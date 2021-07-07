@@ -1,4 +1,4 @@
-# composable-node-delta
+# composable-node-beta
 The node template from parity's github and we can specify that through the cargo.toml  This is the substrate chain, which will be stood up before we make it a parachain as the complexity of testing becomes harder after this
 
 # Substrate Node Template
