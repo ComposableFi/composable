@@ -1,6 +1,15 @@
 # composable-node-beta
 The node template from parity's github and we can specify that through the cargo.toml  This is the substrate chain, which will be stood up before we make it a parachain as the complexity of testing becomes harder after this
 
+** BETA WORK **
+- Chain Up
+- CI Test Clean
+- TODO incorporate Oracle Pallet
+- TODO incorporate Governance Pallet
+- TODO incorporate template Pallet (with Crate)
+- TODO resolve Bridge Issue
+- TODO upscale chain to para-chain
+
 # Substrate Node Template
 
 [![Try on playground](https://img.shields.io/badge/Playground-Node_Template-brightgreen?logo=Parity%20Substrate)](https://playground.substrate.dev/?deploy=node-template)
