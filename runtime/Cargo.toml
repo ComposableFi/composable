@@ -4,6 +4,15 @@ features = ['derive']
 package = 'parity-scale-codec'
 version = '2.0.0'
 
+
+[dependencies.pallet-cfgeneric]
+# import our generic pallet  
+default-features = false
+path = "../pallets/cfgeneric"
+optional = true
+version = '1.0.0'
+
+
 [dependencies.frame-benchmarking]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
