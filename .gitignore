@@ -14,3 +14,7 @@
 
 # direnv cache
 .direnv
+
+
+# dont add vim swap files
+.*.swp
