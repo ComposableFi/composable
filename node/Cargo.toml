@@ -21,7 +21,11 @@ targets = ['x86_64-unknown-linux-gnu']
 [dependencies]
 jsonrpc-core = '15.1.0'
 structopt = '0.3.8'
-sp-keystore = '0.9'
+
+[dependencies.sp-keystore]
+git = 'https://github.com/paritytech/substrate.git'
+rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617'
+version = '0.9'
 
 [dependencies.frame-benchmarking]
 git = 'https://github.com/paritytech/substrate.git'
