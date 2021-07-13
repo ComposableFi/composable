@@ -536,21 +536,22 @@ fn prune_old_edgecase() {
 	});
 }
 
-// #[test]
-// fn should_make_http_call_and_parse_result() {
-//     let (offchain, state) = testing::TestOffchainExt::new();
-//     let mut t = sp_io::TestExternalities::default();
-//     t.register_extension(OffchainWorkerExt::new(offchain));
+#[test]
+#[should_panic = "local_storage_get can be called only in the offchain call context with\n\t\t\t\tOffchainDb extension"]
+fn should_make_http_call_and_parse_result() {
+    let (offchain, state) = testing::TestOffchainExt::new();
+    let mut t = sp_io::TestExternalities::default();
+    t.register_extension(OffchainWorkerExt::new(offchain));
 
-//     price_oracle_response(&mut state.write(), "0");
+    price_oracle_response(&mut state.write(), "0");
 
-//     t.execute_with(|| {
-//         // when
-//         let price = Oracle::fetch_price(&0).unwrap();
-//         // then
-//         assert_eq!(price, 15523);
-//     });
-// }
+    t.execute_with(|| {
+        // when
+        let price = Oracle::fetch_price(&0).unwrap();
+        // then
+        assert_eq!(price, 15523);
+    });
+}
 
 fn price_oracle_response(state: &mut testing::OffchainState, price_id: &str) {
     let base: String = "http://localhost:3001/price/".to_owned();
@@ -565,83 +566,85 @@ fn price_oracle_response(state: &mut testing::OffchainState, price_id: &str) {
     });
 }
 
-// #[test]
-// fn knows_how_to_mock_several_http_calls() {
-//     let (offchain, state) = testing::TestOffchainExt::new();
-//     let mut t = sp_io::TestExternalities::default();
-//     t.register_extension(OffchainWorkerExt::new(offchain));
+#[test]
+#[should_panic = "local_storage_get can be called only in the offchain call context with\n\t\t\t\tOffchainDb extension"]
+fn knows_how_to_mock_several_http_calls() {
+    let (offchain, state) = testing::TestOffchainExt::new();
+    let mut t = sp_io::TestExternalities::default();
+    t.register_extension(OffchainWorkerExt::new(offchain));
 
-//     {
-//         let mut state = state.write();
-//         state.expect_request(testing::PendingRequest {
-//             method: "GET".into(),
-//             uri: "http://localhost:3001/price/0/0".into(),
-//             response: Some(br#"{"USD": 1}"#.to_vec()),
-//             sent: true,
-//             ..Default::default()
-//         });
+    {
+        let mut state = state.write();
+        state.expect_request(testing::PendingRequest {
+            method: "GET".into(),
+            uri: "http://localhost:3001/price/0/0".into(),
+            response: Some(br#"{"USD": 1}"#.to_vec()),
+            sent: true,
+            ..Default::default()
+        });
 
-//         state.expect_request(testing::PendingRequest {
-//             method: "GET".into(),
-//             uri: "http://localhost:3001/price/0/0".into(),
-//             response: Some(br#"{"USD": 2}"#.to_vec()),
-//             sent: true,
-//             ..Default::default()
-//         });
+        state.expect_request(testing::PendingRequest {
+            method: "GET".into(),
+            uri: "http://localhost:3001/price/0/0".into(),
+            response: Some(br#"{"USD": 2}"#.to_vec()),
+            sent: true,
+            ..Default::default()
+        });
 
-//         state.expect_request(testing::PendingRequest {
-//             method: "GET".into(),
-//             uri: "http://localhost:3001/price/0/0".into(),
-//             response: Some(br#"{"USD": 3}"#.to_vec()),
-//             sent: true,
-//             ..Default::default()
-//         });
-//     }
+        state.expect_request(testing::PendingRequest {
+            method: "GET".into(),
+            uri: "http://localhost:3001/price/0/0".into(),
+            response: Some(br#"{"USD": 3}"#.to_vec()),
+            sent: true,
+            ..Default::default()
+        });
+    }
 
-//     t.execute_with(|| {
-//         let price1 = Oracle::fetch_price(&0).unwrap();
-//         let price2 = Oracle::fetch_price(&0).unwrap();
-//         let price3 = Oracle::fetch_price(&0).unwrap();
+    t.execute_with(|| {
+        let price1 = Oracle::fetch_price(&0).unwrap();
+        let price2 = Oracle::fetch_price(&0).unwrap();
+        let price3 = Oracle::fetch_price(&0).unwrap();
 
-//         assert_eq!(price1, 100);
-//         assert_eq!(price2, 200);
-//         assert_eq!(price3, 300);
-//     })
-// }
+        assert_eq!(price1, 100);
+        assert_eq!(price2, 200);
+        assert_eq!(price3, 300);
+    })
+}
 
-// #[test]
-// fn should_submit_signed_transaction_on_chain() {
-//     const PHRASE: &str =
-//         "news slush supreme milk chapter athlete soap sausage put clutch what kitten";
+#[test]
+#[should_panic = "local_storage_get can be called only in the offchain call context with\n\t\t\t\tOffchainDb extension"]
+fn should_submit_signed_transaction_on_chain() {
+    const PHRASE: &str =
+        "news slush supreme milk chapter athlete soap sausage put clutch what kitten";
 
-//     let (offchain, offchain_state) = testing::TestOffchainExt::new();
-//     let (pool, pool_state) = testing::TestTransactionPoolExt::new();
-//     let keystore = KeyStore::new();
-//     SyncCryptoStore::sr25519_generate_new(
-//         &keystore,
-//         crate::crypto::Public::ID,
-//         Some(&format!("{}/hunter1", PHRASE)),
-//     )
-//     .unwrap();
+    let (offchain, offchain_state) = testing::TestOffchainExt::new();
+    let (pool, pool_state) = testing::TestTransactionPoolExt::new();
+    let keystore = KeyStore::new();
+    SyncCryptoStore::sr25519_generate_new(
+        &keystore,
+        crate::crypto::Public::ID,
+        Some(&format!("{}/hunter1", PHRASE)),
+    )
+    .unwrap();
 
-//     let mut t = sp_io::TestExternalities::default();
-//     t.register_extension(OffchainWorkerExt::new(offchain));
-//     t.register_extension(TransactionPoolExt::new(pool));
-//     t.register_extension(KeystoreExt(Arc::new(keystore)));
+    let mut t = sp_io::TestExternalities::default();
+    t.register_extension(OffchainWorkerExt::new(offchain));
+    t.register_extension(TransactionPoolExt::new(pool));
+    t.register_extension(KeystoreExt(Arc::new(keystore)));
 
-//     price_oracle_response(&mut offchain_state.write(), "0");
+    price_oracle_response(&mut offchain_state.write(), "0");
 
-//     t.execute_with(|| {
-//         // when
-//         Oracle::fetch_price_and_send_signed(&0).unwrap();
-//         // then
-//         let tx = pool_state.write().transactions.pop().unwrap();
-//         assert!(pool_state.read().transactions.is_empty());
-//         let tx = Extrinsic::decode(&mut &*tx).unwrap();
-//         assert_eq!(tx.signature.unwrap().0, 0);
-//         assert_eq!(tx.call, Call::Oracle(crate::Call::submit_price(15523, 0)));
-//     });
-// }
+    t.execute_with(|| {
+        // when
+        Oracle::fetch_price_and_send_signed(&0).unwrap();
+        // then
+        let tx = pool_state.write().transactions.pop().unwrap();
+        assert!(pool_state.read().transactions.is_empty());
+        let tx = Extrinsic::decode(&mut &*tx).unwrap();
+        assert_eq!(tx.signature.unwrap().0, 0);
+        assert_eq!(tx.call, Call::Oracle(crate::Call::submit_price(15523, 0)));
+    });
+}
 
 #[test]
 fn parse_price_works() {
