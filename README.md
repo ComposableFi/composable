@@ -4,7 +4,7 @@ The node template from parity's github and we can specify that through the cargo
 ** BETA WORK **
 - Chain Up
 - CI Test Clean
-- TODO incorporate Oracle Pallet
+- incorporate Oracle Pallet
 - TODO incorporate Governance Pallet
 - TODO incorporate template Pallet (with Crate)
 - TODO resolve Bridge Issue
