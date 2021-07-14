@@ -16,3 +16,6 @@
 .direnv
 
 node_modules
+
+# dont add vim swap files
+.*.swp
