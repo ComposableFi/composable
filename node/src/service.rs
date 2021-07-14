@@ -140,22 +140,22 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 	} = new_partial(&config)?;
 
 	#[cfg(feature = "ocw")]
-	let keystore = keystore_container.sync_keystore();
-	if config.offchain_worker.enabled {
-		// Initialize seed for signing transaction using off-chain workers. This is a convenience
-		// so learners can see the transactions submitted simply running the node.
-		// Typically these keys should be inserted with RPC calls to `author_insertKey`.
-		#[cfg(feature = "ocw")]
-		{
-			sp_keystore::SyncCryptoStore::sr25519_generate_new(
-				&*keystore,
-				KeyTypeId(*b"orac"),
-				Some("//Alice"),
-			)
-			.expect("Creating key with account Alice should succeed.");
-		}
-	}
-
+	{
+	    let keystore = keystore_container.sync_keystore();
+	    if config.offchain_worker.enabled {
+		    // Initialize seed for signing transaction using off-chain workers. This is a convenience
+		    // so learners can see the transactions submitted simply running the node.
+		    // Typically these keys should be inserted with RPC calls to `author_insertKey`.
+		    {
+			    sp_keystore::SyncCryptoStore::sr25519_generate_new(
+				    &*keystore,
+				    KeyTypeId(*b"orac"),
+				    Some("//Alice"),
+			    )
+			    .expect("Creating key with account Alice should succeed.");
+		    }
+	    }
+    }
 	if let Some(url) = &config.keystore_remote {
 		match remote_keystore(url) {
 			Ok(k) => keystore_container.set_remote_keystore(k),
