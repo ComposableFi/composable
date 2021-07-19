@@ -12,7 +12,6 @@ path = "../pallets/cfgeneric"
 optional = true
 version = '1.0.0'
 
-
 [dependencies.frame-benchmarking]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
@@ -62,6 +61,18 @@ rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617'
 version = '3.0.0'
 
 [dependencies.pallet-balances]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617'
+version = '3.0.0'
+
+[dependencies.pallet-collective]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617'
+version = '3.0.0'
+
+[dependencies.pallet-democracy]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617'
@@ -215,11 +226,13 @@ std = [
     'frame-system/std',
     'pallet-aura/std',
     'pallet-balances/std',
+    'pallet-collective/std',
+    'pallet-democracy/std',
     'pallet-grandpa/std',
-	'pallet-indices/std',
+    'pallet-indices/std',
     'pallet-randomness-collective-flip/std',
     'pallet-sudo/std',
-	'pallet-oracle/std',
+    'pallet-oracle/std',
     'pallet-timestamp/std',
     'pallet-transaction-payment-rpc-runtime-api/std',
     'pallet-transaction-payment/std',
