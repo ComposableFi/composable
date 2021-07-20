@@ -45,6 +45,7 @@ pub use frame_support::{
 };
 use pallet_transaction_payment::CurrencyAdapter;
 
+pub use pallet_utility;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -388,6 +389,8 @@ construct_runtime!(
 		Aura: pallet_aura::{Pallet, Config<T>},
 		Indices: pallet_indices::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
+		// Utility module.
+//		Utility: pallet_utility::{Pallet, Call, Event} = 16,
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},

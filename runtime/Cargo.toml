@@ -5,6 +5,12 @@ package = 'parity-scale-codec'
 version = '2.0.0'
 
 
+[dependencies.pallet-utility]
+default-features = false 
+path = "../pallets/utility"
+version = '0.1.0'
+
+
 [dependencies.pallet-cfgeneric]
 # import our generic pallet  
 default-features = false
@@ -219,6 +225,7 @@ std = [
 	'pallet-indices/std',
     'pallet-randomness-collective-flip/std',
     'pallet-sudo/std',
+    'pallet-utility/std',
 	'pallet-oracle/std',
     'pallet-timestamp/std',
     'pallet-transaction-payment-rpc-runtime-api/std',
