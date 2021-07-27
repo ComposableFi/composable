@@ -96,11 +96,6 @@ default-features = false
 path = '../pallets/oracle'
 version = '3.0.0'
 
-[dependencies.pallet-oracle]
-default-features = false
-path = '../pallets/oracle'
-version = '3.0.0'
-
 [dependencies.pallet-timestamp]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'

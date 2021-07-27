@@ -530,6 +530,36 @@ fn on_init_prune_scenerios() {
 }
 
 #[test]
+fn on_init_over_max_answers() {
+    new_test_ext().execute_with(|| {
+        // add and request oracle id
+        let account_2 = get_account_2();
+        assert_ok!(Oracle::add_asset_and_info(
+            Origin::signed(account_2),
+            0,
+            Percent::from_percent(80),
+			1,
+			2,
+        ));
+        let account_1: AccountId = Default::default();
+        assert_ok!(Oracle::do_request_price(&account_1, 0));
+        // set prices into storage
+        let account_1: AccountId = Default::default();
+        for i in 0..5 {
+            let price = i as u64 + 100u64;
+            add_price_storage(price, 0, account_1, 0);
+        }
+        // all pruned
+        Oracle::on_initialize(0);
+		// price prunes all but first 2 answers, median went from 102 to 101
+        let price = Price { price: 101, block: 0 };
+        assert_eq!(Oracle::prices(0), price);
+        assert_eq!(Oracle::pre_prices(0).len(), 0);
+
+});
+}
+
+#[test]
 fn prune_old_edgecase() {
     new_test_ext().execute_with(|| {
 		Oracle::prune_old(vec![], 0);

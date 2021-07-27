@@ -229,6 +229,7 @@ pub mod pallet {
         UnsetController,
         ControllerUsed,
 		SignerUsed,
+		AvoidPanic
     }
 
     #[pallet::hooks]
@@ -244,12 +245,17 @@ pub mod pallet {
 					PrePrices::<T>::insert(i, pre_prices.clone());
                 }
                 if pre_prices.len() as u64 >= asset_info.min_answers {
-                    let price = Self::get_median_price(&pre_prices);
+					let mut slice = pre_prices;
+					// check max answer
+					if slice.len() as u64 > asset_info.max_answers {
+						 slice = slice[0 .. asset_info.max_answers as usize].to_vec();
+					}
+                    let price = Self::get_median_price(&slice);
                     let set_price = Price { price, block };
                     Prices::<T>::insert(i, set_price);
                     Requested::<T>::insert(i, false);
 					PrePrices::<T>::remove(i);
-                    Self::handle_payout(&pre_prices, price, i);
+                    Self::handle_payout(&slice, price, i);
                 }
             }
             0
@@ -274,6 +280,7 @@ pub mod pallet {
 			max_answers: u64
         ) -> DispatchResultWithPostInfo {
             T::AddOracle::ensure_origin(origin)?;
+			// TODO add a bounding to max answers here for benchmarks
 			let asset_info = AssetInfo {
 				threshold,
 				min_answers,
@@ -498,6 +505,7 @@ pub mod pallet {
                 .collect();
             numbers.sort();
             let mid = numbers.len() / 2;
+			// TODO maybe check length
             numbers[mid]
         }
 
