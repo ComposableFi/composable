@@ -6,7 +6,7 @@ version = '2.0.0'
 
 
 [dependencies.pallet-cfgeneric]
-# import our generic pallet  
+# import our generic pallet
 default-features = false
 path = "../pallets/cfgeneric"
 optional = true
@@ -91,9 +91,9 @@ git = 'https://github.com/paritytech/substrate.git'
 rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617'
 version = '3.0.0'
 
-[dependencies.pallet-template]
+[dependencies.pallet-oracle]
 default-features = false
-path = '../pallets/template'
+path = '../pallets/oracle'
 version = '3.0.0'
 
 [dependencies.pallet-oracle]
@@ -209,7 +209,6 @@ runtime-benchmarks = [
     'frame-system/runtime-benchmarks',
     'hex-literal',
     'pallet-balances/runtime-benchmarks',
-    'pallet-template/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
 ]
@@ -225,7 +224,6 @@ std = [
 	'pallet-indices/std',
     'pallet-randomness-collective-flip/std',
     'pallet-sudo/std',
-    'pallet-template/std',
 	'pallet-oracle/std',
     'pallet-timestamp/std',
     'pallet-transaction-payment-rpc-runtime-api/std',
