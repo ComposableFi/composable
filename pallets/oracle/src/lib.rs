@@ -283,7 +283,6 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             T::AddOracle::ensure_origin(origin)?;
 			ensure!(max_answers <= T::MaxAnswerBound::get(), Error::<T>::ExceedMaxAnswers);
-			// TODO add a bounding to max answers here for benchmarks
 			let asset_info = AssetInfo {
 				threshold,
 				min_answers,
