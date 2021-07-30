@@ -4,6 +4,10 @@ Substrate allows us to easily make privileged calls and actions with the built-i
 
 *ensure_root(origin);*
 
+Thanks to these functions, we are able to perform privledged calls from various accounts. Such as   
+upgrading the current blockchain. Only accounts that has the correct keys can execute functions that only  
+allow Root origin to call them, meaning normal accounts can not execute them.  
+
 Source code: https://github.com/paritytech/substrate/blob/master/frame/support/src/traits/dispatch.rs#L24     
 
 
