@@ -45,6 +45,14 @@ fn add_asset_and_info() {
             Oracle::add_asset_and_info(Origin::signed(account_1), 1, Percent::from_percent(80), 3, 5),
             BadOrigin
         );
+
+		assert_noop!(Oracle::add_asset_and_info(
+            Origin::signed(account_2),
+            1,
+            Percent::from_percent(80),
+			3,
+			6,
+        ), Error::<Test>::ExceedMaxAnswers);
     });
 }
 

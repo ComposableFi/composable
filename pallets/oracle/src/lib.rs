@@ -92,6 +92,7 @@ pub mod pallet {
         type RequestCost: Get<BalanceOf<Self>>;
         type RewardAmount: Get<BalanceOf<Self>>;
         type SlashAmount: Get<BalanceOf<Self>>;
+		type MaxAnswerBound: Get<u64>;
     }
 
     #[derive(Encode, Decode, Default, Debug, PartialEq)]
@@ -229,7 +230,8 @@ pub mod pallet {
         UnsetController,
         ControllerUsed,
 		SignerUsed,
-		AvoidPanic
+		AvoidPanic,
+		ExceedMaxAnswers
     }
 
     #[pallet::hooks]
@@ -280,6 +282,7 @@ pub mod pallet {
 			max_answers: u64
         ) -> DispatchResultWithPostInfo {
             T::AddOracle::ensure_origin(origin)?;
+			ensure!(max_answers <= T::MaxAnswerBound::get(), Error::<T>::ExceedMaxAnswers);
 			// TODO add a bounding to max answers here for benchmarks
 			let asset_info = AssetInfo {
 				threshold,

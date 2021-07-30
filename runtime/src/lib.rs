@@ -299,6 +299,7 @@ parameter_types! {
 	pub const RewardAmount: Balance = 5;
 	pub const SlashAmount: Balance = 5;
 	pub const StalePrice: BlockNumber = 5;
+	pub const MaxAnswerBound: u64 = 25;
 
 }
 
@@ -313,6 +314,7 @@ impl pallet_oracle::Config for Runtime {
 	type RequestCost = RequestCost;
 	type RewardAmount = RewardAmount;
 	type SlashAmount = SlashAmount;
+	type MaxAnswerBound = MaxAnswerBound;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime

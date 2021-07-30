@@ -87,6 +87,7 @@ parameter_types! {
     pub const RequestCost: u64 = 1;
     pub const RewardAmount: u64 = 5;
     pub const SlashAmount: u64 = 5;
+	pub const MaxAnswerBound: u64 = 5;
 
 }
 
@@ -135,6 +136,7 @@ impl pallet_oracle::Config for Test {
     type RequestCost = RequestCost;
     type RewardAmount = RewardAmount;
     type SlashAmount = SlashAmount;
+	type MaxAnswerBound = MaxAnswerBound;
 }
 
 // Build genesis storage according to the mock runtime.
