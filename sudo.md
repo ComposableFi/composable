@@ -21,7 +21,7 @@ use frame_system::ensure_root;
 
 In substrate the origin functions are used to define where the function is being called from and what privileges the call will have. You can choose between None, Signed and Root origin modes, root being the highest in the chain.   
 
-## Example:  
+## Examples:  
 In order to use ensure_root we need to store the account key that is allowed to use   
 the privileged functions and then execute the ensure_root command.
 
@@ -50,6 +50,28 @@ decl_module! {
 In this example, we create a privileged function and gives the sender/caller/origin root   
 privledges using the *ensure_root(origin)* function. Then we give the origin a reward of 1337 units.    
 
+
+## Protecting sudo functions   
+In order to write safe functions that can execute privledged functions such as upgrading   
+our chain, we want to add a check, that verifies that the person using the function is allowed to do so.
+This we can do with the *ensure_signed*(and scream if it fails) function from the frame_system library.  
+
+
+
+```
+use frame_system::ensure_signed;
+...
+
+fn powerfunction(origin) {
+
+  let sender = ensure_signed(origin)?; //Check if the sender has 
+  ensure!(sender == Self::key(), Error::RequireSudo); // Verify that the function is done by someone holding a key that we are aware of and have verified. If this is not the case, we throw an error
+
+  ... // do privledged stuff here
+
+}
+
+```
 
 
 ### References: 
