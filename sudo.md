@@ -58,7 +58,7 @@ This we can do with the *ensure_signed*(and scream if it fails) function from th
 
 
 
-```
+```rust
 use frame_system::ensure_signed;
 ...
 
