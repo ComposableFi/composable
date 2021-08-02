@@ -640,9 +640,7 @@ pub mod pallet {
                 }
                 _ => return None,
             };
-
-            let exp = price.fraction_length.checked_sub(2).unwrap_or(0);
-            Some(price.integer as u64 * 100 + (price.fraction / 10_u64.pow(exp)) as u64)
+            Some(price.integer as u64)
         }
     }
 }

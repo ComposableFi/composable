@@ -687,10 +687,8 @@ fn should_submit_signed_transaction_on_chain() {
 #[test]
 fn parse_price_works() {
     let test_data = vec![
-        ("{\"USD\":6536.92}", Some(653692)),
-        ("{\"USD\":65.92}", Some(6592)),
-        ("{\"USD\":6536.924565}", Some(653692)),
-        ("{\"USD\":6536}", Some(653600)),
+        ("{\"USD\":6536.92}", Some(6536)),
+        ("{\"USD\":650000000}", Some(650000000)),
         ("{\"USD2\":6536}", None),
         ("{\"USD\":\"6432\"}", None),
     ];
