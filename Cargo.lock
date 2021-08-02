@@ -3811,7 +3811,6 @@ dependencies = [
  "pallet-oracle",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
- "pallet-template",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -4138,20 +4137,6 @@ dependencies = [
  "sp-io 3.0.0 (git+https://github.com/paritytech/substrate.git?rev=d6c33e7ec313f9bd5e319dc0a5a3ace5543f9617)",
  "sp-runtime 3.0.0 (git+https://github.com/paritytech/substrate.git?rev=d6c33e7ec313f9bd5e319dc0a5a3ace5543f9617)",
  "sp-std 3.0.0 (git+https://github.com/paritytech/substrate.git?rev=d6c33e7ec313f9bd5e319dc0a5a3ace5543f9617)",
-]
-
-[[package]]
-name = "pallet-template"
-version = "3.0.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support 3.0.0 (git+https://github.com/paritytech/substrate.git?rev=d6c33e7ec313f9bd5e319dc0a5a3ace5543f9617)",
- "frame-system 3.0.0 (git+https://github.com/paritytech/substrate.git?rev=d6c33e7ec313f9bd5e319dc0a5a3ace5543f9617)",
- "parity-scale-codec",
- "serde",
- "sp-core 3.0.0 (git+https://github.com/paritytech/substrate.git?rev=d6c33e7ec313f9bd5e319dc0a5a3ace5543f9617)",
- "sp-io 3.0.0 (git+https://github.com/paritytech/substrate.git?rev=d6c33e7ec313f9bd5e319dc0a5a3ace5543f9617)",
- "sp-runtime 3.0.0 (git+https://github.com/paritytech/substrate.git?rev=d6c33e7ec313f9bd5e319dc0a5a3ace5543f9617)",
 ]
 
 [[package]]

@@ -92,6 +92,7 @@ pub mod pallet {
         type RequestCost: Get<BalanceOf<Self>>;
         type RewardAmount: Get<BalanceOf<Self>>;
         type SlashAmount: Get<BalanceOf<Self>>;
+		type MaxAnswerBound: Get<u64>;
     }
 
     #[derive(Encode, Decode, Default, Debug, PartialEq)]
@@ -229,6 +230,9 @@ pub mod pallet {
         UnsetController,
         ControllerUsed,
 		SignerUsed,
+		AvoidPanic,
+		ExceedMaxAnswers,
+		InvalidMinAnswers
     }
 
     #[pallet::hooks]
@@ -244,12 +248,17 @@ pub mod pallet {
 					PrePrices::<T>::insert(i, pre_prices.clone());
                 }
                 if pre_prices.len() as u64 >= asset_info.min_answers {
-                    let price = Self::get_median_price(&pre_prices);
+					let mut slice = pre_prices;
+					// check max answer
+					if slice.len() as u64 > asset_info.max_answers {
+						 slice = slice[0 .. asset_info.max_answers as usize].to_vec();
+					}
+                    let price = Self::get_median_price(&slice);
                     let set_price = Price { price, block };
                     Prices::<T>::insert(i, set_price);
                     Requested::<T>::insert(i, false);
 					PrePrices::<T>::remove(i);
-                    Self::handle_payout(&pre_prices, price, i);
+                    Self::handle_payout(&slice, price, i);
                 }
             }
             0
@@ -274,6 +283,8 @@ pub mod pallet {
 			max_answers: u64
         ) -> DispatchResultWithPostInfo {
             T::AddOracle::ensure_origin(origin)?;
+			ensure!(max_answers <= T::MaxAnswerBound::get(), Error::<T>::ExceedMaxAnswers);
+			ensure!(min_answers > 0, Error::<T>::InvalidMinAnswers);
 			let asset_info = AssetInfo {
 				threshold,
 				min_answers,
@@ -498,6 +509,7 @@ pub mod pallet {
                 .collect();
             numbers.sort();
             let mid = numbers.len() / 2;
+			// TODO maybe check length
             numbers[mid]
         }
 
@@ -630,9 +642,7 @@ pub mod pallet {
                 }
                 _ => return None,
             };
-
-            let exp = price.fraction_length.checked_sub(2).unwrap_or(0);
-            Some(price.integer as u64 * 100 + (price.fraction / 10_u64.pow(exp)) as u64)
+            Some(price.integer as u64)
         }
     }
 }

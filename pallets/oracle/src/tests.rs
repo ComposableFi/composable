@@ -45,6 +45,22 @@ fn add_asset_and_info() {
             Oracle::add_asset_and_info(Origin::signed(account_1), 1, Percent::from_percent(80), 3, 5),
             BadOrigin
         );
+
+		assert_noop!(Oracle::add_asset_and_info(
+            Origin::signed(account_2),
+            1,
+            Percent::from_percent(80),
+			3,
+			6,
+        ), Error::<Test>::ExceedMaxAnswers);
+
+		assert_noop!(Oracle::add_asset_and_info(
+            Origin::signed(account_2),
+            1,
+            Percent::from_percent(80),
+			0,
+			5,
+        ), Error::<Test>::InvalidMinAnswers);
     });
 }
 
@@ -530,6 +546,36 @@ fn on_init_prune_scenerios() {
 }
 
 #[test]
+fn on_init_over_max_answers() {
+    new_test_ext().execute_with(|| {
+        // add and request oracle id
+        let account_2 = get_account_2();
+        assert_ok!(Oracle::add_asset_and_info(
+            Origin::signed(account_2),
+            0,
+            Percent::from_percent(80),
+			1,
+			2,
+        ));
+        let account_1: AccountId = Default::default();
+        assert_ok!(Oracle::do_request_price(&account_1, 0));
+        // set prices into storage
+        let account_1: AccountId = Default::default();
+        for i in 0..5 {
+            let price = i as u64 + 100u64;
+            add_price_storage(price, 0, account_1, 0);
+        }
+        // all pruned
+        Oracle::on_initialize(0);
+		// price prunes all but first 2 answers, median went from 102 to 101
+        let price = Price { price: 101, block: 0 };
+        assert_eq!(Oracle::prices(0), price);
+        assert_eq!(Oracle::pre_prices(0).len(), 0);
+
+});
+}
+
+#[test]
 fn prune_old_edgecase() {
     new_test_ext().execute_with(|| {
 		Oracle::prune_old(vec![], 0);
@@ -649,10 +695,8 @@ fn should_submit_signed_transaction_on_chain() {
 #[test]
 fn parse_price_works() {
     let test_data = vec![
-        ("{\"USD\":6536.92}", Some(653692)),
-        ("{\"USD\":65.92}", Some(6592)),
-        ("{\"USD\":6536.924565}", Some(653692)),
-        ("{\"USD\":6536}", Some(653600)),
+        ("{\"USD\":6536.92}", Some(6536)),
+        ("{\"USD\":650000000}", Some(650000000)),
         ("{\"USD2\":6536}", None),
         ("{\"USD\":\"6432\"}", None),
     ];
