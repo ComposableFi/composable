@@ -231,7 +231,8 @@ pub mod pallet {
         ControllerUsed,
 		SignerUsed,
 		AvoidPanic,
-		ExceedMaxAnswers
+		ExceedMaxAnswers,
+		InvalidMinAnswers
     }
 
     #[pallet::hooks]
@@ -283,6 +284,7 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             T::AddOracle::ensure_origin(origin)?;
 			ensure!(max_answers <= T::MaxAnswerBound::get(), Error::<T>::ExceedMaxAnswers);
+			ensure!(min_answers > 0, Error::<T>::InvalidMinAnswers);
 			let asset_info = AssetInfo {
 				threshold,
 				min_answers,

@@ -53,6 +53,14 @@ fn add_asset_and_info() {
 			3,
 			6,
         ), Error::<Test>::ExceedMaxAnswers);
+
+		assert_noop!(Oracle::add_asset_and_info(
+            Origin::signed(account_2),
+            1,
+            Percent::from_percent(80),
+			0,
+			5,
+        ), Error::<Test>::InvalidMinAnswers);
     });
 }
 
