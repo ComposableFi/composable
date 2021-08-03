@@ -211,8 +211,7 @@ by appending your own. A few useful ones are as follow.
 
 
 ## Sudo privileged functions   
-Thanks to substrate sudo functions we can choice what privileges our function has.
+Thanks to substrate sudo functions we can choose what privileges our function has.
 [Read more here](sudo.md)
-
 
 
