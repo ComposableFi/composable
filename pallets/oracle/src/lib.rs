@@ -229,10 +229,12 @@ pub mod pallet {
         AlreadySet,
         UnsetController,
         ControllerUsed,
-		SignerUsed,
-		AvoidPanic,
-		ExceedMaxAnswers,
-		InvalidMinAnswers
+        SignerUsed,
+        AvoidPanic,
+        ExceedMaxAnswers,
+        InvalidMinAnswers,
+        MaxAnswersLessThanMinAnswers,
+        ExceedThreshold,
     }
 
     #[pallet::hooks]
@@ -283,16 +285,18 @@ pub mod pallet {
 			max_answers: u64
         ) -> DispatchResultWithPostInfo {
             T::AddOracle::ensure_origin(origin)?;
-			ensure!(max_answers <= T::MaxAnswerBound::get(), Error::<T>::ExceedMaxAnswers);
-			ensure!(min_answers > 0, Error::<T>::InvalidMinAnswers);
-			let asset_info = AssetInfo {
-				threshold,
-				min_answers,
-				max_answers
-			};
+            ensure!(min_answers > 0, Error::<T>::InvalidMinAnswers);
+            ensure!(max_answers >= min_answers, Error::<T>::MaxAnswersLessThanMinAnswers);
+            ensure!(threshold < Percent::from_percent(100), Error::<T>::ExceedThreshold);
+            ensure!(max_answers <= T::MaxAnswerBound::get(), Error::<T>::ExceedMaxAnswers);
+            let asset_info = AssetInfo {
+                threshold,
+                min_answers,
+                max_answers
+            };
             AssetsInfo::<T>::insert(asset_id, asset_info);
             AssetsCount::<T>::mutate(|a| *a += 1);
-			Self::deposit_event(Event::AssetInfoChange(asset_id, threshold, min_answers, max_answers));
+            Self::deposit_event(Event::AssetInfoChange(asset_id, threshold, min_answers, max_answers));
             Ok(().into())
         }
 
