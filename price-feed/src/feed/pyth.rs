@@ -1,7 +1,7 @@
 use super::{Feed, FeedNotification, Price, TimeStamped};
 use crate::{
-    asset::{symbol, AssetPair},
-    feed::TimeStamp,
+    asset::{to_symbol, AssetPair},
+    feed::{Exponent, TimeStamp},
 };
 use chrono::Utc;
 use jsonrpc_client_transports::{
@@ -22,6 +22,7 @@ struct PythNotification {
 #[derive(Clone, Debug, Deserialize)]
 struct PythProductPrice {
     account: String,
+    price_exponent: i32,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -64,32 +65,29 @@ impl Pyth {
     }
 
     async fn get_product_list(&self) -> Result<Vec<PythProduct>, PythError> {
-        let result = self
-            .client
+        self.client
             .call_method::<(), Vec<PythProduct>>("get_product_list", "", ())
             .await
-            .map_err(|e| PythError::RpcError(e))?;
-        log::info!("Products: {:?}", result);
-        Ok(result)
+            .map_err(|e| PythError::RpcError(e))
     }
 
     async fn subscribe(
         &mut self,
         output: mpsc::Sender<FeedNotification>,
         asset_pair: AssetPair,
-        account: String,
+        product_price: PythProductPrice,
     ) -> Result<(), PythError> {
         log::info!(
             "Subscribing to asset pair {:?} from account {:?}",
             asset_pair,
-            account
+            product_price.account
         );
         let mut stream: TypedSubscriptionStream<PythNotification> = self
             .client
             .subscribe(
                 "subscribe_price",
                 [PythSubscribeParams {
-                    account: account.to_string(),
+                    account: product_price.account.to_string(),
                 }],
                 "notify_price",
                 "",
@@ -105,8 +103,8 @@ impl Pyth {
                 match stream.next().await {
                     Some(notification) => match notification {
                         Ok(price_notification) => {
-                            log::info!(
-                                "received price, {:?} = {:?}",
+                            log::debug!(
+                                "received price, {:?}, {:?}",
                                 asset_pair,
                                 price_notification
                             );
@@ -115,7 +113,10 @@ impl Pyth {
                                     Feed::Pyth,
                                     asset_pair,
                                     TimeStamped {
-                                        value: Price(price_notification.price),
+                                        value: (
+                                            Price(price_notification.price),
+                                            Exponent(product_price.price_exponent),
+                                        ),
                                         timestamp: TimeStamp(Utc::now().timestamp()),
                                     },
                                 ))
@@ -123,7 +124,7 @@ impl Pyth {
                                 .map_err(|e| PythError::ChannelError(e))?;
                         }
                         _ => {
-                            log::warn!("invalid notification?: {:?}", notification);
+                            log::error!("invalid notification?: {:?}", notification);
                         }
                     },
                     None => break 'a,
@@ -142,19 +143,20 @@ impl Pyth {
     pub async fn subscribe_to_asset(
         &mut self,
         output: &mpsc::Sender<FeedNotification>,
-        asset_pair: AssetPair,
+        asset_pair: &AssetPair,
     ) -> Result<(), PythError> {
-        let asset_pair_symbol = symbol(asset_pair);
-        let products = self.get_product_list().await?;
-        let price_accounts = products
+        let asset_pair_symbol = to_symbol(asset_pair);
+        let product_prices = self
+            .get_product_list()
+            .await?
             .iter()
             .filter(|p| p.attr_dict.symbol == asset_pair_symbol)
             .flat_map(|p| p.price.clone())
-            .map(|p| p.account.clone())
             .collect::<Vec<_>>();
-        log::info!("Accounts for {:?}: {:?}", asset_pair_symbol, price_accounts);
-        for account in price_accounts {
-            self.subscribe(output.clone(), asset_pair, account).await?
+        log::info!("Accounts for {:?}: {:?}", asset_pair_symbol, product_prices);
+        for product_price in product_prices {
+            self.subscribe(output.clone(), *asset_pair, product_price)
+                .await?
         }
         Ok(())
     }
