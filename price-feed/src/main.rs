@@ -69,7 +69,7 @@ async fn create_subscriptions(pythd_host: &String) -> (Pyth, mpsc::Receiver<Feed
 
     let mut pyth = Pyth::new(&Url::parse(&pythd_host).expect("invalid pythd host address."))
         .await
-        .expect("connection to pyth-client failed");
+        .expect("connection to pythd failed");
 
     // TODO: subscribe to all asset prices? cli configurable?
     log::info!("successfully connected to pyth-client.");

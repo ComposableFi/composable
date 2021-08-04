@@ -28,7 +28,7 @@ in mkShell {
   packages = [ pythd ];
   SOLANA_ENV = "devnet";
   shellHook = ''
-    echo "Running up pyth_tx & puthd"
+    echo "Running up pyth_tx & pythd"
     export PYTH_TX_LOG=$(mktemp)
     pyth_tx -l $PYTH_TX_LOG -d -r api.$SOLANA_ENV.solana.com &
     export PYTH_TX_PID=$!
