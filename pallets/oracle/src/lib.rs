@@ -240,8 +240,7 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_initialize(block: T::BlockNumber) -> Weight {
-            for i in 0..AssetsCount::<T>::get() {
-				let asset_info = AssetsInfo::<T>::get(i);
+            for (i, asset_info) in AssetsInfo::<T>::iter() {
                 // TODO maybe add a check if price is requested, is less operations?
                 let pre_pruned_prices = PrePrices::<T>::get(i);
                 let mut pre_prices = Vec::new();
@@ -518,7 +517,7 @@ pub mod pallet {
         }
 
         pub fn check_requests() {
-            for i in 0..AssetsCount::<T>::get() {
+            for (i, _) in AssetsInfo::<T>::iter() {
                 if Requested::<T>::get(i) {
                     let _ = Self::fetch_price_and_send_signed(&i);
                 }
