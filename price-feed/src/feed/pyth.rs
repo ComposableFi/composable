@@ -14,8 +14,17 @@ use tokio::{
     task::JoinHandle,
 };
 
+#[derive(PartialEq, Eq, Debug, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum SymbolStatus {
+    Trading,
+    Halted,
+    Unknown,
+}
+
 #[derive(Debug, Deserialize)]
 struct PythNotification {
+    status: SymbolStatus,
     price: u64,
 }
 
@@ -108,20 +117,22 @@ impl Pyth {
                                 asset_pair,
                                 price_notification
                             );
-                            output
-                                .send(FeedNotification::PriceUpdated(
-                                    Feed::Pyth,
-                                    asset_pair,
-                                    TimeStamped {
-                                        value: (
-                                            Price(price_notification.price),
-                                            Exponent(product_price.price_exponent),
-                                        ),
-                                        timestamp: TimeStamp(Utc::now().timestamp()),
-                                    },
-                                ))
-                                .await
-                                .map_err(|e| PythError::ChannelError(e))?;
+                            if price_notification.status == SymbolStatus::Trading {
+                                output
+                                    .send(FeedNotification::PriceUpdated(
+                                        Feed::Pyth,
+                                        asset_pair,
+                                        TimeStamped {
+                                            value: (
+                                                Price(price_notification.price),
+                                                Exponent(product_price.price_exponent),
+                                            ),
+                                            timestamp: TimeStamp(Utc::now().timestamp()),
+                                        },
+                                    ))
+                                    .await
+                                    .map_err(|e| PythError::ChannelError(e))?;
+                            }
                         }
                         _ => {
                             log::error!("invalid notification?: {:?}", notification);
