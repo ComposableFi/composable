@@ -41,6 +41,10 @@ async fn run_http_frontend(
     listening_address: &String,
     prices: Arc<RwLock<PriceMap>>,
 ) -> (oneshot::Sender<()>, JoinHandle<()>) {
+    let get_asset_id = warp::path!("asset_id" / Asset / Asset)
+        .and(warp::get())
+        .map(|x, y| json(&to_hash(&(x, y))));
+
     let get_price = warp::path!("price" / AssetPairHash / u128)
         .and(warp::get())
         .map(move |asset_pair_hash, _request_id| {
@@ -72,7 +76,7 @@ async fn run_http_frontend(
 
     // Channel that will allow warp to gracefully shutdown when a signal is comming.
     let (tx, rx) = oneshot::channel::<()>();
-    let (_, server) = warp::serve(get_price).bind_with_graceful_shutdown(
+    let (_, server) = warp::serve(get_price.or(get_asset_id)).bind_with_graceful_shutdown(
         SocketAddr::from_str(listening_address).expect("invalid listening address."),
         async {
             rx.await.ok();
