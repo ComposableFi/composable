@@ -1,37 +1,37 @@
 use super::{Feed, FeedNotification, Price, TimeStamped};
 use crate::{
-    asset::{to_symbol, AssetPair},
+    asset::AssetPair,
     feed::{Exponent, TimeStamp},
 };
 use chrono::Utc;
+use futures::stream::StreamExt;
 use jsonrpc_client_transports::{
     transports::ws::connect, RpcError, TypedClient, TypedSubscriptionStream,
 };
-use jsonrpc_core_client::futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use tokio::{
     sync::mpsc::{self, error::SendError},
     task::JoinHandle,
 };
 
-#[derive(PartialEq, Eq, Debug, Deserialize)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum SymbolStatus {
+enum PythSymbolStatus {
     Trading,
     Halted,
     Unknown,
 }
 
-#[derive(Debug, Deserialize)]
-struct PythNotification {
-    status: SymbolStatus,
-    price: u64,
+#[derive(Copy, Clone, Debug, Deserialize)]
+struct PythNotifyPrice {
+    status: PythSymbolStatus,
+    price: Price,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 struct PythProductPrice {
     account: String,
-    price_exponent: i32,
+    price_exponent: Exponent,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -62,11 +62,37 @@ pub struct Pyth {
     handles: Vec<JoinHandle<Result<(), PythError>>>,
 }
 
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
+enum PythNotifyPriceAction {
+    YieldFeedNotification(FeedNotification),
+    NoOp,
+}
+
+fn notify_price_action(
+    asset_pair: &AssetPair,
+    product_price: &PythProductPrice,
+    notify_price: &PythNotifyPrice,
+    timestamp: &TimeStamp,
+) -> PythNotifyPriceAction {
+    if notify_price.status == PythSymbolStatus::Trading {
+        PythNotifyPriceAction::YieldFeedNotification(FeedNotification::PriceUpdated(
+            Feed::Pyth,
+            *asset_pair,
+            TimeStamped {
+                value: (notify_price.price, product_price.price_exponent),
+                timestamp: *timestamp,
+            },
+        ))
+    } else {
+        PythNotifyPriceAction::NoOp
+    }
+}
+
 impl Pyth {
     pub async fn new(url: &url::Url) -> Result<Pyth, PythError> {
         let client = connect::<TypedClient>(url)
             .await
-            .map_err(|e| PythError::RpcError(e))?;
+            .map_err(PythError::RpcError)?;
         Ok(Pyth {
             client,
             handles: Vec::new(),
@@ -77,7 +103,7 @@ impl Pyth {
         self.client
             .call_method::<(), Vec<PythProduct>>("get_product_list", "", ())
             .await
-            .map_err(|e| PythError::RpcError(e))
+            .map_err(PythError::RpcError)
     }
 
     async fn subscribe(
@@ -91,7 +117,7 @@ impl Pyth {
             asset_pair,
             product_price.account
         );
-        let mut stream: TypedSubscriptionStream<PythNotification> = self
+        let mut stream: TypedSubscriptionStream<PythNotifyPrice> = self
             .client
             .subscribe(
                 "subscribe_price",
@@ -102,49 +128,50 @@ impl Pyth {
                 "",
                 "",
             )
-            .map_err(|e| PythError::RpcError(e))?;
+            .map_err(PythError::RpcError)?;
         let join_handle = tokio::spawn(async move {
             output
                 .send(FeedNotification::Opened(Feed::Pyth, asset_pair))
                 .await
-                .map_err(|e| PythError::ChannelError(e))?;
+                .map_err(PythError::ChannelError)?;
             'a: loop {
                 match stream.next().await {
-                    Some(notification) => match notification {
-                        Ok(price_notification) => {
-                            log::debug!(
-                                "received price, {:?}, {:?}",
-                                asset_pair,
-                                price_notification
-                            );
-                            if price_notification.status == SymbolStatus::Trading {
+                    Some(Ok(notify_price)) => {
+                        log::debug!(
+                            "received notify_price, {:?}, {:?}",
+                            asset_pair,
+                            notify_price
+                        );
+                        let timestamp = TimeStamp(Utc::now().timestamp());
+                        match notify_price_action(
+                            &asset_pair,
+                            &product_price,
+                            &notify_price,
+                            &timestamp,
+                        ) {
+                            PythNotifyPriceAction::YieldFeedNotification(feed_notification) => {
                                 output
-                                    .send(FeedNotification::PriceUpdated(
-                                        Feed::Pyth,
-                                        asset_pair,
-                                        TimeStamped {
-                                            value: (
-                                                Price(price_notification.price),
-                                                Exponent(product_price.price_exponent),
-                                            ),
-                                            timestamp: TimeStamp(Utc::now().timestamp()),
-                                        },
-                                    ))
+                                    .send(feed_notification)
                                     .await
-                                    .map_err(|e| PythError::ChannelError(e))?;
+                                    .map_err(PythError::ChannelError)?;
+                            }
+                            PythNotifyPriceAction::NoOp => {
+                                // TODO: should we close the feed if the received price don't yield a price update?
+                                // e.g. the SymbolStatus != Trading
                             }
                         }
-                        _ => {
-                            log::error!("invalid notification?: {:?}", notification);
-                        }
-                    },
+                    }
+                    Some(Err(e)) => {
+                        log::error!("unexpected rpc error: {:?}", e);
+                        break 'a;
+                    }
                     None => break 'a,
                 }
             }
             output
                 .send(FeedNotification::Closed(Feed::Pyth, asset_pair))
                 .await
-                .map_err(|e| PythError::ChannelError(e))?;
+                .map_err(PythError::ChannelError)?;
             Ok(())
         });
         self.handles.push(join_handle);
@@ -156,7 +183,7 @@ impl Pyth {
         output: &mpsc::Sender<FeedNotification>,
         asset_pair: &AssetPair,
     ) -> Result<(), PythError> {
-        let asset_pair_symbol = to_symbol(asset_pair);
+        let asset_pair_symbol = asset_pair.symbol();
         let product_prices = self
             .get_product_list()
             .await?
@@ -174,5 +201,48 @@ impl Pyth {
 
     pub async fn terminate(&self) {
         self.handles.iter().for_each(drop);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{asset::*, feed::FeedNotification};
+
+    use super::*;
+
+    #[test]
+    fn test_notify_price_action() {
+        let account = "irrelevant".to_string();
+        let product_price = PythProductPrice {
+            account,
+            price_exponent: Exponent(0x1337),
+        };
+        let price = Price(0xCAFEBABE);
+        let timestamp = TimeStamp(0xDEADC0DE);
+        VALID_ASSETPAIRS.iter().for_each(|asset_pair| {
+            [
+                (PythSymbolStatus::Halted, PythNotifyPriceAction::NoOp),
+                (PythSymbolStatus::Unknown, PythNotifyPriceAction::NoOp),
+                (
+                    PythSymbolStatus::Trading,
+                    PythNotifyPriceAction::YieldFeedNotification(FeedNotification::PriceUpdated(
+                        Feed::Pyth,
+                        *asset_pair,
+                        TimeStamped {
+                            value: (price, product_price.price_exponent),
+                            timestamp,
+                        },
+                    )),
+                ),
+            ]
+            .iter()
+            .for_each(|&(status, expected_action)| {
+                let notify_price = PythNotifyPrice { status, price };
+                assert_eq!(
+                    expected_action,
+                    notify_price_action(asset_pair, &product_price, &notify_price, &timestamp)
+                )
+            });
+        });
     }
 }

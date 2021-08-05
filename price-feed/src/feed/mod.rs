@@ -1,32 +1,32 @@
 pub mod pyth;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::asset::AssetPair;
 
-#[derive(Serialize, Copy, Clone, Debug)]
+#[derive(Serialize, PartialEq, Eq, Copy, Clone, Debug)]
 #[repr(transparent)]
 pub struct TimeStamp(pub(crate) i64);
 
-#[derive(Serialize, Copy, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Copy, Clone, Debug)]
 #[repr(transparent)]
 pub struct Price(pub(crate) u64);
 
-#[derive(Serialize, Copy, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Copy, Clone, Debug)]
 #[repr(transparent)]
 pub struct Exponent(pub(crate) i32);
 
-#[derive(Serialize, Copy, Clone, Debug)]
+#[derive(Serialize, PartialEq, Eq, Copy, Clone, Debug)]
 pub struct TimeStamped<T> {
     pub value: T,
     pub timestamp: TimeStamp,
 }
 
-#[derive(PartialEq, Eq, Hash, Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Feed {
     Pyth,
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum FeedNotification {
     Opened(Feed, AssetPair),
     Closed(Feed, AssetPair),
