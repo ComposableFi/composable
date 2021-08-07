@@ -112,11 +112,21 @@ pub async fn run_pyth_feed(pythd_host: &String) -> (Pyth, mpsc::Receiver<FeedNot
 
 #[cfg(test)]
 mod tests {
+    use super::Backend;
     use crate::{
+        asset::ASSETPAIR_HASHES,
         asset::VALID_ASSETPAIRS,
         backend::{feed_notification_action, FeedNotificationAction},
+        cache::PriceCache,
         feed::{Exponent, Feed, FeedNotification, Price, TimeStamp, TimeStamped},
     };
+    use futures::stream::StreamExt;
+    use signal_hook_tokio::Signals;
+    use std::{
+        collections::HashMap,
+        sync::{Arc, RwLock},
+    };
+    use tokio::sync::mpsc;
 
     #[test]
     fn test_feed_notification_action() {
@@ -146,5 +156,81 @@ mod tests {
                 assert_eq!(feed_notification_action(&notification), expected_action);
             });
         });
+    }
+
+    #[tokio::test]
+    async fn test_feed_backend() {
+        let mk_price = |x, y, z| TimeStamped {
+            value: (Price(x), Exponent(y)),
+            timestamp: TimeStamp(z),
+        };
+        let (price1, price2, price3) = (
+            mk_price(123, -3, 2),
+            mk_price(3134, -1, 5),
+            mk_price(93424, -4, 234),
+        );
+        let feed = Feed::Pyth;
+        for (&asset_pair, &asset_pair_hash) in ASSETPAIR_HASHES.iter() {
+            let tests = [
+                (
+                    vec![
+                        FeedNotification::Opened(feed, asset_pair),
+                        FeedNotification::PriceUpdated(feed, asset_pair, price1),
+                        FeedNotification::Closed(feed, asset_pair),
+                    ],
+                    [(asset_pair_hash, price1)],
+                ),
+                (
+                    vec![
+                        FeedNotification::Opened(feed, asset_pair),
+                        FeedNotification::PriceUpdated(feed, asset_pair, price3),
+                        FeedNotification::PriceUpdated(feed, asset_pair, price1),
+                        FeedNotification::PriceUpdated(feed, asset_pair, price2),
+                        FeedNotification::Closed(feed, asset_pair),
+                    ],
+                    [(asset_pair_hash, price2)],
+                ),
+                (
+                    vec![
+                        FeedNotification::Opened(feed, asset_pair),
+                        FeedNotification::PriceUpdated(feed, asset_pair, price2),
+                        FeedNotification::PriceUpdated(feed, asset_pair, price1),
+                        FeedNotification::PriceUpdated(feed, asset_pair, price3),
+                        FeedNotification::Closed(feed, asset_pair),
+                    ],
+                    [(asset_pair_hash, price3)],
+                ),
+            ];
+            for (events, expected) in &tests {
+                let prices_cache: Arc<RwLock<PriceCache>> = Arc::new(RwLock::new(HashMap::new()));
+                let (feed_in, feed_out) = mpsc::channel::<FeedNotification>(8);
+                let signals = Signals::new(&[])
+                    .expect("could not create signals stream")
+                    .fuse();
+                let backend = Backend::new(prices_cache.clone(), feed_out, signals).await;
+
+                for &event in events {
+                    feed_in
+                        .send(event)
+                        .await
+                        .expect("could not send feed notification");
+                }
+
+                /* Drop the channel so that the backend exit and we join it.
+                   This will ensure the events have been processed.
+                */
+                drop(feed_in);
+                backend
+                    .shutdown_handle
+                    .await
+                    .expect("could not join on backend handle");
+
+                let prices_cache_r = prices_cache.read().expect("could not acquire read lock");
+                assert_eq!(
+                    *prices_cache_r,
+                    expected.iter().copied().collect::<PriceCache>()
+                );
+            }
+        }
     }
 }
