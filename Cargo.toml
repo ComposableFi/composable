@@ -4,6 +4,6 @@ panic = 'unwind'
 [workspace]
 members = [
     'node',
-    'runtime',
+    'runtime/picasso',
     'price-feed',
 ]
