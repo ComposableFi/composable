@@ -1,80 +1,97 @@
-use crate::{
-    asset::*,
-    cache::{PriceCache, PriceCacheEntry},
-    feed::{pyth::Pyth, FeedNotification},
-};
+use crate::{cache::Cache, feed::FeedNotification};
 use futures::stream::{Fuse, StreamExt};
 use signal_hook_tokio::SignalsInfo;
-use std::sync::{Arc, RwLock};
+use std::{convert::TryFrom, fmt::Debug};
 use tokio::{sync::mpsc, task::JoinHandle};
-use url::Url;
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
-enum FeedNotificationAction {
-    UpdateCache(AssetPairHash, PriceCacheEntry),
-    NoOp,
+pub enum FeedNotificationAction<K, V> {
+    UpdateCache(K, V),
+}
+
+pub trait Transition<S> {
+    fn apply(&self, state: &mut S);
+}
+
+impl<TCache, TAsset, TPrice> Transition<TCache> for FeedNotificationAction<TAsset, TPrice>
+where
+    TCache: Cache<TAsset, TPrice>,
+    TAsset: Copy,
+    TPrice: Copy,
+{
+    fn apply(&self, state: &mut TCache) {
+        match self {
+            &FeedNotificationAction::UpdateCache(a, p) => state.insert(a, p),
+        }
+    }
+}
+
+impl<TAsset, TPrice> TryFrom<FeedNotification<TAsset, TPrice>>
+    for FeedNotificationAction<TAsset, TPrice>
+where
+    TAsset: Debug + Copy,
+    TPrice: Copy,
+{
+    type Error = ();
+    /* TODO: how are we going to handles X feeds:
+      - do we just expose every one of them from their own endpoint?
+      - do we merge the prices (median?), if so, merging will depend on timestamp?
+      On notification close, do we remove the price as we are no
+      longer getting new prices?
+    */
+    fn try_from(
+        notification: FeedNotification<TAsset, TPrice>,
+    ) -> Result<FeedNotificationAction<TAsset, TPrice>, Self::Error> {
+        match notification {
+            FeedNotification::Opened(f, a) => {
+                log::info!("{:?} has opened a channel for {:?}", f, a);
+                Err(())
+            }
+            FeedNotification::Closed(f, a) => {
+                log::info!("{:?} has closed a channel for {:?}", f, a);
+                Err(())
+            }
+            FeedNotification::PriceUpdated(_, a, p) => {
+                Ok(FeedNotificationAction::UpdateCache(a, p))
+            }
+        }
+    }
 }
 
 pub struct Backend {
     pub shutdown_handle: JoinHandle<()>,
 }
 
-/* TODO: how are we going to handles X feeds:
- - do we just expose every one of them from their own endpoint?
- - do we merge the prices (median?), if so, merging will depend on timestamp?
- On notification close, do we remove the price as we are no
- longer getting new prices?
-*/
-fn feed_notification_action(feed_notification: &FeedNotification) -> FeedNotificationAction {
-    match feed_notification {
-        FeedNotification::Opened(f, a) => {
-            log::info!("{:?} has opened a channel for {:?}", f, a);
-            FeedNotificationAction::NoOp
-        }
-        FeedNotification::Closed(f, a) => {
-            log::info!("{:?} has closed a channel for {:?}", f, a);
-            FeedNotificationAction::NoOp
-        }
-        FeedNotification::PriceUpdated(_, a, p) => FeedNotificationAction::UpdateCache(
-            *ASSETPAIR_HASHES.get(&a).expect("unknown asset pair hash"),
-            *p,
-        ),
-    }
-}
-
 impl Backend {
-    pub async fn new(
-        prices_cache: Arc<RwLock<PriceCache>>,
-        mut feed_channel: mpsc::Receiver<FeedNotification>,
+    pub async fn new<TNotification, TTransition, TAsset, TPrice, TCache>(
+        mut prices_cache: TCache,
+        mut feed_channel: mpsc::Receiver<TNotification>,
         mut shutdown_trigger: Fuse<SignalsInfo>,
-    ) -> Backend {
+    ) -> Backend
+    where
+        TCache: 'static + Cache<TAsset, TPrice> + Send,
+        TNotification: 'static + Send + Debug,
+        TTransition: Transition<TCache> + TryFrom<TNotification>,
+    {
         let backend = async move {
-            'a: loop {
+            'l: loop {
                 tokio::select! {
                     _ = shutdown_trigger.next() => {
                         log::info!("terminating signal received.");
-                        break 'a;
+                        break 'l;
                     }
                     message = feed_channel.recv() => {
                         match message {
-                            Some(feed_notification) => {
-                                log::debug!("notification received: {:?}", feed_notification);
-                                match feed_notification_action(&feed_notification) {
-                                    FeedNotificationAction::UpdateCache(k, v) => {
-                                        prices_cache
-                                            .write()
-                                            .expect("failed to acquire write lock...")
-                                            .insert(
-                                                k,
-                                                v,
-                                            );
-                                    }
-                                    FeedNotificationAction::NoOp => {}
-                                }
+                            Some(notification) => {
+                                log::debug!("notification received: {:?}", notification);
+                                let _ = TTransition::try_from(notification)
+                                    .map(|action| {
+                                        action.apply(&mut prices_cache);
+                                    });
                             }
                             None => {
                                 log::info!("no more feed available... exiting handler.");
-                                break 'a;
+                                break 'l;
                             }
                         }
                     }
@@ -88,72 +105,59 @@ impl Backend {
     }
 }
 
-// TODO: manage multiple feeds
-pub async fn run_pyth_feed(pythd_host: &String) -> (Pyth, mpsc::Receiver<FeedNotification>) {
-    /* Its important to drop the initial feed_in as it will be cloned for all subsequent tasks
-    The received won't get notified if all cloned senders are closed but not the 'main' one.
-     */
-    let (feed_in, feed_out) = mpsc::channel::<FeedNotification>(128);
-
-    let mut pyth = Pyth::new(&Url::parse(&pythd_host).expect("invalid pythd host address."))
-        .await
-        .expect("connection to pythd failed");
-
-    // TODO: subscribe to all asset prices? cli configurable?
-    log::info!("successfully connected to pythd.");
-    for asset_pair in VALID_ASSETPAIRS.iter() {
-        pyth.subscribe_to_asset(&feed_in, asset_pair)
-            .await
-            .expect("failed to subscribe to asset");
-    }
-
-    (pyth, feed_out)
-}
-
 #[cfg(test)]
 mod tests {
     use super::Backend;
     use crate::{
-        asset::ASSETPAIR_HASHES,
-        asset::VALID_ASSETPAIRS,
-        backend::{feed_notification_action, FeedNotificationAction},
-        cache::PriceCache,
-        feed::{Exponent, Feed, FeedNotification, Price, TimeStamp, TimeStamped},
+        asset::{AssetPair, VALID_ASSETPAIRS},
+        backend::{FeedNotificationAction, Transition},
+        cache::{PriceCache, ThreadSafePriceCache},
+        feed::{Exponent, Feed, FeedNotification, Price, TimeStamp, TimeStamped, TimeStampedPrice},
     };
     use futures::stream::StreamExt;
     use signal_hook_tokio::Signals;
     use std::{
         collections::HashMap,
+        convert::TryFrom,
         sync::{Arc, RwLock},
     };
     use tokio::sync::mpsc;
 
     #[test]
-    fn test_feed_notification_action() {
+    fn test_feed_notification_transition() {
         let feed = Feed::Pyth;
         let timestamped_price = TimeStamped {
             value: (Price(0xCAFEBABE), Exponent(0x1337)),
             timestamp: TimeStamp(0xDEADC0DE),
         };
         VALID_ASSETPAIRS.iter().for_each(|&asset_pair| {
-            let asset_pair_hash = asset_pair.hash();
             [
-                (
-                    FeedNotification::Opened(feed, asset_pair),
-                    FeedNotificationAction::NoOp,
-                ),
-                (
-                    FeedNotification::Closed(feed, asset_pair),
-                    FeedNotificationAction::NoOp,
-                ),
+                (FeedNotification::Opened(feed, asset_pair), None),
+                (FeedNotification::Closed(feed, asset_pair), None),
                 (
                     FeedNotification::PriceUpdated(feed, asset_pair, timestamped_price),
-                    FeedNotificationAction::UpdateCache(asset_pair_hash, timestamped_price),
+                    Some((
+                        FeedNotificationAction::UpdateCache(asset_pair, timestamped_price),
+                        [(asset_pair, timestamped_price)].iter().copied().collect(),
+                    )),
                 ),
             ]
             .iter()
-            .for_each(|&(notification, expected_action)| {
-                assert_eq!(feed_notification_action(&notification), expected_action);
+            .for_each(|(notification, expected)| {
+                match (
+                    FeedNotificationAction::<AssetPair, TimeStampedPrice>::try_from(*notification),
+                    expected,
+                ) {
+                    (Ok(actual_action), Some((expected_action, expected_state))) => {
+                        assert_eq!(&actual_action, expected_action);
+                        let mut state = HashMap::new();
+                        actual_action.apply(&mut state);
+                        assert_eq!(&state, expected_state);
+                    }
+                    _ => {
+                        // No action = no transition
+                    }
+                }
             });
         });
     }
@@ -170,7 +174,7 @@ mod tests {
             mk_price(93424, -4, 234),
         );
         let feed = Feed::Pyth;
-        for (&asset_pair, &asset_pair_hash) in ASSETPAIR_HASHES.iter() {
+        for &asset_pair in VALID_ASSETPAIRS.iter() {
             let tests = [
                 (
                     vec![
@@ -178,7 +182,7 @@ mod tests {
                         FeedNotification::PriceUpdated(feed, asset_pair, price1),
                         FeedNotification::Closed(feed, asset_pair),
                     ],
-                    [(asset_pair_hash, price1)],
+                    [(asset_pair, price1)],
                 ),
                 (
                     vec![
@@ -188,7 +192,7 @@ mod tests {
                         FeedNotification::PriceUpdated(feed, asset_pair, price2),
                         FeedNotification::Closed(feed, asset_pair),
                     ],
-                    [(asset_pair_hash, price2)],
+                    [(asset_pair, price2)],
                 ),
                 (
                     vec![
@@ -198,16 +202,24 @@ mod tests {
                         FeedNotification::PriceUpdated(feed, asset_pair, price3),
                         FeedNotification::Closed(feed, asset_pair),
                     ],
-                    [(asset_pair_hash, price3)],
+                    [(asset_pair, price3)],
                 ),
             ];
             for (events, expected) in &tests {
-                let prices_cache: Arc<RwLock<PriceCache>> = Arc::new(RwLock::new(HashMap::new()));
-                let (feed_in, feed_out) = mpsc::channel::<FeedNotification>(8);
+                let prices_cache: ThreadSafePriceCache = Arc::new(RwLock::new(HashMap::new()));
+                let (feed_in, feed_out) =
+                    mpsc::channel::<FeedNotification<AssetPair, TimeStampedPrice>>(8);
                 let signals = Signals::new(&[])
                     .expect("could not create signals stream")
                     .fuse();
-                let backend = Backend::new(prices_cache.clone(), feed_out, signals).await;
+                let backend = Backend::new::<
+                    FeedNotification<AssetPair, TimeStampedPrice>,
+                    FeedNotificationAction<AssetPair, TimeStampedPrice>,
+                    _,
+                    _,
+                    _,
+                >(prices_cache.clone(), feed_out, signals)
+                .await;
 
                 for &event in events {
                     feed_in

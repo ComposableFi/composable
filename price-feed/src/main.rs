@@ -13,9 +13,10 @@ extern crate enum_derive;
 extern crate lazy_static;
 
 use crate::{
-    asset::*,
-    backend::{run_pyth_feed, Backend},
-    cache::PriceCache,
+    asset::AssetPair,
+    backend::{Backend, FeedNotificationAction},
+    cache::ThreadSafePriceCache,
+    feed::{pyth, FeedNotification, TimeStampedPrice},
     frontend::Frontend,
 };
 use futures::stream::StreamExt;
@@ -32,21 +33,29 @@ async fn main() {
 
     let opts = opts::get_opts();
 
-    for (asset_pair, asset_pair_hash) in ASSETPAIR_HASHES.iter() {
+    for (asset_pair, asset_pair_hash) in asset::ASSETPAIR_TO_HASH.iter() {
         log::info!("AssetPair{:?} = AssetId({:?})", asset_pair, asset_pair_hash);
     }
 
-    let prices_cache: Arc<RwLock<PriceCache>> = Arc::new(RwLock::new(HashMap::new()));
+    let prices_cache: ThreadSafePriceCache = Arc::new(RwLock::new(HashMap::new()));
 
-    let (pyth, pyth_feed) = run_pyth_feed(&opts.pythd_host).await;
+    let (pyth, pyth_feed) = pyth::run_full_subscriptions(&opts.pythd_host).await;
 
     let backend_shutdown_trigger: futures::stream::Fuse<signal_hook_tokio::SignalsInfo> =
         Signals::new(&[SIGTERM, SIGINT, SIGQUIT])
             .expect("could not create signals stream")
             .fuse();
 
-    let backend = Backend::new(prices_cache.clone(), pyth_feed, backend_shutdown_trigger).await;
-    let frontend = Frontend::new(&opts.listening_address, prices_cache.clone()).await;
+    let backend = Backend::new::<
+        FeedNotification<AssetPair, TimeStampedPrice>,
+        FeedNotificationAction<AssetPair, TimeStampedPrice>,
+        _,
+        _,
+        _,
+    >(prices_cache.clone(), pyth_feed, backend_shutdown_trigger)
+    .await;
+
+    let frontend = Frontend::new(&opts.listening_address, prices_cache).await;
 
     backend
         .shutdown_handle

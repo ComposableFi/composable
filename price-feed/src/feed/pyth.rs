@@ -1,6 +1,6 @@
-use super::{Feed, FeedNotification, Price, TimeStamped};
+use super::{Feed, FeedNotification, Price, TimeStamped, TimeStampedPrice};
 use crate::{
-    asset::AssetPair,
+    asset::{AssetPair, VALID_ASSETPAIRS},
     feed::{Exponent, TimeStamp},
 };
 use chrono::Utc;
@@ -13,6 +13,9 @@ use tokio::{
     sync::mpsc::{self, error::SendError},
     task::JoinHandle,
 };
+use url::Url;
+
+pub type PythFeedNotification = FeedNotification<AssetPair, TimeStampedPrice>;
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -49,7 +52,7 @@ struct PythProduct {
 #[derive(Debug)]
 pub enum PythError {
     RpcError(RpcError),
-    ChannelError(SendError<FeedNotification>),
+    ChannelError(SendError<PythFeedNotification>),
 }
 
 #[derive(Serialize)]
@@ -64,8 +67,7 @@ pub struct Pyth {
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 enum PythNotifyPriceAction {
-    YieldFeedNotification(FeedNotification),
-    NoOp,
+    YieldFeedNotification(PythFeedNotification),
 }
 
 fn notify_price_action(
@@ -73,18 +75,20 @@ fn notify_price_action(
     product_price: &PythProductPrice,
     notify_price: &PythNotifyPrice,
     timestamp: &TimeStamp,
-) -> PythNotifyPriceAction {
-    if notify_price.status == PythSymbolStatus::Trading {
-        PythNotifyPriceAction::YieldFeedNotification(FeedNotification::PriceUpdated(
-            Feed::Pyth,
-            *asset_pair,
-            TimeStamped {
-                value: (notify_price.price, product_price.price_exponent),
-                timestamp: *timestamp,
-            },
-        ))
-    } else {
-        PythNotifyPriceAction::NoOp
+) -> Option<PythNotifyPriceAction> {
+    match notify_price.status {
+        PythSymbolStatus::Trading => Some(PythNotifyPriceAction::YieldFeedNotification(
+            FeedNotification::PriceUpdated(
+                Feed::Pyth,
+                *asset_pair,
+                TimeStamped {
+                    value: (notify_price.price, product_price.price_exponent),
+                    timestamp: *timestamp,
+                },
+            ),
+        )),
+        PythSymbolStatus::Halted => None,
+        PythSymbolStatus::Unknown => None,
     }
 }
 
@@ -108,7 +112,7 @@ impl Pyth {
 
     async fn subscribe(
         &mut self,
-        output: mpsc::Sender<FeedNotification>,
+        output: mpsc::Sender<PythFeedNotification>,
         asset_pair: AssetPair,
         product_price: PythProductPrice,
     ) -> Result<(), PythError> {
@@ -149,13 +153,15 @@ impl Pyth {
                             &notify_price,
                             &timestamp,
                         ) {
-                            PythNotifyPriceAction::YieldFeedNotification(feed_notification) => {
+                            Some(PythNotifyPriceAction::YieldFeedNotification(
+                                feed_notification,
+                            )) => {
                                 output
                                     .send(feed_notification)
                                     .await
                                     .map_err(PythError::ChannelError)?;
                             }
-                            PythNotifyPriceAction::NoOp => {
+                            None => {
                                 // TODO: should we close the feed if the received price don't yield a price update?
                                 // e.g. the SymbolStatus != Trading
                             }
@@ -180,7 +186,7 @@ impl Pyth {
 
     pub async fn subscribe_to_asset(
         &mut self,
-        output: &mpsc::Sender<FeedNotification>,
+        output: &mpsc::Sender<PythFeedNotification>,
         asset_pair: &AssetPair,
     ) -> Result<(), PythError> {
         let asset_pair_symbol = asset_pair.symbol();
@@ -204,6 +210,30 @@ impl Pyth {
     }
 }
 
+// TODO: manage multiple feeds
+pub async fn run_full_subscriptions(
+    pythd_host: &String,
+) -> (Pyth, mpsc::Receiver<PythFeedNotification>) {
+    /* Its important to drop the initial feed_in as it will be cloned for all subsequent tasks
+    The received won't get notified if all cloned senders are closed but not the 'main' one.
+     */
+    let (feed_in, feed_out) = mpsc::channel::<PythFeedNotification>(128);
+
+    let mut pyth = Pyth::new(&Url::parse(&pythd_host).expect("invalid pythd host address."))
+        .await
+        .expect("connection to pythd failed");
+
+    // TODO: subscribe to all asset prices? cli configurable?
+    log::info!("successfully connected to pythd.");
+    for asset_pair in VALID_ASSETPAIRS.iter() {
+        pyth.subscribe_to_asset(&feed_in, asset_pair)
+            .await
+            .expect("failed to subscribe to asset");
+    }
+
+    (pyth, feed_out)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{asset::*, feed::FeedNotification};
@@ -221,17 +251,19 @@ mod tests {
         let timestamp = TimeStamp(0xDEADC0DE);
         VALID_ASSETPAIRS.iter().for_each(|asset_pair| {
             [
-                (PythSymbolStatus::Halted, PythNotifyPriceAction::NoOp),
-                (PythSymbolStatus::Unknown, PythNotifyPriceAction::NoOp),
+                (PythSymbolStatus::Halted, None),
+                (PythSymbolStatus::Unknown, None),
                 (
                     PythSymbolStatus::Trading,
-                    PythNotifyPriceAction::YieldFeedNotification(FeedNotification::PriceUpdated(
-                        Feed::Pyth,
-                        *asset_pair,
-                        TimeStamped {
-                            value: (price, product_price.price_exponent),
-                            timestamp,
-                        },
+                    Some(PythNotifyPriceAction::YieldFeedNotification(
+                        FeedNotification::PriceUpdated(
+                            Feed::Pyth,
+                            *asset_pair,
+                            TimeStamped {
+                                value: (price, product_price.price_exponent),
+                                timestamp,
+                            },
+                        ),
                     )),
                 ),
             ]

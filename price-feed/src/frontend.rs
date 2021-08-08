@@ -1,14 +1,15 @@
 use crate::{
-    asset::{Asset, AssetPair, AssetPairHash, ASSETPAIR_HASHES},
-    cache::PriceCache,
+    asset::{Asset, AssetPair, AssetPairHash},
+    cache::{PriceCache, ThreadSafePriceCache},
     feed::{Exponent, Price, TimeStamped},
 };
 use futures::channel::oneshot;
 use serde::Serialize;
 use std::{
+    convert::TryFrom,
     net::SocketAddr,
     str::FromStr,
-    sync::{Arc, RwLock, RwLockReadGuard},
+    sync::{Arc, RwLock},
 };
 use tokio::task::JoinHandle;
 use warp::{
@@ -31,14 +32,7 @@ impl Frontend {
         let get_price_endpoint = warp::path!("price" / AssetPairHash / u128)
             .and(warp::get())
             .map(move |asset_pair_hash, _request_id| {
-                get_price(
-                    prices_cache
-                        .clone()
-                        .read()
-                        .expect("could not acquire read lock"),
-                    asset_pair_hash,
-                    _request_id,
-                )
+                get_price(&prices_cache, asset_pair_hash, _request_id)
             });
 
         let (shutdown_trigger, shutdown) = oneshot::channel::<()>();
@@ -60,11 +54,11 @@ impl Frontend {
 }
 
 fn get_asset_id(x: Asset, y: Asset) -> WithStatus<Json> {
-    match ASSETPAIR_HASHES.get(&AssetPair::new(x, y)) {
-        Some(valid_asset_pair_hash) => {
-            reply::with_status(reply::json(valid_asset_pair_hash), StatusCode::OK)
+    match AssetPairHash::try_from(AssetPair::new(x, y)) {
+        Ok(valid_asset_pair_hash) => {
+            reply::with_status(reply::json(&valid_asset_pair_hash), StatusCode::OK)
         }
-        None => reply::with_status(reply::json(&()), StatusCode::BAD_REQUEST),
+        Err(_) => reply::with_status(reply::json(&()), StatusCode::BAD_REQUEST),
     }
 }
 
@@ -79,13 +73,20 @@ fn get_asset_id(x: Asset, y: Asset) -> WithStatus<Json> {
   here and wipe the cached value?
 */
 fn get_price(
-    prices: RwLockReadGuard<PriceCache>,
+    prices: &ThreadSafePriceCache,
     asset_pair_hash: AssetPairHash,
     _request_id: u128,
 ) -> WithStatus<Json> {
     // TODO: What is the request_id useful for (comming from oracle pallet)?
-    match prices.get(&asset_pair_hash) {
-        Some(&TimeStamped {
+    match AssetPair::try_from(asset_pair_hash).and_then(|x| {
+        prices
+            .read()
+            .expect("could not acquire read lock")
+            .get(&x)
+            .copied()
+            .ok_or(())
+    }) {
+        Ok(TimeStamped {
             value: (Price(p), Exponent(q)),
             timestamp: _,
         }) => {
@@ -95,11 +96,11 @@ fn get_price(
             pub struct USDPrice {
                 pub usd: Price,
             }
-            let usd_unit_exponent = q + 2;
-            let usd_price = Price(p / u64::pow(10u64, i32::abs(usd_unit_exponent) as u32));
+            let usd_adjust_cent_exponent = q + 2;
+            let usd_price = Price(p / u64::pow(10u64, i32::abs(usd_adjust_cent_exponent) as u32));
 
             reply::with_status(reply::json(&USDPrice { usd: usd_price }), StatusCode::OK)
         }
-        None => reply::with_status(reply::json(&()), StatusCode::NOT_FOUND),
+        Err(_) => reply::with_status(reply::json(&()), StatusCode::NOT_FOUND),
     }
 }

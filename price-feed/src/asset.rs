@@ -1,10 +1,5 @@
 use serde::Serialize;
-use std::{
-    collections::{HashMap, HashSet},
-    hash::Hasher,
-    num::ParseIntError,
-    str::FromStr,
-};
+use std::{collections::HashMap, convert::TryFrom, hash::Hasher, num::ParseIntError, str::FromStr};
 
 custom_derive! {
     #[derive(EnumFromStr, Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -82,10 +77,10 @@ lazy_static! {
         .map(|&x| AssetPair(x, Asset::USD))
         .collect()
     };
-    pub static ref ASSETPAIR_HASHES: HashMap<AssetPair, AssetPairHash> =
+    pub static ref ASSETPAIR_TO_HASH: HashMap<AssetPair, AssetPairHash> =
         VALID_ASSETPAIRS.iter().map(|&x| (x, x.hash())).collect();
-    pub static ref ASSETPAIR_HASHES_VALUES: HashSet<AssetPairHash> =
-        ASSETPAIR_HASHES.iter().map(|(_, &h)| h).collect();
+    pub static ref HASH_TO_ASSETPAIR: HashMap<AssetPairHash, AssetPair> =
+        VALID_ASSETPAIRS.iter().map(|&x| (x.hash(), x)).collect();
 }
 
 impl FromStr for AssetPairHash {
@@ -93,7 +88,7 @@ impl FromStr for AssetPairHash {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let asset_pair_hash =
             AssetPairHash(FromStr::from_str(s).map_err(AssetPairHashError::NotANumber)?);
-        if ASSETPAIR_HASHES_VALUES.contains(&asset_pair_hash) {
+        if HASH_TO_ASSETPAIR.contains_key(&asset_pair_hash) {
             Ok(asset_pair_hash)
         } else {
             Err(AssetPairHashError::AssetNotFound)
@@ -106,7 +101,7 @@ impl AssetPair {
         AssetPair(x, y)
     }
 
-    pub fn hash(&self) -> AssetPairHash {
+    fn hash(&self) -> AssetPairHash {
         // not secure but we only need this for indexing
         let mut hasher = fnv::FnvHasher::default();
         hasher.write(self.symbol().as_bytes());
@@ -115,5 +110,19 @@ impl AssetPair {
 
     pub fn symbol(&self) -> String {
         format!("{:?}/{:?}", self.0, self.1)
+    }
+}
+
+impl TryFrom<AssetPair> for AssetPairHash {
+    type Error = ();
+    fn try_from(asset_pair: AssetPair) -> Result<AssetPairHash, Self::Error> {
+        ASSETPAIR_TO_HASH.get(&asset_pair).copied().ok_or(())
+    }
+}
+
+impl TryFrom<AssetPairHash> for AssetPair {
+    type Error = ();
+    fn try_from(asset_pair_hash: AssetPairHash) -> Result<AssetPair, Self::Error> {
+        HASH_TO_ASSETPAIR.get(&asset_pair_hash).copied().ok_or(())
     }
 }
