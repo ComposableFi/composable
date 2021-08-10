@@ -109,7 +109,7 @@ impl Backend {
 mod tests {
     use super::Backend;
     use crate::{
-        asset::{AssetPair, VALID_ASSETPAIRS},
+        asset::{Asset, VALID_ASSETS},
         backend::{FeedNotificationAction, Transition},
         cache::{PriceCache, ThreadSafePriceCache},
         feed::{Exponent, Feed, FeedNotification, Price, TimeStamp, TimeStamped, TimeStampedPrice},
@@ -128,24 +128,24 @@ mod tests {
         let feed = Feed::Pyth;
         let timestamped_price = TimeStamped {
             value: (Price(0xCAFEBABE), Exponent(0x1337)),
-            timestamp: TimeStamp(0xDEADC0DE),
+            timestamp: TimeStamp::now(),
         };
-        VALID_ASSETPAIRS.iter().for_each(|&asset_pair| {
+        VALID_ASSETS.iter().for_each(|&asset| {
             [
-                (FeedNotification::Opened(feed, asset_pair), None),
-                (FeedNotification::Closed(feed, asset_pair), None),
+                (FeedNotification::Opened(feed, asset), None),
+                (FeedNotification::Closed(feed, asset), None),
                 (
-                    FeedNotification::PriceUpdated(feed, asset_pair, timestamped_price),
+                    FeedNotification::PriceUpdated(feed, asset, timestamped_price),
                     Some((
-                        FeedNotificationAction::UpdateCache(asset_pair, timestamped_price),
-                        [(asset_pair, timestamped_price)].iter().copied().collect(),
+                        FeedNotificationAction::UpdateCache(asset, timestamped_price),
+                        [(asset, timestamped_price)].iter().copied().collect(),
                     )),
                 ),
             ]
             .iter()
             .for_each(|(notification, expected)| {
                 match (
-                    FeedNotificationAction::<AssetPair, TimeStampedPrice>::try_from(*notification),
+                    FeedNotificationAction::<Asset, TimeStampedPrice>::try_from(*notification),
                     expected,
                 ) {
                     (Ok(actual_action), Some((expected_action, expected_state))) => {
@@ -164,57 +164,53 @@ mod tests {
 
     #[tokio::test]
     async fn test_feed_backend() {
-        let mk_price = |x, y, z| TimeStamped {
+        let mk_price = |x, y| TimeStamped {
             value: (Price(x), Exponent(y)),
-            timestamp: TimeStamp(z),
+            timestamp: TimeStamp::now(),
         };
-        let (price1, price2, price3) = (
-            mk_price(123, -3, 2),
-            mk_price(3134, -1, 5),
-            mk_price(93424, -4, 234),
-        );
+        let (price1, price2, price3) = (mk_price(123, -3), mk_price(3134, -1), mk_price(93424, -4));
         let feed = Feed::Pyth;
-        for &asset_pair in VALID_ASSETPAIRS.iter() {
+        for &asset in VALID_ASSETS.iter() {
             let tests = [
                 (
                     vec![
-                        FeedNotification::Opened(feed, asset_pair),
-                        FeedNotification::PriceUpdated(feed, asset_pair, price1),
-                        FeedNotification::Closed(feed, asset_pair),
+                        FeedNotification::Opened(feed, asset),
+                        FeedNotification::PriceUpdated(feed, asset, price1),
+                        FeedNotification::Closed(feed, asset),
                     ],
-                    [(asset_pair, price1)],
+                    [(asset, price1)],
                 ),
                 (
                     vec![
-                        FeedNotification::Opened(feed, asset_pair),
-                        FeedNotification::PriceUpdated(feed, asset_pair, price3),
-                        FeedNotification::PriceUpdated(feed, asset_pair, price1),
-                        FeedNotification::PriceUpdated(feed, asset_pair, price2),
-                        FeedNotification::Closed(feed, asset_pair),
+                        FeedNotification::Opened(feed, asset),
+                        FeedNotification::PriceUpdated(feed, asset, price3),
+                        FeedNotification::PriceUpdated(feed, asset, price1),
+                        FeedNotification::PriceUpdated(feed, asset, price2),
+                        FeedNotification::Closed(feed, asset),
                     ],
-                    [(asset_pair, price2)],
+                    [(asset, price2)],
                 ),
                 (
                     vec![
-                        FeedNotification::Opened(feed, asset_pair),
-                        FeedNotification::PriceUpdated(feed, asset_pair, price2),
-                        FeedNotification::PriceUpdated(feed, asset_pair, price1),
-                        FeedNotification::PriceUpdated(feed, asset_pair, price3),
-                        FeedNotification::Closed(feed, asset_pair),
+                        FeedNotification::Opened(feed, asset),
+                        FeedNotification::PriceUpdated(feed, asset, price2),
+                        FeedNotification::PriceUpdated(feed, asset, price1),
+                        FeedNotification::PriceUpdated(feed, asset, price3),
+                        FeedNotification::Closed(feed, asset),
                     ],
-                    [(asset_pair, price3)],
+                    [(asset, price3)],
                 ),
             ];
             for (events, expected) in &tests {
                 let prices_cache: ThreadSafePriceCache = Arc::new(RwLock::new(HashMap::new()));
                 let (feed_in, feed_out) =
-                    mpsc::channel::<FeedNotification<AssetPair, TimeStampedPrice>>(8);
+                    mpsc::channel::<FeedNotification<Asset, TimeStampedPrice>>(8);
                 let signals = Signals::new(&[])
                     .expect("could not create signals stream")
                     .fuse();
                 let backend = Backend::new::<
-                    FeedNotification<AssetPair, TimeStampedPrice>,
-                    FeedNotificationAction<AssetPair, TimeStampedPrice>,
+                    FeedNotification<Asset, TimeStampedPrice>,
+                    FeedNotificationAction<Asset, TimeStampedPrice>,
                     _,
                     _,
                     _,

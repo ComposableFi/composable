@@ -13,7 +13,7 @@ extern crate enum_derive;
 extern crate lazy_static;
 
 use crate::{
-    asset::AssetPair,
+    asset::Asset,
     backend::{Backend, FeedNotificationAction},
     cache::ThreadSafePriceCache,
     feed::{pyth, FeedNotification, TimeStampedPrice},
@@ -33,10 +33,6 @@ async fn main() {
 
     let opts = opts::get_opts();
 
-    for (asset_pair, asset_pair_hash) in asset::ASSETPAIR_TO_HASH.iter() {
-        log::info!("AssetPair{:?} = AssetId({:?})", asset_pair, asset_pair_hash);
-    }
-
     let prices_cache: ThreadSafePriceCache = Arc::new(RwLock::new(HashMap::new()));
 
     let (pyth, pyth_feed) = pyth::run_full_subscriptions(&opts.pythd_host).await;
@@ -47,8 +43,8 @@ async fn main() {
             .fuse();
 
     let backend = Backend::new::<
-        FeedNotification<AssetPair, TimeStampedPrice>,
-        FeedNotificationAction<AssetPair, TimeStampedPrice>,
+        FeedNotification<Asset, TimeStampedPrice>,
+        FeedNotificationAction<Asset, TimeStampedPrice>,
         _,
         _,
         _,

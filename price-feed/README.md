@@ -4,14 +4,7 @@ Currently, in the pallet, the price of an asset is expressed in USD cents, it's 
 The price server handle arbitrary asset pair instead of fixing the denominator to USD, e.g. ETH/BTC, ADA/BTC...
 
 We currently use an arbitrary `asset_id` in the oracle pallet.
-To avoid an extra layer of indirection between the pallet and the price server,
-the current version assume that the `asset_id` is `FNV1A64(Symbol(AssetPair(X, Y)))` where `Symbol(AssetPair(X, Y)) = "X/Y"`:
-- `asset_id(AssetPair(DOGE, USD)) = FNV1A64(Symbol(AssetPair(DOGE, USD))) = 4273408557542323723`
-- `asset_id(AssetPair(LUNA, USD)) = FNV1A64(Symbol(AssetPair(LUNA, USD))) = 3340859369462710808`
-- `asset_id(AssetPair(ETH,  USD)) = FNV1A64(Symbol(AssetPair(ETH,  USD))) = 17646658738355831635`
-- `asset_id(AssetPair(SOL,  USD)) = FNV1A64(Symbol(AssetPair(SOL,  USD))) = 10214562193576803066`
-- `asset_id(AssetPair(LTC,  USD)) = FNV1A64(Symbol(AssetPair(LTC,  USD))) = 3321725485492231977`
-- `asset_id(AssetPair(BTC,  USD)) = FNV1A64(Symbol(AssetPair(BTC,  USD))) = 6354621323601249647`
+The server has a hardcoded map (u8 => Asset) to represent this ID.
 
 # Getting started
 

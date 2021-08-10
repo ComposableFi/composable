@@ -1,9 +1,19 @@
 pub mod pyth;
+use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, PartialEq, Eq, Copy, Clone, Debug)]
 #[repr(transparent)]
-pub struct TimeStamp(pub(crate) i64);
+pub struct TimeStamp(pub i64);
+
+impl TimeStamp {
+    pub fn now() -> Self {
+        TimeStamp(Utc::now().timestamp())
+    }
+    pub fn elapsed_since(&self, previous: &TimeStamp) -> Duration {
+        Duration::seconds(self.0 - previous.0)
+    }
+}
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Copy, Clone, Debug)]
 #[repr(transparent)]

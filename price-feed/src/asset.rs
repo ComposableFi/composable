@@ -1,5 +1,10 @@
 use serde::Serialize;
-use std::{collections::HashMap, convert::TryFrom, hash::Hasher, num::ParseIntError, str::FromStr};
+use std::{
+    collections::{HashMap, HashSet},
+    convert::TryFrom,
+    num::ParseIntError,
+    str::FromStr,
+};
 
 custom_derive! {
     #[derive(EnumFromStr, Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -24,7 +29,6 @@ custom_derive! {
         GME,
         GE,
         QQQ,
-
         USDT,
         USDC,
         GBP,
@@ -34,78 +38,80 @@ custom_derive! {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct AssetPair(Asset, Asset);
+pub struct AssetPair(pub Asset, pub Asset);
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize)]
 #[repr(transparent)]
-pub struct AssetPairHash(u64);
+pub struct AssetIndex(u8);
 
-pub enum AssetPairHashError {
+pub enum AssetIndexError {
     NotANumber(ParseIntError),
     AssetNotFound,
 }
 
 lazy_static! {
-    pub static ref VALID_ASSETPAIRS: Vec<AssetPair> = {
-        [
-            Asset::BTC,
-            Asset::ETH,
-            Asset::LTC,
-            Asset::DOGE,
-            Asset::SOL,
-            Asset::LUNA,
-            Asset::AAPL,
-            Asset::BNB,
-            Asset::TSLA,
-            Asset::BCH,
-            Asset::SRM,
-            Asset::AMZN,
-            Asset::GOOG,
-            Asset::NFLX,
-            Asset::XAU,
-            Asset::AMC,
-            Asset::SPY,
-            Asset::GME,
-            Asset::GE,
-            Asset::QQQ,
-            Asset::USDT,
-            Asset::USDC,
-            Asset::GBP,
-            Asset::EUR,
-        ]
-        .iter()
-        .map(|&x| AssetPair(x, Asset::USD))
-        .collect()
-    };
-    pub static ref ASSETPAIR_TO_HASH: HashMap<AssetPair, AssetPairHash> =
-        VALID_ASSETPAIRS.iter().map(|&x| (x, x.hash())).collect();
-    pub static ref HASH_TO_ASSETPAIR: HashMap<AssetPairHash, AssetPair> =
-        VALID_ASSETPAIRS.iter().map(|&x| (x.hash(), x)).collect();
+    /*
+      The map of valid asset we are allowed to ask price for.
+      We must not swap two indexes.
+    */
+    pub static ref INDEX_TO_ASSET: HashMap<AssetIndex, Asset> = [
+        (0, Asset::BTC),
+        (1, Asset::ETH),
+        (2, Asset::LTC),
+        (3, Asset::DOGE),
+        (4, Asset::SOL),
+        (5, Asset::LUNA),
+        (6, Asset::AAPL),
+        (7, Asset::BNB),
+        (6, Asset::TSLA),
+        (7, Asset::BCH),
+        (8, Asset::SRM),
+        (9, Asset::AMZN),
+        (10, Asset::GOOG),
+        (11, Asset::NFLX),
+        (12, Asset::XAU),
+        (13, Asset::AMC),
+        (14, Asset::SPY),
+        (15, Asset::GME),
+        (16, Asset::GE),
+        (17, Asset::QQQ),
+        (18, Asset::USDT),
+        (19, Asset::USDC),
+        (20, Asset::GBP),
+        (21, Asset::EUR),
+    ]
+    .iter()
+    .map(|&(i, a)| (AssetIndex(i), a))
+    .collect();
+    pub static ref ASSET_TO_INDEX: HashMap<Asset, AssetIndex> =
+        INDEX_TO_ASSET.iter().map(|(&i, &a)| (a, i)).collect();
+    pub static ref VALID_ASSETS: HashSet<Asset> =
+        INDEX_TO_ASSET.values().copied().collect();
 }
 
-impl FromStr for AssetPairHash {
-    type Err = AssetPairHashError;
+impl FromStr for AssetIndex {
+    type Err = AssetIndexError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let asset_pair_hash =
-            AssetPairHash(FromStr::from_str(s).map_err(AssetPairHashError::NotANumber)?);
-        if HASH_TO_ASSETPAIR.contains_key(&asset_pair_hash) {
-            Ok(asset_pair_hash)
+        let asset_pair_index =
+            AssetIndex(FromStr::from_str(s).map_err(AssetIndexError::NotANumber)?);
+        if INDEX_TO_ASSET.contains_key(&asset_pair_index) {
+            Ok(asset_pair_index)
         } else {
-            Err(AssetPairHashError::AssetNotFound)
+            Err(AssetIndexError::AssetNotFound)
         }
     }
 }
 
 impl AssetPair {
-    pub(crate) fn new(x: Asset, y: Asset) -> Self {
-        AssetPair(x, y)
-    }
-
-    fn hash(&self) -> AssetPairHash {
-        // not secure but we only need this for indexing
-        let mut hasher = fnv::FnvHasher::default();
-        hasher.write(self.symbol().as_bytes());
-        AssetPairHash(hasher.finish())
+    /*
+      We currently only allow X/USD
+    */
+    pub fn new(x: Asset, y: Asset) -> Option<Self> {
+        match (x, y) {
+            (Asset::USD, _) => None,
+            (_, Asset::USD) => Some(AssetPair(x, y)),
+            _ => None,
+        }
     }
 
     pub fn symbol(&self) -> String {
@@ -113,16 +119,16 @@ impl AssetPair {
     }
 }
 
-impl TryFrom<AssetPair> for AssetPairHash {
+impl TryFrom<Asset> for AssetIndex {
     type Error = ();
-    fn try_from(asset_pair: AssetPair) -> Result<AssetPairHash, Self::Error> {
-        ASSETPAIR_TO_HASH.get(&asset_pair).copied().ok_or(())
+    fn try_from(asset: Asset) -> Result<AssetIndex, Self::Error> {
+        ASSET_TO_INDEX.get(&asset).copied().ok_or(())
     }
 }
 
-impl TryFrom<AssetPairHash> for AssetPair {
+impl TryFrom<AssetIndex> for Asset {
     type Error = ();
-    fn try_from(asset_pair_hash: AssetPairHash) -> Result<AssetPair, Self::Error> {
-        HASH_TO_ASSETPAIR.get(&asset_pair_hash).copied().ok_or(())
+    fn try_from(asset_index: AssetIndex) -> Result<Asset, Self::Error> {
+        INDEX_TO_ASSET.get(&asset_index).copied().ok_or(())
     }
 }

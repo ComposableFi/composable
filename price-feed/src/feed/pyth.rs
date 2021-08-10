@@ -1,9 +1,8 @@
 use super::{Feed, FeedNotification, Price, TimeStamped, TimeStampedPrice};
 use crate::{
-    asset::{AssetPair, VALID_ASSETPAIRS},
+    asset::{Asset, AssetPair, VALID_ASSETS},
     feed::{Exponent, TimeStamp},
 };
-use chrono::Utc;
 use futures::stream::StreamExt;
 use jsonrpc_client_transports::{
     transports::ws::connect, RpcError, TypedClient, TypedSubscriptionStream,
@@ -15,7 +14,7 @@ use tokio::{
 };
 use url::Url;
 
-pub type PythFeedNotification = FeedNotification<AssetPair, TimeStampedPrice>;
+pub type PythFeedNotification = FeedNotification<Asset, TimeStampedPrice>;
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -71,7 +70,7 @@ enum PythNotifyPriceAction {
 }
 
 fn notify_price_action(
-    asset_pair: &AssetPair,
+    asset: Asset,
     product_price: &PythProductPrice,
     notify_price: &PythNotifyPrice,
     timestamp: &TimeStamp,
@@ -80,7 +79,7 @@ fn notify_price_action(
         PythSymbolStatus::Trading => Some(PythNotifyPriceAction::YieldFeedNotification(
             FeedNotification::PriceUpdated(
                 Feed::Pyth,
-                *asset_pair,
+                asset,
                 TimeStamped {
                     value: (notify_price.price, product_price.price_exponent),
                     timestamp: *timestamp,
@@ -135,7 +134,7 @@ impl Pyth {
             .map_err(PythError::RpcError)?;
         let join_handle = tokio::spawn(async move {
             output
-                .send(FeedNotification::Opened(Feed::Pyth, asset_pair))
+                .send(FeedNotification::Opened(Feed::Pyth, asset_pair.0))
                 .await
                 .map_err(PythError::ChannelError)?;
             'a: loop {
@@ -146,9 +145,9 @@ impl Pyth {
                             asset_pair,
                             notify_price
                         );
-                        let timestamp = TimeStamp(Utc::now().timestamp());
+                        let timestamp = TimeStamp::now();
                         match notify_price_action(
-                            &asset_pair,
+                            asset_pair.0,
                             &product_price,
                             &notify_price,
                             &timestamp,
@@ -175,7 +174,7 @@ impl Pyth {
                 }
             }
             output
-                .send(FeedNotification::Closed(Feed::Pyth, asset_pair))
+                .send(FeedNotification::Closed(Feed::Pyth, asset_pair.0))
                 .await
                 .map_err(PythError::ChannelError)?;
             Ok(())
@@ -225,10 +224,12 @@ pub async fn run_full_subscriptions(
 
     // TODO: subscribe to all asset prices? cli configurable?
     log::info!("successfully connected to pythd.");
-    for asset_pair in VALID_ASSETPAIRS.iter() {
-        pyth.subscribe_to_asset(&feed_in, asset_pair)
-            .await
-            .expect("failed to subscribe to asset");
+    for &asset in VALID_ASSETS.iter() {
+        if let Some(asset_pair) = AssetPair::new(asset, Asset::USD) {
+            pyth.subscribe_to_asset(&feed_in, &asset_pair)
+                .await
+                .expect("failed to subscribe to asset");
+        }
     }
 
     (pyth, feed_out)
@@ -236,9 +237,8 @@ pub async fn run_full_subscriptions(
 
 #[cfg(test)]
 mod tests {
-    use crate::{asset::*, feed::FeedNotification};
-
     use super::*;
+    use crate::{asset::*, feed::FeedNotification};
 
     #[test]
     fn test_notify_price_action() {
@@ -248,8 +248,8 @@ mod tests {
             price_exponent: Exponent(0x1337),
         };
         let price = Price(0xCAFEBABE);
-        let timestamp = TimeStamp(0xDEADC0DE);
-        VALID_ASSETPAIRS.iter().for_each(|asset_pair| {
+        let timestamp = TimeStamp::now();
+        VALID_ASSETS.iter().for_each(|&asset| {
             [
                 (PythSymbolStatus::Halted, None),
                 (PythSymbolStatus::Unknown, None),
@@ -258,7 +258,7 @@ mod tests {
                     Some(PythNotifyPriceAction::YieldFeedNotification(
                         FeedNotification::PriceUpdated(
                             Feed::Pyth,
-                            *asset_pair,
+                            asset,
                             TimeStamped {
                                 value: (price, product_price.price_exponent),
                                 timestamp,
@@ -272,7 +272,7 @@ mod tests {
                 let notify_price = PythNotifyPrice { status, price };
                 assert_eq!(
                     expected_action,
-                    notify_price_action(asset_pair, &product_price, &notify_price, &timestamp)
+                    notify_price_action(asset, &product_price, &notify_price, &timestamp)
                 )
             });
         });

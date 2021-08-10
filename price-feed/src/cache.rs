@@ -1,11 +1,11 @@
-use crate::{asset::AssetPair, feed::TimeStampedPrice};
+use crate::{asset::Asset, feed::TimeStampedPrice};
 use std::{
     collections::HashMap,
     hash::Hash,
     sync::{Arc, RwLock},
 };
 
-pub type PriceCache = HashMap<AssetPair, TimeStampedPrice>;
+pub type PriceCache = HashMap<Asset, TimeStampedPrice>;
 
 pub type ThreadSafePriceCache = Arc<RwLock<PriceCache>>;
 
