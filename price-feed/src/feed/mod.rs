@@ -1,29 +1,44 @@
 pub mod pyth;
-use serde::Serialize;
+use chrono::{Duration, Utc};
+use serde::{Deserialize, Serialize};
 
-use crate::asset::AssetPair;
-
-#[derive(Serialize, Copy, Clone, Debug)]
-pub struct TimeStamp(i64);
-
-#[derive(Serialize, Copy, Clone, Debug)]
+#[derive(Serialize, PartialEq, Eq, Copy, Clone, Debug)]
 #[repr(transparent)]
-pub struct Price(u64);
+pub struct TimeStamp(pub i64);
 
-#[derive(Serialize, Copy, Clone, Debug)]
+impl TimeStamp {
+    pub fn now() -> Self {
+        TimeStamp(Utc::now().timestamp())
+    }
+    pub fn elapsed_since(&self, previous: &TimeStamp) -> Duration {
+        Duration::seconds(self.0 - previous.0)
+    }
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, Copy, Clone, Debug)]
+#[repr(transparent)]
+pub struct Price(pub(crate) u64);
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, Copy, Clone, Debug)]
+#[repr(transparent)]
+pub struct Exponent(pub(crate) i32);
+
+#[derive(Serialize, PartialEq, Eq, Copy, Clone, Debug)]
 pub struct TimeStamped<T> {
     pub value: T,
     pub timestamp: TimeStamp,
 }
 
-#[derive(PartialEq, Eq, Hash, Debug)]
+pub type TimeStampedPrice = TimeStamped<(Price, Exponent)>;
+
+#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Feed {
     Pyth,
 }
 
-#[derive(Debug)]
-pub enum FeedNotification {
-    Opened(Feed, AssetPair),
-    Closed(Feed, AssetPair),
-    PriceUpdated(Feed, AssetPair, TimeStamped<Price>),
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
+pub enum FeedNotification<A, P> {
+    Opened(Feed, A),
+    Closed(Feed, A),
+    PriceUpdated(Feed, A, P),
 }
