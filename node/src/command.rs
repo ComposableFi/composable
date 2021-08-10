@@ -19,7 +19,7 @@ use crate::{chain_spec, service};
 use crate::cli::{Cli, Subcommand};
 use sc_cli::{SubstrateCli, RuntimeVersion, Role, ChainSpec};
 use sc_service::PartialComponents;
-use picasso::Block;
+use picasso_runtime::Block;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -48,16 +48,15 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
-			"dev" => Box::new(chain_spec::development_config()?),
-			"" | "local" => Box::new(chain_spec::local_testnet_config()?),
-			path => Box::new(chain_spec::ChainSpec::from_json_file(
+			"picasso-dev" => Box::new(chain_spec::picasso_dev()),
+			path => Box::new(chain_spec::picasso::ChainSpec::from_json_file(
 				std::path::PathBuf::from(path),
 			)?),
 		})
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&picasso::VERSION
+		&picasso_runtime::VERSION
 	}
 }
 

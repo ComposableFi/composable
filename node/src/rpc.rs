@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use picasso::{opaque::Block, AccountId, Balance, AccountIndex};
+use picasso_runtime::{opaque::Block, AccountId, Balance, AccountIndex};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderMetadata, HeaderBackend};
 use sp_block_builder::BlockBuilder;

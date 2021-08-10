@@ -49,12 +49,12 @@ sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polk
 sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
-picasso = { package = "picasso-runtime", path = "../runtime/picasso"  }
+picasso-runtime = { path = "../runtime/picasso"  }
 
 [build-dependencies]
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
 [features]
 default = []
-runtime-benchmarks = ["picasso/runtime-benchmarks"]
+runtime-benchmarks = ["picasso-runtime/runtime-benchmarks"]
 ocw = []
