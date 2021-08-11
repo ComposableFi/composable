@@ -167,7 +167,7 @@ the following:
 
 The runtime in this project is constructed using many FRAME pallets that ship with the
 [core Substrate repository](https://github.com/paritytech/substrate/tree/master/frame) and a
-template pallet that is [defined in the `pallets`](./pallets/template/src/lib.rs) directory.
+template pallet that is [defined in the `pallets`](frame/template/src/lib.rs) directory.
 
 A FRAME pallet is compromised of a number of blockchain primitives:
 
@@ -210,7 +210,7 @@ by appending your own. A few useful ones are as follow.
 ```
 
 
-## Sudo privileged functions   
+## Sudo privileged functions
 Thanks to substrate sudo functions we can choose what privileges our function has.
 [Read more here](sudo.md)
 

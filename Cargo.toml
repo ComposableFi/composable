@@ -1,9 +1,10 @@
 [profile.release]
-panic = 'unwind'
+panic = "unwind"
 
 [workspace]
 members = [
-    'node',
-    'runtime',
-    'price-feed',
+    "node",
+    "runtime/picasso",
+    "price-feed",
+	"frame/oracle"
 ]
