@@ -31,33 +31,23 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 
 pub fn picasso_dev() -> picasso::ChainSpec {
     picasso::ChainSpec::from_genesis(
-        // Name
         "Local Picasso Testnet",
-        // ID
         "picasso",
         ChainType::Development,
         move || {
             picasso::genesis_config(
-	            // Sudo account
 	            account_id_from_seed::<sr25519::Public>("Alice"),
-                // Initial PoA authorities
                 vec![
                     authority_keys_from_seed("Alice"),
                     authority_keys_from_seed("Bob"),
                 ],
-                // Pre-funded accounts
                 dev_accounts(),
             )
         },
-        // Bootnodes
         vec![],
-        // Telemetry
         None,
-        // Protocol ID
         None,
-        // Properties
         None,
-        // Extensions
         None,
     )
 }

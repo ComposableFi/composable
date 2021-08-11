@@ -524,24 +524,24 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl benchmarking::Benchmark<Block> for Runtime {
-		fn benchmark_metadata(extra: bool) -> (
-			Vec<benchmarking::BenchmarkList>,
-			Vec<support::traits::StorageInfo>,
-		) {
-			use benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
-			use support::traits::StorageInfoTrait;
-			use system_benchmarking::Pallet as SystemBench;
-
-			let mut list = Vec::<BenchmarkList>::new();
-
-			list_benchmark!(list, extra, system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, balances, Balances);
-			list_benchmark!(list, extra, timestamp, Timestamp);
-
-			let storage_info = AllPalletsWithSystem::storage_info();
-
-			return (list, storage_info)
-		}
+		// fn benchmark_metadata(extra: bool) -> (
+		// 	Vec<benchmarking::BenchmarkList>,
+		// 	Vec<support::traits::StorageInfo>,
+		// ) {
+		// 	use benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+		// 	use support::traits::StorageInfoTrait;
+		// 	use system_benchmarking::Pallet as SystemBench;
+		//
+		// 	let mut list = Vec::<BenchmarkList>::new();
+		//
+		// 	list_benchmark!(list, extra, system, SystemBench::<Runtime>);
+		// 	list_benchmark!(list, extra, balances, Balances);
+		// 	list_benchmark!(list, extra, timestamp, Timestamp);
+		//
+		// 	let storage_info = AllPalletsWithSystem::storage_info();
+		//
+		// 	return (list, storage_info)
+		// }
 
 		fn dispatch_benchmark(
 			config: benchmarking::BenchmarkConfig
