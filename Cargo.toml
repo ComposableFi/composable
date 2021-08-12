@@ -6,4 +6,5 @@ members = [
     'node',
     'runtime',
     'price-feed',
+    'pallets/utility',
 ]
