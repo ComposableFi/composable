@@ -2,14 +2,14 @@
 
 use codec::{Decode, Encode};
 use frame_support::{
-	dispatch::PostDispatchInfo,
+	dispatch::PostDispatchInfo, //DispatchInfo,
 	traits::{IsSubType, OriginTrait, UnfilteredDispatchable},
 	transactional,
 	weights::{extract_actual_weight, GetDispatchInfo},
 };
 use sp_core::TypeId;
 use sp_io::hashing::blake2_256;
-use sp_runtime::traits::{Dispatchable, AccountIdLookup};
+use sp_runtime::traits::Dispatchable;
 use sp_std::prelude::*;
 
 pub mod weights;
@@ -46,7 +46,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
-
+/*
 	pub fn get_dispatch_class(call: <T::Config>::Call) -> DispatchClass {
 			let dispatch_info = call.get_dispatch_info();
 			(
@@ -57,6 +57,8 @@ pub mod pallet {
 			)
 
 	}
+
+*/
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -114,15 +116,23 @@ pub mod pallet {
 			Ok(Some(base_weight + weight).into())
 		}
 
-		#[pallet::weight({
-			get_dispatch_class(call)
+//		#[pallet::weight](10_000) // todo change 
+//		/// Get basic batch tx info
+//		pub fn batch_info(origin: OriginFor<T>, call: Box<<T as Config>::Call>) -> DispatchInfo {
+//			let org = ensure_signed(org);// Check if signed
 //			let dispatch_info = call.get_dispatch_info();
-//			(
-//				T::WeightInfo::as_derivative()
-//					.saturating_add(dispatch_info.weight)
-//					.saturating_add(T::DbWeight::get().reads_writes(1, 1)),
-//				dispatch_info.class,
-//			)
+
+//}
+//
+		#[pallet::weight({
+//			get_dispatch_class(call)
+			let dispatch_info = call.get_dispatch_info();
+			(
+				T::WeightInfo::as_derivative()
+					.saturating_add(dispatch_info.weight)
+					.saturating_add(T::DbWeight::get().reads_writes(1, 1)),
+				dispatch_info.class,
+			)
 		})]
 		pub fn as_derivative(
 			origin: OriginFor<T>,
