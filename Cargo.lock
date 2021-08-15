@@ -4078,6 +4078,7 @@ dependencies = [
 name = "pallet-oracle"
 version = "3.0.0"
 dependencies = [
+ "frame-benchmarking",
  "frame-support 3.0.0 (git+https://github.com/paritytech/substrate.git?rev=d6c33e7ec313f9bd5e319dc0a5a3ace5543f9617)",
  "frame-system 3.0.0 (git+https://github.com/paritytech/substrate.git?rev=d6c33e7ec313f9bd5e319dc0a5a3ace5543f9617)",
  "lite-json",
