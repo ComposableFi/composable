@@ -695,14 +695,14 @@ fn should_submit_signed_transaction_on_chain() {
 #[test]
 fn parse_price_works() {
     let test_data = vec![
-        ("{\"USD\":6536.92}", Some(6536)),
-        ("{\"USD\":650000000}", Some(650000000)),
-        ("{\"USD2\":6536}", None),
-        ("{\"USD\":\"6432\"}", None),
+        ("{\"1\":6536.92}", Some(6536)),
+        ("{\"1\":650000000}", Some(650000000)),
+        ("{\"2\":6536}", None),
+        ("{\"0\":\"6432\"}", None),
     ];
 
     for (json, expected) in test_data {
-        assert_eq!(expected, Oracle::parse_price(json));
+        assert_eq!(expected, Oracle::parse_price(json, "1"));
     }
 }
 
