@@ -2,7 +2,7 @@
 name = "pallet-utility"
 version = "0.1.0"
 edition = "2018"
-description = "utilities pallet"
+description = "utility pallet"
 readme = "README.md"
 
 [package.metadata.docs.rs]
