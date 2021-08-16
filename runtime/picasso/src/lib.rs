@@ -263,6 +263,23 @@ impl sudo::Config for Runtime {
     type Call = Call;
 }
 
+parameter_types! {
+	pub const CouncilMotionDuration: BlockNumber = 7 * DAYS;
+	pub const CouncilMaxProposals: u32 = 100;
+	pub const CouncilMaxMembers: u32 = 100;
+}
+
+impl collective::Config for Runtime {
+    type Origin = Origin;
+    type Proposal = Call;
+    type Event = Event;
+    type MotionDuration = CouncilMotionDuration;
+	type MaxProposals = CouncilMaxProposals;
+	type MaxMembers = CouncilMaxMembers;
+	type DefaultVote = collective::PrimeDefaultVote;
+	type WeightInfo = ();
+}
+
 impl<LocalCall> system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 	where
 		Call: From<LocalCall>,
@@ -362,6 +379,7 @@ construct_runtime!(
 		Aura: aura::{Pallet, Config<T>},
 		Grandpa: grandpa::{Pallet, Call, Storage, Config, Event},
 		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+        Council: collective::{collective::DefaultInstance}::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
 		TransactionPayment: transaction_payment::{Pallet, Storage},
 		Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Oracle: oracle::{Pallet, Call, Storage, Event<T>},
