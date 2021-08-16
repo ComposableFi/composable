@@ -9,6 +9,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use grandpa::{
     fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
+use utility;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -365,6 +366,7 @@ construct_runtime!(
 		TransactionPayment: transaction_payment::{Pallet, Storage},
 		Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Oracle: oracle::{Pallet, Call, Storage, Event<T>},
+		Utility: utility::{Pallet, Call, Event<T>},
 	}
 );
 

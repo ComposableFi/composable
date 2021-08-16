@@ -1,0 +1,36 @@
+[package]
+name = "pallet-utility"
+version = "0.1.0"
+edition = "2018"
+description = "utility pallet"
+readme = "README.md"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
+frame-support = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617'  }  
+frame-system = { default-features = false, version = '3.0.0', git = 'https://github.com/paritytech/substrate.git', rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617' }   
+sp-core = { version = "3.0.0", default-features = false,  git = 'https://github.com/paritytech/substrate.git', rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617' }
+sp-runtime = { version = "3.0.0", default-features = false,  git = 'https://github.com/paritytech/substrate.git', rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617' }
+sp-std = { version = "3.0.0", default-features = false,  git = 'https://github.com/paritytech/substrate.git', rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617' }
+sp-io = { version = "3.0.0", default-features = false,  git = 'https://github.com/paritytech/substrate.git', rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617'}
+
+frame-benchmarking =  { version = "3.0.0", default-features = false,  git = 'https://github.com/paritytech/substrate.git', rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617' }
+
+[dev-dependencies]
+sp-core = { version = "3.0.0", default-features = false,  git = 'https://github.com/paritytech/substrate.git', rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617' }
+pallet-balances = { version = "3.0.0", default-features = false,  git = 'https://github.com/paritytech/substrate.git', rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617' }
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"sp-runtime/std",
+	"frame-support/std",
+	"frame-system/std",
+	"sp-io/std",
+	"sp-std/std"
+]
+try-runtime = ["frame-support/try-runtime"]

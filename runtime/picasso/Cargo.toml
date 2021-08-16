@@ -31,6 +31,7 @@ sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate
 timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
+utility = { package = "pallet-utility", path = "../../frame/utility", version = "0.1.0", default-features = false }
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
@@ -40,6 +41,8 @@ benchmarking = { package = "frame-benchmarking", git = "https://github.com/parit
 system-benchmarking = { package = "frame-system-benchmarking", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false, optional = true }
 hex-literal = { version = "0.3.1", optional = true }
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+
+
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
@@ -56,6 +59,7 @@ std = [
     "oracle/std",
     "balances/std",
     "grandpa/std",
+    "utility/std",
     "randomness-collective-flip/std",
     "sudo/std",
     "timestamp/std",
