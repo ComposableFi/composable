@@ -42,20 +42,6 @@ pub mod pallet {
         type WeightInfo: WeightInfo;
     }
 
-    /*
-        pub fn get_dispatch_class(call: <T::Config>::Call) -> DispatchClass {
-                let dispatch_info = call.get_dispatch_info();
-                (
-                    T::WeightInfo::as_derivative()
-                        .saturating_add(dispatch_info.weight)
-                        .saturating_add(T::DbWeight::get().reads_writes(1, 1)),
-                    dispatch_info.class,
-                )
-
-        }
-
-    */
-
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event {
@@ -64,16 +50,16 @@ pub mod pallet {
         ItemCompleted,
     }
 
-// Custom Error classes
+// Custom Error codes 
 	#[pallet::error]
 	pub enum Error<T> {
 	NotSigned,
 	Unknown,
+	InvalidBatch,
 	}
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        //		pub fn bulk_balance()
         #[pallet::weight({
 			let dispatch_infos = calls.iter().map(|call| call.get_dispatch_info()).collect::<Vec<_>>();
 			let dispatch_weight = dispatch_infos.iter()
@@ -119,35 +105,6 @@ pub mod pallet {
             Ok(Some(base_weight + weight).into())
         }
 
-        /*
-                #[pallet::weight({
-                    let dispatch_infos = calls.iter().map(|call| call.get_dispatch_info()).collect::<Vec<_>>();
-                    let dispatch_weight = dispatch_infos.iter()
-                        .map(|di| di.weight)
-                        .fold(0, |total: Weight, weight: Weight| total.saturating_add(weight))
-                        .saturating_add(T::WeightInfo::batch(calls.len() as u32));
-                    let dispatch_class = {
-                        let all_operational = dispatch_infos.iter()
-                            .map(|di| di.class)
-                            .all(|class| class == DispatchClass::Operational);
-                        if all_operational {
-                            DispatchClass::Operational
-                        } else {
-                            DispatchClass::Normal
-                        }
-                    };
-                    (dispatch_weight, dispatch_class)
-                })]
-                pub fn batch_2(origin: OriginFor<T>, calls: Vec<<T as Config>::Call>) -> DispatchResultsWithPostInfo {
-                    let mut weight: Weight = 0; // append weights based on tx data
-
-        // if not okey throw a batch interupt
-
-                    Self::deposit_event(Event::BatchCompleted); // mark Batch as done
-                    let b_weight = T::WeightInfo::batch(calls_len as u32);
-                    Ok(Some(weight + base_weight).into())
-                    }
-        */
         #[pallet::weight(10_000)]
         ///// Get Batch info(weight) without sending anything
         pub fn batch_info(
@@ -165,22 +122,7 @@ pub mod pallet {
             Ok(Some(weight + base_weight).into())
         }
 
-        //		/// Check batch status
-        //		#[pallet::weight](10_000)
-        //		pub fn check_batch_status(origin: OriginFor<T>, call: Box<<T as Config>::Call>) -> {
-
-        //}
-
-        //		#[pallet::weight](10_000) // todo change
-        //		/// Get basic batch tx info
-        //		pub fn batch_info(origin: OriginFor<T>, call: Box<<T as Config>::Call>) -> DispatchInfo {
-        //			let org = ensure_signed(org);// Check if signed
-        //			let dispatch_info = call.get_dispatch_info();
-
-        //}
-        //
         #[pallet::weight({
-//			get_dispatch_class(call)
 			let dispatch_info = call.get_dispatch_info();
 			(
 				T::WeightInfo::as_derivative()
@@ -280,12 +222,26 @@ impl<T: Config> Pallet<T> {
         T::AccountId::decode(&mut &entropy[..]).unwrap_or_default()
     }
 
-    /*
-    // Check if multiaccount
-        pub fn is_multiaccount(origin: OriginFor<T>) -> T::AccountId {
-            let who = ensure_signed(origin);
-            let multi_account = <MultiAccounts<T>>::get(&who).ok_or(Error::<T>::MultiAccountNotFound)?;
-            Ok(())
-            }
-    */
+/*
+   pub fn get_dispatch_weight(calls: Vec<<T as Config>::Call>,) -> u32 {
+			let dispatch_infos = calls.iter().map(|call| call.get_dispatch_info()).collect::<Vec<_>>();
+			let dispatch_weight = dispatch_infos.iter()
+				.map(|di| di.weight)
+				.fold(0, |total: Weight, weight: Weight| total.saturating_add(weight))
+				.saturating_add(T::WeightInfo::batch_all(calls.len() as u32));
+			let dispatch_class = {
+				let all_operational = dispatch_infos.iter()
+					.map(|di| di.class)
+					.all(|class| class == DispatchClass::Operational);
+				if all_operational {
+					DispatchClass::Operational
+				} else {
+					DispatchClass::Normal
+				}
+			};
+//			(dispatch_weight, dispatch_class)
+	let mut w: u32 = 0;
+	w 
+}
+*/
 }
