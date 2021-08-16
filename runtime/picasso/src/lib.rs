@@ -264,9 +264,9 @@ impl sudo::Config for Runtime {
 }
 
 parameter_types! {
-	pub const CouncilMotionDuration: BlockNumber = 7 * DAYS;
-	pub const CouncilMaxProposals: u32 = 100;
-	pub const CouncilMaxMembers: u32 = 100;
+    pub const CouncilMotionDuration: BlockNumber = 7 * DAYS;
+    pub const CouncilMaxProposals: u32 = 100;
+    pub const CouncilMaxMembers: u32 = 100;
 }
 
 impl collective::Config for Runtime {
@@ -274,10 +274,10 @@ impl collective::Config for Runtime {
     type Proposal = Call;
     type Event = Event;
     type MotionDuration = CouncilMotionDuration;
-	type MaxProposals = CouncilMaxProposals;
-	type MaxMembers = CouncilMaxMembers;
-	type DefaultVote = collective::PrimeDefaultVote;
-	type WeightInfo = ();
+    type MaxProposals = CouncilMaxProposals;
+    type MaxMembers = CouncilMaxMembers;
+    type DefaultVote = collective::PrimeDefaultVote;
+    type WeightInfo = ();
 }
 
 impl<LocalCall> system::offchain::CreateSignedTransaction<LocalCall> for Runtime
