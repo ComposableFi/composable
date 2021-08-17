@@ -26,14 +26,18 @@
 )]
 
 mod models;
+mod traits;
 
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
     use crate::models::{Vault, VaultConfig};
+    use crate::traits;
+    use crate::traits::Assets;
+    use codec::Codec;
     use frame_support::pallet_prelude::*;
-    use frame_system::pallet_prelude::*;
+    use sp_runtime::traits::{CheckedAdd, CheckedSub};
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -45,6 +49,9 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: frame_system::Config {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type AssetId: Parameter + Ord + Copy + core::default::Default;
+        type Balance: Parameter + Codec + Copy + Ord + CheckedAdd + CheckedSub;
+        type Assets: traits::Assets<Self::AssetId, Self::Balance, Self::AccountId>;
     }
 
     #[pallet::pallet]
@@ -58,18 +65,16 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn accuracy_threshold)]
     pub type Vaults<T: Config> =
-        StorageMap<_, Blake2_128Concat, VaultIndex, Vault<AssetId>, ValueQuery>;
+        StorageMap<_, Blake2_128Concat, VaultIndex, Vault<T::AssetId>, ValueQuery>;
 
     /// Key type for the vaults. `VaultIndex` uniquely identifies a vault.
     // TODO: should probably be a new type
     pub type VaultIndex = u64;
 
-    // placeholder for once the pallet-assets is integrated
-    pub type AssetId = u64;
-
     #[pallet::error]
     pub enum Error<T> {
         InsufficientBalance,
+        CannotCreateAsset,
     }
 
     impl<T: Config> Pallet<T> {
@@ -81,9 +86,17 @@ pub mod pallet {
             // 3. mint LP token
             // 4. insert vault (do we check if the strategy addresses even exists?)
             VaultCount::<T>::try_mutate(|id| {
-                *id += 1;
+                let id = {
+                    *id += 1;
+                    *id
+                };
 
-                let lp_token_id = todo!("create the LP token");
+                let lp_token_id = {
+                    T::Assets::create(id).map_err(|e| {
+                        log::debug!("failed to create asset: {:?}", e);
+                        Error::<T>::CannotCreateAsset
+                    })?
+                };
 
                 Vaults::<T>::insert(
                     id,
@@ -93,7 +106,7 @@ pub mod pallet {
                     },
                 );
 
-                Ok(*id)
+                Ok(id)
             })
         }
     }
