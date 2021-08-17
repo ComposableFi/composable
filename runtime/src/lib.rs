@@ -296,7 +296,7 @@ pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
 parameter_types! {
 	pub const StakeLock: BlockNumber = 50;
-	pub const MinStake: Balance = 1;
+	pub const MinStake: Balance = 500;
 	pub const RequestCost: Balance = 1;
 	pub const RewardAmount: Balance = 5;
 	pub const SlashAmount: Balance = 5;

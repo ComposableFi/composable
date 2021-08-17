@@ -291,7 +291,7 @@ pub mod pallet {
             Ok(().into())
         }
 
-        #[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::set_signer())]
         pub fn set_signer(
             origin: OriginFor<T>,
             signer: T::AccountId,
