@@ -4490,6 +4490,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-vault"
+version = "0.0.1"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log 0.4.14",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "parity-db"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
