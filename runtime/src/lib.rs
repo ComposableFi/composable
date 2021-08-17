@@ -6,6 +6,8 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+mod weights;
+
 use sp_std::prelude::*;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -315,6 +317,7 @@ impl pallet_oracle::Config for Runtime {
 	type RewardAmount = RewardAmount;
 	type SlashAmount = SlashAmount;
 	type MaxAnswerBound = MaxAnswerBound;
+	type WeightInfo= weights::pallet_oracle::WeightInfo<Runtime>;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime

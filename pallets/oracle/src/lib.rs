@@ -13,6 +13,7 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -47,6 +48,7 @@ pub mod pallet {
     use sp_std::{borrow::ToOwned, str};
 
     pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orac");
+	pub use crate::weights::WeightInfo;
 
     pub mod crypto {
         use super::KEY_TYPE;
@@ -93,6 +95,8 @@ pub mod pallet {
         type RewardAmount: Get<BalanceOf<Self>>;
         type SlashAmount: Get<BalanceOf<Self>>;
 		type MaxAnswerBound: Get<u64>;
+		/// The weight information of this pallet.
+		type WeightInfo: WeightInfo;
     }
 
     #[derive(Encode, Decode, Default, Debug, PartialEq)]
@@ -256,9 +260,8 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// An example dispatchable that takes a singles value as a parameter, writes the value to
-        /// storage and emits an event. This function must be dispatched by a signed extrinsic.
-        #[pallet::weight(10_000)]
+
+		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
         pub fn add_asset_and_info(
             origin: OriginFor<T>,
             asset_id: u64,
