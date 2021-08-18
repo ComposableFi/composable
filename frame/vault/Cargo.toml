@@ -24,7 +24,7 @@ sp-core = { version = "3.0.0", default-features = false,  git = "https://github.
 sp-std = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
 log = { version = "0.4.14", default-features = false }
-
+num-traits = "0.2.14"
 [features]
 default = ["std"]
 std = [
