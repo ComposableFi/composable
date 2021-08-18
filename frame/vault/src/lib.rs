@@ -37,7 +37,16 @@ pub mod pallet {
     use crate::traits::Assets;
     use codec::Codec;
     use frame_support::pallet_prelude::*;
-    use sp_runtime::traits::{CheckedAdd, CheckedSub};
+    use frame_support::PalletId;
+    use sp_runtime::traits::{
+        AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Convert, StaticLookup,
+        Zero,
+    };
+    use sp_runtime::{Perbill, Perquintill};
+    use sp_std::convert::TryInto;
+
+    // TODO(kaiserkarel) name this better
+    pub const PALLET_ID: PalletId = PalletId(*b"Vaults!!");
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -50,8 +59,12 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         type AssetId: Parameter + Ord + Copy + core::default::Default;
-        type Balance: Parameter + Codec + Copy + Ord + CheckedAdd + CheckedSub;
+        type Balance: Default + Parameter + Codec + Copy + Ord + CheckedAdd + CheckedSub + Zero;
         type Assets: traits::Assets<Self::AssetId, Self::Balance, Self::AccountId>;
+
+        type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
+
+        type Precision: Get<u128>;
     }
 
     #[pallet::pallet]
@@ -65,7 +78,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn accuracy_threshold)]
     pub type Vaults<T: Config> =
-        StorageMap<_, Blake2_128Concat, VaultIndex, Vault<T::AssetId>, ValueQuery>;
+        StorageMap<_, Twox64Concat, VaultIndex, Vault<T::AssetId, T::Balance>, ValueQuery>;
 
     /// Key type for the vaults. `VaultIndex` uniquely identifies a vault.
     // TODO: should probably be a new type
@@ -75,10 +88,16 @@ pub mod pallet {
     pub enum Error<T> {
         InsufficientBalance,
         CannotCreateAsset,
+        InconsistentStorage,
+        TransferFromFailed,
+        MintFailed,
+        LookupError,
+        VaultDoesNotExist,
+        NoFreeVaultAllocation,
     }
 
     impl<T: Config> Pallet<T> {
-        fn do_create_vault(config: VaultConfig) -> Result<VaultIndex, Error<T>> {
+        fn do_create_vault(config: VaultConfig<T::AssetId>) -> Result<VaultIndex, Error<T>> {
             log::info!("Hello from do_create_vault :)");
 
             // 1. check config
@@ -103,11 +122,69 @@ pub mod pallet {
                     Vault {
                         config,
                         lp_token_id,
+                        ..Default::default()
                     },
                 );
 
                 Ok(id)
             })
+        }
+
+        fn account_id() -> T::AccountId {
+            PALLET_ID.into_account()
+        }
+
+        fn do_deposit(
+            vault: VaultIndex,
+            from: <T::Lookup as StaticLookup>::Source,
+            amount: T::Balance,
+        ) -> Result<(), Error<T>> {
+            let from = T::Lookup::lookup(from).map_err(|_| Error::<T>::LookupError)?;
+            let vault = Vaults::<T>::try_get(&vault).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+
+            if vault.assets_under_management.is_zero() {
+                // No assets in the vault means we should have no outstanding LP tokens, we can thus
+                // freely mint new tokens without performing the calculation.
+                T::Assets::transfer_from(
+                    &vault.config.asset_id,
+                    &from,
+                    &Self::account_id(),
+                    amount,
+                )
+                .map_err(|_| Error::<T>::TransferFromFailed)?;
+                T::Assets::mint_to(&vault.lp_token_id, &from, amount)
+                    .map_err(|_| Error::<T>::MintFailed)?;
+            } else {
+                // Compute how much of the underlying assets are deposited. LP tokens are allocated such
+                // that, if the deposit is N% of the `aum`, N% of the LP token supply are minted to
+                // the depositor.
+                //
+                // TODO(kaiserkarel): Get this reviewed, integer arithmetic is hard after all.
+                // reference:
+                // https://medium.com/coinmonks/programming-defi-uniswap-part-2-13a6428bf892
+                let deposit = <T::Convert as Convert<T::Balance, u128>>::convert(amount);
+                let outstanding = T::Assets::total_supply(&vault.lp_token_id)
+                    .ok_or(Error::<T>::InconsistentStorage)?;
+                let outstanding = <T::Convert as Convert<T::Balance, u128>>::convert(outstanding);
+                let aum = <T::Convert as Convert<T::Balance, u128>>::convert(
+                    vault.assets_under_management,
+                );
+                let lp = (|| deposit.checked_mul(outstanding)?.checked_div(aum))()
+                    .ok_or(Error::<T>::NoFreeVaultAllocation)?;
+                let lp = <T::Convert as Convert<u128, T::Balance>>::convert(lp);
+
+                T::Assets::transfer_from(
+                    &vault.config.asset_id,
+                    &from,
+                    &Self::account_id(),
+                    amount,
+                )
+                .map_err(|_| Error::<T>::TransferFromFailed)?;
+                T::Assets::mint_to(&vault.lp_token_id, &from, lp)
+                    .map_err(|_| Error::<T>::MintFailed)?;
+            }
+
+            Ok(())
         }
     }
 }
