@@ -73,7 +73,7 @@ pub mod pallet {
 
         type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 
-        type Precision: Get<u128>;
+        type MaxStrategies: Get<usize>;
     }
 
     #[pallet::pallet]
@@ -132,6 +132,7 @@ pub mod pallet {
         VaultDoesNotExist,
         NoFreeVaultAllocation,
         AllocationMustSumToOne,
+        TooManyStrategies,
     }
 
     impl<T: Config> Pallet<T>
@@ -141,8 +142,6 @@ pub mod pallet {
         fn do_create_vault(
             config: VaultConfig<T::AccountId, T::AssetId>,
         ) -> Result<VaultIndex, Error<T>> {
-            log::info!("Hello from do_create_vault :)");
-
             // 1. check config
             // 2. lock endowment
             // 3. mint LP token
@@ -153,12 +152,12 @@ pub mod pallet {
                     *id
                 };
 
-                let lp_token_id = {
-                    T::Assets::create(id).map_err(|e| {
-                        log::debug!("failed to create asset: {:?}", e);
-                        Error::<T>::CannotCreateAsset
-                    })?
-                };
+                // Perhaps later on, we'll make this configurable per creator account id, if we want
+                // to allow special projects to create more complex vaults.
+                ensure!(
+                    config.strategies.len() <= T::MaxStrategies::get(),
+                    Error::<T>::TooManyStrategies
+                );
 
                 // We do allow vaults without strategies, since strategies can be decided on later
                 // through governance. If strategies are present, their allocations must sum up to 1.
@@ -172,11 +171,19 @@ pub mod pallet {
                                 .flatten()
                         },
                     )
-                    .ok_or(todo!())?;
+                    .ok_or(Error::<T>::AllocationMustSumToOne)?;
+
                 ensure!(
                     sum == Perquintill::one().deconstruct(),
                     Error::<T>::AllocationMustSumToOne
                 );
+
+                let lp_token_id = {
+                    T::Assets::create(id).map_err(|e| {
+                        log::debug!("failed to create asset: {:?}", e);
+                        Error::<T>::CannotCreateAsset
+                    })?
+                };
 
                 config
                     .strategies
