@@ -1,37 +1,36 @@
-use picasso_runtime::{
-	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
-	SudoConfig, SystemConfig, WASM_BINARY,
-};
-use super::{AuraId, GrandpaId};
+use picasso_runtime::{self as parachain_runtime, AccountId, GenesisConfig};
+use super::{AuraId, Extensions, ParaId};
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
 /// Generates the genesis config for picasso
 pub fn genesis_config(
 	root: AccountId,
-	authorities: Vec<(AuraId, GrandpaId)>,
+	authorities: Vec<AuraId>,
 	accounts: Vec<AccountId>,
-) -> GenesisConfig {
-	GenesisConfig {
-		system: SystemConfig {
-			// Add Wasm runtime to storage.
-			code: WASM_BINARY.unwrap().to_vec(),
+	id: ParaId,
+) -> parachain_runtime::GenesisConfig {
+	parachain_runtime::GenesisConfig {
+		system: parachain_runtime::SystemConfig {
+			code: parachain_runtime::WASM_BINARY
+				.expect("WASM binary was not build, please build it!")
+				.to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		balances: BalancesConfig {
+		balances: parachain_runtime::BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
 			balances: accounts.iter().cloned().map(|k|(k, 1 << 60)).collect(),
 		},
-		aura: AuraConfig {
-			authorities: authorities.iter().map(|x| (x.0.clone())).collect(),
+		aura: parachain_runtime::AuraConfig {
+			authorities: authorities.clone(),
 		},
-		grandpa: GrandpaConfig {
-			authorities: authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
-		},
-		sudo: SudoConfig {
+		sudo: parachain_runtime::SudoConfig {
 			// Assign network admin rights.
 			key: root,
 		},
+		parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
+		aura_ext: Default::default(),
+		parachain_system: Default::default(),
 	}
 }
