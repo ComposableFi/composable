@@ -29,8 +29,8 @@ sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkad
 # modules
 aura = { package = "pallet-aura", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
-grandpa = { package = "pallet-grandpa", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 randomness-collective-flip = { package = "pallet-randomness-collective-flip", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
+pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false, optional = true }
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
@@ -102,12 +102,15 @@ std = [
 	"sp-consensus-aura/std",
 ]
 runtime-benchmarks = [
-    "benchmarking",
-    "support/runtime-benchmarks",
-    "system-benchmarking",
-    "system/runtime-benchmarks",
-    "hex-literal",
-    "balances/runtime-benchmarks",
-    "timestamp/runtime-benchmarks",
-    "sp-runtime/runtime-benchmarks",
+	"benchmarking",
+	"support/runtime-benchmarks",
+	"system-benchmarking",
+	"system/runtime-benchmarks",
+	"hex-literal",
+	"balances/runtime-benchmarks",
+	"timestamp/runtime-benchmarks",
+	"pallet-collective/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
 ]
