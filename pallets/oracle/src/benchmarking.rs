@@ -53,7 +53,7 @@ benchmarks! {
 		let signer: T::AccountId = account("candidate", 0, SEED);
 		whitelist!(signer);
 		let stake = T::MinStake::get();
-		T::Currency::make_free_balance_be(&caller, (stake * 4u32.into()));
+		T::Currency::make_free_balance_be(&caller, stake + T::Currency::minimum_balance());
     }: _(RawOrigin::Signed(caller.clone()), signer.clone())
     verify {
         assert_last_event::<T>(Event::StakeAdded(signer, stake.clone(), stake).into());
