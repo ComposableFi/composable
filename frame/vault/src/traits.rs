@@ -33,4 +33,11 @@ pub trait Assets<AssetId, Balance, AccountId> {
     /// `pallet-vaults` will always pass an existing `AssetId`, so return value should realistically
     /// never be `None`.
     fn total_supply(asset: &AssetId) -> Option<Balance>;
+
+    /// Returns the balance of an account for a given assets.
+    ///
+    /// # Implementors
+    /// `pallet-vaults` will always pass an existing `AssetId`, so return value should realistically
+    /// never be `None`.
+    fn balance_of(asset: &AssetId, account: &AccountId) -> Option<Balance>;
 }
