@@ -1,12 +1,12 @@
 use cumulus_primitives_core::ParaId;
 use picasso_runtime::AccountId;
+use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
+use sc_service::ChainType;
+use serde::{Deserialize, Serialize};
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::IdentifyAccount;
 use sp_runtime::MultiSigner;
-use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
-use sc_service::ChainType;
-use serde::{Deserialize, Serialize};
 
 pub mod picasso;
 
@@ -14,17 +14,17 @@ pub mod picasso;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension)]
 #[serde(deny_unknown_fields)]
 pub struct Extensions {
-	/// The relay chain of the Parachain.
-	pub relay_chain: String,
-	/// The id of the Parachain.
-	pub para_id: u32,
+    /// The relay chain of the Parachain.
+    pub relay_chain: String,
+    /// The id of the Parachain.
+    pub para_id: u32,
 }
 
 impl Extensions {
-	/// Try to get the extension from the given `ChainSpec`.
-	pub fn try_get(chain_spec: &dyn sc_service::ChainSpec) -> Option<&Self> {
-		sc_chain_spec::get_extension(chain_spec.extensions())
-	}
+    /// Try to get the extension from the given `ChainSpec`.
+    pub fn try_get(chain_spec: &dyn sc_service::ChainSpec) -> Option<&Self> {
+        sc_chain_spec::get_extension(chain_spec.extensions())
+    }
 }
 
 /// Generate a crypto pair from seed.
@@ -76,18 +76,18 @@ pub fn picasso_dev(id: ParaId) -> picasso::ChainSpec {
 
 /// Common dev accounts
 pub fn dev_accounts() -> Vec<AccountId> {
-	vec![
-		account_id_from_seed::<sr25519::Public>("Alice"),
-		account_id_from_seed::<sr25519::Public>("Bob"),
-		account_id_from_seed::<sr25519::Public>("Charlie"),
-		account_id_from_seed::<sr25519::Public>("Dave"),
-		account_id_from_seed::<sr25519::Public>("Eve"),
-		account_id_from_seed::<sr25519::Public>("Ferdie"),
-		account_id_from_seed::<sr25519::Public>("Alice//stash"),
-		account_id_from_seed::<sr25519::Public>("Bob//stash"),
-		account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-		account_id_from_seed::<sr25519::Public>("Dave//stash"),
-		account_id_from_seed::<sr25519::Public>("Eve//stash"),
-		account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-	]
+    vec![
+        account_id_from_seed::<sr25519::Public>("Alice"),
+        account_id_from_seed::<sr25519::Public>("Bob"),
+        account_id_from_seed::<sr25519::Public>("Charlie"),
+        account_id_from_seed::<sr25519::Public>("Dave"),
+        account_id_from_seed::<sr25519::Public>("Eve"),
+        account_id_from_seed::<sr25519::Public>("Ferdie"),
+        account_id_from_seed::<sr25519::Public>("Alice//stash"),
+        account_id_from_seed::<sr25519::Public>("Bob//stash"),
+        account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+        account_id_from_seed::<sr25519::Public>("Dave//stash"),
+        account_id_from_seed::<sr25519::Public>("Eve//stash"),
+        account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+    ]
 }
