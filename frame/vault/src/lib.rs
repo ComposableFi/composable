@@ -32,12 +32,13 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-    use crate::models::{Vault, VaultConfig};
+    use crate::models::{StrategyOverview, Vault, VaultConfig};
     use crate::traits;
     use crate::traits::Assets;
     use codec::Codec;
     use frame_support::pallet_prelude::*;
     use frame_support::PalletId;
+    use num_traits::SaturatingAdd;
     use sp_runtime::traits::{
         AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Convert, StaticLookup,
         Zero,
@@ -59,7 +60,15 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         type AssetId: Parameter + Ord + Copy + core::default::Default;
-        type Balance: Default + Parameter + Codec + Copy + Ord + CheckedAdd + CheckedSub + Zero;
+        type Balance: Default
+            + Parameter
+            + Codec
+            + Copy
+            + Ord
+            + CheckedAdd
+            + CheckedSub
+            + Zero
+            + SaturatingAdd;
         type Assets: traits::Assets<Self::AssetId, Self::Balance, Self::AccountId>;
 
         type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
@@ -76,9 +85,37 @@ pub mod pallet {
     pub type VaultCount<T: Config> = StorageValue<_, VaultIndex, ValueQuery>;
 
     #[pallet::storage]
-    #[pallet::getter(fn accuracy_threshold)]
+    #[pallet::getter(fn vault_data)]
     pub type Vaults<T: Config> =
         StorageMap<_, Twox64Concat, VaultIndex, Vault<T::AssetId, T::Balance>, ValueQuery>;
+
+    /// Amounts which each strategy is allowed to access, including the amount reserved for quick
+    /// withdrawals for the pallet.
+    #[pallet::storage]
+    #[pallet::getter(fn allocations)]
+    pub type Allocations<T: Config> = StorageDoubleMap<
+        _,
+        Blake2_128Concat,
+        VaultIndex,
+        Blake2_128Concat,
+        T::AccountId,
+        Perquintill,
+        ValueQuery,
+    >;
+
+    /// Overview of the balances at each strategy. Does not contain the balance held by the vault
+    /// itself.
+    #[pallet::storage]
+    #[pallet::getter(fn capital_structure)]
+    pub type CapitalStructure<T: Config> = StorageDoubleMap<
+        _,
+        Blake2_128Concat,
+        VaultIndex,
+        Blake2_128Concat,
+        T::AccountId,
+        StrategyOverview<T::Balance>,
+        ValueQuery,
+    >;
 
     /// Key type for the vaults. `VaultIndex` uniquely identifies a vault.
     // TODO: should probably be a new type
@@ -94,10 +131,16 @@ pub mod pallet {
         LookupError,
         VaultDoesNotExist,
         NoFreeVaultAllocation,
+        AllocationMustSumToOne,
     }
 
-    impl<T: Config> Pallet<T> {
-        fn do_create_vault(config: VaultConfig<T::AssetId>) -> Result<VaultIndex, Error<T>> {
+    impl<T: Config> Pallet<T>
+    where
+        <T as frame_system::Config>::AccountId: core::hash::Hash,
+    {
+        fn do_create_vault(
+            config: VaultConfig<T::AccountId, T::AssetId>,
+        ) -> Result<VaultIndex, Error<T>> {
             log::info!("Hello from do_create_vault :)");
 
             // 1. check config
@@ -117,10 +160,36 @@ pub mod pallet {
                     })?
                 };
 
+                // We do allow vaults without strategies, since strategies can be decided on later
+                // through governance. If strategies are present, their allocations must sum up to 1.
+                let sum = config
+                    .strategies
+                    .iter()
+                    .fold(
+                        Some(config.reserved.deconstruct()),
+                        |sum, (_, allocation)| {
+                            sum.map(|sum| sum.checked_add(allocation.deconstruct()))
+                                .flatten()
+                        },
+                    )
+                    .ok_or(todo!())?;
+                ensure!(
+                    sum == Perquintill::one().deconstruct(),
+                    Error::<T>::AllocationMustSumToOne
+                );
+
+                config
+                    .strategies
+                    .into_iter()
+                    .for_each(|(account_id, allocation)| {
+                        Allocations::<T>::insert(id, account_id, allocation);
+                    });
+
+                Allocations::<T>::insert(id, Self::account_id(), config.reserved);
+
                 Vaults::<T>::insert(
                     id,
                     Vault {
-                        config,
                         lp_token_id,
                         ..Default::default()
                     },
@@ -134,6 +203,17 @@ pub mod pallet {
             PALLET_ID.into_account()
         }
 
+        /// Computes the sum of all the assets that the vault currently controls.
+        fn assets_under_management(vault_id: VaultIndex) -> Result<T::Balance, Error<T>> {
+            let vault =
+                Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+            let owned = T::Assets::balance_of(&vault.asset_id, &Self::account_id())
+                .ok_or(Error::<T>::InconsistentStorage)?;
+            let outstanding = CapitalStructure::<T>::iter_prefix_values(vault_id)
+                .fold(T::Balance::zero(), |sum, item| sum + item.withdrawn);
+            Ok(owned + outstanding)
+        }
+
         fn do_deposit(
             vault: VaultIndex,
             from: <T::Lookup as StaticLookup>::Source,
@@ -145,13 +225,8 @@ pub mod pallet {
             if vault.assets_under_management.is_zero() {
                 // No assets in the vault means we should have no outstanding LP tokens, we can thus
                 // freely mint new tokens without performing the calculation.
-                T::Assets::transfer_from(
-                    &vault.config.asset_id,
-                    &from,
-                    &Self::account_id(),
-                    amount,
-                )
-                .map_err(|_| Error::<T>::TransferFromFailed)?;
+                T::Assets::transfer_from(&vault.asset_id, &from, &Self::account_id(), amount)
+                    .map_err(|_| Error::<T>::TransferFromFailed)?;
                 T::Assets::mint_to(&vault.lp_token_id, &from, amount)
                     .map_err(|_| Error::<T>::MintFailed)?;
             } else {
@@ -173,13 +248,8 @@ pub mod pallet {
                     .ok_or(Error::<T>::NoFreeVaultAllocation)?;
                 let lp = <T::Convert as Convert<u128, T::Balance>>::convert(lp);
 
-                T::Assets::transfer_from(
-                    &vault.config.asset_id,
-                    &from,
-                    &Self::account_id(),
-                    amount,
-                )
-                .map_err(|_| Error::<T>::TransferFromFailed)?;
+                T::Assets::transfer_from(&vault.asset_id, &from, &Self::account_id(), amount)
+                    .map_err(|_| Error::<T>::TransferFromFailed)?;
                 T::Assets::mint_to(&vault.lp_token_id, &from, lp)
                     .map_err(|_| Error::<T>::MintFailed)?;
             }
