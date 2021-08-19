@@ -1,43 +1,39 @@
 //! Traits on which this pallet relies
 
-use crate::VaultIndex;
 use frame_support::pallet_prelude::*;
 
-pub trait Assets<AssetId, Balance, AccountId> {
-    /// Creates new asset.
-    ///
-    /// # Implementors
-    /// Implementors may use the vault_index, which is guaranteed to be unique and never seen
-    /// before, but most likely should just use an internal incrementing counter.
-    fn create(vault_index: VaultIndex) -> Result<AssetId, DispatchError>;
+#[derive(Encode, Decode, Debug, PartialEq)]
+pub enum FundsAvailability<Balance> {
+    Withdrawable(Balance),
+    MustLiquidate(Balance),
+}
 
-    /// Transfers assets on behalf of `from`.
-    ///
-    /// # Implementors
-    ///
-    /// Implementations should decide on requiring an allowance mechanism if the calling account is
-    /// not `from`. However that is not strictly necessary as pallets are not added to the runtime
-    /// by untrusted sources.
-    fn transfer_from(
-        asset: &AssetId,
-        from: &AccountId,
-        to: &AccountId,
-        amount: Balance,
-    ) -> DispatchResult;
+pub trait CurrencyFactory<CurrencyId> {
+    fn create() -> Result<CurrencyId, DispatchError>;
+}
 
-    fn mint_to(asset: &AssetId, to: &AccountId, amount: Balance) -> DispatchResult;
+pub trait StrategicVault {
+    type AccountId;
+    type Balance;
+    type Error;
 
-    /// Returns the total supply for a given asset.
-    ///
-    /// # Implementors
-    /// `pallet-vaults` will always pass an existing `AssetId`, so return value should realistically
-    /// never be `None`.
-    fn total_supply(asset: &AssetId) -> Option<Balance>;
+    fn available_funds(
+        account: &Self::AccountId,
+    ) -> Result<FundsAvailability<Self::Balance>, Self::Error>;
 
-    /// Returns the balance of an account for a given assets.
-    ///
-    /// # Implementors
-    /// `pallet-vaults` will always pass an existing `AssetId`, so return value should realistically
-    /// never be `None`.
-    fn balance_of(asset: &AssetId, account: &AccountId) -> Option<Balance>;
+    fn withdraw(
+        account: &Self::AccountId,
+        value: Self::Balance,
+    ) -> Result<Self::Balance, Self::Error>;
+
+    fn deposit(
+        account: &Self::AccountId,
+        value: Self::Balance,
+    ) -> Result<Self::Balance, Self::Error>;
+}
+
+pub trait ReportableStrategicVault: StrategicVault {
+    type StrategyReport;
+
+    fn update_strategy_report(strategy_report: &Self::StrategyReport) -> Result<(), Self::Error>;
 }

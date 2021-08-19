@@ -33,18 +33,21 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
     use crate::models::{StrategyOverview, Vault, VaultConfig};
-    use crate::traits;
-    use crate::traits::Assets;
-    use codec::Codec;
+    use crate::traits::{
+        self, CurrencyFactory, FundsAvailability, ReportableStrategicVault, StrategicVault,
+    };
+    use codec::{Codec, FullCodec};
     use frame_support::pallet_prelude::*;
     use frame_support::PalletId;
     use num_traits::SaturatingAdd;
+    use orml_traits::MultiCurrency;
     use sp_runtime::traits::{
         AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Convert, StaticLookup,
         Zero,
     };
     use sp_runtime::{Perbill, Perquintill};
     use sp_std::convert::TryInto;
+    use sp_std::fmt::Debug;
 
     // TODO(kaiserkarel) name this better
     pub const PALLET_ID: PalletId = PalletId(*b"Vaults!!");
@@ -59,21 +62,23 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: frame_system::Config {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-        type AssetId: Parameter + Ord + Copy + core::default::Default;
-        type Balance: Default
-            + Parameter
-            + Codec
+        type Balance: Default + Parameter + Codec + Copy + Ord + CheckedAdd + CheckedSub + Zero;
+        type CurrencyFactory: CurrencyFactory<Self::CurrencyId>;
+        type CurrencyId: FullCodec
+            + Eq
+            + PartialEq
             + Copy
-            + Ord
-            + CheckedAdd
-            + CheckedSub
-            + Zero
-            + SaturatingAdd;
-        type Assets: traits::Assets<Self::AssetId, Self::Balance, Self::AccountId>;
-
+            + MaybeSerializeDeserialize
+            + Debug
+            + Default;
+        type Currency: MultiCurrency<
+            Self::AccountId,
+            Balance = Self::Balance,
+            CurrencyId = Self::CurrencyId,
+        >;
         type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
-
         type MaxStrategies: Get<usize>;
+        type StrategyReport: FullCodec + Default;
     }
 
     #[pallet::pallet]
@@ -87,7 +92,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn vault_data)]
     pub type Vaults<T: Config> =
-        StorageMap<_, Twox64Concat, VaultIndex, Vault<T::AssetId, T::Balance>, ValueQuery>;
+        StorageMap<_, Twox64Concat, VaultIndex, Vault<T::CurrencyId, T::Balance>, ValueQuery>;
 
     /// Amounts which each strategy is allowed to access, including the amount reserved for quick
     /// withdrawals for the pallet.
@@ -113,7 +118,7 @@ pub mod pallet {
         VaultIndex,
         Blake2_128Concat,
         T::AccountId,
-        StrategyOverview<T::Balance>,
+        StrategyOverview<T::Balance, T::StrategyReport>,
         ValueQuery,
     >;
 
@@ -140,7 +145,7 @@ pub mod pallet {
         <T as frame_system::Config>::AccountId: core::hash::Hash,
     {
         fn do_create_vault(
-            config: VaultConfig<T::AccountId, T::AssetId>,
+            config: VaultConfig<T::AccountId, T::CurrencyId>,
         ) -> Result<VaultIndex, Error<T>> {
             // 1. check config
             // 2. lock endowment
@@ -179,7 +184,7 @@ pub mod pallet {
                 );
 
                 let lp_token_id = {
-                    T::Assets::create(id).map_err(|e| {
+                    T::CurrencyFactory::create().map_err(|e| {
                         log::debug!("failed to create asset: {:?}", e);
                         Error::<T>::CannotCreateAsset
                     })?
@@ -214,8 +219,7 @@ pub mod pallet {
         fn assets_under_management(vault_id: VaultIndex) -> Result<T::Balance, Error<T>> {
             let vault =
                 Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
-            let owned = T::Assets::balance_of(&vault.asset_id, &Self::account_id())
-                .ok_or(Error::<T>::InconsistentStorage)?;
+            let owned = T::Currency::total_balance(vault.asset_id, &Self::account_id());
             let outstanding = CapitalStructure::<T>::iter_prefix_values(vault_id)
                 .fold(T::Balance::zero(), |sum, item| sum + item.withdrawn);
             Ok(owned + outstanding)
@@ -232,9 +236,9 @@ pub mod pallet {
             if vault.assets_under_management.is_zero() {
                 // No assets in the vault means we should have no outstanding LP tokens, we can thus
                 // freely mint new tokens without performing the calculation.
-                T::Assets::transfer_from(&vault.asset_id, &from, &Self::account_id(), amount)
+                T::Currency::transfer(vault.asset_id, &from, &Self::account_id(), amount)
                     .map_err(|_| Error::<T>::TransferFromFailed)?;
-                T::Assets::mint_to(&vault.lp_token_id, &from, amount)
+                T::Currency::deposit(vault.lp_token_id, &from, amount)
                     .map_err(|_| Error::<T>::MintFailed)?;
             } else {
                 // Compute how much of the underlying assets are deposited. LP tokens are allocated such
@@ -245,8 +249,7 @@ pub mod pallet {
                 // reference:
                 // https://medium.com/coinmonks/programming-defi-uniswap-part-2-13a6428bf892
                 let deposit = <T::Convert as Convert<T::Balance, u128>>::convert(amount);
-                let outstanding = T::Assets::total_supply(&vault.lp_token_id)
-                    .ok_or(Error::<T>::InconsistentStorage)?;
+                let outstanding = T::Currency::total_issuance(vault.lp_token_id);
                 let outstanding = <T::Convert as Convert<T::Balance, u128>>::convert(outstanding);
                 let aum = <T::Convert as Convert<T::Balance, u128>>::convert(
                     vault.assets_under_management,
@@ -255,9 +258,9 @@ pub mod pallet {
                     .ok_or(Error::<T>::NoFreeVaultAllocation)?;
                 let lp = <T::Convert as Convert<u128, T::Balance>>::convert(lp);
 
-                T::Assets::transfer_from(&vault.asset_id, &from, &Self::account_id(), amount)
+                T::Currency::transfer(vault.asset_id, &from, &Self::account_id(), amount)
                     .map_err(|_| Error::<T>::TransferFromFailed)?;
-                T::Assets::mint_to(&vault.lp_token_id, &from, lp)
+                T::Currency::deposit(vault.lp_token_id, &from, lp)
                     .map_err(|_| Error::<T>::MintFailed)?;
             }
 
