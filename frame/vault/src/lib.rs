@@ -4,7 +4,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
-    missing_docs,
     bad_style,
     bare_trait_objects,
     const_err,
@@ -24,6 +23,8 @@
     trivial_numeric_casts,
     unused_extern_crates
 )]
+// TODO remove me!
+#![allow(missing_docs)]
 
 mod models;
 mod traits;
@@ -39,14 +40,13 @@ pub mod pallet {
     use codec::{Codec, FullCodec};
     use frame_support::pallet_prelude::*;
     use frame_support::PalletId;
-    use num_traits::SaturatingAdd;
+    use num_traits::{SaturatingSub};
     use orml_traits::MultiCurrency;
     use sp_runtime::traits::{
-        AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Convert, StaticLookup,
-        Zero,
+        AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
+        Convert, StaticLookup, Zero,
     };
-    use sp_runtime::{Perbill, Perquintill};
-    use sp_std::convert::TryInto;
+    use sp_runtime::{Perquintill};
     use sp_std::fmt::Debug;
 
     // TODO(kaiserkarel) name this better
@@ -62,7 +62,18 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: frame_system::Config {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-        type Balance: Default + Parameter + Codec + Copy + Ord + CheckedAdd + CheckedSub + Zero;
+        type Balance: Default
+            + Parameter
+            + Codec
+            + Copy
+            + Ord
+            + CheckedAdd
+            + CheckedSub
+            + CheckedMul
+            + SaturatingSub
+            + AtLeast32BitUnsigned
+            + Zero
+            + From<u64>;
         type CurrencyFactory: CurrencyFactory<Self::CurrencyId>;
         type CurrencyId: FullCodec
             + Eq
@@ -138,6 +149,8 @@ pub mod pallet {
         NoFreeVaultAllocation,
         AllocationMustSumToOne,
         TooManyStrategies,
+        OverflowError,
+        InsufficientFunds,
     }
 
     impl<T: Config> Pallet<T>
@@ -263,7 +276,87 @@ pub mod pallet {
                 T::Currency::deposit(vault.lp_token_id, &from, lp)
                     .map_err(|_| Error::<T>::MintFailed)?;
             }
+            Ok(())
+        }
+    }
 
+    impl<T: Config> StrategicVault for Pallet<T>
+    where
+        <T as frame_system::Config>::AccountId: core::hash::Hash,
+    {
+        type AccountId = T::AccountId;
+        type Balance = T::Balance;
+        type Error = Error<T>;
+        type VaultId = VaultIndex;
+
+        fn available_funds(
+            vault_id: &Self::VaultId,
+            account: &Self::AccountId,
+        ) -> Result<FundsAvailability<Self::Balance>, Self::Error> {
+            let allocation = match Allocations::<T>::try_get(vault_id, &account) {
+                Ok(allocation) => allocation,
+                // The strategy was removed by the fund manager or governance, so all funds should be
+                // returned.
+                Err(_) => return Ok(FundsAvailability::MustLiquidate),
+            };
+
+            let aum = Self::assets_under_management(*vault_id)?;
+            let max_allowed = allocation.mul_floor(aum);
+
+            // if a strategy has an allocation, it must have an associated capital structure too.
+            let state = CapitalStructure::<T>::try_get(vault_id, &account)
+                .map_err(|_| Error::<T>::InconsistentStorage)?;
+            if state.balance >= max_allowed {
+                Ok(FundsAvailability::Depositable(state.balance - max_allowed))
+            } else {
+                Ok(FundsAvailability::Withdrawable(max_allowed - state.balance))
+            }
+        }
+
+        fn withdraw(
+            vault_id: &Self::VaultId,
+            to: &Self::AccountId,
+            amount: Self::Balance,
+        ) -> Result<(), Self::Error> {
+            // TODO: should we check the allocation here? Pallets are technically trusted, so it would
+            // only add unnecessary overhead. The extrinsic/ChainExtension interface should check however
+            let vault =
+                Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+            CapitalStructure::<T>::try_mutate(vault_id, to, |state| {
+                // I do not thing balance can actually overflow, since the total_issuance <= T::Balance::Max
+                state
+                    .balance
+                    .checked_add(&amount)
+                    .ok_or(Error::<T>::OverflowError)?;
+                // This can definitely overflow. Perhaps it should be a BigUint?
+                state
+                    .lifetime_withdrawn
+                    .checked_add(&amount)
+                    .ok_or(Error::<T>::OverflowError)?;
+                T::Currency::transfer(vault.asset_id, &Self::account_id(), to, amount)
+                    .map_err(|_| Error::<T>::InsufficientFunds)
+            })?;
+            Ok(())
+        }
+
+        fn deposit(
+            vault_id: &Self::VaultId,
+            from: &Self::AccountId,
+            amount: Self::Balance,
+        ) -> Result<(), Self::Error> {
+            let vault =
+                Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+            CapitalStructure::<T>::try_mutate(vault_id, from, |state| {
+                // A strategy can return more than it has withdrawn through profits.
+                state.balance.saturating_sub(&amount);
+                // This can definitely overflow. Perhaps it should be a BigUint?
+                state
+                    .lifetime_deposited
+                    .checked_add(&amount)
+                    .ok_or(Error::<T>::OverflowError)?;
+                T::Currency::transfer(vault.asset_id, from, &Self::account_id(), amount)
+                    .map_err(|_| Error::<T>::InsufficientFunds)
+            })?;
             Ok(())
         }
     }
