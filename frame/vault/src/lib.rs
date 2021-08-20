@@ -40,13 +40,13 @@ pub mod pallet {
     use codec::{Codec, FullCodec};
     use frame_support::pallet_prelude::*;
     use frame_support::PalletId;
-    use num_traits::{SaturatingSub};
+    use num_traits::SaturatingSub;
     use orml_traits::MultiCurrency;
     use sp_runtime::traits::{
-        AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
-        Convert, StaticLookup, Zero,
+        AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
+        StaticLookup, Zero,
     };
-    use sp_runtime::{Perquintill};
+    use sp_runtime::Perquintill;
     use sp_std::fmt::Debug;
 
     // TODO(kaiserkarel) name this better
@@ -357,6 +357,22 @@ pub mod pallet {
                 T::Currency::transfer(vault.asset_id, from, &Self::account_id(), amount)
                     .map_err(|_| Error::<T>::InsufficientFunds)
             })?;
+            Ok(())
+        }
+    }
+
+    impl<T: Config> ReportableStrategicVault for Pallet<T>
+    where
+        <T as frame_system::Config>::AccountId: core::hash::Hash,
+    {
+        type Report = T::Balance;
+
+        fn update_strategy_report(
+            vault: &Self::VaultId,
+            strategy: &Self::AccountId,
+            report: &Self::Report,
+        ) -> Result<(), Self::Error> {
+            CapitalStructure::<T>::mutate(vault, strategy, |state| state.balance = *report);
             Ok(())
         }
     }
