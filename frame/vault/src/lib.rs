@@ -118,7 +118,7 @@ pub mod pallet {
         VaultIndex,
         Blake2_128Concat,
         T::AccountId,
-        StrategyOverview<T::Balance, T::StrategyReport>,
+        StrategyOverview<T::Balance>,
         ValueQuery,
     >;
 
@@ -221,7 +221,7 @@ pub mod pallet {
                 Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
             let owned = T::Currency::total_balance(vault.asset_id, &Self::account_id());
             let outstanding = CapitalStructure::<T>::iter_prefix_values(vault_id)
-                .fold(T::Balance::zero(), |sum, item| sum + item.withdrawn);
+                .fold(T::Balance::zero(), |sum, item| sum + item.balance);
             Ok(owned + outstanding)
         }
 
