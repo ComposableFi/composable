@@ -925,6 +925,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "composable-traits"
+version = "0.0.1"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4532,6 +4540,7 @@ dependencies = [
 name = "pallet-vault"
 version = "0.0.1"
 dependencies = [
+ "composable-traits",
  "frame-support",
  "frame-system",
  "log 0.4.14",

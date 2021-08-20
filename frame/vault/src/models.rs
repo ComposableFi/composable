@@ -20,7 +20,11 @@ pub struct Vault<CurrencyId, Balance> {
 }
 
 #[derive(Encode, Decode, Default, Debug, PartialEq)]
-pub struct StrategyOverview<Balance, Report> {
-    pub withdrawn: Balance,
-    pub report: Report,
+pub struct StrategyOverview<Balance> {
+    /// The reported balance of the strategy
+    pub balance: Balance,
+    /// Sum of all withdrawn funds.
+    pub lifetime_withdrawn: Balance,
+    /// Sum of all deposited funds.
+    pub lifetime_deposited: Balance,
 }
