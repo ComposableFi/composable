@@ -40,7 +40,9 @@ fn load_spec(
     para_id: ParaId,
 ) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
     Ok(match id {
-        "picasso-dev" => Box::new(chain_spec::picasso_dev(para_id)),
+        // Must define the default chain here because `export-genesis-state` command
+        // does not support `--chain` and `--parachain-id` arguments simultaneously.
+        "" | "picasso-dev" => Box::new(chain_spec::picasso_dev(para_id)),
         path => Box::new(chain_spec::picasso::ChainSpec::from_json_file(
             std::path::PathBuf::from(path),
         )?),
