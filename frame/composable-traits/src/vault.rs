@@ -49,5 +49,9 @@ pub trait StrategicVault {
 pub trait ReportableStrategicVault: StrategicVault {
     type Report;
 
-    fn update_strategy_report(report: &Self::Report) -> Result<(), Self::Error>;
+    fn update_strategy_report(
+        vault: &Self::VaultId,
+        strategy: &Self::AccountId,
+        report: &Self::Report,
+    ) -> Result<(), Self::Error>;
 }
