@@ -22,23 +22,27 @@ pub trait StrategicVault {
     type AccountId;
     type Balance;
     type Error;
+    type VaultId;
 
     /// Used by strategies to query for available funds.
     fn available_funds(
+        vault: &Self::VaultId,
         account: &Self::AccountId,
     ) -> Result<FundsAvailability<Self::Balance>, Self::Error>;
 
     /// Used by strategies to withdraw funds to be used in DeFi or other protocols.
     fn withdraw(
+        vault: &Self::VaultId,
         to: &Self::AccountId,
         amount: Self::Balance,
-    ) -> Result<Self::Balance, Self::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Used by strategies to return profits and funds.
     fn deposit(
+        vault: &Self::VaultId,
         from: &Self::AccountId,
         amount: Self::Balance,
-    ) -> Result<Self::Balance, Self::Error>;
+    ) -> Result<(), Self::Error>;
 }
 
 ///
