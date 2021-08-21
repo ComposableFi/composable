@@ -34,6 +34,13 @@ pub fn from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public
         .public()
 }
 
+/// Generate collator keys from seed.
+///
+/// This function's return type must always match the session keys of the chain in tuple format.
+pub fn get_collator_keys_from_seed(seed: &str) -> AuraId {
+	from_seed::<AuraId>(seed)
+}
+
 /// Generate an account ID from seed.
 pub fn account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 where
@@ -42,23 +49,26 @@ where
     MultiSigner::from(from_seed::<TPublic>(seed)).into_account()
 }
 
-/// Generate an Aura authority key.
-pub fn authority_keys_from_seed(s: &str) -> AuraId {
-    from_seed::<AuraId>(s)
-}
-
+//TODO create prod config
 pub fn picasso_dev(id: ParaId) -> picasso::ChainSpec {
+	//TODO check properties
+	let mut properties = Properties::new();
+	properties.insert("tokenSymbol".into(), "PIC".into());
+	properties.insert("tokenDecimals".into(), 12.into());
+
     picasso::ChainSpec::from_genesis(
         "Local Picasso Testnet",
         "picasso",
         ChainType::Development,
         move || {
             picasso::genesis_config(
-                account_id_from_seed::<sr25519::Public>("Alice"),
-                vec![
-                    authority_keys_from_seed("Alice"),
-                    authority_keys_from_seed("Bob"),
-                ],
+				account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![
+					(
+						account_id_from_seed::<sr25519::Public>("Alice"),
+						get_collator_keys_from_seed("Alice"),
+					)
+				],
                 dev_accounts(),
                 id,
             )
@@ -66,7 +76,7 @@ pub fn picasso_dev(id: ParaId) -> picasso::ChainSpec {
         vec![],
         None,
         None,
-        None,
+		Some(properties),
         Extensions {
             relay_chain: "picasso-local".into(), // You MUST set this to the correct network!
             para_id: id.into(),
