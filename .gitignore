@@ -23,3 +23,7 @@ node_modules
 .idea
 
 .vscode
+rococo-local-raw.json
+rococo-local.json
+polkadot-launch/bin/polkadot
+polkadot-launch/*.log
