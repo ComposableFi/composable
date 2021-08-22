@@ -114,12 +114,6 @@ pub mod pallet {
         pub block: BlockNumber,
     }
 
-    #[derive(Encode, Decode, Default, Debug, PartialEq)]
-    pub struct Settlement<AccountId> {
-        pub who: AccountId,
-        pub truthful: bool,
-    }
-
 	#[derive(Encode, Decode, Default, Debug, PartialEq)]
     pub struct AssetInfo<Percent> {
         pub threshold: Percent,
@@ -134,16 +128,6 @@ pub mod pallet {
     #[pallet::pallet]
     #[pallet::generate_store(pub(super) trait Store)]
     pub struct Pallet<T>(_);
-
-    // The pallet's runtime storage items.
-    // https://substrate.dev/docs/en/knowledgebase/runtime/storage
-    #[pallet::storage]
-    #[pallet::getter(fn position_count)]
-    pub type AssetTypes<T: Config> = StorageValue<_, u128, ValueQuery>;
-
-    #[pallet::storage]
-    #[pallet::getter(fn settlements)]
-    pub type Settlements<T: Config> = StorageValue<_, Vec<Settlement<T::AccountId>>, ValueQuery>;
 
     #[pallet::storage]
     #[pallet::getter(fn assets_count)]
@@ -618,7 +602,7 @@ pub mod pallet {
                 http::Error::Unknown
             })?;
 
-            let price = match Self::parse_price(body_str) {
+            let price = match Self::parse_price(body_str, &string_id) {
                 Some(price) => Ok(price),
                 None => {
                     log::warn!("Unable to extract price from the response: {:?}", body_str);
@@ -631,13 +615,13 @@ pub mod pallet {
             Ok(price)
         }
 
-        pub fn parse_price(price_str: &str) -> Option<u64> {
+        pub fn parse_price(price_str: &str, asset_id: &str) -> Option<u64> {
             let val = lite_json::parse_json(price_str);
             let price = match val.ok()? {
                 JsonValue::Object(obj) => {
                     let (_, v) = obj
                         .into_iter()
-                        .find(|(k, _)| k.iter().copied().eq("USD".chars()))?;
+                        .find(|(k, _)| k.iter().copied().eq(asset_id.chars()))?;
                     match v {
                         JsonValue::Number(number) => number,
                         _ => return None,
