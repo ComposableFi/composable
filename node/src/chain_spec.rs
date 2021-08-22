@@ -78,6 +78,7 @@ pub fn picasso_dev(id: ParaId) -> picasso::ChainSpec {
         None,
 		Some(properties),
         Extensions {
+			//TODO set to Ksm for picasso
             relay_chain: "picasso-local".into(), // You MUST set this to the correct network!
             para_id: id.into(),
         },

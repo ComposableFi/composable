@@ -216,8 +216,8 @@ impl timestamp::Config for Runtime {
     type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
 }
 
-
-pub const EXISTENTIAL_DEPOSIT: Balance = 500;
+// TODO changed to be inline with ksm
+pub const EXISTENTIAL_DEPOSIT: Balance = 3333333;
 
 parameter_types! {
 	//TODO set
@@ -337,7 +337,7 @@ where
 //TODO set
 parameter_types! {
 	pub const StakeLock: BlockNumber = 50;
-	pub const MinStake: Balance = 500;
+	pub const MinStake: Balance = 3333333;
 	pub const RequestCost: Balance = 1;
 	pub const RewardAmount: Balance = 5;
 	pub const SlashAmount: Balance = 5;
@@ -581,32 +581,32 @@ construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic
     {
 		//TODO number all of these
-        System: system::{Pallet, Call, Config, Storage, Event<T>},
-        Timestamp: timestamp::{Pallet, Call, Storage, Inherent},
-        Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-        RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage},
-        TransactionPayment: transaction_payment::{Pallet, Storage},
-		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>},
+        System: system::{Pallet, Call, Config, Storage, Event<T>} = 0,
+        Timestamp: timestamp::{Pallet, Call, Storage, Inherent} = 1,
+        Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,
+        RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage} = 3,
+        TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
+		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
+        Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
 
         // Parachains stuff
-        ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 20,
-        ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
+        ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
+        ParachainInfo: parachain_info::{Pallet, Storage, Config} = 11,
 
 		// Collator support. the order of these 5 are important and shall not change.
-		Authorship: authorship::{Pallet, Call, Storage},
-		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>},
-		Session: session::{Pallet, Call, Storage, Event, Config<T>},
-        Aura: aura::{Pallet, Config<T>},
-        AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
+		Authorship: authorship::{Pallet, Call, Storage} = 20,
+		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
+		Session: session::{Pallet, Call, Storage, Event, Config<T>} = 22,
+        Aura: aura::{Pallet, Config<T>} = 23,
+        AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 24,
 
         // XCM helpers.
-        XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
-        PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 51,
-        CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
-        DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
+        XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
+        PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 31,
+        CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 32,
+        DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
 
-        Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-        Oracle: oracle::{Pallet, Call, Storage, Event<T>},
+        Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 40,
     }
 );
 
