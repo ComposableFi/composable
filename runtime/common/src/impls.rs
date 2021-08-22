@@ -33,20 +33,22 @@ where
 		let numeric_amount = amount.peek();
 		let staking_pot = <collator_selection::Pallet<R>>::account_id();
 		let slash_ratio: u32 = 2;
-
+		let slash_amount = numeric_amount.div(slash_ratio.into());
 		<balances::Pallet<R>>::resolve_creating(
 			&staking_pot,
 			amount,
 		);
 		// deposit then slash the amount to burn fees
-		let _ = <balances::Pallet<R>>::slash(
-			&staking_pot,
-			numeric_amount.div(slash_ratio.into()),
-		);
+		if <balances::Pallet<R>>::can_slash(&staking_pot, slash_amount) {
+			let _ = <balances::Pallet<R>>::slash(
+				&staking_pot,
+				slash_amount,
+			);
+		}
 
 		<frame_system::Pallet<R>>::deposit_event(balances::Event::Deposit(
 			staking_pot,
-			numeric_amount.div(slash_ratio.into()),
+			slash_amount,
 		));
 
 	}
@@ -132,11 +134,15 @@ mod tests {
 		type OnSetCode = ();
 	}
 
+	parameter_types! {
+		pub const ExistentialDeposit: u64 = 3;
+	}
+
 	impl balances::Config for Test {
 		type Balance = u64;
 		type Event = Event;
 		type DustRemoval = ();
-		type ExistentialDeposit = ();
+		type ExistentialDeposit = ExistentialDeposit;
 		type AccountStore = System;
 		type MaxLocks = ();
 		type ReserveIdentifier = [u8; 8];
@@ -213,6 +219,36 @@ mod tests {
 
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 15);
+		});
+	}
+
+	#[test]
+	fn test_fees_and_tip_split_0() {
+		new_test_ext().execute_with(|| {
+			let fee = Balances::issue(0);
+			let tip = Balances::issue(0);
+
+			assert_eq!(Balances::free_balance(AccountId::default()), 0);
+
+			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
+
+			// Author gets 50% of tip and 50% of fee = 15
+			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 0);
+		});
+	}
+
+	#[test]
+	fn test_fees_and_tip_split_under_ed() {
+		new_test_ext().execute_with(|| {
+			let fee = Balances::issue(1);
+			let tip = Balances::issue(1);
+
+			assert_eq!(Balances::free_balance(AccountId::default()), 0);
+
+			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
+
+			// Author gets 50% of tip and 50% of fee = 15
+			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 0);
 		});
 	}
 }
