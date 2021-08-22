@@ -230,7 +230,7 @@ impl system::Config for Runtime {
     /// What to do if an account is fully reaped from the system.
     type OnKilledAccount = ();
     /// Weight information for the extrinsics of this pallet.
-    type SystemWeightInfo = ();
+    type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
     /// This is used as an identifier of the chain. 42 is the generic substrate prefix.
     type SS58Prefix = SS58Prefix;
     /// The action to take on a Runtime Upgrade. Used not default since we're a parachain.
@@ -254,7 +254,7 @@ impl timestamp::Config for Runtime {
     type Moment = u64;
     type OnTimestampSet = Aura;
     type MinimumPeriod = MinimumPeriod;
-    type WeightInfo = ();
+    type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -274,7 +274,7 @@ impl balances::Config for Runtime {
     type DustRemoval = ();
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
-    type WeightInfo = balances::weights::SubstrateWeight<Runtime>;
+    type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
 //TODO set, some get burned some got to collator pot see DealWithFees in statemint repo
 parameter_types! {
@@ -558,8 +558,8 @@ parameter_types! {
 	pub const UncleGenerations: u32 = 0;
 }
 
-impl pallet_authorship::Config for Runtime {
-	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
+impl authorship::Config for Runtime {
+	type FindAuthor = session::FindAccountFromAuthorIndex<Self, Aura>;
 	type UncleGenerations = UncleGenerations;
 	type FilterUncle = ();
 	type EventHandler = (CollatorSelection,);
@@ -572,19 +572,19 @@ parameter_types! {
 	pub const Offset: u32 = 0;
 }
 
-impl pallet_session::Config for Runtime {
+impl session::Config for Runtime {
 	type Event = Event;
 	type ValidatorId = <Self as system::Config>::AccountId;
 	// we don't have stash and controller, thus we don't need the convert as well.
-	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
-	type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
-	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
+	type ValidatorIdOf = collator_selection::IdentityCollator;
+	type ShouldEndSession = session::PeriodicSessions<Period, Offset>;
+	type NextSessionRotation = session::PeriodicSessions<Period, Offset>;
 	type SessionManager = CollatorSelection;
 	// Essentially just Aura, but lets be pedantic.
 	type SessionHandler = <opaque::SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = opaque::SessionKeys;
 	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
-	type WeightInfo = ();
+	type WeightInfo = weights::session::WeightInfo<Runtime>;
 }
 
 //TODO set
@@ -596,7 +596,7 @@ parameter_types! {
 	pub const MinCandidates: u32 = 5;
 }
 
-impl pallet_collator_selection::Config for Runtime {
+impl collator_selection::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type UpdateOrigin = EnsureOneOf<AccountId, EnsureRoot<AccountId>, EnsureRoot<AccountId>>;
@@ -607,7 +607,7 @@ impl pallet_collator_selection::Config for Runtime {
 	// should be a multiple of session or things will get inconsistent
 	type KickThreshold = Period;
 	type ValidatorId = <Self as system::Config>::AccountId;
-	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
+	type ValidatorIdOf = collator_selection::IdentityCollator;
 	type ValidatorRegistration = Session;
 	type WeightInfo = ();
 }
@@ -631,9 +631,9 @@ construct_runtime!(
         ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
 		// Collator support. the order of these 5 are important and shall not change.
-		Authorship: pallet_authorship::{Pallet, Call, Storage},
-		CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>},
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
+		Authorship: authorship::{Pallet, Call, Storage},
+		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>},
+		Session: session::{Pallet, Call, Storage, Event, Config<T>},
         Aura: aura::{Pallet, Config<T>},
         AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
 
@@ -803,8 +803,11 @@ impl_runtime_apis! {
         ) -> Result<Vec<benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
             use benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
-            use system_benchmarking::Pallet as SystemBench;
-            impl system_benchmarking::Config for Runtime {}
+            use frame_system_benchmarking::Pallet as SystemBench;
+            impl frame_system_benchmarking::Config for Runtime {}
+
+			use session_benchmarking::Pallet as SessionBench;
+			impl session_benchmarking::Config for Runtime {}
 
             let whitelist: Vec<TrackedStorageKey> = vec![
                 // Block Number
@@ -822,10 +825,12 @@ impl_runtime_apis! {
             let mut batches = Vec::<BenchmarkBatch>::new();
             let params = (&config, &whitelist);
 
-            add_benchmark!(params, batches, system, SystemBench::<Runtime>);
+            add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
             add_benchmark!(params, batches, balances, Balances);
             add_benchmark!(params, batches, timestamp, Timestamp);
 			add_benchmark!(params, batches, oracle, Oracle);
+			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
+			add_benchmark!(params, batches, collator_selection, CollatorSelection);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
