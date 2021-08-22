@@ -8,11 +8,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
 
-use sp_std::prelude::*;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::{
-	ApplyExtrinsicResult, generic, create_runtime_str, impl_opaque_keys, MultiSignature,
-	transaction_validity::{TransactionValidity, TransactionSource},
 use grandpa::{
     fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -31,7 +26,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
-pub use support::{
+pub use frame_support::{
     construct_runtime, parameter_types,
     traits::{KeyOwnerProofSystem, Randomness, StorageInfo},
     weights::{
@@ -45,6 +40,7 @@ use transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 use codec::Encode;
+use frame_system as system;
 use system::{EnsureOneOf, EnsureRoot};
 
 /// An index to a block.
@@ -258,57 +254,32 @@ parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
 }
 
-impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
-	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate = ();
+impl transaction_payment::Config for Runtime {
+    type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
+    type TransactionByteFee = TransactionByteFee;
+    type WeightToFee = IdentityFee<Balance>;
+    type FeeMultiplierUpdate = ();
 }
 
-impl pallet_sudo::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+impl sudo::Config for Runtime {
+    type Event = Event;
+    type Call = Call;
 }
 
 parameter_types! {
 	pub const IndexDeposit: Balance = 1 * 100000000000000;
 }
 
-impl pallet_indices::Config for Runtime {
+impl indices::Config for Runtime {
 	type AccountIndex = AccountIndex;
 	type Currency = Balances;
 	type Deposit = IndexDeposit;
 	type Event = Event;
-	type WeightInfo = pallet_indices::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = indices::weights::SubstrateWeight<Runtime>;
 }
 
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
-parameter_types! {
-	pub const StakeLock: BlockNumber = 50;
-	pub const MinStake: Balance = 500;
-	pub const RequestCost: Balance = 1;
-	pub const RewardAmount: Balance = 5;
-	pub const SlashAmount: Balance = 5;
-	pub const StalePrice: BlockNumber = 5;
-	pub const MaxAnswerBound: u64 = 25;
-
-}
-
-impl pallet_oracle::Config for Runtime {
-	type Currency = Balances;
-	type Event = Event;
-	type AuthorityId = pallet_oracle::crypto::TestAuthId;
-	type StakeLock = StakeLock;
-	type MinStake = MinStake;
-	type StalePrice = StalePrice;
-	type AddOracle = EnsureOneOf<AccountId, EnsureRoot<AccountId>, EnsureRoot<AccountId>>;
-	type RequestCost = RequestCost;
-	type RewardAmount = RewardAmount;
-	type SlashAmount = SlashAmount;
-	type MaxAnswerBound = MaxAnswerBound;
-	type WeightInfo = weights::pallet_oracle::WeightInfo<Runtime>;
-}
 
 impl<LocalCall> system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 	where
@@ -373,7 +344,7 @@ impl<C> system::offchain::SendTransactionTypes<C> for Runtime
 
 parameter_types! {
 	pub const StakeLock: BlockNumber = 50;
-	pub const MinStake: Balance = 1;
+	pub const MinStake: Balance = 500;
 	pub const RequestCost: Balance = 1;
 	pub const RewardAmount: Balance = 5;
 	pub const SlashAmount: Balance = 5;
@@ -394,6 +365,7 @@ impl oracle::Config for Runtime {
 	type RewardAmount = RewardAmount;
 	type SlashAmount = SlashAmount;
 	type MaxAnswerBound = MaxAnswerBound;
+	type WeightInfo = ();
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -407,6 +379,7 @@ construct_runtime!(
 		RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage},
 		Timestamp: timestamp::{Pallet, Call, Storage, Inherent},
 		Aura: aura::{Pallet, Config<T>},
+		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Grandpa: grandpa::{Pallet, Call, Storage, Config, Event},
 		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: transaction_payment::{Pallet, Storage},
@@ -573,10 +546,10 @@ impl_runtime_apis! {
 	impl benchmarking::Benchmark<Block> for Runtime {
 		// fn benchmark_metadata(extra: bool) -> (
 		// 	Vec<benchmarking::BenchmarkList>,
-		// 	Vec<support::traits::StorageInfo>,
+		// 	Vec<frame_support::traits::StorageInfo>,
 		// ) {
 		// 	use benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
-		// 	use support::traits::StorageInfoTrait;
+		// 	use frame_support::traits::StorageInfoTrait;
 		// 	use system_benchmarking::Pallet as SystemBench;
 		//
 		// 	let mut list = Vec::<BenchmarkList>::new();
@@ -595,8 +568,8 @@ impl_runtime_apis! {
 		) -> Result<Vec<benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
-			use system_benchmarking::Pallet as SystemBench;
-			impl system_benchmarking::Config for Runtime {}
+			use frame_system_benchmarking::Pallet as SystemBench;
+			impl frame_system_benchmarking::Config for Runtime {}
 
 			let whitelist: Vec<TrackedStorageKey> = vec![
 				// Block Number
@@ -616,7 +589,7 @@ impl_runtime_apis! {
 
 			add_benchmark!(params, batches, system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, balances, Balances);
-			add_benchmark!(params, batches, pallet_oracle, Oracle);
+			add_benchmark!(params, batches, oracle, Oracle);
 			add_benchmark!(params, batches, timestamp, Timestamp);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

@@ -2,15 +2,15 @@
 
 steps=5
 repeat=2
-picassoOutput=./runtime/src/weights/
-picassoChain=dev
+picassoOutput=./runtime/picasso/src/weights
+picassoChain=picasso-dev
 pallets=(
-	pallet_oracle
+	oracle
 )
 
 for p in ${pallets[@]}
 do
-	./target/release/node-template benchmark \
+	./target/release/composable benchmark \
 		--chain=$picassoChain \
 		--execution=wasm \
 		--wasm-execution=compiled \

@@ -7,8 +7,8 @@ edition = "2018"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
-support = { package = "frame-support", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
+frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
+frame-support = { package = "frame-support", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 executive = { package = "frame-executive", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
@@ -26,6 +26,7 @@ sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkad
 aura = { package = "pallet-aura", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 grandpa = { package = "pallet-grandpa", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
+indices = { package = "pallet-indices", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 randomness-collective-flip = { package = "pallet-randomness-collective-flip", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
@@ -37,7 +38,7 @@ transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rp
 
 # Used for runtime benchmarking
 benchmarking = { package = "frame-benchmarking", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false, optional = true }
-system-benchmarking = { package = "frame-system-benchmarking", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false, optional = true }
+frame-system-benchmarking = { package = "frame-system-benchmarking", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false, optional = true }
 hex-literal = { version = "0.3.1", optional = true }
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
 
@@ -49,13 +50,14 @@ default = ["std"]
 std = [
     "codec/std",
     "executive/std",
-    "support/std",
+    "frame-support/std",
     "system-rpc-runtime-api/std",
-    "system/std",
+    "frame-system/std",
     "aura/std",
     "oracle/std",
     "balances/std",
     "grandpa/std",
+    "indices/std",
     "randomness-collective-flip/std",
     "sudo/std",
     "timestamp/std",
@@ -75,11 +77,12 @@ std = [
 ]
 runtime-benchmarks = [
     "benchmarking",
-    "support/runtime-benchmarks",
-    "system-benchmarking",
-    "system/runtime-benchmarks",
+    "frame-support/runtime-benchmarks",
+    "frame-system-benchmarking",
+    "frame-system/runtime-benchmarks",
     "hex-literal",
     "balances/runtime-benchmarks",
+	"oracle/runtime-benchmarks",
     "timestamp/runtime-benchmarks",
     "sp-runtime/runtime-benchmarks",
 ]

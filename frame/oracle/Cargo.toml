@@ -28,6 +28,8 @@ log = { version = "0.4.14", default-features = false }
 lite-json = { version = "0.1", default-features = false }
 serde_json = { version = "1.0.45", default-features = false, features = ["alloc"] }
 
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
+
 [dev-dependencies]
 serde = { version = "1.0.119" }
 pallet-balances = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
@@ -45,4 +47,10 @@ std = [
     "sp-io/std",
     "sp-core/std",
     "sp-std/std",
+]
+
+runtime-benchmarks = [
+	'frame-benchmarking',
+	'frame-support/runtime-benchmarks',
+	'frame-system/runtime-benchmarks',
 ]
