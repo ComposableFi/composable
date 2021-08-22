@@ -1,5 +1,5 @@
 use picasso_runtime::{
-	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
+	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, IndicesConfig,
 	SudoConfig, SystemConfig, WASM_BINARY,
 };
 use super::{AuraId, GrandpaId};
@@ -25,6 +25,9 @@ pub fn genesis_config(
 		},
 		aura: AuraConfig {
 			authorities: authorities.iter().map(|x| (x.0.clone())).collect(),
+		},
+		indices: IndicesConfig {
+			indices: vec![],
 		},
 		grandpa: GrandpaConfig {
 			authorities: authorities.iter().map(|x| (x.1.clone(), 1)).collect(),

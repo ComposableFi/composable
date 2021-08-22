@@ -137,6 +137,7 @@ impl pallet_oracle::Config for Test {
     type RewardAmount = RewardAmount;
     type SlashAmount = SlashAmount;
 	type MaxAnswerBound = MaxAnswerBound;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
