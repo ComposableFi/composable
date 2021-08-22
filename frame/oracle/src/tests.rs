@@ -21,45 +21,69 @@ use sp_runtime::traits::{BadOrigin};
 #[test]
 fn add_asset_and_info() {
     new_test_ext().execute_with(|| {
+        const ASSET_ID: u64 = 1;
+        const MIN_ANSWERS: u64 = 3;
+        const MAX_ANSWERS: u64 = 5;
+        const THRESHOLD: Percent = Percent::from_percent(80);
+
         // passes
         let account_2 = get_account_2();
         assert_ok!(Oracle::add_asset_and_info(
             Origin::signed(account_2),
-            1,
-            Percent::from_percent(80),
-			3,
-			5,
+            ASSET_ID,
+            THRESHOLD,
+            MIN_ANSWERS,
+            MAX_ANSWERS,
         ));
 
-		let asset_info = AssetInfo {
-			threshold: Percent::from_percent(80),
-			min_answers: 3,
-			max_answers: 5
-		};
+        let asset_info = AssetInfo {
+            threshold: THRESHOLD,
+            min_answers: MIN_ANSWERS,
+            max_answers: MAX_ANSWERS
+        };
         // id now activated and count incremented
         assert_eq!(Oracle::accuracy_threshold(1), asset_info);
         assert_eq!(Oracle::assets_count(), 1);
         // fails with non permission
         let account_1: AccountId = Default::default();
-        assert_noop!(
-            Oracle::add_asset_and_info(Origin::signed(account_1), 1, Percent::from_percent(80), 3, 5),
-            BadOrigin
-        );
+        assert_noop!(Oracle::add_asset_and_info(
+            Origin::signed(account_1),
+            ASSET_ID,
+            THRESHOLD,
+            MAX_ANSWERS,
+            MAX_ANSWERS
+        ), BadOrigin);
 
-		assert_noop!(Oracle::add_asset_and_info(
+        assert_noop!(Oracle::add_asset_and_info(
             Origin::signed(account_2),
-            1,
-            Percent::from_percent(80),
-			3,
-			6,
+            ASSET_ID,
+            THRESHOLD,
+            MAX_ANSWERS,
+            MIN_ANSWERS,
+        ), Error::<Test>::MaxAnswersLessThanMinAnswers);
+
+        assert_noop!(Oracle::add_asset_and_info(
+            Origin::signed(account_2),
+            ASSET_ID,
+            Percent::from_percent(100),
+            MIN_ANSWERS,
+            MAX_ANSWERS,
+        ), Error::<Test>::ExceedThreshold);
+
+        assert_noop!(Oracle::add_asset_and_info(
+            Origin::signed(account_2),
+            ASSET_ID,
+            THRESHOLD,
+            MIN_ANSWERS,
+            MAX_ANSWERS + 1,
         ), Error::<Test>::ExceedMaxAnswers);
 
-		assert_noop!(Oracle::add_asset_and_info(
+        assert_noop!(Oracle::add_asset_and_info(
             Origin::signed(account_2),
-            1,
-            Percent::from_percent(80),
-			0,
-			5,
+            ASSET_ID,
+            THRESHOLD,
+            0,
+            MAX_ANSWERS,
         ), Error::<Test>::InvalidMinAnswers);
     });
 }
@@ -695,14 +719,14 @@ fn should_submit_signed_transaction_on_chain() {
 #[test]
 fn parse_price_works() {
     let test_data = vec![
-        ("{\"USD\":6536.92}", Some(6536)),
-        ("{\"USD\":650000000}", Some(650000000)),
-        ("{\"USD2\":6536}", None),
-        ("{\"USD\":\"6432\"}", None),
+        ("{\"1\":6536.92}", Some(6536)),
+        ("{\"1\":650000000}", Some(650000000)),
+        ("{\"2\":6536}", None),
+        ("{\"0\":\"6432\"}", None),
     ];
 
     for (json, expected) in test_data {
-        assert_eq!(expected, Oracle::parse_price(json));
+        assert_eq!(expected, Oracle::parse_price(json, "1"));
     }
 }
 
