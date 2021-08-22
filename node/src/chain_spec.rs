@@ -52,7 +52,7 @@ where
 pub fn picasso_dev(id: ParaId) -> picasso::ChainSpec {
 	//TODO check properties
 	let mut properties = Properties::new();
-	properties.insert("tokenSymbol".into(), "PIC".into());
+	properties.insert("tokenSymbol".into(), "$PICA".into());
 	properties.insert("tokenDecimals".into(), 12.into());
 
     picasso::ChainSpec::from_genesis(
