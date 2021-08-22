@@ -42,6 +42,7 @@ fn load_spec(
     Ok(match id {
         // Must define the default chain here because `export-genesis-state` command
         // does not support `--chain` and `--parachain-id` arguments simultaneously.
+		// TODO set prod and hardcode para id
         "" | "picasso-dev" => Box::new(chain_spec::picasso_dev(para_id)),
         path => Box::new(chain_spec::picasso::ChainSpec::from_json_file(
             std::path::PathBuf::from(path),

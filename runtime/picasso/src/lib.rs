@@ -6,14 +6,19 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+mod weights;
 use sp_api::impl_runtime_apis;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
-    traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify},
+    traits::{AccountIdLookup, BlakeTwo256, Block as BlockT},
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature,
+    ApplyExtrinsicResult,
+};
+pub use runtime_common as common;
+use runtime_common::{
+	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, Hash, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -21,8 +26,8 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
-pub use support::{
-    construct_runtime, match_type, parameter_types,
+pub use frame_support::{
+    construct_runtime, parameter_types, PalletId, match_type,
     traits::{All, KeyOwnerProofSystem, Randomness, StorageInfo},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -37,6 +42,7 @@ use polkadot_parachain::primitives::Sibling;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+use frame_system as system;
 use system::{
     limits::{BlockLength, BlockWeights},
     EnsureOneOf, EnsureRoot,
@@ -53,25 +59,6 @@ use xcm_builder::{
     SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
 use xcm_executor::XcmExecutor;
-
-/// An index to a block.
-pub type BlockNumber = u32;
-
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Index of a transaction in the chain.
-pub type AccountIndex = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -119,23 +106,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     transaction_version: 1,
 };
 
-/// This determines the average expected block time that we are targeting.
-/// Blocks will be produced at a minimum duration defined by `SLOT_DURATION`.
-/// `SLOT_DURATION` is picked up by `timestamp` which is in turn picked
-/// up by `aura` to implement `fn slot_duration()`.
-///
-/// Change this to adjust the block time.
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
-
-// NOTE: Currently it is not possible to change the slot duration after the chain has started.
-//       Attempting to do so will brick block production.
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
-
-// Time is measured by number of blocks.
-pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-pub const HOURS: BlockNumber = MINUTES * 60;
-pub const DAYS: BlockNumber = HOURS * 24;
-
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
@@ -145,15 +115,6 @@ pub fn native_version() -> NativeVersion {
     }
 }
 
-/// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
-/// This is used to limit the maximal weight of a single extrinsic.
-const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
-/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
-/// by  Operational  extrinsics.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
-/// We allow for 0.5 of a second of compute with a 12 second average block time.
-/// This is a default constant received excluding benchmarking.
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 
 parameter_types! {
     pub const BlockHashCount: BlockNumber = 250;
@@ -228,7 +189,7 @@ impl system::Config for Runtime {
     /// What to do if an account is fully reaped from the system.
     type OnKilledAccount = ();
     /// Weight information for the extrinsics of this pallet.
-    type SystemWeightInfo = ();
+    type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
     /// This is used as an identifier of the chain. 42 is the generic substrate prefix.
     type SS58Prefix = SS58Prefix;
     /// The action to take on a Runtime Upgrade. Used not default since we're a parachain.
@@ -252,11 +213,15 @@ impl timestamp::Config for Runtime {
     type Moment = u64;
     type OnTimestampSet = Aura;
     type MinimumPeriod = MinimumPeriod;
-    type WeightInfo = ();
+    type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
 }
 
+// TODO changed to be inline with ksm
+pub const EXISTENTIAL_DEPOSIT: Balance = 3333333;
+
 parameter_types! {
-    pub const ExistentialDeposit: u128 = 500;
+	//TODO set
+    pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
     pub const MaxLocks: u32 = 50;
 }
 
@@ -271,15 +236,15 @@ impl balances::Config for Runtime {
     type DustRemoval = ();
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
-    type WeightInfo = balances::weights::SubstrateWeight<Runtime>;
+    type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
-
+//TODO set, some get burned some got to collator pot see DealWithFees in statemint repo
 parameter_types! {
     pub const TransactionByteFee: Balance = 1;
 }
 
 impl transaction_payment::Config for Runtime {
-    type OnChargeTransaction = transaction_payment::CurrencyAdapter<Balances, ()>;
+    type OnChargeTransaction = transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
     type TransactionByteFee = TransactionByteFee;
     type WeightToFee = IdentityFee<Balance>;
     type FeeMultiplierUpdate = ();
@@ -289,6 +254,21 @@ impl sudo::Config for Runtime {
     type Event = Event;
     type Call = Call;
 }
+
+parameter_types! {
+	pub const IndexDeposit: Balance = 1 * 100000000000000;
+}
+
+impl indices::Config for Runtime {
+	type Event = Event;
+	type AccountIndex = AccountIndex;
+	type Currency = Balances;
+	type Deposit = IndexDeposit;
+	type WeightInfo = indices::weights::SubstrateWeight<Runtime>;
+}
+
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+
 
 impl<LocalCall> system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
@@ -354,14 +334,15 @@ where
     type Extrinsic = UncheckedExtrinsic;
 }
 
+//TODO set
 parameter_types! {
-    pub const StakeLock: BlockNumber = 50;
-    pub const MinStake: Balance = 1;
-    pub const RequestCost: Balance = 1;
-    pub const RewardAmount: Balance = 5;
-    pub const SlashAmount: Balance = 5;
-    pub const StalePrice: BlockNumber = 5;
-    pub const MaxAnswerBound: u64 = 25;
+	pub const StakeLock: BlockNumber = 50;
+	pub const MinStake: Balance = 3333333;
+	pub const RequestCost: Balance = 1;
+	pub const RewardAmount: Balance = 5;
+	pub const SlashAmount: Balance = 5;
+	pub const StalePrice: BlockNumber = 5;
+	pub const MaxAnswerBound: u64 = 25;
 
 }
 
@@ -377,6 +358,7 @@ impl oracle::Config for Runtime {
     type RewardAmount = RewardAmount;
     type SlashAmount = SlashAmount;
     type MaxAnswerBound = MaxAnswerBound;
+	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 }
 
 // Parachain stuff.
@@ -534,6 +516,63 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
     type ExecuteOverweightOrigin = system::EnsureRoot<AccountId>;
 }
 
+parameter_types! {
+	pub const UncleGenerations: u32 = 0;
+}
+
+impl authorship::Config for Runtime {
+	type FindAuthor = session::FindAccountFromAuthorIndex<Self, Aura>;
+	type UncleGenerations = UncleGenerations;
+	type FilterUncle = ();
+	type EventHandler = (CollatorSelection,);
+}
+
+//TODO set
+parameter_types! {
+	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(33);
+	pub const Period: u32 = 6 * HOURS;
+	pub const Offset: u32 = 0;
+}
+
+impl session::Config for Runtime {
+	type Event = Event;
+	type ValidatorId = <Self as system::Config>::AccountId;
+	// we don't have stash and controller, thus we don't need the convert as well.
+	type ValidatorIdOf = collator_selection::IdentityCollator;
+	type ShouldEndSession = session::PeriodicSessions<Period, Offset>;
+	type NextSessionRotation = session::PeriodicSessions<Period, Offset>;
+	type SessionManager = CollatorSelection;
+	// Essentially just Aura, but lets be pedantic.
+	type SessionHandler = <opaque::SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
+	type Keys = opaque::SessionKeys;
+	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
+	type WeightInfo = weights::session::WeightInfo<Runtime>;
+}
+
+//TODO set
+parameter_types! {
+	pub const PotId: PalletId = PalletId(*b"PotStake");
+	pub const MaxCandidates: u32 = 1000;
+	pub const SessionLength: BlockNumber = 6 * HOURS;
+	pub const MaxInvulnerables: u32 = 100;
+	pub const MinCandidates: u32 = 5;
+}
+
+impl collator_selection::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type UpdateOrigin = EnsureOneOf<AccountId, EnsureRoot<AccountId>, EnsureRoot<AccountId>>;
+	type PotId = PotId;
+	type MaxCandidates = MaxCandidates;
+	type MinCandidates = MinCandidates;
+	type MaxInvulnerables = MaxInvulnerables;
+	// should be a multiple of session or things will get inconsistent
+	type KickThreshold = Period;
+	type ValidatorId = <Self as system::Config>::AccountId;
+	type ValidatorIdOf = collator_selection::IdentityCollator;
+	type ValidatorRegistration = Session;
+	type WeightInfo = ();
+}
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -541,27 +580,33 @@ construct_runtime!(
         NodeBlock = opaque::Block,
         UncheckedExtrinsic = UncheckedExtrinsic
     {
-        System: system::{Pallet, Call, Config, Storage, Event<T>},
-        Timestamp: timestamp::{Pallet, Call, Storage, Inherent},
-        Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-        RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage},
-        TransactionPayment: transaction_payment::{Pallet, Storage},
+		//TODO number all of these
+        System: system::{Pallet, Call, Config, Storage, Event<T>} = 0,
+        Timestamp: timestamp::{Pallet, Call, Storage, Inherent} = 1,
+        Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,
+        RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage} = 3,
+        TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
+		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
+        Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
 
         // Parachains stuff
-        ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 20,
-        ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
+        ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
+        ParachainInfo: parachain_info::{Pallet, Storage, Config} = 11,
 
-        Aura: aura::{Pallet, Config<T>},
-        AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
+		// Collator support. the order of these 5 are important and shall not change.
+		Authorship: authorship::{Pallet, Call, Storage} = 20,
+		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
+		Session: session::{Pallet, Call, Storage, Event, Config<T>} = 22,
+        Aura: aura::{Pallet, Config<T>} = 23,
+        AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 24,
 
         // XCM helpers.
-        XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
-        PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 51,
-        CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
-        DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
+        XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
+        PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 31,
+        CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 32,
+        DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
 
-        Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-        Oracle: oracle::{Pallet, Call, Storage, Event<T>},
+        Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 40,
     }
 );
 
@@ -720,8 +765,11 @@ impl_runtime_apis! {
         ) -> Result<Vec<benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
             use benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
-            use system_benchmarking::Pallet as SystemBench;
-            impl system_benchmarking::Config for Runtime {}
+            use frame_system_benchmarking::Pallet as SystemBench;
+            impl frame_system_benchmarking::Config for Runtime {}
+
+			use session_benchmarking::Pallet as SessionBench;
+			impl session_benchmarking::Config for Runtime {}
 
             let whitelist: Vec<TrackedStorageKey> = vec![
                 // Block Number
@@ -739,9 +787,12 @@ impl_runtime_apis! {
             let mut batches = Vec::<BenchmarkBatch>::new();
             let params = (&config, &whitelist);
 
-            add_benchmark!(params, batches, system, SystemBench::<Runtime>);
+            add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
             add_benchmark!(params, batches, balances, Balances);
             add_benchmark!(params, batches, timestamp, Timestamp);
+			add_benchmark!(params, batches, oracle, Oracle);
+			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
+			add_benchmark!(params, batches, collator_selection, CollatorSelection);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
