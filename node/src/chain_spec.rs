@@ -1,15 +1,14 @@
 use cumulus_primitives_core::ParaId;
-use picasso_runtime::AccountId;
+use runtime_common::{AccountId, AuraId, Balance};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::IdentifyAccount;
 use sp_runtime::MultiSigner;
-
 pub mod picasso;
 
+const PICASSO_ED: Balance = picasso_runtime::EXISTENTIAL_DEPOSIT;
 /// The extensions for the [`ChainSpec`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension)]
 #[serde(deny_unknown_fields)]
@@ -71,6 +70,7 @@ pub fn picasso_dev(id: ParaId) -> picasso::ChainSpec {
 				],
                 dev_accounts(),
                 id,
+				PICASSO_ED,
             )
         },
         vec![],

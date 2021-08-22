@@ -1,11 +1,10 @@
-use picasso_runtime::{self as parachain_runtime, AccountId, GenesisConfig, Balance};
+use picasso_runtime::{self as parachain_runtime, GenesisConfig};
+use runtime_common::{AccountId, AuraId, Balance};
 
-use super::{AuraId, Extensions, ParaId};
+use super::{Extensions, ParaId};
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
-//TODO un hardcode pull proper ED from config
-const PICASSO_ED: Balance = 500u128;
 
 /// Generate the session keys from individual elements.
 ///
@@ -19,6 +18,7 @@ pub fn genesis_config(
 	invulnerables: Vec<(AccountId, AuraId)>,
     accounts: Vec<AccountId>,
     id: ParaId,
+	existential_deposit: Balance
 ) -> parachain_runtime::GenesisConfig {
     parachain_runtime::GenesisConfig {
         system: parachain_runtime::SystemConfig {
@@ -51,8 +51,7 @@ pub fn genesis_config(
 		},
 		collator_selection: parachain_runtime::CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
-			//TODO split for each chain due to different ED
-			candidacy_bond: PICASSO_ED * 16,
+			candidacy_bond: existential_deposit * 16,
 			..Default::default()
 		},
     }

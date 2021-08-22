@@ -21,6 +21,7 @@ structopt = '0.3.8'
 
 # Local Dependencies
 picasso-runtime = { path = "../runtime/picasso"  }
+runtime-common = { path = "../runtime/common"  }
 
 # Substrate Dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
