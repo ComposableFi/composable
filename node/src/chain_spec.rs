@@ -1,6 +1,6 @@
 use cumulus_primitives_core::ParaId;
 use picasso_runtime::AccountId;
-use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
+use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;

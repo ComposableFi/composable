@@ -1,5 +1,6 @@
-use super::{AuraId, Extensions, ParaId};
 use picasso_runtime::{self as parachain_runtime, AccountId, GenesisConfig, Balance};
+
+use super::{AuraId, Extensions, ParaId};
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
@@ -35,6 +36,9 @@ pub fn genesis_config(
             // Assign network admin rights.
             key: root,
         },
+		indices: parachain_runtime::IndicesConfig {
+			indices: vec![],
+		},
         parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
         aura_ext: Default::default(),
         parachain_system: Default::default(),

@@ -6,6 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+mod weights;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -21,8 +22,8 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
-pub use support::{
-    construct_runtime, match_type, parameter_types, PalletId,
+pub use frame_support::{
+    construct_runtime, parameter_types, PalletId, match_type,
     traits::{All, KeyOwnerProofSystem, Randomness, StorageInfo},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -37,6 +38,7 @@ use polkadot_parachain::primitives::Sibling;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+use frame_system as system;
 use system::{
     limits::{BlockLength, BlockWeights},
     EnsureOneOf, EnsureRoot,
@@ -291,6 +293,21 @@ impl sudo::Config for Runtime {
     type Call = Call;
 }
 
+parameter_types! {
+	pub const IndexDeposit: Balance = 1 * 100000000000000;
+}
+
+impl indices::Config for Runtime {
+	type Event = Event;
+	type AccountIndex = AccountIndex;
+	type Currency = Balances;
+	type Deposit = IndexDeposit;
+	type WeightInfo = indices::weights::SubstrateWeight<Runtime>;
+}
+
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+
+
 impl<LocalCall> system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
     Call: From<LocalCall>,
@@ -357,13 +374,13 @@ where
 
 //TODO set
 parameter_types! {
-    pub const StakeLock: BlockNumber = 50;
-    pub const MinStake: Balance = 1;
-    pub const RequestCost: Balance = 1;
-    pub const RewardAmount: Balance = 5;
-    pub const SlashAmount: Balance = 5;
-    pub const StalePrice: BlockNumber = 5;
-    pub const MaxAnswerBound: u64 = 25;
+	pub const StakeLock: BlockNumber = 50;
+	pub const MinStake: Balance = 500;
+	pub const RequestCost: Balance = 1;
+	pub const RewardAmount: Balance = 5;
+	pub const SlashAmount: Balance = 5;
+	pub const StalePrice: BlockNumber = 5;
+	pub const MaxAnswerBound: u64 = 25;
 
 }
 
@@ -379,6 +396,7 @@ impl oracle::Config for Runtime {
     type RewardAmount = RewardAmount;
     type SlashAmount = SlashAmount;
     type MaxAnswerBound = MaxAnswerBound;
+	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 }
 
 // Parachain stuff.
@@ -606,7 +624,7 @@ construct_runtime!(
         Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
         RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage},
         TransactionPayment: transaction_payment::{Pallet, Storage},
-
+		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>},
 
         // Parachains stuff
         ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 20,
@@ -807,6 +825,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, system, SystemBench::<Runtime>);
             add_benchmark!(params, batches, balances, Balances);
             add_benchmark!(params, batches, timestamp, Timestamp);
+			add_benchmark!(params, batches, oracle, Oracle);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
