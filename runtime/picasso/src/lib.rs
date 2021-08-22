@@ -580,7 +580,6 @@ construct_runtime!(
         NodeBlock = opaque::Block,
         UncheckedExtrinsic = UncheckedExtrinsic
     {
-		//TODO number all of these
         System: system::{Pallet, Call, Config, Storage, Event<T>} = 0,
         Timestamp: timestamp::{Pallet, Call, Storage, Inherent} = 1,
         Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,

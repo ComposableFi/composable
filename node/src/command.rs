@@ -37,13 +37,12 @@ use std::{io::Write, net::SocketAddr};
 
 fn load_spec(
     id: &str,
-    para_id: ParaId,
 ) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
     Ok(match id {
         // Must define the default chain here because `export-genesis-state` command
         // does not support `--chain` and `--parachain-id` arguments simultaneously.
 		// TODO set prod and hardcode para id
-        "" | "picasso-dev" => Box::new(chain_spec::picasso_dev(para_id)),
+        "" | "picasso-dev" => Box::new(chain_spec::picasso_dev()),
         path => Box::new(chain_spec::picasso::ChainSpec::from_json_file(
             std::path::PathBuf::from(path),
         )?),
@@ -76,7 +75,7 @@ impl SubstrateCli for Cli {
     }
 
     fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-        load_spec(id, self.run.parachain_id.unwrap_or(2000).into())
+        load_spec(id)
     }
 
     fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {

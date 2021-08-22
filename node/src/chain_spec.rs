@@ -7,6 +7,8 @@ use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::IdentifyAccount;
 use sp_runtime::MultiSigner;
 pub mod picasso;
+// Parachin ID
+const PARA_ID: ParaId = ParaId::new(2022);
 
 const PICASSO_ED: Balance = picasso_runtime::EXISTENTIAL_DEPOSIT;
 /// The extensions for the [`ChainSpec`].
@@ -49,7 +51,7 @@ where
 }
 
 //TODO create prod config
-pub fn picasso_dev(id: ParaId) -> picasso::ChainSpec {
+pub fn picasso_dev() -> picasso::ChainSpec {
 	//TODO check properties
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "$PICA".into());
@@ -69,7 +71,7 @@ pub fn picasso_dev(id: ParaId) -> picasso::ChainSpec {
 					)
 				],
                 dev_accounts(),
-                id,
+				PARA_ID,
 				PICASSO_ED,
             )
         },

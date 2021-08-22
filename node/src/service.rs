@@ -210,6 +210,7 @@ where
             // Initialize seed for signing transaction using off-chain workers. This is a convenience
             // so learners can see the transactions submitted simply running the node.
             // Typically these keys should be inserted with RPC calls to `author_insertKey`.
+	        // TODO: rmeove in prod
             {
                 sp_keystore::SyncCryptoStore::sr25519_generate_new(
                     &*keystore,
