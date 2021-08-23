@@ -263,7 +263,7 @@ pub mod pallet {
                     id,
                     VaultInfo {
                         lp_token_id,
-                        ..Default::default()
+                        asset_id: config.asset_id,
                     },
                 );
 
