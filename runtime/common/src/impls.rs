@@ -24,7 +24,7 @@ pub type NegativeImbalance<T> = <balances::Pallet<T> as Currency<<T as frame_sys
 pub struct ToStakingPot<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for ToStakingPot<R>
 where
-	R: balances::Config + collator_selection::Config,
+	R: balances::Config + collator_selection::Config + treasury::Config<Currency=balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::Event: From<balances::Event<R>>,
@@ -40,11 +40,12 @@ where
 		);
 		// deposit then slash the amount to burn fees
 		if <balances::Pallet<R>>::can_slash(&staking_pot, slash_amount) {
-			// TODO: enrich treasury with the negative imbalance.
-			let (_negative_imbalanbce, _) = <balances::Pallet<R>>::slash(
+			let (imbalance, _) = <balances::Pallet<R>>::slash(
 				&staking_pot,
 				slash_amount,
 			);
+			// give treasury the remaining half
+			<treasury::Pallet<R> as OnUnbalanced<_>>::on_unbalanced(imbalance);
 		}
 
 		<frame_system::Pallet<R>>::deposit_event(balances::Event::Deposit(
@@ -58,7 +59,7 @@ where
 pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
-	R: balances::Config + collator_selection::Config,
+	R: balances::Config + collator_selection::Config + treasury::Config<Currency=balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::Event: From<balances::Event<R>>,
@@ -84,9 +85,10 @@ mod tests {
 	use sp_runtime::{
 		testing::Header,
 		traits::{BlakeTwo256, IdentityLookup},
-		Perbill,
+		Perbill, Permill,
 	};
 	use collator_selection::IdentityCollator;
+	use crate::{DAYS, Balance, BlockNumber, constants::PICA};
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 	type Block = frame_system::mocking::MockBlock<Test>;
@@ -99,6 +101,7 @@ mod tests {
 		{
 			System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 			Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+			Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 31,
 			CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>},
 		}
 	);
@@ -127,7 +130,7 @@ mod tests {
 		type DbWeight = ();
 		type Version = ();
 		type PalletInfo = PalletInfo;
-		type AccountData = balances::AccountData<u64>;
+		type AccountData = balances::AccountData<u128>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
 		type SystemWeightInfo = ();
@@ -140,7 +143,7 @@ mod tests {
 	}
 
 	impl balances::Config for Test {
-		type Balance = u64;
+		type Balance = u128;
 		type Event = Event;
 		type DustRemoval = ();
 		type ExistentialDeposit = ExistentialDeposit;
@@ -197,6 +200,36 @@ mod tests {
 		type EventHandler = ();
 	}
 
+	parameter_types! {
+		pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
+		/// percentage of proposal that most be bonded by the proposer
+		pub const ProposalBond: Permill = Permill::from_percent(5);
+		// TODO: rationale?
+		pub const ProposalBondMinimum: Balance = 5 * PICA;
+		pub const SpendPeriod: BlockNumber = 7 * DAYS;
+		pub const Burn: Permill = Permill::from_percent(0);
+
+		pub const MaxApprovals: u32 = 30;
+	}
+
+	impl treasury::Config for Test {
+		type PalletId = TreasuryPalletId;
+		type Currency = Balances;
+		type ApproveOrigin = EnsureRoot<AccountId>;
+		type RejectOrigin = EnsureRoot<AccountId>;
+		type Event = Event;
+		type OnSlash = Treasury;
+		type ProposalBond = ProposalBond;
+		type ProposalBondMinimum = ProposalBondMinimum;
+		type SpendPeriod = SpendPeriod;
+		type Burn = Burn;
+		type MaxApprovals = MaxApprovals;
+		type BurnDestination = ();
+		type WeightInfo = ();
+		// TODO: add bounties?
+		type SpendFunds = ();
+	}
+
 	pub fn new_test_ext() -> sp_io::TestExternalities {
 		let mut t = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
@@ -220,6 +253,7 @@ mod tests {
 
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 15);
+			assert_eq!(Balances::free_balance(Treasury::account_id()), 15);
 		});
 	}
 
@@ -235,6 +269,7 @@ mod tests {
 
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 0);
+			assert_eq!(Balances::free_balance(Treasury::account_id()), 0);
 		});
 	}
 
@@ -250,6 +285,7 @@ mod tests {
 
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 0);
+			assert_eq!(Balances::free_balance(Treasury::account_id()), 0);
 		});
 	}
 }
