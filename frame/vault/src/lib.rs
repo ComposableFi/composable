@@ -165,7 +165,6 @@ pub mod pallet {
         InsufficientFunds,
         AmountMustBePositive,
         NotEnoughLiquidity,
-        InconsistentState,
     }
 
     #[pallet::call]
@@ -300,13 +299,6 @@ pub mod pallet {
             let lp_total_issuance_value =
                 <T::Convert as Convert<T::Balance, u128>>::convert(lp_total_issuance);
 
-            // NOTE(hussein-aitlahcen): The vault should be the only one able to issue the LP tokens.
-            // This property should be held in practice, right?
-            ensure!(
-                vault_aum >= lp_total_issuance,
-                Error::<T>::InconsistentState
-            );
-
             let lp_amount_value = <T::Convert as Convert<T::Balance, u128>>::convert(lp_amount);
 
             /*
@@ -338,10 +330,10 @@ pub mod pallet {
             } else {
                 let from = Self::account_id();
 
-                T::Currency::transfer(vault.asset_id, &from, &to, lp_shares_value_amount)
-                    .map_err(|_| Error::<T>::TransferFromFailed)?;
                 T::Currency::withdraw(vault.lp_token_id, &to, lp_amount)
                     .map_err(|_| Error::<T>::MintFailed)?;
+                T::Currency::transfer(vault.asset_id, &from, &to, lp_shares_value_amount)
+                    .map_err(|_| Error::<T>::TransferFromFailed)?;
                 Ok(lp_shares_value_amount)
             }
         }
