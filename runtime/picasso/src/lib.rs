@@ -19,7 +19,7 @@ pub use runtime_common as common;
 use runtime_common::{
 	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, Hash, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
-	DAYS, EnsureRootOrHalfCouncil, CouncilInstance, PICA, MICRO_PICA,
+	DAYS, EnsureRootOrHalfCouncil, CouncilInstance, PICA, MILLI_PICA,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]

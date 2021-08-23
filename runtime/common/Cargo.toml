@@ -5,7 +5,7 @@ authors = ["Composable Developers <admin@composable.finance>"]
 edition = "2018"
 
 [package.metadata.docs.rs]
-targets = ['x86_64-unknown-linux-gnu']
+targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
@@ -21,7 +21,7 @@ node-primitives = { git = "https://github.com/paritytech/substrate", branch = "p
 polkadot-runtime-common = { git = "https://github.com/paritytech/polkadot", tag = "v0.9.8", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", tag = "v0.9.8", default-features = false }
 
-collator-selection = { package = "pallet-collator-selection", git = 'https://github.com/paritytech/cumulus', branch = 'polkadot-v0.9.8', default-features = false }
+collator-selection = { package = "pallet-collator-selection", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.8", default-features = false }
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 collective = { package = "pallet-collective", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
@@ -33,17 +33,18 @@ authorship = { package = "pallet-authorship", git = "https://github.com/parityte
 [features]
 default = ["std"]
 std = [
-	'codec/std',
-	'sp-consensus-aura/std',
-	'sp-std/std',
-	'sp-io/std',
-	'frame-support/std',
-	'executive/std',
-	'frame-system/std',
-	'collator-selection/std',
-	'balances/std',
-	'collective/std',
-	'node-primitives/std',
-	'polkadot-runtime-common/std',
-	'polkadot-primitives/std',
+	"codec/std",
+	"sp-consensus-aura/std",
+	"sp-std/std",
+	"sp-io/std",
+	"frame-support/std",
+	"executive/std",
+	"frame-system/std",
+	"collator-selection/std",
+	"balances/std",
+	"collective/std",
+	"treasury/std",
+	"node-primitives/std",
+	"polkadot-runtime-common/std",
+	"polkadot-primitives/std",
 ]
