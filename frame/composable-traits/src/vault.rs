@@ -15,14 +15,35 @@ pub enum FundsAvailability<Balance> {
     MustLiquidate,
 }
 
+pub trait Vault {
+    type AccountId;
+    type Balance;
+    type VaultId;
+
+    fn deposit(
+        vault: &Self::VaultId,
+        account: &Self::AccountId,
+        balance: &Self::Balance,
+    ) -> DispatchResult;
+
+    fn withdraw(
+        vault: &Self::VaultId,
+        account: &Self::AccountId,
+        balance: &Self::Balance,
+    ) -> DispatchResult;
+}
+
+pub trait LpTokenVault {
+    type AssetId;
+
+    fn lp_asset_id() -> Self::AssetId;
+}
+
 /// A vault which can be used by different strategies, such as pallets and smart contracts, to
 /// efficiently use capital. An example may be a vault which allocates 40% in a lending protocol, and
 /// 60% of the stored capital in a DEX.
-pub trait StrategicVault {
-    type AccountId;
-    type Balance;
+pub trait StrategicVault: Vault {
     type Error;
-    type VaultId;
 
     /// Used by strategies to query for available funds.
     fn available_funds(
