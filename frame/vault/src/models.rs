@@ -12,13 +12,13 @@ where
     pub strategies: BTreeMap<AccountId, Perquintill>,
 }
 
-#[derive(Encode, Decode, Default, Debug, PartialEq)]
+#[derive(Copy, Clone, Encode, Decode, Default, Debug, PartialEq)]
 pub struct VaultInfo<CurrencyId> {
     pub asset_id: CurrencyId,
     pub lp_token_id: CurrencyId,
 }
 
-#[derive(Encode, Decode, Default, Debug, PartialEq)]
+#[derive(Copy, Clone, Encode, Decode, Default, Debug, PartialEq)]
 pub struct StrategyOverview<Balance> {
     /// The reported balance of the strategy
     pub balance: Balance,
