@@ -26,6 +26,7 @@
 // TODO remove me!
 #![allow(missing_docs)]
 
+pub mod mocks;
 mod models;
 mod traits;
 
@@ -41,6 +42,7 @@ pub mod pallet {
     use composable_traits::vault::Vault;
     use frame_support::pallet_prelude::*;
     use frame_support::PalletId;
+    use frame_system::Config as SystemConfig;
     use num_traits::SaturatingSub;
     use orml_traits::MultiCurrency;
     use sp_runtime::traits::{
@@ -59,6 +61,9 @@ pub mod pallet {
         /// Emitted after a vault has been succesfully created.
         VaultCreated,
     }
+
+    type CurrencyIdOf<T> =
+        <<T as Config>::Currency as MultiCurrency<<T as SystemConfig>::AccountId>>::CurrencyId;
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
@@ -288,6 +293,15 @@ pub mod pallet {
         type AccountId = T::AccountId;
         type Balance = T::Balance;
         type VaultId = VaultIndex;
+        type AssetId = CurrencyIdOf<T>;
+
+        fn asset_id(vault: &Self::VaultId) -> Self::AssetId {
+            todo!()
+        }
+
+        fn account_id() -> Self::AccountId {
+            todo!()
+        }
 
         fn deposit(
             vault: &Self::VaultId,
@@ -310,12 +324,10 @@ pub mod pallet {
     where
         <T as frame_system::Config>::AccountId: core::hash::Hash,
     {
-        type Error = Error<T>;
-
         fn available_funds(
             vault_id: &Self::VaultId,
             account: &Self::AccountId,
-        ) -> Result<FundsAvailability<Self::Balance>, Self::Error> {
+        ) -> Result<FundsAvailability<Self::Balance>, DispatchError> {
             let allocation = match Allocations::<T>::try_get(vault_id, &account) {
                 Ok(allocation) => allocation,
                 // The strategy was removed by the fund manager or governance, so all funds should be
@@ -340,7 +352,7 @@ pub mod pallet {
             vault_id: &Self::VaultId,
             to: &Self::AccountId,
             amount: Self::Balance,
-        ) -> Result<(), Self::Error> {
+        ) -> Result<(), DispatchError> {
             // TODO: should we check the allocation here? Pallets are technically trusted, so it would
             // only add unnecessary overhead. The extrinsic/ChainExtension interface should check however
             let vault =
@@ -366,7 +378,7 @@ pub mod pallet {
             vault_id: &Self::VaultId,
             from: &Self::AccountId,
             amount: Self::Balance,
-        ) -> Result<(), Self::Error> {
+        ) -> Result<(), DispatchError> {
             let vault =
                 Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
             CapitalStructure::<T>::try_mutate(vault_id, from, |state| {
@@ -394,7 +406,7 @@ pub mod pallet {
             vault: &Self::VaultId,
             strategy: &Self::AccountId,
             report: &Self::Report,
-        ) -> Result<(), Self::Error> {
+        ) -> Result<(), DispatchError> {
             CapitalStructure::<T>::mutate(vault, strategy, |state| state.balance = *report);
             Ok(())
         }

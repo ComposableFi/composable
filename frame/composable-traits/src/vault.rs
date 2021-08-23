@@ -1,8 +1,10 @@
 use frame_support::pallet_prelude::*;
+use codec::Codec;
+use frame_support::sp_std::fmt::Debug;
 
 /// An indication for strategies as to how they should be rebalancing. Strategies should evaluate if
 /// it is worth it to deposit or withdraw based on fees.
-#[derive(Encode, Decode, Debug, PartialEq)]
+#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq)]
 pub enum FundsAvailability<Balance> {
     /// Withdrawable balance in the vault, which the strategy may use.
     Withdrawable(Balance),
@@ -18,7 +20,12 @@ pub enum FundsAvailability<Balance> {
 pub trait Vault {
     type AccountId;
     type Balance;
-    type VaultId;
+    type VaultId: Clone + Codec + Debug + PartialEq;
+    type AssetId;
+
+    fn asset_id(vault: &Self::VaultId) -> Self::AssetId;
+
+    fn account_id() -> Self::AccountId;
 
     fn deposit(
         vault: &Self::VaultId,
@@ -43,27 +50,25 @@ pub trait LpTokenVault {
 /// efficiently use capital. An example may be a vault which allocates 40% in a lending protocol, and
 /// 60% of the stored capital in a DEX.
 pub trait StrategicVault: Vault {
-    type Error;
-
     /// Used by strategies to query for available funds.
     fn available_funds(
         vault: &Self::VaultId,
         account: &Self::AccountId,
-    ) -> Result<FundsAvailability<Self::Balance>, Self::Error>;
+    ) -> Result<FundsAvailability<Self::Balance>, DispatchError>;
 
     /// Used by strategies to withdraw funds to be used in DeFi or other protocols.
     fn withdraw(
         vault: &Self::VaultId,
         to: &Self::AccountId,
         amount: Self::Balance,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), DispatchError>;
 
     /// Used by strategies to return profits and funds.
     fn deposit(
         vault: &Self::VaultId,
         from: &Self::AccountId,
         amount: Self::Balance,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), DispatchError>;
 }
 
 ///
@@ -74,5 +79,5 @@ pub trait ReportableStrategicVault: StrategicVault {
         vault: &Self::VaultId,
         strategy: &Self::AccountId,
         report: &Self::Report,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), DispatchError>;
 }
