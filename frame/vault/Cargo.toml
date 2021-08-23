@@ -15,7 +15,7 @@ package = "parity-scale-codec"
 version = "2.0.0"
 
 [dependencies]
-orml-traits = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "master" }
+orml-traits = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb" }
 frame-support = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"  }
 frame-system = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
@@ -28,6 +28,12 @@ composable-traits = { version = "0.0.1", path = "../composable-traits"}
 
 log = { version = "0.4.14", default-features = false }
 num-traits = "0.2.14"
+
+[dev-dependencies]
+proptest = { version = "0.9.6" }
+serde = { version = "1.0.119" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb" }
+
 [features]
 default = ["std"]
 std = [

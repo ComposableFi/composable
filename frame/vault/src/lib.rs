@@ -26,11 +26,16 @@
 // TODO remove me!
 #![allow(missing_docs)]
 
-pub mod mocks;
 mod models;
 mod traits;
 
 pub use pallet::*;
+
+#[cfg(test)]
+pub mod mocks;
+
+#[cfg(test)]
+mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -259,15 +264,14 @@ pub mod pallet {
 
                 Allocations::<T>::insert(id, Self::account_id(), config.reserved);
 
-                Vaults::<T>::insert(
-                    id,
-                    VaultInfo {
-                        lp_token_id,
-                        asset_id: config.asset_id,
-                    },
-                );
+                let vault_info = VaultInfo {
+                    lp_token_id,
+                    asset_id: config.asset_id,
+                };
 
-                Ok((id, lp_token_id))
+                Vaults::<T>::insert(id, vault_info);
+
+                Ok((id, vault_info))
             })
         }
 
