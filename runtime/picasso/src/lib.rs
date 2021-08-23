@@ -366,7 +366,7 @@ construct_runtime!(
 		TransactionPayment: transaction_payment::{Pallet, Storage},
 		Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Oracle: oracle::{Pallet, Call, Storage, Event<T>},
-		Utility: utility::{Pallet, Call, Event<T>},
+		Utility: utility::{Pallet, Call, Event<T>, WeightInfo},
 	}
 );
 
