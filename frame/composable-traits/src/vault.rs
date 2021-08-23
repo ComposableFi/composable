@@ -71,7 +71,7 @@ pub trait StrategicVault: Vault {
     ) -> Result<(), DispatchError>;
 }
 
-///
+/// A vault which allow the strategy to do periodic report.
 pub trait ReportableStrategicVault: StrategicVault {
     type Report;
 
