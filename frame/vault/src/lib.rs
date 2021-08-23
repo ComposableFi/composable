@@ -52,6 +52,7 @@ pub mod pallet {
     use frame_system::Config as SystemConfig;
     use num_traits::SaturatingSub;
     use orml_traits::MultiCurrency;
+    use sp_runtime::helpers_128bit::multiply_by_rational;
     use sp_runtime::traits::{
         AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
         Zero,
@@ -314,12 +315,9 @@ pub mod pallet {
                                 = lp / a * b
                                 = lp * b / a
             */
-            let lp_b = lp_amount_value
-                .checked_mul(vault_aum_value)
-                .ok_or(Error::<T>::OverflowError)?;
-            let lp_shares_value = lp_b
-                .checked_div(lp_total_issuance_value)
-                .ok_or(Error::<T>::OverflowError)?;
+            let lp_shares_value =
+                multiply_by_rational(lp_amount_value, vault_aum_value, lp_total_issuance_value)
+                    .map_err(|_| Error::<T>::OverflowError)?;
 
             // Should represent the deposited funds + interests
             let lp_shares_value_amount =
@@ -372,8 +370,8 @@ pub mod pallet {
                 let outstanding = T::Currency::total_issuance(vault.lp_token_id);
                 let outstanding = <T::Convert as Convert<T::Balance, u128>>::convert(outstanding);
                 let aum = <T::Convert as Convert<T::Balance, u128>>::convert(vault_aum);
-                let lp = (|| deposit.checked_mul(outstanding)?.checked_div(aum))()
-                    .ok_or(Error::<T>::NoFreeVaultAllocation)?;
+                let lp = multiply_by_rational(deposit, outstanding, aum)
+                    .map_err(|_| Error::<T>::NoFreeVaultAllocation)?;
                 let lp = <T::Convert as Convert<u128, T::Balance>>::convert(lp);
 
                 T::Currency::transfer(vault.asset_id, &from, &Self::account_id(), amount)
