@@ -54,5 +54,13 @@ pub fn genesis_config(
 			candidacy_bond: existential_deposit * 16,
 			..Default::default()
 		},
+	    council_membership: picasso_runtime::CouncilMembershipConfig {
+		    members: vec![],
+		    ..Default::default()
+	    },
+	    // council will get its members from council_membership
+	    council: Default::default(),
+	    democracy: Default::default(),
+	    treasury: Default::default(),
     }
 }

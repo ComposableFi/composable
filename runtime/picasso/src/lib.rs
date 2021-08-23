@@ -19,6 +19,7 @@ pub use runtime_common as common;
 use runtime_common::{
 	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, Hash, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	DAYS, EnsureRootOrHalfCouncil, CouncilInstance, PICA, MILLI_PICA,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -43,10 +44,7 @@ use polkadot_parachain::primitives::Sibling;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 use frame_system as system;
-use system::{
-    limits::{BlockLength, BlockWeights},
-    EnsureOneOf, EnsureRoot,
-};
+use system::{limits::{BlockLength, BlockWeights}, EnsureRoot};
 use xcm::{
     opaque::v0::{BodyId, Junction, MultiAsset, MultiLocation, NetworkId},
     v0::Xcm,
@@ -83,10 +81,6 @@ pub mod opaque {
     }
 }
 
-// Unit = the base number of indivisible units for balances
-pub const UNIT: Balance = 1_000_000_000_000;
-pub const MILLIUNIT: Balance = 1_000_000_000;
-pub const MICROUNIT: Balance = 1_000_000;
 
 // To learn more about runtime versioning and what each of the following value means:
 //   https://substrate.dev/docs/en/knowledgebase/runtime/upgrades#runtime-versioning
@@ -139,6 +133,7 @@ parameter_types! {
         })
         .avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
         .build_or_panic();
+	// TODO: update
     pub const SS58Prefix: u8 = 42;
 }
 
@@ -216,11 +211,10 @@ impl timestamp::Config for Runtime {
     type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
 }
 
-// TODO changed to be inline with ksm
-pub const EXISTENTIAL_DEPOSIT: Balance = 3333333;
+/// minimum account balance is given as 0.1 PICA ~ 100 MILLI_PICA
+pub const EXISTENTIAL_DEPOSIT: Balance = 100 * MILLI_PICA;
 
 parameter_types! {
-	//TODO set
     pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
     pub const MaxLocks: u32 = 50;
 }
@@ -233,14 +227,15 @@ impl balances::Config for Runtime {
     type Balance = Balance;
     /// The ubiquitous event type.
     type Event = Event;
-    type DustRemoval = ();
+    type DustRemoval = Treasury;
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
     type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
-//TODO set, some get burned some got to collator pot see DealWithFees in statemint repo
+
 parameter_types! {
-    pub const TransactionByteFee: Balance = 1;
+	/// 1 milli-pica/byte should be fine
+    pub const TransactionByteFee: Balance = 1  * MILLI_PICA;
 }
 
 impl transaction_payment::Config for Runtime {
@@ -256,7 +251,8 @@ impl sudo::Config for Runtime {
 }
 
 parameter_types! {
-	pub const IndexDeposit: Balance = 1 * 100000000000000;
+	/// Index deposit requires a 100 PICA
+	pub const IndexDeposit: Balance = 100 * PICA;
 }
 
 impl indices::Config for Runtime {
@@ -337,11 +333,14 @@ where
 //TODO set
 parameter_types! {
 	pub const StakeLock: BlockNumber = 50;
-	pub const MinStake: Balance = 3333333;
-	pub const RequestCost: Balance = 1;
-	pub const RewardAmount: Balance = 5;
-	pub const SlashAmount: Balance = 5;
 	pub const StalePrice: BlockNumber = 5;
+
+	/// TODO: discuss with omar/cosmin
+	pub const MinStake: Balance = 1000 * PICA;
+	pub const RequestCost: Balance = 1 * PICA;
+	pub const RewardAmount: Balance = 5 * PICA;
+	// Shouldn't this be a ratio based on locked amount?
+	pub const SlashAmount: Balance = 5;
 	pub const MaxAnswerBound: u64 = 25;
 
 }
@@ -353,7 +352,7 @@ impl oracle::Config for Runtime {
     type StakeLock = StakeLock;
     type MinStake = MinStake;
     type StalePrice = StalePrice;
-    type AddOracle = EnsureOneOf<AccountId, EnsureRoot<AccountId>, EnsureRoot<AccountId>>;
+    type AddOracle = EnsureRootOrHalfCouncil;
     type RequestCost = RequestCost;
     type RewardAmount = RewardAmount;
     type SlashAmount = SlashAmount;
@@ -441,8 +440,8 @@ pub type XcmOriginToTransactDispatchOrigin = (
 parameter_types! {
     // One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
     pub UnitWeightCost: Weight = 1_000_000;
-    // One UNIT buys 1 second of weight.
-    pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::X1(Junction::Parent), UNIT);
+    // One PICA buys 1 second of weight.
+    pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::X1(Junction::Parent), PICA);
 }
 
 match_type! {
@@ -467,7 +466,7 @@ impl xcm_executor::Config for XcmConfig {
     type AssetTransactor = LocalAssetTransactor;
     type OriginConverter = XcmOriginToTransactDispatchOrigin;
     type IsReserve = NativeAsset;
-    type IsTeleporter = NativeAsset; // <- should be enough to allow teleportation of UNIT
+    type IsTeleporter = NativeAsset; // <- should be enough to allow teleportation of PICA
     type LocationInverter = LocationInverter<Ancestry>;
     type Barrier = Barrier;
     type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
@@ -561,7 +560,7 @@ parameter_types! {
 impl collator_selection::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type UpdateOrigin = EnsureOneOf<AccountId, EnsureRoot<AccountId>, EnsureRoot<AccountId>>;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
 	type PotId = PotId;
 	type MaxCandidates = MaxCandidates;
 	type MinCandidates = MinCandidates;
@@ -571,8 +570,141 @@ impl collator_selection::Config for Runtime {
 	type ValidatorId = <Self as system::Config>::AccountId;
 	type ValidatorIdOf = collator_selection::IdentityCollator;
 	type ValidatorRegistration = Session;
+	// TODO: benchmark for runtime
 	type WeightInfo = ();
 }
+
+parameter_types! {
+	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
+	/// percentage of proposal that most be bonded by the proposer
+	pub const ProposalBond: Permill = Permill::from_percent(5);
+	// TODO: rationale?
+	pub const ProposalBondMinimum: Balance = 5 * PICA;
+	pub const SpendPeriod: BlockNumber = 7 * DAYS;
+	pub const Burn: Permill = Permill::from_percent(0);
+
+	pub const MaxApprovals: u32 = 30;
+}
+
+impl treasury::Config for Runtime {
+	type PalletId = TreasuryPalletId;
+	type Currency = Balances;
+	type ApproveOrigin = EnsureRootOrHalfCouncil;
+	type RejectOrigin = EnsureRootOrHalfCouncil;
+	type Event = Event;
+	type OnSlash = Treasury;
+	type ProposalBond = ProposalBond;
+	type ProposalBondMinimum = ProposalBondMinimum;
+	type SpendPeriod = SpendPeriod;
+	type Burn = Burn;
+	type MaxApprovals = MaxApprovals;
+	type BurnDestination = ();
+	type WeightInfo = ();
+	// TODO: add bounties?
+	type SpendFunds = ();
+}
+
+parameter_types! {
+    pub const CouncilMotionDuration: BlockNumber = 7 * DAYS;
+    pub const CouncilMaxProposals: u32 = 100;
+    pub const CouncilMaxMembers: u32 = 100;
+}
+
+impl membership::Config<membership::Instance1> for Runtime {
+	type Event = Event;
+	type AddOrigin = EnsureRootOrHalfCouncil;
+	type RemoveOrigin = EnsureRootOrHalfCouncil;
+	type SwapOrigin = EnsureRootOrHalfCouncil;
+	type ResetOrigin = EnsureRootOrHalfCouncil;
+	type PrimeOrigin = EnsureRootOrHalfCouncil;
+	type MembershipInitialized = Council;
+	type MembershipChanged = Council;
+	type MaxMembers = CouncilMaxMembers;
+	// TODO: benchmark
+	type WeightInfo = ();
+}
+
+impl collective::Config<CouncilInstance> for Runtime {
+	type Origin = Origin;
+	type Proposal = Call;
+	type Event = Event;
+	type MotionDuration = CouncilMotionDuration;
+	type MaxProposals = CouncilMaxProposals;
+	type MaxMembers = CouncilMaxMembers;
+	type DefaultVote = collective::PrimeDefaultVote;
+	// TODO: benchmark
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
+	RuntimeBlockWeights::get().max_block;
+	pub const MaxScheduledPerBlock: u32 = 50;
+}
+
+impl scheduler::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	// TODO: benchmark for runtime
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
+	pub const VotingPeriod: BlockNumber = 5 * DAYS;
+	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
+	pub MinimumDeposit: Balance = 100 * PICA;
+	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
+	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
+	// TODO: prod value
+	pub PreimageByteDeposit: Balance = 1 * MILLI_PICA;
+	pub const InstantAllowed: bool = true;
+	pub const MaxVotes: u32 = 100;
+	pub const MaxProposals: u32 = 100;
+}
+
+impl democracy::Config for Runtime {
+	type Proposal = Call;
+	type Event = Event;
+	type Currency = Balances;
+	type EnactmentPeriod = EnactmentPeriod;
+	type LaunchPeriod = LaunchPeriod;
+	type VotingPeriod = VotingPeriod;
+	type MinimumDeposit = MinimumDeposit;
+
+	// TODO: prod values
+	type ExternalOrigin = EnsureRootOrHalfCouncil;
+	type ExternalMajorityOrigin = EnsureRootOrHalfCouncil;
+	type ExternalDefaultOrigin = EnsureRootOrHalfCouncil;
+
+	type FastTrackOrigin = EnsureRootOrHalfCouncil;
+	type InstantOrigin = EnsureRootOrHalfCouncil;
+	type InstantAllowed = InstantAllowed;
+
+	type FastTrackVotingPeriod = FastTrackVotingPeriod;
+	type CancellationOrigin = EnsureRootOrHalfCouncil;
+	type BlacklistOrigin = EnsureRootOrHalfCouncil;
+	type CancelProposalOrigin = EnsureRootOrHalfCouncil;
+	type VetoOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
+	type OperationalPreimageOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
+	type Slash = Treasury;
+
+	type CooloffPeriod = CooloffPeriod;
+	type MaxProposals = MaxProposals;
+	type MaxVotes = MaxVotes;
+	type PalletsOrigin = OriginCaller;
+
+	type PreimageByteDeposit = PreimageByteDeposit;
+	type Scheduler = Scheduler;
+	// TODO: benchmark for runtime
+	type WeightInfo = ();
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -599,13 +731,21 @@ construct_runtime!(
         Aura: aura::{Pallet, Config<T>} = 23,
         AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 24,
 
-        // XCM helpers.
-        XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
-        PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 31,
-        CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 32,
-        DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
+	    // Governance utilities
+	    Council: collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 30,
+	    CouncilMembership: membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 31,
+	    Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 32,
+	    Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
+	    Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 
-        Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 40,
+
+        // XCM helpers.
+        XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
+        PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
+        CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
+        DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
+
+        Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 50,
     }
 );
 
