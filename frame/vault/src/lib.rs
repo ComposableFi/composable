@@ -204,9 +204,9 @@ pub mod pallet {
     where
         <T as frame_system::Config>::AccountId: core::hash::Hash,
     {
-        fn do_create_vault(
+        pub(crate) fn do_create_vault(
             config: VaultConfig<T::AccountId, T::CurrencyId>,
-        ) -> Result<VaultIndex, Error<T>> {
+        ) -> Result<(VaultIndex, VaultInfo<T::CurrencyId>), Error<T>> {
             // 1. check config
             // 2. lock endowment
             // 3. mint LP token
@@ -267,7 +267,7 @@ pub mod pallet {
                     },
                 );
 
-                Ok(id)
+                Ok((id, lp_token_id))
             })
         }
 
