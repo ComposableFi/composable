@@ -1,5 +1,5 @@
-use frame_support::pallet_prelude::*;
 use codec::Codec;
+use frame_support::pallet_prelude::*;
 use frame_support::sp_std::fmt::Debug;
 
 /// An indication for strategies as to how they should be rebalancing. Strategies should evaluate if
@@ -20,6 +20,7 @@ pub enum FundsAvailability<Balance> {
 pub trait Vault {
     type AccountId;
     type Balance;
+    type Error;
     type VaultId: Clone + Codec + Debug + PartialEq;
     type AssetId;
 
@@ -29,15 +30,15 @@ pub trait Vault {
 
     fn deposit(
         vault: &Self::VaultId,
-        account: &Self::AccountId,
-        balance: &Self::Balance,
-    ) -> DispatchResult;
+        from: &Self::AccountId,
+        asset_amount: Self::Balance,
+    ) -> Result<Self::Balance, Self::Error>;
 
     fn withdraw(
         vault: &Self::VaultId,
-        account: &Self::AccountId,
-        balance: &Self::Balance,
-    ) -> DispatchResult;
+        to: &Self::AccountId,
+        lp_amount: Self::Balance,
+    ) -> Result<Self::Balance, Self::Error>;
 }
 
 pub trait LpTokenVault {

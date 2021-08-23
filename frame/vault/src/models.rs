@@ -13,10 +13,9 @@ where
 }
 
 #[derive(Encode, Decode, Default, Debug, PartialEq)]
-pub struct VaultInfo<CurrencyId, Balance> {
+pub struct VaultInfo<CurrencyId> {
     pub asset_id: CurrencyId,
     pub lp_token_id: CurrencyId,
-    pub assets_under_management: Balance,
 }
 
 #[derive(Encode, Decode, Default, Debug, PartialEq)]
