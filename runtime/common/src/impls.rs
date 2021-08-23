@@ -18,7 +18,10 @@
 
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 use core::ops::Div;
+use sp_std::ops::Mul;
+
 pub type NegativeImbalance<T> = <balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+
 
 /// Logic for the author to get a portion of fees.
 pub struct ToStakingPot<R>(sp_std::marker::PhantomData<R>);
@@ -28,6 +31,7 @@ where
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::Event: From<balances::Event<R>>,
+	<R as balances::Config>::Balance: From<u128>,
 {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
 		let numeric_amount = amount.peek();
@@ -44,25 +48,32 @@ where
 				&staking_pot,
 				slash_amount,
 			);
+			// this resolves to 20% of total block fees going to treasury.
+			let to_treasury = imbalance.peek().div(5u128.into()).mul(2u128.into());
+			let (treasury_imbalance, _burn) = imbalance.split(to_treasury);
 			// give treasury the remaining half
-			<treasury::Pallet<R> as OnUnbalanced<_>>::on_unbalanced(imbalance);
+			<treasury::Pallet<R> as OnUnbalanced<_>>::on_unbalanced(treasury_imbalance);
 		}
 
 		<frame_system::Pallet<R>>::deposit_event(balances::Event::Deposit(
 			staking_pot,
 			slash_amount,
 		));
-
 	}
 }
 
+/// OnUnbalanced handler for pallet-transaction-payment.
 pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
+
 impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
-	R: balances::Config + collator_selection::Config + treasury::Config<Currency=balances::Pallet<R>>,
+	R: balances::Config
+		+ collator_selection::Config
+		+ treasury::Config<Currency=balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::Event: From<balances::Event<R>>,
+	<R as balances::Config>::Balance: From<u128>,
 {
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
 		if let Some(mut fees) = fees_then_tips.next() {
@@ -253,7 +264,8 @@ mod tests {
 
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 15);
-			assert_eq!(Balances::free_balance(Treasury::account_id()), 15);
+			// Treasury gets 20%
+			assert_eq!(Balances::free_balance(Treasury::account_id()), 6);
 		});
 	}
 
