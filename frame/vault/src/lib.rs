@@ -33,11 +33,12 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-    use crate::models::{StrategyOverview, Vault, VaultConfig};
+    use crate::models::{StrategyOverview, VaultConfig, VaultInfo};
     use crate::traits::{
         self, CurrencyFactory, FundsAvailability, ReportableStrategicVault, StrategicVault,
     };
     use codec::{Codec, FullCodec};
+    use composable_traits::vault::Vault;
     use frame_support::pallet_prelude::*;
     use frame_support::PalletId;
     use num_traits::SaturatingSub;
@@ -103,7 +104,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn vault_data)]
     pub type Vaults<T: Config> =
-        StorageMap<_, Twox64Concat, VaultIndex, Vault<T::CurrencyId, T::Balance>, ValueQuery>;
+        StorageMap<_, Twox64Concat, VaultIndex, VaultInfo<T::CurrencyId, T::Balance>, ValueQuery>;
 
     /// Amounts which each strategy is allowed to access, including the amount reserved for quick
     /// withdrawals for the pallet.
@@ -214,7 +215,7 @@ pub mod pallet {
 
                 Vaults::<T>::insert(
                     id,
-                    Vault {
+                    VaultInfo {
                         lp_token_id,
                         ..Default::default()
                     },
@@ -280,14 +281,36 @@ pub mod pallet {
         }
     }
 
-    impl<T: Config> StrategicVault for Pallet<T>
+    impl<T: Config> Vault for Pallet<T>
     where
         <T as frame_system::Config>::AccountId: core::hash::Hash,
     {
         type AccountId = T::AccountId;
         type Balance = T::Balance;
-        type Error = Error<T>;
         type VaultId = VaultIndex;
+
+        fn deposit(
+            vault: &Self::VaultId,
+            account: &Self::AccountId,
+            balance: &Self::Balance,
+        ) -> DispatchResult {
+            todo!()
+        }
+
+        fn withdraw(
+            vault: &Self::VaultId,
+            account: &Self::AccountId,
+            balance: &Self::Balance,
+        ) -> DispatchResult {
+            todo!()
+        }
+    }
+
+    impl<T: Config> StrategicVault for Pallet<T>
+    where
+        <T as frame_system::Config>::AccountId: core::hash::Hash,
+    {
+        type Error = Error<T>;
 
         fn available_funds(
             vault_id: &Self::VaultId,
