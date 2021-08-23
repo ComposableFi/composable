@@ -1,40 +1,58 @@
-use picasso_runtime::{
-	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, IndicesConfig,
-	SudoConfig, SystemConfig, WASM_BINARY,
-};
-use super::{AuraId, GrandpaId};
+use picasso_runtime::{self as parachain_runtime, GenesisConfig};
+use runtime_common::{AccountId, AuraId, Balance};
+
+use super::{Extensions, ParaId};
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
+/// Generate the session keys from individual elements.
+///
+/// The input must be a tuple of individual keys (a single arg for now since we have just one key).
+pub fn picasso_session_keys(keys: AuraId) -> parachain_runtime::opaque::SessionKeys {
+	parachain_runtime::opaque::SessionKeys { aura: keys }
+}
 /// Generates the genesis config for picasso
 pub fn genesis_config(
-	root: AccountId,
-	authorities: Vec<(AuraId, GrandpaId)>,
-	accounts: Vec<AccountId>,
-) -> GenesisConfig {
-	GenesisConfig {
-		system: SystemConfig {
-			// Add Wasm runtime to storage.
-			code: WASM_BINARY.unwrap().to_vec(),
-			changes_trie_config: Default::default(),
-		},
-		balances: BalancesConfig {
-			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: accounts.iter().cloned().map(|k|(k, 1 << 60)).collect(),
-		},
-		aura: AuraConfig {
-			authorities: authorities.iter().map(|x| (x.0.clone())).collect(),
-		},
-		indices: IndicesConfig {
+    root: AccountId,
+	invulnerables: Vec<(AccountId, AuraId)>,
+    accounts: Vec<AccountId>,
+    id: ParaId,
+	existential_deposit: Balance
+) -> parachain_runtime::GenesisConfig {
+    parachain_runtime::GenesisConfig {
+        system: parachain_runtime::SystemConfig {
+            code: parachain_runtime::WASM_BINARY
+                .expect("WASM binary was not build, please build it!")
+                .to_vec(),
+            changes_trie_config: Default::default(),
+        },
+        balances: parachain_runtime::BalancesConfig {
+            // Configure endowed accounts with initial balance of 1 << 60.
+            balances: accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+        },
+        aura: Default::default(),
+        sudo: parachain_runtime::SudoConfig {
+            // Assign network admin rights.
+            key: root,
+        },
+		indices: parachain_runtime::IndicesConfig {
 			indices: vec![],
 		},
-		grandpa: GrandpaConfig {
-			authorities: authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
+        parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
+        aura_ext: Default::default(),
+        parachain_system: Default::default(),
+		session: picasso_runtime::SessionConfig {
+			keys: invulnerables.iter().cloned().map(|(acc, aura)| (
+				acc.clone(), // account id
+				acc.clone(), // validator id
+				picasso_session_keys(aura), // session keys
+			)).collect()
 		},
-		sudo: SudoConfig {
-			// Assign network admin rights.
-			key: root,
+		collator_selection: parachain_runtime::CollatorSelectionConfig {
+			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
+			candidacy_bond: existential_deposit * 16,
+			..Default::default()
 		},
-	}
+    }
 }

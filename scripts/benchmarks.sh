@@ -1,11 +1,15 @@
 #!/bin/bash
 
-steps=5
-repeat=2
+steps=50
+repeat=20
 picassoOutput=./runtime/picasso/src/weights
 picassoChain=picasso-dev
 pallets=(
 	oracle
+  frame_system
+  timestamp
+  session
+  balances
 )
 
 for p in ${pallets[@]}
