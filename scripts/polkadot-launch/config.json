@@ -39,7 +39,7 @@
 	},
 	"parachains": [
 		{
-			"bin": "../target/release/composable",
+			"bin": "../../target/release/composable",
 			"balance": "1000000000000000000000",
 			"chain": "picasso-dev",
 			"nodes": [

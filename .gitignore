@@ -25,5 +25,5 @@ node_modules
 .vscode
 rococo-local-raw.json
 rococo-local.json
-polkadot-launch/bin/polkadot
-polkadot-launch/*.log
+scripts/polkadot-launch/bin/polkadot
+scripts/polkadot-launch/*.log
