@@ -20,6 +20,7 @@ frame-support = { default-features = false, version = "3.0.0", git = "https://gi
 frame-system = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
 sp-runtime = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sp-arithmetic = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-io = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-core = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-std = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
