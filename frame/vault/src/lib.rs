@@ -156,6 +156,7 @@ pub mod pallet {
         InconsistentStorage,
         TransferFromFailed,
         MintFailed,
+        BurnFailed,
         LookupError,
         VaultDoesNotExist,
         NoFreeVaultAllocation,
@@ -331,7 +332,7 @@ pub mod pallet {
                 let from = Self::account_id();
 
                 T::Currency::withdraw(vault.lp_token_id, &to, lp_amount)
-                    .map_err(|_| Error::<T>::MintFailed)?;
+                    .map_err(|_| Error::<T>::BurnFailed)?;
                 T::Currency::transfer(vault.asset_id, &from, &to, lp_shares_value_amount)
                     .map_err(|_| Error::<T>::TransferFromFailed)?;
                 Ok(lp_shares_value_amount)
