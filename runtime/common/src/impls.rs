@@ -40,7 +40,8 @@ where
 		);
 		// deposit then slash the amount to burn fees
 		if <balances::Pallet<R>>::can_slash(&staking_pot, slash_amount) {
-			let _ = <balances::Pallet<R>>::slash(
+			// TODO: enrich treasury with the negative imbalance.
+			let (_negative_imbalanbce, _) = <balances::Pallet<R>>::slash(
 				&staking_pot,
 				slash_amount,
 			);
