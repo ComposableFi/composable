@@ -5,19 +5,19 @@ pub mod pallet {
     use crate::traits::{FundsAvailability, ReportableStrategicVault, StrategicVault};
     use composable_traits::vault::Vault;
     use frame_support::pallet_prelude::*;
+    use frame_support::traits::fungibles::{Inspect, Mutate, Transfer};
     use frame_support::PalletId;
     use frame_system::pallet_prelude::OriginFor;
     use frame_system::Config as SystemConfig;
-    use orml_traits::MultiCurrency;
     use sp_runtime::traits::AccountIdConversion;
 
     pub const PALLET_ID: PalletId = PalletId(*b"mck_strt");
 
     type BalanceOf<T> =
-        <<T as Config>::Currency as MultiCurrency<<T as SystemConfig>::AccountId>>::Balance;
+        <<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::Balance;
 
     type CurrencyIdFor<T> =
-        <<T as Config>::Currency as MultiCurrency<<T as SystemConfig>::AccountId>>::CurrencyId;
+        <<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
 
     type VaultIdOf<T> = <<T as Config>::Vault as Vault>::VaultId;
     type ReportOf<T> = <<T as Config>::Vault as ReportableStrategicVault>::Report;
@@ -35,11 +35,11 @@ pub mod pallet {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         type Vault: ReportableStrategicVault<
             AccountId = Self::AccountId,
-            AssetId = <<Self as Config>::Currency as MultiCurrency<Self::AccountId>>::CurrencyId,
-            Report = <<Self as Config>::Currency as MultiCurrency<Self::AccountId>>::Balance,
-            Balance = <<Self as Config>::Currency as MultiCurrency<Self::AccountId>>::Balance,
+            AssetId = <<Self as Config>::Currency as Inspect<Self::AccountId>>::AssetId,
+            Report = <<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance,
+            Balance = <<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance,
         >;
-        type Currency: MultiCurrency<Self::AccountId>;
+        type Currency: Transfer<Self::AccountId> + Mutate<Self::AccountId>;
     }
 
     #[pallet::pallet]
@@ -62,7 +62,7 @@ pub mod pallet {
             amount: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
             let currency_id = T::Vault::asset_id(&vault);
-            T::Currency::deposit(currency_id, &Self::account_id(), amount)?;
+            T::Currency::mint_into(currency_id, &Self::account_id(), amount)?;
             Self::deposit_event(Event::RevenueGenerated(amount));
             Ok(().into())
         }
@@ -71,7 +71,7 @@ pub mod pallet {
         #[pallet::weight(10_000)]
         pub fn report(_origin: OriginFor<T>, vault: VaultIdOf<T>) -> DispatchResultWithPostInfo {
             let currency_id = T::Vault::asset_id(&vault);
-            let balance = T::Currency::total_balance(currency_id, &Self::account_id());
+            let balance = T::Currency::balance(currency_id, &Self::account_id());
             T::Vault::update_strategy_report(&vault, &Self::account_id(), &balance)?;
             Self::deposit_event(Event::Reported(balance));
             Ok(().into())
@@ -84,12 +84,13 @@ pub mod pallet {
             let task = T::Vault::available_funds(&vault, &Self::account_id())?;
             let action = match task {
                 FundsAvailability::MustLiquidate => {
-                    let balance = T::Currency::total_balance(asset_id, &Self::account_id());
+                    let balance = T::Currency::balance(asset_id, &Self::account_id());
                     T::Currency::transfer(
                         asset_id,
                         &Self::account_id(),
                         &T::Vault::account_id(),
                         balance,
+                        true,
                     )?;
                     balance
                 }
@@ -99,6 +100,7 @@ pub mod pallet {
                         &T::Vault::account_id(),
                         &Self::account_id(),
                         balance,
+                        true,
                     )?;
                     balance
                 }
@@ -108,6 +110,7 @@ pub mod pallet {
                         &Self::account_id(),
                         &T::Vault::account_id(),
                         balance,
+                        true,
                     )?;
                     balance
                 }
