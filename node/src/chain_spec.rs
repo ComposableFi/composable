@@ -59,7 +59,7 @@ pub fn dali() -> picasso::ChainSpec {
 /// Picasso (Kusama parachain)
 pub fn picasso() -> picasso::ChainSpec {
 	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/picasso.json").to_vec())
-		.expect("Dali chain spec not found!")
+		.expect("Picasso chain spec not found!")
 }
 
 //TODO create prod config

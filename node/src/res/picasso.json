@@ -9,7 +9,7 @@
     "tokenDecimals": 12,
     "tokenSymbol": "PICA"
   },
-  "relay_chain": "rococo",
+  "relay_chain": "kusama",
   "para_id": 2087,
   "consensusEngine": null,
   "lightSyncState": null,
