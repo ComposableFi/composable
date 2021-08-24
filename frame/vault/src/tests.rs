@@ -121,7 +121,8 @@ proptest! {
             prop_assert_eq!(Tokens::total_balance(asset_id, &ALICE), 0);
             assert_ok!(Tokens::deposit(asset_id, &ALICE, amount));
 
-            assert_noop!(Vault::withdraw(Origin::signed(ALICE), vault_id, amount), Error::<Test>::BurnFailed);
+            assert_noop!(Vault::withdraw(Origin::signed(ALICE), vault_id, amount), Error::<Test>::InsuficientLpTokens);
+            Ok(())
         });
     }
 
@@ -139,7 +140,49 @@ proptest! {
             assert_ok!(Tokens::deposit(asset_id, &BOB, amount));
 
             assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount));
-            assert_noop!(Vault::withdraw(Origin::signed(BOB), vault_id, amount), Error::<Test>::BurnFailed);
+
+            assert_noop!(Vault::withdraw(Origin::signed(BOB), vault_id, amount), Error::<Test>::InsuficientLpTokens);
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn vault_stock_dilution_1(
+        strategy_account_id in any::<AccountId>().prop_map(|a| ACCOUNT_FREE_START + a),
+        amount1 in any::<ReasonableBalance>().prop_map(|a| 1 + a as Balance),
+        amount2 in any::<ReasonableBalance>().prop_map(|a| 1 + a as Balance),
+        strategy_profits in any::<ReasonableBalance>().prop_map(|a| 1 + a as Balance)
+    ) {
+        let asset_id = MockCurrencyId::D;
+        let _ = ExtBuilder::default().build().execute_with(|| {
+            let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
+            prop_assert_eq!(Tokens::total_balance(asset_id, &ALICE), 0);
+            prop_assert_eq!(Tokens::total_balance(asset_id, &BOB), 0);
+            prop_assert_eq!(Tokens::total_balance(asset_id, &strategy_account_id), 0);
+
+            assert_ok!(Tokens::deposit(asset_id, &ALICE, amount1));
+            assert_ok!(Tokens::deposit(asset_id, &BOB, amount2));
+            assert_ok!(Tokens::deposit(asset_id, &strategy_account_id, strategy_profits));
+
+            assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount1));
+            assert_ok!(<Vault as StrategicVault>::deposit(&vault_id, &strategy_account_id, strategy_profits));
+            assert_ok!(Vault::deposit(Origin::signed(BOB), vault_id, amount2));
+
+            let alice_lp = Tokens::total_balance(vault.lp_token_id, &ALICE);
+            let bob_lp = Tokens::total_balance(vault.lp_token_id, &BOB);
+
+            assert_ok!(Vault::withdraw(Origin::signed(ALICE), vault_id, alice_lp));
+            assert_ok!(Vault::withdraw(Origin::signed(BOB), vault_id, bob_lp));
+
+            let alice_total_balance = Tokens::total_balance(asset_id, &ALICE);
+            let bob_total_balance = Tokens::total_balance(asset_id, &BOB);
+            let strategy_total_balance = Tokens::total_balance(asset_id, &strategy_account_id);
+
+            prop_assert_eq!(alice_total_balance, amount1 + strategy_profits);
+            prop_assert_eq!(alice_total_balance + bob_total_balance + strategy_total_balance,
+                            amount1 + amount2 + strategy_profits);
+
+            Ok(())
         });
     }
 }
