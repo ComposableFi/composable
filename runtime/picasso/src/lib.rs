@@ -570,8 +570,7 @@ impl collator_selection::Config for Runtime {
 	type ValidatorId = <Self as system::Config>::AccountId;
 	type ValidatorIdOf = collator_selection::IdentityCollator;
 	type ValidatorRegistration = Session;
-	// TODO: benchmark for runtime
-	type WeightInfo = ();
+	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -946,6 +945,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, indices, Indices);
             add_benchmark!(params, batches, membership, CouncilMembership);
             add_benchmark!(params, batches, treasury, Treasury);
+            add_benchmark!(params, batches, scheduler, Scheduler);
             add_benchmark!(params, batches, democracy, Democracy);
             add_benchmark!(params, batches, collective, Council);
 

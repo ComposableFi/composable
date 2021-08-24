@@ -9,3 +9,4 @@ pub mod treasury;
 pub mod scheduler;
 pub mod collective;
 pub mod democracy;
+pub mod collator_selection;
