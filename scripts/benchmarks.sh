@@ -14,6 +14,8 @@ pallets=(
 	membership
 	treasury
 	scheduler
+	collective
+	democracy
 )
 
 for p in ${pallets[@]}
