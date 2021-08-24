@@ -52,13 +52,13 @@ where
 
 /// Picasso POC-1 (rococo parachain)
 pub fn dali() -> picasso::ChainSpec {
-	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/dali.json").to_vec())
+	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/dali_raw.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 
 /// Picasso (Kusama parachain)
 pub fn picasso() -> picasso::ChainSpec {
-	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/picasso.json").to_vec())
+	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/picasso_raw.json").to_vec())
 		.expect("Picasso chain spec not found!")
 }
 
@@ -68,8 +68,9 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PICA".into());
 	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("ss58Format".into(), 49.into());
 
-    picasso::ChainSpec::from_genesis(
+	picasso::ChainSpec::from_genesis(
         "Local Picasso Testnet",
         "picasso",
         ChainType::Development,
