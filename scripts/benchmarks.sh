@@ -6,10 +6,13 @@ picassoOutput=./runtime/picasso/src/weights
 picassoChain=picasso-dev
 pallets=(
 	oracle
-  frame_system
-  timestamp
-  session
-  balances
+	frame_system
+	timestamp
+	session
+	balances
+	indices
+	membership
+	treasury
 )
 
 for p in ${pallets[@]}
