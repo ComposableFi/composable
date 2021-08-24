@@ -19,7 +19,7 @@
     "tokenSymbol": "PICA"
   },
   "relay_chain": "westend",
-  "para_id": 2076,
+  "para_id": 2087,
   "consensusEngine": null,
   "lightSyncState": null,
   "codeSubstitutes": {},
@@ -49,7 +49,7 @@
       },
       "parachainSystem": null,
       "parachainInfo": {
-        "parachainId": 2076
+        "parachainId": 2087
       },
       "collatorSelection": {
         "invulnerables": [
