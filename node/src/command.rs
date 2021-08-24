@@ -43,6 +43,7 @@ fn load_spec(
         // does not support `--chain` and `--parachain-id` arguments simultaneously.
 		// TODO set prod and hardcode para id
         "" | "picasso-dev" => Box::new(chain_spec::picasso_dev()),
+	    "dali" => Box::new(chain_spec::dali()),
         path => Box::new(chain_spec::picasso::ChainSpec::from_json_file(
             std::path::PathBuf::from(path),
         )?),

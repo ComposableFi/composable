@@ -29,7 +29,7 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
     construct_runtime, parameter_types, PalletId, match_type,
-    traits::{All, KeyOwnerProofSystem, Randomness, StorageInfo},
+    traits::{All, KeyOwnerProofSystem, Randomness, StorageInfo, Filter},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
         DispatchClass, IdentityFee, Weight,
@@ -141,7 +141,7 @@ parameter_types! {
 
 impl system::Config for Runtime {
     /// The basic call filter to use in dispatchable.
-    type BaseCallFilter = ();
+    type BaseCallFilter = BaseCallFilter;
     /// Block & extrinsics weights: base values and limits.
     type BlockWeights = RuntimeBlockWeights;
     /// The maximum length of a block (in bytes).
@@ -702,6 +702,21 @@ impl democracy::Config for Runtime {
 	type Scheduler = Scheduler;
 	// TODO: benchmark for runtime
 	type WeightInfo = ();
+}
+
+/// The calls we permit to be executed by extrinsics
+pub struct BaseCallFilter;
+
+impl Filter<Call> for BaseCallFilter {
+	fn filter(call: &Call) -> bool {
+		matches!(
+			call,
+			Call::System(_) | Call::Timestamp(_) | Call::Sudo(_) | Call::ParachainSystem(_) |
+			Call::Authorship(_) | Call::CollatorSelection(_) | Call::Session(_) | Call::Council(_) |
+			Call::CouncilMembership(_) | Call::XcmpQueue(_) | Call::PolkadotXcm(_) |
+			Call::CumulusXcm(_) | Call::DmpQueue(_)
+		)
+	}
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
