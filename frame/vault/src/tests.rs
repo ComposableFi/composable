@@ -2,13 +2,16 @@ use crate::mocks::currency_factory::MockCurrencyId;
 use crate::models::VaultInfo;
 use crate::*;
 use crate::{mocks::*, models::VaultConfig};
+use composable_traits::vault::StrategicVault;
 use frame_support::{assert_noop, assert_ok};
 use orml_traits::MultiCurrency;
 use proptest::prelude::*;
 use sp_runtime::Perquintill;
 
-fn create_vault(asset_id: MockCurrencyId) -> (VaultIndex, VaultInfo<MockCurrencyId>) {
-    let strategy_account_id = 0xCAFEBABE;
+fn create_vault(
+    strategy_account_id: AccountId,
+    asset_id: MockCurrencyId,
+) -> (VaultIndex, VaultInfo<MockCurrencyId>) {
     let v = Vault::do_create_vault(VaultConfig {
         asset_id,
         reserved: Perquintill::from_percent(10),
@@ -32,12 +35,18 @@ proptest! {
         amount in any::<ReasonableBalance>().prop_map(|a| 1 + a as Balance)
     ) {
         let asset_id = MockCurrencyId::A;
+        let strategy_account_id = ACCOUNT_FREE_START + 0xCAFEBABE;
         let _ = ExtBuilder::default().build().execute_with(|| {
-            let (vault_id, _) = create_vault(asset_id);
+            let (vault_id, _) = create_vault(strategy_account_id, asset_id);
+
+            prop_assert_eq!(Tokens::total_balance(asset_id, &ALICE), 0);
             assert_ok!(Tokens::deposit(asset_id, &ALICE, amount));
+
             prop_assert_eq!(Tokens::total_balance(asset_id, &ALICE), amount);
+
             assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount));
             assert_ok!(Vault::withdraw(Origin::signed(ALICE), vault_id, amount));
+
             prop_assert_eq!(Tokens::total_balance(asset_id, &ALICE), amount);
             Ok(())
         });
@@ -50,8 +59,13 @@ proptest! {
         amount3 in any::<ReasonableBalance>().prop_map(|a| 1 + a as Balance)
     ) {
         let asset_id = MockCurrencyId::A;
+        let strategy_account_id = ACCOUNT_FREE_START + 0xCAFEBABE;
         let _ = ExtBuilder::default().build().execute_with(|| {
-            let (vault_id, _) = create_vault(asset_id);
+            let (vault_id, _) = create_vault(strategy_account_id, asset_id);
+
+            prop_assert_eq!(Tokens::total_balance(asset_id, &ALICE), 0);
+            prop_assert_eq!(Tokens::total_balance(asset_id, &BOB), 0);
+            prop_assert_eq!(Tokens::total_balance(asset_id, &CHARLIE), 0);
             assert_ok!(Tokens::deposit(asset_id, &ALICE, amount1));
             assert_ok!(Tokens::deposit(asset_id, &BOB, amount2));
             assert_ok!(Tokens::deposit(asset_id, &CHARLIE, amount3));
@@ -81,11 +95,16 @@ proptest! {
         amount in any::<ReasonableBalance>().prop_map(|a| 1 + a as Balance))
     {
         let asset_id = MockCurrencyId::B;
+        let strategy_account_id = ACCOUNT_FREE_START + 0xCAFEBABE;
         let _ = ExtBuilder::default().build().execute_with(|| {
-            let (vault_id, vault_info) = create_vault(asset_id);
+            let (vault_id, vault_info) = create_vault(strategy_account_id, asset_id);
+            prop_assert_eq!(Tokens::total_balance(asset_id, &ALICE), 0);
             assert_ok!(Tokens::deposit(asset_id, &ALICE, amount));
+
             prop_assert_eq!(Tokens::total_balance(vault_info.lp_token_id, &ALICE), 0);
+
             assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount));
+
             prop_assert_eq!(Tokens::total_balance(vault_info.lp_token_id, &ALICE), amount);
             Ok(())
         });
@@ -96,9 +115,12 @@ proptest! {
         amount in any::<ReasonableBalance>().prop_map(|a| 1 + a as Balance)
     ) {
         let asset_id = MockCurrencyId::C;
+        let strategy_account_id = ACCOUNT_FREE_START + 0xCAFEBABE;
         let _ = ExtBuilder::default().build().execute_with(|| {
-            let (vault_id, _) = create_vault(asset_id);
+            let (vault_id, _) = create_vault(strategy_account_id, asset_id);
+            prop_assert_eq!(Tokens::total_balance(asset_id, &ALICE), 0);
             assert_ok!(Tokens::deposit(asset_id, &ALICE, amount));
+
             assert_noop!(Vault::withdraw(Origin::signed(ALICE), vault_id, amount), Error::<Test>::BurnFailed);
         });
     }
@@ -108,10 +130,14 @@ proptest! {
         amount in any::<ReasonableBalance>().prop_map(|a| 1 + a as Balance)
     ) {
         let asset_id = MockCurrencyId::D;
+        let strategy_account_id = ACCOUNT_FREE_START + 0xCAFEBABE;
         let _ = ExtBuilder::default().build().execute_with(|| {
-            let (vault_id, _) = create_vault(asset_id);
+            let (vault_id, _) = create_vault(strategy_account_id, asset_id);
+            prop_assert_eq!(Tokens::total_balance(asset_id, &ALICE), 0);
+            prop_assert_eq!(Tokens::total_balance(asset_id, &BOB), 0);
             assert_ok!(Tokens::deposit(asset_id, &ALICE, amount));
             assert_ok!(Tokens::deposit(asset_id, &BOB, amount));
+
             assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount));
             assert_noop!(Vault::withdraw(Origin::signed(BOB), vault_id, amount), Error::<Test>::BurnFailed);
         });
