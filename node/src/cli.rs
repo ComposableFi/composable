@@ -36,8 +36,8 @@ pub enum Subcommand {
     /// Revert the chain to a previous state.
     Revert(sc_cli::RevertCmd),
 
-    /// Allows for inserting collator keys
-    InsertKey(sc_cli::InsertKeyCmd),
+	/// Key management cli utilities
+	Key(sc_cli::KeySubcommand),
 
     /// The custom benchmark subcommmand benchmarking runtime pallets.
     #[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]

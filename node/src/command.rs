@@ -180,6 +180,10 @@ pub fn run() -> Result<()> {
                 Ok(cmd.run(components.client, components.import_queue))
             })
         }
+	    Some(Subcommand::Key(cmd)) => {
+		    let runner = cli.create_runner(cmd)?;
+		    runner.sync_run(|config| cmd.run(&cli))
+	    }
         Some(Subcommand::PurgeChain(cmd)) => {
             let runner = cli.create_runner(cmd)?;
 
