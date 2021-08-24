@@ -135,4 +135,7 @@ runtime-benchmarks = [
 	"pallet-xcm/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
+	"indices/runtime-benchmarks",
+	"membership/runtime-benchmarks",
+	"treasury/runtime-benchmarks",
 ]

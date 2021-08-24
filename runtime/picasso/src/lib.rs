@@ -260,7 +260,7 @@ impl indices::Config for Runtime {
 	type AccountIndex = AccountIndex;
 	type Currency = Balances;
 	type Deposit = IndexDeposit;
-	type WeightInfo = indices::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::indices::WeightInfo<Runtime>;
 }
 
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
@@ -599,7 +599,7 @@ impl treasury::Config for Runtime {
 	type Burn = Burn;
 	type MaxApprovals = MaxApprovals;
 	type BurnDestination = ();
-	type WeightInfo = ();
+	type WeightInfo = weights::treasury::WeightInfo<Runtime>;
 	// TODO: add bounties?
 	type SpendFunds = ();
 }
@@ -620,8 +620,7 @@ impl membership::Config<membership::Instance1> for Runtime {
 	type MembershipInitialized = Council;
 	type MembershipChanged = Council;
 	type MaxMembers = CouncilMaxMembers;
-	// TODO: benchmark
-	type WeightInfo = ();
+	type WeightInfo = weights::membership::WeightInfo<Runtime>;
 }
 
 impl collective::Config<CouncilInstance> for Runtime {
@@ -929,9 +928,12 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
             add_benchmark!(params, batches, balances, Balances);
             add_benchmark!(params, batches, timestamp, Timestamp);
-			add_benchmark!(params, batches, oracle, Oracle);
-			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
-			add_benchmark!(params, batches, collator_selection, CollatorSelection);
+            add_benchmark!(params, batches, oracle, Oracle);
+            add_benchmark!(params, batches, session, SessionBench::<Runtime>);
+            add_benchmark!(params, batches, collator_selection, CollatorSelection);
+            add_benchmark!(params, batches, indices, Indices);
+            add_benchmark!(params, batches, membership, CouncilMembership);
+            add_benchmark!(params, batches, treasury, Treasury);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
