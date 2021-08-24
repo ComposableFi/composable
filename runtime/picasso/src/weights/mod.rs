@@ -6,3 +6,4 @@ pub mod timestamp;
 pub mod indices;
 pub mod membership;
 pub mod treasury;
+pub mod scheduler;

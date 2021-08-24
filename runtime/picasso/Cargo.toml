@@ -138,4 +138,5 @@ runtime-benchmarks = [
 	"indices/runtime-benchmarks",
 	"membership/runtime-benchmarks",
 	"treasury/runtime-benchmarks",
+	"scheduler/runtime-benchmarks",
 ]
