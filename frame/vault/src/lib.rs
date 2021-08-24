@@ -46,12 +46,13 @@ pub mod pallet {
     use codec::{Codec, FullCodec};
     use composable_traits::vault::Vault;
     use frame_support::pallet_prelude::*;
+    use frame_support::traits::fungibles::{Inspect, Mutate, Transfer};
+    use frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
     use frame_support::PalletId;
     use frame_system::ensure_signed;
     use frame_system::pallet_prelude::OriginFor;
     use frame_system::Config as SystemConfig;
     use num_traits::SaturatingSub;
-    use orml_traits::MultiCurrency;
     use sp_runtime::helpers_128bit::multiply_by_rational;
     use sp_runtime::traits::{
         AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
@@ -64,7 +65,7 @@ pub mod pallet {
     pub const PALLET_ID: PalletId = PalletId(*b"Vaults!!");
 
     type CurrencyIdOf<T> =
-        <<T as Config>::Currency as MultiCurrency<<T as SystemConfig>::AccountId>>::CurrencyId;
+        <<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
@@ -89,11 +90,8 @@ pub mod pallet {
             + MaybeSerializeDeserialize
             + Debug
             + Default;
-        type Currency: MultiCurrency<
-            Self::AccountId,
-            Balance = Self::Balance,
-            CurrencyId = Self::CurrencyId,
-        >;
+        type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyId>
+            + Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyId>;
         type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
         type MaxStrategies: Get<usize>;
         type StrategyReport: FullCodec + Default;
@@ -162,7 +160,7 @@ pub mod pallet {
         InconsistentStorage,
         TransferFromFailed,
         MintFailed,
-        InsuficientLpTokens,
+        InsufficientLpTokens,
         LookupError,
         VaultDoesNotExist,
         NoFreeVaultAllocation,
@@ -172,6 +170,7 @@ pub mod pallet {
         InsufficientFunds,
         AmountMustBePositive,
         NotEnoughLiquidity,
+        DepositIsTooLow,
     }
 
     #[pallet::call]
@@ -284,7 +283,7 @@ pub mod pallet {
         fn assets_under_management(vault_id: &VaultIndex) -> Result<T::Balance, Error<T>> {
             let vault =
                 Vaults::<T>::try_get(vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
-            let owned = T::Currency::total_balance(vault.asset_id, &Self::account_id());
+            let owned = T::Currency::balance(vault.asset_id, &Self::account_id());
             let outstanding = CapitalStructure::<T>::iter_prefix_values(vault_id)
                 .fold(T::Balance::zero(), |sum, item| sum + item.balance);
             Ok(owned + outstanding)
@@ -323,22 +322,35 @@ pub mod pallet {
             let lp_shares_value_amount =
                 <T::Convert as Convert<u128, T::Balance>>::convert(lp_shares_value);
 
-            let vault_owned_amount =
-                T::Currency::total_balance(vault.asset_id, &Self::account_id());
+            let vault_owned_amount = T::Currency::balance(vault.asset_id, &Self::account_id());
 
-            if lp_shares_value_amount > vault_owned_amount {
-                // TODO(hussein-aitlahcen): should we provide what we can to reduce the available liquidity
-                // in order to force strategies to deposit back later?
-                Err(Error::<T>::NotEnoughLiquidity)
-            } else {
-                let from = Self::account_id();
+            // TODO(hussein-aitlahcen): should we provide what we can to reduce the available liquidity
+            // in order to force strategies to rebalance?
+            ensure!(
+                lp_shares_value_amount <= vault_owned_amount,
+                Error::<T>::NotEnoughLiquidity
+            );
 
-                T::Currency::withdraw(vault.lp_token_id, &to, lp_amount)
-                    .map_err(|_| Error::<T>::InsuficientLpTokens)?;
-                T::Currency::transfer(vault.asset_id, &from, &to, lp_shares_value_amount)
-                    .map_err(|_| Error::<T>::TransferFromFailed)?;
-                Ok(lp_shares_value_amount)
-            }
+            ensure!(
+                T::Currency::can_withdraw(vault.lp_token_id, &to, lp_amount)
+                    .into_result()
+                    .is_ok(),
+                Error::<T>::InsufficientLpTokens
+            );
+
+            let from = Self::account_id();
+            ensure!(
+                T::Currency::can_withdraw(vault.asset_id, &from, lp_shares_value_amount)
+                    .into_result()
+                    .is_ok(),
+                Error::<T>::TransferFromFailed
+            );
+
+            T::Currency::burn_from(vault.lp_token_id, &to, lp_amount)
+                .map_err(|_| Error::<T>::InsufficientLpTokens)?;
+            T::Currency::transfer(vault.asset_id, &from, &to, lp_shares_value_amount, true)
+                .map_err(|_| Error::<T>::TransferFromFailed)?;
+            Ok(lp_shares_value_amount)
         }
 
         fn do_deposit(
@@ -349,13 +361,28 @@ pub mod pallet {
             let vault =
                 Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
 
+            ensure!(
+                T::Currency::can_withdraw(vault.asset_id, &from, amount)
+                    .into_result()
+                    .is_ok(),
+                Error::<T>::TransferFromFailed
+            );
+
+            let to = Self::account_id();
+
             let vault_aum = Self::assets_under_management(vault_id)?;
             if vault_aum.is_zero() {
+                ensure!(
+                    T::Currency::can_deposit(vault.lp_token_id, &from, amount)
+                        == DepositConsequence::Success,
+                    Error::<T>::MintFailed
+                );
+
                 // No assets in the vault means we should have no outstanding LP tokens, we can thus
                 // freely mint new tokens without performing the calculation.
-                T::Currency::transfer(vault.asset_id, &from, &Self::account_id(), amount)
+                T::Currency::transfer(vault.asset_id, &from, &to, amount, true)
                     .map_err(|_| Error::<T>::TransferFromFailed)?;
-                T::Currency::deposit(vault.lp_token_id, &from, amount)
+                T::Currency::mint_into(vault.lp_token_id, &from, amount)
                     .map_err(|_| Error::<T>::MintFailed)?;
                 Ok(amount)
             } else {
@@ -374,9 +401,17 @@ pub mod pallet {
                     .map_err(|_| Error::<T>::NoFreeVaultAllocation)?;
                 let lp = <T::Convert as Convert<u128, T::Balance>>::convert(lp);
 
-                T::Currency::transfer(vault.asset_id, &from, &Self::account_id(), amount)
+                ensure!(lp > T::Balance::zero(), Error::<T>::DepositIsTooLow);
+
+                ensure!(
+                    T::Currency::can_deposit(vault.lp_token_id, &from, lp)
+                        == DepositConsequence::Success,
+                    Error::<T>::MintFailed
+                );
+
+                T::Currency::transfer(vault.asset_id, &from, &to, amount, true)
                     .map_err(|_| Error::<T>::TransferFromFailed)?;
-                T::Currency::deposit(vault.lp_token_id, &from, lp)
+                T::Currency::mint_into(vault.lp_token_id, &from, lp)
                     .map_err(|_| Error::<T>::MintFailed)?;
                 Ok(lp)
             }
@@ -474,7 +509,7 @@ pub mod pallet {
                     .lifetime_withdrawn
                     .checked_add(&amount)
                     .ok_or(Error::<T>::OverflowError)?;
-                T::Currency::transfer(vault.asset_id, &Self::account_id(), to, amount)
+                T::Currency::transfer(vault.asset_id, &Self::account_id(), to, amount, true)
                     .map_err(|_| Error::<T>::InsufficientFunds)
             })?;
             Ok(())
@@ -495,7 +530,7 @@ pub mod pallet {
                     .lifetime_deposited
                     .checked_add(&amount)
                     .ok_or(Error::<T>::OverflowError)?;
-                T::Currency::transfer(vault.asset_id, from, &Self::account_id(), amount)
+                T::Currency::transfer(vault.asset_id, from, &Self::account_id(), amount, true)
                     .map_err(|_| Error::<T>::InsufficientFunds)
             })?;
             Ok(())
