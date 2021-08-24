@@ -44,6 +44,7 @@ fn load_spec(
 		// TODO set prod and hardcode para id
         "" | "picasso-dev" => Box::new(chain_spec::picasso_dev()),
 	    "dali" => Box::new(chain_spec::dali()),
+	    "picasso" => Box::new(chain_spec::picasso()),
         path => Box::new(chain_spec::picasso::ChainSpec::from_json_file(
             std::path::PathBuf::from(path),
         )?),
