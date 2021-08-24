@@ -51,7 +51,7 @@ where
 			// this resolves to 20% of total block fees going to treasury.
 			let to_treasury = imbalance.peek().div(5u128.into()).mul(2u128.into());
 			let (treasury_imbalance, _burn) = imbalance.split(to_treasury);
-			// give treasury the remaining half
+			// give treasury the remaining
 			<treasury::Pallet<R> as OnUnbalanced<_>>::on_unbalanced(treasury_imbalance);
 		}
 

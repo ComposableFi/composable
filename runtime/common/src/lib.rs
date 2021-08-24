@@ -16,6 +16,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod impls;
+pub mod filter;
 pub use types::*;
 pub use constants::*;
 
@@ -70,8 +71,7 @@ mod constants {
 	/// slot_duration()`.
 	///
 	/// Change this to adjust the block time.
-	// TODO changed to be more in line with statemine
-	pub const MILLISECS_PER_BLOCK: u64 = 12000;
+	pub const MILLISECS_PER_BLOCK: u64 = 6000;
 	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 	// Time is measured by number of blocks.
@@ -89,12 +89,12 @@ mod constants {
 	/// used to limit the maximal weight of a single extrinsic.
 	// TODO changed to be more in line with statemine
 	pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
-	/// TODO: We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
+	/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
 	/// Operational  extrinsics.
 	pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
-	/// TODO: We allow for 0.5 seconds of compute with a 6 second average block time.
-	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
+	/// We allow for 2 seconds of compute with a 6 second average block time.
+	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND * 2;
 
 	/// Origin for either root or half of general council
 	pub type EnsureRootOrHalfCouncil = EnsureOneOf<
