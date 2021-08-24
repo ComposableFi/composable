@@ -52,7 +52,7 @@ where
 
 /// Picasso POC-1 (rococo parachain)
 pub fn dali() -> picasso::ChainSpec {
-	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/dali.json"))
+	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/dali.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 

@@ -10,7 +10,7 @@
     "tokenSymbol": "PICA"
   },
   "relay_chain": "rococo",
-  "para_id": 2022,
+  "para_id": 2076,
   "consensusEngine": null,
   "lightSyncState": null,
   "codeSubstitutes": {},
