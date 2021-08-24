@@ -13,6 +13,7 @@ pallets=(
 	indices
 	membership
 	treasury
+	scheduler
 )
 
 for p in ${pallets[@]}
