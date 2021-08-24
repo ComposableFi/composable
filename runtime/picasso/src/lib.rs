@@ -650,9 +650,9 @@ impl scheduler::Config for Runtime {
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	// TODO: benchmark for runtime
-//        type WeightInfo = scheduler::weights::SubstrateWeight<Runtime>;         
+        type WeightInfo = scheduler::weights::SubstrateWeight<Runtime>;         
 //      type WeightInfo = weights::scheduler::WeightInfo<Runtime>;//WeightInfo;//<Runtime>;
-        type WeightInfo = weights::scheduler::SubstrateWeight<Runtime>;           
+//        type WeightInfo = weights::scheduler::SubstrateWeight<Runtime>;           
 //	type WeightInfo = ();
 }
 
