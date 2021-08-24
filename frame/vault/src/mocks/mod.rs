@@ -2,6 +2,7 @@ use self::currency_factory::MockCurrencyId;
 use crate as pallet_vault;
 use frame_support::{construct_runtime, parameter_types, traits::GenesisBuild};
 use frame_system as system;
+use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
@@ -15,13 +16,9 @@ pub mod strategy;
 pub type BlockNumber = u64;
 pub type AccountId = u32;
 pub type Balance = u128;
-
-/* NOTE(hussein-aitlahcen)
-  Used to generate reasonable amounts in tests.
-*/
-pub type ReasonableBalance = u64;
-
 pub type Amount = i128;
+
+pub const MINIMUM_BALANCE: Balance = 10000;
 
 pub const ALICE: AccountId = 0;
 pub const BOB: AccountId = 1;
@@ -78,7 +75,7 @@ impl pallet_vault::Config for Test {
 
 parameter_type_with_key! {
     pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
-        Default::default()
+        Zero::zero()
     };
 }
 
