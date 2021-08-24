@@ -631,8 +631,7 @@ impl collective::Config<CouncilInstance> for Runtime {
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = collective::PrimeDefaultVote;
-	// TODO: benchmark
-	type WeightInfo = ();
+	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -667,40 +666,39 @@ parameter_types! {
 }
 
 impl democracy::Config for Runtime {
-	type Proposal = Call;
-	type Event = Event;
-	type Currency = Balances;
-	type EnactmentPeriod = EnactmentPeriod;
-	type LaunchPeriod = LaunchPeriod;
-	type VotingPeriod = VotingPeriod;
-	type MinimumDeposit = MinimumDeposit;
+    type Proposal = Call;
+    type Event = Event;
+    type Currency = Balances;
+    type EnactmentPeriod = EnactmentPeriod;
+    type LaunchPeriod = LaunchPeriod;
+    type VotingPeriod = VotingPeriod;
+    type MinimumDeposit = MinimumDeposit;
 
-	// TODO: prod values
-	type ExternalOrigin = EnsureRootOrHalfCouncil;
-	type ExternalMajorityOrigin = EnsureRootOrHalfCouncil;
-	type ExternalDefaultOrigin = EnsureRootOrHalfCouncil;
+    // TODO: prod values
+    type ExternalOrigin = EnsureRootOrHalfCouncil;
+    type ExternalMajorityOrigin = EnsureRootOrHalfCouncil;
+    type ExternalDefaultOrigin = EnsureRootOrHalfCouncil;
 
-	type FastTrackOrigin = EnsureRootOrHalfCouncil;
-	type InstantOrigin = EnsureRootOrHalfCouncil;
-	type InstantAllowed = InstantAllowed;
+    type FastTrackOrigin = EnsureRootOrHalfCouncil;
+    type InstantOrigin = EnsureRootOrHalfCouncil;
+    type InstantAllowed = InstantAllowed;
 
-	type FastTrackVotingPeriod = FastTrackVotingPeriod;
-	type CancellationOrigin = EnsureRootOrHalfCouncil;
-	type BlacklistOrigin = EnsureRootOrHalfCouncil;
-	type CancelProposalOrigin = EnsureRootOrHalfCouncil;
-	type VetoOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
-	type OperationalPreimageOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
-	type Slash = Treasury;
+    type FastTrackVotingPeriod = FastTrackVotingPeriod;
+    type CancellationOrigin = EnsureRootOrHalfCouncil;
+    type BlacklistOrigin = EnsureRootOrHalfCouncil;
+    type CancelProposalOrigin = EnsureRootOrHalfCouncil;
+    type VetoOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
+    type OperationalPreimageOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
+    type Slash = Treasury;
 
-	type CooloffPeriod = CooloffPeriod;
-	type MaxProposals = MaxProposals;
-	type MaxVotes = MaxVotes;
-	type PalletsOrigin = OriginCaller;
+    type CooloffPeriod = CooloffPeriod;
+    type MaxProposals = MaxProposals;
+    type MaxVotes = MaxVotes;
+    type PalletsOrigin = OriginCaller;
 
-	type PreimageByteDeposit = PreimageByteDeposit;
-	type Scheduler = Scheduler;
-	// TODO: benchmark for runtime
-	type WeightInfo = ();
+    type PreimageByteDeposit = PreimageByteDeposit;
+    type Scheduler = Scheduler;
+    type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -933,6 +931,8 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, indices, Indices);
             add_benchmark!(params, batches, membership, CouncilMembership);
             add_benchmark!(params, batches, treasury, Treasury);
+            add_benchmark!(params, batches, democracy, Democracy);
+            add_benchmark!(params, batches, collective, Council);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
