@@ -18,7 +18,7 @@
     "tokenDecimals": 12,
     "tokenSymbol": "PICA"
   },
-  "relay_chain": "rococo",
+  "relay_chain": "westend",
   "para_id": 2076,
   "consensusEngine": null,
   "lightSyncState": null,
@@ -40,16 +40,21 @@
           [
             "5Cf3bX45wVfhMGc73menJ7shqrx7qDcykaXc5FRAyJod185y",
             1000000000000000000000
+          ],
+          [
+            "5HNUjsXcq3XTTHFY3N53tHFv4cF1vLHVkjWVBR7RpDvU54RJ",
+            1000000000000000000000
           ]
         ]
       },
       "parachainSystem": null,
       "parachainInfo": {
-        "parachainId": 2022
+        "parachainId": 2076
       },
       "collatorSelection": {
         "invulnerables": [
-          "5Cf3bX45wVfhMGc73menJ7shqrx7qDcykaXc5FRAyJod185y"
+          "5Cf3bX45wVfhMGc73menJ7shqrx7qDcykaXc5FRAyJod185y",
+          "5HNUjsXcq3XTTHFY3N53tHFv4cF1vLHVkjWVBR7RpDvU54RJ"
         ],
         "candidacyBond": 0,
         "desiredCandidates": 0
@@ -61,6 +66,13 @@
             "5Cf3bX45wVfhMGc73menJ7shqrx7qDcykaXc5FRAyJod185y",
             {
               "aura": "5Cf3bX45wVfhMGc73menJ7shqrx7qDcykaXc5FRAyJod185y"
+            }
+          ],
+          [
+            "5HNUjsXcq3XTTHFY3N53tHFv4cF1vLHVkjWVBR7RpDvU54RJ",
+            "5HNUjsXcq3XTTHFY3N53tHFv4cF1vLHVkjWVBR7RpDvU54RJ",
+            {
+              "aura": "5HNUjsXcq3XTTHFY3N53tHFv4cF1vLHVkjWVBR7RpDvU54RJ"
             }
           ]
         ]
