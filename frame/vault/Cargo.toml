@@ -15,7 +15,6 @@ package = "parity-scale-codec"
 version = "2.0.0"
 
 [dependencies]
-orml-traits = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb" }
 frame-support = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"  }
 frame-system = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
@@ -25,16 +24,16 @@ sp-io = { version = "3.0.0", default-features = false,  git = "https://github.co
 sp-core = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-std = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
-composable-traits = { version = "0.0.1", path = "../composable-traits"}
+composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 
 log = { version = "0.4.14", default-features = false }
-num-traits = "0.2.14"
+num-traits = { version = "0.2.14", default-features = false }
 
 [dev-dependencies]
-rand = { version = "0.8.4" }
 proptest = { version = "0.9.6" }
 serde = { version = "1.0.119" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
 
 [features]
 default = ["std"]
@@ -47,4 +46,11 @@ std = [
     "sp-io/std",
     "sp-core/std",
     "sp-std/std",
+    "sp-arithmetic/std",
+	"composable-traits/std",
+]
+
+runtime-benchmarks = [
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
 ]
