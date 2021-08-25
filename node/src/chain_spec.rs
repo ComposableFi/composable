@@ -61,7 +61,7 @@ pub fn picasso() -> picasso::ChainSpec {
 		.expect("Picasso chain spec not found!")
 }
 
-//TODO create prod config
+// chain spec for single node environments
 pub fn picasso_dev() -> picasso::ChainSpec {
 	//TODO check properties
 	let mut properties = Properties::new();
