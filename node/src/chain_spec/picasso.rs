@@ -14,53 +14,57 @@ pub fn picasso_session_keys(keys: AuraId) -> parachain_runtime::opaque::SessionK
 }
 /// Generates the genesis config for picasso
 pub fn genesis_config(
-    root: AccountId,
+	root: AccountId,
 	invulnerables: Vec<(AccountId, AuraId)>,
-    accounts: Vec<AccountId>,
-    id: ParaId,
-	existential_deposit: Balance
+	accounts: Vec<AccountId>,
+	id: ParaId,
+	existential_deposit: Balance,
 ) -> parachain_runtime::GenesisConfig {
-    parachain_runtime::GenesisConfig {
-        system: parachain_runtime::SystemConfig {
-            code: parachain_runtime::WASM_BINARY
-                .expect("WASM binary was not build, please build it!")
-                .to_vec(),
-            changes_trie_config: Default::default(),
-        },
-        balances: parachain_runtime::BalancesConfig {
-            // Configure endowed accounts with initial balance of 1 << 60.
-            balances: accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
-        },
-        aura: Default::default(),
-        sudo: parachain_runtime::SudoConfig {
-            // Assign network admin rights.
-            key: root,
-        },
-		indices: parachain_runtime::IndicesConfig {
-			indices: vec![],
+	parachain_runtime::GenesisConfig {
+		system: parachain_runtime::SystemConfig {
+			code: parachain_runtime::WASM_BINARY
+				.expect("WASM binary was not build, please build it!")
+				.to_vec(),
+			changes_trie_config: Default::default(),
 		},
-        parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
-        aura_ext: Default::default(),
-        parachain_system: Default::default(),
+		balances: parachain_runtime::BalancesConfig {
+			// Configure endowed accounts with initial balance of 1 << 60.
+			balances: accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+		},
+		aura: Default::default(),
+		sudo: parachain_runtime::SudoConfig {
+			// Assign network admin rights.
+			key: root,
+		},
+		indices: parachain_runtime::IndicesConfig { indices: vec![] },
+		parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
+		aura_ext: Default::default(),
+		parachain_system: Default::default(),
 		session: picasso_runtime::SessionConfig {
-			keys: invulnerables.iter().cloned().map(|(acc, aura)| (
-				acc.clone(), // account id
-				acc.clone(), // validator id
-				picasso_session_keys(aura), // session keys
-			)).collect()
+			keys: invulnerables
+				.iter()
+				.cloned()
+				.map(|(acc, aura)| {
+					(
+						acc.clone(),                // account id
+						acc.clone(),                // validator id
+						picasso_session_keys(aura), // session keys
+					)
+				})
+				.collect(),
 		},
 		collator_selection: parachain_runtime::CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
 			candidacy_bond: existential_deposit * 16,
 			..Default::default()
 		},
-	    council_membership: picasso_runtime::CouncilMembershipConfig {
-		    members: vec![],
-		    ..Default::default()
-	    },
-	    // council will get its members from council_membership
-	    council: Default::default(),
-	    democracy: Default::default(),
-	    treasury: Default::default(),
-    }
+		council_membership: picasso_runtime::CouncilMembershipConfig {
+			members: vec![],
+			..Default::default()
+		},
+		// council will get its members from council_membership
+		council: Default::default(),
+		democracy: Default::default(),
+		treasury: Default::default(),
+	}
 }
