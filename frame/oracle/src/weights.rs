@@ -1,7 +1,10 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
+use frame_support::{
+	traits::Get,
+	weights::{constants::RocksDbWeight, Weight},
+};
 use sp_std::marker::PhantomData;
 
 // The weight info trait for `pallet_collator_selection`.
@@ -24,7 +27,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
 }
-
 
 // For backwards compatibility and tests
 impl WeightInfo for () {

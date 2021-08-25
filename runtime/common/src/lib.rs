@@ -15,14 +15,14 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod impls;
 pub mod filter;
-pub use types::*;
+pub mod impls;
 pub use constants::*;
+pub use types::*;
 
 /// Common types of statemint and statemine.
 mod types {
-	use sp_runtime::traits::{Verify, IdentifyAccount};
+	use sp_runtime::traits::{IdentifyAccount, Verify};
 
 	/// An index to a block.
 	pub type BlockNumber = u32;
@@ -59,11 +59,11 @@ mod types {
 
 /// Common constants of statemint and statemine
 mod constants {
-	use super::types::{BlockNumber, AccountId, CouncilInstance, Balance};
-	use sp_runtime::Perbill;
-	use frame_support::weights::{Weight, constants::WEIGHT_PER_SECOND};
+	use super::types::{AccountId, Balance, BlockNumber, CouncilInstance};
+	use frame_support::weights::{constants::WEIGHT_PER_SECOND, Weight};
 	use frame_system::{EnsureOneOf, EnsureRoot};
 	use sp_core::u32_trait::{_1, _2};
+	use sp_runtime::Perbill;
 
 	/// This determines the average expected block time that we are targeting. Blocks will be
 	/// produced at a minimum duration defined by `SLOT_DURATION`. `SLOT_DURATION` is picked up by
@@ -83,7 +83,6 @@ mod constants {
 	pub const PICA: Balance = 1_000_000_000_000;
 	pub const MILLI_PICA: Balance = PICA / 1_000;
 	pub const MICRO_PICA: Balance = MILLI_PICA / 1_000;
-
 
 	/// We assume that ~5% of the block weight is consumed by `on_initialize` handlers. This is
 	/// used to limit the maximal weight of a single extrinsic.
