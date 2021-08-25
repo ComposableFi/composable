@@ -20,8 +20,8 @@ use sp_runtime::traits::BadOrigin;
 fn add_asset_and_info() {
     new_test_ext().execute_with(|| {
         const ASSET_ID: u64 = 1;
-        const MIN_ANSWERS: u64 = 3;
-        const MAX_ANSWERS: u64 = 5;
+        const MIN_ANSWERS: u32 = 3;
+        const MAX_ANSWERS: u32 = 5;
         const THRESHOLD: Percent = Percent::from_percent(80);
 
         // passes
@@ -315,19 +315,19 @@ fn add_price() {
             100u64,
             0u64
         ));
+        assert_noop!(
+            Oracle::submit_price(Origin::signed(account_2), 100u64, 0u64),
+            Error::<Test>::AlreadySubmitted
+        );
         assert_ok!(Oracle::submit_price(
             Origin::signed(account_4),
             100u64,
             0u64
         ));
+
         assert_noop!(
             Oracle::submit_price(Origin::signed(account_5), 100u64, 0u64),
             Error::<Test>::MaxPrices
-        );
-
-        assert_noop!(
-            Oracle::submit_price(Origin::signed(account_2), 100u64, 0u64),
-            Error::<Test>::AlreadySubmitted
         );
 
         let price = PrePrice {

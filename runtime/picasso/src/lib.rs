@@ -334,7 +334,7 @@ parameter_types! {
 	pub const RewardAmount: Balance = 5 * PICA;
 	// Shouldn't this be a ratio based on locked amount?
 	pub const SlashAmount: Balance = 5;
-	pub const MaxAnswerBound: u64 = 25;
+	pub const MaxAnswerBound: u32 = 25;
 
 }
 

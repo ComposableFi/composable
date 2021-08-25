@@ -109,6 +109,9 @@ benchmarks! {
     }
 
     submit_price {
+        let p in 1 .. T::MaxAnswerBound::get().try_into().unwrap();
+        let p = p - 1; // We will submit a new price now, then the number of prices will equal T::MaxAnswerBound::get().
+        let price_submitters = (0..p).map(|c| account("candidate", c, SEED)).collect::<Vec<T::AccountId>>();
         let caller: T::AccountId = whitelisted_caller();
         let price = 100_000;
         let asset_id = 1;
@@ -118,13 +121,25 @@ benchmarks! {
         Requested::<T>::insert(asset_id, true);
         AssetsInfo::<T>::insert(asset_id, AssetInfo {
             threshold: Percent::from_percent(80),
-            min_answers: 3,
-            max_answers: 5,
+            min_answers: 1,
+            max_answers: T::MaxAnswerBound::get(),
         });
+        PrePrices::<T>::mutate(asset_id, |current_prices| -> DispatchResult {
+            for (i, price_submitter) in price_submitters.iter().enumerate() {
+                let set_price = PrePrice {
+                    price: price + i as u64,
+                    block: frame_system::Pallet::<T>::block_number(),
+                    who: price_submitter.clone(),
+                };
+                current_prices.push(set_price);
+            }
+            Ok(())
+        })?;
     }: _(RawOrigin::Signed(caller.clone()), price, asset_id)
     verify {
         assert_last_event::<T>(Event::PriceSubmitted(caller, asset_id, price).into())
     }
+
 }
 
 impl_benchmark_test_suite!(Oracle, crate::mock::new_test_ext(), crate::mock::Test,);
