@@ -27,28 +27,23 @@ pub mod pallet {
         },
     };
 
+    use frame_system::offchain::{
+        AppCrypto, CreateSignedTransaction, SendSignedTransaction, SignedPayload, Signer,
+        SigningTypes,
+    };
     use frame_system::pallet_prelude::*;
     use frame_system::Config as SystemConfig;
-    use frame_system::{
-        offchain::{
-            AppCrypto, CreateSignedTransaction, SendSignedTransaction,
-            SignedPayload, Signer, SigningTypes,
-        },
-    };
     use lite_json::json::JsonValue;
     use sp_core::crypto::KeyTypeId;
     use sp_runtime::{
-        offchain::{
-            http,
-            Duration,
-        },
+        offchain::{http, Duration},
         traits::{Saturating, Zero},
-        Percent, PerThing, RuntimeDebug,
+        PerThing, Percent, RuntimeDebug,
     };
     use sp_std::{borrow::ToOwned, str};
 
     pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orac");
-	pub use crate::weights::WeightInfo;
+    pub use crate::weights::WeightInfo;
 
     pub mod crypto {
         use super::KEY_TYPE;
@@ -80,7 +75,6 @@ pub mod pallet {
         }
     }
 
-
     #[pallet::config]
     pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -94,9 +88,9 @@ pub mod pallet {
         type RequestCost: Get<BalanceOf<Self>>;
         type RewardAmount: Get<BalanceOf<Self>>;
         type SlashAmount: Get<BalanceOf<Self>>;
-		type MaxAnswerBound: Get<u64>;
-		/// The weight information of this pallet.
-		type WeightInfo: WeightInfo;
+        type MaxAnswerBound: Get<u64>;
+        /// The weight information of this pallet.
+        type WeightInfo: WeightInfo;
     }
 
     #[derive(Encode, Decode, Default, Debug, PartialEq)]
@@ -118,13 +112,12 @@ pub mod pallet {
         pub block: BlockNumber,
     }
 
-	#[derive(Encode, Decode, Default, Debug, PartialEq)]
+    #[derive(Encode, Decode, Default, Debug, PartialEq)]
     pub struct AssetInfo<Percent> {
         pub threshold: Percent,
         pub min_answers: u64,
-		pub max_answers: u64,
+        pub max_answers: u64,
     }
-
 
     type BalanceOf<T> =
         <<T as Config>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
@@ -173,7 +166,8 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn accuracy_threshold)]
-    pub type AssetsInfo<T: Config> = StorageMap<_, Blake2_128Concat, u64, AssetInfo<Percent>, ValueQuery>;
+    pub type AssetsInfo<T: Config> =
+        StorageMap<_, Blake2_128Concat, u64, AssetInfo<Percent>, ValueQuery>;
 
     #[pallet::storage]
     #[pallet::getter(fn requested)]
@@ -188,17 +182,16 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         NewAsset(u128),
-		AssetInfoChange(u64, Percent, u64, u64),
-		PriceRequested(T::AccountId, u64),
-		/// Who added it, the amount added and the total cumulative amount
-		StakeAdded(T::AccountId, BalanceOf<T>, BalanceOf<T>),
-		StakeRemoved(T::AccountId, BalanceOf<T>, T::BlockNumber),
-		StakeReclaimed(T::AccountId, BalanceOf<T>),
-		PriceSubmitted(T::AccountId, u64, u64),
-		UserSlashed(T::AccountId, u64, BalanceOf<T>),
-		UserRewarded(T::AccountId, u64, BalanceOf<T>),
-		AnswerPruned(T::AccountId, u64),
-
+        AssetInfoChange(u64, Percent, u64, u64),
+        PriceRequested(T::AccountId, u64),
+        /// Who added it, the amount added and the total cumulative amount
+        StakeAdded(T::AccountId, BalanceOf<T>, BalanceOf<T>),
+        StakeRemoved(T::AccountId, BalanceOf<T>, T::BlockNumber),
+        StakeReclaimed(T::AccountId, BalanceOf<T>),
+        PriceSubmitted(T::AccountId, u64, u64),
+        UserSlashed(T::AccountId, u64, BalanceOf<T>),
+        UserRewarded(T::AccountId, u64, BalanceOf<T>),
+        AnswerPruned(T::AccountId, u64),
     }
 
     #[pallet::error]
@@ -234,19 +227,19 @@ pub mod pallet {
                 let mut pre_prices = Vec::new();
                 if pre_pruned_prices.len() as u64 >= asset_info.min_answers {
                     pre_prices = Self::prune_old(pre_pruned_prices.clone(), block);
-					PrePrices::<T>::insert(i, pre_prices.clone());
+                    PrePrices::<T>::insert(i, pre_prices.clone());
                 }
                 if pre_prices.len() as u64 >= asset_info.min_answers {
-					let mut slice = pre_prices;
-					// check max answer
-					if slice.len() as u64 > asset_info.max_answers {
-						 slice = slice[0 .. asset_info.max_answers as usize].to_vec();
-					}
+                    let mut slice = pre_prices;
+                    // check max answer
+                    if slice.len() as u64 > asset_info.max_answers {
+                        slice = slice[0..asset_info.max_answers as usize].to_vec();
+                    }
                     let price = Self::get_median_price(&slice);
                     let set_price = Price { price, block };
                     Prices::<T>::insert(i, set_price);
                     Requested::<T>::insert(i, false);
-					PrePrices::<T>::remove(i);
+                    PrePrices::<T>::remove(i);
                     Self::handle_payout(&slice, price, i);
                 }
             }
@@ -261,32 +254,45 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-
-		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
+        #[pallet::weight(T::WeightInfo::add_asset_and_info())]
         pub fn add_asset_and_info(
             origin: OriginFor<T>,
             asset_id: u64,
             threshold: Percent,
-			min_answers: u64,
-			max_answers: u64
+            min_answers: u64,
+            max_answers: u64,
         ) -> DispatchResultWithPostInfo {
             T::AddOracle::ensure_origin(origin)?;
             ensure!(min_answers > 0, Error::<T>::InvalidMinAnswers);
-            ensure!(max_answers >= min_answers, Error::<T>::MaxAnswersLessThanMinAnswers);
-            ensure!(threshold < Percent::from_percent(100), Error::<T>::ExceedThreshold);
-            ensure!(max_answers <= T::MaxAnswerBound::get(), Error::<T>::ExceedMaxAnswers);
+            ensure!(
+                max_answers >= min_answers,
+                Error::<T>::MaxAnswersLessThanMinAnswers
+            );
+            ensure!(
+                threshold < Percent::from_percent(100),
+                Error::<T>::ExceedThreshold
+            );
+            ensure!(
+                max_answers <= T::MaxAnswerBound::get(),
+                Error::<T>::ExceedMaxAnswers
+            );
             let asset_info = AssetInfo {
                 threshold,
                 min_answers,
-                max_answers
+                max_answers,
             };
             AssetsInfo::<T>::insert(asset_id, asset_info);
             AssetsCount::<T>::mutate(|a| *a += 1);
-            Self::deposit_event(Event::AssetInfoChange(asset_id, threshold, min_answers, max_answers));
+            Self::deposit_event(Event::AssetInfoChange(
+                asset_id,
+                threshold,
+                min_answers,
+                max_answers,
+            ));
             Ok(().into())
         }
 
-        #[pallet::weight(10_000)]
+        #[pallet::weight(T::WeightInfo::request_price())]
         pub fn request_price(origin: OriginFor<T>, asset_id: u64) -> DispatchResultWithPostInfo {
             //TODO talk about the security and if this should be protected
             let who = ensure_signed(origin)?;
@@ -294,19 +300,19 @@ pub mod pallet {
             Ok(().into())
         }
 
-		#[pallet::weight(T::WeightInfo::set_signer())]
+        #[pallet::weight(T::WeightInfo::set_signer())]
         pub fn set_signer(
             origin: OriginFor<T>,
             signer: T::AccountId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             let current_controller = ControllerToSigner::<T>::get(&who);
-			let current_signer = SignerToController::<T>::get(&signer);
+            let current_signer = SignerToController::<T>::get(&signer);
 
             ensure!(current_controller == None, Error::<T>::ControllerUsed);
-			ensure!(current_signer == None, Error::<T>::SignerUsed);
+            ensure!(current_signer == None, Error::<T>::SignerUsed);
 
-			Self::do_add_stake(who.clone(), signer.clone(), T::MinStake::get())?;
+            Self::do_add_stake(who.clone(), signer.clone(), T::MinStake::get())?;
 
             ControllerToSigner::<T>::insert(&who, signer.clone());
             SignerToController::<T>::insert(signer, who);
@@ -314,17 +320,17 @@ pub mod pallet {
             Ok(().into())
         }
 
-        #[pallet::weight(10_000)]
+        #[pallet::weight(T::WeightInfo::add_stake())]
         pub fn add_stake(origin: OriginFor<T>, stake: BalanceOf<T>) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             let signer = ControllerToSigner::<T>::get(&who).ok_or(Error::<T>::UnsetSigner)?;
 
-			Self::do_add_stake(who, signer, stake)?;
+            Self::do_add_stake(who, signer, stake)?;
 
             Ok(().into())
         }
 
-        #[pallet::weight(10_000)]
+        #[pallet::weight(T::WeightInfo::remove_stake())]
         pub fn remove_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             let signer = ControllerToSigner::<T>::get(&who).ok_or(Error::<T>::UnsetSigner)?;
@@ -337,11 +343,11 @@ pub mod pallet {
             };
             OracleStake::<T>::remove(&signer);
             DeclaredWithdraws::<T>::insert(signer.clone(), withdrawal);
-			Self::deposit_event(Event::StakeRemoved(signer, stake, unlock_block));
+            Self::deposit_event(Event::StakeRemoved(signer, stake, unlock_block));
             Ok(().into())
         }
 
-        #[pallet::weight(10_000)]
+        #[pallet::weight(T::WeightInfo::reclaim_stake())]
         pub fn reclaim_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             let signer = ControllerToSigner::<T>::get(&who).ok_or(Error::<T>::UnsetSigner)?;
@@ -352,14 +358,14 @@ pub mod pallet {
             T::Currency::unreserve(&signer, withdrawal.stake.into());
             let _ = T::Currency::transfer(&signer, &who, withdrawal.stake.into(), AllowDeath);
 
-			ControllerToSigner::<T>::remove(&who);
+            ControllerToSigner::<T>::remove(&who);
             SignerToController::<T>::remove(&signer);
 
-			Self::deposit_event(Event::StakeReclaimed(signer, withdrawal.stake));
+            Self::deposit_event(Event::StakeReclaimed(signer, withdrawal.stake));
             Ok(().into())
         }
 
-        #[pallet::weight(10_000)]
+        #[pallet::weight(T::WeightInfo::reclaim_stake())]
         pub fn submit_price(
             origin: OriginFor<T>,
             price: u64,
@@ -393,7 +399,7 @@ pub mod pallet {
                 current_prices.push(set_price);
                 Ok(())
             })?;
-			Self::deposit_event(Event::PriceSubmitted(who, asset_id, price));
+            Self::deposit_event(Event::PriceSubmitted(who, asset_id, price));
             Ok(().into())
         }
     }
@@ -414,19 +420,25 @@ pub mod pallet {
     }
 
     impl<T: Config> Pallet<T> {
-
-        pub fn do_add_stake(who: T::AccountId, signer: T::AccountId, stake: BalanceOf<T>) ->  DispatchResult {
-			T::Currency::transfer(&who, &signer, stake, KeepAlive)?;
+        pub fn do_add_stake(
+            who: T::AccountId,
+            signer: T::AccountId,
+            stake: BalanceOf<T>,
+        ) -> DispatchResult {
+            T::Currency::transfer(&who, &signer, stake, KeepAlive)?;
             T::Currency::reserve(&signer, stake.into())?;
             let amount_staked = Self::oracle_stake(signer.clone()).unwrap_or(0u32.into()) + stake; // TODO maybe use checked add?
             OracleStake::<T>::insert(&signer, amount_staked);
-			Self::deposit_event(Event::StakeAdded(signer, stake, amount_staked));
-			Ok(())
-		}
+            Self::deposit_event(Event::StakeAdded(signer, stake, amount_staked));
+            Ok(())
+        }
 
-
-        pub fn handle_payout(pre_prices: &Vec<PrePrice<T::BlockNumber, T::AccountId>>, price: u64, asset_id: u64) {
-			// TODO only take prices up to max prices
+        pub fn handle_payout(
+            pre_prices: &Vec<PrePrice<T::BlockNumber, T::AccountId>>,
+            price: u64,
+            asset_id: u64,
+        ) {
+            // TODO only take prices up to max prices
             for answer in pre_prices {
                 let accuracy: Percent;
                 if answer.price < price {
@@ -435,27 +447,38 @@ pub mod pallet {
                     let adjusted_number = price.saturating_sub(answer.price - price);
                     accuracy = PerThing::from_rational(adjusted_number, price);
                 }
-				let min_accuracy = AssetsInfo::<T>::get(asset_id).threshold;
+                let min_accuracy = AssetsInfo::<T>::get(asset_id).threshold;
                 if accuracy < min_accuracy {
-					let slash_amount = T::SlashAmount::get();
+                    let slash_amount = T::SlashAmount::get();
                     let try_slash = T::Currency::can_slash(&answer.who, slash_amount);
                     if !try_slash {
                         log::warn!("Failed to slash {:?}", answer.who);
                     }
                     T::Currency::slash(&answer.who, slash_amount);
-					Self::deposit_event(Event::UserSlashed(answer.who.clone(), asset_id, slash_amount));
+                    Self::deposit_event(Event::UserSlashed(
+                        answer.who.clone(),
+                        asset_id,
+                        slash_amount,
+                    ));
                 } else {
-					let reward_amount = T::RewardAmount::get();
+                    let reward_amount = T::RewardAmount::get();
                     let controller =
                         SignerToController::<T>::get(&answer.who).unwrap_or(answer.who.clone());
                     // TODO: since inlflationary, burn a portion of tx fees of the chain to account for this
                     let _ = T::Currency::deposit_into_existing(&controller, reward_amount);
-					Self::deposit_event(Event::UserRewarded(answer.who.clone(), asset_id, reward_amount));
+                    Self::deposit_event(Event::UserRewarded(
+                        answer.who.clone(),
+                        asset_id,
+                        reward_amount,
+                    ));
                 }
             }
         }
         pub fn do_request_price(who: &T::AccountId, asset_id: u64) -> DispatchResult {
-			ensure!(AssetsInfo::<T>::get(asset_id).threshold != Percent::from_percent(0), Error::<T>::InvalidAssetId);
+            ensure!(
+                AssetsInfo::<T>::contains_key(asset_id),
+                Error::<T>::InvalidAssetId
+            );
             if !Self::requested(asset_id) {
                 ensure!(
                     T::Currency::can_slash(who, T::RequestCost::get()),
@@ -465,15 +488,15 @@ pub mod pallet {
                 RequestedId::<T>::mutate(asset_id, |request_id| *request_id += 1);
                 Requested::<T>::insert(asset_id, true);
             }
-			Self::deposit_event(Event::PriceRequested(who.clone(), asset_id));
+            Self::deposit_event(Event::PriceRequested(who.clone(), asset_id));
             Ok(())
         }
 
         pub fn prune_old(
             mut pre_pruned_prices: Vec<PrePrice<T::BlockNumber, T::AccountId>>,
-			block: T::BlockNumber
+            block: T::BlockNumber,
         ) -> Vec<PrePrice<T::BlockNumber, T::AccountId>> {
-			let stale_block = block.saturating_sub(T::StalePrice::get());
+            let stale_block = block.saturating_sub(T::StalePrice::get());
             if pre_pruned_prices.len() == 0 || pre_pruned_prices[0].block >= stale_block {
                 pre_pruned_prices
             } else {
@@ -484,7 +507,10 @@ pub mod pallet {
                     if pre_pruned_prices[0].block >= stale_block {
                         break pre_pruned_prices;
                     } else {
-						Self::deposit_event(Event::AnswerPruned(pre_pruned_prices[0].who.clone(), pre_pruned_prices[0].price));
+                        Self::deposit_event(Event::AnswerPruned(
+                            pre_pruned_prices[0].who.clone(),
+                            pre_pruned_prices[0].price,
+                        ));
                         pre_pruned_prices.remove(0);
                     }
                 };
@@ -499,7 +525,7 @@ pub mod pallet {
                 .collect();
             numbers.sort();
             let mid = numbers.len() / 2;
-			// TODO maybe check length
+            // TODO maybe check length
             numbers[mid]
         }
 

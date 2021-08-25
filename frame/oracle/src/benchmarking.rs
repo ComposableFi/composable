@@ -8,7 +8,7 @@ use frame_support::{
     traits::{Currency, EnsureOrigin, Get},
 };
 use frame_system::{EventRecord, RawOrigin};
-use sp_runtime::{Percent};
+use sp_runtime::Percent;
 use sp_std::prelude::*;
 
 // pub type BalanceOf<T> =
@@ -25,11 +25,11 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 }
 
 macro_rules! whitelist {
-	($acc:ident) => {
-		frame_benchmarking::benchmarking::add_to_whitelist(
-			frame_system::Account::<T>::hashed_key_for(&$acc).into()
-		);
-	};
+    ($acc:ident) => {
+        frame_benchmarking::benchmarking::add_to_whitelist(
+            frame_system::Account::<T>::hashed_key_for(&$acc).into(),
+        );
+    };
 }
 
 benchmarks! {
@@ -40,23 +40,90 @@ benchmarks! {
         let min_answers = 3;
         let max_answers = 5;
     }: {
-		assert_ok!(
-			<Oracle<T>>::add_asset_and_info(caller, asset_id, threshold, min_answers, max_answers)
-		);
-	}
+        assert_ok!(
+            <Oracle<T>>::add_asset_and_info(caller, asset_id, threshold, min_answers, max_answers)
+        );
+    }
     verify {
         assert_last_event::<T>(Event::AssetInfoChange(asset_id, threshold, min_answers, max_answers).into());
     }
 
-	set_signer {
+    request_price {
         let caller: T::AccountId = whitelisted_caller();
-		let signer: T::AccountId = account("candidate", 0, SEED);
-		whitelist!(signer);
-		let stake = T::MinStake::get();
-		T::Currency::make_free_balance_be(&caller, stake + T::Currency::minimum_balance());
+        let asset_id = 1;
+        AssetsInfo::<T>::insert(asset_id, AssetInfo {
+            threshold: Percent::from_percent(80),
+            min_answers: 3,
+            max_answers: 5,
+        });
+        AssetsCount::<T>::mutate(|a| *a += 1);
+        T::Currency::make_free_balance_be(&caller, T::RequestCost::get() + T::Currency::minimum_balance());
+    }: _(RawOrigin::Signed(caller.clone()), asset_id)
+    verify {
+        assert_last_event::<T>(Event::PriceRequested(caller, asset_id).into())
+    }
+
+    set_signer {
+        let caller: T::AccountId = whitelisted_caller();
+        let signer: T::AccountId = account("candidate", 0, SEED);
+        whitelist!(signer);
+        let stake = T::MinStake::get();
+        T::Currency::make_free_balance_be(&caller, stake + T::Currency::minimum_balance());
     }: _(RawOrigin::Signed(caller.clone()), signer.clone())
     verify {
         assert_last_event::<T>(Event::StakeAdded(signer, stake.clone(), stake).into());
+    }
+
+    add_stake {
+        let caller: T::AccountId = whitelisted_caller();
+        let stake = T::MinStake::get();
+        T::Currency::make_free_balance_be(&caller, stake * 2u32.into());
+        let signer: T::AccountId = account("candidate", 0, SEED);
+        ControllerToSigner::<T>::insert(&caller, signer.clone());
+    }: _(RawOrigin::Signed(caller.clone()), stake)
+    verify {
+        assert_last_event::<T>(Event::StakeAdded(signer, stake, stake).into())
+    }
+
+    remove_stake {
+        let signer: T::AccountId = account("candidate", 0, SEED);
+        let stake = T::MinStake::get();
+        ControllerToSigner::<T>::insert(&signer, signer.clone());
+        OracleStake::<T>::insert(&signer, stake);
+        let unlock_block = frame_system::Pallet::<T>::block_number() + T::StakeLock::get() + 1u32.into();
+    }: _(RawOrigin::Signed(signer.clone()))
+    verify {
+        assert_last_event::<T>(Event::StakeRemoved(signer, stake, unlock_block).into())
+    }
+
+    reclaim_stake {
+        let signer: T::AccountId = account("candidate", 0, SEED);
+        let stake = T::MinStake::get();
+        ControllerToSigner::<T>::insert(&signer, signer.clone());
+        OracleStake::<T>::insert(&signer, stake);
+        let unlock_block = frame_system::Pallet::<T>::block_number();
+        DeclaredWithdraws::<T>::insert(&signer, Withdraw { stake, unlock_block });
+    }: _(RawOrigin::Signed(signer.clone()))
+    verify {
+        assert_last_event::<T>(Event::StakeReclaimed(signer, stake).into())
+    }
+
+    submit_price {
+        let caller: T::AccountId = whitelisted_caller();
+        let price = 100_000;
+        let asset_id = 1;
+        let stake = T::MinStake::get();
+        OracleStake::<T>::insert(&caller, stake);
+        RequestedId::<T>::mutate(asset_id, |request_id| *request_id += 1);
+        Requested::<T>::insert(asset_id, true);
+        AssetsInfo::<T>::insert(asset_id, AssetInfo {
+            threshold: Percent::from_percent(80),
+            min_answers: 3,
+            max_answers: 5,
+        });
+    }: _(RawOrigin::Signed(caller.clone()), price, asset_id)
+    verify {
+        assert_last_event::<T>(Event::PriceSubmitted(caller, asset_id, price).into())
     }
 }
 

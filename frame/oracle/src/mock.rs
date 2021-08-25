@@ -3,14 +3,8 @@ use crate::*;
 use frame_support::{ord_parameter_types, parameter_types};
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use sp_core::{
-    sr25519::Signature,
-    H256,
-};
-use sp_keystore::{
-    testing::KeyStore,
-    {SyncCryptoStore},
-};
+use sp_core::{sr25519::Signature, H256};
+use sp_keystore::{testing::KeyStore, SyncCryptoStore};
 use sp_runtime::{
     testing::{Header, TestXt},
     traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
@@ -61,7 +55,7 @@ impl system::Config for Test {
     type OnKilledAccount = ();
     type SystemWeightInfo = ();
     type SS58Prefix = SS58Prefix;
-	type OnSetCode = ();
+    type OnSetCode = ();
 }
 
 parameter_types! {
@@ -76,8 +70,8 @@ impl pallet_balances::Config for Test {
     type AccountStore = System;
     type WeightInfo = ();
     type MaxLocks = ();
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
+    type MaxReserves = ();
+    type ReserveIdentifier = [u8; 8];
 }
 
 parameter_types! {
@@ -87,7 +81,7 @@ parameter_types! {
     pub const RequestCost: u64 = 1;
     pub const RewardAmount: u64 = 5;
     pub const SlashAmount: u64 = 5;
-	pub const MaxAnswerBound: u64 = 5;
+    pub const MaxAnswerBound: u64 = 5;
 
 }
 
@@ -136,8 +130,8 @@ impl pallet_oracle::Config for Test {
     type RequestCost = RequestCost;
     type RewardAmount = RewardAmount;
     type SlashAmount = SlashAmount;
-	type MaxAnswerBound = MaxAnswerBound;
-	type WeightInfo = ();
+    type MaxAnswerBound = MaxAnswerBound;
+    type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

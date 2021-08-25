@@ -1,14 +1,12 @@
 use crate::mock::{AccountId, Call, Extrinsic};
-use crate::{mock::*, Error, PrePrice, Price, Withdraw, AssetInfo, *};
+use crate::{mock::*, AssetInfo, Error, PrePrice, Price, Withdraw, *};
 use codec::Decode;
 use frame_support::{
     assert_noop, assert_ok,
     traits::{Currency, OnInitialize},
 };
 use pallet_balances::Error as BalancesError;
-use sp_core::{
-    offchain::{testing, OffchainWorkerExt, TransactionPoolExt},
-};
+use sp_core::offchain::{testing, OffchainWorkerExt, TransactionPoolExt};
 use sp_keystore::{
     testing::KeyStore,
     {KeystoreExt, SyncCryptoStore},
@@ -16,7 +14,7 @@ use sp_keystore::{
 use sp_runtime::{Percent, RuntimeAppPublic};
 use std::sync::Arc;
 
-use sp_runtime::traits::{BadOrigin};
+use sp_runtime::traits::BadOrigin;
 
 #[test]
 fn add_asset_and_info() {
@@ -39,52 +37,67 @@ fn add_asset_and_info() {
         let asset_info = AssetInfo {
             threshold: THRESHOLD,
             min_answers: MIN_ANSWERS,
-            max_answers: MAX_ANSWERS
+            max_answers: MAX_ANSWERS,
         };
         // id now activated and count incremented
         assert_eq!(Oracle::accuracy_threshold(1), asset_info);
         assert_eq!(Oracle::assets_count(), 1);
         // fails with non permission
         let account_1: AccountId = Default::default();
-        assert_noop!(Oracle::add_asset_and_info(
-            Origin::signed(account_1),
-            ASSET_ID,
-            THRESHOLD,
-            MAX_ANSWERS,
-            MAX_ANSWERS
-        ), BadOrigin);
+        assert_noop!(
+            Oracle::add_asset_and_info(
+                Origin::signed(account_1),
+                ASSET_ID,
+                THRESHOLD,
+                MAX_ANSWERS,
+                MAX_ANSWERS
+            ),
+            BadOrigin
+        );
 
-        assert_noop!(Oracle::add_asset_and_info(
-            Origin::signed(account_2),
-            ASSET_ID,
-            THRESHOLD,
-            MAX_ANSWERS,
-            MIN_ANSWERS,
-        ), Error::<Test>::MaxAnswersLessThanMinAnswers);
+        assert_noop!(
+            Oracle::add_asset_and_info(
+                Origin::signed(account_2),
+                ASSET_ID,
+                THRESHOLD,
+                MAX_ANSWERS,
+                MIN_ANSWERS,
+            ),
+            Error::<Test>::MaxAnswersLessThanMinAnswers
+        );
 
-        assert_noop!(Oracle::add_asset_and_info(
-            Origin::signed(account_2),
-            ASSET_ID,
-            Percent::from_percent(100),
-            MIN_ANSWERS,
-            MAX_ANSWERS,
-        ), Error::<Test>::ExceedThreshold);
+        assert_noop!(
+            Oracle::add_asset_and_info(
+                Origin::signed(account_2),
+                ASSET_ID,
+                Percent::from_percent(100),
+                MIN_ANSWERS,
+                MAX_ANSWERS,
+            ),
+            Error::<Test>::ExceedThreshold
+        );
 
-        assert_noop!(Oracle::add_asset_and_info(
-            Origin::signed(account_2),
-            ASSET_ID,
-            THRESHOLD,
-            MIN_ANSWERS,
-            MAX_ANSWERS + 1,
-        ), Error::<Test>::ExceedMaxAnswers);
+        assert_noop!(
+            Oracle::add_asset_and_info(
+                Origin::signed(account_2),
+                ASSET_ID,
+                THRESHOLD,
+                MIN_ANSWERS,
+                MAX_ANSWERS + 1,
+            ),
+            Error::<Test>::ExceedMaxAnswers
+        );
 
-        assert_noop!(Oracle::add_asset_and_info(
-            Origin::signed(account_2),
-            ASSET_ID,
-            THRESHOLD,
-            0,
-            MAX_ANSWERS,
-        ), Error::<Test>::InvalidMinAnswers);
+        assert_noop!(
+            Oracle::add_asset_and_info(
+                Origin::signed(account_2),
+                ASSET_ID,
+                THRESHOLD,
+                0,
+                MAX_ANSWERS,
+            ),
+            Error::<Test>::InvalidMinAnswers
+        );
     });
 }
 
@@ -101,12 +114,18 @@ fn set_signer() {
         assert_eq!(Oracle::controller_to_signer(account_2), Some(account_1));
         assert_eq!(Oracle::signer_to_controller(account_1), Some(account_2));
 
-		assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_5));
+        assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_5));
         assert_eq!(Oracle::controller_to_signer(account_1), Some(account_5));
         assert_eq!(Oracle::signer_to_controller(account_5), Some(account_1));
 
-		assert_noop!(Oracle::set_signer(Origin::signed(account_3), account_4), BalancesError::<Test>::InsufficientBalance);
-		assert_noop!(Oracle::set_signer(Origin::signed(account_4), account_1), Error::<Test>::SignerUsed);
+        assert_noop!(
+            Oracle::set_signer(Origin::signed(account_3), account_4),
+            BalancesError::<Test>::InsufficientBalance
+        );
+        assert_noop!(
+            Oracle::set_signer(Origin::signed(account_4), account_1),
+            Error::<Test>::SignerUsed
+        );
         assert_noop!(
             Oracle::set_signer(Origin::signed(account_1), account_2),
             Error::<Test>::ControllerUsed
@@ -123,12 +142,12 @@ fn do_request_price() {
             Origin::signed(account_2),
             1,
             Percent::from_percent(80),
-			3,
-			5,
+            3,
+            5,
         ));
 
         let account_3 = get_account_3();
-		// fails on not enough funds
+        // fails on not enough funds
         assert_noop!(
             Oracle::do_request_price(&account_3, 1),
             Error::<Test>::NotEnoughFunds
@@ -172,7 +191,7 @@ fn add_stake() {
         assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_2));
 
         assert_eq!(Balances::free_balance(account_2), 100);
-		assert_eq!(Balances::free_balance(account_1), 99);
+        assert_eq!(Balances::free_balance(account_1), 99);
         assert_ok!(Oracle::add_stake(Origin::signed(account_1), 50));
         assert_eq!(Balances::free_balance(account_1), 49);
         assert_eq!(Balances::total_balance(&account_1), 49);
@@ -210,7 +229,7 @@ fn remove_and_reclaim_stake() {
 
         assert_ok!(Oracle::add_stake(Origin::signed(account_1), 50));
 
-		assert_noop!(
+        assert_noop!(
             Oracle::reclaim_stake(Origin::signed(account_1)),
             Error::<Test>::Unknown
         );
@@ -240,8 +259,8 @@ fn remove_and_reclaim_stake() {
         assert_eq!(Balances::free_balance(account_2), 100);
         assert_eq!(Balances::total_balance(&account_2), 100);
 
-		// signer controller pruned
-		assert_eq!(Oracle::controller_to_signer(account_1), None);
+        // signer controller pruned
+        assert_eq!(Oracle::controller_to_signer(account_1), None);
         assert_eq!(Oracle::signer_to_controller(account_2), None);
 
         assert_noop!(
@@ -263,8 +282,8 @@ fn add_price() {
             Origin::signed(account_2),
             0,
             Percent::from_percent(80),
-			3,
-			3,
+            3,
+            3,
         ));
         // fails price not requested
         assert_noop!(
@@ -358,8 +377,8 @@ fn check_request() {
             Origin::signed(account_2),
             0,
             Percent::from_percent(80),
-			3,
-			5,
+            3,
+            5,
         ));
         let account_1: AccountId = Default::default();
         assert_ok!(Oracle::do_request_price(&account_1, 0));
@@ -418,8 +437,8 @@ fn test_payout_slash() {
             Origin::signed(account_2),
             0,
             Percent::from_percent(80),
-			3,
-			5,
+            3,
+            5,
         ));
 
         Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
@@ -436,8 +455,8 @@ fn test_payout_slash() {
             Origin::signed(account_2),
             0,
             Percent::from_percent(90),
-			3,
-			5,
+            3,
+            5,
         ));
         Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
 
@@ -467,8 +486,8 @@ fn on_init() {
             Origin::signed(account_2),
             0,
             Percent::from_percent(80),
-			3,
-			5,
+            3,
+            5,
         ));
         let account_1: AccountId = Default::default();
         assert_ok!(Oracle::do_request_price(&account_1, 0));
@@ -513,8 +532,8 @@ fn on_init_prune_scenerios() {
             Origin::signed(account_2),
             0,
             Percent::from_percent(80),
-			3,
-			5,
+            3,
+            5,
         ));
         let account_1: AccountId = Default::default();
         assert_ok!(Oracle::do_request_price(&account_1, 0));
@@ -578,8 +597,8 @@ fn on_init_over_max_answers() {
             Origin::signed(account_2),
             0,
             Percent::from_percent(80),
-			1,
-			2,
+            1,
+            2,
         ));
         let account_1: AccountId = Default::default();
         assert_ok!(Oracle::do_request_price(&account_1, 0));
@@ -591,19 +610,21 @@ fn on_init_over_max_answers() {
         }
         // all pruned
         Oracle::on_initialize(0);
-		// price prunes all but first 2 answers, median went from 102 to 101
-        let price = Price { price: 101, block: 0 };
+        // price prunes all but first 2 answers, median went from 102 to 101
+        let price = Price {
+            price: 101,
+            block: 0,
+        };
         assert_eq!(Oracle::prices(0), price);
         assert_eq!(Oracle::pre_prices(0).len(), 0);
-
-});
+    });
 }
 
 #[test]
 fn prune_old_edgecase() {
     new_test_ext().execute_with(|| {
-		Oracle::prune_old(vec![], 0);
-	});
+        Oracle::prune_old(vec![], 0);
+    });
 }
 
 #[test]
