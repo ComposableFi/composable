@@ -33,29 +33,29 @@ parameter_types! {
 }
 
 impl system::Config for Test {
-    type BaseCallFilter = ();
-    type BlockWeights = ();
-    type BlockLength = ();
-    type DbWeight = ();
-    type Origin = Origin;
-    type Call = Call;
-    type Index = u64;
-    type BlockNumber = u64;
-    type Hash = H256;
-    type Hashing = BlakeTwo256;
-    type AccountId = sp_core::sr25519::Public;
-    type Lookup = IdentityLookup<Self::AccountId>;
-    type Header = Header;
-    type Event = Event;
-    type BlockHashCount = BlockHashCount;
-    type Version = ();
-    type PalletInfo = PalletInfo;
-    type AccountData = pallet_balances::AccountData<u64>;
-    type OnNewAccount = ();
-    type OnKilledAccount = ();
-    type SystemWeightInfo = ();
-    type SS58Prefix = SS58Prefix;
-    type OnSetCode = ();
+	type BaseCallFilter = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
+	type Origin = Origin;
+	type Call = Call;
+	type Index = u64;
+	type BlockNumber = u64;
+	type Hash = H256;
+	type Hashing = BlakeTwo256;
+	type AccountId = sp_core::sr25519::Public;
+	type Lookup = IdentityLookup<Self::AccountId>;
+	type Header = Header;
+	type Event = Event;
+	type BlockHashCount = BlockHashCount;
+	type Version = ();
+	type PalletInfo = PalletInfo;
+	type AccountData = pallet_balances::AccountData<u64>;
+	type OnNewAccount = ();
+	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
+	type SS58Prefix = SS58Prefix;
+	type OnSetCode = ();
 }
 
 parameter_types! {
@@ -63,25 +63,25 @@ parameter_types! {
 }
 
 impl pallet_balances::Config for Test {
-    type Balance = u64;
-    type Event = Event;
-    type DustRemoval = ();
-    type ExistentialDeposit = ExistentialDeposit;
-    type AccountStore = System;
-    type WeightInfo = ();
-    type MaxLocks = ();
-    type MaxReserves = ();
-    type ReserveIdentifier = [u8; 8];
+	type Balance = u64;
+	type Event = Event;
+	type DustRemoval = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
+	type WeightInfo = ();
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 }
 
 parameter_types! {
-    pub const StakeLock: u64 = 1;
-    pub const MinStake: u64 = 1;
-    pub const StalePrice: u64 = 2;
-    pub const RequestCost: u64 = 1;
-    pub const RewardAmount: u64 = 5;
-    pub const SlashAmount: u64 = 5;
-    pub const MaxAnswerBound: u32 = 5;
+	pub const StakeLock: u64 = 1;
+	pub const MinStake: u64 = 1;
+	pub const StalePrice: u64 = 2;
+	pub const RequestCost: u64 = 1;
+	pub const RewardAmount: u64 = 5;
+	pub const SlashAmount: u64 = 5;
+	pub const MaxAnswerBound: u32 = 5;
 }
 
 ord_parameter_types! {
@@ -119,18 +119,18 @@ where
 }
 
 impl pallet_oracle::Config for Test {
-    type Event = Event;
-    type AuthorityId = crypto::TestAuthId;
-    type Currency = Balances;
-    type StakeLock = StakeLock;
-    type StalePrice = StalePrice;
-    type MinStake = MinStake;
-    type AddOracle = EnsureSignedBy<RootAccount, sp_core::sr25519::Public>;
-    type RequestCost = RequestCost;
-    type RewardAmount = RewardAmount;
-    type SlashAmount = SlashAmount;
-    type MaxAnswerBound = MaxAnswerBound;
-    type WeightInfo = ();
+	type Event = Event;
+	type AuthorityId = crypto::TestAuthId;
+	type Currency = Balances;
+	type StakeLock = StakeLock;
+	type StalePrice = StalePrice;
+	type MinStake = MinStake;
+	type AddOracle = EnsureSignedBy<RootAccount, sp_core::sr25519::Public>;
+	type RequestCost = RequestCost;
+	type RewardAmount = RewardAmount;
+	type SlashAmount = SlashAmount;
+	type MaxAnswerBound = MaxAnswerBound;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
