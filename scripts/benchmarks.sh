@@ -16,6 +16,7 @@ pallets=(
 	scheduler
 	collective
 	democracy
+	collator_selection
 )
 
 for p in ${pallets[@]}
