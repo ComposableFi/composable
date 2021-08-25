@@ -16,9 +16,7 @@
 //! Auxillary struct/enums for Statemint runtime.
 //! Taken from polkadot/runtime/common (at a21cd64) and adapted for Statemint.
 
-use core::ops::Div;
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
-use sp_std::ops::Mul;
 
 pub type NegativeImbalance<T> =
 	<balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
@@ -36,25 +34,15 @@ where
 	<R as balances::Config>::Balance: From<u128>,
 {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
-		let numeric_amount = amount.peek();
-		let staking_pot = <collator_selection::Pallet<R>>::account_id();
-		let slash_ratio: u32 = 2;
-		let slash_amount = numeric_amount.div(slash_ratio.into());
-		<balances::Pallet<R>>::resolve_creating(&staking_pot, amount);
-		// deposit then slash the amount to burn fees
-		if <balances::Pallet<R>>::can_slash(&staking_pot, slash_amount) {
-			let (imbalance, _) = <balances::Pallet<R>>::slash(&staking_pot, slash_amount);
-			// this resolves to 20% of total block fees going to treasury.
-			let to_treasury = imbalance.peek().div(5u128.into()).mul(2u128.into());
-			let (treasury_imbalance, _burn) = imbalance.split(to_treasury);
-			// give treasury the remaining
-			<treasury::Pallet<R> as OnUnbalanced<_>>::on_unbalanced(treasury_imbalance);
-		}
+		// Collator's get half the fees
+		let (to_collators, half) = amount.ration(50, 50);
+		// 30% gets burned 20% to treasury
+		let (_, to_treasury) = half.ration(30, 20);
 
-		<frame_system::Pallet<R>>::deposit_event(balances::Event::Deposit(
-			staking_pot,
-			slash_amount,
-		));
+		let staking_pot = <collator_selection::Pallet<R>>::account_id();
+		<balances::Pallet<R>>::resolve_creating(&staking_pot, to_collators);
+		<treasury::Pallet<R> as OnUnbalanced<_>>::on_unbalanced(to_treasury);
+
 	}
 }
 
