@@ -9,3 +9,4 @@ pub mod democracy;
 pub mod session;
 pub mod timestamp;
 pub mod treasury;
+pub mod collator_selection;
