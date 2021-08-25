@@ -314,11 +314,11 @@ pub mod pallet {
 
             Self::do_add_stake(who.clone(), signer.clone(), T::MinStake::get())?;
 
-            ControllerToSigner::<T>::insert(&who, signer.clone());
-            SignerToController::<T>::insert(signer, who);
+			ControllerToSigner::<T>::insert(&who, signer.clone());
+			SignerToController::<T>::insert(signer, who);
 
-            Ok(().into())
-        }
+			Ok(().into())
+		}
 
         #[pallet::weight(T::WeightInfo::add_stake())]
         pub fn add_stake(origin: OriginFor<T>, stake: BalanceOf<T>) -> DispatchResultWithPostInfo {

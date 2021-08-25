@@ -4,8 +4,8 @@ use super::*;
 use crate::Pallet as Oracle;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
-    assert_ok,
-    traits::{Currency, EnsureOrigin, Get},
+	assert_ok,
+	traits::{Currency, EnsureOrigin, Get},
 };
 use frame_system::{EventRecord, RawOrigin};
 use sp_runtime::Percent;
@@ -17,11 +17,11 @@ use sp_std::prelude::*;
 const SEED: u32 = 0;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
-    let events = frame_system::Pallet::<T>::events();
-    let system_event: <T as frame_system::Config>::Event = generic_event.into();
-    // compare to the last event record
-    let EventRecord { event, .. } = &events[events.len() - 1];
-    assert_eq!(event, &system_event);
+	let events = frame_system::Pallet::<T>::events();
+	let system_event: <T as frame_system::Config>::Event = generic_event.into();
+	// compare to the last event record
+	let EventRecord { event, .. } = &events[events.len() - 1];
+	assert_eq!(event, &system_event);
 }
 
 macro_rules! whitelist {

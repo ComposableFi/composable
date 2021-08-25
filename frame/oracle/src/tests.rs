@@ -2,8 +2,8 @@ use crate::mock::{AccountId, Call, Extrinsic};
 use crate::{mock::*, AssetInfo, Error, PrePrice, Price, Withdraw, *};
 use codec::Decode;
 use frame_support::{
-    assert_noop, assert_ok,
-    traits::{Currency, OnInitialize},
+	assert_noop, assert_ok,
+	traits::{Currency, OnInitialize},
 };
 use pallet_balances::Error as BalancesError;
 use sp_core::offchain::{testing, OffchainWorkerExt, TransactionPoolExt};
@@ -103,16 +103,16 @@ fn add_asset_and_info() {
 
 #[test]
 fn set_signer() {
-    new_test_ext().execute_with(|| {
-        let account_1: AccountId = Default::default();
-        let account_2 = get_account_2();
-        let account_3 = get_account_3();
-        let account_4 = get_account_4();
-        let account_5 = get_account_5();
+	new_test_ext().execute_with(|| {
+		let account_1: AccountId = Default::default();
+		let account_2 = get_account_2();
+		let account_3 = get_account_3();
+		let account_4 = get_account_4();
+		let account_5 = get_account_5();
 
-        assert_ok!(Oracle::set_signer(Origin::signed(account_2), account_1));
-        assert_eq!(Oracle::controller_to_signer(account_2), Some(account_1));
-        assert_eq!(Oracle::signer_to_controller(account_1), Some(account_2));
+		assert_ok!(Oracle::set_signer(Origin::signed(account_2), account_1));
+		assert_eq!(Oracle::controller_to_signer(account_2), Some(account_1));
+		assert_eq!(Oracle::signer_to_controller(account_1), Some(account_2));
 
         assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_5));
         assert_eq!(Oracle::controller_to_signer(account_1), Some(account_5));
@@ -220,14 +220,14 @@ fn add_stake() {
 
 #[test]
 fn remove_and_reclaim_stake() {
-    new_test_ext().execute_with(|| {
-        let account_1: AccountId = Default::default();
-        let account_2 = get_account_2();
-        let account_3 = get_account_3();
+	new_test_ext().execute_with(|| {
+		let account_1: AccountId = Default::default();
+		let account_2 = get_account_2();
+		let account_3 = get_account_3();
 
-        assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_2));
+		assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_2));
 
-        assert_ok!(Oracle::add_stake(Origin::signed(account_1), 50));
+		assert_ok!(Oracle::add_stake(Origin::signed(account_1), 50));
 
         assert_noop!(
             Oracle::reclaim_stake(Origin::signed(account_1)),
@@ -263,11 +263,8 @@ fn remove_and_reclaim_stake() {
         assert_eq!(Oracle::controller_to_signer(account_1), None);
         assert_eq!(Oracle::signer_to_controller(account_2), None);
 
-        assert_noop!(
-            Oracle::reclaim_stake(Origin::signed(account_3)),
-            Error::<Test>::UnsetSigner
-        );
-    });
+		assert_noop!(Oracle::reclaim_stake(Origin::signed(account_3)), Error::<Test>::UnsetSigner);
+	});
 }
 
 #[test]
@@ -357,15 +354,15 @@ fn add_price() {
 
 #[test]
 fn medianize_price() {
-    new_test_ext().execute_with(|| {
-        let account_1: AccountId = Default::default();
-        for i in 0..3 {
-            let price = i as u64 + 100u64;
-            add_price_storage(price, 0, account_1, 0);
-        }
-        let price = Oracle::get_median_price(&Oracle::pre_prices(0));
-        assert_eq!(price, 101);
-    });
+	new_test_ext().execute_with(|| {
+		let account_1: AccountId = Default::default();
+		for i in 0..3 {
+			let price = i as u64 + 100u64;
+			add_price_storage(price, 0, account_1, 0);
+		}
+		let price = Oracle::get_median_price(&Oracle::pre_prices(0));
+		assert_eq!(price, 101);
+	});
 }
 
 #[test]
@@ -388,9 +385,9 @@ fn check_request() {
 
 #[test]
 fn not_check_request() {
-    new_test_ext().execute_with(|| {
-        Oracle::check_requests();
-    });
+	new_test_ext().execute_with(|| {
+		Oracle::check_requests();
+	});
 }
 
 #[test]
@@ -630,132 +627,128 @@ fn prune_old_edgecase() {
 #[test]
 #[should_panic = "local_storage_get can be called only in the offchain call context with\n\t\t\t\tOffchainDb extension"]
 fn should_make_http_call_and_parse_result() {
-    let (offchain, state) = testing::TestOffchainExt::new();
-    let mut t = sp_io::TestExternalities::default();
-    t.register_extension(OffchainWorkerExt::new(offchain));
+	let (offchain, state) = testing::TestOffchainExt::new();
+	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainWorkerExt::new(offchain));
 
-    price_oracle_response(&mut state.write(), "0");
+	price_oracle_response(&mut state.write(), "0");
 
-    t.execute_with(|| {
-        // when
-        let price = Oracle::fetch_price(&0).unwrap();
-        // then
-        assert_eq!(price, 15523);
-    });
+	t.execute_with(|| {
+		// when
+		let price = Oracle::fetch_price(&0).unwrap();
+		// then
+		assert_eq!(price, 15523);
+	});
 }
 
 fn price_oracle_response(state: &mut testing::OffchainState, price_id: &str) {
-    let base: String = "http://localhost:3001/price/".to_owned();
-    let url = base + price_id + "/0";
+	let base: String = "http://localhost:3001/price/".to_owned();
+	let url = base + price_id + "/0";
 
-    state.expect_request(testing::PendingRequest {
-        method: "GET".into(),
-        uri: url.into(),
-        response: Some(br#"{"USD": 155.23}"#.to_vec()),
-        sent: true,
-        ..Default::default()
-    });
+	state.expect_request(testing::PendingRequest {
+		method: "GET".into(),
+		uri: url.into(),
+		response: Some(br#"{"USD": 155.23}"#.to_vec()),
+		sent: true,
+		..Default::default()
+	});
 }
 
 #[test]
 #[should_panic = "local_storage_get can be called only in the offchain call context with\n\t\t\t\tOffchainDb extension"]
 fn knows_how_to_mock_several_http_calls() {
-    let (offchain, state) = testing::TestOffchainExt::new();
-    let mut t = sp_io::TestExternalities::default();
-    t.register_extension(OffchainWorkerExt::new(offchain));
+	let (offchain, state) = testing::TestOffchainExt::new();
+	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainWorkerExt::new(offchain));
 
-    {
-        let mut state = state.write();
-        state.expect_request(testing::PendingRequest {
-            method: "GET".into(),
-            uri: "http://localhost:3001/price/0/0".into(),
-            response: Some(br#"{"USD": 1}"#.to_vec()),
-            sent: true,
-            ..Default::default()
-        });
+	{
+		let mut state = state.write();
+		state.expect_request(testing::PendingRequest {
+			method: "GET".into(),
+			uri: "http://localhost:3001/price/0/0".into(),
+			response: Some(br#"{"USD": 1}"#.to_vec()),
+			sent: true,
+			..Default::default()
+		});
 
-        state.expect_request(testing::PendingRequest {
-            method: "GET".into(),
-            uri: "http://localhost:3001/price/0/0".into(),
-            response: Some(br#"{"USD": 2}"#.to_vec()),
-            sent: true,
-            ..Default::default()
-        });
+		state.expect_request(testing::PendingRequest {
+			method: "GET".into(),
+			uri: "http://localhost:3001/price/0/0".into(),
+			response: Some(br#"{"USD": 2}"#.to_vec()),
+			sent: true,
+			..Default::default()
+		});
 
-        state.expect_request(testing::PendingRequest {
-            method: "GET".into(),
-            uri: "http://localhost:3001/price/0/0".into(),
-            response: Some(br#"{"USD": 3}"#.to_vec()),
-            sent: true,
-            ..Default::default()
-        });
-    }
+		state.expect_request(testing::PendingRequest {
+			method: "GET".into(),
+			uri: "http://localhost:3001/price/0/0".into(),
+			response: Some(br#"{"USD": 3}"#.to_vec()),
+			sent: true,
+			..Default::default()
+		});
+	}
 
-    t.execute_with(|| {
-        let price1 = Oracle::fetch_price(&0).unwrap();
-        let price2 = Oracle::fetch_price(&0).unwrap();
-        let price3 = Oracle::fetch_price(&0).unwrap();
+	t.execute_with(|| {
+		let price1 = Oracle::fetch_price(&0).unwrap();
+		let price2 = Oracle::fetch_price(&0).unwrap();
+		let price3 = Oracle::fetch_price(&0).unwrap();
 
-        assert_eq!(price1, 100);
-        assert_eq!(price2, 200);
-        assert_eq!(price3, 300);
-    })
+		assert_eq!(price1, 100);
+		assert_eq!(price2, 200);
+		assert_eq!(price3, 300);
+	})
 }
 
 #[test]
 #[should_panic = "local_storage_get can be called only in the offchain call context with\n\t\t\t\tOffchainDb extension"]
 fn should_submit_signed_transaction_on_chain() {
-    const PHRASE: &str =
-        "news slush supreme milk chapter athlete soap sausage put clutch what kitten";
+	const PHRASE: &str =
+		"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
 
-    let (offchain, offchain_state) = testing::TestOffchainExt::new();
-    let (pool, pool_state) = testing::TestTransactionPoolExt::new();
-    let keystore = KeyStore::new();
-    SyncCryptoStore::sr25519_generate_new(
-        &keystore,
-        crate::crypto::Public::ID,
-        Some(&format!("{}/hunter1", PHRASE)),
-    )
-    .unwrap();
+	let (offchain, offchain_state) = testing::TestOffchainExt::new();
+	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
+	let keystore = KeyStore::new();
+	SyncCryptoStore::sr25519_generate_new(
+		&keystore,
+		crate::crypto::Public::ID,
+		Some(&format!("{}/hunter1", PHRASE)),
+	)
+	.unwrap();
 
-    let mut t = sp_io::TestExternalities::default();
-    t.register_extension(OffchainWorkerExt::new(offchain));
-    t.register_extension(TransactionPoolExt::new(pool));
-    t.register_extension(KeystoreExt(Arc::new(keystore)));
+	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainWorkerExt::new(offchain));
+	t.register_extension(TransactionPoolExt::new(pool));
+	t.register_extension(KeystoreExt(Arc::new(keystore)));
 
-    price_oracle_response(&mut offchain_state.write(), "0");
+	price_oracle_response(&mut offchain_state.write(), "0");
 
-    t.execute_with(|| {
-        // when
-        Oracle::fetch_price_and_send_signed(&0).unwrap();
-        // then
-        let tx = pool_state.write().transactions.pop().unwrap();
-        assert!(pool_state.read().transactions.is_empty());
-        let tx = Extrinsic::decode(&mut &*tx).unwrap();
-        assert_eq!(tx.signature.unwrap().0, 0);
-        assert_eq!(tx.call, Call::Oracle(crate::Call::submit_price(15523, 0)));
-    });
+	t.execute_with(|| {
+		// when
+		Oracle::fetch_price_and_send_signed(&0).unwrap();
+		// then
+		let tx = pool_state.write().transactions.pop().unwrap();
+		assert!(pool_state.read().transactions.is_empty());
+		let tx = Extrinsic::decode(&mut &*tx).unwrap();
+		assert_eq!(tx.signature.unwrap().0, 0);
+		assert_eq!(tx.call, Call::Oracle(crate::Call::submit_price(15523, 0)));
+	});
 }
 
 #[test]
 fn parse_price_works() {
-    let test_data = vec![
-        ("{\"1\":6536.92}", Some(6536)),
-        ("{\"1\":650000000}", Some(650000000)),
-        ("{\"2\":6536}", None),
-        ("{\"0\":\"6432\"}", None),
-    ];
+	let test_data = vec![
+		("{\"1\":6536.92}", Some(6536)),
+		("{\"1\":650000000}", Some(650000000)),
+		("{\"2\":6536}", None),
+		("{\"0\":\"6432\"}", None),
+	];
 
-    for (json, expected) in test_data {
-        assert_eq!(expected, Oracle::parse_price(json, "1"));
-    }
+	for (json, expected) in test_data {
+		assert_eq!(expected, Oracle::parse_price(json, "1"));
+	}
 }
 
 fn add_price_storage(price: u64, asset_id: u64, who: AccountId, block: u64) {
-    let price = PrePrice {
-        price: price,
-        block,
-        who,
-    };
-    PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.push(price));
+	let price = PrePrice { price, block, who };
+	PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.push(price));
 }

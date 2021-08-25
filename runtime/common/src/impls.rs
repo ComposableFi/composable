@@ -16,18 +16,20 @@
 //! Auxillary struct/enums for Statemint runtime.
 //! Taken from polkadot/runtime/common (at a21cd64) and adapted for Statemint.
 
-use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 use core::ops::Div;
+use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 use sp_std::ops::Mul;
 
-pub type NegativeImbalance<T> = <balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
-
+pub type NegativeImbalance<T> =
+	<balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 /// Logic for the author to get a portion of fees.
 pub struct ToStakingPot<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for ToStakingPot<R>
 where
-	R: balances::Config + collator_selection::Config + treasury::Config<Currency=balances::Pallet<R>>,
+	R: balances::Config
+		+ collator_selection::Config
+		+ treasury::Config<Currency = balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::Event: From<balances::Event<R>>,
@@ -38,16 +40,10 @@ where
 		let staking_pot = <collator_selection::Pallet<R>>::account_id();
 		let slash_ratio: u32 = 2;
 		let slash_amount = numeric_amount.div(slash_ratio.into());
-		<balances::Pallet<R>>::resolve_creating(
-			&staking_pot,
-			amount,
-		);
+		<balances::Pallet<R>>::resolve_creating(&staking_pot, amount);
 		// deposit then slash the amount to burn fees
 		if <balances::Pallet<R>>::can_slash(&staking_pot, slash_amount) {
-			let (imbalance, _) = <balances::Pallet<R>>::slash(
-				&staking_pot,
-				slash_amount,
-			);
+			let (imbalance, _) = <balances::Pallet<R>>::slash(&staking_pot, slash_amount);
 			// this resolves to 20% of total block fees going to treasury.
 			let to_treasury = imbalance.peek().div(5u128.into()).mul(2u128.into());
 			let (treasury_imbalance, _burn) = imbalance.split(to_treasury);
@@ -69,7 +65,7 @@ impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
 	R: balances::Config
 		+ collator_selection::Config
-		+ treasury::Config<Currency=balances::Pallet<R>>,
+		+ treasury::Config<Currency = balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::Event: From<balances::Event<R>>,
@@ -88,8 +84,13 @@ where
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use frame_support::traits::FindAuthor;
-	use frame_support::{parameter_types, PalletId, traits::ValidatorRegistration};
+	use crate::{constants::PICA, Balance, BlockNumber, DAYS};
+	use collator_selection::IdentityCollator;
+	use frame_support::{
+		parameter_types,
+		traits::{FindAuthor, ValidatorRegistration},
+		PalletId,
+	};
 	use frame_system::{limits, EnsureRoot};
 	use polkadot_primitives::v1::AccountId;
 	use sp_core::H256;
@@ -98,8 +99,6 @@ mod tests {
 		traits::{BlakeTwo256, IdentityLookup},
 		Perbill, Permill,
 	};
-	use collator_selection::IdentityCollator;
-	use crate::{DAYS, Balance, BlockNumber, constants::PICA};
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 	type Block = frame_system::mocking::MockBlock<Test>;
@@ -242,13 +241,9 @@ mod tests {
 	}
 
 	pub fn new_test_ext() -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 		// We use default for brevity, but you can configure as desired if needed.
-		balances::GenesisConfig::<Test>::default()
-			.assimilate_storage(&mut t)
-			.unwrap();
+		balances::GenesisConfig::<Test>::default().assimilate_storage(&mut t).unwrap();
 		t.into()
 	}
 
