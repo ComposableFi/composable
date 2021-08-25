@@ -6,7 +6,6 @@ use composable_traits::vault::StrategicVault;
 use frame_support::traits::fungibles::{Inspect, Mutate};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
-use rand::RngCore;
 use sp_runtime::Perquintill;
 
 fn create_vault(
@@ -51,12 +50,20 @@ prop_compose! {
 
 prop_compose! {
     fn valid_amounts_without_overflow_k
-        (accounts: usize)
-        (balances in prop::collection::vec(MINIMUM_BALANCE..Balance::MAX / accounts as Balance, 3..accounts))
+        (max_accounts: usize)
+        (balances in prop::collection::vec(MINIMUM_BALANCE..Balance::MAX / max_accounts as Balance, 3..max_accounts))
          -> Vec<(AccountId, Balance)> {
             (ACCOUNT_FREE_START..balances.len() as AccountId)
                 .zip(balances)
                 .collect()
+        }
+}
+
+prop_compose! {
+    fn valid_amounts_without_overflow_k_with_random_index(max_accounts: usize)
+        (accounts in valid_amounts_without_overflow_k(max_accounts),
+         index in 1..max_accounts) -> (usize, Vec<(AccountId, Balance)>) {
+            (index, accounts)
         }
 }
 
@@ -67,11 +74,8 @@ prop_compose! {
         }
 }
 
-/* NOTE(hussein-aitlahcen)
-   The 1+a is present to avoid the =0 predicate of the vault
-*/
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(100))]
+    #![proptest_config(ProptestConfig::with_cases(10000))]
 
     #[test]
     fn vault_single_deposit_withdraw_asset_identity(
@@ -221,15 +225,21 @@ proptest! {
             Ok(())
         });
     }
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(100))]
 
     #[test]
     fn vault_stock_dilution_k(
-        created_accounts in valid_amounts_without_overflow_k(500)
-            .prop_filter("a minimum of two accounts are required, 1 for the strategy and 1 depositor",
-                         |x| x.len() > 1)
+        (random_index, created_accounts) in
+            valid_amounts_without_overflow_k_with_random_index(1000)
+                .prop_filter("a minimum of two accounts are required, 1 for the strategy and 1 depositor",
+                             |(_, x)| x.len() > 1)
     ) {
         let asset_id = MockCurrencyId::D;
         let (strategy_account_id, strategy_profits) = created_accounts[0];
+        let strategy_deposit_moment = random_index;
         let accounts = &created_accounts[1..];
         let _ = ExtBuilder::default().build().execute_with(|| {
             let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
@@ -242,16 +252,11 @@ proptest! {
                 assert_ok!(Tokens::mint_into(asset_id, &account, balance));
             }
 
-            // TODO(hussein-aitlahcen): how to get the proptest seed instead of this
-            let mut rng = rand::thread_rng();
-
-            // profit cannot be made before any deposit, hence +1
-            let strategy_deposit_at_index = 1 + (rng.next_u64() as usize % accounts.len());
             let strategy_profit_share =
-                strategy_profits.checked_div(strategy_deposit_at_index as u128).expect(">= MINIMUM_BALANCE; qed;");
+                strategy_profits.checked_div(strategy_deposit_moment as Balance).expect(">= MINIMUM_BALANCE; qed;");
 
             for ((account, balance), index) in accounts.iter().copied().zip(0..accounts.len()) {
-                if index == strategy_deposit_at_index {
+                if index == strategy_deposit_moment {
                     assert_ok!(<Vault as StrategicVault>::deposit(&vault_id, &strategy_account_id, strategy_profits));
                 }
                 assert_ok!(Vault::deposit(Origin::signed(account), vault_id, balance));
@@ -263,7 +268,7 @@ proptest! {
 
                 let new_balance = Tokens::balance(asset_id, &account);
                 // We had shares before the profit, we get a cut of the profit
-                if index < strategy_deposit_at_index {
+                if index < strategy_deposit_moment {
                     prop_assert!(new_balance == balance + strategy_profit_share);
                 }
                 else {
@@ -271,7 +276,7 @@ proptest! {
                 }
             }
 
-            let shareholders = &accounts[0..strategy_deposit_at_index];
+            let shareholders = &accounts[0..strategy_deposit_moment];
             let initial_sum_of_shareholders_balance = shareholders.iter()
                 .map(|(_, initial_balance)| initial_balance)
                 .sum::<Balance>();
