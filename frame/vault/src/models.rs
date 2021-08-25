@@ -5,7 +5,7 @@ use sp_std::collections::btree_map::BTreeMap;
 #[derive(Encode, Decode, Default, Debug, PartialEq)]
 pub struct VaultConfig<AccountId, CurrencyId>
 where
-    AccountId: core::cmp::Ord + core::hash::Hash,
+    AccountId: core::cmp::Ord,
 {
     pub asset_id: CurrencyId,
     pub reserved: Perquintill,

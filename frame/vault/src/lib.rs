@@ -47,7 +47,7 @@ pub mod pallet {
     use composable_traits::vault::Vault;
     use frame_support::pallet_prelude::*;
     use frame_support::traits::fungibles::{Inspect, Mutate, Transfer};
-    use frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
+    use frame_support::traits::tokens::DepositConsequence;
     use frame_support::PalletId;
     use frame_system::ensure_signed;
     use frame_system::pallet_prelude::OriginFor;
@@ -174,10 +174,7 @@ pub mod pallet {
     }
 
     #[pallet::call]
-    impl<T: Config> Pallet<T>
-    where
-        <T as frame_system::Config>::AccountId: core::hash::Hash,
-    {
+    impl<T: Config> Pallet<T> {
         // TODO: weight
         #[pallet::weight(10_000)]
         pub fn deposit(
@@ -205,10 +202,7 @@ pub mod pallet {
         }
     }
 
-    impl<T: Config> Pallet<T>
-    where
-        <T as frame_system::Config>::AccountId: core::hash::Hash,
-    {
+    impl<T: Config> Pallet<T> {
         pub(crate) fn do_create_vault(
             config: VaultConfig<T::AccountId, T::CurrencyId>,
         ) -> Result<(VaultIndex, VaultInfo<T::CurrencyId>), Error<T>> {
@@ -418,10 +412,7 @@ pub mod pallet {
         }
     }
 
-    impl<T: Config> Vault for Pallet<T>
-    where
-        <T as frame_system::Config>::AccountId: core::hash::Hash,
-    {
+    impl<T: Config> Vault for Pallet<T> {
         type AccountId = T::AccountId;
         type Balance = T::Balance;
         type VaultId = VaultIndex;
@@ -461,10 +452,7 @@ pub mod pallet {
         }
     }
 
-    impl<T: Config> StrategicVault for Pallet<T>
-    where
-        <T as frame_system::Config>::AccountId: core::hash::Hash,
-    {
+    impl<T: Config> StrategicVault for Pallet<T> {
         fn available_funds(
             vault_id: &Self::VaultId,
             account: &Self::AccountId,
@@ -537,10 +525,7 @@ pub mod pallet {
         }
     }
 
-    impl<T: Config> ReportableStrategicVault for Pallet<T>
-    where
-        <T as frame_system::Config>::AccountId: core::hash::Hash,
-    {
+    impl<T: Config> ReportableStrategicVault for Pallet<T> {
         type Report = T::Balance;
 
         fn update_strategy_report(
