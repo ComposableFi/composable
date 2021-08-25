@@ -1,57 +1,61 @@
 {
-	"relaychain": {
-		"bin": "../../../polkadot/target/release/polkadot",
-		"chain": "rococo-local",
-		"nodes": [
-			{
-				"name": "alice",
-				"wsPort": 9944,
-				"port": 30444
-			},
-			{
-				"name": "bob",
-				"wsPort": 9955,
-				"port": 30555
-			},
-			{
-				"name": "charlie",
-				"wsPort": 9966,
-				"port": 30666
-			},
-			{
-				"name": "dave",
-				"wsPort": 9977,
-				"port": 30777
-			}
-		],
-		"genesis": {
-			"runtime": {
-				"runtime_genesis_config": {
-					"parachainsConfiguration": {
-						"config": {
-							"validation_upgrade_frequency": 1,
-							"validation_upgrade_delay": 1
-						}
-					}
-				}
-			}
-		}
-	},
-	"parachains": [
-		{
-			"bin": "../../target/release/composable",
-			"balance": "1000000000000000000000",
-			"chain": "picasso-dev",
-			"nodes": [
-				{
-					"wsPort": 9988,
-					"port": 31200,
-					"name": "alice",
-					"flags": ["--", "--execution=wasm"]
-				}
-			]
-		}
-	],
-	"types": {},
-	"finalization": false
+  "relaychain": {
+    "bin": "../../../polkadot/target/release/polkadot",
+    "chain": "rococo-local",
+    "nodes": [
+      {
+        "name": "alice",
+        "wsPort": 9944,
+        "basePath": "/tmp/parachains/alice",
+        "port": 30444
+      },
+      {
+        "name": "bob",
+        "wsPort": 9955,
+        "basePath": "/tmp/parachains/bob",
+        "port": 30555
+      },
+      {
+        "name": "charlie",
+        "wsPort": 9966,
+        "basePath": "/tmp/parachains/charlie",
+        "port": 30666
+      },
+      {
+        "name": "dave",
+        "wsPort": 9977,
+        "basePath": "/tmp/parachains/dave",
+        "port": 30777
+      }
+    ],
+    "genesis": {
+      "runtime": {
+        "runtime_genesis_config": {
+          "parachainsConfiguration": {
+            "config": {
+              "validation_upgrade_frequency": 1,
+              "validation_upgrade_delay": 1
+            }
+          }
+        }
+      }
+    }
+  },
+  "parachains": [
+    {
+      "bin": "../../target/release/composable",
+      "balance": "1000000000000000000000",
+      "chain": "picasso-dev",
+      "nodes": [
+        {
+          "wsPort": 9988,
+          "port": 31200,
+          "name": "alice",
+          "flags": ["--", "--execution=wasm"]
+        }
+      ]
+    }
+  ],
+  "types": {},
+  "finalization": false
 }

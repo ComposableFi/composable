@@ -7,7 +7,7 @@ use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{traits::IdentifyAccount, MultiSigner};
 pub mod picasso;
 // Parachin ID
-const PARA_ID: ParaId = ParaId::new(2022);
+const PARA_ID: ParaId = ParaId::new(2000);
 
 const PICASSO_ED: Balance = picasso_runtime::EXISTENTIAL_DEPOSIT;
 /// The extensions for the [`ChainSpec`].
@@ -96,8 +96,7 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 		None,
 		Some(properties),
 		Extensions {
-			//TODO set to Ksm for picasso
-			relay_chain: "picasso-local".into(), // You MUST set this to the correct network!
+			relay_chain: "rococo_local_testnet".into(),
 			para_id: PARA_ID.into(),
 		},
 	)
