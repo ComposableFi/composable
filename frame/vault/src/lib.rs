@@ -240,8 +240,10 @@ pub mod pallet {
 			ensure!(!signed, Error::<T>::InvalidSurchargeClaim);
 
 			let vault = Vaults::<T>::try_get(dest).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			let current_block = <frame_system::Pallet<T>>::block_number();
 
-			match crate::rent::evaluate_eviction::<T>(vault.deposit) {
+
+			match crate::rent::evaluate_eviction::<T>(current_block, vault.deposit) {
 				Verdict::Exempt => {
 					todo!("do not reward, but charge less weight")
 				},

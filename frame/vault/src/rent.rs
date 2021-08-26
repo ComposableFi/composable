@@ -11,12 +11,12 @@ pub enum Verdict<T: Config> {
 }
 
 pub fn evaluate_eviction<T: Config>(
+	current_block: BlockNumberOf<T>,
 	deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
 ) -> Verdict<T> {
 	match deposit {
 		Deposit::Existential => Verdict::Exempt,
 		Deposit::Rent { amount, at } => {
-			let current_block = <frame_system::Pallet<T>>::block_number();
 			// Rent was already paid this block.
 			if current_block <= at {
 				Verdict::Exempt
@@ -41,16 +41,15 @@ mod tests {
 	#[test]
 	fn test_existential() {
 		ExtBuilder::default().build().execute_with(|| {
-			assert_eq!(evaluate_eviction::<Test>(Deposit::Existential), Verdict::Exempt)
+			assert_eq!(evaluate_eviction::<Test>(0, Deposit::Existential), Verdict::Exempt)
 		})
 	}
 
 	#[test]
 	fn test_charge_exempt() {
 		ExtBuilder::default().build().execute_with(|| {
-			<frame_system::Pallet<Test>>::set_block_number(2);
 			assert_eq!(
-				evaluate_eviction::<Test>(Deposit::Rent { amount: 10, at: 2 }),
+				evaluate_eviction::<Test>(2, Deposit::Rent { amount: 10, at: 2 }),
 				Verdict::Exempt
 			)
 		})
@@ -59,9 +58,8 @@ mod tests {
 	#[test]
 	fn test_charge_simple() {
 		ExtBuilder::default().build().execute_with(|| {
-			<frame_system::Pallet<Test>>::set_block_number(5);
 			assert_eq!(
-				evaluate_eviction::<Test>(Deposit::Rent { amount: 10, at: 0 }),
+				evaluate_eviction::<Test>(5, Deposit::Rent { amount: 10, at: 0 }),
 				Verdict::Charge { remaining: 5, payable: 5 }
 			)
 		})
@@ -70,9 +68,8 @@ mod tests {
 	#[test]
 	fn test_charge_evict() {
 		ExtBuilder::default().build().execute_with(|| {
-			<frame_system::Pallet<Test>>::set_block_number(11);
 			assert_eq!(
-				evaluate_eviction::<Test>(Deposit::Rent { amount: 10, at: 0 }),
+				evaluate_eviction::<Test>(11, Deposit::Rent { amount: 10, at: 0 }),
 				Verdict::Evict { reward: 10 }
 			)
 		})
