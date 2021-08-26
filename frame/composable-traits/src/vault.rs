@@ -48,19 +48,16 @@ impl<Balance, BlockNumber> Deposit<Balance, BlockNumber> {
 #[derive(Clone, Encode, Decode, Default, Debug, PartialEq)]
 pub struct VaultConfig<AccountId, CurrencyId>
 where
-	AccountId: core::cmp::Ord + core::hash::Hash,
+	AccountId: core::cmp::Ord,
 {
 	pub asset_id: CurrencyId,
 	pub reserved: Perquintill,
 	pub manager: AccountId,
-	// this BtreeMap unnecessarily adds overhead and type restrictions, while we actually want to
-	// express in the type system that each key should be unique. A keyed-vec or some other custom
-	// type would allow us to ditch the `core::cmp::Ord + core::hash::Hash`, and instead use `PartialEq`
 	pub strategies: BTreeMap<AccountId, Perquintill>,
 }
 
 pub trait Vault {
-	type AccountId: core::cmp::Ord + core::hash::Hash;
+	type AccountId: core::cmp::Ord;
 	type AssetId;
 	type Balance;
 	type BlockNumber;

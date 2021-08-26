@@ -199,8 +199,6 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
-	where
-		<T as frame_system::Config>::AccountId: core::hash::Hash,
 	{
 		#[pallet::weight(10_000)]
 		pub fn create(
@@ -291,8 +289,6 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T>
-	where
-		<T as frame_system::Config>::AccountId: core::hash::Hash,
 	{
 		pub(crate) fn do_create_vault(
 			deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
@@ -496,8 +492,6 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Vault for Pallet<T>
-	where
-		<T as frame_system::Config>::AccountId: core::hash::Hash,
 	{
 		type AccountId = T::AccountId;
 		type Balance = T::Balance;
@@ -545,8 +539,6 @@ pub mod pallet {
 	}
 
 	impl<T: Config> StrategicVault for Pallet<T>
-	where
-		<T as frame_system::Config>::AccountId: core::hash::Hash,
 	{
 		fn available_funds(
 			vault_id: &Self::VaultId,
@@ -614,8 +606,6 @@ pub mod pallet {
 	}
 
 	impl<T: Config> ReportableStrategicVault for Pallet<T>
-	where
-		<T as frame_system::Config>::AccountId: core::hash::Hash,
 	{
 		type Report = T::Balance;
 

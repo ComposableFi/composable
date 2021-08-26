@@ -59,8 +59,8 @@ impl system::Config for Test {
 }
 
 parameter_types! {
-	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::A;
 	pub const MaxStrategies: usize = 255;
+	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::A;
 	pub const CreationDeposit: Balance = 10;
 	pub const ExistentialDeposit: Balance = 1000;
 	pub const RentPerBlock: Balance = 1;
