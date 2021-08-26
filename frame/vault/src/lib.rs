@@ -198,8 +198,7 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T>
-	{
+	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
 		pub fn create(
 			origin: OriginFor<T>,
@@ -288,8 +287,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> Pallet<T>
-	{
+	impl<T: Config> Pallet<T> {
 		pub(crate) fn do_create_vault(
 			deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
 			config: VaultConfig<T::AccountId, T::CurrencyId>,
@@ -491,8 +489,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> Vault for Pallet<T>
-	{
+	impl<T: Config> Vault for Pallet<T> {
 		type AccountId = T::AccountId;
 		type Balance = T::Balance;
 		type BlockNumber = T::BlockNumber;
@@ -538,8 +535,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> StrategicVault for Pallet<T>
-	{
+	impl<T: Config> StrategicVault for Pallet<T> {
 		fn available_funds(
 			vault_id: &Self::VaultId,
 			account: &Self::AccountId,
@@ -605,8 +601,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> ReportableStrategicVault for Pallet<T>
-	{
+	impl<T: Config> ReportableStrategicVault for Pallet<T> {
 		type Report = T::Balance;
 
 		fn update_strategy_report(

@@ -719,7 +719,6 @@ impl vault::Config for Runtime {
 	type ExistentialDeposit = VaultExistentialDeposit;
 	type RentPerBlock = RentPerBlock;
 	type NativeAssetId = NativeAssetId;
-
 }
 
 impl currency_factory::Config for Runtime {
