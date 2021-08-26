@@ -32,12 +32,19 @@ fn add_asset_and_info() {
 			MIN_ANSWERS,
 			MAX_ANSWERS,
 		));
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			ASSET_ID + 1,
+			THRESHOLD,
+			MIN_ANSWERS,
+			MAX_ANSWERS,
+		));
 
 		let asset_info =
 			AssetInfo { threshold: THRESHOLD, min_answers: MIN_ANSWERS, max_answers: MAX_ANSWERS };
 		// id now activated and count incremented
 		assert_eq!(Oracle::accuracy_threshold(1), asset_info);
-		assert_eq!(Oracle::assets_count(), 1);
+		assert_eq!(Oracle::assets_count(), 2);
 		// fails with non permission
 		let account_1: AccountId = Default::default();
 		assert_noop!(
@@ -93,6 +100,18 @@ fn add_asset_and_info() {
 				MAX_ANSWERS,
 			),
 			Error::<Test>::InvalidMinAnswers
+		);
+
+		// passes
+		assert_noop!(
+			Oracle::add_asset_and_info(
+				Origin::signed(account_2),
+				ASSET_ID + 2,
+				THRESHOLD,
+				MIN_ANSWERS,
+				MAX_ANSWERS,
+			),
+			Error::<Test>::ExceedAssetsCount
 		);
 	});
 }

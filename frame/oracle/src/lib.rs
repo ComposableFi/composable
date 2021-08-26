@@ -91,6 +91,7 @@ pub mod pallet {
 		type RewardAmount: Get<BalanceOf<Self>>;
 		type SlashAmount: Get<BalanceOf<Self>>;
 		type MaxAnswerBound: Get<u32>;
+		type MaxAssetsCount: Get<u32>;
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
 	}
@@ -130,7 +131,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn assets_count)]
-	pub type AssetsCount<T: Config> = StorageValue<_, u64, ValueQuery>;
+	pub type AssetsCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn signer_to_controller)]
@@ -218,22 +219,29 @@ pub mod pallet {
 		InvalidMinAnswers,
 		MaxAnswersLessThanMinAnswers,
 		ExceedThreshold,
+		ExceedAssetsCount,
 	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(block: T::BlockNumber) -> Weight {
+			let mut total_weight: Weight = Zero::zero();
+			let (mut total_reads, mut total_writes) = (0, 0);
 			for (i, asset_info) in AssetsInfo::<T>::iter() {
+				// ^^^ 1 read per every iteration
+
 				// TODO maybe add a check if price is requested, is less operations?
-				let pre_pruned_prices = PrePrices::<T>::get(i);
+				let pre_pruned_prices = PrePrices::<T>::get(i); // 1 read
 				let mut pre_prices = Vec::new();
+				total_reads += 2;
 
 				// There can convert pre_pruned_prices.len() to u32 safely
 				// because pre_pruned_prices.len() limited by u32
 				// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 				if pre_pruned_prices.len() as u32 >= asset_info.min_answers {
 					pre_prices = Self::prune_old(pre_pruned_prices.clone(), block);
-					PrePrices::<T>::insert(i, pre_prices.clone());
+					PrePrices::<T>::insert(i, pre_prices.clone()); // 1 write
+					total_writes += 1;
 				}
 
 				// There can convert pre_prices.len() to u32 safely
@@ -247,13 +255,14 @@ pub mod pallet {
 					}
 					let price = Self::get_median_price(&slice);
 					let set_price = Price { price, block };
-					Prices::<T>::insert(i, set_price);
-					Requested::<T>::insert(i, false);
-					PrePrices::<T>::remove(i);
-					Self::handle_payout(&slice, price, i);
+					Prices::<T>::insert(i, set_price); // 1 write
+					Requested::<T>::insert(i, false); // 1 write
+					PrePrices::<T>::remove(i); // 1 write
+					total_writes += 3;
+					total_weight += Self::handle_payout(&slice, price, i);
 				}
 			}
-			0
+			total_weight + T::DbWeight::get().reads_writes(total_reads, total_writes)
 		}
 
 		fn offchain_worker(_block_number: T::BlockNumber) {
@@ -277,6 +286,10 @@ pub mod pallet {
 			ensure!(max_answers >= min_answers, Error::<T>::MaxAnswersLessThanMinAnswers);
 			ensure!(threshold < Percent::from_percent(100), Error::<T>::ExceedThreshold);
 			ensure!(max_answers <= T::MaxAnswerBound::get(), Error::<T>::ExceedMaxAnswers);
+			ensure!(
+				AssetsCount::<T>::get() < T::MaxAssetsCount::get(),
+				Error::<T>::ExceedAssetsCount
+			);
 			let asset_info = AssetInfo { threshold, min_answers, max_answers };
 			AssetsInfo::<T>::insert(asset_id, asset_info);
 			AssetsCount::<T>::mutate(|a| *a += 1);
@@ -431,7 +444,8 @@ pub mod pallet {
 			pre_prices: &Vec<PrePrice<T::BlockNumber, T::AccountId>>,
 			price: u64,
 			asset_id: u64,
-		) {
+		) -> Weight {
+			let (mut total_reads, mut total_writes) = (0, 0);
 			// TODO only take prices up to max prices
 			for answer in pre_prices {
 				let accuracy: Percent;
@@ -441,26 +455,33 @@ pub mod pallet {
 					let adjusted_number = price.saturating_sub(answer.price - price);
 					accuracy = PerThing::from_rational(adjusted_number, price);
 				}
-				let min_accuracy = AssetsInfo::<T>::get(asset_id).threshold;
+				let min_accuracy = AssetsInfo::<T>::get(asset_id).threshold; // 1 read
+				total_reads += 1;
 				if accuracy < min_accuracy {
-					let slash_amount = T::SlashAmount::get();
-					let try_slash = T::Currency::can_slash(&answer.who, slash_amount);
+					let slash_amount = T::SlashAmount::get(); // 1 read
+					let try_slash = T::Currency::can_slash(&answer.who, slash_amount); // 1 read
+					total_reads += 2;
 					if !try_slash {
 						log::warn!("Failed to slash {:?}", answer.who);
 					}
-					T::Currency::slash(&answer.who, slash_amount);
+					T::Currency::slash(&answer.who, slash_amount); // 3 reads and 2 writes (worst case)
+					total_reads += 3;
+					total_writes += 2;
 					Self::deposit_event(Event::UserSlashed(
 						answer.who.clone(),
 						asset_id,
 						slash_amount,
 					));
 				} else {
-					let reward_amount = T::RewardAmount::get();
+					let reward_amount = T::RewardAmount::get(); // 1 read
 					let controller =
-						SignerToController::<T>::get(&answer.who).unwrap_or(answer.who.clone());
+						SignerToController::<T>::get(&answer.who).unwrap_or(answer.who.clone()); // 1 read
+
 					// TODO: since inlflationary, burn a portion of tx fees of the chain to account
 					// for this
-					let _ = T::Currency::deposit_into_existing(&controller, reward_amount);
+					let _ = T::Currency::deposit_into_existing(&controller, reward_amount); // 1 read and 1 write
+					total_reads += 3;
+					total_writes += 1;
 					Self::deposit_event(Event::UserRewarded(
 						answer.who.clone(),
 						asset_id,
@@ -468,7 +489,9 @@ pub mod pallet {
 					));
 				}
 			}
+			T::DbWeight::get().reads_writes(total_reads, total_writes)
 		}
+
 		pub fn do_request_price(who: &T::AccountId, asset_id: u64) -> DispatchResult {
 			ensure!(AssetsInfo::<T>::contains_key(asset_id), Error::<T>::InvalidAssetId);
 			if !Self::requested(asset_id) {
