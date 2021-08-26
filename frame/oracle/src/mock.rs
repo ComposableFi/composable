@@ -81,8 +81,7 @@ parameter_types! {
 	pub const RequestCost: u64 = 1;
 	pub const RewardAmount: u64 = 5;
 	pub const SlashAmount: u64 = 5;
-	pub const MaxAnswerBound: u64 = 5;
-
+	pub const MaxAnswerBound: u32 = 5;
 }
 
 ord_parameter_types! {

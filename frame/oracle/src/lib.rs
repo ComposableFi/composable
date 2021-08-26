@@ -90,7 +90,7 @@ pub mod pallet {
 		type RequestCost: Get<BalanceOf<Self>>;
 		type RewardAmount: Get<BalanceOf<Self>>;
 		type SlashAmount: Get<BalanceOf<Self>>;
-		type MaxAnswerBound: Get<u64>;
+		type MaxAnswerBound: Get<u32>;
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
 	}
@@ -117,8 +117,8 @@ pub mod pallet {
 	#[derive(Encode, Decode, Default, Debug, PartialEq)]
 	pub struct AssetInfo<Percent> {
 		pub threshold: Percent,
-		pub min_answers: u64,
-		pub max_answers: u64,
+		pub min_answers: u32,
+		pub max_answers: u32,
 	}
 
 	type BalanceOf<T> =
@@ -184,7 +184,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		NewAsset(u128),
-		AssetInfoChange(u64, Percent, u64, u64),
+		AssetInfoChange(u64, Percent, u32, u32),
 		PriceRequested(T::AccountId, u64),
 		/// Who added it, the amount added and the total cumulative amount
 		StakeAdded(T::AccountId, BalanceOf<T>, BalanceOf<T>),
@@ -227,14 +227,22 @@ pub mod pallet {
 				// TODO maybe add a check if price is requested, is less operations?
 				let pre_pruned_prices = PrePrices::<T>::get(i);
 				let mut pre_prices = Vec::new();
-				if pre_pruned_prices.len() as u64 >= asset_info.min_answers {
+
+				// There can convert pre_pruned_prices.len() to u32 safely
+				// because pre_pruned_prices.len() limited by u32
+				// (type of AssetsInfo::<T>::get(asset_id).max_answers).
+				if pre_pruned_prices.len() as u32 >= asset_info.min_answers {
 					pre_prices = Self::prune_old(pre_pruned_prices.clone(), block);
 					PrePrices::<T>::insert(i, pre_prices.clone());
 				}
-				if pre_prices.len() as u64 >= asset_info.min_answers {
+
+				// There can convert pre_prices.len() to u32 safely
+				// because pre_prices.len() limited by u32
+				// (type of AssetsInfo::<T>::get(asset_id).max_answers).
+				if pre_prices.len() as u32 >= asset_info.min_answers {
 					let mut slice = pre_prices;
 					// check max answer
-					if slice.len() as u64 > asset_info.max_answers {
+					if slice.len() as u32 > asset_info.max_answers {
 						slice = slice[0..asset_info.max_answers as usize].to_vec();
 					}
 					let price = Self::get_median_price(&slice);
@@ -261,8 +269,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset_id: u64,
 			threshold: Percent,
-			min_answers: u64,
-			max_answers: u64,
+			min_answers: u32,
+			max_answers: u32,
 		) -> DispatchResultWithPostInfo {
 			T::AddOracle::ensure_origin(origin)?;
 			ensure!(min_answers > 0, Error::<T>::InvalidMinAnswers);
@@ -281,7 +289,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::request_price())]
 		pub fn request_price(origin: OriginFor<T>, asset_id: u64) -> DispatchResultWithPostInfo {
 			//TODO talk about the security and if this should be protected
 			let who = ensure_signed(origin)?;
@@ -309,7 +317,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::add_stake())]
 		pub fn add_stake(origin: OriginFor<T>, stake: BalanceOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let signer = ControllerToSigner::<T>::get(&who).ok_or(Error::<T>::UnsetSigner)?;
@@ -319,7 +327,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::remove_stake())]
 		pub fn remove_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let signer = ControllerToSigner::<T>::get(&who).ok_or(Error::<T>::UnsetSigner)?;
@@ -333,7 +341,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::reclaim_stake())]
 		pub fn reclaim_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let signer = ControllerToSigner::<T>::get(&who).ok_or(Error::<T>::UnsetSigner)?;
@@ -351,7 +359,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::submit_price(T::MaxAnswerBound::get()))]
 		pub fn submit_price(
 			origin: OriginFor<T>,
 			price: u64,
@@ -369,18 +377,24 @@ pub mod pallet {
 				who: who.clone(),
 			};
 			log::info!("inside submit 2 {:#?}, {:#?}", set_price, asset_id);
-			PrePrices::<T>::try_mutate(asset_id, |current_prices| -> DispatchResult {
-				if current_prices.into_iter().any(|candidate| candidate.who == who) {
-					Err(Error::<T>::AlreadySubmitted)?
-				}
-				if current_prices.len() as u64 >= AssetsInfo::<T>::get(asset_id).max_answers {
-					Err(Error::<T>::MaxPrices)?
-				}
-				current_prices.push(set_price);
-				Ok(())
-			})?;
+			let current_count = PrePrices::<T>::try_mutate(
+				asset_id,
+				|current_prices| -> Result<usize, DispatchError> {
+					// There can convert current_prices.len() to u32 safely
+					// because current_prices.len() limited by u32
+					// (type of AssetsInfo::<T>::get(asset_id).max_answers).
+					if current_prices.len() as u32 >= AssetsInfo::<T>::get(asset_id).max_answers {
+						Err(Error::<T>::MaxPrices)?
+					}
+					if current_prices.into_iter().any(|candidate| candidate.who == who) {
+						Err(Error::<T>::AlreadySubmitted)?
+					}
+					current_prices.push(set_price);
+					Ok(current_prices.len())
+				},
+			)?;
 			Self::deposit_event(Event::PriceSubmitted(who, asset_id, price));
-			Ok(().into())
+			Ok(Some(T::WeightInfo::submit_price(current_count as u32)).into())
 		}
 	}
 
@@ -456,10 +470,7 @@ pub mod pallet {
 			}
 		}
 		pub fn do_request_price(who: &T::AccountId, asset_id: u64) -> DispatchResult {
-			ensure!(
-				AssetsInfo::<T>::get(asset_id).threshold != Percent::from_percent(0),
-				Error::<T>::InvalidAssetId
-			);
+			ensure!(AssetsInfo::<T>::contains_key(asset_id), Error::<T>::InvalidAssetId);
 			if !Self::requested(asset_id) {
 				ensure!(
 					T::Currency::can_slash(who, T::RequestCost::get()),
