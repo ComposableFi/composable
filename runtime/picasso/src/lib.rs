@@ -335,6 +335,7 @@ parameter_types! {
 	// Shouldn't this be a ratio based on locked amount?
 	pub const SlashAmount: Balance = 5;
 	pub const MaxAnswerBound: u32 = 25;
+	pub const MaxAssetsCount: u32 = 100_000;
 
 }
 
@@ -350,6 +351,7 @@ impl oracle::Config for Runtime {
 	type RewardAmount = RewardAmount;
 	type SlashAmount = SlashAmount;
 	type MaxAnswerBound = MaxAnswerBound;
+	type MaxAssetsCount = MaxAssetsCount;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 }
 
