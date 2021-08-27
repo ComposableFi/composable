@@ -2,7 +2,6 @@ pub mod balances;
 pub mod frame_system;
 pub mod indices;
 pub mod membership;
-pub mod oracle;
 pub mod scheduler;
 pub mod collective;
 pub mod democracy;

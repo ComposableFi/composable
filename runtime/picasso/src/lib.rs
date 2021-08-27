@@ -323,38 +323,6 @@ where
 	type Extrinsic = UncheckedExtrinsic;
 }
 
-//TODO set
-parameter_types! {
-	pub const StakeLock: BlockNumber = 50;
-	pub const StalePrice: BlockNumber = 5;
-
-	/// TODO: discuss with omar/cosmin
-	pub const MinStake: Balance = 1000 * PICA;
-	pub const RequestCost: Balance = 1 * PICA;
-	pub const RewardAmount: Balance = 5 * PICA;
-	// Shouldn't this be a ratio based on locked amount?
-	pub const SlashAmount: Balance = 5;
-	pub const MaxAnswerBound: u32 = 25;
-	pub const MaxAssetsCount: u32 = 100_000;
-
-}
-
-impl oracle::Config for Runtime {
-	type Currency = Balances;
-	type Event = Event;
-	type AuthorityId = oracle::crypto::TestAuthId;
-	type StakeLock = StakeLock;
-	type MinStake = MinStake;
-	type StalePrice = StalePrice;
-	type AddOracle = EnsureRootOrHalfCouncil;
-	type RequestCost = RequestCost;
-	type RewardAmount = RewardAmount;
-	type SlashAmount = SlashAmount;
-	type MaxAnswerBound = MaxAnswerBound;
-	type MaxAssetsCount = MaxAssetsCount;
-	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
-}
-
 // Parachain stuff.
 // See https://github.com/paritytech/cumulus/blob/polkadot-v0.9.8/polkadot-parachains/rococo/src/lib.rs for details.
 parameter_types! {
@@ -707,7 +675,6 @@ impl Filter<Call> for BaseCallFilter {
 			Call::Balances(_)
 				| Call::Indices(_)
 				| Call::Democracy(_)
-				| Call::Oracle(_)
 				| Call::Treasury(_)
 		)
 	}
@@ -752,8 +719,6 @@ construct_runtime!(
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
-
-		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 50,
 	}
 );
 
@@ -937,7 +902,6 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
             add_benchmark!(params, batches, balances, Balances);
             add_benchmark!(params, batches, timestamp, Timestamp);
-            add_benchmark!(params, batches, oracle, Oracle);
             add_benchmark!(params, batches, session, SessionBench::<Runtime>);
             add_benchmark!(params, batches, collator_selection, CollatorSelection);
             add_benchmark!(params, batches, indices, Indices);
