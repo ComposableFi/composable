@@ -95,10 +95,7 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions {
-			relay_chain: "rococo_local_testnet".into(),
-			para_id: PARA_ID.into(),
-		},
+		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: PARA_ID.into() },
 	)
 }
 

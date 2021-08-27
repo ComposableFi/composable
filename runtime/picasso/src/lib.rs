@@ -699,6 +699,10 @@ impl democracy::Config for Runtime {
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
+	pub const NativeAssetId: CurrencyId = 0;
+	pub const CreationDeposit: Balance = 10 * PICA;
+	pub const VaultExistentialDeposit: Balance = 1000 * PICA;
+	pub const RentPerBlock: Balance = 1 * MILLI_PICA;
 }
 
 // TODO(hussein-aitlahcen): what strategy report
@@ -709,8 +713,12 @@ impl vault::Config for Runtime {
 	type CurrencyId = CurrencyId;
 	type Currency = Tokens;
 	type Convert = ConvertInto;
-	type StrategyReport = ();
+
 	type MaxStrategies = MaxStrategies;
+	type CreationDeposit = CreationDeposit;
+	type ExistentialDeposit = VaultExistentialDeposit;
+	type RentPerBlock = RentPerBlock;
+	type NativeAssetId = NativeAssetId;
 }
 
 impl currency_factory::Config for Runtime {

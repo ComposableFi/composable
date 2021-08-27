@@ -6,7 +6,7 @@ use frame_support::pallet_prelude::*;
 /// The implementor should ensure that a new `CurrencyId` is created and collisions are avoided.
 pub trait CurrencyFactory<CurrencyId>
 where
-    CurrencyId: FullCodec + Eq + PartialEq + Copy + MaybeSerializeDeserialize + Debug,
+	CurrencyId: FullCodec + Eq + PartialEq + Copy + MaybeSerializeDeserialize + Debug,
 {
-    fn create() -> Result<CurrencyId, DispatchError>;
+	fn create() -> Result<CurrencyId, DispatchError>;
 }
