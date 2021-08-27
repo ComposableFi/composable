@@ -5,6 +5,4 @@ panic = "unwind"
 members = [
     "node",
     "runtime/picasso",
-    "price-feed",
-	"frame/oracle"
 ]
