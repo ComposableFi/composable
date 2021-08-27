@@ -29,7 +29,7 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_traits::currency::CurrencyFactory;
 	use frame_support::{pallet_prelude::*, PalletId};
-	use sp_runtime::{traits::Convert, ArithmeticError};
+	use sp_runtime::traits::Convert;
 	use sp_std::fmt::Debug;
 
 	pub const PALLET_ID: PalletId = PalletId(*b"pal_curf");
@@ -38,7 +38,9 @@ pub mod pallet {
 	pub enum Event<T: Config> {}
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		Overflow,
+	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -59,9 +61,7 @@ pub mod pallet {
 		fn create() -> Result<T::CurrencyId, DispatchError> {
 			CurrencyCounter::<T>::mutate(|c| {
 				let c_current = *c;
-				let c_next = c_current
-					.checked_add(1)
-					.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+				let c_next = c_current.checked_add(1).ok_or(Error::<T>::Overflow)?;
 				*c = c_next;
 				Ok(T::Convert::convert(c_next))
 			})
