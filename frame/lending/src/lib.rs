@@ -23,18 +23,8 @@
 )]
 // TODO remove me!
 #![allow(missing_docs)]
-
-mod models;
-mod rent;
-mod traits;
-
 pub use pallet::*;
 
-#[cfg(test)]
-pub mod mocks;
-
-#[cfg(test)]
-mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -62,7 +52,7 @@ pub mod pallet {
 	use sp_std::fmt::Debug;
 
 
-	pub const PALLET_ID: PalletId = PalletId(*b"Lending!!");
+	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
