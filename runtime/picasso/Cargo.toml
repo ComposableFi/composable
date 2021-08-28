@@ -41,6 +41,10 @@ timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 democracy = { package = "pallet-democracy", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
+
+# local modules
+liquid-crowdloan = { package = "pallet-liquid-crowdloan", path = '../../frame/liquid-crowdloan', default-features = false }
+
 runtime-common = { path = "../common", default-features = false }
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
@@ -93,6 +97,7 @@ std = [
 	"authorship/std",
 	"balances/std",
 	"randomness-collective-flip/std",
+	"liquid-crowdloan/std",
 	"timestamp/std",
 	"session/std",
 	"sudo/std",

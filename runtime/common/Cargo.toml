@@ -26,6 +26,8 @@ balances = { package = "pallet-balances", git = "https://github.com/paritytech/s
 collective = { package = "pallet-collective", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 
+liquid-crowdloan = { package = "pallet-liquid-crowdloan", path = '../../frame/liquid-crowdloan', default-features = false }
+
 [dev-dependencies]
 serde = { version = "1.0.119" }
 authorship = { package = "pallet-authorship", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
@@ -43,6 +45,7 @@ std = [
 	"collator-selection/std",
 	"balances/std",
 	"collective/std",
+	"liquid-crowdloan/std",
 	"treasury/std",
 	"node-primitives/std",
 	"polkadot-runtime-common/std",

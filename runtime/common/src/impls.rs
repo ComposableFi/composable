@@ -27,6 +27,7 @@ impl<R> OnUnbalanced<NegativeImbalance<R>> for ToStakingPot<R>
 where
 	R: balances::Config
 		+ collator_selection::Config
+		+ liquid_crowdloan::Config
 		+ treasury::Config<Currency = balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
@@ -37,10 +38,14 @@ where
 		// Collator's get half the fees
 		let (to_collators, half) = amount.ration(50, 50);
 		// 30% gets burned 20% to treasury
-		let (_, to_treasury) = half.ration(30, 20);
+		let (pre_burn, to_treasury) = half.ration(30, 20);
+		// temporary, but half the burn goes to crowdloan liquid reward
+		let (_, to_liquid_crowdloan) = pre_burn.ration(50, 50);
 
 		let staking_pot = <collator_selection::Pallet<R>>::account_id();
+		let liquid_pot =  <liquid_crowdloan::Pallet<R>>::account_id();
 		<balances::Pallet<R>>::resolve_creating(&staking_pot, to_collators);
+		<balances::Pallet<R>>::resolve_creating(&liquid_pot, to_liquid_crowdloan);
 		<treasury::Pallet<R> as OnUnbalanced<_>>::on_unbalanced(to_treasury);
 
 	}
@@ -53,6 +58,7 @@ impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
 	R: balances::Config
 		+ collator_selection::Config
+		+ liquid_crowdloan::Config
 		+ treasury::Config<Currency = balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
@@ -101,6 +107,7 @@ mod tests {
 			Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 			Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 31,
 			CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>},
+			LiquidCrowdloan: liquid_crowdloan::{Pallet},
 		}
 	);
 
@@ -191,6 +198,14 @@ mod tests {
 		type WeightInfo = ();
 	}
 
+	parameter_types! {
+		pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
+	}
+
+	impl liquid_crowdloan::Config for Test {
+		type LiquidRewardId = LiquidRewardId;
+	}
+
 	impl authorship::Config for Test {
 		type FindAuthor = OneAuthor;
 		type UncleGenerations = ();
@@ -249,6 +264,9 @@ mod tests {
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 15);
 			// Treasury gets 20%
 			assert_eq!(Balances::free_balance(Treasury::account_id()), 6);
+			// liquid crowdloan gets 10%
+			assert_eq!(Balances::free_balance(LiquidCrowdloan::account_id()), 5);
+
 		});
 	}
 
@@ -265,6 +283,7 @@ mod tests {
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 0);
 			assert_eq!(Balances::free_balance(Treasury::account_id()), 0);
+			assert_eq!(Balances::free_balance(LiquidCrowdloan::account_id()), 0);
 		});
 	}
 
@@ -281,6 +300,7 @@ mod tests {
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 0);
 			assert_eq!(Balances::free_balance(Treasury::account_id()), 0);
+			assert_eq!(Balances::free_balance(LiquidCrowdloan::account_id()), 0);
 		});
 	}
 }

@@ -538,6 +538,15 @@ impl collator_selection::Config for Runtime {
 }
 
 parameter_types! {
+	pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
+
+}
+
+impl liquid_crowdloan::Config for Runtime {
+	type LiquidRewardId = LiquidRewardId;
+}
+
+parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
 	/// percentage of proposal that most be bonded by the proposer
 	pub const ProposalBond: Permill = Permill::from_percent(5);
@@ -719,6 +728,10 @@ construct_runtime!(
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
+
+		// local modules
+		LiquidCrowdloan: liquid_crowdloan::{Pallet} = 50,
+
 	}
 );
 
