@@ -1,5 +1,8 @@
 use codec::Codec;
-use frame_support::{pallet_prelude::*, sp_std::fmt::Debug};
+use frame_support::{
+	pallet_prelude::*,
+	sp_std::{fmt::Debug, vec::Vec},
+};
 
 use crate::vault::Deposit;
 
@@ -11,6 +14,7 @@ where
 	pub deposit: AssetId,
 	pub collateral: AssetId,
 	pub manager: AccountId,
+	pub reserve factor: Permile
 }
 
 pub trait Composable {
@@ -20,12 +24,11 @@ pub trait Composable {
 	type AccountId: core::cmp::Ord;
 }
 
-/// basic lending
-// assumption that user will deposit borrow and collateral assets via vault
-// does not have wrapped tokens, so no need to proxy vault calls
-// liquidation is other trait
 // ASK: not clear how Vault will prevent withdrawing collateral?
-// based on Blacksmith (Warp v2) IBSLendingPair.sol, but without wrapper token and proxy methods
+/// Basic lending with no its own wrapper (liquidity) token.
+///  User will deposit borrow and collateral assets via `Vault`.
+/// `Liquidation` is other trait.
+/// Based on Blacksmith (Warp v2) IBSLendingPair.sol.
 pub trait Lending: Composable {
 	type AssetId;
 	type VaultId: Clone + Codec + Debug + PartialEq;
@@ -34,6 +37,7 @@ pub trait Lending: Composable {
 	/// creates market for new pair in specified vault
 	fn create(
 		vault: Self::VaultId,
+		fee_withdrawal: Self::AccountId, // The account to withdraw fees to
 		deposit: Deposit<Self::Balance, Self::BlockNumber>,
 		config: AccountConfig<Self::AccountId, Self::AssetId>,
 	) -> Result<Self::PairId, Self::Error>;
