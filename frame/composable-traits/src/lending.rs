@@ -1,8 +1,7 @@
 use codec::Codec;
-use frame_support::{
-	pallet_prelude::*,
-	sp_std::{fmt::Debug, vec::Vec},
-};
+use frame_support::{pallet_prelude::*, sp_runtime::{FixedI128, Permill, Perquintill}, sp_std::{fmt::Debug, vec::Vec}};
+
+
 
 use crate::vault::Deposit;
 
@@ -13,8 +12,11 @@ where
 {
 	pub deposit: AssetId,
 	pub collateral: AssetId,
-	pub manager: AccountId,
-	pub reserve factor: Permile
+	/// can pause borrow & deposits of assets
+	pub pause_guardian: AccountId,
+	pub reserve_factor: Permill,
+	pub collateral_factor: Permill,
+	//pub liquidation_fee: Permill,
 }
 
 pub trait Composable {
@@ -52,14 +54,18 @@ pub trait Lending: Composable {
 		amount_to_borrow: Self::Balance,
 	) -> Result<(), Self::Error>;
 
-	fn repay(
+	/// `from` repays some of `beneficiary` debts.
+	///
+	/// - `pair`        : the pair to be repaid.
+	/// - `repay_amount`: the amount to be repaid.
+	fn repay_borrow(
 		pair: Self::PairId,
 		from: &Self::AccountId,
 		beneficiary: &Self::AccountId,
 		repay_amount: Self::Balance,
 	) -> Result<(), Self::Error>;
 
-	/// part or whole deposited assets + interest to account
+	/// part or whole of deposited assets and interest into account
 	fn redeem(
 		pair: Self::PairId,
 		to: &Self::AccountId,
@@ -84,6 +90,7 @@ pub trait Lending: Composable {
 		account: &Self::AccountId,
 	) -> Result<Self::Balance, Self::Error>;
 
+	/// Borrower shouldn't borrow more than his total collateral value
 	fn collateral_required(
 		pair: Self::PairId,
 		borrow_amount: Self::Balance,
