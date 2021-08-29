@@ -24,6 +24,7 @@
 // TODO remove me!
 #![allow(missing_docs)]
 pub use pallet::*;
+mod rate_model;
 
 #[frame_support::pallet]
 pub mod pallet {
