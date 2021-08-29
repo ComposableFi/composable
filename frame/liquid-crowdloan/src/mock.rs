@@ -1,14 +1,22 @@
 use crate as pallet_liquid_crowdloan;
-use frame_support::{parameter_types, sp_runtime::traits::AccountIdConversion, PalletId};
+use frame_support::{parameter_types, PalletId};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, IdentityLookup, ConvertInto},
+};
+use num_traits::Zero;
+use orml_traits::parameter_type_with_key;
+pub use composable_traits::{
+	currency::CurrencyFactory,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+pub type Amount = i128;
+pub type Balance = u128;
+pub type MockCurrencyId = u128;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -19,6 +27,9 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		LiquidCrowdloan: pallet_liquid_crowdloan::{Pallet, Call, Storage, Event<T>},
+		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+		Factory: pallet_currency_factory::{Pallet, Storage, Event<T>},
+
 	}
 );
 
@@ -28,7 +39,7 @@ parameter_types! {
 }
 
 impl system::Config for Test {
-	type BaseCallFilter = frame_support::traits::AllowAll;
+	type BaseCallFilter = ();
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -53,11 +64,43 @@ impl system::Config for Test {
 	type OnSetCode = ();
 }
 
+
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
+		Zero::zero()
+	};
+}
+
+impl orml_tokens::Config for Test {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = MockCurrencyId;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
+	type MaxLocks = ();
+	type DustRemovalWhitelist = ();
+}
+
+impl pallet_currency_factory::Config for Test {
+	type Event = Event;
+	type CurrencyId = MockCurrencyId;
+	type Convert = ConvertInto;
+
+}
+
+
 parameter_types! {
 	pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
 }
 impl pallet_liquid_crowdloan::Config for Test {
+	type Event = Event;
 	type LiquidRewardId = LiquidRewardId;
+	type CurrencyFactory =  Factory;
+	type CurrencyId = MockCurrencyId;
+	type Currency = Tokens;
+	type Balance = Balance;
 }
 
 // Build genesis storage according to the mock runtime.

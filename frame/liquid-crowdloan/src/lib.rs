@@ -3,11 +3,11 @@
 
 pub use pallet::*;
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
@@ -36,6 +36,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type LiquidRewardId: Get<PalletId>;
 		type CurrencyFactory: CurrencyFactory<Self::CurrencyId>;
 		type CurrencyId: FullCodec
@@ -82,6 +83,16 @@ pub mod pallet {
 	#[pallet::getter(fn token_id)]
 	pub type TokenId<T> = StorageValue<_, CurrencyIdOf<T>>;
 
+	#[pallet::event]
+	#[pallet::metadata(T::AccountId = "AccountId")]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		/// Event documentation should end with an array that provides descriptive names for event
+		/// parameters. [something, who]
+		SomethingStored(u32, T::AccountId),
+	}
+
+
 	#[pallet::error]
 	pub enum Error<T> {
 		CannotCreateAsset,
@@ -95,7 +106,7 @@ pub mod pallet {
 
 		#[transactional]
 		#[pallet::weight(10_000)]
-		pub fn initiate(origin: OriginFor<T>, amount: T::Balance, manager: T::AccountId) -> DispatchResult {
+		pub fn initiate(origin: OriginFor<T>, manager: T::AccountId, amount: T::Balance) -> DispatchResult {
 			ensure_root(origin)?;
 			ensure!(!<TokenId<T>>::exists(), Error::<T>::AlreadyInitiated);
 			let lp_token_id = {

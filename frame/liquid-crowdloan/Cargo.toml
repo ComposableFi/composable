@@ -29,6 +29,8 @@ num-traits = { version = "0.2.14", default-features = false }
 proptest = { version = "0.9.6" }
 serde = { version = "1.0.119" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
+pallet-currency-factory = { version = "0.0.1", path = "../currency-factory", default-features = false }
 
 [features]
 default = ["std"]

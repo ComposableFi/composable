@@ -5150,6 +5150,8 @@ dependencies = [
  "log",
  "num-traits",
  "orml-tokens",
+ "orml-traits",
+ "pallet-currency-factory",
  "parity-scale-codec",
  "proptest",
  "serde",
