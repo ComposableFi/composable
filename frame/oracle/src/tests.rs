@@ -556,9 +556,11 @@ fn on_init_over_max_answers() {
 }
 
 #[test]
-fn prune_old_edgecase() {
+fn prune_old_pre_prices_edgecase() {
 	new_test_ext().execute_with(|| {
-		Oracle::prune_old(vec![], 0);
+		let asset_info =
+			AssetInfo { threshold: Percent::from_percent(80), min_answers: 3, max_answers: 5 };
+		Oracle::prune_old_pre_prices(asset_info, vec![], 0);
 	});
 }
 
