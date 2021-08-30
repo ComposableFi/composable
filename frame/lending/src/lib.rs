@@ -25,7 +25,6 @@
 #![allow(missing_docs)]
 pub use pallet::*;
 
-
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -51,18 +50,14 @@ pub mod pallet {
 	};
 	use sp_std::fmt::Debug;
 
-
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
-
-	}
+	pub trait Config: frame_system::Config {}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
-
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -71,7 +66,5 @@ pub mod pallet {
 
 	trait Lending {}
 
-	impl<T: Config> Lending for Pallet<T> {
-
-	}
+	impl<T: Config> Lending for Pallet<T> {}
 }
