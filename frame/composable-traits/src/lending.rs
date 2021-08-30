@@ -27,16 +27,16 @@ VaultId: Clone + Codec + Debug + PartialEq,
 /// Based on Blacksmith (Warp v2) IBSLendingPair.sol and Parallel Finance.
 /// Fees will be withdrawing to vault.
 /// Lenders with be rewarded via vault.
-pub trait Lending: Composable {
+pub trait Lending {
 	/// let use this id for debd token also
 	type AssetId;
 	type VaultId: Clone + Codec + Debug + PartialEq;
 	/// (deposit VaultId, collateral VaultId) <-> PairId
-	type PairId: Self::AccountId;
+	type AccountId: core::cmp::Ord;
+	type PairId: core::cmp::Ord;
 	type Error;
 	type Balance;
 	type BlockNumber;
-	type AccountId: core::cmp::Ord;
 
 	/// creates market for new pair in specified vault
 	fn create(
