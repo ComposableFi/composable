@@ -57,14 +57,22 @@ where
 }
 
 pub trait Vault {
-	type AccountId;
-	type Balance;
-	type VaultId: Clone + Codec + Debug + PartialEq;
+	type AccountId: core::cmp::Ord;
 	type AssetId;
+	type Balance;
+	type BlockNumber;
+	type VaultId: Clone + Codec + Debug + PartialEq;
 
 	fn asset_id(vault: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
 
+	fn lp_asset_id(vault: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
+
 	fn account_id() -> Self::AccountId;
+
+	fn create(
+		deposit: Deposit<Self::Balance, Self::BlockNumber>,
+		config: VaultConfig<Self::AccountId, Self::AssetId>,
+	) -> Result<Self::VaultId, DispatchError>;
 
 	fn deposit(
 		vault: &Self::VaultId,

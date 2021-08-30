@@ -30,7 +30,6 @@ mod traits;
 
 pub use pallet::*;
 
-#[cfg(test)]
 pub mod mocks;
 
 #[cfg(test)]
@@ -41,11 +40,14 @@ pub mod pallet {
 	use crate::{
 		models::StrategyOverview,
 		rent::Verdict,
-		traits::{CurrencyFactory, FundsAvailability, ReportableStrategicVault, StrategicVault},
+		traits::{CurrencyFactory, StrategicVault},
 	};
 	use codec::{Codec, FullCodec};
-	use composable_traits::vault::{Deposit, Vault, VaultConfig};
+	use composable_traits::vault::{
+		Deposit, FundsAvailability, ReportableStrategicVault, Vault, VaultConfig,
+	};
 	use frame_support::{
+		ensure,
 		pallet_prelude::*,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
@@ -61,7 +63,7 @@ pub mod pallet {
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
 			Zero,
 		},
-		Perquintill,
+		DispatchError, Perquintill,
 	};
 	use sp_std::fmt::Debug;
 
@@ -106,7 +108,6 @@ pub mod pallet {
 
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 		type MaxStrategies: Get<usize>;
-		// type StrategyReport: FullCodec + Default;
 
 		#[pallet::constant]
 		type NativeAssetId: Get<Self::CurrencyId>;
@@ -119,6 +120,8 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type RentPerBlock: Get<Self::Balance>;
+
+		type StrategyReport: FullCodec + Default;
 	}
 
 	#[pallet::pallet]
@@ -169,7 +172,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Emitted after a vault has been succesfully created.
-		VaultCreated,
+		VaultCreated(VaultIndex, VaultInfo<T>),
 		// Deposited(Value, LpShareMinted)
 		Deposited(T::AccountId, T::Balance, T::Balance),
 		// Withdrawn(LpShareBurnt, ShareValue)
@@ -242,7 +245,6 @@ pub mod pallet {
 			let vault = Vaults::<T>::try_get(dest).map_err(|_| Error::<T>::VaultDoesNotExist)?;
 			let current_block = <frame_system::Pallet<T>>::block_number();
 
-
 			match crate::rent::evaluate_eviction::<T>(current_block, vault.deposit) {
 				Verdict::Exempt => {
 					todo!("do not reward, but charge less weight")
@@ -258,8 +260,6 @@ pub mod pallet {
 					todo!("update vault deposit info, charge some of the rent from the `hold`ed balance")
 				},
 			}
-
-			Ok(().into())
 		}
 
 		// TODO: weight
@@ -293,7 +293,7 @@ pub mod pallet {
 		pub(crate) fn do_create_vault(
 			deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
 			config: VaultConfig<T::AccountId, T::CurrencyId>,
-		) -> Result<(VaultIndex, VaultInfo<T>), Error<T>> {
+		) -> Result<(VaultIndex, VaultInfo<T>), DispatchError> {
 			// 1. check config
 			// 2. lock endowment
 			// 3. mint LP token
@@ -371,7 +371,7 @@ pub mod pallet {
 			vault_id: &VaultIndex,
 			to: &T::AccountId,
 			lp_amount: T::Balance,
-		) -> Result<T::Balance, Error<T>> {
+		) -> Result<T::Balance, DispatchError> {
 			let vault =
 				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
 
@@ -407,7 +407,7 @@ pub mod pallet {
 			ensure!(lp_shares_value_amount <= vault_owned_amount, Error::<T>::NotEnoughLiquidity);
 
 			ensure!(
-				T::Currency::can_withdraw(vault.lp_token_id, to, lp_amount)
+				T::Currency::can_withdraw(vault.lp_token_id, &to, lp_amount)
 					.into_result()
 					.is_ok(),
 				Error::<T>::InsufficientLpTokens
@@ -421,9 +421,9 @@ pub mod pallet {
 				Error::<T>::TransferFromFailed
 			);
 
-			T::Currency::burn_from(vault.lp_token_id, to, lp_amount)
+			T::Currency::burn_from(vault.lp_token_id, &to, lp_amount)
 				.map_err(|_| Error::<T>::InsufficientLpTokens)?;
-			T::Currency::transfer(vault.asset_id, &from, to, lp_shares_value_amount, true)
+			T::Currency::transfer(vault.asset_id, &from, &to, lp_shares_value_amount, true)
 				.map_err(|_| Error::<T>::TransferFromFailed)?;
 			Ok(lp_shares_value_amount)
 		}
@@ -432,12 +432,12 @@ pub mod pallet {
 			vault_id: &VaultIndex,
 			from: &T::AccountId,
 			amount: T::Balance,
-		) -> Result<T::Balance, Error<T>> {
+		) -> Result<T::Balance, DispatchError> {
 			let vault =
 				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
 
 			ensure!(
-				T::Currency::can_withdraw(vault.asset_id, from, amount).into_result().is_ok(),
+				T::Currency::can_withdraw(vault.asset_id, &from, amount).into_result().is_ok(),
 				Error::<T>::TransferFromFailed
 			);
 
@@ -496,43 +496,44 @@ pub mod pallet {
 		type Balance = T::Balance;
 		type BlockNumber = T::BlockNumber;
 		type VaultId = VaultIndex;
-		type Error = Error<T>;
 		type AssetId = CurrencyIdOf<T>;
 
-		fn asset_id(vault: &Self::VaultId) -> Self::AssetId {
-			todo!()
+		fn asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError> {
+			let vault =
+				Vaults::<T>::try_get(vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			Ok(vault.asset_id)
 		}
 
 		fn account_id() -> Self::AccountId {
-			todo!()
+			Pallet::<T>::account_id()
+		}
+
+		fn create(
+			deposit: Deposit<Self::Balance, Self::BlockNumber>,
+			config: VaultConfig<Self::AccountId, Self::AssetId>,
+		) -> Result<Self::VaultId, DispatchError> {
+			Self::do_create_vault(deposit, config).map(|(id, _)| id)
 		}
 
 		fn deposit(
 			vault: &Self::VaultId,
 			from: &Self::AccountId,
 			asset_amount: Self::Balance,
-		) -> Result<Self::Balance, Error<T>> {
+		) -> Result<Self::Balance, DispatchError> {
 			ensure!(asset_amount > T::Balance::zero(), Error::<T>::AmountMustBePositive);
-			Pallet::<T>::do_deposit(vault, from, asset_amount)
+			Pallet::<T>::do_deposit(&vault, &from, asset_amount)
 		}
 
 		fn withdraw(
 			vault: &Self::VaultId,
 			to: &Self::AccountId,
 			lp_amount: Self::Balance,
-		) -> Result<Self::Balance, Error<T>> {
+		) -> Result<Self::Balance, DispatchError> {
 			ensure!(lp_amount > T::Balance::zero(), Error::<T>::AmountMustBePositive);
-			Pallet::<T>::do_withdraw(vault, to, lp_amount)
+			Pallet::<T>::do_withdraw(&vault, &to, lp_amount)
 		}
 
-		fn create(
-			deposit: Deposit<Self::Balance, Self::BlockNumber>,
-			config: VaultConfig<Self::AccountId, Self::AssetId>,
-		) -> Result<Self::VaultId, Self::Error> {
-			Self::do_create_vault(deposit, config).map(|(id, _)| id)
-		}
-
-		fn lp_asset_id(vault: &Self::VaultId) -> Self::AssetId {
+		fn lp_asset_id(vault: &Self::VaultId) -> Result<Self::AssetId, DispatchError> {
 			todo!()
 		}
 	}
