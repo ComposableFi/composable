@@ -9,7 +9,7 @@ pub mod pallet {
 		traits::fungibles::{Inspect, Mutate, Transfer},
 		PalletId,
 	};
-	use frame_system::{pallet_prelude::OriginFor, Config as SystemConfig};
+	use frame_system::{ensure_root, pallet_prelude::OriginFor, Config as SystemConfig};
 	use sp_runtime::traits::AccountIdConversion;
 
 	pub const PALLET_ID: PalletId = PalletId(*b"mck_strt");
@@ -58,11 +58,12 @@ pub mod pallet {
 		/// Mints new tokens and sends them to self, mocking the generating of revenue through DeFi
 		#[pallet::weight(10_000)]
 		pub fn generate_revenue(
-			_origin: OriginFor<T>,
+			origin: OriginFor<T>,
 			vault: VaultIdOf<T>,
 			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
-			let currency_id = T::Vault::asset_id(&vault);
+			let _ = ensure_root(origin)?;
+			let currency_id = T::Vault::asset_id(&vault)?;
 			T::Currency::mint_into(currency_id, &Self::account_id(), amount)?;
 			Self::deposit_event(Event::RevenueGenerated(amount));
 			Ok(().into())
@@ -70,8 +71,9 @@ pub mod pallet {
 
 		/// Reports the current balance to the vault.
 		#[pallet::weight(10_000)]
-		pub fn report(_origin: OriginFor<T>, vault: VaultIdOf<T>) -> DispatchResultWithPostInfo {
-			let currency_id = T::Vault::asset_id(&vault);
+		pub fn report(origin: OriginFor<T>, vault: VaultIdOf<T>) -> DispatchResultWithPostInfo {
+			let _ = ensure_root(origin)?;
+			let currency_id = T::Vault::asset_id(&vault)?;
 			let balance = T::Currency::balance(currency_id, &Self::account_id());
 			T::Vault::update_strategy_report(&vault, &Self::account_id(), &balance)?;
 			Self::deposit_event(Event::Reported(balance));
@@ -80,8 +82,9 @@ pub mod pallet {
 
 		/// Queries the vault for the current rebalance strategy and executes it.
 		#[pallet::weight(10_000)]
-		pub fn rebalance(_origin: OriginFor<T>, vault: VaultIdOf<T>) -> DispatchResultWithPostInfo {
-			let asset_id = T::Vault::asset_id(&vault);
+		pub fn rebalance(origin: OriginFor<T>, vault: VaultIdOf<T>) -> DispatchResultWithPostInfo {
+			let _ = ensure_root(origin)?;
+			let asset_id = T::Vault::asset_id(&vault)?;
 			let task = T::Vault::available_funds(&vault, &Self::account_id())?;
 			let action = match task {
 				FundsAvailability::MustLiquidate => {
