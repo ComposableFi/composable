@@ -467,15 +467,24 @@ pub mod pallet {
 			let one_read = T::DbWeight::get().reads(1);
 			for (asset_id, asset_info) in AssetsInfo::<T>::iter() {
 				total_weight += one_read;
-				Self::update_price(asset_id, asset_info.clone(), block);
-				total_weight += T::WeightInfo::update_price(asset_info.max_answers);
+				let (prev_pre_prices_len, pre_prices) =
+					Self::update_pre_prices(asset_id, asset_info.clone(), block);
+				total_weight += T::WeightInfo::update_pre_prices(prev_pre_prices_len as u32);
+				let pre_prices_len = pre_prices.len();
+				Self::update_price(asset_id, asset_info.clone(), block, pre_prices);
+				total_weight += T::WeightInfo::update_price(pre_prices_len as u32);
 			}
 			total_weight
 		}
 
-		pub fn update_price(asset_id: u64, asset_info: AssetInfo<Percent>, block: T::BlockNumber) {
+		pub fn update_pre_prices(
+			asset_id: u64,
+			asset_info: AssetInfo<Percent>,
+			block: T::BlockNumber,
+		) -> (usize, Vec<PrePrice<T::BlockNumber, T::AccountId>>) {
 			// TODO maybe add a check if price is requested, is less operations?
 			let pre_pruned_prices = PrePrices::<T>::get(asset_id);
+			let prev_pre_prices_len = pre_pruned_prices.len();
 			let mut pre_prices = Vec::new();
 
 			// There can convert pre_pruned_prices.len() to u32 safely
@@ -495,6 +504,15 @@ pub mod pallet {
 				PrePrices::<T>::insert(asset_id, pre_prices.clone());
 			}
 
+			(prev_pre_prices_len, pre_prices)
+		}
+
+		pub fn update_price(
+			asset_id: u64,
+			asset_info: AssetInfo<Percent>,
+			block: T::BlockNumber,
+			pre_prices: Vec<PrePrice<T::BlockNumber, T::AccountId>>,
+		) {
 			// There can convert pre_prices.len() to u32 safely
 			// because pre_prices.len() limited by u32
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).

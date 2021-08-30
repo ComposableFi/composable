@@ -140,6 +140,29 @@ benchmarks! {
 		assert_last_event::<T>(Event::PriceSubmitted(caller, asset_id, price).into())
 	}
 
+	update_pre_prices {
+		let p in 1 .. T::MaxAnswerBound::get();
+		let who: T::AccountId = whitelisted_caller();
+		let asset_id =  1;
+		let block = T::StalePrice::get();
+		let asset_info = AssetInfo {
+			threshold: Percent::from_percent(80),
+			min_answers: 1,
+			max_answers: p,
+		};
+		let pre_prices = (0..p).map(|i| {
+			PrePrice {
+				price: 100u64 + i as u64,
+				block: 0u32.into(),
+				who: who.clone()
+			}
+		})
+		.collect::<Vec<_>>();
+		PrePrices::<T>::insert(asset_id, pre_prices);
+	}: {
+		Oracle::<T>::update_pre_prices(asset_id, asset_info, block)
+	}
+
 	update_price {
 		let p in 1 .. T::MaxAnswerBound::get();
 		let who: T::AccountId = whitelisted_caller();
@@ -150,7 +173,6 @@ benchmarks! {
 			min_answers: 1,
 			max_answers: p,
 		};
-		AssetsInfo::<T>::insert(asset_id, asset_info.clone());
 		let pre_prices = (0..p).map(|_| {
 			PrePrice {
 				price: 100u64 + p as u64,
@@ -159,9 +181,8 @@ benchmarks! {
 			}
 		})
 		.collect::<Vec<_>>();
-		PrePrices::<T>::insert(asset_id, pre_prices);
 	}: {
-		Oracle::<T>::update_price(asset_id, asset_info, block)
+		Oracle::<T>::update_price(asset_id, asset_info, block, pre_prices)
 	}
 }
 
