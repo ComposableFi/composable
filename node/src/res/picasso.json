@@ -9,7 +9,7 @@
       0
     ]
   ],
-  "protocolId": null,
+  "protocolId": "picasso",
   "properties": {
     "ss58Format": 49,
     "tokenDecimals": 12,
@@ -36,7 +36,7 @@
         "balances": [
           [
             "5Cf3bX45wVfhMGc73menJ7shqrx7qDcykaXc5FRAyJod185y",
-            1000000000000000000000
+            10000000000000000000000
           ]
         ]
       },
@@ -46,7 +46,8 @@
       },
       "collatorSelection": {
         "invulnerables": [
-          "5Cf3bX45wVfhMGc73menJ7shqrx7qDcykaXc5FRAyJod185y"
+          "5Cf3bX45wVfhMGc73menJ7shqrx7qDcykaXc5FRAyJod185y",
+          "5HNUjsXcq3XTTHFY3N53tHFv4cF1vLHVkjWVBR7RpDvU54RJ"
         ],
         "candidacyBond": 0,
         "desiredCandidates": 0
@@ -58,6 +59,13 @@
             "5Cf3bX45wVfhMGc73menJ7shqrx7qDcykaXc5FRAyJod185y",
             {
               "aura": "5Cf3bX45wVfhMGc73menJ7shqrx7qDcykaXc5FRAyJod185y"
+            }
+          ],
+          [
+            "5HNUjsXcq3XTTHFY3N53tHFv4cF1vLHVkjWVBR7RpDvU54RJ",
+            "5HNUjsXcq3XTTHFY3N53tHFv4cF1vLHVkjWVBR7RpDvU54RJ",
+            {
+              "aura": "5HNUjsXcq3XTTHFY3N53tHFv4cF1vLHVkjWVBR7RpDvU54RJ"
             }
           ]
         ]
@@ -72,7 +80,8 @@
       },
       "councilMembership": {
         "members": [
-          "5Cf3bX45wVfhMGc73menJ7shqrx7qDcykaXc5FRAyJod185y"
+          "5Cf3bX45wVfhMGc73menJ7shqrx7qDcykaXc5FRAyJod185y",
+          "5HNUjsXcq3XTTHFY3N53tHFv4cF1vLHVkjWVBR7RpDvU54RJ"
         ],
         "phantom": null
       },
