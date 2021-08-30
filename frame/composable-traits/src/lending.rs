@@ -26,15 +26,17 @@ pub trait Composable {
 	type AccountId: core::cmp::Ord;
 }
 
+
 // ASK: not clear how Vault will prevent withdrawing collateral?
 /// Basic lending with no its own wrapper (liquidity) token.
 ///  User will deposit borrow and collateral assets via `Vault`.
 /// `Liquidation` is other trait.
-/// Based on Blacksmith (Warp v2) IBSLendingPair.sol.
+/// Based on Blacksmith (Warp v2) IBSLendingPair.sol and Parallel Finance.
 pub trait Lending: Composable {
 	type AssetId;
 	type VaultId: Clone + Codec + Debug + PartialEq;
-	type PairId: Clone + Codec + Debug + PartialEq;
+	/// (deposit AssetId, collateral AssetId, VaultId) <-> PairId
+	type PairId: Self::AccountId;
 
 	/// creates market for new pair in specified vault
 	fn create(
