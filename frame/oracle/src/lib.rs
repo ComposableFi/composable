@@ -17,7 +17,8 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{
+	use composable_traits::oracle::Oracle;
+use frame_support::{
 		dispatch::{DispatchResult, DispatchResultWithPostInfo, Vec},
 		pallet_prelude::*,
 		traits::{
@@ -46,6 +47,8 @@ pub mod pallet {
 
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orac");
 	pub use crate::weights::WeightInfo;
+	type AssetId = u64;
+	type PriceValue = u64;
 
 	pub mod crypto {
 		use super::KEY_TYPE;
@@ -110,7 +113,7 @@ pub mod pallet {
 
 	#[derive(Encode, Decode, Default, Debug, PartialEq)]
 	pub struct Price<BlockNumber> {
-		pub price: u64,
+		pub price: PriceValue,
 		pub block: BlockNumber,
 	}
 
@@ -169,7 +172,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn accuracy_threshold)]
 	pub type AssetsInfo<T: Config> =
-		StorageMap<_, Blake2_128Concat, u64, AssetInfo<Percent>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, AssetId, AssetInfo<Percent>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn requested)]
@@ -223,13 +226,13 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(block: T::BlockNumber) -> Weight {
-			for (i, asset_info) in AssetsInfo::<T>::iter() {
+			for (asset_id, asset_info) in AssetsInfo::<T>::iter() {
 				// TODO maybe add a check if price is requested, is less operations?
-				let pre_pruned_prices = PrePrices::<T>::get(i);
+				let pre_pruned_prices = PrePrices::<T>::get(asset_id);
 				let mut pre_prices = Vec::new();
 				if pre_pruned_prices.len() as u64 >= asset_info.min_answers {
 					pre_prices = Self::prune_old(pre_pruned_prices.clone(), block);
-					PrePrices::<T>::insert(i, pre_prices.clone());
+					PrePrices::<T>::insert(asset_id, pre_prices.clone());
 				}
 				if pre_prices.len() as u64 >= asset_info.min_answers {
 					let mut slice = pre_prices;
@@ -239,10 +242,10 @@ pub mod pallet {
 					}
 					let price = Self::get_median_price(&slice);
 					let set_price = Price { price, block };
-					Prices::<T>::insert(i, set_price);
-					Requested::<T>::insert(i, false);
-					PrePrices::<T>::remove(i);
-					Self::handle_payout(&slice, price, i);
+					Prices::<T>::insert(asset_id, set_price);
+					Requested::<T>::insert(asset_id, false);
+					PrePrices::<T>::remove(asset_id);
+					Self::handle_payout(&slice, price, asset_id);
 				}
 			}
 			0
@@ -254,12 +257,26 @@ pub mod pallet {
 		}
 	}
 
+
+	impl<T:Config> Oracle for Pallet<T> {
+		type Balance = PriceValue;
+		type AssetId = AssetId;
+		type Timestamp = <T as  frame_system::Config>::BlockNumber;
+
+		fn get_price(of: Self::AssetId) -> Option<(Self::Balance, Self::Timestamp)> {
+				match Prices::<T>::try_get(of){
+					Ok(price) => Some((price.price, price.block)),
+					Err(()) => None,
+				}
+		}
+	}
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
 		pub fn add_asset_and_info(
 			origin: OriginFor<T>,
-			asset_id: u64,
+			asset_id: AssetId,
 			threshold: Percent,
 			min_answers: u64,
 			max_answers: u64,
@@ -415,8 +432,8 @@ pub mod pallet {
 
 		pub fn handle_payout(
 			pre_prices: &Vec<PrePrice<T::BlockNumber, T::AccountId>>,
-			price: u64,
-			asset_id: u64,
+			price: PriceValue,
+			asset_id: AssetId,
 		) {
 			// TODO only take prices up to max prices
 			for answer in pre_prices {
@@ -455,7 +472,8 @@ pub mod pallet {
 				}
 			}
 		}
-		pub fn do_request_price(who: &T::AccountId, asset_id: u64) -> DispatchResult {
+
+		pub fn do_request_price(who: &T::AccountId, asset_id: AssetId) -> DispatchResult {
 			ensure!(
 				AssetsInfo::<T>::get(asset_id).threshold != Percent::from_percent(0),
 				Error::<T>::InvalidAssetId
