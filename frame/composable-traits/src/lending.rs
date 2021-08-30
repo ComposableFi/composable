@@ -1,8 +1,5 @@
 use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_runtime::{Permill}, sp_std::{fmt::Debug, vec::Vec}};
-
-
-
 use crate::vault::Deposit;
 
 #[derive(Clone, Encode, Decode, Default, Debug)]
@@ -29,7 +26,7 @@ VaultId: Clone + Codec + Debug + PartialEq,
 /// Lenders with be rewarded via vault.
 pub trait Lending {
 	/// let use this id for debd token also
-	type AssetId;
+	type AssetId : Clone + Debug + PartialEq + Codec;
 	type VaultId: Clone + Codec + Debug + PartialEq;
 	/// (deposit VaultId, collateral VaultId) <-> PairId
 	type AccountId: core::cmp::Ord;
