@@ -36,7 +36,7 @@ pub fn evaluate_eviction<T: Config>(
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::mocks::{ExtBuilder, Test};
+	use crate::mocks::tests::{ExtBuilder, Test};
 
 	#[test]
 	fn test_existential() {

@@ -61,31 +61,36 @@ pub trait Vault {
 	type AssetId;
 	type Balance;
 	type BlockNumber;
-	type Error;
 	type VaultId: Clone + Codec + Debug + PartialEq;
 
-	fn asset_id(vault: &Self::VaultId) -> Self::AssetId;
+	fn asset_id(vault: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
+
+	fn lp_asset_id(vault: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
 
 	fn account_id() -> Self::AccountId;
 
 	fn create(
 		deposit: Deposit<Self::Balance, Self::BlockNumber>,
 		config: VaultConfig<Self::AccountId, Self::AssetId>,
-	) -> Result<Self::VaultId, Self::Error>;
+	) -> Result<Self::VaultId, DispatchError>;
 
 	fn deposit(
 		vault: &Self::VaultId,
 		from: &Self::AccountId,
 		asset_amount: Self::Balance,
-	) -> Result<Self::Balance, Self::Error>;
+	) -> Result<Self::Balance, DispatchError>;
 
 	fn withdraw(
 		vault: &Self::VaultId,
 		to: &Self::AccountId,
 		lp_amount: Self::Balance,
-	) -> Result<Self::Balance, Self::Error>;
+	) -> Result<Self::Balance, DispatchError>;
+}
 
-	fn lp_asset_id(vault: &Self::VaultId) -> Self::AssetId;
+pub trait LpTokenVault {
+	type AssetId;
+
+	fn lp_asset_id() -> Self::AssetId;
 }
 
 /// A vault which can be used by different strategies, such as pallets and smart contracts, to

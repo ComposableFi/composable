@@ -1,5 +1,11 @@
 use crate::{
-	mocks::{currency_factory::MockCurrencyId, *},
+	mocks::{
+		currency_factory::MockCurrencyId,
+		tests::{
+			AccountId, Balance, BlockNumber, ExtBuilder, Origin, Test, Tokens, Vault,
+			ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, MINIMUM_BALANCE,
+		},
+	},
 	models::VaultInfo,
 	*,
 };
@@ -9,7 +15,44 @@ use frame_support::{
 	traits::fungibles::{Inspect, Mutate},
 };
 use proptest::prelude::*;
-use sp_runtime::Perquintill;
+use sp_runtime::{helpers_128bit::multiply_by_rational, Perquintill};
+
+/// Missing macro, equivalent to assert_ok!
+macro_rules! prop_assert_ok {
+    ($cond:expr) => {
+        prop_assert_ok!($cond, concat!("assertion failed: ", stringify!($cond)))
+    };
+
+    ($cond:expr, $($fmt:tt)*) => {
+        if let Err(_) = $cond {
+            let message = format!($($fmt)*);
+            let message = format!("{} at {}:{}", message, file!(), line!());
+            return ::std::result::Result::Err(
+                proptest::test_runner::TestCaseError::fail(message));
+        }
+    };
+}
+
+/// Accept a 'dust' deviation
+macro_rules! prop_assert_epsilon {
+	($x:expr, $y:expr) => {{
+		let precision = 100000;
+		let epsilon = 10;
+		let upper = precision + epsilon;
+		let lower = precision - epsilon;
+		let q = multiply_by_rational($x, precision, $y).expect("qed;");
+		prop_assert!(
+			upper >= q && q >= lower,
+			"({}) => {} >= {} * {} / {} >= {}",
+			q,
+			upper,
+			$x,
+			precision,
+			$y,
+			lower
+		);
+	}};
+}
 
 fn create_vault(
 	strategy_account_id: AccountId,
@@ -57,8 +100,8 @@ prop_compose! {
 
 prop_compose! {
 	fn valid_amounts_without_overflow_k
-		(max_accounts: usize)
-		(balances in prop::collection::vec(MINIMUM_BALANCE..Balance::MAX / max_accounts as Balance, 3..max_accounts))
+		(max_accounts: usize, limit: Balance)
+		(balances in prop::collection::vec(MINIMUM_BALANCE..limit, 3..max_accounts))
 		 -> Vec<(AccountId, Balance)> {
 			(ACCOUNT_FREE_START..balances.len() as AccountId)
 				.zip(balances)
@@ -67,10 +110,10 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn valid_amounts_without_overflow_k_with_random_index(max_accounts: usize)
-		(accounts in valid_amounts_without_overflow_k(max_accounts),
+	fn valid_amounts_without_overflow_k_with_random_index(max_accounts: usize, limit: Balance)
+		(accounts in valid_amounts_without_overflow_k(max_accounts, limit),
 		 index in 1..max_accounts) -> (usize, Vec<(AccountId, Balance)>) {
-			(index, accounts)
+			(usize::max(1, index % usize::max(1, accounts.len())), accounts)
 		}
 }
 
@@ -90,20 +133,20 @@ proptest! {
 		amount in valid_amounts_without_overflow_1()
 	) {
 		let asset_id = MockCurrencyId::A;
-		let _ = ExtBuilder::default().build().execute_with(|| {
+		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, _) = create_vault(strategy_account_id, asset_id);
 
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
-			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 
 			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), amount);
 
-			assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount));
-			assert_ok!(Vault::withdraw(Origin::signed(ALICE), vault_id, amount));
+			prop_assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount));
+			prop_assert_ok!(Vault::withdraw(Origin::signed(ALICE), vault_id, amount));
 
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == amount);
 			Ok(())
-		});
+		})?;
 	}
 
 	#[test]
@@ -112,34 +155,34 @@ proptest! {
 		(amount1, amount2, amount3) in valid_amounts_without_overflow_3()
 	) {
 		let asset_id = MockCurrencyId::A;
-		let _ = ExtBuilder::default().build().execute_with(|| {
+		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, _) = create_vault(strategy_account_id, asset_id);
 
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
 			prop_assert!(Tokens::balance(asset_id, &BOB) == 0);
 			prop_assert!(Tokens::balance(asset_id, &CHARLIE) == 0);
-			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount1));
-			assert_ok!(Tokens::mint_into(asset_id, &BOB, amount2));
-			assert_ok!(Tokens::mint_into(asset_id, &CHARLIE, amount3));
+			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount1));
+			prop_assert_ok!(Tokens::mint_into(asset_id, &BOB, amount2));
+			prop_assert_ok!(Tokens::mint_into(asset_id, &CHARLIE, amount3));
 
 			prop_assert!(Tokens::balance(asset_id, &BOB) == amount2);
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == amount1);
 			prop_assert!(Tokens::balance(asset_id, &CHARLIE) == amount3);
 
-			assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault_id, amount3));
-			assert_ok!(Vault::deposit(Origin::signed(BOB), vault_id, amount2));
-			assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount1));
+			prop_assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault_id, amount3));
+			prop_assert_ok!(Vault::deposit(Origin::signed(BOB), vault_id, amount2));
+			prop_assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount1));
 
-			assert_ok!(Vault::withdraw(Origin::signed(ALICE), vault_id, amount1));
-			assert_ok!(Vault::withdraw(Origin::signed(CHARLIE), vault_id, amount3));
-			assert_ok!(Vault::withdraw(Origin::signed(BOB), vault_id, amount2));
+			prop_assert_ok!(Vault::withdraw(Origin::signed(ALICE), vault_id, amount1));
+			prop_assert_ok!(Vault::withdraw(Origin::signed(CHARLIE), vault_id, amount3));
+			prop_assert_ok!(Vault::withdraw(Origin::signed(BOB), vault_id, amount2));
 
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == amount1);
 			prop_assert!(Tokens::balance(asset_id, &BOB) == amount2);
 			prop_assert!(Tokens::balance(asset_id, &CHARLIE) == amount3);
 
 			Ok(())
-		});
+		})?;
 	}
 
 	#[test]
@@ -149,18 +192,18 @@ proptest! {
 	)
 	{
 		let asset_id = MockCurrencyId::B;
-		let _ = ExtBuilder::default().build().execute_with(|| {
+		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault_info) = create_vault(strategy_account_id, asset_id);
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
-			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 
 			prop_assert_eq!(Tokens::balance(vault_info.lp_token_id, &ALICE), 0);
 
-			assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount));
+			prop_assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount));
 
 			prop_assert_eq!(Tokens::balance(vault_info.lp_token_id, &ALICE), amount);
 			Ok(())
-		});
+		})?;
 	}
 
 	#[test]
@@ -169,12 +212,12 @@ proptest! {
 		amount in valid_amounts_without_overflow_1()
 	) {
 		let asset_id = MockCurrencyId::C;
-		let _ = ExtBuilder::default().build().execute_with(|| {
+		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
 			prop_assert!(Tokens::balance(vault.lp_token_id, &ALICE) == 0);
 			assert_noop!(Vault::withdraw(Origin::signed(ALICE), vault_id, amount), Error::<Test>::InsufficientLpTokens);
 			Ok(())
-		});
+		})?;
 	}
 
 	#[test]
@@ -183,16 +226,16 @@ proptest! {
 		amount in valid_amounts_without_overflow_1()
 	) {
 		let asset_id = MockCurrencyId::D;
-		let _ = ExtBuilder::default().build().execute_with(|| {
+		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
-			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
-			assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount));
+			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+			prop_assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount));
 
 			prop_assert!(Tokens::balance(vault.lp_token_id, &BOB) == 0);
 			assert_noop!(Vault::withdraw(Origin::signed(BOB), vault_id, amount), Error::<Test>::InsufficientLpTokens);
 			Ok(())
-		});
+		})?;
 	}
 
 	#[test]
@@ -201,36 +244,39 @@ proptest! {
 		(amount1, amount2, strategy_profits) in valid_amounts_without_overflow_3()
 	) {
 		let asset_id = MockCurrencyId::D;
-		let _ = ExtBuilder::default().build().execute_with(|| {
+		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
 			prop_assert!(Tokens::balance(asset_id, &BOB) == 0);
 			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
 
-			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount1));
-			assert_ok!(Tokens::mint_into(asset_id, &BOB, amount2));
-			assert_ok!(Tokens::mint_into(asset_id, &strategy_account_id, strategy_profits));
+			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount1));
+			prop_assert_ok!(Tokens::mint_into(asset_id, &BOB, amount2));
+			prop_assert_ok!(Tokens::mint_into(asset_id, &strategy_account_id, strategy_profits));
 
-			assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount1));
-			assert_ok!(<Vault as StrategicVault>::deposit(&vault_id, &strategy_account_id, strategy_profits));
-			assert_ok!(Vault::deposit(Origin::signed(BOB), vault_id, amount2));
+			prop_assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount1));
+			prop_assert_ok!(<Vault as StrategicVault>::deposit(&vault_id, &strategy_account_id, strategy_profits));
+			prop_assert_ok!(Vault::deposit(Origin::signed(BOB), vault_id, amount2));
 
 			let alice_lp = Tokens::balance(vault.lp_token_id, &ALICE);
 			let bob_lp = Tokens::balance(vault.lp_token_id, &BOB);
 
-			assert_ok!(Vault::withdraw(Origin::signed(ALICE), vault_id, alice_lp));
-			assert_ok!(Vault::withdraw(Origin::signed(BOB), vault_id, bob_lp));
+			prop_assert_ok!(Vault::withdraw(Origin::signed(ALICE), vault_id, alice_lp));
+			prop_assert_ok!(Vault::withdraw(Origin::signed(BOB), vault_id, bob_lp));
 
 			let alice_total_balance = Tokens::balance(asset_id, &ALICE);
 			let bob_total_balance = Tokens::balance(asset_id, &BOB);
 			let strategy_total_balance = Tokens::balance(asset_id, &strategy_account_id);
 
-			prop_assert!(alice_total_balance == amount1 + strategy_profits);
-			prop_assert!(alice_total_balance + bob_total_balance + strategy_total_balance
-						 == amount1 + amount2 + strategy_profits);
+			prop_assert_epsilon!(alice_total_balance, amount1 + strategy_profits);
+
+			prop_assert_epsilon!(
+				alice_total_balance + bob_total_balance + strategy_total_balance,
+				amount1 + amount2 + strategy_profits
+			);
 
 			Ok(())
-		});
+		})?;
 	}
 }
 
@@ -240,49 +286,79 @@ proptest! {
 	#[test]
 	fn vault_stock_dilution_k(
 		(random_index, created_accounts) in
-			valid_amounts_without_overflow_k_with_random_index(1000)
+			valid_amounts_without_overflow_k_with_random_index(500, 1_000_000_000)
 				.prop_filter("a minimum of two accounts are required, 1 for the strategy and 1 depositor",
-							 |(_, x)| x.len() > 1)
+							 |(_, x)| x.len() > 2)
 	) {
 		let asset_id = MockCurrencyId::D;
 		let (strategy_account_id, strategy_profits) = created_accounts[0];
 		let strategy_deposit_moment = random_index;
-		let accounts = &created_accounts[1..];
-		let _ = ExtBuilder::default().build().execute_with(|| {
+		let account_start = 1;
+		let accounts = &created_accounts[account_start..];
+
+		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
 
 			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
-			assert_ok!(Tokens::mint_into(asset_id, &strategy_account_id, strategy_profits));
+			prop_assert_ok!(Tokens::mint_into(asset_id, &strategy_account_id, strategy_profits));
 
 			for (account, balance) in accounts.iter().copied() {
 				prop_assert!(Tokens::balance(asset_id, &account) == 0);
-				assert_ok!(Tokens::mint_into(asset_id, &account, balance));
+				prop_assert_ok!(Tokens::mint_into(asset_id, &account, balance));
 			}
 
-			let strategy_profit_share =
-				strategy_profits.checked_div(strategy_deposit_moment as Balance).expect(">= MINIMUM_BALANCE; qed;");
-
-			for ((account, balance), index) in accounts.iter().copied().zip(0..accounts.len()) {
-				if index == strategy_deposit_moment {
-					assert_ok!(<Vault as StrategicVault>::deposit(&vault_id, &strategy_account_id, strategy_profits));
-				}
-				assert_ok!(Vault::deposit(Origin::signed(account), vault_id, balance));
+			// Shareholders
+			for (account, balance) in accounts[0..strategy_deposit_moment].iter().copied() {
+				prop_assert_ok!(
+					Vault::deposit(Origin::signed(account), vault_id, balance)
+				);
 			}
 
-			for ((account, balance), index) in accounts.iter().copied().zip(0..accounts.len()) {
+			// Profits comming
+			prop_assert_ok!(
+				<Vault as StrategicVault>::deposit(
+					&vault_id,
+					&strategy_account_id,
+					strategy_profits
+				)
+			);
+
+			// Shareholders total LP
+			let lp_total = Tokens::total_issuance(vault.lp_token_id);
+
+			// Users depositing later
+			for (account, balance) in accounts[strategy_deposit_moment..accounts.len()].iter().copied() {
+				prop_assert_ok!(
+					Vault::deposit(Origin::signed(account), vault_id, balance)
+				);
+			}
+
+			// Withdraw & local check
+			for ((account, balance), index) in accounts.iter().copied().zip(account_start..) {
+				// Current lp
 				let lp = Tokens::balance(vault.lp_token_id, &account);
-				assert_ok!(Vault::withdraw(Origin::signed(account), vault_id, lp));
 
+				// Withdraw all my shares, including profits
+				prop_assert_ok!(Vault::withdraw(Origin::signed(account), vault_id, lp));
+
+				// Balance after having deposited + withdrawn my funds
 				let new_balance = Tokens::balance(asset_id, &account);
+
 				// We had shares before the profit, we get a cut of the profit
-				if index < strategy_deposit_moment {
-					prop_assert!(new_balance == balance + strategy_profit_share);
+				if index <= strategy_deposit_moment {
+					// Compute my share
+					let strategy_profit_share =
+						multiply_by_rational(strategy_profits, lp, lp_total).expect("qed;");
+
+					prop_assert_epsilon!(new_balance, balance + strategy_profit_share);
 				}
 				else {
-					prop_assert!(new_balance == balance);
+					// Our balance should be equivalent
+					prop_assert_epsilon!(new_balance, balance);
 				}
 			}
 
+			// Global check
 			let shareholders = &accounts[0..strategy_deposit_moment];
 			let initial_sum_of_shareholders_balance = shareholders.iter()
 				.map(|(_, initial_balance)| initial_balance)
@@ -291,10 +367,12 @@ proptest! {
 				.map(|(account, _)| Tokens::balance(asset_id, &account))
 				.sum::<Balance>();
 
-			prop_assert!(current_sum_of_shareholders_balance
-						 == initial_sum_of_shareholders_balance + strategy_profits);
+			prop_assert_epsilon!(
+				current_sum_of_shareholders_balance,
+				initial_sum_of_shareholders_balance + strategy_profits
+			);
 
 			Ok(())
-		});
+		})?;
 	}
 }
