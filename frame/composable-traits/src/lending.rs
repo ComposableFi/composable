@@ -3,7 +3,7 @@ use frame_support::{pallet_prelude::*, sp_runtime::{Permill}, sp_std::{fmt::Debu
 use crate::vault::Deposit;
 
 #[derive(Clone, Encode, Decode, Default, Debug)]
-pub struct AccountConfig<AccountId, VaultId>
+pub struct LendingConfig<AccountId, VaultId>
 where
 AccountId: core::cmp::Ord,
 VaultId: Clone + Codec + Debug + PartialEq,
@@ -14,7 +14,6 @@ VaultId: Clone + Codec + Debug + PartialEq,
 	pub pause_guardian: AccountId,
 	pub reserve_factor: Permill,
 	pub collateral_factor: Permill,
-	//pub liquidation_fee: Permill,
 }
 
 // ASK: not clear how Vault will prevent withdrawing collateral?
@@ -40,7 +39,7 @@ pub trait Lending {
 		collateral: Self::VaultId,
 		asset: Self::VaultId,
 		deposit: Deposit<Self::Balance, Self::BlockNumber>,
-		config: AccountConfig<Self::AccountId, Self::AssetId>,
+		config: LendingConfig<Self::AccountId, Self::AssetId>,
 	) -> Result<Self::PairId, Self::Error>;
 
 	fn get_pair_in_vault(vault: Self::VaultId) -> Result<Vec<Self::PairId>, Self::Error>;

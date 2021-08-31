@@ -30,7 +30,7 @@ mod rate_model;
 pub mod pallet {
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::vault::{Deposit, Vault, VaultConfig};
+	use composable_traits::{lending::{Lending, LendingConfig}, oracle::Oracle, vault::{Deposit, Vault, VaultConfig}};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
@@ -54,7 +54,11 @@ pub mod pallet {
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {}
+	pub trait Config: frame_system::Config {
+		type VaultId: Clone + Codec + Debug + PartialEq;
+		type PairId: Clone + Codec + Debug + PartialEq;
+		type Oracle : Oracle;
+	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -65,7 +69,119 @@ pub mod pallet {
 		Overflow,
 	}
 
-	trait Lending {}
+	/// stores all market pairs of assets to be assets/collateral
+	// only assets supported by `Oracle` are possible
+	#[pallet::storage]
+	#[pallet::getter(fn allocations)]
+	pub type Pairs<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::PairId,
+		LendingConfig<T::AccountId, T::VaultId>,
+		ValueQuery,
+	>;
 
-	impl<T: Config> Lending for Pallet<T> {}
+	impl<T:Config> Lending for Pallet<T> {
+		type AssetId = T::AssetId;
+
+		type VaultId = T::VaultId;
+
+		type AccountId = T::AccountId;
+
+		type PairId = T::PairId;
+
+		type Error = Error<T>;
+
+		type Balance;
+
+		type BlockNumber;
+
+		fn create(
+			collateral: Self::VaultId,
+			asset: Self::VaultId,
+			deposit: Deposit<Self::Balance, Self::BlockNumber>,
+			config: composable_traits::lending::LendingConfig<Self::AccountId, Self::AssetId>,
+		) -> Result<Self::PairId, Self::Error> {
+			todo!()
+		}
+
+		fn get_pair_in_vault(vault: Self::VaultId) -> Result<Vec<Self::PairId>, Self::Error> {
+			todo!()
+		}
+
+		fn get_pairs_all() -> Result<Vec<Self::PairId>, Self::Error> {
+			todo!()
+		}
+
+		fn borrow(
+			pair: Self::PairId,
+			debt_owner: &Self::AccountId,
+			amount_to_borrow: Self::Balance,
+		) -> Result<(), Self::Error> {
+			todo!()
+		}
+
+		fn repay_borrow(
+			pair: Self::PairId,
+			from: &Self::AccountId,
+			beneficiary: &Self::AccountId,
+			repay_amount: Self::Balance,
+		) -> Result<(), Self::Error> {
+			todo!()
+		}
+
+		fn redeem(
+			pair: Self::PairId,
+			to: &Self::AccountId,
+			redeem_amount: Self::Balance,
+		) -> Result<(), Self::Error> {
+			todo!()
+		}
+
+		fn calculate_liquidation_fee(amount: Self::Balance) -> Self::Balance {
+			todo!()
+		}
+
+		fn total_borrows(pair: Self::PairId) -> Result<Self::Balance, Self::Error> {
+			todo!()
+		}
+
+		fn accrue_interest(pair: Self::PairId) -> Result<(), Self::Error> {
+			todo!()
+		}
+
+		fn borrow_balance_current(
+			pair: Self::PairId,
+			account: &Self::AccountId,
+		) -> Result<Self::Balance, Self::Error> {
+			todo!()
+		}
+
+		fn withdraw_fees(to_withdraw: Self::Balance) -> Result<(), Self::Error> {
+			todo!()
+		}
+
+		fn collateral_of_account(
+			pair: Self::PairId,
+			account: &Self::AccountId,
+		) -> Result<Self::Balance, Self::Error> {
+			todo!()
+		}
+
+		fn collateral_required(
+			pair: Self::PairId,
+			borrow_amount: Self::Balance,
+		) -> Result<Self::Balance, Self::Error> {
+			todo!()
+		}
+
+		fn get_borrow_limit(
+			pair: Self::PairId,
+			account: Self::AccountId,
+		) -> Result<Self::Balance, Self::Error> {
+			todo!()
+		}
+	}
+
+
 }
