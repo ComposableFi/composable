@@ -179,10 +179,6 @@ pub mod pallet {
 			todo!()
 		}
 
-		fn calculate_liquidation_fee(amount: Self::Balance) -> Self::Balance {
-			todo!()
-		}
-
 		fn total_borrows(pair: Self::PairId) -> Result<Self::Balance, Self::Error> {
 			todo!()
 		}
