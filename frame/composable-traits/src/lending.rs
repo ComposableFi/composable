@@ -14,7 +14,6 @@ VaultId: Clone + Codec + Debug + PartialEq,
 	pub pause_guardian: AccountId,
 	pub reserve_factor: Permill,
 	pub collateral_factor: Permill,
-	//pub liquidation_fee: Permill,
 }
 
 // ASK: not clear how Vault will prevent withdrawing collateral?
@@ -70,8 +69,6 @@ pub trait Lending {
 		to: &Self::AccountId,
 		redeem_amount: Self::Balance,
 	) -> Result<(), Self::Error>;
-
-	fn calculate_liquidation_fee(amount: Self::Balance) -> Self::Balance;
 
 	fn total_borrows(pair: Self::PairId) -> Result<Self::Balance, Self::Error>;
 

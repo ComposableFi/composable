@@ -4,3 +4,4 @@ pub mod currency;
 pub mod lending;
 pub mod vault;
 pub mod oracle;
+pub mod liquidatation;
