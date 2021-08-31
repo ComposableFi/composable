@@ -467,9 +467,9 @@ pub mod pallet {
 			let one_read = T::DbWeight::get().reads(1);
 			for (asset_id, asset_info) in AssetsInfo::<T>::iter() {
 				total_weight += one_read;
-				let (prev_pre_prices_len, pre_prices) =
+				let (removed_pre_prices_len, pre_prices) =
 					Self::update_pre_prices(asset_id, asset_info.clone(), block);
-				total_weight += T::WeightInfo::update_pre_prices(prev_pre_prices_len as u32);
+				total_weight += T::WeightInfo::update_pre_prices(removed_pre_prices_len as u32);
 				let pre_prices_len = pre_prices.len();
 				Self::update_price(asset_id, asset_info.clone(), block, pre_prices);
 				total_weight += T::WeightInfo::update_price(pre_prices_len as u32);
@@ -504,7 +504,7 @@ pub mod pallet {
 				PrePrices::<T>::insert(asset_id, pre_prices.clone());
 			}
 
-			(prev_pre_prices_len, pre_prices)
+			(prev_pre_prices_len - pre_prices.len(), pre_prices)
 		}
 
 		pub fn update_price(
