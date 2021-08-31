@@ -16,6 +16,8 @@ pub trait WeightInfo {
 	fn remove_stake() -> Weight;
 	fn reclaim_stake() -> Weight;
 	fn submit_price(p: u32) -> Weight;
+	fn update_pre_prices(p: u32) -> Weight;
+	fn update_price(p: u32) -> Weight;
 }
 
 /// Weights for pallet_collator_selection using the Substrate node and recommended hardware.
@@ -58,6 +60,20 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	fn update_pre_prices(p: u32) -> Weight {
+		(11_336_000 as Weight)
+			// Standard Error: 7_000
+			.saturating_add((238_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
+	fn update_price(p: u32) -> Weight {
+		(0 as Weight)
+			// Standard Error: 2_426_000
+			.saturating_add((22_017_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+	}
 }
 
 // For backwards compatibility and tests
@@ -98,5 +114,19 @@ impl WeightInfo for () {
 			.saturating_add((254_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	}
+	fn update_pre_prices(p: u32) -> Weight {
+		(11_336_000 as Weight)
+			// Standard Error: 7_000
+			.saturating_add((238_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	}
+	fn update_price(p: u32) -> Weight {
+		(0 as Weight)
+			// Standard Error: 2_426_000
+			.saturating_add((22_017_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
 }

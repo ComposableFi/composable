@@ -42,7 +42,7 @@ pub mod pallet {
 		traits::{Saturating, Zero},
 		PerThing, Percent, RuntimeDebug,
 	};
-	use sp_std::{borrow::ToOwned, str};
+	use sp_std::{borrow::ToOwned, str, vec};
 
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orac");
 	pub use crate::weights::WeightInfo;
@@ -115,7 +115,7 @@ pub mod pallet {
 		pub block: BlockNumber,
 	}
 
-	#[derive(Encode, Decode, Default, Debug, PartialEq)]
+	#[derive(Encode, Decode, Default, Debug, PartialEq, Clone)]
 	pub struct AssetInfo<Percent> {
 		pub threshold: Percent,
 		pub min_answers: u32,
@@ -225,44 +225,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(block: T::BlockNumber) -> Weight {
-			let mut total_weight: Weight = Zero::zero();
-			let (mut total_reads, mut total_writes) = (0, 0);
-			for (i, asset_info) in AssetsInfo::<T>::iter() {
-				// ^^^ 1 read per every iteration
-
-				// TODO maybe add a check if price is requested, is less operations?
-				let pre_pruned_prices = PrePrices::<T>::get(i); // 1 read
-				let mut pre_prices = Vec::new();
-				total_reads += 2;
-
-				// There can convert pre_pruned_prices.len() to u32 safely
-				// because pre_pruned_prices.len() limited by u32
-				// (type of AssetsInfo::<T>::get(asset_id).max_answers).
-				if pre_pruned_prices.len() as u32 >= asset_info.min_answers {
-					pre_prices = Self::prune_old(pre_pruned_prices.clone(), block);
-					PrePrices::<T>::insert(i, pre_prices.clone()); // 1 write
-					total_writes += 1;
-				}
-
-				// There can convert pre_prices.len() to u32 safely
-				// because pre_prices.len() limited by u32
-				// (type of AssetsInfo::<T>::get(asset_id).max_answers).
-				if pre_prices.len() as u32 >= asset_info.min_answers {
-					let mut slice = pre_prices;
-					// check max answer
-					if slice.len() as u32 > asset_info.max_answers {
-						slice = slice[0..asset_info.max_answers as usize].to_vec();
-					}
-					let price = Self::get_median_price(&slice);
-					let set_price = Price { price, block };
-					Prices::<T>::insert(i, set_price); // 1 write
-					Requested::<T>::insert(i, false); // 1 write
-					PrePrices::<T>::remove(i); // 1 write
-					total_writes += 3;
-					total_weight += Self::handle_payout(&slice, price, i);
-				}
-			}
-			total_weight + T::DbWeight::get().reads_writes(total_reads, total_writes)
+			Self::update_prices(block)
 		}
 
 		fn offchain_worker(_block_number: T::BlockNumber) {
@@ -444,8 +407,7 @@ pub mod pallet {
 			pre_prices: &Vec<PrePrice<T::BlockNumber, T::AccountId>>,
 			price: u64,
 			asset_id: u64,
-		) -> Weight {
-			let (mut total_reads, mut total_writes) = (0, 0);
+		) {
 			// TODO only take prices up to max prices
 			for answer in pre_prices {
 				let accuracy: Percent;
@@ -455,33 +417,27 @@ pub mod pallet {
 					let adjusted_number = price.saturating_sub(answer.price - price);
 					accuracy = PerThing::from_rational(adjusted_number, price);
 				}
-				let min_accuracy = AssetsInfo::<T>::get(asset_id).threshold; // 1 read
-				total_reads += 1;
+				let min_accuracy = AssetsInfo::<T>::get(asset_id).threshold;
 				if accuracy < min_accuracy {
-					let slash_amount = T::SlashAmount::get(); // 1 read
-					let try_slash = T::Currency::can_slash(&answer.who, slash_amount); // 1 read
-					total_reads += 2;
+					let slash_amount = T::SlashAmount::get();
+					let try_slash = T::Currency::can_slash(&answer.who, slash_amount);
 					if !try_slash {
 						log::warn!("Failed to slash {:?}", answer.who);
 					}
-					T::Currency::slash(&answer.who, slash_amount); // 3 reads and 2 writes (worst case)
-					total_reads += 3;
-					total_writes += 2;
+					T::Currency::slash(&answer.who, slash_amount);
 					Self::deposit_event(Event::UserSlashed(
 						answer.who.clone(),
 						asset_id,
 						slash_amount,
 					));
 				} else {
-					let reward_amount = T::RewardAmount::get(); // 1 read
+					let reward_amount = T::RewardAmount::get();
 					let controller =
-						SignerToController::<T>::get(&answer.who).unwrap_or(answer.who.clone()); // 1 read
+						SignerToController::<T>::get(&answer.who).unwrap_or(answer.who.clone());
 
 					// TODO: since inlflationary, burn a portion of tx fees of the chain to account
 					// for this
-					let _ = T::Currency::deposit_into_existing(&controller, reward_amount); // 1 read and 1 write
-					total_reads += 3;
-					total_writes += 1;
+					let _ = T::Currency::deposit_into_existing(&controller, reward_amount);
 					Self::deposit_event(Event::UserRewarded(
 						answer.who.clone(),
 						asset_id,
@@ -489,7 +445,6 @@ pub mod pallet {
 					));
 				}
 			}
-			T::DbWeight::get().reads_writes(total_reads, total_writes)
 		}
 
 		pub fn do_request_price(who: &T::AccountId, asset_id: u64) -> DispatchResult {
@@ -507,30 +462,94 @@ pub mod pallet {
 			Ok(())
 		}
 
-		pub fn prune_old(
-			mut pre_pruned_prices: Vec<PrePrice<T::BlockNumber, T::AccountId>>,
-			block: T::BlockNumber,
-		) -> Vec<PrePrice<T::BlockNumber, T::AccountId>> {
-			let stale_block = block.saturating_sub(T::StalePrice::get());
-			if pre_pruned_prices.len() == 0 || pre_pruned_prices[0].block >= stale_block {
-				pre_pruned_prices
-			} else {
-				let pruned_price = loop {
-					if pre_pruned_prices.len() == 0 {
-						break pre_pruned_prices
-					}
-					if pre_pruned_prices[0].block >= stale_block {
-						break pre_pruned_prices
-					} else {
-						Self::deposit_event(Event::AnswerPruned(
-							pre_pruned_prices[0].who.clone(),
-							pre_pruned_prices[0].price,
-						));
-						pre_pruned_prices.remove(0);
-					}
-				};
-				pruned_price
+		pub fn update_prices(block: T::BlockNumber) -> Weight {
+			let mut total_weight: Weight = Zero::zero();
+			let one_read = T::DbWeight::get().reads(1);
+			for (asset_id, asset_info) in AssetsInfo::<T>::iter() {
+				total_weight += one_read;
+				let (removed_pre_prices_len, pre_prices) =
+					Self::update_pre_prices(asset_id, asset_info.clone(), block);
+				total_weight += T::WeightInfo::update_pre_prices(removed_pre_prices_len as u32);
+				let pre_prices_len = pre_prices.len();
+				Self::update_price(asset_id, asset_info.clone(), block, pre_prices);
+				total_weight += T::WeightInfo::update_price(pre_prices_len as u32);
 			}
+			total_weight
+		}
+
+		pub fn update_pre_prices(
+			asset_id: u64,
+			asset_info: AssetInfo<Percent>,
+			block: T::BlockNumber,
+		) -> (usize, Vec<PrePrice<T::BlockNumber, T::AccountId>>) {
+			// TODO maybe add a check if price is requested, is less operations?
+			let pre_pruned_prices = PrePrices::<T>::get(asset_id);
+			let prev_pre_prices_len = pre_pruned_prices.len();
+			let mut pre_prices = Vec::new();
+
+			// There can convert pre_pruned_prices.len() to u32 safely
+			// because pre_pruned_prices.len() limited by u32
+			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
+			if pre_pruned_prices.len() as u32 >= asset_info.min_answers {
+				let res = Self::prune_old_pre_prices(
+					asset_info.clone(),
+					pre_pruned_prices.clone(),
+					block,
+				);
+				let staled_prices = res.0;
+				pre_prices = res.1;
+				for p in staled_prices {
+					Self::deposit_event(Event::AnswerPruned(p.who.clone(), p.price));
+				}
+				PrePrices::<T>::insert(asset_id, pre_prices.clone());
+			}
+
+			(prev_pre_prices_len - pre_prices.len(), pre_prices)
+		}
+
+		pub fn update_price(
+			asset_id: u64,
+			asset_info: AssetInfo<Percent>,
+			block: T::BlockNumber,
+			pre_prices: Vec<PrePrice<T::BlockNumber, T::AccountId>>,
+		) {
+			// There can convert pre_prices.len() to u32 safely
+			// because pre_prices.len() limited by u32
+			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
+			if pre_prices.len() as u32 >= asset_info.min_answers {
+				let price = Self::get_median_price(&pre_prices);
+				Prices::<T>::insert(asset_id, Price { price, block });
+				Requested::<T>::insert(asset_id, false);
+				PrePrices::<T>::remove(asset_id);
+
+				Self::handle_payout(&pre_prices, price, asset_id);
+			}
+		}
+
+		pub fn prune_old_pre_prices(
+			asset_info: AssetInfo<Percent>,
+			mut pre_prices: Vec<PrePrice<T::BlockNumber, T::AccountId>>,
+			block: T::BlockNumber,
+		) -> (
+			Vec<PrePrice<T::BlockNumber, T::AccountId>>,
+			Vec<PrePrice<T::BlockNumber, T::AccountId>>,
+		) {
+			let stale_block = block.saturating_sub(T::StalePrice::get());
+			let (staled_prices, mut fresh_prices) =
+				match pre_prices.iter().position(|p| p.block >= stale_block) {
+					Some(index) => {
+						let fresh_prices = pre_prices.split_off(index);
+						(pre_prices, fresh_prices)
+					},
+					None => (pre_prices, vec![]),
+				};
+
+			// check max answer
+			if fresh_prices.len() as u32 > asset_info.max_answers {
+				fresh_prices = fresh_prices[0..asset_info.max_answers as usize].to_vec();
+			}
+
+			(staled_prices, fresh_prices)
 		}
 
 		pub fn get_median_price(prices: &Vec<PrePrice<T::BlockNumber, T::AccountId>>) -> u64 {
