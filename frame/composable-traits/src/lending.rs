@@ -1,11 +1,20 @@
-use codec::Codec;
-use frame_support::{pallet_prelude::*, sp_runtime::{Permill}, sp_std::{fmt::Debug, vec::Vec}};
 use crate::vault::Deposit;
+use codec::Codec;
+use frame_support::{
+	pallet_prelude::*,
+	sp_runtime::Permill,
+	sp_std::{fmt::Debug, vec::Vec},
+};
 
 #[derive(Encode, Decode, Default)]
 pub struct LendingConfigInput<AccountId>
 where
+<<<<<<< HEAD
 AccountId: core::cmp::Ord,
+=======
+	AccountId: core::cmp::Ord,
+	VaultId: Clone + Codec + Debug + PartialEq,
+>>>>>>> origin/lending
 {
 	/// can pause borrow & deposits of assets
 	pub manager: AccountId,
@@ -21,9 +30,15 @@ AccountId: core::cmp::Ord,
 /// Fees will be withdrawing to vault.
 /// Lenders with be rewarded via vault.
 pub trait Lending {
+<<<<<<< HEAD
 	/// let use this id for debt token also
 	type AssetId;
 	type VaultId: Codec;
+=======
+	/// let use this id for debd token also
+	type AssetId: Clone + Debug + PartialEq + Codec;
+	type VaultId: Clone + Codec + Debug + PartialEq;
+>>>>>>> origin/lending
 	/// (deposit VaultId, collateral VaultId) <-> PairId
 	type AccountId: core::cmp::Ord + Clone + Codec;
 	type PairId: Clone + Codec;
@@ -71,8 +86,6 @@ pub trait Lending {
 		to: &Self::AccountId,
 		redeem_amount: Self::Balance,
 	) -> Result<(), Self::Error>;
-
-	fn calculate_liquidation_fee(amount: Self::Balance) -> Self::Balance;
 
 	fn total_borrows(pair: Self::PairId) -> Result<Self::Balance, Self::Error>;
 
