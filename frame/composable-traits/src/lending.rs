@@ -2,16 +2,13 @@ use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_runtime::{Permill}, sp_std::{fmt::Debug, vec::Vec}};
 use crate::vault::Deposit;
 
-#[derive(Clone, Encode, Decode, Default, Debug)]
-pub struct LendingConfig<AccountId, VaultId>
+#[derive(Encode, Decode, Default)]
+pub struct LendingConfigInput<AccountId>
 where
 AccountId: core::cmp::Ord,
-VaultId: Clone + Codec + Debug + PartialEq,
 {
-	pub deposit: VaultId,
-	pub collateral: VaultId,
 	/// can pause borrow & deposits of assets
-	pub pause_guardian: AccountId,
+	pub manager: AccountId,
 	pub reserve_factor: Permill,
 	pub collateral_factor: Permill,
 }
@@ -24,23 +21,28 @@ VaultId: Clone + Codec + Debug + PartialEq,
 /// Fees will be withdrawing to vault.
 /// Lenders with be rewarded via vault.
 pub trait Lending {
-	/// let use this id for debd token also
-	type AssetId : Clone + Debug + PartialEq + Codec;
-	type VaultId: Clone + Codec + Debug + PartialEq;
+	/// let use this id for debt token also
+	type AssetId;
+	type VaultId: Codec;
 	/// (deposit VaultId, collateral VaultId) <-> PairId
-	type AccountId: core::cmp::Ord;
-	type PairId: core::cmp::Ord;
+	type AccountId: core::cmp::Ord + Clone + Codec;
+	type PairId: Clone + Codec;
 	type Error;
 	type Balance;
 	type BlockNumber;
 
 	/// creates market for new pair in specified vault
+	/// `deposit` - asset users want to borrow
+	/// `collateral` - asset users will put as collateral
 	fn create(
+		rent: Deposit<Self::Balance, Self::BlockNumber>,
+		deposit: Self::VaultId,
 		collateral: Self::VaultId,
-		asset: Self::VaultId,
-		deposit: Deposit<Self::Balance, Self::BlockNumber>,
-		config: LendingConfig<Self::AccountId, Self::AssetId>,
-	) -> Result<Self::PairId, Self::Error>;
+		config: LendingConfigInput<Self::AccountId>,
+	) -> Result<Self::PairId, DispatchError>;
+
+	/// account id of pallet
+	fn account_id() -> Self::AccountId;
 
 	fn get_pair_in_vault(vault: Self::VaultId) -> Result<Vec<Self::PairId>, Self::Error>;
 

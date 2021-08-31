@@ -164,6 +164,10 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Key type for the vaults. `VaultIndex` uniquely identifies a vault.
+	// TODO: should probably be a new type
+	pub type VaultIndex = u64;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {

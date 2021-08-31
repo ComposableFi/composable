@@ -21,16 +21,18 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
-// TODO remove me!
-#![allow(missing_docs)]
-pub use pallet::*;
+
 mod rate_model;
 
 #[frame_support::pallet]
 pub mod pallet {
 
-	use codec::{Codec, FullCodec};
-	use composable_traits::{lending::{Lending, LendingConfig}, oracle::Oracle, vault::{Deposit, Vault, VaultConfig}};
+	use codec::{Codec, EncodeLike, FullCodec};
+	use composable_traits::{
+		lending::{Lending, LendingConfigInput},
+		oracle::Oracle,
+		vault::{Deposit, Vault, VaultConfig},
+	};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
@@ -40,14 +42,14 @@ pub mod pallet {
 		PalletId,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig};
-	use num_traits::SaturatingSub;
+	use num_traits::{Bounded, SaturatingSub};
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
-			Zero,
+			Hash, Zero,
 		},
-		Perquintill,
+		Permill, Perquintill,
 	};
 	use sp_std::fmt::Debug;
 
@@ -55,9 +57,15 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type VaultId: Clone + Codec + Debug + PartialEq;
-		type PairId: Clone + Codec + Debug + PartialEq;
-		type Oracle : Oracle;
+		type Oracle: Oracle;
+		type Vault: Vault;
+		type PairId: EncodeLike
+			+ Clone
+			+ Codec
+			+ Debug
+			+ PartialEq
+			+ From<(<Self::Vault as Vault>::VaultId, <Self::Vault as Vault>::VaultId)>;
+		type Balance;
 	}
 
 	#[pallet::pallet]
@@ -67,6 +75,20 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		Overflow,
+		/// vault provided does not exist
+		VaultNotFound,
+	}
+
+	#[derive(Encode, Decode, Default)]
+	pub struct LendingConfig<VaultId: Default + Codec, AccountId: Codec + Default> {
+		/// asset users want to borrow
+		pub deposit: VaultId,
+		/// asset users will put as collateral
+		pub collateral: VaultId,
+		/// can pause borrow & deposits of assets
+		pub manager: AccountId,
+		pub reserve_factor: Permill,
+		pub collateral_factor: Permill,
 	}
 
 	/// stores all market pairs of assets to be assets/collateral
@@ -76,15 +98,17 @@ pub mod pallet {
 	pub type Pairs<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
+		T::AccountId,
+		Blake2_128Concat,
 		T::PairId,
-		LendingConfig<T::AccountId, T::VaultId>,
+		LendingConfig<<T::Vault as Vault>::VaultId, T::AccountId>,
 		ValueQuery,
 	>;
 
-	impl<T:Config> Lending for Pallet<T> {
-		type AssetId = T::AssetId;
+	impl<T: Config> Lending for Pallet<T> {
+		type AssetId = <T::Vault as Vault>::AssetId;
 
-		type VaultId = T::VaultId;
+		type VaultId = <T::Vault as Vault>::VaultId;
 
 		type AccountId = T::AccountId;
 
@@ -92,17 +116,34 @@ pub mod pallet {
 
 		type Error = Error<T>;
 
-		type Balance;
+		type Balance = T::Balance;
 
-		type BlockNumber;
+		type BlockNumber = T::BlockNumber;
 
 		fn create(
-			collateral: Self::VaultId,
-			asset: Self::VaultId,
-			deposit: Deposit<Self::Balance, Self::BlockNumber>,
-			config: composable_traits::lending::LendingConfig<Self::AccountId, Self::AssetId>,
-		) -> Result<Self::PairId, Self::Error> {
-			todo!()
+			rent: Deposit<Self::Balance, Self::BlockNumber>,
+			deposit: <T::Vault as Vault>::VaultId,
+			collateral: <T::Vault as Vault>::VaultId,
+			config: LendingConfigInput<Self::AccountId>,
+		) -> Result<Self::PairId, DispatchError> {
+			let collateral_asset = T::Vault::asset_id(&collateral)?;
+			let deposit_asset = T::Vault::asset_id(&deposit)?;
+			let pair_id = T::PairId::from((collateral.clone(), deposit.clone()));
+			let config = LendingConfig::<<T::Vault as Vault>::VaultId, T::AccountId> {
+				manager: config.manager,
+				reserve_factor: config.reserve_factor,
+				collateral_factor: config.collateral_factor,
+				collateral,
+				deposit,
+			};
+			// upsetting is reconfiguration
+			// PALL-18 Integrate Oracle Pallet
+			// use `.ok_or(...)?` to provide an error compatible with `Result<<T as pallet::Config>::PairId, sp_runtime::DispatchError>`
+			// expected composable_traits::oracle::Oracle::AssetId, found composable_traits::vault::Vault::AssetId
+			//<T::Oracle as Oracle>::get_price(collateral_asset)?;
+			//<T::Oracle as Oracle>::get_price(deposit_asset)?;
+			Pairs::<T>::insert(config.manager.clone(), pair_id.clone(), config);
+			Ok(pair_id)
 		}
 
 		fn get_pair_in_vault(vault: Self::VaultId) -> Result<Vec<Self::PairId>, Self::Error> {
@@ -181,7 +222,9 @@ pub mod pallet {
 		) -> Result<Self::Balance, Self::Error> {
 			todo!()
 		}
+
+		fn account_id() -> Self::AccountId {
+			todo!()
+		}
 	}
-
-
 }
