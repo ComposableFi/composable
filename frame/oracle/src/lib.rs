@@ -18,7 +18,7 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use composable_traits::oracle::Oracle;
-use frame_support::{
+	use frame_support::{
 		dispatch::{DispatchResult, DispatchResultWithPostInfo, Vec},
 		pallet_prelude::*,
 		traits::{
@@ -257,17 +257,16 @@ use frame_support::{
 		}
 	}
 
-
-	impl<T:Config> Oracle for Pallet<T> {
+	impl<T: Config> Oracle for Pallet<T> {
 		type Balance = PriceValue;
 		type AssetId = AssetId;
-		type Timestamp = <T as  frame_system::Config>::BlockNumber;
+		type Timestamp = <T as frame_system::Config>::BlockNumber;
 
 		fn get_price(of: Self::AssetId) -> Option<(Self::Balance, Self::Timestamp)> {
-				match Prices::<T>::try_get(of){
-					Ok(price) => Some((price.price, price.block)),
-					Err(()) => None,
-				}
+			match Prices::<T>::try_get(of) {
+				Ok(price) => Some((price.price, price.block)),
+				Err(()) => None,
+			}
 		}
 	}
 

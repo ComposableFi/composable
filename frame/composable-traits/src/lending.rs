@@ -1,12 +1,16 @@
-use codec::Codec;
-use frame_support::{pallet_prelude::*, sp_runtime::{Permill}, sp_std::{fmt::Debug, vec::Vec}};
 use crate::vault::Deposit;
+use codec::Codec;
+use frame_support::{
+	pallet_prelude::*,
+	sp_runtime::Permill,
+	sp_std::{fmt::Debug, vec::Vec},
+};
 
 #[derive(Clone, Encode, Decode, Default, Debug)]
 pub struct AccountConfig<AccountId, VaultId>
 where
-AccountId: core::cmp::Ord,
-VaultId: Clone + Codec + Debug + PartialEq,
+	AccountId: core::cmp::Ord,
+	VaultId: Clone + Codec + Debug + PartialEq,
 {
 	pub deposit: VaultId,
 	pub collateral: VaultId,
@@ -14,7 +18,6 @@ VaultId: Clone + Codec + Debug + PartialEq,
 	pub pause_guardian: AccountId,
 	pub reserve_factor: Permill,
 	pub collateral_factor: Permill,
-	//pub liquidation_fee: Permill,
 }
 
 // ASK: not clear how Vault will prevent withdrawing collateral?
@@ -26,7 +29,7 @@ VaultId: Clone + Codec + Debug + PartialEq,
 /// Lenders with be rewarded via vault.
 pub trait Lending {
 	/// let use this id for debd token also
-	type AssetId : Clone + Debug + PartialEq + Codec;
+	type AssetId: Clone + Debug + PartialEq + Codec;
 	type VaultId: Clone + Codec + Debug + PartialEq;
 	/// (deposit VaultId, collateral VaultId) <-> PairId
 	type AccountId: core::cmp::Ord;
@@ -70,8 +73,6 @@ pub trait Lending {
 		to: &Self::AccountId,
 		redeem_amount: Self::Balance,
 	) -> Result<(), Self::Error>;
-
-	fn calculate_liquidation_fee(amount: Self::Balance) -> Self::Balance;
 
 	fn total_borrows(pair: Self::PairId) -> Result<Self::Balance, Self::Error>;
 
