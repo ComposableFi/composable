@@ -5,7 +5,7 @@ In order to set the correct Weights(the execution time of function/transaction f
 get a good estimate of how much computing power is needed and how long the process will take, so that we can put the correct numbers.   
 This is where benchmarking comes in, a way to dry-run our functions without affecting the chain directly.   
 
-There are 3 mayor parts we need in order to implement benchmarking:
+There are 3 major parts we need in order to implement benchmarking:
 
 *  Create a weight file
 
@@ -33,16 +33,13 @@ indices.rs
 membership.rs  
 mod.rs         
 ```
-In our case we want to add the scheduler pallets weight file, which
+In our case, we want to add the scheduler pallets weight file, which
 we can easily find in the [pallets repository](https://github.com/paritytech/substrate/tree/master/frame/scheduler).
 
-Lets download the weights.rs file and place it into our weights folder and name it after the pallet:
+Let's download the weights.rs file and place it into our weights folder and name it after the pallet:
 ```
 $ curl "https://raw.githubusercontent.com/paritytech/substrate/v3.0.0/frame/scheduler/src/weights.rs" -o composable/runtime/picasso/src/weights/scheduler.rs
 ```
-
-
-Keep in mind:
 
 
 Lets make the file more lightweight by change WeightInfo into a struct instead of the default trait and rename SubstrateWeight to WeightInfo:
@@ -163,9 +160,9 @@ runtime-benchmarks = [
 ```
 
 In our runtime we need to tell the benchmark library to execute our benchmarks, so we can easily use it. 
-This is done in with the dispatch_benchmark function. All benchmarks 
+This is done with the [dispatch_benchmark](https://github.com/paritytech/substrate/blob/polkadot-v0.9.8/frame/benchmarking/src/utils.rs#L93) function. All benchmarks 
 we want to enable needs to be added to the Vec list we are creating in this function.
-So simply add it with the add_benchmark! macro function:
+So simply add it with the [add_benchmark](https://docs.rs/frame-benchmarking/3.0.0/frame_benchmarking/macro.add_benchmark.html) macro function:
 
 ```rust 
 ...
@@ -178,7 +175,7 @@ https://github.com/paritytech/substrate/blob/master/frame/benchmarking/src/lib.r
 https://crates.io/crates/frame-benchmarking    
 
 Extra:
-If we are running the latest version of the frame-benchmarking depency we can also add our pallet to the *benchmark_metadata* function.   
+If we are running the latest version of the frame-benchmarking dependency we can also add our pallet to the [benchmark_metadata](https://github.com/paritytech/substrate/blob/polkadot-v0.9.9/frame/benchmarking/src/utils.rs#L150) function.   
 
 
 
@@ -204,7 +201,9 @@ run benchmarks on all pallets synchronously.
 
 ### Read more:   
 https://github.com/shawntabrizi/substrate-benchmark-genesis   
-https://github.com/paritytech/substrate/blob/master/frame/benchmarking/src/lib.rs  
-https://www.shawntabrizi.com/substrate-graph-benchmarks/docs/#/  
-https://substrate.dev/docs/en/knowledgebase/runtime/benchmarking     
- 
+https://github.com/paritytech/substrate/blob/master/frame/benchmarking/src/lib.rs    
+https://www.shawntabrizi.com/substrate-graph-benchmarks/docs/#/   
+https://substrate.dev/docs/en/knowledgebase/runtime/benchmarking      
+https://crates.io/crates/frame-benchmarking    
+https://github.com/paritytech/substrate/tree/polkadot-v0.9.8/frame/benchmarking    
+
