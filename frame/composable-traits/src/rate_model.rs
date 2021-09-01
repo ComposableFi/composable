@@ -15,7 +15,7 @@
 use codec::{Decode, Encode};
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Saturating},
-	FixedPointNumber, FixedU128, Permill, RuntimeDebug,
+	FixedPointNumber, FixedU128, Perquintill, RuntimeDebug,
 };
 
 use crate::*;
@@ -24,7 +24,7 @@ use crate::*;
 pub type Rate = FixedU128;
 
 /// The fixed point number, range from 0 to 1.
-pub type Ratio = Permill;
+pub type Ratio = Perquintill;
 
 pub type Timestamp = u64;
 
@@ -119,14 +119,14 @@ impl JumpModel {
 
 	/// Check the jump model for sanity
 	pub fn check_model(&self) -> bool {
-		if self.base_rate > Self::MAX_BASE_RATE
-			|| self.jump_rate > Self::MAX_JUMP_RATE
-			|| self.full_rate > Self::MAX_FULL_RATE
+		if self.base_rate > Self::MAX_BASE_RATE ||
+			self.jump_rate > Self::MAX_JUMP_RATE ||
+			self.full_rate > Self::MAX_FULL_RATE
 		{
-			return false;
+			return false
 		}
 		if self.base_rate > self.jump_rate || self.jump_rate > self.full_rate {
-			return false;
+			return false
 		}
 
 		true
@@ -255,9 +255,9 @@ mod tests {
 		let excess_util = util.saturating_sub(jump_utilization);
 		assert_eq!(
 			borrow_rate,
-			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into())
-				/ FixedU128::saturating_from_rational(20, 100)
-				+ normal_rate,
+			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into()) /
+				FixedU128::saturating_from_rational(20, 100) +
+				normal_rate,
 		);
 	}
 

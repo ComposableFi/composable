@@ -26,7 +26,6 @@ sp-std = { version = "3.0.0", default-features = false,  git = "https://github.c
 
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 
-serde             = { version = '1', optional = true }
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
 
@@ -39,7 +38,6 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 [features]
 default = ["std"]
 std = [
-    "serde",
     "codec/std",
     "log/std",
     "frame-support/std",

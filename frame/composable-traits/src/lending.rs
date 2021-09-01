@@ -1,14 +1,17 @@
-use crate::vault::Deposit;
+use crate::{rate_model::InterestRateModel, vault::Deposit};
 use codec::Codec;
 use frame_support::{
 	pallet_prelude::*,
 	sp_runtime::{Permill, Perquintill},
 	sp_std::{fmt::Debug, vec::Vec},
 };
+use sp_runtime::FixedU128;
 
 /// The fixed point number of suggested by substrate precision
 /// Must be (1.0.. because applied only to price normalized values
 pub type NormalizedCollateralFactor = frame_support::sp_runtime::FixedU128;
+
+pub type Timestamp = u64;
 
 #[derive(Encode, Decode, Default)]
 pub struct MarketConfigInput<AccountId>
@@ -27,6 +30,7 @@ pub struct MarketConfig<VaultId> {
 	pub collateral: VaultId,
 	pub reserve_factor: Perquintill,
 	pub collateral_factor: NormalizedCollateralFactor,
+	pub interest_rate: InterestRateModel,
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.
@@ -38,7 +42,7 @@ pub struct MarketConfig<VaultId> {
 pub trait Lending {
 	type VaultId: Codec;
 	type MarketId: Codec;
-	/// (deposit VaultId, collateral VaultId) <-> PairId
+	/// (deposit VaultId, collateral VaultId) <-> MarketId
 	type AccountId: core::cmp::Ord + Clone + Codec;
 	type Balance;
 	type BlockNumber;
@@ -91,6 +95,33 @@ pub trait Lending {
 
 	fn accrue_interest(market_id: &Self::MarketId) -> Result<(), DispatchError>;
 
+	fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
+
+	fn total_reserves(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
+
+	fn borrow_index(market_id: &Self::MarketId) -> Result<FixedU128, DispatchError>;
+
+	fn update_borrows(
+		market_id: &Self::MarketId,
+		borrows: Self::Balance,
+	) -> Result<(), DispatchError>;
+
+	fn update_reserves(
+		market_id: &Self::MarketId,
+		reserves: Self::Balance,
+	) -> Result<(), DispatchError>;
+
+	fn update_borrow_index(
+		market_id: &Self::MarketId,
+		borrow_index: FixedU128,
+	) -> Result<(), DispatchError>;
+
+	fn calc_utilization_ratio(
+		cash: &Self::Balance,
+		borrows: &Self::Balance,
+		reserves: &Self::Balance,
+	) -> Result<Perquintill, DispatchError>;
+
 	fn borrow_balance_current(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
@@ -110,7 +141,8 @@ pub trait Lending {
 	/// Returns the borrow limit for an account.
 	/// Calculation uses current values for calculations, so can change during call to `borrow`.
 	/// Depends on overall collateral put by user into vault.
-	/// This borrow limit of specific user, depends only on prices and users collateral, not on state of vault.
+	/// This borrow limit of specific user, depends only on prices and users collateral, not on
+	/// state of vault.
 	fn get_borrow_limit(
 		market_id: &Self::MarketId,
 		account: Self::AccountId,

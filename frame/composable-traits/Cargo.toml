@@ -10,7 +10,8 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 frame-support = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"  }
-
+sp-runtime = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+serde             = { version = '1', optional = true }
 [dependencies.codec]
 default-features = false
 features = ["derive"]
@@ -20,6 +21,8 @@ version = "2.0.0"
 [features]
 default = ["std"]
 std = [
+    "serde",
     "codec/std",
     "frame-support/std",
+    "sp-runtime/std",
 ]

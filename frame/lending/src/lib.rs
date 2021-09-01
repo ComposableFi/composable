@@ -22,17 +22,16 @@
 	unused_extern_crates
 )]
 
-mod rate_model;
-
 #[frame_support::pallet]
 pub mod pallet {
 
-	use std::{convert::TryInto, ops::Mul};
-
 	use codec::{Codec, EncodeLike, FullCodec};
 	use composable_traits::{
-		lending::{Lending, MarketConfig, MarketConfigInput, NormalizedCollateralFactor},
+		lending::{
+			Lending, MarketConfig, MarketConfigInput, NormalizedCollateralFactor, Timestamp,
+		},
 		oracle::Oracle,
+		rate_model::*,
 		vault::{Deposit, Vault, VaultConfig},
 	};
 	use frame_support::{
@@ -40,7 +39,7 @@ pub mod pallet {
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
 			tokens::{fungibles::MutateHold, DepositConsequence},
-			Backing,
+			Backing, UnixTime,
 		},
 		PalletId,
 	};
@@ -54,9 +53,7 @@ pub mod pallet {
 		},
 		FixedPointNumber, FixedPointOperand, PerThing, Permill, Perquintill,
 	};
-	use sp_std::fmt::Debug;
-
-	use crate::rate_model::Ratio;
+	use sp_std::{convert::TryInto, fmt::Debug, ops::Mul};
 
 	#[derive(Default, Copy, Clone, Encode, Decode)]
 	#[repr(transparent)]
@@ -87,13 +84,14 @@ pub mod pallet {
 			+ SaturatingSub
 			+ AtLeast32BitUnsigned
 			+ Zero
+			+ From<u128>
 			+ From<u64>
 			+ Into<u128>;
 
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
 
-		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
+		type UnixTime: UnixTime;
 	}
 
 	#[pallet::pallet]
@@ -103,6 +101,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		Overflow,
+		Underflow,
 		/// vault provided does not exist
 		VaultNotFound,
 		/// Only assets for which we can track price are supported
@@ -175,6 +174,12 @@ pub mod pallet {
 		}
 	}
 
+	/// The timestamp of the previous block or defaults to timestamp at genesis.
+    /// TODO: should be updated in on_finalize() hook.
+	#[pallet::storage]
+	#[pallet::getter(fn last_block_timestamp)]
+	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
+
 	impl<T: Config> Lending for Pallet<T> {
 		type VaultId = <T::Vault as Vault>::VaultId;
 
@@ -214,6 +219,7 @@ pub mod pallet {
 					collateral: collateral_asset_vault,
 					reserve_factor: config_input.reserve_factor,
 					collateral_factor: config_input.collateral_factor,
+					interest_rate: InterestRateModel::default(),
 				};
 
 				Markets::<T>::insert(lending_index, config);
@@ -263,8 +269,98 @@ pub mod pallet {
 			todo!()
 		}
 
-		fn accrue_interest(market_id: &Self::MarketId) -> Result<(), DispatchError> {
+		fn total_cash(pair: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			todo!()
+		}
+
+		fn total_reserves(pair: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
+			todo!()
+		}
+
+		fn borrow_index(
+			market_id: &Self::MarketId,
+		) -> Result<sp_runtime::FixedU128, DispatchError> {
+			todo!()
+		}
+
+		fn update_borrows(
+			market_id: &Self::MarketId,
+			borrows: Self::Balance,
+		) -> Result<(), DispatchError> {
+			todo!()
+		}
+
+		fn update_reserves(
+			market_id: &Self::MarketId,
+			reserves: Self::Balance,
+		) -> Result<(), DispatchError> {
+			todo!()
+		}
+
+		fn update_borrow_index(
+			market_id: &Self::MarketId,
+			borrow_index: sp_runtime::FixedU128,
+		) -> Result<(), DispatchError> {
+			todo!()
+		}
+
+		fn calc_utilization_ratio(
+			cash: &Self::Balance,
+			borrows: &Self::Balance,
+			reserves: &Self::Balance,
+		) -> Result<Perquintill, DispatchError> {
+			// utilization ratio is 0 when there are no borrows
+			if borrows.is_zero() {
+				return Ok(Perquintill::zero())
+			}
+			// utilizationRatio = totalBorrows / (totalCash + totalBorrows − totalReserves)
+			let total = cash
+				.checked_add(borrows)
+				.and_then(|r| r.checked_sub(reserves))
+				.ok_or(Error::<T>::Overflow)?;
+			Ok(Perquintill::from_rational(*borrows, total))
+		}
+
+		fn accrue_interest(market_id: &Self::MarketId) -> Result<(), DispatchError> {
+			let total_borrows = Self::total_borrows(market_id)?;
+			let total_cash = Self::total_cash(market_id)?;
+			let total_reserves = Self::total_reserves(market_id)?;
+			let util = Self::calc_utilization_ratio(&total_cash, &total_borrows, &total_reserves)?;
+			let delta_time = T::UnixTime::now()
+				.as_secs()
+				.checked_sub(Self::last_block_timestamp())
+				.ok_or(Error::<T>::Underflow)?;
+			let market =
+				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let borrow_rate = market.interest_rate.get_borrow_rate(util).unwrap();
+			let interest_accumulated = composable_traits::rate_model::accrued_interest(
+				borrow_rate,
+				total_borrows.into(),
+				delta_time,
+			)
+			.unwrap();
+			let total_borrows_new = interest_accumulated
+				.checked_add(total_borrows.into())
+				.ok_or(Error::<T>::Overflow)?;
+			let total_reserves_new = market
+				.reserve_factor
+				.mul_floor(interest_accumulated)
+				.checked_add(total_reserves.into())
+				.ok_or(Error::<T>::Overflow)?;
+			let borrow_index = Self::borrow_index(market_id)?;
+			let borrow_index_new = increment_index(borrow_rate, borrow_index, delta_time)
+				.and_then(|r| r.checked_add(&borrow_index))
+				.ok_or(Error::<T>::Overflow)?;
+			Self::update_borrows(
+				market_id,
+				Self::Balance::from(total_borrows_new),
+			)?;
+			Self::update_reserves(
+				market_id,
+				Self::Balance::from(total_reserves_new),
+			)?;
+			Self::update_borrow_index(market_id, borrow_index_new)?;
+			Ok(())
 		}
 
 		fn borrow_balance_current(
@@ -325,9 +421,8 @@ pub mod pallet {
 			)
 			.map_err(|_| Error::<T>::CollateralDepositFailed)?;
 			AccountCollateral::<T>::try_mutate(market_id, from, |collateral_balance| {
-				let new_collateral_balance =
-					T::Convert::convert(*collateral_balance) + T::Convert::convert(amount);
-				*collateral_balance = T::Convert::convert(new_collateral_balance);
+				let new_collateral_balance = *collateral_balance + amount;
+				*collateral_balance = new_collateral_balance;
 				Ok(())
 			})
 		}
