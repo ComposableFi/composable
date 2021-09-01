@@ -67,7 +67,7 @@ pub trait Vault {
 
 	fn lp_asset_id(vault: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
 
-	fn account_id() -> Self::AccountId;
+	fn account_id(vault: &Self::VaultId) -> Self::AccountId;
 
 	fn create(
 		deposit: Deposit<Self::Balance, Self::BlockNumber>,

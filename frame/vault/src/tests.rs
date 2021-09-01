@@ -36,7 +36,7 @@ macro_rules! prop_assert_ok {
 /// Accept a 'dust' deviation
 macro_rules! prop_assert_epsilon {
 	($x:expr, $y:expr) => {{
-		let precision = 100000;
+		let precision = 1000;
 		let epsilon = 10;
 		let upper = precision + epsilon;
 		let lower = precision - epsilon;

@@ -338,7 +338,7 @@ pub mod pallet {
 					Allocations::<T>::insert(id, account_id, allocation);
 				});
 
-				Allocations::<T>::insert(id, Self::account_id(), config.reserved);
+				Allocations::<T>::insert(id, Self::account_id(&id), config.reserved);
 
 				let vault_info = crate::models::VaultInfo {
 					lp_token_id,
@@ -353,15 +353,15 @@ pub mod pallet {
 			})
 		}
 
-		fn account_id() -> T::AccountId {
-			PALLET_ID.into_account()
+		fn account_id(vault_id: &VaultIndex) -> T::AccountId {
+			PALLET_ID.into_sub_account(vault_id)
 		}
 
 		/// Computes the sum of all the assets that the vault currently controls.
 		fn assets_under_management(vault_id: &VaultIndex) -> Result<T::Balance, Error<T>> {
 			let vault =
 				Vaults::<T>::try_get(vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
-			let owned = T::Currency::balance(vault.asset_id, &Self::account_id());
+			let owned = T::Currency::balance(vault.asset_id, &Self::account_id(vault_id));
 			let outstanding = CapitalStructure::<T>::iter_prefix_values(vault_id)
 				.fold(T::Balance::zero(), |sum, item| sum + item.balance);
 			Ok(owned + outstanding)
@@ -400,7 +400,8 @@ pub mod pallet {
 			let lp_shares_value_amount =
 				<T::Convert as Convert<u128, T::Balance>>::convert(lp_shares_value);
 
-			let vault_owned_amount = T::Currency::balance(vault.asset_id, &Self::account_id());
+			let vault_owned_amount =
+				T::Currency::balance(vault.asset_id, &Self::account_id(vault_id));
 
 			// TODO(hussein-aitlahcen): should we provide what we can to reduce the available
 			// liquidity in order to force strategies to rebalance?
@@ -413,7 +414,7 @@ pub mod pallet {
 				Error::<T>::InsufficientLpTokens
 			);
 
-			let from = Self::account_id();
+			let from = Self::account_id(&vault_id);
 			ensure!(
 				T::Currency::can_withdraw(vault.asset_id, &from, lp_shares_value_amount)
 					.into_result()
@@ -441,7 +442,7 @@ pub mod pallet {
 				Error::<T>::TransferFromFailed
 			);
 
-			let to = Self::account_id();
+			let to = Self::account_id(&vault_id);
 
 			let vault_aum = Self::assets_under_management(vault_id)?;
 			if vault_aum.is_zero() {
@@ -504,8 +505,8 @@ pub mod pallet {
 			Ok(vault.asset_id)
 		}
 
-		fn account_id() -> Self::AccountId {
-			Pallet::<T>::account_id()
+		fn account_id(vault: &Self::VaultId) -> Self::AccountId {
+			Pallet::<T>::account_id(vault)
 		}
 
 		fn create(
@@ -579,7 +580,7 @@ pub mod pallet {
 				state.balance.checked_add(&amount).ok_or(Error::<T>::OverflowError)?;
 				// This can definitely overflow. Perhaps it should be a BigUint?
 				state.lifetime_withdrawn.checked_add(&amount).ok_or(Error::<T>::OverflowError)?;
-				T::Currency::transfer(vault.asset_id, &Self::account_id(), to, amount, true)
+				T::Currency::transfer(vault.asset_id, &Self::account_id(vault_id), to, amount, true)
 					.map_err(|_| Error::<T>::InsufficientFunds)
 			})?;
 			Ok(())
@@ -597,8 +598,14 @@ pub mod pallet {
 				state.balance.saturating_sub(&amount);
 				// This can definitely overflow. Perhaps it should be a BigUint?
 				state.lifetime_deposited.checked_add(&amount).ok_or(Error::<T>::OverflowError)?;
-				T::Currency::transfer(vault.asset_id, from, &Self::account_id(), amount, true)
-					.map_err(|_| Error::<T>::InsufficientFunds)
+				T::Currency::transfer(
+					vault.asset_id,
+					from,
+					&Self::account_id(vault_id),
+					amount,
+					true,
+				)
+				.map_err(|_| Error::<T>::InsufficientFunds)
 			})?;
 			Ok(())
 		}
