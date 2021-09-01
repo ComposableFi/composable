@@ -243,7 +243,7 @@ pub mod pallet {
 		type AssetId = AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 
-		fn get_price(of: Self::AssetId) -> Result<(Self::Balance, Self::Timestamp), DispatchError> {
+		fn get_price(of: &Self::AssetId) -> Result<(Self::Balance, Self::Timestamp), DispatchError> {
 			let price =  Prices::<T>::try_get(of).map_err(|err| Error::<T>::PriceNotFound)?;
 			Ok((price.price, price.block))
 		}

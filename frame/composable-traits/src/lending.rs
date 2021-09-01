@@ -1,10 +1,6 @@
 use crate::vault::Deposit;
 use codec::Codec;
-use frame_support::{
-	pallet_prelude::*,
-	sp_runtime::Permill,
-	sp_std::{fmt::Debug, vec::Vec},
-};
+use frame_support::{pallet_prelude::*, sp_runtime::{Permill, Perquintill}, sp_std::{fmt::Debug, vec::Vec}};
 
 #[derive(Encode, Decode, Default)]
 pub struct MarketConfigInput<AccountId>
@@ -13,16 +9,16 @@ where
 {
 	/// can pause borrow & deposits of assets
 	pub manager: AccountId,
-	pub reserve_factor: Permill,
-	pub collateral_factor: Permill,
+	pub reserve_factor: Perquintill,
+	pub collateral_factor: Perquintill,
 }
 
 #[derive(Encode, Decode, Default)]
 pub struct MarketConfig<VaultId> {
 	pub borrow: VaultId,
 	pub collateral: VaultId,
-	pub reserve_factor: Permill,
-	pub collateral_factor: Permill,
+	pub reserve_factor: Perquintill,
+	pub collateral_factor: Perquintill,
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.
@@ -99,6 +95,10 @@ pub trait Lending {
 		borrow_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
+	/// Returns the borrow limit for an account.
+	/// Calculation uses current values for calculations, so can change during call to `borrow`.
+	/// Depends on overall collateral put by user into vault.
+	/// This borrow limit of specific user, depends only on prices and users collateral, not on state of vault.
 	fn get_borrow_limit(
 		market_id: &Self::MarketId,
 		account: Self::AccountId,
