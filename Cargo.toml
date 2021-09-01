@@ -3,6 +3,7 @@ panic = "unwind"
 
 [workspace]
 members = [
+    "frame/*",
     "node",
     "runtime/picasso",
 ]

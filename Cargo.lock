@@ -2311,7 +2311,7 @@ dependencies = [
  "linregress",
  "log",
  "parity-scale-codec",
- "paste",
+ "paste 1.0.5",
  "sp-api",
  "sp-io",
  "sp-runtime",
@@ -2395,7 +2395,7 @@ dependencies = [
  "max-encoded-len",
  "once_cell",
  "parity-scale-codec",
- "paste",
+ "paste 1.0.5",
  "serde",
  "smallvec 1.6.1",
  "sp-arithmetic",
@@ -4159,6 +4159,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "lite-json"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0460d985423a026b4d9b828a7c6eed1bcf606f476322f3f9b507529686a61715"
+dependencies = [
+ "lite-parser",
+]
+
+[[package]]
+name = "lite-parser"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c50092e40e0ccd1bf2015a10333fde0502ff95b832b0895dc1ca0d7ac6c52f6"
+dependencies = [
+ "paste 0.1.18",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5161,6 +5179,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-oracle"
+version = "1.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "lite-json",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-proxy"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
@@ -5235,7 +5273,7 @@ dependencies = [
  "pallet-authorship",
  "pallet-session",
  "parity-scale-codec",
- "paste",
+ "paste 1.0.5",
  "serde",
  "sp-application-crypto",
  "sp-io",
@@ -5646,9 +5684,28 @@ dependencies = [
 
 [[package]]
 name = "paste"
+version = "0.1.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "45ca20c77d80be666aef2b45486da86238fabe33e38306bd3118fe4af33fa880"
+dependencies = [
+ "paste-impl",
+ "proc-macro-hack",
+]
+
+[[package]]
+name = "paste"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acbf547ad0c65e31259204bd90935776d1c693cec2f4ff7abb7a1bbbd40dfe58"
+
+[[package]]
+name = "paste-impl"
+version = "0.1.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d95a7db200b97ef370c8e6de0088252f7e0dfff7d047a28528e47456c0fc98b6"
+dependencies = [
+ "proc-macro-hack",
+]
 
 [[package]]
 name = "pbkdf2"
@@ -5774,6 +5831,7 @@ dependencies = [
  "pallet-democracy",
  "pallet-indices",
  "pallet-membership",
+ "pallet-oracle",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
@@ -9244,7 +9302,7 @@ dependencies = [
  "approx",
  "num-complex",
  "num-traits",
- "paste",
+ "paste 1.0.5",
 ]
 
 [[package]]
@@ -9269,7 +9327,7 @@ source = "git+https://github.com/paritytech/polkadot?tag=v0.9.8#3a10ee63c0b5703a
 dependencies = [
  "enumn",
  "parity-scale-codec",
- "paste",
+ "paste 1.0.5",
  "sp-runtime",
  "sp-std",
 ]
@@ -9281,7 +9339,7 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.8#3a10e
 dependencies = [
  "enumn",
  "parity-scale-codec",
- "paste",
+ "paste 1.0.5",
  "sp-runtime",
  "sp-std",
 ]
@@ -9811,7 +9869,7 @@ dependencies = [
  "max-encoded-len",
  "parity-scale-codec",
  "parity-util-mem",
- "paste",
+ "paste 1.0.5",
  "rand 0.7.3",
  "serde",
  "sp-application-crypto",
@@ -11333,7 +11391,7 @@ dependencies = [
  "lazy_static",
  "libc",
  "log",
- "paste",
+ "paste 1.0.5",
  "psm",
  "region",
  "rustc-demangle",
