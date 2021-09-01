@@ -76,7 +76,7 @@ pub mod pallet {
 		Overflow,
 		/// vault provided does not exist
 		VaultNotFound,
-		/// Borrow or Collateral without price feed
+		/// Only assets for which we can track price are supported
 		AssetWithoutPrice,
 	}
 
@@ -86,15 +86,12 @@ pub mod pallet {
 		pub collateral_factor: Permill,
 	}
 
+	/// Lending instances counter
 	#[pallet::storage]
 	#[pallet::getter(fn lending_count)]
 	pub type LendingCount<T: Config> = StorageValue<_, LendingIndex, ValueQuery>;
 
-	/// Stores all market pairs of assets to be assets/collateral
-	/// Only assets for which we can track price are supported
-	/// 0 - manager
-	/// 1 - asset users want to borrow
-	/// 2 - asset users will put as collateral
+	/// Indexed lending instances
 	#[pallet::storage]
 	#[pallet::getter(fn pairs)]
 	pub type Lendings<T: Config> =
