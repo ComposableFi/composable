@@ -29,7 +29,7 @@ pub mod pallet {
 
 	use codec::{Codec, EncodeLike, FullCodec};
 	use composable_traits::{
-		lending::{Lending, LendingConfigInput},
+		lending::{Lending, MarketConfig, MarketConfigInput},
 		oracle::Oracle,
 		vault::{Deposit, Vault, VaultConfig},
 	};
@@ -105,14 +105,6 @@ pub mod pallet {
 		CollateralDepositFailed,
 	}
 
-	#[derive(Encode, Decode, Default)]
-	pub struct MarketConfig<VaultId> {
-		pub borrow_asset_vault: VaultId,
-		pub collateral_asset_vault: VaultId,
-		pub reserve_factor: Permill,
-		pub collateral_factor: Permill,
-	}
-
 	/// Lending instances counter
 	#[pallet::storage]
 	#[pallet::getter(fn lending_count)]
@@ -151,7 +143,7 @@ pub mod pallet {
 		fn create_or_update(
 			borrow_asset_vault: <T::Vault as Vault>::VaultId,
 			collateral_asset_vault: <T::Vault as Vault>::VaultId,
-			config_input: LendingConfigInput<Self::AccountId>,
+			config_input: MarketConfigInput<Self::AccountId>,
 		) -> Result<(), DispatchError> {
 			let collateral_asset = T::Vault::asset_id(&collateral_asset_vault)?;
 			let borrow_asset = T::Vault::asset_id(&borrow_asset_vault)?;
@@ -168,8 +160,8 @@ pub mod pallet {
 				};
 
 				let config = MarketConfig {
-					borrow_asset_vault,
-					collateral_asset_vault,
+					borrow: borrow_asset_vault,
+					collateral: collateral_asset_vault,
 					reserve_factor: config_input.reserve_factor,
 					collateral_factor: config_input.collateral_factor,
 				};
@@ -184,12 +176,20 @@ pub mod pallet {
 			PALLET_ID.into_sub_account(market_id)
 		}
 
-		fn get_pair_in_vault(vault: Self::VaultId) -> Result<Vec<Self::MarketId>, DispatchError> {
-			todo!()
+		fn get_markets_for_borrow(borrow: Self::VaultId) -> Vec<Self::MarketId> {
+			// allow to be slow until it becomes write transaction (not the case evet seems)
+			let mut markets = sp_std::vec![];
+			for (index, market) in Markets::<T>::iter() {
+				if market.borrow == borrow {
+					markets.push(index);
+				}
+			}
+
+			markets
 		}
 
-		fn get_pairs_all() -> Result<Vec<Self::MarketId>, DispatchError> {
-			todo!()
+		fn get_all_markets() -> Vec<(Self::MarketId, MarketConfig<<T::Vault as Vault>::VaultId>)> {
+			Markets::<T>::iter().map(|(index, config)| (index, config)).collect()
 		}
 
 		fn borrow(
@@ -252,7 +252,7 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-			let collateral_lp_id = T::Vault::lp_asset_id(&market.collateral_asset_vault)?;
+			let collateral_lp_id = T::Vault::lp_asset_id(&market.collateral)?;
 			T::Currency::transfer(
 				collateral_lp_id,
 				from,

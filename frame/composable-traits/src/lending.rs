@@ -7,12 +7,20 @@ use frame_support::{
 };
 
 #[derive(Encode, Decode, Default)]
-pub struct LendingConfigInput<AccountId>
+pub struct MarketConfigInput<AccountId>
 where
 	AccountId: core::cmp::Ord,
 {
 	/// can pause borrow & deposits of assets
 	pub manager: AccountId,
+	pub reserve_factor: Permill,
+	pub collateral_factor: Permill,
+}
+
+#[derive(Encode, Decode, Default)]
+pub struct MarketConfig<VaultId> {
+	pub borrow: VaultId,
+	pub collateral: VaultId,
 	pub reserve_factor: Permill,
 	pub collateral_factor: Permill,
 }
@@ -37,7 +45,7 @@ pub trait Lending {
 	fn create_or_update(
 		borrow_asset_vault: Self::VaultId,
 		collateral_asset_vault: Self::VaultId,
-		config: LendingConfigInput<Self::AccountId>,
+		config: MarketConfigInput<Self::AccountId>,
 	) -> Result<(), DispatchError>;
 
 	/// AccountId of the market instance
@@ -49,9 +57,10 @@ pub trait Lending {
 		amount: Self::Balance,
 	) -> Result<(), DispatchError>;
 
-	fn get_pair_in_vault(vault: Self::VaultId) -> Result<Vec<Self::MarketId>, DispatchError>;
+	/// get all existing markets for current deposit
+	fn get_markets_for_borrow(vault: Self::VaultId) -> Vec<Self::MarketId>;
 
-	fn get_pairs_all() -> Result<Vec<Self::MarketId>, DispatchError>;
+	fn get_all_markets() -> Vec<(Self::MarketId, MarketConfig<Self::VaultId>)>;
 
 	fn borrow(
 		market_id: &Self::MarketId,
