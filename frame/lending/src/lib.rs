@@ -21,16 +21,18 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
-// TODO remove me!
-#![allow(missing_docs)]
-pub use pallet::*;
+
 mod rate_model;
 
 #[frame_support::pallet]
 pub mod pallet {
 
-	use codec::{Codec, FullCodec};
-	use composable_traits::vault::{Deposit, Vault, VaultConfig};
+	use codec::{Codec, EncodeLike, FullCodec};
+	use composable_traits::{
+		lending::{Lending, LendingConfigInput},
+		oracle::Oracle,
+		vault::{Deposit, Vault, VaultConfig},
+	};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
@@ -40,21 +42,31 @@ pub mod pallet {
 		PalletId,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig};
-	use num_traits::SaturatingSub;
+	use num_traits::{Bounded, SaturatingSub};
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
-			Zero,
+			Hash, Zero,
 		},
-		Perquintill,
+		Permill, Perquintill,
 	};
 	use sp_std::fmt::Debug;
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {}
+	pub trait Config: frame_system::Config {
+		type Oracle: Oracle;
+		type Vault: Vault;
+		type PairId: EncodeLike
+			+ Clone
+			+ Codec
+			+ Debug
+			+ PartialEq
+			+ From<(<Self::Vault as Vault>::VaultId, <Self::Vault as Vault>::VaultId)>;
+		type Balance;
+	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -63,9 +75,147 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		Overflow,
+		/// vault provided does not exist
+		VaultNotFound,
 	}
 
-	trait Lending {}
+	#[derive(Encode, Decode, Default)]
+	pub struct LendingConfig {
+		pub reserve_factor: Permill,
+		pub collateral_factor: Permill,
+	}
 
-	impl<T: Config> Lending for Pallet<T> {}
+	/// stores all market pairs of assets to be assets/collateral
+	// only assets supported by `Oracle` are possible
+	/// 0 - manager
+	/// 1 - asset users want to borrow
+	/// 2 - asset users will put as collateral
+	#[pallet::storage]
+	#[pallet::getter(fn pairs)]
+	pub type Pairs<T: Config> = StorageNMap<
+		_,
+		(
+			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, <T::Vault as Vault>::VaultId>,
+			NMapKey<Blake2_128Concat, <T::Vault as Vault>::VaultId>,
+		),
+		LendingConfig,
+		ValueQuery,
+	>;
+
+
+	impl<T: Config> Lending for Pallet<T> {
+		type AssetId = <T::Vault as Vault>::AssetId;
+
+		type VaultId = <T::Vault as Vault>::VaultId;
+
+		type AccountId = T::AccountId;
+
+		type PairId = T::PairId;
+
+		type Error = Error<T>;
+
+		type Balance = T::Balance;
+
+		type BlockNumber = T::BlockNumber;
+
+		fn create_or_update(
+			deposit: <T::Vault as Vault>::VaultId,
+			collateral: <T::Vault as Vault>::VaultId,
+			config_input: LendingConfigInput<Self::AccountId>,
+		) -> Result<(), DispatchError> {
+			let collateral_asset = T::Vault::asset_id(&collateral)?;
+			let deposit_asset = T::Vault::asset_id(&deposit)?;
+			let config = LendingConfig {
+				reserve_factor: config_input.reserve_factor,
+				collateral_factor: config_input.collateral_factor,
+			};
+
+			// PALL-18 Integrate Oracle Pallet
+			// use `.ok_or(...)?` to provide an error compatible with `Result<<T as pallet::Config>::PairId, sp_runtime::DispatchError>`
+			// expected composable_traits::oracle::Oracle::AssetId, found composable_traits::vault::Vault::AssetId
+			//<T::Oracle as Oracle>::get_price(collateral_asset)?;
+			//<T::Oracle as Oracle>::get_price(deposit_asset)?;
+
+			Pairs::<T>::insert((config_input.manager, deposit.clone(), collateral.clone()), config);
+			Ok(())
+		}
+
+		fn get_pair_in_vault(vault: Self::VaultId) -> Result<Vec<Self::PairId>, Self::Error> {
+			todo!()
+		}
+
+		fn get_pairs_all() -> Result<Vec<Self::PairId>, Self::Error> {
+			todo!()
+		}
+
+		fn borrow(
+			pair: Self::PairId,
+			debt_owner: &Self::AccountId,
+			amount_to_borrow: Self::Balance,
+		) -> Result<(), Self::Error> {
+			todo!()
+		}
+
+		fn repay_borrow(
+			pair: Self::PairId,
+			from: &Self::AccountId,
+			beneficiary: &Self::AccountId,
+			repay_amount: Self::Balance,
+		) -> Result<(), Self::Error> {
+			todo!()
+		}
+
+		fn redeem(
+			pair: Self::PairId,
+			to: &Self::AccountId,
+			redeem_amount: Self::Balance,
+		) -> Result<(), Self::Error> {
+			todo!()
+		}
+
+		fn total_borrows(pair: Self::PairId) -> Result<Self::Balance, Self::Error> {
+			todo!()
+		}
+
+		fn accrue_interest(pair: Self::PairId) -> Result<(), Self::Error> {
+			todo!()
+		}
+
+		fn borrow_balance_current(
+			pair: Self::PairId,
+			account: &Self::AccountId,
+		) -> Result<Self::Balance, Self::Error> {
+			todo!()
+		}
+
+		fn withdraw_fees(to_withdraw: Self::Balance) -> Result<(), Self::Error> {
+			todo!()
+		}
+
+		fn collateral_of_account(
+			pair: Self::PairId,
+			account: &Self::AccountId,
+		) -> Result<Self::Balance, Self::Error> {
+			todo!()
+		}
+
+		fn collateral_required(
+			pair: Self::PairId,
+			borrow_amount: Self::Balance,
+		) -> Result<Self::Balance, Self::Error> {
+			todo!()
+		}
+
+		fn get_borrow_limit(
+			pair: Self::PairId,
+			account: Self::AccountId,
+		) -> Result<Self::Balance, Self::Error> {
+			todo!()
+		}
+
+		fn account_id() -> Self::AccountId {
+			todo!()
+		}
+	}
 }
