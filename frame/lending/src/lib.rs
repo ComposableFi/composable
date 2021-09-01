@@ -57,8 +57,8 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Oracle: Oracle;
-		type Vault: Vault;
+		type Oracle: Oracle<AssetId = Self::AssetId>;
+		type Vault: Vault<AssetId = Self::AssetId>;
 		type PairId: EncodeLike
 			+ Clone
 			+ Codec
@@ -66,6 +66,7 @@ pub mod pallet {
 			+ PartialEq
 			+ From<(<Self::Vault as Vault>::VaultId, <Self::Vault as Vault>::VaultId)>;
 		type Balance;
+		type AssetId : core::cmp::Ord;// + Self::Oracle::AssetId;
 	}
 
 	#[pallet::pallet]
@@ -105,7 +106,7 @@ pub mod pallet {
 
 
 	impl<T: Config> Lending for Pallet<T> {
-		type AssetId = <T::Vault as Vault>::AssetId;
+		type AssetId = T::AssetId;
 
 		type VaultId = <T::Vault as Vault>::VaultId;
 
@@ -130,13 +131,8 @@ pub mod pallet {
 				reserve_factor: config_input.reserve_factor,
 				collateral_factor: config_input.collateral_factor,
 			};
-
-			// PALL-18 Integrate Oracle Pallet
-			// use `.ok_or(...)?` to provide an error compatible with `Result<<T as pallet::Config>::PairId, sp_runtime::DispatchError>`
-			// expected composable_traits::oracle::Oracle::AssetId, found composable_traits::vault::Vault::AssetId
-			//<T::Oracle as Oracle>::get_price(collateral_asset)?;
-			//<T::Oracle as Oracle>::get_price(deposit_asset)?;
-
+			<T::Oracle as Oracle>::get_price(collateral_asset)?;
+			<T::Oracle as Oracle>::get_price(deposit_asset)?;
 			Pairs::<T>::insert((config_input.manager, deposit.clone(), collateral.clone()), config);
 			Ok(())
 		}
