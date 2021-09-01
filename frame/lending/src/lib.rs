@@ -177,7 +177,7 @@ pub mod pallet {
 		}
 
 		fn get_markets_for_borrow(borrow: Self::VaultId) -> Vec<Self::MarketId> {
-			// allow to be slow until it becomes write transaction (not the case evet seems)
+			// allow to be slow until it becomes write transaction (not the case now and then)
 			let mut markets = sp_std::vec![];
 			for (index, market) in Markets::<T>::iter() {
 				if market.borrow == borrow {
