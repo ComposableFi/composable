@@ -19,7 +19,7 @@ pub mod pallet {
 			fungibles::{Inspect, Transfer, Mutate},
 			tokens::{fungibles::MutateHold},
 			Currency as NativeCurrency,
-			ReservableCurrency, ExistenceRequirement::KeepAlive
+			ExistenceRequirement::KeepAlive
 		},
 	};
 	pub use composable_traits::{
@@ -42,7 +42,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type LiquidRewardId: Get<PalletId>;
 		/// The currency mechanism.
-		type NativeCurrency: ReservableCurrency<Self::AccountId>;
+		type NativeCurrency: NativeCurrency<Self::AccountId>;
 		type CurrencyFactory: CurrencyFactory<Self::CurrencyId>;
 		type CurrencyId: FullCodec
 			+ Eq
