@@ -53,20 +53,18 @@ pub mod pallet {
 	};
 	use sp_std::fmt::Debug;
 
+	#[derive(Default, Copy, Clone, Encode, Decode)]
+	#[repr(transparent)]
+	pub struct LendingIndex(u32);
+
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Oracle: Oracle<AssetId = Self::AssetId>;
 		type Vault: Vault<AssetId = Self::AssetId>;
-		type PairId: EncodeLike
-			+ Clone
-			+ Codec
-			+ Debug
-			+ PartialEq
-			+ From<(<Self::Vault as Vault>::VaultId, <Self::Vault as Vault>::VaultId)>;
 		type Balance;
-		type AssetId : core::cmp::Ord;// + Self::Oracle::AssetId;
+		type AssetId: core::cmp::Ord;
 	}
 
 	#[pallet::pallet]
@@ -78,7 +76,8 @@ pub mod pallet {
 		Overflow,
 		/// vault provided does not exist
 		VaultNotFound,
-		AssetNotFound,
+		/// Only assets for which we can track price are supported
+		AssetWithoutPrice,
 	}
 
 	#[derive(Encode, Decode, Default)]
@@ -87,33 +86,23 @@ pub mod pallet {
 		pub collateral_factor: Permill,
 	}
 
-	/// stores all market pairs of assets to be assets/collateral
-	// only assets supported by `Oracle` are possible
-	/// 0 - manager
-	/// 1 - asset users want to borrow
-	/// 2 - asset users will put as collateral
+	/// Lending instances counter
+	#[pallet::storage]
+	#[pallet::getter(fn lending_count)]
+	pub type LendingCount<T: Config> = StorageValue<_, LendingIndex, ValueQuery>;
+
+	/// Indexed lending instances
 	#[pallet::storage]
 	#[pallet::getter(fn pairs)]
-	pub type Pairs<T: Config> = StorageNMap<
-		_,
-		(
-			NMapKey<Blake2_128Concat, T::AccountId>,
-			NMapKey<Blake2_128Concat, <T::Vault as Vault>::VaultId>,
-			NMapKey<Blake2_128Concat, <T::Vault as Vault>::VaultId>,
-		),
-		LendingConfig,
-		ValueQuery,
-	>;
-
+	pub type Lendings<T: Config> =
+		StorageMap<_, Twox64Concat, LendingIndex, LendingConfig, ValueQuery>;
 
 	impl<T: Config> Lending for Pallet<T> {
-		type AssetId = T::AssetId;
-
 		type VaultId = <T::Vault as Vault>::VaultId;
 
 		type AccountId = T::AccountId;
 
-		type PairId = T::PairId;
+		type LendingId = LendingIndex;
 
 		type Error = Error<T>;
 
@@ -126,28 +115,43 @@ pub mod pallet {
 			collateral: <T::Vault as Vault>::VaultId,
 			config_input: LendingConfigInput<Self::AccountId>,
 		) -> Result<(), DispatchError> {
-			let collateral_asset = T::Vault::asset_id(&collateral)?;
-			let deposit_asset = T::Vault::asset_id(&deposit)?;
-			let config = LendingConfig {
-				reserve_factor: config_input.reserve_factor,
-				collateral_factor: config_input.collateral_factor,
-			};
-			<T::Oracle as Oracle>::get_price(collateral_asset).map_err(|err| Error::<T>::AssetNotFound)?;
-			<T::Oracle as Oracle>::get_price(deposit_asset).map_err(|err| Error::<T>::AssetNotFound)?;
-			Pairs::<T>::insert((config_input.manager, deposit.clone(), collateral.clone()), config);
-			Ok(())
+			LendingCount::<T>::try_mutate(|LendingIndex(previous_lending_index)| {
+				let lending_index = {
+					*previous_lending_index += 1;
+					LendingIndex(*previous_lending_index)
+				};
+				let collateral_asset = T::Vault::asset_id(&collateral)?;
+				let deposit_asset = T::Vault::asset_id(&deposit)?;
+				let config = LendingConfig {
+					reserve_factor: config_input.reserve_factor,
+					collateral_factor: config_input.collateral_factor,
+				};
+
+				<T::Oracle as Oracle>::get_price(collateral_asset)
+					.map_err(|_| Error::<T>::AssetWithoutPrice)?;
+				<T::Oracle as Oracle>::get_price(deposit_asset)
+					.map_err(|_| Error::<T>::AssetWithoutPrice)?;
+
+				Lendings::<T>::insert(lending_index, config);
+
+				Ok(())
+			})
 		}
 
-		fn get_pair_in_vault(vault: Self::VaultId) -> Result<Vec<Self::PairId>, Self::Error> {
+		fn account_id(lending_id: &Self::LendingId) -> Self::AccountId {
+			PALLET_ID.into_sub_account(lending_id)
+		}
+
+		fn get_pair_in_vault(vault: Self::VaultId) -> Result<Vec<Self::LendingId>, Self::Error> {
 			todo!()
 		}
 
-		fn get_pairs_all() -> Result<Vec<Self::PairId>, Self::Error> {
+		fn get_pairs_all() -> Result<Vec<Self::LendingId>, Self::Error> {
 			todo!()
 		}
 
 		fn borrow(
-			pair: Self::PairId,
+			lending_id: &Self::LendingId,
 			debt_owner: &Self::AccountId,
 			amount_to_borrow: Self::Balance,
 		) -> Result<(), Self::Error> {
@@ -155,7 +159,7 @@ pub mod pallet {
 		}
 
 		fn repay_borrow(
-			pair: Self::PairId,
+			lending_id: &Self::LendingId,
 			from: &Self::AccountId,
 			beneficiary: &Self::AccountId,
 			repay_amount: Self::Balance,
@@ -163,55 +167,39 @@ pub mod pallet {
 			todo!()
 		}
 
-		fn redeem(
-			pair: Self::PairId,
-			to: &Self::AccountId,
-			redeem_amount: Self::Balance,
-		) -> Result<(), Self::Error> {
+		fn total_borrows(lending_id: &Self::LendingId) -> Result<Self::Balance, Self::Error> {
 			todo!()
 		}
 
-		fn total_borrows(pair: Self::PairId) -> Result<Self::Balance, Self::Error> {
-			todo!()
-		}
-
-		fn accrue_interest(pair: Self::PairId) -> Result<(), Self::Error> {
+		fn accrue_interest(lending_id: &Self::LendingId) -> Result<(), Self::Error> {
 			todo!()
 		}
 
 		fn borrow_balance_current(
-			pair: Self::PairId,
+			lending_id: &Self::LendingId,
 			account: &Self::AccountId,
 		) -> Result<Self::Balance, Self::Error> {
 			todo!()
 		}
 
-		fn withdraw_fees(to_withdraw: Self::Balance) -> Result<(), Self::Error> {
-			todo!()
-		}
-
 		fn collateral_of_account(
-			pair: Self::PairId,
+			lending_id: &Self::LendingId,
 			account: &Self::AccountId,
 		) -> Result<Self::Balance, Self::Error> {
 			todo!()
 		}
 
 		fn collateral_required(
-			pair: Self::PairId,
+			lending_id: &Self::LendingId,
 			borrow_amount: Self::Balance,
 		) -> Result<Self::Balance, Self::Error> {
 			todo!()
 		}
 
 		fn get_borrow_limit(
-			pair: Self::PairId,
+			lending_id: &Self::LendingId,
 			account: Self::AccountId,
 		) -> Result<Self::Balance, Self::Error> {
-			todo!()
-		}
-
-		fn account_id() -> Self::AccountId {
 			todo!()
 		}
 	}

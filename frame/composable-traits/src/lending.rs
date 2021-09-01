@@ -9,7 +9,7 @@ use frame_support::{
 #[derive(Encode, Decode, Default)]
 pub struct LendingConfigInput<AccountId>
 where
-AccountId: core::cmp::Ord,
+	AccountId: core::cmp::Ord,
 {
 	/// can pause borrow & deposits of assets
 	pub manager: AccountId,
@@ -24,18 +24,16 @@ AccountId: core::cmp::Ord,
 /// Fees will be withdrawing to vault.
 /// Lenders with be rewarded via vault.
 pub trait Lending {
-	/// let use this id for debt token also
-	type AssetId;
 	type VaultId: Codec;
+	type LendingId: Codec;
 	/// (deposit VaultId, collateral VaultId) <-> PairId
 	type AccountId: core::cmp::Ord + Clone + Codec;
-	type PairId: Clone + Codec;
 	type Error;
 	type Balance;
 	type BlockNumber;
 
-	/// creates market for new pair in specified vault. if market exists under specified manager, updates its parameters
-	/// `deposit` - asset users want to borrow.
+	/// creates market for new pair in specified vault. if market exists under specified manager,
+	/// updates its parameters `deposit` - asset users want to borrow.
 	/// `collateral` - asset users will put as collateral.
 	fn create_or_update(
 		deposit: Self::VaultId,
@@ -44,14 +42,14 @@ pub trait Lending {
 	) -> Result<(), DispatchError>;
 
 	/// account id of pallet
-	fn account_id() -> Self::AccountId;
+	fn account_id(lending_id: &Self::LendingId) -> Self::AccountId;
 
-	fn get_pair_in_vault(vault: Self::VaultId) -> Result<Vec<Self::PairId>, Self::Error>;
+	fn get_pair_in_vault(vault: Self::VaultId) -> Result<Vec<Self::LendingId>, Self::Error>;
 
-	fn get_pairs_all() -> Result<Vec<Self::PairId>, Self::Error>;
+	fn get_pairs_all() -> Result<Vec<Self::LendingId>, Self::Error>;
 
 	fn borrow(
-		pair: Self::PairId,
+		lending_id: &Self::LendingId,
 		debt_owner: &Self::AccountId,
 		amount_to_borrow: Self::Balance,
 	) -> Result<(), Self::Error>;
@@ -61,43 +59,34 @@ pub trait Lending {
 	/// - `pair`        : the pair to be repaid.
 	/// - `repay_amount`: the amount to be repaid.
 	fn repay_borrow(
-		pair: Self::PairId,
+		lending_id: &Self::LendingId,
 		from: &Self::AccountId,
 		beneficiary: &Self::AccountId,
 		repay_amount: Self::Balance,
 	) -> Result<(), Self::Error>;
 
-	/// part or whole of deposited assets and interest into account
-	fn redeem(
-		pair: Self::PairId,
-		to: &Self::AccountId,
-		redeem_amount: Self::Balance,
-	) -> Result<(), Self::Error>;
+	fn total_borrows(lending_id: &Self::LendingId) -> Result<Self::Balance, Self::Error>;
 
-	fn total_borrows(pair: Self::PairId) -> Result<Self::Balance, Self::Error>;
-
-	fn accrue_interest(pair: Self::PairId) -> Result<(), Self::Error>;
+	fn accrue_interest(lending_id: &Self::LendingId) -> Result<(), Self::Error>;
 
 	fn borrow_balance_current(
-		pair: Self::PairId,
+		lending_id: &Self::LendingId,
 		account: &Self::AccountId,
 	) -> Result<Self::Balance, Self::Error>;
 
-	fn withdraw_fees(to_withdraw: Self::Balance) -> Result<(), Self::Error>;
-
 	fn collateral_of_account(
-		pair: Self::PairId,
+		lending_id: &Self::LendingId,
 		account: &Self::AccountId,
 	) -> Result<Self::Balance, Self::Error>;
 
 	/// Borrower shouldn't borrow more than his total collateral value
 	fn collateral_required(
-		pair: Self::PairId,
+		lending_id: &Self::LendingId,
 		borrow_amount: Self::Balance,
 	) -> Result<Self::Balance, Self::Error>;
 
 	fn get_borrow_limit(
-		pair: Self::PairId,
+		lending_id: &Self::LendingId,
 		account: Self::AccountId,
 	) -> Result<Self::Balance, Self::Error>;
 }
