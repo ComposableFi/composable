@@ -18,7 +18,11 @@ Let's try adding benchmarking to the scheduler pallet to picasso's runtime.
 
 
 ## Configuring Weights
-All of substrate's own pallets weights.rs files are automatically generated using <>
+All of substrate's own pallets weights.rs files can be automatically generated using the WeightInfo trait. 
+
+Read more here:
+https://substrate.dev/docs/en/knowledgebase/runtime/benchmarking#auto-generated-weightinfo-implementation
+
  
 Find the pallets weight file, add it to the weights folder and 
 include it in the mod.rs file. 
