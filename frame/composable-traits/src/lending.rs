@@ -9,7 +9,7 @@ use frame_support::{
 #[derive(Encode, Decode, Default)]
 pub struct LendingConfigInput<AccountId>
 where
-AccountId: core::cmp::Ord,
+	AccountId: core::cmp::Ord,
 {
 	/// can pause borrow & deposits of assets
 	pub manager: AccountId,
@@ -34,8 +34,8 @@ pub trait Lending {
 	type Balance;
 	type BlockNumber;
 
-	/// creates market for new pair in specified vault. if market exists under specified manager, updates its parameters
-	/// `deposit` - asset users want to borrow.
+	/// creates market for new pair in specified vault. if market exists under specified manager,
+	/// updates its parameters `deposit` - asset users want to borrow.
 	/// `collateral` - asset users will put as collateral.
 	fn create_or_update(
 		deposit: Self::VaultId,
