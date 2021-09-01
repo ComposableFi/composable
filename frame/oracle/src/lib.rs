@@ -107,7 +107,7 @@ pub mod pallet {
 
 	#[derive(Encode, Decode, Clone, Copy, Default, Debug, PartialEq)]
 	pub struct PrePrice<BlockNumber, AccountId> {
-		pub price: u64,
+		pub price: PriceValue,
 		pub block: BlockNumber,
 		pub who: AccountId,
 	}
@@ -223,6 +223,7 @@ pub mod pallet {
 		MaxAnswersLessThanMinAnswers,
 		ExceedThreshold,
 		ExceedAssetsCount,
+		PriceNotFound,
 	}
 
 	#[pallet::hooks]
@@ -242,11 +243,9 @@ pub mod pallet {
 		type AssetId = AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 
-		fn get_price(of: Self::AssetId) -> Option<(Self::Balance, Self::Timestamp)> {
-			match Prices::<T>::try_get(of) {
-				Ok(price) => Some((price.price, price.block)),
-				Err(()) => None,
-			}
+		fn get_price(of: Self::AssetId) -> Result<(Self::Balance, Self::Timestamp), DispatchError> {
+			let price =  Prices::<T>::try_get(of).map_err(|err| Error::<T>::PriceNotFound)?;
+			Ok((price.price, price.block))
 		}
 	}
 
