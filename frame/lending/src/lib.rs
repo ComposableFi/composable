@@ -78,6 +78,7 @@ pub mod pallet {
 		Overflow,
 		/// vault provided does not exist
 		VaultNotFound,
+		AssetNotFound,
 	}
 
 	#[derive(Encode, Decode, Default)]
@@ -131,8 +132,8 @@ pub mod pallet {
 				reserve_factor: config_input.reserve_factor,
 				collateral_factor: config_input.collateral_factor,
 			};
-			<T::Oracle as Oracle>::get_price(collateral_asset)?;
-			<T::Oracle as Oracle>::get_price(deposit_asset)?;
+			<T::Oracle as Oracle>::get_price(collateral_asset).map_err(|err| Error::<T>::AssetNotFound)?;
+			<T::Oracle as Oracle>::get_price(deposit_asset).map_err(|err| Error::<T>::AssetNotFound)?;
 			Pairs::<T>::insert((config_input.manager, deposit.clone(), collateral.clone()), config);
 			Ok(())
 		}

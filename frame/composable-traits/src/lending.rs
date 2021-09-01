@@ -17,7 +17,6 @@ AccountId: core::cmp::Ord,
 	pub collateral_factor: Permill,
 }
 
-// ASK: not clear how Vault will prevent withdrawing collateral?
 /// Basic lending with no its own wrapper (liquidity) token.
 ///  User will deposit borrow and collateral assets via `Vault`.
 /// `Liquidation` is other trait.
