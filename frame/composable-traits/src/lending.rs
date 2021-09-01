@@ -35,15 +35,14 @@ pub trait Lending {
 	type Balance;
 	type BlockNumber;
 
-	/// creates market for new pair in specified vault
-	/// `deposit` - asset users want to borrow
-	/// `collateral` - asset users will put as collateral
-	fn create(
-		rent: Deposit<Self::Balance, Self::BlockNumber>,
+	/// creates market for new pair in specified vault. if market exists under specified manager, updates its parameters
+	/// `deposit` - asset users want to borrow.
+	/// `collateral` - asset users will put as collateral.
+	fn create_or_update(
 		deposit: Self::VaultId,
 		collateral: Self::VaultId,
 		config: LendingConfigInput<Self::AccountId>,
-	) -> Result<Self::PairId, DispatchError>;
+	) -> Result<(), DispatchError>;
 
 	/// account id of pallet
 	fn account_id() -> Self::AccountId;

@@ -80,30 +80,29 @@ pub mod pallet {
 	}
 
 	#[derive(Encode, Decode, Default)]
-	pub struct LendingConfig<VaultId: Default + Codec, AccountId: Codec + Default> {
-		/// asset users want to borrow
-		pub deposit: VaultId,
-		/// asset users will put as collateral
-		pub collateral: VaultId,
-		/// can pause borrow & deposits of assets
-		pub manager: AccountId,
+	pub struct LendingConfig {
 		pub reserve_factor: Permill,
 		pub collateral_factor: Permill,
 	}
 
 	/// stores all market pairs of assets to be assets/collateral
 	// only assets supported by `Oracle` are possible
+	/// 0 - manager
+	/// 1 - asset users want to borrow
+	/// 2 - asset users will put as collateral
 	#[pallet::storage]
-	#[pallet::getter(fn allocations)]
-	pub type Pairs<T: Config> = StorageDoubleMap<
+	#[pallet::getter(fn pairs)]
+	pub type Pairs<T: Config> = StorageNMap<
 		_,
-		Blake2_128Concat,
-		T::AccountId,
-		Blake2_128Concat,
-		T::PairId,
-		LendingConfig<<T::Vault as Vault>::VaultId, T::AccountId>,
+		(
+			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, <T::Vault as Vault>::VaultId>,
+			NMapKey<Blake2_128Concat, <T::Vault as Vault>::VaultId>,
+		),
+		LendingConfig,
 		ValueQuery,
 	>;
+
 
 	impl<T: Config> Lending for Pallet<T> {
 		type AssetId = <T::Vault as Vault>::AssetId;
@@ -120,30 +119,26 @@ pub mod pallet {
 
 		type BlockNumber = T::BlockNumber;
 
-		fn create(
-			rent: Deposit<Self::Balance, Self::BlockNumber>,
+		fn create_or_update(
 			deposit: <T::Vault as Vault>::VaultId,
 			collateral: <T::Vault as Vault>::VaultId,
-			config: LendingConfigInput<Self::AccountId>,
-		) -> Result<Self::PairId, DispatchError> {
+			config_input: LendingConfigInput<Self::AccountId>,
+		) -> Result<(), DispatchError> {
 			let collateral_asset = T::Vault::asset_id(&collateral)?;
 			let deposit_asset = T::Vault::asset_id(&deposit)?;
-			let pair_id = T::PairId::from((collateral.clone(), deposit.clone()));
-			let config = LendingConfig::<<T::Vault as Vault>::VaultId, T::AccountId> {
-				manager: config.manager,
-				reserve_factor: config.reserve_factor,
-				collateral_factor: config.collateral_factor,
-				collateral,
-				deposit,
+			let config = LendingConfig {
+				reserve_factor: config_input.reserve_factor,
+				collateral_factor: config_input.collateral_factor,
 			};
-			// upsetting is reconfiguration
+
 			// PALL-18 Integrate Oracle Pallet
 			// use `.ok_or(...)?` to provide an error compatible with `Result<<T as pallet::Config>::PairId, sp_runtime::DispatchError>`
 			// expected composable_traits::oracle::Oracle::AssetId, found composable_traits::vault::Vault::AssetId
 			//<T::Oracle as Oracle>::get_price(collateral_asset)?;
 			//<T::Oracle as Oracle>::get_price(deposit_asset)?;
-			Pairs::<T>::insert(config.manager.clone(), pair_id.clone(), config);
-			Ok(pair_id)
+
+			Pairs::<T>::insert((config_input.manager, deposit.clone(), collateral.clone()), config);
+			Ok(())
 		}
 
 		fn get_pair_in_vault(vault: Self::VaultId) -> Result<Vec<Self::PairId>, Self::Error> {

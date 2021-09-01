@@ -61,7 +61,7 @@ pub trait Vault {
 	type AssetId;
 	type Balance;
 	type BlockNumber;
-	type VaultId: Clone + Codec + Debug + PartialEq + Default;
+	type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 
 	fn asset_id(vault: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
 
