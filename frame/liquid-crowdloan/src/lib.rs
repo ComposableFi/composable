@@ -18,6 +18,8 @@ pub mod pallet {
 		traits::{
 			fungibles::{Inspect, Transfer, Mutate},
 			tokens::{fungibles::MutateHold},
+			Currency as NativeCurrency,
+			ReservableCurrency, ExistenceRequirement::KeepAlive
 		},
 	};
 	pub use composable_traits::{
@@ -30,14 +32,17 @@ pub mod pallet {
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
-			Zero,
+			Zero, SaturatedConversion
 		},
 	};
+	use core::ops::{Div, Mul};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type LiquidRewardId: Get<PalletId>;
+		/// The currency mechanism.
+		type NativeCurrency: ReservableCurrency<Self::AccountId>;
 		type CurrencyFactory: CurrencyFactory<Self::CurrencyId>;
 		type CurrencyId: FullCodec
 			+ Eq
@@ -69,7 +74,8 @@ pub mod pallet {
 	pub type CurrencyIdOf<T> =
 	<<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
 	pub type BalanceOf<T> = <T as Config>::Balance;
-
+	pub type NativeBalanceOf<T> =
+	<<T as Config>::NativeCurrency as NativeCurrency<<T as SystemConfig>::AccountId>>::Balance;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -98,7 +104,9 @@ pub mod pallet {
 		CannotCreateAsset,
 		AlreadyInitiated,
 		FailedMint,
-		NotClaimable
+		NotClaimable,
+		ConversionError,
+		InsufficientTokens
 	}
 
 	#[pallet::call]
@@ -129,10 +137,33 @@ pub mod pallet {
 
 		}
 
+		#[transactional]
 		#[pallet::weight(10_000)]
-		pub fn claim(origin: OriginFor<T>) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
+		pub fn claim(origin: OriginFor<T>, amount: u128) -> DispatchResult {
+			let who = ensure_signed(origin)?;
 			ensure!(Self::is_claimable().unwrap_or(false), Error::<T>::NotClaimable);
+
+			let token_id = <TokenId<T>>::get().ok_or(Error::<T>::NotClaimable)?;
+			let token_supply = T::Currency::total_issuance(token_id);
+			let pot_balance = T::NativeCurrency::free_balance(&Self::account_id());
+			let token_supply_value: u128 = token_supply.saturated_into::<u128>();
+			let pot_balance_value: u128 = pot_balance.saturated_into::<u128>();
+
+			ensure!(pot_balance_value > 0, Error::<T>::ConversionError);
+			ensure!(token_supply_value > 0, Error::<T>::ConversionError);
+
+			let to_payout = pot_balance_value.mul(amount).div(token_supply_value);
+			let amount_value: T::Balance = amount.saturated_into();
+			let converted_payout: NativeBalanceOf<T> = to_payout.saturated_into();
+
+			ensure!(converted_payout > 0u32.into(), Error::<T>::ConversionError);
+			ensure!(amount_value > 0u32.into(), Error::<T>::ConversionError);
+
+			T::Currency::burn_from(token_id, &who, amount_value)
+			.map_err(|_| Error::<T>::InsufficientTokens)?;
+
+
+			T::NativeCurrency::transfer(&Self::account_id(), &who, converted_payout, KeepAlive)?;
 			// TODO finish this function by burning LP token and applying proper formula to withdraw
 			Ok(().into())
 		}
