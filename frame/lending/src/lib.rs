@@ -66,7 +66,7 @@ pub mod pallet {
 			+ PartialEq
 			+ From<(<Self::Vault as Vault>::VaultId, <Self::Vault as Vault>::VaultId)>;
 		type Balance;
-		type AssetId : core::cmp::Ord;// + Self::Oracle::AssetId;
+		type AssetId: core::cmp::Ord;
 	}
 
 	#[pallet::pallet]
@@ -78,7 +78,8 @@ pub mod pallet {
 		Overflow,
 		/// vault provided does not exist
 		VaultNotFound,
-		AssetNotFound,
+		/// Borrow or Collateral without price feed
+		AssetWithoutPrice,
 	}
 
 	#[derive(Encode, Decode, Default)]
@@ -104,7 +105,6 @@ pub mod pallet {
 		LendingConfig,
 		ValueQuery,
 	>;
-
 
 	impl<T: Config> Lending for Pallet<T> {
 		type AssetId = T::AssetId;
@@ -132,9 +132,14 @@ pub mod pallet {
 				reserve_factor: config_input.reserve_factor,
 				collateral_factor: config_input.collateral_factor,
 			};
-			<T::Oracle as Oracle>::get_price(collateral_asset).map_err(|err| Error::<T>::AssetNotFound)?;
-			<T::Oracle as Oracle>::get_price(deposit_asset).map_err(|err| Error::<T>::AssetNotFound)?;
+
+			<T::Oracle as Oracle>::get_price(collateral_asset)
+				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
+			<T::Oracle as Oracle>::get_price(deposit_asset)
+				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
+
 			Pairs::<T>::insert((config_input.manager, deposit.clone(), collateral.clone()), config);
+
 			Ok(())
 		}
 
