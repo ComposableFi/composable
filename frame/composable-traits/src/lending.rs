@@ -2,6 +2,10 @@ use crate::vault::Deposit;
 use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_runtime::{Permill, Perquintill}, sp_std::{fmt::Debug, vec::Vec}};
 
+/// The fixed point number of suggested by substrate precision
+/// Must be [1..+] because applied only to price normalized values
+pub type NormalizedCollateralFactor = frame_support::sp_runtime::FixedU128;
+
 #[derive(Encode, Decode, Default)]
 pub struct MarketConfigInput<AccountId>
 where
@@ -10,7 +14,7 @@ where
 	/// can pause borrow & deposits of assets
 	pub manager: AccountId,
 	pub reserve_factor: Perquintill,
-	pub collateral_factor: Perquintill,
+	pub collateral_factor: NormalizedCollateralFactor,
 }
 
 #[derive(Encode, Decode, Default)]
@@ -18,7 +22,7 @@ pub struct MarketConfig<VaultId> {
 	pub borrow: VaultId,
 	pub collateral: VaultId,
 	pub reserve_factor: Perquintill,
-	pub collateral_factor: Perquintill,
+	pub collateral_factor: NormalizedCollateralFactor,
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.
