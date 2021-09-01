@@ -18,11 +18,12 @@ Let's try adding benchmarking to the scheduler pallet to picasso's runtime.
 
 
 ## Configuring Weights
+All of substrate's own pallets weights.rs files are automatically generated using <>
+ 
 Find the pallets weight file, add it to the weights folder and 
 include it in the mod.rs file. 
 ```bash
 $ ls runtime/picasso/src/weights/
-scheduler.rs
 frame_system.rs
 indices.rs     
 membership.rs  
@@ -31,10 +32,14 @@ mod.rs
 In our case we want to add the scheduler pallets weight file, which
 we can easily find in the [pallets repository](https://github.com/paritytech/substrate/tree/master/frame/scheduler).
 
-Lets copy over the weights.rs file into our weights folder and name it after the pallet:
+Lets download the weights.rs file and place it into our weights folder and name it after the pallet:
 ```
-$ cp substrate/frame/scheduler/src/weights.rs composable/runtime/picasso/src/weights/scheduler.rs
+$ curl "https://raw.githubusercontent.com/paritytech/substrate/v3.0.0/frame/scheduler/src/weights.rs" -o composable/runtime/picasso/src/weights/scheduler.rs
 ```
+
+
+Keep in mind:
+
 
 Lets make the file more lightweight by change WeightInfo into a struct instead of the default trait and rename SubstrateWeight to WeightInfo:
 
@@ -111,11 +116,19 @@ echo "pub mod scheduler;" >> mod.rs
 and now we can simply call our weight file with:  
 *weights::scheduler*
 
-And use our WeightInfo functionality in the code base by defining a variable with:
+And use our WeightInfo functionality in the code base by defining a variable just like this:
 ```rust
 
-type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
-
+impl scheduler::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;     // updated
+}
 ```
 
 
