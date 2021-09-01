@@ -19,8 +19,8 @@ use sp_runtime::traits::BadOrigin;
 fn add_asset_and_info() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u64 = 1;
-		const MIN_ANSWERS: u64 = 3;
-		const MAX_ANSWERS: u64 = 5;
+		const MIN_ANSWERS: u32 = 3;
+		const MAX_ANSWERS: u32 = 5;
 		const THRESHOLD: Percent = Percent::from_percent(80);
 
 		// passes
@@ -32,12 +32,19 @@ fn add_asset_and_info() {
 			MIN_ANSWERS,
 			MAX_ANSWERS,
 		));
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			ASSET_ID + 1,
+			THRESHOLD,
+			MIN_ANSWERS,
+			MAX_ANSWERS,
+		));
 
 		let asset_info =
 			AssetInfo { threshold: THRESHOLD, min_answers: MIN_ANSWERS, max_answers: MAX_ANSWERS };
 		// id now activated and count incremented
 		assert_eq!(Oracle::accuracy_threshold(1), asset_info);
-		assert_eq!(Oracle::assets_count(), 1);
+		assert_eq!(Oracle::assets_count(), 2);
 		// fails with non permission
 		let account_1: AccountId = Default::default();
 		assert_noop!(
@@ -93,6 +100,18 @@ fn add_asset_and_info() {
 				MAX_ANSWERS,
 			),
 			Error::<Test>::InvalidMinAnswers
+		);
+
+		// passes
+		assert_noop!(
+			Oracle::add_asset_and_info(
+				Origin::signed(account_2),
+				ASSET_ID + 2,
+				THRESHOLD,
+				MIN_ANSWERS,
+				MAX_ANSWERS,
+			),
+			Error::<Test>::ExceedAssetsCount
 		);
 	});
 }
@@ -282,15 +301,15 @@ fn add_price() {
 
 		assert_ok!(Oracle::submit_price(Origin::signed(account_1), 100u64, 0u64));
 		assert_ok!(Oracle::submit_price(Origin::signed(account_2), 100u64, 0u64));
-		assert_ok!(Oracle::submit_price(Origin::signed(account_4), 100u64, 0u64));
-		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_5), 100u64, 0u64),
-			Error::<Test>::MaxPrices
-		);
-
 		assert_noop!(
 			Oracle::submit_price(Origin::signed(account_2), 100u64, 0u64),
 			Error::<Test>::AlreadySubmitted
+		);
+		assert_ok!(Oracle::submit_price(Origin::signed(account_4), 100u64, 0u64));
+
+		assert_noop!(
+			Oracle::submit_price(Origin::signed(account_5), 100u64, 0u64),
+			Error::<Test>::MaxPrices
 		);
 
 		let price = PrePrice { price: 100u64, block: 0, who: account_1 };
@@ -537,9 +556,11 @@ fn on_init_over_max_answers() {
 }
 
 #[test]
-fn prune_old_edgecase() {
+fn prune_old_pre_prices_edgecase() {
 	new_test_ext().execute_with(|| {
-		Oracle::prune_old(vec![], 0);
+		let asset_info =
+			AssetInfo { threshold: Percent::from_percent(80), min_answers: 3, max_answers: 5 };
+		Oracle::prune_old_pre_prices(asset_info, vec![], 0);
 	});
 }
 
