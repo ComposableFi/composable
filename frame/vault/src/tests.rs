@@ -188,6 +188,83 @@ proptest! {
 	}
 
 	#[test]
+	fn vault_reserve_rebalance_ask_strategy_to_deposit(
+		strategy_account_id in strategy_account(),
+		total_funds in valid_amounts_without_overflow_1()
+	) {
+		let asset_id = MockCurrencyId::A;
+		let strategy_share = Perquintill::from_percent(80);
+		let reserve_share = Perquintill::from_percent(20);
+		ExtBuilder::default().build().execute_with(|| {
+			let (vault_id, _) = create_vault_with_share(
+				asset_id,
+				strategy_account_id,
+				strategy_share,
+				reserve_share,
+			);
+
+			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
+			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, total_funds));
+			prop_assert!(Tokens::balance(asset_id, &ALICE) == total_funds);
+
+			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, total_funds));
+
+			let expected_strategy_funds =
+				strategy_share.mul_floor(total_funds);
+
+			let available_funds = <Vaults as StrategicVault>::available_funds(&vault_id, &strategy_account_id);
+			prop_assert!(
+				matches!(
+					available_funds,
+					Ok(FundsAvailability::Withdrawable(strategy_funds))
+						if expected_strategy_funds <= strategy_funds
+						&& strategy_funds <= expected_strategy_funds + 1
+				),
+				"{} - {:?}",
+				expected_strategy_funds,
+				available_funds
+			);
+
+			// Strategy withdraw full allocation
+			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
+			prop_assert_ok!(<Vaults as StrategicVault>::withdraw(&vault_id, &strategy_account_id, expected_strategy_funds));
+			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == expected_strategy_funds);
+
+			// User withdraw from the reserve
+			let reserve = total_funds - expected_strategy_funds;
+			prop_assert_ok!(
+				Vaults::withdraw(
+					Origin::signed(ALICE),
+					vault_id,
+					reserve
+				)
+			);
+
+			// Reserve should now be 20% of 80% of total funds = 20% of initial strategy funds.
+			let new_expected_reserve =
+				reserve_share.mul_floor(expected_strategy_funds);
+
+			// The vault should ask for the strategy to deposit in order to rebalance
+			let new_available_funds =
+				<Vaults as StrategicVault>::available_funds(&vault_id, &strategy_account_id);
+
+			prop_assert!(
+				matches!(
+					new_available_funds,
+					Ok(FundsAvailability::Depositable(new_reserve))
+						if new_expected_reserve <= new_reserve
+						&& new_reserve <= new_expected_reserve + 1
+				),
+				"{} - {:?}",
+				new_expected_reserve,
+				new_available_funds
+			);
+
+			Ok(())
+		})?;
+	}
+
+	#[test]
 	fn vault_single_deposit_withdraw_asset_identity(
 		strategy_account_id in strategy_account(),
 		amount in valid_amounts_without_overflow_1()
