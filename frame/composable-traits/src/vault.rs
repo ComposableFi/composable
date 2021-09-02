@@ -63,9 +63,9 @@ pub trait Vault {
 	type BlockNumber;
 	type VaultId: Clone + Codec + Debug + PartialEq;
 
-	fn asset_id(vault: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
+	fn asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
 
-	fn lp_asset_id(vault: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
+	fn lp_asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
 
 	fn account_id(vault: &Self::VaultId) -> Self::AccountId;
 
@@ -75,13 +75,13 @@ pub trait Vault {
 	) -> Result<Self::VaultId, DispatchError>;
 
 	fn deposit(
-		vault: &Self::VaultId,
+		vault_id: &Self::VaultId,
 		from: &Self::AccountId,
 		asset_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
 	fn withdraw(
-		vault: &Self::VaultId,
+		vault_id: &Self::VaultId,
 		to: &Self::AccountId,
 		lp_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;

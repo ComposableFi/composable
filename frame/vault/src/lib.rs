@@ -517,12 +517,12 @@ pub mod pallet {
 		}
 
 		fn deposit(
-			vault: &Self::VaultId,
+			vault_id: &Self::VaultId,
 			from: &Self::AccountId,
 			asset_amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			ensure!(asset_amount > T::Balance::zero(), Error::<T>::AmountMustBePositive);
-			Pallet::<T>::do_deposit(&vault, &from, asset_amount)
+			Pallet::<T>::do_deposit(&vault_id, &from, asset_amount)
 		}
 
 		fn withdraw(
