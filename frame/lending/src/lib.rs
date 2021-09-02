@@ -49,9 +49,9 @@ pub mod pallet {
 		helpers_128bit::multiply_by_rational,
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedConversion, CheckedMul,
-			CheckedSub, Convert, Hash, Zero,
+			CheckedSub, Convert, Hash, One, Zero,
 		},
-		FixedPointNumber, FixedPointOperand, PerThing, Permill, Perquintill,
+		FixedPointNumber, FixedPointOperand, FixedU128, PerThing, Permill, Perquintill,
 	};
 	use sp_std::{convert::TryInto, fmt::Debug, ops::Mul};
 
@@ -85,7 +85,6 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ Zero
 			+ From<u128>
-			+ From<u64>
 			+ Into<u128>;
 
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
@@ -175,7 +174,7 @@ pub mod pallet {
 	}
 
 	/// The timestamp of the previous block or defaults to timestamp at genesis.
-    /// TODO: should be updated in on_finalize() hook.
+	/// TODO: should be updated in on_finalize() hook.
 	#[pallet::storage]
 	#[pallet::getter(fn last_block_timestamp)]
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
@@ -308,17 +307,21 @@ pub mod pallet {
 			cash: &Self::Balance,
 			borrows: &Self::Balance,
 			reserves: &Self::Balance,
-		) -> Result<Perquintill, DispatchError> {
+		) -> Result<Ratio, DispatchError> {
 			// utilization ratio is 0 when there are no borrows
 			if borrows.is_zero() {
-				return Ok(Perquintill::zero())
+				return Ok(Ratio::zero())
 			}
 			// utilizationRatio = totalBorrows / (totalCash + totalBorrows − totalReserves)
 			let total = cash
 				.checked_add(borrows)
 				.and_then(|r| r.checked_sub(reserves))
 				.ok_or(Error::<T>::Overflow)?;
-			Ok(Perquintill::from_rational(*borrows, total))
+			let mut util_ratio = Ratio::saturating_from_rational((*borrows).into(), total.into());
+			if util_ratio > Ratio::one() {
+				util_ratio = Ratio::one();
+			}
+			Ok(util_ratio)
 		}
 
 		fn accrue_interest(market_id: &Self::MarketId) -> Result<(), DispatchError> {
@@ -351,14 +354,8 @@ pub mod pallet {
 			let borrow_index_new = increment_index(borrow_rate, borrow_index, delta_time)
 				.and_then(|r| r.checked_add(&borrow_index))
 				.ok_or(Error::<T>::Overflow)?;
-			Self::update_borrows(
-				market_id,
-				Self::Balance::from(total_borrows_new),
-			)?;
-			Self::update_reserves(
-				market_id,
-				Self::Balance::from(total_reserves_new),
-			)?;
+			Self::update_borrows(market_id, Self::Balance::from(total_borrows_new))?;
+			Self::update_reserves(market_id, Self::Balance::from(total_reserves_new))?;
 			Self::update_borrow_index(market_id, borrow_index_new)?;
 			Ok(())
 		}
