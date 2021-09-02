@@ -65,11 +65,8 @@ fn create_vault_with_share(
 		VaultConfig {
 			asset_id,
 			manager: ALICE,
-			reserved: Perquintill::from_percent(10),
-			strategies: [(strategy_account_id, Perquintill::from_percent(90))]
-				.iter()
-				.cloned()
-				.collect(),
+			reserved,
+			strategies: [(strategy_account_id, strategy_share)].iter().cloned().collect(),
 		},
 	);
 	assert_ok!(&v);
