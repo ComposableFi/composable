@@ -56,6 +56,8 @@ pub mod pallet {
 	};
 	use sp_std::fmt::Debug;
 
+	use crate::rate_model::Ratio;
+
 	#[derive(Default, Copy, Clone, Encode, Decode)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
@@ -119,9 +121,35 @@ pub mod pallet {
 
 	/// Indexed lending instances
 	#[pallet::storage]
-	#[pallet::getter(fn pairs)]
+	#[pallet::getter(fn markets)]
 	pub type Markets<T: Config> =
 		StorageMap<_, Twox64Concat, MarketIndex, MarketConfig<T::VaultId>, ValueQuery>;
+
+	/// original debt values
+	#[pallet::storage]
+	#[pallet::getter(fn debt_principals)]
+	pub type DebtPrincipals<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		MarketIndex,
+		Twox64Concat,
+		T::AccountId,
+		T::Balance,
+		ValueQuery,
+	>;
+
+	/// at which lending index account did borrowed.
+	#[pallet::storage]
+	#[pallet::getter(fn debt_index)]
+	pub type DebtIndex<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		MarketIndex,
+		Twox64Concat,
+		T::AccountId,
+		Ratio,
+		ValueQuery,
+	>;
 
 	/// (Market, Account) -> Collateral
 	#[pallet::storage]
@@ -135,6 +163,17 @@ pub mod pallet {
 		T::Balance,
 		ValueQuery,
 	>;
+
+	impl<T: Config> Pallet<T> {
+		///Accrue interest to updated borrow index
+		/// and then calculate account's borrow balance using the updated borrow index
+		pub fn borrow_balance_current(
+			market_id: &<Self as Lending>::MarketId,
+		) -> Result<T::Balance, DispatchError> {
+			<Self as Lending>::accrue_interest(market_id)?;
+			todo!()
+		}
+	}
 
 	impl<T: Config> Lending for Pallet<T> {
 		type VaultId = <T::Vault as Vault>::VaultId;

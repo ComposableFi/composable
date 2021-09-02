@@ -1,6 +1,10 @@
 use crate::vault::Deposit;
 use codec::Codec;
-use frame_support::{pallet_prelude::*, sp_runtime::{Permill, Perquintill}, sp_std::{fmt::Debug, vec::Vec}};
+use frame_support::{
+	pallet_prelude::*,
+	sp_runtime::{Permill, Perquintill},
+	sp_std::{fmt::Debug, vec::Vec},
+};
 
 /// The fixed point number of suggested by substrate precision
 /// Must be (1.0.. because applied only to price normalized values
