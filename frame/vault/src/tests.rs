@@ -155,7 +155,7 @@ proptest! {
 
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
-			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), amount);
+			prop_assert!(Tokens::balance(asset_id, &ALICE) == amount);
 
 			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
 
@@ -196,7 +196,7 @@ proptest! {
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 
-			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), amount);
+			prop_assert!(Tokens::balance(asset_id, &ALICE) == amount);
 
 			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
 			prop_assert_ok!(Vaults::withdraw(Origin::signed(ALICE), vault_id, amount));
@@ -254,11 +254,11 @@ proptest! {
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 
-			prop_assert_eq!(Tokens::balance(vault_info.lp_token_id, &ALICE), 0);
+			prop_assert!(Tokens::balance(vault_info.lp_token_id, &ALICE) ==  0);
 
 			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
 
-			prop_assert_eq!(Tokens::balance(vault_info.lp_token_id, &ALICE), amount);
+			prop_assert!(Tokens::balance(vault_info.lp_token_id, &ALICE) == amount);
 			Ok(())
 		})?;
 	}
