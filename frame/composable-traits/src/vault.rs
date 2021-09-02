@@ -85,6 +85,13 @@ pub trait Vault {
 		to: &Self::AccountId,
 		lp_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
+
+	/// Convert from % share represented by LPs to underlying asset value
+	/// Because of stock dilution, the LPs minted are not 1:1 with deposit
+	fn lp_share_value(
+		vault_id: &Self::VaultId,
+		lp_amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
 }
 
 pub trait LpTokenVault {
