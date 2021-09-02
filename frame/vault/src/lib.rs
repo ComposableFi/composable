@@ -335,7 +335,16 @@ pub mod pallet {
 				};
 
 				config.strategies.into_iter().for_each(|(account_id, allocation)| {
-					Allocations::<T>::insert(id, account_id, allocation);
+					Allocations::<T>::insert(id, account_id.clone(), allocation);
+					CapitalStructure::<T>::insert(
+						id,
+						account_id,
+						StrategyOverview {
+							balance: T::Balance::zero(),
+							lifetime_withdrawn: T::Balance::zero(),
+							lifetime_deposited: T::Balance::zero(),
+						},
+					);
 				});
 
 				Allocations::<T>::insert(id, Self::account_id(&id), config.reserved);
