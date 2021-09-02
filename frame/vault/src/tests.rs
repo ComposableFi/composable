@@ -141,46 +141,49 @@ proptest! {
 	#[test]
 	fn vault_strategy_withdraw_deposit_identity(
 		strategy_account_id in strategy_account(),
-		amount in valid_amounts_without_overflow_1()
+		total_funds in valid_amounts_without_overflow_1()
 	) {
 		let asset_id = MockCurrencyId::A;
-		let strategy_share = 80;
+		let strategy_share = Perquintill::from_percent(80);
+		let reserve_share = Perquintill::from_percent(20);
 		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, _) = create_vault_with_share(
 				asset_id,
 				strategy_account_id,
-				Perquintill::from_percent(strategy_share),
-				Perquintill::from_percent(100 - strategy_share)
+				strategy_share,
+				reserve_share,
 			);
 
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
-			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == amount);
+			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, total_funds));
+			prop_assert!(Tokens::balance(asset_id, &ALICE) == total_funds);
 
-			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, total_funds));
+
+			let expected_strategy_funds =
+				strategy_share.mul_floor(total_funds);
 
 			let available_funds = <Vaults as StrategicVault>::available_funds(&vault_id, &strategy_account_id);
-			prop_assert_ok!(available_funds, "{:?}", available_funds);
+			prop_assert!(
+				matches!(
+					available_funds,
+					Ok(FundsAvailability::Withdrawable(strategy_funds))
+						if expected_strategy_funds <= strategy_funds
+						&& strategy_funds <= expected_strategy_funds + 1
+				),
+				"{} - {:?}",
+				expected_strategy_funds,
+				available_funds
+			);
 
-			match available_funds.expect("unreachable; qed;") {
-				FundsAvailability::Withdrawable(x) if x <= amount => {
-					prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
-					prop_assert_ok!(<Vaults as StrategicVault>::withdraw(&vault_id, &strategy_account_id, x));
-					prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == x);
-					prop_assert_ok!(<Vaults as StrategicVault>::deposit(&vault_id, &strategy_account_id, x));
-					prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
-					Ok(())
-				},
-				FundsAvailability::Withdrawable(_) => {
-					Err(TestCaseError::fail("the withdrawable amount should be 80% of the total balance"))
-				},
-				FundsAvailability::Depositable(_) => {
-					Err(TestCaseError::fail("impossible"))
-				},
-				FundsAvailability::MustLiquidate => {
-					Err(TestCaseError::fail("impossible"))
-				},
-			}
+			// Strategy withdraw/deposit full allocation
+			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
+			prop_assert_ok!(<Vaults as StrategicVault>::withdraw(&vault_id, &strategy_account_id, expected_strategy_funds));
+			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == expected_strategy_funds);
+			prop_assert_ok!(<Vaults as StrategicVault>::deposit(&vault_id, &strategy_account_id, expected_strategy_funds));
+			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
+
+			Ok(())
 		})?;
 	}
 
