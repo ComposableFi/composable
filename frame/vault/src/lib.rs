@@ -92,8 +92,7 @@ pub mod pallet {
 			+ CheckedMul
 			+ SaturatingSub
 			+ AtLeast32BitUnsigned
-			+ Zero
-			+ From<u64>;
+			+ Zero;
 		type CurrencyFactory: CurrencyFactory<Self::CurrencyId>;
 		type CurrencyId: FullCodec
 			+ Eq
@@ -588,7 +587,10 @@ pub mod pallet {
 			};
 
 			let aum = Self::assets_under_management(vault_id)?;
-			let max_allowed = allocation.mul_floor(aum);
+
+			let max_allowed = <T::Convert as Convert<u128, T::Balance>>::convert(
+				allocation.mul_floor(<T::Convert as Convert<T::Balance, u128>>::convert(aum)),
+			);
 
 			// if a strategy has an allocation, it must have an associated capital structure too.
 			let state = CapitalStructure::<T>::try_get(vault_id, &account)
