@@ -86,8 +86,7 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ Zero
 			+ From<u64>
-			+ Into<u128>
-			+ PerThing;
+			+ Into<u128>;
 
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
@@ -261,6 +260,7 @@ pub mod pallet {
 			let asset = <T::Vault as Vault>::asset_id(&config.collateral)?;
 			let collateral_price = <T::Oracle as Oracle>::get_price(&asset)?;
 			let balance: u128 = collateral_price.0.into();
+
 			let limit: u128 = NormalizedCollateralFactor::from(balance)
 				.checked_div(&config.collateral_factor)
 				.ok_or(Error::<T>::Overflow)?
