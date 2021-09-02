@@ -29,6 +29,7 @@ frame_support::construct_runtime!(
 		LiquidCrowdloan: pallet_liquid_crowdloan::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
 		Factory: pallet_currency_factory::{Pallet, Storage, Event<T>},
+		NativeBalances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 
 	}
 );
@@ -49,14 +50,14 @@ impl system::Config for Test {
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = u64;
+	type AccountId = u128;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = ();
+	type AccountData = pallet_balances::AccountData<u64>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -83,6 +84,23 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = ();
 }
 
+
+parameter_types! {
+	pub const ExistentialDeposit: u64 = 5;
+}
+
+impl pallet_balances::Config for Test {
+	type Balance = u64;
+	type Event = Event;
+	type DustRemoval = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
+	type WeightInfo = ();
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+}
+
 impl pallet_currency_factory::Config for Test {
 	type Event = Event;
 	type CurrencyId = MockCurrencyId;
@@ -101,6 +119,7 @@ impl pallet_liquid_crowdloan::Config for Test {
 	type CurrencyId = MockCurrencyId;
 	type Currency = Tokens;
 	type Balance = Balance;
+	type NativeCurrency = NativeBalances;
 }
 
 // Build genesis storage according to the mock runtime.

@@ -19,7 +19,7 @@ pub mod pallet {
 			fungibles::{Inspect, Transfer, Mutate},
 			tokens::{fungibles::MutateHold},
 			Currency as NativeCurrency,
-			ExistenceRequirement::KeepAlive
+			ExistenceRequirement::AllowDeath
 		},
 	};
 	pub use composable_traits::{
@@ -163,7 +163,7 @@ pub mod pallet {
 			.map_err(|_| Error::<T>::InsufficientTokens)?;
 
 
-			T::NativeCurrency::transfer(&Self::account_id(), &who, converted_payout, KeepAlive)?;
+			T::NativeCurrency::transfer(&Self::account_id(), &who, converted_payout, AllowDeath)?;
 			// TODO finish this function by burning LP token and applying proper formula to withdraw
 			Ok(().into())
 		}

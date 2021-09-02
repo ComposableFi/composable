@@ -5151,6 +5151,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
+ "pallet-balances",
  "pallet-currency-factory",
  "parity-scale-codec",
  "proptest",
