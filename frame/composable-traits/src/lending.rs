@@ -1,6 +1,10 @@
 use crate::vault::Deposit;
 use codec::Codec;
-use frame_support::{pallet_prelude::*, sp_runtime::{Permill, Perquintill}, sp_std::{fmt::Debug, vec::Vec}};
+use frame_support::{
+	pallet_prelude::*,
+	sp_runtime::{Permill, Perquintill},
+	sp_std::{fmt::Debug, vec::Vec},
+};
 
 /// The fixed point number of suggested by substrate precision
 /// Must be (1.0.. because applied only to price normalized values
@@ -62,6 +66,10 @@ pub trait Lending {
 
 	fn get_all_markets() -> Vec<(Self::MarketId, MarketConfig<Self::VaultId>)>;
 
+	/// `amount_to_borrow` is the amount of the borrow asset lendings's vault shares the user wants to borrow.
+	/// Normalizes amounts for calculations.
+	/// Borrows as exact amount as possible with some inaccuracies for oracle price based normalization.
+	/// If there is not enough collateral or borrow amounts - fails
 	fn borrow(
 		market_id: &Self::MarketId,
 		debt_owner: &Self::AccountId,
