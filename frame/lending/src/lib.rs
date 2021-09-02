@@ -29,13 +29,6 @@ pub mod pallet {
 
 	use std::{convert::TryInto, ops::Mul};
 
-	// use sp_runtime::{
-	// 	traits::{Bounded, DispatchInfoOf, SaturatedConversion, Saturating, SignedExtension},
-	// 	transaction_validity::{
-	// 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
-	// 	},
-	// };
-
 	use codec::{Codec, EncodeLike, FullCodec};
 	use composable_traits::{
 		lending::{Lending, MarketConfig, MarketConfigInput, NormalizedCollateralFactor},
@@ -117,6 +110,7 @@ pub mod pallet {
 		MarketDoesNotExist,
 		CollateralDepositFailed,
 		MarketCollateralWasNotDepositedByAccount,
+		CollateralFactorIsLessOrEqualOne,
 	}
 
 	/// Lending instances counter
@@ -159,6 +153,10 @@ pub mod pallet {
 			collateral_asset_vault: <T::Vault as Vault>::VaultId,
 			config_input: MarketConfigInput<Self::AccountId>,
 		) -> Result<(), DispatchError> {
+			ensure!(
+				config_input.collateral_factor > 1.into(),
+				Error::<T>::CollateralFactorIsLessOrEqualOne
+			);
 			let collateral_asset = T::Vault::asset_id(&collateral_asset_vault)?;
 			let borrow_asset = T::Vault::asset_id(&borrow_asset_vault)?;
 

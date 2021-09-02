@@ -3,7 +3,7 @@ use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_runtime::{Permill, Perquintill}, sp_std::{fmt::Debug, vec::Vec}};
 
 /// The fixed point number of suggested by substrate precision
-/// Must be [1..+] because applied only to price normalized values
+/// Must be (1.0.. because applied only to price normalized values
 pub type NormalizedCollateralFactor = frame_support::sp_runtime::FixedU128;
 
 #[derive(Encode, Decode, Default)]
