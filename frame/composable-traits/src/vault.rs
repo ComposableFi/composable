@@ -74,6 +74,8 @@ pub trait Vault {
 		config: VaultConfig<Self::AccountId, Self::AssetId>,
 	) -> Result<Self::VaultId, DispatchError>;
 
+	/// Used by users to deposit tokens.
+	/// Returns true amount of wrapper token minted to user.
 	fn deposit(
 		vault: &Self::VaultId,
 		from: &Self::AccountId,
