@@ -96,6 +96,7 @@ pub mod pallet {
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
+		// TODO add events
 	}
 
 
@@ -164,7 +165,6 @@ pub mod pallet {
 
 
 			T::NativeCurrency::transfer(&Self::account_id(), &who, converted_payout, AllowDeath)?;
-			// TODO finish this function by burning LP token and applying proper formula to withdraw
 			Ok(().into())
 		}
 
