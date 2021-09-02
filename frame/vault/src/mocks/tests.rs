@@ -103,7 +103,7 @@ impl crate::mocks::currency_factory::Config for Test {
 
 impl crate::mocks::strategy::Config for Test {
 	type Event = Event;
-	type Vault = Vault;
+	type Vault = Vaults;
 	type Currency = Tokens;
 }
 
@@ -118,7 +118,7 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
-		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
+		Vaults: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Factory: crate::mocks::currency_factory::{Pallet, Call, Storage, Event<T>},
 		Strategy: crate::mocks::strategy::{Pallet, Call, Storage, Event<T>},
 	}

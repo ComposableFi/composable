@@ -2,14 +2,14 @@ use crate::{
 	mocks::{
 		currency_factory::MockCurrencyId,
 		tests::{
-			AccountId, Balance, BlockNumber, ExtBuilder, Origin, Test, Tokens, Vault,
+			AccountId, Balance, BlockNumber, ExtBuilder, Origin, Test, Tokens, Vaults,
 			ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, MINIMUM_BALANCE,
 		},
 	},
 	models::VaultInfo,
 	*,
 };
-use composable_traits::vault::{Deposit, StrategicVault, VaultConfig};
+use composable_traits::vault::{Deposit, FundsAvailability, StrategicVault, VaultConfig};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
@@ -54,11 +54,13 @@ macro_rules! prop_assert_epsilon {
 	}};
 }
 
-fn create_vault(
-	strategy_account_id: AccountId,
+fn create_vault_with_share(
 	asset_id: MockCurrencyId,
+	strategy_account_id: AccountId,
+	strategy_share: Perquintill,
+	reserved: Perquintill,
 ) -> (VaultIndex, VaultInfo<AccountId, Balance, MockCurrencyId, BlockNumber>) {
-	let v = Vault::do_create_vault(
+	let v = Vaults::do_create_vault(
 		Deposit::Existential,
 		VaultConfig {
 			asset_id,
@@ -72,6 +74,18 @@ fn create_vault(
 	);
 	assert_ok!(&v);
 	v.expect("unreachable; qed;")
+}
+
+fn create_vault(
+	strategy_account_id: AccountId,
+	asset_id: MockCurrencyId,
+) -> (VaultIndex, VaultInfo<AccountId, Balance, MockCurrencyId, BlockNumber>) {
+	create_vault_with_share(
+		asset_id,
+		strategy_account_id,
+		Perquintill::from_percent(90),
+		Perquintill::from_percent(10),
+	)
 }
 
 prop_compose! {
@@ -128,6 +142,52 @@ proptest! {
 	#![proptest_config(ProptestConfig::with_cases(10000))]
 
 	#[test]
+	fn vault_strategy_withdraw_deposit_identity(
+		strategy_account_id in strategy_account(),
+		amount in valid_amounts_without_overflow_1()
+	) {
+		let asset_id = MockCurrencyId::A;
+		let strategy_share = 80;
+		ExtBuilder::default().build().execute_with(|| {
+			let (vault_id, _) = create_vault_with_share(
+				asset_id,
+				strategy_account_id,
+				Perquintill::from_percent(strategy_share),
+				Perquintill::from_percent(100 - strategy_share)
+			);
+
+			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
+			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), amount);
+
+			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
+
+			let available_funds = <Vaults as StrategicVault>::available_funds(&vault_id, &strategy_account_id);
+			prop_assert_ok!(available_funds, "{:?}", available_funds);
+
+			match available_funds.expect("unreachable; qed;") {
+				FundsAvailability::Withdrawable(x) if x <= amount => {
+					prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
+					prop_assert_ok!(<Vaults as StrategicVault>::withdraw(&vault_id, &strategy_account_id, x));
+					prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == x);
+					prop_assert_ok!(<Vaults as StrategicVault>::deposit(&vault_id, &strategy_account_id, x));
+					prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
+					Ok(())
+				},
+				FundsAvailability::Withdrawable(_) => {
+					Err(TestCaseError::fail("the withdrawable amount should be 80% of the total balance"))
+				},
+				FundsAvailability::Depositable(_) => {
+					Err(TestCaseError::fail("impossible"))
+				},
+				FundsAvailability::MustLiquidate => {
+					Err(TestCaseError::fail("impossible"))
+				},
+			}
+		})?;
+	}
+
+	#[test]
 	fn vault_single_deposit_withdraw_asset_identity(
 		strategy_account_id in strategy_account(),
 		amount in valid_amounts_without_overflow_1()
@@ -141,8 +201,8 @@ proptest! {
 
 			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), amount);
 
-			prop_assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount));
-			prop_assert_ok!(Vault::withdraw(Origin::signed(ALICE), vault_id, amount));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
+			prop_assert_ok!(Vaults::withdraw(Origin::signed(ALICE), vault_id, amount));
 
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == amount);
 			Ok(())
@@ -169,13 +229,13 @@ proptest! {
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == amount1);
 			prop_assert!(Tokens::balance(asset_id, &CHARLIE) == amount3);
 
-			prop_assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault_id, amount3));
-			prop_assert_ok!(Vault::deposit(Origin::signed(BOB), vault_id, amount2));
-			prop_assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount1));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(CHARLIE), vault_id, amount3));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(BOB), vault_id, amount2));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount1));
 
-			prop_assert_ok!(Vault::withdraw(Origin::signed(ALICE), vault_id, amount1));
-			prop_assert_ok!(Vault::withdraw(Origin::signed(CHARLIE), vault_id, amount3));
-			prop_assert_ok!(Vault::withdraw(Origin::signed(BOB), vault_id, amount2));
+			prop_assert_ok!(Vaults::withdraw(Origin::signed(ALICE), vault_id, amount1));
+			prop_assert_ok!(Vaults::withdraw(Origin::signed(CHARLIE), vault_id, amount3));
+			prop_assert_ok!(Vaults::withdraw(Origin::signed(BOB), vault_id, amount2));
 
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == amount1);
 			prop_assert!(Tokens::balance(asset_id, &BOB) == amount2);
@@ -199,7 +259,7 @@ proptest! {
 
 			prop_assert_eq!(Tokens::balance(vault_info.lp_token_id, &ALICE), 0);
 
-			prop_assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
 
 			prop_assert_eq!(Tokens::balance(vault_info.lp_token_id, &ALICE), amount);
 			Ok(())
@@ -215,7 +275,7 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
 			prop_assert!(Tokens::balance(vault.lp_token_id, &ALICE) == 0);
-			assert_noop!(Vault::withdraw(Origin::signed(ALICE), vault_id, amount), Error::<Test>::InsufficientLpTokens);
+			assert_noop!(Vaults::withdraw(Origin::signed(ALICE), vault_id, amount), Error::<Test>::InsufficientLpTokens);
 			Ok(())
 		})?;
 	}
@@ -230,10 +290,10 @@ proptest! {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
 			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
-			prop_assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
 
 			prop_assert!(Tokens::balance(vault.lp_token_id, &BOB) == 0);
-			assert_noop!(Vault::withdraw(Origin::signed(BOB), vault_id, amount), Error::<Test>::InsufficientLpTokens);
+			assert_noop!(Vaults::withdraw(Origin::signed(BOB), vault_id, amount), Error::<Test>::InsufficientLpTokens);
 			Ok(())
 		})?;
 	}
@@ -254,15 +314,15 @@ proptest! {
 			prop_assert_ok!(Tokens::mint_into(asset_id, &BOB, amount2));
 			prop_assert_ok!(Tokens::mint_into(asset_id, &strategy_account_id, strategy_profits));
 
-			prop_assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, amount1));
-			prop_assert_ok!(<Vault as StrategicVault>::deposit(&vault_id, &strategy_account_id, strategy_profits));
-			prop_assert_ok!(Vault::deposit(Origin::signed(BOB), vault_id, amount2));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount1));
+			prop_assert_ok!(<Vaults as StrategicVault>::deposit(&vault_id, &strategy_account_id, strategy_profits));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(BOB), vault_id, amount2));
 
 			let alice_lp = Tokens::balance(vault.lp_token_id, &ALICE);
 			let bob_lp = Tokens::balance(vault.lp_token_id, &BOB);
 
-			prop_assert_ok!(Vault::withdraw(Origin::signed(ALICE), vault_id, alice_lp));
-			prop_assert_ok!(Vault::withdraw(Origin::signed(BOB), vault_id, bob_lp));
+			prop_assert_ok!(Vaults::withdraw(Origin::signed(ALICE), vault_id, alice_lp));
+			prop_assert_ok!(Vaults::withdraw(Origin::signed(BOB), vault_id, bob_lp));
 
 			let alice_total_balance = Tokens::balance(asset_id, &ALICE);
 			let bob_total_balance = Tokens::balance(asset_id, &BOB);
@@ -310,13 +370,13 @@ proptest! {
 			// Shareholders
 			for (account, balance) in accounts[0..strategy_deposit_moment].iter().copied() {
 				prop_assert_ok!(
-					Vault::deposit(Origin::signed(account), vault_id, balance)
+					Vaults::deposit(Origin::signed(account), vault_id, balance)
 				);
 			}
 
 			// Profits comming
 			prop_assert_ok!(
-				<Vault as StrategicVault>::deposit(
+				<Vaults as StrategicVault>::deposit(
 					&vault_id,
 					&strategy_account_id,
 					strategy_profits
@@ -329,7 +389,7 @@ proptest! {
 			// Users depositing later
 			for (account, balance) in accounts[strategy_deposit_moment..accounts.len()].iter().copied() {
 				prop_assert_ok!(
-					Vault::deposit(Origin::signed(account), vault_id, balance)
+					Vaults::deposit(Origin::signed(account), vault_id, balance)
 				);
 			}
 
@@ -339,7 +399,7 @@ proptest! {
 				let lp = Tokens::balance(vault.lp_token_id, &account);
 
 				// Withdraw all my shares, including profits
-				prop_assert_ok!(Vault::withdraw(Origin::signed(account), vault_id, lp));
+				prop_assert_ok!(Vaults::withdraw(Origin::signed(account), vault_id, lp));
 
 				// Balance after having deposited + withdrawn my funds
 				let new_balance = Tokens::balance(asset_id, &account);
