@@ -247,17 +247,17 @@ pub mod pallet {
 			match crate::rent::evaluate_eviction::<T>(current_block, vault.deposit) {
 				Verdict::Exempt => {
 					todo!("do not reward, but charge less weight")
-				},
+				}
 				Verdict::Evict { .. } => {
 					// we should also decide if we are going to drop the vault if there are still
 					// assets left in strategies. If some strategy becomes bricked, they will never
 					// report or return a balance. Tombstoned vaults would then effectively take up
 					// storage forever.
 					todo!("clean up all storage associated with the vault, and then reward the caller")
-				},
+				}
 				Verdict::Charge { .. } => {
 					todo!("update vault deposit info, charge some of the rent from the `hold`ed balance")
-				},
+				}
 			}
 		}
 
@@ -428,8 +428,8 @@ pub mod pallet {
 			let vault_aum = Self::assets_under_management(vault_id)?;
 			if vault_aum.is_zero() {
 				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, amount) ==
-						DepositConsequence::Success,
+					T::Currency::can_deposit(vault.lp_token_id, from, amount)
+						== DepositConsequence::Success,
 					Error::<T>::MintFailed
 				);
 
@@ -459,8 +459,8 @@ pub mod pallet {
 				ensure!(lp > T::Balance::zero(), Error::<T>::DepositIsTooLow);
 
 				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, lp) ==
-						DepositConsequence::Success,
+					T::Currency::can_deposit(vault.lp_token_id, from, lp)
+						== DepositConsequence::Success,
 					Error::<T>::MintFailed
 				);
 
@@ -529,6 +529,12 @@ pub mod pallet {
 			Ok(vault.asset_id)
 		}
 
+		fn lp_asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError> {
+			let vault =
+				Vaults::<T>::try_get(vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			Ok(vault.lp_token_id)
+		}
+
 		fn account_id(vault: &Self::VaultId) -> Self::AccountId {
 			Pallet::<T>::account_id(vault)
 		}
@@ -558,13 +564,7 @@ pub mod pallet {
 			Pallet::<T>::do_withdraw(&vault, &to, lp_amount)
 		}
 
-		fn lp_asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError> {
-			let vault =
-				Vaults::<T>::try_get(vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
-			Ok(vault.lp_token_id)
-		}
-
-		fn lp_share_value(
+		fn to_underlying_value(
 			vault_id: &Self::VaultId,
 			lp_amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {

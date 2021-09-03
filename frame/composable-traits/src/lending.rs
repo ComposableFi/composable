@@ -143,6 +143,9 @@ pub trait Lending {
 	/// Depends on overall collateral put by user into vault.
 	/// This borrow limit of specific user, depends only on prices and users collateral, not on
 	/// state of vault.
+	/// ```python
+	/// normalized_limit = underlying_price * underlying_amount / collateral_factor
+	/// ```
 	fn get_borrow_limit(
 		market_id: &Self::MarketId,
 		account: Self::AccountId,

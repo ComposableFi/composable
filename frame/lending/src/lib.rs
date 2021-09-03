@@ -402,15 +402,17 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let config =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-			let collateral_balance: LiftedFixedBalance =
-				AccountCollateral::<T>::try_get(market_id, account)
-					.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount)?
+
+			let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
+				.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount)?;
+			let underlying_collateral_balance: LiftedFixedBalance =
+				<T::Vault as Vault>::to_underlying_value(&config.collateral, collateral_balance)?
 					.into();
 			let collateral_asset_id = <T::Vault as Vault>::asset_id(&config.collateral)?;
 			let collateral_price: LiftedFixedBalance =
 				<T::Oracle as Oracle>::get_price(&collateral_asset_id)?.0.into();
 
-			let collateral_normalized_amount = collateral_balance
+			let normalized_limit = underlying_collateral_balance
 				.checked_mul(&collateral_price)
 				.and_then(|collateral_normalized| {
 					collateral_normalized.checked_div(&config.collateral_factor)
@@ -418,7 +420,7 @@ pub mod pallet {
 				.and_then(|borrow_normalized| borrow_normalized.checked_mul_int(1u64))
 				.ok_or(Error::<T>::Overflow)?;
 
-			Ok(collateral_normalized_amount.into())
+			Ok(normalized_limit.into())
 		}
 
 		fn deposit_collateral(
