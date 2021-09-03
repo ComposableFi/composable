@@ -92,7 +92,7 @@ pub mod pallet {
 			+ From<u64> // at least 64 bit
 			+ Zero
 			+ Into<LiftedFixedBalance> // integer part not more than bits in this
-			+ Into<u128>;
+			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128 bit
 
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
