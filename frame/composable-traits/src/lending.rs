@@ -43,7 +43,7 @@ pub trait Lending {
 	type VaultId: Codec;
 	type MarketId: Codec;
 	/// (deposit VaultId, collateral VaultId) <-> MarketId
-	type AccountId: core::cmp::Ord + Clone + Codec;
+	type AccountId: core::cmp::Ord + Codec;
 	type Balance;
 	type BlockNumber;
 
@@ -151,6 +151,6 @@ pub trait Lending {
 	/// ```
 	fn get_borrow_limit(
 		market_id: &Self::MarketId,
-		account: Self::AccountId,
+		account: &Self::AccountId,
 	) -> Result<Self::Balance, DispatchError>;
 }

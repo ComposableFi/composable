@@ -32,7 +32,7 @@ pub mod pallet {
 		},
 		oracle::Oracle,
 		rate_model::*,
-		vault::{Deposit, Vault, VaultConfig},
+		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -51,9 +51,9 @@ pub mod pallet {
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedConversion, CheckedMul,
 			CheckedSub, Convert, Hash, One, Zero,
 		},
-		FixedPointNumber, FixedPointOperand, FixedU128, PerThing, Permill, Perquintill,
+		FixedPointNumber, FixedPointOperand, FixedU128, Permill, Perquintill,
 	};
-	use sp_std::{convert::TryInto, fmt::Debug, ops::Mul};
+	use sp_std::{convert::TryInto, fmt::Debug};
 
 	#[derive(Default, Copy, Clone, Encode, Decode)]
 	#[repr(transparent)]
@@ -71,7 +71,17 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type Oracle: Oracle<AssetId = Self::AssetId, Balance = Self::Balance>;
 		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
-		type Vault: Vault<VaultId = Self::VaultId, AssetId = Self::AssetId, Balance = Self::Balance>;
+		type Vault: StrategicVault<
+				VaultId = Self::VaultId,
+				AssetId = Self::AssetId,
+				Balance = Self::Balance,
+				AccountId = Self::AccountId,
+			> + Vault<
+				VaultId = Self::VaultId,
+				AssetId = Self::AssetId,
+				Balance = Self::Balance,
+				AccountId = Self::AccountId,
+			>;
 		type AssetId: FullCodec
 			+ Eq
 			+ PartialEq
@@ -97,6 +107,10 @@ pub mod pallet {
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
 
+		// debt token allows to simplify some debt management and implementation of features
+		type DebtCurrency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = MarketIndex>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = MarketIndex>;
+
 		type UnixTime: UnixTime;
 	}
 
@@ -118,6 +132,9 @@ pub mod pallet {
 		MarketCollateralWasNotDepositedByAccount,
 		CollateralFactorIsLessOrEqualOne,
 		MarketAndAccountPairNotFound,
+		NotEnoughCollateralToBorrowAmount,
+		CannotBorrowInCurrentLendingState,
+		NotEnoughBorrowAsset,
 	}
 
 	/// Lending instances counter
@@ -254,7 +271,59 @@ pub mod pallet {
 			debt_owner: &Self::AccountId,
 			amount_to_borrow: Self::Balance,
 		) -> Result<(), DispatchError> {
-			todo!()
+			let market =
+				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+
+			// how much account owes
+			let borrower_balance_with_interest =
+				Self::borrow_balance_current(market_id, debt_owner)?;
+			let asset_id = <T::Vault as Vault>::asset_id(&market.borrow)?;
+			let borrow_asset_price = <T::Oracle as Oracle>::get_price(&asset_id)?.0;
+			let borrowed_normalized = borrower_balance_with_interest
+				.checked_mul(&borrow_asset_price)
+				.ok_or(Error::<T>::Overflow)?;
+
+			// how much he can borrow total
+			let borrow_limit = Self::get_borrow_limit(&market_id, debt_owner)?;
+
+			let possible_borrow = borrow_limit
+				.checked_sub(&borrowed_normalized)
+				.ok_or(Error::<T>::NotEnoughCollateralToBorrowAmount)?;
+
+			match <T::Vault as StrategicVault>::available_funds(
+				&market.borrow,
+				&Self::account_id(&market_id),
+			)? {
+				FundsAvailability::Withdrawable(balance) => {
+					ensure!(balance >= possible_borrow, Error::<T>::NotEnoughBorrowAsset)
+				}
+				FundsAvailability::Depositable(_) => (),
+				// TODO: decide when react and how to return fees back
+				// https://mlabs-corp.slack.com/archives/C02CRQ9KW04/p1630662664380600?thread_ts=1630658877.363600&cid=C02CRQ9KW04
+				FundsAvailability::MustLiquidate => {
+					return Err(Error::<T>::CannotBorrowInCurrentLendingState.into())
+				}
+			}
+			<T::Vault as StrategicVault>::withdraw(
+				&market.borrow,
+				&Self::account_id(market_id),
+				possible_borrow,
+			)?;
+			<T::Vault as StrategicVault>::transfer(
+				&market.borrow,
+				&Self::account_id(market_id),
+				debt_owner,
+				possible_borrow,
+			)?;
+
+			let market_index =
+				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			//ASK: storage or currency?
+			//<T::DebtCurrency as Mutate<T::AccountId>>::mint_into(market_id.clone(), debt_owner, possible_borrow)?;
+			DebtPrincipals::<T>::insert(market_id, debt_owner, possible_borrow);
+			DebtIndex::<T>::insert(market_id, debt_owner, market_index);
+
+			Ok(())
 		}
 
 		fn repay_borrow(
@@ -409,7 +478,7 @@ pub mod pallet {
 
 		fn get_borrow_limit(
 			market_id: &Self::MarketId,
-			account: Self::AccountId,
+			account: &Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
 			let config =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
