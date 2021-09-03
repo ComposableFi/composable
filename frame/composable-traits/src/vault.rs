@@ -123,13 +123,6 @@ pub trait StrategicVault: Vault {
 		amount: Self::Balance,
 	) -> Result<(), DispatchError>;
 
-	fn transfer(
-		vault: &Self::VaultId,
-		from: &Self::AccountId,
-		to: &Self::AccountId,
-		amount: Self::Balance,
-	) -> Result<(), DispatchError>;
-
 	/// Used by strategies to return profits and funds.
 	fn deposit(
 		vault: &Self::VaultId,

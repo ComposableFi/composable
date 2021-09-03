@@ -72,16 +72,12 @@ pub mod pallet {
 		type Oracle: Oracle<AssetId = Self::AssetId, Balance = Self::Balance>;
 		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 		type Vault: StrategicVault<
-				VaultId = Self::VaultId,
-				AssetId = Self::AssetId,
-				Balance = Self::Balance,
-				AccountId = Self::AccountId,
-			> + Vault<
-				VaultId = Self::VaultId,
-				AssetId = Self::AssetId,
-				Balance = Self::Balance,
-				AccountId = Self::AccountId,
-			>;
+			VaultId = Self::VaultId,
+			AssetId = Self::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+		>;
+
 		type AssetId: FullCodec
 			+ Eq
 			+ PartialEq
@@ -199,13 +195,12 @@ pub mod pallet {
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	impl<T: Config> Lending for Pallet<T> {
+		/// we are operating only on vault types, so restricted by these
 		type VaultId = <T::Vault as Vault>::VaultId;
-
-		type AccountId = T::AccountId;
+		type AccountId = <T::Vault as Vault>::AccountId;
+		type Balance = T::Balance;
 
 		type MarketId = MarketIndex;
-
-		type Balance = T::Balance;
 
 		type BlockNumber = T::BlockNumber;
 
@@ -290,12 +285,26 @@ pub mod pallet {
 				.checked_sub(&borrowed_normalized)
 				.ok_or(Error::<T>::NotEnoughCollateralToBorrowAmount)?;
 
+			let account_id = Self::account_id(market_id);
+			let can_withdraw = <T::Currency as Inspect<T::AccountId>>::reducible_balance(
+				asset_id.clone(),
+				&account_id,
+				true,
+			);
 			match <T::Vault as StrategicVault>::available_funds(
 				&market.borrow,
 				&Self::account_id(&market_id),
 			)? {
 				FundsAvailability::Withdrawable(balance) => {
-					ensure!(balance >= possible_borrow, Error::<T>::NotEnoughBorrowAsset)
+					<T::Vault as StrategicVault>::withdraw(
+						&market.borrow,
+						&account_id,
+						possible_borrow,
+					)?;
+					ensure!(
+						can_withdraw + balance >= possible_borrow,
+						Error::<T>::NotEnoughBorrowAsset
+					)
 				}
 				FundsAvailability::Depositable(_) => (),
 				// TODO: decide when react and how to return fees back
@@ -304,16 +313,13 @@ pub mod pallet {
 					return Err(Error::<T>::CannotBorrowInCurrentLendingState.into())
 				}
 			}
-			<T::Vault as StrategicVault>::withdraw(
-				&market.borrow,
-				&Self::account_id(market_id),
-				possible_borrow,
-			)?;
-			<T::Vault as StrategicVault>::transfer(
-				&market.borrow,
+
+			<T::Currency as Transfer<T::AccountId>>::transfer(
+				asset_id.clone(),
 				&Self::account_id(market_id),
 				debt_owner,
 				possible_borrow,
+				true,
 			)?;
 
 			let market_index =
