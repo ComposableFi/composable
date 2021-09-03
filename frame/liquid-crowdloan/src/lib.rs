@@ -19,14 +19,15 @@ pub mod pallet {
 			fungibles::{Inspect, Transfer, Mutate},
 			tokens::{fungibles::MutateHold},
 			Currency as NativeCurrency,
-			ExistenceRequirement::AllowDeath
+			ExistenceRequirement::AllowDeath,
+			EnsureOrigin
 		},
 	};
 	pub use composable_traits::{
 		currency::CurrencyFactory,
 	};
 	use codec::{Codec, FullCodec};
-	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig};
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig};
 	use sp_std::fmt::Debug;
 	use num_traits::SaturatingSub;
 	use sp_runtime::{
@@ -43,6 +44,7 @@ pub mod pallet {
 		type LiquidRewardId: Get<PalletId>;
 		/// The currency mechanism.
 		type NativeCurrency: NativeCurrency<Self::AccountId>;
+		type JumpStart: EnsureOrigin<Self::Origin>;
 		type CurrencyFactory: CurrencyFactory<Self::CurrencyId>;
 		type CurrencyId: FullCodec
 			+ Eq
@@ -90,13 +92,11 @@ pub mod pallet {
 	pub type TokenId<T> = StorageValue<_, CurrencyIdOf<T>>;
 
 	#[pallet::event]
-	#[pallet::metadata(T::AccountId = "AccountId")]
+	#[pallet::metadata(T::AccountId = "AccountId", CurrencyIdOf<T> = "CurrencyId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Event documentation should end with an array that provides descriptive names for event
-		/// parameters. [something, who]
-		SomethingStored(u32, T::AccountId),
-		// TODO add events
+		Initiated(CurrencyIdOf<T>),
+		Claimed(T::AccountId, u128),
 	}
 
 
@@ -116,7 +116,7 @@ pub mod pallet {
 		#[transactional]
 		#[pallet::weight(10_000)]
 		pub fn initiate(origin: OriginFor<T>, manager: T::AccountId, amount: T::Balance) -> DispatchResult {
-			ensure_root(origin)?;
+			T::JumpStart::ensure_origin(origin)?;
 			ensure!(!<TokenId<T>>::exists(), Error::<T>::AlreadyInitiated);
 			let lp_token_id = {
 				T::CurrencyFactory::create().map_err(|e| {
@@ -126,13 +126,13 @@ pub mod pallet {
 			};
 			T::Currency::mint_into(lp_token_id, &manager, amount)?;
 			<TokenId<T>>::put(lp_token_id);
-			//TODO emit event with token id
+			Self::deposit_event(Event::Initiated(lp_token_id));
 			Ok(().into())
 		}
 
 		#[pallet::weight(10_000)]
 		pub fn make_claimable(origin: OriginFor<T>) -> DispatchResult {
-			ensure_root(origin)?;
+			T::JumpStart::ensure_origin(origin)?;
 			<IsClaimable<T>>::put(true);
 			Ok(().into())
 
@@ -165,6 +165,8 @@ pub mod pallet {
 
 
 			T::NativeCurrency::transfer(&Self::account_id(), &who, converted_payout, AllowDeath)?;
+			Self::deposit_event(Event::Claimed(who, amount));
+			// TODO clear state if pot is empty?
 			Ok(().into())
 		}
 

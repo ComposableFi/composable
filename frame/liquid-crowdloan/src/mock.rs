@@ -1,6 +1,7 @@
 use crate as pallet_liquid_crowdloan;
-use frame_support::{parameter_types, PalletId};
+use frame_support::{parameter_types, ord_parameter_types, PalletId};
 use frame_system as system;
+use frame_system::EnsureSignedBy;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -112,11 +113,16 @@ impl pallet_currency_factory::Config for Test {
 parameter_types! {
 	pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
 }
+
+ord_parameter_types! {
+	pub const RootAccount: u128 = 2;
+}
 impl pallet_liquid_crowdloan::Config for Test {
 	type Event = Event;
 	type LiquidRewardId = LiquidRewardId;
 	type CurrencyFactory =  Factory;
 	type CurrencyId = MockCurrencyId;
+	type JumpStart = EnsureSignedBy<RootAccount, u128>;
 	type Currency = Tokens;
 	type Balance = Balance;
 	type NativeCurrency = NativeBalances;
