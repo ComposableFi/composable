@@ -1,5 +1,5 @@
-// Copyright 2021 Parallel Finance Developer.
-// This file is part of Parallel Finance.
+// Copyright 2021 Composable Developer.
+// This file is part of Composable Finance.
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,15 +14,16 @@
 
 use codec::{Decode, Encode};
 use sp_runtime::{
-	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Saturating},
-	FixedPointNumber, FixedU128, Permill, RuntimeDebug,
+	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero},
+	FixedPointNumber, FixedU128, RuntimeDebug,
 };
 
 /// The fixed point number
 pub type Rate = FixedU128;
 
-/// The fixed point number, range from 0 to 1.
-pub type Ratio = Permill;
+/// Must not be > 1.0
+/// TODO: implement Ratio as wrapper over FixedU128
+pub type Ratio = FixedU128;
 
 pub type Timestamp = u64;
 
@@ -42,7 +43,7 @@ impl Default for InterestRateModel {
 			Rate::saturating_from_rational(2, 100),
 			Rate::saturating_from_rational(10, 100),
 			Rate::saturating_from_rational(32, 100),
-			Ratio::from_percent(80),
+			Ratio::saturating_from_rational(80, 100),
 		)
 	}
 }
@@ -97,6 +98,8 @@ pub struct JumpModel {
 	/// The max interest rate when utilization rate is 100%
 	pub full_rate: Rate,
 	/// The utilization point at which the jump_rate is applied
+	/// For jump_utilization, we should have used sp_runtime::Perquintil, but since Balance is
+	/// based on u128 and Perquintil can't be created from u128.
 	pub jump_utilization: Ratio,
 }
 
@@ -112,7 +115,11 @@ impl JumpModel {
 		full_rate: Rate,
 		jump_utilization: Ratio,
 	) -> JumpModel {
-		Self { base_rate, jump_rate, full_rate, jump_utilization }
+		if jump_utilization > Ratio::one() {
+			Self { base_rate, jump_rate, full_rate, jump_utilization: Ratio::one() }
+		} else {
+			Self { base_rate, jump_rate, full_rate, jump_utilization }
+		}
 	}
 
 	/// Check the jump model for sanity
@@ -181,8 +188,7 @@ impl CurveModel {
 	/// Calculates the borrow interest rate of curve model
 	pub fn get_borrow_rate(&self, utilization: Ratio) -> Option<Rate> {
 		const NINE: usize = 9;
-		let utilization_rate: Rate = utilization.into();
-		utilization_rate.saturating_pow(NINE).checked_add(&self.base_rate)
+		utilization.saturating_pow(NINE).checked_add(&self.base_rate)
 	}
 }
 
@@ -211,7 +217,7 @@ mod tests {
 		let base_rate = Rate::saturating_from_rational(2, 100);
 		let jump_rate = Rate::saturating_from_rational(10, 100);
 		let full_rate = Rate::saturating_from_rational(32, 100);
-		let jump_utilization = Ratio::from_percent(80);
+		let jump_utilization = Ratio::saturating_from_rational(80, 100);
 
 		assert_eq!(
 			JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization),
@@ -219,7 +225,7 @@ mod tests {
 				base_rate: Rate::from_inner(20_000_000_000_000_000).into(),
 				jump_rate: Rate::from_inner(100_000_000_000_000_000).into(),
 				full_rate: Rate::from_inner(320_000_000_000_000_000).into(),
-				jump_utilization: Ratio::from_percent(80),
+				jump_utilization: Ratio::saturating_from_rational(80, 100),
 			}
 		);
 	}
@@ -230,14 +236,14 @@ mod tests {
 		let base_rate = Rate::saturating_from_rational(2, 100);
 		let jump_rate = Rate::saturating_from_rational(10, 100);
 		let full_rate = Rate::saturating_from_rational(32, 100);
-		let jump_utilization = Ratio::from_percent(80);
+		let jump_utilization = Ratio::saturating_from_rational(80, 100);
 		let jump_model = JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization);
 		assert!(jump_model.check_model());
 
 		// normal rate
 		let mut cash: u128 = 500;
 		let borrows: u128 = 1000;
-		let util = Ratio::from_rational(borrows, cash + borrows);
+		let util = Ratio::saturating_from_rational(borrows, cash + borrows);
 		let borrow_rate = jump_model.get_borrow_rate(util).unwrap();
 		assert_eq!(
 			borrow_rate,
@@ -246,7 +252,7 @@ mod tests {
 
 		// jump rate
 		cash = 100;
-		let util = Ratio::from_rational(borrows, cash + borrows);
+		let util = Ratio::saturating_from_rational(borrows, cash + borrows);
 		let borrow_rate = jump_model.get_borrow_rate(util).unwrap();
 		let normal_rate =
 			jump_model.jump_rate.saturating_mul(jump_utilization.into()) + jump_model.base_rate;
@@ -265,7 +271,7 @@ mod tests {
 	#[test]
 	fn get_supply_rate_works() {
 		let borrow_rate = Rate::saturating_from_rational(2, 100);
-		let util = Ratio::from_percent(50);
+		let util = Ratio::saturating_from_rational(50, 100);
 		let reserve_factor = Ratio::zero();
 		let supply_rate = InterestRateModel::get_supply_rate(borrow_rate, util, reserve_factor);
 		assert_eq!(
@@ -279,7 +285,7 @@ mod tests {
 	fn curve_model_correctly_calculates_borrow_rate() {
 		let model = CurveModel::new_model(Rate::saturating_from_rational(2, 100));
 		assert_eq!(
-			model.get_borrow_rate(Ratio::from_percent(80)).unwrap(),
+			model.get_borrow_rate(Ratio::saturating_from_rational(80, 100)).unwrap(),
 			Rate::from_inner(154217728000000000)
 		);
 	}

@@ -6,14 +6,13 @@ use orml_tokens::TransferDust;
 use orml_traits::parameter_type_with_key;
 use sp_arithmetic::traits::Zero;
 use sp_core::{sr25519::Signature, H256};
-use sp_keystore::{testing::KeyStore, SyncCryptoStore};
 use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{
 		AccountIdConversion, BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount,
 		IdentityLookup, Verify,
 	},
-	AccountId32, DispatchError,
+	DispatchError,
 };
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
@@ -32,6 +31,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Oracle: pallet_oracle::{Pallet, Call, Storage, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
@@ -84,6 +84,19 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+}
+
+const MILLISECS_PER_BLOCK: u64 = 6000;
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
+}
+
+impl pallet_timestamp::Config for Test {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -213,7 +226,7 @@ impl pallet_lending::Config for Test {
 	type AssetId = MockCurrencyId;
 	type Balance = Balance;
 	type Currency = Tokens;
-	type Convert = ();
+	type UnixTime = Timestamp;
 }
 
 fn root_account() -> AccountId {

@@ -92,7 +92,7 @@ pub mod pallet {
 					T::Currency::transfer(
 						asset_id,
 						&Self::account_id(),
-						&T::Vault::account_id(),
+						&T::Vault::account_id(&vault),
 						balance,
 						true,
 					)?;
@@ -101,7 +101,7 @@ pub mod pallet {
 				FundsAvailability::Withdrawable(balance) => {
 					T::Currency::transfer(
 						asset_id,
-						&T::Vault::account_id(),
+						&T::Vault::account_id(&vault),
 						&Self::account_id(),
 						balance,
 						true,
@@ -112,7 +112,7 @@ pub mod pallet {
 					T::Currency::transfer(
 						asset_id,
 						&Self::account_id(),
-						&T::Vault::account_id(),
+						&T::Vault::account_id(&vault),
 						balance,
 						true,
 					)?;
