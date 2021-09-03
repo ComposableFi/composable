@@ -1,16 +1,14 @@
 use crate as pallet_liquid_crowdloan;
-use frame_support::{parameter_types, ord_parameter_types, PalletId};
+pub use composable_traits::currency::CurrencyFactory;
+use frame_support::{ord_parameter_types, parameter_types, PalletId};
 use frame_system as system;
 use frame_system::EnsureSignedBy;
+use num_traits::Zero;
+use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup, ConvertInto},
-};
-use num_traits::Zero;
-use orml_traits::parameter_type_with_key;
-pub use composable_traits::{
-	currency::CurrencyFactory,
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -66,7 +64,6 @@ impl system::Config for Test {
 	type OnSetCode = ();
 }
 
-
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
 		Zero::zero()
@@ -84,7 +81,6 @@ impl orml_tokens::Config for Test {
 	type MaxLocks = ();
 	type DustRemovalWhitelist = ();
 }
-
 
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 5;
@@ -106,9 +102,7 @@ impl pallet_currency_factory::Config for Test {
 	type Event = Event;
 	type CurrencyId = MockCurrencyId;
 	type Convert = ConvertInto;
-
 }
-
 
 parameter_types! {
 	pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
@@ -120,7 +114,7 @@ ord_parameter_types! {
 impl pallet_liquid_crowdloan::Config for Test {
 	type Event = Event;
 	type LiquidRewardId = LiquidRewardId;
-	type CurrencyFactory =  Factory;
+	type CurrencyFactory = Factory;
 	type CurrencyId = MockCurrencyId;
 	type JumpStart = EnsureSignedBy<RootAccount, u128>;
 	type Currency = Tokens;

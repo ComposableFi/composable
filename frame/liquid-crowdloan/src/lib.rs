@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-
 pub use pallet::*;
 
 #[cfg(test)]
@@ -9,34 +8,31 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{pallet_prelude::*, PalletId, transactional,
-		traits::{
-			fungibles::{Inspect, Transfer, Mutate},
-			tokens::{fungibles::MutateHold},
-			Currency as NativeCurrency,
-			ExistenceRequirement::AllowDeath,
-			EnsureOrigin
-		},
-	};
-	pub use composable_traits::{
-		currency::CurrencyFactory,
-	};
 	use codec::{Codec, FullCodec};
-	use frame_system::{ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig};
-	use sp_std::fmt::Debug;
-	use num_traits::SaturatingSub;
-	use sp_runtime::{
-		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
-			Zero, SaturatedConversion
-		},
-	};
+	pub use composable_traits::currency::CurrencyFactory;
 	use core::ops::{Div, Mul};
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{
+			fungibles::{Inspect, Mutate, Transfer},
+			tokens::fungibles::MutateHold,
+			Currency as NativeCurrency, EnsureOrigin,
+			ExistenceRequirement::AllowDeath,
+		},
+		transactional, PalletId,
+	};
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig};
+	use num_traits::SaturatingSub;
+	use sp_runtime::traits::{
+		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
+		SaturatedConversion, Zero,
+	};
+	use sp_std::fmt::Debug;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -70,14 +66,13 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ Zero
 			+ From<u64>;
-
 	}
 
 	pub type CurrencyIdOf<T> =
-	<<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
+		<<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
 	pub type BalanceOf<T> = <T as Config>::Balance;
 	pub type NativeBalanceOf<T> =
-	<<T as Config>::NativeCurrency as NativeCurrency<<T as SystemConfig>::AccountId>>::Balance;
+		<<T as Config>::NativeCurrency as NativeCurrency<<T as SystemConfig>::AccountId>>::Balance;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -99,7 +94,6 @@ pub mod pallet {
 		Claimed(T::AccountId, u128),
 	}
 
-
 	#[pallet::error]
 	pub enum Error<T> {
 		CannotCreateAsset,
@@ -107,15 +101,18 @@ pub mod pallet {
 		FailedMint,
 		NotClaimable,
 		ConversionError,
-		InsufficientTokens
+		InsufficientTokens,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
 		#[transactional]
 		#[pallet::weight(10_000)]
-		pub fn initiate(origin: OriginFor<T>, manager: T::AccountId, amount: T::Balance) -> DispatchResult {
+		pub fn initiate(
+			origin: OriginFor<T>,
+			manager: T::AccountId,
+			amount: T::Balance,
+		) -> DispatchResult {
 			T::JumpStart::ensure_origin(origin)?;
 			ensure!(!<TokenId<T>>::exists(), Error::<T>::AlreadyInitiated);
 			let lp_token_id = {
@@ -135,7 +132,6 @@ pub mod pallet {
 			T::JumpStart::ensure_origin(origin)?;
 			<IsClaimable<T>>::put(true);
 			Ok(().into())
-
 		}
 
 		#[transactional]
@@ -161,16 +157,13 @@ pub mod pallet {
 			ensure!(amount_value > 0u32.into(), Error::<T>::ConversionError);
 
 			T::Currency::burn_from(token_id, &who, amount_value)
-			.map_err(|_| Error::<T>::InsufficientTokens)?;
-
+				.map_err(|_| Error::<T>::InsufficientTokens)?;
 
 			T::NativeCurrency::transfer(&Self::account_id(), &who, converted_payout, AllowDeath)?;
 			Self::deposit_event(Event::Claimed(who, amount));
 			// TODO clear state if pot is empty?
 			Ok(().into())
 		}
-
-
 	}
 
 	impl<T: Config> Pallet<T> {
