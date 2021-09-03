@@ -92,6 +92,7 @@ std = [
     "frame-support/std",
 	"executive/std",
     "frame-system/std",
+	"utility/std",
 	"authorship/std",
 	"balances/std",
 	"randomness-collective-flip/std",
@@ -140,4 +141,5 @@ runtime-benchmarks = [
 	"scheduler/runtime-benchmarks",
 	"collective/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
+	"utility/runtime-benchmarks",
 ]
