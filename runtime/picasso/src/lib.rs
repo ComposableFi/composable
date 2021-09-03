@@ -719,7 +719,7 @@ construct_runtime!(
 		Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 32,
 		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
-		Utility: utility::{Pallet, Call, Event},
+		Utility: utility::{Pallet, Call, Event} = 35,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
