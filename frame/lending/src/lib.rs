@@ -22,7 +22,15 @@
 	unused_extern_crates
 )]
 
+pub use pallet::*;
+
 mod rate_model;
+
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -56,6 +64,12 @@ pub mod pallet {
 	#[derive(Default, Copy, Clone, Encode, Decode)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
+
+	impl MarketIndex {
+		pub fn new(i: u32) -> Self {
+			Self(i)
+		}
+	}
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 
@@ -129,6 +143,12 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	impl<T: Config> Pallet<T> {
+		pub fn account_id(market_id: &<Self as Lending>::MarketId) -> <Self as Lending>::AccountId {
+			<Self as Lending>::account_id(market_id)
+		}
+	}
+
 	impl<T: Config> Lending for Pallet<T> {
 		type VaultId = <T::Vault as Vault>::VaultId;
 
@@ -193,54 +213,54 @@ pub mod pallet {
 		}
 
 		fn borrow(
-			market_id: &Self::MarketId,
-			debt_owner: &Self::AccountId,
-			amount_to_borrow: Self::Balance,
+			_market_id: &Self::MarketId,
+			_debt_owner: &Self::AccountId,
+			_amount_to_borrow: Self::Balance,
 		) -> Result<(), DispatchError> {
 			todo!()
 		}
 
 		fn repay_borrow(
-			market_id: &Self::MarketId,
-			from: &Self::AccountId,
-			beneficiary: &Self::AccountId,
-			repay_amount: Self::Balance,
+			_market_id: &Self::MarketId,
+			_from: &Self::AccountId,
+			_beneficiary: &Self::AccountId,
+			_repay_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			todo!()
 		}
 
-		fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
+		fn total_borrows(_market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			todo!()
 		}
 
-		fn accrue_interest(market_id: &Self::MarketId) -> Result<(), DispatchError> {
+		fn accrue_interest(_market_id: &Self::MarketId) -> Result<(), DispatchError> {
 			todo!()
 		}
 
 		fn borrow_balance_current(
-			market_id: &Self::MarketId,
-			account: &Self::AccountId,
+			_market_id: &Self::MarketId,
+			_account: &Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
 			todo!()
 		}
 
 		fn collateral_of_account(
-			market_id: &Self::MarketId,
-			account: &Self::AccountId,
+			_market_id: &Self::MarketId,
+			_account: &Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
 			todo!()
 		}
 
 		fn collateral_required(
-			market_id: &Self::MarketId,
-			borrow_amount: Self::Balance,
+			_market_id: &Self::MarketId,
+			_borrow_amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			todo!()
 		}
 
 		fn get_borrow_limit(
-			market_id: &Self::MarketId,
-			account: Self::AccountId,
+			_market_id: &Self::MarketId,
+			_account: Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
 			todo!()
 		}

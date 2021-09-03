@@ -18,8 +18,6 @@ use sp_runtime::{
 	FixedPointNumber, FixedU128, Permill, RuntimeDebug,
 };
 
-use crate::*;
-
 /// The fixed point number
 pub type Rate = FixedU128;
 
