@@ -63,11 +63,11 @@ pub trait Vault {
 	type BlockNumber;
 	type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 
-	fn asset_id(vault: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
+	fn asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
 
-	fn lp_asset_id(vault: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
+	fn lp_asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
 
-	fn account_id() -> Self::AccountId;
+	fn account_id(vault: &Self::VaultId) -> Self::AccountId;
 
 	fn create(
 		deposit: Deposit<Self::Balance, Self::BlockNumber>,
@@ -77,14 +77,21 @@ pub trait Vault {
 	/// Used by users to deposit tokens.
 	/// Returns true amount of wrapper token minted to user.
 	fn deposit(
-		vault: &Self::VaultId,
+		vault_id: &Self::VaultId,
 		from: &Self::AccountId,
 		asset_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
 	fn withdraw(
-		vault: &Self::VaultId,
+		vault_id: &Self::VaultId,
 		to: &Self::AccountId,
+		lp_amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
+
+	/// Convert from % share represented by LPs to underlying asset value
+	/// Because of stock dilution, the LPs minted are not 1:1 with deposit
+	fn lp_share_value(
+		vault_id: &Self::VaultId,
 		lp_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 }

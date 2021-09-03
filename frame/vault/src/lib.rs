@@ -92,8 +92,7 @@ pub mod pallet {
 			+ CheckedMul
 			+ SaturatingSub
 			+ AtLeast32BitUnsigned
-			+ Zero
-			+ From<u64>;
+			+ Zero;
 		type CurrencyFactory: CurrencyFactory<Self::CurrencyId>;
 		type CurrencyId: FullCodec
 			+ Eq
@@ -335,10 +334,19 @@ pub mod pallet {
 				};
 
 				config.strategies.into_iter().for_each(|(account_id, allocation)| {
-					Allocations::<T>::insert(id, account_id, allocation);
+					Allocations::<T>::insert(id, account_id.clone(), allocation);
+					CapitalStructure::<T>::insert(
+						id,
+						account_id,
+						StrategyOverview {
+							balance: T::Balance::zero(),
+							lifetime_withdrawn: T::Balance::zero(),
+							lifetime_deposited: T::Balance::zero(),
+						},
+					);
 				});
 
-				Allocations::<T>::insert(id, Self::account_id(), config.reserved);
+				Allocations::<T>::insert(id, Self::account_id(&id), config.reserved);
 
 				let vault_info = crate::models::VaultInfo {
 					lp_token_id,
@@ -353,18 +361,15 @@ pub mod pallet {
 			})
 		}
 
-		fn account_id() -> T::AccountId {
-			PALLET_ID.into_account()
+		fn account_id(vault_id: &VaultIndex) -> T::AccountId {
+			PALLET_ID.into_sub_account(vault_id)
 		}
 
 		/// Computes the sum of all the assets that the vault currently controls.
 		fn assets_under_management(vault_id: &VaultIndex) -> Result<T::Balance, Error<T>> {
 			let vault =
 				Vaults::<T>::try_get(vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
-			let owned = T::Currency::balance(vault.asset_id, &Self::account_id());
-			let outstanding = CapitalStructure::<T>::iter_prefix_values(vault_id)
-				.fold(T::Balance::zero(), |sum, item| sum + item.balance);
-			Ok(owned + outstanding)
+			Self::do_assets_under_management(vault_id, &vault)
 		}
 
 		fn do_withdraw(
@@ -374,33 +379,10 @@ pub mod pallet {
 		) -> Result<T::Balance, DispatchError> {
 			let vault =
 				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			let lp_shares_value_amount = Self::do_lp_share_value(vault_id, &vault, lp_amount)?;
 
-			let vault_aum = Self::assets_under_management(vault_id)?;
-			let vault_aum_value = <T::Convert as Convert<T::Balance, u128>>::convert(vault_aum);
-
-			let lp_total_issuance = T::Currency::total_issuance(vault.lp_token_id);
-			let lp_total_issuance_value =
-				<T::Convert as Convert<T::Balance, u128>>::convert(lp_total_issuance);
-
-			let lp_amount_value = <T::Convert as Convert<T::Balance, u128>>::convert(lp_amount);
-
-			/*
-			   a = total lp issued
-			   b = asset under management
-			   lp_share_percent = lp / a
-			   lp_shares_value	= lp_share_percent * b
-								= lp / a * b
-								= lp * b / a
-			*/
-			let lp_shares_value =
-				multiply_by_rational(lp_amount_value, vault_aum_value, lp_total_issuance_value)
-					.map_err(|_| Error::<T>::OverflowError)?;
-
-			// Should represent the deposited funds + interests
-			let lp_shares_value_amount =
-				<T::Convert as Convert<u128, T::Balance>>::convert(lp_shares_value);
-
-			let vault_owned_amount = T::Currency::balance(vault.asset_id, &Self::account_id());
+			let vault_owned_amount =
+				T::Currency::balance(vault.asset_id, &Self::account_id(vault_id));
 
 			// TODO(hussein-aitlahcen): should we provide what we can to reduce the available
 			// liquidity in order to force strategies to rebalance?
@@ -413,7 +395,7 @@ pub mod pallet {
 				Error::<T>::InsufficientLpTokens
 			);
 
-			let from = Self::account_id();
+			let from = Self::account_id(&vault_id);
 			ensure!(
 				T::Currency::can_withdraw(vault.asset_id, &from, lp_shares_value_amount)
 					.into_result()
@@ -441,7 +423,7 @@ pub mod pallet {
 				Error::<T>::TransferFromFailed
 			);
 
-			let to = Self::account_id();
+			let to = Self::account_id(&vault_id);
 
 			let vault_aum = Self::assets_under_management(vault_id)?;
 			if vault_aum.is_zero() {
@@ -489,6 +471,49 @@ pub mod pallet {
 				Ok(lp)
 			}
 		}
+
+		fn do_lp_share_value(
+			vault_id: &VaultIndex,
+			vault: &VaultInfo<T>,
+			lp_amount: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			let vault_aum = Self::do_assets_under_management(vault_id, vault)?;
+			let vault_aum_value = <T::Convert as Convert<T::Balance, u128>>::convert(vault_aum);
+
+			let lp_total_issuance = T::Currency::total_issuance(vault.lp_token_id);
+			let lp_total_issuance_value =
+				<T::Convert as Convert<T::Balance, u128>>::convert(lp_total_issuance);
+
+			let lp_amount_value = <T::Convert as Convert<T::Balance, u128>>::convert(lp_amount);
+
+			/*
+			   a = total lp issued
+			   b = asset under management
+			   lp_share_percent = lp / a
+			   lp_shares_value	= lp_share_percent * b
+								= lp / a * b
+								= lp * b / a
+			*/
+			let lp_shares_value =
+				multiply_by_rational(lp_amount_value, vault_aum_value, lp_total_issuance_value)
+					.map_err(|_| Error::<T>::OverflowError)?;
+
+			let lp_shares_value_amount =
+				<T::Convert as Convert<u128, T::Balance>>::convert(lp_shares_value);
+
+			Ok(lp_shares_value_amount)
+		}
+
+		/// Computes the sum of all the assets that the vault currently controls.
+		fn do_assets_under_management(
+			vault_id: &VaultIndex,
+			vault: &VaultInfo<T>,
+		) -> Result<T::Balance, Error<T>> {
+			let owned = T::Currency::balance(vault.asset_id, &Self::account_id(&vault_id));
+			let outstanding = CapitalStructure::<T>::iter_prefix_values(vault_id)
+				.fold(T::Balance::zero(), |sum, item| sum + item.balance);
+			Ok(owned + outstanding)
+		}
 	}
 
 	impl<T: Config> Vault for Pallet<T> {
@@ -504,8 +529,8 @@ pub mod pallet {
 			Ok(vault.asset_id)
 		}
 
-		fn account_id() -> Self::AccountId {
-			Pallet::<T>::account_id()
+		fn account_id(vault: &Self::VaultId) -> Self::AccountId {
+			Pallet::<T>::account_id(vault)
 		}
 
 		fn create(
@@ -516,12 +541,12 @@ pub mod pallet {
 		}
 
 		fn deposit(
-			vault: &Self::VaultId,
+			vault_id: &Self::VaultId,
 			from: &Self::AccountId,
 			asset_amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			ensure!(asset_amount > T::Balance::zero(), Error::<T>::AmountMustBePositive);
-			Pallet::<T>::do_deposit(&vault, &from, asset_amount)
+			Pallet::<T>::do_deposit(&vault_id, &from, asset_amount)
 		}
 
 		fn withdraw(
@@ -533,8 +558,19 @@ pub mod pallet {
 			Pallet::<T>::do_withdraw(&vault, &to, lp_amount)
 		}
 
-		fn lp_asset_id(vault: &Self::VaultId) -> Result<Self::AssetId, DispatchError> {
-			todo!()
+		fn lp_asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError> {
+			let vault =
+				Vaults::<T>::try_get(vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			Ok(vault.lp_token_id)
+		}
+
+		fn lp_share_value(
+			vault_id: &Self::VaultId,
+			lp_amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			let vault =
+				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			Self::do_lp_share_value(vault_id, &vault, lp_amount)
 		}
 	}
 
@@ -551,7 +587,10 @@ pub mod pallet {
 			};
 
 			let aum = Self::assets_under_management(vault_id)?;
-			let max_allowed = allocation.mul_floor(aum);
+
+			let max_allowed = <T::Convert as Convert<u128, T::Balance>>::convert(
+				allocation.mul_floor(<T::Convert as Convert<T::Balance, u128>>::convert(aum)),
+			);
 
 			// if a strategy has an allocation, it must have an associated capital structure too.
 			let state = CapitalStructure::<T>::try_get(vault_id, &account)
@@ -579,7 +618,7 @@ pub mod pallet {
 				state.balance.checked_add(&amount).ok_or(Error::<T>::OverflowError)?;
 				// This can definitely overflow. Perhaps it should be a BigUint?
 				state.lifetime_withdrawn.checked_add(&amount).ok_or(Error::<T>::OverflowError)?;
-				T::Currency::transfer(vault.asset_id, &Self::account_id(), to, amount, true)
+				T::Currency::transfer(vault.asset_id, &Self::account_id(vault_id), to, amount, true)
 					.map_err(|_| Error::<T>::InsufficientFunds)
 			})?;
 			Ok(())
@@ -597,8 +636,14 @@ pub mod pallet {
 				state.balance.saturating_sub(&amount);
 				// This can definitely overflow. Perhaps it should be a BigUint?
 				state.lifetime_deposited.checked_add(&amount).ok_or(Error::<T>::OverflowError)?;
-				T::Currency::transfer(vault.asset_id, from, &Self::account_id(), amount, true)
-					.map_err(|_| Error::<T>::InsufficientFunds)
+				T::Currency::transfer(
+					vault.asset_id,
+					from,
+					&Self::account_id(vault_id),
+					amount,
+					true,
+				)
+				.map_err(|_| Error::<T>::InsufficientFunds)
 			})?;
 			Ok(())
 		}
