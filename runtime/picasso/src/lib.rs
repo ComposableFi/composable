@@ -21,6 +21,7 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
+use utility;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -614,6 +615,13 @@ impl scheduler::Config for Runtime {
 	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
 }
 
+impl utility::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type WeightInfo = weights::utility::WeightInfo<Runtime>;
+
+}
+
 parameter_types! {
 	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
@@ -712,7 +720,7 @@ construct_runtime!(
 		Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 32,
 		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
-
+		Utility: utility::{Pallet, Call, Event},
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
@@ -910,7 +918,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, scheduler, Scheduler);
             add_benchmark!(params, batches, democracy, Democracy);
             add_benchmark!(params, batches, collective, Council);
-
+	    add_benchmark!(params, batches, utility, Utility);
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
         }
