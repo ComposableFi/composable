@@ -63,6 +63,7 @@ pub trait Vault {
 	type BlockNumber;
 	type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 
+	/// underlying asset id
 	fn asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
 
 	fn lp_asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
@@ -90,9 +91,9 @@ pub trait Vault {
 
 	/// Convert from % share represented by LPs to underlying asset value
 	/// Because of stock dilution, the LPs minted are not 1:1 with deposit
-	fn lp_share_value(
+	fn to_underlying_value(
 		vault_id: &Self::VaultId,
-		lp_amount: Self::Balance,
+		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 }
 
