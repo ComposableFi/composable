@@ -61,6 +61,12 @@ pub mod pallet {
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 
+	/// number like of hi bits, so that amount and balance calculations are don it it with high precision
+	/// via fixed point
+	/// while this is 128 bit, cannot support u128
+	/// can support it if to use FixedU256
+	type LiftedFixedBalance = FixedU128;
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Oracle: Oracle<AssetId = Self::AssetId, Balance = Self::Balance>;
@@ -83,8 +89,9 @@ pub mod pallet {
 			+ CheckedMul
 			+ SaturatingSub
 			+ AtLeast32BitUnsigned
+			+ From<u64> // at least 64 bit
 			+ Zero
-			+ From<u128>
+			+ Into<LiftedFixedBalance> // integer part not more than bits in this
 			+ Into<u128>;
 
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
@@ -310,14 +317,16 @@ pub mod pallet {
 		) -> Result<Ratio, DispatchError> {
 			// utilization ratio is 0 when there are no borrows
 			if borrows.is_zero() {
-				return Ok(Ratio::zero())
+				return Ok(Ratio::zero());
 			}
 			// utilizationRatio = totalBorrows / (totalCash + totalBorrows − totalReserves)
-			let total = cash
+			let total: u128 = cash
 				.checked_add(borrows)
 				.and_then(|r| r.checked_sub(reserves))
-				.ok_or(Error::<T>::Overflow)?;
-			let mut util_ratio = Ratio::saturating_from_rational((*borrows).into(), total.into());
+				.ok_or(Error::<T>::Overflow)?
+				.into();
+			let borrows: u128 = (*borrows).into();
+			let mut util_ratio = Ratio::saturating_from_rational(borrows, total);
 			if util_ratio > Ratio::one() {
 				util_ratio = Ratio::one();
 			}
@@ -336,12 +345,14 @@ pub mod pallet {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let borrow_rate = market.interest_rate.get_borrow_rate(util).unwrap();
-			let interest_accumulated = composable_traits::rate_model::accrued_interest(
+			let interest_accumulated: u128 = composable_traits::rate_model::accrued_interest(
 				borrow_rate,
 				total_borrows.into(),
 				delta_time,
 			)
-			.unwrap();
+			.ok_or(Error::<T>::Overflow)?
+			.try_into()
+			.map_err(|_| Error::<T>::Overflow)?;
 			let total_borrows_new = interest_accumulated
 				.checked_add(total_borrows.into())
 				.ok_or(Error::<T>::Overflow)?;
@@ -354,6 +365,10 @@ pub mod pallet {
 			let borrow_index_new = increment_index(borrow_rate, borrow_index, delta_time)
 				.and_then(|r| r.checked_add(&borrow_index))
 				.ok_or(Error::<T>::Overflow)?;
+			let total_borrows_new: u64 =
+				total_borrows_new.try_into().map_err(|_| Error::<T>::Overflow)?;
+			let total_reserves_new: u64 =
+				total_borrows_new.try_into().map_err(|_| Error::<T>::Overflow)?;
 			Self::update_borrows(market_id, Self::Balance::from(total_borrows_new))?;
 			Self::update_reserves(market_id, Self::Balance::from(total_reserves_new))?;
 			Self::update_borrow_index(market_id, borrow_index_new)?;
@@ -387,18 +402,23 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let config =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-			let collateral = AccountCollateral::<T>::try_get(market_id, account)
-				.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount)?;
-			let asset = <T::Vault as Vault>::asset_id(&config.collateral)?;
-			let collateral_price = <T::Oracle as Oracle>::get_price(&asset)?;
-			let balance: u128 = collateral_price.0.into();
+			let collateral_balance: LiftedFixedBalance =
+				AccountCollateral::<T>::try_get(market_id, account)
+					.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount)?
+					.into();
+			let collateral_asset_id = <T::Vault as Vault>::asset_id(&config.collateral)?;
+			let collateral_price: LiftedFixedBalance =
+				<T::Oracle as Oracle>::get_price(&collateral_asset_id)?.0.into();
 
-			let limit: u128 = NormalizedCollateralFactor::from(balance)
-				.checked_div(&config.collateral_factor)
-				.ok_or(Error::<T>::Overflow)?
-				.checked_mul_int(1)
+			let collateral_normalized_amount = collateral_balance
+				.checked_mul(&collateral_price)
+				.and_then(|collateral_normalized| {
+					collateral_normalized.checked_div(&config.collateral_factor)
+				})
+				.and_then(|borrow_normalized| borrow_normalized.checked_mul_int(1u64))
 				.ok_or(Error::<T>::Overflow)?;
-			Ok(limit.try_into().map_err(|_| Error::<T>::Overflow)?)
+
+			Ok(collateral_normalized_amount.into())
 		}
 
 		fn deposit_collateral(
