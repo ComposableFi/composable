@@ -117,6 +117,7 @@ pub mod pallet {
 		CollateralDepositFailed,
 		MarketCollateralWasNotDepositedByAccount,
 		CollateralFactorIsLessOrEqualOne,
+		MarketAndAccountPairNotFound,
 	}
 
 	/// Lending instances counter
@@ -156,6 +157,11 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// market borrow index
+	#[pallet::storage]
+	#[pallet::getter(fn borrow_index)]
+	pub type BorrowIndex<T: Config> = StorageMap<_, Twox64Concat, MarketIndex, Ratio, ValueQuery>;
+
 	/// (Market, Account) -> Collateral
 	#[pallet::storage]
 	#[pallet::getter(fn account_collateral)]
@@ -168,17 +174,6 @@ pub mod pallet {
 		T::Balance,
 		ValueQuery,
 	>;
-
-	impl<T: Config> Pallet<T> {
-		///Accrue interest to updated borrow index
-		/// and then calculate account's borrow balance using the updated borrow index
-		pub fn borrow_balance_current(
-			market_id: &<Self as Lending>::MarketId,
-		) -> Result<T::Balance, DispatchError> {
-			<Self as Lending>::accrue_interest(market_id)?;
-			todo!()
-		}
-	}
 
 	/// The timestamp of the previous block or defaults to timestamp at genesis.
 	/// TODO: should be updated in on_finalize() hook.
@@ -283,12 +278,6 @@ pub mod pallet {
 			todo!()
 		}
 
-		fn borrow_index(
-			market_id: &Self::MarketId,
-		) -> Result<sp_runtime::FixedU128, DispatchError> {
-			todo!()
-		}
-
 		fn update_borrows(
 			market_id: &Self::MarketId,
 			borrows: Self::Balance,
@@ -361,7 +350,8 @@ pub mod pallet {
 				.mul_floor(interest_accumulated)
 				.checked_add(total_reserves.into())
 				.ok_or(Error::<T>::Overflow)?;
-			let borrow_index = Self::borrow_index(market_id)?;
+			let borrow_index =
+				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let borrow_index_new = increment_index(borrow_rate, borrow_index, delta_time)
 				.and_then(|r| r.checked_add(&borrow_index))
 				.ok_or(Error::<T>::Overflow)?;
@@ -379,7 +369,28 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
-			todo!()
+			<Self as Lending>::accrue_interest(market_id)?;
+			let principal = DebtPrincipals::<T>::try_get(market_id, account)
+				.map_err(|_| Error::<T>::MarketAndAccountPairNotFound)?;
+			// If borrowBalance = 0 then borrow index is likely also 0.
+			// Rather than failing the calculation with a division by 0, we immediately return 0 in this case.
+			if principal.is_zero() {
+				return Ok(T::Balance::zero());
+			}
+
+			let account_interest_index = DebtIndex::<T>::try_get(market_id, account)
+				.map_err(|_| Error::<T>::MarketAndAccountPairNotFound)?;
+			let market_interest_index =
+				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+
+			let principal: LiftedFixedBalance = principal.into();
+
+			let balance = principal
+				.checked_mul(&market_interest_index)
+				.and_then(|from_start_total| from_start_total.checked_div(&account_interest_index))
+				.and_then(|x| x.checked_mul_int(1u64))
+				.ok_or(Error::<T>::Overflow)?;
+			Ok(balance.into())
 		}
 
 		fn collateral_of_account(

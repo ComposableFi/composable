@@ -99,8 +99,6 @@ pub trait Lending {
 
 	fn total_reserves(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
-	fn borrow_index(market_id: &Self::MarketId) -> Result<FixedU128, DispatchError>;
-
 	fn update_borrows(
 		market_id: &Self::MarketId,
 		borrows: Self::Balance,
@@ -122,6 +120,11 @@ pub trait Lending {
 		reserves: &Self::Balance,
 	) -> Result<Ratio, DispatchError>;
 
+	/// Accrue interest to updated borrow index
+	/// and then calculate account's borrow balance using the updated borrow index
+	/// ```python
+	/// new_borrow_balance = principal * market_borrow_index / borrower_borrow_index
+	/// ```
 	fn borrow_balance_current(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
