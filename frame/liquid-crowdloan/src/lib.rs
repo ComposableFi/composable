@@ -10,6 +10,7 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -33,6 +34,7 @@ pub mod pallet {
 		SaturatedConversion, Zero,
 	};
 	use sp_std::fmt::Debug;
+	pub use crate::weights::WeightInfo;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -66,6 +68,9 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ Zero
 			+ From<u64>;
+
+		/// The weight information of this pallet.
+		type WeightInfo: WeightInfo;
 	}
 
 	pub type CurrencyIdOf<T> =
@@ -107,7 +112,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[transactional]
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::initiate())]
 		pub fn initiate(
 			origin: OriginFor<T>,
 			manager: T::AccountId,
@@ -127,7 +132,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::make_claimable())]
 		pub fn make_claimable(origin: OriginFor<T>) -> DispatchResult {
 			T::JumpStart::ensure_origin(origin)?;
 			<IsClaimable<T>>::put(true);
@@ -135,7 +140,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::claim())]
 		pub fn claim(origin: OriginFor<T>, amount: u128) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_claimable().unwrap_or(false), Error::<T>::NotClaimable);

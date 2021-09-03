@@ -120,6 +120,7 @@ impl pallet_liquid_crowdloan::Config for Test {
 	type Currency = Tokens;
 	type Balance = Balance;
 	type NativeCurrency = NativeBalances;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

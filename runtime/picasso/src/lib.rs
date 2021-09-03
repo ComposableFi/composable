@@ -9,7 +9,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod weights;
 pub use runtime_common as common;
 use runtime_common::{
-	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, CouncilInstance,
+	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, CouncilInstance, CurrencyId, Amount,
 	EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
 	MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
 };
@@ -17,10 +17,12 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult,
+	ApplyExtrinsicResult
 };
+use orml_traits::parameter_type_with_key;
+
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -537,13 +539,48 @@ impl collator_selection::Config for Runtime {
 	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
 }
 
+
+
+impl currency_factory::Config for Runtime {
+	type Event = Event;
+	type CurrencyId = CurrencyId;
+	type Convert = ConvertInto;
+}
+
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+		Zero::zero()
+	};
+}
+
+// TODO(hussein-aitlahcen): weight, dust & existential deposit
+impl orml_tokens::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = CurrencyId;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
+	type MaxLocks = ();
+	type DustRemovalWhitelist = ();
+}
+
 parameter_types! {
 	pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
 
 }
 
 impl liquid_crowdloan::Config for Runtime {
+	type Event = Event;
 	type LiquidRewardId = LiquidRewardId;
+	type CurrencyFactory = Factory;
+	type CurrencyId = CurrencyId;
+	type JumpStart = EnsureRootOrHalfCouncil;
+	type Currency = Tokens;
+	type Balance = Balance;
+	type NativeCurrency = Balances;
+	type WeightInfo = weights::liquid_crowdloan::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -730,7 +767,10 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
 		// local modules
-		LiquidCrowdloan: liquid_crowdloan::{Pallet} = 50,
+		LiquidCrowdloan: liquid_crowdloan::{Pallet, Call, Storage, Event<T>} = 50,
+		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
+		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
+
 
 	}
 );
@@ -923,6 +963,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, scheduler, Scheduler);
             add_benchmark!(params, batches, democracy, Democracy);
             add_benchmark!(params, batches, collective, Council);
+            add_benchmark!(params, batches, liquid_crowdloan, LiquidCrowdloan);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

@@ -74,6 +74,10 @@ xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "releas
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.8", default-features = false }
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.8", default-features = false }
 
+currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
+
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
@@ -101,6 +105,8 @@ std = [
 	"timestamp/std",
 	"session/std",
 	"sudo/std",
+	"currency-factory/std",
+	"orml-tokens/std",
 	"indices/std",
 	"treasury/std",
 	"democracy/std",
@@ -138,6 +144,7 @@ runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"indices/runtime-benchmarks",
+	"liquid-crowdloan/runtime-benchmarks",
 	"membership/runtime-benchmarks",
 	"treasury/runtime-benchmarks",
 	"scheduler/runtime-benchmarks",
