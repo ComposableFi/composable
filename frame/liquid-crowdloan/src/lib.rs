@@ -148,8 +148,8 @@ pub mod pallet {
 			let token_id = <TokenId<T>>::get().ok_or(Error::<T>::NotClaimable)?;
 			let token_supply = T::Currency::total_issuance(token_id);
 			let pot_balance = T::NativeCurrency::free_balance(&Self::account_id());
-			let token_supply_value: u128 = token_supply.saturated_into::<u128>();
-			let pot_balance_value: u128 = pot_balance.saturated_into::<u128>();
+			let token_supply_value: u128 = token_supply.saturated_into();
+			let pot_balance_value: u128 = pot_balance.saturated_into();
 
 			ensure!(pot_balance_value > 0, Error::<T>::ConversionError);
 			ensure!(token_supply_value > 0, Error::<T>::ConversionError);
