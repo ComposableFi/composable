@@ -166,7 +166,6 @@ pub mod pallet {
 
 			T::NativeCurrency::transfer(&Self::account_id(), &who, converted_payout, AllowDeath)?;
 			Self::deposit_event(Event::Claimed(who, amount));
-			// TODO clear state if pot is empty?
 			Ok(().into())
 		}
 	}
