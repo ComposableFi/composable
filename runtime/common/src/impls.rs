@@ -81,7 +81,7 @@ mod tests {
 	use crate::{constants::PICA, Balance, BlockNumber, DAYS};
 	use collator_selection::IdentityCollator;
 	use frame_support::{
-		parameter_types,
+		parameter_types, ord_parameter_types,
 		traits::{FindAuthor, ValidatorRegistration},
 		PalletId,
 	};
@@ -90,9 +90,11 @@ mod tests {
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
-		traits::{BlakeTwo256, IdentityLookup},
+		traits::{BlakeTwo256, IdentityLookup, ConvertInto},
 		Perbill, Permill,
 	};
+	use orml_traits::parameter_type_with_key;
+	use num_traits::Zero;
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 	type Block = frame_system::mocking::MockBlock<Test>;
@@ -107,9 +109,14 @@ mod tests {
 			Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 			Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 31,
 			CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>},
-			LiquidCrowdloan: liquid_crowdloan::{Pallet},
+			LiquidCrowdloan: liquid_crowdloan::{Pallet, Call, Storage, Event<T>},
+			Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+			Factory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		}
 	);
+
+	pub type MockCurrencyId = u128;
+	pub type Amount = i128;
 
 	parameter_types! {
 		pub const BlockHashCount: u64 = 250;
@@ -198,12 +205,48 @@ mod tests {
 		type WeightInfo = ();
 	}
 
+	impl pallet_currency_factory::Config for Test {
+		type Event = Event;
+		type CurrencyId = MockCurrencyId;
+		type Convert = ConvertInto;
+	}
+
+	parameter_type_with_key! {
+		pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
+			Zero::zero()
+		};
+	}
+
+	impl orml_tokens::Config for Test {
+		type Event = Event;
+		type Balance = Balance;
+		type Amount = Amount;
+		type CurrencyId = MockCurrencyId;
+		type WeightInfo = ();
+		type ExistentialDeposits = ExistentialDeposits;
+		type OnDust = ();
+		type MaxLocks = ();
+		type DustRemovalWhitelist = ();
+	}
+
+
 	parameter_types! {
 		pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
 	}
 
+	ord_parameter_types! {
+		pub const RootAccount: u128 = 2;
+	}
 	impl liquid_crowdloan::Config for Test {
+		type Event = Event;
 		type LiquidRewardId = LiquidRewardId;
+		type CurrencyFactory = Factory;
+		type CurrencyId = MockCurrencyId;
+		type JumpStart = EnsureRoot<AccountId>;
+		type Currency = Tokens;
+		type Balance = Balance;
+		type NativeCurrency = Balances;
+		type WeightInfo = ();
 	}
 
 	impl authorship::Config for Test {

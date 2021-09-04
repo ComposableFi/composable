@@ -111,6 +111,7 @@ parameter_types! {
 ord_parameter_types! {
 	pub const RootAccount: u128 = 2;
 }
+
 impl pallet_liquid_crowdloan::Config for Test {
 	type Event = Event;
 	type LiquidRewardId = LiquidRewardId;

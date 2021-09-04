@@ -31,6 +31,10 @@ liquid-crowdloan = { package = "pallet-liquid-crowdloan", path = '../../frame/li
 [dev-dependencies]
 serde = { version = "1.0.119" }
 authorship = { package = "pallet-authorship", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb" }
+num-traits = { version = "0.2.14", default-features = false }
+pallet-currency-factory = { version = "0.0.1", path = "../../frame/currency-factory", default-features = false }
 
 [features]
 default = ["std"]
