@@ -17,6 +17,7 @@ pallets=(
 	collective
 	democracy
 	collator_selection
+	utility
 )
 
 for p in ${pallets[@]}
