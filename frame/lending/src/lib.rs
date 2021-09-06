@@ -41,12 +41,22 @@ pub mod pallet {
 		rate_model::*,
 		vault::{FundsAvailability, StrategicVault, Vault},
 	};
-	use frame_support::{PalletId, pallet_prelude::*, traits::{UnixTime, fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer}}};
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{
+			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
+			UnixTime,
+		},
+		PalletId,
+	};
 	use num_traits::{CheckedDiv, SaturatingSub};
-	use sp_runtime::{ArithmeticError, FixedPointNumber, FixedU128, traits::{
+	use sp_runtime::{
+		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Zero,
-		}};
+		},
+		ArithmeticError, FixedPointNumber, FixedU128,
+	};
 	use sp_std::fmt::Debug;
 
 	#[derive(Default, Copy, Clone, Encode, Decode)]

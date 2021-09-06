@@ -102,8 +102,10 @@ pub trait Lending {
 
 	/// new_debt = (delta_interest_rate * interest_rate) + debt
 	///`delta_interest_rate` - rate for passed time since previous update
-	fn update_borrows(market_id: &Self::MarketId, delta_interest_rate: Rate)
-		-> Result<(), DispatchError>;
+	fn update_borrows(
+		market_id: &Self::MarketId,
+		delta_interest_rate: Rate,
+	) -> Result<(), DispatchError>;
 
 	fn update_reserves(
 		market_id: &Self::MarketId,
