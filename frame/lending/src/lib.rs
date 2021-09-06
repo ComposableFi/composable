@@ -282,17 +282,18 @@ pub mod pallet {
 			todo!()
 		}
 
-		fn update_borrows(
-			market_id: &Self::MarketId,
-			interest_rate: Rate,
-		) -> Result<(), DispatchError> {
-			let mut active_debts = DebtPrincipals::<T>::iter_prefix_values(market_id);
-			for mut debt in active_debts {
-				// new_debt = (debt * interest_rate) + debt
+		fn update_borrows(market_id: &Self::MarketId) -> Result<(), DispatchError> {
+			let mut active_debts = DebtPrincipals::<T>::iter_prefix(market_id);
+			for (debt_owner, mut debt) in active_debts {
+				// new_debt = (debt * market_borrow_index) / user_borrow_index
 				let debt_fixed: LiftedFixedBalance = debt.into();
+				let market_borrow_index = BorrowIndex::<T>::try_get(market_id)
+					.map_err(|_| Error::<T>::MarketDoesNotExist)?;
+				let user_borrow_index = DebtIndex::<T>::try_get(market_id, debt_owner)
+					.map_err(|_| Error::<T>::MarketDoesNotExist)?;
 				let new_debt = debt_fixed
-					.checked_mul(&interest_rate)
-					.and_then(|d| d.checked_add(&debt_fixed))
+					.checked_mul(&market_borrow_index)
+					.and_then(|x| x.checked_div(&user_borrow_index))
 					.and_then(|x| x.checked_mul_int(1u64))
 					.ok_or(Error::<T>::Overflow)?;
 				debt = new_debt.into();
@@ -353,10 +354,7 @@ pub mod pallet {
 			BorrowIndex::<T>::insert(market_id, borrow_index_new);
 
 			// update borrows
-			let interest_time = Rate::saturating_from_rational(delta_time, SECONDS_PER_YEAR);
-			let borrow_rate =
-				borrow_rate.checked_mul(&interest_time).ok_or(Error::<T>::Overflow)?;
-			Self::update_borrows(market_id, borrow_rate)?;
+			Self::update_borrows(market_id)?;
 
 			//TODO: update_reserves
 			Ok(())
@@ -367,28 +365,8 @@ pub mod pallet {
 			account: &Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
 			<Self as Lending>::accrue_interest(market_id)?;
-			let principal = DebtPrincipals::<T>::try_get(market_id, account)
-				.map_err(|_| Error::<T>::MarketAndAccountPairNotFound)?;
-			// If borrowBalance = 0 then borrow index is likely also 0.
-			// Rather than failing the calculation with a division by 0, we immediately return 0 in
-			// this case.
-			if principal.is_zero() {
-				return Ok(T::Balance::zero())
-			}
-
-			let account_interest_index = DebtIndex::<T>::try_get(market_id, account)
-				.map_err(|_| Error::<T>::MarketAndAccountPairNotFound)?;
-			let market_interest_index =
-				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-
-			let principal: LiftedFixedBalance = principal.into();
-
-			let balance = principal
-				.checked_mul(&market_interest_index)
-				.and_then(|from_start_total| from_start_total.checked_div(&account_interest_index))
-				.and_then(|x| x.checked_mul_int(1u64))
-				.ok_or(Error::<T>::Overflow)?;
-			Ok(balance.into())
+			DebtPrincipals::<T>::try_get(market_id, account)
+				.map_err(|_| Error::<T>::MarketAndAccountPairNotFound.into())
 		}
 
 		fn collateral_of_account(
