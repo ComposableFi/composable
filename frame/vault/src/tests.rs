@@ -154,9 +154,9 @@ proptest! {
 				reserve_share,
 			);
 
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, total_funds));
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == total_funds);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), total_funds);
 
 			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, total_funds));
 
@@ -177,11 +177,11 @@ proptest! {
 			);
 
 			// Strategy withdraw/deposit full allocation
-			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &strategy_account_id), 0);
 			prop_assert_ok!(<Vaults as StrategicVault>::withdraw(&vault_id, &strategy_account_id, expected_strategy_funds));
-			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == expected_strategy_funds);
+			prop_assert_eq!(Tokens::balance(asset_id, &strategy_account_id), expected_strategy_funds);
 			prop_assert_ok!(<Vaults as StrategicVault>::deposit(&vault_id, &strategy_account_id, expected_strategy_funds));
-			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &strategy_account_id), 0);
 
 			Ok(())
 		})?;
@@ -203,9 +203,9 @@ proptest! {
 				reserve_share,
 			);
 
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, total_funds));
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == total_funds);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), total_funds);
 
 			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, total_funds));
 
@@ -226,9 +226,9 @@ proptest! {
 			);
 
 			// Strategy withdraw full allocation
-			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &strategy_account_id), 0);
 			prop_assert_ok!(<Vaults as StrategicVault>::withdraw(&vault_id, &strategy_account_id, expected_strategy_funds));
-			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == expected_strategy_funds);
+			prop_assert_eq!(Tokens::balance(asset_id, &strategy_account_id), expected_strategy_funds);
 
 			// User withdraw from the reserve
 			let reserve = total_funds - expected_strategy_funds;
@@ -273,15 +273,14 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, _) = create_vault(strategy_account_id, asset_id);
 
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
-
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == amount);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), amount);
 
 			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
 			prop_assert_ok!(Vaults::withdraw(Origin::signed(ALICE), vault_id, amount));
 
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == amount);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), amount);
 			Ok(())
 		})?;
 	}
@@ -295,16 +294,16 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, _) = create_vault(strategy_account_id, asset_id);
 
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
-			prop_assert!(Tokens::balance(asset_id, &BOB) == 0);
-			prop_assert!(Tokens::balance(asset_id, &CHARLIE) == 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &BOB), 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &CHARLIE), 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount1));
 			prop_assert_ok!(Tokens::mint_into(asset_id, &BOB, amount2));
 			prop_assert_ok!(Tokens::mint_into(asset_id, &CHARLIE, amount3));
 
-			prop_assert!(Tokens::balance(asset_id, &BOB) == amount2);
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == amount1);
-			prop_assert!(Tokens::balance(asset_id, &CHARLIE) == amount3);
+			prop_assert_eq!(Tokens::balance(asset_id, &BOB), amount2);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), amount1);
+			prop_assert_eq!(Tokens::balance(asset_id, &CHARLIE), amount3);
 
 			prop_assert_ok!(Vaults::deposit(Origin::signed(CHARLIE), vault_id, amount3));
 			prop_assert_ok!(Vaults::deposit(Origin::signed(BOB), vault_id, amount2));
@@ -314,9 +313,9 @@ proptest! {
 			prop_assert_ok!(Vaults::withdraw(Origin::signed(CHARLIE), vault_id, amount3));
 			prop_assert_ok!(Vaults::withdraw(Origin::signed(BOB), vault_id, amount2));
 
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == amount1);
-			prop_assert!(Tokens::balance(asset_id, &BOB) == amount2);
-			prop_assert!(Tokens::balance(asset_id, &CHARLIE) == amount3);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), amount1);
+			prop_assert_eq!(Tokens::balance(asset_id, &BOB), amount2);
+			prop_assert_eq!(Tokens::balance(asset_id, &CHARLIE), amount3);
 
 			Ok(())
 		})?;
@@ -331,14 +330,14 @@ proptest! {
 		let asset_id = MockCurrencyId::B;
 		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault_info) = create_vault(strategy_account_id, asset_id);
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 
-			prop_assert!(Tokens::balance(vault_info.lp_token_id, &ALICE) ==  0);
+			prop_assert_eq!(Tokens::balance(vault_info.lp_token_id, &ALICE),  0);
 
 			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
 
-			prop_assert!(Tokens::balance(vault_info.lp_token_id, &ALICE) == amount);
+			prop_assert_eq!(Tokens::balance(vault_info.lp_token_id, &ALICE), amount);
 			Ok(())
 		})?;
 	}
@@ -351,7 +350,7 @@ proptest! {
 		let asset_id = MockCurrencyId::C;
 		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
-			prop_assert!(Tokens::balance(vault.lp_token_id, &ALICE) == 0);
+			prop_assert_eq!(Tokens::balance(vault.lp_token_id, &ALICE), 0);
 			assert_noop!(Vaults::withdraw(Origin::signed(ALICE), vault_id, amount), Error::<Test>::InsufficientLpTokens);
 			Ok(())
 		})?;
@@ -365,11 +364,11 @@ proptest! {
 		let asset_id = MockCurrencyId::D;
 		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
 
-			prop_assert!(Tokens::balance(vault.lp_token_id, &BOB) == 0);
+			prop_assert_eq!(Tokens::balance(vault.lp_token_id, &BOB), 0);
 			assert_noop!(Vaults::withdraw(Origin::signed(BOB), vault_id, amount), Error::<Test>::InsufficientLpTokens);
 			Ok(())
 		})?;
@@ -383,9 +382,9 @@ proptest! {
 		let asset_id = MockCurrencyId::D;
 		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
-			prop_assert!(Tokens::balance(asset_id, &ALICE) == 0);
-			prop_assert!(Tokens::balance(asset_id, &BOB) == 0);
-			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &BOB), 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &strategy_account_id), 0);
 
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount1));
 			prop_assert_ok!(Tokens::mint_into(asset_id, &BOB, amount2));
@@ -436,11 +435,11 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
 
-			prop_assert!(Tokens::balance(asset_id, &strategy_account_id) == 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &strategy_account_id), 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &strategy_account_id, strategy_profits));
 
 			for (account, balance) in accounts.iter().copied() {
-				prop_assert!(Tokens::balance(asset_id, &account) == 0);
+				prop_assert_eq!(Tokens::balance(asset_id, &account), 0);
 				prop_assert_ok!(Tokens::mint_into(asset_id, &account, balance));
 			}
 
