@@ -48,7 +48,7 @@ pub mod pallet {
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orac");
 	pub use crate::weights::WeightInfo;
 	type AssetId = u64;
-	type PriceValue = u64;
+	type PriceValue = u128;
 
 	pub mod crypto {
 		use super::KEY_TYPE;
@@ -194,10 +194,10 @@ pub mod pallet {
 		StakeAdded(T::AccountId, BalanceOf<T>, BalanceOf<T>),
 		StakeRemoved(T::AccountId, BalanceOf<T>, T::BlockNumber),
 		StakeReclaimed(T::AccountId, BalanceOf<T>),
-		PriceSubmitted(T::AccountId, u64, u64),
+		PriceSubmitted(T::AccountId, u64, PriceValue),
 		UserSlashed(T::AccountId, u64, BalanceOf<T>),
 		UserRewarded(T::AccountId, u64, BalanceOf<T>),
-		AnswerPruned(T::AccountId, u64),
+		AnswerPruned(T::AccountId, PriceValue),
 	}
 
 	#[pallet::error]
@@ -243,8 +243,10 @@ pub mod pallet {
 		type AssetId = AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 
-		fn get_price(of: &Self::AssetId) -> Result<(Self::Balance, Self::Timestamp), DispatchError> {
-			let price =  Prices::<T>::try_get(of).map_err(|err| Error::<T>::PriceNotFound)?;
+		fn get_price(
+			of: &Self::AssetId,
+		) -> Result<(Self::Balance, Self::Timestamp), DispatchError> {
+			let price = Prices::<T>::try_get(of).map_err(|_| Error::<T>::PriceNotFound)?;
 			Ok((price.price, price.block))
 		}
 	}
@@ -353,7 +355,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::submit_price(T::MaxAnswerBound::get()))]
 		pub fn submit_price(
 			origin: OriginFor<T>,
-			price: u64,
+			price: u128,
 			asset_id: u64,
 		) -> DispatchResultWithPostInfo {
 			log::info!("inside submit {:#?}, {:#?}", asset_id, price);
@@ -567,8 +569,8 @@ pub mod pallet {
 			(staled_prices, fresh_prices)
 		}
 
-		pub fn get_median_price(prices: &Vec<PrePrice<T::BlockNumber, T::AccountId>>) -> u64 {
-			let mut numbers: Vec<u64> =
+		pub fn get_median_price(prices: &Vec<PrePrice<T::BlockNumber, T::AccountId>>) -> u128 {
+			let mut numbers: Vec<u128> =
 				prices.iter().map(|current_prices| current_prices.price).collect();
 			numbers.sort();
 			let mid = numbers.len() / 2;
@@ -606,7 +608,7 @@ pub mod pallet {
 				// Received price is wrapped into a call to `submit_price` public function of this
 				// pallet. This means that the transaction, when executed, will simply call that
 				// function passing `price` as an argument.
-				Call::submit_price(price, *price_id)
+				Call::submit_price(price.into(), *price_id)
 			});
 
 			for (acc, res) in &results {

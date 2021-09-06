@@ -278,14 +278,14 @@ fn add_price() {
 		));
 		// fails price not requested
 		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_1), 100u64, 0u64),
+			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u64),
 			Error::<Test>::PriceNotRequested
 		);
 
 		assert_ok!(Oracle::do_request_price(&account_1, 0));
 		// fails no stake
 		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_1), 100u64, 0u64),
+			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u64),
 			Error::<Test>::NotEnoughStake
 		);
 
@@ -299,24 +299,24 @@ fn add_price() {
 		assert_ok!(Oracle::add_stake(Origin::signed(account_4), 50));
 		assert_ok!(Oracle::add_stake(Origin::signed(account_5), 50));
 
-		assert_ok!(Oracle::submit_price(Origin::signed(account_1), 100u64, 0u64));
-		assert_ok!(Oracle::submit_price(Origin::signed(account_2), 100u64, 0u64));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_1), 100u128, 0u64));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_2), 100u128, 0u64));
 		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_2), 100u64, 0u64),
+			Oracle::submit_price(Origin::signed(account_2), 100u128, 0u64),
 			Error::<Test>::AlreadySubmitted
 		);
-		assert_ok!(Oracle::submit_price(Origin::signed(account_4), 100u64, 0u64));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_4), 100u128, 0u64));
 
 		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_5), 100u64, 0u64),
+			Oracle::submit_price(Origin::signed(account_5), 100u128, 0u64),
 			Error::<Test>::MaxPrices
 		);
 
-		let price = PrePrice { price: 100u64, block: 0, who: account_1 };
+		let price = PrePrice { price: 100u128, block: 0, who: account_1 };
 
-		let price2 = PrePrice { price: 100u64, block: 0, who: account_2 };
+		let price2 = PrePrice { price: 100u128, block: 0, who: account_2 };
 
-		let price4 = PrePrice { price: 100u64, block: 0, who: account_4 };
+		let price4 = PrePrice { price: 100u128, block: 0, who: account_4 };
 
 		assert_eq!(Oracle::pre_prices(0), vec![price, price2, price4]);
 	});
@@ -327,7 +327,7 @@ fn medianize_price() {
 	new_test_ext().execute_with(|| {
 		let account_1: AccountId = Default::default();
 		for i in 0..3 {
-			let price = i as u64 + 100u64;
+			let price = i as u128 + 100u128;
 			add_price_storage(price, 0, account_1, 0);
 		}
 		let price = Oracle::get_median_price(&Oracle::pre_prices(0));
@@ -441,7 +441,7 @@ fn on_init() {
 		// set prices into storage
 		let account_1: AccountId = Default::default();
 		for i in 0..3 {
-			let price = i as u64 + 100u64;
+			let price = i as u128 + 100u128;
 			add_price_storage(price, 0, account_1, 2);
 		}
 
@@ -457,7 +457,7 @@ fn on_init() {
 		assert_ok!(Oracle::do_request_price(&account_1, 0));
 
 		for i in 0..2 {
-			let price = i as u64 + 100u64;
+			let price = i as u128 + 100u128;
 			add_price_storage(price, 0, account_1, 3);
 		}
 
@@ -484,7 +484,7 @@ fn on_init_prune_scenerios() {
 		// set prices into storage
 		let account_1: AccountId = Default::default();
 		for i in 0..3 {
-			let price = i as u64 + 100u64;
+			let price = i as u128 + 100u128;
 			add_price_storage(price, 0, account_1, 0);
 		}
 		// all pruned
@@ -494,12 +494,12 @@ fn on_init_prune_scenerios() {
 		assert_eq!(Oracle::pre_prices(0).len(), 0);
 
 		for i in 0..5 {
-			let price = i as u64 + 1u64;
+			let price = i as u128 + 1u128;
 			add_price_storage(price, 0, account_1, 0);
 		}
 
 		for i in 0..3 {
-			let price = i as u64 + 100u64;
+			let price = i as u128 + 100u128;
 			add_price_storage(price, 0, account_1, 3);
 		}
 
@@ -509,12 +509,12 @@ fn on_init_prune_scenerios() {
 		assert_eq!(Oracle::prices(0), price);
 
 		for i in 0..5 {
-			let price = i as u64 + 1u64;
+			let price = i as u128 + 1u128;
 			add_price_storage(price, 0, account_1, 0);
 		}
 
 		for i in 0..2 {
-			let price = i as u64 + 300u64;
+			let price = i as u128 + 300u128;
 			add_price_storage(price, 0, account_1, 3);
 		}
 
@@ -543,7 +543,7 @@ fn on_init_over_max_answers() {
 		// set prices into storage
 		let account_1: AccountId = Default::default();
 		for i in 0..5 {
-			let price = i as u64 + 100u64;
+			let price = i as u128 + 100u128;
 			add_price_storage(price, 0, account_1, 0);
 		}
 		// all pruned
@@ -688,7 +688,7 @@ fn parse_price_works() {
 	}
 }
 
-fn add_price_storage(price: u64, asset_id: u64, who: AccountId, block: u64) {
+fn add_price_storage(price: u128, asset_id: u64, who: AccountId, block: u64) {
 	let price = PrePrice { price, block, who };
 	PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.push(price));
 }
