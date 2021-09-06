@@ -35,27 +35,18 @@ pub mod pallet {
 
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
+		currency::CurrencyFactory,
 		lending::{Lending, MarketConfig, MarketConfigInput, Timestamp},
 		oracle::Oracle,
 		rate_model::*,
-		vault::Vault,
+		vault::{FundsAvailability, StrategicVault, Vault},
 	};
-	use frame_support::{
-		pallet_prelude::*,
-		traits::{
-			fungibles::{Mutate, Transfer},
-			UnixTime,
-		},
-		PalletId,
-	};
+	use frame_support::{PalletId, pallet_prelude::*, traits::{UnixTime, fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer}}};
 	use num_traits::{CheckedDiv, SaturatingSub};
-	use sp_runtime::{
-		traits::{
+	use sp_runtime::{ArithmeticError, FixedPointNumber, FixedU128, traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Zero,
-		},
-		FixedPointNumber, FixedU128,
-	};
+		}};
 	use sp_std::fmt::Debug;
 
 	#[derive(Default, Copy, Clone, Encode, Decode)]
@@ -276,9 +267,9 @@ pub mod pallet {
 		}
 
 		fn borrow(
-			_market_id: &Self::MarketId,
-			_debt_owner: &Self::AccountId,
-			_amount_to_borrow: Self::Balance,
+			market_id: &Self::MarketId,
+			debt_owner: &Self::AccountId,
+			amount_to_borrow: Self::Balance,
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
@@ -300,11 +291,7 @@ pub mod pallet {
 				.ok_or(Error::<T>::NotEnoughCollateralToBorrowAmount)?;
 
 			let account_id = Self::account_id(market_id);
-			let can_withdraw = <T::Currency as Inspect<T::AccountId>>::reducible_balance(
-				asset_id.clone(),
-				&account_id,
-				true,
-			);
+			let can_withdraw = T::Currency::reducible_balance(asset_id.clone(), &account_id, true);
 			match <T::Vault as StrategicVault>::available_funds(
 				&market.borrow,
 				&Self::account_id(&market_id),
@@ -447,7 +434,7 @@ pub mod pallet {
 			BorrowIndex::<T>::insert(market_id, borrow_index_new);
 
 			// update borrows
-			Self::update_borrows(market_id)?;
+			Self::update_borrows(market_id, borrow_rate)?;
 
 			//TODO: update_reserves
 			Ok(())
