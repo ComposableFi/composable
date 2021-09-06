@@ -61,8 +61,8 @@ pub mod pallet {
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 
-	/// number like of hi bits, so that amount and balance calculations are don it it with high precision
-	/// via fixed point
+	/// number like of hi bits, so that amount and balance calculations are don it it with high
+	/// precision via fixed point
 	/// while this is 128 bit, cannot support u128
 	/// can support it if to use FixedU256
 	type LiftedFixedBalance = FixedU128;
@@ -342,7 +342,11 @@ pub mod pallet {
 		}
 
 		fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
-			todo!()
+			// Iterate over all account with debt in given market and accumulate that value
+			let active_debts = DebtPrincipals::<T>::iter_prefix_values(market_id);
+			active_debts.fold(Ok(Self::Balance::zero()), |acc, x| {
+				acc.and_then(|a| a.checked_add(&x).ok_or(Error::<T>::Overflow.into()))
+			})
 		}
 
 		fn total_cash(pair: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
@@ -355,21 +359,25 @@ pub mod pallet {
 
 		fn update_borrows(
 			market_id: &Self::MarketId,
-			borrows: Self::Balance,
+			interest_rate: Rate,
 		) -> Result<(), DispatchError> {
-			todo!()
+			let mut active_debts = DebtPrincipals::<T>::iter_prefix_values(market_id);
+			for mut debt in active_debts {
+				// new_debt = (debt * interest_rate) + debt
+				let debt_fixed: LiftedFixedBalance = debt.into();
+				let new_debt = debt_fixed
+					.checked_mul(&interest_rate)
+					.and_then(|d| d.checked_add(&debt_fixed))
+					.and_then(|x| x.checked_mul_int(1u64))
+					.ok_or(Error::<T>::Overflow)?;
+				debt = new_debt.into();
+			}
+			Ok(())
 		}
 
 		fn update_reserves(
 			market_id: &Self::MarketId,
 			reserves: Self::Balance,
-		) -> Result<(), DispatchError> {
-			todo!()
-		}
-
-		fn update_borrow_index(
-			market_id: &Self::MarketId,
-			borrow_index: sp_runtime::FixedU128,
 		) -> Result<(), DispatchError> {
 			todo!()
 		}
@@ -381,7 +389,7 @@ pub mod pallet {
 		) -> Result<Ratio, DispatchError> {
 			// utilization ratio is 0 when there are no borrows
 			if borrows.is_zero() {
-				return Ok(Ratio::zero());
+				return Ok(Ratio::zero())
 			}
 			// utilizationRatio = totalBorrows / (totalCash + totalBorrows − totalReserves)
 			let total: u128 = cash
@@ -409,34 +417,23 @@ pub mod pallet {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let borrow_rate = market.interest_rate.get_borrow_rate(util).unwrap();
-			let interest_accumulated: u128 = composable_traits::rate_model::accrued_interest(
-				borrow_rate,
-				total_borrows.into(),
-				delta_time,
-			)
-			.ok_or(Error::<T>::Overflow)?
-			.try_into()
-			.map_err(|_| Error::<T>::Overflow)?;
-			let total_borrows_new = interest_accumulated
-				.checked_add(total_borrows.into())
-				.ok_or(Error::<T>::Overflow)?;
-			let total_reserves_new = market
-				.reserve_factor
-				.mul_floor(interest_accumulated)
-				.checked_add(total_reserves.into())
-				.ok_or(Error::<T>::Overflow)?;
+
+			//update borrow_index
 			let borrow_index =
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let borrow_index_new = increment_index(borrow_rate, borrow_index, delta_time)
 				.and_then(|r| r.checked_add(&borrow_index))
 				.ok_or(Error::<T>::Overflow)?;
-			let total_borrows_new: u64 =
-				total_borrows_new.try_into().map_err(|_| Error::<T>::Overflow)?;
-			let total_reserves_new: u64 =
-				total_borrows_new.try_into().map_err(|_| Error::<T>::Overflow)?;
-			Self::update_borrows(market_id, Self::Balance::from(total_borrows_new))?;
-			Self::update_reserves(market_id, Self::Balance::from(total_reserves_new))?;
-			Self::update_borrow_index(market_id, borrow_index_new)?;
+			// overwrite value
+			BorrowIndex::<T>::insert(market_id, borrow_index_new);
+
+			// update borrows
+			let interest_time = Rate::saturating_from_rational(delta_time, SECONDS_PER_YEAR);
+			let borrow_rate =
+				borrow_rate.checked_mul(&interest_time).ok_or(Error::<T>::Overflow)?;
+			Self::update_borrows(market_id, borrow_rate)?;
+
+			//TODO: update_reserves
 			Ok(())
 		}
 
@@ -448,9 +445,10 @@ pub mod pallet {
 			let principal = DebtPrincipals::<T>::try_get(market_id, account)
 				.map_err(|_| Error::<T>::MarketAndAccountPairNotFound)?;
 			// If borrowBalance = 0 then borrow index is likely also 0.
-			// Rather than failing the calculation with a division by 0, we immediately return 0 in this case.
+			// Rather than failing the calculation with a division by 0, we immediately return 0 in
+			// this case.
 			if principal.is_zero() {
-				return Ok(T::Balance::zero());
+				return Ok(T::Balance::zero())
 			}
 
 			let account_interest_index = DebtIndex::<T>::try_get(market_id, account)
