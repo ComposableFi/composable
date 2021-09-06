@@ -56,7 +56,7 @@ pub mod pallet {
 		},
 		FixedPointNumber, FixedU128,
 	};
-	use sp_std::{convert::TryInto, fmt::Debug};
+	use sp_std::fmt::Debug;
 
 	#[derive(Default, Copy, Clone, Encode, Decode)]
 	#[repr(transparent)]
@@ -298,7 +298,7 @@ pub mod pallet {
 		}
 
 		fn update_borrows(market_id: &Self::MarketId) -> Result<(), DispatchError> {
-			let mut active_debts = DebtPrincipals::<T>::iter_prefix(market_id);
+			let active_debts = DebtPrincipals::<T>::iter_prefix(market_id);
 			for (debt_owner, mut debt) in active_debts {
 				// new_debt = (debt * market_borrow_index) / user_borrow_index
 				let debt_fixed: LiftedFixedBalance = debt.into();
