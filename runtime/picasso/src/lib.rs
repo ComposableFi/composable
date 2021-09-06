@@ -756,17 +756,10 @@ impl Filter<Call> for BaseCallFilter {
 	fn filter(call: &Call) -> bool {
 		matches!(
 			call,
-			Call::System(_) |
-				Call::Timestamp(_) |
-				Call::Sudo(_) | Call::ParachainSystem(_) |
-				Call::Authorship(_) |
-				Call::CollatorSelection(_) |
-				Call::Session(_) | Call::Council(_) |
-				Call::CouncilMembership(_) |
-				Call::XcmpQueue(_) |
-				Call::PolkadotXcm(_) |
-				Call::CumulusXcm(_) |
-				Call::DmpQueue(_)
+			Call::Balances(_)
+				| Call::Indices(_)
+				| Call::Democracy(_)
+				| Call::Treasury(_)
 		)
 	}
 }
