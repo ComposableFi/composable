@@ -99,19 +99,11 @@ pub trait Lending {
 
 	fn total_reserves(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
-	fn update_borrows(
-		market_id: &Self::MarketId,
-		borrows: Self::Balance,
-	) -> Result<(), DispatchError>;
+	fn update_borrows(market_id: &Self::MarketId) -> Result<(), DispatchError>;
 
 	fn update_reserves(
 		market_id: &Self::MarketId,
 		reserves: Self::Balance,
-	) -> Result<(), DispatchError>;
-
-	fn update_borrow_index(
-		market_id: &Self::MarketId,
-		borrow_index: FixedU128,
 	) -> Result<(), DispatchError>;
 
 	fn calc_utilization_ratio(
