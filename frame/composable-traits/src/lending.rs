@@ -50,11 +50,11 @@ pub trait Lending {
 	/// creates market for new pair in specified vault. if market exists under specified manager,
 	/// updates its parameters `deposit` - asset users want to borrow.
 	/// `collateral` - asset users will put as collateral.
-	fn create_or_update(
+	fn create(
 		borrow_asset_vault: Self::VaultId,
 		collateral_asset_vault: Self::VaultId,
 		config: MarketConfigInput<Self::AccountId>,
-	) -> Result<(), DispatchError>;
+	) -> Result<Self::MarketId, DispatchError>;
 
 	/// AccountId of the market instance
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId;
@@ -91,6 +91,7 @@ pub trait Lending {
 		repay_amount: Self::Balance,
 	) -> Result<(), DispatchError>;
 
+	/// total debts principals (not includes interest)
 	fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
 	fn accrue_interest(market_id: &Self::MarketId) -> Result<(), DispatchError>;
@@ -99,7 +100,9 @@ pub trait Lending {
 
 	fn total_reserves(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
-	fn update_borrows(market_id: &Self::MarketId, interest_rate: Rate)
+	/// new_debt = (delta_interest_rate * interest_rate) + debt
+	///`delta_interest_rate` - rate for passed time since previous update
+	fn update_borrows(market_id: &Self::MarketId, delta_interest_rate: Rate)
 		-> Result<(), DispatchError>;
 
 	fn update_reserves(
@@ -146,4 +149,11 @@ pub trait Lending {
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
 	) -> Result<Self::Balance, DispatchError>;
+
+	/// redeem wrapped collateral to specified account
+	fn redeem(
+		market_id: &Self::MarketId,
+		account: &Self::AccountId,
+		borrow_amount: Self::Balance,
+	) -> Result<(), DispatchError>;
 }
