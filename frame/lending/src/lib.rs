@@ -78,6 +78,7 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 		>;
 
+		type CurrencyFactory: CurrencyFactory<Self::AssetId>;
 		type AssetId: FullCodec
 			+ Eq
 			+ PartialEq
@@ -102,10 +103,6 @@ pub mod pallet {
 
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
-
-		// debt token allows to simplify some debt management and implementation of features
-		type DebtCurrency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = MarketIndex>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = MarketIndex>;
 
 		type UnixTime: UnixTime;
 	}
@@ -144,16 +141,16 @@ pub mod pallet {
 	pub type Markets<T: Config> =
 		StorageMap<_, Twox64Concat, MarketIndex, MarketConfig<T::VaultId>, ValueQuery>;
 
-	/// original debt values
+	/// Original debt values are on balances.
+	/// Debt token allows to simplify some debt management and implementation of features
 	#[pallet::storage]
-	#[pallet::getter(fn debt_principals)]
-	pub type DebtPrincipals<T: Config> = StorageDoubleMap<
+	#[pallet::getter(fn debt_currencies)]
+
+	pub type DebtMarkets<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		MarketIndex,
-		Twox64Concat,
-		T::AccountId,
-		T::Balance,
+		T::AssetId,
 		ValueQuery,
 	>;
 
