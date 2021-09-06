@@ -22,45 +22,51 @@
 	unused_extern_crates
 )]
 
+pub use pallet::*;
+
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
 #[frame_support::pallet]
 pub mod pallet {
 
-	use std::ops::Add;
-
-	use codec::{Codec, EncodeLike, FullCodec};
+	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		currency::CurrencyFactory,
-		lending::{
-			Lending, MarketConfig, MarketConfigInput, NormalizedCollateralFactor, Timestamp,
-		},
+		lending::{Lending, MarketConfig, MarketConfigInput, Timestamp},
 		oracle::Oracle,
 		rate_model::*,
-		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
+		vault::Vault,
 	};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
-			fungibles::{Inspect, InspectHold, Mutate, Transfer},
-			tokens::{fungibles::MutateHold, DepositConsequence},
-			Backing, UnixTime,
+			fungibles::{Mutate, Transfer},
+			UnixTime,
 		},
 		PalletId,
 	};
-	use frame_system::{ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig};
-	use num_traits::{Bounded, CheckedDiv, SaturatingSub};
+	use num_traits::{CheckedDiv, SaturatingSub};
 	use sp_runtime::{
-		helpers_128bit::multiply_by_rational,
 		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedConversion, CheckedMul,
-			CheckedSub, Convert, Hash, One, Zero,
+			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
+			Zero,
 		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Permill, Perquintill,
+		FixedPointNumber, FixedU128,
 	};
-	use sp_std::{convert::TryInto, fmt::Debug};
+	use sp_std::fmt::Debug;
 
 	#[derive(Default, Copy, Clone, Encode, Decode)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
+
+	impl MarketIndex {
+		pub fn new(i: u32) -> Self {
+			Self(i)
+		}
+	}
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 
@@ -194,6 +200,12 @@ pub mod pallet {
 	#[pallet::getter(fn last_block_timestamp)]
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
+	impl<T: Config> Pallet<T> {
+		pub fn account_id(market_id: &<Self as Lending>::MarketId) -> <Self as Lending>::AccountId {
+			<Self as Lending>::account_id(market_id)
+		}
+	}
+
 	impl<T: Config> Lending for Pallet<T> {
 		/// we are operating only on vault types, so restricted by these
 		type VaultId = <T::Vault as Vault>::VaultId;
@@ -264,9 +276,9 @@ pub mod pallet {
 		}
 
 		fn borrow(
-			market_id: &Self::MarketId,
-			debt_owner: &Self::AccountId,
-			amount_to_borrow: Self::Balance,
+			_market_id: &Self::MarketId,
+			_debt_owner: &Self::AccountId,
+			_amount_to_borrow: Self::Balance,
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
@@ -337,10 +349,10 @@ pub mod pallet {
 		}
 
 		fn repay_borrow(
-			market_id: &Self::MarketId,
-			from: &Self::AccountId,
-			beneficiary: &Self::AccountId,
-			repay_amount: Self::Balance,
+			_market_id: &Self::MarketId,
+			_from: &Self::AccountId,
+			_beneficiary: &Self::AccountId,
+			_repay_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			todo!()
 		}
@@ -350,11 +362,11 @@ pub mod pallet {
 			Ok(T::Currency::total_issuance(debt_asset_id))
 		}
 
-		fn total_cash(pair: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
+		fn total_cash(_pair: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			todo!()
 		}
 
-		fn total_reserves(pair: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
+		fn total_reserves(_pair: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			todo!()
 		}
 
@@ -382,8 +394,8 @@ pub mod pallet {
 		}
 
 		fn update_reserves(
-			market_id: &Self::MarketId,
-			reserves: Self::Balance,
+			_market_id: &Self::MarketId,
+			_reserves: Self::Balance,
 		) -> Result<(), DispatchError> {
 			todo!()
 		}
@@ -435,10 +447,7 @@ pub mod pallet {
 			BorrowIndex::<T>::insert(market_id, borrow_index_new);
 
 			// update borrows
-			let interest_time = Rate::saturating_from_rational(delta_time, SECONDS_PER_YEAR);
-			let borrow_rate =
-				borrow_rate.checked_mul(&interest_time).ok_or(Error::<T>::Overflow)?;
-			Self::update_borrows(market_id, borrow_rate)?;
+			Self::update_borrows(market_id)?;
 
 			//TODO: update_reserves
 			Ok(())
@@ -475,15 +484,15 @@ pub mod pallet {
 		}
 
 		fn collateral_of_account(
-			market_id: &Self::MarketId,
-			account: &Self::AccountId,
+			_market_id: &Self::MarketId,
+			_account: &Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
 			todo!()
 		}
 
 		fn collateral_required(
-			market_id: &Self::MarketId,
-			borrow_amount: Self::Balance,
+			_market_id: &Self::MarketId,
+			_borrow_amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			todo!()
 		}

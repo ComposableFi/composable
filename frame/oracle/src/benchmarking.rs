@@ -127,7 +127,7 @@ benchmarks! {
 		PrePrices::<T>::mutate(asset_id, |current_prices| -> DispatchResult {
 			for (i, price_submitter) in price_submitters.iter().enumerate() {
 				let set_price = PrePrice {
-					price: price + i as u64,
+					price: price + i as u128,
 					block: frame_system::Pallet::<T>::block_number(),
 					who: price_submitter.clone(),
 				};
@@ -152,7 +152,7 @@ benchmarks! {
 		};
 		let pre_prices = (0..p).map(|i| {
 			PrePrice {
-				price: 100u64 + i as u64,
+				price: 100u128 + i as u128,
 				block: 0u32.into(),
 				who: who.clone()
 			}
@@ -175,7 +175,7 @@ benchmarks! {
 		};
 		let pre_prices = (0..p).map(|_| {
 			PrePrice {
-				price: 100u64 + p as u64,
+				price: 100u128 + p as u128,
 				block: 0u32.into(),
 				who: who.clone()
 			}
