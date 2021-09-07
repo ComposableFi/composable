@@ -41,6 +41,16 @@ mod types {
 	/// Balance of an account.
 	pub type Balance = u128;
 
+	/// An amount
+	pub type Amount = i128;
+
+	// TODO(hussein-aitlahcen):
+	// If we want to differentiate classes of currencies; base, lp token, cross-chain...,
+	// perhaps CurrencyId { BaseA, BaseB, BaseC, LpToken(u32)...?
+	// Similar to: https://github.com/AcalaNetwork/Acala/blob/79a0f904efbee75aecf94288b95507d6375b5522/primitives/src/currency.rs#L223
+	/// Id of a currency.
+	pub type CurrencyId = u128;
+
 	/// Index of a transaction in the chain.
 	pub type Index = u32;
 

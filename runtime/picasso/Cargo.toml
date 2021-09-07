@@ -42,6 +42,10 @@ treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/s
 democracy = { package = "pallet-democracy", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
+vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
+currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
 runtime-common = { path = "../common", default-features = false }
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
@@ -99,6 +103,9 @@ std = [
 	"sudo/std",
 	"indices/std",
 	"oracle/std",
+	"vault/std",
+	"currency-factory/std",
+	"orml-tokens/std",
 	"treasury/std",
 	"democracy/std",
 	"scheduler/std",

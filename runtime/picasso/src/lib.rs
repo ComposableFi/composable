@@ -7,6 +7,8 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
+use common::{Amount, CurrencyId};
+use orml_traits::parameter_type_with_key;
 pub use runtime_common as common;
 use runtime_common::{
 	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, CouncilInstance,
@@ -17,7 +19,7 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -566,7 +568,8 @@ impl collator_selection::Config for Runtime {
 	type ValidatorId = <Self as system::Config>::AccountId;
 	type ValidatorIdOf = collator_selection::IdentityCollator;
 	type ValidatorRegistration = Session;
-	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
+	// TODO: benchmark for runtime
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -696,13 +699,62 @@ impl democracy::Config for Runtime {
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	pub const MaxStrategies: usize = 255;
+	pub const NativeAssetId: CurrencyId = 0;
+	pub const CreationDeposit: Balance = 10 * PICA;
+	pub const VaultExistentialDeposit: Balance = 1000 * PICA;
+	pub const RentPerBlock: Balance = 1 * MILLI_PICA;
+}
+
+// TODO(hussein-aitlahcen): what strategy report
+impl vault::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type CurrencyFactory = Factory;
+	type CurrencyId = CurrencyId;
+	type Currency = Tokens;
+	type Convert = ConvertInto;
+
+	type MaxStrategies = MaxStrategies;
+	type CreationDeposit = CreationDeposit;
+	type ExistentialDeposit = VaultExistentialDeposit;
+	type RentPerBlock = RentPerBlock;
+	type NativeAssetId = NativeAssetId;
+	type StrategyReport = ();
+}
+
+impl currency_factory::Config for Runtime {
+	type Event = Event;
+	type CurrencyId = CurrencyId;
+	type Convert = ConvertInto;
+}
+
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+		Zero::zero()
+	};
+}
+
+// TODO(hussein-aitlahcen): weight, dust & existential deposit
+impl orml_tokens::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = CurrencyId;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
+	type MaxLocks = ();
+	type DustRemovalWhitelist = ();
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
 impl Filter<Call> for BaseCallFilter {
 	fn filter(call: &Call) -> bool {
-		// much easier to instead list the calls we don't want
-		!matches!(
+		matches!(
 			call,
 			Call::Balances(_)
 				| Call::Indices(_)
@@ -745,7 +797,6 @@ construct_runtime!(
 		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 
-
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
@@ -753,6 +804,9 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
 		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 50,
+		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
+		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
+		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
 	}
 );
 
@@ -917,39 +971,39 @@ impl_runtime_apis! {
 			use session_benchmarking::Pallet as SessionBench;
 			impl session_benchmarking::Config for Runtime {}
 
-            let whitelist: Vec<TrackedStorageKey> = vec![
-                // Block Number
-                hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
-                // Total Issuance
-                hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
-                // Execution Phase
-                hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
-                // Event Count
-                hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
-                // System Events
-                hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
-            ];
+			let whitelist: Vec<TrackedStorageKey> = vec![
+				// Block Number
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
+				// Total Issuance
+				hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
+				// Execution Phase
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
+				// Event Count
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
+				// System Events
+				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
+			];
 
-            let mut batches = Vec::<BenchmarkBatch>::new();
-            let params = (&config, &whitelist);
+			let mut batches = Vec::<BenchmarkBatch>::new();
+			let params = (&config, &whitelist);
 
-            add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-            add_benchmark!(params, batches, balances, Balances);
-            add_benchmark!(params, batches, timestamp, Timestamp);
-            add_benchmark!(params, batches, oracle, Oracle);
-            add_benchmark!(params, batches, session, SessionBench::<Runtime>);
-            add_benchmark!(params, batches, collator_selection, CollatorSelection);
-            add_benchmark!(params, batches, indices, Indices);
-            add_benchmark!(params, batches, membership, CouncilMembership);
-            add_benchmark!(params, batches, treasury, Treasury);
-            add_benchmark!(params, batches, scheduler, Scheduler);
-            add_benchmark!(params, batches, democracy, Democracy);
-            add_benchmark!(params, batches, collective, Council);
+			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
+			add_benchmark!(params, batches, balances, Balances);
+			add_benchmark!(params, batches, timestamp, Timestamp);
+			add_benchmark!(params, batches, oracle, Oracle);
+			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
+			add_benchmark!(params, batches, collator_selection, CollatorSelection);
+			add_benchmark!(params, batches, indices, Indices);
+			add_benchmark!(params, batches, membership, CouncilMembership);
+			add_benchmark!(params, batches, treasury, Treasury);
+			add_benchmark!(params, batches, scheduler, Scheduler);
+			add_benchmark!(params, batches, democracy, Democracy);
+			add_benchmark!(params, batches, collective, Council);
 
-            if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
-            Ok(batches)
-        }
-    }
+			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
+			Ok(batches)
+		}
+	}
 }
 
 struct CheckInherents;

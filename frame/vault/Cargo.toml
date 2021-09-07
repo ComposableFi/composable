@@ -1,6 +1,6 @@
 [package]
-name = "pallet-oracle"
-version = "1.0.0"
+name = "pallet-vault"
+version = "0.0.1"
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
 edition = "2018"
@@ -8,7 +8,6 @@ edition = "2018"
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
-# alias "parity-scale-code" to "codec"
 [dependencies.codec]
 default-features = false
 features = ["derive"]
@@ -20,39 +19,38 @@ frame-support = { default-features = false, version = "3.0.0", git = "https://gi
 frame-system = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
 sp-runtime = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sp-arithmetic = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-io = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-core = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-std = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
+composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
+
 log = { version = "0.4.14", default-features = false }
-lite-json = { version = "0.1", default-features = false }
-serde_json = { version = "1.0.45", default-features = false, features = ["alloc"] }
-
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
-
-composable-traits = { path = "../composable-traits", default-features = false }
+num-traits = { version = "0.2.14", default-features = false }
 
 [dev-dependencies]
+proptest = { version = "0.9.6" }
 serde = { version = "1.0.119" }
-pallet-balances = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-sp-keystore = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
 
 [features]
 default = ["std"]
 std = [
     "codec/std",
     "log/std",
-    "lite-json/std",
     "frame-support/std",
     "frame-system/std",
     "sp-runtime/std",
     "sp-io/std",
     "sp-core/std",
     "sp-std/std",
+    "sp-arithmetic/std",
+	"composable-traits/std",
 ]
 
 runtime-benchmarks = [
-	'frame-benchmarking',
-	'frame-support/runtime-benchmarks',
-	'frame-system/runtime-benchmarks',
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
 ]
