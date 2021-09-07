@@ -442,8 +442,9 @@ pub mod pallet {
 			// overwrite value
 			BorrowIndex::<T>::insert(market_id, borrow_index_new);
 
-			// update borrows
-			Self::update_borrows(market_id, borrow_rate)?;
+			let delta_interest_rate =
+				increment_borrow_rate(borrow_rate, delta_time).ok_or(Error::<T>::Overflow)?;
+			Self::update_borrows(market_id, delta_interest_rate)?;
 
 			//TODO: update_reserves
 			Ok(())
