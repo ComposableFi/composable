@@ -281,14 +281,13 @@ pub mod pallet {
 			debt_owner: &Self::AccountId,
 			amount_to_borrow: Self::Balance,
 		) -> Result<(), DispatchError> {
-			let market =
-				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			Self::accrue_interest(market_id)?;
+			let market = Markets::<T>::try_get(market_id).expect("market exists");
 
-			// how much account owes
 			let borrower_balance_with_interest =
 				Self::borrow_balance_current(market_id, debt_owner)?;
-			let asset_id = <T::Vault as Vault>::asset_id(&market.borrow)?;
-			let borrow_asset_price = <T::Oracle as Oracle>::get_price(&asset_id)?.0;
+			let asset_id = T::Vault::asset_id(&market.borrow)?;
+			let borrow_asset_price = T::Oracle::get_price(&asset_id)?.0;
 			let borrowed_normalized = borrower_balance_with_interest
 				.checked_mul(&borrow_asset_price)
 				.ok_or(Error::<T>::Overflow)?;
@@ -302,10 +301,7 @@ pub mod pallet {
 
 			let account_id = Self::account_id(market_id);
 			let can_withdraw = T::Currency::reducible_balance(asset_id.clone(), &account_id, true);
-			match <T::Vault as StrategicVault>::available_funds(
-				&market.borrow,
-				&Self::account_id(&market_id),
-			)? {
+			match T::Vault::available_funds(&market.borrow, &Self::account_id(&market_id))? {
 				FundsAvailability::Withdrawable(balance) => {
 					<T::Vault as StrategicVault>::withdraw(
 						&market.borrow,
@@ -325,7 +321,7 @@ pub mod pallet {
 				}
 			}
 
-			<T::Currency as Transfer<T::AccountId>>::transfer(
+			T::Currency::transfer(
 				asset_id.clone(),
 				&Self::account_id(market_id),
 				debt_owner,
@@ -336,7 +332,8 @@ pub mod pallet {
 			let market_index =
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			//ASK: storage or currency?
-			//<T::DebtCurrency as Mutate<T::AccountId>>::mint_into(market_id.clone(), debt_owner, possible_borrow)?;
+			//<T::DebtCurrency as Mutate<T::AccountId>>::mint_into(market_id.clone(), debt_owner,
+			//<T::DebtCurrency possible_borrow)?;
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			T::Currency::mint_into(debt_asset_id, debt_owner, possible_borrow)?;
 			T::Currency::hold(debt_asset_id, debt_owner, possible_borrow)?;
@@ -379,8 +376,10 @@ pub mod pallet {
 			let total_debt = Self::total_borrows(market_id)?;
 			let accrued_interest =
 				T::Currency::balance(debt_asset_id, &Self::account_id(market_id));
-			let total_borrows: FixedU128 =
-				total_debt.checked_sub(&accrued_interest).ok_or(ArithmeticError::Overflow)?.into();
+			let total_borrows: FixedU128 = total_debt
+				.checked_sub(&accrued_interest)
+				.ok_or(ArithmeticError::Overflow)?
+				.into();
 			let accrued = total_borrows
 				.checked_mul(&delta_interest_rate)
 				.and_then(|x| x.checked_mul_int(1u64))
@@ -454,7 +453,7 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
-			<Self as Lending>::accrue_interest(market_id)?;
+			Self::accrue_interest(market_id)?;
 			let debt_asset_id = DebtMarkets::<T>::try_get(market_id)
 				.map_err(|_| Error::<T>::MarketAndAccountPairNotFound)?;
 			let principal = T::Currency::balance_on_hold(debt_asset_id, account);

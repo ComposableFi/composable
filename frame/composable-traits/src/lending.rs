@@ -118,8 +118,9 @@ pub trait Lending {
 		reserves: &Self::Balance,
 	) -> Result<Ratio, DispatchError>;
 
+	/// Simply - how much account owes.
 	/// Accrue interest to updated borrow index
-	/// and then calculate account's borrow balance using the updated borrow index
+	/// and then calculate account's borrow balance using the updated borrow index.
 	/// ```python
 	/// new_borrow_balance = principal * market_borrow_index / borrower_borrow_index
 	/// ```
