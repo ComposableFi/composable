@@ -206,6 +206,12 @@ pub fn increment_index(borrow_rate: Rate, index: Rate, delta_time: Timestamp) ->
 		.checked_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))
 }
 
+pub fn increment_borrow_rate(borrow_rate: Rate, delta_time: Timestamp) -> Option<Rate> {
+	borrow_rate
+		.checked_mul(&FixedU128::saturating_from_integer(delta_time))?
+		.checked_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;

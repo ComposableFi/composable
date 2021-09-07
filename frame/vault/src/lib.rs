@@ -615,9 +615,13 @@ pub mod pallet {
 			CapitalStructure::<T>::try_mutate(vault_id, to, |state| {
 				// I do not thing balance can actually overflow, since the total_issuance <=
 				// T::Balance::Max
-				state.balance.checked_add(&amount).ok_or(Error::<T>::OverflowError)?;
+				state.balance =
+					state.balance.checked_add(&amount).ok_or(Error::<T>::OverflowError)?;
 				// This can definitely overflow. Perhaps it should be a BigUint?
-				state.lifetime_withdrawn.checked_add(&amount).ok_or(Error::<T>::OverflowError)?;
+				state.lifetime_withdrawn = state
+					.lifetime_withdrawn
+					.checked_add(&amount)
+					.ok_or(Error::<T>::OverflowError)?;
 				T::Currency::transfer(vault.asset_id, &Self::account_id(vault_id), to, amount, true)
 					.map_err(|_| Error::<T>::InsufficientFunds)
 			})?;
@@ -633,9 +637,12 @@ pub mod pallet {
 				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
 			CapitalStructure::<T>::try_mutate(vault_id, from, |state| {
 				// A strategy can return more than it has withdrawn through profits.
-				state.balance.saturating_sub(&amount);
+				state.balance = state.balance.saturating_sub(&amount);
 				// This can definitely overflow. Perhaps it should be a BigUint?
-				state.lifetime_deposited.checked_add(&amount).ok_or(Error::<T>::OverflowError)?;
+				state.lifetime_deposited = state
+					.lifetime_deposited
+					.checked_add(&amount)
+					.ok_or(Error::<T>::OverflowError)?;
 				T::Currency::transfer(
 					vault.asset_id,
 					from,

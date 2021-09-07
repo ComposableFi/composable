@@ -114,6 +114,9 @@ pub trait StrategicVault: Vault {
 	) -> Result<FundsAvailability<Self::Balance>, DispatchError>;
 
 	/// Used by strategies to withdraw funds to be used in DeFi or other protocols.
+	/// Even if vault want its funds back, it is up to strategy to decide to go above available funds.
+	/// At least there is such possibility.
+	/// In most cases default behavior is to check `available_funds` before `withdraw`
 	fn withdraw(
 		vault: &Self::VaultId,
 		to: &Self::AccountId,

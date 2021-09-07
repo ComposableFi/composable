@@ -43,18 +43,18 @@ pub trait Lending {
 	type VaultId: Codec;
 	type MarketId: Codec;
 	/// (deposit VaultId, collateral VaultId) <-> MarketId
-	type AccountId: core::cmp::Ord + Clone + Codec;
+	type AccountId: core::cmp::Ord + Codec;
 	type Balance;
 	type BlockNumber;
 
 	/// creates market for new pair in specified vault. if market exists under specified manager,
 	/// updates its parameters `deposit` - asset users want to borrow.
 	/// `collateral` - asset users will put as collateral.
-	fn create_or_update(
+	fn create(
 		borrow_asset_vault: Self::VaultId,
 		collateral_asset_vault: Self::VaultId,
 		config: MarketConfigInput<Self::AccountId>,
-	) -> Result<(), DispatchError>;
+	) -> Result<Self::MarketId, DispatchError>;
 
 	/// AccountId of the market instance
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId;
@@ -91,6 +91,7 @@ pub trait Lending {
 		repay_amount: Self::Balance,
 	) -> Result<(), DispatchError>;
 
+	/// total debts principals (not includes interest)
 	fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
 	fn accrue_interest(market_id: &Self::MarketId) -> Result<(), DispatchError>;
@@ -99,7 +100,12 @@ pub trait Lending {
 
 	fn total_reserves(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
-	fn update_borrows(market_id: &Self::MarketId) -> Result<(), DispatchError>;
+	/// new_debt = (delta_interest_rate * interest_rate) + debt
+	///`delta_interest_rate` - rate for passed time since previous update
+	fn update_borrows(
+		market_id: &Self::MarketId,
+		delta_interest_rate: Rate,
+	) -> Result<(), DispatchError>;
 
 	fn update_reserves(
 		market_id: &Self::MarketId,
@@ -112,10 +118,10 @@ pub trait Lending {
 		reserves: &Self::Balance,
 	) -> Result<Ratio, DispatchError>;
 
-	/// Accrue interest to updated borrow index
-	/// and then calculate account's borrow balance using the updated borrow index
+	/// Simply - how much account owes.
+	/// Calculate account's borrow balance using the borrow index at the start of block time.
 	/// ```python
-	/// new_borrow_balance = principal * market_borrow_index / borrower_borrow_index
+	/// new_borrow_balance = principal * (market_borrow_index / borrower_borrow_index)
 	/// ```
 	fn borrow_balance_current(
 		market_id: &Self::MarketId,
@@ -134,7 +140,7 @@ pub trait Lending {
 	) -> Result<Self::Balance, DispatchError>;
 
 	/// Returns the borrow limit for an account.
-	/// Calculation uses current values for calculations, so can change during call to `borrow`.
+	/// Calculation uses indexes from start of block time.
 	/// Depends on overall collateral put by user into vault.
 	/// This borrow limit of specific user, depends only on prices and users collateral, not on
 	/// state of vault.
@@ -143,6 +149,13 @@ pub trait Lending {
 	/// ```
 	fn get_borrow_limit(
 		market_id: &Self::MarketId,
-		account: Self::AccountId,
+		account: &Self::AccountId,
 	) -> Result<Self::Balance, DispatchError>;
+
+	/// redeem wrapped collateral to specified account
+	fn redeem(
+		market_id: &Self::MarketId,
+		account: &Self::AccountId,
+		borrow_amount: Self::Balance,
+	) -> Result<(), DispatchError>;
 }
