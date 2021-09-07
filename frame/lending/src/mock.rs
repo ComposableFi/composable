@@ -227,6 +227,7 @@ impl pallet_lending::Config for Test {
 	type Balance = Balance;
 	type Currency = Tokens;
 	type UnixTime = Timestamp;
+	type CurrencyFactory = SimpleFactory;
 }
 
 fn root_account() -> AccountId {
