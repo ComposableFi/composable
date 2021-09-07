@@ -281,7 +281,6 @@ pub mod pallet {
 			debt_owner: &Self::AccountId,
 			amount_to_borrow: Self::Balance,
 		) -> Result<(), DispatchError> {
-			Self::accrue_interest(market_id)?;
 			let market = Markets::<T>::try_get(market_id).expect("market exists");
 
 			let borrower_balance_with_interest =
@@ -292,7 +291,6 @@ pub mod pallet {
 				.checked_mul(&borrow_asset_price)
 				.ok_or(Error::<T>::Overflow)?;
 
-			// how much he can borrow total
 			let borrow_limit = Self::get_borrow_limit(&market_id, debt_owner)?;
 
 			let possible_borrow = borrow_limit
@@ -353,7 +351,9 @@ pub mod pallet {
 
 		fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			Ok(T::Currency::total_issuance(debt_asset_id))
+			let accrued_debt = T::Currency::balance(debt_asset_id, &Self::account_id(market_id));
+			let total_issued = T::Currency::total_issuance(debt_asset_id);
+			Ok(total_issued - accrued_debt)
 		}
 
 		fn total_cash(_pair: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
@@ -454,7 +454,6 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
-			Self::accrue_interest(market_id)?;
 			let debt_asset_id = DebtMarkets::<T>::try_get(market_id)
 				.map_err(|_| Error::<T>::MarketAndAccountPairNotFound)?;
 			let principal = T::Currency::balance_on_hold(debt_asset_id, account);

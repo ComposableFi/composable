@@ -119,10 +119,9 @@ pub trait Lending {
 	) -> Result<Ratio, DispatchError>;
 
 	/// Simply - how much account owes.
-	/// Accrue interest to updated borrow index
-	/// and then calculate account's borrow balance using the updated borrow index.
+	/// Calculate account's borrow balance using the borrow index at the start of block time.
 	/// ```python
-	/// new_borrow_balance = principal * market_borrow_index / borrower_borrow_index
+	/// new_borrow_balance = principal * (market_borrow_index / borrower_borrow_index)
 	/// ```
 	fn borrow_balance_current(
 		market_id: &Self::MarketId,
@@ -141,7 +140,7 @@ pub trait Lending {
 	) -> Result<Self::Balance, DispatchError>;
 
 	/// Returns the borrow limit for an account.
-	/// Calculation uses current values for calculations, so can change during call to `borrow`.
+	/// Calculation uses indexes from start of block time.
 	/// Depends on overall collateral put by user into vault.
 	/// This borrow limit of specific user, depends only on prices and users collateral, not on
 	/// state of vault.
