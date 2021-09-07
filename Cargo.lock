@@ -2991,7 +2991,7 @@ dependencies = [
  "indexmap",
  "slab",
  "tokio 1.10.0",
- "tokio-util 0.6.7",
+ "tokio-util 0.6.8",
  "tracing",
 ]
 
@@ -11613,9 +11613,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
-version = "0.6.7"
+version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1caa0b0c8d94a049db56b5acf8cba99dc0623aab1b26d5b5f5e2d945846b3592"
+checksum = "08d3725d3efa29485e87311c5b699de63cde14b00ed4d256b8318aa30ca452cd"
 dependencies = [
  "bytes 1.0.1",
  "futures-core",
@@ -12135,7 +12135,7 @@ dependencies = [
  "tokio 1.10.0",
  "tokio-stream",
  "tokio-tungstenite",
- "tokio-util 0.6.7",
+ "tokio-util 0.6.8",
  "tower-service",
  "tracing",
 ]
