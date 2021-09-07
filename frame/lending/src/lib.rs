@@ -335,6 +335,8 @@ pub mod pallet {
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			T::Currency::mint_into(debt_asset_id, debt_owner, possible_borrow)?;
 			T::Currency::hold(debt_asset_id, debt_owner, possible_borrow)?;
+
+			// TODO: decide what todo do with reborrow  https://mlabs-corp.slack.com/archives/C02CRQ9KW04/p1631005365082200
 			DebtIndex::<T>::insert(market_id, debt_owner, market_index);
 
 			Ok(())
