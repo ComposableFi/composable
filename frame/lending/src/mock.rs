@@ -239,7 +239,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	let balances = vec![(root_account(), 100_000_000)];
 
-	pallet_balances::GenesisConfig::<Test> { balances }.assimilate_storage(&mut t).unwrap();
+	pallet_balances::GenesisConfig::<Test> { balances }
+		.assimilate_storage(&mut t)
+		.unwrap();
 
 	t.into()
 }

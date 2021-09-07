@@ -310,13 +310,12 @@ pub mod pallet {
 						can_withdraw + balance >= possible_borrow,
 						Error::<T>::NotEnoughBorrowAsset
 					)
-				}
+				},
 				FundsAvailability::Depositable(_) => (),
 				// TODO: decide when react and how to return fees back
 				// https://mlabs-corp.slack.com/archives/C02CRQ9KW04/p1630662664380600?thread_ts=1630658877.363600&cid=C02CRQ9KW04
-				FundsAvailability::MustLiquidate => {
-					return Err(Error::<T>::CannotBorrowInCurrentLendingState.into())
-				}
+				FundsAvailability::MustLiquidate =>
+					return Err(Error::<T>::CannotBorrowInCurrentLendingState.into()),
 			}
 
 			T::Currency::transfer(
@@ -358,12 +357,13 @@ pub mod pallet {
 			Ok(total_issued - accrued_debt)
 		}
 
-		fn total_cash(_pair: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
-			todo!()
+		fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
+			let debt_asset_id = DebtMarkets::<T>::get(market_id);
+			Ok(T::Currency::total_issuance(debt_asset_id))
 		}
 
 		fn total_reserves(_pair: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
-			todo!()
+			Ok(Self::Balance::zero())
 		}
 
 		fn update_borrows(
@@ -405,7 +405,7 @@ pub mod pallet {
 		) -> Result<Ratio, DispatchError> {
 			// utilization ratio is 0 when there are no borrows
 			if borrows.is_zero() {
-				return Ok(Ratio::zero());
+				return Ok(Ratio::zero())
 			}
 			// utilizationRatio = totalBorrows / (totalCash + totalBorrows − totalReserves)
 			let total: u128 = cash
@@ -463,7 +463,7 @@ pub mod pallet {
 			// Rather than failing the calculation with a division by 0, we immediately return 0 in
 			// this case.
 			if principal.is_zero() {
-				return Ok(T::Balance::zero());
+				return Ok(T::Balance::zero())
 			}
 
 			let account_interest_index = DebtIndex::<T>::try_get(market_id, account)
