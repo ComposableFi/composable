@@ -418,11 +418,8 @@ pub mod pallet {
 				.ok_or(Error::<T>::Overflow)?
 				.into();
 			let borrows: u128 = (*borrows).into();
-			let mut util_ratio = Ratio::saturating_from_rational(borrows, total);
-			if util_ratio > Ratio::one() {
-				util_ratio = Ratio::one();
-			}
-			Ok(util_ratio)
+			let util_ratio = Ratio::saturating_from_rational(borrows, total);
+			Ok(util_ratio.clamp(0.into(), 1.into()))
 		}
 
 		fn accrue_interest(market_id: &Self::MarketId) -> Result<(), DispatchError> {
