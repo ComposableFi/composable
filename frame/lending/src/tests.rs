@@ -3,6 +3,9 @@ use crate::{
 	MarketIndex,
 };
 use hex_literal::hex;
+use composable_traits::rate_model::*;
+use sp_runtime::FixedPointNumber;
+use sp_runtime::traits::Zero;
 
 #[test]
 fn account_id_should_work() {
@@ -15,4 +18,27 @@ fn account_id_should_work() {
 			))
 		);
 	})
+}
+
+#[test]
+fn test_calc_utilization_ratio() {
+	 // 50% borrow
+     assert_eq!(
+         Lending::calc_utilization_ratio(&1, &1, &0).unwrap(),
+         Ratio::saturating_from_rational(50, 100)
+     );
+     assert_eq!(
+         Lending::calc_utilization_ratio(&100, &100, &0).unwrap(),
+         Ratio::saturating_from_rational(50, 100)
+     );
+     // no borrow
+     assert_eq!(
+         Lending::calc_utilization_ratio(&1, &0, &0).unwrap(),
+         Ratio::zero()
+     );
+     // full borrow
+     assert_eq!(
+         Lending::calc_utilization_ratio(&0, &1, &0).unwrap(),
+         Ratio::saturating_from_rational(100, 100)
+     );
 }

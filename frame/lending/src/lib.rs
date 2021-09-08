@@ -205,6 +205,12 @@ pub mod pallet {
 		pub fn account_id(market_id: &<Self as Lending>::MarketId) -> <Self as Lending>::AccountId {
 			<Self as Lending>::account_id(market_id)
 		}
+		pub fn calc_utilization_ratio( cash: &<Self as Lending>::Balance,
+			borrows: &<Self as Lending>::Balance,
+			reserves: &<Self as Lending>::Balance,
+		) -> Result<Ratio, DispatchError> {
+			<Self as Lending>::calc_utilization_ratio(cash, borrows, reserves)
+		}
 	}
 
 	impl<T: Config> Lending for Pallet<T> {
