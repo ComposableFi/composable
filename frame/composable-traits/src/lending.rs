@@ -118,11 +118,6 @@ pub trait Lending {
 		delta_interest_rate: Rate,
 	) -> Result<(), DispatchError>;
 
-	fn update_reserves(
-		market_id: &Self::MarketId,
-		reserves: Self::Balance,
-	) -> Result<(), DispatchError>;
-
 	fn calc_utilization_ratio(
 		cash: &Self::Balance,
 		borrows: &Self::Balance,
@@ -137,7 +132,7 @@ pub trait Lending {
 	fn borrow_balance_current(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
-	) -> Result<BorrowAmountOf<Self>, DispatchError>;
+	) -> Result<Option<BorrowAmountOf<Self>>, DispatchError>;
 
 	fn collateral_of_account(
 		market_id: &Self::MarketId,

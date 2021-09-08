@@ -298,10 +298,11 @@ pub mod pallet {
 			debt_owner: &Self::AccountId,
 			amount_to_borrow: Self::Balance,
 		) -> Result<(), DispatchError> {
-			let market = Markets::<T>::try_get(market_id).expect("market exists");
+			let market =
+				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
 			let borrower_balance_with_interest =
-				Self::borrow_balance_current(market_id, debt_owner)?;
+				Self::borrow_balance_current(market_id, debt_owner)?.unwrap_or_default();
 			let asset_id = T::Vault::asset_id(&market.borrow)?;
 			let borrow_asset_price = T::Oracle::get_price(&asset_id)?.0;
 			let borrowed_normalized = borrower_balance_with_interest
@@ -365,43 +366,46 @@ pub mod pallet {
 			beneficiary: &Self::AccountId,
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
-			let market = Markets::<T>::try_get(market_id).expect("market exists");
-			let owed = Self::borrow_balance_current(market_id, beneficiary)?;
-			let repay_amount = repay_amount.unwrap_or(owed);
-			let borrow_id = T::Vault::asset_id(&market.borrow)?;
-			ensure!(repay_amount <= owed, Error::<T>::CannotRepayMoreThanBorrowAmount);
-			ensure!(
-				T::Currency::can_withdraw(borrow_id, &from, repay_amount).into_result().is_ok(),
-				Error::<T>::CannotWithdrawFromProvidedBorrowAccount
-			);
-			let market_account = Self::account_id(market_id);
-			ensure!(
-				T::Currency::can_deposit(borrow_id, &market_account, repay_amount)
-					.into_result()
-					.is_ok(),
-				Error::<T>::TransferFailed
-			);
-			let debt_asset_id = DebtMarkets::<T>::get(market_id);
+			let market =
+				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			if let Some(owed) = Self::borrow_balance_current(market_id, beneficiary)? {
+				let repay_amount = repay_amount.unwrap_or(owed);
+				let borrow_id = T::Vault::asset_id(&market.borrow)?;
+				ensure!(repay_amount <= owed, Error::<T>::CannotRepayMoreThanBorrowAmount);
+				ensure!(
+					T::Currency::can_withdraw(borrow_id, &from, repay_amount).into_result().is_ok(),
+					Error::<T>::CannotWithdrawFromProvidedBorrowAccount
+				);
+				let market_account = Self::account_id(market_id);
+				ensure!(
+					T::Currency::can_deposit(borrow_id, &market_account, repay_amount)
+						.into_result()
+						.is_ok(),
+					Error::<T>::TransferFailed
+				);
+				let debt_asset_id = DebtMarkets::<T>::get(market_id);
 
-			let burn_amount = T::Currency::balance(debt_asset_id, beneficiary);
+				let burn_amount = T::Currency::balance(debt_asset_id, beneficiary);
 
-			// TODO: fuzzing is must to uncover cases when sum != total
-			let market_debt_reduction = T::Currency::balance(debt_asset_id, &market_account)
-				.checked_sub(&burn_amount)
-				.expect("debt balance of market must be of parts of debts of borrowers");
-			T::Currency::burn_from(debt_asset_id, &market_account, market_debt_reduction).expect(
-				"debt balance of market must be of parts of debts of borrowers and can reduce it",
-			);
-			T::Currency::burn_from(debt_asset_id, beneficiary, burn_amount)
-				.expect("can always burn current balance");
-			T::Currency::transfer(borrow_id, from, &market_account, repay_amount, false)
-				.expect("must be able to transfer because of above checks");
+				// TODO: fuzzing is must to uncover cases when sum != total
+				let market_debt_reduction = T::Currency::balance(debt_asset_id, &market_account)
+					.checked_sub(&burn_amount)
+					.expect("debt balance of market must be of parts of debts of borrowers");
+				T::Currency::burn_from(debt_asset_id, &market_account, market_debt_reduction).expect(
+					"debt balance of market must be of parts of debts of borrowers and can reduce it",
+				);
+				T::Currency::burn_from(debt_asset_id, beneficiary, burn_amount)
+					.expect("can always burn current balance");
+				T::Currency::transfer(borrow_id, from, &market_account, repay_amount, false)
+					.expect("must be able to transfer because of above checks");
 
-			// TODO: not sure why Warp V2 (Blacksmith) does that, but seems will need to revise it later with some strategy
-			let interest_index = BorrowIndex::<T>::get(market_id);
-			DebtIndex::<T>::insert(market_id, beneficiary, interest_index);
+				// TODO: not sure why Warp V2 (Blacksmith) does that, but seems will need to revise it later with some strategy
+				let interest_index = BorrowIndex::<T>::get(market_id);
+				DebtIndex::<T>::insert(market_id, beneficiary, interest_index);
 
-			// we do not optimize vault here, will do it on finalize after all repays
+				// we do not optimize vault here, will do it on finalize after all repays
+			}
+
 			Ok(())
 		}
 
@@ -443,13 +447,6 @@ pub mod pallet {
 				.ok_or(ArithmeticError::Overflow)?
 				.into();
 			T::Currency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)
-		}
-
-		fn update_reserves(
-			_market_id: &Self::MarketId,
-			_reserves: Self::Balance,
-		) -> Result<(), DispatchError> {
-			todo!()
 		}
 
 		fn calc_utilization_ratio(
@@ -506,7 +503,7 @@ pub mod pallet {
 		fn borrow_balance_current(
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
-		) -> Result<BorrowAmountOf<Self>, DispatchError> {
+		) -> Result<Option<BorrowAmountOf<Self>>, DispatchError> {
 			let debt_asset_id = DebtMarkets::<T>::try_get(market_id)
 				.map_err(|_| Error::<T>::MarketAndAccountPairNotFound)?;
 			let principal = T::Currency::balance_on_hold(debt_asset_id, account);
@@ -522,7 +519,7 @@ pub mod pallet {
 				account_interest_index,
 			)?;
 
-			Ok(balance.into())
+			Ok(balance.map(Into::into))
 		}
 
 		fn collateral_of_account(
@@ -611,12 +608,14 @@ pub mod pallet {
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 			let collateral_asset = T::Vault::asset_id(&market.collateral)?;
 
-			let (borrow_price, _) = T::Oracle::get_price(&borrow_asset)?;
 			let (collateral_price, _) = T::Oracle::get_price(&collateral_asset)?;
 
-			let current_borrow = Self::borrow_balance_current(market_id, account)?;
+			let current_borrow =
+				Self::borrow_balance_current(market_id, account)?.unwrap_or_default();
+			let (borrow_price, _) = T::Oracle::get_price(&borrow_asset)?;
 			let current_borrow_value =
 				current_borrow.checked_mul(&borrow_price).ok_or(Error::<T>::Overflow)?;
+
 			let max_borrowable_value = Self::get_borrow_limit(market_id, account)?;
 
 			/*
@@ -673,9 +672,9 @@ pub mod pallet {
 		principal: <T as Config>::Balance,
 		market_interest_index: Ratio,
 		account_interest_index: Ratio,
-	) -> Result<u64, DispatchError> {
+	) -> Result<Option<u64>, DispatchError> {
 		if principal.is_zero() {
-			return Ok(0);
+			return Ok(None);
 		}
 		let principal: LiftedFixedBalance = principal.into();
 		let balance = principal
@@ -683,6 +682,6 @@ pub mod pallet {
 			.and_then(|from_start_total| from_start_total.checked_div(&account_interest_index))
 			.and_then(|x| x.checked_mul_int(1u64))
 			.ok_or(ArithmeticError::Overflow)?;
-		Ok(balance)
+		Ok(Some(balance))
 	}
 }
