@@ -147,6 +147,7 @@ pub mod pallet {
 		NotEnoughCollateralToBorrowAmount,
 		CannotBorrowInCurrentLendingState,
 		NotEnoughBorrowAsset,
+		NotEnoughCollateral,
 	}
 
 	/// Lending instances counter
@@ -549,12 +550,59 @@ pub mod pallet {
 			})
 		}
 
-		fn redeem(
+		fn withdraw_collateral(
 			market_id: &Self::MarketId,
-			account: &Self::AccountId,
-			borrow_amount: Self::Balance,
+			to: &Self::AccountId,
+			collateral_lp_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
-			todo!()
+			let market =
+				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+
+			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
+			let collateral_asset = T::Vault::asset_id(&market.collateral)?;
+
+			let (borrow_price, _) = T::Oracle::get_price(&borrow_asset)?;
+			let (collateral_price, _) = T::Oracle::get_price(&collateral_asset)?;
+
+			let current_borrow = Self::borrow_balance_current(market_id, to)?;
+			let current_borrow_value =
+				current_borrow.checked_mul(&borrow_price).ok_or(Error::<T>::Overflow)?;
+			let max_borrowable_value = Self::get_borrow_limit(market_id, to)?;
+
+			/*
+				v = (max - current) * factor
+
+				In practice a user will not withdraw v
+				because it would probably result in quick liquidation?
+			*/
+			let withdrawable_collateral_value = max_borrowable_value
+				.checked_sub(&current_borrow_value)
+				.and_then(|x| market.collateral_factor.checked_mul_int(x))
+				.ok_or(Error::<T>::Overflow)?;
+
+			let collateral_from_collateral_lp =
+				<T::Vault as Vault>::to_underlying_value(&market.collateral, collateral_lp_amount)?;
+			let collateral_value = collateral_from_collateral_lp
+				.checked_mul(&collateral_price)
+				.ok_or(Error::<T>::Overflow)?;
+
+			if collateral_value > withdrawable_collateral_value {
+				Err(Error::<T>::NotEnoughCollateral.into())
+			} else {
+				AccountCollateral::<T>::try_mutate(market_id, to, |collateral_balance| {
+					let new_collateral_balance = *collateral_balance - collateral_lp_amount;
+					*collateral_balance = new_collateral_balance;
+					Result::<(), Error<T>>::Ok(())
+				})?;
+				T::Currency::transfer(
+					collateral_asset,
+					&Self::account_id(&market_id),
+					to,
+					collateral_lp_amount,
+					true,
+				)?;
+				Ok(())
+			}
 		}
 	}
 }
