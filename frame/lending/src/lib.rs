@@ -46,10 +46,11 @@ pub mod pallet {
 	};
 	use frame_support::{
 		pallet_prelude::*,
+		storage::{with_transaction, TransactionOutcome},
 		traits::{
 			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
 			tokens::{DepositConsequence, WithdrawConsequence},
-			UnixTime,
+			GenesisBuild, UnixTime,
 		},
 		PalletId,
 	};
@@ -132,6 +133,32 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	#[pallet::hooks]
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+		fn on_initialize(block_number: T::BlockNumber) -> Weight {
+			let now = T::UnixTime::now().as_secs();
+			if LastBlockTimestamp::<T>::get().is_zero() {
+				LastBlockTimestamp::<T>::put(now);
+			}
+			with_transaction(|| {
+				let res = Markets::<T>::iter()
+					.map(|(index, _)| <Pallet<T>>::accrue_interest(&index))
+					.collect();
+				match res {
+					Ok(()) => {
+						LastBlockTimestamp::<T>::put(now);
+						TransactionOutcome::Commit(1000)
+					},
+					Err(err) => {
+						log::error!("This should never happen, could not initialize block!!! {:#?} {:#?}", block_number, err);
+						TransactionOutcome::Rollback(0)
+					},
+				}
+			});
+			0
+		}
+	}
+
 	#[pallet::error]
 	pub enum Error<T> {
 		Overflow,
@@ -206,10 +233,28 @@ pub mod pallet {
 	>;
 
 	/// The timestamp of the previous block or defaults to timestamp at genesis.
-	/// TODO: should be updated in on_finalize() hook.
 	#[pallet::storage]
 	#[pallet::getter(fn last_block_timestamp)]
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig {
+		pub last_block_timestamp: Timestamp,
+	}
+
+	#[cfg(feature = "std")]
+	impl Default for GenesisConfig {
+		fn default() -> Self {
+			GenesisConfig { last_block_timestamp: 0 }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+		fn build(&self) {
+			LastBlockTimestamp::<T>::put(self.last_block_timestamp.clone());
+		}
+	}
 
 	impl<T: Config> Pallet<T> {
 		pub fn account_id(market_id: &<Self as Lending>::MarketId) -> <Self as Lending>::AccountId {
