@@ -391,8 +391,7 @@ pub mod pallet {
 				.and_then(|x| x.checked_mul_int(1u64))
 				.ok_or(ArithmeticError::Overflow)?
 				.into();
-			T::Currency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued);
-			Ok(())
+			T::Currency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)
 		}
 
 		fn update_reserves(
