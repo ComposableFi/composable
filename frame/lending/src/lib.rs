@@ -37,7 +37,8 @@ pub mod pallet {
 	use composable_traits::{
 		currency::CurrencyFactory,
 		lending::{
-			Lending, MarketConfig, MarketConfigInput, NormalizedCollateralFactor, Timestamp,
+			CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput,
+			NormalizedCollateralFactor, Timestamp,
 		},
 		oracle::Oracle,
 		rate_model::*,
@@ -527,7 +528,7 @@ pub mod pallet {
 		fn deposit_collateral(
 			market_id: &Self::MarketId,
 			from: &Self::AccountId,
-			amount: Self::Balance,
+			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
@@ -549,8 +550,8 @@ pub mod pallet {
 
 		fn withdraw_collateral(
 			market_id: &Self::MarketId,
-			to: &Self::AccountId,
-			collateral_lp_amount: Self::Balance,
+			account: &Self::AccountId,
+			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
@@ -561,10 +562,10 @@ pub mod pallet {
 			let (borrow_price, _) = T::Oracle::get_price(&borrow_asset)?;
 			let (collateral_price, _) = T::Oracle::get_price(&collateral_asset)?;
 
-			let current_borrow = Self::borrow_balance_current(market_id, to)?;
+			let current_borrow = Self::borrow_balance_current(market_id, account)?;
 			let current_borrow_value =
 				current_borrow.checked_mul(&borrow_price).ok_or(Error::<T>::Overflow)?;
-			let max_borrowable_value = Self::get_borrow_limit(market_id, to)?;
+			let max_borrowable_value = Self::get_borrow_limit(market_id, account)?;
 
 			/*
 				v = (max - current) * factor
@@ -578,7 +579,7 @@ pub mod pallet {
 				.ok_or(Error::<T>::Overflow)?;
 
 			let collateral_from_collateral_lp =
-				<T::Vault as Vault>::to_underlying_value(&market.collateral, collateral_lp_amount)?;
+				<T::Vault as Vault>::to_underlying_value(&market.collateral, amount)?;
 			let collateral_value = collateral_from_collateral_lp
 				.checked_mul(&collateral_price)
 				.ok_or(Error::<T>::Overflow)?;
@@ -586,16 +587,16 @@ pub mod pallet {
 			if collateral_value > withdrawable_collateral_value {
 				Err(Error::<T>::NotEnoughCollateral.into())
 			} else {
-				AccountCollateral::<T>::try_mutate(market_id, to, |collateral_balance| {
-					let new_collateral_balance = *collateral_balance - collateral_lp_amount;
+				AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
+					let new_collateral_balance = *collateral_balance - amount;
 					*collateral_balance = new_collateral_balance;
 					Result::<(), Error<T>>::Ok(())
 				})?;
 				T::Currency::transfer(
 					collateral_asset,
 					&Self::account_id(&market_id),
-					to,
-					collateral_lp_amount,
+					account,
+					amount,
 					true,
 				)?;
 				Ok(())
