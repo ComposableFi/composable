@@ -485,10 +485,11 @@ pub mod pallet {
 		}
 
 		fn collateral_of_account(
-			_market_id: &Self::MarketId,
-			_account: &Self::AccountId,
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
-			todo!()
+			AccountCollateral::<T>::try_get(market_id, account)
+				.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount.into())
 		}
 
 		fn collateral_required(
