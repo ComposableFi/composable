@@ -11,6 +11,8 @@ use sp_runtime::FixedU128;
 /// Must be (1.0.. because applied only to price normalized values
 pub type NormalizedCollateralFactor = frame_support::sp_runtime::FixedU128;
 
+pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
+
 pub type Timestamp = u64;
 
 #[derive(Encode, Decode, Default)]
@@ -59,10 +61,18 @@ pub trait Lending {
 	/// AccountId of the market instance
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId;
 
+	/// Deposit collateral in order to borrow.
 	fn deposit_collateral(
 		market_id: &Self::MarketId,
 		account_id: &Self::AccountId,
-		amount: Self::Balance,
+		amount: CollateralLpAmountOf<Self>,
+	) -> Result<(), DispatchError>;
+
+	/// Withdraw a part/total of previously deposited collateral.
+	fn withdraw_collateral(
+		market_id: &Self::MarketId,
+		account: &Self::AccountId,
+		amount: CollateralLpAmountOf<Self>,
 	) -> Result<(), DispatchError>;
 
 	/// get all existing markets for current deposit
@@ -151,11 +161,4 @@ pub trait Lending {
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
 	) -> Result<Self::Balance, DispatchError>;
-
-	/// redeem wrapped collateral to specified account
-	fn redeem(
-		market_id: &Self::MarketId,
-		account: &Self::AccountId,
-		borrow_amount: Self::Balance,
-	) -> Result<(), DispatchError>;
 }

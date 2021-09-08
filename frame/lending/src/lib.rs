@@ -36,7 +36,10 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
-		lending::{Lending, MarketConfig, MarketConfigInput, Timestamp},
+		lending::{
+			CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput,
+			NormalizedCollateralFactor, Timestamp,
+		},
 		oracle::Oracle,
 		rate_model::*,
 		vault::{FundsAvailability, StrategicVault, Vault},
@@ -45,6 +48,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		traits::{
 			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
+			tokens::DepositConsequence,
 			UnixTime,
 		},
 		PalletId,
@@ -55,7 +59,7 @@ pub mod pallet {
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Zero,
 		},
-		ArithmeticError, FixedPointNumber, FixedU128,
+		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128,
 	};
 	use sp_std::fmt::Debug;
 
@@ -108,8 +112,10 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ From<u64> // at least 64 bit
 			+ Zero
+			+ FixedPointOperand
 			+ Into<LiftedFixedBalance> // integer part not more than bits in this
-			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128 bit
+			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
+			  // bit
 
 		// actually there are 2 types of currencies:
 		// 1. vault owned - can transfer, cannot mint
@@ -143,6 +149,8 @@ pub mod pallet {
 		NotEnoughCollateralToBorrowAmount,
 		CannotBorrowInCurrentLendingState,
 		NotEnoughBorrowAsset,
+		NotEnoughCollateral,
+		TransferFailed,
 	}
 
 	/// Lending instances counter
@@ -393,8 +401,7 @@ pub mod pallet {
 				.and_then(|x| x.checked_mul_int(1u64))
 				.ok_or(ArithmeticError::Overflow)?
 				.into();
-			T::Currency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued);
-			Ok(())
+			T::Currency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)
 		}
 
 		fn update_reserves(
@@ -420,11 +427,8 @@ pub mod pallet {
 				.ok_or(Error::<T>::Overflow)?
 				.into();
 			let borrows: u128 = (*borrows).into();
-			let mut util_ratio = Ratio::saturating_from_rational(borrows, total);
-			if util_ratio > Ratio::one() {
-				util_ratio = Ratio::one();
-			}
-			Ok(util_ratio)
+			let util_ratio = Ratio::saturating_from_rational(borrows, total);
+			Ok(util_ratio.clamp(0.into(), 1.into()))
 		}
 
 		fn accrue_interest(market_id: &Self::MarketId) -> Result<(), DispatchError> {
@@ -488,10 +492,11 @@ pub mod pallet {
 		}
 
 		fn collateral_of_account(
-			_market_id: &Self::MarketId,
-			_account: &Self::AccountId,
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
-			todo!()
+			AccountCollateral::<T>::try_get(market_id, account)
+				.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount.into())
 		}
 
 		fn collateral_required(
@@ -530,33 +535,100 @@ pub mod pallet {
 
 		fn deposit_collateral(
 			market_id: &Self::MarketId,
-			from: &Self::AccountId,
-			amount: Self::Balance,
+			account: &Self::AccountId,
+			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let collateral_lp_id = T::Vault::lp_asset_id(&market.collateral)?;
-			T::Currency::transfer(
-				collateral_lp_id,
-				from,
-				&Self::account_id(market_id),
-				amount,
-				true,
-			)
-			.map_err(|_| Error::<T>::CollateralDepositFailed)?;
-			AccountCollateral::<T>::try_mutate(market_id, from, |collateral_balance| {
-				let new_collateral_balance = *collateral_balance + amount;
+			let market_account = Self::account_id(&market_id);
+			ensure!(
+				T::Currency::can_withdraw(collateral_lp_id, &account, amount)
+					.into_result()
+					.is_ok(),
+				Error::<T>::TransferFailed
+			);
+			ensure!(
+				T::Currency::can_deposit(collateral_lp_id, &market_account, amount) ==
+					DepositConsequence::Success,
+				Error::<T>::TransferFailed
+			);
+
+			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
+				let new_collateral_balance = (*collateral_balance)
+					.checked_add(&amount)
+					.ok_or(Error::<T>::Overflow.into())?;
 				*collateral_balance = new_collateral_balance;
-				Ok(())
-			})
+				Result::<(), Error<T>>::Ok(())
+			})?;
+			T::Currency::transfer(collateral_lp_id, account, &market_account, amount, true)
+				.expect("we'd better exit; qed;");
+			Ok(())
 		}
 
-		fn redeem(
+		fn withdraw_collateral(
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
-			borrow_amount: Self::Balance,
+			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			todo!()
+			let market =
+				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+
+			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
+			let collateral_asset = T::Vault::asset_id(&market.collateral)?;
+
+			let (borrow_price, _) = T::Oracle::get_price(&borrow_asset)?;
+			let (collateral_price, _) = T::Oracle::get_price(&collateral_asset)?;
+
+			let current_borrow = Self::borrow_balance_current(market_id, account)?;
+			let current_borrow_value =
+				current_borrow.checked_mul(&borrow_price).ok_or(Error::<T>::Overflow)?;
+			let max_borrowable_value = Self::get_borrow_limit(market_id, account)?;
+
+			/*
+				v = (max - current) * factor
+
+				In practice a user will not withdraw v
+				because it would probably result in quick liquidation?
+			*/
+			let withdrawable_collateral_value = max_borrowable_value
+				.checked_sub(&current_borrow_value)
+				.and_then(|x| market.collateral_factor.checked_mul_int(x))
+				.ok_or(Error::<T>::Overflow)?;
+
+			let collateral_from_collateral_lp =
+				<T::Vault as Vault>::to_underlying_value(&market.collateral, amount)?;
+			let collateral_value = collateral_from_collateral_lp
+				.checked_mul(&collateral_price)
+				.ok_or(Error::<T>::Overflow)?;
+
+			ensure!(
+				collateral_value > withdrawable_collateral_value,
+				Error::<T>::NotEnoughCollateral
+			);
+
+			let market_account = Self::account_id(&market_id);
+			ensure!(
+				T::Currency::can_deposit(collateral_asset, &account, amount) ==
+					DepositConsequence::Success,
+				Error::<T>::TransferFailed
+			);
+			ensure!(
+				T::Currency::can_withdraw(collateral_asset, &market_account, amount)
+					.into_result()
+					.is_ok(),
+				Error::<T>::TransferFailed
+			);
+
+			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
+				let new_collateral_balance =
+					(*collateral_balance).checked_sub(&amount).ok_or(Error::<T>::Underflow)?;
+				*collateral_balance = new_collateral_balance;
+				Result::<(), Error<T>>::Ok(())
+			})?;
+			T::Currency::transfer(collateral_asset, &market_account, account, amount, true)
+				.expect("we'd better exit; qed;");
+			Ok(())
 		}
 	}
 }
