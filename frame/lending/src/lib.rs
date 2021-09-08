@@ -36,7 +36,9 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
-		lending::{Lending, MarketConfig, MarketConfigInput, Timestamp},
+		lending::{
+			Lending, MarketConfig, MarketConfigInput, NormalizedCollateralFactor, Timestamp,
+		},
 		oracle::Oracle,
 		rate_model::*,
 		vault::{FundsAvailability, StrategicVault, Vault},
@@ -55,7 +57,7 @@ pub mod pallet {
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Zero,
 		},
-		ArithmeticError, FixedPointNumber, FixedU128,
+		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128,
 	};
 	use sp_std::fmt::Debug;
 
@@ -108,8 +110,10 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ From<u64> // at least 64 bit
 			+ Zero
+			+ FixedPointOperand
 			+ Into<LiftedFixedBalance> // integer part not more than bits in this
-			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128 bit
+			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
+			  // bit
 
 		// actually there are 2 types of currencies:
 		// 1. vault owned - can transfer, cannot mint
@@ -504,7 +508,7 @@ pub mod pallet {
 
 			let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
 				.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount)?;
-			let underlying_collateral_balance: LiftedFixedBalance =
+			let underlying_collateral_balance: NormalizedCollateralFactor =
 				<T::Vault as Vault>::to_underlying_value(&config.collateral, collateral_balance)?
 					.into();
 			let collateral_asset_id = <T::Vault as Vault>::asset_id(&config.collateral)?;
