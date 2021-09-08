@@ -48,6 +48,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		traits::{
 			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
+			tokens::DepositConsequence,
 			UnixTime,
 		},
 		PalletId,
@@ -149,6 +150,7 @@ pub mod pallet {
 		CannotBorrowInCurrentLendingState,
 		NotEnoughBorrowAsset,
 		NotEnoughCollateral,
+		TransferFailed,
 	}
 
 	/// Lending instances counter
@@ -507,7 +509,7 @@ pub mod pallet {
 
 			let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
 				.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount)?;
-			let underlying_collateral_balance: NormalizedCollateralFactor =
+			let underlying_collateral_balance: LiftedFixedBalance =
 				<T::Vault as Vault>::to_underlying_value(&config.collateral, collateral_balance)?
 					.into();
 			let collateral_asset_id = <T::Vault as Vault>::asset_id(&config.collateral)?;
@@ -527,25 +529,35 @@ pub mod pallet {
 
 		fn deposit_collateral(
 			market_id: &Self::MarketId,
-			from: &Self::AccountId,
+			account: &Self::AccountId,
 			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let collateral_lp_id = T::Vault::lp_asset_id(&market.collateral)?;
-			T::Currency::transfer(
-				collateral_lp_id,
-				from,
-				&Self::account_id(market_id),
-				amount,
-				true,
-			)
-			.map_err(|_| Error::<T>::CollateralDepositFailed)?;
-			AccountCollateral::<T>::try_mutate(market_id, from, |collateral_balance| {
-				let new_collateral_balance = *collateral_balance + amount;
+			let market_account = Self::account_id(&market_id);
+			ensure!(
+				T::Currency::can_withdraw(collateral_lp_id, &account, amount)
+					.into_result()
+					.is_ok(),
+				Error::<T>::TransferFailed
+			);
+			ensure!(
+				T::Currency::can_deposit(collateral_lp_id, &market_account, amount) ==
+					DepositConsequence::Success,
+				Error::<T>::TransferFailed
+			);
+
+			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
+				let new_collateral_balance = (*collateral_balance)
+					.checked_add(&amount)
+					.ok_or(Error::<T>::Overflow.into())?;
 				*collateral_balance = new_collateral_balance;
-				Ok(())
-			})
+				Result::<(), Error<T>>::Ok(())
+			})?;
+			T::Currency::transfer(collateral_lp_id, account, &market_account, amount, true)
+				.expect("we'd better exit; qed;");
+			Ok(())
 		}
 
 		fn withdraw_collateral(
@@ -584,23 +596,33 @@ pub mod pallet {
 				.checked_mul(&collateral_price)
 				.ok_or(Error::<T>::Overflow)?;
 
-			if collateral_value > withdrawable_collateral_value {
-				Err(Error::<T>::NotEnoughCollateral.into())
-			} else {
-				AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
-					let new_collateral_balance = *collateral_balance - amount;
-					*collateral_balance = new_collateral_balance;
-					Result::<(), Error<T>>::Ok(())
-				})?;
-				T::Currency::transfer(
-					collateral_asset,
-					&Self::account_id(&market_id),
-					account,
-					amount,
-					true,
-				)?;
-				Ok(())
-			}
+			ensure!(
+				collateral_value > withdrawable_collateral_value,
+				Error::<T>::NotEnoughCollateral
+			);
+
+			let market_account = Self::account_id(&market_id);
+			ensure!(
+				T::Currency::can_deposit(collateral_asset, &account, amount) ==
+					DepositConsequence::Success,
+				Error::<T>::TransferFailed
+			);
+			ensure!(
+				T::Currency::can_withdraw(collateral_asset, &market_account, amount)
+					.into_result()
+					.is_ok(),
+				Error::<T>::TransferFailed
+			);
+
+			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
+				let new_collateral_balance =
+					(*collateral_balance).checked_sub(&amount).ok_or(Error::<T>::Underflow)?;
+				*collateral_balance = new_collateral_balance;
+				Result::<(), Error<T>>::Ok(())
+			})?;
+			T::Currency::transfer(collateral_asset, &market_account, account, amount, true)
+				.expect("we'd better exit; qed;");
+			Ok(())
 		}
 	}
 }
