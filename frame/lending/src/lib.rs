@@ -150,7 +150,11 @@ pub mod pallet {
 						TransactionOutcome::Commit(1000)
 					},
 					Err(err) => {
-						log::error!("This should never happen, could not initialize block!!! {:#?} {:#?}", block_number, err);
+						log::error!(
+							"This should never happen, could not initialize block!!! {:#?} {:#?}",
+							block_number,
+							err
+						);
 						TransactionOutcome::Rollback(0)
 					},
 				}
@@ -274,6 +278,26 @@ pub mod pallet {
 		) -> Result<<Self as Lending>::MarketId, DispatchError> {
 			<Self as Lending>::create(borrow_asset_vault, collateral_asset_vault, config_input)
 		}
+		pub fn deposit_collateral(
+			market_id: &<Self as Lending>::MarketId,
+			account_id: &<Self as Lending>::AccountId,
+			amount: CollateralLpAmountOf<Self>,
+		) -> Result<(), DispatchError> {
+			<Self as Lending>::deposit_collateral(market_id, account_id, amount)
+		}
+		pub fn collateral_of_account(
+			market_id: &<Self as Lending>::MarketId,
+			account: &<Self as Lending>::AccountId,
+		) -> Result<<Self as Lending>::Balance, DispatchError> {
+			<Self as Lending>::collateral_of_account(market_id, account)
+		}
+		pub fn withdraw_collateral(
+			market_id: &<Self as Lending>::MarketId,
+			account: &<Self as Lending>::AccountId,
+			amount: CollateralLpAmountOf<Self>,
+		) -> Result<(), DispatchError> {
+			<Self as Lending>::withdraw_collateral(market_id, account, amount)
+		}
 	}
 
 	impl<T: Config> Lending for Pallet<T> {
@@ -380,13 +404,12 @@ pub mod pallet {
 						can_withdraw + balance >= possible_borrow,
 						Error::<T>::NotEnoughBorrowAsset
 					)
-				}
+				},
 				FundsAvailability::Depositable(_) => (),
 				// TODO: decide when react and how to return fees back
 				// https://mlabs-corp.slack.com/archives/C02CRQ9KW04/p1630662664380600?thread_ts=1630658877.363600&cid=C02CRQ9KW04
-				FundsAvailability::MustLiquidate => {
-					return Err(Error::<T>::CannotBorrowInCurrentLendingState.into())
-				}
+				FundsAvailability::MustLiquidate =>
+					return Err(Error::<T>::CannotBorrowInCurrentLendingState.into()),
 			}
 
 			T::Currency::transfer(
@@ -451,7 +474,8 @@ pub mod pallet {
 				T::Currency::transfer(borrow_id, from, &market_account, repay_amount, false)
 					.expect("must be able to transfer because of above checks");
 
-				// TODO: not sure why Warp V2 (Blacksmith) does that, but seems will need to revise it later with some strategy
+				// TODO: not sure why Warp V2 (Blacksmith) does that, but seems will need to revise
+				// it later with some strategy
 				let interest_index = BorrowIndex::<T>::get(market_id);
 				DebtIndex::<T>::insert(market_id, beneficiary, interest_index);
 
@@ -508,7 +532,7 @@ pub mod pallet {
 		) -> Result<Ratio, DispatchError> {
 			// utilization ratio is 0 when there are no borrows
 			if borrows.is_zero() {
-				return Ok(Ratio::zero());
+				return Ok(Ratio::zero())
 			}
 			// utilizationRatio = totalBorrows / (totalCash + totalBorrows − totalReserves)
 			let total: u128 = cash
@@ -556,22 +580,27 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
 		) -> Result<Option<BorrowAmountOf<Self>>, DispatchError> {
-			let debt_asset_id = DebtMarkets::<T>::try_get(market_id)
-				.map_err(|_| Error::<T>::MarketAndAccountPairNotFound)?;
-			let principal = T::Currency::balance_on_hold(debt_asset_id, account);
-			let account_interest_index = DebtIndex::<T>::try_get(market_id, account)
-				.map_err(|_| Error::<T>::MarketAndAccountPairNotFound)?;
+			let debt_asset_id =
+				DebtMarkets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
-			let market_interest_index =
-				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let account_debt = DebtIndex::<T>::try_get(market_id, account);
 
-			let balance = borrow_from_principal::<T>(
-				principal,
-				market_interest_index,
-				account_interest_index,
-			)?;
+			match account_debt {
+				Ok(account_interest_index) => {
+					let principal = T::Currency::balance_on_hold(debt_asset_id, account);
+					let market_interest_index = BorrowIndex::<T>::try_get(market_id).unwrap();
 
-			Ok(balance.map(Into::into))
+					let balance = borrow_from_principal::<T>(
+						principal,
+						market_interest_index,
+						account_interest_index,
+					)?;
+
+					Ok(balance.map(Into::into))
+				},
+				// no active borrow on  market for given account
+				Err(()) => Ok(Some(BorrowAmountOf::<Self>::zero())),
+			}
 		}
 
 		fn collateral_of_account(
@@ -632,8 +661,8 @@ pub mod pallet {
 				Error::<T>::TransferFailed
 			);
 			ensure!(
-				T::Currency::can_deposit(collateral_lp_id, &market_account, amount)
-					== DepositConsequence::Success,
+				T::Currency::can_deposit(collateral_lp_id, &market_account, amount) ==
+					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 
@@ -688,14 +717,14 @@ pub mod pallet {
 				.ok_or(Error::<T>::Overflow)?;
 
 			ensure!(
-				collateral_value > withdrawable_collateral_value,
+				collateral_value <= withdrawable_collateral_value,
 				Error::<T>::NotEnoughCollateral
 			);
 
 			let market_account = Self::account_id(&market_id);
 			ensure!(
-				T::Currency::can_deposit(collateral_asset, &account, amount)
-					== DepositConsequence::Success,
+				T::Currency::can_deposit(collateral_asset, &account, amount) ==
+					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 			ensure!(
@@ -726,7 +755,7 @@ pub mod pallet {
 		account_interest_index: Ratio,
 	) -> Result<Option<u64>, DispatchError> {
 		if principal.is_zero() {
-			return Ok(None);
+			return Ok(None)
 		}
 		let principal: LiftedFixedBalance = principal.into();
 		let balance = principal

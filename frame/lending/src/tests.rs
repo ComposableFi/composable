@@ -1,5 +1,5 @@
 use crate::{
-	mock::{new_test_ext, AccountId, Lending, Oracle, Origin, Vault},
+	mock::{new_test_ext, AccountId, Lending, Tokens, Vault},
 	MarketIndex,
 };
 use composable_traits::{
@@ -7,9 +7,12 @@ use composable_traits::{
 	rate_model::*,
 	vault::{Deposit, VaultConfig},
 };
-use frame_support::assert_ok;
+use frame_support::{
+	assert_ok,
+	traits::fungibles::{Inspect, Mutate},
+};
 use hex_literal::hex;
-use sp_runtime::{traits::Zero, FixedPointNumber, Percent, Perquintill};
+use sp_runtime::{traits::Zero, FixedPointNumber, Perquintill};
 use sp_std::collections::btree_map::BTreeMap;
 
 #[test]
@@ -44,6 +47,7 @@ fn test_calc_utilization_ratio() {
 		Ratio::saturating_from_rational(100, 100)
 	);
 }
+
 #[test]
 fn test_create_market() {
 	new_test_ext().execute_with(|| {
@@ -87,5 +91,64 @@ fn test_create_market() {
 		// create market
 		let market = Lending::create(v_eth.unwrap().0, v_usdt.unwrap().0, market_config);
 		assert_ok!(market);
+	})
+}
+
+#[test]
+fn test_market_colletral_deposite_withdraw() {
+	new_test_ext().execute_with(|| {
+		// create vaults
+		let eth_asset_id = 0;
+		let usdt_asset_id = 1;
+		let strategy_account_id = AccountId::from_raw(hex!(
+			"6d6f646c4c656e64696e67210000000000000000000000000000000000000000"
+		));
+		let mut strategy = BTreeMap::new();
+		strategy.insert(strategy_account_id, Perquintill::from_percent(90));
+		let manager_account_id = AccountId::from_raw(hex!(
+			"6d6f646c4c656e64696e67210000000000000000000000000000000000000000"
+		));
+		let v_eth = Vault::do_create_vault(
+			Deposit::Existential,
+			VaultConfig {
+				asset_id: eth_asset_id,
+				reserved: Perquintill::from_percent(10),
+				manager: manager_account_id,
+				strategies: strategy.clone(),
+			},
+		);
+		assert_ok!(v_eth);
+		let v_usdt = Vault::do_create_vault(
+			Deposit::Existential,
+			VaultConfig {
+				asset_id: usdt_asset_id,
+				reserved: Perquintill::from_percent(10),
+				manager: manager_account_id,
+				strategies: strategy,
+			},
+		);
+		assert_ok!(v_usdt);
+		let market_config = MarketConfigInput {
+			manager: manager_account_id,
+			reserve_factor: Perquintill::from_percent(8),
+			collateral_factor: NormalizedCollateralFactor::saturating_from_rational(150, 100),
+		};
+		// Note: this market uses ConstantOracle as defined in src/mock.rs
+		// create market
+		let market = Lending::create(v_eth.unwrap().0, v_usdt.unwrap().0, market_config);
+		assert_ok!(market);
+		let market_id = market.unwrap();
+
+		let user_1_id = AccountId::from_raw(hex!(
+			"6d6f646c4c656e64696e67211000000000000000000000000000000000000000"
+		));
+		assert_eq!(Tokens::balance(usdt_asset_id, &user_1_id), 0);
+		assert_ok!(Tokens::mint_into(usdt_asset_id, &user_1_id, 1000));
+		assert_eq!(Tokens::balance(usdt_asset_id, &user_1_id), 1000);
+
+		assert_ok!(Lending::deposit_collateral(&market_id, &user_1_id, 500));
+		assert_eq!(Lending::collateral_of_account(&market_id, &user_1_id), Ok(500));
+		// assert_ok!(Lending::withdraw_collateral(&market_id, &user_1_id, 1000));
+		assert_ok!(Lending::withdraw_collateral(&market_id, &user_1_id, 500));
 	})
 }
