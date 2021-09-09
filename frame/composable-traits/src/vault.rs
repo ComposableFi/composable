@@ -63,6 +63,8 @@ pub trait Vault {
 	type BlockNumber;
 	type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 
+	fn token_vault(token: Self::AssetId) -> Result<Self::VaultId, DispatchError>;
+
 	/// underlying asset id
 	fn asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
 
@@ -114,8 +116,8 @@ pub trait StrategicVault: Vault {
 	) -> Result<FundsAvailability<Self::Balance>, DispatchError>;
 
 	/// Used by strategies to withdraw funds to be used in DeFi or other protocols.
-	/// Even if vault want its funds back, it is up to strategy to decide to go above available funds.
-	/// At least there is such possibility.
+	/// Even if vault want its funds back, it is up to strategy to decide to go above available
+	/// funds. At least there is such possibility.
 	/// In most cases default behavior is to check `available_funds` before `withdraw`
 	fn withdraw(
 		vault: &Self::VaultId,

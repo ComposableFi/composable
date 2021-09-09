@@ -135,6 +135,11 @@ pub mod pallet {
 	#[pallet::getter(fn vault_data)]
 	pub type Vaults<T: Config> = StorageMap<_, Twox64Concat, VaultIndex, VaultInfo<T>, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn token_vault)]
+	pub type TokenVault<T: Config> =
+		StorageMap<_, Twox64Concat, T::CurrencyId, VaultIndex, ValueQuery>;
+
 	/// Amounts which each strategy is allowed to access, including the amount reserved for quick
 	/// withdrawals for the pallet.
 	#[pallet::storage]
@@ -197,6 +202,7 @@ pub mod pallet {
 		NotEnoughLiquidity,
 		DepositIsTooLow,
 		InvalidSurchargeClaim,
+		NotVaultLpToken,
 	}
 
 	#[pallet::call]
@@ -356,6 +362,7 @@ pub mod pallet {
 				};
 
 				Vaults::<T>::insert(id, vault_info.clone());
+				TokenVault::<T>::insert(lp_token_id, id);
 
 				Ok((id, vault_info))
 			})
@@ -571,6 +578,12 @@ pub mod pallet {
 			let vault =
 				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
 			Self::do_lp_share_value(vault_id, &vault, lp_amount)
+		}
+
+		fn token_vault(token: Self::AssetId) -> Result<Self::VaultId, DispatchError> {
+			let vault_index =
+				TokenVault::<T>::try_get(&token).map_err(|_| Error::<T>::NotVaultLpToken)?;
+			Ok(vault_index)
 		}
 	}
 
