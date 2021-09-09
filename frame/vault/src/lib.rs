@@ -253,17 +253,17 @@ pub mod pallet {
 			match crate::rent::evaluate_eviction::<T>(current_block, vault.deposit) {
 				Verdict::Exempt => {
 					todo!("do not reward, but charge less weight")
-				}
+				},
 				Verdict::Evict { .. } => {
 					// we should also decide if we are going to drop the vault if there are still
 					// assets left in strategies. If some strategy becomes bricked, they will never
 					// report or return a balance. Tombstoned vaults would then effectively take up
 					// storage forever.
 					todo!("clean up all storage associated with the vault, and then reward the caller")
-				}
+				},
 				Verdict::Charge { .. } => {
 					todo!("update vault deposit info, charge some of the rent from the `hold`ed balance")
-				}
+				},
 			}
 		}
 
@@ -441,8 +441,8 @@ pub mod pallet {
 			let vault_aum = Self::assets_under_management(vault_id)?;
 			if vault_aum.is_zero() {
 				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, amount)
-						== DepositConsequence::Success,
+					T::Currency::can_deposit(vault.lp_token_id, from, amount) ==
+						DepositConsequence::Success,
 					Error::<T>::MintFailed
 				);
 
@@ -472,8 +472,8 @@ pub mod pallet {
 				ensure!(lp > T::Balance::zero(), Error::<T>::DepositIsTooLow);
 
 				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, lp)
-						== DepositConsequence::Success,
+					T::Currency::can_deposit(vault.lp_token_id, from, lp) ==
+						DepositConsequence::Success,
 					Error::<T>::MintFailed
 				);
 
