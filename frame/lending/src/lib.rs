@@ -63,7 +63,7 @@ pub mod pallet {
 	};
 	use sp_std::fmt::Debug;
 
-	#[derive(Default, Copy, Clone, Encode, Decode)]
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
 
@@ -221,6 +221,13 @@ pub mod pallet {
 			reserves: &<Self as Lending>::Balance,
 		) -> Result<Ratio, DispatchError> {
 			<Self as Lending>::calc_utilization_ratio(cash, borrows, reserves)
+		}
+		pub fn create(
+			borrow_asset_vault: <T::Vault as Vault>::VaultId,
+			collateral_asset_vault: <T::Vault as Vault>::VaultId,
+			config_input: MarketConfigInput<<Self as Lending>::AccountId>,
+		) -> Result<<Self as Lending>::MarketId, DispatchError> {
+			<Self as Lending>::create(borrow_asset_vault, collateral_asset_vault, config_input)
 		}
 	}
 
