@@ -25,7 +25,7 @@
 pub use pallet::*;
 
 #[cfg(test)]
-mod mock;
+mod mocks;
 
 #[cfg(test)]
 mod tests;
