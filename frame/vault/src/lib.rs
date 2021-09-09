@@ -295,6 +295,12 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		pub fn lp_asset_id(
+			vault_id: &<Self as Vault>::VaultId,
+		) -> Result<<Self as Vault>::AssetId, DispatchError> {
+			<Self as Vault>::lp_asset_id(vault_id)
+		}
+
 		pub fn do_create_vault(
 			deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
 			config: VaultConfig<T::AccountId, T::CurrencyId>,
