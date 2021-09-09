@@ -9,18 +9,70 @@ use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{
-		AccountIdConversion, BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount,
-		IdentityLookup, Verify,
+		AccountIdConversion, BlakeTwo256, ConvertInto, IdentifyAccount, IdentityLookup, Verify,
 	},
 	DispatchError,
 };
 
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-type Extrinsic = TestXt<Call, ()>;
+pub mod oracle;
+
+pub type AccountId = u32;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
-type Balance = u128;
-type MockCurrencyId = u64;
+pub type Balance = u128;
+pub type Amount = i128;
+
+pub type VaultId = u64;
+
+pub const ALICE: AccountId = 0;
+pub const BOB: AccountId = 1;
+pub const CHARLIE: AccountId = 2;
+pub const JEREMY: AccountId = 3;
+pub const ACCOUNT_FREE_START: AccountId = JEREMY + 1;
+
+#[derive(
+	PartialOrd,
+	Ord,
+	PartialEq,
+	Eq,
+	Debug,
+	Copy,
+	Clone,
+	codec::Encode,
+	codec::Decode,
+	serde::Serialize,
+	serde::Deserialize,
+)]
+pub enum MockCurrencyId {
+	PICA,
+	BTC,
+	ETH,
+	LTC,
+	USDT,
+	LpToken(u128),
+}
+
+impl Default for MockCurrencyId {
+	fn default() -> Self {
+		MockCurrencyId::PICA
+	}
+}
+
+impl From<u128> for MockCurrencyId {
+	fn from(x: u128) -> Self {
+		MockCurrencyId::LpToken(x)
+	}
+}
+
+impl From<MockCurrencyId> for u128 {
+	fn from(x: MockCurrencyId) -> Self {
+		match x {
+			MockCurrencyId::LpToken(y) => y,
+			// REALLY BAD
+			_ => panic!("impossible"),
+		}
+	}
+}
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -32,11 +84,11 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-		Oracle: pallet_oracle::{Pallet, Call, Storage, Event<T>},
 		Factory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Lending: pallet_lending::{Pallet, Storage},
+		Oracle: pallet_lending::mocks::oracle::{Pallet}
 	}
 );
 
@@ -56,7 +108,7 @@ impl system::Config for Test {
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = sp_core::sr25519::Public;
+	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
@@ -100,75 +152,15 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const StakeLock: u64 = 1;
-	pub const MinStake: u64 = 1;
-	pub const StalePrice: u64 = 2;
-	pub const RequestCost: u64 = 1;
-	pub const RewardAmount: u64 = 5;
-	pub const SlashAmount: u64 = 5;
-	pub const MaxAnswerBound: u32 = 5;
-	pub const MaxAssetsCount: u32 = 2;
-}
-
-ord_parameter_types! {
-	pub const RootAccount: AccountId = root_account();
-}
-
-impl frame_system::offchain::SigningTypes for Test {
-	type Public = <Signature as Verify>::Signer;
-	type Signature = Signature;
-}
-
-impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
-where
-	Call: From<LocalCall>,
-{
-	type OverarchingCall = Call;
-	type Extrinsic = Extrinsic;
-}
-
-impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
-where
-	Call: From<LocalCall>,
-{
-	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-		call: Call,
-		_public: <Signature as Verify>::Signer,
-		_account: AccountId,
-		nonce: u64,
-	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
-		Some((call, (nonce, ())))
-	}
-}
-
-impl pallet_oracle::Config for Test {
-	type Event = Event;
-	type AuthorityId = pallet_oracle::crypto::TestAuthId;
-	type Currency = Balances;
-	type AssetId = MockCurrencyId;
-	type PriceValue = u128;
-	type StakeLock = StakeLock;
-	type StalePrice = StalePrice;
-	type MinStake = MinStake;
-	type AddOracle = EnsureSignedBy<RootAccount, sp_core::sr25519::Public>;
-	type RequestCost = RequestCost;
-	type RewardAmount = RewardAmount;
-	type SlashAmount = SlashAmount;
-	type MaxAnswerBound = MaxAnswerBound;
-	type MaxAssetsCount = MaxAssetsCount;
-	type WeightInfo = ();
-}
-
 impl pallet_currency_factory::Config for Test {
 	type Event = Event;
 	type CurrencyId = MockCurrencyId;
-	type Convert = ();
+	type Convert = ConvertInto;
 }
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: MockCurrencyId = 1;
+	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::PICA;
 	pub const CreationDeposit: Balance = 10;
 	pub const RentPerBlock: Balance = 1;
 }
@@ -189,14 +181,6 @@ impl pallet_vault::Config for Test {
 	type NativeAssetId = NativeAssetId;
 }
 
-pub struct MockDustRemovalWhitelist;
-
-impl Contains<AccountId> for MockDustRemovalWhitelist {
-	fn contains(a: &AccountId) -> bool {
-		*a == DustReceiver::get()
-	}
-}
-
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
 		Zero::zero()
@@ -204,40 +188,29 @@ parameter_type_with_key! {
 }
 
 parameter_types! {
-	pub DustReceiver: AccountId = PalletId(*b"orml/dst").into_account();
 	pub MaxLocks: u32 = 2;
 }
 
 impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
-	type Amount = i64;
+	type Amount = Amount;
 	type CurrencyId = MockCurrencyId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = TransferDust<Test, DustReceiver>;
-	type MaxLocks = MaxLocks;
-	type DustRemovalWhitelist = MockDustRemovalWhitelist;
+	type OnDust = ();
+	type MaxLocks = ();
+	type DustRemovalWhitelist = ();
 }
 
-pub struct ConstantOracle;
-// Implement ConstantOracle for testing purpose
-impl OracleTrait for ConstantOracle {
-	type Balance = u128;
-	type AssetId = u64;
-	type Timestamp = u32;
-	fn get_price(of: &Self::AssetId) -> Result<(Self::Balance, Self::Timestamp), DispatchError> {
-		match of {
-			0 => Ok((3400, 0)), // ETH
-			1 => Ok((1, 0)),    // USDT
-			_ => Err(DispatchError::CannotLookup),
-		}
-	}
+impl crate::mocks::oracle::Config for Test {
+	type VaultId = VaultId;
+	type Vault = Vault;
 }
 
 impl pallet_lending::Config for Test {
-	type Oracle = ConstantOracle;
-	type VaultId = u64;
+	type Oracle = Oracle;
+	type VaultId = VaultId;
 	type Vault = Vault;
 	type AssetId = MockCurrencyId;
 	type Balance = Balance;
@@ -246,14 +219,10 @@ impl pallet_lending::Config for Test {
 	type CurrencyFactory = Factory;
 }
 
-pub fn root_account() -> AccountId {
-	AccountId::from_raw([0; 32])
-}
-
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	let balances = vec![(root_account(), 100_000_000)];
+	let balances = vec![];
 
 	pallet_balances::GenesisConfig::<Test> { balances }
 		.assimilate_storage(&mut t)

@@ -345,12 +345,33 @@ pub mod pallet {
 				};
 
 				/* Generate the underlying vault that will hold borrowable asset
-					------------------
-					|  Lending pallet |
-					|    ---------    |
-					|    | Vault |    |
-					|    ---------    |
-					------------------
+
+
+				#  -----------
+				#  |  vault  |  I
+				#  -----------
+				#       |
+				# -------------
+				# |  strategy | P
+				# -------------
+				#       |                            M
+				#       |                   -------------------
+				#       |                   |    ---------    |
+				#       -----------------------> |       |    |
+				#                           |    | vault |    |
+				#       -----------------------> |       |    |
+				#       |                   |    ---------    |
+				#       |                   -------------------
+				#       |
+				# -------------
+				# |  strategy | Q
+				# -------------
+				#       |
+				#  ----------
+				#  |  vault | J
+				#  ----------
+
+
 				   The idea here is that the lending pallet owns the vault.
 
 				   Let's assume a group of users X want to use a strategy P
