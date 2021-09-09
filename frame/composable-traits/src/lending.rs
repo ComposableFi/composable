@@ -11,6 +11,10 @@ use sp_runtime::FixedU128;
 /// Must be (1.0.. because applied only to price normalized values
 pub type NormalizedCollateralFactor = frame_support::sp_runtime::FixedU128;
 
+pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
+
+pub type BorrowAmountOf<T> = <T as Lending>::Balance;
+
 pub type Timestamp = u64;
 
 #[derive(Encode, Decode, Default)]
@@ -59,10 +63,18 @@ pub trait Lending {
 	/// AccountId of the market instance
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId;
 
+	/// Deposit collateral in order to borrow.
 	fn deposit_collateral(
 		market_id: &Self::MarketId,
 		account_id: &Self::AccountId,
-		amount: Self::Balance,
+		amount: CollateralLpAmountOf<Self>,
+	) -> Result<(), DispatchError>;
+
+	/// Withdraw a part/total of previously deposited collateral.
+	fn withdraw_collateral(
+		market_id: &Self::MarketId,
+		account: &Self::AccountId,
+		amount: CollateralLpAmountOf<Self>,
 	) -> Result<(), DispatchError>;
 
 	/// get all existing markets for current deposit
@@ -77,18 +89,17 @@ pub trait Lending {
 	fn borrow(
 		market_id: &Self::MarketId,
 		debt_owner: &Self::AccountId,
-		amount_to_borrow: Self::Balance,
+		amount_to_borrow: BorrowAmountOf<Self>,
 	) -> Result<(), DispatchError>;
 
 	/// `from` repays some of `beneficiary` debts.
-	///
-	/// - `pair`        : the pair to be repaid.
-	/// - `repay_amount`: the amount to be repaid.
+	/// - `market_id`   : the market_id on which to be repaid.
+	/// - `repay_amount`: the amount to be repaid in underlying.
 	fn repay_borrow(
 		market_id: &Self::MarketId,
 		from: &Self::AccountId,
 		beneficiary: &Self::AccountId,
-		repay_amount: Self::Balance,
+		repay_amount: Option<BorrowAmountOf<Self>>,
 	) -> Result<(), DispatchError>;
 
 	/// total debts principals (not includes interest)
@@ -107,11 +118,6 @@ pub trait Lending {
 		delta_interest_rate: Rate,
 	) -> Result<(), DispatchError>;
 
-	fn update_reserves(
-		market_id: &Self::MarketId,
-		reserves: Self::Balance,
-	) -> Result<(), DispatchError>;
-
 	fn calc_utilization_ratio(
 		cash: &Self::Balance,
 		borrows: &Self::Balance,
@@ -126,7 +132,7 @@ pub trait Lending {
 	fn borrow_balance_current(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
-	) -> Result<Self::Balance, DispatchError>;
+	) -> Result<Option<BorrowAmountOf<Self>>, DispatchError>;
 
 	fn collateral_of_account(
 		market_id: &Self::MarketId,
@@ -151,11 +157,4 @@ pub trait Lending {
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
 	) -> Result<Self::Balance, DispatchError>;
-
-	/// redeem wrapped collateral to specified account
-	fn redeem(
-		market_id: &Self::MarketId,
-		account: &Self::AccountId,
-		borrow_amount: Self::Balance,
-	) -> Result<(), DispatchError>;
 }

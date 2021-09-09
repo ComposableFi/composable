@@ -1,4 +1,5 @@
 use crate as pallet_lending;
+use composable_traits::{currency::CurrencyFactory, oracle::Oracle as OracleTrait};
 use frame_support::{ord_parameter_types, parameter_types, traits::Contains, PalletId};
 use frame_system::{self as system, EnsureSignedBy};
 use orml_tokens::TransferDust;
@@ -11,6 +12,7 @@ use sp_runtime::{
 		AccountIdConversion, BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount,
 		IdentityLookup, Verify,
 	},
+	DispatchError,
 };
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
@@ -218,8 +220,23 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = MockDustRemovalWhitelist;
 }
 
+pub struct ConstantOracle;
+// Implement ConstantOracle for testing purpose
+impl OracleTrait for ConstantOracle {
+	type Balance = u128;
+	type AssetId = u64;
+	type Timestamp = u32;
+	fn get_price(of: &Self::AssetId) -> Result<(Self::Balance, Self::Timestamp), DispatchError> {
+		match of {
+			0 => Ok((3400, 0)), // ETH
+			1 => Ok((1, 0)),    // USDT
+			_ => Err(DispatchError::CannotLookup),
+		}
+	}
+}
+
 impl pallet_lending::Config for Test {
-	type Oracle = Oracle;
+	type Oracle = ConstantOracle;
 	type VaultId = u64;
 	type Vault = Vault;
 	type AssetId = MockCurrencyId;
@@ -229,7 +246,7 @@ impl pallet_lending::Config for Test {
 	type CurrencyFactory = Factory;
 }
 
-fn root_account() -> AccountId {
+pub fn root_account() -> AccountId {
 	AccountId::from_raw([0; 32])
 }
 

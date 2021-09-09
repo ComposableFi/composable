@@ -289,7 +289,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn do_create_vault(
+		pub fn do_create_vault(
 			deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
 			config: VaultConfig<T::AccountId, T::CurrencyId>,
 		) -> Result<(VaultIndex, VaultInfo<T>), DispatchError> {
