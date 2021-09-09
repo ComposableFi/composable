@@ -38,6 +38,7 @@ orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
 pallet-balances = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 pallet-timestamp = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
 pallet-oracle = { version = "1.0.0", path = "../oracle" }
 pallet-vault = { version = "0.0.1", path = "../vault" }
 
@@ -54,7 +55,8 @@ std = [
     "sp-core/std",
     "sp-std/std",
     "sp-arithmetic/std",
-	"composable-traits/std",
+    "composable-traits/std",
+    "pallet-vault/std",
 ]
 
 runtime-benchmarks = [

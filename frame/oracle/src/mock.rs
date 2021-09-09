@@ -123,6 +123,8 @@ impl pallet_oracle::Config for Test {
 	type Event = Event;
 	type AuthorityId = crypto::TestAuthId;
 	type Currency = Balances;
+	type AssetId = u64;
+	type PriceValue = u128;
 	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
 	type MinStake = MinStake;

@@ -33,7 +33,7 @@ frame-benchmarking = { default-features = false, optional = true, git = 'https:/
 composable-traits = { path = "../composable-traits", default-features = false }
 
 [dev-dependencies]
-serde = { version = "1.0.119" }
+serde = "1.0.119"
 pallet-balances = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-keystore = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 

@@ -30,8 +30,8 @@ log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
 
 [dev-dependencies]
-proptest = { version = "0.9.6" }
-serde = { version = "1.0.119" }
+proptest = "0.9.6"
+serde = "1.0.119"
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
 

@@ -41,16 +41,16 @@ benchmarks! {
 		let max_answers = 5;
 	}: {
 		assert_ok!(
-			<Oracle<T>>::add_asset_and_info(caller, asset_id, threshold, min_answers, max_answers)
+			<Oracle<T>>::add_asset_and_info(caller, asset_id.into(), threshold, min_answers, max_answers)
 		);
 	}
 	verify {
-		assert_last_event::<T>(Event::AssetInfoChange(asset_id, threshold, min_answers, max_answers).into());
+		assert_last_event::<T>(Event::AssetInfoChange(asset_id.into(), threshold, min_answers, max_answers).into());
 	}
 
 	request_price {
 		let caller: T::AccountId = whitelisted_caller();
-		let asset_id = 1;
+		let asset_id: T::AssetId = 1.into();
 		AssetsInfo::<T>::insert(asset_id, AssetInfo {
 			threshold: Percent::from_percent(80),
 			min_answers: 3,
@@ -114,7 +114,7 @@ benchmarks! {
 		let price_submitters = (0..p).map(|c| account("candidate", c, SEED)).collect::<Vec<T::AccountId>>();
 		let caller: T::AccountId = whitelisted_caller();
 		let price = 100_000;
-		let asset_id = 1;
+		let asset_id: T::AssetId = 1.into();
 		let stake = T::MinStake::get();
 		OracleStake::<T>::insert(&caller, stake);
 		RequestedId::<T>::mutate(asset_id, |request_id| *request_id += 1);
@@ -127,7 +127,7 @@ benchmarks! {
 		PrePrices::<T>::mutate(asset_id, |current_prices| -> DispatchResult {
 			for (i, price_submitter) in price_submitters.iter().enumerate() {
 				let set_price = PrePrice {
-					price: price + i as u128,
+					price: (price + i as u128).into(),
 					block: frame_system::Pallet::<T>::block_number(),
 					who: price_submitter.clone(),
 				};
@@ -135,15 +135,15 @@ benchmarks! {
 			}
 			Ok(())
 		})?;
-	}: _(RawOrigin::Signed(caller.clone()), price, asset_id)
+	}: _(RawOrigin::Signed(caller.clone()), price.into(), asset_id)
 	verify {
-		assert_last_event::<T>(Event::PriceSubmitted(caller, asset_id, price).into())
+		assert_last_event::<T>(Event::PriceSubmitted(caller, asset_id, price.into()).into())
 	}
 
 	update_pre_prices {
 		let p in 1 .. T::MaxAnswerBound::get();
 		let who: T::AccountId = whitelisted_caller();
-		let asset_id =  1;
+		let asset_id: T::AssetId = 1.into();
 		let block = T::StalePrice::get();
 		let asset_info = AssetInfo {
 			threshold: Percent::from_percent(80),
@@ -152,7 +152,7 @@ benchmarks! {
 		};
 		let pre_prices = (0..p).map(|i| {
 			PrePrice {
-				price: 100u128 + i as u128,
+				price: (100u128 + i as u128).into(),
 				block: 0u32.into(),
 				who: who.clone()
 			}
@@ -175,14 +175,14 @@ benchmarks! {
 		};
 		let pre_prices = (0..p).map(|_| {
 			PrePrice {
-				price: 100u128 + p as u128,
+				price: (100u128 + p as u128).into(),
 				block: 0u32.into(),
 				who: who.clone()
 			}
 		})
 		.collect::<Vec<_>>();
 	}: {
-		Oracle::<T>::update_price(asset_id, asset_info, block, pre_prices)
+		Oracle::<T>::update_price(asset_id.into(), asset_info, block, pre_prices)
 	}
 }
 

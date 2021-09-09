@@ -33,6 +33,7 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Oracle: pallet_oracle::{Pallet, Call, Storage, Event<T>},
+		Factory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Lending: pallet_lending::{Pallet, Storage},
@@ -145,6 +146,8 @@ impl pallet_oracle::Config for Test {
 	type Event = Event;
 	type AuthorityId = pallet_oracle::crypto::TestAuthId;
 	type Currency = Balances;
+	type AssetId = MockCurrencyId;
+	type PriceValue = u128;
 	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
 	type MinStake = MinStake;
@@ -157,12 +160,10 @@ impl pallet_oracle::Config for Test {
 	type WeightInfo = ();
 }
 
-pub struct SimpleFactory;
-
-impl CurrencyFactory<MockCurrencyId> for SimpleFactory {
-	fn create() -> Result<MockCurrencyId, DispatchError> {
-		Ok(1)
-	}
+impl pallet_currency_factory::Config for Test {
+	type Event = Event;
+	type CurrencyId = MockCurrencyId;
+	type Convert = ();
 }
 
 parameter_types! {
@@ -178,7 +179,7 @@ impl pallet_vault::Config for Test {
 	type CurrencyId = MockCurrencyId;
 	type Balance = Balance;
 	type MaxStrategies = MaxStrategies;
-	type CurrencyFactory = SimpleFactory;
+	type CurrencyFactory = Factory;
 	type Convert = ConvertInto;
 	type StrategyReport = ();
 
@@ -242,7 +243,7 @@ impl pallet_lending::Config for Test {
 	type Balance = Balance;
 	type Currency = Tokens;
 	type UnixTime = Timestamp;
-	type CurrencyFactory = SimpleFactory;
+	type CurrencyFactory = Factory;
 }
 
 pub fn root_account() -> AccountId {

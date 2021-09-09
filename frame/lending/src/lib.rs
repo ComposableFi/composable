@@ -372,7 +372,7 @@ pub mod pallet {
 		fn borrow(
 			market_id: &Self::MarketId,
 			debt_owner: &Self::AccountId,
-			amount_to_borrow: Self::Balance,
+			_amount_to_borrow: Self::Balance,
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
@@ -522,7 +522,8 @@ pub mod pallet {
 				.and_then(|x| x.checked_mul_int(1u64))
 				.ok_or(ArithmeticError::Overflow)?
 				.into();
-			T::Currency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)
+			T::Currency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)?;
+			Ok(())
 		}
 
 		fn calc_utilization_ratio(

@@ -331,7 +331,7 @@ fn medianize_price() {
 			add_price_storage(price, 0, account_1, 0);
 		}
 		let price = Oracle::get_median_price(&Oracle::pre_prices(0));
-		assert_eq!(price, 101);
+		assert_eq!(price, Some(101));
 	});
 }
 
