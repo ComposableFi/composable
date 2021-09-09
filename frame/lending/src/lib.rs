@@ -38,18 +38,18 @@ pub mod pallet {
 		currency::CurrencyFactory,
 		lending::{
 			BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput,
-			NormalizedCollateralFactor, Timestamp,
+			Timestamp,
 		},
 		oracle::Oracle,
 		rate_model::*,
-		vault::{FundsAvailability, StrategicVault, Vault},
+		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
 	};
 	use frame_support::{
 		pallet_prelude::*,
 		storage::{with_transaction, TransactionOutcome},
 		traits::{
 			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
-			tokens::{DepositConsequence, WithdrawConsequence},
+			tokens::DepositConsequence,
 			GenesisBuild, UnixTime,
 		},
 		PalletId,
@@ -57,10 +57,10 @@ pub mod pallet {
 	use num_traits::{CheckedDiv, SaturatingSub};
 	use sp_runtime::{
 		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
-			Zero,
+			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
+			Saturating, Zero,
 		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128,
+		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Perquintill,
 	};
 	use sp_std::fmt::Debug;
 
@@ -194,8 +194,13 @@ pub mod pallet {
 	/// Indexed lending instances
 	#[pallet::storage]
 	#[pallet::getter(fn markets)]
-	pub type Markets<T: Config> =
-		StorageMap<_, Twox64Concat, MarketIndex, MarketConfig<T::VaultId>, ValueQuery>;
+	pub type Markets<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		MarketIndex,
+		MarketConfig<T::VaultId, T::AssetId, T::AccountId>,
+		ValueQuery,
+	>;
 
 	/// Original debt values are on balances.
 	/// Debt token allows to simplify some debt management and implementation of features
@@ -272,11 +277,11 @@ pub mod pallet {
 			<Self as Lending>::calc_utilization_ratio(cash, borrows, reserves)
 		}
 		pub fn create(
-			borrow_asset_vault: <T::Vault as Vault>::VaultId,
-			collateral_asset_vault: <T::Vault as Vault>::VaultId,
+			borrow_asset: <Self as Lending>::AssetId,
+			collateral_asset: <Self as Lending>::AssetId,
 			config_input: MarketConfigInput<<Self as Lending>::AccountId>,
-		) -> Result<<Self as Lending>::MarketId, DispatchError> {
-			<Self as Lending>::create(borrow_asset_vault, collateral_asset_vault, config_input)
+		) -> Result<(<Self as Lending>::MarketId, <Self as Lending>::VaultId), DispatchError> {
+			<Self as Lending>::create(borrow_asset, collateral_asset, config_input)
 		}
 		pub fn deposit_collateral(
 			market_id: &<Self as Lending>::MarketId,
@@ -298,10 +303,18 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			<Self as Lending>::withdraw_collateral(market_id, account, amount)
 		}
+
+		pub fn get_borrow_limit(
+			market_id: &<Self as Lending>::MarketId,
+			account: &<Self as Lending>::AccountId,
+		) -> Result<<Self as Lending>::Balance, DispatchError> {
+			<Self as Lending>::get_borrow_limit(market_id, account)
+		}
 	}
 
 	impl<T: Config> Lending for Pallet<T> {
 		/// we are operating only on vault types, so restricted by these
+		type AssetId = T::AssetId;
 		type VaultId = <T::Vault as Vault>::VaultId;
 		type AccountId = <T::Vault as Vault>::AccountId;
 		type Balance = T::Balance;
@@ -311,16 +324,14 @@ pub mod pallet {
 		type BlockNumber = T::BlockNumber;
 
 		fn create(
-			borrow_asset_vault: <T::Vault as Vault>::VaultId,
-			collateral_asset_vault: <T::Vault as Vault>::VaultId,
+			borrow_asset: Self::AssetId,
+			collateral_asset: Self::AssetId,
 			config_input: MarketConfigInput<Self::AccountId>,
-		) -> Result<Self::MarketId, DispatchError> {
+		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			ensure!(
 				config_input.collateral_factor > 1.into(),
 				Error::<T>::CollateralFactorIsLessOrEqualOne
 			);
-			let collateral_asset = T::Vault::asset_id(&collateral_asset_vault)?;
-			let borrow_asset = T::Vault::asset_id(&borrow_asset_vault)?;
 
 			<T::Oracle as Oracle>::get_price(&collateral_asset)
 				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
@@ -333,10 +344,46 @@ pub mod pallet {
 					MarketIndex(*previous_market_index)
 				};
 
+				/* Generate the underlying vault that will hold borrowable asset
+					------------------
+					|  Lending pallet |
+					|    ---------    |
+					|    | Vault |    |
+					|    ---------    |
+					------------------
+				   The idea here is that the lending pallet owns the vault.
+
+				   Let's assume a group of users X want to use a strategy P
+				   and a group of users Y want to use a strategy Q:
+
+				   Assuming both groups are interested in lending an asset A, they can create two vaults I and J.
+				   They would deposit in I and J, then set P and respectively Q as their strategy.
+				   Now imagine that our lending market M has a good APY, both strategy P and Q
+				   could decide to allocate a share for it, transferring from I and J to the borrow asset vault of M.
+				   Their allocated share could differ because of the strategies being different,
+				   but the lending Market would have all the lendable funds in a single vault.
+				*/
+				let borrow_asset_vault = T::Vault::create(
+					Deposit::Existential,
+					VaultConfig {
+						asset_id: borrow_asset,
+						reserved: config_input.reserved,
+						manager: config_input.manager.clone(),
+						strategies: [(
+							Self::account_id(&market_index),
+							// Borrowable = 100% - reserved
+							Perquintill::one().saturating_sub(config_input.reserved),
+						)]
+						.iter()
+						.cloned()
+						.collect(),
+					},
+				)?;
+
 				let config = MarketConfig {
-					borrow: borrow_asset_vault,
-					collateral: collateral_asset_vault,
-					reserve_factor: config_input.reserve_factor,
+					manager: config_input.manager,
+					borrow: borrow_asset_vault.clone(),
+					collateral: collateral_asset,
 					collateral_factor: config_input.collateral_factor,
 					interest_rate: InterestRateModel::default(),
 				};
@@ -345,7 +392,7 @@ pub mod pallet {
 				DebtMarkets::<T>::insert(market_index, debt_asset_id);
 				Markets::<T>::insert(market_index, config);
 
-				Ok(market_index)
+				Ok((market_index, borrow_asset_vault))
 			})
 		}
 
@@ -365,7 +412,8 @@ pub mod pallet {
 			markets
 		}
 
-		fn get_all_markets() -> Vec<(Self::MarketId, MarketConfig<<T::Vault as Vault>::VaultId>)> {
+		fn get_all_markets(
+		) -> Vec<(Self::MarketId, MarketConfig<T::VaultId, T::AssetId, T::AccountId>)> {
 			Markets::<T>::iter().map(|(index, config)| (index, config)).collect()
 		}
 
@@ -626,16 +674,14 @@ pub mod pallet {
 			let config =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
-			let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
-				.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount)?;
-			let underlying_collateral_balance: LiftedFixedBalance =
-				<T::Vault as Vault>::to_underlying_value(&config.collateral, collateral_balance)?
+			let collateral_balance: LiftedFixedBalance =
+				AccountCollateral::<T>::try_get(market_id, account)
+					.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount)?
 					.into();
-			let collateral_asset_id = <T::Vault as Vault>::asset_id(&config.collateral)?;
 			let collateral_price: LiftedFixedBalance =
-				<T::Oracle as Oracle>::get_price(&collateral_asset_id)?.0.into();
+				<T::Oracle as Oracle>::get_price(&config.collateral)?.0.into();
 
-			let normalized_limit = underlying_collateral_balance
+			let normalized_limit = collateral_balance
 				.checked_mul(&collateral_price)
 				.and_then(|collateral_normalized| {
 					collateral_normalized.checked_div(&config.collateral_factor)
@@ -653,16 +699,15 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-			let collateral_lp_id = T::Vault::lp_asset_id(&market.collateral)?;
 			let market_account = Self::account_id(&market_id);
 			ensure!(
-				T::Currency::can_withdraw(collateral_lp_id, &account, amount)
+				T::Currency::can_withdraw(market.collateral, &account, amount)
 					.into_result()
 					.is_ok(),
 				Error::<T>::TransferFailed
 			);
 			ensure!(
-				T::Currency::can_deposit(collateral_lp_id, &market_account, amount) ==
+				T::Currency::can_deposit(market.collateral, &market_account, amount) ==
 					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
@@ -674,8 +719,8 @@ pub mod pallet {
 				*collateral_balance = new_collateral_balance;
 				Result::<(), Error<T>>::Ok(())
 			})?;
-			T::Currency::transfer(collateral_lp_id, account, &market_account, amount, true)
-				.expect("we'd better exit; qed;");
+			T::Currency::transfer(market.collateral, account, &market_account, amount, true)
+				.expect("impossible; qed;");
 			Ok(())
 		}
 
@@ -688,9 +733,8 @@ pub mod pallet {
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-			let collateral_asset = T::Vault::asset_id(&market.collateral)?;
 
-			let (collateral_price, _) = T::Oracle::get_price(&collateral_asset)?;
+			let (collateral_price, _) = T::Oracle::get_price(&market.collateral)?;
 
 			let current_borrow =
 				Self::borrow_balance_current(market_id, account)?.unwrap_or_default();
@@ -711,11 +755,8 @@ pub mod pallet {
 				.and_then(|x| market.collateral_factor.checked_mul_int(x))
 				.ok_or(Error::<T>::Overflow)?;
 
-			let collateral_from_collateral_lp =
-				<T::Vault as Vault>::to_underlying_value(&market.collateral, amount)?;
-			let collateral_value = collateral_from_collateral_lp
-				.checked_mul(&collateral_price)
-				.ok_or(Error::<T>::Overflow)?;
+			let collateral_value =
+				amount.checked_mul(&collateral_price).ok_or(Error::<T>::Overflow)?;
 
 			ensure!(
 				collateral_value <= withdrawable_collateral_value,
@@ -724,12 +765,12 @@ pub mod pallet {
 
 			let market_account = Self::account_id(&market_id);
 			ensure!(
-				T::Currency::can_deposit(collateral_asset, &account, amount) ==
+				T::Currency::can_deposit(market.collateral, &account, amount) ==
 					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 			ensure!(
-				T::Currency::can_withdraw(collateral_asset, &market_account, amount)
+				T::Currency::can_withdraw(market.collateral, &market_account, amount)
 					.into_result()
 					.is_ok(),
 				Error::<T>::TransferFailed
@@ -741,8 +782,8 @@ pub mod pallet {
 				*collateral_balance = new_collateral_balance;
 				Result::<(), Error<T>>::Ok(())
 			})?;
-			T::Currency::transfer(collateral_asset, &market_account, account, amount, true)
-				.expect("we'd better exit; qed;");
+			T::Currency::transfer(market.collateral, &market_account, account, amount, true)
+				.expect("impossible; qed;");
 			Ok(())
 		}
 	}
