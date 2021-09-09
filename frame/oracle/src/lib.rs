@@ -17,6 +17,7 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use codec::{Codec, FullCodec};
 	use composable_traits::oracle::Oracle;
 	use frame_support::{
 		dispatch::{DispatchResult, DispatchResultWithPostInfo, Vec},
@@ -40,15 +41,13 @@ pub mod pallet {
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
 		offchain::{http, Duration},
-		traits::{Saturating, Zero},
+		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
 		PerThing, Percent, RuntimeDebug,
 	};
-	use sp_std::{borrow::ToOwned, str, vec};
+	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
 
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orac");
 	pub use crate::weights::WeightInfo;
-	type AssetId = u64;
-	type PriceValue = u128;
 
 	pub mod crypto {
 		use super::KEY_TYPE;
@@ -85,6 +84,28 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
+		type AssetId: FullCodec
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ From<u64>
+			+ Into<u64>
+			+ Debug
+			+ Default;
+		type PriceValue: Default
+			+ Parameter
+			+ Codec
+			+ Copy
+			+ Ord
+			+ CheckedAdd
+			+ CheckedSub
+			+ CheckedMul
+			+ AtLeast32BitUnsigned
+			+ From<u64>
+			+ From<u128>
+			+ Into<u128>
+			+ Zero;
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type MinStake: Get<BalanceOf<Self>>;
 		type StakeLock: Get<Self::BlockNumber>;
@@ -106,14 +127,14 @@ pub mod pallet {
 	}
 
 	#[derive(Encode, Decode, Clone, Copy, Default, Debug, PartialEq)]
-	pub struct PrePrice<BlockNumber, AccountId> {
+	pub struct PrePrice<PriceValue, BlockNumber, AccountId> {
 		pub price: PriceValue,
 		pub block: BlockNumber,
 		pub who: AccountId,
 	}
 
 	#[derive(Encode, Decode, Default, Debug, PartialEq)]
-	pub struct Price<BlockNumber> {
+	pub struct Price<PriceValue, BlockNumber> {
 		pub price: PriceValue,
 		pub block: BlockNumber,
 	}
@@ -157,47 +178,52 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn prices)]
-	pub type Prices<T: Config> =
-		StorageMap<_, Blake2_128Concat, u64, Price<T::BlockNumber>, ValueQuery>;
+	pub type Prices<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::AssetId,
+		Price<T::PriceValue, T::BlockNumber>,
+		ValueQuery,
+	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn pre_prices)]
 	pub type PrePrices<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		u64,
-		Vec<PrePrice<T::BlockNumber, T::AccountId>>,
+		T::AssetId,
+		Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 		ValueQuery,
 	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn accuracy_threshold)]
 	pub type AssetsInfo<T: Config> =
-		StorageMap<_, Blake2_128Concat, AssetId, AssetInfo<Percent>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, T::AssetId, AssetInfo<Percent>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn requested)]
-	pub type Requested<T: Config> = StorageMap<_, Blake2_128Concat, u64, bool, ValueQuery>;
+	pub type Requested<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, bool, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn request_id)]
-	pub type RequestedId<T: Config> = StorageMap<_, Blake2_128Concat, u64, u128, ValueQuery>;
+	pub type RequestedId<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, u128, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::metadata(T::AccountId = "AccountId",  BalanceOf<T> = "Balance", T::BlockNumber = "BlockNumber", Percent = "Percent")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		NewAsset(u128),
-		AssetInfoChange(u64, Percent, u32, u32),
-		PriceRequested(T::AccountId, u64),
+		AssetInfoChange(T::AssetId, Percent, u32, u32),
+		PriceRequested(T::AccountId, T::AssetId),
 		/// Who added it, the amount added and the total cumulative amount
 		StakeAdded(T::AccountId, BalanceOf<T>, BalanceOf<T>),
 		StakeRemoved(T::AccountId, BalanceOf<T>, T::BlockNumber),
 		StakeReclaimed(T::AccountId, BalanceOf<T>),
-		PriceSubmitted(T::AccountId, u64, PriceValue),
-		UserSlashed(T::AccountId, u64, BalanceOf<T>),
-		UserRewarded(T::AccountId, u64, BalanceOf<T>),
-		AnswerPruned(T::AccountId, PriceValue),
+		PriceSubmitted(T::AccountId, T::AssetId, T::PriceValue),
+		UserSlashed(T::AccountId, T::AssetId, BalanceOf<T>),
+		UserRewarded(T::AccountId, T::AssetId, BalanceOf<T>),
+		AnswerPruned(T::AccountId, T::PriceValue),
 	}
 
 	#[pallet::error]
@@ -224,6 +250,7 @@ pub mod pallet {
 		ExceedThreshold,
 		ExceedAssetsCount,
 		PriceNotFound,
+		ExceedStake,
 	}
 
 	#[pallet::hooks]
@@ -239,8 +266,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Oracle for Pallet<T> {
-		type Balance = PriceValue;
-		type AssetId = AssetId;
+		type Balance = T::PriceValue;
+		type AssetId = T::AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 
 		fn get_price(
@@ -256,7 +283,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
 		pub fn add_asset_and_info(
 			origin: OriginFor<T>,
-			asset_id: AssetId,
+			asset_id: T::AssetId,
 			threshold: Percent,
 			min_answers: u32,
 			max_answers: u32,
@@ -283,7 +310,10 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(T::WeightInfo::request_price())]
-		pub fn request_price(origin: OriginFor<T>, asset_id: u64) -> DispatchResultWithPostInfo {
+		pub fn request_price(
+			origin: OriginFor<T>,
+			asset_id: T::AssetId,
+		) -> DispatchResultWithPostInfo {
 			//TODO talk about the security and if this should be protected
 			let who = ensure_signed(origin)?;
 			Self::do_request_price(&who, asset_id)?;
@@ -355,8 +385,8 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::submit_price(T::MaxAnswerBound::get()))]
 		pub fn submit_price(
 			origin: OriginFor<T>,
-			price: u128,
-			asset_id: u64,
+			price: T::PriceValue,
+			asset_id: T::AssetId,
 		) -> DispatchResultWithPostInfo {
 			log::info!("inside submit {:#?}, {:#?}", asset_id, price);
 			let who = ensure_signed(origin)?;
@@ -412,18 +442,21 @@ pub mod pallet {
 			signer: T::AccountId,
 			stake: BalanceOf<T>,
 		) -> DispatchResult {
+			let amount_staked = Self::oracle_stake(signer.clone())
+				.unwrap_or(0u32.into())
+				.checked_add(&stake)
+				.ok_or(Error::<T>::ExceedStake)?;
 			T::Currency::transfer(&who, &signer, stake, KeepAlive)?;
 			T::Currency::reserve(&signer, stake.into())?;
-			let amount_staked = Self::oracle_stake(signer.clone()).unwrap_or(0u32.into()) + stake; // TODO maybe use checked add?
 			OracleStake::<T>::insert(&signer, amount_staked);
 			Self::deposit_event(Event::StakeAdded(signer, stake, amount_staked));
 			Ok(())
 		}
 
 		pub fn handle_payout(
-			pre_prices: &Vec<PrePrice<T::BlockNumber, T::AccountId>>,
-			price: PriceValue,
-			asset_id: AssetId,
+			pre_prices: &Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
+			price: T::PriceValue,
+			asset_id: T::AssetId,
 		) {
 			// TODO only take prices up to max prices
 			for answer in pre_prices {
@@ -464,7 +497,7 @@ pub mod pallet {
 			}
 		}
 
-		pub fn do_request_price(who: &T::AccountId, asset_id: u64) -> DispatchResult {
+		pub fn do_request_price(who: &T::AccountId, asset_id: T::AssetId) -> DispatchResult {
 			ensure!(AssetsInfo::<T>::contains_key(asset_id), Error::<T>::InvalidAssetId);
 			if !Self::requested(asset_id) {
 				ensure!(
@@ -495,10 +528,10 @@ pub mod pallet {
 		}
 
 		pub fn update_pre_prices(
-			asset_id: u64,
+			asset_id: T::AssetId,
 			asset_info: AssetInfo<Percent>,
 			block: T::BlockNumber,
-		) -> (usize, Vec<PrePrice<T::BlockNumber, T::AccountId>>) {
+		) -> (usize, Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>) {
 			// TODO maybe add a check if price is requested, is less operations?
 			let pre_pruned_prices = PrePrices::<T>::get(asset_id);
 			let prev_pre_prices_len = pre_pruned_prices.len();
@@ -525,31 +558,32 @@ pub mod pallet {
 		}
 
 		pub fn update_price(
-			asset_id: u64,
+			asset_id: T::AssetId,
 			asset_info: AssetInfo<Percent>,
 			block: T::BlockNumber,
-			pre_prices: Vec<PrePrice<T::BlockNumber, T::AccountId>>,
+			pre_prices: Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 		) {
 			// There can convert pre_prices.len() to u32 safely
 			// because pre_prices.len() limited by u32
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 			if pre_prices.len() as u32 >= asset_info.min_answers {
-				let price = Self::get_median_price(&pre_prices);
-				Prices::<T>::insert(asset_id, Price { price, block });
-				Requested::<T>::insert(asset_id, false);
-				PrePrices::<T>::remove(asset_id);
+				if let Some(price) = Self::get_median_price(&pre_prices) {
+					Prices::<T>::insert(asset_id, Price { price, block });
+					Requested::<T>::insert(asset_id, false);
+					PrePrices::<T>::remove(asset_id);
 
-				Self::handle_payout(&pre_prices, price, asset_id);
+					Self::handle_payout(&pre_prices, price, asset_id);
+				}
 			}
 		}
 
 		pub fn prune_old_pre_prices(
 			asset_info: AssetInfo<Percent>,
-			mut pre_prices: Vec<PrePrice<T::BlockNumber, T::AccountId>>,
+			mut pre_prices: Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 			block: T::BlockNumber,
 		) -> (
-			Vec<PrePrice<T::BlockNumber, T::AccountId>>,
-			Vec<PrePrice<T::BlockNumber, T::AccountId>>,
+			Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
+			Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 		) {
 			let stale_block = block.saturating_sub(T::StalePrice::get());
 			let (staled_prices, mut fresh_prices) =
@@ -569,13 +603,14 @@ pub mod pallet {
 			(staled_prices, fresh_prices)
 		}
 
-		pub fn get_median_price(prices: &Vec<PrePrice<T::BlockNumber, T::AccountId>>) -> u128 {
-			let mut numbers: Vec<u128> =
+		pub fn get_median_price(
+			prices: &Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
+		) -> Option<T::PriceValue> {
+			let mut numbers: Vec<T::PriceValue> =
 				prices.iter().map(|current_prices| current_prices.price).collect();
 			numbers.sort();
 			let mid = numbers.len() / 2;
-			// TODO maybe check length
-			numbers[mid]
+			numbers.get(mid).cloned()
 		}
 
 		pub fn check_requests() {
@@ -586,7 +621,7 @@ pub mod pallet {
 			}
 		}
 
-		pub fn fetch_price_and_send_signed(price_id: &u64) -> Result<(), &'static str> {
+		pub fn fetch_price_and_send_signed(price_id: &T::AssetId) -> Result<(), &'static str> {
 			let signer = Signer::<T, T::AuthorityId>::all_accounts();
 			log::info!("signer");
 			if !signer.can_sign() {
@@ -597,7 +632,7 @@ pub mod pallet {
 			}
 			// Make an external HTTP request to fetch the current price.
 			// Note this call will block until response is received.
-			let price = Self::fetch_price(&price_id).map_err(|_| "Failed to fetch price")?;
+			let price = Self::fetch_price(price_id).map_err(|_| "Failed to fetch price")?;
 			log::info!("price {:#?}", price);
 
 			// Using `send_signed_transaction` associated type we create and submit a transaction
@@ -621,7 +656,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		pub fn fetch_price(price_id: &u64) -> Result<u64, http::Error> {
+		pub fn fetch_price(price_id: &T::AssetId) -> Result<u64, http::Error> {
 			// We want to keep the offchain worker execution time reasonable, so we set a hard-coded
 			// deadline to 2s to complete the external call.
 			// You can also wait idefinitely for the response, however you may still get a timeout
@@ -637,8 +672,9 @@ pub mod pallet {
 			let from_local = sp_io::offchain::local_storage_get(kind, b"ocw-url")
 				.unwrap_or(b"http://localhost:3001/price/".to_vec());
 			let base = str::from_utf8(&from_local).unwrap_or("http://localhost:3001/price/");
-			let string_id = serde_json::to_string(&price_id).map_err(|_| http::Error::IoError)?;
-			let request_id = RequestedId::<T>::get(&price_id);
+			let string_id =
+				serde_json::to_string(&(*price_id).into()).map_err(|_| http::Error::IoError)?;
+			let request_id = RequestedId::<T>::get(price_id);
 			let string_request_id =
 				serde_json::to_string(&request_id).map_err(|_| http::Error::IoError)?;
 			let url = base.to_owned() + &string_id + "/" + &string_request_id;

@@ -5551,6 +5551,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-balances",
+ "pallet-currency-factory",
  "pallet-oracle",
  "pallet-timestamp",
  "pallet-vault",

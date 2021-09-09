@@ -345,6 +345,8 @@ impl oracle::Config for Runtime {
 	type Currency = Balances;
 	type Event = Event;
 	type AuthorityId = oracle::crypto::TestAuthId;
+	type AssetId = u64;
+	type PriceValue = u128;
 	type StakeLock = StakeLock;
 	type MinStake = MinStake;
 	type StalePrice = StalePrice;
@@ -756,10 +758,7 @@ impl Filter<Call> for BaseCallFilter {
 	fn filter(call: &Call) -> bool {
 		matches!(
 			call,
-			Call::Balances(_)
-				| Call::Indices(_)
-				| Call::Democracy(_)
-				| Call::Treasury(_)
+			Call::Balances(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_)
 		)
 	}
 }

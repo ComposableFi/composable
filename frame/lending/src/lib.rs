@@ -279,7 +279,7 @@ pub mod pallet {
 		fn borrow(
 			market_id: &Self::MarketId,
 			debt_owner: &Self::AccountId,
-			amount_to_borrow: Self::Balance,
+			_amount_to_borrow: Self::Balance,
 		) -> Result<(), DispatchError> {
 			let market = Markets::<T>::try_get(market_id).expect("market exists");
 
@@ -387,7 +387,7 @@ pub mod pallet {
 				.and_then(|x| x.checked_mul_int(1u64))
 				.ok_or(ArithmeticError::Overflow)?
 				.into();
-			T::Currency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued);
+			T::Currency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)?;
 			Ok(())
 		}
 
@@ -546,9 +546,9 @@ pub mod pallet {
 		}
 
 		fn redeem(
-			market_id: &Self::MarketId,
-			account: &Self::AccountId,
-			borrow_amount: Self::Balance,
+			_market_id: &Self::MarketId,
+			_account: &Self::AccountId,
+			_borrow_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			todo!()
 		}
