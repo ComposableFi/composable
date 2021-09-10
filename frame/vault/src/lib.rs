@@ -135,6 +135,11 @@ pub mod pallet {
 	#[pallet::getter(fn vault_data)]
 	pub type Vaults<T: Config> = StorageMap<_, Twox64Concat, VaultIndex, VaultInfo<T>, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn token_vault)]
+	pub type TokenVault<T: Config> =
+		StorageMap<_, Twox64Concat, T::CurrencyId, VaultIndex, ValueQuery>;
+
 	/// Amounts which each strategy is allowed to access, including the amount reserved for quick
 	/// withdrawals for the pallet.
 	#[pallet::storage]
@@ -197,6 +202,7 @@ pub mod pallet {
 		NotEnoughLiquidity,
 		DepositIsTooLow,
 		InvalidSurchargeClaim,
+		NotVaultLpToken,
 	}
 
 	#[pallet::call]
@@ -247,17 +253,17 @@ pub mod pallet {
 			match crate::rent::evaluate_eviction::<T>(current_block, vault.deposit) {
 				Verdict::Exempt => {
 					todo!("do not reward, but charge less weight")
-				}
+				},
 				Verdict::Evict { .. } => {
 					// we should also decide if we are going to drop the vault if there are still
 					// assets left in strategies. If some strategy becomes bricked, they will never
 					// report or return a balance. Tombstoned vaults would then effectively take up
 					// storage forever.
 					todo!("clean up all storage associated with the vault, and then reward the caller")
-				}
+				},
 				Verdict::Charge { .. } => {
 					todo!("update vault deposit info, charge some of the rent from the `hold`ed balance")
-				}
+				},
 			}
 		}
 
@@ -289,6 +295,12 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		pub fn lp_asset_id(
+			vault_id: &<Self as Vault>::VaultId,
+		) -> Result<<Self as Vault>::AssetId, DispatchError> {
+			<Self as Vault>::lp_asset_id(vault_id)
+		}
+
 		pub fn do_create_vault(
 			deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
 			config: VaultConfig<T::AccountId, T::CurrencyId>,
@@ -356,6 +368,7 @@ pub mod pallet {
 				};
 
 				Vaults::<T>::insert(id, vault_info.clone());
+				TokenVault::<T>::insert(lp_token_id, id);
 
 				Ok((id, vault_info))
 			})
@@ -428,8 +441,8 @@ pub mod pallet {
 			let vault_aum = Self::assets_under_management(vault_id)?;
 			if vault_aum.is_zero() {
 				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, amount)
-						== DepositConsequence::Success,
+					T::Currency::can_deposit(vault.lp_token_id, from, amount) ==
+						DepositConsequence::Success,
 					Error::<T>::MintFailed
 				);
 
@@ -459,8 +472,8 @@ pub mod pallet {
 				ensure!(lp > T::Balance::zero(), Error::<T>::DepositIsTooLow);
 
 				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, lp)
-						== DepositConsequence::Success,
+					T::Currency::can_deposit(vault.lp_token_id, from, lp) ==
+						DepositConsequence::Success,
 					Error::<T>::MintFailed
 				);
 
@@ -571,6 +584,12 @@ pub mod pallet {
 			let vault =
 				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
 			Self::do_lp_share_value(vault_id, &vault, lp_amount)
+		}
+
+		fn token_vault(token: Self::AssetId) -> Result<Self::VaultId, DispatchError> {
+			let vault_index =
+				TokenVault::<T>::try_get(&token).map_err(|_| Error::<T>::NotVaultLpToken)?;
+			Ok(vault_index)
 		}
 	}
 

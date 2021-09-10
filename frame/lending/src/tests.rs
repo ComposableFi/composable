@@ -1,5 +1,8 @@
 use crate::{
-	mock::{new_test_ext, AccountId, Lending, Tokens, Vault},
+	mocks::{
+		new_test_ext, AccountId, Balance, Lending, MockCurrencyId, Oracle, Test, Tokens, Vault,
+		VaultId, ALICE,
+	},
 	MarketIndex,
 };
 use composable_traits::{
@@ -12,20 +15,59 @@ use frame_support::{
 	traits::fungibles::{Inspect, Mutate},
 };
 use hex_literal::hex;
+use proptest::prelude::*;
 use sp_runtime::{traits::Zero, FixedPointNumber, Perquintill};
 use sp_std::collections::btree_map::BTreeMap;
 
-#[test]
-fn account_id_should_work() {
-	new_test_ext().execute_with(|| {
-		let market_id = MarketIndex::new(0);
-		assert_eq!(
-			Lending::account_id(&market_id),
-			AccountId::from_raw(hex!(
-				"6d6f646c4c656e64696e67210000000000000000000000000000000000000000"
-			))
-		);
-	})
+type BorrowAssetVault = VaultId;
+
+type CollateralAsset = MockCurrencyId;
+
+fn create_market(
+	borrow_asset: MockCurrencyId,
+	collateral_asset: MockCurrencyId,
+	manager: AccountId,
+	reserved: Perquintill,
+	collateral_factor: NormalizedCollateralFactor,
+) -> (MarketIndex, BorrowAssetVault) {
+	let market_config = MarketConfigInput { manager, reserved, collateral_factor };
+	let market = Lending::create(borrow_asset, collateral_asset, market_config);
+	assert_ok!(market);
+	market.expect("unreachable; qed;")
+}
+
+fn create_simple_vaulted_market() -> ((MarketIndex, BorrowAssetVault), CollateralAsset) {
+	let collateral_vault = Vault::do_create_vault(
+		Deposit::Existential,
+		VaultConfig {
+			asset_id: MockCurrencyId::USDT,
+			reserved: Perquintill::from_percent(100),
+			manager: ALICE,
+			strategies: [].iter().cloned().collect(),
+		},
+	);
+	assert_ok!(collateral_vault);
+	let (collateral_vault, collateral_vault_config) = collateral_vault.expect("unreachable; qed;");
+	(
+		create_market(
+			MockCurrencyId::BTC,
+			collateral_vault_config.lp_token_id,
+			ALICE,
+			Perquintill::from_percent(10),
+			NormalizedCollateralFactor::saturating_from_rational(200, 100),
+		),
+		collateral_vault_config.lp_token_id,
+	)
+}
+
+fn create_simple_market() -> (MarketIndex, BorrowAssetVault) {
+	create_market(
+		MockCurrencyId::BTC,
+		MockCurrencyId::USDT,
+		ALICE,
+		Perquintill::from_percent(10),
+		NormalizedCollateralFactor::saturating_from_rational(200, 100),
+	)
 }
 
 #[test]
@@ -48,107 +90,56 @@ fn test_calc_utilization_ratio() {
 	);
 }
 
-#[test]
-fn test_create_market() {
-	new_test_ext().execute_with(|| {
-		// create vaults
-		let eth_asset_id = 0;
-		let usdt_asset_id = 1;
-		let strategy_account_id = AccountId::from_raw(hex!(
-			"6d6f646c4c656e64696e67210000000000000000000000000000000000000000"
-		));
-		let mut strategy = BTreeMap::new();
-		strategy.insert(strategy_account_id, Perquintill::from_percent(90));
-		let manager_account_id = AccountId::from_raw(hex!(
-			"6d6f646c4c656e64696e67210000000000000000000000000000000000000000"
-		));
-		let v_eth = Vault::do_create_vault(
-			Deposit::Existential,
-			VaultConfig {
-				asset_id: eth_asset_id,
-				reserved: Perquintill::from_percent(10),
-				manager: manager_account_id,
-				strategies: strategy.clone(),
-			},
-		);
-		assert_ok!(v_eth);
-		let v_usdt = Vault::do_create_vault(
-			Deposit::Existential,
-			VaultConfig {
-				asset_id: usdt_asset_id,
-				reserved: Perquintill::from_percent(10),
-				manager: manager_account_id,
-				strategies: strategy,
-			},
-		);
-		assert_ok!(v_usdt);
-		let market_config = MarketConfigInput {
-			manager: manager_account_id,
-			reserve_factor: Perquintill::from_percent(8),
-			collateral_factor: NormalizedCollateralFactor::saturating_from_rational(150, 100),
-		};
-		// Note: this market uses ConstantOracle as defined in src/mock.rs
-		// create market
-		let market = Lending::create(v_eth.unwrap().0, v_usdt.unwrap().0, market_config);
-		assert_ok!(market);
-	})
+macro_rules! prop_assert_ok {
+    ($cond:expr) => {
+        prop_assert_ok!($cond, concat!("assertion failed: ", stringify!($cond)))
+    };
+
+    ($cond:expr, $($fmt:tt)*) => {
+        if let Err(e) = $cond {
+            let message = format!($($fmt)*);
+            let message = format!("{} unexpected {:?} at {}:{}", message, e, file!(), line!());
+            return ::std::result::Result::Err(
+                proptest::test_runner::TestCaseError::fail(message));
+        }
+    };
 }
 
-#[test]
-fn test_market_colletral_deposite_withdraw() {
-	new_test_ext().execute_with(|| {
-		// create vaults
-		let eth_asset_id = 0;
-		let usdt_asset_id = 1;
-		let strategy_account_id = AccountId::from_raw(hex!(
-			"6d6f646c4c656e64696e67210000000000000000000000000000000000000000"
-		));
-		let mut strategy = BTreeMap::new();
-		strategy.insert(strategy_account_id, Perquintill::from_percent(90));
-		let manager_account_id = AccountId::from_raw(hex!(
-			"6d6f646c4c656e64696e67210000000000000000000000000000000000000000"
-		));
-		let v_eth = Vault::do_create_vault(
-			Deposit::Existential,
-			VaultConfig {
-				asset_id: eth_asset_id,
-				reserved: Perquintill::from_percent(10),
-				manager: manager_account_id,
-				strategies: strategy.clone(),
-			},
-		);
-		assert_ok!(v_eth);
-		let v_usdt = Vault::do_create_vault(
-			Deposit::Existential,
-			VaultConfig {
-				asset_id: usdt_asset_id,
-				reserved: Perquintill::from_percent(10),
-				manager: manager_account_id,
-				strategies: strategy,
-			},
-		);
-		assert_ok!(v_usdt);
-		let market_config = MarketConfigInput {
-			manager: manager_account_id,
-			reserve_factor: Perquintill::from_percent(8),
-			collateral_factor: NormalizedCollateralFactor::saturating_from_rational(150, 100),
-		};
-		// Note: this market uses ConstantOracle as defined in src/mock.rs
-		// create market
-		let market = Lending::create(v_eth.unwrap().0, v_usdt.unwrap().0, market_config);
-		assert_ok!(market);
-		let market_id = market.unwrap();
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(10000))]
 
-		let user_1_id = AccountId::from_raw(hex!(
-			"6d6f646c4c656e64696e67211000000000000000000000000000000000000000"
-		));
-		assert_eq!(Tokens::balance(usdt_asset_id, &user_1_id), 0);
-		assert_ok!(Tokens::mint_into(usdt_asset_id, &user_1_id, 1000));
-		assert_eq!(Tokens::balance(usdt_asset_id, &user_1_id), 1000);
+	#[test]
+	fn market_collateral_deposit_withdraw_identity(amount in 0..u32::MAX as Balance) {
+		new_test_ext().execute_with(|| {
+			let (market, vault) = create_simple_market();
+			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+			prop_assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, amount));
+			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount);
 
-		assert_ok!(Lending::deposit_collateral(&market_id, &user_1_id, 500));
-		assert_eq!(Lending::collateral_of_account(&market_id, &user_1_id), Ok(500));
-		// assert_ok!(Lending::withdraw_collateral(&market_id, &user_1_id, 1000));
-		assert_ok!(Lending::withdraw_collateral(&market_id, &user_1_id, 500));
-	})
+			prop_assert_ok!(Lending::deposit_collateral(&market, &ALICE, amount));
+			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+			prop_assert_ok!(Lending::withdraw_collateral(&market, &ALICE, amount));
+			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount);
+
+			Ok(())
+		})?;
+	}
+
+	#[test]
+	fn market_collateral_vaulted_deposit_withdraw_identity(amount in 0..u32::MAX as Balance) {
+		new_test_ext().execute_with(|| {
+			let ((market, borrow_vault), collateral_asset) = create_simple_vaulted_market();
+
+			prop_assert_eq!(Tokens::balance(collateral_asset, &ALICE), 0);
+			prop_assert_ok!(Tokens::mint_into(collateral_asset, &ALICE, amount));
+			prop_assert_eq!(Tokens::balance(collateral_asset, &ALICE), amount);
+
+			prop_assert_ok!(Lending::deposit_collateral(&market, &ALICE, amount));
+			prop_assert_eq!(Tokens::balance(collateral_asset, &ALICE), 0);
+			prop_assert_ok!(Lending::withdraw_collateral(&market, &ALICE, amount));
+			prop_assert_eq!(Tokens::balance(collateral_asset, &ALICE), amount);
+
+			Ok(())
+		})?;
+	}
 }

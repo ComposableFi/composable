@@ -22,17 +22,17 @@ pub struct MarketConfigInput<AccountId>
 where
 	AccountId: core::cmp::Ord,
 {
-	/// can pause borrow & deposits of assets
+	pub reserved: Perquintill,
 	pub manager: AccountId,
-	pub reserve_factor: Perquintill,
+	/// can pause borrow & deposits of assets
 	pub collateral_factor: NormalizedCollateralFactor,
 }
 
 #[derive(Encode, Decode, Default)]
-pub struct MarketConfig<VaultId> {
+pub struct MarketConfig<VaultId, AssetId, AccountId> {
+	pub manager: AccountId,
 	pub borrow: VaultId,
-	pub collateral: VaultId,
-	pub reserve_factor: Perquintill,
+	pub collateral: AssetId,
 	pub collateral_factor: NormalizedCollateralFactor,
 	pub interest_rate: InterestRateModel,
 }
@@ -44,6 +44,7 @@ pub struct MarketConfig<VaultId> {
 /// Fees will be withdrawing to vault.
 /// Lenders with be rewarded via vault.
 pub trait Lending {
+	type AssetId;
 	type VaultId: Codec;
 	type MarketId: Codec;
 	/// (deposit VaultId, collateral VaultId) <-> MarketId
@@ -55,10 +56,10 @@ pub trait Lending {
 	/// updates its parameters `deposit` - asset users want to borrow.
 	/// `collateral` - asset users will put as collateral.
 	fn create(
-		borrow_asset_vault: Self::VaultId,
-		collateral_asset_vault: Self::VaultId,
+		borrow_asset: Self::AssetId,
+		collateral_asset_vault: Self::AssetId,
 		config: MarketConfigInput<Self::AccountId>,
-	) -> Result<Self::MarketId, DispatchError>;
+	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 
 	/// AccountId of the market instance
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId;
@@ -80,7 +81,8 @@ pub trait Lending {
 	/// get all existing markets for current deposit
 	fn get_markets_for_borrow(vault: Self::VaultId) -> Vec<Self::MarketId>;
 
-	fn get_all_markets() -> Vec<(Self::MarketId, MarketConfig<Self::VaultId>)>;
+	fn get_all_markets(
+	) -> Vec<(Self::MarketId, MarketConfig<Self::VaultId, Self::AssetId, Self::AccountId>)>;
 
 	/// `amount_to_borrow` is the amount of the borrow asset lendings's vault shares the user wants
 	/// to borrow. Normalizes amounts for calculations.
