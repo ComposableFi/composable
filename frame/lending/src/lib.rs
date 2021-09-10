@@ -144,7 +144,7 @@ pub mod pallet {
 				let results = Markets::<T>::iter()
 					.map(|(index, _)| <Pallet<T>>::accrue_interest(&index))
 					.collect::<Vec<_>>();
-				let (oks, errors): (Vec<_>, Vec<_>) = results.iter().partition(|r| r.is_ok());
+				let (_oks, errors): (Vec<_>, Vec<_>) = results.iter().partition(|r| r.is_ok());
 				if errors.is_empty() {
 					LastBlockTimestamp::<T>::put(now);
 					TransactionOutcome::Commit(1000)
@@ -186,6 +186,8 @@ pub mod pallet {
 		TransferFailed,
 		CannotWithdrawFromProvidedBorrowAccount,
 		CannotRepayMoreThanBorrowAmount,
+		BorrowRateDoesNotExist,
+		BorrowIndexDoesNotExist,
 	}
 
 	/// Lending instances counter
@@ -629,7 +631,10 @@ pub mod pallet {
 				.ok_or(Error::<T>::Underflow)?;
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-			let borrow_rate = market.interest_rate.get_borrow_rate(utilization_ratio).unwrap();
+			let borrow_rate = market
+				.interest_rate
+				.get_borrow_rate(utilization_ratio)
+				.ok_or(Error::<T>::BorrowRateDoesNotExist)?;
 
 			//update borrow_index
 			let borrow_index =
@@ -660,7 +665,8 @@ pub mod pallet {
 			match account_debt {
 				Ok(account_interest_index) => {
 					let principal = T::Currency::balance_on_hold(debt_asset_id, account);
-					let market_interest_index = BorrowIndex::<T>::try_get(market_id).unwrap();
+					let market_interest_index = BorrowIndex::<T>::try_get(market_id)
+						.map_err(|_| Error::<T>::BorrowIndexDoesNotExist)?;
 
 					let balance = borrow_from_principal::<T>(
 						principal,
