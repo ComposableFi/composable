@@ -141,22 +141,24 @@ pub mod pallet {
 				LastBlockTimestamp::<T>::put(now);
 			}
 			with_transaction(|| {
-				let res = Markets::<T>::iter()
+				let results = Markets::<T>::iter()
 					.map(|(index, _)| <Pallet<T>>::accrue_interest(&index))
-					.collect();
-				match res {
-					Ok(()) => {
-						LastBlockTimestamp::<T>::put(now);
-						TransactionOutcome::Commit(1000)
-					},
-					Err(err) => {
-						log::error!(
-							"This should never happen, could not initialize block!!! {:#?} {:#?}",
-							block_number,
-							err
-						);
-						TransactionOutcome::Rollback(0)
-					},
+					.collect::<Vec<_>>();
+				let (oks, errors): (Vec<_>, Vec<_>) = results.iter().partition(|r| r.is_ok());
+				if errors.is_empty() {
+					LastBlockTimestamp::<T>::put(now);
+					TransactionOutcome::Commit(1000)
+				} else {
+					errors.iter().for_each(|e| {
+						if let Err(e) = e {
+							log::error!(
+								"This should never happen, could not initialize block!!! {:#?} {:#?}",
+								block_number,
+								e
+							)
+						}
+					});
+					TransactionOutcome::Rollback(0)
 				}
 			});
 			0
