@@ -1,6 +1,10 @@
 use crate as pallet_lending;
 use composable_traits::{currency::CurrencyFactory, oracle::Oracle as OracleTrait};
-use frame_support::{ord_parameter_types, parameter_types, traits::Contains, PalletId};
+use frame_support::{
+	ord_parameter_types, parameter_types,
+	traits::{Contains, GenesisBuild, OnFinalize, OnInitialize},
+	PalletId,
+};
 use frame_system::{self as system, EnsureSignedBy};
 use orml_tokens::TransferDust;
 use orml_traits::parameter_type_with_key;
@@ -21,6 +25,7 @@ type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 pub type Balance = u128;
 pub type Amount = i128;
+pub type BlockNumber = u64;
 
 pub type VaultId = u64;
 
@@ -88,7 +93,7 @@ frame_support::construct_runtime!(
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Lending: pallet_lending::{Pallet, Storage},
-		Oracle: pallet_lending::mocks::oracle::{Pallet}
+		Oracle: pallet_lending::mocks::oracle::{Pallet},
 	}
 );
 
@@ -227,6 +232,34 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	pallet_balances::GenesisConfig::<Test> { balances }
 		.assimilate_storage(&mut t)
 		.unwrap();
+	pallet_lending::GenesisConfig { last_block_timestamp: 0 }
+		.assimilate_storage::<Test>(&mut t)
+		.unwrap();
 
-	t.into()
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| {
+		System::set_block_number(0);
+		Timestamp::set_timestamp(6000);
+	});
+	ext
+}
+
+/// Progress to the given block, and then finalize the block.
+pub(crate) fn run_to_block(n: BlockNumber) {
+	Lending::on_finalize(System::block_number());
+	for b in (System::block_number() + 1)..=n {
+		System::set_block_number(b);
+		Lending::on_initialize(System::block_number());
+		Timestamp::set_timestamp(6000 * b);
+		if b != n {
+			Lending::on_finalize(System::block_number());
+		}
+	}
+}
+
+pub(crate) fn process_block(n: BlockNumber) {
+	System::set_block_number(n);
+	Lending::on_initialize(n);
+	Timestamp::set_timestamp(6000 * n);
+	Lending::on_finalize(n);
 }
