@@ -107,6 +107,8 @@ pub trait Lending {
 	/// total debts principals (not includes interest)
 	fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
+	fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
+
 	fn accrue_interest(market_id: &Self::MarketId) -> Result<(), DispatchError>;
 
 	fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
