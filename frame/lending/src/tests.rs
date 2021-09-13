@@ -140,7 +140,7 @@ fn test_borrow() {
 		let base_rate = Rate::saturating_from_rational(2, 100);
 		let jump_rate = Rate::saturating_from_rational(10, 100);
 		let jump_utilization = Ratio::saturating_from_rational(80, 100);
-		for i in 1..50 {
+		for i in 1..100000 {
 			process_block(i);
 			// utilizationRatio = totalBorrows / (totalCash + totalBorrows)
 			let util_ratio =
@@ -159,6 +159,7 @@ fn test_borrow() {
 			total_interest = interest_accumulated + total_interest;
 			assert_eq!(Lending::total_interest(&market), Ok(total_interest));
 		}
+		assert_eq!(Lending::total_interest(&market).unwrap(), 1);
 	});
 }
 

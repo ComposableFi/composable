@@ -232,7 +232,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	pallet_balances::GenesisConfig::<Test> { balances }
 		.assimilate_storage(&mut storage)
 		.unwrap();
-	pallet_lending::GenesisConfig { last_block_timestamp: 0 }
+	pallet_lending::GenesisConfig { }
 		.assimilate_storage::<Test>(&mut storage)
 		.unwrap();
 

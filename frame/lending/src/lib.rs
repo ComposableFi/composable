@@ -134,13 +134,10 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
-			let now = T::UnixTime::now().as_secs();
-			if LastBlockTimestamp::<T>::get().is_zero() {
-				LastBlockTimestamp::<T>::put(now);
-			}
 			with_transaction(|| {
+				let now = T::UnixTime::now().as_secs();
 				let results = Markets::<T>::iter()
-					.map(|(index, _)| <Pallet<T>>::accrue_interest(&index))
+					.map(|(index, _)| <Pallet<T>>::accrue_interest(&index, now))
 					.collect::<Vec<_>>();
 				let (_oks, errors): (Vec<_>, Vec<_>) = results.iter().partition(|r| r.is_ok());
 				if errors.is_empty() {
@@ -297,20 +294,20 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub last_block_timestamp: Timestamp,
 	}
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			GenesisConfig { last_block_timestamp: 0 }
+			Self  {}
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			LastBlockTimestamp::<T>::put(self.last_block_timestamp.clone());
+			let now = T::UnixTime::now().as_secs();
+			LastBlockTimestamp::<T>::put(now);
 		}
 	}
 
@@ -514,7 +511,7 @@ pub mod pallet {
 					borrow: borrow_asset_vault.clone(),
 					collateral: collateral_asset,
 					collateral_factor: config_input.collateral_factor,
-					interest_rate: InterestRateModel::default(),
+					interest_rate_model: InterestRateModel::default(),
 				};
 
 				let debt_asset_id = T::CurrencyFactory::create()?;
@@ -707,11 +704,10 @@ pub mod pallet {
 			borrows: &Self::Balance,
 			reserves: &Self::Balance,
 		) -> Result<Ratio, DispatchError> {
-			// utilization ratio is 0 when there are no borrows
 			if borrows.is_zero() {
 				return Ok(Ratio::zero());
 			}
-			// utilizationRatio = totalBorrows / (totalCash + totalBorrows − totalReserves)
+
 			let total: u128 = cash
 				.checked_add(borrows)
 				.and_then(|r| r.checked_sub(reserves))
@@ -722,37 +718,35 @@ pub mod pallet {
 			Ok(util_ratio.clamp(0.into(), 1.into()))
 		}
 
-		fn accrue_interest(market_id: &Self::MarketId) -> Result<(), DispatchError> {
+		fn accrue_interest(market_id: &Self::MarketId, now : Timestamp) -> Result<(), DispatchError> {
+
 			let total_borrows = Self::total_borrows(market_id)?;
 			let total_cash = Self::total_cash(market_id)?;
 			let total_reserves = Self::total_reserves(market_id)?;
 			let utilization_ratio =
 				Self::calc_utilization_ratio(&total_cash, &total_borrows, &total_reserves)?;
-			let delta_time = T::UnixTime::now()
-				.as_secs()
-				.checked_sub(Self::last_block_timestamp())
-				.ok_or(Error::<T>::Underflow)?;
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let delta_time = now
+				.checked_sub(Self::last_block_timestamp())
+				.ok_or(Error::<T>::Underflow)?;
+
 			let borrow_rate = market
-				.interest_rate
+				.interest_rate_model
 				.get_borrow_rate(utilization_ratio)
 				.ok_or(Error::<T>::BorrowRateDoesNotExist)?;
-
-			//update borrow_index
 			let borrow_index =
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let borrow_index_new = increment_index(borrow_rate, borrow_index, delta_time)
 				.and_then(|r| r.checked_add(&borrow_index))
 				.ok_or(Error::<T>::Overflow)?;
-			// overwrite value
-			BorrowIndex::<T>::insert(market_id, borrow_index_new);
-
 			let delta_interest_rate =
 				increment_borrow_rate(borrow_rate, delta_time).ok_or(Error::<T>::Overflow)?;
+
+			BorrowIndex::<T>::insert(market_id, borrow_index_new);
+
 			Self::update_borrows(market_id, delta_interest_rate)?;
 
-			//TODO: update_reserves
 			Ok(())
 		}
 

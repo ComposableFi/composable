@@ -15,6 +15,7 @@ pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
 
 pub type BorrowAmountOf<T> = <T as Lending>::Balance;
 
+/// seconds
 pub type Timestamp = u64;
 
 #[derive(Encode, Decode, Default)]
@@ -34,7 +35,7 @@ pub struct MarketConfig<VaultId, AssetId, AccountId> {
 	pub borrow: VaultId,
 	pub collateral: AssetId,
 	pub collateral_factor: NormalizedCollateralFactor,
-	pub interest_rate: InterestRateModel,
+	pub interest_rate_model: InterestRateModel,
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.
@@ -115,7 +116,7 @@ pub trait Lending {
 	/// Floored down to zero.
 	fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
-	fn accrue_interest(market_id: &Self::MarketId) -> Result<(), DispatchError>;
+	fn accrue_interest(market_id: &Self::MarketId, now : Timestamp) -> Result<(), DispatchError>;
 
 	fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
@@ -128,6 +129,8 @@ pub trait Lending {
 		delta_interest_rate: Rate,
 	) -> Result<(), DispatchError>;
 
+	/// utilization_ratio = total_borrows / (total_cash + total_borrows).
+	/// utilization ratio is 0 when there are no borrows.
 	fn calc_utilization_ratio(
 		cash: &Self::Balance,
 		borrows: &Self::Balance,
