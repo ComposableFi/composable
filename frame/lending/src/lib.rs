@@ -667,9 +667,6 @@ pub mod pallet {
 		}
 
 		fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
-			// let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			// Ok(T::Currency::total_issuance(debt_asset_id))
-
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let borrow_id = T::Vault::asset_id(&market.borrow)?;
