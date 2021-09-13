@@ -836,13 +836,15 @@ pub mod pallet {
 
 			let (collateral_price, _) = T::Oracle::get_price(&market.collateral)?;
 
+			/// ISSUE: we do factor / factor operation, no needed
+
 			let possible_borrowable_value = Self::get_borrow_limit(market_id, account)?;
 
+			/// TODO: move this to lending API docs
 			/*
 				v = (possible_borrowable_value) * factor
 
-				In practice a user will not withdraw v
-				because it would probably result in quick liquidation?
+				In practice if used has borrow user will not withdraw v because it would probably result in quick liquidation, if he has any borrows.
 			*/
 			let withdrawable_collateral_value = market
 				.collateral_factor
