@@ -181,6 +181,21 @@ pub mod pallet {
 	}
 
 	impl BorrowerData {
+		pub fn new<T:Into<LiftedFixedBalance>>(
+			collateral_balance : T,
+			collateral_price: T,
+			borrower_balance_with_interest : T,
+			borrow_price: T,
+			collateral_factor: NormalizedCollateralFactor,
+		) -> Self {
+			Self {
+				collateral_balance: collateral_balance.into(),
+				collateral_price: collateral_price.into(),
+				borrower_balance_with_interest: borrower_balance_with_interest.into(),
+				borrow_price: borrow_price.into(),
+				collateral_factor: collateral_factor.into(),
+			}
+		}
 		pub fn collateral_over_borrow(&self) -> Result<LiftedFixedBalance, ArithmeticError> {
 			let collateral = self.collateral_balance.error_mul(&self.collateral_price)?;
 			let borrowed = self.borrower_balance_with_interest.error_mul(&self.borrow_price)?.error_mul(&self.collateral_factor)?;

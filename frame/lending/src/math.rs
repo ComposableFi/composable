@@ -45,6 +45,6 @@ impl ErrorArithmetic for LiftedFixedBalance {
 
 	#[inline(always)]
     fn error_sub(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
-        self.checked_div(rhs).ok_or(ArithmeticError::Underflow)
+        self.checked_sub(rhs).ok_or(ArithmeticError::Underflow)
     }
 }

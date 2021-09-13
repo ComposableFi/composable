@@ -1,10 +1,7 @@
-use crate::{
-	mocks::{
+use crate::{BorrowerData, MarketIndex, math::LiftedFixedBalance, mocks::{
 		new_test_ext, process_block, AccountId, Balance, Lending, MockCurrencyId, Origin, Tokens,
 		Vault, VaultId, ALICE, BOB, CHARLIE,
-	},
-	MarketIndex,
-};
+	}};
 use composable_traits::{
 	lending::{MarketConfigInput, NormalizedCollateralFactor},
 	rate_model::*,
@@ -92,6 +89,13 @@ fn test_calc_utilization_ratio() {
 }
 
 #[test]
+fn test_borrow_math() {
+	let borrower = BorrowerData::new(100, 1, 0, 1, NormalizedCollateralFactor::from_float(1.0));
+	let borrow = borrower.borrow_for_collateral().unwrap();
+	assert_eq!(borrow, LiftedFixedBalance::from(100));
+}
+
+#[test]
 fn test_borrow() {
 	new_test_ext().execute_with(|| {
 		let amount = 900000;
@@ -100,9 +104,9 @@ fn test_borrow() {
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, amount));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount);
-
 		assert_ok!(Lending::deposit_collateral(&market, &ALICE, amount));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+
 		// Balance for BOB
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &BOB, amount));
