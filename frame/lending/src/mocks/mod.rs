@@ -226,20 +226,20 @@ impl pallet_lending::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut storage = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	let balances = vec![];
 
 	pallet_balances::GenesisConfig::<Test> { balances }
-		.assimilate_storage(&mut t)
+		.assimilate_storage(&mut storage)
 		.unwrap();
 	pallet_lending::GenesisConfig { last_block_timestamp: 0 }
-		.assimilate_storage::<Test>(&mut t)
+		.assimilate_storage::<Test>(&mut storage)
 		.unwrap();
 
-	let mut ext = sp_io::TestExternalities::new(t);
+	let mut ext = sp_io::TestExternalities::new(storage);
 	ext.execute_with(|| {
 		System::set_block_number(0);
-		Timestamp::set_timestamp(6000);
+		Timestamp::set_timestamp(MILLISECS_PER_BLOCK);
 	});
 	ext
 }
@@ -248,9 +248,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 pub(crate) fn run_to_block(n: BlockNumber) {
 	Lending::on_finalize(System::block_number());
 	for b in (System::block_number() + 1)..=n {
-		System::set_block_number(b);
-		Lending::on_initialize(System::block_number());
-		Timestamp::set_timestamp(6000 * b);
+		next_block(b);
 		if b != n {
 			Lending::on_finalize(System::block_number());
 		}
@@ -258,8 +256,12 @@ pub(crate) fn run_to_block(n: BlockNumber) {
 }
 
 pub(crate) fn process_block(n: BlockNumber) {
-	System::set_block_number(n);
-	Lending::on_initialize(n);
-	Timestamp::set_timestamp(6000 * n);
+	next_block(n);
 	Lending::on_finalize(n);
+}
+
+fn next_block(n: u64) {
+    System::set_block_number(n);
+    Lending::on_initialize(n);
+    Timestamp::set_timestamp(MILLISECS_PER_BLOCK * n);
 }
