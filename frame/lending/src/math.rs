@@ -16,7 +16,7 @@ pub type LiftedFixedBalance = FixedU128;
 /// little bit slower than maximizing performance by knowing constraints.
 /// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if you have positive number only, you cannot have underflow.
 /// Same for other constrains, like non zero divisor.
-pub trait ErrorArithmetic {
+pub trait ErrorArithmetic : Sized {
 	fn error_add(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
 	fn error_div(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
 	fn error_mul(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
@@ -32,7 +32,7 @@ impl ErrorArithmetic for LiftedFixedBalance {
 	#[inline(always)]
     fn error_div(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
         if rhs.is_zero() {
-			Err(ArithmeticError::DivisionByZero)
+			return Err(ArithmeticError::DivisionByZero)
 		}
 
 		self.checked_div(rhs).ok_or(ArithmeticError::Overflow)
