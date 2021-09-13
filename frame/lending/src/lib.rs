@@ -547,9 +547,7 @@ pub mod pallet {
 
 			let market_index =
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-			//ASK: storage or currency?
-			//<T::DebtCurrency as Mutate<T::AccountId>>::mint_into(market_id.clone(), debt_owner,
-			//<T::DebtCurrency amount_to_borrow)?;
+
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			T::Currency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
 			T::Currency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
