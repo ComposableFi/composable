@@ -22,6 +22,9 @@
 	unused_extern_crates
 )]
 
+mod math;
+use math::*;
+
 pub use pallet::*;
 
 #[cfg(test)]
@@ -34,26 +37,8 @@ mod tests;
 pub mod pallet {
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::{
-		currency::CurrencyFactory,
-		lending::{
-			BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput,
-			Timestamp,
-		},
-		oracle::Oracle,
-		rate_model::*,
-		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
-	};
-	use frame_support::{
-		pallet_prelude::*,
-		storage::{with_transaction, TransactionOutcome},
-		traits::{
-			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
-			tokens::DepositConsequence,
-			GenesisBuild, UnixTime,
-		},
-		PalletId,
-	};
+	use composable_traits::{currency::CurrencyFactory, lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput, NormalizedCollateralFactor, Timestamp}, oracle::Oracle, rate_model::*, vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig}};
+	use frame_support::{PalletId, pallet_prelude::*, storage::{with_transaction, TransactionOutcome}, traits::{GenesisBuild, Len, ReservableCurrency, UnixTime, fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer}, tokens::DepositConsequence}};
 	use num_traits::{CheckedDiv, SaturatingSub};
 	use sp_runtime::{
 		traits::{
@@ -75,12 +60,6 @@ pub mod pallet {
 	}
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
-
-	/// number like of hi bits, so that amount and balance calculations are don it it with high
-	/// precision via fixed point
-	/// while this is 128 bit, cannot support u128
-	/// can support it if to use FixedU256
-	type LiftedFixedBalance = FixedU128;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -188,6 +167,32 @@ pub mod pallet {
 		CannotRepayMoreThanBorrowAmount,
 		BorrowRateDoesNotExist,
 		BorrowIndexDoesNotExist,
+	}
+
+
+
+	//collateral_balance * collateral_price - borrower_balance_with_interest * borrow_price
+
+	pub struct BorrowerData {
+		pub collateral_balance : LiftedFixedBalance,
+		pub collateral_price: LiftedFixedBalance,
+		pub borrower_balance_with_interest : LiftedFixedBalance,
+		pub borrow_price: LiftedFixedBalance,
+		pub collateral_factor: NormalizedCollateralFactor,
+	}
+
+	impl BorrowerData {
+		pub fn collateral_over_borrow(&self) -> Option<ArithmeticError> {
+			let collateral = self.collateral_balance.error_mul(self.collateral_price)?;
+			let borrowed = self.borrower_balance_with_interest.error_mul(self.borrow_price)?.error_mul(self.collateral_factor)?;
+			collateral.error_sub(borrowed)?
+		}
+
+		pub fn borrow_for_collateral(&self) -> Option<ArithmeticError> {
+			let max_borrow = self.collateral_balance.error_mul(self.collateral_price)?.error_div(self.collateral_factor)?;
+			let borrowed = self.borrower_balance_with_interest.error_mul(self.borrow_price)?;
+			max_borrow.error_sub(borrowed)?
+		}
 	}
 
 	/// Lending instances counter
@@ -762,36 +767,47 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-
 			let collateral_balance: LiftedFixedBalance =
-				AccountCollateral::<T>::try_get(market_id, account)
-					.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount)?
-					.into();
-			let collateral_price: LiftedFixedBalance =
-				<T::Oracle as Oracle>::get_price(&market.collateral)?.0.into();
+				AccountCollateral::<T>::try_get(market_id, account).unwrap_or_default().into();
 
-			let normalized_limit = collateral_balance
-				.checked_mul(&collateral_price)
-				.and_then(|collateral_normalized| {
-					collateral_normalized.checked_div(&market.collateral_factor)
-				})
-				.and_then(|borrow_normalized| borrow_normalized.checked_mul_int(1u64))
-				.ok_or(Error::<T>::Overflow)?;
-
-			let borrower_balance_with_interest =
+			if collateral_balance > LiftedFixedBalance::zero() {
+				let collateral_price: LiftedFixedBalance =
+				Oracle::get_price(&market.collateral)?.0.into();
+				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
+				let borrow_price = T::Oracle::get_price(&borrow_asset)?.0;
+				let borrower_balance_with_interest =
 				Self::borrow_balance_current(market_id, account)?.unwrap_or_default();
-			let asset_id = T::Vault::asset_id(&market.borrow)?;
-			let borrow_asset_price = T::Oracle::get_price(&asset_id)?.0;
-			let borrowed_normalized = borrower_balance_with_interest
-				.checked_mul(&borrow_asset_price)
-				.ok_or(Error::<T>::Overflow)?;
-			let current_borrow: LiftedFixedBalance = borrowed_normalized.into();
-			let current_borrow_value =
-				current_borrow.checked_mul_int(1u64).ok_or(Error::<T>::Overflow)?;
-			let possible_borrow = normalized_limit
-				.checked_sub(current_borrow_value)
-				.ok_or(Error::<T>::NotEnoughCollateralToBorrowAmount)?;
-			Ok(possible_borrow.into())
+
+				let normalized_limit = collateral_balance
+					.checked_mul(&collateral_price)
+					.and_then(|collateral_normalized| {
+						collateral_normalized.checked_div(&market.collateral_factor)
+					})
+					.and_then(|borrow_normalized| borrow_normalized.checked_mul_int(1u64))
+					.ok_or(Error::<T>::Overflow)?;
+
+				let borrowed_normalized = borrower_balance_with_interest
+					.checked_mul(&borrow_price)
+					.ok_or(Error::<T>::Overflow)?;
+				let current_borrow: LiftedFixedBalance = borrowed_normalized.into();
+				let current_borrow_value =
+					current_borrow.checked_mul_int(1u64).ok_or(Error::<T>::Overflow)?;
+				let possible_borrow = normalized_limit
+					.checked_sub(current_borrow_value)
+					.ok_or(Error::<T>::NotEnoughCollateralToBorrowAmount)?;
+
+				let borrower = BorrowerData {
+					collateral_balance : collateral_balance.into(),
+					collateral_price : collateral_price.into(),
+					borrower_balance_with_interest : borrower_balance_with_interest.into(),
+					borrow_price : borrow_price.into(),
+					collateral_factor: market.collateral_factor,
+    			};
+
+				Ok(possible_borrow.into())
+			}
+
+			Ok(Self::Balance::zero())
 		}
 
 		fn deposit_collateral(
@@ -838,6 +854,7 @@ pub mod pallet {
 
 			/// ISSUE: we do factor / factor operation, no needed
 
+
 			let possible_borrowable_value = Self::get_borrow_limit(market_id, account)?;
 
 			/// TODO: move this to lending API docs
@@ -846,6 +863,7 @@ pub mod pallet {
 
 				In practice if used has borrow user will not withdraw v because it would probably result in quick liquidation, if he has any borrows.
 			*/
+			// collateral_balance * collateral_price - borrower_balance_with_interest * borrow_price * collateral_factor
 			let withdrawable_collateral_value = market
 				.collateral_factor
 				.checked_mul_int(possible_borrowable_value)
