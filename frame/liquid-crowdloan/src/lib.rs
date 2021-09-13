@@ -15,7 +15,6 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, FullCodec};
-	pub use composable_traits::currency::CurrencyFactory;
 	use core::ops::{Div, Mul};
 	use frame_support::{
 		pallet_prelude::*,
@@ -39,23 +38,26 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		/// Account ID for the pot of funds
 		type LiquidRewardId: Get<PalletId>;
 		/// The currency mechanism.
 		type NativeCurrency: NativeCurrency<Self::AccountId>;
+		/// Origin that controls this pallet
 		type JumpStart: EnsureOrigin<Self::Origin>;
-		type CurrencyFactory: CurrencyFactory<Self::CurrencyId>;
-		type CurrencyId: FullCodec
+		/// Currency Id for this pallet
+		type CurrencyId: Get<Self::CurrencyIdType>;
+		/// Currency Id type for this pallet
+		type CurrencyIdType: FullCodec
 			+ Eq
 			+ PartialEq
 			+ Copy
 			+ MaybeSerializeDeserialize
-			+ Debug
-			+ Default;
-
-		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyId>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyId>
-			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyId>;
-
+			+ Debug;
+		/// Multicurrency implementation
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyIdType>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyIdType>
+			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyIdType>;
+		/// Balance type
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -68,7 +70,6 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ Zero
 			+ From<u64>;
-
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
 	}
@@ -120,12 +121,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::JumpStart::ensure_origin(origin)?;
 			ensure!(!<TokenId<T>>::exists(), Error::<T>::AlreadyInitiated);
-			let lp_token_id = {
-				T::CurrencyFactory::create().map_err(|e| {
-					log::debug!("failed to create asset: {:?}", e);
-					Error::<T>::CannotCreateAsset
-				})?
-			};
+			let lp_token_id = T::CurrencyId::get();
 			T::Currency::mint_into(lp_token_id, &manager, amount)?;
 			<TokenId<T>>::put(lp_token_id);
 			Self::deposit_event(Event::Initiated(lp_token_id));

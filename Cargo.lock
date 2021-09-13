@@ -1140,14 +1140,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "composable-traits"
-version = "0.0.1"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
-]
-
-[[package]]
 name = "concurrent-queue"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5005,21 +4997,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-currency-factory"
-version = "0.0.1"
-dependencies = [
- "composable-traits",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "sp-arithmetic",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-democracy"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
@@ -5144,7 +5121,6 @@ dependencies = [
 name = "pallet-liquid-crowdloan"
 version = "0.0.1"
 dependencies = [
- "composable-traits",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -5153,7 +5129,6 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-balances",
- "pallet-currency-factory",
  "parity-scale-codec",
  "proptest",
  "serde",
@@ -5886,7 +5861,6 @@ dependencies = [
  "pallet-balances",
  "pallet-collator-selection",
  "pallet-collective",
- "pallet-currency-factory",
  "pallet-democracy",
  "pallet-indices",
  "pallet-liquid-crowdloan",
@@ -7972,7 +7946,6 @@ dependencies = [
  "pallet-balances",
  "pallet-collator-selection",
  "pallet-collective",
- "pallet-currency-factory",
  "pallet-liquid-crowdloan",
  "pallet-treasury",
  "parity-scale-codec",

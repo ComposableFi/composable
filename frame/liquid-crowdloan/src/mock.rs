@@ -1,5 +1,4 @@
 use crate as pallet_liquid_crowdloan;
-pub use composable_traits::currency::CurrencyFactory;
 use frame_support::{ord_parameter_types, parameter_types, PalletId};
 use frame_system as system;
 use frame_system::EnsureSignedBy;
@@ -8,7 +7,7 @@ use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
+	traits::{BlakeTwo256, IdentityLookup},
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -27,9 +26,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		LiquidCrowdloan: pallet_liquid_crowdloan::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
-		Factory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		NativeBalances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-
 	}
 );
 
@@ -98,25 +95,20 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 }
 
-impl pallet_currency_factory::Config for Test {
-	type Event = Event;
-	type CurrencyId = MockCurrencyId;
-	type Convert = ConvertInto;
-}
-
 parameter_types! {
 	pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
 }
 
 ord_parameter_types! {
 	pub const RootAccount: u128 = 2;
+	pub const CrowdloanCurrencyId: u128 = 128;
 }
 
 impl pallet_liquid_crowdloan::Config for Test {
 	type Event = Event;
 	type LiquidRewardId = LiquidRewardId;
-	type CurrencyFactory = Factory;
-	type CurrencyId = MockCurrencyId;
+	type CurrencyId = CrowdloanCurrencyId;
+	type CurrencyIdType = MockCurrencyId;
 	type JumpStart = EnsureSignedBy<RootAccount, u128>;
 	type Currency = Tokens;
 	type Balance = Balance;

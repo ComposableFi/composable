@@ -9,15 +9,16 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod weights;
 pub use runtime_common as common;
 use runtime_common::{
-	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, CouncilInstance, CurrencyId, Amount,
-	EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
-	MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
+	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, CouncilInstance,
+	CurrencyId, TokenSymbol, Amount, EnsureRootOrHalfCouncil, Hash, Signature, DAYS,
+	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
+	AVERAGE_ON_INITIALIZE_RATIO,
 };
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult
 };
@@ -539,15 +540,8 @@ impl collator_selection::Config for Runtime {
 	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
 }
 
-
-
-impl currency_factory::Config for Runtime {
-	type Event = Event;
-	type CurrencyId = CurrencyId;
-	type Convert = ConvertInto;
-}
-
 parameter_type_with_key! {
+	// TODO:
 	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
 		Zero::zero()
 	};
@@ -568,14 +562,14 @@ impl orml_tokens::Config for Runtime {
 
 parameter_types! {
 	pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
-
+	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
 }
 
 impl liquid_crowdloan::Config for Runtime {
 	type Event = Event;
 	type LiquidRewardId = LiquidRewardId;
-	type CurrencyFactory = Factory;
-	type CurrencyId = CurrencyId;
+	type CurrencyId = CrowdloanCurrencyId;
+	type CurrencyIdType = CurrencyId;
 	type JumpStart = EnsureRootOrHalfCouncil;
 	type Currency = Tokens;
 	type Balance = Balance;
@@ -769,9 +763,6 @@ construct_runtime!(
 		// local modules
 		LiquidCrowdloan: liquid_crowdloan::{Pallet, Call, Storage, Event<T>} = 50,
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
-		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
-
-
 	}
 );
 

@@ -1,21 +1,3 @@
-// Copyright (C) 2021 Parity Technologies (UK) Ltd.
-// SPDX-License-Identifier: Apache-2.0
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-//! Auxillary struct/enums for Statemint runtime.
-//! Taken from polkadot/runtime/common (at a21cd64) and adapted for Statemint.
-
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 
 pub type NegativeImbalance<T> =
@@ -90,7 +72,7 @@ mod tests {
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
-		traits::{BlakeTwo256, IdentityLookup, ConvertInto},
+		traits::{BlakeTwo256, IdentityLookup},
 		Perbill, Permill,
 	};
 	use orml_traits::parameter_type_with_key;
@@ -111,7 +93,6 @@ mod tests {
 			CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>},
 			LiquidCrowdloan: liquid_crowdloan::{Pallet, Call, Storage, Event<T>},
 			Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
-			Factory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		}
 	);
 
@@ -205,12 +186,6 @@ mod tests {
 		type WeightInfo = ();
 	}
 
-	impl pallet_currency_factory::Config for Test {
-		type Event = Event;
-		type CurrencyId = MockCurrencyId;
-		type Convert = ConvertInto;
-	}
-
 	parameter_type_with_key! {
 		pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
 			Zero::zero()
@@ -232,6 +207,7 @@ mod tests {
 
 	parameter_types! {
 		pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
+		pub const CrowdloanCurrencyId: u128 = 128;
 	}
 
 	ord_parameter_types! {
@@ -240,8 +216,8 @@ mod tests {
 	impl liquid_crowdloan::Config for Test {
 		type Event = Event;
 		type LiquidRewardId = LiquidRewardId;
-		type CurrencyFactory = Factory;
-		type CurrencyId = MockCurrencyId;
+		type CurrencyId = CrowdloanCurrencyId;
+		type CurrencyIdType = MockCurrencyId;
 		type JumpStart = EnsureRoot<AccountId>;
 		type Currency = Tokens;
 		type Balance = Balance;
