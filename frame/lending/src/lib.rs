@@ -646,9 +646,8 @@ pub mod pallet {
 
 		fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			let accrued_debt = Self::total_interest(market_id)?;
 			let total_issued = T::Currency::total_issuance(debt_asset_id);
-			Ok(total_issued - accrued_debt)
+			Ok(total_issued)
 		}
 
 		fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
@@ -675,6 +674,7 @@ pub mod pallet {
 			let total_debt = Self::total_borrows(market_id)?;
 			let accrued_interest =
 				T::Currency::balance(debt_asset_id, &Self::account_id(market_id));
+
 			let total_borrows: FixedU128 = total_debt
 				.checked_sub(&accrued_interest)
 				.ok_or(ArithmeticError::Overflow)?
@@ -682,8 +682,8 @@ pub mod pallet {
 			let accrued = total_borrows
 				.checked_mul(&delta_interest_rate)
 				.and_then(|x| x.checked_mul_int(1u64))
-				.ok_or(ArithmeticError::Overflow)?
-				.into();
+				.ok_or(ArithmeticError::Overflow)?;
+
 			T::Currency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)?;
 			Ok(())
 		}
@@ -706,13 +706,14 @@ pub mod pallet {
 			let delta_time = now
 				.checked_sub(Self::last_block_timestamp())
 				.ok_or(Error::<T>::Underflow)?;
+			let borrow_index =
+				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
+			// pure math
 			let borrow_rate = market
 				.interest_rate_model
 				.get_borrow_rate(utilization_ratio)
 				.ok_or(Error::<T>::BorrowRateDoesNotExist)?;
-			let borrow_index =
-				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let borrow_index_new = increment_index(borrow_rate, borrow_index, delta_time)
 				.and_then(|r| r.checked_add(&borrow_index))
 				.ok_or(Error::<T>::Overflow)?;
@@ -720,7 +721,6 @@ pub mod pallet {
 				increment_borrow_rate(borrow_rate, delta_time).ok_or(Error::<T>::Overflow)?;
 
 			BorrowIndex::<T>::insert(market_id, borrow_index_new);
-
 			Self::update_borrows(market_id, delta_interest_rate)?;
 
 			Ok(())
