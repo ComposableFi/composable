@@ -18,7 +18,7 @@ use sp_runtime::traits::BadOrigin;
 #[test]
 fn add_asset_and_info() {
 	new_test_ext().execute_with(|| {
-		const ASSET_ID: u64 = 1;
+		const ASSET_ID: u128 = 1;
 		const MIN_ANSWERS: u32 = 3;
 		const MAX_ANSWERS: u32 = 5;
 		const THRESHOLD: Percent = Percent::from_percent(80);
@@ -278,14 +278,14 @@ fn add_price() {
 		));
 		// fails price not requested
 		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u64),
+			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128),
 			Error::<Test>::PriceNotRequested
 		);
 
 		assert_ok!(Oracle::do_request_price(&account_1, 0));
 		// fails no stake
 		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u64),
+			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128),
 			Error::<Test>::NotEnoughStake
 		);
 
@@ -299,16 +299,16 @@ fn add_price() {
 		assert_ok!(Oracle::add_stake(Origin::signed(account_4), 50));
 		assert_ok!(Oracle::add_stake(Origin::signed(account_5), 50));
 
-		assert_ok!(Oracle::submit_price(Origin::signed(account_1), 100u128, 0u64));
-		assert_ok!(Oracle::submit_price(Origin::signed(account_2), 100u128, 0u64));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_2), 100u128, 0u128));
 		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_2), 100u128, 0u64),
+			Oracle::submit_price(Origin::signed(account_2), 100u128, 0u128),
 			Error::<Test>::AlreadySubmitted
 		);
-		assert_ok!(Oracle::submit_price(Origin::signed(account_4), 100u128, 0u64));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_4), 100u128, 0u128));
 
 		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_5), 100u128, 0u64),
+			Oracle::submit_price(Origin::signed(account_5), 100u128, 0u128),
 			Error::<Test>::MaxPrices
 		);
 
@@ -688,7 +688,7 @@ fn parse_price_works() {
 	}
 }
 
-fn add_price_storage(price: u128, asset_id: u64, who: AccountId, block: u64) {
+fn add_price_storage(price: u128, asset_id: u128, who: AccountId, block: u64) {
 	let price = PrePrice { price, block, who };
 	PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.push(price));
 }

@@ -345,7 +345,7 @@ impl oracle::Config for Runtime {
 	type Currency = Balances;
 	type Event = Event;
 	type AuthorityId = oracle::crypto::TestAuthId;
-	type AssetId = u64;
+	type AssetId = CurrencyId;
 	type PriceValue = u128;
 	type StakeLock = StakeLock;
 	type MinStake = MinStake;
@@ -749,6 +749,17 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = ();
 	type MaxLocks = ();
 	type DustRemovalWhitelist = ();
+}
+
+impl lending::Config for Runtime {
+	type Oracle = Oracle;
+	type VaultId = u64;
+	type Vault = Vault;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type Currency = Tokens;
+	type UnixTime = Timestamp;
+	type CurrencyFactory = Factory;
 }
 
 /// The calls we permit to be executed by extrinsics

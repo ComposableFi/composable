@@ -6351,6 +6351,7 @@ dependencies = [
  "pallet-currency-factory",
  "pallet-democracy",
  "pallet-indices",
+ "pallet-lending",
  "pallet-membership",
  "pallet-oracle",
  "pallet-randomness-collective-flip",

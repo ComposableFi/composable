@@ -50,7 +50,7 @@ pub mod pallet {
 		traits::{
 			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
 			tokens::DepositConsequence,
-			GenesisBuild, UnixTime,
+			UnixTime,
 		},
 		PalletId,
 	};
@@ -62,7 +62,7 @@ pub mod pallet {
 		},
 		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Perquintill,
 	};
-	use sp_std::fmt::Debug;
+	use sp_std::{fmt::Debug, vec::Vec};
 
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode)]
 	#[repr(transparent)]

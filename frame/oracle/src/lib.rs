@@ -89,8 +89,8 @@ pub mod pallet {
 			+ PartialEq
 			+ Copy
 			+ MaybeSerializeDeserialize
-			+ From<u64>
-			+ Into<u64>
+			+ From<u128>
+			+ Into<u128>
 			+ Debug
 			+ Default;
 		type PriceValue: Default
