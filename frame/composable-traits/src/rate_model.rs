@@ -27,7 +27,9 @@ use sp_runtime::{
 /// The fixed point number
 pub type Rate = FixedU128;
 
-/// Must not be > 1.0
+//pub fn percentage(numerator ) ->
+
+/// Must be [0..1]
 /// TODO: implement Ratio as wrapper over FixedU128
 pub type Ratio = FixedU128;
 
@@ -167,15 +169,15 @@ pub struct JumpModel {
 }
 
 impl JumpModel {
-	pub const MAX_BASE_RATE: Rate = Rate::from_inner(100_000_000_000_000_000); // 10%
-	pub const MAX_JUMP_RATE: Rate = Rate::from_inner(300_000_000_000_000_000); // 30%
-	pub const MAX_FULL_RATE: Rate = Rate::from_inner(500_000_000_000_000_000); // 50%
+	pub const MAX_BASE_RATE: Ratio = Ratio::from_inner(100_000_000_000_000_000); // 10%
+	pub const MAX_JUMP_RATE: Ratio = Ratio::from_inner(300_000_000_000_000_000); // 30%
+	pub const MAX_FULL_RATE: Ratio = Ratio::from_inner(500_000_000_000_000_000); // 50%
 
 	/// Create a new rate model
 	pub fn new_model(
-		base_rate: Rate,
-		jump_rate: Rate,
-		full_rate: Rate,
+		base_rate: Ratio,
+		jump_rate: Ratio,
+		full_rate: Ratio,
 		jump_utilization: Ratio,
 	) -> JumpModel {
 		if jump_utilization > Ratio::one() {
@@ -279,7 +281,7 @@ pub fn increment_borrow_rate(borrow_rate: Rate, delta_time: Timestamp) -> Option
 mod tests {
 	use super::*;
 	use std::convert::TryInto;
-	use proptest::{strategy::Strategy, test_runner::TestRunner};
+	use proptest::{prelude::prop, strategy::{BoxedStrategy, Strategy}, test_runner::TestRunner};
 	use sp_runtime::FixedU128;
 
 	// Test jump model
@@ -361,16 +363,45 @@ mod tests {
 		);
 	}
 
+	#[derive(Debug, Clone)]
+	struct JumpModelStrategy {
+		pub base_rate: Ratio,
+		pub jump_percentages: Ratio,
+		pub full_percentages : Ratio,
+		pub target_utilization_percentage: Ratio,
+	}
 
+	fn valid_jump_model() -> impl Strategy<Value = JumpModelStrategy> {
+		(
+			(1..=10u32).prop_map(|x|Ratio::saturating_from_rational(x,100)),
+			(11..=30u32).prop_map(|x|Ratio::saturating_from_rational(x,100)),
+			(31..=50).prop_map(|x|Ratio::saturating_from_rational(x,100)),
+			(0..=100).prop_map(|x|Ratio::saturating_from_rational(x,100)),
+		)
+		.prop_filter("Jump rate model", |(base, jump, full, _)| {
+			// tried high order strategy - failed as it tries to combine collections with not collection
+			// alternative to define arbitrary and proptest attributes with filtering
+			// overall cardinality is small, so should work well
+			// here we have one liner, not sure why in code we have many lines....
+			base <= jump && jump <= full && base <= &JumpModel::MAX_BASE_RATE && jump <= &JumpModel::MAX_JUMP_RATE && full <= &JumpModel::MAX_FULL_RATE
+		})
+		.prop_map(|(base_rate, jump_percentages, full_percentages, target_utilization_percentage)|
+			 JumpModelStrategy {
+				base_rate,
+				full_percentages,
+				jump_percentages,
+				target_utilization_percentage,
+		})
+	}
 
 	#[test]
 	fn proptest_jump_model(){
 		let mut runner = TestRunner::default();
-		let result = runner.run(&(5..=10, 10..=15, 15..=20, 0..=100, 0..=u64::MAX, 0..=u64::MAX), |(base_percentages, jump_percentages, full_percentages, target_utilization_percentage, cash, borrows)| {
-			let base_rate = Rate::saturating_from_rational(base_percentages, 100);
-			let jump_rate = Rate::saturating_from_rational(jump_percentages, 100);
-			let full_rate = Rate::saturating_from_rational(full_percentages, 100);
-			let jump_utilization = Ratio::saturating_from_rational(target_utilization_percentage, 100);
+		let result = runner.run(&(valid_jump_model(), 0..=u64::MAX, 0..=u64::MAX), |(strategy, cash, borrows)| {
+			let base_rate = strategy.base_rate;
+			let jump_rate = strategy.jump_percentages;
+			let full_rate = strategy.full_percentages;
+			let jump_utilization = strategy.target_utilization_percentage;
 			let jump_model = JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization);
 			assert!(jump_model.check_model());
 
