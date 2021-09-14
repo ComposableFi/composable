@@ -226,7 +226,7 @@ impl currencies::Config for Runtime {
 	type NativeCurrency = Self::NativeCurrency;     
 	type GetNativeCurrencyId = Self::GetNativeCurrencyId;
 	type WeightInfo = ();         
-
+// https://docs.rs/orml-currencies/0.4.0/orml_currencies/module/trait.Config.html
 
 // Todo
 }
