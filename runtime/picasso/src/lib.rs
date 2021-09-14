@@ -8,7 +8,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
 use common::{Amount, CurrencyId};
-use orml_traits::parameter_type_with_key;
+use orml_traits::{parameter_type_with_key, MultiCurrency};
 pub use runtime_common as common;
 use runtime_common::{
 	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, CouncilInstance,
@@ -221,6 +221,12 @@ parameter_types! {
 
 // multipurpose currency orlm pallet 
 impl currencies::Config for Runtime {
+	type Event = Event; 
+	type MultiCurrency = MultiCurrency<Self::AccountId>;      
+	type NativeCurrency = Self::NativeCurrency;     
+	type GetNativeCurrencyId = Self::GetNativeCurrencyId;
+	type WeightInfo = ();         
+
 
 // Todo
 }

@@ -112,6 +112,7 @@ std = [
 	"scheduler/std",
 	"runtime-common/std",
 	"collective/std",
+	"currencies/std",
 	"transaction-payment/std",
 	"parachain-info/std",
 	"cumulus-pallet-aura-ext/std",
