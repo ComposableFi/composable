@@ -66,7 +66,7 @@ pub mod pallet {
 	};
 	use sp_std::fmt::Debug;
 
-	use crate::math::{ErrorArithmetic, LiftedFixedBalance};
+	use crate::math::{SafeArithmetic, LiftedFixedBalance};
 
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode)]
 	#[repr(transparent)]
@@ -213,21 +213,21 @@ pub mod pallet {
 
 		#[inline(always)]
 		pub fn collateral_over_borrow(&self) -> Result<LiftedFixedBalance, ArithmeticError> {
-			let collateral = self.collateral_balance.error_mul(&self.collateral_price)?;
+			let collateral = self.collateral_balance.safe_mul(&self.collateral_price)?;
 			let borrowed = self
 				.borrower_balance_with_interest
-				.error_mul(&self.borrow_price)?
-				.error_mul(&self.collateral_factor)?;
-			collateral.error_sub(&borrowed)
+				.safe_mul(&self.borrow_price)?
+				.safe_mul(&self.collateral_factor)?;
+			collateral.safe_sub(&borrowed)
 		}
 
 		#[inline(always)]
 		pub fn borrow_for_collateral(&self) -> Result<LiftedFixedBalance, ArithmeticError> {
 			let max_borrow = self
 				.collateral_balance
-				.error_mul(&self.collateral_price)?
-				.error_div(&self.collateral_factor)?;
-			let borrowed = self.borrower_balance_with_interest.error_mul(&self.borrow_price)?;
+				.safe_mul(&self.collateral_price)?
+				.safe_div(&self.collateral_factor)?;
+			let borrowed = self.borrower_balance_with_interest.safe_mul(&self.borrow_price)?;
 			Ok(max_borrow.saturating_sub(borrowed))
 		}
 	}
