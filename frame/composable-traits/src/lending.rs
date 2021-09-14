@@ -74,7 +74,7 @@ pub trait Lending {
 
 	/// Withdraw a part/total of previously deposited collateral.
 	/// In practice if used has borrow user will not withdraw v because it would probably result in quick liquidation, if he has any borrows.
-	///````python
+	///```python
 	/// withdrawable = total_collateral - total_borrows
 	/// withdrawable = collateral_balance * collateral_price - borrower_balance_with_interest * borrow_price * collateral_factor
 	///```

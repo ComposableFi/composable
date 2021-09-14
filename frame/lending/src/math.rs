@@ -7,10 +7,10 @@ use sp_runtime::{
 	ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Perquintill,
 };
 
-/// number like of hi bits, so that amount and balance calculations are don it it with high
-/// precision via fixed point
-/// while this is 128 bit, cannot support u128
-/// can support it if to use FixedU256
+/// Number like of higher bits, so that amount and balance calculations are done it it with higher
+/// precision via fixed point.
+/// While this is 128 bit, cannot support u128 because 18 bits are for of mantissa.
+/// Can support u128 it lifter to use FixedU256
 pub type LiftedFixedBalance = FixedU128;
 
 /// little bit slower than maximizing performance by knowing constraints.
