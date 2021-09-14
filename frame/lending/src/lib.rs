@@ -710,7 +710,6 @@ pub mod pallet {
 
 			let total: u128 = cash
 				.checked_add(borrows)
-				.and_then(|r| r.checked_sub(reserves))
 				.ok_or(Error::<T>::Overflow)?
 				.into();
 			let borrows: u128 = (*borrows).into();
@@ -719,7 +718,6 @@ pub mod pallet {
 		}
 
 		fn accrue_interest(market_id: &Self::MarketId, now : Timestamp) -> Result<(), DispatchError> {
-
 			let total_borrows = Self::total_borrows(market_id)?;
 			let total_cash = Self::total_cash(market_id)?;
 			let total_reserves = Self::total_reserves(market_id)?;

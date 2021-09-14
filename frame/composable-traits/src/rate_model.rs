@@ -13,10 +13,16 @@
 // limitations under the License.
 
 use codec::{Decode, Encode};
+
 use sp_runtime::{
-	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero},
-	FixedPointNumber, FixedU128, RuntimeDebug,
+	traits::{
+		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One, CheckedDiv,
+		Saturating, Zero,
+	},
+	ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Perquintill, RuntimeDebug,
 };
+
+
 
 /// The fixed point number
 pub type Rate = FixedU128;
@@ -25,9 +31,66 @@ pub type Rate = FixedU128;
 /// TODO: implement Ratio as wrapper over FixedU128
 pub type Ratio = FixedU128;
 
+/// seconds
 pub type Timestamp = u64;
 
+/// Number like of higher bits, so that amount and balance calculations are done it it with higher
+/// precision via fixed point.
+/// While this is 128 bit, cannot support u128 because 18 bits are for of mantissa.
+/// Can support u128 it lifter to use FixedU256
+pub type LiftedFixedBalance = FixedU128;
+
+/// little bit slower than maximizing performance by knowing constraints.
+/// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if you have positive number only, you cannot have underflow.
+/// Same for other constrains, like non zero divisor.
+pub trait ErrorArithmetic: Sized {
+	fn error_add(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
+	fn error_div(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
+	fn error_mul(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
+	fn error_sub(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
+}
+
+impl ErrorArithmetic for LiftedFixedBalance {
+	#[inline(always)]
+	fn error_add(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
+		self.checked_add(rhs).ok_or(ArithmeticError::Overflow)
+	}
+	#[inline(always)]
+	fn error_div(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
+		if rhs.is_zero() {
+			return Err(ArithmeticError::DivisionByZero);
+		}
+
+		self.checked_div(rhs).ok_or(ArithmeticError::Overflow)
+	}
+
+	#[inline(always)]
+	fn error_mul(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
+		self.checked_mul(rhs).ok_or(ArithmeticError::Overflow)
+	}
+
+	#[inline(always)]
+	fn error_sub(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
+		self.checked_sub(rhs).ok_or(ArithmeticError::Underflow)
+	}
+}
+
+
 pub const SECONDS_PER_YEAR: Timestamp = 365 * 24 * 60 * 60;
+
+fn calc_utilization_ratio(
+	cash: LiftedFixedBalance,
+	borrows: LiftedFixedBalance,
+) -> Result<Ratio, ArithmeticError> {
+	if borrows.is_zero() {
+		return Ok(Ratio::zero());
+	}
+
+	let total= cash.error_add(&borrows)?;
+	let util_ratio = borrows.checked_div(&total).expect("above checks prove it cannot error");
+	assert!(util_ratio <= Ratio::one(), "because dividing summand by sum");
+	Ok(util_ratio)
+}
 
 /// Parallel interest rate model
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
@@ -215,6 +278,8 @@ pub fn increment_borrow_rate(borrow_rate: Rate, delta_time: Timestamp) -> Option
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use std::convert::TryInto;
+	use proptest::{strategy::Strategy, test_runner::TestRunner};
 	use sp_runtime::FixedU128;
 
 	// Test jump model
@@ -294,5 +359,25 @@ mod tests {
 			model.get_borrow_rate(Ratio::saturating_from_rational(80, 100)).unwrap(),
 			Rate::from_inner(154217728000000000)
 		);
+	}
+
+
+
+	#[test]
+	fn proptest_jump_model(){
+		let mut runner = TestRunner::default();
+		let result = runner.run(&(5..=10, 10..=15, 15..=20, 0..=100, 0..=u64::MAX, 0..=u64::MAX), |(base_percentages, jump_percentages, full_percentages, target_utilization_percentage, cash, borrows)| {
+			let base_rate = Rate::saturating_from_rational(base_percentages, 100);
+			let jump_rate = Rate::saturating_from_rational(jump_percentages, 100);
+			let full_rate = Rate::saturating_from_rational(full_percentages, 100);
+			let jump_utilization = Ratio::saturating_from_rational(target_utilization_percentage, 100);
+			let jump_model = JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization);
+			assert!(jump_model.check_model());
+
+			let util = calc_utilization_ratio(FixedU128::checked_from_integer(cash as u128).unwrap(), FixedU128::checked_from_integer(borrows as u128).unwrap()).unwrap();
+			let borrow_rate = jump_model.get_borrow_rate(util).unwrap();
+
+			Ok(())
+		}).unwrap();
 	}
 }
