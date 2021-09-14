@@ -80,6 +80,7 @@ impl SafeArithmetic for LiftedFixedBalance {
 
 pub const SECONDS_PER_YEAR: Timestamp = 365 * 24 * 60 * 60;
 
+/// utilization_ratio = total_borrows / (total_cash + total_borrows)
 pub fn calc_utilization_ratio(
 	cash: LiftedFixedBalance,
 	borrows: LiftedFixedBalance,

@@ -22,8 +22,6 @@
 	unused_extern_crates
 )]
 
-mod math;
-
 pub use pallet::*;
 
 #[cfg(test)]
@@ -66,7 +64,7 @@ pub mod pallet {
 	};
 	use sp_std::fmt::Debug;
 
-	use composable_traits::rate_model::{SafeArithmetic, LiftedFixedBalance};
+	use composable_traits::rate_model::{LiftedFixedBalance, SafeArithmetic};
 
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode)]
 	#[repr(transparent)]
@@ -116,13 +114,15 @@ pub mod pallet {
 			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
 			  // bit
 
-		// actually there are 2 types of currencies:
-		// 1. vault owned - can transfer, cannot mint
-		// 2. market owned - debt token can be minted
+		// vault owned - can transfer, cannot mint
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			+ InspectHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+
+		// market owned - debt token can be minted
+		type MarketCurrency: Transfer<Self::AccountId, Balance = u128, AssetId = Self::AssetId>
+			+ Mutate<Self::AccountId, Balance = u128, AssetId = Self::AssetId>
+			+ MutateHold<Self::AccountId, Balance = u128, AssetId = Self::AssetId>
+			+ InspectHold<Self::AccountId, Balance = u128, AssetId = Self::AssetId>;
 
 		type UnixTime: UnixTime;
 	}
@@ -293,13 +293,12 @@ pub mod pallet {
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	#[pallet::genesis_config]
-	pub struct GenesisConfig {
-	}
+	pub struct GenesisConfig {}
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self  {}
+			Self {}
 		}
 	}
 
@@ -332,6 +331,15 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		pub fn total_interest_accurate(
+			market_id: &<Self as Lending>::MarketId,
+		) -> Result<u128, DispatchError> {
+			let debt_asset_id = DebtMarkets::<T>::get(market_id);
+			let total_interest =
+				T::MarketCurrency::balance(debt_asset_id, &Self::account_id(market_id));
+			Ok(total_interest)
+		}
+
 		pub fn account_id(market_id: &<Self as Lending>::MarketId) -> <Self as Lending>::AccountId {
 			<Self as Lending>::account_id(market_id)
 		}
@@ -585,8 +593,12 @@ pub mod pallet {
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			T::Currency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
-			T::Currency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
+			let amount_to_borrow: u128 = amount_to_borrow.into();
+			let amount_to_borrow = amount_to_borrow
+				.checked_mul(LiftedFixedBalance::accuracy())
+				.expect("more detailed currency");
+			T::MarketCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
+			T::MarketCurrency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
 
 			// TODO: decide what todo do with reborrow  https://mlabs-corp.slack.com/archives/C02CRQ9KW04/p1631005365082200
 			DebtIndex::<T>::insert(market_id, debt_owner, market_index);
@@ -619,16 +631,20 @@ pub mod pallet {
 				);
 				let debt_asset_id = DebtMarkets::<T>::get(market_id);
 
-				let burn_amount = T::Currency::balance(debt_asset_id, beneficiary);
+				let burn_amount: u128 = T::Currency::balance(debt_asset_id, beneficiary).into();
+				let burn_amount = burn_amount
+					.checked_mul(LiftedFixedBalance::accuracy())
+					.expect("should work for 64 currency");
 
 				// TODO: fuzzing is must to uncover cases when sum != total
-				let market_debt_reduction = T::Currency::balance(debt_asset_id, &market_account)
-					.checked_sub(&burn_amount)
-					.expect("debt balance of market must be of parts of debts of borrowers");
-				T::Currency::burn_from(debt_asset_id, &market_account, market_debt_reduction).expect(
+				let market_debt_reduction =
+					T::MarketCurrency::balance(debt_asset_id, &market_account)
+						.checked_sub(burn_amount)
+						.expect("debt balance of market must be of parts of debts of borrowers");
+				T::MarketCurrency::burn_from(debt_asset_id, &market_account, market_debt_reduction).expect(
 					"debt balance of market must be of parts of debts of borrowers and can reduce it",
 				);
-				T::Currency::burn_from(debt_asset_id, beneficiary, burn_amount)
+				T::MarketCurrency::burn_from(debt_asset_id, beneficiary, burn_amount)
 					.expect("can always burn current balance");
 				T::Currency::transfer(borrow_id, from, &market_account, repay_amount, false)
 					.expect("must be able to transfer because of above checks");
@@ -646,13 +662,18 @@ pub mod pallet {
 
 		fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			let total_issued = T::Currency::total_issuance(debt_asset_id);
-			Ok(total_issued)
+			let accrued_debt =
+				T::MarketCurrency::balance(debt_asset_id, &Self::account_id(market_id));
+			let total_issued = T::MarketCurrency::total_issuance(debt_asset_id);
+			let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
+			Ok((total_borrows as u64).into())
 		}
 
 		fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			Ok(T::Currency::balance(debt_asset_id, &Self::account_id(market_id)))
+			let total_interest =
+				T::MarketCurrency::balance(debt_asset_id, &Self::account_id(market_id));
+			Ok(((total_interest / LiftedFixedBalance::accuracy()) as u64).into())
 		}
 
 		fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
@@ -672,40 +693,41 @@ pub mod pallet {
 			// so no need to loop over each account -> scales to millions of users
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let total_debt = Self::total_borrows(market_id)?;
-			let accrued_interest =
-				T::Currency::balance(debt_asset_id, &Self::account_id(market_id));
 
-			let total_borrows: FixedU128 = total_debt
-				.checked_sub(&accrued_interest)
-				.ok_or(ArithmeticError::Overflow)?
-				.into();
-			let accrued = total_borrows
-				.checked_mul(&delta_interest_rate)
-				.and_then(|x| x.checked_mul_int(1u64))
-				.ok_or(ArithmeticError::Overflow)?;
+			let accrued_debt =
+				T::MarketCurrency::balance(debt_asset_id, &Self::account_id(market_id));
+			let total_issued = T::MarketCurrency::total_issuance(debt_asset_id);
+			let total_borrows = total_issued - accrued_debt;
 
-			T::Currency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)?;
+			let accrued = LiftedFixedBalance::from_inner(total_borrows)
+				.safe_mul(&delta_interest_rate)?
+				.into_inner();
+
+			T::MarketCurrency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)?;
 			Ok(())
 		}
 
 		fn calc_utilization_ratio(
 			cash: &Self::Balance,
-			borrows: &Self::Balance
+			borrows: &Self::Balance,
 		) -> Result<Ratio, DispatchError> {
-
-			Ok(composable_traits::rate_model::calc_utilization_ratio((*cash).into(), (*borrows).into())?)
+			Ok(composable_traits::rate_model::calc_utilization_ratio(
+				(*cash).into(),
+				(*borrows).into(),
+			)?)
 		}
 
-		fn accrue_interest(market_id: &Self::MarketId, now : Timestamp) -> Result<(), DispatchError> {
+		fn accrue_interest(
+			market_id: &Self::MarketId,
+			now: Timestamp,
+		) -> Result<(), DispatchError> {
 			let total_borrows = Self::total_borrows(market_id)?;
 			let total_cash = Self::total_cash(market_id)?;
-			let utilization_ratio =
-				Self::calc_utilization_ratio(&total_cash, &total_borrows)?;
+			let utilization_ratio = Self::calc_utilization_ratio(&total_cash, &total_borrows)?;
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-			let delta_time = now
-				.checked_sub(Self::last_block_timestamp())
-				.ok_or(Error::<T>::Underflow)?;
+			let delta_time =
+				now.checked_sub(Self::last_block_timestamp()).ok_or(Error::<T>::Underflow)?;
 			let borrow_index =
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
@@ -721,6 +743,7 @@ pub mod pallet {
 				increment_borrow_rate(borrow_rate, delta_time).ok_or(Error::<T>::Overflow)?;
 
 			BorrowIndex::<T>::insert(market_id, borrow_index_new);
+
 			Self::update_borrows(market_id, delta_interest_rate)?;
 
 			Ok(())
@@ -737,12 +760,12 @@ pub mod pallet {
 
 			match account_debt {
 				Ok(account_interest_index) => {
-					let principal = T::Currency::balance_on_hold(debt_asset_id, account);
+					let principal = T::MarketCurrency::balance_on_hold(debt_asset_id, account);
 					let market_interest_index = BorrowIndex::<T>::try_get(market_id)
 						.map_err(|_| Error::<T>::BorrowIndexDoesNotExist)?;
 
 					let balance = borrow_from_principal::<T>(
-						principal,
+						((principal / LiftedFixedBalance::accuracy()) as u64).into(),
 						market_interest_index,
 						account_interest_index,
 					)?;

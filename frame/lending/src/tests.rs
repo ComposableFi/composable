@@ -128,6 +128,7 @@ fn test_borrow() {
 
 		assert_eq!(Lending::borrow_balance_current(&market, &ALICE), Ok(Some(0)));
 		let alice_limit = Lending::get_borrow_limit(&market, &ALICE).unwrap();
+		assert_eq!(alice_limit, 45000000);
 		assert_eq!(Lending::total_cash(&market), Ok(total_cash));
 		assert_ok!(Lending::borrow(&market, &ALICE, alice_limit / 4));
 		total_cash -= alice_limit / 4;
@@ -139,25 +140,12 @@ fn test_borrow() {
 		let base_rate = Rate::saturating_from_rational(2, 100);
 		let jump_rate = Rate::saturating_from_rational(10, 100);
 		let jump_utilization = Ratio::saturating_from_rational(80, 100);
-		for i in 1..100000 {
+		for i in 1..10000 {
 			process_block(i);
-			// utilizationRatio = totalBorrows / (totalCash + totalBorrows)
-			let util_ratio =
-				Ratio::saturating_from_rational(total_borrows, total_cash + total_borrows);
-
-			let delta_time = 6; // in seconds
-			let borrow_rate =
-				(jump_rate - base_rate) * util_ratio.into() / jump_utilization.into() + base_rate;
-			let interest_accumulated: u128 = borrow_rate
-				.saturating_mul_int(total_borrows)
-				.saturating_mul(delta_time)
-				.checked_div(SECONDS_PER_YEAR.into())
-				.unwrap();
-			//FIXME: interest_accumulated gets converted to 0 (FixedU128 -> u64)
-			//       for value which is less than 1
-			total_interest = interest_accumulated + total_interest;
-			assert_eq!(Lending::total_interest(&market), Ok(total_interest));
 		}
+
+		assert_eq!(Lending::total_interest_accurate(&market), Ok(695494434837690000000));
+		assert_eq!(Lending::total_interest(&market), Ok(695));
 	});
 }
 
