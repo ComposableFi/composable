@@ -820,8 +820,7 @@ construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
-
-		Currencies: currencies::{Pallet, Call, Storage, Event<T>} = 54, // WIP
+		Currencies: currencies::{Pallet, Call, Event<T>} = 54, // WIP
 	}
 );
 
