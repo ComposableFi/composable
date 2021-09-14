@@ -413,6 +413,15 @@ pub mod pallet {
 		) -> Result<<Self as Lending>::Balance, DispatchError> {
 			<Self as Lending>::total_interest(market_id)
 		}
+
+		pub fn repay_borrow(
+			market_id: &<Self as Lending>::MarketId,
+			from: &<Self as Lending>::AccountId,
+			beneficiary: &<Self as Lending>::AccountId,
+			repay_amount: Option<BorrowAmountOf<Self>>,
+		) -> Result<(), DispatchError> {
+			<Self as Lending>::repay_borrow(market_id, from, beneficiary, repay_amount)
+		}
 	}
 
 	impl<T: Config> Lending for Pallet<T> {
@@ -632,17 +641,15 @@ pub mod pallet {
 				let burn_amount = burn_amount
 					.checked_mul(LiftedFixedBalance::accuracy())
 					.expect("should work for 64 currency");
-
 				// TODO: fuzzing is must to uncover cases when sum != total
-				let market_debt_reduction =
-					T::MarketDebtCurrency::balance(debt_asset_id, &market_account)
-						.checked_sub(burn_amount)
-						.expect("debt balance of market must be of parts of debts of borrowers");
+				let market_debt_reduction = T::MarketDebtCurrency::balance(debt_asset_id, &market_account);
 				T::MarketDebtCurrency::burn_from(debt_asset_id, &market_account, market_debt_reduction).expect(
 					"debt balance of market must be of parts of debts of borrowers and can reduce it",
 				);
+				T::MarketDebtCurrency::release(debt_asset_id, beneficiary, burn_amount, true)
+					.expect("can always release held debt balance");
 				T::MarketDebtCurrency::burn_from(debt_asset_id, beneficiary, burn_amount)
-					.expect("can always burn current balance");
+					.expect("can always burn debt balance");
 				T::Currency::transfer(borrow_id, from, &market_account, repay_amount, false)
 					.expect("must be able to transfer because of above checks");
 
