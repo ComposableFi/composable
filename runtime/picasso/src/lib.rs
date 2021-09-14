@@ -219,7 +219,14 @@ parameter_types! {
 	pub const MaxLocks: u32 = 50;
 }
 
-impl balances::Config for Runtime {
+// multipurpose currency orlm pallet 
+impl currencies::Config for Runtime {
+
+// Todo
+}
+
+
+impl balances::Config for Runtime { // Remove and Replaced by currency frame
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
@@ -776,7 +783,7 @@ construct_runtime!(
 		RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage} = 3,
 		TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
 		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
-		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
+		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6, // Remove/Replace me
 
 		// Parachains stuff
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
@@ -803,9 +810,12 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
 		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 50,
+
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
+
+		Currencies: currencies::{Pallet, Call, Storage, Event<T>} = 54, // WIP
 	}
 );
 

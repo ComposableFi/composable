@@ -44,6 +44,7 @@ transaction-payment = { package = "pallet-transaction-payment", git = "https://g
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
+currencies = { git = "https://github.com/open-web3-stack/open-runtime-module-library", package = "orml-currencies", default-features = false, rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
 runtime-common = { path = "../common", default-features = false }
