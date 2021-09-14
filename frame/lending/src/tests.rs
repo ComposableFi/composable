@@ -1,5 +1,4 @@
 use crate::{
-	math::LiftedFixedBalance,
 	mocks::{
 		new_test_ext, process_block, AccountId, Balance, Lending, MockCurrencyId, Origin, Tokens,
 		Vault, VaultId, ALICE, BOB, CHARLIE,
@@ -76,18 +75,18 @@ fn create_simple_market() -> (MarketIndex, BorrowAssetVault) {
 fn test_calc_utilization_ratio() {
 	// 50% borrow
 	assert_eq!(
-		Lending::calc_utilization_ratio(&1, &1, &0).unwrap(),
+		Lending::calc_utilization_ratio(&1, &1).unwrap(),
 		Ratio::saturating_from_rational(50, 100)
 	);
 	assert_eq!(
-		Lending::calc_utilization_ratio(&100, &100, &0).unwrap(),
+		Lending::calc_utilization_ratio(&100, &100).unwrap(),
 		Ratio::saturating_from_rational(50, 100)
 	);
 	// no borrow
-	assert_eq!(Lending::calc_utilization_ratio(&1, &0, &0).unwrap(), Ratio::zero());
+	assert_eq!(Lending::calc_utilization_ratio(&1, &0).unwrap(), Ratio::zero());
 	// full borrow
 	assert_eq!(
-		Lending::calc_utilization_ratio(&0, &1, &0).unwrap(),
+		Lending::calc_utilization_ratio(&0, &1).unwrap(),
 		Ratio::saturating_from_rational(100, 100)
 	);
 }

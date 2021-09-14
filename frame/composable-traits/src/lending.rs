@@ -117,8 +117,6 @@ pub trait Lending {
 
 	fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
-	fn total_reserves(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
-
 	/// new_debt = (delta_interest_rate * interest_rate) + debt
 	///`delta_interest_rate` - rate for passed time since previous update
 	fn update_borrows(
@@ -131,7 +129,6 @@ pub trait Lending {
 	fn calc_utilization_ratio(
 		cash: &Self::Balance,
 		borrows: &Self::Balance,
-		reserves: &Self::Balance,
 	) -> Result<Ratio, DispatchError>;
 
 	/// Simply - how much account owes.

@@ -45,20 +45,20 @@ pub type LiftedFixedBalance = FixedU128;
 /// little bit slower than maximizing performance by knowing constraints.
 /// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if you have positive number only, you cannot have underflow.
 /// Same for other constrains, like non zero divisor.
-pub trait ErrorArithmetic: Sized {
-	fn error_add(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
-	fn error_div(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
-	fn error_mul(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
-	fn error_sub(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
+pub trait SafeArithmetic: Sized {
+	fn safe_add(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
+	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
+	fn safe_mul(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
+	fn safe_sub(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
 }
 
-impl ErrorArithmetic for LiftedFixedBalance {
+impl SafeArithmetic for LiftedFixedBalance {
 	#[inline(always)]
-	fn error_add(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
+	fn safe_add(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
 		self.checked_add(rhs).ok_or(ArithmeticError::Overflow)
 	}
 	#[inline(always)]
-	fn error_div(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
+	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
 		if rhs.is_zero() {
 			return Err(ArithmeticError::DivisionByZero);
 		}
@@ -67,12 +67,12 @@ impl ErrorArithmetic for LiftedFixedBalance {
 	}
 
 	#[inline(always)]
-	fn error_mul(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
+	fn safe_mul(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
 		self.checked_mul(rhs).ok_or(ArithmeticError::Overflow)
 	}
 
 	#[inline(always)]
-	fn error_sub(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
+	fn safe_sub(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
 		self.checked_sub(rhs).ok_or(ArithmeticError::Underflow)
 	}
 }
@@ -80,7 +80,7 @@ impl ErrorArithmetic for LiftedFixedBalance {
 
 pub const SECONDS_PER_YEAR: Timestamp = 365 * 24 * 60 * 60;
 
-fn calc_utilization_ratio(
+pub fn calc_utilization_ratio(
 	cash: LiftedFixedBalance,
 	borrows: LiftedFixedBalance,
 ) -> Result<Ratio, ArithmeticError> {
@@ -88,7 +88,7 @@ fn calc_utilization_ratio(
 		return Ok(Ratio::zero());
 	}
 
-	let total= cash.error_add(&borrows)?;
+	let total= cash.safe_add(&borrows)?;
 	let util_ratio = borrows.checked_div(&total).expect("above checks prove it cannot error");
 	assert!(util_ratio <= Ratio::one(), "because dividing summand by sum");
 	Ok(util_ratio)

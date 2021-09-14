@@ -40,7 +40,7 @@ pub mod pallet {
 		currency::CurrencyFactory,
 		lending::{
 			BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput,
-			NormalizedCollateralFactor, Timestamp,
+			NormalizedCollateralFactor,
 		},
 		oracle::Oracle,
 		rate_model::*,
@@ -66,7 +66,7 @@ pub mod pallet {
 	};
 	use sp_std::fmt::Debug;
 
-	use crate::math::{ErrorArithmetic, LiftedFixedBalance};
+	use composable_traits::rate_model::{SafeArithmetic, LiftedFixedBalance};
 
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode)]
 	#[repr(transparent)]
@@ -213,21 +213,21 @@ pub mod pallet {
 
 		#[inline(always)]
 		pub fn collateral_over_borrow(&self) -> Result<LiftedFixedBalance, ArithmeticError> {
-			let collateral = self.collateral_balance.error_mul(&self.collateral_price)?;
+			let collateral = self.collateral_balance.safe_mul(&self.collateral_price)?;
 			let borrowed = self
 				.borrower_balance_with_interest
-				.error_mul(&self.borrow_price)?
-				.error_mul(&self.collateral_factor)?;
-			collateral.error_sub(&borrowed)
+				.safe_mul(&self.borrow_price)?
+				.safe_mul(&self.collateral_factor)?;
+			collateral.safe_sub(&borrowed)
 		}
 
 		#[inline(always)]
 		pub fn borrow_for_collateral(&self) -> Result<LiftedFixedBalance, ArithmeticError> {
 			let max_borrow = self
 				.collateral_balance
-				.error_mul(&self.collateral_price)?
-				.error_div(&self.collateral_factor)?;
-			let borrowed = self.borrower_balance_with_interest.error_mul(&self.borrow_price)?;
+				.safe_mul(&self.collateral_price)?
+				.safe_div(&self.collateral_factor)?;
+			let borrowed = self.borrower_balance_with_interest.safe_mul(&self.borrow_price)?;
 			Ok(max_borrow.saturating_sub(borrowed))
 		}
 	}
@@ -338,9 +338,8 @@ pub mod pallet {
 		pub fn calc_utilization_ratio(
 			cash: &<Self as Lending>::Balance,
 			borrows: &<Self as Lending>::Balance,
-			reserves: &<Self as Lending>::Balance,
 		) -> Result<Ratio, DispatchError> {
-			<Self as Lending>::calc_utilization_ratio(cash, borrows, reserves)
+			<Self as Lending>::calc_utilization_ratio(cash, borrows)
 		}
 		pub fn create(
 			borrow_asset: <Self as Lending>::AssetId,
@@ -402,12 +401,6 @@ pub mod pallet {
 			market_id: &<Self as Lending>::MarketId,
 		) -> Result<<Self as Lending>::Balance, DispatchError> {
 			<Self as Lending>::total_cash(market_id)
-		}
-
-		pub fn total_reserves(
-			market_id: &<Self as Lending>::MarketId,
-		) -> Result<<Self as Lending>::Balance, DispatchError> {
-			<Self as Lending>::total_reserves(market_id)
 		}
 
 		pub fn total_interest(
@@ -670,10 +663,6 @@ pub mod pallet {
 			Ok(T::Currency::balance(borrow_id, &T::Vault::account_id(&market.borrow)))
 		}
 
-		fn total_reserves(_market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
-			Ok(Self::Balance::zero())
-		}
-
 		fn update_borrows(
 			market_id: &Self::MarketId,
 			delta_interest_rate: Rate,
@@ -701,28 +690,17 @@ pub mod pallet {
 
 		fn calc_utilization_ratio(
 			cash: &Self::Balance,
-			borrows: &Self::Balance,
-			reserves: &Self::Balance,
+			borrows: &Self::Balance
 		) -> Result<Ratio, DispatchError> {
-			if borrows.is_zero() {
-				return Ok(Ratio::zero());
-			}
 
-			let total: u128 = cash
-				.checked_add(borrows)
-				.ok_or(Error::<T>::Overflow)?
-				.into();
-			let borrows: u128 = (*borrows).into();
-			let util_ratio = Ratio::saturating_from_rational(borrows, total);
-			Ok(util_ratio.clamp(0.into(), 1.into()))
+			Ok(composable_traits::rate_model::calc_utilization_ratio((*cash).into(), (*borrows).into())?)
 		}
 
 		fn accrue_interest(market_id: &Self::MarketId, now : Timestamp) -> Result<(), DispatchError> {
 			let total_borrows = Self::total_borrows(market_id)?;
 			let total_cash = Self::total_cash(market_id)?;
-			let total_reserves = Self::total_reserves(market_id)?;
 			let utilization_ratio =
-				Self::calc_utilization_ratio(&total_cash, &total_borrows, &total_reserves)?;
+				Self::calc_utilization_ratio(&total_cash, &total_borrows)?;
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let delta_time = now
