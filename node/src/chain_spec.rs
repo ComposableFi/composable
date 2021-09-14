@@ -51,19 +51,19 @@ where
 
 /// Picasso POC-1 (westend parachain)
 pub fn dali() -> picasso::ChainSpec {
-	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/dali-raw.json").to_vec())
+	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/dali.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 
 /// Picasso POC-1 (rococo parachain)
 pub fn dali_rococo() -> picasso::ChainSpec {
-	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/dali-rococo-raw.json").to_vec())
+	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/dali-rococo.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 
 /// Picasso (Kusama parachain)
 pub fn picasso() -> picasso::ChainSpec {
-	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/picasso-raw.json").to_vec())
+	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/picasso.json").to_vec())
 		.expect("Picasso chain spec not found!")
 }
 

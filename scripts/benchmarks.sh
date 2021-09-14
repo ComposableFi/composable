@@ -17,7 +17,8 @@ pallets=(
 	collective
 	democracy
 	collator_selection
-  liquid_crowdloan
+	liquid_crowdloan
+	utility
 )
 
 for p in ${pallets[@]}

@@ -10,3 +10,4 @@ pub mod timestamp;
 pub mod treasury;
 pub mod collator_selection;
 pub mod liquid_crowdloan;
+pub mod utility;

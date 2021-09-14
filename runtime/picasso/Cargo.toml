@@ -41,6 +41,7 @@ timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 democracy = { package = "pallet-democracy", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
+utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 
 # local modules
 liquid-crowdloan = { package = "pallet-liquid-crowdloan", path = '../../frame/liquid-crowdloan', default-features = false }
@@ -99,6 +100,7 @@ std = [
     "frame-support/std",
 	"executive/std",
     "frame-system/std",
+	"utility/std",
 	"authorship/std",
 	"balances/std",
 	"randomness-collective-flip/std",
@@ -151,4 +153,5 @@ runtime-benchmarks = [
 	"scheduler/runtime-benchmarks",
 	"collective/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
+	"utility/runtime-benchmarks",
 ]
