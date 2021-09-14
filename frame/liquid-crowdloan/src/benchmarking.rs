@@ -7,7 +7,7 @@ use crate::Pallet as LiquidCrowdloan;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	assert_ok,
-	traits::{Currency, EnsureOrigin},
+	traits::{Currency, EnsureOrigin, Get},
 };
 use frame_system::{EventRecord, RawOrigin};
 
@@ -32,8 +32,7 @@ benchmarks! {
 		);
 	}
 	verify {
-		let token_id = <LiquidCrowdloan<T>>::token_id();
-		assert_last_event::<T>(Event::Initiated(token_id.unwrap()).into());
+		assert_last_event::<T>(Event::Initiated(T::CurrencyId::get()).into());
 	}
 
 	make_claimable {
