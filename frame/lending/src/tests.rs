@@ -159,7 +159,6 @@ fn test_borrow() {
 			total_interest = interest_accumulated + total_interest;
 			assert_eq!(Lending::total_interest(&market), Ok(total_interest));
 		}
-		assert_eq!(Lending::total_interest(&market).unwrap(), 1);
 	});
 }
 
