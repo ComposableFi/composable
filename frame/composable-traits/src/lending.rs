@@ -15,9 +15,6 @@ pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
 
 pub type BorrowAmountOf<T> = <T as Lending>::Balance;
 
-/// seconds
-pub type Timestamp = u64;
-
 #[derive(Encode, Decode, Default)]
 pub struct MarketConfigInput<AccountId>
 where

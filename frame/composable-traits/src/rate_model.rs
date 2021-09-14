@@ -203,7 +203,7 @@ impl JumpModel {
 	/// Calculates the borrow interest rate of jump model
 	pub fn get_borrow_rate(&self, utilization: Ratio) -> Option<Rate> {
 		if utilization <= self.jump_utilization {
-			// utilization * (jump_rate - zero_rate) / jump_utilization + zero_rate
+			// utilization * (jump_rate - base_rate) / jump_utilization + base_rate
 			let result = self
 				.jump_rate
 				.checked_sub(&self.base_rate)?
