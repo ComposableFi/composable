@@ -25,6 +25,8 @@ num-traits = { version = "0.2.14", default-features = false }
 
 frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
 
+primitives = { path = "../../runtime/primitives", default-features = false }
+
 [dev-dependencies]
 proptest = { version = "0.9.6" }
 serde = { version = "1.0.119" }
@@ -37,6 +39,7 @@ default = ["std"]
 std = [
     "codec/std",
     "log/std",
+	"primitives/std",
     "frame-support/std",
     "frame-system/std",
     "sp-runtime/std",

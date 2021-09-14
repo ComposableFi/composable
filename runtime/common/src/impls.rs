@@ -77,6 +77,7 @@ mod tests {
 	};
 	use orml_traits::parameter_type_with_key;
 	use num_traits::Zero;
+	use primitives::currency::{CurrencyId, TokenSymbol};
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 	type Block = frame_system::mocking::MockBlock<Test>;
@@ -96,7 +97,6 @@ mod tests {
 		}
 	);
 
-	pub type MockCurrencyId = u128;
 	pub type Amount = i128;
 
 	parameter_types! {
@@ -187,7 +187,7 @@ mod tests {
 	}
 
 	parameter_type_with_key! {
-		pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
+		pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
 			Zero::zero()
 		};
 	}
@@ -196,7 +196,7 @@ mod tests {
 		type Event = Event;
 		type Balance = Balance;
 		type Amount = Amount;
-		type CurrencyId = MockCurrencyId;
+		type CurrencyId = CurrencyId;
 		type WeightInfo = ();
 		type ExistentialDeposits = ExistentialDeposits;
 		type OnDust = ();
@@ -207,7 +207,7 @@ mod tests {
 
 	parameter_types! {
 		pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
-		pub const CrowdloanCurrencyId: u128 = 128;
+		pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
 	}
 
 	ord_parameter_types! {
@@ -217,7 +217,6 @@ mod tests {
 		type Event = Event;
 		type LiquidRewardId = LiquidRewardId;
 		type CurrencyId = CrowdloanCurrencyId;
-		type CurrencyIdType = MockCurrencyId;
 		type JumpStart = EnsureRoot<AccountId>;
 		type Currency = Tokens;
 		type Balance = Balance;

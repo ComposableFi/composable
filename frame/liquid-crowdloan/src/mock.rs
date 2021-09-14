@@ -9,12 +9,12 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use primitives::currency::{CurrencyId, TokenSymbol};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 pub type Amount = i128;
 pub type Balance = u128;
-pub type MockCurrencyId = u128;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -62,7 +62,7 @@ impl system::Config for Test {
 }
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
+	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
 		Zero::zero()
 	};
 }
@@ -71,7 +71,7 @@ impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
-	type CurrencyId = MockCurrencyId;
+	type CurrencyId = CurrencyId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
@@ -101,14 +101,13 @@ parameter_types! {
 
 ord_parameter_types! {
 	pub const RootAccount: u128 = 2;
-	pub const CrowdloanCurrencyId: u128 = 128;
+	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
 }
 
 impl pallet_liquid_crowdloan::Config for Test {
 	type Event = Event;
 	type LiquidRewardId = LiquidRewardId;
 	type CurrencyId = CrowdloanCurrencyId;
-	type CurrencyIdType = MockCurrencyId;
 	type JumpStart = EnsureSignedBy<RootAccount, u128>;
 	type Currency = Tokens;
 	type Balance = Balance;

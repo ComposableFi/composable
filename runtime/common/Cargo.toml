@@ -1,5 +1,5 @@
 [package]
-name = "runtime-common"
+name = "common"
 version = "0.8.30"
 authors = ["Composable Developers <admin@composable.finance>"]
 edition = "2018"
@@ -27,8 +27,7 @@ collective = { package = "pallet-collective", git = "https://github.com/parityte
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 
 liquid-crowdloan = { package = "pallet-liquid-crowdloan", path = '../../frame/liquid-crowdloan', default-features = false }
-
-serde = { version = '1.0.119', features = ['derive'], optional = true }
+primitives = { path = "../primitives", default-features = false }
 
 [dev-dependencies]
 serde = { version = "1.0.119" }
@@ -40,9 +39,10 @@ num-traits = { version = "0.2.14", default-features = false }
 [features]
 default = ["std"]
 std = [
-	"serde",
 	"codec/std",
 	"sp-consensus-aura/std",
+	"sp-runtime/std",
+	"primitives/std",
 	"sp-std/std",
 	"sp-io/std",
 	"frame-support/std",

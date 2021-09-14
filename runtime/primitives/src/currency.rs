@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub enum CurrencyId {
 	Token(TokenSymbol),
-	LpToken(u8)
+	LpToken(u16)
 }
 
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]

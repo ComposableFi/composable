@@ -14,7 +14,7 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use codec::{Codec, FullCodec};
+	use codec::Codec;
 	use core::ops::{Div, Mul};
 	use frame_support::{
 		pallet_prelude::*,
@@ -32,7 +32,7 @@ pub mod pallet {
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
 		SaturatedConversion, Zero,
 	};
-	use sp_std::fmt::Debug;
+	use primitives::currency::CurrencyId;
 	pub use crate::weights::WeightInfo;
 
 	#[pallet::config]
@@ -45,18 +45,11 @@ pub mod pallet {
 		/// Origin that controls this pallet
 		type JumpStart: EnsureOrigin<Self::Origin>;
 		/// Currency Id for this pallet
-		type CurrencyId: Get<Self::CurrencyIdType>;
-		/// Currency Id type for this pallet
-		type CurrencyIdType: FullCodec
-			+ Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ Debug;
+		type CurrencyId: Get<CurrencyId>;
 		/// Multicurrency implementation
-		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyIdType>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyIdType>
-			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyIdType>;
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = CurrencyId>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = CurrencyId>
+			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = CurrencyId>;
 		/// Balance type
 		type Balance: Default
 			+ Parameter
@@ -88,10 +81,6 @@ pub mod pallet {
 	#[pallet::getter(fn is_claimable)]
 	pub type IsClaimable<T> = StorageValue<_, bool>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn token_id)]
-	pub type TokenId<T> = StorageValue<_, CurrencyIdOf<T>>;
-
 	#[pallet::event]
 	#[pallet::metadata(T::AccountId = "AccountId", CurrencyIdOf<T> = "CurrencyId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -120,10 +109,11 @@ pub mod pallet {
 			amount: T::Balance,
 		) -> DispatchResult {
 			T::JumpStart::ensure_origin(origin)?;
-			ensure!(!<TokenId<T>>::exists(), Error::<T>::AlreadyInitiated);
+			// at genesis this `None`, only when initiate is called will it be `Some`
+			ensure!(Self::is_claimable().is_none(), Error::<T>::AlreadyInitiated);
 			let lp_token_id = T::CurrencyId::get();
 			T::Currency::mint_into(lp_token_id, &manager, amount)?;
-			<TokenId<T>>::put(lp_token_id);
+			<IsClaimable<T>>::put(false);
 			Self::deposit_event(Event::Initiated(lp_token_id));
 			Ok(().into())
 		}
@@ -141,7 +131,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_claimable().unwrap_or(false), Error::<T>::NotClaimable);
 
-			let token_id = <TokenId<T>>::get().ok_or(Error::<T>::NotClaimable)?;
+			let token_id =  T::CurrencyId::get();
 			let token_supply = T::Currency::total_issuance(token_id);
 			let pot_balance = T::NativeCurrency::free_balance(&Self::account_id());
 			let token_supply_value: u128 = token_supply.saturated_into();

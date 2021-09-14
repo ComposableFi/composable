@@ -45,7 +45,9 @@ transaction-payment = { package = "pallet-transaction-payment", git = "https://g
 # local modules
 liquid-crowdloan = { package = "pallet-liquid-crowdloan", path = '../../frame/liquid-crowdloan', default-features = false }
 
-runtime-common = { path = "../common", default-features = false }
+common = { path = "../common", default-features = false }
+primitives = { path = "../primitives", default-features = false }
+
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
@@ -109,7 +111,8 @@ std = [
 	"treasury/std",
 	"democracy/std",
 	"scheduler/std",
-	"runtime-common/std",
+	"common/std",
+	"primitives/std",
 	"collective/std",
 	"transaction-payment/std",
 	"parachain-info/std",

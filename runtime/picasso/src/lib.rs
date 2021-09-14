@@ -7,13 +7,12 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
-pub use runtime_common as common;
-use runtime_common::{
+use common::{
 	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, CouncilInstance,
-	CurrencyId, TokenSymbol, Amount, EnsureRootOrHalfCouncil, Hash, Signature, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
-	AVERAGE_ON_INITIALIZE_RATIO,
+	Amount, EnsureRootOrHalfCouncil, Hash, Signature, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
+	MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION, AVERAGE_ON_INITIALIZE_RATIO,
 };
+use primitives::currency::{CurrencyId, TokenSymbol};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -569,7 +568,6 @@ impl liquid_crowdloan::Config for Runtime {
 	type Event = Event;
 	type LiquidRewardId = LiquidRewardId;
 	type CurrencyId = CrowdloanCurrencyId;
-	type CurrencyIdType = CurrencyId;
 	type JumpStart = EnsureRootOrHalfCouncil;
 	type Currency = Tokens;
 	type Balance = Balance;
