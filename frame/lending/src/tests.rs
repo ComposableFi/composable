@@ -1,9 +1,10 @@
 use crate::{
+	math::LiftedFixedBalance,
 	mocks::{
 		new_test_ext, process_block, AccountId, Balance, Lending, MockCurrencyId, Origin, Tokens,
 		Vault, VaultId, ALICE, BOB, CHARLIE,
 	},
-	MarketIndex,
+	BorrowerData, MarketIndex,
 };
 use composable_traits::{
 	lending::{MarketConfigInput, NormalizedCollateralFactor},
@@ -92,6 +93,13 @@ fn test_calc_utilization_ratio() {
 }
 
 #[test]
+fn test_borrow_math() {
+	let borrower = BorrowerData::new(100, 1, 0, 1, NormalizedCollateralFactor::from_float(1.0));
+	let borrow = borrower.borrow_for_collateral().unwrap();
+	assert_eq!(borrow, LiftedFixedBalance::from(100));
+}
+
+#[test]
 fn test_borrow() {
 	new_test_ext().execute_with(|| {
 		let amount = 900000;
@@ -100,9 +108,9 @@ fn test_borrow() {
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, amount));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount);
-
 		assert_ok!(Lending::deposit_collateral(&market, &ALICE, amount));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+
 		// Balance for BOB
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &BOB, amount));
@@ -132,7 +140,7 @@ fn test_borrow() {
 		let base_rate = Rate::saturating_from_rational(2, 100);
 		let jump_rate = Rate::saturating_from_rational(10, 100);
 		let jump_utilization = Ratio::saturating_from_rational(80, 100);
-		for i in 1..50 {
+		for i in 1..100000 {
 			process_block(i);
 			// utilizationRatio = totalBorrows / (totalCash + totalBorrows)
 			let util_ratio =
@@ -171,6 +179,13 @@ macro_rules! prop_assert_ok {
 
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(10000))]
+
+	#[test]
+	fn proptest_math_borrow(collateral_balance in 0..u32::MAX as Balance, collateral_price in 0..u32::MAX as Balance, borrower_balance_with_interest in 0..u32::MAX as Balance, borrow_price in 0..u32::MAX as Balance) {
+		let borrower = BorrowerData::new(collateral_balance, collateral_price, borrower_balance_with_interest, borrow_price, NormalizedCollateralFactor::from_float(1.0));
+		let borrow = borrower.borrow_for_collateral();
+		prop_assert_ok!(borrow);
+	}
 
 	#[test]
 	fn market_collateral_deposit_withdraw_identity(amount in 0..u32::MAX as Balance) {
