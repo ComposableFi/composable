@@ -17,7 +17,7 @@ use frame_support::{
 use proptest::prelude::*;
 use sp_runtime::{helpers_128bit::multiply_by_rational, Perquintill};
 
-/// Missing macro, equivalent to assert_ok!
+/// Missing macro, equivalent to `assert_ok!`!
 macro_rules! prop_assert_ok {
     ($cond:expr) => {
         prop_assert_ok!($cond, concat!("assertion failed: ", stringify!($cond)))

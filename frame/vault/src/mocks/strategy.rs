@@ -55,7 +55,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Mints new tokens and sends them to self, mocking the generating of revenue through DeFi
+		/// Mints new tokens and sends them to self, mocking the generating of revenue through DeFi.
 		#[pallet::weight(10_000)]
 		pub fn generate_revenue(
 			origin: OriginFor<T>,
@@ -80,7 +80,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Queries the vault for the current rebalance strategy and executes it.
+		/// Queries the vault for the current re-balance strategy and executes it.
 		#[pallet::weight(10_000)]
 		pub fn rebalance(origin: OriginFor<T>, vault: VaultIdOf<T>) -> DispatchResultWithPostInfo {
 			let _ = ensure_root(origin)?;

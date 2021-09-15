@@ -175,7 +175,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Emitted after a vault has been succesfully created.
+		/// Emitted after a vault has been successfully created.
 		VaultCreated(VaultIndex, VaultInfo<T>),
 		// Deposited(Value, LpShareMinted)
 		Deposited(T::AccountId, T::Balance, T::Balance),
