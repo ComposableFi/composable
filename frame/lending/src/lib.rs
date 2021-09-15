@@ -36,10 +36,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
-		lending::{
-			BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput,
-			NormalizedCollateralFactor,
-		},
+		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
 		oracle::Oracle,
 		rate_model::*,
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
@@ -50,7 +47,7 @@ pub mod pallet {
 		traits::{
 			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
 			tokens::DepositConsequence,
-			GenesisBuild, Len, ReservableCurrency, UnixTime,
+			GenesisBuild, UnixTime,
 		},
 		PalletId,
 	};
@@ -60,7 +57,7 @@ pub mod pallet {
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
 		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Perquintill,
+		ArithmeticError, FixedPointNumber, FixedPointOperand, Perquintill,
 	};
 	use sp_std::fmt::Debug;
 
@@ -114,12 +111,12 @@ pub mod pallet {
 			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
 			  // bit
 
-		// vault owned - can transfer, cannot mint
+		/// vault owned - can transfer, cannot mint
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
 
-		// market owned - debt token can be minted
-		type MarketCurrency: Transfer<Self::AccountId, Balance = u128, AssetId = Self::AssetId>
+		/// market owned - debt token can be minted
+		type MarketDebtCurrency: Transfer<Self::AccountId, Balance = u128, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = u128, AssetId = Self::AssetId>
 			+ MutateHold<Self::AccountId, Balance = u128, AssetId = Self::AssetId>
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = Self::AssetId>;
@@ -336,7 +333,7 @@ pub mod pallet {
 		) -> Result<u128, DispatchError> {
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let total_interest =
-				T::MarketCurrency::balance(debt_asset_id, &Self::account_id(market_id));
+				T::MarketDebtCurrency::balance(debt_asset_id, &Self::account_id(market_id));
 			Ok(total_interest)
 		}
 
@@ -597,8 +594,8 @@ pub mod pallet {
 			let amount_to_borrow = amount_to_borrow
 				.checked_mul(LiftedFixedBalance::accuracy())
 				.expect("more detailed currency");
-			T::MarketCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
-			T::MarketCurrency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
+			T::MarketDebtCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
+			T::MarketDebtCurrency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
 
 			// TODO: decide what todo do with reborrow  https://mlabs-corp.slack.com/archives/C02CRQ9KW04/p1631005365082200
 			DebtIndex::<T>::insert(market_id, debt_owner, market_index);
@@ -638,13 +635,13 @@ pub mod pallet {
 
 				// TODO: fuzzing is must to uncover cases when sum != total
 				let market_debt_reduction =
-					T::MarketCurrency::balance(debt_asset_id, &market_account)
+					T::MarketDebtCurrency::balance(debt_asset_id, &market_account)
 						.checked_sub(burn_amount)
 						.expect("debt balance of market must be of parts of debts of borrowers");
-				T::MarketCurrency::burn_from(debt_asset_id, &market_account, market_debt_reduction).expect(
+				T::MarketDebtCurrency::burn_from(debt_asset_id, &market_account, market_debt_reduction).expect(
 					"debt balance of market must be of parts of debts of borrowers and can reduce it",
 				);
-				T::MarketCurrency::burn_from(debt_asset_id, beneficiary, burn_amount)
+				T::MarketDebtCurrency::burn_from(debt_asset_id, beneficiary, burn_amount)
 					.expect("can always burn current balance");
 				T::Currency::transfer(borrow_id, from, &market_account, repay_amount, false)
 					.expect("must be able to transfer because of above checks");
@@ -663,8 +660,8 @@ pub mod pallet {
 		fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let accrued_debt =
-				T::MarketCurrency::balance(debt_asset_id, &Self::account_id(market_id));
-			let total_issued = T::MarketCurrency::total_issuance(debt_asset_id);
+				T::MarketDebtCurrency::balance(debt_asset_id, &Self::account_id(market_id));
+			let total_issued = T::MarketDebtCurrency::total_issuance(debt_asset_id);
 			let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
 			Ok((total_borrows as u64).into())
 		}
@@ -672,7 +669,7 @@ pub mod pallet {
 		fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let total_interest =
-				T::MarketCurrency::balance(debt_asset_id, &Self::account_id(market_id));
+				T::MarketDebtCurrency::balance(debt_asset_id, &Self::account_id(market_id));
 			Ok(((total_interest / LiftedFixedBalance::accuracy()) as u64).into())
 		}
 
@@ -692,18 +689,17 @@ pub mod pallet {
 			// when user pays loan back, we reduce marked accrued debt
 			// so no need to loop over each account -> scales to millions of users
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			let total_debt = Self::total_borrows(market_id)?;
 
 			let accrued_debt =
-				T::MarketCurrency::balance(debt_asset_id, &Self::account_id(market_id));
-			let total_issued = T::MarketCurrency::total_issuance(debt_asset_id);
+				T::MarketDebtCurrency::balance(debt_asset_id, &Self::account_id(market_id));
+			let total_issued = T::MarketDebtCurrency::total_issuance(debt_asset_id);
 			let total_borrows = total_issued - accrued_debt;
 
 			let accrued = LiftedFixedBalance::from_inner(total_borrows)
 				.safe_mul(&delta_interest_rate)?
 				.into_inner();
 
-			T::MarketCurrency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)?;
+			T::MarketDebtCurrency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)?;
 			Ok(())
 		}
 
@@ -760,7 +756,7 @@ pub mod pallet {
 
 			match account_debt {
 				Ok(account_interest_index) => {
-					let principal = T::MarketCurrency::balance_on_hold(debt_asset_id, account);
+					let principal = T::MarketDebtCurrency::balance_on_hold(debt_asset_id, account);
 					let market_interest_index = BorrowIndex::<T>::try_get(market_id)
 						.map_err(|_| Error::<T>::BorrowIndexDoesNotExist)?;
 

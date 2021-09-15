@@ -222,7 +222,7 @@ impl pallet_lending::Config for Test {
 	type Currency = Tokens;
 	type UnixTime = Timestamp;
 	type CurrencyFactory = Factory;
-	type MarketCurrency = Tokens;
+	type MarketDebtCurrency = Tokens;
 }
 
 // Build genesis storage according to the mock runtime.

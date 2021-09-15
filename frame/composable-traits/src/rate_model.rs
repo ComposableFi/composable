@@ -16,18 +16,21 @@ use codec::{Decode, Encode};
 
 use sp_runtime::{
 	traits::{
-		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One, CheckedDiv,
+		CheckedAdd, CheckedMul, CheckedSub, One, CheckedDiv,
 		Saturating, Zero,
 	},
-	ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Perquintill, RuntimeDebug,
+	ArithmeticError, FixedPointNumber, FixedU128, RuntimeDebug,
 };
 
 
-
-/// The fixed point number
+/// The fixed point number from 0..to max.
+/// Unlike `Ratio` it can be more than 1.
+/// And unlike `NormalizedCollateralFactor`, it can be less than one.
 pub type Rate = FixedU128;
 
-//pub fn percentage(numerator ) ->
+/// The fixed point number of suggested by substrate precision
+/// Must be (1.0.. because applied only to price normalized values
+pub type NormalizedCollateralFactor = FixedU128;
 
 /// Must be [0..1]
 /// TODO: implement Ratio as wrapper over FixedU128
@@ -35,6 +38,9 @@ pub type Ratio = FixedU128;
 
 /// seconds
 pub type Timestamp = u64;
+
+/// seconds
+pub type Duration = u64;
 
 /// Number like of higher bits, so that amount and balance calculations are done it it with higher
 /// precision via fixed point.
@@ -258,21 +264,21 @@ impl CurveModel {
 	}
 }
 
-pub fn accrued_interest(borrow_rate: Rate, amount: u128, delta_time: Timestamp) -> Option<u128> {
+pub fn accrued_interest(borrow_rate: Rate, amount: u128, delta_time: Duration) -> Option<u128> {
 	borrow_rate
 		.checked_mul_int(amount)?
 		.checked_mul(delta_time.into())?
 		.checked_div(SECONDS_PER_YEAR.into())
 }
 
-pub fn increment_index(borrow_rate: Rate, index: Rate, delta_time: Timestamp) -> Option<Rate> {
+pub fn increment_index(borrow_rate: Rate, index: Rate, delta_time: Duration) -> Option<Rate> {
 	borrow_rate
 		.checked_mul(&index)?
 		.checked_mul(&FixedU128::saturating_from_integer(delta_time))?
 		.checked_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))
 }
 
-pub fn increment_borrow_rate(borrow_rate: Rate, delta_time: Timestamp) -> Option<Rate> {
+pub fn increment_borrow_rate(borrow_rate: Rate, delta_time: Duration) -> Option<Rate> {
 	borrow_rate
 		.checked_mul(&FixedU128::saturating_from_integer(delta_time))?
 		.checked_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))
