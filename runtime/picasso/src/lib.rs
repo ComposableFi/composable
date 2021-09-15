@@ -204,7 +204,7 @@ parameter_types! {
 }
 
 impl timestamp::Config for Runtime {
-	/// A timestamp: milliseconds since the unix epoch.
+	/// A timestamp: milliseconds since the Unix epoch.
 	type Moment = u64;
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
