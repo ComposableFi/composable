@@ -47,7 +47,7 @@ pub mod pallet {
 		traits::{
 			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
 			tokens::DepositConsequence,
-			GenesisBuild, UnixTime,
+			UnixTime,
 		},
 		PalletId, transactional,
 	};
@@ -60,7 +60,7 @@ use sp_runtime::{
 		},
 		ArithmeticError, FixedPointNumber, FixedPointOperand, Perquintill,
 	};
-	use sp_std::fmt::Debug;
+	use sp_std::{fmt::Debug, vec::Vec};
 
 	use composable_traits::rate_model::{LiftedFixedBalance, SafeArithmetic};
 
