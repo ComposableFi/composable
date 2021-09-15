@@ -4,8 +4,11 @@
 #![allow(clippy::unnecessary_cast)]
 
 use frame_support::weights::{constants::RocksDbWeight as DbWeight, Weight};
+use sp_std::marker::PhantomData;
 
-impl crate::WeightInfo for () {
+
+pub struct WeightInfo<T>(PhantomData<T>);
+impl<T: frame_system::Config> currencies::WeightInfo for WeightInfo<T> {
 	fn transfer_non_native_currency() -> Weight {
 		(172_011_000 as Weight)
 			.saturating_add(DbWeight::get().reads(5 as Weight))
