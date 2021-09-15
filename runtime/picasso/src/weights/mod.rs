@@ -10,3 +10,4 @@ pub mod scheduler;
 pub mod session;
 pub mod timestamp;
 pub mod treasury;
+pub mod currencies;
