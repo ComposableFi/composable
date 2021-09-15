@@ -13,21 +13,88 @@
 // limitations under the License.
 
 use codec::{Decode, Encode};
+
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero},
-	FixedPointNumber, FixedU128, RuntimeDebug,
+	ArithmeticError, FixedPointNumber, FixedU128, RuntimeDebug,
 };
 
-/// The fixed point number
+/// The fixed point number from 0..to max.
+/// Unlike `Ratio` it can be more than 1.
+/// And unlike `NormalizedCollateralFactor`, it can be less than one.
 pub type Rate = FixedU128;
 
-/// Must not be > 1.0
+/// The fixed point number of suggested by substrate precision
+/// Must be (1.0.. because applied only to price normalized values
+pub type NormalizedCollateralFactor = FixedU128;
+
+/// Must be [0..1]
 /// TODO: implement Ratio as wrapper over FixedU128
 pub type Ratio = FixedU128;
 
+/// seconds
 pub type Timestamp = u64;
 
+/// seconds
+pub type Duration = u64;
+
+/// Number like of higher bits, so that amount and balance calculations are done it it with higher
+/// precision via fixed point.
+/// While this is 128 bit, cannot support u128 because 18 bits are for of mantissa.
+/// Can support u128 it lifter to use FixedU256
+pub type LiftedFixedBalance = FixedU128;
+
+/// little bit slower than maximizing performance by knowing constraints.
+/// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if you have positive number only, you cannot have underflow.
+/// Same for other constrains, like non zero divisor.
+pub trait SafeArithmetic: Sized {
+	fn safe_add(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
+	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
+	fn safe_mul(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
+	fn safe_sub(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
+}
+
+impl SafeArithmetic for LiftedFixedBalance {
+	#[inline(always)]
+	fn safe_add(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
+		self.checked_add(rhs).ok_or(ArithmeticError::Overflow)
+	}
+	#[inline(always)]
+	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
+		if rhs.is_zero() {
+			return Err(ArithmeticError::DivisionByZero);
+		}
+
+		self.checked_div(rhs).ok_or(ArithmeticError::Overflow)
+	}
+
+	#[inline(always)]
+	fn safe_mul(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
+		self.checked_mul(rhs).ok_or(ArithmeticError::Overflow)
+	}
+
+	#[inline(always)]
+	fn safe_sub(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
+		self.checked_sub(rhs).ok_or(ArithmeticError::Underflow)
+	}
+}
+
 pub const SECONDS_PER_YEAR: Timestamp = 365 * 24 * 60 * 60;
+
+/// utilization_ratio = total_borrows / (total_cash + total_borrows)
+pub fn calc_utilization_ratio(
+	cash: LiftedFixedBalance,
+	borrows: LiftedFixedBalance,
+) -> Result<Ratio, ArithmeticError> {
+	if borrows.is_zero() {
+		return Ok(Ratio::zero());
+	}
+
+	let total = cash.safe_add(&borrows)?;
+	let util_ratio = borrows.checked_div(&total).expect("above checks prove it cannot error");
+	assert!(util_ratio <= Ratio::one(), "because dividing summand by sum");
+	Ok(util_ratio)
+}
 
 /// Parallel interest rate model
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
@@ -104,15 +171,15 @@ pub struct JumpModel {
 }
 
 impl JumpModel {
-	pub const MAX_BASE_RATE: Rate = Rate::from_inner(100_000_000_000_000_000); // 10%
-	pub const MAX_JUMP_RATE: Rate = Rate::from_inner(300_000_000_000_000_000); // 30%
-	pub const MAX_FULL_RATE: Rate = Rate::from_inner(500_000_000_000_000_000); // 50%
+	pub const MAX_BASE_RATE: Ratio = Ratio::from_inner(100_000_000_000_000_000); // 10%
+	pub const MAX_JUMP_RATE: Ratio = Ratio::from_inner(300_000_000_000_000_000); // 30%
+	pub const MAX_FULL_RATE: Ratio = Ratio::from_inner(500_000_000_000_000_000); // 50%
 
 	/// Create a new rate model
 	pub fn new_model(
-		base_rate: Rate,
-		jump_rate: Rate,
-		full_rate: Rate,
+		base_rate: Ratio,
+		jump_rate: Ratio,
+		full_rate: Ratio,
 		jump_utilization: Ratio,
 	) -> JumpModel {
 		if jump_utilization > Ratio::one() {
@@ -124,14 +191,14 @@ impl JumpModel {
 
 	/// Check the jump model for sanity
 	pub fn check_model(&self) -> bool {
-		if self.base_rate > Self::MAX_BASE_RATE ||
-			self.jump_rate > Self::MAX_JUMP_RATE ||
-			self.full_rate > Self::MAX_FULL_RATE
+		if self.base_rate > Self::MAX_BASE_RATE
+			|| self.jump_rate > Self::MAX_JUMP_RATE
+			|| self.full_rate > Self::MAX_FULL_RATE
 		{
-			return false
+			return false;
 		}
 		if self.base_rate > self.jump_rate || self.jump_rate > self.full_rate {
-			return false
+			return false;
 		}
 
 		true
@@ -140,7 +207,7 @@ impl JumpModel {
 	/// Calculates the borrow interest rate of jump model
 	pub fn get_borrow_rate(&self, utilization: Ratio) -> Option<Rate> {
 		if utilization <= self.jump_utilization {
-			// utilization * (jump_rate - zero_rate) / jump_utilization + zero_rate
+			// utilization * (jump_rate - base_rate) / jump_utilization + base_rate
 			let result = self
 				.jump_rate
 				.checked_sub(&self.base_rate)?
@@ -192,21 +259,21 @@ impl CurveModel {
 	}
 }
 
-pub fn accrued_interest(borrow_rate: Rate, amount: u128, delta_time: Timestamp) -> Option<u128> {
+pub fn accrued_interest(borrow_rate: Rate, amount: u128, delta_time: Duration) -> Option<u128> {
 	borrow_rate
 		.checked_mul_int(amount)?
 		.checked_mul(delta_time.into())?
 		.checked_div(SECONDS_PER_YEAR.into())
 }
 
-pub fn increment_index(borrow_rate: Rate, index: Rate, delta_time: Timestamp) -> Option<Rate> {
+pub fn increment_index(borrow_rate: Rate, index: Rate, delta_time: Duration) -> Option<Rate> {
 	borrow_rate
 		.checked_mul(&index)?
 		.checked_mul(&FixedU128::saturating_from_integer(delta_time))?
 		.checked_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))
 }
 
-pub fn increment_borrow_rate(borrow_rate: Rate, delta_time: Timestamp) -> Option<Rate> {
+pub fn increment_borrow_rate(borrow_rate: Rate, delta_time: Duration) -> Option<Rate> {
 	borrow_rate
 		.checked_mul(&FixedU128::saturating_from_integer(delta_time))?
 		.checked_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))
@@ -215,6 +282,7 @@ pub fn increment_borrow_rate(borrow_rate: Rate, delta_time: Timestamp) -> Option
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use proptest::{prop_assert, strategy::Strategy, test_runner::TestRunner};
 	use sp_runtime::FixedU128;
 
 	// Test jump model
@@ -265,9 +333,9 @@ mod tests {
 		let excess_util = util.saturating_sub(jump_utilization);
 		assert_eq!(
 			borrow_rate,
-			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into()) /
-				FixedU128::saturating_from_rational(20, 100) +
-				normal_rate,
+			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into())
+				/ FixedU128::saturating_from_rational(20, 100)
+				+ normal_rate,
 		);
 	}
 
@@ -294,5 +362,67 @@ mod tests {
 			model.get_borrow_rate(Ratio::saturating_from_rational(80, 100)).unwrap(),
 			Rate::from_inner(154217728000000000)
 		);
+	}
+
+	#[derive(Debug, Clone)]
+	struct JumpModelStrategy {
+		pub base_rate: Ratio,
+		pub jump_percentages: Ratio,
+		pub full_percentages: Ratio,
+		pub target_utilization_percentage: Ratio,
+	}
+
+	fn valid_jump_model() -> impl Strategy<Value = JumpModelStrategy> {
+		(
+			(1..=10u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
+			(11..=30u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
+			(31..=50).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
+			(0..=100).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
+		)
+			.prop_filter("Jump rate model", |(base, jump, full, _)| {
+				// tried high order strategy - failed as it tries to combine collections with not collection
+				// alternative to define arbitrary and proptest attributes with filtering
+				// overall cardinality is small, so should work well
+				// here we have one liner, not sure why in code we have many lines....
+				base <= jump
+					&& jump <= full && base <= &JumpModel::MAX_BASE_RATE
+					&& jump <= &JumpModel::MAX_JUMP_RATE
+					&& full <= &JumpModel::MAX_FULL_RATE
+			})
+			.prop_map(
+				|(base_rate, jump_percentages, full_percentages, target_utilization_percentage)| {
+					JumpModelStrategy {
+						base_rate,
+						full_percentages,
+						jump_percentages,
+						target_utilization_percentage,
+					}
+				},
+			)
+	}
+
+	#[test]
+	fn proptest_jump_model() {
+		let mut runner = TestRunner::default();
+		runner
+			.run(&(valid_jump_model(), 0..=u64::MAX, 0..=u64::MAX), |(strategy, cash, borrows)| {
+				let base_rate = strategy.base_rate;
+				let jump_rate = strategy.jump_percentages;
+				let full_rate = strategy.full_percentages;
+				let jump_utilization = strategy.target_utilization_percentage;
+				let jump_model =
+					JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization);
+				assert!(jump_model.check_model());
+
+				let util = calc_utilization_ratio(
+					FixedU128::checked_from_integer(cash as u128).unwrap(),
+					FixedU128::checked_from_integer(borrows as u128).unwrap(),
+				)
+				.unwrap();
+				let borrow_rate = jump_model.get_borrow_rate(util).unwrap();
+				prop_assert!(borrow_rate > Rate::zero());
+				Ok(())
+			})
+			.unwrap();
 	}
 }

@@ -1205,6 +1205,7 @@ version = "0.0.1"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
+ "proptest",
  "serde",
  "sp-runtime",
 ]

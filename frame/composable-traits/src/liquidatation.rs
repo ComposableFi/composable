@@ -11,22 +11,22 @@ pub trait Liquidation {
 	type Error;
 	type Balance;
 
-	fn update_config(config: &LiquidationConfig) {
+	fn update_config(_config: &LiquidationConfig) {
 		todo!()
 	}
 
-	fn liquidate(pair: Self::PairId, borrower: &Self::AccountId) -> Result<(), Self::Error> {
+	fn liquidate(_pair: Self::PairId, _borrower: &Self::AccountId) -> Result<(), Self::Error> {
 		todo!()
 	}
 
 	fn calculate_liquidation_fee(
-		amount: Self::Balance,
-		config: &LiquidationConfig,
+		_amount: Self::Balance,
+		_config: &LiquidationConfig,
 	) -> Self::Balance {
 		todo!()
 	}
 
-	fn get_liquidation_risk(pair: Self::PairId) -> Self::Balance {
+	fn get_liquidation_risk(_pair: Self::PairId) -> Self::Balance {
 		todo!()
 	}
 }

@@ -1,3 +1,6 @@
+//! An example pallet showing how a `strategy` could be implemented as a secondary pallet. The
+//! extrinsics show how to interact with the `vault` pallet.
+
 pub use pallet::*;
 
 #[frame_support::pallet]
@@ -12,35 +15,43 @@ pub mod pallet {
 	use frame_system::{ensure_root, pallet_prelude::OriginFor, Config as SystemConfig};
 	use sp_runtime::traits::AccountIdConversion;
 
-	pub const PALLET_ID: PalletId = PalletId(*b"mck_strt");
-
 	type BalanceOf<T> =
 		<<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::Balance;
-
-	type CurrencyIdFor<T> =
-		<<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
-
 	type VaultIdOf<T> = <<T as Config>::Vault as Vault>::VaultId;
 	type ReportOf<T> = <<T as Config>::Vault as ReportableStrategicVault>::Report;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		/// Emitted after the pallet reports it's current balance to the vault.
 		Reported(ReportOf<T>),
+		/// Emitted after the pallet mints new funds to mimic the generation of revenue.
 		RevenueGenerated(BalanceOf<T>),
+		/// Emitted after the pallet re-balances it's funds in accordance with the vault.
 		Rebalanced(FundsAvailability<BalanceOf<T>>, BalanceOf<T>),
 	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// Vault used to obtain funds from, report balances and return funds to.
 		type Vault: ReportableStrategicVault<
 			AccountId = Self::AccountId,
 			AssetId = <<Self as Config>::Currency as Inspect<Self::AccountId>>::AssetId,
 			Report = <<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance,
 			Balance = <<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance,
 		>;
+
+		/// Currency implementation used by the pallet. Should be the same pallet as used by the
+		/// vault.
 		type Currency: Transfer<Self::AccountId> + Mutate<Self::AccountId>;
+
+		/// The id used as the `AccountId` of the pallet. This should be unique across all pallets to
+		/// avoid name collisions with other strategies.
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 	}
 
 	#[pallet::pallet]
@@ -49,7 +60,7 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		fn account_id() -> T::AccountId {
-			PALLET_ID.into_account()
+			T::PalletId::get().into_account()
 		}
 	}
 

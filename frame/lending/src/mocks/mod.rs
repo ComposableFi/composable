@@ -1,7 +1,7 @@
 use crate as pallet_lending;
 use composable_traits::{currency::CurrencyFactory, oracle::Oracle as OracleTrait};
 use frame_support::{
-	ord_parameter_types, parameter_types,
+	parameter_types,
 	traits::{Contains, GenesisBuild, OnFinalize, OnInitialize},
 	PalletId,
 };
@@ -168,18 +168,22 @@ parameter_types! {
 	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::PICA;
 	pub const CreationDeposit: Balance = 10;
 	pub const RentPerBlock: Balance = 1;
+	pub const MinimumDeposit: Balance = 10_000;
+	pub const MinimumWithdrawal: Balance = 10_000;
+	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
 }
 
 impl pallet_vault::Config for Test {
 	type Event = Event;
 	type Currency = Tokens;
-	type CurrencyId = MockCurrencyId;
+	type AssetId = MockCurrencyId;
 	type Balance = Balance;
 	type MaxStrategies = MaxStrategies;
 	type CurrencyFactory = Factory;
 	type Convert = ConvertInto;
-	type StrategyReport = ();
-
+	type MinimumDeposit = MinimumDeposit;
+	type MinimumWithdrawal = MinimumWithdrawal;
+	type PalletId = VaultPalletId;
 	type CreationDeposit = CreationDeposit;
 	type ExistentialDeposit = ExistentialDeposit;
 	type RentPerBlock = RentPerBlock;
@@ -222,6 +226,7 @@ impl pallet_lending::Config for Test {
 	type Currency = Tokens;
 	type UnixTime = Timestamp;
 	type CurrencyFactory = Factory;
+	type MarketDebtCurrency = Tokens;
 }
 
 // Build genesis storage according to the mock runtime.
@@ -232,7 +237,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	pallet_balances::GenesisConfig::<Test> { balances }
 		.assimilate_storage(&mut storage)
 		.unwrap();
-	pallet_lending::GenesisConfig { }
+	pallet_lending::GenesisConfig {}
 		.assimilate_storage::<Test>(&mut storage)
 		.unwrap();
 
@@ -261,7 +266,7 @@ pub(crate) fn process_block(n: BlockNumber) {
 }
 
 fn next_block(n: u64) {
-    System::set_block_number(n);
-    Lending::on_initialize(n);
-    Timestamp::set_timestamp(MILLISECS_PER_BLOCK * n);
+	System::set_block_number(n);
+	Lending::on_initialize(n);
+	Timestamp::set_timestamp(MILLISECS_PER_BLOCK * n);
 }
