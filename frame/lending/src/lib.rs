@@ -237,6 +237,9 @@ use sp_runtime::{
 		/// Event emitted when collateral is deposited.
 		/// [sender, market_id, amount]
 		CollateralDeposited(T::AccountId, MarketIndex, T::Balance),
+		/// Event emitted when collateral is withdrawed.
+		/// [sender, market_id, amount]
+		CollateralWithdrawed(T::AccountId, MarketIndex, T::Balance),
 	}
 
 	/// Lending instances counter
@@ -355,6 +358,23 @@ use sp_runtime::{
 			Self::deposit_event(Event::<T>::CollateralDeposited(who, market, amount));
 			Ok(().into())
 		}
+
+		/// Withdraw collateral from market.
+		/// - `origin` : Sender of this extrinsic.
+		/// - `market` : Market index from which collateral will be withdraw.
+		/// - `amount` : Amount of collateral to be withdrawed.
+		#[pallet::weight(1000)]
+		#[transactional]
+		pub fn withdraw_collateral(
+			origin : OriginFor<T>,
+			market : MarketIndex,
+			amount : T::Balance,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			Self::withdraw_collateral_internal(&market, &who, amount)?;
+			Self::deposit_event(Event::<T>::CollateralWithdrawed(who, market, amount));
+			Ok(().into())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -396,7 +416,7 @@ use sp_runtime::{
 		) -> Result<<Self as Lending>::Balance, DispatchError> {
 			<Self as Lending>::collateral_of_account(market_id, account)
 		}
-		pub fn withdraw_collateral(
+		pub fn withdraw_collateral_internal(
 			market_id: &<Self as Lending>::MarketId,
 			account: &<Self as Lending>::AccountId,
 			amount: CollateralLpAmountOf<Self>,

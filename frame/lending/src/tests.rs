@@ -245,7 +245,7 @@ proptest! {
 
 			prop_assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
-			prop_assert_ok!(Lending::withdraw_collateral(&market, &ALICE, amount));
+			prop_assert_ok!(Lending::withdraw_collateral_internal(&market, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount);
 
 			Ok(())
@@ -263,7 +263,7 @@ proptest! {
 
 			prop_assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(collateral_asset, &ALICE), 0);
-			prop_assert_ok!(Lending::withdraw_collateral(&market, &ALICE, amount));
+			prop_assert_ok!(Lending::withdraw_collateral_internal(&market, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(collateral_asset, &ALICE), amount);
 
 			Ok(())

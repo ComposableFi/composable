@@ -758,6 +758,7 @@ impl lending::Config for Runtime {
 	type Oracle = Oracle;
 	type VaultId = u64;
 	type Vault = Vault;
+	type Event = Event;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Currency = Tokens;
@@ -821,6 +822,7 @@ construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
+		Lending: lending::{Pallet, Call, Storage, Event<T>} = 54,
 	}
 );
 
