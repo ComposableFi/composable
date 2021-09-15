@@ -1,10 +1,6 @@
-use crate::{rate_model::*, };
+use crate::rate_model::*;
 use codec::Codec;
-use frame_support::{
-	pallet_prelude::*,
-	sp_runtime::{Perquintill},
-	sp_std::{vec::Vec},
-};
+use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 
 pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
 
@@ -108,7 +104,7 @@ pub trait Lending {
 	/// Floored down to zero.
 	fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
-	fn accrue_interest(market_id: &Self::MarketId, now : Timestamp) -> Result<(), DispatchError>;
+	fn accrue_interest(market_id: &Self::MarketId, now: Timestamp) -> Result<(), DispatchError>;
 
 	fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 

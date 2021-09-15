@@ -15,13 +15,9 @@
 use codec::{Decode, Encode};
 
 use sp_runtime::{
-	traits::{
-		CheckedAdd, CheckedMul, CheckedSub, One, CheckedDiv,
-		Saturating, Zero,
-	},
+	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero},
 	ArithmeticError, FixedPointNumber, FixedU128, RuntimeDebug,
 };
-
 
 /// The fixed point number from 0..to max.
 /// Unlike `Ratio` it can be more than 1.
@@ -83,7 +79,6 @@ impl SafeArithmetic for LiftedFixedBalance {
 	}
 }
 
-
 pub const SECONDS_PER_YEAR: Timestamp = 365 * 24 * 60 * 60;
 
 /// utilization_ratio = total_borrows / (total_cash + total_borrows)
@@ -95,7 +90,7 @@ pub fn calc_utilization_ratio(
 		return Ok(Ratio::zero());
 	}
 
-	let total= cash.safe_add(&borrows)?;
+	let total = cash.safe_add(&borrows)?;
 	let util_ratio = borrows.checked_div(&total).expect("above checks prove it cannot error");
 	assert!(util_ratio <= Ratio::one(), "because dividing summand by sum");
 	Ok(util_ratio)
@@ -196,14 +191,14 @@ impl JumpModel {
 
 	/// Check the jump model for sanity
 	pub fn check_model(&self) -> bool {
-		if self.base_rate > Self::MAX_BASE_RATE ||
-			self.jump_rate > Self::MAX_JUMP_RATE ||
-			self.full_rate > Self::MAX_FULL_RATE
+		if self.base_rate > Self::MAX_BASE_RATE
+			|| self.jump_rate > Self::MAX_JUMP_RATE
+			|| self.full_rate > Self::MAX_FULL_RATE
 		{
-			return false
+			return false;
 		}
 		if self.base_rate > self.jump_rate || self.jump_rate > self.full_rate {
-			return false
+			return false;
 		}
 
 		true
@@ -287,8 +282,7 @@ pub fn increment_borrow_rate(borrow_rate: Rate, delta_time: Duration) -> Option<
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use std::convert::TryInto;
-	use proptest::{prelude::prop, strategy::{BoxedStrategy, Strategy}, test_runner::TestRunner};
+	use proptest::{prop_assert, strategy::Strategy, test_runner::TestRunner};
 	use sp_runtime::FixedU128;
 
 	// Test jump model
@@ -339,9 +333,9 @@ mod tests {
 		let excess_util = util.saturating_sub(jump_utilization);
 		assert_eq!(
 			borrow_rate,
-			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into()) /
-				FixedU128::saturating_from_rational(20, 100) +
-				normal_rate,
+			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into())
+				/ FixedU128::saturating_from_rational(20, 100)
+				+ normal_rate,
 		);
 	}
 
@@ -374,48 +368,61 @@ mod tests {
 	struct JumpModelStrategy {
 		pub base_rate: Ratio,
 		pub jump_percentages: Ratio,
-		pub full_percentages : Ratio,
+		pub full_percentages: Ratio,
 		pub target_utilization_percentage: Ratio,
 	}
 
 	fn valid_jump_model() -> impl Strategy<Value = JumpModelStrategy> {
 		(
-			(1..=10u32).prop_map(|x|Ratio::saturating_from_rational(x,100)),
-			(11..=30u32).prop_map(|x|Ratio::saturating_from_rational(x,100)),
-			(31..=50).prop_map(|x|Ratio::saturating_from_rational(x,100)),
-			(0..=100).prop_map(|x|Ratio::saturating_from_rational(x,100)),
+			(1..=10u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
+			(11..=30u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
+			(31..=50).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
+			(0..=100).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
 		)
-		.prop_filter("Jump rate model", |(base, jump, full, _)| {
-			// tried high order strategy - failed as it tries to combine collections with not collection
-			// alternative to define arbitrary and proptest attributes with filtering
-			// overall cardinality is small, so should work well
-			// here we have one liner, not sure why in code we have many lines....
-			base <= jump && jump <= full && base <= &JumpModel::MAX_BASE_RATE && jump <= &JumpModel::MAX_JUMP_RATE && full <= &JumpModel::MAX_FULL_RATE
-		})
-		.prop_map(|(base_rate, jump_percentages, full_percentages, target_utilization_percentage)|
-			 JumpModelStrategy {
-				base_rate,
-				full_percentages,
-				jump_percentages,
-				target_utilization_percentage,
-		})
+			.prop_filter("Jump rate model", |(base, jump, full, _)| {
+				// tried high order strategy - failed as it tries to combine collections with not collection
+				// alternative to define arbitrary and proptest attributes with filtering
+				// overall cardinality is small, so should work well
+				// here we have one liner, not sure why in code we have many lines....
+				base <= jump
+					&& jump <= full && base <= &JumpModel::MAX_BASE_RATE
+					&& jump <= &JumpModel::MAX_JUMP_RATE
+					&& full <= &JumpModel::MAX_FULL_RATE
+			})
+			.prop_map(
+				|(base_rate, jump_percentages, full_percentages, target_utilization_percentage)| {
+					JumpModelStrategy {
+						base_rate,
+						full_percentages,
+						jump_percentages,
+						target_utilization_percentage,
+					}
+				},
+			)
 	}
 
 	#[test]
-	fn proptest_jump_model(){
+	fn proptest_jump_model() {
 		let mut runner = TestRunner::default();
-		let result = runner.run(&(valid_jump_model(), 0..=u64::MAX, 0..=u64::MAX), |(strategy, cash, borrows)| {
-			let base_rate = strategy.base_rate;
-			let jump_rate = strategy.jump_percentages;
-			let full_rate = strategy.full_percentages;
-			let jump_utilization = strategy.target_utilization_percentage;
-			let jump_model = JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization);
-			assert!(jump_model.check_model());
+		runner
+			.run(&(valid_jump_model(), 0..=u64::MAX, 0..=u64::MAX), |(strategy, cash, borrows)| {
+				let base_rate = strategy.base_rate;
+				let jump_rate = strategy.jump_percentages;
+				let full_rate = strategy.full_percentages;
+				let jump_utilization = strategy.target_utilization_percentage;
+				let jump_model =
+					JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization);
+				assert!(jump_model.check_model());
 
-			let util = calc_utilization_ratio(FixedU128::checked_from_integer(cash as u128).unwrap(), FixedU128::checked_from_integer(borrows as u128).unwrap()).unwrap();
-			let borrow_rate = jump_model.get_borrow_rate(util).unwrap();
-
-			Ok(())
-		}).unwrap();
+				let util = calc_utilization_ratio(
+					FixedU128::checked_from_integer(cash as u128).unwrap(),
+					FixedU128::checked_from_integer(borrows as u128).unwrap(),
+				)
+				.unwrap();
+				let borrow_rate = jump_model.get_borrow_rate(util).unwrap();
+				prop_assert!(borrow_rate > Rate::zero());
+				Ok(())
+			})
+			.unwrap();
 	}
 }
