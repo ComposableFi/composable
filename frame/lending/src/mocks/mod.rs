@@ -168,18 +168,22 @@ parameter_types! {
 	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::PICA;
 	pub const CreationDeposit: Balance = 10;
 	pub const RentPerBlock: Balance = 1;
+	pub const MinimumDeposit: Balance = 10_000;
+	pub const MinimumWithdrawal: Balance = 10_000;
+	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
 }
 
 impl pallet_vault::Config for Test {
 	type Event = Event;
 	type Currency = Tokens;
-	type CurrencyId = MockCurrencyId;
+	type AssetId = MockCurrencyId;
 	type Balance = Balance;
 	type MaxStrategies = MaxStrategies;
 	type CurrencyFactory = Factory;
 	type Convert = ConvertInto;
-	type StrategyReport = ();
-
+	type MinimumDeposit = MinimumDeposit;
+	type MinimumWithdrawal = MinimumWithdrawal;
+	type PalletId = VaultPalletId;
 	type CreationDeposit = CreationDeposit;
 	type ExistentialDeposit = ExistentialDeposit;
 	type RentPerBlock = RentPerBlock;

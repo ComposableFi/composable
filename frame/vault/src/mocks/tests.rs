@@ -1,6 +1,6 @@
 use super::currency_factory::MockCurrencyId;
 use crate as pallet_vault;
-use frame_support::{construct_runtime, parameter_types, traits::GenesisBuild};
+use frame_support::{construct_runtime, parameter_types, traits::GenesisBuild, PalletId};
 use frame_system as system;
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
@@ -61,22 +61,27 @@ parameter_types! {
 	pub const CreationDeposit: Balance = 10;
 	pub const ExistentialDeposit: Balance = 1000;
 	pub const RentPerBlock: Balance = 1;
+	pub const TestPalletID: PalletId = PalletId(*b"test_pid");
+	pub const StrategyTestPalletID: PalletId = PalletId(*b"sest_pid");
+	pub const MinimumDeposit: Balance = 0;
+	pub const MinimumWithdrawal: Balance = 0;
 }
 
 impl pallet_vault::Config for Test {
 	type Event = Event;
 	type Currency = Tokens;
-	type CurrencyId = MockCurrencyId;
+	type AssetId = MockCurrencyId;
 	type Balance = Balance;
 	type MaxStrategies = MaxStrategies;
 	type CurrencyFactory = Factory;
 	type Convert = ConvertInto;
-	type StrategyReport = ();
-
+	type PalletId = TestPalletID;
 	type CreationDeposit = CreationDeposit;
 	type ExistentialDeposit = ExistentialDeposit;
 	type RentPerBlock = RentPerBlock;
 	type NativeAssetId = NativeAssetId;
+	type MinimumDeposit = MinimumDeposit;
+	type MinimumWithdrawal = MinimumWithdrawal;
 }
 
 parameter_type_with_key! {
@@ -105,6 +110,7 @@ impl crate::mocks::strategy::Config for Test {
 	type Event = Event;
 	type Vault = Vaults;
 	type Currency = Tokens;
+	type PalletId = StrategyTestPalletID;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;

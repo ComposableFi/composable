@@ -1,7 +1,25 @@
+//! # Vaults Pallet
 //!
-
+//! A batteries included vault module, usable as liquidity pools, yield farming vaults or embeddable
+//! as core infrastructure.
+//!
+//! ## Overview
+//!
+//! The Vault module provides functionality for asset pool management of fungible asset classes
+//! with a fixed supply, including:
+//!
+//! * Vault Creation.
+//! * Deposits and Withdrawals.
+//! * Strategy Re-balancing.
+//! * Surcharge Claims and Rent.
+//!
+//! To use it in your runtime, you need to implement the vault's [`Config`].
+//!
+//! ## Terminology
+//!
 #![cfg_attr(not(feature = "std"), no_std)]
-#![warn(
+#![deny(
+	dead_code,
 	bad_style,
 	bare_trait_objects,
 	const_err,
@@ -19,9 +37,11 @@
 	while_true,
 	trivial_casts,
 	trivial_numeric_casts,
-	unused_extern_crates
+	unused_extern_crates,
+	rustdoc::missing_doc_code_examples
 )]
-// TODO remove me!
+// Some substrate macros are expanded in such a way that their items cannot be documented. For now,
+// it's best to just set this to warn during development.
 #![allow(missing_docs)]
 
 mod models;
@@ -67,21 +87,28 @@ pub mod pallet {
 	};
 	use sp_std::fmt::Debug;
 
-	// TODO(kaiserkarel) name this better
-	pub const PALLET_ID: PalletId = PalletId(*b"Vaults!!");
-
-	pub type CurrencyIdOf<T> =
+	#[allow(missing_docs)]
+	pub type AssetIdOf<T> =
 		<<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
+	#[allow(missing_docs)]
 	pub type AccountIdOf<T> = <T as SystemConfig>::AccountId;
+	#[allow(missing_docs)]
 	pub type BlockNumberOf<T> = <T as SystemConfig>::BlockNumber;
+	#[allow(missing_docs)]
 	pub type BalanceOf<T> = <T as Config>::Balance;
 
+	/// Type alias exists mainly since `crate::models::VaultInfo` has many generic
+	/// parameters.
 	pub type VaultInfo<T> =
-		crate::models::VaultInfo<AccountIdOf<T>, BalanceOf<T>, CurrencyIdOf<T>, BlockNumberOf<T>>;
+		crate::models::VaultInfo<AccountIdOf<T>, BalanceOf<T>, AssetIdOf<T>, BlockNumberOf<T>>;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// The Balance type used by the pallet for bookkeeping. `Config::Convert` is used for
+		/// conversions to `u128`, which are used in the computations.
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -93,52 +120,87 @@ pub mod pallet {
 			+ SaturatingSub
 			+ AtLeast32BitUnsigned
 			+ Zero;
-		type CurrencyFactory: CurrencyFactory<Self::CurrencyId>;
-		type CurrencyId: FullCodec
+
+		/// The pallet creates new LP tokens for every created vault. It uses `CurrencyFactory`, as
+		/// `orml`'s currency traits do not provide an interface to obtain asset ids (to avoid id
+		/// collisions).
+		type CurrencyFactory: CurrencyFactory<Self::AssetId>;
+
+		/// The `AssetId` used by the pallet. Corresponds the the Ids used by the Currency pallet.
+		type AssetId: FullCodec
 			+ Eq
 			+ PartialEq
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ Debug
 			+ Default;
-		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyId>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyId>
-			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyId>;
 
+		/// Generic Currency bounds. These functions are provided by the `[orml-tokens`](https://github.com/open-web3-stack/open-runtime-module-library/tree/HEAD/currencies) pallet.
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+
+		/// Converts the `Balance` type to `u128`, which internally is used in calculations.
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
+
+		/// The maximum number of strategies a newly created vault can have.
 		type MaxStrategies: Get<usize>;
 
+		/// The minimum amount needed to deposit in a vault and receive LP tokens.
 		#[pallet::constant]
-		type NativeAssetId: Get<Self::CurrencyId>;
+		type MinimumDeposit: Get<Self::Balance>;
 
+		/// The minimum amount of LP tokens to withdraw funds from a vault.
+		#[pallet::constant]
+		type MinimumWithdrawal: Get<Self::Balance>;
+
+		/// The asset ID used to pay for rent.
+		#[pallet::constant]
+		type NativeAssetId: Get<Self::AssetId>;
+
+		/// The minimum native asset needed to create a vault.
 		#[pallet::constant]
 		type CreationDeposit: Get<Self::Balance>;
 
+		/// The deposit needed for a vault to never be cleaned up. Should be significantly higher
+		/// than the rent.
 		#[pallet::constant]
 		type ExistentialDeposit: Get<Self::Balance>;
 
+		/// The rent being charged per block for vaults which have not committed the
+		/// `ExistentialDeposit`.
 		#[pallet::constant]
 		type RentPerBlock: Get<Self::Balance>;
 
-		type StrategyReport: FullCodec + Default;
+		/// The id used as the `AccountId` of the vault. This should be unique across all pallets to
+		/// avoid name collisions with other pallets and vaults.
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// The number of vaults, also used to generate the next vault identifier.
+	///
+	/// # Note
+	///
+	/// Cleaned up vaults do not decrement the counter.
 	#[pallet::storage]
 	#[pallet::getter(fn vault_count)]
 	pub type VaultCount<T: Config> = StorageValue<_, VaultIndex, ValueQuery>;
 
+	/// Info for each specific vaults.
 	#[pallet::storage]
 	#[pallet::getter(fn vault_data)]
 	pub type Vaults<T: Config> = StorageMap<_, Twox64Concat, VaultIndex, VaultInfo<T>, ValueQuery>;
 
+	/// Associated LP token for each vault.
 	#[pallet::storage]
-	#[pallet::getter(fn token_vault)]
-	pub type TokenVault<T: Config> =
-		StorageMap<_, Twox64Concat, T::CurrencyId, VaultIndex, ValueQuery>;
+	#[pallet::getter(fn lp_tokens_to_vaults)]
+	pub type LpTokensToVaults<T: Config> =
+		StorageMap<_, Twox64Concat, T::AssetId, VaultIndex, ValueQuery>;
 
 	/// Amounts which each strategy is allowed to access, including the amount reserved for quick
 	/// withdrawals for the pallet.
@@ -169,53 +231,114 @@ pub mod pallet {
 	>;
 
 	/// Key type for the vaults. `VaultIndex` uniquely identifies a vault.
-	// TODO: should probably be a new type
+	// TODO: should probably be settable through the config
 	pub type VaultIndex = u64;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Emitted after a vault has been successfully created.
-		VaultCreated(VaultIndex, VaultInfo<T>),
-		// Deposited(Value, LpShareMinted)
-		Deposited(T::AccountId, T::Balance, T::Balance),
-		// Withdrawn(LpShareBurnt, ShareValue)
-		Withdrawn(T::AccountId, T::Balance, T::Balance),
+		VaultCreated {
+			/// The (incremented) ID of the created vault.
+			id: VaultIndex,
+		},
+		/// Emitted after a user deposits funds into the vault.
+		Deposited {
+			/// The account making the vault deposit.
+			account: T::AccountId,
+			/// The amount of assets deposited in the vault.
+			asset_amount: T::Balance,
+			/// The number of LP tokens minted for the deposit.
+			lp_amount: T::Balance,
+		},
+		/// Emitted after a user exchanges LP tokens back for underlying assets
+		Withdrawn {
+			/// The account ID making the withdrawal.
+			account: T::AccountId,
+			/// Amount of LP tokens exchanged for the withdrawal.
+			lp_amount: T::Balance,
+			/// Assets received in exchange for the withdrawal.
+			asset_amount: T::Balance,
+		},
 	}
 
+	#[allow(missing_docs)]
 	#[pallet::error]
 	pub enum Error<T> {
-		InsufficientBalance,
+		/// Failures in creating LP tokens during vault creation result in `CannotCreateAsset`.
 		CannotCreateAsset,
+		/// `InconsistentStorage` indicates very bad logic failures, resulting in the storage
+		/// becoming inconsistent.
+		// TODO: this error variant could be completely removed by restructuring the types of the
+		// storage in such a way that it could not become inconsistent.
 		InconsistentStorage,
+		/// Failures to transfer funds from the vault to users or vice- versa result in
+		/// `TransferFromFailed`.
 		TransferFromFailed,
+		/// Minting failures result in `MintFailed`. In general this should never occur.
 		MintFailed,
+		/// Requesting withdrawals for more LP tokens than available to the user result in
+		/// `InsufficientLpTokens`
 		InsufficientLpTokens,
-		LookupError,
+		/// Querying/operating on invalid vault id's result in `VaultDoesNotExist`.
 		VaultDoesNotExist,
+		/// If the vault contains too many assets (close to the `Balance::MAX`), it is considered
+		/// full as arithmetic starts overflowing.
 		NoFreeVaultAllocation,
+		/// Vaults must allocate the proper ratio between reserved and strategies, so that the
+		/// ratio sums up to one.
 		AllocationMustSumToOne,
+		/// Vaults may have up to [`MaxStrategies`](Config::MaxStrategies) strategies.
 		TooManyStrategies,
+		/// For very large numbers, arithmetic starts failing.
+		// TODO: could we fall back to BigInts, and never have math failures?
 		OverflowError,
+		/// Vaults may have insufficient funds for withdrawals, as well as users wishing to deposit
+		/// an incorrect amount.
 		InsufficientFunds,
-		AmountMustBePositive,
+		/// Deposit amounts not exceeding [`MinimumDeposit`](Config::MinimumDeposit) are declined
+		/// and result in `AmountMustGteMinimumDeposit`.
+		AmountMustGteMinimumDeposit,
+		/// Withdrawal amounts not exceeding [`MinimumWithdrawal`](Config::MinimumWithdrawal) are
+		/// declined and result in `AmountMustGteMinimumWithdrawal`.
+		AmountMustGteMinimumWithdrawal,
+		/// When trying to withdraw too much from the vault, `NotEnoughLiquidity` is returned.
+		// TODO: perhaps it is better to not fail on withdrawals, but instead return what we can?
 		NotEnoughLiquidity,
-		DepositIsTooLow,
+		/// Creating vaults with invalid creation deposits results in
+		/// `InsufficientCreationDeposit`.
+		InsufficientCreationDeposit,
+		/// Attempting to tombstone a vault which has rent remaining results in
+		/// `InvalidSurchargeClaim`.
 		InvalidSurchargeClaim,
+		/// Not all vaults have an associated LP token. Attempting to perform LP token related
+		/// operations result in `NotVaultLpToken`.
 		NotVaultLpToken,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Creates a new vault, locking up the deposit. If the deposit is greater than the
+		/// `ExistentialDeposit`, the vault will remain alive forever, else it can be `tombstoned`
+		/// after `deposit / RentPerBlock `. Accounts may deposit more funds to keep the vault
+		/// alive.
+		///
+		/// # Emits
+		///  - [`Event::VaultCreated`](Event::VaultCreated)
+		///
+		/// # Errors
+		///  - When the origin is not signed.
+		///  - When `deposit < CreationDeposit`.
+		///  - Origin has insufficient funds to lock the deposit.
 		#[pallet::weight(10_000)]
 		pub fn create(
 			origin: OriginFor<T>,
-			vault: VaultConfig<AccountIdOf<T>, CurrencyIdOf<T>>,
+			vault: VaultConfig<AccountIdOf<T>, AssetIdOf<T>>,
 			deposit: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
 
-			ensure!(deposit >= T::CreationDeposit::get(), Error::<T>::DepositIsTooLow);
+			ensure!(deposit >= T::CreationDeposit::get(), Error::<T>::InsufficientCreationDeposit);
 
 			let native_id = T::NativeAssetId::get();
 			T::Currency::hold(native_id, &from, deposit)?;
@@ -225,10 +348,16 @@ pub mod pallet {
 			} else {
 				Deposit::Rent { amount: deposit, at: <frame_system::Pallet<T>>::block_number() }
 			};
-			<Self as Vault>::create(deposit, vault)?;
+			let id = <Self as Vault>::create(deposit, vault)?;
+			Self::deposit_event(Event::VaultCreated { id });
 			Ok(().into())
 		}
 
+		/// Tombstones a vault, rewarding the caller if successful with a small fee.
+		///
+		/// TODO:
+		///  - Check that the vault has no more funds, else do something?
+		///  - First disable the vault, then after X amount of time delete it
 		#[pallet::weight(10_000)]
 		pub fn claim_surcharge(
 			origin: OriginFor<T>,
@@ -267,7 +396,13 @@ pub mod pallet {
 			}
 		}
 
-		// TODO: weight
+		/// Deposit funds in the vault and receive LP tokens in return.
+		/// # Emits
+		///  - Event::Deposited
+		///
+		/// # Errors
+		///  - When the origin is not signed.
+		///  - When `deposit < MinimumDeposit`.
 		#[pallet::weight(10_000)]
 		pub fn deposit(
 			origin: OriginFor<T>,
@@ -276,11 +411,18 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
 			let lp_amount = <Self as Vault>::deposit(&vault, &from, asset_amount)?;
-			Self::deposit_event(Event::Deposited(from, asset_amount, lp_amount));
+			Self::deposit_event(Event::Deposited { account: from, asset_amount, lp_amount });
 			Ok(().into())
 		}
 
-		// TODO: weight
+		/// Deposit funds in the vault and receive LP tokens in return.
+		/// # Emits
+		///  - Event::Withdrawn
+		///
+		/// # Errors
+		///  - When the origin is not signed.
+		///  - When `lp_amount < MinimumWithdrawal`.
+		///  - When the vault has insufficient amounts reserved.
 		#[pallet::weight(10_000)]
 		pub fn withdraw(
 			origin: OriginFor<T>,
@@ -289,21 +431,15 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let to = ensure_signed(origin)?;
 			let asset_amount = <Self as Vault>::withdraw(&vault, &to, lp_amount)?;
-			Self::deposit_event(Event::Withdrawn(to, lp_amount, asset_amount));
+			Self::deposit_event(Event::Withdrawn { account: to, lp_amount, asset_amount });
 			Ok(().into())
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn lp_asset_id(
-			vault_id: &<Self as Vault>::VaultId,
-		) -> Result<<Self as Vault>::AssetId, DispatchError> {
-			<Self as Vault>::lp_asset_id(vault_id)
-		}
-
 		pub fn do_create_vault(
 			deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
-			config: VaultConfig<T::AccountId, T::CurrencyId>,
+			config: VaultConfig<T::AccountId, T::AssetId>,
 		) -> Result<(VaultIndex, VaultInfo<T>), DispatchError> {
 			// 1. check config
 			// 2. lock endowment
@@ -368,14 +504,10 @@ pub mod pallet {
 				};
 
 				Vaults::<T>::insert(id, vault_info.clone());
-				TokenVault::<T>::insert(lp_token_id, id);
+				LpTokensToVaults::<T>::insert(lp_token_id, id);
 
 				Ok((id, vault_info))
 			})
-		}
-
-		fn account_id(vault_id: &VaultIndex) -> T::AccountId {
-			PALLET_ID.into_sub_account(vault_id)
 		}
 
 		/// Computes the sum of all the assets that the vault currently controls.
@@ -402,13 +534,13 @@ pub mod pallet {
 			ensure!(lp_shares_value_amount <= vault_owned_amount, Error::<T>::NotEnoughLiquidity);
 
 			ensure!(
-				T::Currency::can_withdraw(vault.lp_token_id, &to, lp_amount)
+				T::Currency::can_withdraw(vault.lp_token_id, to, lp_amount)
 					.into_result()
 					.is_ok(),
 				Error::<T>::InsufficientLpTokens
 			);
 
-			let from = Self::account_id(&vault_id);
+			let from = Self::account_id(vault_id);
 			ensure!(
 				T::Currency::can_withdraw(vault.asset_id, &from, lp_shares_value_amount)
 					.into_result()
@@ -416,9 +548,9 @@ pub mod pallet {
 				Error::<T>::TransferFromFailed
 			);
 
-			T::Currency::burn_from(vault.lp_token_id, &to, lp_amount)
+			T::Currency::burn_from(vault.lp_token_id, to, lp_amount)
 				.map_err(|_| Error::<T>::InsufficientLpTokens)?;
-			T::Currency::transfer(vault.asset_id, &from, &to, lp_shares_value_amount, true)
+			T::Currency::transfer(vault.asset_id, &from, to, lp_shares_value_amount, true)
 				.map_err(|_| Error::<T>::TransferFromFailed)?;
 			Ok(lp_shares_value_amount)
 		}
@@ -432,11 +564,11 @@ pub mod pallet {
 				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
 
 			ensure!(
-				T::Currency::can_withdraw(vault.asset_id, &from, amount).into_result().is_ok(),
+				T::Currency::can_withdraw(vault.asset_id, from, amount).into_result().is_ok(),
 				Error::<T>::TransferFromFailed
 			);
 
-			let to = Self::account_id(&vault_id);
+			let to = Self::account_id(vault_id);
 
 			let vault_aum = Self::assets_under_management(vault_id)?;
 			if vault_aum.is_zero() {
@@ -469,7 +601,7 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::NoFreeVaultAllocation)?;
 				let lp = <T::Convert as Convert<u128, T::Balance>>::convert(lp);
 
-				ensure!(lp > T::Balance::zero(), Error::<T>::DepositIsTooLow);
+				ensure!(lp > T::Balance::zero(), Error::<T>::InsufficientCreationDeposit);
 
 				ensure!(
 					T::Currency::can_deposit(vault.lp_token_id, from, lp) ==
@@ -522,7 +654,7 @@ pub mod pallet {
 			vault_id: &VaultIndex,
 			vault: &VaultInfo<T>,
 		) -> Result<T::Balance, Error<T>> {
-			let owned = T::Currency::balance(vault.asset_id, &Self::account_id(&vault_id));
+			let owned = T::Currency::balance(vault.asset_id, &Self::account_id(vault_id));
 			let outstanding = CapitalStructure::<T>::iter_prefix_values(vault_id)
 				.fold(T::Balance::zero(), |sum, item| sum + item.balance);
 			Ok(owned + outstanding)
@@ -534,7 +666,7 @@ pub mod pallet {
 		type Balance = T::Balance;
 		type BlockNumber = T::BlockNumber;
 		type VaultId = VaultIndex;
-		type AssetId = CurrencyIdOf<T>;
+		type AssetId = AssetIdOf<T>;
 
 		fn asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError> {
 			let vault =
@@ -548,8 +680,9 @@ pub mod pallet {
 			Ok(vault.lp_token_id)
 		}
 
-		fn account_id(vault: &Self::VaultId) -> Self::AccountId {
-			Pallet::<T>::account_id(vault)
+		// TODO: we can use the `VaultId` + into_sub_account to have distinct addresses per vault.
+		fn account_id(_vault: &Self::VaultId) -> Self::AccountId {
+			T::PalletId::get().into_account()
 		}
 
 		fn create(
@@ -564,8 +697,11 @@ pub mod pallet {
 			from: &Self::AccountId,
 			asset_amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			ensure!(asset_amount > T::Balance::zero(), Error::<T>::AmountMustBePositive);
-			Pallet::<T>::do_deposit(&vault_id, &from, asset_amount)
+			ensure!(
+				asset_amount > T::MinimumDeposit::get(),
+				Error::<T>::AmountMustGteMinimumDeposit
+			);
+			Pallet::<T>::do_deposit(vault_id, from, asset_amount)
 		}
 
 		fn withdraw(
@@ -573,8 +709,11 @@ pub mod pallet {
 			to: &Self::AccountId,
 			lp_amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			ensure!(lp_amount > T::Balance::zero(), Error::<T>::AmountMustBePositive);
-			Pallet::<T>::do_withdraw(&vault, &to, lp_amount)
+			ensure!(
+				lp_amount > T::MinimumWithdrawal::get(),
+				Error::<T>::AmountMustGteMinimumWithdrawal
+			);
+			Pallet::<T>::do_withdraw(vault, to, lp_amount)
 		}
 
 		fn to_underlying_value(
@@ -588,7 +727,7 @@ pub mod pallet {
 
 		fn token_vault(token: Self::AssetId) -> Result<Self::VaultId, DispatchError> {
 			let vault_index =
-				TokenVault::<T>::try_get(&token).map_err(|_| Error::<T>::NotVaultLpToken)?;
+				LpTokensToVaults::<T>::try_get(&token).map_err(|_| Error::<T>::NotVaultLpToken)?;
 			Ok(vault_index)
 		}
 	}
