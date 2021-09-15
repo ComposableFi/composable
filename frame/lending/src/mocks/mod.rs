@@ -92,7 +92,7 @@ frame_support::construct_runtime!(
 		Factory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Lending: pallet_lending::{Pallet, Storage},
+		Lending: pallet_lending::{Pallet, Call, Config, Storage, Event<T>},
 		Oracle: pallet_lending::mocks::oracle::{Pallet},
 	}
 );
@@ -221,6 +221,7 @@ impl pallet_lending::Config for Test {
 	type Oracle = Oracle;
 	type VaultId = VaultId;
 	type Vault = Vault;
+	type Event = Event;
 	type AssetId = MockCurrencyId;
 	type Balance = Balance;
 	type Currency = Tokens;

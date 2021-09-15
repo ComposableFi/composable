@@ -107,7 +107,8 @@ fn test_borrow() {
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, amount));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount);
-		assert_ok!(Lending::deposit_collateral(&market, &ALICE, amount));
+
+		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, amount));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 
 		// Balance for BOB
@@ -123,7 +124,7 @@ fn test_borrow() {
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), btc_amt);
 		Vault::deposit(Origin::signed(CHARLIE), vault, btc_amt);
 		let mut total_cash = btc_amt;
-		assert_ok!(Lending::deposit_collateral(&market, &BOB, amount));
+		assert_ok!(Lending::deposit_collateral_internal(&market, &BOB, amount));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
 
 		assert_eq!(Lending::borrow_balance_current(&market, &ALICE), Ok(Some(0)));
@@ -242,7 +243,7 @@ proptest! {
 			prop_assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount);
 
-			prop_assert_ok!(Lending::deposit_collateral(&market, &ALICE, amount));
+			prop_assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 			prop_assert_ok!(Lending::withdraw_collateral(&market, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount);
@@ -260,7 +261,7 @@ proptest! {
 			prop_assert_ok!(Tokens::mint_into(collateral_asset, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(collateral_asset, &ALICE), amount);
 
-			prop_assert_ok!(Lending::deposit_collateral(&market, &ALICE, amount));
+			prop_assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(collateral_asset, &ALICE), 0);
 			prop_assert_ok!(Lending::withdraw_collateral(&market, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(collateral_asset, &ALICE), amount);

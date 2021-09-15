@@ -49,10 +49,11 @@ pub mod pallet {
 			tokens::DepositConsequence,
 			GenesisBuild, UnixTime,
 		},
-		PalletId,
+		PalletId, transactional,
 	};
-	use num_traits::{CheckedDiv, SaturatingSub};
-	use sp_runtime::{
+	use frame_system::pallet_prelude::*;
+use num_traits::{CheckedDiv, SaturatingSub};
+use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
@@ -63,7 +64,7 @@ pub mod pallet {
 
 	use composable_traits::rate_model::{LiftedFixedBalance, SafeArithmetic};
 
-	#[derive(Default, Debug, Copy, Clone, Encode, Decode)]
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
 
@@ -77,6 +78,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Oracle: Oracle<AssetId = Self::AssetId, Balance = Self::Balance>;
 		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 		type Vault: StrategicVault<
@@ -229,6 +231,14 @@ pub mod pallet {
 		}
 	}
 
+	#[pallet::event]
+	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
+	pub enum Event<T : Config> {
+		/// Event emitted when collateral is deposited.
+		/// [sender, market_id, amount]
+		CollateralDeposited(T::AccountId, MarketIndex, T::Balance),
+	}
+
 	/// Lending instances counter
 	#[pallet::storage]
 	#[pallet::getter(fn lending_count)]
@@ -327,6 +337,26 @@ pub mod pallet {
 		}
 	}
 
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		/// Deposit collateral to market.
+		/// - `origin` : Sender of this extrinsic.
+		/// - `market` : Market index to which collateral will be deposited.
+		/// - `amount` : Amount of collateral to be deposited.
+		#[pallet::weight(1000)]
+		#[transactional]
+		pub fn deposit_collateral(
+			origin : OriginFor<T>,
+			market : MarketIndex,
+			amount : T::Balance,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			Self::deposit_collateral_internal(&market, &who, amount)?;
+			Self::deposit_event(Event::<T>::CollateralDeposited(who, market, amount));
+			Ok(().into())
+		}
+	}
+
 	impl<T: Config> Pallet<T> {
 		pub fn total_interest_accurate(
 			market_id: &<Self as Lending>::MarketId,
@@ -353,7 +383,7 @@ pub mod pallet {
 		) -> Result<(<Self as Lending>::MarketId, <Self as Lending>::VaultId), DispatchError> {
 			<Self as Lending>::create(borrow_asset, collateral_asset, config_input)
 		}
-		pub fn deposit_collateral(
+		pub fn deposit_collateral_internal(
 			market_id: &<Self as Lending>::MarketId,
 			account_id: &<Self as Lending>::AccountId,
 			amount: CollateralLpAmountOf<Self>,
