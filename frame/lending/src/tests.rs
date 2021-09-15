@@ -6,7 +6,7 @@ use crate::{
 	BorrowerData, MarketIndex,
 };
 use composable_traits::{
-	lending::{MarketConfigInput, NormalizedCollateralFactor},
+	lending::MarketConfigInput,
 	rate_model::*,
 	vault::{Deposit, VaultConfig},
 };

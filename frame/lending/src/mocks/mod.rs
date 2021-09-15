@@ -1,7 +1,7 @@
 use crate as pallet_lending;
 use composable_traits::{currency::CurrencyFactory, oracle::Oracle as OracleTrait};
 use frame_support::{
-	ord_parameter_types, parameter_types,
+	parameter_types,
 	traits::{Contains, GenesisBuild, OnFinalize, OnInitialize},
 	PalletId,
 };
