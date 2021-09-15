@@ -1,22 +1,10 @@
-use crate::{rate_model::*, vault::Deposit};
+use crate::rate_model::*;
 use codec::Codec;
-use frame_support::{
-	pallet_prelude::*,
-	sp_runtime::{Permill, Perquintill},
-	sp_std::{fmt::Debug, vec::Vec},
-};
-use sp_runtime::FixedU128;
-
-/// The fixed point number of suggested by substrate precision
-/// Must be (1.0.. because applied only to price normalized values
-pub type NormalizedCollateralFactor = frame_support::sp_runtime::FixedU128;
+use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 
 pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
 
 pub type BorrowAmountOf<T> = <T as Lending>::Balance;
-
-/// seconds
-pub type Timestamp = u64;
 
 #[derive(Encode, Decode, Default)]
 pub struct MarketConfigInput<AccountId>
@@ -116,11 +104,9 @@ pub trait Lending {
 	/// Floored down to zero.
 	fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
-	fn accrue_interest(market_id: &Self::MarketId, now : Timestamp) -> Result<(), DispatchError>;
+	fn accrue_interest(market_id: &Self::MarketId, now: Timestamp) -> Result<(), DispatchError>;
 
 	fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
-
-	fn total_reserves(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
 	/// new_debt = (delta_interest_rate * interest_rate) + debt
 	///`delta_interest_rate` - rate for passed time since previous update
@@ -134,7 +120,6 @@ pub trait Lending {
 	fn calc_utilization_ratio(
 		cash: &Self::Balance,
 		borrows: &Self::Balance,
-		reserves: &Self::Balance,
 	) -> Result<Ratio, DispatchError>;
 
 	/// Simply - how much account owes.

@@ -1,7 +1,7 @@
 use crate as pallet_lending;
 use composable_traits::{currency::CurrencyFactory, oracle::Oracle as OracleTrait};
 use frame_support::{
-	ord_parameter_types, parameter_types,
+	parameter_types,
 	traits::{Contains, GenesisBuild, OnFinalize, OnInitialize},
 	PalletId,
 };
@@ -226,6 +226,7 @@ impl pallet_lending::Config for Test {
 	type Currency = Tokens;
 	type UnixTime = Timestamp;
 	type CurrencyFactory = Factory;
+	type MarketDebtCurrency = Tokens;
 }
 
 // Build genesis storage according to the mock runtime.
@@ -236,7 +237,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	pallet_balances::GenesisConfig::<Test> { balances }
 		.assimilate_storage(&mut storage)
 		.unwrap();
-	pallet_lending::GenesisConfig { }
+	pallet_lending::GenesisConfig {}
 		.assimilate_storage::<Test>(&mut storage)
 		.unwrap();
 
@@ -265,7 +266,7 @@ pub(crate) fn process_block(n: BlockNumber) {
 }
 
 fn next_block(n: u64) {
-    System::set_block_number(n);
-    Lending::on_initialize(n);
-    Timestamp::set_timestamp(MILLISECS_PER_BLOCK * n);
+	System::set_block_number(n);
+	Lending::on_initialize(n);
+	Timestamp::set_timestamp(MILLISECS_PER_BLOCK * n);
 }
