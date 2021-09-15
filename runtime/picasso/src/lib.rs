@@ -707,23 +707,26 @@ parameter_types! {
 	pub const CreationDeposit: Balance = 10 * PICA;
 	pub const VaultExistentialDeposit: Balance = 1000 * PICA;
 	pub const RentPerBlock: Balance = 1 * MILLI_PICA;
+	pub const VaultMinimumDeposit: Balance = 10_000;
+	pub const VaultMinimumWithdrawal: Balance = 10_000;
+	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
 }
 
-// TODO(hussein-aitlahcen): what strategy report
 impl vault::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type CurrencyFactory = Factory;
-	type CurrencyId = CurrencyId;
+	type AssetId = CurrencyId;
 	type Currency = Tokens;
 	type Convert = ConvertInto;
-
+	type PalletId = VaultPalletId;
 	type MaxStrategies = MaxStrategies;
 	type CreationDeposit = CreationDeposit;
 	type ExistentialDeposit = VaultExistentialDeposit;
 	type RentPerBlock = RentPerBlock;
 	type NativeAssetId = NativeAssetId;
-	type StrategyReport = ();
+	type MinimumDeposit = VaultMinimumDeposit;
+	type MinimumWithdrawal = VaultMinimumWithdrawal;
 }
 
 impl currency_factory::Config for Runtime {
