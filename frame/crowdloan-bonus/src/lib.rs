@@ -38,7 +38,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		/// Account ID for the pot of funds
+		/// Pallet ID, used for the pot of funds
 		type LiquidRewardId: Get<PalletId>;
 		/// The currency mechanism.
 		type NativeCurrency: NativeCurrency<Self::AccountId>;
@@ -91,11 +91,13 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		CannotCreateAsset,
+		/// Pallet has already been initiated.
 		AlreadyInitiated,
-		FailedMint,
+		/// Claiming has not yet been enabled.
 		NotClaimable,
-		ConversionError,
+		/// Crowdloan Bonus pot is empty.
+		EmptyPot,
+		/// User has insufficent tokens to claim crowdloan bonus.
 		InsufficientTokens,
 	}
 
@@ -125,9 +127,14 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Attempts to claim some crowdloan bonus from the crowdloan pot.
+		/// No-op if amount is zero.
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::claim())]
 		pub fn claim(origin: OriginFor<T>, amount: u128) -> DispatchResult {
+			if amount.is_zero() {
+				return Ok(())
+			}
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_claimable().unwrap_or(false), Error::<T>::NotClaimable);
 
@@ -137,15 +144,11 @@ pub mod pallet {
 			let token_supply_value: u128 = token_supply.saturated_into();
 			let pot_balance_value: u128 = pot_balance.saturated_into();
 
-			ensure!(pot_balance_value > 0, Error::<T>::ConversionError);
-			ensure!(token_supply_value > 0, Error::<T>::ConversionError);
+			ensure!(pot_balance_value > 0 && token_supply_value > 0, Error::<T>::EmptyPot);
 
 			let to_payout = pot_balance_value.mul(amount).div(token_supply_value);
 			let amount_value: T::Balance = amount.saturated_into();
 			let converted_payout: NativeBalanceOf<T> = to_payout.saturated_into();
-
-			ensure!(converted_payout > 0u32.into(), Error::<T>::ConversionError);
-			ensure!(amount_value > 0u32.into(), Error::<T>::ConversionError);
 
 			T::Currency::burn_from(token_id, &who, amount_value)
 				.map_err(|_| Error::<T>::InsufficientTokens)?;

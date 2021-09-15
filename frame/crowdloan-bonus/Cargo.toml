@@ -1,5 +1,5 @@
 [package]
-name = "pallet-liquid-crowdloan"
+name = "pallet-crowdloan-bonus"
 version = "0.0.1"
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"

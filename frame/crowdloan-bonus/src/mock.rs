@@ -1,4 +1,4 @@
-use crate as pallet_liquid_crowdloan;
+use crate as pallet_crowdloan_bonus;
 use frame_support::{ord_parameter_types, parameter_types, PalletId};
 use frame_system as system;
 use frame_system::EnsureSignedBy;
@@ -24,7 +24,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		LiquidCrowdloan: pallet_liquid_crowdloan::{Pallet, Call, Storage, Event<T>},
+		LiquidCrowdloan: pallet_crowdloan_bonus::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
 		NativeBalances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
@@ -104,7 +104,7 @@ ord_parameter_types! {
 	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
 }
 
-impl pallet_liquid_crowdloan::Config for Test {
+impl pallet_crowdloan_bonus::Config for Test {
 	type Event = Event;
 	type LiquidRewardId = LiquidRewardId;
 	type CurrencyId = CrowdloanCurrencyId;

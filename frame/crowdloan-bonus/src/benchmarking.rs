@@ -1,4 +1,4 @@
-//! Benchmarking setup for pallet-liquid-crowdloan
+//! Benchmarking setup for pallet-crowdloan-bonus
 
 use super::*;
 

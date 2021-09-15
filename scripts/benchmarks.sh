@@ -17,7 +17,7 @@ pallets=(
 	collective
 	democracy
 	collator_selection
-	liquid_crowdloan
+	crowdloan_bonus
 	utility
 )
 

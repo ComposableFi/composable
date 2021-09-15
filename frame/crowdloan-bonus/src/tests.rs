@@ -65,7 +65,7 @@ fn claim() {
 
 		assert_noop!(
 			LiquidCrowdloan::claim(Origin::signed(1), 100),
-			Error::<Test>::ConversionError
+			Error::<Test>::EmptyPot
 		);
 	});
 }

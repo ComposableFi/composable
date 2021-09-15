@@ -9,7 +9,7 @@ impl<R> OnUnbalanced<NegativeImbalance<R>> for ToStakingPot<R>
 where
 	R: balances::Config
 		+ collator_selection::Config
-		+ liquid_crowdloan::Config
+		+ crowdloan_bonus::Config
 		+ treasury::Config<Currency = balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
@@ -20,14 +20,18 @@ where
 		// Collator's get half the fees
 		let (to_collators, half) = amount.ration(50, 50);
 		// 30% gets burned 20% to treasury
-		let (pre_burn, to_treasury) = half.ration(30, 20);
-		// temporary, but half the burn goes to crowdloan liquid reward
-		let (_, to_liquid_crowdloan) = pre_burn.ration(50, 50);
+		let (_pre_burn, to_treasury) = half.ration(30, 20);
+
+		// once the pot is opened to be claimed, stop sending transaction fees there.
+		if !matches!(<crowdloan_bonus::Pallet<R>>::is_claimable(), Some(true)) {
+			// essentially 15% of all transaction fees goes to the crowdloan_bonus pot
+			let (_, to_crowdloan_bonus) = _pre_burn.ration(50, 50);
+			let liquid_pot =  <crowdloan_bonus::Pallet<R>>::account_id();
+			<balances::Pallet<R>>::resolve_creating(&liquid_pot, to_crowdloan_bonus);
+		}
 
 		let staking_pot = <collator_selection::Pallet<R>>::account_id();
-		let liquid_pot =  <liquid_crowdloan::Pallet<R>>::account_id();
 		<balances::Pallet<R>>::resolve_creating(&staking_pot, to_collators);
-		<balances::Pallet<R>>::resolve_creating(&liquid_pot, to_liquid_crowdloan);
 		<treasury::Pallet<R> as OnUnbalanced<_>>::on_unbalanced(to_treasury);
 
 	}
@@ -40,7 +44,7 @@ impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
 	R: balances::Config
 		+ collator_selection::Config
-		+ liquid_crowdloan::Config
+		+ crowdloan_bonus::Config
 		+ treasury::Config<Currency = balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
@@ -92,7 +96,7 @@ mod tests {
 			Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 			Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 31,
 			CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>},
-			LiquidCrowdloan: liquid_crowdloan::{Pallet, Call, Storage, Event<T>},
+			LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>},
 			Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
 		}
 	);
@@ -213,7 +217,7 @@ mod tests {
 	ord_parameter_types! {
 		pub const RootAccount: u128 = 2;
 	}
-	impl liquid_crowdloan::Config for Test {
+	impl crowdloan_bonus::Config for Test {
 		type Event = Event;
 		type LiquidRewardId = LiquidRewardId;
 		type CurrencyId = CrowdloanCurrencyId;

@@ -564,7 +564,7 @@ parameter_types! {
 	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
 }
 
-impl liquid_crowdloan::Config for Runtime {
+impl crowdloan_bonus::Config for Runtime {
 	type Event = Event;
 	type LiquidRewardId = LiquidRewardId;
 	type CurrencyId = CrowdloanCurrencyId;
@@ -572,7 +572,7 @@ impl liquid_crowdloan::Config for Runtime {
 	type Currency = Tokens;
 	type Balance = Balance;
 	type NativeCurrency = Balances;
-	type WeightInfo = weights::liquid_crowdloan::WeightInfo<Runtime>;
+	type WeightInfo = weights::crowdloan_bonus::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -766,7 +766,7 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
 		// local modules
-		LiquidCrowdloan: liquid_crowdloan::{Pallet, Call, Storage, Event<T>} = 50,
+		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 50,
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
 	}
 );
@@ -959,7 +959,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, scheduler, Scheduler);
             add_benchmark!(params, batches, democracy, Democracy);
             add_benchmark!(params, batches, collective, Council);
-            add_benchmark!(params, batches, liquid_crowdloan, LiquidCrowdloan);
+            add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
 	    	add_benchmark!(params, batches, utility, Utility);
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

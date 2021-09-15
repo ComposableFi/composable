@@ -44,7 +44,7 @@ transaction-payment = { package = "pallet-transaction-payment", git = "https://g
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 
 # local modules
-liquid-crowdloan = { package = "pallet-liquid-crowdloan", path = '../../frame/liquid-crowdloan', default-features = false }
+crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
 
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
@@ -104,7 +104,7 @@ std = [
 	"authorship/std",
 	"balances/std",
 	"randomness-collective-flip/std",
-	"liquid-crowdloan/std",
+	"crowdloan-bonus/std",
 	"timestamp/std",
 	"session/std",
 	"sudo/std",
@@ -147,7 +147,7 @@ runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"indices/runtime-benchmarks",
-	"liquid-crowdloan/runtime-benchmarks",
+	"crowdloan-bonus/runtime-benchmarks",
 	"membership/runtime-benchmarks",
 	"treasury/runtime-benchmarks",
 	"scheduler/runtime-benchmarks",
