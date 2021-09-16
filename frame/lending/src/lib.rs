@@ -30,6 +30,10 @@ mod mocks;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+pub mod weights;
+
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -133,28 +137,7 @@ use sp_runtime::{
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
-			with_transaction(|| {
-				let now = T::UnixTime::now().as_secs();
-				let results = Markets::<T>::iter()
-					.map(|(index, _)| <Pallet<T>>::accrue_interest(&index, now))
-					.collect::<Vec<_>>();
-				let (_oks, errors): (Vec<_>, Vec<_>) = results.iter().partition(|r| r.is_ok());
-				if errors.is_empty() {
-					LastBlockTimestamp::<T>::put(now);
-					TransactionOutcome::Commit(1000)
-				} else {
-					errors.iter().for_each(|e| {
-						if let Err(e) = e {
-							log::error!(
-								"This should never happen, could not initialize block!!! {:#?} {:#?}",
-								block_number,
-								e
-							)
-						}
-					});
-					TransactionOutcome::Rollback(0)
-				}
-			});
+			Self::accrue_interests(block_number);
 			0
 		}
 	}
@@ -471,6 +454,31 @@ use sp_runtime::{
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
 			<Self as Lending>::repay_borrow(market_id, from, beneficiary, repay_amount)
+		}
+
+		pub(crate) fn accrue_interests(block_number: T::BlockNumber) {
+			with_transaction(|| {
+				let now = T::UnixTime::now().as_secs();
+				let results = Markets::<T>::iter()
+					.map(|(index, _)| <Pallet<T>>::accrue_interest(&index, now))
+					.collect::<Vec<_>>();
+				let (_oks, errors): (Vec<_>, Vec<_>) = results.iter().partition(|r| r.is_ok());
+				if errors.is_empty() {
+					LastBlockTimestamp::<T>::put(now);
+					TransactionOutcome::Commit(1000)
+				} else {
+					errors.iter().for_each(|e| {
+						if let Err(e) = e {
+							log::error!(
+								"This should never happen, could not initialize block!!! {:#?} {:#?}",
+								block_number,
+								e
+							)
+						}
+					});
+					TransactionOutcome::Rollback(0)
+				}
+			});
 		}
 	}
 
