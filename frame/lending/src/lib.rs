@@ -49,11 +49,11 @@ pub mod pallet {
 			tokens::DepositConsequence,
 			UnixTime,
 		},
-		PalletId, transactional,
+		transactional, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-use num_traits::{CheckedDiv, SaturatingSub};
-use sp_runtime::{
+	use num_traits::{CheckedDiv, SaturatingSub};
+	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
@@ -233,13 +233,31 @@ use sp_runtime::{
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
-	pub enum Event<T : Config> {
+	pub enum Event<T: Config> {
+		/// Event emitted when new lending market is created.
+		/// [market_id, vault_id, manager, borrow_asset_id, collateral_asset_id, reserved_factor,
+		/// collateral_factor]
+		NewMarketCreated(
+			MarketIndex,
+			T::VaultId,
+			T::AccountId,
+			T::AssetId,
+			T::AssetId,
+			Perquintill,
+			NormalizedCollateralFactor,
+		),
 		/// Event emitted when collateral is deposited.
 		/// [sender, market_id, amount]
 		CollateralDeposited(T::AccountId, MarketIndex, T::Balance),
 		/// Event emitted when collateral is withdrawed.
 		/// [sender, market_id, amount]
 		CollateralWithdrawed(T::AccountId, MarketIndex, T::Balance),
+		/// Event emitted when user borrows from given market.
+		/// [sender, marker_id, amount]
+		Borrowed(T::AccountId, MarketIndex, T::Balance),
+		/// Event emitted when user repays borrow of beneficiary in given market.
+		/// [sender, marker_id, beneficiary, amount]
+		RepaidBorrow(T::AccountId, MarketIndex, T::AccountId, T::Balance),
 	}
 
 	/// Lending instances counter
@@ -342,6 +360,40 @@ use sp_runtime::{
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Create a new lending market.
+		/// - `origin` : Sender of this extrinsic. (Also manager for new market to be created.)
+		/// - `collateral_asset_id` : AssetId for collateral.
+		/// - `reserved_factor` : Reserve factor of market to be created.
+		/// - `collateral_factor` : Collateral factor of market to be created.
+		#[pallet::weight(1000)]
+		#[transactional]
+		pub fn create_new_market(
+			origin: OriginFor<T>,
+			borrow_asset_id: T::AssetId,
+			collateral_asset_id: T::AssetId,
+			reserved_factor: Perquintill,
+			collateral_factor: NormalizedCollateralFactor,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let market_config = MarketConfigInput {
+				reserved: reserved_factor,
+				manager: who.clone(),
+				collateral_factor,
+			};
+			let (market_id, vault_id) =
+				Self::create(borrow_asset_id, collateral_asset_id, market_config)?;
+			Self::deposit_event(Event::<T>::NewMarketCreated(
+				market_id,
+				vault_id,
+				who,
+				borrow_asset_id,
+				collateral_asset_id,
+				reserved_factor,
+				collateral_factor,
+			));
+			Ok(().into())
+		}
+
 		/// Deposit collateral to market.
 		/// - `origin` : Sender of this extrinsic.
 		/// - `market` : Market index to which collateral will be deposited.
@@ -349,9 +401,9 @@ use sp_runtime::{
 		#[pallet::weight(1000)]
 		#[transactional]
 		pub fn deposit_collateral(
-			origin : OriginFor<T>,
-			market : MarketIndex,
-			amount : T::Balance,
+			origin: OriginFor<T>,
+			market: MarketIndex,
+			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			Self::deposit_collateral_internal(&market, &who, amount)?;
@@ -361,18 +413,60 @@ use sp_runtime::{
 
 		/// Withdraw collateral from market.
 		/// - `origin` : Sender of this extrinsic.
-		/// - `market` : Market index from which collateral will be withdraw.
+		/// - `market_id` : Market index from which collateral will be withdraw.
 		/// - `amount` : Amount of collateral to be withdrawed.
 		#[pallet::weight(1000)]
 		#[transactional]
 		pub fn withdraw_collateral(
-			origin : OriginFor<T>,
-			market : MarketIndex,
-			amount : T::Balance,
+			origin: OriginFor<T>,
+			market_id: MarketIndex,
+			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			Self::withdraw_collateral_internal(&market, &who, amount)?;
-			Self::deposit_event(Event::<T>::CollateralWithdrawed(who, market, amount));
+			Self::withdraw_collateral_internal(&market_id, &who, amount)?;
+			Self::deposit_event(Event::<T>::CollateralWithdrawed(who, market_id, amount));
+			Ok(().into())
+		}
+
+		/// Borrow asset against deposited collateral.
+		/// - `origin` : Sender of this extrinsic. (Also the user who wants to borrow from market.)
+		/// - `market_id` : Market index from which user wants to borrow.
+		/// - `amount_to_borrow` : Amount which user wants to borrow.
+		#[pallet::weight(1000)]
+		#[transactional]
+		pub fn borrow(
+			origin: OriginFor<T>,
+			market_id: MarketIndex,
+			amount_to_borrow: T::Balance,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			Self::borrow_internal(&market_id, &who, amount_to_borrow)?;
+			Self::deposit_event(Event::<T>::Borrowed(who, market_id, amount_to_borrow));
+			Ok(().into())
+		}
+
+		/// Repay borrow for beneficiary account.
+		/// - `origin` : Sender of this extrinsic. (Also the user who repays beneficiary's borrow.)
+		/// - `market_id` : Market index to which user wants to repay borrow.
+		/// - `beneficiary` : AccountId which has borrowed asset. (This can be same or differnt than
+		/// origin).
+		/// - `repay_amount` : Amount which user wants to borrow.
+		#[pallet::weight(1000)]
+		#[transactional]
+		pub fn repay_borrow(
+			origin: OriginFor<T>,
+			market_id: MarketIndex,
+			beneficiary: T::AccountId,
+			repay_amount: T::Balance,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			Self::repay_borrow_internal(&market_id, &who, &beneficiary, Some(repay_amount))?;
+			Self::deposit_event(Event::<T>::RepaidBorrow(
+				who,
+				market_id,
+				beneficiary,
+				repay_amount,
+			));
 			Ok(().into())
 		}
 	}
@@ -431,7 +525,7 @@ use sp_runtime::{
 			<Self as Lending>::get_borrow_limit(market_id, account)
 		}
 
-		pub fn borrow(
+		pub fn borrow_internal(
 			market_id: &<Self as Lending>::MarketId,
 			debt_owner: &<Self as Lending>::AccountId,
 			amount_to_borrow: <Self as Lending>::Balance,
@@ -464,7 +558,7 @@ use sp_runtime::{
 			<Self as Lending>::total_interest(market_id)
 		}
 
-		pub fn repay_borrow(
+		pub fn repay_borrow_internal(
 			market_id: &<Self as Lending>::MarketId,
 			from: &<Self as Lending>::AccountId,
 			beneficiary: &<Self as Lending>::AccountId,
@@ -612,7 +706,7 @@ use sp_runtime::{
 			let asset_id = T::Vault::asset_id(&market.borrow)?;
 			let possible_borrow = Self::get_borrow_limit(&market_id, debt_owner)?;
 			if possible_borrow < amount_to_borrow {
-				return Err(Error::<T>::NotEnoughCollateralToBorrowAmount.into());
+				return Err(Error::<T>::NotEnoughCollateralToBorrowAmount.into())
 			}
 			let account_id = Self::account_id(market_id);
 			let can_withdraw = T::Currency::reducible_balance(asset_id.clone(), &account_id, true);
@@ -628,13 +722,12 @@ use sp_runtime::{
 						can_withdraw + balance >= amount_to_borrow,
 						Error::<T>::NotEnoughBorrowAsset
 					)
-				}
+				},
 				FundsAvailability::Depositable(_) => (),
 				// TODO: decide when react and how to return fees back
 				// https://mlabs-corp.slack.com/archives/C02CRQ9KW04/p1630662664380600?thread_ts=1630658877.363600&cid=C02CRQ9KW04
-				FundsAvailability::MustLiquidate => {
-					return Err(Error::<T>::CannotBorrowInCurrentLendingState.into())
-				}
+				FundsAvailability::MustLiquidate =>
+					return Err(Error::<T>::CannotBorrowInCurrentLendingState.into()),
 			}
 
 			T::Currency::transfer(
@@ -692,7 +785,8 @@ use sp_runtime::{
 					.checked_mul(LiftedFixedBalance::accuracy())
 					.expect("should work for 64 currency");
 				// TODO: fuzzing is must to uncover cases when sum != total
-				let market_debt_reduction = T::MarketDebtCurrency::balance(debt_asset_id, &market_account);
+				let market_debt_reduction =
+					T::MarketDebtCurrency::balance(debt_asset_id, &market_account);
 				T::MarketDebtCurrency::burn_from(debt_asset_id, &market_account, market_debt_reduction).expect(
 					"debt balance of market must be of parts of debts of borrowers and can reduce it",
 				);
@@ -824,7 +918,7 @@ use sp_runtime::{
 					)?;
 
 					Ok(balance.map(Into::into))
-				}
+				},
 				// no active borrow on  market for given account
 				Err(()) => Ok(Some(BorrowAmountOf::<Self>::zero())),
 			}
@@ -875,7 +969,7 @@ use sp_runtime::{
 					.map_err(|_| Error::<T>::NotEnoughCollateralToBorrowAmount)?
 					.checked_mul_int(1u64)
 					.ok_or(ArithmeticError::Overflow)?
-					.into());
+					.into())
 			}
 
 			Ok(Self::Balance::zero())
@@ -896,8 +990,8 @@ use sp_runtime::{
 				Error::<T>::TransferFailed
 			);
 			ensure!(
-				T::Currency::can_deposit(market.collateral, &market_account, amount)
-					== DepositConsequence::Success,
+				T::Currency::can_deposit(market.collateral, &market_account, amount) ==
+					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 
@@ -957,8 +1051,8 @@ use sp_runtime::{
 
 			let market_account = Self::account_id(&market_id);
 			ensure!(
-				T::Currency::can_deposit(market.collateral, &account, amount)
-					== DepositConsequence::Success,
+				T::Currency::can_deposit(market.collateral, &account, amount) ==
+					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 			ensure!(
@@ -989,7 +1083,7 @@ use sp_runtime::{
 		account_interest_index: Ratio,
 	) -> Result<Option<u64>, DispatchError> {
 		if principal.is_zero() {
-			return Ok(None);
+			return Ok(None)
 		}
 		let principal: LiftedFixedBalance = principal.into();
 		let balance = principal
