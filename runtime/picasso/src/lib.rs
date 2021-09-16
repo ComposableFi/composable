@@ -224,16 +224,18 @@ parameter_types! {
 
 
 // multipurpose currency orlm pallet 
-parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Native;
-}
+
+
+//parameter_types! {
+//	pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Native;
+//}
 
 
 impl currencies::Config for Runtime {
 	type Event = Event; 
 	type MultiCurrency = Tokens;      
 	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
-	type GetNativeCurrencyId = GetNativeCurrencyId;
+	type GetNativeCurrencyId = ();//GetNativeCurrencyId;// todo
 	type WeightInfo = weights::currencies::WeightInfo<Runtime>;         
 // https://docs.rs/orml-currencies/0.4.0/orml_currencies/module/trait.Config.html
 // Todo
