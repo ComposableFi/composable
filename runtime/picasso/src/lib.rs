@@ -28,6 +28,9 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+use currencies::BasicCurrencyAdapter;
+
+
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, match_type, parameter_types,
@@ -219,15 +222,20 @@ parameter_types! {
 	pub const MaxLocks: u32 = 50;
 }
 
+
 // multipurpose currency orlm pallet 
+parameter_types! {
+	pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Native;
+}
+
+
 impl currencies::Config for Runtime {
 	type Event = Event; 
-	type MultiCurrency = MultiCurrency<Self::AccountId>;      
-	type NativeCurrency = Self::NativeCurrency;     
-	type GetNativeCurrencyId = Self::GetNativeCurrencyId;
+	type MultiCurrency = Tokens;      
+	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+	type GetNativeCurrencyId = GetNativeCurrencyId;
 	type WeightInfo = weights::currencies::WeightInfo<Runtime>;         
 // https://docs.rs/orml-currencies/0.4.0/orml_currencies/module/trait.Config.html
-
 // Todo
 }
 
