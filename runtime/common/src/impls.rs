@@ -247,6 +247,11 @@ mod tests {
 		pub const MaxApprovals: u32 = 30;
 	}
 
+	impl sudo::Config for Test {
+		type Event = Event;
+		type Call = Call;
+	}
+
 	impl treasury::Config for Test {
 		type PalletId = TreasuryPalletId;
 		type Currency = Balances;
