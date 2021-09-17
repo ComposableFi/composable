@@ -175,6 +175,7 @@ pub mod pallet {
 		MarketAndAccountPairNotFound,
 		NotEnoughCollateralToBorrowAmount,
 		CannotBorrowInCurrentLendingState,
+		CannotHaveMoreThanOneActiveBorrow,
 		NotEnoughBorrowAsset,
 		NotEnoughCollateral,
 		TransferFailed,
@@ -182,6 +183,7 @@ pub mod pallet {
 		CannotRepayMoreThanBorrowAmount,
 		BorrowRateDoesNotExist,
 		BorrowIndexDoesNotExist,
+		FlashLoansAreNotAllowed,
 	}
 
 	pub struct BorrowerData {
@@ -295,6 +297,19 @@ pub mod pallet {
 		T::AccountId,
 		Ratio,
 		ValueQuery,
+	>;
+
+	/// Latest timestamp at which account borrowed from market.
+	#[pallet::storage]
+	#[pallet::getter(fn borrow_timestamp)]
+	pub type BorrowTimestamp<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		MarketIndex,
+		Twox64Concat,
+		T::AccountId,
+		Timestamp,
+		OptionQuery,
 	>;
 
 	/// market borrow index
@@ -704,6 +719,10 @@ pub mod pallet {
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
 			let asset_id = T::Vault::asset_id(&market.borrow)?;
+			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
+			if latest_borrow_timestamp.is_some() {
+				return Err(Error::<T>::CannotHaveMoreThanOneActiveBorrow.into())
+			}
 			let possible_borrow = Self::get_borrow_limit(&market_id, debt_owner)?;
 			if possible_borrow < amount_to_borrow {
 				return Err(Error::<T>::NotEnoughCollateralToBorrowAmount.into())
@@ -751,6 +770,7 @@ pub mod pallet {
 
 			// TODO: decide what todo do with reborrow  https://mlabs-corp.slack.com/archives/C02CRQ9KW04/p1631005365082200
 			DebtIndex::<T>::insert(market_id, debt_owner, market_index);
+			BorrowTimestamp::<T>::insert(market_id, debt_owner, Self::last_block_timestamp());
 
 			Ok(())
 		}
@@ -761,6 +781,11 @@ pub mod pallet {
 			beneficiary: &Self::AccountId,
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
+			let latest_borrow_timestamp =
+				BorrowTimestamp::<T>::get(market_id, beneficiary).unwrap();
+			if latest_borrow_timestamp == Self::last_block_timestamp() {
+				return Err(Error::<T>::FlashLoansAreNotAllowed.into())
+			}
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			if let Some(owed) = Self::borrow_balance_current(market_id, beneficiary)? {
@@ -801,6 +826,7 @@ pub mod pallet {
 				// it later with some strategy
 				let interest_index = BorrowIndex::<T>::get(market_id);
 				DebtIndex::<T>::insert(market_id, beneficiary, interest_index);
+				BorrowTimestamp::<T>::remove(market_id, beneficiary);
 
 				// we do not optimize vault here, will do it on finalize after all repays
 			}
