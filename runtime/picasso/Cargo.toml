@@ -138,6 +138,7 @@ runtime-benchmarks = [
 	"balances/runtime-benchmarks",
 	"timestamp/runtime-benchmarks",
 	"oracle/runtime-benchmarks",
+	"lending/runtime-benchmarks",
 	"collective/runtime-benchmarks",
 	"collator-selection/runtime-benchmarks",
 	"session-benchmarking/runtime-benchmarks",
