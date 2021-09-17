@@ -150,64 +150,64 @@ fn test_borrow() {
 	});
 }
 
-	// #[test]
-	// FIXME: this test fails
-	// fn borrow_repay() {
-	// new_test_ext().execute_with(|| {
-	// 	let alice_balance = 65535;
-	// 	let bob_balance = 65535;
-	// 	let (market, vault) = create_simple_market();
-	// 	// Balance for ALICE
-	// 	assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
-	// 	assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, alice_balance));
-	// 	assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), alice_balance);
-	// 	assert_ok!(Lending::deposit_collateral(&market, &ALICE, alice_balance));
-	// 	assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
-	// 	// Balance for BOB
-	// 	assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
-	// 	assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &BOB, bob_balance));
-	// 	assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), bob_balance);
-	// 	assert_ok!(Lending::deposit_collateral(&market, &BOB, bob_balance));
-	// 	assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
+// #[test]
+// FIXME: this test fails
+// fn borrow_repay() {
+// new_test_ext().execute_with(|| {
+// 	let alice_balance = 65535;
+// 	let bob_balance = 65535;
+// 	let (market, vault) = create_simple_market();
+// 	// Balance for ALICE
+// 	assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+// 	assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, alice_balance));
+// 	assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), alice_balance);
+// 	assert_ok!(Lending::deposit_collateral(&market, &ALICE, alice_balance));
+// 	assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+// 	// Balance for BOB
+// 	assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
+// 	assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &BOB, bob_balance));
+// 	assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), bob_balance);
+// 	assert_ok!(Lending::deposit_collateral(&market, &BOB, bob_balance));
+// 	assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
 
-	// 	// Balance of BTC for CHARLIE
-	// 	// CHARLIE is only lender of BTC
-	// 	let btc_amt = u32::MAX as Balance;
-	// 	assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
-	// 	assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &CHARLIE, btc_amt));
-	// 	assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), btc_amt);
-	// 	assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault, btc_amt));
+// 	// Balance of BTC for CHARLIE
+// 	// CHARLIE is only lender of BTC
+// 	let btc_amt = u32::MAX as Balance;
+// 	assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
+// 	assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &CHARLIE, btc_amt));
+// 	assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), btc_amt);
+// 	assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault, btc_amt));
 
-	// 	// ALICE borrows
-	// 	assert_eq!(Lending::borrow_balance_current(&market, &ALICE), Ok(Some(0)));
-	// 	let alice_limit = Lending::get_borrow_limit(&market, &ALICE).unwrap();
-	// 	assert_ok!(Lending::borrow(&market, &ALICE, alice_limit));
-	// 	for i in 1..10000 {
-	// 		process_block(i);
-	// 	}
+// 	// ALICE borrows
+// 	assert_eq!(Lending::borrow_balance_current(&market, &ALICE), Ok(Some(0)));
+// 	let alice_limit = Lending::get_borrow_limit(&market, &ALICE).unwrap();
+// 	assert_ok!(Lending::borrow(&market, &ALICE, alice_limit));
+// 	for i in 1..10000 {
+// 		process_block(i);
+// 	}
 
-	// 	// BOB borrows
-	// 	assert_eq!(Lending::borrow_balance_current(&market, &BOB), Ok(Some(0)));
-	// 	let bob_limit = Lending::get_borrow_limit(&market, &BOB).unwrap();
-	// 	assert_ok!(Lending::borrow(&market, &BOB, bob_limit));
-	// 	for i in 1..10000 {
-	// 		process_block(i);
-	// 	}
+// 	// BOB borrows
+// 	assert_eq!(Lending::borrow_balance_current(&market, &BOB), Ok(Some(0)));
+// 	let bob_limit = Lending::get_borrow_limit(&market, &BOB).unwrap();
+// 	assert_ok!(Lending::borrow(&market, &BOB, bob_limit));
+// 	for i in 1..10000 {
+// 		process_block(i);
+// 	}
 
-	// 	let alice_repay_amount = Lending::borrow_balance_current(&market, &ALICE).unwrap();
-	// 	let bob_repay_amount = Lending::borrow_balance_current(&market, &BOB).unwrap();
+// 	let alice_repay_amount = Lending::borrow_balance_current(&market, &ALICE).unwrap();
+// 	let bob_repay_amount = Lending::borrow_balance_current(&market, &BOB).unwrap();
 
-	// 	// MINT required BTC so that ALICE and BOB can repay the borrow.
-	// 	assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, alice_repay_amount.unwrap() - alice_limit));
-	// 	assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &BOB, bob_repay_amount.unwrap() - bob_limit));
-	// 	// ALICE , BOB both repay's loan. their USDT balance should have decreased because of
-	// 	// interest paid on borrows
-	// 	assert_ok!(Lending::repay_borrow(&market, &BOB, &BOB, bob_repay_amount));
-	// 	assert_ok!(Lending::repay_borrow(&market, &ALICE, &ALICE, alice_repay_amount));
-	// 	assert!(alice_balance > Tokens::balance(MockCurrencyId::USDT, &ALICE));
-	// 	assert!(bob_balance > Tokens::balance(MockCurrencyId::USDT, &BOB));
+// 	// MINT required BTC so that ALICE and BOB can repay the borrow.
+// 	assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, alice_repay_amount.unwrap() -
+// alice_limit)); 	assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &BOB, bob_repay_amount.unwrap()
+// - bob_limit)); 	// ALICE , BOB both repay's loan. their USDT balance should have decreased because
+// of 	// interest paid on borrows
+// 	assert_ok!(Lending::repay_borrow(&market, &BOB, &BOB, bob_repay_amount));
+// 	assert_ok!(Lending::repay_borrow(&market, &ALICE, &ALICE, alice_repay_amount));
+// 	assert!(alice_balance > Tokens::balance(MockCurrencyId::USDT, &ALICE));
+// 	assert!(bob_balance > Tokens::balance(MockCurrencyId::USDT, &BOB));
 
-	// });
+// });
 // }
 
 macro_rules! prop_assert_ok {

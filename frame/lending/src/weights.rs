@@ -2,7 +2,10 @@
 #![allow(unused_imports)]
 #![allow(trivial_numeric_casts)]
 
-use frame_support::{traits::Get, weights::{constants::RocksDbWeight, Weight}};
+use frame_support::{
+	traits::Get,
+	weights::{constants::RocksDbWeight, Weight},
+};
 use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {

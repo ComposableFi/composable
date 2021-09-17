@@ -55,7 +55,7 @@ pub mod pallet {
 			tokens::DepositConsequence,
 			UnixTime,
 		},
-		PalletId, transactional,
+		transactional, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedDiv, SaturatingSub};
@@ -83,7 +83,7 @@ pub mod pallet {
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 
 	#[pallet::config]
-    #[cfg(not(feature = "runtime-benchmarks"))]
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
@@ -133,7 +133,7 @@ pub mod pallet {
 		type UnixTime: UnixTime;
 		type WeightInfo: WeightInfo;
 	}
-    #[cfg(feature = "runtime-benchmarks")]
+	#[cfg(feature = "runtime-benchmarks")]
 	pub trait Config: frame_system::Config + pallet_oracle::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
@@ -151,7 +151,7 @@ pub mod pallet {
 			+ PartialEq
 			+ Copy
 			+ MaybeSerializeDeserialize
-            + From<u128>
+			+ From<u128>
 			+ Debug
 			+ Default;
 		type Balance: Default
@@ -271,7 +271,7 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
-	pub enum Event<T : Config> {
+	pub enum Event<T: Config> {
 		/// Event emitted when collateral is deposited.
 		/// [sender, market_id, amount]
 		CollateralDeposited(T::AccountId, MarketIndex, T::Balance),
@@ -387,9 +387,9 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::deposit_collateral())]
 		#[transactional]
 		pub fn deposit_collateral(
-			origin : OriginFor<T>,
-			market : MarketIndex,
-			amount : T::Balance,
+			origin: OriginFor<T>,
+			market: MarketIndex,
+			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			Self::deposit_collateral_internal(&market, &who, amount)?;
@@ -404,9 +404,9 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::withdraw_collateral())]
 		#[transactional]
 		pub fn withdraw_collateral(
-			origin : OriginFor<T>,
-			market : MarketIndex,
-			amount : T::Balance,
+			origin: OriginFor<T>,
+			market: MarketIndex,
+			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			Self::withdraw_collateral_internal(&market, &who, amount)?;
@@ -675,10 +675,11 @@ pub mod pallet {
 			let asset_id = T::Vault::asset_id(&market.borrow)?;
 			let possible_borrow = Self::get_borrow_limit(&market_id, debt_owner)?;
 			if possible_borrow < amount_to_borrow {
-				return Err(Error::<T>::NotEnoughCollateralToBorrowAmount.into());
+				return Err(Error::<T>::NotEnoughCollateralToBorrowAmount.into())
 			}
 			let account_id = Self::account_id(market_id);
-			let can_withdraw = <T as Config>::Currency::reducible_balance(asset_id.clone(), &account_id, true);
+			let can_withdraw =
+				<T as Config>::Currency::reducible_balance(asset_id.clone(), &account_id, true);
 			let fund = T::Vault::available_funds(&market.borrow, &Self::account_id(&market_id))?;
 			match fund {
 				FundsAvailability::Withdrawable(balance) => {
@@ -691,13 +692,12 @@ pub mod pallet {
 						can_withdraw + balance >= amount_to_borrow,
 						Error::<T>::NotEnoughBorrowAsset
 					)
-				}
+				},
 				FundsAvailability::Depositable(_) => (),
 				// TODO: decide when react and how to return fees back
 				// https://mlabs-corp.slack.com/archives/C02CRQ9KW04/p1630662664380600?thread_ts=1630658877.363600&cid=C02CRQ9KW04
-				FundsAvailability::MustLiquidate => {
-					return Err(Error::<T>::CannotBorrowInCurrentLendingState.into())
-				}
+				FundsAvailability::MustLiquidate =>
+					return Err(Error::<T>::CannotBorrowInCurrentLendingState.into()),
 			}
 
 			<T as Config>::Currency::transfer(
@@ -738,7 +738,9 @@ pub mod pallet {
 				let borrow_id = T::Vault::asset_id(&market.borrow)?;
 				ensure!(repay_amount <= owed, Error::<T>::CannotRepayMoreThanBorrowAmount);
 				ensure!(
-					<T as Config>::Currency::can_withdraw(borrow_id, &from, repay_amount).into_result().is_ok(),
+					<T as Config>::Currency::can_withdraw(borrow_id, &from, repay_amount)
+						.into_result()
+						.is_ok(),
 					Error::<T>::CannotWithdrawFromProvidedBorrowAccount
 				);
 				let market_account = Self::account_id(market_id);
@@ -750,12 +752,14 @@ pub mod pallet {
 				);
 				let debt_asset_id = DebtMarkets::<T>::get(market_id);
 
-				let burn_amount: u128 = <T as Config>::Currency::balance(debt_asset_id, beneficiary).into();
+				let burn_amount: u128 =
+					<T as Config>::Currency::balance(debt_asset_id, beneficiary).into();
 				let burn_amount = burn_amount
 					.checked_mul(LiftedFixedBalance::accuracy())
 					.expect("should work for 64 currency");
 				// TODO: fuzzing is must to uncover cases when sum != total
-				let market_debt_reduction = T::MarketDebtCurrency::balance(debt_asset_id, &market_account);
+				let market_debt_reduction =
+					T::MarketDebtCurrency::balance(debt_asset_id, &market_account);
 				T::MarketDebtCurrency::burn_from(debt_asset_id, &market_account, market_debt_reduction).expect(
 					"debt balance of market must be of parts of debts of borrowers and can reduce it",
 				);
@@ -763,8 +767,14 @@ pub mod pallet {
 					.expect("can always release held debt balance");
 				T::MarketDebtCurrency::burn_from(debt_asset_id, beneficiary, burn_amount)
 					.expect("can always burn debt balance");
-				<T as Config>::Currency::transfer(borrow_id, from, &market_account, repay_amount, false)
-					.expect("must be able to transfer because of above checks");
+				<T as Config>::Currency::transfer(
+					borrow_id,
+					from,
+					&market_account,
+					repay_amount,
+					false,
+				)
+				.expect("must be able to transfer because of above checks");
 
 				// TODO: not sure why Warp V2 (Blacksmith) does that, but seems will need to revise
 				// it later with some strategy
@@ -887,7 +897,7 @@ pub mod pallet {
 					)?;
 
 					Ok(balance.map(Into::into))
-				}
+				},
 				// no active borrow on  market for given account
 				Err(()) => Ok(Some(BorrowAmountOf::<Self>::zero())),
 			}
@@ -938,7 +948,7 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::NotEnoughCollateralToBorrowAmount)?
 					.checked_mul_int(1u64)
 					.ok_or(ArithmeticError::Overflow)?
-					.into());
+					.into())
 			}
 
 			Ok(Self::Balance::zero())
@@ -959,8 +969,8 @@ pub mod pallet {
 				Error::<T>::TransferFailed
 			);
 			ensure!(
-				<T as Config>::Currency::can_deposit(market.collateral, &market_account, amount)
-					== DepositConsequence::Success,
+				<T as Config>::Currency::can_deposit(market.collateral, &market_account, amount) ==
+					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 
@@ -971,8 +981,14 @@ pub mod pallet {
 				*collateral_balance = new_collateral_balance;
 				Result::<(), Error<T>>::Ok(())
 			})?;
-			<T as Config>::Currency::transfer(market.collateral, account, &market_account, amount, true)
-				.expect("impossible; qed;");
+			<T as Config>::Currency::transfer(
+				market.collateral,
+				account,
+				&market_account,
+				amount,
+				true,
+			)
+			.expect("impossible; qed;");
 			Ok(())
 		}
 
@@ -1020,8 +1036,8 @@ pub mod pallet {
 
 			let market_account = Self::account_id(&market_id);
 			ensure!(
-				<T as Config>::Currency::can_deposit(market.collateral, &account, amount)
-					== DepositConsequence::Success,
+				<T as Config>::Currency::can_deposit(market.collateral, &account, amount) ==
+					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 			ensure!(
@@ -1037,8 +1053,14 @@ pub mod pallet {
 				*collateral_balance = new_collateral_balance;
 				Result::<(), Error<T>>::Ok(())
 			})?;
-			<T as Config>::Currency::transfer(market.collateral, &market_account, account, amount, true)
-				.expect("impossible; qed;");
+			<T as Config>::Currency::transfer(
+				market.collateral,
+				&market_account,
+				account,
+				amount,
+				true,
+			)
+			.expect("impossible; qed;");
 			Ok(())
 		}
 	}
@@ -1052,7 +1074,7 @@ pub mod pallet {
 		account_interest_index: Ratio,
 	) -> Result<Option<u64>, DispatchError> {
 		if principal.is_zero() {
-			return Ok(None);
+			return Ok(None)
 		}
 		let principal: LiftedFixedBalance = principal.into();
 		let balance = principal
