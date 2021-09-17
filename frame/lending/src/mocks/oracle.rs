@@ -5,7 +5,6 @@ pub mod pallet {
 	use codec::Codec;
 	use composable_traits::{oracle::Oracle, vault::Vault};
 	use frame_support::{pallet_prelude::*, PalletId};
-	use frame_system::pallet_prelude::OriginFor;
 	use sp_runtime::{helpers_128bit::multiply_by_rational, ArithmeticError};
 	use sp_std::fmt::Debug;
 

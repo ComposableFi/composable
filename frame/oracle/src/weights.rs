@@ -7,7 +7,7 @@ use frame_support::{
 };
 use sp_std::marker::PhantomData;
 
-// The weight info trait for `pallet_collator_selection`.
+// The weight info trait for `pallet_oracle`.
 pub trait WeightInfo {
 	fn add_asset_and_info() -> Weight;
 	fn request_price() -> Weight;
@@ -20,7 +20,7 @@ pub trait WeightInfo {
 	fn update_price(p: u32) -> Weight;
 }
 
-/// Weights for pallet_collator_selection using the Substrate node and recommended hardware.
+/// Weights for pallet_oracle using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn add_asset_and_info() -> Weight {
