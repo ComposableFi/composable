@@ -94,7 +94,7 @@ fn set_prices<T: Config>() {
     );
 }
 
-fn create_market<T: Config>(manager: T::AccountId) {
+fn create_market<T: Config>(manager: T::AccountId) -> (crate::MarketIndex, <T as Config>::VaultId) {
     let market_config = MarketConfigInput {
         manager,
         reserved: Perquintill::from_percent(10),
@@ -104,7 +104,7 @@ fn create_market<T: Config>(manager: T::AccountId) {
         <T as Config>::AssetId::from(BTC),
         <T as Config>::AssetId::from(USDT),
         market_config
-    ).unwrap();
+    ).unwrap()
 }
 
 benchmarks! {
@@ -113,7 +113,7 @@ benchmarks! {
         let market: MarketIndex = MarketIndex::new(1u32);
         let amount: T::Balance = 1_000_000u64.into();
         set_prices::<T>();
-        create_market::<T>(caller.clone());
+        let _ = create_market::<T>(caller.clone());
         <T as pallet::Config>::Currency::mint_into(USDT.into(), &caller, amount);
     }: _(RawOrigin::Signed(caller.clone()), market, amount)
     verify {
@@ -125,8 +125,9 @@ benchmarks! {
         let market: MarketIndex = MarketIndex::new(1u32);
         let amount: T::Balance = 1_000_000u64.into();
         set_prices::<T>();
-        create_market::<T>(caller.clone());
+        let (market, _vault_id) = create_market::<T>(caller.clone());
         <T as pallet::Config>::Currency::mint_into(USDT.into(), &caller, amount);
+        Lending::<T>::deposit_collateral_internal(&market, &caller, amount);
     }: _(RawOrigin::Signed(caller.clone()), market, amount)
     verify {
         assert_last_event::<T>(Event::CollateralWithdrawed(caller, market, amount).into())

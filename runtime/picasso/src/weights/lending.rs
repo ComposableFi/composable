@@ -29,8 +29,13 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 	fn deposit_collateral() -> Weight {
-		(121_523_000 as Weight)
+		(123_789_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+	fn withdraw_collateral() -> Weight {
+		(138_802_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(10 as Weight))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
 }
