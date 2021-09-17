@@ -39,8 +39,8 @@ type CurrencyId = u64;
 type VaultId = u64;
 
 pub const ALICE: AccountId = 0;
-const BTC: u64 = 1000;
-const USDT: u64 = 2000;
+const BTC: u128 = 1000;
+const USDT: u128 = 2000;
 
 /*
 fn create_market<T: Config<AssetId = u64>>(
@@ -77,13 +77,44 @@ fn asset_id<T: Config>(id: u64) -> T::AssetId {
 }
 */
 
+fn set_prices<T: Config>() {
+    pallet_oracle::Prices::<T>::insert(
+        <T as pallet_oracle::Config>::AssetId::from(BTC),
+        pallet_oracle::Price{
+            price: <T as pallet_oracle::Config>::PriceValue::from(48_000u64),
+            block: 0u32.into(),
+        },
+    );
+    pallet_oracle::Prices::<T>::insert(
+        <T as pallet_oracle::Config>::AssetId::from(USDT),
+        pallet_oracle::Price{
+            price: <T as pallet_oracle::Config>::PriceValue::from(1u64),
+            block: 0u32.into(),
+        },
+    );
+}
+
+fn create_market<T: Config>(manager: T::AccountId) {
+    let market_config = MarketConfigInput {
+        manager,
+        reserved: Perquintill::from_percent(10),
+        collateral_factor: NormalizedCollateralFactor::saturating_from_rational(200, 100),
+    }; 
+    Lending::<T>::create(
+        <T as Config>::AssetId::from(BTC),
+        <T as Config>::AssetId::from(USDT),
+        market_config
+    ).unwrap();
+}
+
 benchmarks! {
     deposit_collateral {
 		let caller: T::AccountId = whitelisted_caller();
         let market: MarketIndex = MarketIndex::new(1u32);
         let amount: T::Balance = 1_000_000u64.into();
-        let usdt: T::AssetId = T::AssetId::default();
-        T::Currency::mint_into(usdt, &caller, amount);
+        set_prices::<T>();
+        create_market::<T>(caller.clone());
+        <T as pallet::Config>::Currency::mint_into(USDT.into(), &caller, amount);
     }: _(RawOrigin::Signed(caller.clone()), market, amount)
     verify {
         assert_last_event::<T>(Event::CollateralDeposited(caller, market, amount).into())
@@ -93,12 +124,15 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
         let market: MarketIndex = MarketIndex::new(1u32);
         let amount: T::Balance = 1_000_000u64.into();
-        let usdt: T::AssetId = T::AssetId::default();
-        T::Currency::mint_into(usdt, &caller, amount);
+        set_prices::<T>();
+        create_market::<T>(caller.clone());
+        <T as pallet::Config>::Currency::mint_into(USDT.into(), &caller, amount);
     }: _(RawOrigin::Signed(caller.clone()), market, amount)
     verify {
         assert_last_event::<T>(Event::CollateralWithdrawed(caller, market, amount).into())
     }
+
+/*
 
     accrue_interests {
         // let m in 1 .. u32::MAX; // values of MarketIndex
@@ -106,5 +140,8 @@ benchmarks! {
     }:  {
         Lending::<T>::accrue_interests(block)
     }
+*/
 }
 
+impl_benchmark_test_suite!(Lending, crate::mock::new_test_ext(), crate::mock::Test,);
+impl_benchmark_test_suite!(Oracle, crate::mock::new_test_ext(), crate::mock::Test,);
