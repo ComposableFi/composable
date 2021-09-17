@@ -4,14 +4,11 @@ use super::*;
 
 #[allow(unused)]
 use crate::Pallet as LiquidCrowdloan;
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
-	assert_ok,
-	traits::{Currency, EnsureOrigin, Get},
+	assert_ok, traits::{Currency, EnsureOrigin},
 };
 use frame_system::{EventRecord, RawOrigin};
-
-const SEED: u32 = 0;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	let events = frame_system::Pallet::<T>::events();
@@ -22,19 +19,6 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 }
 
 benchmarks! {
-	initiate {
-		let caller = T::JumpStart::successful_origin();
-		let manager: T::AccountId = account("manager", 0, SEED);
-
-	}:  {
-		assert_ok!(
-			<LiquidCrowdloan<T>>::initiate(caller, manager, 100u32.into())
-		);
-	}
-	verify {
-		assert_last_event::<T>(Event::Initiated(T::CurrencyId::get()).into());
-	}
-
 	make_claimable {
 		let caller = T::JumpStart::successful_origin();
 
@@ -50,7 +34,7 @@ benchmarks! {
 		let successful = T::JumpStart::successful_origin();
 		let caller: T::AccountId = whitelisted_caller();
 		let pot_address = <LiquidCrowdloan<T>>::account_id();
-		let _ = <LiquidCrowdloan<T>>::initiate(successful.clone(), caller.clone(), 200u32.into());
+		// let _ = <LiquidCrowdloan<T>>::initiate(successful.clone(), caller.clone(), 200u32.into());
 		let _ = <LiquidCrowdloan<T>>::make_claimable(successful);
 		T::NativeCurrency::make_free_balance_be(&pot_address, T::NativeCurrency::minimum_balance() * 2u32.into());
 

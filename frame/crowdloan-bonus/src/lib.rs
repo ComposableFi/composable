@@ -14,6 +14,7 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
+	pub use crate::weights::WeightInfo;
 	use codec::Codec;
 	use core::ops::{Div, Mul};
 	use frame_support::{
@@ -28,15 +29,14 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig};
 	use num_traits::SaturatingSub;
+	use primitives::currency::CurrencyId;
 	use sp_runtime::traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
 		SaturatedConversion, Zero,
 	};
-	use primitives::currency::CurrencyId;
-	pub use crate::weights::WeightInfo;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + sudo::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// Pallet ID, used for the pot of funds
 		type LiquidRewardId: Get<PalletId>;
@@ -46,6 +46,8 @@ pub mod pallet {
 		type JumpStart: EnsureOrigin<Self::Origin>;
 		/// Currency Id for this pallet
 		type CurrencyId: Get<CurrencyId>;
+		/// Total number of tokens to mint initially.
+		type TokenTotal: Get<Self::Balance>;
 		/// Multicurrency implementation
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = CurrencyId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = CurrencyId>
@@ -101,25 +103,17 @@ pub mod pallet {
 		InsufficientTokens,
 	}
 
+	#[pallet::hooks]
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+		fn on_initialize(_n: T::BlockNumber) -> Weight {
+			Self::initialize();
+
+			0
+		}
+	}
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[transactional]
-		#[pallet::weight(T::WeightInfo::initiate())]
-		pub fn initiate(
-			origin: OriginFor<T>,
-			manager: T::AccountId,
-			amount: T::Balance,
-		) -> DispatchResult {
-			T::JumpStart::ensure_origin(origin)?;
-			// at genesis this `None`, only when initiate is called will it be `Some`
-			ensure!(Self::is_claimable().is_none(), Error::<T>::AlreadyInitiated);
-			let lp_token_id = T::CurrencyId::get();
-			T::Currency::mint_into(lp_token_id, &manager, amount)?;
-			<IsClaimable<T>>::put(false);
-			Self::deposit_event(Event::Initiated(lp_token_id));
-			Ok(().into())
-		}
-
 		#[pallet::weight(T::WeightInfo::make_claimable())]
 		pub fn make_claimable(origin: OriginFor<T>) -> DispatchResult {
 			T::JumpStart::ensure_origin(origin)?;
@@ -133,12 +127,12 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::claim())]
 		pub fn claim(origin: OriginFor<T>, amount: u128) -> DispatchResult {
 			if amount.is_zero() {
-				return Ok(())
+				return Ok(());
 			}
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_claimable().unwrap_or(false), Error::<T>::NotClaimable);
 
-			let token_id =  T::CurrencyId::get();
+			let token_id = T::CurrencyId::get();
 			let token_supply = T::Currency::total_issuance(token_id);
 			let pot_balance = T::NativeCurrency::free_balance(&Self::account_id());
 			let token_supply_value: u128 = token_supply.saturated_into();
@@ -160,6 +154,20 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		/// initialize the pallet
+		pub fn initialize() -> Result<(), sp_runtime::DispatchError> {
+			// at genesis `IsClaimable` is `None`
+			if Self::is_claimable().is_none() {
+				let token_id = T::CurrencyId::get();
+				let manager = <sudo::Pallet<T>>::key();
+				// not really sure why this would fail, but keep trying to mint?
+				T::Currency::mint_into(token_id, &manager, T::TokenTotal::get())?;
+				<IsClaimable<T>>::put(false);
+				Self::deposit_event(Event::Initiated(token_id));
+			}
+
+			Ok(())
+		}
 		/// Get a unique, inaccessible account id from the `LiquidRewardId`.
 		pub fn account_id() -> T::AccountId {
 			T::LiquidRewardId::get().into_account()

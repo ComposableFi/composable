@@ -13,6 +13,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = {default-features = false, package = "parity-scale-codec", features = ["derive"], version = "2.0.0" }
 frame-support = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"  }
 frame-system = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sudo = { package = "pallet-sudo", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
 sp-runtime = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-arithmetic = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
@@ -40,6 +41,7 @@ std = [
     "codec/std",
     "log/std",
 	"primitives/std",
+	"sudo/std",
     "frame-support/std",
     "frame-system/std",
     "sp-runtime/std",

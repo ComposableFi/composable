@@ -562,12 +562,15 @@ impl orml_tokens::Config for Runtime {
 parameter_types! {
 	pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
 	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
+	/// total contributed to our crowdloan.
+	pub const TokenTotal: Balance = 200_000_000_000_000_000;
 }
 
 impl crowdloan_bonus::Config for Runtime {
 	type Event = Event;
 	type LiquidRewardId = LiquidRewardId;
 	type CurrencyId = CrowdloanCurrencyId;
+	type TokenTotal = TokenTotal;
 	type JumpStart = EnsureRootOrHalfCouncil;
 	type Currency = Tokens;
 	type Balance = Balance;

@@ -5037,6 +5037,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-balances",
+ "pallet-sudo",
  "parity-scale-codec",
  "primitives",
  "proptest",

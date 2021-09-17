@@ -27,6 +27,7 @@ frame_support::construct_runtime!(
 		LiquidCrowdloan: pallet_crowdloan_bonus::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
 		NativeBalances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 	}
 );
 
@@ -102,6 +103,12 @@ parameter_types! {
 ord_parameter_types! {
 	pub const RootAccount: u128 = 2;
 	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
+	pub const TokenTotal: Balance = 200;
+}
+
+impl sudo::Config for Test {
+	type Call = Call;
+	type Event = Event;
 }
 
 impl pallet_crowdloan_bonus::Config for Test {
@@ -110,6 +117,7 @@ impl pallet_crowdloan_bonus::Config for Test {
 	type CurrencyId = CrowdloanCurrencyId;
 	type JumpStart = EnsureSignedBy<RootAccount, u128>;
 	type Currency = Tokens;
+	type TokenTotal = TokenTotal;
 	type Balance = Balance;
 	type NativeCurrency = NativeBalances;
 	type WeightInfo = ();
