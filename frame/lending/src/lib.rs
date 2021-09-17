@@ -34,9 +34,11 @@ mod tests;
 mod benchmarking;
 pub mod weights;
 
+pub use crate::weights::WeightInfo;
+
 #[frame_support::pallet]
 pub mod pallet {
-
+	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
@@ -56,8 +58,8 @@ pub mod pallet {
 		PalletId, transactional,
 	};
 	use frame_system::pallet_prelude::*;
-use num_traits::{CheckedDiv, SaturatingSub};
-use sp_runtime::{
+	use num_traits::{CheckedDiv, SaturatingSub};
+	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
@@ -65,7 +67,6 @@ use sp_runtime::{
 		ArithmeticError, FixedPointNumber, FixedPointOperand, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec::Vec};
-    use frame_support::traits::Currency;
 
 	use composable_traits::rate_model::{LiftedFixedBalance, SafeArithmetic};
 
@@ -81,29 +82,20 @@ use sp_runtime::{
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 
-    /*
-    #[cfg(not(feature = "runtime-benchmarks"))]
-    type SuperTraits = frame_system::Config;
-    #[cfg(feature = "runtime-benchmarks")]
-    type SuperTraits = frame_system::Config + pallet_oracle::Config;
-	//pub trait Config: frame_system::Config {
-	#[cfg_attr(not(feature = "runtime-benchmarks"), pallet::config)]
-    */
-
 	#[pallet::config]
     #[cfg(not(feature = "runtime-benchmarks"))]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type Oracle: Oracle<AssetId = <Self as pallet::Config>::AssetId, Balance = Self::Balance>;
+		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
 		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 		type Vault: StrategicVault<
 			VaultId = Self::VaultId,
-			AssetId = <Self as pallet::Config>::AssetId,
+			AssetId = <Self as Config>::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 		>;
 
-		type CurrencyFactory: CurrencyFactory<<Self as pallet::Config>::AssetId>;
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
 		type AssetId: FullCodec
 			+ Eq
 			+ PartialEq
@@ -129,16 +121,17 @@ use sp_runtime::{
 			  // bit
 
 		/// vault owned - can transfer, cannot mint
-		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as pallet::Config>::AssetId>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as pallet::Config>::AssetId>;
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
 
 		/// market owned - debt token can be minted
-		type MarketDebtCurrency: Transfer<Self::AccountId, Balance = u128, AssetId = <Self as pallet::Config>::AssetId>
-			+ Mutate<Self::AccountId, Balance = u128, AssetId = <Self as pallet::Config>::AssetId>
-			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as pallet::Config>::AssetId>
-			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as pallet::Config>::AssetId>;
+		type MarketDebtCurrency: Transfer<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
+			+ Mutate<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
+			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
+			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
 		type UnixTime: UnixTime;
+		type WeightInfo: WeightInfo;
 	}
     #[cfg(feature = "runtime-benchmarks")]
 	pub trait Config: frame_system::Config + pallet_oracle::Config {
@@ -189,8 +182,8 @@ use sp_runtime::{
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
 		type UnixTime: UnixTime;
+		type WeightInfo: WeightInfo;
 	}
-
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
