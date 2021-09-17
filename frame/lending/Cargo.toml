@@ -27,6 +27,7 @@ sp-std = { version = "3.0.0", default-features = false,  git = "https://github.c
 
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 
+pallet-oracle = { default-features = false, optional = true, version = "1.0.0", path = "../oracle" }
 frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
 
 serde = { version = '1', optional = true }
@@ -66,4 +67,5 @@ runtime-benchmarks = [
     "frame-benchmarking",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
+	"pallet-oracle/runtime-benchmarks",
 ]
