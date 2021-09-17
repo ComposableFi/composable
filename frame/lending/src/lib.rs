@@ -384,7 +384,7 @@ pub mod pallet {
 		/// - `origin` : Sender of this extrinsic.
 		/// - `market` : Market index to which collateral will be deposited.
 		/// - `amount` : Amount of collateral to be deposited.
-		#[pallet::weight(1000)]
+		#[pallet::weight(<T as Config>::WeightInfo::deposit_collateral())]
 		#[transactional]
 		pub fn deposit_collateral(
 			origin : OriginFor<T>,
@@ -401,7 +401,7 @@ pub mod pallet {
 		/// - `origin` : Sender of this extrinsic.
 		/// - `market` : Market index from which collateral will be withdraw.
 		/// - `amount` : Amount of collateral to be withdrawed.
-		#[pallet::weight(1000)]
+		#[pallet::weight(<T as Config>::WeightInfo::withdraw_collateral())]
 		#[transactional]
 		pub fn withdraw_collateral(
 			origin : OriginFor<T>,

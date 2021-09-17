@@ -765,6 +765,7 @@ impl lending::Config for Runtime {
 	type UnixTime = Timestamp;
 	type CurrencyFactory = Factory;
 	type MarketDebtCurrency = Tokens;
+	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 }
 
 /// The calls we permit to be executed by extrinsics
