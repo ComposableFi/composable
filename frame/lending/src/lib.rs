@@ -184,6 +184,7 @@ pub mod pallet {
 		BorrowRateDoesNotExist,
 		BorrowIndexDoesNotExist,
 		FlashLoansAreNotAllowed,
+		BorrowDoesNotExist,
 	}
 
 	pub struct BorrowerData {
@@ -720,13 +721,9 @@ pub mod pallet {
 
 			let asset_id = T::Vault::asset_id(&market.borrow)?;
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
-			if latest_borrow_timestamp.is_some() {
-				return Err(Error::<T>::CannotHaveMoreThanOneActiveBorrow.into())
-			}
-			let possible_borrow = Self::get_borrow_limit(&market_id, debt_owner)?;
-			if possible_borrow < amount_to_borrow {
-				return Err(Error::<T>::NotEnoughCollateralToBorrowAmount.into())
-			}
+			ensure!(latest_borrow_timestamp.is_none(), Error::<T>::CannotHaveMoreThanOneActiveBorrow);
+			let borrow_limit = Self::get_borrow_limit(&market_id, debt_owner)?;
+			ensure!(borrow_limit >= amount_to_borrow, Error::<T>::NotEnoughCollateralToBorrowAmount);
 			let account_id = Self::account_id(market_id);
 			let can_withdraw = T::Currency::reducible_balance(asset_id.clone(), &account_id, true);
 			let fund = T::Vault::available_funds(&market.borrow, &Self::account_id(&market_id))?;
@@ -782,8 +779,11 @@ pub mod pallet {
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
 			let latest_borrow_timestamp =
-				BorrowTimestamp::<T>::get(market_id, beneficiary).unwrap();
-			if latest_borrow_timestamp == Self::last_block_timestamp() {
+				BorrowTimestamp::<T>::get(market_id, beneficiary);
+			if latest_borrow_timestamp.is_none() {
+				return Err(Error::<T>::BorrowDoesNotExist.into())
+			}
+			if latest_borrow_timestamp.unwrap() == Self::last_block_timestamp() {
 				return Err(Error::<T>::FlashLoansAreNotAllowed.into())
 			}
 			let market =
