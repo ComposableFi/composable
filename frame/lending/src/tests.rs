@@ -131,7 +131,7 @@ fn test_borrow() {
 		let alice_limit = Lending::get_borrow_limit(&market, &ALICE).unwrap();
 		assert_eq!(alice_limit, 45000000);
 		assert_eq!(Lending::total_cash(&market), Ok(total_cash));
-		assert_ok!(Lending::borrow(&market, &ALICE, alice_limit / 4));
+		assert_ok!(Lending::borrow_internal(&market, &ALICE, alice_limit / 4));
 		total_cash -= alice_limit / 4;
 		let mut total_borrows = alice_limit / 4;
 		assert_eq!(Lending::total_cash(&market), Ok(total_cash));
@@ -181,7 +181,7 @@ fn test_borrow() {
 // 	// ALICE borrows
 // 	assert_eq!(Lending::borrow_balance_current(&market, &ALICE), Ok(Some(0)));
 // 	let alice_limit = Lending::get_borrow_limit(&market, &ALICE).unwrap();
-// 	assert_ok!(Lending::borrow(&market, &ALICE, alice_limit));
+// 	assert_ok!(Lending::borrow_internal(&market, &ALICE, alice_limit));
 // 	for i in 1..10000 {
 // 		process_block(i);
 // 	}
@@ -189,7 +189,7 @@ fn test_borrow() {
 // 	// BOB borrows
 // 	assert_eq!(Lending::borrow_balance_current(&market, &BOB), Ok(Some(0)));
 // 	let bob_limit = Lending::get_borrow_limit(&market, &BOB).unwrap();
-// 	assert_ok!(Lending::borrow(&market, &BOB, bob_limit));
+// 	assert_ok!(Lending::borrow_internal(&market, &BOB, bob_limit));
 // 	for i in 1..10000 {
 // 		process_block(i);
 // 	}
@@ -202,8 +202,8 @@ fn test_borrow() {
 // alice_limit)); 	assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &BOB, bob_repay_amount.unwrap()
 // - bob_limit)); 	// ALICE , BOB both repay's loan. their USDT balance should have decreased because
 // of 	// interest paid on borrows
-// 	assert_ok!(Lending::repay_borrow(&market, &BOB, &BOB, bob_repay_amount));
-// 	assert_ok!(Lending::repay_borrow(&market, &ALICE, &ALICE, alice_repay_amount));
+// 	assert_ok!(Lending::repay_borrow_internal(&market, &BOB, &BOB, bob_repay_amount));
+// 	assert_ok!(Lending::repay_borrow_internal(&market, &ALICE, &ALICE, alice_repay_amount));
 // 	assert!(alice_balance > Tokens::balance(MockCurrencyId::USDT, &ALICE));
 // 	assert!(bob_balance > Tokens::balance(MockCurrencyId::USDT, &BOB));
 

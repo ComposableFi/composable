@@ -16,7 +16,6 @@
 //! To use it in your runtime, you need to implement the vault's [`Config`].
 //!
 //! ## Terminology
-//!
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(
 	dead_code,
@@ -44,10 +43,12 @@
 // it's best to just set this to warn during development.
 #![allow(missing_docs)]
 
+mod capabilities;
 mod models;
 mod rent;
 mod traits;
 
+pub use capabilities::Capabilities;
 pub use pallet::*;
 
 pub mod mocks;
@@ -64,7 +65,7 @@ pub mod pallet {
 	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::vault::{
-		Deposit, FundsAvailability, ReportableStrategicVault, Vault, VaultConfig,
+		CapabilityVault, Deposit, FundsAvailability, ReportableStrategicVault, Vault, VaultConfig,
 	};
 	use frame_support::{
 		ensure,
@@ -314,6 +315,10 @@ pub mod pallet {
 		/// Not all vaults have an associated LP token. Attempting to perform LP token related
 		/// operations result in `NotVaultLpToken`.
 		NotVaultLpToken,
+		/// The vault has deposits halted, see [Capabilities](crate::capabilities::Capability).
+		DepositsHalted,
+		/// The vault has withdrawals halted, see [Capabilities](crate::capabilities::Capability).
+		WithdrawalsHalted,
 	}
 
 	#[pallet::call]
@@ -501,6 +506,7 @@ pub mod pallet {
 					manager: config.manager,
 					asset_id: config.asset_id,
 					deposit,
+					..Default::default()
 				};
 
 				Vaults::<T>::insert(id, vault_info.clone());
@@ -524,6 +530,9 @@ pub mod pallet {
 		) -> Result<T::Balance, DispatchError> {
 			let vault =
 				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+
+			ensure!(vault.capabilities.withdrawals_allowed(), Error::<T>::WithdrawalsHalted);
+
 			let lp_shares_value_amount = Self::do_lp_share_value(vault_id, &vault, lp_amount)?;
 
 			let vault_owned_amount =
@@ -562,6 +571,8 @@ pub mod pallet {
 		) -> Result<T::Balance, DispatchError> {
 			let vault =
 				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+
+			ensure!(vault.capabilities.deposits_allowed(), Error::<T>::DepositsHalted);
 
 			ensure!(
 				T::Currency::can_withdraw(vault.asset_id, from, amount).into_result().is_ok(),
@@ -824,6 +835,140 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			CapitalStructure::<T>::mutate(vault, strategy, |state| state.balance = *report);
 			Ok(())
+		}
+	}
+
+	impl<T: Config> CapabilityVault for Pallet<T> {
+		fn stop(vault_id: &Self::VaultId) -> DispatchResult {
+			Vaults::<T>::try_mutate_exists(vault_id, |vault| {
+				if let Some(vault) = vault {
+					ensure!(
+						!vault.capabilities.is_tombstoned(),
+						DispatchError::Other("cannot stop a tombstoned vault")
+					);
+					vault.capabilities.set_stopped();
+					Ok(())
+				} else {
+					Err(DispatchError::CannotLookup)
+				}
+			})
+		}
+
+		fn is_stopped(vault_id: &Self::VaultId) -> Result<bool, DispatchError> {
+			Vaults::<T>::try_get(&vault_id)
+				.map_err(|_| DispatchError::CannotLookup)
+				.map(|vault| vault.capabilities.is_stopped())
+		}
+
+		fn start(vault_id: &Self::VaultId) -> DispatchResult {
+			Vaults::<T>::try_mutate_exists(vault_id, |vault| {
+				if let Some(vault) = vault {
+					ensure!(
+						!vault.capabilities.is_tombstoned(),
+						DispatchError::Other("cannot start a tombstoned vault")
+					);
+					vault.capabilities.start();
+					Ok(())
+				} else {
+					Err(DispatchError::CannotLookup)
+				}
+			})
+		}
+
+		fn tombstone(vault_id: &Self::VaultId) -> DispatchResult {
+			Vaults::<T>::try_mutate_exists(vault_id, |vault| {
+				if let Some(vault) = vault {
+					ensure!(
+						!vault.capabilities.is_tombstoned(),
+						DispatchError::Other("cannot tombstone a tombstoned vault")
+					);
+					vault.capabilities.set_tombstoned();
+					Ok(())
+				} else {
+					Err(DispatchError::CannotLookup)
+				}
+			})
+		}
+
+		fn untombstone(vault_id: &Self::VaultId) -> DispatchResult {
+			Vaults::<T>::try_mutate_exists(vault_id, |vault| {
+				if let Some(vault) = vault {
+					ensure!(
+						vault.capabilities.is_tombstoned(),
+						DispatchError::Other("cannot untombstone a non-tombstoned vault")
+					);
+					vault.capabilities.untombstone();
+					Ok(())
+				} else {
+					Err(DispatchError::CannotLookup)
+				}
+			})
+		}
+
+		fn is_tombstoned(vault_id: &Self::VaultId) -> Result<bool, DispatchError> {
+			Vaults::<T>::try_get(&vault_id)
+				.map_err(|_| DispatchError::CannotLookup)
+				.map(|vault| vault.capabilities.is_tombstoned())
+		}
+
+		fn stop_withdrawals(vault_id: &Self::VaultId) -> DispatchResult {
+			Vaults::<T>::try_mutate_exists(vault_id, |vault| {
+				if let Some(vault) = vault {
+					vault.capabilities.stop_withdrawals();
+					Ok(())
+				} else {
+					Err(DispatchError::CannotLookup)
+				}
+			})
+		}
+
+		fn allow_withdrawals(vault_id: &Self::VaultId) -> DispatchResult {
+			Vaults::<T>::try_mutate_exists(vault_id, |vault| {
+				if let Some(vault) = vault {
+					vault.capabilities.allow_withdrawals();
+					Ok(())
+				} else {
+					Err(DispatchError::CannotLookup)
+				}
+			})
+		}
+
+		fn withdrawals_allowed(vault_id: &Self::VaultId) -> Result<bool, DispatchError> {
+			Vaults::<T>::try_get(&vault_id)
+				.map_err(|_| DispatchError::CannotLookup)
+				.map(|vault| vault.capabilities.withdrawals_allowed())
+		}
+
+		fn stop_deposits(vault_id: &Self::VaultId) -> DispatchResult {
+			Vaults::<T>::try_mutate_exists(vault_id, |vault| {
+				if let Some(vault) = vault {
+					vault.capabilities.stop_deposits();
+					Ok(())
+				} else {
+					Err(DispatchError::CannotLookup)
+				}
+			})
+		}
+
+		fn allow_deposits(vault_id: &Self::VaultId) -> DispatchResult {
+			Vaults::<T>::try_mutate_exists(vault_id, |vault| {
+				if let Some(vault) = vault {
+					ensure!(
+						!vault.capabilities.is_tombstoned(),
+						DispatchError::Other("cannot allow deposits of a tombstoned vault")
+					);
+					vault.capabilities.allow_deposits();
+					Ok(())
+				} else {
+					Err(DispatchError::CannotLookup)
+				}
+			})
+		}
+
+		fn deposits_allowed(vault_id: &Self::VaultId) -> Result<bool, DispatchError> {
+			Vaults::<T>::try_get(&vault_id)
+				.map_err(|_| DispatchError::CannotLookup)
+				.map(|vault| vault.capabilities.deposits_allowed())
 		}
 	}
 }

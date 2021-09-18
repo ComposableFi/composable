@@ -99,6 +99,46 @@ pub trait Vault {
 	) -> Result<Self::Balance, DispatchError>;
 }
 
+/// CapabilityVault exposes functionalities for stopping and limiting vault functionality.
+///
+/// # Terminology
+///  - `Tombstoning`: marks the vault as ready to be deleted, stopping almost all functionalities, such
+///    as withdrawals and deposits. Empty vaults which pay no rent may be tombstoned.
+///  - `Stopping`: Used as an emergency feature to stop all functionality, akin to tombstoning but not
+///    marking it ready for deletion. Consider limiting this to sudo or a multisig council account.
+pub trait CapabilityVault: Vault {
+	/// Stops all functionality of the vault. Call [`start`](CapabilityVault::start) to re-enable
+	/// the vault.
+	fn stop(vault_id: &Self::VaultId) -> DispatchResult;
+	/// Indicates if the vault has been stopped. Stopped vaults have all functionality stopped,
+	/// except for [`start`](CapabilityVault::start)ing.
+	fn is_stopped(vault_id: &Self::VaultId) -> Result<bool, DispatchError>;
+	/// Starts the vault after [`stop`](CapabilityVault::stop) was called.
+	fn start(vault_id: &Self::VaultId) -> DispatchResult;
+	/// Marks the vault as ready to be removed. Most functionality is stopped, except for
+	/// withdrawals.
+	fn tombstone(vault_id: &Self::VaultId) -> DispatchResult;
+	/// Removes the tombstone mark.
+	fn untombstone(vault_id: &Self::VaultId) -> DispatchResult;
+	/// Indicates if the vault is tombstoned. Tombstoned vaults will be deleted after funds are
+	/// returned, unless the rent is topped up.
+	fn is_tombstoned(vault_id: &Self::VaultId) -> Result<bool, DispatchError>;
+	/// Stops withdrawals but allows deposits and other functionalities.
+	fn stop_withdrawals(vault_id: &Self::VaultId) -> DispatchResult;
+	/// Allows withdrawals. If the vault is stopped, withdrawals remain blocked.
+	fn allow_withdrawals(vault_id: &Self::VaultId) -> DispatchResult;
+	/// Indicates if the vault is allowing withdrawals. If the vault is either stopped, or if
+	/// withdrawals are disabled, this returns `false`.
+	fn withdrawals_allowed(vault_id: &Self::VaultId) -> Result<bool, DispatchError>;
+	/// Stops deposits but allows withdrawals and other functionalities.
+	fn stop_deposits(vault_id: &Self::VaultId) -> DispatchResult;
+	/// Allows withdrawals. If the vault is stopped or tombstoned, withdrawals remain blocked.
+	fn allow_deposits(vault_id: &Self::VaultId) -> DispatchResult;
+	/// Indicates if the vault is allowing deposits. If the vault is stopped, tombstoned or if
+	/// withdrawals are disabled, this returns `false`.
+	fn deposits_allowed(vault_id: &Self::VaultId) -> Result<bool, DispatchError>;
+}
+
 pub trait LpTokenVault {
 	type AssetId;
 

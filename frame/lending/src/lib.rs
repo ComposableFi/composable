@@ -272,12 +272,30 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
+		/// Event emitted when new lending market is created.
+		/// [market_id, vault_id, manager, borrow_asset_id, collateral_asset_id, reserved_factor,
+		/// collateral_factor]
+		NewMarketCreated(
+			MarketIndex,
+			T::VaultId,
+			T::AccountId,
+			<T as Config>::AssetId,
+			<T as Config>::AssetId,
+			Perquintill,
+			NormalizedCollateralFactor,
+		),
 		/// Event emitted when collateral is deposited.
 		/// [sender, market_id, amount]
 		CollateralDeposited(T::AccountId, MarketIndex, T::Balance),
 		/// Event emitted when collateral is withdrawed.
 		/// [sender, market_id, amount]
 		CollateralWithdrawed(T::AccountId, MarketIndex, T::Balance),
+		/// Event emitted when user borrows from given market.
+		/// [sender, marker_id, amount]
+		Borrowed(T::AccountId, MarketIndex, T::Balance),
+		/// Event emitted when user repays borrow of beneficiary in given market.
+		/// [sender, marker_id, beneficiary, amount]
+		RepaidBorrow(T::AccountId, MarketIndex, T::AccountId, T::Balance),
 	}
 
 	/// Lending instances counter
@@ -380,6 +398,40 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Create a new lending market.
+		/// - `origin` : Sender of this extrinsic. (Also manager for new market to be created.)
+		/// - `collateral_asset_id` : AssetId for collateral.
+		/// - `reserved_factor` : Reserve factor of market to be created.
+		/// - `collateral_factor` : Collateral factor of market to be created.
+		#[pallet::weight(1000)]
+		#[transactional]
+		pub fn create_new_market(
+			origin: OriginFor<T>,
+			borrow_asset_id: <T as Config>::AssetId,
+			collateral_asset_id: <T as Config>::AssetId,
+			reserved_factor: Perquintill,
+			collateral_factor: NormalizedCollateralFactor,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let market_config = MarketConfigInput {
+				reserved: reserved_factor,
+				manager: who.clone(),
+				collateral_factor,
+			};
+			let (market_id, vault_id) =
+				Self::create(borrow_asset_id, collateral_asset_id, market_config)?;
+			Self::deposit_event(Event::<T>::NewMarketCreated(
+				market_id,
+				vault_id,
+				who,
+				borrow_asset_id,
+				collateral_asset_id,
+				reserved_factor,
+				collateral_factor,
+			));
+			Ok(().into())
+		}
+
 		/// Deposit collateral to market.
 		/// - `origin` : Sender of this extrinsic.
 		/// - `market` : Market index to which collateral will be deposited.
@@ -399,18 +451,60 @@ pub mod pallet {
 
 		/// Withdraw collateral from market.
 		/// - `origin` : Sender of this extrinsic.
-		/// - `market` : Market index from which collateral will be withdraw.
+		/// - `market_id` : Market index from which collateral will be withdraw.
 		/// - `amount` : Amount of collateral to be withdrawed.
 		#[pallet::weight(<T as Config>::WeightInfo::withdraw_collateral())]
 		#[transactional]
 		pub fn withdraw_collateral(
 			origin: OriginFor<T>,
-			market: MarketIndex,
+			market_id: MarketIndex,
 			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			Self::withdraw_collateral_internal(&market, &who, amount)?;
-			Self::deposit_event(Event::<T>::CollateralWithdrawed(who, market, amount));
+			Self::withdraw_collateral_internal(&market_id, &who, amount)?;
+			Self::deposit_event(Event::<T>::CollateralWithdrawed(who, market_id, amount));
+			Ok(().into())
+		}
+
+		/// Borrow asset against deposited collateral.
+		/// - `origin` : Sender of this extrinsic. (Also the user who wants to borrow from market.)
+		/// - `market_id` : Market index from which user wants to borrow.
+		/// - `amount_to_borrow` : Amount which user wants to borrow.
+		#[pallet::weight(1000)]
+		#[transactional]
+		pub fn borrow(
+			origin: OriginFor<T>,
+			market_id: MarketIndex,
+			amount_to_borrow: T::Balance,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			Self::borrow_internal(&market_id, &who, amount_to_borrow)?;
+			Self::deposit_event(Event::<T>::Borrowed(who, market_id, amount_to_borrow));
+			Ok(().into())
+		}
+
+		/// Repay borrow for beneficiary account.
+		/// - `origin` : Sender of this extrinsic. (Also the user who repays beneficiary's borrow.)
+		/// - `market_id` : Market index to which user wants to repay borrow.
+		/// - `beneficiary` : AccountId which has borrowed asset. (This can be same or differnt than
+		/// origin).
+		/// - `repay_amount` : Amount which user wants to borrow.
+		#[pallet::weight(1000)]
+		#[transactional]
+		pub fn repay_borrow(
+			origin: OriginFor<T>,
+			market_id: MarketIndex,
+			beneficiary: T::AccountId,
+			repay_amount: T::Balance,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			Self::repay_borrow_internal(&market_id, &who, &beneficiary, Some(repay_amount))?;
+			Self::deposit_event(Event::<T>::RepaidBorrow(
+				who,
+				market_id,
+				beneficiary,
+				repay_amount,
+			));
 			Ok(().into())
 		}
 	}
@@ -469,7 +563,7 @@ pub mod pallet {
 			<Self as Lending>::get_borrow_limit(market_id, account)
 		}
 
-		pub fn borrow(
+		pub fn borrow_internal(
 			market_id: &<Self as Lending>::MarketId,
 			debt_owner: &<Self as Lending>::AccountId,
 			amount_to_borrow: <Self as Lending>::Balance,
@@ -502,7 +596,7 @@ pub mod pallet {
 			<Self as Lending>::total_interest(market_id)
 		}
 
-		pub fn repay_borrow(
+		pub fn repay_borrow_internal(
 			market_id: &<Self as Lending>::MarketId,
 			from: &<Self as Lending>::AccountId,
 			beneficiary: &<Self as Lending>::AccountId,

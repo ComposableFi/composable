@@ -48,8 +48,8 @@ pub mod pallet {
 		/// vault.
 		type Currency: Transfer<Self::AccountId> + Mutate<Self::AccountId>;
 
-		/// The id used as the `AccountId` of the pallet. This should be unique across all pallets to
-		/// avoid name collisions with other strategies.
+		/// The id used as the `AccountId` of the pallet. This should be unique across all pallets
+		/// to avoid name collisions with other strategies.
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 	}

@@ -1,3 +1,4 @@
+use crate::Capabilities;
 use composable_traits::vault::Deposit;
 use frame_support::pallet_prelude::*;
 
@@ -7,6 +8,7 @@ pub struct VaultInfo<AccountId, Balance, CurrencyId, BlockNumber> {
 	pub lp_token_id: CurrencyId,
 	pub manager: AccountId,
 	pub deposit: Deposit<Balance, BlockNumber>,
+	pub capabilities: Capabilities,
 }
 
 #[derive(Copy, Clone, Encode, Decode, Default, Debug, PartialEq)]
