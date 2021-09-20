@@ -42,7 +42,12 @@ treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/s
 democracy = { package = "pallet-democracy", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
-runtime-common = { path = "../common", default-features = false }
+
+# local modules
+crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
+
+common = { path = "../common", default-features = false }
+primitives = { path = "../primitives", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
@@ -72,6 +77,9 @@ xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "releas
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.8", default-features = false }
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.8", default-features = false }
 
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
+
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
@@ -96,14 +104,17 @@ std = [
 	"authorship/std",
 	"balances/std",
 	"randomness-collective-flip/std",
+	"crowdloan-bonus/std",
 	"timestamp/std",
 	"session/std",
 	"sudo/std",
+	"orml-tokens/std",
 	"indices/std",
 	"treasury/std",
 	"democracy/std",
 	"scheduler/std",
-	"runtime-common/std",
+	"common/std",
+	"primitives/std",
 	"collective/std",
 	"transaction-payment/std",
 	"parachain-info/std",
@@ -136,6 +147,7 @@ runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"indices/runtime-benchmarks",
+	"crowdloan-bonus/runtime-benchmarks",
 	"membership/runtime-benchmarks",
 	"treasury/runtime-benchmarks",
 	"scheduler/runtime-benchmarks",
