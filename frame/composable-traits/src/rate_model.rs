@@ -32,6 +32,14 @@ pub type NormalizedCollateralFactor = FixedU128;
 /// TODO: implement Ratio as wrapper over FixedU128
 pub type Ratio = FixedU128;
 
+pub fn ratio_from_percentages(percentages: u8) -> Option<Ratio> {
+	if percentages > 100 {
+		None
+	} else {
+		Ratio::checked_from_rational(percentages, 100)
+	}
+}
+
 /// seconds
 pub type Timestamp = u64;
 
@@ -79,6 +87,7 @@ impl SafeArithmetic for LiftedFixedBalance {
 	}
 }
 
+/// current notion of year will take away 1/365 from lenders and give away to borrowers (as does no accounts to length of year)
 pub const SECONDS_PER_YEAR: Timestamp = 365 * 24 * 60 * 60;
 
 /// utilization_ratio = total_borrows / (total_cash + total_borrows)
@@ -112,6 +121,7 @@ impl Default for InterestRateModel {
 			Rate::saturating_from_rational(32, 100),
 			Ratio::saturating_from_rational(80, 100),
 		)
+		.unwrap()
 	}
 }
 
@@ -121,19 +131,12 @@ impl InterestRateModel {
 		jump_rate: Rate,
 		full_rate: Rate,
 		jump_utilization: Ratio,
-	) -> Self {
-		Self::Jump(JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization))
+	) -> Option<Self> {
+		JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization).map(Self::Jump)
 	}
 
-	pub fn new_curve_model(base_rate: Rate) -> Self {
-		Self::Curve(CurveModel::new_model(base_rate))
-	}
-
-	pub fn check_model(&self) -> bool {
-		match self {
-			Self::Jump(jump) => jump.check_model(),
-			Self::Curve(curve) => curve.check_model(),
-		}
+	pub fn new_curve_model(base_rate: Rate) -> Option<Self> {
+		CurveModel::new_model(base_rate).map(Self::Curve)
 	}
 
 	/// Calculates the current borrow interest rate
@@ -181,27 +184,22 @@ impl JumpModel {
 		jump_rate: Ratio,
 		full_rate: Ratio,
 		jump_utilization: Ratio,
-	) -> JumpModel {
-		if jump_utilization > Ratio::one() {
+	) -> Option<JumpModel> {
+		let model = if jump_utilization > Ratio::one() {
 			Self { base_rate, jump_rate, full_rate, jump_utilization: Ratio::one() }
 		} else {
 			Self { base_rate, jump_rate, full_rate, jump_utilization }
-		}
-	}
-
-	/// Check the jump model for sanity
-	pub fn check_model(&self) -> bool {
-		if self.base_rate > Self::MAX_BASE_RATE
-			|| self.jump_rate > Self::MAX_JUMP_RATE
-			|| self.full_rate > Self::MAX_FULL_RATE
+		};
+		if model.base_rate <= Self::MAX_BASE_RATE
+			&& model.jump_rate <= Self::MAX_JUMP_RATE
+			&& model.full_rate <= Self::MAX_FULL_RATE
+			&& model.base_rate <= model.jump_rate
+			&& model.jump_rate <= model.full_rate
 		{
-			return false;
+			Some(model)
+		} else {
+			None
 		}
-		if self.base_rate > self.jump_rate || self.jump_rate > self.full_rate {
-			return false;
-		}
-
-		true
 	}
 
 	/// Calculates the borrow interest rate of jump model
@@ -243,13 +241,13 @@ impl CurveModel {
 	pub const MAX_BASE_RATE: Rate = Rate::from_inner(Rate::DIV / 100 * 10); // 10%
 
 	/// Create a new curve model
-	pub fn new_model(base_rate: Rate) -> CurveModel {
-		Self { base_rate }
-	}
-
-	/// Check the curve model for sanity
-	pub fn check_model(&self) -> bool {
-		self.base_rate <= Self::MAX_BASE_RATE
+	pub fn new_model(base_rate: Rate) -> Option<CurveModel> {
+		let model = Self { base_rate };
+		if model.base_rate <= Self::MAX_BASE_RATE {
+			Some(model)
+		} else {
+			None
+		}
 	}
 
 	/// Calculates the borrow interest rate of curve model
@@ -266,17 +264,24 @@ pub fn accrued_interest(borrow_rate: Rate, amount: u128, delta_time: Duration) -
 		.checked_div(SECONDS_PER_YEAR.into())
 }
 
-pub fn increment_index(borrow_rate: Rate, index: Rate, delta_time: Duration) -> Option<Rate> {
+pub fn increment_index(
+	borrow_rate: Rate,
+	index: Rate,
+	delta_time: Duration,
+) -> Result<Rate, ArithmeticError> {
 	borrow_rate
-		.checked_mul(&index)?
-		.checked_mul(&FixedU128::saturating_from_integer(delta_time))?
-		.checked_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))
+		.safe_mul(&index)?
+		.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
+		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))
 }
 
-pub fn increment_borrow_rate(borrow_rate: Rate, delta_time: Duration) -> Option<Rate> {
+pub fn increment_borrow_rate(
+	borrow_rate: Rate,
+	delta_time: Duration,
+) -> Result<Rate, ArithmeticError> {
 	borrow_rate
-		.checked_mul(&FixedU128::saturating_from_integer(delta_time))?
-		.checked_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))
+		.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
+		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))
 }
 
 #[cfg(test)]
@@ -294,7 +299,7 @@ mod tests {
 		let jump_utilization = Ratio::saturating_from_rational(80, 100);
 
 		assert_eq!(
-			JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization),
+			JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization).unwrap(),
 			JumpModel {
 				base_rate: Rate::from_inner(20_000_000_000_000_000).into(),
 				jump_rate: Rate::from_inner(100_000_000_000_000_000).into(),
@@ -311,8 +316,8 @@ mod tests {
 		let jump_rate = Rate::saturating_from_rational(10, 100);
 		let full_rate = Rate::saturating_from_rational(32, 100);
 		let jump_utilization = Ratio::saturating_from_rational(80, 100);
-		let jump_model = JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization);
-		assert!(jump_model.check_model());
+		let jump_model =
+			JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization).unwrap();
 
 		// normal rate
 		let mut cash: u128 = 500;
@@ -357,7 +362,7 @@ mod tests {
 
 	#[test]
 	fn curve_model_correctly_calculates_borrow_rate() {
-		let model = CurveModel::new_model(Rate::saturating_from_rational(2, 100));
+		let model = CurveModel::new_model(Rate::saturating_from_rational(2, 100)).unwrap();
 		assert_eq!(
 			model.get_borrow_rate(Ratio::saturating_from_rational(80, 100)).unwrap(),
 			Rate::from_inner(154217728000000000)
@@ -411,18 +416,74 @@ mod tests {
 				let full_rate = strategy.full_percentages;
 				let jump_utilization = strategy.target_utilization_percentage;
 				let jump_model =
-					JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization);
-				assert!(jump_model.check_model());
+					JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization)
+						.unwrap();
 
-				let util = calc_utilization_ratio(
-					FixedU128::checked_from_integer(cash as u128).unwrap(),
-					FixedU128::checked_from_integer(borrows as u128).unwrap(),
+				let utilization = calc_utilization_ratio(
+					LiftedFixedBalance::checked_from_integer(cash as u128).unwrap(),
+					LiftedFixedBalance::checked_from_integer(borrows as u128).unwrap(),
 				)
 				.unwrap();
-				let borrow_rate = jump_model.get_borrow_rate(util).unwrap();
+				let borrow_rate = jump_model.get_borrow_rate(utilization).unwrap();
 				prop_assert!(borrow_rate > Rate::zero());
 				Ok(())
 			})
+			.unwrap();
+	}
+
+	#[test]
+	fn proptest_jump_model_rate() {
+		let base_rate = Rate::saturating_from_rational(2, 100);
+		let jump_rate = Rate::saturating_from_rational(10, 100);
+		let full_rate = Rate::saturating_from_rational(32, 100);
+		let strategy = (0..=100u8, 1..=99u8)
+			.prop_map(|(optimal, utilization)| (optimal, utilization, utilization + 1));
+
+		let mut runner = TestRunner::default();
+		runner
+			.run(&strategy, |(optimal, previous, next)| {
+				let utilization_1 = ratio_from_percentages(previous).unwrap();
+				let utilization_2 = ratio_from_percentages(next).unwrap();
+				let optimal = ratio_from_percentages(optimal).unwrap();
+				let model = JumpModel::new_model(base_rate, jump_rate, full_rate, optimal).unwrap();
+				let rate_1 = model.get_borrow_rate(utilization_1);
+				let rate_2 = model.get_borrow_rate(utilization_2);
+				if optimal < Ratio::one() {
+					prop_assert!(rate_1 < rate_2);
+				}
+				Ok(())
+			})
+			.unwrap();
+	}
+
+	#[cfg(feature = "visualization")]
+	#[test]
+	fn jump_model_plotter() {
+		use plotters::prelude::*;
+		let base_rate = Rate::saturating_from_rational(2, 100);
+		let jump_rate = Rate::saturating_from_rational(10, 100);
+		let full_rate = Rate::saturating_from_rational(32, 100);
+		let optimal = Ratio::saturating_from_rational(80, 100);
+		let model = JumpModel::new_model(base_rate, jump_rate, full_rate, optimal).unwrap();
+
+		let area = BitMapBackend::new("./jump_model.png", (1024, 768)).into_drawing_area();
+		area.fill(&WHITE).unwrap();
+
+		let mut chart = ChartBuilder::on(&area)
+			.set_label_area_size(LabelAreaPosition::Left, 40)
+			.set_label_area_size(LabelAreaPosition::Bottom, 40)
+			.build_cartesian_2d(0.0..100.0, 0.0..100.0)
+			.unwrap();
+		chart.configure_mesh().draw().unwrap();
+		chart
+			.draw_series(LineSeries::new(
+				(0..=100).map(|x| {
+					let utilization = Ratio::saturating_from_rational(x, 100);
+					let rate = model.get_borrow_rate(utilization).unwrap();
+					(x as f64, rate.to_float() * 100.0)
+				}),
+				&RED,
+			))
 			.unwrap();
 	}
 }

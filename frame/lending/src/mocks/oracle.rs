@@ -4,13 +4,11 @@ pub use pallet::*;
 pub mod pallet {
 	use codec::Codec;
 	use composable_traits::{oracle::Oracle, vault::Vault};
-	use frame_support::{pallet_prelude::*, PalletId};
+	use frame_support::pallet_prelude::*;
 	use sp_runtime::{helpers_128bit::multiply_by_rational, ArithmeticError};
 	use sp_std::fmt::Debug;
 
 	use crate::mocks::{Balance, MockCurrencyId};
-
-	pub const PALLET_ID: PalletId = PalletId(*b"mck_orac");
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -69,7 +67,7 @@ pub mod pallet {
 							.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?,
 						t,
 					))
-				},
+				}
 			}
 		}
 	}
