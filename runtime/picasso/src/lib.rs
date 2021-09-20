@@ -30,11 +30,17 @@ use sp_version::RuntimeVersion;
 
 use currencies::BasicCurrencyAdapter;
 
+// new Balance
+//pub type BalanceOf<T> =
+//		<<T as currencies::Config>::MultiCurrency as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{All, Filter, KeyOwnerProofSystem, Randomness, StorageInfo},
+	traits::{
+		All, Filter, KeyOwnerProofSystem, Randomness, StorageInfo 		
+		
+		},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight,
@@ -226,19 +232,17 @@ parameter_types! {
 // multipurpose currency orlm pallet 
 
 
-//parameter_types! {
-//	pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Native;
-//}
 
+frame_support::parameter_types! {
+	pub const GetNativeCurrencyId: CurrencyId = PICA; // return PICA as the native currency
+}
 
 impl currencies::Config for Runtime {
 	type Event = Event; 
 	type MultiCurrency = Tokens;      
-	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
-	type GetNativeCurrencyId = ();//GetNativeCurrencyId;// todo
-	type WeightInfo = weights::currencies::WeightInfo<Runtime>;         
-// https://docs.rs/orml-currencies/0.4.0/orml_currencies/module/trait.Config.html
-// Todo
+	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>; // ();//Adapter<MultiCurrency>;//NativeCurrency<Self::AccountId>;
+	type GetNativeCurrencyId = GetNativeCurrencyId;// Get the id of the native currency, should be PICA for us
+	type WeightInfo = weights::currencies::WeightInfo<Runtime>; // use our currencies.rs weight file  
 }
 
 
