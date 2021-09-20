@@ -22,6 +22,12 @@ pub enum TokenSymbol {
 	Crowdloan,
 }
 
+impl Default for CurrencyId {
+	fn default() -> Self {
+		CurrencyId::Token(TokenSymbol::LAYR)
+	}
+}
+
 impl From<u128> for CurrencyId {
 	fn from(val: u128) -> Self {
 		match val {

@@ -91,7 +91,8 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ From<u128>
 			+ Into<u128>
-			+ Debug;
+			+ Debug
+			+ Default;
 		type PriceValue: Default
 			+ Parameter
 			+ Codec

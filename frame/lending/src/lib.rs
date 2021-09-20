@@ -101,7 +101,8 @@ pub mod pallet {
 			+ PartialEq
 			+ Copy
 			+ MaybeSerializeDeserialize
-			+ Debug;
+			+ Debug
+			+ Default;
 		type Balance: Default
 			+ Parameter
 			+ Codec
