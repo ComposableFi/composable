@@ -8,7 +8,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
 use common::{Amount, CurrencyId};
-use orml_traits::{parameter_type_with_key, MultiCurrency};
+use orml_traits::parameter_type_with_key;
 pub use runtime_common as common;
 use runtime_common::{
 	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, CouncilInstance,
@@ -230,7 +230,7 @@ parameter_types! {
 
 
 // multipurpose currency orlm pallet 
-
+// https://github.com/open-web3-stack/open-runtime-module-library/tree/master/currencies
 
 
 frame_support::parameter_types! {
@@ -240,7 +240,7 @@ frame_support::parameter_types! {
 impl currencies::Config for Runtime {
 	type Event = Event; 
 	type MultiCurrency = Tokens;      
-	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>; // ();//Adapter<MultiCurrency>;//NativeCurrency<Self::AccountId>;
+	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>; // Convert into a BasicCurrency object
 	type GetNativeCurrencyId = GetNativeCurrencyId;// Get the id of the native currency, should be PICA for us
 	type WeightInfo = weights::currencies::WeightInfo<Runtime>; // use our currencies.rs weight file  
 }
