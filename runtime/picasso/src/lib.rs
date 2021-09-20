@@ -8,10 +8,11 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
 use common::{
-	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, CouncilInstance,
-	Amount, EnsureRootOrHalfCouncil, Hash, Signature, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
-	MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION, AVERAGE_ON_INITIALIZE_RATIO,
+	impls::DealWithFees, AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber,
+	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
+	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
 };
+use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, TokenSymbol};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -19,9 +20,8 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult
+	ApplyExtrinsicResult,
 };
-use orml_traits::parameter_type_with_key;
 
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -694,7 +694,6 @@ impl utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
-
 }
 
 parameter_types! {
@@ -1046,8 +1045,8 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, democracy, Democracy);
 			add_benchmark!(params, batches, collective, Council);
 			add_benchmark!(params, batches, lending, Lending);
-            add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
-	    	add_benchmark!(params, batches, utility, Utility);
+			add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
+			add_benchmark!(params, batches, utility, Utility);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

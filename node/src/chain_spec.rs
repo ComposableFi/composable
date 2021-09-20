@@ -1,5 +1,5 @@
-use cumulus_primitives_core::ParaId;
 use common::{AccountId, AuraId, Balance};
+use cumulus_primitives_core::ParaId;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};

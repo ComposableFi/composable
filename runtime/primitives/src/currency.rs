@@ -1,6 +1,6 @@
 //! CurrencyId implementation
 
-use codec::{Encode, Decode};
+use codec::{Decode, Encode};
 use sp_runtime::RuntimeDebug;
 
 #[cfg(feature = "std")]
@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub enum CurrencyId {
 	Token(TokenSymbol),
-	LpToken(u128)
+	LpToken(u128),
 }
 
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]

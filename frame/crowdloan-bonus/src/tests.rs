@@ -1,15 +1,18 @@
 use crate::{mock::*, Error};
 use frame_support::{assert_noop, assert_ok, traits::Currency};
 use orml_tokens::AccountData;
-use sp_runtime::traits::BadOrigin;
 use primitives::currency::{CurrencyId, TokenSymbol};
+use sp_runtime::traits::BadOrigin;
 
 #[test]
 fn initiate() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(LiquidCrowdloan::initialize());
 		let balance = AccountData { free: 200, reserved: 0, frozen: 0 };
-		assert_eq!(Tokens::accounts(Sudo::key(), CurrencyId::Token(TokenSymbol::Crowdloan)), balance);
+		assert_eq!(
+			Tokens::accounts(Sudo::key(), CurrencyId::Token(TokenSymbol::Crowdloan)),
+			balance
+		);
 	});
 }
 
@@ -58,9 +61,6 @@ fn claim() {
 		assert_eq!(NativeBalances::free_balance(LiquidCrowdloan::account_id()), 0);
 		assert_eq!(NativeBalances::free_balance(owner), 100);
 
-		assert_noop!(
-			LiquidCrowdloan::claim(Origin::signed(1), 100),
-			Error::<Test>::EmptyPot
-		);
+		assert_noop!(LiquidCrowdloan::claim(Origin::signed(1), 100), Error::<Test>::EmptyPot);
 	});
 }
