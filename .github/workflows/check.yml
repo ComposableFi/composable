@@ -9,6 +9,15 @@ on:
 jobs:
   test-build:
     runs-on: ubuntu-20.04
+    env:
+      RUST_BACKTRACE: full
+      RUSTC_WRAPPER: sccache
+      SCCACHE_CACHE_SIZE: 2G
+      SCCACHE_DIR: ~/.cache/sccache
+      SCCACHE_IDLE_TIMEOUT: 0
+      SCCACHE_LOG: debug 
+      SCCACHE_ERROR_LOG: /tmp/sccache_log.txt
+      # SCCACHE_RECACHE: 1 # Uncomment this to clear cache, then comment it back out
     steps:
       - uses: actions/checkout@v2
       - name: Set-Up system dependencies
@@ -21,6 +30,26 @@ jobs:
           rustup update nightly
           rustup update stable
           rustup target add wasm32-unknown-unknown --toolchain nightly
+      - name: Install sccache
+        env:
+          LINK: https://github.com/mozilla/sccache/releases/download
+          SCCACHE_VERSION: v0.2.15
+        run: |
+          SCCACHE_FILE=sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl
+          mkdir -p $HOME/.local/bin
+          curl -L "$LINK/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz" | tar xz
+          mv -f $SCCACHE_FILE/sccache $HOME/.local/bin/sccache
+          chmod +x $HOME/.local/bin/sccache
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+          mkdir -p $SCCACHE_DIR
+          mkdir -p ~/.config/sccache
+          cat <<EOF > ~/.config/sccache/config
+          [cache]
+          disk.dir = "/home/runner/.cache/sccache"
+          disk.size = 2000000000
+          EOF
+          cat ~/.config/sccache/config
       - name: Cache
         uses: actions/cache@v2.1.6
         with:
@@ -29,6 +58,19 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Save sccache
+        uses: actions/cache@v2.1.6
+        continue-on-error: false
+        with:
+          path: ~/.cache/sccache
+          key: ${{ runner.os }}-sccache-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-sccache-
+      - name: Start sccache server
+        run: sccache --start-server
+        continue-on-error: true
+      - name: Read sccache server log
+        rune: cat $SCCACHE_ERROR_LOG
       - name: Clean project artifacts
         run: |
           cargo clean -p picasso-runtime
@@ -43,3 +85,7 @@ jobs:
         run: >
           pushd node &&
           cargo check --features=runtime-benchmarks --release
+      - name: Print sccache stats
+        run: sccache --show-stats
+      - name: Stop sccache server
+        run: sccache --stop-server || true
