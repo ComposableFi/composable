@@ -44,6 +44,8 @@ transaction-payment = { package = "pallet-transaction-payment", git = "https://g
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
+currencies = { git = "https://github.com/open-web3-stack/open-runtime-module-library", package = "orml-currencies", default-features = false, rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb" }
+
 
 # local modules
 crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
@@ -117,6 +119,7 @@ std = [
 	"currency-factory/std",
 	"orml-tokens/std",
 	"orml-traits/std",
+	"currencies/std",
 	"treasury/std",
 	"democracy/std",
 	"scheduler/std",

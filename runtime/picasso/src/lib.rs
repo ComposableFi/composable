@@ -22,6 +22,7 @@ use sp_runtime::{
 	ApplyExtrinsicResult
 };
 use orml_traits::parameter_type_with_key;
+use currencies::BasicCurrencyAdapter;
 
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -173,7 +174,7 @@ impl system::Config for Runtime {
 	/// Version of the runtime.
 	type Version = Version;
 	/// The data to be stored in an account.
-	type AccountData = balances::AccountData<Balance>;
+	type AccountData = balances::AccountData<Balance>; //change me
 
 	/// Converts a module to the index of the module in `construct_runtime!`.
 	///
@@ -210,6 +211,22 @@ impl timestamp::Config for Runtime {
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
 }
+
+// multipurpose currency orlm pallet 
+// https://github.com/open-web3-stack/open-runtime-module-library/tree/master/currencies
+frame_support::parameter_types! {
+        pub const GetNativeCurrencyId: CurrencyId = primitives::currency::CurrencyId::Token(TokenSymbol::PICA); // return PICA as the native currency
+}
+
+impl currencies::Config for Runtime {
+        type Event = Event;
+        type MultiCurrency = Tokens;
+        type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>; // Convert into a BasicCurrency object
+        type GetNativeCurrencyId = GetNativeCurrencyId;// Get the id of the native currency, should be PICA for us
+        type WeightInfo = weights::currencies::WeightInfo<Runtime>; // use our currencies.rs weight file  
+}
+
+
 
 /// minimum account balance is given as 0.1 PICA ~ 100 MILLI_PICA
 pub const EXISTENTIAL_DEPOSIT: Balance = 100 * MILLI_PICA;
@@ -853,6 +870,7 @@ construct_runtime!(
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 54,
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
+		Currencies: currencies::{Pallet, Call, Event<T>} = 56,
 	}
 );
 

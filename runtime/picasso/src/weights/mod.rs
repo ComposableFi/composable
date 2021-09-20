@@ -13,3 +13,4 @@ pub mod treasury;
 pub mod collator_selection;
 pub mod crowdloan_bonus;
 pub mod utility;
+pub mod currencies;
