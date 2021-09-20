@@ -13,10 +13,13 @@ jobs:
       RUST_BACKTRACE: full
       RUSTC_WRAPPER: sccache
       SCCACHE_CACHE_SIZE: 2G
-      SCCACHE_DIR: ~/.cache/sccache
+      SCCACHE_DIR: /home/runner/.cache/sccache
       SCCACHE_IDLE_TIMEOUT: 0
-      SCCACHE_LOG: debug 
-      SCCACHE_ERROR_LOG: /tmp/sccache_log.txt
+
+      # debug
+      # SCCACHE_LOG: debug
+      # SCCACHE_ERROR_LOG: /tmp/sccache_log.txt
+
       # SCCACHE_RECACHE: 1 # Uncomment this to clear cache, then comment it back out
     steps:
       - uses: actions/checkout@v2
@@ -49,7 +52,6 @@ jobs:
           disk.dir = "/home/runner/.cache/sccache"
           disk.size = 2000000000
           EOF
-          cat ~/.config/sccache/config
       - name: Cache
         uses: actions/cache@v2.1.6
         with:
@@ -68,9 +70,6 @@ jobs:
             ${{ runner.os }}-sccache-
       - name: Start sccache server
         run: sccache --start-server
-        continue-on-error: true
-      - name: Read sccache server log
-        rune: cat $SCCACHE_ERROR_LOG
       - name: Clean project artifacts
         run: |
           cargo clean -p picasso-runtime
