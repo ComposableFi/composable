@@ -3,7 +3,9 @@ panic = "unwind"
 
 [workspace]
 members = [
+    "frame/*",
     "node",
+    "price-feed",
     "runtime/picasso",
 	"runtime/common",
 	"runtime/primitives",

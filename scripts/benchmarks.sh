@@ -19,6 +19,7 @@ pallets=(
 	collator_selection
 	crowdloan_bonus
 	utility
+	lending
 )
 
 for p in ${pallets[@]}
