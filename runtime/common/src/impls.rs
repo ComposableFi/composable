@@ -98,6 +98,7 @@ mod tests {
 			CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>},
 			LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>},
 			Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+			Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,
 		}
 	);
 
@@ -212,6 +213,7 @@ mod tests {
 	parameter_types! {
 		pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
 		pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
+		pub const TokenTotal: Balance = 200_000_000_000_000_000;
 	}
 
 	ord_parameter_types! {
@@ -225,6 +227,7 @@ mod tests {
 		type Currency = Tokens;
 		type Balance = Balance;
 		type NativeCurrency = Balances;
+		type TokenTotal = TokenTotal;
 		type WeightInfo = ();
 	}
 

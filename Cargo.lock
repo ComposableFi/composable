@@ -1096,6 +1096,7 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-crowdloan-bonus",
+ "pallet-sudo",
  "pallet-treasury",
  "parity-scale-codec",
  "polkadot-primitives 0.9.8 (git+https://github.com/paritytech/polkadot?tag=v0.9.8)",
