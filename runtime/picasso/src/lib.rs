@@ -765,6 +765,7 @@ impl lending::Config for Runtime {
 	type UnixTime = Timestamp;
 	type CurrencyFactory = Factory;
 	type MarketDebtCurrency = Tokens;
+	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -1015,6 +1016,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, scheduler, Scheduler);
 			add_benchmark!(params, batches, democracy, Democracy);
 			add_benchmark!(params, batches, collective, Council);
+			add_benchmark!(params, batches, lending, Lending);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

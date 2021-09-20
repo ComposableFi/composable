@@ -2,7 +2,7 @@ use crate as pallet_lending;
 use composable_traits::{currency::CurrencyFactory, oracle::Oracle as OracleTrait};
 use frame_support::{
 	parameter_types,
-	traits::{Contains, GenesisBuild, OnFinalize, OnInitialize},
+	traits::{Contains, OnFinalize, OnInitialize},
 	PalletId,
 };
 use frame_system::{self as system, EnsureSignedBy};
@@ -228,6 +228,7 @@ impl pallet_lending::Config for Test {
 	type UnixTime = Timestamp;
 	type CurrencyFactory = Factory;
 	type MarketDebtCurrency = Tokens;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
