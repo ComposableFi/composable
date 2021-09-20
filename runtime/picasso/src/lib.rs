@@ -231,6 +231,7 @@ impl currencies::Config for Runtime {
 /// minimum account balance is given as 0.1 PICA ~ 100 MILLI_PICA
 pub const EXISTENTIAL_DEPOSIT: Balance = 100 * MILLI_PICA;
 
+/*
 parameter_types! {
 	pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
 	pub const MaxLocks: u32 = 50;
@@ -249,6 +250,7 @@ impl balances::Config for Runtime {
 	type AccountStore = System;
 	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
+*/
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
@@ -837,7 +839,7 @@ construct_runtime!(
 		RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage} = 3,
 		TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
 		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
-		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
+//		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
 
 		// Parachains stuff
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,

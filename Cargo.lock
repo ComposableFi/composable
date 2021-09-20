@@ -6421,7 +6421,6 @@ dependencies = [
  "orml-traits",
  "pallet-aura",
  "pallet-authorship",
- "pallet-balances",
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-crowdloan-bonus",
