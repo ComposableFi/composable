@@ -7,22 +7,22 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
-use common::{Amount, CurrencyId};
-use orml_traits::parameter_type_with_key;
-pub use runtime_common as common;
-use runtime_common::{
+use common::{
 	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, CouncilInstance,
-	EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
-	MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
+	Amount, EnsureRootOrHalfCouncil, Hash, Signature, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
+	MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION, AVERAGE_ON_INITIALIZE_RATIO,
 };
+use primitives::currency::{CurrencyId, TokenSymbol};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult,
+	ApplyExtrinsicResult
 };
+use orml_traits::parameter_type_with_key;
+
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -574,6 +574,45 @@ impl collator_selection::Config for Runtime {
 	type WeightInfo = ();
 }
 
+parameter_type_with_key! {
+	// TODO:
+	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+		Zero::zero()
+	};
+}
+
+// TODO(hussein-aitlahcen): weight, dust & existential deposit
+impl orml_tokens::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = CurrencyId;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
+	type MaxLocks = ();
+	type DustRemovalWhitelist = ();
+}
+
+parameter_types! {
+	pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
+	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
+	/// total contributed to our crowdloan.
+	pub const TokenTotal: Balance = 200_000_000_000_000_000;
+}
+
+impl crowdloan_bonus::Config for Runtime {
+	type Event = Event;
+	type LiquidRewardId = LiquidRewardId;
+	type CurrencyId = CrowdloanCurrencyId;
+	type TokenTotal = TokenTotal;
+	type JumpStart = EnsureRootOrHalfCouncil;
+	type Currency = Tokens;
+	type Balance = Balance;
+	type NativeCurrency = Balances;
+	type WeightInfo = weights::crowdloan_bonus::WeightInfo<Runtime>;
+}
+
 parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
 	/// percentage of proposal that most be bonded by the proposer
@@ -651,6 +690,13 @@ impl scheduler::Config for Runtime {
 	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
 }
 
+impl utility::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type WeightInfo = weights::utility::WeightInfo<Runtime>;
+
+}
+
 parameter_types! {
 	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
@@ -703,7 +749,7 @@ impl democracy::Config for Runtime {
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: CurrencyId = 0;
+	pub const NativeAssetId: CurrencyId = CurrencyId::Token(TokenSymbol::PICA);
 	pub const CreationDeposit: Balance = 10 * PICA;
 	pub const VaultExistentialDeposit: Balance = 1000 * PICA;
 	pub const RentPerBlock: Balance = 1 * MILLI_PICA;
@@ -735,25 +781,6 @@ impl currency_factory::Config for Runtime {
 	type Convert = ConvertInto;
 }
 
-parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		Zero::zero()
-	};
-}
-
-// TODO(hussein-aitlahcen): weight, dust & existential deposit
-impl orml_tokens::Config for Runtime {
-	type Event = Event;
-	type Balance = Balance;
-	type Amount = Amount;
-	type CurrencyId = CurrencyId;
-	type WeightInfo = ();
-	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = ();
-	type MaxLocks = ();
-	type DustRemovalWhitelist = ();
-}
-
 impl lending::Config for Runtime {
 	type Oracle = Oracle;
 	type VaultId = u64;
@@ -765,6 +792,7 @@ impl lending::Config for Runtime {
 	type UnixTime = Timestamp;
 	type CurrencyFactory = Factory;
 	type MarketDebtCurrency = Tokens;
+	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -811,6 +839,7 @@ construct_runtime!(
 		Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 32,
 		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
+		Utility: utility::{Pallet, Call, Event} = 35,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
@@ -823,6 +852,7 @@ construct_runtime!(
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 54,
+		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
 	}
 );
 
@@ -1015,6 +1045,9 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, scheduler, Scheduler);
 			add_benchmark!(params, batches, democracy, Democracy);
 			add_benchmark!(params, batches, collective, Council);
+			add_benchmark!(params, batches, lending, Lending);
+            add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
+	    	add_benchmark!(params, batches, utility, Utility);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

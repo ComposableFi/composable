@@ -1,9 +1,9 @@
 use crate::{
 	mocks::{
-		new_test_ext, process_block, AccountId, Balance, Lending, MockCurrencyId, Origin, Tokens,
-		Vault, VaultId, ALICE, BOB, CHARLIE,
+		new_test_ext, process_block, AccountId, Balance, Lending, MockCurrencyId, Origin, Test,
+		Tokens, Vault, VaultId, ALICE, BOB, CHARLIE,
 	},
-	BorrowerData, MarketIndex,
+	BorrowerData, Error, MarketIndex,
 };
 use composable_traits::{
 	lending::MarketConfigInput,
@@ -11,11 +11,8 @@ use composable_traits::{
 	vault::{Deposit, VaultConfig},
 };
 use frame_support::{
-	assert_ok,
-	traits::{
-		fungibles::{Inspect, Mutate},
-		OnInitialize,
-	},
+	assert_err, assert_ok,
+	traits::fungibles::{Inspect, Mutate},
 };
 use proptest::prelude::*;
 use sp_runtime::{traits::Zero, FixedPointNumber, Perquintill};
@@ -209,6 +206,51 @@ fn test_borrow() {
 
 // });
 // }
+
+#[test]
+fn test_flash_loan() {
+	new_test_ext().execute_with(|| {
+		let amount = 900000;
+		let (market, vault) = create_simple_market();
+		// Balance for ALICE
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, amount));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount);
+
+		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, amount));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+
+		// Balance of BTC for CHARLIE
+		// CHARLIE is only lender of BTC
+		let btc_amt = amount * 100;
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &CHARLIE, btc_amt));
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), btc_amt);
+		Vault::deposit(Origin::signed(CHARLIE), vault, btc_amt);
+		let mut total_cash = btc_amt;
+
+		assert_eq!(Lending::borrow_balance_current(&market, &ALICE), Ok(Some(0)));
+		let alice_limit = Lending::get_borrow_limit(&market, &ALICE).unwrap();
+		assert_eq!(Lending::total_cash(&market), Ok(total_cash));
+		process_block(1);
+		assert_ok!(Lending::borrow_internal(&market, &ALICE, alice_limit / 4));
+		total_cash -= alice_limit / 4;
+		let mut total_borrows = alice_limit / 4;
+		assert_eq!(Lending::total_cash(&market), Ok(total_cash));
+		assert_eq!(Lending::total_borrows(&market), Ok(total_borrows));
+		let alice_repay_amount = Lending::borrow_balance_current(&market, &ALICE).unwrap();
+		// MINT required BTC so that ALICE and BOB can repay the borrow.
+		assert_ok!(Tokens::mint_into(
+			MockCurrencyId::BTC,
+			&ALICE,
+			alice_repay_amount.unwrap() - (alice_limit / 4)
+		));
+		assert_err!(
+			Lending::repay_borrow_internal(&market, &ALICE, &ALICE, alice_repay_amount),
+			Error::<Test>::FlashLoansAreNotAllowed
+		);
+	});
+}
 
 macro_rules! prop_assert_ok {
     ($cond:expr) => {

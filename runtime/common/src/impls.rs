@@ -1,21 +1,3 @@
-// Copyright (C) 2021 Parity Technologies (UK) Ltd.
-// SPDX-License-Identifier: Apache-2.0
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-//! Auxillary struct/enums for Statemint runtime.
-//! Taken from polkadot/runtime/common (at a21cd64) and adapted for Statemint.
-
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 
 pub type NegativeImbalance<T> =
@@ -27,6 +9,7 @@ impl<R> OnUnbalanced<NegativeImbalance<R>> for ToStakingPot<R>
 where
 	R: balances::Config
 		+ collator_selection::Config
+		+ crowdloan_bonus::Config
 		+ treasury::Config<Currency = balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
@@ -37,7 +20,15 @@ where
 		// Collator's get half the fees
 		let (to_collators, half) = amount.ration(50, 50);
 		// 30% gets burned 20% to treasury
-		let (_, to_treasury) = half.ration(30, 20);
+		let (_pre_burn, to_treasury) = half.ration(30, 20);
+
+		// once the pot is opened to be claimed, stop sending transaction fees there.
+		if !matches!(<crowdloan_bonus::Pallet<R>>::is_claimable(), Some(true)) {
+			// essentially 15% of all transaction fees goes to the crowdloan_bonus pot
+			let (_, to_crowdloan_bonus) = _pre_burn.ration(50, 50);
+			let liquid_pot =  <crowdloan_bonus::Pallet<R>>::account_id();
+			<balances::Pallet<R>>::resolve_creating(&liquid_pot, to_crowdloan_bonus);
+		}
 
 		let staking_pot = <collator_selection::Pallet<R>>::account_id();
 		<balances::Pallet<R>>::resolve_creating(&staking_pot, to_collators);
@@ -53,6 +44,7 @@ impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
 	R: balances::Config
 		+ collator_selection::Config
+		+ crowdloan_bonus::Config
 		+ treasury::Config<Currency = balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
@@ -75,7 +67,7 @@ mod tests {
 	use crate::{constants::PICA, Balance, BlockNumber, DAYS};
 	use collator_selection::IdentityCollator;
 	use frame_support::{
-		parameter_types,
+		parameter_types, ord_parameter_types,
 		traits::{FindAuthor, ValidatorRegistration},
 		PalletId,
 	};
@@ -87,6 +79,9 @@ mod tests {
 		traits::{BlakeTwo256, IdentityLookup},
 		Perbill, Permill,
 	};
+	use orml_traits::parameter_type_with_key;
+	use num_traits::Zero;
+	use primitives::currency::{CurrencyId, TokenSymbol};
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 	type Block = frame_system::mocking::MockBlock<Test>;
@@ -101,8 +96,13 @@ mod tests {
 			Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 			Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 31,
 			CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>},
+			LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>},
+			Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+			Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,
 		}
 	);
+
+	pub type Amount = i128;
 
 	parameter_types! {
 		pub const BlockHashCount: u64 = 250;
@@ -191,6 +191,46 @@ mod tests {
 		type WeightInfo = ();
 	}
 
+	parameter_type_with_key! {
+		pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+			Zero::zero()
+		};
+	}
+
+	impl orml_tokens::Config for Test {
+		type Event = Event;
+		type Balance = Balance;
+		type Amount = Amount;
+		type CurrencyId = CurrencyId;
+		type WeightInfo = ();
+		type ExistentialDeposits = ExistentialDeposits;
+		type OnDust = ();
+		type MaxLocks = ();
+		type DustRemovalWhitelist = ();
+	}
+
+
+	parameter_types! {
+		pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
+		pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
+		pub const TokenTotal: Balance = 200_000_000_000_000_000;
+	}
+
+	ord_parameter_types! {
+		pub const RootAccount: u128 = 2;
+	}
+	impl crowdloan_bonus::Config for Test {
+		type Event = Event;
+		type LiquidRewardId = LiquidRewardId;
+		type CurrencyId = CrowdloanCurrencyId;
+		type JumpStart = EnsureRoot<AccountId>;
+		type Currency = Tokens;
+		type Balance = Balance;
+		type NativeCurrency = Balances;
+		type TokenTotal = TokenTotal;
+		type WeightInfo = ();
+	}
+
 	impl authorship::Config for Test {
 		type FindAuthor = OneAuthor;
 		type UncleGenerations = ();
@@ -208,6 +248,11 @@ mod tests {
 		pub const Burn: Permill = Permill::from_percent(0);
 
 		pub const MaxApprovals: u32 = 30;
+	}
+
+	impl sudo::Config for Test {
+		type Event = Event;
+		type Call = Call;
 	}
 
 	impl treasury::Config for Test {
@@ -249,6 +294,9 @@ mod tests {
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 15);
 			// Treasury gets 20%
 			assert_eq!(Balances::free_balance(Treasury::account_id()), 6);
+			// liquid crowdloan gets 10%
+			assert_eq!(Balances::free_balance(LiquidCrowdloan::account_id()), 5);
+
 		});
 	}
 
@@ -265,6 +313,7 @@ mod tests {
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 0);
 			assert_eq!(Balances::free_balance(Treasury::account_id()), 0);
+			assert_eq!(Balances::free_balance(LiquidCrowdloan::account_id()), 0);
 		});
 	}
 
@@ -281,6 +330,7 @@ mod tests {
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 0);
 			assert_eq!(Balances::free_balance(Treasury::account_id()), 0);
+			assert_eq!(Balances::free_balance(LiquidCrowdloan::account_id()), 0);
 		});
 	}
 }

@@ -30,9 +30,15 @@ mod mocks;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+pub mod weights;
+
+pub use crate::weights::WeightInfo;
+
 #[frame_support::pallet]
 pub mod pallet {
-
+	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
@@ -77,18 +83,19 @@ pub mod pallet {
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 
 	#[pallet::config]
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type Oracle: Oracle<AssetId = Self::AssetId, Balance = Self::Balance>;
+		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
 		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 		type Vault: StrategicVault<
 			VaultId = Self::VaultId,
-			AssetId = Self::AssetId,
+			AssetId = <Self as Config>::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 		>;
 
-		type CurrencyFactory: CurrencyFactory<Self::AssetId>;
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
 		type AssetId: FullCodec
 			+ Eq
 			+ PartialEq
@@ -114,16 +121,68 @@ pub mod pallet {
 			  // bit
 
 		/// vault owned - can transfer, cannot mint
-		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
 
 		/// market owned - debt token can be minted
-		type MarketDebtCurrency: Transfer<Self::AccountId, Balance = u128, AssetId = Self::AssetId>
-			+ Mutate<Self::AccountId, Balance = u128, AssetId = Self::AssetId>
-			+ MutateHold<Self::AccountId, Balance = u128, AssetId = Self::AssetId>
-			+ InspectHold<Self::AccountId, Balance = u128, AssetId = Self::AssetId>;
+		type MarketDebtCurrency: Transfer<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
+			+ Mutate<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
+			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
+			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
 		type UnixTime: UnixTime;
+		type WeightInfo: WeightInfo;
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait Config: frame_system::Config + pallet_oracle::Config {
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
+		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
+		type Vault: StrategicVault<
+			VaultId = Self::VaultId,
+			AssetId = <Self as Config>::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+		>;
+
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
+		type AssetId: FullCodec
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ From<u128>
+			+ Debug
+			+ Default;
+		type Balance: Default
+			+ Parameter
+			+ Codec
+			+ Copy
+			+ Ord
+			+ CheckedAdd
+			+ CheckedSub
+			+ CheckedMul
+			+ SaturatingSub
+			+ AtLeast32BitUnsigned
+			+ From<u64> // at least 64 bit
+			+ Zero
+			+ FixedPointOperand
+			+ Into<LiftedFixedBalance> // integer part not more than bits in this
+			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
+			  // bit
+
+		/// vault owned - can transfer, cannot mint
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
+
+		/// market owned - debt token can be minted
+		type MarketDebtCurrency: Transfer<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
+			+ Mutate<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
+			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
+			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
+
+		type UnixTime: UnixTime;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -133,28 +192,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
-			with_transaction(|| {
-				let now = T::UnixTime::now().as_secs();
-				let results = Markets::<T>::iter()
-					.map(|(index, _)| <Pallet<T>>::accrue_interest(&index, now))
-					.collect::<Vec<_>>();
-				let (_oks, errors): (Vec<_>, Vec<_>) = results.iter().partition(|r| r.is_ok());
-				if errors.is_empty() {
-					LastBlockTimestamp::<T>::put(now);
-					TransactionOutcome::Commit(1000)
-				} else {
-					errors.iter().for_each(|e| {
-						if let Err(e) = e {
-							log::error!(
-								"This should never happen, could not initialize block!!! {:#?} {:#?}",
-								block_number,
-								e
-							)
-						}
-					});
-					TransactionOutcome::Rollback(0)
-				}
-			});
+			Self::accrue_interests(block_number);
 			0
 		}
 	}
@@ -175,6 +213,7 @@ pub mod pallet {
 		MarketAndAccountPairNotFound,
 		NotEnoughCollateralToBorrowAmount,
 		CannotBorrowInCurrentLendingState,
+		CannotHaveMoreThanOneActiveBorrow,
 		NotEnoughBorrowAsset,
 		NotEnoughCollateral,
 		TransferFailed,
@@ -182,6 +221,8 @@ pub mod pallet {
 		CannotRepayMoreThanBorrowAmount,
 		BorrowRateDoesNotExist,
 		BorrowIndexDoesNotExist,
+		FlashLoansAreNotAllowed,
+		BorrowDoesNotExist,
 	}
 
 	pub struct BorrowerData {
@@ -241,8 +282,8 @@ pub mod pallet {
 			MarketIndex,
 			T::VaultId,
 			T::AccountId,
-			T::AssetId,
-			T::AssetId,
+			<T as Config>::AssetId,
+			<T as Config>::AssetId,
 			Perquintill,
 			NormalizedCollateralFactor,
 		),
@@ -272,7 +313,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		MarketIndex,
-		MarketConfig<T::VaultId, T::AssetId, T::AccountId>,
+		MarketConfig<T::VaultId, <T as Config>::AssetId, T::AccountId>,
 		ValueQuery,
 	>;
 
@@ -282,7 +323,7 @@ pub mod pallet {
 	#[pallet::getter(fn debt_currencies)]
 
 	pub type DebtMarkets<T: Config> =
-		StorageMap<_, Twox64Concat, MarketIndex, T::AssetId, ValueQuery>;
+		StorageMap<_, Twox64Concat, MarketIndex, <T as Config>::AssetId, ValueQuery>;
 
 	/// at which lending index account did borrowed.
 	#[pallet::storage]
@@ -295,6 +336,19 @@ pub mod pallet {
 		T::AccountId,
 		Ratio,
 		ValueQuery,
+	>;
+
+	/// Latest timestamp at which account borrowed from market.
+	#[pallet::storage]
+	#[pallet::getter(fn borrow_timestamp)]
+	pub type BorrowTimestamp<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		MarketIndex,
+		Twox64Concat,
+		T::AccountId,
+		Timestamp,
+		OptionQuery,
 	>;
 
 	/// market borrow index
@@ -369,8 +423,8 @@ pub mod pallet {
 		#[transactional]
 		pub fn create_new_market(
 			origin: OriginFor<T>,
-			borrow_asset_id: T::AssetId,
-			collateral_asset_id: T::AssetId,
+			borrow_asset_id: <T as Config>::AssetId,
+			collateral_asset_id: <T as Config>::AssetId,
 			reserved_factor: Perquintill,
 			collateral_factor: NormalizedCollateralFactor,
 		) -> DispatchResultWithPostInfo {
@@ -398,7 +452,7 @@ pub mod pallet {
 		/// - `origin` : Sender of this extrinsic.
 		/// - `market` : Market index to which collateral will be deposited.
 		/// - `amount` : Amount of collateral to be deposited.
-		#[pallet::weight(1000)]
+		#[pallet::weight(<T as Config>::WeightInfo::deposit_collateral())]
 		#[transactional]
 		pub fn deposit_collateral(
 			origin: OriginFor<T>,
@@ -415,7 +469,7 @@ pub mod pallet {
 		/// - `origin` : Sender of this extrinsic.
 		/// - `market_id` : Market index from which collateral will be withdraw.
 		/// - `amount` : Amount of collateral to be withdrawed.
-		#[pallet::weight(1000)]
+		#[pallet::weight(<T as Config>::WeightInfo::withdraw_collateral())]
 		#[transactional]
 		pub fn withdraw_collateral(
 			origin: OriginFor<T>,
@@ -566,11 +620,36 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			<Self as Lending>::repay_borrow(market_id, from, beneficiary, repay_amount)
 		}
+
+		pub(crate) fn accrue_interests(block_number: T::BlockNumber) {
+			with_transaction(|| {
+				let now = T::UnixTime::now().as_secs();
+				let results = Markets::<T>::iter()
+					.map(|(index, _)| <Pallet<T>>::accrue_interest(&index, now))
+					.collect::<Vec<_>>();
+				let (_oks, errors): (Vec<_>, Vec<_>) = results.iter().partition(|r| r.is_ok());
+				if errors.is_empty() {
+					LastBlockTimestamp::<T>::put(now);
+					TransactionOutcome::Commit(1000)
+				} else {
+					errors.iter().for_each(|e| {
+						if let Err(e) = e {
+							log::error!(
+								"This should never happen, could not initialize block!!! {:#?} {:#?}",
+								block_number,
+								e
+							)
+						}
+					});
+					TransactionOutcome::Rollback(0)
+				}
+			});
+		}
 	}
 
 	impl<T: Config> Lending for Pallet<T> {
 		/// we are operating only on vault types, so restricted by these
-		type AssetId = T::AssetId;
+		type AssetId = <T as Config>::AssetId;
 		type VaultId = <T::Vault as Vault>::VaultId;
 		type AccountId = <T::Vault as Vault>::AccountId;
 		type Balance = T::Balance;
@@ -691,7 +770,7 @@ pub mod pallet {
 		}
 
 		fn get_all_markets(
-		) -> Vec<(Self::MarketId, MarketConfig<T::VaultId, T::AssetId, T::AccountId>)> {
+		) -> Vec<(Self::MarketId, MarketConfig<T::VaultId, <T as Config>::AssetId, T::AccountId>)> {
 			Markets::<T>::iter().map(|(index, config)| (index, config)).collect()
 		}
 
@@ -704,12 +783,13 @@ pub mod pallet {
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
 			let asset_id = T::Vault::asset_id(&market.borrow)?;
-			let possible_borrow = Self::get_borrow_limit(&market_id, debt_owner)?;
-			if possible_borrow < amount_to_borrow {
-				return Err(Error::<T>::NotEnoughCollateralToBorrowAmount.into())
-			}
+			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
+			ensure!(latest_borrow_timestamp.is_none(), Error::<T>::CannotHaveMoreThanOneActiveBorrow);
+			let borrow_limit = Self::get_borrow_limit(&market_id, debt_owner)?;
+			ensure!(borrow_limit >= amount_to_borrow, Error::<T>::NotEnoughCollateralToBorrowAmount);
 			let account_id = Self::account_id(market_id);
-			let can_withdraw = T::Currency::reducible_balance(asset_id.clone(), &account_id, true);
+			let can_withdraw =
+				<T as Config>::Currency::reducible_balance(asset_id.clone(), &account_id, true);
 			let fund = T::Vault::available_funds(&market.borrow, &Self::account_id(&market_id))?;
 			match fund {
 				FundsAvailability::Withdrawable(balance) => {
@@ -730,7 +810,7 @@ pub mod pallet {
 					return Err(Error::<T>::CannotBorrowInCurrentLendingState.into()),
 			}
 
-			T::Currency::transfer(
+			<T as Config>::Currency::transfer(
 				asset_id.clone(),
 				&Self::account_id(market_id),
 				debt_owner,
@@ -751,6 +831,7 @@ pub mod pallet {
 
 			// TODO: decide what todo do with reborrow  https://mlabs-corp.slack.com/archives/C02CRQ9KW04/p1631005365082200
 			DebtIndex::<T>::insert(market_id, debt_owner, market_index);
+			BorrowTimestamp::<T>::insert(market_id, debt_owner, Self::last_block_timestamp());
 
 			Ok(())
 		}
@@ -761,6 +842,14 @@ pub mod pallet {
 			beneficiary: &Self::AccountId,
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
+			let latest_borrow_timestamp =
+				BorrowTimestamp::<T>::get(market_id, beneficiary);
+			if latest_borrow_timestamp.is_none() {
+				return Err(Error::<T>::BorrowDoesNotExist.into())
+			}
+			if latest_borrow_timestamp.unwrap() == Self::last_block_timestamp() {
+				return Err(Error::<T>::FlashLoansAreNotAllowed.into())
+			}
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			if let Some(owed) = Self::borrow_balance_current(market_id, beneficiary)? {
@@ -768,19 +857,22 @@ pub mod pallet {
 				let borrow_id = T::Vault::asset_id(&market.borrow)?;
 				ensure!(repay_amount <= owed, Error::<T>::CannotRepayMoreThanBorrowAmount);
 				ensure!(
-					T::Currency::can_withdraw(borrow_id, &from, repay_amount).into_result().is_ok(),
+					<T as Config>::Currency::can_withdraw(borrow_id, &from, repay_amount)
+						.into_result()
+						.is_ok(),
 					Error::<T>::CannotWithdrawFromProvidedBorrowAccount
 				);
 				let market_account = Self::account_id(market_id);
 				ensure!(
-					T::Currency::can_deposit(borrow_id, &market_account, repay_amount)
+					<T as Config>::Currency::can_deposit(borrow_id, &market_account, repay_amount)
 						.into_result()
 						.is_ok(),
 					Error::<T>::TransferFailed
 				);
 				let debt_asset_id = DebtMarkets::<T>::get(market_id);
 
-				let burn_amount: u128 = T::Currency::balance(debt_asset_id, beneficiary).into();
+				let burn_amount: u128 =
+					<T as Config>::Currency::balance(debt_asset_id, beneficiary).into();
 				let burn_amount = burn_amount
 					.checked_mul(LiftedFixedBalance::accuracy())
 					.expect("should work for 64 currency");
@@ -794,13 +886,20 @@ pub mod pallet {
 					.expect("can always release held debt balance");
 				T::MarketDebtCurrency::burn_from(debt_asset_id, beneficiary, burn_amount)
 					.expect("can always burn debt balance");
-				T::Currency::transfer(borrow_id, from, &market_account, repay_amount, false)
-					.expect("must be able to transfer because of above checks");
+				<T as Config>::Currency::transfer(
+					borrow_id,
+					from,
+					&market_account,
+					repay_amount,
+					false,
+				)
+				.expect("must be able to transfer because of above checks");
 
 				// TODO: not sure why Warp V2 (Blacksmith) does that, but seems will need to revise
 				// it later with some strategy
 				let interest_index = BorrowIndex::<T>::get(market_id);
 				DebtIndex::<T>::insert(market_id, beneficiary, interest_index);
+				BorrowTimestamp::<T>::remove(market_id, beneficiary);
 
 				// we do not optimize vault here, will do it on finalize after all repays
 			}
@@ -828,7 +927,7 @@ pub mod pallet {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let borrow_id = T::Vault::asset_id(&market.borrow)?;
-			Ok(T::Currency::balance(borrow_id, &T::Vault::account_id(&market.borrow)))
+			Ok(<T as Config>::Currency::balance(borrow_id, &T::Vault::account_id(&market.borrow)))
 		}
 
 		fn update_borrows(
@@ -984,13 +1083,13 @@ pub mod pallet {
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let market_account = Self::account_id(&market_id);
 			ensure!(
-				T::Currency::can_withdraw(market.collateral, &account, amount)
+				<T as Config>::Currency::can_withdraw(market.collateral, &account, amount)
 					.into_result()
 					.is_ok(),
 				Error::<T>::TransferFailed
 			);
 			ensure!(
-				T::Currency::can_deposit(market.collateral, &market_account, amount) ==
+				<T as Config>::Currency::can_deposit(market.collateral, &market_account, amount) ==
 					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
@@ -1002,8 +1101,14 @@ pub mod pallet {
 				*collateral_balance = new_collateral_balance;
 				Result::<(), Error<T>>::Ok(())
 			})?;
-			T::Currency::transfer(market.collateral, account, &market_account, amount, true)
-				.expect("impossible; qed;");
+			<T as Config>::Currency::transfer(
+				market.collateral,
+				account,
+				&market_account,
+				amount,
+				true,
+			)
+			.expect("impossible; qed;");
 			Ok(())
 		}
 
@@ -1051,12 +1156,12 @@ pub mod pallet {
 
 			let market_account = Self::account_id(&market_id);
 			ensure!(
-				T::Currency::can_deposit(market.collateral, &account, amount) ==
+				<T as Config>::Currency::can_deposit(market.collateral, &account, amount) ==
 					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 			ensure!(
-				T::Currency::can_withdraw(market.collateral, &market_account, amount)
+				<T as Config>::Currency::can_withdraw(market.collateral, &market_account, amount)
 					.into_result()
 					.is_ok(),
 				Error::<T>::TransferFailed
@@ -1068,8 +1173,14 @@ pub mod pallet {
 				*collateral_balance = new_collateral_balance;
 				Result::<(), Error<T>>::Ok(())
 			})?;
-			T::Currency::transfer(market.collateral, &market_account, account, amount, true)
-				.expect("impossible; qed;");
+			<T as Config>::Currency::transfer(
+				market.collateral,
+				&market_account,
+				account,
+				amount,
+				true,
+			)
+			.expect("impossible; qed;");
 			Ok(())
 		}
 	}
