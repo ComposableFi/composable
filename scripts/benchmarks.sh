@@ -18,6 +18,7 @@ pallets=(
 	democracy
 	collator_selection
 	utility
+	lending
 )
 
 for p in ${pallets[@]}
