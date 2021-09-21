@@ -875,7 +875,6 @@ pub mod pallet {
 				);
 				let market_account = Self::account_id(market_id);
 				ensure!(
-					<T as Config>::Currency::can_deposit(borrow_asset_id, &market_account, repay_amount)
 						.into_result()
 						.is_ok(),
 					Error::<T>::TransferFailed
