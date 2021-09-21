@@ -23,7 +23,7 @@ jobs:
           rustup update stable
           rustup target add wasm32-unknown-unknown --toolchain nightly
       - name: Cache
-        uses: icepuma/rust-action@master
+        uses: actions/cache@v2.1.6
         with:
           path: |
             ~/.cargo/registry
