@@ -1,5 +1,5 @@
-use picasso_runtime::{self as parachain_runtime, GenesisConfig};
 use common::{AccountId, AuraId, Balance};
+use picasso_runtime::{self as parachain_runtime, GenesisConfig};
 
 use super::{Extensions, ParaId};
 

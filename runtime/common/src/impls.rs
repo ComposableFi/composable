@@ -26,14 +26,13 @@ where
 		if !matches!(<crowdloan_bonus::Pallet<R>>::is_claimable(), Some(true)) {
 			// essentially 15% of all transaction fees goes to the crowdloan_bonus pot
 			let (_, to_crowdloan_bonus) = _pre_burn.ration(50, 50);
-			let liquid_pot =  <crowdloan_bonus::Pallet<R>>::account_id();
+			let liquid_pot = <crowdloan_bonus::Pallet<R>>::account_id();
 			<balances::Pallet<R>>::resolve_creating(&liquid_pot, to_crowdloan_bonus);
 		}
 
 		let staking_pot = <collator_selection::Pallet<R>>::account_id();
 		<balances::Pallet<R>>::resolve_creating(&staking_pot, to_collators);
 		<treasury::Pallet<R> as OnUnbalanced<_>>::on_unbalanced(to_treasury);
-
 	}
 }
 
@@ -67,21 +66,21 @@ mod tests {
 	use crate::{constants::PICA, Balance, BlockNumber, DAYS};
 	use collator_selection::IdentityCollator;
 	use frame_support::{
-		parameter_types, ord_parameter_types,
+		ord_parameter_types, parameter_types,
 		traits::{FindAuthor, ValidatorRegistration},
 		PalletId,
 	};
 	use frame_system::{limits, EnsureRoot};
+	use num_traits::Zero;
+	use orml_traits::parameter_type_with_key;
 	use polkadot_primitives::v1::AccountId;
+	use primitives::currency::CurrencyId;
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
 		traits::{BlakeTwo256, IdentityLookup},
 		Perbill, Permill,
 	};
-	use orml_traits::parameter_type_with_key;
-	use num_traits::Zero;
-	use primitives::currency::{CurrencyId, TokenSymbol};
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 	type Block = frame_system::mocking::MockBlock<Test>;
@@ -209,10 +208,9 @@ mod tests {
 		type DustRemovalWhitelist = ();
 	}
 
-
 	parameter_types! {
 		pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
-		pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
+		pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::CROWD_LOAN;
 		pub const TokenTotal: Balance = 200_000_000_000_000_000;
 	}
 
@@ -296,7 +294,6 @@ mod tests {
 			assert_eq!(Balances::free_balance(Treasury::account_id()), 6);
 			// liquid crowdloan gets 10%
 			assert_eq!(Balances::free_balance(LiquidCrowdloan::account_id()), 5);
-
 		});
 	}
 

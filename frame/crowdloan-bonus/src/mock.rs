@@ -4,12 +4,12 @@ use frame_system as system;
 use frame_system::EnsureSignedBy;
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
+use primitives::currency::CurrencyId;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
-use primitives::currency::{CurrencyId, TokenSymbol};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -102,7 +102,7 @@ parameter_types! {
 
 ord_parameter_types! {
 	pub const RootAccount: u128 = 2;
-	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
+	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::CROWD_LOAN;
 	pub const TokenTotal: Balance = 200;
 }
 
