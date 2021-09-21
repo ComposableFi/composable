@@ -1265,6 +1265,7 @@ dependencies = [
  "plotters",
  "proptest",
  "serde",
+ "sp-arithmetic",
  "sp-runtime",
 ]
 

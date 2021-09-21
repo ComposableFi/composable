@@ -1,6 +1,7 @@
 use crate::rate_model::*;
 use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
+use sp_runtime::Percent;
 
 pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
 
@@ -119,7 +120,7 @@ pub trait Lending {
 	fn calc_utilization_ratio(
 		cash: &Self::Balance,
 		borrows: &Self::Balance,
-	) -> Result<Ratio, DispatchError>;
+	) -> Result<Percent, DispatchError>;
 
 	/// Borrow asset amount account should repay to be debt free for specific market pair.
 	/// Calculate account's borrow balance using the borrow index at the start of block time.

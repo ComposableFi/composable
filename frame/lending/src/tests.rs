@@ -17,7 +17,7 @@ use frame_support::{
 };
 
 use proptest::{prelude::*, test_runner::TestRunner};
-use sp_runtime::{traits::Zero, FixedPointNumber, Perquintill};
+use sp_runtime::{FixedPointNumber, Percent, Perquintill};
 
 type BorrowAssetVault = VaultId;
 
@@ -110,7 +110,7 @@ fn accrue_interest_base_cases() {
 #[test]
 fn accrue_interest_edge_cases() {
 	let (_, ref interest_rate_model) = new_jump_model();
-	let utilization = ratio_from_percentages(100).unwrap();
+	let utilization = Percent::from_percent(100);
 	let borrow_index = Rate::saturating_from_integer(1);
 	let delta_time = SECONDS_PER_YEAR;
 	let total_issued = u128::MAX;
@@ -256,7 +256,7 @@ fn test_borrow_repay_in_same_block() {
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &CHARLIE, btc_amt));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), btc_amt);
-		Vault::deposit(Origin::signed(CHARLIE), vault, btc_amt);
+		Vault::deposit(Origin::signed(CHARLIE), vault, btc_amt).unwrap();
 		let mut total_cash = btc_amt;
 
 		assert_eq!(Lending::borrow_balance_current(&market, &ALICE), Ok(Some(0)));
@@ -265,7 +265,7 @@ fn test_borrow_repay_in_same_block() {
 		process_block(1);
 		assert_ok!(Lending::borrow_internal(&market, &ALICE, alice_limit / 4));
 		total_cash -= alice_limit / 4;
-		let mut total_borrows = alice_limit / 4;
+		let total_borrows = alice_limit / 4;
 		assert_eq!(Lending::total_cash(&market), Ok(total_cash));
 		assert_eq!(Lending::total_borrows(&market), Ok(total_borrows));
 		let alice_repay_amount = Lending::borrow_balance_current(&market, &ALICE).unwrap();
@@ -283,11 +283,11 @@ fn test_borrow_repay_in_same_block() {
 }
 
 /// some model with sane parameter
-fn new_jump_model() -> (Ratio, InterestRateModel) {
+fn new_jump_model() -> (Percent, InterestRateModel) {
 	let base_rate = Rate::saturating_from_rational(2, 100);
 	let jump_rate = Rate::saturating_from_rational(10, 100);
 	let full_rate = Rate::saturating_from_rational(32, 100);
-	let optimal = Ratio::saturating_from_rational(80, 100);
+	let optimal = Percent::from_percent(80);
 	let interest_rate_model = InterestRateModel::Jump(
 		JumpModel::new_model(base_rate, jump_rate, full_rate, optimal).unwrap(),
 	);
@@ -297,21 +297,12 @@ fn new_jump_model() -> (Ratio, InterestRateModel) {
 #[test]
 fn test_calc_utilization_ratio() {
 	// 50% borrow
-	assert_eq!(
-		Lending::calc_utilization_ratio(&1, &1).unwrap(),
-		Ratio::saturating_from_rational(50, 100)
-	);
-	assert_eq!(
-		Lending::calc_utilization_ratio(&100, &100).unwrap(),
-		Ratio::saturating_from_rational(50, 100)
-	);
+	assert_eq!(Lending::calc_utilization_ratio(&1, &1).unwrap(), Percent::from_percent(50));
+	assert_eq!(Lending::calc_utilization_ratio(&100, &100).unwrap(), Percent::from_percent(50));
 	// no borrow
-	assert_eq!(Lending::calc_utilization_ratio(&1, &0).unwrap(), Ratio::zero());
+	assert_eq!(Lending::calc_utilization_ratio(&1, &0).unwrap(), Percent::zero());
 	// full borrow
-	assert_eq!(
-		Lending::calc_utilization_ratio(&0, &1).unwrap(),
-		Ratio::saturating_from_rational(100, 100)
-	);
+	assert_eq!(Lending::calc_utilization_ratio(&0, &1).unwrap(), Percent::from_percent(100));
 }
 
 #[test]
@@ -363,8 +354,8 @@ fn test_borrow() {
 			process_block(i);
 		}
 
-		assert_eq!(Lending::total_interest_accurate(&market), Ok(695494434837690000000));
-		assert_eq!(Lending::total_interest(&market), Ok(695));
+		assert_eq!(Lending::total_interest_accurate(&market), Ok(684794520448650000000));
+		assert_eq!(Lending::total_interest(&market), Ok(684));
 	});
 }
 

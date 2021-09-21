@@ -19,6 +19,8 @@ use sp_runtime::{
 	ArithmeticError, FixedPointNumber, FixedU128, RuntimeDebug,
 };
 
+use sp_arithmetic::per_things::Percent;
+
 /// The fixed point number from 0..to max.
 /// Unlike `Ratio` it can be more than 1.
 /// And unlike `NormalizedCollateralFactor`, it can be less than one.
@@ -31,14 +33,6 @@ pub type NormalizedCollateralFactor = FixedU128;
 /// Must be [0..1]
 /// TODO: implement Ratio as wrapper over FixedU128
 pub type Ratio = FixedU128;
-
-pub fn ratio_from_percentages(percentages: u8) -> Option<Ratio> {
-	if percentages > 100 {
-		None
-	} else {
-		Ratio::checked_from_rational(percentages, 100)
-	}
-}
 
 /// seconds
 pub type Timestamp = u64;
@@ -94,15 +88,14 @@ pub const SECONDS_PER_YEAR: Timestamp = 365 * 24 * 60 * 60;
 pub fn calc_utilization_ratio(
 	cash: LiftedFixedBalance,
 	borrows: LiftedFixedBalance,
-) -> Result<Ratio, ArithmeticError> {
+) -> Result<Percent, ArithmeticError> {
 	if borrows.is_zero() {
-		return Ok(Ratio::zero());
+		return Ok(Percent::zero());
 	}
 
 	let total = cash.safe_add(&borrows)?;
 	let util_ratio = borrows.checked_div(&total).expect("above checks prove it cannot error");
-	assert!(util_ratio <= Ratio::one(), "because dividing summand by sum");
-	Ok(util_ratio)
+	Ok(Percent::from_float(util_ratio.to_float()))
 }
 
 /// Parallel interest rate model
@@ -119,7 +112,7 @@ impl Default for InterestRateModel {
 			Rate::saturating_from_rational(2, 100),
 			Rate::saturating_from_rational(10, 100),
 			Rate::saturating_from_rational(32, 100),
-			Ratio::saturating_from_rational(80, 100),
+			Percent::from_percent(80),
 		)
 		.unwrap()
 	}
@@ -130,7 +123,7 @@ impl InterestRateModel {
 		base_rate: Rate,
 		jump_rate: Rate,
 		full_rate: Rate,
-		jump_utilization: Ratio,
+		jump_utilization: Percent,
 	) -> Option<Self> {
 		JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization).map(Self::Jump)
 	}
@@ -140,7 +133,7 @@ impl InterestRateModel {
 	}
 
 	/// Calculates the current borrow interest rate
-	pub fn get_borrow_rate(&self, utilization: Ratio) -> Option<Rate> {
+	pub fn get_borrow_rate(&self, utilization: Percent) -> Option<Rate> {
 		match self {
 			Self::Jump(jump) => jump.get_borrow_rate(utilization),
 			Self::Curve(curve) => curve.get_borrow_rate(utilization),
@@ -170,7 +163,7 @@ pub struct JumpModel {
 	/// The utilization point at which the jump_rate is applied
 	/// For jump_utilization, we should have used sp_runtime::Perquintil, but since Balance is
 	/// based on u128 and Perquintil can't be created from u128.
-	pub jump_utilization: Ratio,
+	pub jump_utilization: Percent,
 }
 
 impl JumpModel {
@@ -183,13 +176,9 @@ impl JumpModel {
 		base_rate: Ratio,
 		jump_rate: Ratio,
 		full_rate: Ratio,
-		jump_utilization: Ratio,
+		jump_utilization: Percent,
 	) -> Option<JumpModel> {
-		let model = if jump_utilization > Ratio::one() {
-			Self { base_rate, jump_rate, full_rate, jump_utilization: Ratio::one() }
-		} else {
-			Self { base_rate, jump_rate, full_rate, jump_utilization }
-		};
+		let model = Self { base_rate, jump_rate, full_rate, jump_utilization };
 		if model.base_rate <= Self::MAX_BASE_RATE
 			&& model.jump_rate <= Self::MAX_JUMP_RATE
 			&& model.full_rate <= Self::MAX_FULL_RATE
@@ -203,7 +192,7 @@ impl JumpModel {
 	}
 
 	/// Calculates the borrow interest rate of jump model
-	pub fn get_borrow_rate(&self, utilization: Ratio) -> Option<Rate> {
+	pub fn get_borrow_rate(&self, utilization: Percent) -> Option<Rate> {
 		if utilization <= self.jump_utilization {
 			// utilization * (jump_rate - base_rate) / jump_utilization + base_rate
 			let result = self
@@ -218,11 +207,12 @@ impl JumpModel {
 			// (utilization - jump_utilization)*(full_rate - jump_rate) / ( 1 - jump_utilization) +
 			// jump_rate
 			let excess_util = utilization.saturating_sub(self.jump_utilization);
+			let available = Percent::from_percent(100).saturating_sub(self.jump_utilization);
 			let result = self
 				.full_rate
 				.checked_sub(&self.jump_rate)?
 				.saturating_mul(excess_util.into())
-				.checked_div(&(Ratio::one().saturating_sub(self.jump_utilization).into()))?
+				.checked_div(&available.into())?
 				.checked_add(&self.jump_rate)?;
 
 			Some(result)
@@ -251,9 +241,10 @@ impl CurveModel {
 	}
 
 	/// Calculates the borrow interest rate of curve model
-	pub fn get_borrow_rate(&self, utilization: Ratio) -> Option<Rate> {
+	pub fn get_borrow_rate(&self, utilization: Percent) -> Option<Rate> {
 		const NINE: usize = 9;
-		utilization.saturating_pow(NINE).checked_add(&self.base_rate)
+		let utilization: Rate = utilization.saturating_pow(NINE).into();
+		utilization.checked_add(&self.base_rate)
 	}
 }
 
@@ -296,7 +287,7 @@ mod tests {
 		let base_rate = Rate::saturating_from_rational(2, 100);
 		let jump_rate = Rate::saturating_from_rational(10, 100);
 		let full_rate = Rate::saturating_from_rational(32, 100);
-		let jump_utilization = Ratio::saturating_from_rational(80, 100);
+		let jump_utilization = Percent::from_percent(80);
 
 		assert_eq!(
 			JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization).unwrap(),
@@ -304,7 +295,7 @@ mod tests {
 				base_rate: Rate::from_inner(20_000_000_000_000_000).into(),
 				jump_rate: Rate::from_inner(100_000_000_000_000_000).into(),
 				full_rate: Rate::from_inner(320_000_000_000_000_000).into(),
-				jump_utilization: Ratio::saturating_from_rational(80, 100),
+				jump_utilization: Percent::from_percent(80),
 			}
 		);
 	}
@@ -315,27 +306,27 @@ mod tests {
 		let base_rate = Rate::saturating_from_rational(2, 100);
 		let jump_rate = Rate::saturating_from_rational(10, 100);
 		let full_rate = Rate::saturating_from_rational(32, 100);
-		let jump_utilization = Ratio::saturating_from_rational(80, 100);
+		let jump_utilization = Percent::from_percent(80);
 		let jump_model =
 			JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization).unwrap();
 
 		// normal rate
 		let mut cash: u128 = 500;
 		let borrows: u128 = 1000;
-		let util = Ratio::saturating_from_rational(borrows, cash + borrows);
-		let borrow_rate = jump_model.get_borrow_rate(util).unwrap();
+		let utilization = Percent::from_rational(borrows, cash + borrows);
+		let borrow_rate = jump_model.get_borrow_rate(utilization).unwrap();
 		assert_eq!(
 			borrow_rate,
-			jump_model.jump_rate.saturating_mul(util.into()) + jump_model.base_rate,
+			jump_model.jump_rate.saturating_mul(utilization.into()) + jump_model.base_rate,
 		);
 
 		// jump rate
 		cash = 100;
-		let util = Ratio::saturating_from_rational(borrows, cash + borrows);
-		let borrow_rate = jump_model.get_borrow_rate(util).unwrap();
+		let utilization = Percent::from_rational(borrows, cash + borrows);
+		let borrow_rate = jump_model.get_borrow_rate(utilization).unwrap();
 		let normal_rate =
 			jump_model.jump_rate.saturating_mul(jump_utilization.into()) + jump_model.base_rate;
-		let excess_util = util.saturating_sub(jump_utilization);
+		let excess_util = utilization.saturating_sub(jump_utilization);
 		assert_eq!(
 			borrow_rate,
 			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into())
@@ -364,17 +355,18 @@ mod tests {
 	fn curve_model_correctly_calculates_borrow_rate() {
 		let model = CurveModel::new_model(Rate::saturating_from_rational(2, 100)).unwrap();
 		assert_eq!(
-			model.get_borrow_rate(Ratio::saturating_from_rational(80, 100)).unwrap(),
-			Rate::from_inner(154217728000000000)
+			model.get_borrow_rate(Percent::from_percent(80)).unwrap(),
+			// curve model has arbitrary power parameters leading to changes in precision of high power
+			Rate::from_inner(140000000000000000)
 		);
 	}
 
 	#[derive(Debug, Clone)]
 	struct JumpModelStrategy {
 		pub base_rate: Ratio,
-		pub jump_percentages: Ratio,
-		pub full_percentages: Ratio,
-		pub target_utilization_percentage: Ratio,
+		pub jump_percentage: Ratio,
+		pub full_percentage: Ratio,
+		pub target_utilization_percentage: Percent,
 	}
 
 	fn valid_jump_model() -> impl Strategy<Value = JumpModelStrategy> {
@@ -382,7 +374,7 @@ mod tests {
 			(1..=10u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
 			(11..=30u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
 			(31..=50).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
-			(0..=100).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
+			(0..=100u8).prop_map(|x| Percent::from_percent(x)),
 		)
 			.prop_filter("Jump rate model", |(base, jump, full, _)| {
 				// tried high order strategy - failed as it tries to combine collections with not collection
@@ -395,11 +387,11 @@ mod tests {
 					&& full <= &JumpModel::MAX_FULL_RATE
 			})
 			.prop_map(
-				|(base_rate, jump_percentages, full_percentages, target_utilization_percentage)| {
+				|(base_rate, jump_percentage, full_percentage, target_utilization_percentage)| {
 					JumpModelStrategy {
 						base_rate,
-						full_percentages,
-						jump_percentages,
+						full_percentage,
+						jump_percentage,
 						target_utilization_percentage,
 					}
 				},
@@ -412,8 +404,8 @@ mod tests {
 		runner
 			.run(&(valid_jump_model(), 0..=u64::MAX, 0..=u64::MAX), |(strategy, cash, borrows)| {
 				let base_rate = strategy.base_rate;
-				let jump_rate = strategy.jump_percentages;
-				let full_rate = strategy.full_percentages;
+				let jump_rate = strategy.jump_percentage;
+				let full_rate = strategy.full_percentage;
 				let jump_utilization = strategy.target_utilization_percentage;
 				let jump_model =
 					JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization)
@@ -442,13 +434,13 @@ mod tests {
 		let mut runner = TestRunner::default();
 		runner
 			.run(&strategy, |(optimal, previous, next)| {
-				let utilization_1 = ratio_from_percentages(previous).unwrap();
-				let utilization_2 = ratio_from_percentages(next).unwrap();
-				let optimal = ratio_from_percentages(optimal).unwrap();
+				let utilization_1 = Percent::from_percent(previous);
+				let utilization_2 = Percent::from_percent(next);
+				let optimal = Percent::from_percent(optimal);
 				let model = JumpModel::new_model(base_rate, jump_rate, full_rate, optimal).unwrap();
 				let rate_1 = model.get_borrow_rate(utilization_1);
 				let rate_2 = model.get_borrow_rate(utilization_2);
-				if optimal < Ratio::one() {
+				if optimal < Percent::from_percent(100) {
 					prop_assert!(rate_1 < rate_2);
 				}
 				Ok(())

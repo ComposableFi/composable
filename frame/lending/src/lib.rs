@@ -64,7 +64,7 @@ pub mod pallet {
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
 		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Perquintill,
+		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec::Vec};
 
@@ -541,7 +541,7 @@ pub mod pallet {
 		pub fn calc_utilization_ratio(
 			cash: &<Self as Lending>::Balance,
 			borrows: &<Self as Lending>::Balance,
-		) -> Result<Ratio, DispatchError> {
+		) -> Result<Percent, DispatchError> {
 			<Self as Lending>::calc_utilization_ratio(cash, borrows)
 		}
 		pub fn create(
@@ -853,7 +853,6 @@ pub mod pallet {
 			beneficiary: &Self::AccountId,
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
-
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, beneficiary);
 			if latest_borrow_timestamp.is_none() {
 				return Err(Error::<T>::BorrowDoesNotExist.into());
@@ -875,8 +874,13 @@ pub mod pallet {
 				);
 				let market_account = Self::account_id(market_id);
 				ensure!(
-						.into_result()
-						.is_ok(),
+					<T as Config>::Currency::can_deposit(
+						borrow_asset_id,
+						&market_account,
+						repay_amount
+					)
+					.into_result()
+					.is_ok(),
 					Error::<T>::TransferFailed
 				);
 
@@ -894,8 +898,14 @@ pub mod pallet {
 					.expect("can always release held debt balance");
 				T::MarketDebtCurrency::burn_from(debt_asset_id, beneficiary, burn_amount)
 					.expect("can always burn debt balance");
-				<T as Config>::Currency::transfer(borrow_asset_id, from, &market_account, repay_amount, false)
-					.expect("must be able to transfer because of above checks");
+				<T as Config>::Currency::transfer(
+					borrow_asset_id,
+					from,
+					&market_account,
+					repay_amount,
+					false,
+				)
+				.expect("must be able to transfer because of above checks");
 
 				let interest_index = BorrowIndex::<T>::get(market_id);
 				DebtIndex::<T>::insert(market_id, beneficiary, interest_index);
@@ -931,7 +941,7 @@ pub mod pallet {
 		fn calc_utilization_ratio(
 			cash: &Self::Balance,
 			borrows: &Self::Balance,
-		) -> Result<Ratio, DispatchError> {
+		) -> Result<Percent, DispatchError> {
 			Ok(composable_traits::rate_model::calc_utilization_ratio(
 				(*cash).into(),
 				(*borrows).into(),
@@ -1212,7 +1222,7 @@ pub mod pallet {
 	}
 
 	pub fn accrue_interest_internal<T: Config>(
-		utilization_ratio: Ratio,
+		utilization_ratio: Percent,
 		interest_rate_model: &InterestRateModel,
 		borrow_index: Rate,
 		delta_time: Duration,
