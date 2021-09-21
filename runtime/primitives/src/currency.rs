@@ -1,7 +1,8 @@
 //! CurrencyId implementation
 
 use codec::{Decode, Encode};
-use sp_runtime::RuntimeDebug;
+use composable_traits::currency::DynamicCurrency;
+use sp_runtime::{ArithmeticError, DispatchError, RuntimeDebug};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -17,6 +18,20 @@ impl CurrencyId {
 	pub const PICA: CurrencyId = CurrencyId(1);
 	pub const LAYR: CurrencyId = CurrencyId(2);
 	pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
+
+	pub const LOCAL_LP_TOKEN_START: CurrencyId = CurrencyId(u128::MAX / 2);
+}
+
+// NOTE(hussein-aitlahcen): we could add an index to DynamicCurrency to differentiate sub-ranges
+// This implementation is only valid if the initial value used to step using next is
+// LOCAL_LP_TOKEN_START
+impl DynamicCurrency for CurrencyId {
+	#[inline]
+	fn next(self) -> Result<Self, sp_runtime::DispatchError> {
+		let CurrencyId(x) = self;
+		let y = x.checked_add(1).ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+		Ok(CurrencyId(y))
+	}
 }
 
 impl Default for CurrencyId {
