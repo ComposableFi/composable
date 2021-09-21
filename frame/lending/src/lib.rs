@@ -223,9 +223,7 @@ pub mod pallet {
 		BorrowIndexDoesNotExist,
 		BorrowAndRepayInSameBlockIsNotSupported,
 		BorrowDoesNotExist,
-		/// user must repay borrow before repaying new one, should do two steps in single
-		/// transaction for now
-		RepayPreviousBorrowBeforeTakingOnNewOne, // think of debt reindex function
+		RepayAmountMustBeGraterThanZero,
 	}
 
 	pub struct BorrowerData {
@@ -791,12 +789,6 @@ pub mod pallet {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			let balance = T::MarketDebtCurrency::balance_on_hold(debt_asset_id, debt_owner);
-			if balance > 0 {
-				// consider debt reindex instead of borrow prevention
-				return Err(Error::<T>::RepayPreviousBorrowBeforeTakingOnNewOne.into())
-			}
-
 			let asset_id = T::Vault::asset_id(&market.borrow)?;
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
 			ensure!(
@@ -863,6 +855,10 @@ pub mod pallet {
 			if let Some(owed) = Self::borrow_balance_current(market_id, beneficiary)? {
 				let repay_amount = repay_amount.unwrap_or(owed);
 				let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
+				ensure!(
+					repay_amount > <Self as Lending>::Balance::zero(),
+					Error::<T>::RepayAmountMustBeGraterThanZero
+				);
 				ensure!(repay_amount <= owed, Error::<T>::CannotRepayMoreThanBorrowAmount);
 				ensure!(
 					<T as Config>::Currency::can_withdraw(borrow_asset_id, from, repay_amount)
@@ -884,17 +880,39 @@ pub mod pallet {
 
 				let debt_asset_id = DebtMarkets::<T>::get(market_id);
 
-				let burn_amount: u128 = T::MarketDebtCurrency::balance(debt_asset_id, beneficiary);
-				// TODO: fuzzing is must to uncover cases when sum != total
-				let market_debt_reduction =
+				let burn_amount: u128 =
+					<T as Config>::Currency::balance(debt_asset_id, beneficiary).into();
+				let total_repay_amount: u128 = repay_amount.into();
+				let mut remaining_borrow_amount =
 					T::MarketDebtCurrency::balance(debt_asset_id, &market_account);
-				T::MarketDebtCurrency::burn_from(debt_asset_id, &market_account, market_debt_reduction).expect(
+				if total_repay_amount <= burn_amount {
+					// only repay interest
+					T::MarketDebtCurrency::release(
+						debt_asset_id,
+						beneficiary,
+						total_repay_amount,
+						true,
+					)
+					.expect("can always release held debt balance");
+					T::MarketDebtCurrency::burn_from(
+						debt_asset_id,
+						beneficiary,
+						total_repay_amount,
+					)
+					.expect("can always burn debt balance");
+				} else {
+					let repay_borrow_amount = total_repay_amount - burn_amount;
+
+					remaining_borrow_amount -= repay_borrow_amount;
+					T::MarketDebtCurrency::burn_from(debt_asset_id, &market_account, repay_borrow_amount).expect(
 					"debt balance of market must be of parts of debts of borrowers and can reduce it",
 				);
-				T::MarketDebtCurrency::release(debt_asset_id, beneficiary, burn_amount, true)
-					.expect("can always release held debt balance");
-				T::MarketDebtCurrency::burn_from(debt_asset_id, beneficiary, burn_amount)
-					.expect("can always burn debt balance");
+					T::MarketDebtCurrency::release(debt_asset_id, beneficiary, burn_amount, true)
+						.expect("can always release held debt balance");
+					T::MarketDebtCurrency::burn_from(debt_asset_id, beneficiary, burn_amount)
+						.expect("can always burn debt balance");
+				}
+				// TODO: fuzzing is must to uncover cases when sum != total
 				<T as Config>::Currency::transfer(
 					borrow_asset_id,
 					from,
@@ -904,9 +922,10 @@ pub mod pallet {
 				)
 				.expect("must be able to transfer because of above checks");
 
-				let interest_index = BorrowIndex::<T>::get(market_id);
-				DebtIndex::<T>::insert(market_id, beneficiary, interest_index);
-				BorrowTimestamp::<T>::remove(market_id, beneficiary);
+				if remaining_borrow_amount == 0 {
+					BorrowTimestamp::<T>::remove(market_id, beneficiary);
+					DebtIndex::<T>::remove(market_id, beneficiary);
+				}
 			}
 
 			Ok(())
