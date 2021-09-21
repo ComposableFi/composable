@@ -127,7 +127,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::claim())]
 		pub fn claim(origin: OriginFor<T>, amount: u128) -> DispatchResult {
 			if amount.is_zero() {
-				return Ok(());
+				return Ok(())
 			}
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_claimable().unwrap_or(false), Error::<T>::NotClaimable);
