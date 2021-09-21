@@ -121,7 +121,7 @@ pub trait Lending {
 		borrows: &Self::Balance,
 	) -> Result<Ratio, DispatchError>;
 
-	/// Simply - how much account owes to market total
+	/// Borrow asset amount account should repay to be debt free for specific market pair.
 	/// Calculate account's borrow balance using the borrow index at the start of block time.
 	/// ```python
 	/// new_borrow_balance = principal * (market_borrow_index / borrower_borrow_index)
