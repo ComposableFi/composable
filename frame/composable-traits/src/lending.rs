@@ -127,6 +127,8 @@ pub trait Lending {
 	/// `from` repays some of `beneficiary` debts.
 	/// - `market_id`   : the market_id on which to be repaid.
 	/// - `repay_amount`: the amount to be repaid in underlying.
+	/// Interest will be repaid first and then remaining amount from `repay_amount` will be used to
+	/// repay principal value.
 	fn repay_borrow(
 		market_id: &Self::MarketId,
 		from: &Self::AccountId,
