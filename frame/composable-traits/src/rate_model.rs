@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::convert::TryInto;
+
 use codec::{Decode, Encode};
 
 use sp_runtime::{
@@ -94,8 +96,15 @@ pub fn calc_utilization_ratio(
 	}
 
 	let total = cash.safe_add(&borrows)?;
-	let util_ratio = borrows.checked_div(&total).expect("above checks prove it cannot error");
-	Ok(Percent::from_float(util_ratio.to_float()))
+	// also max value is 1.00000000000000000, it still fails with u8, so mul by u16 and cast to u8
+	let utilization_ratio = borrows
+		.checked_div(&total)
+		.expect("above checks prove it cannot error")
+		.checked_mul_int(100u16)
+		.unwrap()
+		.try_into()
+		.unwrap();
+	Ok(Percent::from_percent(utilization_ratio))
 }
 
 /// Parallel interest rate model
