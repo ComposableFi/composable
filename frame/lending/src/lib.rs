@@ -213,7 +213,7 @@ pub mod pallet {
 		MarketAndAccountPairNotFound,
 		NotEnoughCollateralToBorrowAmount,
 		CannotBorrowInCurrentSourceVaultState,
-		CannotHaveMoreThanOneActiveBorrow,
+		InvalidTimestampOnBorrowRequest,
 		NotEnoughBorrowAsset,
 		NotEnoughCollateral,
 		TransferFailed,
@@ -788,13 +788,13 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let asset_id = T::Vault::asset_id(&market.borrow)?;
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
-			ensure!(
-				latest_borrow_timestamp.is_none(),
-				Error::<T>::CannotHaveMoreThanOneActiveBorrow
-			);
+			if let Some(time) = latest_borrow_timestamp {
+				if time >= Self::last_block_timestamp() {
+					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into())
+				}
+			}
 			let borrow_limit = Self::get_borrow_limit(market_id, debt_owner)?;
 			ensure!(
 				borrow_limit >= amount_to_borrow,
@@ -823,15 +823,25 @@ pub mod pallet {
 
 			let market_index =
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-
+			let account_interest_index =
+				DebtIndex::<T>::try_get(market_id, debt_owner).map_or(Ratio::zero(), |index| index);
+			let debt_asset_id = DebtMarkets::<T>::get(market_id);
+			let existing_borrow_amount = T::MarketDebtCurrency::balance(debt_asset_id, debt_owner);
 			let amount_to_borrow: u128 = amount_to_borrow.into();
 			let amount_to_borrow = amount_to_borrow
 				.checked_mul(LiftedFixedBalance::accuracy())
 				.expect("more detailed currency");
 			T::MarketDebtCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
 			T::MarketDebtCurrency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
-
-			DebtIndex::<T>::insert(market_id, debt_owner, market_index);
+			let total_borrow_amount = existing_borrow_amount
+				.checked_add(amount_to_borrow)
+				.ok_or(Error::<T>::Overflow)?;
+			let existing_borrow_share =
+				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
+			let new_borrow_share = Percent::from_rational(amount_to_borrow, total_borrow_amount);
+			let new_account_interest_index = (market_index * new_borrow_share.into()) +
+				(account_interest_index * existing_borrow_share.into());
+			DebtIndex::<T>::insert(market_id, debt_owner, new_account_interest_index);
 			BorrowTimestamp::<T>::insert(market_id, debt_owner, Self::last_block_timestamp());
 
 			Ok(())
