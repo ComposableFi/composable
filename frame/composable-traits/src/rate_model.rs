@@ -49,8 +49,9 @@ pub type Duration = u64;
 pub type LiftedFixedBalance = FixedU128;
 
 /// little bit slower than maximizing performance by knowing constraints.
-/// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if you have positive number only, you cannot have underflow.
-/// Same for other constrains, like non zero divisor.
+/// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if
+/// you have positive number only, you cannot have underflow. Same for other constrains, like non
+/// zero divisor.
 pub trait SafeArithmetic: Sized {
 	fn safe_add(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
 	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
@@ -66,7 +67,7 @@ impl SafeArithmetic for LiftedFixedBalance {
 	#[inline(always)]
 	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
 		if rhs.is_zero() {
-			return Err(ArithmeticError::DivisionByZero);
+			return Err(ArithmeticError::DivisionByZero)
 		}
 
 		self.checked_div(rhs).ok_or(ArithmeticError::Overflow)
@@ -92,7 +93,11 @@ pub fn calc_utilization_ratio(
 	borrows: LiftedFixedBalance,
 ) -> Result<Percent, ArithmeticError> {
 	if borrows.is_zero() {
+<<<<<<< HEAD
 		return Ok(Percent::zero());
+=======
+		return Ok(Ratio::zero())
+>>>>>>> origin/main
 	}
 
 	let total = cash.safe_add(&borrows)?;
@@ -185,6 +190,7 @@ impl JumpModel {
 		base_rate: Ratio,
 		jump_rate: Ratio,
 		full_rate: Ratio,
+<<<<<<< HEAD
 		jump_utilization: Percent,
 	) -> Option<JumpModel> {
 		let model = Self { base_rate, jump_rate, full_rate, jump_utilization };
@@ -197,6 +203,27 @@ impl JumpModel {
 			Some(model)
 		} else {
 			None
+=======
+		jump_utilization: Ratio,
+	) -> JumpModel {
+		if jump_utilization > Ratio::one() {
+			Self { base_rate, jump_rate, full_rate, jump_utilization: Ratio::one() }
+		} else {
+			Self { base_rate, jump_rate, full_rate, jump_utilization }
+		}
+	}
+
+	/// Check the jump model for sanity
+	pub fn check_model(&self) -> bool {
+		if self.base_rate > Self::MAX_BASE_RATE ||
+			self.jump_rate > Self::MAX_JUMP_RATE ||
+			self.full_rate > Self::MAX_FULL_RATE
+		{
+			return false
+		}
+		if self.base_rate > self.jump_rate || self.jump_rate > self.full_rate {
+			return false
+>>>>>>> origin/main
 		}
 	}
 
@@ -338,9 +365,9 @@ mod tests {
 		let excess_util = utilization.saturating_sub(jump_utilization);
 		assert_eq!(
 			borrow_rate,
-			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into())
-				/ FixedU128::saturating_from_rational(20, 100)
-				+ normal_rate,
+			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into()) /
+				FixedU128::saturating_from_rational(20, 100) +
+				normal_rate,
 		);
 	}
 
@@ -386,14 +413,14 @@ mod tests {
 			(0..=100u8).prop_map(|x| Percent::from_percent(x)),
 		)
 			.prop_filter("Jump rate model", |(base, jump, full, _)| {
-				// tried high order strategy - failed as it tries to combine collections with not collection
-				// alternative to define arbitrary and proptest attributes with filtering
+				// tried high order strategy - failed as it tries to combine collections with not
+				// collection alternative to define arbitrary and proptest attributes with filtering
 				// overall cardinality is small, so should work well
 				// here we have one liner, not sure why in code we have many lines....
-				base <= jump
-					&& jump <= full && base <= &JumpModel::MAX_BASE_RATE
-					&& jump <= &JumpModel::MAX_JUMP_RATE
-					&& full <= &JumpModel::MAX_FULL_RATE
+				base <= jump &&
+					jump <= full && base <= &JumpModel::MAX_BASE_RATE &&
+					jump <= &JumpModel::MAX_JUMP_RATE &&
+					full <= &JumpModel::MAX_FULL_RATE
 			})
 			.prop_map(
 				|(base_rate, jump_percentage, full_percentage, target_utilization_percentage)| {
