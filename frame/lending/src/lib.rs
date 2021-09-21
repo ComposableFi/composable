@@ -276,29 +276,28 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Event emitted when new lending market is created.
-		/// [market_id, vault_id, manager, borrow_asset_id, collateral_asset_id, reserved_factor,
-		/// collateral_factor]
-		NewMarketCreated(
-			MarketIndex,
-			T::VaultId,
-			T::AccountId,
-			<T as Config>::AssetId,
-			<T as Config>::AssetId,
-			Perquintill,
-			NormalizedCollateralFactor,
-		),
+		NewMarketCreated {
+			market_id: MarketIndex,
+			vault_id: T::VaultId,
+			manager: T::AccountId,
+			borrow_asset_id: <T as Config>::AssetId,
+			collateral_asset_id: <T as Config>::AssetId,
+			reserved_factor: Perquintill,
+			collateral_factor: NormalizedCollateralFactor,
+		},
 		/// Event emitted when collateral is deposited.
-		/// [sender, market_id, amount]
-		CollateralDeposited(T::AccountId, MarketIndex, T::Balance),
+		CollateralDeposited { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
 		/// Event emitted when collateral is withdrawed.
-		/// [sender, market_id, amount]
-		CollateralWithdrawed(T::AccountId, MarketIndex, T::Balance),
+		CollateralWithdrawed { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
 		/// Event emitted when user borrows from given market.
-		/// [sender, marker_id, amount]
-		Borrowed(T::AccountId, MarketIndex, T::Balance),
+		Borrowed { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
 		/// Event emitted when user repays borrow of beneficiary in given market.
-		/// [sender, marker_id, beneficiary, amount]
-		RepaidBorrow(T::AccountId, MarketIndex, T::AccountId, T::Balance),
+		RepaidBorrow {
+			sender: T::AccountId,
+			market_id: MarketIndex,
+			beneficiary: T::AccountId,
+			amount: T::Balance,
+		},
 	}
 
 	/// Lending instances counter
@@ -436,15 +435,15 @@ pub mod pallet {
 			};
 			let (market_id, vault_id) =
 				Self::create(borrow_asset_id, collateral_asset_id, market_config)?;
-			Self::deposit_event(Event::<T>::NewMarketCreated(
+			Self::deposit_event(Event::<T>::NewMarketCreated {
 				market_id,
 				vault_id,
-				who,
+				manager: who,
 				borrow_asset_id,
 				collateral_asset_id,
 				reserved_factor,
 				collateral_factor,
-			));
+			});
 			Ok(().into())
 		}
 
@@ -456,12 +455,12 @@ pub mod pallet {
 		#[transactional]
 		pub fn deposit_collateral(
 			origin: OriginFor<T>,
-			market: MarketIndex,
+			market_id: MarketIndex,
 			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
-			Self::deposit_collateral_internal(&market, &who, amount)?;
-			Self::deposit_event(Event::<T>::CollateralDeposited(who, market, amount));
+			let sender = ensure_signed(origin)?;
+			Self::deposit_collateral_internal(&market_id, &sender, amount)?;
+			Self::deposit_event(Event::<T>::CollateralDeposited { sender, market_id, amount });
 			Ok(().into())
 		}
 
@@ -476,9 +475,9 @@ pub mod pallet {
 			market_id: MarketIndex,
 			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
-			Self::withdraw_collateral_internal(&market_id, &who, amount)?;
-			Self::deposit_event(Event::<T>::CollateralWithdrawed(who, market_id, amount));
+			let sender = ensure_signed(origin)?;
+			Self::withdraw_collateral_internal(&market_id, &sender, amount)?;
+			Self::deposit_event(Event::<T>::CollateralWithdrawed { sender, market_id, amount });
 			Ok(().into())
 		}
 
@@ -493,9 +492,13 @@ pub mod pallet {
 			market_id: MarketIndex,
 			amount_to_borrow: T::Balance,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
-			Self::borrow_internal(&market_id, &who, amount_to_borrow)?;
-			Self::deposit_event(Event::<T>::Borrowed(who, market_id, amount_to_borrow));
+			let sender = ensure_signed(origin)?;
+			Self::borrow_internal(&market_id, &sender, amount_to_borrow)?;
+			Self::deposit_event(Event::<T>::Borrowed {
+				sender,
+				market_id,
+				amount: amount_to_borrow,
+			});
 			Ok(().into())
 		}
 
@@ -513,14 +516,14 @@ pub mod pallet {
 			beneficiary: T::AccountId,
 			repay_amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
-			Self::repay_borrow_internal(&market_id, &who, &beneficiary, Some(repay_amount))?;
-			Self::deposit_event(Event::<T>::RepaidBorrow(
-				who,
+			let sender = ensure_signed(origin)?;
+			Self::repay_borrow_internal(&market_id, &sender, &beneficiary, Some(repay_amount))?;
+			Self::deposit_event(Event::<T>::RepaidBorrow {
+				sender,
 				market_id,
 				beneficiary,
-				repay_amount,
-			));
+				amount: repay_amount,
+			});
 			Ok(().into())
 		}
 	}
