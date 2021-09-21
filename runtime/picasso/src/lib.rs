@@ -774,10 +774,14 @@ impl vault::Config for Runtime {
 	type MinimumWithdrawal = VaultMinimumWithdrawal;
 }
 
+parameter_types! {
+	pub const DynamicCurrencyInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
+}
+
 impl currency_factory::Config for Runtime {
 	type Event = Event;
-	type CurrencyId = CurrencyId;
-	type Convert = ConvertInto;
+	type DynamicCurrency = CurrencyId;
+	type DynamicCurrencyInitial = DynamicCurrencyInitial;
 }
 
 impl lending::Config for Runtime {
