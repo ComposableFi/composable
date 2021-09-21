@@ -67,7 +67,7 @@ impl SafeArithmetic for LiftedFixedBalance {
 	#[inline(always)]
 	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
 		if rhs.is_zero() {
-			return Err(ArithmeticError::DivisionByZero)
+			return Err(ArithmeticError::DivisionByZero);
 		}
 
 		self.checked_div(rhs).ok_or(ArithmeticError::Overflow)
@@ -93,11 +93,7 @@ pub fn calc_utilization_ratio(
 	borrows: LiftedFixedBalance,
 ) -> Result<Percent, ArithmeticError> {
 	if borrows.is_zero() {
-<<<<<<< HEAD
 		return Ok(Percent::zero());
-=======
-		return Ok(Ratio::zero())
->>>>>>> origin/main
 	}
 
 	let total = cash.safe_add(&borrows)?;
@@ -190,7 +186,6 @@ impl JumpModel {
 		base_rate: Ratio,
 		jump_rate: Ratio,
 		full_rate: Ratio,
-<<<<<<< HEAD
 		jump_utilization: Percent,
 	) -> Option<JumpModel> {
 		let model = Self { base_rate, jump_rate, full_rate, jump_utilization };
@@ -203,27 +198,6 @@ impl JumpModel {
 			Some(model)
 		} else {
 			None
-=======
-		jump_utilization: Ratio,
-	) -> JumpModel {
-		if jump_utilization > Ratio::one() {
-			Self { base_rate, jump_rate, full_rate, jump_utilization: Ratio::one() }
-		} else {
-			Self { base_rate, jump_rate, full_rate, jump_utilization }
-		}
-	}
-
-	/// Check the jump model for sanity
-	pub fn check_model(&self) -> bool {
-		if self.base_rate > Self::MAX_BASE_RATE ||
-			self.jump_rate > Self::MAX_JUMP_RATE ||
-			self.full_rate > Self::MAX_FULL_RATE
-		{
-			return false
-		}
-		if self.base_rate > self.jump_rate || self.jump_rate > self.full_rate {
-			return false
->>>>>>> origin/main
 		}
 	}
 
@@ -365,9 +339,9 @@ mod tests {
 		let excess_util = utilization.saturating_sub(jump_utilization);
 		assert_eq!(
 			borrow_rate,
-			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into()) /
-				FixedU128::saturating_from_rational(20, 100) +
-				normal_rate,
+			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into())
+				/ FixedU128::saturating_from_rational(20, 100)
+				+ normal_rate,
 		);
 	}
 
@@ -417,10 +391,10 @@ mod tests {
 				// collection alternative to define arbitrary and proptest attributes with filtering
 				// overall cardinality is small, so should work well
 				// here we have one liner, not sure why in code we have many lines....
-				base <= jump &&
-					jump <= full && base <= &JumpModel::MAX_BASE_RATE &&
-					jump <= &JumpModel::MAX_JUMP_RATE &&
-					full <= &JumpModel::MAX_FULL_RATE
+				base <= jump
+					&& jump <= full && base <= &JumpModel::MAX_BASE_RATE
+					&& jump <= &JumpModel::MAX_JUMP_RATE
+					&& full <= &JumpModel::MAX_FULL_RATE
 			})
 			.prop_map(
 				|(base_rate, jump_percentage, full_percentage, target_utilization_percentage)| {
@@ -451,8 +425,9 @@ mod tests {
 					LiftedFixedBalance::checked_from_integer(cash as u128).unwrap(),
 					LiftedFixedBalance::checked_from_integer(borrows as u128).unwrap(),
 				)
-				.unwrap();
-				let borrow_rate = jump_model.get_borrow_rate(utilization).unwrap();
+				.expect("utilization must be defined");
+				let borrow_rate =
+					jump_model.get_borrow_rate(utilization).expect("borrow rate must be defined");
 				prop_assert!(borrow_rate > Rate::zero());
 				Ok(())
 			})
@@ -473,7 +448,8 @@ mod tests {
 				let utilization_1 = Percent::from_percent(previous);
 				let utilization_2 = Percent::from_percent(next);
 				let optimal = Percent::from_percent(optimal);
-				let model = JumpModel::new_model(base_rate, jump_rate, full_rate, optimal).unwrap();
+				let model = JumpModel::new_model(base_rate, jump_rate, full_rate, optimal)
+					.expect("model should be defined");
 				let rate_1 = model.get_borrow_rate(utilization_1);
 				let rate_2 = model.get_borrow_rate(utilization_2);
 				if optimal < Percent::from_percent(100) {
@@ -491,7 +467,7 @@ mod tests {
 		let base_rate = Rate::saturating_from_rational(2, 100);
 		let jump_rate = Rate::saturating_from_rational(10, 100);
 		let full_rate = Rate::saturating_from_rational(32, 100);
-		let optimal = Ratio::saturating_from_rational(80, 100);
+		let optimal = Percent::from_percent(80);
 		let model = JumpModel::new_model(base_rate, jump_rate, full_rate, optimal).unwrap();
 
 		let area = BitMapBackend::new("./jump_model.png", (1024, 768)).into_drawing_area();
@@ -506,7 +482,7 @@ mod tests {
 		chart
 			.draw_series(LineSeries::new(
 				(0..=100).map(|x| {
-					let utilization = Ratio::saturating_from_rational(x, 100);
+					let utilization = Percent::from_percent(x);
 					let rate = model.get_borrow_rate(utilization).unwrap();
 					(x as f64, rate.to_float() * 100.0)
 				}),
