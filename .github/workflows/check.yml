@@ -16,7 +16,6 @@ jobs:
       - uses: actions/checkout@v2
       - name: Cache
         uses: icepuma/rust-action@master
-        uses: actions/cache@v2.1.6
         with:
           path: |
             ~/.cargo/registry
