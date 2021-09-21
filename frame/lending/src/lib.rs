@@ -784,9 +784,15 @@ pub mod pallet {
 
 			let asset_id = T::Vault::asset_id(&market.borrow)?;
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
-			ensure!(latest_borrow_timestamp.is_none(), Error::<T>::CannotHaveMoreThanOneActiveBorrow);
+			ensure!(
+				latest_borrow_timestamp.is_none(),
+				Error::<T>::CannotHaveMoreThanOneActiveBorrow
+			);
 			let borrow_limit = Self::get_borrow_limit(&market_id, debt_owner)?;
-			ensure!(borrow_limit >= amount_to_borrow, Error::<T>::NotEnoughCollateralToBorrowAmount);
+			ensure!(
+				borrow_limit >= amount_to_borrow,
+				Error::<T>::NotEnoughCollateralToBorrowAmount
+			);
 			let account_id = Self::account_id(market_id);
 			let can_withdraw =
 				<T as Config>::Currency::reducible_balance(asset_id.clone(), &account_id, true);
@@ -842,8 +848,7 @@ pub mod pallet {
 			beneficiary: &Self::AccountId,
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
-			let latest_borrow_timestamp =
-				BorrowTimestamp::<T>::get(market_id, beneficiary);
+			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, beneficiary);
 			if latest_borrow_timestamp.is_none() {
 				return Err(Error::<T>::BorrowDoesNotExist.into())
 			}
