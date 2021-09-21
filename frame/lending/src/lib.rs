@@ -853,6 +853,7 @@ pub mod pallet {
 			beneficiary: &Self::AccountId,
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
+
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, beneficiary);
 			if latest_borrow_timestamp.is_none() {
 				return Err(Error::<T>::BorrowDoesNotExist.into());
@@ -867,14 +868,14 @@ pub mod pallet {
 				let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
 				ensure!(repay_amount <= owed, Error::<T>::CannotRepayMoreThanBorrowAmount);
 				ensure!(
-					T::Currency::can_withdraw(borrow_asset_id, &from, repay_amount)
+					<T as Config>::Currency::can_withdraw(borrow_asset_id, &from, repay_amount)
 						.into_result()
 						.is_ok(),
 					Error::<T>::CannotWithdrawFromProvidedBorrowAccount
 				);
 				let market_account = Self::account_id(market_id);
 				ensure!(
-					T::Currency::can_deposit(borrow_asset_id, &market_account, repay_amount)
+					<T as Config>::Currency::can_deposit(borrow_asset_id, &market_account, repay_amount)
 						.into_result()
 						.is_ok(),
 					Error::<T>::TransferFailed
@@ -894,7 +895,7 @@ pub mod pallet {
 					.expect("can always release held debt balance");
 				T::MarketDebtCurrency::burn_from(debt_asset_id, beneficiary, burn_amount)
 					.expect("can always burn debt balance");
-				T::Currency::transfer(borrow_asset_id, from, &market_account, repay_amount, false)
+				<T as Config>::Currency::transfer(borrow_asset_id, from, &market_account, repay_amount, false)
 					.expect("must be able to transfer because of above checks");
 
 				let interest_index = BorrowIndex::<T>::get(market_id);
@@ -1076,8 +1077,9 @@ pub mod pallet {
 					.is_ok(),
 				Error::<T>::TransferFailed
 			);
+
 			ensure!(
-				T::Currency::can_deposit(market.collateral, &market_account, amount)
+				<T as Config>::Currency::can_deposit(market.collateral, &market_account, amount)
 					== DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
@@ -1144,7 +1146,7 @@ pub mod pallet {
 
 			let market_account = Self::account_id(&market_id);
 			ensure!(
-				T::Currency::can_deposit(market.collateral, &account, amount)
+				<T as Config>::Currency::can_deposit(market.collateral, &account, amount)
 					== DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
