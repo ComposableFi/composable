@@ -19,18 +19,14 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
-// TODO remove me!
-#![allow(missing_docs)]
 
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_traits::currency::CurrencyFactory;
+	use composable_traits::currency::{CurrencyFactory, DynamicCurrency};
 	use frame_support::{pallet_prelude::*, PalletId};
-	use sp_runtime::traits::Convert;
-	use sp_std::fmt::Debug;
 
 	pub const PALLET_ID: PalletId = PalletId(*b"pal_curf");
 
@@ -38,32 +34,38 @@ pub mod pallet {
 	pub enum Event<T: Config> {}
 
 	#[pallet::error]
-	pub enum Error<T> {
-		Overflow,
-	}
+	pub enum Error<T> {}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type CurrencyId: FullCodec + Eq + PartialEq + Copy + MaybeSerializeDeserialize + Debug;
-		type Convert: Convert<Self::CurrencyId, u128> + Convert<u128, Self::CurrencyId>;
+
+		/// The currency which can be created from thin air.
+		type DynamicCurrency: FullCodec + Copy + DynamicCurrency;
+
+		/// The initial currency id from which we are able to generate the next.
+		#[pallet::constant]
+		type DynamicCurrencyInitial: Get<Self::DynamicCurrency>;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// The counter that track the latest generated currency id.
 	#[pallet::storage]
-	#[pallet::getter(fn currency_count)]
-	pub type CurrencyCounter<T: Config> = StorageValue<_, u128, ValueQuery>;
+	#[pallet::getter(fn currency_latest)]
+	pub type CurrencyCounter<T: Config> =
+		StorageValue<_, T::DynamicCurrency, ValueQuery, T::DynamicCurrencyInitial>;
 
-	impl<T: Config> CurrencyFactory<T::CurrencyId> for Pallet<T> {
-		fn create() -> Result<T::CurrencyId, DispatchError> {
+	impl<T: Config> CurrencyFactory<T::DynamicCurrency> for Pallet<T> {
+		fn create() -> Result<T::DynamicCurrency, DispatchError> {
 			CurrencyCounter::<T>::mutate(|c| {
 				let c_current = *c;
-				let c_next = c_current.checked_add(1).ok_or(Error::<T>::Overflow)?;
+				let c_next = c_current.next()?;
 				*c = c_next;
-				Ok(T::Convert::convert(c_next))
+				Ok(c_next)
 			})
 		}
 	}
