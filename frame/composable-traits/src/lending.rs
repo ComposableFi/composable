@@ -61,11 +61,11 @@ pub trait Lending {
 	) -> Result<(), DispatchError>;
 
 	/// Withdraw a part/total of previously deposited collateral.
-	/// In practice if used has borrow user will not withdraw v because it would probably result in quick liquidation, if he has any borrows.
-	///```python
+	/// In practice if used has borrow user will not withdraw v because it would probably result in
+	/// quick liquidation, if he has any borrows. ```python
 	/// withdrawable = total_collateral - total_borrows
 	/// withdrawable = collateral_balance * collateral_price - borrower_balance_with_interest * borrow_price * collateral_factor
-	///```
+	/// ```
 	fn withdraw_collateral(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,

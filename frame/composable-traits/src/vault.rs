@@ -102,10 +102,11 @@ pub trait Vault {
 /// CapabilityVault exposes functionalities for stopping and limiting vault functionality.
 ///
 /// # Terminology
-///  - `Tombstoning`: marks the vault as ready to be deleted, stopping almost all functionalities, such
-///    as withdrawals and deposits. Empty vaults which pay no rent may be tombstoned.
-///  - `Stopping`: Used as an emergency feature to stop all functionality, akin to tombstoning but not
-///    marking it ready for deletion. Consider limiting this to sudo or a multisig council account.
+///  - `Tombstoning`: marks the vault as ready to be deleted, stopping almost all functionalities,
+///    such as withdrawals and deposits. Empty vaults which pay no rent may be tombstoned.
+///  - `Stopping`: Used as an emergency feature to stop all functionality, akin to tombstoning but
+///    not marking it ready for deletion. Consider limiting this to sudo or a multisig council
+///    account.
 pub trait CapabilityVault: Vault {
 	/// Stops all functionality of the vault. Call [`start`](CapabilityVault::start) to re-enable
 	/// the vault.
