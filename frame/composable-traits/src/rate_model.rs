@@ -96,7 +96,7 @@ pub fn calc_utilization_ratio(
 	}
 
 	let total = cash.safe_add(&borrows)?;
-	// also max value is 1.00000000000000000, it still fails with u8, so mul by u16 and cast to u8
+	// also max value is 1.00000000000000000, it still fails with u8, so mul by u16 and cast to u8 safely
 	let utilization_ratio = borrows
 		.checked_div(&total)
 		.expect("above checks prove it cannot error")
