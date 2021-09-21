@@ -1,26 +1,19 @@
 name: Test & Build & Benchmarking Build
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-  workflow_dispatch:
+  pull_request: 
+    branches: 
+      - main
 
 jobs:
   test-build:
-    runs-on: ubuntu-20.04
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
     steps:
       - uses: actions/checkout@v2
-      - name: Set-Up system dependencies
-        run: sudo apt install -y cmake pkg-config libssl-dev git build-essential clang libclang-dev curl
-      - name: Install Rustup
-        run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
-          source ~/.cargo/env
-          rustup default stable
-          rustup update nightly
-          rustup update stable
-          rustup target add wasm32-unknown-unknown --toolchain nightly
       - name: Cache
         uses: actions/cache@v2.1.6
         with:
