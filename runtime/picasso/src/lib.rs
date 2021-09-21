@@ -22,7 +22,7 @@ use sp_runtime::{
 	ApplyExtrinsicResult
 };
 use orml_traits::parameter_type_with_key;
-use currencies::BasicCurrencyAdapter;
+use currencies::{BasicCurrencyAdapter, Currency as CCurrency};
 
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -32,7 +32,7 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{All, Filter, KeyOwnerProofSystem, Randomness, StorageInfo},
+	traits::{All, Filter, KeyOwnerProofSystem, Randomness, StorageInfo, ReservableCurrency},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight,
@@ -176,7 +176,7 @@ impl system::Config for Runtime {
 	/// Version of the runtime.
 	type Version = Version;
 	/// The data to be stored in an account.
-	type AccountData = balances::AccountData<Balance>; //change me
+	type AccountData = ();//balances::AccountData<Balance>; //change me
 
 	/// Converts a module to the index of the module in `construct_runtime!`.
 	///
@@ -223,7 +223,7 @@ frame_support::parameter_types! {
 impl currencies::Config for Runtime {
         type Event = Event;
         type MultiCurrency = Tokens;
-        type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>; // Convert into a BasicCurrency object
+        type NativeCurrency = BasicCurrencyAdapter<Runtime, Balance, Amount, BlockNumber>; // Convert into a BasicCurrency object
         type GetNativeCurrencyId = GetNativeCurrencyId;// Get the id of the native currency, should be PICA for us
         type WeightInfo = weights::currencies::WeightInfo<Runtime>; // use our currencies.rs weight file  
 }
@@ -261,7 +261,7 @@ parameter_types! {
 
 impl transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
+		transaction_payment::CurrencyAdapter<Balance, DealWithFees<Runtime>>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = ();
@@ -280,7 +280,7 @@ parameter_types! {
 impl indices::Config for Runtime {
 	type Event = Event;
 	type AccountIndex = AccountIndex;
-	type Currency = Balances;
+	type Currency = ();//Balances;
 	type Deposit = IndexDeposit;
 	type WeightInfo = weights::indices::WeightInfo<Runtime>;
 }
@@ -363,7 +363,7 @@ parameter_types! {
 }
 
 impl oracle::Config for Runtime {
-	type Currency = Balances;
+	type Currency = ();//Balances; change me
 	type Event = Event;
 	type AuthorityId = oracle::crypto::TestAuthId;
 	type AssetId = CurrencyId;
@@ -422,7 +422,7 @@ pub type LocationToAccountId = (
 /// Means for transacting assets on this chain.
 pub type LocalAssetTransactor = CurrencyAdapter<
 	// Use this currency:
-	Balances,
+	Balance,
 	// Use this currency when it is a fungible asset matching the given location or name:
 	IsConcrete<RelayLocation>,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
@@ -490,7 +490,7 @@ impl xcm_executor::Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
-	type Trader = UsingComponents<IdentityFee<Balance>, RelayLocation, AccountId, Balances, ()>;
+	type Trader = UsingComponents<IdentityFee<Balance>, RelayLocation, AccountId, Balance, ()>;
 	type ResponseHandler = (); // Don't handle responses for now.
 }
 
@@ -580,7 +580,7 @@ parameter_types! {
 
 impl collator_selection::Config for Runtime {
 	type Event = Event;
-	type Currency = Balances;
+	type Currency = ();//Balances;
 	type UpdateOrigin = EnsureRootOrHalfCouncil;
 	type PotId = PotId;
 	type MaxCandidates = MaxCandidates;
@@ -630,7 +630,7 @@ impl crowdloan_bonus::Config for Runtime {
 	type JumpStart = EnsureRootOrHalfCouncil;
 	type Currency = Tokens;
 	type Balance = Balance;
-	type NativeCurrency = Balances;
+	type NativeCurrency = (); //Balances;
 	type WeightInfo = weights::crowdloan_bonus::WeightInfo<Runtime>;
 }
 
@@ -648,7 +648,7 @@ parameter_types! {
 
 impl treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
-	type Currency = Balances;
+	type Currency =  CCurrency<Self::AccountId> + ReservableCurrency<Self::AccountId>;//Balances;
 	type ApproveOrigin = EnsureRootOrHalfCouncil;
 	type RejectOrigin = EnsureRootOrHalfCouncil;
 	type Event = Event;
@@ -735,7 +735,7 @@ parameter_types! {
 impl democracy::Config for Runtime {
 	type Proposal = Call;
 	type Event = Event;
-	type Currency = Balances;
+	type Currency = ();//Balances; change me
 	type EnactmentPeriod = EnactmentPeriod;
 	type LaunchPeriod = LaunchPeriod;
 	type VotingPeriod = VotingPeriod;
