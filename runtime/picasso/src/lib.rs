@@ -87,6 +87,8 @@ pub mod opaque {
 	}
 }
 
+
+
 // To learn more about runtime versioning and what each of the following value means:
 //   https://substrate.dev/docs/en/knowledgebase/runtime/upgrades#runtime-versioning
 #[sp_version::runtime_version]
@@ -1054,7 +1056,7 @@ impl_runtime_apis! {
 			let params = (&config, &whitelist);
 
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, balances, Balances);
+//			add_benchmark!(params, batches, balances, Balances);
 			add_benchmark!(params, batches, timestamp, Timestamp);
 			add_benchmark!(params, batches, oracle, Oracle);
 			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
