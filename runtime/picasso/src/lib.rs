@@ -8,10 +8,11 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
 use common::{
-	impls::DealWithFees, AccountId, AccountIndex, AuraId, Balance, BlockNumber, CouncilInstance,
-	Amount, EnsureRootOrHalfCouncil, Hash, Signature, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
-	MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION, AVERAGE_ON_INITIALIZE_RATIO,
+	impls::DealWithFees, AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber,
+	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
+	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
 };
+use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, TokenSymbol};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -19,9 +20,8 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult
+	ApplyExtrinsicResult,
 };
-use orml_traits::parameter_type_with_key;
 
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -235,7 +235,7 @@ impl balances::Config for Runtime {
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
-	pub const TransactionByteFee: Balance = 1  * MILLI_PICA;
+	pub const TransactionByteFee: Balance = MILLI_PICA;
 }
 
 impl transaction_payment::Config for Runtime {
@@ -308,7 +308,7 @@ where
 		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
 		let address = AccountIdLookup::unlookup(account);
 		let (call, extra, _) = raw_payload.deconstruct();
-		Some((call, (address, signature.into(), extra)))
+		Some((call, (address, signature, extra)))
 	}
 }
 
@@ -332,7 +332,7 @@ parameter_types! {
 
 	/// TODO: discuss with omar/cosmin
 	pub const MinStake: Balance = 1000 * PICA;
-	pub const RequestCost: Balance = 1 * PICA;
+	pub const RequestCost: Balance = PICA;
 	pub const RewardAmount: Balance = 5 * PICA;
 	// Shouldn't this be a ratio based on locked amount?
 	pub const SlashAmount: Balance = 5;
@@ -694,7 +694,6 @@ impl utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
-
 }
 
 parameter_types! {
@@ -705,7 +704,7 @@ parameter_types! {
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	// TODO: prod value
-	pub PreimageByteDeposit: Balance = 1 * MILLI_PICA;
+	pub PreimageByteDeposit: Balance = MILLI_PICA;
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -752,7 +751,7 @@ parameter_types! {
 	pub const NativeAssetId: CurrencyId = CurrencyId::Token(TokenSymbol::PICA);
 	pub const CreationDeposit: Balance = 10 * PICA;
 	pub const VaultExistentialDeposit: Balance = 1000 * PICA;
-	pub const RentPerBlock: Balance = 1 * MILLI_PICA;
+	pub const RentPerBlock: Balance = MILLI_PICA;
 	pub const VaultMinimumDeposit: Balance = 10_000;
 	pub const VaultMinimumWithdrawal: Balance = 10_000;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
@@ -1046,8 +1045,8 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, democracy, Democracy);
 			add_benchmark!(params, batches, collective, Council);
 			add_benchmark!(params, batches, lending, Lending);
-            add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
-	    	add_benchmark!(params, batches, utility, Utility);
+			add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
+			add_benchmark!(params, batches, utility, Utility);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
@@ -1074,7 +1073,7 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 			.create_inherent_data()
 			.expect("Could not create the timestamp inherent data");
 
-		inherent_data.check_extrinsics(&block)
+		inherent_data.check_extrinsics(block)
 	}
 }
 

@@ -1,5 +1,5 @@
-use picasso_runtime::{self as parachain_runtime, GenesisConfig};
 use common::{AccountId, AuraId, Balance};
+use picasso_runtime::{self as parachain_runtime, GenesisConfig};
 
 use super::{Extensions, ParaId};
 
@@ -47,7 +47,7 @@ pub fn genesis_config(
 				.map(|(acc, aura)| {
 					(
 						acc.clone(),                // account id
-						acc.clone(),                // validator id
+						acc,                        // validator id
 						picasso_session_keys(aura), // session keys
 					)
 				})

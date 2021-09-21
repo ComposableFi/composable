@@ -61,11 +61,11 @@ pub trait Lending {
 	) -> Result<(), DispatchError>;
 
 	/// Withdraw a part/total of previously deposited collateral.
-	/// In practice if used has borrow user will not withdraw v because it would probably result in quick liquidation, if he has any borrows.
-	///```python
+	/// In practice if used has borrow user will not withdraw v because it would probably result in
+	/// quick liquidation, if he has any borrows. ```python
 	/// withdrawable = total_collateral - total_borrows
-	/// withdrawable = collateral_balance * collateral_price - borrower_balance_with_interest * borrow_price * collateral_factor
-	///```
+	/// withdrawable = collateral_balance * collateral_price - borrower_balance_with_interest *
+	/// borrow_price * collateral_factor ```
 	fn withdraw_collateral(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
@@ -75,6 +75,7 @@ pub trait Lending {
 	/// get all existing markets for current deposit
 	fn get_markets_for_borrow(vault: Self::VaultId) -> Vec<Self::MarketId>;
 
+	#[allow(clippy::type_complexity)]
 	fn get_all_markets(
 	) -> Vec<(Self::MarketId, MarketConfig<Self::VaultId, Self::AssetId, Self::AccountId>)>;
 

@@ -45,7 +45,7 @@ fn create_simple_vaulted_market() -> ((MarketIndex, BorrowAssetVault), Collatera
 		},
 	);
 	assert_ok!(collateral_vault);
-	let (collateral_vault, collateral_vault_config) = collateral_vault.expect("unreachable; qed;");
+	let (_collateral_vault, collateral_vault_config) = collateral_vault.expect("unreachable; qed;");
 	(
 		create_market(
 			MockCurrencyId::BTC,
@@ -130,14 +130,14 @@ fn test_borrow() {
 		assert_eq!(Lending::total_cash(&market), Ok(total_cash));
 		assert_ok!(Lending::borrow_internal(&market, &ALICE, alice_limit / 4));
 		total_cash -= alice_limit / 4;
-		let mut total_borrows = alice_limit / 4;
+		let total_borrows = alice_limit / 4;
 		assert_eq!(Lending::total_cash(&market), Ok(total_cash));
 		assert_eq!(Lending::total_borrows(&market), Ok(total_borrows));
-		let mut total_interest: u128 = 0;
+		let _total_interest: u128 = 0;
 		// Interest rate model, should be same as defined in InterestRateModel
-		let base_rate = Rate::saturating_from_rational(2, 100);
-		let jump_rate = Rate::saturating_from_rational(10, 100);
-		let jump_utilization = Ratio::saturating_from_rational(80, 100);
+		let _base_rate = Rate::saturating_from_rational(2, 100);
+		let _jump_rate = Rate::saturating_from_rational(10, 100);
+		let _jump_utilization = Ratio::saturating_from_rational(80, 100);
 		for i in 1..10000 {
 			process_block(i);
 		}
@@ -235,7 +235,7 @@ fn test_flash_loan() {
 		process_block(1);
 		assert_ok!(Lending::borrow_internal(&market, &ALICE, alice_limit / 4));
 		total_cash -= alice_limit / 4;
-		let mut total_borrows = alice_limit / 4;
+		let total_borrows = alice_limit / 4;
 		assert_eq!(Lending::total_cash(&market), Ok(total_cash));
 		assert_eq!(Lending::total_borrows(&market), Ok(total_borrows));
 		let alice_repay_amount = Lending::borrow_balance_current(&market, &ALICE).unwrap();
@@ -280,7 +280,7 @@ proptest! {
 	#[test]
 	fn market_collateral_deposit_withdraw_identity(amount in 0..u32::MAX as Balance) {
 		new_test_ext().execute_with(|| {
-			let (market, vault) = create_simple_market();
+			let (market, _vault) = create_simple_market();
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount);
@@ -297,7 +297,7 @@ proptest! {
 	#[test]
 	fn market_collateral_vaulted_deposit_withdraw_identity(amount in 0..u32::MAX as Balance) {
 		new_test_ext().execute_with(|| {
-			let ((market, borrow_vault), collateral_asset) = create_simple_vaulted_market();
+			let ((market, _borrow_vault), collateral_asset) = create_simple_vaulted_market();
 
 			prop_assert_eq!(Tokens::balance(collateral_asset, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(collateral_asset, &ALICE, amount));

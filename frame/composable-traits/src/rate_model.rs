@@ -45,8 +45,9 @@ pub type Duration = u64;
 pub type LiftedFixedBalance = FixedU128;
 
 /// little bit slower than maximizing performance by knowing constraints.
-/// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if you have positive number only, you cannot have underflow.
-/// Same for other constrains, like non zero divisor.
+/// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if
+/// you have positive number only, you cannot have underflow. Same for other constrains, like non
+/// zero divisor.
 pub trait SafeArithmetic: Sized {
 	fn safe_add(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
 	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
@@ -62,7 +63,7 @@ impl SafeArithmetic for LiftedFixedBalance {
 	#[inline(always)]
 	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
 		if rhs.is_zero() {
-			return Err(ArithmeticError::DivisionByZero);
+			return Err(ArithmeticError::DivisionByZero)
 		}
 
 		self.checked_div(rhs).ok_or(ArithmeticError::Overflow)
@@ -87,7 +88,7 @@ pub fn calc_utilization_ratio(
 	borrows: LiftedFixedBalance,
 ) -> Result<Ratio, ArithmeticError> {
 	if borrows.is_zero() {
-		return Ok(Ratio::zero());
+		return Ok(Ratio::zero())
 	}
 
 	let total = cash.safe_add(&borrows)?;
@@ -148,9 +149,9 @@ impl InterestRateModel {
 	pub fn get_supply_rate(borrow_rate: Rate, util: Ratio, reserve_factor: Ratio) -> Rate {
 		// ((1 - reserve_factor) * borrow_rate) * utilization
 		let one_minus_reserve_factor = Ratio::one().saturating_sub(reserve_factor);
-		let rate_to_pool = borrow_rate.saturating_mul(one_minus_reserve_factor.into());
+		let rate_to_pool = borrow_rate.saturating_mul(one_minus_reserve_factor);
 
-		rate_to_pool.saturating_mul(util.into())
+		rate_to_pool.saturating_mul(util)
 	}
 }
 
@@ -191,14 +192,14 @@ impl JumpModel {
 
 	/// Check the jump model for sanity
 	pub fn check_model(&self) -> bool {
-		if self.base_rate > Self::MAX_BASE_RATE
-			|| self.jump_rate > Self::MAX_JUMP_RATE
-			|| self.full_rate > Self::MAX_FULL_RATE
+		if self.base_rate > Self::MAX_BASE_RATE ||
+			self.jump_rate > Self::MAX_JUMP_RATE ||
+			self.full_rate > Self::MAX_FULL_RATE
 		{
-			return false;
+			return false
 		}
 		if self.base_rate > self.jump_rate || self.jump_rate > self.full_rate {
-			return false;
+			return false
 		}
 
 		true
@@ -211,8 +212,8 @@ impl JumpModel {
 			let result = self
 				.jump_rate
 				.checked_sub(&self.base_rate)?
-				.saturating_mul(utilization.into())
-				.checked_div(&self.jump_utilization.into())?
+				.saturating_mul(utilization)
+				.checked_div(&self.jump_utilization)?
 				.checked_add(&self.base_rate)?;
 
 			Some(result)
@@ -223,8 +224,8 @@ impl JumpModel {
 			let result = self
 				.full_rate
 				.checked_sub(&self.jump_rate)?
-				.saturating_mul(excess_util.into())
-				.checked_div(&(Ratio::one().saturating_sub(self.jump_utilization).into()))?
+				.saturating_mul(excess_util)
+				.checked_div(&Ratio::one().saturating_sub(self.jump_utilization))?
 				.checked_add(&self.jump_rate)?;
 
 			Some(result)
@@ -296,9 +297,9 @@ mod tests {
 		assert_eq!(
 			JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization),
 			JumpModel {
-				base_rate: Rate::from_inner(20_000_000_000_000_000).into(),
-				jump_rate: Rate::from_inner(100_000_000_000_000_000).into(),
-				full_rate: Rate::from_inner(320_000_000_000_000_000).into(),
+				base_rate: Rate::from_inner(20_000_000_000_000_000),
+				jump_rate: Rate::from_inner(100_000_000_000_000_000),
+				full_rate: Rate::from_inner(320_000_000_000_000_000),
 				jump_utilization: Ratio::saturating_from_rational(80, 100),
 			}
 		);
@@ -319,23 +320,20 @@ mod tests {
 		let borrows: u128 = 1000;
 		let util = Ratio::saturating_from_rational(borrows, cash + borrows);
 		let borrow_rate = jump_model.get_borrow_rate(util).unwrap();
-		assert_eq!(
-			borrow_rate,
-			jump_model.jump_rate.saturating_mul(util.into()) + jump_model.base_rate,
-		);
+		assert_eq!(borrow_rate, jump_model.jump_rate.saturating_mul(util) + jump_model.base_rate,);
 
 		// jump rate
 		cash = 100;
 		let util = Ratio::saturating_from_rational(borrows, cash + borrows);
 		let borrow_rate = jump_model.get_borrow_rate(util).unwrap();
 		let normal_rate =
-			jump_model.jump_rate.saturating_mul(jump_utilization.into()) + jump_model.base_rate;
+			jump_model.jump_rate.saturating_mul(jump_utilization) + jump_model.base_rate;
 		let excess_util = util.saturating_sub(jump_utilization);
 		assert_eq!(
 			borrow_rate,
-			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into())
-				/ FixedU128::saturating_from_rational(20, 100)
-				+ normal_rate,
+			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util) /
+				FixedU128::saturating_from_rational(20, 100) +
+				normal_rate,
 		);
 	}
 
@@ -350,8 +348,7 @@ mod tests {
 		let supply_rate = InterestRateModel::get_supply_rate(borrow_rate, util, reserve_factor);
 		assert_eq!(
 			supply_rate,
-			borrow_rate
-				.saturating_mul(((Ratio::one().saturating_sub(reserve_factor)) * util).into()),
+			borrow_rate.saturating_mul(Ratio::one().saturating_sub(reserve_factor) * util),
 		);
 	}
 
@@ -380,14 +377,14 @@ mod tests {
 			(0..=100).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
 		)
 			.prop_filter("Jump rate model", |(base, jump, full, _)| {
-				// tried high order strategy - failed as it tries to combine collections with not collection
-				// alternative to define arbitrary and proptest attributes with filtering
+				// tried high order strategy - failed as it tries to combine collections with not
+				// collection alternative to define arbitrary and proptest attributes with filtering
 				// overall cardinality is small, so should work well
 				// here we have one liner, not sure why in code we have many lines....
-				base <= jump
-					&& jump <= full && base <= &JumpModel::MAX_BASE_RATE
-					&& jump <= &JumpModel::MAX_JUMP_RATE
-					&& full <= &JumpModel::MAX_FULL_RATE
+				base <= jump &&
+					jump <= full && base <= &JumpModel::MAX_BASE_RATE &&
+					jump <= &JumpModel::MAX_JUMP_RATE &&
+					full <= &JumpModel::MAX_FULL_RATE
 			})
 			.prop_map(
 				|(base_rate, jump_percentages, full_percentages, target_utilization_percentage)| {

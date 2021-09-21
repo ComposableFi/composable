@@ -247,7 +247,7 @@ pub mod pallet {
 				collateral_price: collateral_price.into(),
 				borrower_balance_with_interest: borrower_balance_with_interest.into(),
 				borrow_price: borrow_price.into(),
-				collateral_factor: collateral_factor.into(),
+				collateral_factor,
 			}
 		}
 
@@ -769,6 +769,7 @@ pub mod pallet {
 			markets
 		}
 
+		#[allow(clippy::type_complexity)]
 		fn get_all_markets(
 		) -> Vec<(Self::MarketId, MarketConfig<T::VaultId, <T as Config>::AssetId, T::AccountId>)> {
 			Markets::<T>::iter().map(|(index, config)| (index, config)).collect()
@@ -784,13 +785,19 @@ pub mod pallet {
 
 			let asset_id = T::Vault::asset_id(&market.borrow)?;
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
-			ensure!(latest_borrow_timestamp.is_none(), Error::<T>::CannotHaveMoreThanOneActiveBorrow);
-			let borrow_limit = Self::get_borrow_limit(&market_id, debt_owner)?;
-			ensure!(borrow_limit >= amount_to_borrow, Error::<T>::NotEnoughCollateralToBorrowAmount);
+			ensure!(
+				latest_borrow_timestamp.is_none(),
+				Error::<T>::CannotHaveMoreThanOneActiveBorrow
+			);
+			let borrow_limit = Self::get_borrow_limit(market_id, debt_owner)?;
+			ensure!(
+				borrow_limit >= amount_to_borrow,
+				Error::<T>::NotEnoughCollateralToBorrowAmount
+			);
 			let account_id = Self::account_id(market_id);
 			let can_withdraw =
-				<T as Config>::Currency::reducible_balance(asset_id.clone(), &account_id, true);
-			let fund = T::Vault::available_funds(&market.borrow, &Self::account_id(&market_id))?;
+				<T as Config>::Currency::reducible_balance(asset_id, &account_id, true);
+			let fund = T::Vault::available_funds(&market.borrow, &Self::account_id(market_id))?;
 			match fund {
 				FundsAvailability::Withdrawable(balance) => {
 					<T::Vault as StrategicVault>::withdraw(
@@ -811,7 +818,7 @@ pub mod pallet {
 			}
 
 			<T as Config>::Currency::transfer(
-				asset_id.clone(),
+				asset_id,
 				&Self::account_id(market_id),
 				debt_owner,
 				amount_to_borrow,
@@ -842,8 +849,7 @@ pub mod pallet {
 			beneficiary: &Self::AccountId,
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
-			let latest_borrow_timestamp =
-				BorrowTimestamp::<T>::get(market_id, beneficiary);
+			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, beneficiary);
 			if latest_borrow_timestamp.is_none() {
 				return Err(Error::<T>::BorrowDoesNotExist.into())
 			}
@@ -857,7 +863,7 @@ pub mod pallet {
 				let borrow_id = T::Vault::asset_id(&market.borrow)?;
 				ensure!(repay_amount <= owed, Error::<T>::CannotRepayMoreThanBorrowAmount);
 				ensure!(
-					<T as Config>::Currency::can_withdraw(borrow_id, &from, repay_amount)
+					<T as Config>::Currency::can_withdraw(borrow_id, from, repay_amount)
 						.into_result()
 						.is_ok(),
 					Error::<T>::CannotWithdrawFromProvidedBorrowAccount
@@ -1056,8 +1062,8 @@ pub mod pallet {
 					Self::borrow_balance_current(market_id, account)?.unwrap_or_default();
 
 				let borrower = BorrowerData {
-					collateral_balance: collateral_balance.into(),
-					collateral_price: collateral_price.into(),
+					collateral_balance,
+					collateral_price,
 					borrower_balance_with_interest: borrower_balance_with_interest.into(),
 					borrow_price: borrow_price.into(),
 					collateral_factor: market.collateral_factor,
@@ -1081,9 +1087,9 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-			let market_account = Self::account_id(&market_id);
+			let market_account = Self::account_id(market_id);
 			ensure!(
-				<T as Config>::Currency::can_withdraw(market.collateral, &account, amount)
+				<T as Config>::Currency::can_withdraw(market.collateral, account, amount)
 					.into_result()
 					.is_ok(),
 				Error::<T>::TransferFailed
@@ -1095,9 +1101,8 @@ pub mod pallet {
 			);
 
 			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
-				let new_collateral_balance = (*collateral_balance)
-					.checked_add(&amount)
-					.ok_or(Error::<T>::Overflow.into())?;
+				let new_collateral_balance =
+					(*collateral_balance).checked_add(&amount).ok_or(Error::<T>::Overflow)?;
 				*collateral_balance = new_collateral_balance;
 				Result::<(), Error<T>>::Ok(())
 			})?;
@@ -1133,7 +1138,7 @@ pub mod pallet {
 				Self::borrow_balance_current(market_id, account)?.unwrap_or_default();
 
 			let borrower = BorrowerData {
-				collateral_balance: collateral_balance.into(),
+				collateral_balance,
 				collateral_price: collateral_price.into(),
 				borrower_balance_with_interest: borrower_balance_with_interest.into(),
 				borrow_price: borrow_price.into(),
@@ -1154,9 +1159,9 @@ pub mod pallet {
 				Error::<T>::NotEnoughCollateral
 			);
 
-			let market_account = Self::account_id(&market_id);
+			let market_account = Self::account_id(market_id);
 			ensure!(
-				<T as Config>::Currency::can_deposit(market.collateral, &account, amount) ==
+				<T as Config>::Currency::can_deposit(market.collateral, account, amount) ==
 					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);

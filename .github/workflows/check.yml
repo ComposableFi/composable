@@ -33,12 +33,15 @@ jobs:
         run: |
           cargo clean -p picasso-runtime
           cargo clean -p composable
+      - name: Cargo fmt
+        run: |
+          cargo +nightly fmt -- --check
+      - name: Cargo clippy
+        run: |
+          SKIP_WASM_BUILD=1 cargo clippy -- -D warnings
       - name: Cargo test
         run: |
           cargo test
-      - name: Cargo check
-        run: |
-          SKIP_WASM_BUILD=1 cargo check --release
       - name: Check build for benchmarking
         run: >
           pushd node &&

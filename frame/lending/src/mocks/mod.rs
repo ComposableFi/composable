@@ -1,21 +1,18 @@
 use crate as pallet_lending;
-use composable_traits::{currency::CurrencyFactory, oracle::Oracle as OracleTrait};
+
 use frame_support::{
 	parameter_types,
-	traits::{Contains, OnFinalize, OnInitialize},
+	traits::{OnFinalize, OnInitialize},
 	PalletId,
 };
-use frame_system::{self as system, EnsureSignedBy};
-use orml_tokens::TransferDust;
+use frame_system::{self as system};
+
 use orml_traits::parameter_type_with_key;
 use sp_arithmetic::traits::Zero;
-use sp_core::{sr25519::Signature, H256};
+use sp_core::H256;
 use sp_runtime::{
-	testing::{Header, TestXt},
-	traits::{
-		AccountIdConversion, BlakeTwo256, ConvertInto, IdentifyAccount, IdentityLookup, Verify,
-	},
-	DispatchError,
+	testing::Header,
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 };
 
 pub mod oracle;
