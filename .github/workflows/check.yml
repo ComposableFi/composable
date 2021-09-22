@@ -1,8 +1,6 @@
 name: Test & Build & Benchmarking Build
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches:
       - main
@@ -32,6 +30,27 @@ jobs:
       - name: Cargo Check
         run: |
           SKIP_WASM_BUILD=1 cargo check --release
+  clippy:
+    name: Clippy
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps: 
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with: 
+          toolchain: stable
+          components: clippy
+          override: true
+      - name: Cargo Fmt
+        run: |
+          cargo +nightly fmt -- --check
+      - name: Cargo clippy
+        run: |
+          SKIP_WASM_BUILD=1 cargo clippy -- -D warnings
+
   test:
     name: Unit Test
     runs-on: 
