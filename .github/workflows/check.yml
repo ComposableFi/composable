@@ -46,6 +46,11 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
+      - uses: actions-rs/toolchain@v1
+        with: 
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: Run Test
         run: |
           cargo test
