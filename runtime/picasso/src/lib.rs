@@ -361,7 +361,7 @@ parameter_types! {
 }
 
 impl oracle::Config for Runtime {
-	type Currency = Balances;
+	type Currency = BasicCurrencyAdapter<Runtime, Balance, Amount, BlockNumber>;//;Balances;
 	type Event = Event;
 	type AuthorityId = oracle::crypto::TestAuthId;
 	type AssetId = CurrencyId;
@@ -578,7 +578,7 @@ parameter_types! {
 
 impl collator_selection::Config for Runtime {
 	type Event = Event;
-	type Currency = Balances;
+	type Currency = BasicCurrencyAdapter<Runtime, Balance, Amount, BlockNumber>;//Balances;
 	type UpdateOrigin = EnsureRootOrHalfCouncil;
 	type PotId = PotId;
 	type MaxCandidates = MaxCandidates;
