@@ -29,9 +29,9 @@ jobs:
           toolchain: stable
           override: true
       - uses: actions-rs/cargo@v1
-        name: Cargo Check
-        with:
-          command:  SKIP_WASM_BUILD=1 check 
+      - name: Cargo Check
+        run: |
+          SKIP_WASM_BUILD=1 cargo check --release
   test:
     name: Lint Test
     runs-on: 
