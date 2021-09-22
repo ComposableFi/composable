@@ -34,8 +34,7 @@ jobs:
           override: true
       - name: Clean Project Artifacts and Test
         run: |
-          cargo clean -p picasso-runtime
-          cargo clean -p composable
+          cargo clean 
           cargo test
       - name: Check build for benchmarking
         run: |
