@@ -43,8 +43,6 @@ jobs:
           override: true
       - name: Run Test
         run: |
-          cargo clean -p picasso-runtime
-          cargo clean -p composable
           cargo test
 
 
