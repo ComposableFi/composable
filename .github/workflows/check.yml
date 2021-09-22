@@ -15,27 +15,13 @@ jobs:
       - linux
       - x64
       - sre
-    container: 
-      image: rust
-    steps:
+    steps: 
       - uses: actions/checkout@v2
-      - name: Cache
-        uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@v1
         with: 
           profile: minimal
           toolchain: stable
-      - name: Clean project artifacts
-        # uses: Swatinem/rust-cache@v1
-        run: |
-          cargo clean -p picasso-runtime
-          cargo clean -p composable
-      - name: Cargo test
-        run: |
-          cargo test
-      - name: Cargo check
-        run: |
-          SKIP_WASM_BUILD=1 cargo check --release
-      - name: Check build for benchmarking
-        run: >
-          pushd node &&
-          cargo check --features=runtime-benchmarks --release
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
