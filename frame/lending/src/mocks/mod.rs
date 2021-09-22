@@ -11,7 +11,7 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
-	ArithmeticError, DispatchError, TokenError,
+	ArithmeticError, DispatchError,
 };
 
 pub mod oracle;
@@ -28,8 +28,6 @@ pub type VaultId = u64;
 pub const ALICE: AccountId = 0;
 pub const BOB: AccountId = 1;
 pub const CHARLIE: AccountId = 2;
-pub const JEREMY: AccountId = 3;
-pub const ACCOUNT_FREE_START: AccountId = JEREMY + 1;
 
 #[derive(
 	PartialOrd,
@@ -135,7 +133,7 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 }
 
-const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
@@ -247,7 +245,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 /// Progress to the given block, and then finalize the block.
-pub(crate) fn run_to_block(n: BlockNumber) {
+#[allow(dead_code)]
+pub fn run_to_block(n: BlockNumber) {
 	Lending::on_finalize(System::block_number());
 	for b in (System::block_number() + 1)..=n {
 		next_block(b);
@@ -257,7 +256,7 @@ pub(crate) fn run_to_block(n: BlockNumber) {
 	}
 }
 
-pub(crate) fn process_block(n: BlockNumber) {
+pub fn process_block(n: BlockNumber) {
 	next_block(n);
 	Lending::on_finalize(n);
 }
