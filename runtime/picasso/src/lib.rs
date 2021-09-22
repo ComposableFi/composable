@@ -21,7 +21,7 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult
 };
-use orml_traits::parameter_type_with_key;
+use orml_traits::{parameter_type_with_key, MultiCurrency};
 use currencies::BasicCurrencyAdapter;
 
 use sp_std::prelude::*;
@@ -645,7 +645,7 @@ parameter_types! {
 
 impl treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
-	type Currency = Balances;
+	type Currency = Balances;//MultiCurrency<AccountId>; //Balances;
 	type ApproveOrigin = EnsureRootOrHalfCouncil;
 	type RejectOrigin = EnsureRootOrHalfCouncil;
 	type Event = Event;
