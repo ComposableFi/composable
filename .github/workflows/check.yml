@@ -28,12 +28,16 @@ jobs:
         with:
           command: check
       - uses: actions-rs/toolchain@v1
-        name: Clean Project Artifacts and Test
         with: 
           profile: minimal
           toolchain: nightly
           override: true
-          command: |
-            cargo clean -p picasso-runtime
-            cargo clean -p composable
-            cargo test
+      - name: Clean Project Artifacts and Test
+        run: |
+          cargo clean -p picasso-runtime
+          cargo clean -p composable
+          cargo test
+      - name: Check build for benchmarking
+        run: |
+          pushd node &&
+          cargo check --features=runtime-benchmarks --release
