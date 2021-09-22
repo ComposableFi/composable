@@ -268,11 +268,6 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Failures in creating LP tokens during vault creation result in `CannotCreateAsset`.
 		CannotCreateAsset,
-		/// `InconsistentStorage` indicates very bad logic failures, resulting in the storage
-		/// becoming inconsistent.
-		// TODO: this error variant could be completely removed by restructuring the types of the
-		// storage in such a way that it could not become inconsistent.
-		InconsistentStorage,
 		/// Failures to transfer funds from the vault to users or vice- versa result in
 		/// `TransferFromFailed`.
 		TransferFromFailed,
@@ -319,6 +314,7 @@ pub mod pallet {
 		DepositsHalted,
 		/// The vault has withdrawals halted, see [Capabilities](crate::capabilities::Capability).
 		WithdrawalsHalted,
+		OnlyManagerCanDoThisOperation,
 	}
 
 	#[pallet::call]
@@ -442,6 +438,20 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		/// liquidates strategy allocation
+		pub fn do_liquidate(
+			origin: OriginFor<T>,
+			vault_id: &VaultIndex,
+			strategy_account_id: &T::AccountId,
+		) -> DispatchResult {
+			let from = ensure_signed(origin)?;
+			let vault =
+				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			ensure!(from != vault.manager, Error::<T>::OnlyManagerCanDoThisOperation);
+			Allocations::<T>::remove(vault_id, strategy_account_id);
+			Ok(())
+		}
+
 		pub fn do_create_vault(
 			deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
 			config: VaultConfig<T::AccountId, T::AssetId>,
@@ -479,12 +489,8 @@ pub mod pallet {
 					Error::<T>::AllocationMustSumToOne
 				);
 
-				let lp_token_id = {
-					T::CurrencyFactory::create().map_err(|e| {
-						log::debug!("failed to create asset: {:?}", e);
-						Error::<T>::CannotCreateAsset
-					})?
-				};
+				let lp_token_id =
+					{ T::CurrencyFactory::create().map_err(|_| Error::<T>::CannotCreateAsset)? };
 
 				config.strategies.into_iter().for_each(|(account_id, allocation)| {
 					Allocations::<T>::insert(id, account_id.clone(), allocation);
@@ -748,26 +754,22 @@ pub mod pallet {
 			vault_id: &Self::VaultId,
 			account: &Self::AccountId,
 		) -> Result<FundsAvailability<Self::Balance>, DispatchError> {
-			let allocation = match Allocations::<T>::try_get(vault_id, &account) {
-				Ok(allocation) => allocation,
-				// The strategy was removed by the fund manager or governance, so all funds should
-				// be returned.
-				Err(_) => return Ok(FundsAvailability::MustLiquidate),
-			};
+			match (Vaults::<T>::try_get(vault_id), Allocations::<T>::try_get(vault_id, &account)) {
+				(Ok(vault), Ok(allocation)) if !vault.capabilities.is_stopped() => {
+					let aum = Self::assets_under_management(vault_id)?;
+					let max_allowed = <T::Convert as Convert<u128, T::Balance>>::convert(
+						allocation
+							.mul_floor(<T::Convert as Convert<T::Balance, u128>>::convert(aum)),
+					);
+					let state = CapitalStructure::<T>::try_get(vault_id, &account).expect("if a strategy has an allocation, it must have an associated capital structure too");
 
-			let aum = Self::assets_under_management(vault_id)?;
-
-			let max_allowed = <T::Convert as Convert<u128, T::Balance>>::convert(
-				allocation.mul_floor(<T::Convert as Convert<T::Balance, u128>>::convert(aum)),
-			);
-
-			// if a strategy has an allocation, it must have an associated capital structure too.
-			let state = CapitalStructure::<T>::try_get(vault_id, &account)
-				.map_err(|_| Error::<T>::InconsistentStorage)?;
-			if state.balance >= max_allowed {
-				Ok(FundsAvailability::Depositable(state.balance - max_allowed))
-			} else {
-				Ok(FundsAvailability::Withdrawable(max_allowed - state.balance))
+					if state.balance >= max_allowed {
+						Ok(FundsAvailability::Depositable(state.balance - max_allowed))
+					} else {
+						Ok(FundsAvailability::Withdrawable(max_allowed - state.balance))
+					}
+				},
+				(_, _) => Ok(FundsAvailability::MustLiquidate),
 			}
 		}
 

@@ -304,9 +304,9 @@ mod tests {
 		assert_eq!(
 			JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization).unwrap(),
 			JumpModel {
-				base_rate: Rate::from_inner(20_000_000_000_000_000).into(),
-				jump_rate: Rate::from_inner(100_000_000_000_000_000).into(),
-				full_rate: Rate::from_inner(320_000_000_000_000_000).into(),
+				base_rate: Rate::from_inner(20_000_000_000_000_000),
+				jump_rate: Rate::from_inner(100_000_000_000_000_000),
+				full_rate: Rate::from_inner(320_000_000_000_000_000),
 				jump_utilization: Percent::from_percent(80),
 			}
 		);
@@ -358,8 +358,7 @@ mod tests {
 		let supply_rate = InterestRateModel::get_supply_rate(borrow_rate, util, reserve_factor);
 		assert_eq!(
 			supply_rate,
-			borrow_rate
-				.saturating_mul(((Ratio::one().saturating_sub(reserve_factor)) * util).into()),
+			borrow_rate.saturating_mul(Ratio::one().saturating_sub(reserve_factor) * util),
 		);
 	}
 
@@ -387,7 +386,7 @@ mod tests {
 			(1..=10u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
 			(11..=30u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
 			(31..=50).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
-			(0..=100u8).prop_map(|x| Percent::from_percent(x)),
+			(0..=100u8).prop_map(Percent::from_percent),
 		)
 			.prop_filter("Jump rate model", |(base, jump, full, _)| {
 				// tried high order strategy - failed as it tries to combine collections with not

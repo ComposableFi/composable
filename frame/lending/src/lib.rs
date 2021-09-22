@@ -200,9 +200,9 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
-			Self::accrue_interests(block_number);
+			Self::initialize_block(block_number);
 			let MarketIndex(max_lending_index) = LendingCount::<T>::get();
-			<T as Config>::WeightInfo::accrue_interests(max_lending_index + 1)
+			<T as Config>::WeightInfo::initialize_block(max_lending_index + 1)
 		}
 	}
 
@@ -221,7 +221,7 @@ pub mod pallet {
 		CollateralFactorIsLessOrEqualOne,
 		MarketAndAccountPairNotFound,
 		NotEnoughCollateralToBorrowAmount,
-		CannotBorrowInCurrentLendingState,
+		CannotBorrowInCurrentSourceVaultState,
 		CannotHaveMoreThanOneActiveBorrow,
 		NotEnoughBorrowAsset,
 		NotEnoughCollateral,
@@ -635,12 +635,56 @@ pub mod pallet {
 			<Self as Lending>::repay_borrow(market_id, from, beneficiary, repay_amount)
 		}
 
-		pub(crate) fn accrue_interests(block_number: T::BlockNumber) {
+		pub(crate) fn initialize_block(block_number: T::BlockNumber) {
 			with_transaction(|| {
 				let now = T::UnixTime::now().as_secs();
 				let results = Markets::<T>::iter()
-					.map(|(index, _)| <Pallet<T>>::accrue_interest(&index, now))
-					.collect::<Vec<_>>();
+					.map(|(market_id, config)| {
+						Pallet::<T>::accrue_interest(&market_id, now)?;
+						let market_account = Self::account_id(&market_id);
+						match <T::Vault as StrategicVault>::available_funds(
+							&config.borrow,
+							&market_account,
+						)? {
+							FundsAvailability::Withdrawable(balance) => {
+								<T::Vault as StrategicVault>::withdraw(
+									&config.borrow,
+									&market_account,
+									balance,
+								)?;
+							},
+							FundsAvailability::Depositable(balance) => {
+								let asset_id = <T::Vault as Vault>::asset_id(&config.borrow)?;
+								let balance = <T as Config>::Currency::reducible_balance(
+									asset_id,
+									&market_account,
+									false,
+								)
+								.min(balance);
+								<T::Vault as StrategicVault>::deposit(
+									&config.borrow,
+									&market_account,
+									balance,
+								)?;
+							},
+							FundsAvailability::MustLiquidate => {
+								let asset_id = <T::Vault as Vault>::asset_id(&config.borrow)?;
+								let balance = <T as Config>::Currency::reducible_balance(
+									asset_id,
+									&market_account,
+									false,
+								);
+								<T::Vault as StrategicVault>::deposit(
+									&config.borrow,
+									&market_account,
+									balance,
+								)?;
+							},
+						}
+
+						Ok(())
+					})
+					.collect::<Vec<Result<(), DispatchError>>>();
 				let (_oks, errors): (Vec<_>, Vec<_>) = results.iter().partition(|r| r.is_ok());
 				if errors.is_empty() {
 					LastBlockTimestamp::<T>::put(now);
@@ -687,7 +731,7 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
 
 			LendingCount::<T>::try_mutate(|MarketIndex(previous_market_index)| {
-				let market_index = {
+				let market_id = {
 					*previous_market_index += 1;
 					ensure!(
 						*previous_market_index <= T::MaxLendingCount::get(),
@@ -696,46 +740,6 @@ pub mod pallet {
 					MarketIndex(*previous_market_index)
 				};
 
-				/* Generate the underlying vault that will hold borrowable asset
-
-
-				#  -----------
-				#  |  vault  |  I
-				#  -----------
-				#       |
-				# -------------
-				# |  strategy | P
-				# -------------
-				#       |                            M
-				#       |                   -------------------
-				#       |                   |    ---------    |
-				#       -----------------------> |       |    |
-				#                           |    | vault |    |
-				#       -----------------------> |       |    |
-				#       |                   |    ---------    |
-				#       |                   -------------------
-				#       |
-				# -------------
-				# |  strategy | Q
-				# -------------
-				#       |
-				#  ----------
-				#  |  vault | J
-				#  ----------
-
-
-				   The idea here is that the lending pallet owns the vault.
-
-				   Let's assume a group of users X want to use a strategy P
-				   and a group of users Y want to use a strategy Q:
-
-				   Assuming both groups are interested in lending an asset A, they can create two vaults I and J.
-				   They would deposit in I and J, then set P and respectively Q as their strategy.
-				   Now imagine that our lending market M has a good APY, both strategy P and Q
-				   could decide to allocate a share for it, transferring from I and J to the borrow asset vault of M.
-				   Their allocated share could differ because of the strategies being different,
-				   but the lending Market would have all the lendable funds in a single vault.
-				*/
 				let borrow_asset_vault = T::Vault::create(
 					Deposit::Existential,
 					VaultConfig {
@@ -743,7 +747,7 @@ pub mod pallet {
 						reserved: config_input.reserved,
 						manager: config_input.manager.clone(),
 						strategies: [(
-							Self::account_id(&market_index),
+							Self::account_id(&market_id),
 							// Borrowable = 100% - reserved
 							Perquintill::one().saturating_sub(config_input.reserved),
 						)]
@@ -762,11 +766,11 @@ pub mod pallet {
 				};
 
 				let debt_asset_id = T::CurrencyFactory::create()?;
-				DebtMarkets::<T>::insert(market_index, debt_asset_id);
-				Markets::<T>::insert(market_index, config);
-				BorrowIndex::<T>::insert(market_index, Ratio::one());
+				DebtMarkets::<T>::insert(market_id, debt_asset_id);
+				Markets::<T>::insert(market_id, config);
+				BorrowIndex::<T>::insert(market_id, Ratio::one());
 
-				Ok((market_index, borrow_asset_vault))
+				Ok((market_id, borrow_asset_vault))
 			})
 		}
 
@@ -818,25 +822,15 @@ pub mod pallet {
 			let account_id = Self::account_id(market_id);
 			let can_withdraw =
 				<T as Config>::Currency::reducible_balance(asset_id, &account_id, true);
-			let fund = T::Vault::available_funds(&market.borrow, &Self::account_id(market_id))?;
-			match fund {
-				FundsAvailability::Withdrawable(balance) => {
-					<T::Vault as StrategicVault>::withdraw(
-						&market.borrow,
-						&account_id,
-						amount_to_borrow,
-					)?;
-					ensure!(
-						can_withdraw + balance >= amount_to_borrow,
-						Error::<T>::NotEnoughBorrowAsset
-					)
-				},
-				FundsAvailability::Depositable(_) => (),
-				// TODO: decide when react and how to return fees back
-				// https://mlabs-corp.slack.com/archives/C02CRQ9KW04/p1630662664380600?thread_ts=1630658877.363600&cid=C02CRQ9KW04
-				FundsAvailability::MustLiquidate =>
-					return Err(Error::<T>::CannotBorrowInCurrentLendingState.into()),
-			}
+			ensure!(can_withdraw >= amount_to_borrow, Error::<T>::NotEnoughBorrowAsset);
+
+			ensure!(
+				!matches!(
+					T::Vault::available_funds(&market.borrow, &Self::account_id(market_id))?,
+					FundsAvailability::MustLiquidate
+				),
+				Error::<T>::CannotBorrowInCurrentSourceVaultState
+			);
 
 			<T as Config>::Currency::transfer(
 				asset_id,

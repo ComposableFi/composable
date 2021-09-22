@@ -18,11 +18,9 @@ Liquidation uses DEX for swaps.
 
 DEX depends on Lending for leverage
 
-
 ## Markets
 
-Can create isolated pairs which are suported  Vault and Oracle.
-
+Can create isolated pairs which are supported  Vault and Oracle.
 
 ## Test
 
@@ -30,21 +28,18 @@ There is known way to setup oracle and vault via extrinsic, and there is way to 
 
 ## Lending Vault
 
-
-Withdraws on market creation, if cannot withdraw, market creation fails.
+As of now Lending does not handles cases when vault changes its decisions during single block.
 
 ### Block level
 
 Lending is executed after Vault.
 
-On block initialization, if can with draw, than withdraws.
-
-On block finalization, if can deposit back, deposits. If must liquidate, than deposit back all.
+On block initialization. If can withdraw, than withdraws. If can deposit back, deposits maximal part available. If must liquidate, than deposit back all.
 
 ### On borrow
 
-If must liquidate or not enough funds, borrow fails.
+If must liquidate or not enough funds(we got maximal amount during initialization), borrow fails.
 
 ### On repay
 
-Repay, do nothing to vault.
+Repay, do nothing to vault. It actually allows to use some deposit asset by other transactions in same block to borrow (event if we should deposit back into vault).

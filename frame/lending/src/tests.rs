@@ -9,7 +9,7 @@ use crate::{
 use composable_traits::{
 	lending::MarketConfigInput,
 	rate_model::*,
-	vault::{Deposit, VaultConfig},
+	vault::{CapabilityVault, Deposit, VaultConfig},
 };
 use frame_support::{
 	assert_err, assert_ok,
@@ -31,13 +31,29 @@ fn create_market(
 	collateral_factor: NormalizedCollateralFactor,
 ) -> (MarketIndex, BorrowAssetVault) {
 	let market_config = MarketConfigInput { manager, reserved, collateral_factor };
+	let market_account_id = Lending::account_id(&MarketIndex::new(1));
+
+	Vault::do_create_vault(
+		Deposit::Existential,
+		VaultConfig {
+			asset_id: borrow_asset,
+			reserved: Perquintill::from_percent(20),
+			manager: ALICE,
+			strategies: [(market_account_id, Perquintill::from_percent(80))]
+				.iter()
+				.cloned()
+				.collect(),
+		},
+	)
+	.expect("good vault parameters are passed");
+
 	let market = Lending::create(borrow_asset, collateral_asset, market_config);
 	assert_ok!(market);
 	market.expect("unreachable; qed;")
 }
 
 fn create_simple_vaulted_market() -> ((MarketIndex, BorrowAssetVault), CollateralAsset) {
-	let collateral_vault = Vault::do_create_vault(
+	let (_, collateral_vault_config) = Vault::do_create_vault(
 		Deposit::Existential,
 		VaultConfig {
 			asset_id: MockCurrencyId::USDT,
@@ -45,9 +61,9 @@ fn create_simple_vaulted_market() -> ((MarketIndex, BorrowAssetVault), Collatera
 			manager: ALICE,
 			strategies: [].iter().cloned().collect(),
 		},
-	);
-	assert_ok!(collateral_vault);
-	let (_, collateral_vault_config) = collateral_vault.expect("unreachable; qed;");
+	)
+	.expect("good vault parameters are passed");
+
 	(
 		create_market(
 			MockCurrencyId::BTC,
@@ -357,6 +373,25 @@ fn test_borrow() {
 
 		assert_eq!(Lending::total_interest_accurate(&market), Ok(684794520448650000000));
 		assert_eq!(Lending::total_interest(&market), Ok(684));
+	});
+}
+
+#[test]
+fn test_vault_interactions() {
+	new_test_ext().execute_with(|| {
+		let (market, vault_id) = create_simple_market();
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, 1_000_000_000_000));
+		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, 1_000_000_000_000));
+
+		Vault::deposit(Origin::signed(ALICE), vault_id, 1_000_000_000).unwrap();
+		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, 1_000_000_000));
+
+		<Vault as CapabilityVault>::stop(&vault_id).unwrap();
+
+		assert_eq!(
+			Lending::borrow_internal(&market, &ALICE, 1_000),
+			Err(Error::<mocks::Test>::CannotBorrowInCurrentSourceVaultState.into())
+		);
 	});
 }
 
