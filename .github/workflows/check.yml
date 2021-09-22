@@ -32,7 +32,6 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
-        with: 
           command: cargo test
   # test:
   #   runs-on: 
