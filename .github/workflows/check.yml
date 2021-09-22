@@ -26,7 +26,6 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
-      - name: Run Test
       - uses: actions-rs/toolchain@v1
         with: 
           profile: minimal
