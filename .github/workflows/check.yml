@@ -21,12 +21,17 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with: 
           profile: minimal
-          toolchain: stable, nightly
+          toolchain: stable
           override: true
       - uses: actions-rs/cargo@v1
         with:
           command: check
       - name: Run Test
+      - uses: actions-rs/toolchain@v1
+        with: 
+          profile: minimal
+          toolchain: nightly
+          override: true
         uses: actions-rs/cargo@v1
         with: 
           command: cargo test
