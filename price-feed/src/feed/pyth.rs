@@ -134,6 +134,7 @@ impl Pyth {
 					Some(Ok(notify_price)) => {
 						log::debug!("received notify_price, {:?}, {:?}", asset_pair, notify_price);
 						let timestamp = TimeStamp::now();
+						#[allow(clippy::single_match)]
 						match notify_price_action(
 							asset_pair.0,
 							&product_price,
@@ -198,14 +199,14 @@ impl Pyth {
 
 // TODO: manage multiple feeds
 pub async fn run_full_subscriptions(
-	pythd_host: &String,
+	pythd_host: &str,
 ) -> (Pyth, mpsc::Receiver<PythFeedNotification>) {
 	/* Its important to drop the initial feed_in as it will be cloned for all subsequent tasks
 	The received won't get notified if all cloned senders are closed but not the 'main' one.
 	 */
 	let (feed_in, feed_out) = mpsc::channel::<PythFeedNotification>(128);
 
-	let mut pyth = Pyth::new(&Url::parse(&pythd_host).expect("invalid pythd host address."))
+	let mut pyth = Pyth::new(&Url::parse(pythd_host).expect("invalid pythd host address."))
 		.await
 		.expect("connection to pythd failed");
 

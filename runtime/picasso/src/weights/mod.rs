@@ -1,3 +1,4 @@
+#![allow(clippy::unnecessary_cast)]
 pub mod balances;
 pub mod collator_selection;
 pub mod collective;

@@ -499,7 +499,7 @@ proptest! {
 				.map(|(_, initial_balance)| initial_balance)
 				.sum::<Balance>();
 			let current_sum_of_shareholders_balance = shareholders.iter()
-				.map(|(account, _)| Tokens::balance(asset_id, &account))
+				.map(|(account, _)| Tokens::balance(asset_id, account))
 				.sum::<Balance>();
 
 			prop_assert_epsilon!(

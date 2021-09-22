@@ -10,6 +10,8 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+
+#[allow(clippy::unnecessary_cast)]
 pub mod weights;
 
 #[frame_support::pallet]
@@ -106,8 +108,9 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(_n: T::BlockNumber) -> Weight {
-			Self::initialize();
-
+			if let Err(err) = Self::initialize() {
+				log::error!("failed to initialize: {:?}", err)
+			}
 			0
 		}
 	}
@@ -118,7 +121,7 @@ pub mod pallet {
 		pub fn make_claimable(origin: OriginFor<T>) -> DispatchResult {
 			T::JumpStart::ensure_origin(origin)?;
 			<IsClaimable<T>>::put(true);
-			Ok(().into())
+			Ok(())
 		}
 
 		/// Attempts to claim some crowdloan bonus from the crowdloan pot.
@@ -149,7 +152,7 @@ pub mod pallet {
 
 			T::NativeCurrency::transfer(&Self::account_id(), &who, converted_payout, AllowDeath)?;
 			Self::deposit_event(Event::Claimed(who, amount));
-			Ok(().into())
+			Ok(())
 		}
 	}
 

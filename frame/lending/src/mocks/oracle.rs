@@ -67,7 +67,7 @@ pub mod pallet {
 							.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?,
 						t,
 					))
-				}
+				},
 			}
 		}
 	}
