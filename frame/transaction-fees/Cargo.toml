@@ -18,7 +18,7 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 #pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
-
+primitives = { path =  "../../runtime/primitives", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
 
 [features]
@@ -32,6 +32,7 @@ std = [
 	"sp-runtime/std",
 	"sp-io/std",
 	"composable-traits/std",
+	"primitives/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 #	"sp-core/std",
 	"sp-std/std",

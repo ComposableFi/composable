@@ -5902,6 +5902,7 @@ dependencies = [
  "orml-tokens",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
+ "primitives",
  "sp-io",
  "sp-runtime",
  "sp-std",

@@ -5,23 +5,28 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode, Codec, Input, Error};
+use codec::{Decode, Encode};
 
+use composable_traits::dex::SimpleExchange;
+use pallet_transaction_payment_rpc_runtime_api::{FeeDetails, InclusionFee, RuntimeDispatchInfo};
+use primitives::currency::CurrencyId;
 use sp_runtime::{
 	traits::{
-		Convert, DispatchInfoOf, Dispatchable, PostDispatchInfoOf, SaturatedConversion, Saturating,
-		SignedExtension,
+		CheckedSub, Convert, DispatchInfoOf, Dispatchable, PostDispatchInfoOf, SaturatedConversion,
+		Saturating, SignedExtension, Zero,
 	},
 	transaction_validity::{
-		TransactionPriority, TransactionValidity, TransactionValidityError, ValidTransaction,
+		InvalidTransaction, TransactionPriority, TransactionValidity, TransactionValidityError,
+		ValidTransaction,
 	},
-	FixedPointNumber, FixedPointOperand, FixedU128, Perquintill, RuntimeDebug,
+	FixedPointNumber, FixedPointOperand, Perbill,
 };
 use sp_std::prelude::*;
-
 use support::{
 	dispatch::DispatchResult,
-	traits::Get,
+	traits::{
+		Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, SameOrOther, WithdrawReasons,
+	},
 	weights::{
 		DispatchClass, DispatchInfo, GetDispatchInfo, Pays, PostDispatchInfo, Weight,
 		WeightToFeeCoefficient, WeightToFeePolynomial,
@@ -29,170 +34,25 @@ use support::{
 };
 
 pub use pallet::*;
-use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo;
-use pallet_transaction_payment_rpc_runtime_api::{FeeDetails, InclusionFee};
-use support::traits::{WithdrawReasons, Currency, ExistenceRequirement, SameOrOther, OnUnbalanced};
-use sp_runtime::traits::{UniqueSaturatedInto, Zero, CheckedSub};
-use sp_runtime::transaction_validity::InvalidTransaction;
-use composable_traits::dex::SimpleExchange;
+pub mod fee_adjustment;
+use fee_adjustment::MultiplierUpdate;
 
-/// Fee multiplier.
-pub type Multiplier = FixedU128;
+// Balance of `T::NativeCurrency`
+type BalanceOf<T> =
+	<<T as Config>::NativeCurrency as Currency<<T as system::Config>::AccountId>>::Balance;
 
-type BalanceOf<T> = <<T as Config>::NativeCurrency as Currency<<T as system::Config>::AccountId>>::Balance;
-
-
-/// A struct to update the weight multiplier per block. It implements `Convert<Multiplier,
-/// Multiplier>`, meaning that it can convert the previous multiplier to the next one. This should
-/// be called on `on_finalize` of a block, prior to potentially cleaning the weight data from the
-/// system pallet.
-///
-/// given:
-/// 	s = previous block weight
-/// 	s'= ideal block weight
-/// 	m = maximum block weight
-///		diff = (s - s')/m
-///		v = 0.00001
-///		t1 = (v * diff)
-///		t2 = (v * diff)^2 / 2
-///	then:
-/// 	next_multiplier = prev_multiplier * (1 + t1 + t2)
-///
-/// Where `(s', v)` must be given as the `Get` implementation of the `T` generic type. Moreover, `M`
-/// must provide the minimum allowed value for the multiplier. Note that a runtime should ensure
-/// with tests that the combination of this `M` and `V` is not such that the multiplier can drop to
-/// zero and never recover.
-///
-/// note that `s'` is interpreted as a portion in the _normal transaction_ capacity of the block.
-/// For example, given `s' == 0.25` and `AvailableBlockRatio = 0.75`, then the target fullness is
-/// _0.25 of the normal capacity_ and _0.1875 of the entire block_.
-///
-/// This implementation implies the bound:
-/// - `v ≤ p / k * (s − s')`
-/// - or, solving for `p`: `p >= v * k * (s - s')`
-///
-/// where `p` is the amount of change over `k` blocks.
-///
-/// Hence:
-/// - in a fully congested chain: `p >= v * k * (1 - s')`.
-/// - in an empty chain: `p >= v * k * (-s')`.
-///
-/// For example, when all blocks are full and there are 28800 blocks per day (default in `substrate-node`)
-/// and v == 0.00001, s' == 0.1875, we'd have:
-///
-/// p >= 0.00001 * 28800 * 0.8125
-/// p >= 0.234
-///
-/// Meaning that fees can change by around ~23% per day, given extreme congestion.
-///
-/// More info can be found at:
-/// <https://w3f-research.readthedocs.io/en/latest/polkadot/Token%20Economics.html>
-pub struct TargetedFeeAdjustment<T, S, V, M>(sp_std::marker::PhantomData<(T, S, V, M)>);
-
-/// Something that can convert the current multiplier to the next one.
-pub trait MultiplierUpdate: Convert<Multiplier, Multiplier> {
-	/// Minimum multiplier
-	fn min() -> Multiplier;
-	/// Target block saturation level
-	fn target() -> Perquintill;
-	/// Variability factor
-	fn variability() -> Multiplier;
-}
-
-impl MultiplierUpdate for () {
-	fn min() -> Multiplier {
-		Default::default()
-	}
-	fn target() -> Perquintill {
-		Default::default()
-	}
-	fn variability() -> Multiplier {
-		Default::default()
-	}
-}
-
-impl<T, S, V, M> MultiplierUpdate for TargetedFeeAdjustment<T, S, V, M>
-where
-	T: system::Config,
-	S: Get<Perquintill>,
-	V: Get<Multiplier>,
-	M: Get<Multiplier>,
-{
-	fn min() -> Multiplier {
-		M::get()
-	}
-	fn target() -> Perquintill {
-		S::get()
-	}
-	fn variability() -> Multiplier {
-		V::get()
-	}
-}
-
-impl<T, S, V, M> Convert<Multiplier, Multiplier> for TargetedFeeAdjustment<T, S, V, M>
-where
-	T: system::Config,
-	S: Get<Perquintill>,
-	V: Get<Multiplier>,
-	M: Get<Multiplier>,
-{
-	fn convert(previous: Multiplier) -> Multiplier {
-		// Defensive only. The multiplier in storage should always be at most positive. Nonetheless
-		// we recover here in case of errors, because any value below this would be stale and can
-		// never change.
-		let min_multiplier = M::get();
-		let previous = previous.max(min_multiplier);
-
-		let weights = T::BlockWeights::get();
-		// the computed ratio is only among the normal class.
-		let normal_max_weight = weights
-			.get(DispatchClass::Normal)
-			.max_total
-			.unwrap_or_else(|| weights.max_block);
-		let current_block_weight = <system::Pallet<T>>::block_weight();
-		let normal_block_weight =
-			*current_block_weight.get(DispatchClass::Normal).min(&normal_max_weight);
-
-		let s = S::get();
-		let v = V::get();
-
-		let target_weight = (s * normal_max_weight) as u128;
-		let block_weight = normal_block_weight as u128;
-
-		// determines if the first_term is positive
-		let positive = block_weight >= target_weight;
-		let diff_abs = block_weight.max(target_weight) - block_weight.min(target_weight);
-
-		// defensive only, a test case assures that the maximum weight diff can fit in Multiplier
-		// without any saturation.
-		let diff = Multiplier::saturating_from_rational(diff_abs, normal_max_weight.max(1));
-		let diff_squared = diff.saturating_mul(diff);
-
-		let v_squared_2 = v.saturating_mul(v) / Multiplier::saturating_from_integer(2);
-
-		let first_term = v.saturating_mul(diff);
-		let second_term = v_squared_2.saturating_mul(diff_squared);
-
-		if positive {
-			let excess = first_term.saturating_add(second_term).saturating_mul(previous);
-			previous.saturating_add(excess).max(min_multiplier)
-		} else {
-			// Defensive-only: first_term > second_term. Safe subtraction.
-			let negative = first_term.saturating_sub(second_term).saturating_mul(previous);
-			previous.saturating_sub(negative).max(min_multiplier)
-		}
-	}
-}
-
+// negative imbalance of `T::NativeCurrency`
+type NegativeImbalanceOf<T> = <<T as Config>::NativeCurrency as Currency<
+	<T as system::Config>::AccountId,
+>>::NegativeImbalance;
 
 #[support::pallet]
 pub mod pallet {
 	use super::*;
+	use crate::fee_adjustment::Multiplier;
+	use primitives::currency::CurrencyId;
 	use support::pallet_prelude::*;
 	use system::pallet_prelude::*;
-	use support::traits::{OnUnbalanced, Currency};
-	use support::traits::fungibles::{Inspect, };
-	use orml_tokens::MultiCurrency;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -206,16 +66,17 @@ pub mod pallet {
 		/// adjusted, depending on the used resources by the transaction. If the
 		/// transaction weight is lower than expected, parts of the transaction fee
 		/// might be refunded. In the end the fees can be deposited.
-		type OnChargeTransaction:
-			OnUnbalanced<<Self::NativeCurrency as Currency<Self::AccountId>>::NegativeImbalance>;
+		type OnChargeTransaction: OnUnbalanced<
+			<Self::NativeCurrency as Currency<Self::AccountId>>::NegativeImbalance,
+		>;
 
+		/// Native currency type.
 		type NativeCurrency: Currency<Self::AccountId>;
 
-		type Currency: Inspect<Self::AccountId>;
-
+		/// Dex interface for executing swaps
 		type Dex: SimpleExchange<
-			AssetId = <Self::Currency as Inspect<Self::AccountId>>::AssetId,
-			Balance = <Self::Currency as Inspect<Self::AccountId>>::Balance,
+			AssetId = CurrencyId,
+			Balance = <Self::NativeCurrency as Currency<Self::AccountId>>::Balance,
 			AccountId = Self::AccountId,
 			Error = (),
 		>;
@@ -250,7 +111,6 @@ pub mod pallet {
 	#[pallet::getter(fn next_fee_multiplier)]
 	pub type NextFeeMultiplier<T: Config> =
 		StorageValue<_, Multiplier, ValueQuery, NextFeeMultiplierOnEmpty>;
-
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -442,7 +302,13 @@ where
 		T::WeightToFee::calc(&capped_weight)
 	}
 
-	fn can_pay_fee(who: &T::AccountId, fee: BalanceOf<T>, reason: WithdrawReasons) {
+	fn can_pay_fee(
+		who: &T::AccountId,
+		fee: BalanceOf<T>,
+		reason: WithdrawReasons,
+		slippage: &Perbill,
+		asset_id: &Option<CurrencyId>,
+	) -> Result<(), ()> {
 		let native_existential_deposit = T::NativeCurrency::minimum_balance();
 		let total_native = T::NativeCurrency::total_balance(who);
 
@@ -456,28 +322,30 @@ where
 				},
 			);
 
-		// native is not enough, try swap native to pay fee and gap
-		if !native_is_enough {
-			// add extra gap to keep alive after swap
-			let asset_id = Default::default();
-			let native_asset_id = Default::default();
-			let amount =
-				fee.saturating_add(native_existential_deposit.saturating_sub(total_native));
-			let slippage = Default::default();
-			if T::Dex::exchange(
-				asset_id,
-				from,
-				native_asset_id,
-				from,
-
-				amount.unique_saturated_into(),
-				slippage
-			)
-			.is_ok()
-			{
-				// successfully swap, break iteration
+		// native is not enough, try swap native to pay fee
+		match (asset_id, native_is_enough) {
+			// user specified some asset to pay and they dont have enough native tokens to pay
+			(Some(asset_id), false) => {
+				let native_asset_id = Default::default();
+				// add extra gap to keep alive after swap
+				let amount =
+					fee.saturating_add(native_existential_deposit.saturating_sub(total_native));
+				T::Dex::exchange(
+					*asset_id,
+					who.clone(),
+					native_asset_id,
+					who.clone(),
+					amount,
+					*slippage,
+				)?;
 			}
+			// user didn't specify some asset to pay and they dont have enough native tokens to pay
+			(None, false) => return Err(()),
+			// they have enough native tokens to pay.
+			_ => {}
 		}
+
+		Ok(())
 	}
 }
 
@@ -499,7 +367,14 @@ where
 /// Require the transactor pay for themselves and maybe include a tip to gain additional priority
 /// in the queue.
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct ChargeTransactionFee<T: Config>(#[codec(compact)] BalanceOf<T>);
+pub struct ChargeTransactionFee<T: Config>(
+	// tip
+	#[codec(compact)] BalanceOf<T>,
+	// max slippage
+	Perbill,
+	// token to pay fee with, defaults to native
+	Option<CurrencyId>,
+);
 
 impl<T: Config> ChargeTransactionFee<T>
 where
@@ -507,8 +382,8 @@ where
 	BalanceOf<T>: Send + Sync + FixedPointOperand,
 {
 	/// utility constructor. Used only in client/factory code.
-	pub fn from(fee: BalanceOf<T>) -> Self {
-		Self(fee)
+	pub fn from(tip: BalanceOf<T>, slippage: Perbill, asset_id: Option<CurrencyId>) -> Self {
+		Self(tip, slippage, asset_id)
 	}
 
 	/// Returns the tip as being choosen by the transaction sender.
@@ -519,15 +394,11 @@ where
 	fn withdraw_fee(
 		&self,
 		who: &T::AccountId,
-		_call: &T::Call,
 		info: &DispatchInfoOf<T::Call>,
 		len: usize,
-	) -> Result<
-		(BalanceOf<T>, Option<NegativeImbalanceOf<T>>),
-		TransactionValidityError,
-	> {
-		let tip = self.0;
-		let fee = Pallet::<T>::compute_fee(len as u32, info, tip);
+	) -> Result<(BalanceOf<T>, Option<NegativeImbalanceOf<T>>), TransactionValidityError> {
+		let ChargeTransactionFee(tip, slippage, asset_id) = self;
+		let fee = Pallet::<T>::compute_fee(len as u32, info, *tip);
 
 		// Only mess with balances if fee is not zero.
 		if fee.is_zero() {
@@ -540,7 +411,8 @@ where
 			WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
 		};
 
-		Pallet::<T>::can_pay_fee(who, fee, reason);
+		Pallet::<T>::can_pay_fee(who, fee, reason, slippage, asset_id)
+			.map_err(|_| InvalidTransaction::Payment)?;
 
 		// withdraw native currency as fee
 		match T::NativeCurrency::withdraw(who, fee, reason, ExistenceRequirement::KeepAlive) {
@@ -598,6 +470,10 @@ where
 		BalanceOf<T>,
 		// who paid the fee
 		Self::AccountId,
+		// imbalance from withdrawing the fee
+		Option<NegativeImbalanceOf<T>>,
+		// actual fee value
+		BalanceOf<T>,
 	);
 	fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> {
 		Ok(())
@@ -606,23 +482,23 @@ where
 	fn validate(
 		&self,
 		who: &Self::AccountId,
-		call: &Self::Call,
+		_call: &Self::Call,
 		info: &DispatchInfoOf<Self::Call>,
 		len: usize,
 	) -> TransactionValidity {
-		let (fee, _) = self.withdraw_fee(who, call, info, len)?;
+		let (fee, _) = self.withdraw_fee(who, info, len)?;
 		Ok(ValidTransaction { priority: Self::priority(len, info, fee), ..Default::default() })
 	}
 
 	fn pre_dispatch(
 		self,
 		who: &Self::AccountId,
-		call: &Self::Call,
+		_call: &Self::Call,
 		info: &DispatchInfoOf<Self::Call>,
 		len: usize,
 	) -> Result<Self::Pre, TransactionValidityError> {
-		let (_fee, imbalance) = self.withdraw_fee(who, call, info, len)?;
-		Ok((self.0, who.clone(), imbalance))
+		let (fee, imbalance) = self.withdraw_fee(who, info, len)?;
+		Ok((self.0, who.clone(), imbalance, fee))
 	}
 
 	fn post_dispatch(
@@ -632,7 +508,7 @@ where
 		len: usize,
 		_result: &DispatchResult,
 	) -> Result<(), TransactionValidityError> {
-		let (tip, who, imbalance) = pre;
+		let (tip, who, imbalance, fee) = pre;
 		if let Some(payed) = imbalance {
 			let actual_fee = Pallet::<T>::compute_actual_fee(len as u32, info, post_info, tip);
 			let refund = fee.saturating_sub(actual_fee);
@@ -653,9 +529,7 @@ where
 			let (tip, fee) = actual_payment.split(tip);
 
 			// distribute fee
-			T::OnChargeTransaction::on_unbalanceds(
-				Some(fee).into_iter().chain(Some(tip)),
-			);
+			T::OnChargeTransaction::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
 		}
 		Ok(())
 	}
