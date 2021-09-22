@@ -27,6 +27,28 @@ jobs:
         name: Cargo Check
         with:
           command: check 
+  test:
+    name: Lint Test
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      run: |
+        cargo clean -p picasso-runtime
+        cargo clean -p composable
+        cargo test
+
+
+
+
       # - uses: actions-rs/toolchain@v1
       #   with: 
       #     profile: minimal
