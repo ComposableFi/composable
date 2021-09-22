@@ -26,16 +26,14 @@ jobs:
       - uses: actions-rs/cargo@v1
         name: Cargo Check
         with:
-          command: check
+          command: check --features=runtime-benchmarks --release
       - uses: actions-rs/toolchain@v1
         with: 
           profile: minimal
           toolchain: nightly
           override: true
-      - name: Clean Project Artifacts and Test
-        run: |
-          cargo test
-      - name: Check build for benchmarking
-        run: |
-          pushd node &&
-          cargo check --features=runtime-benchmarks --release
+      - uses: actions-rs/cargo@v1
+        name: Cargo Test
+        with:
+          command: test
+
