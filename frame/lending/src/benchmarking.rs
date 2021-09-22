@@ -61,7 +61,7 @@ benchmarks! {
 		<T as pallet::Config>::Currency::mint_into(USDT.into(), &caller, amount).unwrap();
 	}: _(RawOrigin::Signed(caller.clone()), market, amount)
 	verify {
-		assert_last_event::<T>(Event::CollateralDeposited(caller, market, amount).into())
+		assert_last_event::<T>(Event::CollateralDeposited{sender : caller, market_id : market, amount}.into())
 	}
 
 	withdraw_collateral {
@@ -74,7 +74,7 @@ benchmarks! {
 		Lending::<T>::deposit_collateral_internal(&market, &caller, amount).unwrap();
 	}: _(RawOrigin::Signed(caller.clone()), market, amount)
 	verify {
-		assert_last_event::<T>(Event::CollateralWithdrawed(caller, market, amount).into())
+		assert_last_event::<T>(Event::CollateralWithdrawed{sender : caller, market_id : market, amount}.into())
 	}
 }
 
