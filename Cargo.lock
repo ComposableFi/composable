@@ -7779,6 +7779,7 @@ dependencies = [
 name = "primitives"
 version = "0.1.0"
 dependencies = [
+ "composable-traits",
  "parity-scale-codec",
  "serde",
  "sp-runtime",

@@ -6,7 +6,8 @@ use super::*;
 use crate::Pallet as LiquidCrowdloan;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
-	assert_ok, traits::{Currency, EnsureOrigin},
+	assert_ok,
+	traits::{Currency, EnsureOrigin},
 };
 use frame_system::{EventRecord, RawOrigin};
 

@@ -3,7 +3,7 @@
 pub mod currency;
 pub mod dex;
 pub mod lending;
-pub mod liquidatation;
+pub mod liquidation;
 pub mod oracle;
 pub mod rate_model;
 pub mod vault;

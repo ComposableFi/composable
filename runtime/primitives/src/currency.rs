@@ -1,51 +1,65 @@
 //! CurrencyId implementation
 
-use codec::{Encode, Decode};
-use sp_runtime::RuntimeDebug;
+use codec::{Decode, Encode};
+use composable_traits::currency::DynamicCurrencyId;
+use sp_runtime::{ArithmeticError, DispatchError, RuntimeDebug};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+use sp_runtime::sp_std::ops::Deref;
 
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
-pub enum CurrencyId {
-	Token(TokenSymbol),
-	LpToken(u128)
+#[repr(transparent)]
+pub struct CurrencyId(u128);
+
+impl CurrencyId {
+	pub const INVALID: CurrencyId = CurrencyId(0);
+	pub const PICA: CurrencyId = CurrencyId(1);
+	pub const LAYR: CurrencyId = CurrencyId(2);
+	pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
+
+	pub const LOCAL_LP_TOKEN_START: CurrencyId = CurrencyId(u128::MAX / 2);
 }
 
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum TokenSymbol {
-	PICA,
-	LAYR,
-	Crowdloan,
-}
-
-impl Default for CurrencyId {
-	fn default() -> Self {
-		CurrencyId::Token(TokenSymbol::LAYR)
+// NOTE(hussein-aitlahcen): we could add an index to DynamicCurrency to differentiate sub-ranges
+// This implementation is only valid if the initial value used to step using next is
+// LOCAL_LP_TOKEN_START
+impl DynamicCurrencyId for CurrencyId {
+	#[inline]
+	fn next(self) -> Result<Self, sp_runtime::DispatchError> {
+		let CurrencyId(x) = self;
+		let y = x.checked_add(1).ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+		Ok(CurrencyId(y))
 	}
 }
 
-impl From<u128> for CurrencyId {
-	fn from(val: u128) -> Self {
-		match val {
-			0 => CurrencyId::Token(TokenSymbol::LAYR),
-			1 => CurrencyId::Token(TokenSymbol::PICA),
-			2 => CurrencyId::Token(TokenSymbol::Crowdloan),
-			val => CurrencyId::LpToken(val),
-		}
+impl Default for CurrencyId {
+	#[inline]
+	fn default() -> Self {
+		CurrencyId::INVALID
+	}
+}
+
+impl Deref for CurrencyId {
+	type Target = u128;
+
+	#[inline]
+	fn deref(&self) -> &Self::Target {
+		&self.0
 	}
 }
 
 impl From<CurrencyId> for u128 {
-	fn from(val: CurrencyId) -> Self {
-		match val {
-			CurrencyId::Token(TokenSymbol::LAYR) => 0,
-			CurrencyId::Token(TokenSymbol::PICA) => 1,
-			CurrencyId::Token(TokenSymbol::Crowdloan) => 2,
-			CurrencyId::LpToken(val) => val,
-		}
+	#[inline]
+	fn from(id: CurrencyId) -> Self {
+		id.0
+	}
+}
+
+impl From<u128> for CurrencyId {
+	#[inline]
+	fn from(raw: u128) -> Self {
+		CurrencyId(raw)
 	}
 }
