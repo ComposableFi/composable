@@ -628,7 +628,7 @@ impl crowdloan_bonus::Config for Runtime {
 	type JumpStart = EnsureRootOrHalfCouncil;
 	type Currency = Tokens;
 	type Balance = Balance;
-	type NativeCurrency = Balances;
+	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balance, Amount, BlockNumber>;
 	type WeightInfo = weights::crowdloan_bonus::WeightInfo<Runtime>;
 }
 
