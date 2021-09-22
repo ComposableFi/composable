@@ -31,7 +31,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         name: Cargo Check
         with:
-          command: check 
+          command:  SKIP_WASM_BUILD=1 check 
   test:
     name: Lint Test
     runs-on: 
