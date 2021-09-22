@@ -33,7 +33,7 @@ jobs:
         run: |
           SKIP_WASM_BUILD=1 cargo check --release
   test:
-    name: Lint Test
+    name: Unit Test
     runs-on: 
       - self-hosted
       - linux
