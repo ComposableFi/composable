@@ -17,6 +17,7 @@ jobs:
       - sre
     steps: 
       - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/toolchain@v1
         with: 
           profile: minimal
@@ -25,14 +26,18 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
-  test:
-    runs-on: 
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    steps: 
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v1
-        with:
-          command: test
+      - name: Run Test
+        uses: actions-rs/cargo@v1
+        with: 
+          command: cargo test
+  # test:
+  #   runs-on: 
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   steps: 
+  #     - uses: actions/checkout@v2
+  #     - uses: Swatinem/rust-cache@v1
+  #       with:
+  #         command: test
