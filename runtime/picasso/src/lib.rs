@@ -13,7 +13,7 @@ use common::{
 	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
 };
 use orml_traits::parameter_type_with_key;
-use primitives::currency::{CurrencyId, TokenSymbol};
+use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -596,7 +596,7 @@ impl orml_tokens::Config for Runtime {
 
 parameter_types! {
 	pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
-	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
+	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::CROWD_LOAN;
 	/// total contributed to our crowdloan.
 	pub const TokenTotal: Balance = 200_000_000_000_000_000;
 }
@@ -748,7 +748,7 @@ impl democracy::Config for Runtime {
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: CurrencyId = CurrencyId::Token(TokenSymbol::PICA);
+	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
 	pub const CreationDeposit: Balance = 10 * PICA;
 	pub const VaultExistentialDeposit: Balance = 1000 * PICA;
 	pub const RentPerBlock: Balance = MILLI_PICA;

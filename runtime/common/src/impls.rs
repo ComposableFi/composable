@@ -74,7 +74,7 @@ mod tests {
 	use num_traits::Zero;
 	use orml_traits::parameter_type_with_key;
 	use polkadot_primitives::v1::AccountId;
-	use primitives::currency::{CurrencyId, TokenSymbol};
+	use primitives::currency::CurrencyId;
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
@@ -210,7 +210,7 @@ mod tests {
 
 	parameter_types! {
 		pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
-		pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::Crowdloan);
+		pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::CROWD_LOAN;
 		pub const TokenTotal: Balance = 200_000_000_000_000_000;
 	}
 

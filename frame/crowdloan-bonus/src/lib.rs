@@ -10,6 +10,8 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+
+#[allow(clippy::unnecessary_cast)]
 pub mod weights;
 
 #[frame_support::pallet]

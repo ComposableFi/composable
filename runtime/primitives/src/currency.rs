@@ -5,47 +5,46 @@ use sp_runtime::RuntimeDebug;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+use sp_runtime::sp_std::ops::Deref;
 
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
-pub enum CurrencyId {
-	Token(TokenSymbol),
-	LpToken(u128),
-}
+#[repr(transparent)]
+pub struct CurrencyId(u128);
 
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum TokenSymbol {
-	PICA,
-	LAYR,
-	Crowdloan,
+impl CurrencyId {
+	pub const INVALID: CurrencyId = CurrencyId(0);
+	pub const PICA: CurrencyId = CurrencyId(1);
+	pub const LAYR: CurrencyId = CurrencyId(2);
+	pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
 }
 
 impl Default for CurrencyId {
+	#[inline]
 	fn default() -> Self {
-		CurrencyId::Token(TokenSymbol::LAYR)
+		CurrencyId::INVALID
 	}
 }
 
-impl From<u128> for CurrencyId {
-	fn from(val: u128) -> Self {
-		match val {
-			0 => CurrencyId::Token(TokenSymbol::LAYR),
-			1 => CurrencyId::Token(TokenSymbol::PICA),
-			2 => CurrencyId::Token(TokenSymbol::Crowdloan),
-			val => CurrencyId::LpToken(val),
-		}
+impl Deref for CurrencyId {
+	type Target = u128;
+
+	#[inline]
+	fn deref(&self) -> &Self::Target {
+		&self.0
 	}
 }
 
 impl From<CurrencyId> for u128 {
-	fn from(val: CurrencyId) -> Self {
-		match val {
-			CurrencyId::Token(TokenSymbol::LAYR) => 0,
-			CurrencyId::Token(TokenSymbol::PICA) => 1,
-			CurrencyId::Token(TokenSymbol::Crowdloan) => 2,
-			CurrencyId::LpToken(val) => val,
-		}
+	#[inline]
+	fn from(id: CurrencyId) -> Self {
+		id.0
+	}
+}
+
+impl From<u128> for CurrencyId {
+	#[inline]
+	fn from(raw: u128) -> Self {
+		CurrencyId(raw)
 	}
 }

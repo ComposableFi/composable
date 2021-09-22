@@ -149,9 +149,9 @@ impl InterestRateModel {
 	pub fn get_supply_rate(borrow_rate: Rate, util: Ratio, reserve_factor: Ratio) -> Rate {
 		// ((1 - reserve_factor) * borrow_rate) * utilization
 		let one_minus_reserve_factor = Ratio::one().saturating_sub(reserve_factor);
-		let rate_to_pool = borrow_rate.saturating_mul(one_minus_reserve_factor);
+		let rate_to_pool = borrow_rate.saturating_mul(one_minus_reserve_factor.into());
 
-		rate_to_pool.saturating_mul(util)
+		rate_to_pool.saturating_mul(util.into())
 	}
 }
 
@@ -212,8 +212,8 @@ impl JumpModel {
 			let result = self
 				.jump_rate
 				.checked_sub(&self.base_rate)?
-				.saturating_mul(utilization)
-				.checked_div(&self.jump_utilization)?
+				.saturating_mul(utilization.into())
+				.checked_div(&self.jump_utilization.into())?
 				.checked_add(&self.base_rate)?;
 
 			Some(result)
@@ -224,8 +224,8 @@ impl JumpModel {
 			let result = self
 				.full_rate
 				.checked_sub(&self.jump_rate)?
-				.saturating_mul(excess_util)
-				.checked_div(&Ratio::one().saturating_sub(self.jump_utilization))?
+				.saturating_mul(excess_util.into())
+				.checked_div(&(Ratio::one().saturating_sub(self.jump_utilization).into()))?
 				.checked_add(&self.jump_rate)?;
 
 			Some(result)
@@ -297,9 +297,9 @@ mod tests {
 		assert_eq!(
 			JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization),
 			JumpModel {
-				base_rate: Rate::from_inner(20_000_000_000_000_000),
-				jump_rate: Rate::from_inner(100_000_000_000_000_000),
-				full_rate: Rate::from_inner(320_000_000_000_000_000),
+				base_rate: Rate::from_inner(20_000_000_000_000_000).into(),
+				jump_rate: Rate::from_inner(100_000_000_000_000_000).into(),
+				full_rate: Rate::from_inner(320_000_000_000_000_000).into(),
 				jump_utilization: Ratio::saturating_from_rational(80, 100),
 			}
 		);
@@ -320,18 +320,21 @@ mod tests {
 		let borrows: u128 = 1000;
 		let util = Ratio::saturating_from_rational(borrows, cash + borrows);
 		let borrow_rate = jump_model.get_borrow_rate(util).unwrap();
-		assert_eq!(borrow_rate, jump_model.jump_rate.saturating_mul(util) + jump_model.base_rate,);
+		assert_eq!(
+			borrow_rate,
+			jump_model.jump_rate.saturating_mul(util.into()) + jump_model.base_rate,
+		);
 
 		// jump rate
 		cash = 100;
 		let util = Ratio::saturating_from_rational(borrows, cash + borrows);
 		let borrow_rate = jump_model.get_borrow_rate(util).unwrap();
 		let normal_rate =
-			jump_model.jump_rate.saturating_mul(jump_utilization) + jump_model.base_rate;
+			jump_model.jump_rate.saturating_mul(jump_utilization.into()) + jump_model.base_rate;
 		let excess_util = util.saturating_sub(jump_utilization);
 		assert_eq!(
 			borrow_rate,
-			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util) /
+			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into()) /
 				FixedU128::saturating_from_rational(20, 100) +
 				normal_rate,
 		);
@@ -348,7 +351,8 @@ mod tests {
 		let supply_rate = InterestRateModel::get_supply_rate(borrow_rate, util, reserve_factor);
 		assert_eq!(
 			supply_rate,
-			borrow_rate.saturating_mul(Ratio::one().saturating_sub(reserve_factor) * util),
+			borrow_rate
+				.saturating_mul(((Ratio::one().saturating_sub(reserve_factor)) * util).into()),
 		);
 	}
 

@@ -75,7 +75,6 @@ pub trait Lending {
 	/// get all existing markets for current deposit
 	fn get_markets_for_borrow(vault: Self::VaultId) -> Vec<Self::MarketId>;
 
-	#[allow(clippy::type_complexity)]
 	fn get_all_markets(
 	) -> Vec<(Self::MarketId, MarketConfig<Self::VaultId, Self::AssetId, Self::AccountId>)>;
 
