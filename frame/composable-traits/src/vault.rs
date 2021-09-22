@@ -17,6 +17,8 @@ pub enum FundsAvailability<Balance> {
 	Depositable(Balance),
 	/// Orders the strategy to liquidate, no matter the cost or the fees associated. Usually
 	/// indicates that a strategy is being terminated or a vault is being destroyed.
+	/// Example, the strategy was removed by the fund manager or governance, so all funds should
+	/// be returned.
 	MustLiquidate,
 }
 
@@ -72,6 +74,7 @@ pub trait Vault {
 
 	fn account_id(vault: &Self::VaultId) -> Self::AccountId;
 
+	/// creates new vault for assets
 	fn create(
 		deposit: Deposit<Self::Balance, Self::BlockNumber>,
 		config: VaultConfig<Self::AccountId, Self::AssetId>,
