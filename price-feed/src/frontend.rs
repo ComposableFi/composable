@@ -30,7 +30,7 @@ pub struct Frontend {
 }
 
 impl Frontend {
-	pub async fn new(listening_address: &String, prices_cache: Arc<RwLock<PriceCache>>) -> Self {
+	pub async fn new(listening_address: &str, prices_cache: Arc<RwLock<PriceCache>>) -> Self {
 		let get_asset_id_endpoint =
 			warp::path!("asset_id" / Asset).and(warp::get()).map(get_asset_id);
 

@@ -47,7 +47,7 @@ pub fn genesis_config(
 				.map(|(acc, aura)| {
 					(
 						acc.clone(),                // account id
-						acc.clone(),                // validator id
+						acc,                        // validator id
 						picasso_session_keys(aura), // session keys
 					)
 				})

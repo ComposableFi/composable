@@ -587,7 +587,7 @@ fn price_oracle_response(state: &mut testing::OffchainState, price_id: &str) {
 
 	state.expect_request(testing::PendingRequest {
 		method: "GET".into(),
-		uri: url.into(),
+		uri: url,
 		response: Some(br#"{"USD": 155.23}"#.to_vec()),
 		sent: true,
 		..Default::default()

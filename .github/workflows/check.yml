@@ -81,3 +81,15 @@ jobs:
       - name: Run Test
         run: |
           SKIP_WASM_BUILD=1 cargo test
+          cargo clean -p picasso-runtime
+          cargo clean -p composable
+      - name: Cargo fmt
+        run: |
+          cargo +nightly fmt -- --check
+      - name: Cargo clippy
+        run: |
+          SKIP_WASM_BUILD=1 cargo clippy -- -D warnings
+      - name: Cargo test
+        run: |
+          cargo test
+
