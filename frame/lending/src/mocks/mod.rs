@@ -1,21 +1,17 @@
 use crate as pallet_lending;
-use composable_traits::{currency::CurrencyFactory, oracle::Oracle as OracleTrait};
+use composable_traits::currency::DynamicCurrencyId;
 use frame_support::{
 	parameter_types,
-	traits::{Contains, OnFinalize, OnInitialize},
+	traits::{OnFinalize, OnInitialize},
 	PalletId,
 };
-use frame_system::{self as system, EnsureSignedBy};
-use orml_tokens::TransferDust;
 use orml_traits::parameter_type_with_key;
 use sp_arithmetic::traits::Zero;
-use sp_core::{sr25519::Signature, H256};
+use sp_core::H256;
 use sp_runtime::{
-	testing::{Header, TestXt},
-	traits::{
-		AccountIdConversion, BlakeTwo256, ConvertInto, IdentifyAccount, IdentityLookup, Verify,
-	},
-	DispatchError,
+	testing::Header,
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
+	ArithmeticError, DispatchError,
 };
 
 pub mod oracle;
@@ -32,8 +28,6 @@ pub type VaultId = u64;
 pub const ALICE: AccountId = 0;
 pub const BOB: AccountId = 1;
 pub const CHARLIE: AccountId = 2;
-pub const JEREMY: AccountId = 3;
-pub const ACCOUNT_FREE_START: AccountId = JEREMY + 1;
 
 #[derive(
 	PartialOrd,
@@ -63,18 +57,13 @@ impl Default for MockCurrencyId {
 	}
 }
 
-impl From<u128> for MockCurrencyId {
-	fn from(x: u128) -> Self {
-		MockCurrencyId::LpToken(x)
-	}
-}
-
-impl From<MockCurrencyId> for u128 {
-	fn from(x: MockCurrencyId) -> Self {
-		match x {
-			MockCurrencyId::LpToken(y) => y,
-			// REALLY BAD
-			_ => panic!("impossible"),
+impl DynamicCurrencyId for MockCurrencyId {
+	fn next(self) -> Result<Self, DispatchError> {
+		match self {
+			MockCurrencyId::LpToken(x) => Ok(MockCurrencyId::LpToken(
+				x.checked_add(1).ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?,
+			)),
+			_ => unreachable!(),
 		}
 	}
 }
@@ -89,7 +78,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-		Factory: pallet_currency_factory::{Pallet, Storage, Event<T>},
+		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Lending: pallet_lending::{Pallet, Call, Config, Storage, Event<T>},
@@ -102,7 +91,7 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
-impl system::Config for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -144,7 +133,7 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 }
 
-const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
@@ -157,10 +146,14 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const DynamicCurrencyIdInitial: MockCurrencyId = MockCurrencyId::LpToken(0);
+}
+
 impl pallet_currency_factory::Config for Test {
 	type Event = Event;
-	type CurrencyId = MockCurrencyId;
-	type Convert = ConvertInto;
+	type DynamicCurrencyId = MockCurrencyId;
+	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
 parameter_types! {
@@ -179,7 +172,7 @@ impl pallet_vault::Config for Test {
 	type AssetId = MockCurrencyId;
 	type Balance = Balance;
 	type MaxStrategies = MaxStrategies;
-	type CurrencyFactory = Factory;
+	type CurrencyFactory = LpTokenFactory;
 	type Convert = ConvertInto;
 	type MinimumDeposit = MinimumDeposit;
 	type MinimumWithdrawal = MinimumWithdrawal;
@@ -226,14 +219,14 @@ impl pallet_lending::Config for Test {
 	type Balance = Balance;
 	type Currency = Tokens;
 	type UnixTime = Timestamp;
-	type CurrencyFactory = Factory;
+	type CurrencyFactory = LpTokenFactory;
 	type MarketDebtCurrency = Tokens;
 	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut storage = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	let balances = vec![];
 
 	pallet_balances::GenesisConfig::<Test> { balances }
@@ -252,7 +245,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 /// Progress to the given block, and then finalize the block.
-pub(crate) fn run_to_block(n: BlockNumber) {
+#[allow(dead_code)]
+pub fn run_to_block(n: BlockNumber) {
 	Lending::on_finalize(System::block_number());
 	for b in (System::block_number() + 1)..=n {
 		next_block(b);
@@ -262,7 +256,7 @@ pub(crate) fn run_to_block(n: BlockNumber) {
 	}
 }
 
-pub(crate) fn process_block(n: BlockNumber) {
+pub fn process_block(n: BlockNumber) {
 	next_block(n);
 	Lending::on_finalize(n);
 }
