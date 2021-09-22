@@ -32,8 +32,13 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - name: Clean Project Artifcats
+        run: |
+          cargo clean -p picasso-runtime
+          cargo clean -p composable
       - uses: actions-rs/cargo@v1
         name: Cargo Test
         with:
           command: test
+
 
