@@ -39,12 +39,13 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
-      run: |
-        cargo clean -p picasso-runtime
-        cargo clean -p composable
-        cargo test
+      - name: Run Test
+        run: |
+          cargo clean -p picasso-runtime
+          cargo clean -p composable
+          cargo test
 
 
 
