@@ -278,7 +278,7 @@ parameter_types! {
 impl indices::Config for Runtime {
 	type Event = Event;
 	type AccountIndex = AccountIndex;
-	type Currency = Balances;
+	type Currency = BasicCurrencyAdapter<Runtime, Balance, Amount, BlockNumber>;
 	type Deposit = IndexDeposit;
 	type WeightInfo = weights::indices::WeightInfo<Runtime>;
 }
