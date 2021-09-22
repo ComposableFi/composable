@@ -220,7 +220,7 @@ frame_support::parameter_types! {
 impl currencies::Config for Runtime {
         type Event = Event;
         type MultiCurrency = Tokens;
-        type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>; // Convert into a BasicCurrency object
+        type NativeCurrency = BasicCurrencyAdapter<Runtime, Balance, Amount, BlockNumber>; // Convert into a BasicCurrency object
         type GetNativeCurrencyId = GetNativeCurrencyId;// Get the id of the native currency, should be PICA for us
         type WeightInfo = weights::currencies::WeightInfo<Runtime>; // use our currencies.rs weight file  
 }
