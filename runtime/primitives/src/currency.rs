@@ -1,7 +1,7 @@
 //! CurrencyId implementation
 
 use codec::{Decode, Encode};
-use composable_traits::currency::DynamicCurrency;
+use composable_traits::currency::DynamicCurrencyId;
 use sp_runtime::{ArithmeticError, DispatchError, RuntimeDebug};
 
 #[cfg(feature = "std")]
@@ -25,7 +25,7 @@ impl CurrencyId {
 // NOTE(hussein-aitlahcen): we could add an index to DynamicCurrency to differentiate sub-ranges
 // This implementation is only valid if the initial value used to step using next is
 // LOCAL_LP_TOKEN_START
-impl DynamicCurrency for CurrencyId {
+impl DynamicCurrencyId for CurrencyId {
 	#[inline]
 	fn next(self) -> Result<Self, sp_runtime::DispatchError> {
 		let CurrencyId(x) = self;

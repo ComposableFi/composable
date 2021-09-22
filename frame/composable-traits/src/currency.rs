@@ -9,7 +9,7 @@ use frame_support::pallet_prelude::*;
  avoided.
 */
 /// A currency we can generate given that we have a previous currency.
-pub trait DynamicCurrency
+pub trait DynamicCurrencyId
 where
 	Self: Sized,
 {

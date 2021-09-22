@@ -775,13 +775,13 @@ impl vault::Config for Runtime {
 }
 
 parameter_types! {
-	pub const DynamicCurrencyInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
+	pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
 }
 
 impl currency_factory::Config for Runtime {
 	type Event = Event;
-	type DynamicCurrency = CurrencyId;
-	type DynamicCurrencyInitial = DynamicCurrencyInitial;
+	type DynamicCurrencyId = CurrencyId;
+	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
 impl lending::Config for Runtime {

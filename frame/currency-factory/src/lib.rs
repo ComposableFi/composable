@@ -25,7 +25,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_traits::currency::{CurrencyFactory, DynamicCurrency};
+	use composable_traits::currency::{CurrencyFactory, DynamicCurrencyId};
 	use frame_support::{pallet_prelude::*, PalletId};
 
 	pub const PALLET_ID: PalletId = PalletId(*b"pal_curf");
@@ -42,11 +42,11 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The currency which can be created from thin air.
-		type DynamicCurrency: FullCodec + Copy + DynamicCurrency;
+		type DynamicCurrencyId: FullCodec + Copy + DynamicCurrencyId;
 
 		/// The initial currency id from which we are able to generate the next.
 		#[pallet::constant]
-		type DynamicCurrencyInitial: Get<Self::DynamicCurrency>;
+		type DynamicCurrencyIdInitial: Get<Self::DynamicCurrencyId>;
 	}
 
 	#[pallet::pallet]
@@ -57,10 +57,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn currency_latest)]
 	pub type CurrencyCounter<T: Config> =
-		StorageValue<_, T::DynamicCurrency, ValueQuery, T::DynamicCurrencyInitial>;
+		StorageValue<_, T::DynamicCurrencyId, ValueQuery, T::DynamicCurrencyIdInitial>;
 
-	impl<T: Config> CurrencyFactory<T::DynamicCurrency> for Pallet<T> {
-		fn create() -> Result<T::DynamicCurrency, DispatchError> {
+	impl<T: Config> CurrencyFactory<T::DynamicCurrencyId> for Pallet<T> {
+		fn create() -> Result<T::DynamicCurrencyId, DispatchError> {
 			CurrencyCounter::<T>::mutate(|c| {
 				let c_current = *c;
 				let c_next = c_current.next()?;

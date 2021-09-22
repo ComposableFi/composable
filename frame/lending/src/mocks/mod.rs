@@ -1,5 +1,5 @@
 use crate as pallet_lending;
-use composable_traits::currency::DynamicCurrency;
+use composable_traits::currency::DynamicCurrencyId;
 use frame_support::{
 	parameter_types,
 	traits::{OnFinalize, OnInitialize},
@@ -59,7 +59,7 @@ impl Default for MockCurrencyId {
 	}
 }
 
-impl DynamicCurrency for MockCurrencyId {
+impl DynamicCurrencyId for MockCurrencyId {
 	fn next(self) -> Result<Self, DispatchError> {
 		match self {
 			MockCurrencyId::LpToken(x) => Ok(MockCurrencyId::LpToken(
@@ -149,13 +149,13 @@ impl pallet_timestamp::Config for Test {
 }
 
 parameter_types! {
-	pub const DynamicCurrencyInitial: MockCurrencyId = MockCurrencyId::LpToken(0);
+	pub const DynamicCurrencyIdInitial: MockCurrencyId = MockCurrencyId::LpToken(0);
 }
 
 impl pallet_currency_factory::Config for Test {
 	type Event = Event;
-	type DynamicCurrency = MockCurrencyId;
-	type DynamicCurrencyInitial = DynamicCurrencyInitial;
+	type DynamicCurrencyId = MockCurrencyId;
+	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
 parameter_types! {
