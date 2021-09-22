@@ -27,18 +27,18 @@ jobs:
         name: Cargo Check
         with:
           command: check 
-      - uses: actions-rs/toolchain@v1
-        with: 
-          profile: minimal
-          toolchain: stable
-          override: true
-      - name: Clean Project Artifcats
-        run: |
-          cargo clean -p picasso-runtime
-          cargo clean -p composable
-      - uses: actions-rs/cargo@v1
-        name: Cargo Test
-        with:
-          command: test
+      # - uses: actions-rs/toolchain@v1
+      #   with: 
+      #     profile: minimal
+      #     toolchain: stable
+      #     override: true
+      # - name: Clean Project Artifcats
+      #   run: |
+      #     cargo clean -p picasso-runtime
+      #     cargo clean -p composable
+      # - uses: actions-rs/cargo@v1
+      #   name: Cargo Test
+      #   with:
+      #     command: test
 
 
