@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-build:
+  check:
     runs-on: 
       - self-hosted
       - linux
@@ -25,3 +25,14 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
+  test:
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps: 
+      - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
+        with:
+          command: test
