@@ -733,7 +733,7 @@ parameter_types! {
 impl democracy::Config for Runtime {
 	type Proposal = Call;
 	type Event = Event;
-	type Currency = Balances;
+	type Currency = Balance;
 	type EnactmentPeriod = EnactmentPeriod;
 	type LaunchPeriod = LaunchPeriod;
 	type VotingPeriod = VotingPeriod;
