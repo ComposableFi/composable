@@ -34,7 +34,6 @@ jobs:
           override: true
       - name: Clean Project Artifacts and Test
         run: |
-          cargo clean 
           cargo test
       - name: Check build for benchmarking
         run: |
