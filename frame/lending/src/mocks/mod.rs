@@ -65,8 +65,7 @@ impl DynamicCurrency for MockCurrencyId {
 			MockCurrencyId::LpToken(x) => Ok(MockCurrencyId::LpToken(
 				x.checked_add(1).ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?,
 			)),
-			// impossible
-			_ => Err(DispatchError::Token(TokenError::Unsupported)),
+			_ => unreachable!(),
 		}
 	}
 }
