@@ -513,6 +513,17 @@ proptest! {
 }
 
 #[test]
+fn test_vault_emergency_shutdown_origin() {
+	ExtBuilder::default().build().execute_with(|| {
+		let (id, _) = create_vault(ALICE, MockCurrencyId::A);
+		Vaults::emergency_shutdown(Origin::signed(ALICE), id)
+			.expect_err("only root may emergency_shutdown");
+		Vaults::emergency_shutdown(Origin::none(), id)
+			.expect_err("only root may emergency_shutdown");
+	})
+}
+
+#[test]
 fn test_vault_emergency_shutdown() {
 	ExtBuilder::default().build().execute_with(|| {
 		let (id, _) = create_vault(ALICE, MockCurrencyId::A);
