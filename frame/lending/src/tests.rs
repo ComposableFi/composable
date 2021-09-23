@@ -1,10 +1,12 @@
 use crate::{
 	accrue_interest_internal,
 	mocks::{
-		self, new_test_ext, process_block, AccountId, Balance, Lending, MockCurrencyId, Origin,
-		Tokens, Vault, VaultId, ALICE, BOB, CHARLIE, MILLISECS_PER_BLOCK,
+		new_test_ext, process_block, AccountId, Balance, BlockNumber, Lending, MockCurrencyId,
+		Oracle, Origin, Test, Tokens, Vault, VaultId, ACCOUNT_FREE_START, ALICE, BOB, CHARLIE,
+		MILLISECS_PER_BLOCK, MINIMUM_BALANCE,
 	},
-	BorrowerData, Error, MarketIndex,
+	models::BorrowerData,
+	Error, MarketIndex,
 };
 use composable_traits::{
 	lending::MarketConfigInput,
@@ -12,16 +14,33 @@ use composable_traits::{
 	vault::{CapabilityVault, Deposit, VaultConfig},
 };
 use frame_support::{
-	assert_err, assert_ok,
+	assert_err, assert_noop, assert_ok, assert_storage_noop,
 	traits::fungibles::{Inspect, Mutate},
 };
-
+use pallet_vault::models::VaultInfo;
 use proptest::{prelude::*, test_runner::TestRunner};
-use sp_runtime::{FixedPointNumber, Percent, Perquintill};
+use sp_runtime::{traits::Zero, ArithmeticError, FixedPointNumber, Percent, Perquintill};
 
 type BorrowAssetVault = VaultId;
 
 type CollateralAsset = MockCurrencyId;
+
+/// Create a very simple vault for the given currency, 100% is reserved.
+fn create_simple_vault(
+	asset_id: MockCurrencyId,
+) -> (VaultId, VaultInfo<AccountId, Balance, MockCurrencyId, BlockNumber>) {
+	let v = Vault::do_create_vault(
+		Deposit::Existential,
+		VaultConfig {
+			asset_id,
+			manager: ALICE,
+			reserved: Perquintill::from_percent(100),
+			strategies: [].iter().cloned().collect(),
+		},
+	);
+	assert_ok!(&v);
+	v.expect("unreachable; qed;")
+}
 
 fn create_market(
 	borrow_asset: MockCurrencyId,
@@ -52,30 +71,23 @@ fn create_market(
 	market.expect("unreachable; qed;")
 }
 
+/// Create a market with a USDT vault LP token as collateral
 fn create_simple_vaulted_market() -> ((MarketIndex, BorrowAssetVault), CollateralAsset) {
-	let (_, collateral_vault_config) = Vault::do_create_vault(
-		Deposit::Existential,
-		VaultConfig {
-			asset_id: MockCurrencyId::USDT,
-			reserved: Perquintill::from_percent(100),
-			manager: ALICE,
-			strategies: [].iter().cloned().collect(),
-		},
-	)
-	.expect("good vault parameters are passed");
-
+	let (collateral_vault, VaultInfo { lp_token_id: collateral_asset, .. }) =
+		create_simple_vault(MockCurrencyId::USDT);
 	(
 		create_market(
 			MockCurrencyId::BTC,
-			collateral_vault_config.lp_token_id,
+			collateral_asset,
 			ALICE,
 			Perquintill::from_percent(10),
 			NormalizedCollateralFactor::saturating_from_rational(200, 100),
 		),
-		collateral_vault_config.lp_token_id,
+		collateral_asset,
 	)
 }
 
+/// Create a market with straight USDT as collateral
 fn create_simple_market() -> (MarketIndex, BorrowAssetVault) {
 	create_market(
 		MockCurrencyId::BTC,
@@ -94,7 +106,7 @@ fn accrue_interest_base_cases() {
 	let borrow_index = Rate::saturating_from_integer(1);
 	let delta_time = SECONDS_PER_YEAR;
 	let total_issued = 100000000000000000000;
-	let (accrued_increase, _) = accrue_interest_internal::<mocks::Test>(
+	let (accrued_increase, _) = accrue_interest_internal::<Test>(
 		optimal,
 		interest_rate_model,
 		borrow_index,
@@ -106,7 +118,7 @@ fn accrue_interest_base_cases() {
 	assert_eq!(accrued_increase, 10000000000000000000);
 
 	let delta_time = MILLISECS_PER_BLOCK;
-	let (accrued_increase, _) = accrue_interest_internal::<mocks::Test>(
+	let (accrued_increase, _) = accrue_interest_internal::<Test>(
 		optimal,
 		interest_rate_model,
 		borrow_index,
@@ -131,7 +143,7 @@ fn accrue_interest_edge_cases() {
 	let borrow_index = Rate::saturating_from_integer(1);
 	let delta_time = SECONDS_PER_YEAR;
 	let total_issued = u128::MAX;
-	let (accrued_increase, _) = accrue_interest_internal::<mocks::Test>(
+	let (accrued_increase, _) = accrue_interest_internal::<Test>(
 		utilization,
 		interest_rate_model,
 		borrow_index,
@@ -142,7 +154,7 @@ fn accrue_interest_edge_cases() {
 	.unwrap();
 	assert_eq!(accrued_increase, 108890357414700308308279874378165827666);
 
-	let (accrued_increase, _) = accrue_interest_internal::<mocks::Test>(
+	let (accrued_increase, _) = accrue_interest_internal::<Test>(
 		utilization,
 		interest_rate_model,
 		borrow_index,
@@ -168,7 +180,7 @@ fn accrue_interest_induction() {
 				(minimal..=25u32).prop_map(|i| 10u128.pow(i)),
 			),
 			|(slot, total_issued)| {
-				let (accrued_increase_1, borrow_index_1) = accrue_interest_internal::<mocks::Test>(
+				let (accrued_increase_1, borrow_index_1) = accrue_interest_internal::<Test>(
 					optimal,
 					interest_rate_model,
 					borrow_index,
@@ -177,7 +189,7 @@ fn accrue_interest_induction() {
 					0,
 				)
 				.unwrap();
-				let (accrued_increase_2, borrow_index_2) = accrue_interest_internal::<mocks::Test>(
+				let (accrued_increase_2, borrow_index_2) = accrue_interest_internal::<Test>(
 					optimal,
 					interest_rate_model,
 					borrow_index,
@@ -203,7 +215,7 @@ fn accrue_interest_plotter() {
 	let mut previous = 0;
 	let _data: Vec<_> = (0..=1000)
 		.map(|x| {
-			let (accrue_increment, _) = accrue_interest_internal::<super::mocks::Test>(
+			let (accrue_increment, _) = accrue_interest_internal::<Test>(
 				optimal,
 				&interest_rate_model,
 				borrow_index,
@@ -217,7 +229,7 @@ fn accrue_interest_plotter() {
 		})
 		.collect();
 
-	let (total_accrued, _) = accrue_interest_internal::<super::mocks::Test>(
+	let (total_accrued, _) = accrue_interest_internal::<Test>(
 		optimal,
 		&interest_rate_model,
 		Rate::checked_from_integer(1).unwrap(),
@@ -294,7 +306,7 @@ fn test_borrow_repay_in_same_block() {
 		));
 		assert_err!(
 			Lending::repay_borrow_internal(&market, &ALICE, &ALICE, alice_repay_amount),
-			Error::<mocks::Test>::BorrowAndRepayInSameBlockIsNotSupported
+			Error::<Test>::BorrowAndRepayInSameBlockIsNotSupported
 		);
 	});
 }
@@ -390,7 +402,7 @@ fn test_vault_interactions() {
 
 		assert_eq!(
 			Lending::borrow_internal(&market, &ALICE, 1_000),
-			Err(Error::<mocks::Test>::CannotBorrowInCurrentSourceVaultState.into())
+			Err(Error::<Test>::CannotBorrowInCurrentSourceVaultState.into())
 		);
 	});
 }
@@ -462,6 +474,10 @@ fn borrow_repay() {
 	});
 }
 
+/*
+  TODO(hussein-aitlahcen):
+  Extract all proptests helpers into a composable-test-helper crate?
+*/
 macro_rules! prop_assert_ok {
     ($cond:expr) => {
         prop_assert_ok!($cond, concat!("assertion failed: ", stringify!($cond)))
@@ -477,18 +493,78 @@ macro_rules! prop_assert_ok {
     };
 }
 
+prop_compose! {
+	fn valid_amount_without_overflow()
+		(x in MINIMUM_BALANCE..u64::MAX as Balance) -> Balance {
+		x
+	}
+}
+
+prop_compose! {
+	fn valid_amounts_without_overflow_2()
+		(x in MINIMUM_BALANCE..u64::MAX as Balance / 2,
+		 y in MINIMUM_BALANCE..u64::MAX as Balance / 2) -> (Balance, Balance) {
+			(x, y)
+	}
+}
+
+prop_compose! {
+	fn valid_amounts_without_overflow_3()
+		(x in MINIMUM_BALANCE..u64::MAX as Balance / 3,
+		 y in MINIMUM_BALANCE..u64::MAX as Balance / 3,
+		 z in MINIMUM_BALANCE..u64::MAX as Balance / 3) -> (Balance, Balance, Balance) {
+			(x, y, z)
+		}
+}
+
+prop_compose! {
+	fn valid_amounts_without_overflow_k
+		(max_accounts: usize, limit: Balance)
+		(balances in prop::collection::vec(MINIMUM_BALANCE..limit, 3..max_accounts))
+		 -> Vec<(AccountId, Balance)> {
+			(ACCOUNT_FREE_START..balances.len() as AccountId)
+				.zip(balances)
+				.collect()
+		}
+}
+
+prop_compose! {
+	fn valid_amounts_without_overflow_k_with_random_index(max_accounts: usize, limit: Balance)
+		(accounts in valid_amounts_without_overflow_k(max_accounts, limit),
+		 index in 1..max_accounts) -> (usize, Vec<(AccountId, Balance)>) {
+			(usize::max(1, index % usize::max(1, accounts.len())), accounts)
+		}
+}
+
+prop_compose! {
+	fn strategy_account()
+		(x in ACCOUNT_FREE_START..AccountId::MAX) -> AccountId {
+			x
+		}
+}
+
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(10000))]
 
 	#[test]
-	fn proptest_math_borrow(collateral_balance in 0..u32::MAX as Balance, collateral_price in 0..u32::MAX as Balance, borrower_balance_with_interest in 0..u32::MAX as Balance, borrow_price in 0..u32::MAX as Balance) {
-		let borrower = BorrowerData::new(collateral_balance, collateral_price, borrower_balance_with_interest, borrow_price, NormalizedCollateralFactor::from_float(1.0));
+	fn proptest_math_borrow(collateral_balance in 0..u32::MAX as Balance,
+							collateral_price in 0..u32::MAX as Balance,
+							borrower_balance_with_interest in 0..u32::MAX as Balance,
+							borrow_price in 0..u32::MAX as Balance
+	) {
+		let borrower = BorrowerData::new(
+			collateral_balance,
+			collateral_price,
+			borrower_balance_with_interest,
+			borrow_price,
+			NormalizedCollateralFactor::from_float(1.0)
+		);
 		let borrow = borrower.borrow_for_collateral();
 		prop_assert_ok!(borrow);
 	}
 
 	#[test]
-	fn market_collateral_deposit_withdraw_identity(amount in 0..u32::MAX as Balance) {
+	fn market_collateral_deposit_withdraw_identity(amount in valid_amount_without_overflow()) {
 		new_test_ext().execute_with(|| {
 			let (market, _) = create_simple_market();
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
@@ -505,7 +581,26 @@ proptest! {
 	}
 
 	#[test]
-	fn market_collateral_vaulted_deposit_withdraw_identity(amount in 0..u32::MAX as Balance) {
+	fn market_collateral_deposit_withdraw_higher_amount_fails(amount in valid_amount_without_overflow()) {
+		new_test_ext().execute_with(|| {
+			let (market, vault) = create_simple_market();
+			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+			prop_assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, amount));
+			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount);
+
+			prop_assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, amount));
+			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+			prop_assert_eq!(
+				Lending::withdraw_collateral_internal(&market, &ALICE, amount + 1),
+				Err(Error::<Test>::NotEnoughCollateral.into())
+			);
+
+			Ok(())
+		})?;
+	}
+
+	#[test]
+	fn market_collateral_vaulted_deposit_withdraw_identity(amount in valid_amount_without_overflow()) {
 		new_test_ext().execute_with(|| {
 			let ((market, _), collateral_asset) = create_simple_vaulted_market();
 
@@ -517,6 +612,38 @@ proptest! {
 			prop_assert_eq!(Tokens::balance(collateral_asset, &ALICE), 0);
 			prop_assert_ok!(Lending::withdraw_collateral_internal(&market, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(collateral_asset, &ALICE), amount);
+
+			Ok(())
+		})?;
+	}
+
+	#[test]
+	fn market_creation_with_multi_level_priceable_lp(depth in 0..20) {
+		new_test_ext().execute_with(|| {
+			// Assume we have a pricable base asset
+			let base_asset = MockCurrencyId::ETH;
+			let base_vault = create_simple_vault(base_asset);
+
+			let (_, VaultInfo { lp_token_id, ..}) =
+				(0..depth).fold(base_vault, |(_, VaultInfo { lp_token_id, .. }), _| {
+					// No stock dilution, 1:1 price against the quote asset.
+					create_simple_vault(lp_token_id)
+				});
+
+			// A market with two priceable assets can be created
+			create_market(
+				MockCurrencyId::BTC,
+				lp_token_id,
+				ALICE,
+				Perquintill::from_percent(10),
+				NormalizedCollateralFactor::saturating_from_rational(200, 100),
+			);
+
+			// Top level lp price should be transitively resolvable to the base asset price.
+			prop_assert_ok!(Oracle::get_price(&lp_token_id));
+
+			// Without stock dilution, prices should be equals
+			prop_assert_eq!(Oracle::get_price(&lp_token_id), Oracle::get_price(&base_asset));
 
 			Ok(())
 		})?;

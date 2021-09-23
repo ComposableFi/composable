@@ -5,6 +5,8 @@ use frame_support::{
 	sp_std::{collections::btree_map::BTreeMap, fmt::Debug},
 };
 
+use crate::rate_model::Rate;
+
 /// An indication for strategies as to how they should be rebalancing. Strategies should evaluate if
 /// it is worth it to deposit or withdraw based on fees.
 #[derive(Copy, Clone, Encode, Decode, Debug, PartialEq)]
@@ -94,12 +96,8 @@ pub trait Vault {
 		lp_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
-	/// Convert from % share represented by LPs to underlying asset value
-	/// Because of stock dilution, the LPs minted are not 1:1 with deposit
-	fn to_underlying_value(
-		vault_id: &Self::VaultId,
-		amount: Self::Balance,
-	) -> Result<Self::Balance, DispatchError>;
+	/// Return the current rate representing the stock dilution of the vault.
+	fn stock_dilution_rate(vault_id: &Self::VaultId) -> Result<Rate, DispatchError>;
 }
 
 /// CapabilityVault exposes functionalities for stopping and limiting vault functionality.

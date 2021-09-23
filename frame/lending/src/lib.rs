@@ -34,11 +34,13 @@ mod tests;
 mod benchmarking;
 pub mod weights;
 
+mod models;
+
 pub use crate::weights::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::weights::WeightInfo;
+	use crate::{models::BorrowerData, weights::WeightInfo};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
@@ -233,51 +235,6 @@ pub mod pallet {
 		BorrowAndRepayInSameBlockIsNotSupported,
 		ExceedLendingCount,
 		RepayAmountMustBeGraterThanZero,
-	}
-
-	pub struct BorrowerData {
-		pub collateral_balance: LiftedFixedBalance,
-		pub collateral_price: LiftedFixedBalance,
-		pub borrower_balance_with_interest: LiftedFixedBalance,
-		pub borrow_price: LiftedFixedBalance,
-		pub collateral_factor: NormalizedCollateralFactor,
-	}
-
-	impl BorrowerData {
-		#[inline]
-		pub fn new<T: Into<LiftedFixedBalance>>(
-			collateral_balance: T,
-			collateral_price: T,
-			borrower_balance_with_interest: T,
-			borrow_price: T,
-			collateral_factor: NormalizedCollateralFactor,
-		) -> Self {
-			Self {
-				collateral_balance: collateral_balance.into(),
-				collateral_price: collateral_price.into(),
-				borrower_balance_with_interest: borrower_balance_with_interest.into(),
-				borrow_price: borrow_price.into(),
-				collateral_factor,
-			}
-		}
-
-		#[inline]
-		pub fn collateral_over_borrow(&self) -> Result<LiftedFixedBalance, ArithmeticError> {
-			let collateral = self.collateral_balance.safe_mul(&self.collateral_price)?;
-			let borrowed = self
-				.borrower_balance_with_interest
-				.safe_mul(&self.borrow_price)?
-				.safe_mul(&self.collateral_factor)?;
-			collateral.safe_sub(&borrowed)
-		}
-
-		#[inline]
-		pub fn borrow_for_collateral(&self) -> Result<LiftedFixedBalance, ArithmeticError> {
-			let max_borrow =
-				swap(&self.collateral_balance, &self.collateral_price, &self.collateral_factor)?;
-			let borrowed = self.borrower_balance_with_interest.safe_mul(&self.borrow_price)?;
-			Ok(max_borrow.saturating_sub(borrowed))
-		}
 	}
 
 	#[pallet::event]
@@ -1069,15 +1026,16 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-			let collateral_balance =
-				AccountCollateral::<T>::try_get(market_id, account).unwrap_or_default();
+			let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
+				.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero());
 
 			if collateral_balance > T::Balance::zero() {
 				let collateral_price = T::Oracle::get_price(&market.collateral)?.0;
 				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 				let borrow_price = T::Oracle::get_price(&borrow_asset)?.0;
 				let borrower_balance_with_interest =
-					Self::borrow_balance_current(market_id, account)?.unwrap_or_default();
+					Self::borrow_balance_current(market_id, account)?
+						.unwrap_or_else(BorrowAmountOf::<Self>::zero);
 
 				let borrower = BorrowerData::new(
 					collateral_balance,
@@ -1145,16 +1103,15 @@ pub mod pallet {
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
 			let (collateral_price, _) = T::Oracle::get_price(&market.collateral)?;
-
-			let market =
-				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let collateral_balance: LiftedFixedBalance =
-				AccountCollateral::<T>::try_get(market_id, account).unwrap_or_default().into();
+				AccountCollateral::<T>::try_get(market_id, account)
+					.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero())
+					.into();
 
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 			let borrow_price = T::Oracle::get_price(&borrow_asset)?.0;
-			let borrower_balance_with_interest =
-				Self::borrow_balance_current(market_id, account)?.unwrap_or_default();
+			let borrower_balance_with_interest = Self::borrow_balance_current(market_id, account)?
+				.unwrap_or_else(BorrowAmountOf::<Self>::zero);
 
 			let borrower = BorrowerData {
 				collateral_balance,
@@ -1164,17 +1121,8 @@ pub mod pallet {
 				collateral_factor: market.collateral_factor,
 			};
 
-			let withdrawable_collateral_value = borrower
-				.collateral_over_borrow()?
-				.checked_mul_int(1u64)
-				.ok_or(Error::<T>::Overflow)?
-				.into();
-
-			let collateral_value =
-				amount.checked_mul(&collateral_price).ok_or(Error::<T>::Overflow)?;
-
 			ensure!(
-				collateral_value <= withdrawable_collateral_value,
+				borrower.collateralization_still_valid(amount.into()) == Ok(true),
 				Error::<T>::NotEnoughCollateral
 			);
 

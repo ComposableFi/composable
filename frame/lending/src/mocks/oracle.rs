@@ -4,8 +4,8 @@ pub use pallet::*;
 pub mod pallet {
 	use codec::Codec;
 	use composable_traits::{oracle::Oracle, vault::Vault};
-	use frame_support::pallet_prelude::*;
-	use sp_runtime::{helpers_128bit::multiply_by_rational, ArithmeticError};
+	use frame_support::{pallet_prelude::*, PalletId};
+	use sp_runtime::{ArithmeticError, FixedPointNumber};
 	use sp_std::fmt::Debug;
 
 	use crate::mocks::{Balance, MockCurrencyId};
@@ -21,7 +21,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	impl<T: Config> Pallet<T> {
-		fn get_price(of: &MockCurrencyId) -> Result<(Balance, ()), DispatchError> {
+		pub fn get_price(of: &MockCurrencyId) -> Result<(Balance, ()), DispatchError> {
 			<Self as Oracle>::get_price(of)
 		}
 	}
@@ -58,15 +58,13 @@ pub mod pallet {
 				*/
 				&x @ MockCurrencyId::LpToken(_) => {
 					let vault = T::Vault::token_vault(x)?;
-					let base_asset = T::Vault::asset_id(&vault)?;
-					let lp_amount = 1000;
-					let base_amount = T::Vault::to_underlying_value(&vault, lp_amount)?;
-					let (p, t) = Self::get_price(&base_asset)?;
-					Ok((
-						multiply_by_rational(p, base_amount, lp_amount)
-							.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?,
-						t,
-					))
+					let base = T::Vault::asset_id(&vault)?;
+					let (p, t) = Self::get_price(&base)?;
+					let rate = T::Vault::stock_dilution_rate(&vault)?;
+					let derived = rate
+						.checked_mul_int(p)
+						.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+					Ok((derived, t))
 				},
 			}
 		}

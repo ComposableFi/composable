@@ -44,7 +44,7 @@
 #![allow(missing_docs)]
 
 mod capabilities;
-mod models;
+pub mod models;
 mod rent;
 mod traits;
 
@@ -64,8 +64,12 @@ pub mod pallet {
 		traits::{CurrencyFactory, StrategicVault},
 	};
 	use codec::{Codec, FullCodec};
-	use composable_traits::vault::{
-		CapabilityVault, Deposit, FundsAvailability, ReportableStrategicVault, Vault, VaultConfig,
+	use composable_traits::{
+		rate_model::Rate,
+		vault::{
+			CapabilityVault, Deposit, FundsAvailability, ReportableStrategicVault, Vault,
+			VaultConfig,
+		},
 	};
 	use frame_support::{
 		ensure,
@@ -84,7 +88,7 @@ pub mod pallet {
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
 			Zero,
 		},
-		DispatchError, Perquintill,
+		DispatchError, FixedPointNumber, Perquintill,
 	};
 	use sp_std::fmt::Debug;
 
@@ -733,13 +737,25 @@ pub mod pallet {
 			Pallet::<T>::do_withdraw(vault, to, lp_amount)
 		}
 
-		fn to_underlying_value(
-			vault_id: &Self::VaultId,
-			lp_amount: Self::Balance,
-		) -> Result<Self::Balance, DispatchError> {
+		fn stock_dilution_rate(vault_id: &Self::VaultId) -> Result<Rate, DispatchError> {
 			let vault =
 				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
-			Self::do_lp_share_value(vault_id, &vault, lp_amount)
+			let lp_total_issuance = T::Currency::total_issuance(vault.lp_token_id);
+			let lp_total_issuance_value =
+				<T::Convert as Convert<T::Balance, u128>>::convert(lp_total_issuance);
+			// If we don't have issued any LP token, the rate is 1:1
+			if lp_total_issuance_value == 0 {
+				Ok(Rate::from(1))
+			} else {
+				// Otherwise, we basically return the base/issued rate
+				let base_asset_amount = Self::do_assets_under_management(vault_id, &vault)?;
+				let base_asset_amount_value =
+					<T::Convert as Convert<T::Balance, u128>>::convert(base_asset_amount);
+				let rate =
+					Rate::checked_from_rational(base_asset_amount_value, lp_total_issuance_value)
+						.unwrap_or_else(Rate::zero);
+				Ok(rate)
+			}
 		}
 
 		fn token_vault(token: Self::AssetId) -> Result<Self::VaultId, DispatchError> {
