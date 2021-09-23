@@ -89,7 +89,5 @@ jobs:
       - name: Cargo clippy
         run: |
           SKIP_WASM_BUILD=1 cargo clippy -- -D warnings
-      - name: Cargo test
-        run: |
-          cargo test
+
 
