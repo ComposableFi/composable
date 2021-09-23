@@ -997,15 +997,16 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-			let collateral_balance =
-				AccountCollateral::<T>::try_get(market_id, account).unwrap_or_default();
+			let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
+				.unwrap_or(CollateralLpAmountOf::<Self>::zero());
 
 			if collateral_balance > T::Balance::zero() {
 				let collateral_price = T::Oracle::get_price(&market.collateral)?.0;
 				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 				let borrow_price = T::Oracle::get_price(&borrow_asset)?.0;
 				let borrower_balance_with_interest =
-					Self::borrow_balance_current(market_id, account)?.unwrap_or_default();
+					Self::borrow_balance_current(market_id, account)?
+						.unwrap_or(BorrowAmountOf::<Self>::zero());
 
 				let borrower = BorrowerData::new(
 					collateral_balance,
@@ -1077,12 +1078,14 @@ pub mod pallet {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let collateral_balance: LiftedFixedBalance =
-				AccountCollateral::<T>::try_get(market_id, account).unwrap_or_default().into();
+				AccountCollateral::<T>::try_get(market_id, account)
+					.unwrap_or(CollateralLpAmountOf::<Self>::zero())
+					.into();
 
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 			let borrow_price = T::Oracle::get_price(&borrow_asset)?.0;
-			let borrower_balance_with_interest =
-				Self::borrow_balance_current(market_id, account)?.unwrap_or_default();
+			let borrower_balance_with_interest = Self::borrow_balance_current(market_id, account)?
+				.unwrap_or(BorrowAmountOf::<Self>::zero());
 
 			let borrower = BorrowerData {
 				collateral_balance,
