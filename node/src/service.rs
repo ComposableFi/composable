@@ -206,12 +206,12 @@ where
 
 	#[cfg(feature = "ocw")]
 	{
-		let keystore = keystore_container.sync_keystore();
+		let keystore = params.keystore_container.sync_keystore();
 		if parachain_config.offchain_worker.enabled {
 			// Initialize seed for signing transaction using off-chain workers. This is a
 			// convenience so learners can see the transactions submitted simply running the node.
 			// Typically these keys should be inserted with RPC calls to `author_insertKey`.
-			// TODO: rmeove in prod
+			// TODO(Jesse): remove in prod
 			{
 				sp_keystore::SyncCryptoStore::sr25519_generate_new(
 					&*keystore,
