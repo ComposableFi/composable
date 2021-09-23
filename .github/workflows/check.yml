@@ -1,48 +1,90 @@
 name: Test & Build & Benchmarking Build
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  test-build:
-    runs-on: ubuntu-20.04
-    steps:
+  check:
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps: 
       - uses: actions/checkout@v2
-      - name: Set-Up system dependencies
-        run: sudo apt install -y cmake pkg-config libssl-dev git build-essential clang libclang-dev curl
-      - name: Install Rustup
-        run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
-          source ~/.cargo/env
-          rustup default stable
-          rustup update nightly
-          rustup update stable
-          rustup target add wasm32-unknown-unknown --toolchain nightly
-      - name: Cache
-        uses: actions/cache@v2.1.6
+      - uses: Swatinem/rust-cache@v1
+      - uses: actions-rs/toolchain@v1
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Clean project artifacts
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - uses: actions-rs/toolchain@v1
+        with: 
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+      - name: Cargo Check
         run: |
-          cargo clean -p picasso-runtime
-          cargo clean -p composable
-      - name: Cargo fmt
+          SKIP_WASM_BUILD=1 cargo check
+      - name: Cargo Check Benchmark
         run: |
-          cargo +nightly fmt -- --check
+          SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --release
+  clippy:
+    name: Clippy
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps: 
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - uses: actions-rs/toolchain@v1
+        with: 
+          toolchain: stable
+          components: clippy
+          override: true
       - name: Cargo clippy
         run: |
           SKIP_WASM_BUILD=1 cargo clippy -- -D warnings
-      - name: Cargo test
+      - name: Cargo fmt
         run: |
-          cargo test
-      - name: Check build for benchmarking
-        run: >
-          pushd node &&
-          cargo check --features=runtime-benchmarks --release
+          rustup component add rustfmt --toolchain nightly-x86_64-unknown-linux-gnu
+          cargo +nightly fmt -- --check
+
+  test:
+    name: Unit Test
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - uses: actions-rs/toolchain@v1
+        with: 
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Run Test
+        run: |
+          SKIP_WASM_BUILD=1 cargo test
+          cargo clean -p picasso-runtime
+          cargo clean -p composable
+
+
+
+
