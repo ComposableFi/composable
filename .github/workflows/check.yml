@@ -87,6 +87,7 @@ jobs:
           cargo clean -p composable
       - name: Cargo fmt
         run: |
+          rustup component add rustfmt --toolchain nightly-x86_64-unknown-linux-gnu
           cargo +nightly fmt -- --check
       - name: Cargo clippy
         run: |
