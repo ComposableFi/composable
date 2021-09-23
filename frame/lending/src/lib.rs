@@ -34,11 +34,13 @@ mod tests;
 mod benchmarking;
 pub mod weights;
 
+mod models;
+
 pub use crate::weights::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::weights::WeightInfo;
+	use crate::{models::BorrowerData, weights::WeightInfo};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
@@ -226,51 +228,6 @@ pub mod pallet {
 		/// user must repay borrow before repaying new one, should do two steps in single
 		/// transaction for now
 		RepayPreviousBorrowBeforeTakingOnNewOne, // think of debt reindex function
-	}
-
-	pub struct BorrowerData {
-		pub collateral_balance: LiftedFixedBalance,
-		pub collateral_price: LiftedFixedBalance,
-		pub borrower_balance_with_interest: LiftedFixedBalance,
-		pub borrow_price: LiftedFixedBalance,
-		pub collateral_factor: NormalizedCollateralFactor,
-	}
-
-	impl BorrowerData {
-		#[inline]
-		pub fn new<T: Into<LiftedFixedBalance>>(
-			collateral_balance: T,
-			collateral_price: T,
-			borrower_balance_with_interest: T,
-			borrow_price: T,
-			collateral_factor: NormalizedCollateralFactor,
-		) -> Self {
-			Self {
-				collateral_balance: collateral_balance.into(),
-				collateral_price: collateral_price.into(),
-				borrower_balance_with_interest: borrower_balance_with_interest.into(),
-				borrow_price: borrow_price.into(),
-				collateral_factor,
-			}
-		}
-
-		#[inline]
-		pub fn collateral_over_borrow(&self) -> Result<LiftedFixedBalance, ArithmeticError> {
-			let collateral = self.collateral_balance.safe_mul(&self.collateral_price)?;
-			let borrowed = self
-				.borrower_balance_with_interest
-				.safe_mul(&self.borrow_price)?
-				.safe_mul(&self.collateral_factor)?;
-			collateral.safe_sub(&borrowed)
-		}
-
-		#[inline]
-		pub fn borrow_for_collateral(&self) -> Result<LiftedFixedBalance, ArithmeticError> {
-			let max_borrow =
-				swap(&self.collateral_balance, &self.collateral_price, &self.collateral_factor)?;
-			let borrowed = self.borrower_balance_with_interest.safe_mul(&self.borrow_price)?;
-			Ok(max_borrow.saturating_sub(borrowed))
-		}
 	}
 
 	#[pallet::event]
