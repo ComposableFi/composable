@@ -131,6 +131,7 @@ pub mod pallet {
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
 		type UnixTime: UnixTime;
+		type MaxLendingCount: Get<u32>;
 		type WeightInfo: WeightInfo;
 	}
 	#[cfg(feature = "runtime-benchmarks")]
@@ -182,6 +183,7 @@ pub mod pallet {
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
 		type UnixTime: UnixTime;
+		type MaxLendingCount: Get<u32>;
 		type WeightInfo: WeightInfo;
 	}
 
@@ -193,7 +195,8 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
 			Self::accrue_interests(block_number);
-			0
+			let MarketIndex(max_lending_index) = LendingCount::<T>::get();
+			<T as Config>::WeightInfo::accrue_interests(max_lending_index + 1)
 		}
 	}
 
@@ -226,6 +229,7 @@ pub mod pallet {
 		/// user must repay borrow before repaying new one, should do two steps in single
 		/// transaction for now
 		RepayPreviousBorrowBeforeTakingOnNewOne, // think of debt reindex function
+		ExceedLendingCount,
 	}
 
 	pub struct BorrowerData {
@@ -671,7 +675,6 @@ pub mod pallet {
 				config_input.collateral_factor > 1.into(),
 				Error::<T>::CollateralFactorIsLessOrEqualOne
 			);
-
 			<T::Oracle as Oracle>::get_price(&collateral_asset)
 				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
 			<T::Oracle as Oracle>::get_price(&borrow_asset)
@@ -680,6 +683,10 @@ pub mod pallet {
 			LendingCount::<T>::try_mutate(|MarketIndex(previous_market_index)| {
 				let market_index = {
 					*previous_market_index += 1;
+					ensure!(
+						*previous_market_index <= T::MaxLendingCount::get(),
+						Error::<T>::ExceedLendingCount
+					);
 					MarketIndex(*previous_market_index)
 				};
 
@@ -773,7 +780,6 @@ pub mod pallet {
 			markets
 		}
 
-		#[allow(clippy::type_complexity)]
 		fn get_all_markets(
 		) -> Vec<(Self::MarketId, MarketConfig<T::VaultId, <T as Config>::AssetId, T::AccountId>)> {
 			Markets::<T>::iter().map(|(index, config)| (index, config)).collect()
