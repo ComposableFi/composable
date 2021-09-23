@@ -30,6 +30,9 @@ jobs:
       - name: Cargo Check
         run: |
           SKIP_WASM_BUILD=1 cargo check
+      - name: Cargo Check Benchmark
+        run: |
+          SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --release
   clippy:
     name: Clippy
     runs-on: 
