@@ -29,7 +29,7 @@ jobs:
       - uses: actions-rs/cargo@v1
       - name: Cargo Check
         run: |
-          SKIP_WASM_BUILD=1 PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig cargo check --release --all-features
+          SKIP_WASM_BUILD=1 cargo check
   clippy:
     name: Clippy
     runs-on: 
