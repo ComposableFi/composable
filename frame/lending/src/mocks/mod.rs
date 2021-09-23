@@ -25,6 +25,8 @@ pub type BlockNumber = u64;
 
 pub type VaultId = u64;
 
+pub const MINIMUM_BALANCE: Balance = 1000;
+
 pub const ALICE: AccountId = 0;
 pub const BOB: AccountId = 1;
 pub const CHARLIE: AccountId = 2;
