@@ -1074,9 +1074,6 @@ pub mod pallet {
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
 			let (collateral_price, _) = T::Oracle::get_price(&market.collateral)?;
-
-			let market =
-				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let collateral_balance: LiftedFixedBalance =
 				AccountCollateral::<T>::try_get(market_id, account)
 					.unwrap_or(CollateralLpAmountOf::<Self>::zero())
