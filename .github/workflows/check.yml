@@ -29,10 +29,7 @@ jobs:
       - uses: actions-rs/cargo@v1
       - name: Cargo Check
         run: |
-          SKIP_WASM_BUILD=1 cargo check --release
-      - name: Cargo Check Runtime
-        run: |
-          SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --release
+          SKIP_WASM_BUILD=1 cargo check --release --all-features
   clippy:
     name: Clippy
     runs-on: 
