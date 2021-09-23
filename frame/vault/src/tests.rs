@@ -511,3 +511,31 @@ proptest! {
 		})?;
 	}
 }
+
+#[test]
+fn test_vault_emergency_shutdown() {
+	ExtBuilder::default().build().execute_with(|| {
+		let (id, _) = create_vault(ALICE, MockCurrencyId::A);
+		// Setting up the vault and depositing to ensure it is working correctly, and later to
+		// ensure that the specific deposit cannot be withdrawn if the vault is stopped.
+		Tokens::mint_into(MockCurrencyId::A, &ALICE, 1000)
+			.expect("minting for ALICE should succeed");
+		Vaults::deposit(Origin::signed(ALICE), id, 100)
+			.expect("depositing in active vault should succeed");
+
+		// Shutdown the vault, and ensure that the deposited funds cannot be withdrawn.
+		Vaults::emergency_shutdown(Origin::root(), id)
+			.expect("root should be able to emergency shutdown");
+		Vaults::deposit(Origin::signed(ALICE), id, 100)
+			.expect_err("depositing in stopped vault should fail");
+		Vaults::withdraw(Origin::signed(ALICE), id, 100)
+			.expect_err("withdrawing from stopped vault should fail");
+
+		// Restart the vault, and ensure that funds can be withdrawn and deposited
+		Vaults::restart_vault(Origin::root(), id).expect("root can restart the vault");
+		Vaults::deposit(Origin::signed(ALICE), id, 100)
+			.expect("depositing in restarted vault should succeed");
+		Vaults::withdraw(Origin::signed(ALICE), id, 100)
+			.expect("withdrawing from restarted vault should succeed");
+	});
+}
