@@ -137,7 +137,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_oracle::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
-		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
+		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter + From<u64>;
 		type Vault: StrategicVault<
 			VaultId = Self::VaultId,
 			AssetId = <Self as Config>::AssetId,
@@ -419,7 +419,7 @@ pub mod pallet {
 		/// - `collateral_asset_id` : AssetId for collateral.
 		/// - `reserved_factor` : Reserve factor of market to be created.
 		/// - `collateral_factor` : Collateral factor of market to be created.
-		#[pallet::weight(1000)]
+		#[pallet::weight(<T as Config>::WeightInfo::create_new_market())]
 		#[transactional]
 		pub fn create_new_market(
 			origin: OriginFor<T>,
@@ -486,7 +486,7 @@ pub mod pallet {
 		/// - `origin` : Sender of this extrinsic. (Also the user who wants to borrow from market.)
 		/// - `market_id` : Market index from which user wants to borrow.
 		/// - `amount_to_borrow` : Amount which user wants to borrow.
-		#[pallet::weight(1000)]
+		#[pallet::weight(<T as Config>::WeightInfo::borrow())]
 		#[transactional]
 		pub fn borrow(
 			origin: OriginFor<T>,
@@ -509,7 +509,7 @@ pub mod pallet {
 		/// - `beneficiary` : AccountId which has borrowed asset. (This can be same or differnt than
 		/// origin).
 		/// - `repay_amount` : Amount which user wants to borrow.
-		#[pallet::weight(1000)]
+		#[pallet::weight(<T as Config>::WeightInfo::repay_borrow())]
 		#[transactional]
 		pub fn repay_borrow(
 			origin: OriginFor<T>,
