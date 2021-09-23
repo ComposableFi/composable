@@ -31,6 +31,8 @@ pub const ALICE: AccountId = 0;
 pub const BOB: AccountId = 1;
 pub const CHARLIE: AccountId = 2;
 
+pub const ACCOUNT_FREE_START: AccountId = CHARLIE + 1;
+
 #[derive(
 	PartialOrd,
 	Ord,
