@@ -772,7 +772,7 @@ impl vault::Config for Runtime {
 	type Balance = Balance;
 	type CurrencyFactory = Factory;
 	type AssetId = CurrencyId;
-	type Currency = Tokens;
+	type Currency = Assets;
 	type Convert = ConvertInto;
 	type PalletId = VaultPalletId;
 	type MaxStrategies = MaxStrategies;
