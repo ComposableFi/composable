@@ -54,9 +54,6 @@ jobs:
           toolchain: nightly
           components: clippy
           override: true
-      - name: Cargo Fmt
-        run: |
-          cargo +nightly fmt -- --check
       - name: Cargo clippy
         run: |
           SKIP_WASM_BUILD=1 cargo clippy -- -D warnings
