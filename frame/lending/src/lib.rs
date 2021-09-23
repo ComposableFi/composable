@@ -70,6 +70,12 @@ pub mod pallet {
 
 	use composable_traits::rate_model::{LiftedFixedBalance, SafeArithmetic};
 
+	type MarketConfiguration<T> = MarketConfig<
+		<T as Config>::VaultId,
+		<T as Config>::AssetId,
+		<T as frame_system::Config>::AccountId,
+	>;
+
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
@@ -780,8 +786,7 @@ pub mod pallet {
 			markets
 		}
 
-		fn get_all_markets(
-		) -> Vec<(Self::MarketId, MarketConfig<T::VaultId, <T as Config>::AssetId, T::AccountId>)> {
+		fn get_all_markets() -> Vec<(Self::MarketId, MarketConfiguration<T>)> {
 			Markets::<T>::iter().map(|(index, config)| (index, config)).collect()
 		}
 
