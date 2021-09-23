@@ -385,6 +385,25 @@ fn test_borrow() {
 
 		assert_eq!(Lending::total_interest_accurate(&market), Ok(684794520448650000000));
 		assert_eq!(Lending::total_interest(&market), Ok(684));
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, amount * amount * 10));
+		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, amount * amount * 10));
+		let alice_limit = Lending::get_borrow_limit(&market, &ALICE).unwrap();
+		assert_eq!(alice_limit, 348746625000000);
+		// Add more borrow
+		assert_ok!(Lending::borrow_internal(&market, &ALICE, 100));
+		let alice_limit = Lending::get_borrow_limit(&market, &ALICE).unwrap();
+		assert_eq!(alice_limit, 348177900000000);
+		// more than one borrow request in same block is invalid.
+		assert_err!(
+			Lending::borrow_internal(&market, &ALICE, alice_limit + 1),
+			Error::<mocks::Test>::InvalidTimestampOnBorrowRequest
+		);
+		process_block(10001);
+		// Try to borrow more than limit
+		assert_err!(
+			Lending::borrow_internal(&market, &ALICE, alice_limit + 1),
+			Error::<mocks::Test>::NotEnoughCollateralToBorrowAmount
+		);
 	});
 }
 
