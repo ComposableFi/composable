@@ -21,3 +21,37 @@ pub trait SimpleExchange {
 		slippage: Perbill,
 	) -> Result<Self::Balance, Self::Error>;
 }
+
+pub struct TakeResult<BALANCE> {
+	pub amount: BALANCE,
+	pub total_price: BALANCE,
+}
+
+pub trait Orderbook {
+	type AssetId;
+	type Balance;
+	type AccountId;
+	type Error;
+	type OrderId;
+
+	fn post(
+		account: &Self::AccountId,
+		asset: &Self::AssetId,
+		want: &Self::AssetId,
+		amount: &Self::Balance,
+		price: &Self::Balance,
+	) -> Result<Self::OrderId, Self::Error>;
+
+	fn market_sell(
+		account: &Self::AccountId,
+		asset: &Self::AssetId,
+		want: &Self::AssetId,
+		amount: &Self::Balance,
+	) -> Result<Self::OrderId, Self::Error>;
+
+	fn take(
+		account: &Self::AccountId,
+		orders: impl Iterator<Item=Self::OrderId>,
+		up_to: Self::Balance,
+	) -> Result<TakeResult<Self::Balance>, Self::Error>;
+}
