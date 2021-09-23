@@ -1092,17 +1092,8 @@ pub mod pallet {
 				collateral_factor: market.collateral_factor,
 			};
 
-			let withdrawable_collateral_value = borrower
-				.collateral_over_borrow()?
-				.checked_mul_int(1u64)
-				.ok_or(Error::<T>::Overflow)?
-				.into();
-
-			let collateral_value =
-				amount.checked_mul(&collateral_price).ok_or(Error::<T>::Overflow)?;
-
 			ensure!(
-				collateral_value <= withdrawable_collateral_value,
+				borrower.collateralization_still_valid(amount.into()) == Ok(true),
 				Error::<T>::NotEnoughCollateral
 			);
 
