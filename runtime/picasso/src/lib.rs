@@ -497,6 +497,16 @@ impl pallet_xcm::Config for Runtime {
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
 }
 
+impl assets::Config for Runtime {
+	type Event = Event;
+
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type NativeAssetId = NativeAssetId;
+	type Currency = Balances;
+	type MultiCurrency = Tokens;
+}
+
 impl cumulus_pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
@@ -856,6 +866,7 @@ construct_runtime!(
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 54,
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
+		Assets: assets::{Pallet, Storage, Event<T>} = 56
 	}
 );
 
