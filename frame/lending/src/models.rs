@@ -25,15 +25,10 @@ impl BorrowerData {
 			collateral_price: collateral_price.into(),
 			borrower_balance_with_interest: borrower_balance_with_interest.into(),
 			borrow_price: borrow_price.into(),
-			collateral_factor: collateral_factor.into(),
+			collateral_factor,
 		}
 	}
 
-	/* NOTE(hussein-aitlahcen):
-	   This function utility can be derived from `collateral_over_borrow`.
-	   The rationale is that we avoid overflowing by first subtracting
-	   the amount of collateral and then multiplying by the price.
-	*/
 	/// Check whether the collateralization is still valid if we subtract an amount from it.
 	#[inline(always)]
 	pub fn collateralization_still_valid(
@@ -49,17 +44,6 @@ impl BorrowerData {
 			.safe_mul(&self.borrow_price)?
 			.safe_mul(&self.collateral_factor)?;
 		Ok(collateral >= borrowed)
-	}
-
-	/// Return the overcollateralized value
-	#[inline(always)]
-	pub fn collateral_over_borrow(&self) -> Result<LiftedFixedBalance, ArithmeticError> {
-		let collateral = self.collateral_balance.safe_mul(&self.collateral_price)?;
-		let borrowed = self
-			.borrower_balance_with_interest
-			.safe_mul(&self.borrow_price)?
-			.safe_mul(&self.collateral_factor)?;
-		collateral.safe_sub(&borrowed)
 	}
 
 	/// Return the maximum borrowable amount, taking into account the current borrowed amount +

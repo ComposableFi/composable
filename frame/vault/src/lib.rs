@@ -753,7 +753,7 @@ pub mod pallet {
 					<T::Convert as Convert<T::Balance, u128>>::convert(base_asset_amount);
 				let rate =
 					Rate::checked_from_rational(base_asset_amount_value, lp_total_issuance_value)
-						.unwrap_or(Rate::zero());
+						.unwrap_or_else(Rate::zero);
 				Ok(rate)
 			}
 		}
