@@ -21,7 +21,7 @@ use sp_std::prelude::*;
 use support::{
 	dispatch::DispatchResult,
 	traits::{
-		Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, SameOrOther, WithdrawReasons,
+		Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons,
 	},
 	weights::{
 		DispatchClass, DispatchInfo, GetDispatchInfo, Pays, PostDispatchInfo, Weight,
@@ -39,7 +39,6 @@ mod mock;
 
 pub mod fee_adjustment;
 use fee_adjustment::MultiplierUpdate;
-use sp_runtime::runtime_logger::RuntimeLogger;
 
 // Balance of `T::NativeCurrency`
 type BalanceOf<T> =
@@ -49,6 +48,11 @@ type BalanceOf<T> =
 type NegativeImbalanceOf<T> = <<T as Config>::NativeCurrency as Currency<
 	<T as system::Config>::AccountId,
 >>::NegativeImbalance;
+
+// positive imbalance of `T::NativeCurrency`
+type PositiveImbalanceOf<T> = <<T as Config>::NativeCurrency as Currency<
+	<T as system::Config>::AccountId,
+>>::PositiveImbalance;
 
 #[support::pallet]
 pub mod pallet {
@@ -326,21 +330,17 @@ where
 				},
 			);
 
-		RuntimeLogger::init();
-		support::debug(&format!("called by {:?}", who));
-
 		// native is not enough, try swap native to pay fee
 		match (asset_id, native_is_enough) {
 			// user specified some asset to pay and they dont have enough native tokens to pay
 			(Some(asset_id), false) => {
-				let native_asset_id = Default::default();
 				// add extra gap to keep alive after swap
 				let amount =
 					fee.saturating_add(native_existential_deposit.saturating_sub(total_native));
 				T::Dex::exchange(
 					*asset_id,
 					who.clone(),
-					native_asset_id,
+					CurrencyId::LAYR,
 					who.clone(),
 					amount,
 					*slippage,
@@ -516,23 +516,18 @@ where
 		_result: &DispatchResult,
 	) -> Result<(), TransactionValidityError> {
 		let (tip, who, imbalance, fee) = pre;
-		if let Some(payed) = imbalance {
+		if let Some(paid) = imbalance {
 			let actual_fee = Pallet::<T>::compute_actual_fee(len as u32, info, post_info, tip);
 			let refund = fee.saturating_sub(actual_fee);
-			let actual_payment = match T::NativeCurrency::deposit_into_existing(&who, refund) {
-				Ok(refund_imbalance) => {
-					// The refund cannot be larger than the up front payed max weight.
-					// `PostDispatchInfo::calc_unspent` guards against such a case.
-					match payed.offset(refund_imbalance) {
-						SameOrOther::Same(actual_payment) => actual_payment,
-						SameOrOther::None => Default::default(),
-						_ => return Err(InvalidTransaction::Payment.into()),
-					}
-				}
-				// We do not recreate the account using the refund. The up front payment
-				// is gone in that case.
-				Err(_) => payed,
-			};
+			// refund to the the account that paid the fees. If this fails, the
+			// account might have dropped below the existential balance. In
+			// that case we don't refund anything.
+			let refund_imbalance = <T::NativeCurrency as Currency<T::AccountId>>::deposit_into_existing(&who, refund)
+				.unwrap_or_else(|_| PositiveImbalanceOf::<T>::zero());
+			// merge the imbalance caused by paying the fees and refunding parts of it again.
+			let actual_payment = paid.offset(refund_imbalance)
+				.same()
+				.map_err(|_| InvalidTransaction::Payment)?;
 			let (tip, fee) = actual_payment.split(tip);
 
 			// distribute fee

@@ -121,7 +121,7 @@ impl system::Config for Runtime {
 
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: CurrencyId| -> u64 {
-		Default::default()
+		1
 	};
 }
 
