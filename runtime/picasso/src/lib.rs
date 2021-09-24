@@ -34,7 +34,8 @@ pub use frame_support::{
 	traits::{All, Filter, KeyOwnerProofSystem, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight,
+		DispatchClass, IdentityFee, Weight, WeightToFeePolynomial, WeightToFeeCoefficients,
+		WeightToFeeCoefficient,
 	},
 	PalletId, StorageValue,
 };
@@ -45,7 +46,7 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Permill};
+pub use sp_runtime::{Perbill, Permill, FixedPointNumber, Perquintill};
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -62,7 +63,7 @@ use xcm_builder::{
 	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
 use xcm_executor::XcmExecutor;
-use transaction_payment::TargetedFeeAdjustment;
+use transaction_payment::{TargetedFeeAdjustment, Multiplier};
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats

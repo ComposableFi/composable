@@ -1,5 +1,5 @@
 [package]
-name = "pallet-transaction-fees"
+name = "pallet-transaction-fee"
 version = "0.1.0"
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
