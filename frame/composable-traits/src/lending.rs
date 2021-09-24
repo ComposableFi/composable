@@ -1,6 +1,7 @@
 use crate::rate_model::*;
 use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
+use sp_runtime::Percent;
 
 pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
 
@@ -64,8 +65,8 @@ pub trait Lending {
 	/// In practice if used has borrow user will not withdraw v because it would probably result in
 	/// quick liquidation, if he has any borrows. ```python
 	/// withdrawable = total_collateral - total_borrows
-	/// withdrawable = collateral_balance * collateral_price - borrower_balance_with_interest * borrow_price * collateral_factor
-	/// ```
+	/// withdrawable = collateral_balance * collateral_price - borrower_balance_with_interest *
+	/// borrow_price * collateral_factor ```
 	fn withdraw_collateral(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
@@ -75,6 +76,7 @@ pub trait Lending {
 	/// get all existing markets for current deposit
 	fn get_markets_for_borrow(vault: Self::VaultId) -> Vec<Self::MarketId>;
 
+	#[allow(clippy::type_complexity)]
 	fn get_all_markets(
 	) -> Vec<(Self::MarketId, MarketConfig<Self::VaultId, Self::AssetId, Self::AccountId>)>;
 
@@ -104,25 +106,24 @@ pub trait Lending {
 	/// Floored down to zero.
 	fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
+	/// ````python
+	/// delta_interest_rate = delta_time / period_interest_rate
+	/// debt_delta = debt_principal * delta_interest_rate
+	/// new_accrued_debt = accrued_debt + debt_delta
+	/// total_debt = debt_principal + new_accrued_debt
+	/// ```
 	fn accrue_interest(market_id: &Self::MarketId, now: Timestamp) -> Result<(), DispatchError>;
 
 	fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
-
-	/// new_debt = (delta_interest_rate * interest_rate) + debt
-	///`delta_interest_rate` - rate for passed time since previous update
-	fn update_borrows(
-		market_id: &Self::MarketId,
-		delta_interest_rate: Rate,
-	) -> Result<(), DispatchError>;
 
 	/// utilization_ratio = total_borrows / (total_cash + total_borrows).
 	/// utilization ratio is 0 when there are no borrows.
 	fn calc_utilization_ratio(
 		cash: &Self::Balance,
 		borrows: &Self::Balance,
-	) -> Result<Ratio, DispatchError>;
+	) -> Result<Percent, DispatchError>;
 
-	/// Simply - how much account owes.
+	/// Borrow asset amount account should repay to be debt free for specific market pair.
 	/// Calculate account's borrow balance using the borrow index at the start of block time.
 	/// ```python
 	/// new_borrow_balance = principal * (market_borrow_index / borrower_borrow_index)

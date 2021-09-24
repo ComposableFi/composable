@@ -340,7 +340,7 @@ where
 		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
 		let address = AccountIdLookup::unlookup(account);
 		let (call, extra, _) = raw_payload.deconstruct();
-		Some((call, (address, signature.into(), extra)))
+		Some((call, (address, signature, extra)))
 	}
 }
 
@@ -364,7 +364,7 @@ parameter_types! {
 
 	/// TODO: discuss with omar/cosmin
 	pub const MinStake: Balance = 1000 * PICA;
-	pub const RequestCost: Balance = 1 * PICA;
+	pub const RequestCost: Balance = PICA;
 	pub const RewardAmount: Balance = 5 * PICA;
 	// Shouldn't this be a ratio based on locked amount?
 	pub const SlashAmount: Balance = 5;
@@ -736,7 +736,7 @@ parameter_types! {
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	// TODO: prod value
-	pub PreimageByteDeposit: Balance = 1 * MILLI_PICA;
+	pub PreimageByteDeposit: Balance = MILLI_PICA;
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -783,7 +783,7 @@ parameter_types! {
 	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
 	pub const CreationDeposit: Balance = 10 * PICA;
 	pub const VaultExistentialDeposit: Balance = 1000 * PICA;
-	pub const RentPerBlock: Balance = 1 * MILLI_PICA;
+	pub const RentPerBlock: Balance = MILLI_PICA;
 	pub const VaultMinimumDeposit: Balance = 10_000;
 	pub const VaultMinimumWithdrawal: Balance = 10_000;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
@@ -816,6 +816,12 @@ impl currency_factory::Config for Runtime {
 	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
+parameter_types! {
+	// Benchmarks of pallet-lending utilize more than 20Gb memory
+	// and don't finish if MaxLendingCount is u32::MAX.
+	pub const MaxLendingCount: u32 = 100_000;
+}
+
 impl lending::Config for Runtime {
 	type Oracle = Oracle;
 	type VaultId = u64;
@@ -827,6 +833,7 @@ impl lending::Config for Runtime {
 	type UnixTime = Timestamp;
 	type CurrencyFactory = Factory;
 	type MarketDebtCurrency = Tokens;
+	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 }
 
@@ -1109,7 +1116,7 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 			.create_inherent_data()
 			.expect("Could not create the timestamp inherent data");
 
-		inherent_data.check_extrinsics(&block)
+		inherent_data.check_extrinsics(block)
 	}
 }
 

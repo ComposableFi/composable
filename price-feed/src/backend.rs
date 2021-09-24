@@ -21,7 +21,7 @@ where
 {
 	fn apply(&self, state: &mut TCache) {
 		match self {
-			&FeedNotificationAction::UpdateCache(a, p) => state.insert(a, p),
+			FeedNotificationAction::UpdateCache(a, p) => state.insert(*a, *p),
 		}
 	}
 }

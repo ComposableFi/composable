@@ -1,6 +1,4 @@
-#![allow(unused_parens)]
-#![allow(unused_imports)]
-
+#![allow(unused_parens, unused_imports, clippy::unnecessary_cast)]
 use frame_support::{
 	traits::Get,
 	weights::{constants::RocksDbWeight, Weight},

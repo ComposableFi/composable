@@ -71,7 +71,7 @@ benchmarks! {
 		T::Currency::make_free_balance_be(&caller, stake + T::Currency::minimum_balance());
 	}: _(RawOrigin::Signed(caller.clone()), signer.clone())
 	verify {
-		assert_last_event::<T>(Event::StakeAdded(signer, stake.clone(), stake).into());
+		assert_last_event::<T>(Event::StakeAdded(signer, stake, stake).into());
 	}
 
 	add_stake {
