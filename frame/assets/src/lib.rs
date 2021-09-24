@@ -69,9 +69,37 @@ pub mod pallet {
 
 	mod currency {
 		use super::*;
-		use frame_support::traits::{
-			Currency, ExistenceRequirement, SignedImbalance, WithdrawReasons,
-		};
+		use frame_support::traits::{Currency, ExistenceRequirement, SignedImbalance, WithdrawReasons, ReservableCurrency, BalanceStatus};
+
+		impl<T: Config> ReservableCurrency<T::AccountId> for Pallet<T>
+			where
+				<T as Config>::Currency: Currency<T::AccountId, Balance = T::Balance>,
+				<T as Config>::Currency: ReservableCurrency<T::AccountId, Balance = T::Balance>,
+		{
+			fn can_reserve(who: &T::AccountId, value: Self::Balance) -> bool {
+				<<T as Config>::Currency>::can_reserve(who, value)
+			}
+
+			fn slash_reserved(who: &T::AccountId, value: Self::Balance) -> (Self::NegativeImbalance, Self::Balance) {
+				<<T as Config>::Currency>::slash_reserved(who, value)
+			}
+
+			fn reserved_balance(who: &T::AccountId) -> Self::Balance {
+				<<T as Config>::Currency>::reserved_balance(who)
+			}
+
+			fn reserve(who: &T::AccountId, value: Self::Balance) -> DispatchResult {
+				<<T as Config>::Currency>::reserve(who, value)
+			}
+
+			fn unreserve(who: &T::AccountId, value: Self::Balance) -> Self::Balance {
+				<<T as Config>::Currency>::unreserve(who, value)
+			}
+
+			fn repatriate_reserved(slashed: &T::AccountId, beneficiary: &T::AccountId, value: Self::Balance, status: BalanceStatus) -> Result<Self::Balance, DispatchError> {
+				<<T as Config>::Currency>::repatriate_reserved(slashed, beneficiary, value, status)
+			}
+		}
 
 		impl<T: Config> Currency<T::AccountId> for Pallet<T>
 		where
@@ -84,44 +112,44 @@ pub mod pallet {
 				<<T as Config>::Currency as Currency<T::AccountId>>::NegativeImbalance;
 
 			fn total_balance(who: &T::AccountId) -> Self::Balance {
-				todo!()
+				<<T as Config>::Currency>::total_balance(who)
 			}
 
 			fn can_slash(who: &T::AccountId, value: Self::Balance) -> bool {
-				todo!()
+				<<T as Config>::Currency>::can_slash(who, value)
 			}
 
 			fn total_issuance() -> Self::Balance {
-				todo!()
+				<<T as Config>::Currency>::total_issuance()
 			}
 
 			fn minimum_balance() -> Self::Balance {
-				todo!()
+				<<T as Config>::Currency>::minimum_balance()
 			}
 
 			fn burn(amount: Self::Balance) -> Self::PositiveImbalance {
-				todo!()
+				<<T as Config>::Currency>::burn(amount)
 			}
 
 			fn issue(amount: Self::Balance) -> Self::NegativeImbalance {
-				todo!()
+				<<T as Config>::Currency>::issue(amount)
 			}
 
 			fn pair(amount: Self::Balance) -> (Self::PositiveImbalance, Self::NegativeImbalance) {
-				todo!()
+				<<T as Config>::Currency>::pair(amount)
 			}
 
 			fn free_balance(who: &T::AccountId) -> Self::Balance {
-				todo!()
+				<<T as Config>::Currency>::free_balance(who)
 			}
 
 			fn ensure_can_withdraw(
 				who: &T::AccountId,
-				_amount: Self::Balance,
+				amount: Self::Balance,
 				reasons: WithdrawReasons,
 				new_balance: Self::Balance,
 			) -> DispatchResult {
-				todo!()
+				<<T as Config>::Currency>::ensure_can_withdraw(who, amount, reasons, new_balance)
 			}
 
 			fn transfer(
@@ -130,39 +158,39 @@ pub mod pallet {
 				value: Self::Balance,
 				existence_requirement: ExistenceRequirement,
 			) -> DispatchResult {
-				todo!()
+				<<T as Config>::Currency>::transfer(source, dest, value, existence_requirement)
 			}
 
 			fn slash(
 				who: &T::AccountId,
 				value: Self::Balance,
 			) -> (Self::NegativeImbalance, Self::Balance) {
-				todo!()
+				<<T as Config>::Currency>::slash(who, value)
 			}
 
 			fn deposit_into_existing(
 				who: &T::AccountId,
 				value: Self::Balance,
 			) -> Result<Self::PositiveImbalance, DispatchError> {
-				todo!()
+				<<T as Config>::Currency>::deposit_into_existing(who, value)
 			}
 
 			fn resolve_into_existing(
 				who: &T::AccountId,
 				value: Self::NegativeImbalance,
 			) -> Result<(), Self::NegativeImbalance> {
-				todo!()
+				<<T as Config>::Currency>::resolve_into_existing(who, value)
 			}
 
 			fn deposit_creating(
 				who: &T::AccountId,
 				value: Self::Balance,
 			) -> Self::PositiveImbalance {
-				todo!()
+				<<T as Config>::Currency>::deposit_creating(who, value)
 			}
 
 			fn resolve_creating(who: &T::AccountId, value: Self::NegativeImbalance) {
-				todo!()
+				<<T as Config>::Currency>::resolve_creating(who, value)
 			}
 
 			fn withdraw(
@@ -171,7 +199,7 @@ pub mod pallet {
 				reasons: WithdrawReasons,
 				liveness: ExistenceRequirement,
 			) -> Result<Self::NegativeImbalance, DispatchError> {
-				todo!()
+				<<T as Config>::Currency>::withdraw(who, value, reasons, liveness)
 			}
 
 			fn settle(
@@ -180,14 +208,14 @@ pub mod pallet {
 				reasons: WithdrawReasons,
 				liveness: ExistenceRequirement,
 			) -> Result<(), Self::PositiveImbalance> {
-				todo!()
+				<<T as Config>::Currency>::settle(who, value, reasons, liveness)
 			}
 
 			fn make_free_balance_be(
 				who: &T::AccountId,
 				balance: Self::Balance,
 			) -> SignedImbalance<Self::Balance, Self::PositiveImbalance> {
-				todo!()
+				<<T as Config>::Currency>::make_free_balance_be(who, balance)
 			}
 		}
 	}
