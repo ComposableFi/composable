@@ -5,11 +5,8 @@ use frame_support::{
 	sp_std::fmt::Debug,
 	traits::{
 		fungibles::{Balanced, CreditOf, DebtOf, HandleImbalanceDrop, Mutate, Transfer},
-		tokens::{
-			fungibles::{Imbalance, Inspect},
-			WithdrawConsequence,
-		},
-		ExistenceRequirement, SameOrOther, SignedImbalance, WithdrawReasons,
+		tokens::fungibles::{Imbalance, Inspect},
+		ExistenceRequirement, SameOrOther,
 	},
 };
 
@@ -216,7 +213,7 @@ where
 			source,
 			dest,
 			value,
-			matches!(ExistenceRequirement::KeepAlive, existence_requirement),
+			matches!(existence_requirement, ExistenceRequirement::KeepAlive),
 		)
 		.map(|_| ())
 	}

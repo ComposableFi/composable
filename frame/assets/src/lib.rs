@@ -4,15 +4,8 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use codec::FullCodec;
 	use composable_traits::currency::{AssetId, Balance};
-	use frame_support::{
-		dispatch::Codec,
-		pallet_prelude::*,
-		sp_runtime::traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub},
-		sp_std::fmt::Debug,
-	};
-	use sp_std::ops::AddAssign;
+	use frame_support::pallet_prelude::*;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -207,14 +200,9 @@ pub mod pallet {
 	mod fungible {
 		use super::*;
 
-		use frame_support::traits::{
-			fungible::{CreditOf, DebtOf},
-			tokens::{
-				fungible::{
-					BalancedHold, Inspect, InspectHold, Mutate, MutateHold, Transfer, Unbalanced,
-				},
-				DepositConsequence, WithdrawConsequence,
-			},
+		use frame_support::traits::tokens::{
+			fungible::{Inspect, InspectHold, Mutate, MutateHold, Transfer, Unbalanced},
+			DepositConsequence, WithdrawConsequence,
 		};
 
 		impl<T: Config> MutateHold<T::AccountId> for Pallet<T>
