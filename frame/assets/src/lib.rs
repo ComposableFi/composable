@@ -5,6 +5,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
+	use composable_traits::currency::{AssetId, Balance};
 	use frame_support::{
 		dispatch::Codec,
 		pallet_prelude::*,
@@ -13,34 +14,10 @@ pub mod pallet {
 	};
 	use sp_std::ops::AddAssign;
 
-	pub trait AssetId: FullCodec + Copy + Eq + PartialEq + Debug {}
-	impl<T: FullCodec + Copy + Eq + PartialEq + Debug> AssetId for T {}
-	pub trait Balance:
-		AtLeast32BitUnsigned
-		+ FullCodec
-		+ Copy
-		+ Default
-		+ Debug
-		+ MaybeSerializeDeserialize
-		+ MaxEncodedLen
-	{
-	}
-	impl<
-			T: AtLeast32BitUnsigned
-				+ FullCodec
-				+ Copy
-				+ Default
-				+ Debug
-				+ MaybeSerializeDeserialize
-				+ MaxEncodedLen,
-		> Balance for T
-	{
-	}
-
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Placeholder
+		Placeholder,
 	}
 
 	#[pallet::config]
@@ -65,18 +42,24 @@ pub mod pallet {
 
 	mod currency {
 		use super::*;
-		use frame_support::traits::{Currency, ExistenceRequirement, SignedImbalance, WithdrawReasons, ReservableCurrency, BalanceStatus};
+		use frame_support::traits::{
+			BalanceStatus, Currency, ExistenceRequirement, ReservableCurrency, SignedImbalance,
+			WithdrawReasons,
+		};
 
 		impl<T: Config> ReservableCurrency<T::AccountId> for Pallet<T>
-			where
-				<T as Config>::Currency: Currency<T::AccountId, Balance = T::Balance>,
-				<T as Config>::Currency: ReservableCurrency<T::AccountId, Balance = T::Balance>,
+		where
+			<T as Config>::Currency: Currency<T::AccountId, Balance = T::Balance>,
+			<T as Config>::Currency: ReservableCurrency<T::AccountId, Balance = T::Balance>,
 		{
 			fn can_reserve(who: &T::AccountId, value: Self::Balance) -> bool {
 				<<T as Config>::Currency>::can_reserve(who, value)
 			}
 
-			fn slash_reserved(who: &T::AccountId, value: Self::Balance) -> (Self::NegativeImbalance, Self::Balance) {
+			fn slash_reserved(
+				who: &T::AccountId,
+				value: Self::Balance,
+			) -> (Self::NegativeImbalance, Self::Balance) {
 				<<T as Config>::Currency>::slash_reserved(who, value)
 			}
 
@@ -92,7 +75,12 @@ pub mod pallet {
 				<<T as Config>::Currency>::unreserve(who, value)
 			}
 
-			fn repatriate_reserved(slashed: &T::AccountId, beneficiary: &T::AccountId, value: Self::Balance, status: BalanceStatus) -> Result<Self::Balance, DispatchError> {
+			fn repatriate_reserved(
+				slashed: &T::AccountId,
+				beneficiary: &T::AccountId,
+				value: Self::Balance,
+				status: BalanceStatus,
+			) -> Result<Self::Balance, DispatchError> {
 				<<T as Config>::Currency>::repatriate_reserved(slashed, beneficiary, value, status)
 			}
 		}
