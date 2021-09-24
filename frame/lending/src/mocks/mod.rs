@@ -210,10 +210,6 @@ impl crate::mocks::oracle::Config for Test {
 	type Vault = Vault;
 }
 
-parameter_types! {
-	pub const MaxLendingCount: u32 = 10;
-}
-
 impl pallet_lending::Config for Test {
 	type Oracle = Oracle;
 	type VaultId = VaultId;
@@ -225,7 +221,6 @@ impl pallet_lending::Config for Test {
 	type UnixTime = Timestamp;
 	type CurrencyFactory = LpTokenFactory;
 	type MarketDebtCurrency = Tokens;
-	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = ();
 }
 
