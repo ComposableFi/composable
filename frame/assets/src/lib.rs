@@ -40,11 +40,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Emitted after a vault has been successfully created.
-		VaultCreated {
-			/// The (incremented) ID of the created vault.
-			id: u32,
-		},
+		Placeholder
 	}
 
 	#[pallet::config]
