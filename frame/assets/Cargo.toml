@@ -18,6 +18,8 @@ sp-io = { version = "3.0.0", default-features = false,  git = "https://github.co
 sp-core = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-std = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
+composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
+
 [dependencies.codec]
 default-features = false
 features = ["derive"]
