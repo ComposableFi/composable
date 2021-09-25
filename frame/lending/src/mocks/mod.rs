@@ -31,8 +31,6 @@ pub const ALICE: AccountId = 0;
 pub const BOB: AccountId = 1;
 pub const CHARLIE: AccountId = 2;
 
-pub const ACCOUNT_FREE_START: AccountId = CHARLIE + 1;
-
 #[derive(
 	PartialOrd,
 	Ord,
@@ -214,6 +212,10 @@ impl crate::mocks::oracle::Config for Test {
 	type Vault = Vault;
 }
 
+parameter_types! {
+	pub const MaxLendingCount: u32 = 10;
+}
+
 impl pallet_lending::Config for Test {
 	type Oracle = Oracle;
 	type VaultId = VaultId;
@@ -225,6 +227,7 @@ impl pallet_lending::Config for Test {
 	type UnixTime = Timestamp;
 	type CurrencyFactory = LpTokenFactory;
 	type MarketDebtCurrency = Tokens;
+	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = ();
 }
 
