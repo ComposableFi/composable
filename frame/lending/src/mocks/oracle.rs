@@ -4,7 +4,7 @@ pub use pallet::*;
 pub mod pallet {
 	use codec::Codec;
 	use composable_traits::{oracle::Oracle, vault::Vault};
-	use frame_support::{pallet_prelude::*};
+	use frame_support::pallet_prelude::*;
 	use sp_runtime::{ArithmeticError, FixedPointNumber};
 	use sp_std::fmt::Debug;
 

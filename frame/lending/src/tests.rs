@@ -2,8 +2,8 @@ use crate::{
 	accrue_interest_internal,
 	mocks::{
 		new_test_ext, process_block, AccountId, Balance, BlockNumber, Lending, MockCurrencyId,
-		Oracle, Origin, Test, Tokens, Vault, VaultId, ACCOUNT_FREE_START, ALICE, BOB, CHARLIE,
-		MILLISECS_PER_BLOCK, MINIMUM_BALANCE,
+		Oracle, Origin, Test, Tokens, Vault, VaultId, ALICE, BOB, CHARLIE, MILLISECS_PER_BLOCK,
+		MINIMUM_BALANCE,
 	},
 	models::BorrowerData,
 	Error, MarketIndex,
@@ -541,7 +541,7 @@ prop_compose! {
 		(max_accounts: usize, limit: Balance)
 		(balances in prop::collection::vec(MINIMUM_BALANCE..limit, 3..max_accounts))
 		 -> Vec<(AccountId, Balance)> {
-			(ACCOUNT_FREE_START..balances.len() as AccountId)
+			((CHARLIE + 1)..balances.len() as AccountId)
 				.zip(balances)
 				.collect()
 		}
@@ -557,7 +557,7 @@ prop_compose! {
 
 prop_compose! {
 	fn strategy_account()
-		(x in ACCOUNT_FREE_START..AccountId::MAX) -> AccountId {
+		(x in (CHARLIE + 1)..AccountId::MAX) -> AccountId {
 			x
 		}
 }
