@@ -37,7 +37,6 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 default = ["std"]
 std = [
     "codec/std",
-    "log/std",
     "frame-support/std",
     "frame-system/std",
     "sp-runtime/std",

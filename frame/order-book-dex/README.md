@@ -3,7 +3,9 @@
 
 ### Matching engine
 
-- collects data from order book
+- receives on chain events about orders added/removed
+- stores off chain all orders in price buckets (price) -> list(orderid ordered by timestamp)
+- runs loop over sell/buy price buckets
 
 
 ## Examples
