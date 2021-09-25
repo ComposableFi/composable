@@ -8,6 +8,7 @@
 - runs loop over sell/buy price buckets
 
 
+
 ## Examples
 
 https://github.com/PacktPublishing/Blockchain-Development-for-Finance-Projects/blob/master/Chapter%208/contracts/orderbook.sol
@@ -24,3 +25,5 @@ https://github.com/PacktPublishing/Blockchain-Development-for-Finance-Projects/b
 
 - fixed with some percentage of oracle?
 - any?
+
+

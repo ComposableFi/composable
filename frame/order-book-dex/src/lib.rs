@@ -35,6 +35,7 @@ pub mod pallet {
 		},
 		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
 	};
+	use sp_std::{fmt::Debug, vec::Vec};
 	pub trait DeFiComposablePallet {
 		type AssetId: FullCodec
 		+ Eq
@@ -68,7 +69,9 @@ pub mod pallet {
 	}
 
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
-	pub struct DexInitialization {}
+	pub struct DexInitialization {
+		// fee for executing swap
+	}
 
 	/// allows order to be diminished in requested price
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
@@ -99,6 +102,8 @@ pub mod pallet {
 		/// allow for Multi-specialist book
 		/// if i want to trade A for B, and there is A -> C -> B, than I can do it.
 		pub multi_book: bool,
+		pub from : T::AssetId,
+		pub to: T::AssetId,
 	}
 	#[pallet::error]
 	pub enum Error<T> {}
@@ -136,7 +141,10 @@ pub mod pallet {
 		}
 	}
 
-
+	/// certain limited number of traders
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
+	#[repr(transparent)]
+	pub struct TraderIndex(u32);
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -151,8 +159,8 @@ pub mod pallet {
 	pub type Sell<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
-		T::AccountId,
-		Order<T>,
+		TraderIndex,
+		Vec<Order<T>>,
 		OptionQuery,
 	>;
 
@@ -161,14 +169,61 @@ pub mod pallet {
 	pub type Buy<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
-		T::AccountId,
-		Order<T>,
+		TraderIndex,
+		Vec<Order<T>>,
 		OptionQuery,
+	>;
+
+	/// trader index to signing address
+	#[pallet::storage]
+	#[pallet::getter(fn traders)]
+	pub type Traders<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		TraderIndex,
+		Vec<Order<T>>,
+		T::AccountId,
+	>;
+
+	/// locked currencies owned by dex
+	#[pallet::storage]
+	#[pallet::getter(fn traders_accounts)]
+	pub type TraderAccounts<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		TraderIndex,
+		Vec<Order<T>>,
+		T::AccountId,
 	>;
 
 	#[pallet::call]
 	impl<T:Config> Pallet<T> {
 
+		/// validate trader limits
+		/// add buy order
+		/// send event
+		/// transfers
+		pub fn buy() {
+
+		}
+
+		/// validate trader limits
+		/// add sell order
+		/// send event
+		/// locks(transfers amount from trader to )
+		pub fn sell() {
+
+		}
+
+		/// swap 2 assets
+		pub fn trade() {
+
+		}
+
+		/// decomissi
+		pub fn decomission() {
+
+		}
 	}
 
 
