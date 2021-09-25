@@ -26,7 +26,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{dex::SimpleExchange, rate_model::LiftedFixedBalance};
 	use frame_support::{Parameter, pallet_prelude::MaybeSerializeDeserialize, traits::UnixTime};
-	use frame_system::pallet_prelude::*;
+	use frame_system::{Account, pallet_prelude::*};
 	use num_traits::{CheckedDiv, SaturatingSub};
 	use sp_runtime::{
 		traits::{
@@ -47,6 +47,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + DeFiComposablePallet {
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -66,33 +67,109 @@ pub mod pallet {
 		type UnixTime: UnixTime;
 	}
 
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
 	pub struct DexInitialization {}
 
 	/// allows order to be diminished in requested price
-	pub struct DutchAuctionsConfig {}
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
+	pub struct DutchAuctionsConfig {
 
+	}
+
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
 	pub enum OrderPrice<T: Config> {
 		ExactPrice(T::Balance),
+		/// allows to buy/sell little off requested
+		AllowSlipagePrice(T::Balance, Perquintill),
+		/// allows to change sell/bid price with time up to some limits
 		Dutch(T::Balance, DutchAuctionsConfig),
 	}
 
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
 	pub enum OrderStatus {}
 
 	/// Store on chain multi dictionary key (from, to, account) , dictionary per buy and sell
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
 	pub struct Order<T: Config> {
 		pub amount: T::Balance,
 		pub price: OrderPrice<T>,
 		pub time_stamp: T::UnixTime,
 		pub trader: T::AccountId,
 		pub status: OrderStatus,
+		/// allow for Multi-specialist book
+		/// if i want to trade A for B, and there is A -> C -> B, than I can do it.
+		pub multi_book: bool,
 	}
 	#[pallet::error]
 	pub enum Error<T> {}
+
+	#[pallet::event]
+	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
+	pub enum Event<T: Config> {
+		BuyAdded {
+			order_time_stamp : T::UnixTime,
+			/// at specific unit of time can do limited amount of orders on behalf single trade
+			/// so (trader, order_time_stamp, counter per block) is natural  order key
+			/// ASK: Hussein, Andrei?
+			counter: u8,
+			amt : T::Balance,
+			price : T::Balance,
+			trader : T::AccountId
+		},
+
+
+		SellAdded{
+			order_time_stamp : T::UnixTime,
+			counter: u8,
+			amt : T::Balance,
+			price : T::Balance,
+			trader : T::AccountId
+		},
+
+		TradeAdd{
+			order_time_stamp : T::UnixTime,
+			counter: u8,
+			amt : T::Balance,
+			price : T::Balance,
+			maker : T::AccountId,
+			taker : T::AccountId
+		}
+	}
+
+
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// must allow O(1) status changes on total orders in system
+	/// may allow O(n) on total orders of from single address, with some order limits per address
+	/// assuming that creating address is seldom, dictionary can be stable enough
+	/// churn with creating new address of any count may be protected by forcing locking some trader fee
+	#[pallet::storage]
+	#[pallet::getter(fn sell)]
+	pub type Sell<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		T::AccountId,
+		Order<T>,
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn buy)]
+	pub type Buy<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		T::AccountId,
+		Order<T>,
+		OptionQuery,
+	>;
+
+	#[pallet::call]
+	impl<T:Config> Pallet<T> {
+
+	}
 
 
 	impl<T: Config> SimpleExchange for Pallet<T> {
