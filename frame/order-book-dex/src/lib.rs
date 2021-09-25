@@ -24,7 +24,7 @@
 pub mod pallet {
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::{dex::SimpleExchange, rate_model::LiftedFixedBalance};
+	use composable_traits::{dex::{Orderbook, SimpleExchange}, rate_model::LiftedFixedBalance};
 	use frame_support::{Parameter, pallet_prelude::MaybeSerializeDeserialize, traits::UnixTime};
 	use frame_system::{Account, pallet_prelude::*};
 	use num_traits::{CheckedDiv, SaturatingSub};
@@ -154,6 +154,10 @@ pub mod pallet {
 	/// may allow O(n) on total orders of from single address, with some order limits per address
 	/// assuming that creating address is seldom, dictionary can be stable enough
 	/// churn with creating new address of any count may be protected by forcing locking some trader fee
+
+	/// alternative desing having random index or growin index dictionary . Ask, what  is pefromance of it?
+	///  or alterantive design would be ring, so that old order are killed within time buy new orders
+	/// so if need to hold longer possition, can hold it off chain
 	#[pallet::storage]
 	#[pallet::getter(fn sell)]
 	pub type Sell<T: Config> = StorageMap<
@@ -227,7 +231,7 @@ pub mod pallet {
 	}
 
 
-	impl<T: Config> SimpleExchange for Pallet<T> {
+	impl<T: Config> Orderbook for Pallet<T> {
 		type AssetId = T::AssetId;
 
 		type Balance = T::Balance;
@@ -236,19 +240,34 @@ pub mod pallet {
 
 		type Error = Error<T>;
 
-		fn price(asset_id: Self::AssetId) -> Option<Self::Balance> {
-			todo!()
-		}
+		type OrderId = u32;
 
-		fn exchange(
-			from: Self::AssetId,
-			from_account: Self::AccountId,
-			to: Self::AssetId,
-			to_account: Self::AccountId,
-			from_amount: Self::Balance,
-			slippage: sp_runtime::Perbill,
-		) -> Result<Self::Balance, Self::Error> {
-			todo!()
-		}
+		fn post(
+				account: &Self::AccountId,
+				asset: &Self::AssetId,
+				want: &Self::AssetId,
+				amount: &Self::Balance,
+				price: &Self::Balance,
+			) -> Result<Self::OrderId, Self::Error> {
+				todo!()
+			}
+
+		fn market_sell(
+				account: &Self::AccountId,
+				asset: &Self::AssetId,
+				want: &Self::AssetId,
+				amount: &Self::Balance,
+			) -> Result<Self::OrderId, Self::Error> {
+				todo!()
+			}
+
+		fn take(
+				account: &Self::AccountId,
+				orders: impl Iterator<Item=Self::OrderId>,
+				up_to: Self::Balance,
+			) -> Result<composable_traits::dex::TakeResult<Self::Balance>, Self::Error> {
+				todo!()
+			}
+
 	}
 }

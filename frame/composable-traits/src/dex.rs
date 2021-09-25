@@ -34,6 +34,8 @@ pub trait Orderbook {
 	type Error;
 	type OrderId;
 
+	/// exchanges specified amount of asset to other at specific price
+	/// please check dex market setting if it allows some features like slippage/dutch auction/multi specialist processing
 	fn post(
 		account: &Self::AccountId,
 		asset: &Self::AssetId,
@@ -42,6 +44,8 @@ pub trait Orderbook {
 		price: &Self::Balance,
 	) -> Result<Self::OrderId, Self::Error>;
 
+	/// exchanges specified amount of asset to other at specific price
+	/// check market settings for possible slippage
 	fn market_sell(
 		account: &Self::AccountId,
 		asset: &Self::AssetId,
@@ -49,6 +53,7 @@ pub trait Orderbook {
 		amount: &Self::Balance,
 	) -> Result<Self::OrderId, Self::Error>;
 
+	/// ???
 	fn take(
 		account: &Self::AccountId,
 		orders: impl Iterator<Item=Self::OrderId>,
