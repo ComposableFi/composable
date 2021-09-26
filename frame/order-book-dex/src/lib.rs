@@ -150,14 +150,18 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	/// must allow O(1) status changes on total orders in system
+	/// must allow O(1) status changes on order in system
+	/// 1.
 	/// may allow O(n) on total orders of from single address, with some order limits per address
 	/// assuming that creating address is seldom, dictionary can be stable enough
-	/// churn with creating new address of any count may be protected by forcing locking some trader fee
-
-	/// alternative desing having random index or growin index dictionary . Ask, what  is pefromance of it?
-	///  or alterantive design would be ring, so that old order are killed within time buy new orders
-	/// so if need to hold longer possition, can hold it off chain
+	/// churn with creating new address of any count may be protected by forcing locking some trader fee (KYC)
+	/// 2. alternative design  having random index(incrementing) index for map index to order .
+	/// there is no natural protection of order spam (so one may open many many cheap orders),
+	/// so may need to have (trader) -> (order count)
+	/// ASK:, what  is performance of it?
+	///
+	/// 3. alterantive design would be ring, so that old order are killed within time buy new orders
+	/// so if need to hold longer position, can hold it off chain
 	#[pallet::storage]
 	#[pallet::getter(fn sell)]
 	pub type Sell<T: Config> = StorageMap<
@@ -168,6 +172,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	/// may add (asset_id or market id as key)
 	#[pallet::storage]
 	#[pallet::getter(fn buy)]
 	pub type Buy<T: Config> = StorageMap<
@@ -186,7 +191,7 @@ pub mod pallet {
 		Twox64Concat,
 		TraderIndex,
 		Vec<Order<T>>,
-		T::AccountId,
+		OptionQuery
 	>;
 
 	/// locked currencies owned by dex
@@ -197,7 +202,7 @@ pub mod pallet {
 		Twox64Concat,
 		TraderIndex,
 		Vec<Order<T>>,
-		T::AccountId,
+		OptionQuery,
 	>;
 
 	#[pallet::call]
@@ -207,7 +212,9 @@ pub mod pallet {
 		/// add buy order
 		/// send event
 		/// transfers
-		pub fn buy() {
+		/// each trader to
+		/// `max_price` - limit for price
+		pub fn buy(origin: OriginFor<T>, max_price: T::Balance) {
 
 		}
 
@@ -215,19 +222,30 @@ pub mod pallet {
 		/// add sell order
 		/// send event
 		/// locks(transfers amount from trader to )
-		pub fn sell() {
+		pub fn sell(origin: OriginFor<T>) {
 
 		}
 
 		/// swap 2 assets
-		pub fn trade() {
+		pub fn trade(from : &TraderIndex, to: &TraderIndex) {
 
 		}
 
-		/// decomissi
-		pub fn decomission() {
+		/// trader can cancel out hist order
+		pub fn decomission(origin: OriginFor<T>) {
 
 		}
+
+		/// so we need to lock amount for each order
+		/// options, per trader per asset
+		/// so several order on same asset accumulate
+		/// alternative - one currency account per assets
+		/// on chain operation:
+		/// trader reconsiders hist
+		fn account_id(trader_id: &TraderIndex, asset_id: &Self::AssetId) -> Self::AccountId {
+			todo!()
+		}
+
 	}
 
 
