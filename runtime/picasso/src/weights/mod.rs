@@ -14,3 +14,4 @@ pub mod session;
 pub mod timestamp;
 pub mod treasury;
 pub mod utility;
+pub mod tokens;

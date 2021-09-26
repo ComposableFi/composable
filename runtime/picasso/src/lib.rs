@@ -28,10 +28,13 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+
+use sp_runtime::traits::AccountIdConversion; // allow conversion for the tokens
+
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{All, Filter, KeyOwnerProofSystem, Randomness, StorageInfo},
+	traits::{All, Filter, Contains, KeyOwnerProofSystem, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight,
@@ -581,17 +584,30 @@ parameter_type_with_key! {
 	};
 }
 
-// TODO(hussein-aitlahcen): weight, dust & existential deposit
+
+pub struct DustRemovalWhitelist;
+impl Contains<AccountId> for DustRemovalWhitelist {
+        fn contains(a: &AccountId) -> bool {
+                vec![TreasuryPalletId::get().into_account()].contains(a) //check t
+he accounts and return true if its in it
+        }
+}
+
+parameter_types! {
+                pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_acco
+unt();
+}
+
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
-	type WeightInfo = ();
-	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = ();
-	type MaxLocks = ();
-	type DustRemovalWhitelist = ();
+	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
+        type ExistentialDeposits = ExistentialDeposits; //Minimum amount to keep in an account
+        type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>; //transfer dust
+        type MaxLocks = MaxLocks; // max amount of locks per account
+        type DustRemovalWhitelist = DustRemovalWhitelist; // (); //remove from whitelist
 }
 
 parameter_types! {
