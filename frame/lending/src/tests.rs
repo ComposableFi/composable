@@ -396,13 +396,13 @@ fn test_borrow() {
 		// more than one borrow request in same block is invalid.
 		assert_err!(
 			Lending::borrow_internal(&market, &ALICE, alice_limit + 1),
-			Error::<mocks::Test>::InvalidTimestampOnBorrowRequest
+			Error::<Test>::InvalidTimestampOnBorrowRequest
 		);
 		process_block(10001);
 		// Try to borrow more than limit
 		assert_err!(
 			Lending::borrow_internal(&market, &ALICE, alice_limit + 1),
-			Error::<mocks::Test>::NotEnoughCollateralToBorrowAmount
+			Error::<Test>::NotEnoughCollateralToBorrowAmount
 		);
 	});
 }

@@ -235,6 +235,7 @@ pub mod pallet {
 		BorrowAndRepayInSameBlockIsNotSupported,
 		ExceedLendingCount,
 		RepayAmountMustBeGraterThanZero,
+		BorrowDoesNotExist,
 	}
 
 	#[pallet::event]
