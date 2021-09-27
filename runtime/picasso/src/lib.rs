@@ -34,8 +34,8 @@ pub use frame_support::{
 	traits::{All, Filter, KeyOwnerProofSystem, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight, WeightToFeePolynomial, WeightToFeeCoefficients,
-		WeightToFeeCoefficient,
+		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		WeightToFeePolynomial,
 	},
 	PalletId, StorageValue,
 };
@@ -46,11 +46,12 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Permill, FixedPointNumber, Perquintill};
+pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
+use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use xcm::{
 	opaque::v0::{BodyId, Junction, MultiAsset, MultiLocation, NetworkId},
 	v0::Xcm,
@@ -63,7 +64,6 @@ use xcm_builder::{
 	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
 use xcm_executor::XcmExecutor;
-use transaction_payment::{TargetedFeeAdjustment, Multiplier};
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -253,7 +253,6 @@ parameter_types! {
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
 }
 
-
 pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
@@ -261,11 +260,11 @@ impl WeightToFeePolynomial for WeightToFee {
 		let p = MILLI_PICA;
 		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 		smallvec::smallvec![WeightToFeeCoefficient {
-            degree: 1,
-            negative: false,
-            coeff_frac: Perbill::from_rational(p % q, q),
-            coeff_integer: p / q,
-        }]
+			degree: 1,
+			negative: false,
+			coeff_frac: Perbill::from_rational(p % q, q),
+			coeff_integer: p / q,
+		}]
 	}
 }
 

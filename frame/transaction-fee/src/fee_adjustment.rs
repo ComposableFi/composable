@@ -1,8 +1,10 @@
 //! Fee adjustment utilities
 
-use sp_runtime::{Perquintill, FixedPointNumber, traits::{Convert, Saturating}, FixedU128};
-use support::pallet_prelude::*;
-use support::weights::DispatchClass;
+use sp_runtime::{
+	traits::{Convert, Saturating},
+	FixedPointNumber, FixedU128, Perquintill,
+};
+use support::{pallet_prelude::*, weights::DispatchClass};
 
 /// A struct to update the weight multiplier per block. It implements `Convert<Multiplier,
 /// Multiplier>`, meaning that it can convert the previous multiplier to the next one. This should
@@ -39,8 +41,8 @@ use support::weights::DispatchClass;
 /// - in a fully congested chain: `p >= v * k * (1 - s')`.
 /// - in an empty chain: `p >= v * k * (-s')`.
 ///
-/// For example, when all blocks are full and there are 28800 blocks per day (default in `substrate-node`)
-/// and v == 0.00001, s' == 0.1875, we'd have:
+/// For example, when all blocks are full and there are 28800 blocks per day (default in
+/// `substrate-node`) and v == 0.00001, s' == 0.1875, we'd have:
 ///
 /// p >= 0.00001 * 28800 * 0.8125
 /// p >= 0.234
@@ -77,11 +79,11 @@ impl MultiplierUpdate for () {
 }
 
 impl<T, S, V, M> MultiplierUpdate for TargetedFeeAdjustment<T, S, V, M>
-	where
-		T: system::Config,
-		S: Get<Perquintill>,
-		V: Get<Multiplier>,
-		M: Get<Multiplier>,
+where
+	T: system::Config,
+	S: Get<Perquintill>,
+	V: Get<Multiplier>,
+	M: Get<Multiplier>,
 {
 	fn min() -> Multiplier {
 		M::get()
@@ -95,11 +97,11 @@ impl<T, S, V, M> MultiplierUpdate for TargetedFeeAdjustment<T, S, V, M>
 }
 
 impl<T, S, V, M> Convert<Multiplier, Multiplier> for TargetedFeeAdjustment<T, S, V, M>
-	where
-		T: system::Config,
-		S: Get<Perquintill>,
-		V: Get<Multiplier>,
-		M: Get<Multiplier>,
+where
+	T: system::Config,
+	S: Get<Perquintill>,
+	V: Get<Multiplier>,
+	M: Get<Multiplier>,
 {
 	fn convert(previous: Multiplier) -> Multiplier {
 		// Defensive only. The multiplier in storage should always be at most positive. Nonetheless
@@ -110,10 +112,8 @@ impl<T, S, V, M> Convert<Multiplier, Multiplier> for TargetedFeeAdjustment<T, S,
 
 		let weights = T::BlockWeights::get();
 		// the computed ratio is only among the normal class.
-		let normal_max_weight = weights
-			.get(DispatchClass::Normal)
-			.max_total
-			.unwrap_or(weights.max_block);
+		let normal_max_weight =
+			weights.get(DispatchClass::Normal).max_total.unwrap_or(weights.max_block);
 		let current_block_weight = <system::Pallet<T>>::block_weight();
 		let normal_block_weight =
 			*current_block_weight.get(DispatchClass::Normal).min(&normal_max_weight);
@@ -148,4 +148,3 @@ impl<T, S, V, M> Convert<Multiplier, Multiplier> for TargetedFeeAdjustment<T, S,
 		}
 	}
 }
-

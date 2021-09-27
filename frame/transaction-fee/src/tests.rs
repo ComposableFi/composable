@@ -5,16 +5,15 @@ use support::{
 	weights::{DispatchInfo, GetDispatchInfo, PostDispatchInfo},
 };
 
-use crate::fee_adjustment::Multiplier;
-use crate::mock::*;
-use crate::{ChargeTransactionFee, NextFeeMultiplier, Pallet};
+use crate::{fee_adjustment::Multiplier, mock::*, ChargeTransactionFee, NextFeeMultiplier, Pallet};
 use orml_traits::MultiCurrency;
 use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo;
 use primitives::currency::CurrencyId;
-use sp_runtime::testing::TestXt;
-use sp_runtime::traits::{One, SignedExtension};
-use support::dispatch::Weight;
-use support::pallet_prelude::*;
+use sp_runtime::{
+	testing::TestXt,
+	traits::{One, SignedExtension},
+};
+use support::{dispatch::Weight, pallet_prelude::*};
 
 const CALL: Call = Call::Tokens(orml_tokens::Call::transfer(2, CurrencyId::PICA, 10));
 

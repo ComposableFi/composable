@@ -10,19 +10,21 @@ use codec::{Decode, Encode};
 use composable_traits::dex::SimpleExchange;
 use pallet_transaction_payment_rpc_runtime_api::{FeeDetails, InclusionFee, RuntimeDispatchInfo};
 use primitives::currency::CurrencyId;
-use sp_runtime::{traits::{
-	CheckedSub, Convert, DispatchInfoOf, Dispatchable, PostDispatchInfoOf, SaturatedConversion,
-	Saturating, SignedExtension, Zero,
-}, transaction_validity::{
-	InvalidTransaction, TransactionPriority, TransactionValidity, TransactionValidityError,
-	ValidTransaction,
-}, FixedPointNumber, FixedPointOperand, Perbill, DispatchError};
+use sp_runtime::{
+	traits::{
+		CheckedSub, Convert, DispatchInfoOf, Dispatchable, PostDispatchInfoOf, SaturatedConversion,
+		Saturating, SignedExtension, Zero,
+	},
+	transaction_validity::{
+		InvalidTransaction, TransactionPriority, TransactionValidity, TransactionValidityError,
+		ValidTransaction,
+	},
+	DispatchError, FixedPointNumber, FixedPointOperand, Perbill,
+};
 use sp_std::prelude::*;
 use support::{
 	dispatch::DispatchResult,
-	traits::{
-		Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons,
-	},
+	traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons},
 	weights::{
 		DispatchClass, DispatchInfo, GetDispatchInfo, Pays, PostDispatchInfo, Weight,
 		WeightToFeeCoefficient, WeightToFeePolynomial,
@@ -134,8 +136,8 @@ pub mod pallet {
 			// loss.
 			use sp_std::convert::TryInto;
 			assert!(
-				<Multiplier as sp_runtime::traits::Bounded>::max_value()
-					>= Multiplier::checked_from_integer(
+				<Multiplier as sp_runtime::traits::Bounded>::max_value() >=
+					Multiplier::checked_from_integer(
 						T::BlockWeights::get().max_block.try_into().unwrap()
 					)
 					.unwrap(),
@@ -146,8 +148,8 @@ pub mod pallet {
 			// that if we collapse to minimum, the trend will be positive with a weight value
 			// which is 1% more than the target.
 			let min_value = T::FeeMultiplierUpdate::min();
-			let mut target = T::FeeMultiplierUpdate::target()
-				* T::BlockWeights::get().get(DispatchClass::Normal).max_total.expect(
+			let mut target = T::FeeMultiplierUpdate::target() *
+				T::BlockWeights::get().get(DispatchClass::Normal).max_total.expect(
 					"Setting `max_total` for `Normal` dispatch class is not compatible with \
 					`transaction-payment` pallet.",
 				);
@@ -155,7 +157,7 @@ pub mod pallet {
 			let addition = target / 100;
 			if addition == 0 {
 				// this is most likely because in a test setup we set everything to ().
-				return;
+				return
 			}
 			target += addition;
 
@@ -321,8 +323,8 @@ where
 		let total_native = T::NativeCurrency::total_balance(who);
 
 		// check native balance if is enough
-		let native_is_enough = fee.saturating_add(native_existential_deposit) <= total_native
-			&& T::NativeCurrency::free_balance(who).checked_sub(&fee).map_or(
+		let native_is_enough = fee.saturating_add(native_existential_deposit) <= total_native &&
+			T::NativeCurrency::free_balance(who).checked_sub(&fee).map_or(
 				false,
 				|new_free_balance| {
 					T::NativeCurrency::ensure_can_withdraw(who, fee, reason, new_free_balance)
@@ -345,11 +347,11 @@ where
 					amount,
 					*slippage,
 				)?;
-			}
+			},
 			// user didn't specify some asset to pay and they dont have enough native tokens to pay
 			(None, false) => return Err(DispatchError::Other("Not enough tokens")),
 			// they have enough native tokens to pay.
-			_ => {}
+			_ => {},
 		}
 
 		Ok(())
@@ -409,7 +411,7 @@ where
 
 		// Only mess with balances if fee is not zero.
 		if fee.is_zero() {
-			return Ok((fee, None));
+			return Ok((fee, None))
 		}
 
 		let reason = if tip.is_zero() {
@@ -522,12 +524,12 @@ where
 			// refund to the the account that paid the fees. If this fails, the
 			// account might have dropped below the existential balance. In
 			// that case we don't refund anything.
-			let refund_imbalance = <T::NativeCurrency as Currency<T::AccountId>>::deposit_into_existing(&who, refund)
-				.unwrap_or_else(|_| PositiveImbalanceOf::<T>::zero());
+			let refund_imbalance =
+				<T::NativeCurrency as Currency<T::AccountId>>::deposit_into_existing(&who, refund)
+					.unwrap_or_else(|_| PositiveImbalanceOf::<T>::zero());
 			// merge the imbalance caused by paying the fees and refunding parts of it again.
-			let actual_payment = paid.offset(refund_imbalance)
-				.same()
-				.map_err(|_| InvalidTransaction::Payment)?;
+			let actual_payment =
+				paid.offset(refund_imbalance).same().map_err(|_| InvalidTransaction::Payment)?;
 			let (tip, fee) = actual_payment.split(tip);
 
 			// distribute fee
