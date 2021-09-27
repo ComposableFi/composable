@@ -10,15 +10,15 @@ use support::weights::DispatchClass;
 /// system pallet.
 ///
 /// given:
-/// 	s = previous block weight
-/// 	s'= ideal block weight
-/// 	m = maximum block weight
-///		diff = (s - s')/m
-///		v = 0.00001
-///		t1 = (v * diff)
-///		t2 = (v * diff)^2 / 2
-///	then:
-/// 	next_multiplier = prev_multiplier * (1 + t1 + t2)
+///     s = previous block weight
+///     s'= ideal block weight
+///     m = maximum block weight
+///     diff = (s - s')/m
+///     v = 0.00001
+///     t1 = (v * diff)
+///     t2 = (v * diff)^2 / 2
+/// then:
+///     next_multiplier = prev_multiplier * (1 + t1 + t2)
 ///
 /// Where `(s', v)` must be given as the `Get` implementation of the `T` generic type. Moreover, `M`
 /// must provide the minimum allowed value for the multiplier. Note that a runtime should ensure
@@ -113,7 +113,7 @@ impl<T, S, V, M> Convert<Multiplier, Multiplier> for TargetedFeeAdjustment<T, S,
 		let normal_max_weight = weights
 			.get(DispatchClass::Normal)
 			.max_total
-			.unwrap_or_else(|| weights.max_block);
+			.unwrap_or(weights.max_block);
 		let current_block_weight = <system::Pallet<T>>::block_weight();
 		let normal_block_weight =
 			*current_block_weight.get(DispatchClass::Normal).min(&normal_max_weight);

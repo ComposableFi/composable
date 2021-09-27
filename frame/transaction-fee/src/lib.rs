@@ -347,7 +347,7 @@ where
 				)?;
 			}
 			// user didn't specify some asset to pay and they dont have enough native tokens to pay
-			(None, false) => Err(DispatchError::Other("Not enough tokens"))?,
+			(None, false) => return Err(DispatchError::Other("Not enough tokens")),
 			// they have enough native tokens to pay.
 			_ => {}
 		}

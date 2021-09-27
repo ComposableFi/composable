@@ -237,7 +237,7 @@ impl balances::Config for Runtime {
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
-	pub const TransactionByteFee: Balance = 1  * MILLI_PICA;
+	pub const TransactionByteFee: Balance = MILLI_PICA;
 
 	// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
@@ -258,7 +258,7 @@ pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		let p = 1 * MILLI_PICA;
+		let p = MILLI_PICA;
 		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 		smallvec::smallvec![WeightToFeeCoefficient {
             degree: 1,
