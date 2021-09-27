@@ -9,5 +9,4 @@ members = [
     "runtime/picasso",
 	"runtime/common",
 	"runtime/primitives",
-	"frame/*"
 ]

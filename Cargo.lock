@@ -6118,6 +6118,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-transaction-fee"
+version = "0.1.0"
+dependencies = [
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "parity-scale-codec",
+ "primitives",
+ "smallvec 1.6.1",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-transaction-payment"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
@@ -6663,6 +6682,7 @@ dependencies = [
  "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
+ "pallet-transaction-fee",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
@@ -6673,6 +6693,7 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-parachain 0.9.8 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.8)",
  "primitives",
+ "smallvec 1.6.1",
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
