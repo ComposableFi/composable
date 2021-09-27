@@ -1,0 +1,77 @@
+#![allow(unused_imports)]
+
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
+use sp_std::marker::PhantomData;
+
+pub trait WeightInfo {
+	fn transfer() -> Weight;
+	fn transfer_native() -> Weight;
+	fn force_transfer() -> Weight;
+	fn force_transfer_native() -> Weight;
+	fn transfer_all() -> Weight;
+}
+
+
+pub struct SubstrateWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
+	fn transfer_all() -> Weight {
+		(83_205_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+
+	fn transfer() -> Weight {
+		(83_205_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+	fn transfer_native() -> Weight {
+		(70_665_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+	fn force_transfer() -> Weight {
+		(81_458_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+
+	fn force_transfer_native() -> Weight {
+		(81_458_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+
+}
+
+// For backwards compatibility and tests
+impl WeightInfo for () {
+	fn transfer_native() -> Weight {
+		(83_205_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+	fn force_transfer_native() -> Weight {
+		(83_205_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+	fn transfer_all() -> Weight {
+		(83_205_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+
+	fn transfer() -> Weight {
+		(83_205_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+	fn force_transfer() -> Weight {
+		(81_458_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+
+
+}

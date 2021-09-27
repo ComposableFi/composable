@@ -2,6 +2,8 @@
 
 pub use pallet::*;
 
+pub mod weights;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use composable_traits::currency::{AssetId, Balance};
