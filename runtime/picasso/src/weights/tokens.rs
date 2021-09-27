@@ -1,11 +1,12 @@
-#![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 #![allow(clippy::unnecessary_cast)]
 
-use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
+use frame_support::{
+	traits::Get,
+	weights::{constants::RocksDbWeight, Weight},
+};
 use sp_std::marker::PhantomData;
-
 
 /// Default weights.
 pub struct WeightInfo<T>(PhantomData<T>);

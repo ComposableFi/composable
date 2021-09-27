@@ -12,6 +12,6 @@ pub mod oracle;
 pub mod scheduler;
 pub mod session;
 pub mod timestamp;
+pub mod tokens;
 pub mod treasury;
 pub mod utility;
-pub mod tokens;
