@@ -2,8 +2,8 @@ use crate::{
 	accrue_interest_internal,
 	mocks::{
 		new_test_ext, process_block, AccountId, Balance, BlockNumber, Lending, MockCurrencyId,
-		Oracle, Origin, Test, Tokens, Vault, VaultId, ACCOUNT_FREE_START, ALICE, BOB, CHARLIE,
-		MILLISECS_PER_BLOCK, MINIMUM_BALANCE,
+		Oracle, Origin, Test, Tokens, Vault, VaultId, ALICE, BOB, CHARLIE, MILLISECS_PER_BLOCK,
+		MINIMUM_BALANCE,
 	},
 	models::BorrowerData,
 	Error, MarketIndex,
@@ -14,12 +14,12 @@ use composable_traits::{
 	vault::{CapabilityVault, Deposit, VaultConfig},
 };
 use frame_support::{
-	assert_err, assert_noop, assert_ok, assert_storage_noop,
+	assert_err, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
 use pallet_vault::models::VaultInfo;
 use proptest::{prelude::*, test_runner::TestRunner};
-use sp_runtime::{traits::Zero, ArithmeticError, FixedPointNumber, Percent, Perquintill};
+use sp_runtime::{FixedPointNumber, Percent, Perquintill};
 
 type BorrowAssetVault = VaultId;
 
@@ -73,7 +73,7 @@ fn create_market(
 
 /// Create a market with a USDT vault LP token as collateral
 fn create_simple_vaulted_market() -> ((MarketIndex, BorrowAssetVault), CollateralAsset) {
-	let (collateral_vault, VaultInfo { lp_token_id: collateral_asset, .. }) =
+	let (_collateral_vault, VaultInfo { lp_token_id: collateral_asset, .. }) =
 		create_simple_vault(MockCurrencyId::USDT);
 	(
 		create_market(
@@ -396,13 +396,13 @@ fn test_borrow() {
 		// more than one borrow request in same block is invalid.
 		assert_err!(
 			Lending::borrow_internal(&market, &ALICE, alice_limit + 1),
-			Error::<mocks::Test>::InvalidTimestampOnBorrowRequest
+			Error::<Test>::InvalidTimestampOnBorrowRequest
 		);
 		process_block(10001);
 		// Try to borrow more than limit
 		assert_err!(
 			Lending::borrow_internal(&market, &ALICE, alice_limit + 1),
-			Error::<mocks::Test>::NotEnoughCollateralToBorrowAmount
+			Error::<Test>::NotEnoughCollateralToBorrowAmount
 		);
 	});
 }
@@ -541,7 +541,7 @@ prop_compose! {
 		(max_accounts: usize, limit: Balance)
 		(balances in prop::collection::vec(MINIMUM_BALANCE..limit, 3..max_accounts))
 		 -> Vec<(AccountId, Balance)> {
-			(ACCOUNT_FREE_START..balances.len() as AccountId)
+			((CHARLIE + 1)..balances.len() as AccountId)
 				.zip(balances)
 				.collect()
 		}
@@ -557,7 +557,7 @@ prop_compose! {
 
 prop_compose! {
 	fn strategy_account()
-		(x in ACCOUNT_FREE_START..AccountId::MAX) -> AccountId {
+		(x in (CHARLIE + 1)..AccountId::MAX) -> AccountId {
 			x
 		}
 }
@@ -602,7 +602,7 @@ proptest! {
 	#[test]
 	fn market_collateral_deposit_withdraw_higher_amount_fails(amount in valid_amount_without_overflow()) {
 		new_test_ext().execute_with(|| {
-			let (market, vault) = create_simple_market();
+			let (market, _vault) = create_simple_market();
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount);

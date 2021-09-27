@@ -784,6 +784,12 @@ impl currency_factory::Config for Runtime {
 	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
+parameter_types! {
+	// Benchmarks of pallet-lending utilize more than 20Gb memory
+	// and don't finish if MaxLendingCount is u32::MAX.
+	pub const MaxLendingCount: u32 = 100_000;
+}
+
 impl lending::Config for Runtime {
 	type Oracle = Oracle;
 	type VaultId = u64;
@@ -795,6 +801,7 @@ impl lending::Config for Runtime {
 	type UnixTime = Timestamp;
 	type CurrencyFactory = Factory;
 	type MarketDebtCurrency = Tokens;
+	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 }
 
