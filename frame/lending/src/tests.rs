@@ -99,7 +99,8 @@ fn accrue_interest_base_cases() {
 		0,
 	)
 	.unwrap();
-	// small increments instead one year lead to some loss by design (until we lift calculation to 256 bit)
+	// small increments instead one year lead to some loss by design (until we lift calculation to
+	// 256 bit)
 	let error = 25;
 	assert_eq!(
 		accrued_increase,

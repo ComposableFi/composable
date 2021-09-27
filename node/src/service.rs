@@ -48,6 +48,7 @@ native_executor_instance!(
 ///
 /// Use this macro if you don't actually need the full service, but just the builder in order to
 /// be able to perform chain operations.
+#[allow(clippy::type_complexity)]
 pub fn new_partial<RuntimeApi, Executor, BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
@@ -100,7 +101,7 @@ where
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(
-			&config,
+			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 		)?;
 	let client = Arc::new(client);
@@ -205,12 +206,12 @@ where
 
 	#[cfg(feature = "ocw")]
 	{
-		let keystore = keystore_container.sync_keystore();
+		let keystore = params.keystore_container.sync_keystore();
 		if parachain_config.offchain_worker.enabled {
 			// Initialize seed for signing transaction using off-chain workers. This is a
 			// convenience so learners can see the transactions submitted simply running the node.
 			// Typically these keys should be inserted with RPC calls to `author_insertKey`.
-			// TODO: rmeove in prod
+			// TODO(Jesse): remove in prod
 			{
 				sp_keystore::SyncCryptoStore::sr25519_generate_new(
 					&*keystore,
@@ -371,7 +372,7 @@ pub fn parachain_build_import_queue(
 
 			Ok((time, slot))
 		},
-		registry: config.prometheus_registry().clone(),
+		registry: config.prometheus_registry(),
 		can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
 		spawner: &task_manager.spawn_essential_handle(),
 		telemetry,
@@ -409,7 +410,7 @@ pub async fn start_node(
 				task_manager.spawn_handle(),
 				client.clone(),
 				transaction_pool,
-				prometheus_registry.clone(),
+				prometheus_registry,
 				telemetry.clone(),
 			);
 
@@ -457,7 +458,7 @@ pub async fn start_node(
 				block_import: client.clone(),
 				relay_chain_client: relay_chain_node.client.clone(),
 				relay_chain_backend: relay_chain_node.backend.clone(),
-				para_client: client.clone(),
+				para_client: client,
 				backoff_authoring_blocks: Option::<()>::None,
 				sync_oracle,
 				keystore,

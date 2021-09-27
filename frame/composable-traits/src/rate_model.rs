@@ -67,7 +67,7 @@ impl SafeArithmetic for LiftedFixedBalance {
 	#[inline(always)]
 	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
 		if rhs.is_zero() {
-			return Err(ArithmeticError::DivisionByZero);
+			return Err(ArithmeticError::DivisionByZero)
 		}
 
 		self.checked_div(rhs).ok_or(ArithmeticError::Overflow)
@@ -84,7 +84,8 @@ impl SafeArithmetic for LiftedFixedBalance {
 	}
 }
 
-/// current notion of year will take away 1/365 from lenders and give away to borrowers (as does no accounts to length of year)
+/// current notion of year will take away 1/365 from lenders and give away to borrowers (as does no
+/// accounts to length of year)
 pub const SECONDS_PER_YEAR: Timestamp = 365 * 24 * 60 * 60;
 
 /// utilization_ratio = total_borrows / (total_cash + total_borrows)
@@ -93,11 +94,12 @@ pub fn calc_utilization_ratio(
 	borrows: LiftedFixedBalance,
 ) -> Result<Percent, ArithmeticError> {
 	if borrows.is_zero() {
-		return Ok(Percent::zero());
+		return Ok(Percent::zero())
 	}
 
 	let total = cash.safe_add(&borrows)?;
-	// also max value is 1.00000000000000000, it still fails with u8, so mul by u16 and cast to u8 safely
+	// also max value is 1.00000000000000000, it still fails with u8, so mul by u16 and cast to u8
+	// safely
 	let utilization_ratio = borrows
 		.checked_div(&total)
 		.expect("above checks prove it cannot error")
@@ -154,9 +156,9 @@ impl InterestRateModel {
 	pub fn get_supply_rate(borrow_rate: Rate, util: Ratio, reserve_factor: Ratio) -> Rate {
 		// ((1 - reserve_factor) * borrow_rate) * utilization
 		let one_minus_reserve_factor = Ratio::one().saturating_sub(reserve_factor);
-		let rate_to_pool = borrow_rate.saturating_mul(one_minus_reserve_factor.into());
+		let rate_to_pool = borrow_rate.saturating_mul(one_minus_reserve_factor);
 
-		rate_to_pool.saturating_mul(util.into())
+		rate_to_pool.saturating_mul(util)
 	}
 }
 
@@ -189,11 +191,11 @@ impl JumpModel {
 		jump_utilization: Percent,
 	) -> Option<JumpModel> {
 		let model = Self { base_rate, jump_rate, full_rate, jump_utilization };
-		if model.base_rate <= Self::MAX_BASE_RATE
-			&& model.jump_rate <= Self::MAX_JUMP_RATE
-			&& model.full_rate <= Self::MAX_FULL_RATE
-			&& model.base_rate <= model.jump_rate
-			&& model.jump_rate <= model.full_rate
+		if model.base_rate <= Self::MAX_BASE_RATE &&
+			model.jump_rate <= Self::MAX_JUMP_RATE &&
+			model.full_rate <= Self::MAX_FULL_RATE &&
+			model.base_rate <= model.jump_rate &&
+			model.jump_rate <= model.full_rate
 		{
 			Some(model)
 		} else {
@@ -339,9 +341,9 @@ mod tests {
 		let excess_util = utilization.saturating_sub(jump_utilization);
 		assert_eq!(
 			borrow_rate,
-			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into())
-				/ FixedU128::saturating_from_rational(20, 100)
-				+ normal_rate,
+			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into()) /
+				FixedU128::saturating_from_rational(20, 100) +
+				normal_rate,
 		);
 	}
 
@@ -366,7 +368,8 @@ mod tests {
 		let model = CurveModel::new_model(Rate::saturating_from_rational(2, 100)).unwrap();
 		assert_eq!(
 			model.get_borrow_rate(Percent::from_percent(80)).unwrap(),
-			// curve model has arbitrary power parameters leading to changes in precision of high power
+			// curve model has arbitrary power parameters leading to changes in precision of high
+			// power
 			Rate::from_inner(140000000000000000)
 		);
 	}
@@ -391,10 +394,10 @@ mod tests {
 				// collection alternative to define arbitrary and proptest attributes with filtering
 				// overall cardinality is small, so should work well
 				// here we have one liner, not sure why in code we have many lines....
-				base <= jump
-					&& jump <= full && base <= &JumpModel::MAX_BASE_RATE
-					&& jump <= &JumpModel::MAX_JUMP_RATE
-					&& full <= &JumpModel::MAX_FULL_RATE
+				base <= jump &&
+					jump <= full && base <= &JumpModel::MAX_BASE_RATE &&
+					jump <= &JumpModel::MAX_JUMP_RATE &&
+					full <= &JumpModel::MAX_FULL_RATE
 			})
 			.prop_map(
 				|(base_rate, jump_percentage, full_percentage, target_utilization_percentage)| {

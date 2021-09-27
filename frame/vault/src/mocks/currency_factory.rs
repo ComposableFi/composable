@@ -67,7 +67,7 @@ pub mod pallet {
 	impl<T: Config> CurrencyFactory<MockCurrencyId> for Pallet<T> {
 		fn create() -> Result<MockCurrencyId, DispatchError> {
 			let lp_token_id = CurrencyCounter::<T>::mutate(|c| {
-				*c = *c + 1;
+				*c += 1;
 				*c
 			});
 			Ok(MockCurrencyId::LpToken(lp_token_id))

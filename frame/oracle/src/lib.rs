@@ -372,8 +372,8 @@ pub mod pallet {
 			let withdrawal = DeclaredWithdraws::<T>::get(&signer).ok_or(Error::<T>::Unknown)?;
 			ensure!(block > withdrawal.unlock_block, Error::<T>::StakeLocked);
 			DeclaredWithdraws::<T>::remove(&signer);
-			T::Currency::unreserve(&signer, withdrawal.stake.into());
-			let _ = T::Currency::transfer(&signer, &who, withdrawal.stake.into(), AllowDeath);
+			T::Currency::unreserve(&signer, withdrawal.stake);
+			let _ = T::Currency::transfer(&signer, &who, withdrawal.stake, AllowDeath);
 
 			ControllerToSigner::<T>::remove(&who);
 			SignerToController::<T>::remove(&signer);
@@ -407,10 +407,10 @@ pub mod pallet {
 					// because current_prices.len() limited by u32
 					// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 					if current_prices.len() as u32 >= AssetsInfo::<T>::get(asset_id).max_answers {
-						Err(Error::<T>::MaxPrices)?
+						return Err(Error::<T>::MaxPrices.into())
 					}
-					if current_prices.into_iter().any(|candidate| candidate.who == who) {
-						Err(Error::<T>::AlreadySubmitted)?
+					if current_prices.iter().any(|candidate| candidate.who == who) {
+						return Err(Error::<T>::AlreadySubmitted.into())
 					}
 					current_prices.push(set_price);
 					Ok(current_prices.len())
@@ -443,18 +443,18 @@ pub mod pallet {
 			stake: BalanceOf<T>,
 		) -> DispatchResult {
 			let amount_staked = Self::oracle_stake(signer.clone())
-				.unwrap_or(0u32.into())
+				.unwrap_or_else(|| 0u32.into())
 				.checked_add(&stake)
 				.ok_or(Error::<T>::ExceedStake)?;
 			T::Currency::transfer(&who, &signer, stake, KeepAlive)?;
-			T::Currency::reserve(&signer, stake.into())?;
+			T::Currency::reserve(&signer, stake)?;
 			OracleStake::<T>::insert(&signer, amount_staked);
 			Self::deposit_event(Event::StakeAdded(signer, stake, amount_staked));
 			Ok(())
 		}
 
 		pub fn handle_payout(
-			pre_prices: &Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
+			pre_prices: &[PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>],
 			price: T::PriceValue,
 			asset_id: T::AssetId,
 		) {
@@ -482,8 +482,8 @@ pub mod pallet {
 					));
 				} else {
 					let reward_amount = T::RewardAmount::get();
-					let controller =
-						SignerToController::<T>::get(&answer.who).unwrap_or(answer.who.clone());
+					let controller = SignerToController::<T>::get(&answer.who)
+						.unwrap_or_else(|| answer.who.clone());
 
 					// TODO: since inlflationary, burn a portion of tx fees of the chain to account
 					// for this
@@ -527,6 +527,7 @@ pub mod pallet {
 			total_weight
 		}
 
+		#[allow(clippy::type_complexity)]
 		pub fn update_pre_prices(
 			asset_id: T::AssetId,
 			asset_info: AssetInfo<Percent>,
@@ -541,11 +542,7 @@ pub mod pallet {
 			// because pre_pruned_prices.len() limited by u32
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 			if pre_pruned_prices.len() as u32 >= asset_info.min_answers {
-				let res = Self::prune_old_pre_prices(
-					asset_info.clone(),
-					pre_pruned_prices.clone(),
-					block,
-				);
+				let res = Self::prune_old_pre_prices(asset_info, pre_pruned_prices, block);
 				let staled_prices = res.0;
 				pre_prices = res.1;
 				for p in staled_prices {
@@ -577,6 +574,7 @@ pub mod pallet {
 			}
 		}
 
+		#[allow(clippy::type_complexity)]
 		pub fn prune_old_pre_prices(
 			asset_info: AssetInfo<Percent>,
 			mut pre_prices: Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
@@ -604,7 +602,7 @@ pub mod pallet {
 		}
 
 		pub fn get_median_price(
-			prices: &Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
+			prices: &[PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>],
 		) -> Option<T::PriceValue> {
 			let mut numbers: Vec<T::PriceValue> =
 				prices.iter().map(|current_prices| current_prices.price).collect();
@@ -628,7 +626,7 @@ pub mod pallet {
 				log::info!("no signer");
 				return Err(
 					"No local accounts available. Consider adding one via `author_insertKey` RPC.",
-				)?
+				)
 			}
 			// Make an external HTTP request to fetch the current price.
 			// Note this call will block until response is received.
@@ -670,7 +668,7 @@ pub mod pallet {
 
 			let kind = sp_core::offchain::StorageKind::PERSISTENT;
 			let from_local = sp_io::offchain::local_storage_get(kind, b"ocw-url")
-				.unwrap_or(b"http://localhost:3001/price/".to_vec());
+				.unwrap_or_else(|| b"http://localhost:3001/price/".to_vec());
 			let base = str::from_utf8(&from_local).unwrap_or("http://localhost:3001/price/");
 			let string_id =
 				serde_json::to_string(&(*price_id).into()).map_err(|_| http::Error::IoError)?;
