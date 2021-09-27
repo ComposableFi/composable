@@ -5,17 +5,18 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use composable_traits::currency::{AssetId, Balance};
-	use frame_support::pallet_prelude::*;
-
-	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
-		Placeholder,
-	}
+	use frame_support::{
+		pallet_prelude::*,
+		sp_runtime::traits::StaticLookup,
+		traits::{
+			fungible::{Inspect as NativeInspect, Transfer as NativeTransfer},
+			fungibles::{Inspect, Transfer},
+		},
+	};
+	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type AssetId: AssetId;
 		type Balance: Balance;
 
@@ -28,9 +29,150 @@ pub mod pallet {
 	#[pallet::generate_store(pub (super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	#[pallet::error]
-	pub enum Error<T> {
-		Unknown,
+	#[pallet::call]
+	impl<T: Config> Pallet<T>
+	where
+		<T as Config>::Currency: NativeTransfer<T::AccountId, Balance = T::Balance>,
+		<T as Config>::Currency: NativeInspect<T::AccountId, Balance = T::Balance>,
+		<T as Config>::MultiCurrency:
+			Transfer<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>,
+	{
+		/// Transfer `amount` of `asset` from `origin` to `dest`.
+		///
+		/// # Errors
+		///  - When `origin` is not signed.
+		///  - If the account has insufficient free balance to make the transfer, or if `keep_alive`
+		///    cannot be respected.
+		///  - If the `dest` cannot be looked up.
+		#[pallet::weight(10_000)]
+		pub fn transfer(
+			origin: OriginFor<T>,
+			asset: T::AssetId,
+			dest: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] amount: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResultWithPostInfo {
+			let src = ensure_signed(origin)?;
+			let dest = T::Lookup::lookup(dest)?;
+			<Self as Transfer<T::AccountId>>::transfer(asset, &src, &dest, amount, keep_alive)?;
+			Ok(().into())
+		}
+
+		/// Transfer `amount` of the native asset from `origin` to `dest`. This is slightly
+		/// cheaper to call, as it avoids an asset lookup.
+		///
+		/// # Errors
+		///  - When `origin` is not signed.
+		///  - If the account has insufficient free balance to make the transfer, or if `keep_alive`
+		///    cannot be respected.
+		///  - If the `dest` cannot be looked up.
+		#[pallet::weight(10_000)]
+		pub fn transfer_native(
+			origin: OriginFor<T>,
+			dest: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] value: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResultWithPostInfo {
+			let src = ensure_signed(origin)?;
+			let dest = T::Lookup::lookup(dest)?;
+			<Self as NativeTransfer<T::AccountId>>::transfer(&src, &dest, value, keep_alive)?;
+			Ok(().into())
+		}
+
+		/// Transfer `amount` of the `asset` from `origin` to `dest`. This requires root.
+		///
+		/// # Errors
+		///  - When `origin` is not root.
+		///  - If the account has insufficient free balance to make the transfer, or if `keep_alive`
+		///    cannot be respected.
+		///  - If the `dest` cannot be looked up.
+		#[pallet::weight(10_000)]
+		pub fn force_transfer(
+			origin: OriginFor<T>,
+			asset: T::AssetId,
+			source: <T::Lookup as StaticLookup>::Source,
+			dest: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] value: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			let source = T::Lookup::lookup(source)?;
+			let dest = T::Lookup::lookup(dest)?;
+			<Self as Transfer<_>>::transfer(asset, &source, &dest, value, keep_alive)?;
+			Ok(().into())
+		}
+
+		/// Transfer `amount` of the the native asset from `origin` to `dest`. This requires root.
+		///
+		/// # Errors
+		///  - When `origin` is not root.
+		///  - If the account has insufficient free balance to make the transfer, or if `keep_alive`
+		///    cannot be respected.
+		///  - If the `dest` cannot be looked up.
+		#[pallet::weight(10_000)]
+		pub fn force_transfer_native(
+			origin: OriginFor<T>,
+			source: <T::Lookup as StaticLookup>::Source,
+			dest: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] value: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			let source = T::Lookup::lookup(source)?;
+			let dest = T::Lookup::lookup(dest)?;
+			<Self as NativeTransfer<_>>::transfer(&source, &dest, value, keep_alive)?;
+			Ok(().into())
+		}
+
+		/// Transfer all free balance of the `asset` from `origin` to `dest`.
+		///
+		/// # Errors
+		///  - When `origin` is not signed.
+		///  - If the `dest` cannot be looked up.
+		#[pallet::weight(10_000)]
+		pub fn transfer_all(
+			origin: OriginFor<T>,
+			asset: T::AssetId,
+			dest: <T::Lookup as StaticLookup>::Source,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let transactor = ensure_signed(origin)?;
+			let reducible_balance =
+				<Self as Inspect<T::AccountId>>::reducible_balance(asset, &transactor, keep_alive);
+			let dest = T::Lookup::lookup(dest)?;
+			<Self as Transfer<T::AccountId>>::transfer(
+				asset,
+				&transactor,
+				&dest,
+				reducible_balance,
+				keep_alive,
+			)?;
+			Ok(())
+		}
+
+		/// Transfer all free balance of the native asset from `origin` to `dest`.
+		///
+		/// # Errors
+		///  - When `origin` is not signed.
+		///  - If the `dest` cannot be looked up.
+		#[pallet::weight(10_000)]
+		pub fn transfer_all_native(
+			origin: OriginFor<T>,
+			dest: <T::Lookup as StaticLookup>::Source,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let transactor = ensure_signed(origin)?;
+			let reducible_balance =
+				<Self as NativeInspect<T::AccountId>>::reducible_balance(&transactor, keep_alive);
+			let dest = T::Lookup::lookup(dest)?;
+			<Self as NativeTransfer<T::AccountId>>::transfer(
+				&transactor,
+				&dest,
+				reducible_balance,
+				keep_alive,
+			)?;
+			Ok(())
+		}
 	}
 
 	mod currency {
