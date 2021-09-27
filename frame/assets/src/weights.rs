@@ -40,7 +40,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
-
 	fn force_transfer() -> Weight {
 		(81_458_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
