@@ -27,6 +27,7 @@ pub mod pallet {
 			ExistenceRequirement::{AllowDeath, KeepAlive},
 			ReservableCurrency,
 		},
+		weights::{Pays, DispatchClass::Operational}
 	};
 
 	use frame_system::{
@@ -42,11 +43,13 @@ pub mod pallet {
 	use sp_runtime::{
 		offchain::{http, Duration},
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
-		PerThing, Percent, RuntimeDebug,
+		PerThing, Percent, RuntimeDebug, AccountId32,
+		KeyTypeId as CryptoKeyTypeId
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
 
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orac");
+	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"orac");
 	pub use crate::weights::WeightInfo;
 
 	pub mod crypto {
@@ -382,7 +385,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::submit_price(T::MaxAnswerBound::get()))]
+		#[pallet::weight((T::WeightInfo::submit_price(T::MaxAnswerBound::get()), Operational))]
 		pub fn submit_price(
 			origin: OriginFor<T>,
 			price: T::PriceValue,
@@ -400,9 +403,9 @@ pub mod pallet {
 				who: who.clone(),
 			};
 			log::info!("inside submit 2 {:#?}, {:#?}", set_price, asset_id);
-			let current_count = PrePrices::<T>::try_mutate(
+			PrePrices::<T>::try_mutate(
 				asset_id,
-				|current_prices| -> Result<usize, DispatchError> {
+				|current_prices| -> Result<(), DispatchError> {
 					// There can convert current_prices.len() to u32 safely
 					// because current_prices.len() limited by u32
 					// (type of AssetsInfo::<T>::get(asset_id).max_answers).
@@ -413,11 +416,11 @@ pub mod pallet {
 						return Err(Error::<T>::AlreadySubmitted.into())
 					}
 					current_prices.push(set_price);
-					Ok(current_prices.len())
+					Ok(())
 				},
 			)?;
 			Self::deposit_event(Event::PriceSubmitted(who, asset_id, price));
-			Ok(Some(T::WeightInfo::submit_price(current_count as u32)).into())
+			Ok(Pays::No.into())
 		}
 	}
 
@@ -630,6 +633,18 @@ pub mod pallet {
 			}
 			// Make an external HTTP request to fetch the current price.
 			// Note this call will block until response is received.
+			let prices = PrePrices::<T>::get(*price_id);
+			let public_key = sp_io::crypto::sr25519_public_keys(CRYPTO_KEY_TYPE);
+			let account = AccountId32::new(public_key[0].0);
+			let mut to32 = AccountId32::as_ref(&account);
+			let address: T::AccountId = T::AccountId::decode(&mut to32).unwrap_or_default();
+
+			if prices.into_iter().any(|price| price.who == address) {
+				return Err(
+					"Tx already submitted",
+				)?
+			}
+
 			let price = Self::fetch_price(price_id).map_err(|_| "Failed to fetch price")?;
 			log::info!("price {:#?}", price);
 
