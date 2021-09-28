@@ -236,6 +236,7 @@ pub mod pallet {
 		BorrowDoesNotExist,
 		RepayAmountMustBeGraterThanZero,
 		ExceedLendingCount,
+		InitiateLiquidation,
 	}
 
 	#[pallet::event]
@@ -492,6 +493,23 @@ pub mod pallet {
 			});
 			Ok(().into())
 		}
+
+		/// Check if borrow for `borrower` account is required to be liquidated, initiate
+		/// liquidation.
+		/// - `origin` : Sender of this extrinsic.
+		/// - `market_id` : Market index from which `borrower` has taken borrow.
+		#[pallet::weight(1000)]
+		#[transactional]
+		pub fn liquidate(
+			origin: OriginFor<T>,
+			market_id: MarketIndex,
+			borrower: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			let _sender = ensure_signed(origin)?;
+			// TODO: should this be restricted to certain users?
+			Self::liquidate_internal(&market_id, &borrower)?;
+			Ok(().into())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -588,6 +606,35 @@ pub mod pallet {
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
 			<Self as Lending>::repay_borrow(market_id, from, beneficiary, repay_amount)
+		}
+
+		pub fn liquidate_internal(
+			market_id: &<Self as Lending>::MarketId,
+			account: &<Self as Lending>::AccountId,
+		) -> Result<(), DispatchError> {
+			let collateral_balance = Self::collateral_of_account(market_id, account)?;
+			let market =
+				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
+			let collateral_price = <T::Oracle as Oracle>::get_price(&market.collateral)
+				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
+			let borrow_price = <T::Oracle as Oracle>::get_price(&borrow_asset_id)
+				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
+			let borrower_balance_with_interest = Self::borrow_balance_current(market_id, account)?
+				.unwrap_or_else(BorrowAmountOf::<Self>::zero);
+			let borrower = BorrowerData::new(
+				collateral_balance,
+				collateral_price.0,
+				borrower_balance_with_interest,
+				borrow_price.0,
+				market.collateral_factor,
+			);
+			let should_liquidate = borrower.should_liquidate()?;
+			if should_liquidate {
+				// must trigger liquidation
+				return Err(Error::<T>::InitiateLiquidation.into())
+			}
+			Ok(())
 		}
 
 		pub(crate) fn initialize_block(block_number: T::BlockNumber) {
