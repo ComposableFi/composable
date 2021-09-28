@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 //! Price function for auction with price going to minimal possible value.
 //! Linear, step-wise exponential, and continuous exponential, others, configured from MakerDao
 //! https://github.com/makerdao/dss/blob/master/src/abaci.sol
@@ -74,7 +73,3 @@ impl AuctionTimeCurveModel for StairstepExponentialDecrease {
 		initial_price.safe_mul(&multiplier.into())
 	}
 }
-=======
-//! Price function for auction.
-//! Linear, step-wise exponential, and continuous exponential, others, configured from MakerDao
->>>>>>> origin/lending
