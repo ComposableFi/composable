@@ -1,9 +1,4 @@
-
-
-
-pub enum AuctionStepFunction {
-
-}
+pub enum AuctionStepFunction {}
 
 pub trait DutchAuction {
 	type AssetId;
@@ -21,14 +16,13 @@ pub trait DutchAuction {
 		want: &Self::AssetId,
 		amount: &Self::Balance,
 		initial_price: &Self::Balance,
-		target_account:&Self::AccountId,
+		target_account: &Self::AccountId,
 		function: AuctionStepFunction,
 	) -> Result<Self::OrderId, Self::Error>;
 
 	/// run existing auctions
 	/// if some auctions completed, transfer amount to target account
-	fn run_auctions(
-	) -> Result<(), Self::Error>;
+	fn run_auctions() -> Result<(), Self::Error>;
 
 	// cancel, iterate..
 }

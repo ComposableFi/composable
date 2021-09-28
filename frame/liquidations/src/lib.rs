@@ -24,9 +24,20 @@
 pub mod pallet {
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::{dex::{Orderbook, SimpleExchange}, lending::Lending, liquidation::Liquidate, rate_model::LiftedFixedBalance};
-	use frame_support::{PalletId, Parameter, dispatch::DispatchResult, log, pallet_prelude::MaybeSerializeDeserialize, traits::{Hooks, IsType, UnixTime}, transactional};
-	use frame_system::{Account, offchain::Signer, pallet_prelude::*};
+	use composable_traits::{
+		dex::{Orderbook, SimpleExchange},
+		lending::Lending,
+		liquidation::Liquidate,
+		rate_model::LiftedFixedBalance,
+	};
+	use frame_support::{
+		dispatch::DispatchResult,
+		log,
+		pallet_prelude::MaybeSerializeDeserialize,
+		traits::{Hooks, IsType, UnixTime},
+		transactional, PalletId, Parameter,
+	};
+	use frame_system::{offchain::Signer, pallet_prelude::*, Account};
 	use num_traits::{CheckedDiv, SaturatingSub};
 	use sp_runtime::{
 		traits::{
@@ -38,12 +49,12 @@ pub mod pallet {
 	use sp_std::{fmt::Debug, vec::Vec};
 	pub trait DeFiComposablePallet {
 		type AssetId: FullCodec
-		+ Eq
-		+ PartialEq
-		+ Copy
-		+ MaybeSerializeDeserialize
-		+ From<u128>
-		+ Default;
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ From<u128>
+			+ Default;
 	}
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Liqudati");
@@ -69,14 +80,13 @@ pub mod pallet {
 			  // bit
 		type UnixTime: UnixTime;
 
-		type Lending : Lending;
+		type Lending: Lending;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-		PositionWasSentToLiquidation {
-		}
+		PositionWasSentToLiquidation {},
 	}
 	#[pallet::error]
 	pub enum Error<T> {}
@@ -86,52 +96,53 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
-	impl<T:Config> Pallet<T> {
+	impl<T: Config> Pallet<T> {
 		#[pallet::weight(1234)]
-		pub fn liquidate_many(sender: OriginFor<T>, block_number: T::BlockNumber) -> DispatchResult {
+		pub fn liquidate_many(
+			sender: OriginFor<T>,
+			block_number: T::BlockNumber,
+		) -> DispatchResult {
 			// how in PF
 			// ask ask all illiquid borrow
 			// collect collaterals and borrows
 			// make sure that can transfer these to dutch auction (API in lending)
 			for (account, asset, want, amount) in Vec::new().iter() {
-				Self::liquidate(account, asset, want,amount)?;
+				Self::liquidate(account, asset, want, amount)?;
 			}
 			Ok(())
 		}
 	}
 
 	#[pallet::hooks]
-    impl<T: Config> Hooks<T::BlockNumber> for Pallet<T>
-    {
-        fn offchain_worker(block_number: T::BlockNumber) {
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+		fn offchain_worker(block_number: T::BlockNumber) {
 			// for off chain worker need  to implement transaction signer to call into extrinsic
 			// let signer = Signer::<T, T::AccountId>::any_account();
 			// if !signer.can_sign() {
 			// 	return Err(Error::<T>::NoAvailableAccount);
 			// }
-            // if let Err(e) = Self::liquidate_many(signer, block_number) {
-            //     log::error!("Failed to run offchain liquidation: {:?}", e);
-            // }
-        }
-    }
+			// if let Err(e) = Self::liquidate_many(signer, block_number) {
+			//     log::error!("Failed to run offchain liquidation: {:?}", e);
+			// }
+		}
+	}
 
 	impl<T: Config> Liquidate for Pallet<T> {
-    type AssetId = T::AssetId;
+		type AssetId = T::AssetId;
 
-    type Balance = T::Balance;
+		type Balance = T::Balance;
 
-    type AccountId = T::AccountId;
+		type AccountId = T::AccountId;
 
+		type Error = Error<T>;
 
-	type Error = Error<T>;
-
-    fn liquidate(
-		account: &Self::AccountId,
-		asset: &Self::AssetId,
-		want: &Self::AssetId,
-		amount: &Self::Balance,
-	) -> Result<(), Self::Error> {
-        todo!()
-    }
-}
+		fn liquidate(
+			account: &Self::AccountId,
+			asset: &Self::AssetId,
+			want: &Self::AssetId,
+			amount: &Self::Balance,
+		) -> Result<(), Self::Error> {
+			todo!()
+		}
+	}
 }

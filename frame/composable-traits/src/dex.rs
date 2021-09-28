@@ -35,7 +35,8 @@ pub trait Orderbook {
 	type OrderId;
 
 	/// exchanges specified amount of asset to other at specific price
-	/// please check dex market setting if it allows some features like slippage/dutch auction/multi specialist processing
+	/// please check dex market setting if it allows some features like slippage/dutch auction/multi
+	/// specialist processing
 	fn post(
 		account: &Self::AccountId,
 		asset: &Self::AssetId,
@@ -56,7 +57,7 @@ pub trait Orderbook {
 	/// ???
 	fn take(
 		account: &Self::AccountId,
-		orders: impl Iterator<Item=Self::OrderId>,
+		orders: impl Iterator<Item = Self::OrderId>,
 		up_to: Self::Balance,
 	) -> Result<TakeResult<Self::Balance>, Self::Error>;
 }

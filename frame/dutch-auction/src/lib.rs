@@ -24,9 +24,17 @@
 pub mod pallet {
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::{auction::DutchAuction, dex::{Orderbook, SimpleExchange}, rate_model::LiftedFixedBalance};
-	use frame_support::{Parameter, pallet_prelude::MaybeSerializeDeserialize, traits::{IsType, UnixTime}};
-	use frame_system::{Account, pallet_prelude::*};
+	use composable_traits::{
+		auction::DutchAuction,
+		dex::{Orderbook, SimpleExchange},
+		rate_model::LiftedFixedBalance,
+	};
+	use frame_support::{
+		pallet_prelude::MaybeSerializeDeserialize,
+		traits::{IsType, UnixTime},
+		Parameter,
+	};
+	use frame_system::{pallet_prelude::*, Account};
 	use num_traits::{CheckedDiv, SaturatingSub};
 	use sp_runtime::{
 		traits::{
@@ -38,12 +46,12 @@ pub mod pallet {
 	use sp_std::{fmt::Debug, vec::Vec};
 	pub trait DeFiComposablePallet {
 		type AssetId: FullCodec
-		+ Eq
-		+ PartialEq
-		+ Copy
-		+ MaybeSerializeDeserialize
-		+ From<u128>
-		+ Default;
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ From<u128>
+			+ Default;
 	}
 
 	#[pallet::config]
@@ -68,12 +76,10 @@ pub mod pallet {
 		type UnixTime: UnixTime;
 	}
 
-
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-		PositionWasSentToLiquidation {
-		}
+		PositionWasSentToLiquidation {},
 	}
 
 	#[pallet::error]
@@ -84,36 +90,33 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
-	impl<T:Config> Pallet<T> {
-	}
-
+	impl<T: Config> Pallet<T> {}
 
 	impl<T: Config> DutchAuction for Pallet<T> {
-    type AssetId = T::AssetId;
+		type AssetId = T::AssetId;
 
-    type Balance = T::Balance;
+		type Balance = T::Balance;
 
-    type AccountId = T::AccountId;
+		type AccountId = T::AccountId;
 
-    type Error = Error<T>;
+		type Error = Error<T>;
 
-    type OrderId = u32;
+		type OrderId = u32;
 
-    fn start(
-		account: &Self::AccountId,
-		asset: &Self::AssetId,
-		want: &Self::AssetId,
-		amount: &Self::Balance,
-		initial_price: &Self::Balance,
-		target_account:&Self::AccountId,
-		function: composable_traits::auction::AuctionStepFunction,
-	) -> Result<Self::OrderId, Self::Error> {
-        todo!()
-    }
+		fn start(
+			account: &Self::AccountId,
+			asset: &Self::AssetId,
+			want: &Self::AssetId,
+			amount: &Self::Balance,
+			initial_price: &Self::Balance,
+			target_account: &Self::AccountId,
+			function: composable_traits::auction::AuctionStepFunction,
+		) -> Result<Self::OrderId, Self::Error> {
+			todo!()
+		}
 
-    fn run_auctions(
-	) -> Result<(), Self::Error> {
-        todo!()
-    }
-}
+		fn run_auctions() -> Result<(), Self::Error> {
+			todo!()
+		}
+	}
 }
