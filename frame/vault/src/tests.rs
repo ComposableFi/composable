@@ -543,7 +543,7 @@ fn test_vault_emergency_shutdown() {
 			.expect_err("withdrawing from stopped vault should fail");
 
 		// Restart the vault, and ensure that funds can be withdrawn and deposited
-		Vaults::restart_vault(Origin::root(), id).expect("root can restart the vault");
+		Vaults::start(Origin::root(), id).expect("root can restart the vault");
 		Vaults::deposit(Origin::signed(ALICE), id, 100)
 			.expect("depositing in restarted vault should succeed");
 		Vaults::withdraw(Origin::signed(ALICE), id, 100)

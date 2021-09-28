@@ -269,7 +269,7 @@ pub mod pallet {
 			vault: VaultIndex,
 		},
 		/// Emitted after a vault is restarted.
-		VaultRestarted {
+		VaultStarted {
 			/// The ID of the vault.
 			vault: VaultIndex,
 		},
@@ -471,22 +471,22 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Restarts a vault after emergency shutdown.
+		/// (Re)starts a vault after emergency shutdown.
 		///
 		/// # Emits
-		///  - Event::VaultRestarted
+		///  - Event::VaultStarted
 		///
 		/// # Errors
 		///  - When the origin is not root.
 		///  - When `vault` does not exist.
 		#[pallet::weight(10_000)]
-		pub fn restart_vault(
+		pub fn start(
 			origin: OriginFor<T>,
 			vault: VaultIndex,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			<Self as CapabilityVault>::start(&vault)?;
-			Self::deposit_event(Event::VaultRestarted { vault });
+			Self::deposit_event(Event::VaultStarted { vault });
 			Ok(().into())
 		}
 	}
