@@ -25,7 +25,7 @@ pub mod pallet {
 
 	use codec::{Codec, FullCodec};
 	use composable_traits::{auction::DutchAuction, dex::{Orderbook, SimpleExchange}, rate_model::LiftedFixedBalance};
-	use frame_support::{Parameter, pallet_prelude::MaybeSerializeDeserialize, traits::UnixTime};
+	use frame_support::{Parameter, pallet_prelude::MaybeSerializeDeserialize, traits::{IsType, UnixTime}};
 	use frame_system::{Account, pallet_prelude::*};
 	use num_traits::{CheckedDiv, SaturatingSub};
 	use sp_runtime::{
