@@ -24,12 +24,7 @@
 pub mod pallet {
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::{
-		dex::{Orderbook, SimpleExchange},
-		lending::Lending,
-		liquidation::Liquidate,
-		rate_model::LiftedFixedBalance,
-	};
+	use composable_traits::{dex::{Orderbook, SimpleExchange}, lending::Lending, liquidation::Liquidate, math::LiftedFixedBalance};
 	use frame_support::{
 		dispatch::DispatchResult,
 		log,

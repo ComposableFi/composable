@@ -23,7 +23,10 @@ use sp_runtime::{
 
 use sp_arithmetic::per_things::Percent;
 
-use crate::{loans::DurationSeconds, math::{LiftedFixedBalance, SafeArithmetic}};
+use crate::{
+	loans::DurationSeconds,
+	math::{LiftedFixedBalance, SafeArithmetic},
+};
 
 /// The fixed point number from 0..to max.
 /// Unlike `Ratio` it can be more than 1.
@@ -40,7 +43,6 @@ pub type Ratio = FixedU128;
 
 /// seconds
 pub type Timestamp = u64;
-
 
 /// current notion of year will take away 1/365 from lenders and give away to borrowers (as does no
 /// accounts to length of year)
@@ -218,7 +220,11 @@ impl CurveModel {
 	}
 }
 
-pub fn accrued_interest(borrow_rate: Rate, amount: u128, delta_time: DurationSeconds) -> Option<u128> {
+pub fn accrued_interest(
+	borrow_rate: Rate,
+	amount: u128,
+	delta_time: DurationSeconds,
+) -> Option<u128> {
 	borrow_rate
 		.checked_mul_int(amount)?
 		.checked_mul(delta_time.into())?

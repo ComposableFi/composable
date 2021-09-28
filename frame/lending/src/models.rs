@@ -1,6 +1,6 @@
-use composable_traits::math::{LiftedFixedBalance, SafeArithmetic};
-use composable_traits::rate_model::{
-	NormalizedCollateralFactor,
+use composable_traits::{
+	math::{LiftedFixedBalance, SafeArithmetic},
+	rate_model::NormalizedCollateralFactor,
 };
 use sp_runtime::{traits::Saturating, ArithmeticError};
 

@@ -42,7 +42,15 @@ pub use crate::weights::WeightInfo;
 pub mod pallet {
 	use crate::{models::BorrowerData, weights::WeightInfo};
 	use codec::{Codec, FullCodec};
-	use composable_traits::{currency::CurrencyFactory, lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput}, loans::DurationSeconds, math::{LiftedFixedBalance, SafeArithmetic}, oracle::Oracle, rate_model::*, vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig}};
+	use composable_traits::{
+		currency::CurrencyFactory,
+		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
+		loans::DurationSeconds,
+		math::{LiftedFixedBalance, SafeArithmetic},
+		oracle::Oracle,
+		rate_model::*,
+		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
+	};
 	use frame_support::{
 		pallet_prelude::*,
 		storage::{with_transaction, TransactionOutcome},
@@ -63,8 +71,6 @@ pub mod pallet {
 		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec::Vec};
-
-
 
 	type MarketConfiguration<T> = MarketConfig<
 		<T as Config>::VaultId,

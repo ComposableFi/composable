@@ -26,11 +26,7 @@ mod price_function;
 pub mod pallet {
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::{
-		auction::DutchAuction,
-		dex::{Orderbook, SimpleExchange},
-		rate_model::LiftedFixedBalance,
-	};
+	use composable_traits::{auction::DutchAuction, dex::{Orderbook, SimpleExchange}, math::LiftedFixedBalance};
 	use frame_support::{
 		pallet_prelude::MaybeSerializeDeserialize,
 		traits::{IsType, UnixTime},
