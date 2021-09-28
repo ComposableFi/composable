@@ -587,7 +587,8 @@ pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
 		let account: AccountId = TreasuryPalletId::get().into_account();
-		&account == a
+		let account2: AccountId = PotId::get().into_account();
+		vec![&account, &account2].contains(&a)
 	}
 }
 
