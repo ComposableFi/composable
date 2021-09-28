@@ -1,32 +1,31 @@
-use frame_support::{pallet_prelude::*, sp_runtime::Permill};
+use crate::dex::Orderbook;
 
-#[derive(Clone, Encode, Decode, Default, Debug)]
-pub struct LiquidationConfig {
-	pub liquidation_fee: Permill,
+pub trait Liquidate {
+	type AssetId;
+	type Balance;
+	type AccountId;
+	type Error;
+
+	fn liquidate(
+		account: &Self::AccountId,
+		asset: &Self::AssetId,
+		want: &Self::AssetId,
+		amount: &Self::Balance,
+	) -> Result<(), Self::Error>;
 }
 
-pub trait Liquidation {
-	type PairId: core::cmp::Ord;
-	type AccountId: core::cmp::Ord;
-	type Error;
-	type Balance;
+impl<T: Orderbook> Liquidate for T {
+	type AssetId = <Self as Orderbook>::AssetId;
+	type Balance = <Self as Orderbook>::Balance;
+	type AccountId = <Self as Orderbook>::AccountId;
+	type Error = <Self as Orderbook>::Error;
 
-	fn update_config(_config: &LiquidationConfig) {
-		todo!()
-	}
-
-	fn liquidate(_pair: Self::PairId, _borrower: &Self::AccountId) -> Result<(), Self::Error> {
-		todo!()
-	}
-
-	fn calculate_liquidation_fee(
-		_amount: Self::Balance,
-		_config: &LiquidationConfig,
-	) -> Self::Balance {
-		todo!()
-	}
-
-	fn get_liquidation_risk(_pair: Self::PairId) -> Self::Balance {
-		todo!()
+	fn liquidate(
+		account: &Self::AccountId,
+		asset: &Self::AssetId,
+		want: &Self::AssetId,
+		amount: &Self::Balance,
+	) -> Result<(), Self::Error> {
+		<T as Orderbook>::market_sell(account, asset, want, amount).map(|_| ())
 	}
 }
