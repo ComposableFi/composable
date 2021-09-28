@@ -42,13 +42,7 @@ pub use crate::weights::WeightInfo;
 pub mod pallet {
 	use crate::{models::BorrowerData, weights::WeightInfo};
 	use codec::{Codec, FullCodec};
-	use composable_traits::{
-		currency::CurrencyFactory,
-		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
-		oracle::Oracle,
-		rate_model::*,
-		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
-	};
+	use composable_traits::{currency::CurrencyFactory, lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput}, loans::DurationSeconds, math::{LiftedFixedBalance, SafeArithmetic}, oracle::Oracle, rate_model::*, vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig}};
 	use frame_support::{
 		pallet_prelude::*,
 		storage::{with_transaction, TransactionOutcome},
@@ -70,7 +64,7 @@ pub mod pallet {
 	};
 	use sp_std::{fmt::Debug, vec::Vec};
 
-	use composable_traits::rate_model::{LiftedFixedBalance, SafeArithmetic};
+
 
 	type MarketConfiguration<T> = MarketConfig<
 		<T as Config>::VaultId,
@@ -1209,7 +1203,7 @@ pub mod pallet {
 		utilization_ratio: Percent,
 		interest_rate_model: &InterestRateModel,
 		borrow_index: Rate,
-		delta_time: Duration,
+		delta_time: DurationSeconds,
 		total_issued: u128,
 		accrued_debt: u128,
 	) -> Result<(u128, Rate), DispatchError> {

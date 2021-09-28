@@ -1,4 +1,4 @@
-use sp_runtime::traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub};
+use sp_runtime::{ArithmeticError, FixedU128, traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Zero}};
 
 
 
@@ -19,7 +19,7 @@ pub trait SafeArithmetic: Sized {
 	fn safe_sub(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
 }
 
-impl<T: CheckedAdd + CheckedMul + CheckedDiv + CheckedSub> SafeArithmetic for T {
+impl<T: CheckedAdd + CheckedMul + CheckedDiv + CheckedSub + Zero> SafeArithmetic for T {
 	#[inline(always)]
 	fn safe_add(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
 		self.checked_add(rhs).ok_or(ArithmeticError::Overflow)

@@ -23,6 +23,8 @@ use sp_runtime::{
 
 use sp_arithmetic::per_things::Percent;
 
+use crate::{loans::DurationSeconds, math::{LiftedFixedBalance, SafeArithmetic}};
+
 /// The fixed point number from 0..to max.
 /// Unlike `Ratio` it can be more than 1.
 /// And unlike `NormalizedCollateralFactor`, it can be less than one.
@@ -216,7 +218,7 @@ impl CurveModel {
 	}
 }
 
-pub fn accrued_interest(borrow_rate: Rate, amount: u128, delta_time: Duration) -> Option<u128> {
+pub fn accrued_interest(borrow_rate: Rate, amount: u128, delta_time: DurationSeconds) -> Option<u128> {
 	borrow_rate
 		.checked_mul_int(amount)?
 		.checked_mul(delta_time.into())?
@@ -226,7 +228,7 @@ pub fn accrued_interest(borrow_rate: Rate, amount: u128, delta_time: Duration) -
 pub fn increment_index(
 	borrow_rate: Rate,
 	index: Rate,
-	delta_time: Duration,
+	delta_time: DurationSeconds,
 ) -> Result<Rate, ArithmeticError> {
 	borrow_rate
 		.safe_mul(&index)?
@@ -236,7 +238,7 @@ pub fn increment_index(
 
 pub fn increment_borrow_rate(
 	borrow_rate: Rate,
-	delta_time: Duration,
+	delta_time: DurationSeconds,
 ) -> Result<Rate, ArithmeticError> {
 	borrow_rate
 		.safe_mul(&FixedU128::saturating_from_integer(delta_time))?

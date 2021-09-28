@@ -21,7 +21,7 @@ struct LinearDecrease{
 
 trait AuctionTimeCurveModel {
 	/// return current auction price
-	fn price(&self, initial_price: LiftedFixedBalance, duration_since_start: DurationSeconds) -> LiftedFixedBalance;
+	fn price(&self, initial_price: LiftedFixedBalance, duration_since_start: DurationSeconds) -> Result<LiftedFixedBalance, ArithmeticError>;
 }
 
 
@@ -30,23 +30,13 @@ impl AuctionTimeCurveModel for LinearDecrease {
     // Returns y = top * ((tau - dur) / tau)
 	fn price(&self, initial_price: LiftedFixedBalance, duration_since_start: DurationSeconds) -> Result<LiftedFixedBalance, ArithmeticError> {
         if duration_since_start >= self.total_duration {
-			LiftedFixedBalance::zero()
+			Ok(LiftedFixedBalance::zero())
 		}
 		else {
-			self.total_duration.safe_sub(&duration_since_start).
-			initial_price.safe_mul()
+			self.total_duration.safe_sub(&duration_since_start)?.into().safe_mul(&initial_price)?.safe_div(&self.total_duration.into())
 		}
-
-        return rmul(top, mul(tau - dur, RAY) / tau);
     }
 }
-
-
-
-
-    function price(uint256 top, uint256 dur) override external view returns (uint256) {
-
-    }
 
 
 
