@@ -1,16 +1,53 @@
-//! Price function for auction.
+//! Price function for auction with price going to minimal possible value.
 //! Linear, step-wise exponential, and continuous exponential, others, configured from MakerDao
+//! https://github.com/makerdao/dss/blob/master/src/abaci.sol
 
-use composable_traits::loans::{DurationSeconds, LiftedFixedBalance};
 
+use composable_traits::{loans::{DurationSeconds, }, math::{LiftedFixedBalance, SafeArithmetic}};
+use proc_macro::LineColumn;
 
+use sp_runtime::{
+	traits::{
+		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
+		Saturating, Zero,
+	},
+	ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
+};
 
 struct LinearDecrease{
-	/// Seconds after auction start when the price reaches zero [seconds]
+	/// Seconds after auction start when the price reaches zero
 	total_duration : DurationSeconds,
 }
 
 trait AuctionTimeCurveModel {
 	/// return current auction price
-	fn price(initial_price: LiftedFixedBalance, duration_since_start: DurationSeconds) -> LiftedFixedBalance;
+	fn price(&self, initial_price: LiftedFixedBalance, duration_since_start: DurationSeconds) -> LiftedFixedBalance;
 }
+
+
+impl AuctionTimeCurveModel for LinearDecrease {
+    // Price calculation when price is decreased linearly in proportion to time:
+    // Returns y = top * ((tau - dur) / tau)
+	fn price(&self, initial_price: LiftedFixedBalance, duration_since_start: DurationSeconds) -> Result<LiftedFixedBalance, ArithmeticError> {
+        if duration_since_start >= self.total_duration {
+			LiftedFixedBalance::zero()
+		}
+		else {
+			self.total_duration.safe_sub(&duration_since_start).
+			initial_price.safe_mul()
+		}
+
+        return rmul(top, mul(tau - dur, RAY) / tau);
+    }
+}
+
+
+
+
+    function price(uint256 top, uint256 dur) override external view returns (uint256) {
+
+    }
+
+
+
+
