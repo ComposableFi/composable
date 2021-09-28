@@ -27,7 +27,7 @@ pub mod pallet {
 			ExistenceRequirement::{AllowDeath, KeepAlive},
 			ReservableCurrency,
 		},
-		weights::{Pays, DispatchClass::Operational}
+		weights::{DispatchClass::Operational, Pays},
 	};
 
 	use frame_system::{
@@ -43,8 +43,7 @@ pub mod pallet {
 	use sp_runtime::{
 		offchain::{http, Duration},
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
-		PerThing, Percent, RuntimeDebug, AccountId32,
-		KeyTypeId as CryptoKeyTypeId
+		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
 
@@ -403,22 +402,19 @@ pub mod pallet {
 				who: who.clone(),
 			};
 			log::info!("inside submit 2 {:#?}, {:#?}", set_price, asset_id);
-			PrePrices::<T>::try_mutate(
-				asset_id,
-				|current_prices| -> Result<(), DispatchError> {
-					// There can convert current_prices.len() to u32 safely
-					// because current_prices.len() limited by u32
-					// (type of AssetsInfo::<T>::get(asset_id).max_answers).
-					if current_prices.len() as u32 >= AssetsInfo::<T>::get(asset_id).max_answers {
-						return Err(Error::<T>::MaxPrices.into())
-					}
-					if current_prices.iter().any(|candidate| candidate.who == who) {
-						return Err(Error::<T>::AlreadySubmitted.into())
-					}
-					current_prices.push(set_price);
-					Ok(())
-				},
-			)?;
+			PrePrices::<T>::try_mutate(asset_id, |current_prices| -> Result<(), DispatchError> {
+				// There can convert current_prices.len() to u32 safely
+				// because current_prices.len() limited by u32
+				// (type of AssetsInfo::<T>::get(asset_id).max_answers).
+				if current_prices.len() as u32 >= AssetsInfo::<T>::get(asset_id).max_answers {
+					return Err(Error::<T>::MaxPrices.into());
+				}
+				if current_prices.iter().any(|candidate| candidate.who == who) {
+					return Err(Error::<T>::AlreadySubmitted.into());
+				}
+				current_prices.push(set_price);
+				Ok(())
+			})?;
 			Self::deposit_event(Event::PriceSubmitted(who, asset_id, price));
 			Ok(Pays::No.into())
 		}
@@ -592,7 +588,7 @@ pub mod pallet {
 					Some(index) => {
 						let fresh_prices = pre_prices.split_off(index);
 						(pre_prices, fresh_prices)
-					},
+					}
 					None => (pre_prices, vec![]),
 				};
 
@@ -629,7 +625,7 @@ pub mod pallet {
 				log::info!("no signer");
 				return Err(
 					"No local accounts available. Consider adding one via `author_insertKey` RPC.",
-				)
+				);
 			}
 			// Make an external HTTP request to fetch the current price.
 			// Note this call will block until response is received.
@@ -640,9 +636,7 @@ pub mod pallet {
 			let address: T::AccountId = T::AccountId::decode(&mut to32).unwrap_or_default();
 
 			if prices.into_iter().any(|price| price.who == address) {
-				return Err(
-					"Tx already submitted",
-				)?
+				return Err("Tx already submitted");
 			}
 
 			let price = Self::fetch_price(price_id).map_err(|_| "Failed to fetch price")?;
@@ -711,7 +705,7 @@ pub mod pallet {
 			// Let's check the status code before we proceed to reading the response.
 			if response.code != 200 {
 				log::warn!("Unexpected status code: {}", response.code);
-				return Err(http::Error::Unknown)
+				return Err(http::Error::Unknown);
 			}
 
 			// Next we want to fully read the response body and collect it to a vector of bytes.
@@ -730,7 +724,7 @@ pub mod pallet {
 				None => {
 					log::warn!("Unable to extract price from the response: {:?}", body_str);
 					Err(http::Error::Unknown)
-				},
+				}
 			}?;
 
 			log::warn!("Got price: {} cents", price);
@@ -748,7 +742,7 @@ pub mod pallet {
 						JsonValue::Number(number) => number,
 						_ => return None,
 					}
-				},
+				}
 				_ => return None,
 			};
 			Some(price.integer as u64)
