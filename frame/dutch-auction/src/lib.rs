@@ -20,6 +20,8 @@
 	unused_extern_crates
 )]
 
+mod price_function;
+
 #[frame_support::pallet]
 pub mod pallet {
 

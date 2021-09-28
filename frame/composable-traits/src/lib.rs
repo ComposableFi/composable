@@ -8,3 +8,4 @@ pub mod liquidation;
 pub mod oracle;
 pub mod rate_model;
 pub mod vault;
+pub mod loans;
