@@ -1,8 +1,14 @@
-use super::{Feed, FeedNotification, Price, TimeStamped, TimeStampedPrice};
+use std::collections::HashSet;
+
+use super::{
+	FeedError, FeedIdentifier, FeedNotification, FeedResult, FeedSource, Price, TimeStamped,
+	TimeStampedPrice,
+};
 use crate::{
-	asset::{Asset, AssetPair, VALID_ASSETS},
+	asset::{Asset, AssetPair, SlashSymbol, Symbol},
 	feed::{Exponent, TimeStamp},
 };
+use async_trait::async_trait;
 use futures::stream::StreamExt;
 use jsonrpc_client_transports::{
 	transports::ws::connect, RpcError, TypedClient, TypedSubscriptionStream,
@@ -14,7 +20,7 @@ use tokio::{
 };
 use url::Url;
 
-pub type PythFeedNotification = FeedNotification<Asset, TimeStampedPrice>;
+pub type PythFeedNotification = FeedNotification<FeedIdentifier, Asset, TimeStampedPrice>;
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -76,22 +82,23 @@ fn notify_price_action(
 	timestamp: &TimeStamp,
 ) -> Option<PythNotifyPriceAction> {
 	match notify_price.status {
-		PythSymbolStatus::Trading =>
-			Some(PythNotifyPriceAction::YieldFeedNotification(FeedNotification::PriceUpdated(
-				Feed::Pyth,
+		PythSymbolStatus::Trading => Some(PythNotifyPriceAction::YieldFeedNotification(
+			FeedNotification::AssetPriceUpdated {
+				feed: FeedIdentifier::Pyth,
 				asset,
-				TimeStamped {
+				price: TimeStamped {
 					value: (notify_price.price, product_price.price_exponent),
 					timestamp: *timestamp,
 				},
-			))),
+			},
+		)),
 		PythSymbolStatus::Halted => None,
 		PythSymbolStatus::Unknown => None,
 	}
 }
 
 impl Pyth {
-	pub async fn new(url: &url::Url) -> Result<Pyth, PythError> {
+	async fn new(url: &url::Url) -> Result<Pyth, PythError> {
 		let client = connect::<TypedClient>(url).await.map_err(PythError::RpcError)?;
 		Ok(Pyth { client, handles: Vec::new() })
 	}
@@ -105,7 +112,7 @@ impl Pyth {
 
 	async fn subscribe(
 		&mut self,
-		output: mpsc::Sender<PythFeedNotification>,
+		sink: mpsc::Sender<PythFeedNotification>,
 		asset_pair: AssetPair,
 		product_price: PythProductPrice,
 	) -> Result<(), PythError> {
@@ -125,10 +132,12 @@ impl Pyth {
 			)
 			.map_err(PythError::RpcError)?;
 		let join_handle = tokio::spawn(async move {
-			output
-				.send(FeedNotification::Opened(Feed::Pyth, asset_pair.0))
-				.await
-				.map_err(PythError::ChannelError)?;
+			sink.send(FeedNotification::AssetOpened {
+				feed: FeedIdentifier::Pyth,
+				asset: asset_pair.0,
+			})
+			.await
+			.map_err(PythError::ChannelError)?;
 			'a: loop {
 				match stream.next().await {
 					Some(Ok(notify_price)) => {
@@ -144,8 +153,7 @@ impl Pyth {
 							Some(PythNotifyPriceAction::YieldFeedNotification(
 								feed_notification,
 							)) => {
-								output
-									.send(feed_notification)
+								sink.send(feed_notification)
 									.await
 									.map_err(PythError::ChannelError)?;
 							},
@@ -162,22 +170,24 @@ impl Pyth {
 					None => break 'a,
 				}
 			}
-			output
-				.send(FeedNotification::Closed(Feed::Pyth, asset_pair.0))
-				.await
-				.map_err(PythError::ChannelError)?;
+			sink.send(FeedNotification::AssetClosed {
+				feed: FeedIdentifier::Pyth,
+				asset: asset_pair.0,
+			})
+			.await
+			.map_err(PythError::ChannelError)?;
 			Ok(())
 		});
 		self.handles.push(join_handle);
 		Ok(())
 	}
 
-	pub async fn subscribe_to_asset(
+	async fn subscribe_to_asset(
 		&mut self,
-		output: &mpsc::Sender<PythFeedNotification>,
+		sink: &mpsc::Sender<PythFeedNotification>,
 		asset_pair: &AssetPair,
 	) -> Result<(), PythError> {
-		let asset_pair_symbol = asset_pair.symbol();
+		let asset_pair_symbol = SlashSymbol::new(*asset_pair).symbol();
 		let product_prices = self
 			.get_product_list()
 			.await?
@@ -187,46 +197,49 @@ impl Pyth {
 			.collect::<Vec<_>>();
 		log::info!("Accounts for {:?}: {:?}", asset_pair_symbol, product_prices);
 		for product_price in product_prices {
-			self.subscribe(output.clone(), *asset_pair, product_price).await?
+			self.subscribe(sink.clone(), *asset_pair, product_price).await?
 		}
 		Ok(())
 	}
 
-	pub async fn terminate(&self) {
+	async fn terminate(&self) {
 		self.handles.iter().for_each(drop);
 	}
 }
 
-// TODO: manage multiple feeds
-pub async fn run_full_subscriptions(
-	pythd_host: &str,
-) -> (Pyth, mpsc::Receiver<PythFeedNotification>) {
-	/* Its important to drop the initial feed_in as it will be cloned for all subsequent tasks
-	The received won't get notified if all cloned senders are closed but not the 'main' one.
-	 */
-	let (feed_in, feed_out) = mpsc::channel::<PythFeedNotification>(128);
+#[async_trait]
+impl FeedSource<FeedIdentifier, Asset, TimeStampedPrice> for Pyth {
+	type Parameters = Url;
 
-	let mut pyth = Pyth::new(&Url::parse(pythd_host).expect("invalid pythd host address."))
-		.await
-		.expect("connection to pythd failed");
-
-	// TODO: subscribe to all asset prices? cli configurable?
-	log::info!("successfully connected to pythd.");
-	for &asset in VALID_ASSETS.iter() {
-		if let Some(asset_pair) = AssetPair::new(asset, Asset::USD) {
-			pyth.subscribe_to_asset(&feed_in, &asset_pair)
-				.await
-				.expect("failed to subscribe to asset");
+	async fn start(
+		parameters: Self::Parameters,
+		sink: mpsc::Sender<FeedNotification<FeedIdentifier, Asset, TimeStampedPrice>>,
+		assets: &HashSet<Asset>,
+	) -> FeedResult<Self> {
+		let mut pyth = Pyth::new(&parameters).await.map_err(|_| FeedError::NetworkFailure)?;
+		sink.send(FeedNotification::Started { feed: FeedIdentifier::Pyth })
+			.await
+			.map_err(|_| FeedError::ChannelIsBroken)?;
+		for &asset in assets.iter() {
+			if let Some(asset_pair) = AssetPair::new(asset, Asset::USD) {
+				pyth.subscribe_to_asset(&sink, &asset_pair)
+					.await
+					.expect("failed to subscribe to asset");
+			}
 		}
+		Ok(pyth)
 	}
 
-	(pyth, feed_out)
+	async fn stop(&mut self) -> FeedResult<()> {
+		self.terminate().await;
+		Ok(())
+	}
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::{asset::*, feed::FeedNotification};
+	use crate::{asset::*, feed::*};
 
 	#[test]
 	fn test_notify_price_action() {
@@ -241,11 +254,14 @@ mod tests {
 				(
 					PythSymbolStatus::Trading,
 					Some(PythNotifyPriceAction::YieldFeedNotification(
-						FeedNotification::PriceUpdated(
-							Feed::Pyth,
+						FeedNotification::AssetPriceUpdated {
+							feed: FeedIdentifier::Pyth,
 							asset,
-							TimeStamped { value: (price, product_price.price_exponent), timestamp },
-						),
+							price: TimeStamped {
+								value: (price, product_price.price_exponent),
+								timestamp,
+							},
+						},
 					)),
 				),
 			]

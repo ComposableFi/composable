@@ -6,7 +6,7 @@ use tokio::{sync::mpsc, task::JoinHandle};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum FeedNotificationAction<K, V> {
-	UpdateCache(K, V),
+	UpdateCache { key: K, value: V },
 }
 
 pub trait Transition<S> {
@@ -21,14 +21,15 @@ where
 {
 	fn apply(&self, state: &mut TCache) {
 		match self {
-			FeedNotificationAction::UpdateCache(a, p) => state.insert(*a, *p),
+			FeedNotificationAction::UpdateCache { key, value } => state.insert(*key, *value),
 		}
 	}
 }
 
-impl<TAsset, TPrice> TryFrom<FeedNotification<TAsset, TPrice>>
+impl<TFeed, TAsset, TPrice> TryFrom<FeedNotification<TFeed, TAsset, TPrice>>
 	for FeedNotificationAction<TAsset, TPrice>
 where
+	TFeed: Debug,
 	TAsset: Debug + Copy,
 	TPrice: Copy,
 {
@@ -40,19 +41,27 @@ where
 	  longer getting new prices?
 	*/
 	fn try_from(
-		notification: FeedNotification<TAsset, TPrice>,
+		notification: FeedNotification<TFeed, TAsset, TPrice>,
 	) -> Result<FeedNotificationAction<TAsset, TPrice>, Self::Error> {
 		match notification {
-			FeedNotification::Opened(f, a) => {
-				log::info!("{:?} has opened a channel for {:?}", f, a);
+			FeedNotification::Started { feed } => {
+				log::info!("{:?} started successfully", feed);
 				Err(())
 			},
-			FeedNotification::Closed(f, a) => {
-				log::info!("{:?} has closed a channel for {:?}", f, a);
+			FeedNotification::AssetOpened { feed, asset } => {
+				log::info!("{:?} has opened a channel for {:?}", feed, asset);
 				Err(())
 			},
-			FeedNotification::PriceUpdated(_, a, p) =>
-				Ok(FeedNotificationAction::UpdateCache(a, p)),
+			FeedNotification::AssetClosed { feed, asset } => {
+				log::info!("{:?} has closed a channel for {:?}", feed, asset);
+				Err(())
+			},
+			FeedNotification::AssetPriceUpdated { asset, price, .. } =>
+				Ok(FeedNotificationAction::UpdateCache { key: asset, value: price }),
+			FeedNotification::Stopped { feed } => {
+				log::info!("{:?} stopped", feed);
+				Err(())
+			},
 		}
 	}
 }
@@ -111,7 +120,10 @@ mod tests {
 		asset::{Asset, VALID_ASSETS},
 		backend::{FeedNotificationAction, Transition},
 		cache::{PriceCache, ThreadSafePriceCache},
-		feed::{Exponent, Feed, FeedNotification, Price, TimeStamp, TimeStamped, TimeStampedPrice},
+		feed::{
+			Exponent, FeedIdentifier, FeedNotification, Price, TimeStamp, TimeStamped,
+			TimeStampedPrice,
+		},
 	};
 	use futures::stream::StreamExt;
 	use signal_hook_tokio::Signals;
@@ -124,19 +136,22 @@ mod tests {
 
 	#[test]
 	fn test_feed_notification_transition() {
-		let feed = Feed::Pyth;
+		let feed = FeedIdentifier::Binance;
 		let timestamped_price = TimeStamped {
 			value: (Price(0xCAFEBABE), Exponent(0x1337)),
 			timestamp: TimeStamp::now(),
 		};
 		VALID_ASSETS.iter().for_each(|&asset| {
 			[
-				(FeedNotification::Opened(feed, asset), None),
-				(FeedNotification::Closed(feed, asset), None),
+				(FeedNotification::AssetOpened { feed, asset }, None),
+				(FeedNotification::AssetClosed { feed, asset }, None),
 				(
-					FeedNotification::PriceUpdated(feed, asset, timestamped_price),
+					FeedNotification::AssetPriceUpdated { feed, asset, price: timestamped_price },
 					Some((
-						FeedNotificationAction::UpdateCache(asset, timestamped_price),
+						FeedNotificationAction::UpdateCache {
+							key: asset,
+							value: timestamped_price,
+						},
 						[(asset, timestamped_price)].iter().copied().collect(),
 					)),
 				),
@@ -166,34 +181,34 @@ mod tests {
 		let mk_price =
 			|x, y| TimeStamped { value: (Price(x), Exponent(y)), timestamp: TimeStamp::now() };
 		let (price1, price2, price3) = (mk_price(123, -3), mk_price(3134, -1), mk_price(93424, -4));
-		let feed = Feed::Pyth;
+		let feed = FeedIdentifier::Binance;
 		for &asset in VALID_ASSETS.iter() {
 			let tests = [
 				(
 					vec![
-						FeedNotification::Opened(feed, asset),
-						FeedNotification::PriceUpdated(feed, asset, price1),
-						FeedNotification::Closed(feed, asset),
+						FeedNotification::AssetOpened { feed, asset },
+						FeedNotification::AssetPriceUpdated { feed, asset, price: price1 },
+						FeedNotification::AssetClosed { feed, asset },
 					],
 					[(asset, price1)],
 				),
 				(
 					vec![
-						FeedNotification::Opened(feed, asset),
-						FeedNotification::PriceUpdated(feed, asset, price3),
-						FeedNotification::PriceUpdated(feed, asset, price1),
-						FeedNotification::PriceUpdated(feed, asset, price2),
-						FeedNotification::Closed(feed, asset),
+						FeedNotification::AssetOpened { feed, asset },
+						FeedNotification::AssetPriceUpdated { feed, asset, price: price3 },
+						FeedNotification::AssetPriceUpdated { feed, asset, price: price1 },
+						FeedNotification::AssetPriceUpdated { feed, asset, price: price2 },
+						FeedNotification::AssetClosed { feed, asset },
 					],
 					[(asset, price2)],
 				),
 				(
 					vec![
-						FeedNotification::Opened(feed, asset),
-						FeedNotification::PriceUpdated(feed, asset, price2),
-						FeedNotification::PriceUpdated(feed, asset, price1),
-						FeedNotification::PriceUpdated(feed, asset, price3),
-						FeedNotification::Closed(feed, asset),
+						FeedNotification::AssetOpened { feed, asset },
+						FeedNotification::AssetPriceUpdated { feed, asset, price: price2 },
+						FeedNotification::AssetPriceUpdated { feed, asset, price: price1 },
+						FeedNotification::AssetPriceUpdated { feed, asset, price: price3 },
+						FeedNotification::AssetClosed { feed, asset },
 					],
 					[(asset, price3)],
 				),
@@ -201,10 +216,10 @@ mod tests {
 			for (events, expected) in &tests {
 				let prices_cache: ThreadSafePriceCache = Arc::new(RwLock::new(HashMap::new()));
 				let (feed_in, feed_out) =
-					mpsc::channel::<FeedNotification<Asset, TimeStampedPrice>>(8);
+					mpsc::channel::<FeedNotification<FeedIdentifier, Asset, TimeStampedPrice>>(8);
 				let signals = Signals::new(&[]).expect("could not create signals stream").fuse();
 				let backend = Backend::new::<
-					FeedNotification<Asset, TimeStampedPrice>,
+					FeedNotification<FeedIdentifier, Asset, TimeStampedPrice>,
 					FeedNotificationAction<Asset, TimeStampedPrice>,
 					_,
 					_,

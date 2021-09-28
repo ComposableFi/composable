@@ -22,3 +22,5 @@ signal-hook = "0.3"
 signal-hook-tokio = { version = "0.3", features = [ "futures-v0_3" ] }
 futures = "0.3"
 lazy_static = "1.4.0"
+async-trait = "0.1.51"
+binance = "0.17"

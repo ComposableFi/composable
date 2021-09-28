@@ -16,7 +16,7 @@ use crate::{
 	asset::Asset,
 	backend::{Backend, FeedNotificationAction},
 	cache::ThreadSafePriceCache,
-	feed::{pyth, FeedNotification, TimeStampedPrice},
+	feed::{binance::BinanceFeed, FeedIdentifier, FeedNotification, FeedSource, TimeStampedPrice},
 	frontend::Frontend,
 };
 use futures::stream::StreamExt;
@@ -26,6 +26,11 @@ use std::{
 	collections::HashMap,
 	sync::{Arc, RwLock},
 };
+use tokio::sync::mpsc;
+
+pub type DefaultFeedNotification = FeedNotification<FeedIdentifier, Asset, TimeStampedPrice>;
+
+const CHANNEL_BUFFER_SIZE: usize = 128;
 
 #[tokio::main]
 async fn main() {
@@ -35,7 +40,18 @@ async fn main() {
 
 	let prices_cache: ThreadSafePriceCache = Arc::new(RwLock::new(HashMap::new()));
 
-	let (pyth, pyth_feed) = pyth::run_full_subscriptions(&opts.pythd_host).await;
+	let (sink, source) = mpsc::channel::<DefaultFeedNotification>(CHANNEL_BUFFER_SIZE);
+
+	let mut binance = BinanceFeed::start(
+		(),
+		sink.clone(),
+		&[Asset::BTC, Asset::ETH, Asset::LTC, Asset::ADA, Asset::DOT]
+			.iter()
+			.copied()
+			.collect(),
+	)
+	.await
+	.expect("unable to start binance feed");
 
 	let backend_shutdown_trigger: futures::stream::Fuse<signal_hook_tokio::SignalsInfo> =
 		Signals::new(&[SIGTERM, SIGINT, SIGQUIT])
@@ -43,20 +59,20 @@ async fn main() {
 			.fuse();
 
 	let backend = Backend::new::<
-		FeedNotification<Asset, TimeStampedPrice>,
+		FeedNotification<FeedIdentifier, Asset, TimeStampedPrice>,
 		FeedNotificationAction<Asset, TimeStampedPrice>,
 		_,
 		_,
 		_,
-	>(prices_cache.clone(), pyth_feed, backend_shutdown_trigger)
+	>(prices_cache.clone(), source, backend_shutdown_trigger)
 	.await;
 
 	let frontend = Frontend::new(&opts.listening_address, prices_cache).await;
 
 	backend.shutdown_handle.await.expect("oop, something went wrong");
 
-	log::info!("backend terminated, dropping pyth subscriptions");
-	pyth.terminate().await;
+	log::info!("backend terminated, dropping subscriptions");
+	binance.stop().await.expect("could not stop binance");
 
 	log::info!("signaling warp for termination...");
 	frontend.shutdown_trigger.send(()).expect("oop, something went wrong");
