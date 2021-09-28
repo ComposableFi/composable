@@ -8,6 +8,5 @@ members = [
     "price-feed",
     "runtime/picasso",
 	"runtime/common",
-	"runtime/primitives",
-	"frame/*"
+	"runtime/primitives"
 ]
