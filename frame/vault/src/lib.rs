@@ -480,10 +480,7 @@ pub mod pallet {
 		///  - When the origin is not root.
 		///  - When `vault` does not exist.
 		#[pallet::weight(10_000)]
-		pub fn start(
-			origin: OriginFor<T>,
-			vault: VaultIndex,
-		) -> DispatchResultWithPostInfo {
+		pub fn start(origin: OriginFor<T>, vault: VaultIndex) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			<Self as CapabilityVault>::start(&vault)?;
 			Self::deposit_event(Event::VaultStarted { vault });
