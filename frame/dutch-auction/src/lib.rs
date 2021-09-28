@@ -19,6 +19,10 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
+// TODO: allow until pallet fully implemented
+#![allow(unused_imports)]
+#![allow(dead_code)]
+#![allow(unused_variables)]
 
 mod price_function;
 
@@ -26,7 +30,11 @@ mod price_function;
 pub mod pallet {
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::{auction::DutchAuction, dex::{Orderbook, SimpleExchange}, math::LiftedFixedBalance};
+	use composable_traits::{
+		auction::DutchAuction,
+		dex::{Orderbook, SimpleExchange},
+		math::LiftedFixedBalance,
+	};
 	use frame_support::{
 		pallet_prelude::MaybeSerializeDeserialize,
 		traits::{IsType, UnixTime},

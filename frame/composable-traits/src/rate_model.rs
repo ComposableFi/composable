@@ -17,7 +17,7 @@ use sp_std::convert::TryInto;
 use codec::{Decode, Encode};
 
 use sp_runtime::{
-	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero},
+	traits::{CheckedAdd, CheckedDiv, CheckedSub, One, Saturating, Zero},
 	ArithmeticError, FixedPointNumber, FixedU128, RuntimeDebug,
 };
 

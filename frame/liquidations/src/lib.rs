@@ -19,12 +19,21 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
+// TODO: allow until pallet fully implemented
+#![allow(unused_imports)]
+#![allow(dead_code)]
+#![allow(unused_variables)]
 
 #[frame_support::pallet]
 pub mod pallet {
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::{dex::{Orderbook, SimpleExchange}, lending::Lending, liquidation::Liquidate, math::LiftedFixedBalance};
+	use composable_traits::{
+		dex::{Orderbook, SimpleExchange},
+		lending::Lending,
+		liquidation::Liquidate,
+		math::LiftedFixedBalance,
+	};
 	use frame_support::{
 		dispatch::DispatchResult,
 		log,
