@@ -1,8 +1,6 @@
 //Bribe DAO
 
-
 pub use pallet::*;
-
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -26,8 +24,7 @@ pub mod pallet {
 			0
 		}
 
-		fn on_finalize(_n: T::BlockNumber) {
-		}
+		fn on_finalize(_n: T::BlockNumber) {}
 	}
 
 	#[pallet::call]
@@ -45,7 +42,6 @@ pub mod pallet {
 			Self::deposit_event(Event::AccumulateDummy(increase_by));
 			Ok(())
 		}
-
 	}
 
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -111,7 +107,6 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-
 pub struct WatchDummy<T: Config + Send + Sync>(PhantomData<T>);
 
 impl<T: Config + Send + Sync> sp_std::fmt::Debug for WatchDummy<T> {
@@ -119,4 +114,3 @@ impl<T: Config + Send + Sync> sp_std::fmt::Debug for WatchDummy<T> {
 		write!(f, "WatchDummy")
 	}
 }
-
