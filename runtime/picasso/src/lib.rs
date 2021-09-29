@@ -855,7 +855,7 @@ pub struct BaseCallFilter;
 
 impl Filter<Call> for BaseCallFilter {
 	fn filter(call: &Call) -> bool {
-		if call_filter::CallFilter::<Runtime>::contains(call) {
+		if call_filter::Pallet::<Runtime>::contains(call) {
 			return false
 		}
 		matches!(

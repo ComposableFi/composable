@@ -111,10 +111,9 @@ pub mod pallet {
 	}
 }
 
-pub struct CallFilter<T>(sp_std::marker::PhantomData<T>);
-impl<T: Config> Contains<T::Call> for CallFilter<T>
-where
-	<T as system::Config>::Call: GetCallMetadata,
+impl<T: Config> Contains<T::Call> for Pallet<T>
+	where
+		<T as system::Config>::Call: GetCallMetadata,
 {
 	fn contains(call: &T::Call) -> bool {
 		let CallMetadata { function_name, pallet_name } = call.get_call_metadata();
