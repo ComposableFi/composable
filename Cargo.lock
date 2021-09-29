@@ -5626,6 +5626,18 @@ dependencies = [
 [[package]]
 name = "pallet-call-filter"
 version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "serde",
+ "smallvec 1.6.1",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
 
 [[package]]
 name = "pallet-collator-selection"
@@ -6672,6 +6684,7 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
+ "pallet-call-filter",
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-crowdloan-bonus",

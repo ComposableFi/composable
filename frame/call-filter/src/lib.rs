@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
+pub use pallet::*;
 use sp_runtime::DispatchResult;
 use sp_std::{prelude::*, vec::Vec};
 use support::{
@@ -10,20 +11,25 @@ use support::{
 	transactional,
 };
 use system::pallet_prelude::*;
+use weights::WeightInfo;
 
-#[frame_support::pallet]
+mod mock;
+mod tests;
+mod weights;
+
+#[support::pallet]
 pub mod pallet {
 	use super::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: system::Config {
 		/// Overarching event type
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Event: From<Event<Self>> + IsType<<Self as system::Config>::Event>;
 
 		/// The origin which may set filter.
-		type SudoOrigin: EnsureOrigin<Self::Origin>;
+		type UpdateOrigin: EnsureOrigin<Self::Origin>;
 
-		/// Weight information for the extrinsics in this module.
+		// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
 	}
 
@@ -39,7 +45,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Paused transaction . \[pallet_name_bytes, function_name_bytes\]
-		TransactionPaused(Vec<u8>, Vec<u8>),
+		Disabled(Vec<u8>, Vec<u8>),
 		/// Unpaused transaction . \[pallet_name_bytes, function_name_bytes\]
 		TransactionUnpaused(Vec<u8>, Vec<u8>),
 	}
@@ -48,7 +54,7 @@ pub mod pallet {
 	///
 	/// map (PalletNameBytes, FunctionNameBytes) => Option<()>
 	#[pallet::storage]
-	#[pallet::getter(fn paused_transactions)]
+	#[pallet::getter(fn disabled_calls)]
 	pub type PausedTransactions<T: Config> =
 		StorageMap<_, Twox64Concat, (Vec<u8>, Vec<u8>), (), OptionQuery>;
 
@@ -60,9 +66,9 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(T::WeightInfo::pause_transaction())]
+		#[pallet::weight(T::WeightInfo::disable())]
 		#[transactional]
-		pub fn pause_transaction(
+		pub fn disable(
 			origin: OriginFor<T>,
 			pallet_name: Vec<u8>,
 			function_name: Vec<u8>,
@@ -82,16 +88,16 @@ pub mod pallet {
 				|maybe_paused| {
 					if maybe_paused.is_none() {
 						*maybe_paused = Some(());
-						Self::deposit_event(Event::TransactionPaused(pallet_name, function_name));
+						Self::deposit_event(Event::Disabled(pallet_name, function_name));
 					}
 				},
 			);
 			Ok(())
 		}
 
-		#[pallet::weight(T::WeightInfo::unpause_transaction())]
+		#[pallet::weight(T::WeightInfo::enable())]
 		#[transactional]
-		pub fn unpause_transaction(
+		pub fn enable(
 			origin: OriginFor<T>,
 			pallet_name: Vec<u8>,
 			function_name: Vec<u8>,
@@ -105,10 +111,10 @@ pub mod pallet {
 	}
 }
 
-pub struct PausedTransactionFilter<T>(sp_std::marker::PhantomData<T>);
-impl<T: Config> Contains<T::Call> for PausedTransactionFilter<T>
+pub struct CallFilter<T>(sp_std::marker::PhantomData<T>);
+impl<T: Config> Contains<T::Call> for CallFilter<T>
 where
-	<T as frame_system::Config>::Call: GetCallMetadata,
+	<T as system::Config>::Call: GetCallMetadata,
 {
 	fn contains(call: &T::Call) -> bool {
 		let CallMetadata { function_name, pallet_name } = call.get_call_metadata();
