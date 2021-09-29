@@ -691,9 +691,8 @@ pub mod pallet {
 			Ok(vault.lp_token_id)
 		}
 
-		// TODO: we can use the `VaultId` + into_sub_account to have distinct addresses per vault.
-		fn account_id(_vault: &Self::VaultId) -> Self::AccountId {
-			T::PalletId::get().into_account()
+		fn account_id(vault: &Self::VaultId) -> Self::AccountId {
+			T::PalletId::get().into_sub_account(vault)
 		}
 
 		fn create(
