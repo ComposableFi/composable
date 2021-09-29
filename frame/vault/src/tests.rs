@@ -9,7 +9,7 @@ use crate::{
 	models::VaultInfo,
 	*,
 };
-use composable_traits::vault::{Deposit, FundsAvailability, StrategicVault, VaultConfig};
+use composable_traits::vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
@@ -24,9 +24,9 @@ macro_rules! prop_assert_ok {
     };
 
     ($cond:expr, $($fmt:tt)*) => {
-        if let Err(_) = $cond {
+        if let Err(e) = $cond {
             let message = format!($($fmt)*);
-            let message = format!("{} at {}:{}", message, file!(), line!());
+            let message = format!("Expected Ok(_), got {:?}, {} at {}:{}", e, message, file!(), line!());
             return ::std::result::Result::Err(
                 proptest::test_runner::TestCaseError::fail(message));
         }
@@ -409,6 +409,42 @@ proptest! {
 				alice_total_balance + bob_total_balance + strategy_total_balance,
 				amount1 + amount2 + strategy_profits
 			);
+
+			Ok(())
+		})?;
+	}
+
+	#[test]
+	fn vault_are_isolated(
+		strategy_account_id in strategy_account(),
+		(amount1, amount2) in valid_amounts_without_overflow_2()
+	) {
+		let asset_id = MockCurrencyId::D;
+		ExtBuilder::default().build().execute_with(|| {
+
+			// Create two vaults based on the same asset
+			let (vault_id1, _) = create_vault(strategy_account_id, asset_id);
+			let (vault_id2, _) = create_vault(strategy_account_id, asset_id);
+
+			// Ensure vaults are unique
+			prop_assert_ne!(vault_id1, vault_id2);
+			prop_assert_ne!(Vaults::account_id(&vault_id1), Vaults::account_id(&vault_id2));
+
+			// Alice deposit an amount in vault 1
+			prop_assert_eq!(Tokens::balance(asset_id, &Vaults::account_id(&vault_id1)), 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), 0);
+			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount1));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id1, amount1));
+
+			// Bob deposit an amount in vault 2
+			prop_assert_eq!(Tokens::balance(asset_id, &Vaults::account_id(&vault_id2)), 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &BOB), 0);
+			prop_assert_ok!(Tokens::mint_into(asset_id, &BOB, amount2));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(BOB), vault_id2, amount2));
+
+			// The funds should not be shared.
+			prop_assert_eq!(Tokens::balance(asset_id, &Vaults::account_id(&vault_id1)), amount1);
+			prop_assert_eq!(Tokens::balance(asset_id, &Vaults::account_id(&vault_id2)), amount2);
 
 			Ok(())
 		})?;
