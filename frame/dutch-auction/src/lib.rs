@@ -20,6 +20,13 @@
 	unused_extern_crates
 )]
 
+// TODO: allow until pallet fully implemented
+#![allow(unused_imports)]
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
+mod price_function;
+
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -27,7 +34,7 @@ pub mod pallet {
 	use composable_traits::{
 		auction::DutchAuction,
 		dex::{Orderbook, SimpleExchange},
-		rate_model::LiftedFixedBalance,
+		math::LiftedFixedBalance,
 	};
 	use frame_support::{
 		pallet_prelude::MaybeSerializeDeserialize,

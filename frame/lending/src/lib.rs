@@ -45,6 +45,8 @@ pub mod pallet {
 	use composable_traits::{
 		currency::CurrencyFactory,
 		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
+		loans::DurationSeconds,
+		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
 		rate_model::*,
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
@@ -69,8 +71,6 @@ pub mod pallet {
 		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec::Vec};
-
-	use composable_traits::rate_model::{LiftedFixedBalance, SafeArithmetic};
 
 	type MarketConfiguration<T> = MarketConfig<
 		<T as Config>::VaultId,
@@ -218,32 +218,32 @@ pub mod pallet {
 			let call_counters = Self::initialize_block(block_number);
 			let one_read = T::DbWeight::get().reads(1);
 
-			// TODO(andor0):
+			// TODO(andor0): write benchmark and uncomment
 			// weight += u64::from(call_counters.now) * <T as Config>::WeightInfo::now();
 
 			weight += u64::from(call_counters.read_markets) * one_read;
 
-			// TODO(andor0):
+			// TODO(andor0): write benchmark and uncomment
 			// weight += u64::from(call_counters.accrue_interest) *
 			// <T as Config>::WeightInfo::accrue_interest();
 
-			// TODO(andor0):
+			// TODO(andor0): write benchmark and uncomment
 			// weight += u64::from(call_counters.account_id) *
 			// <T as Config>::WeightInfo::account_id();
 
-			// TODO(andor0):
+			// TODO(andor0): write benchmark and uncomment
 			// weight += u64::from(call_counters.available_funds) *
 			// <T as Config>::WeightInfo::available_funds();
 
-			// TODO(andor0):
+			// TODO(andor0): write benchmark and uncomment
 			// weight += u64::from(call_counters.handle_withdrawable) *
 			// <T as Config>::WeightInfo::handle_withdrawable();
 
-			// TODO(andor0):
+			// TODO(andor0): write benchmark and uncomment
 			// weight += u64::from(call_counters.handle_depositable) *
 			// <T as Config>::WeightInfo::handle_depositable();
 
-			// TODO(andor0):
+			// TODO(andor0): write benchmark and uncomment
 			// weight += u64::from(call_counters.handle_must_liquidate) *
 			// <T as Config>::WeightInfo::handle_must_liquidate();
 
@@ -279,6 +279,7 @@ pub mod pallet {
 		BorrowDoesNotExist,
 		RepayAmountMustBeGraterThanZero,
 		ExceedLendingCount,
+		InitiateLiquidation,
 	}
 
 	#[pallet::event]
@@ -535,6 +536,23 @@ pub mod pallet {
 			});
 			Ok(().into())
 		}
+
+		/// Check if borrow for `borrower` account is required to be liquidated, initiate
+		/// liquidation.
+		/// - `origin` : Sender of this extrinsic.
+		/// - `market_id` : Market index from which `borrower` has taken borrow.
+		#[pallet::weight(1000)]
+		#[transactional]
+		pub fn liquidate(
+			origin: OriginFor<T>,
+			market_id: MarketIndex,
+			borrower: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			let _sender = ensure_signed(origin)?;
+			// TODO: should this be restricted to certain users?
+			Self::liquidate_internal(&market_id, &borrower)?;
+			Ok(().into())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -631,6 +649,35 @@ pub mod pallet {
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
 			<Self as Lending>::repay_borrow(market_id, from, beneficiary, repay_amount)
+		}
+
+		pub fn liquidate_internal(
+			market_id: &<Self as Lending>::MarketId,
+			account: &<Self as Lending>::AccountId,
+		) -> Result<(), DispatchError> {
+			let collateral_balance = Self::collateral_of_account(market_id, account)?;
+			let market =
+				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
+			let collateral_price = <T::Oracle as Oracle>::get_price(&market.collateral)
+				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
+			let borrow_price = <T::Oracle as Oracle>::get_price(&borrow_asset_id)
+				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
+			let borrower_balance_with_interest = Self::borrow_balance_current(market_id, account)?
+				.unwrap_or_else(BorrowAmountOf::<Self>::zero);
+			let borrower = BorrowerData::new(
+				collateral_balance,
+				collateral_price.0,
+				borrower_balance_with_interest,
+				borrow_price.0,
+				market.collateral_factor,
+			);
+			let should_liquidate = borrower.should_liquidate()?;
+			if should_liquidate {
+				// must trigger liquidation
+				return Err(Error::<T>::InitiateLiquidation.into())
+			}
+			Ok(())
 		}
 
 		pub(crate) fn initialize_block(
@@ -1277,7 +1324,7 @@ pub mod pallet {
 		utilization_ratio: Percent,
 		interest_rate_model: &InterestRateModel,
 		borrow_index: Rate,
-		delta_time: Duration,
+		delta_time: DurationSeconds,
 		total_issued: u128,
 		accrued_debt: u128,
 	) -> Result<(u128, Rate), DispatchError> {

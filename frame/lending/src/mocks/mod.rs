@@ -247,6 +247,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext.execute_with(|| {
 		System::set_block_number(0);
 		Timestamp::set_timestamp(MILLISECS_PER_BLOCK);
+		// Initialize BTC price to 50000
+		pallet_lending::mocks::oracle::BTCValue::<Test>::set(50000u128);
 	});
 	ext
 }

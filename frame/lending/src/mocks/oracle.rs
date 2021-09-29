@@ -20,9 +20,16 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	#[pallet::storage]
+	#[pallet::getter(fn btc_value)]
+	pub type BTCValue<T: Config> = StorageValue<_, u128, ValueQuery>;
+
 	impl<T: Config> Pallet<T> {
 		pub fn get_price(of: &MockCurrencyId) -> Result<(Balance, ()), DispatchError> {
 			<Self as Oracle>::get_price(of)
+		}
+		pub fn set_btc_price(price: u128) {
+			BTCValue::<T>::set(price)
 		}
 	}
 
@@ -42,7 +49,7 @@ pub mod pallet {
 				*/
 				MockCurrencyId::USDT => Ok((100, ())),
 				MockCurrencyId::PICA => usd_mul(10),
-				MockCurrencyId::BTC => usd_mul(50000),
+				MockCurrencyId::BTC => usd_mul(Self::btc_value()),
 				MockCurrencyId::ETH => usd_mul(3000),
 				MockCurrencyId::LTC => usd_mul(200),
 				/*

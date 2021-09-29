@@ -19,6 +19,10 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
+// TODO: allow until pallet fully implemented
+#![allow(unused_imports)]
+#![allow(dead_code)]
+#![allow(unused_variables)]
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -28,7 +32,7 @@ pub mod pallet {
 		dex::{Orderbook, SimpleExchange},
 		lending::Lending,
 		liquidation::Liquidate,
-		rate_model::LiftedFixedBalance,
+		math::LiftedFixedBalance,
 	};
 	use frame_support::{
 		dispatch::DispatchResult,
