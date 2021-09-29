@@ -51,15 +51,6 @@ pub mod pallet {
 		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec::Vec};
-	pub trait DeFiComposablePallet {
-		type AssetId: FullCodec
-			+ Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ From<u128>
-			+ Default;
-	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + DeFiComposablePallet {

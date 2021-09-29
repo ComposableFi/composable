@@ -1,9 +1,8 @@
+use crate::loans::DeFiComposablePallet;
+
 pub enum AuctionStepFunction {}
 
-pub trait DutchAuction {
-	type AssetId;
-	type Balance;
-	type AccountId;
+pub trait DutchAuction : DeFiComposablePallet {
 	type Error;
 	type OrderId;
 
