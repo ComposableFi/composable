@@ -45,6 +45,8 @@ pub mod pallet {
 	use composable_traits::{
 		currency::CurrencyFactory,
 		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
+		loans::DurationSeconds,
+		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
 		rate_model::*,
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
@@ -69,8 +71,6 @@ pub mod pallet {
 		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec::Vec};
-
-	use composable_traits::rate_model::{LiftedFixedBalance, SafeArithmetic};
 
 	type MarketConfiguration<T> = MarketConfig<
 		<T as Config>::VaultId,
@@ -1256,7 +1256,7 @@ pub mod pallet {
 		utilization_ratio: Percent,
 		interest_rate_model: &InterestRateModel,
 		borrow_index: Rate,
-		delta_time: Duration,
+		delta_time: DurationSeconds,
 		total_issued: u128,
 		accrued_debt: u128,
 	) -> Result<(u128, Rate), DispatchError> {
