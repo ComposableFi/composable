@@ -20,7 +20,7 @@ DEX depends on Lending for leverage
 
 ## Markets
 
-Can create isolated pairs which are supported  Vault and Oracle.
+Can create isolated pairs which are supported Vault and Oracle.
 
 ## Test
 
