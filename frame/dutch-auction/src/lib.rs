@@ -19,7 +19,6 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
-
 // TODO: allow until pallet fully implemented
 #![allow(unused_imports)]
 #![allow(dead_code)]
@@ -36,11 +35,7 @@ pub mod pallet {
 		dex::{Orderbook, SimpleExchange},
 		math::LiftedFixedBalance,
 	};
-	use frame_support::{
-		pallet_prelude::MaybeSerializeDeserialize,
-		traits::{IsType, UnixTime},
-		Parameter,
-	};
+	use frame_support::{Parameter, pallet_prelude::MaybeSerializeDeserialize, traits::{IsType, UnixTime, fungibles::{Mutate, Transfer}}};
 	use frame_system::{pallet_prelude::*, Account};
 	use num_traits::{CheckedDiv, SaturatingSub};
 	use sp_runtime::{
@@ -52,26 +47,47 @@ pub mod pallet {
 	};
 	use sp_std::{fmt::Debug, vec::Vec};
 
-	#[pallet::config]
-	pub trait Config: frame_system::Config + DeFiComposablePallet {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type Balance: Default
-			+ Parameter
-			+ Codec
+
+
+	pub trait DeFiComposableConfig : frame_system::Config {
+
+		// what.
+		type AssetId: FullCodec
+			+ Eq
+			+ PartialEq
 			+ Copy
-			+ Ord
-			+ CheckedAdd
-			+ CheckedSub
-			+ CheckedMul
-			+ SaturatingSub
-			+ AtLeast32BitUnsigned
-			+ From<u64> // at least 64 bit
-			+ Zero
-			+ FixedPointOperand
-			+ Into<LiftedFixedBalance> // integer part not more than bits in this
-			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
-			  // bit
+			+ MaybeSerializeDeserialize
+			+ From<u128>
+			+ Default;
+
+			type Balance: Default
+				+ Parameter
+				+ Codec
+				+ Copy
+				+ Ord
+				+ CheckedAdd
+				+ CheckedSub
+				+ CheckedMul
+				+ CheckedSub
+				+ AtLeast32BitUnsigned
+				+ From<u64> // at least 64 bit
+				+ Zero
+				+ FixedPointOperand
+				+ Into<LiftedFixedBalance> // integer part not more than bits in this
+				+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
+				  // bit
+
+		/// bank. vault owned - can transfer, cannot mint
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+	}
+
+	#[pallet::config]
+	#[pallet::disable_frame_system_supertrait_check]
+	pub trait Config: DeFiComposableConfig {
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type UnixTime: UnixTime;
+		type Orderbook: Orderbook;
 	}
 
 	#[pallet::event]
@@ -90,30 +106,40 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
 
-	impl<T: Config> DutchAuction for Pallet<T> {
+	impl<T: Config + DeFiComposableConfig> DutchAuction for Pallet<T> {
+		type AccountId = T::AccountId;
+
 		type AssetId = T::AssetId;
 
 		type Balance = T::Balance;
 
-		type AccountId = T::AccountId;
-
 		type Error = Error<T>;
 
-		type OrderId = u32;
+		type OrderId = u128;
+
+		type Orderbook = T::Orderbook;
 
 		fn start(
-			account: &Self::AccountId,
-			asset: &Self::AssetId,
-			want: &Self::AssetId,
-			amount: &Self::Balance,
-			initial_price: &Self::Balance,
+			account_id: &Self::AccountId,
+			source_asset_id: &Self::AssetId,
+			source_account: &Self::AccountId,
+			target_asset_id: &Self::AssetId,
 			target_account: &Self::AccountId,
+			want: &Self::AssetId,
+			total_amount: &Self::Balance,
+			initial_price: &Self::Balance,
 			function: composable_traits::auction::AuctionStepFunction,
 		) -> Result<Self::OrderId, Self::Error> {
 			todo!()
 		}
 
-		fn run_auctions() -> Result<(), Self::Error> {
+		fn run_auctions(now: composable_traits::loans::DurationSeconds) -> Result<(), Self::Error> {
+			todo!()
+		}
+
+		fn get_auction_state(
+			order: &Self::OrderId,
+		) -> Option<composable_traits::auction::AuctionOrder<Self::OrderId>> {
 			todo!()
 		}
 	}

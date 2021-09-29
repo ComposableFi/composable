@@ -1,18 +1,21 @@
-use crate::{dex::Orderbook, loans::{DeFiComposablePallet, DurationSeconds}};
+use crate::{dex::Orderbook, loans::{DurationSeconds}};
 
-pub enum AuctionOrderConfig {
+pub enum AuctionStepFunction {
 	LinearDecrease,
 	StairstepExponentialDecrease,
 }
 
-pub struct AuctionOrder {
-
+pub struct AuctionOrder<OrderId> {
+	pub id: OrderId,
 }
 
-pub trait DutchAuction : DeFiComposablePallet {
+pub trait DutchAuction {
 	type Error;
 	type OrderId;
 	type Orderbook : Orderbook;
+	type AccountId;
+	type AssetId;
+	type Balance;
 
 	/// Transfers asset from from provided to auction account.
 	/// It is up to caller to check amount he get after auction.
@@ -39,6 +42,6 @@ pub trait DutchAuction : DeFiComposablePallet {
 	/// `now` current time.
 	fn run_auctions(now: DurationSeconds) -> Result<(), Self::Error>;
 
-	fn get_auction_state
+	fn get_auction_state(order:&Self::OrderId) -> Option<AuctionOrder<Self::OrderId>>;
 
 }

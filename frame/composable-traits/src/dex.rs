@@ -40,13 +40,14 @@ pub trait Orderbook {
 
 	/// sell. exchanges specified amount of asset to other at specific price
 	/// `source_price` price per unit
+	/// `amm_slippage` set to zero to avoid AMM sell
 	fn post(
 		account_from: &Self::AccountId,
 		asset: &Self::AssetId,
 		want: &Self::AssetId,
 		source_amount: &Self::Balance,
 		source_price: &Self::Balance,
-		slippage : Permill,
+		amm_slippage : Permill,
 	) -> Result<Self::OrderId, Self::Error>;
 
 	/// sell. exchanges specified amount of asset to other at market price.
@@ -55,7 +56,7 @@ pub trait Orderbook {
 		asset: &Self::AssetId,
 		want: &Self::AssetId,
 		amount: &Self::Balance,
-		slippage : Permill,
+		amm_slippage : Permill,
 	) -> Result<Self::OrderId, Self::Error>;
 
 	/// buy
