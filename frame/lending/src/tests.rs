@@ -10,6 +10,7 @@ use crate::{
 };
 use composable_traits::{
 	lending::MarketConfigInput,
+	math::LiftedFixedBalance,
 	rate_model::*,
 	vault::{CapabilityVault, Deposit, VaultConfig},
 };

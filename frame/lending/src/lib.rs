@@ -88,6 +88,18 @@ pub mod pallet {
 		}
 	}
 
+	#[derive(Debug, Default, Clone, Copy)]
+	pub(crate) struct InitializeBlockCallCounters {
+		now: u32,
+		read_markets: u32,
+		accrue_interest: u32,
+		account_id: u32,
+		available_funds: u32,
+		handle_withdrawable: u32,
+		handle_depositable: u32,
+		handle_must_liquidate: u32,
+	}
+
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 
 	#[pallet::config]
@@ -202,9 +214,40 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
-			Self::initialize_block(block_number);
-			let MarketIndex(max_lending_index) = LendingCount::<T>::get();
-			<T as Config>::WeightInfo::initialize_block(max_lending_index + 1)
+			let mut weight: Weight = 0;
+			let call_counters = Self::initialize_block(block_number);
+			let one_read = T::DbWeight::get().reads(1);
+
+			// TODO(andor0): write benchmark and uncomment
+			// weight += u64::from(call_counters.now) * <T as Config>::WeightInfo::now();
+
+			weight += u64::from(call_counters.read_markets) * one_read;
+
+			// TODO(andor0): write benchmark and uncomment
+			// weight += u64::from(call_counters.accrue_interest) *
+			// <T as Config>::WeightInfo::accrue_interest();
+
+			// TODO(andor0): write benchmark and uncomment
+			// weight += u64::from(call_counters.account_id) *
+			// <T as Config>::WeightInfo::account_id();
+
+			// TODO(andor0): write benchmark and uncomment
+			// weight += u64::from(call_counters.available_funds) *
+			// <T as Config>::WeightInfo::available_funds();
+
+			// TODO(andor0): write benchmark and uncomment
+			// weight += u64::from(call_counters.handle_withdrawable) *
+			// <T as Config>::WeightInfo::handle_withdrawable();
+
+			// TODO(andor0): write benchmark and uncomment
+			// weight += u64::from(call_counters.handle_depositable) *
+			// <T as Config>::WeightInfo::handle_depositable();
+
+			// TODO(andor0): write benchmark and uncomment
+			// weight += u64::from(call_counters.handle_must_liquidate) *
+			// <T as Config>::WeightInfo::handle_must_liquidate();
+
+			weight
 		}
 	}
 
@@ -637,52 +680,35 @@ pub mod pallet {
 			Ok(())
 		}
 
-		pub(crate) fn initialize_block(block_number: T::BlockNumber) {
+		pub(crate) fn initialize_block(
+			block_number: T::BlockNumber,
+		) -> InitializeBlockCallCounters {
+			let mut call_counters = InitializeBlockCallCounters::default();
 			with_transaction(|| {
-				let now = T::UnixTime::now().as_secs();
+				let now = Self::now();
+				call_counters.now += 1;
 				let results = Markets::<T>::iter()
 					.map(|(market_id, config)| {
-						Pallet::<T>::accrue_interest(&market_id, now)?;
+						call_counters.read_markets += 1;
+						Self::accrue_interest(&market_id, now)?;
+						call_counters.accrue_interest += 1;
 						let market_account = Self::account_id(&market_id);
-						match <T::Vault as StrategicVault>::available_funds(
-							&config.borrow,
-							&market_account,
-						)? {
+						match Self::available_funds(&config, &market_account)? {
 							FundsAvailability::Withdrawable(balance) => {
-								<T::Vault as StrategicVault>::withdraw(
-									&config.borrow,
-									&market_account,
-									balance,
-								)?;
+								Self::handle_withdrawable(&config, &market_account, balance)?;
+								call_counters.handle_withdrawable += 1;
 							},
 							FundsAvailability::Depositable(balance) => {
-								let asset_id = <T::Vault as Vault>::asset_id(&config.borrow)?;
-								let balance = <T as Config>::Currency::reducible_balance(
-									asset_id,
-									&market_account,
-									false,
-								)
-								.min(balance);
-								<T::Vault as StrategicVault>::deposit(
-									&config.borrow,
-									&market_account,
-									balance,
-								)?;
+								Self::handle_depositable(&config, &market_account, balance)?;
+								call_counters.handle_depositable += 1;
 							},
 							FundsAvailability::MustLiquidate => {
-								let asset_id = <T::Vault as Vault>::asset_id(&config.borrow)?;
-								let balance = <T as Config>::Currency::reducible_balance(
-									asset_id,
-									&market_account,
-									false,
-								);
-								<T::Vault as StrategicVault>::deposit(
-									&config.borrow,
-									&market_account,
-									balance,
-								)?;
+								Self::handle_must_liquidate(&config, &market_account)?;
+								call_counters.handle_must_liquidate += 1;
 							},
 						}
+
+						call_counters.available_funds += 1;
 
 						Ok(())
 					})
@@ -704,6 +730,48 @@ pub mod pallet {
 					TransactionOutcome::Rollback(0)
 				}
 			});
+			call_counters
+		}
+
+		fn now() -> u64 {
+			T::UnixTime::now().as_secs()
+		}
+
+		fn available_funds(
+			config: &MarketConfiguration<T>,
+			market_account: &T::AccountId,
+		) -> Result<FundsAvailability<T::Balance>, DispatchError> {
+			<T::Vault as StrategicVault>::available_funds(&config.borrow, market_account)
+		}
+
+		fn handle_withdrawable(
+			config: &MarketConfiguration<T>,
+			market_account: &T::AccountId,
+			balance: T::Balance,
+		) -> Result<(), DispatchError> {
+			<T::Vault as StrategicVault>::withdraw(&config.borrow, market_account, balance)
+		}
+
+		fn handle_depositable(
+			config: &MarketConfiguration<T>,
+			market_account: &T::AccountId,
+			balance: T::Balance,
+		) -> Result<(), DispatchError> {
+			let asset_id = <T::Vault as Vault>::asset_id(&config.borrow)?;
+			let balance =
+				<T as Config>::Currency::reducible_balance(asset_id, market_account, false)
+					.min(balance);
+			<T::Vault as StrategicVault>::deposit(&config.borrow, market_account, balance)
+		}
+
+		fn handle_must_liquidate(
+			config: &MarketConfiguration<T>,
+			market_account: &T::AccountId,
+		) -> Result<(), DispatchError> {
+			let asset_id = <T::Vault as Vault>::asset_id(&config.borrow)?;
+			let balance =
+				<T as Config>::Currency::reducible_balance(asset_id, market_account, false);
+			<T::Vault as StrategicVault>::deposit(&config.borrow, market_account, balance)
 		}
 	}
 
