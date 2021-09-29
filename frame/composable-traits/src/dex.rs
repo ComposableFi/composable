@@ -47,7 +47,7 @@ pub trait Orderbook {
 		want: &Self::AssetId,
 		source_amount: &Self::Balance,
 		source_price: &Self::Balance,
-		amm_slippage : Permill,
+		amm_slippage: Permill,
 	) -> Result<Self::OrderId, Self::Error>;
 
 	/// sell. exchanges specified amount of asset to other at market price.
@@ -56,7 +56,7 @@ pub trait Orderbook {
 		asset: &Self::AssetId,
 		want: &Self::AssetId,
 		amount: &Self::Balance,
-		amm_slippage : Permill,
+		amm_slippage: Permill,
 	) -> Result<Self::OrderId, Self::Error>;
 
 	/// buy

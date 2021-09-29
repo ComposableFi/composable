@@ -35,7 +35,15 @@ pub mod pallet {
 		dex::{Orderbook, SimpleExchange},
 		math::LiftedFixedBalance,
 	};
-	use frame_support::{Parameter, pallet_prelude::MaybeSerializeDeserialize, traits::{IsType, UnixTime, fungibles::{Mutate, Transfer}}};
+	use frame_support::{
+		pallet_prelude::MaybeSerializeDeserialize,
+		traits::{
+			fungibles::{Mutate, Transfer},
+			IsType, UnixTime,
+		},
+		Parameter,
+	};
+
 	use frame_system::{pallet_prelude::*, Account};
 	use num_traits::{CheckedDiv, SaturatingSub};
 	use sp_runtime::{
@@ -47,10 +55,7 @@ pub mod pallet {
 	};
 	use sp_std::{fmt::Debug, vec::Vec};
 
-
-
-	pub trait DeFiComposableConfig : frame_system::Config {
-
+	pub trait DeFiComposableConfig: frame_system::Config {
 		// what.
 		type AssetId: FullCodec
 			+ Eq
@@ -60,22 +65,22 @@ pub mod pallet {
 			+ From<u128>
 			+ Default;
 
-			type Balance: Default
-				+ Parameter
-				+ Codec
-				+ Copy
-				+ Ord
-				+ CheckedAdd
-				+ CheckedSub
-				+ CheckedMul
-				+ CheckedSub
-				+ AtLeast32BitUnsigned
-				+ From<u64> // at least 64 bit
-				+ Zero
-				+ FixedPointOperand
-				+ Into<LiftedFixedBalance> // integer part not more than bits in this
-				+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
-				  // bit
+		type Balance: Default
+			+ Parameter
+			+ Codec
+			+ Copy
+			+ Ord
+			+ CheckedAdd
+			+ CheckedSub
+			+ CheckedMul
+			+ CheckedSub
+			+ AtLeast32BitUnsigned
+			+ From<u64> // at least 64 bit
+			+ Zero
+			+ FixedPointOperand
+			+ Into<LiftedFixedBalance> // integer part not more than bits in this
+			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
+			  // bit
 
 		/// bank. vault owned - can transfer, cannot mint
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>

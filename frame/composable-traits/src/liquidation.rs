@@ -28,6 +28,7 @@ impl<T: Orderbook> Liquidate for T {
 		want: &Self::AssetId,
 		amount: &Self::Balance,
 	) -> Result<(), Self::Error> {
-		<T as Orderbook>::market_sell(account, asset, want, amount, Permill::from_perthousand(0)).map(|_| ())
+		<T as Orderbook>::market_sell(account, asset, want, amount, Permill::from_perthousand(0))
+			.map(|_| ())
 	}
 }

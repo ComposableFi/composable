@@ -1,4 +1,4 @@
-use crate::{dex::Orderbook, loans::{DurationSeconds}};
+use crate::{dex::Orderbook, loans::DurationSeconds};
 
 pub enum AuctionStepFunction {
 	LinearDecrease,
@@ -12,7 +12,7 @@ pub struct AuctionOrder<OrderId> {
 pub trait DutchAuction {
 	type Error;
 	type OrderId;
-	type Orderbook : Orderbook;
+	type Orderbook: Orderbook;
 	type AccountId;
 	type AssetId;
 	type Balance;
@@ -42,6 +42,5 @@ pub trait DutchAuction {
 	/// `now` current time.
 	fn run_auctions(now: DurationSeconds) -> Result<(), Self::Error>;
 
-	fn get_auction_state(order:&Self::OrderId) -> Option<AuctionOrder<Self::OrderId>>;
-
+	fn get_auction_state(order: &Self::OrderId) -> Option<AuctionOrder<Self::OrderId>>;
 }
