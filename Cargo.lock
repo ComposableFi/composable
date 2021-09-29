@@ -5624,6 +5624,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-call-filter"
+version = "0.1.0"
+
+[[package]]
 name = "pallet-collator-selection"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.8#ed6ba5dfb2c112c29505e856e8971da3420ce6d0"
