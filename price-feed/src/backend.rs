@@ -1,8 +1,11 @@
 use crate::{cache::Cache, feed::FeedNotification};
-use futures::stream::{Fuse, StreamExt};
+use futures::{
+	stream::{Fuse, StreamExt},
+	Stream,
+};
 use signal_hook_tokio::SignalsInfo;
 use std::{convert::TryFrom, fmt::Debug};
-use tokio::{sync::mpsc, task::JoinHandle};
+use tokio::task::JoinHandle;
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum FeedNotificationAction<K, V> {
@@ -71,12 +74,13 @@ pub struct Backend {
 }
 
 impl Backend {
-	pub async fn new<TNotification, TTransition, TAsset, TPrice, TCache>(
+	pub async fn new<TNotification, TTransition, TAsset, TPrice, TCache, TStream>(
 		mut prices_cache: TCache,
-		mut feed_channel: mpsc::Receiver<TNotification>,
+		mut feed_channel: TStream,
 		mut shutdown_trigger: Fuse<SignalsInfo>,
 	) -> Backend
 	where
+		TStream: 'static + Stream<Item = TNotification> + Send + Unpin,
 		TCache: 'static + Cache<TAsset, TPrice> + Send,
 		TNotification: 'static + Send + Debug,
 		TTransition: Transition<TCache> + TryFrom<TNotification>,
@@ -88,7 +92,7 @@ impl Backend {
 						log::info!("terminating signal received.");
 						break 'l;
 					}
-					message = feed_channel.recv() => {
+					message = feed_channel.next() => {
 						match message {
 							Some(notification) => {
 								log::debug!("notification received: {:?}", notification);
@@ -133,6 +137,7 @@ mod tests {
 		sync::{Arc, RwLock},
 	};
 	use tokio::sync::mpsc;
+	use tokio_stream::wrappers::ReceiverStream;
 
 	#[test]
 	fn test_feed_notification_transition() {
@@ -224,7 +229,8 @@ mod tests {
 					_,
 					_,
 					_,
-				>(prices_cache.clone(), feed_out, signals)
+					_,
+				>(prices_cache.clone(), ReceiverStream::new(feed_out), signals)
 				.await;
 
 				for &event in events {

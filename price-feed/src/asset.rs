@@ -2,6 +2,7 @@ use serde::Serialize;
 use std::{
 	collections::{HashMap, HashSet},
 	convert::TryFrom,
+	fmt::Display,
 	num::ParseIntError,
 	str::FromStr,
 };
@@ -133,25 +134,22 @@ impl TryFrom<AssetIndex> for Asset {
 	}
 }
 
-pub trait Symbol {
-	fn symbol(&self) -> String;
-}
-
 /// A symbol which is the concatenation of two assets.
 /// Like BTCUSD, ETHBTC...
 pub struct ConcatSymbol(AssetPair);
 
 impl ConcatSymbol {
+	#[inline(always)]
 	pub fn new(x: AssetPair) -> Self {
 		ConcatSymbol(x)
 	}
 }
 
-impl Symbol for ConcatSymbol {
+impl Display for ConcatSymbol {
 	#[inline(always)]
-	fn symbol(&self) -> String {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		let ConcatSymbol(AssetPair(x, y)) = self;
-		format!("{:?}{:?}", x, y)
+		write!(f, "{:?}{:?}", x, y)
 	}
 }
 
@@ -160,15 +158,16 @@ impl Symbol for ConcatSymbol {
 pub struct SlashSymbol(AssetPair);
 
 impl SlashSymbol {
+	#[inline(always)]
 	pub fn new(x: AssetPair) -> Self {
 		SlashSymbol(x)
 	}
 }
 
-impl Symbol for SlashSymbol {
+impl Display for SlashSymbol {
 	#[inline(always)]
-	fn symbol(&self) -> String {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		let SlashSymbol(AssetPair(x, y)) = self;
-		format!("{:?}/{:?}", x, y)
+		write!(f, "{:?}/{:?}", x, y)
 	}
 }

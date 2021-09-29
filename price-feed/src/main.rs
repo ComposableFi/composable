@@ -16,21 +16,19 @@ use crate::{
 	asset::Asset,
 	backend::{Backend, FeedNotificationAction},
 	cache::ThreadSafePriceCache,
-	feed::{binance::BinanceFeed, FeedIdentifier, FeedNotification, FeedSource, TimeStampedPrice},
+	feed::{
+		binance::BinanceFeed, FeedHandle, FeedIdentifier, FeedNotification, FeedStream,
+		TimeStampedPrice,
+	},
 	frontend::Frontend,
 };
-use futures::stream::StreamExt;
+use futures::{future::join_all, stream::StreamExt};
 use signal_hook::consts::signal::*;
 use signal_hook_tokio::Signals;
 use std::{
 	collections::HashMap,
-	sync::{Arc, RwLock},
+	sync::{atomic::AtomicBool, Arc, RwLock},
 };
-use tokio::sync::mpsc;
-
-pub type DefaultFeedNotification = FeedNotification<FeedIdentifier, Asset, TimeStampedPrice>;
-
-const CHANNEL_BUFFER_SIZE: usize = 128;
 
 #[tokio::main]
 async fn main() {
@@ -40,11 +38,10 @@ async fn main() {
 
 	let prices_cache: ThreadSafePriceCache = Arc::new(RwLock::new(HashMap::new()));
 
-	let (sink, source) = mpsc::channel::<DefaultFeedNotification>(CHANNEL_BUFFER_SIZE);
+	let keep_running = Arc::new(AtomicBool::new(true));
 
-	let mut binance = BinanceFeed::start(
-		(),
-		sink.clone(),
+	let binance = BinanceFeed::start(
+		keep_running.clone(),
 		&[Asset::BTC, Asset::ETH, Asset::LTC, Asset::ADA, Asset::DOT]
 			.iter()
 			.copied()
@@ -52,6 +49,21 @@ async fn main() {
 	)
 	.await
 	.expect("unable to start binance feed");
+
+	let merge = |feeds: Vec<(FeedHandle, FeedStream<FeedIdentifier, Asset, TimeStampedPrice>)>| {
+		let (handles, sources) = feeds.into_iter().unzip::<_, _, Vec<_>, Vec<_>>();
+		(join_all(handles), futures::stream::select_all(sources))
+	};
+
+	/* NOTE(hussein-aitlahcen):
+		 Introducing a new feed is a matter of merge it with the existing ones.
+		 A feed is a tuple of both a stream of notification along with joinable handle.
+
+		 let new_feed = NewFeed:start(..);
+
+		 ... merge(vec![..., new_feed])
+	*/
+	let (feeds_handle, feeds_source) = merge(vec![binance]);
 
 	let backend_shutdown_trigger: futures::stream::Fuse<signal_hook_tokio::SignalsInfo> =
 		Signals::new(&[SIGTERM, SIGINT, SIGQUIT])
@@ -64,21 +76,25 @@ async fn main() {
 		_,
 		_,
 		_,
-	>(prices_cache.clone(), source, backend_shutdown_trigger)
+		_,
+	>(prices_cache.clone(), feeds_source, backend_shutdown_trigger)
 	.await;
 
 	let frontend = Frontend::new(&opts.listening_address, prices_cache).await;
 
-	backend.shutdown_handle.await.expect("oop, something went wrong");
+	backend.shutdown_handle.await.expect("oops, something went wrong");
 
-	log::info!("backend terminated, dropping subscriptions");
-	binance.stop().await.expect("could not stop binance");
+	log::info!("backend terminated, notifying feeds of termination");
+	keep_running.store(false, std::sync::atomic::Ordering::Relaxed);
+
+	log::info!("waiting for feeds to terminate");
+	let _ = feeds_handle.await;
 
 	log::info!("signaling warp for termination...");
-	frontend.shutdown_trigger.send(()).expect("oop, something went wrong");
+	frontend.shutdown_trigger.send(()).expect("oops, something went wrong");
 
 	log::info!("waiting for warp to terminate...");
-	frontend.shutdown_handle.await.expect("oop, something went wrong");
+	frontend.shutdown_handle.await.expect("oops, something went wrong");
 
 	log::info!("farewell.");
 }

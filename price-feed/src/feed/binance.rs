@@ -1,42 +1,30 @@
 use super::{
-	FeedError, FeedIdentifier, FeedNotification, FeedResult, FeedSource, Price, TimeStamped,
+	Feed, FeedError, FeedIdentifier, FeedNotification, FeedResult, Price, TimeStamped,
 	TimeStampedPrice,
 };
 use crate::{
-	asset::{Asset, AssetPair, ConcatSymbol, Symbol},
-	feed::{Exponent, TimeStamp, USD_CENT_EXPONENT},
+	asset::{Asset, AssetPair, ConcatSymbol},
+	feed::{Exponent, TimeStamp, CHANNEL_BUFFER_SIZE, USD_CENT_EXPONENT},
 };
-use async_trait::async_trait;
 use binance::websockets::{WebSockets, WebsocketEvent};
 use std::{
 	collections::{HashMap, HashSet},
 	sync::{atomic::AtomicBool, Arc},
 };
-use tokio::task::JoinHandle;
+use tokio::{sync::mpsc, task::JoinHandle};
+use tokio_stream::wrappers::ReceiverStream;
 
 pub const TOPIC_AGGREGATE_TRADE: &str = "aggTrade";
 
-pub struct BinanceFeed {
-	keep_running: Arc<AtomicBool>,
-	handle: JoinHandle<Result<(), FeedError>>,
-}
+pub struct BinanceFeed;
 
 impl BinanceFeed {
-	fn terminate(&self) {
-		self.keep_running.store(false, std::sync::atomic::Ordering::Relaxed);
-		self.handle.abort();
-	}
-}
-
-#[async_trait]
-impl FeedSource<FeedIdentifier, Asset, TimeStampedPrice> for BinanceFeed {
-	type Parameters = ();
-
-	async fn start(
-		(): Self::Parameters,
-		sink: tokio::sync::mpsc::Sender<FeedNotification<FeedIdentifier, Asset, TimeStampedPrice>>,
+	pub async fn start(
+		keep_running: Arc<AtomicBool>,
 		assets: &HashSet<Asset>,
-	) -> FeedResult<Self> {
+	) -> FeedResult<Feed<FeedIdentifier, Asset, TimeStampedPrice>> {
+		let (sink, source) = mpsc::channel(CHANNEL_BUFFER_SIZE);
+
 		// Notifiy feed started
 		sink.send(FeedNotification::Started { feed: FeedIdentifier::Binance })
 			.await
@@ -47,7 +35,7 @@ impl FeedSource<FeedIdentifier, Asset, TimeStampedPrice> for BinanceFeed {
 			.map(|&asset| {
 				let asset_pair = AssetPair::new(asset, Asset::USDT)
 					.unwrap_or_else(|| panic!("asset {:?} should be quotable in USDT", asset));
-				ConcatSymbol::new(asset_pair).symbol()
+				format!("{}", ConcatSymbol::new(asset_pair))
 			})
 			.zip(assets.iter().copied())
 			.collect::<HashMap<_, _>>();
@@ -61,12 +49,11 @@ impl FeedSource<FeedIdentifier, Asset, TimeStampedPrice> for BinanceFeed {
 			.map(|symbol| format!("{}@{}", symbol.to_ascii_lowercase(), TOPIC_AGGREGATE_TRADE))
 			.collect::<Vec<_>>();
 
-		let keep_running = Arc::new(AtomicBool::new(true));
 		let sink = sink.clone();
 		let sink1 = sink.clone();
 		let keep_running_clone = keep_running.clone();
-
 		let assets = assets.clone();
+
 		let handle = tokio::spawn(async move {
 			for &asset in assets.iter() {
 				sink.send(FeedNotification::AssetOpened { feed: FeedIdentifier::Binance, asset })
@@ -103,6 +90,7 @@ impl FeedSource<FeedIdentifier, Asset, TimeStampedPrice> for BinanceFeed {
 						}
 						Ok(())
 					});
+					log::trace!("connecting to binance");
 					ws.connect_multiple_streams(&subscriptions)
 						.map_err(|_| FeedError::NetworkFailure)?;
 					log::trace!("running event loop");
@@ -128,11 +116,6 @@ impl FeedSource<FeedIdentifier, Asset, TimeStampedPrice> for BinanceFeed {
 			e
 		});
 
-		Ok(BinanceFeed { keep_running, handle })
-	}
-
-	async fn stop(&mut self) -> FeedResult<()> {
-		self.terminate();
-		Ok(())
+		Ok((handle, ReceiverStream::new(source)))
 	}
 }

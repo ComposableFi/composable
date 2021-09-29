@@ -8105,7 +8105,6 @@ checksum = "ac74c624d6b2d21f425f752262f42188365d7b8ff1aff74c82e45136510a4857"
 name = "price-feed"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "binance",
  "chrono",
  "clap 3.0.0-beta.4",
@@ -8123,6 +8122,7 @@ dependencies = [
  "signal-hook",
  "signal-hook-tokio",
  "tokio 1.12.0",
+ "tokio-stream",
  "url 1.7.2",
  "warp",
 ]

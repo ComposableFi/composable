@@ -1,20 +1,27 @@
+// NOTE(hussein-aitlahcen):
+// avoid clippy issues because of suspended Pyth
+#![allow(dead_code)]
+
 pub mod binance;
 pub mod pyth;
 
-use std::collections::HashSet;
-
-use async_trait::async_trait;
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc;
+use tokio::task::JoinHandle;
+use tokio_stream::wrappers::ReceiverStream;
 
+/// Exponent of a value that is represented as USD cents.
 pub const USD_CENT_EXPONENT: Exponent = Exponent(-2);
+
+/// Default channels size used by feeds
+pub const CHANNEL_BUFFER_SIZE: usize = 128;
 
 #[derive(Serialize, PartialEq, Eq, Copy, Clone, Debug)]
 #[repr(transparent)]
 pub struct TimeStamp(pub i64);
 
 impl TimeStamp {
+	/// Return the current timestamp represented by UNIX timestamp.
 	pub fn now() -> Self {
 		TimeStamp(Utc::now().timestamp())
 	}
@@ -31,12 +38,14 @@ pub struct Price(pub(crate) u64);
 #[repr(transparent)]
 pub struct Exponent(pub(crate) i32);
 
+/// A type that wrap a value and provide a timestamp for it.
 #[derive(Serialize, PartialEq, Eq, Copy, Clone, Debug)]
 pub struct TimeStamped<T> {
 	pub value: T,
 	pub timestamp: TimeStamp,
 }
 
+/// Convenient alias for timestamped price along with it's exponent.
 pub type TimeStampedPrice = TimeStamped<(Price, Exponent)>;
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
@@ -48,30 +57,30 @@ pub enum FeedNotification<F, A, P> {
 	Stopped { feed: F },
 }
 
+/// The feed identifiers.
 #[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum FeedIdentifier {
 	Pyth,
 	Binance,
 }
 
+/// The possible errors hapenning while feeds are running.
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum FeedError {
 	NetworkFailure,
 	ChannelIsBroken,
 }
 
+/// Wrapper type used to notify the possible FeedError
+/// hapenning during a computation.
 pub type FeedResult<T> = Result<T, FeedError>;
 
-#[async_trait]
-pub trait FeedSource<F, A, P>
-where
-	Self: Sized,
-{
-	type Parameters;
-	async fn start(
-		parameters: Self::Parameters,
-		sink: mpsc::Sender<FeedNotification<F, A, P>>,
-		assets: &HashSet<A>,
-	) -> FeedResult<Self>;
-	async fn stop(&mut self) -> FeedResult<()>;
-}
+/// A feed stream that fire various notifications.
+/// Generic over the identifier `F`, the asset `A` and the price `P`.
+pub type FeedStream<F, A, P> = ReceiverStream<FeedNotification<F, A, P>>;
+
+/// A joinable feed handle used to sync while shuting down.
+pub type FeedHandle = JoinHandle<Result<(), FeedError>>;
+
+/// A feed, represented a product of a joinable shutdown handle and a notification stream.
+pub type Feed<F, A, P> = (FeedHandle, FeedStream<F, A, P>);
