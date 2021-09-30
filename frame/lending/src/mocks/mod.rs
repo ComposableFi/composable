@@ -6,6 +6,7 @@ use frame_support::{
 	PalletId,
 };
 use orml_traits::parameter_type_with_key;
+use pallet_liqudations::DeFiComposablePallet;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
@@ -59,6 +60,20 @@ impl Default for MockCurrencyId {
 	}
 }
 
+impl From<u128> for MockCurrencyId {
+	fn from(id: u128) -> Self {
+		match id {
+			0 => MockCurrencyId::PICA,
+			1 => MockCurrencyId::BTC,
+			2 => MockCurrencyId::ETH,
+			3 => MockCurrencyId::LTC,
+			4 => MockCurrencyId::USDT,
+			5 => MockCurrencyId::LpToken(0),
+			_ => unreachable!(),
+		}
+	}
+}
+
 impl DynamicCurrencyId for MockCurrencyId {
 	fn next(self) -> Result<Self, DispatchError> {
 		match self {
@@ -83,6 +98,7 @@ frame_support::construct_runtime!(
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Liqudations: pallet_liqudations::{Pallet, Call, Event<T>},
 		Lending: pallet_lending::{Pallet, Call, Config, Storage, Event<T>},
 		Oracle: pallet_lending::mocks::oracle::{Pallet},
 	}
@@ -212,6 +228,17 @@ impl crate::mocks::oracle::Config for Test {
 	type Vault = Vault;
 }
 
+impl DeFiComposablePallet for Test {
+	type AssetId = MockCurrencyId;
+}
+
+impl pallet_liqudations::Config for Test {
+	type Event = Event;
+	type Balance = Balance;
+	type UnixTime = Timestamp;
+	type Lending = Lending;
+}
+
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 }
@@ -224,9 +251,10 @@ impl pallet_lending::Config for Test {
 	type AssetId = MockCurrencyId;
 	type Balance = Balance;
 	type Currency = Tokens;
-	type UnixTime = Timestamp;
 	type CurrencyFactory = LpTokenFactory;
 	type MarketDebtCurrency = Tokens;
+	type Liqudation = Liqudations;
+	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = ();
 }

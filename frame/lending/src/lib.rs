@@ -45,6 +45,7 @@ pub mod pallet {
 	use composable_traits::{
 		currency::CurrencyFactory,
 		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
+		liquidation::Liquidate,
 		loans::DurationSeconds,
 		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
@@ -150,6 +151,7 @@ pub mod pallet {
 			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
+		type Liqudation: Liquidate;
 		type UnixTime: UnixTime;
 		type MaxLendingCount: Get<u32>;
 		type WeightInfo: WeightInfo;
@@ -202,6 +204,7 @@ pub mod pallet {
 			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
+		type Liqudation: Liquidate;
 		type UnixTime: UnixTime;
 		type MaxLendingCount: Get<u32>;
 		type WeightInfo: WeightInfo;
