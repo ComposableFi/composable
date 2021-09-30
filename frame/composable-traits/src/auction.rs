@@ -1,6 +1,10 @@
 use crate::{dex::Orderbook, loans::DurationSeconds};
+use codec::Codec;
+use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 
+#[derive(Default, Decode, Encode)]
 pub enum AuctionStepFunction {
+	#[default]
 	LinearDecrease,
 	StairstepExponentialDecrease,
 }

@@ -29,13 +29,15 @@ mod price_function;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use codec::{Codec, FullCodec};
+	use codec::{Codec, FullCodec, Decode, Encode};
 	use composable_traits::{auction::DutchAuction, dex::{Orderbook, SimpleExchange}, loans::DurationSeconds, math::LiftedFixedBalance};
-	use frame_support::{Parameter, StorageMap, ensure, pallet_prelude::MaybeSerializeDeserialize, traits::{Currency, IsType, UnixTime, fungibles::{Inspect, Mutate, Transfer}, tokens::WithdrawConsequence}};
+	use frame_support::{Parameter, StorageMap, Twox64Concat, ensure, pallet_prelude::{MaybeSerializeDeserialize, ValueQuery}, traits::{Currency, IsType, UnixTime, fungibles::{Inspect, Mutate, Transfer}, tokens::WithdrawConsequence}};
 
-	use frame_system::{pallet_prelude::*, Account};
+
+	use frame_system::pallet_prelude::*;
+	use frame_system::{pallet_prelude::*, Account, };
 	use num_traits::{CheckedDiv, SaturatingSub};
-	use sp_runtime::{ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill, traits::{
+	use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill, traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
 		}};
@@ -80,7 +82,7 @@ pub mod pallet {
 	pub trait Config: DeFiComposableConfig {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type UnixTime: UnixTime;
-		type Orderbook: Orderbook;
+		type Orderbook: Orderbook<AssetId = Self::AssetId, Balance = Self::Balance, AccountId = Self::AccountId, Error = DispatchError>;
 	}
 
 	#[pallet::event]
@@ -117,15 +119,15 @@ pub mod pallet {
 	}
 
 
-	#[pallet::storage]
-	#[pallet::getter(fn orders)]
-	pub type Orders<T: Config> = StorageMap<
-		_,
-		Twox64Concat,
-		OrderIndex,
-		Order<T::Orderbook::OrderId>,
-		ValueQuery,
-	>;
+	// #[pallet::storage]
+	// #[pallet::getter(fn orders)]
+	// pub type Orders<T: Config> = StorageMap<
+	// 	_,
+	// 	Twox64Concat,
+	// 	OrderIndex,
+	// 	Order<<<T as pallet::Config>::Orderbook as Orderbook>::OrderId>,
+	// 	ValueQuery,
+	// >;
 
 	impl<T: Config + DeFiComposableConfig> DutchAuction for Pallet<T> {
 		type AccountId = T::AccountId;
@@ -136,7 +138,7 @@ pub mod pallet {
 
 		type Error = Error<T>;
 
-		type OrderId = u128;
+		type OrderId = OrderIndex; //Order<<<T as Config>::Orderbook as Orderbook>::OrderId>;
 
 		type Orderbook = T::Orderbook;
 
@@ -153,21 +155,24 @@ pub mod pallet {
 		) -> Result<Self::OrderId, Self::Error> {
 
 			ensure!(
-				matches!(<T::Currency as Inspect>::can_withdraw(source_asset_id, account_id, total_amount), WithdrawConsequence::Success),
+				matches!(<T::Currency as Inspect<T::AccountId>>::can_withdraw(*source_asset_id, account_id, *total_amount), WithdrawConsequence::Success),
 				Error::<T>::CannotWithdrawAmountEqualToDesiredAuction
 			);
 
-			let dex_order = <T::Orderbook as Orderbook>::post(account_id, source_asset_id, initial_price, total_amount, initial_price, Permill::from_perthousand(10))?;
+			let dex_order = <T::Orderbook as Orderbook>::post(account_id, source_asset_id, target_asset_id, total_amount, initial_price, Permill::from_perthousand(10)).unwrap();
 			let order_id = OrderIndex(42);
 			let order = Order {
 				dex_order : dex_order,
-				started : T::UnixTime::now(),
+				started : T::UnixTime::now().as_secs(),
 				function,
 			};
-			Orders::<T>::insert(order_id, order);
+
+			//Orders::<T>::insert(order_id, order);
+
+			Ok(order_id)
 		}
 
-		fn run_auctions(now: composable_traits::loans::DurationSeconds) -> Result<(), Self::Error> {
+		fn run_auctions(now: DurationSeconds) -> Result<(), Self::Error> {
 			todo!()
 		}
 
@@ -176,5 +181,9 @@ pub mod pallet {
 		) -> Option<composable_traits::auction::AuctionOrder<Self::OrderId>> {
 			todo!()
 		}
+
+		fn intention_updated(order: &Self::OrderId, action_event: composable_traits::auction::ActionEvent) {
+	        todo!()
+	    }
 	}
 }
