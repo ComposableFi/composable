@@ -5851,6 +5851,7 @@ dependencies = [
  "orml-traits",
  "pallet-balances",
  "pallet-currency-factory",
+ "pallet-liquidations",
  "pallet-oracle",
  "pallet-timestamp",
  "pallet-vault",
@@ -5866,7 +5867,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-liqudations"
+name = "pallet-liquidations"
 version = "0.0.1"
 dependencies = [
  "composable-traits",
@@ -6694,6 +6695,7 @@ dependencies = [
  "pallet-democracy",
  "pallet-indices",
  "pallet-lending",
+ "pallet-liquidations",
  "pallet-membership",
  "pallet-oracle",
  "pallet-randomness-collective-flip",
