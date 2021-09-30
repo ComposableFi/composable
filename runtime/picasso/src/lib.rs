@@ -12,6 +12,7 @@ use common::{
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
 	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
 };
+use liquidations::DeFiComposablePallet;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -798,11 +799,23 @@ impl lending::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Currency = Tokens;
-	type UnixTime = Timestamp;
 	type CurrencyFactory = Factory;
 	type MarketDebtCurrency = Tokens;
+	type Liquidation = Liquidations;
+	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
+}
+
+impl DeFiComposablePallet for Runtime {
+	type AssetId = CurrencyId;
+}
+
+impl liquidations::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type UnixTime = Timestamp;
+	type Lending = Lending;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -863,6 +876,7 @@ construct_runtime!(
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 54,
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
+		Liquidations: liquidations::{Pallet, Call, Event<T>} = 56,
 	}
 );
 

@@ -6,7 +6,7 @@ use frame_support::{
 	PalletId,
 };
 use orml_traits::parameter_type_with_key;
-use pallet_liqudations::DeFiComposablePallet;
+use pallet_liquidations::DeFiComposablePallet;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
@@ -98,7 +98,7 @@ frame_support::construct_runtime!(
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Liqudations: pallet_liqudations::{Pallet, Call, Event<T>},
+		Liquidations: pallet_liquidations::{Pallet, Call, Event<T>},
 		Lending: pallet_lending::{Pallet, Call, Config, Storage, Event<T>},
 		Oracle: pallet_lending::mocks::oracle::{Pallet},
 	}
@@ -232,7 +232,7 @@ impl DeFiComposablePallet for Test {
 	type AssetId = MockCurrencyId;
 }
 
-impl pallet_liqudations::Config for Test {
+impl pallet_liquidations::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type UnixTime = Timestamp;
@@ -253,7 +253,7 @@ impl pallet_lending::Config for Test {
 	type Currency = Tokens;
 	type CurrencyFactory = LpTokenFactory;
 	type MarketDebtCurrency = Tokens;
-	type Liqudation = Liqudations;
+	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = ();
