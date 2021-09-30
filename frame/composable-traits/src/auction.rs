@@ -9,8 +9,10 @@ pub enum AuctionStepFunction {
 /// That information is provided via event subscribes which callback into auction.
 /// Assuming liquidity providers to be off our local chain, it means that it is high latency external loop.
 pub enum ActionEvent {
-	LinearDecrease,
-	StairstepExponentialDecrease,
+	/// success transfer of funds
+	Fail,
+	CanceledBecauseOfNoPriceMatch,
+	CanceledBecauseOfSomeTechnicalReasons,
 }
 
 pub struct AuctionOrder<OrderId> {
@@ -52,6 +54,6 @@ pub trait DutchAuction {
 
 	fn get_auction_state(order: &Self::OrderId) -> Option<AuctionOrder<Self::OrderId>>;
 
-	///
-	fn intention_updated(order: &Self::OrderId);
+	/// called back from DEX
+	fn intention_updated(order: &Self::OrderId, action_event: ActionEvent);
 }

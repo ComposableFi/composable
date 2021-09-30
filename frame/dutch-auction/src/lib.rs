@@ -30,25 +30,15 @@ mod price_function;
 pub mod pallet {
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::{
-		auction::DutchAuction,
-		dex::{Orderbook, SimpleExchange},
-		math::LiftedFixedBalance,
-	};
-	use frame_support::{Parameter, StorageMap, pallet_prelude::MaybeSerializeDeserialize, traits::{
-			fungibles::{Mutate, Transfer},
-			IsType, UnixTime,
-		}};
+	use composable_traits::{auction::DutchAuction, dex::{Orderbook, SimpleExchange}, loans::DurationSeconds, math::LiftedFixedBalance};
+	use frame_support::{Parameter, StorageMap, ensure, pallet_prelude::MaybeSerializeDeserialize, traits::{Currency, IsType, UnixTime, fungibles::{Inspect, Mutate, Transfer}, tokens::WithdrawConsequence}};
 
 	use frame_system::{pallet_prelude::*, Account};
 	use num_traits::{CheckedDiv, SaturatingSub};
-	use sp_runtime::{
-		traits::{
+	use sp_runtime::{ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill, traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
-		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
-	};
+		}};
 	use sp_std::{fmt::Debug, vec::Vec};
 
 	pub trait DeFiComposableConfig: frame_system::Config {
@@ -80,7 +70,9 @@ pub mod pallet {
 
 		/// bank. vault owned - can transfer, cannot mint
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+			// used to check balances before any storage updates allowing acting without rollback
+			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
 	}
 
 	#[pallet::config]
@@ -98,7 +90,9 @@ pub mod pallet {
 	}
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		CannotWithdrawAmountEqualToDesiredAuction,
+	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -112,9 +106,14 @@ pub mod pallet {
 	#[repr(transparent)]
 	pub struct OrderIndex(u64);
 
+
+	/// auction can span several dex orders within its lifetime
 	#[derive(Encode, Decode, Default)]
-	pub struct Order
+	pub struct Order<DexOrderId>
 	{
+		pub dex_order: DexOrderId,
+		pub started: DurationSeconds,
+		pub function: composable_traits::auction::AuctionStepFunction,
 	}
 
 
@@ -124,7 +123,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		OrderIndex,
-		Order,
+		Order<T::Orderbook::OrderId>,
 		ValueQuery,
 	>;
 
@@ -153,6 +152,19 @@ pub mod pallet {
 			function: composable_traits::auction::AuctionStepFunction,
 		) -> Result<Self::OrderId, Self::Error> {
 
+			ensure!(
+				matches!(<T::Currency as Inspect>::can_withdraw(source_asset_id, account_id, total_amount), WithdrawConsequence::Success),
+				Error::<T>::CannotWithdrawAmountEqualToDesiredAuction
+			);
+
+			let dex_order = <T::Orderbook as Orderbook>::post(account_id, source_asset_id, initial_price, total_amount, initial_price, Permill::from_perthousand(10))?;
+			let order_id = OrderIndex(42);
+			let order = Order {
+				dex_order : dex_order,
+				started : T::UnixTime::now(),
+				function,
+			};
+			Orders::<T>::insert(order_id, order);
 		}
 
 		fn run_auctions(now: composable_traits::loans::DurationSeconds) -> Result<(), Self::Error> {
