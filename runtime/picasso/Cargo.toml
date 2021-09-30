@@ -44,6 +44,7 @@ transaction-payment = { package = "pallet-transaction-payment", git = "https://g
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
+smallvec = "1.6.1"
 
 # local modules
 crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
@@ -54,6 +55,7 @@ vault = { package = "pallet-vault", path = "../../frame/vault", default-features
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
 lending = { package = "pallet-lending", path = "../../frame/lending", default-features = false }
 liquidations = { package = "pallet-liquidations", path = "../../frame/liquidations", default-features = false }
+transaction-fee = { package = "pallet-transaction-fee", path = "../../frame/transaction-fee", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", default-features = false }
@@ -126,6 +128,7 @@ std = [
 	"primitives/std",
 	"collective/std",
 	"transaction-payment/std",
+	"transaction-fee/std",
 	"parachain-info/std",
 	"cumulus-pallet-aura-ext/std",
 	"cumulus-pallet-parachain-system/std",
