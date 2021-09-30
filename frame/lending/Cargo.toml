@@ -44,6 +44,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 pallet-balances = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 pallet-timestamp = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
+pallet-liqudations = { version = "0.0.1", path = "../liquidations" }
 pallet-oracle = { version = "1.0.0", path = "../oracle" }
 pallet-vault = { version = "0.0.1", path = "../vault" }
 
