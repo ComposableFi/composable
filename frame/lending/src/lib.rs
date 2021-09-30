@@ -151,7 +151,11 @@ pub mod pallet {
 			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
-		type Liquidation: Liquidate;
+		type Liquidation: Liquidate<
+			AssetId = Self::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+		>;
 		type UnixTime: UnixTime;
 		type MaxLendingCount: Get<u32>;
 		type WeightInfo: WeightInfo;
@@ -204,7 +208,11 @@ pub mod pallet {
 			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
-		type Liquidation: Liquidate;
+		type Liquidation: Liquidate<
+			AssetId = Self::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+		>;
 		type UnixTime: UnixTime;
 		type MaxLendingCount: Get<u32>;
 		type WeightInfo: WeightInfo;
@@ -282,7 +290,7 @@ pub mod pallet {
 		BorrowDoesNotExist,
 		RepayAmountMustBeGraterThanZero,
 		ExceedLendingCount,
-		InitiateLiquidation,
+		LiquidationFailed,
 	}
 
 	#[pallet::event]
@@ -678,7 +686,13 @@ pub mod pallet {
 			let should_liquidate = borrower.should_liquidate()?;
 			if should_liquidate {
 				// must trigger liquidation
-				return Err(Error::<T>::InitiateLiquidation.into())
+				let _liquidation_result = T::Liquidation::liquidate(
+					&Self::account_id(market_id),
+					&market.collateral,
+					&borrow_asset_id,
+					&borrower_balance_with_interest,
+				)
+				.map_err(|_| Error::<T>::LiquidationFailed);
 			}
 			Ok(())
 		}

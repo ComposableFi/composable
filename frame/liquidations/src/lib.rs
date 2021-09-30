@@ -148,7 +148,8 @@ pub mod pallet {
 			want: &Self::AssetId,
 			amount: &Self::Balance,
 		) -> Result<(), Self::Error> {
-			todo!()
+			//TODO: implement this function.
+			Ok(())
 		}
 	}
 }

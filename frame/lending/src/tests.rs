@@ -529,10 +529,7 @@ fn test_liquidation() {
 
 		// change price of colleteral to initiate liquidation
 		Oracle::set_btc_price(98u128);
-		assert_err!(
-			Lending::liquidate_internal(&market, &ALICE),
-			Error::<Test>::InitiateLiquidation
-		);
+		assert_ok!(Lending::liquidate_internal(&market, &ALICE));
 	});
 }
 /*
