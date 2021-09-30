@@ -31,6 +31,7 @@ pub struct TakeResult<BALANCE> {
 /// see for examples:
 /// - https://github.com/galacticcouncil/Basilisk-node/blob/master/pallets/exchange/src/lib.rs
 /// - https://github.com/Polkadex-Substrate/polkadex-aura-node/blob/master/pallets/polkadex/src/lib.rs
+/// expected that failed exchanges are notified by events.
 pub trait Orderbook {
 	type AssetId;
 	type Balance;

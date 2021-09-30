@@ -5,6 +5,14 @@ pub enum AuctionStepFunction {
 	StairstepExponentialDecrease,
 }
 
+/// Auction is done via dexes which act each block. Each block decide if intention was satisfied or not.
+/// That information is provided via event subscribes which callback into auction.
+/// Assuming liquidity providers to be off our local chain, it means that it is high latency external loop.
+pub enum ActionEvent {
+	LinearDecrease,
+	StairstepExponentialDecrease,
+}
+
 pub struct AuctionOrder<OrderId> {
 	pub id: OrderId,
 }
@@ -24,7 +32,7 @@ pub trait DutchAuction {
 	/// `source_account` for specific specific `asset_id` from which `amount` is transferred
 	/// onto auction account.
 	/// `initial_price` for `total_amount`
-	/// `target_account` where to move account after success sail.
+	/// `target_account` where to move account after success sell.
 	fn start(
 		account_id: &Self::AccountId,
 		source_asset_id: &Self::AssetId,
@@ -43,4 +51,7 @@ pub trait DutchAuction {
 	fn run_auctions(now: DurationSeconds) -> Result<(), Self::Error>;
 
 	fn get_auction_state(order: &Self::OrderId) -> Option<AuctionOrder<Self::OrderId>>;
+
+	///
+	fn intention_updated(order: &Self::OrderId);
 }

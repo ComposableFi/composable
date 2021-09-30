@@ -35,14 +35,10 @@ pub mod pallet {
 		dex::{Orderbook, SimpleExchange},
 		math::LiftedFixedBalance,
 	};
-	use frame_support::{
-		pallet_prelude::MaybeSerializeDeserialize,
-		traits::{
+	use frame_support::{Parameter, StorageMap, pallet_prelude::MaybeSerializeDeserialize, traits::{
 			fungibles::{Mutate, Transfer},
 			IsType, UnixTime,
-		},
-		Parameter,
-	};
+		}};
 
 	use frame_system::{pallet_prelude::*, Account};
 	use num_traits::{CheckedDiv, SaturatingSub};
@@ -111,6 +107,27 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
 
+
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
+	#[repr(transparent)]
+	pub struct OrderIndex(u64);
+
+	#[derive(Encode, Decode, Default)]
+	pub struct Order
+	{
+	}
+
+
+	#[pallet::storage]
+	#[pallet::getter(fn orders)]
+	pub type Orders<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		OrderIndex,
+		Order,
+		ValueQuery,
+	>;
+
 	impl<T: Config + DeFiComposableConfig> DutchAuction for Pallet<T> {
 		type AccountId = T::AccountId;
 
@@ -135,7 +152,7 @@ pub mod pallet {
 			initial_price: &Self::Balance,
 			function: composable_traits::auction::AuctionStepFunction,
 		) -> Result<Self::OrderId, Self::Error> {
-			todo!()
+
 		}
 
 		fn run_auctions(now: composable_traits::loans::DurationSeconds) -> Result<(), Self::Error> {
