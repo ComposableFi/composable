@@ -2,7 +2,11 @@
 //! Linear, step-wise exponential, and continuous exponential, others, configured from MakerDao
 //! https://github.com/makerdao/dss/blob/master/src/abaci.sol
 
-use composable_traits::{auction::{LinearDecrease, StairstepExponentialDecrease}, loans::DurationSeconds, math::{LiftedFixedBalance, SafeArithmetic}};
+use composable_traits::{
+	auction::{LinearDecrease, StairstepExponentialDecrease},
+	loans::DurationSeconds,
+	math::{LiftedFixedBalance, SafeArithmetic},
+};
 
 use sp_runtime::{
 	traits::{
@@ -11,7 +15,6 @@ use sp_runtime::{
 	},
 	ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill,
 };
-
 
 pub trait AuctionTimeCurveModel {
 	/// return current auction price
@@ -37,7 +40,7 @@ impl AuctionTimeCurveModel for LinearDecrease {
 			initial_price
 				.safe_mul(
 					&LiftedFixedBalance::checked_from_integer(
-						self.total.saturating_sub(&duration_since_start) as u128,
+						self.total.saturating_sub(duration_since_start) as u128,
 					)
 					.unwrap(),
 				)?
@@ -45,7 +48,6 @@ impl AuctionTimeCurveModel for LinearDecrease {
 		}
 	}
 }
-
 
 /// returns: top * (cut ^ dur)
 impl AuctionTimeCurveModel for StairstepExponentialDecrease {

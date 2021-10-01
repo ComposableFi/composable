@@ -29,22 +29,39 @@ mod price_function;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use codec::{Codec, FullCodec, Decode, Encode};
-	use composable_traits::{auction::{AuctionState, AuctionStepFunction, DutchAuction}, dex::{Orderbook, SimpleExchange}, loans::DurationSeconds, math::LiftedFixedBalance};
-	use frame_support::{Parameter, Twox64Concat, ensure, pallet_prelude::{MaybeSerializeDeserialize, ValueQuery}, traits::{Currency, IsType, UnixTime, fungibles::{Inspect, Mutate, Transfer}, tokens::WithdrawConsequence}};
-
+	use codec::{Codec, Decode, Encode, FullCodec};
+	use composable_traits::{
+		auction::{AuctionState, AuctionStepFunction, DutchAuction},
+		dex::{Orderbook, SimpleExchange},
+		loans::DurationSeconds,
+		math::LiftedFixedBalance,
+	};
+	use frame_support::{
+		ensure,
+		pallet_prelude::{MaybeSerializeDeserialize, ValueQuery},
+		traits::{
+			fungibles::{Inspect, Mutate, Transfer},
+			tokens::WithdrawConsequence,
+			Currency, IsType, UnixTime,
+		},
+		Parameter, Twox64Concat,
+	};
 
 	use frame_support::pallet_prelude::*;
-	use frame_system::{pallet_prelude::*, Account, };
+	use frame_system::{pallet_prelude::*, Account};
 	use num_traits::{CheckedDiv, SaturatingAdd, SaturatingSub, WrappingAdd};
-	use orml_traits::Auction;
-use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill, traits::{
+
+	use sp_runtime::{
+		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
-		}};
+		},
+		ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128, Percent,
+		Permill, Perquintill,
+	};
 	use sp_std::{fmt::Debug, vec::Vec};
 
-use crate::price_function::AuctionTimeCurveModel;
+	use crate::price_function::AuctionTimeCurveModel;
 
 	pub trait DeFiComposableConfig: frame_system::Config {
 		// what.
@@ -85,34 +102,38 @@ use crate::price_function::AuctionTimeCurveModel;
 	pub trait Config: DeFiComposableConfig {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type UnixTime: UnixTime;
-		type Orderbook: Orderbook<AssetId = Self::AssetId, Balance = Self::Balance, AccountId = Self::AccountId, Error = DispatchError, OrderId = Self::DexOrderId>;
-		type DexOrderId : FullCodec +  Default;
-		type OrderId : FullCodec + Clone + Debug + Eq + Default + WrappingNext;
+		type Orderbook: Orderbook<
+			AssetId = Self::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+			Error = DispatchError,
+			OrderId = Self::DexOrderId,
+		>;
+		type DexOrderId: FullCodec + Default;
+		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-
 		/// when auctions starts
 		AuctionWasStarted {
-			order_id: T::OrderId
+			order_id: T::OrderId,
 		},
 
-
 		AuctionOnDex {
-			order_id: T::OrderId
+			order_id: T::OrderId,
 		},
 
 		AuctionSuccess {
-			order_id: T::OrderId
+			order_id: T::OrderId,
 		},
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		CannotWithdrawAmountEqualToDesiredAuction,
-		EitherTooMuchOfAuctions
+		EitherTooMuchOfAuctions,
 	}
 
 	#[pallet::pallet]
@@ -122,9 +143,10 @@ use crate::price_function::AuctionTimeCurveModel;
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
 
-
-	/// is anybody aware of trait like Next which is semantically same as WrappingAdd, and calling wrapping_add(1) -> increment, but without knowing that it is number?
-	/// - it is up to storage to clean self up preventing overwrite (clean up + next is implemented on top of ranges)
+	/// is anybody aware of trait like Next which is semantically same as WrappingAdd, and calling
+	/// wrapping_add(1) -> increment, but without knowing that it is number?
+	/// - it is up to storage to clean self up preventing overwrite (clean up + next is implemented
+	///   on top of ranges)
 	/// - up configuration to decide cardinality
 	/// - alternative - random key
 	pub trait WrappingNext {
@@ -133,8 +155,7 @@ use crate::price_function::AuctionTimeCurveModel;
 
 	/// auction can span several dex orders within its lifetime
 	#[derive(Encode, Decode, Default)]
-	pub struct Order<DexOrderId, AccountId, AssetId, Balance>
-	{
+	pub struct Order<DexOrderId, AccountId, AssetId, Balance> {
 		pub latest_dex_order_intention: Option<DexOrderId>,
 		pub started: DurationSeconds,
 		pub function: AuctionStepFunction,
@@ -142,13 +163,12 @@ use crate::price_function::AuctionTimeCurveModel;
 		pub source_asset_id: AssetId,
 		pub source_account: AccountId,
 		pub target_asset_id: AssetId,
-		pub target_account:  AccountId,
+		pub target_account: AccountId,
 		pub want: AssetId,
 		pub total_amount: Balance,
 		pub initial_price: Balance,
-		pub state : AuctionState,
+		pub state: AuctionState,
 	}
-
 
 	#[pallet::storage]
 	#[pallet::getter(fn orders)]
@@ -156,17 +176,18 @@ use crate::price_function::AuctionTimeCurveModel;
 		_,
 		Twox64Concat,
 		T::OrderId,
-		Order<<<T as Config>::Orderbook as Orderbook>::OrderId, T::AccountId, T::AssetId, T::Balance>,
+		Order<
+			<<T as Config>::Orderbook as Orderbook>::OrderId,
+			T::AccountId,
+			T::AssetId,
+			T::Balance,
+		>,
 		ValueQuery,
 	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn orders_index)]
-	pub type OrdersIndex<T: Config> = StorageValue<
-		_,
-		T::OrderId,
-		ValueQuery,
-	>;
+	pub type OrdersIndex<T: Config> = StorageValue<_, T::OrderId, ValueQuery>;
 
 	impl<T: Config + DeFiComposableConfig> DutchAuction for Pallet<T> {
 		type AccountId = T::AccountId;
@@ -181,7 +202,12 @@ use crate::price_function::AuctionTimeCurveModel;
 
 		type Orderbook = T::Orderbook;
 
-		type Order = Order<<<T as Config>::Orderbook as Orderbook>::OrderId, T::AccountId, T::AssetId, T::Balance>;
+		type Order = Order<
+			<<T as Config>::Orderbook as Orderbook>::OrderId,
+			T::AccountId,
+			T::AssetId,
+			T::Balance,
+		>;
 
 		fn start(
 			account_id: &Self::AccountId,
@@ -194,69 +220,77 @@ use crate::price_function::AuctionTimeCurveModel;
 			initial_price: &Self::Balance,
 			function: AuctionStepFunction,
 		) -> Result<Self::OrderId, Self::Error> {
-
 			/// TODO: with remote foreign chain DEX it can pass several blocks before we get on DEX.
 			/// so somehow need to lock (transfer) currency before foreign transactions settles
 			ensure!(
-				matches!(<T::Currency as Inspect<T::AccountId>>::can_withdraw(*source_asset_id, account_id, *total_amount), WithdrawConsequence::Success),
+				matches!(
+					<T::Currency as Inspect<T::AccountId>>::can_withdraw(
+						*source_asset_id,
+						account_id,
+						*total_amount
+					),
+					WithdrawConsequence::Success
+				),
 				Error::<T>::CannotWithdrawAmountEqualToDesiredAuction
 			);
 
-			/// because dex call is in "other transaction" and same block can have 2 starts each passing check, but failing during dex call.
-			let order_id : T::OrderId = OrdersIndex::<T>::get();
+			/// because dex call is in "other transaction" and same block can have 2 starts each
+			/// passing check, but failing during dex call.
+			let order_id: T::OrderId = OrdersIndex::<T>::get();
 			OrdersIndex::<T>::set(order_id.next());
 
 			let order = Order {
-				latest_dex_order_intention : None,
-				started : T::UnixTime::now().as_secs(),
+				latest_dex_order_intention: None,
+				started: T::UnixTime::now().as_secs(),
 				function,
-				account_id :  account_id.clone(),
-				source_asset_id :  *source_asset_id ,
-				source_account :  source_account.clone(),
-				target_asset_id :  *target_asset_id ,
-				target_account :  target_account.clone(),
-				want :  *want ,
-				total_amount :  *total_amount ,
-				initial_price :  *initial_price ,
-				state : AuctionState::AuctionStarted,
-
+				account_id: account_id.clone(),
+				source_asset_id: *source_asset_id,
+				source_account: source_account.clone(),
+				target_asset_id: *target_asset_id,
+				target_account: target_account.clone(),
+				want: *want,
+				total_amount: *total_amount,
+				initial_price: *initial_price,
+				state: AuctionState::AuctionStarted,
 			};
 			Orders::<T>::insert(order_id.clone(), order);
-
 
 			Ok(order_id)
 		}
 
 		fn run_auctions(now: DurationSeconds) -> Result<(), Self::Error> {
-
-			for ( order_id, mut order) in Orders::<T>::iter() {
-				if order.latest_dex_order_intention.is_none() && order.state == AuctionState::AuctionStarted {
-					// for final protocol may be will need to transfer currency onto auction pallet sub account and send dex order with idempotency tracking id
-					// final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
+			for (order_id, mut order) in Orders::<T>::iter() {
+				if order.latest_dex_order_intention.is_none() &&
+					order.state == AuctionState::AuctionStarted
+				{
+					// for final protocol may be will need to transfer currency onto auction pallet
+					// sub account and send dex order with idempotency tracking id final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
 					let price = match order.function {
-        				AuctionStepFunction::LinearDecrease(parameters) => {
-							parameters.price(order.initial_price.into(), now - order.started)
-						},
-        				AuctionStepFunction::StairstepExponentialDecrease(parameters )=> {
-							parameters.price(order.initial_price.into(), now - order.started)
-
-						},
-    				}?;
+						AuctionStepFunction::LinearDecrease(parameters) =>
+							parameters.price(order.initial_price.into(), now - order.started),
+						AuctionStepFunction::StairstepExponentialDecrease(parameters) =>
+							parameters.price(order.initial_price.into(), now - order.started),
+					}?
+					.checked_mul_int(1u64)
+					.ok_or(ArithmeticError::Overflow)?
+					.into();
 					let dex_order_intention = <T::Orderbook as Orderbook>::post(
 						&order.account_id,
 						&order.source_asset_id,
 						&order.target_asset_id,
 						&order.total_amount,
 						&price,
-						Permill::from_perthousand(10))?;
+						Permill::from_perthousand(10),
+					)?;
 
 					order.latest_dex_order_intention = Some(dex_order_intention);
-					order.state = AuctionState::AuctionOnDex;
-				}
-				else if order.latest_dex_order_intention.is_none()  && order.state != AuctionState::AuctionEndedSuccessfully && order.state != AuctionState::AuctionFatalFailed {
-
-				}
-				else if let Some(dex_order) = order.latest_dex_order_intention {
+				} else if order.latest_dex_order_intention.is_none() &&
+					order.state != AuctionState::AuctionEndedSuccessfully &&
+					order.state != AuctionState::AuctionFatalFailed
+				{
+					// handle here system timeout by transferring emitting event and cleaning up
+					// dex/crosschain stuff
+				} else if let Some(dex_order) = order.latest_dex_order_intention {
 					// waiting for off chain callback about order status
 				}
 			}
@@ -264,14 +298,15 @@ use crate::price_function::AuctionTimeCurveModel;
 			Ok(())
 		}
 
+		fn intention_updated(
+			order: &Self::OrderId,
+			action_event: composable_traits::auction::ActionEvent,
+		) {
+			todo!("here we receive off chain events back about how well DEX trades our auction")
+		}
 
-		fn intention_updated(order: &Self::OrderId, action_event: composable_traits::auction::ActionEvent) {
-	        todo!("here we receive off chain events back about how well DEX trades our auction")
-	    }
-
-
-fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order> {
-        todo!()
-    }
+		fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order> {
+			todo!()
+		}
 	}
 }

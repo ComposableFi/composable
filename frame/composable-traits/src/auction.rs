@@ -3,7 +3,7 @@ use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use sp_runtime::Permill;
 
-#[derive(Default, Decode, Encode, Clone)]
+#[derive(Decode, Encode, Clone)]
 pub enum AuctionStepFunction {
 	/// default - direct pass through to dex without steps, just to satisfy defaults and reasonably for testing
 	LinearDecrease(LinearDecrease),
@@ -17,12 +17,15 @@ impl Default for AuctionStepFunction {
 }
 
 
-#[derive(Default, Decode, Encode, Clone)]
+#[derive(Default, Decode, Encode, Clone, PartialEq)]
 pub enum AuctionState {
 	#[default]
 	AuctionStarted,
 	AuctionEndedSuccessfully,
+	/// like DEX does not support asset now or halted
 	AuctionFatalFailed,
+	/// so if for some reason system loop is not properly set, than will get timeout
+	AuctionTimeFailed,
 }
 
 /// Auction is done via dexes which act each block. Each block decide if intention was satisfied or not.
@@ -50,7 +53,7 @@ pub struct StairstepExponentialDecrease {
 	pub cut: Permill,
 }
 
-
+/// see example of it in clip.sol of makerdao
 pub trait DutchAuction {
 	type Error;
 	type OrderId;
