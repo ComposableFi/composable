@@ -1,21 +1,20 @@
 use crate::{dex::Orderbook, loans::DurationSeconds};
-use codec::Codec;
-use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
+use frame_support::pallet_prelude::*;
 use sp_runtime::Permill;
 
 #[derive(Decode, Encode, Clone)]
 pub enum AuctionStepFunction {
-	/// default - direct pass through to dex without steps, just to satisfy defaults and reasonably for testing
+	/// default - direct pass through to dex without steps, just to satisfy defaults and reasonably
+	/// for testing
 	LinearDecrease(LinearDecrease),
 	StairstepExponentialDecrease(StairstepExponentialDecrease),
 }
 
 impl Default for AuctionStepFunction {
-    fn default() -> Self {
-        Self::LinearDecrease(Default::default())
-    }
+	fn default() -> Self {
+		Self::LinearDecrease(Default::default())
+	}
 }
-
 
 #[derive(Default, Decode, Encode, Clone, PartialEq)]
 pub enum AuctionState {
@@ -28,9 +27,10 @@ pub enum AuctionState {
 	AuctionTimeFailed,
 }
 
-/// Auction is done via dexes which act each block. Each block decide if intention was satisfied or not.
-/// That information is provided via event subscribes which callback into auction.
-/// Assuming liquidity providers to be off our local chain, it means that it is high latency external loop.
+/// Auction is done via dexes which act each block. Each block decide if intention was satisfied or
+/// not. That information is provided via event subscribes which callback into auction.
+/// Assuming liquidity providers to be off our local chain, it means that it is high latency
+/// external loop.
 pub enum AuctionExchangeCallback {
 	/// success transfer of funds
 	Success,
@@ -73,6 +73,7 @@ pub trait DutchAuction {
 	/// onto auction account.
 	/// `initial_price` for `total_amount`
 	/// `target_account` where to move account after success sell.
+	#[allow(clippy::too_many_arguments)]
 	fn start(
 		account_id: &Self::AccountId,
 		source_asset_id: &Self::AssetId,

@@ -44,7 +44,7 @@ impl AuctionTimeCurveModel for LinearDecrease {
 					)
 					.unwrap(),
 				)?
-				.safe_div(&&LiftedFixedBalance::checked_from_integer(self.total as u128).unwrap())
+				.safe_div(&LiftedFixedBalance::checked_from_integer(self.total as u128).unwrap())
 		}
 	}
 }

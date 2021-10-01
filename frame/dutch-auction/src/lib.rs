@@ -220,8 +220,8 @@ pub mod pallet {
 			initial_price: &Self::Balance,
 			function: AuctionStepFunction,
 		) -> Result<Self::OrderId, Self::Error> {
-			/// TODO: with remote foreign chain DEX it can pass several blocks before we get on DEX.
-			/// so somehow need to lock (transfer) currency before foreign transactions settles
+			// TODO: with remote foreign chain DEX it can pass several blocks before we get on DEX.
+			// so somehow need to lock (transfer) currency before foreign transactions settles
 			ensure!(
 				matches!(
 					<T::Currency as Inspect<T::AccountId>>::can_withdraw(
@@ -234,8 +234,8 @@ pub mod pallet {
 				Error::<T>::CannotWithdrawAmountEqualToDesiredAuction
 			);
 
-			/// because dex call is in "other transaction" and same block can have 2 starts each
-			/// passing check, but failing during dex call.
+			// because dex call is in "other transaction" and same block can have 2 starts each
+			// passing check, but failing during dex call.
 			let order_id: T::OrderId = OrdersIndex::<T>::get();
 			OrdersIndex::<T>::set(order_id.next());
 
@@ -290,6 +290,7 @@ pub mod pallet {
 				{
 					// handle here system timeout by transferring emitting event and cleaning up
 					// dex/crosschain stuff
+					dbg!("timeout check");
 				} else if let Some(dex_order) = order.latest_dex_order_intention {
 					// waiting for off chain callback about order status
 				}
@@ -303,8 +304,8 @@ pub mod pallet {
 			action_event: composable_traits::auction::AuctionExchangeCallback,
 		) {
 			if let Ok(mut order) = Orders::<T>::try_get(order_id) {
-				match order.state {
-					AuctionState::AuctionStarted => match action_event {
+				if let AuctionState::AuctionStarted = order.state {
+					match action_event {
 						composable_traits::auction::AuctionExchangeCallback::Success => {
 							Orders::<T>::remove(order_id);
 							Self::deposit_event(Event::<T>::AuctionSuccess {
@@ -320,10 +321,7 @@ pub mod pallet {
 								order_id: order_id.clone(),
 							});
 						},
-					},
-					_ => {
-						// case of previous fail or success, do not care if somebody calls again
-					},
+					}
 				};
 			}
 		}
