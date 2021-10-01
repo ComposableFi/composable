@@ -1,4 +1,5 @@
 use frame_support::pallet_prelude::*;
+use sp_runtime::RuntimeDebug;
 
 pub trait Bribe {
 	type Balance;
@@ -10,8 +11,8 @@ pub trait Bribe {
 	fn create_bribe(
 		request: CreateBribeRequest<
 			Self::ReferendumIndex,
-			Self::Conviction,
 			Self::Balance,
+			Self::Conviction,
 			Self::CurrencyId,
 		>,
 	) -> Result<Self::BribeIndex, DispatchError>;
@@ -22,14 +23,14 @@ pub trait Bribe {
 }
 
 /// A request to create a bribe for an (ongoing) referendum.
-#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq)]
+#[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug)]
 pub struct CreateBribeRequest<ReferendumIndex, Conviction, Balance, CurrencyId> {
 	/// Index of the referendum.
 	pub ref_index: ReferendumIndex,
-	/// Requested conviction (e.g. number of blocks to lock tokens for).
-	pub requested_conviction: Conviction,
 	/// How much to pay bribe-takers in total.
 	pub total_reward: Balance,
+	/// Requested conviction (e.g. number of blocks to lock tokens for).
+	pub requested_conviction: Conviction,
 	/// What asset to pay the bribes with.
 	pub asset_id: CurrencyId,
 	/// Whether the bribe is in favor of the proposal or against it.
@@ -37,7 +38,7 @@ pub struct CreateBribeRequest<ReferendumIndex, Conviction, Balance, CurrencyId> 
 }
 
 /// A request to take a bribe and vote for the corresponding referendum.
-#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq)]
+#[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug)]
 pub struct TakeBribeRequest<BribeIndex, Balance, Conviction> {
 	/// Index of the bribe.
 	pub bribe_index: BribeIndex,
