@@ -24,9 +24,8 @@ pub mod pallet {
 		composable_traits::bribe::TakeBribeRequest<BribeIndex, <T as Config>::Votes>;
 
 	#[pallet::config]
-	pub trait Config: /* pallet_balances::Config + */ frame_system::Config {
-		// TODO: Balance traits
-		// following are copied from pallet-vault
+	pub trait Config: frame_system::Config {
+		// REVIEW(oleksii): Balance traits; following are copied from pallet-vault
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -39,28 +38,19 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ Zero;
 
-		// TODO: CurrencyId traits
+		// TODO(oleksii): CurrencyId traits
 		type CurrencyId: Parameter;
-		// TODO: Votes traits
+		// TODO(oleksii): Votes traits
 		type Votes: Parameter;
 
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		// /// Type representing the weight of this pallet
+		// TODO(oleksii): WeightInfo type
 		// type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
-
-	// #[pallet::hooks]
-	// impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-	// 	fn lorem(_n: T::BlockNumber) -> Weight {
-	// 		0
-	// 	}
-
-	// 	fn on_finalize(_n: T::BlockNumber) {}
-	// }
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -111,7 +101,7 @@ pub mod pallet {
 		}
 	}
 
-	// TODO: Errors (#[pallet::error])
+	// TODO(oleksii): Errors (#[pallet::error])
 
 	impl<T: Config> Bribe for Pallet<T> {
 		type BribeIndex = BribeIndex;
@@ -138,21 +128,13 @@ pub mod pallet {
 			});
 			BribeRequests::<T>::insert(id, request);
 
-			todo!("do_create_bribe implementation");
+			todo!("check that referendum exists");
 
 			Ok(id)
 		}
 
 		fn do_take_bribe(request: TakeBribeRequest<T>) -> Result<bool, DispatchError> {
-			todo!("do_take_bribe implementation")
+			todo!("enact vote through pallet_democracy");
 		}
 	}
 }
-
-// pub struct WatchDummy<T: Config + Send + Sync>(PhantomData<T>);
-
-// impl<T: Config + Send + Sync> sp_std::fmt::Debug for WatchDummy<T> {
-// 	fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-// 		write!(f, "WatchDummy")
-// 	}
-// }
