@@ -36,7 +36,7 @@ pub mod pallet {
 
 	use frame_support::pallet_prelude::*;
 	use frame_system::{pallet_prelude::*, Account, };
-	use num_traits::{CheckedDiv, SaturatingSub};
+	use num_traits::{CheckedDiv, SaturatingAdd, SaturatingSub, WrappingAdd};
 	use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill, traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
@@ -84,17 +84,29 @@ pub mod pallet {
 		type UnixTime: UnixTime;
 		type Orderbook: Orderbook<AssetId = Self::AssetId, Balance = Self::Balance, AccountId = Self::AccountId, Error = DispatchError, OrderId = Self::DexOrderId>;
 		type DexOrderId : FullCodec +  Default;
+		type OrderId : FullCodec + Clone + Debug + Eq + Default + WrappingNext;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-		PositionWasSentToLiquidation {},
+
+		/// when auctions starts
+		AuctionWasStarted {
+			order_id: T::OrderId
+		},
+
+
+		AuctionStepHappend {
+			order_id: T::OrderId
+		},
+
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		CannotWithdrawAmountEqualToDesiredAuction,
+		EitherTooMuchOfAuctions
 	}
 
 	#[pallet::pallet]
@@ -105,18 +117,29 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {}
 
 
-	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
-	#[repr(transparent)]
-	pub struct OrderIndex(u64);
-
+	/// is anybody aware of trait like Next which is semantically same as WrappingAdd, and calling wrapping_add(1) -> increment, but without knowing that it is number?
+	/// - it is up to storage to clean self up preventing overwrite (clean up + next is implemented on top of ranges)
+	/// - up configuration to decide cardinality
+	/// - alternative - random key
+	pub trait WrappingNext {
+		fn next(&self) -> Self;
+	}
 
 	/// auction can span several dex orders within its lifetime
 	#[derive(Encode, Decode, Default)]
-	pub struct Order<DexOrderId>
+	pub struct Order<DexOrderId, AccountId, AssetId, Balance>
 	{
-		pub dex_order: DexOrderId,
+		pub dex_order_intention: Option<DexOrderId>,
 		pub started: DurationSeconds,
 		pub function: composable_traits::auction::AuctionStepFunction,
+		pub account_id: AccountId,
+		pub source_asset_id: AssetId,
+		pub source_account: AccountId,
+		pub target_asset_id: AssetId,
+		pub target_account:  AccountId,
+		pub want: AssetId,
+		pub total_amount: Balance,
+		pub initial_price: Balance,
 	}
 
 
@@ -125,8 +148,16 @@ pub mod pallet {
 	pub type Orders<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
-		OrderIndex,
-		Order<<<T as Config>::Orderbook as Orderbook>::OrderId>,
+		T::OrderId,
+		Order<<<T as Config>::Orderbook as Orderbook>::OrderId, T::AccountId, T::AssetId, T::Balance>,
+		ValueQuery,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn orders_index)]
+	pub type OrdersIndex<T: Config> = StorageValue<
+		_,
+		T::OrderId,
 		ValueQuery,
 	>;
 
@@ -137,9 +168,9 @@ pub mod pallet {
 
 		type Balance = T::Balance;
 
-		type Error = Error<T>;
+		type Error = DispatchError;
 
-		type OrderId = OrderIndex; //Order<<<T as Config>::Orderbook as Orderbook>::OrderId>;
+		type OrderId = T::OrderId;
 
 		type Orderbook = T::Orderbook;
 
@@ -159,22 +190,51 @@ pub mod pallet {
 				matches!(<T::Currency as Inspect<T::AccountId>>::can_withdraw(*source_asset_id, account_id, *total_amount), WithdrawConsequence::Success),
 				Error::<T>::CannotWithdrawAmountEqualToDesiredAuction
 			);
+			/// probably instead of check we should do transfer onto account to avoid,
+			/// because dex call is in "other transaction" and same block can have 2 starts each passing check, but failing during dex call.
+			let order_id : T::OrderId = OrdersIndex::<T>::get();
+			OrdersIndex::<T>::set(order_id.next());
 
-			let dex_order = <T::Orderbook as Orderbook>::post(account_id, source_asset_id, target_asset_id, total_amount, initial_price, Permill::from_perthousand(10)).unwrap();
-			let order_id = OrderIndex(42);
 			let order = Order {
-				dex_order : dex_order,
+				dex_order_intention : None,
 				started : T::UnixTime::now().as_secs(),
 				function,
+				account_id :  account_id.clone(),
+				source_asset_id :  *source_asset_id ,
+				source_account :  source_account.clone(),
+				target_asset_id :  *target_asset_id ,
+				target_account :  target_account.clone(),
+				want :  *want ,
+				total_amount :  *total_amount ,
+				initial_price :  *initial_price ,
+
 			};
+			Orders::<T>::insert(order_id.clone(), order);
 
-			Orders::<T>::insert(order_id, order);
 
-			Ok(order_id)
+			Ok(order_id.clone())
 		}
 
 		fn run_auctions(now: DurationSeconds) -> Result<(), Self::Error> {
-			todo!()
+			for ( order_id, ref mut order) in Orders::<T>::iter() {
+				if order.dex_order_intention.is_none() {
+					/// for final protocol may be will need to transfer currency onto auction pallet sub account and send dex order with idempotency tracking id
+					// final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
+					let dex_order_intention = <T::Orderbook as Orderbook>::post(
+						&order.account_id,
+						&order.source_asset_id,
+						&order.target_asset_id,
+						&order.total_amount,
+						&order.initial_price,
+						Permill::from_perthousand(10))?;
+					order.dex_order_intention = Some(dex_order_intention);
+					// set dex order in callback
+					// move dex handling protocol into dex
+				}
+
+			}
+
+			Ok(())
 		}
 
 		fn get_auction_state(
@@ -184,7 +244,7 @@ pub mod pallet {
 		}
 
 		fn intention_updated(order: &Self::OrderId, action_event: composable_traits::auction::ActionEvent) {
-	        todo!()
+	        todo!("here we receive off chain events back about how well DEX trades our auction")
 	    }
 	}
 }
