@@ -258,6 +258,13 @@ pub mod pallet {
 			// weight += u64::from(call_counters.handle_must_liquidate) *
 			// <T as Config>::WeightInfo::handle_must_liquidate();
 
+			// TODO: move following loop to OCW
+			for (market_id, account, _) in DebtIndex::<T>::iter() {
+				if Self::liquidate_internal(&market_id, &account).is_ok() {
+					Self::deposit_event(Event::LiquidationInitiated { market_id, account });
+				}
+			}
+
 			weight
 		}
 	}
@@ -319,6 +326,8 @@ pub mod pallet {
 			beneficiary: T::AccountId,
 			amount: T::Balance,
 		},
+		/// Event emitted when a liquidation is initiated for a loan.
+		LiquidationInitiated { market_id: MarketIndex, account: T::AccountId },
 	}
 
 	/// Lending instances counter
@@ -662,10 +671,10 @@ pub mod pallet {
 			<Self as Lending>::repay_borrow(market_id, from, beneficiary, repay_amount)
 		}
 
-		pub fn liquidate_internal(
+		pub fn should_liquidate(
 			market_id: &<Self as Lending>::MarketId,
 			account: &<Self as Lending>::AccountId,
-		) -> Result<(), DispatchError> {
+		) -> Result<bool, DispatchError> {
 			let collateral_balance = Self::collateral_of_account(market_id, account)?;
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
@@ -684,9 +693,25 @@ pub mod pallet {
 				market.collateral_factor,
 			);
 			let should_liquidate = borrower.should_liquidate()?;
-			if should_liquidate {
+			Ok(should_liquidate)
+		}
+
+		/// if liquidation is not required returns `ok(false)`
+		/// if liquidation is required and `liquidate` is successful then return `Ok(true)`
+		/// if there is any error then propagate that error.
+		pub fn liquidate_internal(
+			market_id: &<Self as Lending>::MarketId,
+			account: &<Self as Lending>::AccountId,
+		) -> Result<(), DispatchError> {
+			if Self::should_liquidate(market_id, account)? {
 				// must trigger liquidation
-				let _liquidation_result = T::Liquidation::liquidate(
+				let market =
+					Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+				let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
+				let borrower_balance_with_interest =
+					Self::borrow_balance_current(market_id, account)?
+						.unwrap_or_else(BorrowAmountOf::<Self>::zero);
+				let _liquidation_id = T::Liquidation::initiate_liquidation(
 					&Self::account_id(market_id),
 					&market.collateral,
 					&borrow_asset_id,

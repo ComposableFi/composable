@@ -113,7 +113,7 @@ pub mod pallet {
 			// collect collaterals and borrows
 			// make sure that can transfer these to dutch auction (API in lending)
 			for (account, asset, want, amount) in Vec::new().iter() {
-				Self::liquidate(account, asset, want, amount)?;
+				let _liquidation_id = Self::initiate_liquidation(account, asset, want, amount)?;
 			}
 			Ok(())
 		}
@@ -142,14 +142,20 @@ pub mod pallet {
 
 		type Error = Error<T>;
 
-		fn liquidate(
+		type LiquidationId = u128;
+
+		fn initiate_liquidation(
 			account: &Self::AccountId,
 			asset: &Self::AssetId,
 			want: &Self::AssetId,
 			amount: &Self::Balance,
-		) -> Result<(), Self::Error> {
+		) -> Result<Self::LiquidationId, Self::Error> {
 			//TODO: implement this function.
-			Ok(())
+			Ok(0)
+		}
+		fn is_liquidation_completed(liquidation_id : &Self::LiquidationId) -> bool {
+			// TODO: implement
+			false
 		}
 	}
 }

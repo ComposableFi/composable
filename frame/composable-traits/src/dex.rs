@@ -65,4 +65,6 @@ pub trait Orderbook {
 		orders: impl Iterator<Item = Self::OrderId>,
 		up_to: Self::Balance,
 	) -> Result<TakeResult<Self::Balance>, Self::Error>;
+
+	fn is_order_executed(order_id : &Self::OrderId) -> bool;
 }
