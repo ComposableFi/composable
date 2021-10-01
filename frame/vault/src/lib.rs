@@ -80,7 +80,9 @@ pub mod pallet {
 		},
 		PalletId,
 	};
-	use frame_system::{ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig};
+	use frame_system::{
+		ensure_root, ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig,
+	};
 	use num_traits::SaturatingSub;
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
@@ -265,6 +267,16 @@ pub mod pallet {
 			/// Assets received in exchange for the withdrawal.
 			asset_amount: T::Balance,
 		},
+		/// Emitted after a succesful emergency shutdown.
+		EmergencyShutdown {
+			/// The ID of the vault.
+			vault: VaultIndex,
+		},
+		/// Emitted after a vault is restarted.
+		VaultStarted {
+			/// The ID of the vault.
+			vault: VaultIndex,
+		},
 	}
 
 	#[allow(missing_docs)]
@@ -437,6 +449,41 @@ pub mod pallet {
 			let to = ensure_signed(origin)?;
 			let asset_amount = <Self as Vault>::withdraw(&vault, &to, lp_amount)?;
 			Self::deposit_event(Event::Withdrawn { account: to, lp_amount, asset_amount });
+			Ok(().into())
+		}
+
+		/// Stops a vault. To be used in case of severe protocol flaws.
+		///
+		/// # Emits
+		///  - Event::EmergencyShutdown
+		///
+		/// # Errors
+		///  - When the origin is not root.
+		///  - When `vault` does not exist.
+		#[pallet::weight(10_000)]
+		pub fn emergency_shutdown(
+			origin: OriginFor<T>,
+			vault: VaultIndex,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			<Self as CapabilityVault>::stop(&vault)?;
+			Self::deposit_event(Event::EmergencyShutdown { vault });
+			Ok(().into())
+		}
+
+		/// (Re)starts a vault after emergency shutdown.
+		///
+		/// # Emits
+		///  - Event::VaultStarted
+		///
+		/// # Errors
+		///  - When the origin is not root.
+		///  - When `vault` does not exist.
+		#[pallet::weight(10_000)]
+		pub fn start(origin: OriginFor<T>, vault: VaultIndex) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			<Self as CapabilityVault>::start(&vault)?;
+			Self::deposit_event(Event::VaultStarted { vault });
 			Ok(().into())
 		}
 	}
@@ -701,9 +748,8 @@ pub mod pallet {
 			Ok(vault.lp_token_id)
 		}
 
-		// TODO: we can use the `VaultId` + into_sub_account to have distinct addresses per vault.
-		fn account_id(_vault: &Self::VaultId) -> Self::AccountId {
-			T::PalletId::get().into_account()
+		fn account_id(vault: &Self::VaultId) -> Self::AccountId {
+			T::PalletId::get().into_sub_account(vault)
 		}
 
 		fn create(
