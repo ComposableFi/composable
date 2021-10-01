@@ -31,10 +31,10 @@ pub mod pallet {
 
 	use codec::{Codec, FullCodec, Decode, Encode};
 	use composable_traits::{auction::DutchAuction, dex::{Orderbook, SimpleExchange}, loans::DurationSeconds, math::LiftedFixedBalance};
-	use frame_support::{Parameter, StorageMap, Twox64Concat, ensure, pallet_prelude::{MaybeSerializeDeserialize, ValueQuery}, traits::{Currency, IsType, UnixTime, fungibles::{Inspect, Mutate, Transfer}, tokens::WithdrawConsequence}};
+	use frame_support::{Parameter, Twox64Concat, ensure, pallet_prelude::{MaybeSerializeDeserialize, ValueQuery}, traits::{Currency, IsType, UnixTime, fungibles::{Inspect, Mutate, Transfer}, tokens::WithdrawConsequence}};
 
 
-	use frame_system::pallet_prelude::*;
+	use frame_support::pallet_prelude::*;
 	use frame_system::{pallet_prelude::*, Account, };
 	use num_traits::{CheckedDiv, SaturatingSub};
 	use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill, traits::{
@@ -82,7 +82,8 @@ pub mod pallet {
 	pub trait Config: DeFiComposableConfig {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type UnixTime: UnixTime;
-		type Orderbook: Orderbook<AssetId = Self::AssetId, Balance = Self::Balance, AccountId = Self::AccountId, Error = DispatchError>;
+		type Orderbook: Orderbook<AssetId = Self::AssetId, Balance = Self::Balance, AccountId = Self::AccountId, Error = DispatchError, OrderId = Self::DexOrderId>;
+		type DexOrderId : FullCodec +  Default;
 	}
 
 	#[pallet::event]
@@ -119,15 +120,15 @@ pub mod pallet {
 	}
 
 
-	// #[pallet::storage]
-	// #[pallet::getter(fn orders)]
-	// pub type Orders<T: Config> = StorageMap<
-	// 	_,
-	// 	Twox64Concat,
-	// 	OrderIndex,
-	// 	Order<<<T as pallet::Config>::Orderbook as Orderbook>::OrderId>,
-	// 	ValueQuery,
-	// >;
+	#[pallet::storage]
+	#[pallet::getter(fn orders)]
+	pub type Orders<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		OrderIndex,
+		Order<<<T as Config>::Orderbook as Orderbook>::OrderId>,
+		ValueQuery,
+	>;
 
 	impl<T: Config + DeFiComposableConfig> DutchAuction for Pallet<T> {
 		type AccountId = T::AccountId;
@@ -167,7 +168,7 @@ pub mod pallet {
 				function,
 			};
 
-			//Orders::<T>::insert(order_id, order);
+			Orders::<T>::insert(order_id, order);
 
 			Ok(order_id)
 		}
