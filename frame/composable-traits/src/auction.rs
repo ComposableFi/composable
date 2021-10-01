@@ -31,11 +31,13 @@ pub enum AuctionState {
 /// Auction is done via dexes which act each block. Each block decide if intention was satisfied or not.
 /// That information is provided via event subscribes which callback into auction.
 /// Assuming liquidity providers to be off our local chain, it means that it is high latency external loop.
-pub enum ActionEvent {
+pub enum AuctionExchangeCallback {
 	/// success transfer of funds
-	Fail,
-	CanceledBecauseOfNoPriceMatch,
-	CanceledBecauseOfSomeTechnicalReasons,
+	Success,
+	/// some technical fail of transaction, can issue new one
+	RetryFail,
+	/// cannot retry within current state of system, like assets are not supported
+	FatalFail,
 }
 
 #[derive(Default, Decode, Encode, Clone)]
@@ -91,5 +93,5 @@ pub trait DutchAuction {
 	fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order>;
 
 	/// called back from DEX
-	fn intention_updated(order: &Self::OrderId, action_event: ActionEvent);
+	fn intention_updated(order: &Self::OrderId, action_event: AuctionExchangeCallback);
 }

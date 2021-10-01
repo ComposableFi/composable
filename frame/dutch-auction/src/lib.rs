@@ -121,11 +121,11 @@ pub mod pallet {
 			order_id: T::OrderId,
 		},
 
-		AuctionOnDex {
+		AuctionSuccess {
 			order_id: T::OrderId,
 		},
 
-		AuctionSuccess {
+		AuctionFatalFail {
 			order_id: T::OrderId,
 		},
 	}
@@ -254,7 +254,7 @@ pub mod pallet {
 				state: AuctionState::AuctionStarted,
 			};
 			Orders::<T>::insert(order_id.clone(), order);
-
+			Self::deposit_event(Event::<T>::AuctionWasStarted { order_id: order_id.clone() });
 			Ok(order_id)
 		}
 
@@ -299,10 +299,33 @@ pub mod pallet {
 		}
 
 		fn intention_updated(
-			order: &Self::OrderId,
-			action_event: composable_traits::auction::ActionEvent,
+			order_id: &Self::OrderId,
+			action_event: composable_traits::auction::AuctionExchangeCallback,
 		) {
-			todo!("here we receive off chain events back about how well DEX trades our auction")
+			if let Ok(mut order) = Orders::<T>::try_get(order_id) {
+				match order.state {
+					AuctionState::AuctionStarted => match action_event {
+						composable_traits::auction::AuctionExchangeCallback::Success => {
+							Orders::<T>::remove(order_id);
+							Self::deposit_event(Event::<T>::AuctionSuccess {
+								order_id: order_id.clone(),
+							});
+						},
+						composable_traits::auction::AuctionExchangeCallback::RetryFail => {
+							order.latest_dex_order_intention = None;
+						},
+						composable_traits::auction::AuctionExchangeCallback::FatalFail => {
+							Orders::<T>::remove(order_id);
+							Self::deposit_event(Event::<T>::AuctionFatalFail {
+								order_id: order_id.clone(),
+							});
+						},
+					},
+					_ => {
+						// case of previous fail or success, do not care if somebody calls again
+					},
+				};
+			}
 		}
 
 		fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order> {
