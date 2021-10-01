@@ -2670,7 +2670,11 @@ checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 [[package]]
 name = "fork-tree"
 version = "3.0.0"
+<<<<<<< HEAD
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "parity-scale-codec",
 ]
@@ -2687,8 +2691,13 @@ dependencies = [
 
 [[package]]
 name = "frame-benchmarking"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.1.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2706,8 +2715,13 @@ dependencies = [
 
 [[package]]
 name = "frame-benchmarking-cli"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "Inflector",
  "chrono",
@@ -2732,8 +2746,13 @@ dependencies = [
 
 [[package]]
 name = "frame-election-provider-support"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2745,8 +2764,13 @@ dependencies = [
 
 [[package]]
 name = "frame-executive"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2760,8 +2784,13 @@ dependencies = [
 
 [[package]]
 name = "frame-metadata"
+<<<<<<< HEAD
 version = "14.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "13.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -2771,8 +2800,13 @@ dependencies = [
 
 [[package]]
 name = "frame-support"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "bitflags",
  "frame-metadata",
@@ -2797,8 +2831,13 @@ dependencies = [
 
 [[package]]
 name = "frame-support-procedural"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "Inflector",
  "frame-support-procedural-tools",
@@ -2809,8 +2848,13 @@ dependencies = [
 
 [[package]]
 name = "frame-support-procedural-tools"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support-procedural-tools-derive",
  "proc-macro-crate 1.1.0",
@@ -2822,7 +2866,11 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools-derive"
 version = "3.0.0"
+<<<<<<< HEAD
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2831,8 +2879,13 @@ dependencies = [
 
 [[package]]
 name = "frame-system"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -2848,8 +2901,13 @@ dependencies = [
 
 [[package]]
 name = "frame-system-benchmarking"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2862,8 +2920,13 @@ dependencies = [
 
 [[package]]
 name = "frame-system-rpc-runtime-api"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -2871,8 +2934,13 @@ dependencies = [
 
 [[package]]
 name = "frame-try-runtime"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -4893,6 +4961,31 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
+=======
+name = "max-encoded-len"
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+dependencies = [
+ "impl-trait-for-tuples",
+ "max-encoded-len-derive",
+ "parity-scale-codec",
+ "primitive-types",
+]
+
+[[package]]
+name = "max-encoded-len-derive"
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+dependencies = [
+ "proc-macro-crate 1.0.0",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 name = "maybe-uninit"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5329,7 +5422,11 @@ dependencies = [
 [[package]]
 name = "node-primitives"
 version = "2.0.0"
+<<<<<<< HEAD
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-system",
  "parity-scale-codec",
@@ -5653,8 +5750,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-aura"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5669,8 +5771,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-authority-discovery"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5684,8 +5791,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-authorship"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5698,8 +5810,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-babe"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5721,8 +5838,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-balances"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5776,8 +5898,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-bounties"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5788,6 +5915,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "pallet-bridge-dispatch"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.10#aeea9b7bd81919e014f7621f6c4b2eb9709d918f"
@@ -5799,6 +5927,33 @@ dependencies = [
  "log 0.4.14",
  "parity-scale-codec",
  "sp-core",
+=======
+name = "pallet-bribedao"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log 0.4.14",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-currency-factory",
+ "pallet-democracy",
+ "pallet-oracle",
+ "pallet-timestamp",
+ "pallet-vault",
+ "parity-scale-codec",
+ "plotters",
+ "proptest",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
  "sp-runtime",
  "sp-std",
 ]
@@ -5881,8 +6036,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-collective"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5936,8 +6096,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-democracy"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5970,8 +6135,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-election-provider-multi-phase"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-election-provider-support",
  "frame-support",
@@ -5989,8 +6159,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-elections-phragmen"
+<<<<<<< HEAD
 version = "5.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "4.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6005,8 +6180,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-grandpa"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.1.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6027,8 +6207,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-identity"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "enumflags2",
  "frame-benchmarking",
@@ -6042,8 +6227,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-im-online"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6060,8 +6250,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-indices"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6126,8 +6321,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-membership"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6141,8 +6341,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-mmr"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "ckb-merkle-mountain-range",
  "frame-benchmarking",
@@ -6158,8 +6363,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-mmr-primitives"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6175,7 +6385,11 @@ dependencies = [
 [[package]]
 name = "pallet-mmr-rpc"
 version = "3.0.0"
+<<<<<<< HEAD
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "jsonrpc-core 15.1.0",
  "jsonrpc-core-client 15.1.0",
@@ -6192,8 +6406,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-multisig"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6206,8 +6425,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-nicks"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6219,8 +6443,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-offences"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6291,8 +6520,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-proxy"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6305,8 +6539,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-randomness-collective-flip"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6318,8 +6557,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-scheduler"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6333,8 +6577,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-session"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6353,8 +6602,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-staking"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-election-provider-support",
  "frame-support",
@@ -6375,8 +6629,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-staking-reward-curve"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "proc-macro-crate 1.1.0",
  "proc-macro2",
@@ -6386,8 +6645,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-sudo"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6399,8 +6663,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-timestamp"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6417,8 +6686,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-tips"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6450,8 +6724,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-transaction-payment"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6466,8 +6745,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-transaction-payment-rpc"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "jsonrpc-core 15.1.0",
  "jsonrpc-core-client 15.1.0",
@@ -6483,8 +6767,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-transaction-payment-rpc-runtime-api"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "pallet-transaction-payment",
  "parity-scale-codec",
@@ -6494,8 +6783,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-treasury"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6510,8 +6804,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-utility"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6548,8 +6847,13 @@ dependencies = [
 
 [[package]]
 name = "pallet-vesting"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "enumflags2",
  "frame-support",
@@ -9153,8 +9457,13 @@ dependencies = [
 
 [[package]]
 name = "remote-externalities"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "env_logger 0.8.4",
  "hex",
@@ -9506,8 +9815,13 @@ dependencies = [
 
 [[package]]
 name = "sc-allocator"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "log 0.4.14",
  "sp-core",
@@ -9517,8 +9831,13 @@ dependencies = [
 
 [[package]]
 name = "sc-authority-discovery"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "derive_more",
@@ -9546,8 +9865,13 @@ dependencies = [
 
 [[package]]
 name = "sc-basic-authorship"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "futures 0.3.17",
  "futures-timer 3.0.2",
@@ -9569,8 +9893,13 @@ dependencies = [
 
 [[package]]
 name = "sc-block-builder"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "parity-scale-codec",
  "sc-client-api",
@@ -9585,8 +9914,13 @@ dependencies = [
 
 [[package]]
 name = "sc-chain-spec"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -9601,8 +9935,13 @@ dependencies = [
 
 [[package]]
 name = "sc-chain-spec-derive"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "proc-macro-crate 1.1.0",
  "proc-macro2",
@@ -9612,8 +9951,13 @@ dependencies = [
 
 [[package]]
 name = "sc-cli"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "chrono",
  "fdlimit",
@@ -9650,8 +9994,13 @@ dependencies = [
 
 [[package]]
 name = "sc-client-api"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "derive_more",
  "fnv",
@@ -9684,8 +10033,13 @@ dependencies = [
 
 [[package]]
 name = "sc-client-db"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "blake2-rfc",
  "hash-db",
@@ -9713,8 +10067,13 @@ dependencies = [
 
 [[package]]
 name = "sc-consensus"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "futures 0.3.17",
@@ -9738,8 +10097,13 @@ dependencies = [
 
 [[package]]
 name = "sc-consensus-aura"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "derive_more",
@@ -9770,8 +10134,13 @@ dependencies = [
 
 [[package]]
 name = "sc-consensus-babe"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "derive_more",
@@ -9817,8 +10186,13 @@ dependencies = [
 
 [[package]]
 name = "sc-consensus-babe-rpc"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "derive_more",
  "futures 0.3.17",
@@ -9841,8 +10215,13 @@ dependencies = [
 
 [[package]]
 name = "sc-consensus-epochs"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "fork-tree",
  "parity-scale-codec",
@@ -9854,8 +10233,13 @@ dependencies = [
 
 [[package]]
 name = "sc-consensus-slots"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "futures 0.3.17",
@@ -9883,8 +10267,13 @@ dependencies = [
 
 [[package]]
 name = "sc-consensus-uncles"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "sc-client-api",
  "sp-authorship",
@@ -9894,8 +10283,13 @@ dependencies = [
 
 [[package]]
 name = "sc-executor"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "derive_more",
  "lazy_static",
@@ -9923,8 +10317,13 @@ dependencies = [
 
 [[package]]
 name = "sc-executor-common"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "derive_more",
  "parity-scale-codec",
@@ -9940,8 +10339,13 @@ dependencies = [
 
 [[package]]
 name = "sc-executor-wasmi"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "log 0.4.14",
  "parity-scale-codec",
@@ -9955,8 +10359,13 @@ dependencies = [
 
 [[package]]
 name = "sc-executor-wasmtime"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
@@ -9975,8 +10384,13 @@ dependencies = [
 
 [[package]]
 name = "sc-finality-grandpa"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "derive_more",
@@ -10016,8 +10430,13 @@ dependencies = [
 
 [[package]]
 name = "sc-finality-grandpa-rpc"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "derive_more",
  "finality-grandpa",
@@ -10039,9 +10458,36 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "sc-informant"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+name = "sc-finality-grandpa-warp-sync"
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+dependencies = [
+ "derive_more",
+ "futures 0.3.16",
+ "log 0.4.14",
+ "num-traits",
+ "parity-scale-codec",
+ "parking_lot 0.11.1",
+ "prost",
+ "sc-client-api",
+ "sc-finality-grandpa",
+ "sc-network",
+ "sc-service",
+ "sp-blockchain",
+ "sp-finality-grandpa",
+ "sp-runtime",
+]
+
+[[package]]
+name = "sc-informant"
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "ansi_term 0.12.1",
  "futures 0.3.17",
@@ -10058,8 +10504,13 @@ dependencies = [
 
 [[package]]
 name = "sc-keystore"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "derive_more",
@@ -10078,8 +10529,13 @@ dependencies = [
 
 [[package]]
 name = "sc-light"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "hash-db",
  "lazy_static",
@@ -10097,8 +10553,13 @@ dependencies = [
 
 [[package]]
 name = "sc-network"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-std",
  "async-trait",
@@ -10152,8 +10613,13 @@ dependencies = [
 
 [[package]]
 name = "sc-network-gossip"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "futures 0.3.17",
  "futures-timer 3.0.2",
@@ -10169,8 +10635,13 @@ dependencies = [
 
 [[package]]
 name = "sc-offchain"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "bytes 0.5.6",
  "fnv",
@@ -10197,8 +10668,13 @@ dependencies = [
 
 [[package]]
 name = "sc-peerset"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "futures 0.3.17",
  "libp2p",
@@ -10211,7 +10687,11 @@ dependencies = [
 [[package]]
 name = "sc-proposer-metrics"
 version = "0.9.0"
+<<<<<<< HEAD
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "log 0.4.14",
  "substrate-prometheus-endpoint",
@@ -10219,8 +10699,13 @@ dependencies = [
 
 [[package]]
 name = "sc-rpc"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "futures 0.3.17",
  "hash-db",
@@ -10254,8 +10739,13 @@ dependencies = [
 
 [[package]]
 name = "sc-rpc-api"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "derive_more",
  "futures 0.3.17",
@@ -10279,8 +10769,13 @@ dependencies = [
 
 [[package]]
 name = "sc-rpc-server"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "futures 0.1.31",
  "jsonrpc-core 15.1.0",
@@ -10297,8 +10792,13 @@ dependencies = [
 
 [[package]]
 name = "sc-service"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "directories",
@@ -10365,8 +10865,13 @@ dependencies = [
 
 [[package]]
 name = "sc-state-db"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "log 0.4.14",
  "parity-scale-codec",
@@ -10380,8 +10885,13 @@ dependencies = [
 
 [[package]]
 name = "sc-sync-state-rpc"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "jsonrpc-core 15.1.0",
  "jsonrpc-core-client 15.1.0",
@@ -10402,8 +10912,13 @@ dependencies = [
 
 [[package]]
 name = "sc-telemetry"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "chrono",
  "futures 0.3.17",
@@ -10422,8 +10937,13 @@ dependencies = [
 
 [[package]]
 name = "sc-tracing"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "ansi_term 0.12.1",
  "atty",
@@ -10459,8 +10979,13 @@ dependencies = [
 
 [[package]]
 name = "sc-tracing-proc-macro"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "proc-macro-crate 1.1.0",
  "proc-macro2",
@@ -10469,9 +10994,15 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "sc-transaction-pool"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+name = "sc-transaction-graph"
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "derive_more",
  "futures 0.3.17",
@@ -10498,9 +11029,15 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "sc-transaction-pool-api"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+name = "sc-transaction-pool"
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "derive_more",
  "futures 0.3.17",
@@ -11041,8 +11578,13 @@ dependencies = [
 
 [[package]]
 name = "sp-api"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "hash-db",
  "log 0.4.14",
@@ -11058,8 +11600,13 @@ dependencies = [
 
 [[package]]
 name = "sp-api-proc-macro"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "blake2-rfc",
  "proc-macro-crate 1.1.0",
@@ -11070,8 +11617,13 @@ dependencies = [
 
 [[package]]
 name = "sp-application-crypto"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -11082,8 +11634,13 @@ dependencies = [
 
 [[package]]
 name = "sp-arithmetic"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "integer-sqrt",
  "num-traits",
@@ -11096,8 +11653,13 @@ dependencies = [
 
 [[package]]
 name = "sp-authority-discovery"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -11108,8 +11670,13 @@ dependencies = [
 
 [[package]]
 name = "sp-authorship"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -11120,8 +11687,13 @@ dependencies = [
 
 [[package]]
 name = "sp-block-builder"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -11132,8 +11704,13 @@ dependencies = [
 
 [[package]]
 name = "sp-blockchain"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "futures 0.3.17",
  "log 0.4.14",
@@ -11150,8 +11727,13 @@ dependencies = [
 
 [[package]]
 name = "sp-consensus"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "futures 0.3.17",
@@ -11176,8 +11758,13 @@ dependencies = [
 
 [[package]]
 name = "sp-consensus-aura"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -11193,8 +11780,13 @@ dependencies = [
 
 [[package]]
 name = "sp-consensus-babe"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "merlin",
@@ -11215,8 +11807,13 @@ dependencies = [
 
 [[package]]
 name = "sp-consensus-slots"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "parity-scale-codec",
  "sp-arithmetic",
@@ -11225,8 +11822,13 @@ dependencies = [
 
 [[package]]
 name = "sp-consensus-vrf"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "parity-scale-codec",
  "schnorrkel",
@@ -11237,8 +11839,13 @@ dependencies = [
 
 [[package]]
 name = "sp-core"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "base58",
  "blake2-rfc",
@@ -11281,8 +11888,13 @@ dependencies = [
 
 [[package]]
 name = "sp-database"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "kvdb",
  "parking_lot 0.11.2",
@@ -11291,7 +11903,11 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "3.0.0"
+<<<<<<< HEAD
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "proc-macro2",
  "quote",
@@ -11300,8 +11916,13 @@ dependencies = [
 
 [[package]]
 name = "sp-externalities"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "environmental",
  "parity-scale-codec",
@@ -11311,8 +11932,13 @@ dependencies = [
 
 [[package]]
 name = "sp-finality-grandpa"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "finality-grandpa",
  "log 0.4.14",
@@ -11328,8 +11954,13 @@ dependencies = [
 
 [[package]]
 name = "sp-inherents"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "impl-trait-for-tuples",
@@ -11342,8 +11973,13 @@ dependencies = [
 
 [[package]]
 name = "sp-io"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "futures 0.3.17",
  "hash-db",
@@ -11367,8 +12003,13 @@ dependencies = [
 
 [[package]]
 name = "sp-keyring"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "lazy_static",
  "sp-core",
@@ -11378,8 +12019,13 @@ dependencies = [
 
 [[package]]
 name = "sp-keystore"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "derive_more",
@@ -11395,8 +12041,13 @@ dependencies = [
 
 [[package]]
 name = "sp-maybe-compressed-blob"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "ruzstd",
  "zstd",
@@ -11404,8 +12055,13 @@ dependencies = [
 
 [[package]]
 name = "sp-npos-elections"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -11416,9 +12072,15 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "sp-npos-elections-solution-type"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+name = "sp-npos-elections-compact"
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "proc-macro-crate 1.1.0",
  "proc-macro2",
@@ -11428,8 +12090,13 @@ dependencies = [
 
 [[package]]
 name = "sp-offchain"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "sp-api",
  "sp-core",
@@ -11439,15 +12106,24 @@ dependencies = [
 [[package]]
 name = "sp-panic-handler"
 version = "3.0.0"
+<<<<<<< HEAD
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "backtrace",
 ]
 
 [[package]]
 name = "sp-rpc"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "rustc-hash",
  "serde",
@@ -11457,8 +12133,13 @@ dependencies = [
 
 [[package]]
 name = "sp-runtime"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "either",
  "hash256-std-hasher",
@@ -11478,8 +12159,13 @@ dependencies = [
 
 [[package]]
 name = "sp-runtime-interface"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -11495,8 +12181,13 @@ dependencies = [
 
 [[package]]
 name = "sp-runtime-interface-proc-macro"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "Inflector",
  "proc-macro-crate 1.1.0",
@@ -11508,7 +12199,11 @@ dependencies = [
 [[package]]
 name = "sp-serializer"
 version = "3.0.0"
+<<<<<<< HEAD
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "serde",
  "serde_json",
@@ -11516,8 +12211,13 @@ dependencies = [
 
 [[package]]
 name = "sp-session"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -11529,8 +12229,13 @@ dependencies = [
 
 [[package]]
 name = "sp-staking"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "parity-scale-codec",
  "sp-runtime",
@@ -11539,8 +12244,13 @@ dependencies = [
 
 [[package]]
 name = "sp-state-machine"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "hash-db",
  "log 0.4.14",
@@ -11562,6 +12272,7 @@ dependencies = [
 
 [[package]]
 name = "sp-std"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
 
@@ -11569,6 +12280,15 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#ac
 name = "sp-storage"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+
+[[package]]
+name = "sp-storage"
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -11580,8 +12300,13 @@ dependencies = [
 
 [[package]]
 name = "sp-tasks"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "log 0.4.14",
  "sp-core",
@@ -11593,8 +12318,13 @@ dependencies = [
 
 [[package]]
 name = "sp-timestamp"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "futures-timer 3.0.2",
@@ -11610,8 +12340,13 @@ dependencies = [
 
 [[package]]
 name = "sp-tracing"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "erased-serde",
  "log 0.4.14",
@@ -11628,8 +12363,13 @@ dependencies = [
 
 [[package]]
 name = "sp-transaction-pool"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "sp-api",
  "sp-runtime",
@@ -11637,8 +12377,13 @@ dependencies = [
 
 [[package]]
 name = "sp-transaction-storage-proof"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "log 0.4.14",
@@ -11652,8 +12397,13 @@ dependencies = [
 
 [[package]]
 name = "sp-trie"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "hash-db",
  "memory-db",
@@ -11666,8 +12416,13 @@ dependencies = [
 
 [[package]]
 name = "sp-utils"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "futures 0.3.17",
  "futures-core",
@@ -11678,8 +12433,13 @@ dependencies = [
 
 [[package]]
 name = "sp-version"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -11693,8 +12453,13 @@ dependencies = [
 
 [[package]]
 name = "sp-version-proc-macro"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "parity-scale-codec",
  "proc-macro-crate 1.1.0",
@@ -11705,8 +12470,13 @@ dependencies = [
 
 [[package]]
 name = "sp-wasm-interface"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -11852,15 +12622,24 @@ dependencies = [
 [[package]]
 name = "substrate-build-script-utils"
 version = "3.0.0"
+<<<<<<< HEAD
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "platforms",
 ]
 
 [[package]]
 name = "substrate-frame-rpc-system"
+<<<<<<< HEAD
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "3.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-system-rpc-runtime-api",
  "futures 0.3.17",
@@ -11883,7 +12662,11 @@ dependencies = [
 [[package]]
 name = "substrate-prometheus-endpoint"
 version = "0.9.0"
+<<<<<<< HEAD
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-std",
  "derive_more",
@@ -11897,7 +12680,11 @@ dependencies = [
 [[package]]
 name = "substrate-test-client"
 version = "2.0.1"
+<<<<<<< HEAD
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "async-trait",
  "futures 0.1.31",
@@ -11925,8 +12712,13 @@ dependencies = [
 
 [[package]]
 name = "substrate-wasm-builder"
+<<<<<<< HEAD
 version = "5.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "4.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "ansi_term 0.12.1",
  "atty",
@@ -12701,8 +13493,13 @@ checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
 
 [[package]]
 name = "try-runtime-cli"
+<<<<<<< HEAD
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
+=======
+version = "0.9.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
+>>>>>>> pallet_bribedao: types, signatures and stubs (#131)
 dependencies = [
  "frame-try-runtime",
  "log 0.4.14",
