@@ -55,8 +55,8 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		BribeCreated { id: BribeIndex },
-		BribeTaken { id: BribeIndex },
+		BribeCreated { id: BribeIndex, request: CreateBribeRequest<T> },
+		BribeTaken { id: BribeIndex, request: TakeBribeRequest<T> },
 	}
 
 	/// The number of bribes, also used to generate the next bribe identifier.
@@ -81,8 +81,8 @@ pub mod pallet {
 			request: CreateBribeRequest<T>,
 		) -> DispatchResultWithPostInfo {
 			let _from = ensure_signed(origin)?;
-			let id = <Self as Bribe>::create_bribe(request)?;
-			Self::deposit_event(Event::BribeCreated { id });
+			let id = <Self as Bribe>::create_bribe(request.clone())?;
+			Self::deposit_event(Event::BribeCreated { id, request });
 			Ok(().into())
 		}
 
@@ -93,9 +93,9 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _from = ensure_signed(origin)?;
 			let bribe_index = request.bribe_index;
-			let bribe_taken = <Self as Bribe>::take_bribe(request)?;
+			let bribe_taken = <Self as Bribe>::take_bribe(request.clone())?;
 			if bribe_taken {
-				Self::deposit_event(Event::BribeTaken { id: bribe_index });
+				Self::deposit_event(Event::BribeTaken { id: bribe_index, request });
 			}
 			Ok(().into())
 		}
