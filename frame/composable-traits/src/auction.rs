@@ -1,12 +1,14 @@
 use crate::{dex::Orderbook, loans::DurationSeconds};
 use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
+use sp_runtime::Permill;
 
-#[derive(Default, Decode, Encode)]
+#[derive(Default, Decode, Encode, Clone)]
 pub enum AuctionStepFunction {
 	#[default]
-	LinearDecrease,
-	StairstepExponentialDecrease,
+	Dex,
+	LinearDecrease{duration: DurationSeconds},
+	StairstepExponentialDecrease{step: DurationSeconds, cut: Permill},
 }
 
 /// Auction is done via dexes which act each block. Each block decide if intention was satisfied or not.

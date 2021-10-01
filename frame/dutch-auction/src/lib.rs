@@ -129,7 +129,7 @@ pub mod pallet {
 	#[derive(Encode, Decode, Default)]
 	pub struct Order<DexOrderId, AccountId, AssetId, Balance>
 	{
-		pub dex_order_intention: Option<DexOrderId>,
+		pub latest_dex_order_intention: Option<DexOrderId>,
 		pub started: DurationSeconds,
 		pub function: composable_traits::auction::AuctionStepFunction,
 		pub account_id: AccountId,
@@ -196,7 +196,7 @@ pub mod pallet {
 			OrdersIndex::<T>::set(order_id.next());
 
 			let order = Order {
-				dex_order_intention : None,
+				latest_dex_order_intention : None,
 				started : T::UnixTime::now().as_secs(),
 				function,
 				account_id :  account_id.clone(),
@@ -212,13 +212,13 @@ pub mod pallet {
 			Orders::<T>::insert(order_id.clone(), order);
 
 
-			Ok(order_id.clone())
+			Ok(order_id)
 		}
 
 		fn run_auctions(now: DurationSeconds) -> Result<(), Self::Error> {
 			for ( order_id, ref mut order) in Orders::<T>::iter() {
-				if order.dex_order_intention.is_none() {
-					/// for final protocol may be will need to transfer currency onto auction pallet sub account and send dex order with idempotency tracking id
+				if order.latest_dex_order_intention.is_none() {
+					// for final protocol may be will need to transfer currency onto auction pallet sub account and send dex order with idempotency tracking id
 					// final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
 					let dex_order_intention = <T::Orderbook as Orderbook>::post(
 						&order.account_id,
@@ -227,7 +227,7 @@ pub mod pallet {
 						&order.total_amount,
 						&order.initial_price,
 						Permill::from_perthousand(10))?;
-					order.dex_order_intention = Some(dex_order_intention);
+					order.latest_dex_order_intention = Some(dex_order_intention);
 					// set dex order in callback
 					// move dex handling protocol into dex
 				}
