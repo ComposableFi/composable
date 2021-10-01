@@ -1,0 +1,27 @@
+name-template: 'v$NEXT_PATCH_VERSION'
+tag-template: 'v$NEXT_PATCH_VERSION'
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+template: |
+  $CHANGES
+categories:
+  - title: 💥 Breaking Changes
+    label: Breaking Change
+  - title: ⭐ Features
+    label: Feature
+  - title: 🛠 Improvements
+    label: Improvement
+  - title: 🐞 Bug Fixes
+    label: Bugfix
+  - title: 📖 Documentation
+    label: Documentation
+version-resolver:
+  major:
+    labels:
+      - 'major'
+  minor:
+    labels:
+      - 'minor'
+  patch:
+    labels:
+      - 'patch'
+  default: patch
