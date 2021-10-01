@@ -17,14 +17,11 @@ pub mod pallet {
 	pub type CreateBribeRequest<T> = composable_traits::bribe::CreateBribeRequest<
 		ReferendumIndex,
 		<T as Config>::Balance,
-		<T as Config>::Conviction,
 		<T as Config>::CurrencyId,
+		<T as Config>::Votes,
 	>;
-	pub type TakeBribeRequest<T> = composable_traits::bribe::TakeBribeRequest<
-		BribeIndex,
-		<T as Config>::Balance,
-		<T as Config>::Conviction,
-	>;
+	pub type TakeBribeRequest<T> =
+		composable_traits::bribe::TakeBribeRequest<BribeIndex, <T as Config>::Votes>;
 
 	#[pallet::config]
 	pub trait Config: /* pallet_balances::Config + */ frame_system::Config {
@@ -42,10 +39,11 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ Zero;
 
-		// TODO: Conviction traits
-		type Conviction: Parameter;
 		// TODO: CurrencyId traits
 		type CurrencyId: Parameter;
+		// TODO: Votes traits
+		type Votes: Parameter;
+
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		// /// Type representing the weight of this pallet
 		// type WeightInfo: WeightInfo;
@@ -120,8 +118,8 @@ pub mod pallet {
 		type ReferendumIndex = ReferendumIndex;
 
 		type Balance = T::Balance;
-		type Conviction = T::Conviction;
 		type CurrencyId = T::CurrencyId;
+		type Votes = T::Votes;
 
 		fn create_bribe(request: CreateBribeRequest<T>) -> Result<Self::BribeIndex, DispatchError> {
 			Self::do_create_bribe(request)
