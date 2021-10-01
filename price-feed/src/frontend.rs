@@ -103,7 +103,8 @@ fn ensure_uptodate_price(
 	current_timestamp: &TimeStamp,
 	timestamped_price: &TimeStampedPrice,
 ) -> Option<(Price, Exponent)> {
-	if current_timestamp.elapsed_since(&timestamped_price.timestamp) < max_cache_duration {
+	let elapsed = current_timestamp.elapsed_since(&timestamped_price.timestamp);
+	if elapsed < max_cache_duration {
 		Some(timestamped_price.value)
 	} else {
 		None
