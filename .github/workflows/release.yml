@@ -9,21 +9,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  pr-labeler:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: TimonVS/pr-labeler-action@v3
-        with:
-          configuration-path: .github/pr-labeler.yml # optional, .github/pr-labeler.yml is the default value
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  update_release_draft:
-    runs-on: ubuntu-latest
-    steps:
-      # Drafts your next Release notes as Pull Requests are merged into "master"
-      - uses: release-drafter/release-drafter@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   release-on-push:
     runs-on: ubuntu-latest
     env:
@@ -34,9 +19,5 @@ jobs:
         with:
           bump_version_scheme: minor # if PR contains "release:major; release:minor or release:patch" - this is overwritten
           tag_prefix: v #specify a tag prefix
-          release_body: "When set, adds extra text to body!" #you can customize the release body
+        #   release_body: "When set, adds extra text to body!" #you can customize the release body
           
-      - name: Check Output Parameters
-        run: |
-          echo "Got tag name ${{ steps.release.outputs.tag_name }}"
-          echo "Got release version ${{ steps.release.outputs.version }}"
