@@ -30,7 +30,7 @@ mod price_function;
 pub mod pallet {
 
 	use codec::{Codec, FullCodec, Decode, Encode};
-	use composable_traits::{auction::DutchAuction, dex::{Orderbook, SimpleExchange}, loans::DurationSeconds, math::LiftedFixedBalance};
+	use composable_traits::{auction::{AuctionState, DutchAuction}, dex::{Orderbook, SimpleExchange}, loans::DurationSeconds, math::LiftedFixedBalance};
 	use frame_support::{Parameter, Twox64Concat, ensure, pallet_prelude::{MaybeSerializeDeserialize, ValueQuery}, traits::{Currency, IsType, UnixTime, fungibles::{Inspect, Mutate, Transfer}, tokens::WithdrawConsequence}};
 
 
@@ -97,10 +97,13 @@ pub mod pallet {
 		},
 
 
-		AuctionStepHappend {
+		AuctionOnDex {
 			order_id: T::OrderId
 		},
 
+		AuctionSuccess {
+			order_id: T::OrderId
+		},
 	}
 
 	#[pallet::error]
@@ -140,6 +143,7 @@ pub mod pallet {
 		pub want: AssetId,
 		pub total_amount: Balance,
 		pub initial_price: Balance,
+		pub state : AuctionState,
 	}
 
 
@@ -174,6 +178,8 @@ pub mod pallet {
 
 		type Orderbook = T::Orderbook;
 
+		type Order = Order<<<T as Config>::Orderbook as Orderbook>::OrderId, T::AccountId, T::AssetId, T::Balance>;
+
 		fn start(
 			account_id: &Self::AccountId,
 			source_asset_id: &Self::AssetId,
@@ -207,6 +213,7 @@ pub mod pallet {
 				want :  *want ,
 				total_amount :  *total_amount ,
 				initial_price :  *initial_price ,
+				state : AuctionState::AuctionStarted,
 
 			};
 			Orders::<T>::insert(order_id.clone(), order);
@@ -216,7 +223,7 @@ pub mod pallet {
 		}
 
 		fn run_auctions(now: DurationSeconds) -> Result<(), Self::Error> {
-			for ( order_id, ref mut order) in Orders::<T>::iter() {
+			for ( order_id, mut order) in Orders::<T>::iter() {
 				if order.latest_dex_order_intention.is_none() {
 					// for final protocol may be will need to transfer currency onto auction pallet sub account and send dex order with idempotency tracking id
 					// final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
@@ -227,7 +234,9 @@ pub mod pallet {
 						&order.total_amount,
 						&order.initial_price,
 						Permill::from_perthousand(10))?;
+
 					order.latest_dex_order_intention = Some(dex_order_intention);
+					order.state = AuctionState::AuctionOnDex;
 					// set dex order in callback
 					// move dex handling protocol into dex
 				}
@@ -237,14 +246,14 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn get_auction_state(
-			order: &Self::OrderId,
-		) -> Option<composable_traits::auction::AuctionOrder<Self::OrderId>> {
-			todo!()
-		}
 
 		fn intention_updated(order: &Self::OrderId, action_event: composable_traits::auction::ActionEvent) {
 	        todo!("here we receive off chain events back about how well DEX trades our auction")
 	    }
+
+
+fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order> {
+        todo!()
+    }
 	}
 }

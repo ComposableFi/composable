@@ -42,6 +42,7 @@ pub trait Orderbook {
 	/// sell. exchanges specified amount of asset to other at specific price
 	/// `source_price` price per unit
 	/// `amm_slippage` set to zero to avoid AMM sell
+	/// for remote auction we should  have sent some random to make sure we have idempotent request
 	fn post(
 		account_from: &Self::AccountId,
 		asset: &Self::AssetId,
