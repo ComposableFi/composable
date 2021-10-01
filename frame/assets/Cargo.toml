@@ -23,6 +23,8 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 num-traits = {version = "0.2.14", default-features = false}
 
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
+num-traits = {version = "0.2.14", default-features = false}
 
 [dependencies.codec]
 default-features = false
