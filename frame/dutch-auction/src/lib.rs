@@ -30,18 +30,21 @@ mod price_function;
 pub mod pallet {
 
 	use codec::{Codec, FullCodec, Decode, Encode};
-	use composable_traits::{auction::{AuctionState, DutchAuction}, dex::{Orderbook, SimpleExchange}, loans::DurationSeconds, math::LiftedFixedBalance};
+	use composable_traits::{auction::{AuctionState, AuctionStepFunction, DutchAuction}, dex::{Orderbook, SimpleExchange}, loans::DurationSeconds, math::LiftedFixedBalance};
 	use frame_support::{Parameter, Twox64Concat, ensure, pallet_prelude::{MaybeSerializeDeserialize, ValueQuery}, traits::{Currency, IsType, UnixTime, fungibles::{Inspect, Mutate, Transfer}, tokens::WithdrawConsequence}};
 
 
 	use frame_support::pallet_prelude::*;
 	use frame_system::{pallet_prelude::*, Account, };
 	use num_traits::{CheckedDiv, SaturatingAdd, SaturatingSub, WrappingAdd};
-	use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill, traits::{
+	use orml_traits::Auction;
+use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill, traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
 		}};
 	use sp_std::{fmt::Debug, vec::Vec};
+
+use crate::price_function::AuctionTimeCurveModel;
 
 	pub trait DeFiComposableConfig: frame_system::Config {
 		// what.
@@ -134,7 +137,7 @@ pub mod pallet {
 	{
 		pub latest_dex_order_intention: Option<DexOrderId>,
 		pub started: DurationSeconds,
-		pub function: composable_traits::auction::AuctionStepFunction,
+		pub function: AuctionStepFunction,
 		pub account_id: AccountId,
 		pub source_asset_id: AssetId,
 		pub source_account: AccountId,
@@ -189,14 +192,16 @@ pub mod pallet {
 			want: &Self::AssetId,
 			total_amount: &Self::Balance,
 			initial_price: &Self::Balance,
-			function: composable_traits::auction::AuctionStepFunction,
+			function: AuctionStepFunction,
 		) -> Result<Self::OrderId, Self::Error> {
 
+			/// TODO: with remote foreign chain DEX it can pass several blocks before we get on DEX.
+			/// so somehow need to lock (transfer) currency before foreign transactions settles
 			ensure!(
 				matches!(<T::Currency as Inspect<T::AccountId>>::can_withdraw(*source_asset_id, account_id, *total_amount), WithdrawConsequence::Success),
 				Error::<T>::CannotWithdrawAmountEqualToDesiredAuction
 			);
-			/// probably instead of check we should do transfer onto account to avoid,
+
 			/// because dex call is in "other transaction" and same block can have 2 starts each passing check, but failing during dex call.
 			let order_id : T::OrderId = OrdersIndex::<T>::get();
 			OrdersIndex::<T>::set(order_id.next());
@@ -223,24 +228,37 @@ pub mod pallet {
 		}
 
 		fn run_auctions(now: DurationSeconds) -> Result<(), Self::Error> {
+
 			for ( order_id, mut order) in Orders::<T>::iter() {
-				if order.latest_dex_order_intention.is_none() {
+				if order.latest_dex_order_intention.is_none() && order.state == AuctionState::AuctionStarted {
 					// for final protocol may be will need to transfer currency onto auction pallet sub account and send dex order with idempotency tracking id
 					// final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
+					let price = match order.function {
+        				AuctionStepFunction::LinearDecrease(parameters) => {
+							parameters.price(order.initial_price.into(), now - order.started)
+						},
+        				AuctionStepFunction::StairstepExponentialDecrease(parameters )=> {
+							parameters.price(order.initial_price.into(), now - order.started)
+
+						},
+    				}?;
 					let dex_order_intention = <T::Orderbook as Orderbook>::post(
 						&order.account_id,
 						&order.source_asset_id,
 						&order.target_asset_id,
 						&order.total_amount,
-						&order.initial_price,
+						&price,
 						Permill::from_perthousand(10))?;
 
 					order.latest_dex_order_intention = Some(dex_order_intention);
 					order.state = AuctionState::AuctionOnDex;
-					// set dex order in callback
-					// move dex handling protocol into dex
 				}
+				else if order.latest_dex_order_intention.is_none()  && order.state != AuctionState::AuctionEndedSuccessfully && order.state != AuctionState::AuctionFatalFailed {
 
+				}
+				else if let Some(dex_order) = order.latest_dex_order_intention {
+					// waiting for off chain callback about order status
+				}
 			}
 
 			Ok(())

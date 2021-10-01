@@ -2,10 +2,7 @@
 //! Linear, step-wise exponential, and continuous exponential, others, configured from MakerDao
 //! https://github.com/makerdao/dss/blob/master/src/abaci.sol
 
-use composable_traits::{
-	loans::DurationSeconds,
-	math::{LiftedFixedBalance, SafeArithmetic},
-};
+use composable_traits::{auction::{LinearDecrease, StairstepExponentialDecrease}, loans::DurationSeconds, math::{LiftedFixedBalance, SafeArithmetic}};
 
 use sp_runtime::{
 	traits::{
@@ -15,12 +12,8 @@ use sp_runtime::{
 	ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill,
 };
 
-struct LinearDecrease {
-	/// Seconds after auction start when the price reaches zero
-	total: DurationSeconds,
-}
 
-trait AuctionTimeCurveModel {
+pub trait AuctionTimeCurveModel {
 	/// return current auction price
 	fn price(
 		&self,
@@ -29,9 +22,9 @@ trait AuctionTimeCurveModel {
 	) -> Result<LiftedFixedBalance, ArithmeticError>;
 }
 
+/// Price calculation when price is decreased linearly in proportion to time:
+/// Returns y = initial_price * ((tau - duration_since_start) / tau)
 impl AuctionTimeCurveModel for LinearDecrease {
-	// Price calculation when price is decreased linearly in proportion to time:
-	// Returns y = top * ((tau - dur) / tau)
 	fn price(
 		&self,
 		initial_price: LiftedFixedBalance,
@@ -44,7 +37,7 @@ impl AuctionTimeCurveModel for LinearDecrease {
 			initial_price
 				.safe_mul(
 					&LiftedFixedBalance::checked_from_integer(
-						self.total.safe_sub(&duration_since_start)? as u128,
+						self.total.saturating_sub(&duration_since_start) as u128,
 					)
 					.unwrap(),
 				)?
@@ -53,16 +46,9 @@ impl AuctionTimeCurveModel for LinearDecrease {
 	}
 }
 
-struct StairstepExponentialDecrease {
-	// Length of time between price drops
-	step: DurationSeconds,
-	// Per-step multiplicative factor, usually more than 50%, mostly closer to 100%, but not 100%.
-	// Drop per unit of `step`.
-	cut: Permill,
-}
 
+/// returns: top * (cut ^ dur)
 impl AuctionTimeCurveModel for StairstepExponentialDecrease {
-	// returns: top * (cut ^ dur)
 	fn price(
 		&self,
 		initial_price: LiftedFixedBalance,

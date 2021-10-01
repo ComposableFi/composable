@@ -5,19 +5,24 @@ use sp_runtime::Permill;
 
 #[derive(Default, Decode, Encode, Clone)]
 pub enum AuctionStepFunction {
-	#[default]
-	Dex,
-	LinearDecrease{duration: DurationSeconds},
-	StairstepExponentialDecrease{step: DurationSeconds, cut: Permill},
+	/// default - direct pass through to dex without steps, just to satisfy defaults and reasonably for testing
+	LinearDecrease(LinearDecrease),
+	StairstepExponentialDecrease(StairstepExponentialDecrease),
 }
+
+impl Default for AuctionStepFunction {
+    fn default() -> Self {
+        Self::LinearDecrease(Default::default())
+    }
+}
+
 
 #[derive(Default, Decode, Encode, Clone)]
 pub enum AuctionState {
 	#[default]
 	AuctionStarted,
-	AuctionOnDex,
-	AuctionsNotSoldOnDex,
-	AuctionEnded,
+	AuctionEndedSuccessfully,
+	AuctionFatalFailed,
 }
 
 /// Auction is done via dexes which act each block. Each block decide if intention was satisfied or not.
@@ -28,6 +33,21 @@ pub enum ActionEvent {
 	Fail,
 	CanceledBecauseOfNoPriceMatch,
 	CanceledBecauseOfSomeTechnicalReasons,
+}
+
+#[derive(Default, Decode, Encode, Clone)]
+pub struct LinearDecrease {
+	/// Seconds after auction start when the price reaches zero
+	pub total: DurationSeconds,
+}
+
+#[derive(Default, Decode, Encode, Clone)]
+pub struct StairstepExponentialDecrease {
+	// Length of time between price drops
+	pub step: DurationSeconds,
+	// Per-step multiplicative factor, usually more than 50%, mostly closer to 100%, but not 100%.
+	// Drop per unit of `step`.
+	pub cut: Permill,
 }
 
 
