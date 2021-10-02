@@ -18,6 +18,8 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 
+	use crate::weights::WeightInfo;
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type AssetId: AssetId;
@@ -26,6 +28,7 @@ pub mod pallet {
 		type NativeAssetId: Get<Self::AssetId>;
 		type Currency;
 		type MultiCurrency;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -47,7 +50,7 @@ pub mod pallet {
 		///  - If the account has insufficient free balance to make the transfer, or if `keep_alive`
 		///    cannot be respected.
 		///  - If the `dest` cannot be looked up.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::transfer())]
 		pub fn transfer(
 			origin: OriginFor<T>,
 			asset: T::AssetId,
@@ -69,7 +72,7 @@ pub mod pallet {
 		///  - If the account has insufficient free balance to make the transfer, or if `keep_alive`
 		///    cannot be respected.
 		///  - If the `dest` cannot be looked up.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::transfer_native())]
 		pub fn transfer_native(
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,
@@ -89,7 +92,7 @@ pub mod pallet {
 		///  - If the account has insufficient free balance to make the transfer, or if `keep_alive`
 		///    cannot be respected.
 		///  - If the `dest` cannot be looked up.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::force_transfer())]
 		pub fn force_transfer(
 			origin: OriginFor<T>,
 			asset: T::AssetId,
@@ -112,7 +115,7 @@ pub mod pallet {
 		///  - If the account has insufficient free balance to make the transfer, or if `keep_alive`
 		///    cannot be respected.
 		///  - If the `dest` cannot be looked up.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::force_transfer_native())]
 		pub fn force_transfer_native(
 			origin: OriginFor<T>,
 			source: <T::Lookup as StaticLookup>::Source,
@@ -132,7 +135,7 @@ pub mod pallet {
 		/// # Errors
 		///  - When `origin` is not signed.
 		///  - If the `dest` cannot be looked up.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::transfer_all())]
 		pub fn transfer_all(
 			origin: OriginFor<T>,
 			asset: T::AssetId,
@@ -158,7 +161,7 @@ pub mod pallet {
 		/// # Errors
 		///  - When `origin` is not signed.
 		///  - If the `dest` cannot be looked up.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::transfer_all_native())]
 		pub fn transfer_all_native(
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,

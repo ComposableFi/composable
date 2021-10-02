@@ -13,11 +13,18 @@ pub trait WeightInfo {
 	fn force_transfer() -> Weight;
 	fn force_transfer_native() -> Weight;
 	fn transfer_all() -> Weight;
+	fn transfer_all_native() -> Weight;
 }
 
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn transfer_all() -> Weight {
+		(83_205_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+
+	fn transfer_all_native() -> Weight {
 		(83_205_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
@@ -33,6 +40,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+
 	fn force_transfer() -> Weight {
 		(81_458_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
@@ -59,6 +67,12 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
 	fn transfer_all() -> Weight {
+		(83_205_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+
+	fn transfer_all_native() -> Weight {
 		(83_205_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))

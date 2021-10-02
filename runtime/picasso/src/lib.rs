@@ -503,6 +503,7 @@ impl assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
 	type Currency = Balances;
 	type MultiCurrency = Tokens;
+	type WeightInfo = ();
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
