@@ -9,7 +9,7 @@ use crate::{
 	models::VaultInfo,
 	*,
 };
-use composable_traits::vault::{Deposit, FundsAvailability, StrategicVault, VaultConfig};
+use composable_traits::vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
@@ -24,9 +24,9 @@ macro_rules! prop_assert_ok {
     };
 
     ($cond:expr, $($fmt:tt)*) => {
-        if let Err(_) = $cond {
+        if let Err(e) = $cond {
             let message = format!($($fmt)*);
-            let message = format!("{} at {}:{}", message, file!(), line!());
+            let message = format!("Expected Ok(_), got {:?}, {} at {}:{}", e, message, file!(), line!());
             return ::std::result::Result::Err(
                 proptest::test_runner::TestCaseError::fail(message));
         }
@@ -413,6 +413,42 @@ proptest! {
 			Ok(())
 		})?;
 	}
+
+	#[test]
+	fn vault_are_isolated(
+		strategy_account_id in strategy_account(),
+		(amount1, amount2) in valid_amounts_without_overflow_2()
+	) {
+		let asset_id = MockCurrencyId::D;
+		ExtBuilder::default().build().execute_with(|| {
+
+			// Create two vaults based on the same asset
+			let (vault_id1, _) = create_vault(strategy_account_id, asset_id);
+			let (vault_id2, _) = create_vault(strategy_account_id, asset_id);
+
+			// Ensure vaults are unique
+			prop_assert_ne!(vault_id1, vault_id2);
+			prop_assert_ne!(Vaults::account_id(&vault_id1), Vaults::account_id(&vault_id2));
+
+			// Alice deposit an amount in vault 1
+			prop_assert_eq!(Tokens::balance(asset_id, &Vaults::account_id(&vault_id1)), 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), 0);
+			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount1));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id1, amount1));
+
+			// Bob deposit an amount in vault 2
+			prop_assert_eq!(Tokens::balance(asset_id, &Vaults::account_id(&vault_id2)), 0);
+			prop_assert_eq!(Tokens::balance(asset_id, &BOB), 0);
+			prop_assert_ok!(Tokens::mint_into(asset_id, &BOB, amount2));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(BOB), vault_id2, amount2));
+
+			// The funds should not be shared.
+			prop_assert_eq!(Tokens::balance(asset_id, &Vaults::account_id(&vault_id1)), amount1);
+			prop_assert_eq!(Tokens::balance(asset_id, &Vaults::account_id(&vault_id2)), amount2);
+
+			Ok(())
+		})?;
+	}
 }
 
 proptest! {
@@ -510,4 +546,43 @@ proptest! {
 			Ok(())
 		})?;
 	}
+}
+
+#[test]
+fn test_vault_emergency_shutdown_origin() {
+	ExtBuilder::default().build().execute_with(|| {
+		let (id, _) = create_vault(ALICE, MockCurrencyId::A);
+		Vaults::emergency_shutdown(Origin::signed(ALICE), id)
+			.expect_err("only root may emergency_shutdown");
+		Vaults::emergency_shutdown(Origin::none(), id)
+			.expect_err("only root may emergency_shutdown");
+	})
+}
+
+#[test]
+fn test_vault_emergency_shutdown() {
+	ExtBuilder::default().build().execute_with(|| {
+		let (id, _) = create_vault(ALICE, MockCurrencyId::A);
+		// Setting up the vault and depositing to ensure it is working correctly, and later to
+		// ensure that the specific deposit cannot be withdrawn if the vault is stopped.
+		Tokens::mint_into(MockCurrencyId::A, &ALICE, 1000)
+			.expect("minting for ALICE should succeed");
+		Vaults::deposit(Origin::signed(ALICE), id, 100)
+			.expect("depositing in active vault should succeed");
+
+		// Shutdown the vault, and ensure that the deposited funds cannot be withdrawn.
+		Vaults::emergency_shutdown(Origin::root(), id)
+			.expect("root should be able to emergency shutdown");
+		Vaults::deposit(Origin::signed(ALICE), id, 100)
+			.expect_err("depositing in stopped vault should fail");
+		Vaults::withdraw(Origin::signed(ALICE), id, 100)
+			.expect_err("withdrawing from stopped vault should fail");
+
+		// Restart the vault, and ensure that funds can be withdrawn and deposited
+		Vaults::start(Origin::root(), id).expect("root can restart the vault");
+		Vaults::deposit(Origin::signed(ALICE), id, 100)
+			.expect("depositing in restarted vault should succeed");
+		Vaults::withdraw(Origin::signed(ALICE), id, 100)
+			.expect("withdrawing from restarted vault should succeed");
+	});
 }
