@@ -4,10 +4,12 @@ use crate::{Config, Pallet};
 use frame_support::{
 	dispatch::DispatchResult,
 	pallet_prelude::MaybeSerializeDeserialize,
-	traits::{Currency, ExistenceRequirement, Get, LockableCurrency, WithdrawReasons},
+	traits::{
+		Currency, ExistenceRequirement, Get, LockableCurrency, ReservableCurrency, WithdrawReasons,
+	},
 };
 use num_traits::CheckedSub;
-use orml_traits::{MultiCurrency, MultiLockableCurrency};
+use orml_traits::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Saturating},
 	ArithmeticError, DispatchError,
@@ -122,11 +124,11 @@ where
 		<<T as Config>::MultiCurrency>::withdraw(currency_id, who, amount)
 	}
 
-	fn can_slash(currency_id: Self::CurrencyId, who: &AccountId, value: Self::Balance) -> bool {
+	fn can_slash(currency_id: Self::CurrencyId, who: &AccountId, amount: Self::Balance) -> bool {
 		if currency_id == T::NativeAssetId::get() {
-			return <<T as Config>::Currency>::can_slash(who, value)
+			return <<T as Config>::Currency>::can_slash(who, amount)
 		}
-		<<T as Config>::MultiCurrency>::can_slash(currency_id, who, value)
+		<<T as Config>::MultiCurrency>::can_slash(currency_id, who, amount)
 	}
 
 	fn slash(
@@ -145,8 +147,8 @@ where
 
 impl<T: Config, AccountId> MultiLockableCurrency<AccountId> for Pallet<T>
 where
-	T::Currency: LockableCurrency<AccountId, Balance = T::Balance>,
-	<T as Config>::Currency: Currency<AccountId, Balance = T::Balance>,
+	<T as Config>::Currency: LockableCurrency<AccountId, Balance = T::Balance>
+		+ Currency<AccountId, Balance = T::Balance>,
 	<T as Config>::MultiCurrency:
 		MultiLockableCurrency<AccountId, Balance = T::Balance, CurrencyId = T::AssetId>,
 	<T as Config>::Balance: Saturating + num_traits::Saturating,
@@ -190,5 +192,87 @@ where
 			return Ok(())
 		}
 		<<T as Config>::MultiCurrency>::remove_lock(lock_id, currency_id, who)
+	}
+}
+
+impl<T: Config, AccountId> MultiReservableCurrency<AccountId> for Pallet<T>
+where
+	<T as Config>::Currency: ReservableCurrency<AccountId, Balance = T::Balance>
+		+ Currency<AccountId, Balance = T::Balance>,
+	<T as Config>::MultiCurrency:
+		MultiReservableCurrency<AccountId, Balance = T::Balance, CurrencyId = T::AssetId>,
+	<T as Config>::Balance: Saturating + num_traits::Saturating,
+	<T as Config>::AssetId: MaybeSerializeDeserialize,
+{
+	fn can_reserve(currency_id: Self::CurrencyId, who: &AccountId, amount: Self::Balance) -> bool {
+		if currency_id == T::NativeAssetId::get() {
+			return <<T as Config>::Currency>::can_reserve(who, amount)
+		}
+		<<T as Config>::MultiCurrency>::can_reserve(currency_id, who, amount)
+	}
+
+	fn slash_reserved(
+		currency_id: Self::CurrencyId,
+		who: &AccountId,
+		amount: Self::Balance,
+	) -> Self::Balance {
+		if currency_id == T::NativeAssetId::get() {
+			// Drop the negative imbalance, causing the total issuance to be reduced, in accordance with `MultiReservableCurrency`.
+			return <<T as Config>::Currency>::slash_reserved(who, amount).1
+		}
+		<<T as Config>::MultiCurrency>::slash_reserved(currency_id, who, amount)
+	}
+
+	fn reserved_balance(currency_id: Self::CurrencyId, who: &AccountId) -> Self::Balance {
+		if currency_id == T::NativeAssetId::get() {
+			return <<T as Config>::Currency>::reserved_balance(who)
+		}
+		<<T as Config>::MultiCurrency>::reserved_balance(currency_id, who)
+	}
+
+	fn reserve(
+		currency_id: Self::CurrencyId,
+		who: &AccountId,
+		amount: Self::Balance,
+	) -> sp_runtime::DispatchResult {
+		if currency_id == T::NativeAssetId::get() {
+			return <<T as Config>::Currency>::reserve(who, amount)
+		}
+		<<T as Config>::MultiCurrency>::reserve(currency_id, who, amount)
+	}
+
+	fn unreserve(
+		currency_id: Self::CurrencyId,
+		who: &AccountId,
+		amount: Self::Balance,
+	) -> Self::Balance {
+		if currency_id == T::NativeAssetId::get() {
+			return <<T as Config>::Currency>::unreserve(who, amount)
+		}
+		<<T as Config>::MultiCurrency>::unreserve(currency_id, who, amount)
+	}
+
+	fn repatriate_reserved(
+		currency_id: Self::CurrencyId,
+		slashed: &AccountId,
+		beneficiary: &AccountId,
+		amount: Self::Balance,
+		status: orml_traits::BalanceStatus,
+	) -> core::result::Result<Self::Balance, DispatchError> {
+		if currency_id == T::NativeAssetId::get() {
+			return <<T as Config>::Currency>::repatriate_reserved(
+				slashed,
+				beneficiary,
+				amount,
+				status,
+			)
+		}
+		<<T as Config>::MultiCurrency>::repatriate_reserved(
+			currency_id,
+			slashed,
+			beneficiary,
+			amount,
+			status,
+		)
 	}
 }
