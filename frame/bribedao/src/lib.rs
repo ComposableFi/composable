@@ -1,7 +1,7 @@
 //Bribe DAO
 
 pub use pallet::*;
-use sp_runtime::DispatchError;
+
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -99,10 +99,22 @@ pub mod pallet {
 			}
 			Ok(().into())
 		}
+
+
 	}
 
 	// TODO(oleksii): Errors (#[pallet::error])
+	#[pallet::error]
+	pub enum Error<T> {
+		InvalidBribe,
+		InvalidIndex,
+		NotEnoughFunds,
+		NotEnoughStake,
+		PriceNotRequested,
+		AlreadyBribed,
+	}
 
+	
 	impl<T: Config> Bribe for Pallet<T> {
 		type BribeIndex = BribeIndex;
 		type ReferendumIndex = ReferendumIndex;
@@ -121,16 +133,18 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+
+
 		fn do_create_bribe(request: CreateBribeRequest<T>) -> Result<BribeIndex, DispatchError> {
 			let id = BribeCount::<T>::mutate(|id| {
 				*id += 1;
 				*id
-			});
+			}); 
+
+			ensure!(BribeRequests::<T>::contains_key(id), Error::<T>::AlreadyBribed); //dont duplicate briberequest if we already have it
 			BribeRequests::<T>::insert(id, request);
-
-			todo!("check that referendum exists");
-
 			Ok(id)
+
 		}
 
 		fn do_take_bribe(request: TakeBribeRequest<T>) -> Result<bool, DispatchError> {
