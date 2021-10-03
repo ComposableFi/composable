@@ -5553,6 +5553,8 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "frame-system",
+ "num-traits",
+ "orml-traits",
  "parity-scale-codec",
  "sp-arithmetic",
  "sp-core",
