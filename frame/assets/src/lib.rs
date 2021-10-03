@@ -2,6 +2,7 @@
 
 pub use pallet::*;
 
+mod orml;
 pub mod weights;
 
 #[frame_support::pallet]
