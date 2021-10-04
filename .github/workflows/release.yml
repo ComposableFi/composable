@@ -40,7 +40,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: name/app
+          images: ${{ secrets.DOCKER_HUB_USERNAME }}/composable
           tags: |
             type=ref,event=branch
             type=ref,event=pr
