@@ -1,4 +1,5 @@
-FROM paritytech/ci-linux:production as builder
+FROM paritytech/ci-linux:68f5eb0c-20211004 as builder
+# please update docker, toolchain toml and github action with toolchain at same time
 LABEL description="This is the build stage for Composable. Here we create the binary."
 
 ARG PROFILE=release
