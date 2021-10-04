@@ -25,6 +25,7 @@
 #![allow(unused_variables)]
 
 mod price_function;
+mod mocks;
 
 #[frame_support::pallet]
 pub mod pallet {
