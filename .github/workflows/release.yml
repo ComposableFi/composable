@@ -2,7 +2,7 @@ name: Release
 on:
   pull_request:
     branches:
-      - main
+      - 'release/**'
 
 jobs:
   release-on-push:
