@@ -48,6 +48,6 @@ jobs:
           file: ./install/docker/Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/composable:{{ env.RELEASE_VERSION }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/composable:$RELEASE_VERSION
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
