@@ -92,20 +92,20 @@ fn enable_work() {
 #[test]
 fn paused_transaction_filter_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert!(!CallFilter::<Runtime>::contains(BALANCE_TRANSFER));
+		assert!(!CallFilter::contains(BALANCE_TRANSFER));
 		assert_ok!(CallFilter::disable(
 			Origin::signed(1),
 			b"Balances".to_vec(),
 			b"transfer".to_vec()
 		));
 
-		assert!(CallFilter::<Runtime>::contains(BALANCE_TRANSFER));
+		assert!(CallFilter::contains(BALANCE_TRANSFER));
 		assert_ok!(CallFilter::enable(
 			Origin::signed(1),
 			b"Balances".to_vec(),
 			b"transfer".to_vec()
 		));
 
-		assert!(!CallFilter::<Runtime>::contains(BALANCE_TRANSFER));
+		assert!(!CallFilter::contains(BALANCE_TRANSFER));
 	});
 }

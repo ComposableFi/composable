@@ -112,8 +112,8 @@ pub mod pallet {
 }
 
 impl<T: Config> Contains<T::Call> for Pallet<T>
-	where
-		<T as system::Config>::Call: GetCallMetadata,
+where
+	<T as system::Config>::Call: GetCallMetadata,
 {
 	fn contains(call: &T::Call) -> bool {
 		let CallMetadata { function_name, pallet_name } = call.get_call_metadata();
