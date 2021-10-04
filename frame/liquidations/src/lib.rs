@@ -153,7 +153,7 @@ pub mod pallet {
 			//TODO: implement this function.
 			Ok(0)
 		}
-		fn is_liquidation_completed(liquidation_id : &Self::LiquidationId) -> bool {
+		fn is_liquidation_completed(liquidation_id: &Self::LiquidationId) -> bool {
 			// TODO: implement
 			false
 		}

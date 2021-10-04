@@ -68,5 +68,5 @@ pub trait Orderbook {
 		up_to: Self::Balance,
 	) -> Result<TakeResult<Self::Balance>, Self::Error>;
 
-	fn is_order_executed(order_id : &Self::OrderId) -> bool;
+	fn is_order_executed(order_id: &Self::OrderId) -> bool;
 }
