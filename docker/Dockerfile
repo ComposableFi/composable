@@ -6,7 +6,7 @@ WORKDIR /composable
 
 COPY . /composable
 
-RUN pwd && ls && cd node && cargo build --$PROFILE
+RUN pwd && ls && cd node && cargo +nightly-2021-09-01 build --$PROFILE
 
 # ===== SECOND STAGE ======
 
