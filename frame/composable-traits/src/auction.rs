@@ -1,4 +1,7 @@
-use crate::{dex::Orderbook, loans::DurationSeconds};
+use crate::{
+	dex::Orderbook,
+	loans::{DurationSeconds, Timestamp},
+};
 use frame_support::pallet_prelude::*;
 use sp_runtime::Permill;
 
@@ -16,15 +19,20 @@ impl Default for AuctionStepFunction {
 	}
 }
 
-#[derive(Default, Decode, Encode, Clone, PartialEq)]
+#[derive(Decode, Encode, Clone, PartialEq)]
 pub enum AuctionState {
-	#[default]
 	AuctionStarted,
 	AuctionEndedSuccessfully,
 	/// like DEX does not support asset now or halted
 	AuctionFatalFailed,
 	/// so if for some reason system loop is not properly set, than will get timeout
 	AuctionTimeFailed,
+}
+
+impl Default for AuctionState {
+	fn default() -> Self {
+		Self::AuctionStarted
+	}
 }
 
 /// Auction is done via dexes which act each block. Each block decide if intention was satisfied or
@@ -80,7 +88,6 @@ pub trait DutchAuction {
 		source_account: &Self::AccountId,
 		target_asset_id: &Self::AssetId,
 		target_account: &Self::AccountId,
-		want: &Self::AssetId,
 		total_amount: &Self::Balance,
 		initial_price: &Self::Balance,
 		function: AuctionStepFunction,
@@ -89,7 +96,7 @@ pub trait DutchAuction {
 	/// run existing auctions
 	/// if some auctions completed, transfer amount to target account
 	/// `now` current time.
-	fn run_auctions(now: DurationSeconds) -> Result<(), Self::Error>;
+	fn run_auctions(now: Timestamp) -> Result<(), Self::Error>;
 
 	fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order>;
 

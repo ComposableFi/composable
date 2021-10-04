@@ -42,16 +42,7 @@ pub use crate::weights::WeightInfo;
 pub mod pallet {
 	use crate::{models::BorrowerData, weights::WeightInfo};
 	use codec::{Codec, FullCodec};
-	use composable_traits::{
-		currency::CurrencyFactory,
-		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
-		liquidation::Liquidate,
-		loans::DurationSeconds,
-		math::{LiftedFixedBalance, SafeArithmetic},
-		oracle::Oracle,
-		rate_model::*,
-		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
-	};
+	use composable_traits::{currency::CurrencyFactory, lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput}, liquidation::Liquidate, loans::{DurationSeconds, Timestamp}, math::{LiftedFixedBalance, SafeArithmetic}, oracle::Oracle, rate_model::*, vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig}};
 	use frame_support::{
 		pallet_prelude::*,
 		storage::{with_transaction, TransactionOutcome},

@@ -24,7 +24,7 @@ use sp_runtime::{
 use sp_arithmetic::per_things::Percent;
 
 use crate::{
-	loans::DurationSeconds,
+	loans::{DurationSeconds, Timestamp},
 	math::{LiftedFixedBalance, SafeArithmetic},
 };
 
@@ -40,9 +40,6 @@ pub type NormalizedCollateralFactor = FixedU128;
 /// Must be [0..1]
 /// TODO: implement Ratio as wrapper over FixedU128
 pub type Ratio = FixedU128;
-
-/// seconds
-pub type Timestamp = u64;
 
 /// current notion of year will take away 1/365 from lenders and give away to borrowers (as does no
 /// accounts to length of year)
