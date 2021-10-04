@@ -1,4 +1,4 @@
-use crate::rate_model::*;
+use crate::{loans::Timestamp, rate_model::*};
 use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use sp_runtime::Percent;

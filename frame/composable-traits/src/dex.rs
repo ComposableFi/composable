@@ -31,6 +31,7 @@ pub struct TakeResult<BALANCE> {
 /// see for examples:
 /// - https://github.com/galacticcouncil/Basilisk-node/blob/master/pallets/exchange/src/lib.rs
 /// - https://github.com/Polkadex-Substrate/polkadex-aura-node/blob/master/pallets/polkadex/src/lib.rs
+/// expected that failed exchanges are notified by events.
 pub trait Orderbook {
 	type AssetId;
 	type Balance;
@@ -41,6 +42,7 @@ pub trait Orderbook {
 	/// sell. exchanges specified amount of asset to other at specific price
 	/// `source_price` price per unit
 	/// `amm_slippage` set to zero to avoid AMM sell
+	/// for remote auction we should  have sent some random to make sure we have idempotent request
 	fn post(
 		account_from: &Self::AccountId,
 		asset: &Self::AssetId,
@@ -66,5 +68,5 @@ pub trait Orderbook {
 		up_to: Self::Balance,
 	) -> Result<TakeResult<Self::Balance>, Self::Error>;
 
-	fn is_order_executed(order_id : &Self::OrderId) -> bool;
+	fn is_order_executed(order_id: &Self::OrderId) -> bool;
 }

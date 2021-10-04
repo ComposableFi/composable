@@ -46,7 +46,7 @@ pub mod pallet {
 		currency::CurrencyFactory,
 		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
 		liquidation::Liquidate,
-		loans::DurationSeconds,
+		loans::{DurationSeconds, Timestamp},
 		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
 		rate_model::*,

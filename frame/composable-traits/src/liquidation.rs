@@ -15,9 +15,7 @@ pub trait Liquidate {
 		want: &Self::AssetId,
 		amount: &Self::Balance,
 	) -> Result<Self::LiquidationId, Self::Error>;
-	fn is_liquidation_completed(
-		liquidation_id : &Self::LiquidationId
-	) -> bool;
+	fn is_liquidation_completed(liquidation_id: &Self::LiquidationId) -> bool;
 }
 
 impl<T: Orderbook> Liquidate for T {
@@ -35,7 +33,7 @@ impl<T: Orderbook> Liquidate for T {
 	) -> Result<Self::LiquidationId, Self::Error> {
 		<T as Orderbook>::market_sell(account, asset, want, amount, Permill::from_perthousand(0))
 	}
-	fn is_liquidation_completed(liquidation_id : &Self::LiquidationId) -> bool {
+	fn is_liquidation_completed(liquidation_id: &Self::LiquidationId) -> bool {
 		<T as Orderbook>::is_order_executed(liquidation_id)
 	}
 }
