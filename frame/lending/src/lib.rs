@@ -711,10 +711,14 @@ pub mod pallet {
 				let borrower_balance_with_interest =
 					Self::borrow_balance_current(market_id, account)?
 						.unwrap_or_else(BorrowAmountOf::<Self>::zero);
+				let collateral_price = <T::Oracle as Oracle>::get_price(&market.collateral)
+					.map_err(|_| Error::<T>::AssetWithoutPrice)?;
 				let _liquidation_id = T::Liquidation::initiate_liquidation(
-					&Self::account_id(market_id),
+					account,
 					&market.collateral,
+					&collateral_price.0,
 					&borrow_asset_id,
+					&Self::account_id(market_id),
 					&borrower_balance_with_interest,
 				)
 				.map_err(|_| Error::<T>::LiquidationFailed);

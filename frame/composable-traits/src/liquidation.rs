@@ -10,10 +10,12 @@ pub trait Liquidate {
 	type LiquidationId;
 
 	fn initiate_liquidation(
-		account: &Self::AccountId,
-		asset: &Self::AssetId,
-		want: &Self::AssetId,
-		amount: &Self::Balance,
+		source_account: &Self::AccountId,
+		source_asset_id: &Self::AssetId,
+		source_asset_price: &Self::Balance,
+		target_asset_id: &Self::AssetId,
+		target_account: &Self::AccountId,
+		total_amount: &Self::Balance,
 	) -> Result<Self::LiquidationId, Self::Error>;
 	fn is_liquidation_completed(liquidation_id: &Self::LiquidationId) -> bool;
 }
@@ -26,12 +28,14 @@ impl<T: Orderbook> Liquidate for T {
 	type LiquidationId = <Self as Orderbook>::OrderId;
 
 	fn initiate_liquidation(
-		account: &Self::AccountId,
-		asset: &Self::AssetId,
-		want: &Self::AssetId,
-		amount: &Self::Balance,
+		source_account: &Self::AccountId,
+		source_asset_id: &Self::AssetId,
+		_source_asset_price: &Self::Balance,
+		target_asset_id: &Self::AssetId,
+		_target_account: &Self::AccountId,
+		total_amount: &Self::Balance,
 	) -> Result<Self::LiquidationId, Self::Error> {
-		<T as Orderbook>::market_sell(account, asset, want, amount, Permill::from_perthousand(0))
+		<T as Orderbook>::market_sell(source_account, source_asset_id, target_asset_id, total_amount, Permill::from_perthousand(0))
 	}
 	fn is_liquidation_completed(liquidation_id: &Self::LiquidationId) -> bool {
 		<T as Orderbook>::is_order_executed(liquidation_id)

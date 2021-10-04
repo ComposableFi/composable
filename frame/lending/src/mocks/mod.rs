@@ -1,11 +1,16 @@
 use crate as pallet_lending;
-use composable_traits::currency::DynamicCurrencyId;
+use composable_traits::{
+	currency::DynamicCurrencyId,
+	dex::{Orderbook, TakeResult},
+};
 use frame_support::{
 	parameter_types,
+	sp_runtime::Permill,
 	traits::{OnFinalize, OnInitialize},
 	PalletId,
 };
 use orml_traits::parameter_type_with_key;
+use pallet_dutch_auctions::DeFiComposableConfig;
 use pallet_liquidations::DeFiComposablePallet;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
@@ -101,6 +106,7 @@ frame_support::construct_runtime!(
 		Liquidations: pallet_liquidations::{Pallet, Call, Event<T>},
 		Lending: pallet_lending::{Pallet, Call, Config, Storage, Event<T>},
 		Oracle: pallet_lending::mocks::oracle::{Pallet},
+		Auction: pallet_dutch_auctions::{Pallet, Event<T>},
 	}
 );
 
@@ -232,11 +238,65 @@ impl DeFiComposablePallet for Test {
 	type AssetId = MockCurrencyId;
 }
 
+impl DeFiComposableConfig for Test {
+	type AssetId = MockCurrencyId;
+	type Balance = Balance;
+	type Currency = Tokens;
+}
+
+pub struct MockOrderbook;
+impl Orderbook for MockOrderbook {
+	type AssetId = MockCurrencyId;
+	type Balance = Balance;
+	type AccountId = AccountId;
+	type Error = DispatchError;
+	type OrderId = u128;
+	fn post(
+		_account_from: &Self::AccountId,
+		_asset: &Self::AssetId,
+		_want: &Self::AssetId,
+		_source_amount: &Self::Balance,
+		_source_price: &Self::Balance,
+		_amm_slippage: Permill,
+	) -> Result<Self::OrderId, Self::Error> {
+		Ok(0)
+	}
+	fn market_sell(
+		_account: &Self::AccountId,
+		_asset: &Self::AssetId,
+		_want: &Self::AssetId,
+		_amount: &Self::Balance,
+		_amm_slippage: Permill,
+	) -> Result<Self::OrderId, Self::Error> {
+		Ok(0)
+	}
+	fn take(
+		_account: &Self::AccountId,
+		_orders: impl Iterator<Item = Self::OrderId>,
+		_up_to: Self::Balance,
+	) -> Result<TakeResult<Self::Balance>, Self::Error> {
+		Ok(TakeResult { amount: 0, total_price: 0 })
+	}
+
+	fn is_order_executed(_order_id: &Self::OrderId) -> bool {
+		false
+	}
+}
+
+impl pallet_dutch_auctions::Config for Test {
+	type Event = Event;
+	type DexOrderId = u128;
+	type OrderId = u128;
+	type UnixTime = Timestamp;
+	type Orderbook = MockOrderbook;
+}
+
 impl pallet_liquidations::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type UnixTime = Timestamp;
 	type Lending = Lending;
+	type DutchAuction = Auction;
 }
 
 parameter_types! {

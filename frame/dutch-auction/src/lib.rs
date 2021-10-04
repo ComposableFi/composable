@@ -24,6 +24,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+pub use pallet::*;
 mod mocks;
 mod price_function;
 
@@ -154,6 +155,11 @@ pub mod pallet {
 		fn next(&self) -> Self;
 	}
 
+	impl WrappingNext for u128 {
+		fn next(&self) -> Self {
+			self + 1
+		}
+	}
 	/// auction can span several dex orders within its lifetime
 	#[derive(Encode, Decode, Default)]
 	pub struct Order<DexOrderId, AccountId, AssetId, Balance> {
