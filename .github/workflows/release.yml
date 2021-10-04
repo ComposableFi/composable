@@ -48,7 +48,7 @@ jobs:
           file: ./install/docker/Dockerfile
           images: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/composable
-          tags: type=semver,pattern={{version}}
+          tags: {{ env.RELEASE_VERSION }}
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           cache-from: type=local,src=/tmp/.buildx-cache
