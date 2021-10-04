@@ -45,7 +45,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: nightly-2021-09-01
           override: true
       - uses: actions-rs/toolchain@v1
         with:
@@ -72,7 +72,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: nightly-2021-09-01
           override: true
       - uses: actions-rs/toolchain@v1
         with:
@@ -84,7 +84,3 @@ jobs:
           SKIP_WASM_BUILD=1 cargo test
           cargo clean -p picasso-runtime
           cargo clean -p composable
-
-
-
-
