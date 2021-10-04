@@ -19,7 +19,6 @@
 
 use crate::{AccountVote, Conviction, Vote, VoteThreshold};
 use codec::{Decode, Encode};
-use composable_traits::currency::AssetId;
 use sp_runtime::{
 	traits::{Bounded, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Saturating, Zero},
 	RuntimeDebug,
