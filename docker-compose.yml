@@ -15,3 +15,13 @@ services:
         source: ./.local
         target: /root/.local
     command: bash -c "cargo build --release && ./target/release/node-template --dev --ws-external"
+  composable:
+    image: registry.hub.docker.com/composablefi/composable:latest
+    ports:
+      - "80:8000"
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/.docker/config.json:/config.json
+    command: --interval 30
