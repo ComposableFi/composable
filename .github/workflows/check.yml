@@ -58,7 +58,7 @@ jobs:
       - name: Cargo fmt
         run: |
           rustup component add rustfmt --toolchain nightly-x86_64-unknown-linux-gnu
-          cargo fmt -- --check
+          cargo +nightly fmt -- --check
 
   test:
     name: Unit Test
