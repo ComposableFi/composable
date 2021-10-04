@@ -31,6 +31,3 @@ USER $APP_USER
 WORKDIR ${APP}
 
 EXPOSE 8000
-
-
-CMD ["./hello_world"]
