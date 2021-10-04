@@ -18,7 +18,6 @@ package = "parity-scale-codec"
 version = "2.0.0"
 
 [dependencies]
-# codec = {package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"]}
 serde = {version = "1.0.101", optional = true, features = ["derive"]}
 
 frame-benchmarking = {default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8", optional = true}
@@ -33,7 +32,7 @@ sp-storage = {default-features = false, version = "3.0.0", git = "https://github
 # [dev-dependencies]
 hex-literal = "0.3.1"
 
-pallet-assets = { default-features = false, version = "0.0.1", path = "../assets" }
+pallet-assets = {default-features = false, version = "0.0.1", path = "../assets"}
 
 orml-tokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb"}
 orml-traits = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false}
@@ -43,7 +42,7 @@ pallet-balances = {default-features = false, version = "3.0.0", git = "https://g
 pallet-scheduler = {default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"}
 substrate-test-utils = {default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"}
 
-composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
+composable-traits = {version = "0.0.1", path = "../composable-traits", default-features = false}
 
 [features]
 default = ["std"]

@@ -160,7 +160,6 @@ use frame_support::{
 	ensure,
 	traits::{
 		schedule::{DispatchTime, Named as ScheduleNamed},
-		tokens::fungibles::{Inspect, Mutate, MutateHold, Transfer},
 		BalanceStatus, Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency, OnUnbalanced,
 		ReservableCurrency,
 	},
@@ -168,6 +167,7 @@ use frame_support::{
 	Parameter,
 };
 use frame_system::{self as system, ensure_root, ensure_signed};
+use orml_traits::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
 use sp_runtime::{
 	traits::{Bounded, Dispatchable, Hash, Saturating, Zero},
 	DispatchError, DispatchResult, RuntimeDebug,
@@ -208,8 +208,9 @@ type BalanceOf<T> = <T as Config>::Balance;
 type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
-pub type AssetIdOf<T> =
-	<<T as Config>::MultiCurrency as Inspect<<T as frame_system::Config>::AccountId>>::AssetId;
+pub type AssetIdOf<T> = <<T as Config>::MultiCurrency as MultiCurrency<
+	<T as frame_system::Config>::AccountId,
+>>::CurrencyId;
 
 pub trait Config: frame_system::Config + Sized {
 	type Proposal: Parameter + Dispatchable<Origin = Self::Origin> + From<Call<Self>>;
@@ -220,9 +221,13 @@ pub trait Config: frame_system::Config + Sized {
 		+ LockableCurrency<Self::AccountId, Balance = Self::Balance>;
 
 	/// Multicurrency type for this module.
-	type MultiCurrency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-		+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-		+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+	type MultiCurrency: MultiCurrency<Self::AccountId, Balance = Self::Balance, CurrencyId = Self::AssetId>
+		+ MultiLockableCurrency<Self::AccountId, Balance = Self::Balance, CurrencyId = Self::AssetId>
+		+ MultiReservableCurrency<
+			Self::AccountId,
+			Balance = Self::Balance,
+			CurrencyId = Self::AssetId,
+		>;
 
 	/// The `AssetId` used by the pallet. Corresponds the the Ids used by the Currency pallet.
 	type AssetId: AssetId;
@@ -371,9 +376,8 @@ decl_storage! {
 		pub DepositOf get(fn deposit_of):
 			map hasher(twox_64_concat) PropIndex => Option<(Vec<T::AccountId>, BalanceOf<T>)>;
 
-		/// TWOX-NOTE: Safe, as increasing integer keys are safe.
-		pub AssetOfProp get(fn asset_of_prop):
-			map hasher(twox_64_concat) PropIndex => Option<(Vec<T::AccountId>, AssetIdOf<T>)>;
+		/// Mapping proposal hash and asset id
+		pub AssetIds : map hasher(identity) T::Hash => Option<AssetIdOf<T>>;
 
 		/// Map of hashes to the proposal preimage, along with who registered it and their deposit.
 		/// The block number is the block at which it was deposited.
@@ -400,6 +404,7 @@ decl_storage! {
 		/// have recorded. The second item is the total amount of delegations, that will be added.
 		///
 		/// TWOX-NOTE: SAFE as `AccountId`s are crypto hashes anyway.
+		pub VotingOf: map hasher(twox_64_concat) T::AccountId => Voting<BalanceOf<T>, T::AccountId, T::BlockNumber>;
 
 		/// Accounts for which there are locks in action which may be removed at some point in the
 		/// future. The value is the block number at which the lock expires and may be removed.
@@ -629,8 +634,10 @@ decl_module! {
 
 			PublicPropCount::put(index + 1);
 			<DepositOf<T>>::insert(index, (&[&who][..], value));
-			// store asset_id placeholder
-			<AssetOfProp<T>>::insert(index, (&[&who][..], asset_id));
+
+			// store asset_id with proposal index and proposal hash for retreival
+			<AssetIds<T>>::insert(&proposal_hash, asset_id);
+
 			<PublicProps<T>>::append((index, proposal_hash, who));
 
 			Self::deposit_event(RawEvent::Proposed(index, value));
@@ -655,9 +662,6 @@ decl_module! {
 			ensure!(seconds <= seconds_upper_bound, Error::<T>::WrongUpperBound);
 			let mut deposit = Self::deposit_of(proposal)
 				.ok_or(Error::<T>::ProposalMissing)?;
-			let asset = Self::asset_of_prop(proposal)
-				.ok_or(Error::<T>::ProposalMissing)?;
-			// asset_id placeholder
 			T::Currency::reserve(&who, deposit.1)?;
 			deposit.0.push(who);
 			<DepositOf<T>>::insert(proposal, deposit);
@@ -806,7 +810,11 @@ decl_module! {
 
 			<NextExternal<T>>::kill();
 			let now = <frame_system::Pallet<T>>::block_number();
-			Self::inject_referendum(now + voting_period, proposal_hash, threshold, delay);
+			if let Some(asset_id) = <AssetIds<T>>::get(proposal_hash) {
+				Self::inject_referendum(now + voting_period, proposal_hash, threshold, delay, asset_id);
+			} else {
+				Self::inject_referendum(now + voting_period, proposal_hash, threshold, delay, T::NativeAssetId::get());
+			}
 		}
 
 		/// Veto and blacklist the external proposal hash.
@@ -1239,12 +1247,14 @@ impl<T: Config> Module<T> {
 		proposal_hash: T::Hash,
 		threshold: VoteThreshold,
 		delay: T::BlockNumber,
+		asset_id: AssetIdOf<T>,
 	) -> ReferendumIndex {
 		<Module<T>>::inject_referendum(
 			<frame_system::Pallet<T>>::block_number() + T::VotingPeriod::get(),
 			proposal_hash,
 			threshold,
 			delay,
+			asset_id,
 		)
 	}
 
@@ -1283,7 +1293,7 @@ impl<T: Config> Module<T> {
 	) -> DispatchResult {
 		let mut status = Self::referendum_status(ref_index)?;
 		ensure!(
-			vote.balance() <= T::MultiCurrency::balance(status.asset_id, who),
+			vote.balance() <= T::MultiCurrency::free_balance(status.asset_id, who),
 			Error::<T>::InsufficientFunds
 		);
 		VotingOf::<T>::try_mutate(who, |voting| -> DispatchResult {
@@ -1318,7 +1328,7 @@ impl<T: Config> Module<T> {
 		// Extend the lock to `balance` (rather than setting it) since we don't know what other
 		// votes are in place.
 		//T::Currency::extend_lock(DEMOCRACY_ID, who, vote.balance(), WithdrawReasons::TRANSFER);
-		T::MultiCurrency::hold(status.asset_id, who, vote.balance());
+		T::MultiCurrency::extend_lock(DEMOCRACY_ID, status.asset_id, who, vote.balance());
 		ReferendumInfoOf::<T>::insert(ref_index, ReferendumInfo::Ongoing(status));
 		Ok(())
 	}
@@ -1431,7 +1441,7 @@ impl<T: Config> Module<T> {
 	) -> Result<u32, DispatchError> {
 		ensure!(who != target, Error::<T>::Nonsense);
 		ensure!(
-			balance <= T::MultiCurrency::balance(asset_id, &who),
+			balance <= T::MultiCurrency::free_balance(asset_id, &who),
 			Error::<T>::InsufficientFunds
 		);
 		//ensure!(balance <= T::Currency::free_balance(&who), Error::<T>::InsufficientFunds);
@@ -1460,7 +1470,7 @@ impl<T: Config> Module<T> {
 			// Extend the lock to `balance` (rather than setting it) since we don't know what other
 			// votes are in place.
 			//T::Currency::extend_lock(DEMOCRACY_ID, &who, balance, WithdrawReasons::TRANSFER);
-			T::MultiCurrency::hold(asset_id, &who, balance);
+			T::MultiCurrency::extend_lock(DEMOCRACY_ID, asset_id, &who, balance);
 			Ok(votes)
 		})?;
 		Self::deposit_event(Event::<T>::Delegated(who, target));
@@ -1502,11 +1512,9 @@ impl<T: Config> Module<T> {
 		});
 		if lock_needed.is_zero() {
 			//T::Currency::remove_lock(DEMOCRACY_ID, who);
-			T::MultiCurrency::release(asset_id, who, lock_needed, false); // release is not doing same
-			                                                  // opertion
-			                                                  // as remove lock.
+			T::MultiCurrency::remove_lock(DEMOCRACY_ID, asset_id, who);
 		} else {
-			T::MultiCurrency::hold(asset_id, who, lock_needed);
+			T::MultiCurrency::set_lock(DEMOCRACY_ID, asset_id, who, lock_needed);
 			//T::Currency::set_lock(DEMOCRACY_ID, who, lock_needed, WithdrawReasons::TRANSFER);
 		}
 	}
@@ -1517,6 +1525,7 @@ impl<T: Config> Module<T> {
 		proposal_hash: T::Hash,
 		threshold: VoteThreshold,
 		delay: T::BlockNumber,
+		asset_id: AssetIdOf<T>,
 	) -> ReferendumIndex {
 		let ref_index = Self::referendum_count();
 		ReferendumCount::put(ref_index + 1);
@@ -1526,7 +1535,7 @@ impl<T: Config> Module<T> {
 			threshold,
 			delay,
 			tally: Default::default(),
-			AssetIdOf<T>,
+			asset_id,
 		};
 		let item = ReferendumInfo::Ongoing(status);
 		<ReferendumInfoOf<T>>::insert(ref_index, item);
@@ -1549,12 +1558,24 @@ impl<T: Config> Module<T> {
 		if let Some((proposal, threshold)) = <NextExternal<T>>::take() {
 			LastTabledWasExternal::put(true);
 			Self::deposit_event(RawEvent::ExternalTabled);
-			Self::inject_referendum(
-				now + T::VotingPeriod::get(),
-				proposal,
-				threshold,
-				T::EnactmentPeriod::get(),
-			);
+			if let Some(asset_id) = <AssetIds<T>>::get(proposal) {
+				Self::inject_referendum(
+					now + T::VotingPeriod::get(),
+					proposal,
+					threshold,
+					T::EnactmentPeriod::get(),
+					asset_id,
+				);
+			} else {
+				Self::inject_referendum(
+					now + T::VotingPeriod::get(),
+					proposal,
+					threshold,
+					T::EnactmentPeriod::get(),
+					T::NativeAssetId::get(),
+				);
+			}
+
 			Ok(())
 		} else {
 			Err(Error::<T>::NoneWaiting)?
@@ -1579,12 +1600,25 @@ impl<T: Config> Module<T> {
 					T::Currency::unreserve(d, deposit);
 				}
 				Self::deposit_event(RawEvent::Tabled(prop_index, deposit, depositors));
-				Self::inject_referendum(
-					now + T::VotingPeriod::get(),
-					proposal,
-					VoteThreshold::SuperMajorityApprove,
-					T::EnactmentPeriod::get(),
-				);
+
+				// retreive asset Id
+				if let Some(asset_id) = <AssetIds<T>>::get(proposal) {
+					Self::inject_referendum(
+						now + T::VotingPeriod::get(),
+						proposal,
+						VoteThreshold::SuperMajorityApprove,
+						T::EnactmentPeriod::get(),
+						asset_id,
+					);
+				} else {
+					Self::inject_referendum(
+						now + T::VotingPeriod::get(),
+						proposal,
+						VoteThreshold::SuperMajorityApprove,
+						T::EnactmentPeriod::get(),
+						T::NativeAssetId::get(),
+					);
+				}
 			}
 			Ok(())
 		} else {

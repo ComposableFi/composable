@@ -217,7 +217,8 @@ where
 		amount: Self::Balance,
 	) -> Self::Balance {
 		if currency_id == T::NativeAssetId::get() {
-			// Drop the negative imbalance, causing the total issuance to be reduced, in accordance with `MultiReservableCurrency`.
+			// Drop the negative imbalance, causing the total issuance to be reduced, in accordance
+			// with `MultiReservableCurrency`.
 			return <<T as Config>::Currency>::slash_reserved(who, amount).1
 		}
 		<<T as Config>::MultiCurrency>::slash_reserved(currency_id, who, amount)
