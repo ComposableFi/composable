@@ -46,8 +46,7 @@ jobs:
         with:
           context: ./
           file: ./install/docker/Dockerfile
-          images: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/composable
+          images: ${{ secrets.DOCKER_HUB_USERNAME }}/composable
           tags: {{ env.RELEASE_VERSION }}
           builder: ${{ steps.buildx.outputs.name }}
           push: true
