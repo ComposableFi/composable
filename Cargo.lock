@@ -5679,6 +5679,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-call-filter"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "serde",
+ "smallvec 1.6.1",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-collator-selection"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.8#ed6ba5dfb2c112c29505e856e8971da3420ce6d0"
@@ -6723,6 +6739,7 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
+ "pallet-call-filter",
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-crowdloan-bonus",
