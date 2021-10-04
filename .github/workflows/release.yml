@@ -46,7 +46,7 @@ jobs:
         with:
           context: ./
           file: ./install/docker/Dockerfile
-          images: ${{ secrets.DOCKER_HUB_USERNAME }}/composable
+          images: registry.hub.docker.com/${{ secrets.DOCKER_HUB_USERNAME }}/composable
           tags: latest
           builder: ${{ steps.buildx.outputs.name }}
           push: true
