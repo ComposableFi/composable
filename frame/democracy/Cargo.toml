@@ -29,20 +29,18 @@ sp-runtime = {default-features = false, version = "3.0.0", git = "https://github
 sp-std = {default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"}
 sp-storage = {default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"}
 
-# [dev-dependencies]
-hex-literal = "0.3.1"
-
-pallet-assets = {default-features = false, version = "0.0.1", path = "../assets"}
-
 orml-tokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb"}
 orml-traits = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false}
+
+composable-traits = {version = "0.0.1", path = "../composable-traits", default-features = false}
+
+[dev-dependencies]
+hex-literal = "0.3.1"
 
 pallet-balances = {default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"}
 # pallet-contracts = {default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"}
 pallet-scheduler = {default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"}
 substrate-test-utils = {default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"}
-
-composable-traits = {version = "0.0.1", path = "../composable-traits", default-features = false}
 
 [features]
 default = ["std"]
