@@ -1,9 +1,6 @@
 name: Docker Build
 
 on:
-  pull_request:
-    branches:
-      - main
   page_build:
   release:
     types: # This configuration does not affect the page_build event above
