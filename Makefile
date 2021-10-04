@@ -1,6 +1,6 @@
 COMMIT_SHA:=$(shell git rev-parse --short=9 HEAD)
 BRANCH_NAME:=$(shell git rev-parse --abbrev-ref HEAD | tr '/' '-')
-REPO=composablefi
+REPO=composablefinance
 SERVICE_NAME=composable
 INSTALL_DIR=install/docker
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
@@ -26,7 +26,7 @@ docs: build
 
 style-check:
 	@rustup component add rustfmt 2> /dev/null
-	cargo fmt --all -- --check
+	cargo +nightly fmt --all -- --check
 
 lint:
 	@rustup component add clippy 2> /dev/null
@@ -56,7 +56,7 @@ down:
 	@docker-compose down
 
 
-.PHONY: build test docs style-check lint rust-image up down containerize dev
+.PHONY: build test docs style-check lint up down containerize dev
 
 
 #----------------------------------------------------------------------

@@ -4,7 +4,7 @@ WORKDIR /usr/app/composable
 
 # RUN cargo build --release
 
-ADD . /usr/app/composable
+COPY . /usr/app/composable
 
 FROM debian:buster-slim
 
