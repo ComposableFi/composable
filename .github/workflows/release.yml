@@ -20,7 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with: fetch-depth: 0
+        with: 
+          fetch-depth: 0
       - name: Set env
         run: echo "RELEASE_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
 
