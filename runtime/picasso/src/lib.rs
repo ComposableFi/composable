@@ -33,7 +33,7 @@ use sp_runtime::traits::AccountIdConversion;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{All, Contains, Filter, KeyOwnerProofSystem, Randomness, StorageInfo},
+	traits::{Everything, Contains, KeyOwnerProofSystem, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -54,10 +54,7 @@ use system::{
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use xcm::{
-	opaque::v0::{BodyId, Junction, MultiAsset, MultiLocation, NetworkId},
-	v0::Xcm,
-};
+use xcm::opaque::v0::{BodyId, Junction, MultiLocation, NetworkId};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
 	EnsureXcmOrigin, FixedWeightBounds, IsConcrete, LocationInverter, NativeAsset,
@@ -199,6 +196,7 @@ impl randomness_collective_flip::Config for Runtime {}
 
 impl aura::Config for Runtime {
 	type AuthorityId = AuraId;
+	type DisabledValidators = ();
 }
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
@@ -484,7 +482,7 @@ match_type! {
 
 pub type Barrier = (
 	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<All<MultiLocation>>,
+	AllowTopLevelPaidExecutionFrom<Everything>,
 	// Parent & its unit plurality gets free execution
 	AllowUnpaidExecutionFrom<ParentOrParentsUnitPlurality>,
 );
@@ -523,10 +521,11 @@ impl pallet_xcm::Config for Runtime {
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmExecuteFilter = All<(MultiLocation, Xcm<Call>)>;
+	type XcmExecuteFilter = Everything;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = All<(MultiLocation, Vec<MultiAsset>)>;
+	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = ();
+	type LocationInverter = LocationInverter<Ancestry>;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
 }
 
@@ -853,8 +852,8 @@ impl lending::Config for Runtime {
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
-impl Filter<Call> for BaseCallFilter {
-	fn filter(call: &Call) -> bool {
+impl Contains<Call> for BaseCallFilter {
+	fn contains(call: &Call) -> bool {
 		matches!(
 			call,
 			Call::Balances(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_)
