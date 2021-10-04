@@ -52,3 +52,5 @@ jobs:
           push: true
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
+          secrets: 
+            GIT_AUTH_TOKEN=${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
