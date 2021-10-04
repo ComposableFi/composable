@@ -28,13 +28,16 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+use sp_runtime::traits::AccountIdConversion;
+
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{All, Filter, KeyOwnerProofSystem, Randomness, StorageInfo},
+	traits::{All, Contains, Filter, KeyOwnerProofSystem, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight,
+		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		WeightToFeePolynomial,
 	},
 	PalletId, StorageValue,
 };
@@ -45,11 +48,12 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Permill};
+pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
+use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use xcm::{
 	opaque::v0::{BodyId, Junction, MultiAsset, MultiLocation, NetworkId},
 	v0::Xcm,
@@ -236,14 +240,43 @@ impl balances::Config for Runtime {
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
 	pub const TransactionByteFee: Balance = MILLI_PICA;
+
+	// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
+	/// than this will decrease the weight and more will increase.
+	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
+	/// change the fees more rapidly. This low value causes changes to occur slowly over time.
+	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
+	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
+	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
+	/// See `multiplier_can_grow_from_zero` in integration_tests.rs.
+	/// This value is currently only used by pallet-transaction-payment as an assertion that the
+	/// next multiplier is always > min value.
+	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
+}
+
+pub struct WeightToFee;
+impl WeightToFeePolynomial for WeightToFee {
+	type Balance = Balance;
+	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+		let p = MILLI_PICA;
+		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
+		smallvec::smallvec![WeightToFeeCoefficient {
+			degree: 1,
+			negative: false,
+			coeff_frac: Perbill::from_rational(p % q, q),
+			coeff_integer: p / q,
+		}]
+	}
 }
 
 impl transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate = ();
+	type WeightToFee = WeightToFee;
+	type FeeMultiplierUpdate =
+		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 }
 
 impl sudo::Config for Runtime {
@@ -590,17 +623,29 @@ parameter_type_with_key! {
 	};
 }
 
-// TODO(hussein-aitlahcen): weight, dust & existential deposit
+pub struct DustRemovalWhitelist;
+impl Contains<AccountId> for DustRemovalWhitelist {
+	fn contains(a: &AccountId) -> bool {
+		let account: AccountId = TreasuryPalletId::get().into_account();
+		let account2: AccountId = PotId::get().into_account();
+		vec![&account, &account2].contains(&a)
+	}
+}
+
+parameter_types! {
+				pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+}
+
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
-	type WeightInfo = ();
+	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = ();
-	type MaxLocks = ();
-	type DustRemovalWhitelist = ();
+	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
+	type MaxLocks = MaxLocks;
+	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
 parameter_types! {
@@ -793,6 +838,12 @@ impl currency_factory::Config for Runtime {
 	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
+parameter_types! {
+	// Benchmarks of pallet-lending utilize more than 20Gb memory
+	// and don't finish if MaxLendingCount is u32::MAX.
+	pub const MaxLendingCount: u32 = 100_000;
+}
+
 impl lending::Config for Runtime {
 	type Oracle = Oracle;
 	type VaultId = u64;
@@ -804,6 +855,7 @@ impl lending::Config for Runtime {
 	type UnixTime = Timestamp;
 	type CurrencyFactory = Factory;
 	type MarketDebtCurrency = Assets;
+	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 }
 

@@ -17,7 +17,7 @@ pub trait SimpleExchange {
 		from_account: Self::AccountId,
 		to: Self::AssetId,
 		to_account: Self::AccountId,
-		from_amount: Self::Balance,
+		to_amount: Self::Balance,
 		slippage: Perbill,
 	) -> Result<Self::Balance, Self::Error>;
 }

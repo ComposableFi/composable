@@ -2,6 +2,7 @@ use serde::Serialize;
 use std::{
 	collections::{HashMap, HashSet},
 	convert::TryFrom,
+	fmt::Display,
 	num::ParseIntError,
 	str::FromStr,
 };
@@ -34,6 +35,8 @@ custom_derive! {
 		GBP,
 		EUR,
 		USD,
+		ADA,
+		DOT
 	}
 }
 
@@ -79,6 +82,8 @@ lazy_static! {
 		(19, Asset::USDC),
 		(20, Asset::GBP),
 		(21, Asset::EUR),
+		(22, Asset::ADA),
+		(23, Asset::DOT),
 	]
 	.iter()
 	.map(|&(i, a)| (AssetIndex(i), a))
@@ -104,18 +109,14 @@ impl FromStr for AssetIndex {
 
 impl AssetPair {
 	/*
-	  We currently only allow X/USD
+	  We currently only allow X/(USD|Stablecoin)
 	*/
 	pub fn new(x: Asset, y: Asset) -> Option<Self> {
 		match (x, y) {
 			(Asset::USD, _) => None,
-			(_, Asset::USD) => Some(AssetPair(x, y)),
+			(_, y) if [Asset::USD, Asset::USDT, Asset::USDC].contains(&y) => Some(AssetPair(x, y)),
 			_ => None,
 		}
-	}
-
-	pub fn symbol(&self) -> String {
-		format!("{:?}/{:?}", self.0, self.1)
 	}
 }
 
@@ -130,5 +131,43 @@ impl TryFrom<AssetIndex> for Asset {
 	type Error = ();
 	fn try_from(asset_index: AssetIndex) -> Result<Asset, Self::Error> {
 		INDEX_TO_ASSET.get(&asset_index).copied().ok_or(())
+	}
+}
+
+/// A symbol which is the concatenation of two assets.
+/// Like BTCUSD, ETHBTC...
+pub struct ConcatSymbol(AssetPair);
+
+impl ConcatSymbol {
+	#[inline(always)]
+	pub fn new(x: AssetPair) -> Self {
+		ConcatSymbol(x)
+	}
+}
+
+impl Display for ConcatSymbol {
+	#[inline(always)]
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		let ConcatSymbol(AssetPair(x, y)) = self;
+		write!(f, "{:?}{:?}", x, y)
+	}
+}
+
+/// A symbol which is the concatenation of an two assets with a slash in between.
+/// Like BTC/USD, ETH/BTC...
+pub struct SlashSymbol(AssetPair);
+
+impl SlashSymbol {
+	#[inline(always)]
+	pub fn new(x: AssetPair) -> Self {
+		SlashSymbol(x)
+	}
+}
+
+impl Display for SlashSymbol {
+	#[inline(always)]
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		let SlashSymbol(AssetPair(x, y)) = self;
+		write!(f, "{:?}/{:?}", x, y)
 	}
 }

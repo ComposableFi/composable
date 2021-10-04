@@ -11,7 +11,7 @@ use sp_runtime::{
 };
 
 pub type BlockNumber = u64;
-pub type AccountId = u32;
+pub type AccountId = u128;
 pub type Balance = u128;
 pub type Amount = i128;
 
