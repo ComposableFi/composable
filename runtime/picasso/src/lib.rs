@@ -428,20 +428,6 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
-// /// Means for transacting assets on this chain.
-// pub type LocalAssetTransactor = CurrencyAdapter<
-// 	// Use this currency:
-// 	Balances,
-// 	// Use this currency when it is a fungible asset matching the given location or name:
-// 	IsConcrete<RelayLocation>,
-// 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
-// 	LocationToAccountId,
-// 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
-// 	AccountId,
-// 	// We don't track any teleports.
-// 	(),
-// >;
-
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
 /// biases the kind of local `Origin` it will become.
