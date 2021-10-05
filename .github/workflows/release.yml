@@ -31,6 +31,7 @@ jobs:
 
       - name: Test
         run: |
+          chmod 0R 755 /var/run/docker.sock
           echo $RELEASE_VERSION
           echo ${{ env.RELEASE_VERSION }}
       #ToDo Remove all docker auth and configure on composable github runner
@@ -39,6 +40,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          
 
       - name: Docker meta
         id: meta
@@ -50,9 +52,6 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
 
       - name: Set up Docker Buildx
         id: buildx
