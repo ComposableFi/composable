@@ -1,4 +1,3 @@
-#![feature(derive_default_enum)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod auction;
