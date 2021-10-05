@@ -31,7 +31,7 @@ jobs:
 
       - name: Test
         run: |
-          chmod 0R 755 /var/run/docker.sock
+          chmod 755 /var/run/docker.sock
           echo $RELEASE_VERSION
           echo ${{ env.RELEASE_VERSION }}
       #ToDo Remove all docker auth and configure on composable github runner
