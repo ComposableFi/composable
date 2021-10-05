@@ -1,9 +1,15 @@
 FROM rust:1.55 as builder
 
+COPY . ${APP}
+
+RUN sh ./install/docker/init.sh
+
 ARG APP=/usr/src/app
 
 USER $APP_USER
 WORKDIR ${APP}
+
+
 
 ENV TZ=Etc/UTC \
     APP_USER=composable
@@ -18,9 +24,10 @@ RUN apt-get update \
     libclang-dev curl clang zip cmake curl pkg-config cmake ansible \
     && rm -rf /var/lib/apt/lists/*
 
+
 RUN chown -R $APP_USER:$APP_USER ${APP}
 
-COPY . ${APP}
+
 
 RUN cargo build --release
 

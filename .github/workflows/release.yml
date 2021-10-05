@@ -31,7 +31,6 @@ jobs:
 
       - name: Test
         run: |
-          chmod 755 /var/run/docker.sock
           echo $RELEASE_VERSION
           echo ${{ env.RELEASE_VERSION }}
       #ToDo Remove all docker auth and configure on composable github runner
@@ -48,8 +47,6 @@ jobs:
         with:
           images: ${{ secrets.DOCKER_HUB_USERNAME }}/composable
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
 
