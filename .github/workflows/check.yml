@@ -8,11 +8,7 @@ on:
 
 jobs:
   check:
-    runs-on: 
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     steps: 
       - uses: actions/checkout@v2
       - uses: Swatinem/rust-cache@v1
