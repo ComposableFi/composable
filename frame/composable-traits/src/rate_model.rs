@@ -23,7 +23,7 @@ use sp_runtime::{
 
 use sp_arithmetic::per_things::Percent;
 
-use crate::{loans::{DurationSeconds, ONE_HOUR, Timestamp}, math::{LiftedFixedBalance, SafeArithmetic}};
+use crate::{loans::{DurationSeconds, ONE_HOUR}, math::{LiftedFixedBalance, SafeArithmetic}};
 
 /// The fixed point number from 0..to max.
 /// Unlike `Ratio` it can be more than 1.

@@ -271,7 +271,7 @@ pub mod pallet {
 		}
 
 		fn run_auctions(now: Timestamp) -> Result<(), Self::Error> {
-			let mut removed = vec![]; // avoid removing during iteration as unsafe
+			let mut removed = Vec::new(); // avoid removing during iteration as unsafe
 			for (order_id, order) in Orders::<T>::iter() {
 				match order.state {
 					AuctionState::AuctionStarted => {
