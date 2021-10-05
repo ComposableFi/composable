@@ -119,7 +119,6 @@ benchmarks! {
 		let value = T::MinimumDeposit::get();
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller), proposal_hash, asset_id(), value.into())
-
 	verify {
 		assert_eq!(Democracy::<T>::public_props().len(), p as usize, "Proposals not created.");
 	}
