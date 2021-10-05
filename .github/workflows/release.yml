@@ -47,7 +47,9 @@ jobs:
         with:
           images: ${{ secrets.DOCKER_HUB_USERNAME }}/composable
           tags: |
-            type=semver,pattern=${{ env.RELEASE_VERSION }}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
 
       - name: Set up Docker Buildx
@@ -61,7 +63,7 @@ jobs:
           context: ./
           file: ./install/docker/Dockerfile
           # platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}, latest
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           cache-from: type=local,src=/tmp/.buildx-cache
