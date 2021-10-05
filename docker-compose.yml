@@ -3,7 +3,7 @@ version: "3.2"
 services:
   dev:
     container_name: node-template
-    image: registry.hub.docker.com/composablefi/composable:release-v0.7.1
+    image: composablefi/composable:release-v0.7.1
     working_dir: /usr/src/app
     ports:
       - "8000:8000"
@@ -19,5 +19,5 @@ services:
     image: containrrr/watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /root/.docker/config.json:/config.json
+      - ~/.docker/config.json:/config.json
     command: --interval 30
