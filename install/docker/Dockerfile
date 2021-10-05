@@ -14,7 +14,7 @@ RUN groupadd $APP_USER \
 
 RUN apt-get update \
     && apt-get install -y ca-certificates tzdata git acl packer \
-    && apt-get install -y jq libssl-dev build-essential jq python3-pip \
+    && apt-get install -y jq libssl-dev build-essential python3-pip \
     libclang-dev curl clang zip cmake curl pkg-config cmake ansible \
     && rm -rf /var/lib/apt/lists/*
 

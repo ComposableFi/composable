@@ -6,11 +6,7 @@ on:
 
 jobs:
   release-on-push:
-    runs-on: 
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -21,7 +17,11 @@ jobs:
           tag_prefix: v #specify a tag prefix
         #   release_body: "When set, adds extra text to body!" #you can customize the release body
   docker-build:
-    runs-on: ubuntu-latest
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
     steps:
       - uses: actions/checkout@v2
         with: 
