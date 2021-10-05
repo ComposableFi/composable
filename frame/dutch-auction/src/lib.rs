@@ -34,7 +34,7 @@ pub mod pallet {
 	use composable_traits::{
 		auction::{AuctionState, AuctionStepFunction, DutchAuction},
 		dex::{Orderbook, SimpleExchange},
-		loans::{DurationSeconds, Timestamp},
+		loans::{DurationSeconds, Timestamp, ONE_HOUR},
 		math::{LiftedFixedBalance, SafeArithmetic},
 	};
 	use frame_support::{
@@ -269,7 +269,7 @@ pub mod pallet {
 			for (order_id, order) in Orders::<T>::iter() {
 				match order.state {
 					AuctionState::AuctionStarted => {
-						if now > order.started + 60 * 60 {
+						if now > order.started + ONE_HOUR {
 							removed.push(order_id);
 						} else {
 							// for final protocol may be will need to transfer currency onto auction
@@ -303,7 +303,7 @@ pub mod pallet {
 					},
 					AuctionState::AuctionOnDex(_) => {
 						// waiting for off chain callback about order status
-						if now > order.started + 60 * 60 {
+						if now > order.started + ONE_HOUR {
 							removed.push(order_id);
 						}
 					},

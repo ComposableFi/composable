@@ -5,3 +5,5 @@ pub type DurationSeconds = u64;
 
 /// seconds
 pub type Timestamp = u64;
+
+pub const ONE_HOUR: DurationSeconds = 60 * 60;
