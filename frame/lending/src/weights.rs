@@ -15,7 +15,13 @@ pub trait WeightInfo {
 	fn withdraw_collateral() -> Weight;
 	fn borrow() -> Weight;
 	fn repay_borrow() -> Weight;
-	fn initialize_block(m: u32) -> Weight;
+	fn now() -> Weight;
+	fn accrue_interest() -> Weight;
+	fn account_id() -> Weight;
+	fn available_funds() -> Weight;
+	fn handle_withdrawable() -> Weight;
+	fn handle_depositable() -> Weight;
+	fn handle_must_liquidate() -> Weight;
 }
 
 /// Weight functions for lending.
@@ -46,14 +52,34 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(13 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
-	fn initialize_block(m: u32) -> Weight {
-		(0 as Weight)
-			// Standard Error: 1_318_000
-			.saturating_add((117_261_000 as Weight).saturating_mul(m as Weight))
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().reads((7 as Weight).saturating_mul(m as Weight)))
+	fn now() -> Weight {
+		(4_744_000 as Weight).saturating_add(T::DbWeight::get().reads(1 as Weight))
+	}
+	fn accrue_interest() -> Weight {
+		(76_626_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(m as Weight)))
+	}
+	fn account_id() -> Weight {
+		(3_126_000 as Weight)
+	}
+	fn available_funds() -> Weight {
+		(16_450_000 as Weight).saturating_add(T::DbWeight::get().reads(2 as Weight))
+	}
+	fn handle_withdrawable() -> Weight {
+		(20_716_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
+	fn handle_depositable() -> Weight {
+		(40_066_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
+	fn handle_must_liquidate() -> Weight {
+		(38_744_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }
 
@@ -83,13 +109,33 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
-	fn initialize_block(m: u32) -> Weight {
-		(0 as Weight)
-			// Standard Error: 1_318_000
-			.saturating_add((117_261_000 as Weight).saturating_mul(m as Weight))
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().reads((7 as Weight).saturating_mul(m as Weight)))
+	fn now() -> Weight {
+		(4_744_000 as Weight).saturating_add(RocksDbWeight::get().reads(1 as Weight))
+	}
+	fn accrue_interest() -> Weight {
+		(76_626_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(m as Weight)))
+	}
+	fn account_id() -> Weight {
+		(3_126_000 as Weight)
+	}
+	fn available_funds() -> Weight {
+		(16_450_000 as Weight).saturating_add(RocksDbWeight::get().reads(2 as Weight))
+	}
+	fn handle_withdrawable() -> Weight {
+		(20_716_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	}
+	fn handle_depositable() -> Weight {
+		(40_066_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	}
+	fn handle_must_liquidate() -> Weight {
+		(38_744_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }
