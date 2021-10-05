@@ -26,7 +26,7 @@ use frame_support::{
 	},
 	IterableStorageMap,
 };
-use frame_system::{self, EventRecord, Module as System, RawOrigin};
+use frame_system::{self, EventRecord, Pallet as System, RawOrigin};
 use sp_runtime::traits::{Bounded, One};
 
 use crate::Module as Democracy;
@@ -55,12 +55,20 @@ fn add_proposal<T: Config>(asset_id: T::AssetId, n: u32) -> Result<T::Hash, &'st
 	let value = T::MinimumDeposit::get();
 	let proposal_hash: T::Hash = T::Hashing::hash_of(&n);
 
-	Democracy::<T>::propose(RawOrigin::Signed(other).into(), proposal_hash, asset_id, value.into())?;
+	Democracy::<T>::propose(
+		RawOrigin::Signed(other).into(),
+		proposal_hash,
+		asset_id,
+		value.into(),
+	)?;
 
 	Ok(proposal_hash)
 }
 
-fn add_referendum<T: Config>(asset_id: T::AssetId, n: u32) -> Result<ReferendumIndex, &'static str> {
+fn add_referendum<T: Config>(
+	asset_id: T::AssetId,
+	n: u32,
+) -> Result<ReferendumIndex, &'static str> {
 	let proposal_hash: T::Hash = T::Hashing::hash_of(&n);
 	let vote_threshold = VoteThreshold::SimpleMajority;
 
@@ -91,8 +99,8 @@ fn account_vote<T: Config>(b: BalanceOf<T>) -> AccountVote<BalanceOf<T>> {
 }
 
 fn asset_id<T: From<u128>>() -> T {
-	// We do not return 0 or 1 as asset_id, since in our specific runtime, they are niche cases, with possibly lower 
-	// associated weights.
+	// We do not return 0 or 1 as asset_id, since in our specific runtime, they are niche cases,
+	// with possibly lower associated weights.
 	2_u128.into()
 }
 
@@ -111,7 +119,7 @@ benchmarks! {
 		let value = T::MinimumDeposit::get();
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller), proposal_hash, asset_id(), value.into())
-	
+
 	verify {
 		assert_eq!(Democracy::<T>::public_props().len(), p as usize, "Proposals not created.");
 	}
