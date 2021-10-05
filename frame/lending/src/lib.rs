@@ -79,12 +79,6 @@ pub mod pallet {
 		<T as frame_system::Config>::AccountId,
 	>;
 
-	type MarketConfiguration<T> = MarketConfig<
-		<T as Config>::VaultId,
-		<T as Config>::AssetId,
-		<T as frame_system::Config>::AccountId,
-	>;
-
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
@@ -215,7 +209,7 @@ pub mod pallet {
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
 		type Liquidation: Liquidate<
-			AssetId = Self::AssetId,
+			AssetId = <Self as Config>::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 		>;
@@ -231,7 +225,6 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
-<<<<<<< HEAD
 			let mut weight: Weight = 0;
 			let call_counters = Self::initialize_block(block_number);
 			let one_read = T::DbWeight::get().reads(1);
@@ -273,11 +266,6 @@ pub mod pallet {
 			}
 
 			weight
-=======
-			Self::accrue_interests(block_number);
-			let MarketIndex(max_lending_index) = LendingCount::<T>::get();
-			<T as Config>::WeightInfo::accrue_interests(max_lending_index + 1)
->>>>>>> main
 		}
 	}
 
@@ -307,61 +295,9 @@ pub mod pallet {
 		BorrowIndexDoesNotExist,
 		BorrowAndRepayInSameBlockIsNotSupported,
 		BorrowDoesNotExist,
-<<<<<<< HEAD
 		RepayAmountMustBeGraterThanZero,
 		ExceedLendingCount,
 		LiquidationFailed,
-=======
-		/// user must repay borrow before repaying new one, should do two steps in single
-		/// transaction for now
-		RepayPreviousBorrowBeforeTakingOnNewOne, // think of debt reindex function
-		ExceedLendingCount,
-	}
-
-	pub struct BorrowerData {
-		pub collateral_balance: LiftedFixedBalance,
-		pub collateral_price: LiftedFixedBalance,
-		pub borrower_balance_with_interest: LiftedFixedBalance,
-		pub borrow_price: LiftedFixedBalance,
-		pub collateral_factor: NormalizedCollateralFactor,
-	}
-
-	impl BorrowerData {
-		#[inline]
-		pub fn new<T: Into<LiftedFixedBalance>>(
-			collateral_balance: T,
-			collateral_price: T,
-			borrower_balance_with_interest: T,
-			borrow_price: T,
-			collateral_factor: NormalizedCollateralFactor,
-		) -> Self {
-			Self {
-				collateral_balance: collateral_balance.into(),
-				collateral_price: collateral_price.into(),
-				borrower_balance_with_interest: borrower_balance_with_interest.into(),
-				borrow_price: borrow_price.into(),
-				collateral_factor,
-			}
-		}
-
-		#[inline]
-		pub fn collateral_over_borrow(&self) -> Result<LiftedFixedBalance, ArithmeticError> {
-			let collateral = self.collateral_balance.safe_mul(&self.collateral_price)?;
-			let borrowed = self
-				.borrower_balance_with_interest
-				.safe_mul(&self.borrow_price)?
-				.safe_mul(&self.collateral_factor)?;
-			collateral.safe_sub(&borrowed)
-		}
-
-		#[inline]
-		pub fn borrow_for_collateral(&self) -> Result<LiftedFixedBalance, ArithmeticError> {
-			let max_borrow =
-				swap(&self.collateral_balance, &self.collateral_price, &self.collateral_factor)?;
-			let borrowed = self.borrower_balance_with_interest.safe_mul(&self.borrow_price)?;
-			Ok(max_borrow.saturating_sub(borrowed))
-		}
->>>>>>> main
 	}
 
 	#[pallet::event]

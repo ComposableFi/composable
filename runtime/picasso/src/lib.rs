@@ -846,11 +846,8 @@ impl lending::Config for Runtime {
 	type Currency = Tokens;
 	type CurrencyFactory = Factory;
 	type MarketDebtCurrency = Tokens;
-<<<<<<< HEAD
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
-=======
->>>>>>> main
 	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 }
@@ -933,11 +930,8 @@ construct_runtime!(
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 54,
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
-<<<<<<< HEAD
 		Liquidations: liquidations::{Pallet, Call, Event<T>} = 56,
-=======
-		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 56,
->>>>>>> main
+		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
 
