@@ -15,7 +15,7 @@ pub trait WeightInfo {
 	fn withdraw_collateral() -> Weight;
 	fn borrow() -> Weight;
 	fn repay_borrow() -> Weight;
-	fn accrue_interests(m: u32) -> Weight;
+	fn initialize_block(m: u32) -> Weight;
 }
 
 /// Weight functions for lending.
@@ -46,7 +46,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(13 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
-	fn accrue_interests(m: u32) -> Weight {
+	fn initialize_block(m: u32) -> Weight {
 		(0 as Weight)
 			// Standard Error: 1_318_000
 			.saturating_add((117_261_000 as Weight).saturating_mul(m as Weight))
@@ -83,7 +83,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
-	fn accrue_interests(m: u32) -> Weight {
+	fn initialize_block(m: u32) -> Weight {
 		(0 as Weight)
 			// Standard Error: 1_318_000
 			.saturating_add((117_261_000 as Weight).saturating_mul(m as Weight))
