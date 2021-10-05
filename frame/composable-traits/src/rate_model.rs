@@ -17,11 +17,16 @@ use sp_std::convert::TryInto;
 use codec::{Decode, Encode};
 
 use sp_runtime::{
-	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero},
+	traits::{CheckedAdd, CheckedDiv, CheckedSub, One, Saturating, Zero},
 	ArithmeticError, FixedPointNumber, FixedU128, RuntimeDebug,
 };
 
 use sp_arithmetic::per_things::Percent;
+
+use crate::{
+	loans::{DurationSeconds, ONE_HOUR},
+	math::{LiftedFixedBalance, SafeArithmetic},
+};
 
 /// The fixed point number from 0..to max.
 /// Unlike `Ratio` it can be more than 1.
@@ -36,57 +41,9 @@ pub type NormalizedCollateralFactor = FixedU128;
 /// TODO: implement Ratio as wrapper over FixedU128
 pub type Ratio = FixedU128;
 
-/// seconds
-pub type Timestamp = u64;
-
-/// seconds
-pub type Duration = u64;
-
-/// Number like of higher bits, so that amount and balance calculations are done it it with higher
-/// precision via fixed point.
-/// While this is 128 bit, cannot support u128 because 18 bits are for of mantissa.
-/// Can support u128 it lifter to use FixedU256
-pub type LiftedFixedBalance = FixedU128;
-
-/// little bit slower than maximizing performance by knowing constraints.
-/// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if
-/// you have positive number only, you cannot have underflow. Same for other constrains, like non
-/// zero divisor.
-pub trait SafeArithmetic: Sized {
-	fn safe_add(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
-	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
-	fn safe_mul(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
-	fn safe_sub(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
-}
-
-impl SafeArithmetic for LiftedFixedBalance {
-	#[inline(always)]
-	fn safe_add(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
-		self.checked_add(rhs).ok_or(ArithmeticError::Overflow)
-	}
-	#[inline(always)]
-	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
-		if rhs.is_zero() {
-			return Err(ArithmeticError::DivisionByZero)
-		}
-
-		self.checked_div(rhs).ok_or(ArithmeticError::Overflow)
-	}
-
-	#[inline(always)]
-	fn safe_mul(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
-		self.checked_mul(rhs).ok_or(ArithmeticError::Overflow)
-	}
-
-	#[inline(always)]
-	fn safe_sub(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
-		self.checked_sub(rhs).ok_or(ArithmeticError::Underflow)
-	}
-}
-
 /// current notion of year will take away 1/365 from lenders and give away to borrowers (as does no
 /// accounts to length of year)
-pub const SECONDS_PER_YEAR: Timestamp = 365 * 24 * 60 * 60;
+pub const SECONDS_PER_YEAR: DurationSeconds = 365 * 24 * ONE_HOUR;
 
 /// utilization_ratio = total_borrows / (total_cash + total_borrows)
 pub fn calc_utilization_ratio(
@@ -260,7 +217,11 @@ impl CurveModel {
 	}
 }
 
-pub fn accrued_interest(borrow_rate: Rate, amount: u128, delta_time: Duration) -> Option<u128> {
+pub fn accrued_interest(
+	borrow_rate: Rate,
+	amount: u128,
+	delta_time: DurationSeconds,
+) -> Option<u128> {
 	borrow_rate
 		.checked_mul_int(amount)?
 		.checked_mul(delta_time.into())?
@@ -270,7 +231,7 @@ pub fn accrued_interest(borrow_rate: Rate, amount: u128, delta_time: Duration) -
 pub fn increment_index(
 	borrow_rate: Rate,
 	index: Rate,
-	delta_time: Duration,
+	delta_time: DurationSeconds,
 ) -> Result<Rate, ArithmeticError> {
 	borrow_rate
 		.safe_mul(&index)?
@@ -280,7 +241,7 @@ pub fn increment_index(
 
 pub fn increment_borrow_rate(
 	borrow_rate: Rate,
-	delta_time: Duration,
+	delta_time: DurationSeconds,
 ) -> Result<Rate, ArithmeticError> {
 	borrow_rate
 		.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
@@ -304,9 +265,9 @@ mod tests {
 		assert_eq!(
 			JumpModel::new_model(base_rate, jump_rate, full_rate, jump_utilization).unwrap(),
 			JumpModel {
-				base_rate: Rate::from_inner(20_000_000_000_000_000).into(),
-				jump_rate: Rate::from_inner(100_000_000_000_000_000).into(),
-				full_rate: Rate::from_inner(320_000_000_000_000_000).into(),
+				base_rate: Rate::from_inner(20_000_000_000_000_000),
+				jump_rate: Rate::from_inner(100_000_000_000_000_000),
+				full_rate: Rate::from_inner(320_000_000_000_000_000),
 				jump_utilization: Percent::from_percent(80),
 			}
 		);
@@ -358,8 +319,7 @@ mod tests {
 		let supply_rate = InterestRateModel::get_supply_rate(borrow_rate, util, reserve_factor);
 		assert_eq!(
 			supply_rate,
-			borrow_rate
-				.saturating_mul(((Ratio::one().saturating_sub(reserve_factor)) * util).into()),
+			borrow_rate.saturating_mul(Ratio::one().saturating_sub(reserve_factor) * util),
 		);
 	}
 
@@ -387,7 +347,7 @@ mod tests {
 			(1..=10u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
 			(11..=30u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
 			(31..=50).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
-			(0..=100u8).prop_map(|x| Percent::from_percent(x)),
+			(0..=100u8).prop_map(Percent::from_percent),
 		)
 			.prop_filter("Jump rate model", |(base, jump, full, _)| {
 				// tried high order strategy - failed as it tries to combine collections with not
