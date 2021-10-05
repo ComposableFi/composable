@@ -846,8 +846,11 @@ impl lending::Config for Runtime {
 	type Currency = Tokens;
 	type CurrencyFactory = Factory;
 	type MarketDebtCurrency = Tokens;
+<<<<<<< HEAD
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
+=======
+>>>>>>> main
 	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 }
@@ -868,11 +871,20 @@ pub struct BaseCallFilter;
 
 impl Filter<Call> for BaseCallFilter {
 	fn filter(call: &Call) -> bool {
+		if call_filter::Pallet::<Runtime>::contains(call) {
+			return false
+		}
 		matches!(
 			call,
 			Call::Balances(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_)
 		)
 	}
+}
+
+impl call_filter::Config for Runtime {
+	type Event = Event;
+	type UpdateOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -921,7 +933,11 @@ construct_runtime!(
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 54,
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
+<<<<<<< HEAD
 		Liquidations: liquidations::{Pallet, Call, Event<T>} = 56,
+=======
+		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 56,
+>>>>>>> main
 	}
 );
 

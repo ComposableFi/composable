@@ -228,6 +228,7 @@ impl crate::mocks::oracle::Config for Test {
 	type Vault = Vault;
 }
 
+<<<<<<< HEAD
 impl DeFiComposablePallet for Test {
 	type AssetId = MockCurrencyId;
 }
@@ -239,6 +240,8 @@ impl pallet_liquidations::Config for Test {
 	type Lending = Lending;
 }
 
+=======
+>>>>>>> main
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 }
@@ -253,8 +256,11 @@ impl pallet_lending::Config for Test {
 	type Currency = Tokens;
 	type CurrencyFactory = LpTokenFactory;
 	type MarketDebtCurrency = Tokens;
+<<<<<<< HEAD
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
+=======
+>>>>>>> main
 	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = ();
 }

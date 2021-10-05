@@ -51,7 +51,11 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(13 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
+<<<<<<< HEAD
 	fn initialize_block(m: u32) -> Weight {
+=======
+	fn accrue_interests(m: u32) -> Weight {
+>>>>>>> main
 		(0 as Weight)
 			// Standard Error: 1_318_000
 			.saturating_add((117_261_000 as Weight).saturating_mul(m as Weight))

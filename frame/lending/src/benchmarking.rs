@@ -162,7 +162,11 @@ benchmarks! {
 			let _ = create_market::<T>(caller.clone(), borrow_asset_id.into(), collateral_asset_id.into());
 		});
 	}: {
+<<<<<<< HEAD
 		Lending::<T>::initialize_block(0u32.into())
+=======
+		Lending::<T>::accrue_interests(0u32.into())
+>>>>>>> main
 	}
 }
 
