@@ -2,7 +2,7 @@ use composable_traits::{
 	math::{LiftedFixedBalance, SafeArithmetic},
 	rate_model::NormalizedCollateralFactor,
 };
-use sp_runtime::{traits::Saturating, ArithmeticError};
+use sp_runtime::{traits::Saturating, ArithmeticError, Percent};
 
 pub struct BorrowerData {
 	pub collateral_balance: LiftedFixedBalance,
@@ -10,6 +10,7 @@ pub struct BorrowerData {
 	pub borrower_balance_with_interest: LiftedFixedBalance,
 	pub borrow_price: LiftedFixedBalance,
 	pub collateral_factor: NormalizedCollateralFactor,
+	pub under_collaterized_warn_percent: Percent,
 }
 
 impl BorrowerData {
@@ -20,6 +21,7 @@ impl BorrowerData {
 		borrower_balance_with_interest: T,
 		borrow_price: T,
 		collateral_factor: NormalizedCollateralFactor,
+		under_collaterized_warn_percent: Percent,
 	) -> Self {
 		Self {
 			collateral_balance: collateral_balance.into(),
@@ -27,6 +29,7 @@ impl BorrowerData {
 			borrower_balance_with_interest: borrower_balance_with_interest.into(),
 			borrow_price: borrow_price.into(),
 			collateral_factor,
+			under_collaterized_warn_percent,
 		}
 	}
 
@@ -64,5 +67,20 @@ impl BorrowerData {
 		let borrowed = self.borrower_balance_with_interest.safe_mul(&self.borrow_price)?;
 		let current_collateral_ratio = collateral.safe_div(&borrowed)?;
 		Ok(current_collateral_ratio < self.collateral_factor)
+	}
+
+	/// Check if loan is about to be under collaterized
+	/// safe_collateral_factor = collateral_factor + (collateral_factor *
+	/// under_collaterized_warn_percent) For example collateral_factor = 2 and
+	/// under_collaterized_warn_percent = 10% then if loan's collateral to debt ratio goes below 2.2
+	/// then borrower should be warn so.
+	pub fn should_warn(&self) -> Result<bool, ArithmeticError> {
+		let collateral = self.collateral_balance.safe_mul(&self.collateral_price)?;
+		let borrowed = self.borrower_balance_with_interest.safe_mul(&self.borrow_price)?;
+		let current_collateral_ratio = collateral.safe_div(&borrowed)?;
+		let safe_collateral_factor = self.collateral_factor.safe_add(
+			&self.collateral_factor.safe_mul(&self.under_collaterized_warn_percent.into())?,
+		)?;
+		Ok(current_collateral_ratio < safe_collateral_factor)
 	}
 }
