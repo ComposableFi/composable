@@ -35,7 +35,7 @@ pub mod pallet {
 	use composable_traits::{
 		auction::{AuctionState, AuctionStepFunction, DutchAuction},
 		dex::{Orderbook, SimpleExchange},
-		loans::{DurationSeconds, Timestamp},
+		loans::{DurationSeconds, Timestamp, ONE_HOUR},
 		math::{LiftedFixedBalance, SafeArithmetic},
 	};
 	use frame_support::{
@@ -163,7 +163,6 @@ pub mod pallet {
 	/// auction can span several dex orders within its lifetime
 	#[derive(Encode, Decode, Default)]
 	pub struct Order<DexOrderId, AccountId, AssetId, Balance> {
-		pub latest_dex_order_intention: Option<DexOrderId>,
 		/// when auction was created(started)
 		pub started: Timestamp,
 		/// how price decreases with time
@@ -183,7 +182,7 @@ pub mod pallet {
 		/// price of source unit to start auction with.
 		pub source_initial_price: Balance,
 		/// auction state
-		pub state: AuctionState,
+		pub state: AuctionState<DexOrderId>,
 	}
 
 	#[pallet::storage]
@@ -255,7 +254,6 @@ pub mod pallet {
 			OrdersIndex::<T>::set(order_id.next());
 
 			let order = Order {
-				latest_dex_order_intention: None,
 				started: T::UnixTime::now().as_secs(),
 				function,
 				account_id: account_id.clone(),
@@ -273,45 +271,56 @@ pub mod pallet {
 		}
 
 		fn run_auctions(now: Timestamp) -> Result<(), Self::Error> {
-			for (order_id, mut order) in Orders::<T>::iter() {
-				if order.latest_dex_order_intention.is_none() {
-					if now > order.started + 60 * 60 {
-						// TODO: decide what to do - set timeout fail, unlock and allow caller to
-						// decide? or retry? clean up
-					} else if order.state == AuctionState::AuctionStarted {
-						// for final protocol may be will need to transfer currency onto auction
-						// pallet sub account and send dex order with idempotency tracking id final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
-						let delta_time = now - order.started;
-						let price: LiftedFixedBalance = order.source_initial_price.into();
-						let total_price = price.safe_mul(&order.source_total_amount.into())?;
-						let price = match order.function {
-							AuctionStepFunction::LinearDecrease(parameters) =>
-								parameters.price(total_price, delta_time),
-							AuctionStepFunction::StairstepExponentialDecrease(parameters) =>
-								parameters.price(total_price, delta_time),
-						}?
-						.checked_mul_int(1u64)
-						.ok_or(ArithmeticError::Overflow)?
-						.into();
-						let dex_order_intention = <T::Orderbook as Orderbook>::post(
-							&order.account_id,
-							&order.source_asset_id,
-							&order.target_asset_id,
-							&order.source_total_amount,
-							&price,
-							Permill::from_perthousand(5),
-						)?;
-						order.latest_dex_order_intention = Some(dex_order_intention);
-					} else {
-						//TODO: auction failed, so if it exists on chain, must be removed
-					}
-				} else if let Some(dex_order) = order.latest_dex_order_intention {
-					// waiting for off chain callback about order status
-					if now > order.started + 60 * 60 {
-						// TODO: decide what to do - set timeout fail, unlock and allow caller
-						// to decide? or retry? clean up
-					}
+			let mut removed = vec![]; // avoid removing during iteration as unsafe
+			for (order_id, order) in Orders::<T>::iter() {
+				match order.state {
+					AuctionState::AuctionStarted => {
+						if now > order.started + ONE_HOUR {
+							removed.push(order_id);
+						} else {
+							// for final protocol may be will need to transfer currency onto auction
+							// pallet sub account and send dex order with idempotency tracking id final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
+							let delta_time = now - order.started;
+							let price: LiftedFixedBalance = order.source_initial_price.into();
+							let total_price = price.safe_mul(&order.source_total_amount.into())?;
+							let price = match order.function {
+								AuctionStepFunction::LinearDecrease(parameters) =>
+									parameters.price(total_price, delta_time),
+								AuctionStepFunction::StairstepExponentialDecrease(parameters) =>
+									parameters.price(total_price, delta_time),
+							}?
+							.checked_mul_int(1u64)
+							.ok_or(ArithmeticError::Overflow)?
+							.into();
+							let dex_order_intention = <T::Orderbook as Orderbook>::post(
+								&order.account_id,
+								&order.source_asset_id,
+								&order.target_asset_id,
+								&order.source_total_amount,
+								&price,
+								Permill::from_perthousand(5),
+							)?;
+
+							Orders::<T>::mutate(order_id, |order| {
+								order.state = AuctionState::AuctionOnDex(dex_order_intention); // considers updating in place is
+								                               // safe during iteration
+							});
+						}
+					},
+					AuctionState::AuctionOnDex(_) => {
+						// waiting for off chain callback about order status
+						if now > order.started + ONE_HOUR {
+							removed.push(order_id);
+						}
+					},
+					_ => {
+						removed.push(order_id);
+					},
 				}
+			}
+
+			for r in removed.iter() {
+				Orders::<T>::remove(r);
 			}
 
 			Ok(())
@@ -331,7 +340,8 @@ pub mod pallet {
 							});
 						},
 						composable_traits::auction::AuctionExchangeCallback::RetryFail => {
-							order.latest_dex_order_intention = None;
+							order.state = AuctionState::AuctionStarted;
+							Orders::<T>::insert(order_id, order);
 						},
 						composable_traits::auction::AuctionExchangeCallback::FatalFail => {
 							Orders::<T>::remove(order_id);

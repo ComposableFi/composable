@@ -20,8 +20,9 @@ impl Default for AuctionStepFunction {
 }
 
 #[derive(Decode, Encode, Clone, PartialEq)]
-pub enum AuctionState {
+pub enum AuctionState<DexOrderId> {
 	AuctionStarted,
+	AuctionOnDex(DexOrderId),
 	AuctionEndedSuccessfully,
 	/// like DEX does not support asset now or halted
 	AuctionFatalFailed,
@@ -29,7 +30,7 @@ pub enum AuctionState {
 	AuctionTimeFailed,
 }
 
-impl Default for AuctionState {
+impl<DexOrderId> Default for AuctionState<DexOrderId> {
 	fn default() -> Self {
 		Self::AuctionStarted
 	}

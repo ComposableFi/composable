@@ -23,10 +23,7 @@ use sp_runtime::{
 
 use sp_arithmetic::per_things::Percent;
 
-use crate::{
-	loans::{DurationSeconds, Timestamp},
-	math::{LiftedFixedBalance, SafeArithmetic},
-};
+use crate::{loans::{DurationSeconds, ONE_HOUR, Timestamp}, math::{LiftedFixedBalance, SafeArithmetic}};
 
 /// The fixed point number from 0..to max.
 /// Unlike `Ratio` it can be more than 1.
@@ -43,7 +40,7 @@ pub type Ratio = FixedU128;
 
 /// current notion of year will take away 1/365 from lenders and give away to borrowers (as does no
 /// accounts to length of year)
-pub const SECONDS_PER_YEAR: Timestamp = 365 * 24 * 60 * 60;
+pub const SECONDS_PER_YEAR: DurationSeconds = 365 * 24 * ONE_HOUR;
 
 /// utilization_ratio = total_borrows / (total_cash + total_borrows)
 pub fn calc_utilization_ratio(
