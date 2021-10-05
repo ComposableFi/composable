@@ -926,8 +926,8 @@ construct_runtime!(
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 54,
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
-		Assets: assets::{Pallet, Storage, Call} = 56
-		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 56,
+		Assets: assets::{Pallet, Storage, Call} = 56,
+		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 57,
 	}
 );
 
