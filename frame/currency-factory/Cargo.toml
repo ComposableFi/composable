@@ -15,14 +15,14 @@ package = "parity-scale-codec"
 version = "2.0.0"
 
 [dependencies]
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9"  }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10"  }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
 
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sp-io = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sp-core = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
-sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-io = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-core = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 
 [features]

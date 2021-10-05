@@ -1,7 +1,7 @@
 use sp_runtime::{FixedPointNumber, Perbill};
 
 use support::{
-	assert_err, assert_noop, assert_ok,
+	assert_noop, assert_ok,
 	weights::{DispatchInfo, GetDispatchInfo, PostDispatchInfo},
 };
 

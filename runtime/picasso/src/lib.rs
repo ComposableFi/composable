@@ -33,7 +33,7 @@ use sp_runtime::traits::AccountIdConversion;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Everything, Contains, KeyOwnerProofSystem, Randomness, StorageInfo},
+	traits::{Contains, Everything, KeyOwnerProofSystem, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -54,13 +54,12 @@ use system::{
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use xcm::opaque::v0::{BodyId, Junction, MultiLocation, NetworkId};
+use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedWeightBounds, IsConcrete, LocationInverter, NativeAsset,
-	ParentAsSuperuser, ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative,
-	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
-	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds,
+	LocationInverter, NativeAsset, ParentAsSuperuser, ParentIsDefault, RelayChainAsNative,
+	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 };
 use xcm_executor::XcmExecutor;
 
@@ -411,10 +410,10 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 impl parachain_info::Config for Runtime {}
 
 parameter_types! {
-	pub const RelayLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
-	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
+	// pub const RelayLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
+	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
-	pub Ancestry: MultiLocation = MultiLocation::X1(Junction::Parachain(ParachainInfo::parachain_id().into()));
+	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
@@ -429,19 +428,19 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
-/// Means for transacting assets on this chain.
-pub type LocalAssetTransactor = CurrencyAdapter<
-	// Use this currency:
-	Balances,
-	// Use this currency when it is a fungible asset matching the given location or name:
-	IsConcrete<RelayLocation>,
-	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
-	LocationToAccountId,
-	// Our chain's account ID type (we can't get away without mentioning it explicitly):
-	AccountId,
-	// We don't track any teleports.
-	(),
->;
+// /// Means for transacting assets on this chain.
+// pub type LocalAssetTransactor = CurrencyAdapter<
+// 	// Use this currency:
+// 	Balances,
+// 	// Use this currency when it is a fungible asset matching the given location or name:
+// 	IsConcrete<RelayLocation>,
+// 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
+// 	LocationToAccountId,
+// 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
+// 	AccountId,
+// 	// We don't track any teleports.
+// 	(),
+// >;
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
@@ -470,22 +469,9 @@ pub type XcmOriginToTransactDispatchOrigin = (
 parameter_types! {
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
 	pub UnitWeightCost: Weight = 1_000_000;
-	// One PICA buys 1 second of weight.
-	pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::X1(Junction::Parent), PICA);
 }
 
-match_type! {
-	pub type ParentOrParentsUnitPlurality: impl Contains<MultiLocation> = {
-		MultiLocation::X1(Junction::Parent) | MultiLocation::X2(Junction::Parent, Junction::Plurality { id: BodyId::Unit, .. })
-	};
-}
-
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-	// Parent & its unit plurality gets free execution
-	AllowUnpaidExecutionFrom<ParentOrParentsUnitPlurality>,
-);
+pub type Barrier = (TakeWeightCredit, AllowTopLevelPaidExecutionFrom<Everything>);
 
 pub struct XcmConfig;
 
@@ -493,15 +479,16 @@ impl xcm_executor::Config for XcmConfig {
 	type Call = Call;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = LocalAssetTransactor;
+	type AssetTransactor = ();
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = NativeAsset;
-	type IsTeleporter = NativeAsset; // <- should be enough to allow teleportation of PICA
+	type IsTeleporter = (); // <- should be enough to allow teleportation of PICA
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
-	type Trader = UsingComponents<IdentityFee<Balance>, RelayLocation, AccountId, Balances, ()>;
+	type Trader = ();
 	type ResponseHandler = (); // Don't handle responses for now.
+	type SubscriptionService = PolkadotXcm;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -511,7 +498,7 @@ pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, RelayNet
 /// queues.
 pub type XcmRouter = (
 	// Two routers - use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem>,
+	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, ()>,
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
 );
@@ -537,6 +524,7 @@ impl cumulus_pallet_xcm::Config for Runtime {
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type VersionWrapper = ();
 	type ChannelInfo = ParachainSystem;
 }
 
@@ -854,11 +842,20 @@ pub struct BaseCallFilter;
 
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
-		matches!(
+		if call_filter::Pallet::<Runtime>::contains(call) {
+			return false;
+		}
+		!matches!(
 			call,
 			Call::Balances(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_)
 		)
 	}
+}
+
+impl call_filter::Config for Runtime {
+	type Event = Event;
+	type UpdateOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -884,7 +881,7 @@ construct_runtime!(
 		Authorship: authorship::{Pallet, Call, Storage} = 20,
 		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
 		Session: session::{Pallet, Call, Storage, Event, Config<T>} = 22,
-		Aura: aura::{Pallet, Config<T>} = 23,
+		Aura: aura::{Pallet, Storage, Config<T>} = 23,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 24,
 
 		// Governance utilities
@@ -907,6 +904,7 @@ construct_runtime!(
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 54,
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
+		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 56,
 	}
 );
 
@@ -1041,24 +1039,36 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl benchmarking::Benchmark<Block> for Runtime {
-		// fn benchmark_metadata(extra: bool) -> (
-		// 	Vec<benchmarking::BenchmarkList>,
-		// 	Vec<support::traits::StorageInfo>,
-		// ) {
-		// 	use benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
-		// 	use support::traits::StorageInfoTrait;
-		// 	use system_benchmarking::Pallet as SystemBench;
-		//
-		// 	let mut list = Vec::<BenchmarkList>::new();
-		//
-		// 	list_benchmark!(list, extra, system, SystemBench::<Runtime>);
-		// 	list_benchmark!(list, extra, balances, Balances);
-		// 	list_benchmark!(list, extra, timestamp, Timestamp);
-		//
-		// 	let storage_info = AllPalletsWithSystem::storage_info();
-		//
-		// 	return (list, storage_info)
-		// }
+		fn benchmark_metadata(extra: bool) -> (
+			Vec<benchmarking::BenchmarkList>,
+			Vec<support::traits::StorageInfo>,
+		) {
+			use benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use support::traits::StorageInfoTrait;
+			use system_benchmarking::Pallet as SystemBench;
+
+			let mut list = Vec::<BenchmarkList>::new();
+
+			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			list_benchmark!(list, extra, balances, Balances);
+			list_benchmark!(list, extra, timestamp, Timestamp);
+			list_benchmark!(list, extra, oracle, Oracle);
+			list_benchmark!(list, extra, session, SessionBench::<Runtime>);
+			list_benchmark!(list, extra, collator_selection, CollatorSelection);
+			list_benchmark!(list, extra, indices, Indices);
+			list_benchmark!(list, extra, membership, CouncilMembership);
+			list_benchmark!(list, extra, treasury, Treasury);
+			list_benchmark!(list, extra, scheduler, Scheduler);
+			list_benchmark!(list, extra, democracy, Democracy);
+			list_benchmark!(list, extra, collective, Council);
+			list_benchmark!(list, extra, lending, Lending);
+			list_benchmark!(list, extra, crowdloan_bonus, LiquidCrowdloan);
+			list_benchmark!(list, extra, utility, Utility);
+
+			let storage_info = AllPalletsWithSystem::storage_info();
+
+			return (list, storage_info)
+		}
 
 		fn dispatch_benchmark(
 			config: benchmarking::BenchmarkConfig
