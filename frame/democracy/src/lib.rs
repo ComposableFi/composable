@@ -185,9 +185,6 @@ pub use vote::{AccountVote, Vote, Voting};
 pub use vote_threshold::{Approved, VoteThreshold};
 pub use weights::WeightInfo;
 
-#[cfg(test)]
-mod tests;
-
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 
@@ -1061,9 +1058,9 @@ decl_module! {
 		/// Weight: `O(R)` with R number of vote of target.
 		#[weight = T::WeightInfo::unlock_set(T::MaxVotes::get())
 			.max(T::WeightInfo::unlock_remove(T::MaxVotes::get()))]
-		fn unlock(origin, target: T::AccountId, asset_id: AssetIdOf<T>) {
+		fn unlock(origin, target: T::AccountId, asset_id: AssetIdOf<T>) -> DispatchResult {
 			ensure_signed(origin)?;
-			Self::update_lock(&target, asset_id);
+			Self::update_lock(&target, asset_id)
 		}
 
 		/// Remove a vote for a referendum.
@@ -1326,9 +1323,8 @@ impl<T: Config> Module<T> {
 			}
 		})?;
 		// Extend the lock to `balance` (rather than setting it) since we don't know what other
-		// votes are in place.
-		//T::Currency::extend_lock(DEMOCRACY_ID, who, vote.balance(), WithdrawReasons::TRANSFER);
-		T::MultiCurrency::extend_lock(DEMOCRACY_ID, status.asset_id, who, vote.balance());
+		// votes are in place. `extend_lock` does not fail in practise.
+		T::MultiCurrency::extend_lock(DEMOCRACY_ID, status.asset_id, who, vote.balance())?;
 		ReferendumInfoOf::<T>::insert(ref_index, ReferendumInfo::Ongoing(status));
 		Ok(())
 	}
@@ -1468,9 +1464,8 @@ impl<T: Config> Module<T> {
 			}
 			let votes = Self::increase_upstream_delegation(&target, conviction.votes(balance));
 			// Extend the lock to `balance` (rather than setting it) since we don't know what other
-			// votes are in place.
-			//T::Currency::extend_lock(DEMOCRACY_ID, &who, balance, WithdrawReasons::TRANSFER);
-			T::MultiCurrency::extend_lock(DEMOCRACY_ID, asset_id, &who, balance);
+			// votes are in place. `extend_lock` does not fail in practise.
+			T::MultiCurrency::extend_lock(DEMOCRACY_ID, asset_id, &who, balance)?;
 			Ok(votes)
 		})?;
 		Self::deposit_event(Event::<T>::Delegated(who, target));
@@ -1505,17 +1500,15 @@ impl<T: Config> Module<T> {
 
 	/// Rejig the lock on an account. It will never get more stringent (since that would indicate
 	/// a security hole) but may be reduced from what they are currently.
-	fn update_lock(who: &T::AccountId, asset_id: AssetIdOf<T>) {
+	fn update_lock(who: &T::AccountId, asset_id: AssetIdOf<T>) -> DispatchResult {
 		let lock_needed = VotingOf::<T>::mutate(who, |voting| {
 			voting.rejig(system::Pallet::<T>::block_number());
 			voting.locked_balance()
 		});
 		if lock_needed.is_zero() {
-			//T::Currency::remove_lock(DEMOCRACY_ID, who);
-			T::MultiCurrency::remove_lock(DEMOCRACY_ID, asset_id, who);
+			T::MultiCurrency::remove_lock(DEMOCRACY_ID, asset_id, who)
 		} else {
-			T::MultiCurrency::set_lock(DEMOCRACY_ID, asset_id, who, lock_needed);
-			//T::Currency::set_lock(DEMOCRACY_ID, who, lock_needed, WithdrawReasons::TRANSFER);
+			T::MultiCurrency::set_lock(DEMOCRACY_ID, asset_id, who, lock_needed)
 		}
 	}
 
