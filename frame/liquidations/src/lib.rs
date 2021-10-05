@@ -30,7 +30,13 @@ pub use pallet::*;
 pub mod pallet {
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::{auction::DutchAuction, dex::{Orderbook, SimpleExchange}, lending::Lending, liquidation::Liquidate, math::LiftedFixedBalance};
+	use composable_traits::{
+		auction::DutchAuction,
+		dex::{Orderbook, SimpleExchange},
+		lending::Lending,
+		liquidation::Liquidate,
+		math::LiftedFixedBalance,
+	};
 	use frame_support::{
 		dispatch::DispatchResult,
 		log,
@@ -40,10 +46,14 @@ pub mod pallet {
 	};
 	use frame_system::{offchain::Signer, pallet_prelude::*, Account};
 	use num_traits::{CheckedDiv, SaturatingSub};
-	use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill, traits::{
+	use sp_runtime::{
+		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
-		}};
+		},
+		ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128, Percent,
+		Perquintill,
+	};
 	use sp_std::{fmt::Debug, vec::Vec};
 	pub trait DeFiComposablePallet {
 		type AssetId: FullCodec
@@ -80,13 +90,13 @@ pub mod pallet {
 
 		type Lending: Lending;
 
-		type DutchAuction : DutchAuction<
-				Balance = Self::Balance,
-				AccountId = Self::AccountId,
-				AssetId = Self::AssetId,
-				Error = DispatchError,
-				OrderId = u128,
-			>;
+		type DutchAuction: DutchAuction<
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+			AssetId = Self::AssetId,
+			Error = DispatchError,
+			OrderId = u128,
+		>;
 	}
 
 	#[pallet::event]
@@ -112,7 +122,15 @@ pub mod pallet {
 			// ask ask all illiquid borrow
 			// collect collaterals and borrows
 			// make sure that can transfer these to dutch auction (API in lending)
-			for (source_account, source_asset_id, source_asset_price, target_asset_id, target_account, total_amount) in Vec::new().iter() {
+			for (
+				source_account,
+				source_asset_id,
+				source_asset_price,
+				target_asset_id,
+				target_account,
+				total_amount,
+			) in Vec::new().iter()
+			{
 				let _liquidation_id = Self::initiate_liquidation(
 					source_account,
 					source_asset_id,
@@ -120,7 +138,7 @@ pub mod pallet {
 					target_asset_id,
 					target_account,
 					total_amount,
-					)?;
+				)?;
 			}
 			Ok(())
 		}
@@ -159,7 +177,16 @@ pub mod pallet {
 			target_account: &Self::AccountId,
 			total_amount: &Self::Balance,
 		) -> Result<Self::LiquidationId, Self::Error> {
-			let order_id = <T as Config>::DutchAuction::start(source_account, source_asset_id, source_account, target_asset_id, target_account, total_amount, source_asset_price, composable_traits::auction::AuctionStepFunction::default())?;
+			let order_id = <T as Config>::DutchAuction::start(
+				source_account,
+				source_asset_id,
+				source_account,
+				target_asset_id,
+				target_account,
+				total_amount,
+				source_asset_price,
+				composable_traits::auction::AuctionStepFunction::default(),
+			)?;
 			Ok(order_id)
 		}
 		fn is_liquidation_completed(liquidation_id: &Self::LiquidationId) -> bool {

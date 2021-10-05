@@ -35,7 +35,13 @@ impl<T: Orderbook> Liquidate for T {
 		_target_account: &Self::AccountId,
 		total_amount: &Self::Balance,
 	) -> Result<Self::LiquidationId, Self::Error> {
-		<T as Orderbook>::market_sell(source_account, source_asset_id, target_asset_id, total_amount, Permill::from_perthousand(0))
+		<T as Orderbook>::market_sell(
+			source_account,
+			source_asset_id,
+			target_asset_id,
+			total_amount,
+			Permill::from_perthousand(0),
+		)
 	}
 	fn is_liquidation_completed(liquidation_id: &Self::LiquidationId) -> bool {
 		<T as Orderbook>::is_order_executed(liquidation_id)
