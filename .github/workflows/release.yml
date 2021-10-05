@@ -6,11 +6,7 @@ on:
 
 jobs:
   release-on-push:
-    runs-on: 
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
