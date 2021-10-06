@@ -46,7 +46,14 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ${{ secrets.DOCKER_HUB_USERNAME }}/composable
-          tags: latest
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
 
       - name: Set up Docker Buildx
         id: buildx
@@ -58,8 +65,10 @@ jobs:
         with:
           context: ./
           file: ./install/docker/Dockerfile
-          # platforms: linux/amd64,linux/arm64,
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/composable:latest, ${{ secrets.DOCKER_HUB_USERNAME }}/composable:{{ env.RELEASE_VERSION }}
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/composable:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/composable:${{ steps.release.outputs.tag_name }}
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           cache-from: type=local,src=/tmp/.buildx-cache
