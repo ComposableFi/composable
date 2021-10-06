@@ -753,10 +753,10 @@ proptest! {
 			);
 
 			// Top level lp price should be transitively resolvable to the base asset price.
-			prop_assert_ok!(Oracle::get_price(&lp_token_id));
+			prop_assert_ok!(Oracle::get_price(lp_token_id));
 
 			// Without stock dilution, prices should be equals
-			prop_assert_eq!(Oracle::get_price(&lp_token_id), Oracle::get_price(&base_asset));
+			prop_assert_eq!(Oracle::get_price(lp_token_id), Oracle::get_price(base_asset));
 
 			Ok(())
 		})?;

@@ -878,32 +878,31 @@ impl Orderbook for MockOrderbook {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type AccountId = AccountId;
-	type Error = DispatchError;
 	type OrderId = u128;
 	fn post(
 		_account_from: &Self::AccountId,
-		_asset: &Self::AssetId,
-		_want: &Self::AssetId,
-		_source_amount: &Self::Balance,
-		_source_price: &Self::Balance,
+		_asset: Self::AssetId,
+		_want: Self::AssetId,
+		_source_amount: Self::Balance,
+		_source_price: Self::Balance,
 		_amm_slippage: Permill,
-	) -> Result<Self::OrderId, Self::Error> {
+	) -> Result<Self::OrderId, DispatchError> {
 		Ok(0)
 	}
 	fn market_sell(
 		_account: &Self::AccountId,
-		_asset: &Self::AssetId,
-		_want: &Self::AssetId,
-		_amount: &Self::Balance,
+		_asset: Self::AssetId,
+		_want: Self::AssetId,
+		_amount: Self::Balance,
 		_amm_slippage: Permill,
-	) -> Result<Self::OrderId, Self::Error> {
+	) -> Result<Self::OrderId, DispatchError> {
 		Ok(0)
 	}
 	fn take(
 		_account: &Self::AccountId,
 		_orders: impl Iterator<Item = Self::OrderId>,
 		_up_to: Self::Balance,
-	) -> Result<TakeResult<Self::Balance>, Self::Error> {
+	) -> Result<TakeResult<Self::Balance>, DispatchError> {
 		Ok(TakeResult { amount: 0, total_price: 0 })
 	}
 

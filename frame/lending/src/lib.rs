@@ -678,9 +678,9 @@ pub mod pallet {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
-			let collateral_price = <T::Oracle as Oracle>::get_price(&market.collateral)
+			let collateral_price = <T::Oracle as Oracle>::get_price(market.collateral)
 				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
-			let borrow_price = <T::Oracle as Oracle>::get_price(&borrow_asset_id)
+			let borrow_price = <T::Oracle as Oracle>::get_price(borrow_asset_id)
 				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
 			let borrower_balance_with_interest = Self::borrow_balance_current(market_id, account)?
 				.unwrap_or_else(BorrowAmountOf::<Self>::zero);
@@ -728,15 +728,15 @@ pub mod pallet {
 				let borrower_balance_with_interest =
 					Self::borrow_balance_current(market_id, account)?
 						.unwrap_or_else(BorrowAmountOf::<Self>::zero);
-				let collateral_price = <T::Oracle as Oracle>::get_price(&market.collateral)
+				let collateral_price = <T::Oracle as Oracle>::get_price(market.collateral)
 					.map_err(|_| Error::<T>::AssetWithoutPrice)?;
 				let _liquidation_id = T::Liquidation::initiate_liquidation(
 					account,
-					&market.collateral,
-					&collateral_price.0,
-					&borrow_asset_id,
+					market.collateral,
+					collateral_price.0,
+					borrow_asset_id,
 					&Self::account_id(market_id),
-					&borrower_balance_with_interest,
+					borrower_balance_with_interest,
 				)
 				.map_err(|_| Error::<T>::LiquidationFailed);
 			}
@@ -858,9 +858,9 @@ pub mod pallet {
 				config_input.collateral_factor > 1.into(),
 				Error::<T>::CollateralFactorIsLessOrEqualOne
 			);
-			<T::Oracle as Oracle>::get_price(&collateral_asset)
+			<T::Oracle as Oracle>::get_price(collateral_asset)
 				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
-			<T::Oracle as Oracle>::get_price(&borrow_asset)
+			<T::Oracle as Oracle>::get_price(borrow_asset)
 				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
 
 			LendingCount::<T>::try_mutate(|MarketIndex(previous_market_index)| {
@@ -1203,8 +1203,8 @@ pub mod pallet {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-			let borrow_price = T::Oracle::get_price(&borrow_asset)?.0;
-			Ok(swap_back(&borrow_amount.into(), &borrow_price.into(), &market.collateral_factor)?
+			let borrow_price = T::Oracle::get_price(borrow_asset)?.0;
+			Ok(swap_back(borrow_amount.into(), &borrow_price.into(), &market.collateral_factor)?
 				.checked_mul_int(1u64)
 				.ok_or(ArithmeticError::Overflow)?
 				.into())
@@ -1220,9 +1220,9 @@ pub mod pallet {
 				.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero());
 
 			if collateral_balance > T::Balance::zero() {
-				let collateral_price = T::Oracle::get_price(&market.collateral)?.0;
+				let collateral_price = T::Oracle::get_price(market.collateral)?.0;
 				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-				let borrow_price = T::Oracle::get_price(&borrow_asset)?.0;
+				let borrow_price = T::Oracle::get_price(borrow_asset)?.0;
 				let borrower_balance_with_interest =
 					Self::borrow_balance_current(market_id, account)?
 						.unwrap_or_else(BorrowAmountOf::<Self>::zero);
@@ -1293,14 +1293,14 @@ pub mod pallet {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
-			let (collateral_price, _) = T::Oracle::get_price(&market.collateral)?;
+			let (collateral_price, _) = T::Oracle::get_price(market.collateral)?;
 			let collateral_balance: LiftedFixedBalance =
 				AccountCollateral::<T>::try_get(market_id, account)
 					.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero())
 					.into();
 
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-			let borrow_price = T::Oracle::get_price(&borrow_asset)?.0;
+			let borrow_price = T::Oracle::get_price(borrow_asset)?.0;
 			let borrower_balance_with_interest = Self::borrow_balance_current(market_id, account)?
 				.unwrap_or_else(BorrowAmountOf::<Self>::zero);
 
@@ -1379,7 +1379,7 @@ pub mod pallet {
 	}
 
 	pub fn swap_back(
-		borrow_balance: &LiftedFixedBalance,
+		borrow_balance: LiftedFixedBalance,
 		borrow_price: &LiftedFixedBalance,
 		collateral_factor: &NormalizedCollateralFactor,
 	) -> Result<LiftedFixedBalance, ArithmeticError> {

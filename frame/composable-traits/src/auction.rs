@@ -66,7 +66,6 @@ pub struct StairstepExponentialDecrease {
 
 /// see example of it in clip.sol of makerdao
 pub trait DutchAuction {
-	type Error;
 	type OrderId;
 	type Orderbook: Orderbook;
 	type AccountId;
@@ -85,22 +84,25 @@ pub trait DutchAuction {
 	#[allow(clippy::too_many_arguments)]
 	fn start(
 		account_id: &Self::AccountId,
-		source_asset_id: &Self::AssetId,
+		source_asset_id: Self::AssetId,
 		source_account: &Self::AccountId,
-		target_asset_id: &Self::AssetId,
+		target_asset_id: Self::AssetId,
 		target_account: &Self::AccountId,
-		total_amount: &Self::Balance,
-		initial_price: &Self::Balance,
+		total_amount: Self::Balance,
+		initial_price: Self::Balance,
 		function: AuctionStepFunction,
-	) -> Result<Self::OrderId, Self::Error>;
+	) -> Result<Self::OrderId, DispatchError>;
 
 	/// run existing auctions
 	/// if some auctions completed, transfer amount to target account
 	/// `now` current time.
-	fn run_auctions(now: Timestamp) -> Result<(), Self::Error>;
+	fn run_auctions(now: Timestamp) -> DispatchResult;
 
 	fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order>;
 
 	/// called back from DEX
-	fn intention_updated(order: &Self::OrderId, action_event: AuctionExchangeCallback);
+	fn intention_updated(
+		order: &Self::OrderId,
+		action_event: AuctionExchangeCallback,
+	) -> DispatchResult;
 }
