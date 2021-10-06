@@ -1,5 +1,5 @@
 [package]
-name = "pallet-lending"
+name = "pallet-dutch-auctions"
 version = "0.0.1"
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
@@ -17,8 +17,6 @@ version = "2.0.0"
 [dependencies]
 frame-support = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"  }
 frame-system = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-pallet-vault = { default-features = false, version = "0.0.1", path = "../vault", optional = true }
-plotters =  {version = "0.3.1", optional = true}
 
 sp-runtime = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 sp-arithmetic = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
@@ -28,33 +26,17 @@ sp-std = { version = "3.0.0", default-features = false,  git = "https://github.c
 
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 
-pallet-oracle = { default-features = false, optional = true, version = "1.0.0", path = "../oracle" }
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
-
-serde = { version = '1', optional = true }
-log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
 
 [dev-dependencies]
 proptest = "0.9.6"
-serde = "1.0.119"
-hex-literal = "0.3.1"
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
-pallet-balances = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-pallet-timestamp = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
-pallet-liquidations = { version = "0.0.1", path = "../liquidations" }
-pallet-dutch-auctions = {version = "0.0.1", path = "../dutch-auction" }
-pallet-oracle = { version = "1.0.0", path = "../oracle" }
-pallet-vault = { version = "0.0.1", path = "../vault" }
 
 [features]
 default = ["std"]
 std = [
-    "serde/std",
     "codec/std",
-    "log/std",
     "frame-support/std",
     "frame-system/std",
     "sp-runtime/std",
@@ -62,15 +44,10 @@ std = [
     "sp-core/std",
     "sp-std/std",
     "sp-arithmetic/std",
-    "composable-traits/std",
-    "pallet-vault/std",
+	"composable-traits/std",
 ]
 
 runtime-benchmarks = [
-    "frame-benchmarking",
-    "frame-support/runtime-benchmarks",
-    "frame-system/runtime-benchmarks",
-    "pallet-oracle/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
 ]
-
-visualization = ["plotters"]
