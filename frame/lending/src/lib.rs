@@ -756,6 +756,23 @@ pub mod pallet {
 						Self::accrue_interest(&market_id, now)?;
 						call_counters.accrue_interest += 1;
 						let market_account = Self::account_id(&market_id);
+						/* NOTE(hussein-aitlahcen):
+						 It would probably be more perfomant to handle theses
+						 case while borrowing/repaying.
+
+						 I don't know whether we would face any issue by doing that.
+
+						 borrow:
+						   - withdrawable = transfer(vault->market) + transfer(market->user)
+						   - depositable = error(not enough borrow asset) // vault asking for reserve to be fullfilled
+						   - mustliquidate = error(market is closing)
+						 repay:
+							- (withdrawable || depositable || mustliquidate)
+							  = transfer(user->market) + transfer(market->vault)
+
+						 The intermediate transfer(vault->market) while borrowing would
+						 allow the vault to update the strategy balance (market = borrow vault strategy).
+						*/
 						match Self::available_funds(&config, &market_account)? {
 							FundsAvailability::Withdrawable(balance) => {
 								Self::handle_withdrawable(&config, &market_account, balance)?;
