@@ -327,9 +327,9 @@ pub mod pallet {
 		fn intention_updated(
 			order_id: &Self::OrderId,
 			action_event: composable_traits::auction::AuctionExchangeCallback,
-		) {
-			if let Ok(mut order) = Orders::<T>::try_get(order_id) {
-				if let AuctionState::AuctionStarted = order.state {
+		) -> DispatchResult {
+			Orders::<T>::try_mutate(order_id, |order| match order.state {
+				AuctionState::AuctionStarted => {
 					match action_event {
 						composable_traits::auction::AuctionExchangeCallback::Success => {
 							Orders::<T>::remove(order_id);
@@ -348,8 +348,10 @@ pub mod pallet {
 							});
 						},
 					}
-				};
-			}
+					Ok(())
+				},
+				_ => Ok(()),
+			})
 		}
 
 		fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order> {
