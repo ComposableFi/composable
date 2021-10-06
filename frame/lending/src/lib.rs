@@ -948,7 +948,7 @@ pub mod pallet {
 		fn borrow(
 			market_id: &Self::MarketId,
 			debt_owner: &Self::AccountId,
-			amount_to_borrow: Self::Balance,
+			amount_to_borrow: BorrowAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
@@ -1208,7 +1208,7 @@ pub mod pallet {
 		fn collateral_of_account(
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
-		) -> Result<Self::Balance, DispatchError> {
+		) -> Result<CollateralLpAmountOf<Self>, DispatchError> {
 			AccountCollateral::<T>::try_get(market_id, account)
 				.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount.into())
 		}
