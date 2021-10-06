@@ -1,16 +1,16 @@
 COMMIT_SHA:=$(shell git rev-parse --short=9 HEAD)
 BRANCH_NAME:=$(shell git rev-parse --abbrev-ref HEAD | tr '/' '-')
-REPO=composablefinance
+REPO=composablefi
 SERVICE_NAME=composable
 INSTALL_DIR=install/docker
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
-RELEASE_VERSION=$(shell git fetch -t && git describe --tags $(shell git rev-list --tags --max-count=1))
+RELEASE_VERSION:=$(shell git fetch -t && git describe --tags $(shell git rev-list --tags --max-count=1))
 AUTO_UPDATE?=true  
 
 
 IMAGE?=${IMAGE_URL}:${COMMIT_SHA}
 IMAGE_WITH_COMMIT=${IMAGE}
-IMAGE_WITH_RELEASE_VERSION=${IMAGE}:${RELEASE_VERSION}
+IMAGE_WITH_RELEASE_VERSION=${IMAGE_URL}:${RELEASE_VERSION}
 IMAGE_WITH_BRANCH:=${IMAGE_URL}:${BRANCH_NAME}
 IMAGE_WITH_LATEST:=${IMAGE_URL}:latest
 
@@ -46,6 +46,7 @@ containerize:
        	-f ${INSTALL_DIR}/Dockerfile \
        	-t ${IMAGE_WITH_COMMIT} \
         -t ${IMAGE_WITH_BRANCH} \
+		-t ${IMAGE_WITH_RELEASE_VERSION} \
         -t ${IMAGE_WITH_LATEST} \
 	. 1>/dev/null
 
