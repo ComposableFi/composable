@@ -1,5 +1,5 @@
 use frame_support::sp_runtime::Perbill;
-use sp_runtime::Permill;
+use sp_runtime::{DispatchError, Permill};
 
 /// Describes a simple exchanges which does not allow advanced configurations such as slippage.
 pub trait SimpleExchange {
@@ -36,7 +36,6 @@ pub trait Orderbook {
 	type AssetId;
 	type Balance;
 	type AccountId;
-	type Error;
 	type OrderId;
 
 	/// sell. exchanges specified amount of asset to other at specific price
@@ -45,28 +44,28 @@ pub trait Orderbook {
 	/// for remote auction we should  have sent some random to make sure we have idempotent request
 	fn post(
 		account_from: &Self::AccountId,
-		asset: &Self::AssetId,
-		want: &Self::AssetId,
-		source_amount: &Self::Balance,
-		source_price: &Self::Balance,
+		asset: Self::AssetId,
+		want: Self::AssetId,
+		source_amount: Self::Balance,
+		source_price: Self::Balance,
 		amm_slippage: Permill,
-	) -> Result<Self::OrderId, Self::Error>;
+	) -> Result<Self::OrderId, DispatchError>;
 
 	/// sell. exchanges specified amount of asset to other at market price.
 	fn market_sell(
 		account: &Self::AccountId,
-		asset: &Self::AssetId,
-		want: &Self::AssetId,
-		amount: &Self::Balance,
+		asset: Self::AssetId,
+		want: Self::AssetId,
+		amount: Self::Balance,
 		amm_slippage: Permill,
-	) -> Result<Self::OrderId, Self::Error>;
+	) -> Result<Self::OrderId, DispatchError>;
 
 	/// buy
 	fn take(
 		account: &Self::AccountId,
 		orders: impl Iterator<Item = Self::OrderId>,
 		up_to: Self::Balance,
-	) -> Result<TakeResult<Self::Balance>, Self::Error>;
+	) -> Result<TakeResult<Self::Balance>, DispatchError>;
 
 	fn is_order_executed(order_id: &Self::OrderId) -> bool;
 }

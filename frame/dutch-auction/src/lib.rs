@@ -108,7 +108,6 @@ pub mod pallet {
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
-			Error = DispatchError,
 			OrderId = Self::DexOrderId,
 		>;
 		type DexOrderId: FullCodec + Default;
@@ -211,8 +210,6 @@ pub mod pallet {
 
 		type Balance = T::Balance;
 
-		type Error = DispatchError;
-
 		type OrderId = T::OrderId;
 
 		type Orderbook = T::Orderbook;
@@ -226,22 +223,22 @@ pub mod pallet {
 
 		fn start(
 			account_id: &Self::AccountId,
-			source_asset_id: &Self::AssetId,
+			source_asset_id: Self::AssetId,
 			source_account: &Self::AccountId,
-			target_asset_id: &Self::AssetId,
+			target_asset_id: Self::AssetId,
 			target_account: &Self::AccountId,
-			total_amount: &Self::Balance,
-			initial_price: &Self::Balance,
+			total_amount: Self::Balance,
+			initial_price: Self::Balance,
 			function: AuctionStepFunction,
-		) -> Result<Self::OrderId, Self::Error> {
+		) -> Result<Self::OrderId, DispatchError> {
 			// TODO: with remote foreign chain DEX it can pass several blocks before we get on DEX.
 			// so somehow need to lock (transfer) currency before foreign transactions settles
 			ensure!(
 				matches!(
 					<T::Currency as Inspect<T::AccountId>>::can_withdraw(
-						*source_asset_id,
+						source_asset_id,
 						account_id,
-						*total_amount
+						total_amount
 					),
 					WithdrawConsequence::Success
 				),
@@ -257,12 +254,12 @@ pub mod pallet {
 				started: T::UnixTime::now().as_secs(),
 				function,
 				account_id: account_id.clone(),
-				source_asset_id: *source_asset_id,
+				source_asset_id,
 				source_account: source_account.clone(),
-				target_asset_id: *target_asset_id,
+				target_asset_id,
 				target_account: target_account.clone(),
-				source_total_amount: *total_amount,
-				source_initial_price: *initial_price,
+				source_total_amount: total_amount,
+				source_initial_price: initial_price,
 				state: AuctionState::AuctionStarted,
 			};
 			Orders::<T>::insert(order_id.clone(), order);
@@ -270,7 +267,7 @@ pub mod pallet {
 			Ok(order_id)
 		}
 
-		fn run_auctions(now: Timestamp) -> Result<(), Self::Error> {
+		fn run_auctions(now: Timestamp) -> DispatchResult {
 			let mut removed = Vec::new(); // avoid removing during iteration as unsafe
 			for (order_id, order) in Orders::<T>::iter() {
 				match order.state {
@@ -292,12 +289,13 @@ pub mod pallet {
 							.checked_mul_int(1u64)
 							.ok_or(ArithmeticError::Overflow)?
 							.into();
+
 							let dex_order_intention = <T::Orderbook as Orderbook>::post(
 								&order.account_id,
-								&order.source_asset_id,
-								&order.target_asset_id,
-								&order.source_total_amount,
-								&price,
+								order.source_asset_id,
+								order.target_asset_id,
+								order.source_total_amount,
+								price,
 								Permill::from_perthousand(5),
 							)?;
 

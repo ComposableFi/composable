@@ -94,7 +94,6 @@ pub mod pallet {
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 			AssetId = Self::AssetId,
-			Error = DispatchError,
 			OrderId = u128,
 		>;
 	}
@@ -124,11 +123,11 @@ pub mod pallet {
 			// make sure that can transfer these to dutch auction (API in lending)
 			for (
 				source_account,
-				source_asset_id,
-				source_asset_price,
-				target_asset_id,
+				&source_asset_id,
+				&source_asset_price,
+				&target_asset_id,
 				target_account,
-				total_amount,
+				&total_amount,
 			) in Vec::new().iter()
 			{
 				let _liquidation_id = Self::initiate_liquidation(
@@ -165,18 +164,16 @@ pub mod pallet {
 
 		type AccountId = T::AccountId;
 
-		type Error = DispatchError;
-
 		type LiquidationId = u128;
 
 		fn initiate_liquidation(
 			source_account: &Self::AccountId,
-			source_asset_id: &Self::AssetId,
-			source_asset_price: &Self::Balance,
-			target_asset_id: &Self::AssetId,
+			source_asset_id: Self::AssetId,
+			source_asset_price: Self::Balance,
+			target_asset_id: Self::AssetId,
 			target_account: &Self::AccountId,
-			total_amount: &Self::Balance,
-		) -> Result<Self::LiquidationId, Self::Error> {
+			total_amount: Self::Balance,
+		) -> Result<Self::LiquidationId, DispatchError> {
 			let order_id = <T as Config>::DutchAuction::start(
 				source_account,
 				source_asset_id,
