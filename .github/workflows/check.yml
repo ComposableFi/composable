@@ -8,11 +8,7 @@ on:
 
 jobs:
   check:
-    runs-on: 
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     steps: 
       - uses: actions/checkout@v2
       - uses: Swatinem/rust-cache@v1
@@ -36,11 +32,7 @@ jobs:
           SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --release
   clippy:
     name: Clippy
-    runs-on: 
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     steps: 
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -63,11 +55,7 @@ jobs:
 
   test:
     name: Unit Test
-    runs-on: 
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
