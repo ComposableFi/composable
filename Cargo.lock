@@ -5901,6 +5901,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-dutch-auctions"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "parity-scale-codec",
+ "proptest",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-election-provider-multi-phase"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
@@ -6021,6 +6040,8 @@ dependencies = [
  "orml-traits",
  "pallet-balances",
  "pallet-currency-factory",
+ "pallet-dutch-auctions",
+ "pallet-liquidations",
  "pallet-oracle",
  "pallet-timestamp",
  "pallet-vault",
@@ -6028,6 +6049,25 @@ dependencies = [
  "plotters",
  "proptest",
  "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-liquidations"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "parity-scale-codec",
+ "proptest",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
@@ -6817,6 +6857,7 @@ name = "picasso-runtime"
 version = "0.1.0"
 dependencies = [
  "common",
+ "composable-traits",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -6844,8 +6885,10 @@ dependencies = [
  "pallet-crowdloan-bonus",
  "pallet-currency-factory",
  "pallet-democracy",
+ "pallet-dutch-auctions",
  "pallet-indices",
  "pallet-lending",
+ "pallet-liquidations",
  "pallet-membership",
  "pallet-oracle",
  "pallet-randomness-collective-flip",
