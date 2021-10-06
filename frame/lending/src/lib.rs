@@ -228,35 +228,19 @@ pub mod pallet {
 			let mut weight: Weight = 0;
 			let call_counters = Self::initialize_block(block_number);
 			let one_read = T::DbWeight::get().reads(1);
-
-			// TODO(andor0): write benchmark and uncomment
-			// weight += u64::from(call_counters.now) * <T as Config>::WeightInfo::now();
-
+			weight += u64::from(call_counters.now) * <T as Config>::WeightInfo::now();
 			weight += u64::from(call_counters.read_markets) * one_read;
-
-			// TODO(andor0): write benchmark and uncomment
-			// weight += u64::from(call_counters.accrue_interest) *
-			// <T as Config>::WeightInfo::accrue_interest();
-
-			// TODO(andor0): write benchmark and uncomment
-			// weight += u64::from(call_counters.account_id) *
-			// <T as Config>::WeightInfo::account_id();
-
-			// TODO(andor0): write benchmark and uncomment
-			// weight += u64::from(call_counters.available_funds) *
-			// <T as Config>::WeightInfo::available_funds();
-
-			// TODO(andor0): write benchmark and uncomment
-			// weight += u64::from(call_counters.handle_withdrawable) *
-			// <T as Config>::WeightInfo::handle_withdrawable();
-
-			// TODO(andor0): write benchmark and uncomment
-			// weight += u64::from(call_counters.handle_depositable) *
-			// <T as Config>::WeightInfo::handle_depositable();
-
-			// TODO(andor0): write benchmark and uncomment
-			// weight += u64::from(call_counters.handle_must_liquidate) *
-			// <T as Config>::WeightInfo::handle_must_liquidate();
+			weight += u64::from(call_counters.accrue_interest) *
+				<T as Config>::WeightInfo::accrue_interest();
+			weight += u64::from(call_counters.account_id) * <T as Config>::WeightInfo::account_id();
+			weight += u64::from(call_counters.available_funds) *
+				<T as Config>::WeightInfo::available_funds();
+			weight += u64::from(call_counters.handle_withdrawable) *
+				<T as Config>::WeightInfo::handle_withdrawable();
+			weight += u64::from(call_counters.handle_depositable) *
+				<T as Config>::WeightInfo::handle_depositable();
+			weight += u64::from(call_counters.handle_must_liquidate) *
+				<T as Config>::WeightInfo::handle_must_liquidate();
 
 			// TODO: move following loop to OCW
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
@@ -779,18 +763,18 @@ pub mod pallet {
 			call_counters
 		}
 
-		fn now() -> u64 {
+		pub(crate) fn now() -> u64 {
 			T::UnixTime::now().as_secs()
 		}
 
-		fn available_funds(
+		pub(crate) fn available_funds(
 			config: &MarketConfiguration<T>,
 			market_account: &T::AccountId,
 		) -> Result<FundsAvailability<T::Balance>, DispatchError> {
 			<T::Vault as StrategicVault>::available_funds(&config.borrow, market_account)
 		}
 
-		fn handle_withdrawable(
+		pub(crate) fn handle_withdrawable(
 			config: &MarketConfiguration<T>,
 			market_account: &T::AccountId,
 			balance: T::Balance,
@@ -798,7 +782,7 @@ pub mod pallet {
 			<T::Vault as StrategicVault>::withdraw(&config.borrow, market_account, balance)
 		}
 
-		fn handle_depositable(
+		pub(crate) fn handle_depositable(
 			config: &MarketConfiguration<T>,
 			market_account: &T::AccountId,
 			balance: T::Balance,
@@ -810,7 +794,7 @@ pub mod pallet {
 			<T::Vault as StrategicVault>::deposit(&config.borrow, market_account, balance)
 		}
 
-		fn handle_must_liquidate(
+		pub(crate) fn handle_must_liquidate(
 			config: &MarketConfiguration<T>,
 			market_account: &T::AccountId,
 		) -> Result<(), DispatchError> {
