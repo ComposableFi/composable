@@ -971,7 +971,7 @@ pub mod pallet {
 
 			ensure!(
 				!matches!(
-					T::Vault::available_funds(&market.borrow, &Self::account_id(market_id))?,
+					T::Vault::available_funds(&market.borrow, &account_id)?,
 					FundsAvailability::MustLiquidate
 				),
 				Error::<T>::MarketIsClosing
@@ -979,7 +979,7 @@ pub mod pallet {
 
 			<T as Config>::Currency::transfer(
 				asset_id,
-				&Self::account_id(market_id),
+				&account_id,
 				debt_owner,
 				amount_to_borrow,
 				true,
