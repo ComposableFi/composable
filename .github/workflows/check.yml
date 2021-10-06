@@ -23,8 +23,6 @@ jobs:
       - uses: actions-rs/cargo@v1
       - name: Cargo Check
         run: |
-          find ./target/ -type f -maxdepth 1 -delete
-          rm -f ./target/deps/*ra_*
           cargo clean -p
           cargo update
       - name: Cargo Check Benchmark
