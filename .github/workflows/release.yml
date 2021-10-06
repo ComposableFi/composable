@@ -68,10 +68,15 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/composable:latest
-            ${{ secrets.DOCKER_HUB_USERNAME }}/composable:${{ steps.release.outputs.tag_name }}
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
           secrets: 
             GIT_AUTH_TOKEN=${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build and push
+        working-directory: ./install/docker/
+        run: |
+          docker tag composablefi/composable:latest composablefi/composable:${{ steps.release.outputs.tag_name }}
+          docker push composablefi/composable:${{ steps.release.outputs.tag_name }}
