@@ -326,6 +326,8 @@ fn add_price() {
 fn medianize_price() {
 	new_test_ext().execute_with(|| {
 		let account_1: AccountId = Default::default();
+		// should not panic
+		Oracle::get_median_price(&Oracle::pre_prices(0));
 		for i in 0..3 {
 			let price = i as u128 + 100u128;
 			add_price_storage(price, 0, account_1, 0);

@@ -601,6 +601,10 @@ pub mod pallet {
 		pub fn get_median_price(
 			prices: &[PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>],
 		) -> Option<T::PriceValue> {
+			if prices.is_empty() {
+				return None
+			}
+
 			let mut numbers: Vec<T::PriceValue> =
 				prices.iter().map(|current_prices| current_prices.price).collect();
 
