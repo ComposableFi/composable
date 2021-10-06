@@ -292,7 +292,7 @@ parameter_types! {
 impl indices::Config for Runtime {
 	type Event = Event;
 	type AccountIndex = AccountIndex;
-	type Currency = Balances;
+	type Currency = Assets;
 	type Deposit = IndexDeposit;
 	type WeightInfo = weights::indices::WeightInfo<Runtime>;
 }
@@ -375,7 +375,7 @@ parameter_types! {
 }
 
 impl oracle::Config for Runtime {
-	type Currency = Balances;
+	type Currency = Assets;
 	type Event = Event;
 	type AuthorityId = oracle::crypto::TestAuthId;
 	type AssetId = CurrencyId;
@@ -530,6 +530,14 @@ impl pallet_xcm::Config for Runtime {
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
 }
 
+impl assets::Config for Runtime {
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type NativeAssetId = NativeAssetId;
+	type Currency = Balances;
+	type MultiCurrency = Tokens;
+}
+
 impl cumulus_pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
@@ -592,7 +600,7 @@ parameter_types! {
 
 impl collator_selection::Config for Runtime {
 	type Event = Event;
-	type Currency = Balances;
+	type Currency = Assets;
 	type UpdateOrigin = EnsureRootOrHalfCouncil;
 	type PotId = PotId;
 	type MaxCandidates = MaxCandidates;
@@ -652,9 +660,9 @@ impl crowdloan_bonus::Config for Runtime {
 	type CurrencyId = CrowdloanCurrencyId;
 	type TokenTotal = TokenTotal;
 	type JumpStart = EnsureRootOrHalfCouncil;
-	type Currency = Tokens;
+	type Currency = Assets;
 	type Balance = Balance;
-	type NativeCurrency = Balances;
+	type NativeCurrency = Assets;
 	type WeightInfo = weights::crowdloan_bonus::WeightInfo<Runtime>;
 }
 
@@ -813,7 +821,7 @@ impl vault::Config for Runtime {
 	type Balance = Balance;
 	type CurrencyFactory = Factory;
 	type AssetId = CurrencyId;
-	type Currency = Tokens;
+	type Currency = Assets;
 	type Convert = ConvertInto;
 	type PalletId = VaultPalletId;
 	type MaxStrategies = MaxStrategies;
@@ -848,10 +856,10 @@ impl lending::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
-	type Currency = Tokens;
+	type Currency = Assets;
 	type UnixTime = Timestamp;
 	type CurrencyFactory = Factory;
-	type MarketDebtCurrency = Tokens;
+	type MarketDebtCurrency = Assets;
 	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 }
