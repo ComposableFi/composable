@@ -1,7 +1,7 @@
 services:
   dev:
     container_name: node-template
-    image: composablefinance/composable:latest
+    image: composablefi/composable:latest
     working_dir: /usr/src/app
     ports:
       - "8000:8000"
@@ -12,7 +12,9 @@ services:
       - type: bind
         source: ./.local
         target: /root/.local
-    command: bash -c "cargo build --release && ./target/release/node-template --dev --ws-external"
+    command: bash -c "echo 'Hello'"
+    # secrets:
+    #   - node_executor_secret
   watchtower:
     image: containrrr/watchtower
     volumes:
