@@ -27,7 +27,10 @@ jobs:
       - uses: actions-rs/cargo@v1
       - name: Cargo Check
         run: |
-          cargo update
+          rm -rf ~/.cargo/registry/index
+          rm -rf ~/.cargo/registry/cache
+          rm -rf ~/.cargo/git
+          rm -rf ./target
           SKIP_WASM_BUILD=1 cargo check
       - name: Cargo Check Benchmark
         run: |
