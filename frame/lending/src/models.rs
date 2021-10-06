@@ -59,7 +59,7 @@ impl BorrowerData {
 			.safe_mul(&self.collateral_price)?
 			.safe_div(&self.collateral_factor)?;
 		let borrowed = self.borrower_balance_with_interest.safe_mul(&self.borrow_price)?;
-		Ok(max_borrow.saturating_sub(borrowed))
+		max_borrow.saturating_sub(borrowed).safe_div(&self.borrow_price)
 	}
 
 	pub fn should_liquidate(&self) -> Result<bool, ArithmeticError> {
