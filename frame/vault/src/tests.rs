@@ -9,13 +9,18 @@ use crate::{
 	models::VaultInfo,
 	*,
 };
-use composable_traits::vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig};
+use composable_traits::{
+	rate_model::Rate,
+	vault::{
+		Deposit, FundsAvailability, ReportableStrategicVault, StrategicVault, Vault, VaultConfig,
+	},
+};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
 use proptest::prelude::*;
-use sp_runtime::{helpers_128bit::multiply_by_rational, Perquintill};
+use sp_runtime::{helpers_128bit::multiply_by_rational, FixedPointNumber, Perquintill};
 
 /// Missing macro, equivalent to `assert_ok!`!
 macro_rules! prop_assert_ok {
@@ -54,6 +59,10 @@ macro_rules! prop_assert_epsilon {
 	}};
 }
 
+const DEFAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
+// dependent on the previous value, both should be changed
+const DEFAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
+
 fn create_vault_with_share(
 	asset_id: MockCurrencyId,
 	strategy_account_id: AccountId,
@@ -77,12 +86,7 @@ fn create_vault(
 	strategy_account_id: AccountId,
 	asset_id: MockCurrencyId,
 ) -> (VaultIndex, VaultInfo<AccountId, Balance, MockCurrencyId, BlockNumber>) {
-	create_vault_with_share(
-		asset_id,
-		strategy_account_id,
-		Perquintill::from_percent(90),
-		Perquintill::from_percent(10),
-	)
+	create_vault_with_share(asset_id, strategy_account_id, DEFAULT_STRATEGY_SHARE, DEFAULT_RESERVE)
 }
 
 prop_compose! {
@@ -445,6 +449,73 @@ proptest! {
 			// The funds should not be shared.
 			prop_assert_eq!(Tokens::balance(asset_id, &Vaults::account_id(&vault_id1)), amount1);
 			prop_assert_eq!(Tokens::balance(asset_id, &Vaults::account_id(&vault_id2)), amount2);
+
+			Ok(())
+		})?;
+	}
+
+	#[test]
+	fn vault_stock_dilution_rate(
+		strategy_account_id in strategy_account(),
+		(amount1, amount2, profits) in valid_amounts_without_overflow_3()
+	) {
+		ExtBuilder::default().build().execute_with(|| {
+			let asset_id = MockCurrencyId::A;
+			let (vault_id, VaultInfo { lp_token_id, .. }) = create_vault(strategy_account_id, asset_id);
+
+			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), 0);
+			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount1));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount1));
+
+			// Rate unchanged
+			prop_assert_eq!(Vaults::stock_dilution_rate(&vault_id), Ok(Rate::from(1)));
+
+			prop_assert_eq!(Tokens::balance(asset_id, &BOB), 0);
+			prop_assert_ok!(Tokens::mint_into(asset_id, &BOB, amount2));
+			prop_assert_ok!(Vaults::deposit(Origin::signed(BOB), vault_id, amount2));
+
+			// Rate unchanged
+			prop_assert_eq!(Vaults::stock_dilution_rate(&vault_id), Ok(Rate::from(1)));
+
+			let total_funds = amount1 + amount2;
+			let expected_strategy_funds =
+				DEFAULT_STRATEGY_SHARE.mul_floor(total_funds);
+			let available_funds = <Vaults as StrategicVault>::available_funds(&vault_id, &strategy_account_id);
+			prop_assert!(
+				matches!(
+					available_funds,
+					Ok(FundsAvailability::Withdrawable(strategy_funds))
+						if strategy_funds == expected_strategy_funds
+				),
+				"Strategy funds should be 90%, expected: {}, actual: {:?}",
+				expected_strategy_funds,
+				available_funds
+			);
+
+			// Strategy withdraw full allocation
+			prop_assert_eq!(Tokens::balance(asset_id, &strategy_account_id), 0);
+			prop_assert_ok!(<Vaults as StrategicVault>::withdraw(&vault_id, &strategy_account_id, expected_strategy_funds));
+			prop_assert_eq!(Tokens::balance(asset_id, &strategy_account_id), expected_strategy_funds);
+
+			// Rate unchanged
+			prop_assert_eq!(Vaults::stock_dilution_rate(&vault_id), Ok(Rate::from(1)));
+
+			let current_strategy_balance = expected_strategy_funds + profits;
+			prop_assert_ok!(<Vaults as ReportableStrategicVault>::update_strategy_report(
+				&vault_id,
+				&strategy_account_id,
+				&current_strategy_balance
+			));
+
+			let total_vault_balance = Tokens::balance(asset_id, &Vaults::account_id(&vault_id));
+			let total_vault_value = total_vault_balance + current_strategy_balance;
+			let total_lp_issued = Tokens::total_issuance(lp_token_id);
+
+			let expected_dilution_rate =
+				Rate::saturating_from_rational(total_vault_value, total_lp_issued);
+
+			// Rate moved
+			prop_assert_eq!(Vaults::stock_dilution_rate(&vault_id), Ok(expected_dilution_rate));
 
 			Ok(())
 		})?;

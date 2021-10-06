@@ -277,7 +277,7 @@ pub mod pallet {
 		CollateralFactorIsLessOrEqualOne,
 		MarketAndAccountPairNotFound,
 		NotEnoughCollateralToBorrowAmount,
-		CannotBorrowInCurrentSourceVaultState,
+		MarketIsClosing,
 		InvalidTimestampOnBorrowRequest,
 		NotEnoughBorrowAsset,
 		NotEnoughCollateral,
@@ -756,6 +756,23 @@ pub mod pallet {
 						Self::accrue_interest(&market_id, now)?;
 						call_counters.accrue_interest += 1;
 						let market_account = Self::account_id(&market_id);
+						/* NOTE(hussein-aitlahcen):
+						 It would probably be more perfomant to handle theses
+						 case while borrowing/repaying.
+
+						 I don't know whether we would face any issue by doing that.
+
+						 borrow:
+						   - withdrawable = transfer(vault->market) + transfer(market->user)
+						   - depositable = error(not enough borrow asset) // vault asking for reserve to be fullfilled
+						   - mustliquidate = error(market is closing)
+						 repay:
+							- (withdrawable || depositable || mustliquidate)
+							  = transfer(user->market) + transfer(market->vault)
+
+						 The intermediate transfer(vault->market) while borrowing would
+						 allow the vault to update the strategy balance (market = borrow vault strategy).
+						*/
 						match Self::available_funds(&config, &market_account)? {
 							FundsAvailability::Withdrawable(balance) => {
 								Self::handle_withdrawable(&config, &market_account, balance)?;
@@ -931,7 +948,7 @@ pub mod pallet {
 		fn borrow(
 			market_id: &Self::MarketId,
 			debt_owner: &Self::AccountId,
-			amount_to_borrow: Self::Balance,
+			amount_to_borrow: BorrowAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
@@ -947,22 +964,24 @@ pub mod pallet {
 				borrow_limit >= amount_to_borrow,
 				Error::<T>::NotEnoughCollateralToBorrowAmount
 			);
+
 			let account_id = Self::account_id(market_id);
+
 			let can_withdraw =
 				<T as Config>::Currency::reducible_balance(asset_id, &account_id, true);
 			ensure!(can_withdraw >= amount_to_borrow, Error::<T>::NotEnoughBorrowAsset);
 
 			ensure!(
 				!matches!(
-					T::Vault::available_funds(&market.borrow, &Self::account_id(market_id))?,
+					T::Vault::available_funds(&market.borrow, &account_id)?,
 					FundsAvailability::MustLiquidate
 				),
-				Error::<T>::CannotBorrowInCurrentSourceVaultState
+				Error::<T>::MarketIsClosing
 			);
 
 			<T as Config>::Currency::transfer(
 				asset_id,
-				&Self::account_id(market_id),
+				&account_id,
 				debt_owner,
 				amount_to_borrow,
 				true,
@@ -1108,7 +1127,7 @@ pub mod pallet {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let borrow_id = T::Vault::asset_id(&market.borrow)?;
-			Ok(<T as Config>::Currency::balance(borrow_id, &T::Vault::account_id(&market.borrow)))
+			Ok(<T as Config>::Currency::balance(borrow_id, &Self::account_id(market_id)))
 		}
 
 		fn calc_utilization_ratio(
@@ -1191,7 +1210,7 @@ pub mod pallet {
 		fn collateral_of_account(
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
-		) -> Result<Self::Balance, DispatchError> {
+		) -> Result<CollateralLpAmountOf<Self>, DispatchError> {
 			AccountCollateral::<T>::try_get(market_id, account)
 				.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount.into())
 		}
