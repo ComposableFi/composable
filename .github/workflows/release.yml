@@ -76,7 +76,6 @@ jobs:
             GIT_AUTH_TOKEN=${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Build and push
-        working-directory: ./install/docker/
         run: |
           make containerize 
           make push
