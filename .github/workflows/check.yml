@@ -21,7 +21,7 @@ jobs:
       - uses: actions-rs/cargo@v1
       - name: Cargo Check
         run: |
-          rm -rf ~/.cargo
+          rm -rf Cargo.lock
           SKIP_WASM_BUILD=1 cargo check
       - name: Cargo Check Benchmark
         run: |
