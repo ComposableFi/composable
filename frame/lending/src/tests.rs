@@ -50,7 +50,12 @@ fn create_market(
 	reserved: Perquintill,
 	collateral_factor: NormalizedCollateralFactor,
 ) -> (MarketIndex, BorrowAssetVault) {
-	let market_config = MarketConfigInput { manager, reserved, collateral_factor };
+	let market_config = MarketConfigInput {
+		manager,
+		reserved,
+		collateral_factor,
+		under_collaterized_warn_percent: Percent::from_float(0.10),
+	};
 	let market_account_id = Lending::account_id(&MarketIndex::new(1));
 
 	Vault::do_create_vault(
@@ -337,7 +342,14 @@ fn test_calc_utilization_ratio() {
 
 #[test]
 fn test_borrow_math() {
-	let borrower = BorrowerData::new(100, 1, 0, 1, NormalizedCollateralFactor::from_float(1.0));
+	let borrower = BorrowerData::new(
+		100,
+		1,
+		0,
+		1,
+		NormalizedCollateralFactor::from_float(1.0),
+		Percent::from_float(0.10),
+	);
 	let borrow = borrower.borrow_for_collateral().unwrap();
 	assert_eq!(borrow, LiftedFixedBalance::from(100));
 }
@@ -532,6 +544,48 @@ fn test_liquidation() {
 		assert_ok!(Lending::liquidate_internal(&market, &ALICE));
 	});
 }
+
+#[test]
+fn test_warn_soon_under_collaterized() {
+	new_test_ext().execute_with(|| {
+		let (market, vault) = create_market(
+			MockCurrencyId::USDT,
+			MockCurrencyId::BTC,
+			ALICE,
+			Perquintill::from_percent(10),
+			NormalizedCollateralFactor::saturating_from_rational(200, 100),
+		);
+		// Balance for ALICE
+		Oracle::set_btc_price(100u128);
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, 2));
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 2);
+		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, 2));
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 0);
+
+		// Balance of USDT for CHARLIE
+		// CHARLIE is only lender of USDT
+		let usdt_amt = u32::MAX as Balance;
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &CHARLIE, usdt_amt));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), usdt_amt);
+		assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault, usdt_amt));
+
+		// ALICE borrows
+		assert_eq!(Lending::borrow_balance_current(&market, &ALICE), Ok(Some(0)));
+		assert_ok!(Lending::borrow_internal(&market, &ALICE, 80));
+		for i in 1..10000 {
+			process_block(i);
+		}
+
+		Oracle::set_btc_price(90u128);
+		assert_eq!(Lending::soon_under_collaterized(&market, &ALICE), Ok(false));
+		// change price of colleteral to warn
+		Oracle::set_btc_price(84u128);
+		assert_eq!(Lending::soon_under_collaterized(&market, &ALICE), Ok(true));
+	});
+}
+
 /*
   TODO(hussein-aitlahcen):
   Extract all proptests helpers into a composable-test-helper crate?
@@ -615,7 +669,8 @@ proptest! {
 			collateral_price,
 			borrower_balance_with_interest,
 			borrow_price,
-			NormalizedCollateralFactor::from_float(1.0)
+			NormalizedCollateralFactor::from_float(1.0),
+			Percent::from_float(0.10), // 10%
 		);
 		let borrow = borrower.borrow_for_collateral();
 		prop_assert_ok!(borrow);
