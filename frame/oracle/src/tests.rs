@@ -548,8 +548,8 @@ fn on_init_over_max_answers() {
 		}
 		// all pruned
 		Oracle::on_initialize(0);
-		// price prunes all but first 2 answers, median went from 102 to 101
-		let price = Price { price: 101, block: 0 };
+		// price prunes all but first 2 answers, median went from 102 to 100
+		let price = Price { price: 100, block: 0 };
 		assert_eq!(Oracle::prices(0), price);
 		assert_eq!(Oracle::pre_prices(0).len(), 0);
 	});

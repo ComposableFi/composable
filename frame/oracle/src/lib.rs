@@ -603,9 +603,15 @@ pub mod pallet {
 		) -> Option<T::PriceValue> {
 			let mut numbers: Vec<T::PriceValue> =
 				prices.iter().map(|current_prices| current_prices.price).collect();
-			numbers.sort();
+
+			numbers.sort_unstable();
+
 			let mid = numbers.len() / 2;
-			numbers.get(mid).cloned()
+			if numbers.len() % 2 == 0 {
+				Some(numbers[mid - 1].saturating_add(numbers[mid]) / 2u32.into())
+			} else {
+				Some(numbers[mid])
+			}
 		}
 
 		pub fn check_requests() {
