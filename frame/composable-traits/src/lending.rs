@@ -16,6 +16,7 @@ where
 	pub manager: AccountId,
 	/// can pause borrow & deposits of assets
 	pub collateral_factor: NormalizedCollateralFactor,
+	pub under_collaterized_warn_percent: Percent,
 }
 
 #[derive(Encode, Decode, Default)]
@@ -25,6 +26,7 @@ pub struct MarketConfig<VaultId, AssetId, AccountId> {
 	pub collateral: AssetId,
 	pub collateral_factor: NormalizedCollateralFactor,
 	pub interest_rate_model: InterestRateModel,
+	pub under_collaterized_warn_percent: Percent,
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.

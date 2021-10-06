@@ -251,6 +251,15 @@ pub mod pallet {
 
 			weight
 		}
+		fn offchain_worker(_block_number: T::BlockNumber) {
+			for (market_id, account, _) in DebtIndex::<T>::iter() {
+				if Self::liquidate_internal(&market_id, &account).is_ok() {
+					Self::deposit_event(Event::LiquidationInitiated { market_id, account });
+				} else if let Ok(true) = Self::soon_under_collaterized(&market_id, &account) {
+					Self::deposit_event(Event::SoonMayUnderCollaterized { market_id, account });
+				}
+			}
+		}
 	}
 
 	#[pallet::error]
@@ -312,6 +321,8 @@ pub mod pallet {
 		},
 		/// Event emitted when a liquidation is initiated for a loan.
 		LiquidationInitiated { market_id: MarketIndex, account: T::AccountId },
+		/// Event emitted to warn that loan may go under collaterized soon.
+		SoonMayUnderCollaterized { market_id: MarketIndex, account: T::AccountId },
 	}
 
 	/// Lending instances counter
@@ -432,6 +443,8 @@ pub mod pallet {
 		/// - `collateral_asset_id` : AssetId for collateral.
 		/// - `reserved_factor` : Reserve factor of market to be created.
 		/// - `collateral_factor` : Collateral factor of market to be created.
+		/// - `under_collaterized_warn_percent` : warn borrower when loan's collateral/debt ratio
+		///   given percentage short to be under collaterized
 		#[pallet::weight(<T as Config>::WeightInfo::create_new_market())]
 		#[transactional]
 		pub fn create_new_market(
@@ -440,12 +453,14 @@ pub mod pallet {
 			collateral_asset_id: <T as Config>::AssetId,
 			reserved_factor: Perquintill,
 			collateral_factor: NormalizedCollateralFactor,
+			under_collaterized_warn_percent: Percent,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let market_config = MarketConfigInput {
 				reserved: reserved_factor,
 				manager: who.clone(),
 				collateral_factor,
+				under_collaterized_warn_percent,
 			};
 			let (market_id, vault_id) =
 				Self::create(borrow_asset_id, collateral_asset_id, market_config)?;
@@ -655,10 +670,10 @@ pub mod pallet {
 			<Self as Lending>::repay_borrow(market_id, from, beneficiary, repay_amount)
 		}
 
-		pub fn should_liquidate(
+		fn create_borrower_data(
 			market_id: &<Self as Lending>::MarketId,
 			account: &<Self as Lending>::AccountId,
-		) -> Result<bool, DispatchError> {
+		) -> Result<BorrowerData, DispatchError> {
 			let collateral_balance = Self::collateral_of_account(market_id, account)?;
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
@@ -675,9 +690,27 @@ pub mod pallet {
 				borrower_balance_with_interest,
 				borrow_price.0,
 				market.collateral_factor,
+				market.under_collaterized_warn_percent,
 			);
+			Ok(borrower)
+		}
+
+		pub fn should_liquidate(
+			market_id: &<Self as Lending>::MarketId,
+			account: &<Self as Lending>::AccountId,
+		) -> Result<bool, DispatchError> {
+			let borrower = Self::create_borrower_data(market_id, account)?;
 			let should_liquidate = borrower.should_liquidate()?;
 			Ok(should_liquidate)
+		}
+
+		pub fn soon_under_collaterized(
+			market_id: &<Self as Lending>::MarketId,
+			account: &<Self as Lending>::AccountId,
+		) -> Result<bool, DispatchError> {
+			let borrower = Self::create_borrower_data(market_id, account)?;
+			let should_warn = borrower.should_warn()?;
+			Ok(should_warn)
 		}
 
 		/// if liquidation is not required returns `ok(false)`
@@ -863,6 +896,7 @@ pub mod pallet {
 					collateral: collateral_asset,
 					collateral_factor: config_input.collateral_factor,
 					interest_rate_model: InterestRateModel::default(),
+					under_collaterized_warn_percent: config_input.under_collaterized_warn_percent,
 				};
 
 				let debt_asset_id = T::CurrencyFactory::create()?;
@@ -1199,6 +1233,7 @@ pub mod pallet {
 					borrower_balance_with_interest,
 					borrow_price,
 					market.collateral_factor,
+					market.under_collaterized_warn_percent,
 				);
 
 				return Ok(borrower
@@ -1275,6 +1310,7 @@ pub mod pallet {
 				borrower_balance_with_interest: borrower_balance_with_interest.into(),
 				borrow_price: borrow_price.into(),
 				collateral_factor: market.collateral_factor,
+				under_collaterized_warn_percent: market.under_collaterized_warn_percent,
 			};
 
 			ensure!(
