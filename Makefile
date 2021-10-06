@@ -1,15 +1,21 @@
 COMMIT_SHA:=$(shell git rev-parse --short=9 HEAD)
 BRANCH_NAME:=$(shell git rev-parse --abbrev-ref HEAD | tr '/' '-')
-REPO=composablefinance
+REPO=composablefi
 SERVICE_NAME=composable
 INSTALL_DIR=install/docker
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
+RELEASE_VERSION:=$(shell git fetch -t && git describe --tags $(shell git rev-list --tags --max-count=1))
+AUTO_UPDATE?=true  
 
 
 IMAGE?=${IMAGE_URL}:${COMMIT_SHA}
 IMAGE_WITH_COMMIT=${IMAGE}
+IMAGE_WITH_RELEASE_VERSION=${IMAGE_URL}:${RELEASE_VERSION}
 IMAGE_WITH_BRANCH:=${IMAGE_URL}:${BRANCH_NAME}
 IMAGE_WITH_LATEST:=${IMAGE_URL}:latest
+
+help:
+	@echo $(print_help_text)
 
 build:
 	@cargo build
@@ -17,7 +23,6 @@ build:
 clean:
 	@cargo clean
 
-TESTS = ""
 test:
 	@cargo test $(TESTS) --offline --lib -- --color=always --nocapture
 
@@ -41,26 +46,28 @@ containerize:
        	-f ${INSTALL_DIR}/Dockerfile \
        	-t ${IMAGE_WITH_COMMIT} \
         -t ${IMAGE_WITH_BRANCH} \
+		-t ${IMAGE_WITH_RELEASE_VERSION} \
         -t ${IMAGE_WITH_LATEST} \
 	. 1>/dev/null
 
 push:
 	@docker push ${IMAGE_WITH_COMMIT}
 	@docker push ${IMAGE_WITH_BRANCH}
+	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 	@docker push ${IMAGE_WITH_LATEST}
 
-up:
+install:
 	@docker-compose up
 
-down:
+stop:
 	@docker-compose down
 
 
-.PHONY: build test docs style-check lint up down containerize dev
+.PHONY: build test docs style-check lint up down containerize dev push
 
 
 #----------------------------------------------------------------------
-# UTILITY FUNCTIONS
+# UTILITY FUNCTIONS TO remove
 #----------------------------------------------------------------------
 
 define _info
@@ -72,9 +79,13 @@ define _error
 endef
 
 define print_help_text
-"Here are the commands you can use for ${SERVICE_LONG_NAME}: \n\
+"Here are the commands to help setting up composable in any environment: \n\
 	--- Dev --- \n\
 	make help                    : Display this help message. \n\
 	make vendor                  : Download dependencies into the 'vendor' folder. \n\
+	make containerize            : Bundle the compiled binary in a lean production-ready docker image. \n\
+	make install                 : Use docker-compose to startup composable alongside other needed services
+	make stop				     : Stop all current running containers
+	make push				     : Push all built images to the specified docker registry
 "
 endef

@@ -1,27 +1,21 @@
-version: "3.2"
-
 services:
   dev:
     container_name: node-template
-    image: paritytech/ci-linux:974ba3ac-20201006
-    working_dir: /var/www/node-template
+    image: composablefinance/composable:latest
+    working_dir: /usr/src/app
     ports:
-      - "9944:9944"
+      - "8000:8000"
     environment:
-      - CARGO_HOME=/var/www/node-template/.cargo
+      - CARGO_HOME=/usr/src/app/.cargo
     volumes:
-      - .:/var/www/node-template
+      - .:/usr/src/app/composable
       - type: bind
         source: ./.local
         target: /root/.local
     command: bash -c "cargo build --release && ./target/release/node-template --dev --ws-external"
-  composable:
-    image: registry.hub.docker.com/composablefi/composable:latest
-    ports:
-      - "80:8000"
   watchtower:
     image: containrrr/watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /root/.docker/config.json:/config.json
+      - ~/.docker/config.json:/config.json
     command: --interval 30
