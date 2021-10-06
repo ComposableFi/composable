@@ -964,7 +964,9 @@ pub mod pallet {
 				borrow_limit >= amount_to_borrow,
 				Error::<T>::NotEnoughCollateralToBorrowAmount
 			);
+
 			let account_id = Self::account_id(market_id);
+
 			let can_withdraw =
 				<T as Config>::Currency::reducible_balance(asset_id, &account_id, true);
 			ensure!(can_withdraw >= amount_to_borrow, Error::<T>::NotEnoughBorrowAsset);
@@ -1125,7 +1127,7 @@ pub mod pallet {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let borrow_id = T::Vault::asset_id(&market.borrow)?;
-			Ok(<T as Config>::Currency::balance(borrow_id, &T::Vault::account_id(&market.borrow)))
+			Ok(<T as Config>::Currency::balance(borrow_id, &Self::account_id(market_id)))
 		}
 
 		fn calc_utilization_ratio(
