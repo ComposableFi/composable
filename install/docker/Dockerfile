@@ -10,7 +10,7 @@ RUN groupadd $APP_USER \
     && useradd -g $APP_USER $APP_USER 
 RUN chown -R $APP_USER:$APP_USER /usr/src/app
 
-RUN cargo build --release
+# RUN cargo build --release
 
 EXPOSE 8000
 
