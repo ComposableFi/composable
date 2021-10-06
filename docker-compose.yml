@@ -3,7 +3,7 @@ version: "3.2"
 services:
   dev:
     container_name: node-template
-    image: composablefi/composable:release-v0.7.1
+    image: composablefinance/composable:release-v0.7.1
     working_dir: /usr/src/app
     ports:
       - "8000:8000"
