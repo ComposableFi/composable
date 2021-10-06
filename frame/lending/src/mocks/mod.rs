@@ -185,8 +185,8 @@ parameter_types! {
 	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::PICA;
 	pub const CreationDeposit: Balance = 10;
 	pub const RentPerBlock: Balance = 1;
-	pub const MinimumDeposit: Balance = 10_000;
-	pub const MinimumWithdrawal: Balance = 10_000;
+	pub const MinimumDeposit: Balance = 0;
+	pub const MinimumWithdrawal: Balance = 0;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
 }
 
