@@ -62,6 +62,8 @@ impl BorrowerData {
 		max_borrow.saturating_sub(borrowed).safe_div(&self.borrow_price)
 	}
 
+	/// Determines whether the loan should trigger a liquidation.
+	#[inline(always)]
 	pub fn should_liquidate(&self) -> Result<bool, ArithmeticError> {
 		let collateral = self.collateral_balance.safe_mul(&self.collateral_price)?;
 		let borrowed = self.borrower_balance_with_interest.safe_mul(&self.borrow_price)?;
@@ -74,6 +76,7 @@ impl BorrowerData {
 	/// under_collaterized_warn_percent) For example collateral_factor = 2 and
 	/// under_collaterized_warn_percent = 10% then if loan's collateral to debt ratio goes below 2.2
 	/// then borrower should be warn so.
+	#[inline(always)]
 	pub fn should_warn(&self) -> Result<bool, ArithmeticError> {
 		let collateral = self.collateral_balance.safe_mul(&self.collateral_price)?;
 		let borrowed = self.borrower_balance_with_interest.safe_mul(&self.borrow_price)?;
