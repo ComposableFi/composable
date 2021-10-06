@@ -75,7 +75,3 @@ jobs:
           secrets: 
             GIT_AUTH_TOKEN=${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Build and push
-        run: |
-          make containerize 
-          make push
