@@ -767,7 +767,7 @@ impl democracy::Config for Runtime {
 	type Proposal = Call;
 	type Event = Event;
 	type Currency = Balances;
-	
+
 	type MultiCurrency = Tokens;
 	type AssetId = CurrencyId;
 	type NativeAssetId = NativeAssetId;
