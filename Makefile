@@ -63,7 +63,7 @@ stop:
 	@docker-compose down
 
 
-.PHONY: build test docs style-check lint up down containerize dev push
+.PHONY: build test docs style-check lint up down containerize dev push install stop 
 
 
 #----------------------------------------------------------------------
