@@ -78,5 +78,5 @@ jobs:
       - name: Build and push
         working-directory: ./install/docker/
         run: |
-          docker tag composablefi/composable:latest composablefi/composable:${{ env.RELEASE_VERSION }}
+          docker build -t composablefi/composable:${{ env.RELEASE_VERSION }}
           docker push composablefi/composable:${{ env.RELEASE_VERSION }}
