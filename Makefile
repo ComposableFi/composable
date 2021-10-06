@@ -5,7 +5,7 @@ SERVICE_NAME=composable
 INSTALL_DIR=install/docker
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
 RELEASE_VERSION:=$(shell git fetch -t && git describe --tags $(shell git rev-list --tags --max-count=1))
-AUTO_UPDATE?=true  
+AUTO_UPDATE:=1
 
 
 IMAGE?=${IMAGE_URL}:${COMMIT_SHA}
@@ -55,15 +55,20 @@ push:
 	@docker push ${IMAGE_WITH_BRANCH}
 	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 	@docker push ${IMAGE_WITH_LATEST}
-
-install:
-	@docker-compose up
-
+	
 stop:
 	@docker-compose down
 
+install:
+		$(info Run if auto-update is enabled)
+ifeq ($(AUTO_UPDATE),1)
+	docker-compose up
+else
+		$(info Auto-Update disabled, please use docker-run to start this project)
+endif
 
-.PHONY: build test docs style-check lint up down containerize dev push install stop 
+
+.PHONY: build test docs style-check lint up down containerize dev push install stop
 
 
 #----------------------------------------------------------------------
