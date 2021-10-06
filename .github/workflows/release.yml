@@ -14,7 +14,7 @@ jobs:
         uses: rymndhng/release-on-push-action@master
         with:
           bump_version_scheme: minor # if PR contains "release:major; release:minor or release:patch" - this is overwritten
-          tag_prefix: v #specify a tag prefix
+          tag_prefix: v 
         #   release_body: "When set, adds extra text to body!" #you can customize the release body
   docker-build:
     runs-on: 
