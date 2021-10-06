@@ -19,5 +19,5 @@ pub trait Oracle {
 	/// price (Base BTC) = 5000000
 	/// price (Vaulted base stock_dilution_rate) = price base * stock_dilution_rate
 	/// ```
-	fn get_price(of: &Self::AssetId) -> Result<(Self::Balance, Self::Timestamp), DispatchError>;
+	fn get_price(of: Self::AssetId) -> Result<(Self::Balance, Self::Timestamp), DispatchError>;
 }

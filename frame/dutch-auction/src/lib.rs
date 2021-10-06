@@ -36,7 +36,7 @@ pub mod pallet {
 		auction::{AuctionState, AuctionStepFunction, DutchAuction},
 		dex::{Orderbook, SimpleExchange},
 		loans::{DurationSeconds, Timestamp, ONE_HOUR},
-		math::{LiftedFixedBalance, SafeArithmetic},
+		math::{LiftedFixedBalance, SafeArithmetic, WrappingNext},
 	};
 	use frame_support::{
 		ensure,
@@ -108,7 +108,6 @@ pub mod pallet {
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
-			Error = DispatchError,
 			OrderId = Self::DexOrderId,
 		>;
 		type DexOrderId: FullCodec + Default;
@@ -145,21 +144,6 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
 
-	/// is anybody aware of trait like Next which is semantically same as WrappingAdd, and calling
-	/// wrapping_add(1) -> increment, but without knowing that it is number?
-	/// - it is up to storage to clean self up preventing overwrite (clean up + next is implemented
-	///   on top of ranges)
-	/// - up configuration to decide cardinality
-	/// - alternative - random key
-	pub trait WrappingNext {
-		fn next(&self) -> Self;
-	}
-
-	impl WrappingNext for u128 {
-		fn next(&self) -> Self {
-			self + 1
-		}
-	}
 	/// auction can span several dex orders within its lifetime
 	#[derive(Encode, Decode, Default)]
 	pub struct Order<DexOrderId, AccountId, AssetId, Balance> {
@@ -211,8 +195,6 @@ pub mod pallet {
 
 		type Balance = T::Balance;
 
-		type Error = DispatchError;
-
 		type OrderId = T::OrderId;
 
 		type Orderbook = T::Orderbook;
@@ -226,22 +208,22 @@ pub mod pallet {
 
 		fn start(
 			account_id: &Self::AccountId,
-			source_asset_id: &Self::AssetId,
+			source_asset_id: Self::AssetId,
 			source_account: &Self::AccountId,
-			target_asset_id: &Self::AssetId,
+			target_asset_id: Self::AssetId,
 			target_account: &Self::AccountId,
-			total_amount: &Self::Balance,
-			initial_price: &Self::Balance,
+			total_amount: Self::Balance,
+			initial_price: Self::Balance,
 			function: AuctionStepFunction,
-		) -> Result<Self::OrderId, Self::Error> {
+		) -> Result<Self::OrderId, DispatchError> {
 			// TODO: with remote foreign chain DEX it can pass several blocks before we get on DEX.
 			// so somehow need to lock (transfer) currency before foreign transactions settles
 			ensure!(
 				matches!(
 					<T::Currency as Inspect<T::AccountId>>::can_withdraw(
-						*source_asset_id,
+						source_asset_id,
 						account_id,
-						*total_amount
+						total_amount
 					),
 					WithdrawConsequence::Success
 				),
@@ -257,12 +239,12 @@ pub mod pallet {
 				started: T::UnixTime::now().as_secs(),
 				function,
 				account_id: account_id.clone(),
-				source_asset_id: *source_asset_id,
+				source_asset_id,
 				source_account: source_account.clone(),
-				target_asset_id: *target_asset_id,
+				target_asset_id,
 				target_account: target_account.clone(),
-				source_total_amount: *total_amount,
-				source_initial_price: *initial_price,
+				source_total_amount: total_amount,
+				source_initial_price: initial_price,
 				state: AuctionState::AuctionStarted,
 			};
 			Orders::<T>::insert(order_id.clone(), order);
@@ -270,7 +252,7 @@ pub mod pallet {
 			Ok(order_id)
 		}
 
-		fn run_auctions(now: Timestamp) -> Result<(), Self::Error> {
+		fn run_auctions(now: Timestamp) -> DispatchResult {
 			let mut removed = Vec::new(); // avoid removing during iteration as unsafe
 			for (order_id, order) in Orders::<T>::iter() {
 				match order.state {
@@ -292,12 +274,13 @@ pub mod pallet {
 							.checked_mul_int(1u64)
 							.ok_or(ArithmeticError::Overflow)?
 							.into();
+
 							let dex_order_intention = <T::Orderbook as Orderbook>::post(
 								&order.account_id,
-								&order.source_asset_id,
-								&order.target_asset_id,
-								&order.source_total_amount,
-								&price,
+								order.source_asset_id,
+								order.target_asset_id,
+								order.source_total_amount,
+								price,
 								Permill::from_perthousand(5),
 							)?;
 
@@ -329,9 +312,9 @@ pub mod pallet {
 		fn intention_updated(
 			order_id: &Self::OrderId,
 			action_event: composable_traits::auction::AuctionExchangeCallback,
-		) {
-			if let Ok(mut order) = Orders::<T>::try_get(order_id) {
-				if let AuctionState::AuctionStarted = order.state {
+		) -> DispatchResult {
+			Orders::<T>::try_mutate(order_id, |order| match order.state {
+				AuctionState::AuctionStarted => {
 					match action_event {
 						composable_traits::auction::AuctionExchangeCallback::Success => {
 							Orders::<T>::remove(order_id);
@@ -350,8 +333,10 @@ pub mod pallet {
 							});
 						},
 					}
-				};
-			}
+					Ok(())
+				},
+				_ => Ok(()),
+			})
 		}
 
 		fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order> {
