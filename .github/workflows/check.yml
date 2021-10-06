@@ -23,10 +23,7 @@ jobs:
       - uses: actions-rs/cargo@v1
       - name: Cargo Check
         run: |
-          rm -rf ~/.cargo/registry/index
-          rm -rf ~/.cargo/registry/cache
-          rm -rf ~/.cargo/git
-          rm -rf ./target
+          cargo update
       - name: Cargo Check Benchmark
         run: |
   # clippy:
