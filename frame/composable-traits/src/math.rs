@@ -44,3 +44,16 @@ impl<T: CheckedAdd + CheckedMul + CheckedDiv + CheckedSub + Zero> SafeArithmetic
 		self.checked_sub(rhs).ok_or(ArithmeticError::Underflow)
 	}
 }
+
+/// An object from which we can derive a second object of the same type.
+/// This function cannot fail and might return the same object if a boundary is about to be crossed.
+// This kind of function is usually called an Endomorphism. But let's keep it simple.
+pub trait WrappingNext {
+	fn next(&self) -> Self;
+}
+
+impl WrappingNext for u128 {
+	fn next(&self) -> Self {
+		self.wrapping_add(1)
+	}
+}

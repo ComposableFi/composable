@@ -36,7 +36,7 @@ pub mod pallet {
 		auction::{AuctionState, AuctionStepFunction, DutchAuction},
 		dex::{Orderbook, SimpleExchange},
 		loans::{DurationSeconds, Timestamp, ONE_HOUR},
-		math::{LiftedFixedBalance, SafeArithmetic},
+		math::{LiftedFixedBalance, SafeArithmetic, WrappingNext},
 	};
 	use frame_support::{
 		ensure,
@@ -144,21 +144,6 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
 
-	/// is anybody aware of trait like Next which is semantically same as WrappingAdd, and calling
-	/// wrapping_add(1) -> increment, but without knowing that it is number?
-	/// - it is up to storage to clean self up preventing overwrite (clean up + next is implemented
-	///   on top of ranges)
-	/// - up configuration to decide cardinality
-	/// - alternative - random key
-	pub trait WrappingNext {
-		fn next(&self) -> Self;
-	}
-
-	impl WrappingNext for u128 {
-		fn next(&self) -> Self {
-			self + 1
-		}
-	}
 	/// auction can span several dex orders within its lifetime
 	#[derive(Encode, Decode, Default)]
 	pub struct Order<DexOrderId, AccountId, AssetId, Balance> {
