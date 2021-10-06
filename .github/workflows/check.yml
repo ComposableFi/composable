@@ -1,4 +1,4 @@
-name: Test & Build & Benchmarking Build
+name: Test 
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  check:
+  checks:
     runs-on: 
       - self-hosted
       - linux
@@ -32,7 +32,7 @@ jobs:
       - name: Cargo Check Benchmark
         run: |
           SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --release
-  clippy:
+  clippys:
     name: Clippy
     runs-on: 
       - self-hosted
