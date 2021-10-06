@@ -31,7 +31,7 @@ use sp_version::RuntimeVersion;
 use sp_runtime::traits::AccountIdConversion;
 
 // A few exports that help ease life for downstream crates.
-pub use frame_support::{
+pub use support::{
 	construct_runtime, match_type, parameter_types,
 	traits::{Contains, Everything, KeyOwnerProofSystem, Randomness, StorageInfo},
 	weights::{
@@ -829,7 +829,7 @@ pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false;
+			return false
 		}
 		!matches!(
 			call,
@@ -1039,7 +1039,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, balances, Balances);
 			list_benchmark!(list, extra, timestamp, Timestamp);
 			list_benchmark!(list, extra, oracle, Oracle);
-			list_benchmark!(list, extra, session, SessionBench::<Runtime>);
 			list_benchmark!(list, extra, collator_selection, CollatorSelection);
 			list_benchmark!(list, extra, indices, Indices);
 			list_benchmark!(list, extra, membership, CouncilMembership);
@@ -1061,8 +1060,8 @@ impl_runtime_apis! {
 		) -> Result<Vec<benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
-			use frame_system_benchmarking::Pallet as SystemBench;
-			impl frame_system_benchmarking::Config for Runtime {}
+			use system_benchmarking::Pallet as SystemBench;
+			impl system_benchmarking::Config for Runtime {}
 
 			use session_benchmarking::Pallet as SessionBench;
 			impl session_benchmarking::Config for Runtime {}
