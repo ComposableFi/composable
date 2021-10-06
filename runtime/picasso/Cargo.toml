@@ -54,6 +54,9 @@ oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-featu
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
 lending = { package = "pallet-lending", path = "../../frame/lending", default-features = false }
+liquidations = { package = "pallet-liquidations", path = "../../frame/liquidations", default-features = false }
+dutch-auction = { package = "pallet-dutch-auctions", path = "../../frame/dutch-auction", default-features = false }
+composable-traits = { path = "../../frame/composable-traits" , default-features = false}
 transaction-fee = { package = "pallet-transaction-fee", path = "../../frame/transaction-fee", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 
@@ -117,6 +120,7 @@ std = [
 	"oracle/std",
 	"vault/std",
 	"lending/std",
+	"liquidations/std",
 	"call-filter/std",
 	"currency-factory/std",
 	"orml-tokens/std",

@@ -1,5 +1,6 @@
 name: Test & Build & Benchmarking Build
 
+# please update docker, toolchain toml and github action with toolchain at same time
 on:
   pull_request:
     branches:
@@ -8,19 +9,18 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
     steps: 
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
       - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
-          override: true
-      - uses: actions-rs/toolchain@v1
-        with: 
-          profile: minimal
-          toolchain: stable
+          toolchain: nightly-2021-09-01
           override: true
       - uses: actions-rs/cargo@v1
       - name: Cargo Check
@@ -31,34 +31,7 @@ jobs:
           SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --release
   clippy:
     name: Clippy
-    runs-on: 
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    steps: 
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-      - uses: actions-rs/toolchain@v1
-        with: 
-          toolchain: stable
-          components: clippy
-          override: true
-      - name: Cargo clippy
-        run: |
-          SKIP_WASM_BUILD=1 cargo clippy -- -D warnings
-      - name: Cargo fmt
-        run: |
-          rustup component add rustfmt --toolchain nightly-x86_64-unknown-linux-gnu
-          cargo +nightly fmt -- --check
-
-  test:
-    name: Unit Test
-    runs-on: 
+    runs-on:
       - self-hosted
       - linux
       - x64
@@ -68,19 +41,33 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: nightly-2021-09-01
+          components: clippy
           override: true
+      - name: Cargo clippy
+        run: |
+          SKIP_WASM_BUILD=1 cargo clippy -- -D warnings
+      - name: Cargo fmt
+        run: |
+          rustup component add rustfmt --toolchain nightly-2021-09-01-x86_64-unknown-linux-gnu
+          cargo fmt -- --check
+
+  test:
+    name: Unit Test
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
+      - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
-        with: 
+        with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly-2021-09-01
           override: true
       - name: Run Test
         run: |
           SKIP_WASM_BUILD=1 cargo test
           cargo clean -p picasso-runtime
           cargo clean -p composable
-
-
-
-

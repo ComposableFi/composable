@@ -1,11 +1,16 @@
 FROM paritytech/ci-linux:production as builder
 LABEL description="This is the build stage for Composable. Here we create the binary."
 
+ARG NIGHTLY_VERSION=nightly-2021-09-01
 ARG PROFILE=release
 WORKDIR /composable
 
 COPY . /composable
-
+# please update docker, toolchain toml and github action with toolchain at same time
+# there is no parity docker with same version, any later version breaks 3.0 parity (need to use 4.0)
+RUN rustup install ${NIGHTLY_VERSION}-x86_64-unknown-linux-gnu
+RUN rustup default $NIGHTLY_VERSION
+RUN rustup target add wasm32-unknown-unknown
 RUN pwd && ls && cd node && cargo build --$PROFILE
 
 # ===== SECOND STAGE ======

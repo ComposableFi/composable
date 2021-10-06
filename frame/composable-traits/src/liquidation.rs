@@ -1,32 +1,47 @@
-use frame_support::{pallet_prelude::*, sp_runtime::Permill};
+use sp_runtime::{DispatchError, Permill};
 
-#[derive(Clone, Encode, Decode, Default, Debug)]
-pub struct LiquidationConfig {
-	pub liquidation_fee: Permill,
+use crate::dex::Orderbook;
+
+pub trait Liquidate {
+	type AssetId;
+	type Balance;
+	type AccountId;
+	type LiquidationId;
+
+	fn initiate_liquidation(
+		source_account: &Self::AccountId,
+		source_asset_id: Self::AssetId,
+		source_asset_price: Self::Balance,
+		target_asset_id: Self::AssetId,
+		target_account: &Self::AccountId,
+		total_amount: Self::Balance,
+	) -> Result<Self::LiquidationId, DispatchError>;
+	fn is_liquidation_completed(liquidation_id: &Self::LiquidationId) -> bool;
 }
 
-pub trait Liquidation {
-	type PairId: core::cmp::Ord;
-	type AccountId: core::cmp::Ord;
-	type Error;
-	type Balance;
+impl<T: Orderbook> Liquidate for T {
+	type AssetId = <Self as Orderbook>::AssetId;
+	type Balance = <Self as Orderbook>::Balance;
+	type AccountId = <Self as Orderbook>::AccountId;
+	type LiquidationId = <Self as Orderbook>::OrderId;
 
-	fn update_config(_config: &LiquidationConfig) {
-		todo!()
+	fn initiate_liquidation(
+		source_account: &Self::AccountId,
+		source_asset_id: Self::AssetId,
+		_source_asset_price: Self::Balance,
+		target_asset_id: Self::AssetId,
+		_target_account: &Self::AccountId,
+		total_amount: Self::Balance,
+	) -> Result<Self::LiquidationId, DispatchError> {
+		<T as Orderbook>::market_sell(
+			source_account,
+			source_asset_id,
+			target_asset_id,
+			total_amount,
+			Permill::from_perthousand(0),
+		)
 	}
-
-	fn liquidate(_pair: Self::PairId, _borrower: &Self::AccountId) -> Result<(), Self::Error> {
-		todo!()
-	}
-
-	fn calculate_liquidation_fee(
-		_amount: Self::Balance,
-		_config: &LiquidationConfig,
-	) -> Self::Balance {
-		todo!()
-	}
-
-	fn get_liquidation_risk(_pair: Self::PairId) -> Self::Balance {
-		todo!()
+	fn is_liquidation_completed(liquidation_id: &Self::LiquidationId) -> bool {
+		<T as Orderbook>::is_order_executed(liquidation_id)
 	}
 }
