@@ -59,7 +59,7 @@ jobs:
           context: ./
           file: ./install/docker/Dockerfile
           # platforms: linux/amd64,linux/arm64,
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/composable:latest
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/composable:latest, ${{ secrets.DOCKER_HUB_USERNAME }}/composable:{{ env.RELEASE_VERSION }}
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           cache-from: type=local,src=/tmp/.buildx-cache
