@@ -17,7 +17,8 @@ jobs:
       - uses: actions/checkout@v2
       - uses: Swatinem/rust-cache@v1
         with: 
-          key: ${{ runner.os }}-mycache-v2
+          key: mycache-v2
+          target-dir: /home/runner
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
