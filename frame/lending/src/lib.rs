@@ -277,7 +277,7 @@ pub mod pallet {
 		CollateralFactorIsLessOrEqualOne,
 		MarketAndAccountPairNotFound,
 		NotEnoughCollateralToBorrowAmount,
-		CannotBorrowInCurrentSourceVaultState,
+		MarketIsClosing,
 		InvalidTimestampOnBorrowRequest,
 		NotEnoughBorrowAsset,
 		NotEnoughCollateral,
@@ -974,7 +974,7 @@ pub mod pallet {
 					T::Vault::available_funds(&market.borrow, &Self::account_id(market_id))?,
 					FundsAvailability::MustLiquidate
 				),
-				Error::<T>::CannotBorrowInCurrentSourceVaultState
+				Error::<T>::MarketIsClosing
 			);
 
 			<T as Config>::Currency::transfer(
