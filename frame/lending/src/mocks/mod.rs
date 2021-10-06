@@ -22,7 +22,7 @@ use sp_runtime::{
 
 pub mod oracle;
 
-pub type AccountId = u32;
+pub type AccountId = u128;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 pub type Balance = u128;
