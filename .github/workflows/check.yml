@@ -17,6 +17,7 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
+          key: ${{ runner.os }}-mycache-v2-${{ hashFiles(...) }}
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
