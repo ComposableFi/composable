@@ -85,6 +85,7 @@ pub trait Lending {
 		borrow_asset: Self::AssetId,
 		collateral_asset_vault: Self::AssetId,
 		config: MarketConfigInput<Self::AccountId>,
+		interest_rate_model: &InterestRateModel,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 
 	/// AccountId of the market instance
