@@ -61,7 +61,9 @@ fn create_market(
 		collateral_factor,
 		under_collaterized_warn_percent: Percent::from_float(0.10),
 	};
-	let market = Lending::create(borrow_asset, collateral_asset, market_config);
+	let interest_rate_model = InterestRateModel::default();
+	let market =
+		Lending::create(borrow_asset, collateral_asset, market_config, &interest_rate_model);
 	assert_ok!(market);
 	market.expect("unreachable; qed;")
 }

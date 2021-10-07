@@ -454,6 +454,7 @@ pub mod pallet {
 			reserved_factor: Perquintill,
 			collateral_factor: NormalizedCollateralFactor,
 			under_collaterized_warn_percent: Percent,
+			interest_rate_model: InterestRateModel,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let market_config = MarketConfigInput {
@@ -462,8 +463,12 @@ pub mod pallet {
 				collateral_factor,
 				under_collaterized_warn_percent,
 			};
-			let (market_id, vault_id) =
-				Self::create(borrow_asset_id, collateral_asset_id, market_config)?;
+			let (market_id, vault_id) = Self::create(
+				borrow_asset_id,
+				collateral_asset_id,
+				market_config,
+				&interest_rate_model,
+			)?;
 			Self::deposit_event(Event::<T>::NewMarketCreated {
 				market_id,
 				vault_id,
@@ -597,8 +602,14 @@ pub mod pallet {
 			borrow_asset: <Self as Lending>::AssetId,
 			collateral_asset: <Self as Lending>::AssetId,
 			config_input: MarketConfigInput<<Self as Lending>::AccountId>,
+			interest_rate_model: &InterestRateModel,
 		) -> Result<(<Self as Lending>::MarketId, <Self as Lending>::VaultId), DispatchError> {
-			<Self as Lending>::create(borrow_asset, collateral_asset, config_input)
+			<Self as Lending>::create(
+				borrow_asset,
+				collateral_asset,
+				config_input,
+				interest_rate_model,
+			)
 		}
 		pub fn deposit_collateral_internal(
 			market_id: &<Self as Lending>::MarketId,
@@ -870,6 +881,7 @@ pub mod pallet {
 			borrow_asset: Self::AssetId,
 			collateral_asset: Self::AssetId,
 			config_input: MarketConfigInput<Self::AccountId>,
+			interest_rate_model: &InterestRateModel,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			ensure!(
 				config_input.collateral_factor > 1.into(),
@@ -912,7 +924,7 @@ pub mod pallet {
 					borrow: borrow_asset_vault.clone(),
 					collateral: collateral_asset,
 					collateral_factor: config_input.collateral_factor,
-					interest_rate_model: InterestRateModel::default(),
+					interest_rate_model: *interest_rate_model,
 					under_collaterized_warn_percent: config_input.under_collaterized_warn_percent,
 				};
 
