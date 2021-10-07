@@ -104,8 +104,7 @@ fn accrue_interest_base_cases() {
 	let delta_time = SECONDS_PER_YEAR;
 	let total_issued = 100_000_000_000_000_000_000;
 	let accrued_debt = 0;
-	let accuracy = 1_000_000_000_000_000_000;
-	let total_borrows = (total_issued - accrued_debt) / accuracy;
+	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
 	let (accrued_increase, _) = accrue_interest_internal::<Test>(
 		optimal,
 		interest_rate_model,
@@ -142,8 +141,7 @@ fn accrue_interest_edge_cases() {
 	let delta_time = SECONDS_PER_YEAR;
 	let total_issued = u128::MAX;
 	let accrued_debt = 0;
-	let accuracy = 1_000_000_000_000_000_000;
-	let total_borrows = (total_issued - accrued_debt) / accuracy;
+	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
 	let (accrued_increase, _) = accrue_interest_internal::<Test>(
 		utilization,
 		interest_rate_model,
@@ -169,11 +167,9 @@ fn accrue_interest_edge_cases() {
 fn accrue_interest_induction() {
 	let (optimal, ref interest_rate_model) = new_jump_model();
 	let borrow_index = Rate::saturating_from_integer(1);
-
 	let minimal = 18; // current precision and minimal time delta do not allow to accrue on less than this power of 10
 	let mut runner = TestRunner::default();
 	let accrued_debt = 0;
-	let accuracy = 1_000_000_000_000_000_000;
 	runner
 		.run(
 			&(
@@ -186,7 +182,7 @@ fn accrue_interest_induction() {
 					interest_rate_model,
 					borrow_index,
 					slot * MILLISECS_PER_BLOCK,
-					(total_issued - accrued_debt) / accuracy,
+					(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
 				)
 				.unwrap();
 				let (accrued_increase_2, borrow_index_2) = accrue_interest_internal::<Test>(
@@ -194,7 +190,7 @@ fn accrue_interest_induction() {
 					interest_rate_model,
 					borrow_index,
 					(slot + 1) * MILLISECS_PER_BLOCK,
-					(total_issued - accrued_debt) / accuracy,
+					(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
 				)
 				.unwrap();
 				prop_assert!(accrued_increase_1 < accrued_increase_2);
@@ -209,10 +205,9 @@ fn accrue_interest_induction() {
 fn accrue_interest_plotter() {
 	let (optimal, interest_rate_model) = new_jump_model();
 	let borrow_index = Rate::checked_from_integer(1).unwrap();
-	let total_issued = 10000000;
+	let total_issued = 10_000_000;
 	let accrued_debt = 0;
-	let accuracy = 1_000_000_000_000_000_000;
-	let total_borrows = (total_issued - accrued_debt) / accuracy;
+	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
 	// no sure how handle in rust previous + next (so map has access to previous result)
 	let mut previous = 0;
 	let _data: Vec<_> = (0..=1000)
