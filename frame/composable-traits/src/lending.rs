@@ -1,4 +1,4 @@
-use crate::rate_model::*;
+use crate::{loans::Timestamp, rate_model::*};
 use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use sp_runtime::Percent;
@@ -16,6 +16,7 @@ where
 	pub manager: AccountId,
 	/// can pause borrow & deposits of assets
 	pub collateral_factor: NormalizedCollateralFactor,
+	pub under_collaterized_warn_percent: Percent,
 }
 
 #[derive(Encode, Decode, Default)]
@@ -25,6 +26,7 @@ pub struct MarketConfig<VaultId, AssetId, AccountId> {
 	pub collateral: AssetId,
 	pub collateral_factor: NormalizedCollateralFactor,
 	pub interest_rate_model: InterestRateModel,
+	pub under_collaterized_warn_percent: Percent,
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.
@@ -42,13 +44,48 @@ pub trait Lending {
 	type Balance;
 	type BlockNumber;
 
-	/// creates market for new pair in specified vault. if market exists under specified manager,
-	/// updates its parameters `deposit` - asset users want to borrow.
-	/// `collateral` - asset users will put as collateral.
+	/// Generates the underlying owned vault that will hold borrowable asset (may be shared with
+	/// specific set of defined collaterals). Creates market for new pair in specified vault. if
+	/// market exists under specified manager, updates its parameters `deposit` - asset users want
+	/// to borrow. `collateral` - asset users will put as collateral.
+	/// ```svgbob
+	///  -----------
+	///  |  vault  |  I
+	///  -----------
+	///       |
+	/// -------------
+	/// |  strategy | P
+	/// -------------
+	///       |                            M
+	///       |                   -------------------
+	///       |                   |    ---------    |
+	///       -----------------------> |       |    |
+	///                           |    | vault |    |
+	///       -----------------------> |       |    |
+	///       |                   |    ---------    |
+	///       |                   -------------------
+	///       |
+	/// -------------
+	/// |  strategy | Q
+	/// -------------
+	///       |
+	///  ----------
+	///  |  vault | J
+	///  ----------
+	/// ```
+	/// Let's assume a group of users X want to use a strategy P
+	/// and a group of users Y want to use a strategy Q:
+	/// Assuming both groups are interested in lending an asset A, they can create two vaults I and
+	/// J. They would deposit in I and J, then set P and respectively Q as their strategy.
+	/// Now imagine that our lending market M has a good APY, both strategy P and Q
+	/// could decide to allocate a share for it, transferring from I and J to the borrow asset vault
+	/// of M. Their allocated share could differ because of the strategies being different,
+	/// but the lending Market would have all the lendable funds in a single vault.
 	fn create(
 		borrow_asset: Self::AssetId,
 		collateral_asset_vault: Self::AssetId,
 		config: MarketConfigInput<Self::AccountId>,
+		interest_rate_model: &InterestRateModel,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 
 	/// AccountId of the market instance
@@ -93,6 +130,8 @@ pub trait Lending {
 	/// `from` repays some of `beneficiary` debts.
 	/// - `market_id`   : the market_id on which to be repaid.
 	/// - `repay_amount`: the amount to be repaid in underlying.
+	/// Interest will be repaid first and then remaining amount from `repay_amount` will be used to
+	/// repay principal value.
 	fn repay_borrow(
 		market_id: &Self::MarketId,
 		from: &Self::AccountId,
@@ -136,7 +175,7 @@ pub trait Lending {
 	fn collateral_of_account(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
-	) -> Result<Self::Balance, DispatchError>;
+	) -> Result<CollateralLpAmountOf<Self>, DispatchError>;
 
 	/// Borrower shouldn't borrow more than his total collateral value
 	fn collateral_required(
