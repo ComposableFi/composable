@@ -1315,6 +1315,7 @@ dependencies = [
 name = "composable-traits"
 version = "0.0.1"
 dependencies = [
+ "bitflags",
  "frame-support",
  "parity-scale-codec",
  "plotters",
