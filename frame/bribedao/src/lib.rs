@@ -2,7 +2,6 @@
 
 pub use pallet::*;
 
-
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::Codec;
@@ -17,11 +16,14 @@ pub mod pallet {
 	pub type CreateBribeRequest<T> = composable_traits::bribe::CreateBribeRequest<
 		ReferendumIndex,
 		<T as Config>::Balance,
+		<T as Config>::Conviction,
 		<T as Config>::CurrencyId,
-		<T as Config>::Votes,
 	>;
-	pub type TakeBribeRequest<T> =
-		composable_traits::bribe::TakeBribeRequest<BribeIndex, <T as Config>::Votes>;
+	pub type TakeBribeRequest<T> = composable_traits::bribe::TakeBribeRequest<
+		BribeIndex,
+		<T as Config>::Balance,
+		<T as Config>::Conviction,
+	>;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -38,10 +40,10 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ Zero;
 
+		type Conviction: Parameter;
+
 		// TODO(oleksii): CurrencyId traits
 		type CurrencyId: Parameter;
-		// TODO(oleksii): Votes traits
-		type Votes: Parameter;
 
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		// TODO(oleksii): WeightInfo type
@@ -99,8 +101,6 @@ pub mod pallet {
 			}
 			Ok(().into())
 		}
-
-
 	}
 
 	// TODO(oleksii): Errors (#[pallet::error])
@@ -114,14 +114,13 @@ pub mod pallet {
 		AlreadyBribed,
 	}
 
-	
 	impl<T: Config> Bribe for Pallet<T> {
 		type BribeIndex = BribeIndex;
 		type ReferendumIndex = ReferendumIndex;
 
 		type Balance = T::Balance;
+		type Conviction = T::Conviction;
 		type CurrencyId = T::CurrencyId;
-		type Votes = T::Votes;
 
 		fn create_bribe(request: CreateBribeRequest<T>) -> Result<Self::BribeIndex, DispatchError> {
 			Self::do_create_bribe(request)
@@ -133,21 +132,25 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-
-
 		fn do_create_bribe(request: CreateBribeRequest<T>) -> Result<BribeIndex, DispatchError> {
 			let id = BribeCount::<T>::mutate(|id| {
 				*id += 1;
 				*id
-			}); 
+			});
 
 			ensure!(BribeRequests::<T>::contains_key(id), Error::<T>::AlreadyBribed); //dont duplicate briberequest if we already have it
 			BribeRequests::<T>::insert(id, request);
 			Ok(id)
-
 		}
 
 		fn do_take_bribe(request: TakeBribeRequest<T>) -> Result<bool, DispatchError> {
+			ensure!(
+				BribeRequests::<T>::contains_key(request.bribe_index),
+				Error::<T>::InvalidIndex
+			);
+			let bribe_request = BribeRequests::<T>::get(request.bribe_index).unwrap();
+
+			todo!("account for bribe progress");
 			todo!("enact vote through pallet_democracy");
 		}
 	}
