@@ -102,17 +102,18 @@ fn accrue_interest_base_cases() {
 	assert_eq!(stable_rate, Ratio::saturating_from_rational(10, 100));
 	let borrow_index = Rate::saturating_from_integer(1);
 	let delta_time = SECONDS_PER_YEAR;
-	let total_issued = 100000000000000000000;
+	let total_issued = 100_000_000_000_000_000_000;
+	let accrued_debt = 0;
+	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
 	let (accrued_increase, _) = accrue_interest_internal::<Test>(
 		optimal,
 		interest_rate_model,
 		borrow_index,
 		delta_time,
-		total_issued,
-		0,
+		total_borrows,
 	)
 	.unwrap();
-	assert_eq!(accrued_increase, 10000000000000000000);
+	assert_eq!(accrued_increase, 10_000_000_000_000_000_000);
 
 	let delta_time = MILLISECS_PER_BLOCK;
 	let (accrued_increase, _) = accrue_interest_internal::<Test>(
@@ -120,8 +121,7 @@ fn accrue_interest_base_cases() {
 		interest_rate_model,
 		borrow_index,
 		delta_time,
-		total_issued,
-		0,
+		total_borrows,
 	)
 	.unwrap();
 	// small increments instead one year lead to some loss by design (until we lift calculation to
@@ -129,7 +129,7 @@ fn accrue_interest_base_cases() {
 	let error = 25;
 	assert_eq!(
 		accrued_increase,
-		10000000000000000000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR as u128 + error
+		10_000_000_000_000_000_000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR as u128 + error
 	);
 }
 
@@ -140,23 +140,23 @@ fn accrue_interest_edge_cases() {
 	let borrow_index = Rate::saturating_from_integer(1);
 	let delta_time = SECONDS_PER_YEAR;
 	let total_issued = u128::MAX;
+	let accrued_debt = 0;
+	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
 	let (accrued_increase, _) = accrue_interest_internal::<Test>(
 		utilization,
 		interest_rate_model,
 		borrow_index,
 		delta_time,
-		total_issued,
-		0,
+		total_borrows,
 	)
 	.unwrap();
-	assert_eq!(accrued_increase, 108890357414700308308279874378165827666);
+	assert_eq!(accrued_increase, 108890357414700308308160000000000000000);
 
 	let (accrued_increase, _) = accrue_interest_internal::<Test>(
 		utilization,
 		interest_rate_model,
 		borrow_index,
 		delta_time,
-		0,
 		0,
 	)
 	.unwrap();
@@ -167,14 +167,14 @@ fn accrue_interest_edge_cases() {
 fn accrue_interest_induction() {
 	let (optimal, ref interest_rate_model) = new_jump_model();
 	let borrow_index = Rate::saturating_from_integer(1);
-
-	let minimal = 5; // current precision and minimal time delta do not allow to accrue on less than this power of 10
+	let minimal = 18; // current precision and minimal time delta do not allow to accrue on less than this power of 10
 	let mut runner = TestRunner::default();
+	let accrued_debt = 0;
 	runner
 		.run(
 			&(
 				0..=2 * SECONDS_PER_YEAR / MILLISECS_PER_BLOCK,
-				(minimal..=25u32).prop_map(|i| 10u128.pow(i)),
+				(minimal..=35u32).prop_map(|i| 10u128.pow(i)),
 			),
 			|(slot, total_issued)| {
 				let (accrued_increase_1, borrow_index_1) = accrue_interest_internal::<Test>(
@@ -182,8 +182,7 @@ fn accrue_interest_induction() {
 					interest_rate_model,
 					borrow_index,
 					slot * MILLISECS_PER_BLOCK,
-					total_issued,
-					0,
+					(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
 				)
 				.unwrap();
 				let (accrued_increase_2, borrow_index_2) = accrue_interest_internal::<Test>(
@@ -191,8 +190,7 @@ fn accrue_interest_induction() {
 					interest_rate_model,
 					borrow_index,
 					(slot + 1) * MILLISECS_PER_BLOCK,
-					total_issued,
-					0,
+					(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
 				)
 				.unwrap();
 				prop_assert!(accrued_increase_1 < accrued_increase_2);
@@ -207,7 +205,9 @@ fn accrue_interest_induction() {
 fn accrue_interest_plotter() {
 	let (optimal, interest_rate_model) = new_jump_model();
 	let borrow_index = Rate::checked_from_integer(1).unwrap();
-	let total_issued = 10000000;
+	let total_issued = 10_000_000;
+	let accrued_debt = 0;
+	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
 	// no sure how handle in rust previous + next (so map has access to previous result)
 	let mut previous = 0;
 	let _data: Vec<_> = (0..=1000)
@@ -217,8 +217,7 @@ fn accrue_interest_plotter() {
 				&interest_rate_model,
 				borrow_index,
 				MILLISECS_PER_BLOCK,
-				total_issued,
-				0,
+				total_borrows,
 			)
 			.unwrap();
 			previous += accrue_increment;
@@ -231,12 +230,10 @@ fn accrue_interest_plotter() {
 		&interest_rate_model,
 		Rate::checked_from_integer(1).unwrap(),
 		1000 * MILLISECS_PER_BLOCK,
-		total_issued,
-		0,
+		total_borrows,
 	)
 	.unwrap();
-	let error = 68;
-	assert_eq!(previous + error, total_accrued);
+	assert_eq!(previous, total_accrued);
 
 	#[cfg(feature = "visualization")]
 	{
@@ -354,7 +351,7 @@ fn test_borrow_math() {
 #[test]
 fn test_borrow() {
 	new_test_ext().execute_with(|| {
-		let collateral_amount = 900000;
+		let collateral_amount = 900_000;
 		let (market, vault) = create_simple_market();
 		// alice deposit collaterals
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
