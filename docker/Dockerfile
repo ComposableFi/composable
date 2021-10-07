@@ -1,11 +1,20 @@
 FROM paritytech/ci-linux:production as builder
 LABEL description="This is the build stage for Composable. Here we create the binary."
 
+
+RUN apt-get update \  
+&& apt-get install cron -y && apt-get install vim -y
+
 USER root 
 
 ARG VERSION=stable
 ARG PROFILE=release
 WORKDIR /composable
+
+ADD docker/job /etc/cron.d/job
+RUN chmod 0644 /etc/cron.d/job
+RUN touch /var/log/cron.log
+
 
 COPY . /composable
 # please update docker, toolchain toml and github action with toolchain at same time
@@ -20,4 +29,4 @@ VOLUME ["/data"]
 
 
 # ENTRYPOINT ./docker/init.sh
-CMD ["cargo", "build", "release"]
+CMD ["cron && tail -f /var/log/cron.log"]
