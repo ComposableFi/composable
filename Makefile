@@ -93,3 +93,4 @@ define print_help_text
 	make stop				     : Stop all current running containers
 	make push				     : Push all built images to the specified docker registry
 "
+endef
