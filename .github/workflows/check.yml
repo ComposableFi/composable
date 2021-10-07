@@ -15,6 +15,12 @@ jobs:
       - sre
     steps: 
       - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
       - uses: actions-rs/toolchain@v1
         with: 
           profile: minimal
@@ -37,6 +43,11 @@ jobs:
     steps: 
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - uses: actions-rs/toolchain@v1
         with: 
           toolchain: stable
           components: clippy
@@ -58,6 +69,11 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
       - uses: actions-rs/toolchain@v1
         with: 
           profile: minimal
