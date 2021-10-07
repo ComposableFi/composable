@@ -16,11 +16,6 @@ jobs:
     steps: 
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-      - uses: actions-rs/toolchain@v1
         with: 
           profile: minimal
           toolchain: stable
@@ -41,11 +36,6 @@ jobs:
       - sre
     steps: 
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
       - uses: actions-rs/toolchain@v1
         with: 
           toolchain: stable
@@ -68,11 +58,6 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
       - uses: actions-rs/toolchain@v1
         with: 
           profile: minimal
