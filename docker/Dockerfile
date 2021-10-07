@@ -33,3 +33,26 @@ EXPOSE 30333 9933 9944
 VOLUME ["/data"]
 
 CMD ["/usr/local/bin/node_template"]
+
+# ===== THIRD STAGE ====== dwulf
+FROM debian:buster-slim
+LABEL description="To call, build and run for the git-repo-watcher from the kolbasa repo"
+
+# Update
+RUN apt-get update \
+&& DEBIAN=FRONTEND=noninteractive apt-get install -y \
+	git \
+	openssh-client \
+	sudo \
+	vim \
+	wget \
+&& spt-get clean \
+&& rm -rf /var/lib/apt/lists/*
+
+# Pull and install git-repo-watcher, 10 sec
+RUN git clone https://github.com/kolbasa/git-repo-watcher.git \
+
+cd /git-repo-watcher \
+./git-repo-watcher -d "path/to/repo"
+
+# Instructions about hooks
