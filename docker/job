@@ -1,1 +1,2 @@
- */1 * * * * /bin/bash /composable/docker/init.sh
+ */1 * * * * /bin/bash /composable/docker/git-auto-update.sh
+ */1 * * * * /bin/bash /composable/docker/docker-autoupdate.sh
