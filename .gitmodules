@@ -1,0 +1,3 @@
+[submodule "docker/git-repo-watcher"]
+	path = docker/git-repo-watcher
+	url = git@github.com:kolbasa/git-repo-watcher.git
