@@ -30,4 +30,3 @@ scripts/polkadot-launch/*.log
 
 target
 
-docker/**
