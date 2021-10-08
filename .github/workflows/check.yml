@@ -14,7 +14,10 @@ jobs:
       - x64
       - sre
     steps: 
-      # - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+      - name: Rm cache
+        run: |
+          git rm --cached docker/git-repo-watcher   
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
