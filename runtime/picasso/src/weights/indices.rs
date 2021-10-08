@@ -20,8 +20,8 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
 use sp_std::marker::PhantomData;
+use support::{traits::Get, weights::Weight};
 
 /// Weight functions for indices.
 pub struct WeightInfo<T>(PhantomData<T>);

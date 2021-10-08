@@ -454,6 +454,7 @@ pub mod pallet {
 			reserved_factor: Perquintill,
 			collateral_factor: NormalizedCollateralFactor,
 			under_collaterized_warn_percent: Percent,
+			interest_rate_model: InterestRateModel,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let market_config = MarketConfigInput {
@@ -462,8 +463,12 @@ pub mod pallet {
 				collateral_factor,
 				under_collaterized_warn_percent,
 			};
-			let (market_id, vault_id) =
-				Self::create(borrow_asset_id, collateral_asset_id, market_config)?;
+			let (market_id, vault_id) = Self::create(
+				borrow_asset_id,
+				collateral_asset_id,
+				market_config,
+				&interest_rate_model,
+			)?;
 			Self::deposit_event(Event::<T>::NewMarketCreated {
 				market_id,
 				vault_id,
@@ -597,8 +602,14 @@ pub mod pallet {
 			borrow_asset: <Self as Lending>::AssetId,
 			collateral_asset: <Self as Lending>::AssetId,
 			config_input: MarketConfigInput<<Self as Lending>::AccountId>,
+			interest_rate_model: &InterestRateModel,
 		) -> Result<(<Self as Lending>::MarketId, <Self as Lending>::VaultId), DispatchError> {
-			<Self as Lending>::create(borrow_asset, collateral_asset, config_input)
+			<Self as Lending>::create(
+				borrow_asset,
+				collateral_asset,
+				config_input,
+				interest_rate_model,
+			)
 		}
 		pub fn deposit_collateral_internal(
 			market_id: &<Self as Lending>::MarketId,
@@ -870,6 +881,7 @@ pub mod pallet {
 			borrow_asset: Self::AssetId,
 			collateral_asset: Self::AssetId,
 			config_input: MarketConfigInput<Self::AccountId>,
+			interest_rate_model: &InterestRateModel,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			ensure!(
 				config_input.collateral_factor > 1.into(),
@@ -912,7 +924,7 @@ pub mod pallet {
 					borrow: borrow_asset_vault.clone(),
 					collateral: collateral_asset,
 					collateral_factor: config_input.collateral_factor,
-					interest_rate_model: InterestRateModel::default(),
+					interest_rate_model: *interest_rate_model,
 					under_collaterized_warn_percent: config_input.under_collaterized_warn_percent,
 				};
 
@@ -1149,7 +1161,6 @@ pub mod pallet {
 			// when user pays loan back, we reduce marked accrued debt
 			// so no need to loop over each account -> scales to millions of users
 
-			// TODO: total_borrows calculation duplicated, remove
 			let total_borrows = Self::total_borrows(market_id)?;
 			let total_cash = Self::total_cash(market_id)?;
 			let utilization_ratio = Self::calc_utilization_ratio(&total_cash, &total_borrows)?;
@@ -1160,17 +1171,13 @@ pub mod pallet {
 			let borrow_index =
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			let accrued_debt =
-				T::MarketDebtCurrency::balance(debt_asset_id, &Self::account_id(market_id));
-			let total_issued = T::MarketDebtCurrency::total_issuance(debt_asset_id);
 
 			let (accrued, borrow_index_new) = accrue_interest_internal::<T>(
 				utilization_ratio,
 				&market.interest_rate_model,
 				borrow_index,
 				delta_time,
-				total_issued,
-				accrued_debt,
+				total_borrows.into(),
 			)?;
 
 			BorrowIndex::<T>::insert(market_id, borrow_index_new);
@@ -1410,8 +1417,7 @@ pub mod pallet {
 		interest_rate_model: &InterestRateModel,
 		borrow_index: Rate,
 		delta_time: DurationSeconds,
-		total_issued: u128,
-		accrued_debt: u128,
+		total_borrows: u128,
 	) -> Result<(u128, Rate), DispatchError> {
 		let borrow_rate = interest_rate_model
 			.get_borrow_rate(utilization_ratio)
@@ -1422,8 +1428,7 @@ pub mod pallet {
 			.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
 			.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))?;
 
-		let total_borrows = total_issued - accrued_debt;
-
+		let total_borrows = total_borrows.safe_mul(&LiftedFixedBalance::accuracy())?;
 		let accrue_increment = LiftedFixedBalance::from_inner(total_borrows)
 			.safe_mul(&delta_interest_rate)?
 			.into_inner();
