@@ -8,12 +8,13 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
     steps: 
       - uses: actions/checkout@v2
-        with:
-          clean: 'true'
-          fetch-depth: 0
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
