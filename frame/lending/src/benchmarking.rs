@@ -3,7 +3,7 @@ use super::*;
 use crate::Pallet as Lending;
 use composable_traits::{
 	lending::{Lending as LendingTrait, MarketConfigInput},
-	rate_model::NormalizedCollateralFactor,
+	rate_model::{InterestRateModel, NormalizedCollateralFactor},
 	vault::Vault,
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
@@ -47,12 +47,13 @@ fn create_market<T: Config>(
 		manager,
 		reserved: Perquintill::from_percent(10),
 		collateral_factor: NormalizedCollateralFactor::saturating_from_rational(200, 100),
-		under_collaterized_warn_percent: Percent::from_float(0.10),
+		under_collaterized_warn_percent: Percent::from_percent(10),
 	};
 	Lending::<T>::create(
 		<T as Config>::AssetId::from(borrow_asset),
 		<T as Config>::AssetId::from(collateral_asset),
 		market_config,
+		&InterestRateModel::default(),
 	)
 	.unwrap()
 }
@@ -67,7 +68,7 @@ benchmarks! {
 		let market_id = MarketIndex::new(1);
 		let vault_id = 1u64.into();
 		set_prices::<T>();
-	}: _(RawOrigin::Signed(caller.clone()), borrow_asset_id, collateral_asset_id, reserved_factor, collateral_factor, Percent::from_float(0.10))
+	}: _(RawOrigin::Signed(caller.clone()), borrow_asset_id, collateral_asset_id, reserved_factor, collateral_factor, Percent::from_percent(10), InterestRateModel::default())
 	verify {
 		assert_last_event::<T>(Event::NewMarketCreated {
 			market_id,

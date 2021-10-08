@@ -277,7 +277,7 @@ pub mod pallet {
 		CollateralFactorIsLessOrEqualOne,
 		MarketAndAccountPairNotFound,
 		NotEnoughCollateralToBorrowAmount,
-		CannotBorrowInCurrentSourceVaultState,
+		MarketIsClosing,
 		InvalidTimestampOnBorrowRequest,
 		NotEnoughBorrowAsset,
 		NotEnoughCollateral,
@@ -454,6 +454,7 @@ pub mod pallet {
 			reserved_factor: Perquintill,
 			collateral_factor: NormalizedCollateralFactor,
 			under_collaterized_warn_percent: Percent,
+			interest_rate_model: InterestRateModel,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let market_config = MarketConfigInput {
@@ -462,8 +463,12 @@ pub mod pallet {
 				collateral_factor,
 				under_collaterized_warn_percent,
 			};
-			let (market_id, vault_id) =
-				Self::create(borrow_asset_id, collateral_asset_id, market_config)?;
+			let (market_id, vault_id) = Self::create(
+				borrow_asset_id,
+				collateral_asset_id,
+				market_config,
+				&interest_rate_model,
+			)?;
 			Self::deposit_event(Event::<T>::NewMarketCreated {
 				market_id,
 				vault_id,
@@ -597,8 +602,14 @@ pub mod pallet {
 			borrow_asset: <Self as Lending>::AssetId,
 			collateral_asset: <Self as Lending>::AssetId,
 			config_input: MarketConfigInput<<Self as Lending>::AccountId>,
+			interest_rate_model: &InterestRateModel,
 		) -> Result<(<Self as Lending>::MarketId, <Self as Lending>::VaultId), DispatchError> {
-			<Self as Lending>::create(borrow_asset, collateral_asset, config_input)
+			<Self as Lending>::create(
+				borrow_asset,
+				collateral_asset,
+				config_input,
+				interest_rate_model,
+			)
 		}
 		pub fn deposit_collateral_internal(
 			market_id: &<Self as Lending>::MarketId,
@@ -756,6 +767,23 @@ pub mod pallet {
 						Self::accrue_interest(&market_id, now)?;
 						call_counters.accrue_interest += 1;
 						let market_account = Self::account_id(&market_id);
+						/* NOTE(hussein-aitlahcen):
+						 It would probably be more perfomant to handle theses
+						 case while borrowing/repaying.
+
+						 I don't know whether we would face any issue by doing that.
+
+						 borrow:
+						   - withdrawable = transfer(vault->market) + transfer(market->user)
+						   - depositable = error(not enough borrow asset) // vault asking for reserve to be fullfilled
+						   - mustliquidate = error(market is closing)
+						 repay:
+							- (withdrawable || depositable || mustliquidate)
+							  = transfer(user->market) + transfer(market->vault)
+
+						 The intermediate transfer(vault->market) while borrowing would
+						 allow the vault to update the strategy balance (market = borrow vault strategy).
+						*/
 						match Self::available_funds(&config, &market_account)? {
 							FundsAvailability::Withdrawable(balance) => {
 								Self::handle_withdrawable(&config, &market_account, balance)?;
@@ -853,6 +881,7 @@ pub mod pallet {
 			borrow_asset: Self::AssetId,
 			collateral_asset: Self::AssetId,
 			config_input: MarketConfigInput<Self::AccountId>,
+			interest_rate_model: &InterestRateModel,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			ensure!(
 				config_input.collateral_factor > 1.into(),
@@ -895,7 +924,7 @@ pub mod pallet {
 					borrow: borrow_asset_vault.clone(),
 					collateral: collateral_asset,
 					collateral_factor: config_input.collateral_factor,
-					interest_rate_model: InterestRateModel::default(),
+					interest_rate_model: *interest_rate_model,
 					under_collaterized_warn_percent: config_input.under_collaterized_warn_percent,
 				};
 
@@ -931,7 +960,7 @@ pub mod pallet {
 		fn borrow(
 			market_id: &Self::MarketId,
 			debt_owner: &Self::AccountId,
-			amount_to_borrow: Self::Balance,
+			amount_to_borrow: BorrowAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
@@ -947,22 +976,24 @@ pub mod pallet {
 				borrow_limit >= amount_to_borrow,
 				Error::<T>::NotEnoughCollateralToBorrowAmount
 			);
+
 			let account_id = Self::account_id(market_id);
+
 			let can_withdraw =
 				<T as Config>::Currency::reducible_balance(asset_id, &account_id, true);
 			ensure!(can_withdraw >= amount_to_borrow, Error::<T>::NotEnoughBorrowAsset);
 
 			ensure!(
 				!matches!(
-					T::Vault::available_funds(&market.borrow, &Self::account_id(market_id))?,
+					T::Vault::available_funds(&market.borrow, &account_id)?,
 					FundsAvailability::MustLiquidate
 				),
-				Error::<T>::CannotBorrowInCurrentSourceVaultState
+				Error::<T>::MarketIsClosing
 			);
 
 			<T as Config>::Currency::transfer(
 				asset_id,
-				&Self::account_id(market_id),
+				&account_id,
 				debt_owner,
 				amount_to_borrow,
 				true,
@@ -1108,7 +1139,7 @@ pub mod pallet {
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let borrow_id = T::Vault::asset_id(&market.borrow)?;
-			Ok(<T as Config>::Currency::balance(borrow_id, &T::Vault::account_id(&market.borrow)))
+			Ok(<T as Config>::Currency::balance(borrow_id, &Self::account_id(market_id)))
 		}
 
 		fn calc_utilization_ratio(
@@ -1130,7 +1161,6 @@ pub mod pallet {
 			// when user pays loan back, we reduce marked accrued debt
 			// so no need to loop over each account -> scales to millions of users
 
-			// TODO: total_borrows calculation duplicated, remove
 			let total_borrows = Self::total_borrows(market_id)?;
 			let total_cash = Self::total_cash(market_id)?;
 			let utilization_ratio = Self::calc_utilization_ratio(&total_cash, &total_borrows)?;
@@ -1141,17 +1171,13 @@ pub mod pallet {
 			let borrow_index =
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			let accrued_debt =
-				T::MarketDebtCurrency::balance(debt_asset_id, &Self::account_id(market_id));
-			let total_issued = T::MarketDebtCurrency::total_issuance(debt_asset_id);
 
 			let (accrued, borrow_index_new) = accrue_interest_internal::<T>(
 				utilization_ratio,
 				&market.interest_rate_model,
 				borrow_index,
 				delta_time,
-				total_issued,
-				accrued_debt,
+				total_borrows.into(),
 			)?;
 
 			BorrowIndex::<T>::insert(market_id, borrow_index_new);
@@ -1191,7 +1217,7 @@ pub mod pallet {
 		fn collateral_of_account(
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
-		) -> Result<Self::Balance, DispatchError> {
+		) -> Result<CollateralLpAmountOf<Self>, DispatchError> {
 			AccountCollateral::<T>::try_get(market_id, account)
 				.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount.into())
 		}
@@ -1391,8 +1417,7 @@ pub mod pallet {
 		interest_rate_model: &InterestRateModel,
 		borrow_index: Rate,
 		delta_time: DurationSeconds,
-		total_issued: u128,
-		accrued_debt: u128,
+		total_borrows: u128,
 	) -> Result<(u128, Rate), DispatchError> {
 		let borrow_rate = interest_rate_model
 			.get_borrow_rate(utilization_ratio)
@@ -1403,8 +1428,7 @@ pub mod pallet {
 			.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
 			.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))?;
 
-		let total_borrows = total_issued - accrued_debt;
-
+		let total_borrows = total_borrows.safe_mul(&LiftedFixedBalance::accuracy())?;
 		let accrue_increment = LiftedFixedBalance::from_inner(total_borrows)
 			.safe_mul(&delta_interest_rate)?
 			.into_inner();

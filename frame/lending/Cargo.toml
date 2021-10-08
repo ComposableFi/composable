@@ -15,21 +15,21 @@ package = "parity-scale-codec"
 version = "2.0.0"
 
 [dependencies]
-frame-support = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8"  }
-frame-system = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10"  }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
 pallet-vault = { default-features = false, version = "0.0.1", path = "../vault", optional = true }
 plotters =  {version = "0.3.1", optional = true}
 
-sp-runtime = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-sp-arithmetic = { default-features = false, version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-sp-io = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-sp-core = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-sp-std = { version = "3.0.0", default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-io = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-core = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
 
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 
 pallet-oracle = { default-features = false, optional = true, version = "1.0.0", path = "../oracle" }
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.8' }
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
 
 serde = { version = '1', optional = true }
 log = { version = "0.4.14", default-features = false }
@@ -39,10 +39,10 @@ num-traits = { version = "0.2.14", default-features = false }
 proptest = "0.9.6"
 serde = "1.0.119"
 hex-literal = "0.3.1"
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "650ef607d023e4537d3f2932baa5e50bc3a349cb", default-features = false }
-pallet-balances = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
-pallet-timestamp = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "37e42936c41dbdbaf0117c628c9eab0e06044844" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "37e42936c41dbdbaf0117c628c9eab0e06044844", default-features = false }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
 pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
 pallet-liquidations = { version = "0.0.1", path = "../liquidations" }
 pallet-dutch-auctions = {version = "0.0.1", path = "../dutch-auction" }

@@ -85,6 +85,7 @@ pub trait Lending {
 		borrow_asset: Self::AssetId,
 		collateral_asset_vault: Self::AssetId,
 		config: MarketConfigInput<Self::AccountId>,
+		interest_rate_model: &InterestRateModel,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 
 	/// AccountId of the market instance
@@ -174,7 +175,7 @@ pub trait Lending {
 	fn collateral_of_account(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
-	) -> Result<Self::Balance, DispatchError>;
+	) -> Result<CollateralLpAmountOf<Self>, DispatchError>;
 
 	/// Borrower shouldn't borrow more than his total collateral value
 	fn collateral_required(
