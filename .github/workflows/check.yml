@@ -15,9 +15,9 @@ jobs:
       - sre
     steps: 
       - uses: actions/checkout@v2
-      - name: Rm cache
-        run: |
-          git rm --cached docker/git-repo-watcher   
+        with:
+          clean: 'true'
+          fetch-depth: 0
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
