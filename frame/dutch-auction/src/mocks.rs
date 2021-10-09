@@ -22,3 +22,5 @@ pub fn start_default_auction<
 	const ALICE: u32 = 42;
 	T::start(&ALICE, TOKEN_A, &10, TOKEN_B, &13, 1_000_000, 1_000, <_>::default())
 }
+
+// will cover with tests as soon as cross chain auction design known

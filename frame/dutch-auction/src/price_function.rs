@@ -126,4 +126,11 @@ mod tests {
 			expected_price /= 2.0;
 		}
 	}
+
+	#[test]
+	pub fn proptest() {
+		// it decreases, so x < x - 1
+		// exponteica decreases
+
+	}
 }

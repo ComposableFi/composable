@@ -1,7 +1,7 @@
 
 # Overview
 
-- off-chain monitors `lending` markets
+- off-chain monitors `lending` markets for liquidation opportunities of borrow pairs.
 
 - evaluates and attempts different strategies depending on available liquidity
 
