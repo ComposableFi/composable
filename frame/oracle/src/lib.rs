@@ -47,8 +47,10 @@ pub mod pallet {
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
 
-	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orac");
-	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"orac");
+	// Key Id for location of signer key in keystore
+	pub const KEY_ID: [u8; 4] = *b"orac";
+	pub const KEY_TYPE: KeyTypeId = KeyTypeId(KEY_ID);
+	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(KEY_ID);
 	pub use crate::weights::WeightInfo;
 
 	pub mod crypto {
@@ -61,9 +63,9 @@ pub mod pallet {
 		};
 		app_crypto!(sr25519, KEY_TYPE);
 
-		pub struct TestAuthId;
+		pub struct AuthId;
 		// implemented for ocw-runtime
-		impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
+		impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for AuthId {
 			type RuntimeAppPublic = Public;
 			type GenericSignature = sp_core::sr25519::Signature;
 			type GenericPublic = sp_core::sr25519::Public;
@@ -73,7 +75,7 @@ pub mod pallet {
 			frame_system::offchain::AppCrypto<
 				<Sr25519Signature as Verify>::Signer,
 				Sr25519Signature,
-			> for TestAuthId
+			> for AuthId
 		{
 			type RuntimeAppPublic = Public;
 			type GenericSignature = sp_core::sr25519::Signature;
@@ -109,14 +111,23 @@ pub mod pallet {
 			+ Into<u128>
 			+ Zero;
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
+		/// The Min stake for an oracle
 		type MinStake: Get<BalanceOf<Self>>;
+		/// The delay to withdraw stake as an oracle
 		type StakeLock: Get<Self::BlockNumber>;
+		/// Blocks until price is considered stale
 		type StalePrice: Get<Self::BlockNumber>;
+		/// Origin to add new price types
 		type AddOracle: EnsureOrigin<Self::Origin>;
+		/// Cost to request a price update
 		type RequestCost: Get<BalanceOf<Self>>;
+		/// Rewards for a correct answer
 		type RewardAmount: Get<BalanceOf<Self>>;
+		/// Slash for an incorrect answer
 		type SlashAmount: Get<BalanceOf<Self>>;
+		/// Upper bound for max answers for a price
 		type MaxAnswerBound: Get<u32>;
+		/// Upper bound for total assets available for the oracle
 		type MaxAssetsCount: Get<u32>;
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
@@ -230,28 +241,51 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		/// Unknown
 		Unknown,
+		/// No Permission
 		NoPermission,
+		/// No stake for oracle
 		NoStake,
+		/// Stake is locked try again later
 		StakeLocked,
+		/// Not enough oracle stake for action
 		NotEnoughStake,
+		/// Not Enough Funds to complete action
 		NotEnoughFunds,
+		/// Invalid asset id
 		InvalidAssetId,
+		/// Price already submitted
 		AlreadySubmitted,
+		/// Max prices already reached
 		MaxPrices,
+		/// Price has not been requested
 		PriceNotRequested,
+		/// Signer has not been set
 		UnsetSigner,
+		/// Signer has already been set
 		AlreadySet,
+		/// No controller has been set
 		UnsetController,
+		/// This controller is already in use
 		ControllerUsed,
+		/// This signer is already in use
 		SignerUsed,
+		/// Error avoids a panic
 		AvoidPanic,
+		/// Max answers have been exceeded
 		ExceedMaxAnswers,
+		/// Invalid min answers
 		InvalidMinAnswers,
+		// max answers less than min answers
 		MaxAnswersLessThanMinAnswers,
+		/// Threshold exceeded
 		ExceedThreshold,
+		/// Asset count exceeded
 		ExceedAssetsCount,
+		/// Price not found
 		PriceNotFound,
+		/// Stake exceeded
 		ExceedStake,
 	}
 
@@ -262,7 +296,7 @@ pub mod pallet {
 		}
 
 		fn offchain_worker(_block_number: T::BlockNumber) {
-			log::info!("Hello World from offchain workers!");
+			log::info!("Offchain worker triggered");
 			Self::check_requests();
 		}
 	}
@@ -280,6 +314,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Permissioned call to add an asset
 		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
 		pub fn add_asset_and_info(
 			origin: OriginFor<T>,
@@ -308,7 +343,7 @@ pub mod pallet {
 			));
 			Ok(().into())
 		}
-
+		/// Call to request price, charges a fee
 		#[pallet::weight(T::WeightInfo::request_price())]
 		pub fn request_price(
 			origin: OriginFor<T>,
@@ -319,7 +354,7 @@ pub mod pallet {
 			Self::do_request_price(&who, asset_id)?;
 			Ok(().into())
 		}
-
+		/// Call for a signer to be set, called from controller, adds stake.
 		#[pallet::weight(T::WeightInfo::set_signer())]
 		pub fn set_signer(
 			origin: OriginFor<T>,
@@ -339,7 +374,7 @@ pub mod pallet {
 
 			Ok(().into())
 		}
-
+		/// call to add more stake from a controller
 		#[pallet::weight(T::WeightInfo::add_stake())]
 		pub fn add_stake(origin: OriginFor<T>, stake: BalanceOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -349,13 +384,13 @@ pub mod pallet {
 
 			Ok(().into())
 		}
-
+		/// Call to put in a claim to remove stake, called from controller
 		#[pallet::weight(T::WeightInfo::remove_stake())]
 		pub fn remove_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let signer = ControllerToSigner::<T>::get(&who).ok_or(Error::<T>::UnsetSigner)?;
 			let block = frame_system::Pallet::<T>::block_number();
-			let unlock_block = block + T::StakeLock::get(); //TODO check type of add
+			let unlock_block = block + T::StakeLock::get();
 			let stake = Self::oracle_stake(signer.clone()).ok_or(Error::<T>::NoStake)?;
 			let withdrawal = Withdraw { stake, unlock_block };
 			OracleStake::<T>::remove(&signer);
@@ -363,7 +398,7 @@ pub mod pallet {
 			Self::deposit_event(Event::StakeRemoved(signer, stake, unlock_block));
 			Ok(().into())
 		}
-
+		/// Call to reclaim stake after proper time has passed, called from controller
 		#[pallet::weight(T::WeightInfo::reclaim_stake())]
 		pub fn reclaim_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -381,7 +416,8 @@ pub mod pallet {
 			Self::deposit_event(Event::StakeReclaimed(signer, withdrawal.stake));
 			Ok(().into())
 		}
-
+		/// Call to submit a price, gas is returned if all logic gates passed
+		/// Shold be called from offchain worker but can be called manually too
 		#[pallet::weight((T::WeightInfo::submit_price(T::MaxAnswerBound::get()), Operational))]
 		pub fn submit_price(
 			origin: OriginFor<T>,
@@ -628,7 +664,6 @@ pub mod pallet {
 
 		pub fn fetch_price_and_send_signed(price_id: &T::AssetId) -> Result<(), &'static str> {
 			let signer = Signer::<T, T::AuthorityId>::all_accounts();
-			log::info!("signer");
 			if !signer.can_sign() {
 				log::info!("no signer");
 				return Err(

@@ -377,7 +377,7 @@ parameter_types! {
 impl oracle::Config for Runtime {
 	type Currency = Balances;
 	type Event = Event;
-	type AuthorityId = oracle::crypto::TestAuthId;
+	type AuthorityId = oracle::crypto::AuthId;
 	type AssetId = CurrencyId;
 	type PriceValue = u128;
 	type StakeLock = StakeLock;
