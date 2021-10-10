@@ -168,29 +168,35 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn assets_count)]
+	/// Total amount of assets
 	pub type AssetsCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn signer_to_controller)]
+	/// Mapping signing key to controller key
 	pub type SignerToController<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, T::AccountId, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn controller_to_signer)]
+	/// Mapping Controller key to signer key
 	pub type ControllerToSigner<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, T::AccountId, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn declared_withdraws)]
+	/// Tracking withdrawl requests
 	pub type DeclaredWithdraws<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, Withdraw<BalanceOf<T>, T::BlockNumber>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn oracle_stake)]
+	/// Mapping of signing key to stake
 	pub type OracleStake<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, BalanceOf<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn prices)]
+	/// Price for an asset and blocknumber asset was updated at
 	pub type Prices<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -201,6 +207,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn pre_prices)]
+	/// Temporary prices before aggregated
 	pub type PrePrices<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -211,31 +218,43 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn accuracy_threshold)]
+	/// Information about asset, including precision threshold and max/min answers
 	pub type AssetsInfo<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AssetId, AssetInfo<Percent>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn requested)]
+	/// If an asset price has been requested
 	pub type Requested<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, bool, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn request_id)]
+	/// Request Id number
 	pub type RequestedId<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, u128, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::metadata(T::AccountId = "AccountId",  BalanceOf<T> = "Balance", T::BlockNumber = "BlockNumber", Percent = "Percent")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		NewAsset(u128),
+		/// Asset info created or changed. \[asset_id, threshold, min_answers, max_answers\]
 		AssetInfoChange(T::AssetId, Percent, u32, u32),
+		/// A new price was requested. \[requested_by, asset_id\]
 		PriceRequested(T::AccountId, T::AssetId),
-		/// Who added it, the amount added and the total cumulative amount
+		/// Signer was set. \[signer, controller\]
+		SignerSet(T::AccountId, T::AccountId),
+		/// Stake was added. \[added_by, amount_added, total_amount\]
 		StakeAdded(T::AccountId, BalanceOf<T>, BalanceOf<T>),
+		/// Stake removed. \[removed_by, amount, block_number\]
 		StakeRemoved(T::AccountId, BalanceOf<T>, T::BlockNumber),
+		/// Stake reclaimed. \[reclaimed_by, amount\]
 		StakeReclaimed(T::AccountId, BalanceOf<T>),
+		/// Price submitted by oracle. \[oracle_address, asset_id, price\]
 		PriceSubmitted(T::AccountId, T::AssetId, T::PriceValue),
+		/// Oracle slashed. \[oracle_address, asset_id, amount\]
 		UserSlashed(T::AccountId, T::AssetId, BalanceOf<T>),
+		/// Oracle rewarded. \[oracle_address, asset_id, price\]
 		UserRewarded(T::AccountId, T::AssetId, BalanceOf<T>),
+		/// Answer from oracle removed for staleness. \[oracle_address, price\]
 		AnswerPruned(T::AccountId, T::PriceValue),
 	}
 
@@ -315,6 +334,13 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Permissioned call to add an asset
+		///
+		/// - `asset_id`: Id for the asset
+		/// - `threshold`: Percent close to mean to be rewarded
+		/// - `min_answers`: Min answers before aggregation
+		/// - `max_answers`: Max answers to aggregate
+		///
+		/// Emits `DepositEvent` event when successful.
 		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
 		pub fn add_asset_and_info(
 			origin: OriginFor<T>,
@@ -343,7 +369,12 @@ pub mod pallet {
 			));
 			Ok(().into())
 		}
+
 		/// Call to request price, charges a fee
+		///
+		/// - `asset_id`: Id for the asset
+		///
+		/// Emits `PriceRequested` event when successful.
 		#[pallet::weight(T::WeightInfo::request_price())]
 		pub fn request_price(
 			origin: OriginFor<T>,
@@ -354,7 +385,12 @@ pub mod pallet {
 			Self::do_request_price(&who, asset_id)?;
 			Ok(().into())
 		}
+
 		/// Call for a signer to be set, called from controller, adds stake.
+		///
+		/// - `signer`: signer to tie controller to
+		///
+		/// Emits `SignerSet` and `StakeAdded` events when successful.
 		#[pallet::weight(T::WeightInfo::set_signer())]
 		pub fn set_signer(
 			origin: OriginFor<T>,
@@ -370,11 +406,17 @@ pub mod pallet {
 			Self::do_add_stake(who.clone(), signer.clone(), T::MinStake::get())?;
 
 			ControllerToSigner::<T>::insert(&who, signer.clone());
-			SignerToController::<T>::insert(signer, who);
+			SignerToController::<T>::insert(signer.clone(), who.clone());
 
+			Self::deposit_event(Event::SignerSet(signer, who));
 			Ok(().into())
 		}
+
 		/// call to add more stake from a controller
+		///
+		/// - `stake`: amount to add to stake
+		///
+		/// Emits `StakeAdded` event when successful.
 		#[pallet::weight(T::WeightInfo::add_stake())]
 		pub fn add_stake(origin: OriginFor<T>, stake: BalanceOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -384,7 +426,10 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
 		/// Call to put in a claim to remove stake, called from controller
+		///
+		/// Emits `StakeRemoved` event when successful.
 		#[pallet::weight(T::WeightInfo::remove_stake())]
 		pub fn remove_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -398,7 +443,10 @@ pub mod pallet {
 			Self::deposit_event(Event::StakeRemoved(signer, stake, unlock_block));
 			Ok(().into())
 		}
+
 		/// Call to reclaim stake after proper time has passed, called from controller
+		///
+		/// Emits `StakeReclaimed` event when successful.
 		#[pallet::weight(T::WeightInfo::reclaim_stake())]
 		pub fn reclaim_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -417,14 +465,19 @@ pub mod pallet {
 			Ok(().into())
 		}
 		/// Call to submit a price, gas is returned if all logic gates passed
-		/// Shold be called from offchain worker but can be called manually too
+		/// Should be called from offchain worker but can be called manually too
+		/// Operational transaction
+		///
+		/// - `price`: price to submit
+		/// - `asset_id`: Id for the asset
+		///
+		/// Emits `PriceSubmitted` event when successful.
 		#[pallet::weight((T::WeightInfo::submit_price(T::MaxAnswerBound::get()), Operational))]
 		pub fn submit_price(
 			origin: OriginFor<T>,
 			price: T::PriceValue,
 			asset_id: T::AssetId,
 		) -> DispatchResultWithPostInfo {
-			log::info!("inside submit {:#?}, {:#?}", asset_id, price);
 			let who = ensure_signed(origin)?;
 			let author_stake = OracleStake::<T>::get(&who).unwrap_or_else(Zero::zero);
 			ensure!(Requested::<T>::get(asset_id), Error::<T>::PriceNotRequested);
@@ -435,7 +488,6 @@ pub mod pallet {
 				block: frame_system::Pallet::<T>::block_number(),
 				who: who.clone(),
 			};
-			log::info!("inside submit 2 {:#?}, {:#?}", set_price, asset_id);
 			PrePrices::<T>::try_mutate(asset_id, |current_prices| -> Result<(), DispatchError> {
 				// There can convert current_prices.len() to u32 safely
 				// because current_prices.len() limited by u32
