@@ -1,7 +1,10 @@
+## Liquidation
+
+Used to liquidate collateral from `lending` protocol.  Need to liquidate because of bad collateral factor. It should be sold on exchange as soon as possible.
 
 # Overview
 
-- off-chain monitors `lending` markets for liquidation opportunities of borrow pairs.
+- off-chain worker monitors `lending` markets for liquidation opportunities of borrow pairs.
 
 - evaluates and attempts different strategies depending on available liquidity
 

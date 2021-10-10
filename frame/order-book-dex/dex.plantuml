@@ -22,7 +22,7 @@ end note
 
 
 {block_start} bp --> pd: Get orders with promise to be active for several block
-bp --> pv: Transfer borrow
+bp --> pv: Transfer borrow via bridge
 bp --> pd : Send borrow account
 {block_end}  pd -> pa : Burn collateral
 bp --> bc : Check prove collateral was burnt

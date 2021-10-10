@@ -2,12 +2,16 @@
 
 The exchange allows placing buy and sell orders at specific price levels, or at market level. The market level price can be provided by a combination of `pallet-oracle` and the future AMM DEX
 
+Here is we design cross chain DEX. It will have interfaces like if it is on chain for pallets, but token swaps managed asynchronously by parachain (bridges). This pallet has only API to be called from bridge callbacks, not calling it.
 
-## Liquidation
 
+## What it is about?
 
-Used to liquidate collateral from `lending` protocol.  Need to liquidate because of bad collateral factor. It should be sold on exchange as soon as possible.
+First, what is exchanges of tokens across change?
 
+It is based on protocol of token transfer, where A token is trusted(or proven) to be burn on A and minted on B.
+
+Exchange, when A burns token x and mints y, and B mints x and burns y, and there is data sharing to agree on rate.
 
 ### DEX based liquidation
 
@@ -22,27 +26,12 @@ Because of need to be fast and trusted, we will trust agent to burn amount.
 
 For untrusted actors, more slow and complex schemas are needed.
 
-Untrusted user must transfer borrow currency and buy collateral. There are [hash time locked swap][1](requires prove) and [reserver transfer via polkadot relay][2].
+Untrusted user must transfer borrow currency and buy collateral. There are [hash time locked swap][1](requires prove) and [reserver transfer via polkadot relay][2]. (they actually trust some third party consensus)
 
 Important - assuming our parachain to be anemic - so it set states and allows  other to read that, not directly send message.
-
-### Initial State
-
-- collateral transfer into on chain internal for DEX order
-
-- some borrow amount on off chain order book DEX
-
-### Final State
-
-- collateral burnt on local chain
-
-- borrow minted on local chain
-
-- collateral minted on remote chain
-
-- borrow burnt on remote chain
 
 ### Links
 
 [1]: https://research.csiro.au/blockchainpatterns/general-patterns/blockchain-payment-patterns/token-swap/
 [2]: https://medium.com/polkadot-network/xcm-the-cross-consensus-message-format-3b77b1373392
+[3]: https://wiki.polkadot.network/docs/learn-bridges
