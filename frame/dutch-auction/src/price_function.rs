@@ -73,14 +73,10 @@ mod tests {
 	};
 
 	use sp_arithmetic::assert_eq_error_rate;
-	use sp_runtime::{
-		traits::{
+	use sp_runtime::{ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill, offchain::Duration, traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
-		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill,
-		Perquintill,
-	};
+		}};
 
 	use crate::price_function::AuctionTimeCurveModel;
 
@@ -104,7 +100,8 @@ mod tests {
 
 	#[test]
 	pub fn test_continuous_exp_decrease() {
-		// it will take 100 steps to half the price (sum 100 e^ln(1/2)/100) = e^ln(1/2) = 1/2
+		// it will take 10 steps to half the price
+		// sum  10 times the `(e^ln(1/2)/10)` = will equal `e^ln(1/2)` = `1/2`
 		let half = 10;
 
 		let calc = StairstepExponentialDecrease {
@@ -127,10 +124,34 @@ mod tests {
 		}
 	}
 
-	#[test]
-	pub fn proptest() {
-		// it decreases, so x < x - 1
-		// exponteica decreases
+	use  proptest::{self::*, strategy::Strategy, test_runner::TestRunner};
 
+	#[test]
+	pub fn proptest_half_each_second_vs_linear() {
+		let mut runner = TestRunner::default();
+
+		let time = 1000;
+		let initial_price = LiftedFixedBalance::saturating_from_integer(1_000_000);
+		let calc_linear = LinearDecrease { total:time};
+		let calc_divide_by_2 = StairstepExponentialDecrease {
+			cut: Permill::from_rational(1, 2),
+			step: 1,
+		};
+
+		runner.run((0..1000u32).prop_map(|time|(time, time + 1)), |(time, time_next)| {
+
+			let linear_1 = calc_linear.price(initial_price, time).unwrap();
+			let linear_2 = calc_linear.price(initial_price, time_next).unwrap();
+			prop_assert!(linear_2 <= linear_1);
+			let exp_1 = calc_divide_by_2.price(initial_price, time).unwrap();
+			let exp_2 = calc_divide_by_2.price(initial_price, time_next).unwrap();
+			prop_assert!(exp_2 <= exp_1);
+			// prom property choses for cut to divide each iteration by 2
+			let mut half_price = initial_price / LiftedFixedBalance::from(2^time);
+			prop_assert_eq!(exp1, half_price);
+			// from proprety of exp moving fastr initially and than slowing down
+			prop_assert!(exp_2 <= linear_1);
+
+		}).unwrap();
 	}
 }
