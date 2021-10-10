@@ -1,14 +1,18 @@
 @startuml
+skinparam handwritten true
 
 
+box "Parachain Composable"
 actor Composable as ac
-actor Polkadex as ap
 participant "Assets" as pa
-boundary "Parachain Polkadex" as bp
-boundary "Parachain Composable" as bc
 participant "Vault" as pv
 participant "Order Book DEX" as pd
 control "OCW Order Book DEX" as cd
+actor Polkadex as ap
+end box
+
+boundary "Parachain Polkadex" as bp
+
 
 ac -> pd : Create order with white list of satisfying account ids (default is any)
 pd -> pa : Trasfer collateral
@@ -22,6 +26,6 @@ bp --> pv: Transfer borrow
 bp --> pd : Send borrow account
 {block_end}  pd -> pa : Burn collateral
 bp --> bc : Check prove collateral was burnt
-{block_start} <-> {block_end} : 3 blocks, or what next?
+
 
 @enduml
