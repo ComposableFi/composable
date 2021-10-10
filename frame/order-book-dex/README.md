@@ -22,7 +22,7 @@ Because of need to be fast and trusted, we will trust agent to burn amount.
 
 For untrusted actors, more slow and complex schemas are needed.
 
-Untrusted user must transfer borrow currency and buy collateral. There are [hash time locked swap][1](requires merkel prove) and [reserver transfer via polkadot relay][2].
+Untrusted user must transfer borrow currency and buy collateral. There are [hash time locked swap][1](requires prove) and [reserver transfer via polkadot relay][2].
 
 Important - assuming our parachain to be anemic - so it set states and allows  other to read that, not directly send message.
 

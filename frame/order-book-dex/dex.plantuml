@@ -2,87 +2,26 @@
 
 
 actor Composable as ac
-actor Polkadex as b
-boundary "Parachain Polkadex " p_
-participant "Order Book DEX" as d
+actor Polkadex as ap
+participant "Assets" as pa
+boundary "Parachain Polkadex" as bp
+boundary "Parachain Composable" as bc
+participant "Vault" as pv
+participant "Order Book DEX" as pd
+control "OCW Order Book DEX" as cd
 
-ac -> d : Create order and trasfer collateral
+ac -> pd : Create order with white list of satisfying account ids (default is any)
+pd -> pa : Trasfer collateral
 note right
   creates future order is active for several blocks
 end note
 
 
-
-
-
-
-
-' actor Charlie as ac
-' participant Lending as l
-' participant Liquidation as k
-' participant Auction as au
-'
-' boundary "Parachain with DEX" as p
-' control "OCW Auction" as oa
-' control "OCW Lending" as ol
-' control "OCW Oracle" as m
-
-' group Governance
-
-
-'   a -> l: Create market pair for assets ids (tokens, symbols)
-'   l -> Vault: Check assets are supported and create vault for collateral
-'   l -> Oracle: Check assets are supported
-'   ...
-'   Governance -> Vault : Allocate to Lending
-'   l -> Vault : Withdraw Borrowed Asset
-
-' end
-
-' ...
-
-' group Borrow
-
-'   b -> Vault : transfer collateral
-'   Vault -> b : transfer cCollateral(wrapped token)
-'   b -> l : Deposit cCollateral
-'   ...
-'   b -> l : Borrow (collateralized)
-'   ...
-'   l -> l : accrue interest
-'   ...
-'   b -> l : repay borrow + interest
-
-' end
-
-' ...
-
-' group Liqudaiton (IN PROGRESS)
-
-'   ac -> l : Borrow
-
-'   ...
-
-
-'   m -> Oracle : Make collateral factor bad
-
-'   ol -> l : Liquidate Charlie collateral
-
-'   l -> k: Liquidate
-
-'   k -> au: Dutch Auction sell Collateral
-
-'   oa --> d: Sell on Order Book DEX
-
-'   ...
-
-'   p  --> d: Prove of swap tokens and update DEX order state
-
-
-'   ...
-
-'   oa -> au : Finalize auction1/sum(x^2
-
-' end
+{block_start} bp --> pd: Get orders with promise to be active for several block
+bp --> pv: Transfer borrow
+bp --> pd : Send borrow account
+{block_end}  pd -> pa : Burn collateral
+bp --> bc : Check prove collateral was burnt
+{block_start} <-> {block_end} : 3 blocks, or what next?
 
 @enduml
