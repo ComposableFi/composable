@@ -1,0 +1,88 @@
+@startuml
+
+
+actor Composable as ac
+actor Polkadex as b
+boundary "Parachain Polkadex " p_
+participant "Order Book DEX" as d
+
+ac -> d : Create order and trasfer collateral
+note right
+  creates future order is active for several blocks
+end note
+
+
+
+
+
+
+
+' actor Charlie as ac
+' participant Lending as l
+' participant Liquidation as k
+' participant Auction as au
+'
+' boundary "Parachain with DEX" as p
+' control "OCW Auction" as oa
+' control "OCW Lending" as ol
+' control "OCW Oracle" as m
+
+' group Governance
+
+
+'   a -> l: Create market pair for assets ids (tokens, symbols)
+'   l -> Vault: Check assets are supported and create vault for collateral
+'   l -> Oracle: Check assets are supported
+'   ...
+'   Governance -> Vault : Allocate to Lending
+'   l -> Vault : Withdraw Borrowed Asset
+
+' end
+
+' ...
+
+' group Borrow
+
+'   b -> Vault : transfer collateral
+'   Vault -> b : transfer cCollateral(wrapped token)
+'   b -> l : Deposit cCollateral
+'   ...
+'   b -> l : Borrow (collateralized)
+'   ...
+'   l -> l : accrue interest
+'   ...
+'   b -> l : repay borrow + interest
+
+' end
+
+' ...
+
+' group Liqudaiton (IN PROGRESS)
+
+'   ac -> l : Borrow
+
+'   ...
+
+
+'   m -> Oracle : Make collateral factor bad
+
+'   ol -> l : Liquidate Charlie collateral
+
+'   l -> k: Liquidate
+
+'   k -> au: Dutch Auction sell Collateral
+
+'   oa --> d: Sell on Order Book DEX
+
+'   ...
+
+'   p  --> d: Prove of swap tokens and update DEX order state
+
+
+'   ...
+
+'   oa -> au : Finalize auction1/sum(x^2
+
+' end
+
+@enduml

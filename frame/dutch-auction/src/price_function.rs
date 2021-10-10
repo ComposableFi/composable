@@ -64,7 +64,8 @@ impl AuctionTimeCurveModel for StairstepExponentialDecrease {
 
 #[cfg(test)]
 mod tests {
-	use std::convert::TryInto;
+	use core::time;
+use std::convert::TryInto;
 
 	use composable_traits::{
 		auction::{LinearDecrease, StairstepExponentialDecrease},
@@ -124,34 +125,45 @@ mod tests {
 		}
 	}
 
-	use  proptest::{self::*, strategy::Strategy, test_runner::TestRunner};
+	use  proptest::{strategy::Strategy, test_runner::TestRunner, prop_assert, prop_assert_eq};
+
 
 	#[test]
 	pub fn proptest_half_each_second_vs_linear() {
 		let mut runner = TestRunner::default();
 
-		let time = 1000;
+		let time_max = 40; // making it larger makes overflow of comparison pow function, so price still works
 		let initial_price = LiftedFixedBalance::saturating_from_integer(1_000_000);
-		let calc_linear = LinearDecrease { total:time};
+		let calc_linear = LinearDecrease { total:time_max};
 		let calc_divide_by_2 = StairstepExponentialDecrease {
-			cut: Permill::from_rational(1, 2),
+			cut: Permill::from_rational(1u32, 2u32),
 			step: 1,
 		};
 
-		runner.run((0..1000u32).prop_map(|time|(time, time + 1)), |(time, time_next)| {
+		// bases
+		assert_eq!(calc_linear.price(initial_price, 1).unwrap(), initial_price - initial_price / LiftedFixedBalance::saturating_from_integer(time_max));
+		assert_eq!(calc_divide_by_2.price(initial_price, 1).unwrap(), initial_price / 2.into());
+
+		// ends
+		assert_eq!(calc_divide_by_2.price(initial_price, time_max).unwrap(), LiftedFixedBalance::zero());
+		assert_eq!(calc_linear.price(initial_price, time_max).unwrap(), LiftedFixedBalance::zero());
+
+		runner.run(&(0..time_max).prop_map(|time|(time, time + 1)), |(time, time_next)| {
 
 			let linear_1 = calc_linear.price(initial_price, time).unwrap();
 			let linear_2 = calc_linear.price(initial_price, time_next).unwrap();
-			prop_assert!(linear_2 <= linear_1);
+			prop_assert!(linear_2 < linear_1);
 			let exp_1 = calc_divide_by_2.price(initial_price, time).unwrap();
 			let exp_2 = calc_divide_by_2.price(initial_price, time_next).unwrap();
 			prop_assert!(exp_2 <= exp_1);
 			// prom property choses for cut to divide each iteration by 2
-			let mut half_price = initial_price / LiftedFixedBalance::from(2^time);
-			prop_assert_eq!(exp1, half_price);
-			// from proprety of exp moving fastr initially and than slowing down
-			prop_assert!(exp_2 <= linear_1);
+			let half_price = initial_price / LiftedFixedBalance::saturating_from_integer(2_u64.pow(time as  u32));
+			prop_assert!(half_price- exp_1 < LiftedFixedBalance::one());
+			prop_assert!(LiftedFixedBalance::zero() <= half_price- exp_1);
+			// from property of exp moving faster initially and than slowing down
+			prop_assert!(exp_1 <= linear_1);
 
+			Ok(())
 		}).unwrap();
 	}
 }

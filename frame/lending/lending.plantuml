@@ -6,13 +6,14 @@ actor Charlie as ac
 participant Lending as l
 participant Liquidation as k
 participant Auction as au
+participant "Order Book DEX" as d
 boundary "Parachain with DEX" as p
-participant "OCW Auction" as oa
+control "OCW Auction" as oa
 control "OCW Lending" as ol
-
-control Market as m
+control "OCW Oracle" as m
 
 group Governance
+
 
   a -> l: Create market pair for assets ids (tokens, symbols)
   l -> Vault: Check assets are supported and create vault for collateral
@@ -31,7 +32,7 @@ group Borrow
   Vault -> b : transfer cCollateral(wrapped token)
   b -> l : Deposit cCollateral
   ...
-  b -> l : borrow for collateral
+  b -> l : Borrow (collateralized)
   ...
   l -> l : accrue interest
   ...
@@ -43,7 +44,7 @@ end
 
 group Liqudaiton (IN PROGRESS)
 
-  ac -> l : borrow
+  ac -> l : Borrow
 
   ...
 
@@ -54,15 +55,18 @@ group Liqudaiton (IN PROGRESS)
 
   l -> k: Liquidate
 
-  k -> au: Dutch Auction seel Collateral
+  k -> au: Dutch Auction sell Collateral
 
-  oa --> p: Sell on Order Book DEX
-
-  p --> au: Update DEX call state
+  oa --> d: Sell on Order Book DEX
 
   ...
 
-  oa -> au : Finalize auction
+  p  --> d: Prove of swap tokens and update DEX order state
+
+
+  ...
+
+  oa -> au : Finalize auction1/sum(x^2
 
 end
 
