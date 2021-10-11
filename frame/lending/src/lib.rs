@@ -71,7 +71,7 @@ pub mod pallet {
 		},
 		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
 	};
-	use sp_std::{fmt::Debug, vec::Vec};
+	use sp_std::{fmt::Debug, vec, vec::Vec};
 
 	type MarketConfiguration<T> = MarketConfig<
 		<T as Config>::VaultId,
