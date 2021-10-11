@@ -578,7 +578,8 @@ pub mod pallet {
 				}
 			}
 		}
-		// This can take an account to pay, therefore another pallet can call this and fund oracle requests
+		// This can take an account to pay, therefore another pallet can call this and fund oracle
+		// requests
 		pub fn do_request_price(who: &T::AccountId, asset_id: T::AssetId) -> DispatchResult {
 			ensure!(AssetsInfo::<T>::contains_key(asset_id), Error::<T>::InvalidAssetId);
 			if !Self::requested(asset_id) {
