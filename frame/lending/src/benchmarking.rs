@@ -65,10 +65,19 @@ benchmarks! {
 		let collateral_asset_id = <T as Config>::AssetId::from(USDT);
 		let reserved_factor = Perquintill::from_percent(10);
 		let collateral_factor = NormalizedCollateralFactor::saturating_from_rational(200, 100);
+		let under_collaterized_warn_percent = Percent::from_percent(10);
 		let market_id = MarketIndex::new(1);
 		let vault_id = 1u64.into();
 		set_prices::<T>();
-	}: _(RawOrigin::Signed(caller.clone()), borrow_asset_id, collateral_asset_id, reserved_factor, collateral_factor, Percent::from_percent(10), InterestRateModel::default())
+	}: _(
+		RawOrigin::Signed(caller.clone()),
+		borrow_asset_id,
+		collateral_asset_id,
+		reserved_factor,
+		collateral_factor,
+		under_collaterized_warn_percent,
+		InterestRateModel::default()
+	)
 	verify {
 		assert_last_event::<T>(Event::NewMarketCreated {
 			market_id,
@@ -167,7 +176,7 @@ benchmarks! {
 		let (borrow_asset_id, collateral_asset_id) = (1u32, 2u32);
 		set_price::<T>(borrow_asset_id.into(), u64::from(borrow_asset_id) * 10);
 		set_price::<T>(collateral_asset_id.into(), u64::from(collateral_asset_id) * 10);
-		let (market_id, _) = create_market::<T>(caller.clone(), borrow_asset_id.into(), collateral_asset_id.into());
+		let (market_id, _) = create_market::<T>(caller, borrow_asset_id.into(), collateral_asset_id.into());
 	}: {
 		Lending::<T>::accrue_interest(&market_id, 6).unwrap()
 	}
@@ -177,7 +186,7 @@ benchmarks! {
 		let (borrow_asset_id, collateral_asset_id) = (1u32, 2u32);
 		set_price::<T>(borrow_asset_id.into(), u64::from(borrow_asset_id) * 10);
 		set_price::<T>(collateral_asset_id.into(), u64::from(collateral_asset_id) * 10);
-		let (market_id, _) = create_market::<T>(caller.clone(), borrow_asset_id.into(), collateral_asset_id.into());
+		let (market_id, _) = create_market::<T>(caller, borrow_asset_id.into(), collateral_asset_id.into());
 	}: {
 		Lending::<T>::account_id(&market_id)
 	}
