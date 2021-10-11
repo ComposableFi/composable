@@ -63,9 +63,9 @@ pub mod pallet {
 		};
 		app_crypto!(sr25519, KEY_TYPE);
 
-		pub struct AuthId;
+		pub struct BathurstStId;
 		// implemented for ocw-runtime
-		impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for AuthId {
+		impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for BathurstStId {
 			type RuntimeAppPublic = Public;
 			type GenericSignature = sp_core::sr25519::Signature;
 			type GenericPublic = sp_core::sr25519::Public;
@@ -75,7 +75,7 @@ pub mod pallet {
 			frame_system::offchain::AppCrypto<
 				<Sr25519Signature as Verify>::Signer,
 				Sr25519Signature,
-			> for AuthId
+			> for BathurstStId
 		{
 			type RuntimeAppPublic = Public;
 			type GenericSignature = sp_core::sr25519::Signature;
