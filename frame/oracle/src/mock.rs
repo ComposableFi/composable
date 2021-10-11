@@ -121,7 +121,7 @@ where
 
 impl pallet_oracle::Config for Test {
 	type Event = Event;
-	type AuthorityId = crypto::AuthId;
+	type AuthorityId = crypto::BathurstStId;
 	type Currency = Balances;
 	type AssetId = u128;
 	type PriceValue = u128;
