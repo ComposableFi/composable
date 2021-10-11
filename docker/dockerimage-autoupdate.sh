@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-IMAGE="nginx"
+IMAGE="composablefi/composable:latest"
 CONTAINER_ID=$(docker ps | grep $IMAGE| awk '{print $1}')
 AUTO_UPDATE=1
 # docker pull $IMAGE
@@ -17,7 +17,7 @@ if [ "$AUTO_UPDATE" = 1 ]; then
             docker pull $IMAGE
             docker stop $im
             docker rm -f $NAME
-            #ToDO reverse engineer a running container to get the command used to run a container and use it to start the container again
+            # Add the command to run your container here
             # docker run $NAME 
         else
             echo "$NAME up to date"
@@ -26,9 +26,3 @@ if [ "$AUTO_UPDATE" = 1 ]; then
 else
     echo "No latest update to upstrean"
 fi
-
-
-## Logic 2 ##
-# Pull and install git-repo-watcher, 10 sec
-
-#bash ./git-repo-watcher/git-repo-watcher -d /composable -i 30  > "repo-watcher.log" 

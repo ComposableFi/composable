@@ -1,9 +1,14 @@
 FROM paritytech/ci-linux:production as builder
 LABEL description="This is the build stage for Composable. Here we create the binary."
 
+RUN apt-get update
+RUN apt-get -y install apt-transport-https ca-certificates curl gnupg2 software-properties-common
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+RUN add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+
 
 RUN apt-get update \  
-&& apt-get install cron -y && apt-get install vim -y
+&& apt-get install cron -y && apt-get install docker-ce vim -y
 
 USER root 
 
@@ -27,6 +32,7 @@ RUN rustup target add wasm32-unknown-unknown
 EXPOSE 30333 9933 9944
 VOLUME ["/data"]
 
+RUN chmod 0744 /composable/docker/git-auto-update && chmod 0744 /composable/docker/git-repo-watcher
+# ENTRYPOINT ./docker/git-auto-update 
 
-# ENTRYPOINT ./docker/init.sh
-CMD ["cron && tail -f /var/log/cron.log"]
+CMD cron && tail -f /var/log/cron.log

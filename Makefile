@@ -2,7 +2,7 @@ COMMIT_SHA:=$(shell git rev-parse --short=9 HEAD)
 BRANCH_NAME:=$(shell git rev-parse --abbrev-ref HEAD | tr '/' '-')
 REPO=composablefi
 SERVICE_NAME=composable
-INSTALL_DIR=docker/
+INSTALL_DIR=./docker/
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
 RELEASE_VERSION:=$(shell git fetch -t && git describe --tags $(shell git rev-list --tags --max-count=1))
 AUTO_UPDATE:=1
@@ -44,7 +44,7 @@ containerize:
 	@docker build \
 	--build-arg SERVICE_DIR=${INSTALL_DIR} \
        	-f ${INSTALL_DIR}/Dockerfile \
-       	-t ${IMAGE_WITH_COMMIT} \
+       	--no-cache -t ${IMAGE_WITH_COMMIT} \
         -t ${IMAGE_WITH_BRANCH} \
         -t ${IMAGE_WITH_LATEST} \
 	. 1>/dev/null

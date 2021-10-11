@@ -12,12 +12,10 @@ services:
       - type: bind
         source: ./.local
         target: /root/.local
-    command: bash -c "echo 'Hello'"
-    # secrets:
-    #   - node_executor_secret
-  # watchtower:
-  #   image: containrrr/watchtower
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #     - ~/.docker/config.json:/config.json
-  #   command: --interval 30
+    command: cargo build --release
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.docker/config.json:/config.json
+    command: --interval 30
