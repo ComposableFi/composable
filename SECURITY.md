@@ -1,21 +1,27 @@
 # Security Policy
 
-## Supported Versions
+At Composable Finance we are always striving towards writing secure and stable code. If you have found a critical bug or a security  
+vulnerability, you can simply report your findings to us.  
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
 
 ## Reporting a Vulnerability
+When you report a security vulnerability please include:
+*  Description of the findings   
+*  Platform(operating system,  and rust version)   
+*  Reproducible code sample(Make the vulnerability easy to reproduce)   
+*  Type, Severity and impact of Vulnerability   
 
-Use this section to tell people how to report a vulnerability.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+The more information you provide the better. We recommend submitting a report where you describe the vulnerability, show us how you found it and provide reproducible code samples.
+Providing mitigation advice is also recommended.
+ 
+
+## Responsible Disclosure   
+We are encouraging responsible disclosure of security vulnerabilities by providing a legal safe harbor.
+In return, we ask you to not publicly disclose your findings until either 2 weeks of time has passed or after the bugs have been acknowledged and fixed.
+
+
+## Rewards   
+
+
