@@ -543,7 +543,6 @@ pub mod pallet {
 			price: T::PriceValue,
 			asset_id: T::AssetId,
 		) {
-			// TODO only take prices up to max prices
 			for answer in pre_prices {
 				let accuracy: Percent;
 				if answer.price < price {
@@ -570,8 +569,6 @@ pub mod pallet {
 					let controller = SignerToController::<T>::get(&answer.who)
 						.unwrap_or_else(|| answer.who.clone());
 
-					// TODO: since inlflationary, burn a portion of tx fees of the chain to account
-					// for this
 					let _ = T::Currency::deposit_into_existing(&controller, reward_amount);
 					Self::deposit_event(Event::UserRewarded(
 						answer.who.clone(),
@@ -581,7 +578,7 @@ pub mod pallet {
 				}
 			}
 		}
-
+		// This can take an account to pay, therefore another pallet can call this and fund oracle requests
 		pub fn do_request_price(who: &T::AccountId, asset_id: T::AssetId) -> DispatchResult {
 			ensure!(AssetsInfo::<T>::contains_key(asset_id), Error::<T>::InvalidAssetId);
 			if !Self::requested(asset_id) {
@@ -765,12 +762,9 @@ pub mod pallet {
 			// You can also wait idefinitely for the response, however you may still get a timeout
 			// coming from the host machine.
 			let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
-			// Initiate an external HTTP GET request.
-			// This is using high-level wrappers from `sp_runtime`, for the low-level calls that
-			// you can find in `sp_io`. The API is trying to be similar to `reqwest`, but
-			// since we are running in a custom WASM execution environment we can't simply
-			// import the library here.]
 
+			// Check if the node has another endpoint to call if not fall back to localhost:3001
+			// Then build the endpoint
 			let kind = sp_core::offchain::StorageKind::PERSISTENT;
 			let from_local = sp_io::offchain::local_storage_get(kind, b"ocw-url")
 				.unwrap_or_else(|| b"http://localhost:3001/price/".to_vec());
@@ -781,21 +775,15 @@ pub mod pallet {
 			let string_request_id =
 				serde_json::to_string(&request_id).map_err(|_| http::Error::IoError)?;
 			let url = base.to_owned() + &string_id + "/" + &string_request_id;
+
+			// Initiate an external HTTP GET request.
 			let request = http::Request::get(&url);
 
 			log::info!("request incoming {:#?}", request);
 
-			// We set the deadline for sending of the request, note that awaiting response can
-			// have a separate deadline. Next we send the request, before that it's also possible
-			// to alter request headers or stream body content in case of non-GET requests.
+			// set the deadline for sending of the request
 			let pending = request.deadline(deadline).send().map_err(|_| http::Error::IoError)?;
 
-			// The request is already being processed by the host, we are free to do anything
-			// else in the worker (we can send multiple concurrent requests too).
-			// At some point however we probably want to check the response though,
-			// so we can block current thread and wait for it to finish.
-			// Note that since the request is being driven by the host, we don't have to wait
-			// for the request to have it complete, we will just not read the response.
 			let response =
 				pending.try_wait(deadline).map_err(|_| http::Error::DeadlineReached)??;
 			// Let's check the status code before we proceed to reading the response.
@@ -804,9 +792,6 @@ pub mod pallet {
 				return Err(http::Error::Unknown)
 			}
 
-			// Next we want to fully read the response body and collect it to a vector of bytes.
-			// Note that the return object allows you to read the body in chunks as well
-			// with a way to control the deadline.
 			let body = response.body().collect::<Vec<u8>>();
 
 			// Create a str slice from the body.
