@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-set -e
-./docker/git-repo-watcher -d ../composable -i 60

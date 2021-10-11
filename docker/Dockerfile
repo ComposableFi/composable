@@ -16,11 +16,6 @@ ARG VERSION=stable
 ARG PROFILE=release
 WORKDIR /composable
 
-ADD docker/job /etc/cron.d/job
-RUN chmod 0644 /etc/cron.d/job
-RUN touch /var/log/cron.log
-
-
 COPY . /composable
 # please update docker, toolchain toml and github action with toolchain at same time
 # there is no parity docker with same version, any later version breaks 3.0 parity (need to use 4.0)
@@ -32,7 +27,5 @@ RUN rustup target add wasm32-unknown-unknown
 EXPOSE 30333 9933 9944
 VOLUME ["/data"]
 
-RUN chmod 0744 /composable/docker/git-auto-update && chmod 0744 /composable/docker/git-repo-watcher
-# ENTRYPOINT ./docker/git-auto-update 
 
-CMD cron && tail -f /var/log/cron.log
+CMD ["cargo"]
