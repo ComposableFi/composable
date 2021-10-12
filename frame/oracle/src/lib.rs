@@ -272,9 +272,7 @@ pub mod pallet {
 		type AssetId = T::AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 
-		fn get_price(
-			of: &Self::AssetId,
-		) -> Result<(Self::Balance, Self::Timestamp), DispatchError> {
+		fn get_price(of: Self::AssetId) -> Result<(Self::Balance, Self::Timestamp), DispatchError> {
 			let price = Prices::<T>::try_get(of).map_err(|_| Error::<T>::PriceNotFound)?;
 			Ok((price.price, price.block))
 		}
@@ -603,11 +601,21 @@ pub mod pallet {
 		pub fn get_median_price(
 			prices: &[PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>],
 		) -> Option<T::PriceValue> {
+			if prices.is_empty() {
+				return None
+			}
+
 			let mut numbers: Vec<T::PriceValue> =
 				prices.iter().map(|current_prices| current_prices.price).collect();
-			numbers.sort();
+
+			numbers.sort_unstable();
+
 			let mid = numbers.len() / 2;
-			numbers.get(mid).cloned()
+			if numbers.len() % 2 == 0 {
+				Some(numbers[mid - 1].saturating_add(numbers[mid]) / 2u32.into())
+			} else {
+				Some(numbers[mid])
+			}
 		}
 
 		pub fn check_requests() {

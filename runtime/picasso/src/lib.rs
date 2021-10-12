@@ -12,6 +12,8 @@ use common::{
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
 	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
 };
+use dutch_auction::DeFiComposableConfig;
+use liquidations::DeFiComposablePallet;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -20,9 +22,10 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult,
+	ApplyExtrinsicResult, DispatchError,
 };
 
+use composable_traits::dex::{Orderbook, TakeResult};
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -31,9 +34,9 @@ use sp_version::RuntimeVersion;
 use sp_runtime::traits::AccountIdConversion;
 
 // A few exports that help ease life for downstream crates.
-pub use frame_support::{
+pub use support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{All, Contains, Filter, KeyOwnerProofSystem, Randomness, StorageInfo},
+	traits::{Contains, Everything, KeyOwnerProofSystem, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -54,16 +57,12 @@ use system::{
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use xcm::{
-	opaque::v0::{BodyId, Junction, MultiAsset, MultiLocation, NetworkId},
-	v0::Xcm,
-};
+use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedWeightBounds, IsConcrete, LocationInverter, NativeAsset,
-	ParentAsSuperuser, ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative,
-	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
-	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds,
+	LocationInverter, NativeAsset, ParentAsSuperuser, ParentIsDefault, RelayChainAsNative,
+	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 };
 use xcm_executor::XcmExecutor;
 
@@ -199,6 +198,7 @@ impl randomness_collective_flip::Config for Runtime {}
 
 impl aura::Config for Runtime {
 	type AuthorityId = AuraId;
+	type DisabledValidators = ();
 }
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
@@ -413,10 +413,10 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 impl parachain_info::Config for Runtime {}
 
 parameter_types! {
-	pub const RelayLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
-	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
+	// pub const RelayLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
+	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
-	pub Ancestry: MultiLocation = MultiLocation::X1(Junction::Parachain(ParachainInfo::parachain_id().into()));
+	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
@@ -430,20 +430,6 @@ pub type LocationToAccountId = (
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
-
-/// Means for transacting assets on this chain.
-pub type LocalAssetTransactor = CurrencyAdapter<
-	// Use this currency:
-	Balances,
-	// Use this currency when it is a fungible asset matching the given location or name:
-	IsConcrete<RelayLocation>,
-	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
-	LocationToAccountId,
-	// Our chain's account ID type (we can't get away without mentioning it explicitly):
-	AccountId,
-	// We don't track any teleports.
-	(),
->;
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
@@ -472,22 +458,9 @@ pub type XcmOriginToTransactDispatchOrigin = (
 parameter_types! {
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
 	pub UnitWeightCost: Weight = 1_000_000;
-	// One PICA buys 1 second of weight.
-	pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::X1(Junction::Parent), PICA);
 }
 
-match_type! {
-	pub type ParentOrParentsUnitPlurality: impl Contains<MultiLocation> = {
-		MultiLocation::X1(Junction::Parent) | MultiLocation::X2(Junction::Parent, Junction::Plurality { id: BodyId::Unit, .. })
-	};
-}
-
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<All<MultiLocation>>,
-	// Parent & its unit plurality gets free execution
-	AllowUnpaidExecutionFrom<ParentOrParentsUnitPlurality>,
-);
+pub type Barrier = (TakeWeightCredit, AllowTopLevelPaidExecutionFrom<Everything>);
 
 pub struct XcmConfig;
 
@@ -495,15 +468,16 @@ impl xcm_executor::Config for XcmConfig {
 	type Call = Call;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = LocalAssetTransactor;
+	type AssetTransactor = ();
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = NativeAsset;
-	type IsTeleporter = NativeAsset; // <- should be enough to allow teleportation of PICA
+	type IsTeleporter = (); // <- should be enough to allow teleportation of PICA
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
-	type Trader = UsingComponents<IdentityFee<Balance>, RelayLocation, AccountId, Balances, ()>;
+	type Trader = ();
 	type ResponseHandler = (); // Don't handle responses for now.
+	type SubscriptionService = PolkadotXcm;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -513,7 +487,7 @@ pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, RelayNet
 /// queues.
 pub type XcmRouter = (
 	// Two routers - use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem>,
+	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, ()>,
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
 );
@@ -523,10 +497,11 @@ impl pallet_xcm::Config for Runtime {
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmExecuteFilter = All<(MultiLocation, Xcm<Call>)>;
+	type XcmExecuteFilter = Everything;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = All<(MultiLocation, Vec<MultiAsset>)>;
+	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = ();
+	type LocationInverter = LocationInverter<Ancestry>;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
 }
 
@@ -536,6 +511,7 @@ impl assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
 	type Currency = Balances;
 	type MultiCurrency = Tokens;
+	type WeightInfo = ();
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -546,6 +522,7 @@ impl cumulus_pallet_xcm::Config for Runtime {
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type VersionWrapper = ();
 	type ChannelInfo = ParachainSystem;
 }
 
@@ -857,22 +834,87 @@ impl lending::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Currency = Assets;
-	type UnixTime = Timestamp;
 	type CurrencyFactory = Factory;
-	type MarketDebtCurrency = Assets;
+	type MarketDebtCurrency = Tokens;
+	type Liquidation = Liquidations;
+	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
+}
+
+impl DeFiComposablePallet for Runtime {
+	type AssetId = CurrencyId;
+}
+
+impl DeFiComposableConfig for Runtime {
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type Currency = Tokens;
+}
+
+pub struct MockOrderbook;
+impl Orderbook for MockOrderbook {
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type AccountId = AccountId;
+	type OrderId = u128;
+	fn post(
+		_account_from: &Self::AccountId,
+		_asset: Self::AssetId,
+		_want: Self::AssetId,
+		_source_amount: Self::Balance,
+		_source_price: Self::Balance,
+		_amm_slippage: Permill,
+	) -> Result<Self::OrderId, DispatchError> {
+		Ok(0)
+	}
+	fn market_sell(
+		_account: &Self::AccountId,
+		_asset: Self::AssetId,
+		_want: Self::AssetId,
+		_amount: Self::Balance,
+		_amm_slippage: Permill,
+	) -> Result<Self::OrderId, DispatchError> {
+		Ok(0)
+	}
+	fn take(
+		_account: &Self::AccountId,
+		_orders: impl Iterator<Item = Self::OrderId>,
+		_up_to: Self::Balance,
+	) -> Result<TakeResult<Self::Balance>, DispatchError> {
+		Ok(TakeResult { amount: 0, total_price: 0 })
+	}
+
+	fn is_order_executed(_order_id: &Self::OrderId) -> bool {
+		false
+	}
+}
+
+impl dutch_auction::Config for Runtime {
+	type Event = Event;
+	type DexOrderId = u128;
+	type OrderId = u128;
+	type UnixTime = Timestamp;
+	type Orderbook = MockOrderbook;
+}
+
+impl liquidations::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type UnixTime = Timestamp;
+	type Lending = Lending;
+	type DutchAuction = Auctions;
 }
 
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
-impl Filter<Call> for BaseCallFilter {
-	fn filter(call: &Call) -> bool {
+impl Contains<Call> for BaseCallFilter {
+	fn contains(call: &Call) -> bool {
 		if call_filter::Pallet::<Runtime>::contains(call) {
 			return false
 		}
-		matches!(
+		!matches!(
 			call,
 			Call::Balances(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_)
 		)
@@ -908,7 +950,7 @@ construct_runtime!(
 		Authorship: authorship::{Pallet, Call, Storage} = 20,
 		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
 		Session: session::{Pallet, Call, Storage, Event, Config<T>} = 22,
-		Aura: aura::{Pallet, Config<T>} = 23,
+		Aura: aura::{Pallet, Storage, Config<T>} = 23,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 24,
 
 		// Governance utilities
@@ -931,7 +973,10 @@ construct_runtime!(
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 54,
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
-		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 56,
+		Liquidations: liquidations::{Pallet, Call, Event<T>} = 56,
+		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 57,
+		Auctions: dutch_auction::{Pallet, Event<T>} = 58,
+		Assets: assets::{Pallet, Storage, Call} = 59,
 	}
 );
 
@@ -1066,32 +1111,43 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl benchmarking::Benchmark<Block> for Runtime {
-		// fn benchmark_metadata(extra: bool) -> (
-		// 	Vec<benchmarking::BenchmarkList>,
-		// 	Vec<support::traits::StorageInfo>,
-		// ) {
-		// 	use benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
-		// 	use support::traits::StorageInfoTrait;
-		// 	use system_benchmarking::Pallet as SystemBench;
-		//
-		// 	let mut list = Vec::<BenchmarkList>::new();
-		//
-		// 	list_benchmark!(list, extra, system, SystemBench::<Runtime>);
-		// 	list_benchmark!(list, extra, balances, Balances);
-		// 	list_benchmark!(list, extra, timestamp, Timestamp);
-		//
-		// 	let storage_info = AllPalletsWithSystem::storage_info();
-		//
-		// 	return (list, storage_info)
-		// }
+		fn benchmark_metadata(extra: bool) -> (
+			Vec<benchmarking::BenchmarkList>,
+			Vec<support::traits::StorageInfo>,
+		) {
+			use benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use support::traits::StorageInfoTrait;
+			use system_benchmarking::Pallet as SystemBench;
+
+			let mut list = Vec::<BenchmarkList>::new();
+
+			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			list_benchmark!(list, extra, balances, Balances);
+			list_benchmark!(list, extra, timestamp, Timestamp);
+			list_benchmark!(list, extra, oracle, Oracle);
+			list_benchmark!(list, extra, collator_selection, CollatorSelection);
+			list_benchmark!(list, extra, indices, Indices);
+			list_benchmark!(list, extra, membership, CouncilMembership);
+			list_benchmark!(list, extra, treasury, Treasury);
+			list_benchmark!(list, extra, scheduler, Scheduler);
+			list_benchmark!(list, extra, democracy, Democracy);
+			list_benchmark!(list, extra, collective, Council);
+			list_benchmark!(list, extra, lending, Lending);
+			list_benchmark!(list, extra, crowdloan_bonus, LiquidCrowdloan);
+			list_benchmark!(list, extra, utility, Utility);
+
+			let storage_info = AllPalletsWithSystem::storage_info();
+
+			return (list, storage_info)
+		}
 
 		fn dispatch_benchmark(
 			config: benchmarking::BenchmarkConfig
 		) -> Result<Vec<benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
-			use frame_system_benchmarking::Pallet as SystemBench;
-			impl frame_system_benchmarking::Config for Runtime {}
+			use system_benchmarking::Pallet as SystemBench;
+			impl system_benchmarking::Config for Runtime {}
 
 			use session_benchmarking::Pallet as SessionBench;
 			impl session_benchmarking::Config for Runtime {}

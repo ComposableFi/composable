@@ -1,11 +1,17 @@
 use crate as pallet_lending;
-use composable_traits::currency::DynamicCurrencyId;
+use composable_traits::{
+	currency::DynamicCurrencyId,
+	dex::{Orderbook, TakeResult},
+};
 use frame_support::{
 	parameter_types,
+	sp_runtime::Permill,
 	traits::{OnFinalize, OnInitialize},
 	PalletId,
 };
 use orml_traits::parameter_type_with_key;
+use pallet_dutch_auctions::DeFiComposableConfig;
+use pallet_liquidations::DeFiComposablePallet;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
@@ -16,7 +22,7 @@ use sp_runtime::{
 
 pub mod oracle;
 
-pub type AccountId = u32;
+pub type AccountId = u128;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 pub type Balance = u128;
@@ -24,6 +30,8 @@ pub type Amount = i128;
 pub type BlockNumber = u64;
 
 pub type VaultId = u64;
+
+pub const MINIMUM_BALANCE: Balance = 1000;
 
 pub const ALICE: AccountId = 0;
 pub const BOB: AccountId = 1;
@@ -57,6 +65,20 @@ impl Default for MockCurrencyId {
 	}
 }
 
+impl From<u128> for MockCurrencyId {
+	fn from(id: u128) -> Self {
+		match id {
+			0 => MockCurrencyId::PICA,
+			1 => MockCurrencyId::BTC,
+			2 => MockCurrencyId::ETH,
+			3 => MockCurrencyId::LTC,
+			4 => MockCurrencyId::USDT,
+			5 => MockCurrencyId::LpToken(0),
+			_ => unreachable!(),
+		}
+	}
+}
+
 impl DynamicCurrencyId for MockCurrencyId {
 	fn next(self) -> Result<Self, DispatchError> {
 		match self {
@@ -81,8 +103,10 @@ frame_support::construct_runtime!(
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Liquidations: pallet_liquidations::{Pallet, Call, Event<T>},
 		Lending: pallet_lending::{Pallet, Call, Config, Storage, Event<T>},
 		Oracle: pallet_lending::mocks::oracle::{Pallet},
+		Auction: pallet_dutch_auctions::{Pallet, Event<T>},
 	}
 );
 
@@ -161,8 +185,8 @@ parameter_types! {
 	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::PICA;
 	pub const CreationDeposit: Balance = 10;
 	pub const RentPerBlock: Balance = 1;
-	pub const MinimumDeposit: Balance = 10_000;
-	pub const MinimumWithdrawal: Balance = 10_000;
+	pub const MinimumDeposit: Balance = 0;
+	pub const MinimumWithdrawal: Balance = 0;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
 }
 
@@ -210,6 +234,70 @@ impl crate::mocks::oracle::Config for Test {
 	type Vault = Vault;
 }
 
+impl DeFiComposablePallet for Test {
+	type AssetId = MockCurrencyId;
+}
+
+impl DeFiComposableConfig for Test {
+	type AssetId = MockCurrencyId;
+	type Balance = Balance;
+	type Currency = Tokens;
+}
+
+pub struct MockOrderbook;
+impl Orderbook for MockOrderbook {
+	type AssetId = MockCurrencyId;
+	type Balance = Balance;
+	type AccountId = AccountId;
+	type OrderId = u128;
+	fn post(
+		_account_from: &Self::AccountId,
+		_asset: Self::AssetId,
+		_want: Self::AssetId,
+		_source_amount: Self::Balance,
+		_source_price: Self::Balance,
+		_amm_slippage: Permill,
+	) -> Result<Self::OrderId, DispatchError> {
+		Ok(0)
+	}
+	fn market_sell(
+		_account: &Self::AccountId,
+		_asset: Self::AssetId,
+		_want: Self::AssetId,
+		_amount: Self::Balance,
+		_amm_slippage: Permill,
+	) -> Result<Self::OrderId, DispatchError> {
+		Ok(0)
+	}
+	fn take(
+		_account: &Self::AccountId,
+		_orders: impl Iterator<Item = Self::OrderId>,
+		_up_to: Self::Balance,
+	) -> Result<TakeResult<Self::Balance>, DispatchError> {
+		Ok(TakeResult { amount: 0, total_price: 0 })
+	}
+
+	fn is_order_executed(_order_id: &Self::OrderId) -> bool {
+		false
+	}
+}
+
+impl pallet_dutch_auctions::Config for Test {
+	type Event = Event;
+	type DexOrderId = u128;
+	type OrderId = u128;
+	type UnixTime = Timestamp;
+	type Orderbook = MockOrderbook;
+}
+
+impl pallet_liquidations::Config for Test {
+	type Event = Event;
+	type Balance = Balance;
+	type UnixTime = Timestamp;
+	type Lending = Lending;
+	type DutchAuction = Auction;
+}
+
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 }
@@ -222,9 +310,10 @@ impl pallet_lending::Config for Test {
 	type AssetId = MockCurrencyId;
 	type Balance = Balance;
 	type Currency = Tokens;
-	type UnixTime = Timestamp;
 	type CurrencyFactory = LpTokenFactory;
 	type MarketDebtCurrency = Tokens;
+	type Liquidation = Liquidations;
+	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = ();
 }
@@ -245,6 +334,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext.execute_with(|| {
 		System::set_block_number(0);
 		Timestamp::set_timestamp(MILLISECS_PER_BLOCK);
+		// Initialize BTC price to 50000
+		pallet_lending::mocks::oracle::BTCValue::<Test>::set(50000u128);
 	});
 	ext
 }

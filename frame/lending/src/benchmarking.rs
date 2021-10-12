@@ -2,12 +2,14 @@ use super::*;
 
 use crate::Pallet as Lending;
 use composable_traits::{
-	lending::MarketConfigInput, rate_model::NormalizedCollateralFactor, vault::Vault,
+	lending::{Lending as LendingTrait, MarketConfigInput},
+	rate_model::{InterestRateModel, NormalizedCollateralFactor},
+	vault::Vault,
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
-use frame_support::traits::{fungibles::Mutate, Get};
+use frame_support::traits::fungibles::Mutate;
 use frame_system::{EventRecord, RawOrigin};
-use sp_runtime::{FixedPointNumber, Perquintill};
+use sp_runtime::{FixedPointNumber, Percent, Perquintill};
 use sp_std::prelude::*;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
@@ -45,11 +47,13 @@ fn create_market<T: Config>(
 		manager,
 		reserved: Perquintill::from_percent(10),
 		collateral_factor: NormalizedCollateralFactor::saturating_from_rational(200, 100),
+		under_collaterized_warn_percent: Percent::from_percent(10),
 	};
 	Lending::<T>::create(
 		<T as Config>::AssetId::from(borrow_asset),
 		<T as Config>::AssetId::from(collateral_asset),
 		market_config,
+		&InterestRateModel::default(),
 	)
 	.unwrap()
 }
@@ -61,10 +65,19 @@ benchmarks! {
 		let collateral_asset_id = <T as Config>::AssetId::from(USDT);
 		let reserved_factor = Perquintill::from_percent(10);
 		let collateral_factor = NormalizedCollateralFactor::saturating_from_rational(200, 100);
+		let under_collaterized_warn_percent = Percent::from_percent(10);
 		let market_id = MarketIndex::new(1);
 		let vault_id = 1u64.into();
 		set_prices::<T>();
-	}: _(RawOrigin::Signed(caller.clone()), borrow_asset_id, collateral_asset_id, reserved_factor, collateral_factor)
+	}: _(
+		RawOrigin::Signed(caller.clone()),
+		borrow_asset_id,
+		collateral_asset_id,
+		reserved_factor,
+		collateral_factor,
+		under_collaterized_warn_percent,
+		InterestRateModel::default()
+	)
 	verify {
 		assert_last_event::<T>(Event::NewMarketCreated {
 			market_id,
@@ -112,13 +125,14 @@ benchmarks! {
 
 	borrow {
 		let caller: T::AccountId = whitelisted_caller();
-		let amount_to_borrow = 1_000_000u64.into();
+		let balance: T::Balance = 1_000_000u64.into();
 		set_prices::<T>();
 		let (market_id, vault_id) = create_market::<T>(caller.clone(), BTC, USDT);
-		<T as pallet::Config>::Currency::mint_into(USDT.into(), &caller, amount_to_borrow * 6u64.into()).unwrap();
-		<T as pallet::Config>::Currency::mint_into(BTC.into(), &caller, amount_to_borrow * 6u64.into()).unwrap();
-		Lending::<T>::deposit_collateral_internal(&market_id, &caller, amount_to_borrow * 2u64.into()).unwrap();
-		<T as pallet::Config>::Vault::deposit(&vault_id, &caller, amount_to_borrow * 2u64.into()).unwrap();
+		<T as pallet::Config>::Currency::mint_into(USDT.into(), &caller, balance * 6u64.into()).unwrap();
+		<T as pallet::Config>::Currency::mint_into(BTC.into(), &caller, balance * 6u64.into()).unwrap();
+		Lending::<T>::deposit_collateral_internal(&market_id, &caller, balance * 2u64.into()).unwrap();
+		<T as pallet::Config>::Vault::deposit(&vault_id, &caller, balance * 2u64.into()).unwrap();
+		let amount_to_borrow: T::Balance = 0u32.into();
 	}: _(RawOrigin::Signed(caller.clone()), market_id, amount_to_borrow)
 	verify {
 		assert_last_event::<T>(Event::Borrowed {
@@ -132,12 +146,12 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 		set_prices::<T>();
 		let (market_id, vault_id) = create_market::<T>(caller.clone(), BTC, USDT);
-		let repay_amount = 1_000_000u64.into();
-
-		<T as pallet::Config>::Currency::mint_into(USDT.into(), &caller, repay_amount * 6u64.into()).unwrap();
-		<T as pallet::Config>::Currency::mint_into(BTC.into(), &caller, repay_amount * 6u64.into()).unwrap();
-		Lending::<T>::deposit_collateral_internal(&market_id, &caller, repay_amount * 2u64.into()).unwrap();
-		<T as pallet::Config>::Vault::deposit(&vault_id, &caller, repay_amount * 2u64.into()).unwrap();
+		let balance: T::Balance = 1_000_000u64.into();
+		<T as pallet::Config>::Currency::mint_into(USDT.into(), &caller, balance * 6u64.into()).unwrap();
+		<T as pallet::Config>::Currency::mint_into(BTC.into(), &caller, balance * 6u64.into()).unwrap();
+		Lending::<T>::deposit_collateral_internal(&market_id, &caller, balance * 2u64.into()).unwrap();
+		<T as pallet::Config>::Vault::deposit(&vault_id, &caller, balance * 2u64.into()).unwrap();
+		let repay_amount: T::Balance = 0u32.into();
 		Lending::<T>::borrow_internal(&market_id, &caller, repay_amount).unwrap();
 		crate::LastBlockTimestamp::<T>::put(6);
 	}: _(RawOrigin::Signed(caller.clone()), market_id, caller.clone(), repay_amount)
@@ -152,17 +166,75 @@ benchmarks! {
 		)
 	}
 
-	accrue_interests {
-		let m in 1 .. T::MaxLendingCount::get();
-		let caller: T::AccountId = whitelisted_caller();
-		(0..m).for_each(|borrow_asset_id| {
-			let collateral_asset_id = borrow_asset_id + 1;
-			set_price::<T>(borrow_asset_id.into(), u64::from(borrow_asset_id) * 10);
-			set_price::<T>(collateral_asset_id.into(), u64::from(collateral_asset_id) * 10);
-			let _ = create_market::<T>(caller.clone(), borrow_asset_id.into(), collateral_asset_id.into());
-		});
+	now {
 	}: {
-		Lending::<T>::accrue_interests(0u32.into())
+		Lending::<T>::now()
+	}
+
+	accrue_interest {
+		let caller: T::AccountId = whitelisted_caller();
+		let (borrow_asset_id, collateral_asset_id) = (1u32, 2u32);
+		set_price::<T>(borrow_asset_id.into(), u64::from(borrow_asset_id) * 10);
+		set_price::<T>(collateral_asset_id.into(), u64::from(collateral_asset_id) * 10);
+		let (market_id, _) = create_market::<T>(caller.clone(), borrow_asset_id.into(), collateral_asset_id.into());
+	}: {
+		Lending::<T>::accrue_interest(&market_id, 6).unwrap()
+	}
+
+	account_id {
+		let caller: T::AccountId = whitelisted_caller();
+		let (borrow_asset_id, collateral_asset_id) = (1u32, 2u32);
+		set_price::<T>(borrow_asset_id.into(), u64::from(borrow_asset_id) * 10);
+		set_price::<T>(collateral_asset_id.into(), u64::from(collateral_asset_id) * 10);
+		let (market_id, _) = create_market::<T>(caller, borrow_asset_id.into(), collateral_asset_id.into());
+	}: {
+		Lending::<T>::account_id(&market_id)
+	}
+
+	available_funds {
+		let caller: T::AccountId = whitelisted_caller();
+		let (borrow_asset_id, collateral_asset_id) = (1u32, 2u32);
+		set_price::<T>(borrow_asset_id.into(), u64::from(borrow_asset_id) * 10);
+		set_price::<T>(collateral_asset_id.into(), u64::from(collateral_asset_id) * 10);
+		let (market_id, _) = create_market::<T>(caller.clone(), borrow_asset_id.into(), collateral_asset_id.into());
+		let market_config = Markets::<T>::try_get(market_id).unwrap();
+	}: {
+		Lending::<T>::available_funds(&market_config, &caller).unwrap()
+	}
+
+	handle_withdrawable {
+		let caller: T::AccountId = whitelisted_caller();
+		let (borrow_asset_id, collateral_asset_id) = (1u32, 2u32);
+		set_price::<T>(borrow_asset_id.into(), u64::from(borrow_asset_id) * 10);
+		set_price::<T>(collateral_asset_id.into(), u64::from(collateral_asset_id) * 10);
+		let (market_id, vault_id) = create_market::<T>(caller.clone(), borrow_asset_id.into(), collateral_asset_id.into());
+		let market_config = Markets::<T>::try_get(market_id).unwrap();
+		let balance = 0u32.into();
+	}: {
+		Lending::<T>::handle_withdrawable(&market_config, &caller, balance).unwrap()
+	}
+
+	handle_depositable {
+		let caller: T::AccountId = whitelisted_caller();
+		let (borrow_asset_id, collateral_asset_id) = (1u32, 2u32);
+		set_price::<T>(borrow_asset_id.into(), u64::from(borrow_asset_id) * 10);
+		set_price::<T>(collateral_asset_id.into(), u64::from(collateral_asset_id) * 10);
+		let (market_id, _) = create_market::<T>(caller.clone(), borrow_asset_id.into(), collateral_asset_id.into());
+		let market_config = Markets::<T>::try_get(market_id).unwrap();
+		let balance = 1_000_000u32.into();
+	}: {
+		Lending::<T>::handle_depositable(&market_config, &caller, balance).unwrap()
+	}
+
+	handle_must_liquidate {
+		let caller: T::AccountId = whitelisted_caller();
+		let (borrow_asset_id, collateral_asset_id) = (1u32, 2u32);
+		set_price::<T>(borrow_asset_id.into(), u64::from(borrow_asset_id) * 10);
+		set_price::<T>(collateral_asset_id.into(), u64::from(collateral_asset_id) * 10);
+		let (market_id, _) = create_market::<T>(caller.clone(), borrow_asset_id.into(), collateral_asset_id.into());
+		let market_config = Markets::<T>::try_get(market_id).unwrap();
+	}: {
+		Lending::<T>::handle_must_liquidate(&market_config, &caller).unwrap()
 	}
 }
 
