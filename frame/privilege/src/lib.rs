@@ -60,7 +60,6 @@ pub mod pallet {
 		GroupPrivilegeNotHeld,
 		NotGroupMember,
 		AlreadyGroupMember,
-		NotPrivileged,
 	}
 
 	#[pallet::config]
@@ -127,34 +126,33 @@ pub mod pallet {
 	impl<T: Config> MutatePrivilege for Pallet<T> {
 		fn promote(account_id: &Self::AccountId, privilege: Privilege) -> DispatchResult {
 			AccountPrivileges::<T>::try_mutate(account_id, |account_privileges| {
-				account_privileges.insert(privilege);
-				Self::deposit_event(Event::PrivilegeAdded { account_id: *account_id, privilege });
+				if !account_privileges.contains(privilege) {
+					account_privileges.insert(privilege);
+					Self::deposit_event(Event::PrivilegeAdded {
+						account_id: *account_id,
+						privilege,
+					});
+				}
 				Ok(())
 			})
 		}
 
 		fn revoke(account_id: &Self::AccountId, privilege: Privilege) -> DispatchResult {
 			AccountPrivileges::<T>::try_mutate(account_id, |account_privileges| {
-				if account_privileges.is_empty() {
-					Err(Error::<T>::NotPrivileged)
-				} else {
+				if !account_privileges.is_empty() {
 					account_privileges.remove(privilege);
 					Self::deposit_event(Event::PrivilegeRemoved {
 						account_id: *account_id,
 						privilege,
 					});
-					Ok(())
+					GroupPrivileges::<T>::iter()
+						.filter(|(_, group_privileges)| group_privileges.contains(privilege))
+						.for_each(|(group_id, _)| {
+							let _ = <Self as MutatePrivilegeGroup>::revoke(group_id, account_id);
+						});
 				}
-			})?;
-			/* NOTE(hussein-aitlahcen):
-				 Not ideal
-			*/
-			GroupPrivileges::<T>::iter()
-				.filter(|(_, group_privileges)| group_privileges.contains(privilege))
-				.for_each(|(group_id, _)| {
-					let _ = <Self as MutatePrivilegeGroup>::revoke(group_id, account_id);
-				});
-			Ok(())
+				Ok(())
+			})
 		}
 	}
 
