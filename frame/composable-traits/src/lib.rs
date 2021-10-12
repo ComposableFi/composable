@@ -1,10 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-<<<<<<< HEAD
 pub mod auction;
-=======
 pub mod bribe;
->>>>>>> add trait defs
 pub mod currency;
 pub mod democracy;
 pub mod dex;
