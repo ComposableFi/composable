@@ -1315,6 +1315,7 @@ dependencies = [
 name = "composable-traits"
 version = "0.0.1"
 dependencies = [
+ "bitflags",
  "frame-support",
  "parity-scale-codec",
  "plotters",
@@ -6273,6 +6274,22 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-keystore",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-privilege"
+version = "0.0.1"
+dependencies = [
+ "bitflags",
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]

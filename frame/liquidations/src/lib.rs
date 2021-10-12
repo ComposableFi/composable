@@ -34,7 +34,7 @@ pub mod pallet {
 		auction::DutchAuction,
 		dex::{Orderbook, SimpleExchange},
 		lending::Lending,
-		liquidation::Liquidate,
+		liquidation::Liquidation,
 		math::LiftedFixedBalance,
 	};
 	use frame_support::{
@@ -130,7 +130,7 @@ pub mod pallet {
 				&total_amount,
 			) in Vec::new().iter()
 			{
-				let _liquidation_id = Self::initiate_liquidation(
+				let _liquidation_id = Self::liquidate(
 					source_account,
 					source_asset_id,
 					source_asset_price,
@@ -157,7 +157,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> Liquidate for Pallet<T> {
+	impl<T: Config> Liquidation for Pallet<T> {
 		type AssetId = T::AssetId;
 
 		type Balance = T::Balance;
@@ -166,7 +166,7 @@ pub mod pallet {
 
 		type LiquidationId = u128;
 
-		fn initiate_liquidation(
+		fn liquidate(
 			source_account: &Self::AccountId,
 			source_asset_id: Self::AssetId,
 			source_asset_price: Self::Balance,
@@ -186,7 +186,8 @@ pub mod pallet {
 			)?;
 			Ok(order_id)
 		}
-		fn is_liquidation_completed(liquidation_id: &Self::LiquidationId) -> bool {
+
+		fn has_been_liquidated(liquidation_id: &Self::LiquidationId) -> bool {
 			// TODO: implement
 			false
 		}

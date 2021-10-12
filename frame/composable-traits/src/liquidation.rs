@@ -2,13 +2,15 @@ use sp_runtime::{DispatchError, Permill};
 
 use crate::dex::Orderbook;
 
-pub trait Liquidate {
+/// An object from which we can initiate liquidations from.
+pub trait Liquidation {
 	type AssetId;
 	type Balance;
 	type AccountId;
 	type LiquidationId;
 
-	fn initiate_liquidation(
+	/// Initiate a liquidation, this operation should be executed as fast as possible.
+	fn liquidate(
 		source_account: &Self::AccountId,
 		source_asset_id: Self::AssetId,
 		source_asset_price: Self::Balance,
@@ -16,16 +18,18 @@ pub trait Liquidate {
 		target_account: &Self::AccountId,
 		total_amount: Self::Balance,
 	) -> Result<Self::LiquidationId, DispatchError>;
-	fn is_liquidation_completed(liquidation_id: &Self::LiquidationId) -> bool;
+
+	/// Determine whether a liquidation has been completed.
+	fn has_been_liquidated(liquidation_id: &Self::LiquidationId) -> bool;
 }
 
-impl<T: Orderbook> Liquidate for T {
+impl<T: Orderbook> Liquidation for T {
 	type AssetId = <Self as Orderbook>::AssetId;
 	type Balance = <Self as Orderbook>::Balance;
 	type AccountId = <Self as Orderbook>::AccountId;
 	type LiquidationId = <Self as Orderbook>::OrderId;
 
-	fn initiate_liquidation(
+	fn liquidate(
 		source_account: &Self::AccountId,
 		source_asset_id: Self::AssetId,
 		_source_asset_price: Self::Balance,
@@ -41,7 +45,8 @@ impl<T: Orderbook> Liquidate for T {
 			Permill::from_perthousand(0),
 		)
 	}
-	fn is_liquidation_completed(liquidation_id: &Self::LiquidationId) -> bool {
+
+	fn has_been_liquidated(liquidation_id: &Self::LiquidationId) -> bool {
 		<T as Orderbook>::is_order_executed(liquidation_id)
 	}
 }
