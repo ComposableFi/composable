@@ -80,6 +80,8 @@ pub mod pallet {
 		<T as Config>::GroupId,
 	>;
 
+	type OraclePrice<T> = (<T as Config>::Balance, <<T as Config>::Oracle as Oracle>::Timestamp);
+
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
@@ -694,13 +696,10 @@ pub mod pallet {
 			account: &<Self as Lending>::AccountId,
 		) -> Result<BorrowerData, DispatchError> {
 			let collateral_balance = Self::collateral_of_account(market_id, account)?;
-			let market =
-				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let market = Self::get_market(market_id)?;
 			let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
-			let collateral_price = <T::Oracle as Oracle>::get_price(market.collateral)
-				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
-			let borrow_price = <T::Oracle as Oracle>::get_price(borrow_asset_id)
-				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
+			let collateral_price = Self::get_price(market.collateral)?;
+			let borrow_price = Self::get_price(borrow_asset_id)?;
 			let borrower_balance_with_interest = Self::borrow_balance_current(market_id, account)?
 				.unwrap_or_else(BorrowAmountOf::<Self>::zero);
 			let borrower = BorrowerData::new(
@@ -741,14 +740,12 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			if Self::should_liquidate(market_id, account)? {
 				// must trigger liquidation
-				let market =
-					Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+				let market = Self::get_market(market_id)?;
 				let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
 				let borrower_balance_with_interest =
 					Self::borrow_balance_current(market_id, account)?
 						.unwrap_or_else(BorrowAmountOf::<Self>::zero);
-				let collateral_price = <T::Oracle as Oracle>::get_price(market.collateral)
-					.map_err(|_| Error::<T>::AssetWithoutPrice)?;
+				let collateral_price = Self::get_price(market.collateral)?;
 				T::Liquidation::liquidate(
 					account,
 					market.collateral,
@@ -872,6 +869,46 @@ pub mod pallet {
 				<T as Config>::Currency::reducible_balance(asset_id, market_account, false);
 			<T::Vault as StrategicVault>::deposit(&config.borrow, market_account, balance)
 		}
+
+		fn get_market(market_id: &MarketIndex) -> Result<MarketConfiguration<T>, DispatchError> {
+			Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist.into())
+		}
+
+		fn get_borrow_index(market_id: &MarketIndex) -> Result<FixedU128, DispatchError> {
+			BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist.into())
+		}
+
+		fn get_price(asset_id: <T as Config>::AssetId) -> Result<OraclePrice<T>, DispatchError> {
+			<T::Oracle as Oracle>::get_price(asset_id)
+				.map_err(|_| Error::<T>::AssetWithoutPrice.into())
+		}
+
+		fn updated_account_interest_index(
+			market_id: &MarketIndex,
+			debt_owner: &T::AccountId,
+			amount: T::Balance,
+		) -> Result<FixedU128, DispatchError> {
+			let market_index =
+				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let account_interest_index =
+				DebtIndex::<T>::try_get(market_id, debt_owner).map_or(Ratio::zero(), |index| index);
+			let debt_asset_id = DebtMarkets::<T>::get(market_id);
+			let existing_borrow_amount = T::MarketDebtCurrency::balance(debt_asset_id, debt_owner);
+			let amount_to_borrow: u128 = amount.into();
+			let amount_to_borrow = amount_to_borrow
+				.checked_mul(LiftedFixedBalance::accuracy())
+				.ok_or(Error::<T>::Overflow)?;
+			T::MarketDebtCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
+			T::MarketDebtCurrency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
+			let total_borrow_amount = existing_borrow_amount
+				.checked_add(amount_to_borrow)
+				.ok_or(Error::<T>::Overflow)?;
+			let existing_borrow_share =
+				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
+			let new_borrow_share = Percent::from_rational(amount_to_borrow, total_borrow_amount);
+			Ok((market_index * new_borrow_share.into()) +
+				(account_interest_index * existing_borrow_share.into()))
+		}
 	}
 
 	impl<T: Config> Lending for Pallet<T> {
@@ -896,10 +933,8 @@ pub mod pallet {
 				config_input.collateral_factor > 1.into(),
 				Error::<T>::CollateralFactorIsLessOrEqualOne
 			);
-			<T::Oracle as Oracle>::get_price(collateral_asset)
-				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
-			<T::Oracle as Oracle>::get_price(borrow_asset)
-				.map_err(|_| Error::<T>::AssetWithoutPrice)?;
+			Self::get_price(collateral_asset)?;
+			Self::get_price(borrow_asset)?;
 
 			LendingCount::<T>::try_mutate(|MarketIndex(previous_market_index)| {
 				let market_id = {
@@ -973,8 +1008,7 @@ pub mod pallet {
 			debt_owner: &Self::AccountId,
 			amount_to_borrow: BorrowAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			let market =
-				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let market = Self::get_market(market_id)?;
 			let asset_id = T::Vault::asset_id(&market.borrow)?;
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
 			if let Some(time) = latest_borrow_timestamp {
@@ -1004,31 +1038,8 @@ pub mod pallet {
 				Error::<T>::MarketIsClosing
 			);
 
-			let market_index =
-				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-			let account_interest_index =
-				DebtIndex::<T>::try_get(market_id, debt_owner).map_or(Ratio::zero(), |index| index);
-			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			let existing_borrow_amount = T::MarketDebtCurrency::balance(debt_asset_id, debt_owner);
-			let converted_amount_to_borrow: u128 = amount_to_borrow.into();
-			let converted_amount_to_borrow = converted_amount_to_borrow
-				.checked_mul(LiftedFixedBalance::accuracy())
-				.ok_or(Error::<T>::Overflow)?;
-			T::MarketDebtCurrency::mint_into(
-				debt_asset_id,
-				debt_owner,
-				converted_amount_to_borrow,
-			)?;
-			T::MarketDebtCurrency::hold(debt_asset_id, debt_owner, converted_amount_to_borrow)?;
-			let total_borrow_amount = existing_borrow_amount
-				.checked_add(converted_amount_to_borrow)
-				.ok_or(Error::<T>::Overflow)?;
-			let existing_borrow_share =
-				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
-			let new_borrow_share =
-				Percent::from_rational(converted_amount_to_borrow, total_borrow_amount);
-			let new_account_interest_index = (market_index * new_borrow_share.into()) +
-				(account_interest_index * existing_borrow_share.into());
+			let new_account_interest_index =
+				Self::updated_account_interest_index(market_id, debt_owner, amount_to_borrow)?;
 
 			<T as Config>::Currency::transfer(
 				asset_id,
@@ -1057,8 +1068,7 @@ pub mod pallet {
 					Error::<T>::BorrowAndRepayInSameBlockIsNotSupported
 				);
 			}
-			let market =
-				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let market = Self::get_market(market_id)?;
 			if let Some(owed) = Self::borrow_balance_current(market_id, beneficiary)? {
 				let repay_amount = repay_amount.unwrap_or(owed);
 				let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
@@ -1155,8 +1165,7 @@ pub mod pallet {
 		}
 
 		fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
-			let market =
-				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let market = Self::get_market(market_id)?;
 			let borrow_id = T::Vault::asset_id(&market.borrow)?;
 			Ok(<T as Config>::Currency::balance(borrow_id, &Self::account_id(market_id)))
 		}
@@ -1183,12 +1192,10 @@ pub mod pallet {
 			let total_borrows = Self::total_borrows(market_id)?;
 			let total_cash = Self::total_cash(market_id)?;
 			let utilization_ratio = Self::calc_utilization_ratio(&total_cash, &total_borrows)?;
-			let market =
-				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let market = Self::get_market(market_id)?;
 			let delta_time =
 				now.checked_sub(Self::last_block_timestamp()).ok_or(Error::<T>::Underflow)?;
-			let borrow_index =
-				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let borrow_index = Self::get_borrow_index(market_id)?;
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 
 			let (accrued, borrow_index_new) = accrue_interest_internal::<T>(
@@ -1217,8 +1224,7 @@ pub mod pallet {
 			match account_debt {
 				Ok(account_interest_index) => {
 					let principal = T::MarketDebtCurrency::balance_on_hold(debt_asset_id, account);
-					let market_interest_index = BorrowIndex::<T>::try_get(market_id)
-						.map_err(|_| Error::<T>::BorrowIndexDoesNotExist)?;
+					let market_interest_index = Self::get_borrow_index(market_id)?;
 
 					let balance = borrow_from_principal::<T>(
 						((principal / LiftedFixedBalance::accuracy()) as u64).into(),
@@ -1245,10 +1251,9 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 			borrow_amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			let market =
-				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let market = Self::get_market(market_id)?;
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-			let borrow_price = T::Oracle::get_price(borrow_asset)?.0;
+			let borrow_price = Self::get_price(borrow_asset)?.0;
 			Ok(swap_back(borrow_amount.into(), &borrow_price.into(), &market.collateral_factor)?
 				.checked_mul_int(1u64)
 				.ok_or(ArithmeticError::Overflow)?
@@ -1259,8 +1264,7 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
-			let market =
-				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let market = Self::get_market(market_id)?;
 			let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
 				.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero());
 
@@ -1297,8 +1301,7 @@ pub mod pallet {
 			account: &Self::AccountId,
 			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			let market =
-				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let market = Self::get_market(market_id)?;
 			let market_account = Self::account_id(market_id);
 			ensure!(
 				<T as Config>::Currency::can_withdraw(market.collateral, account, amount)
@@ -1335,10 +1338,9 @@ pub mod pallet {
 			account: &Self::AccountId,
 			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			let market =
-				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let market = Self::get_market(market_id)?;
 
-			let (collateral_price, _) = T::Oracle::get_price(market.collateral)?;
+			let collateral_price = Self::get_price(market.collateral)?.0;
 			let collateral_balance: LiftedFixedBalance =
 				AccountCollateral::<T>::try_get(market_id, account)
 					.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero())

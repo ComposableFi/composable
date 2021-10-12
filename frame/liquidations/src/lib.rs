@@ -115,7 +115,6 @@ use codec::{Codec, FullCodec};
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-
 	impl<T: Config> Liquidation for Pallet<T> {
 		type AssetId = T::AssetId;
 
