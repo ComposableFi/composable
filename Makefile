@@ -4,7 +4,7 @@ REPO=composablefi
 SERVICE_NAME=composable
 INSTALL_DIR=docker/
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
-RELEASE_VERSION:=$(shell git fetch -t && git describe --tags $(shell git rev-list --tags --max-count=1))
+RELEASE_VERSION:=$(shell git describe --tags $(shell git rev-list --tags --max-count=1))
 AUTO_UPDATE:=1
 
 
@@ -42,12 +42,12 @@ dev:
 
 containerize:
 	@docker build \
-	--build-arg SERVICE_DIR=${INSTALL_DIR} \
+	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg RUSTC_WRAPPER=--build-arg --build-arg  PROFILE=release \
        	-f ${INSTALL_DIR}/Dockerfile \
-       	-t ${IMAGE_WITH_COMMIT} \
-		-t ${IMAGE_WITH_RELEASE_VERSION} \
-        -t ${IMAGE_WITH_BRANCH} \
         -t ${IMAGE_WITH_LATEST} \
+		-t ${IMAGE_WITH_RELEASE_VERSION} \
+		-t ${IMAGE_WITH_BRANCH} \
+		-t ${IMAGE_WITH_COMMIT} \
 	. 1>/dev/null
 
 push:

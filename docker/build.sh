@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-#set -e
+set -e
 
-pushd .
+# pushd .
 
 # The following line ensure we run from the project root
 PROJECT_ROOT=`git rev-parse --show-toplevel`
