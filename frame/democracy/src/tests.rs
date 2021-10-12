@@ -152,9 +152,9 @@ ord_parameter_types! {
 }
 pub struct OneToFive;
 impl Contains<u64> for OneToFive {
-	fn sorted_members() -> Vec<u64> {
-		vec![1, 2, 3, 4, 5]
-	}
+	// fn sorted_members() -> Vec<u64> {
+	// 	vec![1, 2, 3, 4, 5]
+	// }
 	#[cfg(feature = "runtime-benchmarks")]
 	fn add(_m: &u64) {}
 }
