@@ -176,7 +176,7 @@ benchmarks! {
 		let (borrow_asset_id, collateral_asset_id) = (1u32, 2u32);
 		set_price::<T>(borrow_asset_id.into(), u64::from(borrow_asset_id) * 10);
 		set_price::<T>(collateral_asset_id.into(), u64::from(collateral_asset_id) * 10);
-		let (market_id, _) = create_market::<T>(caller, borrow_asset_id.into(), collateral_asset_id.into());
+		let (market_id, _) = create_market::<T>(caller.clone(), borrow_asset_id.into(), collateral_asset_id.into());
 	}: {
 		Lending::<T>::accrue_interest(&market_id, 6).unwrap()
 	}

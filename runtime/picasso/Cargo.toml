@@ -47,6 +47,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 smallvec = "1.6.1"
 
 # local modules
+assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false }
 crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
