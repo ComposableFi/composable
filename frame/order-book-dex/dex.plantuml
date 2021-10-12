@@ -13,12 +13,20 @@ end box
 
 boundary "Parachain Polkadex" as bp
 
-
 ac -> pd : Create order with white list of satisfying account ids (default is any)
 pd -> pa : Trasfer collateral
 note right
   creates future order is active for several blocks
 end note
+
+' priviliged - burn collateral
+' 2 priveleged - option over people (still need on chain)
+' later on on pribileged - mint (with some prove - may previos mints did good)
+' later -  mint, set order cleaned
+'
+
+' -----
+' not priveleged - should deposit before
 
 
 {block_start} bp --> pd: Get orders with promise to be active for several block
