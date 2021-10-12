@@ -41,7 +41,7 @@ dev:
 	cargo run
 
 containerize:
-	@docker build \
+	docker build \
 	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg RUSTC_WRAPPER= --build-arg  PROFILE=release \
        	-f ${INSTALL_DIR}/Dockerfile \
         -t ${IMAGE_WITH_LATEST} \
