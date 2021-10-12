@@ -134,5 +134,44 @@ pub mod pallet {
 		type Order = Order<
 			T::OrderId,
 		>;
+
+fn post(
+		account_from: &Self::AccountId,
+		asset: Self::AssetId,
+		want: Self::AssetId,
+		source_amount: Self::Balance,
+		source_price: Price<Self::GroupId, Self::Balance>,
+		amm_slippage: Permill,
+	) -> Result<Self::OrderId, DispatchError> {
+        todo!()
+    }
+
+fn patch(order_id: Self::OrderId, price: Price<Self::GroupId, Self::Balance>) -> Result<(), DispatchError> {
+        todo!()
+    }
+
+fn market_sell(
+		account: &Self::AccountId,
+		asset: Self::AssetId,
+		want: Self::AssetId,
+		amount: Self::Balance,
+		amm_slippage: Permill,
+	) -> Result<Self::OrderId, DispatchError> {
+        todo!()
+    }
+
+fn take(
+		account: &Self::AccountId,
+		orders: impl Iterator<Item = Self::OrderId>,
+		up_to: Self::Balance,
+	) -> Result<composable_traits::dex::TakeResult<Self::Balance>, DispatchError> {
+        todo!()
+    }
+
+fn is_order_executed(order_id: &Self::OrderId) -> bool {
+        todo!()
+    }
+
+
 	}
 }

@@ -84,12 +84,11 @@ pub trait Orderbook {
 		amm_slippage: Permill,
 	) -> Result<Self::OrderId, DispatchError>;
 
-	/// buy
-	fn take(
+	/// ask to take order. get not found error if order never existed or was removed. got conflict error if order still on chain but was executed.
+	/// please subscribe to events dispatched or check your balance or check blockchain history to validate your won the order.
+	fn ask(
 		account: &Self::AccountId,
 		orders: impl Iterator<Item = Self::OrderId>,
 		up_to: Self::Balance,
-	) -> Result<TakeResult<Self::Balance>, DispatchError>;
-
-	fn is_order_executed(order_id: &Self::OrderId) -> bool;
+	) -> Result<(), DispatchError>;
 }
