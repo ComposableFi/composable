@@ -32,12 +32,7 @@ mod price_function;
 pub mod pallet {
 
 	use codec::{Codec, Decode, Encode, FullCodec};
-	use composable_traits::{
-		auction::{AuctionState, AuctionStepFunction, DutchAuction},
-		dex::{Orderbook, SimpleExchange},
-		loans::{DurationSeconds, Timestamp, ONE_HOUR},
-		math::{LiftedFixedBalance, SafeArithmetic, WrappingNext},
-	};
+	use composable_traits::{auction::{AuctionState, AuctionStepFunction, DutchAuction}, dex::{Orderbook, Price, SimpleExchange}, loans::{DurationSeconds, Timestamp, ONE_HOUR}, math::{LiftedFixedBalance, SafeArithmetic, WrappingNext}};
 	use frame_support::{
 		ensure,
 		pallet_prelude::{MaybeSerializeDeserialize, ValueQuery},
@@ -112,6 +107,7 @@ pub mod pallet {
 		>;
 		type DexOrderId: FullCodec + Default;
 		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext;
+		type GroupId;
 	}
 
 	#[pallet::event]
@@ -275,8 +271,9 @@ pub mod pallet {
 									parameters.price(total_price, delta_time),
 							}?
 							.checked_mul_int(1u64)
-							.ok_or(ArithmeticError::Overflow)?
-							.into();
+							.ok_or(ArithmeticError::Overflow)?;
+
+							let price = Price::<Self::GroupId, Self::Balance>::new(price);
 
 							let dex_order_intention = <T::Orderbook as Orderbook>::post(
 								&order.account_id,

@@ -7,3 +7,21 @@ pub type DurationSeconds = u64;
 pub type Timestamp = u64;
 
 pub const ONE_HOUR: DurationSeconds = 60 * 60;
+
+
+/// allows for price to favor some group within some period of time
+#[derive(Debug)]
+pub struct PriceStructure<GroupId, Balance> {
+	pub initial_price: Balance,
+	pub preference: Option<(GroupId,DurationSeconds)>,
+}
+
+
+impl<GroupId, Balance> PriceStructure<GroupId, Balance> {
+	pub fn new(initial_price: Balance) -> Self {
+		Self {
+			initial_price,
+			preference : None,
+		}
+	}
+}

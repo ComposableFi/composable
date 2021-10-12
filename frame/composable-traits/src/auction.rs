@@ -1,4 +1,4 @@
-use crate::{dex::{Orderbook, Price}, loans::{DurationSeconds, Timestamp}};
+use crate::{dex::{Orderbook, Price}, loans::{DurationSeconds, PriceStructure, Timestamp}};
 use frame_support::pallet_prelude::*;
 use sp_runtime::Permill;
 
@@ -61,14 +61,6 @@ pub struct StairstepExponentialDecrease {
 	pub cut: Permill,
 }
 
-#[derive(Debug)]
-pub struct PriceStructure<GroupId, Balance> {
-	pub initial_price: Balance,
-	pub preferred_buyer: GroupId,
-	pub preference_duration: DurationSeconds,
-}
-
-
 /// An object from which we can initiate a dutch auction.
 // see example of it in clip.sol of makerdao
 pub trait DutchAuction {
@@ -78,7 +70,7 @@ pub trait DutchAuction {
 	type AssetId;
 	type Balance;
 	type Order;
-	type GroupId = GroupId;
+	type GroupId;
 
 	/// Transfer the asset from the provided account to the auction account.
 	/// The caller is responsible for checking the price at which the auction executed (not known in
