@@ -41,7 +41,11 @@ pub enum Price<GroupId, Balance> {
 	Any(Balance),
 }
 
-impl<> From<T> for Price
+impl<GroupId, Balance> Price<GroupId, Balance> {
+    pub fn new_any(price: Balance) -> Self {
+        Self::Any(price)
+    }
+}
 
 /// see for examples:
 /// - https://github.com/galacticcouncil/Basilisk-node/blob/master/pallets/exchange/src/lib.rs

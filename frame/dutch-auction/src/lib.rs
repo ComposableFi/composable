@@ -199,6 +199,8 @@ pub mod pallet {
 
 		type Orderbook = T::Orderbook;
 
+		type GroupId = T::GroupId;
+
 		type Order = Order<
 			<<T as Config>::Orderbook as Orderbook>::OrderId,
 			T::AccountId,

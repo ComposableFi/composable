@@ -1,7 +1,4 @@
-use crate::{
-	dex::Orderbook,
-	loans::{DurationSeconds, Timestamp},
-};
+use crate::{dex::{Orderbook, Price}, loans::{DurationSeconds, Timestamp}};
 use frame_support::pallet_prelude::*;
 use sp_runtime::Permill;
 
@@ -64,6 +61,14 @@ pub struct StairstepExponentialDecrease {
 	pub cut: Permill,
 }
 
+#[derive(Debug)]
+pub struct PriceStructure<GroupId, Balance> {
+	pub initial_price: Balance,
+	pub preferred_buyer: GroupId,
+	pub preference_duration: DurationSeconds,
+}
+
+
 /// An object from which we can initiate a dutch auction.
 // see example of it in clip.sol of makerdao
 pub trait DutchAuction {
@@ -73,6 +78,7 @@ pub trait DutchAuction {
 	type AssetId;
 	type Balance;
 	type Order;
+	type GroupId = GroupId;
 
 	/// Transfer the asset from the provided account to the auction account.
 	/// The caller is responsible for checking the price at which the auction executed (not known in
@@ -86,7 +92,7 @@ pub trait DutchAuction {
 	/// * `source_asset_id`: the asset we are interested to trade for `target_asset_id`.
 	/// * `target_account`: the beneficiary of the order.
 	/// * `total_amount`: the amount of `source_asset_id`.
-	/// * `initial_price`: the initial price for `total_amount`.
+	/// * `price_structure`: the initial price for `total_amount` and some rules.
 	#[allow(clippy::too_many_arguments)]
 	fn start(
 		account_id: &Self::AccountId,
@@ -95,7 +101,7 @@ pub trait DutchAuction {
 		target_asset_id: Self::AssetId,
 		target_account: &Self::AccountId,
 		total_amount: Self::Balance,
-		initial_price: Self::Balance,
+		price_structure: PriceStructure<Self::GroupId, Self::Balance>,
 		function: AuctionStepFunction,
 	) -> Result<Self::OrderId, DispatchError>;
 
