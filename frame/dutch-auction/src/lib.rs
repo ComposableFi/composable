@@ -28,11 +28,7 @@ mod price_function;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, Decode, Encode, FullCodec};
-	use composable_traits::{auction::{AuctionState, AuctionStepFunction, DutchAuction},
-	 dex::{Orderbook, Price, SimpleExchange}, loans::{DurationSeconds, Timestamp, ONE_HOUR},
-	 math::{LiftedFixedBalance, SafeArithmetic, WrappingNext},
-	loans::PriceStructure,
-	};
+	use composable_traits::{auction::{AuctionState, AuctionStepFunction, DutchAuction}, dex::{Orderbook, Price, SimpleExchange}, loans::{DeFiComposableConfig, DurationSeconds, ONE_HOUR, Timestamp}, loans::PriceStructure, math::{LiftedFixedBalance, SafeArithmetic, WrappingNext}};
 	use frame_support::{
 		ensure,
 		pallet_prelude::{MaybeSerializeDeserialize, ValueQuery},
@@ -59,40 +55,6 @@ pub mod pallet {
 	use sp_std::{fmt::Debug, vec::Vec};
 
 	use crate::price_function::AuctionTimeCurveModel;
-
-	pub trait DeFiComposableConfig: frame_system::Config {
-		// what.
-		type AssetId: FullCodec
-			+ Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ From<u128>
-			+ Default;
-
-		type Balance: Default
-			+ Parameter
-			+ Codec
-			+ Copy
-			+ Ord
-			+ CheckedAdd
-			+ CheckedSub
-			+ CheckedMul
-			+ CheckedSub
-			+ AtLeast32BitUnsigned
-			+ From<u64> // at least 64 bit
-			+ Zero
-			+ FixedPointOperand
-			+ Into<LiftedFixedBalance> // integer part not more than bits in this
-			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
-			  // bit
-
-		/// bank. vault owned - can transfer, cannot mint
-		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			// used to check balances before any storage updates allowing acting without rollback
-			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
-	}
 
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]

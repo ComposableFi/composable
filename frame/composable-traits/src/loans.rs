@@ -1,5 +1,9 @@
 //! shared types across lending/liquidation/auctions pallets
-use codec::{Codec, Encode, Decode};
+use codec::{Codec, Decode, Encode, FullCodec};
+use frame_support::{Parameter, pallet_prelude::MaybeSerializeDeserialize, traits::fungibles::{Inspect, Mutate, Transfer}};
+use sp_runtime::{FixedPointOperand, traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero}};
+
+use crate::math::LiftedFixedBalance;
 
 /// `std::time::Duration` is not used because it is to precise with 128 bits and microseconds.
 pub type DurationSeconds = u64;
@@ -25,4 +29,39 @@ impl<GroupId, Balance> PriceStructure<GroupId, Balance> {
 			preference : None,
 		}
 	}
+}
+
+
+pub trait DeFiComposableConfig: frame_system::Config {
+	// what.
+	type AssetId: FullCodec
+		+ Eq
+		+ PartialEq
+		+ Copy
+		+ MaybeSerializeDeserialize
+		+ From<u128>
+		+ Default;
+
+	type Balance: Default
+		+ Parameter
+		+ Codec
+		+ Copy
+		+ Ord
+		+ CheckedAdd
+		+ CheckedSub
+		+ CheckedMul
+		+ CheckedSub
+		+ AtLeast32BitUnsigned
+		+ From<u64> // at least 64 bit
+		+ Zero
+		+ FixedPointOperand
+		+ Into<LiftedFixedBalance> // integer part not more than bits in this
+		+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
+		  // bit
+
+	/// bank. vault owned - can transfer, cannot mint
+	type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+		+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+		// used to check balances before any storage updates allowing acting without rollback
+		+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
 }
