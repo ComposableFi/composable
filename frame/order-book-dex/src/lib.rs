@@ -17,23 +17,19 @@
 	unused_parens,
 	while_true,
 	trivial_casts,
-	trivial_numeric_casts)]
+	trivial_numeric_casts
+)]
 #![allow(unused_imports)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
 pub use pallet::*;
 mod mocks;
-mod price_function;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, Decode, Encode, FullCodec};
-	use composable_traits::{auction::{AuctionState, AuctionStepFunction, DutchAuction},
-	 dex::{Orderbook, Price, SimpleExchange}, loans::{DurationSeconds, Timestamp, ONE_HOUR},
-	 math::{LiftedFixedBalance, SafeArithmetic, WrappingNext},
-	loans::PriceStructure,
-	};
+	use composable_traits::{auction::{AuctionState, AuctionStepFunction, DutchAuction}, dex::{Orderbook, Price, SimpleExchange}, loans::{DeFiComposableConfig, DurationSeconds, PriceStructure, Timestamp, ONE_HOUR}, math::{LiftedFixedBalance, SafeArithmetic, WrappingNext}, privilege::InspectPrivilege};
 	use frame_support::{
 		ensure,
 		pallet_prelude::{MaybeSerializeDeserialize, ValueQuery},
@@ -59,8 +55,6 @@ pub mod pallet {
 	};
 	use sp_std::{fmt::Debug, vec::Vec};
 
-	use crate::price_function::AuctionTimeCurveModel;
-
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
 	pub trait Config: DeFiComposableConfig {
@@ -76,17 +70,15 @@ pub mod pallet {
 		type DexOrderId: FullCodec + Default;
 		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext;
 		type GroupId: FullCodec + Clone + Debug + PartialEq + Default;
+		type Privilege : InspectPrivilege;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
-	pub enum Event<T: Config> {
-
-	}
+	pub enum Event<T: Config> {}
 
 	#[pallet::error]
-	pub enum Error<T> {
-	}
+	pub enum Error<T> {}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -98,9 +90,8 @@ pub mod pallet {
 	/// auction can span several dex orders within its lifetime
 	#[derive(Encode, Decode, Default)]
 	pub struct Order<OrderId> {
-
+		pub id: OrderId,
 	}
-
 
 	#[pallet::storage]
 	#[pallet::getter(fn orders)]
@@ -108,9 +99,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		T::OrderId,
-		Order<
-			<<T as Config>::Orderbook as Orderbook>::OrderId,
-		>,
+		Order<<<T as Config>::Orderbook as Orderbook>::OrderId>,
 		ValueQuery,
 	>;
 
@@ -131,47 +120,42 @@ pub mod pallet {
 
 		type GroupId = T::GroupId;
 
-		type Order = Order<
-			T::OrderId,
-		>;
+		type Order = Order<T::OrderId>;
 
-fn post(
-		account_from: &Self::AccountId,
-		asset: Self::AssetId,
-		want: Self::AssetId,
-		source_amount: Self::Balance,
-		source_price: Price<Self::GroupId, Self::Balance>,
-		amm_slippage: Permill,
-	) -> Result<Self::OrderId, DispatchError> {
-        todo!()
-    }
+		fn post(
+			account_from: &Self::AccountId,
+			asset: Self::AssetId,
+			want: Self::AssetId,
+			source_amount: Self::Balance,
+			source_price: Price<Self::GroupId, Self::Balance>,
+			amm_slippage: Permill,
+		) -> Result<Self::OrderId, DispatchError> {
+			todo!()
+		}
 
-fn patch(order_id: Self::OrderId, price: Price<Self::GroupId, Self::Balance>) -> Result<(), DispatchError> {
-        todo!()
-    }
+		fn patch(
+			order_id: Self::OrderId,
+			price: Price<Self::GroupId, Self::Balance>,
+		) -> Result<(), DispatchError> {
+			todo!()
+		}
 
-fn market_sell(
-		account: &Self::AccountId,
-		asset: Self::AssetId,
-		want: Self::AssetId,
-		amount: Self::Balance,
-		amm_slippage: Permill,
-	) -> Result<Self::OrderId, DispatchError> {
-        todo!()
-    }
+		fn market_sell(
+			account: &Self::AccountId,
+			asset: Self::AssetId,
+			want: Self::AssetId,
+			amount: Self::Balance,
+			amm_slippage: Permill,
+		) -> Result<Self::OrderId, DispatchError> {
+			todo!()
+		}
 
-fn take(
-		account: &Self::AccountId,
-		orders: impl Iterator<Item = Self::OrderId>,
-		up_to: Self::Balance,
-	) -> Result<composable_traits::dex::TakeResult<Self::Balance>, DispatchError> {
-        todo!()
-    }
-
-fn is_order_executed(order_id: &Self::OrderId) -> bool {
-        todo!()
-    }
-
-
+		fn ask(
+			account: &Self::AccountId,
+			orders: impl Iterator<Item = Self::OrderId>,
+			up_to: Self::Balance,
+		) -> Result<(), DispatchError> {
+			todo!()
+		}
 	}
 }
