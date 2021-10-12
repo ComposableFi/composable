@@ -77,6 +77,7 @@ pub mod pallet {
 		<T as Config>::VaultId,
 		<T as Config>::AssetId,
 		<T as frame_system::Config>::AccountId,
+		<T as Config>::GroupId,
 	>;
 
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
@@ -155,11 +156,13 @@ pub mod pallet {
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
+			GroupId = Self::GroupId,
 		>;
 
 		type UnixTime: UnixTime;
 		type MaxLendingCount: Get<u32>;
 		type WeightInfo: WeightInfo;
+		type GroupId: FullCodec + Default + PartialEq + Clone + Debug;
 	}
 	#[cfg(feature = "runtime-benchmarks")]
 	pub trait Config: frame_system::Config + pallet_oracle::Config {
@@ -458,6 +461,7 @@ pub mod pallet {
 			collateral_factor: NormalizedCollateralFactor,
 			under_collaterized_warn_percent: Percent,
 			interest_rate_model: InterestRateModel,
+			liquidator: Option<T::GroupId>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let market_config = MarketConfigInput {
@@ -465,6 +469,7 @@ pub mod pallet {
 				manager: who.clone(),
 				collateral_factor,
 				under_collaterized_warn_percent,
+				liquidator,
 			};
 			let (market_id, vault_id) = Self::create(
 				borrow_asset_id,
@@ -604,7 +609,7 @@ pub mod pallet {
 		pub fn create(
 			borrow_asset: <Self as Lending>::AssetId,
 			collateral_asset: <Self as Lending>::AssetId,
-			config_input: MarketConfigInput<<Self as Lending>::AccountId>,
+			config_input: MarketConfigInput<<Self as Lending>::AccountId, T::GroupId>,
 			interest_rate_model: &InterestRateModel,
 		) -> Result<(<Self as Lending>::MarketId, <Self as Lending>::VaultId), DispatchError> {
 			<Self as Lending>::create(
@@ -879,11 +884,12 @@ pub mod pallet {
 		type MarketId = MarketIndex;
 
 		type BlockNumber = T::BlockNumber;
+		type GroupId = T::GroupId;
 
 		fn create(
 			borrow_asset: Self::AssetId,
 			collateral_asset: Self::AssetId,
-			config_input: MarketConfigInput<Self::AccountId>,
+			config_input: MarketConfigInput<Self::AccountId, Self::GroupId>,
 			interest_rate_model: &InterestRateModel,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			ensure!(
@@ -929,6 +935,8 @@ pub mod pallet {
 					collateral_factor: config_input.collateral_factor,
 					interest_rate_model: *interest_rate_model,
 					under_collaterized_warn_percent: config_input.under_collaterized_warn_percent,
+					liquidator : config_input.liquidator,
+
 				};
 
 				let debt_asset_id = T::CurrencyFactory::create()?;

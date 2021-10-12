@@ -15,8 +15,8 @@
 	unused_comparisons,
 	unused_parens,
 	while_true,
- 	trivial_casts,
-	trivial_numeric_casts loans::{DurationSeconds, ONE_HOUR, PriceStructure, Timestamp}n til pallet fully implemented
+	trivial_casts,
+	trivial_numeric_casts)]
 #![allow(unused_imports)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
@@ -27,9 +27,12 @@ mod price_function;
 
 #[frame_support::pallet]
 pub mod pallet {
-
 	use codec::{Codec, Decode, Encode, FullCodec};
-	use composable_traits::{auction::{AuctionState, AuctionStepFunction, DutchAuction}, dex::{Orderbook, Price, SimpleExchange}, loans::{DurationSeconds, Timestamp, ONE_HOUR}, math::{LiftedFixedBalance, SafeArithmetic, WrappingNext}};
+	use composable_traits::{auction::{AuctionState, AuctionStepFunction, DutchAuction},
+	 dex::{Orderbook, Price, SimpleExchange}, loans::{DurationSeconds, Timestamp, ONE_HOUR},
+	 math::{LiftedFixedBalance, SafeArithmetic, WrappingNext},
+	loans::PriceStructure,
+	};
 	use frame_support::{
 		ensure,
 		pallet_prelude::{MaybeSerializeDeserialize, ValueQuery},
@@ -105,7 +108,7 @@ pub mod pallet {
 		>;
 		type DexOrderId: FullCodec + Default;
 		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext;
-		type GroupId;
+		type GroupId: FullCodec + Clone + Debug + PartialEq + Default;
 	}
 
 	#[pallet::event]
@@ -140,7 +143,7 @@ pub mod pallet {
 
 	/// auction can span several dex orders within its lifetime
 	#[derive(Encode, Decode, Default)]
-	pub struct Order<DexOrderId, AccountId, AssetId, Balance> {
+	pub struct Order<DexOrderId, AccountId, AssetId, Balance, GroupId> {
 		/// when auction was created(started)
 		pub started: Timestamp,
 		/// how price decreases with time
@@ -158,10 +161,18 @@ pub mod pallet {
 		/// amount of source currency
 		pub source_total_amount: Balance,
 		/// price of source unit to start auction with.
-		pub source_initial_price: Balance,
+		pub source_initial_price: PriceStructure<GroupId, Balance>,
 		/// auction state
 		pub state: AuctionState<DexOrderId>,
 	}
+
+impl<DexOrderId, AccountId, AssetId, Balance, GroupId> std::ops::Deref for Order<DexOrderId, AccountId, AssetId, Balance, GroupId> {
+    type Target = PriceStructure<GroupId, Balance>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.source_initial_price
+    }
+}
 
 	#[pallet::storage]
 	#[pallet::getter(fn orders)]
@@ -174,6 +185,7 @@ pub mod pallet {
 			T::AccountId,
 			T::AssetId,
 			T::Balance,
+			T::GroupId,
 		>,
 		ValueQuery,
 	>;
@@ -200,6 +212,7 @@ pub mod pallet {
 			T::AccountId,
 			T::AssetId,
 			T::Balance,
+			T::GroupId,
 		>;
 
 		fn start(
@@ -240,7 +253,7 @@ pub mod pallet {
 				target_asset_id,
 				target_account: target_account.clone(),
 				source_total_amount: total_amount,
-				source_initial_price: initial_price,
+				source_initial_price: price,
 				state: AuctionState::AuctionStarted,
 			};
 			Orders::<T>::insert(order_id.clone(), order);

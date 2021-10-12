@@ -8,7 +8,7 @@ pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
 pub type BorrowAmountOf<T> = <T as Lending>::Balance;
 
 #[derive(Encode, Decode, Default)]
-pub struct MarketConfigInput<AccountId>
+pub struct MarketConfigInput<AccountId, GroupId>
 where
 	AccountId: core::cmp::Ord,
 {
@@ -17,6 +17,8 @@ where
 	/// can pause borrow & deposits of assets
 	pub collateral_factor: NormalizedCollateralFactor,
 	pub under_collaterized_warn_percent: Percent,
+	pub liquidator: Option<GroupId>,
+
 }
 
 #[derive(Encode, Decode, Default)]
@@ -27,7 +29,7 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, GroupId> {
 	pub collateral_factor: NormalizedCollateralFactor,
 	pub interest_rate_model: InterestRateModel,
 	pub under_collaterized_warn_percent: Percent,
-	pub liquidator: GroupId,
+	pub liquidator: Option<GroupId>,
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.
@@ -86,7 +88,7 @@ pub trait Lending {
 	fn create(
 		borrow_asset: Self::AssetId,
 		collateral_asset_vault: Self::AssetId,
-		config: MarketConfigInput<Self::AccountId>,
+		config: MarketConfigInput<Self::AccountId, Self::GroupId>,
 		interest_rate_model: &InterestRateModel,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 

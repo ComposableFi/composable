@@ -1,4 +1,5 @@
 //! shared types across lending/liquidation/auctions pallets
+use codec::{Codec, Encode, Decode};
 
 /// `std::time::Duration` is not used because it is to precise with 128 bits and microseconds.
 pub type DurationSeconds = u64;
@@ -10,7 +11,7 @@ pub const ONE_HOUR: DurationSeconds = 60 * 60;
 
 
 /// allows for price to favor some group within some period of time
-#[derive(Debug)]
+#[derive(Debug, Decode, Encode, Default)]
 pub struct PriceStructure<GroupId, Balance> {
 	pub initial_price: Balance,
 	pub preference: Option<(GroupId,DurationSeconds)>,
