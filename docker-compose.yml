@@ -12,9 +12,7 @@ services:
       - type: bind
         source: ./.local
         target: /root/.local
-    command: bash -c "echo 'Hello'"
-    # secrets:
-    #   - node_executor_secret
+    command: cargo build --release
   watchtower:
     image: containrrr/watchtower
     volumes:
