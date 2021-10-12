@@ -6262,7 +6262,7 @@ dependencies = [
  "frame-system",
  "num-traits",
  "orml-tokens",
- "orml-traits",
+ "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=37e42936c41dbdbaf0117c628c9eab0e06044844)",
  "parity-scale-codec",
  "proptest",
  "sp-arithmetic",

@@ -217,6 +217,8 @@ pub mod pallet {
 		type UnixTime: UnixTime;
 		type MaxLendingCount: Get<u32>;
 		type WeightInfo: WeightInfo;
+
+		type GroupId;
 	}
 
 	#[pallet::pallet]
@@ -338,7 +340,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		MarketIndex,
-		MarketConfig<T::VaultId, <T as Config>::AssetId, T::AccountId>,
+		MarketConfig<T::VaultId, <T as Config>::AssetId, T::AccountId, T::GroupId>,
 		ValueQuery,
 	>;
 

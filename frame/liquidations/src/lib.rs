@@ -29,7 +29,9 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use codec::{Codec, FullCodec};
+	use std::slice::GroupByMut;
+
+use codec::{Codec, FullCodec};
 	use composable_traits::{
 		auction::DutchAuction,
 		dex::{Orderbook, SimpleExchange},
@@ -95,7 +97,10 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 			AssetId = Self::AssetId,
 			OrderId = u128,
+			GroupId = Self::GroupId,
 		>;
+
+		type GroupId;
 	}
 
 	#[pallet::event]
@@ -166,10 +171,12 @@ pub mod pallet {
 
 		type LiquidationId = u128;
 
+		type GroupId = T::GroupId;
+
 		fn liquidate(
 			source_account: &Self::AccountId,
 			source_asset_id: Self::AssetId,
-			source_asset_price: Self::Balance,
+			source_asset_price: PriceStructure<Self::GroupId, Self::Balance>,
 			target_asset_id: Self::AssetId,
 			target_account: &Self::AccountId,
 			total_amount: Self::Balance,

@@ -15,11 +15,8 @@
 	unused_comparisons,
 	unused_parens,
 	while_true,
-	trivial_casts,
-	trivial_numeric_casts,
-	unused_extern_crates
-)]
-// TODO: allow until pallet fully implemented
+ 	trivial_casts,
+	trivial_numeric_casts loans::{DurationSeconds, ONE_HOUR, PriceStructure, Timestamp}n til pallet fully implemented
 #![allow(unused_imports)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
@@ -104,6 +101,7 @@ pub mod pallet {
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 			OrderId = Self::DexOrderId,
+			GroupId = Self::GroupId,
 		>;
 		type DexOrderId: FullCodec + Default;
 		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext;
@@ -211,7 +209,7 @@ pub mod pallet {
 			target_asset_id: Self::AssetId,
 			target_account: &Self::AccountId,
 			total_amount: Self::Balance,
-			initial_price: Self::Balance,
+			price: PriceStructure<Self::GroupId, Self::Balance>,
 			function: AuctionStepFunction,
 		) -> Result<Self::OrderId, DispatchError> {
 			// TODO: with remote foreign chain DEX it can pass several blocks before we get on DEX.
@@ -273,7 +271,7 @@ pub mod pallet {
 							.checked_mul_int(1u64)
 							.ok_or(ArithmeticError::Overflow)?;
 
-							let price = Price::<Self::GroupId, Self::Balance>::new(price);
+							let price = Price::<Self::GroupId, Self::Balance>::new_any(price.into());
 
 							let dex_order_intention = <T::Orderbook as Orderbook>::post(
 								&order.account_id,

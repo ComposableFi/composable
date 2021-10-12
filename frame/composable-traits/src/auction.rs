@@ -84,7 +84,7 @@ pub trait DutchAuction {
 	/// * `source_asset_id`: the asset we are interested to trade for `target_asset_id`.
 	/// * `target_account`: the beneficiary of the order.
 	/// * `total_amount`: the amount of `source_asset_id`.
-	/// * `price_structure`: the initial price for `total_amount` and some rules.
+	/// * `price`: the initial price for `total_amount` and some rules.
 	#[allow(clippy::too_many_arguments)]
 	fn start(
 		account_id: &Self::AccountId,
@@ -93,7 +93,7 @@ pub trait DutchAuction {
 		target_asset_id: Self::AssetId,
 		target_account: &Self::AccountId,
 		total_amount: Self::Balance,
-		price_structure: PriceStructure<Self::GroupId, Self::Balance>,
+		price: PriceStructure<Self::GroupId, Self::Balance>,
 		function: AuctionStepFunction,
 	) -> Result<Self::OrderId, DispatchError>;
 
