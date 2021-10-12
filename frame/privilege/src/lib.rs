@@ -41,10 +41,12 @@ pub mod pallet {
 	type AccountIdOf<T> = <T as Config>::AccountId;
 
 	#[pallet::event]
+	#[pallet::metadata(AccountIdOf<T> = "AccountId", T::GroupId = "GroupId")]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		PrivilegeAdded { account_id: AccountIdOf<T>, privilege: Privilege },
 		PrivilegeRemoved { account_id: AccountIdOf<T>, privilege: Privilege },
-		GroupCreated { group_id: T::GroupId },
+		GroupCreated { group_id: T::GroupId, privilege: Privilege },
 		GroupDeleted { group_id: T::GroupId },
 		GroupMemberAdded { group_id: T::GroupId, account_id: AccountIdOf<T> },
 		GroupMemberRemoved { group_id: T::GroupId, account_id: AccountIdOf<T> },
@@ -90,7 +92,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	#[pallet::getter(fn account_privilege)]
+	#[pallet::getter(fn account_privileges)]
 	pub type AccountPrivileges<T: Config> =
 		StorageMap<_, Blake2_128Concat, AccountIdOf<T>, Privilege, ValueQuery>;
 
@@ -126,6 +128,7 @@ pub mod pallet {
 		fn promote(account_id: &Self::AccountId, privilege: Privilege) -> DispatchResult {
 			AccountPrivileges::<T>::try_mutate(account_id, |account_privileges| {
 				account_privileges.insert(privilege);
+				Self::deposit_event(Event::PrivilegeAdded { account_id: *account_id, privilege });
 				Ok(())
 			})
 		}
@@ -136,6 +139,10 @@ pub mod pallet {
 					Err(Error::<T>::NotPrivileged)
 				} else {
 					account_privileges.remove(privilege);
+					Self::deposit_event(Event::PrivilegeRemoved {
+						account_id: *account_id,
+						privilege,
+					});
 					Ok(())
 				}
 			})?;
@@ -183,6 +190,7 @@ pub mod pallet {
 				GroupCount::<T>::mutate(|x| *x += 1);
 				GroupPrivileges::<T>::insert(group_id, privilege);
 				GroupMembers::<T>::insert(group_id, PrivilegedGroupSet(group));
+				Self::deposit_event(Event::GroupCreated { group_id, privilege });
 
 				Ok(group_id)
 			})
@@ -192,6 +200,7 @@ pub mod pallet {
 			GroupCount::<T>::mutate(|x| *x -= 1);
 			GroupPrivileges::<T>::remove(group_id);
 			GroupMembers::<T>::remove(group_id);
+			Self::deposit_event(Event::GroupDeleted { group_id });
 			Ok(())
 		}
 
@@ -215,6 +224,10 @@ pub mod pallet {
 					Ok(_) => Err(Error::<T>::AlreadyGroupMember.into()),
 					Err(i) => {
 						group.insert(i, *account_id);
+						Self::deposit_event(Event::GroupMemberAdded {
+							group_id,
+							account_id: *account_id,
+						});
 						Ok(())
 					},
 				}
@@ -235,6 +248,10 @@ pub mod pallet {
 				let index =
 					group.binary_search(account_id).map_err(|_| Error::<T>::NotGroupMember)?;
 				group.remove(index);
+				Self::deposit_event(Event::GroupMemberRemoved {
+					group_id,
+					account_id: *account_id,
+				});
 				Ok(())
 			})
 		}
