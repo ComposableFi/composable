@@ -20,13 +20,14 @@ where
 }
 
 #[derive(Encode, Decode, Default)]
-pub struct MarketConfig<VaultId, AssetId, AccountId> {
+pub struct MarketConfig<VaultId, AssetId, AccountId, GroupId> {
 	pub manager: AccountId,
 	pub borrow: VaultId,
 	pub collateral: AssetId,
 	pub collateral_factor: NormalizedCollateralFactor,
 	pub interest_rate_model: InterestRateModel,
 	pub under_collaterized_warn_percent: Percent,
+	pub liquidator: GroupId,
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.
@@ -43,6 +44,7 @@ pub trait Lending {
 	type AccountId: core::cmp::Ord + Codec;
 	type Balance;
 	type BlockNumber;
+	type GroupId;
 
 	/// Generates the underlying owned vault that will hold borrowable asset (may be shared with
 	/// specific set of defined collaterals). Creates market for new pair in specified vault. if
@@ -115,7 +117,7 @@ pub trait Lending {
 
 	#[allow(clippy::type_complexity)]
 	fn get_all_markets(
-	) -> Vec<(Self::MarketId, MarketConfig<Self::VaultId, Self::AssetId, Self::AccountId>)>;
+	) -> Vec<(Self::MarketId, MarketConfig<Self::VaultId, Self::AssetId, Self::AccountId, Self::GroupId>)>;
 
 	/// `amount_to_borrow` is the amount of the borrow asset lendings's vault shares the user wants
 	/// to borrow. Normalizes amounts for calculations.

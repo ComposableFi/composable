@@ -1,4 +1,5 @@
 use frame_support::sp_runtime::Perbill;
+use codec::{Codec, Decode, Encode};
 use sp_runtime::{DispatchError, Permill};
 
 /// Describes a simple exchanges which does not allow advanced configurations such as slippage.
@@ -29,7 +30,7 @@ pub struct TakeResult<BALANCE> {
 }
 
 
-#[derive(Encode, Decode, Default)]
+#[derive(Encode, Decode)]
 pub enum Price<GroupId, Balance> {
 	Preferred(GroupId, Balance),
 	Both {
@@ -39,6 +40,8 @@ pub enum Price<GroupId, Balance> {
 	},
 	Any(Balance),
 }
+
+impl<> From<T> for Price
 
 /// see for examples:
 /// - https://github.com/galacticcouncil/Basilisk-node/blob/master/pallets/exchange/src/lib.rs
@@ -64,7 +67,9 @@ pub trait Orderbook {
 		amm_slippage: Permill,
 	) -> Result<Self::OrderId, DispatchError>;
 
-	fn
+	/// updates same existing order with new price
+	/// to avoid overpay, use `take` with `up_to` price
+	fn patch(order_id: Self::OrderId, price: Price<Self::GroupId, Self::Balance>) -> Result<(), DispatchError>;
 
 	/// sell. exchanges specified amount of asset to other at market price.
 	fn market_sell(
