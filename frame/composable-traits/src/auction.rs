@@ -51,7 +51,7 @@ pub enum AuctionExchangeCallback {
 
 #[derive(Default, Decode, Encode, Clone)]
 pub struct LinearDecrease {
-	/// Seconds after auction start when the price reaches zero
+	/// The number of seconds until the price reach zero.
 	pub total: DurationSeconds,
 }
 
@@ -64,7 +64,8 @@ pub struct StairstepExponentialDecrease {
 	pub cut: Permill,
 }
 
-/// see example of it in clip.sol of makerdao
+/// An object from which we can initiate a dutch auction.
+// see example of it in clip.sol of makerdao
 pub trait DutchAuction {
 	type OrderId;
 	type Orderbook: Orderbook;
@@ -73,14 +74,19 @@ pub trait DutchAuction {
 	type Balance;
 	type Order;
 
-	/// Transfers asset from from provided to auction account.
-	/// It is up to caller to check amount he get after auction.
-	/// monitors `OrderBook` for possibility to start selling
-	/// `account_id` who owns order
-	/// `source_account` for specific specific `asset_id` from which `amount` is transferred
-	/// onto auction account.
-	/// `initial_price` for `total_amount`
-	/// `target_account` where to move account after success sell.
+	/// Transfer the asset from the provided account to the auction account.
+	/// The caller is responsible for checking the price at which the auction executed (not known in
+	/// advance of course).
+	///
+	/// Description.
+	///
+	/// * `account_id`: the order owner.
+	/// * `source_account`: the account from which we extract the `amount` of `source_asset_id`
+	///   from.
+	/// * `source_asset_id`: the asset we are interested to trade for `target_asset_id`.
+	/// * `target_account`: the beneficiary of the order.
+	/// * `total_amount`: the amount of `source_asset_id`.
+	/// * `initial_price`: the initial price for `total_amount`.
 	#[allow(clippy::too_many_arguments)]
 	fn start(
 		account_id: &Self::AccountId,
