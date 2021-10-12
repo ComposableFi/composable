@@ -28,6 +28,18 @@ pub struct TakeResult<BALANCE> {
 	pub total_price: BALANCE,
 }
 
+
+#[derive(Encode, Decode, Default)]
+pub enum Price<GroupId, Balance> {
+	Preferred(GroupId, Balance),
+	Both {
+		preferred_id : GroupId,
+		preferred_price: Balance,
+		any_price: Balance,
+	},
+	Any(Balance),
+}
+
 /// see for examples:
 /// - https://github.com/galacticcouncil/Basilisk-node/blob/master/pallets/exchange/src/lib.rs
 /// - https://github.com/Polkadex-Substrate/polkadex-aura-node/blob/master/pallets/polkadex/src/lib.rs
@@ -37,6 +49,7 @@ pub trait Orderbook {
 	type Balance;
 	type AccountId;
 	type OrderId;
+	type GroupId;
 
 	/// sell. exchanges specified amount of asset to other at specific price
 	/// `source_price` price per unit
@@ -47,9 +60,11 @@ pub trait Orderbook {
 		asset: Self::AssetId,
 		want: Self::AssetId,
 		source_amount: Self::Balance,
-		source_price: Self::Balance,
+		source_price: Price<Self::GroupId, Self::Balance>,
 		amm_slippage: Permill,
 	) -> Result<Self::OrderId, DispatchError>;
+
+	fn
 
 	/// sell. exchanges specified amount of asset to other at market price.
 	fn market_sell(

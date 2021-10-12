@@ -49,7 +49,8 @@ impl AuctionTimeCurveModel for LinearDecrease {
 	}
 }
 
-/// returns: top * (cut ^ dur)
+/// returns: initial_price * (cut ^ duration_since_start)
+/// if time step is 1, than can optimize away division if needed
 impl AuctionTimeCurveModel for StairstepExponentialDecrease {
 	fn price(
 		&self,
