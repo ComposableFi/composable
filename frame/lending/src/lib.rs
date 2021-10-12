@@ -71,7 +71,7 @@ pub mod pallet {
 		},
 		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
 	};
-	use sp_std::{fmt::Debug, vec::Vec};
+	use sp_std::{fmt::Debug, vec, vec::Vec};
 
 	type MarketConfiguration<T> = MarketConfig<
 		<T as Config>::VaultId,
@@ -741,7 +741,7 @@ pub mod pallet {
 						.unwrap_or_else(BorrowAmountOf::<Self>::zero);
 				let collateral_price = <T::Oracle as Oracle>::get_price(market.collateral)
 					.map_err(|_| Error::<T>::AssetWithoutPrice)?;
-				let _liquidation_id = T::Liquidation::initiate_liquidation(
+				T::Liquidation::initiate_liquidation(
 					account,
 					market.collateral,
 					collateral_price.0,
@@ -749,7 +749,7 @@ pub mod pallet {
 					&Self::account_id(market_id),
 					borrower_balance_with_interest,
 				)
-				.map_err(|_| Error::<T>::LiquidationFailed);
+				.map_err(|_| Error::<T>::LiquidationFailed)?;
 			}
 			Ok(())
 		}
@@ -943,7 +943,7 @@ pub mod pallet {
 
 		fn get_markets_for_borrow(borrow: Self::VaultId) -> Vec<Self::MarketId> {
 			// allow to be slow until it becomes write transaction (not the case now and then)
-			let mut markets = sp_std::vec![];
+			let mut markets = vec![];
 			for (index, market) in Markets::<T>::iter() {
 				if market.borrow == borrow {
 					markets.push(index);
@@ -978,10 +978,12 @@ pub mod pallet {
 			);
 
 			let account_id = Self::account_id(market_id);
-
-			let can_withdraw =
-				<T as Config>::Currency::reducible_balance(asset_id, &account_id, true);
-			ensure!(can_withdraw >= amount_to_borrow, Error::<T>::NotEnoughBorrowAsset);
+			ensure!(
+				<T as Config>::Currency::can_withdraw(asset_id, &account_id, amount_to_borrow)
+					.into_result()
+					.is_ok(),
+				Error::<T>::NotEnoughBorrowAsset,
+			);
 
 			ensure!(
 				!matches!(
@@ -991,6 +993,32 @@ pub mod pallet {
 				Error::<T>::MarketIsClosing
 			);
 
+			let market_index =
+				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+			let account_interest_index =
+				DebtIndex::<T>::try_get(market_id, debt_owner).map_or(Ratio::zero(), |index| index);
+			let debt_asset_id = DebtMarkets::<T>::get(market_id);
+			let existing_borrow_amount = T::MarketDebtCurrency::balance(debt_asset_id, debt_owner);
+			let converted_amount_to_borrow: u128 = amount_to_borrow.into();
+			let converted_amount_to_borrow = converted_amount_to_borrow
+				.checked_mul(LiftedFixedBalance::accuracy())
+				.ok_or(Error::<T>::Overflow)?;
+			T::MarketDebtCurrency::mint_into(
+				debt_asset_id,
+				debt_owner,
+				converted_amount_to_borrow,
+			)?;
+			T::MarketDebtCurrency::hold(debt_asset_id, debt_owner, converted_amount_to_borrow)?;
+			let total_borrow_amount = existing_borrow_amount
+				.checked_add(converted_amount_to_borrow)
+				.ok_or(Error::<T>::Overflow)?;
+			let existing_borrow_share =
+				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
+			let new_borrow_share =
+				Percent::from_rational(converted_amount_to_borrow, total_borrow_amount);
+			let new_account_interest_index = (market_index * new_borrow_share.into()) +
+				(account_interest_index * existing_borrow_share.into());
+
 			<T as Config>::Currency::transfer(
 				asset_id,
 				&account_id,
@@ -998,27 +1026,6 @@ pub mod pallet {
 				amount_to_borrow,
 				true,
 			)?;
-
-			let market_index =
-				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
-			let account_interest_index =
-				DebtIndex::<T>::try_get(market_id, debt_owner).map_or(Ratio::zero(), |index| index);
-			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			let existing_borrow_amount = T::MarketDebtCurrency::balance(debt_asset_id, debt_owner);
-			let amount_to_borrow: u128 = amount_to_borrow.into();
-			let amount_to_borrow = amount_to_borrow
-				.checked_mul(LiftedFixedBalance::accuracy())
-				.expect("more detailed currency");
-			T::MarketDebtCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
-			T::MarketDebtCurrency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
-			let total_borrow_amount = existing_borrow_amount
-				.checked_add(amount_to_borrow)
-				.ok_or(Error::<T>::Overflow)?;
-			let existing_borrow_share =
-				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
-			let new_borrow_share = Percent::from_rational(amount_to_borrow, total_borrow_amount);
-			let new_account_interest_index = (market_index * new_borrow_share.into()) +
-				(account_interest_index * existing_borrow_share.into());
 			DebtIndex::<T>::insert(market_id, debt_owner, new_account_interest_index);
 			BorrowTimestamp::<T>::insert(market_id, debt_owner, Self::last_block_timestamp());
 
@@ -1032,11 +1039,12 @@ pub mod pallet {
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, beneficiary);
-			if latest_borrow_timestamp.is_none() {
-				return Err(Error::<T>::BorrowDoesNotExist.into())
-			}
-			if latest_borrow_timestamp.unwrap() == Self::last_block_timestamp() {
-				return Err(Error::<T>::BorrowAndRepayInSameBlockIsNotSupported.into())
+			ensure!(latest_borrow_timestamp.is_some(), Error::<T>::BorrowDoesNotExist);
+			if let Some(timestamp) = latest_borrow_timestamp {
+				ensure!(
+					timestamp != Self::last_block_timestamp(),
+					Error::<T>::BorrowAndRepayInSameBlockIsNotSupported
+				);
 			}
 			let market =
 				Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
