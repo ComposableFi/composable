@@ -2,7 +2,6 @@ COMMIT_SHA:=$(shell git rev-parse --short=9 HEAD)
 BRANCH_NAME:=$(shell git rev-parse --abbrev-ref HEAD | tr '/' '-')
 REPO=composablefi
 SERVICE_NAME=composable
-INSTALL_DIR=install/docker
 INSTALL_DIR=docker/
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
 RELEASE_VERSION:=$(shell git fetch -t && git describe --tags $(shell git rev-list --tags --max-count=1))
