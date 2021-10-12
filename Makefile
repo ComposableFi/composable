@@ -41,14 +41,13 @@ dev:
 	cargo run
 
 containerize:
-	docker build \
+	@docker build \
 	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg RUSTC_WRAPPER= --build-arg  PROFILE=release \
        	-f ${INSTALL_DIR}/Dockerfile \
         -t ${IMAGE_WITH_LATEST} \
 		-t ${IMAGE_WITH_RELEASE_VERSION} \
 		-t ${IMAGE_WITH_BRANCH} \
-		-t ${IMAGE_WITH_COMMIT} \
-	. 1>/dev/null
+		-t ${IMAGE_WITH_COMMIT} . 
 
 push:
 	@docker push ${IMAGE_WITH_COMMIT}
@@ -62,7 +61,7 @@ stop:
 install:
 		$(info Run if auto-update is enabled)
 ifeq ($(AUTO_UPDATE),1)
-	docker-compose up 
+	@docker-compose up 
 else
 		$(info Auto-Update disabled, please use docker-run to start this project)
 endif
