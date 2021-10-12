@@ -6207,6 +6207,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-order-book-dex"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "parity-scale-codec",
+ "proptest",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-privilege"
 version = "0.0.1"
 dependencies = [
