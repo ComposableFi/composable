@@ -1315,6 +1315,7 @@ dependencies = [
 name = "composable-traits"
 version = "0.0.1"
 dependencies = [
+ "bitflags",
  "frame-support",
  "parity-scale-codec",
  "plotters",
@@ -6206,17 +6207,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-order-book-dex"
+name = "pallet-privilege"
 version = "0.0.1"
 dependencies = [
+ "bitflags",
  "composable-traits",
  "frame-support",
  "frame-system",
- "num-traits",
- "orml-tokens",
- "orml-traits",
  "parity-scale-codec",
- "proptest",
  "sp-arithmetic",
  "sp-core",
  "sp-io",

@@ -45,7 +45,7 @@ pub mod pallet {
 	use composable_traits::{
 		currency::CurrencyFactory,
 		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
-		liquidation::Liquidate,
+		liquidation::Liquidation,
 		loans::{DurationSeconds, Timestamp},
 		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
@@ -151,11 +151,12 @@ pub mod pallet {
 			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
-		type Liquidation: Liquidate<
+		type Liquidation: Liquidation<
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 		>;
+
 		type UnixTime: UnixTime;
 		type MaxLendingCount: Get<u32>;
 		type WeightInfo: WeightInfo;
@@ -208,7 +209,7 @@ pub mod pallet {
 			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
-		type Liquidation: Liquidate<
+		type Liquidation: Liquidation<
 			AssetId = <Self as Config>::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
@@ -741,7 +742,7 @@ pub mod pallet {
 						.unwrap_or_else(BorrowAmountOf::<Self>::zero);
 				let collateral_price = <T::Oracle as Oracle>::get_price(market.collateral)
 					.map_err(|_| Error::<T>::AssetWithoutPrice)?;
-				T::Liquidation::initiate_liquidation(
+				T::Liquidation::liquidate(
 					account,
 					market.collateral,
 					collateral_price.0,

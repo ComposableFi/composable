@@ -8,5 +8,6 @@ pub mod liquidation;
 pub mod loans;
 pub mod math;
 pub mod oracle;
+pub mod privilege;
 pub mod rate_model;
 pub mod vault;
