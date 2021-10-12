@@ -9,9 +9,6 @@ services:
       - CARGO_HOME=/usr/src/app/.cargo
     volumes:
       - .:/usr/src/app/composable
-      - type: bind
-        source: ./.local
-        target: /root/.local
     command: cargo build --release
   watchtower:
     image: containrrr/watchtower
