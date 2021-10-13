@@ -128,13 +128,6 @@ pub mod pallet {
 		pub state: AuctionState<DexOrderId>,
 	}
 
-impl<DexOrderId, AccountId, AssetId, Balance, GroupId> std::ops::Deref for Order<DexOrderId, AccountId, AssetId, Balance, GroupId> {
-    type Target = PriceStructure<GroupId, Balance>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.source_initial_price
-    }
-}
 
 	#[pallet::storage]
 	#[pallet::getter(fn orders)]

@@ -749,7 +749,7 @@ pub mod pallet {
 				T::Liquidation::liquidate(
 					account,
 					market.collateral,
-					PriceStructure::new_any(collateral_price.0),
+					PriceStructure::new(collateral_price.0),
 					borrow_asset_id,
 					&Self::account_id(market_id),
 					borrower_balance_with_interest,
