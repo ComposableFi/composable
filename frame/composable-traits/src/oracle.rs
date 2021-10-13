@@ -1,4 +1,10 @@
-use frame_support::dispatch::DispatchError;
+use frame_support::{dispatch::DispatchError, pallet_prelude::*};
+
+#[derive(Encode, Decode, Default, Debug, PartialEq)]
+pub struct Price<PriceValue, BlockNumber> {
+	pub price: PriceValue,
+	pub block: BlockNumber,
+}
 
 pub trait Oracle {
 	type AssetId;
@@ -19,5 +25,6 @@ pub trait Oracle {
 	/// price (Base BTC) = 5000000
 	/// price (Vaulted base stock_dilution_rate) = price base * stock_dilution_rate
 	/// ```
-	fn get_price(of: Self::AssetId) -> Result<(Self::Balance, Self::Timestamp), DispatchError>;
+	fn get_price(of: Self::AssetId)
+		-> Result<Price<Self::Balance, Self::Timestamp>, DispatchError>;
 }

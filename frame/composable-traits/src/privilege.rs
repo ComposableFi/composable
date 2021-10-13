@@ -52,10 +52,16 @@ pub trait InspectPrivilegeGroup {
 	type GroupId;
 
 	/// Retrieve the privilege that is held for all the members.
-	/// Implementation should ensute that this privilege is held for all the members.
+	/// Implementation should ensure that this privilege is held for all the members.
 	fn privilege(group_id: Self::GroupId) -> Result<Privilege, DispatchError>;
 
-	/// Retrive a group of privileged accounts.
+	/// `account_id` is part of `group_id` has specific `privilege`
+	fn is_privileged(
+		group_id: Self::GroupId,
+		account_id: Self::AccountId,
+	) -> Result<bool, DispatchError>;
+
+	/// Retrieve a group of privileged accounts.
 	fn members(group_id: Self::GroupId) -> Result<PrivilegedGroupOf<Self>, DispatchError>;
 }
 
