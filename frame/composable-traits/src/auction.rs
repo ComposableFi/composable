@@ -1,4 +1,7 @@
-use crate::{dex::{Orderbook, Price}, loans::{DurationSeconds, PriceStructure, Timestamp}};
+use crate::{
+	dex::Orderbook,
+	loans::{DurationSeconds, PriceStructure, Timestamp},
+};
 use frame_support::pallet_prelude::*;
 use sp_runtime::Permill;
 

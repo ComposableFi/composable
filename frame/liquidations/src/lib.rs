@@ -12,12 +12,12 @@
 	private_in_public,
 	unconditional_recursion,
 	unused_allocation,
-	 unused_comparisons,
+	unused_comparisons,
 	unused_parens,
 	while_true,
- 	trivial_casts,
-	 trivial_numeric_casts,
-	 unused_extern_crates,
+	trivial_casts,
+	trivial_numeric_casts,
+	unused_extern_crates
 )]
 // TODO: allow until pallet fully implemented
 #![allow(unused_imports)]
@@ -29,15 +29,14 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		auction::DutchAuction,
 		dex::{Orderbook, SimpleExchange},
 		lending::Lending,
 		liquidation::Liquidation,
-		math::LiftedFixedBalance,
 		loans::PriceStructure,
+		math::LiftedFixedBalance,
 	};
 	use frame_support::{
 		dispatch::DispatchResult,
@@ -101,7 +100,7 @@ pub mod pallet {
 			GroupId = Self::GroupId,
 		>;
 
-		type GroupId : Default + FullCodec;
+		type GroupId: Default + FullCodec;
 	}
 
 	#[pallet::event]
@@ -117,8 +116,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-	}
+	impl<T: Config> Pallet<T> {}
 
 	impl<T: Config> Liquidation for Pallet<T> {
 		type AssetId = T::AssetId;

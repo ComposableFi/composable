@@ -28,7 +28,13 @@ pub mod mocks;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, Decode, Encode, FullCodec};
-	use composable_traits::{auction::{AuctionState, AuctionStepFunction, DutchAuction}, dex::{Orderbook, Price, SimpleExchange}, loans::{DeFiComposableConfig, DurationSeconds, PriceStructure, Timestamp, ONE_HOUR}, math::{LiftedFixedBalance, SafeArithmetic, WrappingNext}, privilege::InspectPrivilegeGroup};
+	use composable_traits::{
+		auction::{AuctionState, AuctionStepFunction, DutchAuction},
+		dex::{Orderbook, Price, SimpleExchange},
+		loans::{DeFiComposableConfig, DurationSeconds, PriceStructure, Timestamp, ONE_HOUR},
+		math::{LiftedFixedBalance, SafeArithmetic, WrappingNext},
+		privilege::InspectPrivilegeGroup,
+	};
 	use frame_support::{
 		ensure,
 		pallet_prelude::{MaybeSerializeDeserialize, ValueQuery},
@@ -69,7 +75,7 @@ pub mod pallet {
 		type DexOrderId: FullCodec + Default;
 		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext;
 		type GroupId: FullCodec + Clone + Debug + PartialEq + Default;
-		type Privilege : InspectPrivilegeGroup<AccountId = Self::AccountId, GroupId = Self::GroupId>;
+		type Privilege: InspectPrivilegeGroup<AccountId = Self::AccountId, GroupId = Self::GroupId>;
 	}
 
 	#[pallet::event]
@@ -117,7 +123,6 @@ pub mod pallet {
 
 		type GroupId = T::GroupId;
 
-
 		fn patch(
 			order_id: Self::OrderId,
 			price: Price<Self::GroupId, Self::Balance>,
@@ -143,15 +148,16 @@ pub mod pallet {
 			todo!()
 		}
 
-fn post(
-		account_from: &Self::AccountId,
-		asset: Self::AssetId,
-		want: Self::AssetId,
-		source_amount: Self::Balance,
-		source_price: Price<Self::GroupId, Self::Balance>,
-		amm_slippage: Permill,
-	) -> Result<composable_traits::dex::SellOrder<Self::OrderId, Self::AccountId>, DispatchError> {
-        todo!()
-    }
+		fn post(
+			account_from: &Self::AccountId,
+			asset: Self::AssetId,
+			want: Self::AssetId,
+			source_amount: Self::Balance,
+			source_price: Price<Self::GroupId, Self::Balance>,
+			amm_slippage: Permill,
+		) -> Result<composable_traits::dex::SellOrder<Self::OrderId, Self::AccountId>, DispatchError>
+		{
+			todo!()
+		}
 	}
 }

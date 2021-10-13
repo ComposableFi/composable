@@ -16,7 +16,8 @@
 	unused_parens,
 	while_true,
 	trivial_casts,
-	trivial_numeric_casts)]
+	trivial_numeric_casts
+)]
 #![allow(unused_imports)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
@@ -28,7 +29,12 @@ mod price_function;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, Decode, Encode, FullCodec};
-	use composable_traits::{auction::{AuctionState, AuctionStepFunction, DutchAuction}, dex::{Orderbook, Price, SimpleExchange}, loans::{DeFiComposableConfig, DurationSeconds, ONE_HOUR, Timestamp}, loans::PriceStructure, math::{LiftedFixedBalance, SafeArithmetic, WrappingNext}};
+	use composable_traits::{
+		auction::{AuctionState, AuctionStepFunction, DutchAuction},
+		dex::{Orderbook, Price, SimpleExchange},
+		loans::{DeFiComposableConfig, DurationSeconds, PriceStructure, Timestamp, ONE_HOUR},
+		math::{LiftedFixedBalance, SafeArithmetic, WrappingNext},
+	};
 	use frame_support::{
 		ensure,
 		pallet_prelude::{MaybeSerializeDeserialize, ValueQuery},
@@ -128,22 +134,19 @@ pub mod pallet {
 		pub state: AuctionState<DexOrderId>,
 	}
 
+	type OrderIdOf<T> = <<T as Config>::Orderbook as Orderbook>::OrderId;
+
+	type OrderOf<T> = Order<
+		OrderIdOf<T>,
+		<T as frame_system::Config>::AccountId,
+		<T as DeFiComposableConfig>::AssetId,
+		<T as DeFiComposableConfig>::Balance,
+		<T as Config>::GroupId,
+	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn orders)]
-	pub type Orders<T: Config> = StorageMap<
-		_,
-		Twox64Concat,
-		T::OrderId,
-		Order<
-			<<T as Config>::Orderbook as Orderbook>::OrderId,
-			T::AccountId,
-			T::AssetId,
-			T::Balance,
-			T::GroupId,
-		>,
-		ValueQuery,
-	>;
+	pub type Orders<T: Config> = StorageMap<_, Twox64Concat, T::OrderId, OrderOf<T>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn orders_index)]
@@ -162,13 +165,8 @@ pub mod pallet {
 
 		type GroupId = T::GroupId;
 
-		type Order = Order<
-			<<T as Config>::Orderbook as Orderbook>::OrderId,
-			T::AccountId,
-			T::AssetId,
-			T::Balance,
-			T::GroupId,
-		>;
+		#[allow(clippy::type_complexity)]
+		type Order = Order<OrderIdOf<T>, T::AccountId, T::AssetId, T::Balance, T::GroupId>;
 
 		fn start(
 			account_id: &Self::AccountId,
@@ -228,7 +226,8 @@ pub mod pallet {
 							// for final protocol may be will need to transfer currency onto auction
 							// pallet sub account and send dex order with idempotency tracking id final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
 							let delta_time = now - order.started;
-							let price: LiftedFixedBalance = order.source_initial_price.initial_price.into();
+							let price: LiftedFixedBalance =
+								order.source_initial_price.initial_price.into();
 							let total_price = price.safe_mul(&order.source_total_amount.into())?;
 							let price = match order.function {
 								AuctionStepFunction::LinearDecrease(parameters) =>
@@ -239,7 +238,8 @@ pub mod pallet {
 							.checked_mul_int(1u64)
 							.ok_or(ArithmeticError::Overflow)?;
 
-							let price = Price::<Self::GroupId, Self::Balance>::new_any(price.into());
+							let price =
+								Price::<Self::GroupId, Self::Balance>::new_any(price.into());
 
 							let dex_order_intention = <T::Orderbook as Orderbook>::post(
 								&order.account_id,

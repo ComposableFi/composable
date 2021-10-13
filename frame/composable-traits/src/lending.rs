@@ -18,7 +18,6 @@ where
 	pub collateral_factor: NormalizedCollateralFactor,
 	pub under_collaterized_warn_percent: Percent,
 	pub liquidator: Option<GroupId>,
-
 }
 
 #[derive(Encode, Decode, Default)]
@@ -118,8 +117,10 @@ pub trait Lending {
 	fn get_markets_for_borrow(vault: Self::VaultId) -> Vec<Self::MarketId>;
 
 	#[allow(clippy::type_complexity)]
-	fn get_all_markets(
-	) -> Vec<(Self::MarketId, MarketConfig<Self::VaultId, Self::AssetId, Self::AccountId, Self::GroupId>)>;
+	fn get_all_markets() -> Vec<(
+		Self::MarketId,
+		MarketConfig<Self::VaultId, Self::AssetId, Self::AccountId, Self::GroupId>,
+	)>;
 
 	/// `amount_to_borrow` is the amount of the borrow asset lendings's vault shares the user wants
 	/// to borrow. Normalizes amounts for calculations.

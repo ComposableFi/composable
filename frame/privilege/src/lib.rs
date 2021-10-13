@@ -168,11 +168,12 @@ pub mod pallet {
 			GroupMembers::<T>::try_get(group_id).map_err(|_| Error::<T>::GroupNotFound.into())
 		}
 
-fn is_privileged(group_id: Self::GroupId, account_id: Self::AccountId) -> Result<bool, DispatchError> {
-        todo!()
-    }
-
-
+		fn is_privileged(
+			_group_id: Self::GroupId,
+			_account_id: Self::AccountId,
+		) -> Result<bool, DispatchError> {
+			todo!()
+		}
 	}
 
 	impl<T: Config> MutatePrivilegeGroup for Pallet<T> {

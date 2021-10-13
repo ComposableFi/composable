@@ -3,8 +3,8 @@ use sp_runtime::{DispatchError, Permill};
 use crate::{dex::Orderbook, loans::PriceStructure};
 
 /// An object from which we can initiate liquidations from.
-/// Does not cares if liquidation was completed or not, neither can reasonably provide that information.
-/// Off-chain can join relevant ids if needed.
+/// Does not cares if liquidation was completed or not, neither can reasonably provide that
+/// information. Off-chain can join relevant ids if needed.
 pub trait Liquidation {
 	type AssetId;
 	type Balance;
