@@ -30,7 +30,7 @@ pub use pallet::*;
 pub mod pallet {
 
 
-use codec::{Codec, FullCodec};
+	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		auction::DutchAuction,
 		dex::{Orderbook, SimpleExchange},
@@ -70,7 +70,7 @@ use codec::{Codec, FullCodec};
 	pub const PALLET_ID: PalletId = PalletId(*b"Liqudati");
 
 	#[pallet::config]
-	#[pallet::call]
+
 	pub trait Config: frame_system::Config + DeFiComposablePallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Balance: Default
@@ -115,6 +115,10 @@ use codec::{Codec, FullCodec};
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+	}
 
 	impl<T: Config> Liquidation for Pallet<T> {
 		type AssetId = T::AssetId;
