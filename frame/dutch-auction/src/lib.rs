@@ -223,7 +223,7 @@ impl<DexOrderId, AccountId, AssetId, Balance, GroupId> std::ops::Deref for Order
 			Ok(order_id)
 		}
 
-		fn run_auctions(now: Timestamp) -> DispatchResult {
+		fn off_chain_run_auctions(now: Timestamp) -> DispatchResult {
 			// avoid removing during iteration as unsafe
 			let mut removed = Vec::new();
 			for (order_id, order) in Orders::<T>::iter() {
@@ -235,7 +235,7 @@ impl<DexOrderId, AccountId, AssetId, Balance, GroupId> std::ops::Deref for Order
 							// for final protocol may be will need to transfer currency onto auction
 							// pallet sub account and send dex order with idempotency tracking id final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
 							let delta_time = now - order.started;
-							let price: LiftedFixedBalance = order.source_initial_price.into();
+							let price: LiftedFixedBalance = order.source_initial_price.initial_price.into();
 							let total_price = price.safe_mul(&order.source_total_amount.into())?;
 							let price = match order.function {
 								AuctionStepFunction::LinearDecrease(parameters) =>
@@ -260,7 +260,7 @@ impl<DexOrderId, AccountId, AssetId, Balance, GroupId> std::ops::Deref for Order
 							Orders::<T>::mutate(order_id, |order| {
 								// considers updating in place is
 								// safe during iteration
-								order.state = AuctionState::AuctionOnDex(dex_order_intention);
+								order.state = AuctionState::AuctionOnDex(dex_order_intention.id);
 							});
 						}
 					},

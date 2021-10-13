@@ -23,13 +23,10 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-pub use pallet::*;
-mod mocks;
-
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, Decode, Encode, FullCodec};
-	use composable_traits::{auction::{AuctionState, AuctionStepFunction, DutchAuction}, dex::{Orderbook, Price, SimpleExchange}, loans::{DeFiComposableConfig, DurationSeconds, PriceStructure, Timestamp, ONE_HOUR}, math::{LiftedFixedBalance, SafeArithmetic, WrappingNext}, privilege::InspectPrivilege};
+	use composable_traits::{auction::{AuctionState, AuctionStepFunction, DutchAuction}, dex::{Orderbook, Price, SimpleExchange}, loans::{DeFiComposableConfig, DurationSeconds, PriceStructure, Timestamp, ONE_HOUR}, math::{LiftedFixedBalance, SafeArithmetic, WrappingNext}, privilege::InspectPrivilegeGroup};
 	use frame_support::{
 		ensure,
 		pallet_prelude::{MaybeSerializeDeserialize, ValueQuery},
@@ -70,7 +67,7 @@ pub mod pallet {
 		type DexOrderId: FullCodec + Default;
 		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext;
 		type GroupId: FullCodec + Clone + Debug + PartialEq + Default;
-		type Privilege : InspectPrivilege;
+		type Privilege : InspectPrivilegeGroup<AccountId = Self::AccountId, GroupId = Self::GroupId>;
 	}
 
 	#[pallet::event]
@@ -116,22 +113,8 @@ pub mod pallet {
 
 		type OrderId = T::OrderId;
 
-		type Orderbook = T::Orderbook;
-
 		type GroupId = T::GroupId;
 
-		type Order = Order<T::OrderId>;
-
-		fn post(
-			account_from: &Self::AccountId,
-			asset: Self::AssetId,
-			want: Self::AssetId,
-			source_amount: Self::Balance,
-			source_price: Price<Self::GroupId, Self::Balance>,
-			amm_slippage: Permill,
-		) -> Result<Self::OrderId, DispatchError> {
-			todo!()
-		}
 
 		fn patch(
 			order_id: Self::OrderId,
@@ -157,5 +140,16 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			todo!()
 		}
+
+fn post(
+		account_from: &Self::AccountId,
+		asset: Self::AssetId,
+		want: Self::AssetId,
+		source_amount: Self::Balance,
+		source_price: Price<Self::GroupId, Self::Balance>,
+		amm_slippage: Permill,
+	) -> Result<composable_traits::dex::SellOrder<Self::OrderId, Self::AccountId>, DispatchError> {
+        todo!()
+    }
 	}
 }

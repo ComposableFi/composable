@@ -100,7 +100,7 @@ pub trait DutchAuction {
 	/// run existing auctions
 	/// if some auctions completed, transfer amount to target account
 	/// `now` current time.
-	fn run_auctions(now: Timestamp) -> DispatchResult;
+	fn off_chain_run_auctions(now: Timestamp) -> DispatchResult;
 
 	fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order>;
 

@@ -30,6 +30,13 @@ pub struct TakeResult<BALANCE> {
 }
 
 
+pub struct SellOrder<OrderId, AccountId> {
+	pub id: OrderId,
+	/// account holding sell order amount.
+	/// if it becomes empty or non existing, and there was no direct call from seller to cancel order, it means amount was sold
+	pub account: AccountId,
+}
+
 #[derive(Encode, Decode)]
 pub enum Price<GroupId, Balance> {
 	Preferred(GroupId, Balance),
@@ -46,6 +53,7 @@ impl<GroupId, Balance> Price<GroupId, Balance> {
         Self::Any(price)
     }
 }
+
 
 /// see for examples:
 /// - https://github.com/galacticcouncil/Basilisk-node/blob/master/pallets/exchange/src/lib.rs
@@ -69,7 +77,7 @@ pub trait Orderbook {
 		source_amount: Self::Balance,
 		source_price: Price<Self::GroupId, Self::Balance>,
 		amm_slippage: Permill,
-	) -> Result<Self::OrderId, DispatchError>;
+	) -> Result<SellOrder<Self::OrderId, Self::AccountId>, DispatchError>;
 
 	/// updates same existing order with new price
 	/// to avoid overpay, use `take` with `up_to` price

@@ -46,7 +46,7 @@ pub mod pallet {
 		currency::CurrencyFactory,
 		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
 		liquidation::Liquidation,
-		loans::{DurationSeconds, Timestamp},
+		loans::{DurationSeconds, Timestamp, PriceStructure},
 		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
 		rate_model::*,
@@ -749,7 +749,7 @@ pub mod pallet {
 				T::Liquidation::liquidate(
 					account,
 					market.collateral,
-					collateral_price.0,
+					PriceStructure::new_any(collateral_price.0),
 					borrow_asset_id,
 					&Self::account_id(market_id),
 					borrower_balance_with_interest,
