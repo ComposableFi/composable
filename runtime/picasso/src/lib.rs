@@ -12,7 +12,7 @@ use common::{
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
 	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
 };
-use dutch_auction::DeFiComposableConfig;
+use loans::DeFiComposableConfig;
 use liquidations::DeFiComposablePallet;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
@@ -25,7 +25,7 @@ use sp_runtime::{
 	ApplyExtrinsicResult, DispatchError,
 };
 
-use composable_traits::dex::{Orderbook, TakeResult};
+use composable_traits::{dex::{Orderbook, TakeResult}, loans};
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -834,6 +834,7 @@ impl lending::Config for Runtime {
 	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
+	type GroupId = u32;
 }
 
 impl DeFiComposablePallet for Runtime {
@@ -852,36 +853,40 @@ impl Orderbook for MockOrderbook {
 	type Balance = Balance;
 	type AccountId = AccountId;
 	type OrderId = u128;
-	fn post(
-		_account_from: &Self::AccountId,
-		_asset: Self::AssetId,
-		_want: Self::AssetId,
-		_source_amount: Self::Balance,
-		_source_price: Self::Balance,
-		_amm_slippage: Permill,
-	) -> Result<Self::OrderId, DispatchError> {
-		Ok(0)
-	}
-	fn market_sell(
-		_account: &Self::AccountId,
-		_asset: Self::AssetId,
-		_want: Self::AssetId,
-		_amount: Self::Balance,
-		_amm_slippage: Permill,
-	) -> Result<Self::OrderId, DispatchError> {
-		Ok(0)
-	}
-	fn take(
-		_account: &Self::AccountId,
-		_orders: impl Iterator<Item = Self::OrderId>,
-		_up_to: Self::Balance,
-	) -> Result<TakeResult<Self::Balance>, DispatchError> {
-		Ok(TakeResult { amount: 0, total_price: 0 })
-	}
+	type GroupId = u32;
 
-	fn is_order_executed(_order_id: &Self::OrderId) -> bool {
-		false
-	}
+	fn post(
+		account_from: &Self::AccountId,
+		asset: Self::AssetId,
+		want: Self::AssetId,
+		source_amount: Self::Balance,
+		source_price: composable_traits::dex::Price<Self::GroupId, Self::Balance>,
+		amm_slippage: sp_runtime::Permill,
+	) -> Result<composable_traits::dex::SellOrder<Self::OrderId, Self::AccountId>, sp_runtime::DispatchError> {
+        todo!()
+    }
+
+    fn patch(order_id: Self::OrderId, price: composable_traits::dex::Price<Self::GroupId, Self::Balance>) -> Result<(), sp_runtime::DispatchError> {
+        todo!()
+    }
+
+    fn market_sell(
+		account: &Self::AccountId,
+		asset: Self::AssetId,
+		want: Self::AssetId,
+		amount: Self::Balance,
+		amm_slippage: sp_runtime::Permill,
+	) -> Result<Self::OrderId, sp_runtime::DispatchError> {
+        todo!()
+    }
+
+    fn ask(
+		account: &Self::AccountId,
+		orders: impl Iterator<Item = Self::OrderId>,
+		up_to: Self::Balance,
+	) -> Result<(), sp_runtime::DispatchError> {
+        todo!()
+    }
 }
 
 impl dutch_auction::Config for Runtime {
@@ -890,6 +895,7 @@ impl dutch_auction::Config for Runtime {
 	type OrderId = u128;
 	type UnixTime = Timestamp;
 	type Orderbook = MockOrderbook;
+	type GroupId = u32;
 }
 
 impl liquidations::Config for Runtime {
@@ -898,6 +904,7 @@ impl liquidations::Config for Runtime {
 	type UnixTime = Timestamp;
 	type Lending = Lending;
 	type DutchAuction = Auctions;
+	type GroupId = u32;
 }
 
 /// The calls we permit to be executed by extrinsics

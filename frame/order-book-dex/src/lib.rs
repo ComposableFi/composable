@@ -23,6 +23,8 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+pub mod mocks;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, Decode, Encode, FullCodec};

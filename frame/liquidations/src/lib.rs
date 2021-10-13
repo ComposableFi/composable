@@ -70,6 +70,7 @@ use codec::{Codec, FullCodec};
 	pub const PALLET_ID: PalletId = PalletId(*b"Liqudati");
 
 	#[pallet::config]
+	#[pallet::call]
 	pub trait Config: frame_system::Config + DeFiComposablePallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Balance: Default
