@@ -62,14 +62,19 @@ pub mod pallet {
 		},
 		transactional, PalletId,
 	};
-	use frame_system::pallet_prelude::*;
+	use frame_system::{
+		offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},
+		pallet_prelude::*,
+	};
 	use num_traits::{CheckedDiv, SaturatingSub};
+	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
 		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
+		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128,
+		KeyTypeId as CryptoKeyTypeId, Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec, vec::Vec};
 
@@ -102,10 +107,44 @@ pub mod pallet {
 	}
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
+	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"lend");
+	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"lend");
+
+	pub mod crypto {
+		use super::KEY_TYPE;
+		use sp_core::sr25519::Signature as Sr25519Signature;
+		use sp_runtime::{
+			app_crypto::{app_crypto, sr25519},
+			traits::Verify,
+			MultiSignature, MultiSigner,
+		};
+		app_crypto!(sr25519, KEY_TYPE);
+
+		pub struct TestAuthId;
+
+		// implementation for runtime
+		impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
+			type RuntimeAppPublic = Public;
+			type GenericSignature = sp_core::sr25519::Signature;
+			type GenericPublic = sp_core::sr25519::Public;
+		}
+
+		// implementation for mock runtime in test
+		impl
+			frame_system::offchain::AppCrypto<
+				<Sr25519Signature as Verify>::Signer,
+				Sr25519Signature,
+			> for TestAuthId
+		{
+			type RuntimeAppPublic = Public;
+			type GenericSignature = sp_core::sr25519::Signature;
+			type GenericPublic = sp_core::sr25519::Public;
+		}
+	}
 
 	#[pallet::config]
 	#[cfg(not(feature = "runtime-benchmarks"))]
-	pub trait Config: frame_system::Config {
+	pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
 		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
@@ -158,10 +197,13 @@ pub mod pallet {
 		>;
 		type UnixTime: UnixTime;
 		type MaxLendingCount: Get<u32>;
+		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type WeightInfo: WeightInfo;
 	}
 	#[cfg(feature = "runtime-benchmarks")]
-	pub trait Config: frame_system::Config + pallet_oracle::Config {
+	pub trait Config:
+		CreateSignedTransaction<Call<Self>> + frame_system::Config + pallet_oracle::Config
+	{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
 		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter + From<u64>;
@@ -215,6 +257,7 @@ pub mod pallet {
 		>;
 		type UnixTime: UnixTime;
 		type MaxLendingCount: Get<u32>;
+		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type WeightInfo: WeightInfo;
 	}
 
@@ -251,12 +294,34 @@ pub mod pallet {
 
 			weight
 		}
+
 		fn offchain_worker(_block_number: T::BlockNumber) {
+			log::info!("Off-chain worker running");
+			let signer = Signer::<T, <T as Config>::AuthorityId>::all_accounts();
+			if !signer.can_sign() {
+				log::warn!("No signer");
+				return
+			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
-				if Self::liquidate_internal(&market_id, &account).is_ok() {
-					Self::deposit_event(Event::LiquidationInitiated { market_id, account });
-				} else if let Ok(true) = Self::soon_under_collaterized(&market_id, &account) {
-					Self::deposit_event(Event::SoonMayUnderCollaterized { market_id, account });
+				let results = signer.send_signed_transaction(|_account| {
+					// call `liquidate` extrinsic
+					Call::liquidate(market_id, account.clone())
+				});
+
+				for (_acc, res) in &results {
+					match res {
+						Ok(()) => log::info!(
+							"Liquidation succeed, market_id: {:?}, account: {:?}",
+							market_id,
+							account
+						),
+						Err(e) => log::error!(
+							"Liquidation failed, market_id: {:?}, account: {:?}, error: {:?}",
+							market_id,
+							account,
+							e
+						),
+					}
 				}
 			}
 		}
@@ -575,6 +640,7 @@ pub mod pallet {
 			let _sender = ensure_signed(origin)?;
 			// TODO: should this be restricted to certain users?
 			Self::liquidate_internal(&market_id, &borrower)?;
+			Self::deposit_event(Event::LiquidationInitiated { market_id, account: borrower });
 			Ok(().into())
 		}
 	}

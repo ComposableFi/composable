@@ -1,4 +1,4 @@
-use crate as pallet_lending;
+use crate::{self as pallet_lending, *};
 use composable_traits::{
 	currency::DynamicCurrencyId,
 	dex::{Orderbook, TakeResult},
@@ -9,20 +9,23 @@ use frame_support::{
 	traits::{OnFinalize, OnInitialize},
 	PalletId,
 };
+use hex_literal::hex;
+use once_cell::sync::Lazy;
 use orml_traits::parameter_type_with_key;
 use pallet_dutch_auctions::DeFiComposableConfig;
 use pallet_liquidations::DeFiComposablePallet;
 use sp_arithmetic::traits::Zero;
-use sp_core::H256;
+use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
+	testing::{Header, TestXt},
+	traits::{
+		BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify,
+	},
 	ArithmeticError, DispatchError,
 };
 
 pub mod oracle;
 
-pub type AccountId = u128;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 pub type Balance = u128;
@@ -33,9 +36,19 @@ pub type VaultId = u64;
 
 pub const MINIMUM_BALANCE: Balance = 1000;
 
-pub const ALICE: AccountId = 0;
-pub const BOB: AccountId = 1;
-pub const CHARLIE: AccountId = 2;
+pub static ALICE: Lazy<AccountId> = Lazy::new(|| {
+	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000000"))
+});
+pub static BOB: Lazy<AccountId> = Lazy::new(|| {
+	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000001"))
+});
+pub static CHARLIE: Lazy<AccountId> = Lazy::new(|| {
+	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000002"))
+});
+#[allow(dead_code)]
+pub static UNRESERVED: Lazy<AccountId> = Lazy::new(|| {
+	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000003"))
+});
 
 #[derive(
 	PartialOrd,
@@ -298,6 +311,36 @@ impl pallet_liquidations::Config for Test {
 	type DutchAuction = Auction;
 }
 
+pub type Extrinsic = TestXt<Call, ()>;
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+
+impl frame_system::offchain::SigningTypes for Test {
+	type Public = <Signature as Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	type OverarchingCall = Call;
+	type Extrinsic = Extrinsic;
+}
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: Call,
+		_public: <Signature as Verify>::Signer,
+		_account: AccountId,
+		nonce: u64,
+	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+		Some((call, (nonce, ())))
+	}
+}
+
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 }
@@ -315,6 +358,7 @@ impl pallet_lending::Config for Test {
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
+	type AuthorityId = crypto::TestAuthId;
 	type WeightInfo = ();
 }
 
