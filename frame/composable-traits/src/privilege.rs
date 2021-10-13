@@ -56,7 +56,7 @@ pub trait InspectPrivilegeGroup {
 	fn privilege(group_id: Self::GroupId) -> Result<Privilege, DispatchError>;
 
 	/// `account_id` is part of `group_id` has specific `privilege`
-	fn is_privileged(group_id: Self::GroupId, account_id: Self::AccountId, privilege: Privilege) -> Result<bool, DispatchError>;
+	fn is_privileged(group_id: Self::GroupId, account_id: Self::AccountId) -> Result<bool, DispatchError>;
 
 	/// Retrieve a group of privileged accounts.
 	fn members(group_id: Self::GroupId) -> Result<PrivilegedGroupOf<Self>, DispatchError>;
