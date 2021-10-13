@@ -3,7 +3,10 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::Codec;
-	use composable_traits::{oracle::Oracle, vault::Vault};
+	use composable_traits::{
+		oracle::{Oracle, Price},
+		vault::Vault,
+	};
 	use frame_support::pallet_prelude::*;
 	use sp_runtime::{ArithmeticError, FixedPointNumber};
 	use sp_std::fmt::Debug;
@@ -25,7 +28,7 @@ pub mod pallet {
 	pub type BTCValue<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	impl<T: Config> Pallet<T> {
-		pub fn get_price(of: MockCurrencyId) -> Result<(Balance, ()), DispatchError> {
+		pub fn get_price(of: MockCurrencyId) -> Result<Price<Balance, ()>, DispatchError> {
 			<Self as Oracle>::get_price(of)
 		}
 		pub fn set_btc_price(price: u128) {
@@ -38,14 +41,19 @@ pub mod pallet {
 		type Balance = Balance;
 		type Timestamp = ();
 
-		fn get_price(of: Self::AssetId) -> Result<(Self::Balance, Self::Timestamp), DispatchError> {
-			let usd_mul = |k| Self::get_price(MockCurrencyId::USDT).map(|(x, y)| (x * k, y));
+		fn get_price(
+			of: Self::AssetId,
+		) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError> {
+			let usd_mul = |k| {
+				Self::get_price(MockCurrencyId::USDT)
+					.map(|Price { price, block }| Price { price: price * k, block })
+			};
 			match of {
 				/*
 					Ideally we would have all the static currency quoted against USD cents on chain.
 					So that we would be able to derive LP tokens price.
 				*/
-				MockCurrencyId::USDT => Ok((100, ())),
+				MockCurrencyId::USDT => Ok(Price { price: 100, block: () }),
 				MockCurrencyId::PICA => usd_mul(10),
 				MockCurrencyId::BTC => usd_mul(Self::btc_value()),
 				MockCurrencyId::ETH => usd_mul(3000),
@@ -64,12 +72,12 @@ pub mod pallet {
 				x @ MockCurrencyId::LpToken(_) => {
 					let vault = T::Vault::token_vault(x)?;
 					let base = T::Vault::asset_id(&vault)?;
-					let (p, t) = Self::get_price(base)?;
+					let Price { price, block } = Self::get_price(base)?;
 					let rate = T::Vault::stock_dilution_rate(&vault)?;
 					let derived = rate
-						.checked_mul_int(p)
+						.checked_mul_int(price)
 						.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-					Ok((derived, t))
+					Ok(Price { price: derived, block })
 				},
 			}
 		}
