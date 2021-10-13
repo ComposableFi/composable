@@ -96,7 +96,7 @@ mod tests {
 		assert_eq!(price, initial_price);
 		let delta = delta + 360;
 		let price = calc.price(initial_price, delta).unwrap();
-		assert_eq!(price, 100.into());
+		assert_eq!(price, 900.into());
 		let delta = delta + 360 * 8;
 		let price = calc.price(initial_price, delta).unwrap();
 		assert_eq!(price, (1000 - 100 * 9).into());

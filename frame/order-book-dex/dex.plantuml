@@ -13,27 +13,25 @@ end box
 
 boundary "Parachain Polkadex" as bp
 
-ac -> pd : Create order with white list of satisfying account ids (default is any)
-pd -> pa : Trasfer collateral
+bp --> ap : Bridge borrow assets
+ap -> pa : Deposit borrow assets
+...
+
+ac ->  pd : Create order with prices and priviledges
+pd -> pa : Trasfer sell tokens under derived DEX order account
 note right
   creates future order is active for several blocks
 end note
+...
 
-' priviliged - burn collateral
-' 2 priveleged - option over people (still need on chain)
-' later on on pribileged - mint (with some prove - may previos mints did good)
-' later -  mint, set order cleaned
-'
-
-' -----
-' not priveleged - should deposit before
-
-
-{block_start} bp --> pd: Get orders with promise to be active for several block
-bp --> pv: Transfer borrow via bridge
-bp --> pd : Send borrow account
-{block_end}  pd -> pa : Burn collateral
-bp --> bc : Check prove collateral was burnt
-
+bp --> ap : Buy prefered first
+ap -> pd: Swap sell and buy tokens
+pd -> pa: Withdraw sell to buyer account
+bp --> pa: Bridge info about bough token to its chain
+note right
+  - will be decided during mosaic integratiion
+  - risks: too slow (need to run push agent on our chain) or need to much deposit locked to cover big collaterals
+  - for now same flow for prefered and usual - need to deposit, the differene some time preference on order right after it created
+end note
 
 @enduml

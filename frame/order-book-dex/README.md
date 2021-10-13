@@ -4,6 +4,7 @@ The exchange allows placing buy and sell orders at specific price levels, or at 
 
 Here is we design cross chain DEX. It will have interfaces like if it is on chain for pallets, but token swaps managed asynchronously by parachain (bridges). This pallet has only API to be called from bridge callbacks, not calling it.
 
+Our DEX represents SELL side of traditional OB.
 
 ## What it is about?
 
@@ -17,18 +18,19 @@ Exchange, when A burns token x and mints y, and B mints x and burns y, and there
 
 Sell the collateral on the DEX for the best price possible once the collateral passes some price point(collateral to borrow factor). Optimal is return back obtain at least the lent out coin(borrow principal) as return value from DEX.
 
-
 External exchange is a trusted order book based exchange by trusted account id.
 
 Fast it that there are up to few blocks allowed to liquidate.
 
-Because of need to be fast and trusted, we will trust agent to burn amount.
+Can be faster if untrusted, we will trust agent to burn amount.
 
 For untrusted actors, more slow and complex schemas are needed.
 
-Untrusted user must transfer borrow currency and buy collateral. There are [hash time locked swap][1](requires prove) and [reserver transfer via polkadot relay][2]. (they actually trust some third party consensus)
+Untrusted user must transfer borrow currency and buy collateral. There are [hash time locked swap][1](requires prove) and [reserver transfer via polkadot relay][2]. (they actually trust some third party consensus). And bridge some deposit first.
 
 Important - assuming our parachain to be anemic - so it set states and allows  other to read that, not directly send message.
+
+So that proffered account is of same level of trust as usual for now.
 
 ### Links
 
