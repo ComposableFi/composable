@@ -339,8 +339,8 @@ pub mod pallet {
 			})
 		}
 
-		fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order> {
-			todo!()
+		fn get_auction_state(order_id: &Self::OrderId) -> Option<Self::Order> {
+			Orders::<T>::try_get(order_id).ok()
 		}
 	}
 }

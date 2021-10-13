@@ -1218,15 +1218,15 @@ pub mod pallet {
 			let total_borrows = Self::total_borrows(market_id)?;
 			let total_cash = Self::total_cash(market_id)?;
 			let utilization_ratio = Self::calc_utilization_ratio(&total_cash, &total_borrows)?;
-			let market = Self::get_market(market_id)?;
+			let mut market = Self::get_market(market_id)?;
 			let delta_time =
 				now.checked_sub(Self::last_block_timestamp()).ok_or(Error::<T>::Underflow)?;
 			let borrow_index = Self::get_borrow_index(market_id)?;
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 
-			let (accrued, borrow_index_new) = accrue_interest_internal::<T>(
+			let (accrued, borrow_index_new) = accrue_interest_internal::<T, InterestRateModel>(
 				utilization_ratio,
-				&market.interest_rate_model,
+				&mut market.interest_rate_model,
 				borrow_index,
 				delta_time,
 				total_borrows.into(),
@@ -1459,9 +1459,9 @@ pub mod pallet {
 		borrow_balance.safe_mul(borrow_price)?.safe_mul(collateral_factor)
 	}
 
-	pub fn accrue_interest_internal<T: Config>(
+	pub fn accrue_interest_internal<T: Config, I: InterestRate>(
 		utilization_ratio: Percent,
-		interest_rate_model: &InterestRateModel,
+		interest_rate_model: &mut I,
 		borrow_index: Rate,
 		delta_time: DurationSeconds,
 		total_borrows: u128,
