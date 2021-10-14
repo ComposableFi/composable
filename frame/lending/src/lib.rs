@@ -43,7 +43,7 @@ pub mod pallet {
 	use crate::{models::BorrowerData, weights::WeightInfo};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		currency::CurrencyFactory,
+		currency::{CurrencyFactory, PriceableAsset},
 		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
 		liquidation::Liquidation,
 		loans::{DurationSeconds, PriceStructure, Timestamp},
@@ -124,7 +124,8 @@ pub mod pallet {
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ Debug
-			+ Default;
+			+ Default
+			+ PriceableAsset<Balance = Self::Balance>;
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -690,22 +691,21 @@ pub mod pallet {
 			<Self as Lending>::repay_borrow(market_id, from, beneficiary, repay_amount)
 		}
 
-		fn create_borrower_data(
+		pub fn create_borrower_data(
 			market_id: &<Self as Lending>::MarketId,
 			account: &<Self as Lending>::AccountId,
 		) -> Result<BorrowerData, DispatchError> {
-			let collateral_balance = Self::collateral_of_account(market_id, account)?;
 			let market = Self::get_market(market_id)?;
-			let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
-			let collateral_price = Self::get_price(market.collateral)?;
-			let borrow_price = Self::get_price(borrow_asset_id)?;
+			let collateral_balance = Self::collateral_of_account(market_id, account)?;
+			let collateral_balance_value = Self::get_price(market.collateral, collateral_balance)?;
+			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 			let borrower_balance_with_interest = Self::borrow_balance_current(market_id, account)?
 				.unwrap_or_else(BorrowAmountOf::<Self>::zero);
+			let borrow_balance_value =
+				Self::get_price(borrow_asset, borrower_balance_with_interest)?;
 			let borrower = BorrowerData::new(
-				collateral_balance,
-				collateral_price,
-				borrower_balance_with_interest,
-				borrow_price,
+				collateral_balance_value.0,
+				borrow_balance_value.0,
 				market.collateral_factor,
 				market.under_collaterized_warn_percent,
 			);
@@ -738,24 +738,25 @@ pub mod pallet {
 			account: &<Self as Lending>::AccountId,
 		) -> Result<(), DispatchError> {
 			if Self::should_liquidate(market_id, account)? {
-				// must trigger liquidation
 				let market = Self::get_market(market_id)?;
-				let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
-				let borrower_balance_with_interest =
-					Self::borrow_balance_current(market_id, account)?
-						.unwrap_or_else(BorrowAmountOf::<Self>::zero);
-				let collateral_price = Self::get_price(market.collateral)?;
+				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
+				let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
+				let collateral_price =
+					Self::get_price(market.collateral, market.collateral.unit())?;
+				let source_target_account = Self::account_id(market_id);
 				T::Liquidation::liquidate(
-					account,
+					&source_target_account,
 					market.collateral,
 					PriceStructure::new(collateral_price),
 					borrow_asset_id,
-					&Self::account_id(market_id),
+					&source_target_account,
 					borrower_balance_with_interest,
+					collateral_to_liquidate,
 				)
-				.map_err(|_| Error::<T>::LiquidationFailed)?;
+				.map(|_| ())
+			} else {
+				Ok(())
 			}
-			Ok(())
 		}
 
 		pub(crate) fn initialize_block(
@@ -877,8 +878,11 @@ pub mod pallet {
 			BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist.into())
 		}
 
-		fn get_price(asset_id: <T as Config>::AssetId) -> Result<T::Balance, DispatchError> {
-			<T::Oracle as Oracle>::get_price(asset_id)
+		fn get_price(
+			asset_id: <T as Config>::AssetId,
+			amount: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			<T::Oracle as Oracle>::get_price(asset_id, amount)
 				.map(|p| p.price)
 				.map_err(|_| Error::<T>::AssetWithoutPrice.into())
 		}
@@ -1007,8 +1011,8 @@ pub mod pallet {
 				config_input.collateral_factor > 1.into(),
 				Error::<T>::CollateralFactorIsLessOrEqualOne
 			);
-			Self::get_price(collateral_asset)?;
-			Self::get_price(borrow_asset)?;
+			Self::get_price(collateral_asset, collateral_asset.unit())?;
+			Self::get_price(borrow_asset, borrow_asset.unit())?;
 
 			LendingCount::<T>::try_mutate(|MarketIndex(previous_market_index)| {
 				let market_id = {
@@ -1082,23 +1086,28 @@ pub mod pallet {
 			amount_to_borrow: BorrowAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			let market = Self::get_market(market_id)?;
-			let asset_id = T::Vault::asset_id(&market.borrow)?;
-			let market_account = Self::account_id(market_id);
+			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
+			if let Some(time) = latest_borrow_timestamp {
+				if time >= Self::last_block_timestamp() {
+					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into())
+				}
+			}
 
-			Self::can_borrow(
-				market_id,
-				debt_owner,
-				amount_to_borrow,
-				asset_id,
-				market,
-				&market_account,
-			)?;
+			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
+			let borrow_limit_value = Self::get_borrow_limit(market_id, debt_owner)?;
+			let borrow_amount_value = Self::get_price(borrow_asset, amount_to_borrow)?;
+			ensure!(
+				borrow_limit_value >= borrow_amount_value,
+				Error::<T>::NotEnoughCollateralToBorrowAmount
+			);
+
+			let market_account = Self::account_id(market_id);
 
 			let new_account_interest_index =
 				Self::updated_account_interest_index(market_id, debt_owner, amount_to_borrow)?;
 
 			<T as Config>::Currency::transfer(
-				asset_id,
+				borrow_asset,
 				&market_account,
 				debt_owner,
 				amount_to_borrow,
@@ -1290,8 +1299,8 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let market = Self::get_market(market_id)?;
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-			let borrow_price = Self::get_price(borrow_asset)?;
-			Ok(swap_back(borrow_amount.into(), &borrow_price.into(), &market.collateral_factor)?
+			let borrow_amount_value = Self::get_price(borrow_asset, borrow_amount)?.0;
+			Ok(swap_back(borrow_amount_value.into(), &market.collateral_factor)?
 				.checked_mul_int(1u64)
 				.ok_or(ArithmeticError::Overflow)?
 				.into())
@@ -1301,36 +1310,20 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
-			let market = Self::get_market(market_id)?;
 			let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
 				.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero());
 
 			if collateral_balance > T::Balance::zero() {
-				let collateral_price = Self::get_price(market.collateral)?;
-				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-				let borrow_price = Self::get_price(borrow_asset)?;
-				let borrower_balance_with_interest =
-					Self::borrow_balance_current(market_id, account)?
-						.unwrap_or_else(BorrowAmountOf::<Self>::zero);
-
-				let borrower = BorrowerData::new(
-					collateral_balance,
-					collateral_price,
-					borrower_balance_with_interest,
-					borrow_price,
-					market.collateral_factor,
-					market.under_collaterized_warn_percent,
-				);
-
-				return Ok(borrower
+				let borrower = Self::create_borrower_data(market_id, account)?;
+				Ok(borrower
 					.borrow_for_collateral()
 					.map_err(|_| Error::<T>::NotEnoughCollateralToBorrowAmount)?
 					.checked_mul_int(1u64)
 					.ok_or(ArithmeticError::Overflow)?
 					.into())
+			} else {
+				Ok(Self::Balance::zero())
 			}
-
-			Ok(Self::Balance::zero())
 		}
 
 		fn deposit_collateral(
@@ -1377,28 +1370,29 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let market = Self::get_market(market_id)?;
 
-			let collateral_price = Self::get_price(market.collateral)?;
-			let collateral_balance: LiftedFixedBalance =
-				AccountCollateral::<T>::try_get(market_id, account)
-					.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero())
-					.into();
+			let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
+				.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero());
+
+			ensure!(amount <= collateral_balance, Error::<T>::NotEnoughCollateral);
 
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-			let borrow_price = Self::get_price(borrow_asset)?;
 			let borrower_balance_with_interest = Self::borrow_balance_current(market_id, account)?
 				.unwrap_or_else(BorrowAmountOf::<Self>::zero);
+			let borrow_balance_value =
+				Self::get_price(borrow_asset, borrower_balance_with_interest)?.0;
 
-			let borrower = BorrowerData {
-				collateral_balance,
-				collateral_price: collateral_price.into(),
-				borrower_balance_with_interest: borrower_balance_with_interest.into(),
-				borrow_price: borrow_price.into(),
-				collateral_factor: market.collateral_factor,
-				under_collaterized_warn_percent: market.under_collaterized_warn_percent,
-			};
+			let collateral_balance_after_withdrawal_value =
+				Self::get_price(market.collateral, collateral_balance.safe_sub(&amount)?)?.0;
+
+			let borrower_after_withdrawal = BorrowerData::new(
+				collateral_balance_after_withdrawal_value,
+				borrow_balance_value,
+				market.collateral_factor,
+				market.under_collaterized_warn_percent,
+			);
 
 			ensure!(
-				borrower.collateralization_still_valid(amount.into()) == Ok(true),
+				!borrower_after_withdrawal.should_liquidate()?,
 				Error::<T>::NotEnoughCollateral
 			);
 
@@ -1463,11 +1457,10 @@ pub mod pallet {
 	}
 
 	pub fn swap_back(
-		borrow_balance: LiftedFixedBalance,
-		borrow_price: &LiftedFixedBalance,
+		borrow_balance_value: LiftedFixedBalance,
 		collateral_factor: &NormalizedCollateralFactor,
 	) -> Result<LiftedFixedBalance, ArithmeticError> {
-		borrow_balance.safe_mul(borrow_price)?.safe_mul(collateral_factor)
+		borrow_balance_value.safe_mul(collateral_factor)
 	}
 
 	pub fn accrue_interest_internal<T: Config>(

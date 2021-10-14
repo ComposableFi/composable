@@ -11,9 +11,8 @@ pub trait Oracle {
 	type Balance;
 	type Timestamp;
 
-	/// How much `in` currency should one have to get 1 unit  `of` currency
-	/// Error is returned if currency not supported or price information not available.
-	/// `in` currency some well known shared (stable) currency.
+	/// Quote the `amount` of `asset` in USDT cent.
+	/// Error is returned if `asset` not supported or price information not available.
 	/// Implementation ensure that a LP token price can be resolved as long as the base asset price
 	/// is resolvable.
 	///```haskell
@@ -25,6 +24,8 @@ pub trait Oracle {
 	/// price (Base BTC) = 5000000
 	/// price (Vaulted base stock_dilution_rate) = price base * stock_dilution_rate
 	/// ```
-	fn get_price(of: Self::AssetId)
-		-> Result<Price<Self::Balance, Self::Timestamp>, DispatchError>;
+	fn get_price(
+		asset: Self::AssetId,
+		amount: Self::Balance,
+	) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError>;
 }

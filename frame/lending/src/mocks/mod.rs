@@ -1,6 +1,6 @@
 use crate as pallet_lending;
 use composable_traits::{
-	currency::DynamicCurrencyId,
+	currency::{DynamicCurrencyId, PriceableAsset},
 	dex::{Orderbook, TakeResult},
 };
 use frame_support::{
@@ -65,16 +65,21 @@ impl Default for MockCurrencyId {
 	}
 }
 
-impl From<u128> for MockCurrencyId {
-	fn from(id: u128) -> Self {
-		match id {
-			0 => MockCurrencyId::PICA,
-			1 => MockCurrencyId::BTC,
-			2 => MockCurrencyId::ETH,
-			3 => MockCurrencyId::LTC,
-			4 => MockCurrencyId::USDT,
-			5 => MockCurrencyId::LpToken(0),
-			_ => unreachable!(),
+impl PriceableAsset for MockCurrencyId {
+	type Balance = Balance;
+
+	fn unit(&self) -> Self::Balance {
+		10u128.pow(self.smallest_unit_exponent())
+	}
+
+	fn smallest_unit_exponent(&self) -> composable_traits::currency::Exponent {
+		match self {
+			MockCurrencyId::PICA => 0,
+			MockCurrencyId::BTC => 8,
+			MockCurrencyId::ETH => 18,
+			MockCurrencyId::LTC => 8,
+			MockCurrencyId::USDT => 2,
+			MockCurrencyId::LpToken(_) => 0,
 		}
 	}
 }
