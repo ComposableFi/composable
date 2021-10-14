@@ -30,6 +30,7 @@ pub mod pallet {
 		weights::{DispatchClass::Operational, Pays},
 	};
 
+	pub use crate::weights::WeightInfo;
 	use frame_system::{
 		offchain::{
 			AppCrypto, CreateSignedTransaction, SendSignedTransaction, SignedPayload, Signer,
@@ -46,7 +47,6 @@ pub mod pallet {
 		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
-	pub use crate::weights::WeightInfo;
 
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
