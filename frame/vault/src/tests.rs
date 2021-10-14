@@ -2,8 +2,8 @@ use crate::{
 	mocks::{
 		currency_factory::MockCurrencyId,
 		tests::{
-			AccountId, Balance, BlockNumber, ExtBuilder, Origin, Test, Tokens, Vaults,
-			ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, MINIMUM_BALANCE,
+			AccountId, Balance, BlockNumber, ExistentialDeposit, ExtBuilder, Origin, System, Test,
+			Tokens, Vaults, ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, MINIMUM_BALANCE,
 		},
 	},
 	models::VaultInfo,
@@ -80,6 +80,22 @@ fn create_vault_with_share(
 	);
 	assert_ok!(&v);
 	v.expect("unreachable; qed;")
+}
+
+fn create_vault_with_deposit(asset_id: MockCurrencyId, deposit: Balance) -> VaultIndex {
+	let v = Vaults::create(
+		Origin::signed(ALICE),
+		VaultConfig {
+			asset_id,
+			manager: ALICE,
+			reserved: DEFAULT_RESERVE,
+			strategies: [(ALICE, DEFAULT_STRATEGY_SHARE)].iter().cloned().collect(),
+		},
+		deposit,
+	);
+	assert_ok!(&v);
+	v.expect("unreachable; qed;");
+	1
 }
 
 fn create_vault(
@@ -617,6 +633,67 @@ proptest! {
 			Ok(())
 		})?;
 	}
+}
+
+#[test]
+fn test_vault_claim_surcharge_existential() {
+	ExtBuilder::default().build().execute_with(|| {
+		Tokens::mint_into(MockCurrencyId::A, &ALICE, ExistentialDeposit::get() * 3).unwrap();
+		let id = create_vault_with_deposit(MockCurrencyId::A, ExistentialDeposit::get());
+		System::set_block_number(10000000000);
+		Vaults::claim_surcharge(Origin::none(), id, Some(ALICE))
+			.expect("claiming surcharge for existential should always ok");
+	})
+}
+
+#[test]
+fn test_vault_claim_surcharge_rent_excempt() {
+	ExtBuilder::default().build().execute_with(|| {
+		Tokens::mint_into(MockCurrencyId::A, &ALICE, ExistentialDeposit::get() * 3).unwrap();
+		assert_eq!(Tokens::balance(MockCurrencyId::A, &CHARLIE), 0);
+		System::set_block_number(1);
+		let id = create_vault_with_deposit(MockCurrencyId::A, ExistentialDeposit::get() / 2);
+		System::set_block_number(1);
+		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
+			.expect("claiming surcharge for rent should work");
+		assert!(Tokens::balance(MockCurrencyId::A, &CHARLIE) == 0);
+		let vault = Vaults::vault_data(id);
+		assert!(!vault.capabilities.is_tombstoned());
+	})
+}
+
+#[test]
+fn test_vault_claim_surcharge_rent_charge() {
+	ExtBuilder::default().build().execute_with(|| {
+		Tokens::mint_into(MockCurrencyId::A, &ALICE, ExistentialDeposit::get() * 3).unwrap();
+		assert_eq!(Tokens::balance(MockCurrencyId::A, &CHARLIE), 0);
+		System::set_block_number(1);
+		let id = create_vault_with_deposit(MockCurrencyId::A, ExistentialDeposit::get() / 2);
+		let duration = 20;
+		System::set_block_number(duration);
+		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
+			.expect("claiming surcharge for rent should work");
+		assert!(Tokens::balance(MockCurrencyId::A, &CHARLIE) > 0);
+		let vault = Vaults::vault_data(id);
+		assert!(!vault.capabilities.is_tombstoned());
+	})
+}
+
+#[test]
+fn test_vault_claim_surcharge_rent_evict() {
+	ExtBuilder::default().build().execute_with(|| {
+		Tokens::mint_into(MockCurrencyId::A, &ALICE, ExistentialDeposit::get() * 3).unwrap();
+		assert_eq!(Tokens::balance(MockCurrencyId::A, &CHARLIE), 0);
+		System::set_block_number(1);
+		let id = create_vault_with_deposit(MockCurrencyId::A, ExistentialDeposit::get() / 2);
+		let duration = 100000;
+		System::set_block_number(duration);
+		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
+			.expect("claiming surcharge for rent should work");
+		assert!(Tokens::balance(MockCurrencyId::A, &CHARLIE) > 0);
+		let vault = Vaults::vault_data(id);
+		assert!(vault.capabilities.is_tombstoned());
+	})
 }
 
 #[test]

@@ -78,7 +78,7 @@ pub mod pallet {
 			fungibles::{Inspect, Mutate, Transfer},
 			tokens::{fungibles::MutateHold, DepositConsequence},
 		},
-		PalletId,
+		transactional, PalletId,
 	};
 	use frame_system::{
 		ensure_root, ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig,
@@ -93,7 +93,6 @@ pub mod pallet {
 		DispatchError, FixedPointNumber, Perquintill,
 	};
 	use sp_std::fmt::Debug;
-
 	#[allow(missing_docs)]
 	pub type AssetIdOf<T> =
 		<<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
@@ -331,6 +330,7 @@ pub mod pallet {
 		/// The vault has withdrawals halted, see [Capabilities](crate::capabilities::Capability).
 		WithdrawalsHalted,
 		OnlyManagerCanDoThisOperation,
+		InvalidDeletionClaim,
 	}
 
 	#[pallet::call]
@@ -347,25 +347,38 @@ pub mod pallet {
 		///  - When the origin is not signed.
 		///  - When `deposit < CreationDeposit`.
 		///  - Origin has insufficient funds to lock the deposit.
+		#[transactional]
 		#[pallet::weight(10_000)]
 		pub fn create(
 			origin: OriginFor<T>,
 			vault: VaultConfig<AccountIdOf<T>, AssetIdOf<T>>,
-			deposit: BalanceOf<T>,
+			deposit_amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
 
-			ensure!(deposit >= T::CreationDeposit::get(), Error::<T>::InsufficientCreationDeposit);
+			ensure!(
+				deposit_amount >= T::CreationDeposit::get(),
+				Error::<T>::InsufficientCreationDeposit
+			);
 
 			let native_id = T::NativeAssetId::get();
-			T::Currency::hold(native_id, &from, deposit)?;
 
-			let deposit = if deposit > T::ExistentialDeposit::get() {
+			let deposit = if deposit_amount > T::ExistentialDeposit::get() {
 				Deposit::Existential
 			} else {
-				Deposit::Rent { amount: deposit, at: <frame_system::Pallet<T>>::block_number() }
+				Deposit::Rent {
+					amount: deposit_amount,
+					at: <frame_system::Pallet<T>>::block_number(),
+				}
 			};
 			let id = <Self as Vault>::create(deposit, vault)?;
+			T::Currency::transfer(
+				native_id,
+				&from,
+				&Self::vault_account(&id),
+				deposit_amount,
+				true,
+			)?;
 			Self::deposit_event(Event::VaultCreated { id });
 			Ok(().into())
 		}
@@ -383,7 +396,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let origin = origin.into();
 
-			let (signed, _rewarded) = match (origin, address) {
+			let (signed, rewarded) = match (origin, address) {
 				(Ok(frame_system::RawOrigin::Signed(account)), None) => (true, account),
 				(Ok(frame_system::RawOrigin::None), Some(address)) => (false, address),
 				_ => return Err(Error::<T>::InvalidSurchargeClaim.into()),
@@ -393,24 +406,38 @@ pub mod pallet {
 			// capabilities + tombstoning, we'll evaluate having users call this too.
 			ensure!(!signed, Error::<T>::InvalidSurchargeClaim);
 
-			let vault = Vaults::<T>::try_get(dest).map_err(|_| Error::<T>::VaultDoesNotExist)?;
-			let current_block = <frame_system::Pallet<T>>::block_number();
+			Vaults::<T>::try_mutate_exists(dest, |vault| -> DispatchResultWithPostInfo {
+				let mut vault = vault.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
+				let current_block = <frame_system::Pallet<T>>::block_number();
+				let native_id = T::NativeAssetId::get();
 
-			match crate::rent::evaluate_eviction::<T>(current_block, vault.deposit) {
-				Verdict::Exempt => {
-					todo!("do not reward, but charge less weight")
-				},
-				Verdict::Evict { .. } => {
-					// we should also decide if we are going to drop the vault if there are still
-					// assets left in strategies. If some strategy becomes bricked, they will never
-					// report or return a balance. Tombstoned vaults would then effectively take up
-					// storage forever.
-					todo!("clean up all storage associated with the vault, and then reward the caller")
-				},
-				Verdict::Charge { .. } => {
-					todo!("update vault deposit info, charge some of the rent from the `hold`ed balance")
-				},
-			}
+				match crate::rent::evaluate_eviction::<T>(current_block, vault.deposit) {
+					Verdict::Exempt => Ok(().into()),
+					Verdict::Evict {} => {
+						vault.deposit = Deposit::Rent { amount: Zero::zero(), at: current_block };
+						vault.capabilities.set_tombstoned();
+						let account = &Self::vault_account(&dest);
+						let reward = T::Currency::reducible_balance(native_id, account, false);
+						T::Currency::transfer(native_id, account, &rewarded, reward, false)?;
+						Ok(().into())
+					},
+					Verdict::Charge { remaining, payable } => {
+						vault.deposit = Deposit::Rent { amount: remaining, at: current_block };
+						// If this transfer call fails due to the vaults account not being kept
+						// alive, the caller should come back later, and evict the vault, which
+						// empties the entire account. This ensures that the deposit accurately
+						// reflects the account balance of the vault.
+						T::Currency::transfer(
+							native_id,
+							&Self::vault_account(&dest),
+							&rewarded,
+							payable,
+							true,
+						)?;
+						Ok(().into())
+					},
+				}
+			})
 		}
 
 		/// Deposit funds in the vault and receive LP tokens in return.
@@ -571,6 +598,12 @@ pub mod pallet {
 
 				Ok((id, vault_info))
 			})
+		}
+
+		fn vault_account(vault_id: &VaultIndex) -> T::AccountId {
+			// `into_sub_account` should never receive a 0 value, as that is identical to
+			// calling into_account(). Incrementing is a quick fix.
+			T::PalletId::get().into_sub_account(vault_id + 1)
 		}
 
 		/// Computes the sum of all the assets that the vault currently controls.
