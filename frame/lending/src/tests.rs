@@ -355,22 +355,22 @@ fn test_borrow() {
 	new_test_ext().execute_with(|| {
 		let (market, vault) = create_simple_market();
 
-		Oracle::set_btc_price(50_000 * MockCurrencyId::USDT.unit());
+		Oracle::set_btc_price(50_000 * MockCurrencyId::USDT.unit::<Balance>());
 
 		let btc_price = |x| {
-			Oracle::get_price(MockCurrencyId::BTC, x * MockCurrencyId::BTC.unit())
+			Oracle::get_price(MockCurrencyId::BTC, x * MockCurrencyId::BTC.unit::<Balance>())
 				.expect("impossible")
 				.price
 		};
 
-		let collateral_amount = 1_000_000 * MockCurrencyId::USDT.unit();
+		let collateral_amount = 1_000_000 * MockCurrencyId::USDT.unit::<Balance>();
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, collateral_amount));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), collateral_amount);
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, collateral_amount));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 
-		let borrow_asset_deposit = 100 * MockCurrencyId::BTC.unit();
+		let borrow_asset_deposit = 100 * MockCurrencyId::BTC.unit::<Balance>();
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &CHARLIE, borrow_asset_deposit));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), borrow_asset_deposit);
@@ -392,7 +392,7 @@ fn test_borrow() {
 		assert_eq!(Lending::total_cash(&market), Ok(expected_cash));
 
 		// Borrow a single BTC
-		let alice_borrow = MockCurrencyId::BTC.unit();
+		let alice_borrow = MockCurrencyId::BTC.unit::<Balance>();
 		assert_ok!(Lending::borrow_internal(&market, &ALICE, alice_borrow));
 		assert_eq!(Lending::total_cash(&market), Ok(expected_cash - alice_borrow));
 		assert_eq!(Lending::total_borrows(&market), Ok(alice_borrow));
@@ -405,12 +405,16 @@ fn test_borrow() {
 
 		// Interests mean that we cannot borrow the remaining 9 BTCs.
 		assert_noop!(
-			Lending::borrow_internal(&market, &ALICE, 9 * MockCurrencyId::BTC.unit()),
+			Lending::borrow_internal(&market, &ALICE, 9 * MockCurrencyId::BTC.unit::<Balance>()),
 			Error::<Test>::NotEnoughCollateralToBorrowAmount
 		);
 
 		// Borrow less because of interests.
-		assert_ok!(Lending::borrow_internal(&market, &ALICE, 8 * MockCurrencyId::BTC.unit()));
+		assert_ok!(Lending::borrow_internal(
+			&market,
+			&ALICE,
+			8 * MockCurrencyId::BTC.unit::<Balance>()
+		));
 
 		// More than one borrow request in same block is invalid.
 		assert_noop!(
@@ -431,11 +435,15 @@ fn test_borrow() {
 
 		// Try to borrow more than limit
 		assert_noop!(
-			Lending::borrow_internal(&market, &ALICE, 11 * MockCurrencyId::BTC.unit()),
+			Lending::borrow_internal(&market, &ALICE, 11 * MockCurrencyId::BTC.unit::<Balance>()),
 			Error::<Test>::NotEnoughCollateralToBorrowAmount
 		);
 
-		assert_ok!(Lending::borrow_internal(&market, &ALICE, 10 * MockCurrencyId::BTC.unit()));
+		assert_ok!(Lending::borrow_internal(
+			&market,
+			&ALICE,
+			10 * MockCurrencyId::BTC.unit::<Balance>()
+		));
 	});
 }
 
@@ -444,8 +452,8 @@ fn test_vault_market_cannot_withdraw() {
 	new_test_ext().execute_with(|| {
 		let (market, vault_id) = create_simple_market();
 
-		let deposit_usdt = 1_000_000 * MockCurrencyId::USDT.unit();
-		let deposit_btc = 10 * MockCurrencyId::BTC.unit();
+		let deposit_usdt = 1_000_000 * MockCurrencyId::USDT.unit::<Balance>();
+		let deposit_btc = 10 * MockCurrencyId::BTC.unit::<Balance>();
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, deposit_usdt));
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, deposit_btc));
 
@@ -454,7 +462,7 @@ fn test_vault_market_cannot_withdraw() {
 
 		// We don't even wait 1 block, which mean the market couldn't withdraw funds.
 		assert_noop!(
-			Lending::borrow_internal(&market, &ALICE, 1 * MockCurrencyId::BTC.unit()),
+			Lending::borrow_internal(&market, &ALICE, 1 * MockCurrencyId::BTC.unit::<Balance>()),
 			Error::<Test>::NotEnoughBorrowAsset
 		);
 	});
@@ -465,8 +473,8 @@ fn test_vault_market_can_withdraw() {
 	new_test_ext().execute_with(|| {
 		let (market, vault_id) = create_simple_market();
 
-		let deposit_usdt = 1_000_000 * MockCurrencyId::USDT.unit();
-		let deposit_btc = 10 * MockCurrencyId::BTC.unit();
+		let deposit_usdt = 1_000_000 * MockCurrencyId::USDT.unit::<Balance>();
+		let deposit_btc = 10 * MockCurrencyId::BTC.unit::<Balance>();
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, deposit_usdt));
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, deposit_btc));
 
@@ -478,15 +486,19 @@ fn test_vault_market_can_withdraw() {
 		}
 
 		// We waited 1 block, the market should have withdraw the funds
-		assert_ok!(Lending::borrow_internal(&market, &ALICE, 1 * MockCurrencyId::BTC.unit()),);
+		assert_ok!(Lending::borrow_internal(
+			&market,
+			&ALICE,
+			1 * MockCurrencyId::BTC.unit::<Balance>()
+		),);
 	});
 }
 
 #[test]
 fn borrow_repay() {
 	new_test_ext().execute_with(|| {
-		let alice_balance = 1_000_000 * MockCurrencyId::USDT.unit();
-		let bob_balance = 1_000_000 * MockCurrencyId::USDT.unit();
+		let alice_balance = 1_000_000 * MockCurrencyId::USDT.unit::<Balance>();
+		let bob_balance = 1_000_000 * MockCurrencyId::USDT.unit::<Balance>();
 
 		let (market, vault) = create_simple_market();
 
@@ -504,7 +516,7 @@ fn borrow_repay() {
 		assert_ok!(Lending::deposit_collateral_internal(&market, &BOB, bob_balance));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
 
-		let borrow_asset_deposit = 10 * MockCurrencyId::BTC.unit();
+		let borrow_asset_deposit = 10 * MockCurrencyId::BTC.unit::<Balance>();
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &CHARLIE, borrow_asset_deposit));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), borrow_asset_deposit);
@@ -573,9 +585,9 @@ fn test_liquidation() {
 			NormalizedCollateralFactor::saturating_from_rational(2, 1),
 		);
 
-		Oracle::set_btc_price(100 * MockCurrencyId::USDT.unit());
+		Oracle::set_btc_price(100 * MockCurrencyId::USDT.unit::<Balance>());
 
-		let two_btc_amount = 2 * MockCurrencyId::BTC.unit();
+		let two_btc_amount = 2 * MockCurrencyId::BTC.unit::<Balance>();
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, two_btc_amount));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), two_btc_amount);
@@ -606,7 +618,7 @@ fn test_liquidation() {
 		}
 
 		// Collateral going down imply liquidation
-		Oracle::set_btc_price(99 * MockCurrencyId::USDT.unit());
+		Oracle::set_btc_price(99 * MockCurrencyId::USDT.unit::<Balance>());
 
 		assert_ok!(Lending::liquidate_internal(&market, &ALICE));
 	});
@@ -624,10 +636,10 @@ fn test_warn_soon_under_collaterized() {
 		);
 
 		// 1 BTC = 100 USDT
-		Oracle::set_btc_price(100 * MockCurrencyId::USDT.unit());
+		Oracle::set_btc_price(100 * MockCurrencyId::USDT.unit::<Balance>());
 
 		// Deposit 2 BTC
-		let two_btc_amount = 2 * MockCurrencyId::BTC.unit();
+		let two_btc_amount = 2 * MockCurrencyId::BTC.unit::<Balance>();
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, two_btc_amount));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), two_btc_amount);
@@ -659,18 +671,18 @@ fn test_warn_soon_under_collaterized() {
 		*/
 		assert_eq!(
 			Lending::get_borrow_limit(&market, &ALICE),
-			Ok(100 * MockCurrencyId::USDT.unit())
+			Ok(100 * MockCurrencyId::USDT.unit::<Balance>())
 		);
 
 		// Borrow 80 USDT
-		let borrow_amount = 80 * MockCurrencyId::USDT.unit();
+		let borrow_amount = 80 * MockCurrencyId::USDT.unit::<Balance>();
 		assert_ok!(Lending::borrow_internal(&market, &ALICE, borrow_amount));
 
 		for i in 2..10000 {
 			process_block(i);
 		}
 
-		Oracle::set_btc_price(90 * MockCurrencyId::USDT.unit());
+		Oracle::set_btc_price(90 * MockCurrencyId::USDT.unit::<Balance>());
 
 		/*
 			Collateral = 2*90 = 180
@@ -679,7 +691,7 @@ fn test_warn_soon_under_collaterized() {
 		*/
 		assert_eq!(Lending::soon_under_collaterized(&market, &ALICE), Ok(false));
 
-		Oracle::set_btc_price(87 * MockCurrencyId::USDT.unit());
+		Oracle::set_btc_price(87 * MockCurrencyId::USDT.unit::<Balance>());
 
 		/*
 		   Collateral = 2*87 = 174
@@ -821,13 +833,13 @@ proptest! {
 		new_test_ext().execute_with(|| {
 			let (market, _vault) = create_simple_market();
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
-			prop_assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, amount * MockCurrencyId::USDT.unit()));
-			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount * MockCurrencyId::USDT.unit());
+			prop_assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, amount * MockCurrencyId::USDT.unit::<Balance>()));
+			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), amount * MockCurrencyId::USDT.unit::<Balance>());
 
-			prop_assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, amount * MockCurrencyId::USDT.unit()));
+			prop_assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, amount * MockCurrencyId::USDT.unit::<Balance>()));
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 			prop_assert_eq!(
-				Lending::withdraw_collateral_internal(&market, &ALICE, amount * MockCurrencyId::USDT.unit() + 1),
+				Lending::withdraw_collateral_internal(&market, &ALICE, amount * MockCurrencyId::USDT.unit::<Balance>() + 1),
 				Err(Error::<Test>::NotEnoughCollateral.into())
 			);
 

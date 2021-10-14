@@ -12,10 +12,14 @@ use frame_support::{
 
 pub type Exponent = u32;
 
-pub trait PriceableAsset {
-	type Balance;
-	fn unit(&self) -> Self::Balance;
-	fn smallest_unit_exponent(&self) -> Exponent;
+pub trait PriceableAsset
+where
+	Self: Copy,
+{
+	fn unit<T: From<u64>>(&self) -> T {
+		T::from(10u64.pow(self.smallest_unit_exponent()))
+	}
+	fn smallest_unit_exponent(self) -> Exponent;
 }
 
 /* NOTE(hussein-aitlahcen):

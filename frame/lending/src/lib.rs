@@ -125,7 +125,7 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ Debug
 			+ Default
-			+ PriceableAsset<Balance = Self::Balance>;
+			+ PriceableAsset;
 		type Balance: Default
 			+ Parameter
 			+ Codec

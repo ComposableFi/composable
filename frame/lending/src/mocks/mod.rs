@@ -66,13 +66,7 @@ impl Default for MockCurrencyId {
 }
 
 impl PriceableAsset for MockCurrencyId {
-	type Balance = Balance;
-
-	fn unit(&self) -> Self::Balance {
-		10u128.pow(self.smallest_unit_exponent())
-	}
-
-	fn smallest_unit_exponent(&self) -> composable_traits::currency::Exponent {
+	fn smallest_unit_exponent(self) -> composable_traits::currency::Exponent {
 		match self {
 			MockCurrencyId::PICA => 0,
 			MockCurrencyId::BTC => 8,
