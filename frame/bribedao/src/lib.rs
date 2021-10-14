@@ -6,6 +6,7 @@ pub use pallet::*;
 pub mod pallet {
 	use codec::Codec;
 	use composable_traits::bribe::Bribe;
+	use composable_traits::democracy::Democracy;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
@@ -42,6 +43,8 @@ pub mod pallet {
 
 		type Conviction: Parameter;
 
+		type Democracy: Democracy;
+
 		// TODO(oleksii): CurrencyId traits
 		type CurrencyId: Parameter;
 
@@ -74,6 +77,12 @@ pub mod pallet {
 	#[pallet::getter(fn bribe_requests)]
 	pub(super) type BribeRequests<T: Config> =
 		StorageMap<_, Blake2_128Concat, BribeIndex, CreateBribeRequest<T>>;
+
+
+	/// Bribe Status
+	#[pallet::storage]
+	#[pallet::getter(fn bribe_count)]
+	pub(super) type BribeStatus<T: Config> = StorageValue<_, BribeIndex, Status, Active>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -150,7 +159,11 @@ pub mod pallet {
 			);
 			let bribe_request = BribeRequests::<T>::get(request.bribe_index).unwrap();
 
-			todo!("account for bribe progress");
+			todo!("account for bribe progress ");
+			BribeStatus::<T>::insert(todo!(), todo!(), todo!()); // account for bribe progress
+
+
+			T::Democracy::vote(todo!(), todo!(), todo!()); // ""
 			todo!("enact vote through pallet_democracy");
 		}
 	}
