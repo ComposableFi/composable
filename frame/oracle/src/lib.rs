@@ -30,6 +30,7 @@ pub mod pallet {
 		weights::{DispatchClass::Operational, Pays},
 	};
 
+	pub use crate::weights::WeightInfo;
 	use frame_system::{
 		offchain::{
 			AppCrypto, CreateSignedTransaction, SendSignedTransaction, SignedPayload, Signer,
@@ -47,10 +48,10 @@ pub mod pallet {
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
 
-	pub use crate::weights::WeightInfo;
-
-	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orac");
-	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"orac");
+	// Key Id for location of signer key in keystore
+	pub const KEY_ID: [u8; 4] = *b"orac";
+	pub const KEY_TYPE: KeyTypeId = KeyTypeId(KEY_ID);
+	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(KEY_ID);
 
 	pub mod crypto {
 		use super::KEY_TYPE;
@@ -62,9 +63,9 @@ pub mod pallet {
 		};
 		app_crypto!(sr25519, KEY_TYPE);
 
-		pub struct TestAuthId;
+		pub struct BathurstStId;
 		// implemented for ocw-runtime
-		impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
+		impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for BathurstStId {
 			type RuntimeAppPublic = Public;
 			type GenericSignature = sp_core::sr25519::Signature;
 			type GenericPublic = sp_core::sr25519::Public;
@@ -74,7 +75,7 @@ pub mod pallet {
 			frame_system::offchain::AppCrypto<
 				<Sr25519Signature as Verify>::Signer,
 				Sr25519Signature,
-			> for TestAuthId
+			> for BathurstStId
 		{
 			type RuntimeAppPublic = Public;
 			type GenericSignature = sp_core::sr25519::Signature;
@@ -110,14 +111,23 @@ pub mod pallet {
 			+ Into<u128>
 			+ Zero;
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
+		/// The Min stake for an oracle
 		type MinStake: Get<BalanceOf<Self>>;
+		/// The delay to withdraw stake as an oracle
 		type StakeLock: Get<Self::BlockNumber>;
+		/// Blocks until price is considered stale
 		type StalePrice: Get<Self::BlockNumber>;
+		/// Origin to add new price types
 		type AddOracle: EnsureOrigin<Self::Origin>;
+		/// Cost to request a price update
 		type RequestCost: Get<BalanceOf<Self>>;
+		/// Rewards for a correct answer
 		type RewardAmount: Get<BalanceOf<Self>>;
+		/// Slash for an incorrect answer
 		type SlashAmount: Get<BalanceOf<Self>>;
+		/// Upper bound for max answers for a price
 		type MaxAnswerBound: Get<u32>;
+		/// Upper bound for total assets available for the oracle
 		type MaxAssetsCount: Get<u32>;
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
@@ -158,29 +168,35 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn assets_count)]
+	/// Total amount of assets
 	pub type AssetsCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn signer_to_controller)]
+	/// Mapping signing key to controller key
 	pub type SignerToController<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, T::AccountId, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn controller_to_signer)]
+	/// Mapping Controller key to signer key
 	pub type ControllerToSigner<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, T::AccountId, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn declared_withdraws)]
+	/// Tracking withdrawl requests
 	pub type DeclaredWithdraws<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, Withdraw<BalanceOf<T>, T::BlockNumber>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn oracle_stake)]
+	/// Mapping of signing key to stake
 	pub type OracleStake<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, BalanceOf<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn prices)]
+	/// Price for an asset and blocknumber asset was updated at
 	pub type Prices<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -191,6 +207,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn pre_prices)]
+	/// Temporary prices before aggregated
 	pub type PrePrices<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -201,58 +218,93 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn accuracy_threshold)]
+	/// Information about asset, including precision threshold and max/min answers
 	pub type AssetsInfo<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AssetId, AssetInfo<Percent>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn requested)]
+	/// If an asset price has been requested
 	pub type Requested<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, bool, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn request_id)]
+	/// Request Id number
 	pub type RequestedId<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, u128, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::metadata(T::AccountId = "AccountId",  BalanceOf<T> = "Balance", T::BlockNumber = "BlockNumber", Percent = "Percent")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		NewAsset(u128),
+		/// Asset info created or changed. \[asset_id, threshold, min_answers, max_answers\]
 		AssetInfoChange(T::AssetId, Percent, u32, u32),
+		/// A new price was requested. \[requested_by, asset_id\]
 		PriceRequested(T::AccountId, T::AssetId),
-		/// Who added it, the amount added and the total cumulative amount
+		/// Signer was set. \[signer, controller\]
+		SignerSet(T::AccountId, T::AccountId),
+		/// Stake was added. \[added_by, amount_added, total_amount\]
 		StakeAdded(T::AccountId, BalanceOf<T>, BalanceOf<T>),
+		/// Stake removed. \[removed_by, amount, block_number\]
 		StakeRemoved(T::AccountId, BalanceOf<T>, T::BlockNumber),
+		/// Stake reclaimed. \[reclaimed_by, amount\]
 		StakeReclaimed(T::AccountId, BalanceOf<T>),
+		/// Price submitted by oracle. \[oracle_address, asset_id, price\]
 		PriceSubmitted(T::AccountId, T::AssetId, T::PriceValue),
+		/// Oracle slashed. \[oracle_address, asset_id, amount\]
 		UserSlashed(T::AccountId, T::AssetId, BalanceOf<T>),
+		/// Oracle rewarded. \[oracle_address, asset_id, price\]
 		UserRewarded(T::AccountId, T::AssetId, BalanceOf<T>),
+		/// Answer from oracle removed for staleness. \[oracle_address, price\]
 		AnswerPruned(T::AccountId, T::PriceValue),
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
+		/// Unknown
 		Unknown,
+		/// No Permission
 		NoPermission,
+		/// No stake for oracle
 		NoStake,
+		/// Stake is locked try again later
 		StakeLocked,
+		/// Not enough oracle stake for action
 		NotEnoughStake,
+		/// Not Enough Funds to complete action
 		NotEnoughFunds,
+		/// Invalid asset id
 		InvalidAssetId,
+		/// Price already submitted
 		AlreadySubmitted,
+		/// Max prices already reached
 		MaxPrices,
+		/// Price has not been requested
 		PriceNotRequested,
+		/// Signer has not been set
 		UnsetSigner,
+		/// Signer has already been set
 		AlreadySet,
+		/// No controller has been set
 		UnsetController,
+		/// This controller is already in use
 		ControllerUsed,
+		/// This signer is already in use
 		SignerUsed,
+		/// Error avoids a panic
 		AvoidPanic,
+		/// Max answers have been exceeded
 		ExceedMaxAnswers,
+		/// Invalid min answers
 		InvalidMinAnswers,
+		// max answers less than min answers
 		MaxAnswersLessThanMinAnswers,
+		/// Threshold exceeded
 		ExceedThreshold,
+		/// Asset count exceeded
 		ExceedAssetsCount,
+		/// Price not found
 		PriceNotFound,
+		/// Stake exceeded
 		ExceedStake,
 	}
 
@@ -263,7 +315,7 @@ pub mod pallet {
 		}
 
 		fn offchain_worker(_block_number: T::BlockNumber) {
-			log::info!("Hello World from offchain workers!");
+			log::info!("Offchain worker triggered");
 			Self::check_requests();
 		}
 	}
@@ -284,6 +336,14 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Permissioned call to add an asset
+		///
+		/// - `asset_id`: Id for the asset
+		/// - `threshold`: Percent close to mean to be rewarded
+		/// - `min_answers`: Min answers before aggregation
+		/// - `max_answers`: Max answers to aggregate
+		///
+		/// Emits `DepositEvent` event when successful.
 		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
 		pub fn add_asset_and_info(
 			origin: OriginFor<T>,
@@ -313,6 +373,11 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Call to request price, charges a fee
+		///
+		/// - `asset_id`: Id for the asset
+		///
+		/// Emits `PriceRequested` event when successful.
 		#[pallet::weight(T::WeightInfo::request_price())]
 		pub fn request_price(
 			origin: OriginFor<T>,
@@ -324,6 +389,11 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Call for a signer to be set, called from controller, adds stake.
+		///
+		/// - `signer`: signer to tie controller to
+		///
+		/// Emits `SignerSet` and `StakeAdded` events when successful.
 		#[pallet::weight(T::WeightInfo::set_signer())]
 		pub fn set_signer(
 			origin: OriginFor<T>,
@@ -339,11 +409,17 @@ pub mod pallet {
 			Self::do_add_stake(who.clone(), signer.clone(), T::MinStake::get())?;
 
 			ControllerToSigner::<T>::insert(&who, signer.clone());
-			SignerToController::<T>::insert(signer, who);
+			SignerToController::<T>::insert(signer.clone(), who.clone());
 
+			Self::deposit_event(Event::SignerSet(signer, who));
 			Ok(().into())
 		}
 
+		/// call to add more stake from a controller
+		///
+		/// - `stake`: amount to add to stake
+		///
+		/// Emits `StakeAdded` event when successful.
 		#[pallet::weight(T::WeightInfo::add_stake())]
 		pub fn add_stake(origin: OriginFor<T>, stake: BalanceOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -354,12 +430,15 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Call to put in a claim to remove stake, called from controller
+		///
+		/// Emits `StakeRemoved` event when successful.
 		#[pallet::weight(T::WeightInfo::remove_stake())]
 		pub fn remove_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let signer = ControllerToSigner::<T>::get(&who).ok_or(Error::<T>::UnsetSigner)?;
 			let block = frame_system::Pallet::<T>::block_number();
-			let unlock_block = block + T::StakeLock::get(); //TODO check type of add
+			let unlock_block = block + T::StakeLock::get();
 			let stake = Self::oracle_stake(signer.clone()).ok_or(Error::<T>::NoStake)?;
 			let withdrawal = Withdraw { stake, unlock_block };
 			OracleStake::<T>::remove(&signer);
@@ -368,6 +447,9 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Call to reclaim stake after proper time has passed, called from controller
+		///
+		/// Emits `StakeReclaimed` event when successful.
 		#[pallet::weight(T::WeightInfo::reclaim_stake())]
 		pub fn reclaim_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -385,14 +467,20 @@ pub mod pallet {
 			Self::deposit_event(Event::StakeReclaimed(signer, withdrawal.stake));
 			Ok(().into())
 		}
-
+		/// Call to submit a price, gas is returned if all logic gates passed
+		/// Should be called from offchain worker but can be called manually too
+		/// Operational transaction
+		///
+		/// - `price`: price to submit
+		/// - `asset_id`: Id for the asset
+		///
+		/// Emits `PriceSubmitted` event when successful.
 		#[pallet::weight((T::WeightInfo::submit_price(T::MaxAnswerBound::get()), Operational))]
 		pub fn submit_price(
 			origin: OriginFor<T>,
 			price: T::PriceValue,
 			asset_id: T::AssetId,
 		) -> DispatchResultWithPostInfo {
-			log::info!("inside submit {:#?}, {:#?}", asset_id, price);
 			let who = ensure_signed(origin)?;
 			let author_stake = OracleStake::<T>::get(&who).unwrap_or_else(Zero::zero);
 			ensure!(Requested::<T>::get(asset_id), Error::<T>::PriceNotRequested);
@@ -403,7 +491,6 @@ pub mod pallet {
 				block: frame_system::Pallet::<T>::block_number(),
 				who: who.clone(),
 			};
-			log::info!("inside submit 2 {:#?}, {:#?}", set_price, asset_id);
 			PrePrices::<T>::try_mutate(asset_id, |current_prices| -> Result<(), DispatchError> {
 				// There can convert current_prices.len() to u32 safely
 				// because current_prices.len() limited by u32
@@ -459,7 +546,6 @@ pub mod pallet {
 			price: T::PriceValue,
 			asset_id: T::AssetId,
 		) {
-			// TODO only take prices up to max prices
 			for answer in pre_prices {
 				let accuracy: Percent;
 				if answer.price < price {
@@ -486,8 +572,6 @@ pub mod pallet {
 					let controller = SignerToController::<T>::get(&answer.who)
 						.unwrap_or_else(|| answer.who.clone());
 
-					// TODO: since inlflationary, burn a portion of tx fees of the chain to account
-					// for this
 					let _ = T::Currency::deposit_into_existing(&controller, reward_amount);
 					Self::deposit_event(Event::UserRewarded(
 						answer.who.clone(),
@@ -497,7 +581,8 @@ pub mod pallet {
 				}
 			}
 		}
-
+		// This can take an account to pay, therefore another pallet can call this and fund oracle
+		// requests
 		pub fn do_request_price(who: &T::AccountId, asset_id: T::AssetId) -> DispatchResult {
 			ensure!(AssetsInfo::<T>::contains_key(asset_id), Error::<T>::InvalidAssetId);
 			if !Self::requested(asset_id) {
@@ -632,7 +717,6 @@ pub mod pallet {
 
 		pub fn fetch_price_and_send_signed(price_id: &T::AssetId) -> Result<(), &'static str> {
 			let signer = Signer::<T, T::AuthorityId>::all_accounts();
-			log::info!("signer");
 			if !signer.can_sign() {
 				log::info!("no signer");
 				return Err(
@@ -682,12 +766,9 @@ pub mod pallet {
 			// You can also wait idefinitely for the response, however you may still get a timeout
 			// coming from the host machine.
 			let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
-			// Initiate an external HTTP GET request.
-			// This is using high-level wrappers from `sp_runtime`, for the low-level calls that
-			// you can find in `sp_io`. The API is trying to be similar to `reqwest`, but
-			// since we are running in a custom WASM execution environment we can't simply
-			// import the library here.]
 
+			// Check if the node has another endpoint to call if not fall back to localhost:3001
+			// Then build the endpoint
 			let kind = sp_core::offchain::StorageKind::PERSISTENT;
 			let from_local = sp_io::offchain::local_storage_get(kind, b"ocw-url")
 				.unwrap_or_else(|| b"http://localhost:3001/price/".to_vec());
@@ -698,21 +779,15 @@ pub mod pallet {
 			let string_request_id =
 				serde_json::to_string(&request_id).map_err(|_| http::Error::IoError)?;
 			let url = base.to_owned() + &string_id + "/" + &string_request_id;
+
+			// Initiate an external HTTP GET request.
 			let request = http::Request::get(&url);
 
 			log::info!("request incoming {:#?}", request);
 
-			// We set the deadline for sending of the request, note that awaiting response can
-			// have a separate deadline. Next we send the request, before that it's also possible
-			// to alter request headers or stream body content in case of non-GET requests.
+			// set the deadline for sending of the request
 			let pending = request.deadline(deadline).send().map_err(|_| http::Error::IoError)?;
 
-			// The request is already being processed by the host, we are free to do anything
-			// else in the worker (we can send multiple concurrent requests too).
-			// At some point however we probably want to check the response though,
-			// so we can block current thread and wait for it to finish.
-			// Note that since the request is being driven by the host, we don't have to wait
-			// for the request to have it complete, we will just not read the response.
 			let response =
 				pending.try_wait(deadline).map_err(|_| http::Error::DeadlineReached)??;
 			// Let's check the status code before we proceed to reading the response.
@@ -721,9 +796,6 @@ pub mod pallet {
 				return Err(http::Error::Unknown)
 			}
 
-			// Next we want to fully read the response body and collect it to a vector of bytes.
-			// Note that the return object allows you to read the body in chunks as well
-			// with a way to control the deadline.
 			let body = response.body().collect::<Vec<u8>>();
 
 			// Create a str slice from the body.
