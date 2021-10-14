@@ -64,6 +64,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedDiv, SaturatingSub};
+	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
@@ -79,7 +80,7 @@ pub mod pallet {
 		<T as frame_system::Config>::AccountId,
 	>;
 
-	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, TypeInfo)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
 
@@ -123,7 +124,8 @@ pub mod pallet {
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ Debug
-			+ Default;
+			+ Default
+			+ TypeInfo;
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -180,7 +182,8 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ From<u128>
 			+ Debug
-			+ Default;
+			+ Default
+			+ TypeInfo;
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -399,14 +402,8 @@ pub mod pallet {
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	#[pallet::genesis_config]
+	#[derive(Default)]
 	pub struct GenesisConfig {}
-
-	#[cfg(feature = "std")]
-	impl Default for GenesisConfig {
-		fn default() -> Self {
-			Self {}
-		}
-	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {

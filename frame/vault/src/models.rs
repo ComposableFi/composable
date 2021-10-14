@@ -1,8 +1,9 @@
 use crate::Capabilities;
 use composable_traits::vault::Deposit;
 use frame_support::pallet_prelude::*;
+use scale_info::TypeInfo;
 
-#[derive(Copy, Clone, Encode, Decode, Default, Debug, PartialEq)]
+#[derive(Copy, Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 pub struct VaultInfo<AccountId, Balance, CurrencyId, BlockNumber> {
 	pub asset_id: CurrencyId,
 	pub lp_token_id: CurrencyId,
@@ -11,7 +12,7 @@ pub struct VaultInfo<AccountId, Balance, CurrencyId, BlockNumber> {
 	pub capabilities: Capabilities,
 }
 
-#[derive(Copy, Clone, Encode, Decode, Default, Debug, PartialEq)]
+#[derive(Copy, Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 pub struct StrategyOverview<Balance> {
 	/// The reported balance of the strategy
 	pub balance: Balance,

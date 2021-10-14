@@ -40,6 +40,7 @@ pub mod pallet {
 		Config as SystemConfig,
 	};
 	use lite_json::json::JsonValue;
+	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
 		offchain::{http, Duration},
@@ -47,7 +48,6 @@ pub mod pallet {
 		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
-
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(KEY_ID);
@@ -96,7 +96,8 @@ pub mod pallet {
 			+ From<u128>
 			+ Into<u128>
 			+ Debug
-			+ Default;
+			+ Default
+			+ TypeInfo;
 		type PriceValue: Default
 			+ Parameter
 			+ Codec
@@ -133,26 +134,26 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
-	#[derive(Encode, Decode, Default, Debug, PartialEq)]
+	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 	pub struct Withdraw<Balance, BlockNumber> {
 		pub stake: Balance,
 		pub unlock_block: BlockNumber,
 	}
 
-	#[derive(Encode, Decode, Clone, Copy, Default, Debug, PartialEq)]
+	#[derive(Encode, Decode, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
 	pub struct PrePrice<PriceValue, BlockNumber, AccountId> {
 		pub price: PriceValue,
 		pub block: BlockNumber,
 		pub who: AccountId,
 	}
 
-	#[derive(Encode, Decode, Default, Debug, PartialEq)]
+	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 	pub struct Price<PriceValue, BlockNumber> {
 		pub price: PriceValue,
 		pub block: BlockNumber,
 	}
 
-	#[derive(Encode, Decode, Default, Debug, PartialEq, Clone)]
+	#[derive(Encode, Decode, Default, Debug, PartialEq, Clone, TypeInfo)]
 	pub struct AssetInfo<Percent> {
 		pub threshold: Percent,
 		pub min_answers: u32,
@@ -233,7 +234,6 @@ pub mod pallet {
 	pub type RequestedId<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, u128, ValueQuery>;
 
 	#[pallet::event]
-	#[pallet::metadata(T::AccountId = "AccountId",  BalanceOf<T> = "Balance", T::BlockNumber = "BlockNumber", Percent = "Percent")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Asset info created or changed. \[asset_id, threshold, min_answers, max_answers\]
@@ -747,7 +747,7 @@ pub mod pallet {
 				// Received price is wrapped into a call to `submit_price` public function of this
 				// pallet. This means that the transaction, when executed, will simply call that
 				// function passing `price` as an argument.
-				Call::submit_price(price.into(), *price_id)
+				Call::submit_price { price: price.into(), asset_id: *price_id }
 			});
 
 			for (acc, res) in &results {

@@ -56,4 +56,8 @@ impl<T: frame_system::Config> balances::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+
+	fn force_unreserve() -> Weight {
+		todo!()
+	}
 }
