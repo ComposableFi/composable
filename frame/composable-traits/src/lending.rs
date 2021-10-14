@@ -8,7 +8,7 @@ pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
 pub type BorrowAmountOf<T> = <T as Lending>::Balance;
 
 #[derive(Encode, Decode, Default)]
-pub struct MarketConfigInput<AccountId>
+pub struct MarketConfigInput<AccountId, GroupId>
 where
 	AccountId: core::cmp::Ord,
 {
@@ -17,16 +17,18 @@ where
 	/// can pause borrow & deposits of assets
 	pub collateral_factor: NormalizedCollateralFactor,
 	pub under_collaterized_warn_percent: Percent,
+	pub liquidator: Option<GroupId>,
 }
 
 #[derive(Encode, Decode, Default)]
-pub struct MarketConfig<VaultId, AssetId, AccountId> {
+pub struct MarketConfig<VaultId, AssetId, AccountId, GroupId> {
 	pub manager: AccountId,
 	pub borrow: VaultId,
 	pub collateral: AssetId,
 	pub collateral_factor: NormalizedCollateralFactor,
 	pub interest_rate_model: InterestRateModel,
 	pub under_collaterized_warn_percent: Percent,
+	pub liquidator: Option<GroupId>,
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.
@@ -43,6 +45,7 @@ pub trait Lending {
 	type AccountId: core::cmp::Ord + Codec;
 	type Balance;
 	type BlockNumber;
+	type GroupId;
 
 	/// Generates the underlying owned vault that will hold borrowable asset (may be shared with
 	/// specific set of defined collaterals). Creates market for new pair in specified vault. if
@@ -84,7 +87,7 @@ pub trait Lending {
 	fn create(
 		borrow_asset: Self::AssetId,
 		collateral_asset_vault: Self::AssetId,
-		config: MarketConfigInput<Self::AccountId>,
+		config: MarketConfigInput<Self::AccountId, Self::GroupId>,
 		interest_rate_model: &InterestRateModel,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 
@@ -114,8 +117,10 @@ pub trait Lending {
 	fn get_markets_for_borrow(vault: Self::VaultId) -> Vec<Self::MarketId>;
 
 	#[allow(clippy::type_complexity)]
-	fn get_all_markets(
-	) -> Vec<(Self::MarketId, MarketConfig<Self::VaultId, Self::AssetId, Self::AccountId>)>;
+	fn get_all_markets() -> Vec<(
+		Self::MarketId,
+		MarketConfig<Self::VaultId, Self::AssetId, Self::AccountId, Self::GroupId>,
+	)>;
 
 	/// `amount_to_borrow` is the amount of the borrow asset lendings's vault shares the user wants
 	/// to borrow. Normalizes amounts for calculations.

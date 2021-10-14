@@ -1,6 +1,6 @@
 use crate::{
 	dex::Orderbook,
-	loans::{DurationSeconds, Timestamp},
+	loans::{DurationSeconds, PriceStructure, Timestamp},
 };
 use frame_support::pallet_prelude::*;
 use sp_runtime::Permill;
@@ -73,6 +73,7 @@ pub trait DutchAuction {
 	type AssetId;
 	type Balance;
 	type Order;
+	type GroupId;
 
 	/// Transfer the asset from the provided account to the auction account.
 	/// The caller is responsible for checking the price at which the auction executed (not known in
@@ -86,7 +87,7 @@ pub trait DutchAuction {
 	/// * `source_asset_id`: the asset we are interested to trade for `target_asset_id`.
 	/// * `target_account`: the beneficiary of the order.
 	/// * `total_amount`: the amount of `source_asset_id`.
-	/// * `initial_price`: the initial price for `total_amount`.
+	/// * `price`: the initial price for `total_amount` and some rules.
 	#[allow(clippy::too_many_arguments)]
 	fn start(
 		account_id: &Self::AccountId,
@@ -95,14 +96,14 @@ pub trait DutchAuction {
 		target_asset_id: Self::AssetId,
 		target_account: &Self::AccountId,
 		total_amount: Self::Balance,
-		initial_price: Self::Balance,
+		price: PriceStructure<Self::GroupId, Self::Balance>,
 		function: AuctionStepFunction,
 	) -> Result<Self::OrderId, DispatchError>;
 
 	/// run existing auctions
 	/// if some auctions completed, transfer amount to target account
 	/// `now` current time.
-	fn run_auctions(now: Timestamp) -> DispatchResult;
+	fn off_chain_run_auctions(now: Timestamp) -> DispatchResult;
 
 	fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order>;
 
