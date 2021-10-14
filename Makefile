@@ -29,6 +29,10 @@ test:
 docs: build
 	@cargo doc --no-deps
 
+style:
+	@rustup component add rustfmt 2> /dev/null
+	cargo +nightly fmt --all
+
 style-check:
 	@rustup component add rustfmt 2> /dev/null
 	cargo +nightly fmt --all -- --check

@@ -60,6 +60,7 @@ fn create_market(
 		reserved,
 		collateral_factor,
 		under_collaterized_warn_percent: Percent::from_float(0.10),
+		liquidator: Some(42u32),
 	};
 	let interest_rate_model = InterestRateModel::default();
 	let market =
