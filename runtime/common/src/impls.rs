@@ -67,7 +67,7 @@ mod tests {
 	use collator_selection::IdentityCollator;
 	use frame_support::{
 		ord_parameter_types, parameter_types,
-		traits::{FindAuthor, ValidatorRegistration},
+		traits::{Everything, FindAuthor, ValidatorRegistration},
 		PalletId,
 	};
 	use frame_system::{limits, EnsureRoot};
@@ -81,7 +81,6 @@ mod tests {
 		traits::{BlakeTwo256, IdentityLookup},
 		Perbill, Permill,
 	};
-	use frame_support::traits::Everything;
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 	type Block = frame_system::mocking::MockBlock<Test>;

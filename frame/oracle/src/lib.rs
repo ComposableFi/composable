@@ -40,6 +40,7 @@ pub mod pallet {
 		Config as SystemConfig,
 	};
 	use lite_json::json::JsonValue;
+	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
 		offchain::{http, Duration},
@@ -47,7 +48,6 @@ pub mod pallet {
 		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
-	use scale_info::TypeInfo;
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(KEY_ID);

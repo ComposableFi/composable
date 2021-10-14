@@ -17,13 +17,12 @@ use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use support::{
 	parameter_types,
-	traits::{Imbalance, OnUnbalanced},
+	traits::{Everything, Imbalance, OnUnbalanced},
 	weights::{
 		DispatchClass, DispatchInfo, PostDispatchInfo, Weight, WeightToFeeCoefficient,
 		WeightToFeeCoefficients, WeightToFeePolynomial,
 	},
 };
-use support::traits::Everything;
 
 type UncheckedExtrinsic = system::mocking::MockUncheckedExtrinsic<Runtime>;
 type Block = system::mocking::MockBlock<Runtime>;

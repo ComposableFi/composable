@@ -1,6 +1,6 @@
 use crate as pallet_oracle;
 use crate::*;
-use frame_support::{ord_parameter_types, parameter_types};
+use frame_support::{ord_parameter_types, parameter_types, traits::Everything};
 use frame_system as system;
 use frame_system::EnsureSignedBy;
 use sp_core::{sr25519::Signature, H256};
@@ -10,7 +10,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
 	RuntimeAppPublic,
 };
-use frame_support::traits::Everything;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;

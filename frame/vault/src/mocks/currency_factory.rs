@@ -21,7 +21,7 @@ pub mod pallet {
 		codec::Decode,
 		serde::Serialize,
 		serde::Deserialize,
-		TypeInfo
+		TypeInfo,
 	)]
 	pub enum MockCurrencyId {
 		A,

@@ -53,6 +53,7 @@ pub mod pallet {
 	use frame_system::{pallet_prelude::*, Account};
 	use num_traits::{CheckedDiv, SaturatingAdd, SaturatingSub, WrappingAdd};
 
+	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
@@ -62,7 +63,6 @@ pub mod pallet {
 		Permill, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec::Vec};
-	use scale_info::TypeInfo;
 
 	use crate::price_function::AuctionTimeCurveModel;
 

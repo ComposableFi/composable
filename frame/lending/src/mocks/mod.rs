@@ -6,12 +6,13 @@ use composable_traits::{
 use frame_support::{
 	parameter_types,
 	sp_runtime::Permill,
-	traits::{OnFinalize, OnInitialize},
+	traits::{Everything, OnFinalize, OnInitialize},
 	PalletId,
 };
 use orml_traits::parameter_type_with_key;
 use pallet_dutch_auctions::DeFiComposableConfig;
 use pallet_liquidations::DeFiComposablePallet;
+use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
@@ -19,8 +20,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 	ArithmeticError, DispatchError,
 };
-use scale_info::TypeInfo;
-use frame_support::traits::Everything;
 
 pub mod oracle;
 

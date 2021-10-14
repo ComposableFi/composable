@@ -3,9 +3,8 @@
 use super::*;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup};
-use support::{construct_runtime, ord_parameter_types, parameter_types};
+use support::{construct_runtime, ord_parameter_types, parameter_types, traits::Everything};
 use system::EnsureSignedBy;
-use support::traits::Everything;
 
 pub type AccountId = u128;
 pub type Balance = u128;

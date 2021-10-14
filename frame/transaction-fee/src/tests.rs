@@ -15,7 +15,11 @@ use sp_runtime::{
 };
 use support::{dispatch::Weight, pallet_prelude::*};
 
-const CALL: Call = Call::Tokens(orml_tokens::Call::transfer { dest: 2, currency_id: CurrencyId::PICA, amount: 10 });
+const CALL: Call = Call::Tokens(orml_tokens::Call::transfer {
+	dest: 2,
+	currency_id: CurrencyId::PICA,
+	amount: 10,
+});
 
 #[test]
 fn can_pay_fees_easily() {

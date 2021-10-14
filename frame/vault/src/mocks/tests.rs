@@ -1,6 +1,10 @@
 use super::currency_factory::MockCurrencyId;
 use crate as pallet_vault;
-use frame_support::{construct_runtime, parameter_types, traits::GenesisBuild, PalletId};
+use frame_support::{
+	construct_runtime, parameter_types,
+	traits::{Everything, GenesisBuild},
+	PalletId,
+};
 use frame_system as system;
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
@@ -9,7 +13,6 @@ use sp_runtime::{
 	testing::Header,
 	traits::{ConvertInto, IdentityLookup},
 };
-use frame_support::traits::Everything;
 
 pub type BlockNumber = u64;
 pub type AccountId = u128;

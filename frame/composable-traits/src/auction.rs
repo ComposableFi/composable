@@ -3,8 +3,8 @@ use crate::{
 	loans::{DurationSeconds, Timestamp},
 };
 use frame_support::pallet_prelude::*;
-use sp_runtime::Permill;
 use scale_info::TypeInfo;
+use sp_runtime::Permill;
 
 #[derive(Decode, Encode, Clone, TypeInfo)]
 pub enum AuctionStepFunction {

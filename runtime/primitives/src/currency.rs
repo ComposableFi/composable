@@ -2,8 +2,8 @@
 
 use codec::{Decode, Encode};
 use composable_traits::currency::DynamicCurrencyId;
-use sp_runtime::{ArithmeticError, DispatchError, RuntimeDebug};
 use scale_info::TypeInfo;
+use sp_runtime::{ArithmeticError, DispatchError, RuntimeDebug};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};

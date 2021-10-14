@@ -6,10 +6,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use scale_info::TypeInfo;
 use composable_traits::dex::SimpleExchange;
 use pallet_transaction_payment_rpc_runtime_api::{FeeDetails, InclusionFee, RuntimeDispatchInfo};
 use primitives::currency::CurrencyId;
+use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{
 		CheckedSub, Convert, DispatchInfoOf, Dispatchable, PostDispatchInfoOf, SaturatedConversion,

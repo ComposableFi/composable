@@ -64,6 +64,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedDiv, SaturatingSub};
+	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
@@ -72,7 +73,6 @@ pub mod pallet {
 		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec, vec::Vec};
-	use scale_info::TypeInfo;
 
 	type MarketConfiguration<T> = MarketConfig<
 		<T as Config>::VaultId,

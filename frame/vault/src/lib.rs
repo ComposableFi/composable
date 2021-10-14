@@ -84,6 +84,7 @@ pub mod pallet {
 		ensure_root, ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig,
 	};
 	use num_traits::SaturatingSub;
+	use scale_info::TypeInfo;
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
 		traits::{
@@ -93,7 +94,6 @@ pub mod pallet {
 		DispatchError, FixedPointNumber, Perquintill,
 	};
 	use sp_std::fmt::Debug;
-	use scale_info::TypeInfo;
 
 	#[allow(missing_docs)]
 	pub type AssetIdOf<T> =
