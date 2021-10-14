@@ -72,6 +72,7 @@ pub mod pallet {
 		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec, vec::Vec};
+	use scale_info::TypeInfo;
 
 	type MarketConfiguration<T> = MarketConfig<
 		<T as Config>::VaultId,
@@ -79,7 +80,7 @@ pub mod pallet {
 		<T as frame_system::Config>::AccountId,
 	>;
 
-	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, TypeInfo)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
 
@@ -123,7 +124,8 @@ pub mod pallet {
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ Debug
-			+ Default;
+			+ Default
+			+ TypeInfo;
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -180,7 +182,8 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ From<u128>
 			+ Debug
-			+ Default;
+			+ Default
+			+ TypeInfo;
 		type Balance: Default
 			+ Parameter
 			+ Codec

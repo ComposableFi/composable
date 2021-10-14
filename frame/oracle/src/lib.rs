@@ -48,6 +48,7 @@ pub mod pallet {
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
 
 	pub use crate::weights::WeightInfo;
+	use scale_info::TypeInfo;
 
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orac");
 	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"orac");
@@ -95,7 +96,8 @@ pub mod pallet {
 			+ From<u128>
 			+ Into<u128>
 			+ Debug
-			+ Default;
+			+ Default
+			+ TypeInfo;
 		type PriceValue: Default
 			+ Parameter
 			+ Codec
@@ -123,26 +125,26 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
-	#[derive(Encode, Decode, Default, Debug, PartialEq)]
+	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 	pub struct Withdraw<Balance, BlockNumber> {
 		pub stake: Balance,
 		pub unlock_block: BlockNumber,
 	}
 
-	#[derive(Encode, Decode, Clone, Copy, Default, Debug, PartialEq)]
+	#[derive(Encode, Decode, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
 	pub struct PrePrice<PriceValue, BlockNumber, AccountId> {
 		pub price: PriceValue,
 		pub block: BlockNumber,
 		pub who: AccountId,
 	}
 
-	#[derive(Encode, Decode, Default, Debug, PartialEq)]
+	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 	pub struct Price<PriceValue, BlockNumber> {
 		pub price: PriceValue,
 		pub block: BlockNumber,
 	}
 
-	#[derive(Encode, Decode, Default, Debug, PartialEq, Clone)]
+	#[derive(Encode, Decode, Default, Debug, PartialEq, Clone, TypeInfo)]
 	pub struct AssetInfo<Percent> {
 		pub threshold: Percent,
 		pub min_answers: u32,
@@ -213,7 +215,6 @@ pub mod pallet {
 	pub type RequestedId<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, u128, ValueQuery>;
 
 	#[pallet::event]
-	#[pallet::metadata(T::AccountId = "AccountId",  BalanceOf<T> = "Balance", T::BlockNumber = "BlockNumber", Percent = "Percent")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		NewAsset(u128),
@@ -663,7 +664,7 @@ pub mod pallet {
 				// Received price is wrapped into a call to `submit_price` public function of this
 				// pallet. This means that the transaction, when executed, will simply call that
 				// function passing `price` as an argument.
-				Call::submit_price(price.into(), *price_id)
+				Call::submit_price { price: price.into(), asset_id: *price_id }
 			});
 
 			for (acc, res) in &results {

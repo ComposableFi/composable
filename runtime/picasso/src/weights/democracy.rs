@@ -113,6 +113,11 @@ impl<T: frame_system::Config> democracy::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(r as Weight)))
 	}
+
+	fn on_initialize_base_with_launch_period(r: u32) -> Weight {
+		todo!()
+	}
+
 	fn delegate(r: u32) -> Weight {
 		(67_447_000 as Weight)
 			// Standard Error: 64_000

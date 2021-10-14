@@ -4,8 +4,9 @@ use crate::{
 };
 use frame_support::pallet_prelude::*;
 use sp_runtime::Permill;
+use scale_info::TypeInfo;
 
-#[derive(Decode, Encode, Clone)]
+#[derive(Decode, Encode, Clone, TypeInfo)]
 pub enum AuctionStepFunction {
 	/// default - direct pass through to dex without steps, just to satisfy defaults and reasonably
 	/// for testing
@@ -19,7 +20,7 @@ impl Default for AuctionStepFunction {
 	}
 }
 
-#[derive(Decode, Encode, Clone, PartialEq)]
+#[derive(Decode, Encode, Clone, PartialEq, TypeInfo)]
 pub enum AuctionState<DexOrderId> {
 	AuctionStarted,
 	AuctionOnDex(DexOrderId),
@@ -49,13 +50,13 @@ pub enum AuctionExchangeCallback {
 	FatalFail,
 }
 
-#[derive(Default, Decode, Encode, Clone)]
+#[derive(Default, Decode, Encode, Clone, TypeInfo)]
 pub struct LinearDecrease {
 	/// Seconds after auction start when the price reaches zero
 	pub total: DurationSeconds,
 }
 
-#[derive(Default, Decode, Encode, Clone)]
+#[derive(Default, Decode, Encode, Clone, TypeInfo)]
 pub struct StairstepExponentialDecrease {
 	// Length of time between price drops
 	pub step: DurationSeconds,

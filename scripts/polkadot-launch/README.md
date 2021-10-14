@@ -5,7 +5,7 @@ To run:
 	```bash
 	git clone https://github.com/paritytech/polkadot
 	cd polkadot
-	git checkout v0.9.10-rc2
+	git checkout v0.9.11-rc2
 	cargo build --release
     ```
 

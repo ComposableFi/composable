@@ -3,12 +3,13 @@
 use codec::{Decode, Encode};
 use composable_traits::currency::DynamicCurrencyId;
 use sp_runtime::{ArithmeticError, DispatchError, RuntimeDebug};
+use scale_info::TypeInfo;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_runtime::sp_std::ops::Deref;
 
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[repr(transparent)]
 pub struct CurrencyId(u128);

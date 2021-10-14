@@ -15,7 +15,7 @@
 use core::ops::Neg;
 
 use sp_std::{cmp::Ordering, convert::TryInto};
-
+use scale_info::TypeInfo;
 use codec::{Decode, Encode};
 
 use sp_runtime::{
@@ -75,7 +75,7 @@ pub trait InterestRate {
 
 /// Parallel interest rate model
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug)]
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, TypeInfo)]
 pub enum InterestRateModel {
 	Jump(JumpModel),
 	Curve(CurveModel),
@@ -153,7 +153,7 @@ impl InterestRate for InterestRateModel {
 
 /// The jump interest rate model
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default)]
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
 pub struct JumpModel {
 	/// The base interest rate when utilization rate is 0
 	pub base_rate: Rate,
@@ -228,7 +228,7 @@ impl InterestRate for JumpModel {
 
 /// The curve interest rate model
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default)]
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
 pub struct CurveModel {
 	base_rate: Rate,
 }
@@ -268,7 +268,7 @@ impl InterestRate for CurveModel {
 ///
 /// To know how `kp`, `ki` and `kd` are derived plesae check paper at above URL.
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default)]
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
 pub struct DynamicPIDControllerModel {
 	/// proportional_parameter
 	kp: FixedI128,
