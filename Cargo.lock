@@ -1230,7 +1230,7 @@ dependencies = [
  "node-primitives",
  "num-traits",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=37e42936c41dbdbaf0117c628c9eab0e06044844)",
+ "orml-traits",
  "pallet-authorship",
  "pallet-balances",
  "pallet-collator-selection",
@@ -1359,11 +1359,11 @@ dependencies = [
 
 [[package]]
 name = "core-foundation"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a89e2ae426ea83155dccf10c0fa6b1463ef6d5fcb44cee0b224a408fa640a62"
+checksum = "6888e10551bb93e424d8df1d07f1a8b4fceb0001a3a4b048bfc47554946f47b3"
 dependencies = [
- "core-foundation-sys 0.8.2",
+ "core-foundation-sys 0.8.3",
  "libc",
 ]
 
@@ -1375,9 +1375,9 @@ checksum = "b3a71ab494c0b5b860bdc8407ae08978052417070c2ced38573a9157ad75b8ac"
 
 [[package]]
 name = "core-foundation-sys"
-version = "0.8.2"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea221b5284a47e40033bf9b66f35f984ec0ea2931eb03505246cd27a963f981b"
+checksum = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc"
 
 [[package]]
 name = "core-graphics"
@@ -1386,7 +1386,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "269f35f69b542b80e736a20a89a05215c0ce80c2c03c514abb2e318b78379d86"
 dependencies = [
  "bitflags",
- "core-foundation 0.9.1",
+ "core-foundation 0.9.2",
  "core-graphics-types",
  "foreign-types",
  "libc",
@@ -1399,7 +1399,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a68b68b3446082644c91ac778bf50cd4104bfb002b5a6a7c44cca5a2c70788b"
 dependencies = [
  "bitflags",
- "core-foundation 0.9.1",
+ "core-foundation 0.9.2",
  "foreign-types",
  "libc",
 ]
@@ -1410,7 +1410,7 @@ version = "19.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99d74ada66e07c1cefa18f8abfba765b486f250de2e4a999e5727fc0dd4b4a25"
 dependencies = [
- "core-foundation 0.9.1",
+ "core-foundation 0.9.2",
  "core-graphics",
  "foreign-types",
  "libc",
@@ -2634,7 +2634,7 @@ checksum = "46c9a156ec38864999bc9c4156e5f3b50224d4a5578028a64e5a3875caa9ee28"
 dependencies = [
  "bitflags",
  "byteorder",
- "core-foundation 0.9.1",
+ "core-foundation 0.9.2",
  "core-graphics",
  "core-text",
  "dirs-next",
@@ -3164,9 +3164,9 @@ dependencies = [
 
 [[package]]
 name = "gif"
-version = "0.11.2"
+version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a668f699973d0f573d15749b7002a9ac9e1f9c6b220e7b165601334c173d8de"
+checksum = "c3a7187e78088aead22ceedeee99779455b23fc231fe13ec443f99bb71694e5b"
 dependencies = [
  "color_quant",
  "weezl",
@@ -5553,7 +5553,7 @@ source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=37e42936c41dbdbaf0117c628c9eab0e06044844)",
+ "orml-traits",
  "parity-scale-codec",
  "serde",
  "sp-runtime",
@@ -5568,24 +5568,7 @@ dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
  "num-traits",
- "orml-utilities 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=37e42936c41dbdbaf0117c628c9eab0e06044844)",
- "parity-scale-codec",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "xcm 0.9.10 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.10)",
-]
-
-[[package]]
-name = "orml-traits"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#72b0e5249efc3cfe4f521d2331b967716580f1c8"
-dependencies = [
- "frame-support",
- "impl-trait-for-tuples",
- "num-traits",
- "orml-utilities 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
+ "orml-utilities",
  "parity-scale-codec",
  "serde",
  "sp-io",
@@ -5598,19 +5581,6 @@ dependencies = [
 name = "orml-utilities"
 version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=37e42936c41dbdbaf0117c628c9eab0e06044844#37e42936c41dbdbaf0117c628c9eab0e06044844"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "orml-utilities"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#72b0e5249efc3cfe4f521d2331b967716580f1c8"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -5643,7 +5613,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "num-traits",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
+ "orml-traits",
  "parity-scale-codec",
  "sp-arithmetic",
  "sp-core",
@@ -5906,7 +5876,7 @@ dependencies = [
  "log 0.4.14",
  "num-traits",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=37e42936c41dbdbaf0117c628c9eab0e06044844)",
+ "orml-traits",
  "pallet-balances",
  "pallet-sudo",
  "parity-scale-codec",
@@ -5946,7 +5916,7 @@ dependencies = [
  "getrandom 0.2.3",
  "hex-literal",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=37e42936c41dbdbaf0117c628c9eab0e06044844)",
+ "orml-traits",
  "pallet-balances",
  "pallet-scheduler",
  "parity-scale-codec",
@@ -5962,25 +5932,15 @@ dependencies = [
 name = "pallet-democracy"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
-version = "0.0.1"
 dependencies = [
- "composable-traits",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal",
- "orml-tokens",
- "orml-traits",
- "pallet-balances",
- "pallet-scheduler",
  "parity-scale-codec",
  "serde",
- "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sp-storage",
- "substrate-test-utils",
 ]
 
 [[package]]
@@ -5992,7 +5952,7 @@ dependencies = [
  "frame-system",
  "num-traits",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=37e42936c41dbdbaf0117c628c9eab0e06044844)",
+ "orml-traits",
  "parity-scale-codec",
  "proptest",
  "sp-arithmetic",
@@ -6120,7 +6080,7 @@ dependencies = [
  "log 0.4.14",
  "num-traits",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=37e42936c41dbdbaf0117c628c9eab0e06044844)",
+ "orml-traits",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-dutch-auctions",
@@ -6148,7 +6108,7 @@ dependencies = [
  "frame-system",
  "num-traits",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=37e42936c41dbdbaf0117c628c9eab0e06044844)",
+ "orml-traits",
  "parity-scale-codec",
  "proptest",
  "sp-arithmetic",
@@ -6452,7 +6412,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=37e42936c41dbdbaf0117c628c9eab0e06044844)",
+ "orml-traits",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "primitives",
@@ -6549,7 +6509,7 @@ dependencies = [
  "log 0.4.14",
  "num-traits",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=37e42936c41dbdbaf0117c628c9eab0e06044844)",
+ "orml-traits",
  "parity-scale-codec",
  "proptest",
  "serde",
@@ -6974,7 +6934,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex-literal",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=37e42936c41dbdbaf0117c628c9eab0e06044844)",
+ "orml-traits",
  "pallet-assets",
  "pallet-aura",
  "pallet-authorship",
@@ -8495,9 +8455,9 @@ dependencies = [
 
 [[package]]
 name = "ppv-lite86"
-version = "0.2.10"
+version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac74c624d6b2d21f425f752262f42188365d7b8ff1aff74c82e45136510a4857"
+checksum = "c3ca011bd0129ff4ae15cd04c4eef202cadf6c51c21e47aba319b4e0501db741"
 
 [[package]]
 name = "price-feed"
@@ -8631,9 +8591,9 @@ checksum = "bc881b2c22681370c6a780e47af9840ef841837bc98118431d4e1868bd0c1086"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.29"
+version = "1.0.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9f5105d4fdaab20335ca9565e106a5d9b82b6219b5ba735731124ac6711d23d"
+checksum = "edc3358ebc67bc8b7fa0c007f945b0b18226f78437d61bec735a9eb96b61ee70"
 dependencies = [
  "unicode-xid",
 ]
@@ -10655,8 +10615,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "525bc1abfda2e1998d152c45cf13e696f76d0a4972310b22fac1658b05df7c87"
 dependencies = [
  "bitflags",
- "core-foundation 0.9.1",
- "core-foundation-sys 0.8.2",
+ "core-foundation 0.9.2",
+ "core-foundation-sys 0.8.3",
  "libc",
  "security-framework-sys 2.4.2",
 ]
@@ -10677,7 +10637,7 @@ version = "2.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a9dd14d83160b528b7bfd66439110573efcfbe281b17fc2ca9f39f550d619c7e"
 dependencies = [
- "core-foundation-sys 0.8.2",
+ "core-foundation-sys 0.8.3",
  "libc",
 ]
 
@@ -10858,9 +10818,9 @@ dependencies = [
 
 [[package]]
 name = "sharded-slab"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "740223c51853f3145fe7c90360d2d4232f2b62e3449489c207eccde818979982"
+checksum = "900fba806f70c630b0a382d0d825e17a0f19fcd059a2ade1ff237bcddf446b31"
 dependencies = [
  "lazy_static",
 ]
@@ -10922,9 +10882,9 @@ dependencies = [
 
 [[package]]
 name = "slab"
-version = "0.4.4"
+version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c307a32c1c5c437f38c7fd45d753050587732ba8628319fbdf12a7e289ccc590"
+checksum = "9def91fd1e018fe007022791f865d0ccc9b3a0d5001e01aabb8b40e46000afb5"
 
 [[package]]
 name = "slog"
@@ -11938,26 +11898,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "substrate-test-utils"
-version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
-dependencies = [
- "futures 0.3.16",
- "substrate-test-utils-derive",
- "tokio 0.2.25",
-]
-
-[[package]]
-name = "substrate-test-utils-derive"
-version = "0.9.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
-dependencies = [
- "proc-macro-crate 1.0.0",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "substrate-wasm-builder"
 version = "5.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.10#acb44df78015906174daf359b40916b7bef58c57"
@@ -12240,7 +12180,7 @@ dependencies = [
  "parking_lot 0.11.2",
  "pin-project-lite 0.2.7",
  "signal-hook-registry",
- "tokio-macros 1.4.1",
+ "tokio-macros 1.5.0",
  "winapi 0.3.9",
 ]
 
@@ -12321,9 +12261,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-macros"
-version = "1.4.1"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "154794c8f499c2619acd19e839294703e9e32e7630ef5f46ea80d4ef0fbee5eb"
+checksum = "b2dd85aeaba7b68df939bd357c6afb36c87951be9e80bf9c859f2fc3e9fca0fd"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12819,7 +12759,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f559b464de2e2bdabcac6a210d12e9b5a5973c251e102c44c585c71d51bd78e"
 dependencies = [
  "cfg-if 1.0.0",
- "rand 0.6.5",
+ "rand 0.8.4",
  "static_assertions",
 ]
 
