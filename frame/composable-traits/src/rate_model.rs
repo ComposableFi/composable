@@ -80,6 +80,7 @@ pub enum InterestRateModel {
 	Jump(JumpModel),
 	Curve(CurveModel),
 	DynamicPIDController(DynamicPIDControllerModel),
+	DoubleExponent(DoubleExponentModel),
 }
 
 impl Default for InterestRateModel {
@@ -129,6 +130,10 @@ impl InterestRateModel {
 		.map(Self::DynamicPIDController)
 	}
 
+	pub fn new_double_exponent_model(coefficients: [u8; 16]) -> Option<Self> {
+		DoubleExponentModel::new_model(coefficients).map(Self::DoubleExponent)
+	}
+
 	/// Calculates the current supply interest rate
 	pub fn get_supply_rate(borrow_rate: Rate, util: Ratio, reserve_factor: Ratio) -> Rate {
 		// ((1 - reserve_factor) * borrow_rate) * utilization
@@ -147,6 +152,8 @@ impl InterestRate for InterestRateModel {
 			Self::Curve(curve) => curve.get_borrow_rate(utilization),
 			Self::DynamicPIDController(dynamic_pid_model) =>
 				dynamic_pid_model.get_borrow_rate(utilization),
+			Self::DoubleExponent(double_exponents_model) =>
+				double_exponents_model.get_borrow_rate(utilization),
 		}
 	}
 }
@@ -352,6 +359,50 @@ impl InterestRate for DynamicPIDControllerModel {
 			return Some(interest_rate)
 		}
 		None
+	}
+}
+
+const EXPECTED_COEFFICIENTS_SUM: u16 = 100;
+
+/// The double exponent interest rate model
+/// Interest based on a polynomial of the utilization of the market.
+/// Interest = C_0 + C_1 * U^(2^0) + C_2 * U^(2^1) + C_3 * U^(2^2) ...
+/// C_0, C_1, C_2, ... coefficients are passed as packed u128.
+/// Each coefficient is of 8 byte. C_0 is at LSB and C_15 at MSB.
+/// For reference check https://github.com/dydxprotocol/solo/blob/master/contracts/external/interestsetters/DoubleExponentInterestSetter.sol
+/// https://help.dydx.exchange/en/articles/2924246-how-do-interest-rates-work
+#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
+pub struct DoubleExponentModel {
+	coefficients: [u8; 16],
+}
+
+impl DoubleExponentModel {
+	/// Create a double exponent model
+	pub fn new_model(coefficients: [u8; 16]) -> Option<Self> {
+		let sum_of_coefficients = coefficients.iter().fold(0u16, |acc, &c| acc + c as u16);
+		if sum_of_coefficients == EXPECTED_COEFFICIENTS_SUM {
+			return Some(DoubleExponentModel { coefficients })
+		}
+		None
+	}
+}
+
+impl InterestRate for DoubleExponentModel {
+	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate> {
+		let polynomial_0: FixedU128 = FixedU128::one();
+		let result_0: Rate = Rate::zero();
+		let res =
+			self.coefficients
+				.iter()
+				.try_fold((result_0, polynomial_0), |(res, poly), coeff| {
+					let coefficient = FixedU128::from_inner(u128::from(*coeff));
+					let result = res.checked_add(&coefficient.checked_mul(&poly)?)?;
+					let polynomial = poly.checked_mul(&utilization.into())?;
+					Some((result, polynomial))
+				});
+		res.map(|(r, _p)| r.checked_div(&FixedU128::from_inner(EXPECTED_COEFFICIENTS_SUM.into())))
+			.unwrap()
 	}
 }
 
@@ -666,6 +717,34 @@ mod tests {
 					let utilization = Percent::from_percent(*x);
 					let rate = model.get_borrow_rate(utilization).unwrap();
 					(i as f64, rate.to_float() * 100.0)
+				}),
+				&RED,
+			))
+			.unwrap();
+	}
+
+	#[cfg(feature = "visualization")]
+	#[test]
+	fn double_exponents_model_plotter() {
+		use plotters::prelude::*;
+		let coefficients: [u8; 16] = [60, 20, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+		let mut model = DoubleExponentModel::new_model(coefficients).unwrap();
+		let area =
+			BitMapBackend::new("./double_exponents_model.png", (1024, 768)).into_drawing_area();
+		area.fill(&WHITE).unwrap();
+
+		let mut chart = ChartBuilder::on(&area)
+			.set_label_area_size(LabelAreaPosition::Left, 40)
+			.set_label_area_size(LabelAreaPosition::Bottom, 40)
+			.build_cartesian_2d(0.0..100.0, 0.0..100.0)
+			.unwrap();
+		chart.configure_mesh().draw().unwrap();
+		chart
+			.draw_series(LineSeries::new(
+				(60..=100).map(|x| {
+					let utilization = Percent::from_percent(x);
+					let rate = model.get_borrow_rate(utilization).unwrap();
+					(x as f64, rate.to_float() * 100.0)
 				}),
 				&RED,
 			))
