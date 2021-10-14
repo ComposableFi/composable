@@ -59,6 +59,7 @@ fn create_market(
 	collateral_factor: NormalizedCollateralFactor,
 ) -> (MarketIndex, BorrowAssetVault) {
 	let market_config = MarketConfigInput {
+		liquidator: None,
 		manager,
 		reserved,
 		collateral_factor,
@@ -359,7 +360,7 @@ fn test_borrow() {
 		let btc_price = |x| {
 			Oracle::get_price(MockCurrencyId::BTC, x * MockCurrencyId::BTC.unit())
 				.expect("impossible")
-				.0
+				.price
 		};
 
 		let collateral_amount = 1_000_000 * MockCurrencyId::USDT.unit();
@@ -425,7 +426,7 @@ fn test_borrow() {
 		let alice_limit = Lending::get_borrow_limit(&market, &ALICE).unwrap();
 
 		// We didn't borrowed 9 because of interests, we added $ worth of 10 BTC,
-		// we should have a value between 11>x>10 as limit
+		// let x being our limit, it should be: 11>x>10
 		assert!(btc_price(11) > alice_limit && alice_limit > btc_price(10));
 
 		// Try to borrow more than limit
@@ -439,21 +440,45 @@ fn test_borrow() {
 }
 
 #[test]
-fn test_vault_interactions() {
+fn test_vault_market_cannot_withdraw() {
 	new_test_ext().execute_with(|| {
 		let (market, vault_id) = create_simple_market();
-		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, 1_000_000_000_000));
-		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, 1_000_000_000_000));
 
-		Vault::deposit(Origin::signed(ALICE), vault_id, 1_000_000_000).unwrap();
-		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, 1_000_000_000));
+		let deposit_usdt = 1_000_000 * MockCurrencyId::USDT.unit();
+		let deposit_btc = 10 * MockCurrencyId::BTC.unit();
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, deposit_usdt));
+		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, deposit_btc));
 
-		<Vault as CapabilityVault>::stop(&vault_id).unwrap();
+		assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, deposit_btc));
+		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, deposit_usdt));
 
+		// We don't even wait 1 block, which mean the market couldn't withdraw funds.
 		assert_noop!(
-			Lending::borrow_internal(&market, &ALICE, 1_000),
+			Lending::borrow_internal(&market, &ALICE, 1 * MockCurrencyId::BTC.unit()),
 			Error::<Test>::NotEnoughBorrowAsset
 		);
+	});
+}
+
+#[test]
+fn test_vault_market_can_withdraw() {
+	new_test_ext().execute_with(|| {
+		let (market, vault_id) = create_simple_market();
+
+		let deposit_usdt = 1_000_000 * MockCurrencyId::USDT.unit();
+		let deposit_btc = 10 * MockCurrencyId::BTC.unit();
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, deposit_usdt));
+		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, deposit_btc));
+
+		assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, deposit_btc));
+		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, deposit_usdt));
+
+		for i in 1..2 {
+			process_block(i);
+		}
+
+		// We waited 1 block, the market should have withdraw the funds
+		assert_ok!(Lending::borrow_internal(&market, &ALICE, 1 * MockCurrencyId::BTC.unit()),);
 	});
 }
 

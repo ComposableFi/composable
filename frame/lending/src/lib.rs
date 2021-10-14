@@ -704,8 +704,8 @@ pub mod pallet {
 			let borrow_balance_value =
 				Self::get_price(borrow_asset, borrower_balance_with_interest)?;
 			let borrower = BorrowerData::new(
-				collateral_balance_value.0,
-				borrow_balance_value.0,
+				collateral_balance_value,
+				borrow_balance_value,
 				market.collateral_factor,
 				market.under_collaterized_warn_percent,
 			);
@@ -748,9 +748,8 @@ pub mod pallet {
 					&source_target_account,
 					market.collateral,
 					PriceStructure::new(collateral_price),
-					borrow_asset_id,
+					borrow_asset,
 					&source_target_account,
-					borrower_balance_with_interest,
 					collateral_to_liquidate,
 				)
 				.map(|_| ())
@@ -928,11 +927,15 @@ pub mod pallet {
 					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into())
 				}
 			}
-			let borrow_limit = Self::get_borrow_limit(market_id, debt_owner)?;
+
+			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
+			let borrow_limit_value = Self::get_borrow_limit(market_id, debt_owner)?;
+			let borrow_amount_value = Self::get_price(borrow_asset, amount_to_borrow)?;
 			ensure!(
-				borrow_limit >= amount_to_borrow,
+				borrow_limit_value >= borrow_amount_value,
 				Error::<T>::NotEnoughCollateralToBorrowAmount
 			);
+
 			ensure!(
 				<T as Config>::Currency::can_withdraw(asset_id, market_account, amount_to_borrow)
 					.into_result()
@@ -1086,22 +1089,17 @@ pub mod pallet {
 			amount_to_borrow: BorrowAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			let market = Self::get_market(market_id)?;
-			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
-			if let Some(time) = latest_borrow_timestamp {
-				if time >= Self::last_block_timestamp() {
-					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into())
-				}
-			}
-
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-			let borrow_limit_value = Self::get_borrow_limit(market_id, debt_owner)?;
-			let borrow_amount_value = Self::get_price(borrow_asset, amount_to_borrow)?;
-			ensure!(
-				borrow_limit_value >= borrow_amount_value,
-				Error::<T>::NotEnoughCollateralToBorrowAmount
-			);
-
 			let market_account = Self::account_id(market_id);
+
+			Self::can_borrow(
+				market_id,
+				debt_owner,
+				amount_to_borrow,
+				borrow_asset,
+				market,
+				&market_account,
+			)?;
 
 			let new_account_interest_index =
 				Self::updated_account_interest_index(market_id, debt_owner, amount_to_borrow)?;
@@ -1299,7 +1297,7 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let market = Self::get_market(market_id)?;
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-			let borrow_amount_value = Self::get_price(borrow_asset, borrow_amount)?.0;
+			let borrow_amount_value = Self::get_price(borrow_asset, borrow_amount)?;
 			Ok(swap_back(borrow_amount_value.into(), &market.collateral_factor)?
 				.checked_mul_int(1u64)
 				.ok_or(ArithmeticError::Overflow)?
@@ -1379,10 +1377,10 @@ pub mod pallet {
 			let borrower_balance_with_interest = Self::borrow_balance_current(market_id, account)?
 				.unwrap_or_else(BorrowAmountOf::<Self>::zero);
 			let borrow_balance_value =
-				Self::get_price(borrow_asset, borrower_balance_with_interest)?.0;
+				Self::get_price(borrow_asset, borrower_balance_with_interest)?;
 
 			let collateral_balance_after_withdrawal_value =
-				Self::get_price(market.collateral, collateral_balance.safe_sub(&amount)?)?.0;
+				Self::get_price(market.collateral, collateral_balance.safe_sub(&amount)?)?;
 
 			let borrower_after_withdrawal = BorrowerData::new(
 				collateral_balance_after_withdrawal_value,

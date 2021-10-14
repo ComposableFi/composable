@@ -1,7 +1,8 @@
 use crate as pallet_lending;
 use composable_traits::{
 	currency::{DynamicCurrencyId, PriceableAsset},
-	dex::{Orderbook, TakeResult},
+	dex::{Orderbook, Price, SellOrder, TakeResult},
+	loans::DeFiComposableConfig,
 };
 use frame_support::{
 	parameter_types,
@@ -10,7 +11,6 @@ use frame_support::{
 	PalletId,
 };
 use orml_traits::parameter_type_with_key;
-use pallet_dutch_auctions::DeFiComposableConfig;
 use pallet_liquidations::DeFiComposablePallet;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
@@ -255,16 +255,19 @@ impl Orderbook for MockOrderbook {
 	type Balance = Balance;
 	type AccountId = AccountId;
 	type OrderId = u128;
+	type GroupId = AccountId;
+
 	fn post(
 		_account_from: &Self::AccountId,
 		_asset: Self::AssetId,
 		_want: Self::AssetId,
 		_source_amount: Self::Balance,
-		_source_price: Self::Balance,
+		_source_price: Price<Self::GroupId, Self::Balance>,
 		_amm_slippage: Permill,
-	) -> Result<Self::OrderId, DispatchError> {
-		Ok(0)
+	) -> Result<SellOrder<Self::OrderId, Self::AccountId>, DispatchError> {
+		Ok(SellOrder { id: 0, account: 0 })
 	}
+
 	fn market_sell(
 		_account: &Self::AccountId,
 		_asset: Self::AssetId,
@@ -274,16 +277,20 @@ impl Orderbook for MockOrderbook {
 	) -> Result<Self::OrderId, DispatchError> {
 		Ok(0)
 	}
-	fn take(
-		_account: &Self::AccountId,
-		_orders: impl Iterator<Item = Self::OrderId>,
-		_up_to: Self::Balance,
-	) -> Result<TakeResult<Self::Balance>, DispatchError> {
-		Ok(TakeResult { amount: 0, total_price: 0 })
+
+	fn patch(
+		order_id: Self::OrderId,
+		price: composable_traits::dex::Price<Self::GroupId, Self::Balance>,
+	) -> Result<(), DispatchError> {
+		Ok(())
 	}
 
-	fn is_order_executed(_order_id: &Self::OrderId) -> bool {
-		false
+	fn ask(
+		account: &Self::AccountId,
+		orders: impl Iterator<Item = Self::OrderId>,
+		up_to: Self::Balance,
+	) -> Result<(), DispatchError> {
+		Ok(())
 	}
 }
 
@@ -293,6 +300,7 @@ impl pallet_dutch_auctions::Config for Test {
 	type OrderId = u128;
 	type UnixTime = Timestamp;
 	type Orderbook = MockOrderbook;
+	type GroupId = u128;
 }
 
 impl pallet_liquidations::Config for Test {
@@ -301,6 +309,7 @@ impl pallet_liquidations::Config for Test {
 	type UnixTime = Timestamp;
 	type Lending = Lending;
 	type DutchAuction = Auction;
+	type GroupId = u128;
 }
 
 parameter_types! {
@@ -321,6 +330,7 @@ impl pallet_lending::Config for Test {
 	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
 	type WeightInfo = ();
+	type GroupId = u128;
 }
 
 // Build genesis storage according to the mock runtime.
