@@ -6,10 +6,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-
 use composable_traits::dex::SimpleExchange;
 use pallet_transaction_payment_rpc_runtime_api::{FeeDetails, InclusionFee, RuntimeDispatchInfo};
 use primitives::currency::CurrencyId;
+use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{
 		CheckedSub, Convert, DispatchInfoOf, Dispatchable, PostDispatchInfoOf, SaturatedConversion,
@@ -375,7 +375,8 @@ where
 
 /// Require the transactor pay for themselves and maybe include a tip to gain additional priority
 /// in the queue.
-#[derive(Encode, Decode, Clone, Eq, PartialEq)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, TypeInfo)]
+#[scale_info(skip_type_params(T))]
 pub struct ChargeTransactionFee<T: Config>(
 	// tip
 	#[codec(compact)] BalanceOf<T>,
@@ -468,7 +469,7 @@ impl<T: Config> sp_std::fmt::Debug for ChargeTransactionFee<T> {
 impl<T: Config> SignedExtension for ChargeTransactionFee<T>
 where
 	BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
-	T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo>,
+	T::Call: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo> + TypeInfo,
 {
 	const IDENTIFIER: &'static str = "ChargeTransactionFee";
 	type AccountId = T::AccountId;

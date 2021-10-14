@@ -98,7 +98,7 @@ fn create_simple_market() -> (MarketIndex, BorrowAssetVault) {
 
 #[test]
 fn accrue_interest_base_cases() {
-	let (optimal, ref interest_rate_model) = new_jump_model();
+	let (optimal, ref mut interest_rate_model) = new_jump_model();
 	let stable_rate = interest_rate_model.get_borrow_rate(optimal).unwrap();
 	assert_eq!(stable_rate, Ratio::saturating_from_rational(10, 100));
 	let borrow_index = Rate::saturating_from_integer(1);
@@ -106,7 +106,7 @@ fn accrue_interest_base_cases() {
 	let total_issued = 100_000_000_000_000_000_000;
 	let accrued_debt = 0;
 	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
-	let (accrued_increase, _) = accrue_interest_internal::<Test>(
+	let (accrued_increase, _) = accrue_interest_internal::<Test, InterestRateModel>(
 		optimal,
 		interest_rate_model,
 		borrow_index,
@@ -117,7 +117,7 @@ fn accrue_interest_base_cases() {
 	assert_eq!(accrued_increase, 10_000_000_000_000_000_000);
 
 	let delta_time = MILLISECS_PER_BLOCK;
-	let (accrued_increase, _) = accrue_interest_internal::<Test>(
+	let (accrued_increase, _) = accrue_interest_internal::<Test, InterestRateModel>(
 		optimal,
 		interest_rate_model,
 		borrow_index,
@@ -136,14 +136,14 @@ fn accrue_interest_base_cases() {
 
 #[test]
 fn accrue_interest_edge_cases() {
-	let (_, ref interest_rate_model) = new_jump_model();
+	let (_, ref mut interest_rate_model) = new_jump_model();
 	let utilization = Percent::from_percent(100);
 	let borrow_index = Rate::saturating_from_integer(1);
 	let delta_time = SECONDS_PER_YEAR;
 	let total_issued = u128::MAX;
 	let accrued_debt = 0;
 	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
-	let (accrued_increase, _) = accrue_interest_internal::<Test>(
+	let (accrued_increase, _) = accrue_interest_internal::<Test, InterestRateModel>(
 		utilization,
 		interest_rate_model,
 		borrow_index,
@@ -153,7 +153,7 @@ fn accrue_interest_edge_cases() {
 	.unwrap();
 	assert_eq!(accrued_increase, 108890357414700308308160000000000000000);
 
-	let (accrued_increase, _) = accrue_interest_internal::<Test>(
+	let (accrued_increase, _) = accrue_interest_internal::<Test, InterestRateModel>(
 		utilization,
 		interest_rate_model,
 		borrow_index,
@@ -166,7 +166,6 @@ fn accrue_interest_edge_cases() {
 
 #[test]
 fn accrue_interest_induction() {
-	let (optimal, ref interest_rate_model) = new_jump_model();
 	let borrow_index = Rate::saturating_from_integer(1);
 	let minimal = 18; // current precision and minimal time delta do not allow to accrue on less than this power of 10
 	let mut runner = TestRunner::default();
@@ -178,22 +177,25 @@ fn accrue_interest_induction() {
 				(minimal..=35u32).prop_map(|i| 10u128.pow(i)),
 			),
 			|(slot, total_issued)| {
-				let (accrued_increase_1, borrow_index_1) = accrue_interest_internal::<Test>(
-					optimal,
-					interest_rate_model,
-					borrow_index,
-					slot * MILLISECS_PER_BLOCK,
-					(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
-				)
-				.unwrap();
-				let (accrued_increase_2, borrow_index_2) = accrue_interest_internal::<Test>(
-					optimal,
-					interest_rate_model,
-					borrow_index,
-					(slot + 1) * MILLISECS_PER_BLOCK,
-					(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
-				)
-				.unwrap();
+				let (optimal, ref mut interest_rate_model) = new_jump_model();
+				let (accrued_increase_1, borrow_index_1) =
+					accrue_interest_internal::<Test, InterestRateModel>(
+						optimal,
+						interest_rate_model,
+						borrow_index,
+						slot * MILLISECS_PER_BLOCK,
+						(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
+					)
+					.unwrap();
+				let (accrued_increase_2, borrow_index_2) =
+					accrue_interest_internal::<Test, InterestRateModel>(
+						optimal,
+						interest_rate_model,
+						borrow_index,
+						(slot + 1) * MILLISECS_PER_BLOCK,
+						(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
+					)
+					.unwrap();
 				prop_assert!(accrued_increase_1 < accrued_increase_2);
 				prop_assert!(borrow_index_1 < borrow_index_2);
 				Ok(())
@@ -204,7 +206,7 @@ fn accrue_interest_induction() {
 
 #[test]
 fn accrue_interest_plotter() {
-	let (optimal, interest_rate_model) = new_jump_model();
+	let (optimal, ref mut interest_rate_model) = new_jump_model();
 	let borrow_index = Rate::checked_from_integer(1).unwrap();
 	let total_issued = 10_000_000;
 	let accrued_debt = 0;
@@ -213,9 +215,9 @@ fn accrue_interest_plotter() {
 	let mut previous = 0;
 	let _data: Vec<_> = (0..=1000)
 		.map(|x| {
-			let (accrue_increment, _) = accrue_interest_internal::<Test>(
+			let (accrue_increment, _) = accrue_interest_internal::<Test, InterestRateModel>(
 				optimal,
-				&interest_rate_model,
+				interest_rate_model,
 				borrow_index,
 				MILLISECS_PER_BLOCK,
 				total_borrows,
@@ -226,9 +228,9 @@ fn accrue_interest_plotter() {
 		})
 		.collect();
 
-	let (total_accrued, _) = accrue_interest_internal::<Test>(
+	let (total_accrued, _) = accrue_interest_internal::<Test, InterestRateModel>(
 		optimal,
-		&interest_rate_model,
+		interest_rate_model,
 		Rate::checked_from_integer(1).unwrap(),
 		1000 * MILLISECS_PER_BLOCK,
 		total_borrows,

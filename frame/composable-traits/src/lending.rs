@@ -1,13 +1,14 @@
 use crate::{loans::Timestamp, rate_model::*};
 use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
+use scale_info::TypeInfo;
 use sp_runtime::Percent;
 
 pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
 
 pub type BorrowAmountOf<T> = <T as Lending>::Balance;
 
-#[derive(Encode, Decode, Default)]
+#[derive(Encode, Decode, Default, TypeInfo)]
 pub struct MarketConfigInput<AccountId>
 where
 	AccountId: core::cmp::Ord,
@@ -19,7 +20,7 @@ where
 	pub under_collaterized_warn_percent: Percent,
 }
 
-#[derive(Encode, Decode, Default)]
+#[derive(Encode, Decode, Default, TypeInfo)]
 pub struct MarketConfig<VaultId, AssetId, AccountId> {
 	pub manager: AccountId,
 	pub borrow: VaultId,

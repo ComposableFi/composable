@@ -6,7 +6,7 @@ use composable_traits::{
 use frame_support::{
 	parameter_types,
 	sp_runtime::Permill,
-	traits::{OnFinalize, OnInitialize},
+	traits::{Everything, OnFinalize, OnInitialize},
 	PalletId,
 };
 use hex_literal::hex;
@@ -14,6 +14,7 @@ use once_cell::sync::Lazy;
 use orml_traits::parameter_type_with_key;
 use pallet_dutch_auctions::DeFiComposableConfig;
 use pallet_liquidations::DeFiComposablePallet;
+use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
 use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
@@ -62,6 +63,7 @@ pub static UNRESERVED: Lazy<AccountId> = Lazy::new(|| {
 	codec::Decode,
 	serde::Serialize,
 	serde::Deserialize,
+	TypeInfo,
 )]
 pub enum MockCurrencyId {
 	PICA,
@@ -129,7 +131,7 @@ parameter_types! {
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -239,7 +241,7 @@ impl orml_tokens::Config for Test {
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
 	type MaxLocks = ();
-	type DustRemovalWhitelist = ();
+	type DustRemovalWhitelist = Everything;
 }
 
 impl crate::mocks::oracle::Config for Test {

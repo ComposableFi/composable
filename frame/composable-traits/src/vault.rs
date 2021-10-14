@@ -1,15 +1,15 @@
+use crate::rate_model::Rate;
 use codec::Codec;
 use frame_support::{
 	pallet_prelude::*,
 	sp_runtime::Perquintill,
 	sp_std::{collections::btree_map::BTreeMap, fmt::Debug},
 };
-
-use crate::rate_model::Rate;
+use scale_info::TypeInfo;
 
 /// An indication for strategies as to how they should be rebalancing. Strategies should evaluate if
 /// it is worth it to deposit or withdraw based on fees.
-#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq)]
+#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, TypeInfo)]
 pub enum FundsAvailability<Balance> {
 	/// Withdrawable balance in the vault, which the strategy may use.
 	Withdrawable(Balance),
@@ -24,7 +24,7 @@ pub enum FundsAvailability<Balance> {
 	MustLiquidate,
 }
 
-#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq)]
+#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, TypeInfo)]
 pub enum Deposit<Balance, BlockNumber> {
 	/// Indicates that the vault has deposited an amount large enough to forever be exempt from
 	/// rent payments.
@@ -49,7 +49,7 @@ impl<Balance, BlockNumber> Deposit<Balance, BlockNumber> {
 	}
 }
 
-#[derive(Clone, Encode, Decode, Default, Debug, PartialEq)]
+#[derive(Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 pub struct VaultConfig<AccountId, CurrencyId>
 where
 	AccountId: core::cmp::Ord,

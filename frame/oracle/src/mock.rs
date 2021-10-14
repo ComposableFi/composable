@@ -1,6 +1,6 @@
 use crate as pallet_oracle;
 use crate::*;
-use frame_support::{ord_parameter_types, parameter_types};
+use frame_support::{ord_parameter_types, parameter_types, traits::Everything};
 use frame_system as system;
 use frame_system::EnsureSignedBy;
 use sp_core::{sr25519::Signature, H256};
@@ -33,7 +33,7 @@ parameter_types! {
 }
 
 impl system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -121,7 +121,7 @@ where
 
 impl pallet_oracle::Config for Test {
 	type Event = Event;
-	type AuthorityId = crypto::TestAuthId;
+	type AuthorityId = crypto::BathurstStId;
 	type Currency = Balances;
 	type AssetId = u128;
 	type PriceValue = u128;

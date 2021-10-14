@@ -67,6 +67,7 @@ pub mod pallet {
 		pallet_prelude::*,
 	};
 	use num_traits::{CheckedDiv, SaturatingSub};
+	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
 		traits::{
@@ -84,7 +85,7 @@ pub mod pallet {
 		<T as frame_system::Config>::AccountId,
 	>;
 
-	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, TypeInfo)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
 
@@ -162,7 +163,8 @@ pub mod pallet {
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ Debug
-			+ Default;
+			+ Default
+			+ TypeInfo;
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -222,7 +224,8 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ From<u128>
 			+ Debug
-			+ Default;
+			+ Default
+			+ TypeInfo;
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -305,7 +308,7 @@ pub mod pallet {
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
 				let results = signer.send_signed_transaction(|_account| {
 					// call `liquidate` extrinsic
-					Call::liquidate(market_id, account.clone())
+					Call::liquidate { market_id, borrower: account.clone() }
 				});
 
 				for (_acc, res) in &results {
@@ -464,14 +467,8 @@ pub mod pallet {
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	#[pallet::genesis_config]
+	#[derive(Default)]
 	pub struct GenesisConfig {}
-
-	#[cfg(feature = "std")]
-	impl Default for GenesisConfig {
-		fn default() -> Self {
-			Self {}
-		}
-	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
@@ -1284,15 +1281,15 @@ pub mod pallet {
 			let total_borrows = Self::total_borrows(market_id)?;
 			let total_cash = Self::total_cash(market_id)?;
 			let utilization_ratio = Self::calc_utilization_ratio(&total_cash, &total_borrows)?;
-			let market = Self::get_market(market_id)?;
+			let mut market = Self::get_market(market_id)?;
 			let delta_time =
 				now.checked_sub(Self::last_block_timestamp()).ok_or(Error::<T>::Underflow)?;
 			let borrow_index = Self::get_borrow_index(market_id)?;
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 
-			let (accrued, borrow_index_new) = accrue_interest_internal::<T>(
+			let (accrued, borrow_index_new) = accrue_interest_internal::<T, InterestRateModel>(
 				utilization_ratio,
-				&market.interest_rate_model,
+				&mut market.interest_rate_model,
 				borrow_index,
 				delta_time,
 				total_borrows.into(),
@@ -1525,9 +1522,9 @@ pub mod pallet {
 		borrow_balance.safe_mul(borrow_price)?.safe_mul(collateral_factor)
 	}
 
-	pub fn accrue_interest_internal<T: Config>(
+	pub fn accrue_interest_internal<T: Config, I: InterestRate>(
 		utilization_ratio: Percent,
-		interest_rate_model: &InterestRateModel,
+		interest_rate_model: &mut I,
 		borrow_index: Rate,
 		delta_time: DurationSeconds,
 		total_borrows: u128,

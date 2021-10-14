@@ -5,6 +5,7 @@ pub mod pallet {
 	use crate::traits::CurrencyFactory;
 	use frame_support::{pallet_prelude::*, PalletId};
 	use frame_system::pallet_prelude::OriginFor;
+	use scale_info::TypeInfo;
 
 	pub const PALLET_ID: PalletId = PalletId(*b"mck_curf");
 
@@ -20,6 +21,7 @@ pub mod pallet {
 		codec::Decode,
 		serde::Serialize,
 		serde::Deserialize,
+		TypeInfo,
 	)]
 	pub enum MockCurrencyId {
 		A,
