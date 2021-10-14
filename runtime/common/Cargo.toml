@@ -36,6 +36,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "v0.9.11" }
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
+scale-info = "1.0.0"
 
 [features]
 default = ["std"]

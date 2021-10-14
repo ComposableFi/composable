@@ -9,6 +9,7 @@ use sp_runtime::{
 	testing::Header,
 	traits::{ConvertInto, IdentityLookup},
 };
+use frame_support::traits::Everything;
 
 pub type BlockNumber = u64;
 pub type AccountId = u128;
@@ -49,7 +50,7 @@ impl system::Config for Test {
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type DbWeight = ();
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
@@ -99,7 +100,7 @@ impl orml_tokens::Config for Test {
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
 	type MaxLocks = ();
-	type DustRemovalWhitelist = ();
+	type DustRemovalWhitelist = Everything;
 }
 
 impl crate::mocks::currency_factory::Config for Test {

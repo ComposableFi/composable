@@ -19,6 +19,8 @@ use sp_runtime::{
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 	ArithmeticError, DispatchError,
 };
+use scale_info::TypeInfo;
+use frame_support::traits::Everything;
 
 pub mod oracle;
 
@@ -49,6 +51,7 @@ pub const CHARLIE: AccountId = 2;
 	codec::Decode,
 	serde::Serialize,
 	serde::Deserialize,
+	TypeInfo,
 )]
 pub enum MockCurrencyId {
 	PICA,
@@ -116,7 +119,7 @@ parameter_types! {
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -226,7 +229,7 @@ impl orml_tokens::Config for Test {
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
 	type MaxLocks = ();
-	type DustRemovalWhitelist = ();
+	type DustRemovalWhitelist = Everything;
 }
 
 impl crate::mocks::oracle::Config for Test {

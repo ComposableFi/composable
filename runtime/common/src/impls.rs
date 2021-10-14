@@ -81,6 +81,7 @@ mod tests {
 		traits::{BlakeTwo256, IdentityLookup},
 		Perbill, Permill,
 	};
+	use frame_support::traits::Everything;
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 	type Block = frame_system::mocking::MockBlock<Test>;
@@ -110,7 +111,7 @@ mod tests {
 	}
 
 	impl frame_system::Config for Test {
-		type BaseCallFilter = ();
+		type BaseCallFilter = Everything;
 		type Origin = Origin;
 		type Index = u64;
 		type BlockNumber = u64;
@@ -205,7 +206,7 @@ mod tests {
 		type ExistentialDeposits = ExistentialDeposits;
 		type OnDust = ();
 		type MaxLocks = ();
-		type DustRemovalWhitelist = ();
+		type DustRemovalWhitelist = Everything;
 	}
 
 	parameter_types! {

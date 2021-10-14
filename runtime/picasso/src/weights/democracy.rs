@@ -114,7 +114,7 @@ impl<T: frame_system::Config> democracy::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(r as Weight)))
 	}
 
-	fn on_initialize_base_with_launch_period(r: u32) -> Weight {
+	fn on_initialize_base_with_launch_period(_r: u32) -> Weight {
 		todo!()
 	}
 

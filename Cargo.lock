@@ -1245,6 +1245,7 @@ dependencies = [
  "polkadot-primitives 0.9.11 (git+https://github.com/paritytech/polkadot?tag=v0.9.11)",
  "polkadot-runtime-common 0.9.11 (git+https://github.com/paritytech/polkadot?tag=v0.9.11)",
  "primitives",
+ "scale-info",
  "serde",
  "sp-consensus-aura",
  "sp-core",

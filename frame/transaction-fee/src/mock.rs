@@ -23,6 +23,7 @@ use support::{
 		WeightToFeeCoefficients, WeightToFeePolynomial,
 	},
 };
+use support::traits::Everything;
 
 type UncheckedExtrinsic = system::mocking::MockUncheckedExtrinsic<Runtime>;
 type Block = system::mocking::MockBlock<Runtime>;
@@ -94,7 +95,7 @@ parameter_types! {
 }
 
 impl system::Config for Runtime {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = BlockWeights;
 	type BlockLength = ();
 	type DbWeight = ();
@@ -133,7 +134,7 @@ impl orml_tokens::Config for Runtime {
 	type MaxLocks = ();
 	type WeightInfo = ();
 	type CurrencyId = CurrencyId;
-	type DustRemovalWhitelist = ();
+	type DustRemovalWhitelist = Everything;
 	type ExistentialDeposits = ExistentialDeposits;
 }
 

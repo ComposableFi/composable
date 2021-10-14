@@ -9,7 +9,7 @@ use crate::rate_model::Rate;
 
 /// An indication for strategies as to how they should be rebalancing. Strategies should evaluate if
 /// it is worth it to deposit or withdraw based on fees.
-#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq)]
+#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, TypeInfo)]
 pub enum FundsAvailability<Balance> {
 	/// Withdrawable balance in the vault, which the strategy may use.
 	Withdrawable(Balance),
