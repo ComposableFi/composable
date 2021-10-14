@@ -10,6 +10,14 @@ use frame_support::{
 	},
 };
 
+pub type Exponent = u32;
+
+pub trait PriceableAsset {
+	type Balance;
+	fn unit(&self) -> Self::Balance;
+	fn smallest_unit_exponent(&self) -> Exponent;
+}
+
 /* NOTE(hussein-aitlahcen):
  I initially added a generic type to index into the generatable sub-range but realised it was
  overkill. Perhaps it will be required later if we want to differentiate multiple sub-ranges
