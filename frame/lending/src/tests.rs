@@ -528,10 +528,10 @@ fn test_liquidation() {
 		// Balance for ALICE
 		Oracle::set_btc_price(100u128);
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 0);
-		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, 2));
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 2);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, 102));
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 102);
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, 2));
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 100);
 
 		// Balance of USDT for CHARLIE
 		// CHARLIE is only lender of USDT

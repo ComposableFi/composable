@@ -18,7 +18,7 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, FullCodec};
-	use composable_traits::oracle::Oracle;
+	use composable_traits::oracle::{Oracle, Price as LastPrice};
 	use frame_support::{
 		dispatch::{DispatchResult, DispatchResultWithPostInfo, Vec},
 		pallet_prelude::*,
@@ -46,12 +46,12 @@ pub mod pallet {
 		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
+	pub use crate::weights::WeightInfo;
 
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(KEY_ID);
 	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(KEY_ID);
-	pub use crate::weights::WeightInfo;
 
 	pub mod crypto {
 		use super::KEY_TYPE;
@@ -325,9 +325,12 @@ pub mod pallet {
 		type AssetId = T::AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 
-		fn get_price(of: Self::AssetId) -> Result<(Self::Balance, Self::Timestamp), DispatchError> {
-			let price = Prices::<T>::try_get(of).map_err(|_| Error::<T>::PriceNotFound)?;
-			Ok((price.price, price.block))
+		fn get_price(
+			of: Self::AssetId,
+		) -> Result<LastPrice<Self::Balance, Self::Timestamp>, DispatchError> {
+			let Price { price, block } =
+				Prices::<T>::try_get(of).map_err(|_| Error::<T>::PriceNotFound)?;
+			Ok(LastPrice { price, block })
 		}
 	}
 
