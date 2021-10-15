@@ -57,13 +57,7 @@ pub mod pallet {
 	};
 	use sp_std::{fmt::Debug, vec::Vec};
 	pub trait DeFiComposablePallet {
-		type AssetId: FullCodec
-			+ Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ From<u128>
-			+ Default;
+		type AssetId: FullCodec + Eq + PartialEq + Copy + MaybeSerializeDeserialize + Default;
 	}
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Liqudati");
