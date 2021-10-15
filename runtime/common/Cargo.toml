@@ -28,6 +28,7 @@ treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/s
 
 crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
 primitives = { path = "../primitives", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 serde = { version = "1.0.119" }
@@ -36,7 +37,6 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "v0.9.11" }
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
-scale-info = "1.0.0"
 
 [features]
 default = ["std"]
@@ -58,4 +58,5 @@ std = [
 	"node-primitives/std",
 	"polkadot-runtime-common/std",
 	"polkadot-primitives/std",
+    "scale-info/std",
 ]

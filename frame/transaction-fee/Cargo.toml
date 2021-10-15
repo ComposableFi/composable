@@ -18,7 +18,7 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 primitives = { path =  "../../runtime/primitives", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
-scale-info = "1.0.0"
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
@@ -38,4 +38,5 @@ std = [
 	"primitives/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"sp-std/std",
+    "scale-info/std",
 ]

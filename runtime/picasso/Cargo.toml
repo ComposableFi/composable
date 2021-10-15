@@ -87,7 +87,7 @@ xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.1
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.11", default-features = false }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.11", default-features = false }
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.11", default-features = false }
-scale-info = "1.0.0"
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
@@ -148,6 +148,7 @@ std = [
 	"xcm-executor/std",
 	"aura/std",
 	"sp-consensus-aura/std",
+    "scale-info/std",
 ]
 runtime-benchmarks = [
 	"benchmarking",
