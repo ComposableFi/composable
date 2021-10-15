@@ -16,9 +16,9 @@ WORKDIR /composable
 
 COPY . /composable
 
-RUN cargo build --$PROFILE
+RUN cargo build --release
 
-RUN cp /composable/target/$PROFILE/node-template /usr/local/bin
+# RUN cp /composable/target/$PROFILE/ /usr/local/bin
 
 
 
