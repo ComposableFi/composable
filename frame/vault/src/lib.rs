@@ -383,11 +383,11 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Tombstones a vault, rewarding the caller if successful with a small fee.
+		/// Substracts rent from a vault, rewarding the caller if successful with a small fee and
+		/// possibly tombstoning the vault.
 		///
-		/// TODO:
-		///  - Check that the vault has no more funds, else do something?
-		///  - First disable the vault, then after X amount of time delete it
+		/// A tombstoned vault still allows for withdrawals but blocks deposits, and requests all
+		/// strategies to return their funds.
 		#[pallet::weight(10_000)]
 		pub fn claim_surcharge(
 			origin: OriginFor<T>,
@@ -396,15 +396,11 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let origin = origin.into();
 
-			let (signed, rewarded) = match (origin, address) {
+			let (_, reward_address) = match (origin, address) {
 				(Ok(frame_system::RawOrigin::Signed(account)), None) => (true, account),
 				(Ok(frame_system::RawOrigin::None), Some(address)) => (false, address),
 				_ => return Err(Error::<T>::InvalidSurchargeClaim.into()),
 			};
-
-			// for now, we'll only allow collators to claim surcharges. Once we implement
-			// capabilities + tombstoning, we'll evaluate having users call this too.
-			ensure!(!signed, Error::<T>::InvalidSurchargeClaim);
 
 			Vaults::<T>::try_mutate_exists(dest, |vault| -> DispatchResultWithPostInfo {
 				let mut vault = vault.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
@@ -413,12 +409,12 @@ pub mod pallet {
 
 				match crate::rent::evaluate_eviction::<T>(current_block, vault.deposit) {
 					Verdict::Exempt => Ok(().into()),
-					Verdict::Evict {} => {
+					Verdict::Evict => {
 						vault.deposit = Deposit::Rent { amount: Zero::zero(), at: current_block };
 						vault.capabilities.set_tombstoned();
 						let account = &Self::vault_account(&dest);
 						let reward = T::Currency::reducible_balance(native_id, account, false);
-						T::Currency::transfer(native_id, account, &rewarded, reward, false)?;
+						T::Currency::transfer(native_id, account, &reward_address, reward, false)?;
 						Ok(().into())
 					},
 					Verdict::Charge { remaining, payable } => {
@@ -430,7 +426,7 @@ pub mod pallet {
 						T::Currency::transfer(
 							native_id,
 							&Self::vault_account(&dest),
-							&rewarded,
+							&reward_address,
 							payable,
 							true,
 						)?;
@@ -850,7 +846,9 @@ pub mod pallet {
 			account: &Self::AccountId,
 		) -> Result<FundsAvailability<Self::Balance>, DispatchError> {
 			match (Vaults::<T>::try_get(vault_id), Allocations::<T>::try_get(vault_id, &account)) {
-				(Ok(vault), Ok(allocation)) if !vault.capabilities.is_stopped() => {
+				(Ok(vault), Ok(allocation))
+					if !vault.capabilities.is_stopped() && !vault.capabilities.is_tombstoned() =>
+				{
 					let aum = Self::assets_under_management(vault_id)?;
 					let max_allowed = <T::Convert as Convert<u128, T::Balance>>::convert(
 						allocation
@@ -863,7 +861,7 @@ pub mod pallet {
 					} else {
 						Ok(FundsAvailability::Withdrawable(max_allowed - state.balance))
 					}
-				},
+				}
 				(_, _) => Ok(FundsAvailability::MustLiquidate),
 			}
 		}
