@@ -50,12 +50,6 @@ pub mod pallet {
 			amount: Balance,
 		) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError> {
 			let derive_price = |p: u128, a: u128| {
-				/* NOTE(hussein-aitlahcen):
-					Assuming we have a price `p` for an asset `asset` in USDT cents.
-					Let `k` be the number of decimals for `asset`.
-					The price of an amount `a` of the smallest possible unit of `asset` is:
-					  p * a / 10^k
-				*/
 				let e = 10u128
 					.checked_pow(asset.smallest_unit_exponent())
 					.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;

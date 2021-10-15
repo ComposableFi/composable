@@ -276,7 +276,8 @@ pub mod pallet {
 		/// vault provided does not exist
 		VaultNotFound,
 		/// Only assets for which we can track price are supported
-		AssetWithoutPrice,
+		AssetNotSupportedByOracle,
+		AssetPriceNotFound,
 		/// The market could not be found
 		MarketDoesNotExist,
 		CollateralDepositFailed,
@@ -883,7 +884,7 @@ pub mod pallet {
 		) -> Result<T::Balance, DispatchError> {
 			<T::Oracle as Oracle>::get_price(asset_id, amount)
 				.map(|p| p.price)
-				.map_err(|_| Error::<T>::AssetWithoutPrice.into())
+				.map_err(|_| Error::<T>::AssetPriceNotFound.into())
 		}
 
 		fn updated_account_interest_index(
@@ -1014,8 +1015,13 @@ pub mod pallet {
 				config_input.collateral_factor > 1.into(),
 				Error::<T>::CollateralFactorIsLessOrEqualOne
 			);
-			Self::get_price(collateral_asset, collateral_asset.unit())?;
-			Self::get_price(borrow_asset, borrow_asset.unit())?;
+
+			let collateral_asset_supported = <T::Oracle as Oracle>::is_supported(collateral_asset)?;
+			let borrow_asset_supported = <T::Oracle as Oracle>::is_supported(borrow_asset)?;
+			ensure!(
+				collateral_asset_supported && borrow_asset_supported,
+				Error::<T>::AssetNotSupportedByOracle
+			);
 
 			LendingCount::<T>::try_mutate(|MarketIndex(previous_market_index)| {
 				let market_id = {

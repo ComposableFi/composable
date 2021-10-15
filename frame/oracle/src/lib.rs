@@ -18,7 +18,10 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, FullCodec};
-	use composable_traits::oracle::{Oracle, Price as LastPrice};
+	use composable_traits::{
+		currency::PriceableAsset,
+		oracle::{Oracle, Price as LastPrice},
+	};
 	use frame_support::{
 		dispatch::{DispatchResult, DispatchResultWithPostInfo, Vec},
 		pallet_prelude::*,
@@ -95,7 +98,8 @@ pub mod pallet {
 			+ From<u128>
 			+ Into<u128>
 			+ Debug
-			+ Default;
+			+ Default
+			+ PriceableAsset;
 		type PriceValue: Default
 			+ Parameter
 			+ Codec
@@ -273,9 +277,11 @@ pub mod pallet {
 		type AssetId = T::AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 
+		// TODO(hussein-aitlahcen):
+		// implement the amount based computation with decimals once it's been completely defined
 		fn get_price(
 			asset: Self::AssetId,
-			amount: Self::Balance,
+			_amount: Self::Balance,
 		) -> Result<LastPrice<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
 				Prices::<T>::try_get(asset).map_err(|_| Error::<T>::PriceNotFound)?;
