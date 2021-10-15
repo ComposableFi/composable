@@ -840,6 +840,7 @@ impl lending::Config for Runtime {
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
+	type AuthorityId = lending::crypto::TestAuthId;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 }
 

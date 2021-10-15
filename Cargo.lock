@@ -5835,6 +5835,7 @@ dependencies = [
  "hex-literal",
  "log 0.4.14",
  "num-traits",
+ "once_cell",
  "orml-tokens",
  "orml-traits",
  "pallet-balances",
