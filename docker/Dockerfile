@@ -18,7 +18,8 @@ COPY . /composable
 
 RUN cargo build --release
 
-# RUN cp /composable/target/$PROFILE/ /usr/local/bin
+RUN cp -R /composable/target/release /usr/local/bin
+
 
 
 
