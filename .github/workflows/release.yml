@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
     steps:
       - id: release
         uses: rymndhng/release-on-push-action@master
@@ -28,6 +31,9 @@ jobs:
           fetch-depth: 0
       - name: Set env
         run: echo "RELEASE_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
+
+      - name: Download rococo-chachacha.json
+        run: ./docker/get-rococo get s3://composable-rococo/rococo-chachacha.json rococo-chachacha.json
 
       - name: Test
         run: |

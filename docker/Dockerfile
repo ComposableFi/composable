@@ -11,6 +11,8 @@ RUN apt-get update \
 && apt-get install cron -y && apt-get install docker-ce vim -y
 
 ARG VERSION=stable
+ARG AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+ARG AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 ARG PROFILE=release
 WORKDIR /composable
 
