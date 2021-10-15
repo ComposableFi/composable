@@ -31,10 +31,7 @@ RUN cargo build --release
 RUN useradd -m -u 1000 -U -s /bin/sh -d /composable composable && \
 	mkdir -p /composable/.local/share && \
 	mkdir /data && \
-	chown -R composable:composable /data && \
-	chown -R composable:composable /composable/.local/share/local_testnet && \
-	ln -s /data /composable/.local/share/local_testnet && \
-	rm -rf /usr/bin /usr/sbin
+	chown -R composable:composable /data 
 
 USER composable
 EXPOSE 30333 9933 9944

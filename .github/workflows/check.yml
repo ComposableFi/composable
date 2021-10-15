@@ -24,10 +24,10 @@ jobs:
       - uses: actions-rs/cargo@v1
       - name: Cargo Check
         run: |
-          SKIP_WASM_BUILD=1 cargo check
+          cargo check
       - name: Cargo Check Benchmark
         run: |
-          SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --release
+          cargo check --features=runtime-benchmarks --release
   clippy:
     name: Clippy
     runs-on:
@@ -45,7 +45,7 @@ jobs:
           override: true
       - name: Cargo clippy
         run: |
-          SKIP_WASM_BUILD=1 cargo clippy -- -D warnings
+          cargo clippy -- -D warnings
       - name: Cargo fmt
         run: |
           rustup component add rustfmt --toolchain nightly-2021-09-01-x86_64-unknown-linux-gnu
