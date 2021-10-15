@@ -38,8 +38,8 @@ sp-runtime = {default-features = false, git = "https://github.com/paritytech/sub
 sp-std = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10"}
 
 [dev-dependencies]
-pallet-balances = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10"}
-pallet-scheduler = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10"}
+pallet-balances = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10"}
+pallet-scheduler = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10"}
 hex-literal = "0.3.1"
 
 [features]
