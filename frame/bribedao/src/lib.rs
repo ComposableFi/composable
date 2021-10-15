@@ -26,6 +26,17 @@ pub mod pallet {
 		<T as Config>::Conviction,
 	>;
 
+
+	// Status of Bribe request
+	#[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug)]
+	pub enum BribeStatuses {
+		Created, 
+		Started,
+		OnHold,
+		Failed,
+		Finished,
+		}
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		// REVIEW(oleksii): Balance traits; following are copied from pallet-vault
@@ -73,16 +84,21 @@ pub mod pallet {
 	#[pallet::getter(fn bribe_count)]
 	pub(super) type BribeCount<T: Config> = StorageValue<_, BribeIndex, ValueQuery>;
 
+
+	#[pallet::storage]
+	#[pallet::getter(fn bribe_status)]
+	pub(super) type BribeStatus<T: Config> =
+		StorageMap<_, Blake2_128Concat, BribeIndex, BribeStatuses>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn bribe_requests)]
 	pub(super) type BribeRequests<T: Config> =
 		StorageMap<_, Blake2_128Concat, BribeIndex, CreateBribeRequest<T>>;
 
+//	#[pallet::storage]
+//	#[pallet::getter(fn bribe_status)]
+//	pub(super) type BribeStatus<T: Config> = StorageValue<_, BribeIndex, BribeStatueses>;
 
-	/// Bribe Status
-	#[pallet::storage]
-	#[pallet::getter(fn bribe_count)]
-	pub(super) type BribeStatus<T: Config> = StorageValue<_, BribeIndex, Status, Active>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -159,8 +175,8 @@ pub mod pallet {
 			);
 			let bribe_request = BribeRequests::<T>::get(request.bribe_index).unwrap();
 
-			todo!("account for bribe progress ");
-			BribeStatus::<T>::insert(todo!(), todo!(), todo!()); // account for bribe progress
+//			todo!("account for bribe progress ");
+			BribeStatus::<T>::insert(request.bribe_index, BribeStatuses::Created); // account for bribe progress
 
 
 			T::Democracy::vote(todo!(), todo!(), todo!()); // ""
