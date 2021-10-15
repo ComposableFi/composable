@@ -14,12 +14,12 @@ s3simple() {
   fi
   local path="${url:4}"
 
-  if [ -z "${AWS_ACCESS_KEY_ID-}"  ]; then
+  if [ -z "$AWS_ACCESS_KEY_ID"  ]; then
     echo "Need AWS_ACCESS_KEY_ID to be set"
     return 1
   fi
 
-  if [ -z "${AWS_SECRET_ACCESS_KEY-}" ]; then
+  if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
     echo "Need AWS_SECRET_ACCESS_KEY to be set"
     return 1
   fi
