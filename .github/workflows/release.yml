@@ -31,6 +31,7 @@ jobs:
 
       - name: Test
         run: |
+          docker system prune -f
           echo $RELEASE_VERSION
           echo ${{ env.RELEASE_VERSION }}
           
