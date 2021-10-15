@@ -1,7 +1,7 @@
 {
   "name": "Dali Chachacha",
   "id": "dali",
-  "chainType": "Development",
+  "chainType": "Live",
   "bootNodes": [],
   "telemetryEndpoints": null,
   "protocolId": "dali",
@@ -10,7 +10,7 @@
     "tokenDecimals": 12,
     "tokenSymbol": "DALI"
   },
-  "relay_chain": "rococo-chachacha",
+  "relay_chain": "chachacha",
   "para_id": 2001,
   "consensusEngine": null,
   "codeSubstitutes": {},
