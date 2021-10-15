@@ -11,10 +11,13 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
 	use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
+	use pallet_democracy::{Vote, AccountVote};
+
 
 	pub type BribeIndex = u32;
 	pub type ReferendumIndex = pallet_democracy::ReferendumIndex;
 	pub type CreateBribeRequest<T> = composable_traits::bribe::CreateBribeRequest<
+		<T as Config>::AccountId,
 		ReferendumIndex,
 		<T as Config>::Balance,
 		<T as Config>::Conviction,
@@ -55,6 +58,8 @@ pub mod pallet {
 		type Conviction: Parameter;
 
 		type Democracy: Democracy;
+
+//		type AccountId: Self::AccountId;
 
 		// TODO(oleksii): CurrencyId traits
 		type CurrencyId: Parameter;
@@ -141,8 +146,8 @@ pub mod pallet {
 
 	impl<T: Config> Bribe for Pallet<T> {
 		type BribeIndex = BribeIndex;
+		type AccountId = T::AccountId;
 		type ReferendumIndex = ReferendumIndex;
-
 		type Balance = T::Balance;
 		type Conviction = T::Conviction;
 		type CurrencyId = T::CurrencyId;
@@ -164,6 +169,7 @@ pub mod pallet {
 			});
 
 			ensure!(BribeRequests::<T>::contains_key(id), Error::<T>::AlreadyBribed); //dont duplicate briberequest if we already have it
+
 			BribeRequests::<T>::insert(id, request);
 			Ok(id)
 		}
@@ -179,7 +185,7 @@ pub mod pallet {
 			BribeStatus::<T>::insert(request.bribe_index, BribeStatuses::Created); // account for bribe progress
 
 
-			T::Democracy::vote(todo!(), todo!(), todo!()); // ""
+			T::Democracy::vote(bribe_request.account_id, bribe_request.ref_index, todo!()); //AccountId, Referendum Index, Vote 
 			todo!("enact vote through pallet_democracy");
 		}
 	}

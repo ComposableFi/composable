@@ -7,9 +7,11 @@ pub trait Bribe {
 	type Conviction;
 	type CurrencyId;
 	type ReferendumIndex;
+	type AccountId: core::cmp::Ord;
 
 	fn create_bribe(
 		request: CreateBribeRequest<
+			Self::AccountId,
 			Self::ReferendumIndex,
 			Self::Balance,
 			Self::Conviction,
@@ -24,7 +26,9 @@ pub trait Bribe {
 
 /// A request to create a bribe for an (ongoing) referendum.
 #[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug)]
-pub struct CreateBribeRequest<ReferendumIndex, Balance, Conviction, CurrencyId> {
+pub struct CreateBribeRequest<AccountId, ReferendumIndex, Balance, Conviction, CurrencyId> {
+	/// Account id of the creator of the Bribe request
+	pub account_id: AccountId,
 	/// Index of the referendum.
 	pub ref_index: ReferendumIndex,
 	/// How much to pay bribe-takers in total.
