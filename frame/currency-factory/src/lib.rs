@@ -27,6 +27,7 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_traits::currency::{CurrencyFactory, DynamicCurrencyId};
 	use frame_support::{pallet_prelude::*, PalletId};
+	use scale_info::TypeInfo;
 
 	pub const PALLET_ID: PalletId = PalletId(*b"pal_curf");
 
@@ -42,7 +43,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The currency which can be created from thin air.
-		type DynamicCurrencyId: FullCodec + Copy + DynamicCurrencyId;
+		type DynamicCurrencyId: FullCodec + Copy + DynamicCurrencyId + TypeInfo;
 
 		/// The initial currency id from which we are able to generate the next.
 		#[pallet::constant]
