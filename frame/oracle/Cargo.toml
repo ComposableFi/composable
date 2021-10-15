@@ -31,7 +31,7 @@ serde_json = { version = "1.0.45", default-features = false, features = ["alloc"
 frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.11' }
 
 composable-traits = { path = "../composable-traits", default-features = false }
-scale-info = "1.0.0"
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 serde = "1.0.119"
@@ -50,6 +50,7 @@ std = [
     "sp-io/std",
     "sp-core/std",
     "sp-std/std",
+    "scale-info/std",
 ]
 
 runtime-benchmarks = [
