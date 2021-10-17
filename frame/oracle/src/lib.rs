@@ -769,7 +769,7 @@ pub mod pallet {
 			let base = str::from_utf8(&from_local).unwrap_or("http://localhost:3001/price/");
 			let string_id =
 				serde_json::to_string(&(*price_id).into()).map_err(|_| http::Error::IoError)?;
-			let url = base.to_owned() + &string_id + "/";
+			let url = base.to_owned() + &string_id;
 
 			// Initiate an external HTTP GET request.
 			let request = http::Request::get(&url);
