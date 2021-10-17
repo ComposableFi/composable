@@ -228,11 +228,6 @@ pub mod pallet {
 	/// If an asset price has been requested
 	pub type Requested<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, bool, ValueQuery>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn request_id)]
-	/// Request Id number
-	pub type RequestedId<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, u128, ValueQuery>;
-
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -591,7 +586,6 @@ pub mod pallet {
 					Error::<T>::NotEnoughFunds
 				);
 				T::Currency::slash(who, T::RequestCost::get());
-				RequestedId::<T>::mutate(asset_id, |request_id| *request_id += 1);
 				Requested::<T>::insert(asset_id, true);
 			}
 			Self::deposit_event(Event::PriceRequested(who.clone(), asset_id));
@@ -775,10 +769,7 @@ pub mod pallet {
 			let base = str::from_utf8(&from_local).unwrap_or("http://localhost:3001/price/");
 			let string_id =
 				serde_json::to_string(&(*price_id).into()).map_err(|_| http::Error::IoError)?;
-			let request_id = RequestedId::<T>::get(price_id);
-			let string_request_id =
-				serde_json::to_string(&request_id).map_err(|_| http::Error::IoError)?;
-			let url = base.to_owned() + &string_id + "/" + &string_request_id;
+			let url = base.to_owned() + &string_id + "/";
 
 			// Initiate an external HTTP GET request.
 			let request = http::Request::get(&url);
