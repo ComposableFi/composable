@@ -171,7 +171,6 @@ fn do_request_price() {
 		assert_eq!(Balances::free_balance(account_1), 99);
 		// True and request ID incremented
 		assert_eq!(Oracle::requested(1), true);
-		assert_eq!(Oracle::request_id(1), 1);
 
 		// fails on invalid ID
 		assert_noop!(Oracle::do_request_price(&account_1, 2), Error::<Test>::InvalidAssetId);
@@ -182,7 +181,6 @@ fn do_request_price() {
 
 		// True and request ID not incremented
 		assert_eq!(Oracle::requested(1), true);
-		assert_eq!(Oracle::request_id(1), 1);
 	});
 }
 
@@ -607,7 +605,7 @@ fn knows_how_to_mock_several_http_calls() {
 		let mut state = state.write();
 		state.expect_request(testing::PendingRequest {
 			method: "GET".into(),
-			uri: "http://localhost:3001/price/0/0".into(),
+			uri: "http://localhost:3001/price/0".into(),
 			response: Some(br#"{"USD": 1}"#.to_vec()),
 			sent: true,
 			..Default::default()
@@ -615,7 +613,7 @@ fn knows_how_to_mock_several_http_calls() {
 
 		state.expect_request(testing::PendingRequest {
 			method: "GET".into(),
-			uri: "http://localhost:3001/price/0/0".into(),
+			uri: "http://localhost:3001/price/0".into(),
 			response: Some(br#"{"USD": 2}"#.to_vec()),
 			sent: true,
 			..Default::default()
@@ -623,7 +621,7 @@ fn knows_how_to_mock_several_http_calls() {
 
 		state.expect_request(testing::PendingRequest {
 			method: "GET".into(),
-			uri: "http://localhost:3001/price/0/0".into(),
+			uri: "http://localhost:3001/price/0".into(),
 			response: Some(br#"{"USD": 3}"#.to_vec()),
 			sent: true,
 			..Default::default()
