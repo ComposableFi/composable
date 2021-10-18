@@ -17,7 +17,7 @@ pub mod pallet {
 	pub type BribeIndex = u32;
 	pub type ReferendumIndex = pallet_democracy::ReferendumIndex;
 	pub type CreateBribeRequest<T> = composable_traits::bribe::CreateBribeRequest<
-		<T as Config>::AccountId,
+		<T as frame_system::Config>::AccountId,
 		ReferendumIndex,
 		<T as Config>::Balance,
 		<T as Config>::Conviction,
@@ -57,9 +57,7 @@ pub mod pallet {
 
 		type Conviction: Parameter;
 
-		type Democracy: Democracy;
-
-//		type AccountId: Self::AccountId;
+		type Democracy: Democracy<AccountId = Self::AccountId>;
 
 		// TODO(oleksii): CurrencyId traits
 		type CurrencyId: Parameter;

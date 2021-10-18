@@ -7,7 +7,7 @@ pub trait Bribe {
 	type Conviction;
 	type CurrencyId;
 	type ReferendumIndex;
-	type AccountId: core::cmp::Ord;
+	type AccountId;
 
 	fn create_bribe(
 		request: CreateBribeRequest<
