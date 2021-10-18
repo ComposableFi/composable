@@ -59,6 +59,7 @@ dutch-auction = { package = "pallet-dutch-auctions", path = "../../frame/dutch-a
 composable-traits = { path = "../../frame/composable-traits" , default-features = false}
 transaction-fee = { package = "pallet-transaction-fee", path = "../../frame/transaction-fee", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
+ping = { package = "pallet-ping", path = "../../frame/ping", default-features = false}
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
@@ -124,6 +125,7 @@ std = [
 	"lending/std",
 	"liquidations/std",
 	"call-filter/std",
+	"ping/std",
 	"currency-factory/std",
 	"orml-tokens/std",
 	"orml-traits/std",
