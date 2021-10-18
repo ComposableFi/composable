@@ -71,15 +71,10 @@ pub mod pallet {
 			VaultConfig,
 		},
 	};
-	use frame_support::{
-		ensure,
-		pallet_prelude::*,
-		traits::{
+	use frame_support::{PalletId, dispatch::DispatchResultWithPostInfo, ensure, pallet_prelude::*, traits::{
 			fungibles::{Inspect, Mutate, Transfer},
 			tokens::{fungibles::MutateHold, DepositConsequence},
-		},
-		transactional, PalletId,
-	};
+		}, transactional};
 	use frame_system::{
 		ensure_root, ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig,
 	};
@@ -336,9 +331,9 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Creates a new vault, locking up the deposit. If the deposit is greater than the
-		/// `ExistentialDeposit`, the vault will remain alive forever, else it can be `tombstoned`
-		/// after `deposit / RentPerBlock `. Accounts may deposit more funds to keep the vault
-		/// alive.
+		/// `ExistentialDeposit` + `CreationDeposit`, the vault will remain alive forever, else it
+		/// can be `tombstoned` after `deposit / RentPerBlock `. Accounts may deposit more funds to
+		/// keep the vault alive.
 		///
 		/// # Emits
 		///  - [`Event::VaultCreated`](Event::VaultCreated)
@@ -356,26 +351,47 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
 
-			ensure!(
-				deposit_amount >= T::CreationDeposit::get(),
-				Error::<T>::InsufficientCreationDeposit
-			);
+			let (deposit_amount, deletion_reward) = {
+				let deletion_reward = T::CreationDeposit::get();
+				(
+					deposit_amount
+						.checked_sub(&deletion_reward)
+						.ok_or(Error::<T>::InsufficientCreationDeposit)?,
+					deletion_reward,
+				)
+			};
 
 			let native_id = T::NativeAssetId::get();
 
 			let deposit = if deposit_amount > T::ExistentialDeposit::get() {
+				// TODO(kaiserkarel): determine if we return the amount to the creator/manager after
+				// deletion of the vault, or immediately to the treasury. (leaning towards the
+				// second).
 				Deposit::Existential
 			} else {
+				// TODO(kaiserkarel): most likely the deletion reward can be used to yield farm in
+				// the mean time. Most likely not really worth it in this case. Since
+				// `CreationDeposit` may be updated in the future, we need to explicitly keep track
+				// of the `deletion_reward`.
 				Deposit::Rent {
 					amount: deposit_amount,
 					at: <frame_system::Pallet<T>>::block_number(),
 				}
 			};
+
 			let id = <Self as Vault>::create(deposit, vault)?;
 			T::Currency::transfer(
 				native_id,
 				&from,
-				&Self::vault_account(&id),
+				&Self::deletion_reward_account(&id),
+				deletion_reward,
+				true,
+			)?;
+
+			T::Currency::transfer(
+				native_id,
+				&from,
+				&Self::rent_account(&id),
 				deposit_amount,
 				true,
 			)?;
@@ -412,7 +428,9 @@ pub mod pallet {
 					Verdict::Evict => {
 						vault.deposit = Deposit::Rent { amount: Zero::zero(), at: current_block };
 						vault.capabilities.set_tombstoned();
-						let account = &Self::vault_account(&dest);
+						let account = &Self::rent_account(&dest);
+						// Clean up anything that remains in the vault's account. The reward for
+						// cleaning up the tombstoned vault is in `deletion_reward_account`.
 						let reward = T::Currency::reducible_balance(native_id, account, false);
 						T::Currency::transfer(native_id, account, &reward_address, reward, false)?;
 						Ok(().into())
@@ -425,7 +443,7 @@ pub mod pallet {
 						// reflects the account balance of the vault.
 						T::Currency::transfer(
 							native_id,
-							&Self::vault_account(&dest),
+							&Self::rent_account(&dest),
 							&reward_address,
 							payable,
 							true,
@@ -435,6 +453,14 @@ pub mod pallet {
 				}
 			})
 		}
+
+		// #[pallet::weight(10_000)]
+		// pub fn delete_tombstoned(origin: OriginFor<T>, dest: VaultIndex, address: Option<AccountIdOf<T>>,) -> DispatchResultWithPostInfo {
+
+		// 	Vaults::<T>::try_mutate_exists(dest, |vault| -> DispatchResultWithPostInfo {
+		// 		let mut vault = vault.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
+		// 	}
+		// }
 
 		/// Deposit funds in the vault and receive LP tokens in return.
 		/// # Emits
@@ -596,10 +622,12 @@ pub mod pallet {
 			})
 		}
 
-		fn vault_account(vault_id: &VaultIndex) -> T::AccountId {
-			// `into_sub_account` should never receive a 0 value, as that is identical to
-			// calling into_account(). Incrementing is a quick fix.
-			T::PalletId::get().into_sub_account(vault_id + 1)
+		fn rent_account(vault_id: &VaultIndex) -> T::AccountId {
+			T::PalletId::get().into_sub_account(&[b"rent_acc", &vault_id.to_le_bytes()])
+		}
+
+		fn deletion_reward_account(vault_id: &VaultIndex) -> T::AccountId {
+			T::PalletId::get().into_sub_account(&[b"deletion", &vault_id.to_le_bytes()])
 		}
 
 		/// Computes the sum of all the assets that the vault currently controls.
