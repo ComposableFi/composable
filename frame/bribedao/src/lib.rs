@@ -57,7 +57,7 @@ pub mod pallet {
 
 		type Conviction: Parameter;
 
-		type Democracy: Democracy<AccountId = Self::AccountId>;
+		type Democracy: Democracy<AccountId = Self::AccountId, ReferendumIndex = pallet_democracy::ReferendumIndex, Vote = pallet_democracy::Vote>;
 
 		// TODO(oleksii): CurrencyId traits
 		type CurrencyId: Parameter;
@@ -179,11 +179,10 @@ pub mod pallet {
 			);
 			let bribe_request = BribeRequests::<T>::get(request.bribe_index).unwrap();
 
-//			todo!("account for bribe progress ");
 			BribeStatus::<T>::insert(request.bribe_index, BribeStatuses::Created); // account for bribe progress
 
-
-			T::Democracy::vote(bribe_request.account_id, bribe_request.ref_index, todo!()); //AccountId, Referendum Index, Vote 
+			let vote = Vote{ aye: bribe_request.is_aye, conviction: Default::default() }; //todo get conviction
+			T::Democracy::vote(bribe_request.account_id, bribe_request.ref_index, vote); //AccountId, Referendum Index, Vote 
 			todo!("enact vote through pallet_democracy");
 		}
 	}
