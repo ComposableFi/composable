@@ -62,7 +62,7 @@ pub mod pallet {
 
 	use crate::{
 		models::StrategyOverview,
-		rent::Verdict,
+		rent::{self, Verdict},
 		traits::{CurrencyFactory, StrategicVault},
 	};
 	use codec::{Codec, FullCodec};
@@ -74,13 +74,14 @@ pub mod pallet {
 		},
 	};
 	use frame_support::{
+		dispatch::DispatchResultWithPostInfo,
 		ensure,
 		pallet_prelude::*,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
 			tokens::{fungibles::MutateHold, DepositConsequence},
 		},
-		PalletId,
+		transactional, PalletId,
 	};
 	use frame_system::{
 		ensure_root, ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig,
@@ -96,7 +97,6 @@ pub mod pallet {
 		DispatchError, FixedPointNumber, Perquintill,
 	};
 	use sp_std::fmt::Debug;
-
 	#[allow(missing_docs)]
 	pub type AssetIdOf<T> =
 		<<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
@@ -160,7 +160,8 @@ pub mod pallet {
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ Debug
-			+ Default;
+			+ Default
+			+ Into<u128>;
 
 		/// Converts the `Balance` type to `u128`, which internally is used in calculations.
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
@@ -188,6 +189,10 @@ pub mod pallet {
 		/// than the rent.
 		#[pallet::constant]
 		type ExistentialDeposit: Get<Self::Balance>;
+
+		/// The duration that a vault may remain tombstoned before it can be deleted.
+		#[pallet::constant]
+		type TombstoneDuration: Get<Self::BlockNumber>;
 
 		/// The rent being charged per block for vaults which have not committed the
 		/// `ExistentialDeposit`.
@@ -342,14 +347,21 @@ pub mod pallet {
 		/// The vault has withdrawals halted, see [Capabilities](crate::capabilities::Capability).
 		WithdrawalsHalted,
 		OnlyManagerCanDoThisOperation,
+		InvalidDeletionClaim,
+		/// The vault could not be deleted, as it was not yet tombstoned.
+		VaultNotTombstoned,
+		/// The vault could not be deleted, as it was not tombstoned for long enough.
+		TombstoneDurationNotExceeded,
+		/// Existentially funded vaults do not require extra funds.
+		InvalidAddSurcharge,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Creates a new vault, locking up the deposit. If the deposit is greater than the
-		/// `ExistentialDeposit`, the vault will remain alive forever, else it can be `tombstoned`
-		/// after `deposit / RentPerBlock `. Accounts may deposit more funds to keep the vault
-		/// alive.
+		/// `ExistentialDeposit` + `CreationDeposit`, the vault will remain alive forever, else it
+		/// can be `tombstoned` after `deposit / RentPerBlock `. Accounts may deposit more funds to
+		/// keep the vault alive.
 		///
 		/// # Emits
 		///  - [`Event::VaultCreated`](Event::VaultCreated)
@@ -358,34 +370,57 @@ pub mod pallet {
 		///  - When the origin is not signed.
 		///  - When `deposit < CreationDeposit`.
 		///  - Origin has insufficient funds to lock the deposit.
+		#[transactional]
 		#[pallet::weight(10_000)]
 		pub fn create(
 			origin: OriginFor<T>,
 			vault: VaultConfig<AccountIdOf<T>, AssetIdOf<T>>,
-			deposit: BalanceOf<T>,
+			deposit_amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
 
-			ensure!(deposit >= T::CreationDeposit::get(), Error::<T>::InsufficientCreationDeposit);
+			let (deposit_amount, deletion_reward) = {
+				let deletion_reward = T::CreationDeposit::get();
+				(
+					deposit_amount
+						.checked_sub(&deletion_reward)
+						.ok_or(Error::<T>::InsufficientCreationDeposit)?,
+					deletion_reward,
+				)
+			};
 
 			let native_id = T::NativeAssetId::get();
-			T::Currency::hold(native_id, &from, deposit)?;
 
-			let deposit = if deposit > T::ExistentialDeposit::get() {
-				Deposit::Existential
-			} else {
-				Deposit::Rent { amount: deposit, at: <frame_system::Pallet<T>>::block_number() }
-			};
+			// TODO(kaiserkarel): determine if we return the amount to the creator/manager after
+			// deletion of the vault, or immediately to the treasury. (leaning towards the
+			// second).
+			let deposit = rent::deposit_from_balance::<T>(deposit_amount);
+
 			let id = <Self as Vault>::create(deposit, vault)?;
+			T::Currency::transfer(
+				native_id,
+				&from,
+				&Self::deletion_reward_account(id),
+				deletion_reward,
+				true,
+			)?;
+
+			T::Currency::transfer(
+				native_id,
+				&from,
+				&Self::rent_account(id),
+				deposit_amount,
+				true,
+			)?;
 			Self::deposit_event(Event::VaultCreated { id });
 			Ok(().into())
 		}
 
-		/// Tombstones a vault, rewarding the caller if successful with a small fee.
+		/// Substracts rent from a vault, rewarding the caller if successful with a small fee and
+		/// possibly tombstoning the vault.
 		///
-		/// TODO:
-		///  - Check that the vault has no more funds, else do something?
-		///  - First disable the vault, then after X amount of time delete it
+		/// A tombstoned vault still allows for withdrawals but blocks deposits, and requests all
+		/// strategies to return their funds.
 		#[pallet::weight(10_000)]
 		pub fn claim_surcharge(
 			origin: OriginFor<T>,
@@ -394,34 +429,121 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let origin = origin.into();
 
-			let (signed, _rewarded) = match (origin, address) {
-				(Ok(frame_system::RawOrigin::Signed(account)), None) => (true, account),
-				(Ok(frame_system::RawOrigin::None), Some(address)) => (false, address),
+			let reward_address = match (origin, address) {
+				(Ok(frame_system::RawOrigin::Signed(account)), None) => account,
+				(Ok(frame_system::RawOrigin::None), Some(address)) => address,
 				_ => return Err(Error::<T>::InvalidSurchargeClaim.into()),
 			};
 
-			// for now, we'll only allow collators to claim surcharges. Once we implement
-			// capabilities + tombstoning, we'll evaluate having users call this too.
-			ensure!(!signed, Error::<T>::InvalidSurchargeClaim);
+			Vaults::<T>::try_mutate_exists(dest, |vault| -> DispatchResultWithPostInfo {
+				let mut vault = vault.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
+				let current_block = <frame_system::Pallet<T>>::block_number();
+				let native_id = T::NativeAssetId::get();
 
-			let vault = Vaults::<T>::try_get(dest).map_err(|_| Error::<T>::VaultDoesNotExist)?;
-			let current_block = <frame_system::Pallet<T>>::block_number();
+				match rent::evaluate_eviction::<T>(current_block, vault.deposit) {
+					Verdict::Exempt => Ok(().into()),
+					Verdict::Evict => {
+						vault.deposit = Deposit::Rent { amount: Zero::zero(), at: current_block };
+						vault.capabilities.set_tombstoned();
+						let account = &Self::rent_account(dest);
+						// Clean up anything that remains in the vault's account. The reward for
+						// cleaning up the tombstoned vault is in `deletion_reward_account`.
+						let reward = T::Currency::reducible_balance(native_id, account, false);
+						T::Currency::transfer(native_id, account, &reward_address, reward, false)?;
+						Ok(().into())
+					},
+					Verdict::Charge { remaining, payable } => {
+						vault.deposit = Deposit::Rent { amount: remaining, at: current_block };
+						// If this transfer call fails due to the vaults account not being kept
+						// alive, the caller should come back later, and evict the vault, which
+						// empties the entire account. This ensures that the deposit accurately
+						// reflects the account balance of the vault.
+						T::Currency::transfer(
+							native_id,
+							&Self::rent_account(dest),
+							&reward_address,
+							payable,
+							true,
+						)?;
+						Ok(().into())
+					},
+				}
+			})
+		}
 
-			match crate::rent::evaluate_eviction::<T>(current_block, vault.deposit) {
-				Verdict::Exempt => {
-					todo!("do not reward, but charge less weight")
-				},
-				Verdict::Evict { .. } => {
-					// we should also decide if we are going to drop the vault if there are still
-					// assets left in strategies. If some strategy becomes bricked, they will never
-					// report or return a balance. Tombstoned vaults would then effectively take up
-					// storage forever.
-					todo!("clean up all storage associated with the vault, and then reward the caller")
-				},
-				Verdict::Charge { .. } => {
-					todo!("update vault deposit info, charge some of the rent from the `hold`ed balance")
-				},
-			}
+		#[pallet::weight(10_000)]
+		pub fn add_surcharge(
+			origin: OriginFor<T>,
+			dest: T::VaultId,
+			amount: T::Balance,
+		) -> DispatchResultWithPostInfo {
+			let origin = ensure_signed(origin)?;
+
+			ensure!(amount >= T::CreationDeposit::get(), Error::<T>::InsufficientCreationDeposit);
+
+			Vaults::<T>::try_mutate_exists(dest, |vault| -> DispatchResultWithPostInfo {
+				let mut vault = vault.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
+				let current = match vault.deposit {
+					Deposit::Existential => return Err(Error::<T>::InvalidAddSurcharge.into()),
+					Deposit::Rent { amount, .. } => amount,
+				};
+				let native_id = T::NativeAssetId::get();
+				T::Currency::transfer(
+					native_id,
+					&origin,
+					&Self::rent_account(dest),
+					amount,
+					false,
+				)?;
+				vault.deposit = rent::deposit_from_balance::<T>(amount + current);
+				// since we guaranteed above that we're adding at least CreationDeposit, we can
+				// now untombstone it. If it was not tombstoned, this is a noop.
+				vault.capabilities.untombstone();
+				Ok(().into())
+			})
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn delete_tombstoned(
+			origin: OriginFor<T>,
+			dest: T::VaultId,
+			address: Option<AccountIdOf<T>>,
+		) -> DispatchResultWithPostInfo {
+			let reward_address = match (origin.into(), address) {
+				(Ok(frame_system::RawOrigin::Signed(account)), None) => account,
+				(Ok(frame_system::RawOrigin::None), Some(address)) => address,
+				_ => return Err(Error::<T>::InvalidSurchargeClaim.into()),
+			};
+
+			let native_id = T::NativeAssetId::get();
+
+			Vaults::<T>::try_mutate_exists(dest, |v| -> DispatchResultWithPostInfo {
+				let vault = v.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
+				ensure!(vault.capabilities.is_tombstoned(), Error::<T>::VaultNotTombstoned);
+
+				if !rent::evaluate_deletion::<T>(
+					<frame_system::Pallet<T>>::block_number(),
+					vault.deposit,
+				) {
+					return Err(Error::<T>::TombstoneDurationNotExceeded.into())
+				} else {
+					let deletion_reward_account = &Self::deletion_reward_account(dest);
+					let reward =
+						T::Currency::reducible_balance(native_id, deletion_reward_account, false);
+					// No need to keep `deletion_reward_account` alive. After this operation, the
+					// vault has no associated data anymore.
+					T::Currency::transfer(
+						native_id,
+						deletion_reward_account,
+						&reward_address,
+						reward,
+						false,
+					)?;
+					LpTokensToVaults::<T>::remove(vault.asset_id);
+					v.take();
+				}
+				Ok(().into())
+			})
 		}
 
 		/// Deposit funds in the vault and receive LP tokens in return.
@@ -582,6 +704,16 @@ pub mod pallet {
 
 				Ok((id, vault_info))
 			})
+		}
+
+		fn rent_account(vault_id: T::VaultId) -> T::AccountId {
+			let vault_id: u128 = vault_id.into();
+			T::PalletId::get().into_sub_account(&[b"rent_account____", &vault_id.to_le_bytes()])
+		}
+
+		fn deletion_reward_account(vault_id: T::VaultId) -> T::AccountId {
+			let vault_id: u128 = vault_id.into();
+			T::PalletId::get().into_sub_account(&[b"deletion_account", &vault_id.to_le_bytes()])
 		}
 
 		/// Computes the sum of all the assets that the vault currently controls.
@@ -828,7 +960,9 @@ pub mod pallet {
 			account: &Self::AccountId,
 		) -> Result<FundsAvailability<Self::Balance>, DispatchError> {
 			match (Vaults::<T>::try_get(vault_id), Allocations::<T>::try_get(vault_id, &account)) {
-				(Ok(vault), Ok(allocation)) if !vault.capabilities.is_stopped() => {
+				(Ok(vault), Ok(allocation))
+					if !vault.capabilities.is_stopped() && !vault.capabilities.is_tombstoned() =>
+				{
 					let aum = Self::assets_under_management(vault_id)?;
 					let max_allowed = <T::Convert as Convert<u128, T::Balance>>::convert(
 						allocation
@@ -841,7 +975,7 @@ pub mod pallet {
 					} else {
 						Ok(FundsAvailability::Withdrawable(max_allowed - state.balance))
 					}
-				},
+				}
 				(_, _) => Ok(FundsAvailability::MustLiquidate),
 			}
 		}
