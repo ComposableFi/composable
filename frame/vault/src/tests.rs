@@ -69,7 +69,7 @@ fn create_vault_with_share(
 	strategy_account_id: AccountId,
 	strategy_share: Perquintill,
 	reserved: Perquintill,
-) -> (VaultIndex, VaultInfo<AccountId, Balance, MockCurrencyId, BlockNumber>) {
+) -> (u64, VaultInfo<AccountId, Balance, MockCurrencyId, BlockNumber>) {
 	let v = Vaults::do_create_vault(
 		Deposit::Existential,
 		VaultConfig {
@@ -83,7 +83,7 @@ fn create_vault_with_share(
 	v.expect("unreachable; qed;")
 }
 
-fn create_vault_with_deposit(asset_id: MockCurrencyId, deposit: Balance) -> VaultIndex {
+fn create_vault_with_deposit(asset_id: MockCurrencyId, deposit: Balance) -> u64 {
 	let v = Vaults::create(
 		Origin::signed(ALICE),
 		VaultConfig {
@@ -102,7 +102,7 @@ fn create_vault_with_deposit(asset_id: MockCurrencyId, deposit: Balance) -> Vaul
 fn create_vault(
 	strategy_account_id: AccountId,
 	asset_id: MockCurrencyId,
-) -> (VaultIndex, VaultInfo<AccountId, Balance, MockCurrencyId, BlockNumber>) {
+) -> (u64, VaultInfo<AccountId, Balance, MockCurrencyId, BlockNumber>) {
 	create_vault_with_share(asset_id, strategy_account_id, DEFAULT_STRATEGY_SHARE, DEFAULT_RESERVE)
 }
 

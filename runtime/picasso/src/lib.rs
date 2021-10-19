@@ -804,6 +804,7 @@ impl vault::Config for Runtime {
 	type MinimumDeposit = VaultMinimumDeposit;
 	type MinimumWithdrawal = VaultMinimumWithdrawal;
 	type TombstoneDuration = TombstoneDuration;
+	type VaultId = u64;
 }
 
 parameter_types! {

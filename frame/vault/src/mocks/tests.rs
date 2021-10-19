@@ -84,6 +84,7 @@ impl pallet_vault::Config for Test {
 	type MinimumDeposit = MinimumDeposit;
 	type MinimumWithdrawal = MinimumWithdrawal;
 	type TombstoneDuration = TombstoneDuration;
+	type VaultId = u64;
 }
 
 parameter_type_with_key! {
