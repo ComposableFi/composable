@@ -10,6 +10,16 @@ pub enum Verdict<T: Config> {
 	Evict,
 }
 
+pub fn evaluate_deletion<T: Config>(
+	current_block: BlockNumberOf<T>,
+	deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
+) -> bool {
+	match deposit {
+		Deposit::Existential => false,
+		Deposit::Rent { at, .. } => current_block.saturating_sub(at) >= T::TombstoneDuration::get(),
+	}
+}
+
 pub fn evaluate_eviction<T: Config>(
 	current_block: BlockNumberOf<T>,
 	deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,

@@ -8,7 +8,7 @@
 //! The Vault module provides functionality for asset pool management of fungible asset classes
 //! with a fixed supply, including:
 //!
-//! * Vault Creation.
+//! * Vault Cre}ion.
 //! * Deposits and Withdrawals.
 //! * Strategy Re-balancing.
 //! * Surcharge Claims and Rent.
@@ -60,7 +60,7 @@ mod tests;
 pub mod pallet {
 	use crate::{
 		models::StrategyOverview,
-		rent::Verdict,
+		rent::{self, Verdict},
 		traits::{CurrencyFactory, StrategicVault},
 	};
 	use codec::{Codec, FullCodec};
@@ -71,10 +71,16 @@ pub mod pallet {
 			VaultConfig,
 		},
 	};
-	use frame_support::{PalletId, dispatch::DispatchResultWithPostInfo, ensure, pallet_prelude::*, traits::{
+	use frame_support::{
+		dispatch::DispatchResultWithPostInfo,
+		ensure,
+		pallet_prelude::*,
+		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
 			tokens::{fungibles::MutateHold, DepositConsequence},
-		}, transactional};
+		},
+		transactional, PalletId,
+	};
 	use frame_system::{
 		ensure_root, ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig,
 	};
@@ -167,6 +173,10 @@ pub mod pallet {
 		/// than the rent.
 		#[pallet::constant]
 		type ExistentialDeposit: Get<Self::Balance>;
+
+		/// The duration that a vault may remain tombstoned before it can be deleted.
+		#[pallet::constant]
+		type TombstoneDuration: Get<Self::BlockNumber>;
 
 		/// The rent being charged per block for vaults which have not committed the
 		/// `ExistentialDeposit`.
@@ -326,6 +336,10 @@ pub mod pallet {
 		WithdrawalsHalted,
 		OnlyManagerCanDoThisOperation,
 		InvalidDeletionClaim,
+		/// The vault could not be deleted, as it was not yet tombstoned.
+		VaultNotTombstoned,
+		/// The vault could not be deleted, as it was not tombstoned for long enough.
+		TombstoneDurationNotExceeded,
 	}
 
 	#[pallet::call]
@@ -412,9 +426,9 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let origin = origin.into();
 
-			let (_, reward_address) = match (origin, address) {
-				(Ok(frame_system::RawOrigin::Signed(account)), None) => (true, account),
-				(Ok(frame_system::RawOrigin::None), Some(address)) => (false, address),
+			let reward_address = match (origin, address) {
+				(Ok(frame_system::RawOrigin::Signed(account)), None) => account,
+				(Ok(frame_system::RawOrigin::None), Some(address)) => address,
 				_ => return Err(Error::<T>::InvalidSurchargeClaim.into()),
 			};
 
@@ -423,7 +437,7 @@ pub mod pallet {
 				let current_block = <frame_system::Pallet<T>>::block_number();
 				let native_id = T::NativeAssetId::get();
 
-				match crate::rent::evaluate_eviction::<T>(current_block, vault.deposit) {
+				match rent::evaluate_eviction::<T>(current_block, vault.deposit) {
 					Verdict::Exempt => Ok(().into()),
 					Verdict::Evict => {
 						vault.deposit = Deposit::Rent { amount: Zero::zero(), at: current_block };
@@ -454,13 +468,48 @@ pub mod pallet {
 			})
 		}
 
-		// #[pallet::weight(10_000)]
-		// pub fn delete_tombstoned(origin: OriginFor<T>, dest: VaultIndex, address: Option<AccountIdOf<T>>,) -> DispatchResultWithPostInfo {
+		#[pallet::weight(10_000)]
+		pub fn delete_tombstoned(
+			origin: OriginFor<T>,
+			dest: VaultIndex,
+			address: Option<AccountIdOf<T>>,
+		) -> DispatchResultWithPostInfo {
+			let reward_address = match (origin.into(), address) {
+				(Ok(frame_system::RawOrigin::Signed(account)), None) => account,
+				(Ok(frame_system::RawOrigin::None), Some(address)) => address,
+				_ => return Err(Error::<T>::InvalidSurchargeClaim.into()),
+			};
 
-		// 	Vaults::<T>::try_mutate_exists(dest, |vault| -> DispatchResultWithPostInfo {
-		// 		let mut vault = vault.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
-		// 	}
-		// }
+			let native_id = T::NativeAssetId::get();
+
+			Vaults::<T>::try_mutate_exists(dest, |v| -> DispatchResultWithPostInfo {
+				let vault = v.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
+				ensure!(vault.capabilities.is_tombstoned(), Error::<T>::VaultNotTombstoned);
+
+				if !rent::evaluate_deletion::<T>(
+					<frame_system::Pallet<T>>::block_number(),
+					vault.deposit,
+				) {
+					return Err(Error::<T>::TombstoneDurationNotExceeded.into())
+				} else {
+					let deletion_reward_account = &Self::deletion_reward_account(&dest);
+					let reward =
+						T::Currency::reducible_balance(native_id, deletion_reward_account, false);
+					// No need to keep `deletion_reward_account` alive. After this operation, the
+					// vault has no associated data anymore.
+					T::Currency::transfer(
+						native_id,
+						deletion_reward_account,
+						&reward_address,
+						reward,
+						false,
+					)?;
+					LpTokensToVaults::<T>::remove(vault.asset_id);
+					v.take();
+				}
+				Ok(().into())
+			})
+		}
 
 		/// Deposit funds in the vault and receive LP tokens in return.
 		/// # Emits

@@ -2,7 +2,7 @@ use crate::{
 	mocks::{
 		currency_factory::MockCurrencyId,
 		tests::{
-			AccountId, Balance, BlockNumber, ExistentialDeposit, ExtBuilder, Origin, System, Test,
+			AccountId, Balance, BlockNumber, CreationDeposit, ExistentialDeposit, TombstoneDuration, ExtBuilder, Origin, System, Test,
 			Tokens, Vaults, ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, MINIMUM_BALANCE,
 		},
 	},
@@ -693,6 +693,57 @@ fn test_vault_claim_surcharge_rent_evict() {
 		assert!(Tokens::balance(MockCurrencyId::A, &CHARLIE) > 0);
 		let vault = Vaults::vault_data(id);
 		assert!(vault.capabilities.is_tombstoned());
+	})
+}
+
+#[test]
+fn test_vault_delete_tombstoned() {
+	ExtBuilder::default().build().execute_with(|| {
+		Tokens::mint_into(MockCurrencyId::A, &ALICE, ExistentialDeposit::get() * 3).unwrap();
+		assert_eq!(Tokens::balance(MockCurrencyId::A, &CHARLIE), 0);
+		System::set_block_number(0);
+		let id = create_vault_with_deposit(MockCurrencyId::A, ExistentialDeposit::get() - 1);
+		System::set_block_number(1000000);
+		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
+			.expect("claiming surcharge for rent should work");
+		let after_surcharge_balance	= Tokens::balance(MockCurrencyId::A, &CHARLIE);
+		assert!(after_surcharge_balance > 0);
+		let vault = Vaults::vault_data(id);
+		assert!(vault.capabilities.is_tombstoned());
+		System::set_block_number(1000000 + TombstoneDuration::get());
+		Vaults::delete_tombstoned(Origin::signed(CHARLIE), id, None).unwrap();
+		let after_delete_balance	= Tokens::balance(MockCurrencyId::A, &CHARLIE);
+		assert!(after_delete_balance > after_surcharge_balance);
+		// second time should error, as the vault is not deleted.
+		Vaults::delete_tombstoned(Origin::signed(CHARLIE), id, None).unwrap_err();
+	})
+}
+
+#[test]
+fn test_vault_delete_tombstoned_insufficient_time_fails() {
+	ExtBuilder::default().build().execute_with(|| {
+		Tokens::mint_into(MockCurrencyId::A, &ALICE, ExistentialDeposit::get() * 3).unwrap();
+		assert_eq!(Tokens::balance(MockCurrencyId::A, &CHARLIE), 0);
+		System::set_block_number(0);
+		let id = create_vault_with_deposit(MockCurrencyId::A, ExistentialDeposit::get() - 1);
+		System::set_block_number(1000000);
+		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
+			.expect("claiming surcharge for rent should work");
+		assert!(Tokens::balance(MockCurrencyId::A, &CHARLIE) > 0);
+		let vault = Vaults::vault_data(id);
+		assert!(vault.capabilities.is_tombstoned());
+		System::set_block_number(1000000 + TombstoneDuration::get() - 1);
+		Vaults::delete_tombstoned(Origin::signed(ALICE), id, None).unwrap_err();
+	})
+}
+
+#[test]
+fn test_vault_delete_tombstoned_non_tombstoned_fails() {
+	ExtBuilder::default().build().execute_with(|| {
+		Tokens::mint_into(MockCurrencyId::A, &ALICE, ExistentialDeposit::get() - 1).unwrap();
+		assert_eq!(Tokens::balance(MockCurrencyId::A, &CHARLIE), 0);
+		let id = create_vault_with_deposit(MockCurrencyId::A, CreationDeposit::get());
+		Vaults::delete_tombstoned(Origin::signed(ALICE), id, None).unwrap_err();
 	})
 }
 
