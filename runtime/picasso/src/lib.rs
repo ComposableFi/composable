@@ -920,6 +920,21 @@ impl liquidations::Config for Runtime {
 	type DutchAuction = Auctions;
 }
 
+impl ping::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type Call = Call;
+	type XcmSender = XcmRouter;
+}
+
+// For test purposes.
+impl cumulus_ping::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type Call = Call;
+	type XcmSender = XcmRouter;
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -939,13 +954,6 @@ impl call_filter::Config for Runtime {
 	type Event = Event;
 	type UpdateOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
-}
-
-impl cumulus_ping::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
-	type Call = Call;
-	type XcmSender = XcmRouter;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -996,8 +1004,9 @@ construct_runtime!(
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
 		Liquidations: liquidations::{Pallet, Call, Event<T>} = 56,
 		Auctions: dutch_auction::{Pallet, Event<T>} = 57,
+		Ping: ping::{Pallet, Call, Storage, Event<T>} = 58,
 
-		Ping: cumulus_ping::{Pallet, Call, Storage, Event<T>} = 90,
+		Spambot: cumulus_ping::{Pallet, Call, Storage, Event<T>} = 90,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
