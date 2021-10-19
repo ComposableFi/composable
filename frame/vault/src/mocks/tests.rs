@@ -65,6 +65,7 @@ parameter_types! {
 	pub const StrategyTestPalletID: PalletId = PalletId(*b"sest_pid");
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
+	pub const TombstoneDuration: BlockNumber = 10;
 }
 
 impl pallet_vault::Config for Test {
@@ -82,6 +83,7 @@ impl pallet_vault::Config for Test {
 	type NativeAssetId = NativeAssetId;
 	type MinimumDeposit = MinimumDeposit;
 	type MinimumWithdrawal = MinimumWithdrawal;
+	type TombstoneDuration = TombstoneDuration;
 	type VaultId = u64;
 }
 
