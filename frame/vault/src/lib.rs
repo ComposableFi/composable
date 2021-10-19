@@ -9,7 +9,7 @@
 //! with a fixed supply, including:
 //!
 //! * Vault Creation.
-//! * Deposit  s and Wi, WrapperTypeEncodet, WrapperTypeEncodehdrawals.
+//! * Deposits and Withdrawals.
 //! * Strategy Re-balancing.
 //! * Surcharge Claims and Rent.
 //!
