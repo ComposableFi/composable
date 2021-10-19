@@ -813,6 +813,7 @@ parameter_types! {
 	pub const VaultMinimumDeposit: Balance = 10_000;
 	pub const VaultMinimumWithdrawal: Balance = 10_000;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
+	pub const TombstoneDuration: BlockNumber = DAYS * 7;
 }
 
 impl vault::Config for Runtime {
@@ -830,6 +831,7 @@ impl vault::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
 	type MinimumDeposit = VaultMinimumDeposit;
 	type MinimumWithdrawal = VaultMinimumWithdrawal;
+	type TombstoneDuration = TombstoneDuration;
 	type VaultId = u64;
 }
 
