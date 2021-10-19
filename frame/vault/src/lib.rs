@@ -9,7 +9,7 @@
 //! with a fixed supply, including:
 //!
 //! * Vault Creation.
-//! * Deposits and Withdrawals.
+//! * Deposit  s and Wi, WrapperTypeEncodet, WrapperTypeEncodehdrawals.
 //! * Strategy Re-balancing.
 //! * Surcharge Claims and Rent.
 //!
@@ -58,6 +58,8 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use core::ops::AddAssign;
+
 	use crate::{
 		models::StrategyOverview,
 		rent::Verdict,
@@ -83,7 +85,7 @@ pub mod pallet {
 	use frame_system::{
 		ensure_root, ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig,
 	};
-	use num_traits::SaturatingSub;
+	use num_traits::{One, SaturatingSub};
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
 		traits::{
@@ -147,6 +149,17 @@ pub mod pallet {
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
 
+		/// Key type for the vaults. `VaultId` uniquely identifies a vault. The identifiers are
+		type VaultId: AddAssign
+			+ FullCodec
+			+ One
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default;
+
 		/// Converts the `Balance` type to `u128`, which internally is used in calculations.
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 
@@ -196,18 +209,18 @@ pub mod pallet {
 	/// Cleaned up vaults do not decrement the counter.
 	#[pallet::storage]
 	#[pallet::getter(fn vault_count)]
-	pub type VaultCount<T: Config> = StorageValue<_, VaultIndex, ValueQuery>;
+	pub type VaultCount<T: Config> = StorageValue<_, T::VaultId, ValueQuery>;
 
 	/// Info for each specific vaults.
 	#[pallet::storage]
 	#[pallet::getter(fn vault_data)]
-	pub type Vaults<T: Config> = StorageMap<_, Twox64Concat, VaultIndex, VaultInfo<T>, ValueQuery>;
+	pub type Vaults<T: Config> = StorageMap<_, Twox64Concat, T::VaultId, VaultInfo<T>, ValueQuery>;
 
 	/// Associated LP token for each vault.
 	#[pallet::storage]
 	#[pallet::getter(fn lp_tokens_to_vaults)]
 	pub type LpTokensToVaults<T: Config> =
-		StorageMap<_, Twox64Concat, T::AssetId, VaultIndex, ValueQuery>;
+		StorageMap<_, Twox64Concat, T::AssetId, T::VaultId, ValueQuery>;
 
 	/// Amounts which each strategy is allowed to access, including the amount reserved for quick
 	/// withdrawals for the pallet.
@@ -216,7 +229,7 @@ pub mod pallet {
 	pub type Allocations<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		VaultIndex,
+		T::VaultId,
 		Blake2_128Concat,
 		T::AccountId,
 		Perquintill,
@@ -230,16 +243,12 @@ pub mod pallet {
 	pub type CapitalStructure<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		VaultIndex,
+		T::VaultId,
 		Blake2_128Concat,
 		T::AccountId,
 		StrategyOverview<T::Balance>,
 		ValueQuery,
 	>;
-
-	/// Key type for the vaults. `VaultIndex` uniquely identifies a vault.
-	// TODO: should probably be settable through the config
-	pub type VaultIndex = u64;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -247,7 +256,7 @@ pub mod pallet {
 		/// Emitted after a vault has been successfully created.
 		VaultCreated {
 			/// The (incremented) ID of the created vault.
-			id: VaultIndex,
+			id: T::VaultId,
 		},
 		/// Emitted after a user deposits funds into the vault.
 		Deposited {
@@ -270,12 +279,12 @@ pub mod pallet {
 		/// Emitted after a succesful emergency shutdown.
 		EmergencyShutdown {
 			/// The ID of the vault.
-			vault: VaultIndex,
+			vault: T::VaultId,
 		},
 		/// Emitted after a vault is restarted.
 		VaultStarted {
 			/// The ID of the vault.
-			vault: VaultIndex,
+			vault: T::VaultId,
 		},
 	}
 
@@ -378,7 +387,7 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn claim_surcharge(
 			origin: OriginFor<T>,
-			dest: VaultIndex,
+			dest: T::VaultId,
 			address: Option<AccountIdOf<T>>,
 		) -> DispatchResultWithPostInfo {
 			let origin = origin.into();
@@ -423,7 +432,7 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn deposit(
 			origin: OriginFor<T>,
-			vault: VaultIndex,
+			vault: T::VaultId,
 			asset_amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
@@ -443,7 +452,7 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn withdraw(
 			origin: OriginFor<T>,
-			vault: VaultIndex,
+			vault: T::VaultId,
 			lp_amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let to = ensure_signed(origin)?;
@@ -463,7 +472,7 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn emergency_shutdown(
 			origin: OriginFor<T>,
-			vault: VaultIndex,
+			vault: T::VaultId,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			<Self as CapabilityVault>::stop(&vault)?;
@@ -480,7 +489,7 @@ pub mod pallet {
 		///  - When the origin is not root.
 		///  - When `vault` does not exist.
 		#[pallet::weight(10_000)]
-		pub fn start(origin: OriginFor<T>, vault: VaultIndex) -> DispatchResultWithPostInfo {
+		pub fn start(origin: OriginFor<T>, vault: T::VaultId) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			<Self as CapabilityVault>::start(&vault)?;
 			Self::deposit_event(Event::VaultStarted { vault });
@@ -492,7 +501,7 @@ pub mod pallet {
 		/// liquidates strategy allocation
 		pub fn do_liquidate(
 			origin: OriginFor<T>,
-			vault_id: &VaultIndex,
+			vault_id: &T::VaultId,
 			strategy_account_id: &T::AccountId,
 		) -> DispatchResult {
 			let from = ensure_signed(origin)?;
@@ -506,14 +515,14 @@ pub mod pallet {
 		pub fn do_create_vault(
 			deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
 			config: VaultConfig<T::AccountId, T::AssetId>,
-		) -> Result<(VaultIndex, VaultInfo<T>), DispatchError> {
+		) -> Result<(T::VaultId, VaultInfo<T>), DispatchError> {
 			// 1. check config
 			// 2. lock endowment
 			// 3. mint LP token
 			// 4. insert vault (do we check if the strategy addresses even exists?)
 			VaultCount::<T>::try_mutate(|id| {
 				let id = {
-					*id += 1;
+					*id += One::one();
 					*id
 				};
 
@@ -574,14 +583,14 @@ pub mod pallet {
 		}
 
 		/// Computes the sum of all the assets that the vault currently controls.
-		fn assets_under_management(vault_id: &VaultIndex) -> Result<T::Balance, Error<T>> {
+		fn assets_under_management(vault_id: &T::VaultId) -> Result<T::Balance, Error<T>> {
 			let vault =
 				Vaults::<T>::try_get(vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
 			Self::do_assets_under_management(vault_id, &vault)
 		}
 
 		fn do_withdraw(
-			vault_id: &VaultIndex,
+			vault_id: &T::VaultId,
 			to: &T::AccountId,
 			lp_amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
@@ -622,7 +631,7 @@ pub mod pallet {
 		}
 
 		fn do_deposit(
-			vault_id: &VaultIndex,
+			vault_id: &T::VaultId,
 			from: &T::AccountId,
 			amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
@@ -686,7 +695,7 @@ pub mod pallet {
 		}
 
 		fn do_lp_share_value(
-			vault_id: &VaultIndex,
+			vault_id: &T::VaultId,
 			vault: &VaultInfo<T>,
 			lp_amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
@@ -719,7 +728,7 @@ pub mod pallet {
 
 		/// Computes the sum of all the assets that the vault currently controls.
 		fn do_assets_under_management(
-			vault_id: &VaultIndex,
+			vault_id: &T::VaultId,
 			vault: &VaultInfo<T>,
 		) -> Result<T::Balance, Error<T>> {
 			let owned = T::Currency::balance(vault.asset_id, &Self::account_id(vault_id));
@@ -733,7 +742,7 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type Balance = T::Balance;
 		type BlockNumber = T::BlockNumber;
-		type VaultId = VaultIndex;
+		type VaultId = T::VaultId;
 		type AssetId = AssetIdOf<T>;
 
 		fn asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError> {
