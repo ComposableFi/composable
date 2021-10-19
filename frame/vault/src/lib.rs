@@ -8,7 +8,7 @@
 //! The Vault module provides functionality for asset pool management of fungible asset classes
 //! with a fixed supply, including:
 //!
-//! * Vault Cre}ion.
+//! * Vault Creation.
 //! * Deposits and Withdrawals.
 //! * Strategy Re-balancing.
 //! * Surcharge Claims and Rent.
@@ -484,7 +484,7 @@ pub mod pallet {
 					false,
 				)?;
 				vault.deposit = rent::deposit_from_balance::<T>(amount + current);
-				// since we guaranteed above that we're adding at least CreationDeposit, we can 
+				// since we guaranteed above that we're adding at least CreationDeposit, we can
 				// now untombstone it. If it was not tombstoned, this is a noop.
 				vault.capabilities.untombstone();
 				Ok(().into())
