@@ -340,6 +340,8 @@ pub mod pallet {
 		VaultNotTombstoned,
 		/// The vault could not be deleted, as it was not tombstoned for long enough.
 		TombstoneDurationNotExceeded,
+		/// Existentially funded vaults do not require extra funds.
+		InvalidAddSurcharge,
 	}
 
 	#[pallet::call]
@@ -377,21 +379,10 @@ pub mod pallet {
 
 			let native_id = T::NativeAssetId::get();
 
-			let deposit = if deposit_amount > T::ExistentialDeposit::get() {
-				// TODO(kaiserkarel): determine if we return the amount to the creator/manager after
-				// deletion of the vault, or immediately to the treasury. (leaning towards the
-				// second).
-				Deposit::Existential
-			} else {
-				// TODO(kaiserkarel): most likely the deletion reward can be used to yield farm in
-				// the mean time. Most likely not really worth it in this case. Since
-				// `CreationDeposit` may be updated in the future, we need to explicitly keep track
-				// of the `deletion_reward`.
-				Deposit::Rent {
-					amount: deposit_amount,
-					at: <frame_system::Pallet<T>>::block_number(),
-				}
-			};
+			// TODO(kaiserkarel): determine if we return the amount to the creator/manager after
+			// deletion of the vault, or immediately to the treasury. (leaning towards the
+			// second).
+			let deposit = rent::deposit_from_balance::<T>(deposit_amount);
 
 			let id = <Self as Vault>::create(deposit, vault)?;
 			T::Currency::transfer(
@@ -465,6 +456,38 @@ pub mod pallet {
 						Ok(().into())
 					},
 				}
+			})
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn add_surcharge(
+			origin: OriginFor<T>,
+			dest: VaultIndex,
+			amount: T::Balance,
+		) -> DispatchResultWithPostInfo {
+			let origin = ensure_signed(origin)?;
+
+			ensure!(amount >= T::CreationDeposit::get(), Error::<T>::InsufficientCreationDeposit);
+
+			Vaults::<T>::try_mutate_exists(dest, |vault| -> DispatchResultWithPostInfo {
+				let mut vault = vault.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
+				let current = match vault.deposit {
+					Deposit::Existential => return Err(Error::<T>::InvalidAddSurcharge.into()),
+					Deposit::Rent { amount, .. } => amount,
+				};
+				let native_id = T::NativeAssetId::get();
+				T::Currency::transfer(
+					native_id,
+					&origin,
+					&Self::rent_account(&dest),
+					amount,
+					false,
+				)?;
+				vault.deposit = rent::deposit_from_balance::<T>(amount + current);
+				// since we guaranteed above that we're adding at least CreationDeposit, we can 
+				// now untombstone it. If it was not tombstoned, this is a noop.
+				vault.capabilities.untombstone();
+				Ok(().into())
 			})
 		}
 

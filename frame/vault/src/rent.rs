@@ -10,6 +10,14 @@ pub enum Verdict<T: Config> {
 	Evict,
 }
 
+pub fn deposit_from_balance<T: Config>(amount: T::Balance) -> Deposit<T::Balance, T::BlockNumber> {
+	if amount > T::ExistentialDeposit::get() {
+		Deposit::Existential
+	} else {
+		Deposit::Rent { amount, at: <frame_system::Pallet<T>>::block_number() }
+	}
+}
+
 pub fn evaluate_deletion<T: Config>(
 	current_block: BlockNumberOf<T>,
 	deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
