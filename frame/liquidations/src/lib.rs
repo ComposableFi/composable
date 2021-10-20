@@ -35,6 +35,7 @@ pub mod pallet {
 		dex::{Orderbook, SimpleExchange},
 		lending::Lending,
 		liquidation::Liquidation,
+		loans::PriceStructure,
 		math::LiftedFixedBalance,
 	};
 	use frame_support::{
@@ -62,12 +63,14 @@ pub mod pallet {
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ From<u128>
-			+ Default;
+			+ Default
+			+ TypeInfo;
 	}
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Liqudati");
 
 	#[pallet::config]
+
 	pub trait Config: frame_system::Config + DeFiComposablePallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Balance: Default
@@ -95,7 +98,10 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 			AssetId = Self::AssetId,
 			OrderId = u128,
+			GroupId = Self::GroupId,
 		>;
+
+		type GroupId: Default + FullCodec;
 	}
 
 	#[pallet::event]
@@ -111,51 +117,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-		#[pallet::weight(1234)]
-		pub fn liquidate_many(
-			sender: OriginFor<T>,
-			block_number: T::BlockNumber,
-		) -> DispatchResult {
-			// how in PF
-			// ask ask all illiquid borrow
-			// collect collaterals and borrows
-			// make sure that can transfer these to dutch auction (API in lending)
-			for (
-				source_account,
-				&source_asset_id,
-				&source_asset_price,
-				&target_asset_id,
-				target_account,
-				&total_amount,
-			) in Vec::new().iter()
-			{
-				let _liquidation_id = Self::liquidate(
-					source_account,
-					source_asset_id,
-					source_asset_price,
-					target_asset_id,
-					target_account,
-					total_amount,
-				)?;
-			}
-			Ok(())
-		}
-	}
-
-	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-		fn offchain_worker(block_number: T::BlockNumber) {
-			// for off chain worker need  to implement transaction signer to call into extrinsic
-			// let signer = Signer::<T, T::AccountId>::any_account();
-			// if !signer.can_sign() {
-			// 	return Err(Error::<T>::NoAvailableAccount);
-			// }
-			// if let Err(e) = Self::liquidate_many(signer, block_number) {
-			//     log::error!("Failed to run offchain liquidation: {:?}", e);
-			// }
-		}
-	}
+	impl<T: Config> Pallet<T> {}
 
 	impl<T: Config> Liquidation for Pallet<T> {
 		type AssetId = T::AssetId;
@@ -166,10 +128,12 @@ pub mod pallet {
 
 		type LiquidationId = u128;
 
+		type GroupId = T::GroupId;
+
 		fn liquidate(
 			source_account: &Self::AccountId,
 			source_asset_id: Self::AssetId,
-			source_asset_price: Self::Balance,
+			source_asset_price: PriceStructure<Self::GroupId, Self::Balance>,
 			target_asset_id: Self::AssetId,
 			target_account: &Self::AccountId,
 			total_amount: Self::Balance,
@@ -185,11 +149,6 @@ pub mod pallet {
 				composable_traits::auction::AuctionStepFunction::default(),
 			)?;
 			Ok(order_id)
-		}
-
-		fn has_been_liquidated(liquidation_id: &Self::LiquidationId) -> bool {
-			// TODO: implement
-			false
 		}
 	}
 }

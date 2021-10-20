@@ -48,10 +48,11 @@ pub mod pallet {
 		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
+
 	// Key Id for location of signer key in keystore
-	pub const KEY_ID: [u8; 4] = *b"orac";
-	pub const KEY_TYPE: KeyTypeId = KeyTypeId(KEY_ID);
-	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(KEY_ID);
+	//pub const KEY_ID: [u8; 4] = *b"orac";
+	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orac");
+	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"orac");
 
 	pub mod crypto {
 		use super::KEY_TYPE;
