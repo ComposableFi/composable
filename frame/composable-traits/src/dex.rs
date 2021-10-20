@@ -62,7 +62,7 @@ pub trait Orderbook {
 	type GroupId;
 
 	/// sell. exchanges specified amount of asset to other at specific price
-	/// `source_price` price per unit
+	/// `source_total_price` normalized
 	/// `amm_slippage` set to zero to avoid AMM sell
 	/// for remote auction we should  have sent some random to make sure we have idempotent request
 	fn post(
@@ -70,7 +70,7 @@ pub trait Orderbook {
 		asset: Self::AssetId,
 		want: Self::AssetId,
 		source_amount: Self::Balance,
-		source_price: Price<Self::GroupId, Self::Balance>,
+		source_total_price: Price<Self::GroupId, Self::Balance>,
 		amm_slippage: Permill,
 	) -> Result<SellOrder<Self::OrderId, Self::AccountId>, DispatchError>;
 

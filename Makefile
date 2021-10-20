@@ -41,6 +41,10 @@ lint:
 	@rustup component add clippy 2> /dev/null
 	cargo clippy --all-targets --all-features -- -D warnings
 
+bench:
+	SKIP_WASM_BUILD=1
+	@cargo check --features=runtime-benchmarks --release
+
 dev:
 	cargo run
 
