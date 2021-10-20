@@ -32,6 +32,10 @@ pub mod pallet {
 		/// Converts the `Balance` type to `u128`, which internally is used in calculations.
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 
+		type Balance: Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo;
+
+		// type Moment: Moment;
+
 		type AssetId: FullCodec
 		     + Eq
 			 + PartialEq
@@ -39,18 +43,6 @@ pub mod pallet {
 			 + MaybeSerializeDeserialize
 			 + Debug
 			 + Default;
-
-		type Balance: Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo;
-
-		// type Moment: Moment;
-
-		type NetworkId: FullCodec
-			+ Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ Debug
-			+ Default;
 		
 		type RemoteAssetId: FullCodec
 		    + Eq
