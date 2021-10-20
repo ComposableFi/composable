@@ -226,9 +226,10 @@ pub mod pallet {
 							// for final protocol may be will need to transfer currency onto auction
 							// pallet sub account and send dex order with idempotency tracking id final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
 							let delta_time = now - order.started;
-							let price: LiftedFixedBalance =
-								order.source_initial_price.initial_price.into();
-							let total_price = price.safe_mul(&order.source_total_amount.into())?;
+							let total_initial_price: LiftedFixedBalance =
+								order.source_initial_price.total_initial_price.into();
+							let total_price =
+								total_initial_price.safe_mul(&order.source_total_amount.into())?;
 							let price = match order.function {
 								AuctionStepFunction::LinearDecrease(parameters) =>
 									parameters.price(total_price, delta_time),
@@ -238,7 +239,7 @@ pub mod pallet {
 							.checked_mul_int(1u64)
 							.ok_or(ArithmeticError::Overflow)?;
 
-							let price =
+							let total_price =
 								Price::<Self::GroupId, Self::Balance>::new_any(price.into());
 
 							let dex_order_intention = <T::Orderbook as Orderbook>::post(
@@ -246,7 +247,7 @@ pub mod pallet {
 								order.source_asset_id,
 								order.target_asset_id,
 								order.source_total_amount,
-								price,
+								total_price,
 								Permill::from_perthousand(5),
 							)?;
 
