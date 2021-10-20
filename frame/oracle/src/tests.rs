@@ -12,7 +12,6 @@ use sp_core::offchain::{testing, OffchainDbExt, OffchainWorkerExt, TransactionPo
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{Percent, RuntimeAppPublic};
 use std::sync::Arc;
-
 use sp_runtime::traits::BadOrigin;
 
 #[test]
@@ -39,6 +38,7 @@ fn add_asset_and_info() {
 			MIN_ANSWERS,
 			MAX_ANSWERS,
 		));
+
 
 		let asset_info =
 			AssetInfo { threshold: THRESHOLD, min_answers: MIN_ANSWERS, max_answers: MAX_ANSWERS };

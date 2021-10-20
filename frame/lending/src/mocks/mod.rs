@@ -218,7 +218,6 @@ impl pallet_vault::Config for Test {
 	type CreationDeposit = CreationDeposit;
 	type ExistentialDeposit = ExistentialDeposit;
 	type RentPerBlock = RentPerBlock;
-	type NativeAssetId = NativeAssetId;
 }
 
 parameter_type_with_key! {

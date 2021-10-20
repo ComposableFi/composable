@@ -78,8 +78,12 @@ pub mod pallet {
 		ensure,
 		pallet_prelude::*,
 		traits::{
-			fungibles::{Inspect, Mutate, Transfer},
-			tokens::{fungibles::MutateHold, DepositConsequence},
+			fungible::{
+				Inspect as InspectNative, Mutate as MutateNative, MutateHold as MutateHoldNative,
+				Transfer as TransferNative,
+			},
+			fungibles::{Inspect, Mutate, MutateHold, Transfer},
+			tokens::DepositConsequence,
 		},
 		transactional, PalletId,
 	};
@@ -129,7 +133,8 @@ pub mod pallet {
 			+ CheckedMul
 			+ SaturatingSub
 			+ AtLeast32BitUnsigned
-			+ Zero;
+			+ Zero
+			+ TypeInfo;
 
 		/// The pallet creates new LP tokens for every created vault. It uses `CurrencyFactory`, as
 		/// `orml`'s currency traits do not provide an interface to obtain asset ids (to avoid id
@@ -146,6 +151,11 @@ pub mod pallet {
 			+ Default
 			+ TypeInfo;
 
+		/// The asset used to pay for rent and other fees
+		type NativeCurrency: TransferNative<Self::AccountId, Balance = Self::Balance>
+			+ MutateNative<Self::AccountId, Balance = Self::Balance>
+			+ MutateHoldNative<Self::AccountId, Balance = Self::Balance>;
+
 		/// Generic Currency bounds. These functions are provided by the `[orml-tokens`](https://github.com/open-web3-stack/open-runtime-module-library/tree/HEAD/currencies) pallet.
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
@@ -161,7 +171,8 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ Debug
 			+ Default
-			+ Into<u128>;
+			+ Into<u128>
+			+ TypeInfo;
 
 		/// Converts the `Balance` type to `u128`, which internally is used in calculations.
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
@@ -176,10 +187,6 @@ pub mod pallet {
 		/// The minimum amount of LP tokens to withdraw funds from a vault.
 		#[pallet::constant]
 		type MinimumWithdrawal: Get<Self::Balance>;
-
-		/// The asset ID used to pay for rent.
-		#[pallet::constant]
-		type NativeAssetId: Get<Self::AssetId>;
 
 		/// The minimum native asset needed to create a vault.
 		#[pallet::constant]
@@ -389,29 +396,20 @@ pub mod pallet {
 				)
 			};
 
-			let native_id = T::NativeAssetId::get();
-
 			// TODO(kaiserkarel): determine if we return the amount to the creator/manager after
 			// deletion of the vault, or immediately to the treasury. (leaning towards the
 			// second).
 			let deposit = rent::deposit_from_balance::<T>(deposit_amount);
 
 			let id = <Self as Vault>::create(deposit, vault)?;
-			T::Currency::transfer(
-				native_id,
+			T::NativeCurrency::transfer(
 				&from,
 				&Self::deletion_reward_account(id),
 				deletion_reward,
 				true,
 			)?;
 
-			T::Currency::transfer(
-				native_id,
-				&from,
-				&Self::rent_account(id),
-				deposit_amount,
-				true,
-			)?;
+			T::NativeCurrency::transfer(&from, &Self::rent_account(id), deposit_amount, true)?;
 			Self::deposit_event(Event::VaultCreated { id });
 			Ok(().into())
 		}
@@ -438,7 +436,6 @@ pub mod pallet {
 			Vaults::<T>::try_mutate_exists(dest, |vault| -> DispatchResultWithPostInfo {
 				let mut vault = vault.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
 				let current_block = <frame_system::Pallet<T>>::block_number();
-				let native_id = T::NativeAssetId::get();
 
 				match rent::evaluate_eviction::<T>(current_block, vault.deposit) {
 					Verdict::Exempt => Ok(().into()),
@@ -448,8 +445,8 @@ pub mod pallet {
 						let account = &Self::rent_account(dest);
 						// Clean up anything that remains in the vault's account. The reward for
 						// cleaning up the tombstoned vault is in `deletion_reward_account`.
-						let reward = T::Currency::reducible_balance(native_id, account, false);
-						T::Currency::transfer(native_id, account, &reward_address, reward, false)?;
+						let reward = T::NativeCurrency::reducible_balance(account, false);
+						T::NativeCurrency::transfer(account, &reward_address, reward, false)?;
 						Ok(().into())
 					},
 					Verdict::Charge { remaining, payable } => {
@@ -458,8 +455,7 @@ pub mod pallet {
 						// alive, the caller should come back later, and evict the vault, which
 						// empties the entire account. This ensures that the deposit accurately
 						// reflects the account balance of the vault.
-						T::Currency::transfer(
-							native_id,
+						T::NativeCurrency::transfer(
 							&Self::rent_account(dest),
 							&reward_address,
 							payable,
@@ -487,14 +483,7 @@ pub mod pallet {
 					Deposit::Existential => return Err(Error::<T>::InvalidAddSurcharge.into()),
 					Deposit::Rent { amount, .. } => amount,
 				};
-				let native_id = T::NativeAssetId::get();
-				T::Currency::transfer(
-					native_id,
-					&origin,
-					&Self::rent_account(dest),
-					amount,
-					false,
-				)?;
+				T::NativeCurrency::transfer(&origin, &Self::rent_account(dest), amount, false)?;
 				vault.deposit = rent::deposit_from_balance::<T>(amount + current);
 				// since we guaranteed above that we're adding at least CreationDeposit, we can
 				// now untombstone it. If it was not tombstoned, this is a noop.
@@ -515,8 +504,6 @@ pub mod pallet {
 				_ => return Err(Error::<T>::InvalidSurchargeClaim.into()),
 			};
 
-			let native_id = T::NativeAssetId::get();
-
 			Vaults::<T>::try_mutate_exists(dest, |v| -> DispatchResultWithPostInfo {
 				let vault = v.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
 				ensure!(vault.capabilities.is_tombstoned(), Error::<T>::VaultNotTombstoned);
@@ -529,11 +516,10 @@ pub mod pallet {
 				} else {
 					let deletion_reward_account = &Self::deletion_reward_account(dest);
 					let reward =
-						T::Currency::reducible_balance(native_id, deletion_reward_account, false);
+						T::NativeCurrency::reducible_balance(deletion_reward_account, false);
 					// No need to keep `deletion_reward_account` alive. After this operation, the
 					// vault has no associated data anymore.
-					T::Currency::transfer(
-						native_id,
+					T::NativeCurrency::transfer(
 						deletion_reward_account,
 						&reward_address,
 						reward,
