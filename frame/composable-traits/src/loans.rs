@@ -5,11 +5,11 @@ use frame_support::{
 	traits::fungibles::{Inspect, Mutate, Transfer},
 	Parameter,
 };
+use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero},
 	FixedPointOperand,
 };
-use scale_info::TypeInfo;
 
 use crate::math::LiftedFixedBalance;
 
@@ -54,7 +54,7 @@ pub trait DeFiComposableConfig: frame_system::Config {
 		+ Into<LiftedFixedBalance> // integer part not more than bits in this
 		+ Into<u128>
 		+ TypeInfo; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
-			  // bit
+			// bit
 
 	/// bank. vault owned - can transfer, cannot mint
 	type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>

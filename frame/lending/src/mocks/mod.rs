@@ -79,9 +79,9 @@ pub enum MockCurrencyId {
 }
 
 impl From<u128> for MockCurrencyId {
-    fn from(value: u128) -> Self {
+	fn from(value: u128) -> Self {
 		Self::LpToken(value)
-    }
+	}
 }
 
 impl Default for MockCurrencyId {
@@ -232,7 +232,6 @@ impl pallet_vault::Config for Test {
 	type NativeCurrency = NativeCurrency;
 	type VaultId = VaultId;
 	type TombstoneDuration = TombstoneDuration;
-
 }
 
 parameter_type_with_key! {
@@ -287,7 +286,7 @@ impl Orderbook for MockOrderbook {
 		_source_amount: Self::Balance,
 		_source_price: Price<Self::GroupId, Self::Balance>,
 		_amm_slippage: Permill,
-	) -> Result<SellOrder<Self::OrderId,Self::AccountId>, DispatchError> {
+	) -> Result<SellOrder<Self::OrderId, Self::AccountId>, DispatchError> {
 		Ok(SellOrder { id: 0, account: ALICE.clone() })
 	}
 

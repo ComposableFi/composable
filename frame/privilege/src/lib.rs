@@ -32,10 +32,10 @@ pub mod pallet {
 			Privilege, PrivilegedGroupOf, PrivilegedGroupSet,
 		},
 	};
-	use frame_support::{PalletId, pallet_prelude::*, };
-	use sp_runtime::{traits::MaybeDisplay};
-	use sp_std::fmt::Debug;
+	use frame_support::{pallet_prelude::*, PalletId};
 	use scale_info::TypeInfo;
+	use sp_runtime::traits::MaybeDisplay;
+	use sp_std::fmt::Debug;
 
 	pub const PALLET_ID: PalletId = PalletId(*b"pal_priv");
 
