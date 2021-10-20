@@ -27,7 +27,6 @@ pub mod mocks;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use scale_info::TypeInfo;
 	use codec::{Codec, Decode, Encode, FullCodec};
 	use composable_traits::{
 		auction::{AuctionState, AuctionStepFunction, DutchAuction},
@@ -46,6 +45,7 @@ pub mod pallet {
 		},
 		Parameter, Twox64Concat,
 	};
+	use scale_info::TypeInfo;
 
 	use frame_support::pallet_prelude::*;
 	use frame_system::{pallet_prelude::*, Account};

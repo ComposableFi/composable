@@ -24,7 +24,9 @@ use frame_support::{
 use pallet_vault::models::VaultInfo;
 use proptest::{prelude::*, test_runner::TestRunner};
 use sp_core::U256;
-use sp_runtime::{helpers_128bit::multiply_by_rational, FixedPointNumber, Percent, Perquintill, FixedI128};
+use sp_runtime::{
+	helpers_128bit::multiply_by_rational, FixedI128, FixedPointNumber, Percent, Perquintill,
+};
 
 type BorrowAssetVault = VaultId;
 

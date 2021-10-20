@@ -1,7 +1,7 @@
 use bitflags::bitflags;
 use frame_support::pallet_prelude::*;
-use sp_std::vec::Vec;
 use scale_info::TypeInfo;
+use sp_std::vec::Vec;
 
 bitflags! {
 	/// Privilege of an account.
