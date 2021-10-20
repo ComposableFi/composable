@@ -10,9 +10,8 @@ use frame_support::{
 use pallet_balances::Error as BalancesError;
 use sp_core::offchain::{testing, OffchainDbExt, OffchainWorkerExt, TransactionPoolExt};
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
-use sp_runtime::{Percent, RuntimeAppPublic};
+use sp_runtime::{traits::BadOrigin, Percent, RuntimeAppPublic};
 use std::sync::Arc;
-use sp_runtime::traits::BadOrigin;
 
 #[test]
 fn add_asset_and_info() {
@@ -38,7 +37,6 @@ fn add_asset_and_info() {
 			MIN_ANSWERS,
 			MAX_ANSWERS,
 		));
-
 
 		let asset_info =
 			AssetInfo { threshold: THRESHOLD, min_answers: MIN_ANSWERS, max_answers: MAX_ANSWERS };

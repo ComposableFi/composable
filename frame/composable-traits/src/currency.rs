@@ -24,9 +24,9 @@ where
 }
 
 impl PriceableAsset for u128 {
-    fn smallest_unit_exponent(self) -> Exponent {
-        0
-    }
+	fn smallest_unit_exponent(self) -> Exponent {
+		0
+	}
 }
 
 /* NOTE(hussein-aitlahcen):
@@ -72,7 +72,7 @@ impl<
 			+ Debug
 			+ MaybeSerializeDeserialize
 			+ MaxEncodedLen
-			+ TypeInfo
+			+ TypeInfo,
 	> Balance for T
 {
 }

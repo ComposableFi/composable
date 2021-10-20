@@ -28,7 +28,6 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use scale_info::TypeInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		auction::DutchAuction,
@@ -47,6 +46,7 @@ pub mod pallet {
 	};
 	use frame_system::{offchain::Signer, pallet_prelude::*, Account};
 	use num_traits::{CheckedDiv, SaturatingSub};
+	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,

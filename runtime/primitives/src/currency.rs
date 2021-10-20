@@ -1,8 +1,8 @@
 //! CurrencyId implementation
 
 use codec::{Decode, Encode};
-use scale_info::TypeInfo;
 use composable_traits::currency::{DynamicCurrencyId, Exponent, PriceableAsset};
+use scale_info::TypeInfo;
 use sp_runtime::{ArithmeticError, DispatchError, RuntimeDebug};
 
 #[cfg(feature = "std")]
