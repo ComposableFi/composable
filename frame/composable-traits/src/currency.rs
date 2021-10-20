@@ -10,6 +10,8 @@ use frame_support::{
 	},
 };
 
+use scale_info::TypeInfo;
+
 /* NOTE(hussein-aitlahcen):
  I initially added a generic type to index into the generatable sub-range but realised it was
  overkill. Perhaps it will be required later if we want to differentiate multiple sub-ranges
@@ -71,7 +73,7 @@ pub trait MultiImbalance<A: AssetId, B: Balance>: Sized {
 
 impl<
 		A: AssetId,
-		B: Balance,
+		B: Balance + TypeInfo,
 		OppositeOnDrop: HandleImbalanceDrop<A, B>,
 		OnDrop: HandleImbalanceDrop<A, B>,
 	> MultiImbalance<A, B> for Imbalance<A, B, OnDrop, OppositeOnDrop>
