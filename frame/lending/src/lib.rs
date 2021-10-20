@@ -165,11 +165,8 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ Debug
 			+ Default
-<<<<<<< HEAD
-			+ TypeInfo;
-=======
+			+ TypeInfo
 			+ PriceableAsset;
->>>>>>> 889590c (smallest possible unit for currencies + refactor + lending fixes / tests more clear (#186))
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -208,7 +205,7 @@ pub mod pallet {
 		type MaxLendingCount: Get<u32>;
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type WeightInfo: WeightInfo;
-		type GroupId: FullCodec + Default + PartialEq + Clone + Debug;
+		type GroupId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
 	}
 	#[cfg(feature = "runtime-benchmarks")]
 	pub trait Config:
@@ -806,7 +803,7 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			if Self::should_liquidate(market_id, account)? {
 				let market = Self::get_market(market_id)?;
-				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
+				let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
 				let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
 				let collateral_price =
 					Self::get_price(market.collateral, market.collateral.unit())?;
@@ -814,20 +811,13 @@ pub mod pallet {
 				T::Liquidation::liquidate(
 					&source_target_account,
 					market.collateral,
-<<<<<<< HEAD
-					collateral_price,
-=======
 					PriceStructure::new(collateral_price),
-<<<<<<< HEAD
->>>>>>> 96dd905 (dex docs, groups for lending, api (#183))
 					borrow_asset_id,
 					&Self::account_id(market_id),
-					borrower_balance_with_interest,
-=======
-					borrow_asset,
-					&source_target_account,
 					collateral_to_liquidate,
->>>>>>> 889590c (smallest possible unit for currencies + refactor + lending fixes / tests more clear (#186))
+					//borrow_asset,
+					//&source_target_account,
+					// collateral_to_liquidate,
 				)
 				.map(|_| ())
 			} else {
@@ -1318,7 +1308,7 @@ pub mod pallet {
 			let total_borrows = Self::total_borrows(market_id)?;
 			let total_cash = Self::total_cash(market_id)?;
 			let utilization_ratio = Self::calc_utilization_ratio(&total_cash, &total_borrows)?;
-			let market = Self::get_market(market_id)?;
+			let mut market = Self::get_market(market_id)?;
 			let delta_time =
 				now.checked_sub(Self::last_block_timestamp()).ok_or(Error::<T>::Underflow)?;
 			let borrow_index = Self::get_borrow_index(market_id)?;

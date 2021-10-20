@@ -1,10 +1,11 @@
 use bitflags::bitflags;
 use frame_support::pallet_prelude::*;
 use sp_std::vec::Vec;
+use scale_info::TypeInfo;
 
 bitflags! {
 	/// Privilege of an account.
-	#[derive(Encode, Decode)]
+	#[derive(Encode, Decode, TypeInfo)]
 	pub struct Privilege: u32 {
 		/// An account we prioritize in liquidation processes.
 		/// In a dutch auction for instance, the account will be able to buy at a previous block price,
@@ -40,7 +41,7 @@ pub trait MutatePrivilege: InspectPrivilege {
 }
 
 #[repr(transparent)]
-#[derive(Default, Encode, Decode)]
+#[derive(Default, Encode, Decode, TypeInfo)]
 /// A privileged group.
 pub struct PrivilegedGroupSet<T>(pub Vec<T>);
 

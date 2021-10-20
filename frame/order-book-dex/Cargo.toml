@@ -27,6 +27,7 @@ sp-std = { default-features = false,  git = "https://github.com/paritytech/subst
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 
 num-traits = { version = "0.2.14", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 proptest = "0.9.6"

@@ -28,7 +28,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-
+	use scale_info::TypeInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		auction::DutchAuction,
