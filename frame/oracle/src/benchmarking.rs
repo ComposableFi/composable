@@ -117,7 +117,6 @@ benchmarks! {
 		let asset_id: T::AssetId = 1.into();
 		let stake = T::MinStake::get();
 		OracleStake::<T>::insert(&caller, stake);
-		RequestedId::<T>::mutate(asset_id, |request_id| *request_id += 1);
 		Requested::<T>::insert(asset_id, true);
 		AssetsInfo::<T>::insert(asset_id, AssetInfo {
 			threshold: Percent::from_percent(80),

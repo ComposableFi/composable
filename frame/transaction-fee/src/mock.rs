@@ -17,7 +17,7 @@ use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use support::{
 	parameter_types,
-	traits::{Imbalance, OnUnbalanced},
+	traits::{Everything, Imbalance, OnUnbalanced},
 	weights::{
 		DispatchClass, DispatchInfo, PostDispatchInfo, Weight, WeightToFeeCoefficient,
 		WeightToFeeCoefficients, WeightToFeePolynomial,
@@ -94,7 +94,7 @@ parameter_types! {
 }
 
 impl system::Config for Runtime {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = BlockWeights;
 	type BlockLength = ();
 	type DbWeight = ();
@@ -133,7 +133,7 @@ impl orml_tokens::Config for Runtime {
 	type MaxLocks = ();
 	type WeightInfo = ();
 	type CurrencyId = CurrencyId;
-	type DustRemovalWhitelist = ();
+	type DustRemovalWhitelist = Everything;
 	type ExistentialDeposits = ExistentialDeposits;
 }
 

@@ -1,5 +1,4 @@
 use frame_support::{dispatch::DispatchError, pallet_prelude::*};
-
 use crate::currency::PriceableAsset;
 
 #[derive(Encode, Decode, Default, Debug, PartialEq)]
@@ -37,10 +36,7 @@ pub trait Oracle {
 	/// price (Base BTC) = 5000000
 	/// price (Vaulted base stock_dilution_rate) = price base * stock_dilution_rate
 	/// ```
-	fn get_price(
-		asset: Self::AssetId,
-		amount: Self::Balance,
-	) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError>;
+	fn get_price(of: Self::AssetId) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError>;
 
 	/// Check whether the provided `asset` is supported (a.k.a. a price can be computed) by the
 	/// oracle.
