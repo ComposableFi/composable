@@ -30,3 +30,5 @@ To use it in your runtime, you need to implement the vault's [`Config`].
 Pallets depending on the vault should use the [vault](composable_traits::vault) traits. When managing the reaping and deposits is too difficult due to the creation of many vaults, or prohibitively expensive; create the vault with an existential deposit. You should ensure that you delete the vault yourself once it is no longer required.
 
 ## Emergency Shutdown
+
+Root is capable of completely shutting down a vault, disallowing deposits and withdrawals. This is intended as a mitigation for hacks.
