@@ -86,6 +86,7 @@ impl pallet_vault::Config for Test {
 	type NativeAssetId = NativeAssetId;
 	type MinimumDeposit = MinimumDeposit;
 	type MinimumWithdrawal = MinimumWithdrawal;
+	type VaultId = u64;
 }
 
 parameter_type_with_key! {
