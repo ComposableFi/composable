@@ -45,7 +45,7 @@ pub mod pallet {
 	use composable_traits::{
 		currency::CurrencyFactory,
 		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
-		liquidation::Liquidate,
+		liquidation::Liquidation,
 		loans::{DurationSeconds, Timestamp},
 		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
@@ -192,11 +192,12 @@ pub mod pallet {
 			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
-		type Liquidation: Liquidate<
+		type Liquidation: Liquidation<
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 		>;
+
 		type UnixTime: UnixTime;
 		type MaxLendingCount: Get<u32>;
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
@@ -253,7 +254,7 @@ pub mod pallet {
 			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
-		type Liquidation: Liquidate<
+		type Liquidation: Liquidation<
 			AssetId = <Self as Config>::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
@@ -799,7 +800,7 @@ pub mod pallet {
 					Self::borrow_balance_current(market_id, account)?
 						.unwrap_or_else(BorrowAmountOf::<Self>::zero);
 				let collateral_price = Self::get_price(market.collateral)?;
-				T::Liquidation::initiate_liquidation(
+				T::Liquidation::liquidate(
 					account,
 					market.collateral,
 					collateral_price,
@@ -1168,6 +1169,14 @@ pub mod pallet {
 			beneficiary: &Self::AccountId,
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
+			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, beneficiary);
+			ensure!(latest_borrow_timestamp.is_some(), Error::<T>::BorrowDoesNotExist);
+			if let Some(timestamp) = latest_borrow_timestamp {
+				ensure!(
+					timestamp != Self::last_block_timestamp(),
+					Error::<T>::BorrowAndRepayInSameBlockIsNotSupported
+				);
+			}
 			let market = Self::get_market(market_id)?;
 			if let Some(owed) = Self::borrow_balance_current(market_id, beneficiary)? {
 				let repay_amount = repay_amount.unwrap_or(owed);
@@ -1281,7 +1290,7 @@ pub mod pallet {
 			let total_borrows = Self::total_borrows(market_id)?;
 			let total_cash = Self::total_cash(market_id)?;
 			let utilization_ratio = Self::calc_utilization_ratio(&total_cash, &total_borrows)?;
-			let mut market = Self::get_market(market_id)?;
+			let market = Self::get_market(market_id)?;
 			let delta_time =
 				now.checked_sub(Self::last_block_timestamp()).ok_or(Error::<T>::Underflow)?;
 			let borrow_index = Self::get_borrow_index(market_id)?;
