@@ -156,6 +156,11 @@ pub mod pallet {
 			+ MutateNative<Self::AccountId, Balance = Self::Balance>
 			+ MutateHoldNative<Self::AccountId, Balance = Self::Balance>;
 
+		/// The asset used to pay for rent and other fees
+		type NativeCurrency: TransferNative<Self::AccountId, Balance = Self::Balance>
+			+ MutateNative<Self::AccountId, Balance = Self::Balance>
+			+ MutateHoldNative<Self::AccountId, Balance = Self::Balance>;
+
 		/// Generic Currency bounds. These functions are provided by the `[orml-tokens`](https://github.com/open-web3-stack/open-runtime-module-library/tree/HEAD/currencies) pallet.
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
