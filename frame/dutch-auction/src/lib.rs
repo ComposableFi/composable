@@ -182,14 +182,13 @@ pub mod pallet {
 			// TODO: with remote foreign chain DEX it can pass several blocks before we get on DEX.
 			// so somehow need to lock (transfer) currency before foreign transactions settles
 			ensure!(
-				matches!(
-					<T::Currency as Inspect<T::AccountId>>::can_withdraw(
-						source_asset_id,
-						account_id,
-						total_amount
-					),
-					WithdrawConsequence::Success
-				),
+				<T::Currency as Inspect<T::AccountId>>::can_withdraw(
+					source_asset_id,
+					account_id,
+					total_amount
+				)
+				.into_result()
+				.is_ok(),
 				Error::<T>::CannotWithdrawAmountEqualToDesiredAuction
 			);
 
