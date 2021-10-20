@@ -11,6 +11,23 @@ use frame_support::{
 };
 
 use scale_info::TypeInfo;
+pub type Exponent = u32;
+
+pub trait PriceableAsset
+where
+	Self: Copy,
+{
+	fn unit<T: From<u64>>(&self) -> T {
+		T::from(10u64.pow(self.smallest_unit_exponent()))
+	}
+	fn smallest_unit_exponent(self) -> Exponent;
+}
+
+impl PriceableAsset for u128 {
+    fn smallest_unit_exponent(self) -> Exponent {
+        0
+    }
+}
 
 /* NOTE(hussein-aitlahcen):
  I initially added a generic type to index into the generatable sub-range but realised it was
