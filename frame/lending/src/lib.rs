@@ -181,8 +181,9 @@ pub mod pallet {
 			+ Zero
 			+ FixedPointOperand
 			+ Into<LiftedFixedBalance> // integer part not more than bits in this
-			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
-			  // bit
+			+ Into<u128>
+			+ TypeInfo; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
+			// bit
 
 		/// vault owned - can transfer, cannot mint
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
@@ -213,7 +214,7 @@ pub mod pallet {
 	{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
-		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter + From<u64>;
+		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter + From<u64> + TypeInfo;
 		type Vault: StrategicVault<
 			VaultId = Self::VaultId,
 			AssetId = <Self as Config>::AssetId,
@@ -245,8 +246,9 @@ pub mod pallet {
 			+ Zero
 			+ FixedPointOperand
 			+ Into<LiftedFixedBalance> // integer part not more than bits in this
-			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
-			  // bit
+			+ Into<u128>
+			+ TypeInfo; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
+			// bit
 
 		/// vault owned - can transfer, cannot mint
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
@@ -268,7 +270,7 @@ pub mod pallet {
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type WeightInfo: WeightInfo;
 
-		type GroupId;
+		type GroupId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
 	}
 
 	#[pallet::pallet]
@@ -805,19 +807,16 @@ pub mod pallet {
 				let market = Self::get_market(market_id)?;
 				let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
 				let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
-				let collateral_price =
-					Self::get_price(market.collateral, market.collateral.unit())?;
+				let total_collateral_price =
+					Self::get_price(market.collateral, collateral_to_liquidate)?;
 				let source_target_account = Self::account_id(market_id);
 				T::Liquidation::liquidate(
 					&source_target_account,
 					market.collateral,
-					PriceStructure::new(collateral_price),
+					PriceStructure::new(total_collateral_price),
 					borrow_asset_id,
-					&Self::account_id(market_id),
+					&source_target_account,
 					collateral_to_liquidate,
-					//borrow_asset,
-					//&source_target_account,
-					// collateral_to_liquidate,
 				)
 				.map(|_| ())
 			} else {

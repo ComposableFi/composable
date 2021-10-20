@@ -301,16 +301,16 @@ impl Orderbook for MockOrderbook {
 	}
 
 	fn patch(
-		order_id: Self::OrderId,
-		price: composable_traits::dex::Price<Self::GroupId, Self::Balance>,
+		_order_id: Self::OrderId,
+		_price: composable_traits::dex::Price<Self::GroupId, Self::Balance>,
 	) -> Result<(), DispatchError> {
 		Ok(())
 	}
 
 	fn ask(
-		account: &Self::AccountId,
-		orders: impl Iterator<Item = Self::OrderId>,
-		up_to: Self::Balance,
+		_account: &Self::AccountId,
+		_orders: impl Iterator<Item = Self::OrderId>,
+		_up_to: Self::Balance,
 	) -> Result<(), DispatchError> {
 		Ok(())
 	}
