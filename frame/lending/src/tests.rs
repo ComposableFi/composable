@@ -458,7 +458,7 @@ fn test_vault_market_cannot_withdraw() {
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, deposit_usdt));
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, deposit_btc));
 
-		assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, deposit_btc));
+		assert_ok!(Vault::deposit(Origin::signed(ALICE.clone()), vault_id, deposit_btc));
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, deposit_usdt));
 
 		// We don't even wait 1 block, which mean the market couldn't withdraw funds.
@@ -479,7 +479,7 @@ fn test_vault_market_can_withdraw() {
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, deposit_usdt));
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, deposit_btc));
 
-		assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, deposit_btc));
+		assert_ok!(Vault::deposit(Origin::signed(ALICE.clone()), vault_id, deposit_btc));
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, deposit_usdt));
 
 		for i in 1..2 {
