@@ -64,13 +64,8 @@ jobs:
 
           total_exit_code=0
           while IFS= read -r crate; do
-            if [ "$crate" = "." ] || [ "$crate" = "./node" ] || [ "$crate" = "./runtime/picasso" ]; then
-              # skip those directories because the udeps can't check their:
-              #   thread 'main' panicked at '`cargo metadata` can not fail on project `Cargo.toml`; qed: CargoMetadata { stderr: "error: Found argument 'metadata' which wasn't expected, or isn't valid in this context\n\nUSAGE:\n    cargo <SUBCOMMAND>\n\nFor more information try --help\n" }', /home/user/.cargo/git/checkouts/substrate-7e08433d4c370a21/57346f6/utils/wasm-builder/src/wasm_project.rs:83:10
-              continue
-            fi
             echo "=== $crate ==="
-            (cd "$crate"; cargo udeps -q --all-targets) || total_exit_code=$?
+            (cd "$crate"; SKIP_WASM_BUILD=1 cargo udeps -q --all-targets) || total_exit_code=$?
             echo ""
           done < <(find . -name "Cargo.toml" -not -path "./polkadot-launch/*" -not -path "./target/*" -exec dirname '{}' \;)
           exit $total_exit_code
