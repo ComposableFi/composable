@@ -90,12 +90,8 @@ pub mod pallet {
 	use frame_system::{
 		ensure_root, ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig,
 	};
-<<<<<<< HEAD
-	use num_traits::{One, SaturatingSub};
-=======
 	use num_traits::SaturatingSub;
 	use scale_info::TypeInfo;
->>>>>>> origin/main
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
 		traits::{
