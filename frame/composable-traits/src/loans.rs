@@ -35,13 +35,7 @@ impl<GroupId, Balance> PriceStructure<GroupId, Balance> {
 
 pub trait DeFiComposableConfig: frame_system::Config {
 	// what.
-	type AssetId: FullCodec
-		+ Eq
-		+ PartialEq
-		+ Copy
-		+ MaybeSerializeDeserialize
-		+ From<u128>
-		+ Default;
+	type AssetId: FullCodec + Eq + PartialEq + Copy + MaybeSerializeDeserialize + Default;
 
 	type Balance: Default
 		+ Parameter

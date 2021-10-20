@@ -1,6 +1,7 @@
 use crate as pallet_oracle;
 use crate::*;
-use frame_support::{ord_parameter_types, parameter_types, traits::Everything};
+use composable_traits::currency::{DynamicCurrencyId, PriceableAsset};
+use frame_support::{ord_parameter_types, parameter_types, traits::{Currency, Everything}};
 use frame_system as system;
 use frame_system::EnsureSignedBy;
 use sp_core::{sr25519::Signature, H256};
@@ -118,6 +119,7 @@ where
 		Some((call, (nonce, ())))
 	}
 }
+
 
 impl pallet_oracle::Config for Test {
 	type Event = Event;
