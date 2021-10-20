@@ -55,16 +55,24 @@ jobs:
         env:
           UDEPS_VERSION: v0.1.23
         run: |
+          rustup target add wasm32-unknown-unknown
           curl -L -O "https://github.com/est31/cargo-udeps/releases/download/${UDEPS_VERSION}/cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
           tar xzf "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
           cp "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu/cargo-udeps" ~/.cargo/bin/
-
           rm -r "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu"
+          cargo udeps --version
 
           total_exit_code=0
           while IFS= read -r crate; do
-            (cd "$crate"; cargo +nightly udeps --all-targets 2>/dev/null) || total_exit_code=$?
-          done < <(find . -name "Cargo.toml" -exec dirname '{}' \;)
+            if [ "$crate" = "." ] || [ "$crate" = "./node" ] || [ "$crate" = "./runtime/picasso" ]; then
+              # skip those directories because the udeps can't check their:
+              #   thread 'main' panicked at '`cargo metadata` can not fail on project `Cargo.toml`; qed: CargoMetadata { stderr: "error: Found argument 'metadata' which wasn't expected, or isn't valid in this context\n\nUSAGE:\n    cargo <SUBCOMMAND>\n\nFor more information try --help\n" }', /home/user/.cargo/git/checkouts/substrate-7e08433d4c370a21/57346f6/utils/wasm-builder/src/wasm_project.rs:83:10
+              continue
+            fi
+            echo "=== $crate ==="
+            (cd "$crate"; cargo udeps -q --all-targets) || total_exit_code=$?
+            echo ""
+          done < <(find . -name "Cargo.toml" -not -path "./polkadot-launch/*" -not -path "./target/*" -exec dirname '{}' \;)
           exit $total_exit_code
   test:
     name: Unit Test
