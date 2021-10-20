@@ -255,7 +255,8 @@ pub mod pallet {
 		}
 
 		fn run_auctions(now: Timestamp) -> DispatchResult {
-			let mut removed = Vec::new(); // avoid removing during iteration as unsafe
+			// avoid removing during iteration as unsafe
+			let mut removed = Vec::new();
 			for (order_id, order) in Orders::<T>::iter() {
 				match order.state {
 					AuctionState::AuctionStarted => {
@@ -287,8 +288,9 @@ pub mod pallet {
 							)?;
 
 							Orders::<T>::mutate(order_id, |order| {
-								order.state = AuctionState::AuctionOnDex(dex_order_intention); // considers updating in place is
-								                               // safe during iteration
+								// considers updating in place is
+								// safe during iteration
+								order.state = AuctionState::AuctionOnDex(dex_order_intention);
 							});
 						}
 					},
