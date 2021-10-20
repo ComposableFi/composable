@@ -42,7 +42,7 @@ pub trait Lending {
 	type VaultId;
 	type MarketId;
 	/// (deposit VaultId, collateral VaultId) <-> MarketId
-	type AccountId;
+	type AccountId : Ord;
 	type Balance;
 	type BlockNumber;
 	type GroupId;

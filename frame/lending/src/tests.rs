@@ -453,15 +453,8 @@ fn test_vault_market_cannot_withdraw() {
 	new_test_ext().execute_with(|| {
 		let (market, vault_id) = create_simple_market();
 
-<<<<<<< HEAD
-		let deposit_usdt = 1_000_000 * MockCurrencyId::USDT.unit::<Balance>();
-		let deposit_btc = 10 * MockCurrencyId::BTC.unit::<Balance>();
-		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, deposit_usdt));
-		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, deposit_btc));
-=======
 		Vault::deposit(Origin::signed(*ALICE), vault_id, 1_000_000_000).unwrap();
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, 1_000_000_000));
->>>>>>> origin/main
 
 		assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, deposit_btc));
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, deposit_usdt));

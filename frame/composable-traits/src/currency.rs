@@ -9,6 +9,7 @@ use frame_support::{
 		ExistenceRequirement, SameOrOther,
 	},
 };
+use scale_info::TypeInfo;
 
 pub type Exponent = u32;
 
@@ -44,8 +45,8 @@ pub trait CurrencyFactory<CurrencyId> {
 	fn create() -> Result<CurrencyId, DispatchError>;
 }
 
-pub trait AssetId: FullCodec + Copy + Eq + PartialEq + Debug {}
-impl<T: FullCodec + Copy + Eq + PartialEq + Debug> AssetId for T {}
+pub trait AssetId: FullCodec + Copy + Eq + PartialEq + Debug + TypeInfo {}
+impl<T: FullCodec + Copy + Eq + PartialEq + Debug+ TypeInfo> AssetId for T {}
 pub trait Balance:
 	AtLeast32BitUnsigned
 	+ FullCodec
@@ -54,6 +55,7 @@ pub trait Balance:
 	+ Debug
 	+ MaybeSerializeDeserialize
 	+ MaxEncodedLen
+	+ TypeInfo
 {
 }
 impl<
@@ -63,7 +65,8 @@ impl<
 			+ Default
 			+ Debug
 			+ MaybeSerializeDeserialize
-			+ MaxEncodedLen,
+			+ MaxEncodedLen
+			+ TypeInfo
 	> Balance for T
 {
 }
@@ -169,6 +172,7 @@ impl<AccountId, T> MultiCurrency<AccountId> for T
 where
 	T: Inspect<AccountId> + Balanced<AccountId> + Mutate<AccountId> + Transfer<AccountId>,
 	T::Balance: Balance,
+	T::AssetId: TypeInfo,
 {
 	type Balance = T::Balance;
 	type PositiveImbalance = DebtOf<AccountId, Self>;

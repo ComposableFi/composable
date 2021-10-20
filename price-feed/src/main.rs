@@ -12,16 +12,10 @@ extern crate enum_derive;
 #[macro_use]
 extern crate lazy_static;
 
-use crate::{
-	asset::Asset,
-	backend::{Backend, FeedNotificationAction},
-	cache::ThreadSafePriceCache,
-	feed::{
+use crate::{asset::Asset, backend::{Backend, FeedNotificationAction}, cache::ThreadSafePriceCache, feed::{
 		binance::BinanceFeed, FeedHandle, FeedIdentifier, FeedNotification, FeedStream,
 		TimeStampedPrice,
-	},
-	frontend::Frontend,
-};
+	}, frontend::Frontend, opts::Opts};
 use futures::{future::join_all, stream::StreamExt};
 use signal_hook::consts::signal::*;
 use signal_hook_tokio::Signals;
@@ -34,7 +28,7 @@ use std::{
 async fn main() {
 	env_logger::init();
 
-	let opts = opts::get_opts();
+	let opts = Opts::new();
 
 	let prices_cache: ThreadSafePriceCache = Arc::new(RwLock::new(HashMap::new()));
 

@@ -35,16 +35,11 @@ pub mod pallet {
 		math::{LiftedFixedBalance, SafeArithmetic, WrappingNext},
 		privilege::InspectPrivilegeGroup,
 	};
-	use frame_support::{
-		ensure,
-		pallet_prelude::{MaybeSerializeDeserialize, ValueQuery},
-		traits::{
+	use frame_support::{Parameter, Twox64Concat, ensure, pallet_prelude::{MaybeSerializeDeserialize, ValueQuery}, scale_info::TypeInfo, traits::{
 			fungibles::{Inspect, Mutate, Transfer},
 			tokens::WithdrawConsequence,
 			Currency, IsType, UnixTime,
-		},
-		Parameter, Twox64Concat,
-	};
+		}};
 
 	use frame_support::pallet_prelude::*;
 	use frame_system::{pallet_prelude::*, Account};
@@ -73,8 +68,8 @@ pub mod pallet {
 			GroupId = Self::GroupId,
 		>;
 		type DexOrderId: FullCodec + Default;
-		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext;
-		type GroupId: FullCodec + Clone + Debug + PartialEq + Default;
+		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext + TypeInfo;
+		type GroupId: FullCodec + Clone + Debug + PartialEq + Default + TypeInfo;
 		type Privilege: InspectPrivilegeGroup<AccountId = Self::AccountId, GroupId = Self::GroupId>;
 	}
 

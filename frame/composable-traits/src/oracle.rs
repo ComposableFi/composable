@@ -41,6 +41,6 @@ pub trait Oracle {
 	/// Check whether the provided `asset` is supported (a.k.a. a price can be computed) by the
 	/// oracle.
 	fn is_supported(asset: Self::AssetId) -> Result<bool, DispatchError> {
-		Self::get_price(asset, asset.unit()).map(|_| true)
+		Self::get_price(asset).map(|_| true)
 	}
 }

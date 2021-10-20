@@ -90,7 +90,7 @@ pub mod pallet {
 	use frame_system::{
 		ensure_root, ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig,
 	};
-	use num_traits::SaturatingSub;
+	use num_traits::{One, SaturatingSub};
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
@@ -170,7 +170,8 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ Debug
 			+ Default
-			+ Into<u128>;
+			+ Into<u128>
+			+ TypeInfo;
 
 		/// Converts the `Balance` type to `u128`, which internally is used in calculations.
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;

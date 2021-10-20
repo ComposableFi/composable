@@ -18,14 +18,7 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, FullCodec};
-<<<<<<< HEAD
-	use composable_traits::{
-		currency::PriceableAsset,
-		oracle::{Oracle, Price as LastPrice},
-	};
-=======
 	use composable_traits::oracle::{Oracle, Price as LastPrice};
->>>>>>> origin/main
 	use frame_support::{
 		dispatch::{DispatchResult, DispatchResultWithPostInfo, Vec},
 		pallet_prelude::*,
@@ -55,18 +48,10 @@ pub mod pallet {
 		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
-<<<<<<< HEAD
-
-	pub use crate::weights::WeightInfo;
-
-	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orac");
-	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"orac");
-=======
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(KEY_ID);
 	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(KEY_ID);
->>>>>>> origin/main
 
 	pub mod crypto {
 		use super::KEY_TYPE;
@@ -112,11 +97,7 @@ pub mod pallet {
 			+ Into<u128>
 			+ Debug
 			+ Default
-<<<<<<< HEAD
-			+ PriceableAsset;
-=======
 			+ TypeInfo;
->>>>>>> origin/main
 		type PriceValue: Default
 			+ Parameter
 			+ Codec
@@ -339,22 +320,11 @@ pub mod pallet {
 		type AssetId = T::AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 
-<<<<<<< HEAD
-		// TODO(hussein-aitlahcen):
-		// implement the amount based computation with decimals once it's been completely defined
-		fn get_price(
-			asset: Self::AssetId,
-			_amount: Self::Balance,
-		) -> Result<LastPrice<Self::Balance, Self::Timestamp>, DispatchError> {
-			let Price { price, block } =
-				Prices::<T>::try_get(asset).map_err(|_| Error::<T>::PriceNotFound)?;
-=======
 		fn get_price(
 			of: Self::AssetId,
 		) -> Result<LastPrice<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
 				Prices::<T>::try_get(of).map_err(|_| Error::<T>::PriceNotFound)?;
->>>>>>> origin/main
 			Ok(LastPrice { price, block })
 		}
 	}
