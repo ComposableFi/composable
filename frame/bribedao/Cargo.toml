@@ -29,7 +29,6 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 
-pallet-oracle = { default-features = false, optional = true, version = "1.0.0", path = "../oracle" }
 frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.10' }
 
 serde = { version = '1', optional = true }
@@ -45,7 +44,6 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
 pallet-timestamp = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.10" }
 pallet-currency-factory = { path = "../currency-factory" }
-pallet-oracle = { path = "../oracle" }
 pallet-vault = { path = "../vault" }
 
 [features]

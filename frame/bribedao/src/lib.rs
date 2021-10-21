@@ -5,19 +5,15 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::Codec;
-	use composable_traits::bribe::Bribe;
-	use composable_traits::democracy::Democracy;
+	use composable_traits::{bribe::Bribe, democracy::Democracy};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{
-			fungibles::{Inspect, Transfer},
-		},
+		traits::fungibles::{Inspect, Transfer},
 	};
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
-	use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 	use pallet_democracy::Vote;
-
+	use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 
 	pub type BribeIndex = u32;
 	pub type ReferendumIndex = pallet_democracy::ReferendumIndex;
@@ -34,17 +30,16 @@ pub mod pallet {
 		<T as Config>::Conviction,
 	>;
 
-
 	// Status of Bribe request
 	#[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug)]
 	pub enum BribeStatuses {
-		Created, 
+		Created,
 		Started,
 		OnHold,
 		Failed,
 		Finished,
 		InvalidId,
-		}
+	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -63,7 +58,11 @@ pub mod pallet {
 
 		type Conviction: Parameter;
 
-		type Democracy: Democracy<AccountId = Self::AccountId, ReferendumIndex = pallet_democracy::ReferendumIndex, Vote = pallet_democracy::Vote>;
+		type Democracy: Democracy<
+			AccountId = Self::AccountId,
+			ReferendumIndex = pallet_democracy::ReferendumIndex,
+			Vote = pallet_democracy::Vote,
+		>;
 
 		// TODO(oleksii): CurrencyId traits
 		type CurrencyId: Parameter;
@@ -93,12 +92,6 @@ pub mod pallet {
 	#[pallet::getter(fn bribe_count)]
 	pub(super) type BribeCount<T: Config> = StorageValue<_, BribeIndex, ValueQuery>;
 
-
-	#[pallet::storage]
-	#[pallet::getter(fn bribe_status)]
-	pub(super) type BribeStatus<T: Config> =
-		StorageMap<_, Blake2_128Concat, BribeIndex, BribeStatuses>;
-
 	#[pallet::storage]
 	#[pallet::getter(fn bribe_requests)]
 	pub(super) type BribeRequests<T: Config> =
@@ -118,22 +111,38 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-/*
-		/// Check the status of a bribe request
+		#[transactional]
 		#[pallet::weight(10_000)]
-		pub fn check_status(origin: OriginFor<T>, id: BribeIndex) -> Result<BribeStatuses, DispatchError> {
-		let idstatus = BribeStatus.get(id.into());
-		match idstatus {
-			Ok(idstatu) => {
-				Ok(idstatus)
-				}
-			Err(()) =>{
-				Ok(Error::InvalidBribe)
-				} 
-		}
+		pub fn deposit_funds(
+			origin: OriginFor<T>,
+			bribe: BribeIndex,
+			amount: u128,
+		) -> DispatchResult {
+			transfer(account_id, origin, amount);
+			todo!("deposit_tokens into vault ");
+
+			todo!("transfer funds");
+			todo!("Update token funds status");
+
+			Ok(())
 		}
 
-*/
+		#[transactional]
+		#[pallet::weight(10_000)]
+		pub fn release_funds(
+			origin: OriginFor<T>,
+			bribe: BribeIndex,
+			amount: u128,
+		) -> DispatchResult {
+			let _check = ensure_origin!(origin);
+			transfer(account_id, origin, amount);
+
+			todo!("Check token supply, if supply is less or same as asked for: release funds");
+			Error::<T>::EmptySupply;
+			todo!("update capital status");
+			Ok(())
+		}
+
 		#[pallet::weight(10_000)]
 		pub fn take_bribe(
 			origin: OriginFor<T>,
@@ -158,18 +167,16 @@ pub mod pallet {
 		NotEnoughStake,
 		PriceNotRequested,
 		AlreadyBribed,
+		EmptySupply,
 	}
 
 	// offchain indexing
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T>{
-
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn offchain_worker(_b: T::BlockNumber) {
 			log::info!("Indexing request offchain");
-			}
-
+		}
 	}
-
 
 	impl<T: Config> Bribe for Pallet<T> {
 		type BribeIndex = BribeIndex;
@@ -179,11 +186,11 @@ pub mod pallet {
 		type Conviction = T::Conviction;
 		type CurrencyId = T::CurrencyId;
 
-//		fn lockup_funds(origin: Origin<T>, request: CreateBribeRequest<T>) -> Result<bool, DispatchError>{
-//			todo!("lock up users funds until vote is finished");
-//		}
+		//		fn lockup_funds(origin: Origin<T>, request: CreateBribeRequest<T>) -> Result<bool,
+		// DispatchError>{ 			todo!("lock up users funds until vote is finished");
+		//		}
 
-//		fn payout_funds()
+		//		fn payout_funds()
 
 		fn create_bribe(request: CreateBribeRequest<T>) -> Result<Self::BribeIndex, DispatchError> {
 			Self::do_create_bribe(request)
@@ -201,7 +208,7 @@ pub mod pallet {
 				*id
 			});
 
-			ensure!(BribeRequests::<T>::contains_key(id), Error::<T>::AlreadyBribed); //dont duplicate briberequest if we already have it
+			ensure!(!BribeRequests::<T>::contains_key(id), Error::<T>::AlreadyBribed); //dont duplicate briberequest if we already have it
 
 			BribeRequests::<T>::insert(id, request);
 			Ok(id)
@@ -214,12 +221,10 @@ pub mod pallet {
 			);
 			let bribe_request = BribeRequests::<T>::get(request.bribe_index).unwrap();
 
-			BribeStatus::<T>::insert(request.bribe_index, BribeStatuses::Created); // account for bribe progress
-
-			let vote = Vote{ aye: bribe_request.is_aye, conviction: Default::default() }; //todo get conviction
-			T::Democracy::vote(bribe_request.account_id, bribe_request.ref_index, vote); //AccountId, Referendum Index, Vote 
+			let vote = Vote { aye: bribe_request.is_aye, conviction: Default::default() }; //todo get conviction
+			T::Democracy::vote(bribe_request.account_id, bribe_request.ref_index, vote); //AccountId, Referendum Index, Vote
 			Ok(true)
-//			todo!("enact vote through pallet_democracy");
+			//			todo!("enact vote through pallet_democracy");
 		}
 	}
 }
