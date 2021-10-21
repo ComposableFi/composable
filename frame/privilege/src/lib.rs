@@ -33,6 +33,7 @@ pub mod pallet {
 		},
 	};
 	use frame_support::{pallet_prelude::*, PalletId};
+	use scale_info::TypeInfo;
 	use sp_runtime::traits::MaybeDisplay;
 	use sp_std::fmt::Debug;
 
@@ -41,7 +42,7 @@ pub mod pallet {
 	type AccountIdOf<T> = <T as Config>::AccountId;
 
 	#[pallet::event]
-	#[pallet::metadata(AccountIdOf<T> = "AccountId", T::GroupId = "GroupId")]
+	//#[pallet::metadata(AccountIdOf<T> = "AccountId", T::GroupId = "GroupId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		PrivilegeAdded { account_id: AccountIdOf<T>, privilege: Privilege },
@@ -75,9 +76,10 @@ pub mod pallet {
 			+ Ord
 			+ Default
 			+ MaxEncodedLen
-			+ Copy;
+			+ Copy
+			+ TypeInfo;
 
-		type GroupId: FullCodec + WrappingNext + Default + Debug + Copy + PartialEq;
+		type GroupId: FullCodec + WrappingNext + Default + Debug + Copy + PartialEq + TypeInfo;
 
 		/// The max number of groups this pallet can handle.
 		type MaxGroup: Get<u32>;

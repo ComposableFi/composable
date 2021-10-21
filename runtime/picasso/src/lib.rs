@@ -59,10 +59,10 @@ use system::{
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds,
-	LocationInverter, NativeAsset, ParentAsSuperuser, ParentIsDefault, RelayChainAsNative,
-	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin,
+	FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser, ParentIsDefault,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 };
 use xcm_executor::XcmExecutor;
 
@@ -196,9 +196,14 @@ impl system::Config for Runtime {
 
 impl randomness_collective_flip::Config for Runtime {}
 
+parameter_types! {
+	pub const MaxAuthorities: u32 = 1_000;
+}
+
 impl aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
+	type MaxAuthorities = ();
 }
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
@@ -253,6 +258,7 @@ parameter_types! {
 	/// This value is currently only used by pallet-transaction-payment as an assertion that the
 	/// next multiplier is always > min value.
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
+	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
 pub struct WeightToFee;
@@ -277,6 +283,7 @@ impl transaction_payment::Config for Runtime {
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
 impl sudo::Config for Runtime {
@@ -377,7 +384,7 @@ parameter_types! {
 impl oracle::Config for Runtime {
 	type Currency = Assets;
 	type Event = Event;
-	type AuthorityId = oracle::crypto::TestAuthId;
+	type AuthorityId = oracle::crypto::BathurstStId;
 	type AssetId = CurrencyId;
 	type PriceValue = u128;
 	type StakeLock = StakeLock;
@@ -458,9 +465,22 @@ pub type XcmOriginToTransactDispatchOrigin = (
 parameter_types! {
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
 	pub UnitWeightCost: Weight = 1_000_000;
+	pub const MaxInstructions: u32 = 100;
 }
 
-pub type Barrier = (TakeWeightCredit, AllowTopLevelPaidExecutionFrom<Everything>);
+// For test purposes.
+match_type! {
+	pub type SpecParachain: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: X1(Parachain(2000)) } |
+			MultiLocation { parents: 1, interior: X1(Parachain(2001)) }
+	};
+}
+
+pub type Barrier = (
+	TakeWeightCredit,
+	AllowTopLevelPaidExecutionFrom<Everything>,
+	AllowUnpaidExecutionFrom<SpecParachain>,
+);
 
 pub struct XcmConfig;
 
@@ -474,10 +494,12 @@ impl xcm_executor::Config for XcmConfig {
 	type IsTeleporter = (); // <- should be enough to allow teleportation of PICA
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type Trader = ();
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
+	type AssetClaims = PolkadotXcm;
+	type AssetTrap = PolkadotXcm;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -500,9 +522,14 @@ impl pallet_xcm::Config for Runtime {
 	type XcmExecuteFilter = Everything;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
-	type XcmReserveTransferFilter = ();
+	type XcmReserveTransferFilter = Everything;
 	type LocationInverter = LocationInverter<Ancestry>;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+	type Origin = Origin;
+	type Call = Call;
+
+	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
+	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
 impl assets::Config for Runtime {
@@ -747,6 +774,7 @@ impl democracy::Config for Runtime {
 	type EnactmentPeriod = EnactmentPeriod;
 	type LaunchPeriod = LaunchPeriod;
 	type VotingPeriod = VotingPeriod;
+	type VoteLockingPeriod = EnactmentPeriod;
 	type MinimumDeposit = MinimumDeposit;
 
 	// TODO: prod values
@@ -836,6 +864,7 @@ impl lending::Config for Runtime {
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
+	type AuthorityId = lending::crypto::TestAuthId;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 	type GroupId = u32;
 }
@@ -916,6 +945,21 @@ impl liquidations::Config for Runtime {
 	type GroupId = u32;
 }
 
+impl ping::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type Call = Call;
+	type XcmSender = XcmRouter;
+}
+
+// For test purposes.
+impl cumulus_ping::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type Call = Call;
+	type XcmSender = XcmRouter;
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -984,9 +1028,14 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 54,
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
 		Liquidations: liquidations::{Pallet, Call, Event<T>} = 56,
-		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 57,
-		Auctions: dutch_auction::{Pallet, Event<T>} = 58,
-		Assets: assets::{Pallet, Storage, Call} = 59,
+
+		Auctions: dutch_auction::{Pallet, Event<T>} = 57,
+		Assets: assets::{Pallet, Storage, Call} = 58,
+		Ping: ping::{Pallet, Call, Storage, Event<T>} = 59,
+
+		Spambot: cumulus_ping::{Pallet, Call, Storage, Event<T>} = 90,
+
+		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
 
@@ -1029,7 +1078,7 @@ impl_runtime_apis! {
 
 	impl sp_api::Metadata<Block> for Runtime {
 		fn metadata() -> OpaqueMetadata {
-			Runtime::metadata().into()
+			OpaqueMetadata::new(Runtime::metadata().into())
 		}
 	}
 
@@ -1076,7 +1125,7 @@ impl_runtime_apis! {
 		}
 
 		fn authorities() -> Vec<AuraId> {
-			Aura::authorities()
+			Aura::authorities().into_inner()
 		}
 	}
 

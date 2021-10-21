@@ -1,4 +1,4 @@
-use crate as pallet_lending;
+use crate::{self as pallet_lending, *};
 use composable_traits::{
 	currency::{DynamicCurrencyId, PriceableAsset},
 	dex::{Orderbook, Price, SellOrder, TakeResult},
@@ -7,22 +7,29 @@ use composable_traits::{
 use frame_support::{
 	parameter_types,
 	sp_runtime::Permill,
-	traits::{OnFinalize, OnInitialize},
+	traits::{Everything, OnFinalize, OnInitialize},
 	PalletId,
 };
+use hex_literal::hex;
+use once_cell::sync::Lazy;
 use orml_traits::parameter_type_with_key;
 use pallet_liquidations::DeFiComposablePallet;
+use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
-use sp_core::H256;
+use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
+	testing::{Header, TestXt},
+	traits::{
+		BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify,
+	},
 	ArithmeticError, DispatchError,
 };
 
+pub type Extrinsic = TestXt<Call, ()>;
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+
 pub mod oracle;
 
-pub type AccountId = u128;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 pub type Balance = u128;
@@ -30,12 +37,23 @@ pub type Amount = i128;
 pub type BlockNumber = u64;
 
 pub type VaultId = u64;
+type NativeCurrency = Balances;
 
 pub const MINIMUM_BALANCE: Balance = 1000;
 
-pub const ALICE: AccountId = 0;
-pub const BOB: AccountId = 1;
-pub const CHARLIE: AccountId = 2;
+pub static ALICE: Lazy<AccountId> = Lazy::new(|| {
+	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000000"))
+});
+pub static BOB: Lazy<AccountId> = Lazy::new(|| {
+	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000001"))
+});
+pub static CHARLIE: Lazy<AccountId> = Lazy::new(|| {
+	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000002"))
+});
+#[allow(dead_code)]
+pub static UNRESERVED: Lazy<AccountId> = Lazy::new(|| {
+	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000003"))
+});
 
 #[derive(
 	PartialOrd,
@@ -49,6 +67,7 @@ pub const CHARLIE: AccountId = 2;
 	codec::Decode,
 	serde::Serialize,
 	serde::Deserialize,
+	TypeInfo,
 )]
 pub enum MockCurrencyId {
 	PICA,
@@ -57,6 +76,12 @@ pub enum MockCurrencyId {
 	LTC,
 	USDT,
 	LpToken(u128),
+}
+
+impl From<u128> for MockCurrencyId {
+	fn from(value: u128) -> Self {
+		Self::LpToken(value)
+	}
 }
 
 impl Default for MockCurrencyId {
@@ -115,7 +140,7 @@ parameter_types! {
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -187,6 +212,7 @@ parameter_types! {
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
+	pub const TombstoneDuration: u64 = 42;
 }
 
 impl pallet_vault::Config for Test {
@@ -203,7 +229,9 @@ impl pallet_vault::Config for Test {
 	type CreationDeposit = CreationDeposit;
 	type ExistentialDeposit = ExistentialDeposit;
 	type RentPerBlock = RentPerBlock;
-	type NativeAssetId = NativeAssetId;
+	type NativeCurrency = NativeCurrency;
+	type VaultId = VaultId;
+	type TombstoneDuration = TombstoneDuration;
 }
 
 parameter_type_with_key! {
@@ -225,7 +253,7 @@ impl orml_tokens::Config for Test {
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
 	type MaxLocks = ();
-	type DustRemovalWhitelist = ();
+	type DustRemovalWhitelist = Everything;
 }
 
 impl crate::mocks::oracle::Config for Test {
@@ -259,7 +287,7 @@ impl Orderbook for MockOrderbook {
 		_source_price: Price<Self::GroupId, Self::Balance>,
 		_amm_slippage: Permill,
 	) -> Result<SellOrder<Self::OrderId, Self::AccountId>, DispatchError> {
-		Ok(SellOrder { id: 0, account: 0 })
+		Ok(SellOrder { id: 0, account: ALICE.clone() })
 	}
 
 	fn market_sell(
@@ -273,16 +301,16 @@ impl Orderbook for MockOrderbook {
 	}
 
 	fn patch(
-		order_id: Self::OrderId,
-		price: composable_traits::dex::Price<Self::GroupId, Self::Balance>,
+		_order_id: Self::OrderId,
+		_price: composable_traits::dex::Price<Self::GroupId, Self::Balance>,
 	) -> Result<(), DispatchError> {
 		Ok(())
 	}
 
 	fn ask(
-		account: &Self::AccountId,
-		orders: impl Iterator<Item = Self::OrderId>,
-		up_to: Self::Balance,
+		_account: &Self::AccountId,
+		_orders: impl Iterator<Item = Self::OrderId>,
+		_up_to: Self::Balance,
 	) -> Result<(), DispatchError> {
 		Ok(())
 	}
@@ -294,7 +322,7 @@ impl pallet_dutch_auctions::Config for Test {
 	type OrderId = u128;
 	type UnixTime = Timestamp;
 	type Orderbook = MockOrderbook;
-	type GroupId = u128;
+	type GroupId = AccountId;
 }
 
 impl pallet_liquidations::Config for Test {
@@ -303,7 +331,34 @@ impl pallet_liquidations::Config for Test {
 	type UnixTime = Timestamp;
 	type Lending = Lending;
 	type DutchAuction = Auction;
-	type GroupId = u128;
+	type GroupId = AccountId;
+}
+
+impl frame_system::offchain::SigningTypes for Test {
+	type Public = <Signature as Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	type OverarchingCall = Call;
+	type Extrinsic = Extrinsic;
+}
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
+where
+	Call: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: Call,
+		_public: <Signature as Verify>::Signer,
+		_account: AccountId,
+		nonce: u64,
+	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+		Some((call, (nonce, ())))
+	}
 }
 
 parameter_types! {
@@ -323,8 +378,9 @@ impl pallet_lending::Config for Test {
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
+	type AuthorityId = crypto::TestAuthId;
 	type WeightInfo = ();
-	type GroupId = u128;
+	type GroupId = AccountId;
 }
 
 // Build genesis storage according to the mock runtime.

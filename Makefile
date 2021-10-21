@@ -29,6 +29,10 @@ test:
 docs: build
 	@cargo doc --no-deps
 
+style:
+	@rustup component add rustfmt 2> /dev/null
+	cargo +nightly fmt --all
+
 style-check:
 	@rustup component add rustfmt 2> /dev/null
 	cargo +nightly fmt --all -- --check
@@ -36,6 +40,10 @@ style-check:
 lint:
 	@rustup component add clippy 2> /dev/null
 	cargo clippy --all-targets --all-features -- -D warnings
+
+bench:
+	SKIP_WASM_BUILD=1
+	@cargo check --features=runtime-benchmarks --release
 
 dev:
 	cargo run

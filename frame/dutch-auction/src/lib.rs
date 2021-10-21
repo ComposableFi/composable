@@ -50,6 +50,7 @@ pub mod pallet {
 	use frame_system::{pallet_prelude::*, Account};
 	use num_traits::{CheckedDiv, SaturatingAdd, SaturatingSub, WrappingAdd};
 
+	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
@@ -74,9 +75,9 @@ pub mod pallet {
 			OrderId = Self::DexOrderId,
 			GroupId = Self::GroupId,
 		>;
-		type DexOrderId: FullCodec + Default;
-		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext;
-		type GroupId: FullCodec + Clone + Debug + PartialEq + Default;
+		type DexOrderId: FullCodec + Default + TypeInfo;
+		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext + TypeInfo;
+		type GroupId: FullCodec + Clone + Debug + PartialEq + Default + TypeInfo;
 	}
 
 	#[pallet::event]
@@ -110,7 +111,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {}
 
 	/// auction can span several dex orders within its lifetime
-	#[derive(Encode, Decode, Default)]
+	#[derive(Encode, Decode, Default, TypeInfo)]
 	pub struct Order<DexOrderId, AccountId, AssetId, Balance, GroupId> {
 		/// when auction was created(started)
 		pub started: Timestamp,
@@ -225,9 +226,10 @@ pub mod pallet {
 							// for final protocol may be will need to transfer currency onto auction
 							// pallet sub account and send dex order with idempotency tracking id final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
 							let delta_time = now - order.started;
-							let price: LiftedFixedBalance =
-								order.source_initial_price.initial_price.into();
-							let total_price = price.safe_mul(&order.source_total_amount.into())?;
+							let total_initial_price: LiftedFixedBalance =
+								order.source_initial_price.total_initial_price.into();
+							let total_price =
+								total_initial_price.safe_mul(&order.source_total_amount.into())?;
 							let price = match order.function {
 								AuctionStepFunction::LinearDecrease(parameters) =>
 									parameters.price(total_price, delta_time),
@@ -237,7 +239,7 @@ pub mod pallet {
 							.checked_mul_int(1u64)
 							.ok_or(ArithmeticError::Overflow)?;
 
-							let price =
+							let total_price =
 								Price::<Self::GroupId, Self::Balance>::new_any(price.into());
 
 							let dex_order_intention = <T::Orderbook as Orderbook>::post(
@@ -245,7 +247,7 @@ pub mod pallet {
 								order.source_asset_id,
 								order.target_asset_id,
 								order.source_total_amount,
-								price,
+								total_price,
 								Permill::from_perthousand(5),
 							)?;
 
@@ -305,8 +307,8 @@ pub mod pallet {
 			})
 		}
 
-		fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order> {
-			todo!()
+		fn get_auction_state(order_id: &Self::OrderId) -> Option<Self::Order> {
+			Orders::<T>::try_get(order_id).ok()
 		}
 	}
 }

@@ -3,9 +3,10 @@ use crate::{
 	loans::{DurationSeconds, PriceStructure, Timestamp},
 };
 use frame_support::pallet_prelude::*;
+use scale_info::TypeInfo;
 use sp_runtime::Permill;
 
-#[derive(Decode, Encode, Clone)]
+#[derive(Decode, Encode, Clone, TypeInfo)]
 pub enum AuctionStepFunction {
 	/// default - direct pass through to dex without steps, just to satisfy defaults and reasonably
 	/// for testing
@@ -19,7 +20,7 @@ impl Default for AuctionStepFunction {
 	}
 }
 
-#[derive(Decode, Encode, Clone, PartialEq)]
+#[derive(Decode, Encode, Clone, PartialEq, TypeInfo)]
 pub enum AuctionState<DexOrderId> {
 	AuctionStarted,
 	AuctionOnDex(DexOrderId),
@@ -49,13 +50,13 @@ pub enum AuctionExchangeCallback {
 	FatalFail,
 }
 
-#[derive(Default, Decode, Encode, Clone)]
+#[derive(Default, Decode, Encode, Clone, TypeInfo)]
 pub struct LinearDecrease {
 	/// The number of seconds until the price reach zero.
 	pub total: DurationSeconds,
 }
 
-#[derive(Default, Decode, Encode, Clone)]
+#[derive(Default, Decode, Encode, Clone, TypeInfo)]
 pub struct StairstepExponentialDecrease {
 	// Length of time between price drops
 	pub step: DurationSeconds,
@@ -81,7 +82,7 @@ pub trait DutchAuction {
 	///
 	/// Description.
 	///
-	/// * `account_id`: the order owner.
+	/// * `owner_account_id`: the order owner.
 	/// * `source_account`: the account from which we extract the `amount` of `source_asset_id`
 	///   from.
 	/// * `source_asset_id`: the asset we are interested to trade for `target_asset_id`.
@@ -90,7 +91,7 @@ pub trait DutchAuction {
 	/// * `price`: the initial price for `total_amount` and some rules.
 	#[allow(clippy::too_many_arguments)]
 	fn start(
-		account_id: &Self::AccountId,
+		owner_account_id: &Self::AccountId,
 		source_asset_id: Self::AssetId,
 		source_account: &Self::AccountId,
 		target_asset_id: Self::AssetId,

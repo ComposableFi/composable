@@ -1,6 +1,10 @@
 use super::currency_factory::MockCurrencyId;
 use crate as pallet_vault;
-use frame_support::{construct_runtime, parameter_types, traits::GenesisBuild, PalletId};
+use frame_support::{
+	construct_runtime, parameter_types,
+	traits::{Everything, GenesisBuild},
+	PalletId,
+};
 use frame_system as system;
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
@@ -49,7 +53,7 @@ impl system::Config for Test {
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type DbWeight = ();
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
@@ -118,7 +122,7 @@ impl orml_tokens::Config for Test {
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
 	type MaxLocks = ();
-	type DustRemovalWhitelist = ();
+	type DustRemovalWhitelist = Everything;
 }
 
 impl crate::mocks::currency_factory::Config for Test {

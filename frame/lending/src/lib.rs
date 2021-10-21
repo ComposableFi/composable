@@ -62,14 +62,20 @@ pub mod pallet {
 		},
 		transactional, PalletId,
 	};
-	use frame_system::pallet_prelude::*;
+	use frame_system::{
+		offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},
+		pallet_prelude::*,
+	};
 	use num_traits::{CheckedDiv, SaturatingSub};
+	use scale_info::TypeInfo;
+	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
 		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Perquintill,
+		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128,
+		KeyTypeId as CryptoKeyTypeId, Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec, vec::Vec};
 
@@ -80,7 +86,7 @@ pub mod pallet {
 		<T as Config>::GroupId,
 	>;
 
-	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq)]
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, TypeInfo)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
 
@@ -103,10 +109,44 @@ pub mod pallet {
 	}
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
+	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"lend");
+	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"lend");
+
+	pub mod crypto {
+		use super::KEY_TYPE;
+		use sp_core::sr25519::Signature as Sr25519Signature;
+		use sp_runtime::{
+			app_crypto::{app_crypto, sr25519},
+			traits::Verify,
+			MultiSignature, MultiSigner,
+		};
+		app_crypto!(sr25519, KEY_TYPE);
+
+		pub struct TestAuthId;
+
+		// implementation for runtime
+		impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
+			type RuntimeAppPublic = Public;
+			type GenericSignature = sp_core::sr25519::Signature;
+			type GenericPublic = sp_core::sr25519::Public;
+		}
+
+		// implementation for mock runtime in test
+		impl
+			frame_system::offchain::AppCrypto<
+				<Sr25519Signature as Verify>::Signer,
+				Sr25519Signature,
+			> for TestAuthId
+		{
+			type RuntimeAppPublic = Public;
+			type GenericSignature = sp_core::sr25519::Signature;
+			type GenericPublic = sp_core::sr25519::Public;
+		}
+	}
 
 	#[pallet::config]
 	#[cfg(not(feature = "runtime-benchmarks"))]
-	pub trait Config: frame_system::Config {
+	pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
 		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
@@ -125,6 +165,7 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ Debug
 			+ Default
+			+ TypeInfo
 			+ PriceableAsset;
 		type Balance: Default
 			+ Parameter
@@ -140,8 +181,9 @@ pub mod pallet {
 			+ Zero
 			+ FixedPointOperand
 			+ Into<LiftedFixedBalance> // integer part not more than bits in this
-			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
-			  // bit
+			+ Into<u128>
+			+ TypeInfo; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
+			// bit
 
 		/// vault owned - can transfer, cannot mint
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
@@ -162,14 +204,17 @@ pub mod pallet {
 
 		type UnixTime: UnixTime;
 		type MaxLendingCount: Get<u32>;
+		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type WeightInfo: WeightInfo;
-		type GroupId: FullCodec + Default + PartialEq + Clone + Debug;
+		type GroupId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
 	}
 	#[cfg(feature = "runtime-benchmarks")]
-	pub trait Config: frame_system::Config + pallet_oracle::Config {
+	pub trait Config:
+		CreateSignedTransaction<Call<Self>> + frame_system::Config + pallet_oracle::Config
+	{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
-		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter + From<u64>;
+		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter + From<u64> + TypeInfo;
 		type Vault: StrategicVault<
 			VaultId = Self::VaultId,
 			AssetId = <Self as Config>::AssetId,
@@ -185,7 +230,8 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ From<u128>
 			+ Debug
-			+ Default;
+			+ Default
+			+ TypeInfo;
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -200,8 +246,9 @@ pub mod pallet {
 			+ Zero
 			+ FixedPointOperand
 			+ Into<LiftedFixedBalance> // integer part not more than bits in this
-			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
-			  // bit
+			+ Into<u128>
+			+ TypeInfo; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
+			// bit
 
 		/// vault owned - can transfer, cannot mint
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
@@ -220,9 +267,10 @@ pub mod pallet {
 		>;
 		type UnixTime: UnixTime;
 		type MaxLendingCount: Get<u32>;
+		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type WeightInfo: WeightInfo;
 
-		type GroupId;
+		type GroupId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
 	}
 
 	#[pallet::pallet]
@@ -258,12 +306,34 @@ pub mod pallet {
 
 			weight
 		}
+
 		fn offchain_worker(_block_number: T::BlockNumber) {
+			log::info!("Off-chain worker running");
+			let signer = Signer::<T, <T as Config>::AuthorityId>::all_accounts();
+			if !signer.can_sign() {
+				log::warn!("No signer");
+				return
+			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
-				if Self::liquidate_internal(&market_id, &account).is_ok() {
-					Self::deposit_event(Event::LiquidationInitiated { market_id, account });
-				} else if let Ok(true) = Self::soon_under_collaterized(&market_id, &account) {
-					Self::deposit_event(Event::SoonMayUnderCollaterized { market_id, account });
+				let results = signer.send_signed_transaction(|_account| {
+					// call `liquidate` extrinsic
+					Call::liquidate { market_id, borrower: account.clone() }
+				});
+
+				for (_acc, res) in &results {
+					match res {
+						Ok(()) => log::info!(
+							"Liquidation succeed, market_id: {:?}, account: {:?}",
+							market_id,
+							account
+						),
+						Err(e) => log::error!(
+							"Liquidation failed, market_id: {:?}, account: {:?}, error: {:?}",
+							market_id,
+							account,
+							e
+						),
+					}
 				}
 			}
 		}
@@ -407,14 +477,8 @@ pub mod pallet {
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	#[pallet::genesis_config]
+	#[derive(Default)]
 	pub struct GenesisConfig {}
-
-	#[cfg(feature = "std")]
-	impl Default for GenesisConfig {
-		fn default() -> Self {
-			Self {}
-		}
-	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
@@ -586,6 +650,7 @@ pub mod pallet {
 			let _sender = ensure_signed(origin)?;
 			// TODO: should this be restricted to certain users?
 			Self::liquidate_internal(&market_id, &borrower)?;
+			Self::deposit_event(Event::LiquidationInitiated { market_id, account: borrower });
 			Ok(().into())
 		}
 	}
@@ -740,16 +805,16 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			if Self::should_liquidate(market_id, account)? {
 				let market = Self::get_market(market_id)?;
-				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
+				let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
 				let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
-				let collateral_price =
-					Self::get_price(market.collateral, market.collateral.unit())?;
+				let total_collateral_price =
+					Self::get_price(market.collateral, collateral_to_liquidate)?;
 				let source_target_account = Self::account_id(market_id);
 				T::Liquidation::liquidate(
 					&source_target_account,
 					market.collateral,
-					PriceStructure::new(collateral_price),
-					borrow_asset,
+					PriceStructure::new(total_collateral_price),
+					borrow_asset_id,
 					&source_target_account,
 					collateral_to_liquidate,
 				)
@@ -1242,15 +1307,15 @@ pub mod pallet {
 			let total_borrows = Self::total_borrows(market_id)?;
 			let total_cash = Self::total_cash(market_id)?;
 			let utilization_ratio = Self::calc_utilization_ratio(&total_cash, &total_borrows)?;
-			let market = Self::get_market(market_id)?;
+			let mut market = Self::get_market(market_id)?;
 			let delta_time =
 				now.checked_sub(Self::last_block_timestamp()).ok_or(Error::<T>::Underflow)?;
 			let borrow_index = Self::get_borrow_index(market_id)?;
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 
-			let (accrued, borrow_index_new) = accrue_interest_internal::<T>(
+			let (accrued, borrow_index_new) = accrue_interest_internal::<T, InterestRateModel>(
 				utilization_ratio,
-				&market.interest_rate_model,
+				&mut market.interest_rate_model,
 				borrow_index,
 				delta_time,
 				total_borrows.into(),
@@ -1467,9 +1532,9 @@ pub mod pallet {
 		borrow_balance_value.safe_mul(collateral_factor)
 	}
 
-	pub fn accrue_interest_internal<T: Config>(
+	pub fn accrue_interest_internal<T: Config, I: InterestRate>(
 		utilization_ratio: Percent,
-		interest_rate_model: &InterestRateModel,
+		interest_rate_model: &mut I,
 		borrow_index: Rate,
 		delta_time: DurationSeconds,
 		total_borrows: u128,
