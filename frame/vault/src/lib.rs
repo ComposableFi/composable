@@ -91,6 +91,7 @@ pub mod pallet {
 		ensure_root, ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig,
 	};
 	use num_traits::{One, SaturatingSub};
+	use scale_info::TypeInfo;
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
 		traits::{
@@ -132,7 +133,8 @@ pub mod pallet {
 			+ CheckedMul
 			+ SaturatingSub
 			+ AtLeast32BitUnsigned
-			+ Zero;
+			+ Zero
+			+ TypeInfo;
 
 		/// The pallet creates new LP tokens for every created vault. It uses `CurrencyFactory`, as
 		/// `orml`'s currency traits do not provide an interface to obtain asset ids (to avoid id
@@ -146,7 +148,8 @@ pub mod pallet {
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ Debug
-			+ Default;
+			+ Default
+			+ TypeInfo;
 
 		/// The asset used to pay for rent and other fees
 		type NativeCurrency: TransferNative<Self::AccountId, Balance = Self::Balance>
@@ -168,7 +171,8 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ Debug
 			+ Default
-			+ Into<u128>;
+			+ Into<u128>
+			+ TypeInfo;
 
 		/// Converts the `Balance` type to `u128`, which internally is used in calculations.
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;

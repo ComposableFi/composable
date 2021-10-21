@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use sp_std::{cmp::Ordering, convert::TryInto};
+use core::ops::Neg;
 
 use codec::{Decode, Encode};
+use scale_info::TypeInfo;
+use sp_std::{cmp::Ordering, convert::TryInto};
 
 use sp_runtime::{
-	traits::{CheckedAdd, CheckedDiv, CheckedSub, One, Saturating, Zero},
-	ArithmeticError, FixedPointNumber, FixedU128, RuntimeDebug,
+	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero},
+	ArithmeticError, FixedI128, FixedPointNumber, FixedU128, RuntimeDebug,
 };
 
 use sp_arithmetic::per_things::Percent;
@@ -67,12 +69,18 @@ pub fn calc_utilization_ratio(
 	Ok(Percent::from_percent(utilization_ratio))
 }
 
+pub trait InterestRate {
+	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate>;
+}
+
 /// Parallel interest rate model
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug)]
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, TypeInfo)]
 pub enum InterestRateModel {
 	Jump(JumpModel),
 	Curve(CurveModel),
+	DynamicPIDController(DynamicPIDControllerModel),
+	DoubleExponent(DoubleExponentModel),
 }
 
 impl Default for InterestRateModel {
@@ -101,12 +109,29 @@ impl InterestRateModel {
 		CurveModel::new_model(base_rate).map(Self::Curve)
 	}
 
-	/// Calculates the current borrow interest rate
-	pub fn get_borrow_rate(&self, utilization: Percent) -> Option<Rate> {
-		match self {
-			Self::Jump(jump) => jump.get_borrow_rate(utilization),
-			Self::Curve(curve) => curve.get_borrow_rate(utilization),
-		}
+	pub fn new_dynamic_pid_model(
+		proportional_parameter: FixedI128,
+		integral_parameter: FixedI128,
+		derivative_parameter: FixedI128,
+		previous_error_value: FixedI128,
+		previous_integral_term: FixedI128,
+		previous_interest_rate: FixedU128,
+		optimal_utilization_ratio: FixedU128,
+	) -> Option<Self> {
+		DynamicPIDControllerModel::new_model(
+			proportional_parameter,
+			integral_parameter,
+			derivative_parameter,
+			previous_error_value,
+			previous_integral_term,
+			previous_interest_rate,
+			optimal_utilization_ratio,
+		)
+		.map(Self::DynamicPIDController)
+	}
+
+	pub fn new_double_exponent_model(coefficients: [u8; 16]) -> Option<Self> {
+		DoubleExponentModel::new_model(coefficients).map(Self::DoubleExponent)
 	}
 
 	/// Calculates the current supply interest rate
@@ -119,9 +144,23 @@ impl InterestRateModel {
 	}
 }
 
+impl InterestRate for InterestRateModel {
+	/// Calculates the current borrow interest rate
+	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate> {
+		match self {
+			Self::Jump(jump) => jump.get_borrow_rate(utilization),
+			Self::Curve(curve) => curve.get_borrow_rate(utilization),
+			Self::DynamicPIDController(dynamic_pid_model) =>
+				dynamic_pid_model.get_borrow_rate(utilization),
+			Self::DoubleExponent(double_exponents_model) =>
+				double_exponents_model.get_borrow_rate(utilization),
+		}
+	}
+}
+
 /// The jump interest rate model
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default)]
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
 pub struct JumpModel {
 	/// The base interest rate when utilization rate is 0
 	pub base_rate: Rate,
@@ -160,9 +199,11 @@ impl JumpModel {
 			None
 		}
 	}
+}
 
+impl InterestRate for JumpModel {
 	/// Calculates the borrow interest rate of jump model
-	pub fn get_borrow_rate(&self, utilization: Percent) -> Option<Rate> {
+	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate> {
 		match utilization.cmp(&self.target_utilization) {
 			Ordering::Less => {
 				// utilization * (jump_rate - base_rate) / target_utilization + base_rate
@@ -194,7 +235,7 @@ impl JumpModel {
 
 /// The curve interest rate model
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default)]
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
 pub struct CurveModel {
 	base_rate: Rate,
 }
@@ -211,12 +252,157 @@ impl CurveModel {
 			None
 		}
 	}
+}
 
+impl InterestRate for CurveModel {
 	/// Calculates the borrow interest rate of curve model
-	pub fn get_borrow_rate(&self, utilization: Percent) -> Option<Rate> {
+	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate> {
 		const NINE: usize = 9;
 		let utilization: Rate = utilization.saturating_pow(NINE).into();
 		utilization.checked_add(&self.base_rate)
+	}
+}
+
+/// The dynamic interest rate curve based on control theory
+/// https://www.delphidigital.io/reports/dynamic-interest-rate-model-based-on-control-theory/
+/// PID Controller (proportional-integral-derivative controller)
+/// Error term is calculated as `et = uo - ut`.
+/// Propertional term is calculated as `pt = kp * et`.
+/// Integral term is calculated as `it = it_1 + ki * et`, here `it_1` is previous_integral_term.
+/// Derivative term is calculated as `dt = kd * (et - et_1)`. here `et_1` is previous_error_value.
+/// Control value is calculated as `ut = pt + it + dt`.
+/// New Interest rate is calculated as `ir = ir_t_1 + ut` here ir_t_1 is previous_interest_rate.
+///
+/// To know how `kp`, `ki` and `kd` are derived plesae check paper at above URL.
+#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
+pub struct DynamicPIDControllerModel {
+	/// proportional_parameter
+	kp: FixedI128,
+	/// integral_parameter
+	ki: FixedI128,
+	/// derivative_parameter
+	kd: FixedI128,
+	/// previous error value
+	et_1: FixedI128,
+	/// previous integral term
+	it_1: FixedI128,
+	/// previous interest rate
+	ir_t_1: FixedU128,
+	/// optimal utilization_ratio
+	uo: FixedU128,
+}
+
+impl DynamicPIDControllerModel {
+	pub fn get_output_utilization_ratio(
+		&mut self,
+		utilization_ratio: FixedU128,
+	) -> Result<Rate, ArithmeticError> {
+		// compute error term `et = uo - ut`
+		let et: i128 = self.uo.into_inner().try_into().unwrap_or(0i128) -
+			utilization_ratio.into_inner().try_into().unwrap_or(0i128);
+		let et: FixedI128 = FixedI128::from_inner(et);
+		// compute proportional term `pt = kp * et`
+		let pt = self.kp.checked_mul(&et).ok_or(ArithmeticError::Overflow)?;
+		//compute integral term `it = it_1 + ki * et`
+		let it = self
+			.it_1
+			.checked_add(&self.ki.checked_mul(&et).ok_or(ArithmeticError::Overflow)?)
+			.ok_or(ArithmeticError::Overflow)?;
+		self.it_1 = it;
+		// compute derivative term `dt = kd * (et - et_1)`
+		let dt = self.kd.checked_mul(&(et - self.et_1)).ok_or(ArithmeticError::Overflow)?;
+		self.et_1 = et;
+
+		// compute u(t), control value `ut = pt + it + dt`
+		let ut = pt + it + dt;
+		// update interest_rate `ir = ir_t_1 + ut`
+		if ut.is_negative() {
+			let ut = ut.neg();
+			self.ir_t_1 = self
+				.ir_t_1
+				.saturating_sub(FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0u128)));
+		} else {
+			self.ir_t_1 = self
+				.ir_t_1
+				.saturating_add(FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0u128)));
+		}
+		Ok(self.ir_t_1)
+	}
+
+	pub fn new_model(
+		proportional_parameter: FixedI128,
+		integral_parameter: FixedI128,
+		derivative_parameter: FixedI128,
+		previous_error_value: FixedI128,
+		previous_integral_term: FixedI128,
+		previous_interest_rate: FixedU128,
+		optimal_utilization_ratio: FixedU128,
+	) -> Option<DynamicPIDControllerModel> {
+		Some(DynamicPIDControllerModel {
+			kp: proportional_parameter,
+			ki: integral_parameter,
+			kd: derivative_parameter,
+			et_1: previous_error_value,
+			it_1: previous_integral_term,
+			ir_t_1: previous_interest_rate,
+			uo: optimal_utilization_ratio,
+		})
+	}
+}
+
+impl InterestRate for DynamicPIDControllerModel {
+	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate> {
+		// const NINE: usize = 9;
+		let utilization: Rate = utilization.into();
+		if let Ok(interest_rate) = Self::get_output_utilization_ratio(self, utilization) {
+			return Some(interest_rate)
+		}
+		None
+	}
+}
+
+const EXPECTED_COEFFICIENTS_SUM: u16 = 100;
+
+/// The double exponent interest rate model
+/// Interest based on a polynomial of the utilization of the market.
+/// Interest = C_0 + C_1 * U^(2^0) + C_2 * U^(2^1) + C_3 * U^(2^2) ...
+/// C_0, C_1, C_2, ... coefficients are passed as packed u128.
+/// Each coefficient is of 8 byte. C_0 is at LSB and C_15 at MSB.
+/// For reference check https://github.com/dydxprotocol/solo/blob/master/contracts/external/interestsetters/DoubleExponentInterestSetter.sol
+/// https://help.dydx.exchange/en/articles/2924246-how-do-interest-rates-work
+#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
+pub struct DoubleExponentModel {
+	coefficients: [u8; 16],
+}
+
+impl DoubleExponentModel {
+	/// Create a double exponent model
+	pub fn new_model(coefficients: [u8; 16]) -> Option<Self> {
+		let sum_of_coefficients = coefficients.iter().fold(0u16, |acc, &c| acc + c as u16);
+		if sum_of_coefficients == EXPECTED_COEFFICIENTS_SUM {
+			return Some(DoubleExponentModel { coefficients })
+		}
+		None
+	}
+}
+
+impl InterestRate for DoubleExponentModel {
+	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate> {
+		let polynomial_0: FixedU128 = FixedU128::one();
+		let result_0: Rate = Rate::zero();
+		let res =
+			self.coefficients
+				.iter()
+				.try_fold((result_0, polynomial_0), |(res, poly), coeff| {
+					let coefficient = FixedU128::from_inner(u128::from(*coeff));
+					let result = res.checked_add(&coefficient.checked_mul(&poly)?)?;
+					let polynomial = poly.checked_mul(&utilization.into())?;
+					Some((result, polynomial))
+				});
+		res.map(|(r, _p)| r.checked_div(&FixedU128::from_inner(EXPECTED_COEFFICIENTS_SUM.into())))
+			.unwrap()
 	}
 }
 
@@ -282,7 +468,7 @@ mod tests {
 		let jump_rate = Rate::saturating_from_rational(10, 100);
 		let full_rate = Rate::saturating_from_rational(32, 100);
 		let target_utilization = Percent::from_percent(80);
-		let jump_model =
+		let mut jump_model =
 			JumpModel::new_model(base_rate, jump_rate, full_rate, target_utilization).unwrap();
 		// normal rate
 		let mut cash: u128 = 500;
@@ -326,7 +512,7 @@ mod tests {
 
 	#[test]
 	fn curve_model_correctly_calculates_borrow_rate() {
-		let model = CurveModel::new_model(Rate::saturating_from_rational(2, 100)).unwrap();
+		let mut model = CurveModel::new_model(Rate::saturating_from_rational(2, 100)).unwrap();
 		assert_eq!(
 			model.get_borrow_rate(Percent::from_percent(80)).unwrap(),
 			// curve model has arbitrary power parameters leading to changes in precision of high
@@ -372,7 +558,7 @@ mod tests {
 
 	#[test]
 	fn test_empty_drained_market() {
-		let jump_model = JumpModel::new_model(
+		let mut jump_model = JumpModel::new_model(
 			FixedU128::from_float(0.010000000000000000),
 			FixedU128::from_float(0.110000000000000000),
 			FixedU128::from_float(0.310000000000000000),
@@ -388,7 +574,7 @@ mod tests {
 
 	#[test]
 	fn test_slope() {
-		let jump_model = JumpModel::new_model(
+		let mut jump_model = JumpModel::new_model(
 			FixedU128::from_float(0.010000000000000000),
 			FixedU128::from_float(0.110000000000000000),
 			FixedU128::from_float(0.310000000000000000),
@@ -422,7 +608,7 @@ mod tests {
 				let jump_rate = strategy.jump_percentage;
 				let full_rate = strategy.full_percentage;
 				let target_utilization = strategy.target_utilization;
-				let jump_model =
+				let mut jump_model =
 					JumpModel::new_model(base_rate, jump_rate, full_rate, target_utilization)
 						.unwrap();
 
@@ -449,7 +635,7 @@ mod tests {
 				let utilization_1 = Percent::from_percent(previous);
 				let utilization_2 = Percent::from_percent(next);
 				let optimal = Percent::from_percent(optimal);
-				let model = JumpModel::new_model(base_rate, jump_rate, full_rate, optimal)
+				let mut model = JumpModel::new_model(base_rate, jump_rate, full_rate, optimal)
 					.expect("model should be defined");
 				let rate_1 = model.get_borrow_rate(utilization_1);
 				let rate_2 = model.get_borrow_rate(utilization_2);
@@ -469,7 +655,7 @@ mod tests {
 		let jump_rate = Rate::saturating_from_rational(10, 100);
 		let full_rate = Rate::saturating_from_rational(32, 100);
 		let optimal = Percent::from_percent(80);
-		let model = JumpModel::new_model(base_rate, jump_rate, full_rate, optimal).unwrap();
+		let mut model = JumpModel::new_model(base_rate, jump_rate, full_rate, optimal).unwrap();
 
 		let area = BitMapBackend::new("./jump_model.png", (1024, 768)).into_drawing_area();
 		area.fill(&WHITE).unwrap();
@@ -483,6 +669,79 @@ mod tests {
 		chart
 			.draw_series(LineSeries::new(
 				(0..=100).map(|x| {
+					let utilization = Percent::from_percent(x);
+					let rate = model.get_borrow_rate(utilization).unwrap();
+					(x as f64, rate.to_float() * 100.0)
+				}),
+				&RED,
+			))
+			.unwrap();
+	}
+	#[cfg(feature = "visualization")]
+	#[test]
+	fn dynamic_pid_model_plotter() {
+		use plotters::prelude::*;
+		let kp = FixedI128::saturating_from_rational(600, 100);
+		let ki = FixedI128::saturating_from_rational(200, 100);
+		let kd = FixedI128::saturating_from_rational(1275, 100);
+		let et_1 = FixedI128::from_inner(0i128);
+		let it_1 = FixedI128::from_inner(0i128);
+		let ir_t_1 = FixedU128::saturating_from_rational(500, 100);
+		let uo = FixedU128::saturating_from_rational(80, 100);
+		let mut model =
+			DynamicPIDControllerModel::new_model(kp, ki, kd, et_1, it_1, ir_t_1, uo).unwrap();
+
+		let area = BitMapBackend::new("./dynamic_pid_model.png", (1024, 768)).into_drawing_area();
+		area.fill(&WHITE).unwrap();
+
+		let mut chart = ChartBuilder::on(&area)
+			.set_label_area_size(LabelAreaPosition::Left, 40)
+			.set_label_area_size(LabelAreaPosition::Bottom, 40)
+			.build_cartesian_2d(0.0..200.0, 0.0..5000.0)
+			.unwrap();
+		chart.configure_mesh().draw().unwrap();
+		chart
+			.draw_series(LineSeries::new(
+				[
+					50, 55, 51, 57, 60, 66, 66, 66, 66, 77, 78, 50, 78, 88, 88, 90, 78, 79, 74, 74,
+					80, 80, 62, 59, 58, 59, 58, 60, 61, 62, 62, 62, 63, 80, 85, 99, 80, 81, 82, 60,
+					60, 40, 30, 31, 32, 40, 50, 51, 51, 40, 50, 60, 66, 69, 60, 80, 70, 70, 77, 70,
+					60, 56, 52, 50, 45, 44, 40, 30, 10, 30, 40, 50, 60, 70, 71, 71, 71, 70, 80, 80,
+					90, 91, 90, 91, 90, 91, 90, 91, 90, 91, 90, 91, 90, 91, 92, 90, 90, 90, 90, 90,
+					90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 80, 80, 70, 71, 70, 71, 70,
+					71, 70, 71, 70, 68, 67, 66, 65, 64, 63, 62, 61, 50, 50, 40, 30,
+				]
+				.iter()
+				.enumerate()
+				.map(|(i, x)| {
+					let utilization = Percent::from_percent(*x);
+					let rate = model.get_borrow_rate(utilization).unwrap();
+					(i as f64, rate.to_float() * 100.0)
+				}),
+				&RED,
+			))
+			.unwrap();
+	}
+
+	#[cfg(feature = "visualization")]
+	#[test]
+	fn double_exponents_model_plotter() {
+		use plotters::prelude::*;
+		let coefficients: [u8; 16] = [60, 20, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+		let mut model = DoubleExponentModel::new_model(coefficients).unwrap();
+		let area =
+			BitMapBackend::new("./double_exponents_model.png", (1024, 768)).into_drawing_area();
+		area.fill(&WHITE).unwrap();
+
+		let mut chart = ChartBuilder::on(&area)
+			.set_label_area_size(LabelAreaPosition::Left, 40)
+			.set_label_area_size(LabelAreaPosition::Bottom, 40)
+			.build_cartesian_2d(0.0..100.0, 0.0..100.0)
+			.unwrap();
+		chart.configure_mesh().draw().unwrap();
+		chart
+			.draw_series(LineSeries::new(
+				(60..=100).map(|x| {
 					let utilization = Percent::from_percent(x);
 					let rate = model.get_borrow_rate(utilization).unwrap();
 					(x as f64, rate.to_float() * 100.0)

@@ -1,13 +1,17 @@
 use crate::{loans::Timestamp, rate_model::*};
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
+use scale_info::TypeInfo;
 use sp_runtime::Percent;
 
 pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
 
 pub type BorrowAmountOf<T> = <T as Lending>::Balance;
 
-#[derive(Encode, Decode, Default)]
-pub struct MarketConfigInput<AccountId, GroupId> {
+#[derive(Encode, Decode, Default, TypeInfo)]
+pub struct MarketConfigInput<AccountId, GroupId>
+where
+	AccountId: core::cmp::Ord,
+{
 	pub reserved: Perquintill,
 	pub manager: AccountId,
 	/// can pause borrow & deposits of assets
@@ -16,7 +20,7 @@ pub struct MarketConfigInput<AccountId, GroupId> {
 	pub liquidator: Option<GroupId>,
 }
 
-#[derive(Encode, Decode, Default)]
+#[derive(Encode, Decode, Default, TypeInfo)]
 pub struct MarketConfig<VaultId, AssetId, AccountId, GroupId> {
 	pub manager: AccountId,
 	pub borrow: VaultId,
@@ -38,7 +42,7 @@ pub trait Lending {
 	type VaultId;
 	type MarketId;
 	/// (deposit VaultId, collateral VaultId) <-> MarketId
-	type AccountId;
+	type AccountId: core::cmp::Ord;
 	type Balance;
 	type BlockNumber;
 	type GroupId;

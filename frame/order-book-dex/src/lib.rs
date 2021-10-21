@@ -45,6 +45,7 @@ pub mod pallet {
 		},
 		Parameter, Twox64Concat,
 	};
+	use scale_info::TypeInfo;
 
 	use frame_support::pallet_prelude::*;
 	use frame_system::{pallet_prelude::*, Account};
@@ -72,9 +73,9 @@ pub mod pallet {
 			OrderId = Self::DexOrderId,
 			GroupId = Self::GroupId,
 		>;
-		type DexOrderId: FullCodec + Default;
-		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext;
-		type GroupId: FullCodec + Clone + Debug + PartialEq + Default;
+		type DexOrderId: FullCodec + Default + TypeInfo;
+		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext + TypeInfo;
+		type GroupId: FullCodec + Clone + Debug + PartialEq + Default + TypeInfo;
 		type Privilege: InspectPrivilegeGroup<AccountId = Self::AccountId, GroupId = Self::GroupId>;
 	}
 
@@ -93,7 +94,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {}
 
 	/// auction can span several dex orders within its lifetime
-	#[derive(Encode, Decode, Default)]
+	#[derive(Encode, Decode, Default, TypeInfo)]
 	pub struct Order<OrderId> {
 		pub id: OrderId,
 	}

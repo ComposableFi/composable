@@ -5,7 +5,7 @@ use crate::{
 	mocks::{
 		new_test_ext, process_block, AccountId, Balance, BlockNumber, Lending, MockCurrencyId,
 		Oracle, Origin, Test, Tokens, Vault, VaultId, ALICE, BOB, CHARLIE, MILLISECS_PER_BLOCK,
-		MINIMUM_BALANCE,
+		MINIMUM_BALANCE, UNRESERVED,
 	},
 	models::BorrowerData,
 	Error, MarketIndex,
@@ -23,8 +23,9 @@ use frame_support::{
 };
 use pallet_vault::models::VaultInfo;
 use proptest::{prelude::*, test_runner::TestRunner};
+use sp_core::U256;
 use sp_runtime::{
-	helpers_128bit::multiply_by_rational, FixedPointNumber, FixedU128, Percent, Perquintill,
+	helpers_128bit::multiply_by_rational, FixedI128, FixedPointNumber, Percent, Perquintill,
 };
 
 type BorrowAssetVault = VaultId;
@@ -42,7 +43,7 @@ fn create_simple_vault(
 		Deposit::Existential,
 		VaultConfig {
 			asset_id,
-			manager: ALICE,
+			manager: *ALICE,
 			reserved: Perquintill::from_percent(100),
 			strategies: [].iter().cloned().collect(),
 		},
@@ -80,7 +81,7 @@ fn create_simple_vaulted_market() -> ((MarketIndex, BorrowAssetVault), Collatera
 		create_market(
 			MockCurrencyId::BTC,
 			collateral_asset,
-			ALICE,
+			*ALICE,
 			DEFAULT_MARKET_VAULT_RESERVE,
 			NormalizedCollateralFactor::saturating_from_rational(200, 100),
 		),
@@ -93,7 +94,7 @@ fn create_simple_market() -> (MarketIndex, BorrowAssetVault) {
 	create_market(
 		MockCurrencyId::BTC,
 		MockCurrencyId::USDT,
-		ALICE,
+		*ALICE,
 		DEFAULT_MARKET_VAULT_RESERVE,
 		NormalizedCollateralFactor::saturating_from_rational(200, 100),
 	)
@@ -101,7 +102,7 @@ fn create_simple_market() -> (MarketIndex, BorrowAssetVault) {
 
 #[test]
 fn accrue_interest_base_cases() {
-	let (optimal, ref interest_rate_model) = new_jump_model();
+	let (optimal, ref mut interest_rate_model) = new_jump_model();
 	let stable_rate = interest_rate_model.get_borrow_rate(optimal).unwrap();
 	assert_eq!(stable_rate, Ratio::saturating_from_rational(10, 100));
 	let borrow_index = Rate::saturating_from_integer(1);
@@ -109,7 +110,7 @@ fn accrue_interest_base_cases() {
 	let total_issued = 100_000_000_000_000_000_000;
 	let accrued_debt = 0;
 	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
-	let (accrued_increase, _) = accrue_interest_internal::<Test>(
+	let (accrued_increase, _) = accrue_interest_internal::<Test, InterestRateModel>(
 		optimal,
 		interest_rate_model,
 		borrow_index,
@@ -120,7 +121,7 @@ fn accrue_interest_base_cases() {
 	assert_eq!(accrued_increase, 10_000_000_000_000_000_000);
 
 	let delta_time = MILLISECS_PER_BLOCK;
-	let (accrued_increase, _) = accrue_interest_internal::<Test>(
+	let (accrued_increase, _) = accrue_interest_internal::<Test, InterestRateModel>(
 		optimal,
 		interest_rate_model,
 		borrow_index,
@@ -139,14 +140,14 @@ fn accrue_interest_base_cases() {
 
 #[test]
 fn accrue_interest_edge_cases() {
-	let (_, ref interest_rate_model) = new_jump_model();
+	let (_, ref mut interest_rate_model) = new_jump_model();
 	let utilization = Percent::from_percent(100);
 	let borrow_index = Rate::saturating_from_integer(1);
 	let delta_time = SECONDS_PER_YEAR;
 	let total_issued = u128::MAX;
 	let accrued_debt = 0;
 	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
-	let (accrued_increase, _) = accrue_interest_internal::<Test>(
+	let (accrued_increase, _) = accrue_interest_internal::<Test, InterestRateModel>(
 		utilization,
 		interest_rate_model,
 		borrow_index,
@@ -156,7 +157,7 @@ fn accrue_interest_edge_cases() {
 	.unwrap();
 	assert_eq!(accrued_increase, 108890357414700308308160000000000000000);
 
-	let (accrued_increase, _) = accrue_interest_internal::<Test>(
+	let (accrued_increase, _) = accrue_interest_internal::<Test, InterestRateModel>(
 		utilization,
 		interest_rate_model,
 		borrow_index,
@@ -169,7 +170,6 @@ fn accrue_interest_edge_cases() {
 
 #[test]
 fn accrue_interest_induction() {
-	let (optimal, ref interest_rate_model) = new_jump_model();
 	let borrow_index = Rate::saturating_from_integer(1);
 	let minimal = 18; // current precision and minimal time delta do not allow to accrue on less than this power of 10
 	let mut runner = TestRunner::default();
@@ -181,22 +181,25 @@ fn accrue_interest_induction() {
 				(minimal..=35u32).prop_map(|i| 10u128.pow(i)),
 			),
 			|(slot, total_issued)| {
-				let (accrued_increase_1, borrow_index_1) = accrue_interest_internal::<Test>(
-					optimal,
-					interest_rate_model,
-					borrow_index,
-					slot * MILLISECS_PER_BLOCK,
-					(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
-				)
-				.unwrap();
-				let (accrued_increase_2, borrow_index_2) = accrue_interest_internal::<Test>(
-					optimal,
-					interest_rate_model,
-					borrow_index,
-					(slot + 1) * MILLISECS_PER_BLOCK,
-					(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
-				)
-				.unwrap();
+				let (optimal, ref mut interest_rate_model) = new_jump_model();
+				let (accrued_increase_1, borrow_index_1) =
+					accrue_interest_internal::<Test, InterestRateModel>(
+						optimal,
+						interest_rate_model,
+						borrow_index,
+						slot * MILLISECS_PER_BLOCK,
+						(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
+					)
+					.unwrap();
+				let (accrued_increase_2, borrow_index_2) =
+					accrue_interest_internal::<Test, InterestRateModel>(
+						optimal,
+						interest_rate_model,
+						borrow_index,
+						(slot + 1) * MILLISECS_PER_BLOCK,
+						(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
+					)
+					.unwrap();
 				prop_assert!(accrued_increase_1 < accrued_increase_2);
 				prop_assert!(borrow_index_1 < borrow_index_2);
 				Ok(())
@@ -207,7 +210,7 @@ fn accrue_interest_induction() {
 
 #[test]
 fn accrue_interest_plotter() {
-	let (optimal, interest_rate_model) = new_jump_model();
+	let (optimal, ref mut interest_rate_model) = new_jump_model();
 	let borrow_index = Rate::checked_from_integer(1).unwrap();
 	let total_issued = 10_000_000;
 	let accrued_debt = 0;
@@ -216,9 +219,9 @@ fn accrue_interest_plotter() {
 	let mut previous = 0;
 	let _data: Vec<_> = (0..=1000)
 		.map(|x| {
-			let (accrue_increment, _) = accrue_interest_internal::<Test>(
+			let (accrue_increment, _) = accrue_interest_internal::<Test, InterestRateModel>(
 				optimal,
-				&interest_rate_model,
+				interest_rate_model,
 				borrow_index,
 				MILLISECS_PER_BLOCK,
 				total_borrows,
@@ -229,9 +232,9 @@ fn accrue_interest_plotter() {
 		})
 		.collect();
 
-	let (total_accrued, _) = accrue_interest_internal::<Test>(
+	let (total_accrued, _) = accrue_interest_internal::<Test, InterestRateModel>(
 		optimal,
-		&interest_rate_model,
+		interest_rate_model,
 		Rate::checked_from_integer(1).unwrap(),
 		1000 * MILLISECS_PER_BLOCK,
 		total_borrows,
@@ -283,7 +286,7 @@ fn test_borrow_repay_in_same_block() {
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &CHARLIE, borrow_asset_deposit));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), borrow_asset_deposit);
-		assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault, borrow_asset_deposit));
+		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, borrow_asset_deposit));
 		let mut total_cash = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(borrow_asset_deposit);
 
 		// Allow the market to initialize it's account by withdrawing
@@ -374,7 +377,7 @@ fn test_borrow() {
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &CHARLIE, borrow_asset_deposit));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), borrow_asset_deposit);
-		assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault, borrow_asset_deposit));
+		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, borrow_asset_deposit));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
 
 		let alice_limit = Lending::get_borrow_limit(&market, &ALICE).unwrap();
@@ -457,7 +460,7 @@ fn test_vault_market_cannot_withdraw() {
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, deposit_usdt));
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, deposit_btc));
 
-		assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, deposit_btc));
+		assert_ok!(Vault::deposit(Origin::signed(ALICE.clone()), vault_id, deposit_btc));
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, deposit_usdt));
 
 		// We don't even wait 1 block, which mean the market couldn't withdraw funds.
@@ -478,7 +481,7 @@ fn test_vault_market_can_withdraw() {
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, deposit_usdt));
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, deposit_btc));
 
-		assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id, deposit_btc));
+		assert_ok!(Vault::deposit(Origin::signed(ALICE.clone()), vault_id, deposit_btc));
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, deposit_usdt));
 
 		for i in 1..2 {
@@ -520,7 +523,7 @@ fn borrow_repay() {
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &CHARLIE, borrow_asset_deposit));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), borrow_asset_deposit);
-		assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault, borrow_asset_deposit));
+		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, borrow_asset_deposit));
 
 		// Allow the market to initialize it's account by withdrawing
 		// from the vault
@@ -580,7 +583,7 @@ fn test_liquidation() {
 		let (market, vault) = create_market(
 			MockCurrencyId::USDT,
 			MockCurrencyId::BTC,
-			ALICE,
+			*ALICE,
 			Perquintill::from_percent(10),
 			NormalizedCollateralFactor::saturating_from_rational(2, 1),
 		);
@@ -598,7 +601,7 @@ fn test_liquidation() {
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &CHARLIE, usdt_amt));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), usdt_amt);
-		assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault, usdt_amt));
+		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, usdt_amt));
 
 		assert_eq!(Lending::borrow_balance_current(&market, &ALICE), Ok(Some(0)));
 
@@ -630,7 +633,7 @@ fn test_warn_soon_under_collaterized() {
 		let (market, vault) = create_market(
 			MockCurrencyId::USDT,
 			MockCurrencyId::BTC,
-			ALICE,
+			*ALICE,
 			Perquintill::from_percent(10),
 			NormalizedCollateralFactor::saturating_from_rational(2, 1),
 		);
@@ -652,7 +655,7 @@ fn test_warn_soon_under_collaterized() {
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &CHARLIE, usdt_amt));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), usdt_amt);
-		assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault, usdt_amt));
+		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, usdt_amt));
 
 		// Allow the market to initialize it's account by withdrawing
 		// from the vault
@@ -750,9 +753,15 @@ prop_compose! {
 		(max_accounts: usize, limit: Balance)
 		(balances in prop::collection::vec(MINIMUM_BALANCE..limit, 3..max_accounts))
 		 -> Vec<(AccountId, Balance)> {
-			((CHARLIE + 1)..balances.len() as AccountId)
-				.zip(balances)
-				.collect()
+			let mut result = Vec::with_capacity(balances.len());
+			let mut account = U256::from_little_endian(UNRESERVED.as_ref());
+			let mut buffer = [0; 32];
+			for balance in balances {
+				account += U256::one();
+				account.to_little_endian(&mut buffer);
+				result.push((AccountId::from_raw(buffer), balance))
+			};
+			result
 		}
 }
 
@@ -766,8 +775,12 @@ prop_compose! {
 
 prop_compose! {
 	fn strategy_account()
-		(x in (CHARLIE + 1)..AccountId::MAX) -> AccountId {
-			x
+		(x in u128::from(U256::from_little_endian(UNRESERVED.as_ref()).low_u64())..u128::MAX) -> AccountId {
+			let mut account = U256::from_little_endian(UNRESERVED.as_ref());
+			account += x.into();
+			let mut buffer = [0; 32];
+			account.to_little_endian(&mut buffer);
+			AccountId::from_raw(buffer)
 		}
 }
 
@@ -882,7 +895,7 @@ proptest! {
 			create_market(
 				MockCurrencyId::BTC,
 				lp_token_id,
-				ALICE,
+				*ALICE,
 				Perquintill::from_percent(10),
 				NormalizedCollateralFactor::saturating_from_rational(200, 100),
 			);
@@ -913,13 +926,13 @@ proptest! {
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, amount1));
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), amount1);
-			prop_assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id1, amount1));
+			prop_assert_ok!(Vault::deposit(Origin::signed(*ALICE), vault_id1, amount1));
 
 			// Bob lend an amount in market2 vault
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 0);
 			prop_assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &BOB, amount2));
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), amount2);
-			prop_assert_ok!(Vault::deposit(Origin::signed(BOB), vault_id2, amount2));
+			prop_assert_ok!(Vault::deposit(Origin::signed(*BOB), vault_id2, amount2));
 
 			// Allow the market to initialize it's account by withdrawing
 			// from the vault
