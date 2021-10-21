@@ -1,7 +1,8 @@
 use crate::{self as pallet_lending, *};
 use composable_traits::{
-	currency::DynamicCurrencyId,
-	dex::{Orderbook, TakeResult},
+	currency::{DynamicCurrencyId, PriceableAsset},
+	dex::{Orderbook, Price, SellOrder, TakeResult},
+	loans::DeFiComposableConfig,
 };
 use frame_support::{
 	parameter_types,
@@ -12,7 +13,6 @@ use frame_support::{
 use hex_literal::hex;
 use once_cell::sync::Lazy;
 use orml_traits::parameter_type_with_key;
-use pallet_dutch_auctions::DeFiComposableConfig;
 use pallet_liquidations::DeFiComposablePallet;
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
@@ -25,6 +25,9 @@ use sp_runtime::{
 	ArithmeticError, DispatchError,
 };
 
+pub type Extrinsic = TestXt<Call, ()>;
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+
 pub mod oracle;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -34,6 +37,7 @@ pub type Amount = i128;
 pub type BlockNumber = u64;
 
 pub type VaultId = u64;
+type NativeCurrency = Balances;
 
 pub const MINIMUM_BALANCE: Balance = 1000;
 
@@ -74,22 +78,27 @@ pub enum MockCurrencyId {
 	LpToken(u128),
 }
 
+impl From<u128> for MockCurrencyId {
+	fn from(value: u128) -> Self {
+		Self::LpToken(value)
+	}
+}
+
 impl Default for MockCurrencyId {
 	fn default() -> Self {
 		MockCurrencyId::PICA
 	}
 }
 
-impl From<u128> for MockCurrencyId {
-	fn from(id: u128) -> Self {
-		match id {
-			0 => MockCurrencyId::PICA,
-			1 => MockCurrencyId::BTC,
-			2 => MockCurrencyId::ETH,
-			3 => MockCurrencyId::LTC,
-			4 => MockCurrencyId::USDT,
-			5 => MockCurrencyId::LpToken(0),
-			_ => unreachable!(),
+impl PriceableAsset for MockCurrencyId {
+	fn smallest_unit_exponent(self) -> composable_traits::currency::Exponent {
+		match self {
+			MockCurrencyId::PICA => 0,
+			MockCurrencyId::BTC => 8,
+			MockCurrencyId::ETH => 18,
+			MockCurrencyId::LTC => 8,
+			MockCurrencyId::USDT => 2,
+			MockCurrencyId::LpToken(_) => 0,
 		}
 	}
 }
@@ -203,6 +212,7 @@ parameter_types! {
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
+	pub const TombstoneDuration: u64 = 42;
 }
 
 impl pallet_vault::Config for Test {
@@ -219,7 +229,9 @@ impl pallet_vault::Config for Test {
 	type CreationDeposit = CreationDeposit;
 	type ExistentialDeposit = ExistentialDeposit;
 	type RentPerBlock = RentPerBlock;
-	type NativeAssetId = NativeAssetId;
+	type NativeCurrency = NativeCurrency;
+	type VaultId = VaultId;
+	type TombstoneDuration = TombstoneDuration;
 }
 
 parameter_type_with_key! {
@@ -265,16 +277,19 @@ impl Orderbook for MockOrderbook {
 	type Balance = Balance;
 	type AccountId = AccountId;
 	type OrderId = u128;
+	type GroupId = AccountId;
+
 	fn post(
 		_account_from: &Self::AccountId,
 		_asset: Self::AssetId,
 		_want: Self::AssetId,
 		_source_amount: Self::Balance,
-		_source_price: Self::Balance,
+		_source_price: Price<Self::GroupId, Self::Balance>,
 		_amm_slippage: Permill,
-	) -> Result<Self::OrderId, DispatchError> {
-		Ok(0)
+	) -> Result<SellOrder<Self::OrderId, Self::AccountId>, DispatchError> {
+		Ok(SellOrder { id: 0, account: ALICE.clone() })
 	}
+
 	fn market_sell(
 		_account: &Self::AccountId,
 		_asset: Self::AssetId,
@@ -284,16 +299,20 @@ impl Orderbook for MockOrderbook {
 	) -> Result<Self::OrderId, DispatchError> {
 		Ok(0)
 	}
-	fn take(
+
+	fn patch(
+		_order_id: Self::OrderId,
+		_price: composable_traits::dex::Price<Self::GroupId, Self::Balance>,
+	) -> Result<(), DispatchError> {
+		Ok(())
+	}
+
+	fn ask(
 		_account: &Self::AccountId,
 		_orders: impl Iterator<Item = Self::OrderId>,
 		_up_to: Self::Balance,
-	) -> Result<TakeResult<Self::Balance>, DispatchError> {
-		Ok(TakeResult { amount: 0, total_price: 0 })
-	}
-
-	fn is_order_executed(_order_id: &Self::OrderId) -> bool {
-		false
+	) -> Result<(), DispatchError> {
+		Ok(())
 	}
 }
 
@@ -303,6 +322,7 @@ impl pallet_dutch_auctions::Config for Test {
 	type OrderId = u128;
 	type UnixTime = Timestamp;
 	type Orderbook = MockOrderbook;
+	type GroupId = AccountId;
 }
 
 impl pallet_liquidations::Config for Test {
@@ -311,10 +331,8 @@ impl pallet_liquidations::Config for Test {
 	type UnixTime = Timestamp;
 	type Lending = Lending;
 	type DutchAuction = Auction;
+	type GroupId = AccountId;
 }
-
-pub type Extrinsic = TestXt<Call, ()>;
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 impl frame_system::offchain::SigningTypes for Test {
 	type Public = <Signature as Verify>::Signer;
@@ -362,6 +380,7 @@ impl pallet_lending::Config for Test {
 	type MaxLendingCount = MaxLendingCount;
 	type AuthorityId = crypto::TestAuthId;
 	type WeightInfo = ();
+	type GroupId = AccountId;
 }
 
 // Build genesis storage according to the mock runtime.

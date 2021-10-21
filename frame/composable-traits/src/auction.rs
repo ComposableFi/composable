@@ -1,6 +1,6 @@
 use crate::{
 	dex::Orderbook,
-	loans::{DurationSeconds, Timestamp},
+	loans::{DurationSeconds, PriceStructure, Timestamp},
 };
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
@@ -52,7 +52,7 @@ pub enum AuctionExchangeCallback {
 
 #[derive(Default, Decode, Encode, Clone, TypeInfo)]
 pub struct LinearDecrease {
-	/// Seconds after auction start when the price reaches zero
+	/// The number of seconds until the price reach zero.
 	pub total: DurationSeconds,
 }
 
@@ -65,7 +65,8 @@ pub struct StairstepExponentialDecrease {
 	pub cut: Permill,
 }
 
-/// see example of it in clip.sol of makerdao
+/// An object from which we can initiate a dutch auction.
+// see example of it in clip.sol of makerdao
 pub trait DutchAuction {
 	type OrderId;
 	type Orderbook: Orderbook;
@@ -73,31 +74,37 @@ pub trait DutchAuction {
 	type AssetId;
 	type Balance;
 	type Order;
+	type GroupId;
 
-	/// Transfers asset from from provided to auction account.
-	/// It is up to caller to check amount he get after auction.
-	/// monitors `OrderBook` for possibility to start selling
-	/// `account_id` who owns order
-	/// `source_account` for specific specific `asset_id` from which `amount` is transferred
-	/// onto auction account.
-	/// `initial_price` for `total_amount`
-	/// `target_account` where to move account after success sell.
+	/// Transfer the asset from the provided account to the auction account.
+	/// The caller is responsible for checking the price at which the auction executed (not known in
+	/// advance of course).
+	///
+	/// Description.
+	///
+	/// * `owner_account_id`: the order owner.
+	/// * `source_account`: the account from which we extract the `amount` of `source_asset_id`
+	///   from.
+	/// * `source_asset_id`: the asset we are interested to trade for `target_asset_id`.
+	/// * `target_account`: the beneficiary of the order.
+	/// * `total_amount`: the amount of `source_asset_id`.
+	/// * `price`: the initial price for `total_amount` and some rules.
 	#[allow(clippy::too_many_arguments)]
 	fn start(
-		account_id: &Self::AccountId,
+		owner_account_id: &Self::AccountId,
 		source_asset_id: Self::AssetId,
 		source_account: &Self::AccountId,
 		target_asset_id: Self::AssetId,
 		target_account: &Self::AccountId,
 		total_amount: Self::Balance,
-		initial_price: Self::Balance,
+		price: PriceStructure<Self::GroupId, Self::Balance>,
 		function: AuctionStepFunction,
 	) -> Result<Self::OrderId, DispatchError>;
 
 	/// run existing auctions
 	/// if some auctions completed, transfer amount to target account
 	/// `now` current time.
-	fn run_auctions(now: Timestamp) -> DispatchResult;
+	fn off_chain_run_auctions(now: Timestamp) -> DispatchResult;
 
 	fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order>;
 

@@ -1319,7 +1319,9 @@ dependencies = [
 name = "composable-traits"
 version = "0.0.1"
 dependencies = [
+ "bitflags",
  "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "plotters",
  "proptest",
@@ -5380,6 +5382,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-assets"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "num-traits",
+ "orml-traits",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.11#57346f6b24875f8935280dba51fa8ab0a9ba1e39"
@@ -5717,6 +5737,7 @@ dependencies = [
  "frame-system",
  "num-traits",
  "parity-scale-codec",
+ "proptest",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -6023,6 +6044,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-order-book-dex"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "parity-scale-codec",
+ "proptest",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-ping"
 version = "0.1.0"
 dependencies = [
@@ -6036,6 +6077,23 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "xcm 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+]
+
+[[package]]
+name = "pallet-privilege"
+version = "0.0.1"
+dependencies = [
+ "bitflags",
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -6295,6 +6353,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
+ "pallet-balances",
  "parity-scale-codec",
  "proptest",
  "scale-info",
@@ -6717,6 +6776,7 @@ dependencies = [
  "hex-literal",
  "orml-tokens",
  "orml-traits",
+ "pallet-assets",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",

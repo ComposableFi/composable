@@ -10,6 +10,25 @@ use frame_support::{
 	},
 };
 
+use scale_info::TypeInfo;
+pub type Exponent = u32;
+
+pub trait PriceableAsset
+where
+	Self: Copy,
+{
+	fn unit<T: From<u64>>(&self) -> T {
+		T::from(10u64.pow(self.smallest_unit_exponent()))
+	}
+	fn smallest_unit_exponent(self) -> Exponent;
+}
+
+impl PriceableAsset for u128 {
+	fn smallest_unit_exponent(self) -> Exponent {
+		0
+	}
+}
+
 /* NOTE(hussein-aitlahcen):
  I initially added a generic type to index into the generatable sub-range but realised it was
  overkill. Perhaps it will be required later if we want to differentiate multiple sub-ranges
@@ -32,8 +51,8 @@ pub trait CurrencyFactory<CurrencyId> {
 	fn create() -> Result<CurrencyId, DispatchError>;
 }
 
-pub trait AssetId: FullCodec + Copy + Eq + PartialEq + Debug {}
-impl<T: FullCodec + Copy + Eq + PartialEq + Debug> AssetId for T {}
+pub trait AssetId: FullCodec + Copy + Eq + PartialEq + Debug + TypeInfo {}
+impl<T: FullCodec + Copy + Eq + PartialEq + Debug + TypeInfo> AssetId for T {}
 pub trait Balance:
 	AtLeast32BitUnsigned
 	+ FullCodec
@@ -42,6 +61,7 @@ pub trait Balance:
 	+ Debug
 	+ MaybeSerializeDeserialize
 	+ MaxEncodedLen
+	+ TypeInfo
 {
 }
 impl<
@@ -51,7 +71,8 @@ impl<
 			+ Default
 			+ Debug
 			+ MaybeSerializeDeserialize
-			+ MaxEncodedLen,
+			+ MaxEncodedLen
+			+ TypeInfo,
 	> Balance for T
 {
 }
@@ -71,7 +92,7 @@ pub trait MultiImbalance<A: AssetId, B: Balance>: Sized {
 
 impl<
 		A: AssetId,
-		B: Balance,
+		B: Balance + TypeInfo,
 		OppositeOnDrop: HandleImbalanceDrop<A, B>,
 		OnDrop: HandleImbalanceDrop<A, B>,
 	> MultiImbalance<A, B> for Imbalance<A, B, OnDrop, OppositeOnDrop>
@@ -157,6 +178,7 @@ impl<AccountId, T> MultiCurrency<AccountId> for T
 where
 	T: Inspect<AccountId> + Balanced<AccountId> + Mutate<AccountId> + Transfer<AccountId>,
 	T::Balance: Balance,
+	T::AssetId: TypeInfo,
 {
 	type Balance = T::Balance;
 	type PositiveImbalance = DebtOf<AccountId, Self>;

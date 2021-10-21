@@ -1,7 +1,7 @@
 //! CurrencyId implementation
 
 use codec::{Decode, Encode};
-use composable_traits::currency::DynamicCurrencyId;
+use composable_traits::currency::{DynamicCurrencyId, Exponent, PriceableAsset};
 use scale_info::TypeInfo;
 use sp_runtime::{ArithmeticError, DispatchError, RuntimeDebug};
 
@@ -21,6 +21,19 @@ impl CurrencyId {
 	pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
 
 	pub const LOCAL_LP_TOKEN_START: CurrencyId = CurrencyId(u128::MAX / 2);
+}
+
+impl PriceableAsset for CurrencyId {
+	#[inline]
+	fn smallest_unit_exponent(self) -> Exponent {
+		match self {
+			// NOTE(hussein-aitlahcen): arbitrary, can we please determine this in the PR?
+			CurrencyId::PICA => 8,
+			CurrencyId::LAYR => 8,
+			CurrencyId::CROWD_LOAN => 8,
+			_ => 0,
+		}
+	}
 }
 
 // NOTE(hussein-aitlahcen): we could add an index to DynamicCurrency to differentiate sub-ranges

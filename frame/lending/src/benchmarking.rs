@@ -48,6 +48,7 @@ fn create_market<T: Config>(
 		reserved: Perquintill::from_percent(10),
 		collateral_factor: NormalizedCollateralFactor::saturating_from_rational(200, 100),
 		under_collaterized_warn_percent: Percent::from_percent(10),
+		liquidator: None,
 	};
 	Lending::<T>::create(
 		<T as Config>::AssetId::from(borrow_asset),
@@ -76,7 +77,8 @@ benchmarks! {
 		reserved_factor,
 		collateral_factor,
 		under_collaterized_warn_percent,
-		InterestRateModel::default()
+		InterestRateModel::default(),
+		None
 	)
 	verify {
 		assert_last_event::<T>(Event::NewMarketCreated {
