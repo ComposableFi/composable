@@ -8,7 +8,7 @@ pub mod pallet {
 	use composable_traits::{bribe::Bribe, democracy::Democracy};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::fungibles::{Inspect, Transfer},
+		traits::fungibles::{MutateHold, Inspect, Transfer},
 	};
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
@@ -111,21 +111,21 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[transactional]
-		#[pallet::weight(10_000)]
-		pub fn deposit_funds(
-			origin: OriginFor<T>,
-			bribe: BribeIndex,
-			amount: u128,
-		) -> DispatchResult {
-			transfer(account_id, origin, amount);
-			todo!("deposit_tokens into vault ");
+//		#[transactional]
+//		#[pallet::weight(10_000)]
+//		pub fn deposit_funds(
+//			origin: OriginFor<T>,
+//			bribe: BribeIndex,
+//			amount: u128,
+//		) -> DispatchResult {
+//			transfer(account_id, origin, amount);
+//			todo!("deposit_tokens into vault ");
 
-			todo!("transfer funds");
-			todo!("Update token funds status");
+//			todo!("transfer funds");
+//			todo!("Update token funds status");
 
-			Ok(())
-		}
+//			Ok(())
+//		}
 
 		#[transactional]
 		#[pallet::weight(10_000)]
@@ -134,11 +134,13 @@ pub mod pallet {
 			bribe: BribeIndex,
 			amount: u128,
 		) -> DispatchResult {
-			let _check = ensure_origin!(origin);
-			transfer(account_id, origin, amount);
+			let who = ensure_origin!(origin);
+
+			Mutatehold::release(asset, who, amount, false);
+			//transfer(account_id, origin, amount);
 
 			todo!("Check token supply, if supply is less or same as asked for: release funds");
-			Error::<T>::EmptySupply;
+//			Error::<T>::EmptySupply;
 			todo!("update capital status");
 			Ok(())
 		}
@@ -148,9 +150,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			request: TakeBribeRequest<T>,
 		) -> DispatchResultWithPostInfo {
-			let _from = ensure_signed(origin)?;
+			let who = ensure_signed(origin)?;
 			let bribe_index = request.bribe_index;
 			let bribe_taken = <Self as Bribe>::take_bribe(request.clone())?;
+			MutateHold::hold(asset, who, amount); //Freeze assets
 			if bribe_taken {
 				Self::deposit_event(Event::BribeTaken { id: bribe_index, request });
 			}
