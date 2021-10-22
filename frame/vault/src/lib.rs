@@ -1,21 +1,3 @@
-//! # Vaults Pallet
-//!
-//! A batteries included vault module, usable as liquidity pools, yield farming vaults or embeddable
-//! as core infrastructure.
-//!
-//! ## Overview
-//!
-//! The Vault module provides functionality for asset pool management of fungible asset classes
-//! with a fixed supply, including:
-//!
-//! * Vault Creation.
-//! * Deposits and Withdrawals.
-//! * Strategy Re-balancing.
-//! * Surcharge Claims and Rent.
-//!
-//! To use it in your runtime, you need to implement the vault's [`Config`].
-//!
-//! ## Terminology
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(
 	dead_code,
@@ -37,11 +19,11 @@
 	trivial_casts,
 	trivial_numeric_casts,
 	unused_extern_crates,
-	rustdoc::missing_doc_code_examples
 )]
 // Some substrate macros are expanded in such a way that their items cannot be documented. For now,
 // it's best to just set this to warn during development.
 #![allow(missing_docs)]
+#![doc = include_str!("../README.md")]
 
 mod capabilities;
 pub mod models;
@@ -151,12 +133,12 @@ pub mod pallet {
 			+ Default
 			+ TypeInfo;
 
-		/// The asset used to pay for rent and other fees
+		/// The asset used to pay for rent and other fees.
 		type NativeCurrency: TransferNative<Self::AccountId, Balance = Self::Balance>
 			+ MutateNative<Self::AccountId, Balance = Self::Balance>
 			+ MutateHoldNative<Self::AccountId, Balance = Self::Balance>;
 
-		/// Generic Currency bounds. These functions are provided by the `[orml-tokens`](https://github.com/open-web3-stack/open-runtime-module-library/tree/HEAD/currencies) pallet.
+		/// Currency is used for the assets managed by the vaults.
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
@@ -349,9 +331,9 @@ pub mod pallet {
 		/// Not all vaults have an associated LP token. Attempting to perform LP token related
 		/// operations result in `NotVaultLpToken`.
 		NotVaultLpToken,
-		/// The vault has deposits halted, see [Capabilities](crate::capabilities::Capability).
+		/// The vault has deposits halted, see [Capabilities](crate::capabilities::Capabilities).
 		DepositsHalted,
-		/// The vault has withdrawals halted, see [Capabilities](crate::capabilities::Capability).
+		/// The vault has withdrawals halted, see [Capabilities](crate::capabilities::Capabilities).
 		WithdrawalsHalted,
 		OnlyManagerCanDoThisOperation,
 		InvalidDeletionClaim,
