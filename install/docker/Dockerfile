@@ -11,4 +11,4 @@ ENV TZ=Etc/UTC \
 
 EXPOSE 8000
 
-CMD [cargo]
+CMD ["cargo"]
