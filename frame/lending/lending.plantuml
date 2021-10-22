@@ -1,42 +1,56 @@
 @startuml
+box Composable #SkyBlue
+  actor Alice as a
+  actor Bob as b
+  participant Lending as pl
+  participant Liquidation as pk
+  participant Vault as v
+  participant Auction as pa
+  control "Assets" as c_assets
+  participant Oracle as po
+  participant Governance as pg
+  participant "AMM/OB DEX" as pd
+  control "OCW Auction" as oa
+  control "OCW Lending" as cl
+  control "OCW Liqudation" as ck
+  control "OCW Oracle" as co
+end box
 
-actor Alice as a
-actor Bob as b
-actor Charlie as ac
-participant Lending as l
-participant Liquidation as k
-participant Auction as au
-participant "Order Book DEX" as d
-boundary "Parachain with DEX" as p
-control "OCW Auction" as oa
-control "OCW Lending" as ol
-control "OCW Oracle" as m
+box HydraDx
+  participant "DEX" as pd2
+  participant "Assets" as p_assets2
+  participant "Auction" as pa2
+end box
 
-group Governance
-
-
-  a -> l: Create market pair for assets ids (tokens, symbols)
-  l -> Vault: Check assets are supported and create vault for collateral
-  l -> Oracle: Check assets are supported
+group Positive Governance
+  alt #LightYellow DEX Parachaing
+    c_assets --> p_assets2: Settle mapping of assets identifiers
+    co --> pd2: Is pair supported? (for each asset in Composable)
+    ...
+    cl ->  po: Set if external dex suppors price pair
+  end
+  a   ->    pl: Create market pair for assets ids (tokens, symbols)
+  pl  ->    v: Check assets are supported and create vault for collateral
+  pl  ->    pl: Set liquidating ParaId for market if any
+  pl  ->    po: Check assets pairs are supported (on parachain if set)
   ...
-  Governance -> Vault : Allocate to Lending
-  l -> Vault : Withdraw Borrowed Asset
-
+  pg  ->    v : Allocate to Lending
+  pl  ->    v : Withdraw Borrowed Asset (liquidity for protocol)
 end
 
 ...
 
-group Borrow
 
-  b -> Vault : transfer collateral
-  Vault -> b : transfer cCollateral(wrapped token)
-  b -> l : Deposit cCollateral
+group Borrow
+  b -> v  : transfer collateral
+  v -> b  : transfer cCollateral(wrapped token)
+  b -> pl : Deposit cCollateral
   ...
-  b -> l : Borrow (collateralized)
+  b -> pl : Borrow (collateralized)
   ...
-  l -> l : accrue interest
+  cl -> pl : accrue interest
   ...
-  b -> l : repay borrow + interest
+  b -> pl : repay borrow + interest
 
 end
 
@@ -44,29 +58,29 @@ end
 
 group Liqudaiton (IN PROGRESS)
 
-  ac -> l : Borrow
-
-  ...
-
-
-  m -> Oracle : Make collateral factor bad
-
-  ol -> l : Liquidate Charlie collateral
-
-  l -> k: Liquidate
-
-  k -> au: Dutch Auction sell Collateral
-
-  oa --> d: Sell on Order Book DEX
-
-  ...
-
-  p  --> d: Prove of swap tokens and update DEX order state
+  b  -> pl: Borrow
+  co -> pl: Make mCollaral bad ratio
+  pl -> pk: Liqudate
 
 
-  ...
+  alt #LightYellow Liqudate via HydraDx
+    ck --> pa2 : Transfer and sell on auction
+    ...
+    pa2 -> pd2 : Sell on dex
+    ...
+    pa2 --> pl :  Transfer borrow after sell
+  else #LightCyan Local liquidation (in case no preferred liqudator)
+    cl    -> pl : Liquidate collateral
+    pl    -> pk: Liquidate
+    pk -> pa: Dutch Auction sell Collateral
+    pa    -->  pd: Sell
+    ...
+    a    -> v : Transfer tokens via bridges
+    a    -> pd: Buy
+    ...
+    oa    -> pa : Finalize auction
+  end
 
-  oa -> au : Finalize auction
 
 end
 

@@ -1,0 +1,34 @@
+digraph Polkadot {
+  subgraph Shared {
+      AuctionShared [label = "
+        AuctionShared
+        - code written by Composable and run on HydraDx
+        - is Dutch Auction
+      "]
+      MessagesShared [label = "
+        MessagesShared
+        - shared contract amid parachains
+        - transfer sell token + start sell
+        - transfer amount sold back
+      "]
+      AssetMapShared [label = "
+        AssetMapShared
+        - shared pallet to map asets from and to parachains
+        - ? each map entry to be double signed - by governance of both chains
+      "]
+  }
+
+  subgraph HydraDx {
+    node [style=filled color=LightYellow shape=square]
+
+    HydraDx -> AuctionShared [label = "run"]
+    HydraDx -> MessagesShared [label = "pub/sub"]
+    HydraDx -> AssetMapShared [label = "consent" color = "red"]
+  }
+
+  subgraph Composable {
+    node [style=filled color=SkyBlue shape=square]
+    Composable -> MessagesShared [label = "pub/sub"]
+    Composable -> AssetMapShared [label = "consent" color = "red"]
+  }
+}

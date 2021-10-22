@@ -2642,7 +2642,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking-cli"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.11#11e6bb0e0f472fc08b6b42348ee92545adb5dbbc"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.11#57346f6b24875f8935280dba51fa8ab0a9ba1e39"
 dependencies = [
  "Inflector",
  "chrono",
@@ -6064,22 +6064,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-ping"
-version = "0.1.0"
-dependencies = [
- "cumulus-pallet-xcm",
- "cumulus-primitives-core",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-runtime",
- "sp-std",
- "xcm 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
-]
-
-[[package]]
 name = "pallet-privilege"
 version = "0.0.1"
 dependencies = [
@@ -6395,6 +6379,32 @@ dependencies = [
  "sp-std",
  "xcm 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
  "xcm-executor 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+]
+
+[[package]]
+name = "pallet-xcmp"
+version = "0.1.0"
+dependencies = [
+ "cumulus-pallet-xcm",
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "polkadot-core-primitives 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "polkadot-parachain 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "polkadot-runtime-parachains 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "xcm-builder",
+ "xcm-executor 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "xcm-simulator",
 ]
 
 [[package]]
@@ -6792,7 +6802,6 @@ dependencies = [
  "pallet-liquidations",
  "pallet-membership",
  "pallet-oracle",
- "pallet-ping",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
@@ -6805,6 +6814,7 @@ dependencies = [
  "pallet-utility",
  "pallet-vault",
  "pallet-xcm",
+ "pallet-xcmp",
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
@@ -8928,7 +8938,7 @@ dependencies = [
 [[package]]
 name = "remote-externalities"
 version = "0.10.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.11#11e6bb0e0f472fc08b6b42348ee92545adb5dbbc"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.11#57346f6b24875f8935280dba51fa8ab0a9ba1e39"
 dependencies = [
  "env_logger 0.9.0",
  "jsonrpsee-proc-macros",
@@ -11520,7 +11530,7 @@ dependencies = [
 [[package]]
 name = "substrate-build-script-utils"
 version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.11#11e6bb0e0f472fc08b6b42348ee92545adb5dbbc"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.11#57346f6b24875f8935280dba51fa8ab0a9ba1e39"
 dependencies = [
  "platforms",
 ]
@@ -11564,7 +11574,7 @@ dependencies = [
 [[package]]
 name = "substrate-test-client"
 version = "2.0.1"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.11#11e6bb0e0f472fc08b6b42348ee92545adb5dbbc"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.11#57346f6b24875f8935280dba51fa8ab0a9ba1e39"
 dependencies = [
  "async-trait",
  "futures 0.3.17",
@@ -12159,7 +12169,7 @@ checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
 [[package]]
 name = "try-runtime-cli"
 version = "0.10.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.11#11e6bb0e0f472fc08b6b42348ee92545adb5dbbc"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.11#57346f6b24875f8935280dba51fa8ab0a9ba1e39"
 dependencies = [
  "jsonrpsee-ws-client",
  "log 0.4.14",
@@ -13129,6 +13139,23 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "xcm-simulator"
+version = "0.9.11"
+source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.11#eb9f107e3a04687dcf80111563f2bcea7d5b15d3"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "paste 1.0.5",
+ "polkadot-core-primitives 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "polkadot-parachain 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "polkadot-runtime-parachains 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "sp-io",
+ "sp-std",
+ "xcm 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "xcm-executor 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
 ]
 
 [[package]]
