@@ -945,7 +945,7 @@ impl liquidations::Config for Runtime {
 	type GroupId = u32;
 }
 
-impl ping::Config for Runtime {
+impl xcmp::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
 	type Call = Call;
@@ -1031,7 +1031,7 @@ construct_runtime!(
 
 		Auctions: dutch_auction::{Pallet, Event<T>} = 57,
 		Assets: assets::{Pallet, Storage, Call} = 58,
-		Ping: ping::{Pallet, Call, Storage, Event<T>} = 59,
+		Xcmp: xcmp::{Pallet, Call, Storage, Event<T>} = 59,
 
 		Spambot: cumulus_ping::{Pallet, Call, Storage, Event<T>} = 90,
 

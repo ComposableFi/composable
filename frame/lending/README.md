@@ -4,23 +4,10 @@ https://composablefinance.atlassian.net/wiki/spaces/COM/pages/2916374/Lending
 
 ## What
 
-Lending = Loans + Liquidation
+Vault provides and recalls liquidity into/from Lending via protocol.
 
-Lending calls Oracle and Vault
-
-Oracle = only Pairs with Prices are allowed
-
-Vault = Vault provides and recalls liquidity into/from Lending via protocol.
-
-Lending uses Vault for operation to withdraw assets and deposit back.
-
-Liquidation uses DEX for swaps.
 
 DEX depends on Lending for leverage
-
-## Markets
-
-Can create isolated pairs which are supported Vault and Oracle.
 
 ## Test
 
@@ -28,7 +15,7 @@ There is known way to setup oracle and vault via extrinsic, and there is way to 
 
 ## Lending Vault
 
-As of now Lending does not handles cases when vault changes its decisions during single block.
+As of now Lending does not handle cases when vault changes its decisions during single block.
 
 ### Block level
 
