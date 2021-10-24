@@ -4,7 +4,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use codec::Codec;
+	use codec::{Codec, FullCodec};
 	use composable_traits::{bribe::Bribe, democracy::Democracy};
 	use frame_support::{
 		pallet_prelude::*,
@@ -15,8 +15,12 @@ pub mod pallet {
 	use pallet_democracy::Vote;
 	use primitives::currency::CurrencyId;
 	use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
+	use sp_std::fmt::Debug;
+	use sp_runtime::scale_info::TypeInfo;
+
 
 	pub type BribeIndex = u32;
+
 	pub type ReferendumIndex = pallet_democracy::ReferendumIndex;
 	pub type CreateBribeRequest<T> = composable_traits::bribe::CreateBribeRequest<
 		<T as frame_system::Config>::AccountId,
@@ -45,6 +49,15 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		// REVIEW(oleksii): Balance traits; following are copied from pallet-vault
+		type AssetId: FullCodec
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ TypeInfo;
+
 		type Balance: Default
 			+ Parameter
 			+ Codec
