@@ -24,6 +24,7 @@ pub mod pallet {
 		 }
 	};
 
+	use composable_traits::{loans::Timestamp};
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -44,8 +45,6 @@ pub mod pallet {
 		type MaxTransferDelay: Get<Self::Balance>;
 
 		type MinTransferDelay: Get<Self::Balance>;
-
-		type LastTransfer: Get<usize>;
 
 		// type Moment: Moment;
 
@@ -89,6 +88,14 @@ pub mod pallet {
 	#[pallet::getter(fn min_asset_transfer_size)]
 	pub(super) type MinAssetTransferSize<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::Balance, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn last_transfer)]
+	pub(super) type LastTransfer<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, Timestamp, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn transfer_lockup_time)]
+	pub(super) type TransferLockupTime<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
+	
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
  	pub enum Event<T: Config> {
@@ -134,6 +141,13 @@ pub mod pallet {
 			T::AssetId,
 			T::Balance,
 		),
+
+		LockupTimeChanged(
+			T::AccountId,
+			Timestamp, // old lockup time
+			Timestamp, // new lockup time
+			Vec<u8>, //
+		)
 
 	}
 
@@ -219,10 +233,24 @@ pub mod pallet {
 
 			 <MinAssetTransferSize<T>>::insert(asset_id, size);
 
-			 Self::deposit_event(Event::AssetMaxTransferSizeChanged(asset_id, size));
+			 Self::deposit_event(Event::AssetMinTransferSizeChanged(asset_id, size));
 
 			 Ok(().into())
 		 }
+
+		 #[pallet::weight(10_000)]
+		 pub fn set_transfer_lockup_time(origin: OriginFor<T>, lockup_time: Timestamp) -> DispatchResultWithPostInfo {
+
+		     let sender =  ensure_signed(origin)?;
+
+			 let old_lockup_time = <TransferLockupTime<T>>::get();
+
+			 <TransferLockupTime<T>>::put(lockup_time);
+
+			 Self::deposit_event(Event::LockupTimeChanged(sender, old_lockup_time, lockup_time, "Transfer".as_bytes().to_vec()));
+
+			 Ok(().into())
+		 }		 
 
 		 #[pallet::weight(10_000)]
 		 pub fn deposit(
