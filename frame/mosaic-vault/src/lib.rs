@@ -1,16 +1,21 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub use pallet::*;
+// #[cfg(feature = "runtime-benchmarks")]
+// mod benchmarking;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
+pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
 
-	use frame_support::{pallet_prelude::*};
+	use frame_support::{
+		ensure,
+		pallet_prelude::*,
+		traits::fungibles::{Inspect, Mutate, Transfer}
+	};
+
 	use frame_system::pallet_prelude::*;
-	use scale_info::TypeInfo;
+ 	use scale_info::TypeInfo;
 	use sp_std::{fmt::Debug, vec::Vec}; 
 	use codec::{Codec, FullCodec};
 	use sp_runtime::{
@@ -29,10 +34,18 @@ pub mod pallet {
 
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-		/// Converts the `Balance` type to `u128`, which internally is used in calculations.
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+		     + Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 
 		type Balance: Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo;
+
+		type MaxTransferDelay: Get<Self::Balance>;
+
+		type MinTransferDelay: Get<Self::Balance>;
+
+		type LastTransfer: Get<usize>;
 
 		// type Moment: Moment;
 
@@ -42,15 +55,17 @@ pub mod pallet {
 			 + Copy
 			 + MaybeSerializeDeserialize
 			 + Debug
-			 + Default;
+			 + Default
+			 + TypeInfo;
 		
 		type RemoteAssetId: FullCodec
-		    + Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ Debug
-			+ Default;
+			 + Eq
+			 + PartialEq
+			 + Copy
+			 + MaybeSerializeDeserialize
+			 + Debug
+			 + Default
+			 + TypeInfo;
 		
 		type RemoteNetworkId: FullCodec
 			+ Eq
@@ -58,13 +73,21 @@ pub mod pallet {
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ Debug
-			+ Default;
+			+ Default
+			+ TypeInfo;
 	}
-
 	
 	#[pallet::storage]
 	#[pallet::getter(fn remote_asset_id)]
-    pub(super) type RemoteAssetId<T: Config> = StorageDoubleMap<_, Blake2_128Concat, T::RemoteNetworkId, Blake2_128Concat, T::AssetId, T::RemoteAssetId, ValueQuery >;
+    pub(super) type RemoteAssetId<T: Config> = StorageDoubleMap<_, Blake2_128Concat, T::RemoteNetworkId, Blake2_128Concat, T::AssetId, T::RemoteAssetId, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn max_asset_transfer_size)]
+	pub(super) type MaxAssetTransferSize<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::Balance, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn min_asset_transfer_size)]
+	pub(super) type MinAssetTransferSize<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::Balance, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -104,17 +127,46 @@ pub mod pallet {
 
 	}
 
+	#[allow(missing_docs)]
+	#[pallet::error]
+	pub enum Error<T> {
+		/// Minting failures result in `MintFailed`. In general this should never occur.
+		MintFailed,
+		///
+		MaxTransferSizeLessThanMin,
+		///
+		TransferDelayBelowMinimum,
+		///
+		TransferDelayAboveMaximum,
+		/// 
+		TransferDelayAboveAssetMaximum,
+		/// 
+		TransferDelayAboveBelowMaximum,
+	}
+
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 
 		#[pallet::weight(10_000)]
-		 pub fn add_supported_token(origin: OriginFor<T>, asset_id: T::AssetId, remote_asset_id: T::RemoteAssetId, remote_network_id: T::RemoteNetworkId ) -> DispatchResultWithPostInfo {
+		 pub fn add_supported_token(origin: OriginFor<T>, 
+			asset_id: T::AssetId, 
+			remote_asset_id: T::RemoteAssetId, 
+			remote_network_id: T::RemoteNetworkId, 
+			max_asset_transfer_size: T::Balance,
+			min_asset_transfer_size: T::Balance,) -> DispatchResultWithPostInfo {
            
 		   ensure_signed(origin)?; // -todo check admin permission 
 
-		   <RemoteAssetId<T>>::insert(remote_network_id, asset_id, remote_asset_id);		
+		   ensure!(max_asset_transfer_size > min_asset_transfer_size, Error::<T>::MaxTransferSizeLessThanMin);
 
-		  Self::deposit_event(Event::TokenAdded(asset_id, remote_asset_id, remote_network_id));
+		   <RemoteAssetId<T>>::insert(remote_network_id, asset_id, remote_asset_id);	
+		   
+		   <MaxAssetTransferSize<T>>::insert(asset_id, max_asset_transfer_size);
+
+		   <MinAssetTransferSize<T>>::insert(asset_id, min_asset_transfer_size);
+
+		   Self::deposit_event(Event::TokenAdded(asset_id, remote_asset_id, remote_network_id));
 
 		   Ok(().into())
 		 }
@@ -126,7 +178,11 @@ pub mod pallet {
           
  		    let remote_asset_id = RemoteAssetId::<T>::get(remote_network_id, asset_id);
 
-		    <RemoteAssetId<T>>::remove(remote_network_id, asset_id);
+		     <RemoteAssetId<T>>::remove(remote_network_id, asset_id);
+
+			 <MaxAssetTransferSize<T>>::remove(asset_id);
+
+			 <MinAssetTransferSize<T>>::remove(asset_id);
 
              Self::deposit_event(Event::TokenRemoved(asset_id, remote_asset_id,  remote_network_id));
 
@@ -134,7 +190,43 @@ pub mod pallet {
 
 		 }
 
-	}
+		 #[pallet::weight(10_000)]
+		 pub fn deposit(
+			 origin: OriginFor<T>, 
+			 amount: T:: Balance,
+			 asset_id: T::AssetId, 
+			 receive_address: T::AccountId, 
+			 remote_network_id: T::RemoteNetworkId,
+		 	 transfer_delay: T::Balance,
+			) -> DispatchResultWithPostInfo {
+
+			ensure_signed(origin)?;
+			// ensure!(
+			// 	config.strategies.len() <= T::MaxStrategies::get(),
+			// 	Error::<T>::TooManyStrategies
+			// );
+
+			// ensure!(LastTransfer::<T>::)
+			// todo - add lastTransfer check, ? how to get block.timespamp
+
+			ensure!(transfer_delay <= T::MaxTransferDelay::get(), Error::<T>::TransferDelayAboveMaximum);
+
+			ensure!(transfer_delay >= T::MinTransferDelay::get(), Error::<T>::TransferDelayBelowMinimum);
+
+			ensure!(transfer_delay <= Self::max_asset_transfer_size(asset_id), Error::<T>::TransferDelayAboveAssetMaximum);
+
+			ensure!(transfer_delay >= Self::min_asset_transfer_size(asset_id), Error::<T>::TransferDelayAboveBelowMaximum);
+
+			T::Currency::mint_into(asset_id, &receive_address,  amount).map_err(|_| Error::<T>::MintFailed)?;
+
+			///- toddo store deposit info info 
+			/// 
+			/// - send event 
+ 			/// // question how to generate the hash id used in the solidity version , hash vs incremented uint
+
+			Ok(().into())
+		 }
+ 	}
 
  }
 
