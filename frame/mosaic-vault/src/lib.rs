@@ -72,6 +72,9 @@ pub mod pallet {
 			+ Debug
 			+ Default
 			+ TypeInfo;
+
+		#[pallet::constant]
+		type FeeFactor: Get<Self::Balance>;
 	}
 	
 	#[pallet::storage]
@@ -101,6 +104,14 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn transfer_lockup_time)]
 	pub(super) type TransferLockupTime<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn max_fee)]
+	pub(super) type MaxFee<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn min_fee)]
+	pub(super) type MinFee<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 	
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -161,7 +172,11 @@ pub mod pallet {
 			Timestamp, // old lockup time
 			Timestamp, // new lockup time
 			Vec<u8>, //
-		)
+		),
+
+		MinFeeChanged(
+			T::Balance,
+		),
 
 	}
 
@@ -184,6 +199,10 @@ pub mod pallet {
 		MaxTransferDelayBelowMinimum,
 		///
 		MinTransferDelayAboveMaximum,
+		///
+	    MinFeeAboveFeeFactor,
+		/// 
+		MinFeeAboveMaxFee,
 	}
 
 
@@ -298,6 +317,22 @@ pub mod pallet {
 			<MinTransferDelay<T>>::put(new_min_transfer_delay);
 
 			Self::deposit_event(Event::MinTransferDelayChanged(new_min_transfer_delay));
+
+			Ok(().into())
+		 }
+
+		 #[pallet::weight(10_000)]
+		 pub fn set_min_fee(origin: OriginFor<T>, min_fee: T::Balance) -> DispatchResultWithPostInfo {
+			
+			ensure_signed(origin);
+            
+			ensure!(min_fee < T::FeeFactor::get(), Error::<T>::MinFeeAboveFeeFactor);
+
+			ensure!(min_fee < Self::max_fee(), Error::<T>::MinFeeAboveMaxFee);
+
+            <MinFee<T>>::put(min_fee);
+
+			Self::deposit_event(Event::MinFeeChanged(min_fee));
 
 			Ok(().into())
 		 }
