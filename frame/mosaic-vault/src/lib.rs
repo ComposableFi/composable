@@ -123,7 +123,12 @@ pub mod pallet {
 			T::AssetId, // assetId
 			T::RemoteAssetId, // remoteAssetId
 			T::RemoteNetworkId //remoteNetworkId
-		)
+		),
+
+		AssetMaxTransferSizeChanged(
+			T::AssetId,
+			T::Balance,
+		),
 
 	}
 
@@ -188,6 +193,18 @@ pub mod pallet {
 
 			 Ok(().into())
 
+		 }
+
+		 #[pallet::weight(10_000)]
+		 pub fn set_asset_max_transfer_size(origin: OriginFor<T>, asset_id: T::AssetId, size: T::Balance) -> DispatchResultWithPostInfo {
+
+		     ensure_signed(origin);
+
+			 <MaxAssetTransferSize<T>>::insert(asset_id, size);
+
+			 Self::deposit_event(Event::AssetMaxTransferSizeChanged(asset_id, size));
+
+			 Ok(().into())
 		 }
 
 		 #[pallet::weight(10_000)]
