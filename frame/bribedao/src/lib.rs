@@ -8,7 +8,7 @@ pub mod pallet {
 	use composable_traits::{bribe::Bribe, democracy::Democracy};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::fungibles::{Inspect, MutateHold, Transfer},
+		traits::fungibles::{Inspect, InspectHold, MutateHold, Transfer},
 	};
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
@@ -63,7 +63,7 @@ pub mod pallet {
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
 		type Conviction: Parameter;
-		type DefaultAsset: CurrencyId::PICA;
+//		type DefaultAsset: CurrencyId::PICA;
 		type Democracy: Democracy<
 			AccountId = Self::AccountId,
 			ReferendumIndex = pallet_democracy::ReferendumIndex,
