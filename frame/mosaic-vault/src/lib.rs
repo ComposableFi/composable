@@ -42,9 +42,7 @@ pub mod pallet {
 
 		type Balance: Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo;
 
-		type MaxTransferDelay: Get<Self::Balance>;
-
-		type MinTransferDelay: Get<Self::Balance>;
+		type TransferDelay:  Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo;
 
 		// type Moment: Moment;
 
@@ -87,6 +85,14 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn min_asset_transfer_size)]
 	pub(super) type MinAssetTransferSize<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::Balance, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn max_transfer_delay)]
+	pub(super) type MaxTransferDelay<T: Config> = StorageValue<_, T::TransferDelay, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn min_transfer_delay)]
+	pub(super) type MinTransferDelay<T: Config> =  StorageValue<_, T::TransferDelay, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn last_transfer)]
@@ -132,6 +138,14 @@ pub mod pallet {
 			T::RemoteNetworkId //remoteNetworkId
 		),
 
+		MaxTransferDelayChanged(
+			T::TransferDelay,
+		),
+
+		MinTransferDelayChanged(
+			T::TransferDelay,
+		),
+
 		AssetMaxTransferSizeChanged(
 			T::AssetId,
 			T::Balance,
@@ -157,15 +171,19 @@ pub mod pallet {
 		/// Minting failures result in `MintFailed`. In general this should never occur.
 		MintFailed,
 		///
-		MaxTransferSizeLessThanMin,
-		///
-		TransferDelayBelowMinimum,
+		MaxAssetTransferSizeBelowMinimum,
 		///
 		TransferDelayAboveMaximum,
+		///
+		TransferDelayBelowMinimum,
+		/// max_asset_transfer_size
+		AmountAboveMaxAssetTransferSize,
 		/// 
-		TransferDelayAboveAssetMaximum,
-		/// 
-		TransferDelayAboveBelowMaximum,
+		AmountBelowMaxAssetTransferSize,
+		///
+		MaxTransferDelayBelowMinimum,
+		///
+		MinTransferDelayAboveMaximum,
 	}
 
 
@@ -182,7 +200,7 @@ pub mod pallet {
            
 		   ensure_signed(origin)?; // -todo check admin permission 
 
-		   ensure!(max_asset_transfer_size > min_asset_transfer_size, Error::<T>::MaxTransferSizeLessThanMin);
+		   ensure!(max_asset_transfer_size > min_asset_transfer_size, Error::<T>::MaxAssetTransferSizeBelowMinimum);
 
 		   <RemoteAssetId<T>>::insert(remote_network_id, asset_id, remote_asset_id);	
 		   
@@ -241,7 +259,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_transfer_lockup_time(origin: OriginFor<T>, lockup_time: Timestamp) -> DispatchResultWithPostInfo {
 
-		     let sender =  ensure_signed(origin)?;
+		     let sender = ensure_signed(origin)?;
 
 			 let old_lockup_time = <TransferLockupTime<T>>::get();
 
@@ -250,7 +268,39 @@ pub mod pallet {
 			 Self::deposit_event(Event::LockupTimeChanged(sender, old_lockup_time, lockup_time, "Transfer".as_bytes().to_vec()));
 
 			 Ok(().into())
-		 }		 
+		 }	
+
+		 #[pallet::weight(10_000)]
+		 pub fn set_max_transfer_delay(origin: OriginFor<T>, new_max_transfer_delay: T::TransferDelay) -> DispatchResultWithPostInfo {
+            
+			ensure_signed(origin);
+
+			let min_transfer_delay = Self::min_transfer_delay();
+
+			ensure!(new_max_transfer_delay >= min_transfer_delay, Error::<T>::MaxTransferDelayBelowMinimum);
+
+			<MaxTransferDelay<T>>::put(new_max_transfer_delay);
+
+			Self::deposit_event(Event::MaxTransferDelayChanged(new_max_transfer_delay));
+
+			Ok(().into())
+		 }
+		 
+		 #[pallet::weight(10_000)]
+		 pub fn set_min_transfer_delay(origin: OriginFor<T>, new_min_transfer_delay: T::TransferDelay) -> DispatchResultWithPostInfo {
+            
+			ensure_signed(origin);
+
+			let max_transfer_delay = Self::max_transfer_delay();
+
+			ensure!(new_min_transfer_delay <= max_transfer_delay, Error::<T>::MinTransferDelayAboveMaximum);
+            
+			<MinTransferDelay<T>>::put(new_min_transfer_delay);
+
+			Self::deposit_event(Event::MinTransferDelayChanged(new_min_transfer_delay));
+
+			Ok(().into())
+		 }
 
 		 #[pallet::weight(10_000)]
 		 pub fn deposit(
@@ -259,7 +309,7 @@ pub mod pallet {
 			 asset_id: T::AssetId, 
 			 receive_address: T::AccountId, 
 			 remote_network_id: T::RemoteNetworkId,
-		 	 transfer_delay: T::Balance,
+		 	 transfer_delay: T::TransferDelay,
 			) -> DispatchResultWithPostInfo {
 
 			ensure_signed(origin)?;
@@ -271,13 +321,13 @@ pub mod pallet {
 			// ensure!(LastTransfer::<T>::)
 			// todo - add lastTransfer check, ? how to get block.timespamp
 
-			ensure!(transfer_delay <= T::MaxTransferDelay::get(), Error::<T>::TransferDelayAboveMaximum);
+			ensure!(transfer_delay <= <MaxTransferDelay<T>>::get(), Error::<T>::TransferDelayAboveMaximum);
 
-			ensure!(transfer_delay >= T::MinTransferDelay::get(), Error::<T>::TransferDelayBelowMinimum);
+			ensure!(transfer_delay >= <MinTransferDelay<T>>::get(), Error::<T>::TransferDelayBelowMinimum);
 
-			ensure!(transfer_delay <= Self::max_asset_transfer_size(asset_id), Error::<T>::TransferDelayAboveAssetMaximum);
+			ensure!(amount <= Self::max_asset_transfer_size(asset_id), Error::<T>::AmountAboveMaxAssetTransferSize);
 
-			ensure!(transfer_delay >= Self::min_asset_transfer_size(asset_id), Error::<T>::TransferDelayAboveBelowMaximum);
+			ensure!(amount >= Self::min_asset_transfer_size(asset_id), Error::<T>::AmountBelowMaxAssetTransferSize);
 
 			T::Currency::mint_into(asset_id, &receive_address,  amount).map_err(|_| Error::<T>::MintFailed)?;
 
