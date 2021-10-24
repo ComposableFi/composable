@@ -63,7 +63,7 @@ pub mod pallet {
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
 		type Conviction: Parameter;
-//		type DefaultAsset: CurrencyId::PICA;
+		//		type DefaultAsset: CurrencyId::PICA;
 		type Democracy: Democracy<
 			AccountId = Self::AccountId,
 			ReferendumIndex = pallet_democracy::ReferendumIndex,
@@ -139,9 +139,9 @@ pub mod pallet {
 			bribe: BribeIndex,
 			amount: u128,
 		) -> DispatchResult {
-			let who = ensure_signed(origin);
-
-			Mutatehold::release(CurrencyId::PICA, who, amount, false);
+			let who = ensure_signed(origin)?;
+			// todo more validate logic
+			T::Currency::release(CurrencyId::PICA, &who, amount, false);
 			//transfer(account_id, origin, amount);
 
 			todo!("Check token supply, if supply is less or same as asked for: release funds");
@@ -159,7 +159,7 @@ pub mod pallet {
 			let bribe_index = request.bribe_index;
 			let bribe_taken = <Self as Bribe>::take_bribe(request.clone())?;
 			let amount: u128 = 2; //request.balance; TEST
-			MutateHold::hold(CurrencyId::PICA, &who, amount); //Freeze assets
+			T::Currency::hold(CurrencyId::PICA, &who, amount); //Freeze assets
 			if bribe_taken {
 				Self::deposit_event(Event::BribeTaken { id: bribe_index, request });
 			}
