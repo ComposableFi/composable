@@ -5522,6 +5522,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-bribedao"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log 0.4.14",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-currency-factory",
+ "pallet-democracy",
+ "pallet-timestamp",
+ "pallet-vault",
+ "parity-scale-codec",
+ "plotters",
+ "primitives",
+ "proptest",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-bridge-dispatch"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.11#eb9f107e3a04687dcf80111563f2bcea7d5b15d3"

@@ -8,11 +8,12 @@ pub mod pallet {
 	use composable_traits::{bribe::Bribe, democracy::Democracy};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::fungibles::{MutateHold, Inspect, Transfer},
+		traits::fungibles::{Inspect, MutateHold, Transfer},
 	};
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
 	use pallet_democracy::Vote;
+	use primitives::currency::CurrencyId;
 	use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 
 	pub type BribeIndex = u32;
@@ -56,8 +57,13 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ Zero;
 
-		type Conviction: Parameter;
+		// Currency config supporting transfer, freezing and inspect
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
+			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
+			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
+		type Conviction: Parameter;
+		type DefaultAsset: CurrencyId::PICA;
 		type Democracy: Democracy<
 			AccountId = Self::AccountId,
 			ReferendumIndex = pallet_democracy::ReferendumIndex,
@@ -97,7 +103,6 @@ pub mod pallet {
 	pub(super) type BribeRequests<T: Config> =
 		StorageMap<_, Blake2_128Concat, BribeIndex, CreateBribeRequest<T>>;
 
-
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
@@ -111,21 +116,21 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-//		#[transactional]
-//		#[pallet::weight(10_000)]
-//		pub fn deposit_funds(
-//			origin: OriginFor<T>,
-//			bribe: BribeIndex,
-//			amount: u128,
-//		) -> DispatchResult {
-//			transfer(account_id, origin, amount);
-//			todo!("deposit_tokens into vault ");
+		//		#[transactional]
+		//		#[pallet::weight(10_000)]
+		//		pub fn deposit_funds(
+		//			origin: OriginFor<T>,
+		//			bribe: BribeIndex,
+		//			amount: u128,
+		//		) -> DispatchResult {
+		//			transfer(account_id, origin, amount);
+		//			todo!("deposit_tokens into vault ");
 
-//			todo!("transfer funds");
-//			todo!("Update token funds status");
+		//			todo!("transfer funds");
+		//			todo!("Update token funds status");
 
-//			Ok(())
-//		}
+		//			Ok(())
+		//		}
 
 		#[transactional]
 		#[pallet::weight(10_000)]
@@ -134,13 +139,13 @@ pub mod pallet {
 			bribe: BribeIndex,
 			amount: u128,
 		) -> DispatchResult {
-			let who = ensure_origin!(origin);
+			let who = ensure_signed(origin);
 
-			Mutatehold::release(asset, who, amount, false);
+			Mutatehold::release(CurrencyId::PICA, who, amount, false);
 			//transfer(account_id, origin, amount);
 
 			todo!("Check token supply, if supply is less or same as asked for: release funds");
-//			Error::<T>::EmptySupply;
+			//			Error::<T>::EmptySupply;
 			todo!("update capital status");
 			Ok(())
 		}
@@ -153,7 +158,8 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let bribe_index = request.bribe_index;
 			let bribe_taken = <Self as Bribe>::take_bribe(request.clone())?;
-			MutateHold::hold(asset, who, amount); //Freeze assets
+			let amount: u128 = 2; //request.balance; TEST
+			MutateHold::hold(CurrencyId::PICA, &who, amount); //Freeze assets
 			if bribe_taken {
 				Self::deposit_event(Event::BribeTaken { id: bribe_index, request });
 			}
