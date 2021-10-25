@@ -89,7 +89,9 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 	let body_string = req.body_string().await?;
 	let timestamp = req
 		.header("X-Slack-Request-Timestamp")
-		.ok_or_else(|| Error::from_str(400, "No `X-Slack-Request-Timestamp` in headers".to_string()))?
+		.ok_or_else(|| {
+			Error::from_str(400, "No `X-Slack-Request-Timestamp` in headers".to_string())
+		})?
 		.as_str();
 	// strip out "v0="
 	let signature = &req

@@ -104,15 +104,8 @@ async fn rotate_keys(port: Option<String>, key: String) -> Result<(), RpcError> 
 		transaction_payment::ChargeTransactionPayment::<rococo::Runtime>::from(0),
 	);
 
-	let additional = (
-		VERSION.spec_version,
-		VERSION.transaction_version,
-		genesis_hash,
-		genesis_hash,
-		(),
-		(),
-		(),
-	);
+	let additional =
+		(VERSION.spec_version, VERSION.transaction_version, genesis_hash, genesis_hash, (), (), ());
 
 	let payload = rococo::SignedPayload::from_raw(call, extra, additional);
 	let signature = payload.using_encoded(|payload| signer.sign(payload));
