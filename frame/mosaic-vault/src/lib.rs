@@ -24,7 +24,8 @@ pub mod pallet {
 		 }
 	};
 
-	use composable_traits::{loans::Timestamp};
+	use composable_traits::{loans::Timestamp, vault::{StrategicVault, Vault }};
+	
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -44,6 +45,7 @@ pub mod pallet {
 
 		type TransferDelay:  Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo;
 
+		type MosaicVault: StrategicVault + Vault;
 		// type Moment: Moment;
 
 		type AssetId: FullCodec
