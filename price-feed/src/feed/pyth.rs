@@ -241,6 +241,7 @@ impl PythFeed {
 		}
 
 		let handle = tokio::spawn(async move {
+			let _ = &pyth;
 			futures::future::join_all(pyth.handles).await;
 			Ok(())
 		});
