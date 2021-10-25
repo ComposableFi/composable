@@ -65,7 +65,7 @@ async fn rotate_keys(port: Option<String>, key: String) -> Result<(), RpcError> 
 	let signer = sr25519::Pair::from_string(&key, None).unwrap();
 	let account_id = MultiSigner::from(signer.public()).into_account();
 
-	let uri = format!("http://localhost:{}", port.unwrap_or("9933".into()));
+	let uri = format!("http://localhost:{}", port.unwrap_or_else(|| "9933".into()));
 	let author = http::connect::<AuthorClient<Hash, Hash>>(&uri).await.unwrap();
 	// first rotate, our keys.
 	let bytes = author.rotate_keys().await.unwrap();
@@ -107,8 +107,8 @@ async fn rotate_keys(port: Option<String>, key: String) -> Result<(), RpcError> 
 	let additional = (
 		VERSION.spec_version,
 		VERSION.transaction_version,
-		genesis_hash.clone(),
-		genesis_hash.clone(),
+		genesis_hash,
+		genesis_hash,
 		(),
 		(),
 		(),
@@ -168,8 +168,8 @@ async fn upgrade_runtime(wasm: Vec<u8>, key: String) -> Result<(), RpcError> {
 	let additional = (
 		picasso::VERSION.spec_version,
 		picasso::VERSION.transaction_version,
-		genesis_hash.clone(),
-		genesis_hash.clone(),
+		genesis_hash,
+		genesis_hash,
 		(),
 		(),
 		(),

@@ -78,7 +78,7 @@ async fn init() -> Arc<State> {
 	// connection to make rpc requests over
 	let channel = ws::connect::<RpcChannel>(&url).await.unwrap();
 	let (dali_chain, dali_system, dali_author) =
-		(channel.clone().into(), channel.clone().into(), channel.clone().into());
+		(channel.clone().into(), channel.clone().into(), channel.into());
 	Arc::new(State { dali_author, dali_chain, dali_system, signer, env })
 }
 
@@ -89,12 +89,12 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 	let body_string = req.body_string().await?;
 	let timestamp = req
 		.header("X-Slack-Request-Timestamp")
-		.ok_or_else(|| Error::from_str(400, format!("No `X-Slack-Request-Timestamp` in headers")))?
+		.ok_or_else(|| Error::from_str(400, "No `X-Slack-Request-Timestamp` in headers".to_string()))?
 		.as_str();
 	// strip out "v0="
 	let signature = &req
 		.header("X-Slack-Signature")
-		.ok_or_else(|| Error::from_str(400, format!("No `X-Slack-Signature` in headers")))?
+		.ok_or_else(|| Error::from_str(400, "No `X-Slack-Signature` in headers".to_string()))?
 		.as_str()[3..];
 
 	// Signing key from slack.
@@ -103,7 +103,7 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 	let preimage = format!("v0:{}:{}", timestamp, body_string);
 	mac.update(preimage.as_bytes());
 	mac.verify(&hex::decode(signature)?)
-		.map_err(|_| Error::from_str(400, format!("Invalid Signature")))?;
+		.map_err(|_| Error::from_str(400, "Invalid Signature".to_string()))?;
 	// message has been verified.
 
 	let SlackWebhook { user_id, text, user_name, .. } = serde_urlencoded::from_str(&body_string)?;
@@ -151,8 +151,8 @@ async fn enrich(address: picasso::Address, state: &State) -> Result<(), RpcError
 	let additional = (
 		picasso::VERSION.spec_version,
 		picasso::VERSION.transaction_version,
-		genesis_hash.clone(),
-		genesis_hash.clone(),
+		genesis_hash,
+		genesis_hash,
 		(),
 		(),
 		(),
@@ -161,7 +161,7 @@ async fn enrich(address: picasso::Address, state: &State) -> Result<(), RpcError
 	let call = picasso::Call::Balances(balances::Call::transfer {
 		dest: address,
 		// 1k dali
-		value: 1000_000_000_000_000,
+		value: 1_000_000_000_000_000,
 	});
 
 	let payload = picasso::SignedPayload::from_raw(call, extra, additional);
