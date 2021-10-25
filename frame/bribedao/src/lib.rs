@@ -48,15 +48,6 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		// REVIEW(oleksii): Balance traits; following are copied from pallet-vault
-		type AssetId: FullCodec
-			+ Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ Debug
-			+ Default
-			+ TypeInfo;
 
 		type Balance: Default
 			+ Parameter
@@ -71,9 +62,9 @@ pub mod pallet {
 			+ Zero;
 
 		// Currency config supporting transfer, freezing and inspect
-		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
-			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
-			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyId>
+			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyId>
+			+ InspectHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyId>;
 
 		type Conviction: Parameter;
 		//		type DefaultAsset: CurrencyId::PICA;
