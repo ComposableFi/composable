@@ -8,7 +8,9 @@ use frame_support::{
 	traits::{Currency, OnInitialize},
 };
 use pallet_balances::Error as BalancesError;
+use parking_lot::RwLock;
 use sp_core::offchain::{testing, OffchainDbExt, OffchainWorkerExt, TransactionPoolExt};
+use sp_io::TestExternalities;
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{Percent, RuntimeAppPublic};
 use std::sync::Arc;
@@ -170,7 +172,7 @@ fn do_request_price() {
 		// takes the cost
 		assert_eq!(Balances::free_balance(account_1), 99);
 		// True and request ID incremented
-		assert_eq!(Oracle::requested(1), true);
+		assert!(Oracle::requested(1));
 
 		// fails on invalid ID
 		assert_noop!(Oracle::do_request_price(&account_1, 2), Error::<Test>::InvalidAssetId);
@@ -180,7 +182,7 @@ fn do_request_price() {
 		assert_ok!(Oracle::do_request_price(&account_3, 1));
 
 		// True and request ID not incremented
-		assert_eq!(Oracle::requested(1), true);
+		assert!(Oracle::requested(1));
 	});
 }
 
@@ -451,7 +453,7 @@ fn on_init() {
 		assert_eq!(Oracle::prices(0), price);
 		// prunes state
 		assert_eq!(Oracle::pre_prices(0), vec![]);
-		assert_eq!(Oracle::requested(0), false);
+		assert!(!Oracle::requested(0));
 
 		// doesn't prune state if under min prices
 		assert_ok!(Oracle::do_request_price(&account_1, 0));
@@ -463,7 +465,7 @@ fn on_init() {
 
 		Oracle::on_initialize(3);
 		assert_eq!(Oracle::pre_prices(0).len(), 2);
-		assert_eq!(Oracle::requested(0), true);
+		assert!(Oracle::requested(0));
 	});
 }
 
@@ -566,12 +568,7 @@ fn prune_old_pre_prices_edgecase() {
 
 #[test]
 fn should_make_http_call_and_parse_result() {
-	let (offchain, state) = testing::TestOffchainExt::new();
-	let mut t = sp_io::TestExternalities::default();
-	t.register_extension(OffchainDbExt::new(offchain.clone()));
-	t.register_extension(OffchainWorkerExt::new(offchain));
-
-	price_oracle_response(&mut state.write(), "0");
+	let (mut t, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
 
 	t.execute_with(|| {
 		// when
@@ -581,28 +578,9 @@ fn should_make_http_call_and_parse_result() {
 	});
 }
 
-fn price_oracle_response(state: &mut testing::OffchainState, price_id: &str) {
-	let base: String = "http://localhost:3001/price/".to_owned();
-	let url = base + price_id;
-
-	state.expect_request(testing::PendingRequest {
-		method: "GET".into(),
-		uri: url,
-		response: Some(br#"{"0": 15523}"#.to_vec()),
-		sent: true,
-		..Default::default()
-	});
-}
-
 #[test]
 fn knows_how_to_mock_several_http_calls() {
-	let (offchain, state) = testing::TestOffchainExt::new();
-	let mut t = sp_io::TestExternalities::default();
-	t.register_extension(OffchainDbExt::new(offchain.clone()));
-	t.register_extension(OffchainWorkerExt::new(offchain));
-
-	{
-		let mut state = state.write();
+	let (mut t, _) = offchain_worker_env(|state| {
 		state.expect_request(testing::PendingRequest {
 			method: "GET".into(),
 			uri: "http://localhost:3001/price/0".into(),
@@ -626,7 +604,7 @@ fn knows_how_to_mock_several_http_calls() {
 			sent: true,
 			..Default::default()
 		});
-	}
+	});
 
 	t.execute_with(|| {
 		let price1 = Oracle::fetch_price(&0).unwrap();
@@ -641,26 +619,7 @@ fn knows_how_to_mock_several_http_calls() {
 
 #[test]
 fn should_submit_signed_transaction_on_chain() {
-	const PHRASE: &str =
-		"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
-
-	let (offchain, offchain_state) = testing::TestOffchainExt::new();
-	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
-	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap();
-
-	let mut t = sp_io::TestExternalities::default();
-	t.register_extension(OffchainDbExt::new(offchain.clone()));
-	t.register_extension(OffchainWorkerExt::new(offchain));
-	t.register_extension(TransactionPoolExt::new(pool));
-	t.register_extension(KeystoreExt(Arc::new(keystore)));
-
-	price_oracle_response(&mut offchain_state.write(), "0");
+	let (mut t, pool_state) = offchain_worker_env(|state| price_oracle_response(state, "0"));
 
 	t.execute_with(|| {
 		// when
@@ -677,26 +636,7 @@ fn should_submit_signed_transaction_on_chain() {
 #[test]
 #[should_panic = "Tx already submitted"]
 fn should_check_oracles_submitted_price() {
-	const PHRASE: &str =
-		"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
-
-	let (offchain, offchain_state) = testing::TestOffchainExt::new();
-	let (pool, _pool_state) = testing::TestTransactionPoolExt::new();
-	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap();
-
-	let mut t = sp_io::TestExternalities::default();
-	t.register_extension(OffchainDbExt::new(offchain.clone()));
-	t.register_extension(OffchainWorkerExt::new(offchain));
-	t.register_extension(TransactionPoolExt::new(pool));
-	t.register_extension(KeystoreExt(Arc::new(keystore)));
-
-	price_oracle_response(&mut offchain_state.write(), "0");
+	let (mut t, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
 
 	t.execute_with(|| {
 		let account_2 = get_account_2();
@@ -724,4 +664,44 @@ fn parse_price_works() {
 fn add_price_storage(price: u128, asset_id: u128, who: AccountId, block: u64) {
 	let price = PrePrice { price, block, who };
 	PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.push(price));
+}
+
+fn price_oracle_response(state: &mut testing::OffchainState, price_id: &str) {
+	let base: String = "http://localhost:3001/price/".to_owned();
+	let url = base + price_id;
+
+	state.expect_request(testing::PendingRequest {
+		method: "GET".into(),
+		uri: url,
+		response: Some(br#"{"0": 15523}"#.to_vec()),
+		sent: true,
+		..Default::default()
+	});
+}
+
+fn offchain_worker_env(
+	state_updater: fn(&mut testing::OffchainState),
+) -> (TestExternalities, Arc<RwLock<testing::PoolState>>) {
+	const PHRASE: &str =
+		"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
+
+	let (offchain, offchain_state) = testing::TestOffchainExt::new();
+	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
+	let keystore = KeyStore::new();
+	SyncCryptoStore::sr25519_generate_new(
+		&keystore,
+		crate::crypto::Public::ID,
+		Some(&format!("{}/hunter1", PHRASE)),
+	)
+	.unwrap();
+
+	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainDbExt::new(offchain.clone()));
+	t.register_extension(OffchainWorkerExt::new(offchain));
+	t.register_extension(TransactionPoolExt::new(pool));
+	t.register_extension(KeystoreExt(Arc::new(keystore)));
+
+	state_updater(&mut offchain_state.write());
+
+	(t, pool_state)
 }

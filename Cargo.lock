@@ -5995,6 +5995,7 @@ dependencies = [
  "log 0.4.14",
  "pallet-balances",
  "parity-scale-codec",
+ "parking_lot 0.11.2",
  "scale-info",
  "serde",
  "serde_json",

@@ -34,8 +34,9 @@ composable-traits = { path = "../composable-traits", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-serde = "1.0.119"
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+parking_lot = "0.11.2"
+serde = "1.0.119"
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 
 [features]
