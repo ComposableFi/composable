@@ -144,7 +144,7 @@ pub mod pallet {
 			amount: u128,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			ensure!(BribeRequests::<T>::get(bribe), Error::<T>::InvalidBribe); //Check if the bribe request is legit
+			ensure!(BribeRequests::<T>::contains_key(bribe), Error::<T>::InvalidBribe); //Check if the bribe request is legit
 			let og_request = BribeRequests::<T>::get(bribe).unwrap();
 			let amount = og_request.total_reward; // amount of tokens locked in
 			let currencyid = og_request.asset_id;
