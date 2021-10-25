@@ -9,6 +9,7 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::fungibles::{Inspect, InspectHold, MutateHold, Transfer},
+		transactional,
 	};
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
