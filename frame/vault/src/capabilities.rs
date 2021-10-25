@@ -1,10 +1,11 @@
 use bitflags::bitflags;
 use frame_support::pallet_prelude::*;
+use scale_info::TypeInfo;
 
 bitflags! {
 	/// Capabilities (or more accurately, `incapabilities`) restrict functionality of specific vault
 	/// instances.
-	#[derive(Encode, Decode)]
+	#[derive(Encode, Decode, TypeInfo)]
 	pub struct Capabilities: u32 {
 		/// Tomb-stoning a vault is schedules it for deletion.
 		const TOMBSTONED = 0b000000001;

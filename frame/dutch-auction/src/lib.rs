@@ -53,6 +53,7 @@ pub mod pallet {
 	use frame_system::{pallet_prelude::*, Account};
 	use num_traits::{CheckedDiv, SaturatingAdd, SaturatingSub, WrappingAdd};
 
+	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
@@ -73,7 +74,8 @@ pub mod pallet {
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ From<u128>
-			+ Default;
+			+ Default
+			+ TypeInfo;
 
 		type Balance: Default
 			+ Parameter
@@ -110,8 +112,8 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 			OrderId = Self::DexOrderId,
 		>;
-		type DexOrderId: FullCodec + Default;
-		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext;
+		type DexOrderId: FullCodec + Default + TypeInfo;
+		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext + TypeInfo;
 	}
 
 	#[pallet::event]
@@ -145,7 +147,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {}
 
 	/// auction can span several dex orders within its lifetime
-	#[derive(Encode, Decode, Default)]
+	#[derive(Encode, Decode, Default, TypeInfo)]
 	pub struct Order<DexOrderId, AccountId, AssetId, Balance> {
 		/// when auction was created(started)
 		pub started: Timestamp,
@@ -339,8 +341,8 @@ pub mod pallet {
 			})
 		}
 
-		fn get_auction_state(order: &Self::OrderId) -> Option<Self::Order> {
-			todo!()
+		fn get_auction_state(order_id: &Self::OrderId) -> Option<Self::Order> {
+			Orders::<T>::try_get(order_id).ok()
 		}
 	}
 }

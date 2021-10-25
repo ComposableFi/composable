@@ -67,7 +67,7 @@ mod tests {
 	use collator_selection::IdentityCollator;
 	use frame_support::{
 		ord_parameter_types, parameter_types,
-		traits::{FindAuthor, ValidatorRegistration},
+		traits::{Everything, FindAuthor, ValidatorRegistration},
 		PalletId,
 	};
 	use frame_system::{limits, EnsureRoot};
@@ -110,7 +110,7 @@ mod tests {
 	}
 
 	impl frame_system::Config for Test {
-		type BaseCallFilter = ();
+		type BaseCallFilter = Everything;
 		type Origin = Origin;
 		type Index = u64;
 		type BlockNumber = u64;
@@ -205,7 +205,7 @@ mod tests {
 		type ExistentialDeposits = ExistentialDeposits;
 		type OnDust = ();
 		type MaxLocks = ();
-		type DustRemovalWhitelist = ();
+		type DustRemovalWhitelist = Everything;
 	}
 
 	parameter_types! {

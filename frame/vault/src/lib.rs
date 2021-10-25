@@ -84,6 +84,7 @@ pub mod pallet {
 		ensure_root, ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig,
 	};
 	use num_traits::SaturatingSub;
+	use scale_info::TypeInfo;
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
 		traits::{
@@ -140,7 +141,8 @@ pub mod pallet {
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ Debug
-			+ Default;
+			+ Default
+			+ TypeInfo;
 
 		/// Generic Currency bounds. These functions are provided by the `[orml-tokens`](https://github.com/open-web3-stack/open-runtime-module-library/tree/HEAD/currencies) pallet.
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>

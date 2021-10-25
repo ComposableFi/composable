@@ -86,7 +86,6 @@ pub mod pallet {
 	pub type IsClaimable<T> = StorageValue<_, bool>;
 
 	#[pallet::event]
-	#[pallet::metadata(T::AccountId = "AccountId", CurrencyIdOf<T> = "CurrencyId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		Initiated(CurrencyIdOf<T>),
