@@ -5,7 +5,7 @@ use crate::{
 	mocks::{
 		new_test_ext, process_block, AccountId, Balance, BlockNumber, Lending, MockCurrencyId,
 		Oracle, Origin, Test, Tokens, Vault, VaultId, ALICE, BOB, CHARLIE, MILLISECS_PER_BLOCK,
-		MINIMUM_BALANCE,
+		MINIMUM_BALANCE, UNRESERVED,
 	},
 	models::BorrowerData,
 	Error, MarketIndex,
@@ -22,6 +22,7 @@ use frame_support::{
 };
 use pallet_vault::models::VaultInfo;
 use proptest::{prelude::*, test_runner::TestRunner};
+use sp_core::U256;
 use sp_runtime::{helpers_128bit::multiply_by_rational, FixedPointNumber, Percent, Perquintill};
 
 type BorrowAssetVault = VaultId;
@@ -39,7 +40,7 @@ fn create_simple_vault(
 		Deposit::Existential,
 		VaultConfig {
 			asset_id,
-			manager: ALICE,
+			manager: *ALICE,
 			reserved: Perquintill::from_percent(100),
 			strategies: [].iter().cloned().collect(),
 		},
@@ -76,7 +77,7 @@ fn create_simple_vaulted_market() -> ((MarketIndex, BorrowAssetVault), Collatera
 		create_market(
 			MockCurrencyId::BTC,
 			collateral_asset,
-			ALICE,
+			*ALICE,
 			DEFAULT_MARKET_VAULT_RESERVE,
 			NormalizedCollateralFactor::saturating_from_rational(200, 100),
 		),
@@ -89,7 +90,7 @@ fn create_simple_market() -> (MarketIndex, BorrowAssetVault) {
 	create_market(
 		MockCurrencyId::BTC,
 		MockCurrencyId::USDT,
-		ALICE,
+		*ALICE,
 		DEFAULT_MARKET_VAULT_RESERVE,
 		NormalizedCollateralFactor::saturating_from_rational(200, 100),
 	)
@@ -281,7 +282,7 @@ fn test_borrow_repay_in_same_block() {
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &CHARLIE, borrow_asset_deposit));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), borrow_asset_deposit);
-		assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault, borrow_asset_deposit));
+		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, borrow_asset_deposit));
 		let mut total_cash = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(borrow_asset_deposit);
 
 		// Allow the market to initialize it's account by withdrawing
@@ -368,7 +369,7 @@ fn test_borrow() {
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &CHARLIE, borrow_asset_deposit));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), borrow_asset_deposit);
-		assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault, borrow_asset_deposit));
+		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, borrow_asset_deposit));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
 
 		let alice_limit = Lending::get_borrow_limit(&market, &ALICE).unwrap();
@@ -425,7 +426,7 @@ fn test_vault_interactions() {
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, 1_000_000_000_000));
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, 1_000_000_000_000));
 
-		Vault::deposit(Origin::signed(ALICE), vault_id, 1_000_000_000).unwrap();
+		Vault::deposit(Origin::signed(*ALICE), vault_id, 1_000_000_000).unwrap();
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, 1_000_000_000));
 
 		<Vault as CapabilityVault>::stop(&vault_id).unwrap();
@@ -463,7 +464,7 @@ fn borrow_repay() {
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &CHARLIE, borrow_asset_deposit));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), borrow_asset_deposit);
-		assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault, borrow_asset_deposit));
+		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, borrow_asset_deposit));
 
 		// Allow the market to initialize it's account by withdrawing
 		// from the vault
@@ -523,7 +524,7 @@ fn test_liquidation() {
 		let (market, vault) = create_market(
 			MockCurrencyId::USDT,
 			MockCurrencyId::BTC,
-			ALICE,
+			*ALICE,
 			Perquintill::from_percent(10),
 			NormalizedCollateralFactor::saturating_from_rational(200, 100),
 		);
@@ -541,7 +542,7 @@ fn test_liquidation() {
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &CHARLIE, usdt_amt));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), usdt_amt);
-		assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault, usdt_amt));
+		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, usdt_amt));
 
 		// ALICE borrows
 		assert_eq!(Lending::borrow_balance_current(&market, &ALICE), Ok(Some(0)));
@@ -570,7 +571,7 @@ fn test_warn_soon_under_collaterized() {
 		let (market, vault) = create_market(
 			MockCurrencyId::USDT,
 			MockCurrencyId::BTC,
-			ALICE,
+			*ALICE,
 			Perquintill::from_percent(10),
 			NormalizedCollateralFactor::saturating_from_rational(200, 100),
 		);
@@ -588,7 +589,7 @@ fn test_warn_soon_under_collaterized() {
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &CHARLIE, usdt_amt));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), usdt_amt);
-		assert_ok!(Vault::deposit(Origin::signed(CHARLIE), vault, usdt_amt));
+		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, usdt_amt));
 
 		// Allow the market to initialize it's account by withdrawing
 		// from the vault
@@ -660,9 +661,15 @@ prop_compose! {
 		(max_accounts: usize, limit: Balance)
 		(balances in prop::collection::vec(MINIMUM_BALANCE..limit, 3..max_accounts))
 		 -> Vec<(AccountId, Balance)> {
-			((CHARLIE + 1)..balances.len() as AccountId)
-				.zip(balances)
-				.collect()
+			let mut result = Vec::with_capacity(balances.len());
+			let mut account = U256::from_little_endian(UNRESERVED.as_ref());
+			let mut buffer = [0; 32];
+			for balance in balances {
+				account += U256::one();
+				account.to_little_endian(&mut buffer);
+				result.push((AccountId::from_raw(buffer), balance))
+			};
+			result
 		}
 }
 
@@ -676,8 +683,12 @@ prop_compose! {
 
 prop_compose! {
 	fn strategy_account()
-		(x in (CHARLIE + 1)..AccountId::MAX) -> AccountId {
-			x
+		(x in u128::from(U256::from_little_endian(UNRESERVED.as_ref()).low_u64())..u128::MAX) -> AccountId {
+			let mut account = U256::from_little_endian(UNRESERVED.as_ref());
+			account += x.into();
+			let mut buffer = [0; 32];
+			account.to_little_endian(&mut buffer);
+			AccountId::from_raw(buffer)
 		}
 }
 
@@ -794,7 +805,7 @@ proptest! {
 			create_market(
 				MockCurrencyId::BTC,
 				lp_token_id,
-				ALICE,
+				*ALICE,
 				Perquintill::from_percent(10),
 				NormalizedCollateralFactor::saturating_from_rational(200, 100),
 			);
@@ -825,13 +836,13 @@ proptest! {
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, amount1));
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), amount1);
-			prop_assert_ok!(Vault::deposit(Origin::signed(ALICE), vault_id1, amount1));
+			prop_assert_ok!(Vault::deposit(Origin::signed(*ALICE), vault_id1, amount1));
 
 			// Bob lend an amount in market2 vault
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 0);
 			prop_assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &BOB, amount2));
 			prop_assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), amount2);
-			prop_assert_ok!(Vault::deposit(Origin::signed(BOB), vault_id2, amount2));
+			prop_assert_ok!(Vault::deposit(Origin::signed(*BOB), vault_id2, amount2));
 
 			// Allow the market to initialize it's account by withdrawing
 			// from the vault

@@ -1,0 +1,21 @@
+services:
+  dev:
+    container_name: node-template
+    image: composablefi/composable:latest
+    working_dir: /usr/src/app
+    ports:
+      - "8000:8000"
+    environment:
+      - CARGO_HOME=/usr/src/app/.cargo
+    volumes:
+      - .:/usr/src/app/composable
+      - type: bind
+        source: ./.local
+        target: /root/.local
+    command: cargo build --release
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.docker/config.json:/config.json
+    command: --interval 30
