@@ -11,7 +11,8 @@ pub mod pallet {
 	use frame_support::{
 		ensure,
 		pallet_prelude::*,
-		traits::fungibles::{Inspect, Mutate, Transfer}
+		traits::fungibles::{Inspect, Mutate, Transfer},
+		PalletId,
 	};
 
 	use frame_system::pallet_prelude::*;
@@ -24,12 +25,13 @@ pub mod pallet {
 		 }
 	};
 
-	use composable_traits::{loans::Timestamp, vault::{StrategicVault, Vault }};
+	use composable_traits::{loans::Timestamp, vault::{Deposit, StrategicVault, Vault, VaultConfig }};
 	
-
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
+
+	pub const PALLET_ID: PalletId = PalletId(*b"Liqudati");
 	
 	#[pallet::config]
     pub trait Config: frame_system::Config {
@@ -45,7 +47,13 @@ pub mod pallet {
 
 		type TransferDelay:  Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo;
 
-		type MosaicVault: StrategicVault + Vault;
+		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
+
+		type Vault: StrategicVault<
+			VaultId = Self::VaultId,
+			AssetId = <Self as Config>::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,>;
 		// type Moment: Moment;
 
 		type AssetId: FullCodec
@@ -77,6 +85,9 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type FeeFactor: Get<Self::Balance>;
+
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 	}
 	
 	#[pallet::storage]
@@ -402,9 +413,6 @@ pub mod pallet {
 
 			T::Currency::burn_from(asset_id, &destination_address,  amount).map_err(|_| Error::<T>::BurnFailed)?;
 
-   		
- 
-
 			///- toddo store deposit info info 
 			/// 
 			/// - send event 
@@ -412,9 +420,49 @@ pub mod pallet {
 
 			Ok(().into())
 		 }
+
+		#[pallet::weight(10_000)]
+		pub fn create_vault(
+			origin: OriginFor<T>,
+			asset_id: <T as Config>::AssetId,
+			reserved: Perquintill,
+		) -> DispatchResultWithPostInfo {
+
+			let sender = ensure_signed(origin)?;
+
+            let account = &Self::account_id();
+
+			T::Vault::create(
+				Deposit::Existential,
+				VaultConfig {
+					asset_id: asset_id,
+					reserved: reserved,
+					manager: sender,
+					strategies:account,
+				},
+			);
+
+			Ok(().into())
+		}
  	}
+
+	impl<T: Config> Pallet<T> {
+		fn account_id() -> T::AccountId {
+			T::PalletId::get().into_account()
+		}
+	}
 
  }
 
  
  
+//  #[derive(Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
+//  pub struct VaultConfig<AccountId, CurrencyId>
+//  where
+// 	 AccountId: core::cmp::Ord,
+//  {
+// 	 pub asset_id: CurrencyId,
+// 	 pub reserved: Perquintill,
+// 	 pub manager: AccountId,
+// 	 pub strategies: BTreeMap<AccountId, Perquintill>,
+//  }
