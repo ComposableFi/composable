@@ -178,6 +178,10 @@ pub mod pallet {
 			T::Balance,
 		),
 
+		MaxFeeChanged(
+			T::Balance,
+		),
+
 	}
 
 	#[allow(missing_docs)]
@@ -185,6 +189,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Minting failures result in `MintFailed`. In general this should never occur.
 		MintFailed,
+		/// 
+		BurnFailed,
 		///
 		MaxAssetTransferSizeBelowMinimum,
 		///
@@ -201,8 +207,12 @@ pub mod pallet {
 		MinTransferDelayAboveMaximum,
 		///
 	    MinFeeAboveFeeFactor,
+		///
+		MaxFeeAboveFeeFactor,
 		/// 
 		MinFeeAboveMaxFee,
+		/// 
+		MaxFeeBelowMinFee,
 	}
 
 
@@ -322,6 +332,22 @@ pub mod pallet {
 		 }
 
 		 #[pallet::weight(10_000)]
+		 pub fn set_max_fee(origin: OriginFor<T>, max_fee: T::Balance) -> DispatchResultWithPostInfo {
+			
+			ensure_signed(origin);
+            
+			ensure!(max_fee < T::FeeFactor::get(), Error::<T>::MaxFeeAboveFeeFactor);
+
+			ensure!(max_fee > Self::min_fee(), Error::<T>::MaxFeeBelowMinFee);
+
+            <MaxFee<T>>::put(max_fee);
+
+			Self::deposit_event(Event::MaxFeeChanged(max_fee));
+
+			Ok(().into())
+		 }
+
+		 #[pallet::weight(10_000)]
 		 pub fn set_min_fee(origin: OriginFor<T>, min_fee: T::Balance) -> DispatchResultWithPostInfo {
 			
 			ensure_signed(origin);
@@ -337,17 +363,25 @@ pub mod pallet {
 			Ok(().into())
 		 }
 
+		 /**
+		  * todo 
+		  * setFeeAddress
+		  *  getCurrentTokenLiquidity
+		  calculateFeePercentage
+		  withdrawTo
+		  */
+
 		 #[pallet::weight(10_000)]
 		 pub fn deposit(
 			 origin: OriginFor<T>, 
 			 amount: T:: Balance,
 			 asset_id: T::AssetId, 
-			 receive_address: T::AccountId, 
+			 destination_address: T::AccountId, 
 			 remote_network_id: T::RemoteNetworkId,
 		 	 transfer_delay: T::TransferDelay,
 			) -> DispatchResultWithPostInfo {
 
-			ensure_signed(origin)?;
+			let sender = ensure_signed(origin)?;
 			// ensure!(
 			// 	config.strategies.len() <= T::MaxStrategies::get(),
 			// 	Error::<T>::TooManyStrategies
@@ -364,7 +398,10 @@ pub mod pallet {
 
 			ensure!(amount >= Self::min_asset_transfer_size(asset_id), Error::<T>::AmountBelowMaxAssetTransferSize);
 
-			T::Currency::mint_into(asset_id, &receive_address,  amount).map_err(|_| Error::<T>::MintFailed)?;
+			T::Currency::burn_from(asset_id, &destination_address,  amount).map_err(|_| Error::<T>::BurnFailed)?;
+
+   		
+ 
 
 			///- toddo store deposit info info 
 			/// 
