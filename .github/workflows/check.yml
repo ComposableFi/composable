@@ -65,7 +65,10 @@ jobs:
           exit $total_exit_code
       - name: Remark
         run: |
-          yarn add remark-cli \
+          npm install yarn
+          ./node_modules/.bin/yarn --version
+          ./node_modules/.bin/yarn --help
+          ./node_modules/.bin/yarn add remark-cli \
             remark-lint-mdash-style \
             https://github.com/typeable/remark-validate-links#anchors \
             remark-preset-lint-recommended \
@@ -73,24 +76,7 @@ jobs:
 
           total_exit_code=0
           while IFS= read -r file; do
-              yarn run remark -f \
-                  -u validate-links \
-                  -u remark-lint-mdash-style \
-                  -u remark-lint-final-newline \
-                  -u remark-lint-list-item-bullet-indent \
-                  -u remark-lint-no-blockquote-without-marker \
-                  -u remark-lint-ordered-list-marker-style \
-                  -u remark-lint-no-literal-urls \
-                  -u remark-lint-hard-break-spaces \
-                  -u remark-lint-no-duplicate-definitions \
-                  -u remark-lint-no-heading-content-indent \
-                  -u remark-lint-no-inline-padding \
-                  -u remark-lint-no-shortcut-reference-image \
-                  -u remark-lint-no-shortcut-reference-link \
-                  -u remark-lint-no-undefined-references \
-                  -u remark-lint-no-unused-definitions \
-                  -u remark-lint-no-dead-urls \
-                  $file || total_exit_code=$?
+              yarn run remark -f $file || total_exit_code=$?
           done < <(find . -name "*.md" -not -path "*/node_modules/*" -not -path "./.github/*")
           exit $total_exit_code
       - name: Cargo clippy
