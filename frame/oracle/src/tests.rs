@@ -675,6 +675,39 @@ fn should_submit_signed_transaction_on_chain() {
 }
 
 #[test]
+#[should_panic = "Tx already submitted"]
+fn should_check_oracles_submitted_price() {
+	const PHRASE: &str =
+		"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
+
+	let (offchain, offchain_state) = testing::TestOffchainExt::new();
+	let (pool, _pool_state) = testing::TestTransactionPoolExt::new();
+	let keystore = KeyStore::new();
+	SyncCryptoStore::sr25519_generate_new(
+		&keystore,
+		crate::crypto::Public::ID,
+		Some(&format!("{}/hunter1", PHRASE)),
+	)
+	.unwrap();
+
+	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainDbExt::new(offchain.clone()));
+	t.register_extension(OffchainWorkerExt::new(offchain));
+	t.register_extension(TransactionPoolExt::new(pool));
+	t.register_extension(KeystoreExt(Arc::new(keystore)));
+
+	price_oracle_response(&mut offchain_state.write(), "0");
+
+	t.execute_with(|| {
+		let account_2 = get_account_2();
+
+		add_price_storage(100u128, 0, account_2, 0);
+		// when
+		Oracle::fetch_price_and_send_signed(&0).unwrap();
+	});
+}
+
+#[test]
 fn parse_price_works() {
 	let test_data = vec![
 		("{\"1\":6536.92}", Some(6536)),
