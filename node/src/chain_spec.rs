@@ -67,7 +67,6 @@ pub fn dali_chachacha() -> picasso::ChainSpec {
 		.expect("Dali chain spec not found!")
 }
 
-
 /// Picasso (Kusama parachain)
 pub fn picasso() -> picasso::ChainSpec {
 	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/picasso.json").to_vec())

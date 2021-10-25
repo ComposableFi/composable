@@ -6,8 +6,7 @@ use sha2::Sha256;
 use sp_core::{crypto::Ss58Codec, sr25519, Pair};
 use sp_rpc::{list::ListOrValue, number::NumberOrHex};
 use sp_runtime::{generic, generic::Era, traits::IdentifyAccount, MultiSigner};
-use std::str::FromStr;
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 use structopt::StructOpt;
 use substrate_frame_rpc_system::SystemApiClient;
 use tide::{prelude::*, Error, Request};
@@ -116,7 +115,7 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 
 	match enrich(address.into(), req.state()).await {
 		Err(e) => return Ok(format!("Error: {:?}", e).into()),
-		Ok(()) => {}
+		Ok(()) => {},
 	};
 
 	log::info!("Sent {} 1k Dali", user_name);
