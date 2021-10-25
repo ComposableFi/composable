@@ -20,13 +20,12 @@ frame-system = { default-features = false, git = "https://github.com/paritytech/
 pallet-democracy = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 pallet-vault = { default-features = false, path = "../vault", optional = true }
 plotters = { version = "0.3.1", optional = true }
-primitives = { path = "../../runtime/primitives", default-features = false }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-
+scale-info = { version = "1.0", default-features = false, features=["derive"]}
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 
 frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.11' }

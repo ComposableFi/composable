@@ -4,7 +4,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use codec::{Codec, FullCodec};
+	use codec::Codec;
 	use composable_traits::{bribe::Bribe, democracy::Democracy};
 	use frame_support::{
 		pallet_prelude::*,
@@ -13,12 +13,12 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
 	use pallet_democracy::Vote;
-	use primitives::currency::CurrencyId;
+	//	use primitives::currency::CurrencyId;
 	use sp_runtime::{
 		scale_info::TypeInfo,
 		traits::{AtLeast32BitUnsigned, Zero},
 	};
-	use sp_std::fmt::Debug;
+	//	use sp_std::fmt::Debug;
 
 	pub type BribeIndex = u32;
 
@@ -136,8 +136,8 @@ pub mod pallet {
 		//			Ok(())
 		//		}
 
-		#[transactional]
 		#[pallet::weight(10_000)]
+		#[transactional]
 		pub fn release_funds(
 			origin: OriginFor<T>,
 			bribe: BribeIndex,
@@ -150,9 +150,9 @@ pub mod pallet {
 			let currencyid = og_request.asset_id;
 			T::Currency::release(currencyid, &who, amount, false);
 
-			todo!("Check token supply, if supply is less or same as asked for: release funds");
+			//			todo!("Check token supply, if supply is less or same as asked for: release funds");
 			//			Error::<T>::EmptySupply;
-			todo!("update capital status");
+			//			todo!("update capital status");
 			Ok(())
 		}
 
