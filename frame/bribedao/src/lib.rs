@@ -144,8 +144,11 @@ pub mod pallet {
 			amount: u128,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			// todo more validate logic
-			T::Currency::release(CurrencyId::PICA, &who, amount, false);
+			ensure!(BribeRequests::<T>::get(bribe), Error::<T>::InvalidBribe); //Check if the bribe request is legit
+			let og_request = BribeRequests::<T>::get(bribe).unwrap();
+			let amount = og_request.total_reward; // amount of tokens locked in
+			let currencyid = og_request.asset_id;
+			T::Currency::release(currencyid, &who, amount, false);
 
 			todo!("Check token supply, if supply is less or same as asked for: release funds");
 			//			Error::<T>::EmptySupply;
