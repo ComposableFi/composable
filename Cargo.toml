@@ -9,4 +9,6 @@ members = [
     "runtime/picasso",
 	"runtime/common",
 	"runtime/primitives",
+	"utils/faucet-server",
+	"utils/parachain-utils"
 ]

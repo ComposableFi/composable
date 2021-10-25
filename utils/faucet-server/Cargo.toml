@@ -1,0 +1,35 @@
+[package]
+name = "faucet-server"
+version = "0.1.0"
+authors = ["Composable Developers"]
+homepage = "https://composable.finance"
+edition = "2018"
+
+[dependencies]
+tide = "0.16"
+async-std = { version = "1", features = ["attributes", "tokio1"] }
+serde = { version = "1", features = ["derive"] }
+structopt = "0.3.25"
+sha2 = "0.9.8"
+hmac = "0.11.0"
+serde_urlencoded = "0.7.0"
+hex = "0.4.3"
+url = "1.7"
+codec = { package = "parity-scale-codec", version = "2.2.0", default-features = false }
+env_logger = "0.8.4"
+log = "0.4.14"
+envy = "0.4"
+dotenv = "0.15.0"
+tokio = { version = "1.12.0", features  = ["macros", "rt-multi-thread"] }
+sp-runtime = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+substrate-frame-rpc-system = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+futures = { version = "0.3", features = ["compat"] }
+jsonrpc-core-client = { version = "18", features = ["ws"] }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+picasso = { package = "picasso-runtime", path = "../../runtime/picasso" }
+common = { package = "common", path = "../../runtime/common" }
