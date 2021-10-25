@@ -430,7 +430,7 @@ pub mod pallet {
 
 			let sender = ensure_signed(origin)?;
 
-            let account = &Self::account_id();
+            let account = Self::account_id();
 
 			T::Vault::create(
 				Deposit::Existential,
