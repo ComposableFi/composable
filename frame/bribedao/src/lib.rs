@@ -14,10 +14,11 @@ pub mod pallet {
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
 	use pallet_democracy::Vote;
 	use primitives::currency::CurrencyId;
-	use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
+	use sp_runtime::{
+		scale_info::TypeInfo,
+		traits::{AtLeast32BitUnsigned, Zero},
+	};
 	use sp_std::fmt::Debug;
-	use sp_runtime::scale_info::TypeInfo;
-
 
 	pub type BribeIndex = u32;
 
@@ -48,7 +49,6 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -67,7 +67,7 @@ pub mod pallet {
 			+ InspectHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyId>;
 
 		type Conviction: Parameter;
-		//		type DefaultAsset: CurrencyId::PICA;
+
 		type Democracy: Democracy<
 			AccountId = Self::AccountId,
 			ReferendumIndex = pallet_democracy::ReferendumIndex,
@@ -146,7 +146,6 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			// todo more validate logic
 			T::Currency::release(CurrencyId::PICA, &who, amount, false);
-			//transfer(account_id, origin, amount);
 
 			todo!("Check token supply, if supply is less or same as asked for: release funds");
 			//			Error::<T>::EmptySupply;
@@ -162,8 +161,11 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let bribe_index = request.bribe_index;
 			let bribe_taken = <Self as Bribe>::take_bribe(request.clone())?;
-			let amount: u128 = 2; //request.balance; TEST
-			T::Currency::hold(CurrencyId::PICA, &who, amount); //Freeze assets
+			let og_request = BribeRequests::<T>::get(request.bribe_index).unwrap(); // should be saved in the create bribe request, if its not then there is a logic error
+																		// somewhere, so unwrap should be okey to use
+			let amount = og_request.total_reward; // amount of tokens locked in
+			let currencyid = og_request.asset_id;
+			T::Currency::hold(currencyid, &who, amount); //Freeze assets
 			if bribe_taken {
 				Self::deposit_event(Event::BribeTaken { id: bribe_index, request });
 			}
