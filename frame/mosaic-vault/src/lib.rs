@@ -5,6 +5,8 @@
 
 pub use pallet::*;
 
+
+
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -21,7 +23,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use sp_runtime::{
          traits::{
-			AtLeast32BitUnsigned, Convert, AccountIdConversion, Saturating
+			AtLeast32BitUnsigned, Convert, AccountIdConversion, Saturating, CheckedSub
 		 },
 		  Perquintill,
 	};
@@ -44,7 +46,7 @@ pub mod pallet {
 
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 
-		type Balance: Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo;
+		type Balance: Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo + CheckedSub;
 
 		type TransferDelay:  Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo;
 
@@ -84,12 +86,27 @@ pub mod pallet {
 			+ Default
 			+ TypeInfo;
 
+		type DepositId: FullCodec
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ TypeInfo;
+
 		#[pallet::constant]
 		type FeeFactor: Get<Self::Balance>;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 	}
+
+	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
+	pub struct DepositInfo<AssetId, Balance > {
+        pub asset_id: AssetId,
+		pub amount: Balance,
+	}  
 	
 	#[pallet::storage]
 	#[pallet::getter(fn remote_asset_id)]
@@ -130,7 +147,27 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn asset_vault)]
 	pub(super) type AssetVault<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::VaultId, ValueQuery>;
-	
+
+	#[pallet::storage]
+	#[pallet::getter(fn has_been_withdrawn)]
+	pub(super) type HasBeenWithdrawn<T: Config> = StorageMap<_, Blake2_128Concat, T::DepositId, bool, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn has_been_unlocked)]
+	pub(super) type HasBeenUnlocked<T: Config> = StorageMap<_, Blake2_128Concat, T::DepositId, bool, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn has_been_completed)]
+	pub(super) type HasBeenCompleted<T: Config> = StorageMap<_, Blake2_128Concat, T::DepositId, bool, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn in_transfer_funds)]
+	pub(super) type InTransferFunds<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::Balance, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn deposits)]
+	pub(super) type Deposits<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, DepositInfo<T::AssetId, T::Balance>, ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
  	pub enum Event<T: Config> {
@@ -205,7 +242,13 @@ pub mod pallet {
 			T::AssetId, // asset id
 			T::VaultId, // vault id
 			Perquintill, // reserved factor
-		)
+		),
+
+		TransferFundsUnlocked(
+			T::AssetId, 
+			T::Balance, 
+			T::DepositId
+		),
 
 	}
 
@@ -215,7 +258,7 @@ pub mod pallet {
 		/// Minting failures result in `MintFailed`. In general this should never occur.
 		MintFailed,
 		/// 
-		BurnFailed,
+		DepositFailed,
 		///
 		MaxAssetTransferSizeBelowMinimum,
 		///
@@ -238,6 +281,12 @@ pub mod pallet {
 		MinFeeAboveMaxFee,
 		/// 
 		MaxFeeBelowMinFee,
+
+		AlreadCompleted,
+
+		InsufficientFunds,
+
+		Underflow,
 	}
 
 
@@ -399,7 +448,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn deposit(
 			 origin: OriginFor<T>, 
-			 amount: T:: Balance,
+			 amount: T::Balance,
 			 asset_id: T::AssetId, 
 			 destination_address: T::AccountId, 
 			 remote_network_id: T::RemoteNetworkId,
@@ -423,9 +472,13 @@ pub mod pallet {
 
 			ensure!(amount >= Self::min_asset_transfer_size(asset_id), Error::<T>::AmountBelowMaxAssetTransferSize);
 
-			T::Currency::burn_from(asset_id, &destination_address,  amount).map_err(|_| Error::<T>::BurnFailed)?;
+			let vault_id = <AssetVault<T>>::get(asset_id);
 
-			
+			let pallet_account_id = Self::account_id();
+
+			T::Vault::deposit(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::DepositFailed)?;
+
+			//T::Currency::burn_from(asset_id, &destination_address,  amount).map_err(|_| Error::<T>::BurnFailed)?;
 
 			///- toddo store deposit info info 
 			/// 
@@ -434,6 +487,20 @@ pub mod pallet {
 
 			Ok(().into())
 		 }
+
+		 #[pallet::weight(10_000)]
+		 pub fn withdraw(
+			origin: OriginFor<T>, 
+			receiving_account: T::AccountId,
+			asset_id: T::AssetId, 
+			remote_netword_id: T::RemoteNetworkId,
+	        deposit_id: T::DepositId,
+		 ) -> DispatchResultWithPostInfo {
+
+
+			 Ok(().into())
+		 }
+
 
 		 #[pallet::weight(10_000)]
 		 pub fn create_vault(
@@ -451,7 +518,7 @@ pub mod pallet {
 				 VaultConfig {
 					 asset_id: asset_id,
 					 reserved: reserved,
-					 manager: sender,
+					 manager: sender.clone(),
 					 strategies:[(account, Perquintill::one().saturating_sub(reserved))]
 					 .iter()
 					 .cloned()
@@ -459,12 +526,40 @@ pub mod pallet {
 				 },
 			 )?;
  
-		 	<AssetVault<T>>::insert(asset_id, vault_id);
+		 	<AssetVault<T>>::insert(asset_id, &vault_id);
  
 		 	Self::deposit_event(Event::VaultCreated(sender, asset_id, vault_id, reserved));
  
 			 Ok(().into())
 		 }
+
+		 #[pallet::weight(10_000)]
+		 pub fn unlock_in_transfer_funds(
+			origin: OriginFor<T>,
+			asset_id: T:: AssetId,
+			amount: T::Balance,
+			deposit_id: T::DepositId,
+		 ) ->DispatchResultWithPostInfo {
+			
+			ensure!(Self::has_been_completed(deposit_id) == false, Error::<T>::AlreadCompleted);
+
+			ensure!(Self::in_transfer_funds(asset_id) >= amount, Error::<T>::InsufficientFunds);
+
+			let deposit = Self::deposits(asset_id);
+
+			ensure!(deposit.asset_id == asset_id && deposit.amount == amount, Error::<T>::InsufficientFunds);
+
+			<HasBeenCompleted<T>>::insert(deposit_id, true);
+
+	       let new_intransfer_funds = Self::in_transfer_funds(asset_id).checked_sub(&amount).ok_or(Error::<T>::Underflow)?;
+
+		   <InTransferFunds<T>>::insert(asset_id, amount);
+
+		   Self::deposit_event(Event::TransferFundsUnlocked(asset_id, amount, deposit_id));
+	
+			Ok(().into())
+		 }
+	
  	}
 
 	impl<T: Config> Pallet<T> {
@@ -473,9 +568,10 @@ pub mod pallet {
 		}
 	}
 
+
  }
 
- 
+
  
 //  #[derive(Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 //  pub struct VaultConfig<AccountId, CurrencyId>
