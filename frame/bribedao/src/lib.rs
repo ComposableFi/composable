@@ -1,6 +1,7 @@
 //Bribe DAO
 
 pub use pallet::*;
+pub mod vecstorage;
 
 #[frame_support::pallet]
 pub mod pallet {
