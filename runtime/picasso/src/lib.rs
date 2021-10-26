@@ -203,7 +203,7 @@ parameter_types! {
 impl aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
-	type MaxAuthorities = ();
+	type MaxAuthorities = MaxAuthorities;
 }
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}

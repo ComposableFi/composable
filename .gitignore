@@ -29,3 +29,4 @@ scripts/polkadot-launch/bin/polkadot
 scripts/polkadot-launch/*.log
 
 target
+.env
