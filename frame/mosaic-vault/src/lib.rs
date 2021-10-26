@@ -21,17 +21,18 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use sp_runtime::{
          traits::{
-			AtLeast32BitUnsigned, Convert
-		 }
+			AtLeast32BitUnsigned, Convert, AccountIdConversion, Saturating
+		 },
+		  Perquintill,
 	};
 
 	use composable_traits::{loans::Timestamp, vault::{Deposit, StrategicVault, Vault, VaultConfig }};
+
+	// use sp_runtime::traits::AccountIdConversion;
 	
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
-
-	pub const PALLET_ID: PalletId = PalletId(*b"Liqudati");
 	
 	#[pallet::config]
     pub trait Config: frame_system::Config {
@@ -125,6 +126,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn min_fee)]
 	pub(super) type MinFee<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn asset_vault)]
+	pub(super) type AssetVault = StorageMape<_, Blake2_128Concat, T::AssetId,  T::AccountId, ValueQuery>;
 	
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -194,6 +199,13 @@ pub mod pallet {
 		MaxFeeChanged(
 			T::Balance,
 		),
+
+		VaultCreated(
+			T:: AccountId, // asset manager
+			T::AssetId, // asset id
+			T::AccountId, // vault id
+			Perquintill, // reserved factor
+		)
 
 	}
 
@@ -432,15 +444,22 @@ pub mod pallet {
 
             let account = Self::account_id();
 
-			T::Vault::create(
+			let vault_id = T::Vault::create(
 				Deposit::Existential,
 				VaultConfig {
 					asset_id: asset_id,
 					reserved: reserved,
 					manager: sender,
-					strategies:account,
+					strategies:[(account, Perquintill::one().saturating_sub(reserved))]
+					.iter()
+					.cloned()
+					.collect(),
 				},
 			);
+
+			<AssetVault<T>>::insert(account, vault_id);
+
+			Self::deposit_event(Event::VaultCreated(sender, asset_id, vault_id, reserved));
 
 			Ok(().into())
 		}
