@@ -129,7 +129,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn asset_vault)]
-	pub(super) type AssetVault = StorageMape<_, Blake2_128Concat, T::AssetId,  T::AccountId, ValueQuery>;
+	pub(super) type AssetVault<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::VaultId, ValueQuery>;
 	
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -203,7 +203,7 @@ pub mod pallet {
 		VaultCreated(
 			T:: AccountId, // asset manager
 			T::AssetId, // asset id
-			T::AccountId, // vault id
+			T::VaultId, // vault id
 			Perquintill, // reserved factor
 		)
 
@@ -425,6 +425,8 @@ pub mod pallet {
 
 			T::Currency::burn_from(asset_id, &destination_address,  amount).map_err(|_| Error::<T>::BurnFailed)?;
 
+			
+
 			///- toddo store deposit info info 
 			/// 
 			/// - send event 
@@ -433,36 +435,36 @@ pub mod pallet {
 			Ok(().into())
 		 }
 
-		#[pallet::weight(10_000)]
-		pub fn create_vault(
-			origin: OriginFor<T>,
-			asset_id: <T as Config>::AssetId,
-			reserved: Perquintill,
-		) -> DispatchResultWithPostInfo {
-
-			let sender = ensure_signed(origin)?;
-
-            let account = Self::account_id();
-
-			let vault_id = T::Vault::create(
-				Deposit::Existential,
-				VaultConfig {
-					asset_id: asset_id,
-					reserved: reserved,
-					manager: sender,
-					strategies:[(account, Perquintill::one().saturating_sub(reserved))]
-					.iter()
-					.cloned()
-					.collect(),
-				},
-			);
-
-			<AssetVault<T>>::insert(asset_id, vault_id);
-
-			Self::deposit_event(Event::VaultCreated(sender, asset_id, vault_id, reserved));
-
-			Ok(().into())
-		}
+		 #[pallet::weight(10_000)]
+		 pub fn create_vault(
+			 origin: OriginFor<T>,
+			 asset_id: <T as Config>::AssetId,
+			 reserved: Perquintill,
+		 ) -> DispatchResultWithPostInfo {
+ 
+			 let sender = ensure_signed(origin)?;
+ 
+			 let account = Self::account_id();
+ 
+			 let vault_id = T::Vault::create(
+				 Deposit::Existential,
+				 VaultConfig {
+					 asset_id: asset_id,
+					 reserved: reserved,
+					 manager: sender,
+					 strategies:[(account, Perquintill::one().saturating_sub(reserved))]
+					 .iter()
+					 .cloned()
+					 .collect(),
+				 },
+			 )?;
+ 
+		 	<AssetVault<T>>::insert(asset_id, vault_id);
+ 
+		 	Self::deposit_event(Event::VaultCreated(sender, asset_id, vault_id, reserved));
+ 
+			 Ok(().into())
+		 }
  	}
 
 	impl<T: Config> Pallet<T> {
