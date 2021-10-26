@@ -36,10 +36,20 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
+      - name: Install toolchain
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y
+          source $HOME/.cargo/env
+          rustup default stable
+          rustup update nightly
+          rustup update stable
+          rustup target add wasm32-unknown-unknown --toolchain nightly
+
       - name: Build and Push Artifacts to gcloud
         run: |
           /home/runner/.cargo/bin/cargo build --release -p composable
           gsutil cp composable/target/release/composable gs://composable-binaries/releases/client/v0.1.0/
+
 
       - name: Set up Docker Build
         run: |
