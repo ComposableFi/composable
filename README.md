@@ -1,4 +1,4 @@
-# Picasso Composable Node     
+# Composable Node     
 <p align="center">
   <img src="https://uploads-ssl.webflow.com/600b1c51927516f998803ed6/612112cbe809145e51140850_composable.svg" width="500">
 </p>
