@@ -5,21 +5,6 @@ on:
       - 'release/**'
 
 jobs:
-  release-on-push:
-    runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-    steps:
-      - id: release
-        uses: rymndhng/release-on-push-action@master
-        with:
-          bump_version_scheme: major # if PR contains "release:major; release:minor or release:patch" - this is overwritten
-          tag_prefix: v 
-        #   release_body: "When set, adds extra text to body!" #you can customize the release body
-
   docker-build:
     runs-on: 
       - self-hosted
@@ -53,7 +38,7 @@ jobs:
 
       - name: Build and Push Artifacts to gcloud
         run: |
-          /home/composable/.cargo/bin/cargo build --release -p composable
+          /home/runner/.cargo/bin/cargo build --release -p composable
           gsutil cp composable/target/release/composable gs://composable-binaries/releases/client/v0.1.0/
 
       - name: Set up Docker Build
