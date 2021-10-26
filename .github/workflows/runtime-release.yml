@@ -2,7 +2,7 @@ name: Runtime Release
 on:
   push:
     branches:
-      - 'runtime-release/**'
+      - 'release/**'
 
 jobs:
   release-on-push:
