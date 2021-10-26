@@ -1,5 +1,6 @@
 use frame_support::pallet_prelude::*;
 use sp_runtime::RuntimeDebug;
+use scale_info::TypeInfo;
 
 pub trait Bribe {
 	type Balance;
