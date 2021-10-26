@@ -26,7 +26,6 @@ pub enum Main {
 
 #[derive(Deserialize, Debug)]
 struct Env {
-	slack_signing_key: String,
 	root_key: String,
 	rpc_node: String,
 }
