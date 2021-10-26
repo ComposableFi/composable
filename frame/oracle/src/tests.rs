@@ -8,7 +8,7 @@ use frame_support::{
 	traits::{Currency, OnInitialize},
 };
 use pallet_balances::Error as BalancesError;
-use sp_core::offchain::{testing, OffchainWorkerExt, TransactionPoolExt};
+use sp_core::offchain::{testing, OffchainDbExt, OffchainWorkerExt, TransactionPoolExt};
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{Percent, RuntimeAppPublic};
 use std::sync::Arc;
@@ -171,7 +171,6 @@ fn do_request_price() {
 		assert_eq!(Balances::free_balance(account_1), 99);
 		// True and request ID incremented
 		assert_eq!(Oracle::requested(1), true);
-		assert_eq!(Oracle::request_id(1), 1);
 
 		// fails on invalid ID
 		assert_noop!(Oracle::do_request_price(&account_1, 2), Error::<Test>::InvalidAssetId);
@@ -182,7 +181,6 @@ fn do_request_price() {
 
 		// True and request ID not incremented
 		assert_eq!(Oracle::requested(1), true);
-		assert_eq!(Oracle::request_id(1), 1);
 	});
 }
 
@@ -567,10 +565,10 @@ fn prune_old_pre_prices_edgecase() {
 }
 
 #[test]
-#[should_panic = "local_storage_get can be called only in the offchain call context with\n\t\t\t\tOffchainDb extension"]
 fn should_make_http_call_and_parse_result() {
 	let (offchain, state) = testing::TestOffchainExt::new();
 	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainDbExt::new(offchain.clone()));
 	t.register_extension(OffchainWorkerExt::new(offchain));
 
 	price_oracle_response(&mut state.write(), "0");
@@ -585,46 +583,46 @@ fn should_make_http_call_and_parse_result() {
 
 fn price_oracle_response(state: &mut testing::OffchainState, price_id: &str) {
 	let base: String = "http://localhost:3001/price/".to_owned();
-	let url = base + price_id + "/0";
+	let url = base + price_id;
 
 	state.expect_request(testing::PendingRequest {
 		method: "GET".into(),
 		uri: url,
-		response: Some(br#"{"USD": 155.23}"#.to_vec()),
+		response: Some(br#"{"0": 15523}"#.to_vec()),
 		sent: true,
 		..Default::default()
 	});
 }
 
 #[test]
-#[should_panic = "local_storage_get can be called only in the offchain call context with\n\t\t\t\tOffchainDb extension"]
 fn knows_how_to_mock_several_http_calls() {
 	let (offchain, state) = testing::TestOffchainExt::new();
 	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainDbExt::new(offchain.clone()));
 	t.register_extension(OffchainWorkerExt::new(offchain));
 
 	{
 		let mut state = state.write();
 		state.expect_request(testing::PendingRequest {
 			method: "GET".into(),
-			uri: "http://localhost:3001/price/0/0".into(),
-			response: Some(br#"{"USD": 1}"#.to_vec()),
+			uri: "http://localhost:3001/price/0".into(),
+			response: Some(br#"{"0": 100}"#.to_vec()),
 			sent: true,
 			..Default::default()
 		});
 
 		state.expect_request(testing::PendingRequest {
 			method: "GET".into(),
-			uri: "http://localhost:3001/price/0/0".into(),
-			response: Some(br#"{"USD": 2}"#.to_vec()),
+			uri: "http://localhost:3001/price/0".into(),
+			response: Some(br#"{"0": 200}"#.to_vec()),
 			sent: true,
 			..Default::default()
 		});
 
 		state.expect_request(testing::PendingRequest {
 			method: "GET".into(),
-			uri: "http://localhost:3001/price/0/0".into(),
-			response: Some(br#"{"USD": 3}"#.to_vec()),
+			uri: "http://localhost:3001/price/0".into(),
+			response: Some(br#"{"0": 300}"#.to_vec()),
 			sent: true,
 			..Default::default()
 		});
@@ -642,7 +640,6 @@ fn knows_how_to_mock_several_http_calls() {
 }
 
 #[test]
-#[should_panic = "local_storage_get can be called only in the offchain call context with\n\t\t\t\tOffchainDb extension"]
 fn should_submit_signed_transaction_on_chain() {
 	const PHRASE: &str =
 		"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
@@ -658,6 +655,7 @@ fn should_submit_signed_transaction_on_chain() {
 	.unwrap();
 
 	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainDbExt::new(offchain.clone()));
 	t.register_extension(OffchainWorkerExt::new(offchain));
 	t.register_extension(TransactionPoolExt::new(pool));
 	t.register_extension(KeystoreExt(Arc::new(keystore)));
@@ -673,6 +671,39 @@ fn should_submit_signed_transaction_on_chain() {
 		let tx = Extrinsic::decode(&mut &*tx).unwrap();
 		assert_eq!(tx.signature.unwrap().0, 0);
 		assert_eq!(tx.call, Call::Oracle(crate::Call::submit_price { price: 15523, asset_id: 0 }));
+	});
+}
+
+#[test]
+#[should_panic = "Tx already submitted"]
+fn should_check_oracles_submitted_price() {
+	const PHRASE: &str =
+		"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
+
+	let (offchain, offchain_state) = testing::TestOffchainExt::new();
+	let (pool, _pool_state) = testing::TestTransactionPoolExt::new();
+	let keystore = KeyStore::new();
+	SyncCryptoStore::sr25519_generate_new(
+		&keystore,
+		crate::crypto::Public::ID,
+		Some(&format!("{}/hunter1", PHRASE)),
+	)
+	.unwrap();
+
+	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainDbExt::new(offchain.clone()));
+	t.register_extension(OffchainWorkerExt::new(offchain));
+	t.register_extension(TransactionPoolExt::new(pool));
+	t.register_extension(KeystoreExt(Arc::new(keystore)));
+
+	price_oracle_response(&mut offchain_state.write(), "0");
+
+	t.execute_with(|| {
+		let account_2 = get_account_2();
+
+		add_price_storage(100u128, 0, account_2, 0);
+		// when
+		Oracle::fetch_price_and_send_signed(&0).unwrap();
 	});
 }
 

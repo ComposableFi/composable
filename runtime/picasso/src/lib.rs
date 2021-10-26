@@ -59,10 +59,10 @@ use system::{
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds,
-	LocationInverter, NativeAsset, ParentAsSuperuser, ParentIsDefault, RelayChainAsNative,
-	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin,
+	FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser, ParentIsDefault,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 };
 use xcm_executor::XcmExecutor;
 
@@ -468,7 +468,19 @@ parameter_types! {
 	pub const MaxInstructions: u32 = 100;
 }
 
-pub type Barrier = (TakeWeightCredit, AllowTopLevelPaidExecutionFrom<Everything>);
+// For test purposes.
+match_type! {
+	pub type SpecParachain: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: X1(Parachain(2000)) } |
+			MultiLocation { parents: 1, interior: X1(Parachain(2001)) }
+	};
+}
+
+pub type Barrier = (
+	TakeWeightCredit,
+	AllowTopLevelPaidExecutionFrom<Everything>,
+	AllowUnpaidExecutionFrom<SpecParachain>,
+);
 
 pub struct XcmConfig;
 
@@ -840,6 +852,7 @@ impl lending::Config for Runtime {
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
+	type AuthorityId = lending::crypto::TestAuthId;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 }
 
@@ -905,6 +918,21 @@ impl liquidations::Config for Runtime {
 	type UnixTime = Timestamp;
 	type Lending = Lending;
 	type DutchAuction = Auctions;
+}
+
+impl ping::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type Call = Call;
+	type XcmSender = XcmRouter;
+}
+
+// For test purposes.
+impl cumulus_ping::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type Call = Call;
+	type XcmSender = XcmRouter;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -976,6 +1004,10 @@ construct_runtime!(
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
 		Liquidations: liquidations::{Pallet, Call, Event<T>} = 56,
 		Auctions: dutch_auction::{Pallet, Event<T>} = 57,
+		Ping: ping::{Pallet, Call, Storage, Event<T>} = 58,
+
+		Spambot: cumulus_ping::{Pallet, Call, Storage, Event<T>} = 90,
+
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
