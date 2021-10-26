@@ -48,7 +48,9 @@ jobs:
       - name: Build and Push Artifacts to gcloud
         run: |
           /home/runner/.cargo/bin/cargo build --release -p composable
+          /home/runner/.cargo/bin/cargo build --release -p parachain-utils
           gsutil cp target/release/composable gs://composable-binaries/releases/client/v0.1.0/ 
+          gsutil cp target/release/parachain-utils gs://composable-binaries/releases/client/v0.1.0/ 
 
 
       - name: Set up Docker Build
