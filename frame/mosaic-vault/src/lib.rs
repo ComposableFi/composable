@@ -457,7 +457,7 @@ pub mod pallet {
 				},
 			);
 
-			<AssetVault<T>>::insert(account, vault_id);
+			<AssetVault<T>>::insert(asset_id, vault_id);
 
 			Self::deposit_event(Event::VaultCreated(sender, asset_id, vault_id, reserved));
 
