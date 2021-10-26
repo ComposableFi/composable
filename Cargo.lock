@@ -6700,6 +6700,7 @@ name = "parachain-utils"
 version = "0.1.0"
 dependencies = [
  "common",
+ "envy",
  "frame-system",
  "futures 0.3.17",
  "jsonrpc-core-client",
@@ -6713,6 +6714,7 @@ dependencies = [
  "polkadot-core-primitives 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
  "rococo-runtime",
  "sc-rpc",
+ "serde",
  "sp-core",
  "sp-rpc",
  "sp-runtime",

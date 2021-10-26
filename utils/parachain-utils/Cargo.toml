@@ -31,6 +31,8 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 
 tokio = {version = "1", features = ["full"]}
 codec = { package = "parity-scale-codec", version = "2.2.0", default-features = false }
+envy = "0.4.2"
+serde = { version = "1", features = ["derive"] }
 
 picasso = { package = "picasso-runtime", path = "../../runtime/picasso" }
 common = { package = "common", path = "../../runtime/common" }

@@ -1,11 +1,9 @@
 use codec::{Decode, Encode};
-use jsonrpc_core_client::{
-	transports::{http, ws},
-	RpcError,
-};
+use jsonrpc_core_client::{transports::ws, RpcChannel, RpcError};
 use polkadot_core_primitives::{AccountId, AccountIndex, BlockNumber, Hash, Header};
 use rococo::{Call, SessionKeys, SignedBlock, VERSION};
 use sc_rpc::{author::AuthorClient, chain::ChainClient};
+use serde::Deserialize;
 use sp_core::{sr25519, Pair};
 use sp_rpc::{list::ListOrValue, number::NumberOrHex};
 use sp_runtime::{generic, generic::Era, traits::IdentifyAccount, MultiSigner};
@@ -14,64 +12,77 @@ use structopt::StructOpt;
 use substrate_frame_rpc_system::SystemApiClient;
 
 type RococoChain = ChainClient<BlockNumber, Hash, Header, SignedBlock>;
-type DaliChain = ChainClient<
-	common::BlockNumber,
-	common::Hash,
-	picasso::Header,
-	generic::SignedBlock<picasso::Block>,
->;
 
 /// The `insert` command
 #[derive(Debug, StructOpt, Clone)]
 pub enum Main {
-	RotateKeys {
-		/// The secret key URI.
-		/// If the value is a file, the file content is used as URI.
-		/// If not given, you will be prompted for the URI.
-		#[structopt(long)]
-		key: String,
-
-		/// port number.
-		#[structopt(long)]
-		port: Option<String>,
-	},
+	RotateKeys,
 	UpgradeRuntime {
-		/// The secret key URI.
-		/// If the value is a file, the file content is used as URI.
-		/// If not given, you will be prompted for the URI.
-		#[structopt(long)]
-		key: String,
 		/// path to wasm file
+		#[structopt(long)]
 		path: String,
 	},
+}
+
+#[derive(Deserialize, Debug)]
+struct Env {
+	slack_signing_key: String,
+	root_key: String,
+	rpc_node: String,
+}
+
+struct State {
+	dali_chain: ChainClient<
+		common::BlockNumber,
+		common::Hash,
+		picasso::Header,
+		generic::SignedBlock<picasso::Block>,
+	>,
+	dali_system: SystemApiClient<common::Hash, common::AccountId, common::AccountIndex>,
+	dali_author: AuthorClient<common::Hash, common::Hash>,
+	signer: sr25519::Pair,
+}
+
+impl State {
+	async fn new() -> Self {
+		let env = envy::from_env::<Env>().unwrap();
+
+		let url = url::Url::from_str(&env.rpc_node).unwrap();
+
+		// create the signer
+		let signer = sr25519::Pair::from_string(&env.root_key, None).unwrap();
+		// connection to make rpc requests over
+		let channel = ws::connect::<RpcChannel>(&url).await.unwrap();
+		let (dali_chain, dali_system, dali_author) =
+			(channel.clone().into(), channel.clone().into(), channel.into());
+		State { dali_author, dali_chain, dali_system, signer }
+	}
 }
 
 #[tokio::main]
 async fn main() -> Result<(), RpcError> {
 	let main = Main::from_args();
+	let state = State::new().await;
 
 	match main {
-		Main::RotateKeys { key, port } => rotate_keys(port, key).await?,
-		Main::UpgradeRuntime { key, path } => {
+		Main::RotateKeys => rotate_keys(&state).await?,
+		Main::UpgradeRuntime { path } => {
 			let wasm = std::fs::read(path).unwrap();
-			upgrade_runtime(wasm, key).await?
-		},
+			upgrade_runtime(wasm, &state).await?
+		}
 	};
 
 	Ok(())
 }
 
-async fn rotate_keys(port: Option<String>, key: String) -> Result<(), RpcError> {
-	let signer = sr25519::Pair::from_string(&key, None).unwrap();
-	let account_id = MultiSigner::from(signer.public()).into_account();
+async fn rotate_keys(state: &State) -> Result<(), RpcError> {
+	let account_id = MultiSigner::from(state.signer.public()).into_account();
 
-	let uri = format!("http://localhost:{}", port.unwrap_or_else(|| "9933".into()));
-	let author = http::connect::<AuthorClient<Hash, Hash>>(&uri).await.unwrap();
 	// first rotate, our keys.
-	let bytes = author.rotate_keys().await.unwrap();
+	let bytes = state.dali_author.rotate_keys().await.unwrap();
 	let keys = SessionKeys::decode(&mut &bytes[..]).unwrap();
 	// assert that our keys have been rotated.
-	assert!(author.has_session_keys(keys.clone().encode().into()).await.unwrap());
+	assert!(state.dali_author.has_session_keys(keys.clone().encode().into()).await.unwrap());
 
 	// now to set our session keys on cha cha cha
 	let call = Call::Session(session::Call::set_keys { keys: keys.clone(), proof: vec![] });
@@ -108,7 +119,7 @@ async fn rotate_keys(port: Option<String>, key: String) -> Result<(), RpcError> 
 		(VERSION.spec_version, VERSION.transaction_version, genesis_hash, genesis_hash, (), (), ());
 
 	let payload = rococo::SignedPayload::from_raw(call, extra, additional);
-	let signature = payload.using_encoded(|payload| signer.sign(payload));
+	let signature = payload.using_encoded(|payload| state.signer.sign(payload));
 	let (call, extra, _) = payload.deconstruct();
 	let extrinsic = rococo::UncheckedExtrinsic::new_signed(
 		call,
@@ -126,19 +137,12 @@ async fn rotate_keys(port: Option<String>, key: String) -> Result<(), RpcError> 
 	Ok(())
 }
 
-async fn upgrade_runtime(wasm: Vec<u8>, key: String) -> Result<(), RpcError> {
-	let signer = sr25519::Pair::from_string(&key, None).unwrap();
-	let account_id = MultiSigner::from(signer.public()).into_account();
-
-	let url = url::Url::from_str("wss://dali-chachacha-rpc.composable.finance").unwrap();
-
-	let dali_chain_client = ws::connect::<DaliChain>(&url).await.unwrap();
-	let dali_system_client =
-		ws::connect::<SystemApiClient<common::Hash, common::AccountId, common::AccountIndex>>(&url)
-			.await?;
+async fn upgrade_runtime(wasm: Vec<u8>, state: &State) -> Result<(), RpcError> {
+	let account_id = MultiSigner::from(state.signer.public()).into_account();
 
 	// get genesis hash
-	let genesis_hash = match dali_chain_client
+	let genesis_hash = match state
+		.dali_chain
 		.block_hash(Some(ListOrValue::Value(NumberOrHex::Number(0))))
 		.await
 	{
@@ -146,7 +150,7 @@ async fn upgrade_runtime(wasm: Vec<u8>, key: String) -> Result<(), RpcError> {
 		_ => unreachable!("genesis hash should exist"),
 	};
 
-	let account_index = dali_system_client.nonce(account_id.clone()).await?;
+	let account_index = state.dali_system.nonce(account_id.clone()).await?;
 
 	let extra = (
 		system::CheckSpecVersion::<picasso::Runtime>::new(),
@@ -169,7 +173,7 @@ async fn upgrade_runtime(wasm: Vec<u8>, key: String) -> Result<(), RpcError> {
 	);
 
 	let call = scheduler::Call::schedule_after {
-		after: 600,
+		after: 5,
 		maybe_periodic: None,
 		priority: 0,
 		call: Box::new(
@@ -182,7 +186,7 @@ async fn upgrade_runtime(wasm: Vec<u8>, key: String) -> Result<(), RpcError> {
 	};
 
 	let payload = picasso::SignedPayload::from_raw(call.into(), extra, additional);
-	let signature = payload.using_encoded(|payload| signer.sign(payload));
+	let signature = payload.using_encoded(|payload| state.signer.sign(payload));
 	let (call, extra, _) = payload.deconstruct();
 	let extrinsic = picasso::UncheckedExtrinsic::new_signed(
 		call,
@@ -191,9 +195,8 @@ async fn upgrade_runtime(wasm: Vec<u8>, key: String) -> Result<(), RpcError> {
 		extra,
 	);
 
-	let dali_author = ws::connect::<AuthorClient<common::Hash, common::Hash>>(&url).await?;
 	// send off the extrinsic
-	dali_author.submit_extrinsic(extrinsic.encode().into()).await?;
+	state.dali_author.submit_extrinsic(extrinsic.encode().into()).await?;
 
 	Ok(())
 }
