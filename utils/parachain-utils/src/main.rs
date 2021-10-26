@@ -69,7 +69,7 @@ async fn main() -> Result<(), RpcError> {
 		Main::UpgradeRuntime { path } => {
 			let wasm = std::fs::read(path).unwrap();
 			upgrade_runtime(wasm, &state).await?
-		}
+		},
 	};
 
 	Ok(())
