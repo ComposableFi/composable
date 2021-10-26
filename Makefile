@@ -45,6 +45,7 @@ containerize:
 	--build-arg SERVICE_DIR=${INSTALL_DIR} \
        	-f ${INSTALL_DIR}/Dockerfile \
        	-t ${IMAGE_WITH_COMMIT} \
+		-t ${IMAGE_WITH_RELEASE_VERSION} \
         -t ${IMAGE_WITH_BRANCH} \
         -t ${IMAGE_WITH_LATEST} \
 	. 1>/dev/null
@@ -52,6 +53,7 @@ containerize:
 push:
 	@docker push ${IMAGE_WITH_COMMIT}
 	@docker push ${IMAGE_WITH_BRANCH}
+	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 	@docker push ${IMAGE_WITH_LATEST}
 
 stop:
