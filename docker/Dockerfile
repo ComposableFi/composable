@@ -1,4 +1,4 @@
-FROM paritytech/ci-linux:production as builder
+FROM composablefi/rust:latest
 LABEL description="This is the build stage for Composable. Here we create the binary."
 
 RUN apt-get update \
@@ -11,9 +11,9 @@ RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add - \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-USER root 
-
 ARG VERSION=stable
+ARG AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+ARG AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 ARG PROFILE=release
 WORKDIR /composable
 
@@ -25,6 +25,25 @@ RUN rustup install ${VERSION}-x86_64-unknown-linux-gnu \
     && rustup target add wasm32-unknown-unknown
 # RUN pwd && ls && cd node && cargo build --$PROFILE
 
+RUN cargo build --release
+
+RUN cp -R /composable/target/release /usr/local/bin
+
+
+
+
+### STAGE 2 ###
+# FROM debian:buster-slim
+# LABEL description="This is the 2nd stage: a very small image where we copy the Composable binary."
+# ARG PROFILE=release
+# COPY --from=builder /composable/target/$PROFILE/node-template /usr/local/bin
+
+RUN useradd -m -u 1000 -U -s /bin/sh -d /composable composable && \
+	mkdir -p /composable/.local/share && \
+	mkdir /data && \
+	chown -R composable:composable /data 
+
+USER composable
 EXPOSE 30333 9933 9944
 VOLUME ["/data"]
 
