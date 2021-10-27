@@ -1,0 +1,32 @@
+@startuml
+
+box Composable #LightYellow
+  participant "Alice" as aa
+  participant "Assets" as pas
+  participant "Lending" as pl
+  participant "External DEX" as pd
+  control "OCW External DEX" as cd
+
+end box
+
+box HydraDx #SkyBlue
+  participant "HydraDx" as pah
+end box
+
+cd -> pas : Get list of mappings
+
+cd --> pah : RCP to get all combinations of pairs
+note over pah
+    Starting with few combinations of mappings
+    to avoid mutlistage market creation
+    ASK: should Composable create market on Hydra?
+end note
+
+cd -> pd : Store availalbe pairs
+
+...
+
+aa -> pl : Create market
+pl -> pd : Validate pair
+
+@enduml

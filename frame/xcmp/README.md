@@ -1,10 +1,10 @@
-# Up to best knowledge current properties of XCM
+# Overview
 
 - Will not use 3rd party common good parachain for mapping
-- Using Direct messaging amid chains with no hops.
+- Using Direct XCM messaging amid chains with no hops.
 - Will use `Teleport` message and than `Exchange` for DEX
-- Will zero price execution
-- `Teleport` + `Transact` extinsic `Call` for auction
+- `Teleport` + `Transact` extrinsic `Call` for auction
+- Will use zero price execution
 
 [xcmp fromat]:https://github.com/paritytech/xcm-format/blob/master/README.md
 [xcmp why]: https://medium.com/polkadot-network/xcm-the-cross-consensus-message-format-3b77b1373392

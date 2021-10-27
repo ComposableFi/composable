@@ -1,0 +1,39 @@
+@startuml
+
+box Composable #LightYellow
+  participant "Assets" as pas
+  participant "Lending" as pl
+  control "OCW Liqudation" as cl
+end box
+
+box HydraDx #SkyBlue
+  participant "HydraDx" as pah
+  participant "HydraDx Auction" as pauh
+end box
+
+cl -> pl: Detect liqudate condition
+
+cl -> pl: Liqudate
+
+alt OB
+  pl --> pas: Burn
+  pl --> pah: XCM sell via 'Teleport' + 'Exchange'
+  note over pah
+    - direct teleport is direct chain to chain connected high trust solutuin
+  end note
+  ...
+  alt Sold
+    pah --> pas: XCM 'Teleport' sold out back
+  else Fatal fail to sell
+    pah --> pas: XCM: `Teleport' + `ReportError`
+  end
+else Dutch Auction
+  pl --> pas: Burn
+  pl --> dauh: XCM sell via 'Teleport' + 'Transact'
+  note over pah
+    - will share `Dispatchable` `Call` `Extrinsic` contract
+  end note
+end
+
+
+@enduml

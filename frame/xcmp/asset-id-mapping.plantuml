@@ -14,7 +14,7 @@ box Composable #LightYellow
 
 end box
 
-box Composable #SkyBlue
+box HydraDx #SkyBlue
   participant "HydraDx" as pah
 end box
 
