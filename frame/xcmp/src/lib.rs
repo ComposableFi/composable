@@ -31,33 +31,31 @@ mod relay_chain;
 #[cfg(test)]
 mod tests;
 
-
-//// mocks - move to mocks. seems out of box simulator example code with kind of recursive dependency which works only if code is in lib
+//// mocks - move to mocks. seems out of box simulator example code with kind of recursive
+//// dependency which works only if code is in lib
 
 use polkadot_parachain::primitives::Id as ParaId;
 use sp_runtime::traits::AccountIdConversion;
 use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
 
-
-pub const COMPOSABLE:u32 = 49;
+pub const COMPOSABLE: u32 = 49;
 pub const HYDRADX: u32 = 63;
-
 
 decl_test_parachain! {
 	pub struct ComposableParachain {
 		Runtime = parachain::Runtime,
 		XcmpMessageHandler = parachain::MsgQueue,
 		DmpMessageHandler = parachain::MsgQueue,
-		new_ext = para_ext(1),
+		new_ext = para_ext(COMPOSABLE),
 	}
 }
 
 decl_test_parachain! {
-	pub struct HydraDx {
+	pub struct HydraDxParachain {
 		Runtime = parachain::Runtime,
 		XcmpMessageHandler = parachain::MsgQueue,
 		DmpMessageHandler = parachain::MsgQueue,
-		new_ext = para_ext(2),
+		new_ext = para_ext(HYDRADX),
 	}
 }
 
@@ -74,14 +72,16 @@ decl_test_network! {
 		relay_chain = Relay,
 		parachains = vec![
 			(COMPOSABLE, ComposableParachain),
-			(HYDRADX, HydraDx),
+			(HYDRADX, HydraDxParachain),
 		],
 	}
 }
 
 pub const ALICE: sp_runtime::AccountId32 = sp_runtime::AccountId32::new([0u8; 32]);
-pub const INITIAL_BALANCE: u128 = 1_000_000_000;
+pub const BTC_ACCOUNT: sp_runtime::AccountId32 = sp_runtime::AccountId32::new([1u8; 32]);
+pub const USDT: sp_runtime::AccountId32 = sp_runtime::AccountId32::new([2u8; 32]);
 
+pub const INITIAL_BALANCE: u128 = 1_000_000_000;
 
 pub fn relay_ext() -> sp_io::TestExternalities {
 	use relay_chain::{Runtime, System};
@@ -89,7 +89,7 @@ pub fn relay_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 	pallet_balances::GenesisConfig::<Runtime> {
-		balances: vec![(ALICE, INITIAL_BALANCE), (para_account_id(1), INITIAL_BALANCE)],
+		balances: vec![(ALICE, INITIAL_BALANCE), (para_account_id(COMPOSABLE), INITIAL_BALANCE)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
@@ -99,14 +99,12 @@ pub fn relay_ext() -> sp_io::TestExternalities {
 	ext
 }
 
-
-
 pub fn para_account_id(id: u32) -> relay_chain::AccountId {
 	ParaId::from(id).into_account()
 }
 
 pub fn para_ext(para_id: u32) -> sp_io::TestExternalities {
-	use parachain::{MsgQueue, Runtime, System};
+	use parachain::{Balances, MsgQueue, Runtime, System};
 
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
@@ -122,15 +120,13 @@ pub fn para_ext(para_id: u32) -> sp_io::TestExternalities {
 	ext
 }
 
-
-
 pub type RelayChainPalletXcm = pallet_xcm::Pallet<relay_chain::Runtime>;
 pub type ParachainPalletXcm = pallet_xcm::Pallet<parachain::Runtime>;
 
 /// end mocks
-
-
 pub use pallet::*;
+
+use crate::parachain::Balance;
 
 #[frame_support::pallet]
 pub mod pallet {

@@ -1,5 +1,5 @@
 @startuml
-box Composable #SkyBlue
+box Composable #LightYellow
   actor Alice as a
   actor Bob as b
   participant Lending as pl
@@ -16,14 +16,14 @@ box Composable #SkyBlue
   control "OCW Oracle" as co
 end box
 
-box HydraDx
+box HydraDx #SkyBlue
   participant "DEX" as pd2
   participant "Assets" as p_assets2
   participant "Auction" as pa2
 end box
 
 group Positive Governance
-  alt #LightYellow DEX Parachaing
+  alt #SkyBlue DEX Parachaing
     c_assets --> p_assets2: Settle mapping of assets identifiers
     co --> pd2: Is pair supported? (for each asset in Composable)
     ...
@@ -63,7 +63,7 @@ group Liqudaiton (IN PROGRESS)
   pl -> pk: Liqudate
 
 
-  alt #LightYellow Liqudate via HydraDx
+  alt #SkyBlue Liqudate via HydraDx
     ck --> pa2 : Transfer and sell on auction
     ...
     pa2 -> pd2 : Sell on dex

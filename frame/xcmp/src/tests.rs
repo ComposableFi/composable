@@ -1,13 +1,19 @@
+use std::convert::TryInto;
+
+use codec::{Decode, Encode};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Everything, Nothing},
 	weights::Weight,
 };
-use sp_core::H256;
-use sp_runtime::{testing::Header, traits::IdentityLookup,};
-
 use polkadot_parachain::primitives::Id as ParaId;
 use polkadot_runtime_parachains::{configuration, origin, shared, ump};
+use scale_info::TypeInfo;
+use sp_core::H256;
+use sp_runtime::{
+	testing::Header,
+	traits::{AccountIdConversion, IdentityLookup},
+};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowUnpaidExecutionFrom, ChildParachainAsNative,
@@ -16,17 +22,15 @@ use xcm_builder::{
 	LocationInverter, SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation,
 };
 use xcm_executor::{Config, XcmExecutor};
-use sp_runtime::traits::AccountIdConversion;
 use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
-
 
 use super::*;
 
-use codec::Encode;
 use frame_support::assert_ok;
-use xcm::latest::prelude::*;
+use xcm::{latest::prelude::*, v2::*};
 use xcm_simulator::TestExt;
 
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 // Helper function for forming buy execution message
 fn buy_execution<C>(fees: impl Into<MultiAsset>) -> Instruction<C> {
@@ -65,9 +69,10 @@ fn dmp_from_relay_to_composable() {
 fn ump() {
 	MockNet::reset();
 
-	let remark = relay_chain::Call::System(
-		frame_system::Call::<relay_chain::Runtime>::remark_with_event { remark: vec![1, 2, 3] },
-	);
+	let remark =
+		relay_chain::Call::System(frame_system::Call::<relay_chain::Runtime>::remark_with_event {
+			remark: vec![1, 2, 3],
+		});
 	ComposableParachain::execute_with(|| {
 		assert_ok!(ParachainPalletXcm::send_xcm(
 			Here,
@@ -108,7 +113,7 @@ fn xcmp_via_relay() {
 		));
 	});
 
-	HydraDx::execute_with(|| {
+	HydraDxParachain::execute_with(|| {
 		use parachain::{Event, System};
 		assert!(System::events()
 			.iter()
@@ -131,7 +136,7 @@ fn reserve_transfer_in_low_trust() {
 			0,
 		));
 		assert_eq!(
-			parachain::Balances::free_balance(&para_account_id(1)),
+			parachain::Balances::free_balance(&para_account_id(COMPOSABLE)),
 			INITIAL_BALANCE + withdraw_amount
 		);
 	});
@@ -144,9 +149,6 @@ fn reserve_transfer_in_low_trust() {
 		);
 	});
 }
-
-
-
 
 /// Scenario:
 /// A parachain transfers funds on the relay chain to another parachain account.
@@ -165,7 +167,7 @@ fn withdraw_and_deposit() {
 			DepositAsset {
 				assets: All.into(),
 				max_assets: 1,
-				beneficiary: Parachain(2).into(),
+				beneficiary: Parachain(HYDRADX).into(),
 			},
 		]);
 		// Send withdraw and deposit
@@ -238,22 +240,146 @@ fn query_holding() {
 	});
 }
 
-#[test]
-fn teleport() {
-	MockNet::reset();
-	let sell_asset = MultiAsset::new();
-	let mut assets = MultiAssets::new();
-	assets.push(sell_asset);
-	let x =  MultiAssetFilter::Definite(assets);
-	Instruction::
-	let teleportAndAuction = Instruction::InitiateTeleport {
-		assets:x ,
-		dest: Parachain(HYDRADX).into(),
-		xcm : Xcm(vec![])
-	};
-	let message = Xcm(
-		vec![
+/// fungible
+#[derive(
+	Encode,
+	Decode,
+	Eq,
+	PartialEq,
+	Copy,
+	Clone,
+	PartialOrd,
+	Ord,
+	TypeInfo,
+	IntoPrimitive,
+	TryFromPrimitive,
+)]
+#[repr(u8)] // we can make it to be u16, but that would prevent optimize later with processor table jump, so can
+			// consider 9 bit so. or preclude optimization and make 16 bit.
+pub enum KnownAssetId {
+	#[num_enum(default)]
+	PICA = 1,
+	LAYR = 2,
+	CROWD_LOAN = 3,
+	BTC = 4,
+	ETH = 5,
+	USDT = 6,
+	SOL = 42,
+}
 
-		]
-	);
+/// are used to allow only certain operations for these
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, PartialOrd, Ord, TypeInfo)]
+pub struct MappedId(u128);
+
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, PartialOrd, Ord, TypeInfo)]
+pub struct Liquid(u128);
+
+/// must implement custom Encode, Decode so it validates numeric properties and compresses data into
+/// one 128 bit, and IntoPrimitive and TryFromPrimitive fungible
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, PartialOrd, Ord, TypeInfo)]
+pub enum MultiAssetId {
+	LocalKnown(KnownAssetId),
+	// starts from 256 to u128/4
+	Local(u128),
+	/// to other parachains starts from u128/4 to u128/2, can always be mapped to ParaId and
+	/// ExternalAssetId
+	Mapped(MappedId),
+	/// rest of space as can make infinite derives :)
+	Liquid(Liquid),
+}
+
+impl KnownAssetId {
+	pub fn new(value: u8) -> Option<KnownAssetId> {
+		KnownAssetId::try_from_primitive(value).ok()
+	}
+
+	// that it, we cannot create it here, because need need storage access
+}
+
+struct CurrencyMetadata {
+	id: MultiAssetId,
+	/// any Liquid token should have decimals of parent, so if you have can find decimals from
+	/// which it derived
+	decimals: u8,
+}
+
+pub trait AssetIds {
+	/// will return option if not found
+	fn from_number(value: u128) -> Option<MultiAssetId>;
+	fn diluted(value: Liquid) -> Option<MultiAssetId>;
+	fn as_on_target(value: MappedId) -> Option<(ParaId, u128)>;
+}
+
+pub struct MockAssetIds;
+
+impl AssetIds for MockAssetIds {
+	fn from_number(value: u128) -> Option<MultiAssetId> {
+		let value: u8 = value.try_into().ok()?;
+		let value = KnownAssetId::new(value)?;
+		Some(MultiAssetId::LocalKnown(value))
+	}
+
+	fn diluted(value: Liquid) -> Option<MultiAssetId> {
+		todo!()
+	}
+
+	fn as_on_target(value: MappedId) -> Option<(ParaId, u128)> {
+		todo!()
+	}
+}
+
+#[test]
+fn full_trust_teleport_and_dex() {
+	MockNet::reset();
+
+	let account_with_some_amount =
+		Junction::AccountId32 { id: BTC_ACCOUNT.into(), network: NetworkId::Any };
+	let mut location = MultiLocation::here();
+	location
+		.append_with(Junctions::X2(Junction::Parachain(COMPOSABLE), account_with_some_amount))
+		.unwrap();
+	let from_id = AssetId::Concrete(location);
+	let from = MultiAsset { id: from_id, fun: Fungible(42) };
+	let mut assets = MultiAssets::new();
+	assets.push(from);
+	let assets_sell = MultiAssetFilter::Definite(assets);
+
+	let account_with_some_amount =
+		Junction::AccountId32 { id: USDT.into(), network: NetworkId::Any };
+	let mut location = MultiLocation::here();
+	location
+		.append_with(Junctions::X2(Junction::Parachain(COMPOSABLE), account_with_some_amount))
+		.unwrap();
+	let from_id = AssetId::Concrete(location);
+	let from = MultiAsset { id: from_id, fun: Fungible(42 * 10000) };
+	let mut assets_buy = MultiAssets::new();
+	assets_buy.push(from);
+
+	let exchange = Instruction::ExchangeAsset { give: assets_sell.clone(), receive: assets_buy };
+
+	let teleport_and_dex = Xcm(vec![Instruction::InitiateTeleport {
+		assets: assets_sell,
+		dest: Parachain(HYDRADX).into(),
+		xcm: Xcm(vec![exchange]),
+	}]);
+
+	// TODO: avoid here jump via relay (need to change simulator ) TODO: create github issue for
+	// polka about
+	ComposableParachain::execute_with(|| {
+		assert_ok!(ParachainPalletXcm::send_xcm(
+			Here,
+			(Parent, Parachain(HYDRADX)),
+			teleport_and_dex.clone()
+		));
+	});
+
+	HydraDxParachain::execute_with(|| {
+		// TODO: setup currency pallet
+	});
+}
+
+#[test]
+#[ignore = "how to share extrinsic Call metadata without sharing pallet?"]
+fn teleport_and_transaction_via_auction() {
+	MockNet::reset();
 }

@@ -1,4 +1,3 @@
-
 use frame_support::weights::Weight;
 use polkadot_runtime_parachains::configuration::WeightInfo;
 
@@ -23,4 +22,3 @@ impl WeightInfo for TestWeightInfo {
 		Weight::MAX
 	}
 }
-

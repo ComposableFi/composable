@@ -30,6 +30,7 @@ use sp_runtime::{
 };
 use sp_std::{convert::TryFrom, prelude::*};
 
+use crate::ParachainXcmRouter;
 use pallet_xcm::XcmPassthrough;
 use polkadot_core_primitives::BlockNumber as RelayBlockNumber;
 use polkadot_parachain::primitives::{
@@ -43,7 +44,6 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation,
 };
 use xcm_executor::{Config, XcmExecutor};
-use crate::ParachainXcmRouter;
 
 pub type AccountId = AccountId32;
 pub type Balance = u128;
@@ -220,6 +220,7 @@ pub mod mock_msg_queue {
 			let hash = Encode::using_encoded(&xcm, T::Hashing::hash);
 			let (result, event) = match Xcm::<T::Call>::try_from(xcm) {
 				Ok(xcm) => {
+					dbg!("xcm {:?}", xcm.clone());
 					let location = (1, Parachain(sender.into()));
 					match T::XcmExecutor::execute_xcm(location, xcm, max_weight) {
 						Outcome::Error(e) => (Err(e.clone()), Event::Fail(Some(hash), e)),

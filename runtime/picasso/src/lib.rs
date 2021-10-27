@@ -1018,6 +1018,7 @@ construct_runtime!(
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
+		//ASK: Should we have Kusama XCM here
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
