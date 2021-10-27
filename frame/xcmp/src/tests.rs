@@ -28,34 +28,13 @@ use xcm::latest::prelude::*;
 use xcm_simulator::TestExt;
 
 
-pub const ALICE: sp_runtime::AccountId32 = sp_runtime::AccountId32::new([0u8; 32]);
-pub const INITIAL_BALANCE: u128 = 1_000_000_000;
-
-pub fn relay_ext() -> sp_io::TestExternalities {
-	use relay_chain::{Runtime, System};
-
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
-
-	pallet_balances::GenesisConfig::<Runtime> {
-		balances: vec![(ALICE, INITIAL_BALANCE), (para_account_id(1), INITIAL_BALANCE)],
-	}
-	.assimilate_storage(&mut t)
-	.unwrap();
-
-	let mut ext = sp_io::TestExternalities::new(t);
-	ext.execute_with(|| System::set_block_number(1));
-	ext
-}
-
-
-
 // Helper function for forming buy execution message
 fn buy_execution<C>(fees: impl Into<MultiAsset>) -> Instruction<C> {
 	BuyExecution { fees: fees.into(), weight_limit: Unlimited }
 }
 
 #[test]
-fn dmp() {
+fn dmp_from_relay_to_composable() {
 	MockNet::reset();
 
 	let remark =
@@ -65,7 +44,7 @@ fn dmp() {
 	Relay::execute_with(|| {
 		assert_ok!(RelayChainPalletXcm::send_xcm(
 			Here,
-			Parachain(1),
+			Parachain(COMPOSABLE),
 			Xcm(vec![Transact {
 				origin_type: OriginKind::SovereignAccount,
 				require_weight_at_most: INITIAL_BALANCE as u64,
@@ -74,7 +53,7 @@ fn dmp() {
 		));
 	});
 
-	ParaA::execute_with(|| {
+	ComposableParachain::execute_with(|| {
 		use parachain::{Event, System};
 		assert!(System::events()
 			.iter()
@@ -89,7 +68,7 @@ fn ump() {
 	let remark = relay_chain::Call::System(
 		frame_system::Call::<relay_chain::Runtime>::remark_with_event { remark: vec![1, 2, 3] },
 	);
-	ParaA::execute_with(|| {
+	ComposableParachain::execute_with(|| {
 		assert_ok!(ParachainPalletXcm::send_xcm(
 			Here,
 			Parent,
@@ -117,10 +96,10 @@ fn xcmp() {
 		parachain::Call::System(frame_system::Call::<parachain::Runtime>::remark_with_event {
 			remark: vec![1, 2, 3],
 		});
-	ParaA::execute_with(|| {
+	ComposableParachain::execute_with(|| {
 		assert_ok!(ParachainPalletXcm::send_xcm(
 			Here,
-			(Parent, Parachain(2)),
+			(Parent, Parachain(HYDRADX)),
 			Xcm(vec![Transact {
 				origin_type: OriginKind::SovereignAccount,
 				require_weight_at_most: INITIAL_BALANCE as u64,
@@ -129,7 +108,7 @@ fn xcmp() {
 		));
 	});
 
-	ParaB::execute_with(|| {
+	HydraDx::execute_with(|| {
 		use parachain::{Event, System};
 		assert!(System::events()
 			.iter()
@@ -138,7 +117,7 @@ fn xcmp() {
 }
 
 #[test]
-fn reserve_transfer() {
+fn reserve_transfer_in_low_trust() {
 	MockNet::reset();
 
 	let withdraw_amount = 123;
@@ -146,7 +125,7 @@ fn reserve_transfer() {
 	Relay::execute_with(|| {
 		assert_ok!(RelayChainPalletXcm::reserve_transfer_assets(
 			relay_chain::Origin::signed(ALICE),
-			Box::new(X1(Parachain(1)).into().into()),
+			Box::new(X1(Parachain(COMPOSABLE)).into().into()),
 			Box::new(X1(AccountId32 { network: Any, id: ALICE.into() }).into().into()),
 			Box::new((Here, withdraw_amount).into()),
 			0,
@@ -157,7 +136,7 @@ fn reserve_transfer() {
 		);
 	});
 
-	ParaA::execute_with(|| {
+	ComposableParachain::execute_with(|| {
 		// free execution, full amount received
 		assert_eq!(
 			pallet_balances::Pallet::<parachain::Runtime>::free_balance(&ALICE),
@@ -176,7 +155,7 @@ fn withdraw_and_deposit() {
 
 	let send_amount = 10;
 
-	ParaA::execute_with(|| {
+	ComposableParachain::execute_with(|| {
 		let message = Xcm(vec![
 			WithdrawAsset((Here, send_amount).into()),
 			buy_execution((Here, send_amount)),
@@ -212,7 +191,7 @@ fn query_holding() {
 	let query_id_set = 1234;
 
 	// Send a message which fully succeeds on the relay chain
-	ParaA::execute_with(|| {
+	ComposableParachain::execute_with(|| {
 		let message = Xcm(vec![
 			WithdrawAsset((Here, send_amount).into()),
 			buy_execution((Here, send_amount)),
@@ -244,7 +223,7 @@ fn query_holding() {
 	});
 
 	// Check that QueryResponse message was received
-	ParaA::execute_with(|| {
+	ComposableParachain::execute_with(|| {
 		assert_eq!(
 			parachain::MsgQueue::received_dmp(),
 			vec![Xcm(vec![QueryResponse {
