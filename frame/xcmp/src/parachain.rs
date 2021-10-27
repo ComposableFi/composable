@@ -43,6 +43,7 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation,
 };
 use xcm_executor::{Config, XcmExecutor};
+use crate::ParachainXcmRouter;
 
 pub type AccountId = AccountId32;
 pub type Balance = u128;
