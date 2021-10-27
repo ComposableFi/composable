@@ -89,7 +89,7 @@ impl pallet_balances::Config for Runtime {
 impl shared::Config for Runtime {}
 
 impl configuration::Config for Runtime {
-	type WeightInfo = configuration::TestWeightInfo;
+	type WeightInfo = crate::configuration::TestWeightInfo;
 }
 
 parameter_types! {

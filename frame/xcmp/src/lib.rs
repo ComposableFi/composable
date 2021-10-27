@@ -25,7 +25,7 @@ use sp_runtime::traits::Saturating;
 use sp_std::prelude::*;
 use xcm::latest::prelude::*;
 
-mod mocks;
+//mod mocks;
 
 pub use pallet::*;
 

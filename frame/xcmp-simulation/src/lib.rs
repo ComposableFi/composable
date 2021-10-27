@@ -16,6 +16,7 @@
 
 mod parachain;
 mod relay_chain;
+mod configuration;
 
 use polkadot_parachain::primitives::Id as ParaId;
 use sp_runtime::traits::AccountIdConversion;
