@@ -1,5 +1,8 @@
 # Up to best knowledge current properties of XCM
 
-Message header hops 'collator->validator->validator->collator` and gets to fair parachains fair queue.
+- Using Direct messaging amid chains with no hops.
+- Will use `Teleport` message
 
-Data is passed from collator to collator directly. Initial version sent bodies only after relay chain prove as security.
+
+[xcmp]:https://github.com/paritytech/xcm-format/blob/master/README.md
+

@@ -13159,6 +13159,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "xcm-simulator-example"
+version = "0.9.12"
+dependencies = [
+ "cumulus-pallet-xcm",
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "polkadot-core-primitives 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "polkadot-parachain 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "polkadot-runtime-parachains 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "xcm-builder",
+ "xcm-executor 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "xcm-simulator",
+]
+
+[[package]]
 name = "yamux"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
