@@ -89,7 +89,7 @@ fn ump() {
 }
 
 #[test]
-fn xcmp() {
+fn xcmp_via_relay() {
 	MockNet::reset();
 
 	let remark =
@@ -145,6 +145,9 @@ fn reserve_transfer_in_low_trust() {
 	});
 }
 
+
+
+
 /// Scenario:
 /// A parachain transfers funds on the relay chain to another parachain account.
 ///
@@ -171,10 +174,10 @@ fn withdraw_and_deposit() {
 
 	Relay::execute_with(|| {
 		assert_eq!(
-			relay_chain::Balances::free_balance(para_account_id(1)),
+			relay_chain::Balances::free_balance(para_account_id(COMPOSABLE)),
 			INITIAL_BALANCE - send_amount
 		);
-		assert_eq!(relay_chain::Balances::free_balance(para_account_id(2)), send_amount);
+		assert_eq!(relay_chain::Balances::free_balance(para_account_id(HYDRADX)), send_amount);
 	});
 }
 
@@ -198,11 +201,11 @@ fn query_holding() {
 			DepositAsset {
 				assets: All.into(),
 				max_assets: 1,
-				beneficiary: Parachain(2).into(),
+				beneficiary: Parachain(HYDRADX).into(),
 			},
 			QueryHolding {
 				query_id: query_id_set,
-				dest: Parachain(1).into(),
+				dest: Parachain(COMPOSABLE).into(),
 				assets: All.into(),
 				max_response_weight: 1_000_000_000,
 			},
@@ -215,11 +218,11 @@ fn query_holding() {
 	Relay::execute_with(|| {
 		// Withdraw executed
 		assert_eq!(
-			relay_chain::Balances::free_balance(para_account_id(1)),
+			relay_chain::Balances::free_balance(para_account_id(COMPOSABLE)),
 			INITIAL_BALANCE - send_amount
 		);
 		// Deposit executed
-		assert_eq!(relay_chain::Balances::free_balance(para_account_id(2)), send_amount);
+		assert_eq!(relay_chain::Balances::free_balance(para_account_id(HYDRADX)), send_amount);
 	});
 
 	// Check that QueryResponse message was received
@@ -233,4 +236,24 @@ fn query_holding() {
 			}])],
 		);
 	});
+}
+
+#[test]
+fn teleport() {
+	MockNet::reset();
+	let sell_asset = MultiAsset::new();
+	let mut assets = MultiAssets::new();
+	assets.push(sell_asset);
+	let x =  MultiAssetFilter::Definite(assets);
+	Instruction::
+	let teleportAndAuction = Instruction::InitiateTeleport {
+		assets:x ,
+		dest: Parachain(HYDRADX).into(),
+		xcm : Xcm(vec![])
+	};
+	let message = Xcm(
+		vec![
+
+		]
+	);
 }
