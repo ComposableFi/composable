@@ -1,0 +1,50 @@
+[package]
+name = "pallet-democracy"
+version = "0.0.1"
+authors = ["Composable Developers"]
+homepage = "https://composable.finance"
+edition = "2018"
+license = "Apache-2.0"
+description = "FRAME pallet for democracy with multi currency"
+readme = "README.md"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+serde = { version = "1.0.126", optional = true, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive" ] }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84", default-features = false }
+
+[dev-dependencies]
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+
+[features]
+default = ["std"]
+std = [
+	"serde",
+	"codec/std",
+	"scale-info/std",
+	"sp-std/std",
+	"sp-io/std",
+	"frame-support/std",
+	"sp-runtime/std",
+	"frame-system/std",
+	"orml-tokens/std",
+	"orml-traits/std",
+]
+runtime-benchmarks = [
+	"frame-system/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+]
+try-runtime = ["frame-support/try-runtime"]
