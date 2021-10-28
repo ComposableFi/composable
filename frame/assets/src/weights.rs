@@ -14,6 +14,9 @@ pub trait WeightInfo {
 	fn force_transfer_native() -> Weight;
 	fn transfer_all() -> Weight;
 	fn transfer_all_native() -> Weight;
+	fn mint_initialize() -> Weight;
+	fn set_administrator() -> Weight;
+	fn mint_into() -> Weight;
 }
 
 pub struct SubstrateWeight<T>(PhantomData<T>);
@@ -52,6 +55,24 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+
+	fn mint_initialize() -> Weight {
+		(81_458_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+
+	fn set_administrator() -> Weight {
+		(81_458_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+
+	fn mint_into() -> Weight {
+		(81_458_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
 }
 
 // For backwards compatibility and tests
@@ -84,6 +105,24 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
 	fn force_transfer() -> Weight {
+		(81_458_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+
+	fn mint_initialize() -> Weight {
+		(81_458_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+
+	fn set_administrator() -> Weight {
+		(81_458_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+
+	fn mint_into() -> Weight {
 		(81_458_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))

@@ -7,16 +7,20 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use composable_traits::currency::{AssetId, Balance};
+	use composable_traits::currency::{AssetId, Balance, CurrencyFactory};
 	use frame_support::{
+		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
 		sp_runtime::traits::StaticLookup,
 		traits::{
-			fungible::{Inspect as NativeInspect, Transfer as NativeTransfer},
-			fungibles::{Inspect, Transfer},
+			fungible::{
+				Inspect as NativeInspect, Mutate as NativeMutate, Transfer as NativeTransfer,
+			},
+			fungibles::{Inspect, Mutate, Transfer},
 		},
 	};
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
+	use sp_runtime::DispatchError;
 
 	use crate::weights::WeightInfo;
 
@@ -26,6 +30,7 @@ pub mod pallet {
 		type Balance: Balance;
 
 		type NativeAssetId: Get<Self::AssetId>;
+		type GenerateCurrencyId: CurrencyFactory<Self::AssetId>;
 		type Currency;
 		type MultiCurrency;
 		type WeightInfo: WeightInfo;
@@ -35,13 +40,25 @@ pub mod pallet {
 	#[pallet::generate_store(pub (super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	#[pallet::storage]
+	#[pallet::getter(fn markets)]
+	pub type PalletAccounts<T: Config> =
+		StorageMap<_, Twox64Concat, T::AssetId, T::AccountId, ValueQuery>;
+
+	#[pallet::error]
+	pub enum Error<T> {
+		BadOrigin,
+	}
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
 	where
-		<T as Config>::Currency: NativeTransfer<T::AccountId, Balance = T::Balance>,
-		<T as Config>::Currency: NativeInspect<T::AccountId, Balance = T::Balance>,
-		<T as Config>::MultiCurrency:
-			Transfer<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>,
+		<T as Config>::Currency: NativeTransfer<T::AccountId, Balance = T::Balance>
+			+ NativeInspect<T::AccountId, Balance = T::Balance>
+			+ NativeMutate<T::AccountId, Balance = T::Balance>,
+		<T as Config>::MultiCurrency: Inspect<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>
+			+ Transfer<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>
+			+ Mutate<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>,
 	{
 		/// Transfer `amount` of `asset` from `origin` to `dest`.
 		///
@@ -179,6 +196,82 @@ pub mod pallet {
 			)?;
 			Ok(())
 		}
+
+		/// Creates a new asset, minting `amount` of funds into the `dest` account. Intented to be
+		/// used for creating wrapped assets, not associated with any project.
+		#[pallet::weight(T::WeightInfo::mint_initialize())]
+		pub fn mint_initialize(
+			origin: OriginFor<T>,
+			amount: T::Balance,
+			dest: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			let id = T::GenerateCurrencyId::create()?;
+			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
+			Ok(().into())
+		}
+
+		/// Creates a new asset, minting `amount` of funds into the `dest` account. The `dest`
+		/// account can use the democracy pallet to mint further assets, or if the governance_origin
+		/// is set to an owned account, using signed transactions. In general the
+		/// `governance_origin` should be generated from the pallet id.
+		#[pallet::weight(T::WeightInfo::mint_initialize())]
+		pub fn mint_initialize_with_governance(
+			origin: OriginFor<T>,
+			amount: T::Balance,
+			governance_origin: T::AccountId,
+			dest: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			let id = T::GenerateCurrencyId::create()?;
+			PalletAccounts::<T>::insert(id, governance_origin);
+			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
+			Ok(().into())
+		}
+
+		/// Mints `amount` of `asset_id` into the `dest` account.
+		#[pallet::weight(T::WeightInfo::mint_into())]
+		pub fn mint_into(
+			origin: OriginFor<T>,
+			asset_id: T::AssetId,
+			dest: T::AccountId,
+			amount: T::Balance,
+		) -> DispatchResultWithPostInfo {
+			ensure_root_or_governance::<T>(origin, asset_id)?;
+			<Self as Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
+			Ok(().into())
+		}
+
+		/// Mints `amount` of `asset_id` into the `dest` account.
+		#[pallet::weight(T::WeightInfo::burn_from())]
+		pub fn burn_from(
+			origin: OriginFor<T>,
+			asset_id: T::AssetId,
+			dest: T::AccountId,
+			amount: T::Balance,
+		) -> DispatchResultWithPostInfo {
+			ensure_root_or_governance::<T>(origin, asset_id)?;
+			<Self as Mutate<T::AccountId>>::burn_from(asset_id, &dest, amount)?;
+			Ok(().into())
+		}
+	}
+
+	fn ensure_root_or_governance<T: Config>(
+		origin: OriginFor<T>,
+		asset_id: T::AssetId,
+	) -> Result<Option<T::AccountId>, DispatchError> {
+		let account = match origin.into() {
+			Ok(frame_system::RawOrigin::Signed(account)) => {
+				if PalletAccounts::<T>::try_get(asset_id) == Ok(account) {
+					Some(account)
+				} else {
+					return Err(Error::<T>::BadOrigin.into())
+				}
+			},
+			Ok(frame_system::RawOrigin::Root) => None,
+			_ => return Err(Error::<T>::BadOrigin.into()),
+		};
+		Ok(account)
 	}
 
 	mod currency {
