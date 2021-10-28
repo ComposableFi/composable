@@ -16,3 +16,4 @@
 [6]: https://medium.com/polkadot-network/xcm-the-cross-consensus-message-format-3b77b1373392
 [7]: https://research.web3.foundation/en/latest/polkadot/XCMP/index.html
 [8]: https://medium.com/oak-blockchain/tutorial-polkadot-cross-chain-message-passing-xcmp-demo-with-ping-pallet-f53397158ab4
+[9]: https://research.web3.foundation/en/latest/polkadot/XCMP/Opening_closing%20XCMP%20Channel.html
