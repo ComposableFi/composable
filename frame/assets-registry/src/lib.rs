@@ -22,6 +22,7 @@ pub mod pallet {
 
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
+	use serde::{Deserialize, Serialize};
 	use sp_std::{fmt::Debug, marker::PhantomData, str};
 
 	#[pallet::config]
@@ -47,18 +48,17 @@ pub mod pallet {
 			+ Debug
 			+ Default
 			+ TypeInfo;
-		type UpdateAdmin: EnsureOrigin<Self::Origin>;
+		type UpdateAdminOrigin: EnsureOrigin<Self::Origin>;
 		type LocalAdminOrigin: EnsureOrigin<Self::Origin>;
 		type ForeignAdminOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[derive(Debug, Clone, Copy, Encode, Decode, TypeInfo)]
 	pub enum CandidateStatus {
-		NobodyApproved,
 		LocalAdminApproved,
 		ForeignAdminApproved,
 	}
-
+	
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
@@ -91,6 +91,52 @@ pub mod pallet {
 	pub type AssetsMappingCandidates<T: Config> =
 		StorageMap<_, Blake2_128Concat, (T::LocalAssetId, T::ForeignAssetId), CandidateStatus, OptionQuery>;
 
+	#[derive(Debug, Clone, Copy, Encode, Decode, Serialize, Deserialize)]
+	pub struct AssetsPair {
+		local_asset_id: u128,
+		foreign_asset_id: u128,
+	}
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		local_admin: Option<T::AccountId>,
+		foreign_admin: Option<T::AccountId>,
+		assets_pairs: Vec<AssetsPair>,
+	}
+
+	#[cfg(feature = "std")]
+    impl<T: Config> Default for GenesisConfig<T> { 
+        fn default() -> Self {
+            Self {
+				local_admin: Default::default(),
+				foreign_admin: Default::default(),
+                assets_pairs: Default::default(),
+            }
+        }
+    }    
+		
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			if let Some(local_admin) = &self.local_admin {
+				<LocalAdmin<T>>::put(local_admin)
+			}
+			if let Some(foreign_admin) = &self.foreign_admin {
+				<ForeignAdmin<T>>::put(foreign_admin)
+			}
+			for assets_pair in &self.assets_pairs {
+				<LocalAsset<T>>::insert(
+					T::LocalAssetId::from(assets_pair.local_asset_id),
+					T::ForeignAssetId::from(assets_pair.foreign_asset_id)
+				);
+				<ForeignAsset<T>>::insert(
+					T::ForeignAssetId::from(assets_pair.foreign_asset_id),
+					T::LocalAssetId::from(assets_pair.local_asset_id)
+				);
+			}
+		}
+	}
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -100,15 +146,16 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		OnlyAllowedToAdmins,
-		AssetsMappingCandidateNotFound,
+		OnlyAllowedForAdmins,
+		LocalAssetIdAlreadyUsed,
+		ForeignAssetIdAlreadyUsed,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
 		pub fn set_local_admin(origin: OriginFor<T>, local_admin: T::AccountId) -> DispatchResultWithPostInfo {
-			T::UpdateAdmin::ensure_origin(origin)?;
+			T::UpdateAdminOrigin::ensure_origin(origin)?;
 			<LocalAdmin<T>>::put(local_admin.clone());
 			Self::deposit_event(Event::LocalAdminUpdated(local_admin));
 			Ok(().into())
@@ -116,7 +163,7 @@ pub mod pallet {
 
 		#[pallet::weight(10_000)]
 		pub fn set_foreign_admin(origin: OriginFor<T>, foreign_admin: T::AccountId) -> DispatchResultWithPostInfo {
-			T::UpdateAdmin::ensure_origin(origin)?;
+			T::UpdateAdminOrigin::ensure_origin(origin)?;
 			<ForeignAdmin<T>>::put(foreign_admin.clone());
 			Self::deposit_event(Event::ForeignAdminUpdated(foreign_admin));
 			Ok(().into())
@@ -130,6 +177,8 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin.clone())?;
 			Self::ensure_admins_only(origin)?;
+			ensure!(!<LocalAsset<T>>::contains_key(local_asset_id), Error::<T>::LocalAssetIdAlreadyUsed);
+			ensure!(!<ForeignAsset<T>>::contains_key(foreign_asset_id), Error::<T>::ForeignAssetIdAlreadyUsed);
 			Self::approve_candidate(who, local_asset_id, foreign_asset_id)?;
 			Ok(().into())
 		}
@@ -138,7 +187,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn ensure_admins_only(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			if let (Err(_), Err(_)) = (T::LocalAdminOrigin::ensure_origin(origin.clone()), T::ForeignAdminOrigin::ensure_origin(origin)) {
-				Err(Error::<T>::OnlyAllowedToAdmins.into())
+				Err(Error::<T>::OnlyAllowedForAdmins.into())
 			} else {
 				Ok(().into())
 			}
@@ -149,26 +198,25 @@ pub mod pallet {
 			local_asset_id: T::LocalAssetId,
 			foreign_asset_id: T::ForeignAssetId
 		) -> DispatchResultWithPostInfo {
-			let current_candidate_status = <AssetsMappingCandidates<T>>::get((local_asset_id, foreign_asset_id))
-				.ok_or(Error::<T>::AssetsMappingCandidateNotFound)?;
+			let current_candidate_status = <AssetsMappingCandidates<T>>::get((local_asset_id, foreign_asset_id));
 			let local_admin = <LocalAdmin<T>>::get();
 			let foreign_admin = <ForeignAdmin<T>>::get();
 			match current_candidate_status {
-				CandidateStatus::NobodyApproved => {
+				None => {
 					if who == local_admin {
 						<AssetsMappingCandidates<T>>::insert((local_asset_id, foreign_asset_id), CandidateStatus::LocalAdminApproved);
 					} else {
 						<AssetsMappingCandidates<T>>::insert((local_asset_id, foreign_asset_id), CandidateStatus::LocalAdminApproved);
 					}
 				},
-				CandidateStatus::LocalAdminApproved => {
+				Some(CandidateStatus::LocalAdminApproved) => {
 					if who == foreign_admin {
 						<LocalAsset<T>>::insert(local_asset_id, foreign_asset_id);
 						<ForeignAsset<T>>::insert(foreign_asset_id, local_asset_id);
 						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
 					}
 				},
-				CandidateStatus::ForeignAdminApproved => {
+				Some(CandidateStatus::ForeignAdminApproved) => {
 					if who == local_admin {
 						<LocalAsset<T>>::insert(local_asset_id, foreign_asset_id);
 						<ForeignAsset<T>>::insert(foreign_asset_id, local_asset_id);
