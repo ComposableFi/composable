@@ -17,44 +17,35 @@ package = "parity-scale-codec"
 version = "2.0.0"
 
 [dependencies]
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.11" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11"  }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-io = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sp-core = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-io = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 
 log = { version = "0.4.14", default-features = false }
-serde = { version = '1', optional = true }
-lite-json = { version = "0.1", default-features = false }
-serde_json = { version = "1.0.45", default-features = false, features = ["alloc"] }
-
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.11' }
-
-composable-traits = { path = "../composable-traits", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+serde = { version = "1", optional = true }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-parking_lot = "0.11.2"
-serde = "1.0.119"
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 
 [features]
 default = ["std"]
 std = [
     "codec/std",
     "log/std",
+    "scale-info/std",
     "serde/std",
-    "lite-json/std",
     "frame-support/std",
     "frame-system/std",
     "sp-runtime/std",
     "sp-io/std",
     "sp-core/std",
     "sp-std/std",
-    "scale-info/std",
 ]
 
 runtime-benchmarks = [

@@ -1,14 +1,11 @@
 use crate as pallet_assets_registry;
-use crate::*;
 use frame_support::{ord_parameter_types, parameter_types, traits::Everything};
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use sp_core::{sr25519::Signature, H256};
-use sp_keystore::{testing::KeyStore, SyncCryptoStore};
+use sp_core::H256;
 use sp_runtime::{
-	testing::{Header, TestXt},
-	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
-	RuntimeAppPublic,
+	testing::Header,
+	traits::{BlakeTwo256, IdentityLookup},
 };
 
 pub type AccountId = u32;
@@ -55,7 +52,7 @@ impl system::Config for Test {
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = ();
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
