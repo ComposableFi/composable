@@ -15,7 +15,7 @@ end box
 
 cd -> pas : Get list of mappings
 
-cd --> pah : RCP to get all combinations of pairs
+cd --> pah : RCP to get all combinations of pairs (also can use Direct XCM `ReportHolding`)
 note over pah
     Starting with few combinations of mappings
     to avoid mutlistage market creation

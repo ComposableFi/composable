@@ -19,7 +19,7 @@ alt OB
   pl --> pas: Burn
   pl --> pah: XCM sell via 'Teleport' + 'Exchange'
   note over pah
-    - direct teleport is direct chain to chain connected high trust solutuin
+    - direct teleport is direct chain to chain connected high trust solution
   end note
   ...
   alt Sold

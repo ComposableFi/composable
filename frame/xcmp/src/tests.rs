@@ -274,6 +274,10 @@ pub struct MappedId(u128);
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, PartialOrd, Ord, TypeInfo)]
 pub struct Liquid(u128);
 
+/// for those which were bridged
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, PartialOrd, Ord, TypeInfo)]
+pub struct Bridged(MappedId)
+
 /// must implement custom Encode, Decode so it validates numeric properties and compresses data into
 /// one 128 bit, and IntoPrimitive and TryFromPrimitive fungible
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, PartialOrd, Ord, TypeInfo)]
@@ -374,7 +378,7 @@ fn full_trust_teleport_and_dex() {
 	});
 
 	HydraDxParachain::execute_with(|| {
-		// TODO: setup currency pallet
+		// TODO: setup currency pallet as example
 	});
 }
 
