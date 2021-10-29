@@ -28,7 +28,7 @@ impl ComplexMap {
 	} // binary search here;
 
 // make it easier to add things 
-	fn add(&self, amounts: u32, pid: u32, vots: u32) -> bool {
+	fn add(&mut self, amounts: u32, pid: u32, vots: u32) -> bool {
 		&self.insert(
 BribesStorage{
 	p_id: pid,
