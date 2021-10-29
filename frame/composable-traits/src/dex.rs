@@ -279,6 +279,71 @@ impl StableSwapPool {
 
 		None
 	}
+
+	/// Here `xp` - coin amounts, `ann` is amplification coefficient multiplied by `n^n`, where
+	/// `n` is number of coins.
+	/// Calculate `x[i]` if one reduces `d` from being calculated for `xp` to `d`.
+	///
+	/// # Notes
+	///
+	/// Done by solving quadratic equation iteratively.
+	///
+	/// ```pseudocode
+	/// x_1^2 + x_1 * (sum' - (A * n^n - 1) * D / (A * n^n)) = D^(n+1) / (n^2n * prod' * A)
+	/// x_1^2 + b * x_1 = c
+	///
+	/// x_1 = (x_1^2 + c) / (2 * x_1 + b)
+	/// ```
+	pub fn get_y_d(i: usize, d: FixedU128, xp: &[FixedU128], ann: FixedU128) -> Option<FixedU128> {
+		let prec = FixedU128::from_inner(FixedU128::accuracy());
+		let zero = FixedU128::one();
+		let two = FixedU128::saturating_from_integer(u128::try_from(2).ok()?);
+		let n = FixedU128::saturating_from_integer(u128::try_from(xp.len()).ok()?);
+
+		if i >= xp.len() {
+			return None
+		}
+
+		let mut c = d;
+		let mut s = zero;
+
+		for (k, xp_k) in xp.iter().enumerate() {
+			if k == i {
+				continue
+			}
+
+			let x = xp_k;
+
+			s = s.checked_add(x)?;
+			// c = c * d / (x * n)
+			c = c.checked_mul(&d)?.checked_div(&x.checked_mul(&n)?)?;
+		}
+		// c = c * d / (ann * n)
+		c = c.checked_mul(&d)?.checked_div(&ann.checked_mul(&n)?)?;
+		// b = s + d / ann
+		let b = s.checked_add(&d.checked_div(&ann)?)?;
+		let mut y = d;
+
+		for _ in 0..255 {
+			let y_prev = y;
+			// y = (y*y + c) / (2 * y + b - d)
+			y = y
+				.checked_mul(&y)?
+				.checked_add(&c)?
+				.checked_div(&two.checked_mul(&y)?.checked_add(&b)?.checked_sub(&d)?)?;
+
+			// Equality with the specified precision
+			if y > y_prev {
+				if y.checked_sub(&y_prev)? <= prec {
+					return Some(y)
+				}
+			} else if y_prev.checked_sub(&y)? <= prec {
+				return Some(y)
+			}
+		}
+
+		None
+	}
 }
 
 #[cfg(test)]
