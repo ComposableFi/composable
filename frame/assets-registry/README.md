@@ -6,6 +6,7 @@
 - should support any asset to be added
 - allow to transfer assets to HydraDX
 - allow to transfer assets back from HydraDX to Composable
+- Composable will send local AssetIds, hoping Hydra DX will map them properly
 
 ## v1
 

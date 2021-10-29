@@ -1,0 +1,66 @@
+@startuml
+
+box Composable #LightYellow
+  actor "Root or Collective" as composable_authority
+  actor "Bob" as bob
+  participant "Compsable" as composable
+  participant "Assets Registy" as assets_registry_pallet
+  participant "Assets" as assets_pallet
+  participant "OCW Assets Registy" as assets_registry_ocw
+
+
+end box
+
+participant XCM as xcm
+
+box HydraDx #SkyBlue
+  participant "HydraDX Assets Registry" as assets_registry_hydra_dx
+  participant "HydraDX OB" as dex
+  actor "Root or Collective" as hydra_dx_authority
+end box
+
+composable_authority --> assets_registry_pallet : Decide to create mapping for SOL on HydraDX
+
+assets_registry_pallet --> xcm: Send mapping request to HyraDX
+
+xcm --> assets_registry_hydra_dx : Mapping proposal
+
+...
+
+
+hydra_dx_authority -> assets_registry_hydra_dx : Vote for mapping
+
+
+...
+
+assets_registry_ocw -> assets_registry_hydra_dx : RCP call to check current state of requested mapping
+
+assets_registry_hydra_dx -> assets_registry_ocw: Created mapping id
+
+assets_registry_ocw -> assets_registry_pallet: Store mapping (ParaId, ForeignAssetId, LocalAssetId)
+
+...
+
+composable --> xcm: Transfer with Composable Para ID and local Asset Id
+
+xcm --> assets_registry_hydra_dx : Map Composable Asset id into Hydra DX asset id
+
+
+...
+
+bob -> assets_registry_hydra_dx : RCP: What is list of assets for Composable?
+
+...
+
+
+dex --> xcm: Transfer sold amount
+
+xcm --> assets_pallet : Transfer
+
+assets_pallet -> assets_registry_pallet : What would be asset id for for sender (ParaId, AssetId)?
+
+assets_registry_pallet -> assets_registry_pallet: Check if AssetId is mapped or local
+
+...
+
+@enduml
