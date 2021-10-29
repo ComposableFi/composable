@@ -26,7 +26,7 @@ pub trait Bribe {
 }
 
 /// A request to create a bribe for an (ongoing) referendum.
-#[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug)]
+#[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct CreateBribeRequest<AccountId, ReferendumIndex, Balance, Conviction, CurrencyId> {
 	/// Account id of the creator of the Bribe request
 	pub account_id: AccountId,
@@ -43,7 +43,7 @@ pub struct CreateBribeRequest<AccountId, ReferendumIndex, Balance, Conviction, C
 }
 
 /// A request to take a bribe and vote for the corresponding referendum.
-#[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug)]
+#[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct TakeBribeRequest<BribeIndex, Balance, Conviction> {
 	/// Index of the bribe.
 	pub bribe_index: BribeIndex,
@@ -51,7 +51,7 @@ pub struct TakeBribeRequest<BribeIndex, Balance, Conviction> {
 	pub votes: Votes<Balance, Conviction>,
 }
 
-#[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug)]
+#[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct Votes<Balance, Conviction> {
 	pub capital: Balance,
 	pub conviction: Conviction,
