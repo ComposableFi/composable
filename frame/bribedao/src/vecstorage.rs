@@ -13,34 +13,27 @@ pub struct BribesStorage {
 sortedvec! {
 	/// lookup by (amount, votes) keys
 	#[derive(Debug)]
-	pub struct ComplexMap {
+	pub struct FastMap {
 		fn derive_key(val: &BribesStorage) -> (u32, u32) {
 			(val.amount, val.votes)
 		}
 	}
 }
 
-impl ComplexMap {
+impl FastMap {
 	fn fastsearch(&self, key: u32) -> (u32, u32, u32) {
 		let myinner = &self.inner;
 		let out = myinner.binary_search_by_key(&key, |n| n.amount);
 		(out.unwrap().try_into().unwrap(), 2, 3)
 	} // binary search here;
 
-// make it easier to add things 
+	// make it easier to add things
 	fn add(&mut self, amounts: u32, pid: u32, vots: u32) -> bool {
-		&self.insert(
-BribesStorage{
-	p_id: pid,
-	amount: amounts,
-	votes: vots,
-}
-);
+		&self.insert(BribesStorage { p_id: pid, amount: amounts, votes: vots });
 		true
 	}
-
 }
 
-pub fn new() -> ComplexMap {
-	ComplexMap::default()
+pub fn new() -> FastMap {
+	FastMap::default()
 }

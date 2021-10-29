@@ -1,7 +1,10 @@
 //Bribe DAO
 
 pub use pallet::*;
+
 pub mod vecstorage;
+
+pub use crate::vecstorage::FastMap;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -21,9 +24,10 @@ pub mod pallet {
 		traits::{AtLeast32BitUnsigned, Zero},
 	};
 	//	use sp_std::fmt::Debug;
-
+	use crate::vecstorage::FastMap;
+	//	mod vecstorage;
 	pub type BribeIndex = u32;
-
+	pub type FastVec = FastMap;
 	pub type ReferendumIndex = pallet_democracy::ReferendumIndex;
 	pub type CreateBribeRequest<T> = composable_traits::bribe::CreateBribeRequest<
 		<T as frame_system::Config>::AccountId,
