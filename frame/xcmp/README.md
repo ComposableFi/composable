@@ -1,7 +1,6 @@
 # Overview
 
 - For read XCM, event direct, it still takes block space.
-- Will not use 3rd party common good parachain for mapping
 - Using Direct XCM messaging amid chains with no hops. ASK: if that Direct is ready?
 - Will use `Teleport` message and than `Exchange` for DEX. NOTE: Safe than fast with Reserve back
 - `Teleport` + `Transact` extrinsic `Call` for auction. Partial cell. Define it later.

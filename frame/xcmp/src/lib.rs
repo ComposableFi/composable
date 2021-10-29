@@ -19,6 +19,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};
+use frame_support::parameter_types;
 use frame_system::Config as SystemConfig;
 use sp_runtime::traits::Saturating;
 use sp_std::prelude::*;
@@ -127,6 +128,11 @@ pub type ParachainPalletXcm = pallet_xcm::Pallet<parachain::Runtime>;
 pub use pallet::*;
 
 use crate::parachain::Balance;
+
+parameter_types! {
+	/// jump to Relay, and go down to composable
+	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
+}
 
 #[frame_support::pallet]
 pub mod pallet {
