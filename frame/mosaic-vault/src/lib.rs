@@ -456,6 +456,12 @@ pub mod pallet {
 			) -> DispatchResultWithPostInfo {
 
 			let sender = ensure_signed(origin)?;
+            
+			let bn = <frame_system::Pallet<T>>::block_number();
+			let ebn = Encode::encode(&bn);
+
+            let enc = Encode::encode(&destination_address);
+
 			// ensure!(
 			// 	config.strategies.len() <= T::MaxStrategies::get(),
 			// 	Error::<T>::TooManyStrategies
@@ -476,7 +482,7 @@ pub mod pallet {
 
 			let pallet_account_id = Self::account_id();
 
-			T::Vault::deposit(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::DepositFailed)?;
+			//T::Vault::deposit(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::DepositFailed)?;
 
 			//T::Currency::burn_from(asset_id, &destination_address,  amount).map_err(|_| Error::<T>::BurnFailed)?;
 
