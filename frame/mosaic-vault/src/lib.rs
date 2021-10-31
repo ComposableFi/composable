@@ -5,33 +5,34 @@
 
 pub use pallet::*;
 
-
-
 #[frame_support::pallet]
 pub mod pallet {
 
 	use frame_support::{
 		ensure,
 		pallet_prelude::*,
-		traits::fungibles::{Inspect, Mutate, Transfer},
+		traits::{
+			UnixTime,
+			fungibles::{Mutate, Transfer}
+		},
 		PalletId,
 	};
-
+	use sp_core::hashing::keccak_256;
 	use frame_system::pallet_prelude::*;
  	use scale_info::TypeInfo;
 	use sp_std::{fmt::Debug, vec::Vec}; 
 	use codec::{Codec, FullCodec};
 	use sp_runtime::{
          traits::{
-			AtLeast32BitUnsigned, Convert, AccountIdConversion, Saturating, CheckedSub
+			AtLeast32BitUnsigned, Convert, AccountIdConversion, 
+			Saturating, CheckedSub, CheckedAdd, CheckedMul, CheckedDiv, Zero,
+			
 		 },
 		  Perquintill,
 	};
-
 	use composable_traits::{loans::Timestamp, vault::{Deposit, StrategicVault, Vault, VaultConfig }};
 
 	// use sp_runtime::traits::AccountIdConversion;
-	
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
@@ -46,7 +47,9 @@ pub mod pallet {
 
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 
-		type Balance: Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo + CheckedSub;
+		type Balance: Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo + CheckedSub + CheckedAdd + Zero;
+
+		type Nonce:  Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo + CheckedSub + CheckedAdd + From<u8>;
 
 		type TransferDelay:  Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo;
 
@@ -100,6 +103,10 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+
+		type FeeAddress: Get<Self::AccountId>;
+
+		type BlockTimestamp: UnixTime;
 	}
 
 	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
@@ -168,6 +175,15 @@ pub mod pallet {
 	#[pallet::getter(fn deposits)]
 	pub(super) type Deposits<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, DepositInfo<T::AssetId, T::Balance>, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn nonce)]
+	pub(super) type Nonce<T: Config> = StorageValue<_, T::Nonce, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn last_withdraw_id)]
+	pub(super) type LastWithdrawID<T: Config> = StorageValue<_, T::DepositId, ValueQuery>;
+
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
  	pub enum Event<T: Config> {
@@ -175,12 +191,12 @@ pub mod pallet {
 		DepositCompleted(
    			T::AccountId, // sender
    			T::AssetId,   // assetId
-			// T::RemoteAssetId, // remoteAssetId
-			// T::RemoteNetworkId, // remoteNetworkId
+			T::RemoteAssetId, // remoteAssetId
+			T::RemoteNetworkId, // remoteNetworkId
 			T::AccountId, // receiver
- 			u128, // value
-			Vec<u8>, // uniqueId
-			u128 // transferDelay
+ 			T::Balance, // value
+			[u8; 32], // uniqueId
+			T::TransferDelay // transferDelay
 		),
 
 		WithdrawalCompleted(
@@ -189,7 +205,7 @@ pub mod pallet {
 		   T::Balance, // receivedAmount
 		   T::Balance, // feeAmount
 		   T::AssetId, // assetId
-		   Vec<u8>, // uniqueId
+		   T::DepositId, // uniqueId
 		),
  
         TokenAdded(
@@ -250,6 +266,15 @@ pub mod pallet {
 			T::DepositId
 		),
 
+		FeeTaken(
+            T::AccountId, // sender
+			T::AccountId, // receiver
+			T::AssetId,
+			T::Balance, // amount
+			T::Balance, // fee
+			T::DepositId,
+		),
+
 	}
 
 	#[allow(missing_docs)]
@@ -286,7 +311,17 @@ pub mod pallet {
 
 		InsufficientFunds,
 
+		InsufficientAssetBalance,
+
+		AlreadyWithdrawn,
+
+		TransferNotPossible,
+
+		ZeroAmount,
+
 		Underflow,
+
+		Overflow,
 	}
 
 
@@ -456,53 +491,116 @@ pub mod pallet {
 			) -> DispatchResultWithPostInfo {
 
 			let sender = ensure_signed(origin)?;
-            
-			let bn = <frame_system::Pallet<T>>::block_number();
-			let ebn = Encode::encode(&bn);
 
-            let enc = Encode::encode(&destination_address);
+			ensure!(amount != T::Balance::zero(), Error::<T>::ZeroAmount);
 
-			// ensure!(
-			// 	config.strategies.len() <= T::MaxStrategies::get(),
-			// 	Error::<T>::TooManyStrategies
-			// );
-
-			// ensure!(LastTransfer::<T>::)
-			// todo - add lastTransfer check, ? how to get block.timespamp
-
-			ensure!(transfer_delay <= <MaxTransferDelay<T>>::get(), Error::<T>::TransferDelayAboveMaximum);
-
+			ensure!(Self::last_transfer(&sender).checked_add(Self::transfer_lockup_time()).ok_or(Error::<T>::Overflow)? < T::BlockTimestamp::now().as_secs(), Error::<T>::TransferNotPossible);
+           
 			ensure!(transfer_delay >= <MinTransferDelay<T>>::get(), Error::<T>::TransferDelayBelowMinimum);
+		
+			ensure!(transfer_delay <= <MaxTransferDelay<T>>::get(), Error::<T>::TransferDelayAboveMaximum);
 
 			ensure!(amount <= Self::max_asset_transfer_size(asset_id), Error::<T>::AmountAboveMaxAssetTransferSize);
 
 			ensure!(amount >= Self::min_asset_transfer_size(asset_id), Error::<T>::AmountBelowMaxAssetTransferSize);
 
+			// update in_transfer_funds
+			let in_transfer_funds = Self::in_transfer_funds(asset_id);
+			let new_in_transfer_funds = in_transfer_funds.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
+			<InTransferFunds<T>>::insert(asset_id, new_in_transfer_funds);
+			// 
+			let pallet_account_id = Self::account_id();            
+
+            // move funds to pallet amount
+			T::Currency::transfer(asset_id, &sender, &pallet_account_id, amount, true);
+            // deposit to valut
 			let vault_id = <AssetVault<T>>::get(asset_id);
+			<T::Vault as StrategicVault>::deposit(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::DepositFailed)?;
+           
+			<LastTransfer<T>>::insert(&sender, T::BlockTimestamp::now().as_secs());
 
-			let pallet_account_id = Self::account_id();
+			let deposit_id = Self::generate_deposit_id(remote_network_id, &destination_address, pallet_account_id);
+            <Deposits<T>>::insert(asset_id, DepositInfo{asset_id, amount});
 
-			//T::Vault::deposit(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::DepositFailed)?;
-
-			//T::Currency::burn_from(asset_id, &destination_address,  amount).map_err(|_| Error::<T>::BurnFailed)?;
-
-			///- toddo store deposit info info 
-			/// 
-			/// - send event 
- 			/// // question how to generate the hash id used in the solidity version , hash vs incremented uint
+			Self::deposit_event(Event::DepositCompleted(
+				sender,
+				asset_id,
+				Self::remote_asset_id(remote_network_id, asset_id),
+				remote_network_id,
+				destination_address,
+				amount, 
+				deposit_id,
+				transfer_delay
+			));
 
 			Ok(().into())
 		 }
 
+
 		 #[pallet::weight(10_000)]
 		 pub fn withdraw(
 			origin: OriginFor<T>, 
-			receiving_account: T::AccountId,
+			destination_account: T::AccountId,
+			amount: T::Balance,
 			asset_id: T::AssetId, 
 			remote_netword_id: T::RemoteNetworkId,
 	        deposit_id: T::DepositId,
 		 ) -> DispatchResultWithPostInfo {
 
+			  let sender = ensure_signed(origin)?;
+             
+			  ensure!(Self::has_been_withdrawn(deposit_id) == false, Error::<T>::AlreadyWithdrawn);
+
+			  <HasBeenWithdrawn<T>>::insert(deposit_id, true);
+
+			  <LastWithdrawID<T>>::put(deposit_id);
+
+			  let pallet_account_id = Self::account_id(); 
+
+			  let vault_id = <AssetVault<T>>::get(asset_id);
+
+			  /**
+			   - todo check before withdraw 
+			  */
+
+              // withdraw to pallet account
+			  <T::Vault as StrategicVault>::withdraw(&vault_id, &pallet_account_id, amount);
+              
+              let fee = Self::calculate_fee_percentage(asset_id, amount);
+			  
+			  let fee_absolute = amount.checked_mul(&fee)
+			     .and_then(|x|x.checked_div(&T::FeeFactor::get()))
+				 .ok_or(Error::<T>::Overflow)?;
+			
+
+			  let withdraw_amount = amount.checked_sub(&fee_absolute).ok_or(Error::<T>::Underflow)?;
+
+			  ensure!(Self::get_current_token_liquidity(asset_id) >= amount, Error::<T>::InsufficientAssetBalance);    
+
+			 T::Currency::transfer(asset_id, &pallet_account_id, &sender, withdraw_amount, true);
+
+			 if fee_absolute > T::Balance::zero() {  
+			   
+				T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee_absolute, true);
+				
+				Self::deposit_event(Event::FeeTaken(
+					sender, 
+					destination_account.clone(), // receiver
+					asset_id,
+					amount, // amount
+					fee_absolute, // fee
+					deposit_id,
+				));
+			 }
+
+			 Self::deposit_event(Event::WithdrawalCompleted(
+				destination_account,
+				amount,
+				withdraw_amount,
+				fee_absolute,
+				asset_id,
+				deposit_id
+			 ));
 
 			 Ok(().into())
 		 }
@@ -559,18 +657,83 @@ pub mod pallet {
 
 	       let new_intransfer_funds = Self::in_transfer_funds(asset_id).checked_sub(&amount).ok_or(Error::<T>::Underflow)?;
 
-		   <InTransferFunds<T>>::insert(asset_id, amount);
+		   <InTransferFunds<T>>::insert(asset_id, new_intransfer_funds);
 
 		   Self::deposit_event(Event::TransferFundsUnlocked(asset_id, amount, deposit_id));
 	
 			Ok(().into())
 		 }
+
+
 	
  	}
 
 	impl<T: Config> Pallet<T> {
 		fn account_id() -> T::AccountId {
 			T::PalletId::get().into_account()
+		}
+
+		fn get_fee_address() -> T::AccountId {
+			T::FeeAddress::get()
+		}
+
+		fn increment_nonce() -> T::Nonce {
+
+			let mut nonce = Self::nonce();
+
+			nonce += 1u8.into();
+
+			<Nonce<T>>::put(nonce);
+
+			nonce
+		}
+
+		fn calculate_fee_percentage(asset_id: T::AssetId, amount: T::Balance) -> T::Balance {
+
+			// let fake: T::Balance = Self::min_fee();
+			// fake
+			amount
+		}
+
+		fn get_current_token_liquidity(asset_id: T::AssetId) -> T::Balance {
+	
+			// let vault_id = <AssetVault<T>>::get(asset_id);
+		
+			// let available_funds = <T::Vault as StrategicVault>::available_funds(&vault_id, &Self::account_id())?;
+
+			// let asset_liquidity = available_funds.checked_sub(Self::in_transfer_funds(asset_id)).ok_or(Error::<T>::Underflow);
+
+			// asset_liquidity
+			let fake: T::Balance = Self::min_fee();
+			fake
+		}
+
+		fn generate_deposit_id(
+			remote_network_id: T::RemoteNetworkId,
+			destination_address: &T::AccountId,
+			pallet_account_id: T::AccountId,
+		) -> [u8; 32] {
+
+			let mut encoded_remote_network_id = Encode::encode(&remote_network_id);
+
+			let mut encoded_block_number = Encode::encode(&<frame_system::Pallet<T>>::block_number());
+
+            let mut encoded_destination_address = Encode::encode(&destination_address);
+
+			let mut encoded_pallet_account_id = Encode::encode(&pallet_account_id);
+
+			let mut encoded_nonce = Encode::encode(&Self::increment_nonce());
+
+			let mut encoded_data = Vec::new();
+			encoded_data.append(& mut encoded_remote_network_id);
+			encoded_data.append(& mut encoded_block_number);
+			encoded_data.append(& mut encoded_destination_address);
+			encoded_data.append(& mut encoded_pallet_account_id);
+			encoded_data.append(& mut encoded_nonce);
+
+			let deposit_id = keccak_256(&encoded_data);
+
+			deposit_id
 		}
 	}
 

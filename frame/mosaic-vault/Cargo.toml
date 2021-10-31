@@ -38,6 +38,7 @@ serde = "1.0.119"
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b89b1f98fcf0f5c341fbef1d12bfd869a2f2a9fe" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b89b1f98fcf0f5c341fbef1d12bfd869a2f2a9fe", default-features = false }
 
+
 [features]
 default = ["std"]
 std = [
