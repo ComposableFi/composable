@@ -175,7 +175,7 @@ https://github.com/paritytech/substrate/blob/master/frame/benchmarking/src/lib.r
 https://crates.io/crates/frame-benchmarking
 
 Extra:
-If we are running the latest version of the frame-benchmarking dependency we can also add our pallet to the [benchmark_metadata](https://github.com/paritytech/substrate/blob/polkadot-v0.9.11/frame/benchmarking/src/utils.rs#L150) function.
+If we are running the latest version of the frame-benchmarking dependency we can also add our pallet to the [benchmark_metadata](https://github.com/paritytech/substrate/blob/polkadot-v0.9.12/frame/benchmarking/src/utils.rs#L150) function.
 
 
 
