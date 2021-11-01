@@ -20,7 +20,6 @@ pub mod pallet {
 
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
-	use serde::{Deserialize, Serialize};
 	use sp_std::{fmt::Debug, marker::PhantomData, str};
 
 	#[pallet::config]
@@ -94,7 +93,8 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	#[derive(Debug, Clone, Copy, Encode, Decode, Serialize, Deserialize)]
+	#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
+	#[derive(Debug, Clone, Copy, Encode, Decode)]
 	pub struct AssetsPair {
 		local_asset_id: u128,
 		foreign_asset_id: u128,
@@ -145,6 +145,10 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		LocalAdminUpdated(T::AccountId),
 		ForeignAdminUpdated(T::AccountId),
+		AssetsMappingCandidateUpdated {
+			local_asset_id: T::LocalAssetId,
+			foreign_asset_id: T::ForeignAssetId,
+		},
 	}
 
 	#[pallet::error]
@@ -195,6 +199,10 @@ pub mod pallet {
 				Error::<T>::ForeignAssetIdAlreadyUsed
 			);
 			Self::approve_candidate(who, local_asset_id, foreign_asset_id)?;
+			Self::deposit_event(Event::AssetsMappingCandidateUpdated {
+				local_asset_id,
+				foreign_asset_id,
+			});
 			Ok(().into())
 		}
 	}
