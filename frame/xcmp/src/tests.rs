@@ -6,6 +6,7 @@ use frame_support::{
 	traits::{Everything, Nothing},
 	weights::Weight,
 };
+use frame_system::Origin;
 use polkadot_parachain::primitives::Id as ParaId;
 use polkadot_runtime_parachains::{configuration, origin, shared, ump};
 use scale_info::TypeInfo;
@@ -23,6 +24,8 @@ use xcm_builder::{
 };
 use xcm_executor::{Config, XcmExecutor};
 use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
+
+use crate::parachain::AccountId;
 
 use super::*;
 
@@ -276,7 +279,7 @@ pub struct Liquid(u128);
 
 /// for those which were bridged
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, PartialOrd, Ord, TypeInfo)]
-pub struct Bridged(MappedId)
+pub struct Bridged(MappedId);
 
 /// must implement custom Encode, Decode so it validates numeric properties and compresses data into
 /// one 128 bit, and IntoPrimitive and TryFromPrimitive fungible
@@ -382,8 +385,22 @@ fn full_trust_teleport_and_dex() {
 	});
 }
 
+
+
 #[test]
 #[ignore = "how to share extrinsic Call metadata without sharing pallet?"]
 fn teleport_and_transaction_via_auction() {
 	MockNet::reset();
+
+	let alice = AccountId::default();
+	let origin = crate::parachain::Origin::signed(alice.into());
+	ComposableParachain::execute_with(|| {
+		let result = ParachainContracts::ping(
+			origin,
+				42,
+				Vec::new(),
+			);
+
+		assert_ok!(result);
+	});
 }

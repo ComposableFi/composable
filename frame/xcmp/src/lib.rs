@@ -123,16 +123,13 @@ pub fn para_ext(para_id: u32) -> sp_io::TestExternalities {
 
 pub type RelayChainPalletXcm = pallet_xcm::Pallet<relay_chain::Runtime>;
 pub type ParachainPalletXcm = pallet_xcm::Pallet<parachain::Runtime>;
+/// all contracts which should be implemented on target chain
+pub type ParachainContracts = crate::parachain::mock_msg_queue::Pallet<parachain::Runtime>;
 
 /// end mocks
 pub use pallet::*;
 
 use crate::parachain::Balance;
-
-parameter_types! {
-	/// jump to Relay, and go down to composable
-	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
-}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -143,6 +140,7 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
+
 
 	/// The module configuration trait.
 	#[pallet::config]

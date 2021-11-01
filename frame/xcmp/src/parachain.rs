@@ -1,19 +1,3 @@
-// Copyright 2021 Parity Technologies (UK) Ltd.
-// This file is part of Polkadot.
-
-// Polkadot is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Polkadot is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
-
 //! Parachain runtime mock.
 
 use codec::{Decode, Encode};
@@ -151,17 +135,45 @@ impl Config for XcmConfig {
 
 #[frame_support::pallet]
 pub mod mock_msg_queue {
-	use super::*;
-	use frame_support::pallet_prelude::*;
+	use crate::HYDRADX;
+
+use super::*;
+	use frame_support::{dispatch::GetCallMetadata, pallet_prelude::*};
+use frame_system::pallet_prelude::OriginFor;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type XcmExecutor: ExecuteXcm<Self::Call>;
+		type XcmSender: SendXcm;
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		/// cumulus pallet compatible ping
+		#[pallet::weight(0)]
+		pub fn ping(origin: OriginFor<T>, seq: u32, payload: Vec<u8>) -> DispatchResult {
+			PingCount::<T>::set(seq);
+			T::XcmSender::send_xcm(
+				(1, Junction::Parachain(HYDRADX)),
+				Xcm(vec![Transact {
+					origin_type: OriginKind::Native,
+					require_weight_at_most: 1_000,
+					call: <T as Config>::Call::from(Call::<T>::ping {
+						seq,
+						payload: payload.clone(),
+					})
+					.encode()
+					.into(),
+				}])).expect("just for test"));
+
+			Ok(())
+		}
+	}
+
+	/// The total number of pongs received sent.
+	#[pallet::storage]
+	pub(super) type PingCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -206,6 +218,8 @@ pub mod mock_msg_queue {
 		ExecutedDownward(MessageId, Outcome),
 	}
 
+
+
 	impl<T: Config> Pallet<T> {
 		pub fn set_para_id(para_id: ParaId) {
 			ParachainId::<T>::put(para_id);
@@ -236,6 +250,7 @@ pub mod mock_msg_queue {
 			result
 		}
 	}
+
 
 	impl<T: Config> XcmpMessageHandler for Pallet<T> {
 		fn handle_xcmp_messages<'a, I: Iterator<Item = (ParaId, RelayBlockNumber, &'a [u8])>>(
@@ -291,6 +306,7 @@ pub mod mock_msg_queue {
 impl mock_msg_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type XcmSender = XcmRouter;
 }
 
 pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, RelayNetwork>;
