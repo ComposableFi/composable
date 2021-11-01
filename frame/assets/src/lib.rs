@@ -8,13 +8,17 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use composable_traits::currency::{AssetId, Balance, CurrencyFactory};
-	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*, sp_runtime::traits::StaticLookup, traits::{
+	use frame_support::{
+		dispatch::DispatchResultWithPostInfo,
+		pallet_prelude::*,
+		sp_runtime::traits::StaticLookup,
+		traits::{
 			fungible::{
 				Inspect as NativeInspect, Mutate as NativeMutate, Transfer as NativeTransfer,
 			},
 			fungibles::{Inspect, Mutate, Transfer},
-			EnsureOrigin,
-		}};
+		},
+	};
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::DispatchError;
 
@@ -29,8 +33,6 @@ pub mod pallet {
 		type GenerateCurrencyId: CurrencyFactory<Self::AssetId>;
 		type Currency;
 		type MultiCurrency;
-		type CreateMinter: EnsureOrigin<Self::Origin>;
-		type RecoveryOrigin: EnsureOrigin<Self::Origin>;
 		type WeightInfo: WeightInfo;
 	}
 
@@ -39,14 +41,13 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	#[pallet::getter(fn administrators)]
-	pub type Administrators<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AssetId, T::AccountId, ValueQuery>;
+	#[pallet::getter(fn markets)]
+	pub type PalletAccounts<T: Config> =
+		StorageMap<_, Twox64Concat, T::AssetId, T::AccountId, ValueQuery>;
 
 	#[pallet::error]
 	pub enum Error<T> {
-		NotAdmin,
-		AssetIdNotFound
+		BadOrigin,
 	}
 
 	#[pallet::call]
@@ -196,43 +197,39 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Creates a new asset, minting `amount` of funds into the `administrator` account. The `administrator` can continue to 
-		/// mint and burn funds, and should be a multisignature account.
-		/// 
-		/// # Errors
-		///  - When `origin` is not `CreateMinter`.
+		/// Creates a new asset, minting `amount` of funds into the `dest` account. Intented to be
+		/// used for creating wrapped assets, not associated with any project.
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
 		pub fn mint_initialize(
 			origin: OriginFor<T>,
 			amount: T::Balance,
-			administrator: T::AccountId,
+			dest: T::AccountId,
 		) -> DispatchResultWithPostInfo {
-			T::CreateMinter::ensure_origin(origin)?;
+			ensure_root(origin)?;
 			let id = T::GenerateCurrencyId::create()?;
-			<Self as Mutate<T::AccountId>>::mint_into(id, &administrator, amount)?;
-			Administrators::<T>::insert(id, administrator);
+			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(().into())
 		}
 
-		/// Changes the administrator of the asset.
-		/// 
-		/// # Errors
-		///  - When `origin` is not the current `administrator` or `RecoveryOrigin`.
-		#[pallet::weight(T::WeightInfo::set_administrator())]
-		pub fn set_administrator(
+		/// Creates a new asset, minting `amount` of funds into the `dest` account. The `dest`
+		/// account can use the democracy pallet to mint further assets, or if the governance_origin
+		/// is set to an owned account, using signed transactions. In general the
+		/// `governance_origin` should be generated from the pallet id.
+		#[pallet::weight(T::WeightInfo::mint_initialize())]
+		pub fn mint_initialize_with_governance(
 			origin: OriginFor<T>,
-			asset_id: T::AssetId,
-			administrator: T::AccountId,
+			amount: T::Balance,
+			governance_origin: T::AccountId,
+			dest: T::AccountId,
 		) -> DispatchResultWithPostInfo {
-			ensure_admin_or_recovery::<T>(origin, asset_id)?;
-			Administrators::<T>::insert(asset_id, administrator);
+			ensure_root(origin)?;
+			let id = T::GenerateCurrencyId::create()?;
+			PalletAccounts::<T>::insert(id, governance_origin);
+			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(().into())
 		}
 
 		/// Mints `amount` of `asset_id` into the `dest` account.
-		/// 
-		/// # Errors
-		///  - When the `origin` is not the administrator.
 		#[pallet::weight(T::WeightInfo::mint_into())]
 		pub fn mint_into(
 			origin: OriginFor<T>,
@@ -240,35 +237,41 @@ pub mod pallet {
 			dest: T::AccountId,
 			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
-			let account = ensure_signed(origin)?;
-			ensure_admin::<T>(&account, asset_id)?;
+			ensure_root_or_governance::<T>(origin, asset_id)?;
 			<Self as Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
+			Ok(().into())
+		}
+
+		/// Mints `amount` of `asset_id` into the `dest` account.
+		#[pallet::weight(T::WeightInfo::burn_from())]
+		pub fn burn_from(
+			origin: OriginFor<T>,
+			asset_id: T::AssetId,
+			dest: T::AccountId,
+			amount: T::Balance,
+		) -> DispatchResultWithPostInfo {
+			ensure_root_or_governance::<T>(origin, asset_id)?;
+			<Self as Mutate<T::AccountId>>::burn_from(asset_id, &dest, amount)?;
 			Ok(().into())
 		}
 	}
 
-	fn ensure_admin<T: Config>(
-		account: &T::AccountId,
-		asset_id: T::AssetId,
-	) -> Result<(), DispatchError> {
-		let admin = Administrators::<T>::try_get(asset_id).map_err(|_| -> DispatchError { Error::<T>::AssetIdNotFound.into() })?;
-		ensure!(&admin == account, Error::<T>::NotAdmin);
-		Ok(())
-	}
-
-	fn ensure_admin_or_recovery<T: Config>(
+	fn ensure_root_or_governance<T: Config>(
 		origin: OriginFor<T>,
 		asset_id: T::AssetId,
-	) -> Result<(), DispatchError> {
-		let account = ensure_signed(origin.clone())?;
-
-		match ensure_admin::<T>(&account, asset_id) {
-			Ok(_) => Ok(()),
-			Err(_) => {
-				T::RecoveryOrigin::ensure_origin(origin)?;
-				Ok(())
-			}
-		}
+	) -> Result<Option<T::AccountId>, DispatchError> {
+		let account = match origin.into() {
+			Ok(frame_system::RawOrigin::Signed(account)) => {
+				if PalletAccounts::<T>::try_get(asset_id) == Ok(account) {
+					Some(account)
+				} else {
+					return Err(Error::<T>::BadOrigin.into())
+				}
+			},
+			Ok(frame_system::RawOrigin::Root) => None,
+			_ => return Err(Error::<T>::BadOrigin.into()),
+		};
+		Ok(account)
 	}
 
 	mod currency {
