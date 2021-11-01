@@ -1465,7 +1465,6 @@ impl<T: Config> Pallet<T> {
 			vote.balance() <= T::Currency::balance(status.proposal_id.asset_id, who),
 			Error::<T>::InsufficientFunds
 		);
-		println!("in try_vote");
 		VotingOf::<T>::try_mutate((who, status.proposal_id.asset_id), |voting| -> DispatchResult {
 			if let Voting::Direct { ref mut votes, delegations, .. } = voting {
 				match votes.binary_search_by_key(&ref_index, |i| i.0) {
@@ -1490,11 +1489,9 @@ impl<T: Config> Pallet<T> {
 				if let Some(approve) = vote.as_standard() {
 					status.tally.increase(approve, *delegations);
 				}
-				println!("holding for vote");
 				T::Currency::hold(status.proposal_id.asset_id, who, vote.balance())?;
 				Ok(())
 			} else {
-				println!("AlreadyDelegating");
 				Err(Error::<T>::AlreadyDelegating.into())
 			}
 		})?;
@@ -1514,7 +1511,9 @@ impl<T: Config> Pallet<T> {
 		ref_index: ReferendumIndex,
 		scope: UnvoteScope,
 	) -> DispatchResult {
+		println!("fetching ref with index: {:?}", ref_index);
 		let info = ReferendumInfoOf::<T>::get(ref_index);
+		println!("got info: {:?}", info);
 		VotingOf::<T>::try_mutate((who, asset_id), |voting| -> DispatchResult {
 			if let Voting::Direct { ref mut votes, delegations, ref mut prior } = voting {
 				let i = votes
@@ -1535,6 +1534,7 @@ impl<T: Config> Pallet<T> {
 							let unlock_at = end + T::VoteLockingPeriod::get() * lock_periods.into();
 							let now = frame_system::Pallet::<T>::block_number();
 							if now < unlock_at {
+								println!("throwing NoPermission");
 								ensure!(
 									matches!(scope, UnvoteScope::Any),
 									Error::<T>::NoPermission
@@ -1870,7 +1870,8 @@ impl<T: Config> Pallet<T> {
 
 		// tally up votes for any expiring referenda.
 		for (index, info) in Self::maturing_referenda_at_inner(now, next..last).into_iter() {
-			let approved = Self::bake_referendum(now, index, info);
+			let approved = Self::bake_referendum(now, index, info.clone());
+			println!("index: {:?} {:?} approved: {}", index, info, approved);
 			ReferendumInfoOf::<T>::insert(index, ReferendumInfo::Finished { end: now, approved });
 			weight = max_block_weight;
 		}

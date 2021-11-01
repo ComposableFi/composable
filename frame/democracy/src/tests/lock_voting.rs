@@ -49,6 +49,7 @@ fn lock_voting_should_work() {
 			VoteThreshold::SuperMajorityApprove,
 			0,
 		);
+		println!("test: created ref with index: {:?}", r);
 		assert_ok!(Democracy::vote(Origin::signed(1), r, nay(5, 10)));
 		assert_ok!(Democracy::vote(Origin::signed(2), r, aye(4, 20)));
 		assert_ok!(Democracy::vote(Origin::signed(3), r, aye(3, 30)));
@@ -144,7 +145,7 @@ fn no_locks_without_conviction_should_work() {
 }
 
 #[test]
-fn lock_voting_should_work_with_delegation() {
+fn _lock_voting_should_work_with_delegation() {
 	new_test_ext().execute_with(|| {
 		let r = Democracy::inject_referendum(
 			2,
