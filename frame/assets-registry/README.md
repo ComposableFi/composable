@@ -2,18 +2,17 @@
 
 # Overview
 
-- should allow making proposals to add assets to HydraDX, and so that DEX authorities can approve that mapping
+- helps to hide complexity of creating mappings of local ids to and from HydraDX, with proper authorities and voting
 - should support any asset to be added
-- allow to transfer assets to HydraDX
-- allow to transfer assets back from HydraDX to Composable
-- Composable will send local AssetIds, hoping Hydra DX will map them properly
+- support to transfer assets to HydraDX (forward mapping)
+- support to transfer assets back from HydraDX to Composable (back mapping)
+- supports not only HydraDX
 
 ## v1
 
-- support small set of well know assets
+- support small set of well know assets added manually on both registries
 - manually asking HydraDX to add mapping
 
 ## vNEXT
 
-- support any assets to be added new
-- signed API (root or collective) to send proposal for mapping onto HydraDX via XCM
+- support any assets to be added new via voting processes
