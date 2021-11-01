@@ -7109,6 +7109,7 @@ dependencies = [
  "hex-literal",
  "orml-tokens",
  "orml-traits",
+ "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
