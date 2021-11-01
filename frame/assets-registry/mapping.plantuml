@@ -3,8 +3,8 @@
 box Composable #LightYellow
   actor "Root or Collective" as composable_authority
   actor "Bob" as bob
-  participant "Compsable" as composable
-  participant "Compsable Democracy" as composable_democracy
+  participant "Composable" as composable
+  participant "Composable Democracy" as composable_democracy
   participant "Assets Registy" as assets_registry_pallet
   participant "Assets" as assets_pallet
   participant "OCW Assets Registy" as assets_registry_ocw
@@ -75,7 +75,5 @@ xcm --> assets_pallet : Transfer
 assets_pallet -> assets_registry_pallet :
 
 assets_registry_pallet -> assets_registry_pallet: Check if AssetId is mapped or local
-
-...
 
 @enduml
