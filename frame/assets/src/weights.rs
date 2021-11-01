@@ -17,6 +17,7 @@ pub trait WeightInfo {
 	fn mint_initialize() -> Weight;
 	fn set_administrator() -> Weight;
 	fn mint_into() -> Weight;
+	fn burn_from() -> Weight;
 }
 
 pub struct SubstrateWeight<T>(PhantomData<T>);
@@ -73,6 +74,12 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
+
+	fn burn_from() -> Weight {
+		(81_458_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
 }
 
 // For backwards compatibility and tests
@@ -123,6 +130,12 @@ impl WeightInfo for () {
 	}
 
 	fn mint_into() -> Weight {
+		(81_458_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+
+	fn burn_from() -> Weight {
 		(81_458_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))

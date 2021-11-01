@@ -541,6 +541,23 @@ impl pallet_xcm::Config for Runtime {
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
+impl governance_registry::Config for Runtime {
+	type AssetId = CurrencyId;
+	type WeightInfo = ();
+	type Event = Event;
+}
+
+impl assets::Config for Runtime {
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type NativeAssetId = NativeAssetId;
+	type Currency = Balances;
+	type MultiCurrency = Tokens;
+	type GenerateCurrencyId = Factory;
+	type GovernanceRegistry = GovernanceRegistry;
+	type WeightInfo = ();
+}
+
 impl cumulus_pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
@@ -908,8 +925,15 @@ construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
-		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 54,
+		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
+		Liquidations: liquidations::{Pallet, Call, Event<T>} = 56,
 
+		Auctions: dutch_auction::{Pallet, Event<T>} = 57,
+		Assets: assets::{Pallet, Storage, Call} = 58,
+		Xcmp: xcmp::{Pallet, Call, Storage, Event<T>} = 59,
+		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 60,
+
+		Spambot: cumulus_ping::{Pallet, Call, Storage, Event<T>} = 90,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
