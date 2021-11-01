@@ -55,15 +55,15 @@ fn len_of_deposit_of() {
 #[test]
 fn pre_image() {
 	new_test_ext().execute_with(|| {
-		let key = Default::default();
+		let key: ProposalId<H256, AssetId> = Default::default();
 		let missing = PreimageStatus::Missing(0);
 		Preimages::<Test>::insert(key, missing);
-		assert_noop!(Democracy::pre_image_data_len(key), Error::<Test>::PreimageMissing);
-		assert_eq!(Democracy::check_pre_image_is_missing(key), Ok(()));
+		assert_noop!(Democracy::pre_image_data_len(&key), Error::<Test>::PreimageMissing);
+		assert_eq!(Democracy::check_pre_image_is_missing(&key), Ok(()));
 
 		Preimages::<Test>::remove(key);
-		assert_noop!(Democracy::pre_image_data_len(key), Error::<Test>::PreimageMissing);
-		assert_noop!(Democracy::check_pre_image_is_missing(key), Error::<Test>::NotImminent);
+		assert_noop!(Democracy::pre_image_data_len(&key), Error::<Test>::PreimageMissing);
+		assert_noop!(Democracy::check_pre_image_is_missing(&key), Error::<Test>::NotImminent);
 
 		for l in vec![0, 10, 100, 1000u32] {
 			let available = PreimageStatus::Available {
@@ -75,9 +75,9 @@ fn pre_image() {
 			};
 
 			Preimages::<Test>::insert(key, available);
-			assert_eq!(Democracy::pre_image_data_len(key), Ok(l));
+			assert_eq!(Democracy::pre_image_data_len(&key), Ok(l));
 			assert_noop!(
-				Democracy::check_pre_image_is_missing(key),
+				Democracy::check_pre_image_is_missing(&key),
 				Error::<Test>::DuplicatePreimage
 			);
 		}

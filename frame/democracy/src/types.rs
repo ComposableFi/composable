@@ -22,8 +22,18 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{Bounded, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Saturating, Zero},
-	RuntimeDebug,
+	DispatchError, RuntimeDebug,
 };
+
+pub trait OriginMap<AssetId, Origin> {
+	fn try_origin_for(asset_id: AssetId) -> Result<Origin, DispatchError>;
+}
+
+#[derive(Encode, Decode, Default, Copy, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+pub struct ProposalId<Hash, AssetId> {
+	pub hash: Hash,
+	pub asset_id: AssetId,
+}
 
 /// Info regarding an ongoing referendum.
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
@@ -161,11 +171,11 @@ impl<
 
 /// Info regarding an ongoing referendum.
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct ReferendumStatus<BlockNumber, Hash, Balance> {
+pub struct ReferendumStatus<BlockNumber, Hash, Balance, AssetId> {
 	/// When voting on this referendum will end.
 	pub end: BlockNumber,
 	/// The hash of the proposal being voted on.
-	pub proposal_hash: Hash,
+	pub proposal_id: ProposalId<Hash, AssetId>,
 	/// The thresholding mechanism to determine whether it passed.
 	pub threshold: VoteThreshold,
 	/// The delay (in blocks) to wait after a successful referendum before deploying.
@@ -176,22 +186,24 @@ pub struct ReferendumStatus<BlockNumber, Hash, Balance> {
 
 /// Info regarding a referendum, present or past.
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub enum ReferendumInfo<BlockNumber, Hash, Balance> {
+pub enum ReferendumInfo<BlockNumber, Hash, Balance, AssetId> {
 	/// Referendum is happening, the arg is the block number at which it will end.
-	Ongoing(ReferendumStatus<BlockNumber, Hash, Balance>),
+	Ongoing(ReferendumStatus<BlockNumber, Hash, Balance, AssetId>),
 	/// Referendum finished at `end`, and has been `approved` or rejected.
 	Finished { approved: bool, end: BlockNumber },
 }
 
-impl<BlockNumber, Hash, Balance: Default> ReferendumInfo<BlockNumber, Hash, Balance> {
+impl<BlockNumber, Hash, Balance: Default, AssetId>
+	ReferendumInfo<BlockNumber, Hash, Balance, AssetId>
+{
 	/// Create a new instance.
 	pub fn new(
 		end: BlockNumber,
-		proposal_hash: Hash,
+		proposal_id: ProposalId<Hash, AssetId>,
 		threshold: VoteThreshold,
 		delay: BlockNumber,
 	) -> Self {
-		let s = ReferendumStatus { end, proposal_hash, threshold, delay, tally: Tally::default() };
+		let s = ReferendumStatus { end, proposal_id, threshold, delay, tally: Tally::default() };
 		ReferendumInfo::Ongoing(s)
 	}
 }
