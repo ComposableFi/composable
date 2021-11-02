@@ -785,8 +785,6 @@ pub mod pallet {
 		}
 
 		fn get_current_token_liquidity(asset_id: T::AssetId) -> Result<T::Balance, DispatchError> {
-	
-			let vault_id = <AssetVault<T>>::get(asset_id);
 		
 			let available_funds = Self::get_withdrawable_balance(asset_id)?;
 
@@ -796,6 +794,8 @@ pub mod pallet {
 		}
 
 		fn get_withdrawable_balance(asset_id: T::AssetId) -> Result<T::Balance, DispatchError> {
+
+			let vault_id = <AssetVault<T>>::get(asset_id);
 			
 			let available_funds = match <T::Vault as StrategicVault>::available_funds(&vault_id, &Self::account_id())? {
 				FundsAvailability::Withdrawable(balance) => balance,
@@ -833,23 +833,8 @@ pub mod pallet {
 			deposit_id
 		}
 
-		fn ensure_not_paused() {
+		fn ensure_not_paused()  {
 			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused)
 		}
 	}
-
-
  }
-
-
- 
-//  #[derive(Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
-//  pub struct VaultConfig<AccountId, CurrencyId>
-//  where
-// 	 AccountId: core::cmp::Ord,
-//  {
-// 	 pub asset_id: CurrencyId,
-// 	 pub reserved: Perquintill,
-// 	 pub manager: AccountId,
-// 	 pub strategies: BTreeMap<AccountId, Perquintill>,
-//  }
