@@ -43,7 +43,7 @@ else
 	read response
 	if "no" == $response; then
 		echo "Goodbye"
-		exit
+		exit 1
 
 fi
 
