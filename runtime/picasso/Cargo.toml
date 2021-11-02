@@ -62,7 +62,8 @@ liquidations = { package = "pallet-liquidations", path = "../../frame/liquidatio
 dutch-auction = { package = "pallet-dutch-auctions", path = "../../frame/dutch-auction", default-features = false }
 composable-traits = { path = "../../frame/composable-traits" , default-features = false}
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
-ping = { package = "pallet-ping", path = "../../frame/ping", default-features = false}
+ping = { package = "pallet-ping", path = "../../frame/ping", default-features = false }
+assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
@@ -129,6 +130,7 @@ std = [
 	"liquidations/std",
 	"call-filter/std",
 	"ping/std",
+	"assets-registry/std",
 	"currency-factory/std",
 	"orml-tokens/std",
 	"orml-traits/std",
@@ -166,6 +168,7 @@ runtime-benchmarks = [
 	"timestamp/runtime-benchmarks",
 	"oracle/runtime-benchmarks",
 	"lending/runtime-benchmarks",
+	"assets-registry/runtime-benchmarks",
 	"collective/runtime-benchmarks",
 	"collator-selection/runtime-benchmarks",
 	"session-benchmarking/runtime-benchmarks",

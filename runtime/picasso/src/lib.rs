@@ -938,6 +938,15 @@ impl cumulus_ping::Config for Runtime {
 	type XcmSender = XcmRouter;
 }
 
+impl assets_registry::Config for Runtime {
+	type Event = Event;
+	type LocalAssetId = u128;
+	type ForeignAssetId = u128;
+	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
+	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
+	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -1008,6 +1017,7 @@ construct_runtime!(
 		Liquidations: liquidations::{Pallet, Call, Event<T>} = 56,
 		Auctions: dutch_auction::{Pallet, Event<T>} = 57,
 		Ping: ping::{Pallet, Call, Storage, Event<T>} = 58,
+		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 59,
 
 		Spambot: cumulus_ping::{Pallet, Call, Storage, Event<T>} = 90,
 
