@@ -4,7 +4,8 @@ use frame_support::{
 	codec::{Decode, Encode},
 	sp_runtime::Perbill,
 };
-use sp_runtime::{DispatchError, FixedU128, Permill};
+use scale_info::TypeInfo;
+use sp_runtime::{DispatchError, Permill};
 
 use sp_std::vec::Vec;
 
@@ -27,7 +28,7 @@ pub trait SimpleExchange {
 		to_account: Self::AccountId,
 		to_amount: Self::Balance,
 		slippage: Perbill,
-	) -> Result<Self::Balance, Self::Error>;
+	) -> Result<Self::Balance, DispatchError>;
 }
 
 pub struct TakeResult<BALANCE> {
@@ -80,11 +81,37 @@ pub trait Orderbook {
 /// Implement AMM curve from "StableSwap - efficient mechanism for Stablecoin liquidity by Micheal
 /// Egorov" Also blog at https://miguelmota.com/blog/understanding-stableswap-curve/ has very good explanation.
 
+pub trait CurveAmm {
+	/// The asset ID type
+	type AssetId;
+	/// The balance type of an account
+	type Balance;
+	/// The user account identifier type for the runtime
+	type AccountId;
+
+	/// Current number of pools (also ID for the next created pool)
+	fn pool_count() -> PoolId;
+
+	/// Information about the pool with the specified `id`
+	fn pool(id: PoolId) -> Option<PoolInfo<Self::AccountId, Self::AssetId, Self::Balance>>;
+
+	/// Creates a pool, taking a creation fee from the caller
+	fn create_pool(
+		who: &Self::AccountId,
+		assets: Vec<Self::AssetId>,
+		amplification_coefficient: Self::Balance,
+	) -> Result<PoolId, DispatchError>;
+}
+
+/// Type that represents index type of token in the pool passed from the outside as an extrinsic
+/// argument.
+pub type PoolTokenIndex = u32;
+
 /// Type that represents pool id
 pub type PoolId = u32;
 
 /// Pool type
-#[derive(Encode, Decode, Clone, Default, PartialEq, Eq, Debug)]
+#[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, Debug)]
 pub struct PoolInfo<AccountId, AssetId, Balance> {
 	/// Owner of pool
 	pub owner: AccountId,
@@ -93,7 +120,7 @@ pub struct PoolInfo<AccountId, AssetId, Balance> {
 	/// List of multiasset supported by the pool
 	pub assets: Vec<AssetId>,
 	/// Initial amplification coefficient
-	pub amplification_coefficient: FixedU128,
+	pub amplification_coefficient: Balance,
 	/// Current balances
 	pub balances: Vec<Balance>,
 }

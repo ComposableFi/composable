@@ -33,6 +33,10 @@ mod tests;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, FullCodec};
+	use composable_traits::{
+		currency::CurrencyFactory,
+		dex::{CurveAmm, PoolId, PoolInfo},
+	};
 	use frame_support::{pallet_prelude::*, PalletId};
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
@@ -40,7 +44,7 @@ pub mod pallet {
 		traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
 		FixedPointNumber, FixedPointOperand, FixedU128, KeyTypeId as CryptoKeyTypeId,
 	};
-	use sp_std::fmt::Debug;
+	use sp_std::{collections::btree_set::BTreeSet, fmt::Debug, iter::FromIterator};
 
 	pub const PALLET_ID: PalletId = PalletId(*b"CurveAmm");
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"camm");
@@ -88,7 +92,8 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ Debug
 			+ Default
-			+ TypeInfo;
+			+ TypeInfo
+			+ Ord;
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -102,24 +107,126 @@ pub mod pallet {
 			+ FixedPointOperand
 			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
 			  // bit
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Current number of pools (also ID for the next created pool)
+	#[pallet::storage]
+	#[pallet::getter(fn pool_count)]
+	pub type PoolCount<T: Config> = StorageValue<_, PoolId, ValueQuery>;
+
+	/// Existing pools
+	#[pallet::storage]
+	#[pallet::getter(fn pools)]
+	pub type Pools<T: Config> =
+		StorageMap<_, Blake2_128Concat, PoolId, PoolInfo<T::AccountId, T::AssetId, T::Balance>>;
+
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		/// Could not create new asset
+		AssetNotCreated,
+		/// Values in the storage are inconsistent
+		InconsistentStorage,
+		/// Not enough assets provided
+		NotEnoughAssets,
+		/// Some provided assets are not unique
+		DuplicateAssets,
+		/// Pool with specified id is not found
+		PoolNotFound,
+		/// Error occurred while performing math calculations
+		Math,
+		/// Specified asset amount is wrong
+		WrongAssetAmount,
+		/// Required amount of some token did not reached during adding or removing liquidity
+		RequiredAmountNotReached,
+		/// Source does not have required amount of coins to complete operation
+		InsufficientFunds,
+		/// Specified index is out of range
+		IndexOutOfRange,
+		/// The `AssetChecker` can use this error in case it can't provide better error
+		ExternalAssetCheckFailed,
+	}
 
 	#[pallet::event]
-	// #[pallet::generate_deposit(pub (crate) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
+	pub enum Event<T: Config> {
+		/// Pool with specified id `PoolId` was created successfully by `T::AccountId`.
+		///
+		/// Included values are:
+		/// - account identifier `T::AccountId`
+		/// - pool identifier `PoolId`
+		///
+		/// \[who, pool_id\]
+		PoolCreated { who: T::AccountId, pool_id: PoolId },
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
+
+	impl<T: Config> CurveAmm for Pallet<T> {
+		type AssetId = T::AssetId;
+		type Balance = T::Balance;
+		type AccountId = T::AccountId;
+
+		fn pool_count() -> PoolId {
+			PoolCount::<T>::get()
+		}
+
+		fn pool(id: PoolId) -> Option<PoolInfo<Self::AccountId, Self::AssetId, Self::Balance>> {
+			Pools::<T>::get(id)
+		}
+		fn create_pool(
+			who: &Self::AccountId,
+			assets: Vec<Self::AssetId>,
+			amplification_coefficient: Self::Balance,
+		) -> Result<PoolId, DispatchError> {
+			// Assets related checks
+			ensure!(assets.len() > 1, Error::<T>::NotEnoughAssets);
+			let unique_assets = BTreeSet::<T::AssetId>::from_iter(assets.iter().copied());
+			ensure!(unique_assets.len() == assets.len(), Error::<T>::DuplicateAssets);
+
+			// Add new pool
+			let pool_id =
+				PoolCount::<T>::try_mutate(|pool_count| -> Result<PoolId, DispatchError> {
+					let pool_id = *pool_count;
+
+					Pools::<T>::try_mutate_exists(pool_id, |maybe_pool_info| -> DispatchResult {
+						// We expect that PoolInfos have sequential keys.
+						// No PoolInfo can have key greater or equal to PoolCount
+						ensure!(maybe_pool_info.is_none(), Error::<T>::InconsistentStorage);
+
+						let asset = T::CurrencyFactory::create()?;
+
+						let empty_balances = vec![Self::Balance::zero(); assets.len()];
+
+						*maybe_pool_info = Some(PoolInfo {
+							owner: who.clone(),
+							pool_asset: asset,
+							assets,
+							amplification_coefficient,
+							balances: empty_balances,
+						});
+
+						Ok(())
+					})?;
+
+					*pool_count = pool_id.checked_add(1).ok_or(Error::<T>::InconsistentStorage)?;
+
+					Ok(pool_id)
+				})?;
+
+			Self::deposit_event(Event::PoolCreated { who: who.clone(), pool_id });
+
+			Ok(pool_id)
+		}
+	}
 
 	impl<T: Config> Pallet<T> {
 		/// Find `ann = amp * n^n` where `amp` - amplification coefficient,

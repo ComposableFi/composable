@@ -6058,12 +6058,14 @@ dependencies = [
 name = "pallet-curve-amm"
 version = "0.0.1"
 dependencies = [
+ "composable-traits",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log 0.4.14",
  "num-traits",
  "pallet-balances",
+ "pallet-currency-factory",
  "pallet-oracle",
  "pallet-vault",
  "parity-scale-codec",
