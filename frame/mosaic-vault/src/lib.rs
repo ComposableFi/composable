@@ -30,7 +30,7 @@ pub mod pallet {
 		 },
 		  Perquintill,
 	};
-	use composable_traits::{loans::Timestamp, vault::{Deposit, StrategicVault, Vault, VaultConfig }};
+	use composable_traits::{loans::Timestamp, vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig }};
 
 	// use sp_runtime::traits::AccountIdConversion;
 	#[pallet::pallet]
@@ -47,7 +47,7 @@ pub mod pallet {
 
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 
-		type Balance: Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo + CheckedSub + CheckedAdd + Zero;
+		type Balance: Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo + CheckedSub + CheckedAdd + Zero + PartialOrd;
 
 		type Nonce:  Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo + CheckedSub + CheckedAdd + From<u8>;
 
@@ -100,6 +100,9 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type FeeFactor: Get<Self::Balance>;
+
+		#[pallet::constant]
+		type ThresholdFactor: Get<Self::Balance>;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
@@ -180,8 +183,16 @@ pub mod pallet {
 	pub(super) type Nonce<T: Config> = StorageValue<_, T::Nonce, ValueQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn fee_threshold)]
+	pub(super) type FeeThreshold<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn last_withdraw_id)]
 	pub(super) type LastWithdrawID<T: Config> = StorageValue<_, T::DepositId, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn pause_status)]
+	pub(super) type PauseStatus<T :Config> = StorageValue<_, bool, ValueQuery>;
 
 
 	#[pallet::event]
@@ -275,6 +286,18 @@ pub mod pallet {
 			T::DepositId,
 		),
 
+		FeeThresholdChanged(
+           T::Balance,
+		),
+
+		Pause(
+			T::AccountId,
+		),
+
+		UnPause(
+			T::AccountId,
+		),
+
 	}
 
 	#[allow(missing_docs)]
@@ -313,11 +336,21 @@ pub mod pallet {
 
 		InsufficientAssetBalance,
 
+		ThresholdFeeAboveThresholdFactor,
+
 		AlreadyWithdrawn,
 
 		TransferNotPossible,
 
+		TransferFromFailed,
+
+		WithdrawFailed,
+
 		ZeroAmount,
+
+		DivisionError,
+
+		ContractPaused,
 
 		Underflow,
 
@@ -373,7 +406,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_asset_max_transfer_size(origin: OriginFor<T>, asset_id: T::AssetId, size: T::Balance) -> DispatchResultWithPostInfo {
 
-		     ensure_signed(origin);
+		     ensure_signed(origin)?;
 
 			 <MaxAssetTransferSize<T>>::insert(asset_id, size);
 
@@ -472,6 +505,20 @@ pub mod pallet {
 			Ok(().into())
 		 }
 
+		 #[pallet::weight(10_000)]
+		 pub fn set_thresh_hold(origin: OriginFor<T>, new_fee_threshold: T::Balance) -> DispatchResultWithPostInfo {
+			 
+			ensure_signed(origin)?;
+
+			ensure!(new_fee_threshold < T::ThresholdFactor::get(), Error::<T>::ThresholdFeeAboveThresholdFactor);
+
+			<FeeThreshold<T>>::put(new_fee_threshold);
+
+			Self::deposit_event(Event::FeeThresholdChanged(new_fee_threshold));
+
+			Ok(().into())
+		 }
+
 		 /**
 		  * todo 
 		  * setFeeAddress
@@ -510,9 +557,8 @@ pub mod pallet {
 			<InTransferFunds<T>>::insert(asset_id, new_in_transfer_funds);
 			// 
 			let pallet_account_id = Self::account_id();            
-
             // move funds to pallet amount
-			T::Currency::transfer(asset_id, &sender, &pallet_account_id, amount, true);
+			T::Currency::transfer(asset_id, &sender, &pallet_account_id, amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
             // deposit to valut
 			let vault_id = <AssetVault<T>>::get(asset_id);
 			<T::Vault as StrategicVault>::deposit(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::DepositFailed)?;
@@ -564,20 +610,19 @@ pub mod pallet {
 			  */
 
               // withdraw to pallet account
-			  <T::Vault as StrategicVault>::withdraw(&vault_id, &pallet_account_id, amount);
+			  <T::Vault as StrategicVault>::withdraw(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::WithdrawFailed)?;
               
-              let fee = Self::calculate_fee_percentage(asset_id, amount);
+              let fee = Self::calculate_fee_percentage(asset_id, amount)?;
 			  
 			  let fee_absolute = amount.checked_mul(&fee)
 			     .and_then(|x|x.checked_div(&T::FeeFactor::get()))
 				 .ok_or(Error::<T>::Overflow)?;
-			
-
+	
 			  let withdraw_amount = amount.checked_sub(&fee_absolute).ok_or(Error::<T>::Underflow)?;
 
-			  ensure!(Self::get_current_token_liquidity(asset_id) >= amount, Error::<T>::InsufficientAssetBalance);    
+			  ensure!(Self::get_current_token_liquidity(asset_id)? >= amount, Error::<T>::InsufficientAssetBalance);    
 
-			 T::Currency::transfer(asset_id, &pallet_account_id, &sender, withdraw_amount, true);
+			  T::Currency::transfer(asset_id, &pallet_account_id, &sender, withdraw_amount, true);
 
 			 if fee_absolute > T::Balance::zero() {  
 			   
@@ -604,7 +649,6 @@ pub mod pallet {
 
 			 Ok(().into())
 		 }
-
 
 		 #[pallet::weight(10_000)]
 		 pub fn create_vault(
@@ -644,7 +688,11 @@ pub mod pallet {
 			amount: T::Balance,
 			deposit_id: T::DepositId,
 		 ) ->DispatchResultWithPostInfo {
+
+			Self::ensure_not_paused();
 			
+			ensure_signed(origin);
+            
 			ensure!(Self::has_been_completed(deposit_id) == false, Error::<T>::AlreadCompleted);
 
 			ensure!(Self::in_transfer_funds(asset_id) >= amount, Error::<T>::InsufficientFunds);
@@ -664,8 +712,26 @@ pub mod pallet {
 			Ok(().into())
 		 }
 
+		#[pallet::weight(10_000)]
+		pub fn pause(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			
+            let sender = ensure_signed(origin)?;
 
-	
+			 <PauseStatus<T>>::put(true);
+			 Self::deposit_event(Event::Pause(sender));
+
+			 Ok(().into())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn un_pause(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+            let sender = ensure_signed(origin)?;
+
+			 <PauseStatus<T>>::put(false);
+			 Self::deposit_event(Event::UnPause(sender));
+
+			 Ok(().into())
+		}
  	}
 
 	impl<T: Config> Pallet<T> {
@@ -688,24 +754,55 @@ pub mod pallet {
 			nonce
 		}
 
-		fn calculate_fee_percentage(asset_id: T::AssetId, amount: T::Balance) -> T::Balance {
+		fn calculate_fee_percentage(asset_id: T::AssetId, amount: T::Balance) -> Result<T::Balance, DispatchError> {
 
-			// let fake: T::Balance = Self::min_fee();
-			// fake
-			amount
+			let token_liquidity = Self::get_current_token_liquidity(asset_id)?;
+
+			if token_liquidity == T::Balance::zero() {
+				return Ok(Self::max_fee());
+			}
+
+           let fee_threshold = Self::fee_threshold();
+
+		   let multiplier: T::Balance = 100u8.into();
+
+			if  amount.checked_mul(&multiplier).and_then(|x| x.checked_div(&token_liquidity)).ok_or(Error::<T>::Overflow)? > fee_threshold {
+                  return Ok(Self::max_fee());
+			}
+
+			let max_transfer = (token_liquidity.checked_mul(&fee_threshold).and_then(|x| x.checked_div(&T::ThresholdFactor::get())).ok_or(Error::<T>::Overflow))?;
+            let percent_transfer = (amount.checked_mul(&multiplier).and_then(|x| x.checked_div(&max_transfer)).ok_or(Error::<T>::Overflow))?;
+
+			let fee_percentage = percent_transfer.checked_mul(
+				&(max_transfer.checked_sub(&Self::max_fee()).ok_or(Error::<T>::Underflow)?)
+			).ok_or(Error::<T>::Overflow)?.checked_add(&(
+				(Self::min_fee()).checked_mul(&multiplier).ok_or(Error::<T>::Overflow)?
+			)).ok_or(Error::<T>::Overflow)?.checked_div(
+				&multiplier
+			).ok_or(Error::<T>::DivisionError)?;
+         
+	     	Ok(fee_percentage)
 		}
 
-		fn get_current_token_liquidity(asset_id: T::AssetId) -> T::Balance {
+		fn get_current_token_liquidity(asset_id: T::AssetId) -> Result<T::Balance, DispatchError> {
 	
-			// let vault_id = <AssetVault<T>>::get(asset_id);
+			let vault_id = <AssetVault<T>>::get(asset_id);
 		
-			// let available_funds = <T::Vault as StrategicVault>::available_funds(&vault_id, &Self::account_id())?;
+			let available_funds = Self::get_withdrawable_balance(asset_id)?;
 
-			// let asset_liquidity = available_funds.checked_sub(Self::in_transfer_funds(asset_id)).ok_or(Error::<T>::Underflow);
+			let liquidity = available_funds.checked_sub(&Self::in_transfer_funds(asset_id)).ok_or(Error::<T>::Underflow)?;
 
-			// asset_liquidity
-			let fake: T::Balance = Self::min_fee();
-			fake
+			Ok(liquidity)
+		}
+
+		fn get_withdrawable_balance(asset_id: T::AssetId) -> Result<T::Balance, DispatchError> {
+			
+			let available_funds = match <T::Vault as StrategicVault>::available_funds(&vault_id, &Self::account_id())? {
+				FundsAvailability::Withdrawable(balance) => balance,
+				_ => T::Balance::zero(),
+			};
+
+			Ok(available_funds)
 		}
 
 		fn generate_deposit_id(
@@ -734,6 +831,10 @@ pub mod pallet {
 			let deposit_id = keccak_256(&encoded_data);
 
 			deposit_id
+		}
+
+		fn ensure_not_paused() {
+			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused)
 		}
 	}
 
