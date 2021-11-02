@@ -21,6 +21,7 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
+#![allow(clippy::all)]
 
 pub use pallet::*;
 
