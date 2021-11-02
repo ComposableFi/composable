@@ -1,6 +1,10 @@
 use crate::*;
+
+use composable_traits::currency::CurrencyFactory;
 use frame_support::{parameter_types, traits::Everything};
 use frame_system as system;
+use num_traits::Zero;
+use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -8,9 +12,11 @@ use sp_runtime::{
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
-type AccountId = u64;
-type AssetId = u64;
+pub type Block = frame_system::mocking::MockBlock<Test>;
+pub type AccountId = u64;
+pub type AssetId = u64;
+pub type Amount = i128;
+pub type Balance = u64;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -19,13 +25,56 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		GovRegistry: crate::{Pallet, Call, Storage, Event<T>},
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>} = 1,
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 2,
+		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 3,
+		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
+		Assets: crate::{Pallet, Call, Storage} = 5,
 	}
 );
 
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_a: AssetId| -> Balance {
+		Zero::zero()
+	};
+}
+
+parameter_types! {
+	pub const NativeAssetId: AssetId = 1;
+}
+
+pub struct CurrencyIdGenerator;
+
+impl CurrencyFactory<AssetId> for CurrencyIdGenerator {
+	fn create() -> Result<AssetId, sp_runtime::DispatchError> {
+		Ok(1 as AssetId)
+	}
+}
+
 impl Config for Test {
+	type AssetId = AssetId;
+	type Balance = Balance;
+	type NativeAssetId = NativeAssetId;
+	type GenerateCurrencyId = CurrencyIdGenerator;
+	type Currency = Balances;
+	type MultiCurrency = Tokens;
+	type GovernanceRegistry = GovernanceRegistry;
+	type WeightInfo = ();
+}
+
+impl orml_tokens::Config for Test {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = AssetId;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
+	type MaxLocks = ();
+	type DustRemovalWhitelist = Everything;
+}
+
+impl governance_registry::Config for Test {
 	type AssetId = AssetId;
 	type WeightInfo = ();
 	type Event = Event;
@@ -67,7 +116,7 @@ parameter_types! {
 }
 
 impl pallet_balances::Config for Test {
-	type Balance = u64;
+	type Balance = Balance;
 	type Event = Event;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;

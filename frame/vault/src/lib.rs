@@ -18,7 +18,7 @@
 	while_true,
 	trivial_casts,
 	trivial_numeric_casts,
-	unused_extern_crates,
+	unused_extern_crates
 )]
 // Some substrate macros are expanded in such a way that their items cannot be documented. For now,
 // it's best to just set this to warn during development.
@@ -333,7 +333,8 @@ pub mod pallet {
 		NotVaultLpToken,
 		/// The vault has deposits halted, see [Capabilities](crate::capabilities::Capabilities).
 		DepositsHalted,
-		/// The vault has withdrawals halted, see [Capabilities](crate::capabilities::Capabilities).
+		/// The vault has withdrawals halted, see
+		/// [Capabilities](crate::capabilities::Capabilities).
 		WithdrawalsHalted,
 		OnlyManagerCanDoThisOperation,
 		InvalidDeletionClaim,

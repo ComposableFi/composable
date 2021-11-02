@@ -61,6 +61,7 @@ composable-traits = { path = "../../frame/composable-traits" , default-features 
 transaction-fee = { package = "pallet-transaction-fee", path = "../../frame/transaction-fee", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 xcmp = { package = "pallet-xcmp", path = "../../frame/xcmp", default-features = false}
+governance-registry = { version = "0.0.1", path = "../../frame/governance-registry", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
@@ -69,7 +70,7 @@ transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rp
 # Used for runtime benchmarking
 benchmarking = { package = "frame-benchmarking", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false, optional = true }
 system-benchmarking = { package = "frame-system-benchmarking", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false, optional = true }
-hex-literal = { version = "0.3.1", optional = true }
+hex-literal = { version = "0.3.1", default-features = false, optional = true }
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
 
 # Parachain Utilities
@@ -93,7 +94,7 @@ pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
 [build-dependencies]
-substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 
 [features]
 default = ["std"]
@@ -154,6 +155,7 @@ std = [
     "frame-system/std",
     "scale-info/std",
     "support/std",
+	"governance-registry/std"
 ]
 runtime-benchmarks = [
 	"balances/runtime-benchmarks",

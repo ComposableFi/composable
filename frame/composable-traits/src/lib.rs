@@ -10,4 +10,7 @@ pub mod math;
 pub mod oracle;
 pub mod privilege;
 pub mod rate_model;
+pub mod set_by_key;
 pub mod vault;
+
+pub use crate::set_by_key::SetByKey;

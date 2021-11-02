@@ -89,8 +89,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		/// Gets the orgin associated with the asset. 
-		/// 
+		/// Gets the orgin associated with the asset.
+		///
 		/// # Errors
 		///  - When the asset has no associated mapping
 		pub fn get(asset: &T::AssetId) -> Result<frame_system::RawOrigin<T::AccountId>, Error<T>> {
@@ -129,11 +129,13 @@ pub mod pallet {
 	}
 
 	impl<T: Config>
-		orml_traits::GetByKey<T::AssetId, Result<frame_system::RawOrigin<T::AccountId>, Error<T>>>
-		for Pallet<T>
+		orml_traits::GetByKey<
+			T::AssetId,
+			Result<frame_system::RawOrigin<T::AccountId>, DispatchError>,
+		> for Pallet<T>
 	{
-		fn get(k: &T::AssetId) -> Result<frame_system::RawOrigin<T::AccountId>, Error<T>> {
-			Self::get(k)
+		fn get(k: &T::AssetId) -> Result<frame_system::RawOrigin<T::AccountId>, DispatchError> {
+			Self::get(k).map_err(Into::into)
 		}
 	}
 
@@ -141,7 +143,7 @@ pub mod pallet {
 		for Pallet<T>
 	{
 		fn set(
-			k: &T::AssetId,
+			k: T::AssetId,
 			v: frame_system::RawOrigin<T::AccountId>,
 		) -> Result<(), frame_system::RawOrigin<T::AccountId>> {
 			let value = match v {

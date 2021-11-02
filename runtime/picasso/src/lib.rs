@@ -532,12 +532,20 @@ impl pallet_xcm::Config for Runtime {
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
+impl governance_registry::Config for Runtime {
+	type AssetId = CurrencyId;
+	type WeightInfo = ();
+	type Event = Event;
+}
+
 impl assets::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type NativeAssetId = NativeAssetId;
 	type Currency = Balances;
 	type MultiCurrency = Tokens;
+	type GenerateCurrencyId = Factory;
+	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 }
 
@@ -1032,6 +1040,7 @@ construct_runtime!(
 		Auctions: dutch_auction::{Pallet, Event<T>} = 57,
 		Assets: assets::{Pallet, Storage, Call} = 58,
 		Xcmp: xcmp::{Pallet, Call, Storage, Event<T>} = 59,
+		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 60,
 
 		Spambot: cumulus_ping::{Pallet, Call, Storage, Event<T>} = 90,
 

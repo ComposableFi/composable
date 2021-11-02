@@ -5,9 +5,19 @@ pub use pallet::*;
 mod orml;
 pub mod weights;
 
+#[cfg(test)]
+mod mocks;
+
+#[cfg(test)]
+mod tests;
+
 #[frame_support::pallet]
 pub mod pallet {
-	use composable_traits::currency::{AssetId, Balance, CurrencyFactory};
+	use crate::weights::WeightInfo;
+	use composable_traits::{
+		currency::{AssetId, Balance, CurrencyFactory},
+		SetByKey,
+	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
@@ -19,20 +29,20 @@ pub mod pallet {
 			fungibles::{Inspect, Mutate, Transfer},
 		},
 	};
-	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
+	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor, RawOrigin};
+	use orml_traits::GetByKey;
 	use sp_runtime::DispatchError;
-
-	use crate::weights::WeightInfo;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type AssetId: AssetId;
 		type Balance: Balance;
-
 		type NativeAssetId: Get<Self::AssetId>;
 		type GenerateCurrencyId: CurrencyFactory<Self::AssetId>;
 		type Currency;
 		type MultiCurrency;
+		type GovernanceRegistry: GetByKey<Self::AssetId, Result<RawOrigin<Self::AccountId>, DispatchError>>
+			+ SetByKey<Self::AssetId, frame_system::RawOrigin<Self::AccountId>>;
 		type WeightInfo: WeightInfo;
 	}
 
@@ -40,14 +50,10 @@ pub mod pallet {
 	#[pallet::generate_store(pub (super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	#[pallet::storage]
-	#[pallet::getter(fn markets)]
-	pub type PalletAccounts<T: Config> =
-		StorageMap<_, Twox64Concat, T::AssetId, T::AccountId, ValueQuery>;
-
 	#[pallet::error]
 	pub enum Error<T> {
 		BadOrigin,
+		CannotSet,
 	}
 
 	#[pallet::call]
@@ -224,7 +230,8 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			let id = T::GenerateCurrencyId::create()?;
-			PalletAccounts::<T>::insert(id, governance_origin);
+			T::GovernanceRegistry::set(id, RawOrigin::Signed(governance_origin))
+				.map_err(|_| Error::<T>::CannotSet)?;
 			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(().into())
 		}
@@ -237,7 +244,7 @@ pub mod pallet {
 			dest: T::AccountId,
 			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
-			ensure_root_or_governance::<T>(origin, asset_id)?;
+			ensure_root_or_governance::<T>(origin, &asset_id)?;
 			<Self as Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
 			Ok(().into())
 		}
@@ -250,22 +257,27 @@ pub mod pallet {
 			dest: T::AccountId,
 			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
-			ensure_root_or_governance::<T>(origin, asset_id)?;
+			ensure_root_or_governance::<T>(origin, &asset_id)?;
 			<Self as Mutate<T::AccountId>>::burn_from(asset_id, &dest, amount)?;
 			Ok(().into())
 		}
 	}
 
-	fn ensure_root_or_governance<T: Config>(
+	pub(crate) fn ensure_root_or_governance<T: Config>(
 		origin: OriginFor<T>,
-		asset_id: T::AssetId,
+		asset_id: &T::AssetId,
 	) -> Result<Option<T::AccountId>, DispatchError> {
 		let account = match origin.into() {
 			Ok(frame_system::RawOrigin::Signed(account)) => {
-				if PalletAccounts::<T>::try_get(asset_id) == Ok(account) {
-					Some(account)
-				} else {
-					return Err(Error::<T>::BadOrigin.into())
+				match T::GovernanceRegistry::get(asset_id) {
+					Ok(RawOrigin::Root) => None,
+					Ok(RawOrigin::Signed(acc)) =>
+						if acc == account {
+							Some(acc)
+						} else {
+							return Err(Error::<T>::BadOrigin.into())
+						},
+					_ => return Err(Error::<T>::BadOrigin.into()),
 				}
 			},
 			Ok(frame_system::RawOrigin::Root) => None,

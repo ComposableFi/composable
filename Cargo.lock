@@ -3144,6 +3144,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "governance-registry"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "h2"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5388,8 +5406,11 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "frame-system",
+ "governance-registry",
  "num-traits",
+ "orml-tokens",
  "orml-traits",
+ "pallet-balances",
  "parity-scale-codec",
  "scale-info",
  "sp-arithmetic",
@@ -6783,6 +6804,7 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "governance-registry",
  "hex-literal",
  "orml-tokens",
  "orml-traits",

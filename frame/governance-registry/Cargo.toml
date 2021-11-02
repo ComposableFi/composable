@@ -1,5 +1,5 @@
 [package]
-name = "pallet-governance-registry"
+name = "governance-registry"
 version = "0.0.1"
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
@@ -39,5 +39,4 @@ std = [
     "frame-system/std",
     "sp-runtime/std",
     "orml-traits/std",
-    "pallet-balances/std",
 ]
