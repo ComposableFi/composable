@@ -28,7 +28,7 @@ elif echo "$myos" | fgrep -q OpenBSD 2>/dev/null; then
 
 # FreeBSD
 elif echo "$myos" | fgrep -q FreeBSD 2>/dev/null; then
-
+	curl https://sh.rustup.rs -sSf | sh
 
 # Darwin
 elif echo "$myos" | fgrep -q Darwin 2>/dev/null; then
