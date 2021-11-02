@@ -19,6 +19,9 @@ Picasso is our custom built kusama parachain, based on the substrate framework.
 For linux, FreeBSD, OpenBSD and macOS:
 
 ```sh
+rustup update
+rustup update nightly
+rustup target add wasm32-unknown-unknown --toolchain nightly
 git clone https://github.com/composableFi/composable
 cd composable/
 sh scripts/init.sh
@@ -27,9 +30,10 @@ cargo build --release
 
 
 ## Run  
-After compiling the node, you can simply run it with: 
-```sh
+After you have compiled the node, you can simply run it with: 
 
+```sh
+$ ./target/release/composable --dev --tmp
 ```
 
 
