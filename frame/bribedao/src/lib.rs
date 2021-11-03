@@ -12,7 +12,7 @@ pub mod pallet {
 	use composable_traits::{bribe::Bribe, democracy::Democracy};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::fungibles::{Inspect, InspectHold, MutateHold, Transfer},
+		traits::fungibles::{InspectHold, MutateHold, Transfer},
 		transactional,
 	};
 	use frame_system::pallet_prelude::*;
@@ -20,7 +20,7 @@ pub mod pallet {
 	use pallet_democracy::Vote;
 	//	use primitives::currency::CurrencyId;
 	use sp_runtime::{
-		scale_info::TypeInfo,
+//		scale_info::TypeInfo,
 		traits::{AtLeast32BitUnsigned, Zero},
 	};
 	//	use sp_std::fmt::Debug;
@@ -147,14 +147,13 @@ pub mod pallet {
 		pub fn release_funds(
 			origin: OriginFor<T>,
 			bribe: BribeIndex,
-			amount: u128,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let og_request =
 				BribeRequests::<T>::try_get(bribe).map_err(|_| Error::<T>::InvalidBribe)?;
 			let amount = og_request.total_reward; // amount of tokens locked in
 			let currencyid = og_request.asset_id;
-			T::Currency::release(currencyid, &who, amount, false);
+			T::Currency::release(currencyid, &who, amount, false).map_err(|_| Error::<T>::ReleaseFailed)?;
 
 			//			todo!("Check token supply, if supply is less or same as asked for: release funds");
 			//			Error::<T>::EmptySupply;
@@ -174,7 +173,7 @@ pub mod pallet {
 																		// somewhere, so unwrap should be okey to use
 			let amount = og_request.total_reward; // amount of tokens locked in
 			let currencyid = og_request.asset_id;
-			T::Currency::hold(currencyid, &who, amount); //Freeze assets
+			T::Currency::hold(currencyid, &who, amount).map_err(|_| Error::<T>::CantFreezeFunds)?; //Freeze assets
 			if bribe_taken {
 				Self::deposit_event(Event::BribeTaken { id: bribe_index, request });
 			}
@@ -192,6 +191,8 @@ pub mod pallet {
 		PriceNotRequested,
 		AlreadyBribed,
 		EmptySupply,
+		CantFreezeFunds,
+		ReleaseFailed,
 	}
 
 	// offchain indexing
