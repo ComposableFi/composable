@@ -37,12 +37,20 @@ pub mod pallet {
 	use composable_traits::{
 		currency::CurrencyFactory,
 		dex::{CurveAmm, PoolId, PoolInfo},
+		math::LiftedFixedBalance,
 	};
-	use frame_support::{pallet_prelude::*, PalletId};
+	use frame_support::{
+		pallet_prelude::*,
+		traits::fungibles::{Inspect, Mutate, Transfer},
+		PalletId,
+	};
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
-		traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
+		traits::{
+			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul,
+			CheckedSub, One, Zero,
+		},
 		FixedPointNumber, FixedPointOperand, FixedU128, KeyTypeId as CryptoKeyTypeId,
 	};
 	use sp_std::{collections::btree_set::BTreeSet, fmt::Debug, iter::FromIterator};
@@ -103,12 +111,19 @@ pub mod pallet {
 			+ CheckedAdd
 			+ CheckedSub
 			+ CheckedMul
+			+ AtLeast32BitUnsigned
 			+ From<u64> // at least 64 bit
 			+ Zero
+			+ One
 			+ FixedPointOperand
+			+ Into<LiftedFixedBalance>
 			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
 			  // bit
 		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
+		type LpToken: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
+			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
+		type Precision: Get<FixedU128>;
 	}
 
 	#[pallet::pallet]
@@ -166,6 +181,42 @@ pub mod pallet {
 		///
 		/// \[who, pool_id\]
 		PoolCreated { who: T::AccountId, pool_id: PoolId },
+
+		/// Liquidity added into the pool `PoolId` by `T::AccountId`.
+		///
+		/// Included values are:
+		/// - account identifier `T::AccountId`
+		/// - pool identifier `PoolId`
+		/// - added token amounts `Vec<T::Balance>`
+		/// - actual invariant `T::Balance`
+		/// - actual token supply `T::Balance`
+		/// - minted amount `T::Balance`
+		///
+		/// \[who, pool_id, token_amounts, invariant, token_supply, mint_amount\]
+		LiquidityAdded {
+			who: T::AccountId,
+			pool_id: PoolId,
+			token_amounts: Vec<T::Balance>,
+			invariant: T::Balance,
+			token_supply: T::Balance,
+			mint_amount: T::Balance,
+		},
+
+		/// Liquidity removed from pool `PoolId` by `T::AccountId` in balanced way.
+		///
+		/// Included values are:
+		/// - account identifier `T::AccountId`
+		/// - pool identifier `PoolId`
+		/// - removed token amounts `Vec<T::Balance>`
+		/// - actual token supply `T::Balance`
+		///
+		/// \[who, pool_id, token_amounts, token_supply\]
+		LiquidityRemoved {
+			who: T::AccountId,
+			pool_id: PoolId,
+			token_amounts: Vec<T::Balance>,
+			token_supply: T::Balance,
+		},
 	}
 
 	#[pallet::call]
@@ -227,13 +278,219 @@ pub mod pallet {
 
 			Ok(pool_id)
 		}
+
+		fn add_liquidity(
+			who: &Self::AccountId,
+			pool_id: PoolId,
+			amounts: Vec<Self::Balance>,
+			min_mint_amount: Self::Balance,
+		) -> Result<(), DispatchError> {
+			let zero = Self::Balance::zero();
+			ensure!(amounts.iter().all(|&x| x >= zero), Error::<T>::WrongAssetAmount);
+
+			let (provider, pool_id, token_amounts, invariant, token_supply, mint_amount) =
+				Pools::<T>::try_mutate(pool_id, |pool| -> Result<_, DispatchError> {
+					let pool = pool.as_mut().ok_or(Error::<T>::PoolNotFound)?;
+
+					let n_coins = pool.assets.len();
+
+					ensure!(n_coins == pool.balances.len(), Error::<T>::InconsistentStorage);
+
+					ensure!(n_coins == amounts.len(), Error::<T>::IndexOutOfRange);
+					let amp_f = FixedU128::saturating_from_integer(
+						u128::try_from(pool.amplification_coefficient)
+							.ok()
+							.ok_or(Error::<T>::Math)?,
+					);
+					let ann = Self::get_ann(amp_f, n_coins).ok_or(Error::<T>::Math)?;
+
+					let old_balances: Vec<FixedU128> = pool
+						.balances
+						.iter()
+						.map(|b| {
+							let b_u: u128 = (*b).into();
+							FixedU128::saturating_from_integer(b_u)
+						})
+						.collect();
+					let d0 = Self::get_d(&old_balances, ann).ok_or(Error::<T>::Math)?;
+
+					let token_supply = T::LpToken::total_issuance(pool.pool_asset);
+					let token_supply_u: u128 = token_supply.into();
+					let token_supply_f = FixedU128::saturating_from_integer(token_supply_u);
+					let mut new_balances = old_balances;
+					for i in 0..n_coins {
+						if token_supply == zero {
+							ensure!(amounts[i] > zero, Error::<T>::WrongAssetAmount);
+						}
+						let amount_i: u128 = amounts[i].into();
+						new_balances[i] = new_balances[i]
+							.checked_add(&FixedU128::saturating_from_integer(amount_i))
+							.ok_or(Error::<T>::Math)?;
+					}
+
+					let d1 = Self::get_d(&new_balances, ann).ok_or(Error::<T>::Math)?;
+					ensure!(d1 > d0, Error::<T>::WrongAssetAmount);
+					let _new_balances_b: Vec<T::Balance> = new_balances
+						.iter()
+						.map(|b_f| Ok(b_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into()))
+						.collect::<Result<Vec<T::Balance>, Error<T>>>()?;
+					let d1_b = d1.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+					let mint_amount;
+					if token_supply > zero {
+						// mint_amount = token_supply * (d1 - d0) / d0
+						let mint_amount_f = (|| {
+							token_supply_f.checked_mul(&d1.checked_sub(&d0)?)?.checked_div(&d0)
+						})()
+						.ok_or(Error::<T>::Math)?;
+						mint_amount =
+							mint_amount_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+					} else {
+						mint_amount = d1_b;
+					}
+
+					ensure!(mint_amount >= min_mint_amount, Error::<T>::RequiredAmountNotReached);
+
+					let new_token_supply =
+						token_supply.checked_add(&mint_amount).ok_or(Error::<T>::Math)?;
+
+					// Ensure that for all tokens user has sufficient amount
+					for (i, amount) in amounts.iter().enumerate() {
+						ensure!(
+							T::LpToken::balance(pool.assets[i], who) >= *amount,
+							Error::<T>::InsufficientFunds
+						);
+					}
+					// Transfer funds to pool
+					for (i, amount) in amounts.iter().enumerate() {
+						if amount > &zero {
+							Self::transfer_liquidity_into_pool(
+								&Self::account_id(&pool_id),
+								pool,
+								who,
+								i,
+								*amount,
+							)?;
+						}
+					}
+
+					T::LpToken::mint_into(pool.pool_asset, who, mint_amount)?;
+
+					Ok((who.clone(), pool_id, amounts, d1_b, new_token_supply, mint_amount))
+				})?;
+
+			Self::deposit_event(Event::LiquidityAdded {
+				who: provider,
+				pool_id,
+				token_amounts,
+				invariant,
+				token_supply,
+				mint_amount,
+			});
+
+			Ok(())
+		}
+
+		fn remove_liquidity(
+			who: &Self::AccountId,
+			pool_id: PoolId,
+			amount: Self::Balance,
+			min_amounts: Vec<Self::Balance>,
+		) -> Result<(), DispatchError> {
+			let zero = FixedU128::zero();
+			let b_zero = Self::Balance::zero();
+			ensure!(amount >= b_zero, Error::<T>::WrongAssetAmount);
+			let amount_u: u128 = amount.into();
+			let amount_f = FixedU128::saturating_from_integer(amount_u);
+
+			let min_amounts_f: Vec<FixedU128> = min_amounts
+				.iter()
+				.map(|b| {
+					let b_u: u128 = (*b).into();
+					FixedU128::saturating_from_integer(b_u)
+				})
+				.collect();
+
+			let (provider, pool_id, token_amounts, token_supply) =
+				Pools::<T>::try_mutate(pool_id, |pool| -> Result<_, DispatchError> {
+					let pool = pool.as_mut().ok_or(Error::<T>::PoolNotFound)?;
+
+					let n_coins = pool.assets.len();
+
+					ensure!(n_coins == pool.balances.len(), Error::<T>::InconsistentStorage);
+
+					ensure!(n_coins == min_amounts.len(), Error::<T>::IndexOutOfRange);
+
+					let token_supply = T::LpToken::total_issuance(pool.pool_asset);
+					let token_supply_u: u128 = token_supply.into();
+
+					let mut amounts_f = vec![FixedU128::zero(); n_coins];
+
+					for i in 0..n_coins {
+						let old_balance_u: u128 = pool.balances[i].into();
+						let old_balance = FixedU128::saturating_from_integer(old_balance_u);
+						// value = old_balance * n_amount / token_supply
+						let value = (|| {
+							old_balance
+								.checked_mul(&amount_f)?
+								.checked_div(&FixedU128::saturating_from_integer(token_supply_u))
+						})()
+						.ok_or(Error::<T>::Math)?;
+						ensure!(value >= min_amounts_f[i], Error::<T>::RequiredAmountNotReached);
+
+						amounts_f[i] = value;
+					}
+
+					let amounts: Vec<T::Balance> = amounts_f
+						.iter()
+						.map(|b_f| Ok(b_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into()))
+						.collect::<Result<Vec<T::Balance>, Error<T>>>()?;
+
+					let new_token_supply =
+						token_supply.checked_sub(&amount).ok_or(Error::<T>::Math)?;
+
+					T::LpToken::burn_from(pool.pool_asset, who, amount)?;
+
+					// Ensure that for all tokens we have sufficient amount
+					for (i, amounts_i) in amounts.iter().enumerate() {
+						ensure!(
+							T::LpToken::balance(pool.assets[i], &Self::account_id(&pool_id)) >=
+								*amounts_i,
+							Error::<T>::InsufficientFunds
+						);
+					}
+
+					for i in 0..n_coins {
+						if amounts_f[i] > zero {
+							// pool.balances[i] = old_balance - value
+							Self::transfer_liquidity_from_pool(
+								&Self::account_id(&pool_id),
+								pool,
+								i,
+								who,
+								amounts[i],
+							)?;
+						}
+					}
+
+					Ok((who.clone(), pool_id, amounts, new_token_supply))
+				})?;
+
+			Self::deposit_event(Event::LiquidityRemoved {
+				who: provider,
+				pool_id,
+				token_amounts,
+				token_supply,
+			});
+
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
 		/// Find `ann = amp * n^n` where `amp` - amplification coefficient,
 		/// `n` - number of coins.
 		pub fn get_ann(amp: FixedU128, n: usize) -> Option<FixedU128> {
-			let n_coins = FixedU128::saturating_from_integer(u128::try_from(n).ok()?);
+			let n_coins = FixedU128::saturating_from_integer(n as u128);
 			let mut ann = amp;
 			for _ in 0..n {
 				ann = ann.checked_mul(&n_coins)?;
@@ -258,13 +515,13 @@ pub mod pallet {
 		/// ```pseudocode
 		/// D[j + 1] = (A * n^n * sum(x_i) - D[j]^(n+1) / (n^n * prod(x_i))) / (A * n^n - 1)
 		/// ```
-		pub fn get_d(xp: &[FixedU128], ann: FixedU128) -> Option<FixedU128> {
+		pub fn get_d(xp_f: &[FixedU128], ann_f: FixedU128) -> Option<FixedU128> {
 			let zero = FixedU128::zero();
 			let one = FixedU128::one();
-			let prec = FixedU128::from_inner(FixedU128::accuracy());
-			let n = FixedU128::saturating_from_integer(u128::try_from(xp.len()).ok()?);
-
-			let sum = xp.iter().try_fold(zero, |s, x| s.checked_add(x))?;
+			let prec = T::Precision::get();
+			// let n = FixedU128::try_from(xp_f.len() as u128).ok()?;
+			let n = FixedU128::saturating_from_integer(u128::try_from(xp_f.len()).ok()?);
+			let sum = xp_f.iter().try_fold(zero, |s, x| s.checked_add(x))?;
 			if sum == zero {
 				return Some(zero)
 			}
@@ -272,28 +529,31 @@ pub mod pallet {
 
 			for _ in 0..255 {
 				let mut d_p = d;
-				for x in xp.iter() {
+				for x in xp_f.iter() {
 					// d_p = d_p * d / (x * n)
 					d_p = d_p.checked_mul(&d)?.checked_div(&x.checked_mul(&n)?)?;
 				}
 				let d_prev = d;
 
 				// d = (ann * sum + d_p * n) * d / ((ann - 1) * d + (n + 1) * d_p)
-				d = ann
+				d = ann_f
 					.checked_mul(&sum)?
 					.checked_add(&d_p.checked_mul(&n)?)?
 					.checked_mul(&d)?
 					.checked_div(
-						&ann.checked_sub(&one)?
-							.checked_mul(&d)?
-							.checked_add(&n.checked_add(&one)?.checked_mul(&d_p)?)?,
-					)?;
+					&ann_f
+						.checked_sub(&one)?
+						.checked_mul(&d)?
+						.checked_add(&n.checked_add(&one)?.checked_mul(&d_p)?)?,
+				)?;
 
 				if d > d_prev {
 					if d.checked_sub(&d_prev)? <= prec {
+						// return Some(d.checked_mul_int(1u64)?.into());
 						return Some(d)
 					}
 				} else if d_prev.checked_sub(&d)? <= prec {
+					// return Some(d.checked_mul_int(1u64)?.into());
 					return Some(d)
 				}
 			}
@@ -319,38 +579,37 @@ pub mod pallet {
 		pub fn get_y(
 			i: usize,
 			j: usize,
-			x: FixedU128,
-			xp: &[FixedU128],
-			ann: FixedU128,
+			x_f: FixedU128,
+			xp_f: &[FixedU128],
+			ann_f: FixedU128,
 		) -> Option<FixedU128> {
 			let zero = FixedU128::zero();
-			let one = FixedU128::one();
-			let two = FixedU128::saturating_from_integer(u128::try_from(2).ok()?);
-			let n = FixedU128::saturating_from_integer(u128::try_from(xp.len()).ok()?);
+			let prec = T::Precision::get();
+			let two = FixedU128::saturating_from_integer(2u8);
+			let n = FixedU128::try_from(xp_f.len() as u128).ok()?;
 
 			// Same coin
 			if i == j {
 				return None
 			}
 			// j above n
-			if j >= xp.len() {
+			if j >= xp_f.len() {
 				return None
 			}
-			if i >= xp.len() {
+			if i >= xp_f.len() {
 				return None
 			}
-			let d = Self::get_d(xp, ann)?;
-
-			let mut c = d;
+			let d_f = Self::get_d(xp_f, ann_f)?;
+			let mut c = d_f;
 			let mut s = zero;
 
 			// Calculate s and c
 			// p is implicitly calculated as part of c
 			// note that loop makes n - 1 iterations
-			for (k, xp_k) in xp.iter().enumerate() {
-				let x_k;
+			for (k, xp_k) in xp_f.iter().enumerate() {
+				let x_k: FixedU128;
 				if k == i {
-					x_k = x;
+					x_k = x_f;
 				} else if k != j {
 					x_k = *xp_k;
 				} else {
@@ -359,18 +618,18 @@ pub mod pallet {
 				// s = s + x_k
 				s = s.checked_add(&x_k)?;
 				// c = c * d / (x_k * n)
-				c = c.checked_mul(&d)?.checked_div(&x_k.checked_mul(&n)?)?;
+				c = c.checked_mul(&d_f)?.checked_div(&x_k.checked_mul(&n)?)?;
 			}
 			// c = c * d / (ann * n)
 			// At this step we have d^n in the numerator of c
 			// and n^(n-1) in its denominator.
 			// So we multiplying it by remaining d/n
-			c = c.checked_mul(&d)?.checked_div(&ann.checked_mul(&n)?)?;
+			c = c.checked_mul(&d_f)?.checked_div(&ann_f.checked_mul(&n)?)?;
 
 			// b = s + d / ann
 			// We subtract d later
-			let b = s.checked_add(&d.checked_div(&ann)?)?;
-			let mut y = d;
+			let b = s.checked_add(&d_f.checked_div(&ann_f)?)?;
+			let mut y = d_f;
 
 			for _ in 0..255 {
 				let y_prev = y;
@@ -379,14 +638,14 @@ pub mod pallet {
 				y = y
 					.checked_mul(&y)?
 					.checked_add(&c)?
-					.checked_div(&two.checked_mul(&y)?.checked_add(&b)?.checked_sub(&d)?)?;
+					.checked_div(&two.checked_mul(&y)?.checked_add(&b)?.checked_sub(&d_f)?)?;
 
 				// Equality with the specified precision
 				if y > y_prev {
-					if y.checked_sub(&y_prev)? <= one {
+					if y.checked_sub(&y_prev)? <= prec {
 						return Some(y)
 					}
-				} else if y_prev.checked_sub(&y)? <= one {
+				} else if y_prev.checked_sub(&y)? <= prec {
 					return Some(y)
 				}
 			}
@@ -409,23 +668,23 @@ pub mod pallet {
 		/// ```
 		pub fn get_y_d(
 			i: usize,
-			d: FixedU128,
-			xp: &[FixedU128],
-			ann: FixedU128,
+			d_f: FixedU128,
+			xp_f: &[FixedU128],
+			ann_f: FixedU128,
 		) -> Option<FixedU128> {
-			let prec = FixedU128::from_inner(FixedU128::accuracy());
-			let zero = FixedU128::one();
-			let two = FixedU128::saturating_from_integer(u128::try_from(2).ok()?);
-			let n = FixedU128::saturating_from_integer(u128::try_from(xp.len()).ok()?);
+			let zero = FixedU128::zero();
+			let prec = T::Precision::get();
+			let two = FixedU128::saturating_from_integer(2u8);
+			let n = FixedU128::try_from(xp_f.len() as u128).ok()?;
 
-			if i >= xp.len() {
+			if i >= xp_f.len() {
 				return None
 			}
 
-			let mut c = d;
+			let mut c = d_f;
 			let mut s = zero;
 
-			for (k, xp_k) in xp.iter().enumerate() {
+			for (k, xp_k) in xp_f.iter().enumerate() {
 				if k == i {
 					continue
 				}
@@ -434,13 +693,13 @@ pub mod pallet {
 
 				s = s.checked_add(x)?;
 				// c = c * d / (x * n)
-				c = c.checked_mul(&d)?.checked_div(&x.checked_mul(&n)?)?;
+				c = c.checked_mul(&d_f)?.checked_div(&x.checked_mul(&n)?)?;
 			}
 			// c = c * d / (ann * n)
-			c = c.checked_mul(&d)?.checked_div(&ann.checked_mul(&n)?)?;
+			c = c.checked_mul(&d_f)?.checked_div(&ann_f.checked_mul(&n)?)?;
 			// b = s + d / ann
-			let b = s.checked_add(&d.checked_div(&ann)?)?;
-			let mut y = d;
+			let b = s.checked_add(&d_f.checked_div(&ann_f)?)?;
+			let mut y = d_f;
 
 			for _ in 0..255 {
 				let y_prev = y;
@@ -448,7 +707,7 @@ pub mod pallet {
 				y = y
 					.checked_mul(&y)?
 					.checked_add(&c)?
-					.checked_div(&two.checked_mul(&y)?.checked_add(&b)?.checked_sub(&d)?)?;
+					.checked_div(&two.checked_mul(&y)?.checked_add(&b)?.checked_sub(&d_f)?)?;
 
 				// Equality with the specified precision
 				if y > y_prev {
@@ -461,6 +720,54 @@ pub mod pallet {
 			}
 
 			None
+		}
+
+		fn transfer_liquidity_into_pool(
+			pool_account_id: &T::AccountId,
+			pool: &mut PoolInfo<T::AccountId, T::AssetId, T::Balance>,
+			source: &T::AccountId,
+			destination_asset_index: usize,
+			amount: T::Balance,
+		) -> DispatchResult {
+			T::LpToken::transfer(
+				pool.assets[destination_asset_index],
+				source,
+				pool_account_id,
+				amount,
+				true,
+			)?;
+
+			pool.balances[destination_asset_index] = pool.balances[destination_asset_index]
+				.checked_add(&amount)
+				.ok_or(Error::<T>::InconsistentStorage)?;
+
+			Ok(())
+		}
+
+		fn transfer_liquidity_from_pool(
+			pool_account_id: &T::AccountId,
+			pool: &mut PoolInfo<T::AccountId, T::AssetId, T::Balance>,
+			source_asset_index: usize,
+			destination: &T::AccountId,
+			amount: T::Balance,
+		) -> DispatchResult {
+			T::LpToken::transfer(
+				pool.assets[source_asset_index],
+				pool_account_id,
+				destination,
+				amount,
+				true,
+			)?;
+
+			pool.balances[source_asset_index] = pool.balances[source_asset_index]
+				.checked_sub(&amount)
+				.ok_or(Error::<T>::InconsistentStorage)?;
+
+			Ok(())
+		}
+
+		fn account_id(pool_id: &PoolId) -> T::AccountId {
+			PALLET_ID.into_sub_account(pool_id)
 		}
 	}
 }
