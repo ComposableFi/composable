@@ -2,12 +2,14 @@ use crate as curve_amm;
 use composable_traits::currency::DynamicCurrencyId;
 use frame_support::{parameter_types, traits::Everything};
 use frame_system as system;
+use orml_traits::parameter_type_with_key;
 use scale_info::TypeInfo;
+use sp_arithmetic::{traits::Zero, FixedU128};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	ArithmeticError, DispatchError,
+	ArithmeticError, DispatchError, FixedPointNumber,
 };
 
 #[derive(
@@ -78,6 +80,7 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
 		CurveAmm: curve_amm::{Pallet, Call, Storage, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
+		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
 );
 
@@ -97,6 +100,13 @@ parameter_types! {
 }
 
 pub type AccountId = u64;
+
+#[allow(dead_code)]
+pub static ALICE: AccountId = 1;
+#[allow(dead_code)]
+pub static BOB: AccountId = 2;
+#[allow(dead_code)]
+pub static CHARLIE: AccountId = 3;
 
 impl system::Config for Test {
 	type BaseCallFilter = Everything;
@@ -144,9 +154,40 @@ pub type Balance = u128;
 
 pub type AssetId = MockCurrencyId;
 
+pub type Amount = i128;
+
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
+		Zero::zero()
+	};
+}
+
+impl orml_tokens::Config for Test {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = MockCurrencyId;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
+	type MaxLocks = ();
+	type DustRemovalWhitelist = Everything;
+}
+
+parameter_types! {
+	pub Precision: FixedU128 = FixedU128::saturating_from_rational(1, 1_000_000_000);
+}
+
 impl curve_amm::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
 	type Balance = Balance;
 	type CurrencyFactory = LpTokenFactory;
+	type Precision = Precision;
+	type LpToken = Tokens;
+}
+
+// Build genesis storage according to the mock runtime.
+pub fn new_test_ext() -> sp_io::TestExternalities {
+	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }

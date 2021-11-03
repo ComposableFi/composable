@@ -101,6 +101,27 @@ pub trait CurveAmm {
 		assets: Vec<Self::AssetId>,
 		amplification_coefficient: Self::Balance,
 	) -> Result<PoolId, DispatchError>;
+
+	/// Deposit coins into the pool
+	/// `amounts` - list of amounts of coins to deposit,
+	/// `min_mint_amount` - minimum amout of LP tokens to mint from the deposit.
+	fn add_liquidity(
+		who: &Self::AccountId,
+		pool_id: PoolId,
+		amounts: Vec<Self::Balance>,
+		min_mint_amount: Self::Balance,
+	) -> Result<(), DispatchError>;
+
+	/// Withdraw coins from the pool.
+	/// Withdrawal amount are based on current deposit ratios.
+	/// `amount` - quantity of LP tokens to burn in the withdrawal,
+	/// `min_amounts` - minimum amounts of underlying coins to receive.
+	fn remove_liquidity(
+		who: &Self::AccountId,
+		pool_id: PoolId,
+		amount: Self::Balance,
+		min_amounts: Vec<Self::Balance>,
+	) -> Result<(), DispatchError>;
 }
 
 /// Type that represents index type of token in the pool passed from the outside as an extrinsic
