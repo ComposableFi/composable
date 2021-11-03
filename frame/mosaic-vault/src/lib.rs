@@ -1,10 +1,15 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+pub mod mocks;
+pub mod traits;
 
 pub use pallet::*;
 
+// #[cfg(test)]
+// mod mock;
+
+#[cfg(test)]
+mod tests;
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -111,7 +116,6 @@ pub mod pallet {
 
 		type BlockTimestamp: UnixTime;
 	}
-
 	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 	pub struct DepositInfo<AssetId, Balance > {
         pub asset_id: AssetId,
@@ -191,9 +195,12 @@ pub mod pallet {
 	pub(super) type LastWithdrawID<T: Config> = StorageValue<_, T::DepositId, ValueQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn last_unlocked_id)]
+	pub(super) type LastUnlockedID<T: Config> = StorageValue<_, T::DepositId, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn pause_status)]
 	pub(super) type PauseStatus<T :Config> = StorageValue<_, bool, ValueQuery>;
-
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -298,6 +305,18 @@ pub mod pallet {
 			T::AccountId,
 		),
 
+		FundsUnlocked(
+			T::AssetId,
+			T::AccountId,
+			T::Balance,
+			T::DepositId,
+		),
+
+		LiquidityMoved(
+          T::AccountId,
+		  T::AccountId,
+		  T::Balance,
+		),
 	}
 
 	#[allow(missing_docs)]
@@ -342,6 +361,8 @@ pub mod pallet {
 
 		TransferNotPossible,
 
+		AssetUnlreadyUnlocked,
+
 		TransferFromFailed,
 
 		WithdrawFailed,
@@ -352,11 +373,14 @@ pub mod pallet {
 
 		ContractPaused,
 
+		ContractNotPaused,
+
+		NoTransferableBalance,
+
 		Underflow,
 
 		Overflow,
 	}
-
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -400,7 +424,6 @@ pub mod pallet {
              Self::deposit_event(Event::TokenRemoved(asset_id, remote_asset_id,  remote_network_id));
 
 			 Ok(().into())
-
 		 }
 
 		 #[pallet::weight(10_000)]
@@ -519,14 +542,6 @@ pub mod pallet {
 			Ok(().into())
 		 }
 
-		 /**
-		  * todo 
-		  * setFeeAddress
-		  *  getCurrentTokenLiquidity
-		  calculateFeePercentage
-		  withdrawTo
-		  */
-
 		 #[pallet::weight(10_000)]
 		 pub fn deposit(
 			 origin: OriginFor<T>, 
@@ -536,6 +551,8 @@ pub mod pallet {
 			 remote_network_id: T::RemoteNetworkId,
 		 	 transfer_delay: T::TransferDelay,
 			) -> DispatchResultWithPostInfo {
+
+			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 
 			let sender = ensure_signed(origin)?;
 
@@ -593,6 +610,8 @@ pub mod pallet {
 	        deposit_id: T::DepositId,
 		 ) -> DispatchResultWithPostInfo {
 
+			 ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
+
 			  let sender = ensure_signed(origin)?;
              
 			  ensure!(Self::has_been_withdrawn(deposit_id) == false, Error::<T>::AlreadyWithdrawn);
@@ -605,11 +624,6 @@ pub mod pallet {
 
 			  let vault_id = <AssetVault<T>>::get(asset_id);
 
-			  /**
-			   - todo check before withdraw 
-			  */
-
-              // withdraw to pallet account
 			  <T::Vault as StrategicVault>::withdraw(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::WithdrawFailed)?;
               
               let fee = Self::calculate_fee_percentage(asset_id, amount)?;
@@ -622,11 +636,11 @@ pub mod pallet {
 
 			  ensure!(Self::get_current_token_liquidity(asset_id)? >= amount, Error::<T>::InsufficientAssetBalance);    
 
-			  T::Currency::transfer(asset_id, &pallet_account_id, &sender, withdraw_amount, true);
+			  T::Currency::transfer(asset_id, &pallet_account_id, &sender, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed);
 
 			 if fee_absolute > T::Balance::zero() {  
 			   
-				T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee_absolute, true);
+				T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee_absolute, true).map_err(|_|Error::<T>::TransferFromFailed);
 				
 				Self::deposit_event(Event::FeeTaken(
 					sender, 
@@ -689,9 +703,9 @@ pub mod pallet {
 			deposit_id: T::DepositId,
 		 ) ->DispatchResultWithPostInfo {
 
-			Self::ensure_not_paused();
+			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 			
-			ensure_signed(origin);
+			ensure_signed(origin)?;
             
 			ensure!(Self::has_been_completed(deposit_id) == false, Error::<T>::AlreadCompleted);
 
@@ -712,8 +726,69 @@ pub mod pallet {
 			Ok(().into())
 		 }
 
+		 #[pallet::weight(10_000)]
+		 pub fn unlock_funds(
+			origin: OriginFor<T>,
+			asset_id: T::AssetId,
+			user_account_id: T::AccountId,
+			amount: T::Balance,
+			deposit_id: T::DepositId,
+		 ) ->DispatchResultWithPostInfo {
+            
+			ensure_signed(origin)?;
+          
+			 ensure!(Self::has_been_unlocked(deposit_id) == false, Error::<T>::AssetUnlreadyUnlocked);
+
+			 <HasBeenUnlocked<T>>::insert(deposit_id, true);
+
+			 <LastUnlockedID<T>>::put(deposit_id);
+
+			 let pallet_account_id = Self::account_id(); 
+
+			 let vault_id = <AssetVault<T>>::get(asset_id);
+
+			<T::Vault as StrategicVault>::withdraw(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::WithdrawFailed)?;
+
+			T::Currency::transfer(asset_id, &pallet_account_id, &user_account_id, amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+             
+			Self::deposit_event(Event::FundsUnlocked(asset_id,user_account_id, amount, deposit_id));
+
+			if Self::has_been_completed(deposit_id) == false {
+				Self::unlock_in_transfer_funds(origin, asset_id, amount, deposit_id)?;
+		    }
+
+			Ok(().into())
+
+		 }
+
+		 #[pallet::weight(10_000)]
+		 pub fn save_funds(
+			 origin: OriginFor<T>,
+			 asset_id: T::AssetId,
+			 to: T::AccountId,
+		 ) -> DispatchResultWithPostInfo {
+
+			let sender = ensure_signed(origin)?;
+
+			ensure!(Self::pause_status() == true, Error::<T>::ContractNotPaused);
+
+			let withdrawable_balance = Self::get_withdrawable_balance(asset_id)?;
+
+			ensure!(withdrawable_balance > T::Balance::zero(), Error::<T>::NoTransferableBalance);
+
+			<T::Vault as StrategicVault>::withdraw(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::WithdrawFailed)?;
+
+			T::Currency::transfer(asset_id, &pallet_account_id, &user_account_id, amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+             
+		    Self::deposit_event(Event::LiquidityMoved(sender, to, withdrawable_balance));
+
+			Ok(().into)
+		}
+
 		#[pallet::weight(10_000)]
 		pub fn pause(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+
+			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 			
             let sender = ensure_signed(origin)?;
 
@@ -831,10 +906,6 @@ pub mod pallet {
 			let deposit_id = keccak_256(&encoded_data);
 
 			deposit_id
-		}
-
-		fn ensure_not_paused()  {
-			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused)
 		}
 	}
  }
