@@ -124,12 +124,13 @@ pub mod pallet {
 	pub fn create_vault<T: Config>(
 		origin: OriginFor<T>,
 		asset_id: T::CurrencyId,
-	) -> (T::VaultId, VaultInfo<AccountId, Balance<T>, CurrencyId, BlockNumber>) {
+	) -> (T::VaultId, VaultInfo<T::AccountId, T::Balance, T::CurrencyId, T::BlockNumber>) where <T as frame_system::Config>::Origin: Ord {
 		Vault::<
 			AccountId = T::AccountId,
 			AssetId = T::CurrencyId,
 			BlockNumber = T::BlockNumber,
 			VaultId = T::VaultId,
+			Balance = T::Balance,
 		>::do_create_vault(
 			Deposit::Existential,
 			VaultConfig {
