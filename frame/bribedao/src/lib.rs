@@ -9,7 +9,11 @@ pub use crate::vecstorage::FastMap;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::Codec;
-	use composable_traits::{bribe::Bribe, democracy::Democracy};
+	use composable_traits::{
+		bribe::Bribe,
+		democracy::Democracy,
+		vault::{Deposit, Vault, VaultConfig},
+	};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::fungibles::{InspectHold, MutateHold, Transfer},
@@ -19,13 +23,14 @@ pub mod pallet {
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
 	use pallet_democracy::Vote;
 	//	use primitives::currency::CurrencyId;
-	use sp_runtime::{
-//		scale_info::TypeInfo,
-		traits::{AtLeast32BitUnsigned, Zero},
-	};
-	//	use sp_std::fmt::Debug;
 	use crate::vecstorage::FastMap;
-	//	mod vecstorage;
+	use pallet_vault::models::VaultInfo;
+	use sp_runtime::{
+		traits::{AtLeast32BitUnsigned, Zero},
+		Perquintill,
+	};
+	use sp_std::fmt::Debug;
+
 	pub type BribeIndex = u32;
 	pub type FastVec = FastMap;
 	pub type ReferendumIndex = pallet_democracy::ReferendumIndex;
@@ -66,6 +71,8 @@ pub mod pallet {
 			+ SaturatingSub
 			+ AtLeast32BitUnsigned
 			+ Zero;
+
+		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 
 		// Currency config supporting transfer, freezing and inspect
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::CurrencyId>
@@ -113,6 +120,27 @@ pub mod pallet {
 	pub(super) type BribeRequests<T: Config> =
 		StorageMap<_, Blake2_128Concat, BribeIndex, CreateBribeRequest<T>>;
 
+	// Create a cubic vault for holding funds
+	pub fn create_vault<T: Config>(
+		origin: OriginFor<T>,
+		asset_id: T::CurrencyId,
+	) -> (T::VaultId, VaultInfo<AccountId, Balance<T>, CurrencyId, BlockNumber>) {
+		Vault::<
+			AccountId = T::AccountId,
+			AssetId = T::CurrencyId,
+			BlockNumber = T::BlockNumber,
+			VaultId = T::VaultId,
+		>::do_create_vault(
+			Deposit::Existential,
+			VaultConfig {
+				asset_id,
+				manager: origin,
+				reserved: Perquintill::from_percent(100),
+				strategies: [].iter().cloned().collect(),
+			},
+		);
+	}
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
@@ -144,16 +172,14 @@ pub mod pallet {
 
 		#[pallet::weight(10_000)]
 		#[transactional]
-		pub fn release_funds(
-			origin: OriginFor<T>,
-			bribe: BribeIndex,
-		) -> DispatchResult {
+		pub fn release_funds(origin: OriginFor<T>, bribe: BribeIndex) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let og_request =
 				BribeRequests::<T>::try_get(bribe).map_err(|_| Error::<T>::InvalidBribe)?;
 			let amount = og_request.total_reward; // amount of tokens locked in
 			let currencyid = og_request.asset_id;
-			T::Currency::release(currencyid, &who, amount, false).map_err(|_| Error::<T>::ReleaseFailed)?;
+			T::Currency::release(currencyid, &who, amount, false)
+				.map_err(|_| Error::<T>::ReleaseFailed)?;
 
 			//			todo!("Check token supply, if supply is less or same as asked for: release funds");
 			//			Error::<T>::EmptySupply;
