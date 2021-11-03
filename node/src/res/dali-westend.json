@@ -1,5 +1,5 @@
 {
-  "name": "Picasso POC-1",
+  "name": "Dali Testent (Westend)",
   "id": "dali",
   "chainType": "Live",
   "bootNodes": [
@@ -12,7 +12,7 @@
       0
     ]
   ],
-  "protocolId": "pica",
+  "protocolId": "dali-westend",
   "properties": {
     "ss58Format": 49,
     "tokenDecimals": 12,

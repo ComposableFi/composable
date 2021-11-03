@@ -19,7 +19,6 @@ Need to do to run 4 relay chain nodes and 1 Composable's collator:
 	cd ../../..
 	git clone -b v0.9.12 https://github.com/paritytech/polkadot
 	cd polkadot
-	git checkout v0.9.12
 	cargo build --release
 	target/release/polkadot --version
 	cd "$old_pwd"
