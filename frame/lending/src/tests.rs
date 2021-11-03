@@ -10,7 +10,7 @@ use crate::{
 	models::BorrowerData,
 	Error, MarketIndex,
 };
-use composable_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
+use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::{
 	currency::PriceableAsset,
 	lending::MarketConfigInput,

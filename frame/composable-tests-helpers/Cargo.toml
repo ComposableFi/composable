@@ -1,5 +1,5 @@
 [package]
-name = "composable-helpers"
+name = "composable-tests-helpers"
 version = "0.0.1"
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
@@ -9,18 +9,13 @@ edition = "2018"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11"  }
-
-sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 serde = { version = '1', optional = true }
-plotters =  {version = "0.3.1", optional = true}
-bitflags = "1.3.2"
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 
 [dependencies.codec]
 default-features = false
@@ -37,6 +32,7 @@ std = [
     "serde",
     "codec/std",
     "frame-support/std",
+    "frame-system/std",
     "sp-runtime/std",
     "scale-info/std",
 ]

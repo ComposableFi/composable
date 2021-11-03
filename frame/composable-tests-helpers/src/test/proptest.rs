@@ -19,7 +19,9 @@ macro_rules! prop_assert_ok {
 #[macro_export]
 macro_rules! prop_assert_acceptable_computation_error {
 	($x:expr, $y:expr, $precision:expr) => {{
-		match composable_helpers::test::helper::acceptable_computation_error($x, $y, $precision) {
+		match composable_tests_helpers::test::helper::acceptable_computation_error(
+			$x, $y, $precision,
+		) {
 			Ok(()) => {},
 			Err(q) => {
 				prop_assert!(false, "{} * {} / {} = {} != {}", $x, $precision, $y, q, $precision);
@@ -30,7 +32,7 @@ macro_rules! prop_assert_acceptable_computation_error {
 		prop_assert_acceptable_computation_error!(
 			$x,
 			$y,
-			composable_helpers::test::helper::DEFAULT_ACCEPTABLE_DEVIATION
+			composable_tests_helpers::test::helper::DEFAULT_ACCEPTABLE_DEVIATION
 		);
 	}};
 }

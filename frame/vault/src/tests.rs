@@ -10,7 +10,7 @@ use crate::{
 	models::VaultInfo,
 	*,
 };
-use composable_helpers::{
+use composable_tests_helpers::{
 	prop_assert_acceptable_computation_error, prop_assert_ok,
 	test::helper::default_acceptable_computation_error,
 };
@@ -136,11 +136,13 @@ proptest! {
 
 		V is vaults, S is strategies, U is users
 
+		```math
 		∀v ∈ V, ∀s ∈ S, ∀u ∈ U, ∀a ∈ ℕ, alloc x = 0.8 * funds x
 
 		let v₁ = user_deposit u a v
 			alloc_v₁ = alloc v₁
 		in (strategy_deposit s alloc_v₁ ∘ strategy_withdraw s alloc_v₁) v₁ = identity v₁
+		```
 	*/
 	#[test]
 	fn vault_strategy_withdraw_deposit_identity(
@@ -215,6 +217,7 @@ proptest! {
 
 		V is vaults, S is strategies, U is users
 
+		```math
 		∀v ∈ V, ∀s ∈ S, ∀u ∈ U, ∀a ∈ ℕ, alloc x = 0.8 * funds x, reserve x = 0.2 * funds x
 
 		let v₁ = user_deposit u a v
@@ -222,6 +225,7 @@ proptest! {
 			v₃ = user_withdraw u (reserve v₂) v₂
 			v₄ = strategy_deposit (reserve v₃) v₃
 		in unbalanced v₃ and balanced v₄
+		```
 	 */
 	#[test]
 	fn vault_reserve_rebalance_ask_strategy_to_deposit(
@@ -305,10 +309,11 @@ proptest! {
 		The vault funds is at it's initial state.
 
 		V is vaults, U is users
-
+		```math
 		∀v ∈ V, ∀u ∈ U, ∀a ∈ ℕ
 
 		(user_withdraw u a ∘ user_deposit u a) v = identity v
+		```
 	 */
 	#[test]
 	fn vault_single_deposit_withdraw_asset_identity(
@@ -331,9 +336,7 @@ proptest! {
 		})?;
 	}
 
-	/*
-		Similar to the previous single user version, but with three distinct users.
-	 */
+	/// Similar to the previous single user version, but with three distinct users.
 	#[test]
 	fn vault_multi_deposit_withdraw_asset_identity(
 		strategy_account_id in strategy_account(),
@@ -377,11 +380,12 @@ proptest! {
 		The vault mint a 1:1 amount of lp tokens.
 
 		V is vaults, U is users
-
+		```math
 		∀v ∈ V, ∀u ∈ U, ∀a ∈ ℕ
 
 		let v₁ = user_deposit u a v
 		in issued (lp_id v) v₁ = balance (lp_id v) u = a
+		```
 	 */
 	#[test]
 	fn vault_single_deposit_lp_ratio_asset_is_one(
@@ -421,9 +425,7 @@ proptest! {
 		})?;
 	}
 
-	/*
-		Impossible to withdraw without holding lp tokens. Two users version.
-	 */
+	/// Impossible to withdraw without holding lp tokens. Two users version.
 	#[test]
 	fn vault_withdraw_without_depositing_fails_to_burn(
 		strategy_account_id in strategy_account(),
@@ -453,6 +455,7 @@ proptest! {
 
 		V is vaults, U is users, S is strategies
 
+		```math
 		∀v ∈ V, ∀s ∈ S, ∀u₁ ∈ U, ∀u₂ ∈ U, u₁ != u₂, ∀a₁ ∈ ℕ, ∀a₂ ∈ ℕ, ∀p ∈ ℕ
 
 		let v₁ = user_deposit u₁ a₁ v
@@ -461,6 +464,7 @@ proptest! {
 			v₄ = user_withdraw u₁ (balance (lp_id v) u₁) v₃
 			v₅ = user_withdraw u₂ (balance (lp_id v) u₂) v₄
 		in balance (asset_id v) u₁  = a₁ + p and balance (asset_id v) u₂ = a₂
+		```
 	 */
 	#[test]
 	fn vault_stock_dilution_1(
@@ -503,9 +507,7 @@ proptest! {
 		})?;
 	}
 
-	/*
-		Make sure that two distinct vault have their account isolated.
-	 */
+	/// Make sure that two distinct vault have their account isolated.
 	#[test]
 	fn vault_are_isolated(
 		strategy_account_id in strategy_account(),
@@ -542,9 +544,7 @@ proptest! {
 		})?;
 	}
 
-	/*
-		Make sure that two distinct vault have their account isolated.
-	 */
+	/// Make sure that two distinct vault have their account isolated.
 	#[test]
 	fn vault_stock_dilution_rate(
 		strategy_account_id in strategy_account(),
