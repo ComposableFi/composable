@@ -1,4 +1,4 @@
-#!/usr/sh
+#!/bin/sh
 echo "Composable Multiplatform installer"
 myos=$(uname -a)
 echo $myos
