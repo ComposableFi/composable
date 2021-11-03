@@ -41,6 +41,7 @@ hex-literal = "0.3.3"
 once_cell = "1.8.0"
 proptest = "0.9.6"
 serde = "1.0.119"
+composable-helpers = { version = "0.0.1", path = "../composable-helpers", default-features = false }
 
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b89b1f98fcf0f5c341fbef1d12bfd869a2f2a9fe" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b89b1f98fcf0f5c341fbef1d12bfd869a2f2a9fe", default-features = false }

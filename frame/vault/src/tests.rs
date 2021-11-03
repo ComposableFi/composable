@@ -10,6 +10,10 @@ use crate::{
 	models::VaultInfo,
 	*,
 };
+use composable_helpers::{
+	prop_assert_acceptable_computation_error, prop_assert_ok,
+	test::helper::default_acceptable_computation_error,
+};
 use composable_traits::{
 	rate_model::Rate,
 	vault::{
@@ -22,43 +26,6 @@ use frame_support::{
 };
 use proptest::prelude::*;
 use sp_runtime::{helpers_128bit::multiply_by_rational, FixedPointNumber, Perquintill};
-
-/// Missing macro, equivalent to `assert_ok!`!
-macro_rules! prop_assert_ok {
-    ($cond:expr) => {
-        prop_assert_ok!($cond, concat!("assertion failed: ", stringify!($cond)))
-    };
-
-    ($cond:expr, $($fmt:tt)*) => {
-        if let Err(e) = $cond {
-            let message = format!($($fmt)*);
-            let message = format!("Expected Ok(_), got {:?}, {} at {}:{}", e, message, file!(), line!());
-            return ::std::result::Result::Err(
-                proptest::test_runner::TestCaseError::fail(message));
-        }
-    };
-}
-
-/// Accept a 'dust' deviation
-macro_rules! prop_assert_epsilon {
-	($x:expr, $y:expr) => {{
-		let precision = 1000;
-		let epsilon = 10;
-		let upper = precision + epsilon;
-		let lower = precision - epsilon;
-		let q = multiply_by_rational($x, precision, $y).expect("qed;");
-		prop_assert!(
-			upper >= q && q >= lower,
-			"({}) => {} >= {} * {} / {} >= {}",
-			q,
-			upper,
-			$x,
-			precision,
-			$y,
-			lower
-		);
-	}};
-}
 
 const DEFAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 // dependent on the previous value, both should be changed
@@ -159,6 +126,22 @@ prop_compose! {
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(10000))]
 
+	/*
+		Create an empty vault with 80% allocated for a single strategy, 20% as reserve.
+		A single user and a single strategy are interacting.
+		The user deposit an arbitrary amount.
+		The strategy withdraw it's full allocation, a.k.a. 80% of the user deposit.
+		The strategy deposit everything back, a.k.a. 80% of the user deposit.
+		The vault funds is at it's initial state.
+
+		V is vaults, S is strategies, U is users
+
+		∀v ∈ V, ∀s ∈ S, ∀u ∈ U, ∀a ∈ ℕ, alloc x = 0.8 * funds x
+
+		let v₁ = user_deposit u a v
+			alloc_v₁ = alloc v₁
+		in (strategy_deposit s alloc_v₁ ∘ strategy_withdraw s alloc_v₁) v₁ = identity v₁
+	*/
 	#[test]
 	fn vault_strategy_withdraw_deposit_identity(
 		strategy_account_id in strategy_account(),
@@ -189,25 +172,57 @@ proptest! {
 				matches!(
 					available_funds,
 					Ok(FundsAvailability::Withdrawable(strategy_funds))
-						if expected_strategy_funds <= strategy_funds
-						// && strategy_funds <= expected_strategy_funds + 1
+						if expected_strategy_funds == strategy_funds
 				),
-				"Reserve should now be 20% of initial strategy funds, expected: {}, actual: {:?}",
+				"Reserve should be 20% of initial strategy funds, expected: {}, actual: {:?}",
 				expected_strategy_funds,
 				available_funds
 			);
 
-			// Strategy withdraw/deposit full allocation
+			//  deposit . withdraw
 			prop_assert_eq!(Tokens::balance(asset_id, &strategy_account_id), 0);
 			prop_assert_ok!(<Vaults as StrategicVault>::withdraw(&vault_id, &strategy_account_id, expected_strategy_funds));
 			prop_assert_eq!(Tokens::balance(asset_id, &strategy_account_id), expected_strategy_funds);
 			prop_assert_ok!(<Vaults as StrategicVault>::deposit(&vault_id, &strategy_account_id, expected_strategy_funds));
 			prop_assert_eq!(Tokens::balance(asset_id, &strategy_account_id), 0);
 
+			// check that vault is back to its initial state
+			let available_funds = <Vaults as StrategicVault>::available_funds(&vault_id, &strategy_account_id);
+			prop_assert!(
+				matches!(
+					available_funds,
+					Ok(FundsAvailability::Withdrawable(strategy_funds))
+						if expected_strategy_funds == strategy_funds
+				),
+				"Reserve should be 20% of initial strategy funds, expected: {}, actual: {:?}",
+				expected_strategy_funds,
+				available_funds
+			);
+
 			Ok(())
 		})?;
 	}
 
+	/*
+		Create an empty vault with 80% allocated for a single strategy, 20% as reserve.
+		A single user and a single strategy are interacting.
+		The user deposit an arbitrary amount.
+		The strategy withdraw it's full allocation, a.k.a. 80% of the user deposit.
+		The user withdraw the whole reserve, a.k.a. 20% of it's initial deposit.
+		The vault is unbalanced.
+		The strategy questions the vault for the funds available, the vault answer that a 20% deposit is required.
+		The vault is balanced.
+
+		V is vaults, S is strategies, U is users
+
+		∀v ∈ V, ∀s ∈ S, ∀u ∈ U, ∀a ∈ ℕ, alloc x = 0.8 * funds x, reserve x = 0.2 * funds x
+
+		let v₁ = user_deposit u a v
+			v₂ = stategy_withdraw s (alloc v₁) v₁
+			v₃ = user_withdraw u (reserve v₂) v₂
+			v₄ = strategy_deposit (reserve v₃) v₃
+		in unbalanced v₃ and balanced v₄
+	 */
 	#[test]
 	fn vault_reserve_rebalance_ask_strategy_to_deposit(
 		strategy_account_id in strategy_account(),
@@ -238,8 +253,7 @@ proptest! {
 				matches!(
 					available_funds,
 					Ok(FundsAvailability::Withdrawable(strategy_funds))
-						if expected_strategy_funds <= strategy_funds
-						&& strategy_funds <= expected_strategy_funds + 1
+						if strategy_funds == expected_strategy_funds
 				),
 				"Reserve should now be 20% of initial strategy funds, expected: {}, actual: {:?}",
 				expected_strategy_funds,
@@ -272,8 +286,7 @@ proptest! {
 				matches!(
 					new_available_funds,
 					Ok(FundsAvailability::Depositable(new_reserve))
-						if new_expected_reserve <= new_reserve
-						// && new_reserve <= new_expected_reserve + 1
+						if default_acceptable_computation_error(new_expected_reserve, new_reserve).is_ok()
 				),
 				"Reserve should now be 20% of 80% of total funds = 20% of initial strategy funds, expected: {}, actual: {:?}",
 				new_expected_reserve,
@@ -284,6 +297,19 @@ proptest! {
 		})?;
 	}
 
+	/*
+		Create an empty vault.
+		A single user is interacting.
+		The user deposit an arbitrary amount.
+		The user withdraw everything it can.
+		The vault funds is at it's initial state.
+
+		V is vaults, U is users
+
+		∀v ∈ V, ∀u ∈ U, ∀a ∈ ℕ
+
+		(user_withdraw u a ∘ user_deposit u a) v = identity v
+	 */
 	#[test]
 	fn vault_single_deposit_withdraw_asset_identity(
 		strategy_account_id in strategy_account(),
@@ -305,6 +331,9 @@ proptest! {
 		})?;
 	}
 
+	/*
+		Similar to the previous single user version, but with three distinct users.
+	 */
 	#[test]
 	fn vault_multi_deposit_withdraw_asset_identity(
 		strategy_account_id in strategy_account(),
@@ -341,6 +370,19 @@ proptest! {
 		})?;
 	}
 
+	/*
+		Create an empty vault.
+		A single user is interacting.
+		The user deposit an arbitrary amount.
+		The vault mint a 1:1 amount of lp tokens.
+
+		V is vaults, U is users
+
+		∀v ∈ V, ∀u ∈ U, ∀a ∈ ℕ
+
+		let v₁ = user_deposit u a v
+		in issued (lp_id v) v₁ = balance (lp_id v) u = a
+	 */
 	#[test]
 	fn vault_single_deposit_lp_ratio_asset_is_one(
 		strategy_account_id in strategy_account(),
@@ -362,6 +404,9 @@ proptest! {
 		})?;
 	}
 
+	/*
+		Impossible to withdraw without holding lp tokens.
+	 */
 	#[test]
 	fn vault_withdraw_with_zero_lp_issued_fails_to_burn(
 		strategy_account_id in strategy_account(),
@@ -376,6 +421,9 @@ proptest! {
 		})?;
 	}
 
+	/*
+		Impossible to withdraw without holding lp tokens. Two users version.
+	 */
 	#[test]
 	fn vault_withdraw_without_depositing_fails_to_burn(
 		strategy_account_id in strategy_account(),
@@ -394,6 +442,26 @@ proptest! {
 		})?;
 	}
 
+	/*
+		Create an empty vault.
+		Two distinct users A and B and a single strategy are interacting.
+		The user A deposit an arbitrary amount X.
+		The strategy deposit an arbitrary profit, this profit should belong to previous shareholdres.
+		The user B deposit an arbitrary amount Y.
+		The user A withdraw everything it can, which should be X + profit.
+		The user B withdraw everything it can, which should be Y.
+
+		V is vaults, U is users, S is strategies
+
+		∀v ∈ V, ∀s ∈ S, ∀u₁ ∈ U, ∀u₂ ∈ U, u₁ != u₂, ∀a₁ ∈ ℕ, ∀a₂ ∈ ℕ, ∀p ∈ ℕ
+
+		let v₁ = user_deposit u₁ a₁ v
+			v₂ = strategy_deposit s p v₁
+			v₃ = user_deposit u₂ a₂ v₂
+			v₄ = user_withdraw u₁ (balance (lp_id v) u₁) v₃
+			v₅ = user_withdraw u₂ (balance (lp_id v) u₂) v₄
+		in balance (asset_id v) u₁  = a₁ + p and balance (asset_id v) u₂ = a₂
+	 */
 	#[test]
 	fn vault_stock_dilution_1(
 		strategy_account_id in strategy_account(),
@@ -424,9 +492,9 @@ proptest! {
 			let bob_total_balance = Tokens::balance(asset_id, &BOB);
 			let strategy_total_balance = Tokens::balance(asset_id, &strategy_account_id);
 
-			prop_assert_epsilon!(alice_total_balance, amount1 + strategy_profits);
+			prop_assert_acceptable_computation_error!(alice_total_balance, amount1 + strategy_profits);
 
-			prop_assert_epsilon!(
+			prop_assert_acceptable_computation_error!(
 				alice_total_balance + bob_total_balance + strategy_total_balance,
 				amount1 + amount2 + strategy_profits
 			);
@@ -435,6 +503,9 @@ proptest! {
 		})?;
 	}
 
+	/*
+		Make sure that two distinct vault have their account isolated.
+	 */
 	#[test]
 	fn vault_are_isolated(
 		strategy_account_id in strategy_account(),
@@ -471,6 +542,9 @@ proptest! {
 		})?;
 	}
 
+	/*
+		Make sure that two distinct vault have their account isolated.
+	 */
 	#[test]
 	fn vault_stock_dilution_rate(
 		strategy_account_id in strategy_account(),
@@ -542,6 +616,10 @@ proptest! {
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(100))]
 
+	/*
+		stock_dilution1 generalized to (almost) arbitrary number of users.
+		The profit deposited by a strategy at a time T should be distributed to 0..T shareholders.
+	*/
 	#[test]
 	fn vault_stock_dilution_k(
 		(random_index, created_accounts) in
@@ -609,11 +687,11 @@ proptest! {
 					let strategy_profit_share =
 						multiply_by_rational(strategy_profits, lp, lp_total).expect("qed;");
 
-					prop_assert_epsilon!(new_balance, balance + strategy_profit_share);
+					prop_assert_acceptable_computation_error!(new_balance, balance + strategy_profit_share);
 				}
 				else {
 					// Our balance should be equivalent
-					prop_assert_epsilon!(new_balance, balance);
+					prop_assert_acceptable_computation_error!(new_balance, balance);
 				}
 			}
 
@@ -626,7 +704,7 @@ proptest! {
 				.map(|(account, _)| Tokens::balance(asset_id, account))
 				.sum::<Balance>();
 
-			prop_assert_epsilon!(
+			prop_assert_acceptable_computation_error!(
 				current_sum_of_shareholders_balance,
 				initial_sum_of_shareholders_balance + strategy_profits
 			);

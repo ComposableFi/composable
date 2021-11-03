@@ -1316,6 +1316,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "composable-helpers"
+version = "0.0.1"
+dependencies = [
+ "bitflags",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "plotters",
+ "proptest",
+ "scale-info",
+ "serde",
+ "sp-arithmetic",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "composable-traits"
 version = "0.0.1"
 dependencies = [
@@ -5862,6 +5879,7 @@ dependencies = [
 name = "pallet-lending"
 version = "0.0.1"
 dependencies = [
+ "composable-helpers",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -6330,6 +6348,7 @@ name = "pallet-vault"
 version = "0.0.1"
 dependencies = [
  "bitflags",
+ "composable-helpers",
  "composable-traits",
  "frame-support",
  "frame-system",
