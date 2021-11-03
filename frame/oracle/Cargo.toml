@@ -17,28 +17,28 @@ package = "parity-scale-codec"
 version = "2.0.0"
 
 [dependencies]
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11"  }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12"  }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-io = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-core = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-io = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-core = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
 log = { version = "0.4.14", default-features = false }
 lite-json = { version = "0.1", default-features = false }
 serde_json = { version = "1.0.45", default-features = false, features = ["alloc"] }
 
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.11' }
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
 
 composable-traits = { path = "../composable-traits", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 parking_lot = "0.11.2"
 serde = "1.0.119"
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
 [features]
 default = ["std"]

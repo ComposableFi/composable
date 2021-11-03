@@ -21,15 +21,15 @@ log = "0.4.14"
 envy = "0.4"
 dotenv = "0.15.0"
 tokio = { version = "1.12.0", features  = ["macros", "rt-multi-thread"] }
-sp-runtime = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-substrate-frame-rpc-system = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sp-runtime = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+substrate-frame-rpc-system = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 futures = { version = "0.3", features = ["compat"] }
 jsonrpc-core-client = { version = "18", features = ["ws"] }
-sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 picasso = { package = "picasso-runtime", path = "../../runtime/picasso" }
 common = { package = "common", path = "../../runtime/common" }

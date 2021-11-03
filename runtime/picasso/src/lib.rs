@@ -36,7 +36,7 @@ use sp_runtime::traits::AccountIdConversion;
 // A few exports that help ease life for downstream crates.
 pub use support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Contains, Everything, KeyOwnerProofSystem, Randomness, StorageInfo},
+	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -62,7 +62,7 @@ use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin,
 	FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser, ParentIsDefault,
 	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+	SignedAccountId32AsNative, SovereignSignedViaLocation, TakeWeightCredit,
 };
 use xcm_executor::XcmExecutor;
 
@@ -114,6 +114,7 @@ pub fn native_version() -> NativeVersion {
 }
 
 parameter_types! {
+	// how much block hashes to keep
 	pub const BlockHashCount: BlockNumber = 250;
 	pub const Version: RuntimeVersion = VERSION;
 	pub RuntimeBlockLength: BlockLength =
@@ -503,7 +504,8 @@ impl xcm_executor::Config for XcmConfig {
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
-pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, RelayNetwork>;
+/// https://medium.com/kusama-network/kusamas-governance-thwarts-would-be-attacker-9023180f6fb
+pub type LocalOriginToLocation = ();
 
 /// The means for routing XCM messages which are not for local execution into the right message
 /// queues.
@@ -519,7 +521,8 @@ impl pallet_xcm::Config for Runtime {
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmExecuteFilter = Everything;
+	/// https://medium.com/kusama-network/kusamas-governance-thwarts-would-be-attacker-9023180f6fb
+	type XcmExecuteFilter = Nothing;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = Everything;
@@ -580,7 +583,7 @@ impl session::Config for Runtime {
 	type SessionHandler =
 		<opaque::SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = opaque::SessionKeys;
-	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
+	// type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
 	type WeightInfo = weights::session::WeightInfo<Runtime>;
 }
 
@@ -627,7 +630,7 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 }
 
 parameter_types! {
-				pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
 }
 
 impl orml_tokens::Config for Runtime {

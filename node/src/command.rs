@@ -41,7 +41,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		// does not support `--chain` and `--parachain-id` arguments simultaneously.
 		"picasso-dev" => Box::new(chain_spec::picasso_dev()),
 		// westend parachain
-		"dali" => Box::new(chain_spec::dali()),
+		"dali-westend" => Box::new(chain_spec::dali_westend()),
 		// rococo parachain
 		"dali-rococo" => Box::new(chain_spec::dali_rococo()),
 		// chachacha parachain

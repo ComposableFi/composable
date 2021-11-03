@@ -1,10 +1,15 @@
 {
-  "name": "Dali Chachacha",
+  "name": "Dali Testnet (ChaChaCha)",
   "id": "dali",
   "chainType": "Live",
   "bootNodes": [],
-  "telemetryEndpoints": null,
-  "protocolId": "dali",
+  "telemetryEndpoints": [
+    [
+      "/dns/telemetry.polkadot.io/tcp/443/x-parity-wss/%2Fsubmit%2F",
+      0
+    ]
+  ],
+  "protocolId": "dali-chachacha",
   "properties": {
     "ss58Format": 49,
     "tokenDecimals": 12,
