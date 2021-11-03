@@ -78,7 +78,7 @@ jobs:
           total_exit_code=0
           while IFS= read -r crate; do
             echo "=== $crate ==="
-            (cd "$crate"; SKIP_WASM_BUILD=1 cargo udeps -q --all-targets) || total_exit_code=$?
+            (cd "$crate"; SKIP_WASM_BUILD=1 cargo +nightly udeps -q --all-targets) || total_exit_code=$?
             echo ""
           done < <(find . -name "Cargo.toml" -not -path "./polkadot-launch/*" -not -path "./target/*" -exec dirname '{}' \;)
           exit $total_exit_code
