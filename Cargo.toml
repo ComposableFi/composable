@@ -9,4 +9,5 @@ members = [
 	"runtime/common",
     "runtime/picasso",
 	"runtime/primitives",
+	"integration-tests",
 ]

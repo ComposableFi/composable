@@ -1,0 +1,9 @@
+[package]
+name = "runtime-integration-tests"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.56"
+
+
+[dependencies]
+xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "4d3bb9dd4fa2cd554a9970ffff816d9346269eaa" }

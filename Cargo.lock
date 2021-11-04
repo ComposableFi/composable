@@ -9172,6 +9172,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "runtime-integration-tests"
+version = "0.1.0"
+dependencies = [
+ "xcm-emulator",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13123,6 +13130,30 @@ dependencies = [
  "sp-arithmetic",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+ "xcm 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "xcm-executor 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+]
+
+[[package]]
+name = "xcm-emulator"
+version = "0.1.0"
+source = "git+https://github.com/shaunxw/xcm-simulator?rev=4d3bb9dd4fa2cd554a9970ffff816d9346269eaa#4d3bb9dd4fa2cd554a9970ffff816d9346269eaa"
+dependencies = [
+ "cumulus-pallet-dmp-queue",
+ "cumulus-pallet-parachain-system",
+ "cumulus-pallet-xcmp-queue",
+ "cumulus-primitives-core",
+ "cumulus-primitives-parachain-inherent",
+ "cumulus-test-relay-sproof-builder",
+ "frame-support",
+ "frame-system",
+ "parachain-info",
+ "parity-scale-codec",
+ "paste 1.0.5",
+ "polkadot-primitives 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "polkadot-runtime-parachains 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
+ "sp-io",
  "sp-std",
  "xcm 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
  "xcm-executor 0.9.11 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.11)",
