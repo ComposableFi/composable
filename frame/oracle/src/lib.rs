@@ -130,6 +130,9 @@ pub mod pallet {
 		type MaxAnswerBound: Get<u32>;
 		/// Upper bound for total assets available for the oracle
 		type MaxAssetsCount: Get<u32>;
+
+		type MaxHistory: Get<u32>;
+
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
 	}
@@ -154,10 +157,11 @@ pub mod pallet {
 	}
 
 	#[derive(Encode, Decode, Default, Debug, PartialEq, Clone, TypeInfo)]
-	pub struct AssetInfo<Percent> {
+	pub struct AssetInfo<Percent, BlockNumber> {
 		pub threshold: Percent,
 		pub min_answers: u32,
 		pub max_answers: u32,
+		pub block_interval: BlockNumber
 	}
 
 	type BalanceOf<T> =
@@ -207,6 +211,17 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn price_history)]
+	/// Price for an asset and blocknumber asset was updated at
+	pub type PriceHistory<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::AssetId,
+		Vec<Price<T::PriceValue, T::BlockNumber>>,
+		ValueQuery,
+	>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn pre_prices)]
 	/// Temporary prices before aggregated
 	pub type PrePrices<T: Config> = StorageMap<
@@ -218,10 +233,10 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn accuracy_threshold)]
+	#[pallet::getter(fn asset_info)]
 	/// Information about asset, including precision threshold and max/min answers
 	pub type AssetsInfo<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AssetId, AssetInfo<Percent>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, T::AssetId, AssetInfo<Percent, T::BlockNumber>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn requested)]
@@ -231,8 +246,8 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Asset info created or changed. \[asset_id, threshold, min_answers, max_answers\]
-		AssetInfoChange(T::AssetId, Percent, u32, u32),
+		/// Asset info created or changed. \[asset_id, threshold, min_answers, max_answers, block_interval\]
+		AssetInfoChange(T::AssetId, Percent, u32, u32, T::BlockNumber),
 		/// A new price was requested. \[requested_by, asset_id\]
 		PriceRequested(T::AccountId, T::AssetId),
 		/// Signer was set. \[signer, controller\]
@@ -346,6 +361,7 @@ pub mod pallet {
 			threshold: Percent,
 			min_answers: u32,
 			max_answers: u32,
+			block_interval: T::BlockNumber
 		) -> DispatchResultWithPostInfo {
 			T::AddOracle::ensure_origin(origin)?;
 			ensure!(min_answers > 0, Error::<T>::InvalidMinAnswers);
@@ -356,7 +372,7 @@ pub mod pallet {
 				AssetsCount::<T>::get() < T::MaxAssetsCount::get(),
 				Error::<T>::ExceedAssetsCount
 			);
-			let asset_info = AssetInfo { threshold, min_answers, max_answers };
+			let asset_info = AssetInfo { threshold, min_answers, max_answers, block_interval };
 			AssetsInfo::<T>::insert(asset_id, asset_info);
 			AssetsCount::<T>::mutate(|a| *a += 1);
 			Self::deposit_event(Event::AssetInfoChange(
@@ -364,6 +380,7 @@ pub mod pallet {
 				threshold,
 				min_answers,
 				max_answers,
+				block_interval
 			));
 			Ok(().into())
 		}
@@ -610,7 +627,7 @@ pub mod pallet {
 		#[allow(clippy::type_complexity)]
 		pub fn update_pre_prices(
 			asset_id: T::AssetId,
-			asset_info: AssetInfo<Percent>,
+			asset_info: AssetInfo<Percent, T::BlockNumber>,
 			block: T::BlockNumber,
 		) -> (usize, Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>) {
 			// TODO maybe add a check if price is requested, is less operations?
@@ -636,7 +653,7 @@ pub mod pallet {
 
 		pub fn update_price(
 			asset_id: T::AssetId,
-			asset_info: AssetInfo<Percent>,
+			asset_info: AssetInfo<Percent, T::BlockNumber>,
 			block: T::BlockNumber,
 			pre_prices: Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 		) {
@@ -647,6 +664,17 @@ pub mod pallet {
 				if let Some(price) = Self::get_median_price(&pre_prices) {
 					Prices::<T>::insert(asset_id, Price { price, block });
 					Requested::<T>::insert(asset_id, false);
+					let historical = Self::price_history(asset_id);
+					if (historical.len() as u32) < T::MaxHistory::get() {
+						PriceHistory::<T>::mutate(asset_id, |prices|{
+							prices.push(Price { price, block });
+						})
+					} else {
+						PriceHistory::<T>::mutate(asset_id, |prices| {
+							prices.remove(0);
+							prices.push(Price { price, block });
+						})
+					}
 					PrePrices::<T>::remove(asset_id);
 
 					Self::handle_payout(&pre_prices, price, asset_id);
@@ -656,7 +684,7 @@ pub mod pallet {
 
 		#[allow(clippy::type_complexity)]
 		pub fn prune_old_pre_prices(
-			asset_info: AssetInfo<Percent>,
+			asset_info: AssetInfo<Percent, T::BlockNumber>,
 			mut pre_prices: Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 			block: T::BlockNumber,
 		) -> (
@@ -703,7 +731,11 @@ pub mod pallet {
 
 		pub fn check_requests() {
 			for (i, _) in AssetsInfo::<T>::iter() {
-				if Requested::<T>::get(i) {
+				
+				let last_update = Self::prices(i);
+				let current_block = frame_system::Pallet::<T>::block_number();
+				let asset_info = Self::asset_info(i);
+				if last_update.block <= current_block + asset_info.block_interval {
 					let _ = Self::fetch_price_and_send_signed(&i);
 				}
 			}
