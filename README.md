@@ -40,17 +40,9 @@ $ ./target/release/composable --dev --tmp
 ### Pallets
 Picasso ships with multiple custom made pallets such as:
 [Cubic Vault](frame/vault/README.md)    
-[Lending](frame/lending/README.md)    
-[Oracle](frame/oracle/README.md)     
-[CurveAmm](frame/curve-amm/README.md)
-[BribeDAO](https://www.bribe.xyz/)    
 
-
-## Sudo privileged functions
-Thanks to substrate sudo functions we can choose what privileges our function has.
-[Read more here](sudo.md)
+and several others you can find in the frame folder.
 
 
 
-## Benchmarking   
-For all things benchmarking, [Read our benchmarking documentation here](docs/benchmarking.md)
+Read more specific information in [our docs folder](docs/).
