@@ -776,13 +776,17 @@ pub mod pallet {
 
 			ensure!(withdrawable_balance > T::Balance::zero(), Error::<T>::NoTransferableBalance);
 
-			<T::Vault as StrategicVault>::withdraw(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::WithdrawFailed)?;
+			let pallet_account_id = Self::account_id(); 
 
-			T::Currency::transfer(asset_id, &pallet_account_id, &user_account_id, amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+			let vault_id = <AssetVault<T>>::get(asset_id);
+
+			<T::Vault as StrategicVault>::withdraw(&vault_id, &pallet_account_id, withdrawable_balance).map_err(|_| Error::<T>::WithdrawFailed)?;
+
+			T::Currency::transfer(asset_id, &pallet_account_id, &to, withdrawable_balance, true).map_err(|_|Error::<T>::TransferFromFailed)?;
              
 		    Self::deposit_event(Event::LiquidityMoved(sender, to, withdrawable_balance));
 
-			Ok(().into)
+			Ok(().into())
 		}
 
 		#[pallet::weight(10_000)]
