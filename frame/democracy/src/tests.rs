@@ -246,12 +246,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	orml_tokens::GenesisConfig::<Test> {
 		balances: vec![
-			(1, DefaultAsset, 100),
-			(2, DefaultAsset, 200),
-			(3, DefaultAsset, 300),
-			(4, DefaultAsset, 400),
-			(5, DefaultAsset, 500),
-			(6, DefaultAsset, 600),
+			(1, DefaultAsset, 10),
+			(2, DefaultAsset, 20),
+			(3, DefaultAsset, 30),
+			(4, DefaultAsset, 40),
+			(5, DefaultAsset, 50),
+			(6, DefaultAsset, 60),
 		],
 	}
 	.assimilate_storage(&mut t)
