@@ -66,6 +66,6 @@ jobs:
           gsutil cp gs://composable-binaries/releases/client/v0.1.0/picasso_runtime.compact.wasm .
           gsutil cp gs://composable-binaries/releases/client/v0.1.0/parachain-utils .
           chmod +x parachain-utils
-          ./parachain-utils upgrade-runtime --path ./picasso_runtime.compact.wasm
+          RUST_LOG=debug ./parachain-utils upgrade-runtime --path ./picasso_runtime.compact.wasm
 
   

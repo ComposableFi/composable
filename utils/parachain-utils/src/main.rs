@@ -60,6 +60,8 @@ impl State {
 
 #[tokio::main]
 async fn main() -> Result<(), RpcError> {
+	env_logger::init();
+
 	let main = Main::from_args();
 	let state = State::new().await;
 
@@ -171,17 +173,9 @@ async fn upgrade_runtime(wasm: Vec<u8>, state: &State) -> Result<(), RpcError> {
 		(),
 	);
 
-	let call = scheduler::Call::schedule_after {
-		after: 5,
-		maybe_periodic: None,
-		priority: 0,
-		call: Box::new(
-			sudo::Call::sudo_unchecked_weight {
-				call: Box::new(system::Call::set_code { code: wasm }.into()),
-				weight: 0,
-			}
-			.into(),
-		),
+	let call = sudo::Call::sudo_unchecked_weight {
+		call: Box::new(system::Call::set_code { code: wasm }.into()),
+		weight: 0,
 	};
 
 	let payload = picasso::SignedPayload::from_raw(call.into(), extra, additional);
@@ -195,7 +189,9 @@ async fn upgrade_runtime(wasm: Vec<u8>, state: &State) -> Result<(), RpcError> {
 	);
 
 	// send off the extrinsic
-	state.dali_author.submit_extrinsic(extrinsic.encode().into()).await?;
+	let hash = state.dali_author.submit_extrinsic(extrinsic.encode().into()).await?;
+
+	log::info!("Runtime upgrade proposed, extrinsic hash: {}", hash);
 
 	Ok(())
 }
