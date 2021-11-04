@@ -57,13 +57,8 @@ primitives = { path = "../primitives", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
-lending = { package = "pallet-lending", path = "../../frame/lending", default-features = false }
-liquidations = { package = "pallet-liquidations", path = "../../frame/liquidations", default-features = false }
-dutch-auction = { package = "pallet-dutch-auctions", path = "../../frame/dutch-auction", default-features = false }
 composable-traits = { path = "../../frame/composable-traits" , default-features = false}
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
-ping = { package = "pallet-ping", path = "../../frame/ping", default-features = false }
-assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
@@ -81,7 +76,6 @@ cumulus-pallet-parachain-system = { git = "https://github.com/paritytech/cumulus
 cumulus-pallet-dmp-queue = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12", default-features = false }
 cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12", default-features = false }
 cumulus-pallet-xcmp-queue = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12", default-features = false }
-cumulus-ping = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12", default-features = false }
 cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12", default-features = false }
 cumulus-primitives-timestamp = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12", default-features = false }
 cumulus-primitives-utility = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12", default-features = false }
@@ -126,11 +120,7 @@ std = [
 	"indices/std",
 	"oracle/std",
 	"vault/std",
-	"lending/std",
-	"liquidations/std",
 	"call-filter/std",
-	"ping/std",
-	"assets-registry/std",
 	"currency-factory/std",
 	"orml-tokens/std",
 	"orml-traits/std",
@@ -146,7 +136,6 @@ std = [
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-pallet-xcmp-queue/std",
 	"cumulus-pallet-xcm/std",
-	"cumulus-ping/std",
 	"cumulus-primitives-core/std",
 	"cumulus-primitives-timestamp/std",
 	"cumulus-primitives-utility/std",
@@ -167,8 +156,6 @@ runtime-benchmarks = [
 	"balances/runtime-benchmarks",
 	"timestamp/runtime-benchmarks",
 	"oracle/runtime-benchmarks",
-	"lending/runtime-benchmarks",
-	"assets-registry/runtime-benchmarks",
 	"collective/runtime-benchmarks",
 	"collator-selection/runtime-benchmarks",
 	"session-benchmarking/runtime-benchmarks",
