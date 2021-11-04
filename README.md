@@ -40,6 +40,7 @@ $ ./target/release/composable --dev --tmp
 ### Pallets
 Picasso ships with multiple custom made pallets such as:
 [Cubic Vault](frame/vault/README.md)    
+[Apollo](frame/oracle/README.md)
 
 and several others you can find in the frame folder.
 
