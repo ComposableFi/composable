@@ -37,6 +37,9 @@ lint:
 	@rustup component add clippy 2> /dev/null
 	cargo clippy --all-targets --all-features -- -D warnings
 
+udeps:
+	SKIP_WASM_BUILD=1 cargo +nightly udeps -q --all-targets
+
 dev:
 	cargo run
 
@@ -68,7 +71,7 @@ else
 endif
 
 
-.PHONY: build test docs style-check lint up down containerize dev push install stop
+.PHONY: build test docs style-check lint udeps containerize dev push install stop
 
 
 #----------------------------------------------------------------------
