@@ -2135,23 +2135,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cumulus-ping"
-version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.12#f5926c2f50df73bf36171b138241437131d76fff"
-dependencies = [
- "cumulus-pallet-xcm",
- "cumulus-primitives-core",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-runtime",
- "sp-std",
- "xcm",
-]
-
-[[package]]
 name = "cumulus-primitives-core"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.12#f5926c2f50df73bf36171b138241437131d76fff"
@@ -7144,7 +7127,6 @@ dependencies = [
  "cumulus-pallet-session-benchmarking",
  "cumulus-pallet-xcm",
  "cumulus-pallet-xcmp-queue",
- "cumulus-ping",
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
@@ -7157,7 +7139,6 @@ dependencies = [
  "hex-literal",
  "orml-tokens",
  "orml-traits",
- "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -7167,13 +7148,9 @@ dependencies = [
  "pallet-crowdloan-bonus",
  "pallet-currency-factory",
  "pallet-democracy",
- "pallet-dutch-auctions",
  "pallet-indices",
- "pallet-lending",
- "pallet-liquidations",
  "pallet-membership",
  "pallet-oracle",
- "pallet-ping",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
