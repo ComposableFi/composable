@@ -132,23 +132,34 @@ fn test_transfer_all_native() {
 #[test]
 fn test_mint_initialize() {
 	new_test_ext().execute_with(|| {
+		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT), INIT_AMOUNT);
 		Pallet::<Test>::mint_initialize(Origin::root(), TRANSFER_AMOUNT, TO_ACCOUNT)
 			.expect("mint_initialize should work");
-		// TODO(oleksii): check for successful minting
+		assert_eq!(
+			Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT),
+			INIT_AMOUNT + TRANSFER_AMOUNT
+		);
 	});
 }
 
 #[test]
 fn test_mint_initialize_with_governance() {
 	new_test_ext().execute_with(|| {
+		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT), INIT_AMOUNT);
 		Pallet::<Test>::mint_initialize_with_governance(
 			Origin::root(),
 			TRANSFER_AMOUNT,
-			FROM_ACCOUNT,
+			TO_ACCOUNT,
 			TO_ACCOUNT,
 		)
 		.expect("mint_initialize_with_governance should work");
-		// TODO(oleksii): check for successful minting
+		assert_eq!(
+			Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT),
+			INIT_AMOUNT + TRANSFER_AMOUNT
+		);
+		ensure_root_or_governance::<Test>(Origin::signed(TO_ACCOUNT), &ASSET_ID).expect(
+			"mint_initialize_with_governance should add governance_origin to GovernanceRegistry",
+		);
 	});
 }
 
