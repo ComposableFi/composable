@@ -101,7 +101,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 200,
+	spec_version: 100,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -117,6 +117,7 @@ parameter_types! {
 	// how much block hashes to keep
 	pub const BlockHashCount: BlockNumber = 250;
 	pub const Version: RuntimeVersion = VERSION;
+	// 5mb with 25% of that reserved for system extrinsics.
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
@@ -198,7 +199,8 @@ impl system::Config for Runtime {
 impl randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
-	pub const MaxAuthorities: u32 = 1_000;
+	// Maximum authorities/collators for aura
+	pub const MaxAuthorities: u32 = 100;
 }
 
 impl aura::Config for Runtime {
@@ -226,6 +228,7 @@ pub const EXISTENTIAL_DEPOSIT: Balance = 100 * MILLI_PICA;
 
 parameter_types! {
 	pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
+	/// Maximum number of reservation locks that can be placed on an account.
 	pub const MaxLocks: u32 = 50;
 }
 
