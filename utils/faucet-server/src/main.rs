@@ -13,6 +13,7 @@ use subxt::{ClientBuilder, PairSigner};
 use tide::{prelude::*, Error, Request};
 
 mod dali;
+
 use dali::api;
 
 #[derive(Debug, Deserialize, StructOpt, Clone)]
@@ -117,7 +118,7 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 
 	match enrich(address.into(), req.state()).await {
 		Err(e) => return Ok(format!("Error: {:?}", e).into()),
-		Ok(()) => {},
+		Ok(()) => {}
 	};
 
 	log::info!("Sent {} 1k Dali", user_name);
@@ -131,6 +132,7 @@ async fn enrich(address: picasso::Address, state: &State) -> Result<(), subxt::E
 		.api
 		.tx()
 		.balances()
+		// 1k Dali
 		.transfer(address, 1_000_000_000_000_000)
 		.sign_and_submit_then_watch(&signer)
 		.await?;

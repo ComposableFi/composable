@@ -28,6 +28,7 @@ structopt = "0.3.23"
 sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 
 tokio = {version = "1", features = ["full"]}
 codec = { package = "parity-scale-codec", version = "2.2.0", default-features = false }
@@ -36,3 +37,5 @@ serde = { version = "1", features = ["derive"] }
 
 picasso = { package = "picasso-runtime", path = "../../runtime/picasso" }
 common = { package = "common", path = "../../runtime/common" }
+subxt = { git = "https://github.com/composableFi/subxt", branch = "seun-0.9.12" }
+derive_more = "0.99.16"

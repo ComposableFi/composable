@@ -1,15 +1,19 @@
 use codec::{Decode, Encode};
 use jsonrpc_core_client::{transports::ws, RpcChannel, RpcError};
 use polkadot_core_primitives::{AccountId, AccountIndex, BlockNumber, Hash, Header};
-use rococo::{Call, SessionKeys, SignedBlock, VERSION};
+use rococo::{SessionKeys, SignedBlock, VERSION};
 use sc_rpc::{author::AuthorClient, chain::ChainClient};
 use serde::Deserialize;
 use sp_core::{sr25519, Pair};
 use sp_rpc::{list::ListOrValue, number::NumberOrHex};
-use sp_runtime::{generic, generic::Era, traits::IdentifyAccount, MultiSigner};
+use sp_runtime::{generic::Era, traits::IdentifyAccount, MultiSigner};
 use std::str::FromStr;
 use structopt::StructOpt;
 use substrate_frame_rpc_system::SystemApiClient;
+use subxt::{ClientBuilder, PairSigner};
+
+mod dali;
+use dali::api;
 
 type RococoChain = ChainClient<BlockNumber, Hash, Header, SignedBlock>;
 
@@ -26,40 +30,46 @@ pub enum Main {
 
 #[derive(Deserialize, Debug)]
 struct Env {
+	/// Root key used to sign transactions
 	root_key: String,
+	/// Url to dali rpc node
 	rpc_node: String,
 }
 
 struct State {
-	dali_chain: ChainClient<
-		common::BlockNumber,
-		common::Hash,
-		picasso::Header,
-		generic::SignedBlock<picasso::Block>,
-	>,
-	dali_system: SystemApiClient<common::Hash, common::AccountId, common::AccountIndex>,
-	dali_author: AuthorClient<common::Hash, common::Hash>,
+	/// Subxt api
+	api: api::RuntimeApi<api::DefaultConfig>,
+	/// Pair signer
 	signer: sr25519::Pair,
+	/// Env variables
+	env: Env,
 }
 
 impl State {
 	async fn new() -> Self {
 		let env = envy::from_env::<Env>().unwrap();
-
-		let url = url::Url::from_str(&env.rpc_node).unwrap();
-
 		// create the signer
 		let signer = sr25519::Pair::from_string(&env.root_key, None).unwrap();
-		// connection to make rpc requests over
-		let channel = ws::connect::<RpcChannel>(&url).await.unwrap();
-		let (dali_chain, dali_system, dali_author) =
-			(channel.clone().into(), channel.clone().into(), channel.into());
-		State { dali_author, dali_chain, dali_system, signer }
+
+		let api = ClientBuilder::new()
+			.set_url(&env.rpc_node)
+			.build()
+			.await
+			.unwrap()
+			.to_runtime_api();
+
+		State { api, signer, env }
 	}
 }
 
+#[derive(derive_more::From, Debug)]
+enum Error {
+	Subxt(subxt::Error),
+	Rpc(RpcError),
+}
+
 #[tokio::main]
-async fn main() -> Result<(), RpcError> {
+async fn main() -> Result<(), Error> {
 	let main = Main::from_args();
 	let state = State::new().await;
 
@@ -68,30 +78,31 @@ async fn main() -> Result<(), RpcError> {
 		Main::UpgradeRuntime { path } => {
 			let wasm = std::fs::read(path).unwrap();
 			upgrade_runtime(wasm, &state).await?
-		},
+		}
 	};
 
 	Ok(())
 }
 
 async fn rotate_keys(state: &State) -> Result<(), RpcError> {
-	let account_id = MultiSigner::from(state.signer.public()).into_account();
+	let url = url::Url::from_str(&state.env.rpc_node).unwrap();
+	let rpc_channel = ws::connect::<RpcChannel>(&url).await.unwrap();
+	let dali_author: AuthorClient<common::Hash, common::Hash> = rpc_channel.clone().into();
 
 	// first rotate, our keys.
-	let bytes = state.dali_author.rotate_keys().await.unwrap();
+	let bytes = dali_author.rotate_keys().await.unwrap();
 	let keys = SessionKeys::decode(&mut &bytes[..]).unwrap();
 	// assert that our keys have been rotated.
-	assert!(state.dali_author.has_session_keys(keys.clone().encode().into()).await.unwrap());
+	assert!(dali_author.has_session_keys(keys.clone().encode().into()).await.unwrap());
 
 	// now to set our session keys on cha cha cha
-	let call = Call::Session(session::Call::set_keys { keys: keys.clone(), proof: vec![] });
+	let call = rococo::Call::Session(session::Call::set_keys { keys: keys.clone(), proof: vec![] });
 
 	let url = url::Url::from_str("wss://fullnode-relay.chachacha.centrifuge.io").unwrap();
-	let chachacha_chain_client = ws::connect::<RococoChain>(&url).await.unwrap();
-	let chachacha_system_client =
-		ws::connect::<SystemApiClient<Hash, AccountId, AccountIndex>>(&url)
-			.await
-			.unwrap();
+	let rpc_channel = ws::connect::<RpcChannel>(&url).await.unwrap();
+	let chachacha_chain_client: RococoChain = rpc_channel.clone().into();
+	let chachacha_system_client: SystemApiClient<Hash, AccountId, AccountIndex> =
+		rpc_channel.clone().into();
 
 	// get genesis hash
 	let genesis_hash = match chachacha_chain_client
@@ -102,6 +113,7 @@ async fn rotate_keys(state: &State) -> Result<(), RpcError> {
 		_ => unreachable!("genesis hash should exist"),
 	};
 
+	let account_id = MultiSigner::from(state.signer.public()).into_account();
 	let account_index = chachacha_system_client.nonce(account_id.clone()).await.unwrap();
 
 	let extra = (
@@ -127,8 +139,8 @@ async fn rotate_keys(state: &State) -> Result<(), RpcError> {
 		extra,
 	);
 
-	let chachacha_author = ws::connect::<AuthorClient<Hash, Hash>>(&url).await.unwrap();
-	// send off the extrinsic
+	let chachacha_author: AuthorClient<Hash, Hash> = rpc_channel.clone().into();
+	// TODO: use subxt
 	chachacha_author.submit_extrinsic(extrinsic.encode().into()).await.unwrap();
 
 	println!("Confirm your keys on PolkadotJs:\n{:#?}", keys);
@@ -136,66 +148,32 @@ async fn rotate_keys(state: &State) -> Result<(), RpcError> {
 	Ok(())
 }
 
-async fn upgrade_runtime(wasm: Vec<u8>, state: &State) -> Result<(), RpcError> {
-	let account_id = MultiSigner::from(state.signer.public()).into_account();
+async fn upgrade_runtime(wasm: Vec<u8>, state: &State) -> Result<(), subxt::Error> {
+	let code_hash = sp_io::hashing::blake2_256(&wasm);
+	let signer = PairSigner::new(state.signer.clone());
+	let result = state
+		.api
+		.tx()
+		.parachain_system()
+		.authorize_upgrade(code_hash.into())
+		.sign_and_submit_then_watch(&signer)
+		.await?;
 
-	// get genesis hash
-	let genesis_hash = match state
-		.dali_chain
-		.block_hash(Some(ListOrValue::Value(NumberOrHex::Number(0))))
-		.await
-	{
-		Ok(ListOrValue::Value(Some(hash))) => hash,
-		_ => unreachable!("genesis hash should exist"),
-	};
+	if let None = result.find_event::<api::parachain_system::events::UpgradeAuthorized>()? {
+		return Err(subxt::Error::Other("Failed to authorize upgrade".into()));
+	}
 
-	let account_index = state.dali_system.nonce(account_id.clone()).await?;
+	let result = state
+		.api
+		.tx()
+		.parachain_system()
+		.enact_authorized_upgrade(wasm)
+		.sign_and_submit_then_watch(&signer)
+		.await?;
 
-	let extra = (
-		system::CheckSpecVersion::<picasso::Runtime>::new(),
-		system::CheckTxVersion::<picasso::Runtime>::new(),
-		system::CheckGenesis::<picasso::Runtime>::new(),
-		system::CheckMortality::<picasso::Runtime>::from(Era::Immortal),
-		system::CheckNonce::<picasso::Runtime>::from(account_index),
-		system::CheckWeight::<picasso::Runtime>::new(),
-		transaction_payment::ChargeTransactionPayment::<picasso::Runtime>::from(0),
-	);
-
-	let additional = (
-		picasso::VERSION.spec_version,
-		picasso::VERSION.transaction_version,
-		genesis_hash,
-		genesis_hash,
-		(),
-		(),
-		(),
-	);
-
-	let call = scheduler::Call::schedule_after {
-		after: 5,
-		maybe_periodic: None,
-		priority: 0,
-		call: Box::new(
-			sudo::Call::sudo_unchecked_weight {
-				call: Box::new(system::Call::set_code { code: wasm }.into()),
-				weight: 0,
-			}
-			.into(),
-		),
-	};
-
-	let payload = picasso::SignedPayload::from_raw(call.into(), extra, additional);
-	let signature = payload.using_encoded(|payload| state.signer.sign(payload));
-	let (call, extra, _) = payload.deconstruct();
-	let extrinsic = picasso::UncheckedExtrinsic::new_signed(
-		call,
-		account_id.clone().into(),
-		signature.into(),
-		extra,
-	);
-
-	// send off the extrinsic
-	state.dali_author.submit_extrinsic(extrinsic.encode().into()).await?;
+	if let None = result.find_event::<api::parachain_system::events::ValidationFunctionStored>()? {
+		return Err(subxt::Error::Other("Failed to enact upgrade".into()));
+	}
 
 	Ok(())
 }
