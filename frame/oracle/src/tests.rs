@@ -24,6 +24,7 @@ fn add_asset_and_info() {
 		const MIN_ANSWERS: u32 = 3;
 		const MAX_ANSWERS: u32 = 5;
 		const THRESHOLD: Percent = Percent::from_percent(80);
+		const BLOCK_INTERVAL: u64 = 5;
 
 		// passes
 		let account_2 = get_account_2();
@@ -33,6 +34,7 @@ fn add_asset_and_info() {
 			THRESHOLD,
 			MIN_ANSWERS,
 			MAX_ANSWERS,
+			BLOCK_INTERVAL
 		));
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
@@ -40,12 +42,17 @@ fn add_asset_and_info() {
 			THRESHOLD,
 			MIN_ANSWERS,
 			MAX_ANSWERS,
+			BLOCK_INTERVAL
 		));
 
-		let asset_info =
-			AssetInfo { threshold: THRESHOLD, min_answers: MIN_ANSWERS, max_answers: MAX_ANSWERS };
+		let asset_info = AssetInfo {
+			threshold: THRESHOLD,
+			min_answers: MIN_ANSWERS,
+			max_answers: MAX_ANSWERS,
+			block_interval: BLOCK_INTERVAL,
+		};
 		// id now activated and count incremented
-		assert_eq!(Oracle::accuracy_threshold(1), asset_info);
+		assert_eq!(Oracle::asset_info(1), asset_info);
 		assert_eq!(Oracle::assets_count(), 2);
 		// fails with non permission
 		let account_1: AccountId = Default::default();
@@ -55,7 +62,8 @@ fn add_asset_and_info() {
 				ASSET_ID,
 				THRESHOLD,
 				MAX_ANSWERS,
-				MAX_ANSWERS
+				MAX_ANSWERS,
+				BLOCK_INTERVAL
 			),
 			BadOrigin
 		);
@@ -67,6 +75,7 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				MAX_ANSWERS,
 				MIN_ANSWERS,
+				BLOCK_INTERVAL
 			),
 			Error::<Test>::MaxAnswersLessThanMinAnswers
 		);
@@ -78,6 +87,7 @@ fn add_asset_and_info() {
 				Percent::from_percent(100),
 				MIN_ANSWERS,
 				MAX_ANSWERS,
+				BLOCK_INTERVAL
 			),
 			Error::<Test>::ExceedThreshold
 		);
@@ -89,6 +99,7 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				MIN_ANSWERS,
 				MAX_ANSWERS + 1,
+				BLOCK_INTERVAL
 			),
 			Error::<Test>::ExceedMaxAnswers
 		);
@@ -100,11 +111,11 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				0,
 				MAX_ANSWERS,
+				BLOCK_INTERVAL
 			),
 			Error::<Test>::InvalidMinAnswers
 		);
 
-		// passes
 		assert_noop!(
 			Oracle::add_asset_and_info(
 				Origin::signed(account_2),
@@ -112,6 +123,7 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				MIN_ANSWERS,
 				MAX_ANSWERS,
+				BLOCK_INTERVAL
 			),
 			Error::<Test>::ExceedAssetsCount
 		);
@@ -161,6 +173,7 @@ fn do_request_price() {
 			Percent::from_percent(80),
 			3,
 			5,
+			5
 		));
 
 		let account_3 = get_account_3();
@@ -275,14 +288,10 @@ fn add_price() {
 			Percent::from_percent(80),
 			3,
 			3,
+			5
 		));
-		// fails price not requested
-		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128),
-			Error::<Test>::PriceNotRequested
-		);
 
-		assert_ok!(Oracle::do_request_price(&account_1, 0));
+		System::set_block_number(6);
 		// fails no stake
 		assert_noop!(
 			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128),
@@ -312,13 +321,22 @@ fn add_price() {
 			Error::<Test>::MaxPrices
 		);
 
-		let price = PrePrice { price: 100u128, block: 0, who: account_1 };
+		let price = PrePrice { price: 100u128, block: 6, who: account_1 };
 
-		let price2 = PrePrice { price: 100u128, block: 0, who: account_2 };
+		let price2 = PrePrice { price: 100u128, block: 6, who: account_2 };
 
-		let price4 = PrePrice { price: 100u128, block: 0, who: account_4 };
+		let price4 = PrePrice { price: 100u128, block: 6, who: account_4 };
 
 		assert_eq!(Oracle::pre_prices(0), vec![price, price2, price4]);
+
+		System::set_block_number(2);
+		Oracle::on_initialize(2);
+
+		// fails price not requested
+		assert_noop!(
+			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128),
+			Error::<Test>::PriceNotRequested
+		);
 	});
 }
 
@@ -348,9 +366,9 @@ fn check_request() {
 			Percent::from_percent(80),
 			3,
 			5,
+			5
 		));
-		let account_1: AccountId = Default::default();
-		assert_ok!(Oracle::do_request_price(&account_1, 0));
+		System::set_block_number(6);
 		Oracle::check_requests();
 	});
 }
@@ -359,6 +377,31 @@ fn check_request() {
 fn not_check_request() {
 	new_test_ext().execute_with(|| {
 		Oracle::check_requests();
+	});
+}
+
+#[test]
+fn is_requested() {
+	new_test_ext().execute_with(|| {
+		let account_2 = get_account_2();
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Percent::from_percent(80),
+			3,
+			5,
+			5
+		));
+		System::set_block_number(6);
+		assert!(Oracle::is_requested(&0));
+
+		let price = Price { price: 0, block: 6 };
+		Prices::<Test>::insert(0, price);
+
+		assert!(!Oracle::is_requested(&0));
+
+		System::set_block_number(11);
+		assert!(!Oracle::is_requested(&0));
 	});
 }
 
@@ -388,6 +431,7 @@ fn test_payout_slash() {
 			Percent::from_percent(80),
 			3,
 			5,
+			5
 		));
 
 		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
@@ -406,6 +450,7 @@ fn test_payout_slash() {
 			Percent::from_percent(90),
 			3,
 			5,
+			5
 		));
 		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
 
@@ -437,6 +482,7 @@ fn on_init() {
 			Percent::from_percent(80),
 			3,
 			5,
+			5
 		));
 		let account_1: AccountId = Default::default();
 		assert_ok!(Oracle::do_request_price(&account_1, 0));
@@ -463,9 +509,11 @@ fn on_init() {
 			add_price_storage(price, 0, account_1, 3);
 		}
 
+		// does not fire under min answers
 		Oracle::on_initialize(3);
 		assert_eq!(Oracle::pre_prices(0).len(), 2);
 		assert!(Oracle::requested(0));
+		assert_eq!(Oracle::prices(0), price);
 	});
 }
 
@@ -480,6 +528,7 @@ fn on_init_prune_scenerios() {
 			Percent::from_percent(80),
 			3,
 			5,
+			5
 		));
 		let account_1: AccountId = Default::default();
 		assert_ok!(Oracle::do_request_price(&account_1, 0));
@@ -539,6 +588,7 @@ fn on_init_over_max_answers() {
 			Percent::from_percent(80),
 			1,
 			2,
+			5
 		));
 		let account_1: AccountId = Default::default();
 		assert_ok!(Oracle::do_request_price(&account_1, 0));
@@ -560,8 +610,12 @@ fn on_init_over_max_answers() {
 #[test]
 fn prune_old_pre_prices_edgecase() {
 	new_test_ext().execute_with(|| {
-		let asset_info =
-			AssetInfo { threshold: Percent::from_percent(80), min_answers: 3, max_answers: 5 };
+		let asset_info = AssetInfo {
+			threshold: Percent::from_percent(80),
+			min_answers: 3,
+			max_answers: 5,
+			block_interval: 5,
+		};
 		Oracle::prune_old_pre_prices(asset_info, vec![], 0);
 	});
 }

@@ -83,6 +83,7 @@ parameter_types! {
 	pub const SlashAmount: u64 = 5;
 	pub const MaxAnswerBound: u32 = 5;
 	pub const MaxAssetsCount: u32 = 2;
+	pub const MaxHistory: u32 = 2;
 }
 
 ord_parameter_types! {
@@ -134,6 +135,7 @@ impl pallet_oracle::Config for Test {
 	type SlashAmount = SlashAmount;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
+	type MaxHistory = MaxHistory;
 	type WeightInfo = ();
 }
 

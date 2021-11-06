@@ -161,7 +161,7 @@ pub mod pallet {
 		pub threshold: Percent,
 		pub min_answers: u32,
 		pub max_answers: u32,
-		pub block_interval: BlockNumber
+		pub block_interval: BlockNumber,
 	}
 
 	type BalanceOf<T> =
@@ -246,7 +246,8 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Asset info created or changed. \[asset_id, threshold, min_answers, max_answers, block_interval\]
+		/// Asset info created or changed. \[asset_id, threshold, min_answers, max_answers,
+		/// block_interval\]
 		AssetInfoChange(T::AssetId, Percent, u32, u32, T::BlockNumber),
 		/// A new price was requested. \[requested_by, asset_id\]
 		PriceRequested(T::AccountId, T::AssetId),
@@ -361,7 +362,7 @@ pub mod pallet {
 			threshold: Percent,
 			min_answers: u32,
 			max_answers: u32,
-			block_interval: T::BlockNumber
+			block_interval: T::BlockNumber,
 		) -> DispatchResultWithPostInfo {
 			T::AddOracle::ensure_origin(origin)?;
 			ensure!(min_answers > 0, Error::<T>::InvalidMinAnswers);
@@ -380,7 +381,7 @@ pub mod pallet {
 				threshold,
 				min_answers,
 				max_answers,
-				block_interval
+				block_interval,
 			));
 			Ok(().into())
 		}
@@ -495,7 +496,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let author_stake = OracleStake::<T>::get(&who).unwrap_or_else(Zero::zero);
-			ensure!(Requested::<T>::get(asset_id), Error::<T>::PriceNotRequested);
+			ensure!(Self::is_requested(&asset_id), Error::<T>::PriceNotRequested);
 			ensure!(author_stake >= T::MinStake::get(), Error::<T>::NotEnoughStake);
 
 			let set_price = PrePrice {
@@ -666,7 +667,7 @@ pub mod pallet {
 					Requested::<T>::insert(asset_id, false);
 					let historical = Self::price_history(asset_id);
 					if (historical.len() as u32) < T::MaxHistory::get() {
-						PriceHistory::<T>::mutate(asset_id, |prices|{
+						PriceHistory::<T>::mutate(asset_id, |prices| {
 							prices.push(Price { price, block });
 						})
 					} else {
@@ -731,14 +732,17 @@ pub mod pallet {
 
 		pub fn check_requests() {
 			for (i, _) in AssetsInfo::<T>::iter() {
-				
-				let last_update = Self::prices(i);
-				let current_block = frame_system::Pallet::<T>::block_number();
-				let asset_info = Self::asset_info(i);
-				if last_update.block <= current_block + asset_info.block_interval {
+				if Self::is_requested(&i) {
 					let _ = Self::fetch_price_and_send_signed(&i);
 				}
 			}
+		}
+
+		pub fn is_requested(price_id: &T::AssetId) -> bool {
+			let last_update = Self::prices(price_id);
+			let current_block = frame_system::Pallet::<T>::block_number();
+			let asset_info = Self::asset_info(price_id);
+			last_update.block + asset_info.block_interval < current_block
 		}
 
 		pub fn fetch_price_and_send_signed(price_id: &T::AssetId) -> Result<(), &'static str> {
