@@ -3997,6 +3997,7 @@ dependencies = [
  "picasso-runtime",
  "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-runtime-parachains",
  "primitives",
  "scale-info",
  "smallvec 1.7.0",
