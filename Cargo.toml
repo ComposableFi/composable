@@ -10,5 +10,6 @@ members = [
 	"runtime/common",
 	"runtime/primitives",
 	"utils/faucet-server",
-	"utils/parachain-utils"
+	"utils/parachain-utils",
+    "utils/subxt-clients"
 ]

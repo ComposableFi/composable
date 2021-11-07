@@ -52,11 +52,12 @@
           "wsPort": 9988,
           "basePath": "/tmp/polkadot-launch/parachains/alice",
           "port": 31200,
-          "flags": ["--", "--execution=wasm"]
+          "flags": ["--rpc-cors=all", "--", "--execution=wasm"]
         }
       ]
     }
   ],
   "types": {},
-  "finalization": false
+  "finalization": false,
+  "simpleParachains": []
 }

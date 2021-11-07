@@ -2783,6 +2783,7 @@ dependencies = [
  "structopt",
  "substrate-frame-rpc-system",
  "subxt",
+ "subxt-clients",
  "tide",
  "tokio",
  "url 1.7.2",
@@ -2950,7 +2951,7 @@ dependencies = [
  "linregress",
  "log 0.4.14",
  "parity-scale-codec",
- "paste 1.0.5",
+ "paste 1.0.6",
  "scale-info",
  "sp-api",
  "sp-io",
@@ -3040,7 +3041,7 @@ dependencies = [
  "log 0.4.14",
  "once_cell",
  "parity-scale-codec",
- "paste 1.0.5",
+ "paste 1.0.6",
  "scale-info",
  "serde",
  "smallvec 1.7.0",
@@ -4376,9 +4377,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.106"
+version = "0.2.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a60553f9a9e039a333b4e9b20573b9e9b9c0bb3a11e201ccc48ef4283456d673"
+checksum = "fbe5e23404da5b4f555ef85ebed98fb4083e55a00c317800bc2a50ede9f3d219"
 
 [[package]]
 name = "libloading"
@@ -6848,28 +6849,18 @@ version = "0.1.0"
 dependencies = [
  "common",
  "derive_more",
+ "env_logger 0.9.0",
  "envy",
- "frame-system",
- "futures 0.3.17",
  "jsonrpc-core-client",
- "pallet-balances",
- "pallet-scheduler",
- "pallet-session",
- "pallet-sudo",
- "pallet-transaction-payment",
  "parity-scale-codec",
- "picasso-runtime",
- "polkadot-core-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
- "rococo-runtime",
  "sc-rpc",
  "serde",
  "sp-core",
  "sp-io",
- "sp-rpc",
  "sp-runtime",
  "structopt",
- "substrate-frame-rpc-system",
  "subxt",
+ "subxt-clients",
  "tokio",
  "url 1.7.2",
 ]
@@ -7094,9 +7085,9 @@ dependencies = [
 
 [[package]]
 name = "paste"
-version = "1.0.5"
+version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acbf547ad0c65e31259204bd90935776d1c693cec2f4ff7abb7a1bbbd40dfe58"
+checksum = "0744126afe1a6dd7f394cb50a716dbe086cb06e255e53d8d0185d82828358fb5"
 
 [[package]]
 name = "paste-impl"
@@ -10834,7 +10825,7 @@ dependencies = [
  "approx",
  "num-complex",
  "num-traits",
- "paste 1.0.5",
+ "paste 1.0.6",
 ]
 
 [[package]]
@@ -10859,7 +10850,7 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.12#5fee
 dependencies = [
  "enumn",
  "parity-scale-codec",
- "paste 1.0.5",
+ "paste 1.0.6",
  "sp-runtime",
  "sp-std",
 ]
@@ -11392,7 +11383,7 @@ dependencies = [
  "log 0.4.14",
  "parity-scale-codec",
  "parity-util-mem",
- "paste 1.0.5",
+ "paste 1.0.6",
  "rand 0.7.3",
  "scale-info",
  "serde",
@@ -11913,7 +11904,7 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 [[package]]
 name = "subxt"
 version = "0.15.0"
-source = "git+https://github.com/composableFi/subxt?branch=seun-0.9.12#5b7253f4f8873254020efdf8c3ea8dbee013adef"
+source = "git+https://github.com/composableFi/subxt?branch=seun-0.9.12#426277f32a2b0e1354103a5180a88e176a6d5b4d"
 dependencies = [
  "async-trait",
  "bitvec 0.20.4",
@@ -11941,9 +11932,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "subxt-clients"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec",
+ "subxt",
+]
+
+[[package]]
 name = "subxt-codegen"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/subxt?branch=seun-0.9.12#5b7253f4f8873254020efdf8c3ea8dbee013adef"
+source = "git+https://github.com/composableFi/subxt?branch=seun-0.9.12#426277f32a2b0e1354103a5180a88e176a6d5b4d"
 dependencies = [
  "async-trait",
  "darling",
@@ -11961,7 +11960,7 @@ dependencies = [
 [[package]]
 name = "subxt-macro"
 version = "0.1.0"
-source = "git+https://github.com/composableFi/subxt?branch=seun-0.9.12#5b7253f4f8873254020efdf8c3ea8dbee013adef"
+source = "git+https://github.com/composableFi/subxt?branch=seun-0.9.12#426277f32a2b0e1354103a5180a88e176a6d5b4d"
 dependencies = [
  "async-trait",
  "darling",
@@ -13095,7 +13094,7 @@ dependencies = [
  "libc",
  "log 0.4.14",
  "object 0.26.2",
- "paste 1.0.5",
+ "paste 1.0.6",
  "psm",
  "rayon",
  "region",

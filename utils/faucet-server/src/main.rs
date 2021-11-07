@@ -12,10 +12,6 @@ use substrate_frame_rpc_system::SystemApiClient;
 use subxt::{ClientBuilder, PairSigner};
 use tide::{prelude::*, Error, Request};
 
-mod dali;
-
-use dali::api;
-
 #[derive(Debug, Deserialize, StructOpt, Clone)]
 struct Main {
 	#[structopt(long)]

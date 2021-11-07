@@ -1,23 +1,15 @@
 use codec::{Decode, Encode};
 use jsonrpc_core_client::{transports::ws, RpcChannel, RpcError};
-use polkadot_core_primitives::{AccountId, AccountIndex, BlockNumber, Hash, Header};
-use rococo::{SessionKeys, SignedBlock, VERSION};
-use sc_rpc::{author::AuthorClient, chain::ChainClient};
+use sc_rpc::author::AuthorClient;
 use serde::Deserialize;
-use sp_core::{sr25519, Pair};
-use sp_rpc::{list::ListOrValue, number::NumberOrHex};
-use sp_runtime::{generic::Era, traits::IdentifyAccount, MultiSigner};
+use sp_core::{sr25519, Pair, H256};
+use sp_runtime::{traits::IdentifyAccount, MultiSigner};
 use std::str::FromStr;
 use structopt::StructOpt;
-use substrate_frame_rpc_system::SystemApiClient;
 use subxt::{ClientBuilder, PairSigner};
+use subxt_clients::{chachacha, picasso};
 
-mod dali;
-use dali::api;
-
-type RococoChain = ChainClient<BlockNumber, Hash, Header, SignedBlock>;
-
-/// The `insert` command
+/// The command options
 #[derive(Debug, StructOpt, Clone)]
 pub enum Main {
 	RotateKeys,
@@ -38,7 +30,7 @@ struct Env {
 
 struct State {
 	/// Subxt api
-	api: api::RuntimeApi<api::DefaultConfig>,
+	api: picasso::api::RuntimeApi<picasso::api::DefaultConfig>,
 	/// Pair signer
 	signer: sr25519::Pair,
 	/// Env variables
@@ -70,6 +62,8 @@ enum Error {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+	env_logger::init();
+
 	let main = Main::from_args();
 	let state = State::new().await;
 
@@ -84,94 +78,84 @@ async fn main() -> Result<(), Error> {
 	Ok(())
 }
 
-async fn rotate_keys(state: &State) -> Result<(), RpcError> {
+async fn rotate_keys(state: &State) -> Result<(), Error> {
 	let url = url::Url::from_str(&state.env.rpc_node).unwrap();
-	let rpc_channel = ws::connect::<RpcChannel>(&url).await.unwrap();
+	let rpc_channel = ws::connect::<RpcChannel>(&url).await?;
 	let dali_author: AuthorClient<common::Hash, common::Hash> = rpc_channel.clone().into();
 
 	// first rotate, our keys.
-	let bytes = dali_author.rotate_keys().await.unwrap();
-	let keys = SessionKeys::decode(&mut &bytes[..]).unwrap();
+	let bytes = dali_author.rotate_keys().await?.to_vec();
+	use chachacha::api::runtime_types::rococo_runtime::SessionKeys;
 	// assert that our keys have been rotated.
-	assert!(dali_author.has_session_keys(keys.clone().encode().into()).await.unwrap());
+	assert!(dali_author.has_session_keys(bytes.clone().into()).await?);
 
 	// now to set our session keys on cha cha cha
-	let call = rococo::Call::Session(session::Call::set_keys { keys: keys.clone(), proof: vec![] });
+	let api = ClientBuilder::new()
+		.set_url("wss://fullnode-relay.chachacha.centrifuge.io")
+		.build()
+		.await?
+		.to_runtime_api::<chachacha::api::RuntimeApi<chachacha::api::DefaultConfig>>();
 
-	let url = url::Url::from_str("wss://fullnode-relay.chachacha.centrifuge.io").unwrap();
-	let rpc_channel = ws::connect::<RpcChannel>(&url).await.unwrap();
-	let chachacha_chain_client: RococoChain = rpc_channel.clone().into();
-	let chachacha_system_client: SystemApiClient<Hash, AccountId, AccountIndex> =
-		rpc_channel.clone().into();
+	let signer = PairSigner::new(state.signer.clone());
+	let account = MultiSigner::from(state.signer.public()).into_account();
 
-	// get genesis hash
-	let genesis_hash = match chachacha_chain_client
-		.block_hash(Some(ListOrValue::Value(NumberOrHex::Number(0))))
-		.await
-	{
-		Ok(ListOrValue::Value(Some(hash))) => hash,
-		_ => unreachable!("genesis hash should exist"),
-	};
+	let _ = api
+		.tx()
+		.session()
+		.set_keys(SessionKeys::decode(&mut &bytes[..]).unwrap(), vec![])
+		.sign_and_submit_then_watch(&signer)
+		.await?;
 
-	let account_id = MultiSigner::from(state.signer.public()).into_account();
-	let account_index = chachacha_system_client.nonce(account_id.clone()).await.unwrap();
+	// check storage for the new keys
+	let key_bytes = api
+		.storage()
+		.session()
+		.next_keys(account, None)
+		.await?
+		.ok_or_else(|| subxt::Error::Other("Failed to set keys!".into()))?
+		.encode();
 
-	let extra = (
-		system::CheckSpecVersion::<rococo::Runtime>::new(),
-		system::CheckTxVersion::<rococo::Runtime>::new(),
-		system::CheckGenesis::<rococo::Runtime>::new(),
-		system::CheckMortality::<rococo::Runtime>::from(Era::Immortal),
-		system::CheckNonce::<rococo::Runtime>::from(account_index),
-		system::CheckWeight::<rococo::Runtime>::new(),
-		transaction_payment::ChargeTransactionPayment::<rococo::Runtime>::from(0),
-	);
-
-	let additional =
-		(VERSION.spec_version, VERSION.transaction_version, genesis_hash, genesis_hash, (), (), ());
-
-	let payload = rococo::SignedPayload::from_raw(call, extra, additional);
-	let signature = payload.using_encoded(|payload| state.signer.sign(payload));
-	let (call, extra, _) = payload.deconstruct();
-	let extrinsic = rococo::UncheckedExtrinsic::new_signed(
-		call,
-		account_id.clone().into(),
-		signature.into(),
-		extra,
-	);
-
-	let chachacha_author: AuthorClient<Hash, Hash> = rpc_channel.clone().into();
-	// TODO: use subxt
-	chachacha_author.submit_extrinsic(extrinsic.encode().into()).await.unwrap();
-
-	println!("Confirm your keys on PolkadotJs:\n{:#?}", keys);
+	// should match
+	assert_eq!(bytes, key_bytes);
 
 	Ok(())
 }
 
-async fn upgrade_runtime(wasm: Vec<u8>, state: &State) -> Result<(), subxt::Error> {
-	let code_hash = sp_io::hashing::blake2_256(&wasm);
+async fn upgrade_runtime(code: Vec<u8>, state: &State) -> Result<(), subxt::Error> {
+	use crate::picasso::api::runtime_types::{
+		cumulus_pallet_parachain_system::pallet::Call as ParachainSystemCall, picasso_runtime::Call,
+	};
+	let code_hash: H256 = sp_io::hashing::blake2_256(&code).into();
 	let signer = PairSigner::new(state.signer.clone());
+	let call = Call::ParachainSystem(ParachainSystemCall::authorize_upgrade { code_hash });
 	let result = state
 		.api
 		.tx()
-		.parachain_system()
-		.authorize_upgrade(code_hash.into())
+		.sudo()
+		.sudo_unchecked_weight(call, 0)
 		.sign_and_submit_then_watch(&signer)
 		.await?;
 
-	if let None = result.find_event::<api::parachain_system::events::UpgradeAuthorized>()? {
+	if result
+		.find_event::<picasso::api::parachain_system::events::UpgradeAuthorized>()?
+		.is_none()
+	{
 		return Err(subxt::Error::Other("Failed to authorize upgrade".into()));
 	}
 
+	let call = Call::ParachainSystem(ParachainSystemCall::enact_authorized_upgrade { code });
 	let result = state
 		.api
 		.tx()
-		.parachain_system()
-		.enact_authorized_upgrade(wasm)
+		.sudo()
+		.sudo_unchecked_weight(call, 0)
 		.sign_and_submit_then_watch(&signer)
 		.await?;
 
-	if let None = result.find_event::<api::parachain_system::events::ValidationFunctionStored>()? {
+	if result
+		.find_event::<picasso::api::parachain_system::events::ValidationFunctionStored>()?
+		.is_none()
+	{
 		return Err(subxt::Error::Other("Failed to enact upgrade".into()));
 	}
 
