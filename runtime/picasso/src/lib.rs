@@ -373,7 +373,6 @@ parameter_types! {
 
 	/// TODO: discuss with omar/cosmin
 	pub const MinStake: Balance = 1000 * PICA;
-	pub const RequestCost: Balance = PICA;
 	pub const RewardAmount: Balance = 5 * PICA;
 	// Shouldn't this be a ratio based on locked amount?
 	pub const SlashAmount: Balance = 5;
@@ -392,7 +391,6 @@ impl oracle::Config for Runtime {
 	type MinStake = MinStake;
 	type StalePrice = StalePrice;
 	type AddOracle = EnsureRootOrHalfCouncil;
-	type RequestCost = RequestCost;
 	type RewardAmount = RewardAmount;
 	type SlashAmount = SlashAmount;
 	type MaxAnswerBound = MaxAnswerBound;

@@ -163,43 +163,6 @@ fn set_signer() {
 }
 
 #[test]
-fn do_request_price() {
-	new_test_ext().execute_with(|| {
-		// sets ID to true first
-		let account_2 = get_account_2();
-		assert_ok!(Oracle::add_asset_and_info(
-			Origin::signed(account_2),
-			1,
-			Percent::from_percent(80),
-			3,
-			5,
-			5
-		));
-
-		let account_3 = get_account_3();
-		// fails on not enough funds
-		assert_noop!(Oracle::do_request_price(&account_3, 1), Error::<Test>::NotEnoughFunds);
-		// passes
-		let account_1: AccountId = Default::default();
-		assert_ok!(Oracle::do_request_price(&account_1, 1));
-		// takes the cost
-		assert_eq!(Balances::free_balance(account_1), 99);
-		// True and request ID incremented
-		assert!(Oracle::requested(1));
-
-		// fails on invalid ID
-		assert_noop!(Oracle::do_request_price(&account_1, 2), Error::<Test>::InvalidAssetId);
-
-		// no funds taken if already true
-		let account_3 = get_account_3();
-		assert_ok!(Oracle::do_request_price(&account_3, 1));
-
-		// True and request ID not incremented
-		assert!(Oracle::requested(1));
-	});
-}
-
-#[test]
 fn add_stake() {
 	new_test_ext().execute_with(|| {
 		let account_1: AccountId = Default::default();
@@ -484,8 +447,6 @@ fn on_init() {
 			5,
 			5
 		));
-		let account_1: AccountId = Default::default();
-		assert_ok!(Oracle::do_request_price(&account_1, 0));
 		// set prices into storage
 		let account_1: AccountId = Default::default();
 		for i in 0..3 {
@@ -499,11 +460,8 @@ fn on_init() {
 		assert_eq!(Oracle::prices(0), price);
 		// prunes state
 		assert_eq!(Oracle::pre_prices(0), vec![]);
-		assert!(!Oracle::requested(0));
 
 		// doesn't prune state if under min prices
-		assert_ok!(Oracle::do_request_price(&account_1, 0));
-
 		for i in 0..2 {
 			let price = i as u128 + 100u128;
 			add_price_storage(price, 0, account_1, 3);
@@ -512,7 +470,6 @@ fn on_init() {
 		// does not fire under min answers
 		Oracle::on_initialize(3);
 		assert_eq!(Oracle::pre_prices(0).len(), 2);
-		assert!(Oracle::requested(0));
 		assert_eq!(Oracle::prices(0), price);
 	});
 }
@@ -575,8 +532,6 @@ fn on_init_prune_scenerios() {
 			5,
 			5
 		));
-		let account_1: AccountId = Default::default();
-		assert_ok!(Oracle::do_request_price(&account_1, 0));
 		// set prices into storage
 		let account_1: AccountId = Default::default();
 		for i in 0..3 {
@@ -635,8 +590,6 @@ fn on_init_over_max_answers() {
 			2,
 			5
 		));
-		let account_1: AccountId = Default::default();
-		assert_ok!(Oracle::do_request_price(&account_1, 0));
 		// set prices into storage
 		let account_1: AccountId = Default::default();
 		for i in 0..5 {

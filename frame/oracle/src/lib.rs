@@ -120,8 +120,6 @@ pub mod pallet {
 		type StalePrice: Get<Self::BlockNumber>;
 		/// Origin to add new price types
 		type AddOracle: EnsureOrigin<Self::Origin>;
-		/// Cost to request a price update
-		type RequestCost: Get<BalanceOf<Self>>;
 		/// Rewards for a correct answer
 		type RewardAmount: Get<BalanceOf<Self>>;
 		/// Slash for an incorrect answer
@@ -238,19 +236,12 @@ pub mod pallet {
 	pub type AssetsInfo<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AssetId, AssetInfo<Percent, T::BlockNumber>, ValueQuery>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn requested)]
-	/// If an asset price has been requested
-	pub type Requested<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, bool, ValueQuery>;
-
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Asset info created or changed. \[asset_id, threshold, min_answers, max_answers,
 		/// block_interval\]
 		AssetInfoChange(T::AssetId, Percent, u32, u32, T::BlockNumber),
-		/// A new price was requested. \[requested_by, asset_id\]
-		PriceRequested(T::AccountId, T::AssetId),
 		/// Signer was set. \[signer, controller\]
 		SignerSet(T::AccountId, T::AccountId),
 		/// Stake was added. \[added_by, amount_added, total_amount\]
@@ -386,21 +377,6 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Call to request price, charges a fee
-		///
-		/// - `asset_id`: Id for the asset
-		///
-		/// Emits `PriceRequested` event when successful.
-		#[pallet::weight(T::WeightInfo::request_price())]
-		pub fn request_price(
-			origin: OriginFor<T>,
-			asset_id: T::AssetId,
-		) -> DispatchResultWithPostInfo {
-			//TODO talk about the security and if this should be protected
-			let who = ensure_signed(origin)?;
-			Self::do_request_price(&who, asset_id)?;
-			Ok(().into())
-		}
 
 		/// Call for a signer to be set, called from controller, adds stake.
 		///
@@ -594,21 +570,6 @@ pub mod pallet {
 				}
 			}
 		}
-		// This can take an account to pay, therefore another pallet can call this and fund oracle
-		// requests
-		pub fn do_request_price(who: &T::AccountId, asset_id: T::AssetId) -> DispatchResult {
-			ensure!(AssetsInfo::<T>::contains_key(asset_id), Error::<T>::InvalidAssetId);
-			if !Self::requested(asset_id) {
-				ensure!(
-					T::Currency::can_slash(who, T::RequestCost::get()),
-					Error::<T>::NotEnoughFunds
-				);
-				T::Currency::slash(who, T::RequestCost::get());
-				Requested::<T>::insert(asset_id, true);
-			}
-			Self::deposit_event(Event::PriceRequested(who.clone(), asset_id));
-			Ok(())
-		}
 
 		pub fn update_prices(block: T::BlockNumber) -> Weight {
 			let mut total_weight: Weight = Zero::zero();
@@ -664,7 +625,6 @@ pub mod pallet {
 			if pre_prices.len() as u32 >= asset_info.min_answers {
 				if let Some(price) = Self::get_median_price(&pre_prices) {
 					Prices::<T>::insert(asset_id, Price { price, block });
-					Requested::<T>::insert(asset_id, false);
 					let historical = Self::price_history(asset_id);
 					if (historical.len() as u32) < T::MaxHistory::get() {
 						PriceHistory::<T>::mutate(asset_id, |prices| {
