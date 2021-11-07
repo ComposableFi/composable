@@ -379,7 +379,7 @@ parameter_types! {
 	pub const SlashAmount: Balance = 5;
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
-
+	pub const MaxHistory: u32 = 20;
 }
 
 impl oracle::Config for Runtime {
@@ -397,6 +397,7 @@ impl oracle::Config for Runtime {
 	type SlashAmount = SlashAmount;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
+	type MaxHistory = MaxHistory;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 }
 
