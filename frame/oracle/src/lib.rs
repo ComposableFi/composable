@@ -150,7 +150,7 @@ pub mod pallet {
 		pub who: AccountId,
 	}
 
-	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
+	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo, Clone)]
 	pub struct Price<PriceValue, BlockNumber> {
 		pub price: PriceValue,
 		pub block: BlockNumber,
@@ -668,7 +668,9 @@ pub mod pallet {
 					let historical = Self::price_history(asset_id);
 					if (historical.len() as u32) < T::MaxHistory::get() {
 						PriceHistory::<T>::mutate(asset_id, |prices| {
-							prices.push(Price { price, block });
+							if Self::prices(asset_id).block != 0u32.into() {
+								prices.push(Price { price, block });
+							}
 						})
 					} else {
 						PriceHistory::<T>::mutate(asset_id, |prices| {

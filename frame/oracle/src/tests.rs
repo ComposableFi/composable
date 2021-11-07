@@ -518,6 +518,51 @@ fn on_init() {
 }
 
 #[test]
+fn historic_pricing() {
+	new_test_ext().execute_with(|| {
+		// add and request oracle id
+		let account_2 = get_account_2();
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Percent::from_percent(80),
+			3,
+			5,
+			5
+		));
+
+		let mut price_history = vec![];
+
+		do_price_update(0, 0);
+
+		assert_eq!(Oracle::price_history(0).len(), 0);
+		assert_eq!(Oracle::price_history(0), price_history);
+
+		do_price_update(0, 5);
+
+		let price_5 = Price { price: 101, block: 5 };
+		price_history = vec![price_5.clone()];
+
+		assert_eq!(Oracle::price_history(0), price_history);
+		assert_eq!(Oracle::price_history(0).len(), 1);
+
+		do_price_update(0, 10);
+		let price_10 = Price { price: 101, block: 10 };
+		price_history = vec![price_5, price_10.clone()];
+
+		assert_eq!(Oracle::price_history(0), price_history);
+		assert_eq!(Oracle::price_history(0).len(), 2);
+
+		do_price_update(0, 15);
+		let price_15 = Price { price: 101, block: 15 };
+		price_history = vec![price_10, price_15];
+
+		assert_eq!(Oracle::price_history(0), price_history);
+		assert_eq!(Oracle::price_history(0).len(), 2);
+	});
+}
+
+#[test]
 fn on_init_prune_scenerios() {
 	new_test_ext().execute_with(|| {
 		// add and request oracle id
@@ -718,6 +763,19 @@ fn parse_price_works() {
 fn add_price_storage(price: u128, asset_id: u128, who: AccountId, block: u64) {
 	let price = PrePrice { price, block, who };
 	PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.push(price));
+}
+
+fn do_price_update(asset_id: u128, block: u64) {
+	let account_1: AccountId = Default::default();
+	for i in 0..3 {
+		let price = i as u128 + 100u128;
+		add_price_storage(price, asset_id, account_1, block);
+	}
+
+	System::set_block_number(block);
+	Oracle::on_initialize(block);
+	let price = Price { price: 101, block };
+	assert_eq!(Oracle::prices(asset_id), price);
 }
 
 fn price_oracle_response(state: &mut testing::OffchainState, price_id: &str) {
