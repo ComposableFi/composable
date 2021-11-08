@@ -109,7 +109,7 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 
 	match enrich(address.into(), req.state()).await {
 		Err(e) => return Ok(format!("Error: {:?}", e).into()),
-		Ok(()) => {},
+		Ok(()) => {}
 	};
 
 	log::info!("Sent {} 1k Dali", user_name);
@@ -117,7 +117,7 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 	Ok(format!("Sent <@{}> 1,000 Dalis", user_id).into())
 }
 
-async fn enrich(address: picasso::Address, state: &State) -> Result<(), subxt::Error> {
+async fn enrich(address: common::Address, state: &State) -> Result<(), subxt::Error> {
 	let signer = PairSigner::new(state.signer.clone());
 	let result = state
 		.api
@@ -129,7 +129,7 @@ async fn enrich(address: picasso::Address, state: &State) -> Result<(), subxt::E
 		.await?;
 
 	if result.find_event::<api::balances::events::Transfer>()?.is_none() {
-		return Err(subxt::Error::Other("Transfer failed".into()))
+		return Err(subxt::Error::Other("Transfer failed".into()));
 	}
 
 	Ok(())
