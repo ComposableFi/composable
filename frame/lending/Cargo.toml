@@ -68,6 +68,8 @@ std = [
     "sp-arithmetic/std",
     "composable-traits/std",
     "pallet-vault/std",
+    "pallet-balances/std",
+    "pallet-currency-factory/std",
     "scale-info/std",
 ]
 

@@ -5,7 +5,14 @@ pub mod pallet {
 	use crate::traits::CurrencyFactory;
 	use frame_support::{pallet_prelude::*, PalletId};
 	use frame_system::pallet_prelude::OriginFor;
-	use scale_info::TypeInfo;
+	use composable_traits::{
+       currency::DynamicCurrencyId,
+	};
+use scale_info::TypeInfo;
+use sp_runtime::{
+	ArithmeticError,
+	DispatchError
+};
 
 	pub const PALLET_ID: PalletId = PalletId(*b"mck_curf");
 
@@ -36,6 +43,18 @@ pub mod pallet {
 			MockCurrencyId::A
 		}
 	}
+
+	impl DynamicCurrencyId for MockCurrencyId {
+		fn next(self) -> Result<Self, DispatchError> {
+			match self {
+				MockCurrencyId::LpToken(x) => Ok(MockCurrencyId::LpToken(
+					x.checked_add(1).ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?,
+				)),
+				_=>unreachable!(),
+			}
+		}
+	}
+
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]

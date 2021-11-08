@@ -52,13 +52,31 @@ pub mod pallet {
 
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 
-		type Balance: Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo + CheckedSub + CheckedAdd + Zero + PartialOrd;
+		type Balance: Parameter 
+		    + Member 
+			+ AtLeast32BitUnsigned 
+			+ Codec 
+			+ Default 
+			+ Copy 
+			+ MaybeSerializeDeserialize 
+			+ Debug 
+			+ MaxEncodedLen 
+			+ TypeInfo 
+			+ CheckedSub 
+			+ CheckedAdd 
+			+ Zero 
+			+ PartialOrd;
 
-		type Nonce:  Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo + CheckedSub + CheckedAdd + From<u8>;
+		type Nonce:  Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo + CheckedSub + CheckedAdd;//+ From<u8>;
 
 		type TransferDelay:  Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo;
 
-		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
+		type VaultId: Clone 
+		    + Codec 
+			+ Debug 
+			+ PartialEq 
+			+ Default 
+			+ Parameter;
 
 		type Vault: StrategicVault<
 			VaultId = Self::VaultId,
@@ -441,7 +459,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_asset_min_transfer_size(origin: OriginFor<T>, asset_id: T::AssetId, size: T::Balance) -> DispatchResultWithPostInfo {
 
-		     ensure_signed(origin);
+		     ensure_signed(origin)?;
 
 			 <MinAssetTransferSize<T>>::insert(asset_id, size);
 
@@ -467,7 +485,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_max_transfer_delay(origin: OriginFor<T>, new_max_transfer_delay: T::TransferDelay) -> DispatchResultWithPostInfo {
             
-			ensure_signed(origin);
+			ensure_signed(origin)?;
 
 			let min_transfer_delay = Self::min_transfer_delay();
 
@@ -483,7 +501,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_min_transfer_delay(origin: OriginFor<T>, new_min_transfer_delay: T::TransferDelay) -> DispatchResultWithPostInfo {
             
-			ensure_signed(origin);
+			ensure_signed(origin)?;
 
 			let max_transfer_delay = Self::max_transfer_delay();
 
@@ -499,7 +517,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_max_fee(origin: OriginFor<T>, max_fee: T::Balance) -> DispatchResultWithPostInfo {
 			
-			ensure_signed(origin);
+			ensure_signed(origin)?;
             
 			ensure!(max_fee < T::FeeFactor::get(), Error::<T>::MaxFeeAboveFeeFactor);
 
@@ -515,7 +533,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_min_fee(origin: OriginFor<T>, min_fee: T::Balance) -> DispatchResultWithPostInfo {
 			
-			ensure_signed(origin);
+			ensure_signed(origin)?;
             
 			ensure!(min_fee < T::FeeFactor::get(), Error::<T>::MinFeeAboveFeeFactor);
 
@@ -636,11 +654,11 @@ pub mod pallet {
 
 			  ensure!(Self::get_current_token_liquidity(asset_id)? >= amount, Error::<T>::InsufficientAssetBalance);    
 
-			  T::Currency::transfer(asset_id, &pallet_account_id, &sender, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed);
+			  T::Currency::transfer(asset_id, &pallet_account_id, &sender, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
 
 			 if fee_absolute > T::Balance::zero() {  
 			   
-				T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee_absolute, true).map_err(|_|Error::<T>::TransferFromFailed);
+				T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee_absolute, true).map_err(|_|Error::<T>::TransferFromFailed)?;
 				
 				Self::deposit_event(Event::FeeTaken(
 					sender, 
@@ -735,7 +753,7 @@ pub mod pallet {
 			deposit_id: T::DepositId,
 		 ) ->DispatchResultWithPostInfo {
             
-			ensure_signed(origin)?;
+			ensure_signed(origin.clone())?;
           
 			 ensure!(Self::has_been_unlocked(deposit_id) == false, Error::<T>::AssetUnlreadyUnlocked);
 
