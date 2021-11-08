@@ -12,8 +12,6 @@ use common::{
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
 	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
 };
-use dutch_auction::DeFiComposableConfig;
-use liquidations::DeFiComposablePallet;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -22,10 +20,9 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, DispatchError,
+	ApplyExtrinsicResult,
 };
 
-use composable_traits::dex::{Orderbook, TakeResult};
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -595,9 +592,9 @@ impl session::Config for Runtime {
 	type WeightInfo = weights::session::WeightInfo<Runtime>;
 }
 
-/// Lifted from Statemine:
-/// https://github.com/paritytech/cumulus/blob/935bac869a72baef17e46d2ae1abc8c0c650cef5/polkadot-parachains/statemine/src/lib.rs?_pjax=%23js-repo-pjax-container%2C%20div%5Bitemtype%3D%22http%3A%2F%2Fschema.org%2FSoftwareSourceCode%22%5D%20main%2C%20%5Bdata-pjax-container%5D#L666-L672
 parameter_types! {
+	/// Lifted from Statemine:
+	/// https://github.com/paritytech/cumulus/blob/935bac869a72baef17e46d2ae1abc8c0c650cef5/polkadot-parachains/statemine/src/lib.rs?#L666-L672
 	pub const PotId: PalletId = PalletId(*b"PotStake");
 	pub const MaxCandidates: u32 = 1000;
 	pub const SessionLength: BlockNumber = 6 * HOURS;
@@ -844,117 +841,6 @@ impl currency_factory::Config for Runtime {
 	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
-parameter_types! {
-	// Benchmarks of pallet-lending utilize more than 20Gb memory
-	// and don't finish if MaxLendingCount is u32::MAX.
-	pub const MaxLendingCount: u32 = 100_000;
-}
-
-impl lending::Config for Runtime {
-	type Oracle = Oracle;
-	type VaultId = u64;
-	type Vault = Vault;
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type Currency = Tokens;
-	type CurrencyFactory = Factory;
-	type MarketDebtCurrency = Tokens;
-	type Liquidation = Liquidations;
-	type UnixTime = Timestamp;
-	type MaxLendingCount = MaxLendingCount;
-	type AuthorityId = lending::crypto::TestAuthId;
-	type WeightInfo = weights::lending::WeightInfo<Runtime>;
-}
-
-impl DeFiComposablePallet for Runtime {
-	type AssetId = CurrencyId;
-}
-
-impl DeFiComposableConfig for Runtime {
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type Currency = Tokens;
-}
-
-pub struct MockOrderbook;
-impl Orderbook for MockOrderbook {
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type AccountId = AccountId;
-	type OrderId = u128;
-	fn post(
-		_account_from: &Self::AccountId,
-		_asset: Self::AssetId,
-		_want: Self::AssetId,
-		_source_amount: Self::Balance,
-		_source_price: Self::Balance,
-		_amm_slippage: Permill,
-	) -> Result<Self::OrderId, DispatchError> {
-		Ok(0)
-	}
-	fn market_sell(
-		_account: &Self::AccountId,
-		_asset: Self::AssetId,
-		_want: Self::AssetId,
-		_amount: Self::Balance,
-		_amm_slippage: Permill,
-	) -> Result<Self::OrderId, DispatchError> {
-		Ok(0)
-	}
-	fn take(
-		_account: &Self::AccountId,
-		_orders: impl Iterator<Item = Self::OrderId>,
-		_up_to: Self::Balance,
-	) -> Result<TakeResult<Self::Balance>, DispatchError> {
-		Ok(TakeResult { amount: 0, total_price: 0 })
-	}
-
-	fn is_order_executed(_order_id: &Self::OrderId) -> bool {
-		false
-	}
-}
-
-impl dutch_auction::Config for Runtime {
-	type Event = Event;
-	type DexOrderId = u128;
-	type OrderId = u128;
-	type UnixTime = Timestamp;
-	type Orderbook = MockOrderbook;
-}
-
-impl liquidations::Config for Runtime {
-	type Event = Event;
-	type Balance = Balance;
-	type UnixTime = Timestamp;
-	type Lending = Lending;
-	type DutchAuction = Auctions;
-}
-
-impl ping::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
-	type Call = Call;
-	type XcmSender = XcmRouter;
-}
-
-// For test purposes.
-impl cumulus_ping::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
-	type Call = Call;
-	type XcmSender = XcmRouter;
-}
-
-impl assets_registry::Config for Runtime {
-	type Event = Event;
-	type LocalAssetId = u128;
-	type ForeignAssetId = u128;
-	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
-	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
-	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
-}
-
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -1020,14 +906,7 @@ construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
-		Lending: lending::{Pallet, Call, Storage, Event<T>} = 54,
-		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 55,
-		Liquidations: liquidations::{Pallet, Call, Event<T>} = 56,
-		Auctions: dutch_auction::{Pallet, Event<T>} = 57,
-		Ping: ping::{Pallet, Call, Storage, Event<T>} = 58,
-		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 59,
-
-		Spambot: cumulus_ping::{Pallet, Call, Storage, Event<T>} = 90,
+		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 54,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1185,7 +1064,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, scheduler, Scheduler);
 			list_benchmark!(list, extra, democracy, Democracy);
 			list_benchmark!(list, extra, collective, Council);
-			list_benchmark!(list, extra, lending, Lending);
 			list_benchmark!(list, extra, crowdloan_bonus, LiquidCrowdloan);
 			list_benchmark!(list, extra, utility, Utility);
 
@@ -1233,7 +1111,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, scheduler, Scheduler);
 			add_benchmark!(params, batches, democracy, Democracy);
 			add_benchmark!(params, batches, collective, Council);
-			add_benchmark!(params, batches, lending, Lending);
 			add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
 			add_benchmark!(params, batches, utility, Utility);
 
