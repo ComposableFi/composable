@@ -6849,9 +6849,10 @@ version = "0.1.0"
 dependencies = [
  "common",
  "derive_more",
- "env_logger 0.9.0",
+ "env_logger 0.8.4",
  "envy",
  "jsonrpc-core-client",
+ "log 0.4.14",
  "parity-scale-codec",
  "sc-rpc",
  "serde",

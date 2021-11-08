@@ -1,15 +1,10 @@
-use codec::Encode;
 use hmac::{Hmac, Mac, NewMac};
-use jsonrpc_core_client::{transports::ws, RpcChannel, RpcError};
-use sc_rpc::{author::AuthorClient, chain::ChainClient};
 use sha2::Sha256;
 use sp_core::{crypto::Ss58Codec, sr25519, Pair};
-use sp_rpc::{list::ListOrValue, number::NumberOrHex};
-use sp_runtime::{generic, generic::Era, traits::IdentifyAccount, MultiSigner};
-use std::{str::FromStr, sync::Arc};
+use std::sync::Arc;
 use structopt::StructOpt;
-use substrate_frame_rpc_system::SystemApiClient;
 use subxt::{ClientBuilder, PairSigner};
+use subxt_clients::picasso::api;
 use tide::{prelude::*, Error, Request};
 
 #[derive(Debug, Deserialize, StructOpt, Clone)]
@@ -133,10 +128,8 @@ async fn enrich(address: picasso::Address, state: &State) -> Result<(), subxt::E
 		.sign_and_submit_then_watch(&signer)
 		.await?;
 
-	if let Some(_) = result.find_event::<api::balances::events::Transfer>()? {
-		Ok(())
-	} else {
-		Err(subxt::Error::Other("Transfer failed".into()))
+	if result.find_event::<api::balances::events::Transfer>()?.is_none() {
+		return Err(subxt::Error::Other("Transfer failed".into()));
 	}
 
 	Ok(())

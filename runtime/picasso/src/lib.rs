@@ -117,6 +117,7 @@ parameter_types! {
 	// how much block hashes to keep
 	pub const BlockHashCount: BlockNumber = 250;
 	pub const Version: RuntimeVersion = VERSION;
+	// 5mb with 25% of that reserved for system extrinsics.
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
@@ -198,7 +199,8 @@ impl system::Config for Runtime {
 impl randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
-	pub const MaxAuthorities: u32 = 1_000;
+	// Maximum authorities/collators for aura
+	pub const MaxAuthorities: u32 = 100;
 }
 
 impl aura::Config for Runtime {

@@ -159,5 +159,7 @@ async fn upgrade_runtime(code: Vec<u8>, state: &State) -> Result<(), subxt::Erro
 		return Err(subxt::Error::Other("Failed to enact upgrade".into()));
 	}
 
+	log::info!("Runtime upgrade proposed, extrinsic hash: {}", result.extrinsic);
+
 	Ok(())
 }

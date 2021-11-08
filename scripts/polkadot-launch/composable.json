@@ -53,7 +53,21 @@
           "wsPort": 9988,
           "basePath": "/tmp/polkadot-launch/parachains/alice",
           "port": 31200,
-          "flags": ["--rpc-cors=all", "--", "--execution=wasm"]
+          "flags": ["--", "--execution=wasm"]
+        },
+        {
+          "name": "bob",
+          "wsPort": 9997,
+          "basePath": "/tmp/polkadot-launch/parachains/bob",
+          "port": 31200,
+          "flags": ["--", "--execution=wasm"]
+        },
+        {
+          "name": "charlie",
+          "wsPort": 9996,
+          "basePath": "/tmp/polkadot-launch/parachains/charlie",
+          "port": 31200,
+          "flags": ["--", "--execution=wasm"]
         }
       ]
     }

@@ -88,10 +88,20 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 		move || {
 			picasso::genesis_config(
 				account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![(
-					account_id_from_seed::<sr25519::Public>("Alice"),
-					get_collator_keys_from_seed("Alice"),
-				)],
+				vec![
+					(
+						account_id_from_seed::<sr25519::Public>("Alice"),
+						get_collator_keys_from_seed("Alice"),
+					),
+					(
+						account_id_from_seed::<sr25519::Public>("Bob"),
+						get_collator_keys_from_seed("Bob"),
+					),
+					(
+						account_id_from_seed::<sr25519::Public>("Charlie"),
+						get_collator_keys_from_seed("Charlie"),
+					),
+				],
 				dev_accounts(),
 				PARA_ID,
 				PICASSO_ED,
