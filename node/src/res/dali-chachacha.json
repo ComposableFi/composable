@@ -2,7 +2,11 @@
   "name": "Dali Testnet (ChaChaCha)",
   "id": "dali",
   "chainType": "Live",
-  "bootNodes": [],
+  "bootNodes": [
+    "/dns/bn1.composablefinance.ninja/tcp/30333/p2p/",
+    "/dns/bn2.composablefinance.ninja/tcp/30333/p2p/",
+    "/dns/bn3.composablefinance.ninja/tcp/30333/p2p/"
+  ],
   "telemetryEndpoints": [
     [
       "/dns/telemetry.polkadot.io/tcp/443/x-parity-wss/%2Fsubmit%2F",
