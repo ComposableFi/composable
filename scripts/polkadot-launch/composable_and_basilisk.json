@@ -71,6 +71,19 @@
       ]
     }
   ],
-  "hrmpChannels": [],
+  "hrmpChannels": [
+    {
+      "sender": 200,
+      "recipient": 2000,
+      "maxCapacity": 8,
+      "maxMessageSize": 512
+    },
+    {
+      "sender": 2000,
+      "recipient": 200,
+      "maxCapacity": 8,
+      "maxMessageSize": 512
+    }
+  ],
   "types": {}
 }
