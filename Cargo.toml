@@ -11,5 +11,5 @@ members = [
 	"runtime/primitives",
 	"utils/faucet-server",
 	"utils/parachain-utils",
-	"integration-tests",
+    "utils/subxt-clients"
 ]
