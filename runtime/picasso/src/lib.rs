@@ -212,12 +212,15 @@ impl aura::Config for Runtime {
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
+	/// Minimum period in between blocks, for now we leave it at half
+	/// the expected slot duration
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
 
 impl timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the Unix epoch.
 	type Moment = u64;
+	/// What to do when SLOT_DURATION has passed?
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
@@ -227,8 +230,10 @@ impl timestamp::Config for Runtime {
 pub const EXISTENTIAL_DEPOSIT: Balance = 100 * MILLI_PICA;
 
 parameter_types! {
+	/// Minimum amount an account has to hold to stay in state.
 	pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
-	/// Maximum number of reservation locks that can be placed on an account.
+	/// Max locks that can be placed on an account. Capped for storage
+	/// concerns.
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -296,7 +301,7 @@ impl sudo::Config for Runtime {
 }
 
 parameter_types! {
-	/// Index deposit requires a 100 PICA
+	/// Deposit required to get an index.
 	pub const IndexDeposit: Balance = 100 * PICA;
 }
 
@@ -406,7 +411,9 @@ impl oracle::Config for Runtime {
 // Parachain stuff.
 // See https://github.com/paritytech/cumulus/blob/polkadot-v0.9.8/polkadot-parachains/rococo/src/lib.rs for details.
 parameter_types! {
+	/// 1/4 of blockweight is reserved for XCMP
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
+	/// 1/4 of block weight is reserved for handling Downward messages
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 }
 
@@ -569,7 +576,6 @@ impl authorship::Config for Runtime {
 
 //TODO set
 parameter_types! {
-	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(33);
 	pub const Period: u32 = 6 * HOURS;
 	pub const Offset: u32 = 0;
 }
@@ -586,11 +592,11 @@ impl session::Config for Runtime {
 	type SessionHandler =
 		<opaque::SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = opaque::SessionKeys;
-	// type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
 	type WeightInfo = weights::session::WeightInfo<Runtime>;
 }
 
-//TODO set
+/// Lifted from Statemine:
+/// https://github.com/paritytech/cumulus/blob/935bac869a72baef17e46d2ae1abc8c0c650cef5/polkadot-parachains/statemine/src/lib.rs?_pjax=%23js-repo-pjax-container%2C%20div%5Bitemtype%3D%22http%3A%2F%2Fschema.org%2FSoftwareSourceCode%22%5D%20main%2C%20%5Bdata-pjax-container%5D#L666-L672
 parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
 	pub const MaxCandidates: u32 = 1000;
@@ -612,8 +618,7 @@ impl collator_selection::Config for Runtime {
 	type ValidatorId = <Self as system::Config>::AccountId;
 	type ValidatorIdOf = collator_selection::IdentityCollator;
 	type ValidatorRegistration = Session;
-	// TODO: benchmark for runtime
-	type WeightInfo = ();
+	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
 }
 
 parameter_type_with_key! {
@@ -956,7 +961,7 @@ pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false
+			return false;
 		}
 		!matches!(
 			call,

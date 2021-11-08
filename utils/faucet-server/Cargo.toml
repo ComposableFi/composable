@@ -33,3 +33,5 @@ sp-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 picasso = { package = "picasso-runtime", path = "../../runtime/picasso" }
 common = { package = "common", path = "../../runtime/common" }
+subxt = { git = "https://github.com/composableFi/subxt", branch = "seun-0.9.12" }
+subxt-clients = { path = "../subxt-clients" }
