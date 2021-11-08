@@ -1,13 +1,15 @@
 use polkadot_runtime_parachains::configuration::HostConfiguration;
+use primitives::currency::CurrencyId;
 use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
 use common::AccountId;
-pub const ALICE: [u8; 32] = [4u8; 32];
-type Balances = u128;
-pub const PICA: Balances = 1_000_000_000_000;
 use cumulus_primitives_core::ParaId;
 use support::traits::GenesisBuild;
 use sp_runtime::traits::AccountIdConversion;
 use polkadot_primitives::v1::{BlockNumber, MAX_CODE_SIZE, MAX_POV_SIZE};
+type Balances = u128;
+pub const ALICE: [u8; 32] = [4u8; 32];
+pub const PICA: Balances = 1_000_000_000_000;
+pub const PICASSO_PARA_ID:u32 = 2000;
 
 fn default_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 	HostConfiguration {
@@ -52,7 +54,7 @@ pub fn kusama_ext() -> sp_io::TestExternalities {
     balances::GenesisConfig::<Runtime> {
         balances : vec![
             (AccountId::from(ALICE), 2002 * PICA),
-             (ParaId::from(2000).into_account(), 10 * PICA),
+             (ParaId::from(PICASSO_PARA_ID).into_account(), 10 * PICA),
         ]
     }.assimilate_storage(&mut storage).unwrap();
 
@@ -60,5 +62,34 @@ pub fn kusama_ext() -> sp_io::TestExternalities {
         config : default_parachains_host_configuration(),
     }.assimilate_storage(&mut storage).unwrap();
 
-    todo!();
+    let mut externalities = sp_io::TestExternalities::new(storage);
+    externalities.execute_with(|| System::set_block_number(1));;
+    externalities
+}
+
+pub fn picasso_ext(para_id: ParaId) -> sp_io::TestExternalities {
+    use picasso_runtime::{Runtime, System, };
+    use primitives::currency::CurrencyId;
+    let mut storage = frame_system::GenesisConfig::default()
+		.build_storage::<Runtime>()
+		.unwrap();
+        balances::GenesisConfig::<Runtime> {
+            balances: vec![(AccountId::from(ALICE), 200 * 1_000_000_000_000)],
+        }
+        .assimilate_storage(&mut storage)
+        .unwrap();
+
+    <parachain_info::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
+        &parachain_info::GenesisConfig {
+            parachain_id: para_id,
+        },
+        &mut storage).unwrap();
+    orml_tokens::GenesisConfig::<Runtime> {
+        balances: vec![(AccountId::from(ALICE), CurrencyId::PICA, 200 * 1_000_000_000_000)],
+    }
+        .assimilate_storage(&mut storage).unwrap();
+
+    let mut externalities = sp_io::TestExternalities::new(storage);
+    externalities.execute_with(|| System::set_block_number(1));
+    externalities
 }
