@@ -33,6 +33,10 @@ style-check:
 	@rustup component add rustfmt 2> /dev/null
 	cargo +nightly fmt --all -- --check
 
+style:
+	@rustup component add rustfmt 2> /dev/null
+	cargo +nightly fmt --all
+
 lint:
 	@rustup component add clippy 2> /dev/null
 	cargo clippy --all-targets --all-features -- -D warnings
@@ -65,7 +69,7 @@ stop:
 install:
 		$(info Run if auto-update is enabled)
 ifeq ($(AUTO_UPDATE),1)
-	docker-compose up 
+	docker-compose up
 else
 		$(info Auto-Update disabled, please use docker-run to start this project)
 endif
