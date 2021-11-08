@@ -13,7 +13,7 @@ pub const PICA: Balances = 1_000_000_000_000;
 pub const PICASSO_PARA_ID: u32 = 2000;
 pub const DALI_PARA_ID: u32 = 2001;
 
-// null handler for now, so need
+// null handler for now, so need to find existing impl (or copy paste from simulator example)
 type XcmpMessageHandler = ();
 
 decl_test_parachain! {
