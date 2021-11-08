@@ -33,6 +33,7 @@
         "runtime_genesis_config": {
           "configuration": {
             "config": {
+              "max_code_size": 7000000,
               "validation_upgrade_frequency": 1,
               "validation_upgrade_delay": 1
             }
@@ -53,10 +54,25 @@
           "basePath": "/tmp/polkadot-launch/parachains/alice",
           "port": 31200,
           "flags": ["--", "--execution=wasm"]
+        },
+        {
+          "name": "bob",
+          "wsPort": 9997,
+          "basePath": "/tmp/polkadot-launch/parachains/bob",
+          "port": 31200,
+          "flags": ["--", "--execution=wasm"]
+        },
+        {
+          "name": "charlie",
+          "wsPort": 9996,
+          "basePath": "/tmp/polkadot-launch/parachains/charlie",
+          "port": 31200,
+          "flags": ["--", "--execution=wasm"]
         }
       ]
     }
   ],
   "types": {},
-  "finalization": false
+  "finalization": false,
+  "simpleParachains": []
 }
