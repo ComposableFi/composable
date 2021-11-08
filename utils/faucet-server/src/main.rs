@@ -117,7 +117,7 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 	Ok(format!("Sent <@{}> 1,000 Dalis", user_id).into())
 }
 
-async fn enrich(address: picasso::Address, state: &State) -> Result<(), subxt::Error> {
+async fn enrich(address: common::Address, state: &State) -> Result<(), subxt::Error> {
 	let signer = PairSigner::new(state.signer.clone());
 	let result = state
 		.api
