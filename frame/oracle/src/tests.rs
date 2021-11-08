@@ -14,7 +14,6 @@ use sp_io::TestExternalities;
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{Percent, RuntimeAppPublic};
 use std::sync::Arc;
-
 use sp_runtime::traits::BadOrigin;
 
 #[test]

@@ -20,7 +20,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::oracle::{Oracle, Price as LastPrice};
 	use frame_support::{
-		dispatch::{DispatchResult, DispatchResultWithPostInfo, Vec},
+		dispatch::{DispatchResult, DispatchResultWithPostInfo},
 		pallet_prelude::*,
 		traits::{
 			Currency, EnsureOrigin,
@@ -29,7 +29,7 @@ pub mod pallet {
 		},
 		weights::{DispatchClass::Operational, Pays},
 	};
-
+	use sp_std::vec::Vec;
 	pub use crate::weights::WeightInfo;
 	use frame_system::{
 		offchain::{
@@ -48,6 +48,8 @@ pub mod pallet {
 		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
+	use std::ops::{Mul, Div};
+
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(KEY_ID);
@@ -308,6 +310,9 @@ pub mod pallet {
 		PriceNotFound,
 		/// Stake exceeded
 		ExceedStake,
+		MustSumTo100,
+		DepthTooLarge,
+		ArithmeticError
 	}
 
 	#[pallet::hooks]
@@ -333,6 +338,10 @@ pub mod pallet {
 			let Price { price, block } =
 				Prices::<T>::try_get(of).map_err(|_| Error::<T>::PriceNotFound)?;
 			Ok(LastPrice { price, block })
+		}
+
+		fn get_twap(of: Self::AssetId, weighting: Vec<Self::Balance>) -> Result<Self::Balance, DispatchError> {
+			Self::get_twap(of, weighting)
 		}
 	}
 
@@ -707,6 +716,28 @@ pub mod pallet {
 			last_update.block + asset_info.block_interval < current_block
 		}
 
+		pub fn get_twap(asset_id: T::AssetId, mut price_weights: Vec<T::PriceValue>) -> Result< T::PriceValue, DispatchError> {
+			let historical_prices = Self::price_history(asset_id);
+			let historic_length = historical_prices.len();
+			ensure!(historical_prices.len() <= price_weights.len(), Error::<T>::DepthTooLarge);
+			let sum = price_weights.clone().into_iter().reduce(|a, b| a.saturating_add(b));
+			ensure!(sum == Some(100000000000u128.into()), Error::<T>::MustSumTo100);
+			let last_weight = price_weights.pop().unwrap_or(0u128.into());
+			let mut weighted_prices = Vec::new();
+			let mut i: usize = 0;
+			for weight in price_weights.clone() {
+				let current_weight: T::PriceValue = weight.mul(historical_prices[historic_length - price_weights.len() + i].price).div(100000000000u128.into());
+				weighted_prices.push(current_weight);
+				i += 1
+			}
+			let current_price = Self::prices(asset_id);
+			let current_weighted_price = last_weight.mul(current_price.price).div(100000000000u128.into());
+			weighted_prices.push(current_weighted_price);
+			let weighted_average = weighted_prices.into_iter().reduce(|a, b| a.saturating_add(b));
+			let unwrapped_average = weighted_average.unwrap_or(0u128.into());
+			ensure!(unwrapped_average != 0u128.into(), Error::<T>::ArithmeticError);
+			Ok(unwrapped_average)
+		}
 		pub fn fetch_price_and_send_signed(price_id: &T::AssetId) -> Result<(), &'static str> {
 			let signer = Signer::<T, T::AuthorityId>::all_accounts();
 			if !signer.can_sign() {
