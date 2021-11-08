@@ -1,18 +1,17 @@
-use polkadot_runtime_parachains::configuration::HostConfiguration;
-use primitives::currency::CurrencyId;
-use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
 use common::AccountId;
 use cumulus_primitives_core::ParaId;
-use support::traits::GenesisBuild;
-use sp_runtime::traits::AccountIdConversion;
 use polkadot_primitives::v1::{BlockNumber, MAX_CODE_SIZE, MAX_POV_SIZE};
+use polkadot_runtime_parachains::configuration::HostConfiguration;
+use primitives::currency::CurrencyId;
+use sp_runtime::traits::AccountIdConversion;
+use support::traits::GenesisBuild;
+use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
+
 type Balances = u128;
 pub const ALICE: [u8; 32] = [4u8; 32];
 pub const PICA: Balances = 1_000_000_000_000;
-pub const PICASSO_PARA_ID:u32 = 2000;
-pub const HYDRA_DX_PARA_ID:u32 = 2001;
-
-use polkadot_primitives::v1::*;
+pub const PICASSO_PARA_ID: u32 = 2000;
+pub const DALI_PARA_ID: u32 = 2001;
 
 // null handler for now, so need
 type XcmpMessageHandler = ();
@@ -29,18 +28,18 @@ decl_test_parachain! {
 // we use picasso as test, need to test out transfer
 // and then decide how to imitate hydra
 decl_test_parachain! {
-	pub struct HydraDx {
+	pub struct Dali {
 		Runtime = picasso_runtime::Runtime,
 		XcmpMessageHandler = XcmpMessageHandler,
 		DmpMessageHandler = XcmpMessageHandler,
-		new_ext = picasso_ext(HYDRA_DX_PARA_ID),
+		new_ext = picasso_ext(DALI_PARA_ID),
 	}
 }
 
 decl_test_relay_chain! {
 	pub struct KusamaRelay {
 		Runtime = kusama_runtime::Runtime,
-		XcmConfig = kusama_runtcmConfig,
+		XcmConfig = kusama_runtime::XcmConfig,
 		new_ext = kusama_ext(),
 	}
 }
@@ -49,7 +48,8 @@ decl_test_network! {
 	pub struct KusamaNetwork {
 		relay_chain = KusamaRelay,
 		parachains = vec![
-			(2000, Picasso),
+			(PICASSO_PARA_ID, Picasso),
+			(DALI_PARA_ID, Dali),
 		],
 	}
 }
@@ -92,48 +92,50 @@ fn default_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 }
 
 pub fn kusama_ext() -> sp_io::TestExternalities {
-    use kusama_runtime::{Runtime, System};
-    let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
-    balances::GenesisConfig::<Runtime> {
-        balances : vec![
-            (AccountId::from(ALICE), 2002 * PICA),
-             (ParaId::from(PICASSO_PARA_ID).into_account(), 10 * PICA),
-        ]
-    }.assimilate_storage(&mut storage).unwrap();
+	use kusama_runtime::{Runtime, System};
+	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+	balances::GenesisConfig::<Runtime> {
+		balances: vec![
+			(AccountId::from(ALICE), 2002 * PICA),
+			(ParaId::from(PICASSO_PARA_ID).into_account(), 10 * PICA),
+		],
+	}
+	.assimilate_storage(&mut storage)
+	.unwrap();
 
-    polkadot_runtime_parachains::configuration::GenesisConfig::<Runtime> {
-        config : default_parachains_host_configuration(),
-    }.assimilate_storage(&mut storage).unwrap();
+	polkadot_runtime_parachains::configuration::GenesisConfig::<Runtime> {
+		config: default_parachains_host_configuration(),
+	}
+	.assimilate_storage(&mut storage)
+	.unwrap();
 
-    let mut externalities = sp_io::TestExternalities::new(storage);
-    externalities.execute_with(|| System::set_block_number(1));;
-    externalities
+	let mut externalities = sp_io::TestExternalities::new(storage);
+	externalities.execute_with(|| System::set_block_number(1));
+	externalities
 }
 
 pub fn picasso_ext(para_id: u32) -> sp_io::TestExternalities {
 	let para_id = para_id.into();
-    use picasso_runtime::{Runtime, System, };
-    use primitives::currency::CurrencyId;
-    let mut storage = frame_system::GenesisConfig::default()
-		.build_storage::<Runtime>()
-		.unwrap();
-        balances::GenesisConfig::<Runtime> {
-            balances: vec![(AccountId::from(ALICE), 200 * 1_000_000_000_000)],
-        }
-        .assimilate_storage(&mut storage)
-        .unwrap();
+	use picasso_runtime::{Runtime, System};
+	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+	balances::GenesisConfig::<Runtime> {
+		balances: vec![(AccountId::from(ALICE), 200 * 1_000_000_000_000)],
+	}
+	.assimilate_storage(&mut storage)
+	.unwrap();
 
-    <parachain_info::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
-        &parachain_info::GenesisConfig {
-            parachain_id: para_id,
-        },
-        &mut storage).unwrap();
-    orml_tokens::GenesisConfig::<Runtime> {
-        balances: vec![(AccountId::from(ALICE), CurrencyId::PICA, 200 * 1_000_000_000_000)],
-    }
-        .assimilate_storage(&mut storage).unwrap();
+	<parachain_info::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
+		&parachain_info::GenesisConfig { parachain_id: para_id },
+		&mut storage,
+	)
+	.unwrap();
+	orml_tokens::GenesisConfig::<Runtime> {
+		balances: vec![(AccountId::from(ALICE), CurrencyId::PICA, 200 * 1_000_000_000_000)],
+	}
+	.assimilate_storage(&mut storage)
+	.unwrap();
 
-    let mut externalities = sp_io::TestExternalities::new(storage);
-    externalities.execute_with(|| System::set_block_number(1));
-    externalities
+	let mut externalities = sp_io::TestExternalities::new(storage);
+	externalities.execute_with(|| System::set_block_number(1));
+	externalities
 }
