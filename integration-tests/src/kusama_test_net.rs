@@ -10,6 +10,49 @@ type Balances = u128;
 pub const ALICE: [u8; 32] = [4u8; 32];
 pub const PICA: Balances = 1_000_000_000_000;
 pub const PICASSO_PARA_ID:u32 = 2000;
+pub const HYDRA_DX_PARA_ID:u32 = 2001;
+
+use polkadot_primitives::v1::*;
+
+// null handler for now, so need
+type XcmpMessageHandler = ();
+
+decl_test_parachain! {
+	pub struct Picasso {
+		Runtime = picasso_runtime::Runtime,
+		XcmpMessageHandler = XcmpMessageHandler,
+		DmpMessageHandler = XcmpMessageHandler,
+		new_ext = picasso_ext(PICASSO_PARA_ID),
+	}
+}
+
+// we use picasso as test, need to test out transfer
+// and then decide how to imitate hydra
+decl_test_parachain! {
+	pub struct HydraDx {
+		Runtime = picasso_runtime::Runtime,
+		XcmpMessageHandler = XcmpMessageHandler,
+		DmpMessageHandler = XcmpMessageHandler,
+		new_ext = picasso_ext(HYDRA_DX_PARA_ID),
+	}
+}
+
+decl_test_relay_chain! {
+	pub struct KusamaRelay {
+		Runtime = kusama_runtime::Runtime,
+		XcmConfig = kusama_runtcmConfig,
+		new_ext = kusama_ext(),
+	}
+}
+
+decl_test_network! {
+	pub struct KusamaNetwork {
+		relay_chain = KusamaRelay,
+		parachains = vec![
+			(2000, Picasso),
+		],
+	}
+}
 
 fn default_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 	HostConfiguration {
@@ -67,7 +110,8 @@ pub fn kusama_ext() -> sp_io::TestExternalities {
     externalities
 }
 
-pub fn picasso_ext(para_id: ParaId) -> sp_io::TestExternalities {
+pub fn picasso_ext(para_id: u32) -> sp_io::TestExternalities {
+	let para_id = para_id.into();
     use picasso_runtime::{Runtime, System, };
     use primitives::currency::CurrencyId;
     let mut storage = frame_system::GenesisConfig::default()
