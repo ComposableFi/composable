@@ -12,12 +12,12 @@ const TRANSFER_AMOUNT: u64 = 500;
 fn set_only_by_root() {
 	new_test_ext().execute_with(|| {
 		GovernanceRegistry::set(Origin::root(), 1, 1).unwrap();
-		ensure_root_or_governance::<Test>(Origin::root(), &2).unwrap();
-		ensure_root_or_governance::<Test>(Origin::signed(1), &2).unwrap_err();
-		ensure_root_or_governance::<Test>(Origin::signed(2), &1).unwrap_err();
-		ensure_root_or_governance::<Test>(Origin::signed(1), &1).unwrap();
-		ensure_root_or_governance::<Test>(Origin::none(), &1).unwrap_err();
-		ensure_root_or_governance::<Test>(Origin::none(), &2).unwrap_err();
+		ensure_admin_or_governance::<Test>(Origin::root(), &2).unwrap();
+		ensure_admin_or_governance::<Test>(Origin::signed(1), &2).unwrap_err();
+		ensure_admin_or_governance::<Test>(Origin::signed(2), &1).unwrap_err();
+		ensure_admin_or_governance::<Test>(Origin::signed(1), &1).unwrap();
+		ensure_admin_or_governance::<Test>(Origin::none(), &1).unwrap_err();
+		ensure_admin_or_governance::<Test>(Origin::none(), &2).unwrap_err();
 	});
 }
 
@@ -156,7 +156,7 @@ fn test_mint_initialize_with_governance() {
 			Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT),
 			INIT_AMOUNT + TRANSFER_AMOUNT
 		);
-		ensure_root_or_governance::<Test>(Origin::signed(TO_ACCOUNT), &ASSET_ID).expect(
+		ensure_admin_or_governance::<Test>(Origin::signed(TO_ACCOUNT), &ASSET_ID).expect(
 			"mint_initialize_with_governance should add governance_origin to GovernanceRegistry",
 		);
 	});

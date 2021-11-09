@@ -10,6 +10,7 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use system::EnsureRoot;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub type Block = frame_system::mocking::MockBlock<Test>;
@@ -60,6 +61,7 @@ impl Config for Test {
 	type MultiCurrency = Tokens;
 	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
+	type AdminOrigin = EnsureRoot<AccountId>;
 }
 
 impl orml_tokens::Config for Test {

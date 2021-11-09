@@ -546,6 +546,7 @@ impl assets::Config for Runtime {
 	type MultiCurrency = Tokens;
 	type GenerateCurrencyId = Factory;
 	type GovernanceRegistry = GovernanceRegistry;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = ();
 }
 
