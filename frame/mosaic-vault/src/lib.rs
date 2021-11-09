@@ -505,9 +505,7 @@ pub mod pallet {
             
 			ensure_signed(origin)?;
 
-			let min_transfer_delay = Self::min_transfer_delay();
-
-			ensure!(new_max_transfer_delay >= min_transfer_delay, Error::<T>::MaxTransferDelayBelowMinimum);
+			ensure!(new_max_transfer_delay >= Self::min_transfer_delay(), Error::<T>::MaxTransferDelayBelowMinimum);
 
 			<MaxTransferDelay<T>>::put(new_max_transfer_delay);
 
@@ -521,9 +519,7 @@ pub mod pallet {
             
 			ensure_signed(origin)?;
 
-			let max_transfer_delay = Self::max_transfer_delay();
-
-			ensure!(new_min_transfer_delay <= max_transfer_delay, Error::<T>::MinTransferDelayAboveMaximum);
+			ensure!(new_min_transfer_delay <= Self::max_transfer_delay(), Error::<T>::MinTransferDelayAboveMaximum);
             
 			<MinTransferDelay<T>>::put(new_min_transfer_delay);
 

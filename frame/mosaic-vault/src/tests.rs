@@ -32,6 +32,14 @@ fn test_set_max_fee() {
 fn test_set_asset_max_transfer_size() {
     ExtBuilder::default().build().execute_with(||{
        assert_ok!(MosaicVault::set_asset_max_transfer_size(Origin::signed(ALICE as u64), MockCurrencyId::A, 200));
-       assert_eq!(MosaicVault::max_asset_transfer_size(MockCurrencyId::A), 200 )
+       assert_eq!(MosaicVault::max_asset_transfer_size(MockCurrencyId::A), 200 );
+    })
+}
+
+#[test]
+fn test_set_asset_in_transfer_size() {
+    ExtBuilder::default().build().execute_with(||{
+       assert_ok!(MosaicVault::set_asset_min_transfer_size(Origin::signed(ALICE as u64), MockCurrencyId::A, 50));
+       assert_eq!(MosaicVault::smin_transfer_size(MockCurrencyId::A), 50 )
     })
 }
