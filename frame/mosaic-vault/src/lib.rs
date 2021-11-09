@@ -552,10 +552,10 @@ pub mod pallet {
 		 pub fn set_min_fee(origin: OriginFor<T>, min_fee: T::Balance) -> DispatchResultWithPostInfo {
 			
 			ensure_signed(origin)?;
-            
-			ensure!(min_fee < T::FeeFactor::get(), Error::<T>::MinFeeAboveFeeFactor);
 
 			ensure!(min_fee < Self::max_fee(), Error::<T>::MinFeeAboveMaxFee);
+            
+			ensure!(min_fee < T::FeeFactor::get(), Error::<T>::MinFeeAboveFeeFactor);
 
             <MinFee<T>>::put(min_fee);
 
