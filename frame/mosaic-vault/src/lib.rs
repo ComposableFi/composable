@@ -395,6 +395,8 @@ pub mod pallet {
 
 		NoTransferableBalance,
 
+		UnsupportedToken,
+
 		Underflow,
 
 		Overflow,
@@ -430,6 +432,8 @@ pub mod pallet {
 		 pub fn remove_supported_token(origin: OriginFor<T>, asset_id: T::AssetId, remote_network_id: T::RemoteNetworkId) -> DispatchResultWithPostInfo {
 
 			ensure_signed(origin)?; // -todo  check admin permission 
+
+			Self::only_supported_remoteToken(remote_network_id.clone(), asset_id.clone())?;
           
  		    let remote_asset_id = RemoteAssetId::<T>::get(remote_network_id, asset_id);
 
@@ -572,6 +576,8 @@ pub mod pallet {
 
 			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 
+			Self::only_supported_remoteToken(remote_network_id.clone(), asset_id.clone())?;
+
 			let sender = ensure_signed(origin)?;
 
 			ensure!(amount != T::Balance::zero(), Error::<T>::ZeroAmount);
@@ -624,11 +630,13 @@ pub mod pallet {
 			destination_account: T::AccountId,
 			amount: T::Balance,
 			asset_id: T::AssetId, 
-			remote_netword_id: T::RemoteNetworkId,
+			remote_network_id: T::RemoteNetworkId,
 	        deposit_id: T::DepositId,
 		 ) -> DispatchResultWithPostInfo {
-
+         
 			 ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
+
+			  Self::only_supported_remoteToken(remote_network_id.clone(), asset_id.clone())?;
 
 			  let sender = ensure_signed(origin)?;
              
@@ -900,6 +908,14 @@ pub mod pallet {
 			};
 
 			Ok(available_funds)
+		}
+
+
+		fn only_supported_remoteToken(remote_network_id: T::RemoteNetworkId, asset_id:T::AssetId) -> Result<T::RemoteAssetId, DispatchError> {
+			
+			let remote_asset_id = <RemoteAssetId<T>>::try_get(remote_network_id, asset_id).map_err(|_|Error::<T>::UnsupportedToken)?;
+
+			Ok(remote_asset_id)
 		}
 
 		fn generate_deposit_id(
