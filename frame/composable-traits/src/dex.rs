@@ -122,6 +122,20 @@ pub trait CurveAmm {
 		amount: Self::Balance,
 		min_amounts: Vec<Self::Balance>,
 	) -> Result<(), DispatchError>;
+
+	/// Perform an exchange between two coins.
+	/// `i` - index value of the coin to send,
+	/// `j` - index value of the coin to receive,
+	/// `dx` - amount of `i` being exchanged,
+	/// `min_dy` - minimum amount of `j` to receive.
+	fn exchange(
+		who: &Self::AccountId,
+		pool_id: PoolId,
+		i: PoolTokenIndex,
+		j: PoolTokenIndex,
+		dx: Self::Balance,
+		min_dy: Self::Balance,
+	) -> Result<(), DispatchError>;
 }
 
 /// Type that represents index type of token in the pool passed from the outside as an extrinsic

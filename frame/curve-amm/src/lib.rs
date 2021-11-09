@@ -1,4 +1,4 @@
-//!
+//
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
@@ -36,7 +36,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
-		dex::{CurveAmm, PoolId, PoolInfo},
+		dex::{CurveAmm, PoolId, PoolInfo, PoolTokenIndex},
 		math::LiftedFixedBalance,
 	};
 	use frame_support::{
@@ -216,6 +216,26 @@ pub mod pallet {
 			pool_id: PoolId,
 			token_amounts: Vec<T::Balance>,
 			token_supply: T::Balance,
+		},
+
+		/// Token exchange happened.
+		///
+		/// Included values are:
+		/// - account identifier `T::AccountId`
+		/// - pool identifier `PoolId`
+		/// - index of sent token `PoolTokenIndex`
+		/// - amount of sent token `T::Balance`
+		/// - index of received token `PoolTokenIndex`
+		/// - amount of received token `T::Balance`
+		///
+		/// \[who, pool_id, sent_token_index, sent_amount, received_token_index, received_amount\]
+		TokenExchanged {
+			who: T::AccountId,
+			pool_id: PoolId,
+			sent_token_index: PoolTokenIndex,
+			sent_amount: T::Balance,
+			received_token_index: PoolTokenIndex,
+			received_amount: T::Balance,
 		},
 	}
 
@@ -482,6 +502,105 @@ pub mod pallet {
 				token_supply,
 			});
 
+			Ok(())
+		}
+		fn exchange(
+			who: &Self::AccountId,
+			pool_id: PoolId,
+			i: PoolTokenIndex,
+			j: PoolTokenIndex,
+			dx: Self::Balance,
+			min_dy: Self::Balance,
+		) -> Result<(), DispatchError> {
+			let prec = T::Precision::get();
+			let zero_b = Self::Balance::zero();
+			ensure!(dx >= zero_b, Error::<T>::WrongAssetAmount);
+
+			let (provider, pool_id, dy) =
+				Pools::<T>::try_mutate(pool_id, |pool| -> Result<_, DispatchError> {
+					let pool = pool.as_mut().ok_or(Error::<T>::PoolNotFound)?;
+
+					let i = i as usize;
+					let j = j as usize;
+
+					let n_coins = pool.assets.len();
+
+					ensure!(i < n_coins && j < n_coins, Error::<T>::IndexOutOfRange);
+
+					let dx_u: u128 = dx.into();
+					let dx_f = FixedU128::saturating_from_integer(dx_u);
+					let min_dy_u: u128 = min_dy.into();
+					let min_dy_f = FixedU128::saturating_from_integer(min_dy_u);
+
+					let xp: Vec<FixedU128> = pool
+						.balances
+						.iter()
+						.map(|b| {
+							let b_u: u128 = (*b).into();
+							FixedU128::saturating_from_integer(b_u)
+						})
+						.collect();
+
+					// xp[i] + dx
+					let x = xp[i].checked_add(&dx_f).ok_or(Error::<T>::Math)?;
+
+					let amp_f = FixedU128::saturating_from_integer(
+						u128::try_from(pool.amplification_coefficient)
+							.ok()
+							.ok_or(Error::<T>::Math)?,
+					);
+					let ann = Self::get_ann(amp_f, n_coins).ok_or(Error::<T>::Math)?;
+					let y = Self::get_y(i, j, x, &xp, ann).ok_or(Error::<T>::Math)?;
+
+					// -1 just in case there were some rounding errors
+					// dy = xp[j] - y - 1
+					let dy_f = xp[j]
+						.checked_sub(&y)
+						.ok_or(Error::<T>::Math)?
+						.checked_sub(&prec)
+						.ok_or(Error::<T>::Math)?;
+
+					ensure!(dy_f >= min_dy_f, Error::<T>::RequiredAmountNotReached);
+
+					let dy: Self::Balance =
+						dy_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+
+					ensure!(
+						T::LpToken::balance(pool.assets[i], &who) >= dx,
+						Error::<T>::InsufficientFunds
+					);
+
+					ensure!(
+						T::LpToken::balance(pool.assets[j], &Self::account_id(&pool_id)) >= dy,
+						Error::<T>::InsufficientFunds
+					);
+
+					Self::transfer_liquidity_into_pool(
+						&Self::account_id(&pool_id),
+						pool,
+						&who,
+						i,
+						dx,
+					)?;
+					Self::transfer_liquidity_from_pool(
+						&Self::account_id(&pool_id),
+						pool,
+						j,
+						&who,
+						dy,
+					)?;
+
+					Ok((who.clone(), pool_id, dy))
+				})?;
+
+			Self::deposit_event(Event::TokenExchanged {
+				who: provider,
+				pool_id,
+				sent_token_index: i,
+				sent_amount: dx,
+				received_token_index: j,
+				received_amount: dy,
+			});
 			Ok(())
 		}
 	}

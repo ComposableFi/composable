@@ -169,3 +169,51 @@ fn add_remove_liquidity() {
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 20);
 	});
 }
+
+#[test]
+fn exchange_test() {
+	new_test_ext().execute_with(|| {
+		let assets = vec![MockCurrencyId::BTC, MockCurrencyId::USDT];
+		let amp_coeff = 2u128;
+
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, 200000));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200000);
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, 20));
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 20);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &BOB, 200000));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200000);
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &BOB, 20));
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 20);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &CHARLIE, 200000));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), 200000);
+		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff);
+		assert_ok!(&p);
+		let pool_id = p.unwrap();
+		let pool = CurveAmm::pool(pool_id);
+		assert!(pool.is_some());
+		let pool_info = pool.unwrap();
+		// 1 BTC = 65000 USDT
+		let amounts = vec![2u128, 130000u128];
+		assert_ok!(CurveAmm::add_liquidity(&ALICE, pool_id, amounts.clone(), 0u128));
+		let alice_balance = Tokens::balance(pool_info.pool_asset, &ALICE);
+		assert_ne!(alice_balance, 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200000 - 130000);
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 20 - 2);
+		let pool = CurveAmm::pool(pool_id);
+		assert!(pool.is_some());
+		let pool_info = pool.unwrap();
+		assert_ok!(CurveAmm::add_liquidity(&BOB, pool_id, amounts.clone(), 0u128));
+		let bob_balance = Tokens::balance(pool_info.pool_asset, &BOB);
+		assert_ne!(bob_balance, 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200000 - 130000);
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 20 - 2);
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
+		assert_ok!(CurveAmm::exchange(&CHARLIE, pool_id, 1, 0, 65000, 0));
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 1);
+	});
+}
