@@ -1,3 +1,5 @@
+#![cfg(test)]
+
 use crate::vecstorage::{FastMap, BribesStorage};
 
 /// Test the Fast Vec functions and make sure they return a sorted result
