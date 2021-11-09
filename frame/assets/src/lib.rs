@@ -1,3 +1,51 @@
+//! # Assets Pallet
+//!
+//! The Assets pallet provides implementation of common currency traits
+//! (e.g. from [`orml`](https://docs.rs/orml-traits) or `frame_support`)
+//! and functionality for handling transfers and minting.
+//!
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Pallet`]
+//!
+//! ## Overview
+//!
+//! The Assets pallet provides functions for:
+//!
+//! - Transferring balances of native and other assets between accounts.
+//! - Minting new assets, with support for governance.
+//! - Crediting and debiting of created asset balances.
+//!
+//! ### Implementations
+//!
+//! The Assets pallet provides implementations for the following traits:
+//!
+//! - [`Currency`](frame_support::traits::Currency):
+//!  Functions for dealing with a fungible assets system.
+//! - [`ReservableCurrency`](frame_support::traits::ReservableCurrency):
+//!  Functions for dealing with assets that can be reserved from an account.
+//! - [`MultiCurrency`](orml_traits::MultiCurrency):
+//!  Abstraction over a fungible multi-currency system.
+//! - [`MultiLockableCurrency`](orml_traits::MultiLockableCurrency):
+//!  A fungible multi-currency system whose accounts can have liquidity restrictions.
+//! - [`MultiReservableCurrency`](orml_traits::MultiReservableCurrency):
+//!  A fungible multi-currency system where funds can be reserved from the user.
+//!  
+//! ## Interface
+//!
+//! ### Dispatchable Functions
+//!
+//! - `transfer`
+//! - `transfer_native`
+//! - `force_transfer`
+//! - `force_transfer_native`
+//! - `transfer_all`
+//! - `transfer_all_native`
+//! - `mint_initialize`
+//! - `mint_initialize_with_governance`
+//! - `mint_into`
+//! - `burn_from`
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
