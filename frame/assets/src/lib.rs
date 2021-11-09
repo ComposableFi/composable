@@ -27,6 +27,7 @@ pub mod pallet {
 				Inspect as NativeInspect, Mutate as NativeMutate, Transfer as NativeTransfer,
 			},
 			fungibles::{Inspect, Mutate, Transfer},
+			EnsureOrigin,
 		},
 	};
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor, RawOrigin};
@@ -44,6 +45,7 @@ pub mod pallet {
 		type GovernanceRegistry: GetByKey<Self::AssetId, Result<RawOrigin<Self::AccountId>, DispatchError>>
 			+ SetByKey<Self::AssetId, frame_system::RawOrigin<Self::AccountId>>;
 		type WeightInfo: WeightInfo;
+		type AdminOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::pallet]
@@ -247,7 +249,7 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
-			ensure_root_or_governance::<T>(origin, &asset_id)?;
+			ensure_admin_or_governance::<T>(origin, &asset_id)?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
 			Ok(().into())
@@ -261,17 +263,23 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
-			ensure_root_or_governance::<T>(origin, &asset_id)?;
+			ensure_admin_or_governance::<T>(origin, &asset_id)?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::burn_from(asset_id, &dest, amount)?;
 			Ok(().into())
 		}
 	}
 
-	pub(crate) fn ensure_root_or_governance<T: Config>(
+	/// Returns Ok(None) if the origin is root or the AdminOrigin, and Ok(Some(AccountId)) if the
+	/// origin is the GovernanceRegistry based account.
+	pub(crate) fn ensure_admin_or_governance<T: Config>(
 		origin: OriginFor<T>,
 		asset_id: &T::AssetId,
 	) -> Result<Option<T::AccountId>, DispatchError> {
+		if T::AdminOrigin::ensure_origin(origin.clone()).is_ok() {
+			return Ok(None)
+		}
+
 		let account = match origin.into() {
 			Ok(frame_system::RawOrigin::Signed(account)) => {
 				match T::GovernanceRegistry::get(asset_id) {
