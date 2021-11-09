@@ -208,11 +208,12 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
 		pub fn mint_initialize(
 			origin: OriginFor<T>,
-			amount: T::Balance,
-			dest: T::AccountId,
+			#[pallet::compact] amount: T::Balance,
+			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			let id = T::GenerateCurrencyId::create()?;
+			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(().into())
 		}
@@ -224,14 +225,16 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
 		pub fn mint_initialize_with_governance(
 			origin: OriginFor<T>,
-			amount: T::Balance,
-			governance_origin: T::AccountId,
-			dest: T::AccountId,
+			#[pallet::compact] amount: T::Balance,
+			governance_origin: <T::Lookup as StaticLookup>::Source,
+			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			let id = T::GenerateCurrencyId::create()?;
+			let governance_origin = T::Lookup::lookup(governance_origin)?;
 			T::GovernanceRegistry::set(id, RawOrigin::Signed(governance_origin))
 				.map_err(|_| Error::<T>::CannotSet)?;
+			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(().into())
 		}
@@ -241,10 +244,11 @@ pub mod pallet {
 		pub fn mint_into(
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
-			dest: T::AccountId,
-			amount: T::Balance,
+			dest: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			ensure_root_or_governance::<T>(origin, &asset_id)?;
+			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
 			Ok(().into())
 		}
@@ -254,10 +258,11 @@ pub mod pallet {
 		pub fn burn_from(
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
-			dest: T::AccountId,
-			amount: T::Balance,
+			dest: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			ensure_root_or_governance::<T>(origin, &asset_id)?;
+			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::burn_from(asset_id, &dest, amount)?;
 			Ok(().into())
 		}
