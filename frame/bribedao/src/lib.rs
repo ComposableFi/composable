@@ -3,7 +3,7 @@
 pub use pallet::*;
 
 pub mod vecstorage;
-
+pub mod tests;
 pub use crate::vecstorage::FastMap;
 
 #[frame_support::pallet]
@@ -120,6 +120,7 @@ pub mod pallet {
 	pub(super) type BribeRequests<T: Config> =
 		StorageMap<_, Blake2_128Concat, BribeIndex, CreateBribeRequest<T>>;
 
+/*
 	// Create a cubic vault for holding funds
 	pub fn create_vault<T: Config>(
 		origin: OriginFor<T>,
@@ -141,6 +142,8 @@ pub mod pallet {
 			},
 		);
 	}
+
+*/
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {

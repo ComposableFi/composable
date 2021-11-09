@@ -7,9 +7,9 @@ use std::convert::TryInto;
 
 #[derive(Debug, Default, PartialEq, Hash, Clone)]
 pub struct BribesStorage {
-	p_id: u32,
-	amount: u32,
-	votes: u32,
+	pub p_id: u32,
+	pub amount: u32,
+	pub votes: u32,
 }
 
 sortedvec! {
@@ -34,8 +34,12 @@ impl FastMap {
 		self.insert(BribesStorage { p_id: pid, amount: amounts, votes: vots });
 		true
 	}
-}
+
 
 pub fn new() -> FastMap {
 	FastMap::default()
 }
+}
+
+
+
