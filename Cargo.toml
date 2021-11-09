@@ -6,7 +6,7 @@ members = [
     "frame/*",
     "node",
     "price-feed",
-    "runtime/picasso",
 	"runtime/common",
+    "runtime/picasso",
 	"runtime/primitives",
 ]
