@@ -719,27 +719,30 @@ pub mod pallet {
 		pub fn get_twap(asset_id: T::AssetId, mut price_weights: Vec<T::PriceValue>) -> Result< T::PriceValue, DispatchError> {
 			let precision: T::PriceValue = 100u128.into();
 			let historical_prices = Self::price_history(asset_id);
-			let historic_length = historical_prices.len();
 			// add an extra to account for current price not stored in history
 			ensure!(historical_prices.len() + 1 >= price_weights.len(), Error::<T>::DepthTooLarge);
-			let sum = price_weights.clone().into_iter().reduce(|a, b| a.saturating_add(b));
-			ensure!(sum == Some(precision), Error::<T>::MustSumTo100);
+			let sum = Self::price_values_sum(&price_weights);
+			ensure!(sum == precision, Error::<T>::MustSumTo100);
 			let last_weight = price_weights.pop().unwrap_or(0u128.into());
-			let mut weighted_prices = Vec::new();
-			let mut i: usize = 0;
-			for weight in price_weights.clone() {
-				let current_weight: T::PriceValue = weight.mul(historical_prices[historic_length - price_weights.len() + i].price).div(precision);
-				weighted_prices.push(current_weight);
-				i += 1
-			}
+			let mut weighted_prices = price_weights
+				.iter()
+				.enumerate()
+				.map(|(i, weight)| {
+					weight.mul(historical_prices[historical_prices.len() - price_weights.len() + i].price).div(precision)
+				})
+				.collect::<Vec<_>>();
 			let current_price = Self::prices(asset_id);
 			let current_weighted_price = last_weight.mul(current_price.price).div(precision);
 			weighted_prices.push(current_weighted_price);
-			let weighted_average = weighted_prices.into_iter().reduce(|a, b| a.saturating_add(b));
-			let unwrapped_average = weighted_average.unwrap_or(0u128.into());
-			ensure!(unwrapped_average != 0u128.into(), Error::<T>::ArithmeticError);
-			Ok(unwrapped_average)
+			let weighted_average = Self::price_values_sum(&weighted_prices);
+			ensure!(weighted_average != 0u128.into(), Error::<T>::ArithmeticError);
+			Ok(weighted_average)
 		}
+
+		fn price_values_sum(price_values: &[T::PriceValue]) -> T::PriceValue {
+			price_values.iter().fold(T::PriceValue::from(0u128), |acc, b| acc.saturating_add(*b))
+		}
+
 		pub fn fetch_price_and_send_signed(price_id: &T::AssetId) -> Result<(), &'static str> {
 			let signer = Signer::<T, T::AuthorityId>::all_accounts();
 			if !signer.can_sign() {
