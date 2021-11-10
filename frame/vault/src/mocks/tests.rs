@@ -105,6 +105,7 @@ impl pallet_vault::Config for Test {
 	type MinimumWithdrawal = MinimumWithdrawal;
 	type TombstoneDuration = TombstoneDuration;
 	type VaultId = u64;
+	type WeightInfo = ();
 }
 
 parameter_type_with_key! {

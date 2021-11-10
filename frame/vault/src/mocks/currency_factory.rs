@@ -37,6 +37,18 @@ pub mod pallet {
 		}
 	}
 
+	impl From<u128> for MockCurrencyId {
+		fn from(id: u128) -> Self {
+			match id {
+				0 => MockCurrencyId::A,
+				1 => MockCurrencyId::B,
+				2 => MockCurrencyId::C,
+				3 => MockCurrencyId::D,
+				x => MockCurrencyId::LpToken(x as u32),
+			}
+		}
+	}
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {

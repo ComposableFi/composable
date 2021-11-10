@@ -181,4 +181,5 @@ runtime-benchmarks = [
 	"xcm-builder/runtime-benchmarks",
     "support/runtime-benchmarks",
     "system-benchmarking",
+    "vault/runtime-benchmarks",
 ]
