@@ -203,7 +203,7 @@ parameter_types! {
 impl aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
-	type MaxAuthorities = ();
+	type MaxAuthorities = MaxAuthorities;
 }
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
@@ -833,6 +833,7 @@ impl vault::Config for Runtime {
 	type MinimumWithdrawal = VaultMinimumWithdrawal;
 	type TombstoneDuration = TombstoneDuration;
 	type VaultId = u64;
+	type WeightInfo = weights::vault::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -1194,6 +1195,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, lending, Lending);
 			list_benchmark!(list, extra, crowdloan_bonus, LiquidCrowdloan);
 			list_benchmark!(list, extra, utility, Utility);
+			list_benchmark!(list, extra, vault, Vault);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1242,6 +1244,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, lending, Lending);
 			add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
 			add_benchmark!(params, batches, utility, Utility);
+			add_benchmark!(params, batches, vault, Vault);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
