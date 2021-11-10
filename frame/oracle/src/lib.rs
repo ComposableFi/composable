@@ -720,7 +720,8 @@ pub mod pallet {
 			let precision: T::PriceValue = 100u128.into();
 			let historical_prices = Self::price_history(asset_id);
 			let historic_length = historical_prices.len();
-			ensure!(historical_prices.len() <= price_weights.len(), Error::<T>::DepthTooLarge);
+			// add an extra to account for current price not stored in history
+			ensure!(historical_prices.len() + 1 >= price_weights.len(), Error::<T>::DepthTooLarge);
 			let sum = price_weights.clone().into_iter().reduce(|a, b| a.saturating_add(b));
 			ensure!(sum == Some(precision), Error::<T>::MustSumTo100);
 			let last_weight = price_weights.pop().unwrap_or(0u128.into());

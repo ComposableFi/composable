@@ -549,6 +549,12 @@ fn get_twap() {
 		let twap = Oracle::get_twap(0, vec![20, 30, 50]);
 		// twap should be (0.2 * 100) + (0.3 * 120) + (0.5 * 101)
 		assert_eq!(twap, Ok(106));
+		let err_twap = Oracle::get_twap(0, vec![21, 30, 50]);
+		assert_eq!(err_twap, Err(Error::<Test>::MustSumTo100.into()));
+
+		let err_2_twap = Oracle::get_twap(0, vec![10, 10, 10, 10, 60]);
+		assert_eq!(err_2_twap, Err(Error::<Test>::DepthTooLarge.into()));
+
 	});
 }
 
