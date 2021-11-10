@@ -717,21 +717,22 @@ pub mod pallet {
 		}
 
 		pub fn get_twap(asset_id: T::AssetId, mut price_weights: Vec<T::PriceValue>) -> Result< T::PriceValue, DispatchError> {
+			let precision: T::PriceValue = 100u128.into();
 			let historical_prices = Self::price_history(asset_id);
 			let historic_length = historical_prices.len();
 			ensure!(historical_prices.len() <= price_weights.len(), Error::<T>::DepthTooLarge);
 			let sum = price_weights.clone().into_iter().reduce(|a, b| a.saturating_add(b));
-			ensure!(sum == Some(100000000000u128.into()), Error::<T>::MustSumTo100);
+			ensure!(sum == Some(precision), Error::<T>::MustSumTo100);
 			let last_weight = price_weights.pop().unwrap_or(0u128.into());
 			let mut weighted_prices = Vec::new();
 			let mut i: usize = 0;
 			for weight in price_weights.clone() {
-				let current_weight: T::PriceValue = weight.mul(historical_prices[historic_length - price_weights.len() + i].price).div(100000000000u128.into());
+				let current_weight: T::PriceValue = weight.mul(historical_prices[historic_length - price_weights.len() + i].price).div(precision);
 				weighted_prices.push(current_weight);
 				i += 1
 			}
 			let current_price = Self::prices(asset_id);
-			let current_weighted_price = last_weight.mul(current_price.price).div(100000000000u128.into());
+			let current_weighted_price = last_weight.mul(current_price.price).div(precision);
 			weighted_prices.push(current_weighted_price);
 			let weighted_average = weighted_prices.into_iter().reduce(|a, b| a.saturating_add(b));
 			let unwrapped_average = weighted_average.unwrap_or(0u128.into());

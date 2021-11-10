@@ -504,17 +504,51 @@ fn historic_pricing() {
 
 		do_price_update(0, 10);
 		let price_10 = Price { price: 101, block: 10 };
-		price_history = vec![price_5, price_10.clone()];
+		price_history = vec![price_5.clone(), price_10.clone()];
 
 		assert_eq!(Oracle::price_history(0), price_history);
 		assert_eq!(Oracle::price_history(0).len(), 2);
 
 		do_price_update(0, 15);
 		let price_15 = Price { price: 101, block: 15 };
-		price_history = vec![price_10, price_15];
+		price_history = vec![price_5.clone(), price_10.clone(), price_15.clone()];
 
 		assert_eq!(Oracle::price_history(0), price_history);
-		assert_eq!(Oracle::price_history(0).len(), 2);
+		assert_eq!(Oracle::price_history(0).len(), 3);
+
+		do_price_update(0, 20);
+		let price_20 = Price { price: 101, block: 20 };
+		price_history = vec![price_10, price_15, price_20];
+
+		assert_eq!(Oracle::price_history(0), price_history);
+		assert_eq!(Oracle::price_history(0).len(), 3);
+	});
+}
+
+#[test]
+fn get_twap() {
+	new_test_ext().execute_with(|| {
+		// add and request oracle id
+		let account_2 = get_account_2();
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Percent::from_percent(80),
+			3,
+			5,
+			5
+		));
+
+		do_price_update(0, 0);
+		let price_1 = Price { price: 100, block: 20 };
+		let price_2 = Price { price: 100, block: 20 };
+		let price_3 = Price { price: 120, block: 20 };
+		let historic_prices = [price_1, price_2, price_3].to_vec();
+		set_historic_prices(0, historic_prices);
+
+		let twap = Oracle::get_twap(0, vec![20, 30, 50]);
+		// twap should be (0.2 * 100) + (0.3 * 120) + (0.5 * 101)
+		assert_eq!(twap, Ok(106));
 	});
 }
 
@@ -728,6 +762,10 @@ fn do_price_update(asset_id: u128, block: u64) {
 	Oracle::on_initialize(block);
 	let price = Price { price: 101, block };
 	assert_eq!(Oracle::prices(asset_id), price);
+}
+
+fn set_historic_prices(asset_id: u128, historic_prices: Vec<Price<u128, u64>>) {
+	PriceHistory::<Test>::insert(asset_id, historic_prices);
 }
 
 fn price_oracle_response(state: &mut testing::OffchainState, price_id: &str) {
