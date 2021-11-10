@@ -2,8 +2,8 @@
 
 pub use pallet::*;
 
-pub mod vecstorage;
 pub mod tests;
+pub mod vecstorage;
 pub use crate::vecstorage::FastMap;
 
 #[frame_support::pallet]
@@ -115,35 +115,39 @@ pub mod pallet {
 	#[pallet::getter(fn bribe_count)]
 	pub(super) type BribeCount<T: Config> = StorageValue<_, BribeIndex, ValueQuery>;
 
+	//	#[pallet::storage]
+	//	#[pallet::getter(fn fast_vec)]
+	//	pub(super) type myfastvec<T: Config> = FastVec::new();
+
 	#[pallet::storage]
 	#[pallet::getter(fn bribe_requests)]
 	pub(super) type BribeRequests<T: Config> =
 		StorageMap<_, Blake2_128Concat, BribeIndex, CreateBribeRequest<T>>;
 
-/*
-	// Create a cubic vault for holding funds
-	pub fn create_vault<T: Config>(
-		origin: OriginFor<T>,
-		asset_id: T::CurrencyId,
-	) -> (T::VaultId, VaultInfo<T::AccountId, T::Balance, T::CurrencyId, T::BlockNumber>) where <T as frame_system::Config>::Origin: Ord {
-		Vault::<
-			AccountId = T::AccountId,
-			AssetId = T::CurrencyId,
-			BlockNumber = T::BlockNumber,
-			VaultId = T::VaultId,
-			Balance = T::Balance,
-		>::do_create_vault(
-			Deposit::Existential,
-			VaultConfig {
-				asset_id,
-				manager: origin,
-				reserved: Perquintill::from_percent(100),
-				strategies: [].iter().cloned().collect(),
-			},
-		);
-	}
+	/*
+		// Create a cubic vault for holding funds
+		pub fn create_vault<T: Config>(
+			origin: OriginFor<T>,
+			asset_id: T::CurrencyId,
+		) -> (T::VaultId, VaultInfo<T::AccountId, T::Balance, T::CurrencyId, T::BlockNumber>) where <T as frame_system::Config>::Origin: Ord {
+			Vault::<
+				AccountId = T::AccountId,
+				AssetId = T::CurrencyId,
+				BlockNumber = T::BlockNumber,
+				VaultId = T::VaultId,
+				Balance = T::Balance,
+			>::do_create_vault(
+				Deposit::Existential,
+				VaultConfig {
+					asset_id,
+					manager: origin,
+					reserved: Perquintill::from_percent(100),
+					strategies: [].iter().cloned().collect(),
+				},
+			);
+		}
 
-*/
+	*/
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -184,6 +188,7 @@ pub mod pallet {
 			let currencyid = og_request.asset_id;
 			T::Currency::release(currencyid, &who, amount, false)
 				.map_err(|_| Error::<T>::ReleaseFailed)?;
+			// remove from fastvec
 
 			//			todo!("Check token supply, if supply is less or same as asked for: release funds");
 			//			Error::<T>::EmptySupply;
@@ -205,6 +210,7 @@ pub mod pallet {
 			let currencyid = og_request.asset_id;
 			T::Currency::hold(currencyid, &who, amount).map_err(|_| Error::<T>::CantFreezeFunds)?; //Freeze assets
 			if bribe_taken {
+				// insert into fastvec
 				Self::deposit_event(Event::BribeTaken { id: bribe_index, request });
 			}
 			Ok(().into())
