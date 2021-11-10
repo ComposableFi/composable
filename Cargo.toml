@@ -3,13 +3,14 @@ panic = "unwind"
 
 [workspace]
 members = [
-    "frame/*",
-    "node",
-    "price-feed",
-    "runtime/picasso",
 	"runtime/common",
 	"runtime/primitives",
 	"utils/faucet-server",
 	"utils/parachain-utils",
-    "utils/subxt-clients"
+    "frame/*",
+    "integration-tests",
+    "node",
+    "price-feed",
+    "runtime/picasso",
+    "utils/subxt-clients",
 ]

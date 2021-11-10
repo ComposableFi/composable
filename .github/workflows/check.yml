@@ -29,7 +29,7 @@ jobs:
           SKIP_WASM_BUILD=1 cargo check --all --benches
       - name: Cargo Check Benchmark
         run: |
-          SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --release
+          SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --workspace --release --exclude integration-tests
       - name: Picasso Runtime Build
         run: |
           cargo build --release -p picasso-runtime
