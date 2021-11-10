@@ -14,11 +14,13 @@ pub mod pallet {
 		ensure,
 		pallet_prelude::*,
 		traits::{
+			EnsureOrigin,
 			UnixTime,
 			fungibles::{Mutate, Transfer}
 		},
 		PalletId,
 	};
+
 	use sp_core::hashing::keccak_256;
 	use frame_system::pallet_prelude::*;
  	use scale_info::TypeInfo;
@@ -34,7 +36,6 @@ pub mod pallet {
 	};
 	use composable_traits::{loans::Timestamp, vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig }};
 
-	// use sp_runtime::traits::AccountIdConversion;
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
@@ -116,6 +117,10 @@ pub mod pallet {
 			+ Debug
 			+ Default
 			+ TypeInfo;
+
+		type RelayerOrigin: EnsureOrigin<Self::Origin>;
+
+		type AdminOrigin: EnsureOrigin<Self::Origin>;
 
 		#[pallet::constant]
 		type FeeFactor: Get<Self::Balance>;
@@ -351,8 +356,6 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 
-		MintFailed,
-
 		DepositFailed,
 
 		MaxAssetTransferSizeBelowMinimum,
@@ -423,7 +426,7 @@ pub mod pallet {
 			max_asset_transfer_size: T::Balance,
 			min_asset_transfer_size: T::Balance,) -> DispatchResultWithPostInfo {
            
-		   ensure_signed(origin)?; // -todo check admin permission 
+		   T::AdminOrigin::ensure_origin(origin)?;
 
 		   ensure!(max_asset_transfer_size > min_asset_transfer_size, Error::<T>::MaxAssetTransferSizeBelowMinimum);
 
@@ -441,7 +444,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn remove_supported_token(origin: OriginFor<T>, asset_id: T::AssetId, remote_network_id: T::RemoteNetworkId) -> DispatchResultWithPostInfo {
 
-			ensure_signed(origin)?; // -todo  check admin permission 
+			T::AdminOrigin::ensure_origin(origin)?; 
 
 			Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
           
@@ -461,7 +464,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_asset_max_transfer_size(origin: OriginFor<T>, asset_id: T::AssetId, size: T::Balance) -> DispatchResultWithPostInfo {
 
-		     ensure_signed(origin)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 
 			 <MaxAssetTransferSize<T>>::insert(asset_id, size);
 
@@ -473,7 +476,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_asset_min_transfer_size(origin: OriginFor<T>, asset_id: T::AssetId, size: T::Balance) -> DispatchResultWithPostInfo {
 
-		     ensure_signed(origin)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 
 			 <MinAssetTransferSize<T>>::insert(asset_id, size);
 
@@ -485,7 +488,9 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_transfer_lockup_time(origin: OriginFor<T>, lockup_time: Timestamp) -> DispatchResultWithPostInfo {
 
-		     let sender = ensure_signed(origin)?;
+			T::AdminOrigin::ensure_origin(origin.clone())?;
+			
+			let sender = ensure_signed(origin)?;
 
 			 let old_lockup_time = <TransferLockupTime<T>>::get();
 
@@ -500,8 +505,8 @@ pub mod pallet {
 
 		 #[pallet::weight(10_000)]
 		 pub fn set_max_transfer_delay(origin: OriginFor<T>, new_max_transfer_delay: T::TransferDelay) -> DispatchResultWithPostInfo {
-            
-			ensure_signed(origin)?;
+        	
+			T::AdminOrigin::ensure_origin(origin)?;
 
 			ensure!(new_max_transfer_delay >= Self::min_transfer_delay(), Error::<T>::MaxTransferDelayBelowMinimum);
 
@@ -515,7 +520,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_min_transfer_delay(origin: OriginFor<T>, new_min_transfer_delay: T::TransferDelay) -> DispatchResultWithPostInfo {
             
-			ensure_signed(origin)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 
 			ensure!(new_min_transfer_delay <= Self::max_transfer_delay(), Error::<T>::MinTransferDelayAboveMaximum);
             
@@ -529,7 +534,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_max_fee(origin: OriginFor<T>, max_fee: T::Balance) -> DispatchResultWithPostInfo {
 			
-			ensure_signed(origin)?;
+			T::AdminOrigin::ensure_origin(origin)?;
             
 			ensure!(max_fee < T::FeeFactor::get(), Error::<T>::MaxFeeAboveFeeFactor);
 
@@ -545,7 +550,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_min_fee(origin: OriginFor<T>, min_fee: T::Balance) -> DispatchResultWithPostInfo {
 			
-			ensure_signed(origin)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 
 			ensure!(min_fee < Self::max_fee(), Error::<T>::MinFeeAboveMaxFee);
             
@@ -561,7 +566,7 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn set_thresh_hold(origin: OriginFor<T>, new_fee_threshold: T::Balance) -> DispatchResultWithPostInfo {
 			 
-			ensure_signed(origin)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 
 			ensure!(new_fee_threshold < T::ThresholdFactor::get(), Error::<T>::ThresholdFeeAboveThresholdFactor);
 
@@ -582,11 +587,11 @@ pub mod pallet {
 		 	 transfer_delay: T::TransferDelay,
 			) -> DispatchResultWithPostInfo {
 
+			let sender = ensure_signed(origin)?;
+
 			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 
 			Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
-
-			let sender = ensure_signed(origin)?;
 
 			ensure!(amount != T::Balance::zero(), Error::<T>::ZeroAmount);
 
@@ -641,12 +646,12 @@ pub mod pallet {
 			remote_network_id: T::RemoteNetworkId,
 	        deposit_id: T::DepositId,
 		 ) -> DispatchResultWithPostInfo {
+
+			 let sender = ensure_signed(origin)?;
          
 			 ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 
 			  Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
-
-			  let sender = ensure_signed(origin)?;
              
 			  ensure!(Self::has_been_withdrawn(deposit_id) == false, Error::<T>::AlreadyWithdrawn);
 
@@ -704,12 +709,14 @@ pub mod pallet {
 			 asset_id: <T as Config>::AssetId,
 			 reserved: Perquintill,
 		 ) -> DispatchResultWithPostInfo {
+
+			T::AdminOrigin::ensure_origin(origin.clone())?;
+
+			let sender = ensure_signed(origin)?;
  
-			 let sender = ensure_signed(origin)?;
+			let account = Self::account_id();
  
-			 let account = Self::account_id();
- 
-			 let vault_id = T::Vault::create(
+			let vault_id = T::Vault::create(
 				 Deposit::Existential,
 				 VaultConfig {
 					 asset_id: asset_id,
@@ -737,10 +744,10 @@ pub mod pallet {
 			deposit_id: T::DepositId,
 		 ) ->DispatchResultWithPostInfo {
 
+			T::RelayerOrigin::ensure_origin(origin)?;
+
 			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 			
-			ensure_signed(origin)?;
-            
 			ensure!(Self::has_been_completed(deposit_id) == false, Error::<T>::AlreadCompleted);
 
 			ensure!(Self::in_transfer_funds(asset_id) >= amount, Error::<T>::InsufficientFunds);
@@ -769,7 +776,7 @@ pub mod pallet {
 			deposit_id: T::DepositId,
 		 ) ->DispatchResultWithPostInfo {
             
-			ensure_signed(origin.clone())?;
+			 T::RelayerOrigin::ensure_origin(origin.clone())?;
           
 			 ensure!(Self::has_been_unlocked(deposit_id) == false, Error::<T>::AssetUnlreadyUnlocked);
 
@@ -802,6 +809,8 @@ pub mod pallet {
 			 to: T::AccountId,
 		 ) -> DispatchResultWithPostInfo {
 
+			T::AdminOrigin::ensure_origin(origin.clone())?;
+
 			let sender = ensure_signed(origin)?;
 
 			ensure!(Self::pause_status() == true, Error::<T>::ContractNotPaused);
@@ -826,10 +835,11 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn pause(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 
-			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
-			
-            let sender = ensure_signed(origin)?;
+			 T::AdminOrigin::ensure_origin(origin.clone())?;
 
+			let sender = ensure_signed(origin)?;
+
+			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 			 <PauseStatus<T>>::put(true);
 			 Self::deposit_event(Event::Pause{sender});
 
@@ -838,7 +848,10 @@ pub mod pallet {
 
 		#[pallet::weight(10_000)]
 		pub fn un_pause(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-            let sender = ensure_signed(origin)?;
+
+			T::AdminOrigin::ensure_origin(origin.clone())?;
+
+			let sender = ensure_signed(origin)?;
 
 			 <PauseStatus<T>>::put(false);
 			 Self::deposit_event(Event::UnPause{sender});
