@@ -5,9 +5,6 @@ pub mod traits;
 
 pub use pallet::*;
 
-// #[cfg(test)]
-// mod mock;
-
 #[cfg(test)]
 mod tests;
 #[frame_support::pallet]
@@ -83,7 +80,6 @@ pub mod pallet {
 			AssetId = <Self as Config>::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,>;
-		// type Moment: Moment;
 
 		type AssetId: FullCodec
 		     + Eq
@@ -238,147 +234,147 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
  	pub enum Event<T: Config> {
 
-		DepositCompleted(
-   			T::AccountId, // sender
-   			T::AssetId,   // assetId
-			T::RemoteAssetId, // remoteAssetId
-			T::RemoteNetworkId, // remoteNetworkId
-			T::AccountId, // receiver
- 			T::Balance, // value
-			[u8; 32], // uniqueId
-			T::TransferDelay // transferDelay
-		),
+		DepositCompleted {
+			sender: T::AccountId,
+			asset_id: T::AssetId,   
+		    remote_asset_id: T::RemoteAssetId,
+		    remote_network_id: T::RemoteNetworkId, 
+		    destination_address: T::AccountId, 
+		    amount: T::Balance, 
+		    deposit_id: [u8; 32],
+		    transfer_delay: T::TransferDelay, 
+		},
 
-		WithdrawalCompleted(
-		   T::AccountId, // receiver
-           T::Balance, // amount
-		   T::Balance, // receivedAmount
-		   T::Balance, // feeAmount
-		   T::AssetId, // assetId
-		   T::DepositId, // uniqueId
-		),
+		WithdrawalCompleted{
+		   destination_account: T::AccountId,
+           amount: T::Balance,
+		   withdraw_amount: T::Balance,
+		   fee_absolute: T::Balance,
+		   asset_id: T::AssetId,
+		   deposit_id: T::DepositId,
+		},
  
-        TokenAdded(
-           T::AssetId, // asset
-		   T::RemoteAssetId, // remoteAssetId
-		   T::RemoteNetworkId // remoteNetworkId
-		),
+        TokenAdded {
+		   asset_id: T::AssetId,
+		   remote_asset_id: T::RemoteAssetId, 
+		   remote_network_id: T::RemoteNetworkId 
+		},
 
-		TokenRemoved(
-			T::AssetId, // assetId
-			T::RemoteAssetId, // remoteAssetId
-			T::RemoteNetworkId //remoteNetworkId
-		),
+		TokenRemoved {
+			asset_id: T::AssetId, 
+			remote_asset_id: T::RemoteAssetId, 
+			remote_network_id: T::RemoteNetworkId 
+		},
 
-		MaxTransferDelayChanged(
-			T::TransferDelay,
-		),
+		MaxTransferDelayChanged {
+			new_max_transfer_delay: T::TransferDelay,
+		},
 
-		MinTransferDelayChanged(
-			T::TransferDelay,
-		),
+		MinTransferDelayChanged{
+			new_min_transfer_delay: T::TransferDelay,
+		},
 
-		AssetMaxTransferSizeChanged(
-			T::AssetId,
-			T::Balance,
-		),
+		AssetMaxTransferSizeChanged{
+			asset_id: T::AssetId,
+			size: T::Balance,
+		},
 
-		AssetMinTransferSizeChanged(
-			T::AssetId,
-			T::Balance,
-		),
+		AssetMinTransferSizeChanged {
+			asset_id: T::AssetId,
+			size: T::Balance,
+		},
 
-		LockupTimeChanged(
-			T::AccountId,
-			Timestamp, // old lockup time
-			Timestamp, // new lockup time
-			Vec<u8>, //
-		),
+		LockupTimeChanged{
+			sender: T::AccountId,
+			old_lockup_time: Timestamp,
+			lockup_time: Timestamp, 
+			action: Vec<u8>, 
+		},
 
-		MinFeeChanged(
-			T::Balance,
-		),
+		MinFeeChanged{
+			min_fee: T::Balance,
+		},
 
-		MaxFeeChanged(
-			T::Balance,
-		),
+		MaxFeeChanged {
+		   max_fee: T::Balance,
+		},
 
-		VaultCreated(
-			T:: AccountId, // asset manager
-			T::AssetId, // asset id
-			T::VaultId, // vault id
-			Perquintill, // reserved factor
-		),
+		VaultCreated {
+			sender: T:: AccountId, 
+			asset_id: T::AssetId,
+			vault_id: T::VaultId,
+			reserved: Perquintill, 
+		},
 
-		TransferFundsUnlocked(
-			T::AssetId, 
-			T::Balance, 
-			T::DepositId
-		),
+		TransferFundsUnlocked {
+			asset_id: T::AssetId, 
+			amount: T::Balance, 
+			deposit_id: T::DepositId
+		},
 
-		FeeTaken(
-            T::AccountId, // sender
-			T::AccountId, // receiver
-			T::AssetId,
-			T::Balance, // amount
-			T::Balance, // fee
-			T::DepositId,
-		),
+		FeeTaken{
+            sender: T::AccountId,
+			destination_account: T::AccountId,
+			asset_id: T::AssetId,
+			amount: T::Balance,
+			fee_absolute: T::Balance,
+			deposit_id: T::DepositId,
+		},
 
-		FeeThresholdChanged(
-           T::Balance,
-		),
+		FeeThresholdChanged{
+			new_fee_threshold: T::Balance,
+		},
 
-		Pause(
-			T::AccountId,
-		),
+		Pause{
+			sender: T::AccountId,
+		},
 
-		UnPause(
-			T::AccountId,
-		),
+		UnPause{
+			sender: T::AccountId,
+		},
 
-		FundsUnlocked(
-			T::AssetId,
-			T::AccountId,
-			T::Balance,
-			T::DepositId,
-		),
+		FundsUnlocked{
+			asset_id: T::AssetId,
+			user_account_id: T::AccountId,
+			amount: T::Balance,
+			deposit_id: T::DepositId,
+		},
 
-		LiquidityMoved(
-          T::AccountId,
-		  T::AccountId,
-		  T::Balance,
-		),
+		LiquidityMoved{
+			sender: T::AccountId,
+			to: T::AccountId,
+			withdrawable_balance: T::Balance,
+		},
 	}
 
 	#[allow(missing_docs)]
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Minting failures result in `MintFailed`. In general this should never occur.
+
 		MintFailed,
-		/// 
+
 		DepositFailed,
-		///
+
 		MaxAssetTransferSizeBelowMinimum,
-		///
+		
 		TransferDelayAboveMaximum,
-		///
+		
 		TransferDelayBelowMinimum,
-		/// max_asset_transfer_size
+
 		AmountAboveMaxAssetTransferSize,
-		/// 
+		 
 		AmountBelowMaxAssetTransferSize,
-		///
+		
 		MaxTransferDelayBelowMinimum,
-		///
+		
 		MinTransferDelayAboveMaximum,
-		///
+		
 	    MinFeeAboveFeeFactor,
-		///
+		
 		MaxFeeAboveFeeFactor,
-		/// 
+		 
 		MinFeeAboveMaxFee,
-		/// 
+		 
 		MaxFeeBelowMinFee,
 
 		AlreadCompleted,
@@ -437,7 +433,7 @@ pub mod pallet {
 
 		   <MinAssetTransferSize<T>>::insert(asset_id, min_asset_transfer_size);
 
-		   Self::deposit_event(Event::TokenAdded(asset_id, remote_asset_id, remote_network_id));
+		   Self::deposit_event(Event::TokenAdded{asset_id, remote_asset_id, remote_network_id});
 
 		   Ok(().into())
 		 }
@@ -457,7 +453,7 @@ pub mod pallet {
 
 			 <MinAssetTransferSize<T>>::remove(asset_id);
 
-             Self::deposit_event(Event::TokenRemoved(asset_id, remote_asset_id,  remote_network_id));
+             Self::deposit_event(Event::TokenRemoved{asset_id, remote_asset_id,  remote_network_id});
 
 			 Ok(().into())
 		 }
@@ -469,7 +465,7 @@ pub mod pallet {
 
 			 <MaxAssetTransferSize<T>>::insert(asset_id, size);
 
-			 Self::deposit_event(Event::AssetMaxTransferSizeChanged(asset_id, size));
+			 Self::deposit_event(Event::AssetMaxTransferSizeChanged {asset_id, size});
 
 			 Ok(().into())
 		 }
@@ -481,7 +477,7 @@ pub mod pallet {
 
 			 <MinAssetTransferSize<T>>::insert(asset_id, size);
 
-			 Self::deposit_event(Event::AssetMinTransferSizeChanged(asset_id, size));
+			 Self::deposit_event(Event::AssetMinTransferSizeChanged {asset_id, size});
 
 			 Ok(().into())
 		 }
@@ -495,7 +491,9 @@ pub mod pallet {
 
 			 <TransferLockupTime<T>>::put(lockup_time);
 
-			 Self::deposit_event(Event::LockupTimeChanged(sender, old_lockup_time, lockup_time, "Transfer".as_bytes().to_vec()));
+			 let action = "Transfer".as_bytes().to_vec();
+
+			 Self::deposit_event(Event::LockupTimeChanged{sender, old_lockup_time, lockup_time, action});
 
 			 Ok(().into())
 		 }	
@@ -509,7 +507,7 @@ pub mod pallet {
 
 			<MaxTransferDelay<T>>::put(new_max_transfer_delay);
 
-			Self::deposit_event(Event::MaxTransferDelayChanged(new_max_transfer_delay));
+			Self::deposit_event(Event::MaxTransferDelayChanged{new_max_transfer_delay});
 
 			Ok(().into())
 		 }
@@ -523,7 +521,7 @@ pub mod pallet {
             
 			<MinTransferDelay<T>>::put(new_min_transfer_delay);
 
-			Self::deposit_event(Event::MinTransferDelayChanged(new_min_transfer_delay));
+			Self::deposit_event(Event::MinTransferDelayChanged{new_min_transfer_delay});
 
 			Ok(().into())
 		 }
@@ -539,7 +537,7 @@ pub mod pallet {
 
             <MaxFee<T>>::put(max_fee);
 
-			Self::deposit_event(Event::MaxFeeChanged(max_fee));
+			Self::deposit_event(Event::MaxFeeChanged{max_fee});
 
 			Ok(().into())
 		 }
@@ -555,7 +553,7 @@ pub mod pallet {
 
             <MinFee<T>>::put(min_fee);
 
-			Self::deposit_event(Event::MinFeeChanged(min_fee));
+			Self::deposit_event(Event::MinFeeChanged{min_fee});
 
 			Ok(().into())
 		 }
@@ -569,7 +567,7 @@ pub mod pallet {
 
 			<FeeThreshold<T>>::put(new_fee_threshold);
 
-			Self::deposit_event(Event::FeeThresholdChanged(new_fee_threshold));
+			Self::deposit_event(Event::FeeThresholdChanged{new_fee_threshold});
 
 			Ok(().into())
 		 }
@@ -619,16 +617,16 @@ pub mod pallet {
 			let deposit_id = Self::generate_deposit_id(remote_network_id, &destination_address, pallet_account_id);
             <Deposits<T>>::insert(asset_id, DepositInfo{asset_id, amount});
 
-			Self::deposit_event(Event::DepositCompleted(
+			Self::deposit_event(Event::<T>::DepositCompleted{
 				sender,
 				asset_id,
-				Self::remote_asset_id(remote_network_id, asset_id),
+				remote_asset_id: Self::remote_asset_id(remote_network_id, asset_id),
 				remote_network_id,
 				destination_address,
 				amount, 
 				deposit_id,
 				transfer_delay
-			));
+			});
 
 			Ok(().into())
 		 }
@@ -678,24 +676,24 @@ pub mod pallet {
 			   
 				T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee_absolute, true).map_err(|_|Error::<T>::TransferFromFailed)?;
 				
-				Self::deposit_event(Event::FeeTaken(
+				Self::deposit_event(Event::FeeTaken{
 					sender, 
-					destination_account.clone(), // receiver
+					destination_account: destination_account.clone(), 
 					asset_id,
-					amount, // amount
-					fee_absolute, // fee
+					amount,
+					fee_absolute,
 					deposit_id,
-				));
+				});
 			 }
 
-			 Self::deposit_event(Event::WithdrawalCompleted(
+			 Self::deposit_event(Event::WithdrawalCompleted{
 				destination_account,
 				amount,
 				withdraw_amount,
 				fee_absolute,
 				asset_id,
 				deposit_id
-			 ));
+			 });
 
 			 Ok(().into())
 		 }
@@ -726,7 +724,7 @@ pub mod pallet {
  
 		 	<AssetVault<T>>::insert(asset_id, &vault_id);
  
-		 	Self::deposit_event(Event::VaultCreated(sender, asset_id, vault_id, reserved));
+		 	Self::deposit_event(Event::VaultCreated{sender, asset_id, vault_id, reserved});
  
 			 Ok(().into())
 		 }
@@ -757,7 +755,7 @@ pub mod pallet {
 
 		   <InTransferFunds<T>>::insert(asset_id, new_intransfer_funds);
 
-		   Self::deposit_event(Event::TransferFundsUnlocked(asset_id, amount, deposit_id));
+		   Self::deposit_event(Event::TransferFundsUnlocked{asset_id, amount, deposit_id});
 	
 			Ok(().into())
 		 }
@@ -787,7 +785,7 @@ pub mod pallet {
 
 			T::Currency::transfer(asset_id, &pallet_account_id, &user_account_id, amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
              
-			Self::deposit_event(Event::FundsUnlocked(asset_id,user_account_id, amount, deposit_id));
+			Self::deposit_event(Event::FundsUnlocked{asset_id,user_account_id, amount, deposit_id});
 
 			if Self::has_been_completed(deposit_id) == false {
 				Self::unlock_in_transfer_funds(origin, asset_id, amount, deposit_id)?;
@@ -820,7 +818,7 @@ pub mod pallet {
 
 			T::Currency::transfer(asset_id, &pallet_account_id, &to, withdrawable_balance, true).map_err(|_|Error::<T>::TransferFromFailed)?;
              
-		    Self::deposit_event(Event::LiquidityMoved(sender, to, withdrawable_balance));
+		    Self::deposit_event(Event::LiquidityMoved {sender, to, withdrawable_balance});
 
 			Ok(().into())
 		}
@@ -833,7 +831,7 @@ pub mod pallet {
             let sender = ensure_signed(origin)?;
 
 			 <PauseStatus<T>>::put(true);
-			 Self::deposit_event(Event::Pause(sender));
+			 Self::deposit_event(Event::Pause{sender});
 
 			 Ok(().into())
 		}
@@ -843,7 +841,7 @@ pub mod pallet {
             let sender = ensure_signed(origin)?;
 
 			 <PauseStatus<T>>::put(false);
-			 Self::deposit_event(Event::UnPause(sender));
+			 Self::deposit_event(Event::UnPause{sender});
 
 			 Ok(().into())
 		}
