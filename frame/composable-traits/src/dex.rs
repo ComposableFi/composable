@@ -100,6 +100,8 @@ pub trait CurveAmm {
 		who: &Self::AccountId,
 		assets: Vec<Self::AssetId>,
 		amplification_coefficient: Self::Balance,
+		fee: Permill,
+		admin_fee: Permill,
 	) -> Result<PoolId, DispatchError>;
 
 	/// Deposit coins into the pool
@@ -136,6 +138,13 @@ pub trait CurveAmm {
 		dx: Self::Balance,
 		min_dy: Self::Balance,
 	) -> Result<(), DispatchError>;
+
+	/// Withdraw admin fees
+	fn withdraw_admin_fees(
+		who: &Self::AccountId,
+		pool_id: PoolId,
+		admin_fee_account: &Self::AccountId,
+	) -> Result<(), DispatchError>;
 }
 
 /// Type that represents index type of token in the pool passed from the outside as an extrinsic
@@ -156,6 +165,12 @@ pub struct PoolInfo<AccountId, AssetId, Balance> {
 	pub assets: Vec<AssetId>,
 	/// Initial amplification coefficient
 	pub amplification_coefficient: Balance,
-	/// Current balances
+	/// Amount of the fee pool charges for the exchange
+	pub fee: Permill,
+	/// Amount of the admin fee pool charges for the exchange
+	pub admin_fee: Permill,
+	/// Current balances excluding admin_fee
 	pub balances: Vec<Balance>,
+	/// Current balances including admin_fee
+	pub total_balances: Vec<Balance>,
 }

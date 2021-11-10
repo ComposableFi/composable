@@ -5,7 +5,7 @@ use composable_traits::dex::CurveAmm as CurveAmmTrait;
 use frame_support::traits::fungibles::{Inspect, Mutate};
 use sp_runtime::{
 	traits::{Saturating, Zero},
-	FixedPointNumber, FixedU128,
+	FixedPointNumber, FixedU128, Permill,
 };
 use sp_std::cmp::Ordering;
 
@@ -124,6 +124,8 @@ fn add_remove_liquidity() {
 	new_test_ext().execute_with(|| {
 		let assets = vec![MockCurrencyId::BTC, MockCurrencyId::USDT];
 		let amp_coeff = 2u128;
+		let fee = Permill::zero();
+		let admin_fee = Permill::zero();
 
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, 200000));
@@ -137,7 +139,7 @@ fn add_remove_liquidity() {
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &BOB, 20));
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 20);
-		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff);
+		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff, fee, admin_fee);
 		assert_ok!(&p);
 		let pool_id = p.unwrap();
 		let pool = CurveAmm::pool(pool_id);
@@ -159,14 +161,20 @@ fn add_remove_liquidity() {
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200000 - 130000);
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 20 - 2);
 		let min_amt = vec![0u128, 0u128];
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CurveAmm::account_id(&pool_id)), 4);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)), 260000);
 		assert_ok!(CurveAmm::remove_liquidity(&ALICE, pool_id, alice_balance, min_amt.clone()));
 		assert_eq!(Tokens::balance(pool_info.pool_asset, &ALICE), 0);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200000);
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 20);
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CurveAmm::account_id(&pool_id)), 2);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)), 130000);
 		assert_ok!(CurveAmm::remove_liquidity(&BOB, pool_id, bob_balance, min_amt.clone()));
 		assert_eq!(Tokens::balance(pool_info.pool_asset, &BOB), 0);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200000);
 		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 20);
+		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CurveAmm::account_id(&pool_id)), 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)), 0);
 	});
 }
 
@@ -175,6 +183,8 @@ fn exchange_test() {
 	new_test_ext().execute_with(|| {
 		let assets = vec![MockCurrencyId::BTC, MockCurrencyId::USDT];
 		let amp_coeff = 2u128;
+		let fee = Permill::zero();
+		let admin_fee = Permill::zero();
 
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, 200000));
@@ -191,7 +201,7 @@ fn exchange_test() {
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &CHARLIE, 200000));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), 200000);
-		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff);
+		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff, fee, admin_fee);
 		assert_ok!(&p);
 		let pool_id = p.unwrap();
 		let pool = CurveAmm::pool(pool_id);
