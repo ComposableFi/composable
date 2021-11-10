@@ -3998,6 +3998,7 @@ dependencies = [
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
+ "pallet-society",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
