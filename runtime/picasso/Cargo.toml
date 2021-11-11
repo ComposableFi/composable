@@ -51,6 +51,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 smallvec = "1.6.1"
 
 # local modules
+assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false, optional = true }
 crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
 common = { path = "../common", default-features = false }
@@ -150,9 +151,11 @@ std = [
 	"assets-registry/std",
 ]
 runtime-benchmarks = [
+	"assets/runtime-benchmarks",
+	"balances/runtime-benchmarks",
 	"benchmarking",
-    "support/runtime-benchmarks",
-    "system-benchmarking",
+	"support/runtime-benchmarks",
+	"system-benchmarking",
 	"frame-system/runtime-benchmarks",
 	"hex-literal",
 	"balances/runtime-benchmarks",

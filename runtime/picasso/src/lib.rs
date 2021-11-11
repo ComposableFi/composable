@@ -857,7 +857,7 @@ pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false
+			return false;
 		}
 		!matches!(
 			call,
@@ -1126,6 +1126,8 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, collective, Council);
 			list_benchmark!(list, extra, crowdloan_bonus, LiquidCrowdloan);
 			list_benchmark!(list, extra, utility, Utility);
+			list_benchmark!(list, extra, vault, Vault);
+			list_benchmark!(list, extra, assets, Assets);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1173,6 +1175,8 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, collective, Council);
 			add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
 			add_benchmark!(params, batches, utility, Utility);
+			add_benchmark!(params, batches, vault, Vault);
+			add_benchmark!(params, batches, assets, Assets);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
