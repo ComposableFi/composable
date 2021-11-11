@@ -7,7 +7,12 @@
     "/dns/bn2.composablefinance.ninja/tcp/30333/p2p/12D3KooWNZ2Dwy8nx4cR1Ak4JHoPRubAPCP5Rtqp6jmndT1xDBca",
     "/dns/bn3.composablefinance.ninja/tcp/30333/p2p/12D3KooWQUAg4L3fcAYBf9wqVZYTv7KMAagAHpkRCcra4zyjA4xo"
   ],
-  "telemetryEndpoints": null,
+  "telemetryEndpoints": [
+    [
+      "/dns/telemetry.polkadot.io/tcp/443/x-parity-wss/%2Fsubmit%2F",
+      0
+    ]
+  ],
   "protocolId": "dali",
   "properties": {
     "ss58Format": 49,
