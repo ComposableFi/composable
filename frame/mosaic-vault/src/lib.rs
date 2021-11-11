@@ -3,7 +3,7 @@
 pub mod mocks;
 pub mod traits;
 
-pub use pallet::*;
+// pub use pallet::*;
 
 #[cfg(test)]
 mod tests;
@@ -20,7 +20,7 @@ pub mod pallet {
 		},
 		PalletId,
 	};
-
+	use sp_arithmetic::per_things::Perquintill;
 	use sp_core::hashing::keccak_256;
 	use frame_system::pallet_prelude::*;
  	use scale_info::TypeInfo;
@@ -32,7 +32,7 @@ pub mod pallet {
 			Saturating, CheckedSub, CheckedAdd, CheckedMul, CheckedDiv, Zero,
 			
 		 },
-		  Perquintill,
+		// Perquintill,
 	};
 	use composable_traits::{loans::Timestamp, vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig }};
 
@@ -708,7 +708,9 @@ pub mod pallet {
 			 origin: OriginFor<T>,
 			 asset_id: <T as Config>::AssetId,
 			 reserved: Perquintill,
-		 ) -> DispatchResultWithPostInfo {
+		 ) -> DispatchResultWithPostInfo {//Result<(Self::MarketId,T::Vault::VaultId), DispatchResultWithPostInfo> {
+
+			// type MarketId = T::AccountId;
 
 			T::AdminOrigin::ensure_origin(origin.clone())?;
 

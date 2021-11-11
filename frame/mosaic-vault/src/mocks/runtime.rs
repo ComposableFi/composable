@@ -96,17 +96,17 @@ parameter_types! {
 	pub const ExistentialDeposit: u64 = 1000;
 }
 
-impl pallet_balances::Config for Test {
-	type Balance = Balance;
-	type Event = Event;
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = ();
-	type MaxLocks = ();
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-}
+// impl pallet_balances::Config for Test {
+// 	type Balance = Balance;
+// 	type Event = Event;
+// 	type DustRemoval = ();
+// 	type ExistentialDeposit = ExistentialDeposit;
+// 	type AccountStore = System;
+// 	type WeightInfo = ();
+// 	type MaxLocks = ();
+// 	type MaxReserves = ();
+// 	type ReserveIdentifier = [u8; 8];
+// }
 
 parameter_types! {
 	pub const DynamicCurrencyIdInitial: MockCurrencyId = MockCurrencyId::LpToken(0);
@@ -203,7 +203,7 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
         System: system::{ Pallet, Call, Storage, Config, Event<T>},
-        Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+        // Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
         Timestamp: pallet_timestamp::{Pallet, Call, Storage},
         LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
         Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
