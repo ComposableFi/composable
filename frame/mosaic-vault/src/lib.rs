@@ -3,7 +3,7 @@
 pub mod mocks;
 pub mod traits;
 
-// pub use pallet::*;
+pub use pallet::*;
 
 #[cfg(test)]
 mod tests;
@@ -969,4 +969,5 @@ pub mod pallet {
 			deposit_id
 		}
 	}
+
  }

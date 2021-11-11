@@ -1,7 +1,9 @@
+
+use crate::{self as mosaic_vault, *};
+//use crate as mosaic_vault;
 use super::currency_factory::MockCurrencyId;
 use super::*;
-use crate::*;
-use crate as mosaic_vault;
+// use crate::*;
 use frame_support::{
     ord_parameter_types,
     construct_runtime,parameter_types,
@@ -19,6 +21,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
 	RuntimeAppPublic,
 };
+// use sp_runtime::generic::UncheckedExtrinsic;
 
 pub type BlockNumber = u64;
 pub type Balance = u128;
@@ -38,9 +41,6 @@ pub const CHARLIE: AccountId = 0;
 pub const JEREMY: AccountId = 0;
 pub const ACCOUNT_FREE_START: AccountId = JEREMY + 1;
 pub const ACCOUNT_INITIAL_AMOUNT: u128 = 1_000_000;
-
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
 
@@ -157,10 +157,6 @@ impl pallet_timestamp::Config for Test {
     type WeightInfo = ();
 }
 
-// ord_parameter_types! {
-// 	pub const RootAccount: AccountId = get_account_2();
-// }
-
 parameter_types! {
     pub const FeeFactor: Balance = 100;
     pub const ThresholdFactor:Balance = 100;
@@ -168,7 +164,7 @@ parameter_types! {
     pub const MosaicVaultId: PalletId = PalletId(*b"test_pid");
     pub const MaxFeeDefault: Balance = 500;
     pub const MinFeeDefault: Balance = 0;
-    pub const One: AccountId = 1;
+    pub const One: u128 = AccountId = 1;
 }
 
 impl mosaic_vault::Config for Test {
@@ -195,6 +191,9 @@ impl mosaic_vault::Config for Test {
     type AdminOrigin = EnsureSignedBy<One, AccountId>;//<RootAccount, sp_core::sr25519::Public>;
 }
 
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+type Block = frame_system::mocking::MockBlock<Test>;
+
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
 	pub enum Test where
@@ -203,13 +202,11 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
         System: system::{ Pallet, Call, Storage, Config, Event<T>},
-        // Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
         Timestamp: pallet_timestamp::{Pallet, Call, Storage},
         LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
-        Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+        Tokens: orml_tokens::{Pallet,Storage, Event<T>, Config<T>},
         Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
-        MosaicVault: mosaic_vault::{ Pallet, Call, Storage, Event<T> },
-
+        MosaicVault: mosaic_vault::{ Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -227,21 +224,6 @@ impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-        // pallet_balances::GenesisConfig::<Test> {
-        //     balances: Vec![
-        //         (1, 10),
-        //         (2, 16), 
-        //         (3, 200),
-        //         (4, 200),
-        //         (5, 100),
-        //         (6, 200),
-        //         (7, 140),
-        //         (8, 230),
-        //         (9, 188),
-        //         (10, 120),
-        //     ],
-        // }.assimilate_storage(&mut t)
-        //   .unwrap();
 
 		orml_tokens::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut t)
@@ -250,14 +232,3 @@ impl ExtBuilder {
 		t.into()
 	}
 }
-
-// pub fn get_account_2() -> AccountId {
-// 	const PHRASE: &str = "topic say join drop loud labor little chest public squeeze fossil coil";
-// 	let keystore = KeyStore::new();
-// 	SyncCryptoStore::sr25519_generate_new(
-// 		&keystore,
-// 		crate::crypto::Public::ID,
-// 		Some(&format!("{}/hunter1", PHRASE)),
-// 	)
-// 	.unwrap()
-// }

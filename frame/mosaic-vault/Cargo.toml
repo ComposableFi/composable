@@ -17,7 +17,6 @@ version = "2.0.0"
 [dependencies]
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12"  }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-io = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
@@ -25,23 +24,22 @@ sp-core = { default-features = false,  git = "https://github.com/paritytech/subs
 sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
-
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
-[dependencies.serde]
-version = '1.0.126'
-
-[dev-dependencies]
 proptest = "0.9.6"
 # serde = "1.0.119"
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b89b1f98fcf0f5c341fbef1d12bfd869a2f2a9fe" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b89b1f98fcf0f5c341fbef1d12bfd869a2f2a9fe", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84", default-features = false }
 pallet-vault = { version = "0.0.1", path = "../vault" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+
+
+[dependencies.serde]
+version = '1.0.126'
 
 [features]
 default = ["std"]
@@ -57,6 +55,8 @@ std = [
     "sp-arithmetic/std",
 	"composable-traits/std",
     "pallet-vault/std",
+    "pallet-timestamp/std",
+    "orml-tokens/std",
     "pallet-currency-factory/std",
     "pallet-balances/std",
     "scale-info/std",
