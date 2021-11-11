@@ -29,5 +29,8 @@ pub trait Oracle {
 	fn get_price(of: Self::AssetId)
 		-> Result<Price<Self::Balance, Self::Timestamp>, DispatchError>;
 
-	fn get_twap(of: Self::AssetId, weighting: Vec<Self::Balance>) -> Result<Self::Balance, DispatchError>;
+	fn get_twap(
+		of: Self::AssetId,
+		weighting: Vec<Self::Balance>,
+	) -> Result<Self::Balance, DispatchError>;
 }

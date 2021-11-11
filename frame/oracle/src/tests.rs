@@ -12,9 +12,8 @@ use parking_lot::RwLock;
 use sp_core::offchain::{testing, OffchainDbExt, OffchainWorkerExt, TransactionPoolExt};
 use sp_io::TestExternalities;
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
-use sp_runtime::{Percent, RuntimeAppPublic};
+use sp_runtime::{traits::BadOrigin, Percent, RuntimeAppPublic};
 use std::sync::Arc;
-use sp_runtime::traits::BadOrigin;
 
 #[test]
 fn add_asset_and_info() {
@@ -554,7 +553,6 @@ fn get_twap() {
 
 		let err_2_twap = Oracle::get_twap(0, vec![10, 10, 10, 10, 60]);
 		assert_eq!(err_2_twap, Err(Error::<Test>::DepthTooLarge.into()));
-
 	});
 }
 

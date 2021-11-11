@@ -17,8 +17,10 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
+	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::oracle::{Oracle, Price as LastPrice};
+	use core::ops::{Div, Mul};
 	use frame_support::{
 		dispatch::{DispatchResult, DispatchResultWithPostInfo},
 		pallet_prelude::*,
@@ -29,8 +31,6 @@ pub mod pallet {
 		},
 		weights::{DispatchClass::Operational, Pays},
 	};
-	use sp_std::vec::Vec;
-	pub use crate::weights::WeightInfo;
 	use frame_system::{
 		offchain::{
 			AppCrypto, CreateSignedTransaction, SendSignedTransaction, SignedPayload, Signer,
@@ -47,8 +47,7 @@ pub mod pallet {
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
 		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
 	};
-	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
-	use core::ops::{Mul, Div};
+	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec, vec::Vec};
 
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
@@ -312,7 +311,7 @@ pub mod pallet {
 		ExceedStake,
 		MustSumTo100,
 		DepthTooLarge,
-		ArithmeticError
+		ArithmeticError,
 	}
 
 	#[pallet::hooks]
@@ -340,7 +339,10 @@ pub mod pallet {
 			Ok(LastPrice { price, block })
 		}
 
-		fn get_twap(of: Self::AssetId, weighting: Vec<Self::Balance>) -> Result<Self::Balance, DispatchError> {
+		fn get_twap(
+			of: Self::AssetId,
+			weighting: Vec<Self::Balance>,
+		) -> Result<Self::Balance, DispatchError> {
 			Self::get_twap(of, weighting)
 		}
 	}
@@ -385,7 +387,6 @@ pub mod pallet {
 			));
 			Ok(().into())
 		}
-
 
 		/// Call for a signer to be set, called from controller, adds stake.
 		///
@@ -716,7 +717,10 @@ pub mod pallet {
 			last_update.block + asset_info.block_interval < current_block
 		}
 
-		pub fn get_twap(asset_id: T::AssetId, mut price_weights: Vec<T::PriceValue>) -> Result< T::PriceValue, DispatchError> {
+		pub fn get_twap(
+			asset_id: T::AssetId,
+			mut price_weights: Vec<T::PriceValue>,
+		) -> Result<T::PriceValue, DispatchError> {
 			let precision: T::PriceValue = 100u128.into();
 			let historical_prices = Self::price_history(asset_id);
 			// add an extra to account for current price not stored in history
@@ -728,7 +732,12 @@ pub mod pallet {
 				.iter()
 				.enumerate()
 				.map(|(i, weight)| {
-					weight.mul(historical_prices[historical_prices.len() - price_weights.len() + i].price).div(precision)
+					weight
+						.mul(
+							historical_prices[historical_prices.len() - price_weights.len() + i]
+								.price,
+						)
+						.div(precision)
 				})
 				.collect::<Vec<_>>();
 			let current_price = Self::prices(asset_id);
@@ -740,7 +749,9 @@ pub mod pallet {
 		}
 
 		fn price_values_sum(price_values: &[T::PriceValue]) -> T::PriceValue {
-			price_values.iter().fold(T::PriceValue::from(0u128), |acc, b| acc.saturating_add(*b))
+			price_values
+				.iter()
+				.fold(T::PriceValue::from(0u128), |acc, b| acc.saturating_add(*b))
 		}
 
 		pub fn fetch_price_and_send_signed(price_id: &T::AssetId) -> Result<(), &'static str> {

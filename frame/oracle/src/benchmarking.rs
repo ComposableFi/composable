@@ -169,7 +169,7 @@ benchmarks! {
 			}
 		})
 		.collect::<Vec<_>>();
-		// the worst scenerio is when we need to remove a price first so gonna need to fill the price history 
+		// the worst scenerio is when we need to remove a price first so gonna need to fill the price history
 		let price = Price { price: 100u32.into(), block };
 		let historic_prices = vec![price; T::MaxHistory::get() as usize];
 		PriceHistory::<T>::insert(asset_id, historic_prices);
