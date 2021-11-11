@@ -2,11 +2,11 @@ use crate::*;
 use composable_traits::currency::MultiCurrency;
 use mocks::{new_test_ext, GovernanceRegistry, Origin, Test};
 
-const FROM_ACCOUNT: u64 = 1;
-const TO_ACCOUNT: u64 = 2;
-const ASSET_ID: u64 = 1;
-const INIT_AMOUNT: u64 = 1000;
-const TRANSFER_AMOUNT: u64 = 500;
+pub const FROM_ACCOUNT: u64 = 1;
+pub const TO_ACCOUNT: u64 = 2;
+pub const ASSET_ID: u64 = 1;
+pub const INIT_AMOUNT: u64 = 1000;
+pub const TRANSFER_AMOUNT: u64 = 500;
 
 #[test]
 fn set_only_by_root() {

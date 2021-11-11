@@ -158,6 +158,7 @@ std = [
 	"governance-registry/std"
 ]
 runtime-benchmarks = [
+	"assets/runtime-benchmarks",
 	"balances/runtime-benchmarks",
 	"benchmarking",
 	"collator-selection/runtime-benchmarks",

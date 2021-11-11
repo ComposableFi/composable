@@ -51,13 +51,16 @@
 pub use pallet::*;
 
 mod orml;
-pub mod weights;
 
 #[cfg(test)]
 mod mocks;
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
