@@ -1,10 +1,15 @@
 use super::*;
 
-use crate::tests::{ASSET_ID, FROM_ACCOUNT, INIT_AMOUNT, TO_ACCOUNT, TRANSFER_AMOUNT};
 use crate::Pallet as Assets;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
 use sp_std::prelude::*;
+
+const FROM_ACCOUNT: u64 = 1;
+const TO_ACCOUNT: u64 = 2;
+const ASSET_ID: u64 = 1;
+const INIT_AMOUNT: u64 = 1000;
+const TRANSFER_AMOUNT: u64 = 500;
 
 benchmarks! {
 	transfer {
