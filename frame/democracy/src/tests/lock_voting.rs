@@ -116,10 +116,10 @@ fn lock_voting_should_work() {
 		// 2 doesn't need to reap_vote here because it was already done before.
 		fast_forward_to(25);
 		assert_ok!(Democracy::unlock(Origin::signed(1), 2, DefaultAsset));
-		assert_eq!(Tokens::balance_on_hold(DefaultAsset, &3), 20);
+		assert_eq!(Tokens::balance_on_hold(DefaultAsset, &2), 20);
 		fast_forward_to(26);
 		assert_ok!(Democracy::unlock(Origin::signed(1), 2, DefaultAsset));
-		assert_eq!(Tokens::balance_on_hold(DefaultAsset, &3), 0);
+		assert_eq!(Tokens::balance_on_hold(DefaultAsset, &2), 0);
 	});
 }
 
