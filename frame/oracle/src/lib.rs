@@ -729,7 +729,8 @@ pub mod pallet {
 			ensure!(historical_prices.len() + 1 >= price_weights.len(), Error::<T>::DepthTooLarge);
 			let sum = Self::price_values_sum(&price_weights);
 			ensure!(sum == precision, Error::<T>::MustSumTo100);
-			let last_weight = price_weights.pop().unwrap_or(0u128.into());
+			let last_weight = price_weights.pop().unwrap_or_else(|| 0u128.into());
+			ensure!(last_weight != 0u128.into(), Error::<T>::ArithmeticError);
 			let mut weighted_prices = price_weights
 				.iter()
 				.enumerate()
