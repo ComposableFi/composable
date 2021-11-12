@@ -309,7 +309,9 @@ pub mod pallet {
 		PriceNotFound,
 		/// Stake exceeded
 		ExceedStake,
+		/// Price weight must sum to 100
 		MustSumTo100,
+		/// Too many weighted averages requested
 		DepthTooLarge,
 		ArithmeticError,
 	}
