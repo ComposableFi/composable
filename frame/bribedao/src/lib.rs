@@ -9,11 +9,7 @@ pub use crate::vecstorage::FastMap;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::Codec;
-	use composable_traits::{
-		bribe::Bribe,
-		democracy::Democracy,
-		vault::{Deposit, Vault, VaultConfig},
-	};
+	use composable_traits::{bribe::Bribe, democracy::Democracy};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::fungibles::{InspectHold, MutateHold, Transfer},
@@ -24,11 +20,8 @@ pub mod pallet {
 	use pallet_democracy::Vote;
 	//	use primitives::currency::CurrencyId;
 	use crate::vecstorage::FastMap;
-	use pallet_vault::models::VaultInfo;
-	use sp_runtime::{
-		traits::{AtLeast32BitUnsigned, Zero},
-		Perquintill,
-	};
+	//	use pallet_vault::models::VaultInfo;
+	use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 	use sp_std::fmt::Debug;
 
 	pub type BribeIndex = u32;
@@ -115,9 +108,9 @@ pub mod pallet {
 	#[pallet::getter(fn bribe_count)]
 	pub(super) type BribeCount<T: Config> = StorageValue<_, BribeIndex, ValueQuery>;
 
-	//	#[pallet::storage]
-	//	#[pallet::getter(fn fast_vec)]
-	//	pub(super) type myfastvec<T: Config> = FastVec::new();
+	#[pallet::storage]
+	#[pallet::getter(fn fast_vec)]
+	pub(super) type MyFastvec<T: Config> = StorageValue<_, FastMap>;//::new();
 
 	#[pallet::storage]
 	#[pallet::getter(fn bribe_requests)]
