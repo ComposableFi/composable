@@ -332,7 +332,6 @@ pub mod pallet {
 		DepositsHalted,
 		/// The vault has withdrawals halted, see [Capabilities](crate::capabilities::Capability).
 		WithdrawalsHalted,
-		OnlyManagerCanDoThisOperation,
 	}
 
 	#[pallet::call]
@@ -491,20 +490,6 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		/// liquidates strategy allocation
-		pub fn do_liquidate(
-			origin: OriginFor<T>,
-			vault_id: &VaultIndex,
-			strategy_account_id: &T::AccountId,
-		) -> DispatchResult {
-			let from = ensure_signed(origin)?;
-			let vault =
-				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
-			ensure!(from != vault.manager, Error::<T>::OnlyManagerCanDoThisOperation);
-			Allocations::<T>::remove(vault_id, strategy_account_id);
-			Ok(())
-		}
-
 		pub fn do_create_vault(
 			deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
 			config: VaultConfig<T::AccountId, T::AssetId>,
