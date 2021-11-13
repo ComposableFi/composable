@@ -35,10 +35,11 @@ pub type AccountId = u128;
 
 pub const MINIMUM_BALANCE: Balance = 1000;
 // accounts 
-pub const ALICE: AccountId = 0;
-pub const BOB: AccountId = 0;
-pub const CHARLIE: AccountId = 0;
-pub const JEREMY: AccountId = 0;
+pub const RELAYER: AccountId = 0;
+pub const ALICE: AccountId = 1;
+pub const BOB: AccountId = 2;
+pub const CHARLIE: AccountId = 4;
+pub const JEREMY: AccountId = 5;
 pub const ACCOUNT_FREE_START: AccountId = JEREMY + 1;
 pub const ACCOUNT_INITIAL_AMOUNT: u128 = 1_000_000;
 
@@ -167,7 +168,8 @@ parameter_types! {
 }
 
 ord_parameter_types! {
-	pub const One: AccountId = 1;
+	pub const ADMIN: AccountId = ALICE;
+    pub const RELAYER: AccountId = RELAYER;
 }
 
 impl mosaic_vault::Config for Test {
@@ -190,8 +192,8 @@ impl mosaic_vault::Config for Test {
     type BlockTimestamp = Timestamp;
     type MaxFeeDefault = MaxFeeDefault;
     type MinFeeDefault = MinFeeDefault;
-    type RelayerOrigin = EnsureSignedBy<One, AccountId>;//<RootAccount, sp_core::sr25519::Public>;
-    type AdminOrigin = EnsureSignedBy<One, AccountId>;//<RootAccount, sp_core::sr25519::Public>;
+    type RelayerOrigin = EnsureSignedBy<RELAYER, AccountId>;//<RootAccount, sp_core::sr25519::Public>;
+    type AdminOrigin = EnsureSignedBy<ADMIN, AccountId>;//<RootAccount, sp_core::sr25519::Public>;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -212,7 +214,6 @@ construct_runtime!(
         MosaicVault: mosaic_vault::{ Pallet, Call, Storage, Event<T>},
 	}
 );
-
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId, MockCurrencyId, Balance)>,
@@ -236,3 +237,5 @@ impl ExtBuilder {
 		t.into()
 	}
 }
+
+
