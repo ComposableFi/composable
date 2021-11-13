@@ -378,13 +378,12 @@ parameter_types! {
 
 	/// TODO: discuss with omar/cosmin
 	pub const MinStake: Balance = 1000 * PICA;
-	pub const RequestCost: Balance = PICA;
 	pub const RewardAmount: Balance = 5 * PICA;
 	// Shouldn't this be a ratio based on locked amount?
 	pub const SlashAmount: Balance = 5;
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
-
+	pub const MaxHistory: u32 = 20;
 }
 
 impl oracle::Config for Runtime {
@@ -397,11 +396,11 @@ impl oracle::Config for Runtime {
 	type MinStake = MinStake;
 	type StalePrice = StalePrice;
 	type AddOracle = EnsureRootOrHalfCouncil;
-	type RequestCost = RequestCost;
 	type RewardAmount = RewardAmount;
 	type SlashAmount = SlashAmount;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
+	type MaxHistory = MaxHistory;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 }
 

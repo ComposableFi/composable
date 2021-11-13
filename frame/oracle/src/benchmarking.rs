@@ -39,28 +39,14 @@ benchmarks! {
 		let threshold = Percent::from_percent(80);
 		let min_answers = 3;
 		let max_answers = 5;
+		let block_interval: T::BlockNumber = 5u32.into();
 	}: {
 		assert_ok!(
-			<Oracle<T>>::add_asset_and_info(caller, asset_id.into(), threshold, min_answers, max_answers)
+			<Oracle<T>>::add_asset_and_info(caller, asset_id.into(), threshold, min_answers, max_answers, block_interval)
 		);
 	}
 	verify {
-		assert_last_event::<T>(Event::AssetInfoChange(asset_id.into(), threshold, min_answers, max_answers).into());
-	}
-
-	request_price {
-		let caller: T::AccountId = whitelisted_caller();
-		let asset_id: T::AssetId = 1.into();
-		AssetsInfo::<T>::insert(asset_id, AssetInfo {
-			threshold: Percent::from_percent(80),
-			min_answers: 3,
-			max_answers: 5,
-		});
-		AssetsCount::<T>::mutate(|a| *a += 1);
-		T::Currency::make_free_balance_be(&caller, T::RequestCost::get() + T::Currency::minimum_balance());
-	}: _(RawOrigin::Signed(caller.clone()), asset_id)
-	verify {
-		assert_last_event::<T>(Event::PriceRequested(caller, asset_id).into())
+		assert_last_event::<T>(Event::AssetInfoChange(asset_id.into(), threshold, min_answers, max_answers, block_interval).into());
 	}
 
 	set_signer {
@@ -71,7 +57,7 @@ benchmarks! {
 		T::Currency::make_free_balance_be(&caller, stake + T::Currency::minimum_balance());
 	}: _(RawOrigin::Signed(caller.clone()), signer.clone())
 	verify {
-		assert_last_event::<T>(Event::StakeAdded(signer, stake, stake).into());
+		assert_last_event::<T>(Event::SignerSet(signer, caller).into());
 	}
 
 	add_stake {
@@ -117,12 +103,13 @@ benchmarks! {
 		let asset_id: T::AssetId = 1.into();
 		let stake = T::MinStake::get();
 		OracleStake::<T>::insert(&caller, stake);
-		Requested::<T>::insert(asset_id, true);
 		AssetsInfo::<T>::insert(asset_id, AssetInfo {
 			threshold: Percent::from_percent(80),
 			min_answers: 1,
 			max_answers: T::MaxAnswerBound::get(),
+			block_interval: 0u32.into(),
 		});
+		frame_system::Pallet::<T>::set_block_number(6u32.into());
 		PrePrices::<T>::mutate(asset_id, |current_prices| -> DispatchResult {
 			for (i, price_submitter) in price_submitters.iter().enumerate() {
 				let set_price = PrePrice {
@@ -148,6 +135,7 @@ benchmarks! {
 			threshold: Percent::from_percent(80),
 			min_answers: 1,
 			max_answers: p,
+			block_interval: 5u32.into(),
 		};
 		let pre_prices = (0..p).map(|i| {
 			PrePrice {
@@ -165,12 +153,13 @@ benchmarks! {
 	update_price {
 		let p in 1 .. T::MaxAnswerBound::get();
 		let who: T::AccountId = whitelisted_caller();
-		let asset_id =  1;
+		let asset_id: T::AssetId =  T::AssetId::from(1u128);
 		let block = T::StalePrice::get();
 		let asset_info = AssetInfo {
 			threshold: Percent::from_percent(80),
 			min_answers: 1,
 			max_answers: p,
+			block_interval: 5u32.into(),
 		};
 		let pre_prices = (0..p).map(|_| {
 			PrePrice {
@@ -180,8 +169,12 @@ benchmarks! {
 			}
 		})
 		.collect::<Vec<_>>();
+		// the worst scenerio is when we need to remove a price first so gonna need to fill the price history
+		let price = Price { price: 100u32.into(), block };
+		let historic_prices = vec![price; T::MaxHistory::get() as usize];
+		PriceHistory::<T>::insert(asset_id, historic_prices);
 	}: {
-		Oracle::<T>::update_price(asset_id.into(), asset_info, block, pre_prices)
+		Oracle::<T>::update_price(asset_id, asset_info.into(), block, pre_prices)
 	}
 }
 
