@@ -708,9 +708,7 @@ pub mod pallet {
 			 origin: OriginFor<T>,
 			 asset_id: <T as Config>::AssetId,
 			 reserved: Perquintill,
-		 ) -> DispatchResultWithPostInfo {//Result<(Self::MarketId,T::Vault::VaultId), DispatchResultWithPostInfo> {
-
-			// type MarketId = T::AccountId;
+		 ) -> DispatchResultWithPostInfo {
 
 			T::AdminOrigin::ensure_origin(origin.clone())?;
 
