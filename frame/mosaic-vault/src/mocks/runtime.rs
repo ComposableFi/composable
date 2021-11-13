@@ -49,7 +49,7 @@ parameter_types!{
 }
 
 impl system::Config for Test {
-    type AccountId = u64;
+    type AccountId = AccountId;////u64;
     type Origin = Origin;
     type Index = u64;
     type BlockNumber = BlockNumber;
@@ -164,7 +164,10 @@ parameter_types! {
     pub const MosaicVaultId: PalletId = PalletId(*b"test_pid");
     pub const MaxFeeDefault: Balance = 500;
     pub const MinFeeDefault: Balance = 0;
-    pub const One: u128 = AccountId = 1;
+}
+
+ord_parameter_types! {
+	pub const One: AccountId = 1;
 }
 
 impl mosaic_vault::Config for Test {
@@ -210,8 +213,9 @@ construct_runtime!(
 	}
 );
 
+
 pub struct ExtBuilder {
-	balances: Vec<(u64, MockCurrencyId, u128)>, // accoun_id // cuurency_id // balance
+	balances: Vec<(AccountId, MockCurrencyId, Balance)>,
 }
 
 impl Default for ExtBuilder {
