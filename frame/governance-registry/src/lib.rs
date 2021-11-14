@@ -1,3 +1,6 @@
+//! # Governance Registry Pallet
+//!
+//! Is used to add new assets into chain.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
@@ -89,7 +92,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		/// Gets the orgin associated with the asset.
+		/// Gets the origin associated with the asset.
 		///
 		/// # Errors
 		///  - When the asset has no associated mapping
