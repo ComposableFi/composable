@@ -7,7 +7,7 @@ use super::*;
 use frame_support::{
     ord_parameter_types,
     construct_runtime,parameter_types,
-    traits::{Everything, GenesisBuild},
+    traits::{Everything, GenesisBuild, UnixTime},
     PalletId,
 };
 use sp_keystore::{testing::KeyStore, SyncCryptoStore};
@@ -18,9 +18,31 @@ use num_traits::Zero;
 use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
 	testing::{Header, TestXt},
-	traits::{BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
+	traits::{BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify, Saturating},
 	RuntimeAppPublic,
 };
+
+use std::time::{SystemTime, UNIX_EPOCH};
+
+// use sp_runtime::{
+//     traits::{
+//        AtLeast32BitUnsigned, Convert, AccountIdConversion, 
+//        Saturating, CheckedSub, CheckedAdd, CheckedMul, CheckedDiv, Zero,
+       
+//     },
+//    // Perquintill,
+// };
+
+// use frame_support::{
+//     ensure,
+//     pallet_prelude::*,
+//     traits::{
+//         EnsureOrigin,
+//         UnixTime,
+//         fungibles::{Mutate, Transfer}
+//     },
+//     PalletId,
+// };
 // use sp_runtime::generic::UncheckedExtrinsic;
 
 pub type BlockNumber = u64;
@@ -221,7 +243,9 @@ pub struct ExtBuilder {
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self { balances: Vec::new() }
+		Self { balances: vec![
+            (ALICE, MockCurrencyId::A, 1000000000)
+        ] }
 	}
 }
 

@@ -366,7 +366,7 @@ pub mod pallet {
 
 		AmountAboveMaxAssetTransferSize,
 		 
-		AmountBelowMaxAssetTransferSize,
+		AmountBelowMinAssetTransferSize,
 		
 		MaxTransferDelayBelowMinimum,
 		
@@ -591,9 +591,9 @@ pub mod pallet {
 
 			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 
-			Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
-
 			ensure!(amount != T::Balance::zero(), Error::<T>::ZeroAmount);
+
+			Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
 
 			ensure!(Self::last_transfer(&sender).checked_add(Self::transfer_lockup_time()).ok_or(Error::<T>::Overflow)? < T::BlockTimestamp::now().as_secs(), Error::<T>::TransferNotPossible);
            
@@ -603,7 +603,7 @@ pub mod pallet {
 
 			ensure!(amount <= Self::max_asset_transfer_size(asset_id), Error::<T>::AmountAboveMaxAssetTransferSize);
 
-			ensure!(amount >= Self::min_asset_transfer_size(asset_id), Error::<T>::AmountBelowMaxAssetTransferSize);
+			ensure!(amount >= Self::min_asset_transfer_size(asset_id), Error::<T>::AmountBelowMinAssetTransferSize);
 
 			// update in_transfer_funds
 			let in_transfer_funds = Self::in_transfer_funds(asset_id);
@@ -615,7 +615,7 @@ pub mod pallet {
 			T::Currency::transfer(asset_id, &sender, &pallet_account_id, amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
             // deposit to valut
 			let vault_id = <AssetVault<T>>::get(asset_id);
-			<T::Vault as StrategicVault>::deposit(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::DepositFailed)?;
+			<T::Vault as StrategicVault>::deposit(&vault_id, &pallet_account_id, amount)?;
            
 			<LastTransfer<T>>::insert(&sender, T::BlockTimestamp::now().as_secs());
 
