@@ -1,0 +1,9 @@
+{
+    "assets": [
+        {"name": "USDT", "composable_id": 1, "basilisk_id": 1},
+        {"name": "BTC", "composable_id": 2, "basilisk_id": 2}
+    ],
+    "basilisk_collator_url": "ws://127.0.0.1:9998",
+    "composable_collator_url": "ws://127.0.0.1:9988"
+}
+

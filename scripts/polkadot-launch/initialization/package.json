@@ -1,0 +1,15 @@
+{
+  "name": "initialization",
+  "version": "0.1.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "yarn && tsc",
+    "start": "node dist/index.js",
+    "lint": "tslint src/index.ts"
+  },
+  "dependencies": {
+    "@polkadot/api": "^6.7.2",
+    "@polkadot/types": "^6.7.2"
+  }
+}
