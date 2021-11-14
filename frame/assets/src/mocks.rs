@@ -57,7 +57,7 @@ impl Config for Test {
 	type Balance = Balance;
 	type NativeAssetId = NativeAssetId;
 	type GenerateCurrencyId = CurrencyIdGenerator;
-	type Currency = Balances;
+	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
 	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
