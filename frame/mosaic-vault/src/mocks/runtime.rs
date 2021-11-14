@@ -35,7 +35,7 @@ pub type AccountId = u128;
 
 pub const MINIMUM_BALANCE: Balance = 1000;
 // accounts 
-pub const RELAYER: AccountId = 0;
+pub const RELAYER_ACCOUNT: AccountId = 0;
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
 pub const CHARLIE: AccountId = 4;
@@ -169,7 +169,7 @@ parameter_types! {
 
 ord_parameter_types! {
 	pub const ADMIN: AccountId = ALICE;
-    pub const RELAYER: AccountId = RELAYER;
+    pub const RELAYER: AccountId = RELAYER_ACCOUNT;
 }
 
 impl mosaic_vault::Config for Test {
