@@ -551,7 +551,7 @@ impl assets::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type NativeAssetId = NativeAssetId;
-	type Currency = Balances;
+	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
 	type GenerateCurrencyId = Factory;
 	type GovernanceRegistry = GovernanceRegistry;
