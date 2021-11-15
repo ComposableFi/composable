@@ -246,7 +246,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Asset info created or changed. \[asset_id, threshold, min_answers, max_answers,
-		/// block_interval, reward. slash\]
+		/// block_interval, reward, slash\]
 		AssetInfoChange(T::AssetId, Percent, u32, u32, T::BlockNumber, BalanceOf<T>, BalanceOf<T>),
 		/// Signer was set. \[signer, controller\]
 		SignerSet(T::AccountId, T::AccountId),
@@ -362,6 +362,9 @@ pub mod pallet {
 		/// - `threshold`: Percent close to mean to be rewarded
 		/// - `min_answers`: Min answers before aggregation
 		/// - `max_answers`: Max answers to aggregate
+		/// - `block_interval`: blocks until oracle triggered
+		/// - `reward`: reward amount for correct answer
+		/// - `slash`: slash amount for bad answer
 		///
 		/// Emits `DepositEvent` event when successful.
 		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
