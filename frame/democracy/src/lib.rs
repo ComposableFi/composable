@@ -165,6 +165,7 @@ use frame_support::{
 			fungibles::{Inspect, MutateHold, Transfer},
 		},
 		Get, LockIdentifier,
+		Currency, LockableCurrency, ReservableCurrency, ExistenceRequirement, WithdrawReasons,
 	},
 	transactional,
 	weights::Weight,
@@ -175,6 +176,7 @@ use sp_runtime::{
 	ArithmeticError, DispatchError, DispatchResult, RuntimeDebug,
 };
 use sp_std::prelude::*;
+use orml_traits::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
 
 mod conviction;
 mod types;
@@ -301,10 +303,10 @@ pub mod pallet {
 			+ NativeTransfer<Self::AccountId, Balance = Self::Balance>
 			+ NativeMutateHold<Self::AccountId, Balance = Self::Balance>;
 
-		/// Currency type for this pallet.
-		type Currency: Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			+ Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+		// Currency type for this Pallet
+		type Currency: MultiCurrency<Self::AccountId, Balance = Self::Balance, CurrencyId = Self::AssetId>
+			+ MultiLockableCurrency<Self::AccountId, Balance = Self::Balance, CurrencyId = Self::AssetId>
+			+ MultiReservableCurrency<Self::AccountId,Balance = Self::Balance, CurrencyId = Self::AssetId>;
 
 		type OriginFor: OriginMap<Self::AssetId, Self::Origin>;
 
@@ -1462,7 +1464,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let mut status = Self::referendum_status(ref_index)?;
 		ensure!(
-			vote.balance() <= T::Currency::balance(status.proposal_id.asset_id, who),
+			vote.balance() <= T::Currency::free_balance(status.proposal_id.asset_id, who),
 			Error::<T>::InsufficientFunds
 		);
 		VotingOf::<T>::try_mutate((who, status.proposal_id.asset_id), |voting| -> DispatchResult {
@@ -1489,12 +1491,12 @@ impl<T: Config> Pallet<T> {
 				if let Some(approve) = vote.as_standard() {
 					status.tally.increase(approve, *delegations);
 				}
-				T::Currency::hold(status.proposal_id.asset_id, who, vote.balance())?;
 				Ok(())
 			} else {
 				Err(Error::<T>::AlreadyDelegating.into())
 			}
 		})?;
+		T::Currency::extend_lock(DEMOCRACY_ID, status.proposal_id.asset_id, who, vote.balance())?;
 		ReferendumInfoOf::<T>::insert(ref_index, ReferendumInfo::Ongoing(status));
 		Ok(())
 	}
@@ -1611,7 +1613,7 @@ impl<T: Config> Pallet<T> {
 		balance: BalanceOf<T>,
 	) -> Result<u32, DispatchError> {
 		ensure!(who != target, Error::<T>::Nonsense);
-		ensure!(balance <= T::Currency::balance(asset_id, &who), Error::<T>::InsufficientFunds);
+		ensure!(balance <= T::Currency::free_balance(asset_id, &who), Error::<T>::InsufficientFunds);
 		let votes = VotingOf::<T>::try_mutate(&(who.clone(), asset_id), |voting| -> Result<u32, DispatchError> {
 			let mut old = Voting::Delegating {
 				balance,
@@ -1634,7 +1636,7 @@ impl<T: Config> Pallet<T> {
 				},
 			}
 			let votes = Self::increase_upstream_delegation(&target, asset_id, conviction.votes(balance));
-			T::Currency::hold(asset_id, &who, balance)?;
+			T::Currency::extend_lock(DEMOCRACY_ID, asset_id, &who, balance)?;
 			Ok(votes)
 		})?;
 		Self::deposit_event(Event::<T>::Delegated(who, target));
@@ -1670,19 +1672,14 @@ impl<T: Config> Pallet<T> {
 	/// Rejig the lock on an account. It will never get more stringent (since that would indicate
 	/// a security hole) but may be reduced from what they are currently.
 	fn update_lock(who: &T::AccountId, asset_id: T::AssetId) -> Result<(), DispatchError> {
-		println!("updating lock");
-		let (lock_needed, locked) = VotingOf::<T>::mutate((who, asset_id), |voting| {
-			let locked = voting.locked_balance();
-			println!("old locked balance: {:?}", locked);
+		let lock_needed = VotingOf::<T>::mutate((who, asset_id), |voting| {
 			voting.rejig(frame_system::Pallet::<T>::block_number());
-			(voting.locked_balance(), locked)
+			voting.locked_balance()
 		});
 		if lock_needed.is_zero() {
-			println!("lock_needed.is_zero(): locked: {:?}", locked);
-			T::Currency::release(asset_id, who, locked, false)?;
+			T::Currency::remove_lock(DEMOCRACY_ID, asset_id, who)?;
 		} else {
-			println!("!lock_needed.is_zero(): locked - lock_needed: {:?}", locked - lock_needed);
-			T::Currency::release(asset_id, who, locked - lock_needed, false)?;
+			T::Currency::set_lock(DEMOCRACY_ID, asset_id, who, lock_needed)?;
 		}
 		Ok(())
 	}

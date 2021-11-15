@@ -55,6 +55,8 @@ const NAY: Vote = Vote { aye: false, conviction: Conviction::None };
 const BIG_AYE: Vote = Vote { aye: true, conviction: Conviction::Locked1x };
 const BIG_NAY: Vote = Vote { aye: false, conviction: Conviction::Locked1x };
 const DefaultAsset: AssetId = 1;
+const DOT: AssetId = 2;
+const ETH: AssetId = 3;
 const MAX_PROPOSALS: u32 = 100;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -148,13 +150,13 @@ impl orml_tokens::Config for Test {
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
-	type MaxLocks = ();
+	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = Everything;
 }
 
 parameter_types! {
 	pub const ExistentialDeposit: Balance = 1;
-	pub const MaxLocks: u32 = 10;
+	pub const MaxLocks: u32 = 50;
 }
 impl pallet_balances::Config for Test {
 	type MaxReserves = ();
@@ -303,6 +305,17 @@ fn set_balance_proposal_hash_and_note(value: u64) -> ProposalId<H256, AssetId> {
 		Err(x) => panic!("{:?}", x),
 	}
 	ProposalId { hash: h, asset_id: DefaultAsset }
+}
+
+fn set_balance_proposal_hash_and_note_and_asset_id(value: u64, asset_id: AssetId ) -> ProposalId<H256, AssetId> {
+	let p = set_balance_proposal(value);
+	let h = BlakeTwo256::hash(&p[..]);
+	match Democracy::note_preimage(Origin::signed(6), p, asset_id) {
+		Ok(_) => (),
+		Err(x) if x == Error::<Test>::DuplicatePreimage.into() => (),
+		Err(x) => panic!("{:?}", x),
+	}
+	ProposalId { hash: h, asset_id: asset_id }
 }
 
 fn propose_set_balance(who: u64, value: u64, delay: u64) -> DispatchResult {
