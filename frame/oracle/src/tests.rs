@@ -23,6 +23,8 @@ fn add_asset_and_info() {
 		const MAX_ANSWERS: u32 = 5;
 		const THRESHOLD: Percent = Percent::from_percent(80);
 		const BLOCK_INTERVAL: u64 = 5;
+		const REWARD: u64 = 5;
+		const SLASH: u64 = 5;
 
 		// passes
 		let account_2 = get_account_2();
@@ -32,7 +34,9 @@ fn add_asset_and_info() {
 			THRESHOLD,
 			MIN_ANSWERS,
 			MAX_ANSWERS,
-			BLOCK_INTERVAL
+			BLOCK_INTERVAL,
+			REWARD,
+			SLASH
 		));
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
@@ -40,7 +44,9 @@ fn add_asset_and_info() {
 			THRESHOLD,
 			MIN_ANSWERS,
 			MAX_ANSWERS,
-			BLOCK_INTERVAL
+			BLOCK_INTERVAL,
+			REWARD,
+			SLASH
 		));
 
 		let asset_info = AssetInfo {
@@ -48,6 +54,8 @@ fn add_asset_and_info() {
 			min_answers: MIN_ANSWERS,
 			max_answers: MAX_ANSWERS,
 			block_interval: BLOCK_INTERVAL,
+			reward: REWARD,
+			slash: SLASH,
 		};
 		// id now activated and count incremented
 		assert_eq!(Oracle::asset_info(1), asset_info);
@@ -61,7 +69,9 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				MAX_ANSWERS,
 				MAX_ANSWERS,
-				BLOCK_INTERVAL
+				BLOCK_INTERVAL,
+				REWARD,
+				SLASH
 			),
 			BadOrigin
 		);
@@ -73,7 +83,9 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				MAX_ANSWERS,
 				MIN_ANSWERS,
-				BLOCK_INTERVAL
+				BLOCK_INTERVAL,
+				REWARD,
+				SLASH
 			),
 			Error::<Test>::MaxAnswersLessThanMinAnswers
 		);
@@ -85,7 +97,9 @@ fn add_asset_and_info() {
 				Percent::from_percent(100),
 				MIN_ANSWERS,
 				MAX_ANSWERS,
-				BLOCK_INTERVAL
+				BLOCK_INTERVAL,
+				REWARD,
+				SLASH
 			),
 			Error::<Test>::ExceedThreshold
 		);
@@ -97,7 +111,9 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				MIN_ANSWERS,
 				MAX_ANSWERS + 1,
-				BLOCK_INTERVAL
+				BLOCK_INTERVAL,
+				REWARD,
+				SLASH
 			),
 			Error::<Test>::ExceedMaxAnswers
 		);
@@ -109,7 +125,9 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				0,
 				MAX_ANSWERS,
-				BLOCK_INTERVAL
+				BLOCK_INTERVAL,
+				REWARD,
+				SLASH
 			),
 			Error::<Test>::InvalidMinAnswers
 		);
@@ -121,7 +139,9 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				MIN_ANSWERS,
 				MAX_ANSWERS,
-				BLOCK_INTERVAL
+				BLOCK_INTERVAL,
+				REWARD,
+				SLASH
 			),
 			Error::<Test>::ExceedAssetsCount
 		);
@@ -249,6 +269,8 @@ fn add_price() {
 			Percent::from_percent(80),
 			3,
 			3,
+			5,
+			5,
 			5
 		));
 
@@ -327,6 +349,8 @@ fn check_request() {
 			Percent::from_percent(80),
 			3,
 			5,
+			5,
+			5,
 			5
 		));
 		System::set_block_number(6);
@@ -350,6 +374,8 @@ fn is_requested() {
 			0,
 			Percent::from_percent(80),
 			3,
+			5,
+			5,
 			5,
 			5
 		));
@@ -384,7 +410,7 @@ fn test_payout_slash() {
 		let five = PrePrice { price: 100, block: 0, who: account_5 };
 		// doesn't panic when percent not set
 		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
-		assert_eq!(Balances::free_balance(account_1), 105);
+		assert_eq!(Balances::free_balance(account_1), 100);
 
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
@@ -392,18 +418,20 @@ fn test_payout_slash() {
 			Percent::from_percent(80),
 			3,
 			5,
+			5,
+			5,
 			5
 		));
 
 		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
 		// account 1 and 4 gets slashed 2 and 5 gets rewarded
-		assert_eq!(Balances::free_balance(account_1), 100);
+		assert_eq!(Balances::free_balance(account_1), 95);
 		// 5 gets 2's reward and its own
-		assert_eq!(Balances::free_balance(account_5), 119);
+		assert_eq!(Balances::free_balance(account_5), 109);
 		assert_eq!(Balances::free_balance(account_2), 100);
 
 		assert_eq!(Balances::free_balance(account_3), 0);
-		assert_eq!(Balances::free_balance(account_4), 100);
+		assert_eq!(Balances::free_balance(account_4), 95);
 
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
@@ -411,18 +439,20 @@ fn test_payout_slash() {
 			Percent::from_percent(90),
 			3,
 			5,
+			5,
+			4,
 			5
 		));
 		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
 
 		// account 4 gets slashed 2 5 and 1 gets rewarded
-		assert_eq!(Balances::free_balance(account_1), 95);
+		assert_eq!(Balances::free_balance(account_1), 90);
 		// 5 gets 2's reward and its own
-		assert_eq!(Balances::free_balance(account_5), 129);
+		assert_eq!(Balances::free_balance(account_5), 117);
 		assert_eq!(Balances::free_balance(account_2), 100);
 
 		assert_eq!(Balances::free_balance(account_3), 0);
-		assert_eq!(Balances::free_balance(account_4), 95);
+		assert_eq!(Balances::free_balance(account_4), 90);
 	});
 }
 
@@ -442,6 +472,8 @@ fn on_init() {
 			0,
 			Percent::from_percent(80),
 			3,
+			5,
+			5,
 			5,
 			5
 		));
@@ -482,6 +514,8 @@ fn historic_pricing() {
 			0,
 			Percent::from_percent(80),
 			3,
+			5,
+			5,
 			5,
 			5
 		));
@@ -535,6 +569,8 @@ fn get_twap() {
 			Percent::from_percent(80),
 			3,
 			5,
+			5,
+			5,
 			5
 		));
 
@@ -566,6 +602,8 @@ fn on_init_prune_scenerios() {
 			0,
 			Percent::from_percent(80),
 			3,
+			5,
+			5,
 			5,
 			5
 		));
@@ -625,6 +663,8 @@ fn on_init_over_max_answers() {
 			Percent::from_percent(80),
 			1,
 			2,
+			5,
+			5,
 			5
 		));
 		// set prices into storage
@@ -650,6 +690,8 @@ fn prune_old_pre_prices_edgecase() {
 			min_answers: 3,
 			max_answers: 5,
 			block_interval: 5,
+			reward: 5, 
+			slash: 5
 		};
 		Oracle::prune_old_pre_prices(asset_info, vec![], 0);
 	});
