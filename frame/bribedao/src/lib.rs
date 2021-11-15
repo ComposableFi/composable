@@ -8,7 +8,7 @@ pub use crate::vecstorage::FastMap;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use codec::Codec;
+	use codec::{Codec, WrapperTypeEncode};
 	use composable_traits::{bribe::Bribe, democracy::Democracy};
 	use frame_support::{
 		pallet_prelude::*,
@@ -107,6 +107,11 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn bribe_count)]
 	pub(super) type BribeCount<T: Config> = StorageValue<_, BribeIndex, ValueQuery>;
+
+//	impl<T: WrapperTypeEncode> WrapperTypeEncode for FastMap {
+//}
+
+
 
 	#[pallet::storage]
 	#[pallet::getter(fn fast_vec)]
