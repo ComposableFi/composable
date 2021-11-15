@@ -690,8 +690,8 @@ fn prune_old_pre_prices_edgecase() {
 			min_answers: 3,
 			max_answers: 5,
 			block_interval: 5,
-			reward: 5, 
-			slash: 5
+			reward: 5,
+			slash: 5,
 		};
 		Oracle::prune_old_pre_prices(asset_info, vec![], 0);
 	});

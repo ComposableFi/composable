@@ -11,8 +11,8 @@ use frame_system::{EventRecord, RawOrigin};
 use sp_runtime::{DispatchResult, Percent};
 use sp_std::prelude::*;
 
-// pub type BalanceOf<T> =
-//     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+pub type BalanceOf<T> =
+	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 const SEED: u32 = 0;
 
@@ -40,13 +40,16 @@ benchmarks! {
 		let min_answers = 3;
 		let max_answers = 5;
 		let block_interval: T::BlockNumber = 5u32.into();
+		let reward: BalanceOf<T> = T::Currency::minimum_balance();
+		let slash: BalanceOf<T> = T::Currency::minimum_balance();
+
 	}: {
 		assert_ok!(
-			<Oracle<T>>::add_asset_and_info(caller, asset_id.into(), threshold, min_answers, max_answers, block_interval)
+			<Oracle<T>>::add_asset_and_info(caller, asset_id.into(), threshold, min_answers, max_answers, block_interval, reward, slash)
 		);
 	}
 	verify {
-		assert_last_event::<T>(Event::AssetInfoChange(asset_id.into(), threshold, min_answers, max_answers, block_interval).into());
+		assert_last_event::<T>(Event::AssetInfoChange(asset_id.into(), threshold, min_answers, max_answers, block_interval, reward, slash).into());
 	}
 
 	set_signer {
@@ -108,6 +111,8 @@ benchmarks! {
 			min_answers: 1,
 			max_answers: T::MaxAnswerBound::get(),
 			block_interval: 0u32.into(),
+			reward: T::Currency::minimum_balance(),
+			slash: T::Currency::minimum_balance()
 		});
 		frame_system::Pallet::<T>::set_block_number(6u32.into());
 		PrePrices::<T>::mutate(asset_id, |current_prices| -> DispatchResult {
@@ -136,6 +141,8 @@ benchmarks! {
 			min_answers: 1,
 			max_answers: p,
 			block_interval: 5u32.into(),
+			reward: T::Currency::minimum_balance(),
+			slash: T::Currency::minimum_balance()
 		};
 		let pre_prices = (0..p).map(|i| {
 			PrePrice {
@@ -160,6 +167,8 @@ benchmarks! {
 			min_answers: 1,
 			max_answers: p,
 			block_interval: 5u32.into(),
+			reward: T::Currency::minimum_balance(),
+			slash: T::Currency::minimum_balance()
 		};
 		let pre_prices = (0..p).map(|_| {
 			PrePrice {
