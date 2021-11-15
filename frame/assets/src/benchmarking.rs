@@ -10,10 +10,10 @@ use frame_system::RawOrigin;
 use sp_std::prelude::*;
 use sp_runtime::traits::StaticLookup;
 use frame_system::Config as SystemConfig;
+
 const FROM_ACCOUNT: u64 = 1;
 const TO_ACCOUNT: u64 = 2;
-const ASSET_ID: u128 = 1;
-const INIT_AMOUNT: u64 = 1000;
+const ASSET_ID: u64 = 1;
 const TRANSFER_AMOUNT: u32 = 500;
 
 benchmarks! {
@@ -29,45 +29,78 @@ benchmarks! {
 
 	}
 
-	transfer {
+	// transfer {
+        // let caller: T::AccountId = whitelisted_caller();
+        // let asset_id: T::AssetId = ASSET_ID.into();
+        // let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
+        // let amount: T::Balance = TRANSFER_AMOUNT.into();
+        // // FIXME(oleksii): InsufficientBalance ?
+	    // T::MultiCurrency::mint_into(asset_id, &caller, amount).unwrap();
+	// }: _(RawOrigin::Signed(caller), asset_id, dest, amount, false)
+
+	transfer_native {
 		let caller: T::AccountId = whitelisted_caller();
-		let dest = 2_u64.into();
-		let dest = T::Lookup::unlookup(dest);
-		// T::Currency::mint_into(T::AssetId::from(A), &caller, amount)
-	}: _(RawOrigin::Signed(caller), 1_u64.into(), dest, 1_u32.into(), true)
+        let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
+        let amount: T::Balance = TRANSFER_AMOUNT.into();
+	    T::Currency::mint_into(&caller, amount).unwrap();
+	}: _(RawOrigin::Signed(caller), dest, amount, false)
 
-	// transfer_native {
-	// 	let caller: T::AccountId = whitelisted_caller();
-	// 	// T::Currency::mint_into(T::AssetId::from(A), &caller, amount)
-	// }: _(RawOrigin::Signed(caller), TO_ACCOUNT, TRANSFER_AMOUNT, true)
+	force_transfer {
+        let caller: T::AccountId = FROM_ACCOUNT.into();
+        let asset_id: T::AssetId = ASSET_ID.into();
+        let from = T::Lookup::unlookup(FROM_ACCOUNT.into());
+        let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
+        let amount: T::Balance = TRANSFER_AMOUNT.into();
+	    T::MultiCurrency::mint_into(asset_id, &caller, amount).unwrap();
+	}: _(RawOrigin::Root, asset_id, from, dest, amount, false)
 
-	// force_transfer {
-	// }: _(RawOrigin::Root, ASSET_ID, FROM_ACCOUNT, TO_ACCOUNT, TRANSFER_AMOUNT, true)
+	force_transfer_native {
+        let caller: T::AccountId = FROM_ACCOUNT.into();
+        let from = T::Lookup::unlookup(FROM_ACCOUNT.into());
+        let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
+        let amount: T::Balance = TRANSFER_AMOUNT.into();
+	    T::Currency::mint_into(&caller, amount).unwrap();
+	}: _(RawOrigin::Root, from, dest, amount, false)
 
-	// force_transfer_native {
-	// }: _(RawOrigin::Root, FROM_ACCOUNT, TO_ACCOUNT, TRANSFER_AMOUNT, true)
+	transfer_all {
+        let caller: T::AccountId = whitelisted_caller();
+        let asset_id: T::AssetId = ASSET_ID.into();
+        let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
+        let amount: T::Balance = TRANSFER_AMOUNT.into();
+	    T::MultiCurrency::mint_into(asset_id, &caller, amount).unwrap();
+	}: _(RawOrigin::Signed(caller), asset_id, dest, false)
 
-	// transfer_all {
-	// 	let caller: T::AccountId = whitelisted_caller();
-	// 	// T::Currency::mint_into(T::AssetId::from(A), &caller, amount)
-	// }: _(RawOrigin::Signed(caller), ASSET_ID, TO_ACCOUNT, true)
+	transfer_all_native {
+        let caller: T::AccountId = whitelisted_caller();
+        let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
+        let amount: T::Balance = TRANSFER_AMOUNT.into();
+	    T::Currency::mint_into(&caller, amount).unwrap();
+	}: _(RawOrigin::Signed(caller), dest, false)
 
-	// transfer_all_native {
-	// 	let caller: T::AccountId = whitelisted_caller();
-	// 	// T::Currency::mint_into(T::AssetId::from(A), &caller, amount)
-	// }: _(RawOrigin::Signed(caller), TO_ACCOUNT, true)
+	mint_initialize {
+        let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
+        let amount: T::Balance = TRANSFER_AMOUNT.into();
+	}: _(RawOrigin::Root, amount, dest)
 
-	// mint_initialize {
-	// }: _(RawOrigin::Root, TRANSFER_AMOUNT, TO_ACCOUNT, true)
+	mint_initialize_with_governance {
+        let governance = T::Lookup::unlookup(TO_ACCOUNT.into());
+        let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
+        let amount: T::Balance = TRANSFER_AMOUNT.into();
+	}: _(RawOrigin::Root, amount, governance, dest)
 
-	// mint_initialize_with_governance {
-	// }: _(RawOrigin::Root, TRANSFER_AMOUNT, TO_ACCOUNT, TO_ACCOUNT, true)
+	mint_into {
+        let asset_id: T::AssetId = ASSET_ID.into();
+        let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
+        let amount: T::Balance = TRANSFER_AMOUNT.into();
+	}: _(RawOrigin::Root, asset_id, dest, amount)
 
-	// mint_into {
-	// }: _(RawOrigin::Root, ASSET_ID, TO_ACCOUNT, TRANSFER_AMOUNT, true)
-
-	// burn_from {
-	// }: _(RawOrigin::Root, ASSET_ID, TO_ACCOUNT, TRANSFER_AMOUNT, true)
+	burn_from {
+        let caller: T::AccountId = TO_ACCOUNT.into();
+        let asset_id: T::AssetId = ASSET_ID.into();
+        let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
+        let amount: T::Balance = TRANSFER_AMOUNT.into();
+	    T::MultiCurrency::mint_into(asset_id, &caller, amount).unwrap();
+	}: _(RawOrigin::Root, asset_id, dest, amount)
 
 }
 
