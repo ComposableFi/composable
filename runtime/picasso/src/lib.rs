@@ -49,7 +49,10 @@ use polkadot_parachain::primitives::Sibling;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
-use system::{EnsureRoot, EnsureSigned, limits::{BlockLength, BlockWeights}};
+use system::{
+	limits::{BlockLength, BlockWeights},
+	EnsureRoot,
+};
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -837,14 +840,15 @@ impl currency_factory::Config for Runtime {
 	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
-
+#[cfg(feature = "develop")]
 impl assets_registry::Config for Runtime {
 	type Event = Event;
 	type LocalAssetId = CurrencyId;
 	type ForeignAssetId = composable_traits::assets::XcmAssetLocation;
-	type UpdateAdminOrigin: EnsureRootOrHalfCouncil<Self::Origin>;
-	type LocalAdminOrigin: EnsureRootOrHalfCouncil<Self::Origin>;
-	type ForeignAdminOrigin: EnsureSigned<Self::Origin>;
+	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
+	type LocalAdminOrigin = EnsureRootOrHalfCouncil;
+	/// we should define governance for adding foreign assets here
+	type ForeignAdminOrigin = EnsureRootOrHalfCouncil;
 }
 
 /// The calls we permit to be executed by extrinsics

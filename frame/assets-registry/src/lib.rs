@@ -1,10 +1,10 @@
 //! Pallet for allowing to map assets from this and other parachain.
 //!
 //! It works as next:
-//! 1. Genesis config defines well know assets maps. Specifically map of native token to this chain(here).
-//! 2. Each mapping is bidirectional.
-//! 3. Assets map added as candidate and waits for approval.
-//! 4. After approval map return mapped value.
+//! 1. Each mapping is bidirectional.
+//! 2. Assets map added as candidate and waits for approval.
+//! 3. After approval map return mapped value.
+//! 4. Map of native token to this chain(here) is added unconditionally.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
@@ -19,7 +19,7 @@ mod tests;
 pub mod pallet {
 	use codec::FullCodec;
 	use composable_traits::assets::RemoteAssetRegistry;
-use frame_support::{
+	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
 	};
 
@@ -43,9 +43,10 @@ use frame_support::{
 		type ForeignAssetId: FullCodec
 			+ Eq
 			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
+			// we wrap non serde type, so until written custom serde, cannot handle that
+			// + MaybeSerializeDeserialize
 			+ Debug
+			+ Clone
 			+ Default
 			+ TypeInfo;
 		type UpdateAdminOrigin: EnsureOrigin<Self::Origin>;
@@ -107,7 +108,8 @@ use frame_support::{
 	pub struct GenesisConfig<T: Config> {
 		local_admin: Option<T::AccountId>,
 		foreign_admin: Option<T::AccountId>,
-		assets_pairs: Vec<AssetsPair<T::LocalAssetId, T::ForeignAssetId>>,
+		/*  need to decide if to write serde for this or it is ok to have admin based input
+		 * assets_pairs: Vec<AssetsPair<T::LocalAssetId, T::ForeignAssetId>>, */
 	}
 
 	#[cfg(feature = "std")]
@@ -116,7 +118,7 @@ use frame_support::{
 			Self {
 				local_admin: Default::default(),
 				foreign_admin: Default::default(),
-				assets_pairs: Default::default(),
+				// assets_pairs: Default::default(),
 			}
 		}
 	}
@@ -130,16 +132,17 @@ use frame_support::{
 			if let Some(foreign_admin) = &self.foreign_admin {
 				<ForeignAdmin<T>>::put(foreign_admin)
 			}
-			for assets_pair in &self.assets_pairs {
-				<LocalToForeign<T>>::insert(
-					assets_pair.local_asset_id,
-					assets_pair.foreign_asset_id,
-				);
-				<ForeignToLocal<T>>::insert(
-					assets_pair.foreign_asset_id,
-					assets_pair.local_asset_id,
-				);
-			}
+			// commented out until json serde is implemented for xcm location
+			// for assets_pair in &self.assets_pairs {
+			// 	<LocalToForeign<T>>::insert(
+			// 		assets_pair.local_asset_id,
+			// 		assets_pair.foreign_asset_id.clone(),
+			// 	);
+			// 	<ForeignToLocal<T>>::insert(
+			// 		assets_pair.foreign_asset_id.clone(),
+			// 		assets_pair.local_asset_id,
+			// 	);
+			// }
 		}
 	}
 
@@ -198,10 +201,10 @@ use frame_support::{
 				Error::<T>::LocalAssetIdAlreadyUsed
 			);
 			ensure!(
-				!<ForeignToLocal<T>>::contains_key(foreign_asset_id),
+				!<ForeignToLocal<T>>::contains_key(foreign_asset_id.clone()),
 				Error::<T>::ForeignAssetIdAlreadyUsed
 			);
-			Self::approve_candidate(who, local_asset_id, foreign_asset_id)?;
+			Self::approve_candidate(who, local_asset_id, foreign_asset_id.clone())?;
 			Self::deposit_event(Event::AssetsMappingCandidateUpdated {
 				local_asset_id,
 				foreign_asset_id,
@@ -210,14 +213,16 @@ use frame_support::{
 		}
 	}
 
-	impl<T:Config> RemoteAssetRegistry for Pallet<T> {
-    	type AssetId = T::LocalAssetId;
+	impl<T: Config> RemoteAssetRegistry for Pallet<T> {
+		type AssetId = T::LocalAssetId;
 
-    	type AssetNativeLocation = T::ForeignAssetId;
+		type AssetNativeLocation = T::ForeignAssetId;
 
-		fn set_location(local_asset_id: Self::AssetId, foreign_asset_id: Self::AssetNativeLocation)
-			-> DispatchResult {
-			<LocalToForeign<T>>::insert(local_asset_id, foreign_asset_id);
+		fn set_location(
+			local_asset_id: Self::AssetId,
+			foreign_asset_id: Self::AssetNativeLocation,
+		) -> DispatchResult {
+			<LocalToForeign<T>>::insert(local_asset_id, foreign_asset_id.clone());
 			<ForeignToLocal<T>>::insert(foreign_asset_id, local_asset_id);
 			Ok(())
 		}
@@ -229,7 +234,7 @@ use frame_support::{
 		fn location_to_asset(foreign_asset_id: Self::AssetNativeLocation) -> Option<Self::AssetId> {
 			<ForeignToLocal<T>>::get(foreign_asset_id)
 		}
-}
+	}
 
 	impl<T: Config> Pallet<T> {
 		fn ensure_admins_only(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
@@ -249,7 +254,7 @@ use frame_support::{
 			foreign_asset_id: T::ForeignAssetId,
 		) -> DispatchResultWithPostInfo {
 			let current_candidate_status =
-				<AssetsMappingCandidates<T>>::get((local_asset_id, foreign_asset_id));
+				<AssetsMappingCandidates<T>>::get((local_asset_id, foreign_asset_id.clone()));
 			let local_admin = <LocalAdmin<T>>::get();
 			let foreign_admin = <ForeignAdmin<T>>::get();
 			match current_candidate_status {
@@ -267,12 +272,12 @@ use frame_support::{
 					},
 				Some(CandidateStatus::LocalAdminApproved) =>
 					if who == foreign_admin {
-						Self::set_location(local_asset_id, foreign_asset_id)?;
+						Self::set_location(local_asset_id, foreign_asset_id.clone())?;
 						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
 					},
 				Some(CandidateStatus::ForeignAdminApproved) =>
 					if who == local_admin {
-						Self::set_location(local_asset_id, foreign_asset_id)?;
+						Self::set_location(local_asset_id, foreign_asset_id.clone())?;
 						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
 					},
 			};
