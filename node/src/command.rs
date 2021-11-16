@@ -41,9 +41,11 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		// does not support `--chain` and `--parachain-id` arguments simultaneously.
 		"picasso-dev" => Box::new(chain_spec::picasso_dev()),
 		// westend parachain
-		"dali" => Box::new(chain_spec::dali()),
+		"dali-westend" => Box::new(chain_spec::dali_westend()),
 		// rococo parachain
 		"dali-rococo" => Box::new(chain_spec::dali_rococo()),
+		// chachacha parachain
+		"dali-chachacha" => Box::new(chain_spec::dali_chachacha()),
 		// kusama parachain
 		"" | "picasso" => Box::new(chain_spec::picasso()),
 		path => Box::new(chain_spec::picasso::ChainSpec::from_json_file(
@@ -262,6 +264,7 @@ pub fn run() -> Result<()> {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
 			runner.run_node_until_exit(|config| async move {
+				let _ = &cli;
 				let para_id =
 					chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
 

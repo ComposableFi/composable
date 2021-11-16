@@ -15,6 +15,7 @@ parachain
 runtime
 SignedExtension
 Stairstep
+startuml
 timestamp
 TODO
 tombstoned

@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "polkadot-launch config.json"
+    "composable": "rm -rf /tmp/polkadot-launch && polkadot-launch composable.json",
+    "composable_and_basilisk": "polkadot-launch composable_and_basilisk.json"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "polkadot-launch": "^1.7.0"
+    "polkadot-launch": "^1.8.0"
   }
 }

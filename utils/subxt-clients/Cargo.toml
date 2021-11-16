@@ -1,0 +1,10 @@
+[package]
+name = "subxt-clients"
+version = "0.1.0"
+edition = "2021"
+authors = ["Composable Developers"]
+homepage = "https://composable.finance"
+
+[dependencies]
+subxt = { git = "https://github.com/composableFi/subxt", branch = "seun-0.9.12" }
+codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false }

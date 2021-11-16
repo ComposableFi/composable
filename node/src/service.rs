@@ -5,6 +5,7 @@ use std::sync::Arc;
 use picasso_runtime::{self as parachain_runtime, RuntimeApi};
 
 // Cumulus Imports
+use common::{AccountId, AccountIndex, Balance};
 use cumulus_client_consensus_aura::{
 	build_aura_consensus, BuildAuraConsensusParams, SlotProportion,
 };
@@ -16,6 +17,7 @@ use cumulus_client_service::{
 use cumulus_primitives_core::ParaId;
 
 // Substrate Imports
+use crate::rpc;
 use sc_client_api::ExecutorProvider;
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::NetworkService;
@@ -167,11 +169,10 @@ where
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
-async fn start_node_impl<RuntimeApi, Executor, RB, BIQ, BIC>(
+async fn start_node_impl<RuntimeApi, Executor, BIQ, BIC>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	id: ParaId,
-	rpc_ext_builder: RB,
 	build_import_queue: BIQ,
 	build_consensus: BIC,
 ) -> sc_service::error::Result<(
@@ -191,14 +192,11 @@ where
 			StateBackend = sc_client_api::StateBackendFor<TFullBackend<Block>, Block>,
 		> + sp_offchain::OffchainWorkerApi<Block>
 		+ sp_block_builder::BlockBuilder<Block>
-		+ cumulus_primitives_core::CollectCollationInfo<Block>,
+		+ cumulus_primitives_core::CollectCollationInfo<Block>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, AccountIndex>
+		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
-	RB: Fn(
-			Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
-		) -> Result<jsonrpc_core::IoHandler<sc_rpc::Metadata>, sc_service::Error>
-		+ Send
-		+ 'static,
 	BIQ: FnOnce(
 		Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
 		&Configuration,
@@ -300,8 +298,19 @@ where
 		);
 	}
 
-	let rpc_client = client.clone();
-	let rpc_extensions_builder = Box::new(move |_, _| rpc_ext_builder(rpc_client.clone()));
+	let rpc_extensions_builder = {
+		let client = client.clone();
+		let transaction_pool = transaction_pool.clone();
+		Box::new(move |deny_unsafe, _| {
+			let deps = rpc::FullDeps {
+				client: client.clone(),
+				pool: transaction_pool.clone(),
+				deny_unsafe,
+			};
+
+			Ok(rpc::create(deps))
+		})
+	};
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		on_demand: None,
@@ -423,11 +432,10 @@ pub async fn start_node(
 	TaskManager,
 	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
 )> {
-	start_node_impl::<RuntimeApi, Executor, _, _, _>(
+	start_node_impl::<RuntimeApi, Executor, _, _>(
 		parachain_config,
 		polkadot_config,
 		id,
-		|_| Ok(Default::default()),
 		parachain_build_import_queue,
 		|client,
 		 prometheus_registry,

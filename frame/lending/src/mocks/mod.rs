@@ -25,9 +25,6 @@ use sp_runtime::{
 	ArithmeticError, DispatchError,
 };
 
-pub type Extrinsic = TestXt<Call, ()>;
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
 pub mod oracle;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -334,6 +331,9 @@ impl pallet_liquidations::Config for Test {
 	type DutchAuction = Auction;
 	type GroupId = AccountId;
 }
+
+pub type Extrinsic = TestXt<Call, ()>;
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 impl frame_system::offchain::SigningTypes for Test {
 	type Public = <Signature as Verify>::Signer;
