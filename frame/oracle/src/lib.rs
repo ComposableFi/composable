@@ -320,6 +320,8 @@ pub mod pallet {
 		/// Too many weighted averages requested
 		DepthTooLarge,
 		ArithmeticError,
+		/// Block interval is less then stale price
+		BlockIntervalLength,
 	}
 
 	#[pallet::hooks]
@@ -384,6 +386,7 @@ pub mod pallet {
 			ensure!(max_answers >= min_answers, Error::<T>::MaxAnswersLessThanMinAnswers);
 			ensure!(threshold < Percent::from_percent(100), Error::<T>::ExceedThreshold);
 			ensure!(max_answers <= T::MaxAnswerBound::get(), Error::<T>::ExceedMaxAnswers);
+			ensure!(block_interval > T::StalePrice::get(), Error::<T>::BlockIntervalLength);
 			ensure!(
 				AssetsCount::<T>::get() < T::MaxAssetsCount::get(),
 				Error::<T>::ExceedAssetsCount

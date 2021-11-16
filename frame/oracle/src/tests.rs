@@ -38,6 +38,7 @@ fn add_asset_and_info() {
 			REWARD,
 			SLASH
 		));
+
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
 			ASSET_ID + 1,
@@ -144,6 +145,18 @@ fn add_asset_and_info() {
 				SLASH
 			),
 			Error::<Test>::ExceedAssetsCount
+		);
+
+		assert_noop!(
+			Oracle::add_asset_and_info(
+				Origin::signed(account_2),
+				ASSET_ID,
+				THRESHOLD,
+				MIN_ANSWERS,
+				MAX_ANSWERS,
+				BLOCK_INTERVAL - 4
+			),
+			Error::<Test>::BlockIntervalLength
 		);
 	});
 }
