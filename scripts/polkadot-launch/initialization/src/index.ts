@@ -20,8 +20,8 @@ async function main() {
     const basiliskApi = await createApi(basilisk_collator_url, {
         AssetType: {
             _enum: {
-                PoolShare: "(u32, u32)",
-                Token: null,
+                PoolShare: "(AssetId,AssetId)",
+                Token: "Null",
             },
         },
     });
@@ -42,11 +42,13 @@ async function main() {
         composableForeignAdmin,
     );
 
+    /*
     await doBasiliskAssetsMapping(
         basiliskApi,
         assets,
         alice,
     );
+    */
 }
 
 async function createApi(url: string, types: object): Promise<typeof ApiPromise> {
@@ -71,35 +73,35 @@ async function doComposableAssetsMapping(
     localAdmin: typeof KeyringPair,
     foreignAdmin: typeof KeyringPair,
 ) {
-    let { rootNonce } = await api.query.system.account(root.address);
-    await api.tx.assetsRegistry
-        .setLocalAdmin(localAdmin.address)
-        .signAndSend(root, { rootNonce }, ({ status }: typeof ISubmittableResult) => {
-            console.log(`Current status of setLocalAdmin(...) is ${status}`);
+    const txs = [
+        api.tx.assetsRegistry.setLocalAdmin(localAdmin.address),
+        api.tx.assetsRegistry.setForeignAdmin(foreignAdmin.address),
+    ];
+    await api.tx.utility
+        .batch(txs)
+        .signAndSend(root, ({ status }: typeof ISubmittableResult) => {
+            if (status.isInBlock) {
+                console.log(`LocalAdmin and ForeignAdmin updated`);
+            }
         });
-    rootNonce++;
-    await api.tx.assetsRegistry
-        .setForeignAdmin(foreignAdmin.address)
-        .signAndSend(root, { rootNonce }, ({ status }: typeof ISubmittableResult) => {
-            console.log(`Current status of setForeignAdmin(...) is ${status}`);
-        });
+    await sleep(12000);
 
-    let { localAdminNonce } = await api.query.system.account(localAdmin.address);
-    let { foreignAdminNonce } = await api.query.system.account(foreignAdmin.address);
-    assets.forEach(async ({ composable_id, basilisk_id }) => {
+    for (const { composable_id, basilisk_id } of assets) {
         await api.tx.assetsRegistry
             .approveAssetsMappingCandidate(composable_id, basilisk_id)
-            .signAndSend(localAdmin, { localAdminNonce }, ({ status }: typeof ISubmittableResult) => {
-                console.log(`Current status of approveAssetsMappingCandidate(...) is ${status}`);
+            .signAndSend(localAdmin, { nonce: -1 }, ({ status }: typeof ISubmittableResult) => {
+                if (status.isInBlock) {
+                    console.log(`Current status of approveAssetsMappingCandidate(${composable_id}, ${basilisk_id}) is ${status}`);
+                }
             });
         await api.tx.assetsRegistry
             .approveAssetsMappingCandidate(composable_id, basilisk_id)
-            .signAndSend(foreignAdmin, { foreignAdminNonce }, ({ status }: typeof ISubmittableResult) => {
-                console.log(`Current status of approveAssetsMappingCandidate(...) is ${status}`);
+            .signAndSend(foreignAdmin, { nonce: -1 }, ({ status }: typeof ISubmittableResult) => {
+                if (status.isInBlock) {
+                    console.log(`Current status of approveAssetsMappingCandidate(${composable_id}, ${basilisk_id}) is ${status}`);
+                }
             });
-        localAdminNonce++;
-        foreignAdminNonce++;
-    });
+    }
 }
 
 async function doBasiliskAssetsMapping(api: typeof ApiPromise, assets: IAsset[], root: typeof KeyringPair) {
@@ -126,6 +128,10 @@ async function doBasiliskAssetsMapping(api: typeof ApiPromise, assets: IAsset[],
             });
         rootNonce++;
     });
+}
+
+function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 main().catch(console.error).finally(() => process.exit());
