@@ -8,7 +8,8 @@ pub use crate::vecstorage::FastMap;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use codec::{Codec, WrapperTypeEncode};
+	use crate::vecstorage::FastMap;
+	use codec::Codec;
 	use composable_traits::{bribe::Bribe, democracy::Democracy};
 	use frame_support::{
 		pallet_prelude::*,
@@ -18,8 +19,6 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
 	use pallet_democracy::Vote;
-	//	use primitives::currency::CurrencyId;
-	use crate::vecstorage::FastMap;
 	//	use pallet_vault::models::VaultInfo;
 	use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 	use sp_std::fmt::Debug;
@@ -108,14 +107,12 @@ pub mod pallet {
 	#[pallet::getter(fn bribe_count)]
 	pub(super) type BribeCount<T: Config> = StorageValue<_, BribeIndex, ValueQuery>;
 
-//	impl<T: WrapperTypeEncode> WrapperTypeEncode for FastMap {
-//}
-
-
+	//	impl<T: WrapperTypeEncode> WrapperTypeEncode for FastMap {
+	//}
 
 	#[pallet::storage]
 	#[pallet::getter(fn fast_vec)]
-	pub(super) type MyFastvec<T: Config> = StorageValue<_, FastMap>;//::new();
+	pub(super) type MyFastvec<T: Config> = StorageValue<_, FastMap>; //::new();
 
 	#[pallet::storage]
 	#[pallet::getter(fn bribe_requests)]
