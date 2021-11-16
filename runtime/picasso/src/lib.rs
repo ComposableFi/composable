@@ -840,6 +840,17 @@ impl currency_factory::Config for Runtime {
 	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
+#[cfg(feature = "develop")]
+impl assets_registry::Config for Runtime {
+	type Event = Event;
+	type LocalAssetId = CurrencyId;
+	type ForeignAssetId = composable_traits::assets::XcmAssetLocation;
+	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
+	type LocalAdminOrigin = EnsureRootOrHalfCouncil;
+	/// we should define governance for adding foreign assets here
+	type ForeignAdminOrigin = EnsureRootOrHalfCouncil;
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -862,6 +873,7 @@ impl call_filter::Config for Runtime {
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
+#[cfg(not(feature = "develop"))] // https://github.com/paritytech/substrate/issues/10286
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -906,6 +918,57 @@ construct_runtime!(
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 54,
+
+		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
+	}
+);
+
+#[cfg(feature = "develop")]
+construct_runtime!(
+	pub enum Runtime where
+		Block = Block,
+		NodeBlock = opaque::Block,
+		UncheckedExtrinsic = UncheckedExtrinsic
+	{
+		System: system::{Pallet, Call, Config, Storage, Event<T>} = 0,
+		Timestamp: timestamp::{Pallet, Call, Storage, Inherent} = 1,
+		Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,
+		RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage} = 3,
+		TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
+		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
+		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
+
+		// Parachains stuff
+		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
+		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 11,
+
+		// Collator support. the order of these 5 are important and shall not change.
+		Authorship: authorship::{Pallet, Call, Storage} = 20,
+		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
+		Session: session::{Pallet, Call, Storage, Event, Config<T>} = 22,
+		Aura: aura::{Pallet, Storage, Config<T>} = 23,
+		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 24,
+
+		// Governance utilities
+		Council: collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 30,
+		CouncilMembership: membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 31,
+		Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 32,
+		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
+		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
+		Utility: utility::{Pallet, Call, Event} = 35,
+
+		// XCM helpers.
+		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
+		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
+		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
+		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
+
+		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 50,
+		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
+		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
+		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
+		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 54,
+		AssetsRegistry : assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}

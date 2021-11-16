@@ -4,6 +4,7 @@ use frame_support::dispatch::DispatchResult;
 use scale_info::TypeInfo;
 
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
+//#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct XcmAssetLocation(pub xcm::latest::MultiLocation);
 
 impl Default for XcmAssetLocation {
