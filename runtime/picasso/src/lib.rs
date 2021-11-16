@@ -49,10 +49,7 @@ use polkadot_parachain::primitives::Sibling;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
-use system::{
-	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
-};
+use system::{EnsureRoot, EnsureSigned, limits::{BlockLength, BlockWeights}};
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -841,7 +838,15 @@ impl currency_factory::Config for Runtime {
 }
 
 
-impl pallet_assets_registry::
+impl assets_registry::Config for Runtime {
+	type Event = Event;
+	type LocalAssetId = CurrencyId;
+	type ForeignAssetId = composable_traits::assets::XcmAssetLocation;
+	type UpdateAdminOrigin: EnsureRootOrHalfCouncil<Self::Origin>;
+	type LocalAdminOrigin: EnsureRootOrHalfCouncil<Self::Origin>;
+	type ForeignAdminOrigin: EnsureSigned<Self::Origin>;
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -908,6 +913,7 @@ construct_runtime!(
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 54,
+		AssetsRegistry : assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}

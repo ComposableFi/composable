@@ -45,8 +45,6 @@ use frame_support::{
 			+ PartialEq
 			+ Copy
 			+ MaybeSerializeDeserialize
-			+ From<u128>
-			+ Into<u128>
 			+ Debug
 			+ Default
 			+ TypeInfo;
@@ -100,16 +98,16 @@ use frame_support::{
 
 	#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 	#[derive(Debug, Clone, Copy, Encode, Decode)]
-	pub struct AssetsPair {
-		local_asset_id: u128,
-		foreign_asset_id: u128,
+	pub struct AssetsPair<LocalAssetId, ForeignAssetId> {
+		local_asset_id: LocalAssetId,
+		foreign_asset_id: ForeignAssetId,
 	}
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		local_admin: Option<T::AccountId>,
 		foreign_admin: Option<T::AccountId>,
-		assets_pairs: Vec<AssetsPair>,
+		assets_pairs: Vec<AssetsPair<T::LocalAssetId, T::ForeignAssetId>>,
 	}
 
 	#[cfg(feature = "std")]
@@ -134,12 +132,12 @@ use frame_support::{
 			}
 			for assets_pair in &self.assets_pairs {
 				<LocalToForeign<T>>::insert(
-					T::LocalAssetId::from(assets_pair.local_asset_id),
-					T::ForeignAssetId::from(assets_pair.foreign_asset_id),
+					assets_pair.local_asset_id,
+					assets_pair.foreign_asset_id,
 				);
 				<ForeignToLocal<T>>::insert(
-					T::ForeignAssetId::from(assets_pair.foreign_asset_id),
-					T::LocalAssetId::from(assets_pair.local_asset_id),
+					assets_pair.foreign_asset_id,
+					assets_pair.local_asset_id,
 				);
 			}
 		}
