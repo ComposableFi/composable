@@ -840,6 +840,8 @@ impl currency_factory::Config for Runtime {
 	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
+
+impl pallet_assets_registry::
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 

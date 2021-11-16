@@ -2,8 +2,9 @@
 //!
 //! It works as next:
 //! 1. Genesis config defines well know assets maps. Specifically map of native token to this chain(here).
-//! 2. each mapping is bidirectional.
-//!
+//! 2. Each mapping is bidirectional.
+//! 3. Assets map added as candidate and waits for approval.
+//! 4. After approval map return mapped value.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
@@ -17,7 +18,8 @@ mod tests;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use frame_support::{
+	use composable_traits::assets::RemoteAssetRegistry;
+use frame_support::{
 		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
 	};
 
@@ -210,9 +212,26 @@ pub mod pallet {
 		}
 	}
 
-	impl<T:Config> composable_traits::RemoteAssetRegistry for Pallet<T> {
+	impl<T:Config> RemoteAssetRegistry for Pallet<T> {
+    	type AssetId = T::LocalAssetId;
 
-	}
+    	type AssetNativeLocation = T::ForeignAssetId;
+
+		fn set_location(local_asset_id: Self::AssetId, foreign_asset_id: Self::AssetNativeLocation)
+			-> DispatchResult {
+			<LocalToForeign<T>>::insert(local_asset_id, foreign_asset_id);
+			<ForeignToLocal<T>>::insert(foreign_asset_id, local_asset_id);
+			Ok(())
+		}
+
+		fn asset_to_location(local_asset_id: Self::AssetId) -> Option<Self::AssetNativeLocation> {
+			<LocalToForeign<T>>::get(local_asset_id)
+		}
+
+		fn location_to_asset(foreign_asset_id: Self::AssetNativeLocation) -> Option<Self::AssetId> {
+			<ForeignToLocal<T>>::get(foreign_asset_id)
+		}
+}
 
 	impl<T: Config> Pallet<T> {
 		fn ensure_admins_only(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
@@ -250,14 +269,12 @@ pub mod pallet {
 					},
 				Some(CandidateStatus::LocalAdminApproved) =>
 					if who == foreign_admin {
-						<LocalToForeign<T>>::insert(local_asset_id, foreign_asset_id);
-						<ForeignToLocal<T>>::insert(foreign_asset_id, local_asset_id);
+						Self::set_location(local_asset_id, foreign_asset_id)?;
 						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
 					},
 				Some(CandidateStatus::ForeignAdminApproved) =>
 					if who == local_admin {
-						<LocalToForeign<T>>::insert(local_asset_id, foreign_asset_id);
-						<ForeignToLocal<T>>::insert(foreign_asset_id, local_asset_id);
+						Self::set_location(local_asset_id, foreign_asset_id)?;
 						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
 					},
 			};
