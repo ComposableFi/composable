@@ -917,11 +917,14 @@ construct_runtime!(
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 54,
-		AssetsRegistry : assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
+
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
+
+// #[cfg(feature = "develop")]
+// 		AssetsRegistry : assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 
 /// Block header type as expected by this runtime.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
