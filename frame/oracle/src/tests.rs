@@ -154,7 +154,9 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				MIN_ANSWERS,
 				MAX_ANSWERS,
-				BLOCK_INTERVAL - 4
+				BLOCK_INTERVAL - 4,
+				REWARD,
+				SLASH
 			),
 			Error::<Test>::BlockIntervalLength
 		);
