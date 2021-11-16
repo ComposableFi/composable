@@ -24,26 +24,6 @@ use sp_runtime::{
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
-// use sp_runtime::{
-//     traits::{
-//        AtLeast32BitUnsigned, Convert, AccountIdConversion, 
-//        Saturating, CheckedSub, CheckedAdd, CheckedMul, CheckedDiv, Zero,
-       
-//     },
-//    // Perquintill,
-// };
-
-// use frame_support::{
-//     ensure,
-//     pallet_prelude::*,
-//     traits::{
-//         EnsureOrigin,
-//         UnixTime,
-//         fungibles::{Mutate, Transfer}
-//     },
-//     PalletId,
-// };
-// use sp_runtime::generic::UncheckedExtrinsic;
 
 pub type BlockNumber = u64;
 pub type Balance = u128;
@@ -71,7 +51,7 @@ parameter_types!{
     pub const BlockHashCount: u64 = 250;
 }
 
-impl system::Config for Test {
+impl frame_system::Config for Test {
     type AccountId = AccountId;////u64;
     type Origin = Origin;
     type Index = u64;
@@ -218,25 +198,6 @@ impl mosaic_vault::Config for Test {
     type AdminOrigin = EnsureSignedBy<ADMIN, AccountId>;//<RootAccount, sp_core::sr25519::Public>;
 }
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
-
-// Configure a mock runtime to test the pallet.
-construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
-        System: system::{ Pallet, Call, Storage, Config, Event<T>},
-        Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-        LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
-        Tokens: orml_tokens::{Pallet,Storage, Event<T>, Config<T>},
-        Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
-        MosaicVault: mosaic_vault::{ Pallet, Call, Storage, Event<T>},
-	}
-);
-
 pub struct ExtBuilder {
 	balances: Vec<(AccountId, MockCurrencyId, Balance)>,
 }
@@ -251,15 +212,45 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
 
 
 		orml_tokens::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut t)
 			.unwrap();
 
-		t.into()
+            let mut ext = sp_io::TestExternalities::new(t);
+            ext.execute_with(|| System::set_block_number(1));
+            ext
+
+		//t.into()
 	}
 }
+
+// pub fn new_test_ext() -> sp_io::TestExternalities {
+//     let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+//     let mut ext = sp_io::TestExternalities::new(t);
+//     ext.execute_with(|| System::set_block_number(1));
+//     ext
+// }
+
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+type Block = frame_system::mocking::MockBlock<Test>;
+
+// Configure a mock runtime to test the pallet.
+construct_runtime!(
+	pub enum Test where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+        System: frame_system::{ Pallet, Call, Storage, Config, Event<T>},
+        Timestamp: pallet_timestamp::{Pallet, Call, Storage},
+        LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
+        Tokens: orml_tokens::{Pallet,Storage, Event<T>, Config<T>},
+        Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
+        MosaicVault: mosaic_vault::{ Pallet, Call, Storage, Event<T>},
+	}
+);
 
 

@@ -8,9 +8,17 @@ use frame_support::{
     }
 };
 use crate::{mocks::runtime::*}; 
+
 use crate::{mocks::currency_factory::MockCurrencyId};
 use std::time::{SystemTime, UNIX_EPOCH};
 use sp_runtime::{helpers_128bit::multiply_by_rational, FixedPointNumber, Percent, Perquintill};
+use frame_system::EventRecord;
+use crate::{mocks::runtime::Event}; 
+use crate::{mocks::runtime}; 
+// use frame_system::pallet::Event;
+// use crate::{RawEvent};
+
+
 
 #[test]
 fn test_set_min_fee(){
@@ -144,7 +152,58 @@ fn test_deposit() {
 
         assert_eq!(MosaicVault::deposits(MockCurrencyId::A).asset_id, MockCurrencyId::A );
         assert_eq!(MosaicVault::deposits(MockCurrencyId::A).amount, 500);
-        
+    })
+}
+
+#[test]
+fn test_withdraw() {
+    ExtBuilder::default().build().execute_with(||{
+        let remote_network_id: RemoteNetworkId = 1235;
+        let transfer_delay: TransferDelay = 60;
+
+        MosaicVault::create_vault(Origin::signed(ALICE), MockCurrencyId::A,Perquintill::from_percent(100));
+        MosaicVault::deposit(Origin::signed(ALICE), 500, MockCurrencyId::A, BOB, remote_network_id, transfer_delay);
+
+        let deposit_completed = System::events().into_iter().map(|r| r.event).filter_map(|e| {
+            if let Event::MosaicVault(inner) = e {
+                Some(inner)
+            } else {
+                None
+            }
+        })
+        .last()
+        .unwrap();
+
+        if let crate::Event::DepositCompleted{ sender, asset_id,remote_asset_id,remote_network_id, destination_address,amount,  deposit_id, transfer_delay} = deposit_completed {
+           assert_ok!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 500, MockCurrencyId::A, remote_network_id, deposit_id));
+           assert_eq!(MosaicVault::has_been_withdrawn(deposit_id), true);
+           assert_eq!(MosaicVault::last_withdraw_id(), deposit_id);
+        }
+
+    })
+}
+
+#[test]
+fn test_create_vault() {
+    ExtBuilder::default().build().execute_with(||{
+
+        let remote_network_id: RemoteNetworkId = 100001;
+        assert_noop!(MosaicVault::create_vault(Origin::signed(BOB), MockCurrencyId::A,Perquintill::from_percent(100)), BadOrigin);
+        assert_ok!(MosaicVault::create_vault(Origin::signed(ALICE), MockCurrencyId::A,Perquintill::from_percent(100)));
+
+       let vault_created = System::events().into_iter().map(|r| r.event) .filter_map(|e| {
+           if let Event::MosaicVault(inner)= e {
+               Some(inner) 
+           }else {
+               None
+           }
+        })
+        .last()
+        .unwrap();
+
+        if let crate::Event::VaultCreated{sender, asset_id, vault_id, reserved} = vault_created {
+            assert_eq!(vault_id, MosaicVault::asset_vault(asset_id));
+        }
     })
 }
 
