@@ -1,7 +1,8 @@
 [package]
 name = "price-feed"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
+rust-version = "1.56"
 
 [dependencies]
 enum_derive = "0.1.7"
@@ -15,7 +16,6 @@ chrono = "0.4.19"
 serde = { version = "1.0", features = [ "derive" ] }
 serde_json = "1.0"
 jsonrpc-core = "18.0.0"
-jsonrpc-core-client = "18.0.0"
 jsonrpc-client-transports = "18.0.0"
 clap = "3.0.0-beta.2"
 warp = "0.3"

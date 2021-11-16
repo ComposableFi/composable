@@ -1,6 +1,6 @@
-use frame_support::{dispatch::DispatchError, pallet_prelude::*};
-
 use crate::currency::PriceableAsset;
+use frame_support::{dispatch::DispatchError, pallet_prelude::*};
+use sp_std::vec::Vec;
 
 #[derive(Encode, Decode, Default, Debug, PartialEq)]
 pub struct Price<PriceValue, BlockNumber> {
@@ -41,6 +41,11 @@ pub trait Oracle {
 		asset: Self::AssetId,
 		amount: Self::Balance,
 	) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError>;
+
+	fn get_twap(
+		of: Self::AssetId,
+		weighting: Vec<Self::Balance>,
+	) -> Result<Self::Balance, DispatchError>;
 
 	/// Check whether the provided `asset` is supported (a.k.a. a price can be computed) by the
 	/// oracle.

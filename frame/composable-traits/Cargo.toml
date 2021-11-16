@@ -3,19 +3,19 @@ name = "composable-traits"
 version = "0.0.1"
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
-edition = "2018"
+edition = "2021"
+rust-version = "1.56"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11"  }
-
-sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12"  }
+xcm = { package = "xcm", git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12", default-features = false }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 serde = { version = '1', optional = true }
@@ -37,7 +37,9 @@ std = [
     "serde",
     "codec/std",
     "frame-support/std",
+    "frame-system/std",
     "sp-runtime/std",
     "scale-info/std",
+    "xcm/std",
 ]
 visualization = ["plotters"]

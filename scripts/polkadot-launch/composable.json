@@ -51,12 +51,27 @@
           "name": "alice",
           "wsPort": 9988,
           "basePath": "/tmp/polkadot-launch/parachains/alice",
+          "port": 31100,
+          "flags": ["--", "--execution=wasm"]
+        },
+        {
+          "name": "bob",
+          "wsPort": 9997,
+          "basePath": "/tmp/polkadot-launch/parachains/bob",
           "port": 31200,
+          "flags": ["--", "--execution=wasm"]
+        },
+        {
+          "name": "charlie",
+          "wsPort": 9996,
+          "basePath": "/tmp/polkadot-launch/parachains/charlie",
+          "port": 31300,
           "flags": ["--", "--execution=wasm"]
         }
       ]
     }
   ],
   "types": {},
-  "finalization": false
+  "finalization": false,
+  "simpleParachains": []
 }
