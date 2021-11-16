@@ -1,6 +1,6 @@
 # Summary
 
-This RFS proposes a solution to maintain several development streams and runtimes in a single branch.
+This proposes a solution to maintain several development streams and runtimes in a single branch.
 
 ## Motivation
 
@@ -56,5 +56,6 @@ Using develop branch is an attempted alternative to go forward. I see next probl
 
 - Gating new yet audited extrinsic in existing pallets.
 - Versioning conditional blocks of code inside pallets.
+- https://github.com/paritytech/substrate/issues/10286
 
 Two of the above issues should be solved regardless of whether we are using develop branch or feature gate.
