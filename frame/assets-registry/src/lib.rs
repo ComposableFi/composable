@@ -1,8 +1,11 @@
+//! Pallet for allowing to map assets from this and other parachain.
+//!
+//! It works as next:
+//! 1. Genesis config defines well know assets maps. Specifically map of native token to this chain(here).
+//! 2. each mapping is bidirectional.
+//!
 #![cfg_attr(not(feature = "std"), no_std)]
 
-/// Edit this file to define custom logic or remove it if it is not needed.
-/// Learn more about FRAME and the core library of Substrate FRAME pallets:
-/// <https://substrate.dev/docs/en/knowledgebase/runtime/frame>
 pub use pallet::*;
 
 #[cfg(test)]
@@ -73,13 +76,13 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn from_local_asset)]
 	/// Mapping local asset to foreign asset.
-	pub type LocalAsset<T: Config> =
+	pub type LocalToForeign<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::LocalAssetId, T::ForeignAssetId, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn from_foreign_asset)]
 	/// Mapping foreign asset to local asset.
-	pub type ForeignAsset<T: Config> =
+	pub type ForeignToLocal<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::ForeignAssetId, T::LocalAssetId, OptionQuery>;
 
 	#[pallet::storage]
@@ -128,11 +131,11 @@ pub mod pallet {
 				<ForeignAdmin<T>>::put(foreign_admin)
 			}
 			for assets_pair in &self.assets_pairs {
-				<LocalAsset<T>>::insert(
+				<LocalToForeign<T>>::insert(
 					T::LocalAssetId::from(assets_pair.local_asset_id),
 					T::ForeignAssetId::from(assets_pair.foreign_asset_id),
 				);
-				<ForeignAsset<T>>::insert(
+				<ForeignToLocal<T>>::insert(
 					T::ForeignAssetId::from(assets_pair.foreign_asset_id),
 					T::LocalAssetId::from(assets_pair.local_asset_id),
 				);
@@ -191,11 +194,11 @@ pub mod pallet {
 			let who = ensure_signed(origin.clone())?;
 			Self::ensure_admins_only(origin)?;
 			ensure!(
-				!<LocalAsset<T>>::contains_key(local_asset_id),
+				!<LocalToForeign<T>>::contains_key(local_asset_id),
 				Error::<T>::LocalAssetIdAlreadyUsed
 			);
 			ensure!(
-				!<ForeignAsset<T>>::contains_key(foreign_asset_id),
+				!<ForeignToLocal<T>>::contains_key(foreign_asset_id),
 				Error::<T>::ForeignAssetIdAlreadyUsed
 			);
 			Self::approve_candidate(who, local_asset_id, foreign_asset_id)?;
@@ -205,6 +208,10 @@ pub mod pallet {
 			});
 			Ok(().into())
 		}
+	}
+
+	impl<T:Config> composable_traits::RemoteAssetRegistry for Pallet<T> {
+
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -243,14 +250,14 @@ pub mod pallet {
 					},
 				Some(CandidateStatus::LocalAdminApproved) =>
 					if who == foreign_admin {
-						<LocalAsset<T>>::insert(local_asset_id, foreign_asset_id);
-						<ForeignAsset<T>>::insert(foreign_asset_id, local_asset_id);
+						<LocalToForeign<T>>::insert(local_asset_id, foreign_asset_id);
+						<ForeignToLocal<T>>::insert(foreign_asset_id, local_asset_id);
 						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
 					},
 				Some(CandidateStatus::ForeignAdminApproved) =>
 					if who == local_admin {
-						<LocalAsset<T>>::insert(local_asset_id, foreign_asset_id);
-						<ForeignAsset<T>>::insert(foreign_asset_id, local_asset_id);
+						<LocalToForeign<T>>::insert(local_asset_id, foreign_asset_id);
+						<ForeignToLocal<T>>::insert(foreign_asset_id, local_asset_id);
 						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
 					},
 			};
