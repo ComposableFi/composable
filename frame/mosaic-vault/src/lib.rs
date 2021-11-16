@@ -242,6 +242,7 @@ pub mod pallet {
 		DepositCompleted {
 			sender: T::AccountId,
 			asset_id: T::AssetId,   
+			vault_id: T::VaultId,
 		    remote_asset_id: T::RemoteAssetId,
 		    remote_network_id: T::RemoteNetworkId, 
 		    destination_address: T::AccountId, 
@@ -604,16 +605,15 @@ pub mod pallet {
 			ensure!(amount <= Self::max_asset_transfer_size(asset_id), Error::<T>::AmountAboveMaxAssetTransferSize);
 
 			ensure!(amount >= Self::min_asset_transfer_size(asset_id), Error::<T>::AmountBelowMinAssetTransferSize);
-
-			// update in_transfer_funds
-			let in_transfer_funds = Self::in_transfer_funds(asset_id);
-			let new_in_transfer_funds = in_transfer_funds.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
-			<InTransferFunds<T>>::insert(asset_id, new_in_transfer_funds);
 			// 
 			let pallet_account_id = Self::account_id();            
             // move funds to pallet amount
 			T::Currency::transfer(asset_id, &sender, &pallet_account_id, amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
-            // deposit to valut
+			// update in_transfer_funds
+			let in_transfer_funds = Self::in_transfer_funds(asset_id);
+			let new_in_transfer_funds = in_transfer_funds.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
+			<InTransferFunds<T>>::insert(asset_id, new_in_transfer_funds);
+			// deposit to valut
 			let vault_id = <AssetVault<T>>::get(asset_id);
 			<T::Vault as StrategicVault>::deposit(&vault_id, &pallet_account_id, amount)?;
            
@@ -622,9 +622,10 @@ pub mod pallet {
 			let deposit_id = Self::generate_deposit_id(remote_network_id, &destination_address, pallet_account_id);
             <Deposits<T>>::insert(asset_id, DepositInfo{asset_id, amount});
 
-			Self::deposit_event(Event::<T>::DepositCompleted{
+			Self::deposit_event(Event::DepositCompleted{
 				sender,
 				asset_id,
+				vault_id,
 				remote_asset_id: Self::remote_asset_id(remote_network_id, asset_id),
 				remote_network_id,
 				destination_address,
@@ -655,50 +656,50 @@ pub mod pallet {
              
 			  ensure!(Self::has_been_withdrawn(deposit_id) == false, Error::<T>::AlreadyWithdrawn);
 
+			//  ensure!(Self::get_current_token_liquidity(asset_id)? >= amount, Error::<T>::InsufficientAssetBalance); 
+
 			  <HasBeenWithdrawn<T>>::insert(deposit_id, true);
 
 			  <LastWithdrawID<T>>::put(deposit_id);
 
 			  let pallet_account_id = Self::account_id(); 
 
-			  let vault_id = <AssetVault<T>>::get(asset_id);
+			  let vault_id = <AssetVault<T>>::get(asset_id);  
 
-			  <T::Vault as StrategicVault>::withdraw(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::WithdrawFailed)?;
-              
-              let fee = Self::calculate_fee_percentage(asset_id, amount)?;
-			  
-			  let fee_absolute = amount.checked_mul(&fee)
-			     .and_then(|x|x.checked_div(&T::FeeFactor::get()))
-				 .ok_or(Error::<T>::Overflow)?;
+			// let fee = Self::calculate_fee_percentage(asset_id, amount)?;
+
+		    <T::Vault as StrategicVault>::withdraw(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::WithdrawFailed)?;
+            
+			//   let fee_absolute = amount.checked_mul(&fee)
+			//      .and_then(|x|x.checked_div(&T::FeeFactor::get()))
+			// 	 .ok_or(Error::<T>::Overflow)?;
 	
-			  let withdraw_amount = amount.checked_sub(&fee_absolute).ok_or(Error::<T>::Underflow)?;
+			//   let withdraw_amount = amount.checked_sub(&fee_absolute).ok_or(Error::<T>::Underflow)?;  
 
-			  ensure!(Self::get_current_token_liquidity(asset_id)? >= amount, Error::<T>::InsufficientAssetBalance);    
+		   // T::Currency::transfer(asset_id, &pallet_account_id, &sender, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
 
-			  T::Currency::transfer(asset_id, &pallet_account_id, &sender, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
-
-			 if fee_absolute > T::Balance::zero() {  
+			//  if fee_absolute > T::Balance::zero() {  
 			   
-				T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee_absolute, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+			// 	T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee_absolute, true).map_err(|_|Error::<T>::TransferFromFailed)?;
 				
-				Self::deposit_event(Event::FeeTaken{
-					sender, 
-					destination_account: destination_account.clone(), 
-					asset_id,
-					amount,
-					fee_absolute,
-					deposit_id,
-				});
-			 }
+			// 	Self::deposit_event(Event::FeeTaken{
+			// 		sender, 
+			// 		destination_account: destination_account.clone(), 
+			// 		asset_id,
+			// 		amount,
+			// 		fee_absolute,
+			// 		deposit_id,
+			// 	});
+			//  }
 
-			 Self::deposit_event(Event::WithdrawalCompleted{
-				destination_account,
-				amount,
-				withdraw_amount,
-				fee_absolute,
-				asset_id,
-				deposit_id
-			 });
+			//  Self::deposit_event(Event::WithdrawalCompleted{
+			// 	destination_account,
+			// 	amount,
+			// 	withdraw_amount,
+			// 	fee_absolute,
+			// 	asset_id,
+			// 	deposit_id
+			//  });
 
 			 Ok(().into())
 		 }
@@ -882,7 +883,7 @@ pub mod pallet {
 
 		fn calculate_fee_percentage(asset_id: T::AssetId, amount: T::Balance) -> Result<T::Balance, DispatchError> {
 
-			let token_liquidity = Self::get_current_token_liquidity(asset_id)?;
+		  let token_liquidity = Self::get_current_token_liquidity(asset_id)?;
 
 			if token_liquidity == T::Balance::zero() {
 				return Ok(Self::max_fee());
@@ -914,9 +915,10 @@ pub mod pallet {
 		
 			let available_funds = Self::get_withdrawable_balance(asset_id)?;
 
-			let liquidity = available_funds.checked_sub(&Self::in_transfer_funds(asset_id)).ok_or(Error::<T>::Underflow)?;
+			//let liquidity = available_funds.checked_sub(&Self::in_transfer_funds(asset_id)).ok_or(Error::<T>::Underflow)?;
 
-			Ok(liquidity)
+			// Ok(liquidity)
+			Ok(available_funds)
 		}
 
 		fn get_withdrawable_balance(asset_id: T::AssetId) -> Result<T::Balance, DispatchError> {
@@ -969,3 +971,4 @@ pub mod pallet {
 	}
 
  }
+ 

@@ -165,7 +165,7 @@ parameter_types! {
     pub const ThresholdFactor:Balance = 100;
     pub const FeeAddress: u64 = 1;
     pub const MosaicVaultId: PalletId = PalletId(*b"test_pid");
-    pub const MaxFeeDefault: Balance = 500;
+    pub const MaxFeeDefault: Balance = 3;
     pub const MinFeeDefault: Balance = 0;
 }
 
@@ -206,6 +206,7 @@ impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self { balances: vec![
             (ALICE, MockCurrencyId::A, 1000000000)
+                                       
         ] }
 	}
 }
