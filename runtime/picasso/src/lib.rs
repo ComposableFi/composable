@@ -846,10 +846,12 @@ impl assets_registry::Config for Runtime {
 	type LocalAssetId = CurrencyId;
 	type ForeignAssetId = composable_traits::assets::XcmAssetLocation;
 	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
-	type LocalAdminOrigin = EnsureRootOrHalfCouncil;
-	/// we should define governance for adding foreign assets here
-	type ForeignAdminOrigin = EnsureRootOrHalfCouncil;
+	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
+	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
 }
+
+// type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
+// 	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
 
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;

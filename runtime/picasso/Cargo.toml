@@ -157,6 +157,7 @@ runtime-benchmarks = [
 	"hex-literal",
 	"balances/runtime-benchmarks",
 	"timestamp/runtime-benchmarks",
+	"assets-registry/runtime-benchmarks",
 	"oracle/runtime-benchmarks",
 	"collective/runtime-benchmarks",
 	"collator-selection/runtime-benchmarks",
