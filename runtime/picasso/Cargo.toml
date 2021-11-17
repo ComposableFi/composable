@@ -10,7 +10,7 @@ authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [package.metadata.cargo-udeps.ignore]
-normal = ["pallet-vault", "session-benchmarking" ]
+normal = ["pallet-vault", "session-benchmarking", "assets-registry"]
 
 [dependencies]
 frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
@@ -51,6 +51,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 smallvec = "1.6.1"
 
 # local modules
+assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false, optional = true }
 crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
@@ -146,6 +147,7 @@ std = [
 	"aura/std",
 	"sp-consensus-aura/std",
     "scale-info/std",
+	"assets-registry/std",
 ]
 runtime-benchmarks = [
 	"benchmarking",
@@ -155,6 +157,7 @@ runtime-benchmarks = [
 	"hex-literal",
 	"balances/runtime-benchmarks",
 	"timestamp/runtime-benchmarks",
+	"assets-registry/runtime-benchmarks",
 	"oracle/runtime-benchmarks",
 	"collective/runtime-benchmarks",
 	"collator-selection/runtime-benchmarks",
@@ -170,4 +173,7 @@ runtime-benchmarks = [
 	"collective/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
+]
+develop = [
+	"assets-registry"
 ]
