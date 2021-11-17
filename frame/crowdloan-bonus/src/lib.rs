@@ -18,7 +18,7 @@ pub mod weights;
 pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::Codec;
-	use core::ops::{Div, Mul};
+	use composable_traits::math::SafeArithmetic;
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
@@ -142,7 +142,8 @@ pub mod pallet {
 
 			ensure!(pot_balance_value > 0 && token_supply_value > 0, Error::<T>::EmptyPot);
 
-			let to_payout = pot_balance_value.mul(amount).div(token_supply_value);
+			let to_payout = pot_balance_value.safe_mul(&amount)?.safe_div(&token_supply_value)?;
+
 			let amount_value: T::Balance = amount.saturated_into();
 			let converted_payout: NativeBalanceOf<T> = to_payout.saturated_into();
 
