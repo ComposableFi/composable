@@ -109,7 +109,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn fast_vec)]
-	pub(super) type Fastvec<T: Config> = StorageMap<_, Blake2_128Concat, FastMap, ValueQuery>;
+	pub(super) type Fastvec<T: Config> = StorageMap<_, Blake2_128Concat, FastMap, FastMap>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn bribe_requests)]
