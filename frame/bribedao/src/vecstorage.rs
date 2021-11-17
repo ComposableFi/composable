@@ -2,7 +2,7 @@
 
 // Sorted Vec storage, import BribeStorage and ComplexMap
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, EncodeLike};
 use scale_info::TypeInfo;
 use sortedvec::sortedvec;
 use std::convert::TryInto;
@@ -16,7 +16,7 @@ pub struct BribesStorage {
 
 sortedvec! {
 	/// lookup by (amount, votes) keys
-	#[derive(Debug, Encode, Decode, TypeInfo)]
+	#[derive(Debug, Encode, Decode, TypeInfo)]//EncodeLike
 	pub struct FastMap {
 		fn derive_key(val: &BribesStorage) -> (u32, u32) {
 			(val.amount, val.votes)
@@ -41,35 +41,3 @@ impl FastMap {
 		FastMap::default()
 	}
 }
-
-/*
-// Extend storage value | based on: https://github.com/totem-tech/totem-lego/blob/1759cc080ce413a9815bb07aa3658d9a07c9f3ef/frame/totem/utils/src/lib.rs
-
-pub trait StorageValueExt<V>
-where
-	Self: StorageValue<V>,
-//    K: FullEncode + Encode + EncodeLike,
-	V: FullCodec + Decode + FullEncode + Encode + EncodeLike + WrapperTypeEncode,
-{
-	/// If the key exists in the map, modifies it with the provided function, and returns `Update::Done`.
-	/// Otherwise, it does nothing and returns `Update::KeyNotFound`.
-//    fn mutate_<KeyArg: EncodeLike<K>, F: FnOnce(&mut V)>(key: KeyArg, f: F) -> Update {
-//        Self::mutate_exists(key, |option| match option.as_mut() {
-//            Some(value) => {
-//                f(value);
-//                Update::Done
-//            }
-//            None => Update::KeyNotFound,
-//        })
-   // }
-}
-
-impl<T, V> StorageValueExt<V> for T
-where
-	T: StorageValue<V>,
-//    K: FullEncode + Encode + EncodeLike,
-	V: FullCodec + Decode + FullEncode + Encode + EncodeLike + WrapperTypeEncode,
-{
-}
-
-*/

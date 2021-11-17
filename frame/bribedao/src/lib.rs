@@ -19,12 +19,11 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
 	use pallet_democracy::Vote;
-	//	use pallet_vault::models::VaultInfo;
 	use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 	use sp_std::fmt::Debug;
 
 	pub type BribeIndex = u32;
-	pub type FastVec = FastMap;
+	//	pub type FastVec = FastMap;
 	pub type ReferendumIndex = pallet_democracy::ReferendumIndex;
 	pub type CreateBribeRequest<T> = composable_traits::bribe::CreateBribeRequest<
 		<T as frame_system::Config>::AccountId,
@@ -107,12 +106,9 @@ pub mod pallet {
 	#[pallet::getter(fn bribe_count)]
 	pub(super) type BribeCount<T: Config> = StorageValue<_, BribeIndex, ValueQuery>;
 
-	//	impl<T: WrapperTypeEncode> WrapperTypeEncode for FastMap {
-	//}
-
-	#[pallet::storage]
-	#[pallet::getter(fn fast_vec)]
-	pub(super) type MyFastvec<T: Config> = StorageValue<_, FastMap>; //::new();
+	//	#[pallet::storage]
+	//	#[pallet::getter(fn fast_vec)]
+	//	pub(super) type Fastvec<T: Config> = StorageMap<_, Blake2_128Concat, FastMap, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn bribe_requests)]
@@ -205,7 +201,6 @@ pub mod pallet {
 			let currencyid = og_request.asset_id;
 			T::Currency::hold(currencyid, &who, amount).map_err(|_| Error::<T>::CantFreezeFunds)?; //Freeze assets
 			if bribe_taken {
-				// insert into fastvec
 				Self::deposit_event(Event::BribeTaken { id: bribe_index, request });
 			}
 			Ok(().into())
@@ -265,6 +260,9 @@ pub mod pallet {
 			});
 
 			ensure!(!BribeRequests::<T>::contains_key(id), Error::<T>::AlreadyBribed); //dont duplicate briberequest if we already have it
+
+			// insert into fastvec
+			//Fastvec::<T>::add(1, 3, 2);
 
 			BribeRequests::<T>::insert(id, request);
 			Ok(id)

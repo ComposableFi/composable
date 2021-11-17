@@ -10,9 +10,9 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies.codec]
 default-features = false
-features = ["derive"]
+features = ["derive", "max-encoded-len"]
 package = "parity-scale-codec"
-version = "2.0.0"
+version = "2.2.0"
 
 [dependencies]
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
@@ -27,7 +27,7 @@ sp-core = { default-features = false, git = "https://github.com/paritytech/subst
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 scale-info = { version = "1.0", default-features = false, features=["derive"]}
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
-sortedvec = { version = "0.5.0", git = "https://github.com/marcusklaas/sortedvec" }
+sortedvec = { version = "0.5.0", git = "https://github.com/marcusklaas/sortedvec"}
 frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.11' }
 rand = "0.8.4"
 serde = { version = '1', optional = true }
