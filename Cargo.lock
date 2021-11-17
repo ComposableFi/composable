@@ -5545,7 +5545,6 @@ dependencies = [
  "rand 0.8.4",
  "scale-info",
  "serde",
- "sortedvec",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
@@ -10446,11 +10445,6 @@ dependencies = [
  "rand 0.8.4",
  "sha-1 0.9.8",
 ]
-
-[[package]]
-name = "sortedvec"
-version = "0.5.0"
-source = "git+https://github.com/marcusklaas/sortedvec#3f9e153d55e750eb54220fdaf865eec63b46156b"
 
 [[package]]
 name = "sp-api"

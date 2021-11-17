@@ -1,10 +1,13 @@
 #![allow(dead_code)]
 
 // Sorted Vec storage, import BribeStorage and ComplexMap
+//pub mod sortedvec;
+//use crate::sortedvec::sortedvec;
 
+use crate::sortedvec;
 use codec::{Decode, Encode, EncodeLike};
 use scale_info::TypeInfo;
-use sortedvec::sortedvec;
+//use sortedvec::sortedvec;
 use std::convert::TryInto;
 
 #[derive(Debug, Default, TypeInfo, PartialEq, Hash, Clone, Encode, Decode)]

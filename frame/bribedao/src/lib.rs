@@ -2,13 +2,14 @@
 
 pub use pallet::*;
 
+pub mod sortedvec;
 pub mod tests;
 pub mod vecstorage;
-pub use crate::vecstorage::FastMap;
+pub use crate::sortedvec::FastMap;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::vecstorage::FastMap;
+	use crate::sortedvec::FastMap;
 	use codec::Codec;
 	use composable_traits::{bribe::Bribe, democracy::Democracy};
 	use frame_support::{
@@ -106,9 +107,9 @@ pub mod pallet {
 	#[pallet::getter(fn bribe_count)]
 	pub(super) type BribeCount<T: Config> = StorageValue<_, BribeIndex, ValueQuery>;
 
-	//	#[pallet::storage]
-	//	#[pallet::getter(fn fast_vec)]
-	//	pub(super) type Fastvec<T: Config> = StorageMap<_, Blake2_128Concat, FastMap, ValueQuery>;
+	#[pallet::storage]
+	#[pallet::getter(fn fast_vec)]
+	pub(super) type Fastvec<T: Config> = StorageMap<_, Blake2_128Concat, FastMap, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn bribe_requests)]
