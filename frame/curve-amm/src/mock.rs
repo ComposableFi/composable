@@ -1,6 +1,6 @@
 use crate as curve_amm;
 use composable_traits::currency::DynamicCurrencyId;
-use frame_support::{parameter_types, traits::Everything};
+use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
 use scale_info::TypeInfo;
@@ -8,7 +8,7 @@ use sp_arithmetic::{traits::Zero, FixedU128};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 	ArithmeticError, DispatchError, FixedPointNumber,
 };
 
@@ -68,6 +68,8 @@ impl DynamicCurrencyId for MockCurrencyId {
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+pub type VaultId = u64;
+pub type BlockNumber = u64;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -81,6 +83,7 @@ frame_support::construct_runtime!(
 		CurveAmm: curve_amm::{Pallet, Call, Storage, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -92,6 +95,33 @@ impl pallet_currency_factory::Config for Test {
 	type Event = Event;
 	type DynamicCurrencyId = MockCurrencyId;
 	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
+}
+
+parameter_types! {
+	pub const MaxStrategies: usize = 255;
+	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::PICA;
+	pub const CreationDeposit: Balance = 10;
+	pub const RentPerBlock: Balance = 1;
+	pub const MinimumDeposit: Balance = 0;
+	pub const MinimumWithdrawal: Balance = 0;
+	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
+}
+
+impl pallet_vault::Config for Test {
+	type Event = Event;
+	type Currency = Tokens;
+	type AssetId = MockCurrencyId;
+	type Balance = Balance;
+	type MaxStrategies = MaxStrategies;
+	type CurrencyFactory = LpTokenFactory;
+	type Convert = ConvertInto;
+	type MinimumDeposit = MinimumDeposit;
+	type MinimumWithdrawal = MinimumWithdrawal;
+	type PalletId = VaultPalletId;
+	type CreationDeposit = CreationDeposit;
+	type ExistentialDeposit = ExistentialDeposit;
+	type RentPerBlock = RentPerBlock;
+	type NativeAssetId = NativeAssetId;
 }
 
 parameter_types! {
@@ -108,7 +138,7 @@ pub static BOB: AccountId = 2;
 #[allow(dead_code)]
 pub static CHARLIE: AccountId = 3;
 #[allow(dead_code)]
-pub static CURVE_ADMIN_FEE_ACC_ID: AccountId = 4;
+pub static CURVE_STRATEGY_ACC_ID: AccountId = 4;
 
 impl system::Config for Test {
 	type BaseCallFilter = Everything;
@@ -118,7 +148,7 @@ impl system::Config for Test {
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;
-	type BlockNumber = u64;
+	type BlockNumber = BlockNumber;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
@@ -187,6 +217,8 @@ impl curve_amm::Config for Test {
 	type CurrencyFactory = LpTokenFactory;
 	type Precision = Precision;
 	type LpToken = Tokens;
+	type VaultId = VaultId;
+	type Vault = Vault;
 }
 
 // Build genesis storage according to the mock runtime.

@@ -88,41 +88,38 @@ pub trait CurveAmm {
 	type Balance;
 	/// The user account identifier type for the runtime
 	type AccountId;
+	/// The vault identifier
+	type VaultId;
 
 	/// Current number of pools (also ID for the next created pool)
 	fn pool_count() -> PoolId;
 
 	/// Information about the pool with the specified `id`
-	fn pool(id: PoolId) -> Option<PoolInfo<Self::AccountId, Self::AssetId, Self::Balance>>;
+	fn pool(id: PoolId) -> Option<PoolInfo<Self::AccountId, Self::VaultId, Self::Balance>>;
 
 	/// Creates a pool, taking a creation fee from the caller
 	fn create_pool(
 		who: &Self::AccountId,
-		assets: Vec<Self::AssetId>,
+		assets_vault_ids: Vec<Self::VaultId>,
 		amplification_coefficient: Self::Balance,
 		fee: Permill,
-		admin_fee: Permill,
 	) -> Result<PoolId, DispatchError>;
 
 	/// Deposit coins into the pool
 	/// `amounts` - list of amounts of coins to deposit,
-	/// `min_mint_amount` - minimum amout of LP tokens to mint from the deposit.
 	fn add_liquidity(
 		who: &Self::AccountId,
 		pool_id: PoolId,
 		amounts: Vec<Self::Balance>,
-		min_mint_amount: Self::Balance,
-	) -> Result<(), DispatchError>;
+	) -> Result<Vec<Self::Balance>, DispatchError>;
 
 	/// Withdraw coins from the pool.
 	/// Withdrawal amount are based on current deposit ratios.
-	/// `amount` - quantity of LP tokens to burn in the withdrawal,
-	/// `min_amounts` - minimum amounts of underlying coins to receive.
+	/// `lp_tokens` - quantity of LP tokens to burn in the withdrawal,
 	fn remove_liquidity(
 		who: &Self::AccountId,
 		pool_id: PoolId,
-		amount: Self::Balance,
-		min_amounts: Vec<Self::Balance>,
+		lp_tokens: Vec<Self::Balance>,
 	) -> Result<(), DispatchError>;
 
 	/// Perform an exchange between two coins.
@@ -138,13 +135,6 @@ pub trait CurveAmm {
 		dx: Self::Balance,
 		min_dy: Self::Balance,
 	) -> Result<(), DispatchError>;
-
-	/// Withdraw admin fees
-	fn withdraw_admin_fees(
-		who: &Self::AccountId,
-		pool_id: PoolId,
-		admin_fee_account: &Self::AccountId,
-	) -> Result<(), DispatchError>;
 }
 
 /// Type that represents index type of token in the pool passed from the outside as an extrinsic
@@ -156,21 +146,13 @@ pub type PoolId = u32;
 
 /// Pool type
 #[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, Debug)]
-pub struct PoolInfo<AccountId, AssetId, Balance> {
+pub struct PoolInfo<AccountId, VaultId, Balance> {
 	/// Owner of pool
 	pub owner: AccountId,
-	/// LP multiasset
-	pub pool_asset: AssetId,
-	/// List of multiasset supported by the pool
-	pub assets: Vec<AssetId>,
+	/// Assets vault ids
+	pub assets_vault_ids: Vec<VaultId>,
 	/// Initial amplification coefficient
 	pub amplification_coefficient: Balance,
 	/// Amount of the fee pool charges for the exchange
 	pub fee: Permill,
-	/// Amount of the admin fee pool charges for the exchange
-	pub admin_fee: Permill,
-	/// Current balances excluding admin_fee
-	pub balances: Vec<Balance>,
-	/// Current balances including admin_fee
-	pub total_balances: Vec<Balance>,
 }
