@@ -1,5 +1,5 @@
 const { ApiPromise, WsProvider } = require("@polkadot/api");
-const { ISubmittableResult, EventRecord, XcmV1MultiLocation, XcmV1MultilocationJunctions } = require("@polkadot/types/types");
+const { ISubmittableResult, XcmV1MultiLocation, XcmV1MultilocationJunctions } = require("@polkadot/types/types");
 const { Keyring, KeyringPair } = require("@polkadot/keyring");
 
 interface IAsset {
@@ -43,6 +43,7 @@ async function main() {
     );
 
     /*
+    >>>
     await doBasiliskAssetsMapping(
         basiliskApi,
         assets,
@@ -73,18 +74,24 @@ async function doComposableAssetsMapping(
     localAdmin: typeof KeyringPair,
     foreignAdmin: typeof KeyringPair,
 ) {
+    let adminsUpdated = false;
     const txs = [
         api.tx.assetsRegistry.setLocalAdmin(localAdmin.address),
         api.tx.assetsRegistry.setForeignAdmin(foreignAdmin.address),
     ];
     await api.tx.utility
         .batch(txs)
-        .signAndSend(root, ({ status }: typeof ISubmittableResult) => {
+        .signAndSend(root, ({ status, events }: typeof ISubmittableResult) => {
             if (status.isInBlock) {
                 console.log(`LocalAdmin and ForeignAdmin updated`);
+                adminsUpdated = true;
             }
         });
-    await sleep(12000);
+
+    while (!adminsUpdated) {
+        console.log(`Waiting admins update...`);
+        await sleep(1000);
+    }
 
     for (const { composable_id, basilisk_id } of assets) {
         await api.tx.assetsRegistry
