@@ -4,7 +4,6 @@ pub use pallet::*;
 
 pub mod sortedvec;
 pub mod tests;
-pub mod vecstorage;
 pub use crate::sortedvec::FastMap;
 
 #[frame_support::pallet]
