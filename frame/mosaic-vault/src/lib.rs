@@ -215,6 +215,10 @@ pub mod pallet {
 	pub(super) type InTransferFunds<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::Balance, ValueQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn total_value_transferred)]
+	pub(super) type TotalValueTransferred<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::Balance, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn deposits)]
 	pub(super) type Deposits<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, DepositInfo<T::AssetId, T::Balance>, ValueQuery>;
 
@@ -257,7 +261,7 @@ pub mod pallet {
 		   destination_account: T::AccountId,
            amount: T::Balance,
 		   withdraw_amount: T::Balance,
-		   fee_absolute: T::Balance,
+		   fee: T::Balance,
 		   asset_id: T::AssetId,
 		   deposit_id: T::DepositId,
 		},
@@ -325,7 +329,7 @@ pub mod pallet {
 			destination_account: T::AccountId,
 			asset_id: T::AssetId,
 			amount: T::Balance,
-			fee_absolute: T::Balance,
+			fee: T::Balance,
 			deposit_id: T::DepositId,
 		},
 
@@ -416,6 +420,8 @@ pub mod pallet {
 		Underflow,
 
 		Overflow,
+
+		UnlockAmountGreaterThanTotalValueTransferred,
 	}
 
 	#[pallet::call]
@@ -610,7 +616,10 @@ pub mod pallet {
 			// 
 			let pallet_account_id = Self::account_id();            
             // move funds to pallet amount
-			T::Currency::transfer(asset_id, &sender, &pallet_account_id, amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+		     T::Currency::burn_from(asset_id, &sender, amount).map_err(|_|Error::<T>::TransferFromFailed)?;
+
+			 Self::increase_total_value_transferred(asset_id, amount)?;
+
 			// update in_transfer_funds
 			let in_transfer_funds = Self::in_transfer_funds(asset_id);
 			let new_in_transfer_funds = in_transfer_funds.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
@@ -643,9 +652,12 @@ pub mod pallet {
 			asset_id: T::AssetId, 
 			remote_network_id: T::RemoteNetworkId,
 	        deposit_id: T::DepositId,
+			fee: T::Balance,
 		 ) -> DispatchResultWithPostInfo {
 
-			 let sender = ensure_signed(origin)?;
+			 let sender = ensure_signed(origin.clone())?;
+
+			 T::RelayerOrigin::ensure_origin(origin)?;
          
 			 ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 
@@ -660,27 +672,25 @@ pub mod pallet {
 			  <LastWithdrawID<T>>::put(deposit_id);
 
 			  let pallet_account_id = Self::account_id(); 
-
-			  let fee = Self::calculate_fee_percentage(asset_id, amount)?;
-
-			  let fee_absolute = amount.checked_mul(&fee)
-			     .and_then(|x|x.checked_div(&T::FeeFactor::get()))
-				 .ok_or(Error::<T>::Overflow)?;
 	
-			  let withdraw_amount = amount.saturating_sub(fee_absolute);
+			  let withdraw_amount = amount.saturating_sub(fee);
 
-		       T::Currency::transfer(asset_id, &pallet_account_id, &sender, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+			  T::Currency::mint_into(asset_id, &pallet_account_id, amount).map_err(|_|Error::<T>::TransferFromFailed)?;
 
-			 if fee_absolute > T::Balance::zero() {  
+			  T::Currency::transfer(asset_id, &pallet_account_id, &destination_account, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+
+			  Self::decrease_total_value_transferred(asset_id, amount)?;
+			
+			 if fee > T::Balance::zero() {  
 			   
-				T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee_absolute, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+				 T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee, true).map_err(|_|Error::<T>::TransferFromFailed)?;
 				
 				Self::deposit_event(Event::FeeTaken{
 					sender, 
 					destination_account: destination_account.clone(), 
 					asset_id,
 					amount,
-					fee_absolute,
+					fee,
 					deposit_id,
 				});
 			 }
@@ -689,7 +699,7 @@ pub mod pallet {
 				destination_account,
 				amount,
 				withdraw_amount,
-				fee_absolute,
+				fee,
 				asset_id,
 				deposit_id
 			 });
@@ -741,17 +751,15 @@ pub mod pallet {
           
 			 ensure!(Self::has_been_unlocked(deposit_id) == false, Error::<T>::AssetUnlreadyUnlocked);
 
+			 ensure!(Self::total_value_transferred(asset_id) >= amount, Error::<T>::UnlockAmountGreaterThanTotalValueTransferred);
+
 			 <HasBeenUnlocked<T>>::insert(deposit_id, true);
 
 			 <LastUnlockedID<T>>::put(deposit_id);
 
-			 let pallet_account_id = Self::account_id(); 
+			 T::Currency::mint_into(asset_id, &user_account_id, amount).map_err(|_|Error::<T>::TransferFromFailed)?;
 
-			 let vault_id = <AssetVault<T>>::get(asset_id);
-
-			<T::Vault as StrategicVault>::withdraw(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::WithdrawFailed)?;
-
-			T::Currency::transfer(asset_id, &pallet_account_id, &user_account_id, amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+			 Self::decrease_total_value_transferred(asset_id, amount)?;
              
 			Self::deposit_event(Event::FundsUnlocked{asset_id,user_account_id, amount, deposit_id});
 
@@ -760,7 +768,6 @@ pub mod pallet {
 		    }
 
 			Ok(().into())
-
 		 }
 
 		 #[pallet::weight(10_000)]
@@ -776,17 +783,13 @@ pub mod pallet {
 
 			ensure!(Self::pause_status() == true, Error::<T>::ContractNotPaused);
 
-			let withdrawable_balance = Self::get_withdrawable_balance(asset_id)?;
+			let withdrawable_balance = Self::total_value_transferred(asset_id);
 
 			ensure!(withdrawable_balance > T::Balance::zero(), Error::<T>::NoTransferableBalance);
 
-			let pallet_account_id = Self::account_id(); 
+			T::Currency::mint_into(asset_id, &to, withdrawable_balance).map_err(|_|Error::<T>::TransferFromFailed)?;
 
-			let vault_id = <AssetVault<T>>::get(asset_id);
-
-			<T::Vault as StrategicVault>::withdraw(&vault_id, &pallet_account_id, withdrawable_balance).map_err(|_| Error::<T>::WithdrawFailed)?;
-
-			T::Currency::transfer(asset_id, &pallet_account_id, &to, withdrawable_balance, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+			Self::decrease_total_value_transferred(asset_id, withdrawable_balance)?;
              
 		    Self::deposit_event(Event::LiquidityMoved {sender, to, withdrawable_balance});
 
@@ -873,22 +876,12 @@ pub mod pallet {
 
 		fn get_current_token_liquidity(asset_id: T::AssetId) -> Result<T::Balance, DispatchError> {
 		
-			let available_funds = Self::get_withdrawable_balance(asset_id)?;
+			let available_funds = Self::total_value_transferred(asset_id);
 
 			let liquidity = available_funds.checked_sub(&Self::in_transfer_funds(asset_id)).ok_or(Error::<T>::Underflow)?;
 
 			 Ok(liquidity)
 		}
-
-		fn get_withdrawable_balance(asset_id: T::AssetId) -> Result<T::Balance, DispatchError> {
-
-			let pallet_account_id = Self::account_id(); 
-
-			let available_funds = T::Currency::balance(asset_id, &pallet_account_id);
-
-			 Ok(available_funds)
-		}
-
 
 		fn only_supported_remote_token(remote_network_id: T::RemoteNetworkId, asset_id:T::AssetId) -> Result<T::RemoteAssetId, DispatchError> {
 			
@@ -923,6 +916,24 @@ pub mod pallet {
 			let deposit_id = keccak_256(&encoded_data);
 
 			deposit_id
+		}
+
+		fn increase_total_value_transferred(asset_id: T::AssetId, amount: T::Balance) -> Result<T::Balance, DispatchError>  {
+			
+			let total_value = (Self::total_value_transferred(asset_id)).checked_add(&amount).ok_or(Error::<T>::Overflow)?;
+            
+			<TotalValueTransferred<T>>::insert(asset_id, total_value);
+
+			Ok(total_value)
+		}
+
+		fn decrease_total_value_transferred(asset_id: T::AssetId, amount: T::Balance) -> Result<T::Balance, DispatchError>  {
+			
+			let total_value = (Self::total_value_transferred(asset_id)).checked_sub(&amount).ok_or(Error::<T>::Overflow)?;
+            
+			<TotalValueTransferred<T>>::insert(asset_id, total_value);
+
+			Ok(total_value)
 		}
 	}
 

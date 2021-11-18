@@ -182,17 +182,17 @@ fn test_withdraw() {
         if let crate::Event::DepositCompleted{ sender, asset_id, remote_asset_id,remote_network_id, destination_address,amount,deposit_id, transfer_delay} = deposit_completed {
         
             assert_ok!(MosaicVault::pause(Origin::signed(ALICE)));
-            assert_noop!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id), Error::<Test>::ContractPaused);
+            assert_noop!(MosaicVault::withdraw(Origin::signed(RELAYER_ACCOUNT),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id, 10), Error::<Test>::ContractPaused);
            
             assert_ok!(MosaicVault::un_pause(Origin::signed(ALICE)));
-            assert_noop!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 900, MockCurrencyId::B, remote_network_id, deposit_id), Error::<Test>::UnsupportedToken);
-            assert_noop!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id), Error::<Test>::InsufficientAssetBalance);
+            assert_noop!(MosaicVault::withdraw(Origin::signed(RELAYER_ACCOUNT),BOB, 900, MockCurrencyId::B, remote_network_id, deposit_id, 10), Error::<Test>::UnsupportedToken);
+            assert_noop!(MosaicVault::withdraw(Origin::signed(RELAYER_ACCOUNT),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id, 10), Error::<Test>::InsufficientAssetBalance);
 
             assert_ok!(MosaicVault::unlock_in_transfer_funds(Origin::signed(RELAYER_ACCOUNT),asset_id, amount, deposit_id));
-            assert_noop!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 1000, MockCurrencyId::A, remote_network_id, deposit_id), Error::<Test>::InsufficientAssetBalance);
+            assert_noop!(MosaicVault::withdraw(Origin::signed(RELAYER_ACCOUNT),BOB, 1000, MockCurrencyId::A, remote_network_id, deposit_id, 10), Error::<Test>::InsufficientAssetBalance);
 
-            assert_ok!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id));
-            assert_noop!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id), Error::<Test>::AlreadyWithdrawn);
+            assert_ok!(MosaicVault::withdraw(Origin::signed(RELAYER_ACCOUNT),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id, 10));
+            assert_noop!(MosaicVault::withdraw(Origin::signed(RELAYER_ACCOUNT),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id, 10), Error::<Test>::AlreadyWithdrawn);
         }
 
     })
