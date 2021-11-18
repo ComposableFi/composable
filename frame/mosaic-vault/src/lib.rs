@@ -677,9 +677,9 @@ pub mod pallet {
 
 			  T::Currency::mint_into(asset_id, &pallet_account_id, amount).map_err(|_|Error::<T>::TransferFromFailed)?;
 
-			  T::Currency::transfer(asset_id, &pallet_account_id, &destination_account, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
-
 			  Self::decrease_total_value_transferred(asset_id, amount)?;
+
+			  T::Currency::transfer(asset_id, &pallet_account_id, &destination_account, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
 			
 			 if fee > T::Balance::zero() {  
 			   
