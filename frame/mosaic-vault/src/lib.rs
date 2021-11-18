@@ -844,36 +844,6 @@ pub mod pallet {
 			nonce
 		}
 
-		fn calculate_fee_percentage(asset_id: T::AssetId, amount: T::Balance) -> Result<T::Balance, DispatchError> {
-
-		  let token_liquidity = Self::get_current_token_liquidity(asset_id)?;
-
-			if token_liquidity == T::Balance::zero() {
-				return Ok(Self::max_fee());
-			}
-
-           let fee_threshold = Self::fee_threshold();
-
-		   let multiplier: T::Balance = 100u8.into();
-
-			if  amount.checked_mul(&multiplier).and_then(|x| x.checked_div(&token_liquidity)).ok_or(Error::<T>::Overflow)? > fee_threshold {
-                  return Ok(Self::max_fee());
-			}
-
-			let max_transfer = (token_liquidity.checked_mul(&fee_threshold).and_then(|x| x.checked_div(&T::ThresholdFactor::get())).ok_or(Error::<T>::Overflow))?;
-            let percent_transfer = (amount.checked_mul(&multiplier).and_then(|x| x.checked_div(&max_transfer)).ok_or(Error::<T>::Overflow))?;
-
-			let fee_percentage = percent_transfer.checked_mul(
-				&(max_transfer.checked_sub(&Self::max_fee()).ok_or(Error::<T>::Underflow)?)
-			).ok_or(Error::<T>::Overflow)?.checked_add(&(
-				(Self::min_fee()).checked_mul(&multiplier).ok_or(Error::<T>::Overflow)?
-			)).ok_or(Error::<T>::Overflow)?.checked_div(
-				&multiplier
-			).ok_or(Error::<T>::DivisionError)?;
-         
-	     	Ok(fee_percentage)
-		}
-
 		fn get_current_token_liquidity(asset_id: T::AssetId) -> Result<T::Balance, DispatchError> {
 		
 			let available_funds = Self::total_value_transferred(asset_id);
