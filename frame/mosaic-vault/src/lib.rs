@@ -20,6 +20,8 @@ pub mod pallet {
 		},
 		PalletId,
 	};
+	use frame_support::traits::tokens::currency::Currency;
+	use frame_support::traits::tokens::fungibles::Inspect;
 	use sp_arithmetic::per_things::Perquintill;
 	use sp_core::hashing::keccak_256;
 	use frame_system::pallet_prelude::*;
@@ -46,7 +48,8 @@ pub mod pallet {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-		     + Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+		     + Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+			 + Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
 
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 
@@ -242,7 +245,6 @@ pub mod pallet {
 		DepositCompleted {
 			sender: T::AccountId,
 			asset_id: T::AssetId,   
-			vault_id: T::VaultId,
 		    remote_asset_id: T::RemoteAssetId,
 		    remote_network_id: T::RemoteNetworkId, 
 		    destination_address: T::AccountId, 
@@ -590,7 +592,7 @@ pub mod pallet {
 
 			let sender = ensure_signed(origin)?;
 
-			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
+			ensure!(Self::pause_status() == false, Error::<T>::PalletPaused);
 
 			ensure!(amount != T::Balance::zero(), Error::<T>::ZeroAmount);
 
@@ -613,9 +615,6 @@ pub mod pallet {
 			let in_transfer_funds = Self::in_transfer_funds(asset_id);
 			let new_in_transfer_funds = in_transfer_funds.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
 			<InTransferFunds<T>>::insert(asset_id, new_in_transfer_funds);
-			// deposit to valut
-			let vault_id = <AssetVault<T>>::get(asset_id);
-			<T::Vault as StrategicVault>::deposit(&vault_id, &pallet_account_id, amount)?;
            
 			<LastTransfer<T>>::insert(&sender, T::BlockTimestamp::now().as_secs());
 
@@ -625,7 +624,6 @@ pub mod pallet {
 			Self::deposit_event(Event::DepositCompleted{
 				sender,
 				asset_id,
-				vault_id,
 				remote_asset_id: Self::remote_asset_id(remote_network_id, asset_id),
 				remote_network_id,
 				destination_address,
@@ -649,13 +647,13 @@ pub mod pallet {
 
 			 let sender = ensure_signed(origin)?;
          
-			 ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
+			 ensure!(Self::pause_status() == false, Error::<T>::PalletPaused);
 
-			  Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
+			 Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
              
-			  ensure!(Self::has_been_withdrawn(deposit_id) == false, Error::<T>::AlreadyWithdrawn);
+			ensure!(Self::has_been_withdrawn(deposit_id) == false, Error::<T>::AlreadyWithdrawn);
 
-			//  ensure!(Self::get_current_token_liquidity(asset_id)? >= amount, Error::<T>::InsufficientAssetBalance); 
+			ensure!(Self::get_current_token_liquidity(asset_id)? >= amount, Error::<T>::InsufficientAssetBalance); 
 
 			  <HasBeenWithdrawn<T>>::insert(deposit_id, true);
 
@@ -663,76 +661,39 @@ pub mod pallet {
 
 			  let pallet_account_id = Self::account_id(); 
 
-			  let vault_id = <AssetVault<T>>::get(asset_id);  
+			  let fee = Self::calculate_fee_percentage(asset_id, amount)?;
 
-			// let fee = Self::calculate_fee_percentage(asset_id, amount)?;
-
-		    <T::Vault as StrategicVault>::withdraw(&vault_id, &pallet_account_id, amount).map_err(|_| Error::<T>::WithdrawFailed)?;
-            
-			//   let fee_absolute = amount.checked_mul(&fee)
-			//      .and_then(|x|x.checked_div(&T::FeeFactor::get()))
-			// 	 .ok_or(Error::<T>::Overflow)?;
+			  let fee_absolute = amount.checked_mul(&fee)
+			     .and_then(|x|x.checked_div(&T::FeeFactor::get()))
+				 .ok_or(Error::<T>::Overflow)?;
 	
-			//   let withdraw_amount = amount.checked_sub(&fee_absolute).ok_or(Error::<T>::Underflow)?;  
+			  let withdraw_amount = amount.checked_sub(&fee_absolute).ok_or(Error::<T>::Underflow)?;  
 
-		   // T::Currency::transfer(asset_id, &pallet_account_id, &sender, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+		       T::Currency::transfer(asset_id, &pallet_account_id, &sender, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
 
-			//  if fee_absolute > T::Balance::zero() {  
+			 if fee_absolute > T::Balance::zero() {  
 			   
-			// 	T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee_absolute, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+				T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee_absolute, true).map_err(|_|Error::<T>::TransferFromFailed)?;
 				
-			// 	Self::deposit_event(Event::FeeTaken{
-			// 		sender, 
-			// 		destination_account: destination_account.clone(), 
-			// 		asset_id,
-			// 		amount,
-			// 		fee_absolute,
-			// 		deposit_id,
-			// 	});
-			//  }
+				Self::deposit_event(Event::FeeTaken{
+					sender, 
+					destination_account: destination_account.clone(), 
+					asset_id,
+					amount,
+					fee_absolute,
+					deposit_id,
+				});
+			 }
 
-			//  Self::deposit_event(Event::WithdrawalCompleted{
-			// 	destination_account,
-			// 	amount,
-			// 	withdraw_amount,
-			// 	fee_absolute,
-			// 	asset_id,
-			// 	deposit_id
-			//  });
+			 Self::deposit_event(Event::WithdrawalCompleted{
+				destination_account,
+				amount,
+				withdraw_amount,
+				fee_absolute,
+				asset_id,
+				deposit_id
+			 });
 
-			 Ok(().into())
-		 }
-
-		 #[pallet::weight(10_000)]
-		 pub fn create_vault(
-			 origin: OriginFor<T>,
-			 asset_id: <T as Config>::AssetId,
-			 reserved: Perquintill,
-		 ) -> DispatchResultWithPostInfo {
-
-			T::AdminOrigin::ensure_origin(origin.clone())?;
-
-			let sender = ensure_signed(origin)?;
- 
-			let account = Self::account_id();
- 
-			let vault_id = T::Vault::create(
-				 Deposit::Existential,
-				 VaultConfig {
-					 asset_id: asset_id,
-					 reserved: reserved,
-					 manager: sender.clone(),
-					 strategies:[(account, Perquintill::one().saturating_sub(reserved))]
-					 .iter()
-					 .cloned()
-					 .collect(),
-				 },
-			 )?;
- 
-		 	<AssetVault<T>>::insert(asset_id, &vault_id);
-		 	
-			 Self::deposit_event(Event::VaultCreated{sender, asset_id, vault_id, reserved});
- 
 			 Ok(().into())
 		 }
 
@@ -746,7 +707,7 @@ pub mod pallet {
 
 			T::RelayerOrigin::ensure_origin(origin)?;
 
-			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
+			ensure!(Self::pause_status() == false, Error::<T>::PalletPaused);
 			
 			ensure!(Self::has_been_completed(deposit_id) == false, Error::<T>::AlreadCompleted);
 
@@ -839,7 +800,7 @@ pub mod pallet {
 
 			let sender = ensure_signed(origin)?;
 
-			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
+			ensure!(Self::pause_status() == false, Error::<T>::PalletPaused);
 			 <PauseStatus<T>>::put(true);
 			 Self::deposit_event(Event::Pause{sender});
 
@@ -914,22 +875,18 @@ pub mod pallet {
 		
 			let available_funds = Self::get_withdrawable_balance(asset_id)?;
 
-			//let liquidity = available_funds.checked_sub(&Self::in_transfer_funds(asset_id)).ok_or(Error::<T>::Underflow)?;
+			let liquidity = available_funds.checked_sub(&Self::in_transfer_funds(asset_id)).ok_or(Error::<T>::Underflow)?;
 
-			// Ok(liquidity)
-			Ok(available_funds)
+			 Ok(liquidity)
 		}
 
 		fn get_withdrawable_balance(asset_id: T::AssetId) -> Result<T::Balance, DispatchError> {
 
-			let vault_id = <AssetVault<T>>::get(asset_id);
-			
-			let available_funds = match <T::Vault as StrategicVault>::available_funds(&vault_id, &Self::account_id())? {
-				FundsAvailability::Withdrawable(balance) => balance,
-				_ => T::Balance::zero(),
-			};
+			let pallet_account_id = Self::account_id(); 
 
-			Ok(available_funds)
+			let available_funds = T::Currency::balance(asset_id, &pallet_account_id);
+
+			 Ok(available_funds)
 		}
 
 

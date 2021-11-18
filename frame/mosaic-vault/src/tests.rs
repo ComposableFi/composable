@@ -178,7 +178,6 @@ fn test_withdraw() {
         assert_ok!(MosaicVault::create_vault(Origin::signed(ALICE), MockCurrencyId::A,Perquintill::from_percent(100)));
         assert_ok!(MosaicVault::deposit(Origin::signed(ALICE), 900, MockCurrencyId::A, BOB, _remote_network_id, _transfer_delay));
 
-        // assert_eq!(MosaicVault::deposits(MockCurrencyId::A).amount, 500);
         let deposit_completed = System::events().into_iter().map(|r| r.event).filter_map(|e| {
             if let Event::MosaicVault(inner) = e {
                 Some(inner)
@@ -189,28 +188,20 @@ fn test_withdraw() {
         .last()
         .unwrap();
 
-        if let crate::Event::DepositCompleted{ sender, asset_id, vault_id, remote_asset_id,remote_network_id, destination_address,amount,deposit_id, transfer_delay} = deposit_completed {
-        // assert_ok!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id));
+        if let crate::Event::DepositCompleted{ sender, asset_id, remote_asset_id,remote_network_id, destination_address,amount,deposit_id, transfer_delay} = deposit_completed {
+        
+            assert_ok!(MosaicVault::pause(Origin::signed(ALICE)));
+            assert_noop!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id), Error::<Test>::ContractPaused);
+           
+            assert_ok!(MosaicVault::un_pause(Origin::signed(ALICE)));
+            assert_noop!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 900, MockCurrencyId::B, remote_network_id, deposit_id), Error::<Test>::UnsupportedToken);
+            assert_noop!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id), Error::<Test>::InsufficientAssetBalance);
 
-        //  Vault::available_funds(vault_id,MosaicVaultId::get().into_account());
-        //    let bal =Tokens::balance(MockCurrencyId::A, &ALICE); 
-    //      let mosaic_account:AccountId = MosaicVaultId::get().into_account();
+            assert_ok!(MosaicVault::unlock_in_transfer_funds(Origin::signed(RELAYER_ACCOUNT),asset_id, amount, deposit_id));
+            assert_noop!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 1000, MockCurrencyId::A, remote_network_id, deposit_id), Error::<Test>::InsufficientAssetBalance);
 
-    //      let vault_account:AccountId = VaultPalletId::get().into_sub_account(vault_id);
-
-    //    let x = <Vault as StrategicVault>::available_funds(&vault_id, &vault_account);
-    //     dbg!(x);
-
-    //    let bal =Tokens::balance(MockCurrencyId::A, &vault_account); 
-    //      dbg!(bal);
-        //    assert_eq!(MosaicVault::has_been_withdrawn(deposit_id), true);
-        //    assert_eq!(MosaicVault::last_withdraw_id(), deposit_id);
-
-        //assert_eq!(MosaicVault::max_fee(), 3);
-
-        //    assert_ok!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 500, MockCurrencyId::A, remote_network_id, deposit_id));
-
-        //   dbg!(remote_asset_id);
+            assert_ok!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id));
+            assert_noop!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id), Error::<Test>::AlreadyWithdrawn);
         }
 
     })
