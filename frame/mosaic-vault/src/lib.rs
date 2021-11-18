@@ -307,13 +307,6 @@ pub mod pallet {
 		   max_fee: T::Balance,
 		},
 
-		VaultCreated {
-			sender: T:: AccountId, 
-			asset_id: T::AssetId,
-			vault_id: T::VaultId,
-			reserved: Perquintill, 
-		},
-
 		TransferFundsUnlocked {
 			asset_id: T::AssetId, 
 			amount: T::Balance, 
