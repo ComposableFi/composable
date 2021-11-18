@@ -637,7 +637,6 @@ pub mod pallet {
 			Ok(().into())
 		 }
 
-
 		 #[pallet::weight(10_000)]
 		 pub fn withdraw(
 			origin: OriginFor<T>, 

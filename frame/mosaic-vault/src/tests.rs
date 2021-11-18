@@ -193,20 +193,16 @@ fn test_withdraw() {
         // assert_ok!(MosaicVault::withdraw(Origin::signed(ALICE),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id));
 
         //  Vault::available_funds(vault_id,MosaicVaultId::get().into_account());
-        let x =Tokens::balance(MockCurrencyId::A, &ALICE); 
-      // let id:AccountId = MosaicVaultId::get().into_account();
+        //    let bal =Tokens::balance(MockCurrencyId::A, &ALICE); 
+    //      let mosaic_account:AccountId = MosaicVaultId::get().into_account();
 
-         // let id:AccountId = VaultPalletId::get().into_account();
+    //      let vault_account:AccountId = VaultPalletId::get().into_sub_account(vault_id);
 
-       // let x = <Vault as StrategicVault>::available_funds(&vault_id, &id);
+    //    let x = <Vault as StrategicVault>::available_funds(&vault_id, &vault_account);
+    //     dbg!(x);
 
-
-
-        // orml_tokens::Pallet::
-
-       // let x =Tokens::total_issuance(MockCurrencyId::A);
-
-       dbg!(x);
+    //    let bal =Tokens::balance(MockCurrencyId::A, &vault_account); 
+    //      dbg!(bal);
         //    assert_eq!(MosaicVault::has_been_withdrawn(deposit_id), true);
         //    assert_eq!(MosaicVault::last_withdraw_id(), deposit_id);
 
