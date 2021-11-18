@@ -195,10 +195,6 @@ pub mod pallet {
 	pub(super) type MinFee<T: Config> = StorageValue<_, T::Balance, ValueQuery, MinFeeDefault<T>>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn asset_vault)]
-	pub(super) type AssetVault<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::VaultId, ValueQuery>;
-
-	#[pallet::storage]
 	#[pallet::getter(fn has_been_withdrawn)]
 	pub(super) type HasBeenWithdrawn<T: Config> = StorageMap<_, Blake2_128Concat, T::DepositId, bool, ValueQuery>;
 
