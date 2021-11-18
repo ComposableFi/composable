@@ -392,6 +392,10 @@ pub mod pallet {
 
 		TransferFromFailed,
 
+		BurnFromFailed,
+
+		MintToFailed,
+
 		WithdrawFailed,
 
 		ZeroAmount,
@@ -605,7 +609,7 @@ pub mod pallet {
 			// 
 			let pallet_account_id = Self::account_id();            
             // move funds to pallet amount
-		     T::Currency::burn_from(asset_id, &sender, amount).map_err(|_|Error::<T>::TransferFromFailed)?;
+		     T::Currency::burn_from(asset_id, &sender, amount).map_err(|_|Error::<T>::BurnFromFailed)?;
 
 			 Self::increase_total_value_transferred(asset_id, amount)?;
 
@@ -664,9 +668,9 @@ pub mod pallet {
 	
 			  let withdraw_amount = amount.saturating_sub(fee);
 
-			  T::Currency::mint_into(asset_id, &pallet_account_id, amount).map_err(|_|Error::<T>::TransferFromFailed)?;
+			 T::Currency::mint_into(asset_id, &pallet_account_id, amount).map_err(|_|Error::<T>::MintToFailed)?;
 
-			  Self::decrease_total_value_transferred(asset_id, amount)?;
+			 Self::decrease_total_value_transferred(asset_id, amount)?;
 
 			  T::Currency::transfer(asset_id, &pallet_account_id, &destination_account, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
 			
@@ -746,7 +750,7 @@ pub mod pallet {
 
 			 <LastUnlockedID<T>>::put(deposit_id);
 
-			 T::Currency::mint_into(asset_id, &user_account_id, amount).map_err(|_|Error::<T>::TransferFromFailed)?;
+			 T::Currency::mint_into(asset_id, &user_account_id, amount).map_err(|_|Error::<T>::MintToFailed)?;
 
 			 Self::decrease_total_value_transferred(asset_id, amount)?;
              
@@ -776,7 +780,7 @@ pub mod pallet {
 
 			ensure!(withdrawable_balance > T::Balance::zero(), Error::<T>::NoTransferableBalance);
 
-			T::Currency::mint_into(asset_id, &to, withdrawable_balance).map_err(|_|Error::<T>::TransferFromFailed)?;
+			T::Currency::mint_into(asset_id, &to, withdrawable_balance).map_err(|_|Error::<T>::MintToFailed)?;
 
 			Self::decrease_total_value_transferred(asset_id, withdrawable_balance)?;
              

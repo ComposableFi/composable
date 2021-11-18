@@ -42,6 +42,7 @@ pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
 pub const CHARLIE: AccountId = 4;
 pub const JEREMY: AccountId = 5;
+pub const FEE_ADDRESS: AccountId = 777;
 pub const ACCOUNT_FREE_START: AccountId = JEREMY + 1;
 pub const ACCOUNT_INITIAL_AMOUNT: u128 = 1_000_000;
 
@@ -163,7 +164,7 @@ impl pallet_timestamp::Config for Test {
 parameter_types! {
     pub const FeeFactor: Balance = 100;
     pub const ThresholdFactor:Balance = 100;
-    pub const FeeAddress: u64 = 1;
+    pub const FeeAddress: u64 = FEE_ADDRESS as u64;
     pub const MosaicVaultId: PalletId = PalletId(*b"test_pid");
     pub const MaxFeeDefault: Balance = 10;
     pub const MinFeeDefault: Balance = 0;
@@ -205,7 +206,8 @@ pub struct ExtBuilder {
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self { balances: vec![
-            (ALICE, MockCurrencyId::A, 1000000000)
+            (ALICE, MockCurrencyId::A, 1000000000),
+            (BOB, MockCurrencyId::A, 1000000000)
                                        
         ] }
 	}

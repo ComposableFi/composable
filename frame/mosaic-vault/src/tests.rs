@@ -167,7 +167,7 @@ fn test_withdraw() {
         MosaicVault::set_min_transfer_delay(Origin::signed(ALICE), 30).ok();
 
         assert_ok!(MosaicVault::add_supported_token(Origin::signed(ALICE), MockCurrencyId::A, MockCurrencyId::A, _remote_network_id,  1000, 200 ));
-        assert_ok!(MosaicVault::deposit(Origin::signed(ALICE), 900, MockCurrencyId::A, BOB, _remote_network_id, _transfer_delay));
+        assert_ok!(MosaicVault::deposit(Origin::signed(BOB), 900, MockCurrencyId::A, BOB, _remote_network_id, _transfer_delay));
 
         let deposit_completed = System::events().into_iter().map(|r| r.event).filter_map(|e| {
             if let Event::MosaicVault(inner) = e {
@@ -193,6 +193,12 @@ fn test_withdraw() {
 
             assert_ok!(MosaicVault::withdraw(Origin::signed(RELAYER_ACCOUNT),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id, 10));
             assert_noop!(MosaicVault::withdraw(Origin::signed(RELAYER_ACCOUNT),BOB, 900, MockCurrencyId::A, remote_network_id, deposit_id, 10), Error::<Test>::AlreadyWithdrawn);
+
+            let bal = Tokens::balance(MockCurrencyId::A, &BOB);
+
+            dbg!(bal);
+
+            //999999110
         }
 
     })
