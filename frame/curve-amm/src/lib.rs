@@ -38,9 +38,11 @@ pub mod pallet {
 		currency::CurrencyFactory,
 		dex::{CurveAmm, PoolId, PoolInfo, PoolTokenIndex},
 		math::LiftedFixedBalance,
+		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
 	};
 	use frame_support::{
 		pallet_prelude::*,
+		storage::{with_transaction, TransactionOutcome},
 		traits::fungibles::{Inspect, Mutate, Transfer},
 		PalletId,
 	};
@@ -49,9 +51,10 @@ pub mod pallet {
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul,
-			CheckedSub, One, Zero,
+			CheckedSub, One, Saturating, Zero,
 		},
 		FixedPointNumber, FixedPointOperand, FixedU128, KeyTypeId as CryptoKeyTypeId, Permill,
+		Perquintill,
 	};
 	use sp_std::{collections::btree_set::BTreeSet, fmt::Debug, iter::FromIterator};
 
@@ -119,6 +122,13 @@ pub mod pallet {
 			+ Into<LiftedFixedBalance>
 			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
 			  // bit
+		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter + Ord + Copy;
+		type Vault: StrategicVault<
+			VaultId = Self::VaultId,
+			AssetId = <Self as Config>::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+		>;
 		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
 		type LpToken: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
@@ -139,10 +149,15 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
 	pub type Pools<T: Config> =
-		StorageMap<_, Blake2_128Concat, PoolId, PoolInfo<T::AccountId, T::AssetId, T::Balance>>;
+		StorageMap<_, Blake2_128Concat, PoolId, PoolInfo<T::AccountId, T::VaultId, T::Balance>>;
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+		fn on_initialize(block_number: T::BlockNumber) -> frame_support::weights::Weight {
+			Self::initialize_block(block_number);
+			0
+		}
+	}
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -168,6 +183,10 @@ pub mod pallet {
 		IndexOutOfRange,
 		/// The `AssetChecker` can use this error in case it can't provide better error
 		ExternalAssetCheckFailed,
+		/// Vault Error
+		VaultError,
+		/// DEX is halted
+		DEXHalted,
 	}
 
 	#[pallet::event]
@@ -176,51 +195,11 @@ pub mod pallet {
 		/// Pool with specified id `PoolId` was created successfully by `T::AccountId`.
 		///
 		/// Included values are:
-		/// - account identifier `T::AccountId`
+		/// - manager account identifier `T::AccountId`
 		/// - pool identifier `PoolId`
 		///
-		/// \[who, pool_id\]
-		PoolCreated { who: T::AccountId, pool_id: PoolId },
-
-		/// Liquidity added into the pool `PoolId` by `T::AccountId`.
-		///
-		/// Included values are:
-		/// - account identifier `T::AccountId`
-		/// - pool identifier `PoolId`
-		/// - added token amounts `Vec<T::Balance>`
-		/// - charged fees `Vec<T::Balance>`
-		/// - actual invariant `T::Balance`
-		/// - actual token supply `T::Balance`
-		/// - minted amount `T::Balance`
-		///
-		/// \[who, pool_id, token_amounts, fees, invariant, token_supply, mint_amount\]
-		LiquidityAdded {
-			who: T::AccountId,
-			pool_id: PoolId,
-			token_amounts: Vec<T::Balance>,
-			fees: Vec<T::Balance>,
-			invariant: T::Balance,
-			token_supply: T::Balance,
-			mint_amount: T::Balance,
-		},
-
-		/// Liquidity removed from pool `PoolId` by `T::AccountId` in balanced way.
-		///
-		/// Included values are:
-		/// - account identifier `T::AccountId`
-		/// - pool identifier `PoolId`
-		/// - removed token amounts `Vec<T::Balance>`
-		/// - charged fees `Vec<T::Balance>`
-		/// - actual token supply `T::Balance`
-		///
-		/// \[who, pool_id, token_amounts, fees, token_supply\]
-		LiquidityRemoved {
-			who: T::AccountId,
-			pool_id: PoolId,
-			token_amounts: Vec<T::Balance>,
-			fees: Vec<T::Balance>,
-			token_supply: T::Balance,
-		},
+		/// \[manager, pool_id\]
+		PoolCreated { manager: T::AccountId, pool_id: PoolId },
 
 		/// Token exchange happened.
 		///
@@ -245,21 +224,15 @@ pub mod pallet {
 			fee: T::Balance,
 		},
 
-		/// Withdraw admin fees `Vec<T::Balance>` from pool `PoolId` by user `T::AccountId`
+		/// Operations halted. Atleast one vault does not have sufficient balance.
 		///
-		/// Included values are:
-		/// - account identifier `T::AccountId`
 		/// - pool identifier `PoolId`
-		/// - admin fee receiving account identifier `T::AccountId`
-		/// - withdrew admin fees `Vec<T::Balance>`
+		OperationsHalted { pool_id: PoolId },
+
+		/// Operations resumed.
 		///
-		/// [who, pool_id, admin_fee_account, admin_fees]
-		AdminFeesWithdrawn {
-			who: T::AccountId,
-			pool_id: PoolId,
-			admin_fee_account: T::AccountId,
-			admin_fees: Vec<T::Balance>,
-		},
+		/// - pool identifier `PoolId`
+		OperationsResumed { pool_id: PoolId },
 	}
 
 	#[pallet::call]
@@ -269,49 +242,63 @@ pub mod pallet {
 		type AssetId = T::AssetId;
 		type Balance = T::Balance;
 		type AccountId = T::AccountId;
+		type VaultId = T::VaultId;
 
 		fn pool_count() -> PoolId {
 			PoolCount::<T>::get()
 		}
 
-		fn pool(id: PoolId) -> Option<PoolInfo<Self::AccountId, Self::AssetId, Self::Balance>> {
+		fn pool(id: PoolId) -> Option<PoolInfo<Self::AccountId, Self::VaultId, Self::Balance>> {
 			Pools::<T>::get(id)
 		}
+
 		fn create_pool(
-			who: &Self::AccountId,
-			assets: Vec<Self::AssetId>,
+			manager: &Self::AccountId,
+			assets_ids: Vec<Self::AssetId>,
 			amplification_coefficient: Self::Balance,
 			fee: Permill,
-			admin_fee: Permill,
+			reserve_factor: Perquintill,
 		) -> Result<PoolId, DispatchError> {
 			// Assets related checks
-			ensure!(assets.len() > 1, Error::<T>::NotEnoughAssets);
-			let unique_assets = BTreeSet::<T::AssetId>::from_iter(assets.iter().copied());
-			ensure!(unique_assets.len() == assets.len(), Error::<T>::DuplicateAssets);
+			ensure!(assets_ids.len() > 1, Error::<T>::NotEnoughAssets);
+			let unique_assets = BTreeSet::<T::AssetId>::from_iter(assets_ids.iter().copied());
+			ensure!(unique_assets.len() == assets_ids.len(), Error::<T>::DuplicateAssets);
 
 			// Add new pool
 			let pool_id =
 				PoolCount::<T>::try_mutate(|pool_count| -> Result<PoolId, DispatchError> {
 					let pool_id = *pool_count;
-
+					let mut assets_vault_ids = Vec::new();
+					for asset_id in assets_ids {
+						let asset_vault_id = T::Vault::create(
+							Deposit::Existential,
+							VaultConfig {
+								asset_id,
+								reserved: reserve_factor.clone(),
+								manager: manager.clone(),
+								strategies: [(
+									Self::account_id(&pool_id),
+									// Borrowable = 100% - reserved
+									Perquintill::one().saturating_sub(reserve_factor),
+								)]
+								.iter()
+								.cloned()
+								.collect(),
+							},
+						)?;
+						assets_vault_ids.push(asset_vault_id);
+					}
 					Pools::<T>::try_mutate_exists(pool_id, |maybe_pool_info| -> DispatchResult {
 						// We expect that PoolInfos have sequential keys.
 						// No PoolInfo can have key greater or equal to PoolCount
 						ensure!(maybe_pool_info.is_none(), Error::<T>::InconsistentStorage);
 
-						let asset = T::CurrencyFactory::create()?;
-
-						let empty_balances = vec![Self::Balance::zero(); assets.len()];
-
 						*maybe_pool_info = Some(PoolInfo {
-							owner: who.clone(),
-							pool_asset: asset,
-							assets,
+							manager: manager.clone(),
+							assets_vault_ids,
 							amplification_coefficient,
 							fee,
-							admin_fee,
-							balances: empty_balances.clone(),
-							total_balances: empty_balances,
+							halt: false,
 						});
 
 						Ok(())
@@ -322,284 +309,11 @@ pub mod pallet {
 					Ok(pool_id)
 				})?;
 
-			Self::deposit_event(Event::PoolCreated { who: who.clone(), pool_id });
+			Self::deposit_event(Event::PoolCreated { manager: manager.clone(), pool_id });
 
 			Ok(pool_id)
 		}
 
-		fn add_liquidity(
-			who: &Self::AccountId,
-			pool_id: PoolId,
-			amounts: Vec<Self::Balance>,
-			min_mint_amount: Self::Balance,
-		) -> Result<(), DispatchError> {
-			let zero = Self::Balance::zero();
-			ensure!(amounts.iter().all(|&x| x >= zero), Error::<T>::WrongAssetAmount);
-
-			let (provider, pool_id, token_amounts, fees, invariant, token_supply, mint_amount) =
-				Pools::<T>::try_mutate(pool_id, |pool| -> Result<_, DispatchError> {
-					let pool = pool.as_mut().ok_or(Error::<T>::PoolNotFound)?;
-
-					let n_coins = pool.assets.len();
-
-					ensure!(n_coins == pool.balances.len(), Error::<T>::InconsistentStorage);
-
-					ensure!(n_coins == amounts.len(), Error::<T>::IndexOutOfRange);
-					let amp_f = FixedU128::saturating_from_integer(
-						u128::try_from(pool.amplification_coefficient)
-							.ok()
-							.ok_or(Error::<T>::Math)?,
-					);
-					let ann = Self::get_ann(amp_f, n_coins).ok_or(Error::<T>::Math)?;
-
-					let old_balances: Vec<FixedU128> = pool
-						.balances
-						.iter()
-						.map(|b| {
-							let b_u: u128 = (*b).into();
-							FixedU128::saturating_from_integer(b_u)
-						})
-						.collect();
-					let d0 = Self::get_d(&old_balances, ann).ok_or(Error::<T>::Math)?;
-
-					let token_supply = T::LpToken::total_issuance(pool.pool_asset);
-					let token_supply_u: u128 = token_supply.into();
-					let token_supply_f = FixedU128::saturating_from_integer(token_supply_u);
-					let mut new_balances = old_balances.clone();
-					for i in 0..n_coins {
-						if token_supply == zero {
-							ensure!(amounts[i] > zero, Error::<T>::WrongAssetAmount);
-						}
-						let amount_i: u128 = amounts[i].into();
-						new_balances[i] = new_balances[i]
-							.checked_add(&FixedU128::saturating_from_integer(amount_i))
-							.ok_or(Error::<T>::Math)?;
-					}
-
-					let d1 = Self::get_d(&new_balances, ann).ok_or(Error::<T>::Math)?;
-					ensure!(d1 > d0, Error::<T>::WrongAssetAmount);
-					let d1_b = d1.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
-					let mint_amount;
-					let mut fees = vec![FixedU128::zero(); n_coins];
-					// Only account for fees if we are not the first to deposit
-					if token_supply > zero {
-						// Deposit x + withdraw y would chargVe about same
-						// fees as a swap. Otherwise, one could exchange w/o paying fees.
-						// And this formula leads to exactly that equality
-						// fee = pool.fee * n_coins / (4 * (n_coins - 1))
-						let one = FixedU128::saturating_from_integer(1u8);
-						let four = FixedU128::saturating_from_integer(4u8);
-						let n_coins_f = FixedU128::saturating_from_integer(n_coins as u128);
-						let fee_f: FixedU128 = pool.fee.into();
-						let fee_f = fee_f
-							.checked_mul(&n_coins_f)
-							.ok_or(Error::<T>::Math)?
-							.checked_div(
-								&four
-									.checked_mul(
-										&n_coins_f.checked_sub(&one).ok_or(Error::<T>::Math)?,
-									)
-									.ok_or(Error::<T>::Math)?,
-							)
-							.ok_or(Error::<T>::Math)?;
-						let admin_fee_f: FixedU128 = pool.admin_fee.into();
-						for i in 0..n_coins {
-							// ideal_balance = d1 * old_balances[i] / d0
-							let ideal_balance =
-								(|| d1.checked_mul(&old_balances[i])?.checked_div(&d0))()
-									.ok_or(Error::<T>::Math)?;
-
-							let new_balance = new_balances[i];
-							// difference = abs(ideal_balance - new_balance)
-							let difference = (if ideal_balance > new_balance {
-								ideal_balance.checked_sub(&new_balance)
-							} else {
-								new_balance.checked_sub(&ideal_balance)
-							})
-							.ok_or(Error::<T>::Math)?;
-
-							fees[i] = fee_f.checked_mul(&difference).ok_or(Error::<T>::Math)?;
-							// new_pool_balance = new_balance - (fees[i] * admin_fee)
-							let new_pool_balance =
-								(|| new_balance.checked_sub(&fees[i].checked_mul(&admin_fee_f)?))()
-									.ok_or(Error::<T>::Math)?;
-							pool.balances[i] = new_pool_balance
-								.checked_mul_int(1u64)
-								.ok_or(Error::<T>::Math)?
-								.into();
-
-							new_balances[i] =
-								new_balances[i].checked_sub(&fees[i]).ok_or(Error::<T>::Math)?;
-						}
-						let d2 = Self::get_d(&new_balances, ann).ok_or(Error::<T>::Math)?;
-
-						// mint_amount = token_supply * (d2 - d0) / d0
-						let mint_amount_f = (|| {
-							token_supply_f.checked_mul(&d2.checked_sub(&d0)?)?.checked_div(&d0)
-						})()
-						.ok_or(Error::<T>::Math)?;
-						mint_amount =
-							mint_amount_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
-					} else {
-						let new_balances_b: Vec<T::Balance> = new_balances
-							.iter()
-							.map(|b_f| {
-								Ok(b_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into())
-							})
-							.collect::<Result<Vec<T::Balance>, Error<T>>>()?;
-						pool.balances = new_balances_b;
-						mint_amount = d1_b;
-					}
-
-					ensure!(mint_amount >= min_mint_amount, Error::<T>::RequiredAmountNotReached);
-
-					let new_token_supply =
-						token_supply.checked_add(&mint_amount).ok_or(Error::<T>::Math)?;
-
-					// Ensure that for all tokens user has sufficient amount
-					for (i, amount) in amounts.iter().enumerate() {
-						ensure!(
-							T::LpToken::balance(pool.assets[i], who) >= *amount,
-							Error::<T>::InsufficientFunds
-						);
-					}
-					// Transfer funds to pool
-					for (i, amount) in amounts.iter().enumerate() {
-						if amount > &zero {
-							Self::transfer_liquidity_into_pool(
-								&Self::account_id(&pool_id),
-								pool,
-								who,
-								i,
-								*amount,
-							)?;
-						}
-					}
-
-					T::LpToken::mint_into(pool.pool_asset, who, mint_amount)?;
-					let fees: Vec<T::Balance> = fees
-						.iter()
-						.map(|b_f| Ok(b_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into()))
-						.collect::<Result<Vec<T::Balance>, Error<T>>>()?;
-
-					Ok((who.clone(), pool_id, amounts, fees, d1_b, new_token_supply, mint_amount))
-				})?;
-
-			Self::deposit_event(Event::LiquidityAdded {
-				who: provider,
-				pool_id,
-				token_amounts,
-				fees,
-				invariant,
-				token_supply,
-				mint_amount,
-			});
-
-			Ok(())
-		}
-
-		fn remove_liquidity(
-			who: &Self::AccountId,
-			pool_id: PoolId,
-			amount: Self::Balance,
-			min_amounts: Vec<Self::Balance>,
-		) -> Result<(), DispatchError> {
-			let zero = FixedU128::zero();
-			let b_zero = Self::Balance::zero();
-			ensure!(amount >= b_zero, Error::<T>::WrongAssetAmount);
-			let amount_u: u128 = amount.into();
-			let amount_f = FixedU128::saturating_from_integer(amount_u);
-
-			let min_amounts_f: Vec<FixedU128> = min_amounts
-				.iter()
-				.map(|b| {
-					let b_u: u128 = (*b).into();
-					FixedU128::saturating_from_integer(b_u)
-				})
-				.collect();
-
-			let (provider, pool_id, token_amounts, fees, token_supply) =
-				Pools::<T>::try_mutate(pool_id, |pool| -> Result<_, DispatchError> {
-					let pool = pool.as_mut().ok_or(Error::<T>::PoolNotFound)?;
-
-					let n_coins = pool.assets.len();
-
-					ensure!(n_coins == pool.balances.len(), Error::<T>::InconsistentStorage);
-
-					ensure!(n_coins == min_amounts.len(), Error::<T>::IndexOutOfRange);
-
-					let token_supply = T::LpToken::total_issuance(pool.pool_asset);
-					let token_supply_u: u128 = token_supply.into();
-
-					let mut amounts_f = vec![FixedU128::zero(); n_coins];
-
-					for i in 0..n_coins {
-						let old_balance_u: u128 = pool.balances[i].into();
-						let old_balance = FixedU128::saturating_from_integer(old_balance_u);
-						// value = old_balance * n_amount / token_supply
-						let value = (|| {
-							old_balance
-								.checked_mul(&amount_f)?
-								.checked_div(&FixedU128::saturating_from_integer(token_supply_u))
-						})()
-						.ok_or(Error::<T>::Math)?;
-						ensure!(value >= min_amounts_f[i], Error::<T>::RequiredAmountNotReached);
-						// pool.balances[i] = old_balance - value
-						pool.balances[i] = old_balance
-							.checked_sub(&value)
-							.ok_or(Error::<T>::InsufficientFunds)?
-							.checked_mul_int(1u64)
-							.ok_or(Error::<T>::Math)?
-							.into();
-						amounts_f[i] = value;
-					}
-
-					let amounts: Vec<T::Balance> = amounts_f
-						.iter()
-						.map(|b_f| Ok(b_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into()))
-						.collect::<Result<Vec<T::Balance>, Error<T>>>()?;
-
-					let new_token_supply =
-						token_supply.checked_sub(&amount).ok_or(Error::<T>::Math)?;
-
-					let fees = vec![T::Balance::zero(); n_coins];
-
-					T::LpToken::burn_from(pool.pool_asset, who, amount)?;
-
-					// Ensure that for all tokens we have sufficient amount
-					for (i, amounts_i) in amounts.iter().enumerate() {
-						ensure!(
-							T::LpToken::balance(pool.assets[i], &Self::account_id(&pool_id)) >=
-								*amounts_i,
-							Error::<T>::InsufficientFunds
-						);
-					}
-
-					for i in 0..n_coins {
-						if amounts_f[i] > zero {
-							Self::transfer_liquidity_from_pool(
-								&Self::account_id(&pool_id),
-								pool,
-								i,
-								who,
-								amounts[i],
-							)?;
-						}
-					}
-
-					Ok((who.clone(), pool_id, amounts, fees, new_token_supply))
-				})?;
-
-			Self::deposit_event(Event::LiquidityRemoved {
-				who: provider,
-				pool_id,
-				token_amounts,
-				fees,
-				token_supply,
-			});
-
-			Ok(())
-		}
 		fn exchange(
 			who: &Self::AccountId,
 			pool_id: PoolId,
@@ -615,21 +329,36 @@ pub mod pallet {
 			let (provider, pool_id, dy, fee) =
 				Pools::<T>::try_mutate(pool_id, |pool| -> Result<_, DispatchError> {
 					let pool = pool.as_mut().ok_or(Error::<T>::PoolNotFound)?;
-
+					if pool.halt {
+						return Err(Error::<T>::DEXHalted.into())
+					}
 					let i = i as usize;
 					let j = j as usize;
 
-					let n_coins = pool.assets.len();
+					let n_coins = pool.assets_vault_ids.len();
 
 					ensure!(i < n_coins && j < n_coins, Error::<T>::IndexOutOfRange);
+
+					let pool_account_id = Self::account_id(&pool_id);
+					let pool_asset_ids: Vec<Self::AssetId> = pool
+						.assets_vault_ids
+						.iter()
+						.map(|vault_id| {
+							Ok(T::Vault::asset_id(vault_id).ok().ok_or(Error::VaultError)?.into())
+						})
+						.collect::<Result<Vec<T::AssetId>, Error<T>>>()?;
+					let mut balances = Vec::new();
+					for asset_id in &pool_asset_ids {
+						let bal = T::LpToken::balance(*asset_id, &pool_account_id);
+						balances.push(bal);
+					}
 
 					let dx_u: u128 = dx.into();
 					let dx_f = FixedU128::saturating_from_integer(dx_u);
 					let min_dy_u: u128 = min_dy.into();
 					let min_dy_f = FixedU128::saturating_from_integer(min_dy_u);
 
-					let xp: Vec<FixedU128> = pool
-						.balances
+					let xp: Vec<FixedU128> = balances
 						.iter()
 						.map(|b| {
 							let b_u: u128 = (*b).into();
@@ -662,45 +391,32 @@ pub mod pallet {
 					let dy_f = dy_f.checked_sub(&dy_fee_f).ok_or(Error::<T>::Math)?;
 					ensure!(dy_f >= min_dy_f, Error::<T>::RequiredAmountNotReached);
 
-					let admin_fee_f: FixedU128 = pool.admin_fee.into();
-					let dy_admin_fee_f =
-						dy_fee_f.checked_mul(&admin_fee_f).ok_or(Error::<T>::Math)?;
 					let dy: Self::Balance =
 						dy_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
 
-					pool.balances[i] = x.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
-					// When rounding errors happen, we undercharge admin fee in favor of LP
-					// pool.balances[j] = xp[j] - dy_f - dy_admin_fee_f
-					let bal_j = xp[j]
-						.checked_sub(&dy_f)
-						.ok_or(Error::<T>::Math)?
-						.checked_sub(&dy_admin_fee_f)
-						.ok_or(Error::<T>::Math)?;
-					pool.balances[j] = bal_j.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
-
 					ensure!(
-						T::LpToken::balance(pool.assets[i], &who) >= dx,
+						T::LpToken::balance(pool_asset_ids[i], &who) >= dx,
 						Error::<T>::InsufficientFunds
 					);
 
 					ensure!(
-						T::LpToken::balance(pool.assets[j], &Self::account_id(&pool_id)) >= dy,
+						T::LpToken::balance(pool_asset_ids[j], &pool_account_id) >= dy,
 						Error::<T>::InsufficientFunds
 					);
 
-					Self::transfer_liquidity_into_pool(
+					T::LpToken::transfer(
+						pool_asset_ids[i],
+						who,
 						&Self::account_id(&pool_id),
-						pool,
-						&who,
-						i,
 						dx,
+						true,
 					)?;
-					Self::transfer_liquidity_from_pool(
+					T::LpToken::transfer(
+						pool_asset_ids[j],
 						&Self::account_id(&pool_id),
-						pool,
-						j,
-						&who,
+						who,
 						dy,
+						true,
 					)?;
 
 					Ok((who.clone(), pool_id, dy, dy_fee))
@@ -715,62 +431,6 @@ pub mod pallet {
 				received_amount: dy,
 				fee,
 			});
-			Ok(())
-		}
-
-		fn withdraw_admin_fees(
-			who: &Self::AccountId,
-			pool_id: PoolId,
-			admin_fee_account: &Self::AccountId,
-		) -> Result<(), DispatchError> {
-			let admin_fees =
-				Pools::<T>::try_mutate(pool_id, |maybe_pool| -> Result<_, DispatchError> {
-					let pool = maybe_pool.as_mut().ok_or(Error::<T>::PoolNotFound)?;
-					let n_coins = pool.assets.len();
-
-					ensure!(n_coins == pool.balances.len(), Error::<T>::InconsistentStorage);
-
-					let total_balances = &pool.total_balances;
-					let balances = &pool.balances;
-
-					let admin_fees = total_balances
-						.into_iter()
-						.zip(balances)
-						.map(|(tb, b)| {
-							let admin_fee = tb.checked_sub(b).ok_or(Error::<T>::Math)?;
-
-							Ok(admin_fee)
-						})
-						.collect::<Result<Vec<Self::Balance>, DispatchError>>()?;
-
-					let assets = pool.assets.clone();
-
-					for i in 0..n_coins {
-						pool.total_balances[i] = pool.total_balances[i]
-							.checked_sub(&admin_fees[i])
-							.ok_or(Error::<T>::Math)?;
-					}
-
-					for (asset, amount) in assets.into_iter().zip(admin_fees.iter().copied()) {
-						T::LpToken::transfer(
-							asset,
-							&Self::account_id(&pool_id),
-							admin_fee_account,
-							amount,
-							true,
-						)?;
-					}
-
-					Ok(admin_fees)
-				})?;
-
-			Self::deposit_event(Event::AdminFeesWithdrawn {
-				who: who.clone(),
-				pool_id,
-				admin_fee_account: admin_fee_account.clone(),
-				admin_fees,
-			});
-
 			Ok(())
 		}
 	}
@@ -1011,53 +671,237 @@ pub mod pallet {
 			None
 		}
 
-		fn transfer_liquidity_into_pool(
-			pool_account_id: &T::AccountId,
-			pool: &mut PoolInfo<T::AccountId, T::AssetId, T::Balance>,
-			source: &T::AccountId,
-			destination_asset_index: usize,
-			amount: T::Balance,
-		) -> DispatchResult {
-			T::LpToken::transfer(
-				pool.assets[destination_asset_index],
-				source,
-				pool_account_id,
-				amount,
-				true,
-			)?;
-
-			pool.total_balances[destination_asset_index] = pool.total_balances
-				[destination_asset_index]
-				.checked_add(&amount)
-				.ok_or(Error::<T>::InconsistentStorage)?;
-
-			Ok(())
-		}
-
-		fn transfer_liquidity_from_pool(
-			pool_account_id: &T::AccountId,
-			pool: &mut PoolInfo<T::AccountId, T::AssetId, T::Balance>,
-			source_asset_index: usize,
-			destination: &T::AccountId,
-			amount: T::Balance,
-		) -> DispatchResult {
-			T::LpToken::transfer(
-				pool.assets[source_asset_index],
-				pool_account_id,
-				destination,
-				amount,
-				true,
-			)?;
-
-			pool.total_balances[source_asset_index] = pool.total_balances[source_asset_index]
-				.checked_sub(&amount)
-				.ok_or(Error::<T>::InconsistentStorage)?;
-
-			Ok(())
-		}
-
 		pub fn account_id(pool_id: &PoolId) -> T::AccountId {
 			PALLET_ID.into_sub_account(pool_id)
+		}
+
+		pub fn resume_operations(pool_id: &PoolId) -> Result<(), DispatchError> {
+			Pools::<T>::mutate(pool_id, |pool| -> Result<(), DispatchError> {
+				let mut can_resume = true;
+				let mut pool = pool.as_mut().unwrap();
+				let pool_account_id = Self::account_id(&pool_id);
+				for (index, vault_id) in pool.assets_vault_ids.iter().enumerate() {
+					match <T::Vault as StrategicVault>::available_funds(
+						&vault_id,
+						&pool_account_id,
+					)? {
+						FundsAvailability::Withdrawable(balance) => {
+							let balance = Self::limit_preserving_invariant(
+								*pool_id,
+								index,
+								T::Balance::zero(),
+								balance,
+							)?;
+							<T::Vault as StrategicVault>::withdraw(
+								&vault_id,
+								&pool_account_id,
+								balance,
+							)?
+						},
+						_ => {
+							can_resume = false;
+						},
+					}
+				}
+				if can_resume {
+					pool.halt = false;
+					Self::deposit_event(Event::OperationsResumed { pool_id: *pool_id });
+				} else {
+					// at least one vault still not have sufficient fund to resume DEX operations.
+					Self::deposit_event(Event::OperationsHalted { pool_id: *pool_id });
+				}
+				Ok(())
+			})
+		}
+
+		fn limit_preserving_invariant(
+			pool_id: PoolId,
+			index: usize,
+			min_balance: T::Balance,
+			max_balance: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			let value =
+				Pools::<T>::try_mutate(pool_id, |pool| -> Result<T::Balance, DispatchError> {
+					let pool = pool.as_mut().ok_or(Error::<T>::PoolNotFound)?;
+					let n_coins = pool.assets_vault_ids.len();
+
+					let pool_account_id = Self::account_id(&pool_id);
+					let pool_asset_ids: Vec<T::AssetId> = pool
+						.assets_vault_ids
+						.iter()
+						.map(|vault_id| {
+							Ok(T::Vault::asset_id(vault_id).ok().ok_or(Error::VaultError)?.into())
+						})
+						.collect::<Result<Vec<T::AssetId>, Error<T>>>()?;
+					let mut balances = Vec::new();
+					for asset_id in &pool_asset_ids {
+						let bal = T::LpToken::balance(*asset_id, &pool_account_id);
+						balances.push(bal);
+					}
+					let mut xp_f: Vec<FixedU128> = balances
+						.iter()
+						.map(|b| {
+							let b_u: u128 = (*b).into();
+							FixedU128::saturating_from_integer(b_u)
+						})
+						.collect();
+					let min_balance: u128 = min_balance.into();
+					let min_balance_f = FixedU128::saturating_from_integer(min_balance);
+					let max_balance: u128 = max_balance.into();
+					let max_balance_f = FixedU128::saturating_from_integer(max_balance);
+					let amp_f = FixedU128::saturating_from_integer(
+						u128::try_from(pool.amplification_coefficient)
+							.ok()
+							.ok_or(Error::<T>::Math)?,
+					);
+					let ann_f = Self::get_ann(amp_f, n_coins).ok_or(Error::<T>::Math)?;
+					let old_invariant = Self::get_d(&xp_f, ann_f).ok_or(Error::<T>::Math)?;
+
+					let left = min_balance_f;
+					let mut right = max_balance_f;
+					let mut balance = right;
+					while left < right {
+						balance = left
+							.checked_add(&right)
+							.ok_or(Error::<T>::Math)?
+							.checked_div(&FixedU128::saturating_from_integer(2u8))
+							.ok_or(Error::<T>::Math)?;
+						xp_f[index] = xp_f[index].checked_add(&balance).ok_or(Error::<T>::Math)?;
+						let new_invariant = Self::get_d(&xp_f, ann_f).ok_or(Error::<T>::Math)?;
+						let difference =
+							new_invariant.checked_sub(&old_invariant).ok_or(Error::<T>::Math)?;
+						if difference < FixedU128::saturating_from_integer(100u8) {
+							break
+						} else {
+							right = balance;
+						}
+						xp_f[index] = xp_f[index].checked_sub(&balance).ok_or(Error::<T>::Math)?;
+					}
+					let res: T::Balance =
+						balance.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+					Ok(res)
+				})?;
+			Ok(value)
+		}
+
+		fn update_pool_balances(pool_id: &PoolId) -> Result<(), DispatchError> {
+			let pool_info = Self::pool(*pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let pool_account_id = Self::account_id(pool_id);
+			let mut withdrawables: Vec<<T as Config>::Balance> = Vec::new();
+			let mut depositables: Vec<<T as Config>::Balance> = Vec::new();
+			let mut withdrawables_vault_indices: Vec<usize> = Vec::new();
+			let mut depositables_vault_indices: Vec<usize> = Vec::new();
+			let mut should_halted: bool = false;
+			for (index, vault_id) in pool_info.assets_vault_ids.iter().enumerate() {
+				let asset_id = <T::Vault>::asset_id(&vault_id)?;
+				match <T::Vault as StrategicVault>::available_funds(&vault_id, &pool_account_id)? {
+					FundsAvailability::Depositable(balance) => {
+						let balance = <T as Config>::LpToken::reducible_balance(
+							asset_id,
+							&pool_account_id,
+							false,
+						)
+						.min(balance);
+						depositables.push(balance);
+						depositables_vault_indices.push(index);
+						sp_std::if_std! {
+							println!("Depositable {:?}", balance);
+						}
+					},
+					FundsAvailability::Withdrawable(balance) => {
+						withdrawables.push(balance);
+						withdrawables_vault_indices.push(index);
+						sp_std::if_std! {
+							println!("Withdrawable {:?}", balance);
+						}
+					},
+					FundsAvailability::MustLiquidate => {
+						should_halted = true;
+						sp_std::if_std! {
+							println!("Must Liquidate!!!");
+						}
+					},
+				}
+			}
+			if should_halted {
+				// return balance of all assets to respective vaults and halt operations
+				for (_index, vault_id) in pool_info.assets_vault_ids.iter().enumerate() {
+					let asset_id = <T::Vault>::asset_id(&vault_id)?;
+					let balance = <T as Config>::LpToken::reducible_balance(
+						asset_id,
+						&pool_account_id,
+						false,
+					);
+					<T::Vault as StrategicVault>::deposit(&vault_id, &pool_account_id, balance)?
+				}
+				Pools::<T>::mutate(pool_id, |pool| {
+					let mut pool = pool.as_mut().unwrap();
+					pool.halt = true;
+				});
+				Self::deposit_event(Event::OperationsHalted { pool_id: *pool_id });
+			} else {
+				let total_withdrawables = withdrawables.len();
+				let total_depositables = depositables.len();
+				if total_depositables == 0 && total_withdrawables > 0 {
+					// all withdrawables
+					// withdraw min balance from all vaults
+					let min_balance = withdrawables.iter().min().unwrap();
+					for (_index, vault_id) in pool_info.assets_vault_ids.iter().enumerate() {
+						<T::Vault as StrategicVault>::withdraw(
+							&vault_id,
+							&pool_account_id,
+							*min_balance,
+						)?
+					}
+				} else if total_withdrawables == 0 && total_depositables > 0 {
+					// all depositables
+					// deposit min balance to all vaults
+					let min_balance = depositables.iter().min().unwrap();
+					for (_index, vault_id) in pool_info.assets_vault_ids.iter().enumerate() {
+						<T::Vault as StrategicVault>::deposit(
+							&vault_id,
+							&pool_account_id,
+							*min_balance,
+						)?
+					}
+				} else {
+					// some depositables some withdrawables
+					// ignore withdrawables
+					let min_balance = depositables.iter().min().unwrap();
+					for index in depositables_vault_indices {
+						let vault_id = pool_info.assets_vault_ids[index];
+						<T::Vault as StrategicVault>::deposit(
+							&vault_id,
+							&pool_account_id,
+							*min_balance,
+						)?
+					}
+				}
+			}
+			Ok(())
+		}
+		pub fn initialize_block(block_number: T::BlockNumber) {
+			with_transaction(|| {
+				let results = Pools::<T>::iter()
+					.map(|(pool_id, _pool_info)| Self::update_pool_balances(&pool_id))
+					.collect::<Vec<Result<(), DispatchError>>>();
+				let (_, errors): (Vec<Result<(), DispatchError>>, Vec<_>) =
+					results.iter().partition(|r| r.is_ok());
+				if errors.is_empty() {
+					TransactionOutcome::Commit(1000)
+				} else {
+					errors.iter().for_each(|e| {
+						if let Err(e) = e {
+							log::error!(
+								"This should never happen, could not initialize block!!! {:#?} {:#?}",
+								block_number,
+								e
+							)
+						}
+					});
+					TransactionOutcome::Rollback(0)
+				}
+			});
 		}
 	}
 }
