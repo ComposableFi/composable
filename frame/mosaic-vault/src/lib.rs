@@ -592,7 +592,7 @@ pub mod pallet {
 
 			let sender = ensure_signed(origin)?;
 
-			ensure!(Self::pause_status() == false, Error::<T>::PalletPaused);
+			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 
 			ensure!(amount != T::Balance::zero(), Error::<T>::ZeroAmount);
 
@@ -647,7 +647,7 @@ pub mod pallet {
 
 			 let sender = ensure_signed(origin)?;
          
-			 ensure!(Self::pause_status() == false, Error::<T>::PalletPaused);
+			 ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 
 			 Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
              
@@ -667,7 +667,7 @@ pub mod pallet {
 			     .and_then(|x|x.checked_div(&T::FeeFactor::get()))
 				 .ok_or(Error::<T>::Overflow)?;
 	
-			  let withdraw_amount = amount.checked_sub(&fee_absolute).ok_or(Error::<T>::Underflow)?;  
+			  let withdraw_amount = amount.saturating_sub(fee_absolute);
 
 		       T::Currency::transfer(asset_id, &pallet_account_id, &sender, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
 
@@ -707,7 +707,7 @@ pub mod pallet {
 
 			T::RelayerOrigin::ensure_origin(origin)?;
 
-			ensure!(Self::pause_status() == false, Error::<T>::PalletPaused);
+			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 			
 			ensure!(Self::has_been_completed(deposit_id) == false, Error::<T>::AlreadCompleted);
 
@@ -800,7 +800,7 @@ pub mod pallet {
 
 			let sender = ensure_signed(origin)?;
 
-			ensure!(Self::pause_status() == false, Error::<T>::PalletPaused);
+			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 			 <PauseStatus<T>>::put(true);
 			 Self::deposit_event(Event::Pause{sender});
 

@@ -10,12 +10,10 @@ use frame_support::{
 };
 
 use composable_traits::{
-    oracle::{Oracle, Price},
     vault::StrategicVault,
 };
 use sp_runtime::traits::AccountIdConversion;
 use crate::{mocks::runtime::*}; 
-
 use crate::{mocks::currency_factory::MockCurrencyId};
 use std::time::{SystemTime, UNIX_EPOCH};
 use sp_runtime::{helpers_128bit::multiply_by_rational, FixedPointNumber, Percent, Perquintill};
@@ -23,19 +21,14 @@ use frame_system::EventRecord;
 use crate::{mocks::runtime::Event}; 
 use crate::{mocks::runtime}; 
 
-// use frame_system::pallet::Event;
-// use crate::{RawEvent};
-
-
-
 // #[test]
 // fn test_set_min_fee(){
 //     ExtBuilder::default().build().execute_with(|| {
 //         assert_noop!(MosaicVault::set_min_fee(Origin::signed(BOB), 600),  BadOrigin);
 //         assert_noop!(MosaicVault::set_min_fee(Origin::signed(ALICE), 600), Error::<Test>::MinFeeAboveMaxFee);
 //         assert_noop!(MosaicVault::set_min_fee(Origin::signed(ALICE), 120), Error::<Test>::MinFeeAboveFeeFactor);
-//         assert_ok!( MosaicVault::set_min_fee(Origin::signed(ALICE), 10));
-//         assert_eq!(MosaicVault::min_fee() ,10);
+//         // assert_ok!( MosaicVault::set_min_fee(Origin::signed(ALICE), 10));
+//         // assert_eq!(MosaicVault::min_fee() ,10);
 //     });
 // }
 
@@ -155,7 +148,6 @@ fn test_deposit() {
         
         // assert_noop!(MosaicVault::deposit(Origin::signed(ALICE), 500, MockCurrencyId::A, BOB, remote_network_id, transfer_delay), <pallet_vault::Pallet<Test>>::Error::<Test>); - how to use error type from another palet - vault - VaultDoesNotExist
       
-        MosaicVault::create_vault(Origin::signed(ALICE), MockCurrencyId::A,Perquintill::from_percent(100));
         assert_ok!(MosaicVault::deposit(Origin::signed(ALICE), 500, MockCurrencyId::A, BOB, remote_network_id, transfer_delay));
 
         assert_eq!(MosaicVault::deposits(MockCurrencyId::A).asset_id, MockCurrencyId::A );
@@ -175,7 +167,6 @@ fn test_withdraw() {
         MosaicVault::set_min_transfer_delay(Origin::signed(ALICE), 30).ok();
 
         assert_ok!(MosaicVault::add_supported_token(Origin::signed(ALICE), MockCurrencyId::A, MockCurrencyId::A, _remote_network_id,  1000, 200 ));
-        assert_ok!(MosaicVault::create_vault(Origin::signed(ALICE), MockCurrencyId::A,Perquintill::from_percent(100)));
         assert_ok!(MosaicVault::deposit(Origin::signed(ALICE), 900, MockCurrencyId::A, BOB, _remote_network_id, _transfer_delay));
 
         let deposit_completed = System::events().into_iter().map(|r| r.event).filter_map(|e| {
@@ -207,29 +198,6 @@ fn test_withdraw() {
     })
 }
 
-#[test]
-fn test_create_vault() {
-    ExtBuilder::default().build().execute_with(||{
-
-        let remote_network_id: RemoteNetworkId = 100001;
-        assert_noop!(MosaicVault::create_vault(Origin::signed(BOB), MockCurrencyId::A,Perquintill::from_percent(100)), BadOrigin);
-        assert_ok!(MosaicVault::create_vault(Origin::signed(ALICE), MockCurrencyId::A,Perquintill::from_percent(100)));
-
-       let vault_created = System::events().into_iter().map(|r| r.event) .filter_map(|e| {
-           if let Event::MosaicVault(inner)= e {
-               Some(inner) 
-           }else {
-               None
-           }
-        })
-        .last()
-        .unwrap();
-
-        if let crate::Event::VaultCreated{sender, asset_id, vault_id, reserved} = vault_created {
-            assert_eq!(vault_id, MosaicVault::asset_vault(asset_id));
-        }
-    })
-}
 
 fn get_epoch_ms() -> u64 {
     SystemTime::now()

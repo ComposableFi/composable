@@ -165,7 +165,7 @@ parameter_types! {
     pub const ThresholdFactor:Balance = 100;
     pub const FeeAddress: u64 = 1;
     pub const MosaicVaultId: PalletId = PalletId(*b"test_pid");
-    pub const MaxFeeDefault: Balance = 3;
+    pub const MaxFeeDefault: Balance = 10;
     pub const MinFeeDefault: Balance = 0;
 }
 
@@ -224,7 +224,6 @@ impl ExtBuilder {
             ext.execute_with(|| System::set_block_number(1));
             ext
 
-		//t.into()
 	}
 }
 
