@@ -29,7 +29,7 @@ pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 pub const WEEKS: BlockNumber = DAYS * 7;
 
-pub const VESTING_PARTITION: BlockNumber = 1 * WEEKS;
+pub const VESTING_STEP: BlockNumber = 1 * WEEKS;
 pub const INITIAL_PAYMENT: Perbill = Perbill::from_percent(50);
 
 pub const MINIMUM_BALANCE: Balance = 1000;
@@ -93,7 +93,7 @@ impl balances::Config for Test {
 
 parameter_types! {
 	pub const InitialPayment: Perbill = INITIAL_PAYMENT;
-	pub const VestingPartition: BlockNumber = VESTING_PARTITION;
+	pub const VestingStep: BlockNumber = VESTING_STEP;
 	pub const Prefix: &'static [u8] = PROOF_PREFIX;
 }
 
@@ -104,7 +104,7 @@ impl pallet_crowdloan_rewards::Config for Test {
 	type Convert = ConvertInto;
 	type RelayChainAccountId = RelayChainAccountId;
 	type InitialPayment = InitialPayment;
-	type VestingPartition = VestingPartition;
+	type VestingStep = VestingStep;
 	type Prefix = Prefix;
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type AssociationOrigin = EnsureRoot<AccountId>;

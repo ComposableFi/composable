@@ -3,7 +3,7 @@ use crate::{
 	mocks::{
 		AccountId, Balance, Balances, BlockNumber, CrowdloanRewards, ExtBuilder, Origin,
 		RelayChainAccountId, System, Test, ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, DAYS,
-		INITIAL_PAYMENT, MINIMUM_BALANCE, PROOF_PREFIX, VESTING_PARTITION, WEEKS,
+		INITIAL_PAYMENT, MINIMUM_BALANCE, PROOF_PREFIX, VESTING_STEP, WEEKS,
 	},
 	models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount},
 	verify_relay, Error, RemoteAccountOf, RewardAmountOf, VestingPeriodOf,
@@ -295,11 +295,11 @@ fn test_invalid_less_than_a_week() {
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
 			assert_ok!(remote_account.associate(picasso_account));
 		}
-		set_block(VESTING_PARTITION - 1);
+		set_block(VESTING_STEP - 1);
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
 			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NothingToClaim);
 		}
-		set_block(VESTING_PARTITION);
+		set_block(VESTING_STEP);
 		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.claim(picasso_account));
 		}
@@ -310,7 +310,7 @@ fn test_invalid_less_than_a_week() {
 fn test_valid_claim_full() {
 	let total_initial_reward = INITIAL_PAYMENT * DEFAULT_NB_OF_CONTRIBUTORS * DEFAULT_REWARD;
 	let total_vested_reward = DEFAULT_NB_OF_CONTRIBUTORS * DEFAULT_REWARD - total_initial_reward;
-	let nb_of_vesting_step = DEFAULT_VESTING_PERIOD / VESTING_PARTITION;
+	let nb_of_vesting_step = DEFAULT_VESTING_PERIOD / VESTING_STEP;
 	with_rewards_default(|set_block, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		// Initial payment
@@ -319,7 +319,7 @@ fn test_valid_claim_full() {
 		}
 		assert_eq!(CrowdloanRewards::claimed_rewards(), total_initial_reward);
 		for i in 1..(nb_of_vesting_step + 1) {
-			set_block(i * VESTING_PARTITION);
+			set_block(i * VESTING_STEP);
 			for (picasso_account, remote_account) in accounts.clone().into_iter() {
 				assert_ok!(remote_account.claim(picasso_account));
 			}
@@ -376,7 +376,7 @@ fn test_valid_eth_hardcoded() {
 		assert_ok!(CrowdloanRewards::populate(Origin::root(), rewards));
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		assert_ok!(CrowdloanRewards::associate(Origin::root(), ALICE, proof));
-		System::set_block_number(VESTING_PARTITION);
+		System::set_block_number(VESTING_STEP);
 		assert_ok!(CrowdloanRewards::claim(Origin::signed(ALICE)));
 		System::set_block_number(DEFAULT_VESTING_PERIOD);
 		assert_ok!(CrowdloanRewards::claim(Origin::signed(ALICE)));

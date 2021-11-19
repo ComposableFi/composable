@@ -4,7 +4,7 @@ Crowdloan rewards pallet used by contributors to claim their rewards.
 A user is able to claim rewards once it has an associated account. Associating
 an account using the `associate` extrinsic automatically yield the upfront
 liquidity (% of the vested reward). The rest of the reward can be claimed every
-`VestingPartition` starting at the block when the pallet has been initialized
+`VestingStep` starting at the block when the pallet has been initialized
 using the `initialize` extrinsic.
 
 Proof to provide when associating a reward account:
@@ -138,7 +138,7 @@ pub mod pallet {
 
 		/// The number of blocks a fragment of the reward is vested.
 		#[pallet::constant]
-		type VestingPartition: Get<Self::BlockNumber>;
+		type VestingStep: Get<Self::BlockNumber>;
 
 		/// The arbitrary prefix used for the proof
 		#[pallet::constant]
@@ -193,6 +193,7 @@ pub mod pallet {
 
 		/// Populate pallet by adding more rewards.
 		/// Can be called multiple times. Idempotent.
+		/// Can only be called before `initialize`.
 		#[pallet::weight(10_000)]
 		pub fn populate(
 			origin: OriginFor<T>,
@@ -313,9 +314,9 @@ pub mod pallet {
 								// probably have already claimed everything.
 								reward.total
 							} else {
-								let partition = T::VestingPartition::get();
+								let vesting_step = T::VestingStep::get();
 								// Current window, rounded to previous window.
-								let vesting_window = vesting_point - (vesting_point % partition);
+								let vesting_window = vesting_point - (vesting_point % vesting_step);
 								// The user should have claimed the upfront payment + the vested
 								// amount until this window point.
 								let vested_reward = reward.total - upfront_payment;
