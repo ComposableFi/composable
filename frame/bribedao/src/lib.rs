@@ -112,7 +112,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn fast_vexc)]
-	pub(super) type Fastvec2<T: Config> = StorageValue<_, FastMap, OptionQuery>;
+	pub(super) type Fastvec2<T: Config> = StorageValue<_, FastMap, ValueQuery>; // using value query instead of OptionQuery cuz OptionsQuery returns null if its empty
 
 	#[pallet::storage]
 	#[pallet::getter(fn fast_vec)]
@@ -269,8 +269,9 @@ pub mod pallet {
 
 			ensure!(!BribeRequests::<T>::contains_key(id), Error::<T>::AlreadyBribed); //dont duplicate briberequest if we already have it
 
+			Fastvec2::<T>::mutate(|a| a.add(1, 2, 3));
 			// insert into fastvec
-			Fastvec2::<T>::add(1, 3, 2);
+			//			Fastvec2::<T>::add(1, 3, 2);
 
 			BribeRequests::<T>::insert(id, request);
 			Ok(id)
