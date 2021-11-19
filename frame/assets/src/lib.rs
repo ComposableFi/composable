@@ -16,6 +16,9 @@
 //! - Minting new assets, with support for governance.
 //! - Crediting and debiting of created asset balances.
 //!
+//! Functions requiring authorization are checked via asset's governance registry origin. Example,
+//! minting.
+//!
 //! ### Implementations
 //!
 //! The Assets pallet provides implementations for the following traits:
@@ -64,7 +67,7 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use composable_traits::{
 		currency::{AssetIdLike, BalanceLike, CurrencyFactory},
-		SetByKey,
+		governance::{GovernanceRegistry, SignedRawOrigin},
 	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
@@ -78,7 +81,7 @@ pub mod pallet {
 			EnsureOrigin,
 		},
 	};
-	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor, RawOrigin};
+	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 	use orml_traits::GetByKey;
 	use sp_runtime::DispatchError;
 
@@ -91,9 +94,10 @@ pub mod pallet {
 		type GenerateCurrencyId: CurrencyFactory<Self::AssetId>;
 		type NativeCurrency;
 		type MultiCurrency;
-		type GovernanceRegistry: GetByKey<Self::AssetId, Result<RawOrigin<Self::AccountId>, DispatchError>>
-			+ SetByKey<Self::AssetId, frame_system::RawOrigin<Self::AccountId>>;
+		type GovernanceRegistry: GetByKey<Self::AssetId, Result<SignedRawOrigin<Self::AccountId>, DispatchError>>
+			+ GovernanceRegistry<Self::AssetId, Self::AccountId>;
 		type WeightInfo: WeightInfo;
+		/// origin of admin of this pallet
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
 	}
 
@@ -283,8 +287,7 @@ pub mod pallet {
 			ensure_root(origin)?;
 			let id = T::GenerateCurrencyId::create()?;
 			let governance_origin = T::Lookup::lookup(governance_origin)?;
-			T::GovernanceRegistry::set(id, RawOrigin::Signed(governance_origin))
-				.map_err(|_| Error::<T>::CannotSetNewCurrencyToRegistry)?;
+			T::GovernanceRegistry::set(id, SignedRawOrigin::Signed(governance_origin));
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(().into())
@@ -319,8 +322,7 @@ pub mod pallet {
 		}
 	}
 
-	/// Returns Ok(None) if the origin is root or the AdminOrigin, and Ok(Some(AccountId)) if the
-	/// origin is the GovernanceRegistry based account.
+	/// Returns `Ok(())` if origin is root or asset is signed by root or by origin
 	pub(crate) fn ensure_admin_or_governance<T: Config>(
 		origin: OriginFor<T>,
 		asset_id: &T::AssetId,
@@ -329,18 +331,17 @@ pub mod pallet {
 			return Ok(())
 		}
 
-		let _account = match origin.into() {
+		match origin.into() {
 			Ok(frame_system::RawOrigin::Signed(account)) => {
 				match T::GovernanceRegistry::get(asset_id) {
-					Ok(RawOrigin::Root) => None,
-					Ok(RawOrigin::Signed(acc)) if acc == account => Some(acc),
-					_ => return Err(Error::<T>::BadOrigin.into()),
+					Ok(SignedRawOrigin::Root) => Ok(()),
+					Ok(SignedRawOrigin::Signed(acc)) if acc == account => Ok(()),
+					_ => Err(Error::<T>::BadOrigin.into()),
 				}
 			},
-			Ok(frame_system::RawOrigin::Root) => None,
-			_ => return Err(Error::<T>::BadOrigin.into()),
-		};
-		Ok(())
+			Ok(frame_system::RawOrigin::Root) => Ok(()),
+			_ => Err(Error::<T>::BadOrigin.into()),
+		}
 	}
 
 	mod currency {

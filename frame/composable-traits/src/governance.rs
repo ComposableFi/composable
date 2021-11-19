@@ -22,6 +22,6 @@ impl<T> Into<RawOrigin<T>> for SignedRawOrigin<T> {
 	}
 }
 
-pub trait Governance<AssetId, AccountId> {
+pub trait GovernanceRegistry<AssetId, AccountId> {
 	fn set(k: AssetId, value: SignedRawOrigin<AccountId>);
 }

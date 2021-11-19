@@ -1,6 +1,7 @@
 use crate::*;
-use composable_traits::currency::MultiCurrency;
+//use composable_traits::currency::MultiCurrency;
 use mocks::{new_test_ext, GovernanceRegistry, Origin, Test};
+use orml_traits::MultiCurrency;
 
 const FROM_ACCOUNT: u64 = 1;
 const TO_ACCOUNT: u64 = 2;

@@ -18,7 +18,7 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_traits::{
 		currency::AssetIdLike,
-		governance::{Governance, SignedRawOrigin},
+		governance::{GovernanceRegistry, SignedRawOrigin},
 	};
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 	use frame_system::{ensure_root, pallet_prelude::OriginFor};
@@ -111,7 +111,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> Governance<T::AssetId, T::AccountId> for Pallet<T> {
+	impl<T: Config> GovernanceRegistry<T::AssetId, T::AccountId> for Pallet<T> {
 		fn set(k: T::AssetId, v: SignedRawOrigin<T::AccountId>) {
 			OriginsByAssetId::<T>::insert(k, v);
 		}
