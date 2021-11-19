@@ -16,21 +16,20 @@ mod tests;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
+	use composable_traits::{
+		currency::AssetIdLike,
+		governance::{Governance, SignedRawOrigin},
+	};
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 	use frame_system::{ensure_root, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
-	use composable_traits::currency::AssetIdLike;
 
 	use crate::weights::WeightInfo;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type AssetId: AssetIdLike
-			+ Decode
-			+ Clone
-			+ core::fmt::Debug
-			+ Default;
+		type AssetId: AssetIdLike + Decode + Clone + core::fmt::Debug + Default;
 		type WeightInfo: WeightInfo;
 	}
 
@@ -73,7 +72,10 @@ pub mod pallet {
 
 		/// Sets the value of an `asset_id` to root. Only callable by root.
 		#[pallet::weight(T::WeightInfo::grant_root())]
-		pub fn grant_root(origin: OriginFor<T>, asset_id: T::AssetId) -> DispatchResultWithPostInfo {
+		pub fn grant_root(
+			origin: OriginFor<T>,
+			asset_id: T::AssetId,
+		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			OriginsByAssetId::<T>::insert(asset_id.clone(), SignedRawOrigin::Root);
 			Self::deposit_event(Event::<T>::GrantRoot { asset_id });
@@ -101,30 +103,17 @@ pub mod pallet {
 	}
 
 	impl<T: Config>
-		orml_traits::GetByKey<
-			T::AssetId,
-			Result<SignedRawOrigin<T::AccountId>, DispatchError>,
-		> for Pallet<T>
+		orml_traits::GetByKey<T::AssetId, Result<SignedRawOrigin<T::AccountId>, DispatchError>>
+		for Pallet<T>
 	{
 		fn get(k: &T::AssetId) -> Result<SignedRawOrigin<T::AccountId>, DispatchError> {
 			Self::get(k).map_err(Into::into)
 		}
 	}
 
-	// impl<T: Config> composable_traits::SetByKey<T::AssetId, frame_system::RawOrigin<T::AccountId>>
-	// 	for Pallet<T>
-	// {
-	// 	fn set(
-	// 		k: T::AssetId,
-	// 		v: SignedRawOrigin<T::AccountId>,
-	// 	) -> Result<(), frame_system::RawOrigin<T::AccountId>> {
-	// 		let value = match v {
-	// 			frame_system::RawOrigin::None => return Err(v),
-	// 			frame_system::RawOrigin::Root => StorageOrigin::Root,
-	// 			frame_system::RawOrigin::Signed(acc) => StorageOrigin::Signed(acc),
-	// 		};
-	// 		OriginsByAssetId::<T>::insert(k, value);
-	// 		Ok(())
-	// 	}
-	// }
+	impl<T: Config> Governance<T::AssetId, T::AccountId> for Pallet<T> {
+		fn set(k: T::AssetId, v: SignedRawOrigin<T::AccountId>) {
+			OriginsByAssetId::<T>::insert(k, v);
+		}
+	}
 }

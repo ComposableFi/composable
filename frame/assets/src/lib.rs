@@ -82,7 +82,6 @@ pub mod pallet {
 	use orml_traits::GetByKey;
 	use sp_runtime::DispatchError;
 
-
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// currency id

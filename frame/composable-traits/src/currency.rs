@@ -51,6 +51,7 @@ impl<
 }
 
 // hack to imitate type alias until it is in stable
-// named with like implying it is`like` is is necessary to be `AssetId`, but may be not enough (if something is `AssetIdLike` than it is not always asset)
+// named with like implying it is`like` is is necessary to be `AssetId`, but may be not enough (if
+// something is `AssetIdLike` than it is not always asset)
 pub trait AssetIdLike: FullCodec + Copy + Eq + PartialEq + Debug + TypeInfo {}
 impl<T: FullCodec + Copy + Eq + PartialEq + Debug + TypeInfo> AssetIdLike for T {}
