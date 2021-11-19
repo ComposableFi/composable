@@ -121,7 +121,7 @@ fn with_rewards<R>(
 	count: u128,
 	reward: Balance,
 	vesting_period: BlockNumber,
-	execute: impl FnOnce(Vec<(AccountId, ClaimKey)>) -> R,
+	execute: impl FnOnce(&dyn Fn(BlockNumber), Vec<(AccountId, ClaimKey)>) -> R,
 ) -> R {
 	let accounts = generate_accounts(count as _);
 	let rewards = accounts
@@ -129,8 +129,11 @@ fn with_rewards<R>(
 		.map(|(_, account)| (account.as_remote_public(), reward, vesting_period))
 		.collect();
 	ExtBuilder::default().build().execute_with(|| {
+		let random_block_start = 0xCAFEBEEF * WEEKS;
+		let set_block = |x: BlockNumber| System::set_block_number(random_block_start + x);
+		set_block(0);
 		assert_ok!(CrowdloanRewards::populate(Origin::root(), rewards));
-		execute(accounts)
+		execute(&set_block, accounts)
 	})
 }
 
@@ -138,7 +141,9 @@ const DEFAULT_NB_OF_CONTRIBUTORS: u128 = 100;
 const DEFAULT_VESTING_PERIOD: BlockNumber = 10 * WEEKS;
 const DEFAULT_REWARD: Balance = 10_000;
 
-fn with_rewards_default<R>(execute: impl FnOnce(Vec<(AccountId, ClaimKey)>) -> R) -> R {
+fn with_rewards_default<R>(
+	execute: impl FnOnce(&dyn Fn(BlockNumber), Vec<(AccountId, ClaimKey)>) -> R,
+) -> R {
 	with_rewards(DEFAULT_NB_OF_CONTRIBUTORS, DEFAULT_REWARD, DEFAULT_VESTING_PERIOD, execute)
 }
 
@@ -207,7 +212,7 @@ fn test_initialize_once() {
 
 #[test]
 fn test_not_initialized() {
-	with_rewards_default(|accounts| {
+	with_rewards_default(|_, accounts| {
 		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_noop!(remote_account.associate(picasso_account), Error::<Test>::NotInitialized);
 		}
@@ -216,7 +221,7 @@ fn test_not_initialized() {
 
 #[test]
 fn test_initialize_totals() {
-	with_rewards_default(|_| {
+	with_rewards_default(|_, _| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		assert_eq!(CrowdloanRewards::total_rewards(), DEFAULT_REWARD * DEFAULT_NB_OF_CONTRIBUTORS);
 		assert_eq!(CrowdloanRewards::total_contributors() as u128, DEFAULT_NB_OF_CONTRIBUTORS);
@@ -226,7 +231,7 @@ fn test_initialize_totals() {
 
 #[test]
 fn test_initial_payment() {
-	with_rewards_default(|accounts| {
+	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.associate(picasso_account));
@@ -241,7 +246,7 @@ fn test_initial_payment() {
 
 #[test]
 fn test_invalid_early_claim() {
-	with_rewards_default(|accounts| {
+	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.associate(picasso_account));
@@ -252,7 +257,7 @@ fn test_invalid_early_claim() {
 
 #[test]
 fn test_not_a_contributor() {
-	with_rewards_default(|_| {
+	with_rewards_default(|_, _| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for account in 0..ACCOUNT_FREE_START {
 			assert_noop!(
@@ -265,7 +270,7 @@ fn test_not_a_contributor() {
 
 #[test]
 fn test_association_ok() {
-	with_rewards_default(|accounts| {
+	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
 			assert_ok!(remote_account.associate(picasso_account));
@@ -275,7 +280,7 @@ fn test_association_ok() {
 
 #[test]
 fn test_association_ko() {
-	with_rewards_default(|accounts| {
+	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
 			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NotAssociated);
@@ -285,16 +290,16 @@ fn test_association_ko() {
 
 #[test]
 fn test_invalid_less_than_a_week() {
-	with_rewards_default(|accounts| {
+	with_rewards_default(|set_block, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
 			assert_ok!(remote_account.associate(picasso_account));
 		}
-		System::set_block_number(VESTING_PARTITION - 1);
+		set_block(VESTING_PARTITION - 1);
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
 			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NothingToClaim);
 		}
-		System::set_block_number(VESTING_PARTITION);
+		set_block(VESTING_PARTITION);
 		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.claim(picasso_account));
 		}
@@ -303,17 +308,25 @@ fn test_invalid_less_than_a_week() {
 
 #[test]
 fn test_valid_claim_full() {
-	with_rewards_default(|accounts| {
+	let total_initial_reward = INITIAL_PAYMENT * DEFAULT_NB_OF_CONTRIBUTORS * DEFAULT_REWARD;
+	let total_vested_reward = DEFAULT_NB_OF_CONTRIBUTORS * DEFAULT_REWARD - total_initial_reward;
+	let nb_of_vesting_step = DEFAULT_VESTING_PERIOD / VESTING_PARTITION;
+	with_rewards_default(|set_block, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		// Initial payment
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
 			assert_ok!(remote_account.associate(picasso_account));
 		}
-		for i in 0..(DEFAULT_VESTING_PERIOD / VESTING_PARTITION) {
-			System::set_block_number((i + 1) * VESTING_PARTITION);
+		assert_eq!(CrowdloanRewards::claimed_rewards(), total_initial_reward);
+		for i in 1..(nb_of_vesting_step + 1) {
+			set_block(i * VESTING_PARTITION);
 			for (picasso_account, remote_account) in accounts.clone().into_iter() {
 				assert_ok!(remote_account.claim(picasso_account));
 			}
+			assert_eq!(
+				CrowdloanRewards::claimed_rewards(),
+				total_initial_reward + total_vested_reward * i as u128 / nb_of_vesting_step as u128,
+			);
 		}
 		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NothingToClaim);
@@ -324,7 +337,7 @@ fn test_valid_claim_full() {
 
 #[test]
 fn test_valid_claim_no_vesting() {
-	with_rewards(DEFAULT_NB_OF_CONTRIBUTORS, DEFAULT_REWARD, 0, |accounts| {
+	with_rewards(DEFAULT_NB_OF_CONTRIBUTORS, DEFAULT_REWARD, 0, |_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		// Initial payment = full reward
 		for (picasso_account, remote_account) in accounts.into_iter() {

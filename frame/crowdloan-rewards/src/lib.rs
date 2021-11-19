@@ -48,7 +48,6 @@ mod tests;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::Codec;
-	use composable_traits::math::SafeArithmetic;
 	use frame_support::{pallet_prelude::*, traits::fungible::Mutate};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
@@ -314,8 +313,6 @@ pub mod pallet {
 								// probably have already claimed everything.
 								reward.total
 							} else {
-								let vesting_period = VestingBlockStart::<T>::get()
-									.safe_add(&reward.vesting_period)?;
 								let partition = T::VestingPartition::get();
 								// Current window, rounded to previous window.
 								let vesting_window = vesting_point - (vesting_point % partition);
@@ -325,7 +322,7 @@ pub mod pallet {
 								upfront_payment +
 									(vested_reward
 										.saturating_mul(T::Convert::convert(vesting_window)) /
-										T::Convert::convert(vesting_period))
+										T::Convert::convert(reward.vesting_period))
 							}
 						};
 						let available_to_claim = should_have_claimed - reward.claimed;
