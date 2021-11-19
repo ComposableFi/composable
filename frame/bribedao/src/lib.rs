@@ -106,6 +106,14 @@ pub mod pallet {
 	#[pallet::getter(fn bribe_count)]
 	pub(super) type BribeCount<T: Config> = StorageValue<_, BribeIndex, ValueQuery>;
 
+	//	#[pallet::storage]
+	//	pub(super) type MyStorageValue<T: Config> =
+	//	    StorageValue<FastMap,ValueQuery, FastMap::new()>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn fast_vexc)]
+	pub(super) type Fastvec2<T: Config> = StorageValue<_, FastMap, OptionQuery>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn fast_vec)]
 	pub(super) type Fastvec<T: Config> = StorageMap<_, Blake2_128Concat, FastMap, FastMap>;
@@ -167,7 +175,7 @@ pub mod pallet {
 		//			todo!("Update token funds status");
 
 		//			Ok(())
-		//		}
+		//		insert}
 
 		#[pallet::weight(10_000)]
 		#[transactional]
@@ -262,7 +270,7 @@ pub mod pallet {
 			ensure!(!BribeRequests::<T>::contains_key(id), Error::<T>::AlreadyBribed); //dont duplicate briberequest if we already have it
 
 			// insert into fastvec
-			//Fastvec::<T>::add(1, 3, 2);
+			Fastvec2::<T>::add(1, 3, 2);
 
 			BribeRequests::<T>::insert(id, request);
 			Ok(id)

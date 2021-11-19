@@ -480,7 +480,7 @@ pub struct BribesStorage {
 	pub amount: u32,
 	pub votes: u32,
 }
-///*
+
 sortedvec! {
 		/// lookup by (amount, votes) keys
 		#[derive(Debug, Encode, Decode, TypeInfo)]//EncodeLike
@@ -508,7 +508,7 @@ impl FastMap {
 		FastMap::default()
 	}
 }
-//*/
+
 #[cfg(test)]
 #[allow(unused_variables)]
 mod tests {
