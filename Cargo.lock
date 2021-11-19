@@ -1470,6 +1470,7 @@ name = "composable-traits"
 version = "0.0.1"
 dependencies = [
  "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "plotters",
  "proptest",
@@ -5956,6 +5957,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-assets"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-governance-registry",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-assets-registry"
 version = "0.1.0"
 dependencies = [
@@ -6396,6 +6418,24 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-arithmetic",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-governance-registry"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
