@@ -11,3 +11,7 @@ pub mod math;
 pub mod oracle;
 pub mod rate_model;
 pub mod vault;
+pub mod governance;
+mod set_by_key;
+
+pub use set_by_key::SetByKey;
