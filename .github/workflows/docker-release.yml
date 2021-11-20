@@ -1,13 +1,12 @@
-name: "pre-release"
+name: "Community Release"
 
 on:
   push:
-    branches:
-      - "master"
+    tags: 
+      - '*'
 
 
 jobs:
-
   build:
     runs-on: 
         - self-hosted
