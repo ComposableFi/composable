@@ -1,11 +1,8 @@
-
-   
 name: Release Drafter
-
 on:
   push:
     branches:
-      - release/v0.1.4
+      - master
 
 jobs:
   update_release_draft:
