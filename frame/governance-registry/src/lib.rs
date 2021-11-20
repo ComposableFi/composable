@@ -15,14 +15,12 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use codec::FullCodec;
 	use composable_traits::{
 		currency::AssetIdLike,
 		governance::{GovernanceRegistry, SignedRawOrigin},
 	};
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 	use frame_system::{ensure_root, pallet_prelude::OriginFor};
-	use scale_info::TypeInfo;
 
 	use crate::weights::WeightInfo;
 
@@ -65,7 +63,7 @@ pub mod pallet {
 			value: T::AccountId,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			OriginsByAssetId::<T>::insert(asset_id.clone(), SignedRawOrigin::Signed(value.clone()));
+			OriginsByAssetId::<T>::insert(asset_id, SignedRawOrigin::Signed(value.clone()));
 			Self::deposit_event(Event::<T>::Set { asset_id, value });
 			Ok(().into())
 		}
@@ -77,7 +75,7 @@ pub mod pallet {
 			asset_id: T::AssetId,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			OriginsByAssetId::<T>::insert(asset_id.clone(), SignedRawOrigin::Root);
+			OriginsByAssetId::<T>::insert(asset_id, SignedRawOrigin::Root);
 			Self::deposit_event(Event::<T>::GrantRoot { asset_id });
 			Ok(().into())
 		}
@@ -86,7 +84,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::remove())]
 		pub fn remove(origin: OriginFor<T>, asset_id: T::AssetId) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			OriginsByAssetId::<T>::remove(asset_id.clone());
+			OriginsByAssetId::<T>::remove(asset_id);
 			Self::deposit_event(Event::<T>::Remove { asset_id });
 			Ok(().into())
 		}
