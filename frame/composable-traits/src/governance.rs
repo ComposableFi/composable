@@ -4,6 +4,7 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 use scale_info::TypeInfo;
+
 /// Like `RawOrigin`, but always signed.
 #[derive(PartialEq, Eq, Clone, RuntimeDebug, Encode, Decode, TypeInfo)]
 pub enum SignedRawOrigin<AccountId> {
@@ -13,9 +14,9 @@ pub enum SignedRawOrigin<AccountId> {
 	Signed(AccountId),
 }
 
-impl<T> Into<RawOrigin<T>> for SignedRawOrigin<T> {
-	fn into(self) -> RawOrigin<T> {
-		match self {
+impl<T> From<SignedRawOrigin<T>> for RawOrigin<T> {
+	fn from(this: SignedRawOrigin<T>) -> Self {
+		match this {
 			SignedRawOrigin::Root => RawOrigin::Root,
 			SignedRawOrigin::Signed(x) => RawOrigin::Signed(x),
 		}
