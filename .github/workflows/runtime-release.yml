@@ -8,7 +8,7 @@ env:
   CLOUDSDK_CORE_DISABLE_PROMPTS: 1
   ROOT_KEY: ${{ secrets.ROOT_KEY }}
   SLACK_SIGNING_KEY: ${{ secrets.SLACK_SIGNING_KEY }}
-  RPC_NODE: wss://rpc.composablefinance.io
+  RPC_NODE: wss://rpc.composablefinance.ninja
 
 jobs:
   runtime-release:
@@ -23,16 +23,6 @@ jobs:
           fetch-depth: 0
       - name: Set env
         run: echo "RELEASE_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
-
-      - name: Install toolchain
-        run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
-          source ~/.cargo/env
-          rustup default stable
-          rustup update nightly
-          rustup update stable
-          rustup target add wasm32-unknown-unknown
-          rustup target add wasm32-unknown-unknown --toolchain nightly
 
     
 #  runtime-upgrade:
