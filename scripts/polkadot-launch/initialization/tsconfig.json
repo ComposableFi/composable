@@ -4,9 +4,22 @@
         "outDir": "dist",
         "sourceMap": true,
         "strict": true,
-        "target": "es2017"
+        "target": "es6",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "baseUrl": ".",
+        "skipLibCheck": true,
+        "paths": {
+            "initialization/*": ["src/*"],
+            "@polkadot/api/augment": ["src/interfaces/augment-api.ts"],
+            "@polkadot/types/augment": ["src/interfaces/augment-types.ts"],
+        },
+        "typeRoots": [
+            "node_modules/@types"
+        ]
     },
-    "include": [
-        "src"
+    "exclude": [
+        "build/**/*",
+        "node_modules"
     ]
 }

@@ -1,6 +1,12 @@
-const { ApiPromise, WsProvider } = require("@polkadot/api");
-const { ISubmittableResult, XcmV1MultiLocation, XcmV1MultilocationJunctions } = require("@polkadot/types/types");
-const { Keyring, KeyringPair } = require("@polkadot/keyring");
+import './interfaces/augment-api';
+import './interfaces/augment-types';
+
+import { ApiPromise, WsProvider } from "@polkadot/api";
+import type { ISubmittableResult, RegistryTypes } from "@polkadot/types/types";
+import { Keyring } from "@polkadot/keyring";
+import type { KeyringPair } from "@polkadot/keyring/types";
+
+import * as definitions from './interfaces/definitions';
 
 interface IAsset {
     name: string;
@@ -15,16 +21,10 @@ enum AssetType {
 
 async function main() {
     const { assets, basilisk_collator_url, composable_collator_url } = require("../config/config.json");
+    const types = Object.values(definitions).reduce((res, { types }): object => ({ ...res, ...types }), {});
 
-    const composableApi = await createApi(composable_collator_url, {});
-    const basiliskApi = await createApi(basilisk_collator_url, {
-        AssetType: {
-            _enum: {
-                PoolShare: "(AssetId,AssetId)",
-                Token: "Null",
-            },
-        },
-    });
+    const composableApi = await createApi(composable_collator_url, undefined);
+    const basiliskApi = await createApi(basilisk_collator_url, types);
 
     await chainInfo(composableApi);
     await chainInfo(basiliskApi);
@@ -42,22 +42,19 @@ async function main() {
         composableForeignAdmin,
     );
 
-    /*
-    >>>
     await doBasiliskAssetsMapping(
         basiliskApi,
         assets,
         alice,
     );
-    */
 }
 
-async function createApi(url: string, types: object): Promise<typeof ApiPromise> {
+async function createApi(url: string, types: RegistryTypes | undefined): Promise<ApiPromise> {
     const provider = new WsProvider(url);
-    return await ApiPromise.create({ provider }, types);
+    return await ApiPromise.create({ provider, types });
 }
 
-async function chainInfo(api: typeof ApiPromise) {
+async function chainInfo(api: ApiPromise) {
     const [chain, nodeName, nodeVersion] = await Promise.all([
         api.rpc.system.chain(),
         api.rpc.system.name(),
@@ -68,11 +65,11 @@ async function chainInfo(api: typeof ApiPromise) {
 }
 
 async function doComposableAssetsMapping(
-    api: typeof ApiPromise,
+    api: ApiPromise,
     assets: IAsset[],
-    root: typeof KeyringPair,
-    localAdmin: typeof KeyringPair,
-    foreignAdmin: typeof KeyringPair,
+    root: KeyringPair,
+    localAdmin: KeyringPair,
+    foreignAdmin: KeyringPair,
 ) {
     let adminsUpdated = false;
     const txs = [
@@ -81,7 +78,7 @@ async function doComposableAssetsMapping(
     ];
     await api.tx.utility
         .batch(txs)
-        .signAndSend(root, ({ status, events }: typeof ISubmittableResult) => {
+        .signAndSend(root, ({ status }: ISubmittableResult) => {
             if (status.isInBlock) {
                 console.log(`LocalAdmin and ForeignAdmin updated`);
                 adminsUpdated = true;
@@ -96,14 +93,14 @@ async function doComposableAssetsMapping(
     for (const { composable_id, basilisk_id } of assets) {
         await api.tx.assetsRegistry
             .approveAssetsMappingCandidate(composable_id, basilisk_id)
-            .signAndSend(localAdmin, { nonce: -1 }, ({ status }: typeof ISubmittableResult) => {
+            .signAndSend(localAdmin, { nonce: -1 }, ({ status }: ISubmittableResult) => {
                 if (status.isInBlock) {
                     console.log(`Current status of approveAssetsMappingCandidate(${composable_id}, ${basilisk_id}) is ${status}`);
                 }
             });
         await api.tx.assetsRegistry
             .approveAssetsMappingCandidate(composable_id, basilisk_id)
-            .signAndSend(foreignAdmin, { nonce: -1 }, ({ status }: typeof ISubmittableResult) => {
+            .signAndSend(foreignAdmin, { nonce: -1 }, ({ status }: ISubmittableResult) => {
                 if (status.isInBlock) {
                     console.log(`Current status of approveAssetsMappingCandidate(${composable_id}, ${basilisk_id}) is ${status}`);
                 }
@@ -111,17 +108,21 @@ async function doComposableAssetsMapping(
     }
 }
 
-async function doBasiliskAssetsMapping(api: typeof ApiPromise, assets: IAsset[], root: typeof KeyringPair) {
-    let { rootNonce } = await api.query.system.account(root.address);
-    assets.forEach(async ({ name }) => {
+async function doBasiliskAssetsMapping(api: ApiPromise, assets: IAsset[], root: KeyringPair) {
+    for (const { name } of assets) {
         const existentialDeposit = 1000;
         const composableParachainId = 2000;
         await api.tx.assetRegistry
-            .register(name, AssetType.Token, existentialDeposit)
-            .signAndSend(root, { rootNonce }, ({ status }: typeof ISubmittableResult) => {
+            .register(name, api.createType("AssetType", AssetType.Token), existentialDeposit)
+            .signAndSend(root, { nonce: -1 }, ({ status }: ISubmittableResult) => {
                 console.log(`Current status of register(...) is ${status}`);
             });
-        rootNonce++;
+        /*
+        await api.tx.assetRegistry
+            .register(name, AssetType.Token, existentialDeposit)
+            .signAndSend(root, { nonce: -1 }, ({ status }: ISubmittableResult) => {
+                console.log(`Current status of register(...) is ${status}`);
+            });
         const assetId = api.query.assetRegistry
             .assetIds(name);
         const location: typeof XcmV1MultiLocation = {
@@ -130,11 +131,11 @@ async function doBasiliskAssetsMapping(api: typeof ApiPromise, assets: IAsset[],
         };
         await api.tx.assetRegistry
             .setLocation(assetId, location)
-            .signAndSend(root, { rootNonce }, ({ status }: typeof ISubmittableResult) => {
+            .signAndSend(root, { nonce: -1 }, ({ status }: typeof ISubmittableResult) => {
                 console.log(`Current status of setLocation(...) is ${status}`);
             });
-        rootNonce++;
-    });
+        */
+    }
 }
 
 function sleep(ms: number) {
