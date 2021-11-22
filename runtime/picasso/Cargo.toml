@@ -10,7 +10,7 @@ authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [package.metadata.cargo-udeps.ignore]
-normal = ["pallet-vault", "session-benchmarking", "assets-registry"]
+normal = ["pallet-vault", "session-benchmarking", "assets-registry", "currency-factory", "oracle", "vault"]
 
 [dependencies]
 frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
