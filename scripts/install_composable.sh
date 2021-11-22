@@ -10,7 +10,8 @@ elif echo "$myos" | fgrep -q Debian 2>/dev/null; then
 	echo "Debian Detected"
 	apt update && apt install -y git clang curl libssl-dev llvm libudev-dev
 # Fedora
-elif echo "$myos" | fgrep -q Fedora 2>/dev/null; then
+elif echo "$myos" | fgrep -q fc32 2>/dev/null; then
+	echo "Fedora detected"
 	dnf update && dnf install clang curl git openssl-devel
 # Arch
 elif echo "$myos" | fgrep -q Arch 2>/dev/null; then
