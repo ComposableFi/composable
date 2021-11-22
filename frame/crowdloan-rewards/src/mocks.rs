@@ -75,15 +75,11 @@ impl system::Config for Test {
 	type OnSetCode = ();
 }
 
-parameter_types! {
-		pub const ExistentialDeposit: u64 = 3;
-}
-
 impl balances::Config for Test {
 	type Balance = Balance;
 	type Event = Event;
 	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ();
 	type AccountStore = System;
 	type MaxLocks = ();
 	type ReserveIdentifier = [u8; 8];
@@ -108,6 +104,7 @@ impl pallet_crowdloan_rewards::Config for Test {
 	type Prefix = Prefix;
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type AssociationOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
