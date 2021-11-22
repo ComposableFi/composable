@@ -16,6 +16,10 @@ elif echo "$myos" | fgrep -q Fedora 2>/dev/null; then
 elif echo "$myos" | fgrep -q Arch 2>/dev/null; then
 	pacman -Syu --needed --noconfirm curl git clang
 
+# Nix Os
+elif echo "$myos" | fgrep -q NixOS 2>/dev/null; then
+	nix-env -iA nixpkgs.{git,rustup}
+
 # OpenBSD
 elif echo "$myos" | fgrep -q OpenBSD 2>/dev/null; then
 	pkg_add -uv && pkg_add -iv rust rust-gdb rust-clippy rust-rustfmt 
