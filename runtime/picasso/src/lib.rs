@@ -18,7 +18,7 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -385,6 +385,7 @@ parameter_types! {
 	pub const MaxHistory: u32 = 20;
 }
 
+#[cfg(feature = "develop")]
 impl oracle::Config for Runtime {
 	type Currency = Balances;
 	type Event = Event;
@@ -811,13 +812,14 @@ parameter_types! {
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
 }
 
+#[cfg(feature = "develop")]
 impl vault::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type CurrencyFactory = Factory;
 	type AssetId = CurrencyId;
 	type Currency = Tokens;
-	type Convert = ConvertInto;
+	type Convert = sp_runtime::traits::ConvertInto;
 	type PalletId = VaultPalletId;
 	type MaxStrategies = MaxStrategies;
 	type CreationDeposit = CreationDeposit;
@@ -832,6 +834,7 @@ parameter_types! {
 	pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
 }
 
+#[cfg(feature = "develop")]
 impl currency_factory::Config for Runtime {
 	type Event = Event;
 	type DynamicCurrencyId = CurrencyId;
@@ -913,11 +916,8 @@ construct_runtime!(
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
-		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 50,
-		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
-		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
-		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
-		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 54,
+		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 50,
+		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -963,11 +963,13 @@ construct_runtime!(
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
-		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 50,
-		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
-		Factory: currency_factory::{Pallet, Storage, Event<T>} = 52,
-		Vault: vault::{Pallet, Call, Storage, Event<T>} = 53,
-		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 54,
+		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 50,
+
+		// DeFi
+		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 51,
+		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
+		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
+		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
 		AssetsRegistry : assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
