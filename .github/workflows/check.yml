@@ -58,7 +58,7 @@ jobs:
           cargo +nightly fmt -- --check
       - name: Hadolint
         env:
-          HADOLINT_VERSION: v2.7.0
+          HADOLINT_VERSION: v2.8.0
         run: |
           curl -L -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
           chmod +x hadolint
