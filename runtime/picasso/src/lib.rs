@@ -1118,7 +1118,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, balances, Balances);
 			list_benchmark!(list, extra, timestamp, Timestamp);
-			list_benchmark!(list, extra, oracle, Oracle);
 			list_benchmark!(list, extra, collator_selection, CollatorSelection);
 			list_benchmark!(list, extra, indices, Indices);
 			list_benchmark!(list, extra, membership, CouncilMembership);
@@ -1128,6 +1127,11 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, collective, Council);
 			list_benchmark!(list, extra, crowdloan_bonus, LiquidCrowdloan);
 			list_benchmark!(list, extra, utility, Utility);
+
+			#[cfg(feature = "develop")]
+			{
+				list_benchmark!(list, extra, oracle, Oracle);
+			}
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1164,7 +1168,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, balances, Balances);
 			add_benchmark!(params, batches, timestamp, Timestamp);
-			add_benchmark!(params, batches, oracle, Oracle);
 			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
 			add_benchmark!(params, batches, collator_selection, CollatorSelection);
 			add_benchmark!(params, batches, indices, Indices);
@@ -1175,6 +1178,11 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, collective, Council);
 			add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
 			add_benchmark!(params, batches, utility, Utility);
+
+			#[cfg(feature ="develop")]
+			{
+				add_benchmark!(params, batches, oracle, Oracle);
+			}
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
