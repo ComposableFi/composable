@@ -21,6 +21,7 @@ pub mod pallet {
 	use pallet_democracy::Vote;
 	use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 	use sp_std::fmt::Debug;
+	use std::convert::TryInto;
 
 	pub type BribeIndex = u32;
 	//	pub type FastVec = FastMap;
@@ -106,17 +107,9 @@ pub mod pallet {
 	#[pallet::getter(fn bribe_count)]
 	pub(super) type BribeCount<T: Config> = StorageValue<_, BribeIndex, ValueQuery>;
 
-	//	#[pallet::storage]
-	//	pub(super) type MyStorageValue<T: Config> =
-	//	    StorageValue<FastMap,ValueQuery, FastMap::new()>;
-
 	#[pallet::storage]
 	#[pallet::getter(fn fast_vexc)]
-	pub(super) type Fastvec2<T: Config> = StorageValue<_, FastMap, ValueQuery>; // using value query instead of OptionQuery cuz OptionsQuery returns null if its empty
-
-	#[pallet::storage]
-	#[pallet::getter(fn fast_vec)]
-	pub(super) type Fastvec<T: Config> = StorageMap<_, Blake2_128Concat, FastMap, FastMap>;
+	pub(super) type Fastvec<T: Config> = StorageValue<_, FastMap, ValueQuery>; // using value query instead of OptionQuery cuz OptionsQuery returns null if its empty
 
 	#[pallet::storage]
 	#[pallet::getter(fn bribe_requests)]
@@ -269,9 +262,13 @@ pub mod pallet {
 
 			ensure!(!BribeRequests::<T>::contains_key(id), Error::<T>::AlreadyBribed); //dont duplicate briberequest if we already have it
 
-			Fastvec2::<T>::mutate(|a| a.add(1, 2, 3));
-			// insert into fastvec
-			//			Fastvec2::<T>::add(1, 3, 2);
+			//			let pid =
+			//			let amount =
+			// 			TryInto::<u32>::try_into(input).ok()
+			let amount: u32 = TryInto::<u32>::try_into(request.total_reward).ok().unwrap(); // amount of tokens locked in
+																				//			let votes =
+																				// insert into fastvec
+			Fastvec::<T>::mutate(|a| a.add(amount, 2, 3));
 
 			BribeRequests::<T>::insert(id, request);
 			Ok(id)
