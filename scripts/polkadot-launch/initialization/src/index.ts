@@ -1,22 +1,20 @@
-import './interfaces/augment-api';
-import './interfaces/augment-types';
+import "./interfaces/augment-api";
+import "./interfaces/augment-types";
 
 import { ApiPromise, WsProvider } from "@polkadot/api";
-import type { ISubmittableResult, RegistryTypes } from "@polkadot/types/types";
 import { Keyring } from "@polkadot/keyring";
 import type { KeyringPair } from "@polkadot/keyring/types";
+import { createType } from "@polkadot/types";
+import type { AssetId, JunctionsV1 } from "@polkadot/types/interfaces";
+import type { ISubmittableResult, RegistryTypes } from "@polkadot/types/types";
 
-import * as definitions from './interfaces/definitions';
+import * as definitions from "./interfaces/definitions";
+import type { AssetNativeLocation, AssetType } from "./interfaces/types";
 
 interface IAsset {
     name: string;
     composable_id: number;
     basilisk_id: number;
-}
-
-enum AssetType {
-    PoolShare = 1,
-    Token = 0,
 }
 
 async function main() {
@@ -86,7 +84,9 @@ async function doComposableAssetsMapping(
         });
 
     while (!adminsUpdated) {
-        console.log(`Waiting admins update...`);
+        if (Math.round(Date.now() / 1000) % 5 === 0) {
+            console.log(`Waiting admins update...`);
+        }
         await sleep(1000);
     }
 
@@ -112,29 +112,40 @@ async function doBasiliskAssetsMapping(api: ApiPromise, assets: IAsset[], root: 
     for (const { name } of assets) {
         const existentialDeposit = 1000;
         const composableParachainId = 2000;
+        const assetType: AssetType = createType(api.registry, "AssetType", { Token: true });
+        let registrationDone = false;
         await api.tx.assetRegistry
-            .register(name, api.createType("AssetType", AssetType.Token), existentialDeposit)
+            .register(name, assetType, existentialDeposit)
             .signAndSend(root, { nonce: -1 }, ({ status }: ISubmittableResult) => {
-                console.log(`Current status of register(...) is ${status}`);
+                if (status.isInBlock) {
+                    console.log(`Current status of register(...) is ${status}`);
+                    registrationDone = true;
+                }
             });
-        /*
-        await api.tx.assetRegistry
-            .register(name, AssetType.Token, existentialDeposit)
-            .signAndSend(root, { nonce: -1 }, ({ status }: ISubmittableResult) => {
-                console.log(`Current status of register(...) is ${status}`);
-            });
-        const assetId = api.query.assetRegistry
+        while (!registrationDone) {
+            if (Math.round(Date.now() / 1000) % 5 === 0) {
+                console.log(`Waiting registration...`);
+            }
+            await sleep(1000);
+        }
+        const assetIdOpt = await api.query.assetRegistry
             .assetIds(name);
-        const location: typeof XcmV1MultiLocation = {
-            interior: XcmV1MultilocationJunctions.XcmV1Junction.asParachain(composableParachainId),
-            parents: 0,
-        };
+        const assetId: AssetId | null = assetIdOpt.unwrapOr(null);
+        if (assetId === null) {
+            console.log(`AssetId with name=${name} not found. Stopping work.`);
+            return;
+        }
+        const junctionsV1: JunctionsV1 = createType(api.registry, "JunctionsV1", { here: true });
+        const location: AssetNativeLocation = createType(
+            api.registry,
+            "AssetNativeLocation",
+            { parents: 0, interior: junctionsV1 },
+        );
         await api.tx.assetRegistry
             .setLocation(assetId, location)
-            .signAndSend(root, { nonce: -1 }, ({ status }: typeof ISubmittableResult) => {
+            .signAndSend(root, { nonce: -1 }, ({ status }: ISubmittableResult) => {
                 console.log(`Current status of setLocation(...) is ${status}`);
             });
-        */
     }
 }
 
