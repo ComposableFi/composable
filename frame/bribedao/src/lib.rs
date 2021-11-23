@@ -26,6 +26,8 @@ pub mod pallet {
 	pub type BribeIndex = u32;
 	//	pub type FastVec = FastMap;
 	pub type ReferendumIndex = pallet_democracy::ReferendumIndex;
+
+// User asks to buy X amount of votes for a certain amount | Briber
 	pub type CreateBribeRequest<T> = composable_traits::bribe::CreateBribeRequest<
 		<T as frame_system::Config>::AccountId,
 		ReferendumIndex,
@@ -33,6 +35,8 @@ pub mod pallet {
 		<T as Config>::Conviction,
 		<T as Config>::CurrencyId,
 	>;
+
+// Bribeee
 	pub type TakeBribeRequest<T> = composable_traits::bribe::TakeBribeRequest<
 		BribeIndex,
 		<T as Config>::Balance,
