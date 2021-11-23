@@ -3,7 +3,11 @@ ARG VERSION=v0.1.0
 
 USER root
 
+<<<<<<< HEAD
 RUN apt update -y && apt install wget curl -y 
+=======
+RUN apt-get update -y && apt-get -y --no-install-recommends install wget curl
+>>>>>>> 42a83a5e5fa3b403251251c4f32fec5b818653bf
 
 WORKDIR /composable
 

@@ -163,19 +163,14 @@ mod tests {
 			]
 			.iter()
 			.for_each(|(notification, expected)| {
-				match (
+				if let (Ok(actual_action), Some((expected_action, expected_state))) = (
 					FeedNotificationAction::<Asset, TimeStampedPrice>::try_from(*notification),
 					expected,
 				) {
-					(Ok(actual_action), Some((expected_action, expected_state))) => {
-						assert_eq!(&actual_action, expected_action);
-						let mut state = HashMap::new();
-						actual_action.apply(&mut state);
-						assert_eq!(&state, expected_state);
-					},
-					_ => {
-						// No action = no transition
-					},
+					assert_eq!(&actual_action, expected_action);
+					let mut state = HashMap::new();
+					actual_action.apply(&mut state);
+					assert_eq!(&state, expected_state);
 				}
 			});
 		});
