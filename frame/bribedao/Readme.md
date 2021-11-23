@@ -8,7 +8,7 @@ for a certain amount.
 ## Buying Votes    
 Any user can buy votes by placing a bid for X amount of votes for Y amount of tokens.
 BribeDAO will automatically find the votes for the amount and fullfill the request. 
-Once the user has bought the votes, BribeDAO issues an offical vote with the help of pallet-democracy. 
+Once the user has requested the buy the votes, the funds will be deposited and once the request is fullfilled and the votes has been picked out and bought, BribeDAO issues an offical vote with the help of pallet-democracy. 
 
 
 
