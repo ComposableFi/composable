@@ -4,8 +4,9 @@ ARG VERSION=v0.1.0
 
 USER root
 
-RUN apt update -y && apt install wget curl -y 
-RUN apt-get update -y && apt-get -y --no-install-recommends install wget curl
+RUN apt-get update -y && apt install wget curl -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /composable
 
