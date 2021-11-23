@@ -60,8 +60,6 @@ rustup default stable
 rustup update nightly
 rustup target add wasm32-unknown-unknown --toolchain nightly
 echo "Installing composable node"
-#git clone https://github.com/composablefi/composable
-#cd composable/ && 
-sh scripts/init.sh && cargo build --release
+git clone https://github.com/composablefi/composable && cd composable/ && sh scripts/init.sh && cargo build --release
 
 echo "Done"
