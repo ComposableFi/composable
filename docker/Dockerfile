@@ -1,9 +1,12 @@
 FROM composablefi/rust:latest
+
 ARG VERSION=v0.1.0
 
 USER root
 
-RUN apt-get update -y && apt-get -y --no-install-recommends install wget curl
+RUN apt-get update -y && apt-get install wget curl -y --no-install-recommends \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /composable
 
@@ -14,7 +17,7 @@ LABEL description="Precompiled Docker image for Composable" \
       image.source="https://github.com/ComposableFi/composable/blob/main/docker/Dockerfile" \
       image.documentation="https://github.com/ComposableFi/composable#readme"
 
-RUN curl "https://storage.googleapis.com/composable-binaries/releases/client/v0.1.3/composable" -o composable 
+RUN curl "https://storage.googleapis.com/composable-binaries/releases/client/${VERSION}/composable" -o composable 
 
 RUN chmod +x composable && mv composable /usr/local/bin
 
@@ -25,13 +28,11 @@ RUN useradd -m -u 1001 -U -s /bin/sh -d /composable composable && \
     mkdir /data && \
     chown -R composable:composable /data && \
     chown -R composable:composable /composable/.local/share/local_testnet && \
-    ln -s /data /composable/.local/share/local_testnet && \
-    rm -rf /usr/bin /usr/sbin
-
+    ln -s /data /composable/.local/share/local_testnet 
 USER composable
 
 EXPOSE 30333 9933 9944 9615
 
 VOLUME ["/data"] 
 
-CMD ["composable"]
+CMD ["composable", "--version"]
