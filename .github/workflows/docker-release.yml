@@ -1,0 +1,42 @@
+name: "Community Release"
+
+on:
+  push:
+    tags: 
+      - '*'
+
+
+jobs:
+  build:
+    runs-on: 
+        - self-hosted
+        - linux
+        - x64
+        - sre
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+
+    - name: Set env
+      run: |
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)" >> $GITHUB_ENV
+    - name: Test
+      run: |
+        echo "${{ env.RELEASE_VERSION }}"
+
+    # - name: Build and Push Artifacts to gcloud
+    #   run: |
+    #       /home/runner/.cargo/bin/cargo build --release -p composable
+    #       gsutil cp target/release/composable gs://cp-test01/${{ env.RELEASE_VERSION }}/ 
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1 
+      with:
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_PASSWORD }}  
+
+    - name: Build Docker image
+      run: make containerize 
+    - name:  Docker push
+      run: make push
