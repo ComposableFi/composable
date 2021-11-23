@@ -4,7 +4,7 @@ ARG VERSION=v0.1.0
 
 USER root
 
-RUN apt-get update -y && apt install wget curl -y \
+RUN apt-get update -y && apt-get install wget curl -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,9 +28,7 @@ RUN useradd -m -u 1001 -U -s /bin/sh -d /composable composable && \
     mkdir /data && \
     chown -R composable:composable /data && \
     chown -R composable:composable /composable/.local/share/local_testnet && \
-    ln -s /data /composable/.local/share/local_testnet && \
-    rm -rf /usr/bin /usr/sbin
-
+    ln -s /data /composable/.local/share/local_testnet 
 USER composable
 
 EXPOSE 30333 9933 9944 9615
