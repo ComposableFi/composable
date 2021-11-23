@@ -2,8 +2,8 @@ name: "Community Release"
 
 on:
   push:
-    tags: 
-      - '*'
+    branches: 
+      - 'update-binary-path'
 
 
 jobs:
