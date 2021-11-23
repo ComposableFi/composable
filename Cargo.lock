@@ -6286,7 +6286,6 @@ dependencies = [
 name = "pallet-crowdloan-rewards"
 version = "0.0.1"
 dependencies = [
- "composable-traits",
  "frame-support",
  "frame-system",
  "hex",
@@ -7010,24 +7009,6 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-arithmetic",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-vault-group"
-version = "0.1.0"
-dependencies = [
- "composable-traits",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "smallvec 1.7.0",
  "sp-core",
  "sp-io",
  "sp-runtime",

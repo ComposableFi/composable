@@ -33,7 +33,7 @@ struct SlackWebhook {
 
 struct State {
 	api: api::RuntimeApi<api::DefaultConfig>,
-	signer: sr25519::Pair,
+	signer: PairSigner<api::DefaultConfig, sr25519::Pair>,
 	env: Env,
 }
 
@@ -62,7 +62,7 @@ async fn init() -> Arc<State> {
 	let env = envy::from_env::<Env>().expect("Missing env vars");
 
 	// create the signer
-	let signer = sr25519::Pair::from_string(&env.root_key, None).unwrap();
+	let signer = PairSigner::new(sr25519::Pair::from_string(&env.root_key, None).unwrap());
 
 	let api = ClientBuilder::new()
 		.set_url(&env.rpc_node)
@@ -107,12 +107,14 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 		Err(e) => return Ok(format!("Error: {:?}", e).into()),
 	};
 
+	let state = req.state();
+
 	let result = state
 		.api
 		.tx()
 		.balances()
 		// 1k Dali
-		.transfer(address, 1_000_000_000_000_000)
+		.transfer(address.into(), 1_000_000_000_000_000)
 		.sign_and_submit_then_watch(&state.signer)
 		.await?;
 
