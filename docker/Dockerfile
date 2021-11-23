@@ -1,13 +1,11 @@
 FROM composablefi/rust:latest
+
 ARG VERSION=v0.1.0
 
 USER root
 
-<<<<<<< HEAD
 RUN apt update -y && apt install wget curl -y 
-=======
 RUN apt-get update -y && apt-get -y --no-install-recommends install wget curl
->>>>>>> 42a83a5e5fa3b403251251c4f32fec5b818653bf
 
 WORKDIR /composable
 
@@ -18,7 +16,7 @@ LABEL description="Precompiled Docker image for Composable" \
       image.source="https://github.com/ComposableFi/composable/blob/main/docker/Dockerfile" \
       image.documentation="https://github.com/ComposableFi/composable#readme"
 
-RUN curl "https://storage.googleapis.com/composable-binaries/releases/client/v0.1.3/composable" -o composable 
+RUN curl "https://storage.googleapis.com/composable-binaries/releases/client/${VERSION}/composable" -o composable 
 
 RUN chmod +x composable && mv composable /usr/local/bin
 
@@ -38,4 +36,4 @@ EXPOSE 30333 9933 9944 9615
 
 VOLUME ["/data"] 
 
-CMD ["composable"]
+CMD ["composable", "--version"]
