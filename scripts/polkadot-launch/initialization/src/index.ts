@@ -19,10 +19,10 @@ interface IAsset {
 
 async function main() {
     const { assets, basilisk_collator_url, composable_collator_url } = require("../config/config.json");
-    const types = Object.values(definitions).reduce((res, { types }): object => ({ ...res, ...types }), {});
+    const basiliskTypes = Object.values(definitions).reduce((res, { types }): object => ({ ...res, ...types }), {});
 
     const composableApi = await createApi(composable_collator_url, undefined);
-    const basiliskApi = await createApi(basilisk_collator_url, types);
+    const basiliskApi = await createApi(basilisk_collator_url, basiliskTypes);
 
     await chainInfo(composableApi);
     await chainInfo(basiliskApi);
@@ -71,8 +71,8 @@ async function doComposableAssetsMapping(
 ) {
     let adminsUpdated = false;
     const txs = [
-        api.tx.assetsRegistry.setLocalAdmin(localAdmin.address),
-        api.tx.assetsRegistry.setForeignAdmin(foreignAdmin.address),
+        api.tx.sudo.sudo(api.tx.assetsRegistry.setLocalAdmin(localAdmin.address)),
+        api.tx.sudo.sudo(api.tx.assetsRegistry.setForeignAdmin(foreignAdmin.address)),
     ];
     await api.tx.utility
         .batch(txs)
@@ -114,8 +114,8 @@ async function doBasiliskAssetsMapping(api: ApiPromise, assets: IAsset[], root: 
         const composableParachainId = 2000;
         const assetType: AssetType = createType(api.registry, "AssetType", { Token: true });
         let registrationDone = false;
-        await api.tx.assetRegistry
-            .register(name, assetType, existentialDeposit)
+        await api.tx.sudo
+            .sudo(api.tx.assetRegistry.register(name, assetType, existentialDeposit))
             .signAndSend(root, { nonce: -1 }, ({ status }: ISubmittableResult) => {
                 if (status.isInBlock) {
                     console.log(`Current status of register(...) is ${status}`);
@@ -141,8 +141,8 @@ async function doBasiliskAssetsMapping(api: ApiPromise, assets: IAsset[], root: 
             "AssetNativeLocation",
             { parents: 0, interior: junctionsV1 },
         );
-        await api.tx.assetRegistry
-            .setLocation(assetId, location)
+        await api.tx.sudo
+            .sudo(api.tx.assetRegistry.setLocation(assetId, location))
             .signAndSend(root, { nonce: -1 }, ({ status }: ISubmittableResult) => {
                 console.log(`Current status of setLocation(...) is ${status}`);
             });
