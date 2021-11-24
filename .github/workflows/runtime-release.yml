@@ -1,28 +1,28 @@
-name: Runtime Release
-on:
-  push:
-    branches:
-      - 'release/**'
+# name: Runtime Release
+# on:
+#   push:
+#     branches:
+#       - 'release/**'
 
-env:
-  CLOUDSDK_CORE_DISABLE_PROMPTS: 1
-  ROOT_KEY: ${{ secrets.ROOT_KEY }}
-  SLACK_SIGNING_KEY: ${{ secrets.SLACK_SIGNING_KEY }}
-  RPC_NODE: wss://rpc.composablefinance.ninja
+# env:
+#   CLOUDSDK_CORE_DISABLE_PROMPTS: 1
+#   ROOT_KEY: ${{ secrets.ROOT_KEY }}
+#   SLACK_SIGNING_KEY: ${{ secrets.SLACK_SIGNING_KEY }}
+#   RPC_NODE: wss://rpc.composablefinance.ninja
 
-jobs:
-  runtime-release:
-    runs-on: 
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    steps:
-      - uses: actions/checkout@v2
-        with: 
-          fetch-depth: 0
-      - name: Set env
-        run: echo "RELEASE_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
+# jobs:
+#   runtime-release:
+#     runs-on: 
+#       - self-hosted
+#       - linux
+#       - x64
+#       - sre
+#     steps:
+#       - uses: actions/checkout@v2
+#         with: 
+#           fetch-depth: 0
+#       - name: Set env
+#         run: echo "RELEASE_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
 
     
 #  runtime-upgrade:
