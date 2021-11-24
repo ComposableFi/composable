@@ -7,9 +7,9 @@ categories:
       - 'enhancement'
   - title: '🐛 Bug Fixes'
     labels:
-      - 'major'
-      - 'minor'
-      - 'patch'
+      - 'fix'
+      - 'bugfix'
+      - 'bug'
   - title: '🧰 Maintenance'
     label: 'chore'
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
