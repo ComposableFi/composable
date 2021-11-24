@@ -1,8 +1,12 @@
 {
-  "name": "Dali Testnet (ChaChaCha)",
+  "name": "Picasso Testnet (Chachacha Relay)",
   "id": "dali",
   "chainType": "Live",
-  "bootNodes": [],
+  "bootNodes": [
+    "/dns/bn1.composablefinance.ninja/tcp/30333/p2p/12D3KooWDj7b28dXZ32wo1CHgyzcYMRJH39gP7u43qrVb3bwmzJE",
+    "/dns/bn2.composablefinance.ninja/tcp/30333/p2p/12D3KooWKN6z8pUV47KF1WCLteit2dTnyMweazxbBXd1BFDmRWcY",
+    "/dns/bn3.composablefinance.ninja/tcp/30333/p2p/12D3KooWHysJHsLGePAgWMpNYUhJpqGQZrnBKfSfotRm3Z5zFgZq"
+  ],
   "telemetryEndpoints": [
     [
       "/dns/telemetry.polkadot.io/tcp/443/x-parity-wss/%2Fsubmit%2F",
