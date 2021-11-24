@@ -1,15 +1,15 @@
 use super::*;
 
+// FIXME(oleksii): why is this marked as unused?
+#[allow(unused_imports)]
 use crate::Pallet as Assets;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::{
 	fungible::{Inspect as NativeInspect, Mutate as NativeMutate, Transfer as NativeTransfer},
 	fungibles::{Inspect, Mutate, Transfer},
 };
-use frame_system::Config as SystemConfig;
-use frame_system::RawOrigin;
+use frame_system::{Config as SystemConfig, RawOrigin};
 use sp_runtime::traits::StaticLookup;
-use sp_std::prelude::*;
 
 const FROM_ACCOUNT: u64 = 1;
 const TO_ACCOUNT: u64 = 2;
