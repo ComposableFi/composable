@@ -1,4 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+//! This pallet is used to work with remote tokens.
+//! Allows to manage remote tokens, with relevant network, timing and limits configurations.
+//! Allows to send amount to relayer deposit, and allows relayer to withdraw.
 
 pub mod mocks;
 pub mod traits;
@@ -26,13 +29,13 @@ pub mod pallet {
 	use sp_core::hashing::keccak_256;
 	use frame_system::pallet_prelude::*;
  	use scale_info::TypeInfo;
-	use sp_std::{fmt::Debug, vec::Vec}; 
+	use sp_std::{fmt::Debug, vec::Vec};
 	use codec::{Codec, FullCodec};
 	use sp_runtime::{
          traits::{
-			AtLeast32BitUnsigned, Convert, AccountIdConversion, 
+			AtLeast32BitUnsigned, Convert, AccountIdConversion,
 			Saturating, CheckedSub, CheckedAdd, CheckedMul, CheckedDiv, Zero,
-			
+
 		 },
 		// Perquintill,
 	};
@@ -41,7 +44,7 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
-	
+
 	#[pallet::config]
     pub trait Config: frame_system::Config {
 
@@ -53,30 +56,30 @@ pub mod pallet {
 
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 
-		type Balance: Parameter 
-		    + Member 
-			+ AtLeast32BitUnsigned 
-			+ Codec 
-			+ Default 
-			+ Copy 
-			+ MaybeSerializeDeserialize 
-			+ Debug 
-			+ MaxEncodedLen 
-			+ TypeInfo 
-			+ CheckedSub 
-			+ CheckedAdd 
-			+ Zero 
+		type Balance: Parameter
+		    + Member
+			+ AtLeast32BitUnsigned
+			+ Codec
+			+ Default
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ MaxEncodedLen
+			+ TypeInfo
+			+ CheckedSub
+			+ CheckedAdd
+			+ Zero
 			+ PartialOrd;
 
 		type Nonce:  Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo + CheckedSub + CheckedAdd;//+ From<u8>;
 
 		type TransferDelay:  Parameter + Member + AtLeast32BitUnsigned + Codec + Default + Copy + MaybeSerializeDeserialize + Debug + MaxEncodedLen + TypeInfo;
 
-		type VaultId: Clone 
-		    + Codec 
-			+ Debug 
-			+ PartialEq 
-			+ Default 
+		type VaultId: Clone
+		    + Codec
+			+ Debug
+			+ PartialEq
+			+ Default
 			+ Parameter;
 
 		type Vault: StrategicVault<
@@ -93,7 +96,7 @@ pub mod pallet {
 			 + Debug
 			 + Default
 			 + TypeInfo;
-		
+
 		type RemoteAssetId: FullCodec
 			 + Eq
 			 + PartialEq
@@ -102,7 +105,7 @@ pub mod pallet {
 			 + Debug
 			 + Default
 			 + TypeInfo;
-		
+
 		type RemoteNetworkId: FullCodec
 			+ Eq
 			+ PartialEq
@@ -146,8 +149,8 @@ pub mod pallet {
 	pub struct DepositInfo<AssetId, Balance > {
         pub asset_id: AssetId,
 		pub amount: Balance,
-	}  
-	
+	}
+
 	#[pallet::storage]
 	#[pallet::getter(fn remote_asset_id)]
     pub(super) type RemoteAssetId<T: Config> = StorageDoubleMap<_, Blake2_128Concat, T::RemoteNetworkId, Blake2_128Concat, T::AssetId, T::RemoteAssetId, ValueQuery>;
@@ -244,13 +247,13 @@ pub mod pallet {
 
 		DepositCompleted {
 			sender: T::AccountId,
-			asset_id: T::AssetId,   
+			asset_id: T::AssetId,
 		    remote_asset_id: T::RemoteAssetId,
-		    remote_network_id: T::RemoteNetworkId, 
-		    destination_address: T::AccountId, 
-		    amount: T::Balance, 
+		    remote_network_id: T::RemoteNetworkId,
+		    destination_address: T::AccountId,
+		    amount: T::Balance,
 		    deposit_id: [u8; 32],
-		    transfer_delay: T::TransferDelay, 
+		    transfer_delay: T::TransferDelay,
 		},
 
 		WithdrawalCompleted{
@@ -261,17 +264,17 @@ pub mod pallet {
 		   asset_id: T::AssetId,
 		   deposit_id: T::DepositId,
 		},
- 
+
         TokenAdded {
 		   asset_id: T::AssetId,
-		   remote_asset_id: T::RemoteAssetId, 
-		   remote_network_id: T::RemoteNetworkId 
+		   remote_asset_id: T::RemoteAssetId,
+		   remote_network_id: T::RemoteNetworkId
 		},
 
 		TokenRemoved {
-			asset_id: T::AssetId, 
-			remote_asset_id: T::RemoteAssetId, 
-			remote_network_id: T::RemoteNetworkId 
+			asset_id: T::AssetId,
+			remote_asset_id: T::RemoteAssetId,
+			remote_network_id: T::RemoteNetworkId
 		},
 
 		MaxTransferDelayChanged {
@@ -295,8 +298,8 @@ pub mod pallet {
 		LockupTimeChanged{
 			sender: T::AccountId,
 			old_lockup_time: Timestamp,
-			lockup_time: Timestamp, 
-			action: Vec<u8>, 
+			lockup_time: Timestamp,
+			action: Vec<u8>,
 		},
 
 		MinFeeChanged{
@@ -308,8 +311,8 @@ pub mod pallet {
 		},
 
 		TransferFundsUnlocked {
-			asset_id: T::AssetId, 
-			amount: T::Balance, 
+			asset_id: T::AssetId,
+			amount: T::Balance,
 			deposit_id: T::DepositId
 		},
 
@@ -355,25 +358,25 @@ pub mod pallet {
 		DepositFailed,
 
 		MaxAssetTransferSizeBelowMinimum,
-		
+
 		TransferDelayAboveMaximum,
-		
+
 		TransferDelayBelowMinimum,
 
 		AmountAboveMaxAssetTransferSize,
-		 
+
 		AmountBelowMinAssetTransferSize,
-		
+
 		MaxTransferDelayBelowMinimum,
-		
+
 		MinTransferDelayAboveMaximum,
-		
+
 	    MinFeeAboveFeeFactor,
-		
+
 		MaxFeeAboveFeeFactor,
-		 
+
 		MinFeeAboveMaxFee,
-		 
+
 		MaxFeeBelowMinFee,
 
 		AlreadCompleted,
@@ -421,19 +424,19 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 
 		#[pallet::weight(10_000)]
-		 pub fn add_supported_token(origin: OriginFor<T>, 
-			asset_id: T::AssetId, 
-			remote_asset_id: T::RemoteAssetId, 
-			remote_network_id: T::RemoteNetworkId, 
+		 pub fn add_supported_token(origin: OriginFor<T>,
+			asset_id: T::AssetId,
+			remote_asset_id: T::RemoteAssetId,
+			remote_network_id: T::RemoteNetworkId,
 			max_asset_transfer_size: T::Balance,
 			min_asset_transfer_size: T::Balance,) -> DispatchResultWithPostInfo {
-           
+
 		   T::AdminOrigin::ensure_origin(origin)?;
 
 		   ensure!(max_asset_transfer_size > min_asset_transfer_size, Error::<T>::MaxAssetTransferSizeBelowMinimum);
 
-		   <RemoteAssetId<T>>::insert(remote_network_id, asset_id, remote_asset_id);	
-		   
+		   <RemoteAssetId<T>>::insert(remote_network_id, asset_id, remote_asset_id);
+
 		   <MaxAssetTransferSize<T>>::insert(asset_id, max_asset_transfer_size);
 
 		   <MinAssetTransferSize<T>>::insert(asset_id, min_asset_transfer_size);
@@ -446,10 +449,10 @@ pub mod pallet {
 		 #[pallet::weight(10_000)]
 		 pub fn remove_supported_token(origin: OriginFor<T>, asset_id: T::AssetId, remote_network_id: T::RemoteNetworkId) -> DispatchResultWithPostInfo {
 
-			T::AdminOrigin::ensure_origin(origin)?; 
+			T::AdminOrigin::ensure_origin(origin)?;
 
 			Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
-          
+
  		    let remote_asset_id = RemoteAssetId::<T>::get(remote_network_id, asset_id);
 
 		     <RemoteAssetId<T>>::remove(remote_network_id, asset_id);
@@ -491,7 +494,7 @@ pub mod pallet {
 		 pub fn set_transfer_lockup_time(origin: OriginFor<T>, lockup_time: Timestamp) -> DispatchResultWithPostInfo {
 
 			T::AdminOrigin::ensure_origin(origin.clone())?;
-			
+
 			let sender = ensure_signed(origin)?;
 
 			 let old_lockup_time = <TransferLockupTime<T>>::get();
@@ -503,11 +506,11 @@ pub mod pallet {
 			 Self::deposit_event(Event::LockupTimeChanged{sender, old_lockup_time, lockup_time, action});
 
 			 Ok(().into())
-		 }	
+		 }
 
 		 #[pallet::weight(10_000)]
 		 pub fn set_max_transfer_delay(origin: OriginFor<T>, new_max_transfer_delay: T::TransferDelay) -> DispatchResultWithPostInfo {
-        	
+
 			T::AdminOrigin::ensure_origin(origin)?;
 
 			ensure!(new_max_transfer_delay >= Self::min_transfer_delay(), Error::<T>::MaxTransferDelayBelowMinimum);
@@ -518,14 +521,14 @@ pub mod pallet {
 
 			Ok(().into())
 		 }
-		 
+
 		 #[pallet::weight(10_000)]
 		 pub fn set_min_transfer_delay(origin: OriginFor<T>, new_min_transfer_delay: T::TransferDelay) -> DispatchResultWithPostInfo {
-            
+
 			T::AdminOrigin::ensure_origin(origin)?;
 
 			ensure!(new_min_transfer_delay <= Self::max_transfer_delay(), Error::<T>::MinTransferDelayAboveMaximum);
-            
+
 			<MinTransferDelay<T>>::put(new_min_transfer_delay);
 
 			Self::deposit_event(Event::MinTransferDelayChanged{new_min_transfer_delay});
@@ -535,9 +538,9 @@ pub mod pallet {
 
 		 #[pallet::weight(10_000)]
 		 pub fn set_max_fee(origin: OriginFor<T>, max_fee: T::Balance) -> DispatchResultWithPostInfo {
-			
+
 			T::AdminOrigin::ensure_origin(origin)?;
-            
+
 			ensure!(max_fee < T::FeeFactor::get(), Error::<T>::MaxFeeAboveFeeFactor);
 
 			ensure!(max_fee > Self::min_fee(), Error::<T>::MaxFeeBelowMinFee);
@@ -551,11 +554,11 @@ pub mod pallet {
 
 		 #[pallet::weight(10_000)]
 		 pub fn set_min_fee(origin: OriginFor<T>, min_fee: T::Balance) -> DispatchResultWithPostInfo {
-			
+
 			T::AdminOrigin::ensure_origin(origin)?;
 
 			ensure!(min_fee < Self::max_fee(), Error::<T>::MinFeeAboveMaxFee);
-            
+
 			ensure!(min_fee < T::FeeFactor::get(), Error::<T>::MinFeeAboveFeeFactor);
 
             <MinFee<T>>::put(min_fee);
@@ -567,7 +570,7 @@ pub mod pallet {
 
 		 #[pallet::weight(10_000)]
 		 pub fn set_thresh_hold(origin: OriginFor<T>, new_fee_threshold: T::Balance) -> DispatchResultWithPostInfo {
-			 
+
 			T::AdminOrigin::ensure_origin(origin)?;
 
 			ensure!(new_fee_threshold < T::ThresholdFactor::get(), Error::<T>::ThresholdFeeAboveThresholdFactor);
@@ -581,12 +584,12 @@ pub mod pallet {
 
 		 #[pallet::weight(10_000)]
 		 pub fn deposit(
-			 origin: OriginFor<T>, 
+			 origin: OriginFor<T>,
 			 amount: T::Balance,
-			 asset_id: T::AssetId, 
-			 destination_address: T::AccountId, 
+			 asset_id: T::AssetId,
+			 destination_address: T::AccountId,
 			 remote_network_id: T::RemoteNetworkId,
-		 	 transfer_delay: T::TransferDelay,
+		 	 i: T::TransferDelay,
 			) -> DispatchResultWithPostInfo {
 
 			let sender = ensure_signed(origin)?;
@@ -598,16 +601,16 @@ pub mod pallet {
 			Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
 
 			ensure!(Self::last_transfer(&sender).checked_add(Self::transfer_lockup_time()).ok_or(Error::<T>::Overflow)? < T::BlockTimestamp::now().as_secs(), Error::<T>::TransferNotPossible);
-           
+
 			ensure!(transfer_delay >= <MinTransferDelay<T>>::get(), Error::<T>::TransferDelayBelowMinimum);
-		
+
 			ensure!(transfer_delay <= <MaxTransferDelay<T>>::get(), Error::<T>::TransferDelayAboveMaximum);
 
 			ensure!(amount <= Self::max_asset_transfer_size(asset_id), Error::<T>::AmountAboveMaxAssetTransferSize);
 
 			ensure!(amount >= Self::min_asset_transfer_size(asset_id), Error::<T>::AmountBelowMinAssetTransferSize);
-			// 
-			let pallet_account_id = Self::account_id();            
+			//
+			let pallet_account_id = Self::account_id();
             // move funds to pallet amount
 		     T::Currency::burn_from(asset_id, &sender, amount).map_err(|_|Error::<T>::BurnFromFailed)?;
 
@@ -617,7 +620,7 @@ pub mod pallet {
 			let in_transfer_funds = Self::in_transfer_funds(asset_id);
 			let new_in_transfer_funds = in_transfer_funds.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
 			<InTransferFunds<T>>::insert(asset_id, new_in_transfer_funds);
-           
+
 			<LastTransfer<T>>::insert(&sender, T::BlockTimestamp::now().as_secs());
 
 			let deposit_id = Self::generate_deposit_id(remote_network_id, &destination_address, pallet_account_id);
@@ -629,7 +632,7 @@ pub mod pallet {
 				remote_asset_id: Self::remote_asset_id(remote_network_id, asset_id),
 				remote_network_id,
 				destination_address,
-				amount, 
+				amount,
 				deposit_id,
 				transfer_delay
 			});
@@ -639,10 +642,10 @@ pub mod pallet {
 
 		 #[pallet::weight(10_000)]
 		 pub fn withdraw(
-			origin: OriginFor<T>, 
+			origin: OriginFor<T>,
 			destination_account: T::AccountId,
 			amount: T::Balance,
-			asset_id: T::AssetId, 
+			asset_id: T::AssetId,
 			remote_network_id: T::RemoteNetworkId,
 	        deposit_id: T::DepositId,
 			fee: T::Balance,
@@ -651,21 +654,21 @@ pub mod pallet {
 			 let sender = ensure_signed(origin.clone())?;
 
 			 T::RelayerOrigin::ensure_origin(origin)?;
-         
+
 			 ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 
 			 Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
-             
+
 			ensure!(Self::has_been_withdrawn(deposit_id) == false, Error::<T>::AlreadyWithdrawn);
 
-			ensure!(Self::get_current_token_liquidity(asset_id)? >= amount, Error::<T>::InsufficientAssetBalance); 
+			ensure!(Self::get_current_token_liquidity(asset_id)? >= amount, Error::<T>::InsufficientAssetBalance);
 
 			  <HasBeenWithdrawn<T>>::insert(deposit_id, true);
 
 			  <LastWithdrawID<T>>::put(deposit_id);
 
-			  let pallet_account_id = Self::account_id(); 
-	
+			  let pallet_account_id = Self::account_id();
+
 			  let withdraw_amount = amount.saturating_sub(fee);
 
 			 T::Currency::mint_into(asset_id, &pallet_account_id, amount).map_err(|_|Error::<T>::MintToFailed)?;
@@ -673,14 +676,14 @@ pub mod pallet {
 			 Self::decrease_total_value_transferred(asset_id, amount)?;
 
 			  T::Currency::transfer(asset_id, &pallet_account_id, &destination_account, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
-			
-			 if fee > T::Balance::zero() {  
-			   
+
+			 if fee > T::Balance::zero() {
+
 				 T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee, true).map_err(|_|Error::<T>::TransferFromFailed)?;
-				
+
 				Self::deposit_event(Event::FeeTaken{
-					sender, 
-					destination_account: destination_account.clone(), 
+					sender,
+					destination_account: destination_account.clone(),
 					asset_id,
 					amount,
 					fee,
@@ -711,7 +714,7 @@ pub mod pallet {
 			T::RelayerOrigin::ensure_origin(origin)?;
 
 			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
-			
+
 			ensure!(Self::has_been_completed(deposit_id) == false, Error::<T>::AlreadCompleted);
 
 			ensure!(Self::in_transfer_funds(asset_id) >= amount, Error::<T>::InsufficientFunds);
@@ -727,10 +730,12 @@ pub mod pallet {
 		   <InTransferFunds<T>>::insert(asset_id, new_intransfer_funds);
 
 		   Self::deposit_event(Event::TransferFundsUnlocked{asset_id, amount, deposit_id});
-	
+
 			Ok(().into())
 		 }
 
+		 /// Mints funds to `user_account_id` if there was deposit previously and not yet been unlocked.
+		 /// Deposited is cleaned after.
 		 #[pallet::weight(10_000)]
 		 pub fn unlock_funds(
 			origin: OriginFor<T>,
@@ -739,9 +744,9 @@ pub mod pallet {
 			amount: T::Balance,
 			deposit_id: T::DepositId,
 		 ) ->DispatchResultWithPostInfo {
-            
+
 			 T::RelayerOrigin::ensure_origin(origin.clone())?;
-          
+
 			 ensure!(Self::has_been_unlocked(deposit_id) == false, Error::<T>::AssetUnlreadyUnlocked);
 
 			 ensure!(Self::total_value_transferred(asset_id) >= amount, Error::<T>::UnlockAmountGreaterThanTotalValueTransferred);
@@ -753,7 +758,7 @@ pub mod pallet {
 			 T::Currency::mint_into(asset_id, &user_account_id, amount).map_err(|_|Error::<T>::MintToFailed)?;
 
 			 Self::decrease_total_value_transferred(asset_id, amount)?;
-             
+
 			Self::deposit_event(Event::FundsUnlocked{asset_id,user_account_id, amount, deposit_id});
 
 			if Self::has_been_completed(deposit_id) == false {
@@ -783,7 +788,7 @@ pub mod pallet {
 			T::Currency::mint_into(asset_id, &to, withdrawable_balance).map_err(|_|Error::<T>::MintToFailed)?;
 
 			Self::decrease_total_value_transferred(asset_id, withdrawable_balance)?;
-             
+
 		    Self::deposit_event(Event::LiquidityMoved {sender, to, withdrawable_balance});
 
 			Ok(().into())
@@ -838,7 +843,7 @@ pub mod pallet {
 		}
 
 		fn get_current_token_liquidity(asset_id: T::AssetId) -> Result<T::Balance, DispatchError> {
-		
+
 			let available_funds = Self::total_value_transferred(asset_id);
 
 			let liquidity = available_funds.checked_sub(&Self::in_transfer_funds(asset_id)).ok_or(Error::<T>::Underflow)?;
@@ -847,7 +852,7 @@ pub mod pallet {
 		}
 
 		fn only_supported_remote_token(remote_network_id: T::RemoteNetworkId, asset_id:T::AssetId) -> Result<T::RemoteAssetId, DispatchError> {
-			
+
 			let remote_asset_id = <RemoteAssetId<T>>::try_get(remote_network_id, asset_id).map_err(|_|Error::<T>::UnsupportedToken)?;
 
 			Ok(remote_asset_id)
@@ -882,18 +887,18 @@ pub mod pallet {
 		}
 
 		fn increase_total_value_transferred(asset_id: T::AssetId, amount: T::Balance) -> Result<T::Balance, DispatchError>  {
-			
+
 			let total_value = (Self::total_value_transferred(asset_id)).checked_add(&amount).ok_or(Error::<T>::Overflow)?;
-            
+
 			<TotalValueTransferred<T>>::insert(asset_id, total_value);
 
 			Ok(total_value)
 		}
 
 		fn decrease_total_value_transferred(asset_id: T::AssetId, amount: T::Balance) -> Result<T::Balance, DispatchError>  {
-			
+
 			let total_value = (Self::total_value_transferred(asset_id)).checked_sub(&amount).ok_or(Error::<T>::Overflow)?;
-            
+
 			<TotalValueTransferred<T>>::insert(asset_id, total_value);
 
 			Ok(total_value)
@@ -901,4 +906,3 @@ pub mod pallet {
 	}
 
  }
- 
