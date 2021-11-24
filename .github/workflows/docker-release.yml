@@ -8,7 +8,7 @@ on:
 env:
   SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SA_KEY }}
   GCP_PROJECT_ID: "composable-ops-5568"
-  ARTIFACT_URL: "europe-central2-docker.pkg.dev/composable-ops-5568/composable-pkg"
+  REPO: "europe-central2-docker.pkg.dev/composable-ops-5568/composable-pkg"
 
 jobs:
   build:
