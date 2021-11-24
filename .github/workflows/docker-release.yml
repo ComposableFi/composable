@@ -40,11 +40,16 @@ jobs:
         export_default_credentials: true
 
     - name: Authenticate docker
-      run: |
-          chmod -R 777 /var/run/docker.sock
-          gcloud auth configure-docker ${{ env.ARTIFACT_URL }}
+      run: gcloud auth configure-docker ${{ env.ARTIFACT_URL }}
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
 
     - name: Build Docker image
       run: make containerize-release 
+      
     - name:  Docker push
       run: make push-release
