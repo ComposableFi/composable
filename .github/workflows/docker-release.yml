@@ -32,7 +32,11 @@ jobs:
     #     gsutil cp target/release/composable gs://composable-binaries/releases/${{ env.RELEASE_VERSION }}/ 
 
   publish:
-    runs-on: ubuntu-latest
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
     steps:
     - uses: actions/checkout@v2
       with: 
