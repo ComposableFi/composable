@@ -31,6 +31,17 @@ jobs:
     #     /home/runner/.cargo/bin/cargo build --release -p composable
     #     gsutil cp target/release/composable gs://composable-binaries/releases/${{ env.RELEASE_VERSION }}/ 
 
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+        
+    - name: Set env
+      run: |
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)" >> $GITHUB_ENV
+
     - name: Set up gcloud
       uses: google-github-actions/setup-gcloud@v0.2.1
       with:
