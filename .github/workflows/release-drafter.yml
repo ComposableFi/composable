@@ -3,8 +3,8 @@ on:
   push:
     branches:
       - main
-    pull_request:
-      types: [opened, reopened, synchronize]
+  pull_request:
+    types: [opened, reopened, synchronize]
 jobs:
   update_release_draft:
     runs-on: ubuntu-latest
