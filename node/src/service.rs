@@ -458,6 +458,8 @@ pub async fn start_node(
 
 			let relay_chain_backend = relay_chain_node.backend.clone();
 			let relay_chain_client = relay_chain_node.client.clone();
+			let backoff_authoring_blocks =
+				Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
 			Ok(build_aura_consensus::<
 				sp_consensus_aura::sr25519::AuthorityPair,
 				_,
@@ -501,7 +503,7 @@ pub async fn start_node(
 				relay_chain_client: relay_chain_node.client.clone(),
 				relay_chain_backend: relay_chain_node.backend.clone(),
 				para_client: client,
-				backoff_authoring_blocks: Option::<()>::None,
+				backoff_authoring_blocks,
 				sync_oracle,
 				keystore,
 				force_authoring,

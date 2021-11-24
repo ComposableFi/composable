@@ -7,6 +7,7 @@ pub mod democracy;
 pub mod frame_system;
 pub mod indices;
 pub mod membership;
+#[cfg(feature = "develop")]
 pub mod oracle;
 pub mod scheduler;
 pub mod session;

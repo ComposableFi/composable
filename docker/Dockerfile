@@ -1,31 +1,38 @@
 FROM composablefi/rust:latest
-LABEL description="This is the build stage for Composable. Here we create the binary."
 
-RUN apt-get update \
-	&& apt-get -y --no-install-recommends install apt-transport-https ca-certificates curl gnupg2 software-properties-common automake libtool inotify-tools autoconf
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add - \
-	&& add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
-	&& apt-get update \
-	&& apt-get -y --no-install-recommends cron docker-ce vim
+ARG VERSION=v0.1.0
 
-ARG VERSION=stable
-ARG AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-ARG AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-ARG PROFILE=release
+USER root
+
+RUN apt-get update -y && apt-get install wget curl -y --no-install-recommends \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /composable
 
-COPY . /composable
+LABEL description="Precompiled Docker image for Composable" \
+      image.author="dayo@composable.finance, sre@composable.finance" \
+      image.vendor="Composable Finance" \
+      image.description="Composable is a hyper liquidity infrastructure layer for DeFi assets powered by Layer 2 Ethereum and Polkadot." \
+      image.source="https://github.com/ComposableFi/composable/blob/main/docker/Dockerfile" \
+      image.documentation="https://github.com/ComposableFi/composable#readme"
 
-RUN cargo build --release \
-	&& cp -R /composable/target/release /usr/local/bin \
-	&& useradd -m -u 1000 -U -s /bin/sh -d /composable composable && \
-	mkdir -p /composable/.local/share && \
-	mkdir /data && \
-	chown -R composable:composable /data 
+RUN curl "https://storage.googleapis.com/composable-binaries/releases/client/${VERSION}/composable" -o composable 
 
+RUN chmod +x composable && mv composable /usr/local/bin
+
+RUN composable --version
+
+RUN useradd -m -u 1001 -U -s /bin/sh -d /composable composable && \
+    mkdir -p /composable/.local/share/local_testnet && \
+    mkdir /data && \
+    chown -R composable:composable /data && \
+    chown -R composable:composable /composable/.local/share/local_testnet && \
+    ln -s /data /composable/.local/share/local_testnet 
 USER composable
-EXPOSE 30333 9933 9944
-VOLUME ["/data"]
 
-CMD ["/usr/local/bin/"]
+EXPOSE 30333 9933 9944 9615
+
+VOLUME ["/data"] 
+
+CMD ["composable", "--version"]
