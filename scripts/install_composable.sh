@@ -1,9 +1,10 @@
 #!/bin/sh
+# One liner a node operator can use to install and compile the node
 echo "Composable Multiplatform installer"
 myos=$(uname -a)
 
 # Ubuntu:
-if echo "$myos" | fgrep -q Ubuntu 2>/dev/null ; then      
+if echo "$myos" | fgrep -q Ubuntu 2>/dev/null ; then
 	apt update && apt install -y git clang curl libssl-dev llvm libudev-dev
 # Debian:
 elif echo "$myos" | fgrep -q Debian 2>/dev/null; then
@@ -23,7 +24,7 @@ elif echo "$myos" | fgrep -q NixOS 2>/dev/null; then
 
 # OpenBSD
 elif echo "$myos" | fgrep -q OpenBSD 2>/dev/null; then
-	pkg_add -uv && pkg_add -iv rust rust-gdb rust-clippy rust-rustfmt 
+	pkg_add -uv && pkg_add -iv rust rust-gdb rust-clippy rust-rustfmt
 
 # FreeBSD
 elif echo "$myos" | fgrep -q FreeBSD 2>/dev/null; then
@@ -38,14 +39,15 @@ elif echo "$myos" | fgrep -q Darwin 2>/dev/null; then
 	brew update && brew install openssl cmake llvm
 
 else
-	echo "Invalid operating system detected, do you want to proceed with the installation? yes/no"
+	echo "Not supported operating system detected, do you want to proceed with the installation? yes/no"
 	read response
 	if "no" == $response; then
 		echo "Goodbye"
 		exit 1
-	fi 
+	fi
 fi
 
+# NOTE: need to keep Rust version compatible with other ways we run node
 echo "Getting the latest version of Rust"
 # Check if rust is enabled
 if ! which rustup >/dev/null 2>&1; then
