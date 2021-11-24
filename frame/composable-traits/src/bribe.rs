@@ -1,6 +1,6 @@
 use frame_support::pallet_prelude::*;
-use sp_runtime::RuntimeDebug;
 use scale_info::TypeInfo;
+use sp_runtime::RuntimeDebug;
 
 pub trait Bribe {
 	type Balance;
@@ -10,6 +10,7 @@ pub trait Bribe {
 	type ReferendumIndex;
 	type AccountId;
 
+	/// Let a user create a bribe request and buy votes
 	fn create_bribe(
 		request: CreateBribeRequest<
 			Self::AccountId,
@@ -20,9 +21,13 @@ pub trait Bribe {
 		>,
 	) -> Result<Self::BribeIndex, DispatchError>;
 
+	/// Sell your votes
 	fn take_bribe(
 		request: TakeBribeRequest<Self::BribeIndex, Self::Balance, Self::Conviction>,
 	) -> Result<bool, DispatchError>;
+
+	/// Delete the Bribe Request
+	fn delete_bribe(request: DeleteBribeRequest<Self::BribeIndex>) -> Result<bool, DispatchError>;
 }
 
 /// A request to create a bribe for an (ongoing) referendum.
@@ -49,6 +54,13 @@ pub struct TakeBribeRequest<BribeIndex, Balance, Conviction> {
 	pub bribe_index: BribeIndex,
 	/// A product of token amount and lock period.
 	pub votes: Votes<Balance, Conviction>,
+}
+
+/// Delete a Bribe request
+#[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
+pub struct DeleteBribeRequest<BribeIndex> {
+	/// Index of the bribe.
+	pub bribe_index: BribeIndex,
 }
 
 #[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]

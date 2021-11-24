@@ -4,6 +4,7 @@
 Bribe DAO is a pallet created in order for people to buy bribes and place bribes.  Allowing users to sell there votes and third parties to buy votes
 for a certain amount.  
 
+map UID's based on referendum index
 
 ## Buying Votes    
 Any user can buy votes by placing a bid for X amount of votes for Y amount of tokens.
@@ -11,8 +12,9 @@ BribeDAO will automatically find the votes for the amount and fullfill the reque
 Once the user has requested the buy the votes, the funds will be deposited and once the request is fullfilled and the votes has been picked out and bought, BribeDAO issues an offical vote with the help of pallet-democracy. 
 
 Logic:
-CreateBribeRequest > freeze/hold assets > match against votes > enact throw pallet-democracy > release funds to users 
+CreateBribeRequest > freeze/hold assets > match against votes > enact throw pallet-democracy > release funds to users > delete bribe  
 
+A user place a bid for votes on a referendum 
 
 ## Selling Votes   
 Any user can sell there votes on a certain proposal using the TakeBribeRequest function
@@ -20,6 +22,7 @@ Any user can sell there votes on a certain proposal using the TakeBribeRequest f
 Logic: 
 TakeBribeRequest > register vote in FastMap vector   
 
+Sell votes for a referendum
 
 Left to do:
 time limits

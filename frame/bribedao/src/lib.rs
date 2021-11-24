@@ -8,7 +8,7 @@ pub use crate::sortedvec::FastMap;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::sortedvec::FastMap;
+	use crate::sortedvec::{BribesStorage, FastMap};
 	use codec::Codec;
 	use composable_traits::{bribe::Bribe, democracy::Democracy};
 	use frame_support::{
@@ -24,10 +24,9 @@ pub mod pallet {
 	use std::convert::TryInto;
 
 	pub type BribeIndex = u32;
-	//	pub type FastVec = FastMap;
 	pub type ReferendumIndex = pallet_democracy::ReferendumIndex;
 
-// User asks to buy X amount of votes for a certain amount | Briber
+	// User asks to buy X amount of votes for a certain amount | Briber
 	pub type CreateBribeRequest<T> = composable_traits::bribe::CreateBribeRequest<
 		<T as frame_system::Config>::AccountId,
 		ReferendumIndex,
@@ -36,12 +35,14 @@ pub mod pallet {
 		<T as Config>::CurrencyId,
 	>;
 
-// Bribeee
+	// Bribe'e, the user selling its vote for tokens
 	pub type TakeBribeRequest<T> = composable_traits::bribe::TakeBribeRequest<
 		BribeIndex,
 		<T as Config>::Balance,
 		<T as Config>::Conviction,
 	>;
+
+	pub type DeleteBribeRequest = composable_traits::bribe::DeleteBribeRequest<BribeIndex>;
 
 	// Status of Bribe request
 	#[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug)]
@@ -100,6 +101,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		BribeCreated { id: BribeIndex, request: CreateBribeRequest<T> },
 		BribeTaken { id: BribeIndex, request: TakeBribeRequest<T> },
+		DeleteBribe { id: BribeIndex, request: DeleteBribeRequest },
 	}
 
 	/// The number of bribes, also used to generate the next bribe identifier.
@@ -205,6 +207,7 @@ pub mod pallet {
 			let amount = og_request.total_reward; // amount of tokens locked in
 			let currencyid = og_request.asset_id;
 			T::Currency::hold(currencyid, &who, amount).map_err(|_| Error::<T>::CantFreezeFunds)?; //Freeze assets
+
 			if bribe_taken {
 				Self::deposit_event(Event::BribeTaken { id: bribe_index, request });
 			}
@@ -212,7 +215,6 @@ pub mod pallet {
 		}
 	}
 
-	// TODO(oleksii): Errors (#[pallet::error])
 	#[pallet::error]
 	pub enum Error<T> {
 		InvalidBribe,
@@ -248,16 +250,26 @@ pub mod pallet {
 
 		//		fn payout_funds()
 
+		/// Register new bribe request
 		fn create_bribe(request: CreateBribeRequest<T>) -> Result<Self::BribeIndex, DispatchError> {
 			Self::do_create_bribe(request)
 		}
 
+		/// Register the votes a user wants to sell
 		fn take_bribe(request: TakeBribeRequest<T>) -> Result<bool, DispatchError> {
 			Self::do_take_bribe(request)
+		}
+
+		/// Delete a finished Bribe Request
+		fn delete_bribe(request: DeleteBribeRequest) -> Result<bool, DispatchError> {
+			// todo, make sure this function can not be abused
+			Self::do_delete_bribe(request)
+			//			Ok(true)
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
+		/// Create a new Bribe Request
 		fn do_create_bribe(request: CreateBribeRequest<T>) -> Result<BribeIndex, DispatchError> {
 			let id = BribeCount::<T>::mutate(|id| {
 				*id += 1;
@@ -266,29 +278,62 @@ pub mod pallet {
 
 			ensure!(!BribeRequests::<T>::contains_key(id), Error::<T>::AlreadyBribed); //dont duplicate briberequest if we already have it
 
-			//			let pid =
-			//			let amount =
-			// 			TryInto::<u32>::try_into(input).ok()
-			let amount: u32 = TryInto::<u32>::try_into(request.total_reward).ok().unwrap(); // amount of tokens locked in
-																				//			let votes =
-																				// insert into fastvec
-			Fastvec::<T>::mutate(|a| a.add(amount, 2, 3));
-
 			BribeRequests::<T>::insert(id, request);
 			Ok(id)
 		}
 
+		/// Find votes for a bribe request
+		fn do_match_votes(bribe_index: BribeIndex) -> Result<bool, DispatchError> {
+			ensure!(BribeRequests::<T>::contains_key(bribe_index), Error::<T>::InvalidIndex);
+
+			let bribe_request = BribeRequests::<T>::get(bribe_index).unwrap();
+
+			let ref_index = bribe_request.ref_index;
+			// Yield all the bribe votes for sale with the same ref index
+
+			//	Fastvec::<T>::mutate(|a| a.add(amount, pid, amount_votes));
+
+			let loot: Vec<BribesStorage> =
+				Fastvec::<T>::mutate(|a| *a.find_all_pid(ref_index)).to_vec();
+
+			Ok(true)
+		}
+
+		/// Take Bribe user sell votes request   
 		fn do_take_bribe(request: TakeBribeRequest<T>) -> Result<bool, DispatchError> {
 			ensure!(
 				BribeRequests::<T>::contains_key(request.bribe_index),
 				Error::<T>::InvalidIndex
 			);
+			// todo: make sure the user is not selling the same vote twice
+
 			let bribe_request = BribeRequests::<T>::get(request.bribe_index).unwrap();
 
-			let vote = Vote { aye: bribe_request.is_aye, conviction: Default::default() }; //todo get conviction
-			T::Democracy::vote(bribe_request.account_id, bribe_request.ref_index, vote); //AccountId, Referendum Index, Vote
+			let pid = bribe_request.ref_index; // save based on the referendumIndex
+			let amount_votes: u32 = 3;
+			let amount: u32 = TryInto::<u32>::try_into(bribe_request.total_reward).ok().unwrap(); // amount of tokens locked in
+																					  // insert into fastvec
+			Fastvec::<T>::mutate(|a| a.add(amount, pid, amount_votes));
+
+			//			let vote = Vote { aye: bribe_request.is_aye, conviction: Default::default() }; //todo
+			// get conviction 			T::Democracy::vote(bribe_request.account_id, bribe_request.ref_index,
+			// vote); //AccountId, Referendum Index, Vote
 			Ok(true)
 			//			todo!("enact vote through pallet_democracy");
+		}
+
+		/// Delete Bribe Request
+		/// Check the bribe id, delete from BribeRequests and from FastMap
+		fn do_delete_bribe(request: DeleteBribeRequest) -> Result<bool, DispatchError> {
+			let bribe_id = request.bribe_index;
+			// Check if the bribe request id exists
+			ensure!(!BribeRequests::<T>::contains_key(bribe_id), Error::<T>::InvalidBribe);
+
+			// Remove from BribeRequests Storage Map
+			BribeRequests::<T>::remove(bribe_id);
+			// Emit the event
+			Self::deposit_event(Event::DeleteBribe { id: bribe_id, request });
+			Ok(true)
 		}
 	}
 }

@@ -2,6 +2,8 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use std::convert::TryInto;
 
+/// forked from sortedvec 0.5.0
+
 /// A macro that defines a sorted vector data structure.
 ///
 /// The generated struct is specific to the given keys and value types. To create the struct,
@@ -474,7 +476,7 @@ macro_rules! sortedvec_slicekey {
     }
 }
 
-#[derive(Debug, Default, TypeInfo, PartialEq, Hash, Clone, Encode, Decode)]
+#[derive(Debug, Default, TypeInfo, PartialEq, Hash, Clone, Copy, Encode, Decode)]
 pub struct BribesStorage {
 	pub p_id: u32,
 	pub amount: u32,
@@ -502,6 +504,14 @@ impl FastMap {
 	pub fn add(&mut self, amounts: u32, pid: u32, vots: u32) -> bool {
 		self.insert(BribesStorage { p_id: pid, amount: amounts, votes: vots });
 		true
+	}
+
+	/// Find all
+	pub fn find_all_pid(self, pid: u32) -> Vec<BribesStorage> {
+		let mut iterme = self.inner; //.into_iter();
+		let loot: Vec<BribesStorage> = iterme.into_iter().filter(|a| a.p_id == pid).collect();
+
+		loot
 	}
 
 	pub fn new() -> FastMap {
