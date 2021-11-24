@@ -40,7 +40,7 @@ jobs:
 
     - name: Authenticate docker
       run: |
-          sudo service docker start 
+          sudo chmod -R 777 /var/run/dokcer.sock
           gcloud auth configure-docker ${{ env.ARTIFACT_URL }}
 
     - name: Build Docker image
