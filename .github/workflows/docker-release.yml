@@ -40,6 +40,7 @@ jobs:
 
     - name: Authenticate docker
       run: |
+          sudo service docker start 
           gcloud auth configure-docker ${{ env.ARTIFACT_URL }}
 
     - name: Build Docker image
