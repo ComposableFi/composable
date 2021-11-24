@@ -55,10 +55,9 @@ jobs:
       
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
-
     
     - name: Authenticate docker
-      run: gcloud auth configure-docker europe-central2-docker.pkg.dev
+      run: gcloud auth configure-docker europe-central2-docker.pkg.dev 
 
     - name: Build Docker image
       run: make containerize-release 
