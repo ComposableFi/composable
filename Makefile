@@ -47,6 +47,13 @@ udeps:
 dev:
 	cargo run
 
+containerize-release:
+	@docker build \
+	--build-arg SERVICE_DIR=${INSTALL_DIR} \
+       	-f ${INSTALL_DIR}/Dockerfile \
+		-t ${IMAGE_WITH_RELEASE_VERSION} \
+	. 1>/dev/null
+
 containerize:
 	@docker build \
 	--build-arg SERVICE_DIR=${INSTALL_DIR} \
@@ -63,6 +70,9 @@ push:
 	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 	@docker push ${IMAGE_WITH_LATEST}
 
+push-release:
+	@docker push ${IMAGE_WITH_RELEASE_VERSION}
+
 stop:
 	@docker-compose down
 
@@ -75,7 +85,7 @@ else
 endif
 
 
-.PHONY: build test docs style-check lint udeps containerize dev push install stop
+.PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release
 
 
 #----------------------------------------------------------------------
