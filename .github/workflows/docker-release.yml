@@ -2,13 +2,12 @@ name: "Community Release"
 
 on:
   push:
-    branches: "update-release"
     tags: 
       - '*'
 env:
   SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SA_KEY }}
   GCP_PROJECT_ID: "composable-ops-5568"
-  REPO: "europe-central2-docker.pkg.dev/composable-ops-5568/composable-pkg"
+  ARTIFACT_URL: "europe-central2-docker.pkg.dev/composable-ops-5568/composable-pkg"
 
 jobs:
   build:
@@ -31,21 +30,6 @@ jobs:
     #     /home/runner/.cargo/bin/cargo build --release -p composable
     #     gsutil cp target/release/composable gs://composable-binaries/releases/${{ env.RELEASE_VERSION }}/ 
 
-  publish:
-    runs-on: 
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    steps:
-    - uses: actions/checkout@v2
-      with: 
-        fetch-depth: 0
-
-    - name: Set env
-      run: |
-        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)" >> $GITHUB_ENV
-
     - name: Set up gcloud
       uses: google-github-actions/setup-gcloud@v0.2.1
       with:
@@ -54,17 +38,11 @@ jobs:
         service_account_key: ${{ env.SERVICE_ACCOUNT_KEY }}
         export_default_credentials: true
 
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
-      
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-    
     - name: Authenticate docker
-      run: gcloud auth configure-docker europe-central2-docker.pkg.dev 
+      run: |
+          gcloud auth configure-docker ${{ env.ARTIFACT_URL }}
 
     - name: Build Docker image
       run: make containerize-release 
-      
     - name:  Docker push
       run: make push-release
