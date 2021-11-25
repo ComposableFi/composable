@@ -1,10 +1,8 @@
 name: "Community Release"
 
 on:
-  push:
-    branches: "update-release"
-    tags: 
-      - '*'
+  tags: 
+    - '*'
 
 jobs:
   build-and-publish:
