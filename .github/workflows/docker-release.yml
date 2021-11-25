@@ -2,6 +2,7 @@ name: "Community Release"
 
 on:
   push:
+    branches: "update-release"
     tags: 
       - '*'
 
