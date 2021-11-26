@@ -500,6 +500,20 @@ impl FastMap {
 		(out.unwrap().try_into().unwrap(), 2, 3)
 	} // binary search here;
 
+	/// Remove a BribesStorage item
+	pub fn remove_bribe(&mut self, pid: u32, amount: u32, votes: u32) -> bool {
+		if let Some(index) = self
+			.inner
+			.iter()
+			.position(|value| value.amount == 10 && value.p_id == pid && value.votes == votes)
+		{
+			self.inner.swap_remove(index); // Remove from vec
+			return true
+		}
+
+		false //true
+	}
+
 	// make it easier to add things
 	pub fn add(&mut self, amounts: u32, pid: u32, vots: u32) -> bool {
 		self.insert(BribesStorage { p_id: pid, amount: amounts, votes: vots });

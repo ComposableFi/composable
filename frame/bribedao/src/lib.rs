@@ -14,7 +14,7 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::fungibles::{InspectHold, MutateHold, Transfer},
-		transactional,
+//		transactional,
 	};
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
@@ -149,65 +149,34 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+
+		/// Buy votes request
 		#[pallet::weight(10_000)]
 		pub fn create_bribe(
 			origin: OriginFor<T>,
 			request: CreateBribeRequest<T>,
 		) -> DispatchResultWithPostInfo {
-			let _from = ensure_signed(origin)?;
+			let from = ensure_signed(origin)?;
+			// Freeze/hold the users funds, to verify payment
+			let holdreq = request.clone();
+			T::Currency::hold(holdreq.asset_id, &from, holdreq.total_reward)
+				.map_err(|_| Error::<T>::CantFreezeFunds)?; //Freeze assets
+
 			let id = <Self as Bribe>::create_bribe(request.clone())?;
 			Self::deposit_event(Event::BribeCreated { id, request });
 			Ok(().into())
 		}
 
-		//		#[transactional]
-		//		#[pallet::weight(10_000)]
-		//		pub fn deposit_funds(
-		//			origin: OriginFor<T>,
-		//			bribe: BribeIndex,
-		//			amount: u128,
-		//		) -> DispatchResult {
-		//			transfer(account_id, origin, amount);
-		//			todo!("deposit_tokens into vault ");
 
-		//			todo!("transfer funds");
-		//			todo!("Update token funds status");
-
-		//			Ok(())
-		//		insert}
-
-		#[pallet::weight(10_000)]
-		#[transactional]
-		pub fn release_funds(origin: OriginFor<T>, bribe: BribeIndex) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-			let og_request =
-				BribeRequests::<T>::try_get(bribe).map_err(|_| Error::<T>::InvalidBribe)?;
-			let amount = og_request.total_reward; // amount of tokens locked in
-			let currencyid = og_request.asset_id;
-			T::Currency::release(currencyid, &who, amount, false)
-				.map_err(|_| Error::<T>::ReleaseFailed)?;
-			// remove from fastvec
-
-			//			todo!("Check token supply, if supply is less or same as asked for: release funds");
-			//			Error::<T>::EmptySupply;
-			//			todo!("update capital status");
-			Ok(())
-		}
-
+		/// Sell Votes request
 		#[pallet::weight(10_000)]
 		pub fn take_bribe(
 			origin: OriginFor<T>,
 			request: TakeBribeRequest<T>,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
+			let _from = ensure_signed(origin)?;
 			let bribe_index = request.bribe_index;
 			let bribe_taken = <Self as Bribe>::take_bribe(request.clone())?;
-			let og_request = BribeRequests::<T>::get(request.bribe_index).unwrap(); // should be saved in the create bribe request, if its not then there is a logic error
-																		// somewhere, so unwrap should be okey to use
-			let amount = og_request.total_reward; // amount of tokens locked in
-			let currencyid = og_request.asset_id;
-			T::Currency::hold(currencyid, &who, amount).map_err(|_| Error::<T>::CantFreezeFunds)?; //Freeze assets
-
 			if bribe_taken {
 				Self::deposit_event(Event::BribeTaken { id: bribe_index, request });
 			}
@@ -244,11 +213,6 @@ pub mod pallet {
 		type Conviction = T::Conviction;
 		type CurrencyId = T::CurrencyId;
 
-		//		fn lockup_funds(origin: Origin<T>, request: CreateBribeRequest<T>) -> Result<bool,
-		// DispatchError>{ 			todo!("lock up users funds until vote is finished");
-		//		}
-
-		//		fn payout_funds()
 
 		/// Register new bribe request
 		fn create_bribe(request: CreateBribeRequest<T>) -> Result<Self::BribeIndex, DispatchError> {
@@ -295,15 +259,34 @@ pub mod pallet {
 
 			if !loot.is_empty() {
 				for bribes in loot {
-// Cast Vote, Remove from storage
+					// Cast Vote
 
-// Pay out to voters
+					let vote = Vote { aye: bribe_request.is_aye, conviction: Default::default() }; //todo
+
+					let ss = bribe_request.clone();
+					T::Democracy::vote(ss.account_id, bribes.p_id, vote); //AccountId,
+
+// Remove from storage
+					Fastvec::<T>::mutate(|a| a.remove_bribe(bribes.amount, bribes.p_id, bribes.votes));
 
 
-						let p_id = bribes.p_id;
-						let amount = bribes.amount; 
-						let votes = bribes.votes;
-					}
+					// Pay out to the seller of the vote
+
+					let tmp_value = bribe_request.clone();
+					let currencyid = tmp_value.asset_id;
+					T::Currency::release(
+						currencyid,
+						&tmp_value.account_id,
+						bribes.amount.into(),
+						false,
+					)
+					.map_err(|_| Error::<T>::ReleaseFailed)?;
+					// Check if all votes are fullfilled
+
+					// Delete The bribe if fullfilled
+					let dr: DeleteBribeRequest = DeleteBribeRequest { bribe_index: 32 };
+					Self::do_delete_bribe(dr);
+				}
 			}
 			Ok(true)
 		}
@@ -323,12 +306,10 @@ pub mod pallet {
 			let amount: u32 = TryInto::<u32>::try_into(bribe_request.total_reward).ok().unwrap(); // amount of tokens locked in
 																					  // insert into fastvec
 			Fastvec::<T>::mutate(|a| a.add(amount, pid, amount_votes));
+			//Check if we can sell the votes now
+			Self::do_match_votes(request.bribe_index);
 
-			//			let vote = Vote { aye: bribe_request.is_aye, conviction: Default::default() }; //todo
-			// get conviction 			T::Democracy::vote(bribe_request.account_id, bribe_request.ref_index,
-			// vote); //AccountId, Referendum Index, Vote
 			Ok(true)
-			//			todo!("enact vote through pallet_democracy");
 		}
 
 		/// Delete Bribe Request
