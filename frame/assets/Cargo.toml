@@ -32,7 +32,7 @@ package = "parity-scale-codec"
 version = "2.0.0"
 
 [dev-dependencies]
-governance-registry = { package = "pallet-governance-registry", version = "0.0.1", path = "../governance-registry", default-features = false }
+governance-registry = { package = "pallet-governance-registry", path = "../governance-registry", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84" }
 
@@ -44,7 +44,6 @@ std = [
     "sp-runtime/std",
     "orml-traits/std",
     "num-traits/std",
-    "governance-registry/std",
 ]
 runtime-benchmarks = [
     "frame-benchmarking",

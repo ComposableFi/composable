@@ -818,7 +818,7 @@ impl vault::Config for Runtime {
 	type Balance = Balance;
 	type CurrencyFactory = Factory;
 	type AssetId = CurrencyId;
-	type Currency = Tokens;
+	type Currency = Assets;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type PalletId = VaultPalletId;
 	type MaxStrategies = MaxStrategies;
@@ -851,8 +851,25 @@ impl assets_registry::Config for Runtime {
 	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
 }
 
-// type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
-// 	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
+#[cfg(feature = "develop")]
+impl governance_registry::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type WeightInfo = ();
+}
+
+#[cfg(feature = "develop")]
+impl assets::Config for Runtime {
+	type NativeAssetId = NativeAssetId;
+	type GenerateCurrencyId = Factory;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type NativeCurrency = Balances;
+	type MultiCurrency = Tokens;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type GovernanceRegistry = GovernanceRegistry;
+}
 
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
@@ -970,7 +987,9 @@ construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
-		AssetsRegistry : assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
+		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
+	  GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
+	  Assets: assets::{Pallet, Call, Storage} = 57,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1127,8 +1146,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, collective, Council);
 			list_benchmark!(list, extra, crowdloan_bonus, LiquidCrowdloan);
 			list_benchmark!(list, extra, utility, Utility);
-			list_benchmark!(list, extra, vault, Vault);
-			list_benchmark!(list, extra, assets, Assets);
 
 			#[cfg(feature = "develop")]
 			{
@@ -1180,8 +1197,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, collective, Council);
 			add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
 			add_benchmark!(params, batches, utility, Utility);
-			add_benchmark!(params, batches, vault, Vault);
-			add_benchmark!(params, batches, assets, Assets);
 
 			#[cfg(feature ="develop")]
 			{
