@@ -508,7 +508,7 @@ impl FastMap {
 
 	/// Find all
 	pub fn find_all_pid(self, pid: u32) -> Vec<BribesStorage> {
-		let mut iterme = self.inner; //.into_iter();
+		let iterme = self.inner; //.into_iter();
 		let loot: Vec<BribesStorage> = iterme.into_iter().filter(|a| a.p_id == pid).collect();
 
 		loot

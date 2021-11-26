@@ -291,11 +291,20 @@ pub mod pallet {
 			let ref_index = bribe_request.ref_index;
 			// Yield all the bribe votes for sale with the same ref index
 
-			//	Fastvec::<T>::mutate(|a| a.add(amount, pid, amount_votes));
+			let loot: Vec<BribesStorage> = Fastvec::<T>::get().find_all_pid(ref_index);
 
-			let loot: Vec<BribesStorage> =
-				Fastvec::<T>::mutate(|a| *a.find_all_pid(ref_index)).to_vec();
+			if !loot.is_empty() {
+				for bribes in loot {
+// Cast Vote, Remove from storage
 
+// Pay out to voters
+
+
+						let p_id = bribes.p_id;
+						let amount = bribes.amount; 
+						let votes = bribes.votes;
+					}
+			}
 			Ok(true)
 		}
 
