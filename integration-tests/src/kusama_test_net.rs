@@ -5,7 +5,7 @@ use polkadot_runtime_parachains::configuration::HostConfiguration;
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
 use support::traits::GenesisBuild;
-use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
+use xcm_emulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
 
 type Balances = u128;
 pub const ALICE: [u8; 32] = [4u8; 32];
@@ -13,14 +13,10 @@ pub const PICA: Balances = 1_000_000_000_000;
 pub const PICASSO_PARA_ID: u32 = 2000;
 pub const DALI_PARA_ID: u32 = 2001;
 
-// null handler for now, so need to find existing impl (or copy paste from simulator example)
-type XcmpMessageHandler = ();
-
 decl_test_parachain! {
 	pub struct Picasso {
 		Runtime = picasso_runtime::Runtime,
-		XcmpMessageHandler = XcmpMessageHandler,
-		DmpMessageHandler = XcmpMessageHandler,
+		Origin = picasso_runtime::Origin,
 		new_ext = picasso_ext(PICASSO_PARA_ID),
 	}
 }
@@ -30,8 +26,7 @@ decl_test_parachain! {
 decl_test_parachain! {
 	pub struct Dali {
 		Runtime = picasso_runtime::Runtime,
-		XcmpMessageHandler = XcmpMessageHandler,
-		DmpMessageHandler = XcmpMessageHandler,
+		Origin = picasso_runtime::Origin,
 		new_ext = picasso_ext(DALI_PARA_ID),
 	}
 }
@@ -48,8 +43,8 @@ decl_test_network! {
 	pub struct KusamaNetwork {
 		relay_chain = KusamaRelay,
 		parachains = vec![
-			(PICASSO_PARA_ID, Picasso),
-			(DALI_PARA_ID, Dali),
+			(2000, Picasso),
+			(3000, Dali),
 		],
 	}
 }
