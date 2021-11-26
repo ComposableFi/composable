@@ -18,10 +18,19 @@ interface IAsset {
 }
 
 async function main() {
-    const { assets, basilisk_collator_url, composable_collator_url } = require("../config/config.json");
+    const {
+        assets,
+        basilisk_collator_url,
+        composable_collator_url,
+        basilisk_para_id,
+    } = require("../config/config.json");
+    const composableTypes = {
+        AssetNativeLocation: "MultiLocation",
+        MultiLocation: "MultiLocationV1",
+    };
     const basiliskTypes = Object.values(definitions).reduce((res, { types }): object => ({ ...res, ...types }), {});
 
-    const composableApi = await createApi(composable_collator_url, undefined);
+    const composableApi = await createApi(composable_collator_url, composableTypes);
     const basiliskApi = await createApi(basilisk_collator_url, basiliskTypes);
 
     await chainInfo(composableApi);
@@ -35,6 +44,7 @@ async function main() {
     await doComposableAssetsMapping(
         composableApi,
         assets,
+        basilisk_para_id,
         alice,
         composableLocalAdmin,
         composableForeignAdmin,
@@ -65,6 +75,7 @@ async function chainInfo(api: ApiPromise) {
 async function doComposableAssetsMapping(
     api: ApiPromise,
     assets: IAsset[],
+    basiliskParaId: number,
     root: KeyringPair,
     localAdmin: KeyringPair,
     foreignAdmin: KeyringPair,
@@ -90,19 +101,29 @@ async function doComposableAssetsMapping(
         await sleep(1000);
     }
 
-    for (const { composable_id, basilisk_id } of assets) {
+    for (const { composable_id } of assets) {
+        const junctionsV1: JunctionsV1 = createType(
+            api.registry,
+            "JunctionsV1",
+            { x1: { parachain: basiliskParaId } },
+        );
+        const location: AssetNativeLocation = createType(
+            api.registry,
+            "AssetNativeLocation",
+            { parents: 0, interior: junctionsV1 },
+        );
         await api.tx.assetsRegistry
-            .approveAssetsMappingCandidate(composable_id, basilisk_id)
+            .approveAssetsMappingCandidate(composable_id, location)
             .signAndSend(localAdmin, { nonce: -1 }, ({ status }: ISubmittableResult) => {
                 if (status.isInBlock) {
-                    console.log(`Current status of approveAssetsMappingCandidate(${composable_id}, ${basilisk_id}) is ${status}`);
+                    console.log(`Current status of approveAssetsMappingCandidate(${composable_id}, ${location}) is ${status}`);
                 }
             });
         await api.tx.assetsRegistry
-            .approveAssetsMappingCandidate(composable_id, basilisk_id)
+            .approveAssetsMappingCandidate(composable_id, location)
             .signAndSend(foreignAdmin, { nonce: -1 }, ({ status }: ISubmittableResult) => {
                 if (status.isInBlock) {
-                    console.log(`Current status of approveAssetsMappingCandidate(${composable_id}, ${basilisk_id}) is ${status}`);
+                    console.log(`Current status of approveAssetsMappingCandidate(${composable_id}, ${location}) is ${status}`);
                 }
             });
     }
@@ -111,7 +132,6 @@ async function doComposableAssetsMapping(
 async function doBasiliskAssetsMapping(api: ApiPromise, assets: IAsset[], root: KeyringPair) {
     for (const { name } of assets) {
         const existentialDeposit = 1000;
-        const composableParachainId = 2000;
         const assetType: AssetType = createType(api.registry, "AssetType", { Token: true });
         let registrationDone = false;
         await api.tx.sudo
