@@ -861,7 +861,7 @@ impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		#[cfg(feature = "develop")]
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false;
+			return false
 		}
 		!matches!(
 			call,
