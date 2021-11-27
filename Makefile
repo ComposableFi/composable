@@ -4,13 +4,13 @@ REPO=composablefi
 SERVICE_NAME=composable
 INSTALL_DIR=docker/
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
-RELEASE_VERSION:=$(shell git fetch -t && git describe --tags $(shell git rev-list --tags --max-count=1))
+RELEASE_VERSION:=$(shell git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
 AUTO_UPDATE:=1
 
 
 IMAGE?=${IMAGE_URL}:${COMMIT_SHA}
 IMAGE_WITH_COMMIT=${IMAGE}
-IMAGE_WITH_RELEASE_VERSION=${IMAGE_URL}:${RELEASE_VERSION}
+IMAGE_WITH_RELEASE_VERSION:=${IMAGE_URL}:${RELEASE_VERSION}
 IMAGE_WITH_BRANCH:=${IMAGE_URL}:${BRANCH_NAME}
 IMAGE_WITH_LATEST:=${IMAGE_URL}:latest
 
@@ -47,14 +47,21 @@ udeps:
 dev:
 	cargo run
 
+containerize-release:
+	@docker build \
+	--build-arg SERVICE_DIR=${INSTALL_DIR} \
+       	-f ${INSTALL_DIR}/Dockerfile \
+		-t ${IMAGE_WITH_RELEASE_VERSION} \
+	. 1>/dev/null
+
 containerize:
 	@docker build \
 	--build-arg SERVICE_DIR=${INSTALL_DIR} \
        	-f ${INSTALL_DIR}/Dockerfile \
-       	-t ${IMAGE_WITH_COMMIT} \
+		-t ${IMAGE_WITH_COMMIT} \
 		-t ${IMAGE_WITH_RELEASE_VERSION} \
-        -t ${IMAGE_WITH_BRANCH} \
-        -t ${IMAGE_WITH_LATEST} \
+		-t ${IMAGE_WITH_BRANCH} \
+		-t ${IMAGE_WITH_LATEST} \
 	. 1>/dev/null
 
 push:
@@ -62,6 +69,9 @@ push:
 	@docker push ${IMAGE_WITH_BRANCH}
 	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 	@docker push ${IMAGE_WITH_LATEST}
+
+push-release:
+	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 
 stop:
 	@docker-compose down
@@ -75,7 +85,7 @@ else
 endif
 
 
-.PHONY: build test docs style-check lint udeps containerize dev push install stop
+.PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release
 
 
 #----------------------------------------------------------------------

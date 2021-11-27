@@ -1451,6 +1451,7 @@ dependencies = [
  "sc-cli",
  "sc-client-api",
  "sc-consensus",
+ "sc-consensus-slots",
  "sc-executor",
  "sc-finality-grandpa",
  "sc-keystore",
@@ -4039,8 +4040,8 @@ dependencies = [
  "sp-version",
  "xcm",
  "xcm-builder",
+ "xcm-emulator",
  "xcm-executor",
- "xcm-simulator",
 ]
 
 [[package]]
@@ -13681,6 +13682,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "xcm-emulator"
+version = "0.1.0"
+source = "git+https://github.com/dzmitry-lahoda-forks/xcm-simulator?branch=dz/0.9.12#440571b41870c87d32c662fd2f578e3fe3391f6e"
+dependencies = [
+ "cumulus-pallet-dmp-queue",
+ "cumulus-pallet-parachain-system",
+ "cumulus-pallet-xcmp-queue",
+ "cumulus-primitives-core",
+ "cumulus-primitives-parachain-inherent",
+ "cumulus-test-relay-sproof-builder",
+ "frame-support",
+ "frame-system",
+ "parachain-info",
+ "parity-scale-codec",
+ "paste 1.0.6",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-runtime-parachains",
+ "sp-io",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
 name = "xcm-executor"
 version = "0.9.12"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.12#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
@@ -13705,23 +13730,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "xcm-simulator"
-version = "0.9.12"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.12#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "paste 1.0.6",
- "polkadot-core-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
- "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
- "polkadot-runtime-parachains",
- "sp-io",
- "sp-std",
- "xcm",
- "xcm-executor",
 ]
 
 [[package]]
