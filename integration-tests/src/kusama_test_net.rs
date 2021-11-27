@@ -15,11 +15,13 @@ pub const PICA: Balances = 1_000_000_000_000;
 
 // picasso_runtime::XcmpQueue, XcmpQueue seems like handler, but it does not for some reason types
 // here
+pub const PICASSO_PARA_ID: u32 = 2000;
+pub const DALI_PARA_ID: u32 = 2001;
+
 decl_test_parachain! {
 	pub struct Picasso {
 		Runtime = picasso_runtime::Runtime,
 		Origin = picasso_runtime::Origin,
-
 		new_ext = picasso_ext(PICASSO_PARA_ID),
 	}
 }
