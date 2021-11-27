@@ -2,7 +2,11 @@
   "name": "Picasso",
   "id": "picasso",
   "chainType": "Live",
-  "bootNodes": [],
+  "bootNodes": [
+    "/dns/picasso-bn1.composable.finance/tcp/30334/p2p/12D3KooWJg71wN3iSscczmP5K59GePJC8T4Joc4GmuApgVgEptgF",
+    "/dns/picasso-bn2.composable.finance/tcp/30334/p2p/12D3KooWEQunyKtqnX94wrLdSQ9ZwnV74wWq72irZkHQWQKXXAWt",
+    "/dns/picasso-bn3.composable.finance/tcp/30334/p2p/12D3KooWFC4HFJmmjT4jgk1BLNTfaxtxRks48Da9wpoHPECL1uqc"
+  ],
   "telemetryEndpoints": [
     [
       "/dns/telemetry.polkadot.io/tcp/443/x-parity-wss/%2Fsubmit%2F",
