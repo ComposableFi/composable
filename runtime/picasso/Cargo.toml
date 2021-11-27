@@ -46,12 +46,15 @@ treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/s
 democracy = { package = "pallet-democracy", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84", default-features = false }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93", default-features = false }
 smallvec = "1.6.1"
 
 # local modules
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false, optional = true }
+governance-registry = { package = "pallet-governance-registry", path = '../../frame/governance-registry', default-features = false, optional = true }
+assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false, optional = true }
+
 crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
@@ -89,6 +92,12 @@ xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "releas
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12", default-features = false }
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+
+# orml XCM support
+orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93", default-features = false }
+orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93", default-features = false }
+orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93", default-features = false }
+
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
@@ -147,7 +156,12 @@ std = [
 	"aura/std",
 	"sp-consensus-aura/std",
     "scale-info/std",
+	"orml-xtokens/std",
+    "orml-xcm-support/std",
+    "orml-unknown-tokens/std",
 	"assets-registry/std",
+	"assets/std",
+	"governance-registry/std",
 ]
 runtime-benchmarks = [
 	"benchmarking",
@@ -158,6 +172,8 @@ runtime-benchmarks = [
 	"balances/runtime-benchmarks",
 	"timestamp/runtime-benchmarks",
 	"assets-registry/runtime-benchmarks",
+	#"assets/runtime-benchmarks",
+	#"governance-registry/runtime-benchmarks",
 	"oracle/runtime-benchmarks",
 	"collective/runtime-benchmarks",
 	"collator-selection/runtime-benchmarks",
@@ -176,6 +192,8 @@ runtime-benchmarks = [
 ]
 develop = [
 	"assets-registry",
+	"governance-registry",
+	"assets",
 	"oracle",
 	"vault",
 	"currency-factory",
