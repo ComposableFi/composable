@@ -10,7 +10,7 @@ authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [package.metadata.cargo-udeps.ignore]
-normal = ["pallet-vault", "session-benchmarking", "assets-registry", "currency-factory", "oracle", "vault"]
+normal = ["pallet-vault", "session-benchmarking", "assets-registry", "currency-factory", "oracle", "vault", "assets", "governance-registry"]
 
 [dependencies]
 frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
@@ -51,12 +51,14 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 smallvec = "1.6.1"
 
 # local modules
-assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false, optional = true }
-crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
+assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false, optional = true }
+assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false, optional = true }
+crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = "../../frame/crowdloan-bonus", default-features = false }
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false, optional = true }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false, optional = true }
+governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false, optional = true }
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false, optional = true}
 composable-traits = { path = "../../frame/composable-traits" , default-features = false}
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
@@ -107,9 +109,9 @@ std = [
 	"sp-block-builder/std",
 	"sp-transaction-pool/std",
 	"sp-inherents/std",
-    "support/std",
+  "support/std",
 	"executive/std",
-    "frame-system/std",
+  "frame-system/std",
 	"utility/std",
 	"authorship/std",
 	"balances/std",
@@ -121,6 +123,8 @@ std = [
 	"indices/std",
 	"oracle/std",
 	"vault/std",
+  "assets/std",
+	"governance-registry/std",
 	"call-filter/std",
 	"currency-factory/std",
 	"orml-tokens/std",
@@ -146,13 +150,15 @@ std = [
 	"xcm-executor/std",
 	"aura/std",
 	"sp-consensus-aura/std",
-    "scale-info/std",
+  "scale-info/std",
 	"assets-registry/std",
 ]
 runtime-benchmarks = [
+	"assets/runtime-benchmarks",
+	"balances/runtime-benchmarks",
 	"benchmarking",
-    "support/runtime-benchmarks",
-    "system-benchmarking",
+	"support/runtime-benchmarks",
+	"system-benchmarking",
 	"frame-system/runtime-benchmarks",
 	"hex-literal",
 	"balances/runtime-benchmarks",
@@ -175,6 +181,8 @@ runtime-benchmarks = [
 	"utility/runtime-benchmarks",
 ]
 develop = [
+  "assets",
+  "governance-registry",
 	"assets-registry",
 	"oracle",
 	"vault",
