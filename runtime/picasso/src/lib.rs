@@ -45,6 +45,7 @@ pub use support::{
 
 #[cfg(feature = "develop")]
 use crate::xcmp::*;
+
 use codec::Encode;
 use frame_system as system;
 #[cfg(any(feature = "std", test))]
@@ -850,8 +851,8 @@ construct_runtime!(
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
-	    GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
-	    Assets: assets::{Pallet, Call, Storage} = 57,
+		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
+		Assets: assets::{Pallet, Call, Storage} = 57,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}

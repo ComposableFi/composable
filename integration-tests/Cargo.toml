@@ -105,10 +105,9 @@ picasso-runtime = { path = "../runtime/picasso", default-features = false, featu
 
 [dev-dependencies]
 env_logger = "0.9.0"
-#serial_test = "0.5.1"
 
 [features]
-default = ["std"]
+default = ["std", "develop"]
 std = [
 	"codec/std",
 	"sp-api/std",

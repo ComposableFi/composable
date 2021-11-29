@@ -1,5 +1,4 @@
 use crate::*;
-//use composable_traits::currency::MultiCurrency;
 use mocks::{new_test_ext, GovernanceRegistry, Origin, Test};
 use orml_traits::MultiCurrency;
 

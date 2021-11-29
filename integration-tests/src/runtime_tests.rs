@@ -12,7 +12,6 @@ use sp_runtime::traits::AccountIdConversion;
 use support::assert_ok;
 use xcm::latest::prelude::*;
 use xcm_executor::XcmExecutor;
-//use crate::xcm_simulator::TestExt;
 use crate::kusama_test_net::KusamaNetwork;
 use kusama_runtime::KusamaNetwork as KusamaNetworkId;
 use picasso_runtime as dali_runtime;
