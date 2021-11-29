@@ -5983,6 +5983,7 @@ name = "pallet-assets"
 version = "0.0.1"
 dependencies = [
  "composable-traits",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "num-traits",

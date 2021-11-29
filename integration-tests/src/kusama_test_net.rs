@@ -13,11 +13,6 @@ pub const ALICE: [u8; 32] = [4u8; 32];
 pub const BOB: [u8; 32] = [5u8; 32];
 pub const PICA: Balances = 1_000_000_000_000;
 
-// picasso_runtime::XcmpQueue, XcmpQueue seems like handler, but it does not for some reason types
-// here
-pub const PICASSO_PARA_ID: u32 = 2000;
-pub const DALI_PARA_ID: u32 = 2001;
-
 decl_test_parachain! {
 	pub struct Picasso {
 		Runtime = picasso_runtime::Runtime,

@@ -10,6 +10,7 @@ rust-version = "1.56"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
@@ -20,11 +21,14 @@ sp-core = { default-features = false, git = "https://github.com/paritytech/subst
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
+
+#governance-registry = { package = "pallet-governance-registry", version = "0.0.1", path = "../governance-registry", default-features = false }
+
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
-governance-registry = { package = "pallet-governance-registry", version = "0.0.1", path = "../governance-registry", default-features = false }
+governance-registry = { package = "pallet-governance-registry", path = "../governance-registry", default-features = false }
 
 [dependencies.codec]
 default-features = false
@@ -33,10 +37,21 @@ package = "parity-scale-codec"
 version = "2.0.0"
 
 [dev-dependencies]
-
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93" }
 
 [features]
 default = ["std"]
-std = ["codec/std", "frame-support/std", "sp-runtime/std", "orml-traits/std", "num-traits/std", "governance-registry/std"]
+std = [
+    "codec/std",
+    "frame-support/std",
+    "sp-runtime/std",
+    "orml-traits/std",
+    "num-traits/std",
+    "governance-registry/std",
+]
+runtime-benchmarks = [
+    "frame-benchmarking",
+    "frame-support/runtime-benchmarks",
+    "frame-system/runtime-benchmarks",
+]

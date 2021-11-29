@@ -10,7 +10,7 @@ authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [package.metadata.cargo-udeps.ignore]
-normal = ["pallet-vault", "session-benchmarking", "assets-registry", "currency-factory", "oracle", "vault"]
+normal = ["pallet-vault", "session-benchmarking", "assets-registry", "currency-factory", "oracle", "vault", "assets", "governance-registry"]
 
 [dependencies]
 frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
@@ -56,6 +56,7 @@ governance-registry = { package = "pallet-governance-registry", path = '../../fr
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false, optional = true }
 
 crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
+
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false, optional = true }
@@ -116,9 +117,9 @@ std = [
 	"sp-block-builder/std",
 	"sp-transaction-pool/std",
 	"sp-inherents/std",
-    "support/std",
+  "support/std",
 	"executive/std",
-    "frame-system/std",
+  "frame-system/std",
 	"utility/std",
 	"authorship/std",
 	"balances/std",
@@ -130,6 +131,8 @@ std = [
 	"indices/std",
 	"oracle/std",
 	"vault/std",
+  "assets/std",
+	"governance-registry/std",
 	"call-filter/std",
 	"currency-factory/std",
 	"orml-tokens/std",
@@ -164,16 +167,16 @@ std = [
 	"governance-registry/std",
 ]
 runtime-benchmarks = [
+	"assets/runtime-benchmarks",
+	"balances/runtime-benchmarks",
 	"benchmarking",
-    "support/runtime-benchmarks",
-    "system-benchmarking",
+	"support/runtime-benchmarks",
+	"system-benchmarking",
 	"frame-system/runtime-benchmarks",
 	"hex-literal",
 	"balances/runtime-benchmarks",
 	"timestamp/runtime-benchmarks",
 	"assets-registry/runtime-benchmarks",
-	#"assets/runtime-benchmarks",
-	#"governance-registry/runtime-benchmarks",
 	"oracle/runtime-benchmarks",
 	"collective/runtime-benchmarks",
 	"collator-selection/runtime-benchmarks",
@@ -191,6 +194,8 @@ runtime-benchmarks = [
 	"utility/runtime-benchmarks",
 ]
 develop = [
+  "assets",
+  "governance-registry",
 	"assets-registry",
 	"governance-registry",
 	"assets",

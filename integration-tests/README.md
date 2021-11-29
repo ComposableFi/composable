@@ -17,20 +17,20 @@ Transfer currency is based on sending some named messages interpreted on each ch
 
 - calls `XTokens` pallet to map local tokens to remote
 - it will call `xcm_executor::traits::TransactAsset`  to form proper XCM messages with unique request id
-- then messages will be put into `XcmQueue` on chain
-- Networking layer will ensure that messages appear on other chain
+- then messages will be put into `XcmQueue` on-chain
+- Networking layer will ensure that messages appear on another chain
 - Messages will be `dispatched` to call relevant pallet for accepting foreign assets.
-- It is possible to send message and ask send response about success/fail operation, but that happens not in same block
+- It is possible to send a message and ask send a response about success/fail operation, but that happens not in same block
 
 ## Readings
 
 
-### How to setup XCMP:
+### How to setup XCMP
 
 - [Polkadot XCM Cross-Chain Asset Transfer Demo](https://medium.com/oak-blockchain/polkadot-xcm-cross-chain-asset-transfer-demo-53aa9a2e97a7)
 - https://medium.com/oak-blockchain/tutorial-polkadot-cross-chain-message-passing-xcmp-demo-with-ping-pallet-
 
-### Format of messages:
+### Format of messages
 
 - https://medium.com/polkadot-network/xcm-part-ii-versioning-and-compatibility-b313fc257b83
 - https://medium.com/polkadot-network/xcm-part-iii-execution-and-error-management-ceb8155dd166

@@ -48,7 +48,7 @@ pub struct CurrencyIdGenerator;
 
 impl CurrencyFactory<AssetId> for CurrencyIdGenerator {
 	fn create() -> Result<AssetId, sp_runtime::DispatchError> {
-		Ok(1 as AssetId)
+		Ok(1_u64)
 	}
 }
 
