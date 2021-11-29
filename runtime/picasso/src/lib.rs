@@ -851,13 +851,8 @@ construct_runtime!(
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
-<<<<<<< HEAD
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
 		Assets: assets::{Pallet, Call, Storage} = 57,
-=======
-	  GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
-	  Assets: assets::{Pallet, Call, Storage} = 57,
->>>>>>> origin/main
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}

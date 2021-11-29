@@ -51,18 +51,11 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 smallvec = "1.6.1"
 
 # local modules
-<<<<<<< HEAD
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false, optional = true }
-governance-registry = { package = "pallet-governance-registry", path = '../../frame/governance-registry', default-features = false, optional = true }
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false, optional = true }
 
 crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
 
-=======
-assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false, optional = true }
-assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false, optional = true }
-crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = "../../frame/crowdloan-bonus", default-features = false }
->>>>>>> origin/main
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false, optional = true }
@@ -165,18 +158,15 @@ std = [
 	"xcm-executor/std",
 	"aura/std",
 	"sp-consensus-aura/std",
-<<<<<<< HEAD
     "scale-info/std",
 	"orml-xtokens/std",
     "orml-xcm-support/std",
     "orml-unknown-tokens/std",
-=======
-  "scale-info/std",
->>>>>>> origin/main
+
 	"assets-registry/std",
 	"assets/std",
 	"governance-registry/std",
-]
+	]
 runtime-benchmarks = [
 	"assets/runtime-benchmarks",
 	"balances/runtime-benchmarks",
