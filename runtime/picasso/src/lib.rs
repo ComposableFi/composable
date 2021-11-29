@@ -43,9 +43,6 @@ pub use support::{
 	PalletId, StorageValue,
 };
 
-#[cfg(feature = "develop")]
-use crate::xcmp::*;
-
 use codec::Encode;
 use frame_system as system;
 #[cfg(any(feature = "std", test))]
