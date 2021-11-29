@@ -10,7 +10,7 @@ authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [package.metadata.cargo-udeps.ignore]
-normal = ["pallet-vault", "session-benchmarking", "assets-registry", "currency-factory", "oracle", "vault", "assets", "governance-registry"]
+normal = ["pallet-vault", "session-benchmarking", "assets-registry", "currency-factory", "oracle", "vault", "assets", "governance-registry", "orml-unknown-tokens", "orml-xtokens"]
 
 [dependencies]
 frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
@@ -117,9 +117,9 @@ std = [
 	"sp-block-builder/std",
 	"sp-transaction-pool/std",
 	"sp-inherents/std",
-  "support/std",
+  	"support/std",
 	"executive/std",
-  "frame-system/std",
+ 	"frame-system/std",
 	"utility/std",
 	"authorship/std",
 	"balances/std",
@@ -131,7 +131,7 @@ std = [
 	"indices/std",
 	"oracle/std",
 	"vault/std",
-  "assets/std",
+  	"assets/std",
 	"governance-registry/std",
 	"call-filter/std",
 	"currency-factory/std",
@@ -162,7 +162,6 @@ std = [
 	"orml-xtokens/std",
     "orml-xcm-support/std",
     "orml-unknown-tokens/std",
-
 	"assets-registry/std",
 	"assets/std",
 	"governance-registry/std",
@@ -195,10 +194,9 @@ runtime-benchmarks = [
 	"utility/runtime-benchmarks",
 ]
 develop = [
-  "assets",
-  "governance-registry",
+    "assets",
+    "governance-registry",
 	"assets-registry",
-	"governance-registry",
 	"assets",
 	"oracle",
 	"vault",
