@@ -14,14 +14,15 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::fungibles::{InspectHold, MutateHold, Transfer},
-//		transactional,
 	};
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
 	use pallet_democracy::Vote;
-	use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
+	use sp_runtime::{
+		traits::{AtLeast32BitUnsigned, Zero},
+		SaturatedConversion,
+	};
 	use sp_std::fmt::Debug;
-	use std::convert::TryInto;
 
 	pub type BribeIndex = u32;
 	pub type ReferendumIndex = pallet_democracy::ReferendumIndex;
@@ -122,34 +123,8 @@ pub mod pallet {
 	pub(super) type BribeRequests<T: Config> =
 		StorageMap<_, Blake2_128Concat, BribeIndex, CreateBribeRequest<T>>;
 
-	/*
-		// Create a cubic vault for holding funds
-		pub fn create_vault<T: Config>(
-			origin: OriginFor<T>,
-			asset_id: T::CurrencyId,
-		) -> (T::VaultId, VaultInfo<T::AccountId, T::Balance, T::CurrencyId, T::BlockNumber>) where <T as frame_system::Config>::Origin: Ord {
-			Vault::<
-				AccountId = T::AccountId,
-				AssetId = T::CurrencyId,
-				BlockNumber = T::BlockNumber,
-				VaultId = T::VaultId,
-				Balance = T::Balance,
-			>::do_create_vault(
-				Deposit::Existential,
-				VaultConfig {
-					asset_id,
-					manager: origin,
-					reserved: Perquintill::from_percent(100),
-					strategies: [].iter().cloned().collect(),
-				},
-			);
-		}
-
-	*/
-
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
 		/// Buy votes request
 		#[pallet::weight(10_000)]
 		pub fn create_bribe(
@@ -166,7 +141,6 @@ pub mod pallet {
 			Self::deposit_event(Event::BribeCreated { id, request });
 			Ok(().into())
 		}
-
 
 		/// Sell Votes request
 		#[pallet::weight(10_000)]
@@ -195,6 +169,8 @@ pub mod pallet {
 		EmptySupply,
 		CantFreezeFunds,
 		ReleaseFailed,
+		BribeDeletionFailed,
+		InvalidVote,
 	}
 
 	// offchain indexing
@@ -212,7 +188,6 @@ pub mod pallet {
 		type Balance = T::Balance;
 		type Conviction = T::Conviction;
 		type CurrencyId = T::CurrencyId;
-
 
 		/// Register new bribe request
 		fn create_bribe(request: CreateBribeRequest<T>) -> Result<Self::BribeIndex, DispatchError> {
@@ -258,6 +233,8 @@ pub mod pallet {
 			let loot: Vec<BribesStorage> = Fastvec::<T>::get().find_all_pid(ref_index);
 
 			if !loot.is_empty() {
+				let mut spendamount: u32 = 0;
+
 				for bribes in loot {
 					// Cast Vote
 
@@ -266,9 +243,13 @@ pub mod pallet {
 					let ss = bribe_request.clone();
 					T::Democracy::vote(ss.account_id, bribes.p_id, vote); //AccountId,
 
-// Remove from storage
-					Fastvec::<T>::mutate(|a| a.remove_bribe(bribes.amount, bribes.p_id, bribes.votes));
+					// Remove from storage
+					Fastvec::<T>::mutate(|a| {
+						a.remove_bribe(bribes.amount, bribes.p_id, bribes.votes)
+					});
 
+					// append the amount to our spend amount tracking
+					spendamount += bribes.amount;
 
 					// Pay out to the seller of the vote
 
@@ -281,11 +262,16 @@ pub mod pallet {
 						false,
 					)
 					.map_err(|_| Error::<T>::ReleaseFailed)?;
-					// Check if all votes are fullfilled
-
-					// Delete The bribe if fullfilled
-					let dr: DeleteBribeRequest = DeleteBribeRequest { bribe_index: 32 };
-					Self::do_delete_bribe(dr);
+					// todo: Check if all votes are fullfilled
+					let bribe_balance: u32 = bribe_request.total_reward.saturated_into::<u32>();
+					//					if we have spent all the money we have for votes, we assume the order is
+					// fullfilled and can not interact anymore so we remove it
+					if spendamount >= bribe_balance {
+						//todo also check if the correct amount of votes has been fullfilled
+						// Delete The bribe if fullfilled
+						let dr: DeleteBribeRequest = DeleteBribeRequest { bribe_index: bribe_index };
+						Self::do_delete_bribe(dr).map_err(|_| Error::<T>::BribeDeletionFailed)?;
+					}
 				}
 			}
 			Ok(true)
@@ -303,11 +289,11 @@ pub mod pallet {
 
 			let pid = bribe_request.ref_index; // save based on the referendumIndex
 			let amount_votes: u32 = 3;
-			let amount: u32 = TryInto::<u32>::try_into(bribe_request.total_reward).ok().unwrap(); // amount of tokens locked in
-																					  // insert into fastvec
+			let amount: u32 = bribe_request.total_reward.saturated_into::<u32>(); // amount of tokens locked in
+																	  // insert into fastvec
 			Fastvec::<T>::mutate(|a| a.add(amount, pid, amount_votes));
 			//Check if we can sell the votes now
-			Self::do_match_votes(request.bribe_index);
+			Self::do_match_votes(request.bribe_index).map_err(|_| Error::<T>::InvalidVote)?;
 
 			Ok(true)
 		}

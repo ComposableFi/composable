@@ -505,7 +505,7 @@ impl FastMap {
 		if let Some(index) = self
 			.inner
 			.iter()
-			.position(|value| value.amount == 10 && value.p_id == pid && value.votes == votes)
+			.position(|value| value.amount == amount && value.p_id == pid && value.votes == votes)
 		{
 			self.inner.swap_remove(index); // Remove from vec
 			return true

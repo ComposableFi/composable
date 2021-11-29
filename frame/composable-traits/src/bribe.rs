@@ -2,6 +2,7 @@ use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 
+
 pub trait Bribe {
 	type Balance;
 	type BribeIndex;
