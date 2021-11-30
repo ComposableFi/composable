@@ -157,9 +157,9 @@ impl pallet_timestamp::Config for Test {
     type WeightInfo = ();
 }
 
-ord_parameter_types! {
-	pub const RootAccount: AccountId = get_account_2();
-}
+// ord_parameter_types! {
+// 	pub const RootAccount: AccountId = get_account_2();
+// }
 
 parameter_types! {
     pub const FeeFactor: Balance = 100;
@@ -251,13 +251,13 @@ impl ExtBuilder {
 	}
 }
 
-pub fn get_account_2() -> AccountId {
-	const PHRASE: &str = "topic say join drop loud labor little chest public squeeze fossil coil";
-	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap()
-}
+// pub fn get_account_2() -> AccountId {
+// 	const PHRASE: &str = "topic say join drop loud labor little chest public squeeze fossil coil";
+// 	let keystore = KeyStore::new();
+// 	SyncCryptoStore::sr25519_generate_new(
+// 		&keystore,
+// 		crate::crypto::Public::ID,
+// 		Some(&format!("{}/hunter1", PHRASE)),
+// 	)
+// 	.unwrap()
+// }
