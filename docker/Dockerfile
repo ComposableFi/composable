@@ -1,6 +1,6 @@
 FROM composablefi/rust:latest
 
-ARG VERSION=v0.1.0
+ARG VERSION=v0.1.9
 
 USER root
 
@@ -17,7 +17,7 @@ LABEL description="Precompiled Docker image for Composable" \
       image.source="https://github.com/ComposableFi/composable/blob/main/docker/Dockerfile" \
       image.documentation="https://github.com/ComposableFi/composable#readme"
 
-RUN curl "https://storage.googleapis.com/composable-binaries/releases/client/${VERSION}/composable" -o composable 
+RUN curl "https://storage.googleapis.com/composable-binaries/community-releases/${VERSION}/composable" -o composable 
 
 RUN chmod +x composable && mv composable /usr/local/bin
 
