@@ -735,6 +735,7 @@ pub struct BaseCallFilter;
 
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
+		#[cfg(feature = "develop")]
 		if call_filter::Pallet::<Runtime>::contains(call) {
 			return false
 		}
@@ -745,6 +746,7 @@ impl Contains<Call> for BaseCallFilter {
 	}
 }
 
+#[cfg(feature = "develop")]
 impl call_filter::Config for Runtime {
 	type Event = Event;
 	type UpdateOrigin = EnsureRoot<AccountId>;
@@ -794,8 +796,6 @@ construct_runtime!(
 
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 50,
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
-
-		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
 
