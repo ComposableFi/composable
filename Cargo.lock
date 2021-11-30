@@ -1359,6 +1359,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "collator-sidecar"
+version = "0.1.0"
+dependencies = [
+ "async-std",
+ "common",
+ "env_logger 0.8.4",
+ "jsonrpc-core-client",
+ "picasso-runtime",
+ "sc-rpc",
+ "serde",
+ "structopt",
+ "tide",
+ "tokio",
+ "url 1.7.2",
+]
+
+[[package]]
 name = "color_quant"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7105,9 +7122,11 @@ dependencies = [
  "derive_more",
  "env_logger 0.8.4",
  "envy",
+ "hex",
  "jsonrpc-core-client",
  "log 0.4.14",
  "parity-scale-codec",
+ "picasso-runtime",
  "sc-rpc",
  "serde",
  "sp-core",
