@@ -33,6 +33,9 @@ jobs:
       - name: Picasso Runtime Build
         run: |
           cargo build --release -p picasso-runtime
+      - name: Picasso Runtime Build with develop feature
+        run: |
+          cargo build --release -p picasso-runtime --features develop
   linters:
     name: Linters
     runs-on:
