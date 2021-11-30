@@ -60,12 +60,12 @@
       "nodes": [
         {
           "wsPort": 9998,
-          "port": 31200,
+          "port": 31300,
           "flags": ["--alice", "--rpc-cors=all", "--", "--execution=wasm"]
         },
         {
           "wsPort": 9999,
-          "port": 31201,
+          "port": 31301,
           "flags": ["--bob", "--rpc-cors=all", "--", "--execution=wasm"]
         }
       ]
@@ -85,5 +85,6 @@
       "maxMessageSize": 512
     }
   ],
-  "types": {}
+  "types": {},
+  "finalization": false
 }
