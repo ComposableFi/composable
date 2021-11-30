@@ -482,9 +482,9 @@ pub mod pallet {
 		ReferendumInfo<T::BlockNumber, T::Hash, BalanceOf<T>, T::AssetId>,
 	>;
 
-	/// All votes for a particular voter. We store the balance for the number of votes that we
-	/// have recorded. The second item is the total amount of delegations, that will be added.
-	///
+	/// All votes for a particular voter. We store the balance for the number of votes for a
+	/// account and asset id combination, that we have recorded. The second item is the total
+	/// amount of delegations, that will be added.
 	/// TWOX-NOTE: SAFE as `AccountId`s are crypto hashes anyway.
 	#[pallet::storage]
 	pub type VotingOf<T: Config> = StorageMap<
@@ -682,6 +682,7 @@ pub mod pallet {
 		/// have funds to cover the deposit.
 		///
 		/// - `proposal_hash`: The hash of the proposal preimage.
+		/// - `asset_id` : The asset id of the proposal preimage.
 		/// - `value`: The amount of deposit (must be at least `MinimumDeposit`).
 		///
 		/// Emits `Proposed`.
@@ -1528,9 +1529,7 @@ impl<T: Config> Pallet<T> {
 		ref_index: ReferendumIndex,
 		scope: UnvoteScope,
 	) -> DispatchResult {
-		println!("fetching ref with index: {:?}", ref_index);
 		let info = ReferendumInfoOf::<T>::get(ref_index);
-		println!("got info: {:?}", info);
 		VotingOf::<T>::try_mutate((who, asset_id), |voting| -> DispatchResult {
 			if let Voting::Direct { ref mut votes, delegations, ref mut prior } = voting {
 				let i = votes
@@ -1551,7 +1550,6 @@ impl<T: Config> Pallet<T> {
 							let unlock_at = end + T::VoteLockingPeriod::get() * lock_periods.into();
 							let now = frame_system::Pallet::<T>::block_number();
 							if now < unlock_at {
-								println!("throwing NoPermission");
 								ensure!(
 									matches!(scope, UnvoteScope::Any),
 									Error::<T>::NoPermission
@@ -1810,7 +1808,7 @@ impl<T: Config> Pallet<T> {
 		if let Some(PreimageStatus::Available { data, provider, deposit, .. }) = preimage {
 			if let Ok(proposal) = T::Proposal::decode(&mut &data[..]) {
 				let err_amount = T::NativeCurrency::release(&provider, deposit, true)?;
-				debug_assert!(err_amount.is_zero());
+				debug_assert_eq!(err_amount, deposit);
 				Self::deposit_event(Event::<T>::PreimageUsed(proposal_id.hash, provider, deposit));
 				let origin = T::OriginFor::try_origin_for(proposal_id.asset_id)?;
 				let res = proposal.dispatch(origin).map(|_| ()).map_err(|e| e.error);
