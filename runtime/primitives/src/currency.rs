@@ -15,8 +15,8 @@ use sp_runtime::sp_std::ops::Deref;
 pub struct CurrencyId(u128);
 
 impl CurrencyId {
-	pub const INVALID: CurrencyId = CurrencyId(42);
-	pub const PICA: CurrencyId = CurrencyId(0);
+	pub const INVALID: CurrencyId = CurrencyId(0);
+	pub const PICA: CurrencyId = CurrencyId(1);
 	pub const LAYR: CurrencyId = CurrencyId(2);
 	pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
 
@@ -67,6 +67,7 @@ impl From<u128> for CurrencyId {
 
 /// maps id to junction generic key,
 /// unfortunately it is the best way to encode currency id as of now in XCM
+#[cfg(feature = "develop")]
 impl From<CurrencyId> for xcm::latest::Junction {
 	fn from(this: CurrencyId) -> Self {
 		xcm::latest::Junction::GeneralKey(this.encode())

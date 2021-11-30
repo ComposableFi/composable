@@ -18,6 +18,15 @@ We do not use `Teleport` messages as it is considered unsafe.
 
 ### Transfer currency
 
+Amounts are defined as next:
+```rust
+// next tells 1 networks up (jump to relay, find chain with ID, than encode para native asset),
+let asset_id = AssetId::Concrete(AssetId::Concrete(MultiLocation::new(1, X2(Parachain(PICASSO_PARA_ID), GeneralKey(СurrencyId::PICA.encode()))));
+// here we encode amount of 42 tokens to be manipulated
+let amount_and_asset_id = MultiAsset{ fun : Fungible(42), id: asset_id};
+```
+
+
 Transfer currency is based on sending some named messages interpreted on each chain, but always ends with `dispatch` calls on target chain.
 
 - calls `XTokens` pallet to map local tokens to remote
@@ -30,6 +39,7 @@ Transfer currency is based on sending some named messages interpreted on each ch
 
 
 ## Readings
+
 
 ### How to setup XCMP
 

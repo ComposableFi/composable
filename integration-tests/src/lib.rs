@@ -1,11 +1,7 @@
 /// this must be singleton
 #[cfg(test)]
 pub fn env_logger_init() {
-	use std::sync::Once;
-	static LOG_INIT: Once = Once::new();
-	LOG_INIT.call_once(|| {
-		env_logger::init();
-	});
+	let _ = env_logger::builder().is_test(true).try_init();
 }
 
 #[cfg(test)]
