@@ -33,6 +33,7 @@ use sp_runtime::{
 	traits::{BadOrigin, BlakeTwo256, IdentityLookup},
 	Perbill,
 };
+use pallet_balances::Error as BalancesError;
 
 mod cancellation;
 mod decoders;
@@ -40,10 +41,10 @@ mod delegation;
 mod external_proposing;
 mod fast_tracking;
 mod lock_voting;
-// mod preimage;
-// mod public_proposals;
-// mod scheduling;
-// mod voting;
+mod preimage;
+mod public_proposals;
+mod scheduling;
+mod voting;
 
 type Balance = u64;
 type AccountId = u64;
@@ -51,8 +52,8 @@ type AssetId = u64;
 
 const AYE: Vote = Vote { aye: true, conviction: Conviction::None };
 const NAY: Vote = Vote { aye: false, conviction: Conviction::None };
-// const BIG_AYE: Vote = Vote { aye: true, conviction: Conviction::Locked1x };
-// const BIG_NAY: Vote = Vote { aye: false, conviction: Conviction::Locked1x };
+const BIG_AYE: Vote = Vote { aye: true, conviction: Conviction::Locked1x };
+const BIG_NAY: Vote = Vote { aye: false, conviction: Conviction::Locked1x };
 const DEFAULT_ASSET: AssetId = 1;
 const DOT_ASSET: AssetId = 2;
 const MAX_PROPOSALS: u32 = 100;
@@ -236,7 +237,7 @@ impl Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
-		balances: vec![(1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)],
+		balances: vec![(0,100), (1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
@@ -246,6 +247,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	orml_tokens::GenesisConfig::<Test> {
 		balances: vec![
+			(0, DEFAULT_ASSET, 100),
 			(1, DEFAULT_ASSET, 10),
 			(2, DEFAULT_ASSET, 20),
 			(3, DEFAULT_ASSET, 30),
@@ -269,17 +271,17 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 /// Execute the function two times, with `true` and with `false`.
-// pub fn new_test_ext_execute_with_cond(execute: impl FnOnce(bool) -> () + Clone) {
-// 	new_test_ext().execute_with(|| (execute.clone())(false));
-// 	new_test_ext().execute_with(|| execute(true));
-// }
+pub fn new_test_ext_execute_with_cond(execute: impl FnOnce(bool) -> () + Clone) {
+	new_test_ext().execute_with(|| (execute.clone())(false));
+	new_test_ext().execute_with(|| execute(true));
+}
 
 #[test]
 fn params_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(Democracy::referendum_count(), 0);
 		assert_eq!(Balances::free_balance(42), 0);
-		assert_eq!(Balances::total_issuance(), 210);
+		assert_eq!(Balances::total_issuance(), 310);
 	});
 }
 
@@ -298,6 +300,12 @@ fn set_balance_proposal_is_correctly_filtered_out() {
 
 fn set_balance_proposal_hash(value: u64) -> H256 {
 	BlakeTwo256::hash(&set_balance_proposal(value)[..])
+}
+
+fn set_balance_proposal_id(value: u64) -> ProposalId<H256, AssetId> {
+	let p = set_balance_proposal(value);
+	let h = BlakeTwo256::hash(&p[..]);
+	ProposalId { hash: h, asset_id: DEFAULT_ASSET }
 }
 
 fn set_balance_proposal_hash_and_note(value: u64) -> ProposalId<H256, AssetId> {
@@ -325,9 +333,9 @@ fn set_balance_proposal_hash_and_note_and_asset_id(
 	ProposalId { hash: h, asset_id }
 }
 
-// fn propose_set_balance(who: u64, value: u64, delay: u64) -> DispatchResult {
-// 	Democracy::propose(Origin::signed(who), set_balance_proposal_hash(value), DEFAULT_ASSET, delay)
-// }
+fn propose_set_balance(who: u64, value: u64, delay: u64) -> DispatchResult {
+	Democracy::propose(Origin::signed(who), set_balance_proposal_hash(value), DEFAULT_ASSET, delay)
+}
 
 fn propose_set_balance_and_note(who: u64, value: u64, delay: u64) -> DispatchResult {
 	let id = set_balance_proposal_hash_and_note(value);
@@ -361,13 +369,13 @@ fn nay(who: u64) -> AccountVote<u64> {
 	AccountVote::Standard { vote: NAY, balance: Balances::free_balance(&who) }
 }
 
-// fn big_aye(who: u64) -> AccountVote<u64> {
-// 	AccountVote::Standard { vote: BIG_AYE, balance: Balances::free_balance(&who) }
-// }
-//
-// fn big_nay(who: u64) -> AccountVote<u64> {
-// 	AccountVote::Standard { vote: BIG_NAY, balance: Balances::free_balance(&who) }
-// }
+fn big_aye(who: u64) -> AccountVote<u64> {
+	AccountVote::Standard { vote: BIG_AYE, balance: Balances::free_balance(&who) }
+}
+
+fn big_nay(who: u64) -> AccountVote<u64> {
+	AccountVote::Standard { vote: BIG_NAY, balance: Balances::free_balance(&who) }
+}
 
 fn tally(r: ReferendumIndex) -> Tally<u64> {
 	Democracy::referendum_status(r).unwrap().tally
