@@ -133,6 +133,10 @@ pub mod pallet {
 		type FeeAddress: Get<Self::AccountId>;
 
 		type BlockTimestamp: UnixTime;
+
+		type MaxFeeDefault: Get<Self::Balance>;
+
+		type MinFeeDefault: Get<Self::Balance>;
 	}
 	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 	pub struct DepositInfo<AssetId, Balance > {
@@ -168,13 +172,23 @@ pub mod pallet {
 	#[pallet::getter(fn transfer_lockup_time)]
 	pub(super) type TransferLockupTime<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
+	#[pallet::type_value]
+	pub(super) fn MaxFeeDefault<T: Config>() -> T::Balance {
+        T::MaxFeeDefault::get()
+	}
+
 	#[pallet::storage]
 	#[pallet::getter(fn max_fee)]
-	pub(super) type MaxFee<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
+	pub(super) type MaxFee<T: Config> = StorageValue<_, T::Balance, ValueQuery, MaxFeeDefault<T>>;
+
+	#[pallet::type_value]
+	pub(super) fn MinFeeDefault<T: Config>() -> T::Balance {
+        T::MinFeeDefault::get()
+	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn min_fee)]
-	pub(super) type MinFee<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
+	pub(super) type MinFee<T: Config> = StorageValue<_, T::Balance, ValueQuery, MinFeeDefault<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn asset_vault)]
@@ -433,7 +447,7 @@ pub mod pallet {
 
 			ensure_signed(origin)?; // -todo  check admin permission 
 
-			Self::only_supported_remoteToken(remote_network_id.clone(), asset_id.clone())?;
+			Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
           
  		    let remote_asset_id = RemoteAssetId::<T>::get(remote_network_id, asset_id);
 
@@ -576,7 +590,7 @@ pub mod pallet {
 
 			ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 
-			Self::only_supported_remoteToken(remote_network_id.clone(), asset_id.clone())?;
+			Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
 
 			let sender = ensure_signed(origin)?;
 
@@ -636,7 +650,7 @@ pub mod pallet {
          
 			 ensure!(Self::pause_status() == false, Error::<T>::ContractPaused);
 
-			  Self::only_supported_remoteToken(remote_network_id.clone(), asset_id.clone())?;
+			  Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
 
 			  let sender = ensure_signed(origin)?;
              
@@ -911,7 +925,7 @@ pub mod pallet {
 		}
 
 
-		fn only_supported_remoteToken(remote_network_id: T::RemoteNetworkId, asset_id:T::AssetId) -> Result<T::RemoteAssetId, DispatchError> {
+		fn only_supported_remote_token(remote_network_id: T::RemoteNetworkId, asset_id:T::AssetId) -> Result<T::RemoteAssetId, DispatchError> {
 			
 			let remote_asset_id = <RemoteAssetId<T>>::try_get(remote_network_id, asset_id).map_err(|_|Error::<T>::UnsupportedToken)?;
 

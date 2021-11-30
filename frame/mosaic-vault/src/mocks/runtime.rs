@@ -25,6 +25,15 @@ pub type DepositId = [u8; 32];
 pub type RemoteNetworkId = u64;
 pub type AccountId = u128;
 
+pub const MINIMUM_BALANCE: Balance = 1000;
+// accounts 
+pub const ALICE: AccountId = 0;
+pub const BOB: AccountId = 0;
+pub const CHARLIE: AccountId = 0;
+pub const JEREMY: AccountId = 0;
+pub const ACCOUNT_FREE_START: AccountId = JEREMY + 1;
+pub const ACCOUNT_INITIAL_AMOUNT: u128 = 1_000_000;
+
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
@@ -147,6 +156,8 @@ parameter_types! {
     pub const ThresholdFactor:Balance = 100;
     pub const FeeAddress: u64 = 1;
     pub const MosaicVaultId: PalletId = PalletId(*b"test_pid");
+    pub const MaxFeeDefault: Balance = 500;
+    pub const MinFeeDefault: Balance = 0;
 }
 
 impl mosaic_vault::Config for Test {
@@ -167,6 +178,8 @@ impl mosaic_vault::Config for Test {
     type PalletId = MosaicVaultId;
     type FeeAddress = FeeAddress;
     type BlockTimestamp = Timestamp;
+    type MaxFeeDefault = MaxFeeDefault;
+    type MinFeeDefault = MinFeeDefault;
 }
 
 // Configure a mock runtime to test the pallet.
