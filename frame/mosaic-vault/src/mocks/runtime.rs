@@ -1,29 +1,28 @@
-
 use crate::{self as mosaic_vault, *};
 //use crate as mosaic_vault;
-use super::currency_factory::MockCurrencyId;
-use super::*;
+use super::{currency_factory::MockCurrencyId, *};
 // use crate::*;
 use frame_support::{
-    ord_parameter_types,
-    construct_runtime,parameter_types,
-    traits::{Everything, GenesisBuild, UnixTime},
-    PalletId,
+	construct_runtime, ord_parameter_types, parameter_types,
+	traits::{Everything, GenesisBuild, UnixTime},
+	PalletId,
 };
-use sp_keystore::{testing::KeyStore, SyncCryptoStore};
-use frame_system::EnsureSignedBy;
 use frame_system as system;
-use orml_traits::parameter_type_with_key;
+use frame_system::EnsureSignedBy;
 use num_traits::Zero;
+use orml_traits::parameter_type_with_key;
 use sp_core::{sr25519::Signature, H256};
+use sp_keystore::{testing::KeyStore, SyncCryptoStore};
 use sp_runtime::{
 	testing::{Header, TestXt},
-	traits::{BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify, Saturating},
+	traits::{
+		BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup,
+		Saturating, Verify,
+	},
 	RuntimeAppPublic,
 };
 
 use std::time::{SystemTime, UNIX_EPOCH};
-
 
 pub type BlockNumber = u64;
 pub type Balance = u128;
@@ -36,7 +35,7 @@ pub type RemoteNetworkId = u64;
 pub type AccountId = u128;
 
 pub const MINIMUM_BALANCE: Balance = 1000;
-// accounts 
+// accounts
 pub const RELAYER_ACCOUNT: AccountId = 0;
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
@@ -48,34 +47,34 @@ pub const ACCOUNT_INITIAL_AMOUNT: u128 = 1_000_000;
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
 
-parameter_types!{
-    pub const BlockHashCount: u64 = 250;
+parameter_types! {
+	pub const BlockHashCount: u64 = 250;
 }
 
 impl frame_system::Config for Test {
-    type AccountId = AccountId;////u64;
-    type Origin = Origin;
-    type Index = u64;
-    type BlockNumber = BlockNumber;
-    type Call = Call;
-    type Hash = H256;
-    type Hashing = sp_runtime::traits::BlakeTwo256;
-    type Lookup = IdentityLookup<Self::AccountId>;
-    type Header = Header;
-    type Event = Event;
-    type BlockHashCount = BlockHashCount;
-    type BlockWeights = ();
-    type BlockLength = ();
-    type Version = ();
-    type PalletInfo = PalletInfo;
-    type AccountData = pallet_balances::AccountData<Balance>;
-    type OnNewAccount = ();
-    type OnKilledAccount = ();
-    type DbWeight = ();
-    type BaseCallFilter = Everything;
-    type SystemWeightInfo = ();
-    type SS58Prefix = ();
-    type OnSetCode = ();
+	type AccountId = AccountId; ////u64;
+	type Origin = Origin;
+	type Index = u64;
+	type BlockNumber = BlockNumber;
+	type Call = Call;
+	type Hash = H256;
+	type Hashing = sp_runtime::traits::BlakeTwo256;
+	type Lookup = IdentityLookup<Self::AccountId>;
+	type Header = Header;
+	type Event = Event;
+	type BlockHashCount = BlockHashCount;
+	type BlockWeights = ();
+	type BlockLength = ();
+	type Version = ();
+	type PalletInfo = PalletInfo;
+	type AccountData = pallet_balances::AccountData<Balance>;
+	type OnNewAccount = ();
+	type OnKilledAccount = ();
+	type DbWeight = ();
+	type BaseCallFilter = Everything;
+	type SystemWeightInfo = ();
+	type SS58Prefix = ();
+	type OnSetCode = ();
 }
 
 parameter_type_with_key! {
@@ -85,11 +84,11 @@ parameter_type_with_key! {
 }
 
 impl orml_tokens::Config for Test {
-    type Event = Event;
-    type Balance = Balance;
-    type Amount = Amount;
-    type CurrencyId = MockCurrencyId;
-    type WeightInfo = ();
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = MockCurrencyId;
+	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
 	type MaxLocks = ();
@@ -110,7 +109,7 @@ impl pallet_currency_factory::Config for Test {
 	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
-parameter_types!{
+parameter_types! {
    pub const MaxStrategies: usize = 255;
    pub const MinimumDeposit: Balance = 0;
    pub const MinimumWithdrawal: Balance = 0;
@@ -121,7 +120,7 @@ parameter_types!{
 }
 
 impl pallet_vault::Config for Test {
-    type Event = Event;
+	type Event = Event;
 	type Currency = Tokens;
 	type AssetId = MockCurrencyId;
 	type Balance = Balance;
@@ -145,46 +144,46 @@ impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
-	
-    type WeightInfo = ();
+
+	type WeightInfo = ();
 }
 
 parameter_types! {
-    pub const FeeFactor: Balance = 100;
-    pub const ThresholdFactor:Balance = 100;
-    pub const FeeAddress: u64 = FEE_ADDRESS as u64;
-    pub const MosaicVaultId: PalletId = PalletId(*b"test_pid");
-    pub const MaxFeeDefault: Balance = 10;
-    pub const MinFeeDefault: Balance = 0;
+	pub const FeeFactor: Balance = 100;
+	pub const ThresholdFactor:Balance = 100;
+	pub const FeeAddress: u64 = FEE_ADDRESS as u64;
+	pub const MosaicVaultId: PalletId = PalletId(*b"test_pid");
+	pub const MaxFeeDefault: Balance = 10;
+	pub const MinFeeDefault: Balance = 0;
 }
 
 ord_parameter_types! {
 	pub const ADMIN: AccountId = ALICE;
-    pub const RELAYER: AccountId = RELAYER_ACCOUNT;
+	pub const RELAYER: AccountId = RELAYER_ACCOUNT;
 }
 
 impl mosaic_vault::Config for Test {
-    type Event = Event;
-    type Currency = Tokens;
-    type Convert = ConvertInto;
-    type Balance = Balance;
-    type Nonce = Nonce;
-    type TransferDelay = TransferDelay;
-    type VaultId = VaultId;
-    type Vault = Vault;
-    type AssetId = MockCurrencyId;
-    type RemoteAssetId = MockCurrencyId;
-    type RemoteNetworkId = RemoteNetworkId;
-    type DepositId = DepositId;
-    type FeeFactor = FeeFactor;
-    type ThresholdFactor = ThresholdFactor;
-    type PalletId = MosaicVaultId;
-    type FeeAddress = FeeAddress;
-    type BlockTimestamp = Timestamp;
-    type MaxFeeDefault = MaxFeeDefault;
-    type MinFeeDefault = MinFeeDefault;
-    type RelayerOrigin = EnsureSignedBy<RELAYER, AccountId>;
-    type AdminOrigin = EnsureSignedBy<ADMIN, AccountId>;
+	type Event = Event;
+	type Currency = Tokens;
+	type Convert = ConvertInto;
+	type Balance = Balance;
+	type Nonce = Nonce;
+	type TransferDelay = TransferDelay;
+	type VaultId = VaultId;
+	type Vault = Vault;
+	type AssetId = MockCurrencyId;
+	type RemoteAssetId = MockCurrencyId;
+	type RemoteNetworkId = RemoteNetworkId;
+	type DepositId = DepositId;
+	type FeeFactor = FeeFactor;
+	type ThresholdFactor = ThresholdFactor;
+	type PalletId = MosaicVaultId;
+	type FeeAddress = FeeAddress;
+	type BlockTimestamp = Timestamp;
+	type MaxFeeDefault = MaxFeeDefault;
+	type MinFeeDefault = MinFeeDefault;
+	type RelayerOrigin = EnsureSignedBy<RELAYER, AccountId>;
+	type AdminOrigin = EnsureSignedBy<ADMIN, AccountId>;
 }
 
 pub struct ExtBuilder {
@@ -193,11 +192,12 @@ pub struct ExtBuilder {
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self { balances: vec![
-            (ALICE, MockCurrencyId::A, 1000000000),
-            (BOB, MockCurrencyId::A, 1000000000)
-                                       
-        ] }
+		Self {
+			balances: vec![
+				(ALICE, MockCurrencyId::A, 1000000000),
+				(BOB, MockCurrencyId::A, 1000000000),
+			],
+		}
 	}
 }
 
@@ -205,15 +205,13 @@ impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
 
-
 		orml_tokens::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut t)
 			.unwrap();
 
-            let mut ext = sp_io::TestExternalities::new(t);
-            ext.execute_with(|| System::set_block_number(1));
-            ext
-
+		let mut ext = sp_io::TestExternalities::new(t);
+		ext.execute_with(|| System::set_block_number(1));
+		ext
 	}
 }
 
@@ -227,13 +225,11 @@ construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-        System: frame_system::{ Pallet, Call, Storage, Config, Event<T>},
-        Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-        LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
-        Tokens: orml_tokens::{Pallet,Storage, Event<T>, Config<T>},
-        Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
-        MosaicVault: mosaic_vault::{ Pallet, Call, Storage, Event<T>},
+		System: frame_system::{ Pallet, Call, Storage, Config, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
+		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
+		Tokens: orml_tokens::{Pallet,Storage, Event<T>, Config<T>},
+		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
+		MosaicVault: mosaic_vault::{ Pallet, Call, Storage, Event<T>},
 	}
 );
-
-
