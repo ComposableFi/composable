@@ -270,11 +270,11 @@ pub fn run() -> Result<()> {
 				// DO NOT REMOVE.
 				if config.chain_spec.id() == "picasso" {
 					config.execution_strategies = ExecutionStrategies {
-						syncing: ExecutionStrategy::Wasm,
-						block_construction: ExecutionStrategy::Wasm,
-						importing: ExecutionStrategy::Wasm,
-						offchain_worker: ExecutionStrategy::Wasm,
-						other: ExecutionStrategy::Wasm,
+						syncing: ExecutionStrategy::AlwaysWasm,
+						block_construction: ExecutionStrategy::AlwaysWasm,
+						importing: ExecutionStrategy::AlwaysWasm,
+						offchain_worker: ExecutionStrategy::AlwaysWasm,
+						other: ExecutionStrategy::AlwaysWasm,
 					};
 				}
 
