@@ -451,8 +451,6 @@ pub mod pallet {
 
 			T::AdminOrigin::ensure_origin(origin)?;
 
-			Self::only_supported_remote_token(remote_network_id.clone(), asset_id.clone())?;
-
  		    let remote_asset_id = RemoteAssetId::<T>::get(remote_network_id, asset_id);
 
 		     <RemoteAssetId<T>>::remove(remote_network_id, asset_id);
