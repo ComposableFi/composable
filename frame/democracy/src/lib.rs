@@ -78,11 +78,12 @@
 //! a signed extrinsic.
 //!
 //! Basic actions:
-//! - `propose` - Submits a sensitive action, represented as a hash. Requires a deposit.
+//! - `propose` - Submits a sensitive action in a preferred currency(token), represented as a hash.
+//! Requires a deposit in native currency(token).
 //! - `second` - Signals agreement with a proposal, moves it higher on the proposal queue, and
-//!   requires a matching deposit to the original.
-//! - `vote` - Votes in a referendum, either the vote is "Aye" to enact the proposal or "Nay" to
-//!   keep the status quo.
+//!   requires a matching deposit in native currency(token) to the original.
+//! - `vote` - Votes in a referendum with preferred currency(token), either the vote is "Aye" to
+//!   enact the proposal or "Nay" to keep the status quo.
 //! - `unvote` - Cancel a previous vote, this must be done by the voter before the vote ends.
 //! - `delegate` - Delegates the voting power (tokens * conviction) to another account.
 //! - `undelegate` - Stops the delegation of voting power to another account.
@@ -92,8 +93,9 @@
 //! - `unlock` - Redetermine the account's balance lock, potentially making tokens available.
 //!
 //! Preimage actions:
-//! - `note_preimage` - Registers the preimage for an upcoming proposal, requires a deposit that is
-//!   returned once the proposal is enacted.
+//! - `note_preimage` - Registers the preimage for an upcoming proposal, requires a deposit in
+//!   native
+//! currency(token) that is returned once the proposal is enacted.
 //! - `note_preimage_operational` - same but provided by `T::OperationalPreimageOrigin`.
 //! - `note_imminent_preimage` - Registers the preimage for an upcoming proposal. Does not require a
 //!   deposit, but the proposal must be in the dispatch queue.
@@ -485,7 +487,8 @@ pub mod pallet {
 	/// All votes for a particular voter. We store the balance for the number of votes for a
 	/// account and asset id combination, that we have recorded. The second item is the total
 	/// amount of delegations, that will be added.
-	/// TWOX-NOTE: SAFE as `AccountId`s are crypto hashes anyway.
+	/// TWOX-NOTE: SAFE as `AccountId`s are crypto hashes anyway and `AssetId` is not
+	/// user-controlled data.
 	#[pallet::storage]
 	pub type VotingOf<T: Config> = StorageMap<
 		_,
