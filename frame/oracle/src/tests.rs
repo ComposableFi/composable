@@ -768,6 +768,18 @@ fn should_submit_signed_transaction_on_chain() {
 	let (mut t, pool_state) = offchain_worker_env(|state| price_oracle_response(state, "0"));
 
 	t.execute_with(|| {
+		let account_2 = get_account_2();
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Percent::from_percent(80),
+			3,
+			3,
+			5,
+			5,
+			5
+		));
+
 		// when
 		Oracle::fetch_price_and_send_signed(&0).unwrap();
 		// then
@@ -792,6 +804,17 @@ fn should_check_oracles_submitted_price() {
 		Oracle::fetch_price_and_send_signed(&0).unwrap();
 	});
 }
+
+#[test]
+#[should_panic = "Max answers reached"]
+fn should_check_oracles_max_answer() {
+	let (mut t, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
+
+	t.execute_with(|| {
+		Oracle::fetch_price_and_send_signed(&0).unwrap();
+	});
+}
+
 
 #[test]
 fn parse_price_works() {

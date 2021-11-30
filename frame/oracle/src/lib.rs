@@ -322,6 +322,8 @@ pub mod pallet {
 		ArithmeticError,
 		/// Block interval is less then stale price
 		BlockIntervalLength,
+		/// There was an error transferring
+		TransferError
 	}
 
 	#[pallet::hooks]
@@ -477,7 +479,8 @@ pub mod pallet {
 			ensure!(block > withdrawal.unlock_block, Error::<T>::StakeLocked);
 			DeclaredWithdraws::<T>::remove(&signer);
 			T::Currency::unreserve(&signer, withdrawal.stake);
-			let _ = T::Currency::transfer(&signer, &who, withdrawal.stake, AllowDeath);
+			let result = T::Currency::transfer(&signer, &who, withdrawal.stake, AllowDeath);
+			ensure!(!result.is_err(), Error::<T>::TransferError);
 
 			ControllerToSigner::<T>::remove(&who);
 			SignerToController::<T>::remove(&signer);
@@ -591,7 +594,10 @@ pub mod pallet {
 					let controller = SignerToController::<T>::get(&answer.who)
 						.unwrap_or_else(|| answer.who.clone());
 
-					let _ = T::Currency::deposit_into_existing(&controller, reward_amount);
+					let result = T::Currency::deposit_into_existing(&controller, reward_amount);
+					if result.is_err() {
+						log::warn!("Failed to deposit {:?}", controller);
+					}
 					Self::deposit_event(Event::UserRewarded(
 						answer.who.clone(),
 						asset_id,
@@ -790,8 +796,12 @@ pub mod pallet {
 			let mut to32 = AccountId32::as_ref(&account);
 			let address: T::AccountId = T::AccountId::decode(&mut to32).unwrap_or_default();
 
-			if prices.into_iter().any(|price| price.who == address) {
+			if prices.clone().into_iter().any(|price| price.who == address) {
 				return Err("Tx already submitted")
+			}
+
+			if prices.len() as u32 >= Self::asset_info(price_id).max_answers {
+				return Err("Max answers reached")
 			}
 
 			// Make an external HTTP request to fetch the current price.
