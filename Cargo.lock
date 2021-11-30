@@ -1463,6 +1463,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-state-machine",
  "sp-timestamp",
  "sp-transaction-pool",
  "structopt",

@@ -30,10 +30,11 @@ use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
-use sc_executor::WasmExecutionMethod;
+use sc_client_api::execution_extensions::ExecutionStrategies;
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
+use sp_state_machine::ExecutionStrategy;
 use std::{io::Write, net::SocketAddr};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -268,7 +269,13 @@ pub fn run() -> Result<()> {
 				// This is so that users can sync our chain from genesis
 				// DO NOT REMOVE.
 				if config.chain_spec.id() == "picasso" {
-					config.wasm_method = WasmExecutionMethod::Interpreted;
+					config.execution_strategies = ExecutionStrategies {
+						syncing: ExecutionStrategy::Wasm,
+						block_construction: ExecutionStrategy::Wasm,
+						importing: ExecutionStrategy::Wasm,
+						offchain_worker: ExecutionStrategy::Wasm,
+						other: ExecutionStrategy::Wasm,
+					};
 				}
 
 				let _ = &cli;
