@@ -119,7 +119,7 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 		.await?;
 
 	if result.find_event::<api::balances::events::Transfer>()?.is_none() {
-		return Ok(format!("Error: Transfer failed!").into())
+		return Ok("Error: Transfer failed!".into())
 	}
 
 	log::info!("Sent {} 1k Dali", user_name);

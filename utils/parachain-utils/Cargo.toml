@@ -28,3 +28,7 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 common = { package = "common", path = "../../runtime/common" }
 subxt = { git = "https://github.com/composableFi/subxt", branch = "seun-0.9.12" }
 subxt-clients = { path = "../subxt-clients" }
+
+[dev-dependencies]
+picasso-runtime = { path = "../../runtime/picasso" }
+hex = "0.4.3"

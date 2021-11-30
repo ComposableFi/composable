@@ -34,16 +34,15 @@ async fn main() -> tide::Result<()> {
 async fn log_handler(mut req: Request<State>) -> tide::Result {
 	let targets = req.body_string().await?;
 
-	let result = if targets.len() > 0 {
+	let result = if targets.is_empty() {
 		req.state().system.system_add_log_filter(targets).await
 	} else {
 		req.state().system.system_reset_log_filter().await
 	};
 
-	match result {
-		Err(e) => return Ok(format!("Error: {:?}", e).into()),
-		_ => {},
-	};
+	if let Err(e) = result {
+		return Ok(format!("Error: {:?}", e).into())
+	}
 
 	Ok("".into())
 }
