@@ -1,23 +1,16 @@
 
 use frame_support::{
     assert_ok,
+    assert_noop,
 };
 
-use crate::{
-    mocks::{
-        currency_factory::MockCurrencyId,
-        runtime::{
-			AccountId, Balance, BlockNumber, ExtBuilder, Origin, Test, Tokens, Vault, MosaicVault, 
-			ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, MINIMUM_BALANCE,
-		},
-    }
-};
+use crate::{mocks::runtime::*, Error};
 
 #[test]
 fn test_set_min_fee(){
     ExtBuilder::default().build().execute_with(|| {
-        assert_ok!( 
-            MosaicVault::set_min_fee(Origin::signed(ALICE as u64), 12)
-         );
-    })
+        assert_noop!(MosaicVault::set_min_fee(Origin::signed(ALICE as u64), 600), Error::<Test>::MinFeeAboveMaxFee);
+        assert_noop!(MosaicVault::set_min_fee(Origin::signed(ALICE as u64), 120), Error::<Test>::MinFeeAboveFeeFactor);
+        assert_ok!( MosaicVault::set_min_fee(Origin::signed(ALICE as u64), 2));
+    });
 }
