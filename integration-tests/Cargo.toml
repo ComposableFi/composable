@@ -58,7 +58,6 @@ oracle = { package = "pallet-oracle", path = "../frame/oracle", default-features
 vault = { package = "pallet-vault", path = "../frame/vault", default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../frame/currency-factory", default-features = false }
 composable-traits = { path = "../frame/composable-traits" , default-features = false}
-call-filter = { package = "pallet-call-filter", path = "../frame/call-filter", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
@@ -126,7 +125,6 @@ std = [
 	"indices/std",
 	"oracle/std",
 	"vault/std",
-	"call-filter/std",
 	"currency-factory/std",
 	"orml-tokens/std",
 	"orml-traits/std",
