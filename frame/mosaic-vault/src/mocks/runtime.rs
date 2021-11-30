@@ -100,18 +100,6 @@ parameter_types! {
 	pub const ExistentialDeposit: u64 = 1000;
 }
 
-// impl pallet_balances::Config for Test {
-// 	type Balance = Balance;
-// 	type Event = Event;
-// 	type DustRemoval = ();
-// 	type ExistentialDeposit = ExistentialDeposit;
-// 	type AccountStore = System;
-// 	type WeightInfo = ();
-// 	type MaxLocks = ();
-// 	type MaxReserves = ();
-// 	type ReserveIdentifier = [u8; 8];
-// }
-
 parameter_types! {
 	pub const DynamicCurrencyIdInitial: MockCurrencyId = MockCurrencyId::LpToken(0);
 }
@@ -195,8 +183,8 @@ impl mosaic_vault::Config for Test {
     type BlockTimestamp = Timestamp;
     type MaxFeeDefault = MaxFeeDefault;
     type MinFeeDefault = MinFeeDefault;
-    type RelayerOrigin = EnsureSignedBy<RELAYER, AccountId>;//<RootAccount, sp_core::sr25519::Public>;
-    type AdminOrigin = EnsureSignedBy<ADMIN, AccountId>;//<RootAccount, sp_core::sr25519::Public>;
+    type RelayerOrigin = EnsureSignedBy<RELAYER, AccountId>;
+    type AdminOrigin = EnsureSignedBy<ADMIN, AccountId>;
 }
 
 pub struct ExtBuilder {
@@ -228,13 +216,6 @@ impl ExtBuilder {
 
 	}
 }
-
-// pub fn new_test_ext() -> sp_io::TestExternalities {
-//     let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-//     let mut ext = sp_io::TestExternalities::new(t);
-//     ext.execute_with(|| System::set_block_number(1));
-//     ext
-// }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
