@@ -85,7 +85,7 @@ else
 endif
 
 
-.PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release
+.PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release
 
 
 #----------------------------------------------------------------------
