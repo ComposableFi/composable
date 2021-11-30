@@ -1,18 +1,23 @@
 use super::currency_factory::MockCurrencyId;
+use super::*;
+use crate::*;
 use crate as mosaic_vault;
 use frame_support::{
+    ord_parameter_types,
     construct_runtime,parameter_types,
     traits::{Everything, GenesisBuild},
     PalletId,
 };
-
+use sp_keystore::{testing::KeyStore, SyncCryptoStore};
+use frame_system::EnsureSignedBy;
+use frame_system as system;
 use orml_traits::parameter_type_with_key;
 use num_traits::Zero;
-use sp_core::H256;
-use frame_system as system;
+use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
-    testing::Header,
-    traits::{ConvertInto, IdentityLookup},
+	testing::{Header, TestXt},
+	traits::{BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
+	RuntimeAppPublic,
 };
 
 pub type BlockNumber = u64;
@@ -148,7 +153,12 @@ impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
+	
+    type WeightInfo = ();
+}
+
+ord_parameter_types! {
+	pub const RootAccount: AccountId = get_account_2();
 }
 
 parameter_types! {
@@ -158,6 +168,7 @@ parameter_types! {
     pub const MosaicVaultId: PalletId = PalletId(*b"test_pid");
     pub const MaxFeeDefault: Balance = 500;
     pub const MinFeeDefault: Balance = 0;
+    pub const One: AccountId = 1;
 }
 
 impl mosaic_vault::Config for Test {
@@ -180,6 +191,8 @@ impl mosaic_vault::Config for Test {
     type BlockTimestamp = Timestamp;
     type MaxFeeDefault = MaxFeeDefault;
     type MinFeeDefault = MinFeeDefault;
+    type RelayerOrigin = EnsureSignedBy<One, AccountId>;//<RootAccount, sp_core::sr25519::Public>;
+    type AdminOrigin = EnsureSignedBy<One, AccountId>;//<RootAccount, sp_core::sr25519::Public>;
 }
 
 // Configure a mock runtime to test the pallet.
@@ -236,4 +249,15 @@ impl ExtBuilder {
 
 		t.into()
 	}
+}
+
+pub fn get_account_2() -> AccountId {
+	const PHRASE: &str = "topic say join drop loud labor little chest public squeeze fossil coil";
+	let keystore = KeyStore::new();
+	SyncCryptoStore::sr25519_generate_new(
+		&keystore,
+		crate::crypto::Public::ID,
+		Some(&format!("{}/hunter1", PHRASE)),
+	)
+	.unwrap()
 }
