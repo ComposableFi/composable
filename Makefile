@@ -48,9 +48,6 @@ udeps:
 dev:
 	cargo run
 
-.PHONY: deploy-production
-deploy-production: update-deployment-image apply-prod-files
-
 .PHONY: version
 version:
 	@if [ ${RELEASE_VERSION} ]; then \
