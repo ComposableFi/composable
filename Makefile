@@ -5,6 +5,7 @@ SERVICE_NAME=composable
 INSTALL_DIR=docker/
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
 RELEASE_VERSION:=$(shell git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
+CARGO_VERSION:=$(sed -i '' "s|^version =.*|version = "${VERSION}"|" node/Cargo.toml)
 AUTO_UPDATE:=1
 
 
@@ -47,16 +48,21 @@ udeps:
 dev:
 	cargo run
 
-containerize-release:
-	@docker build \
-	--build-arg SERVICE_DIR=${INSTALL_DIR} \
-       	-f ${INSTALL_DIR}/Dockerfile \
-		-t ${IMAGE_WITH_RELEASE_VERSION} \
-	. 1>/dev/null
+.PHONY: deploy-production
+deploy-production: update-deployment-image apply-prod-files
 
-containerize:
+.PHONY: version
+version:
+	@if [ ${RELEASE_VERSION} ]; then \
+	sed -i '' "s|^version =.*|version = '"${RELEASE_VERSION}"'|" node/Cargo.toml; \
+	fi;
+
+.PHONY: containerize-release
+containerize-release: version containerize
+
+containerize: 
 	@docker build \
-	--build-arg SERVICE_DIR=${INSTALL_DIR} \
+	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg VERSION=${RELEASE_VERSION} \
        	-f ${INSTALL_DIR}/Dockerfile \
 		-t ${IMAGE_WITH_COMMIT} \
 		-t ${IMAGE_WITH_RELEASE_VERSION} \
