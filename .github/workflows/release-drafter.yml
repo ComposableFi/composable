@@ -19,4 +19,5 @@ jobs:
         run: |
           echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)" >> $GITHUB_ENV
           make version
+          cat node/Cargo.toml
 
