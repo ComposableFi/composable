@@ -11,5 +11,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 
-      - name: Update Cargo.toml
-        run: make version
