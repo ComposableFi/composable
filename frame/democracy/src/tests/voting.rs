@@ -121,7 +121,7 @@ fn controversial_voting_should_work() {
 		next_block();
 
 		// Free balance is not zero, need to double check hold, temporarily commenting it.
-		// assert_eq!(Balances::free_balance(42), 2);
+		assert_eq!(Balances::free_balance(42), 2);
 	});
 }
 

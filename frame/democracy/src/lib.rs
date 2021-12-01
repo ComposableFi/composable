@@ -556,10 +556,11 @@ pub mod pallet {
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		#![allow(clippy::unnecessary_cast)]
 		fn build(&self) {
-			PublicPropCount::<T>::put(0_u32);
-			ReferendumCount::<T>::put(0_u32);
-			LowestUnbaked::<T>::put(0_u32);
+			PublicPropCount::<T>::put(0 as PropIndex);
+			ReferendumCount::<T>::put(0 as ReferendumIndex);
+			LowestUnbaked::<T>::put(0 as ReferendumIndex);
 			StorageVersion::<T>::put(Releases::V1);
 		}
 	}
@@ -802,6 +803,7 @@ pub mod pallet {
 		/// The dispatch origin of this call must be `ExternalOrigin`.
 		///
 		/// - `proposal_hash`: The preimage hash of the proposal.
+		/// - `asset_id` : The asset id of the proposal.
 		///
 		/// Weight: `O(V)` with V number of vetoers in the blacklist of proposal.
 		///   Decoding vec of length V. Charged as maximum
@@ -830,6 +832,7 @@ pub mod pallet {
 		/// The dispatch of this call must be `ExternalMajorityOrigin`.
 		///
 		/// - `proposal_hash`: The preimage hash of the proposal.
+		/// - `asset_id` : The asset id of the proposal.
 		///
 		/// Unlike `external_propose`, blacklisting has no effect on this and it may replace a
 		/// pre-scheduled `external_propose` call.
@@ -853,6 +856,7 @@ pub mod pallet {
 		/// The dispatch of this call must be `ExternalDefaultOrigin`.
 		///
 		/// - `proposal_hash`: The preimage hash of the proposal.
+		/// - `asset_id` : The asset id of the proposal preimage.
 		///
 		/// Unlike `external_propose`, blacklisting has no effect on this and it may replace a
 		/// pre-scheduled `external_propose` call.
@@ -877,6 +881,7 @@ pub mod pallet {
 		/// The dispatch of this call must be `FastTrackOrigin`.
 		///
 		/// - `proposal_hash`: The hash of the current external proposal.
+		/// - `asset_id` : The asset id of the proposal.
 		/// - `voting_period`: The period that is allowed for voting on this proposal. Increased to
 		///   `FastTrackVotingPeriod` if too low.
 		/// - `delay`: The number of block after voting has ended in approval and this should be
@@ -930,6 +935,7 @@ pub mod pallet {
 		/// The dispatch origin of this call must be `VetoOrigin`.
 		///
 		/// - `proposal_hash`: The preimage hash of the proposal to veto and blacklist.
+		/// - `asset_id` : The asset id of the proposal.
 		///
 		/// Emits `Vetoed`.
 		///
@@ -1006,6 +1012,7 @@ pub mod pallet {
 		///     through `reap_vote` or `unvote`).
 		///
 		/// - `to`: The account whose voting the `target` account's voting power will follow.
+		/// - `asset_id` : The asset id to be used in delegating.
 		/// - `conviction`: The conviction that will be attached to the delegated votes. When the
 		///   account is undelegated, the funds will be locked for the corresponding period.
 		/// - `balance`: The amount of the account's balance to be used in delegating. This must not
@@ -1037,6 +1044,8 @@ pub mod pallet {
 		///
 		/// The dispatch origin of this call must be _Signed_ and the signing account must be
 		/// currently delegating.
+		///
+		/// - `asset_id` : The asset id to be used in delegating.
 		///
 		/// Emits `Undelegated`.
 		///
@@ -1072,6 +1081,7 @@ pub mod pallet {
 		/// The dispatch origin of this call must be _Signed_.
 		///
 		/// - `encoded_proposal`: The preimage of a proposal.
+		/// - `asset_id` : The asset id of a proposal.
 		///
 		/// Emits `PreimageNoted`.
 		///
@@ -1109,6 +1119,7 @@ pub mod pallet {
 		/// The dispatch origin of this call must be _Signed_.
 		///
 		/// - `encoded_proposal`: The preimage of a proposal.
+		/// - `asset_id` : The asset id of a proposal.
 		///
 		/// Emits `PreimageNoted`.
 		///
@@ -1149,6 +1160,7 @@ pub mod pallet {
 		/// The dispatch origin of this call must be _Signed_.
 		///
 		/// - `proposal_hash`: The preimage hash of a proposal.
+		/// - `asset_id` : The asset id of a proposal.
 		/// - `proposal_length_upper_bound`: an upper bound on length of the proposal. Extrinsic is
 		///   weighted according to this value with no refund.
 		///
@@ -1201,6 +1213,7 @@ pub mod pallet {
 		/// The dispatch origin of this call must be _Signed_.
 		///
 		/// - `target`: The account to remove the lock on.
+		/// - `asset_id` : The asset id of a proposal.
 		///
 		/// Weight: `O(R)` with R number of vote of target.
 		#[pallet::weight(
@@ -1240,6 +1253,7 @@ pub mod pallet {
 		/// The dispatch origin of this call must be _Signed_, and the signer must have a vote
 		/// registered for referendum `index`.
 		///
+		/// - `asset_id` : The asset id of a referendum.
 		/// - `index`: The index of referendum of the vote to be removed.
 		///
 		/// Weight: `O(R + log R)` where R is the number of referenda that `target` has voted on.
@@ -1265,6 +1279,7 @@ pub mod pallet {
 		///
 		/// - `target`: The account of the vote to be removed; this account must have voted for
 		///   referendum `index`.
+		/// - `asset_id` : The asset id of a referendum.
 		/// - `index`: The index of referendum of the vote to be removed.
 		///
 		/// Weight: `O(R + log R)` where R is the number of referenda that `target` has voted on.
@@ -1303,6 +1318,7 @@ pub mod pallet {
 		/// The dispatch origin of this call must be `BlacklistOrigin`.
 		///
 		/// - `proposal_hash`: The proposal hash to blacklist permanently.
+		/// - `asset_id` : The asset id of a referendum.
 		/// - `ref_index`: An ongoing referendum whose hash is `proposal_hash`, which will be
 		/// cancelled.
 		///
@@ -1819,7 +1835,7 @@ impl<T: Config> Pallet<T> {
 
 				Ok(())
 			} else {
-				// slash_reserved is best_effort as well; although we could consider setting
+				// transfer_held is best_effort as well; although we could consider setting
 				// best_effort to false to catch possible errors.
 				T::NativeCurrency::transfer_held(
 					&provider,
