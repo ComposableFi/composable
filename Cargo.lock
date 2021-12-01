@@ -1359,6 +1359,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "collator-sidecar"
+version = "0.1.0"
+dependencies = [
+ "async-std",
+ "common",
+ "env_logger 0.8.4",
+ "jsonrpc-core-client",
+ "picasso-runtime",
+ "sc-rpc",
+ "serde",
+ "structopt",
+ "tide",
+ "tokio",
+ "url 1.7.2",
+]
+
+[[package]]
 name = "color_quant"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1446,6 +1463,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-state-machine",
  "sp-timestamp",
  "sp-transaction-pool",
  "structopt",
@@ -5911,22 +5929,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-vesting"
-version = "0.4.1-dev"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "os_str_bytes"
 version = "4.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5983,6 +5985,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "xcm",
 ]
 
 [[package]]
@@ -7035,24 +7038,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-vault-group"
-version = "0.1.0"
-dependencies = [
- "composable-traits",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "smallvec 1.7.0",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-vesting"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.12#d76f39995315ec36980908e4b99709bd14927044"
@@ -7105,9 +7090,11 @@ dependencies = [
  "derive_more",
  "env_logger 0.8.4",
  "envy",
+ "hex",
  "jsonrpc-core-client",
  "log 0.4.14",
  "parity-scale-codec",
+ "picasso-runtime",
  "sc-rpc",
  "serde",
  "sp-core",

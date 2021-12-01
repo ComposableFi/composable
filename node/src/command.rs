@@ -30,9 +30,11 @@ use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
+use sc_client_api::execution_extensions::ExecutionStrategies;
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
+use sp_state_machine::ExecutionStrategy;
 use std::{io::Write, net::SocketAddr};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -263,7 +265,19 @@ pub fn run() -> Result<()> {
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
-			runner.run_node_until_exit(|config| async move {
+			runner.run_node_until_exit(|mut config| async move {
+				// This is so that users can sync our chain from genesis
+				// DO NOT REMOVE.
+				if config.chain_spec.id() == "picasso" {
+					config.execution_strategies = ExecutionStrategies {
+						syncing: ExecutionStrategy::AlwaysWasm,
+						block_construction: ExecutionStrategy::AlwaysWasm,
+						importing: ExecutionStrategy::AlwaysWasm,
+						offchain_worker: ExecutionStrategy::AlwaysWasm,
+						other: ExecutionStrategy::AlwaysWasm,
+					};
+				}
+
 				let _ = &cli;
 				let para_id =
 					chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);

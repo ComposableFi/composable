@@ -19,7 +19,7 @@ codec = { package = "parity-scale-codec", version = "2.2.0", default-features = 
 envy = "0.4.2"
 serde = { version = "1", features = ["derive"] }
 
-jsonrpc-core-client = { version = "18", features = ["http", "ws"] }
+jsonrpc-core-client = { version = "18", features = ["ws"] }
 structopt = "0.3.23"
 sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
@@ -28,3 +28,6 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 common = { package = "common", path = "../../runtime/common" }
 subxt = { git = "https://github.com/composableFi/subxt", branch = "seun-0.9.12" }
 subxt-clients = { path = "../subxt-clients" }
+
+[dev-dependencies]
+hex = "0.4.3"

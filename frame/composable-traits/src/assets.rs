@@ -13,6 +13,12 @@ impl Default for XcmAssetLocation {
 	}
 }
 
+impl XcmAssetLocation {
+	pub fn new(multi_location: xcm::latest::MultiLocation) -> Self {
+		Self(multi_location)
+	}
+}
+
 pub trait RemoteAssetRegistry {
 	/// Local asset id.
 	/// Each implemented of this trait must hedge common id space for well known local assets

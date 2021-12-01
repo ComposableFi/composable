@@ -17,8 +17,8 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use codec::FullCodec;
-	use composable_traits::assets::RemoteAssetRegistry;
+	use codec::{EncodeLike, FullCodec};
+	use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
 	};
@@ -26,6 +26,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
 	use sp_std::{fmt::Debug, marker::PhantomData, str};
+	use xcm::latest::{Junction, Junctions, MultiLocation};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -104,12 +105,26 @@ pub mod pallet {
 		foreign_asset_id: ForeignAssetId,
 	}
 
+	#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
+	#[derive(Debug, Clone, Copy, Encode, Decode)]
+	pub struct ForeignRawLocation {
+		parents: u8,
+		para_id: u32,
+		asset_id: u128,
+	}
+
+	#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
+	#[derive(Debug, Clone, Copy, Encode, Decode)]
+	pub struct RawAssetPair<LocalAssetId> {
+		local_asset_id: LocalAssetId,
+		foreign_raw_location: ForeignRawLocation,
+	}
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		local_admin: Option<T::AccountId>,
 		foreign_admin: Option<T::AccountId>,
-		/*  need to decide if to write serde for this or it is ok to have admin based input
-		 * assets_pairs: Vec<AssetsPair<T::LocalAssetId, T::ForeignAssetId>>, */
+		raw_asset_pairs: Vec<RawAssetPair<T::LocalAssetId>>,
 	}
 
 	#[cfg(feature = "std")]
@@ -118,13 +133,16 @@ pub mod pallet {
 			Self {
 				local_admin: Default::default(),
 				foreign_admin: Default::default(),
-				// assets_pairs: Default::default(),
+				raw_asset_pairs: Default::default(),
 			}
 		}
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T>
+	where
+		XcmAssetLocation: EncodeLike<<T as Config>::ForeignAssetId>,
+	{
 		fn build(&self) {
 			if let Some(local_admin) = &self.local_admin {
 				<LocalAdmin<T>>::put(local_admin)
@@ -132,17 +150,18 @@ pub mod pallet {
 			if let Some(foreign_admin) = &self.foreign_admin {
 				<ForeignAdmin<T>>::put(foreign_admin)
 			}
-			// commented out until json serde is implemented for xcm location
-			// for assets_pair in &self.assets_pairs {
-			// 	<LocalToForeign<T>>::insert(
-			// 		assets_pair.local_asset_id,
-			// 		assets_pair.foreign_asset_id.clone(),
-			// 	);
-			// 	<ForeignToLocal<T>>::insert(
-			// 		assets_pair.foreign_asset_id.clone(),
-			// 		assets_pair.local_asset_id,
-			// 	);
-			// }
+
+			for p in &self.raw_asset_pairs {
+				let foreign_location = XcmAssetLocation::new(MultiLocation::new(
+					p.foreign_raw_location.parents,
+					Junctions::X2(
+						Junction::Parachain(p.foreign_raw_location.para_id),
+						Junction::GeneralKey(p.foreign_raw_location.asset_id.encode()),
+					),
+				));
+				<LocalToForeign<T>>::insert(p.local_asset_id, foreign_location.clone());
+				<ForeignToLocal<T>>::insert(foreign_location, p.local_asset_id);
+			}
 		}
 	}
 
