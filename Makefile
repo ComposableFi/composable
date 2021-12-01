@@ -51,7 +51,7 @@ dev:
 .PHONY: version
 version:
 	@if [ ${RELEASE_VERSION} ]; then \
-	sed -i '' "s|^version =.*|version = '"${RELEASE_VERSION}"'|" node/Cargo.toml; \
+	sed -i "s|^version =.*|version = '"${RELEASE_VERSION}"'|" node/Cargo.toml; \
 	fi;
 
 .PHONY: containerize-release
