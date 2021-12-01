@@ -1,6 +1,6 @@
 [package]
 name = "composable"
-version = 'v0.1.13'
+version = '0.1.14'
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
 build = "build.rs"
