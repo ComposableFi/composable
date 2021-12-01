@@ -2,7 +2,7 @@ name: Release Drafter
 on:
   push:
     branches:
-      - main
+      - stable-release
 jobs:
   update_release_draft:
     runs-on: ubuntu-latest
@@ -10,4 +10,9 @@ jobs:
       - uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+
+      - name: Set env
+        run: |
+          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)" >> $GITHUB_ENV
+          make version
 
