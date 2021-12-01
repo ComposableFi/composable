@@ -6035,6 +6035,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "xcm",
 ]
 
 [[package]]
@@ -7143,7 +7144,6 @@ dependencies = [
  "jsonrpc-core-client",
  "log 0.4.14",
  "parity-scale-codec",
- "picasso-runtime",
  "sc-rpc",
  "serde",
  "sp-core",

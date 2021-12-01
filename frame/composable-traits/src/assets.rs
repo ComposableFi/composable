@@ -19,6 +19,12 @@ impl From<XcmAssetLocation> for xcm::latest::MultiLocation {
 	}
 }
 
+impl XcmAssetLocation {
+	pub fn new(multi_location: xcm::latest::MultiLocation) -> Self {
+		Self(multi_location)
+	}
+}
+
 pub trait RemoteAssetRegistry {
 	/// Local asset id.
 	/// Each implemented of this trait must hedge common id space for well known local assets

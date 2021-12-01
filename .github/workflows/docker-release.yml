@@ -19,7 +19,8 @@ jobs:
 
     - name: Set env
       run: |
-        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)" >> $GITHUB_ENV
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^[0-9]' | tail -1)" >> $GITHUB_ENV
+        make version
 
     - name: Build and Push Artifacts to gcloud
       run: |

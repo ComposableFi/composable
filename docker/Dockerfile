@@ -1,6 +1,6 @@
 FROM composablefi/rust:latest
 
-ARG VERSION=v0.1.9
+ARG VERSION
 
 USER root
 
@@ -9,6 +9,8 @@ RUN apt-get update -y && apt-get install wget curl -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /composable
+
+COPY . /composable
 
 LABEL description="Precompiled Docker image for Composable" \
       image.author="dayo@composable.finance, sre@composable.finance" \

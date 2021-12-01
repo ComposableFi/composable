@@ -62,7 +62,6 @@ assets-registry = { package = "pallet-assets-registry", path = "../frame/assets-
 governance-registry = { package = "pallet-governance-registry", path = "../frame/governance-registry", default-features = false, optional = true}
 assets = { package = "pallet-assets", path = "../frame/assets", default-features = false, optional = true}
 
-
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
@@ -135,7 +134,6 @@ std = [
 	"indices/std",
 	"oracle/std",
 	"vault/std",
-	"call-filter/std",
 	"currency-factory/std",
 	"orml-tokens/std",
 	"orml-traits/std",
