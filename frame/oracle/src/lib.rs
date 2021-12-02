@@ -200,6 +200,12 @@ pub mod pallet {
 	pub type OracleStake<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, BalanceOf<T>>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn answer_in_transit)]
+	/// Mapping of signing key to stake
+	pub type AnswerInTransit<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, BalanceOf<T>>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn prices)]
 	/// Price for an asset and blocknumber asset was updated at
 	pub type Prices<T: Config> = StorageMap<
@@ -323,7 +329,7 @@ pub mod pallet {
 		/// Block interval is less then stale price
 		BlockIntervalLength,
 		/// There was an error transferring
-		TransferError
+		TransferError,
 	}
 
 	#[pallet::hooks]
@@ -505,18 +511,25 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let author_stake = OracleStake::<T>::get(&who).unwrap_or_else(Zero::zero);
 			ensure!(Self::is_requested(&asset_id), Error::<T>::PriceNotRequested);
-			ensure!(author_stake >= T::MinStake::get(), Error::<T>::NotEnoughStake);
+			ensure!(
+				author_stake >=
+					T::MinStake::get().saturating_add(
+						Self::answer_in_transit(&who).unwrap_or_else(Zero::zero)
+					),
+				Error::<T>::NotEnoughStake
+			);
 
 			let set_price = PrePrice {
 				price,
 				block: frame_system::Pallet::<T>::block_number(),
 				who: who.clone(),
 			};
+			let asset_info = AssetsInfo::<T>::get(asset_id);
 			PrePrices::<T>::try_mutate(asset_id, |current_prices| -> Result<(), DispatchError> {
 				// There can convert current_prices.len() to u32 safely
 				// because current_prices.len() limited by u32
 				// (type of AssetsInfo::<T>::get(asset_id).max_answers).
-				if current_prices.len() as u32 >= AssetsInfo::<T>::get(asset_id).max_answers {
+				if current_prices.len() as u32 >= asset_info.max_answers {
 					return Err(Error::<T>::MaxPrices.into())
 				}
 				if current_prices.iter().any(|candidate| candidate.who == who) {
@@ -525,6 +538,11 @@ pub mod pallet {
 				current_prices.push(set_price);
 				Ok(())
 			})?;
+
+			AnswerInTransit::<T>::mutate(&who, |transit| {
+				*transit = Some(transit.unwrap_or_else(Zero::zero).saturating_add(asset_info.slash));
+			});
+			
 			Self::deposit_event(Event::PriceSubmitted(who, asset_id, price));
 			Ok(Pays::No.into())
 		}
@@ -604,6 +622,7 @@ pub mod pallet {
 						reward_amount,
 					));
 				}
+				Self::remove_price_in_transit(&asset_id, &answer.who);
 			}
 		}
 
@@ -637,7 +656,8 @@ pub mod pallet {
 			// because pre_pruned_prices.len() limited by u32
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 			if pre_pruned_prices.len() as u32 >= asset_info.min_answers {
-				let res = Self::prune_old_pre_prices(asset_info, pre_pruned_prices, block);
+				let res =
+					Self::prune_old_pre_prices(asset_info, pre_pruned_prices, block, &asset_id);
 				let staled_prices = res.0;
 				pre_prices = res.1;
 				for p in staled_prices {
@@ -686,6 +706,7 @@ pub mod pallet {
 			asset_info: AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
 			mut pre_prices: Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 			block: T::BlockNumber,
+			asset_id: &T::AssetId,
 		) -> (
 			Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 			Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
@@ -694,6 +715,7 @@ pub mod pallet {
 			let (staled_prices, mut fresh_prices) =
 				match pre_prices.iter().position(|p| p.block >= stale_block) {
 					Some(index) => {
+						Self::remove_price_in_transit(asset_id, &pre_prices[index].who);
 						let fresh_prices = pre_prices.split_off(index);
 						(pre_prices, fresh_prices)
 					},
@@ -701,8 +723,13 @@ pub mod pallet {
 				};
 
 			// check max answer
-			if fresh_prices.len() as u32 > asset_info.max_answers {
-				fresh_prices = fresh_prices[0..asset_info.max_answers as usize].to_vec();
+			let max_answers = asset_info.max_answers;
+			if fresh_prices.len() as u32 > max_answers {
+				let pruned = fresh_prices.len() - max_answers as usize;
+				for i in pruned..fresh_prices.len() {
+					Self::remove_price_in_transit(asset_id, &fresh_prices[i].who);
+				}
+				fresh_prices = fresh_prices[0..max_answers as usize].to_vec();
 			}
 
 			(staled_prices, fresh_prices)
@@ -741,6 +768,13 @@ pub mod pallet {
 			let current_block = frame_system::Pallet::<T>::block_number();
 			let asset_info = Self::asset_info(price_id);
 			last_update.block + asset_info.block_interval < current_block
+		}
+
+		pub fn remove_price_in_transit(asset_id: &T::AssetId, who: &T::AccountId) {
+			let asset_info = AssetsInfo::<T>::get(asset_id);
+			AnswerInTransit::<T>::mutate(&who, |transit| {
+				*transit = Some(transit.unwrap_or_else(Zero::zero).saturating_sub(asset_info.slash))
+			});
 		}
 
 		pub fn get_twap(
