@@ -433,7 +433,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Deposit funds in the vault and receive LP tokens in return.
+		/// Withdraw funds
+		///
 		/// # Emits
 		///  - Event::Withdrawn
 		///
