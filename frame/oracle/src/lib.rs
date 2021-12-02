@@ -540,9 +540,10 @@ pub mod pallet {
 			})?;
 
 			AnswerInTransit::<T>::mutate(&who, |transit| {
-				*transit = Some(transit.unwrap_or_else(Zero::zero).saturating_add(asset_info.slash));
+				*transit =
+					Some(transit.unwrap_or_else(Zero::zero).saturating_add(asset_info.slash));
 			});
-			
+
 			Self::deposit_event(Event::PriceSubmitted(who, asset_id, price));
 			Ok(Pays::No.into())
 		}

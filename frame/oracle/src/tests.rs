@@ -12,7 +12,10 @@ use parking_lot::RwLock;
 use sp_core::offchain::{testing, OffchainDbExt, OffchainWorkerExt, TransactionPoolExt};
 use sp_io::TestExternalities;
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
-use sp_runtime::{traits::{BadOrigin, Zero}, Percent, RuntimeAppPublic};
+use sp_runtime::{
+	traits::{BadOrigin, Zero},
+	Percent, RuntimeAppPublic,
+};
 use std::sync::Arc;
 
 #[test]
@@ -446,7 +449,7 @@ fn test_payout_slash() {
 
 		assert_eq!(Oracle::answer_in_transit(account_1), Some(5));
 		assert_eq!(Oracle::answer_in_transit(account_2), Some(5));
-		
+
 		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
 
 		assert_eq!(Oracle::answer_in_transit(account_1), Some(0));
@@ -849,7 +852,9 @@ fn parse_price_works() {
 fn add_price_storage(price: u128, asset_id: u128, who: AccountId, block: u64) {
 	let price = PrePrice { price, block, who };
 	PrePrices::<Test>::mutate(asset_id.clone(), |current_prices| current_prices.push(price));
-	AnswerInTransit::<Test>::mutate(who, |transit| *transit = Some(transit.unwrap_or_else(Zero::zero) + 5));
+	AnswerInTransit::<Test>::mutate(who, |transit| {
+		*transit = Some(transit.unwrap_or_else(Zero::zero) + 5)
+	});
 }
 
 fn do_price_update(asset_id: u128, block: u64) {
