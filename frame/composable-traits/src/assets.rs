@@ -13,6 +13,12 @@ impl Default for XcmAssetLocation {
 	}
 }
 
+impl From<XcmAssetLocation> for xcm::latest::MultiLocation {
+	fn from(this: XcmAssetLocation) -> Self {
+		this.0
+	}
+}
+
 impl XcmAssetLocation {
 	pub fn new(multi_location: xcm::latest::MultiLocation) -> Self {
 		Self(multi_location)

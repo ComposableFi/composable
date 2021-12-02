@@ -37,12 +37,12 @@ num-traits = { version = "0.2.14", default-features = false }
 plotters = { version = "0.3.1", optional = true }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 serde = { version = '1', optional = true }
-composable-traits = { default-features = false, version = "0.0.1", path = "../composable-traits" } 
+composable-traits = { default-features = false, version = "0.0.1", path = "../composable-traits" }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93", default-features = false }
 pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
 
 [features]
