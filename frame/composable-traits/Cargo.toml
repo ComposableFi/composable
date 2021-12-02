@@ -20,6 +20,11 @@ sp-std = { default-features = false,  git = "https://github.com/paritytech/subst
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 serde = { version = '1', optional = true }
 plotters =  {version = "0.3.1", optional = true}
+proptest-derive = { version = "0.3", optional = true }
+proptest = { version = "0.9.6", optional = true }
+
+[dev-dependencies]
+proptest = { version = "0.9.6" }
 
 [dependencies.codec]
 default-features = false
@@ -27,11 +32,9 @@ features = ["derive"]
 package = "parity-scale-codec"
 version = "2.0.0"
 
-[dev-dependencies]
-proptest = "0.9.6"
-
 [features]
 default = ["std"]
+proptest-support = ["proptest", "proptest-derive"]
 std = [
     "serde",
     "codec/std",
