@@ -6,9 +6,6 @@ on:
         target:
           required: true
           description: Target node tags 
-    branches: 
-        - master
-        - stable-release
 
 env: 
   RELEASE_VERSION: ""
