@@ -819,6 +819,17 @@ fn should_check_oracles_submitted_price() {
 	t.execute_with(|| {
 		let account_2 = get_account_2();
 
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Percent::from_percent(80),
+			3,
+			3,
+			5,
+			5,
+			5
+		));
+
 		add_price_storage(100u128, 0, account_2, 0);
 		// when
 		Oracle::fetch_price_and_send_signed(&0).unwrap();

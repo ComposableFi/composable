@@ -831,14 +831,13 @@ pub mod pallet {
 			let mut to32 = AccountId32::as_ref(&account);
 			let address: T::AccountId = T::AccountId::decode(&mut to32).unwrap_or_default();
 
-			if prices.clone().into_iter().any(|price| price.who == address) {
-				return Err("Tx already submitted")
-			}
-
 			if prices.len() as u32 >= Self::asset_info(price_id).max_answers {
 				return Err("Max answers reached")
 			}
 
+			if prices.into_iter().any(|price| price.who == address) {
+				return Err("Tx already submitted")
+			}
 			// Make an external HTTP request to fetch the current price.
 			// Note this call will block until response is received.
 			let price = Self::fetch_price(price_id).map_err(|_| "Failed to fetch price")?;
