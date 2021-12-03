@@ -1,15 +1,7 @@
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use std::convert::TryInto;
-#[cfg(test)]
-extern crate quickcheck;
-#[cfg(test)]
-#[macro_use(quickcheck)]
-extern crate quickcheck_macros;
 
-//#[macro_use]
-//extern crate quickcheck;
-//use quickcheck_macro::quickcheck;
 
 /// forked from sortedvec 0.5.0
 
@@ -600,51 +592,3 @@ mod tests {
 	}
 }
 
-#[cfg(test)]
-mod slices_tests {
-	use super::*;
-
-	sortedvec_slicekey! {
-		#[derive(Debug, Clone)]
-		pub struct SortedVecOfListLikes {
-			fn derive_key(t: &String) -> &[u8] { t.as_bytes() }
-		}
-	}
-
-	#[quickcheck]
-	fn string_in_vec(mut xs: Vec<String>, s: String) -> bool {
-		let s_clone = s.clone();
-		xs.insert(xs.len() / 2, s_clone);
-		let sorted = SortedVecOfListLikes::from(xs);
-
-		sorted.find(s.as_bytes()).is_some()
-	}
-
-	#[quickcheck]
-	fn strings_in_vec(xs: Vec<String>) -> bool {
-		let sorted = SortedVecOfListLikes::from(xs.clone());
-
-		xs.into_iter().all(|s| sorted.find(s.as_bytes()).unwrap() == &s)
-	}
-
-	#[quickcheck]
-	fn in_sorted_iff_in_source(xs: Vec<String>, s: String) -> bool {
-		let sorted = SortedVecOfListLikes::from(xs.clone());
-
-		sorted.find(&s).is_some() == xs.into_iter().any(|x| x == s)
-	}
-
-	#[test]
-	fn bad_case() {
-		let case = &[
-			"\u{80}", "\u{80}", "\u{80}", "\u{80}", "", "\u{80}", "", "", "¤", "", "", "\u{80}",
-			"", "\u{80}", "", "\u{80}", "", "¤\u{0}", "¥", "", "", "¥", "", "\u{80}", "", "", "¥",
-			"\u{80}", "",
-		];
-		let sorted: SortedVecOfListLikes = case.into_iter().map(|&x| x.to_owned()).collect();
-
-		for s in case {
-			assert_eq!(s, sorted.find(s.as_bytes()).unwrap());
-		}
-	}
-}

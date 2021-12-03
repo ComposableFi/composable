@@ -32,8 +32,6 @@ rand = "0.8.4"
 serde = { version = '1', optional = true }
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
-#quickcheck = "1.0.3"
-#quickcheck_macros = "1.0.0"
 
 
 [dev-dependencies]
@@ -46,8 +44,6 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-timestamp = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 pallet-currency-factory = { path = "../currency-factory" }
 pallet-vault = { path = "../vault" }
-quickcheck = "1"
-quickcheck_macros = "1"
 
 
 [features]
