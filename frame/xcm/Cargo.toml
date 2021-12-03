@@ -1,0 +1,33 @@
+[dependencies]
+frame-support = { branch = "polkadot-v0.9.12", default-features = false, git = "https://github.com/paritytech/substrate"  }
+frame-system = { branch = "polkadot-v0.9.12", default-features = false, git = "https://github.com/paritytech/substrate" }
+parity-scale-codec = { default-features = false, version = "2.0" }
+scale-info = { default-features = false, features = ["derive"], version = "1.0" }
+sp-runtime = { branch = "polkadot-v0.9.12", default-features = false, git = "https://github.com/paritytech/substrate" }
+xcm = { branch = "release-v0.9.12", default-features = false, git = "https://github.com/paritytech/polkadot" }
+
+[dev-dependencies]
+sp-io = { branch = "polkadot-v0.9.12", default-features = false, git = "https://github.com/paritytech/substrate" }
+
+[features]
+default = ["std"]
+std = [
+    "frame-support/std",
+    "frame-system/std",
+    "parity-scale-codec/std",
+    "scale-info/std",
+    "sp-runtime/std",
+    "xcm/std"
+]
+
+[package]
+name = "pallet-composable_xcm"
+version = "1.0.0"
+authors = ["Composable Developers"]
+homepage = "https://composable.finance"
+edition = "2021"
+rust-version = "1.56"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
