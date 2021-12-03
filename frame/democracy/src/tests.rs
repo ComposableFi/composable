@@ -41,6 +41,7 @@ mod delegation;
 mod external_proposing;
 mod fast_tracking;
 mod lock_voting;
+mod multi_currency_voting;
 mod preimage;
 mod public_proposals;
 mod scheduling;
@@ -54,8 +55,13 @@ const AYE: Vote = Vote { aye: true, conviction: Conviction::None };
 const NAY: Vote = Vote { aye: false, conviction: Conviction::None };
 const BIG_AYE: Vote = Vote { aye: true, conviction: Conviction::Locked1x };
 const BIG_NAY: Vote = Vote { aye: false, conviction: Conviction::Locked1x };
+// Multi Currency Assets
 const DEFAULT_ASSET: AssetId = 1;
 const DOT_ASSET: AssetId = 2;
+const X_ASSET: AssetId = 3;
+const Y_ASSET: AssetId = 4;
+const Z_ASSET: AssetId = 5;
+
 const MAX_PROPOSALS: u32 = 100;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -259,6 +265,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 			(4, DOT_ASSET, 40),
 			(5, DOT_ASSET, 50),
 			(6, DOT_ASSET, 60),
+			(1, X_ASSET, 100),
+			(2, X_ASSET, 200),
+			(3, X_ASSET, 300),
+			(4, X_ASSET, 400),
+			(5, X_ASSET, 500),
+			(6, X_ASSET, 600),
 		],
 	}
 	.assimilate_storage(&mut t)
@@ -318,7 +330,7 @@ fn set_balance_proposal_hash_and_note(value: u64) -> ProposalId<H256, AssetId> {
 	ProposalId { hash: h, asset_id: DEFAULT_ASSET }
 }
 
-fn set_balance_proposal_hash_and_note_and_asset_id(
+fn set_balance_proposal_hash_and_note_and_asset(
 	value: u64,
 	asset_id: AssetId,
 ) -> ProposalId<H256, AssetId> {
@@ -338,6 +350,11 @@ fn propose_set_balance(who: u64, value: u64, delay: u64) -> DispatchResult {
 
 fn propose_set_balance_and_note(who: u64, value: u64, delay: u64) -> DispatchResult {
 	let id = set_balance_proposal_hash_and_note(value);
+	Democracy::propose(Origin::signed(who), id.hash, id.asset_id, delay)
+}
+
+fn propose_set_balance_and_note_and_asset(who: u64, value: u64, asset_id: AssetId, delay: u64) -> DispatchResult {
+	let id = set_balance_proposal_hash_and_note_and_asset(value, asset_id);
 	Democracy::propose(Origin::signed(who), id.hash, id.asset_id, delay)
 }
 

@@ -46,6 +46,20 @@ fn deposit_for_proposals_should_be_taken() {
 }
 
 #[test]
+fn deposit_for_proposals_with_asset_should_be_taken() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(propose_set_balance_and_note_and_asset(1, 2, DOT_ASSET, 5));
+		assert_ok!(Democracy::second(Origin::signed(2), 0, u32::MAX));
+		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
+		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
+		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
+		assert_eq!(Balances::free_balance(1), 5);
+		assert_eq!(Balances::free_balance(2), 15);
+		assert_eq!(Balances::free_balance(5), 35);
+	});
+}
+
+#[test]
 fn deposit_for_proposals_should_be_returned() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(propose_set_balance_and_note(1, 2, 5));

@@ -127,7 +127,7 @@ fn lock_voting_should_work_without_native_asset() {
 		System::set_block_number(0);
 		let r = Democracy::inject_referendum(
 			2,
-			set_balance_proposal_hash_and_note_and_asset_id(2, DOT_ASSET),
+			set_balance_proposal_hash_and_note_and_asset(2, DOT_ASSET),
 			VoteThreshold::SuperMajorityApprove,
 			0,
 		);
