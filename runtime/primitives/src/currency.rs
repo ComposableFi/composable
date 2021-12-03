@@ -64,3 +64,12 @@ impl From<u128> for CurrencyId {
 		CurrencyId(raw)
 	}
 }
+
+/// maps id to junction generic key,
+/// unfortunately it is the best way to encode currency id as of now in XCM
+#[cfg(feature = "develop")]
+impl From<CurrencyId> for xcm::latest::Junction {
+	fn from(this: CurrencyId) -> Self {
+		xcm::latest::Junction::GeneralKey(this.encode())
+	}
+}
