@@ -23,7 +23,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Run ansible playbook
-      workingDirectory: "/opt/ansible/inventory"
+      working-directory: "/opt/ansible/inventory"
       run: |
         echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^[0-9]' | tail -1)" >> $GITHUB_ENV
         ansible-playbook -l $TARGET $PLAYBOOK -i $INVENTORY_FILE -e 'ansible_python_interpreter=/usr/bin/python3'
