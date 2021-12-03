@@ -2,6 +2,10 @@ name: Run Ansible Playbooks
 
 on: 
   workflow_dispatch:
+    inputs:
+        target:
+          required: true
+          description: Target node tags 
     branches: 
         - master
         - stable-release
@@ -12,7 +16,7 @@ on:
 
 env: 
   RELEASE_VERSION: ""
-  TARGET: "test_node_yes"
+  TARGET: ${{ github.event.inputs.target }}
   PLAYBOOK: "client-upgrade.yml"
   INVENTORY_FILE: "gcp.yaml"
 
