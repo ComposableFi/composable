@@ -1,51 +1,39 @@
 #![cfg(test)]
 
 use crate::sortedvec::{BribesStorage, FastMap};
-use composable_traits::{bribe::{Bribe, CreateBribeRequest}, democracy::Democracy};
+use composable_traits::{
+	bribe::{Bribe, CreateBribeRequest},
+	democracy::Democracy,
+};
 use pallet_democracy::{ReferendumIndex, Vote};
 
-
 #[test]
-fn bribe_request(){
-
+fn bribe_request() {
 	let mut FastVec: FastMap = FastMap::new();
 	let ref_index: u32 = 20;
 	let amount: u32 = 100;
 	let votes: u32 = 3;
 
-/*
-	let request = CreateBribeRequest{
-	account_id: 2,
-	ref_index: 2,
-	total_reward: 3,
-	asset_id: 3,
-	requested_votes: 3,
-	is_aye: false,
-};
-*/
+	/*
+		let request = CreateBribeRequest{
+		account_id: 2,
+		ref_index: 2,
+		total_reward: 3,
+		asset_id: 3,
+		requested_votes: 3,
+		is_aye: false,
+	};
+	*/
 	let id = 333;
 
-
-//BribeRequests::<T>::insert(id, request);
-
+	//BribeRequests::<T>::insert(id, request);
 
 	FastVec::add(amount, ref_index, votes);
 
 	FastVec::find_all_pid(ref_index);
 
-	 FastVec::remove_bribe(amount, ref_index, votes);
-
-
-
-
+	FastVec::remove_bribe(amount, ref_index, votes);
 }
-
-
-
-
-
-
-
 
 /// Test the Fast Vec functions and make sure they return a sorted result
 #[test]
