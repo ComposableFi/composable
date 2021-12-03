@@ -18,8 +18,12 @@ env:
 
 jobs:
   run-playbooks:
-    runs-on: self-hosted
-    
+    runs-on: 
+        - self-hosted
+        - linux
+        - X64
+        - ansible-runner
+
     steps:
     - uses: actions/checkout@v2
     - name: Run ansible playbook
