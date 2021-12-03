@@ -2,12 +2,6 @@
 
 use crate::sortedvec::{BribesStorage, FastMap};
 
-
-
-
-
-
-
 /// Test the Fast Vec functions and make sure they return a sorted result
 #[test]
 fn test_fastvec() {

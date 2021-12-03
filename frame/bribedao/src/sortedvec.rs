@@ -2,7 +2,6 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use std::convert::TryInto;
 
-
 /// forked from sortedvec 0.5.0
 
 /// A macro that defines a sorted vector data structure.
@@ -591,4 +590,3 @@ mod tests {
 		}
 	}
 }
-
