@@ -60,7 +60,6 @@ const DEFAULT_ASSET: AssetId = 1;
 const DOT_ASSET: AssetId = 2;
 const X_ASSET: AssetId = 3;
 const Y_ASSET: AssetId = 4;
-const Z_ASSET: AssetId = 5;
 
 const MAX_PROPOSALS: u32 = 100;
 
@@ -353,7 +352,12 @@ fn propose_set_balance_and_note(who: u64, value: u64, delay: u64) -> DispatchRes
 	Democracy::propose(Origin::signed(who), id.hash, id.asset_id, delay)
 }
 
-fn propose_set_balance_and_note_and_asset(who: u64, value: u64, asset_id: AssetId, delay: u64) -> DispatchResult {
+fn propose_set_balance_and_note_and_asset(
+	who: u64,
+	value: u64,
+	asset_id: AssetId,
+	delay: u64,
+) -> DispatchResult {
 	let id = set_balance_proposal_hash_and_note_and_asset(value, asset_id);
 	Democracy::propose(Origin::signed(who), id.hash, id.asset_id, delay)
 }
