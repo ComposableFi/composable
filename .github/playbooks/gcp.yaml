@@ -1,0 +1,19 @@
+---
+plugin: gcp_compute
+projects:
+  - composable-ops-5568
+hostname:
+  - name
+keyed_groups:
+  - key: labels
+groups:
+  collator-node: "collator' in (labels|list)"
+  bootnode: "'bootnode' in (labels|list)"
+  validator-node: "'validator' in (labels|list)"
+  rpc-node: "'rpc' in (labels|list)"
+  testnode: "testnode' in (labels|list)"
+filters: []
+auth_kind: serviceaccount
+service_account_file: /opt/ansible/inventory/new.json
+vars:
+  - ansible_python_interpreter: /usr/bin/python3

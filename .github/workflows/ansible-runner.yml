@@ -1,0 +1,30 @@
+name: Run Ansible Playbooks
+
+on: 
+  workflow_dispatch:
+    inputs:
+        target:
+          required: true
+          description: Target node tags 
+
+env: 
+  RELEASE_VERSION: ""
+  TARGET: ${{ github.event.inputs.target }}
+  PLAYBOOK: "client-upgrade.yml"
+  INVENTORY_FILE: "gcp.yaml"
+
+jobs:
+  run-playbooks:
+    runs-on: 
+        - self-hosted
+        - linux
+        - X64
+        - ansible-runner
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run ansible playbook
+      working-directory: "/opt/ansible/inventory"
+      run: |
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^[0-9]' | tail -1)" >> $GITHUB_ENV
+        ansible-playbook -l $TARGET $PLAYBOOK -i $INVENTORY_FILE -e 'ansible_python_interpreter=/usr/bin/python3'
