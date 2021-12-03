@@ -1346,13 +1346,14 @@ pub mod pallet {
 					let (prop_index, ..) = props.remove(index);
 					if let Some((whos, amount)) = DepositOf::<T>::take(prop_index) {
 						for who in whos.into_iter() {
-							T::NativeCurrency::transfer_held(
+							let trans_amount = T::NativeCurrency::transfer_held(
 								&who,
 								&T::TreasuryAccount::get(),
 								amount,
 								true,
 								false,
 							)?;
+							debug_assert_eq!(trans_amount, amount);
 						}
 					}
 				}
@@ -1394,13 +1395,14 @@ pub mod pallet {
 			PublicProps::<T>::mutate(|props| props.retain(|p| p.0 != prop_index));
 			if let Some((whos, amount)) = DepositOf::<T>::take(prop_index) {
 				for who in whos.into_iter() {
-					T::NativeCurrency::transfer_held(
+					let trans_amount = T::NativeCurrency::transfer_held(
 						&who,
 						&T::TreasuryAccount::get(),
 						amount,
 						true,
 						false,
 					)?;
+					debug_assert_eq!(trans_amount, amount);
 				}
 			}
 
@@ -1837,13 +1839,14 @@ impl<T: Config> Pallet<T> {
 			} else {
 				// transfer_held is best_effort as well; although we could consider setting
 				// best_effort to false to catch possible errors.
-				T::NativeCurrency::transfer_held(
+				let trans_amount = T::NativeCurrency::transfer_held(
 					&provider,
 					&T::TreasuryAccount::get(),
 					deposit,
 					true,
 					false,
 				)?;
+				debug_assert_eq!(trans_amount, deposit);
 				Self::deposit_event(Event::<T>::PreimageInvalid(proposal_id.hash, index));
 				Err(Error::<T>::PreimageInvalid.into())
 			}
