@@ -1,0 +1,69 @@
+[package]
+name = "pallet-bribedao"
+version = "0.0.1"
+authors = ["Composable Developers"]
+homepage = "https://composable.finance"
+edition = "2018"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies.codec]
+default-features = false
+features = ["derive", "max-encoded-len"]
+package = "parity-scale-codec"
+version = "2.3.1"
+
+[dependencies]
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+pallet-democracy = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+pallet-vault = { default-features = false, path = "../vault", optional = true }
+plotters = { version = "0.3.1", optional = true }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+scale-info = { version = "1.0", default-features = false, features=["derive"]}
+composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.12' }
+rand = "0.8.4"
+serde = { version = '1', optional = true }
+log = { version = "0.4.14", default-features = false }
+num-traits = { version = "0.2.14", default-features = false }
+#quickcheck = "1.0.3"
+#quickcheck_macros = "1.0.0"
+
+
+[dev-dependencies]
+proptest = "0.9.6"
+serde = "1.0.119"
+hex-literal = "0.3.1"
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84", default-features = false }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+pallet-timestamp = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+pallet-currency-factory = { path = "../currency-factory" }
+pallet-vault = { path = "../vault" }
+quickcheck = "1"
+quickcheck_macros = "1"
+
+
+[features]
+default = ["std"]
+std = [
+    "serde/std",
+    "codec/std",
+    "log/std",
+    "frame-support/std",
+    "frame-system/std",
+    "pallet-democracy/std",
+    "sp-runtime/std",
+    "sp-io/std",
+    "sp-core/std",
+    "sp-std/std",
+    "sp-arithmetic/std",
+    "composable-traits/std",
+    "pallet-vault/std",
+]

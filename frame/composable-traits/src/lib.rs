@@ -12,3 +12,5 @@ pub mod math;
 pub mod oracle;
 pub mod rate_model;
 pub mod vault;
+pub mod democracy;
+pub mod bribe;
