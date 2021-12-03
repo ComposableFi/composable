@@ -2,8 +2,8 @@ use crate::{
 	mocks::{
 		currency_factory::MockCurrencyId,
 		tests::{
-			AccountId, Balance, BlockNumber, ExtBuilder, Origin, Test, Tokens, Vaults,
-			ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, MINIMUM_BALANCE,
+			AccountId, Balance, BlockNumber, Event, ExtBuilder, Origin, System, Test, Tokens,
+			Vaults, ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, MINIMUM_BALANCE,
 		},
 	},
 	models::VaultInfo,
@@ -143,6 +143,17 @@ proptest! {
 	#![proptest_config(ProptestConfig::with_cases(10000))]
 
 	#[test]
+	fn liquidate_strategy_successfully_liquidates_a_strategy_account(
+		strategy_account_id in strategy_account(),
+		total_funds in valid_amounts_without_overflow_1()
+	) {
+		do_liquidate_strategy_successfully_liquidates_a_strategy_account(
+			strategy_account_id,
+			total_funds
+		)
+	}
+
+	#[test]
 	fn vault_strategy_withdraw_deposit_identity(
 		strategy_account_id in strategy_account(),
 		total_funds in valid_amounts_without_overflow_1()
@@ -164,8 +175,7 @@ proptest! {
 
 			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, total_funds));
 
-			let expected_strategy_funds =
-				strategy_share.mul_floor(total_funds);
+			let expected_strategy_funds = strategy_share.mul_floor(total_funds);
 
 			let available_funds = <Vaults as StrategicVault>::available_funds(&vault_id, &strategy_account_id);
 			prop_assert!(
@@ -213,8 +223,7 @@ proptest! {
 
 			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, total_funds));
 
-			let expected_strategy_funds =
-				strategy_share.mul_floor(total_funds);
+			let expected_strategy_funds = strategy_share.mul_floor(total_funds);
 
 			let available_funds = <Vaults as StrategicVault>::available_funds(&vault_id, &strategy_account_id);
 			prop_assert!(
@@ -655,5 +664,55 @@ fn test_vault_emergency_shutdown() {
 			.expect("depositing in restarted vault should succeed");
 		Vaults::withdraw(Origin::signed(ALICE), id, 100)
 			.expect("withdrawing from restarted vault should succeed");
+	});
+}
+
+#[test]
+fn liquidate_strategy_can_not_be_executed_by_non_manager_accounts() {
+	ExtBuilder::default().build().execute_with(|| {
+		let (id, _) = create_vault(ALICE, MockCurrencyId::A);
+		assert_noop!(
+			Vaults::liquidate_strategy(Origin::signed(BOB), id, 100),
+			Error::<Test>::AccountIsNotManager
+		);
+	});
+}
+
+fn do_liquidate_strategy_successfully_liquidates_a_strategy_account(
+	strategy_account_id: AccountId,
+	total_funds: Balance,
+) {
+	let currency_id = MockCurrencyId::A;
+	let strategy_share = Perquintill::from_percent(20);
+
+	let strategy_vault = strategy_share.mul_floor(total_funds);
+
+	ExtBuilder::default().build().execute_with(|| {
+		System::set_block_number(1);
+
+		Tokens::mint_into(currency_id, &ALICE, total_funds).unwrap();
+
+		let (id, _) = create_vault(strategy_account_id, currency_id);
+
+		Vaults::deposit(Origin::signed(ALICE), id, total_funds).unwrap();
+		assert_eq!(Tokens::balance(currency_id, &strategy_account_id), 0);
+
+		<Vaults as StrategicVault>::withdraw(&id, &strategy_account_id, strategy_vault).unwrap();
+		assert!(Allocations::<Test>::try_get(id, strategy_account_id).is_ok());
+		assert_eq!(Tokens::balance(currency_id, &strategy_account_id), strategy_vault);
+
+		Vaults::liquidate_strategy(Origin::signed(ALICE), id, strategy_account_id).unwrap();
+		assert!(Allocations::<Test>::try_get(id, strategy_account_id).is_err());
+		assert_eq!(
+			<Vaults as StrategicVault>::available_funds(&id, &strategy_account_id),
+			Ok(FundsAvailability::MustLiquidate)
+		);
+		System::assert_has_event(Event::Vaults(crate::Event::LiquidateStrategy {
+			account: strategy_account_id,
+			amount: strategy_vault,
+		}));
+
+		<Vaults as StrategicVault>::deposit(&id, &strategy_account_id, strategy_vault).unwrap();
+		assert_eq!(Tokens::balance(currency_id, &strategy_account_id), 0);
 	});
 }
