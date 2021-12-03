@@ -1,6 +1,6 @@
 //! Setup of Picasso running as if it is on Kusama relay
 use common::AccountId;
-use cumulus_primitives_core::{ParaId, XcmpMessageHandler};
+use cumulus_primitives_core::ParaId;
 use polkadot_primitives::v1::{BlockNumber, MAX_CODE_SIZE, MAX_POV_SIZE};
 use polkadot_runtime_parachains::configuration::HostConfiguration;
 use primitives::currency::CurrencyId;
@@ -99,8 +99,7 @@ pub fn kusama_ext() -> sp_io::TestExternalities {
 	balances::GenesisConfig::<Runtime> {
 		balances: vec![
 			(AccountId::from(ALICE), ALICE_RELAY_BALANCE),
-			(ParaId::from(PICASSO_PARA_ID).into_account(), 10 * PICA),
-			//(ParaId::from(DALI_PARA_ID).into_account(), 0),
+			(ParaId::from(PICASSO_PARA_ID).into_account(), PICASSO_RELAY_BALANCE),
 		],
 	}
 	.assimilate_storage(&mut storage)
@@ -124,6 +123,7 @@ pub fn kusama_ext() -> sp_io::TestExternalities {
 
 pub const ALICE_PARACHAIN_BALANCE: u128 = 200 * 1_000_000_000_000;
 pub const ALICE_PARACHAIN_PICA: u128 = 200 * 1_000_000_000_000;
+pub const ALICE_PARACHAIN_KSM: u128 = 13 * 1_000_000_000_000;
 
 pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	let parachain_id = parachain_id.into();
@@ -141,7 +141,10 @@ pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	)
 	.unwrap();
 	orml_tokens::GenesisConfig::<Runtime> {
-		balances: vec![(AccountId::from(ALICE), CurrencyId::PICA, ALICE_PARACHAIN_PICA)],
+		balances: vec![
+			(AccountId::from(ALICE), CurrencyId::PICA, ALICE_PARACHAIN_PICA),
+			(AccountId::from(ALICE), CurrencyId::KSM, ALICE_PARACHAIN_KSM),
+		],
 	}
 	.assimilate_storage(&mut storage)
 	.unwrap();
