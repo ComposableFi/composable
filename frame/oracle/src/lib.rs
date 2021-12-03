@@ -727,8 +727,8 @@ pub mod pallet {
 			let max_answers = asset_info.max_answers;
 			if fresh_prices.len() as u32 > max_answers {
 				let pruned = fresh_prices.len() - max_answers as usize;
-				for i in pruned..fresh_prices.len() {
-					Self::remove_price_in_transit(asset_id, &fresh_prices[i].who);
+				for price in fresh_prices.iter().skip(pruned) {
+					Self::remove_price_in_transit(asset_id, &price.who);
 				}
 				fresh_prices = fresh_prices[0..max_answers as usize].to_vec();
 			}
