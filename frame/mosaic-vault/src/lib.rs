@@ -500,7 +500,7 @@ pub mod pallet {
 
 			 <TransferLockupTime<T>>::put(lockup_time);
 
-			 let action = b"Transfer".to_vec();//.as_bytes().to_vec();
+			 let action = b"Transfer".to_vec();
 
 			 Self::deposit_event(Event::LockupTimeChanged{sender, old_lockup_time, lockup_time, action});
 
