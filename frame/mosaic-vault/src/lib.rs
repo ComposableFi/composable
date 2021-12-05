@@ -662,8 +662,6 @@ pub mod pallet {
 
 			  <LastWithdrawID<T>>::put(deposit_id);
 
-			  let pallet_account_id = Self::account_id();
-
 			  let withdraw_amount = amount.saturating_sub(fee);
 
 			 T::Currency::mint_into(asset_id, &destination_account, withdraw_amount).map_err(|_|Error::<T>::MintToFailed)?;
