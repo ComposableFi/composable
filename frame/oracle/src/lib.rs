@@ -832,10 +832,12 @@ pub mod pallet {
 			let address: T::AccountId = T::AccountId::decode(&mut to32).unwrap_or_default();
 
 			if prices.len() as u32 >= Self::asset_info(price_id).max_answers {
+				log::info!("Max answers reached");
 				return Err("Max answers reached")
 			}
 
 			if prices.into_iter().any(|price| price.who == address) {
+				log::info!("Tx already submitted");
 				return Err("Tx already submitted")
 			}
 			// Make an external HTTP request to fetch the current price.
