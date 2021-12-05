@@ -139,9 +139,10 @@ pub mod pallet {
 
 	pub type DepositId = [u8; 32];
 	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
-	pub struct DepositInfo<AssetId, Balance > {
+	pub struct DepositInfo<AssetId, Balance, AccountId> {
         pub asset_id: AssetId,
 		pub amount: Balance,
+		pub account_id: AccountId,
 	}
 
 	#[pallet::storage]
@@ -212,7 +213,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn deposits)]
-	pub(super) type Deposits<T: Config> = StorageMap<_, Blake2_128Concat, DepositId, DepositInfo<T::AssetId, T::Balance>, ValueQuery>;
+	pub(super) type Deposits<T: Config> = StorageMap<_, Blake2_128Concat, DepositId, DepositInfo<T::AssetId, T::Balance, T::AccountId>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn nonce)]
@@ -413,6 +414,8 @@ pub mod pallet {
 		Overflow,
 
 		UnlockAmountGreaterThanTotalValueTransferred,
+
+		UnrecodnizedUserAccountId,
 	}
 
 	#[pallet::call]
@@ -611,10 +614,8 @@ pub mod pallet {
 
 			<LastTransfer<T>>::insert(&sender, T::BlockTimestamp::now().as_secs());
 
-			let pallet_account_id = Self::account_id();
-
-			let deposit_id = Self::generate_deposit_id(remote_network_id, &destination_address, pallet_account_id);
-            <Deposits<T>>::insert(deposit_id, DepositInfo{asset_id, amount});
+			let deposit_id = Self::generate_deposit_id(remote_network_id, &destination_address, Self::account_id());
+            <Deposits<T>>::insert(deposit_id, DepositInfo{asset_id, amount, account_id: sender.clone()});
 
 			Self::increase_total_value_transferred(asset_id, amount)?;
 			// move funds to pallet amount
@@ -741,6 +742,8 @@ pub mod pallet {
 			 ensure!(Self::has_been_unlocked(deposit_id) == false, Error::<T>::AssetUnlreadyUnlocked);
 
 			 ensure!(Self::total_value_transferred(asset_id) >= amount, Error::<T>::UnlockAmountGreaterThanTotalValueTransferred);
+
+			ensure!(Self::deposits(deposit_id).account_id == user_account_id, Error::<T>::UnrecodnizedUserAccountId);
 
 			 <HasBeenUnlocked<T>>::insert(deposit_id, true);
 
