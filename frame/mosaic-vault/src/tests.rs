@@ -116,14 +116,14 @@ fn test_set_min_transfer_delay() {
 #[test]
 fn test_set_thresh_hold() {
 	ExtBuilder::default().build().execute_with(|| {
-		MosaicVault::set_fee_thresh_hold(Origin::signed(ALICE), 500).ok();
-		assert_noop!(MosaicVault::set_fee_thresh_hold(Origin::signed(BOB), 100), BadOrigin);
+		MosaicVault::set_fee_threshold(Origin::signed(ALICE), 500).ok();
+		assert_noop!(MosaicVault::set_fee_threshold(Origin::signed(BOB), 100), BadOrigin);
 		assert_noop!(
-			MosaicVault::set_fee_thresh_hold(Origin::signed(ALICE), 100),
+			MosaicVault::set_fee_threshold(Origin::signed(ALICE), 100),
 			Error::<Test>::ThresholdFeeAboveThresholdFactor
 		);
 
-		assert_ok!(MosaicVault::set_fee_thresh_hold(Origin::signed(ALICE), 90));
+		assert_ok!(MosaicVault::set_fee_threshold(Origin::signed(ALICE), 90));
 		assert_eq!(MosaicVault::fee_threshold(), 90);
 	})
 }

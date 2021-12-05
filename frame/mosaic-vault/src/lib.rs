@@ -568,7 +568,7 @@ pub mod pallet {
 		 }
 
 		 #[pallet::weight(10_000)]
-		 pub fn set_fee_thresh_hold(origin: OriginFor<T>, new_fee_threshold: T::Balance) -> DispatchResultWithPostInfo {
+		 pub fn set_fee_threshold(origin: OriginFor<T>, new_fee_threshold: T::Balance) -> DispatchResultWithPostInfo {
 
 			T::AdminOrigin::ensure_origin(origin)?;
 
