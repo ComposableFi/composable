@@ -26,29 +26,8 @@ use std::convert::TryInto;
 /// To get an overview of the exposed methods on the generated structure, see the documentation
 /// of the example module.
 ///
-/// # Example
-/// ```rust
-/// use sortedvec::sortedvec;
 ///
-/// /// Example key
-/// #[derive(PartialOrd, Ord, PartialEq, Eq, Debug, Clone, Copy)]
-/// pub struct K;
-///
-/// /// Example value
-/// #[derive(Debug, Clone)]
-/// pub struct T {
-///     key: K,
-/// }
-///
-/// sortedvec! {
-///     /// Sorted vector type that provides quick access to `T`s through `K`s.
-///     #[derive(Debug, Clone)]
-///     pub struct ExampleSortedVec {
-///         fn derive_key(t: &T) -> K { t.key }
-///     }
-/// }
-///
-/// let sv = ExampleSortedVec::default();
+/// 
 /// ```
 #[macro_export]
 macro_rules! sortedvec {
@@ -487,7 +466,7 @@ pub struct BribesStorage {
 
 sortedvec! {
 		/// lookup by (amount, votes) keys
-		#[derive(Debug, Encode, Decode, TypeInfo)]//EncodeLike
+		#[derive(Debug, Clone, Encode, Decode, TypeInfo)]//EncodeLike
 		pub struct FastMap {
 				fn derive_key(val: &BribesStorage) -> (u32, u32) {
 						(val.amount, val.votes)
@@ -522,6 +501,14 @@ impl FastMap {
 		true
 	}
 
+	/// Find values based on amount
+	pub fn find_amount(self, amount: u32) -> BribesStorage {
+		let iterme = self.inner;
+		let loot: Vec<BribesStorage> = iterme.into_iter().filter(|a| a.amount == amount).collect();
+		let myloot: BribesStorage = *loot.last().unwrap(); //change to something safer then unwrap
+		myloot
+}
+
 	/// Find all
 	pub fn find_all_pid(self, pid: u32) -> Vec<BribesStorage> {
 		let iterme = self.inner; //.into_iter();
@@ -535,58 +522,3 @@ impl FastMap {
 	}
 }
 
-#[cfg(test)]
-#[allow(unused_variables)]
-mod tests {
-	#[test]
-	fn simple() {
-		sortedvec! {
-			#[derive(Eq, PartialEq, Ord, PartialOrd, Debug, Clone, Hash)]
-			pub struct TestVec {
-				fn derive_key(x: &u32) -> u32 { *x }
-			}
-		}
-
-		let sv: TestVec = (0u32..10).collect();
-		assert!(sv.find(&5) == Some(&5));
-		assert_eq!(10, sv.len());
-		let v: Vec<_> = sv.clone().into();
-	}
-
-	#[test]
-	fn more_complex() {
-		#[derive(Debug, Default)]
-		struct SomeComplexValue {
-			some_map: std::collections::HashMap<String, std::path::PathBuf>,
-			name: String,
-			prio: u64,
-		}
-
-		sortedvec! {
-			/// Vec of `SomeComplexValues` that allows quick
-			/// lookup by (name, prio) keys
-			#[derive(Debug)]
-			struct ComplexMap {
-				fn derive_key(val: &SomeComplexValue) -> (&str, u64) {
-					(val.name.as_str(), val.prio)
-				}
-			}
-		}
-
-		let mut sv = ComplexMap::default();
-		sv.insert(SomeComplexValue {
-			some_map: Default::default(),
-			name: "test".to_owned(),
-			prio: 0,
-		});
-
-		assert!(sv.len() == 1);
-		assert!(sv.find(&("hello", 1)).is_none());
-		assert!(sv.remove(&("test", 0)).is_some());
-		assert!(sv.is_empty());
-
-		for val in sv {
-			println!("{:?}", val);
-		}
-	}
-}
