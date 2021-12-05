@@ -223,9 +223,7 @@ pub mod pallet {
 
 		/// Find votes for a bribe request
 		fn do_match_votes(bribe_index: BribeIndex) -> Result<bool, DispatchError> {
-			ensure!(BribeRequests::<T>::contains_key(bribe_index), Error::<T>::InvalidIndex);
-
-			let bribe_request = BribeRequests::<T>::get(bribe_index).unwrap();
+			let bribe_request = BribeRequests::<T>::try_get(bribe_index).map_err(|_| Error::<T>::InvalidIndex)?;
 
 			let ref_index = bribe_request.ref_index;
 			// Yield all the bribe votes for sale with the same ref index
