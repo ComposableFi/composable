@@ -609,13 +609,6 @@ pub mod pallet {
 			ensure!(amount <= Self::max_asset_transfer_size(asset_id), Error::<T>::AmountAboveMaxAssetTransferSize);
 
 			ensure!(amount >= Self::min_asset_transfer_size(asset_id), Error::<T>::AmountBelowMinAssetTransferSize);
-			//
-			let pallet_account_id = Self::account_id();
-            // move funds to pallet amount
-		     T::Currency::burn_from(asset_id, &sender, amount).map_err(|_|Error::<T>::BurnFromFailed)?;
-
-			Self::increase_total_value_transferred(asset_id, amount)?;
-
 			// update in_transfer_funds
 			let in_transfer_funds = Self::in_transfer_funds(asset_id);
 			let new_in_transfer_funds = in_transfer_funds.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
@@ -623,8 +616,14 @@ pub mod pallet {
 
 			<LastTransfer<T>>::insert(&sender, T::BlockTimestamp::now().as_secs());
 
+			let pallet_account_id = Self::account_id();
+
 			let deposit_id = Self::generate_deposit_id(remote_network_id, &destination_address, pallet_account_id);
             <Deposits<T>>::insert(asset_id, DepositInfo{asset_id, amount});
+
+			Self::increase_total_value_transferred(asset_id, amount)?;
+			// move funds to pallet amount
+			T::Currency::burn_from(asset_id, &sender, amount).map_err(|_|Error::<T>::BurnFromFailed)?;
 
 			Self::deposit_event(Event::DepositCompleted{
 					sender,
