@@ -284,8 +284,28 @@ fn test_deposit() {
 			transfer_delay
 		));
 
-		assert_eq!(MosaicVault::deposits(MockCurrencyId::A).asset_id, MockCurrencyId::A);
-		assert_eq!(MosaicVault::deposits(MockCurrencyId::A).amount, 500);
+		let deposit_completed = System::events()
+		.into_iter()
+		.map(|r| r.event)
+		.filter_map(|e| if let Event::MosaicVault(inner) = e { Some(inner) } else { None })
+		.last()
+		.unwrap();
+
+	if let crate::Event::DepositCompleted {
+		sender,
+		asset_id,
+		remote_asset_id,
+		remote_network_id,
+		destination_address,
+		amount,
+		deposit_id,
+		transfer_delay,
+	} = deposit_completed
+	{
+		assert_eq!(MosaicVault::deposits(deposit_id).asset_id, MockCurrencyId::A);
+		assert_eq!(MosaicVault::deposits(deposit_id).amount, 500);
+	}
+
 	})
 }
 

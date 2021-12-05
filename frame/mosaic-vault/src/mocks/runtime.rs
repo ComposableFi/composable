@@ -174,7 +174,6 @@ impl mosaic_vault::Config for Test {
 	type AssetId = MockCurrencyId;
 	type RemoteAssetId = MockCurrencyId;
 	type RemoteNetworkId = RemoteNetworkId;
-	type DepositId = DepositId;
 	type FeeFactor = FeeFactor;
 	type ThresholdFactor = ThresholdFactor;
 	type PalletId = MosaicVaultId;
