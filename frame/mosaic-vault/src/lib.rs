@@ -672,14 +672,15 @@ pub mod pallet {
 
 			  let withdraw_amount = amount.saturating_sub(fee);
 
-			 T::Currency::mint_into(asset_id, &pallet_account_id, amount).map_err(|_|Error::<T>::MintToFailed)?;
+			 T::Currency::mint_into(asset_id, &destination_account, withdraw_amount).map_err(|_|Error::<T>::MintToFailed)?;
 
-			 Self::decrease_total_value_transferred(asset_id, amount)?;
-
-			 T::Currency::transfer(asset_id, &pallet_account_id, &destination_account, withdraw_amount, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+			 Self::decrease_total_value_transferred(asset_id, withdraw_amount)?;
 
 			 if fee > T::Balance::zero() {
-                T::Currency::transfer(asset_id, &pallet_account_id, &Self::get_fee_address(), fee, true).map_err(|_|Error::<T>::TransferFromFailed)?;
+
+				T::Currency::mint_into(asset_id, &Self::get_fee_address(), fee).map_err(|_|Error::<T>::MintToFailed)?;
+
+				Self::decrease_total_value_transferred(asset_id, fee)?;
 
 				Self::deposit_event(Event::FeeTaken{
 					sender,
