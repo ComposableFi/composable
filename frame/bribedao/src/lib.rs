@@ -215,15 +215,14 @@ pub mod pallet {
 				*id
 			});
 
-			ensure!(!BribeRequests::<T>::contains_key(id), Error::<T>::AlreadyBribed); //dont duplicate briberequest if we already have it
-
 			BribeRequests::<T>::insert(id, request);
 			Ok(id)
 		}
 
 		/// Find votes for a bribe request
 		fn do_match_votes(bribe_index: BribeIndex) -> Result<bool, DispatchError> {
-			let bribe_request = BribeRequests::<T>::try_get(bribe_index).map_err(|_| Error::<T>::InvalidIndex)?;
+			let bribe_request =
+				BribeRequests::<T>::try_get(bribe_index).map_err(|_| Error::<T>::InvalidIndex)?;
 
 			let ref_index = bribe_request.ref_index;
 			// Yield all the bribe votes for sale with the same ref index
