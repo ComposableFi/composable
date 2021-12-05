@@ -210,7 +210,7 @@ pub mod pallet {
 	pub(super) type HasBeenCompleted<T: Config> = StorageMap<_, Blake2_128Concat, T::DepositId, bool, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn in_transfer_funds)]
+	#[pallet::getter(fn intransfer_funds)]
 	pub(super) type InTransferFunds<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::Balance, ValueQuery>;
 
 	#[pallet::storage]
@@ -609,10 +609,10 @@ pub mod pallet {
 			ensure!(amount <= Self::max_asset_transfer_size(asset_id), Error::<T>::AmountAboveMaxAssetTransferSize);
 
 			ensure!(amount >= Self::min_asset_transfer_size(asset_id), Error::<T>::AmountBelowMinAssetTransferSize);
-			// update in_transfer_funds
-			let in_transfer_funds = Self::in_transfer_funds(asset_id);
-			let new_in_transfer_funds = in_transfer_funds.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
-			<InTransferFunds<T>>::insert(asset_id, new_in_transfer_funds);
+			// update intransfer_funds
+			let intransfer_funds = Self::intransfer_funds(asset_id);
+			let new_intransfer_funds = intransfer_funds.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
+			<InTransferFunds<T>>::insert(asset_id, new_intransfer_funds);
 
 			<LastTransfer<T>>::insert(&sender, T::BlockTimestamp::now().as_secs());
 
@@ -717,7 +717,7 @@ pub mod pallet {
 
 			ensure!(Self::has_been_completed(deposit_id) == false, Error::<T>::AlreadCompleted);
 
-			ensure!(Self::in_transfer_funds(asset_id) >= amount, Error::<T>::InsufficientFunds);
+			ensure!(Self::intransfer_funds(asset_id) >= amount, Error::<T>::InsufficientFunds);
 
 			let deposit = Self::deposits(deposit_id);
 
@@ -725,7 +725,7 @@ pub mod pallet {
 
 			<HasBeenCompleted<T>>::insert(deposit_id, true);
 
-	       let new_intransfer_funds = Self::in_transfer_funds(asset_id).checked_sub(&amount).ok_or(Error::<T>::Underflow)?;
+	       let new_intransfer_funds = Self::intransfer_funds(asset_id).checked_sub(&amount).ok_or(Error::<T>::Underflow)?;
 
 		   <InTransferFunds<T>>::insert(asset_id, new_intransfer_funds);
 
@@ -846,7 +846,7 @@ pub mod pallet {
 
 			let available_funds = Self::total_value_transferred(asset_id);
 
-			let liquidity = available_funds.checked_sub(&Self::in_transfer_funds(asset_id)).ok_or(Error::<T>::Underflow)?;
+			let liquidity = available_funds.checked_sub(&Self::intransfer_funds(asset_id)).ok_or(Error::<T>::Underflow)?;
 
 			 Ok(liquidity)
 		}
