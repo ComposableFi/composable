@@ -8,10 +8,10 @@ fn test_fastvec() {
 	let mut fast_vec = FastMap::new();
 	// insert a bunch of test values
 	let myvec = vec![1, 4, 2, 3, 7, 5, 8, 9];
-	for xc in  myvec.iter() {
+	for xc in myvec.iter() {
 		let pid: u32 = rand::random(); // make all entries unqiue with a random u32 id
 		let num: u32 = *xc;
-		let xnum: u32 = num*100;
+		let xnum: u32 = num * 100;
 		fast_vec.add(num, pid, pid / xnum);
 	}
 

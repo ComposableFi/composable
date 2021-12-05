@@ -27,7 +27,7 @@ use std::convert::TryInto;
 /// of the example module.
 ///
 ///
-/// 
+///
 /// ```
 #[macro_export]
 macro_rules! sortedvec {
@@ -507,7 +507,7 @@ impl FastMap {
 		let loot: Vec<BribesStorage> = iterme.into_iter().filter(|a| a.amount == amount).collect();
 		let myloot: BribesStorage = *loot.last().unwrap(); //change to something safer then unwrap
 		myloot
-}
+	}
 
 	/// Find all
 	pub fn find_all_pid(self, pid: u32) -> Vec<BribesStorage> {
@@ -521,4 +521,3 @@ impl FastMap {
 		FastMap::default()
 	}
 }
-
