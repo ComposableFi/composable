@@ -349,7 +349,7 @@ fn test_withdraw() {
 				Error::<Test>::ContractPaused
 			);
 
-			assert_ok!(MosaicVault::un_pause(Origin::signed(ALICE)));
+			assert_ok!(MosaicVault::unpause(Origin::signed(ALICE)));
 			assert_noop!(
 				MosaicVault::withdraw(
 					Origin::signed(RELAYER_ACCOUNT),

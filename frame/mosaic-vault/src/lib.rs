@@ -219,7 +219,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn deposits)]
-	pub(super) type Deposits<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, DepositInfo<T::AssetId, T::Balance>, ValueQuery>;
+	pub(super) type Deposits<T: Config> = StorageMap<_, Blake2_128Concat, T::DepositId, DepositInfo<T::AssetId, T::Balance>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn nonce)]
@@ -809,7 +809,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000)]
-		pub fn un_pause(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		pub fn unpause(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 
 			T::AdminOrigin::ensure_origin(origin.clone())?;
 
@@ -863,14 +863,14 @@ pub mod pallet {
 			destination_address: &T::AccountId,
 			pallet_account_id: T::AccountId,
 		) -> [u8; 32] {
-            
-			let mut encoded_data = vec![
-				&remote_network_id.encode(),
-				&(Encode::encode(&<frame_system::Pallet<T>>::block_number())).encode(),
-				&destination_address.encode(),
-				&pallet_account_id.encode(),
-				&(Encode::encode(&Self::increment_nonce())).encode()
-			];
+
+			let encoded_data = Vec::new();
+
+			encoded_data.append(&mut remote_network_id.encode());
+			encoded_data.append(&mut <frame_system::Pallet<T>>::block_number().encode());
+			encoded_data.append(&mut destination_address.encode());
+			encoded_data.append(&mut pallet_account_id.encode());
+			encoded_data.append(&mut Self::increment_nonce().encode());
 
 			let deposit_id = keccak_256(&encoded_data);
 
