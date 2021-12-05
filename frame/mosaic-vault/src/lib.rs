@@ -863,10 +863,8 @@ pub mod pallet {
 			destination_address: &T::AccountId,
 			pallet_account_id: T::AccountId,
 		) -> [u8; 32] {
-
-			let x = remote_network_id.encode();
             
-			let mut encoded_data: &[u8] = vec![
+			let mut encoded_data = vec![
 				&remote_network_id.encode(),
 				&(Encode::encode(&<frame_system::Pallet<T>>::block_number())).encode(),
 				&destination_address.encode(),
