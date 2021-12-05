@@ -864,22 +864,15 @@ pub mod pallet {
 			pallet_account_id: T::AccountId,
 		) -> [u8; 32] {
 
-			let mut encoded_remote_network_id = Encode::encode(&remote_network_id);
-
-			let mut encoded_block_number = Encode::encode(&<frame_system::Pallet<T>>::block_number());
-
-            let mut encoded_destination_address = Encode::encode(&destination_address);
-
-			let mut encoded_pallet_account_id = Encode::encode(&pallet_account_id);
-
-			let mut encoded_nonce = Encode::encode(&Self::increment_nonce());
-
-			let mut encoded_data = Vec::new();
-			encoded_data.append(& mut encoded_remote_network_id);
-			encoded_data.append(& mut encoded_block_number);
-			encoded_data.append(& mut encoded_destination_address);
-			encoded_data.append(& mut encoded_pallet_account_id);
-			encoded_data.append(& mut encoded_nonce);
+			let x = remote_network_id.encode();
+            
+			let mut encoded_data: &[u8] = vec![
+				&remote_network_id.encode(),
+				&(Encode::encode(&<frame_system::Pallet<T>>::block_number())).encode(),
+				&destination_address.encode(),
+				&pallet_account_id.encode(),
+				&(Encode::encode(&Self::increment_nonce())).encode()
+			];
 
 			let deposit_id = keccak_256(&encoded_data);
 
