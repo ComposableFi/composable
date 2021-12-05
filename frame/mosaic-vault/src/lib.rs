@@ -619,7 +619,7 @@ pub mod pallet {
 			let pallet_account_id = Self::account_id();
 
 			let deposit_id = Self::generate_deposit_id(remote_network_id, &destination_address, pallet_account_id);
-            <Deposits<T>>::insert(asset_id, DepositInfo{asset_id, amount});
+            <Deposits<T>>::insert(deposit_id, DepositInfo{asset_id, amount});
 
 			Self::increase_total_value_transferred(asset_id, amount)?;
 			// move funds to pallet amount
