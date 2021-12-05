@@ -201,7 +201,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn answer_in_transit)]
-	/// Mapping of signing key to stake
+	/// Mapping of slash amounts currently in transit
 	pub type AnswerInTransit<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, BalanceOf<T>>;
 
