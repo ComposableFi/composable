@@ -123,6 +123,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	XcmPassthrough<Origin>,
 );
 
+#[cfg(feature = "develop")]
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	crate::Assets,
 	UnknownTokens,
