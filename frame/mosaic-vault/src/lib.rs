@@ -115,15 +115,6 @@ pub mod pallet {
 			+ Default
 			+ TypeInfo;
 
-		type DepositId: FullCodec
-			+ Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ Debug
-			+ Default
-			+ TypeInfo;
-
 		type RelayerOrigin: EnsureOrigin<Self::Origin>;
 
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
@@ -145,6 +136,8 @@ pub mod pallet {
 
 		type MinFeeDefault: Get<Self::Balance>;
 	}
+
+	pub type DepositId = [u8; 32];
 	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 	pub struct DepositInfo<AssetId, Balance > {
         pub asset_id: AssetId,
@@ -199,15 +192,15 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn has_been_withdrawn)]
-	pub(super) type HasBeenWithdrawn<T: Config> = StorageMap<_, Blake2_128Concat, T::DepositId, bool, ValueQuery>;
+	pub(super) type HasBeenWithdrawn<T: Config> = StorageMap<_, Blake2_128Concat, DepositId, bool, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn has_been_unlocked)]
-	pub(super) type HasBeenUnlocked<T: Config> = StorageMap<_, Blake2_128Concat, T::DepositId, bool, ValueQuery>;
+	pub(super) type HasBeenUnlocked<T: Config> = StorageMap<_, Blake2_128Concat, DepositId, bool, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn has_been_completed)]
-	pub(super) type HasBeenCompleted<T: Config> = StorageMap<_, Blake2_128Concat, T::DepositId, bool, ValueQuery>;
+	pub(super) type HasBeenCompleted<T: Config> = StorageMap<_, Blake2_128Concat, DepositId, bool, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn intransfer_funds)]
@@ -219,7 +212,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn deposits)]
-	pub(super) type Deposits<T: Config> = StorageMap<_, Blake2_128Concat, T::DepositId, DepositInfo<T::AssetId, T::Balance>, ValueQuery>;
+	pub(super) type Deposits<T: Config> = StorageMap<_, Blake2_128Concat, DepositId, DepositInfo<T::AssetId, T::Balance>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn nonce)]
@@ -231,11 +224,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn last_withdraw_id)]
-	pub(super) type LastWithdrawID<T: Config> = StorageValue<_, T::DepositId, ValueQuery>;
+	pub(super) type LastWithdrawID<T: Config> = StorageValue<_, DepositId, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn last_unlocked_id)]
-	pub(super) type LastUnlockedID<T: Config> = StorageValue<_, T::DepositId, ValueQuery>;
+	pub(super) type LastUnlockedID<T: Config> = StorageValue<_, DepositId, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn pause_status)]
@@ -262,7 +255,7 @@ pub mod pallet {
 		   withdraw_amount: T::Balance,
 		   fee: T::Balance,
 		   asset_id: T::AssetId,
-		   deposit_id: T::DepositId,
+		   deposit_id: DepositId,
 		},
 
         TokenAdded {
@@ -313,7 +306,7 @@ pub mod pallet {
 		TransferFundsUnlocked {
 			asset_id: T::AssetId,
 			amount: T::Balance,
-			deposit_id: T::DepositId
+			deposit_id: DepositId
 		},
 
 		FeeTaken{
@@ -322,7 +315,7 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			amount: T::Balance,
 			fee: T::Balance,
-			deposit_id: T::DepositId,
+			deposit_id: DepositId,
 		},
 
 		FeeThresholdChanged{
@@ -341,7 +334,7 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			user_account_id: T::AccountId,
 			amount: T::Balance,
-			deposit_id: T::DepositId,
+			deposit_id: DepositId,
 		},
 
 		LiquidityMoved{
@@ -647,7 +640,7 @@ pub mod pallet {
 			amount: T::Balance,
 			asset_id: T::AssetId,
 			remote_network_id: T::RemoteNetworkId,
-	        deposit_id: T::DepositId,
+	        deposit_id: DepositId,
 			fee: T::Balance,
 		 ) -> DispatchResultWithPostInfo {
 
@@ -708,7 +701,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset_id: T:: AssetId,
 			amount: T::Balance,
-			deposit_id: T::DepositId,
+			deposit_id: DepositId,
 		 ) ->DispatchResultWithPostInfo {
 
 			T::RelayerOrigin::ensure_origin(origin)?;
@@ -742,7 +735,7 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			user_account_id: T::AccountId,
 			amount: T::Balance,
-			deposit_id: T::DepositId,
+			deposit_id: DepositId,
 		 ) ->DispatchResultWithPostInfo {
 
 			 T::RelayerOrigin::ensure_origin(origin.clone())?;
@@ -864,13 +857,13 @@ pub mod pallet {
 			pallet_account_id: T::AccountId,
 		) -> [u8; 32] {
 
-			let encoded_data = Vec::new();
+			let mut encoded_data = Vec::new();
 
-			encoded_data.append(&mut remote_network_id.encode());
-			encoded_data.append(&mut <frame_system::Pallet<T>>::block_number().encode());
-			encoded_data.append(&mut destination_address.encode());
-			encoded_data.append(&mut pallet_account_id.encode());
-			encoded_data.append(&mut Self::increment_nonce().encode());
+			encoded_data.append(& mut remote_network_id.encode());
+			encoded_data.append(& mut <frame_system::Pallet<T>>::block_number().encode());
+			encoded_data.append(& mut destination_address.encode());
+			encoded_data.append(& mut pallet_account_id.encode());
+			encoded_data.append(& mut Self::increment_nonce().encode());
 
 			let deposit_id = keccak_256(&encoded_data);
 
