@@ -719,7 +719,7 @@ pub mod pallet {
 
 			ensure!(Self::in_transfer_funds(asset_id) >= amount, Error::<T>::InsufficientFunds);
 
-			let deposit = Self::deposits(asset_id);
+			let deposit = Self::deposits(deposit_id);
 
 			ensure!(deposit.asset_id == asset_id && deposit.amount == amount, Error::<T>::InsufficientFunds);
 
