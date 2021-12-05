@@ -375,7 +375,7 @@ fn test_withdraw() {
 				Error::<Test>::InsufficientAssetBalance
 			);
 
-			assert_ok!(MosaicVault::unlock_in_transfer_funds(
+			assert_ok!(MosaicVault::unlock_intransfer_funds(
 				Origin::signed(RELAYER_ACCOUNT),
 				asset_id,
 				amount,

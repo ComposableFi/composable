@@ -704,7 +704,7 @@ pub mod pallet {
 		 }
 
 		 #[pallet::weight(10_000)]
-		 pub fn unlock_in_transfer_funds(
+		 pub fn unlock_intransfer_funds(
 			origin: OriginFor<T>,
 			asset_id: T:: AssetId,
 			amount: T::Balance,
@@ -762,7 +762,7 @@ pub mod pallet {
 			Self::deposit_event(Event::FundsUnlocked{asset_id,user_account_id, amount, deposit_id});
 
 			if Self::has_been_completed(deposit_id) == false {
-				Self::unlock_in_transfer_funds(origin, asset_id, amount, deposit_id)?;
+				Self::unlock_intransfer_funds(origin, asset_id, amount, deposit_id)?;
 		    }
 
 			Ok(().into())
