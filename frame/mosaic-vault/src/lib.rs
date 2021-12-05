@@ -376,6 +376,8 @@ pub mod pallet {
 
 		InsufficientFunds,
 
+		DepositNotRegistered,
+
 		InsufficientAssetBalance,
 
 		ThresholdFeeAboveThresholdFactor,
@@ -714,7 +716,7 @@ pub mod pallet {
 
 			let deposit = Self::deposits(deposit_id);
 
-			ensure!(deposit.asset_id == asset_id && deposit.amount == amount, Error::<T>::InsufficientFunds);
+			ensure!(deposit.asset_id == asset_id && deposit.amount == amount, Error::<T>::DepositNotRegistered);
 
 			<HasBeenCompleted<T>>::insert(deposit_id, true);
 
@@ -727,8 +729,6 @@ pub mod pallet {
 			Ok(().into())
 		 }
 
-		 /// Mints funds to `user_account_id` if there was deposit previously and not yet been unlocked.
-		 /// Deposited is cleaned after.
 		 #[pallet::weight(10_000)]
 		 pub fn unlock_funds(
 			origin: OriginFor<T>,
