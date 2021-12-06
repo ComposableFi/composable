@@ -201,9 +201,7 @@ pub mod pallet {
 
 		/// Delete a finished Bribe Request
 		fn delete_bribe(request: DeleteBribeRequest) -> Result<bool, DispatchError> {
-			// todo, make sure this function can not be abused
 			Self::do_delete_bribe(request)
-			//			Ok(true)
 		}
 	}
 
@@ -276,16 +274,12 @@ pub mod pallet {
 
 		/// Take Bribe user sell votes request   
 		fn do_take_bribe(request: TakeBribeRequest<T>) -> Result<bool, DispatchError> {
-			ensure!(
-				BribeRequests::<T>::contains_key(request.bribe_index),
-				Error::<T>::InvalidIndex
-			);
 			// todo: make sure the user is not selling the same vote twice
-
-			let bribe_request = BribeRequests::<T>::get(request.bribe_index).unwrap();
+			let bribe_request = BribeRequests::<T>::try_get(request.bribe_index)
+				.map_err(|_| Error::<T>::InvalidIndex)?;
 
 			let pid = bribe_request.ref_index; // save based on the referendumIndex
-			let amount_votes: u32 = 3;
+			let amount_votes: u32 = 3; //change me
 			let amount: u32 = bribe_request.total_reward.saturated_into::<u32>(); // amount of tokens locked in
 																	  // insert into fastvec
 			Fastvec::<T>::mutate(|a| a.add(amount, pid, amount_votes));
