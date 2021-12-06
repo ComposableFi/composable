@@ -4,11 +4,7 @@ REPO=composablefi
 SERVICE_NAME=composable
 INSTALL_DIR=docker/
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
-<<<<<<< HEAD
-RELEASE_VERSION:=$(shell git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 | cut -c 2- )
-=======
-RELEASE_VERSION:=$(shell git tag --sort=committerdate | grep -E '^[0-9]' | tail -1)
->>>>>>> b8445a9640062bb767402ff05aa37d4014cb6b68
+RELEASE_VERSION:=$(shell git tag --sort=committerdate | grep -E '^${CHAIN}[0-9]' | tail -1)
 CARGO_VERSION:=$(sed -i '' "s|^version =.*|version = "${VERSION}"|" node/Cargo.toml)
 AUTO_UPDATE:=1
 
