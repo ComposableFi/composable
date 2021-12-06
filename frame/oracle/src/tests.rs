@@ -341,6 +341,12 @@ fn add_price() {
 			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128),
 			Error::<Test>::PriceNotRequested
 		);
+
+		// non existent asset_id
+		assert_noop!(
+			Oracle::submit_price(Origin::signed(account_1), 100u128, 10u128),
+			Error::<Test>::MaxPrices
+		);
 	});
 }
 
