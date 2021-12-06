@@ -26,6 +26,8 @@ pub type Amount = i128;
 pub type AccountId = u128;
 
 pub const NATIVE_CURRENCY_ID: MockCurrencyId = MockCurrencyId::PICA;
+pub const MIN_VESTED_TRANSFER: u64 = 1_000_000;
+pub const MIN_REWARD: u128 = 1_000_000;
 
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
@@ -124,7 +126,7 @@ impl orml_tokens::Config for Runtime {
 
 parameter_types! {
 	pub const MaxVestingSchedule: u32 = 2;
-	pub const MinVestedTransfer: u64 = 0;
+	pub const MinVestedTransfer: u64 = MIN_VESTED_TRANSFER;
 }
 
 impl pallet_vesting::Config for Runtime {
@@ -140,8 +142,7 @@ parameter_types! {
 	  pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
 	  pub const Stake: Balance = 10_000;
 	  pub const NativeCurrencyId: MockCurrencyId = NATIVE_CURRENCY_ID;
-	  pub const MinReward: Balance = 1_000_000;
-	  pub const MinOffer: Balance = 1_000_000;
+	  pub const MinReward: Balance = MIN_REWARD;
 }
 
 impl pallet::Config for Runtime {
@@ -153,7 +154,6 @@ impl pallet::Config for Runtime {
 	type PalletId = BondedFinanceId;
 	type Stake = Stake;
 	type MinReward = MinReward;
-	type MinOffer = MinOffer;
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type Convert = ConvertInto;
 }

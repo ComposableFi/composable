@@ -19,6 +19,27 @@
 	unused_extern_crates
 )]
 
+//! Bonded Finance pallet
+//!
+//! - [`Config`]
+//! - [`Call`]
+//!
+//! ## Overview
+//!
+//! A simple pallet providing means of submitting bond offers.
+//!
+//! ## Interface
+//!
+//! This pallet implements the `BondedFinance` trait from `composable-traits`.
+//!
+//! ## Dispatchable Functions
+//!
+//! - `offer` - Register a new bond offer, allowing use to later bond it.
+//! - `bond` - Bond to an offer, the user should provide the number of parts a user is willing to
+//!   buy.
+//! - `cancel_offer` - Cancel a running offer, blocking further bond but not cancelling the
+//!   currently vested rewards.
+
 mod mock;
 mod tests;
 
@@ -64,8 +85,12 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// A new offer has been created.
 		NewOffer { offer: T::BondOfferId },
-		/// Someone did bond to an offer.
-		NewBond { offer: T::BondOfferId, who: AccountIdOf<T>, bonded_amount: BalanceOf<T> },
+		/// A new bond has been registered.
+		NewBond { offer: T::BondOfferId, who: AccountIdOf<T>, parts: BalanceOf<T> },
+		/// An offer has been cancelled by the `AdminOrigin`.
+		OfferCancelled { offer: T::BondOfferId },
+		/// An offer has been completed.
+		OfferCompleted { offer: T::BondOfferId },
 	}
 
 	#[pallet::error]
@@ -78,8 +103,10 @@ pub mod pallet {
 		NotEnoughAsset,
 		/// Someone tried  to submit an invalid offer.
 		InvalidBondOffer,
-		/// Someone tried to bond with an invalid amount.
-		InvalidBondAmount,
+		/// Someone tried to bond an already completed offer.
+		OfferCompleted,
+		/// Someone tried to bond with an invalid number of parts.
+		InvalidParts,
 	}
 
 	#[pallet::config]
@@ -118,9 +145,6 @@ pub mod pallet {
 		/// The minimum reward for an offer.
 		type MinReward: Get<BalanceOf<Self>>;
 
-		/// The minimum asset amount for an offer.
-		type MinOffer: Get<BalanceOf<Self>>;
-
 		/// The origin that is allowed to cancel bond offers.
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
 	}
@@ -154,6 +178,11 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Create a new offer.
+		///
+		/// The dispatch origin for this call must be _Signed_ and the sender must have the
+		/// appropriate funds.
+		///
+		/// Emits a `NewOffer`.
 		#[pallet::weight(10_000)]
 		pub fn offer(origin: OriginFor<T>, offer: BondOfferOf<T>) -> DispatchResult {
 			let from = ensure_signed(origin)?;
@@ -161,19 +190,28 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Bond to an existing offer.
+		/// Bond to an offer.
+		///
+		/// The dispatch origin for this call must be _Signed_ and the sender must have the
+		/// appropriate funds.
+		///
+		/// Emits a `NewBond`.
 		#[pallet::weight(10_000)]
 		pub fn bond(
 			origin: OriginFor<T>,
 			offer: T::BondOfferId,
-			amount: BalanceOf<T>,
+			parts: BalanceOf<T>,
 		) -> DispatchResult {
 			let from = ensure_signed(origin)?;
-			Self::do_bond(offer, &from, amount)?;
+			Self::do_bond(offer, &from, parts)?;
 			Ok(())
 		}
 
-		/// Cancel an existing offer.
+		/// Cancel an offer.
+		///
+		/// The dispatch origin for this call must be _Signed_ and the sender must be `AdminOrigin`
+		///
+		/// Emits a `OfferCancelled`.
 		#[pallet::weight(10_000)]
 		pub fn cancel_offer(origin: OriginFor<T>, offer: T::BondOfferId) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
@@ -182,7 +220,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn account_id(offer: T::BondOfferId) -> AccountIdOf<T> {
+		pub fn account_id(offer: T::BondOfferId) -> AccountIdOf<T> {
 			T::PalletId::get().into_sub_account(offer)
 		}
 
@@ -192,6 +230,7 @@ pub mod pallet {
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(&offer_account, &creator, T::Stake::get(), true)?;
 			BondOffers::<T>::remove(offer_id);
+			Self::deposit_event(Event::<T>::OfferCancelled { offer: offer_id });
 			Ok(())
 		}
 
@@ -201,7 +240,10 @@ pub mod pallet {
 			offer: BondOfferOf<T>,
 		) -> Result<T::BondOfferId, DispatchError> {
 			ensure!(
-				offer.valid(T::MinOffer::get(), T::MinReward::get()),
+				offer.valid(
+					<T::Vesting as VestedTransfer>::MinVestedTransfer::get(),
+					T::MinReward::get()
+				),
 				Error::<T>::InvalidBondOffer
 			);
 			let offer_id = BondOfferCount::<T>::mutate(|offer_id| {
@@ -227,26 +269,35 @@ pub mod pallet {
 		pub fn do_bond(
 			offer_id: T::BondOfferId,
 			from: &AccountIdOf<T>,
-			amount: BalanceOf<T>,
+			parts: BalanceOf<T>,
 		) -> Result<BalanceOf<T>, DispatchError> {
 			BondOffers::<T>::try_mutate(offer_id, |offer| {
 				offer
 					.as_mut()
 					.map(|(_, offer)| {
-						ensure!(amount <= offer.amount, Error::<T>::InvalidBondAmount);
+						ensure!(offer.parts > BalanceOf::<T>::zero(), Error::<T>::OfferCompleted);
 						ensure!(
-							T::Currency::can_withdraw(offer.asset, from, amount)
+							parts > BalanceOf::<T>::zero() && parts <= offer.parts,
+							Error::<T>::InvalidParts
+						);
+						// NOTE(hussein-aitlahcen): can't overflow, subsumed by `offer.valid()` in
+						// `do_offer`
+						let value = parts * offer.price;
+						ensure!(
+							T::Currency::can_withdraw(offer.asset, from, value)
 								.into_result()
 								.is_ok(),
 							Error::<T>::NotEnoughAsset
 						);
 						let offer_account = Self::account_id(offer_id);
-						T::Currency::transfer(offer.asset, from, &offer_account, amount, true)?;
+						T::Currency::transfer(offer.asset, from, &offer_account, value, true)?;
 						let reward_share = T::Convert::convert(
 							multiply_by_rational(
-								T::Convert::convert(amount),
+								T::Convert::convert(value),
 								T::Convert::convert(offer.reward_amount),
-								T::Convert::convert(offer.amount),
+								// NOTE(hussein-aitlahcen): checked by `offer.valid()` in
+								// `do_offer`
+								T::Convert::convert(offer.total_price().expect("impossible; qed;")),
 							)
 							.map_err(|_| ArithmeticError::Overflow)?,
 						);
@@ -273,22 +324,25 @@ pub mod pallet {
 										start: block,
 										period: blocks,
 										period_count: 1,
-										per_period: amount,
+										per_period: value,
 									},
 									true,
 								)?;
 							},
 							BondDuration::Infinite => {
-								// the protocol now owns the liquidity
+								// the liquidity is now owned by us
 							},
 						}
-						(*offer).amount -= amount;
+						(*offer).parts -= parts;
 						(*offer).reward_amount -= reward_share;
 						Self::deposit_event(Event::<T>::NewBond {
 							offer: offer_id,
 							who: from.clone(),
-							bonded_amount: amount,
+							parts,
 						});
+						if offer.parts.is_zero() {
+							Self::deposit_event(Event::<T>::OfferCompleted { offer: offer_id });
+						}
 						Ok(reward_share)
 					})
 					.unwrap_or_else(|| Err(Error::<T>::BondOfferNotFound.into()))
@@ -313,9 +367,9 @@ pub mod pallet {
 		fn bond(
 			offer: Self::BondOfferId,
 			from: &Self::AccountId,
-			amount: Self::Balance,
+			parts: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			Self::do_bond(offer, from, amount)
+			Self::do_bond(offer, from, parts)
 		}
 	}
 }

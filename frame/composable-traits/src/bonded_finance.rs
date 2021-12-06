@@ -1,6 +1,8 @@
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
-use sp_runtime::traits::{CheckedAdd, Zero};
+use sp_runtime::{traits::Zero, ArithmeticError};
+
+use crate::math::SafeArithmetic;
 
 pub trait BondedFinance {
 	type AccountId;
@@ -19,27 +21,28 @@ pub trait BondedFinance {
 	fn bond(
 		offer: Self::BondOfferId,
 		from: &Self::AccountId,
-		amount: Self::Balance,
+		parts: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 }
 
 /// The Bond duration.
-/// Can either be finite or infinite, infinite representing the protocol owned liquidity case.
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-#[cfg_attr(feature = "proptest-support", derive(proptest_derive::Arbitrary))]
 pub enum BondDuration<BlockNumber> {
+	/// Finite duration, liquidity is returned after a number of `blocks`.
 	Finite { blocks: BlockNumber },
+	/// Infinite duration, the protocol is now owning the liquidity
 	Infinite,
 }
 
 /// The Bond offer.
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-#[cfg_attr(feature = "proptest-support", derive(proptest_derive::Arbitrary))]
 pub struct BondOffer<AssetId, Balance, BlockNumber> {
 	/// Asset to be locked. Unlockable after `duration`.
 	pub asset: AssetId,
-	/// Total amount of the asset to be locked.
-	pub amount: Balance,
+	/// Price of a bond.
+	pub price: Balance,
+	/// Number of bonds. We use the Balance type for the sake of simplicity.
+	pub parts: Balance,
 	/// Duration for which the asset has to be locked.
 	pub duration: BondDuration<BlockNumber>,
 	/// Asset given as reward.
@@ -50,18 +53,25 @@ pub struct BondOffer<AssetId, Balance, BlockNumber> {
 	pub reward_duration: BlockNumber,
 }
 
-impl<AssetId: PartialEq, Balance: Zero + CheckedAdd + PartialOrd, BlockNumber: Zero>
+impl<AssetId, Balance: Zero + PartialOrd + SafeArithmetic, BlockNumber: Zero>
 	BondOffer<AssetId, Balance, BlockNumber>
 {
-	pub fn valid(&self, min_offer: Balance, min_reward: Balance) -> bool {
+	pub fn total_price(&self) -> Result<Balance, ArithmeticError> {
+		self.parts.safe_mul(&self.price)
+	}
+	pub fn valid(&self, min_price: Balance, min_reward: Balance) -> bool {
 		let valid_duration = match &self.duration {
 			BondDuration::Finite { blocks } => !blocks.is_zero(),
 			BondDuration::Infinite => true,
 		};
-		let valid_reward_duration = !self.reward_duration.is_zero();
+		let valid_price = self.price >= min_price;
+		let positive_parts = !self.parts.is_zero();
+		let valid_reward = self.reward_amount >= min_reward;
+		let positive_reward_duration = !self.reward_duration.is_zero();
+		let valid_total = self.total_price().is_ok();
 		valid_duration &&
-			valid_reward_duration &&
-			self.reward_amount >= min_reward &&
-			self.amount >= min_offer
+			positive_parts &&
+			valid_price && positive_reward_duration &&
+			valid_reward && valid_total
 	}
 }
