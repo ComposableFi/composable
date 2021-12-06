@@ -17,7 +17,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
-	use pallet_democracy::Vote;
+	use pallet_democracy::{Vote, VotingOf};
 	use sp_runtime::{
 		traits::{AtLeast32BitUnsigned, Zero},
 		SaturatedConversion,
@@ -44,6 +44,8 @@ pub mod pallet {
 	>;
 
 	pub type DeleteBribeRequest = composable_traits::bribe::DeleteBribeRequest<BribeIndex>;
+
+	//	pub type VotingOf<T> = pallet_democracy::VotingOf<T>;
 
 	// Status of Bribe request
 	#[derive(Copy, Clone, Encode, Decode, PartialEq, RuntimeDebug)]
@@ -149,6 +151,8 @@ pub mod pallet {
 			request: TakeBribeRequest<T>,
 		) -> DispatchResultWithPostInfo {
 			let _from = ensure_signed(origin)?;
+			let amount_of_votes = T::Democracy::count_votes(_from.into()).unwrap();
+			//			let test = VotingOf::<T>::get(origin);
 			let bribe_index = request.bribe_index;
 			let bribe_taken = <Self as Bribe>::take_bribe(request.clone())?;
 			if bribe_taken {
