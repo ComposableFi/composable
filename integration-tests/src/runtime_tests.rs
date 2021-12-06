@@ -4,19 +4,8 @@ use crate::{
 	env_logger_init,
 	kusama_test_net::{KusamaNetwork, *},
 };
-use codec::Encode;
-use common::AccountId;
-use composable_traits::assets::RemoteAssetRegistry;
 use cumulus_primitives_core::{ChannelStatus, GetChannelInfo, ParaId};
-use kusama_runtime::{KusamaNetwork as KusamaNetworkId, *};
-use orml_traits::currency::MultiCurrency;
-use picasso_runtime as dali_runtime;
-use primitives::currency::CurrencyId;
-use sp_runtime::traits::AccountIdConversion;
-use support::assert_ok;
-use xcm::latest::prelude::*;
 use xcm_emulator::TestExt;
-use xcm_executor::XcmExecutor;
 
 ///  there is no XCM `channel` opened to Relay by design (as it is only relay).
 #[test]
