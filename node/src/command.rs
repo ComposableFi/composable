@@ -42,14 +42,16 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		// Must define the default chain here because `export-genesis-state` command
 		// does not support `--chain` and `--parachain-id` arguments simultaneously.
 		"picasso-dev" => Box::new(chain_spec::picasso_dev()),
-		// westend parachain
+		// Dali (Westend Relay)
 		"dali-westend" => Box::new(chain_spec::dali_westend()),
-		// rococo parachain
+		// Dali (Rococo Relay)
 		"dali-rococo" => Box::new(chain_spec::dali_rococo()),
-		// chachacha parachain
+		// Dali (Chachacha Relay)
 		"dali-chachacha" => Box::new(chain_spec::dali_chachacha()),
-		// kusama parachain
-		"" | "picasso" => Box::new(chain_spec::picasso()),
+		// Picasso (Kusama Relay)
+		"picasso" => Box::new(chain_spec::picasso()),
+		// Composable (Polkadot Relay)
+		"" | "composable" => Box::new(chain_spec::composable()),
 		path => Box::new(chain_spec::picasso::ChainSpec::from_json_file(
 			std::path::PathBuf::from(path),
 		)?),
@@ -165,27 +167,27 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
-		},
+		}
 		Some(Subcommand::CheckBlock(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.client, components.import_queue))
 			})
-		},
+		}
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.client, config.database))
 			})
-		},
+		}
 		Some(Subcommand::ExportState(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.client, config.chain_spec))
 			})
-		},
+		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.client, components.import_queue))
 			})
-		},
+		}
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -205,7 +207,7 @@ pub fn run() -> Result<()> {
 
 				cmd.run(config, polkadot_config)
 			})
-		},
+		}
 		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
 			Ok(cmd.run(components.client, components.backend))
 		}),
@@ -230,7 +232,7 @@ pub fn run() -> Result<()> {
 			}
 
 			Ok(())
-		},
+		}
 		Some(Subcommand::ExportGenesisWasm(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
@@ -251,8 +253,8 @@ pub fn run() -> Result<()> {
 			}
 
 			Ok(())
-		},
-		Some(Subcommand::Benchmark(cmd)) =>
+		}
+		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 
@@ -261,7 +263,8 @@ pub fn run() -> Result<()> {
 				Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
 					.into())
-			},
+			}
+		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
@@ -311,7 +314,7 @@ pub fn run() -> Result<()> {
 					.map(|r| r.0)
 					.map_err(Into::into)
 			})
-		},
+		}
 	}
 }
 
