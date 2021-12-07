@@ -274,7 +274,7 @@ pub mod pallet {
 			BondOffers::<T>::try_mutate(offer_id, |offer| {
 				offer
 					.as_mut()
-					.map(|(_, offer)| {
+					.map(|(creator, offer)| {
 						ensure!(offer.parts > BalanceOf::<T>::zero(), Error::<T>::OfferCompleted);
 						ensure!(
 							parts > BalanceOf::<T>::zero() && parts <= offer.parts,
@@ -340,7 +340,13 @@ pub mod pallet {
 							who: from.clone(),
 							parts,
 						});
-						if offer.parts.is_zero() {
+						if offer.completed() {
+							T::NativeCurrency::transfer(
+								&offer_account,
+								&creator,
+								T::Stake::get(),
+								true,
+							)?;
 							Self::deposit_event(Event::<T>::OfferCompleted { offer: offer_id });
 						}
 						Ok(reward_share)

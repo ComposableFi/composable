@@ -56,6 +56,9 @@ pub struct BondOffer<AssetId, Balance, BlockNumber> {
 impl<AssetId, Balance: Zero + PartialOrd + SafeArithmetic, BlockNumber: Zero>
 	BondOffer<AssetId, Balance, BlockNumber>
 {
+	pub fn completed(&self) -> bool {
+		self.parts.is_zero()
+	}
 	pub fn total_price(&self) -> Result<Balance, ArithmeticError> {
 		self.parts.safe_mul(&self.price)
 	}
