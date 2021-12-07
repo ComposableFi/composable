@@ -4,7 +4,12 @@ REPO=composablefi
 SERVICE_NAME=composable
 INSTALL_DIR=docker/
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
+<<<<<<< HEAD
 RELEASE_VERSION:=$(shell git fetch -t && git describe --tags $(shell git rev-list --tags --max-count=1))
+=======
+RELEASE_VERSION:=$(shell git tag --sort=committerdate | grep -E '^${CHAIN}[0-9]' | tail -1)
+CARGO_VERSION:=$(sed -i '' "s|^version =.*|version = "${VERSION}"|" node/Cargo.toml)
+>>>>>>> 7f004bf... Dali chachacha 1.0.0 (#342)
 AUTO_UPDATE:=1
 
 
