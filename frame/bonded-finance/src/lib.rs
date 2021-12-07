@@ -198,6 +198,7 @@ pub mod pallet {
 		/// appropriate funds.
 		///
 		/// Emits a `NewBond`.
+		/// Possibily Emits a `OfferCompleted`.
 		#[pallet::weight(10_000)]
 		pub fn bond(
 			origin: OriginFor<T>,
