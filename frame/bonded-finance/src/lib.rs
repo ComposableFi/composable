@@ -345,7 +345,7 @@ pub mod pallet {
 						if offer.completed() {
 							T::NativeCurrency::transfer(
 								&offer_account,
-								&creator,
+								creator,
 								T::Stake::get(),
 								true,
 							)?;

@@ -70,7 +70,7 @@ impl<AssetId, Balance: Zero + PartialOrd + SafeArithmetic, BlockNumber: Zero>
 		let valid_price = self.price >= min_transfer;
 		let positive_parts = !self.contracts.is_zero();
 		let valid_reward = self.reward_amount >= min_reward &&
-			self.reward_amount.safe_div(&self.contracts).unwrap_or(Balance::zero()) >=
+			self.reward_amount.safe_div(&self.contracts).unwrap_or_else(|_| Balance::zero()) >=
 				min_transfer;
 		let positive_reward_duration = !self.reward_duration.is_zero();
 		let valid_total = self.total_price().is_ok();
