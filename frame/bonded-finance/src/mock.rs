@@ -185,7 +185,7 @@ impl ExtBuilder {
 			.assimilate_storage(&mut t)
 			.unwrap();
 
-		pallet_vesting::GenesisConfig::<Runtime> { ignore_min_transfer: false, vesting: vec![] }
+		pallet_vesting::GenesisConfig::<Runtime> { vesting: vec![] }
 			.assimilate_storage(&mut t)
 			.unwrap();
 

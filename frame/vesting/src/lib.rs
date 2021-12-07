@@ -146,14 +146,13 @@ pub mod module {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub ignore_min_transfer: bool,
 		pub vesting: Vec<ScheduledItem<T>>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			GenesisConfig { ignore_min_transfer: false, vesting: vec![] }
+			GenesisConfig { vesting: vec![] }
 		}
 	}
 
@@ -176,10 +175,7 @@ pub mod module {
 						.try_fold::<_, _, Result<BalanceOf<T>, DispatchError>>(
 							Zero::zero(),
 							|acc_amount, schedule| {
-								let amount = ensure_valid_vesting_schedule::<T>(
-									schedule,
-									self.ignore_min_transfer,
-								)?;
+								let amount = ensure_valid_vesting_schedule::<T>(schedule)?;
 								Ok(acc_amount + amount)
 							},
 						)
@@ -221,17 +217,10 @@ pub mod module {
 			dest: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
 			schedule: VestingScheduleOf<T>,
-			ignore_min_transfer: bool,
 		) -> DispatchResult {
 			let from = T::VestedTransferOrigin::ensure_origin(origin)?;
 			let to = T::Lookup::lookup(dest)?;
-			<Self as VestedTransfer>::vested_transfer(
-				asset,
-				&from,
-				&to,
-				schedule.clone(),
-				ignore_min_transfer,
-			)?;
+			<Self as VestedTransfer>::vested_transfer(asset, &from, &to, schedule.clone())?;
 
 			Self::deposit_event(Event::VestingScheduleAdded { from, to, asset, schedule });
 			Ok(())
@@ -243,17 +232,11 @@ pub mod module {
 			who: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
 			vesting_schedules: Vec<VestingScheduleOf<T>>,
-			ignore_min_transfer: bool,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
 			let account = T::Lookup::lookup(who)?;
-			Self::do_update_vesting_schedules(
-				&account,
-				asset,
-				vesting_schedules,
-				ignore_min_transfer,
-			)?;
+			Self::do_update_vesting_schedules(&account, asset, vesting_schedules)?;
 
 			Self::deposit_event(Event::VestingSchedulesUpdated { who: account });
 			Ok(())
@@ -288,9 +271,8 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 		from: &Self::AccountId,
 		to: &Self::AccountId,
 		schedule: VestingSchedule<Self::BlockNumber, Self::Balance>,
-		ignore_min_transfer: bool,
 	) -> frame_support::dispatch::DispatchResult {
-		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule, ignore_min_transfer)?;
+		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 
 		let total_amount = Self::locked_balance(to, asset)
 			.checked_add(&schedule_amount)
@@ -343,7 +325,6 @@ impl<T: Config> Pallet<T> {
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
 		schedules: Vec<VestingScheduleOf<T>>,
-		ignore_min_transfer: bool,
 	) -> DispatchResult {
 		let bounded_schedules: BoundedVec<VestingScheduleOf<T>, T::MaxVestingSchedules> =
 			schedules.try_into().map_err(|_| Error::<T>::MaxVestingSchedulesExceeded)?;
@@ -359,7 +340,7 @@ impl<T: Config> Pallet<T> {
 			bounded_schedules.iter().try_fold::<_, _, Result<BalanceOf<T>, DispatchError>>(
 				Zero::zero(),
 				|acc_amount, schedule| {
-					let amount = ensure_valid_vesting_schedule::<T>(schedule, ignore_min_transfer)?;
+					let amount = ensure_valid_vesting_schedule::<T>(schedule)?;
 					Ok(acc_amount + amount)
 				},
 			)?;
@@ -378,7 +359,6 @@ impl<T: Config> Pallet<T> {
 /// Returns `Ok(total_total)` if valid schedule, or error.
 fn ensure_valid_vesting_schedule<T: Config>(
 	schedule: &VestingScheduleOf<T>,
-	ignore_min_transfer: bool,
 ) -> Result<BalanceOf<T>, DispatchError> {
 	ensure!(!schedule.period.is_zero(), Error::<T>::ZeroVestingPeriod);
 	ensure!(!schedule.period_count.is_zero(), Error::<T>::ZeroVestingPeriodCount);
@@ -386,10 +366,7 @@ fn ensure_valid_vesting_schedule<T: Config>(
 
 	let total_total = schedule.total_amount().ok_or(ArithmeticError::Overflow)?;
 
-	ensure!(
-		ignore_min_transfer || total_total >= T::MinVestedTransfer::get(),
-		Error::<T>::AmountLow
-	);
+	ensure!(total_total >= T::MinVestedTransfer::get(), Error::<T>::AmountLow);
 
 	Ok(total_total)
 }

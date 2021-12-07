@@ -312,7 +312,6 @@ pub mod pallet {
 								period_count: 1,
 								per_period: reward_share,
 							},
-							true,
 						)?;
 						match offer.duration {
 							BondDuration::Finite { blocks } => {
@@ -326,7 +325,6 @@ pub mod pallet {
 										period_count: 1,
 										per_period: value,
 									},
-									true,
 								)?;
 							},
 							BondDuration::Infinite => {

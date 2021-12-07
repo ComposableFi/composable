@@ -155,9 +155,8 @@ impl ExtBuilder {
 		.unwrap();
 
 		vesting::GenesisConfig::<Runtime> {
-			ignore_min_transfer: false,
 			vesting: vec![
-				// who, start, period, period_count, per_period
+				// asset, who, start, period, period_count, per_period
 				(MockCurrencyId::BTC, CHARLIE, 2, 3, 1, 5),
 				(MockCurrencyId::BTC, CHARLIE, 2 + 3, 3, 3, 5),
 			],

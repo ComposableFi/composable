@@ -17,7 +17,6 @@ pub trait VestedTransfer {
 		from: &Self::AccountId,
 		to: &Self::AccountId,
 		schedule: VestingSchedule<Self::BlockNumber, Self::Balance>,
-		ignore_min_transfer: bool,
 	) -> DispatchResult;
 }
 
