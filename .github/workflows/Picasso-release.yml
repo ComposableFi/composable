@@ -1,9 +1,29 @@
+<<<<<<< HEAD
+<<<<<<< HEAD:.github/workflows/Picasso-release.yml
 name: "Picasso Community Release"
+=======
+name: "Dali-chachacha Community Release"
+>>>>>>> 7f004bf... Dali chachacha 1.0.0 (#342):.github/workflows/dali-chachacha-release.yml
+=======
+name: "Picasso Community Release"
+>>>>>>> 7f004bf... Dali chachacha 1.0.0 (#342)
 
 on:
   push: 
     tags: 
+<<<<<<< HEAD
       - 'dali-*'
+<<<<<<< HEAD:.github/workflows/Picasso-release.yml
+=======
+
+env:
+  CHAIN: "dali"
+>>>>>>> 7f004bf... Dali chachacha 1.0.0 (#342):.github/workflows/dali-chachacha-release.yml
+=======
+      - 'picasso-*'
+env:
+  CHAIN: "picasso"
+>>>>>>> 7f004bf... Dali chachacha 1.0.0 (#342)
 
 jobs:
   build-and-publish:
@@ -19,13 +39,26 @@ jobs:
 
     - name: Set env
       run: |
+<<<<<<< HEAD
+<<<<<<< HEAD:.github/workflows/Picasso-release.yml
         echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^picasso-[0-9]' | tail -1 )" >> $GITHUB_ENV
+=======
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^dali-[0-9]' | tail -1 )" >> $GITHUB_ENV
+>>>>>>> 7f004bf... Dali chachacha 1.0.0 (#342):.github/workflows/dali-chachacha-release.yml
+=======
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^picasso-[0-9]' | tail -1 )" >> $GITHUB_ENV
+>>>>>>> 7f004bf... Dali chachacha 1.0.0 (#342)
         make version
 
     - name: Build and Push Artifacts to gcloud
       run: |
         /home/runner/.cargo/bin/cargo build --release -p composable
-        gsutil cp target/release/composable gs://composable-binaries/community-releases/${{ env.RELEASE_VERSION }}/ 
+        tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
+<<<<<<< HEAD
+        gsutil mv composable-${{ env.RELEASE_VERSION }}.tar.gz gs://composable-binaries/community-releases/dali/ 
+=======
+        gsutil mv composable-${{ env.RELEASE_VERSION }}.tar.gz gs://composable-binaries/community-releases/picasso/ 
+>>>>>>> 7f004bf... Dali chachacha 1.0.0 (#342)
 
     - name: Login to DockerHub
       uses: docker/login-action@v1 
