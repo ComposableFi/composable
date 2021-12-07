@@ -35,8 +35,8 @@
 //! ## Dispatchable Functions
 //!
 //! - `offer` - Register a new bond offer, allowing use to later bond it.
-//! - `bond` - Bond to an offer, the user should provide the number of parts a user is willing to
-//!   buy.
+//! - `bond` - Bond to an offer, the user should provide the number of contracts a user is willing
+//!   to buy.
 //! - `cancel_offer` - Cancel a running offer, blocking further bond but not cancelling the
 //!   currently vested rewards.
 
@@ -86,7 +86,7 @@ pub mod pallet {
 		/// A new offer has been created.
 		NewOffer { offer: T::BondOfferId },
 		/// A new bond has been registered.
-		NewBond { offer: T::BondOfferId, who: AccountIdOf<T>, parts: BalanceOf<T> },
+		NewBond { offer: T::BondOfferId, who: AccountIdOf<T>, contracts: BalanceOf<T> },
 		/// An offer has been cancelled by the `AdminOrigin`.
 		OfferCancelled { offer: T::BondOfferId },
 		/// An offer has been completed.
@@ -105,8 +105,8 @@ pub mod pallet {
 		InvalidBondOffer,
 		/// Someone tried to bond an already completed offer.
 		OfferCompleted,
-		/// Someone tried to bond with an invalid number of parts.
-		InvalidParts,
+		/// Someone tried to bond with an invalid number of contracts.
+		InvalidNumberOfContracts,
 	}
 
 	#[pallet::config]
@@ -143,6 +143,8 @@ pub mod pallet {
 		type Stake: Get<NativeBalanceOf<Self>>;
 
 		/// The minimum reward for an offer.
+		///
+		/// Must be > T::Vesting::MinVestedTransfer.
 		type MinReward: Get<BalanceOf<Self>>;
 
 		/// The origin that is allowed to cancel bond offers.
@@ -200,10 +202,10 @@ pub mod pallet {
 		pub fn bond(
 			origin: OriginFor<T>,
 			offer: T::BondOfferId,
-			parts: BalanceOf<T>,
+			contracts: BalanceOf<T>,
 		) -> DispatchResult {
 			let from = ensure_signed(origin)?;
-			Self::do_bond(offer, &from, parts)?;
+			Self::do_bond(offer, &from, contracts)?;
 			Ok(())
 		}
 
@@ -251,7 +253,6 @@ pub mod pallet {
 				*offer_id
 			});
 			let offer_account = Self::account_id(offer_id);
-			// TODO(hussein-aitlahcen): when should we rapatriate the stake?
 			T::NativeCurrency::transfer(from, &offer_account, T::Stake::get(), true)?;
 			T::Currency::transfer(
 				offer.reward_asset,
@@ -269,20 +270,23 @@ pub mod pallet {
 		pub fn do_bond(
 			offer_id: T::BondOfferId,
 			from: &AccountIdOf<T>,
-			parts: BalanceOf<T>,
+			contracts: BalanceOf<T>,
 		) -> Result<BalanceOf<T>, DispatchError> {
 			BondOffers::<T>::try_mutate(offer_id, |offer| {
 				offer
 					.as_mut()
 					.map(|(creator, offer)| {
-						ensure!(offer.parts > BalanceOf::<T>::zero(), Error::<T>::OfferCompleted);
 						ensure!(
-							parts > BalanceOf::<T>::zero() && parts <= offer.parts,
-							Error::<T>::InvalidParts
+							offer.contracts > BalanceOf::<T>::zero(),
+							Error::<T>::OfferCompleted
+						);
+						ensure!(
+							contracts > BalanceOf::<T>::zero() && contracts <= offer.contracts,
+							Error::<T>::InvalidNumberOfContracts
 						);
 						// NOTE(hussein-aitlahcen): can't overflow, subsumed by `offer.valid()` in
 						// `do_offer`
-						let value = parts * offer.price;
+						let value = contracts * offer.price;
 						ensure!(
 							T::Currency::can_withdraw(offer.asset, from, value)
 								.into_result()
@@ -331,12 +335,12 @@ pub mod pallet {
 								// the liquidity is now owned by us
 							},
 						}
-						(*offer).parts -= parts;
+						(*offer).contracts -= contracts;
 						(*offer).reward_amount -= reward_share;
 						Self::deposit_event(Event::<T>::NewBond {
 							offer: offer_id,
 							who: from.clone(),
-							parts,
+							contracts,
 						});
 						if offer.completed() {
 							T::NativeCurrency::transfer(
@@ -371,9 +375,9 @@ pub mod pallet {
 		fn bond(
 			offer: Self::BondOfferId,
 			from: &Self::AccountId,
-			parts: Self::Balance,
+			contracts: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			Self::do_bond(offer, from, parts)
+			Self::do_bond(offer, from, contracts)
 		}
 	}
 }

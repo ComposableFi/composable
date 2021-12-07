@@ -21,7 +21,7 @@ pub trait BondedFinance {
 	fn bond(
 		offer: Self::BondOfferId,
 		from: &Self::AccountId,
-		parts: Self::Balance,
+		contracts: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 }
 
@@ -42,7 +42,7 @@ pub struct BondOffer<AssetId, Balance, BlockNumber> {
 	/// Price of a bond.
 	pub price: Balance,
 	/// Number of bonds. We use the Balance type for the sake of simplicity.
-	pub parts: Balance,
+	pub contracts: Balance,
 	/// Duration for which the asset has to be locked.
 	pub duration: BondDuration<BlockNumber>,
 	/// Asset given as reward.
@@ -57,19 +57,21 @@ impl<AssetId, Balance: Zero + PartialOrd + SafeArithmetic, BlockNumber: Zero>
 	BondOffer<AssetId, Balance, BlockNumber>
 {
 	pub fn completed(&self) -> bool {
-		self.parts.is_zero()
+		self.contracts.is_zero()
 	}
 	pub fn total_price(&self) -> Result<Balance, ArithmeticError> {
-		self.parts.safe_mul(&self.price)
+		self.contracts.safe_mul(&self.price)
 	}
-	pub fn valid(&self, min_price: Balance, min_reward: Balance) -> bool {
+	pub fn valid(&self, min_transfer: Balance, min_reward: Balance) -> bool {
 		let valid_duration = match &self.duration {
 			BondDuration::Finite { blocks } => !blocks.is_zero(),
 			BondDuration::Infinite => true,
 		};
-		let valid_price = self.price >= min_price;
-		let positive_parts = !self.parts.is_zero();
-		let valid_reward = self.reward_amount >= min_reward;
+		let valid_price = self.price >= min_transfer;
+		let positive_parts = !self.contracts.is_zero();
+		let valid_reward = self.reward_amount >= min_reward &&
+			self.reward_amount.safe_div(&self.contracts).unwrap_or(Balance::zero()) >=
+				min_transfer;
 		let positive_reward_duration = !self.reward_duration.is_zero();
 		let valid_total = self.total_price().is_ok();
 		valid_duration &&

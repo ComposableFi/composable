@@ -14,7 +14,7 @@ use sp_runtime::helpers_128bit::multiply_by_rational;
 
 macro_rules! prop_assert_epsilon {
 	($x:expr, $y:expr) => {{
-		let precision = 1000;
+		let precision = 100;
 		let epsilon = 1;
 		let upper = precision + epsilon;
 		let lower = precision - epsilon;
@@ -52,17 +52,17 @@ fn valid_offer() {
 	assert!(BondOffer {
 		asset: MockCurrencyId::BTC,
 		price: MIN_VESTED_TRANSFER as _,
-		parts: 100_000u128,
+		contracts: 100_000u128,
 		duration: BondDuration::Infinite,
 		reward_asset: MockCurrencyId::PICA,
-		reward_amount: 1_000_000u128,
+		reward_amount: 1_000_000u128 * 100_000u128,
 		reward_duration: 96u128,
 	}
 	.valid(MinVestedTransfer::get() as _, MinReward::get()));
 	assert!(BondOffer {
 		asset: MockCurrencyId::BTC,
 		price: MIN_VESTED_TRANSFER as _,
-		parts: 1u128,
+		contracts: 1u128,
 		duration: BondDuration::Finite { blocks: 1 },
 		reward_asset: MockCurrencyId::BTC,
 		reward_amount: 1_000_000u128,
@@ -72,10 +72,10 @@ fn valid_offer() {
 	assert!(BondOffer {
 		asset: MockCurrencyId::BTC,
 		price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		parts: 100_000u128,
+		contracts: 100_000u128,
 		duration: BondDuration::Finite { blocks: 1_000_000 },
 		reward_asset: MockCurrencyId::BTC,
-		reward_amount: 1_000_000u128,
+		reward_amount: 1_000_000u128 * 100_000u128,
 		reward_duration: 96u128,
 	}
 	.valid(MinVestedTransfer::get() as _, MinReward::get()));
@@ -87,7 +87,7 @@ fn invalid_offer() {
 	assert!(!BondOffer {
 		asset: MockCurrencyId::BTC,
 		price: MIN_VESTED_TRANSFER as u128 - 1,
-		parts: 100_000u128,
+		contracts: 100_000u128,
 		duration: BondDuration::Infinite,
 		reward_asset: MockCurrencyId::PICA,
 		reward_amount: 1_000_000u128,
@@ -95,11 +95,11 @@ fn invalid_offer() {
 	}
 	.valid(MinVestedTransfer::get() as _, MinReward::get()));
 
-	// invalid parts
+	// invalid contracts
 	assert!(!BondOffer {
 		asset: MockCurrencyId::BTC,
 		price: MIN_VESTED_TRANSFER as _,
-		parts: 0,
+		contracts: 0,
 		duration: BondDuration::Finite { blocks: 1 },
 		reward_asset: MockCurrencyId::BTC,
 		reward_amount: 1_000_000u128,
@@ -111,7 +111,7 @@ fn invalid_offer() {
 	assert!(!BondOffer {
 		asset: MockCurrencyId::BTC,
 		price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		parts: 100_000u128,
+		contracts: 100_000u128,
 		duration: BondDuration::Finite { blocks: 0 },
 		reward_asset: MockCurrencyId::BTC,
 		reward_amount: 1_000_000u128,
@@ -123,10 +123,22 @@ fn invalid_offer() {
 	assert!(!BondOffer {
 		asset: MockCurrencyId::BTC,
 		price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		parts: 100_000u128,
+		contracts: 100_000u128,
 		duration: BondDuration::Finite { blocks: 1_000_000 },
 		reward_asset: MockCurrencyId::BTC,
 		reward_amount: 0,
+		reward_duration: 96u128,
+	}
+	.valid(MinVestedTransfer::get() as _, MinReward::get()));
+
+	// invalid reward: < MinVested
+	assert!(!BondOffer {
+		asset: MockCurrencyId::BTC,
+		price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
+		contracts: 100_000u128,
+		duration: BondDuration::Finite { blocks: 1_000_000 },
+		reward_asset: MockCurrencyId::BTC,
+		reward_amount: 1_000_000u128 * 100_000u128 - 1,
 		reward_duration: 96u128,
 	}
 	.valid(MinVestedTransfer::get() as _, MinReward::get()));
@@ -135,7 +147,7 @@ fn invalid_offer() {
 	assert!(!BondOffer {
 		asset: MockCurrencyId::BTC,
 		price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		parts: 100_000u128,
+		contracts: 100_000u128,
 		duration: BondDuration::Finite { blocks: 1_000_000 },
 		reward_asset: MockCurrencyId::BTC,
 		reward_amount: 1_000_000u128,
@@ -145,24 +157,29 @@ fn invalid_offer() {
 }
 
 prop_compose! {
-	  // NOTE(hussein-aitlahcen): we use u32 before casting to avoid the total_price overflow (price * parts)
-	/// Pseudo random valid simple offer
-	  fn simple_offer(min_parts: u32)
+	  // NOTE(hussein-aitlahcen): we use u32 before casting to avoid overflows
+	  /// Pseudo random valid simple offer
+	  fn simple_offer(min_contracts: Balance)
 			  (
 					  price in MIN_VESTED_TRANSFER as u128..u32::MAX as Balance,
-					  parts in min_parts..u32::MAX,
-					  duration in prop_oneof![Just(BondDuration::Infinite), (1..BlockNumber::MAX).prop_map(|blocks| BondDuration::Finite { blocks })],
-					  reward_amount in MIN_REWARD..Balance::MAX / 2, // /2 for the case of 2 users to avoid overflows
-					  reward_duration in 1..BlockNumber::MAX  / 2
+					  contracts in min_contracts..u32::MAX as Balance,
+					  duration in prop_oneof![
+							  Just(BondDuration::Infinite),
+							  (1..BlockNumber::MAX / 2).prop_map(|blocks| BondDuration::Finite { blocks })
+					  ],
+					  // avoid overflowing when advancing blocks and mint_into for a couple of offers
+					  reward_amount in MIN_REWARD..Balance::MAX / 2,
+					  reward_duration in 1..BlockNumber::MAX / 2
 			)
 			  -> BondOffer<MockCurrencyId, Balance, BlockNumber> {
 					  BondOffer {
 							  asset: MockCurrencyId::BTC,
 								price,
-								parts: parts as Balance,
+								contracts,
 								duration,
 								reward_asset: MockCurrencyId::ETH,
-								reward_amount,
+							  // min_reward is per_contract
+								reward_amount: Balance::max(MIN_REWARD.saturating_mul(contracts), reward_amount),
 								reward_duration,
 					  }
 			  }
@@ -219,12 +236,12 @@ proptest! {
 					  let offer_id = offer_id.expect("impossible; qed");
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
-					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.parts - 1));
+					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.contracts - 1));
 
 					  System::assert_last_event(Event::BondedFinance(crate::Event::NewBond {
 							  offer: offer_id,
 							  who: BOB,
-							  parts: offer.parts - 1
+							  contracts: offer.contracts - 1
 					  }));
 
 					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, 1));
@@ -232,7 +249,7 @@ proptest! {
 					  System::assert_has_event(Event::BondedFinance(crate::Event::NewBond {
 							  offer: offer_id,
 							  who: BOB,
-							  parts: 1
+							  contracts: 1
 					  }));
 
 					  System::assert_last_event(Event::BondedFinance(crate::Event::OfferCompleted { offer: offer_id }));
@@ -251,16 +268,16 @@ proptest! {
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
-					  let half_parts = offer.parts / 2;
+					  let half_contracts = offer.contracts / 2;
 					  let half_reward = offer.reward_amount / 2;
 
-					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, half_parts * offer.price));
-					  let bob_reward = BondedFinance::do_bond(offer_id, &BOB, half_parts);
+					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, half_contracts * offer.price));
+					  let bob_reward = BondedFinance::do_bond(offer_id, &BOB, half_contracts);
 					  prop_assert_ok!(bob_reward);
 					  let bob_reward = bob_reward.expect("impossible; qed;");
 
-					  prop_assert_ok!(Tokens::mint_into(offer.asset, &CHARLIE, half_parts * offer.price));
-					  let charlie_reward = BondedFinance::do_bond(offer_id, &CHARLIE, half_parts);
+					  prop_assert_ok!(Tokens::mint_into(offer.asset, &CHARLIE, half_contracts * offer.price));
+					  let charlie_reward = BondedFinance::do_bond(offer_id, &CHARLIE, half_contracts);
 					  prop_assert_ok!(charlie_reward);
 					  let charlie_reward = charlie_reward.expect("impossible; qed;");
 
@@ -293,12 +310,12 @@ proptest! {
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.parts + 1),
-							  Err(Error::<Runtime>::InvalidParts.into())
+							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.contracts + 1),
+							  Err(Error::<Runtime>::InvalidNumberOfContracts.into())
 					  );
 					  prop_assert_eq!(
 							  BondedFinance::bond(Origin::signed(BOB), offer_id, 0),
-							  Err(Error::<Runtime>::InvalidParts.into())
+							  Err(Error::<Runtime>::InvalidNumberOfContracts.into())
 					  );
 
 					  Ok(())
@@ -315,9 +332,9 @@ proptest! {
 					  let offer_id = offer_id.expect("impossible; qed");
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
-					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.parts));
+					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.contracts));
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.parts),
+							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.contracts),
 							  Err(Error::<Runtime>::OfferCompleted.into())
 					  );
 
