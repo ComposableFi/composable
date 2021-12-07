@@ -6,8 +6,8 @@ pub mod crowdloan_bonus;
 pub mod democracy;
 pub mod frame_system;
 pub mod indices;
-pub mod lending;
 pub mod membership;
+#[cfg(feature = "develop")]
 pub mod oracle;
 pub mod scheduler;
 pub mod session;

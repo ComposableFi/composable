@@ -31,6 +31,9 @@ mod types {
 	/// Index of a transaction in the chain.
 	pub type Index = u32;
 
+	/// The address format for describing accounts.
+	pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
+
 	/// A hash of some data used by the chain.
 	pub type Hash = sp_core::H256;
 
@@ -58,7 +61,7 @@ mod constants {
 	/// slot_duration()`.
 	///
 	/// Change this to adjust the block time.
-	pub const MILLISECS_PER_BLOCK: u64 = 6000;
+	pub const MILLISECS_PER_BLOCK: u64 = 12000;
 	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 	// Time is measured by number of blocks.
@@ -80,7 +83,7 @@ mod constants {
 	pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 	/// We allow for 2 seconds of compute with a 6 second average block time.
-	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND * 2;
+	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 
 	/// Origin for either root or half of general council
 	pub type EnsureRootOrHalfCouncil = EnsureOneOf<

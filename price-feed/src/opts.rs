@@ -1,8 +1,7 @@
-use clap::{AppSettings, Clap};
+use clap::Parser;
 
-#[derive(Clap)]
+#[derive(Parser)]
 #[clap(version = "1.0", author = "MLabs")]
-#[clap(setting = AppSettings::ColoredHelp)]
 pub struct Opts {
 	#[clap(short, long, default_value = "http://127.0.0.1:8910")]
 	pub pythd_host: String,

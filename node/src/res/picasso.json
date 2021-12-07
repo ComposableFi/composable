@@ -2,7 +2,11 @@
   "name": "Picasso",
   "id": "picasso",
   "chainType": "Live",
-  "bootNodes": [],
+  "bootNodes": [
+    "/dns/picasso-bn1.composable.finance/tcp/30334/p2p/12D3KooWJUwiZN4ePCwgbEM7AxJ4U2SaTrrgzkppFQxDmDhXXX2x",
+    "/dns/picasso-bn2.composable.finance/tcp/30334/p2p/12D3KooWD4M96HiuBUvhZZ8jmSzic4V6cWWvxFGPa7XAZnubmLtX",
+    "/dns/picasso-bn3.composable.finance/tcp/30334/p2p/12D3KooWASeF5JW1HGvpH46r9UzTBh77TfP4z8VPQ1RuyiKf34JN"
+  ],
   "telemetryEndpoints": [
     [
       "/dns/telemetry.polkadot.io/tcp/443/x-parity-wss/%2Fsubmit%2F",
@@ -18,7 +22,6 @@
   "relay_chain": "kusama",
   "para_id": 2087,
   "consensusEngine": null,
-  "lightSyncState": null,
   "codeSubstitutes": {},
   "genesis": {
     "raw": {

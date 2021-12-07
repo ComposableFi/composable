@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::too_many_arguments)]
 
 /// Edit this file to define custom logic or remove it if it is not needed.
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
@@ -17,10 +18,12 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
+	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::oracle::{Oracle, Price as LastPrice};
+	use core::ops::{Div, Mul};
 	use frame_support::{
-		dispatch::{DispatchResult, DispatchResultWithPostInfo, Vec},
+		dispatch::{DispatchResult, DispatchResultWithPostInfo},
 		pallet_prelude::*,
 		traits::{
 			Currency, EnsureOrigin,
@@ -29,8 +32,6 @@ pub mod pallet {
 		},
 		weights::{DispatchClass::Operational, Pays},
 	};
-
-	pub use crate::weights::WeightInfo;
 	use frame_system::{
 		offchain::{
 			AppCrypto, CreateSignedTransaction, SendSignedTransaction, SignedPayload, Signer,
@@ -47,7 +48,8 @@ pub mod pallet {
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
 		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
 	};
-	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
+	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec, vec::Vec};
+
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(KEY_ID);
@@ -120,16 +122,15 @@ pub mod pallet {
 		type StalePrice: Get<Self::BlockNumber>;
 		/// Origin to add new price types
 		type AddOracle: EnsureOrigin<Self::Origin>;
-		/// Cost to request a price update
-		type RequestCost: Get<BalanceOf<Self>>;
-		/// Rewards for a correct answer
-		type RewardAmount: Get<BalanceOf<Self>>;
 		/// Slash for an incorrect answer
 		type SlashAmount: Get<BalanceOf<Self>>;
 		/// Upper bound for max answers for a price
 		type MaxAnswerBound: Get<u32>;
 		/// Upper bound for total assets available for the oracle
 		type MaxAssetsCount: Get<u32>;
+
+		type MaxHistory: Get<u32>;
+
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
 	}
@@ -147,17 +148,20 @@ pub mod pallet {
 		pub who: AccountId,
 	}
 
-	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
+	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo, Clone)]
 	pub struct Price<PriceValue, BlockNumber> {
 		pub price: PriceValue,
 		pub block: BlockNumber,
 	}
 
 	#[derive(Encode, Decode, Default, Debug, PartialEq, Clone, TypeInfo)]
-	pub struct AssetInfo<Percent> {
+	pub struct AssetInfo<Percent, BlockNumber, Balance> {
 		pub threshold: Percent,
 		pub min_answers: u32,
 		pub max_answers: u32,
+		pub block_interval: BlockNumber,
+		pub reward: Balance,
+		pub slash: Balance,
 	}
 
 	type BalanceOf<T> =
@@ -207,6 +211,17 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn price_history)]
+	/// Price for an asset and blocknumber asset was updated at
+	pub type PriceHistory<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::AssetId,
+		Vec<Price<T::PriceValue, T::BlockNumber>>,
+		ValueQuery,
+	>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn pre_prices)]
 	/// Temporary prices before aggregated
 	pub type PrePrices<T: Config> = StorageMap<
@@ -218,23 +233,22 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn accuracy_threshold)]
+	#[pallet::getter(fn asset_info)]
 	/// Information about asset, including precision threshold and max/min answers
-	pub type AssetsInfo<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AssetId, AssetInfo<Percent>, ValueQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn requested)]
-	/// If an asset price has been requested
-	pub type Requested<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, bool, ValueQuery>;
+	pub type AssetsInfo<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::AssetId,
+		AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
+		ValueQuery,
+	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Asset info created or changed. \[asset_id, threshold, min_answers, max_answers\]
-		AssetInfoChange(T::AssetId, Percent, u32, u32),
-		/// A new price was requested. \[requested_by, asset_id\]
-		PriceRequested(T::AccountId, T::AssetId),
+		/// Asset info created or changed. \[asset_id, threshold, min_answers, max_answers,
+		/// block_interval, reward, slash\]
+		AssetInfoChange(T::AssetId, Percent, u32, u32, T::BlockNumber, BalanceOf<T>, BalanceOf<T>),
 		/// Signer was set. \[signer, controller\]
 		SignerSet(T::AccountId, T::AccountId),
 		/// Stake was added. \[added_by, amount_added, total_amount\]
@@ -301,6 +315,13 @@ pub mod pallet {
 		PriceNotFound,
 		/// Stake exceeded
 		ExceedStake,
+		/// Price weight must sum to 100
+		MustSumTo100,
+		/// Too many weighted averages requested
+		DepthTooLarge,
+		ArithmeticError,
+		/// Block interval is less then stale price
+		BlockIntervalLength,
 	}
 
 	#[pallet::hooks]
@@ -327,6 +348,13 @@ pub mod pallet {
 				Prices::<T>::try_get(of).map_err(|_| Error::<T>::PriceNotFound)?;
 			Ok(LastPrice { price, block })
 		}
+
+		fn get_twap(
+			of: Self::AssetId,
+			weighting: Vec<Self::Balance>,
+		) -> Result<Self::Balance, DispatchError> {
+			Self::get_twap(of, weighting)
+		}
 	}
 
 	#[pallet::call]
@@ -337,6 +365,9 @@ pub mod pallet {
 		/// - `threshold`: Percent close to mean to be rewarded
 		/// - `min_answers`: Min answers before aggregation
 		/// - `max_answers`: Max answers to aggregate
+		/// - `block_interval`: blocks until oracle triggered
+		/// - `reward`: reward amount for correct answer
+		/// - `slash`: slash amount for bad answer
 		///
 		/// Emits `DepositEvent` event when successful.
 		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
@@ -346,17 +377,22 @@ pub mod pallet {
 			threshold: Percent,
 			min_answers: u32,
 			max_answers: u32,
+			block_interval: T::BlockNumber,
+			reward: BalanceOf<T>,
+			slash: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			T::AddOracle::ensure_origin(origin)?;
 			ensure!(min_answers > 0, Error::<T>::InvalidMinAnswers);
 			ensure!(max_answers >= min_answers, Error::<T>::MaxAnswersLessThanMinAnswers);
 			ensure!(threshold < Percent::from_percent(100), Error::<T>::ExceedThreshold);
 			ensure!(max_answers <= T::MaxAnswerBound::get(), Error::<T>::ExceedMaxAnswers);
+			ensure!(block_interval > T::StalePrice::get(), Error::<T>::BlockIntervalLength);
 			ensure!(
 				AssetsCount::<T>::get() < T::MaxAssetsCount::get(),
 				Error::<T>::ExceedAssetsCount
 			);
-			let asset_info = AssetInfo { threshold, min_answers, max_answers };
+			let asset_info =
+				AssetInfo { threshold, min_answers, max_answers, block_interval, reward, slash };
 			AssetsInfo::<T>::insert(asset_id, asset_info);
 			AssetsCount::<T>::mutate(|a| *a += 1);
 			Self::deposit_event(Event::AssetInfoChange(
@@ -364,23 +400,10 @@ pub mod pallet {
 				threshold,
 				min_answers,
 				max_answers,
+				block_interval,
+				reward,
+				slash,
 			));
-			Ok(().into())
-		}
-
-		/// Call to request price, charges a fee
-		///
-		/// - `asset_id`: Id for the asset
-		///
-		/// Emits `PriceRequested` event when successful.
-		#[pallet::weight(T::WeightInfo::request_price())]
-		pub fn request_price(
-			origin: OriginFor<T>,
-			asset_id: T::AssetId,
-		) -> DispatchResultWithPostInfo {
-			//TODO talk about the security and if this should be protected
-			let who = ensure_signed(origin)?;
-			Self::do_request_price(&who, asset_id)?;
 			Ok(().into())
 		}
 
@@ -478,7 +501,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let author_stake = OracleStake::<T>::get(&who).unwrap_or_else(Zero::zero);
-			ensure!(Requested::<T>::get(asset_id), Error::<T>::PriceNotRequested);
+			ensure!(Self::is_requested(&asset_id), Error::<T>::PriceNotRequested);
 			ensure!(author_stake >= T::MinStake::get(), Error::<T>::NotEnoughStake);
 
 			let set_price = PrePrice {
@@ -541,6 +564,7 @@ pub mod pallet {
 			price: T::PriceValue,
 			asset_id: T::AssetId,
 		) {
+			let asset_info = Self::asset_info(asset_id);
 			for answer in pre_prices {
 				let accuracy: Percent;
 				if answer.price < price {
@@ -551,7 +575,7 @@ pub mod pallet {
 				}
 				let min_accuracy = AssetsInfo::<T>::get(asset_id).threshold;
 				if accuracy < min_accuracy {
-					let slash_amount = T::SlashAmount::get();
+					let slash_amount = asset_info.slash;
 					let try_slash = T::Currency::can_slash(&answer.who, slash_amount);
 					if !try_slash {
 						log::warn!("Failed to slash {:?}", answer.who);
@@ -563,7 +587,7 @@ pub mod pallet {
 						slash_amount,
 					));
 				} else {
-					let reward_amount = T::RewardAmount::get();
+					let reward_amount = asset_info.reward;
 					let controller = SignerToController::<T>::get(&answer.who)
 						.unwrap_or_else(|| answer.who.clone());
 
@@ -575,21 +599,6 @@ pub mod pallet {
 					));
 				}
 			}
-		}
-		// This can take an account to pay, therefore another pallet can call this and fund oracle
-		// requests
-		pub fn do_request_price(who: &T::AccountId, asset_id: T::AssetId) -> DispatchResult {
-			ensure!(AssetsInfo::<T>::contains_key(asset_id), Error::<T>::InvalidAssetId);
-			if !Self::requested(asset_id) {
-				ensure!(
-					T::Currency::can_slash(who, T::RequestCost::get()),
-					Error::<T>::NotEnoughFunds
-				);
-				T::Currency::slash(who, T::RequestCost::get());
-				Requested::<T>::insert(asset_id, true);
-			}
-			Self::deposit_event(Event::PriceRequested(who.clone(), asset_id));
-			Ok(())
 		}
 
 		pub fn update_prices(block: T::BlockNumber) -> Weight {
@@ -610,7 +619,7 @@ pub mod pallet {
 		#[allow(clippy::type_complexity)]
 		pub fn update_pre_prices(
 			asset_id: T::AssetId,
-			asset_info: AssetInfo<Percent>,
+			asset_info: AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
 			block: T::BlockNumber,
 		) -> (usize, Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>) {
 			// TODO maybe add a check if price is requested, is less operations?
@@ -636,7 +645,7 @@ pub mod pallet {
 
 		pub fn update_price(
 			asset_id: T::AssetId,
-			asset_info: AssetInfo<Percent>,
+			asset_info: AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
 			block: T::BlockNumber,
 			pre_prices: Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 		) {
@@ -646,7 +655,19 @@ pub mod pallet {
 			if pre_prices.len() as u32 >= asset_info.min_answers {
 				if let Some(price) = Self::get_median_price(&pre_prices) {
 					Prices::<T>::insert(asset_id, Price { price, block });
-					Requested::<T>::insert(asset_id, false);
+					let historical = Self::price_history(asset_id);
+					if (historical.len() as u32) < T::MaxHistory::get() {
+						PriceHistory::<T>::mutate(asset_id, |prices| {
+							if Self::prices(asset_id).block != 0u32.into() {
+								prices.push(Price { price, block });
+							}
+						})
+					} else {
+						PriceHistory::<T>::mutate(asset_id, |prices| {
+							prices.remove(0);
+							prices.push(Price { price, block });
+						})
+					}
 					PrePrices::<T>::remove(asset_id);
 
 					Self::handle_payout(&pre_prices, price, asset_id);
@@ -656,7 +677,7 @@ pub mod pallet {
 
 		#[allow(clippy::type_complexity)]
 		pub fn prune_old_pre_prices(
-			asset_info: AssetInfo<Percent>,
+			asset_info: AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
 			mut pre_prices: Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 			block: T::BlockNumber,
 		) -> (
@@ -703,10 +724,55 @@ pub mod pallet {
 
 		pub fn check_requests() {
 			for (i, _) in AssetsInfo::<T>::iter() {
-				if Requested::<T>::get(i) {
+				if Self::is_requested(&i) {
 					let _ = Self::fetch_price_and_send_signed(&i);
 				}
 			}
+		}
+
+		pub fn is_requested(price_id: &T::AssetId) -> bool {
+			let last_update = Self::prices(price_id);
+			let current_block = frame_system::Pallet::<T>::block_number();
+			let asset_info = Self::asset_info(price_id);
+			last_update.block + asset_info.block_interval < current_block
+		}
+
+		pub fn get_twap(
+			asset_id: T::AssetId,
+			mut price_weights: Vec<T::PriceValue>,
+		) -> Result<T::PriceValue, DispatchError> {
+			let precision: T::PriceValue = 100u128.into();
+			let historical_prices = Self::price_history(asset_id);
+			// add an extra to account for current price not stored in history
+			ensure!(historical_prices.len() + 1 >= price_weights.len(), Error::<T>::DepthTooLarge);
+			let sum = Self::price_values_sum(&price_weights);
+			ensure!(sum == precision, Error::<T>::MustSumTo100);
+			let last_weight = price_weights.pop().unwrap_or_else(|| 0u128.into());
+			ensure!(last_weight != 0u128.into(), Error::<T>::ArithmeticError);
+			let mut weighted_prices = price_weights
+				.iter()
+				.enumerate()
+				.map(|(i, weight)| {
+					weight
+						.mul(
+							historical_prices[historical_prices.len() - price_weights.len() + i]
+								.price,
+						)
+						.div(precision)
+				})
+				.collect::<Vec<_>>();
+			let current_price = Self::prices(asset_id);
+			let current_weighted_price = last_weight.mul(current_price.price).div(precision);
+			weighted_prices.push(current_weighted_price);
+			let weighted_average = Self::price_values_sum(&weighted_prices);
+			ensure!(weighted_average != 0u128.into(), Error::<T>::ArithmeticError);
+			Ok(weighted_average)
+		}
+
+		fn price_values_sum(price_values: &[T::PriceValue]) -> T::PriceValue {
+			price_values
+				.iter()
+				.fold(T::PriceValue::from(0u128), |acc, b| acc.saturating_add(*b))
 		}
 
 		pub fn fetch_price_and_send_signed(price_id: &T::AssetId) -> Result<(), &'static str> {

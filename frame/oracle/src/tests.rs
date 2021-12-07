@@ -12,10 +12,8 @@ use parking_lot::RwLock;
 use sp_core::offchain::{testing, OffchainDbExt, OffchainWorkerExt, TransactionPoolExt};
 use sp_io::TestExternalities;
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
-use sp_runtime::{Percent, RuntimeAppPublic};
+use sp_runtime::{traits::BadOrigin, Percent, RuntimeAppPublic};
 use std::sync::Arc;
-
-use sp_runtime::traits::BadOrigin;
 
 #[test]
 fn add_asset_and_info() {
@@ -24,6 +22,9 @@ fn add_asset_and_info() {
 		const MIN_ANSWERS: u32 = 3;
 		const MAX_ANSWERS: u32 = 5;
 		const THRESHOLD: Percent = Percent::from_percent(80);
+		const BLOCK_INTERVAL: u64 = 5;
+		const REWARD: u64 = 5;
+		const SLASH: u64 = 5;
 
 		// passes
 		let account_2 = get_account_2();
@@ -33,19 +34,32 @@ fn add_asset_and_info() {
 			THRESHOLD,
 			MIN_ANSWERS,
 			MAX_ANSWERS,
+			BLOCK_INTERVAL,
+			REWARD,
+			SLASH
 		));
+
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
 			ASSET_ID + 1,
 			THRESHOLD,
 			MIN_ANSWERS,
 			MAX_ANSWERS,
+			BLOCK_INTERVAL,
+			REWARD,
+			SLASH
 		));
 
-		let asset_info =
-			AssetInfo { threshold: THRESHOLD, min_answers: MIN_ANSWERS, max_answers: MAX_ANSWERS };
+		let asset_info = AssetInfo {
+			threshold: THRESHOLD,
+			min_answers: MIN_ANSWERS,
+			max_answers: MAX_ANSWERS,
+			block_interval: BLOCK_INTERVAL,
+			reward: REWARD,
+			slash: SLASH,
+		};
 		// id now activated and count incremented
-		assert_eq!(Oracle::accuracy_threshold(1), asset_info);
+		assert_eq!(Oracle::asset_info(1), asset_info);
 		assert_eq!(Oracle::assets_count(), 2);
 		// fails with non permission
 		let account_1: AccountId = Default::default();
@@ -55,7 +69,10 @@ fn add_asset_and_info() {
 				ASSET_ID,
 				THRESHOLD,
 				MAX_ANSWERS,
-				MAX_ANSWERS
+				MAX_ANSWERS,
+				BLOCK_INTERVAL,
+				REWARD,
+				SLASH
 			),
 			BadOrigin
 		);
@@ -67,6 +84,9 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				MAX_ANSWERS,
 				MIN_ANSWERS,
+				BLOCK_INTERVAL,
+				REWARD,
+				SLASH
 			),
 			Error::<Test>::MaxAnswersLessThanMinAnswers
 		);
@@ -78,6 +98,9 @@ fn add_asset_and_info() {
 				Percent::from_percent(100),
 				MIN_ANSWERS,
 				MAX_ANSWERS,
+				BLOCK_INTERVAL,
+				REWARD,
+				SLASH
 			),
 			Error::<Test>::ExceedThreshold
 		);
@@ -89,6 +112,9 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				MIN_ANSWERS,
 				MAX_ANSWERS + 1,
+				BLOCK_INTERVAL,
+				REWARD,
+				SLASH
 			),
 			Error::<Test>::ExceedMaxAnswers
 		);
@@ -100,11 +126,13 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				0,
 				MAX_ANSWERS,
+				BLOCK_INTERVAL,
+				REWARD,
+				SLASH
 			),
 			Error::<Test>::InvalidMinAnswers
 		);
 
-		// passes
 		assert_noop!(
 			Oracle::add_asset_and_info(
 				Origin::signed(account_2),
@@ -112,8 +140,25 @@ fn add_asset_and_info() {
 				THRESHOLD,
 				MIN_ANSWERS,
 				MAX_ANSWERS,
+				BLOCK_INTERVAL,
+				REWARD,
+				SLASH
 			),
 			Error::<Test>::ExceedAssetsCount
+		);
+
+		assert_noop!(
+			Oracle::add_asset_and_info(
+				Origin::signed(account_2),
+				ASSET_ID,
+				THRESHOLD,
+				MIN_ANSWERS,
+				MAX_ANSWERS,
+				BLOCK_INTERVAL - 4,
+				REWARD,
+				SLASH
+			),
+			Error::<Test>::BlockIntervalLength
 		);
 	});
 }
@@ -147,42 +192,6 @@ fn set_signer() {
 			Oracle::set_signer(Origin::signed(account_1), account_2),
 			Error::<Test>::ControllerUsed
 		);
-	});
-}
-
-#[test]
-fn do_request_price() {
-	new_test_ext().execute_with(|| {
-		// sets ID to true first
-		let account_2 = get_account_2();
-		assert_ok!(Oracle::add_asset_and_info(
-			Origin::signed(account_2),
-			1,
-			Percent::from_percent(80),
-			3,
-			5,
-		));
-
-		let account_3 = get_account_3();
-		// fails on not enough funds
-		assert_noop!(Oracle::do_request_price(&account_3, 1), Error::<Test>::NotEnoughFunds);
-		// passes
-		let account_1: AccountId = Default::default();
-		assert_ok!(Oracle::do_request_price(&account_1, 1));
-		// takes the cost
-		assert_eq!(Balances::free_balance(account_1), 99);
-		// True and request ID incremented
-		assert!(Oracle::requested(1));
-
-		// fails on invalid ID
-		assert_noop!(Oracle::do_request_price(&account_1, 2), Error::<Test>::InvalidAssetId);
-
-		// no funds taken if already true
-		let account_3 = get_account_3();
-		assert_ok!(Oracle::do_request_price(&account_3, 1));
-
-		// True and request ID not incremented
-		assert!(Oracle::requested(1));
 	});
 }
 
@@ -275,14 +284,12 @@ fn add_price() {
 			Percent::from_percent(80),
 			3,
 			3,
+			5,
+			5,
+			5
 		));
-		// fails price not requested
-		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128),
-			Error::<Test>::PriceNotRequested
-		);
 
-		assert_ok!(Oracle::do_request_price(&account_1, 0));
+		System::set_block_number(6);
 		// fails no stake
 		assert_noop!(
 			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128),
@@ -312,13 +319,22 @@ fn add_price() {
 			Error::<Test>::MaxPrices
 		);
 
-		let price = PrePrice { price: 100u128, block: 0, who: account_1 };
+		let price = PrePrice { price: 100u128, block: 6, who: account_1 };
 
-		let price2 = PrePrice { price: 100u128, block: 0, who: account_2 };
+		let price2 = PrePrice { price: 100u128, block: 6, who: account_2 };
 
-		let price4 = PrePrice { price: 100u128, block: 0, who: account_4 };
+		let price4 = PrePrice { price: 100u128, block: 6, who: account_4 };
 
 		assert_eq!(Oracle::pre_prices(0), vec![price, price2, price4]);
+
+		System::set_block_number(2);
+		Oracle::on_initialize(2);
+
+		// fails price not requested
+		assert_noop!(
+			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128),
+			Error::<Test>::PriceNotRequested
+		);
 	});
 }
 
@@ -348,9 +364,11 @@ fn check_request() {
 			Percent::from_percent(80),
 			3,
 			5,
+			5,
+			5,
+			5
 		));
-		let account_1: AccountId = Default::default();
-		assert_ok!(Oracle::do_request_price(&account_1, 0));
+		System::set_block_number(6);
 		Oracle::check_requests();
 	});
 }
@@ -359,6 +377,33 @@ fn check_request() {
 fn not_check_request() {
 	new_test_ext().execute_with(|| {
 		Oracle::check_requests();
+	});
+}
+
+#[test]
+fn is_requested() {
+	new_test_ext().execute_with(|| {
+		let account_2 = get_account_2();
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Percent::from_percent(80),
+			3,
+			5,
+			5,
+			5,
+			5
+		));
+		System::set_block_number(6);
+		assert!(Oracle::is_requested(&0));
+
+		let price = Price { price: 0, block: 6 };
+		Prices::<Test>::insert(0, price);
+
+		assert!(!Oracle::is_requested(&0));
+
+		System::set_block_number(11);
+		assert!(!Oracle::is_requested(&0));
 	});
 }
 
@@ -380,7 +425,7 @@ fn test_payout_slash() {
 		let five = PrePrice { price: 100, block: 0, who: account_5 };
 		// doesn't panic when percent not set
 		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
-		assert_eq!(Balances::free_balance(account_1), 105);
+		assert_eq!(Balances::free_balance(account_1), 100);
 
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
@@ -388,17 +433,20 @@ fn test_payout_slash() {
 			Percent::from_percent(80),
 			3,
 			5,
+			5,
+			5,
+			5
 		));
 
 		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
 		// account 1 and 4 gets slashed 2 and 5 gets rewarded
-		assert_eq!(Balances::free_balance(account_1), 100);
+		assert_eq!(Balances::free_balance(account_1), 95);
 		// 5 gets 2's reward and its own
-		assert_eq!(Balances::free_balance(account_5), 119);
+		assert_eq!(Balances::free_balance(account_5), 109);
 		assert_eq!(Balances::free_balance(account_2), 100);
 
 		assert_eq!(Balances::free_balance(account_3), 0);
-		assert_eq!(Balances::free_balance(account_4), 100);
+		assert_eq!(Balances::free_balance(account_4), 95);
 
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
@@ -406,17 +454,20 @@ fn test_payout_slash() {
 			Percent::from_percent(90),
 			3,
 			5,
+			5,
+			4,
+			5
 		));
 		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
 
 		// account 4 gets slashed 2 5 and 1 gets rewarded
-		assert_eq!(Balances::free_balance(account_1), 95);
+		assert_eq!(Balances::free_balance(account_1), 90);
 		// 5 gets 2's reward and its own
-		assert_eq!(Balances::free_balance(account_5), 129);
+		assert_eq!(Balances::free_balance(account_5), 117);
 		assert_eq!(Balances::free_balance(account_2), 100);
 
 		assert_eq!(Balances::free_balance(account_3), 0);
-		assert_eq!(Balances::free_balance(account_4), 95);
+		assert_eq!(Balances::free_balance(account_4), 90);
 	});
 }
 
@@ -437,9 +488,10 @@ fn on_init() {
 			Percent::from_percent(80),
 			3,
 			5,
+			5,
+			5,
+			5
 		));
-		let account_1: AccountId = Default::default();
-		assert_ok!(Oracle::do_request_price(&account_1, 0));
 		// set prices into storage
 		let account_1: AccountId = Default::default();
 		for i in 0..3 {
@@ -453,19 +505,105 @@ fn on_init() {
 		assert_eq!(Oracle::prices(0), price);
 		// prunes state
 		assert_eq!(Oracle::pre_prices(0), vec![]);
-		assert!(!Oracle::requested(0));
 
 		// doesn't prune state if under min prices
-		assert_ok!(Oracle::do_request_price(&account_1, 0));
-
 		for i in 0..2 {
 			let price = i as u128 + 100u128;
 			add_price_storage(price, 0, account_1, 3);
 		}
 
+		// does not fire under min answers
 		Oracle::on_initialize(3);
 		assert_eq!(Oracle::pre_prices(0).len(), 2);
-		assert!(Oracle::requested(0));
+		assert_eq!(Oracle::prices(0), price);
+	});
+}
+
+#[test]
+fn historic_pricing() {
+	new_test_ext().execute_with(|| {
+		// add and request oracle id
+		let account_2 = get_account_2();
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Percent::from_percent(80),
+			3,
+			5,
+			5,
+			5,
+			5
+		));
+
+		let mut price_history = vec![];
+
+		do_price_update(0, 0);
+
+		assert_eq!(Oracle::price_history(0).len(), 0);
+		assert_eq!(Oracle::price_history(0), price_history);
+
+		do_price_update(0, 5);
+
+		let price_5 = Price { price: 101, block: 5 };
+		price_history = vec![price_5.clone()];
+
+		assert_eq!(Oracle::price_history(0), price_history);
+		assert_eq!(Oracle::price_history(0).len(), 1);
+
+		do_price_update(0, 10);
+		let price_10 = Price { price: 101, block: 10 };
+		price_history = vec![price_5.clone(), price_10.clone()];
+
+		assert_eq!(Oracle::price_history(0), price_history);
+		assert_eq!(Oracle::price_history(0).len(), 2);
+
+		do_price_update(0, 15);
+		let price_15 = Price { price: 101, block: 15 };
+		price_history = vec![price_5.clone(), price_10.clone(), price_15.clone()];
+
+		assert_eq!(Oracle::price_history(0), price_history);
+		assert_eq!(Oracle::price_history(0).len(), 3);
+
+		do_price_update(0, 20);
+		let price_20 = Price { price: 101, block: 20 };
+		price_history = vec![price_10, price_15, price_20];
+
+		assert_eq!(Oracle::price_history(0), price_history);
+		assert_eq!(Oracle::price_history(0).len(), 3);
+	});
+}
+
+#[test]
+fn get_twap() {
+	new_test_ext().execute_with(|| {
+		// add and request oracle id
+		let account_2 = get_account_2();
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Percent::from_percent(80),
+			3,
+			5,
+			5,
+			5,
+			5
+		));
+
+		do_price_update(0, 0);
+		let price_1 = Price { price: 100, block: 20 };
+		let price_2 = Price { price: 100, block: 20 };
+		let price_3 = Price { price: 120, block: 20 };
+		let historic_prices = [price_1, price_2, price_3].to_vec();
+		set_historic_prices(0, historic_prices);
+
+		let twap = Oracle::get_twap(0, vec![20, 30, 50]);
+		// twap should be (0.2 * 100) + (0.3 * 120) + (0.5 * 101)
+		assert_eq!(twap, Ok(106));
+		let err_twap = Oracle::get_twap(0, vec![21, 30, 50]);
+		assert_eq!(err_twap, Err(Error::<Test>::MustSumTo100.into()));
+
+		let err_2_twap = Oracle::get_twap(0, vec![10, 10, 10, 10, 60]);
+		assert_eq!(err_2_twap, Err(Error::<Test>::DepthTooLarge.into()));
 	});
 }
 
@@ -480,9 +618,10 @@ fn on_init_prune_scenerios() {
 			Percent::from_percent(80),
 			3,
 			5,
+			5,
+			5,
+			5
 		));
-		let account_1: AccountId = Default::default();
-		assert_ok!(Oracle::do_request_price(&account_1, 0));
 		// set prices into storage
 		let account_1: AccountId = Default::default();
 		for i in 0..3 {
@@ -539,9 +678,10 @@ fn on_init_over_max_answers() {
 			Percent::from_percent(80),
 			1,
 			2,
+			5,
+			5,
+			5
 		));
-		let account_1: AccountId = Default::default();
-		assert_ok!(Oracle::do_request_price(&account_1, 0));
 		// set prices into storage
 		let account_1: AccountId = Default::default();
 		for i in 0..5 {
@@ -560,8 +700,14 @@ fn on_init_over_max_answers() {
 #[test]
 fn prune_old_pre_prices_edgecase() {
 	new_test_ext().execute_with(|| {
-		let asset_info =
-			AssetInfo { threshold: Percent::from_percent(80), min_answers: 3, max_answers: 5 };
+		let asset_info = AssetInfo {
+			threshold: Percent::from_percent(80),
+			min_answers: 3,
+			max_answers: 5,
+			block_interval: 5,
+			reward: 5,
+			slash: 5,
+		};
 		Oracle::prune_old_pre_prices(asset_info, vec![], 0);
 	});
 }
@@ -664,6 +810,23 @@ fn parse_price_works() {
 fn add_price_storage(price: u128, asset_id: u128, who: AccountId, block: u64) {
 	let price = PrePrice { price, block, who };
 	PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.push(price));
+}
+
+fn do_price_update(asset_id: u128, block: u64) {
+	let account_1: AccountId = Default::default();
+	for i in 0..3 {
+		let price = i as u128 + 100u128;
+		add_price_storage(price, asset_id, account_1, block);
+	}
+
+	System::set_block_number(block);
+	Oracle::on_initialize(block);
+	let price = Price { price: 101, block };
+	assert_eq!(Oracle::prices(asset_id), price);
+}
+
+fn set_historic_prices(asset_id: u128, historic_prices: Vec<Price<u128, u64>>) {
+	PriceHistory::<Test>::insert(asset_id, historic_prices);
 }
 
 fn price_oracle_response(state: &mut testing::OffchainState, price_id: &str) {

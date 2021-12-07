@@ -31,11 +31,6 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-	fn request_price() -> Weight {
-		(61_369_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-	}
 	fn set_signer() -> Weight {
 		(122_818_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))

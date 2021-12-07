@@ -1,4 +1,5 @@
 use frame_support::{dispatch::DispatchError, pallet_prelude::*};
+use sp_std::vec::Vec;
 
 #[derive(Encode, Decode, Default, Debug, PartialEq)]
 pub struct Price<PriceValue, BlockNumber> {
@@ -27,4 +28,9 @@ pub trait Oracle {
 	/// ```
 	fn get_price(of: Self::AssetId)
 		-> Result<Price<Self::Balance, Self::Timestamp>, DispatchError>;
+
+	fn get_twap(
+		of: Self::AssetId,
+		weighting: Vec<Self::Balance>,
+	) -> Result<Self::Balance, DispatchError>;
 }

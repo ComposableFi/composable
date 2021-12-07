@@ -49,19 +49,19 @@ where
 	MultiSigner::from(from_seed::<TPublic>(seed)).into_account()
 }
 
-/// Picasso POC-1 (westend parachain)
-pub fn dali() -> picasso::ChainSpec {
-	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/dali.json").to_vec())
+/// Dali (westend parachain)
+pub fn dali_westend() -> picasso::ChainSpec {
+	picasso::ChainSpec::from_json_bytes(include_bytes!("res/dali-westend.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 
-/// Picasso POC-1 (rococo parachain)
+/// Dali (rococo parachain)
 pub fn dali_rococo() -> picasso::ChainSpec {
 	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/dali-rococo.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 
-/// Dali-Chachacha parachain
+/// Dali (chachacha parachain)
 pub fn dali_chachacha() -> picasso::ChainSpec {
 	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/dali-chachacha.json").to_vec())
 		.expect("Dali chain spec not found!")
@@ -88,10 +88,20 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 		move || {
 			picasso::genesis_config(
 				account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![(
-					account_id_from_seed::<sr25519::Public>("Alice"),
-					get_collator_keys_from_seed("Alice"),
-				)],
+				vec![
+					(
+						account_id_from_seed::<sr25519::Public>("Alice"),
+						get_collator_keys_from_seed("Alice"),
+					),
+					(
+						account_id_from_seed::<sr25519::Public>("Bob"),
+						get_collator_keys_from_seed("Bob"),
+					),
+					(
+						account_id_from_seed::<sr25519::Public>("Charlie"),
+						get_collator_keys_from_seed("Charlie"),
+					),
+				],
 				dev_accounts(),
 				PARA_ID,
 				PICASSO_ED,

@@ -182,7 +182,7 @@ mod tests {
 		[
 			((Price(0xCAFEBABE), Exponent(-2)), USDCentPrice(0xCAFEBABE)),
 			((Price(0xDEADBEEF), Exponent(2)), USDCentPrice(0xDEADBEEF * u64::pow(10, 2 + 2))),
-			((Price(1), Exponent(0)), USDCentPrice(1 * u64::pow(10, 2))),
+			((Price(1), Exponent(0)), USDCentPrice(u64::pow(10, 2))),
 			((Price(12), Exponent(-1)), USDCentPrice(12 * u64::pow(10, 1))),
 			((Price(454000), Exponent(-6)), USDCentPrice(45)),
 		]

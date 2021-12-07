@@ -1,4 +1,8 @@
+use codec::FullCodec;
 use frame_support::pallet_prelude::*;
+use scale_info::TypeInfo;
+use sp_runtime::traits::AtLeast32BitUnsigned;
+use sp_std::fmt::Debug;
 
 /* NOTE(hussein-aitlahcen):
  I initially added a generic type to index into the generatable sub-range but realised it was
@@ -21,3 +25,33 @@ where
 pub trait CurrencyFactory<CurrencyId> {
 	fn create() -> Result<CurrencyId, DispatchError>;
 }
+
+pub trait BalanceLike:
+	AtLeast32BitUnsigned
+	+ FullCodec
+	+ Copy
+	+ Default
+	+ Debug
+	+ MaybeSerializeDeserialize
+	+ MaxEncodedLen
+	+ TypeInfo
+{
+}
+impl<
+		T: AtLeast32BitUnsigned
+			+ FullCodec
+			+ Copy
+			+ Default
+			+ Debug
+			+ MaybeSerializeDeserialize
+			+ MaxEncodedLen
+			+ TypeInfo,
+	> BalanceLike for T
+{
+}
+
+// hack to imitate type alias until it is in stable
+// named with like implying it is`like` is is necessary to be `AssetId`, but may be not enough (if
+// something is `AssetIdLike` than it is not always asset)
+pub trait AssetIdLike: FullCodec + Copy + Eq + PartialEq + Debug + TypeInfo {}
+impl<T: FullCodec + Copy + Eq + PartialEq + Debug + TypeInfo> AssetIdLike for T {}
