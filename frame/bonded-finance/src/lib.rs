@@ -106,7 +106,7 @@ pub mod pallet {
 		/// Someone tried to bond an already completed offer.
 		OfferCompleted,
 		/// Someone tried to bond with an invalid number of nb_of_bonds.
-		InvalidNumberOfContracts,
+		InvalidNumberOfBonds,
 	}
 
 	#[pallet::config]
@@ -216,25 +216,35 @@ pub mod pallet {
 		///
 		/// Emits a `OfferCancelled`.
 		#[pallet::weight(10_000)]
-		pub fn cancel_offer(origin: OriginFor<T>, offer_id: T::BondOfferId) -> DispatchResult {
-			T::AdminOrigin::ensure_origin(origin)?;
-			Self::do_cancel_offer(offer_id)
-		}
-	}
-
-	impl<T: Config> Pallet<T> {
-		pub fn account_id(offer_id: T::BondOfferId) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account(offer_id)
-		}
-
-		pub fn do_cancel_offer(offer_id: T::BondOfferId) -> DispatchResult {
-			let (issuer, _) =
-				BondOffers::<T>::try_get(offer_id).map_err(|_| Error::<T>::BondOfferNotFound)?;
+		pub fn cancel(origin: OriginFor<T>, offer_id: T::BondOfferId) -> DispatchResult {
+			let (issuer, _) = Self::get_offer(offer_id)?;
+			match (ensure_signed(origin.clone()), T::AdminOrigin::ensure_origin(origin)) {
+				// Continue on admin origin
+				(_, Ok(_)) => {},
+				// Only issuer is allowed
+				(Ok(account), _) =>
+					if issuer != account {
+						return Err(DispatchError::BadOrigin)
+					},
+				_ => return Err(DispatchError::BadOrigin),
+			};
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(&offer_account, &issuer, T::Stake::get(), true)?;
 			BondOffers::<T>::remove(offer_id);
 			Self::deposit_event(Event::<T>::OfferCancelled { offer_id });
 			Ok(())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub fn get_offer(
+			offer_id: T::BondOfferId,
+		) -> Result<(AccountIdOf<T>, BondOfferOf<T>), DispatchError> {
+			BondOffers::<T>::try_get(offer_id).map_err(|_| Error::<T>::BondOfferNotFound.into())
+		}
+
+		pub fn account_id(offer_id: T::BondOfferId) -> AccountIdOf<T> {
+			T::PalletId::get().into_sub_account(offer_id)
 		}
 
 		#[transactional]
@@ -284,7 +294,7 @@ pub mod pallet {
 						ensure!(
 							nb_of_bonds > BalanceOf::<T>::zero() &&
 								nb_of_bonds <= offer.nb_of_bonds,
-							Error::<T>::InvalidNumberOfContracts
+							Error::<T>::InvalidNumberOfBonds
 						);
 						// NOTE(hussein-aitlahcen): can't overflow, subsumed by `offer.valid()` in
 						// `do_offer`

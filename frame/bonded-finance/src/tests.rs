@@ -4,9 +4,12 @@
 
 use super::*;
 use composable_traits::bonded_finance::{BondDuration, BondOffer, BondOfferReward};
-use frame_support::traits::{
-	fungibles::{Inspect, Mutate},
-	tokens::WithdrawConsequence,
+use frame_support::{
+	error::BadOrigin,
+	traits::{
+		fungibles::{Inspect, Mutate},
+		tokens::WithdrawConsequence,
+	},
 };
 use mock::{Event, *};
 use proptest::prelude::*;
@@ -353,11 +356,11 @@ proptest! {
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
 					  prop_assert_eq!(
 							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds + 1),
-							  Err(Error::<Runtime>::InvalidNumberOfContracts.into())
+							  Err(Error::<Runtime>::InvalidNumberOfBonds.into())
 					  );
 					  prop_assert_eq!(
 							  BondedFinance::bond(Origin::signed(BOB), offer_id, 0),
-							  Err(Error::<Runtime>::InvalidNumberOfContracts.into())
+							  Err(Error::<Runtime>::InvalidNumberOfBonds.into())
 					  );
 
 					  Ok(())
@@ -381,6 +384,66 @@ proptest! {
 					  );
 
 						prop_assert_eq!(Tokens::balance(NATIVE_CURRENCY_ID, &ALICE), Stake::get());
+
+					  Ok(())
+			  })?;
+	  }
+
+	  #[test]
+	  fn issuer_cancel_offer(offer in simple_offer(1)) {
+			  ExtBuilder::build().execute_with(|| {
+					  System::set_block_number(1);
+
+						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
+						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
+						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+					  prop_assert_ok!(offer_id);
+					  let offer_id = offer_id.expect("impossible; qed");
+
+					  prop_assert_eq!(
+							  BondedFinance::cancel(Origin::signed(BOB), offer_id),
+							  Err(BadOrigin.into())
+					  );
+
+					  prop_assert_ok!(BondedFinance::cancel(Origin::signed(ALICE), offer_id));
+						prop_assert_eq!(Tokens::balance(NATIVE_CURRENCY_ID, &ALICE), Stake::get());
+
+					  prop_assert_eq!(
+							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds),
+							  Err(Error::<Runtime>::BondOfferNotFound.into())
+					  );
+
+					  System::assert_last_event(Event::BondedFinance(crate::Event::OfferCancelled { offer_id }));
+
+					  Ok(())
+			  })?;
+	  }
+
+	  #[test]
+	  fn admin_cancel_offer(offer in simple_offer(1)) {
+			  ExtBuilder::build().execute_with(|| {
+					  System::set_block_number(1);
+
+						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
+						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
+						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+					  prop_assert_ok!(offer_id);
+					  let offer_id = offer_id.expect("impossible; qed");
+
+					  prop_assert_eq!(
+							  BondedFinance::cancel(Origin::signed(BOB), offer_id),
+							  Err(BadOrigin.into())
+					  );
+
+					  prop_assert_ok!(BondedFinance::cancel(Origin::root(), offer_id));
+						prop_assert_eq!(Tokens::balance(NATIVE_CURRENCY_ID, &ALICE), Stake::get());
+
+					  prop_assert_eq!(
+							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds),
+							  Err(Error::<Runtime>::BondOfferNotFound.into())
+					  );
+
+					  System::assert_last_event(Event::BondedFinance(crate::Event::OfferCancelled { offer_id }));
 
 					  Ok(())
 			  })?;
