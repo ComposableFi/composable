@@ -1,8 +1,9 @@
 name: "Dali-chachacha Community Release"
 
 on:
-  tags: 
-    - 'dali-*'
+  push: 
+    tags: 
+      - 'dali-*'
 
 env:
   CHAIN: "dali"
