@@ -222,6 +222,32 @@ proptest! {
 	  }
 
 	  #[test]
+	  fn stake_taken(offer in simple_offer(1)) {
+			  ExtBuilder::build().execute_with(|| {
+						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
+						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
+
+						prop_assert_eq!(Tokens::balance(NATIVE_CURRENCY_ID, &ALICE), Stake::get());
+						prop_assert_ok!(BondedFinance::do_offer(&ALICE, offer));
+						prop_assert_eq!(Tokens::balance(NATIVE_CURRENCY_ID, &ALICE), 0);
+					  Ok(())
+			  })?;
+	  }
+
+	  #[test]
+	  fn reward_taken(offer in simple_offer(1)) {
+			  ExtBuilder::build().execute_with(|| {
+						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
+						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
+
+						prop_assert_eq!(Tokens::balance(offer.reward.asset, &ALICE), offer.reward.amount);
+						prop_assert_ok!(BondedFinance::do_offer(&ALICE, offer.clone()));
+						prop_assert_eq!(Tokens::balance(offer.reward.asset, &ALICE), 0);
+					  Ok(())
+			  })?;
+	  }
+
+	  #[test]
 	  fn isolated_accounts(offer_a in simple_offer(1), offer_b in simple_offer(1)) {
 			  ExtBuilder::build().execute_with(|| {
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
