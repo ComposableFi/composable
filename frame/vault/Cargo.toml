@@ -25,7 +25,7 @@ sp-io = { default-features = false,  git = "https://github.com/paritytech/substr
 sp-core = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
-composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
+composable-traits = {  path = "../composable-traits", default-features = false }
 
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
@@ -35,8 +35,8 @@ scale-info = { version = "1.0", default-features = false, features = ["derive"] 
 [dev-dependencies]
 proptest = "0.9.6"
 serde = "1.0.119"
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93", default-features = false }
 
 [features]
 default = ["std"]

@@ -24,8 +24,8 @@ scale-info = { version = "1.0", default-features = false, features = ["derive"] 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 smallvec = "1.6.1"
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93" }
 
 [features]
 default = ["std"]

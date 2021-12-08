@@ -2,14 +2,37 @@
 use codec::{Decode, Encode};
 use frame_support::dispatch::DispatchResult;
 use scale_info::TypeInfo;
+use xcm::latest::MultiLocation;
 
+/// works only with concrete assets
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
 //#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct XcmAssetLocation(pub xcm::latest::MultiLocation);
 
+impl XcmAssetLocation {
+	/// relay native asset
+	pub const RELAY_NATIVE: XcmAssetLocation = XcmAssetLocation(MultiLocation::parent());
+
+	/// local native, is equivalent to (1, LOCAL_PARACHAIN_ID), and to (1, LOCAL_PARACHAIN_ID, 1)
+	/// and to (0, 1)
+	pub const LOCAL_NATIVE: XcmAssetLocation = XcmAssetLocation(MultiLocation::here());
+}
+
 impl Default for XcmAssetLocation {
 	fn default() -> Self {
 		XcmAssetLocation(xcm::latest::MultiLocation::here())
+	}
+}
+
+impl From<XcmAssetLocation> for xcm::latest::MultiLocation {
+	fn from(this: XcmAssetLocation) -> Self {
+		this.0
+	}
+}
+
+impl XcmAssetLocation {
+	pub fn new(multi_location: xcm::latest::MultiLocation) -> Self {
+		Self(multi_location)
 	}
 }
 
@@ -34,6 +57,8 @@ pub trait RemoteAssetRegistry {
 	/// Adds mapping between native location and local asset id and vice versa.
 	///
 	/// Emits `LocationSet` event when successful.
+	/// `asset_id` - local id
+	/// `location` - remote location relative to this chain
 	fn set_location(asset_id: Self::AssetId, location: Self::AssetNativeLocation)
 		-> DispatchResult;
 

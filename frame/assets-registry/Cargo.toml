@@ -29,6 +29,7 @@ sp-core = { default-features = false,  git = "https://github.com/paritytech/subs
 sp-io = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12", default-features = false }
 
 log = { version = "0.4.14", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
@@ -50,6 +51,7 @@ std = [
     "sp-io/std",
     "sp-core/std",
     "sp-std/std",
+    "xcm/std",
 ]
 
 runtime-benchmarks = [

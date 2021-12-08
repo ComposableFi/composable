@@ -1,6 +1,7 @@
 name: Test & Build & Benchmarking Build
 
 # please update docker, toolchain toml and github action with toolchain at same time
+
 on:
   pull_request:
     branches:
@@ -33,6 +34,9 @@ jobs:
       - name: Picasso Runtime Build
         run: |
           cargo build --release -p picasso-runtime
+      - name: Picasso Runtime Build with develop feature
+        run: |
+          cargo build --release -p picasso-runtime --features develop
   linters:
     name: Linters
     runs-on:

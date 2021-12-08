@@ -1,6 +1,6 @@
 [package]
 name = "composable"
-version = "3.0.0"
+version = '3.0.0'
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
 build = "build.rs"
@@ -51,6 +51,7 @@ grandpa = { package = "sc-finality-grandpa", git = "https://github.com/paritytec
 ## Substrate Primitive Dependencies
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }

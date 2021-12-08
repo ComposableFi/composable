@@ -10,7 +10,7 @@ authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [package.metadata.cargo-udeps.ignore]
-normal = ["pallet-vault", "session-benchmarking", "assets-registry", "currency-factory", "oracle", "vault", "assets", "governance-registry"]
+normal = ["pallet-vault", "session-benchmarking", "assets-registry", "currency-factory", "oracle", "vault", "assets", "governance-registry", "call-filter", "orml-unknown-tokens", "orml-xtokens"]
 
 [dependencies]
 frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
@@ -46,14 +46,16 @@ treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/s
 democracy = { package = "pallet-democracy", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84", default-features = false }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "ee37b76a7a8cf159e6c41851942758746318bb84", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93", default-features = false }
 smallvec = "1.6.1"
 
 # local modules
-assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false, optional = true }
-assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false, optional = true }
-crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = "../../frame/crowdloan-bonus", default-features = false }
+assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false, optional = true }
+assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false, optional = true }
+
+crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
+
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false, optional = true }
@@ -92,6 +94,12 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "relea
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
+# orml XCM support
+orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93", default-features = false }
+orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93", default-features = false }
+orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "5670bfa4360c9c33eb651a2b911cbbc54caa1c93", default-features = false }
+
+
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
@@ -109,9 +117,9 @@ std = [
 	"sp-block-builder/std",
 	"sp-transaction-pool/std",
 	"sp-inherents/std",
-  "support/std",
+  	"support/std",
 	"executive/std",
-  "frame-system/std",
+ 	"frame-system/std",
 	"utility/std",
 	"authorship/std",
 	"balances/std",
@@ -123,7 +131,7 @@ std = [
 	"indices/std",
 	"oracle/std",
 	"vault/std",
-  "assets/std",
+  	"assets/std",
 	"governance-registry/std",
 	"call-filter/std",
 	"currency-factory/std",
@@ -150,9 +158,14 @@ std = [
 	"xcm-executor/std",
 	"aura/std",
 	"sp-consensus-aura/std",
-  "scale-info/std",
+    "scale-info/std",
+	"orml-xtokens/std",
+    "orml-xcm-support/std",
+    "orml-unknown-tokens/std",
 	"assets-registry/std",
-]
+	"assets/std",
+	"governance-registry/std",
+	]
 runtime-benchmarks = [
 	"assets/runtime-benchmarks",
 	"balances/runtime-benchmarks",
@@ -181,9 +194,10 @@ runtime-benchmarks = [
 	"utility/runtime-benchmarks",
 ]
 develop = [
-  "assets",
-  "governance-registry",
+    "assets",
+    "governance-registry",
 	"assets-registry",
+	"assets",
 	"oracle",
 	"vault",
 	"currency-factory",

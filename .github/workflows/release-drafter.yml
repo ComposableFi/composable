@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - dali-chachacha
+      - picasso
 jobs:
   update_release_draft:
     runs-on: ubuntu-latest
@@ -10,3 +14,4 @@ jobs:
       - uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+

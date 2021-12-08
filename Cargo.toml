@@ -13,4 +13,5 @@ members = [
     "price-feed",
     "runtime/picasso",
     "utils/subxt-clients",
+    "utils/collator-sidecar"
 ]

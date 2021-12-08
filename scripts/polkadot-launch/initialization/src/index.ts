@@ -5,8 +5,9 @@ import { ApiPromise, WsProvider } from "@polkadot/api";
 import { Keyring } from "@polkadot/keyring";
 import type { KeyringPair } from "@polkadot/keyring/types";
 import { createType } from "@polkadot/types";
-import type { AssetId, JunctionsV1 } from "@polkadot/types/interfaces";
+import type { AssetId, JunctionsV1, JunctionsV2 } from "@polkadot/types/interfaces";
 import type { ISubmittableResult, RegistryTypes } from "@polkadot/types/types";
+import BN from "bn.js";
 
 import * as definitions from "./interfaces/definitions";
 import type { AssetNativeLocation, AssetType } from "./interfaces/types";
@@ -23,6 +24,7 @@ async function main() {
         basilisk_collator_url,
         composable_collator_url,
         basilisk_para_id,
+        composable_para_id,
     } = require("../config/config.json");
     const composableTypes = {
         AssetNativeLocation: "MultiLocation",
@@ -41,19 +43,20 @@ async function main() {
     const composableLocalAdmin = keyring.addFromUri("//Eve", { name: "Eve default" });
     const composableForeignAdmin = keyring.addFromUri("//Ferdie", { name: "Ferdie default" });
 
+    await doBasiliskAssetsMapping(
+        basiliskApi,
+        assets,
+        alice,
+    );
+
     await doComposableAssetsMapping(
+        basiliskApi,
         composableApi,
         assets,
         basilisk_para_id,
         alice,
         composableLocalAdmin,
         composableForeignAdmin,
-    );
-
-    await doBasiliskAssetsMapping(
-        basiliskApi,
-        assets,
-        alice,
     );
 }
 
@@ -73,7 +76,8 @@ async function chainInfo(api: ApiPromise) {
 }
 
 async function doComposableAssetsMapping(
-    api: ApiPromise,
+    basiliskApi: ApiPromise,
+    composableApi: ApiPromise,
     assets: IAsset[],
     basiliskParaId: number,
     root: KeyringPair,
@@ -82,10 +86,10 @@ async function doComposableAssetsMapping(
 ) {
     let adminsUpdated = false;
     const txs = [
-        api.tx.sudo.sudo(api.tx.assetsRegistry.setLocalAdmin(localAdmin.address)),
-        api.tx.sudo.sudo(api.tx.assetsRegistry.setForeignAdmin(foreignAdmin.address)),
+        composableApi.tx.sudo.sudo(composableApi.tx.assetsRegistry.setLocalAdmin(localAdmin.address)),
+        composableApi.tx.sudo.sudo(composableApi.tx.assetsRegistry.setForeignAdmin(foreignAdmin.address)),
     ];
-    await api.tx.utility
+    await composableApi.tx.utility
         .batch(txs)
         .signAndSend(root, ({ status }: ISubmittableResult) => {
             if (status.isInBlock) {
@@ -101,25 +105,32 @@ async function doComposableAssetsMapping(
         await sleep(1000);
     }
 
-    for (const { composable_id } of assets) {
-        const junctionsV1: JunctionsV1 = createType(
-            api.registry,
-            "JunctionsV1",
-            { x1: { parachain: basiliskParaId } },
+    for (const { name, composable_id } of assets) {
+        const basiliskAssetIdOpt = await basiliskApi.query.assetRegistry
+            .assetIds(name);
+        const basiliskAssetId: AssetId | null = basiliskAssetIdOpt.unwrapOr(null);
+        if (basiliskAssetId === null) {
+            console.log(`AssetId with name=${name} not found. Stopping work.`);
+            return;
+        }
+        const junctionsV2: JunctionsV2 = createType(
+            composableApi.registry,
+            "JunctionsV2",
+            { x2: [ { parachain: basiliskParaId }, { generalKey: toBE(basiliskAssetId) } ] },
         );
         const location: AssetNativeLocation = createType(
-            api.registry,
+            composableApi.registry,
             "AssetNativeLocation",
-            { parents: 0, interior: junctionsV1 },
+            { parents: 0, interior: junctionsV2 },
         );
-        await api.tx.assetsRegistry
+        await composableApi.tx.assetsRegistry
             .approveAssetsMappingCandidate(composable_id, location)
             .signAndSend(localAdmin, { nonce: -1 }, ({ status }: ISubmittableResult) => {
                 if (status.isInBlock) {
                     console.log(`Current status of approveAssetsMappingCandidate(${composable_id}, ${location}) is ${status}`);
                 }
             });
-        await api.tx.assetsRegistry
+        await composableApi.tx.assetsRegistry
             .approveAssetsMappingCandidate(composable_id, location)
             .signAndSend(foreignAdmin, { nonce: -1 }, ({ status }: ISubmittableResult) => {
                 if (status.isInBlock) {
@@ -130,7 +141,7 @@ async function doComposableAssetsMapping(
 }
 
 async function doBasiliskAssetsMapping(api: ApiPromise, assets: IAsset[], root: KeyringPair) {
-    for (const { name } of assets) {
+    for (const { name, composable_id } of assets) {
         const existentialDeposit = 1000;
         const assetType: AssetType = createType(api.registry, "AssetType", { Token: true });
         let registrationDone = false;
@@ -167,6 +178,10 @@ async function doBasiliskAssetsMapping(api: ApiPromise, assets: IAsset[], root: 
                 console.log(`Current status of setLocation(...) is ${status}`);
             });
     }
+}
+
+function toBE(a: AssetId): number[] {
+    return (new BN(a)).toArray();
 }
 
 function sleep(ms: number) {
