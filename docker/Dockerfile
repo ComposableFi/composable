@@ -1,10 +1,6 @@
 FROM composablefi/rust:latest
 
-<<<<<<< HEAD
-ARG VERSION=v0.1.9
-=======
 ARG VERSION
->>>>>>> 4af4e904f5eb0ea78f6ba91b6e7e1a4c9437f400
 
 USER root
 
