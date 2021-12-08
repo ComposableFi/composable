@@ -12,7 +12,10 @@ use parking_lot::RwLock;
 use sp_core::offchain::{testing, OffchainDbExt, OffchainWorkerExt, TransactionPoolExt};
 use sp_io::TestExternalities;
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
-use sp_runtime::{traits::BadOrigin, Percent, RuntimeAppPublic};
+use sp_runtime::{
+	traits::{BadOrigin, Zero},
+	Percent, RuntimeAppPublic,
+};
 use std::sync::Arc;
 
 #[test]
@@ -314,6 +317,10 @@ fn add_price() {
 		);
 		assert_ok!(Oracle::submit_price(Origin::signed(account_4), 100u128, 0u128));
 
+		assert_eq!(Oracle::answer_in_transit(account_1), Some(5));
+		assert_eq!(Oracle::answer_in_transit(account_2), Some(5));
+		assert_eq!(Oracle::answer_in_transit(account_4), Some(5));
+
 		assert_noop!(
 			Oracle::submit_price(Origin::signed(account_5), 100u128, 0u128),
 			Error::<Test>::MaxPrices
@@ -326,7 +333,6 @@ fn add_price() {
 		let price4 = PrePrice { price: 100u128, block: 6, who: account_4 };
 
 		assert_eq!(Oracle::pre_prices(0), vec![price, price2, price4]);
-
 		System::set_block_number(2);
 		Oracle::on_initialize(2);
 
@@ -334,6 +340,12 @@ fn add_price() {
 		assert_noop!(
 			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128),
 			Error::<Test>::PriceNotRequested
+		);
+
+		// non existent asset_id
+		assert_noop!(
+			Oracle::submit_price(Origin::signed(account_1), 100u128, 10u128),
+			Error::<Test>::MaxPrices
 		);
 	});
 }
@@ -438,7 +450,16 @@ fn test_payout_slash() {
 			5
 		));
 
+		add_price_storage(79, 0, account_1, 0);
+		add_price_storage(100, 0, account_2, 0);
+
+		assert_eq!(Oracle::answer_in_transit(account_1), Some(5));
+		assert_eq!(Oracle::answer_in_transit(account_2), Some(5));
+
 		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
+
+		assert_eq!(Oracle::answer_in_transit(account_1), Some(0));
+		assert_eq!(Oracle::answer_in_transit(account_2), Some(0));
 		// account 1 and 4 gets slashed 2 and 5 gets rewarded
 		assert_eq!(Balances::free_balance(account_1), 95);
 		// 5 gets 2's reward and its own
@@ -688,12 +709,17 @@ fn on_init_over_max_answers() {
 			let price = i as u128 + 100u128;
 			add_price_storage(price, 0, account_1, 0);
 		}
+
+		assert_eq!(Oracle::answer_in_transit(account_1), Some(25));
+
 		// all pruned
 		Oracle::on_initialize(0);
 		// price prunes all but first 2 answers, median went from 102 to 100
 		let price = Price { price: 100, block: 0 };
 		assert_eq!(Oracle::prices(0), price);
 		assert_eq!(Oracle::pre_prices(0).len(), 0);
+
+		assert_eq!(Oracle::answer_in_transit(account_1), Some(0));
 	});
 }
 
@@ -708,7 +734,7 @@ fn prune_old_pre_prices_edgecase() {
 			reward: 5,
 			slash: 5,
 		};
-		Oracle::prune_old_pre_prices(asset_info, vec![], 0);
+		Oracle::prune_old_pre_prices(asset_info, vec![], 0, &0);
 	});
 }
 
@@ -768,6 +794,18 @@ fn should_submit_signed_transaction_on_chain() {
 	let (mut t, pool_state) = offchain_worker_env(|state| price_oracle_response(state, "0"));
 
 	t.execute_with(|| {
+		let account_2 = get_account_2();
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Percent::from_percent(80),
+			3,
+			3,
+			5,
+			5,
+			5
+		));
+
 		// when
 		Oracle::fetch_price_and_send_signed(&0).unwrap();
 		// then
@@ -787,8 +825,29 @@ fn should_check_oracles_submitted_price() {
 	t.execute_with(|| {
 		let account_2 = get_account_2();
 
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Percent::from_percent(80),
+			3,
+			3,
+			5,
+			5,
+			5
+		));
+
 		add_price_storage(100u128, 0, account_2, 0);
 		// when
+		Oracle::fetch_price_and_send_signed(&0).unwrap();
+	});
+}
+
+#[test]
+#[should_panic = "Max answers reached"]
+fn should_check_oracles_max_answer() {
+	let (mut t, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
+
+	t.execute_with(|| {
 		Oracle::fetch_price_and_send_signed(&0).unwrap();
 	});
 }
@@ -809,7 +868,10 @@ fn parse_price_works() {
 
 fn add_price_storage(price: u128, asset_id: u128, who: AccountId, block: u64) {
 	let price = PrePrice { price, block, who };
-	PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.push(price));
+	PrePrices::<Test>::mutate(asset_id.clone(), |current_prices| current_prices.push(price));
+	AnswerInTransit::<Test>::mutate(who, |transit| {
+		*transit = Some(transit.unwrap_or_else(Zero::zero) + 5)
+	});
 }
 
 fn do_price_update(asset_id: u128, block: u64) {
