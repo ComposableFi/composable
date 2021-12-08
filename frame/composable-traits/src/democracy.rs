@@ -13,6 +13,7 @@ pub trait Democracy {
 	fn vote(account: Self::AccountId, ref_index: Self::ReferendumIndex, vote: Self::Vote);
 	fn exists_and_is_ongoing(index: Self::ReferendumIndex) -> bool;
 
+	#[allow(clippy::type_complexity)]
 	fn count_votes(
 		account: Self::AccountId,
 	) -> Result<Voting<Self::Balance, Self::AccountId, Self::BlockNumber>, DispatchError>;
