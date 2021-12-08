@@ -6,12 +6,23 @@ use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "std")]
 use sp_std::vec::Vec;
+use xcm::latest::MultiLocation;
 
+/// works only with concrete assets
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct XcmAssetLocation(
 	#[cfg_attr(feature = "std", serde(with = "MultiLocationDef"))] pub xcm::latest::MultiLocation,
 );
+
+impl XcmAssetLocation {
+	/// relay native asset
+	pub const RELAY_NATIVE: XcmAssetLocation = XcmAssetLocation(MultiLocation::parent());
+
+	/// local native, is equivalent to (1, LOCAL_PARACHAIN_ID), and to (1, LOCAL_PARACHAIN_ID, 1)
+	/// and to (0, 1)
+	pub const LOCAL_NATIVE: XcmAssetLocation = XcmAssetLocation(MultiLocation::here());
+}
 
 impl Default for XcmAssetLocation {
 	fn default() -> Self {
@@ -52,6 +63,8 @@ pub trait RemoteAssetRegistry {
 	/// Adds mapping between native location and local asset id and vice versa.
 	///
 	/// Emits `LocationSet` event when successful.
+	/// `asset_id` - local id
+	/// `location` - remote location relative to this chain
 	fn set_location(asset_id: Self::AssetId, location: Self::AssetNativeLocation)
 		-> DispatchResult;
 

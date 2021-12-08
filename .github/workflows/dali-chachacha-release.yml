@@ -1,0 +1,43 @@
+name: "Dali-chachacha Community Release"
+
+on:
+  push: 
+    tags: 
+      - 'dali-*'
+
+env:
+  CHAIN: "dali"
+
+jobs:
+  build-and-publish:
+    runs-on: 
+        - self-hosted
+        - linux
+        - x64
+        - sre
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+
+    - name: Set env
+      run: |
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^dali-[0-9]' | tail -1 )" >> $GITHUB_ENV
+        make version
+
+    - name: Build and Push Artifacts to gcloud
+      run: |
+        /home/runner/.cargo/bin/cargo build --release -p composable
+        tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
+        gsutil mv composable-${{ env.RELEASE_VERSION }}.tar.gz gs://composable-binaries/community-releases/dali/ 
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1 
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
+
+    - name: Build Docker image
+      run: make containerize-release 
+    - name:  Docker push
+      run: make push-release

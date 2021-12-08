@@ -7535,6 +7535,7 @@ dependencies = [
  "pallet-currency-factory",
  "pallet-democracy",
  "pallet-governance-registry",
+ "pallet-identity",
  "pallet-indices",
  "pallet-membership",
  "pallet-oracle",

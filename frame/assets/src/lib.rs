@@ -15,7 +15,7 @@
 //! - Transferring balances of native and other assets between accounts.
 //! - Minting new assets, with support for governance.
 //! - Crediting and debiting of created asset balances.
-//!
+//! - By design similar to [orml_currencies](https://docs.rs/orml-currencies/latest/orml_currencies/)
 //! Functions requiring authorization are checked via asset's governance registry origin. Example,
 //! minting.
 //!

@@ -1,7 +1,6 @@
 //! Setup of XCMP for parachain to allow cross chain transfers and other operations.
 //! Very similar to https://github.com/galacticcouncil/Basilisk-node/blob/master/runtime/basilisk/src/xcm.rs
 #![allow(unused_imports)] // allow until v2 xcm released (instead creating 2 runtimes)
-#![cfg_attr(not(feature = "std"), no_std)]
 
 use super::*; // recursive dependency onto runtime
 
@@ -41,7 +40,10 @@ use xcm_builder::{
 	ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 };
-use xcm_executor::{traits::WeightTrader, Assets, Config, XcmExecutor};
+use xcm_executor::{
+	traits::{TransactAsset, WeightTrader},
+	Assets, Config, XcmExecutor,
+};
 
 parameter_types! {
 	// pub const RelayLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
@@ -122,7 +124,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 
 #[cfg(feature = "develop")]
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
-	Tokens,
+	crate::Assets,
 	UnknownTokens,
 	IsNativeConcrete<CurrencyId, CurrencyIdConvert>,
 	AccountId,
@@ -164,7 +166,7 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTransactor = LocalAssetTransactor;
 
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = xcm_builder::NativeAsset;
+	type IsReserve = MultiNativeAsset;
 	type IsTeleporter = (); // <- should be enough to allow teleportation of PICA
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
