@@ -29,7 +29,7 @@ jobs:
         /home/runner/.cargo/bin/cargo build --release --bins
         tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
         tar -czvf picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
-        tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain
+        tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain-utils
         gsutil mv *.tar.gz gs://composable-binaries/community-releases/dali/ 
 
     - name: Login to DockerHub
