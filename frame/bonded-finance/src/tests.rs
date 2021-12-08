@@ -193,7 +193,6 @@ prop_compose! {
 								maturity,
 							  reward: BondOfferReward {
 									  asset: MockCurrencyId::ETH,
-									  // min_reward is per_contract
 									  amount: Balance::max(MIN_REWARD.saturating_mul(nb_of_bonds), reward_amount),
 									  maturity: reward_maturity,
 							  }
@@ -224,17 +223,25 @@ proptest! {
 			  ExtBuilder::build().execute_with(|| {
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer_a.reward.asset, &ALICE, offer_a.reward.amount));
-						let offer_a_id = BondedFinance::do_offer(&ALICE, offer_a);
+						let offer_a_id = BondedFinance::do_offer(&ALICE, offer_a.clone());
 					  prop_assert_ok!(offer_a_id);
 					  let offer_a_id = offer_a_id.expect("impossible; qed");
 
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &BOB, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer_b.reward.asset, &BOB, offer_b.reward.amount));
-						let offer_b_id = BondedFinance::do_offer(&BOB, offer_b);
+						let offer_b_id = BondedFinance::do_offer(&BOB, offer_b.clone());
 					  prop_assert_ok!(offer_b_id);
 					  let offer_b_id = offer_b_id.expect("impossible; qed");
 
 					  prop_assert_ne!(BondedFinance::account_id(offer_a_id), BondedFinance::account_id(offer_b_id));
+					  prop_assert_eq!(
+							  Tokens::balance(offer_a.reward.asset, &BondedFinance::account_id(offer_a_id)),
+							  offer_a.reward.amount
+					  );
+					  prop_assert_eq!(
+							  Tokens::balance(offer_b.reward.asset, &BondedFinance::account_id(offer_b_id)),
+							  offer_b.reward.amount
+					  );
 					  Ok(())
 			  })?;
 	  }
@@ -316,7 +323,26 @@ proptest! {
 	  }
 
 	  #[test]
-	  fn invalid_parts(offer in simple_offer(1)) {
+	  fn non_existing_offer(offer in simple_offer(1)) {
+			  ExtBuilder::build().execute_with(|| {
+						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
+						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
+						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+					  prop_assert_ok!(offer_id);
+					  let offer_id = offer_id.expect("impossible; qed");
+
+					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
+					  prop_assert_eq!(
+							  BondedFinance::bond(Origin::signed(BOB), offer_id + 1, offer.nb_of_bonds),
+							  Err(Error::<Runtime>::BondOfferNotFound.into())
+					  );
+
+					  Ok(())
+			  })?;
+	  }
+
+	  #[test]
+	  fn invalid_nb_of_bonds(offer in simple_offer(1)) {
 			  ExtBuilder::build().execute_with(|| {
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
