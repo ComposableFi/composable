@@ -1,0 +1,46 @@
+---
+- hosts: all
+  tasks:
+    - name: Stop Composable service
+      become: true
+      command: supervisorctl stop composable
+
+    - name: Download WASM runtime ${RELEASE_VERSION}
+      become: yes
+      get_url:
+        url: https://storage.googleapis.com/composable-binaries/community-releases/${ENVIRONMENT}/picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz
+        dest: ~/
+        mode: "+x"
+    
+    - name: Download Parachain utils ${RELEASE_VERSION}
+      become: yes
+      get_url:
+        url: https://storage.googleapis.com/composable-binaries/community-releases/${ENVIRONMENT}/parachain-utils-${RELEASE_VERSION}.tar.gz
+        dest: ~/
+        mode: "+x"
+
+    - name: Unpack WASM runtime file 
+      become: yes
+      command: tar -xf ~/picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz
+
+    - name: Unpack Parachain utils 
+      become: yes
+      command: tar -xf ~/parachain-utils-${RELEASE_VERSION}.tar.gz
+
+    - name: Move parachain-utils binary to /usr/local/bin/
+      become: yes
+      command: mv ~/parachain-utils /usr/bin/parachain-utils
+
+    - name: Change owner composable
+      become: yes
+      command: chown composable:composable /usr/bin/parachain-utils
+
+
+    - name: Runtime Upgrade
+      become: yes
+      command: parachain-utils upgrade-runtime --path ./picasso_runtime.compact.wasm
+
+
+    - name: Start Composable service
+      become: true
+      command: supervisorctl restart composable

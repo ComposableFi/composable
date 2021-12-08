@@ -12,6 +12,7 @@ env:
   TARGET: ${{ github.event.inputs.target }}
   PLAYBOOK: "client-upgrade.yml"
   INVENTORY_FILE: "gcp.yaml"
+  ENVIRONMENT: ${{ github.event.inputs.environment }}
 
 jobs:
   run-playbooks:
