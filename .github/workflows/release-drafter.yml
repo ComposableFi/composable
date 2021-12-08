@@ -4,9 +4,7 @@ on:
     branches:
       - main
       - dali-chachacha
-      - picasso
-      - cleanup-release
-     
+      - picasso     
 jobs:
   update_release_draft:
     runs-on: ubuntu-latest
