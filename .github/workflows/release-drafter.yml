@@ -5,6 +5,7 @@ on:
       - main
       - dali-chachacha
       - picasso
+      - cleanup-release
      
 jobs:
   update_release_draft:
@@ -20,7 +21,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: false
           CUSTOM_TAG: dali-
-          TAG_CONTEXT: dali-chachacha
       - uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
