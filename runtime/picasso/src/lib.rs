@@ -200,6 +200,30 @@ impl aura::Config for Runtime {
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
+	pub const BasicDeposit: Balance = 8 * PICA;
+	pub const FieldDeposit: Balance = 256 * MILLI_PICA;
+	pub const MaxAdditionalFields: u32 = 32;
+	pub const MaxRegistrars: u32 = 8;
+	pub const MaxSubAccounts: u32 = 32;
+	pub const SubAccountDeposit: Balance = 2 * PICA;
+}
+
+impl identity::Config for Runtime {
+	type BasicDeposit = BasicDeposit;
+	type Currency = Balances;
+	type Event = Event;
+	type FieldDeposit = FieldDeposit;
+	type ForceOrigin = EnsureRoot<AccountId>;
+	type MaxAdditionalFields = MaxAdditionalFields;
+	type MaxRegistrars = MaxRegistrars;
+	type MaxSubAccounts = MaxSubAccounts;
+	type RegistrarOrigin = EnsureRoot<AccountId>;
+	type Slashed = Treasury;
+	type SubAccountDeposit = SubAccountDeposit;
+	type WeightInfo = weights::identity::WeightInfo<Runtime>;
+}
+
+parameter_types! {
 	/// Minimum period in between blocks, for now we leave it at half
 	/// the expected slot duration
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
@@ -768,6 +792,7 @@ construct_runtime!(
 		TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
 		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
 		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
+		Identity: identity::{Call, Event<T>, Pallet, Storage} = 7,
 
 		// Parachains stuff
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
@@ -813,6 +838,7 @@ construct_runtime!(
 		TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
 		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
 		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
+		Identity: identity::{Call, Event<T>, Pallet, Storage} = 7,
 
 		// Parachains stuff
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
@@ -1006,6 +1032,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, collective, Council);
 			list_benchmark!(list, extra, crowdloan_bonus, LiquidCrowdloan);
 			list_benchmark!(list, extra, utility, Utility);
+			list_benchmark!(list, extra, identity, Identity);
 
 			#[cfg(feature = "develop")]
 			{
@@ -1057,6 +1084,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, collective, Council);
 			add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
 			add_benchmark!(params, batches, utility, Utility);
+			add_benchmark!(params, batches, identity, Identity);
 
 			#[cfg(feature ="develop")]
 			{
