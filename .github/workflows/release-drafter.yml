@@ -4,23 +4,11 @@ on:
     branches:
       - main
       - dali-chachacha
-      - picasso
-     
+      - picasso     
 jobs:
   update_release_draft:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with: 
-          fetch-depth: 0
-        
-      - name: Bump version and push tag
-        uses: anothrNick/github-tag-action@1.36.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: false
-          CUSTOM_TAG: dali-
-          TAG_CONTEXT: dali-chachacha
       - uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
