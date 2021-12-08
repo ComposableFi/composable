@@ -5,10 +5,18 @@ on:
       - main
       - dali-chachacha
       - picasso
+     
 jobs:
   update_release_draft:
     runs-on: ubuntu-latest
     steps:
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@1.36.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: false
+          CUSTOM_TAG: dali-
+          TAG_CONTEXT: dali-chachacha
       - uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
