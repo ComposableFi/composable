@@ -486,7 +486,7 @@ pub mod pallet {
 			DeclaredWithdraws::<T>::remove(&signer);
 			T::Currency::unreserve(&signer, withdrawal.stake);
 			let result = T::Currency::transfer(&signer, &who, withdrawal.stake, AllowDeath);
-			ensure!(!result.is_err(), Error::<T>::TransferError);
+			ensure!(result.is_ok(), Error::<T>::TransferError);
 
 			ControllerToSigner::<T>::remove(&who);
 			SignerToController::<T>::remove(&signer);
