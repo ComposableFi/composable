@@ -1,10 +1,8 @@
 name: "Dali-chachacha Community Release"
 
 on:
-  push: 
-    branches: "workflow-to-dali"
-    tags: 
-      - 'dali-*'
+  tags: 
+    - 'dali-*'
 
 env:
   CHAIN: "dali"
@@ -33,15 +31,6 @@ jobs:
         tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain-utils
         gsutil cp *.tar.gz gs://composable-binaries/community-releases/dali/ 
 
-    - name: Upload binaries to release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: target/release/composable
-        asset_name: composable
-        tag: ${{ github.ref }}
-        overwrite: true
-        body: "Composable Binary File"
 
     - name: Login to DockerHub
       uses: docker/login-action@v1 
