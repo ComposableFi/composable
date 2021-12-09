@@ -22,7 +22,9 @@
 
     - name: Unpack Composable Bonary file 
       become: yes
-      command: tar -xf ~/composable-{{ release_version }}.tar.gz
+      unarchive: 
+        src: ~/composable-{{ release_version }}.tar.gz
+        dest: ~/
       
 
     - name: Move composable binary to /usr/local/bin/composable
