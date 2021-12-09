@@ -7,6 +7,7 @@ pub mod democracy;
 pub mod frame_system;
 pub mod identity;
 pub mod indices;
+pub mod multisig;
 pub mod membership;
 #[cfg(feature = "develop")]
 pub mod oracle;
