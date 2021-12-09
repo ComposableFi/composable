@@ -5,12 +5,16 @@ on:
     inputs:
         target:
           required: true
-          description: Target node tags 
+          description: Target node tags
+        playbook_file:
+          required: true
+          description: Playbook file to run
+       
 
 env: 
   RELEASE_VERSION: ""
   TARGET: ${{ github.event.inputs.target }}
-  PLAYBOOK: "client-upgrade.yml"
+  PLAYBOOK: ${{ github.event.inputs.playbook_file }}
   INVENTORY_FILE: "gcp.yaml"
   ENVIRONMENT: ${{ github.event.inputs.environment }}
 
