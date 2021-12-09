@@ -1,5 +1,8 @@
 ---
 - hosts: all
+  vars:
+    chain: "{{ lookup('env','CHAIN') }}"
+    release_version: "{{ lookup('env','RELEASE_VERSION') }}"
   tasks:
     - name: Stop Composable service
       become: true
@@ -15,13 +18,12 @@
         url: https://storage.googleapis.com/composable-binaries/community-releases/{{ chain }}/composable-{{ release_version }}.tar.gz
         dest: ~/
         mode: "+x"
-      vars:
-        chain:     "{{ lookup('env','CHAIN') }}"
-        release_version: "{{ lookup('env','RELEASE_VERSION') }}"
+  
 
     - name: Unpack Composable Bonary file 
       become: yes
-      command: tar -xf ~/composable-${RELEASE_VERSION}.tar.gz
+      command: tar -xf ~/composable-{{ release_version }}.tar.gz
+      
 
     - name: Move composable binary to /usr/local/bin/composable
       become: yes
