@@ -19,7 +19,7 @@ env:
   TARGET: ${{ github.event.inputs.target }}
   PLAYBOOK: ${{ github.event.inputs.playbook_file }}
   INVENTORY_FILE: "gcp.yaml"
-  ENVIRONMENT: ${{ github.event.inputs.environment }}
+  CHAIN: ${{ github.event.inputs.chain }}
 
 jobs:
   run-playbooks:
