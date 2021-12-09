@@ -34,4 +34,5 @@ jobs:
       working-directory: "./playbooks"
       run: |
         echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^'$CHAIN'-[0-9]' | tail -1)" >> $GITHUB_ENV
+        printenv
         ansible-playbook -l $TARGET $PLAYBOOK -i $INVENTORY_FILE -e 'ansible_python_interpreter=/usr/bin/python3'
