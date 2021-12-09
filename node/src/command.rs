@@ -18,13 +18,13 @@
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, Executor},
+	service::{new_partial, ComposableExecutor, PicassoExecutor},
 };
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use log::info;
-use picasso_runtime::{Block, RuntimeApi};
+use picasso_runtime::Block;
 use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -146,8 +146,8 @@ macro_rules! construct_async_run {
 		let runner = $cli.create_runner($cmd)?;
 		runner.async_run(|$config| {
 			let $components = new_partial::<
-				RuntimeApi,
-				Executor,
+				picasso_runtime::RuntimeApi,
+				PicassoExecutor,
 				_
 			>(
 				&$config,
@@ -258,7 +258,7 @@ pub fn run() -> Result<()> {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 
-				runner.sync_run(|config| cmd.run::<Block, Executor>(config))
+				runner.sync_run(|config| cmd.run::<Block, PicassoExecutor>(config))
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
@@ -309,10 +309,25 @@ pub fn run() -> Result<()> {
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				crate::service::start_node(config, polkadot_config, id)
+				match config.chain_spec.id() {
+					"composable" => crate::service::start_node::<
+						composable_runtime::RuntimeApi,
+						ComposableExecutor,
+					>(config, polkadot_config, id)
 					.await
 					.map(|r| r.0)
-					.map_err(Into::into)
+					.map_err(Into::into),
+					_ => {
+						crate::service::start_node::<picasso_runtime::RuntimeApi, PicassoExecutor>(
+							config,
+							polkadot_config,
+							id,
+						)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
+					}
+				}
 			})
 		}
 	}

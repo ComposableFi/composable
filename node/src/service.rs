@@ -1,9 +1,6 @@
 // std
 use std::sync::Arc;
 
-// Local Runtime Types
-use picasso_runtime::{self as parachain_runtime, RuntimeApi};
-
 // Cumulus Imports
 use common::{AccountId, AccountIndex, Balance};
 use cumulus_client_consensus_aura::{
@@ -17,9 +14,9 @@ use cumulus_client_service::{
 use cumulus_primitives_core::ParaId;
 
 // Substrate Imports
-use crate::rpc;
+use crate::{rpc, runtime::HostRuntimeApis};
 use sc_client_api::ExecutorProvider;
-use sc_executor::NativeElseWasmExecutor;
+use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
 use sc_network::NetworkService;
 use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
@@ -36,18 +33,35 @@ type BlockNumber = u32;
 type Header = sp_runtime::generic::Header<BlockNumber, sp_runtime::traits::BlakeTwo256>;
 pub type Block = sp_runtime::generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
 type Hash = sp_core::H256;
+type FullClient<RuntimeApi, Executor> =
+	TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>;
+type FullBackend = TFullBackend<Block>;
 
-pub struct Executor;
+pub struct PicassoExecutor;
 
-impl sc_executor::NativeExecutionDispatch for Executor {
+impl sc_executor::NativeExecutionDispatch for PicassoExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		parachain_runtime::api::dispatch(method, data)
+		picasso_runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		parachain_runtime::native_version()
+		picasso_runtime::native_version()
+	}
+}
+
+pub struct ComposableExecutor;
+
+impl sc_executor::NativeExecutionDispatch for ComposableExecutor {
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		composable_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		composable_runtime::native_version()
 	}
 }
 
@@ -379,18 +393,22 @@ where
 
 /// Build the import queue for the the parachain runtime.
 #[allow(clippy::type_complexity)]
-pub fn parachain_build_import_queue(
-	client: Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
+pub fn parachain_build_import_queue<RuntimeApi, Executor>(
+	client: Arc<FullClient<RuntimeApi, Executor>>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<
-	sc_consensus::DefaultImportQueue<
-		Block,
-		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
-	>,
+	sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
 	sc_service::Error,
-> {
+>
+where
+	RuntimeApi:
+		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi::RuntimeApi:
+		HostRuntimeApis<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+	Executor: NativeExecutionDispatch + 'static,
+{
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 	cumulus_client_consensus_aura::import_queue::<
@@ -424,14 +442,18 @@ pub fn parachain_build_import_queue(
 }
 
 /// Start a normal parachain node.
-pub async fn start_node(
+pub async fn start_node<RuntimeApi, Executor>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	id: ParaId,
-) -> sc_service::error::Result<(
-	TaskManager,
-	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
-)> {
+) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, Executor>>)>
+where
+	RuntimeApi:
+		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi::RuntimeApi:
+		HostRuntimeApis<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+	Executor: NativeExecutionDispatch + 'static,
+{
 	start_node_impl::<RuntimeApi, Executor, _, _>(
 		parachain_config,
 		polkadot_config,
