@@ -12,7 +12,7 @@
     - name: Download composable binary ${RELEASE_VERSION}
       become: yes
       get_url:
-        url: https://storage.googleapis.com/composable-binaries/community-releases/${ENVIRONMENT}/composable-${RELEASE_VERSION}.tar.gz
+        url: https://storage.googleapis.com/composable-binaries/community-releases/${CHAIN}/composable-${RELEASE_VERSION}.tar.gz
         dest: ~/
         mode: "+x"
 

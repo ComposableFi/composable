@@ -8,14 +8,14 @@
     - name: Download WASM runtime ${RELEASE_VERSION}
       become: yes
       get_url:
-        url: https://storage.googleapis.com/composable-binaries/community-releases/${ENVIRONMENT}/picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz
+        url: https://storage.googleapis.com/composable-binaries/community-releases/${CHAIN}/picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz
         dest: ~/
         mode: "+x"
     
     - name: Download Parachain utils ${RELEASE_VERSION}
       become: yes
       get_url:
-        url: https://storage.googleapis.com/composable-binaries/community-releases/${ENVIRONMENT}/parachain-utils-${RELEASE_VERSION}.tar.gz
+        url: https://storage.googleapis.com/composable-binaries/community-releases/${CHAIN}/parachain-utils-${RELEASE_VERSION}.tar.gz
         dest: ~/
         mode: "+x"
 
