@@ -17,7 +17,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, CheckedMul, CheckedSub, SaturatingSub};
-	use pallet_democracy::Vote;
+	use pallet_democracy::{Conviction, Vote};
 	use sp_runtime::{
 		traits::{AtLeast32BitUnsigned, Zero},
 		SaturatedConversion,
@@ -151,9 +151,9 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
 			// Check to make sure that a user actually has that vote
-			let account_vote_balance = T::Democracy::count_votes(from).unwrap().balance; //.saturated_into::<u32>();
-																			 // If the user has an allocated vote balance that is less then what its trying to sell,
-																			 // throw an error
+			let account_vote_balance = T::Democracy::count_votes(from).unwrap().balance;
+			// If the user has an allocated vote balance that is less then what its trying to sell,
+			// throw an error
 			ensure!(account_vote_balance < request.votes.capital.into(), Error::<T>::InvalidVote);
 			let bribe_index = request.bribe_index;
 			let bribe_taken = <Self as Bribe>::take_bribe(request.clone())?;
@@ -194,10 +194,6 @@ pub mod pallet {
 		type Balance = T::Balance;
 		type Conviction = T::Conviction;
 		type CurrencyId = T::CurrencyId;
-
-		//		pub fn count_votes(account: T::AccountId) -> Result<VotingOf<T>, DispatchError>{
-		//		Ok()
-		//}
 
 		/// Register new bribe request
 		fn create_bribe(request: CreateBribeRequest<T>) -> Result<Self::BribeIndex, DispatchError> {
@@ -243,10 +239,10 @@ pub mod pallet {
 				for bribes in loot {
 					// Cast Vote
 
-					let vote = Vote { aye: bribe_request.is_aye, conviction: Default::default() }; //todo
+					let vote = Vote { aye: bribe_request.is_aye, conviction: Conviction::None }; //Conviction is None because we do want quick access to the vote, see reference here: https://crates.parity.io/pallet_democracy/enum.Conviction.html
 
 					let ss = bribe_request.clone();
-					T::Democracy::vote(ss.account_id, bribes.p_id, vote); //AccountId,
+					T::Democracy::vote(ss.account_id, bribes.p_id, vote);
 
 					// Remove from storage
 					Fastvec::<T>::mutate(|a| {
@@ -269,7 +265,7 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::ReleaseFailed)?;
 					// todo: Check if all votes are fullfilled
 					let bribe_balance: u32 = bribe_request.total_reward.saturated_into::<u32>();
-					//					if we have spent all the money we have for votes, we assume the order is
+					// if we have spent all the money we have for votes, we assume the order is
 					// fullfilled and can not interact anymore so we remove it
 					if spendamount >= bribe_balance {
 						//todo also check if the correct amount of votes has been fullfilled
@@ -284,12 +280,11 @@ pub mod pallet {
 
 		/// Take Bribe user sell votes request   
 		fn do_take_bribe(request: TakeBribeRequest<T>) -> Result<bool, DispatchError> {
-			// todo: make sure the user is not selling the same vote twice
 			let bribe_request = BribeRequests::<T>::try_get(request.bribe_index)
 				.map_err(|_| Error::<T>::InvalidIndex)?;
 
 			let pid = bribe_request.ref_index; // save based on the referendumIndex
-			let amount_votes: u32 = 3; //change me
+			let amount_votes: u32 = 1; //request.votes.len(); //change me
 			let amount: u32 = bribe_request.total_reward.saturated_into::<u32>(); // amount of tokens locked in
 																	  // insert into fastvec
 			Fastvec::<T>::mutate(|a| a.add(amount, pid, amount_votes));
