@@ -32,6 +32,7 @@ pub enum MockCurrencyId {
 	ETH,
 	LTC,
 	USDT,
+	USDC,
 	LpToken(u128),
 }
 

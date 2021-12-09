@@ -5,7 +5,7 @@ use frame_support::{
 	sp_runtime::Perbill,
 };
 use scale_info::TypeInfo;
-use sp_runtime::{DispatchError, Permill};
+use sp_runtime::{DispatchError, FixedU128, Permill};
 
 use sp_std::vec::Vec;
 
@@ -93,13 +93,13 @@ pub trait CurveAmm {
 	fn pool_count() -> PoolId;
 
 	/// Information about the pool with the specified `id`
-	fn pool(id: PoolId) -> Option<PoolInfo<Self::AccountId, Self::AssetId, Self::Balance>>;
+	fn pool(id: PoolId) -> Option<PoolInfo<Self::AccountId>>;
 
 	/// Creates a pool, taking a creation fee from the caller
 	fn create_pool(
 		who: &Self::AccountId,
 		assets: Vec<Self::AssetId>,
-		amplification_coefficient: Self::Balance,
+		amplification_coefficient: FixedU128,
 		fee: Permill,
 		admin_fee: Permill,
 	) -> Result<PoolId, DispatchError>;
@@ -156,21 +156,13 @@ pub type PoolId = u32;
 
 /// Pool type
 #[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, Debug)]
-pub struct PoolInfo<AccountId, AssetId, Balance> {
+pub struct PoolInfo<AccountId> {
 	/// Owner of pool
 	pub owner: AccountId,
-	/// LP multiasset
-	pub pool_asset: AssetId,
-	/// List of multiasset supported by the pool
-	pub assets: Vec<AssetId>,
 	/// Initial amplification coefficient
-	pub amplification_coefficient: Balance,
+	pub amplification_coefficient: FixedU128,
 	/// Amount of the fee pool charges for the exchange
 	pub fee: Permill,
 	/// Amount of the admin fee pool charges for the exchange
 	pub admin_fee: Permill,
-	/// Current balances excluding admin_fee
-	pub balances: Vec<Balance>,
-	/// Current balances including admin_fee
-	pub total_balances: Vec<Balance>,
 }
