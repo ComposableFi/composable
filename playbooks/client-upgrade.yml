@@ -12,9 +12,12 @@
     - name: Download composable binary \"{{ ansible_env.RELEASE_VERSION }}\"\n"
       become: yes
       get_url:
-        url: https://storage.googleapis.com/composable-binaries/community-releases/{{ ansible_env.CHAIN }}/composable-{{ ansible_env.RELEASE_VERSION }}.tar.gz
+        url: https://storage.googleapis.com/composable-binaries/community-releases/{{ chain }}/composable-{{ release_version }}.tar.gz
         dest: ~/
         mode: "+x"
+      vars:
+        chain:     "{{ lookup('env','CHAIN') }}"
+        release_version: "{{ lookup('env','RELEASE_VERSION') }}"
 
     - name: Unpack Composable Bonary file 
       become: yes
