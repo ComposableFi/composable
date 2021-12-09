@@ -224,6 +224,22 @@ impl identity::Config for Runtime {
 }
 
 parameter_types! {
+	pub const DepositBase: u64 = PICA as u64;
+	pub const DepositFactor: u64 = 32 * MILLI_PICA as u64;
+	pub const MaxSignatories: u16 = 5;
+}
+
+impl multisig::Config for Runtime {
+	type Call = Call;
+	type Currency = Balances;
+	type DepositBase = DepositBase;
+	type DepositFactor = DepositFactor;
+	type Event = Event;
+	type MaxSignatories = MaxSignatories;
+	type WeightInfo = weights::multisig::WeightInfo<Runtime>;
+}
+
+parameter_types! {
 	/// Minimum period in between blocks, for now we leave it at half
 	/// the expected slot duration
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
@@ -793,6 +809,7 @@ construct_runtime!(
 		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
 		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
 		Identity: identity::{Call, Event<T>, Pallet, Storage} = 7,
+		Multisig: multisig::{Call, Event<T>, Pallet, Storage} = 8,
 
 		// Parachains stuff
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
@@ -839,6 +856,7 @@ construct_runtime!(
 		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
 		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
 		Identity: identity::{Call, Event<T>, Pallet, Storage} = 7,
+		Multisig: multisig::{Call, Event<T>, Pallet, Storage} = 8,
 
 		// Parachains stuff
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
@@ -1033,6 +1051,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, crowdloan_bonus, LiquidCrowdloan);
 			list_benchmark!(list, extra, utility, Utility);
 			list_benchmark!(list, extra, identity, Identity);
+			list_benchmark!(list, extra, multisig, Multisig);
 
 			#[cfg(feature = "develop")]
 			{
@@ -1085,6 +1104,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
 			add_benchmark!(params, batches, utility, Utility);
 			add_benchmark!(params, batches, identity, Identity);
+			add_benchmark!(params, batches, multisig, Multisig);
 
 			#[cfg(feature ="develop")]
 			{

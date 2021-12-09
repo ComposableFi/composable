@@ -8,6 +8,7 @@ pub mod frame_system;
 pub mod identity;
 pub mod indices;
 pub mod membership;
+pub mod multisig;
 #[cfg(feature = "develop")]
 pub mod oracle;
 pub mod scheduler;
