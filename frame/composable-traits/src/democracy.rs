@@ -5,7 +5,7 @@ use sp_runtime::DispatchError;
 
 pub trait Democracy {
 	type AccountId;
-	type Balance;
+	type Balance: core::cmp::PartialOrd;
 	type ReferendumIndex;
 	type Vote;
 	type BlockNumber;
