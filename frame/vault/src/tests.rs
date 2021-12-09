@@ -20,7 +20,7 @@ use frame_support::{
 	traits::fungibles::{Inspect, Mutate},
 };
 use proptest::prelude::*;
-use sp_runtime::{helpers_128bit::multiply_by_rational, FixedPointNumber, Perquintill};
+use sp_runtime::{helpers_128bit::multiply_by_rational, FixedPointNumber, Perbill, Perquintill};
 
 /// Missing macro, equivalent to `assert_ok!`!
 macro_rules! prop_assert_ok {
@@ -534,93 +534,125 @@ proptest! {
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(100))]
 
+	// The strategy withdraw is calculated multiplying the deposited value by
+	// (accounts.len() % 100) and then the strategy balance representing a loss is calculated
+	// using the same percentage meaning that `deposit` > `withdraw` > `strategy balance`.
+	//
+	// `strategy_moment` is when the strategy generates profits or losses. Before or after that
+	// Liquidity Providers deposit native tokens into the vault.
 	#[test]
 	fn vault_stock_dilution_k(
-		(random_index, created_accounts) in
+		(strategy_moment, accounts) in
 			valid_amounts_without_overflow_k_with_random_index(500, 1_000_000_000)
 				.prop_filter("a minimum of two accounts are required, 1 for the strategy and 1 depositor",
 							 |(_, x)| x.len() > 2)
 	) {
+		let lps_start = 1;
 		let asset_id = MockCurrencyId::D;
-		let (strategy_account_id, strategy_profits) = created_accounts[0];
-		let strategy_deposit_moment = random_index;
-		let account_start = 1;
-		let accounts = &created_accounts[account_start..];
+
+		let (strategy_account_id, strategy_deposit) = accounts[0];
+		let strategy_withdraw_pbl = Perbill::from_percent(accounts.len() as u32 % 100);
+		let strategy_withdraw = strategy_withdraw_pbl.mul_floor(strategy_deposit);
+		let strategy_vault_balance = strategy_withdraw - strategy_withdraw_pbl.mul_floor(strategy_withdraw);
+		let strategy_withdraw_diff = strategy_withdraw - strategy_vault_balance;
+		let lps = &accounts[lps_start..];
+
+		//let strategy_diff = strategy_profits - strategy_losses;
+		let before_moment_lps = || lps.iter().take(strategy_moment).copied();
+		let after_moment_lps = || lps.iter().skip(strategy_moment).copied();
 
 		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
 
-			prop_assert_eq!(Tokens::balance(asset_id, &strategy_account_id), 0);
-			prop_assert_ok!(Tokens::mint_into(asset_id, &strategy_account_id, strategy_profits));
-
-			for (account, balance) in accounts.iter().copied() {
+			// Mints native tokens for all accounts
+			for (account, initial_native_tokens) in accounts.iter().copied() {
 				prop_assert_eq!(Tokens::balance(asset_id, &account), 0);
-				prop_assert_ok!(Tokens::mint_into(asset_id, &account, balance));
+				prop_assert_ok!(Tokens::mint_into(asset_id, &account, initial_native_tokens));
 			}
 
-			// Shareholders
-			for (account, balance) in accounts[0..strategy_deposit_moment].iter().copied() {
-				prop_assert_ok!(
-					Vaults::deposit(Origin::signed(account), vault_id, balance)
-				);
+			// Liquidity providers deposit all their native tokens to receive LP tokens
+			// BEFORE losses and profits
+			for (account, initial_native_tokens) in before_moment_lps() {
+				let origin = Origin::signed(account);
+				prop_assert_ok!(Vaults::deposit(origin, vault_id, initial_native_tokens));
 			}
 
-			// Profits comming
-			prop_assert_ok!(
-				<Vaults as StrategicVault>::deposit(
-					&vault_id,
-					&strategy_account_id,
-					strategy_profits
-				)
-			);
+			prop_assert_ok!(<Vaults as StrategicVault>::deposit(
+				&vault_id,
+				&strategy_account_id,
+				strategy_deposit
+			));
+			prop_assert_ok!(<Vaults as StrategicVault>::withdraw(
+				&vault_id,
+				&strategy_account_id,
+				strategy_withdraw
+			));
+			prop_assert_ok!(<Vaults as ReportableStrategicVault>::update_strategy_report(
+				&vault_id,
+				&strategy_account_id,
+				&strategy_vault_balance
+			));
 
-			// Shareholders total LP
-			let lp_total = Tokens::total_issuance(vault.lp_token_id);
+			let lp_tokens_total = Tokens::total_issuance(vault.lp_token_id);
 
-			// Users depositing later
-			for (account, balance) in accounts[strategy_deposit_moment..accounts.len()].iter().copied() {
-				prop_assert_ok!(
-					Vaults::deposit(Origin::signed(account), vault_id, balance)
-				);
+			// Liquidity providers deposit all their native tokens to receive LP tokens
+			// AFTER losses and profits
+			for (account, initial_native_tokens) in after_moment_lps() {
+				let origin = Origin::signed(account);
+				prop_assert_ok!(Vaults::deposit(origin, vault_id, initial_native_tokens));
 			}
 
-			// Withdraw & local check
-			for ((account, balance), index) in accounts.iter().copied().zip(account_start..) {
-				// Current lp
-				let lp = Tokens::balance(vault.lp_token_id, &account);
+			for (idx, (account, initial_native_tokens)) in lps.iter().copied().enumerate() {
+				//  Contains half of LP balances minus LP profits
+				let half_initial_native_tokens = initial_native_tokens / 2;
 
-				// Withdraw all my shares, including profits
-				prop_assert_ok!(Vaults::withdraw(Origin::signed(account), vault_id, lp));
+				let lp_tokens = Tokens::balance(vault.lp_token_id, &account);
+				// Because of `<Vaults as StrategicVault>::withdraw`, the vault does not own 100% of
+				// the funds. Therefore, a full withdraw is not possible.
+				let withdrawn_lp_tokens = lp_tokens / 2;
 
-				// Balance after having deposited + withdrawn my funds
-				let new_balance = Tokens::balance(asset_id, &account);
+				// Withdraws all LP tokens
+				prop_assert_ok!(Vaults::withdraw(Origin::signed(account), vault_id, withdrawn_lp_tokens));
 
-				// We had shares before the profit, we get a cut of the profit
-				if index <= strategy_deposit_moment {
-					// Compute my share
-					let strategy_profit_share =
-						multiply_by_rational(strategy_profits, lp, lp_total).expect("qed;");
+				// New balance that includes losses and profits
+				let new_native_tokens = Tokens::balance(asset_id, &account);
 
-					prop_assert_epsilon!(new_balance, balance + strategy_profit_share);
-				}
-				else {
+				let curr_lp_deposited_before_moment = lps_start + idx <= strategy_moment;
+
+				if curr_lp_deposited_before_moment {
+					let strategy_native_tokens_deposit = multiply_by_rational(
+						strategy_deposit / 2,
+						lp_tokens,
+						lp_tokens_total,
+					)
+					.expect("qed;");
+					let strategy_native_tokens_withdraw = multiply_by_rational(
+						strategy_withdraw_diff / 2,
+						lp_tokens,
+						lp_tokens_total,
+					)
+					.expect("qed;");
+
+					let diff = strategy_native_tokens_deposit - strategy_native_tokens_withdraw;
+
+					prop_assert_epsilon!(new_native_tokens, half_initial_native_tokens + diff);
+				} else {
 					// Our balance should be equivalent
-					prop_assert_epsilon!(new_balance, balance);
+					prop_assert_epsilon!(new_native_tokens, half_initial_native_tokens);
 				}
 			}
 
 			// Global check
-			let shareholders = &accounts[0..strategy_deposit_moment];
-			let initial_sum_of_shareholders_balance = shareholders.iter()
-				.map(|(_, initial_balance)| initial_balance)
+			let initial_sum_of_native_tokens = before_moment_lps()
+				.map(|(_, initial_native_tokens)| initial_native_tokens)
 				.sum::<Balance>();
-			let current_sum_of_shareholders_balance = shareholders.iter()
-				.map(|(account, _)| Tokens::balance(asset_id, account))
+			let current_sum_of_native_tokens = before_moment_lps()
+				.map(|(account, _)| Tokens::balance(asset_id, &account))
 				.sum::<Balance>();
 
 			prop_assert_epsilon!(
-				current_sum_of_shareholders_balance,
-				initial_sum_of_shareholders_balance + strategy_profits
+				current_sum_of_native_tokens,
+				initial_sum_of_native_tokens / 2 + strategy_deposit / 2 - strategy_withdraw_diff / 2
 			);
 
 			Ok(())
