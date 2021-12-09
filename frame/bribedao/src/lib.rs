@@ -151,7 +151,11 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
 			// Check to make sure that a user actually has that vote
-			let account_vote_balance = T::Democracy::count_votes(from).unwrap().balance;
+			let account_vote_balance = match T::Democracy::count_votes(from) {
+				Ok(voting) => voting.balance,
+				_ => return Err(Error::<T>::InvalidVote.into()),
+			};
+			//.unwrap().balance;
 			// If the user has an allocated vote balance that is less then what its trying to sell,
 			// throw an error
 			ensure!(account_vote_balance < request.votes.capital.into(), Error::<T>::InvalidVote);
@@ -268,7 +272,6 @@ pub mod pallet {
 					// if we have spent all the money we have for votes, we assume the order is
 					// fullfilled and can not interact anymore so we remove it
 					if spendamount >= bribe_balance {
-						//todo also check if the correct amount of votes has been fullfilled
 						// Delete The bribe if fullfilled
 						let dr: DeleteBribeRequest = DeleteBribeRequest { bribe_index };
 						Self::do_delete_bribe(dr).map_err(|_| Error::<T>::BribeDeletionFailed)?;
