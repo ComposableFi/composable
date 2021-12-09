@@ -37,6 +37,7 @@ balances = { package = "pallet-balances", git = "https://github.com/paritytech/s
 indices = { package = "pallet-indices", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 randomness-collective-flip = { package = "pallet-randomness-collective-flip", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 collective = { package = "pallet-collective", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+identity = { package = "pallet-identity", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 membership = { package = "pallet-membership", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 scheduler = { package = "pallet-scheduler", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 session = { package = "pallet-session", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
@@ -130,6 +131,7 @@ std = [
 	"sudo/std",
 	"indices/std",
 	"oracle/std",
+	"identity/std",
 	"vault/std",
   	"assets/std",
 	"governance-registry/std",
@@ -186,6 +188,7 @@ runtime-benchmarks = [
 	"xcm-builder/runtime-benchmarks",
 	"indices/runtime-benchmarks",
 	"crowdloan-bonus/runtime-benchmarks",
+	"identity/runtime-benchmarks",
 	"membership/runtime-benchmarks",
 	"treasury/runtime-benchmarks",
 	"scheduler/runtime-benchmarks",
