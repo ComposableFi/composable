@@ -9,7 +9,7 @@
     #   become: yes
     #   command: rm /usr/bin/composable
 
-    - name: Download composable binary \"{{ ansible_env.RELEASE_VERSION }}\"\n"
+    - name: Download composable binary {{ release_version }}
       become: yes
       get_url:
         url: https://storage.googleapis.com/composable-binaries/community-releases/{{ chain }}/composable-{{ release_version }}.tar.gz

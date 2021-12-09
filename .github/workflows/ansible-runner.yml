@@ -15,7 +15,6 @@ on:
        
 
 env: 
-  RELEASE_VERSION: ""
   TARGET: ${{ github.event.inputs.target }}
   PLAYBOOK: ${{ github.event.inputs.playbook_file }}
   INVENTORY_FILE: "gcp.yaml"
