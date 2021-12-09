@@ -5,11 +5,11 @@
       become: true
       command: supervisorctl stop composable
 
-    - name: Remove Previous Version #ToDO: add --continue-on-error
-      become: yes
-      command: rm /usr/bin/composable
+    # - name: Remove Previous Version #ToDO: add --continue-on-error
+    #   become: yes
+    #   command: rm /usr/bin/composable
 
-    - name: Download composable binary ${RELEASE_VERSION}
+    - name: Download composable binary {{ ansible_env.RELEASE_VERSION }}
       become: yes
       get_url:
         url: https://storage.googleapis.com/composable-binaries/community-releases/{{ ansible_env.CHAIN }}/composable-{{ ansible_env.RELEASE_VERSION }}.tar.gz
