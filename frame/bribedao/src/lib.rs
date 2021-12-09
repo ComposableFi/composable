@@ -152,10 +152,9 @@ pub mod pallet {
 			let from = ensure_signed(origin)?;
 			// Check to make sure that a user actually has that vote
 			let account_vote_balance = T::Democracy::count_votes(from).unwrap().balance; //.saturated_into::<u32>();
-			ensure!(account_vote_balance >= request.votes.capital.into(), Error::<T>::InvalidVote);
-			//			if account_vote_balance > request.balance {
-			//				Error::<T>::InvalidVote
-			//}
+																			 // If the user has an allocated vote balance that is less then what its trying to sell,
+																			 // throw an error
+			ensure!(account_vote_balance < request.votes.capital.into(), Error::<T>::InvalidVote);
 			let bribe_index = request.bribe_index;
 			let bribe_taken = <Self as Bribe>::take_bribe(request.clone())?;
 			if bribe_taken {
