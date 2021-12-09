@@ -224,7 +224,7 @@ impl identity::Config for Runtime {
 }
 
 parameter_types! {
-	pub const DepositBase: u64 = 1 * PICA as u64;
+	pub const DepositBase: u64 = PICA as u64;
 	pub const DepositFactor: u64 = 32 * MILLI_PICA as u64;
 	pub const MaxSignatories: u16 = 5;
 }
