@@ -25,6 +25,7 @@
       unarchive: 
         src: ~/composable-{{ release_version }}.tar.gz
         dest: ~/
+        remote_src: yes
       
 
     - name: Move composable binary to /usr/local/bin/composable
