@@ -48,6 +48,7 @@ use frame_system as system;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
+use support::traits::EqualPrivilegeOnly;
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -638,6 +639,7 @@ impl scheduler::Config for Runtime {
 	type Call = Call;
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
 }
@@ -645,6 +647,7 @@ impl scheduler::Config for Runtime {
 impl utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
+	type PalletsOrigin = OriginCaller;
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
 }
 
@@ -777,7 +780,7 @@ impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		#[cfg(feature = "develop")]
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false
+			return false;
 		}
 		!matches!(
 			call,
