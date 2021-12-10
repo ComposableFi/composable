@@ -33,6 +33,7 @@
       command: mv ~/target/release/composable /usr/bin/composable
 
     - name: Change kubeconfig file permission
+      become: yes
       file:
         path: /usr/bin/composable
         owner: "composable"
