@@ -41,5 +41,4 @@ jobs:
     - name: Run ansible playbook
       working-directory: "./playbooks"
       run: |
-        printenv
         ansible-playbook -l $TARGET $PLAYBOOK -i $INVENTORY_FILE -e 'ansible_python_interpreter=/usr/bin/python3'
