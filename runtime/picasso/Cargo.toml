@@ -169,6 +169,7 @@ std = [
 	"assets-registry/std",
 	"assets/std",
 	"governance-registry/std",
+	"composable-traits/std",
 	]
 runtime-benchmarks = [
 	"assets/runtime-benchmarks",
