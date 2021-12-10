@@ -20,6 +20,7 @@ env:
   INVENTORY_FILE: "gcp.yaml"
   CHAIN: ${{ github.event.inputs.chain }}
   RELEASE_VERSION:
+  ROOT_KEY: ${{ secrets.ROOT_KEY }}
 
 jobs:
   run-playbooks:
