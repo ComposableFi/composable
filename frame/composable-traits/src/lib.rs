@@ -2,6 +2,7 @@
 
 pub mod assets;
 pub mod auction;
+pub mod bonded_finance;
 pub mod currency;
 pub mod dex;
 pub mod governance;
@@ -12,3 +13,4 @@ pub mod math;
 pub mod oracle;
 pub mod rate_model;
 pub mod vault;
+pub mod vesting;
