@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
 	asset::{Asset, AssetPair, ConcatSymbol},
-	feed::{Exponent, TimeStamp, CHANNEL_BUFFER_SIZE, USD_CENT_EXPONENT},
+	feed::{Exponent, TimeStamp, CHANNEL_BUFFER_SIZE},
 };
 use binance::websockets::{WebSockets, WebsocketEvent};
 use std::{
@@ -22,6 +22,7 @@ impl BinanceFeed {
 	pub async fn start(
 		keep_running: Arc<AtomicBool>,
 		assets: &HashSet<Asset>,
+		quote_asset: Asset,
 	) -> FeedResult<Feed<FeedIdentifier, Asset, TimeStampedPrice>> {
 		let (sink, source) = mpsc::channel(CHANNEL_BUFFER_SIZE);
 
@@ -33,8 +34,9 @@ impl BinanceFeed {
 		let symbol_asset = assets
 			.iter()
 			.map(|&asset| {
-				let asset_pair = AssetPair::new(asset, Asset::USDT)
-					.unwrap_or_else(|| panic!("asset {:?} should be quotable in USDT", asset));
+				let asset_pair = AssetPair::new(asset, quote_asset).unwrap_or_else(|| {
+					panic!("asset {:?} should be quotable in {:?}", asset, quote_asset)
+				});
 				format!("{}", ConcatSymbol::new(asset_pair))
 			})
 			.zip(assets.iter().copied())
@@ -72,9 +74,8 @@ impl BinanceFeed {
 							let timestamp = TimeStamp::now();
 							let price = str::parse::<f64>(trades.price.as_str())
 								.expect("couldn't parse price");
-							let Exponent(usd_cent_exponent) = USD_CENT_EXPONENT;
-							let usd_cent_price =
-								(price * f64::powf(10.0, i32::abs(usd_cent_exponent) as _)) as u64;
+							// Binance send a f64 price in USD. We normalize it to USD cent.
+							let usd_cent_price = (price * 100.) as u64;
 							// Find back the asset from the symbol.
 							if let Some(&asset) = symbol_asset.get(&trades.symbol) {
 								// Trigger a price update in USD cent
@@ -82,7 +83,7 @@ impl BinanceFeed {
 									feed: FeedIdentifier::Binance,
 									asset,
 									price: TimeStamped {
-										value: (Price(usd_cent_price), USD_CENT_EXPONENT),
+										value: (Price(usd_cent_price), Exponent(2)),
 										timestamp,
 									},
 								});
@@ -90,12 +91,12 @@ impl BinanceFeed {
 						}
 						Ok(())
 					});
-					log::trace!("connecting to binance");
+					log::debug!("connecting to binance");
 					ws.connect_multiple_streams(&subscriptions)
 						.map_err(|_| FeedError::NetworkFailure)?;
-					log::trace!("running event loop");
+					log::debug!("running event loop");
 					ws.event_loop(&keep_running_clone).map_err(|_| FeedError::NetworkFailure)?;
-					log::trace!("closing subscription");
+					log::debug!("closing subscription");
 					Ok(())
 				});
 
