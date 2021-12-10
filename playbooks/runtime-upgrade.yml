@@ -1,46 +1,64 @@
 ---
 - hosts: all
+  vars:
+    chain: "{{ lookup('env','CHAIN') }}"
+    release_version: "{{ lookup('env','RELEASE_VERSION') }}"
   tasks:
     - name: Stop Composable service
       become: true
       command: supervisorctl stop composable
 
-    - name: Download WASM runtime ${RELEASE_VERSION}
+    - name: Download WASM runtime {{ release_version }}
       become: yes
       get_url:
-        url: https://storage.googleapis.com/composable-binaries/community-releases/${CHAIN}/picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz
+        url: https://storage.googleapis.com/composable-binaries/community-releases/{{ chain }}/picasso_runtime.compact.wasm-{{ release_version }}.tar.gz
         dest: ~/
         mode: "+x"
     
-    - name: Download Parachain utils ${RELEASE_VERSION}
+    - name: Download Parachain utils {{ release_version }}
       become: yes
       get_url:
-        url: https://storage.googleapis.com/composable-binaries/community-releases/${CHAIN}/parachain-utils-${RELEASE_VERSION}.tar.gz
+        url: https://storage.googleapis.com/composable-binaries/community-releases/{{ chain }}/parachain-utils-{{ release_version }}.tar.gz
         dest: ~/
         mode: "+x"
+    
+    - name: Unpack WASM runtime file 
+      become: yes
+      unarchive: 
+        src: ~/picasso_runtime.compact.wasm-{{ release_version }}.tar.gz
+        dest: ~/
+        remote_src: yes
 
     - name: Unpack WASM runtime file 
       become: yes
-      command: tar -xf ~/picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz
+      unarchive: 
+        src: ~/picasso_runtime.compact.wasm-{{ release_version }}.tar.gz
+        dest: ~/
+        remote_src: yes
 
     - name: Unpack Parachain utils 
       become: yes
-      command: tar -xf ~/parachain-utils-${RELEASE_VERSION}.tar.gz
+      unarchive: 
+        src: ~/parachain-utils-{{ release_version }}.tar.gz
+        dest: ~/
+        remote_src: yes
 
     - name: Move parachain-utils binary to /usr/local/bin/
       become: yes
-      command: mv ~/parachain-utils /usr/bin/parachain-utils
+      command: mv ~/target/release/parachain-utils /usr/bin/parachain-utils
 
-    - name: Change owner composable
+    - name: Change Parachain utils file permission
       become: yes
-      command: chown composable:composable /usr/bin/parachain-utils
-
+      file:
+        path: /usr/bin/parachain-utils
+        owner: "composable"
+        group: "composable"
 
     - name: Runtime Upgrade
       become: yes
-      command: parachain-utils upgrade-runtime --path ./picasso_runtime.compact.wasm
+      command: parachain-utils upgrade-runtime --path ~/target/release/picasso_runtime.compact.wasm
 
 
     - name: Start Composable service
       become: true
-      command: supervisorctl restart composable
+      command: supervisorctl start composable

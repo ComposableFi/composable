@@ -15,11 +15,12 @@ on:
        
 
 env: 
-  RELEASE_VERSION: ""
   TARGET: ${{ github.event.inputs.target }}
   PLAYBOOK: ${{ github.event.inputs.playbook_file }}
   INVENTORY_FILE: "gcp.yaml"
   CHAIN: ${{ github.event.inputs.chain }}
+  RELEASE_VERSION:
+  ROOT_KEY: ${{ secrets.ROOT_KEY }}
 
 jobs:
   run-playbooks:
@@ -31,8 +32,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+
+    - name: Set env
+      run: |
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^dali-[0-9]' | tail -1 )" >> $GITHUB_ENV
+
     - name: Run ansible playbook
       working-directory: "./playbooks"
       run: |
-        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^[0-9]' | tail -1)" >> $GITHUB_ENV
         ansible-playbook -l $TARGET $PLAYBOOK -i $INVENTORY_FILE -e 'ansible_python_interpreter=/usr/bin/python3'
