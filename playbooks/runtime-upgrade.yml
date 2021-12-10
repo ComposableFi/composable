@@ -45,7 +45,7 @@
 
     - name: Move parachain-utils binary to /usr/local/bin/
       become: yes
-      command: mv ~/parachain-utils /usr/bin/parachain-utils
+      command: mv ~/target/release/parachain-utils /usr/bin/parachain-utils
 
     - name: Change Parachain utils file permission
       become: yes
@@ -56,7 +56,7 @@
 
     - name: Runtime Upgrade
       become: yes
-      command: parachain-utils upgrade-runtime --path ~/picasso_runtime.compact.wasm
+      command: parachain-utils upgrade-runtime --path ~/target/release/picasso_runtime.compact.wasm
 
 
     - name: Start Composable service
