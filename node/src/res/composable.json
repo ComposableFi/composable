@@ -4,7 +4,7 @@
   "chainType": "Live",
   "bootNodes": [],
   "telemetryEndpoints": null,
-  "protocolId": null,
+  "protocolId": "composable",
   "properties": {
     "ss58Format": 49,
     "tokenDecimals": 12,

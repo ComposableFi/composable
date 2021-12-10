@@ -18,7 +18,7 @@
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, ComposableExecutor, PicassoExecutor},
+	service::{new_chain_ops, ComposableExecutor, PicassoExecutor},
 };
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
@@ -145,15 +145,10 @@ macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
 		runner.async_run(|$config| {
-			let $components = new_partial::<
-				picasso_runtime::RuntimeApi,
-				PicassoExecutor,
-				_
-			>(
+			let $components = new_chain_ops(
 				&$config,
-				crate::service::parachain_build_import_queue,
 			)?;
-			let task_manager = $components.task_manager;
+			let task_manager = $components.3;
 			{ $( $code )* }.map(|v| (v, task_manager))
 		})
 	}}
@@ -170,22 +165,22 @@ pub fn run() -> Result<()> {
 		}
 		Some(Subcommand::CheckBlock(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, components.import_queue))
+				Ok(cmd.run(components.0, components.2))
 			})
 		}
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, config.database))
+				Ok(cmd.run(components.0, config.database))
 			})
 		}
 		Some(Subcommand::ExportState(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, config.chain_spec))
+				Ok(cmd.run(components.0, config.chain_spec))
 			})
 		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, components.import_queue))
+				Ok(cmd.run(components.0, components.2))
 			})
 		}
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
@@ -209,7 +204,7 @@ pub fn run() -> Result<()> {
 			})
 		}
 		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
-			Ok(cmd.run(components.client, components.backend))
+			Ok(cmd.run(components.0, components.1))
 		}),
 		Some(Subcommand::ExportGenesisState(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
@@ -309,25 +304,22 @@ pub fn run() -> Result<()> {
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				match config.chain_spec.id() {
-					"composable" => crate::service::start_node::<
-						composable_runtime::RuntimeApi,
-						ComposableExecutor,
-					>(config, polkadot_config, id)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into),
-					_ => {
-						crate::service::start_node::<picasso_runtime::RuntimeApi, PicassoExecutor>(
-							config,
-							polkadot_config,
-							id,
-						)
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into)
-					}
-				}
+				let task_manager =
+					match config.chain_spec.id() {
+						"composable" => {
+							crate::service::start_node::<
+								composable_runtime::RuntimeApi,
+								ComposableExecutor,
+							>(config, polkadot_config, id)
+							.await?
+						}
+						_ => crate::service::start_node::<
+							picasso_runtime::RuntimeApi,
+							PicassoExecutor,
+						>(config, polkadot_config, id)
+						.await?,
+					};
+				Ok(task_manager)
 			})
 		}
 	}
