@@ -61,4 +61,4 @@
 
     - name: Start Composable service
       become: true
-      command: supervisorctl restart composable
+      command: supervisorctl start composable
