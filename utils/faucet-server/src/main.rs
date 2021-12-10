@@ -116,10 +116,14 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 		// 1k Dali
 		.transfer(address.into(), 1_000_000_000_000_000)
 		.sign_and_submit_then_watch(&state.signer)
+		.await?
+		.wait_for_in_block()
+		.await?
+		.fetch_events()
 		.await?;
 
-	if result.find_event::<api::balances::events::Transfer>()?.is_none() {
-		return Ok("Error: Transfer failed!".into())
+	if result.find_events::<api::balances::events::Transfer>()?.is_empty() {
+		return Ok("Error: Transfer failed!".into());
 	}
 
 	log::info!("Sent {} 1k Dali", user_name);

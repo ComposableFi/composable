@@ -72,7 +72,7 @@ async fn main() -> Result<(), Error> {
 		Main::UpgradeRuntime { path } => {
 			let wasm = std::fs::read(path).unwrap();
 			upgrade_runtime(wasm, &state).await?
-		},
+		}
 	};
 
 	Ok(())
@@ -134,13 +134,17 @@ async fn upgrade_runtime(code: Vec<u8>, state: &State) -> Result<(), subxt::Erro
 		.sudo()
 		.sudo_unchecked_weight(call, 0)
 		.sign_and_submit_then_watch(&signer)
+		.await?
+		.wait_for_in_block()
+		.await?
+		.fetch_events()
 		.await?;
 
 	if result
-		.find_event::<picasso::api::parachain_system::events::UpgradeAuthorized>()?
-		.is_none()
+		.find_events::<picasso::api::parachain_system::events::UpgradeAuthorized>()?
+		.is_empty()
 	{
-		return Err(subxt::Error::Other("Failed to authorize upgrade".into()))
+		return Err(subxt::Error::Other("Failed to authorize upgrade".into()));
 	}
 
 	let call = Call::ParachainSystem(ParachainSystemCall::enact_authorized_upgrade { code });
@@ -150,16 +154,20 @@ async fn upgrade_runtime(code: Vec<u8>, state: &State) -> Result<(), subxt::Erro
 		.sudo()
 		.sudo_unchecked_weight(call, 0)
 		.sign_and_submit_then_watch(&signer)
+		.await?
+		.wait_for_in_block()
+		.await?
+		.fetch_events()
 		.await?;
 
 	if result
-		.find_event::<picasso::api::parachain_system::events::ValidationFunctionStored>()?
-		.is_none()
+		.find_events::<picasso::api::parachain_system::events::ValidationFunctionStored>()?
+		.is_empty()
 	{
-		return Err(subxt::Error::Other("Failed to enact upgrade".into()))
+		return Err(subxt::Error::Other("Failed to enact upgrade".into()));
 	}
 
-	log::info!("Runtime upgrade proposed, extrinsic hash: {}", result.extrinsic);
+	log::info!("Runtime upgrade proposed, extrinsic hash: {}", result.extrinsic_hash());
 
 	Ok(())
 }
