@@ -32,17 +32,11 @@
       become: yes
       command: mv ~/target/release/composable /usr/bin/composable
 
-    - name: Change owner composable
-      become: yes
-      command: chown composable:composable /usr/bin/composable
-
-
-    - name: Check composable binary exists
-      become: yes
-      stat:
-        path: ~/composable
-      register: composable
-
+    - name: Change kubeconfig file permission
+      file:
+        path: /usr/bin/composable
+        owner: "composable"
+        group: "composable"
 
     - name: Check Version
       become: yes
