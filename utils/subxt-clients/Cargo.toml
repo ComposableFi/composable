@@ -6,5 +6,5 @@ authors = ["Composable Developers"]
 homepage = "https://composable.finance"
 
 [dependencies]
-subxt = { git = "https://github.com/composableFi/subxt", branch = "seun-0.9.12" }
+subxt = { git = "https://github.com/composableFi/subxt", branch = "seun-0.9.13" }
 codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false }
