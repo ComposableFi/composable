@@ -63,9 +63,9 @@ pub fn calc_utilization_ratio(
 		.checked_div(&total)
 		.expect("above checks prove it cannot error")
 		.checked_mul_int(100_u16)
-		.unwrap()
+		.ok_or(ArithmeticError::Overflow)?
 		.try_into()
-		.unwrap();
+		.map_err(|_| ArithmeticError::Overflow)?;
 	Ok(Percent::from_percent(utilization_ratio))
 }
 
@@ -84,6 +84,8 @@ pub enum InterestRateModel {
 }
 
 impl Default for InterestRateModel {
+	// unwrap is used with known parameters, and unit tested right below.
+	#[allow(clippy::disallowed_method)]
 	fn default() -> Self {
 		Self::new_jump_model(
 			Rate::saturating_from_rational(2, 100),
@@ -93,6 +95,11 @@ impl Default for InterestRateModel {
 		)
 		.unwrap()
 	}
+}
+
+#[test]
+fn test_interest_rate_model_default() {
+	InterestRateModel::default();
 }
 
 impl InterestRateModel {
@@ -402,7 +409,7 @@ impl InterestRate for DoubleExponentModel {
 					Some((result, polynomial))
 				});
 		res.map(|(r, _p)| r.checked_div(&FixedU128::from_inner(EXPECTED_COEFFICIENTS_SUM.into())))
-			.unwrap()
+			.flatten()
 	}
 }
 

@@ -4,3 +4,5 @@ disallowed-methods = [
 ]
 
 disallowed-types = ["frame_support::storage::types::ValueQuery"]
+
+type-complexity-threshold = 5000

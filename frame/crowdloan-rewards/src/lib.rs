@@ -164,22 +164,28 @@ pub mod pallet {
 	/// The total amount of rewards to be claimed.
 	#[pallet::storage]
 	#[pallet::getter(fn total_rewards)]
+	// Absence of total rewards is equivalent to 0, so ValueQuery is allowed.
+	#[allow(clippy::disallowed_type)]
 	pub type TotalRewards<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
 	/// The rewards claimed so far.
 	#[pallet::storage]
 	#[pallet::getter(fn claimed_rewards)]
+	// Absence of claimed rewards is equivalent to 0, so ValueQuery is allowed.
+	#[allow(clippy::disallowed_type)]
 	pub type ClaimedRewards<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
 	/// The total number of contributors.
 	#[pallet::storage]
 	#[pallet::getter(fn total_contributors)]
+	// Absence of total contributors is equivalent to 0, so ValueQuery is allowed.
+	#[allow(clippy::disallowed_type)]
 	pub type TotalContributors<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	/// The block at which the users are able to claim their rewards.
 	#[pallet::storage]
 	#[pallet::getter(fn vesting_block_start)]
-	pub type VestingBlockStart<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
+	pub type VestingBlockStart<T: Config> = StorageValue<_, T::BlockNumber, OptionQuery>;
 
 	/// Associate a local account with a remote one.
 	#[pallet::storage]
@@ -253,7 +259,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn do_initialize() -> DispatchResult {
 			let current_block = frame_system::Pallet::<T>::block_number();
-			VestingBlockStart::<T>::set(current_block);
+			VestingBlockStart::<T>::set(Some(current_block));
 			Ok(())
 		}
 
@@ -330,7 +336,7 @@ pub mod pallet {
 			remote_account: RemoteAccountOf<T>,
 			reward_account: &T::AccountId,
 		) -> Result<T::Balance, DispatchError> {
-			ensure!(VestingBlockStart::<T>::exists(), Error::<T>::NotInitialized);
+			let start = VestingBlockStart::<T>::get().ok_or(Error::<T>::NotInitialized)?;
 			Rewards::<T>::try_mutate(remote_account, |reward| {
 				reward
 					.as_mut()
@@ -339,8 +345,7 @@ pub mod pallet {
 						let should_have_claimed = {
 							let current_block = frame_system::Pallet::<T>::block_number();
 							// Current point in time
-							let vesting_point =
-								current_block.saturating_sub(VestingBlockStart::<T>::get());
+							let vesting_point = current_block.saturating_sub(start);
 							if vesting_point >= reward.vesting_period {
 								// If the user is claiming when the period is over, he should
 								// probably have already claimed everything.

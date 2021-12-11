@@ -56,10 +56,14 @@ pub mod pallet {
 
 	/// The target parachains to ping.
 	#[pallet::storage]
+	// Targets is an empty Vec by default, which causes the pallet not to ping any targets.
+	#[allow(clippy::disallowed_type)]
 	pub(super) type Targets<T: Config> = StorageValue<_, Vec<(ParaId, Vec<u8>)>, ValueQuery>;
 
 	/// The total number of pings sent.
 	#[pallet::storage]
+	// Absence of PingCount is equivalent to 0, so ValueQuery is valid here.
+	#[allow(clippy::disallowed_type)]
 	pub(super) type PingCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	/// The sent pings.

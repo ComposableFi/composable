@@ -168,6 +168,9 @@ pub mod pallet {
 	/// The counter used to uniquely identify bond offers within this pallet.
 	#[pallet::storage]
 	#[pallet::getter(fn bond_offer_count)]
+	// `BondOfferOnEmpty<T>` explicitly defines the behaviour when empty, so `ValueQuery` is
+	// allowed.
+	#[allow(clippy::disallowed_type)]
 	pub type BondOfferCount<T: Config> =
 		StorageValue<_, T::BondOfferId, ValueQuery, BondOfferOnEmpty<T>>;
 

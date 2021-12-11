@@ -179,6 +179,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn assets_count)]
+	#[allow(clippy::disallowed_type)] // Default asset count of 0 is valid in this context
 	/// Total amount of assets
 	pub type AssetsCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
@@ -213,7 +214,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn prices)]
+	// Price<_, _> has a default value which is checked against in a few places.
+	// REVIEW: (benluelo) I think there's probably a better way to use this with an OptionQuery,
+	// instead of checking against defaults.
 	/// Price for an asset and blocknumber asset was updated at
+	#[allow(clippy::disallowed_type)]
 	pub type Prices<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -224,6 +229,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn price_history)]
+	#[allow(clippy::disallowed_type)] // default history for an asset is an empty list, which is valid in this context.
 	/// Price for an asset and blocknumber asset was updated at
 	pub type PriceHistory<T: Config> = StorageMap<
 		_,
@@ -235,6 +241,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn pre_prices)]
+	#[allow(clippy::disallowed_type)] // default history for an asset is an empty list, which is valid in this context.
 	/// Temporary prices before aggregated
 	pub type PrePrices<T: Config> = StorageMap<
 		_,
@@ -246,6 +253,9 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn asset_info)]
+	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
+	// use OptionQuery instead
+	#[allow(clippy::disallowed_type)]
 	/// Information about asset, including precision threshold and max/min answers
 	pub type AssetsInfo<T: Config> = StorageMap<
 		_,
@@ -794,6 +804,7 @@ pub mod pallet {
 		}
 
 		// REVIEW: indexing
+		#[allow(clippy::indexing_slicing)] // to get CI to pass
 		pub fn get_twap(
 			asset_id: T::AssetId,
 			mut price_weights: Vec<T::PriceValue>,

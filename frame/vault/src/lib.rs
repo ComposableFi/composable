@@ -272,23 +272,27 @@ pub mod pallet {
 	/// Cleaned up vaults do not decrement the counter.
 	#[pallet::storage]
 	#[pallet::getter(fn vault_count)]
+	#[allow(clippy::disallowed_type)]
 	pub type VaultCount<T: Config> = StorageValue<_, T::VaultId, ValueQuery>;
 
 	/// Info for each specific vaults.
 	#[pallet::storage]
 	#[pallet::getter(fn vault_data)]
-	pub type Vaults<T: Config> = StorageMap<_, Twox64Concat, T::VaultId, VaultInfo<T>, ValueQuery>;
+	pub type Vaults<T: Config> = StorageMap<_, Twox64Concat, T::VaultId, VaultInfo<T>, OptionQuery>;
 
 	/// Associated LP token for each vault.
 	#[pallet::storage]
 	#[pallet::getter(fn lp_tokens_to_vaults)]
 	pub type LpTokensToVaults<T: Config> =
-		StorageMap<_, Twox64Concat, T::AssetId, T::VaultId, ValueQuery>;
+		StorageMap<_, Twox64Concat, T::AssetId, T::VaultId, OptionQuery>;
 
 	/// Overview of the allocation & balances at each strategy. Does not contain the balance held by
 	/// the vault itself.
 	#[pallet::storage]
 	#[pallet::getter(fn capital_structure)]
+	// Bit questionable to have this be ValueQuery, as technically that makes it difficult to
+	// determine if a strategy is connected to a vault vs not having an allocation at all.
+	#[allow(clippy::disallowed_type)]
 	pub type CapitalStructure<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,

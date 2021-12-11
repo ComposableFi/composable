@@ -1,4 +1,3 @@
-
 //! Dutch Auction
 //!
 //! Ask to sell on auction.

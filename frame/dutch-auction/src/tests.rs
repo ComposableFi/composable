@@ -3,7 +3,6 @@ use composable_traits::{
 	defi::{Sell, Take},
 };
 use orml_traits::MultiReservableCurrency;
-use pallet_balances;
 
 use frame_support::{
 	assert_ok,
@@ -18,12 +17,10 @@ use crate::mock::{currency::CurrencyId, runtime::*};
 
 pub fn new_test_externalities() -> sp_io::TestExternalities {
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
-	let balances = vec![
-		(AccountId::from(ALICE), 1_000_000_000_000_000_000_000_000),
-		(AccountId::from(BOB), 1_000_000_000_000_000_000_000_000),
-	];
+	let balances =
+		vec![(ALICE, 1_000_000_000_000_000_000_000_000), (BOB, 1_000_000_000_000_000_000_000_000)];
 
-	pallet_balances::GenesisConfig::<Runtime> { balances: balances.clone() }
+	pallet_balances::GenesisConfig::<Runtime> { balances }
 		.assimilate_storage(&mut storage)
 		.unwrap();
 
@@ -53,7 +50,7 @@ fn setup_sell() {
 		assert!(not_reserved < reserved && reserved == 1);
 		let order_id = crate::OrdersIndex::<Runtime>::get();
 		assert_ne!(invalid, order_id);
-		let initiative: u128 = Assets::reserved_balance(CurrencyId::PICA, &ALICE).into();
+		let initiative: u128 = Assets::reserved_balance(CurrencyId::PICA, &ALICE);
 		let taken = <() as crate::weights::WeightInfo>::liquidate();
 		assert!(initiative == taken.into());
 	});

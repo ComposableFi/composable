@@ -121,6 +121,9 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn next_fee_multiplier)]
+	// `NextFeeMultiplierOnEmpty` explicitly defines what happens on empty, so `ValueQuery` is
+	// allowed.
+	#[allow(clippy::disallowed_type)]
 	pub type NextFeeMultiplier<T: Config> =
 		StorageValue<_, Multiplier, ValueQuery, NextFeeMultiplierOnEmpty>;
 
@@ -132,6 +135,8 @@ pub mod pallet {
 			});
 		}
 
+		// `integrity_test` is allowed to panic.
+		#[allow(clippy::disallowed_method)]
 		fn integrity_test() {
 			// given weight == u64, we build multipliers from `diff` of two weight values, which can
 			// at most be maximum block weight. Make sure that this can fit in a multiplier without

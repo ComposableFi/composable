@@ -70,12 +70,16 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn local_admin)]
 	/// Local admin account
-	pub type LocalAdmin<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
+	#[allow(clippy::disallowed_type)] // LocalAdminOnEmpty provides a default value, so ValueQuery is ok here.
+	pub type LocalAdmin<T: Config> =
+		StorageValue<_, T::AccountId, ValueQuery, LocalAdminOnEmpty<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_admin)]
 	/// Foreign admin account
-	pub type ForeignAdmin<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
+	#[allow(clippy::disallowed_type)] // ForeignAdminOnEmpty provides a default value, so ValueQuery is ok here.
+	pub type ForeignAdmin<T: Config> =
+		StorageValue<_, T::AccountId, ValueQuery, ForeignAdminOnEmpty<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn from_local_asset)]
@@ -99,6 +103,16 @@ pub mod pallet {
 		CandidateStatus,
 		OptionQuery,
 	>;
+
+	#[pallet::type_value]
+	pub fn LocalAdminOnEmpty<T: Config>() -> T::AccountId {
+		T::AccountId::default()
+	}
+
+	#[pallet::type_value]
+	pub fn ForeignAdminOnEmpty<T: Config>() -> T::AccountId {
+		T::AccountId::default()
+	}
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
