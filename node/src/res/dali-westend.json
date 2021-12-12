@@ -1,6 +1,6 @@
 {
   "name": "Dali Testent (Westend Relay)",
-  "id": "dali",
+  "id": "dali-westend",
   "chainType": "Live",
   "bootNodes": [
     "/ip4/142.93.39.160/tcp/30333/p2p/12D3KooWP6rPJxr89XhySpoXuM9fFCN9qwii5b46dwFciJvpCDAg",
