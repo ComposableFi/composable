@@ -490,7 +490,7 @@ pub mod pallet {
 
 				// mint_amount = token_supply * (d2 - d0) / d0
 				let mint_amount_f =
-					(|| token_supply_f.checked_mul(&d2.checked_sub(&d0)?)?.checked_div(&d0))()
+					(|| token_supply_f.checked_mul(&d2.checked_sub(&d0)?.checked_div(&d0)?))()
 						.ok_or(Error::<T>::Math)?;
 				mint_amount = mint_amount_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
 			} else {
@@ -870,17 +870,14 @@ pub mod pallet {
 					d_p = d_p.checked_mul(&d)?.checked_div(&x.checked_mul(&n)?)?;
 				}
 				let d_prev = d;
-
 				// d = (ann * sum + d_p * n) * d / ((ann - 1) * d + (n + 1) * d_p)
-				d = ann_f
-					.checked_mul(&sum)?
-					.checked_add(&d_p.checked_mul(&n)?)?
-					.checked_mul(&d)?
-					.checked_div(
-					&ann_f
-						.checked_sub(&one)?
-						.checked_mul(&d)?
-						.checked_add(&n.checked_add(&one)?.checked_mul(&d_p)?)?,
+				d = ann_f.checked_mul(&sum)?.checked_add(&d_p.checked_mul(&n)?)?.checked_mul(
+					&d.checked_div(
+						&ann_f
+							.checked_sub(&one)?
+							.checked_mul(&d)?
+							.checked_add(&n.checked_add(&one)?.checked_mul(&d_p)?)?,
+					)?,
 				)?;
 
 				if d > d_prev {

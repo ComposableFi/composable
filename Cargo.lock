@@ -6568,6 +6568,7 @@ dependencies = [
  "pallet-vault",
  "parity-scale-codec",
  "plotters",
+ "proptest 0.9.6",
  "scale-info",
  "serde",
  "sp-arithmetic",
