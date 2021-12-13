@@ -588,13 +588,12 @@ pub mod pallet {
 		) {
 			let asset_info = Self::asset_info(asset_id);
 			for answer in pre_prices {
-				let accuracy: Percent;
-				if answer.price < price {
-					accuracy = PerThing::from_rational(answer.price, price);
+				let accuracy: Percent = if answer.price < price {
+					PerThing::from_rational(answer.price, price)
 				} else {
 					let adjusted_number = price.saturating_sub(answer.price - price);
-					accuracy = PerThing::from_rational(adjusted_number, price);
-				}
+					PerThing::from_rational(adjusted_number, price)
+				};
 				let min_accuracy = AssetsInfo::<T>::get(asset_id).threshold;
 				if accuracy < min_accuracy {
 					let slash_amount = asset_info.slash;
