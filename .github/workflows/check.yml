@@ -102,25 +102,6 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - name: Run Test
-        run: |
-          SKIP_WASM_BUILD=1 cargo test
-          SKIP_WASM_BUILD=1 cargo clean -p picasso-runtime
-          SKIP_WASM_BUILD=1 cargo clean -p composable
-  coverage:
-    name: Test coverage
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    steps:
-      - uses: actions/checkout@v2
       - name: Install nightly toolchain for cargo-llvm-cov
         uses: actions-rs/toolchain@v1
         with:
@@ -134,11 +115,14 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - name: Generate coverage
-        run: SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --lcov --output-path lcov.info
+      - name: Run Test (with coverage)
+        run: |
+          SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --lcov --output-path lcov.info
+          SKIP_WASM_BUILD=1 cargo clean -p picasso-runtime
+          SKIP_WASM_BUILD=1 cargo clean -p composable
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
           # token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
           files: lcov.info
-          fail_ci_if_error: true
+          fail_ci_if_error: false
