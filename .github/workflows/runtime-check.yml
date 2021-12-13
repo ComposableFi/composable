@@ -14,4 +14,6 @@ jobs:
     steps:
       - name: Check for runtime changes
         run: |
+          ls
+          pwd
           sh ./.maintain/check_runtime.sh
