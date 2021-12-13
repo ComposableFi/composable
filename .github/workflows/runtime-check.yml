@@ -11,6 +11,6 @@ jobs:
   update_release_draft:
     runs-on: ubuntu-latest
     steps:
-      - uses: Check for runtime changes
+      - name: Check for runtime changes
         run: |
           sh ../.maintain/check_runtime.sh
