@@ -6,7 +6,6 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-mod weights;
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
@@ -44,8 +43,6 @@ pub use support::{
 
 use codec::Encode;
 use frame_system as system;
-use pallet_xcm::XcmPassthrough;
-use polkadot_parachain::primitives::Sibling;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
@@ -55,14 +52,9 @@ use system::{
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use xcm::latest::prelude::*;
-use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin,
-	FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser, ParentIsDefault,
-	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SovereignSignedViaLocation, TakeWeightCredit,
-};
-use xcm_executor::XcmExecutor;
+
+mod weights;
+mod xcmp;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -91,8 +83,8 @@ pub mod opaque {
 //   https://substrate.dev/docs/en/knowledgebase/runtime/upgrades#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("picasso"),
-	impl_name: create_runtime_str!("picasso"),
+	spec_name: create_runtime_str!("composable"),
+	impl_name: create_runtime_str!("composable"),
 	authoring_version: 1,
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
@@ -137,7 +129,7 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 
-	pub const SS58Prefix: u8 = 49;
+	pub const SS58Prefix: u8 = 50;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -372,38 +364,6 @@ where
 	type Extrinsic = UncheckedExtrinsic;
 }
 
-//TODO set
-parameter_types! {
-	pub const StakeLock: BlockNumber = 50;
-	pub const StalePrice: BlockNumber = 5;
-
-	/// TODO: discuss with omar/cosmin
-	pub const MinStake: Balance = 1000 * PICA;
-	// Shouldn't this be a ratio based on locked amount?
-	pub const SlashAmount: Balance = 5;
-	pub const MaxAnswerBound: u32 = 25;
-	pub const MaxAssetsCount: u32 = 100_000;
-	pub const MaxHistory: u32 = 20;
-}
-
-#[cfg(feature = "develop")]
-impl oracle::Config for Runtime {
-	type Currency = Balances;
-	type Event = Event;
-	type AuthorityId = oracle::crypto::BathurstStId;
-	type AssetId = CurrencyId;
-	type PriceValue = u128;
-	type StakeLock = StakeLock;
-	type MinStake = MinStake;
-	type StalePrice = StalePrice;
-	type AddOracle = EnsureRootOrHalfCouncil;
-	type SlashAmount = SlashAmount;
-	type MaxAnswerBound = MaxAnswerBound;
-	type MaxAssetsCount = MaxAssetsCount;
-	type MaxHistory = MaxHistory;
-	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
-}
-
 // Parachain stuff.
 // See https://github.com/paritytech/cumulus/blob/polkadot-v0.9.8/polkadot-parachains/rococo/src/lib.rs for details.
 parameter_types! {
@@ -427,139 +387,6 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 impl parachain_info::Config for Runtime {}
 
 parameter_types! {
-	// pub const RelayLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
-	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
-	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
-	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
-}
-
-/// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
-/// when determining ownership of accounts for asset transacting and when attempting to use XCM
-/// `Transact` in order to determine the dispatch Origin.
-pub type LocationToAccountId = (
-	// The parent (Relay-chain) origin converts to the default `AccountId`.
-	ParentIsDefault<AccountId>,
-	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
-	SiblingParachainConvertsVia<Sibling, AccountId>,
-	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
-	AccountId32Aliases<RelayNetwork, AccountId>,
-);
-
-/// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
-/// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
-/// biases the kind of local `Origin` it will become.
-pub type XcmOriginToTransactDispatchOrigin = (
-	// Sovereign account converter; this attempts to derive an `AccountId` from the origin location
-	// using `LocationToAccountId` and then turn that into the usual `Signed` origin. Useful for
-	// foreign chains who want to have a local sovereign account on this chain which they control.
-	SovereignSignedViaLocation<LocationToAccountId, Origin>,
-	// Native converter for Relay-chain (Parent) location; will converts to a `Relay` origin when
-	// recognised.
-	RelayChainAsNative<RelayOrigin, Origin>,
-	// Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
-	// recognised.
-	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, Origin>,
-	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
-	// transaction from the Root origin.
-	ParentAsSuperuser<Origin>,
-	// Native signed account converter; this just converts an `AccountId32` origin into a normal
-	// `Origin::Signed` origin of the same 32-byte value.
-	SignedAccountId32AsNative<RelayNetwork, Origin>,
-	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
-	XcmPassthrough<Origin>,
-);
-
-parameter_types! {
-	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
-	pub UnitWeightCost: Weight = 1_000_000;
-	pub const MaxInstructions: u32 = 100;
-}
-
-// For test purposes.
-match_type! {
-	pub type SpecParachain: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: X1(Parachain(2000)) } |
-			MultiLocation { parents: 1, interior: X1(Parachain(2001)) }
-	};
-}
-
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-	AllowUnpaidExecutionFrom<SpecParachain>,
-);
-
-pub struct XcmConfig;
-
-impl xcm_executor::Config for XcmConfig {
-	type Call = Call;
-	type XcmSender = XcmRouter;
-	// How to withdraw and deposit an asset.
-	type AssetTransactor = ();
-	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = NativeAsset;
-	type IsTeleporter = (); // <- should be enough to allow teleportation of PICA
-	type LocationInverter = LocationInverter<Ancestry>;
-	type Barrier = Barrier;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader = ();
-	type ResponseHandler = (); // Don't handle responses for now.
-	type SubscriptionService = PolkadotXcm;
-	type AssetClaims = PolkadotXcm;
-	type AssetTrap = PolkadotXcm;
-}
-
-/// No local origins on this chain are allowed to dispatch XCM sends/executions.
-/// https://medium.com/kusama-network/kusamas-governance-thwarts-would-be-attacker-9023180f6fb
-pub type LocalOriginToLocation = ();
-
-/// The means for routing XCM messages which are not for local execution into the right message
-/// queues.
-pub type XcmRouter = (
-	// Two routers - use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, ()>,
-	// ..and XCMP to communicate with the sibling chains.
-	XcmpQueue,
-);
-
-impl pallet_xcm::Config for Runtime {
-	type Event = Event;
-	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmRouter = XcmRouter;
-	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	/// https://medium.com/kusama-network/kusamas-governance-thwarts-would-be-attacker-9023180f6fb
-	type XcmExecuteFilter = Nothing;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = Everything;
-	type XcmReserveTransferFilter = Everything;
-	type LocationInverter = LocationInverter<Ancestry>;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Origin = Origin;
-	type Call = Call;
-
-	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
-	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
-}
-
-impl cumulus_pallet_xcm::Config for Runtime {
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-}
-
-impl cumulus_pallet_xcmp_queue::Config for Runtime {
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type VersionWrapper = ();
-	type ChannelInfo = ParachainSystem;
-}
-
-impl cumulus_pallet_dmp_queue::Config for Runtime {
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = system::EnsureRoot<AccountId>;
-}
-
-parameter_types! {
 	pub const UncleGenerations: u32 = 0;
 }
 
@@ -570,7 +397,6 @@ impl authorship::Config for Runtime {
 	type EventHandler = (CollatorSelection,);
 }
 
-//TODO set
 parameter_types! {
 	pub const Period: u32 = 6 * HOURS;
 	pub const Offset: u32 = 0;
@@ -757,6 +583,7 @@ parameter_types! {
 	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
+
 	pub MinimumDeposit: Balance = 100 * PICA;
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
@@ -815,74 +642,11 @@ parameter_types! {
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
 }
 
-#[cfg(feature = "develop")]
-impl vault::Config for Runtime {
-	type Event = Event;
-	type Balance = Balance;
-	type CurrencyFactory = Factory;
-	type AssetId = CurrencyId;
-	type Currency = Assets;
-	type Convert = sp_runtime::traits::ConvertInto;
-	type PalletId = VaultPalletId;
-	type MaxStrategies = MaxStrategies;
-	type CreationDeposit = CreationDeposit;
-	type ExistentialDeposit = VaultExistentialDeposit;
-	type RentPerBlock = RentPerBlock;
-	type NativeAssetId = NativeAssetId;
-	type MinimumDeposit = VaultMinimumDeposit;
-	type MinimumWithdrawal = VaultMinimumWithdrawal;
-}
-
-parameter_types! {
-	pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
-}
-
-#[cfg(feature = "develop")]
-impl currency_factory::Config for Runtime {
-	type Event = Event;
-	type DynamicCurrencyId = CurrencyId;
-	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
-}
-
-#[cfg(feature = "develop")]
-impl assets_registry::Config for Runtime {
-	type Event = Event;
-	type LocalAssetId = CurrencyId;
-	type ForeignAssetId = composable_traits::assets::XcmAssetLocation;
-	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
-	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
-	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
-}
-
-#[cfg(feature = "develop")]
-impl governance_registry::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type WeightInfo = ();
-}
-
-#[cfg(feature = "develop")]
-impl assets::Config for Runtime {
-	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = Factory;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
-	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrHalfCouncil;
-	type GovernanceRegistry = GovernanceRegistry;
-}
-
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
-		#[cfg(feature = "develop")]
-		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false;
-		}
 		!matches!(
 			call,
 			Call::Balances(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_)
@@ -890,15 +654,7 @@ impl Contains<Call> for BaseCallFilter {
 	}
 }
 
-#[cfg(feature = "develop")]
-impl call_filter::Config for Runtime {
-	type Event = Event;
-	type UpdateOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = ();
-}
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
-#[cfg(not(feature = "develop"))] // https://github.com/paritytech/substrate/issues/10286
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -934,67 +690,12 @@ construct_runtime!(
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
-		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
+		RelayerXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
 		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 50,
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
-	}
-);
-
-#[cfg(feature = "develop")]
-construct_runtime!(
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = opaque::Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
-	{
-		System: system::{Pallet, Call, Config, Storage, Event<T>} = 0,
-		Timestamp: timestamp::{Pallet, Call, Storage, Inherent} = 1,
-		Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,
-		RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage} = 3,
-		TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
-		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
-		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
-
-		// Parachains stuff
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
-		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 11,
-
-		// Collator support. the order of these 5 are important and shall not change.
-		Authorship: authorship::{Pallet, Call, Storage} = 20,
-		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
-		Session: session::{Pallet, Call, Storage, Event, Config<T>} = 22,
-		Aura: aura::{Pallet, Storage, Config<T>} = 23,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 24,
-
-		// Governance utilities
-		Council: collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 30,
-		CouncilMembership: membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 31,
-		Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 32,
-		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
-		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
-		Utility: utility::{Pallet, Call, Event} = 35,
-
-		// XCM helpers.
-		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
-		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
-		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
-		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
-
-		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 50,
-
-		// DeFi
-		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 51,
-		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
-		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
-		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
-		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
-	  GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
-	  Assets: assets::{Pallet, Call, Storage} = 57,
-
-		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
 
@@ -1150,11 +851,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, crowdloan_bonus, LiquidCrowdloan);
 			list_benchmark!(list, extra, utility, Utility);
 
-			#[cfg(feature = "develop")]
-			{
-				list_benchmark!(list, extra, oracle, Oracle);
-			}
-
 			let storage_info = AllPalletsWithSystem::storage_info();
 
 			return (list, storage_info)
@@ -1200,11 +896,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, collective, Council);
 			add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
 			add_benchmark!(params, batches, utility, Utility);
-
-			#[cfg(feature ="develop")]
-			{
-				add_benchmark!(params, batches, oracle, Oracle);
-			}
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
