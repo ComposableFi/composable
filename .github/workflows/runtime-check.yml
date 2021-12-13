@@ -19,6 +19,4 @@ jobs:
       - name: Check for runtime changes
         working-directory: "./.maintain/"
         run: |
-          ls
-          pwd
           sh check_runtime.sh
