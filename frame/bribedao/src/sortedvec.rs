@@ -1,6 +1,5 @@
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use std::convert::TryInto;
 
 /// forked from sortedvec 0.5.0
 
@@ -475,18 +474,25 @@ sortedvec! {
 }
 
 impl FastMap {
-	pub fn fastsearch(&self, key: u32) -> (u32, u32, u32) {
+	pub fn fastsearch(&self, key: u32) -> BribesStorage {
 		let myinner = &self.inner;
-		let out = myinner.binary_search_by_key(&key, |n| n.amount);
-		(out.unwrap().try_into().unwrap(), 2, 3)
-	} // binary search here;
+		let out = match myinner.binary_search_by_key(&key, |n| n.amount) {
+			//;
+			Ok(i) => self.inner[i], // return the struct based on the position we get
+			Err(_) => BribesStorage { amount: 0, p_id: 0, votes: 0 }, /* should not happend, but
+			                          * if it does, we should
+			                          * return an empty struct
+			                          * instead of a panic */
+		};
+		out
+	}
 
 	/// Remove a BribesStorage item
 	pub fn remove_bribe(&mut self, pid: u32, amount: u32, votes: u32) -> bool {
 		if let Some(index) = self
 			.inner
 			.iter()
-			.position(|value| value.amount == amount && value.p_id == pid && value.votes == votes)
+			.position(|value| value == &BribesStorage { p_id: pid, amount, votes })
 		{
 			self.inner.swap_remove(index); // Remove from vec
 			return true
@@ -505,7 +511,10 @@ impl FastMap {
 	pub fn find_amount(self, amount: u32) -> BribesStorage {
 		let iterme = self.inner;
 		let loot: Vec<BribesStorage> = iterme.into_iter().filter(|a| a.amount == amount).collect();
-		let myloot: BribesStorage = *loot.last().unwrap(); //change to something safer then unwrap
+		let myloot: BribesStorage = match loot.last() {
+			Some(mloot) => *mloot,
+			None => BribesStorage { amount: 0, p_id: 0, votes: 0 }, // this should not happend
+		};
 		myloot
 	}
 

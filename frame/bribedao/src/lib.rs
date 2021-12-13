@@ -155,7 +155,6 @@ pub mod pallet {
 				Ok(voting) => voting.balance,
 				_ => return Err(Error::<T>::InvalidVote.into()),
 			};
-			//.unwrap().balance;
 			// If the user has an allocated vote balance that is less then what its trying to sell,
 			// throw an error
 			ensure!(account_vote_balance < request.votes.capital.into(), Error::<T>::InvalidVote);

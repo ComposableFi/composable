@@ -7,6 +7,8 @@ This allows anyone to have a sorted accessable vector.
 
 ## Examples:   
 
+See sortedvec.rs for the latest source codes and code samples
+
 ```rust
 sortedvec! {    
                 /// lookup by (amount, votes) keys 
@@ -19,11 +21,6 @@ sortedvec! {
 }     
 
 impl FastMap {                                                                         
-  pub fn fastsearch(&self, key: u32) -> (u32, u32, u32) {                        
-                let myinner = &self.inner;                                             
-                let out = myinner.binary_search_by_key(&key, |n| n.amount);            
-                (out.unwrap().try_into().unwrap(), 2, 3)                               
-        } // binary search here;                                                       
                                                                                        
         // make it easier to add things                                                
         pub fn add(&mut self, amounts: u32, pid: u32, vots: u32) -> bool {             
