@@ -170,7 +170,7 @@ std = [
 	"assets/std",
 	"governance-registry/std",
 	"composable-traits/std",
-	]
+]
 runtime-benchmarks = [
 	"assets/runtime-benchmarks",
 	"balances/runtime-benchmarks",
