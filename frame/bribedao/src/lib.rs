@@ -151,10 +151,8 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
 			// Check to make sure that a user actually has that vote
-			let account_vote_balance = match T::Democracy::count_votes(from) {
-				Ok(voting) => voting.balance,
-				_ => return Err(Error::<T>::InvalidVote.into()),
-			};
+			let account_vote_balance = T::Democracy::count_votes(from)?.balance;
+
 			// If the user has an allocated vote balance that is less then what its trying to sell,
 			// throw an error
 			ensure!(account_vote_balance < request.votes.capital.into(), Error::<T>::InvalidVote);
