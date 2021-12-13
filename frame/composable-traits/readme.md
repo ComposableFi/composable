@@ -3,7 +3,7 @@
 #### Composable-traits allow us to write simple interfaces to thirdparty pallet functions. 
 
 
-In order to have a clean source code and avoid adding unnecessary frame Config traits additions(example: ```rust pub trait Config: frame_system::Config + thirdpartycrate::Config {  ```), composable-traits comes to the rescue.  
+In order to have a clean source code and avoid adding unnecessary frame Config traits additions(example: `pub trait Config: frame_system::Config + thirdpartycrate::Config`), composable-traits comes to the rescue.  
 Using traits we can easily import and use functions and logic from thirdparty frames without importing and configuring the thirdparty frame 
 functions in lib.rs.
 
