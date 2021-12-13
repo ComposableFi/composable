@@ -1,4 +1,4 @@
-name: Release Drafter
+name: Check Runtime
 on:
   push:
     branches:
@@ -9,9 +9,9 @@ on:
       - dali-chachacha
       - picasso
 jobs:
-  update_release_draft:
+  check-runtime:
     runs-on: ubuntu-latest
     steps:
       - name: Check for runtime changes
         run: |
-          sh ../.maintain/check_runtime.sh
+          sh ./.maintain/check_runtime.sh
