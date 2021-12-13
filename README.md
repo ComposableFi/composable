@@ -26,7 +26,13 @@ git clone https://github.com/composableFi/composable
 cd composable/
 sh scripts/init.sh
 cargo build --release
-```
+```   
+
+or you can simply install it with this one liner:    
+
+```sh
+curl https://get.composable.finance | sh
+```     
 
 
 ## Run  

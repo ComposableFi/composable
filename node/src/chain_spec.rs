@@ -73,6 +73,12 @@ pub fn picasso() -> picasso::ChainSpec {
 		.expect("Picasso chain spec not found!")
 }
 
+/// Composable (Polkadot parachain)
+pub fn composable() -> picasso::ChainSpec {
+	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/composable.json").to_vec())
+		.expect("Picasso chain spec not found!")
+}
+
 // chain spec for single node environments
 pub fn picasso_dev() -> picasso::ChainSpec {
 	//TODO check properties

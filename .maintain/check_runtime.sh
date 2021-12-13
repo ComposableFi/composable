@@ -31,7 +31,7 @@ github_label () {
 boldprint "latest 10 commits of ${CI_COMMIT_REF_NAME}"
 git log --graph --oneline --decorate=short -n 10
 
-boldprint "make sure the main branch and dali-chachacha tag are available in shallow clones"
+boldprint "make sure the main, dali-chachacha and picasso tag are available in shallow clones"
 git fetch --depth="${GIT_DEPTH:-100}" origin main
 git fetch --depth="${GIT_DEPTH:-100}" origin dali-chachacha
 git tag -f dali-chachacha FETCH_HEAD
