@@ -1,5 +1,5 @@
 
-## Bribe DAO
+## [Bribe DAO](https://www.bribe.xyz/)   
 
 Bribe DAO is a pallet created in order for people to buy bribes and place bribes.  Allowing users to sell there votes and third parties to buy votes
 for a certain amount.  
