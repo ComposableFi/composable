@@ -38,7 +38,6 @@ collective = { package = "pallet-collective", git = "https://github.com/parityte
 membership = { package = "pallet-membership", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 scheduler = { package = "pallet-scheduler", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 session = { package = "pallet-session", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
-society = { package = "pallet-society", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false, optional = true }
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
@@ -169,7 +168,6 @@ runtime-benchmarks = [
 	"hex-literal",
 	"balances/runtime-benchmarks",
 	"timestamp/runtime-benchmarks",
-	"society/runtime-benchmarks",
 	"oracle/runtime-benchmarks",
 	"collective/runtime-benchmarks",
 	"collator-selection/runtime-benchmarks",
