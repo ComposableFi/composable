@@ -14,7 +14,10 @@ pub struct VaultInfo<AccountId, Balance, CurrencyId, BlockNumber> {
 
 #[derive(Copy, Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 pub struct StrategyOverview<Balance> {
-	/// The reported balance of the strategy
+	/// The reported balance of the strategy.
+	///
+	/// Added when an account withdraws from a vault and subtracted when an account deposits
+	/// into a vault.
 	pub balance: Balance,
 	/// Sum of all withdrawn funds.
 	pub lifetime_withdrawn: Balance,

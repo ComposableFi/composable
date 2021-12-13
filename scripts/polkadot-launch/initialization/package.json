@@ -13,10 +13,12 @@
   },
   "dependencies": {
     "@polkadot/api": "^6.8.1",
-    "@polkadot/types": "^6.8.1"
+    "@polkadot/types": "^6.8.1",
+    "bn.js": "^5.2.0"
   },
   "devDependencies": {
     "@polkadot/typegen": "^6.8.1",
+    "@types/node": "^16.11.11",
     "ts-node": "^10.4.0",
     "typescript": "^4.5.2"
   }

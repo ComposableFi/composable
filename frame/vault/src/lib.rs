@@ -91,7 +91,7 @@ pub mod pallet {
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
 			Zero,
 		},
-		DispatchError, FixedPointNumber, Perquintill,
+		ArithmeticError, DispatchError, FixedPointNumber, Perquintill,
 	};
 	use sp_std::fmt::Debug;
 
@@ -260,6 +260,10 @@ pub mod pallet {
 			/// The number of LP tokens minted for the deposit.
 			lp_amount: T::Balance,
 		},
+		LiquidateStrategy {
+			account: T::AccountId,
+			amount: T::Balance,
+		},
 		/// Emitted after a user exchanges LP tokens back for underlying assets
 		Withdrawn {
 			/// The account ID making the withdrawal.
@@ -284,6 +288,8 @@ pub mod pallet {
 	#[allow(missing_docs)]
 	#[pallet::error]
 	pub enum Error<T> {
+		/// It is not possible to perform a privileged action using an ordinary account
+		AccountIsNotManager,
 		/// Failures in creating LP tokens during vault creation result in `CannotCreateAsset`.
 		CannotCreateAsset,
 		/// Failures to transfer funds from the vault to users or vice- versa result in
@@ -304,9 +310,6 @@ pub mod pallet {
 		AllocationMustSumToOne,
 		/// Vaults may have up to [`MaxStrategies`](Config::MaxStrategies) strategies.
 		TooManyStrategies,
-		/// For very large numbers, arithmetic starts failing.
-		// TODO: could we fall back to BigInts, and never have math failures?
-		OverflowError,
 		/// Vaults may have insufficient funds for withdrawals, as well as users wishing to deposit
 		/// an incorrect amount.
 		InsufficientFunds,
@@ -379,7 +382,7 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn claim_surcharge(
 			origin: OriginFor<T>,
-			dest: VaultIndex,
+			dest_id: VaultIndex,
 			address: Option<AccountIdOf<T>>,
 		) -> DispatchResultWithPostInfo {
 			let origin = origin.into();
@@ -394,7 +397,7 @@ pub mod pallet {
 			// capabilities + tombstoning, we'll evaluate having users call this too.
 			ensure!(!signed, Error::<T>::InvalidSurchargeClaim);
 
-			let vault = Vaults::<T>::try_get(dest).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			let vault = Self::vault_info(&dest_id)?;
 			let current_block = <frame_system::Pallet<T>>::block_number();
 
 			match crate::rent::evaluate_eviction::<T>(current_block, vault.deposit) {
@@ -433,7 +436,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Deposit funds in the vault and receive LP tokens in return.
+		/// Withdraw funds
+		///
 		/// # Emits
 		///  - Event::Withdrawn
 		///
@@ -486,6 +490,34 @@ pub mod pallet {
 			<Self as CapabilityVault>::start(&vault)?;
 			Self::deposit_event(Event::VaultStarted { vault });
 			Ok(().into())
+		}
+
+		/// Turns an existent strategy account `strategy_account` of a vault determined by
+		/// `vault_idx` into a liquidation state where withdrawn funds should de returned as soon
+		/// as possible.
+		///
+		/// Only the vault's manager will be able to call this method.
+		///
+		/// # Emits
+		///  - Event::LiquidateStrategy
+		#[pallet::weight(10_000)]
+		pub fn liquidate_strategy(
+			origin: OriginFor<T>,
+			vault_idx: VaultIndex,
+			strategy_account: T::AccountId,
+		) -> DispatchResult {
+			let from = ensure_signed(origin)?;
+			ensure!(Self::vault_info(&vault_idx)?.manager == from, Error::<T>::AccountIsNotManager);
+			let balance = CapitalStructure::<T>::try_get(&vault_idx, &strategy_account)
+				.map_err(|_err| DispatchError::CannotLookup)?
+				.balance;
+			CapitalStructure::<T>::remove(&vault_idx, &strategy_account);
+			Allocations::<T>::remove(&vault_idx, &strategy_account);
+			Self::deposit_event(Event::LiquidateStrategy {
+				account: strategy_account,
+				amount: balance,
+			});
+			Ok(())
 		}
 	}
 
@@ -561,10 +593,9 @@ pub mod pallet {
 		}
 
 		/// Computes the sum of all the assets that the vault currently controls.
-		fn assets_under_management(vault_id: &VaultIndex) -> Result<T::Balance, Error<T>> {
-			let vault =
-				Vaults::<T>::try_get(vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
-			Self::do_assets_under_management(vault_id, &vault)
+		fn assets_under_management(vault_id: &VaultIndex) -> Result<T::Balance, DispatchError> {
+			let vault = Self::vault_info(vault_id)?;
+			Ok(Self::do_assets_under_management(vault_id, &vault)?)
 		}
 
 		fn do_withdraw(
@@ -572,8 +603,7 @@ pub mod pallet {
 			to: &T::AccountId,
 			lp_amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			let vault =
-				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			let vault = Self::vault_info(vault_id)?;
 
 			ensure!(vault.capabilities.withdrawals_allowed(), Error::<T>::WithdrawalsHalted);
 
@@ -613,8 +643,7 @@ pub mod pallet {
 			from: &T::AccountId,
 			amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			let vault =
-				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			let vault = Self::vault_info(vault_id)?;
 
 			ensure!(vault.capabilities.deposits_allowed(), Error::<T>::DepositsHalted);
 
@@ -696,7 +725,7 @@ pub mod pallet {
 			*/
 			let lp_shares_value =
 				multiply_by_rational(lp_amount_value, vault_aum_value, lp_total_issuance_value)
-					.map_err(|_| Error::<T>::OverflowError)?;
+					.map_err(|_| ArithmeticError::Overflow)?;
 
 			let lp_shares_value_amount =
 				<T::Convert as Convert<u128, T::Balance>>::convert(lp_shares_value);
@@ -714,6 +743,11 @@ pub mod pallet {
 				.fold(T::Balance::zero(), |sum, item| sum + item.balance);
 			Ok(owned + outstanding)
 		}
+
+		/// Tries to fetch a stored [VaultInfo] through its index.
+		fn vault_info(vault_idx: &VaultIndex) -> Result<VaultInfo<T>, DispatchError> {
+			Ok(Vaults::<T>::try_get(vault_idx).map_err(|_err| Error::<T>::VaultDoesNotExist)?)
+		}
 	}
 
 	impl<T: Config> Vault for Pallet<T> {
@@ -724,15 +758,11 @@ pub mod pallet {
 		type AssetId = AssetIdOf<T>;
 
 		fn asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError> {
-			let vault =
-				Vaults::<T>::try_get(vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
-			Ok(vault.asset_id)
+			Ok(Self::vault_info(vault_id)?.asset_id)
 		}
 
 		fn lp_asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError> {
-			let vault =
-				Vaults::<T>::try_get(vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
-			Ok(vault.lp_token_id)
+			Ok(Self::vault_info(vault_id)?.lp_token_id)
 		}
 
 		fn account_id(vault: &Self::VaultId) -> Self::AccountId {
@@ -771,8 +801,7 @@ pub mod pallet {
 		}
 
 		fn stock_dilution_rate(vault_id: &Self::VaultId) -> Result<Rate, DispatchError> {
-			let vault =
-				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			let vault = Self::vault_info(vault_id)?;
 			let lp_total_issuance = T::Currency::total_issuance(vault.lp_token_id);
 			let lp_total_issuance_value =
 				<T::Convert as Convert<T::Balance, u128>>::convert(lp_total_issuance);
@@ -830,22 +859,27 @@ pub mod pallet {
 			// TODO: should we check the allocation here? Pallets are technically trusted, so it
 			// would only add unnecessary overhead. The extrinsic/ChainExtension interface should
 			// check however
-			let vault =
-				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			let vault = Self::vault_info(vault_id)?;
 			CapitalStructure::<T>::try_mutate(vault_id, to, |state| {
 				// I do not thing balance can actually overflow, since the total_issuance <=
 				// T::Balance::Max
 				state.balance =
-					state.balance.checked_add(&amount).ok_or(Error::<T>::OverflowError)?;
+					state.balance.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
 				// This can definitely overflow. Perhaps it should be a BigUint?
 				state.lifetime_withdrawn = state
 					.lifetime_withdrawn
 					.checked_add(&amount)
-					.ok_or(Error::<T>::OverflowError)?;
-				T::Currency::transfer(vault.asset_id, &Self::account_id(vault_id), to, amount, true)
-					.map_err(|_| Error::<T>::InsufficientFunds)
-			})?;
-			Ok(())
+					.ok_or(ArithmeticError::Overflow)?;
+				T::Currency::transfer(
+					vault.asset_id,
+					&Self::account_id(vault_id),
+					to,
+					amount,
+					true,
+				)
+				.map_err(|_| Error::<T>::InsufficientFunds)?;
+				Ok(())
+			})
 		}
 
 		fn deposit(
@@ -853,8 +887,7 @@ pub mod pallet {
 			from: &Self::AccountId,
 			amount: Self::Balance,
 		) -> Result<(), DispatchError> {
-			let vault =
-				Vaults::<T>::try_get(&vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			let vault = Self::vault_info(vault_id)?;
 			CapitalStructure::<T>::try_mutate(vault_id, from, |state| {
 				// A strategy can return more than it has withdrawn through profits.
 				state.balance = state.balance.saturating_sub(&amount);
@@ -862,7 +895,7 @@ pub mod pallet {
 				state.lifetime_deposited = state
 					.lifetime_deposited
 					.checked_add(&amount)
-					.ok_or(Error::<T>::OverflowError)?;
+					.ok_or(ArithmeticError::Overflow)?;
 				T::Currency::transfer(
 					vault.asset_id,
 					from,
@@ -870,9 +903,9 @@ pub mod pallet {
 					amount,
 					true,
 				)
-				.map_err(|_| Error::<T>::InsufficientFunds)
-			})?;
-			Ok(())
+				.map_err(|_| Error::<T>::InsufficientFunds)?;
+				Ok(())
+			})
 		}
 	}
 
@@ -906,9 +939,7 @@ pub mod pallet {
 		}
 
 		fn is_stopped(vault_id: &Self::VaultId) -> Result<bool, DispatchError> {
-			Vaults::<T>::try_get(&vault_id)
-				.map_err(|_| DispatchError::CannotLookup)
-				.map(|vault| vault.capabilities.is_stopped())
+			Self::vault_info(vault_id).map(|vault| vault.capabilities.is_stopped())
 		}
 
 		fn start(vault_id: &Self::VaultId) -> DispatchResult {
@@ -957,9 +988,7 @@ pub mod pallet {
 		}
 
 		fn is_tombstoned(vault_id: &Self::VaultId) -> Result<bool, DispatchError> {
-			Vaults::<T>::try_get(&vault_id)
-				.map_err(|_| DispatchError::CannotLookup)
-				.map(|vault| vault.capabilities.is_tombstoned())
+			Self::vault_info(vault_id).map(|vault| vault.capabilities.is_tombstoned())
 		}
 
 		fn stop_withdrawals(vault_id: &Self::VaultId) -> DispatchResult {
@@ -985,9 +1014,7 @@ pub mod pallet {
 		}
 
 		fn withdrawals_allowed(vault_id: &Self::VaultId) -> Result<bool, DispatchError> {
-			Vaults::<T>::try_get(&vault_id)
-				.map_err(|_| DispatchError::CannotLookup)
-				.map(|vault| vault.capabilities.withdrawals_allowed())
+			Self::vault_info(vault_id).map(|vault| vault.capabilities.withdrawals_allowed())
 		}
 
 		fn stop_deposits(vault_id: &Self::VaultId) -> DispatchResult {
@@ -1017,9 +1044,7 @@ pub mod pallet {
 		}
 
 		fn deposits_allowed(vault_id: &Self::VaultId) -> Result<bool, DispatchError> {
-			Vaults::<T>::try_get(&vault_id)
-				.map_err(|_| DispatchError::CannotLookup)
-				.map(|vault| vault.capabilities.deposits_allowed())
+			Self::vault_info(vault_id).map(|vault| vault.capabilities.deposits_allowed())
 		}
 	}
 }

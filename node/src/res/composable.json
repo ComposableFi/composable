@@ -6,7 +6,7 @@
   "telemetryEndpoints": null,
   "protocolId": "composable",
   "properties": {
-    "ss58Format": 49,
+    "ss58Format": 50,
     "tokenDecimals": 12,
     "tokenSymbol": "LAYR"
   },

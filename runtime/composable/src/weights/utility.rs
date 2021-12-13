@@ -19,4 +19,7 @@ impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 			// Standard Error: 0
 			.saturating_add((1_013_000 as Weight).saturating_mul(c as Weight))
 	}
+	fn dispatch_as() -> Weight {
+		(10_000_000 as Weight)
+	}
 }
