@@ -22,7 +22,7 @@ git log --graph --oneline --decorate=short -n 10
 
 
 boldprint "check if the wasm sources changed"
-if ! has_runtime_changes origin/main "${GITHUB_SHA}"
+if ! has_runtime_changes origin/main "${GITHUB_REF_NAME}"
 then
 	boldcat <<-EOT
 
