@@ -2,10 +2,13 @@
   "name": "Composable Finance",
   "id": "composable",
   "chainType": "Live",
-  "bootNodes": [
-    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWESHwxVuHpJFUNu4gakoNupoJmjsvvt3E9BvCL8mbae58"
+  "bootNodes": [],
+  "telemetryEndpoints": [
+    [
+      "/dns/telemetry.polkadot.io/tcp/443/x-parity-wss/%2Fsubmit%2F",
+      0
+    ]
   ],
-  "telemetryEndpoints": null,
   "protocolId": "composable",
   "properties": {
     "ss58Format": 50,
