@@ -114,3 +114,4 @@ jobs:
           SKIP_WASM_BUILD=1 cargo test
           SKIP_WASM_BUILD=1 cargo clean -p picasso-runtime
           SKIP_WASM_BUILD=1 cargo clean -p composable
+
