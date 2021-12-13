@@ -10,9 +10,6 @@ use serde::{Deserialize, Serialize};
 use tokio::task::JoinHandle;
 use tokio_stream::wrappers::ReceiverStream;
 
-/// Exponent of a value that is represented as USD cents.
-pub const USD_CENT_EXPONENT: Exponent = Exponent(-2);
-
 /// Default channels size used by feeds
 pub const CHANNEL_BUFFER_SIZE: usize = 128;
 
@@ -82,5 +79,5 @@ pub type FeedStream<F, A, P> = ReceiverStream<FeedNotification<F, A, P>>;
 /// A joinable feed handle used to sync while shuting down.
 pub type FeedHandle = JoinHandle<Result<(), FeedError>>;
 
-/// A feed, represented a product of a joinable shutdown handle and a notification stream.
+/// A feed, represented as a product of a joinable shutdown handle and a notification stream.
 pub type Feed<F, A, P> = (FeedHandle, FeedStream<F, A, P>);
