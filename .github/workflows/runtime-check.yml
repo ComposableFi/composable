@@ -13,7 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check for runtime changes
+        working-directory: ".maintain/"
         run: |
           ls
           pwd
-          sh ../.maintain/check_runtime.sh
+          sh check_runtime.sh
