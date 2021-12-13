@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check for runtime changes
-        working-directory: ".maintain"
+        working-directory: ".maintain/"
         run: |
           ls
           pwd
