@@ -41,3 +41,4 @@ jobs:
       run: make containerize-release 
     - name:  Docker push
       run: make push-release
+      
