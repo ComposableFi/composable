@@ -189,7 +189,7 @@ mod tests {
 		let expected_exponent = Exponent(2);
 		[
 			((Price(0xCAFEBABE), Exponent(-2)), NormalizedPrice(0xCAFEBABE * u64::pow(10, 4))),
-			((Price(0xDEADBEEF), Exponent(2)), NormalizedPrice(0xDEADBEEF * u64::pow(10, 0))),
+			((Price(0xDEADBEEF), Exponent(2)), NormalizedPrice(0xDEADBEEF)),
 			((Price(1), Exponent(0)), NormalizedPrice(u64::pow(10, 2))),
 			((Price(12), Exponent(-1)), NormalizedPrice(12 * u64::pow(10, 3))),
 			((Price(454000), Exponent(4)), NormalizedPrice(4540)),
