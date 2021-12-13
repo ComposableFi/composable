@@ -16,4 +16,4 @@ jobs:
         run: |
           ls
           pwd
-          sh ./.maintain/check_runtime.sh
+          sh ../.maintain/check_runtime.sh
