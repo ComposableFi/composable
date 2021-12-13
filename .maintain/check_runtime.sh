@@ -39,7 +39,7 @@ git log -n1 dali-chachacha
 
 
 boldprint "check if the wasm sources changed"
-if ! has_runtime_changes origin/master "${CI_COMMIT_SHA}"
+if ! has_runtime_changes origin/main "${CI_COMMIT_SHA}"
 then
 	boldcat <<-EOT
 
