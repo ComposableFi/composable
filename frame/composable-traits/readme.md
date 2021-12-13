@@ -8,7 +8,7 @@ Using traits we can easily import and use functions and logic from thirdparty fr
 functions in lib.rs.
 
 The logic for this is pretty simple, all we need to do is to create a function in our trait file that returns the same output as the original function. 
-After we have created a function inside our custom trait that returns the same output, we can simply import it from composable_traits( ```rust use composable_traits::newtrait::Ourtrait ``` ) and call it with a ```rust T::Ourtrait::customfunction() ```.
+After we have created a function inside our custom trait that returns the same output, we can simply import it from composable_traits( ` use composable_traits::newtrait::Ourtrait ` ) and call it with a ` T::Ourtrait::customfunction() `.
 
 
 
