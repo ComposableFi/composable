@@ -1276,33 +1276,17 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.0.0-beta.5"
+version = "3.0.0-rc.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "feff3878564edb93745d58cf63e17b63f24142506e7a20c87a5521ed7bfb1d63"
+checksum = "967965e82fc46fee1a88147a7a977a66d615ed5f83eb95b18577b342c08f90ff"
 dependencies = [
  "atty",
  "bitflags",
- "clap_derive",
  "indexmap",
- "lazy_static",
  "os_str_bytes",
  "strsim 0.10.0",
  "termcolor",
  "textwrap 0.14.2",
- "unicase 2.6.0",
-]
-
-[[package]]
-name = "clap_derive"
-version = "3.0.0-beta.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b15c6b4f786ffb6192ffe65a36855bc1fc2444bcd0945ae16748dcd6ed7d0d3"
-dependencies = [
- "heck",
- "proc-macro-error",
- "proc-macro2 1.0.33",
- "quote 1.0.10",
- "syn 1.0.82",
 ]
 
 [[package]]
@@ -1379,6 +1363,7 @@ name = "composable"
 version = "3.0.0"
 dependencies = [
  "common",
+ "composable-runtime",
  "cumulus-client-cli",
  "cumulus-client-collator",
  "cumulus-client-consensus-aura",
@@ -1393,6 +1378,7 @@ dependencies = [
  "jsonrpc-core",
  "log 0.4.14",
  "pallet-transaction-payment-rpc",
+ "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "picasso-runtime",
  "polkadot-cli",
@@ -1429,12 +1415,90 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-state-machine",
+ "sp-storage",
  "sp-timestamp",
  "sp-transaction-pool",
+ "sp-trie",
  "structopt",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
+]
+
+[[package]]
+name = "composable-runtime"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "composable-traits",
+ "cumulus-pallet-aura-ext",
+ "cumulus-pallet-dmp-queue",
+ "cumulus-pallet-parachain-system",
+ "cumulus-pallet-session-benchmarking",
+ "cumulus-pallet-xcm",
+ "cumulus-pallet-xcmp-queue",
+ "cumulus-primitives-core",
+ "cumulus-primitives-timestamp",
+ "cumulus-primitives-utility",
+ "frame-benchmarking",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-benchmarking",
+ "frame-system-rpc-runtime-api",
+ "hex-literal",
+ "orml-tokens",
+ "orml-traits",
+ "orml-unknown-tokens",
+ "orml-xcm-support",
+ "orml-xtokens",
+ "pallet-assets",
+ "pallet-assets-registry",
+ "pallet-aura",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-call-filter",
+ "pallet-collator-selection",
+ "pallet-collective",
+ "pallet-crowdloan-bonus",
+ "pallet-currency-factory",
+ "pallet-democracy",
+ "pallet-governance-registry",
+ "pallet-indices",
+ "pallet-membership",
+ "pallet-oracle",
+ "pallet-randomness-collective-flip",
+ "pallet-scheduler",
+ "pallet-session",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-treasury",
+ "pallet-utility",
+ "pallet-vault",
+ "pallet-xcm",
+ "parachain-info",
+ "parity-scale-codec",
+ "polkadot-parachain 0.9.13 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.13)",
+ "primitives",
+ "scale-info",
+ "smallvec 1.7.0",
+ "sp-api",
+ "sp-block-builder",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-inherents",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-version",
+ "substrate-wasm-builder",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -4587,9 +4651,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.110"
+version = "0.2.111"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b58a4469763e4e3a906c4ed786e1c70512d16aa88f84dded826da42640fc6a1c"
+checksum = "8e167738f1866a7ec625567bae89ca0d44477232a4f7c52b1c7f2adc2c98804f"
 
 [[package]]
 name = "libloading"
@@ -5938,9 +6002,9 @@ checksum = "28988d872ab76095a6e6ac88d99b54fd267702734fd7ffe610ca27f533ddb95a"
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.71"
+version = "0.9.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7df13d165e607909b363a4757a6f133f8a818a74e9d3a98d09c6128e15fa4c73"
+checksum = "7e46109c383602735fa0a2e48dd2b7c892b048e1bf69e5c3b1d804b7d9c203cb"
 dependencies = [
  "autocfg 1.0.1",
  "cc",
@@ -6056,9 +6120,9 @@ dependencies = [
 
 [[package]]
 name = "os_str_bytes"
-version = "4.2.0"
+version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "addaa943333a514159c80c97ff4a93306530d965d27e139188283cd13e06a799"
+checksum = "8e22443d1643a904602595ba1cd8f7d896afe56d26712531c5ff73a15b2fbf64"
 dependencies = [
  "memchr",
 ]
@@ -7751,9 +7815,9 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "pkg-config"
-version = "0.3.23"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1a3ea4f0dd7f1f3e512cf97bf100819aa547f36a6eccac8dbaae839eb92363e"
+checksum = "58893f751c9b0412871a09abd62ecd2a00298c6c83befa223ef98c52aef40cbe"
 
 [[package]]
 name = "platforms"
@@ -8970,7 +9034,7 @@ version = "0.1.0"
 dependencies = [
  "binance",
  "chrono",
- "clap 3.0.0-beta.5",
+ "clap 3.0.0-rc.4",
  "custom_derive",
  "enum_derive",
  "env_logger 0.9.0",
@@ -9987,9 +10051,9 @@ dependencies = [
 
 [[package]]
 name = "ryu"
-version = "1.0.6"
+version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c9613b5a66ab9ba26415184cfc41156594925a9cf3a2057e57f31ff145f6568"
+checksum = "73b4b750c782965c211b42f022f59af1fbceabdd026623714f104152f1ec149f"
 
 [[package]]
 name = "safe-mix"
@@ -12566,9 +12630,6 @@ name = "textwrap"
 version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0066c8d12af8b5acd21e00547c3797fde4e8677254a7ee429176ccebbe93dd80"
-dependencies = [
- "unicode-width",
-]
 
 [[package]]
 name = "thiserror"
