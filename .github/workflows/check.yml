@@ -1,4 +1,4 @@
-name: Test & Build & Benchmarking Build
+name: CI Check
 
 # please update docker, toolchain toml and github action with toolchain at same time
 
@@ -10,6 +10,7 @@ on:
       - dali-chachacha
       - picasso
   workflow_dispatch:
+concurrency: ci-check
 jobs:
   check:
     runs-on:
