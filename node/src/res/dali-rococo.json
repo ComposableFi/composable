@@ -1,5 +1,5 @@
 {
-  "name": "Dali Testnet (Rococo)",
+  "name": "Dali Testnet (Rococo Relay)",
   "id": "dali",
   "chainType": "Live",
   "bootNodes": [
