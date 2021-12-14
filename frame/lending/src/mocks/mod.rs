@@ -235,6 +235,7 @@ impl pallet_vault::Config for Test {
 	type NativeCurrency = Balances;
 	type VaultId = VaultId;
 	type TombstoneDuration = TombstoneDuration;
+	type WeightInfo = ();
 }
 
 parameter_type_with_key! {

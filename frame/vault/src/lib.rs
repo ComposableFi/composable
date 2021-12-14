@@ -30,10 +30,15 @@ pub mod models;
 mod rent;
 mod traits;
 
+pub use crate::weights::WeightInfo;
 pub use capabilities::Capabilities;
 pub use pallet::*;
 
 pub mod mocks;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+pub mod weights;
 
 #[cfg(test)]
 mod tests;
@@ -46,6 +51,7 @@ pub mod pallet {
 		models::StrategyOverview,
 		rent::{self, Verdict},
 		traits::{CurrencyFactory, StrategicVault},
+		weights::WeightInfo,
 	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
@@ -98,6 +104,64 @@ pub mod pallet {
 	pub type VaultInfo<T> =
 		crate::models::VaultInfo<AccountIdOf<T>, BalanceOf<T>, AssetIdOf<T>, BlockNumberOf<T>>;
 
+	// NOTE(hussein-aitlahcen): extra constraints for benchmarking simplicity
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait Config: frame_system::Config {
+		#[allow(missing_docs)]
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Balance: Default
+			+ Parameter
+			+ Codec
+			+ Copy
+			+ Ord
+			+ CheckedAdd
+			+ CheckedSub
+			+ CheckedMul
+			+ SaturatingSub
+			+ AtLeast32BitUnsigned
+			+ From<u128>
+			+ Zero;
+		type CurrencyFactory: CurrencyFactory<Self::AssetId>;
+		type AssetId: FullCodec
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ From<u128>
+			+ TypeInfo;
+		type NativeCurrency: TransferNative<Self::AccountId, Balance = Self::Balance>
+			+ MutateNative<Self::AccountId, Balance = Self::Balance>
+			+ MutateHoldNative<Self::AccountId, Balance = Self::Balance>;
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+		type VaultId: AddAssign
+			+ FullCodec
+			+ One
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ Into<u128>
+			+ From<u64>
+			+ TypeInfo;
+		type WeightInfo: WeightInfo;
+		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
+		type MaxStrategies: Get<usize>;
+		type MinimumDeposit: Get<Self::Balance>;
+		type MinimumWithdrawal: Get<Self::Balance>;
+		type CreationDeposit: Get<Self::Balance>;
+		type ExistentialDeposit: Get<Self::Balance>;
+		type TombstoneDuration: Get<Self::BlockNumber>;
+		type RentPerBlock: Get<Self::Balance>;
+		type PalletId: Get<PalletId>;
+	}
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
@@ -154,6 +218,8 @@ pub mod pallet {
 			+ Default
 			+ TypeInfo
 			+ Into<u128>;
+
+		type WeightInfo: WeightInfo;
 
 		/// Converts the `Balance` type to `u128`, which internally is used in calculations.
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
@@ -363,7 +429,7 @@ pub mod pallet {
 		///  - When `deposit < CreationDeposit`.
 		///  - Origin has insufficient funds to lock the deposit.
 		#[transactional]
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::create())]
 		pub fn create(
 			origin: OriginFor<T>,
 			vault: VaultConfig<AccountIdOf<T>, AssetIdOf<T>>,
@@ -404,7 +470,7 @@ pub mod pallet {
 		///
 		/// A tombstoned vault still allows for withdrawals but blocks deposits, and requests all
 		/// strategies to return their funds.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::claim_surcharge())]
 		pub fn claim_surcharge(
 			origin: OriginFor<T>,
 			dest: T::VaultId,
@@ -452,7 +518,7 @@ pub mod pallet {
 			})
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::add_surcharge())]
 		pub fn add_surcharge(
 			origin: OriginFor<T>,
 			dest: T::VaultId,
@@ -477,7 +543,7 @@ pub mod pallet {
 			})
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::delete_tombstoned())]
 		pub fn delete_tombstoned(
 			origin: OriginFor<T>,
 			dest: T::VaultId,
@@ -524,7 +590,7 @@ pub mod pallet {
 		/// # Errors
 		///  - When the origin is not signed.
 		///  - When `deposit < MinimumDeposit`.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::deposit())]
 		pub fn deposit(
 			origin: OriginFor<T>,
 			vault: T::VaultId,
@@ -545,7 +611,7 @@ pub mod pallet {
 		///  - When the origin is not signed.
 		///  - When `lp_amount < MinimumWithdrawal`.
 		///  - When the vault has insufficient amounts reserved.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::withdraw())]
 		pub fn withdraw(
 			origin: OriginFor<T>,
 			vault: T::VaultId,
@@ -565,7 +631,7 @@ pub mod pallet {
 		/// # Errors
 		///  - When the origin is not root.
 		///  - When `vault` does not exist.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::emergency_shutdown())]
 		pub fn emergency_shutdown(
 			origin: OriginFor<T>,
 			vault: T::VaultId,
@@ -584,7 +650,7 @@ pub mod pallet {
 		/// # Errors
 		///  - When the origin is not root.
 		///  - When `vault` does not exist.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::start_())]
 		pub fn start(origin: OriginFor<T>, vault: T::VaultId) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			<Self as CapabilityVault>::start(&vault)?;

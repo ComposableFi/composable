@@ -733,6 +733,7 @@ impl vault::Config for Runtime {
 	type MinimumWithdrawal = VaultMinimumWithdrawal;
 	type TombstoneDuration = TombstoneDuration;
 	type VaultId = u64;
+	type WeightInfo = weights::vault::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -1061,6 +1062,8 @@ impl_runtime_apis! {
 
 			#[cfg(feature = "develop")]
 			{
+				list_benchmark!(list, extra, vault, Vault);
+				list_benchmark!(list, extra, lending, Lending);
 				list_benchmark!(list, extra, oracle, Oracle);
 			}
 
@@ -1114,6 +1117,8 @@ impl_runtime_apis! {
 
 			#[cfg(feature ="develop")]
 			{
+				add_benchmark!(params, batches, vault, Lending);
+				add_benchmark!(params, batches, vault, Vault);
 				add_benchmark!(params, batches, oracle, Oracle);
 			}
 
