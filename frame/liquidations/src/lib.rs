@@ -57,6 +57,7 @@ pub mod pallet {
 		Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec::Vec};
+
 	pub const PALLET_ID: PalletId = PalletId(*b"Liqudati");
 
 	#[pallet::config]

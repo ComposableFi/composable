@@ -1,5 +1,4 @@
 use crate::{loans::Timestamp, rate_model::*};
-use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
 use sp_runtime::Percent;
@@ -9,10 +8,7 @@ pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
 pub type BorrowAmountOf<T> = <T as Lending>::Balance;
 
 #[derive(Encode, Decode, Default, TypeInfo)]
-pub struct MarketConfigInput<AccountId, GroupId>
-where
-	AccountId: core::cmp::Ord,
-{
+pub struct MarketConfigInput<AccountId, GroupId> {
 	pub reserved: Perquintill,
 	pub manager: AccountId,
 	/// can pause borrow & deposits of assets
@@ -40,10 +36,10 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, GroupId> {
 /// Lenders with be rewarded via vault.
 pub trait Lending {
 	type AssetId;
-	type VaultId: Codec;
-	type MarketId: Codec;
+	type VaultId;
+	type MarketId;
 	/// (deposit VaultId, collateral VaultId) <-> MarketId
-	type AccountId: core::cmp::Ord + Codec;
+	type AccountId;
 	type Balance;
 	type BlockNumber;
 	type GroupId;
