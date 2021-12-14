@@ -80,7 +80,7 @@ cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branc
 cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.13" }
 
 # Polkadot dependencies
-polkadot-cli = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13", features = ["rococo-native"]}
+polkadot-cli = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13", features = ["rococo-native", "westend-native"]}
 polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13"}
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13"}
 polkadot-service = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13"}

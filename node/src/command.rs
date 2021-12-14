@@ -42,6 +42,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		// Must define the default chain here because `export-genesis-state` command
 		// does not support `--chain` and `--parachain-id` arguments simultaneously.
 		"picasso-dev" => Box::new(chain_spec::picasso_dev()),
+		"composable-dev" => Box::new(chain_spec::composable_dev()),
 		// Dali (Westend Relay)
 		"dali-westend" => Box::new(chain_spec::dali_westend()),
 		// Dali (Rococo Relay)
@@ -87,8 +88,11 @@ impl SubstrateCli for Cli {
 		load_spec(id)
 	}
 
-	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&picasso_runtime::VERSION
+	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+		match spec.id() {
+			"composable" | "composable-dev" => &composable_runtime::VERSION,
+			_ => &picasso_runtime::VERSION,
+		}
 	}
 }
 

@@ -17,16 +17,18 @@ use crate::{
 	backend::{Backend, FeedNotificationAction},
 	cache::ThreadSafePriceCache,
 	feed::{
-		binance::BinanceFeed, FeedHandle, FeedIdentifier, FeedNotification, FeedStream,
+		binance::BinanceFeed, Exponent, FeedHandle, FeedIdentifier, FeedNotification, FeedStream,
 		TimeStampedPrice,
 	},
 	frontend::Frontend,
 };
+use chrono::Duration;
 use futures::{future::join_all, stream::StreamExt};
 use signal_hook::consts::signal::*;
 use signal_hook_tokio::Signals;
 use std::{
 	collections::HashMap,
+	str::FromStr,
 	sync::{atomic::AtomicBool, Arc, RwLock},
 };
 
@@ -42,10 +44,11 @@ async fn main() {
 
 	let binance = BinanceFeed::start(
 		keep_running.clone(),
-		&[Asset::BTC, Asset::ETH, Asset::LTC, Asset::ADA, Asset::DOT]
+		&[Asset::BTC, Asset::ETH, Asset::LTC, Asset::ADA, Asset::DOT, Asset::SOL]
 			.iter()
 			.copied()
 			.collect(),
+		Asset::from_str(&opts.quote_asset).expect("invalid quote asset"),
 	)
 	.await
 	.expect("unable to start binance feed");
@@ -80,7 +83,13 @@ async fn main() {
 	>(prices_cache.clone(), feeds_source, backend_shutdown_trigger)
 	.await;
 
-	let frontend = Frontend::new(&opts.listening_address, prices_cache).await;
+	let frontend = Frontend::new(
+		&opts.listening_address,
+		prices_cache,
+		Duration::seconds(opts.cache_duration as _),
+		Exponent(opts.expected_exponent),
+	)
+	.await;
 
 	backend.shutdown_handle.await.expect("oops, something went wrong");
 

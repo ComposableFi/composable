@@ -550,7 +550,7 @@ pub mod pallet {
 					.strategies
 					.iter()
 					.fold(Some(config.reserved.deconstruct()), |sum, (_, allocation)| {
-						sum.map(|sum| sum.checked_add(allocation.deconstruct())).flatten()
+						sum.and_then(|sum| sum.checked_add(allocation.deconstruct()))
 					})
 					.ok_or(Error::<T>::AllocationMustSumToOne)?;
 
