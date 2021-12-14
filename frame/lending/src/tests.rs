@@ -10,6 +10,7 @@ use crate::{
 	models::BorrowerData,
 	Error, MarketIndex,
 };
+use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::{
 	currency::PriceableAsset,
 	lending::MarketConfigInput,
@@ -24,7 +25,7 @@ use frame_support::{
 use pallet_vault::models::VaultInfo;
 use proptest::{prelude::*, test_runner::TestRunner};
 use sp_core::U256;
-use sp_runtime::{helpers_128bit::multiply_by_rational, FixedPointNumber, Percent, Perquintill};
+use sp_runtime::{FixedPointNumber, Percent, Perquintill};
 
 type BorrowAssetVault = VaultId;
 
@@ -703,25 +704,6 @@ fn test_warn_soon_under_collaterized() {
 	});
 }
 
-/*
-  TODO(hussein-aitlahcen):
-  Extract all proptests helpers into a composable-test-helper crate?
-*/
-macro_rules! prop_assert_ok {
-    ($cond:expr) => {
-        prop_assert_ok!($cond, concat!("assertion failed: ", stringify!($cond)))
-    };
-
-    ($cond:expr, $($fmt:tt)*) => {
-        if let Err(e) = $cond {
-            let message = format!($($fmt)*);
-            let message = format!("{} unexpected {:?} at {}:{}", message, e, file!(), line!());
-            return ::std::result::Result::Err(
-                proptest::test_runner::TestCaseError::fail(message));
-        }
-    };
-}
-
 prop_compose! {
 	fn valid_amount_without_overflow()
 		(x in MINIMUM_BALANCE..u64::MAX as Balance) -> Balance {
@@ -782,29 +764,8 @@ prop_compose! {
 		}
 }
 
-/// Accept a 'dust' deviation
-macro_rules! prop_assert_epsilon {
-	($x:expr, $y:expr) => {{
-		let precision = 100000;
-		let epsilon = 10;
-		let upper = precision + epsilon;
-		let lower = precision - epsilon;
-		let q = multiply_by_rational($x, precision, $y).expect("qed;");
-		prop_assert!(
-			upper >= q && q >= lower,
-			"({}) => {} >= {} * {} / {} >= {}",
-			q,
-			upper,
-			$x,
-			precision,
-			$y,
-			lower
-		);
-	}};
-}
-
 proptest! {
-	#![proptest_config(ProptestConfig::with_cases(1))]
+	#![proptest_config(ProptestConfig::with_cases(10_000))]
 
 	#[test]
 	fn proptest_math_borrow(collateral_balance in 0..u32::MAX as Balance,
@@ -942,11 +903,11 @@ proptest! {
 			let expected_market2_balance = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(amount2);
 
 			// // The funds should not be shared.
-			prop_assert_epsilon!(
+			prop_assert_acceptable_computation_error!(
 				Tokens::balance(MockCurrencyId::BTC, &Lending::account_id(&market_id1)),
 				expected_market1_balance
 			);
-			prop_assert_epsilon!(
+			prop_assert_acceptable_computation_error!(
 				Tokens::balance(MockCurrencyId::BTC, &Lending::account_id(&market_id2)),
 				expected_market2_balance
 			);
