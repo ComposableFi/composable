@@ -283,22 +283,8 @@ pub mod pallet {
 	pub type LpTokensToVaults<T: Config> =
 		StorageMap<_, Twox64Concat, T::AssetId, T::VaultId, ValueQuery>;
 
-	/// Amounts which each strategy is allowed to access, including the amount reserved for quick
-	/// withdrawals for the pallet.
-	#[pallet::storage]
-	#[pallet::getter(fn allocations)]
-	pub type Allocations<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::VaultId,
-		Blake2_128Concat,
-		T::AccountId,
-		Perquintill,
-		ValueQuery,
-	>;
-
-	/// Overview of the balances at each strategy. Does not contain the balance held by the vault
-	/// itself.
+	/// Overview of the allocation & balances at each strategy. Does not contain the balance held by
+	/// the vault itself.
 	#[pallet::storage]
 	#[pallet::getter(fn capital_structure)]
 	pub type CapitalStructure<T: Config> = StorageDoubleMap<
@@ -678,7 +664,6 @@ pub mod pallet {
 				.map_err(|_err| DispatchError::CannotLookup)?
 				.balance;
 			CapitalStructure::<T>::remove(&vault_idx, &strategy_account_id);
-			Allocations::<T>::remove(&vault_idx, &strategy_account_id);
 			Self::deposit_event(Event::LiquidateStrategy {
 				account: strategy_account_id,
 				amount: balance,
@@ -729,19 +714,17 @@ pub mod pallet {
 					{ T::CurrencyFactory::create().map_err(|_| Error::<T>::CannotCreateAsset)? };
 
 				config.strategies.into_iter().for_each(|(account_id, allocation)| {
-					Allocations::<T>::insert(id, account_id.clone(), allocation);
 					CapitalStructure::<T>::insert(
 						id,
 						account_id,
 						StrategyOverview {
+							allocation,
 							balance: T::Balance::zero(),
 							lifetime_withdrawn: T::Balance::zero(),
 							lifetime_deposited: T::Balance::zero(),
 						},
 					);
 				});
-
-				Allocations::<T>::insert(id, Self::account_id(&id), config.reserved);
 
 				let vault_info = crate::models::VaultInfo {
 					lp_token_id,
@@ -1009,8 +992,11 @@ pub mod pallet {
 			vault_id: &Self::VaultId,
 			account: &Self::AccountId,
 		) -> Result<FundsAvailability<Self::Balance>, DispatchError> {
-			match (Vaults::<T>::try_get(vault_id), Allocations::<T>::try_get(vault_id, &account)) {
-				(Ok(vault), Ok(allocation))
+			match (
+				Vaults::<T>::try_get(vault_id),
+				CapitalStructure::<T>::try_get(vault_id, &account),
+			) {
+				(Ok(vault), Ok(StrategyOverview { allocation, balance, .. }))
 					if !vault.capabilities.is_stopped() && !vault.capabilities.is_tombstoned() =>
 				{
 					let aum = Self::assets_under_management(vault_id)?;
@@ -1018,12 +1004,10 @@ pub mod pallet {
 						allocation
 							.mul_floor(<T::Convert as Convert<T::Balance, u128>>::convert(aum)),
 					);
-					let state = CapitalStructure::<T>::try_get(vault_id, &account).expect("if a strategy has an allocation, it must have an associated capital structure too");
-
-					if state.balance >= max_allowed {
-						Ok(FundsAvailability::Depositable(state.balance - max_allowed))
+					if balance >= max_allowed {
+						Ok(FundsAvailability::Depositable(balance - max_allowed))
 					} else {
-						Ok(FundsAvailability::Withdrawable(max_allowed - state.balance))
+						Ok(FundsAvailability::Withdrawable(max_allowed - balance))
 					}
 				},
 				(_, _) => Ok(FundsAvailability::MustLiquidate),

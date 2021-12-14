@@ -955,11 +955,11 @@ fn do_liquidate_strategy_successfully_liquidates_a_strategy_account(
 		assert_eq!(Tokens::balance(currency_id, &strategy_account_id), 0);
 
 		<Vaults as StrategicVault>::withdraw(&id, &strategy_account_id, strategy_vault).unwrap();
-		assert!(Allocations::<Test>::try_get(id, strategy_account_id).is_ok());
+		assert!(CapitalStructure::<Test>::try_get(id, strategy_account_id).is_ok());
 		assert_eq!(Tokens::balance(currency_id, &strategy_account_id), strategy_vault);
 
 		Vaults::liquidate_strategy(Origin::signed(ALICE), id, strategy_account_id).unwrap();
-		assert!(Allocations::<Test>::try_get(id, strategy_account_id).is_err());
+		assert!(CapitalStructure::<Test>::try_get(id, strategy_account_id).is_err());
 		assert_eq!(
 			<Vaults as StrategicVault>::available_funds(&id, &strategy_account_id),
 			Ok(FundsAvailability::MustLiquidate)

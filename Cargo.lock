@@ -6668,6 +6668,7 @@ dependencies = [
 name = "pallet-crowdloan-bonus"
 version = "0.0.1"
 dependencies = [
+ "composable-traits",
  "frame-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
  "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
  "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
