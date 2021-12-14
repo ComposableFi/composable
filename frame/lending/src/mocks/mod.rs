@@ -232,7 +232,7 @@ impl pallet_vault::Config for Test {
 	type CreationDeposit = CreationDeposit;
 	type ExistentialDeposit = ExistentialDeposit;
 	type RentPerBlock = RentPerBlock;
-	type NativeAssetId = NativeAssetId;
+	type NativeCurrency = Balances;
 	type VaultId = VaultId;
 	type TombstoneDuration = TombstoneDuration;
 }

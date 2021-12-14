@@ -728,7 +728,7 @@ impl vault::Config for Runtime {
 	type CreationDeposit = CreationDeposit;
 	type ExistentialDeposit = VaultExistentialDeposit;
 	type RentPerBlock = RentPerBlock;
-	type NativeAssetId = NativeAssetId;
+	type NativeCurrency = Balances;
 	type MinimumDeposit = VaultMinimumDeposit;
 	type MinimumWithdrawal = VaultMinimumWithdrawal;
 	type TombstoneDuration = TombstoneDuration;

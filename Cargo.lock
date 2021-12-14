@@ -7452,6 +7452,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
+ "pallet-balances 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
  "parity-scale-codec",
  "proptest 0.9.6",
  "scale-info",
