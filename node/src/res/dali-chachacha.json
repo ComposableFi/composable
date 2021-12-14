@@ -1,6 +1,6 @@
 {
   "name": "Picasso Testnet (Chachacha Relay)",
-  "id": "dali",
+  "id": "dali-chachacha",
   "chainType": "Live",
   "bootNodes": [
     "/dns/bn1.composablefinance.ninja/tcp/30334/p2p/12D3KooWDj7b28dXZ32wo1CHgyzcYMRJH39gP7u43qrVb3bwmzJE",
