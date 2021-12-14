@@ -57,6 +57,7 @@ fn create_market(
 	collateral_factor: NormalizedCollateralFactor,
 ) -> (MarketIndex, BorrowAssetVault) {
 	let market_config = MarketConfigInput {
+		liquidator: None,
 		manager,
 		reserved,
 		collateral_factor,

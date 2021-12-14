@@ -1,7 +1,8 @@
 use crate::{self as pallet_lending, *};
 use composable_traits::{
 	currency::DynamicCurrencyId,
-	dex::{Orderbook, TakeResult},
+	dex::{Orderbook, Price, SellOrder},
+	loans::DeFiComposableConfig,
 };
 use frame_support::{
 	parameter_types,
@@ -12,8 +13,6 @@ use frame_support::{
 use hex_literal::hex;
 use once_cell::sync::Lazy;
 use orml_traits::parameter_type_with_key;
-use pallet_dutch_auctions::DeFiComposableConfig;
-use pallet_liquidations::DeFiComposablePallet;
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
 use sp_core::{sr25519::Signature, H256};
@@ -249,10 +248,6 @@ impl crate::mocks::oracle::Config for Test {
 	type Vault = Vault;
 }
 
-impl DeFiComposablePallet for Test {
-	type AssetId = MockCurrencyId;
-}
-
 impl DeFiComposableConfig for Test {
 	type AssetId = MockCurrencyId;
 	type Balance = Balance;
@@ -265,16 +260,19 @@ impl Orderbook for MockOrderbook {
 	type Balance = Balance;
 	type AccountId = AccountId;
 	type OrderId = u128;
+	type GroupId = AccountId;
+
 	fn post(
 		_account_from: &Self::AccountId,
 		_asset: Self::AssetId,
 		_want: Self::AssetId,
 		_source_amount: Self::Balance,
-		_source_price: Self::Balance,
+		_source_price: Price<Self::GroupId, Self::Balance>,
 		_amm_slippage: Permill,
-	) -> Result<Self::OrderId, DispatchError> {
-		Ok(0)
+	) -> Result<SellOrder<Self::OrderId, Self::AccountId>, DispatchError> {
+		Ok(SellOrder { id: 0, account: ALICE.clone() })
 	}
+
 	fn market_sell(
 		_account: &Self::AccountId,
 		_asset: Self::AssetId,
@@ -284,16 +282,20 @@ impl Orderbook for MockOrderbook {
 	) -> Result<Self::OrderId, DispatchError> {
 		Ok(0)
 	}
-	fn take(
+
+	fn patch(
+		_order_id: Self::OrderId,
+		_price: Price<Self::GroupId, Self::Balance>,
+	) -> Result<(), DispatchError> {
+		Ok(())
+	}
+
+	fn ask(
 		_account: &Self::AccountId,
 		_orders: impl Iterator<Item = Self::OrderId>,
 		_up_to: Self::Balance,
-	) -> Result<TakeResult<Self::Balance>, DispatchError> {
-		Ok(TakeResult { amount: 0, total_price: 0 })
-	}
-
-	fn is_order_executed(_order_id: &Self::OrderId) -> bool {
-		false
+	) -> Result<(), DispatchError> {
+		Ok(())
 	}
 }
 
@@ -303,14 +305,15 @@ impl pallet_dutch_auctions::Config for Test {
 	type OrderId = u128;
 	type UnixTime = Timestamp;
 	type Orderbook = MockOrderbook;
+	type GroupId = AccountId;
 }
 
 impl pallet_liquidations::Config for Test {
 	type Event = Event;
-	type Balance = Balance;
 	type UnixTime = Timestamp;
 	type Lending = Lending;
 	type DutchAuction = Auction;
+	type GroupId = AccountId;
 }
 
 pub type Extrinsic = TestXt<Call, ()>;
@@ -362,6 +365,7 @@ impl pallet_lending::Config for Test {
 	type MaxLendingCount = MaxLendingCount;
 	type AuthorityId = crypto::TestAuthId;
 	type WeightInfo = ();
+	type GroupId = AccountId;
 }
 
 // Build genesis storage according to the mock runtime.

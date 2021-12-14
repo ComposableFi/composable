@@ -45,8 +45,8 @@ pub mod pallet {
 	use composable_traits::{
 		currency::CurrencyFactory,
 		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
-		liquidation::Liquidate,
-		loans::{DurationSeconds, Timestamp},
+		liquidation::Liquidation,
+		loans::{DurationSeconds, PriceStructure, Timestamp},
 		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
 		rate_model::*,
@@ -67,7 +67,6 @@ pub mod pallet {
 		pallet_prelude::*,
 	};
 	use num_traits::{CheckedDiv, SaturatingSub};
-	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
 		traits::{
@@ -83,6 +82,7 @@ pub mod pallet {
 		<T as Config>::VaultId,
 		<T as Config>::AssetId,
 		<T as frame_system::Config>::AccountId,
+		<T as Config>::GroupId,
 	>;
 
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, TypeInfo)]
@@ -192,15 +192,17 @@ pub mod pallet {
 			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
-		type Liquidation: Liquidate<
+		type Liquidation: Liquidation<
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
+			GroupId = Self::GroupId,
 		>;
 		type UnixTime: UnixTime;
 		type MaxLendingCount: Get<u32>;
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type WeightInfo: WeightInfo;
+		type GroupId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
 	}
 	#[cfg(feature = "runtime-benchmarks")]
 	pub trait Config:
@@ -253,7 +255,7 @@ pub mod pallet {
 			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
 			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
 
-		type Liquidation: Liquidate<
+		type Liquidation: Liquidation<
 			AssetId = <Self as Config>::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
@@ -262,6 +264,8 @@ pub mod pallet {
 		type MaxLendingCount: Get<u32>;
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type WeightInfo: WeightInfo;
+
+		type GroupId;
 	}
 
 	#[pallet::pallet]
@@ -405,7 +409,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		MarketIndex,
-		MarketConfig<T::VaultId, <T as Config>::AssetId, T::AccountId>,
+		MarketConfig<T::VaultId, <T as Config>::AssetId, T::AccountId, T::GroupId>,
 		ValueQuery,
 	>;
 
@@ -509,6 +513,7 @@ pub mod pallet {
 		///   given percentage short to be under collaterized
 		#[pallet::weight(<T as Config>::WeightInfo::create_new_market())]
 		#[transactional]
+		#[allow(clippy::too_many_arguments)]
 		pub fn create_new_market(
 			origin: OriginFor<T>,
 			borrow_asset_id: <T as Config>::AssetId,
@@ -517,6 +522,7 @@ pub mod pallet {
 			collateral_factor: NormalizedCollateralFactor,
 			under_collaterized_warn_percent: Percent,
 			interest_rate_model: InterestRateModel,
+			liquidator: Option<T::GroupId>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let market_config = MarketConfigInput {
@@ -524,6 +530,7 @@ pub mod pallet {
 				manager: who.clone(),
 				collateral_factor,
 				under_collaterized_warn_percent,
+				liquidator,
 			};
 			let (market_id, vault_id) = Self::create(
 				borrow_asset_id,
@@ -664,7 +671,7 @@ pub mod pallet {
 		pub fn create(
 			borrow_asset: <Self as Lending>::AssetId,
 			collateral_asset: <Self as Lending>::AssetId,
-			config_input: MarketConfigInput<<Self as Lending>::AccountId>,
+			config_input: MarketConfigInput<<Self as Lending>::AccountId, T::GroupId>,
 			interest_rate_model: &InterestRateModel,
 		) -> Result<(<Self as Lending>::MarketId, <Self as Lending>::VaultId), DispatchError> {
 			<Self as Lending>::create(
@@ -799,10 +806,10 @@ pub mod pallet {
 					Self::borrow_balance_current(market_id, account)?
 						.unwrap_or_else(BorrowAmountOf::<Self>::zero);
 				let collateral_price = Self::get_price(market.collateral)?;
-				T::Liquidation::initiate_liquidation(
+				T::Liquidation::liquidate(
 					account,
 					market.collateral,
-					collateral_price,
+					PriceStructure::new(collateral_price),
 					borrow_asset_id,
 					&Self::account_id(market_id),
 					borrower_balance_with_interest,
@@ -1049,11 +1056,12 @@ pub mod pallet {
 		type MarketId = MarketIndex;
 
 		type BlockNumber = T::BlockNumber;
+		type GroupId = T::GroupId;
 
 		fn create(
 			borrow_asset: Self::AssetId,
 			collateral_asset: Self::AssetId,
-			config_input: MarketConfigInput<Self::AccountId>,
+			config_input: MarketConfigInput<Self::AccountId, Self::GroupId>,
 			interest_rate_model: &InterestRateModel,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			ensure!(
@@ -1097,6 +1105,7 @@ pub mod pallet {
 					collateral_factor: config_input.collateral_factor,
 					interest_rate_model: *interest_rate_model,
 					under_collaterized_warn_percent: config_input.under_collaterized_warn_percent,
+					liquidator: config_input.liquidator,
 				};
 
 				let debt_asset_id = T::CurrencyFactory::create()?;

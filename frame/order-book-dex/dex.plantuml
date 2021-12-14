@@ -1,0 +1,37 @@
+@startuml
+skinparam handwritten true
+
+
+box "Parachain Composable"
+actor Composable as ac
+participant "Assets" as pa
+participant "Vault" as pv
+participant "Order Book DEX" as pd
+control "OCW Order Book DEX" as cd
+actor Polkadex as ap
+end box
+
+boundary "Parachain Polkadex" as bp
+
+bp --> ap : Bridge borrow assets
+ap -> pa : Deposit borrow assets
+...
+
+ac ->  pd : Create order with prices and priviledges
+pd -> pa : Trasfer sell tokens under derived DEX order account
+note right
+  creates future order is active for several blocks
+end note
+...
+
+bp --> ap : Buy prefered first
+ap -> pd: Swap sell and buy tokens
+pd -> pa: Withdraw sell to buyer account
+bp --> pa: Bridge info about bough token to its chain
+note right
+  - will be decided during mosaic integratiion
+  - risks: too slow (need to run push agent on our chain) or need to much deposit locked to cover big collaterals
+  - for now same flow for prefered and usual - need to deposit, the differene some time preference on order right after it created
+end note
+
+@enduml

@@ -13,6 +13,3 @@ Run thorough all asks, and reduces these in price as time goes. Initial price ca
 - splits collateral by pieces one by one put into auction
 
 - auction time parameters depend on liquidity of collateral (these set by governance as collateral factor)
-
-- see `abaci.sol` for price function
-
