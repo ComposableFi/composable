@@ -1428,6 +1428,7 @@ dependencies = [
  "sc-cli",
  "sc-client-api",
  "sc-consensus",
+ "sc-consensus-slots",
  "sc-executor",
  "sc-finality-grandpa",
  "sc-keystore",
