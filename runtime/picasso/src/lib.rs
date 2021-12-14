@@ -730,6 +730,7 @@ impl vault::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
 	type MinimumDeposit = VaultMinimumDeposit;
 	type MinimumWithdrawal = VaultMinimumWithdrawal;
+	type VaultId = u64;
 }
 
 parameter_types! {
