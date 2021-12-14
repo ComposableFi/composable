@@ -215,6 +215,7 @@ parameter_types! {
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
+  pub const TombstoneDuration: u64 = 42;
 }
 
 impl pallet_vault::Config for Test {
@@ -232,6 +233,8 @@ impl pallet_vault::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type RentPerBlock = RentPerBlock;
 	type NativeAssetId = NativeAssetId;
+	type VaultId = VaultId;
+	type TombstoneDuration = TombstoneDuration;
 }
 
 parameter_type_with_key! {
