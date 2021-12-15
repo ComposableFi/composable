@@ -81,5 +81,12 @@ pub mod pallet {
 				},
 			}
 		}
+
+		fn get_twap(
+			_of: Self::AssetId,
+			_weights: Vec<u128>,
+		) -> Result<Self::Balance, DispatchError> {
+			Ok(0u32.into())
+		}
 	}
 }

@@ -40,12 +40,20 @@ custom_derive! {
 	}
 }
 
+pub const VALID_PRICE_QUOTE_ASSETS: &[Asset] = &[Asset::USD, Asset::USDT, Asset::USDC];
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct AssetPair(pub Asset, pub Asset);
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize)]
 #[repr(transparent)]
 pub struct AssetIndex(u8);
+
+impl core::fmt::Display for AssetIndex {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		write!(f, "{}", self.0)
+	}
+}
 
 pub enum AssetIndexError {
 	NotANumber(ParseIntError),
@@ -114,7 +122,7 @@ impl AssetPair {
 	pub fn new(x: Asset, y: Asset) -> Option<Self> {
 		match (x, y) {
 			(Asset::USD, _) => None,
-			(_, y) if [Asset::USD, Asset::USDT, Asset::USDC].contains(&y) => Some(AssetPair(x, y)),
+			(_, y) if VALID_PRICE_QUOTE_ASSETS.contains(&y) => Some(AssetPair(x, y)),
 			_ => None,
 		}
 	}

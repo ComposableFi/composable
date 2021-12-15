@@ -1,0 +1,79 @@
+@startuml
+
+box Composable #LightYellow
+  actor "Root or Collective" as composable_authority
+  actor "Bob" as bob
+  participant "Composable" as composable
+  participant "Composable Democracy" as composable_democracy
+  participant "Assets Registy" as assets_registry_pallet
+  participant "Assets" as assets_pallet
+  participant "OCW Assets Registy" as assets_registry_ocw
+end box
+
+participant XCM as xcm
+
+box HydraDx #SkyBlue
+  actor "Charlie" as charlie
+  participant "HydraDX Assets Registry" as assets_registry_hydra_dx
+  participant "HydraDX OB" as dex
+  participant "HydraDX Collective" as hydra_dx_collective
+  actor "Root or Collective" as hydra_dx_authority
+end box
+
+
+bob --> charlie: Ask to add Composable account as something which can add proposals into HydraDX
+
+charlie --> hydra_dx_collective : Add some composable authority to add voting proposals
+
+...
+
+bob --> composable_democracy : Decide to create mapping for `Composable SOL` and `Composable USDT` on HydraDX
+note right
+ - can use shared ids like Akala, so that can have more stable coin liquidity
+end note
+
+composable_authority -> composable_democracy : Vote for proposal
+
+composable_democracy -> assets_registry_pallet : Start mapping creation for `Composable SOL` and `Composable USDT`
+
+assets_registry_pallet -> xcm: Send mapping creation request to HydraDX (or send via RCP OCW)
+
+xcm --> hydra_dx_collective : Create  mapping vote proposal
+note right
+ - so can manually add mapping if needed
+end note
+
+
+...
+
+hydra_dx_authority -> assets_registry_hydra_dx : Apply voted assets
+
+...
+
+assets_registry_ocw -> assets_registry_hydra_dx :  Call to check current state of requested mapping
+
+assets_registry_hydra_dx -> assets_registry_ocw: Created back mapping id
+
+assets_registry_ocw -> assets_registry_pallet: Store mapping (ParaId, ForeignAssetId, LocalAssetId)
+
+...
+
+composable --> xcm: Transfer to with Composable Para ID and HydraDX Asset Id + `Exchange`(later custom `Call`) message
+
+xcm --> dex : Sell asset
+
+...
+
+
+dex --> xcm: Transfer sold amount back with Compisable asset id
+note right
+  - assume that our message will be weight free for both network
+end note
+
+xcm --> assets_pallet : Transfer
+
+assets_pallet -> assets_registry_pallet :
+
+assets_registry_pallet -> assets_registry_pallet: Check if AssetId is mapped or local
+
+@enduml

@@ -1,14 +1,10 @@
-use codec::Encode;
 use hmac::{Hmac, Mac, NewMac};
-use jsonrpc_core_client::{transports::ws, RpcChannel, RpcError};
-use sc_rpc::{author::AuthorClient, chain::ChainClient};
 use sha2::Sha256;
 use sp_core::{crypto::Ss58Codec, sr25519, Pair};
-use sp_rpc::{list::ListOrValue, number::NumberOrHex};
-use sp_runtime::{generic, generic::Era, traits::IdentifyAccount, MultiSigner};
-use std::{str::FromStr, sync::Arc};
+use std::sync::Arc;
 use structopt::StructOpt;
-use substrate_frame_rpc_system::SystemApiClient;
+use subxt::{ClientBuilder, PairSigner};
+use subxt_clients::picasso::api;
 use tide::{prelude::*, Error, Request};
 
 #[derive(Debug, Deserialize, StructOpt, Clone)]
@@ -36,15 +32,8 @@ struct SlackWebhook {
 }
 
 struct State {
-	dali_chain: ChainClient<
-		common::BlockNumber,
-		common::Hash,
-		picasso::Header,
-		generic::SignedBlock<picasso::Block>,
-	>,
-	dali_system: SystemApiClient<common::Hash, common::AccountId, common::AccountIndex>,
-	dali_author: AuthorClient<common::Hash, common::Hash>,
-	signer: sr25519::Pair,
+	api: api::RuntimeApi<api::DefaultConfig>,
+	signer: PairSigner<api::DefaultConfig, sr25519::Pair>,
 	env: Env,
 }
 
@@ -71,15 +60,18 @@ async fn main() -> tide::Result<()> {
 
 async fn init() -> Arc<State> {
 	let env = envy::from_env::<Env>().expect("Missing env vars");
-	let url = url::Url::from_str(&env.rpc_node).unwrap();
 
 	// create the signer
-	let signer = sr25519::Pair::from_string(&env.root_key, None).unwrap();
-	// connection to make rpc requests over
-	let channel = ws::connect::<RpcChannel>(&url).await.unwrap();
-	let (dali_chain, dali_system, dali_author) =
-		(channel.clone().into(), channel.clone().into(), channel.into());
-	Arc::new(State { dali_author, dali_chain, dali_system, signer, env })
+	let signer = PairSigner::new(sr25519::Pair::from_string(&env.root_key, None).unwrap());
+
+	let api = ClientBuilder::new()
+		.set_url(&env.rpc_node)
+		.build()
+		.await
+		.unwrap()
+		.to_runtime_api();
+
+	Arc::new(State { api, signer, env })
 }
 
 async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
@@ -115,69 +107,26 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 		Err(e) => return Ok(format!("Error: {:?}", e).into()),
 	};
 
-	match enrich(address.into(), req.state()).await {
-		Err(e) => return Ok(format!("Error: {:?}", e).into()),
-		Ok(()) => {},
-	};
+	let state = req.state();
+
+	let result = state
+		.api
+		.tx()
+		.balances()
+		// 1k Dali
+		.transfer(address.into(), 1_000_000_000_000_000)
+		.sign_and_submit_then_watch(&state.signer)
+		.await?
+		.wait_for_in_block()
+		.await?
+		.fetch_events()
+		.await?;
+
+	if result.find_events::<api::balances::events::Transfer>()?.is_empty() {
+		return Ok("Error: Transfer failed!".into())
+	}
 
 	log::info!("Sent {} 1k Dali", user_name);
 
 	Ok(format!("Sent <@{}> 1,000 Dalis", user_id).into())
-}
-
-async fn enrich(address: picasso::Address, state: &State) -> Result<(), RpcError> {
-	let account_id = MultiSigner::from(state.signer.public()).into_account();
-
-	// get genesis hash
-	let genesis_hash = match state
-		.dali_chain
-		.block_hash(Some(ListOrValue::Value(NumberOrHex::Number(0))))
-		.await
-	{
-		Ok(ListOrValue::Value(Some(hash))) => hash,
-		_ => unreachable!("genesis hash should exist"),
-	};
-
-	let account_index = state.dali_system.nonce(account_id.clone()).await?;
-
-	let extra = (
-		system::CheckSpecVersion::<picasso::Runtime>::new(),
-		system::CheckTxVersion::<picasso::Runtime>::new(),
-		system::CheckGenesis::<picasso::Runtime>::new(),
-		system::CheckMortality::<picasso::Runtime>::from(Era::Immortal),
-		system::CheckNonce::<picasso::Runtime>::from(account_index),
-		system::CheckWeight::<picasso::Runtime>::new(),
-		transaction_payment::ChargeTransactionPayment::<picasso::Runtime>::from(0),
-	);
-
-	let additional = (
-		picasso::VERSION.spec_version,
-		picasso::VERSION.transaction_version,
-		genesis_hash,
-		genesis_hash,
-		(),
-		(),
-		(),
-	);
-
-	let call = picasso::Call::Balances(balances::Call::transfer {
-		dest: address,
-		// 1k dali
-		value: 1_000_000_000_000_000,
-	});
-
-	let payload = picasso::SignedPayload::from_raw(call, extra, additional);
-	let signature = payload.using_encoded(|payload| state.signer.sign(payload));
-	let (call, extra, _) = payload.deconstruct();
-	let extrinsic = picasso::UncheckedExtrinsic::new_signed(
-		call,
-		account_id.clone().into(),
-		signature.into(),
-		extra,
-	);
-
-	// send off the extrinsic
-	state.dali_author.submit_extrinsic(extrinsic.encode().into()).await?;
-
-	Ok(())
 }

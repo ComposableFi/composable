@@ -18,21 +18,23 @@
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, Executor},
+	service::{new_chain_ops, ComposableExecutor, PicassoExecutor},
 };
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use log::info;
-use picasso_runtime::{Block, RuntimeApi};
+use picasso_runtime::Block;
 use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
+use sc_client_api::execution_extensions::ExecutionStrategies;
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
+use sp_state_machine::ExecutionStrategy;
 use std::{io::Write, net::SocketAddr};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -40,14 +42,17 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		// Must define the default chain here because `export-genesis-state` command
 		// does not support `--chain` and `--parachain-id` arguments simultaneously.
 		"picasso-dev" => Box::new(chain_spec::picasso_dev()),
-		// westend parachain
+		"composable-dev" => Box::new(chain_spec::composable_dev()),
+		// Dali (Westend Relay)
 		"dali-westend" => Box::new(chain_spec::dali_westend()),
-		// rococo parachain
+		// Dali (Rococo Relay)
 		"dali-rococo" => Box::new(chain_spec::dali_rococo()),
-		// chachacha parachain
+		// Dali (Chachacha Relay)
 		"dali-chachacha" => Box::new(chain_spec::dali_chachacha()),
-		// kusama parachain
-		"" | "picasso" => Box::new(chain_spec::picasso()),
+		// Picasso (Kusama Relay)
+		"picasso" => Box::new(chain_spec::picasso()),
+		// Composable (Polkadot Relay)
+		"" | "composable" => Box::new(chain_spec::composable()),
 		path => Box::new(chain_spec::picasso::ChainSpec::from_json_file(
 			std::path::PathBuf::from(path),
 		)?),
@@ -83,8 +88,11 @@ impl SubstrateCli for Cli {
 		load_spec(id)
 	}
 
-	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&picasso_runtime::VERSION
+	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+		match spec.id() {
+			"composable" | "composable-dev" => &composable_runtime::VERSION,
+			_ => &picasso_runtime::VERSION,
+		}
 	}
 }
 
@@ -141,15 +149,10 @@ macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
 		runner.async_run(|$config| {
-			let $components = new_partial::<
-				RuntimeApi,
-				Executor,
-				_
-			>(
+			let $components = new_chain_ops(
 				&$config,
-				crate::service::parachain_build_import_queue,
 			)?;
-			let task_manager = $components.task_manager;
+			let task_manager = $components.3;
 			{ $( $code )* }.map(|v| (v, task_manager))
 		})
 	}}
@@ -166,22 +169,22 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::CheckBlock(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, components.import_queue))
+				Ok(cmd.run(components.0, components.2))
 			})
 		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, config.database))
+				Ok(cmd.run(components.0, config.database))
 			})
 		},
 		Some(Subcommand::ExportState(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, config.chain_spec))
+				Ok(cmd.run(components.0, config.chain_spec))
 			})
 		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, components.import_queue))
+				Ok(cmd.run(components.0, components.2))
 			})
 		},
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
@@ -205,7 +208,7 @@ pub fn run() -> Result<()> {
 			})
 		},
 		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
-			Ok(cmd.run(components.client, components.backend))
+			Ok(cmd.run(components.0, components.1))
 		}),
 		Some(Subcommand::ExportGenesisState(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
@@ -254,7 +257,7 @@ pub fn run() -> Result<()> {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 
-				runner.sync_run(|config| cmd.run::<Block, Executor>(config))
+				runner.sync_run(|config| cmd.run::<Block, PicassoExecutor>(config))
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
@@ -263,17 +266,30 @@ pub fn run() -> Result<()> {
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
-			runner.run_node_until_exit(|config| async move {
+			runner.run_node_until_exit(|mut config| async move {
+				// This is so that users can sync our chain from genesis
+				// DO NOT REMOVE.
+				if config.chain_spec.id() == "picasso" {
+					config.execution_strategies = ExecutionStrategies {
+						syncing: ExecutionStrategy::AlwaysWasm,
+						block_construction: ExecutionStrategy::AlwaysWasm,
+						importing: ExecutionStrategy::AlwaysWasm,
+						offchain_worker: ExecutionStrategy::AlwaysWasm,
+						other: ExecutionStrategy::AlwaysWasm,
+					};
+				}
+
 				let _ = &cli;
-				let para_id =
-					chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
+				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
+					.map(|e| e.para_id)
+					.ok_or("Could not find parachain extension in chain-spec.")?;
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
 					[RelayChainCli::executable_name()].iter().chain(cli.relaychain_args.iter()),
 				);
 
-				let id = ParaId::from(cli.run.parachain_id.or(para_id).unwrap_or(2000));
+				let id = ParaId::from(para_id);
 
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
@@ -292,10 +308,21 @@ pub fn run() -> Result<()> {
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				crate::service::start_node(config, polkadot_config, id)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into)
+				let task_manager =
+					match config.chain_spec.id() {
+						"composable" =>
+							crate::service::start_node::<
+								composable_runtime::RuntimeApi,
+								ComposableExecutor,
+							>(config, polkadot_config, id)
+							.await?,
+						_ => crate::service::start_node::<
+							picasso_runtime::RuntimeApi,
+							PicassoExecutor,
+						>(config, polkadot_config, id)
+						.await?,
+					};
+				Ok(task_manager)
 			})
 		},
 	}
