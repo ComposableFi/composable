@@ -1520,10 +1520,7 @@ dependencies = [
 name = "composable-tests-helpers"
 version = "0.0.1"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
- "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
  "parity-scale-codec",
- "proptest 1.0.0",
  "scale-info",
  "serde",
  "sp-arithmetic 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
@@ -7130,10 +7127,7 @@ dependencies = [
  "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
  "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
  "num-traits",
- "orml-tokens",
- "orml-traits",
  "parity-scale-codec",
- "proptest 0.9.6",
  "scale-info",
  "sp-arithmetic 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
  "sp-core 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
@@ -7467,7 +7461,6 @@ dependencies = [
  "frame-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
  "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
  "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
- "hex-literal",
  "log 0.4.14",
  "num-traits",
  "once_cell",
