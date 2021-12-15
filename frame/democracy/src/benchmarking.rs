@@ -23,9 +23,7 @@ use frame_benchmarking::{account, benchmarks, whitelist_account};
 use frame_support::{
 	assert_noop, assert_ok,
 	codec::Decode,
-	traits::{
-		schedule::DispatchTime, EnsureOrigin, Get, OnInitialize, UnfilteredDispatchable,
-	},
+	traits::{schedule::DispatchTime, EnsureOrigin, Get, OnInitialize, UnfilteredDispatchable},
 };
 use frame_system::{Pallet as System, RawOrigin};
 use sp_runtime::traits::{BadOrigin, One};

@@ -281,7 +281,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 /// Execute the function two times, with `true` and with `false`.
-pub fn new_test_ext_execute_with_cond(execute: impl FnOnce(bool) -> () + Clone) {
+pub fn new_test_ext_execute_with_cond(execute: impl FnOnce(bool) + Clone) {
 	new_test_ext().execute_with(|| (execute.clone())(false));
 	new_test_ext().execute_with(|| execute(true));
 }

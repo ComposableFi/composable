@@ -318,7 +318,7 @@ pub mod pallet {
 			>;
 
 		type OriginFor: OriginMap<Self::AssetId, Self::Origin>;
-		
+
 		/// The period between a proposal being approved and enacted.
 		///
 		/// It should generally be a little more than the unstake period to ensure that
