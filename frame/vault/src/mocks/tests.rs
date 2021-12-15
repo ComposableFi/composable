@@ -49,7 +49,7 @@ impl system::Config for Test {
 	type BlockLength = ();
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = ();
+	type AccountData = pallet_balances::AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type DbWeight = ();
@@ -57,6 +57,22 @@ impl system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
+}
+
+parameter_types! {
+	pub const BalanceExistentialDeposit: u64 = 1;
+}
+
+impl pallet_balances::Config for Test {
+	type Balance = Balance;
+	type Event = Event;
+	type DustRemoval = ();
+	type ExistentialDeposit = BalanceExistentialDeposit;
+	type AccountStore = System;
+	type WeightInfo = ();
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 }
 
 parameter_types! {
@@ -69,6 +85,7 @@ parameter_types! {
 	pub const StrategyTestPalletID: PalletId = PalletId(*b"sest_pid");
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
+	pub const TombstoneDuration: BlockNumber = 10;
 }
 
 impl pallet_vault::Config for Test {
@@ -83,9 +100,12 @@ impl pallet_vault::Config for Test {
 	type CreationDeposit = CreationDeposit;
 	type ExistentialDeposit = ExistentialDeposit;
 	type RentPerBlock = RentPerBlock;
-	type NativeAssetId = NativeAssetId;
+	type NativeCurrency = Balances;
 	type MinimumDeposit = MinimumDeposit;
 	type MinimumWithdrawal = MinimumWithdrawal;
+	type TombstoneDuration = TombstoneDuration;
+	type VaultId = u64;
+	type WeightInfo = ();
 }
 
 parameter_type_with_key! {
@@ -131,6 +151,7 @@ construct_runtime!(
 		Vaults: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Factory: crate::mocks::currency_factory::{Pallet, Call, Storage, Event<T>},
 		Strategy: crate::mocks::strategy::{Pallet, Call, Storage, Event<T>},
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
 );
 
@@ -147,6 +168,10 @@ impl Default for ExtBuilder {
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+
+		pallet_balances::GenesisConfig::<Test> { balances: vec![(ALICE, 1000000)] }
+			.assimilate_storage(&mut t)
+			.unwrap();
 
 		orml_tokens::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut t)
