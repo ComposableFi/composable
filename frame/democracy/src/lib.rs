@@ -196,6 +196,9 @@ pub use weights::WeightInfo;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 const DEMOCRACY_ID: LockIdentifier = *b"democrac";
 
 /// The maximum number of vetoers on a single proposal used to compute Weight.
@@ -294,7 +297,9 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ core::fmt::Debug
 			+ Default
-			+ TypeInfo;
+			+ TypeInfo
+			+ From<u64>
+			+ Into<u64>;
 
 		type NativeCurrency: NativeInspect<Self::AccountId, Balance = Self::Balance>
 			+ NativeTransfer<Self::AccountId, Balance = Self::Balance>
@@ -313,7 +318,7 @@ pub mod pallet {
 			>;
 
 		type OriginFor: OriginMap<Self::AssetId, Self::Origin>;
-
+		
 		/// The period between a proposal being approved and enacted.
 		///
 		/// It should generally be a little more than the unstake period to ensure that
@@ -1933,7 +1938,6 @@ impl<T: Config> Pallet<T> {
 		// tally up votes for any expiring referenda.
 		for (index, info) in Self::maturing_referenda_at_inner(now, next..last).into_iter() {
 			let approved = Self::bake_referendum(now, index, info.clone());
-			println!("index: {:?} {:?} approved: {}", index, info, approved);
 			ReferendumInfoOf::<T>::insert(index, ReferendumInfo::Finished { end: now, approved });
 			weight = max_block_weight;
 		}
