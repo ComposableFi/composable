@@ -149,15 +149,4 @@ define print_help_text
 	make push				     : Push all built images to the specified docker registry
 "
 endef
-© 2021 GitHub, Inc.
-Terms
-Privacy
-Security
-Status
-Docs
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About
+
