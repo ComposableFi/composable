@@ -17,4 +17,5 @@ pub mod timestamp;
 pub mod tokens;
 pub mod treasury;
 pub mod utility;
+#[cfg(feature = "develop")]
 pub mod vault;
