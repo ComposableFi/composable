@@ -29,11 +29,6 @@ composable-traits = { version = "0.0.1", path = "../composable-traits", default-
 
 num-traits = { version = "0.2.14", default-features = false }
 
-[dev-dependencies]
-proptest = "0.9.6"
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301", default-features = false }
-
 [features]
 default = ["std"]
 std = [
