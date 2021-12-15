@@ -1,5 +1,5 @@
 use sp_runtime::{
-	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Zero},
+	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero},
 	ArithmeticError, FixedU128,
 };
 
@@ -52,8 +52,11 @@ pub trait WrappingNext {
 	fn next(&self) -> Self;
 }
 
-impl WrappingNext for u128 {
+impl<T> WrappingNext for T
+where
+	T: Copy + One + Saturating,
+{
 	fn next(&self) -> Self {
-		self.wrapping_add(1)
+		self.saturating_add(T::one())
 	}
 }

@@ -60,17 +60,31 @@
       "nodes": [
         {
           "wsPort": 9998,
-          "port": 31200,
+          "port": 31300,
           "flags": ["--alice", "--rpc-cors=all", "--", "--execution=wasm"]
         },
         {
           "wsPort": 9999,
-          "port": 31201,
+          "port": 31301,
           "flags": ["--bob", "--rpc-cors=all", "--", "--execution=wasm"]
         }
       ]
     }
   ],
-  "hrmpChannels": [],
-  "types": {}
+  "hrmpChannels": [
+    {
+      "sender": 200,
+      "recipient": 2000,
+      "maxCapacity": 8,
+      "maxMessageSize": 512
+    },
+    {
+      "sender": 2000,
+      "recipient": 200,
+      "maxCapacity": 8,
+      "maxMessageSize": 512
+    }
+  ],
+  "types": {},
+  "finalization": false
 }

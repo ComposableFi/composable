@@ -19,6 +19,7 @@ impl CurrencyId {
 	pub const PICA: CurrencyId = CurrencyId(1);
 	pub const LAYR: CurrencyId = CurrencyId(2);
 	pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
+	pub const KSM: CurrencyId = CurrencyId(4);
 
 	pub const LOCAL_LP_TOKEN_START: CurrencyId = CurrencyId(u128::MAX / 2);
 }
@@ -62,5 +63,14 @@ impl From<u128> for CurrencyId {
 	#[inline]
 	fn from(raw: u128) -> Self {
 		CurrencyId(raw)
+	}
+}
+
+/// maps id to junction generic key,
+/// unfortunately it is the best way to encode currency id as of now in XCM
+#[cfg(feature = "develop")]
+impl From<CurrencyId> for xcm::latest::Junction {
+	fn from(this: CurrencyId) -> Self {
+		xcm::latest::Junction::GeneralKey(this.encode())
 	}
 }
