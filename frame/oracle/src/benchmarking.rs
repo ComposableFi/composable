@@ -9,7 +9,7 @@ use frame_support::{
 };
 use frame_system::{EventRecord, RawOrigin};
 use sp_runtime::{DispatchResult, Percent};
-use sp_std::prelude::*;
+use sp_std::{prelude::*, vec};
 
 pub type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;

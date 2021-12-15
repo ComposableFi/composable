@@ -199,6 +199,7 @@ runtime-benchmarks = [
 	"collective/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
+  "vault/runtime-benchmarks"
 ]
 develop = [
     "assets",

@@ -712,6 +712,7 @@ parameter_types! {
 	pub const VaultMinimumDeposit: Balance = 10_000;
 	pub const VaultMinimumWithdrawal: Balance = 10_000;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
+	pub const TombstoneDuration: BlockNumber = DAYS * 7;
 }
 
 #[cfg(feature = "develop")]
@@ -727,9 +728,12 @@ impl vault::Config for Runtime {
 	type CreationDeposit = CreationDeposit;
 	type ExistentialDeposit = VaultExistentialDeposit;
 	type RentPerBlock = RentPerBlock;
-	type NativeAssetId = NativeAssetId;
+	type NativeCurrency = Balances;
 	type MinimumDeposit = VaultMinimumDeposit;
 	type MinimumWithdrawal = VaultMinimumWithdrawal;
+	type TombstoneDuration = TombstoneDuration;
+	type VaultId = u64;
+	type WeightInfo = weights::vault::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -1058,6 +1062,8 @@ impl_runtime_apis! {
 
 			#[cfg(feature = "develop")]
 			{
+				list_benchmark!(list, extra, vault, Vault);
+				list_benchmark!(list, extra, lending, Lending);
 				list_benchmark!(list, extra, oracle, Oracle);
 			}
 
@@ -1111,6 +1117,8 @@ impl_runtime_apis! {
 
 			#[cfg(feature ="develop")]
 			{
+				add_benchmark!(params, batches, vault, Lending);
+				add_benchmark!(params, batches, vault, Vault);
 				add_benchmark!(params, batches, oracle, Oracle);
 			}
 

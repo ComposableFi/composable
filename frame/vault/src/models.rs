@@ -2,6 +2,7 @@ use crate::Capabilities;
 use composable_traits::vault::Deposit;
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
+use sp_runtime::Perquintill;
 
 #[derive(Copy, Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 pub struct VaultInfo<AccountId, Balance, CurrencyId, BlockNumber> {
@@ -14,10 +15,9 @@ pub struct VaultInfo<AccountId, Balance, CurrencyId, BlockNumber> {
 
 #[derive(Copy, Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 pub struct StrategyOverview<Balance> {
-	/// The reported balance of the strategy.
-	///
-	/// Added when an account withdraws from a vault and subtracted when an account deposits
-	/// into a vault.
+	// The allocation of this strategy
+	pub allocation: Perquintill,
+	/// The reported balance of the strategy
 	pub balance: Balance,
 	/// Sum of all withdrawn funds.
 	pub lifetime_withdrawn: Balance,

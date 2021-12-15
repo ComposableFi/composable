@@ -30,6 +30,8 @@ frame-benchmarking = { default-features = false, optional = true, git = 'https:/
 primitives = { path = "../../runtime/primitives", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
+composable-traits = { path = "../../frame/composable-traits" , default-features = false}
+
 [dev-dependencies]
 serde = { version = "1.0.119" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301" }
