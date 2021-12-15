@@ -1,38 +1,3 @@
-Skip to content
-Search or jump to…
-Pull requests
-Issues
-Marketplace
-Explore
- 
-@haroldsphinx 
-ComposableFi
-/
-composable
-Public
-Code
-Issues
-13
-Pull requests
-11
-Discussions
-Actions
-Projects
-1
-Wiki
-Security
-Insights
-Settings
-composable/Makefile
-@haroldsphinx
-haroldsphinx Dali chachacha 1.0.0 (#342)
-…
-Latest commit 7f004bf 9 days ago
- History
- 8 contributors
-@haroldsphinx@andor0@JesseAbram@vivekvpandya@seunlanlege@KaiserKarel@dzmitry-lahoda@bluewitch
- 116 lines (90 sloc)  3.06 KB
-   
 COMMIT_SHA:=$(shell git rev-parse --short=9 HEAD)
 BRANCH_NAME:=$(shell git rev-parse --abbrev-ref HEAD | tr '/' '-')
 REPO=composablefi
