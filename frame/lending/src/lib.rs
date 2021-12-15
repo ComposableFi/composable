@@ -229,7 +229,9 @@ pub mod pallet {
 			+ From<u128>
 			+ Debug
 			+ Default
-			+ TypeInfo;
+			+ TypeInfo
+			+ PriceableAsset;
+
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -267,7 +269,7 @@ pub mod pallet {
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type WeightInfo: WeightInfo;
 
-		type GroupId;
+		type GroupId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
 	}
 
 	#[pallet::pallet]

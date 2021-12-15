@@ -1,7 +1,7 @@
 use sp_runtime::{FixedPointNumber, FixedU128};
 
-/// Default is 0.001%
-pub const DEFAULT_ACCEPTABLE_DEVIATION: u128 = 100000;
+/// Default is 0.1%
+pub const DEFAULT_ACCEPTABLE_DEVIATION: u128 = 1000;
 
 /// Check that x/y ~ 1 up to a certain precision
 pub fn acceptable_computation_error(x: u128, y: u128, precision: u128) -> Result<(), FixedU128> {
