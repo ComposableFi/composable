@@ -7339,6 +7339,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-uniswap-v2"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log 0.4.14",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-currency-factory",
+ "pallet-oracle",
+ "pallet-vault",
+ "parity-scale-codec",
+ "plotters",
+ "scale-info",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-utility"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13#fcc54a72973d03afe7bf9e3ef2736050b3f33465"

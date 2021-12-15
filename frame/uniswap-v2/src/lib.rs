@@ -36,7 +36,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
-		dex::{CurveAmm, StableSwapPoolInfo},
+		dex::{ConstantProductPoolInfo, CurveAmm},
 		math::LiftedFixedBalance,
 	};
 	use frame_support::{
@@ -49,15 +49,15 @@ pub mod pallet {
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul,
-			CheckedSub, One, Zero,
+			CheckedSub, IntegerSquareRoot, One, Zero,
 		},
 		FixedPointNumber, FixedPointOperand, FixedU128, KeyTypeId as CryptoKeyTypeId, Permill,
 	};
 	use sp_std::{collections::btree_set::BTreeSet, fmt::Debug, iter::FromIterator};
 
-	pub const PALLET_ID: PalletId = PalletId(*b"CurveAmm");
-	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"camm");
-	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"camm");
+	pub const PALLET_ID: PalletId = PalletId(*b"Uni-swap");
+	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"uswp");
+	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"uswp");
 
 	pub mod crypto {
 		use super::KEY_TYPE;
@@ -115,6 +115,7 @@ pub mod pallet {
 			+ From<u64> // at least 64 bit
 			+ Zero
 			+ One
+			+ IntegerSquareRoot
 			+ FixedPointOperand
 			+ Into<LiftedFixedBalance>
 			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
@@ -150,7 +151,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
 	pub type Pools<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::PoolId, StableSwapPoolInfo<T::AccountId>>;
+		StorageMap<_, Blake2_128Concat, T::PoolId, ConstantProductPoolInfo<T::AccountId>>;
 
 	/// Pool's LP asset
 	#[pallet::storage]
@@ -330,12 +331,12 @@ pub mod pallet {
 			min_mint_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			let zero = Self::Balance::zero();
+			ensure!(amounts.len() == 2, Error::<T>::IndexOutOfRange);
 			ensure!(
 				amounts.iter().all(|&x| x >= zero),
 				Error::<T>::AssetAmountMustBePositiveNumber
 			);
 
-			let pool = Self::get_pool_info(pool_id).ok_or(Error::<T>::PoolNotFound)?;
 			let pool_lp_asset =
 				PoolLPAsset::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
 			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
@@ -349,8 +350,6 @@ pub mod pallet {
 			ensure!(n_coins == balances.len(), Error::<T>::InconsistentStorage);
 
 			ensure!(n_coins == amounts.len(), Error::<T>::IndexOutOfRange);
-			let amp_f = pool.amplification_coefficient;
-			let ann = Self::get_ann(amp_f, n_coins).ok_or(Error::<T>::Math)?;
 
 			let old_balances: Vec<FixedU128> = balances
 				.iter()
@@ -359,105 +358,71 @@ pub mod pallet {
 					FixedU128::saturating_from_integer(b_u)
 				})
 				.collect();
-			let d0 = Self::get_d(&old_balances, ann).ok_or(Error::<T>::Math)?;
+			let old_balance_a = old_balances[0];
+			let old_balance_b = old_balances[1];
+			let amount_a_u: u128 = amounts[0].into();
+			let amount_b_u: u128 = amounts[1].into();
+			let amount_a_desired = FixedU128::saturating_from_integer(amount_a_u);
+			let amount_b_desired = FixedU128::saturating_from_integer(amount_b_u);
+			let amount_a;
+			let amount_b;
+
+			if old_balance_a == FixedU128::zero() && old_balance_b == FixedU128::zero() {
+				amount_a = amount_a_desired;
+				amount_b = amount_b_desired;
+			} else {
+				let amount_b_optimal = Self::quote(amount_a_desired, old_balance_a, old_balance_b)
+					.ok_or(Error::<T>::Math)?;
+
+				if amount_b_optimal <= amount_b_desired {
+					amount_a = amount_a_desired;
+					amount_b = amount_b_optimal;
+				} else {
+					let amount_a_optimal =
+						Self::quote(amount_b_desired, old_balance_b, old_balance_a)
+							.ok_or(Error::<T>::Math)?;
+					assert!(amount_a_optimal <= amount_a_desired);
+					amount_a = amount_a_optimal;
+					amount_b = amount_b_desired;
+				}
+			}
 
 			let token_supply = T::LpToken::total_issuance(pool_lp_asset);
 			let token_supply_u: u128 = token_supply.into();
 			let token_supply_f = FixedU128::saturating_from_integer(token_supply_u);
-			let mut new_balances = old_balances.clone();
-			for i in 0..n_coins {
-				if token_supply == zero {
-					ensure!(amounts[i] > zero, Error::<T>::AssetAmountMustBePositiveNumber);
-				}
-				let amount_i: u128 = amounts[i].into();
-				new_balances[i] = new_balances[i]
-					.checked_add(&FixedU128::saturating_from_integer(amount_i))
-					.ok_or(Error::<T>::Math)?;
-			}
-
-			let d1 = Self::get_d(&new_balances, ann).ok_or(Error::<T>::Math)?;
-			ensure!(d1 > d0, Error::<T>::AssetAmountMustBePositiveNumber);
-			let d1_b = d1.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
 			let mint_amount;
-			let mut fees = vec![FixedU128::zero(); n_coins];
-			// Only account for fees if we are not the first to deposit
-			if token_supply > zero {
-				// Deposit x + withdraw y would chargVe about same
-				// fees as a swap. Otherwise, one could exchange w/o paying fees.
-				// And this formula leads to exactly that equality
-				// fee = pool.fee * n_coins / (4 * (n_coins - 1))
-				let one = FixedU128::saturating_from_integer(1u8);
-				let four = FixedU128::saturating_from_integer(4u8);
-				let n_coins_f = FixedU128::saturating_from_integer(n_coins as u128);
-				let fee_f: FixedU128 = pool.fee.into();
-				let fee_f = fee_f
-					.checked_mul(&n_coins_f)
-					.ok_or(Error::<T>::Math)?
-					.checked_div(
-						&four
-							.checked_mul(&n_coins_f.checked_sub(&one).ok_or(Error::<T>::Math)?)
-							.ok_or(Error::<T>::Math)?,
-					)
-					.ok_or(Error::<T>::Math)?;
-				let admin_fee_f: FixedU128 = pool.admin_fee.into();
-				for (index, asset_id) in assets.iter().enumerate() {
-					// ideal_balance = d1 * old_balances[i] / d0
-					let ideal_balance =
-						(|| d1.checked_mul(&old_balances[index])?.checked_div(&d0))()
-							.ok_or(Error::<T>::Math)?;
-
-					let new_balance = new_balances[index];
-					// difference = abs(ideal_balance - new_balance)
-					let difference = (if ideal_balance > new_balance {
-						ideal_balance.checked_sub(&new_balance)
-					} else {
-						new_balance.checked_sub(&ideal_balance)
-					})
-					.ok_or(Error::<T>::Math)?;
-
-					fees[index] = fee_f.checked_mul(&difference).ok_or(Error::<T>::Math)?;
-					// new_pool_balance = new_balance - (fees[i] * admin_fee)
-					let new_pool_balance =
-						(|| new_balance.checked_sub(&fees[index].checked_mul(&admin_fee_f)?))()
-							.ok_or(Error::<T>::Math)?;
-					PoolAssetBalance::<T>::mutate(
-						pool_id,
-						asset_id,
-						|balance| -> DispatchResult {
-							*balance = new_pool_balance
-								.checked_mul_int(1u64)
-								.ok_or(Error::<T>::Math)?
-								.into();
-							Ok(())
-						},
-					)?;
-
-					new_balances[index] =
-						new_balances[index].checked_sub(&fees[index]).ok_or(Error::<T>::Math)?;
-				}
-				let d2 = Self::get_d(&new_balances, ann).ok_or(Error::<T>::Math)?;
-
-				// mint_amount = token_supply * (d2 - d0) / d0
-				let mint_amount_f =
-					(|| token_supply_f.checked_mul(&d2.checked_sub(&d0)?.checked_div(&d0)?))()
-						.ok_or(Error::<T>::Math)?;
-				mint_amount = mint_amount_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+			if token_supply_u == 0 {
+				let mint_amount_f = amount_a.checked_mul(&amount_b).ok_or(Error::<T>::Math)?;
+				let mint_amount_b: T::Balance =
+					mint_amount_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+				mint_amount = mint_amount_b.integer_sqrt();
 			} else {
-				for (index, asset_id) in assets.iter().enumerate() {
-					PoolAssetBalance::<T>::mutate(
-						pool_id,
-						asset_id,
-						|balance| -> DispatchResult {
-							*balance = new_balances[index]
-								.checked_mul_int(1u64)
-								.ok_or(Error::<T>::Math)?
-								.into();
-							Ok(())
-						},
-					)?;
-				}
-				mint_amount = d1_b;
+				let mint_a = amount_a
+					.checked_mul(&token_supply_f)
+					.ok_or(Error::<T>::Math)?
+					.checked_div(&old_balance_a)
+					.ok_or(Error::<T>::Math)?;
+				let mint_b = amount_b
+					.checked_mul(&token_supply_f)
+					.ok_or(Error::<T>::Math)?
+					.checked_div(&old_balance_b)
+					.ok_or(Error::<T>::Math)?;
+				let mint_amount_f = mint_a.min(mint_b);
+				mint_amount = mint_amount_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
 			}
+
+			let asset_id_a = assets[0];
+			let asset_id_b = assets[1];
+			let new_balance_a = old_balance_a.checked_add(&amount_a).ok_or(Error::<T>::Math)?;
+			let new_balance_b = old_balance_b.checked_add(&amount_b).ok_or(Error::<T>::Math)?;
+			PoolAssetBalance::<T>::mutate(pool_id, asset_id_a, |balance| -> DispatchResult {
+				*balance = new_balance_a.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+				Ok(())
+			})?;
+			PoolAssetBalance::<T>::mutate(pool_id, asset_id_b, |balance| -> DispatchResult {
+				*balance = new_balance_b.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+				Ok(())
+			})?;
 
 			ensure!(mint_amount >= min_mint_amount, Error::<T>::RequiredAmountNotReached);
 
@@ -485,17 +450,18 @@ pub mod pallet {
 			}
 
 			T::LpToken::mint_into(pool_lp_asset, who, mint_amount)?;
-			let fees: Vec<T::Balance> = fees
-				.iter()
-				.map(|b_f| Ok(b_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into()))
-				.collect::<Result<Vec<T::Balance>, Error<T>>>()?;
+
+			let mut invariant = T::Balance::one();
+			for asset_id in &assets {
+				invariant *= PoolAssetBalance::<T>::get(pool_id, asset_id);
+			}
 
 			Self::deposit_event(Event::LiquidityAdded {
 				who: who.clone(),
 				pool_id,
 				token_amounts: amounts,
-				fees,
-				invariant: d1_b,
+				fees: vec![],
+				invariant,
 				token_supply: new_token_supply,
 				mint_amount,
 			});
@@ -605,6 +571,7 @@ pub mod pallet {
 
 			Ok(())
 		}
+
 		fn exchange(
 			who: &Self::AccountId,
 			pool_id: T::PoolId,
@@ -613,13 +580,13 @@ pub mod pallet {
 			dx: Self::Balance,
 			min_dy: Self::Balance,
 		) -> Result<(), DispatchError> {
-			let prec = T::Precision::get();
 			let zero_b = Self::Balance::zero();
 			ensure!(dx >= zero_b, Error::<T>::AssetAmountMustBePositiveNumber);
 
 			let pool = Self::get_pool_info(pool_id).ok_or(Error::<T>::PoolNotFound)?;
-			let i = i_token.into() as usize;
-			let j = j_token.into() as usize;
+
+			let i: usize = i_token.into() as usize;
+			let j: usize = j_token.into() as usize;
 
 			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
 			let mut balances = Vec::new();
@@ -642,21 +609,8 @@ pub mod pallet {
 					FixedU128::saturating_from_integer(b_u)
 				})
 				.collect();
-
-			// xp[i] + dx
 			let x = xp[i].checked_add(&dx_f).ok_or(Error::<T>::Math)?;
-
-			let amp_f = pool.amplification_coefficient;
-			let ann = Self::get_ann(amp_f, n_coins).ok_or(Error::<T>::Math)?;
-			let y = Self::get_y(i, j, x, &xp, ann).ok_or(Error::<T>::Math)?;
-
-			// -1 just in case there were some rounding errors
-			// dy = xp[j] - y - 1
-			let dy_f = xp[j]
-				.checked_sub(&y)
-				.ok_or(Error::<T>::Math)?
-				.checked_sub(&prec)
-				.ok_or(Error::<T>::Math)?;
+			let dy_f = Self::get_y_out(dx_f, xp[i], xp[j]).ok_or(Error::<T>::Math)?;
 
 			let fee_f: FixedU128 = pool.fee.into();
 			let dy_fee_f = dy_f.checked_mul(&fee_f).ok_or(Error::<T>::Math)?;
@@ -664,8 +618,6 @@ pub mod pallet {
 			let dy_f = dy_f.checked_sub(&dy_fee_f).ok_or(Error::<T>::Math)?;
 			ensure!(dy_f >= min_dy_f, Error::<T>::RequiredAmountNotReached);
 
-			let admin_fee_f: FixedU128 = pool.admin_fee.into();
-			let dy_admin_fee_f = dy_fee_f.checked_mul(&admin_fee_f).ok_or(Error::<T>::Math)?;
 			let dy: Self::Balance = dy_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
 			let asset_id_i = assets[i];
 			let asset_id_j = assets[j];
@@ -673,12 +625,7 @@ pub mod pallet {
 				*balance = x.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
 				Ok(())
 			})?;
-			// When rounding errors happen, we undercharge admin fee in favor of LP
-			let bal_j = xp[j]
-				.checked_sub(&dy_f)
-				.ok_or(Error::<T>::Math)?
-				.checked_sub(&dy_admin_fee_f)
-				.ok_or(Error::<T>::Math)?;
+			let bal_j = xp[j].checked_sub(&dy_f).ok_or(Error::<T>::Math)?;
 			PoolAssetBalance::<T>::mutate(pool_id, asset_id_j, |balance| -> DispatchResult {
 				*balance = bal_j.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
 				Ok(())
@@ -775,9 +722,8 @@ pub mod pallet {
 		pub fn create_pool(
 			who: &T::AccountId,
 			assets: Vec<T::AssetId>,
-			amplification_coefficient: FixedU128,
 			fee: Permill,
-			admin_fee: Permill,
+			_admin_fee: Permill,
 		) -> Result<T::PoolId, DispatchError> {
 			// Assets related checks
 			ensure!(assets.len() > 1, Error::<T>::NotEnoughAssets);
@@ -794,12 +740,8 @@ pub mod pallet {
 						// No PoolInfo can have key greater or equal to PoolCount
 						ensure!(maybe_pool_info.is_none(), Error::<T>::InconsistentStorage);
 
-						*maybe_pool_info = Some(StableSwapPoolInfo {
-							owner: who.clone(),
-							amplification_coefficient,
-							fee,
-							admin_fee,
-						});
+						*maybe_pool_info =
+							Some(ConstantProductPoolInfo { owner: who.clone(), fee });
 
 						Ok(())
 					})?;
@@ -835,237 +777,35 @@ pub mod pallet {
 		}
 
 		/// Return pool information for given pool_id.
-		pub fn get_pool_info(pool_id: T::PoolId) -> Option<StableSwapPoolInfo<T::AccountId>> {
+		pub fn get_pool_info(pool_id: T::PoolId) -> Option<ConstantProductPoolInfo<T::AccountId>> {
 			Pools::<T>::get(pool_id)
 		}
 
-		/// Find `ann = amp * n^n` where `amp` - amplification coefficient,
-		/// `n` - number of coins.
-		pub fn get_ann(amp: FixedU128, n: usize) -> Option<FixedU128> {
-			let n_coins = FixedU128::saturating_from_integer(n as u128);
-			let mut ann = amp;
-			for _ in 0..n {
-				ann = ann.checked_mul(&n_coins)?;
-			}
-			Some(ann)
-		}
-		/// Find `d` preserving StableSwap invariant.
-		/// Here `d` - total amount of coins when they have an equal price,
-		/// `xp` - coin amounts, `ann` is amplification coefficient multiplied by `n^n`,
-		/// where `n` is number of coins.
-		///
-		/// # Notes
-		///
-		/// D invariant calculation in non-overflowing integer operations iteratively
-		///
-		/// ```pseudocode
-		///  A * sum(x_i) * n^n + D = A * D * n^n + D^(n+1) / (n^n * prod(x_i))
-		/// ```
-		///
-		/// Converging solution:
-		///
-		/// ```pseudocode
-		/// D[j + 1] = (A * n^n * sum(x_i) - D[j]^(n+1) / (n^n * prod(x_i))) / (A * n^n - 1)
-		/// ```
-		pub fn get_d(xp_f: &[FixedU128], ann_f: FixedU128) -> Option<FixedU128> {
-			let zero = FixedU128::zero();
-			let one = FixedU128::one();
-			let prec = T::Precision::get();
-			let n = FixedU128::saturating_from_integer(u128::try_from(xp_f.len()).ok()?);
-			let sum = xp_f.iter().try_fold(zero, |s, x| s.checked_add(x))?;
-			if sum == zero {
-				return Some(zero)
-			}
-			let mut d = sum;
-
-			for _ in 0..255 {
-				let mut d_p = d;
-				for x in xp_f.iter() {
-					// d_p = d_p * d / (x * n)
-					d_p = d_p.checked_mul(&d)?.checked_div(&x.checked_mul(&n)?)?;
-				}
-				let d_prev = d;
-				// d = (ann * sum + d_p * n) * d / ((ann - 1) * d + (n + 1) * d_p)
-				d = ann_f.checked_mul(&sum)?.checked_add(&d_p.checked_mul(&n)?)?.checked_mul(
-					&d.checked_div(
-						&ann_f
-							.checked_sub(&one)?
-							.checked_mul(&d)?
-							.checked_add(&n.checked_add(&one)?.checked_mul(&d_p)?)?,
-					)?,
-				)?;
-
-				if d > d_prev {
-					if d.checked_sub(&d_prev)? <= prec {
-						return Some(d)
-					}
-				} else if d_prev.checked_sub(&d)? <= prec {
-					return Some(d)
-				}
-			}
-			None
-		}
-
-		/// Here `xp` - coin amounts, `ann` is amplification coefficient multiplied by `n^n`, where
-		/// `n` is number of coins.
-		///
-		/// See https://github.com/equilibrium-eosdt/equilibrium-curve-amm/blob/master/docs/deducing-get_y-formulas.pdf
-		/// for detailed explanation about formulas this function uses.
-		///
-		/// # Notes
-		///
-		/// Done by solving quadratic equation iteratively.
-		///
-		/// ```pseudocode
-		/// x_1^2 + x_1 * (sum' - (A * n^n - 1) * D / (A * n^n)) = D^(n+1) / (n^2n * prod' * A)
-		/// x_1^2 + b * x_1 = c
-		///
-		/// x_1 = (x_1^2 + c) / (2 * x_1 + b)
-		/// ```
-		pub fn get_y(
-			i: usize,
-			j: usize,
-			x_f: FixedU128,
-			xp_f: &[FixedU128],
-			ann_f: FixedU128,
+		/// given some amount of an asset and pair balances, returns an equivalent amount of the
+		/// other asset
+		pub fn quote(
+			amount_a: FixedU128,
+			balance_a: FixedU128,
+			balance_b: FixedU128,
 		) -> Option<FixedU128> {
-			let zero = FixedU128::zero();
-			let prec = T::Precision::get();
-			let two = FixedU128::saturating_from_integer(2u8);
-			let n = FixedU128::try_from(xp_f.len() as u128).ok()?;
-
-			// Same coin
-			if i == j {
-				return None
-			}
-			// j above n
-			if j >= xp_f.len() {
-				return None
-			}
-			if i >= xp_f.len() {
-				return None
-			}
-			let d_f = Self::get_d(xp_f, ann_f)?;
-			let mut c = d_f;
-			let mut s = zero;
-
-			// Calculate s and c
-			// p is implicitly calculated as part of c
-			// note that loop makes n - 1 iterations
-			for (k, xp_k) in xp_f.iter().enumerate() {
-				let x_k: FixedU128;
-				if k == i {
-					x_k = x_f;
-				} else if k != j {
-					x_k = *xp_k;
-				} else {
-					continue
-				}
-				// s = s + x_k
-				s = s.checked_add(&x_k)?;
-				// c = c * d / (x_k * n)
-				c = c.checked_mul(&d_f)?.checked_div(&x_k.checked_mul(&n)?)?;
-			}
-			// c = c * d / (ann * n)
-			// At this step we have d^n in the numerator of c
-			// and n^(n-1) in its denominator.
-			// So we multiplying it by remaining d/n
-			c = c.checked_mul(&d_f)?.checked_div(&ann_f.checked_mul(&n)?)?;
-
-			// b = s + d / ann
-			// We subtract d later
-			let b = s.checked_add(&d_f.checked_div(&ann_f)?)?;
-			let mut y = d_f;
-
-			for _ in 0..255 {
-				let y_prev = y;
-				// y = (y^2 + c) / (2 * y + b - d)
-				// Subtract d to calculate b finally
-				y = y
-					.checked_mul(&y)?
-					.checked_add(&c)?
-					.checked_div(&two.checked_mul(&y)?.checked_add(&b)?.checked_sub(&d_f)?)?;
-
-				// Equality with the specified precision
-				if y > y_prev {
-					if y.checked_sub(&y_prev)? <= prec {
-						return Some(y)
-					}
-				} else if y_prev.checked_sub(&y)? <= prec {
-					return Some(y)
-				}
-			}
-
-			None
+			assert!(amount_a > FixedU128::zero());
+			assert!(balance_a > FixedU128::zero() && balance_b > FixedU128::zero());
+			// optimal amount_b
+			amount_a.checked_mul(&balance_b)?.checked_div(&balance_a)
 		}
-		/// Here `xp` - coin amounts, `ann` is amplification coefficient multiplied by `n^n`, where
-		/// `n` is number of coins.
-		/// Calculate `x[i]` if one reduces `d` from being calculated for `xp` to `d`.
-		///
-		/// # Notes
-		///
-		/// Done by solving quadratic equation iteratively.
-		///
-		/// ```pseudocode
-		/// x_1^2 + x_1 * (sum' - (A * n^n - 1) * D / (A * n^n)) = D^(n+1) / (n^2n * prod' * A)
-		/// x_1^2 + b * x_1 = c
-		///
-		/// x_1 = (x_1^2 + c) / (2 * x_1 + b)
-		/// ```
-		pub fn get_y_d(
-			i: usize,
-			d_f: FixedU128,
-			xp_f: &[FixedU128],
-			ann_f: FixedU128,
+
+		/// given an input amount of an asset and pair balances, returns the maximum output amount
+		/// of the other asset
+		pub fn get_y_out(
+			dx_f: FixedU128,
+			balance_x_f: FixedU128,
+			balance_y_f: FixedU128,
 		) -> Option<FixedU128> {
-			let zero = FixedU128::zero();
-			let prec = T::Precision::get();
-			let two = FixedU128::saturating_from_integer(2u8);
-			let n = FixedU128::try_from(xp_f.len() as u128).ok()?;
-
-			if i >= xp_f.len() {
-				return None
-			}
-
-			let mut c = d_f;
-			let mut s = zero;
-
-			for (k, xp_k) in xp_f.iter().enumerate() {
-				if k == i {
-					continue
-				}
-
-				let x = xp_k;
-
-				s = s.checked_add(x)?;
-				// c = c * d / (x * n)
-				c = c.checked_mul(&d_f)?.checked_div(&x.checked_mul(&n)?)?;
-			}
-			// c = c * d / (ann * n)
-			c = c.checked_mul(&d_f)?.checked_div(&ann_f.checked_mul(&n)?)?;
-			// b = s + d / ann
-			let b = s.checked_add(&d_f.checked_div(&ann_f)?)?;
-			let mut y = d_f;
-
-			for _ in 0..255 {
-				let y_prev = y;
-				// y = (y*y + c) / (2 * y + b - d)
-				y = y
-					.checked_mul(&y)?
-					.checked_add(&c)?
-					.checked_div(&two.checked_mul(&y)?.checked_add(&b)?.checked_sub(&d_f)?)?;
-
-				// Equality with the specified precision
-				if y > y_prev {
-					if y.checked_sub(&y_prev)? <= prec {
-						return Some(y)
-					}
-				} else if y_prev.checked_sub(&y)? <= prec {
-					return Some(y)
-				}
-			}
-
-			None
+			assert!(dx_f > FixedU128::zero());
+			assert!(balance_x_f > FixedU128::zero() && balance_y_f > FixedU128::zero());
+			let numerator = dx_f.checked_mul(&balance_y_f)?;
+			let denominator = balance_x_f.checked_add(&dx_f)?;
+			numerator.checked_div(&denominator)
 		}
 
 		fn transfer_liquidity_into_pool(

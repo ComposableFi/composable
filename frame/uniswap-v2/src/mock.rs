@@ -1,4 +1,4 @@
-use crate as curve_amm;
+use crate as constant_product_amm;
 use composable_traits::currency::DynamicCurrencyId;
 use frame_support::{parameter_types, traits::Everything};
 use frame_system as system;
@@ -79,7 +79,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		CurveAmm: curve_amm::{Pallet, Call, Storage, Event<T>},
+		ConstantProductAmm: constant_product_amm::{Pallet, Call, Storage, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
@@ -181,7 +181,7 @@ parameter_types! {
 	pub Precision: FixedU128 = FixedU128::saturating_from_rational(1, 1_000_000_000);
 }
 
-impl curve_amm::Config for Test {
+impl constant_product_amm::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
 	type Balance = Balance;
