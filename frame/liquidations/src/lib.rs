@@ -27,8 +27,8 @@ pub mod pallet {
 
 	use codec::FullCodec;
 	use composable_traits::{
-		auction::DutchAuction, defi::DeFiComposableConfig, lending::Lending,
-		liquidation::Liquidation, loans::PriceStructure,
+		defi::DeFiComposableConfig, lending::Lending, liquidation::Liquidation,
+		loans::PriceStructure,
 	};
 	use frame_support::{
 		traits::{IsType, UnixTime},
@@ -47,13 +47,6 @@ pub mod pallet {
 		type UnixTime: UnixTime;
 
 		type Lending: Lending;
-
-		type DutchAuction: DutchAuction<
-			Balance = Self::Balance,
-			AccountId = Self::AccountId,
-			AssetId = Self::AssetId,
-			OrderId = u128,
-		>;
 
 		type GroupId: Default + FullCodec;
 	}

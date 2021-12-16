@@ -3,6 +3,7 @@
 //! price above market.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub use pallet::*;
 mod math;
 
 #[frame_support::pallet]
