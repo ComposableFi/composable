@@ -6960,23 +6960,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-order-book-dex"
-version = "0.0.1"
-dependencies = [
- "composable-traits",
- "frame-support",
- "frame-system",
- "num-traits",
- "parity-scale-codec",
- "scale-info",
- "sp-arithmetic",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-ping"
 version = "0.1.0"
 dependencies = [

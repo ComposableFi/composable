@@ -576,6 +576,7 @@ fn borrow_repay() {
 	});
 }
 
+#[ignore = "until we reimplement liquidation engine"]
 #[test]
 fn test_liquidation() {
 	new_test_ext().execute_with(|| {

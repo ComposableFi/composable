@@ -4,6 +4,7 @@ pub mod assets;
 pub mod auction;
 pub mod bonded_finance;
 pub mod currency;
+pub mod defi;
 pub mod dex;
 pub mod governance;
 pub mod lending;
