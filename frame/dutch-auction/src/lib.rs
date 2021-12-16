@@ -16,12 +16,13 @@ pub mod pallet {
 	};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{IsType, UnixTime},
+		traits::{IsType, UnixTime, fungibles::Transfer},
 	};
 	use scale_info::TypeInfo;
 
 	use sp_runtime::DispatchError;
 	use sp_std::vec::Vec;
+	use orml_traits::{MultiReservableCurrency, MultiCurrencyExtended, MultiCurrency};
 
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
@@ -30,15 +31,15 @@ pub mod pallet {
 		type UnixTime: UnixTime;
 		type OrderId: OrderIdLike + WrappingNext;
 		type Order;
+		type MultiCurrency: MultiCurrencyExtended<Self::AccountId, CurrencyId = Self::AssetId, Amount = Self::Balance>
+		+ MultiReservableCurrency<Self::AccountId>;
 	}
 
 	// type aliases
 	pub type OrderIdOf<T> = <T as Config>::OrderId;
-	pub type SellOrderOf<T> = SellOrder<
-		OrderIdOf<T>,
+	pub type SellOf<T> = Sell<
 		<T as DeFiComposableConfig>::AssetId,
 		<T as DeFiComposableConfig>::Balance,
-		<T as frame_system::Config>::AccountId,
 	>;
 
 	#[pallet::event]
@@ -48,7 +49,9 @@ pub mod pallet {
 	}
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		RequestedOrderDoesNotExists
+	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -67,25 +70,22 @@ pub mod pallet {
 	#[pallet::getter(fn orders_index)]
 	pub type OrdersIndex<T: Config> = StorageValue<_, T::OrderId, ValueQuery>;
 
-	#[derive(Encode, Decode, Default, TypeInfo)]
-	pub struct SellOrder<OrderId, AssetId, Balance, AccountId> {
-		pub id: OrderId,
-		pub order: Sell<AssetId, Balance>,
-		// allow to sell by parts like Order Book does, sorted by best proposition
-		pub takes: Vec<TakeBy<AccountId, Balance>>,
-	}
-
 	#[pallet::storage]
 	#[pallet::getter(fn buys)]
 	pub type SellOrders<T: Config> =
-		StorageMap<_, Twox64Concat, OrderIdOf<T>, SellOrderOf<T>, OptionQuery>;
+		StorageMap<_, Twox64Concat, OrderIdOf<T>, SellOf<T>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn takes)]
+	pub type Takes<T: Config> =
+		StorageMap<_, Twox64Concat, OrderIdOf<T>, Vec<TakeBy<T::AccountId, T::Balance>>, OptionQuery>;		
 
 	impl<T: Config + DeFiComposableConfig> DeFiEngine for Pallet<T> {
 		type AssetId = T::AssetId;
 
 		type Balance = T::Balance;
 
-		type AccountId = T::AccountId;
+		type AccountId = T::AccountId;		
 	}
 
 	impl<T: Config + DeFiComposableConfig> SellEngine<AuctionStepFunction> for Pallet<T> {
@@ -93,20 +93,37 @@ pub mod pallet {
 
 		fn ask(
 			_from_to: &Self::AccountId,
-			_order: composable_traits::defi::Sell<Self::AssetId, Self::Balance>,
+			_order: Sell<Self::AssetId, Self::Balance>,
 			_base_amount: Self::Balance,
 			_configuration: AuctionStepFunction,
 		) -> Result<Self::OrderId, DispatchError> {
+			
 			Self::deposit_event(Event::OrderAdded { order_id: <_>::default() });
 			todo!()
 		}
 
 		fn take(
-			_from_to: &Self::AccountId,
-			_order: Self::OrderId,
-			_take: Take<Self::Balance>,
+			from_to: &Self::AccountId,
+			order: Self::OrderId,
+			take: Take<Self::Balance>,
 		) -> Result<(), DispatchError> {
-			todo!()
+			let order = SellOrders::<T>::try_get(order)
+			.map_err(|x| Error::<T>::RequestedOrderDoesNotExists)?;
+			 
+			let order = order.limit;
+			
+			T::MultiCurrency::reserve(order.pair.quote, from_to, take.amount)?;
+
+			// ensure!(
+			// 	SellOrders::<T>::contains_key(order),
+				
+			// );
+			//ensure!(
+				//can_reserve(ta
+			//)
+
+			//Takes::<T>::insert()
+			Ok(())
 		}
 	}
 

@@ -13,12 +13,20 @@ use crate::{
 	math::LiftedFixedBalance,
 };
 
+#[derive(Encode, Decode, TypeInfo)]
+pub struct Take<Balance> {
+	/// amount of `base`
+	pub amount: Balance,
+	/// direction depends on referenced order type
+	/// either minimal or maximal amount of `quote` for given unit of `base`
+	pub limit: Balance,
+}
+
 /// take `quote` currency and give `base` currency
 #[derive(Encode, Decode, TypeInfo)]
 pub struct Sell<AssetId, Balance> {
 	pub pair: CurrencyPair<AssetId>,
-	/// minimal amount of `quote` for given unit of `base`
-	pub limit: Balance,
+	pub take: Take<Balance>,	
 }
 
 /// given `base`, how much `quote` needed for unit
@@ -41,12 +49,6 @@ pub trait DeFiEngine {
 	type AccountId;
 }
 
-#[derive(Encode, Decode, TypeInfo)]
-pub struct Take<Balance> {
-	pub amount: Balance,
-	/// direction depends on referenced order type
-	pub limit: Balance,
-}
 
 /// take nothing
 impl<Balance: Default> Default for Take<Balance> {
@@ -103,8 +105,9 @@ pub trait SellEngine<Configuration>: DeFiEngine {
 		configuration: Configuration,
 	) -> Result<Self::OrderId, DispatchError>;
 	/// take order. get not found error if order never existed or was removed.
-	/// `take.limit` - for `sell` order it is maximal value are you to pay for `base`, for `buy`
-	/// order it is minimal value you are eager to accept for `base` `take.amount` - amount of
+	/// - `take.limit` - for `sell` order it is maximal value are you to pay for `base` in `quote` asset, for `buy`
+	/// order it is minimal value you are eager to accept for `base` 
+	/// - `take.amount` - amount of
 	/// `base` you are ready to exchange for this order
 	fn take(
 		from_to: &Self::AccountId,
