@@ -22,12 +22,25 @@ pub struct Take<Balance> {
 	pub limit: Balance,
 }
 
+impl<Balance : PartialOrd + Zero> Take<Balance> {
+	pub fn is_valid(&self) -> bool {
+		self.amount > Balance::zero() && self.limit > Balance::zero() 
+	}
+}
+
 /// take `quote` currency and give `base` currency
 #[derive(Encode, Decode, TypeInfo)]
 pub struct Sell<AssetId, Balance> {
 	pub pair: CurrencyPair<AssetId>,
 	pub take: Take<Balance>,	
 }
+
+impl<AssetId : PartialEq, Balance : PartialOrd + Zero> Sell<AssetId, Balance> {
+	pub fn is_valid(&self) -> bool {
+		self.take.is_valid() && self.pair.is_valid()
+	}
+}
+
 
 /// given `base`, how much `quote` needed for unit
 /// see [currency pair](https://www.investopedia.com/terms/c/currencypair.asp)
@@ -37,6 +50,12 @@ pub struct CurrencyPair<AssetId> {
 	pub base: AssetId,
 	/// counter currency
 	pub quote: AssetId,
+}
+
+impl<AssetId: PartialEq> CurrencyPair<AssetId> {
+	pub fn is_valid(&self) -> bool {
+		self.base != self.quote
+	}
 }
 
 /// type parameters for traits in pure defi area
@@ -64,15 +83,15 @@ impl<AssetId: Default> Default for CurrencyPair<AssetId> {
 }
 
 impl<AssetId, Balance> Sell<AssetId, Balance> {
-	pub fn new(base: AssetId, quote: AssetId, quote_amount: Balance) -> Self {
-		Self { limit: quote_amount, pair: CurrencyPair { base, quote } }
+	pub fn new(base: AssetId, quote: AssetId, base_amount: Balance, quote_limit: Balance) -> Self {
+		Self { take: Take { amount: base_amount, limit: quote_limit}, pair: CurrencyPair { base, quote } }
 	}
 }
 
-/// default sale is no sale
+/// default sale is no sale and invalid sale
 impl<AssetId: Default, Balance: Default> Default for Sell<AssetId, Balance> {
 	fn default() -> Self {
-		Self { pair: Default::default(), limit: Default::default() }
+		Self { pair: Default::default(), take: Default::default() }
 	}
 }
 
@@ -101,7 +120,6 @@ pub trait SellEngine<Configuration>: DeFiEngine {
 	fn ask(
 		from_to: &Self::AccountId,
 		order: Sell<Self::AssetId, Self::Balance>,
-		base_amount: Self::Balance,
 		configuration: Configuration,
 	) -> Result<Self::OrderId, DispatchError>;
 	/// take order. get not found error if order never existed or was removed.
@@ -111,7 +129,7 @@ pub trait SellEngine<Configuration>: DeFiEngine {
 	/// `base` you are ready to exchange for this order
 	fn take(
 		from_to: &Self::AccountId,
-		order: Self::OrderId,
+		order_id: Self::OrderId,
 		take: Take<Self::Balance>,
 	) -> Result<(), DispatchError>;
 }
