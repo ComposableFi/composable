@@ -116,9 +116,8 @@ impl FromStr for AssetIndex {
 }
 
 impl AssetPair {
-	/*
-	  We currently only allow X/(USD|Stablecoin)
-	*/
+	
+	/// We currently only allow X/(USD|Stablecoin)
 	pub fn new(x: Asset, y: Asset) -> Option<Self> {
 		match (x, y) {
 			(Asset::USD, _) => None,

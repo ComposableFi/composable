@@ -25,7 +25,7 @@ You can find them under the `frame` directory. We try to give them a meaningful 
 
 ## Price feed server
 
-The `oracle` off-chain worker is fetching prices from a server. We provide a reference implementation named `price-fee` that fetches and cache prices from the official binance API.
+The `oracle` off-chain worker is fetching prices from a server. We provide a reference implementation named `price-feed` that fetches and cache prices from the official binance API.
 
 ## Subxt clients
 
