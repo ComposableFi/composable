@@ -55,8 +55,10 @@ where
 	AccountId: core::cmp::Ord,
 {
 	pub asset_id: CurrencyId,
+	/// Idle amount of assets for withdraw
 	pub reserved: Perquintill,
 	pub manager: AccountId,
+	/// Not the vault strategy per si but rather a pool of funds that are used for strategies
 	pub strategies: BTreeMap<AccountId, Perquintill>,
 }
 

@@ -26,7 +26,6 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
 	use sp_std::{fmt::Debug, marker::PhantomData, str};
-	use xcm::latest::{Junction, Junctions, MultiLocation};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -98,33 +97,11 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
-	#[derive(Debug, Clone, Copy, Encode, Decode)]
-	pub struct AssetsPair<LocalAssetId, ForeignAssetId> {
-		local_asset_id: LocalAssetId,
-		foreign_asset_id: ForeignAssetId,
-	}
-
-	#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
-	#[derive(Debug, Clone, Copy, Encode, Decode)]
-	pub struct ForeignRawLocation {
-		parents: u8,
-		para_id: u32,
-		asset_id: u128,
-	}
-
-	#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
-	#[derive(Debug, Clone, Copy, Encode, Decode)]
-	pub struct RawAssetPair<LocalAssetId> {
-		local_asset_id: LocalAssetId,
-		foreign_raw_location: ForeignRawLocation,
-	}
-
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		local_admin: Option<T::AccountId>,
 		foreign_admin: Option<T::AccountId>,
-		raw_asset_pairs: Vec<RawAssetPair<T::LocalAssetId>>,
+		asset_pairs: Vec<(T::LocalAssetId, XcmAssetLocation)>,
 	}
 
 	#[cfg(feature = "std")]
@@ -133,7 +110,7 @@ pub mod pallet {
 			Self {
 				local_admin: Default::default(),
 				foreign_admin: Default::default(),
-				raw_asset_pairs: Default::default(),
+				asset_pairs: Default::default(),
 			}
 		}
 	}
@@ -150,17 +127,9 @@ pub mod pallet {
 			if let Some(foreign_admin) = &self.foreign_admin {
 				<ForeignAdmin<T>>::put(foreign_admin)
 			}
-
-			for p in &self.raw_asset_pairs {
-				let foreign_location = XcmAssetLocation::new(MultiLocation::new(
-					p.foreign_raw_location.parents,
-					Junctions::X2(
-						Junction::Parachain(p.foreign_raw_location.para_id),
-						Junction::GeneralKey(p.foreign_raw_location.asset_id.encode()),
-					),
-				));
-				<LocalToForeign<T>>::insert(p.local_asset_id, foreign_location.clone());
-				<ForeignToLocal<T>>::insert(foreign_location, p.local_asset_id);
+			for p in &self.asset_pairs {
+				<LocalToForeign<T>>::insert(p.0, p.1.to_owned());
+				<ForeignToLocal<T>>::insert(p.1.to_owned(), p.0);
 			}
 		}
 	}

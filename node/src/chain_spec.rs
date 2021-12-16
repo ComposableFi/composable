@@ -5,6 +5,7 @@ use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{traits::IdentifyAccount, MultiSigner};
+pub mod composable;
 pub mod picasso;
 // Parachin ID
 const PARA_ID: ParaId = ParaId::new(2000);
@@ -73,6 +74,12 @@ pub fn picasso() -> picasso::ChainSpec {
 		.expect("Picasso chain spec not found!")
 }
 
+/// Composable (Polkadot parachain)
+pub fn composable() -> composable::ChainSpec {
+	composable::ChainSpec::from_json_bytes(include_bytes!("./res/composable.json").to_vec())
+		.expect("Picasso chain spec not found!")
+}
+
 // chain spec for single node environments
 pub fn picasso_dev() -> picasso::ChainSpec {
 	//TODO check properties
@@ -112,6 +119,48 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 		None,
 		Some(properties),
 		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: PARA_ID.into() },
+	)
+}
+
+// chain spec for single node environments
+pub fn composable_dev() -> composable::ChainSpec {
+	//TODO check properties
+	let mut properties = Properties::new();
+	properties.insert("tokenSymbol".into(), "LAYR".into());
+	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("ss58Format".into(), 50.into());
+
+	composable::ChainSpec::from_genesis(
+		"Local Composable Testnet",
+		"composable",
+		ChainType::Development,
+		move || {
+			composable::genesis_config(
+				account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![
+					(
+						account_id_from_seed::<sr25519::Public>("Alice"),
+						get_collator_keys_from_seed("Alice"),
+					),
+					(
+						account_id_from_seed::<sr25519::Public>("Bob"),
+						get_collator_keys_from_seed("Bob"),
+					),
+					(
+						account_id_from_seed::<sr25519::Public>("Charlie"),
+						get_collator_keys_from_seed("Charlie"),
+					),
+				],
+				dev_accounts(),
+				PARA_ID,
+				PICASSO_ED,
+			)
+		},
+		vec![],
+		None,
+		None,
+		Some(properties),
+		Extensions { relay_chain: "westend_local_testnet".into(), para_id: PARA_ID.into() },
 	)
 }
 

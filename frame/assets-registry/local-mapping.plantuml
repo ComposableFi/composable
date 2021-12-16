@@ -1,0 +1,34 @@
+@startuml
+
+box Composable #LightYellow
+  actor "Root or Collective" as composable_authority
+  actor "Alice" as alice
+  actor "Bob" as Bob
+  participant "Assets Registy" as assets_registry_pallet
+end box
+
+note across: Alice and Bob cannot approve an asset mapping candidate
+
+...
+
+composable_authority -> assets_registry_pallet: Set Alice as a local admin
+note across: Alice can approve an asset mapping candidate
+
+...
+
+composable_authority -> assets_registry_pallet: Set Bob as a foreign admin
+note across: Bob can approve an asset mapping candidate
+
+...
+
+alice -> assets_registry_pallet: Approve an asset mapping candidate with local_asset_id = 1 and foreign_asset_id = 1
+
+...
+
+Bob -> assets_registry_pallet: Approve an asset mapping candidate with local_asset_id = 1 and foreign_asset_id = 1
+note over assets_registry_pallet
+asset mapping for local_asset_id = 1
+and foreign_asset_id = 1 stored
+end note
+
+@enduml

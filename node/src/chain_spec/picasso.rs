@@ -25,7 +25,6 @@ pub fn genesis_config(
 			code: parachain_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
-			changes_trie_config: Default::default(),
 		},
 		balances: parachain_runtime::BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.

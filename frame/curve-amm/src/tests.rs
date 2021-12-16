@@ -3,11 +3,44 @@ use frame_support::assert_ok;
 use crate::mock::*;
 use composable_traits::dex::CurveAmm as CurveAmmTrait;
 use frame_support::traits::fungibles::{Inspect, Mutate};
+use proptest::prelude::*;
 use sp_runtime::{
+	helpers_128bit::multiply_by_rational,
 	traits::{Saturating, Zero},
 	FixedPointNumber, FixedU128, Permill,
 };
 use sp_std::cmp::Ordering;
+
+/// Accepts -2, -1, 0, 1, 2
+macro_rules! prop_assert_zero_epsilon {
+	($x:expr) => {{
+		let epsilon = 2;
+		let upper = 0 + epsilon;
+		let lower = 0;
+		prop_assert!(upper >= $x && $x >= lower, "{} => {} >= {}", upper, $x, lower);
+	}};
+}
+
+/// Accept a 'dust' deviation
+macro_rules! prop_assert_epsilon {
+	($x:expr, $y:expr) => {{
+		let precision = 1000;
+		let epsilon = 5;
+		let upper = precision + epsilon;
+		let lower = precision - epsilon;
+		let q = multiply_by_rational($x, precision, $y).expect("qed;");
+		prop_assert!(
+			upper >= q && q >= lower,
+			"({}) => {} >= {} * {} / {} >= {}",
+			q,
+			upper,
+			$x,
+			precision,
+			$y,
+			lower
+		);
+	}};
+}
 
 #[test]
 fn compute_d_works() {
@@ -122,58 +155,59 @@ fn get_y_j_greater_than_n() {
 #[test]
 fn add_remove_liquidity() {
 	new_test_ext().execute_with(|| {
-		let assets = vec![MockCurrencyId::BTC, MockCurrencyId::USDT];
-		let amp_coeff = 2u128;
+		let assets = vec![MockCurrencyId::USDC, MockCurrencyId::USDT];
+		let amp_coeff = FixedU128::saturating_from_rational(1000i128, 1i128);
 		let fee = Permill::zero();
 		let admin_fee = Permill::zero();
 
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, 200000));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200000);
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 0);
-		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, 20));
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 20);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDC, &ALICE, 200000));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 200000);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &BOB, 200000));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200000);
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 0);
-		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &BOB, 20));
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 20);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDC, &BOB, 200000));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 200000);
 		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff, fee, admin_fee);
 		assert_ok!(&p);
 		let pool_id = p.unwrap();
 		let pool = CurveAmm::pool(pool_id);
 		assert!(pool.is_some());
-		let pool_info = pool.unwrap();
-		// 1 BTC = 65000 USDT
-		let amounts = vec![2u128, 130000u128];
+		let pool_lp_asset = CurveAmm::pool_lp_asset(pool_id);
+		assert!(pool_lp_asset.is_some());
+		let pool_lp_asset = pool_lp_asset.unwrap();
+		// 1 USDC = 1 USDT
+		let amounts = vec![130000u128, 130000u128];
 		assert_ok!(CurveAmm::add_liquidity(&ALICE, pool_id, amounts.clone(), 0u128));
-		let alice_balance = Tokens::balance(pool_info.pool_asset, &ALICE);
+		let alice_balance = Tokens::balance(pool_lp_asset, &ALICE);
 		assert_ne!(alice_balance, 0);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200000 - 130000);
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 20 - 2);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 200000 - 130000);
 		let pool = CurveAmm::pool(pool_id);
 		assert!(pool.is_some());
-		let pool_info = pool.unwrap();
 		assert_ok!(CurveAmm::add_liquidity(&BOB, pool_id, amounts.clone(), 0u128));
-		let bob_balance = Tokens::balance(pool_info.pool_asset, &BOB);
+		let bob_balance = Tokens::balance(pool_lp_asset, &BOB);
 		assert_ne!(bob_balance, 0);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200000 - 130000);
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 20 - 2);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 200000 - 130000);
 		let min_amt = vec![0u128, 0u128];
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CurveAmm::account_id(&pool_id)), 4);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &CurveAmm::account_id(&pool_id)), 260000);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)), 260000);
 		assert_ok!(CurveAmm::remove_liquidity(&ALICE, pool_id, alice_balance, min_amt.clone()));
-		assert_eq!(Tokens::balance(pool_info.pool_asset, &ALICE), 0);
+		assert_eq!(Tokens::balance(pool_lp_asset, &ALICE), 0);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200000);
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 20);
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CurveAmm::account_id(&pool_id)), 2);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 200000);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &CurveAmm::account_id(&pool_id)), 130000);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)), 130000);
 		assert_ok!(CurveAmm::remove_liquidity(&BOB, pool_id, bob_balance, min_amt.clone()));
-		assert_eq!(Tokens::balance(pool_info.pool_asset, &BOB), 0);
+		assert_eq!(Tokens::balance(pool_lp_asset, &BOB), 0);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200000);
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 20);
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CurveAmm::account_id(&pool_id)), 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 200000);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &CurveAmm::account_id(&pool_id)), 0);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)), 0);
 	});
 }
@@ -181,23 +215,23 @@ fn add_remove_liquidity() {
 #[test]
 fn exchange_test() {
 	new_test_ext().execute_with(|| {
-		let assets = vec![MockCurrencyId::BTC, MockCurrencyId::USDT];
-		let amp_coeff = 2u128;
+		let assets = vec![MockCurrencyId::USDC, MockCurrencyId::USDT];
+		let amp_coeff = FixedU128::saturating_from_rational(1000i128, 1i128);
 		let fee = Permill::zero();
 		let admin_fee = Permill::zero();
 
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, 200000));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200000);
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 0);
-		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &ALICE, 20));
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 20);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDC, &ALICE, 200000));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 200000);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &BOB, 200000));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200000);
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 0);
-		assert_ok!(Tokens::mint_into(MockCurrencyId::BTC, &BOB, 20));
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 20);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDC, &BOB, 200000));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 200000);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &CHARLIE, 200000));
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), 200000);
@@ -205,25 +239,172 @@ fn exchange_test() {
 		assert_ok!(&p);
 		let pool_id = p.unwrap();
 		let pool = CurveAmm::pool(pool_id);
+		let pool_lp_asset = CurveAmm::pool_lp_asset(pool_id);
 		assert!(pool.is_some());
-		let pool_info = pool.unwrap();
-		// 1 BTC = 65000 USDT
-		let amounts = vec![2u128, 130000u128];
+		assert!(pool_lp_asset.is_some());
+		let pool_lp_asset = pool_lp_asset.unwrap();
+		// 1 USDC = 1 USDT
+		let amounts = vec![130000u128, 130000u128];
 		assert_ok!(CurveAmm::add_liquidity(&ALICE, pool_id, amounts.clone(), 0u128));
-		let alice_balance = Tokens::balance(pool_info.pool_asset, &ALICE);
+		let alice_balance = Tokens::balance(pool_lp_asset, &ALICE);
 		assert_ne!(alice_balance, 0);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200000 - 130000);
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &ALICE), 20 - 2);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 200000 - 130000);
 		let pool = CurveAmm::pool(pool_id);
 		assert!(pool.is_some());
-		let pool_info = pool.unwrap();
 		assert_ok!(CurveAmm::add_liquidity(&BOB, pool_id, amounts.clone(), 0u128));
-		let bob_balance = Tokens::balance(pool_info.pool_asset, &BOB);
+		let bob_balance = Tokens::balance(pool_lp_asset, &BOB);
 		assert_ne!(bob_balance, 0);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200000 - 130000);
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &BOB), 20 - 2);
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 200000 - 130000);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &CHARLIE), 0);
 		assert_ok!(CurveAmm::exchange(&CHARLIE, pool_id, 1, 0, 65000, 0));
-		assert_eq!(Tokens::balance(MockCurrencyId::BTC, &CHARLIE), 1);
+		assert!(65000 - Tokens::balance(MockCurrencyId::USDC, &CHARLIE) < 10);
 	});
+}
+
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(10000))]
+
+	#[test]
+	fn proptest_exchange(alice_balance in 1..u32::MAX,
+						 bob_balance in 1..u32::MAX) {
+
+	new_test_ext().execute_with(|| {
+		// configuration for DEX Pool
+		let assets = vec![MockCurrencyId::USDC, MockCurrencyId::USDT];
+		let amp_coeff = FixedU128::saturating_from_rational(10000i128, 1i128);
+		let fee = Permill::zero();
+		let admin_fee = Permill::zero();
+
+		// Add funds to ALICE's account.
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, alice_balance.into()));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), alice_balance.into());
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDC, &ALICE, alice_balance.into()));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), alice_balance.into());
+
+		// Add funds to BOB's account.
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &BOB, bob_balance.into()));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), bob_balance.into());
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDC, &BOB, bob_balance.into()));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), bob_balance.into());
+
+		// Add funds to CHARLIE's account.
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &CHARLIE, alice_balance.into()));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CHARLIE), alice_balance.into());
+
+
+		// create DEX pool for 1 USDC = 1 USDT
+		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff, fee, admin_fee);
+		assert_ok!(&p);
+		let pool_id = p.unwrap();
+		let pool = CurveAmm::pool(pool_id);
+		let pool_lp_asset = CurveAmm::pool_lp_asset(pool_id);
+		assert!(pool.is_some());
+		assert!(pool_lp_asset.is_some());
+		let pool_lp_asset = pool_lp_asset.unwrap();
+
+		// ALICE adds liquidity to DEX pool.
+		let alice_amounts = vec![alice_balance as u128, alice_balance as u128];
+		assert_ok!(CurveAmm::add_liquidity(&ALICE, pool_id, alice_amounts.clone(), 0u128));
+		let alice_lp_balance = Tokens::balance(pool_lp_asset, &ALICE);
+		assert_ne!(alice_lp_balance, 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 0);
+
+		// BOB adds liquidity to DEX pool.
+		let bob_amounts = vec![bob_balance as u128, bob_balance as u128];
+		assert_ok!(CurveAmm::add_liquidity(&BOB, pool_id, bob_amounts.clone(), 0u128));
+		let bob_lp_balance = Tokens::balance(pool_lp_asset, &BOB);
+		assert_ne!(bob_lp_balance, 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 0);
+
+		// CHARLIE exchanges USDT for USDC, CHARLIE has same balance of USDT as of ALICE.
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &CHARLIE), 0);
+		assert_ok!(CurveAmm::exchange(&CHARLIE, pool_id, 1, 0, alice_balance as u128, 0));
+		prop_assert_epsilon!(alice_balance as u128, Tokens::balance(MockCurrencyId::USDC, &CHARLIE));
+		Ok(())
+	}).unwrap();
+	}
+
+	#[test]
+	fn proptest_add_remove_liquidity(alice_balance in 0..u32::MAX,
+									 bob_balance in 0..u32::MAX) {
+	new_test_ext().execute_with(|| {
+		// configuration for DEX Pool
+		let assets = vec![MockCurrencyId::USDC, MockCurrencyId::USDT];
+		let amp_coeff = FixedU128::saturating_from_rational(1000i128, 1i128);
+		let fee = Permill::zero();
+		let admin_fee = Permill::zero();
+
+		// Add funds to ALICE's account.
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, alice_balance.into()));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), alice_balance.into());
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDC, &ALICE, alice_balance.into()));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), alice_balance.into());
+
+		// Add funds to BOB's account.
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &BOB, bob_balance.into()));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), bob_balance.into());
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 0);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDC, &BOB, bob_balance.into()));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), bob_balance.into());
+
+		// create DEX pool for 1 USDC = 1 USDT
+		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff, fee, admin_fee);
+		assert_ok!(&p);
+		let pool_id = p.unwrap();
+		let pool = CurveAmm::pool(pool_id);
+		assert!(pool.is_some());
+		let pool_lp_asset = CurveAmm::pool_lp_asset(pool_id);
+		assert!(pool_lp_asset.is_some());
+		let pool_lp_asset = pool_lp_asset.unwrap();
+
+		// ALICE adds liquidity to DEX pool.
+		let alice_amounts = vec![alice_balance as u128, alice_balance as u128];
+		assert_ok!(CurveAmm::add_liquidity(&ALICE, pool_id, alice_amounts.clone(), 0u128));
+		let alice_lp_balance = Tokens::balance(pool_lp_asset, &ALICE);
+		assert_ne!(alice_lp_balance, 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 0);
+
+		// BOB adds liquidity to DEX pool.
+		let bob_amounts = vec![bob_balance as u128, bob_balance as u128];
+		assert_ok!(CurveAmm::add_liquidity(&BOB, pool_id, bob_amounts.clone(), 0u128));
+		let bob_lp_balance = Tokens::balance(pool_lp_asset, &BOB);
+		assert_ne!(bob_balance, 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 0);
+
+		let min_amt = vec![0u128, 0u128];
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &CurveAmm::account_id(&pool_id)), alice_balance as u128 + bob_balance as u128);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)), alice_balance as u128 + bob_balance as u128);
+
+		// ALICE removes liquidity from DEX pool.
+		assert_ok!(CurveAmm::remove_liquidity(&ALICE, pool_id, alice_lp_balance, min_amt.clone()));
+		prop_assert_zero_epsilon!(Tokens::balance(pool_lp_asset, &ALICE));
+		prop_assert_epsilon!(Tokens::balance(MockCurrencyId::USDT, &ALICE), alice_balance as u128);
+		prop_assert_epsilon!(Tokens::balance(MockCurrencyId::USDC, &ALICE), alice_balance as u128);
+		prop_assert_epsilon!(Tokens::balance(MockCurrencyId::USDC, &CurveAmm::account_id(&pool_id)), bob_balance as u128);
+		prop_assert_epsilon!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)), bob_balance as u128);
+
+		// BOB removes liquidity from DEX pool.
+		assert_ok!(CurveAmm::remove_liquidity(&BOB, pool_id, bob_lp_balance, min_amt.clone()));
+		prop_assert_zero_epsilon!(Tokens::balance(pool_lp_asset, &BOB));
+		prop_assert_zero_epsilon!(Tokens::balance(MockCurrencyId::USDC, &CurveAmm::account_id(&pool_id)));
+		prop_assert_zero_epsilon!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)));
+		prop_assert_epsilon!(Tokens::balance(MockCurrencyId::USDT, &BOB), bob_balance as u128);
+		prop_assert_epsilon!(Tokens::balance(MockCurrencyId::USDC, &BOB), bob_balance as u128);
+		Ok(())
+	}).unwrap();
+	}
 }

@@ -12,6 +12,7 @@ members = [
     "node",
     "price-feed",
     "runtime/picasso",
+    "runtime/composable",
     "utils/subxt-clients",
     "utils/collator-sidecar"
 ]

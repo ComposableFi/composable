@@ -1,7 +1,6 @@
 //! Setup of XCMP for parachain to allow cross chain transfers and other operations.
 //! Very similar to https://github.com/galacticcouncil/Basilisk-node/blob/master/runtime/basilisk/src/xcm.rs
 #![allow(unused_imports)] // allow until v2 xcm released (instead creating 2 runtimes)
-#![cfg_attr(not(feature = "std"), no_std)]
 
 use super::*; // recursive dependency onto runtime
 

@@ -1,21 +1,3 @@
-//! # Vaults Pallet
-//!
-//! A batteries included vault module, usable as liquidity pools, yield farming vaults or embeddable
-//! as core infrastructure.
-//!
-//! ## Overview
-//!
-//! The Vault module provides functionality for asset pool management of fungible asset classes
-//! with a fixed supply, including:
-//!
-//! * Vault Creation.
-//! * Deposits and Withdrawals.
-//! * Strategy Re-balancing.
-//! * Surcharge Claims and Rent.
-//!
-//! To use it in your runtime, you need to implement the vault's [`Config`].
-//!
-//! ## Terminology
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(
 	dead_code,
@@ -36,32 +18,40 @@
 	while_true,
 	trivial_casts,
 	trivial_numeric_casts,
-	unused_extern_crates,
-	rustdoc::missing_doc_code_examples
+	unused_extern_crates
 )]
 // Some substrate macros are expanded in such a way that their items cannot be documented. For now,
 // it's best to just set this to warn during development.
 #![allow(missing_docs)]
+#![doc = include_str!("../README.md")]
 
 mod capabilities;
 pub mod models;
 mod rent;
 mod traits;
 
+pub use crate::weights::WeightInfo;
 pub use capabilities::Capabilities;
 pub use pallet::*;
 
 pub mod mocks;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+pub mod weights;
 
 #[cfg(test)]
 mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use core::ops::AddAssign;
+
 	use crate::{
 		models::StrategyOverview,
-		rent::Verdict,
+		rent::{self, Verdict},
 		traits::{CurrencyFactory, StrategicVault},
+		weights::WeightInfo,
 	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
@@ -72,18 +62,23 @@ pub mod pallet {
 		},
 	};
 	use frame_support::{
+		dispatch::DispatchResultWithPostInfo,
 		ensure,
 		pallet_prelude::*,
 		traits::{
-			fungibles::{Inspect, Mutate, Transfer},
-			tokens::{fungibles::MutateHold, DepositConsequence},
+			fungible::{
+				Inspect as InspectNative, Mutate as MutateNative, MutateHold as MutateHoldNative,
+				Transfer as TransferNative,
+			},
+			fungibles::{Inspect, Mutate, MutateHold, Transfer},
+			tokens::DepositConsequence,
 		},
-		PalletId,
+		transactional, PalletId,
 	};
 	use frame_system::{
 		ensure_root, ensure_signed, pallet_prelude::OriginFor, Config as SystemConfig,
 	};
-	use num_traits::SaturatingSub;
+	use num_traits::{One, SaturatingSub};
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
@@ -94,7 +89,6 @@ pub mod pallet {
 		ArithmeticError, DispatchError, FixedPointNumber, Perquintill,
 	};
 	use sp_std::fmt::Debug;
-
 	#[allow(missing_docs)]
 	pub type AssetIdOf<T> =
 		<<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
@@ -110,6 +104,64 @@ pub mod pallet {
 	pub type VaultInfo<T> =
 		crate::models::VaultInfo<AccountIdOf<T>, BalanceOf<T>, AssetIdOf<T>, BlockNumberOf<T>>;
 
+	// NOTE(hussein-aitlahcen): extra constraints for benchmarking simplicity
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait Config: frame_system::Config {
+		#[allow(missing_docs)]
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Balance: Default
+			+ Parameter
+			+ Codec
+			+ Copy
+			+ Ord
+			+ CheckedAdd
+			+ CheckedSub
+			+ CheckedMul
+			+ SaturatingSub
+			+ AtLeast32BitUnsigned
+			+ From<u128>
+			+ Zero;
+		type CurrencyFactory: CurrencyFactory<Self::AssetId>;
+		type AssetId: FullCodec
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ From<u128>
+			+ TypeInfo;
+		type NativeCurrency: TransferNative<Self::AccountId, Balance = Self::Balance>
+			+ MutateNative<Self::AccountId, Balance = Self::Balance>
+			+ MutateHoldNative<Self::AccountId, Balance = Self::Balance>;
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+		type VaultId: AddAssign
+			+ FullCodec
+			+ One
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ Into<u128>
+			+ From<u64>
+			+ TypeInfo;
+		type WeightInfo: WeightInfo;
+		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
+		type MaxStrategies: Get<usize>;
+		type MinimumDeposit: Get<Self::Balance>;
+		type MinimumWithdrawal: Get<Self::Balance>;
+		type CreationDeposit: Get<Self::Balance>;
+		type ExistentialDeposit: Get<Self::Balance>;
+		type TombstoneDuration: Get<Self::BlockNumber>;
+		type RentPerBlock: Get<Self::Balance>;
+		type PalletId: Get<PalletId>;
+	}
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
@@ -144,10 +196,30 @@ pub mod pallet {
 			+ Default
 			+ TypeInfo;
 
-		/// Generic Currency bounds. These functions are provided by the `[orml-tokens`](https://github.com/open-web3-stack/open-runtime-module-library/tree/HEAD/currencies) pallet.
+		/// The asset used to pay for rent and other fees.
+		type NativeCurrency: TransferNative<Self::AccountId, Balance = Self::Balance>
+			+ MutateNative<Self::AccountId, Balance = Self::Balance>
+			+ MutateHoldNative<Self::AccountId, Balance = Self::Balance>;
+
+		/// Currency is used for the assets managed by the vaults.
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+
+		/// Key type for the vaults. `VaultId` uniquely identifies a vault. The identifiers are
+		type VaultId: AddAssign
+			+ FullCodec
+			+ One
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ TypeInfo
+			+ Into<u128>;
+
+		type WeightInfo: WeightInfo;
 
 		/// Converts the `Balance` type to `u128`, which internally is used in calculations.
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
@@ -163,10 +235,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type MinimumWithdrawal: Get<Self::Balance>;
 
-		/// The asset ID used to pay for rent.
-		#[pallet::constant]
-		type NativeAssetId: Get<Self::AssetId>;
-
 		/// The minimum native asset needed to create a vault.
 		#[pallet::constant]
 		type CreationDeposit: Get<Self::Balance>;
@@ -175,6 +243,10 @@ pub mod pallet {
 		/// than the rent.
 		#[pallet::constant]
 		type ExistentialDeposit: Get<Self::Balance>;
+
+		/// The duration that a vault may remain tombstoned before it can be deleted.
+		#[pallet::constant]
+		type TombstoneDuration: Get<Self::BlockNumber>;
 
 		/// The rent being charged per block for vaults which have not committed the
 		/// `ExistentialDeposit`.
@@ -198,50 +270,32 @@ pub mod pallet {
 	/// Cleaned up vaults do not decrement the counter.
 	#[pallet::storage]
 	#[pallet::getter(fn vault_count)]
-	pub type VaultCount<T: Config> = StorageValue<_, VaultIndex, ValueQuery>;
+	pub type VaultCount<T: Config> = StorageValue<_, T::VaultId, ValueQuery>;
 
 	/// Info for each specific vaults.
 	#[pallet::storage]
 	#[pallet::getter(fn vault_data)]
-	pub type Vaults<T: Config> = StorageMap<_, Twox64Concat, VaultIndex, VaultInfo<T>, ValueQuery>;
+	pub type Vaults<T: Config> = StorageMap<_, Twox64Concat, T::VaultId, VaultInfo<T>, ValueQuery>;
 
 	/// Associated LP token for each vault.
 	#[pallet::storage]
 	#[pallet::getter(fn lp_tokens_to_vaults)]
 	pub type LpTokensToVaults<T: Config> =
-		StorageMap<_, Twox64Concat, T::AssetId, VaultIndex, ValueQuery>;
+		StorageMap<_, Twox64Concat, T::AssetId, T::VaultId, ValueQuery>;
 
-	/// Amounts which each strategy is allowed to access, including the amount reserved for quick
-	/// withdrawals for the pallet.
-	#[pallet::storage]
-	#[pallet::getter(fn allocations)]
-	pub type Allocations<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		VaultIndex,
-		Blake2_128Concat,
-		T::AccountId,
-		Perquintill,
-		ValueQuery,
-	>;
-
-	/// Overview of the balances at each strategy. Does not contain the balance held by the vault
-	/// itself.
+	/// Overview of the allocation & balances at each strategy. Does not contain the balance held by
+	/// the vault itself.
 	#[pallet::storage]
 	#[pallet::getter(fn capital_structure)]
 	pub type CapitalStructure<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		VaultIndex,
+		T::VaultId,
 		Blake2_128Concat,
 		T::AccountId,
 		StrategyOverview<T::Balance>,
 		ValueQuery,
 	>;
-
-	/// Key type for the vaults. `VaultIndex` uniquely identifies a vault.
-	// TODO: should probably be settable through the config
-	pub type VaultIndex = u64;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -249,7 +303,7 @@ pub mod pallet {
 		/// Emitted after a vault has been successfully created.
 		VaultCreated {
 			/// The (incremented) ID of the created vault.
-			id: VaultIndex,
+			id: T::VaultId,
 		},
 		/// Emitted after a user deposits funds into the vault.
 		Deposited {
@@ -276,12 +330,12 @@ pub mod pallet {
 		/// Emitted after a succesful emergency shutdown.
 		EmergencyShutdown {
 			/// The ID of the vault.
-			vault: VaultIndex,
+			vault: T::VaultId,
 		},
 		/// Emitted after a vault is restarted.
 		VaultStarted {
 			/// The ID of the vault.
-			vault: VaultIndex,
+			vault: T::VaultId,
 		},
 	}
 
@@ -331,18 +385,27 @@ pub mod pallet {
 		/// Not all vaults have an associated LP token. Attempting to perform LP token related
 		/// operations result in `NotVaultLpToken`.
 		NotVaultLpToken,
-		/// The vault has deposits halted, see [Capabilities](crate::capabilities::Capability).
+		/// The vault has deposits halted, see [Capabilities](crate::capabilities::Capabilities).
 		DepositsHalted,
-		/// The vault has withdrawals halted, see [Capabilities](crate::capabilities::Capability).
+		/// The vault has withdrawals halted, see
+		/// [Capabilities](crate::capabilities::Capabilities).
 		WithdrawalsHalted,
+		OnlyManagerCanDoThisOperation,
+		InvalidDeletionClaim,
+		/// The vault could not be deleted, as it was not yet tombstoned.
+		VaultNotTombstoned,
+		/// The vault could not be deleted, as it was not tombstoned for long enough.
+		TombstoneDurationNotExceeded,
+		/// Existentially funded vaults do not require extra funds.
+		InvalidAddSurcharge,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Creates a new vault, locking up the deposit. If the deposit is greater than the
-		/// `ExistentialDeposit`, the vault will remain alive forever, else it can be `tombstoned`
-		/// after `deposit / RentPerBlock `. Accounts may deposit more funds to keep the vault
-		/// alive.
+		/// `ExistentialDeposit` + `CreationDeposit`, the vault will remain alive forever, else it
+		/// can be `tombstoned` after `deposit / RentPerBlock `. Accounts may deposit more funds to
+		/// keep the vault alive.
 		///
 		/// # Emits
 		///  - [`Event::VaultCreated`](Event::VaultCreated)
@@ -351,70 +414,159 @@ pub mod pallet {
 		///  - When the origin is not signed.
 		///  - When `deposit < CreationDeposit`.
 		///  - Origin has insufficient funds to lock the deposit.
-		#[pallet::weight(10_000)]
+		#[transactional]
+		#[pallet::weight(<T as Config>::WeightInfo::create())]
 		pub fn create(
 			origin: OriginFor<T>,
 			vault: VaultConfig<AccountIdOf<T>, AssetIdOf<T>>,
-			deposit: BalanceOf<T>,
+			deposit_amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
 
-			ensure!(deposit >= T::CreationDeposit::get(), Error::<T>::InsufficientCreationDeposit);
-
-			let native_id = T::NativeAssetId::get();
-			T::Currency::hold(native_id, &from, deposit)?;
-
-			let deposit = if deposit > T::ExistentialDeposit::get() {
-				Deposit::Existential
-			} else {
-				Deposit::Rent { amount: deposit, at: <frame_system::Pallet<T>>::block_number() }
+			let (deposit_amount, deletion_reward) = {
+				let deletion_reward = T::CreationDeposit::get();
+				(
+					deposit_amount
+						.checked_sub(&deletion_reward)
+						.ok_or(Error::<T>::InsufficientCreationDeposit)?,
+					deletion_reward,
+				)
 			};
+
+			// TODO(kaiserkarel): determine if we return the amount to the creator/manager after
+			// deletion of the vault, or immediately to the treasury. (leaning towards the
+			// second).
+			let deposit = rent::deposit_from_balance::<T>(deposit_amount);
+
 			let id = <Self as Vault>::create(deposit, vault)?;
+			T::NativeCurrency::transfer(
+				&from,
+				&Self::deletion_reward_account(id),
+				deletion_reward,
+				true,
+			)?;
+
+			T::NativeCurrency::transfer(&from, &Self::rent_account(id), deposit_amount, true)?;
 			Self::deposit_event(Event::VaultCreated { id });
 			Ok(().into())
 		}
 
-		/// Tombstones a vault, rewarding the caller if successful with a small fee.
+		/// Substracts rent from a vault, rewarding the caller if successful with a small fee and
+		/// possibly tombstoning the vault.
 		///
-		/// TODO:
-		///  - Check that the vault has no more funds, else do something?
-		///  - First disable the vault, then after X amount of time delete it
-		#[pallet::weight(10_000)]
+		/// A tombstoned vault still allows for withdrawals but blocks deposits, and requests all
+		/// strategies to return their funds.
+		#[pallet::weight(<T as Config>::WeightInfo::claim_surcharge())]
 		pub fn claim_surcharge(
 			origin: OriginFor<T>,
-			dest_id: VaultIndex,
+			dest: T::VaultId,
 			address: Option<AccountIdOf<T>>,
 		) -> DispatchResultWithPostInfo {
 			let origin = origin.into();
 
-			let (signed, _rewarded) = match (origin, address) {
-				(Ok(frame_system::RawOrigin::Signed(account)), None) => (true, account),
-				(Ok(frame_system::RawOrigin::None), Some(address)) => (false, address),
+			let reward_address = match (origin, address) {
+				(Ok(frame_system::RawOrigin::Signed(account)), None) => account,
+				(Ok(frame_system::RawOrigin::None), Some(address)) => address,
 				_ => return Err(Error::<T>::InvalidSurchargeClaim.into()),
 			};
 
-			// for now, we'll only allow collators to claim surcharges. Once we implement
-			// capabilities + tombstoning, we'll evaluate having users call this too.
-			ensure!(!signed, Error::<T>::InvalidSurchargeClaim);
+			Vaults::<T>::try_mutate_exists(dest, |vault| -> DispatchResultWithPostInfo {
+				let mut vault = vault.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
+				let current_block = <frame_system::Pallet<T>>::block_number();
 
-			let vault = Self::vault_info(&dest_id)?;
-			let current_block = <frame_system::Pallet<T>>::block_number();
+				match rent::evaluate_eviction::<T>(current_block, vault.deposit) {
+					Verdict::Exempt => Ok(().into()),
+					Verdict::Evict => {
+						vault.deposit = Deposit::Rent { amount: Zero::zero(), at: current_block };
+						vault.capabilities.set_tombstoned();
+						let account = &Self::rent_account(dest);
+						// Clean up anything that remains in the vault's account. The reward for
+						// cleaning up the tombstoned vault is in `deletion_reward_account`.
+						let reward = T::NativeCurrency::reducible_balance(account, false);
+						T::NativeCurrency::transfer(account, &reward_address, reward, false)?;
+						Ok(().into())
+					},
+					Verdict::Charge { remaining, payable } => {
+						vault.deposit = Deposit::Rent { amount: remaining, at: current_block };
+						// If this transfer call fails due to the vaults account not being kept
+						// alive, the caller should come back later, and evict the vault, which
+						// empties the entire account. This ensures that the deposit accurately
+						// reflects the account balance of the vault.
+						T::NativeCurrency::transfer(
+							&Self::rent_account(dest),
+							&reward_address,
+							payable,
+							true,
+						)?;
+						Ok(().into())
+					},
+				}
+			})
+		}
 
-			match crate::rent::evaluate_eviction::<T>(current_block, vault.deposit) {
-				Verdict::Exempt => {
-					todo!("do not reward, but charge less weight")
-				},
-				Verdict::Evict { .. } => {
-					// we should also decide if we are going to drop the vault if there are still
-					// assets left in strategies. If some strategy becomes bricked, they will never
-					// report or return a balance. Tombstoned vaults would then effectively take up
-					// storage forever.
-					todo!("clean up all storage associated with the vault, and then reward the caller")
-				},
-				Verdict::Charge { .. } => {
-					todo!("update vault deposit info, charge some of the rent from the `hold`ed balance")
-				},
-			}
+		#[pallet::weight(<T as Config>::WeightInfo::add_surcharge())]
+		pub fn add_surcharge(
+			origin: OriginFor<T>,
+			dest: T::VaultId,
+			amount: T::Balance,
+		) -> DispatchResultWithPostInfo {
+			let origin = ensure_signed(origin)?;
+
+			ensure!(amount >= T::CreationDeposit::get(), Error::<T>::InsufficientCreationDeposit);
+
+			Vaults::<T>::try_mutate_exists(dest, |vault| -> DispatchResultWithPostInfo {
+				let mut vault = vault.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
+				let current = match vault.deposit {
+					Deposit::Existential => return Err(Error::<T>::InvalidAddSurcharge.into()),
+					Deposit::Rent { amount, .. } => amount,
+				};
+				T::NativeCurrency::transfer(&origin, &Self::rent_account(dest), amount, false)?;
+				vault.deposit = rent::deposit_from_balance::<T>(amount + current);
+				// since we guaranteed above that we're adding at least CreationDeposit, we can
+				// now untombstone it. If it was not tombstoned, this is a noop.
+				vault.capabilities.untombstone();
+				Ok(().into())
+			})
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::delete_tombstoned())]
+		pub fn delete_tombstoned(
+			origin: OriginFor<T>,
+			dest: T::VaultId,
+			address: Option<AccountIdOf<T>>,
+		) -> DispatchResultWithPostInfo {
+			let reward_address = match (origin.into(), address) {
+				(Ok(frame_system::RawOrigin::Signed(account)), None) => account,
+				(Ok(frame_system::RawOrigin::None), Some(address)) => address,
+				_ => return Err(Error::<T>::InvalidSurchargeClaim.into()),
+			};
+
+			Vaults::<T>::try_mutate_exists(dest, |v| -> DispatchResultWithPostInfo {
+				let vault = v.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
+				ensure!(vault.capabilities.is_tombstoned(), Error::<T>::VaultNotTombstoned);
+
+				if !rent::evaluate_deletion::<T>(
+					<frame_system::Pallet<T>>::block_number(),
+					vault.deposit,
+				) {
+					return Err(Error::<T>::TombstoneDurationNotExceeded.into())
+				} else {
+					let deletion_reward_account = &Self::deletion_reward_account(dest);
+					let reward =
+						T::NativeCurrency::reducible_balance(deletion_reward_account, false);
+					// No need to keep `deletion_reward_account` alive. After this operation, the
+					// vault has no associated data anymore.
+					T::NativeCurrency::transfer(
+						deletion_reward_account,
+						&reward_address,
+						reward,
+						false,
+					)?;
+					LpTokensToVaults::<T>::remove(vault.asset_id);
+					v.take();
+				}
+				Ok(().into())
+			})
 		}
 
 		/// Deposit funds in the vault and receive LP tokens in return.
@@ -424,10 +576,10 @@ pub mod pallet {
 		/// # Errors
 		///  - When the origin is not signed.
 		///  - When `deposit < MinimumDeposit`.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::deposit())]
 		pub fn deposit(
 			origin: OriginFor<T>,
-			vault: VaultIndex,
+			vault: T::VaultId,
 			asset_amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
@@ -436,7 +588,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Deposit funds in the vault and receive LP tokens in return.
+		/// Withdraw funds
+		///
 		/// # Emits
 		///  - Event::Withdrawn
 		///
@@ -444,10 +597,10 @@ pub mod pallet {
 		///  - When the origin is not signed.
 		///  - When `lp_amount < MinimumWithdrawal`.
 		///  - When the vault has insufficient amounts reserved.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::withdraw())]
 		pub fn withdraw(
 			origin: OriginFor<T>,
-			vault: VaultIndex,
+			vault: T::VaultId,
 			lp_amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let to = ensure_signed(origin)?;
@@ -464,10 +617,10 @@ pub mod pallet {
 		/// # Errors
 		///  - When the origin is not root.
 		///  - When `vault` does not exist.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::emergency_shutdown())]
 		pub fn emergency_shutdown(
 			origin: OriginFor<T>,
-			vault: VaultIndex,
+			vault: T::VaultId,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			<Self as CapabilityVault>::stop(&vault)?;
@@ -483,8 +636,8 @@ pub mod pallet {
 		/// # Errors
 		///  - When the origin is not root.
 		///  - When `vault` does not exist.
-		#[pallet::weight(10_000)]
-		pub fn start(origin: OriginFor<T>, vault: VaultIndex) -> DispatchResultWithPostInfo {
+		#[pallet::weight(<T as Config>::WeightInfo::start_())]
+		pub fn start(origin: OriginFor<T>, vault: T::VaultId) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			<Self as CapabilityVault>::start(&vault)?;
 			Self::deposit_event(Event::VaultStarted { vault });
@@ -502,18 +655,17 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn liquidate_strategy(
 			origin: OriginFor<T>,
-			vault_idx: VaultIndex,
-			strategy_account: T::AccountId,
+			vault_idx: T::VaultId,
+			strategy_account_id: T::AccountId,
 		) -> DispatchResult {
 			let from = ensure_signed(origin)?;
 			ensure!(Self::vault_info(&vault_idx)?.manager == from, Error::<T>::AccountIsNotManager);
-			let balance = CapitalStructure::<T>::try_get(&vault_idx, &strategy_account)
+			let balance = CapitalStructure::<T>::try_get(&vault_idx, &strategy_account_id)
 				.map_err(|_err| DispatchError::CannotLookup)?
 				.balance;
-			CapitalStructure::<T>::remove(&vault_idx, &strategy_account);
-			Allocations::<T>::remove(&vault_idx, &strategy_account);
+			CapitalStructure::<T>::remove(&vault_idx, &strategy_account_id);
 			Self::deposit_event(Event::LiquidateStrategy {
-				account: strategy_account,
+				account: strategy_account_id,
 				amount: balance,
 			});
 			Ok(())
@@ -524,14 +676,14 @@ pub mod pallet {
 		pub fn do_create_vault(
 			deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
 			config: VaultConfig<T::AccountId, T::AssetId>,
-		) -> Result<(VaultIndex, VaultInfo<T>), DispatchError> {
+		) -> Result<(T::VaultId, VaultInfo<T>), DispatchError> {
 			// 1. check config
 			// 2. lock endowment
 			// 3. mint LP token
 			// 4. insert vault (do we check if the strategy addresses even exists?)
 			VaultCount::<T>::try_mutate(|id| {
 				let id = {
-					*id += 1;
+					*id += One::one();
 					*id
 				};
 
@@ -549,7 +701,7 @@ pub mod pallet {
 					.strategies
 					.iter()
 					.fold(Some(config.reserved.deconstruct()), |sum, (_, allocation)| {
-						sum.map(|sum| sum.checked_add(allocation.deconstruct())).flatten()
+						sum.and_then(|sum| sum.checked_add(allocation.deconstruct()))
 					})
 					.ok_or(Error::<T>::AllocationMustSumToOne)?;
 
@@ -562,19 +714,17 @@ pub mod pallet {
 					{ T::CurrencyFactory::create().map_err(|_| Error::<T>::CannotCreateAsset)? };
 
 				config.strategies.into_iter().for_each(|(account_id, allocation)| {
-					Allocations::<T>::insert(id, account_id.clone(), allocation);
 					CapitalStructure::<T>::insert(
 						id,
 						account_id,
 						StrategyOverview {
+							allocation,
 							balance: T::Balance::zero(),
 							lifetime_withdrawn: T::Balance::zero(),
 							lifetime_deposited: T::Balance::zero(),
 						},
 					);
 				});
-
-				Allocations::<T>::insert(id, Self::account_id(&id), config.reserved);
 
 				let vault_info = crate::models::VaultInfo {
 					lp_token_id,
@@ -591,14 +741,25 @@ pub mod pallet {
 			})
 		}
 
+		fn rent_account(vault_id: T::VaultId) -> T::AccountId {
+			let vault_id: u128 = vault_id.into();
+			T::PalletId::get().into_sub_account(&[b"rent_account____", &vault_id.to_le_bytes()])
+		}
+
+		fn deletion_reward_account(vault_id: T::VaultId) -> T::AccountId {
+			let vault_id: u128 = vault_id.into();
+			T::PalletId::get().into_sub_account(&[b"deletion_account", &vault_id.to_le_bytes()])
+		}
+
 		/// Computes the sum of all the assets that the vault currently controls.
-		fn assets_under_management(vault_id: &VaultIndex) -> Result<T::Balance, DispatchError> {
-			let vault = Self::vault_info(vault_id)?;
-			Ok(Self::do_assets_under_management(vault_id, &vault)?)
+		fn assets_under_management(vault_id: &T::VaultId) -> Result<T::Balance, Error<T>> {
+			let vault =
+				Vaults::<T>::try_get(vault_id).map_err(|_| Error::<T>::VaultDoesNotExist)?;
+			Self::do_assets_under_management(vault_id, &vault)
 		}
 
 		fn do_withdraw(
-			vault_id: &VaultIndex,
+			vault_id: &T::VaultId,
 			to: &T::AccountId,
 			lp_amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
@@ -638,7 +799,7 @@ pub mod pallet {
 		}
 
 		fn do_deposit(
-			vault_id: &VaultIndex,
+			vault_id: &T::VaultId,
 			from: &T::AccountId,
 			amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
@@ -701,7 +862,7 @@ pub mod pallet {
 		}
 
 		fn do_lp_share_value(
-			vault_id: &VaultIndex,
+			vault_id: &T::VaultId,
 			vault: &VaultInfo<T>,
 			lp_amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
@@ -734,7 +895,7 @@ pub mod pallet {
 
 		/// Computes the sum of all the assets that the vault currently controls.
 		fn do_assets_under_management(
-			vault_id: &VaultIndex,
+			vault_id: &T::VaultId,
 			vault: &VaultInfo<T>,
 		) -> Result<T::Balance, Error<T>> {
 			let owned = T::Currency::balance(vault.asset_id, &Self::account_id(vault_id));
@@ -744,7 +905,7 @@ pub mod pallet {
 		}
 
 		/// Tries to fetch a stored [VaultInfo] through its index.
-		fn vault_info(vault_idx: &VaultIndex) -> Result<VaultInfo<T>, DispatchError> {
+		fn vault_info(vault_idx: &T::VaultId) -> Result<VaultInfo<T>, DispatchError> {
 			Ok(Vaults::<T>::try_get(vault_idx).map_err(|_err| Error::<T>::VaultDoesNotExist)?)
 		}
 	}
@@ -753,7 +914,7 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type Balance = T::Balance;
 		type BlockNumber = T::BlockNumber;
-		type VaultId = VaultIndex;
+		type VaultId = T::VaultId;
 		type AssetId = AssetIdOf<T>;
 
 		fn asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError> {
@@ -831,19 +992,22 @@ pub mod pallet {
 			vault_id: &Self::VaultId,
 			account: &Self::AccountId,
 		) -> Result<FundsAvailability<Self::Balance>, DispatchError> {
-			match (Vaults::<T>::try_get(vault_id), Allocations::<T>::try_get(vault_id, &account)) {
-				(Ok(vault), Ok(allocation)) if !vault.capabilities.is_stopped() => {
+			match (
+				Vaults::<T>::try_get(vault_id),
+				CapitalStructure::<T>::try_get(vault_id, &account),
+			) {
+				(Ok(vault), Ok(StrategyOverview { allocation, balance, .. }))
+					if !vault.capabilities.is_stopped() && !vault.capabilities.is_tombstoned() =>
+				{
 					let aum = Self::assets_under_management(vault_id)?;
 					let max_allowed = <T::Convert as Convert<u128, T::Balance>>::convert(
 						allocation
 							.mul_floor(<T::Convert as Convert<T::Balance, u128>>::convert(aum)),
 					);
-					let state = CapitalStructure::<T>::try_get(vault_id, &account).expect("if a strategy has an allocation, it must have an associated capital structure too");
-
-					if state.balance >= max_allowed {
-						Ok(FundsAvailability::Depositable(state.balance - max_allowed))
+					if balance >= max_allowed {
+						Ok(FundsAvailability::Depositable(balance - max_allowed))
 					} else {
-						Ok(FundsAvailability::Withdrawable(max_allowed - state.balance))
+						Ok(FundsAvailability::Withdrawable(max_allowed - balance))
 					}
 				},
 				(_, _) => Ok(FundsAvailability::MustLiquidate),

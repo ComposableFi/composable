@@ -5,14 +5,26 @@ on:
     inputs:
         target:
           required: true
-          description: Target node tags 
+          description: Target node tags
+        playbook_file:
+          required: true
+          description: Playbook file to run
+        chain:
+          required: true
+          description: Chain to use, dali|picasso
+       
 
 env: 
-  RELEASE_VERSION: ""
   TARGET: ${{ github.event.inputs.target }}
-  PLAYBOOK: "client-upgrade.yml"
+  PLAYBOOK: ${{ github.event.inputs.playbook_file }}
   INVENTORY_FILE: "gcp.yaml"
+<<<<<<< HEAD
   ENVIRONMENT: ${{ github.event.inputs.environment }}
+=======
+  CHAIN: ${{ github.event.inputs.chain }}
+  RELEASE_VERSION:
+  ROOT_KEY: ${{ secrets.ROOT_KEY }}
+>>>>>>> bbc78797a884a247a0eb17742f1eda5975252d60
 
 jobs:
   run-playbooks:
@@ -24,8 +36,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Run ansible playbook
-      working-directory: "/opt/ansible/inventory"
+      with: 
+        fetch-depth: 0
+
+    - name: Set env
       run: |
-        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^[0-9]' | tail -1)" >> $GITHUB_ENV
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^'${CHAIN}'-[0-9]' | tail -1 )" >> $GITHUB_ENV
+
+    - name: Run ansible playbook
+      working-directory: "./.maintain/playbooks"
+      run: |
         ansible-playbook -l $TARGET $PLAYBOOK -i $INVENTORY_FILE -e 'ansible_python_interpreter=/usr/bin/python3'

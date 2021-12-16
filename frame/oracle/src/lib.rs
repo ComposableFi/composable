@@ -20,7 +20,10 @@ pub mod weights;
 pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
-	use composable_traits::oracle::{Oracle, Price as LastPrice};
+	use composable_traits::{
+		currency::PriceableAsset,
+		oracle::{Oracle, Price as LastPrice},
+	};
 	use core::ops::{Div, Mul};
 	use frame_support::{
 		dispatch::{DispatchResult, DispatchResultWithPostInfo},
@@ -99,7 +102,8 @@ pub mod pallet {
 			+ Into<u128>
 			+ Debug
 			+ Default
-			+ TypeInfo;
+			+ TypeInfo
+			+ PriceableAsset;
 		type PriceValue: Default
 			+ Parameter
 			+ Codec
@@ -198,6 +202,12 @@ pub mod pallet {
 	#[pallet::getter(fn oracle_stake)]
 	/// Mapping of signing key to stake
 	pub type OracleStake<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, BalanceOf<T>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn answer_in_transit)]
+	/// Mapping of slash amounts currently in transit
+	pub type AnswerInTransit<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, BalanceOf<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn prices)]
@@ -322,6 +332,8 @@ pub mod pallet {
 		ArithmeticError,
 		/// Block interval is less then stale price
 		BlockIntervalLength,
+		/// There was an error transferring
+		TransferError,
 	}
 
 	#[pallet::hooks]
@@ -341,11 +353,14 @@ pub mod pallet {
 		type AssetId = T::AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 
+		// TODO(hussein-aitlahcen):
+		// implement the amount based computation with decimals once it's been completely defined
 		fn get_price(
-			of: Self::AssetId,
+			asset: Self::AssetId,
+			_amount: Self::Balance,
 		) -> Result<LastPrice<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
-				Prices::<T>::try_get(of).map_err(|_| Error::<T>::PriceNotFound)?;
+				Prices::<T>::try_get(asset).map_err(|_| Error::<T>::PriceNotFound)?;
 			Ok(LastPrice { price, block })
 		}
 
@@ -477,7 +492,8 @@ pub mod pallet {
 			ensure!(block > withdrawal.unlock_block, Error::<T>::StakeLocked);
 			DeclaredWithdraws::<T>::remove(&signer);
 			T::Currency::unreserve(&signer, withdrawal.stake);
-			let _ = T::Currency::transfer(&signer, &who, withdrawal.stake, AllowDeath);
+			let result = T::Currency::transfer(&signer, &who, withdrawal.stake, AllowDeath);
+			ensure!(result.is_ok(), Error::<T>::TransferError);
 
 			ControllerToSigner::<T>::remove(&who);
 			SignerToController::<T>::remove(&signer);
@@ -502,18 +518,25 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let author_stake = OracleStake::<T>::get(&who).unwrap_or_else(Zero::zero);
 			ensure!(Self::is_requested(&asset_id), Error::<T>::PriceNotRequested);
-			ensure!(author_stake >= T::MinStake::get(), Error::<T>::NotEnoughStake);
+			ensure!(
+				author_stake >=
+					T::MinStake::get().saturating_add(
+						Self::answer_in_transit(&who).unwrap_or_else(Zero::zero)
+					),
+				Error::<T>::NotEnoughStake
+			);
 
 			let set_price = PrePrice {
 				price,
 				block: frame_system::Pallet::<T>::block_number(),
 				who: who.clone(),
 			};
+			let asset_info = AssetsInfo::<T>::get(asset_id);
 			PrePrices::<T>::try_mutate(asset_id, |current_prices| -> Result<(), DispatchError> {
 				// There can convert current_prices.len() to u32 safely
 				// because current_prices.len() limited by u32
 				// (type of AssetsInfo::<T>::get(asset_id).max_answers).
-				if current_prices.len() as u32 >= AssetsInfo::<T>::get(asset_id).max_answers {
+				if current_prices.len() as u32 >= asset_info.max_answers {
 					return Err(Error::<T>::MaxPrices.into())
 				}
 				if current_prices.iter().any(|candidate| candidate.who == who) {
@@ -522,6 +545,12 @@ pub mod pallet {
 				current_prices.push(set_price);
 				Ok(())
 			})?;
+
+			AnswerInTransit::<T>::mutate(&who, |transit| {
+				*transit =
+					Some(transit.unwrap_or_else(Zero::zero).saturating_add(asset_info.slash));
+			});
+
 			Self::deposit_event(Event::PriceSubmitted(who, asset_id, price));
 			Ok(Pays::No.into())
 		}
@@ -566,13 +595,12 @@ pub mod pallet {
 		) {
 			let asset_info = Self::asset_info(asset_id);
 			for answer in pre_prices {
-				let accuracy: Percent;
-				if answer.price < price {
-					accuracy = PerThing::from_rational(answer.price, price);
+				let accuracy: Percent = if answer.price < price {
+					PerThing::from_rational(answer.price, price)
 				} else {
 					let adjusted_number = price.saturating_sub(answer.price - price);
-					accuracy = PerThing::from_rational(adjusted_number, price);
-				}
+					PerThing::from_rational(adjusted_number, price)
+				};
 				let min_accuracy = AssetsInfo::<T>::get(asset_id).threshold;
 				if accuracy < min_accuracy {
 					let slash_amount = asset_info.slash;
@@ -591,13 +619,17 @@ pub mod pallet {
 					let controller = SignerToController::<T>::get(&answer.who)
 						.unwrap_or_else(|| answer.who.clone());
 
-					let _ = T::Currency::deposit_into_existing(&controller, reward_amount);
+					let result = T::Currency::deposit_into_existing(&controller, reward_amount);
+					if result.is_err() {
+						log::warn!("Failed to deposit {:?}", controller);
+					}
 					Self::deposit_event(Event::UserRewarded(
 						answer.who.clone(),
 						asset_id,
 						reward_amount,
 					));
 				}
+				Self::remove_price_in_transit(&asset_id, &answer.who);
 			}
 		}
 
@@ -631,7 +663,8 @@ pub mod pallet {
 			// because pre_pruned_prices.len() limited by u32
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 			if pre_pruned_prices.len() as u32 >= asset_info.min_answers {
-				let res = Self::prune_old_pre_prices(asset_info, pre_pruned_prices, block);
+				let res =
+					Self::prune_old_pre_prices(asset_info, pre_pruned_prices, block, &asset_id);
 				let staled_prices = res.0;
 				pre_prices = res.1;
 				for p in staled_prices {
@@ -680,6 +713,7 @@ pub mod pallet {
 			asset_info: AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
 			mut pre_prices: Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 			block: T::BlockNumber,
+			asset_id: &T::AssetId,
 		) -> (
 			Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 			Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
@@ -688,6 +722,7 @@ pub mod pallet {
 			let (staled_prices, mut fresh_prices) =
 				match pre_prices.iter().position(|p| p.block >= stale_block) {
 					Some(index) => {
+						Self::remove_price_in_transit(asset_id, &pre_prices[index].who);
 						let fresh_prices = pre_prices.split_off(index);
 						(pre_prices, fresh_prices)
 					},
@@ -695,8 +730,13 @@ pub mod pallet {
 				};
 
 			// check max answer
-			if fresh_prices.len() as u32 > asset_info.max_answers {
-				fresh_prices = fresh_prices[0..asset_info.max_answers as usize].to_vec();
+			let max_answers = asset_info.max_answers;
+			if fresh_prices.len() as u32 > max_answers {
+				let pruned = fresh_prices.len() - max_answers as usize;
+				for price in fresh_prices.iter().skip(pruned) {
+					Self::remove_price_in_transit(asset_id, &price.who);
+				}
+				fresh_prices = fresh_prices[0..max_answers as usize].to_vec();
 			}
 
 			(staled_prices, fresh_prices)
@@ -735,6 +775,13 @@ pub mod pallet {
 			let current_block = frame_system::Pallet::<T>::block_number();
 			let asset_info = Self::asset_info(price_id);
 			last_update.block + asset_info.block_interval < current_block
+		}
+
+		pub fn remove_price_in_transit(asset_id: &T::AssetId, who: &T::AccountId) {
+			let asset_info = AssetsInfo::<T>::get(asset_id);
+			AnswerInTransit::<T>::mutate(&who, |transit| {
+				*transit = Some(transit.unwrap_or_else(Zero::zero).saturating_sub(asset_info.slash))
+			});
 		}
 
 		pub fn get_twap(
@@ -790,10 +837,15 @@ pub mod pallet {
 			let mut to32 = AccountId32::as_ref(&account);
 			let address: T::AccountId = T::AccountId::decode(&mut to32).unwrap_or_default();
 
-			if prices.into_iter().any(|price| price.who == address) {
-				return Err("Tx already submitted")
+			if prices.len() as u32 >= Self::asset_info(price_id).max_answers {
+				log::info!("Max answers reached");
+				return Err("Max answers reached")
 			}
 
+			if prices.into_iter().any(|price| price.who == address) {
+				log::info!("Tx already submitted");
+				return Err("Tx already submitted")
+			}
 			// Make an external HTTP request to fetch the current price.
 			// Note this call will block until response is received.
 			let price = Self::fetch_price(price_id).map_err(|_| "Failed to fetch price")?;

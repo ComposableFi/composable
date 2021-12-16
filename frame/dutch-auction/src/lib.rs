@@ -16,10 +16,8 @@
 	unused_parens,
 	while_true,
 	trivial_casts,
-	trivial_numeric_casts,
-	unused_extern_crates
+	trivial_numeric_casts
 )]
-// TODO: allow until pallet fully implemented
 #![allow(unused_imports)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
@@ -30,12 +28,11 @@ mod price_function;
 
 #[frame_support::pallet]
 pub mod pallet {
-
 	use codec::{Codec, Decode, Encode, FullCodec};
 	use composable_traits::{
 		auction::{AuctionState, AuctionStepFunction, DutchAuction},
-		dex::{Orderbook, SimpleExchange},
-		loans::{DurationSeconds, Timestamp, ONE_HOUR},
+		dex::{Orderbook, Price, SimpleExchange},
+		loans::{DeFiComposableConfig, DurationSeconds, PriceStructure, Timestamp, ONE_HOUR},
 		math::{LiftedFixedBalance, SafeArithmetic, WrappingNext},
 	};
 	use frame_support::{
@@ -66,41 +63,6 @@ pub mod pallet {
 
 	use crate::price_function::AuctionTimeCurveModel;
 
-	pub trait DeFiComposableConfig: frame_system::Config {
-		// what.
-		type AssetId: FullCodec
-			+ Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ From<u128>
-			+ Default
-			+ TypeInfo;
-
-		type Balance: Default
-			+ Parameter
-			+ Codec
-			+ Copy
-			+ Ord
-			+ CheckedAdd
-			+ CheckedSub
-			+ CheckedMul
-			+ CheckedSub
-			+ AtLeast32BitUnsigned
-			+ From<u64> // at least 64 bit
-			+ Zero
-			+ FixedPointOperand
-			+ Into<LiftedFixedBalance> // integer part not more than bits in this
-			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
-			  // bit
-
-		/// bank. vault owned - can transfer, cannot mint
-		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			// used to check balances before any storage updates allowing acting without rollback
-			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
-	}
-
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
 	pub trait Config: DeFiComposableConfig {
@@ -111,9 +73,11 @@ pub mod pallet {
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 			OrderId = Self::DexOrderId,
+			GroupId = Self::GroupId,
 		>;
 		type DexOrderId: FullCodec + Default + TypeInfo;
 		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext + TypeInfo;
+		type GroupId: FullCodec + Clone + Debug + PartialEq + Default + TypeInfo;
 	}
 
 	#[pallet::event]
@@ -148,7 +112,7 @@ pub mod pallet {
 
 	/// auction can span several dex orders within its lifetime
 	#[derive(Encode, Decode, Default, TypeInfo)]
-	pub struct Order<DexOrderId, AccountId, AssetId, Balance> {
+	pub struct Order<DexOrderId, AccountId, AssetId, Balance, GroupId> {
 		/// when auction was created(started)
 		pub started: Timestamp,
 		/// how price decreases with time
@@ -166,25 +130,24 @@ pub mod pallet {
 		/// amount of source currency
 		pub source_total_amount: Balance,
 		/// price of source unit to start auction with.
-		pub source_initial_price: Balance,
+		pub source_initial_price: PriceStructure<GroupId, Balance>,
 		/// auction state
 		pub state: AuctionState<DexOrderId>,
 	}
 
+	type OrderIdOf<T> = <<T as Config>::Orderbook as Orderbook>::OrderId;
+
+	type OrderOf<T> = Order<
+		OrderIdOf<T>,
+		<T as frame_system::Config>::AccountId,
+		<T as DeFiComposableConfig>::AssetId,
+		<T as DeFiComposableConfig>::Balance,
+		<T as Config>::GroupId,
+	>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn orders)]
-	pub type Orders<T: Config> = StorageMap<
-		_,
-		Twox64Concat,
-		T::OrderId,
-		Order<
-			<<T as Config>::Orderbook as Orderbook>::OrderId,
-			T::AccountId,
-			T::AssetId,
-			T::Balance,
-		>,
-		ValueQuery,
-	>;
+	pub type Orders<T: Config> = StorageMap<_, Twox64Concat, T::OrderId, OrderOf<T>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn orders_index)]
@@ -201,12 +164,10 @@ pub mod pallet {
 
 		type Orderbook = T::Orderbook;
 
-		type Order = Order<
-			<<T as Config>::Orderbook as Orderbook>::OrderId,
-			T::AccountId,
-			T::AssetId,
-			T::Balance,
-		>;
+		type GroupId = T::GroupId;
+
+		#[allow(clippy::type_complexity)]
+		type Order = Order<OrderIdOf<T>, T::AccountId, T::AssetId, T::Balance, T::GroupId>;
 
 		fn start(
 			account_id: &Self::AccountId,
@@ -215,20 +176,19 @@ pub mod pallet {
 			target_asset_id: Self::AssetId,
 			target_account: &Self::AccountId,
 			total_amount: Self::Balance,
-			initial_price: Self::Balance,
+			price: PriceStructure<Self::GroupId, Self::Balance>,
 			function: AuctionStepFunction,
 		) -> Result<Self::OrderId, DispatchError> {
 			// TODO: with remote foreign chain DEX it can pass several blocks before we get on DEX.
 			// so somehow need to lock (transfer) currency before foreign transactions settles
 			ensure!(
-				matches!(
-					<T::Currency as Inspect<T::AccountId>>::can_withdraw(
-						source_asset_id,
-						account_id,
-						total_amount
-					),
-					WithdrawConsequence::Success
-				),
+				<T::Currency as Inspect<T::AccountId>>::can_withdraw(
+					source_asset_id,
+					account_id,
+					total_amount
+				)
+				.into_result()
+				.is_ok(),
 				Error::<T>::CannotWithdrawAmountEqualToDesiredAuction
 			);
 
@@ -246,7 +206,7 @@ pub mod pallet {
 				target_asset_id,
 				target_account: target_account.clone(),
 				source_total_amount: total_amount,
-				source_initial_price: initial_price,
+				source_initial_price: price,
 				state: AuctionState::AuctionStarted,
 			};
 			Orders::<T>::insert(order_id.clone(), order);
@@ -254,8 +214,9 @@ pub mod pallet {
 			Ok(order_id)
 		}
 
-		fn run_auctions(now: Timestamp) -> DispatchResult {
-			let mut removed = Vec::new(); // avoid removing during iteration as unsafe
+		fn off_chain_run_auctions(now: Timestamp) -> DispatchResult {
+			// avoid removing during iteration as unsafe
+			let mut removed = Vec::new();
 			for (order_id, order) in Orders::<T>::iter() {
 				match order.state {
 					AuctionState::AuctionStarted => {
@@ -265,7 +226,8 @@ pub mod pallet {
 							// for final protocol may be will need to transfer currency onto auction
 							// pallet sub account and send dex order with idempotency tracking id final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
 							let delta_time = now - order.started;
-							let price: LiftedFixedBalance = order.source_initial_price.into();
+							let price: LiftedFixedBalance =
+								order.source_initial_price.initial_price.into();
 							let total_price = price.safe_mul(&order.source_total_amount.into())?;
 							let price = match order.function {
 								AuctionStepFunction::LinearDecrease(parameters) =>
@@ -274,8 +236,10 @@ pub mod pallet {
 									parameters.price(total_price, delta_time),
 							}?
 							.checked_mul_int(1u64)
-							.ok_or(ArithmeticError::Overflow)?
-							.into();
+							.ok_or(ArithmeticError::Overflow)?;
+
+							let price =
+								Price::<Self::GroupId, Self::Balance>::new_any(price.into());
 
 							let dex_order_intention = <T::Orderbook as Orderbook>::post(
 								&order.account_id,
@@ -287,8 +251,9 @@ pub mod pallet {
 							)?;
 
 							Orders::<T>::mutate(order_id, |order| {
-								order.state = AuctionState::AuctionOnDex(dex_order_intention); // considers updating in place is
-								                               // safe during iteration
+								// considers updating in place is
+								// safe during iteration
+								order.state = AuctionState::AuctionOnDex(dex_order_intention.id);
 							});
 						}
 					},
