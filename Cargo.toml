@@ -9,6 +9,7 @@ members = [
 	"utils/parachain-utils",
     "frame/*",
     "integration-tests",
+    "integration-tests/simnode",
     "node",
     "price-feed",
     "runtime/picasso",
