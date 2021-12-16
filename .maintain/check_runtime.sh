@@ -16,32 +16,6 @@ VERSIONS_FILE="runtime/picasso/src/lib.rs"
 boldprint () { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
 boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done; printf "|\n" ; }
 
-<<<<<<< HEAD
-github_label () {
-	echo
-	echo "# run github-api job for labeling it ${1}"
-	curl -sS -X POST \
-		-F "token=${CI_JOB_TOKEN}" \
-		-F "ref=main" \
-		-F "variables[LABEL]=${1}" \
-		-F "variables[PRNO]=${CI_COMMIT_REF_NAME}" \
-		"${GITLAB_API}/projects/${GITHUB_API_PROJECT}/trigger/pipeline"
-}
-
-
-boldprint "latest 10 commits of ${CI_COMMIT_REF_NAME}"
-git log --graph --oneline --decorate=short -n 10
-
-boldprint "make sure the main branch and dali-chachacha tag are available in shallow clones"
-git fetch --depth="${GIT_DEPTH:-100}" origin main
-git fetch --depth="${GIT_DEPTH:-100}" origin dali-chachacha
-git tag -f dali-chachacha FETCH_HEAD
-git log -n1 dali-chachacha
-
-
-boldprint "check if the wasm sources changed"
-if ! has_runtime_changes origin/master "${CI_COMMIT_SHA}"
-=======
 
 boldprint "latest 10 commits of ${GITHUB_REF_NAME}"
 git log --graph --oneline --decorate=short -n 10
@@ -49,7 +23,6 @@ git log --graph --oneline --decorate=short -n 10
 
 boldprint "check if the wasm sources changed"
 if ! has_runtime_changes origin/main "${GITHUB_REF_NAME}"
->>>>>>> bbc78797a884a247a0eb17742f1eda5975252d60
 then
 	boldcat <<-EOT
 
@@ -66,15 +39,9 @@ fi
 # consensus-critical logic that has changed. the runtime wasm blobs must be
 # rebuilt.
 
-<<<<<<< HEAD
-add_spec_version="$(git diff tags/release ${CI_COMMIT_SHA} -- "${VERSIONS_FILE}" \
-	| sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
-sub_spec_version="$(git diff tags/release ${CI_COMMIT_SHA} -- "${VERSIONS_FILE}" \
-=======
 add_spec_version="$(git diff tags/release ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 	| sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
 sub_spec_version="$(git diff tags/release ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
->>>>>>> bbc78797a884a247a0eb17742f1eda5975252d60
 	| sed -n -r "s/^\-[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
 
 
@@ -95,15 +62,9 @@ else
 	# check for impl_version updates: if only the impl versions changed, we assume
 	# there is no consensus-critical logic that has changed.
 
-<<<<<<< HEAD
-	add_impl_version="$(git diff tags/release ${CI_COMMIT_SHA} -- "${VERSIONS_FILE}" \
-		| sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
-	sub_impl_version="$(git diff tags/release ${CI_COMMIT_SHA} -- "${VERSIONS_FILE}" \
-=======
 	add_impl_version="$(git diff tags/release ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 		| sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
 	sub_impl_version="$(git diff tags/release ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
->>>>>>> bbc78797a884a247a0eb17742f1eda5975252d60
 		| sed -n -r 's/^\-[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
 
 
