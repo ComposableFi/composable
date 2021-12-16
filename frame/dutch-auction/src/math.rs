@@ -62,8 +62,6 @@ impl AuctionTimeCurveModel for StairstepExponentialDecrease {
 
 #[cfg(test)]
 mod tests {
-	
-	
 
 	use composable_traits::{
 		auction::{LinearDecrease, StairstepExponentialDecrease},
@@ -73,9 +71,8 @@ mod tests {
 
 	use sp_arithmetic::assert_eq_error_rate;
 	use sp_runtime::{
-		traits::{
-			One, Zero,
-		}, FixedPointNumber, Permill,
+		traits::{One, Zero},
+		FixedPointNumber, Permill,
 	};
 
 	use crate::math::AuctionTimeCurveModel;

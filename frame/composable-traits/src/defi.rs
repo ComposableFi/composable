@@ -1,11 +1,17 @@
 //! Common codes for defi pallets
 
-use codec::{Decode, Encode, FullCodec, Codec};
-use frame_support::{Parameter, pallet_prelude::MaybeSerializeDeserialize};
+use codec::{Codec, Decode, Encode, FullCodec};
+use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use scale_info::TypeInfo;
-use sp_runtime::{DispatchError, traits::{CheckedSub, CheckedMul, CheckedAdd, Zero}, FixedPointOperand};
+use sp_runtime::{
+	traits::{CheckedAdd, CheckedMul, CheckedSub, Zero},
+	DispatchError, FixedPointOperand,
+};
 
-use crate::{currency::{AssetIdLike, BalanceLike}, math::LiftedFixedBalance};
+use crate::{
+	currency::{AssetIdLike, BalanceLike},
+	math::LiftedFixedBalance,
+};
 
 /// take `quote` currency and give `base` currency
 #[derive(Encode, Decode, TypeInfo)]
@@ -62,10 +68,10 @@ impl<AssetId, Balance> Sell<AssetId, Balance> {
 }
 
 /// default sale is no sale
-impl<AssetId : Default, Balance: Default> Default for Sell<AssetId, Balance> {
-    fn default() -> Self {
-        Self { pair: Default::default(), limit: Default::default() }
-    }
+impl<AssetId: Default, Balance: Default> Default for Sell<AssetId, Balance> {
+	fn default() -> Self {
+		Self { pair: Default::default(), limit: Default::default() }
+	}
 }
 
 /// order is something that lives some some time until taken
@@ -73,8 +79,16 @@ pub trait OrderIdLike:
 	FullCodec + Copy + Eq + PartialEq + sp_std::fmt::Debug + TypeInfo + sp_std::hash::Hash + Default
 {
 }
-impl<T: FullCodec + Copy + Eq + PartialEq + sp_std::fmt::Debug + TypeInfo + sp_std::hash::Hash + Default>
-	OrderIdLike for T
+impl<
+		T: FullCodec
+			+ Copy
+			+ Eq
+			+ PartialEq
+			+ sp_std::fmt::Debug
+			+ TypeInfo
+			+ sp_std::hash::Hash
+			+ Default,
+	> OrderIdLike for T
 {
 }
 
@@ -99,13 +113,9 @@ pub trait SellEngine<Configuration>: DeFiEngine {
 	) -> Result<(), DispatchError>;
 }
 
-
 pub trait DeFiComposableConfig: frame_system::Config {
 	// what.
-	type AssetId: AssetIdLike
-		+ MaybeSerializeDeserialize
-		+ From<u128>
-		+ Default;
+	type AssetId: AssetIdLike + MaybeSerializeDeserialize + From<u128> + Default;
 
 	type Balance: BalanceLike
 		+ Default

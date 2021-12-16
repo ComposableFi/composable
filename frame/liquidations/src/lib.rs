@@ -25,34 +25,17 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use codec::{Codec, FullCodec};
+	use codec::FullCodec;
 	use composable_traits::{
-		auction::DutchAuction,
-		dex::{Orderbook, SimpleExchange},
-		lending::Lending,
-		liquidation::Liquidation,
-		loans::{DeFiComposableConfig, PriceStructure},
-		math::LiftedFixedBalance,
+		auction::DutchAuction, defi::DeFiComposableConfig, lending::Lending,
+		liquidation::Liquidation, loans::PriceStructure,
 	};
 	use frame_support::{
-		dispatch::DispatchResult,
-		log,
-		pallet_prelude::MaybeSerializeDeserialize,
-		traits::{Hooks, IsType, UnixTime},
-		transactional, PalletId, Parameter,
+		traits::{IsType, UnixTime},
+		PalletId,
 	};
-	use frame_system::{offchain::Signer, pallet_prelude::*, Account};
-	use num_traits::{CheckedDiv, SaturatingSub};
-	use scale_info::TypeInfo;
-	use sp_runtime::{
-		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
-			Saturating, Zero,
-		},
-		ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128, Percent,
-		Perquintill,
-	};
-	use sp_std::{fmt::Debug, vec::Vec};
+
+	use sp_runtime::DispatchError;
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Liqudati");
 
@@ -70,7 +53,6 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 			AssetId = Self::AssetId,
 			OrderId = u128,
-			GroupId = Self::GroupId,
 		>;
 
 		type GroupId: Default + FullCodec;
@@ -103,13 +85,14 @@ pub mod pallet {
 		type GroupId = T::GroupId;
 
 		fn liquidate(
-			source_account: &Self::AccountId,
-			source_asset_id: Self::AssetId,
-			source_asset_price: PriceStructure<Self::GroupId, Self::Balance>,
-			target_asset_id: Self::AssetId,
-			target_account: &Self::AccountId,
-			total_amount: Self::Balance,
+			_source_account: &Self::AccountId,
+			_source_asset_id: Self::AssetId,
+			_source_asset_price: PriceStructure<Self::GroupId, Self::Balance>,
+			_target_asset_id: Self::AssetId,
+			_target_account: &Self::AccountId,
+			_total_amount: Self::Balance,
 		) -> Result<Self::LiquidationId, DispatchError> {
+			Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
 			todo!("call liquidation engines")
 		}
 	}

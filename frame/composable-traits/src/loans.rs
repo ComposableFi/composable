@@ -1,5 +1,5 @@
 //! shared types across lending/liquidation/auctions pallets
-use codec::{Decode, Encode,};
+use codec::{Decode, Encode};
 
 use scale_info::TypeInfo;
 
@@ -24,10 +24,8 @@ impl<GroupId, Balance> PriceStructure<GroupId, Balance> {
 	}
 }
 
-
-
-	// /// bank. vault owned - can transfer, cannot mint
-	// type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-	// 	+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-	// 	// used to check balances before any storage updates allowing acting without rollback
-	// 	+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+// /// bank. vault owned - can transfer, cannot mint
+// type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+// 	+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+// 	// used to check balances before any storage updates allowing acting without rollback
+// 	+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
