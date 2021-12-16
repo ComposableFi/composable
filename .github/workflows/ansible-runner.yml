@@ -12,12 +12,15 @@ on:
         chain:
           required: true
           description: Chain to use, dali|picasso
+        inventory_file:
+          required: true
+          description: Inventory file to use
        
 
 env: 
   TARGET: ${{ github.event.inputs.target }}
   PLAYBOOK: ${{ github.event.inputs.playbook_file }}
-  INVENTORY_FILE: "gcp.yaml"
+  INVENTORY_FILE: ${{ github.event.inputs.inventory_file }}
   CHAIN: ${{ github.event.inputs.chain }}
   RELEASE_VERSION:
   ROOT_KEY: ${{ secrets.ROOT_KEY }}
