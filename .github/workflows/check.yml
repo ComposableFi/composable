@@ -9,6 +9,7 @@ on:
       - develop
       - dali-chachacha
       - picasso
+      - release-publisher
   workflow_dispatch:
 concurrency: ci-check
 jobs:
