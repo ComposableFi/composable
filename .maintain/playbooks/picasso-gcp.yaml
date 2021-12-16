@@ -1,6 +1,5 @@
 ---
 plugin: gcp_compute
-ansible_user=root
 projects:
   - composableops
 hostname:
