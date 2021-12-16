@@ -38,7 +38,7 @@ jobs:
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
-        asset_name: picasso_runtime
+        asset_name: picasso_runtime.compact.wasm
         tag: ${{ github.ref }}
         overwrite: true
         body: "Runtime Release"
