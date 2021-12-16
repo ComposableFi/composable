@@ -17,4 +17,3 @@
     service_account_file: /opt/ansible/inventory/new.json
     vars:
       - ansible_python_interpreter: /usr/bin/python3
-      

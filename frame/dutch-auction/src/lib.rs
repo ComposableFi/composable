@@ -7,25 +7,20 @@ mod math;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use codec::{Decode, Encode,};
+	use codec::{Decode, Encode};
 	use composable_traits::{
 		auction::{AuctionStepFunction, DutchAuction},
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
-		math::{WrappingNext},
+		math::WrappingNext,
 	};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{
-			IsType, UnixTime,
-		},
+		traits::{IsType, UnixTime},
 	};
 	use scale_info::TypeInfo;
-	
-	use sp_runtime::{
-		
-		DispatchError,
-	};
-	use sp_std::{vec::Vec};
+
+	use sp_runtime::DispatchError;
+	use sp_std::vec::Vec;
 
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
@@ -48,9 +43,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-		OrderAdded { 
-			order_id: OrderIdOf<T>,
-		}
+		OrderAdded { order_id: OrderIdOf<T> },
 	}
 
 	#[pallet::error]
@@ -69,7 +62,6 @@ pub mod pallet {
 		pub take: Take<Balance>,
 	}
 
-	
 	#[pallet::storage]
 	#[pallet::getter(fn orders_index)]
 	pub type OrdersIndex<T: Config> = StorageValue<_, T::OrderId, ValueQuery>;
@@ -104,9 +96,7 @@ pub mod pallet {
 			_base_amount: Self::Balance,
 			_configuration: AuctionStepFunction,
 		) -> Result<Self::OrderId, DispatchError> {
-			Self::deposit_event(Event::OrderAdded{
-				order_id : <_>::default(),
-			});
+			Self::deposit_event(Event::OrderAdded { order_id: <_>::default() });
 			todo!()
 		}
 
@@ -119,12 +109,11 @@ pub mod pallet {
 		}
 	}
 
-
 	impl<T: Config + DeFiComposableConfig> DutchAuction for Pallet<T> {
-    type  Order = T::Order;
+		type Order = T::Order;
 
-    fn get_order(_order: &Self::OrderId) -> Option<Self::Order> {
-        todo!()
-    }
-}
+		fn get_order(_order: &Self::OrderId) -> Option<Self::Order> {
+			todo!()
+		}
+	}
 }
