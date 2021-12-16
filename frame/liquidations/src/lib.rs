@@ -19,10 +19,6 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
-// TODO: allow until pallet fully implemented
-#![allow(unused_imports)]
-#![allow(dead_code)]
-#![allow(unused_variables)]
 
 pub use pallet::*;
 
@@ -114,17 +110,7 @@ pub mod pallet {
 			target_account: &Self::AccountId,
 			total_amount: Self::Balance,
 		) -> Result<Self::LiquidationId, DispatchError> {
-			let order_id = <T as Config>::DutchAuction::start(
-				source_account,
-				source_asset_id,
-				source_account,
-				target_asset_id,
-				target_account,
-				total_amount,
-				source_asset_price,
-				composable_traits::auction::AuctionStepFunction::default(),
-			)?;
-			Ok(order_id)
+			todo!("call liquidation engines")
 		}
 	}
 }

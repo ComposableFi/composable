@@ -1,16 +1,11 @@
 //! Common codes for defi pallets
 
-use codec::{Decode, Encode, FullCodec};
+use codec::{Decode, Encode, FullCodec, Codec};
+use frame_support::{Parameter, pallet_prelude::MaybeSerializeDeserialize};
 use scale_info::TypeInfo;
-use sp_runtime::DispatchError;
+use sp_runtime::{DispatchError, traits::{CheckedSub, CheckedMul, CheckedAdd, Zero}, FixedPointOperand};
 
-use crate::currency::{AssetIdLike, BalanceLike};
-pub trait DeFiComposableConfig: frame_system::Config {
-	/// The asset ID type
-	type AssetId: AssetIdLike;
-	/// The balance type of an account
-	type Balance: BalanceLike;
-}
+use crate::{currency::{AssetIdLike, BalanceLike}, math::LiftedFixedBalance};
 
 /// take `quote` currency and give `base` currency
 #[derive(Encode, Decode, TypeInfo)]
@@ -66,12 +61,19 @@ impl<AssetId, Balance> Sell<AssetId, Balance> {
 	}
 }
 
+/// default sale is no sale
+impl<AssetId : Default, Balance: Default> Default for Sell<AssetId, Balance> {
+    fn default() -> Self {
+        Self { pair: Default::default(), limit: Default::default() }
+    }
+}
+
 /// order is something that lives some some time until taken
 pub trait OrderIdLike:
-	FullCodec + Copy + Eq + PartialEq + sp_std::fmt::Debug + TypeInfo + sp_std::hash::Hash
+	FullCodec + Copy + Eq + PartialEq + sp_std::fmt::Debug + TypeInfo + sp_std::hash::Hash + Default
 {
 }
-impl<T: FullCodec + Copy + Eq + PartialEq + sp_std::fmt::Debug + TypeInfo + sp_std::hash::Hash>
+impl<T: FullCodec + Copy + Eq + PartialEq + sp_std::fmt::Debug + TypeInfo + sp_std::hash::Hash + Default>
 	OrderIdLike for T
 {
 }
@@ -95,4 +97,30 @@ pub trait SellEngine<Configuration>: DeFiEngine {
 		order: Self::OrderId,
 		take: Take<Self::Balance>,
 	) -> Result<(), DispatchError>;
+}
+
+
+pub trait DeFiComposableConfig: frame_system::Config {
+	// what.
+	type AssetId: AssetIdLike
+		+ MaybeSerializeDeserialize
+		+ From<u128>
+		+ Default;
+
+	type Balance: BalanceLike
+		+ Default
+		+ Parameter
+		+ Codec
+		+ Copy
+		+ Ord
+		+ CheckedAdd
+		+ CheckedSub
+		+ CheckedMul
+		+ CheckedSub
+		+ From<u64> // at least 64 bit
+		+ Zero
+		+ FixedPointOperand
+		+ Into<LiftedFixedBalance> // integer part not more than bits in this
+		+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
+			  // bit
 }

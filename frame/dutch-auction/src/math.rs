@@ -9,11 +9,8 @@ use composable_traits::{
 };
 
 use sp_runtime::{
-	traits::{
-		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
-		Saturating, Zero,
-	},
-	ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill,
+	traits::{Saturating, Zero},
+	ArithmeticError, FixedPointNumber,
 };
 
 pub trait AuctionTimeCurveModel {
@@ -65,8 +62,8 @@ impl AuctionTimeCurveModel for StairstepExponentialDecrease {
 
 #[cfg(test)]
 mod tests {
-	use core::time;
-	use std::convert::TryInto;
+	
+	
 
 	use composable_traits::{
 		auction::{LinearDecrease, StairstepExponentialDecrease},
@@ -76,16 +73,12 @@ mod tests {
 
 	use sp_arithmetic::assert_eq_error_rate;
 	use sp_runtime::{
-		offchain::Duration,
 		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
-			Saturating, Zero,
-		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill,
-		Perquintill,
+			One, Zero,
+		}, FixedPointNumber, Permill,
 	};
 
-	use crate::price_function::AuctionTimeCurveModel;
+	use crate::math::AuctionTimeCurveModel;
 
 	#[test]
 	pub fn test_linear_decrease() {
@@ -131,7 +124,7 @@ mod tests {
 		}
 	}
 
-	use proptest::{prop_assert, prop_assert_eq, strategy::Strategy, test_runner::TestRunner};
+	use proptest::{prop_assert, strategy::Strategy, test_runner::TestRunner};
 
 	#[test]
 	pub fn proptest_half_each_second_vs_linear() {
