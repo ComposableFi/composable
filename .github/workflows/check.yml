@@ -1,6 +1,7 @@
-name: Test & Build & Benchmarking Build
+name: CI Check
 
 # please update docker, toolchain toml and github action with toolchain at same time
+
 on:
   pull_request:
     branches:
@@ -9,7 +10,7 @@ on:
       - dali-chachacha
       - picasso    
   workflow_dispatch:
-
+concurrency: ci-check
 jobs:
   check:
     runs-on:
@@ -27,10 +28,17 @@ jobs:
       - uses: actions-rs/cargo@v1
       - name: Cargo Check
         run: |
+          rustup target add wasm32-unknown-unknown
           SKIP_WASM_BUILD=1 cargo check --all --benches
       - name: Cargo Check Benchmark
         run: |
-          SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --release
+          SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --workspace --release --exclude integration-tests
+      - name: Picasso Runtime Build
+        run: |
+          cargo build --release -p picasso-runtime
+      - name: Picasso Runtime Build with develop feature
+        run: |
+          cargo build --release -p picasso-runtime --features develop
   linters:
     name: Linters
     runs-on:
@@ -46,13 +54,17 @@ jobs:
           toolchain: stable
           components: clippy
           override: true
+      - name: Install Rust components and targets
+        run: |
+          rustup target add wasm32-unknown-unknown
+          rustup component add rustfmt --toolchain nightly-x86_64-unknown-linux-gnu
+          rustup target add wasm32-unknown-unknown --toolchain nightly
       - name: Cargo fmt
         run: |
-          rustup component add rustfmt --toolchain nightly-x86_64-unknown-linux-gnu
           cargo +nightly fmt -- --check
       - name: Hadolint
         env:
-          HADOLINT_VERSION: v2.7.0
+          HADOLINT_VERSION: v2.8.0
         run: |
           curl -L -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
           chmod +x hadolint
@@ -66,12 +78,11 @@ jobs:
           exit $total_exit_code
       - name: Cargo clippy
         run: |
-          SKIP_WASM_BUILD=1 cargo clippy -- -D warnings
+          cargo +nightly clippy -- -D warnings
       - name: Cargo udeps
         env:
           UDEPS_VERSION: v0.1.24
         run: |
-          rustup target add wasm32-unknown-unknown
           curl -L -O "https://github.com/est31/cargo-udeps/releases/download/${UDEPS_VERSION}/cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
           tar xzf "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
           cp "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu/cargo-udeps" ~/.cargo/bin/
@@ -101,5 +112,6 @@ jobs:
       - name: Run Test
         run: |
           SKIP_WASM_BUILD=1 cargo test
-          cargo clean -p picasso-runtime
-          cargo clean -p composable
+          SKIP_WASM_BUILD=1 cargo clean -p picasso-runtime
+          SKIP_WASM_BUILD=1 cargo clean -p composable
+

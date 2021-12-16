@@ -1,0 +1,8 @@
+# Composable Github Action Workflow Code Owners
+
+# These owners will be the default owners for everything in the repo
+# Any change inside this directory will require approval from @haroldsphinx and @seunlanlege
+
+# .github/ @haroldsphinx @seunlanlege
+docker/ @haroldsphinx @seunlanlege
+Makefile @haroldsphinx

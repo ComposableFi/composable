@@ -31,17 +31,26 @@ mod types {
 	/// Index of a transaction in the chain.
 	pub type Index = u32;
 
+	/// The address format for describing accounts.
+	pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
+
 	/// A hash of some data used by the chain.
 	pub type Hash = sp_core::H256;
 
 	/// Digest item type.
-	pub type DigestItem = sp_runtime::generic::DigestItem<Hash>;
+	pub type DigestItem = sp_runtime::generic::DigestItem;
 
 	// Aura consensus authority.
 	pub type AuraId = sp_consensus_aura::sr25519::AuthorityId;
 
 	/// Council Instance
 	pub type CouncilInstance = collective::Instance1;
+
+	/// Concrete header
+	pub type Header = sp_runtime::generic::Header<BlockNumber, sp_runtime::traits::BlakeTwo256>;
+
+	/// Opaque block
+	pub type OpaqueBlock = sp_runtime::generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
 }
 
 /// Common constants of statemint and statemine
@@ -80,7 +89,7 @@ mod constants {
 	pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 	/// We allow for 2 seconds of compute with a 6 second average block time.
-	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND * 2;
+	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 
 	/// Origin for either root or half of general council
 	pub type EnsureRootOrHalfCouncil = EnsureOneOf<

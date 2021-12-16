@@ -1,0 +1,49 @@
+---
+    - hosts: all
+      vars:
+        chain: "{{ lookup('env','CHAIN') }}"
+        release_version: "{{ lookup('env','RELEASE_VERSION') }}"
+      tasks:
+        - name: Stop Composable service
+          become: true
+          command: supervisorctl stop composable
+    
+        # - name: Remove Previous Version #ToDO: add --continue-on-error
+        #   become: yes
+        #   command: rm /usr/bin/composable
+    
+        - name: Download composable binary {{ release_version }}
+          become: yes
+          get_url:
+            url: https://storage.googleapis.com/composable-binaries/community-releases/{{ chain }}/composable-{{ release_version }}.tar.gz
+            dest: ~/
+            mode: "+x"
+      
+    
+        - name: Unpack Composable Bonary file 
+          become: yes
+          unarchive: 
+            src: ~/composable-{{ release_version }}.tar.gz
+            dest: ~/
+            remote_src: yes
+          
+    
+        - name: Move composable binary to /usr/local/bin/composable
+          become: yes
+          command: mv ~/target/release/composable /usr/bin/composable
+    
+        - name: Change Composable file permission
+          become: yes
+          file:
+            path: /usr/bin/composable
+            owner: "composable"
+            group: "composable"
+    
+        - name: Check Version
+          become: yes
+          command: composable --version
+    
+    
+        - name: Start Composable service
+          become: true
+          command: supervisorctl start composable

@@ -7,7 +7,7 @@ Need to do to run 4 relay chain nodes and 1 Composable's collator:
 	```bash
 	old_pwd=$(pwd)
 	cd ../..
-	cargo build --release
+	cargo build --release --features develop
 	target/release/composable --version
 	cd "$old_pwd"
     ```
@@ -17,7 +17,7 @@ Need to do to run 4 relay chain nodes and 1 Composable's collator:
 	```bash
 	old_pwd=$(pwd)
 	cd ../../..
-	git clone -b v0.9.12 https://github.com/paritytech/polkadot
+	git clone -b v0.9.13 https://github.com/paritytech/polkadot
 	cd polkadot
 	cargo build --release
 	target/release/polkadot --version
@@ -49,7 +49,7 @@ Need to do to run 4 relay chain nodes, 2 Composable's collators and 2 Basilisk's
 	```bash
 	old_pwd=$(pwd)
 	cd ../..
-	cargo build --release
+	cargo build --release --features develop
 	target/release/composable --version
 	cd "$old_pwd"
     ```
@@ -59,7 +59,7 @@ Need to do to run 4 relay chain nodes, 2 Composable's collators and 2 Basilisk's
 	```bash
 	old_pwd=$(pwd)
 	cd ../../..
-	git clone -b v0.9.11 https://github.com/paritytech/polkadot
+	git clone -b v0.9.13 https://github.com/paritytech/polkadot
 	cd polkadot
 	cargo build --release
 	target/release/polkadot --version
@@ -71,7 +71,7 @@ Need to do to run 4 relay chain nodes, 2 Composable's collators and 2 Basilisk's
 	```bash
 	old_pwd=$(pwd)
 	cd ../../..
-	git clone -b v5.0.2 https://github.com/galacticcouncil/Basilisk-node.git
+	git clone -b v5.0.3 https://github.com/galacticcouncil/Basilisk-node.git
 	cd Basilisk-node
 	cargo build --release
 	target/release/basilisk --version

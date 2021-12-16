@@ -5,9 +5,11 @@ pub mod collective;
 pub mod crowdloan_bonus;
 pub mod democracy;
 pub mod frame_system;
+pub mod identity;
 pub mod indices;
-pub mod lending;
 pub mod membership;
+pub mod multisig;
+#[cfg(feature = "develop")]
 pub mod oracle;
 pub mod scheduler;
 pub mod session;

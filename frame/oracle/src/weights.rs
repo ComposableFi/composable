@@ -8,7 +8,6 @@ use sp_std::marker::PhantomData;
 // The weight info trait for `pallet_oracle`.
 pub trait WeightInfo {
 	fn add_asset_and_info() -> Weight;
-	fn request_price() -> Weight;
 	fn set_signer() -> Weight;
 	fn add_stake() -> Weight;
 	fn remove_stake() -> Weight;
@@ -24,11 +23,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn add_asset_and_info() -> Weight {
 		(33_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-	}
-	fn request_price() -> Weight {
-		(95_050_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	fn set_signer() -> Weight {
@@ -79,11 +73,6 @@ impl WeightInfo for () {
 	fn add_asset_and_info() -> Weight {
 		(33_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
-	}
-	fn request_price() -> Weight {
-		(95_050_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
 	fn set_signer() -> Weight {
