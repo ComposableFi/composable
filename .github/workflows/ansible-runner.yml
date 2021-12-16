@@ -1,0 +1,45 @@
+name: Run Ansible Playbooks
+
+on: 
+  workflow_dispatch:
+    inputs:
+        target:
+          required: true
+          description: Target node tags
+        playbook_file:
+          required: true
+          description: Playbook file to run
+        chain:
+          required: true
+          description: Chain to use, dali|picasso
+       
+
+env: 
+  TARGET: ${{ github.event.inputs.target }}
+  PLAYBOOK: ${{ github.event.inputs.playbook_file }}
+  INVENTORY_FILE: "gcp.yaml"
+  CHAIN: ${{ github.event.inputs.chain }}
+  RELEASE_VERSION:
+  ROOT_KEY: ${{ secrets.ROOT_KEY }}
+
+jobs:
+  run-playbooks:
+    runs-on: 
+        - self-hosted
+        - linux
+        - X64
+        - ansible-runner
+
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+
+    - name: Set env
+      run: |
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^'${CHAIN}'-[0-9]' | tail -1 )" >> $GITHUB_ENV
+
+    - name: Run ansible playbook
+      working-directory: "./.maintain/playbooks"
+      run: |
+        ansible-playbook -l $TARGET $PLAYBOOK -i $INVENTORY_FILE -e 'ansible_python_interpreter=/usr/bin/python3'
