@@ -15,6 +15,9 @@ on:
         inventory_file:
           required: true
           description: Inventory file to use
+        username:
+          required: true
+          description: Ansible Username
        
 
 env: 
@@ -24,6 +27,7 @@ env:
   CHAIN: ${{ github.event.inputs.chain }}
   RELEASE_VERSION:
   ROOT_KEY: ${{ secrets.ROOT_KEY }}
+  USERNAME: ${{ github.event.inputs.username }}
 
 jobs:
   run-playbooks:
@@ -45,4 +49,4 @@ jobs:
     - name: Run ansible playbook
       working-directory: "./.maintain/playbooks"
       run: |
-        ansible-playbook -l $TARGET $PLAYBOOK -i $INVENTORY_FILE -e 'ansible_python_interpreter=/usr/bin/python3'
+        ansible-playbook -l $TARGET $PLAYBOOK -i $INVENTORY_FILE  --user $USERNAME -e 'ansible_python_interpreter=/usr/bin/python3'
