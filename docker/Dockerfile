@@ -23,8 +23,6 @@ RUN curl "https://storage.googleapis.com/composable-binaries/community-releases/
 
 RUN chmod +x composable && mv composable /usr/local/bin
 
-RUN composable --version
-
 RUN useradd -m -u 1001 -U -s /bin/sh -d /composable composable && \
     mkdir -p /composable/.local/share/local_testnet && \
     mkdir /data && \
