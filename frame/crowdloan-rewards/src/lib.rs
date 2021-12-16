@@ -38,7 +38,7 @@ Reference for proof mechanism: https://github.com/paritytech/polkadot/blob/maste
 
 pub use pallet::*;
 
-mod models;
+pub mod models;
 
 #[cfg(test)]
 mod mocks;
@@ -47,9 +47,16 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use codec::Codec;
-	use frame_support::{pallet_prelude::*, traits::fungible::Mutate};
-	use frame_system::pallet_prelude::*;
+	use codec::{Decode, Codec};
+	use frame_support::{
+		pallet_prelude::{
+			ensure, Blake2_128Concat, DispatchError, DispatchResult, DispatchResultWithPostInfo,
+			Encode, EnsureOrigin, Get, IsType, MaybeSerializeDeserialize, OptionQuery, Parameter,
+			Pays, StorageMap, StorageValue, ValueQuery,
+		},
+		traits::fungible::Mutate,
+	};
+	use frame_system::pallet_prelude::{ensure_signed, OriginFor};
 	use scale_info::TypeInfo;
 	use sp_core::keccak_256;
 	use sp_runtime::{
@@ -60,7 +67,7 @@ pub mod pallet {
 		AccountId32, MultiSignature, Perbill,
 	};
 
-	use super::models::*;
+	use super::models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount};
 
 	#[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo)]
 	pub struct Reward<Balance, BlockNumber> {
@@ -252,7 +259,7 @@ pub mod pallet {
 						ethereum_recover(T::Prefix::get(), &reward_account_encoded, &eth_proof)
 							.ok_or(Error::<T>::InvalidProof)?;
 					Result::<_, DispatchError>::Ok(RemoteAccount::Ethereum(ethereum_address))
-				},
+				}
 				Proof::RelayChain(relay_account, relay_proof) => {
 					ensure!(
 						verify_relay(
@@ -264,7 +271,7 @@ pub mod pallet {
 						Error::<T>::InvalidProof
 					);
 					Ok(RemoteAccount::RelayChain(relay_account))
-				},
+				}
 			}?;
 			let claimed = Self::do_claim(remote_account.clone(), &reward_account)?;
 			Associations::<T>::insert(reward_account.clone(), remote_account.clone());
@@ -320,10 +327,10 @@ pub mod pallet {
 								// The user should have claimed the upfront payment + the vested
 								// amount until this window point.
 								let vested_reward = reward.total - upfront_payment;
-								upfront_payment +
-									(vested_reward
-										.saturating_mul(T::Convert::convert(vesting_window)) /
-										T::Convert::convert(reward.vesting_period))
+								upfront_payment
+									+ (vested_reward
+										.saturating_mul(T::Convert::convert(vesting_window))
+										/ T::Convert::convert(reward.vesting_period))
 							}
 						};
 						let available_to_claim = should_have_claimed - reward.claimed;
