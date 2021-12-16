@@ -3,6 +3,7 @@
       vars:
         chain: "{{ lookup('env','CHAIN') }}"
         release_version: "{{ lookup('env','RELEASE_VERSION') }}"
+        root_key: "{{ lookup('env','ROOT_KEY') }}"
       tasks:
         - name: Stop Composable service
           become: true
@@ -56,8 +57,7 @@
     
         - name: Runtime Upgrade
           become: yes
-          command: parachain-utils upgrade-runtime --path ~/target/release/picasso_runtime.compact.wasm
-    
+          command: parachain-utils upgrade-runtime --path ~/target/release/picasso_runtime.compact.wasm    
     
         - name: Start Composable service
           become: true
