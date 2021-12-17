@@ -34,7 +34,7 @@ where
 			let cloned_client = client.clone();
 			let create_inherent_data_providers = Box::new(move |_, _| {
 				let client = cloned_client.clone();
-				let mut parachain_sproof = ParachainInherentSproof::new(client.clone());
+				let parachain_sproof = ParachainInherentSproof::new(client.clone(), 2087);
 				async move {
 					let timestamp = SlotTimestampProvider::aura(client.clone())
 						.map_err(|err| format!("{:?}", err))?;
