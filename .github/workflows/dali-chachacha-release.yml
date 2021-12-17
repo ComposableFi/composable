@@ -45,3 +45,12 @@ jobs:
     - name:  Docker push
       run: make push-release
   
+    - name: Upload binaries on release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        file: target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
+        asset_name: picasso_runtime.compact.wasm
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: "Runtime Release"
