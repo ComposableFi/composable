@@ -1839,6 +1839,7 @@ dependencies = [
  "frame-system",
  "hex",
  "pallet-crowdloan-rewards",
+ "parity-scale-codec",
  "rustc-hex",
  "scale-info",
  "serde",
