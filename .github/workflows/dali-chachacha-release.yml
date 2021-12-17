@@ -39,19 +39,17 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
 
-    #- name: Build Docker image
-    #  run: make containerize-release 
-    #- name:  Docker push
-    #  run: make push-release
-    - name: Build Docker Image
-      run: echo ${IMAGE_WITH_COMMIT} | ${IMAGE_WITH_RELEASE_VERSION} | ${IMAGE_WITH_BRANCH} | ${IMAGE_WITH_LATEST}
+    - name: Build Docker image
+      run: make containerize-release 
+    - name:  Docker push
+      run: make push-release
 
-    - name: Upload binaries on release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-        file: target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
-        asset_name: picasso_runtime.compact.wasm
-        tag: ${{ github.ref }}
-        overwrite: true
-        body: "Runtime Release"
+    #- name: Upload binaries on release
+    #  uses: svenstaro/upload-release-action@v2
+    #  with:
+    #    repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+    #    file: target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
+    #    asset_name: picasso_runtime.compact.wasm
+    #    tag: ${{ github.ref }}
+    #    overwrite: true
+    #    body: "Runtime Release"
