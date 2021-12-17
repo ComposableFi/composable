@@ -13,7 +13,7 @@ use crate::{
 	math::LiftedFixedBalance,
 };
 
-#[derive(Encode, Decode, TypeInfo)]
+#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
 pub struct Take<Balance> {
 	/// amount of `base`
 	pub amount: Balance,
@@ -29,7 +29,7 @@ impl<Balance : PartialOrd + Zero> Take<Balance> {
 }
 
 /// take `quote` currency and give `base` currency
-#[derive(Encode, Decode, TypeInfo)]
+#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
 pub struct Sell<AssetId, Balance> {
 	pub pair: CurrencyPair<AssetId>,
 	pub take: Take<Balance>,	
@@ -44,7 +44,7 @@ impl<AssetId : PartialEq, Balance : PartialOrd + Zero> Sell<AssetId, Balance> {
 
 /// given `base`, how much `quote` needed for unit
 /// see [currency pair](https://www.investopedia.com/terms/c/currencypair.asp)
-#[derive(Encode, Decode, TypeInfo)]
+#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
 pub struct CurrencyPair<AssetId> {
 	/// See [Base Currency](https://www.investopedia.com/terms/b/basecurrency.asp)
 	pub base: AssetId,

@@ -8,3 +8,5 @@
 - splits collateral by pieces one by one put into auction
 
 - auction time parameters depend on liquidity of collateral (these set by governance as collateral factor)
+
+- see example of it in `clip.sol` of makerdao
