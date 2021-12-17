@@ -10,6 +10,10 @@ warp = "0.3.2"
 tokio = { version = "1", features = ["full"] }
 clap = "2.34.0"
 
+pallet-crowdloan-rewards = { path = "../frame/crowdloan-rewards", features = [], default-features = false }
+subxt-clients = { path = "../utils/subxt-clients", features = [], default-features = false }
+
+subxt = { git = "https://github.com/composableFi/subxt", branch = "seun-0.9.13" }
 
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
@@ -25,6 +29,3 @@ scale-info = { version = "1.0", default-features = false, features = [
 serde = { version = "1.0.130" }
 rustc-hex = { version = "2.1.0", default-features = false }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
-
-pallet-crowdloan-rewards = { path = "../frame/crowdloan-rewards", features = [], default-features = false }
-subxt-clients = { path = "../utils/subxt-clients", features = [], default-features = false }
