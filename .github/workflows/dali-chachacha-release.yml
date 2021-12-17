@@ -41,5 +41,5 @@ jobs:
 
     - name: Build Docker image
       run: make containerize-release 
-    - name:  Docker push
+    - name: Docker push
       run: make push-release
