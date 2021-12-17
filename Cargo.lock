@@ -6616,6 +6616,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "num-traits",
+ "orml-traits",
  "parity-scale-codec",
  "proptest 1.0.0",
  "scale-info",
@@ -6955,23 +6956,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-keystore",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-order-book-dex"
-version = "0.0.1"
-dependencies = [
- "composable-traits",
- "frame-support",
- "frame-system",
- "num-traits",
- "parity-scale-codec",
- "scale-info",
- "sp-arithmetic",
- "sp-core",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]
