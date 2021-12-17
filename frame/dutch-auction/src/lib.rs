@@ -20,12 +20,12 @@ pub mod pallet {
 		traits::{fungibles::Transfer, IsType, UnixTime},
 	};
 	use frame_system::pallet_prelude::BlockNumberFor;
-use num_traits::Zero;
+	use num_traits::Zero;
 	use scale_info::TypeInfo;
 
 	use crate::math::*;
 	use orml_traits::{MultiCurrency, MultiCurrencyExtended, MultiReservableCurrency};
-	use sp_runtime::DispatchError;
+	use sp_runtime::{traits::Saturating, DispatchError};
 	use sp_std::vec::Vec;
 
 	#[pallet::config]
@@ -104,7 +104,6 @@ use num_traits::Zero;
 	#[pallet::storage]
 	#[pallet::getter(fn takes)]
 	pub type Takes<T: Config> =
-		// Vec is  here, unbounded, adding payed via weigh, cleared without being stored into block 
 		StorageMap<_, Twox64Concat, OrderIdOf<T>, Vec<TakeOf<T>>, OptionQuery>;
 
 	impl<T: Config + DeFiComposableConfig> DeFiEngine for Pallet<T> {
@@ -120,6 +119,21 @@ use num_traits::Zero;
 		T::OrderId::zero()
 	}
 
+	#[pallet::call]
+	impl <T:Config> Pallet<T> {
+		#[pallet::weight(<T as Config>::WeightInfo::create_new_market())]
+		#[transactional]
+		fn ask(
+			origin: OriginFor<T>,
+			order: Sell<Self::AssetId, Self::Balance>,
+			configuration: AuctionStepFunction,
+		) -> Result<Self::OrderId, DispatchError> {
+			let who = ensure_signed(origin)?;
+			<Self as SellEngine<AuctionStepFunction>>::ask(&who, order, configuration);
+		}
+	}
+	
+
 	impl<T: Config + DeFiComposableConfig> SellEngine<AuctionStepFunction> for Pallet<T> {
 		type OrderId = T::OrderId;
 		fn ask(
@@ -130,6 +144,7 @@ use num_traits::Zero;
 			ensure!(order.is_valid(), Error::<T>::TakeParametersIsInvalid,);
 			let order_id = <OrdersIndex<T>>::mutate(|x| {
 				*x = x.next();
+				// in case of wrapping, will need to check existence of order/takes
 				*x
 			});
 			let order = SellOf::<T> {
@@ -157,6 +172,8 @@ use num_traits::Zero;
 				Error::<T>::TakeLimitDoesNotSatisfiesOrder,
 			);
 			let limit = order.order.take.limit.into();
+			// may consider storing calculation results within single block, so that finalize does
+			// not recalculates
 			let passed = T::UnixTime::now().as_secs() - order.added_at;
 			let limit = order.configuration.price(limit, passed)?;
 			let quote = take.amount.safe_mul(&take.limit)?;
@@ -182,31 +199,57 @@ use num_traits::Zero;
 		type Order = T::Order;
 
 		fn get_order(_order: &Self::OrderId) -> Option<Self::Order> {
-			todo!()
+			todo!("allow to view orders off chain")
 		}
 	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_finalize(n: T::BlockNumber) {
+		fn on_finalize(_n: T::BlockNumber) {
 			for (order_id, mut takes) in <Takes<T>>::iter() {
 				takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));
-				let mut order = <SellOrders<T>>::get(order_id).expect("takes are added only onto existing orders");
+				let SellOrder { mut order, added_at, from_to: ref seller, configuration } =
+					<SellOrders<T>>::get(order_id)
+						.expect("takes are added only onto existing orders");
+
 				// calculate real price
 				for take in takes {
-					// 1. cap take part which can eat order
-					// 2. take from order
-					// 4. unlock amount from seller
-					// 5. unlock amount for taker
-					// 6. transfer amount base to taker
-					// 6. transfer amount quate to seller
-					// if order is zero , remove order
-				}																	
+					let take_amount = take.take.amount.min(order.take.amount);
+					order.take.amount -= take_amount;
+					let quote_amount = take_amount.saturating_mul(take.take.limit);
+
+					exchange_reserved::<T>(order.pair.base, seller, take_amount, order.pair.quote, &take.from_to, quote_amount);
+
+					// what to do with orders which nobody ever takes? some kind of dust orders with
+					// 1 token
+					if order.take.amount == T::Balance::zero() {
+						break
+					}
+				}
+
+				if order.take.amount == T::Balance::zero() {
+					<SellOrders<T>>::remove(order_id);
+				}
 			}
 			<Takes<T>>::remove_all(None);
 		}
-		fn on_initialize(_n: T::BlockNumber) -> Weight {	
+		fn on_initialize(_n: T::BlockNumber) -> Weight {
 			todo!("T::WeightInfo::known_overhead_for_on_finalize()");
 		}
+	}
+
+	/// feesless exchange of reserved currencies
+	fn exchange_reserved<T: Config>(
+		base: <T as DeFiComposableConfig>::AssetId,
+		seller: &<T as frame_system::Config>::AccountId,
+		take_amount: <T as DeFiComposableConfig>::Balance,
+		quote: <T as DeFiComposableConfig>::AssetId,
+		taker: &<T as frame_system::Config>::AccountId,
+		quote_amount: <T as DeFiComposableConfig>::Balance,
+	) {
+		T::MultiCurrency::unreserve(base, seller, take_amount);
+		T::MultiCurrency::unreserve(quote, &taker, quote_amount);
+		T::MultiCurrency::transfer(base, seller, &taker, take_amount);
+		T::MultiCurrency::transfer(quote, &taker, seller, take_amount);
 	}
 }
