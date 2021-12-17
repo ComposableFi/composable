@@ -295,6 +295,7 @@ pub mod pallet {
 			rewards: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
 		) -> DispatchResult {
 			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
+			let _ = Rewards::<T>::remove_all(None);
 			rewards
 				.into_iter()
 				.for_each(|(remote_account, account_reward, vesting_period)| {
