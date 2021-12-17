@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-test-runner = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "master" }
 
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }

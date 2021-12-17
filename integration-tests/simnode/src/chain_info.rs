@@ -3,7 +3,7 @@ use sc_consensus_manual_seal::consensus::timestamp::SlotTimestampProvider;
 use sc_service::TFullBackend;
 use sp_runtime::generic::Era;
 use std::sync::Arc;
-use test_runner::{ChainInfo, FullClientFor, SignatureVerificationOverride};
+use substrate_simnode::{ChainInfo, FullClientFor, SignatureVerificationOverride};
 
 /// A unit struct which implements `NativeExecutionDispatch` feeding in the
 /// hard-coded runtime.
