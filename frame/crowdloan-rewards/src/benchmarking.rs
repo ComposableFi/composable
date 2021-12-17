@@ -3,6 +3,7 @@ use super::*;
 use crate::{models::*, Pallet as CrowdloanReward};
 use codec::Encode;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
+use frame_support::traits::Get;
 use frame_system::RawOrigin;
 use sp_core::{ed25519, keccak_256, Pair};
 use sp_runtime::AccountId32;
@@ -23,25 +24,26 @@ const WEEKS: BlockNumber = DAYS * 7;
 
 pub const ALICE: AccountId = AccountId32::new([0; 32]);
 
-const PROOF_PREFIX: &[u8] = b"picasso-";
-
 const VESTING_PERIOD: BlockNumber = 48 * WEEKS;
 
-fn relay_proof(relay_account: &RelayKey, reward_account: AccountId) -> Proof<RelayChainAccountId> {
+fn relay_proof<T: Config>(
+	relay_account: &RelayKey,
+	reward_account: AccountId,
+) -> Proof<RelayChainAccountId> {
 	let mut msg = b"<Bytes>".to_vec();
-	msg.append(&mut PROOF_PREFIX.to_vec());
+	msg.append(&mut T::Prefix::get().to_vec());
 	msg.append(&mut reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()));
 	msg.append(&mut b"</Bytes>".to_vec());
 	Proof::RelayChain(relay_account.public().into(), relay_account.sign(&msg).into())
 }
 
-fn ethereum_proof(
+fn ethereum_proof<T: Config>(
 	ethereum_account: &EthKey,
 	reward_account: AccountId,
 ) -> Proof<RelayChainAccountId> {
 	let msg = keccak_256(
 		&ethereum_signable_message(
-			PROOF_PREFIX,
+			T::Prefix::get(),
 			&reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()),
 		)[..],
 	);
@@ -115,10 +117,11 @@ impl ClaimKey {
 				RemoteAccount::Ethereum(ethereum_address(ethereum_account)),
 		}
 	}
-	fn sign(&self, reward_account: AccountId) -> Proof<RelayChainAccountId> {
+	fn sign<T: Config>(&self, reward_account: AccountId) -> Proof<RelayChainAccountId> {
 		match self {
-			ClaimKey::Relay(relay_account) => relay_proof(relay_account, reward_account),
-			ClaimKey::Eth(ethereum_account) => ethereum_proof(ethereum_account, reward_account),
+			ClaimKey::Relay(relay_account) => relay_proof::<T>(relay_account, reward_account),
+			ClaimKey::Eth(ethereum_account) =>
+				ethereum_proof::<T>(ethereum_account, reward_account),
 		}
 	}
 }
@@ -157,7 +160,7 @@ benchmarks! {
 		  CrowdloanReward::<T>::do_populate(accounts_reward)?;
 			CrowdloanReward::<T>::do_initialize()?;
 		  frame_system::Pallet::<T>::set_block_number(VESTING_PERIOD);
-	}: _(RawOrigin::Root, ALICE, accounts[0 as usize].1.sign(ALICE))
+	}: _(RawOrigin::Root, ALICE, accounts[0 as usize].1.sign::<T>(ALICE))
 
   claim {
 		  let x in 1000..5000;
@@ -169,7 +172,7 @@ benchmarks! {
 		  CrowdloanReward::<T>::do_populate(accounts_reward)?;
 			CrowdloanReward::<T>::do_initialize()?;
 		  for (reward_account, remote_account) in accounts.clone().into_iter() {
-			  CrowdloanReward::<T>::do_associate(reward_account.clone(), remote_account.sign(reward_account))?;
+			  CrowdloanReward::<T>::do_associate(reward_account.clone(), remote_account.sign::<T>(reward_account))?;
 		  }
 		  frame_system::Pallet::<T>::set_block_number(VESTING_PERIOD);
 	}: _(RawOrigin::Signed(accounts[0 as usize].0.clone()))
