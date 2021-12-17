@@ -34,8 +34,14 @@ jobs:
         gsutil cp *.tar.gz gs://composable-binaries/community-releases/dali/ 
     
     - name: Upload binaries on release
-      run: |
-      ls target/release/wbuild/picasso-runtime/
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        file: target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
+        asset_name: picasso_runtime.compact.wasm
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: "Runtime Release"
 
     - name: Login to DockerHub
       uses: docker/login-action@v1 
