@@ -4,13 +4,10 @@ use pallet_crowdloan_rewards::{
 	get_remote_account,
 	models::{Proof, RemoteAccount},
 };
-use serde::{Deserialize, Serialize};
 use sp_core::{Decode, Encode};
-use sp_runtime::{AccountId32, MultiSignature};
+use sp_runtime::AccountId32;
 use subxt_clients::picasso;
 use warp::{hyper::StatusCode, Filter};
-
-mod verify;
 
 type PicassoApi = picasso::api::RuntimeApi<picasso::api::DefaultConfig>;
 
@@ -66,15 +63,6 @@ struct AssociateOrigin {
 	reward_account: RemoteAccount<AccountId32>,
 }
 
-impl<'de> Deserialize<'de> for AssociateOrigin {
-	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-	where
-		D: serde::Deserializer<'de>,
-	{
-		todo!()
-	}
-}
-
 async fn associate(
 	associate_origin_bytes: warp::hyper::body::Bytes,
 	api: Arc<PicassoApi>,
@@ -82,7 +70,8 @@ async fn associate(
 ) -> Result<StatusCode, warp::Rejection> {
 	let associate_origin = match AssociateOrigin::decode(&mut associate_origin_bytes.as_ref()) {
 		Ok(ok) => ok,
-		Err(why) => return Ok(StatusCode::BAD_REQUEST),
+		// TODO: log error?
+		Err(_) => return Ok(StatusCode::BAD_REQUEST),
 	};
 
 	// currently errors due to type parameter T
