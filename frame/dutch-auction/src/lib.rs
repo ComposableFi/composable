@@ -32,7 +32,7 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 
 	use crate::math::*;
-	use orml_traits::{MultiCurrency, MultiCurrencyExtended, MultiReservableCurrency};
+	use orml_traits::{MultiCurrency, MultiReservableCurrency};
 	use sp_runtime::{traits::Saturating, DispatchError};
 	use sp_std::vec::Vec;
 
@@ -42,11 +42,10 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type UnixTime: UnixTime;
 		type OrderId: OrderIdLike + WrappingNext + Zero;
-		type Order;
-		type MultiCurrency: MultiCurrencyExtended<
+		type MultiCurrency: MultiCurrency<
 				Self::AccountId,
 				CurrencyId = Self::AssetId,
-				Amount = <Self as DeFiComposableConfig>::Balance,
+				Balance = <Self as DeFiComposableConfig>::Balance,
 			> + MultiReservableCurrency<
 				Self::AccountId,
 				CurrencyId = Self::AssetId,
@@ -208,8 +207,8 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_n: T::BlockNumber) {
 			for (order_id, mut takes) in <Takes<T>>::iter() {
-				/// users payed N * WEIGHT before, we here pay N * (log N - 1) * Weight. We can
-				/// retain pure N by first served principle so, not highest price.
+				// users payed N * WEIGHT before, we here pay N * (log N - 1) * Weight. We can
+				// retain pure N by first served principle so, not highest price.
 				takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));
 				let SellOrder { mut order, added_at: _, from_to: ref seller, configuration: _ } =
 					<SellOrders<T>>::get(order_id)

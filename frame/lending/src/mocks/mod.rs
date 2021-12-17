@@ -2,15 +2,17 @@ use crate::{self as pallet_lending, *};
 use composable_traits::{
 	currency::{DynamicCurrencyId, PriceableAsset},
 	defi::DeFiComposableConfig,
+	governance::{GovernanceRegistry, SignedRawOrigin},
 };
 use frame_support::{
-	parameter_types,
+	ord_parameter_types, parameter_types,
 	traits::{Everything, OnFinalize, OnInitialize},
 	PalletId,
 };
+use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 use once_cell::sync::Lazy;
-use orml_traits::parameter_type_with_key;
+use orml_traits::{parameter_type_with_key, GetByKey};
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
 use sp_core::{sr25519::Signature, H256};
@@ -128,6 +130,7 @@ frame_support::construct_runtime!(
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Assets: assets::{Pallet, Call, Storage},
 		Liquidations: pallet_liquidations::{Pallet, Call, Event<T>},
 		Lending: pallet_lending::{Pallet, Call, Config, Storage, Event<T>},
 		Oracle: pallet_lending::mocks::oracle::{Pallet},
@@ -258,6 +261,39 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = Everything;
 }
 
+ord_parameter_types! {
+	pub const RootAccount: AccountId = *ALICE;
+}
+
+impl GovernanceRegistry<MockCurrencyId, AccountId> for () {
+	fn set(_k: MockCurrencyId, _value: composable_traits::governance::SignedRawOrigin<AccountId>) {}
+}
+
+impl
+	GetByKey<
+		MockCurrencyId,
+		Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError>,
+	> for ()
+{
+	fn get(
+		_k: &MockCurrencyId,
+	) -> Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError> {
+		Ok(SignedRawOrigin::Root)
+	}
+}
+
+impl assets::Config for Test {
+	type NativeAssetId = NativeAssetId;
+	type GenerateCurrencyId = LpTokenFactory;
+	type AssetId = MockCurrencyId;
+	type Balance = Balance;
+	type NativeCurrency = Balances;
+	type MultiCurrency = Tokens;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
+	type GovernanceRegistry = ();
+}
+
 impl crate::mocks::oracle::Config for Test {
 	type VaultId = VaultId;
 	type Vault = Vault;
@@ -272,7 +308,7 @@ impl pallet_dutch_auctions::Config for Test {
 	type Event = Event;
 	type OrderId = u128;
 	type UnixTime = Timestamp;
-	type Order = pallet_dutch_auctions::SellOrderOf<Self>;
+	type MultiCurrency = Assets;
 }
 
 impl pallet_liquidations::Config for Test {
