@@ -22,9 +22,9 @@ pub struct Take<Balance> {
 	pub limit: Balance,
 }
 
-impl<Balance : PartialOrd + Zero> Take<Balance> {
+impl<Balance: PartialOrd + Zero> Take<Balance> {
 	pub fn is_valid(&self) -> bool {
-		self.amount > Balance::zero() && self.limit > Balance::zero() 
+		self.amount > Balance::zero() && self.limit > Balance::zero()
 	}
 }
 
@@ -32,15 +32,14 @@ impl<Balance : PartialOrd + Zero> Take<Balance> {
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
 pub struct Sell<AssetId, Balance> {
 	pub pair: CurrencyPair<AssetId>,
-	pub take: Take<Balance>,	
+	pub take: Take<Balance>,
 }
 
-impl<AssetId : PartialEq, Balance : PartialOrd + Zero> Sell<AssetId, Balance> {
+impl<AssetId: PartialEq, Balance: PartialOrd + Zero> Sell<AssetId, Balance> {
 	pub fn is_valid(&self) -> bool {
 		self.take.is_valid() && self.pair.is_valid()
 	}
 }
-
 
 /// given `base`, how much `quote` needed for unit
 /// see [currency pair](https://www.investopedia.com/terms/c/currencypair.asp)
@@ -68,7 +67,6 @@ pub trait DeFiEngine {
 	type AccountId;
 }
 
-
 /// take nothing
 impl<Balance: Default> Default for Take<Balance> {
 	fn default() -> Self {
@@ -84,7 +82,10 @@ impl<AssetId: Default> Default for CurrencyPair<AssetId> {
 
 impl<AssetId, Balance> Sell<AssetId, Balance> {
 	pub fn new(base: AssetId, quote: AssetId, base_amount: Balance, quote_limit: Balance) -> Self {
-		Self { take: Take { amount: base_amount, limit: quote_limit}, pair: CurrencyPair { base, quote } }
+		Self {
+			take: Take { amount: base_amount, limit: quote_limit },
+			pair: CurrencyPair { base, quote },
+		}
 	}
 }
 
@@ -123,8 +124,9 @@ pub trait SellEngine<Configuration>: DeFiEngine {
 		configuration: Configuration,
 	) -> Result<Self::OrderId, DispatchError>;
 	/// take order. get not found error if order never existed or was removed.
-	/// - `take.limit` - for `sell` order it is maximal value are you to pay for `base` in `quote` asset, for `buy`
-	/// order it is minimal value you are eager to accept for `base` 
+	/// - `take.limit` - for `sell` order it is maximal value are you to pay for `base` in `quote`
+	///   asset, for `buy`
+	/// order it is minimal value you are eager to accept for `base`
 	/// - `take.amount` - amount of
 	/// `base` you are ready to exchange for this order
 	fn take(

@@ -1,9 +1,9 @@
-use crate::{loans::DurationSeconds};
+use crate::loans::DurationSeconds;
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::Permill;
 
-#[derive(Decode, Encode, Clone, TypeInfo, Debug, PartialEq,)]
+#[derive(Decode, Encode, Clone, TypeInfo, Debug, PartialEq)]
 pub enum AuctionStepFunction {
 	/// default - direct pass through to dex without steps, just to satisfy defaults and reasonably
 	/// for testing
@@ -17,13 +17,13 @@ impl Default for AuctionStepFunction {
 	}
 }
 
-#[derive(Default, Decode, Encode, Clone, TypeInfo, Debug, PartialEq,)]
+#[derive(Default, Decode, Encode, Clone, TypeInfo, Debug, PartialEq)]
 pub struct LinearDecrease {
 	/// Seconds after auction start when the price reaches zero
 	pub total: DurationSeconds,
 }
 
-#[derive(Default, Decode, Encode, Clone, TypeInfo, Debug, PartialEq, )]
+#[derive(Default, Decode, Encode, Clone, TypeInfo, Debug, PartialEq)]
 pub struct StairstepExponentialDecrease {
 	// Length of time between price drops
 	pub step: DurationSeconds,

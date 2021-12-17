@@ -10,7 +10,7 @@ pub mod math;
 pub mod pallet {
 	use codec::{Decode, Encode};
 	use composable_traits::{
-		auction::{AuctionStepFunction},
+		auction::AuctionStepFunction,
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
 		loans::DurationSeconds,
 		math::{SafeArithmetic, WrappingNext},
@@ -19,7 +19,10 @@ pub mod pallet {
 		pallet_prelude::*,
 		traits::{IsType, UnixTime},
 	};
-	use frame_system::{pallet_prelude::{BlockNumberFor, OriginFor}, ensure_signed};
+	use frame_system::{
+		ensure_signed,
+		pallet_prelude::{BlockNumberFor, OriginFor},
+	};
 	use num_traits::Zero;
 	use scale_info::TypeInfo;
 
@@ -89,7 +92,6 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-
 	#[pallet::storage]
 	#[pallet::getter(fn orders_index)]
 	pub type OrdersIndex<T: Config> = StorageValue<_, T::OrderId, ValueQuery, OrderIdOnEmpty<T>>;
@@ -118,7 +120,7 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl <T:Config> Pallet<T> {
+	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
 		pub fn ask(
 			origin: OriginFor<T>,
@@ -126,7 +128,8 @@ pub mod pallet {
 			configuration: AuctionStepFunction,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let _order_id = <Self as SellEngine<AuctionStepFunction>>::ask(&who, order, configuration)?;
+			let _order_id =
+				<Self as SellEngine<AuctionStepFunction>>::ask(&who, order, configuration)?;
 			Self::deposit_event(Event::OrderAdded { order_id: <_>::default() });
 			Ok(().into())
 		}
@@ -142,7 +145,6 @@ pub mod pallet {
 			Ok(().into())
 		}
 	}
-	
 
 	impl<T: Config + DeFiComposableConfig> SellEngine<AuctionStepFunction> for Pallet<T> {
 		type OrderId = T::OrderId;
@@ -165,7 +167,7 @@ pub mod pallet {
 			};
 			T::MultiCurrency::reserve(order.order.pair.base, from_to, order.order.take.amount)?;
 			SellOrders::<T>::insert(order_id, order);
-	
+
 			Ok(order_id)
 		}
 
@@ -210,7 +212,15 @@ pub mod pallet {
 					order.take.amount -= take_amount;
 					let quote_amount = take_amount.saturating_mul(take.take.limit);
 
-					exchange_reserved::<T>(order.pair.base, seller, take_amount, order.pair.quote, &take.from_to, quote_amount).expect("we forced locks beforhand");
+					exchange_reserved::<T>(
+						order.pair.base,
+						seller,
+						take_amount,
+						order.pair.quote,
+						&take.from_to,
+						quote_amount,
+					)
+					.expect("we forced locks beforhand");
 
 					// what to do with orders which nobody ever takes? some kind of dust orders with
 					// 1 token
@@ -238,7 +248,7 @@ pub mod pallet {
 		quote: <T as DeFiComposableConfig>::AssetId,
 		taker: &<T as frame_system::Config>::AccountId,
 		quote_amount: <T as DeFiComposableConfig>::Balance,
-	) -> Result<(), DispatchError>{
+	) -> Result<(), DispatchError> {
 		T::MultiCurrency::unreserve(base, seller, take_amount);
 		T::MultiCurrency::unreserve(quote, &taker, quote_amount);
 		T::MultiCurrency::transfer(base, seller, &taker, take_amount)?;

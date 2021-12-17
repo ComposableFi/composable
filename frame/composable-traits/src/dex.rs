@@ -91,7 +91,6 @@ pub struct PoolInfo<AccountId> {
 	pub admin_fee: Permill,
 }
 
-
 /// Describes a simple exchanges which does not allow advanced configurations such as slippage.
 pub trait SimpleExchange {
 	type AssetId;
