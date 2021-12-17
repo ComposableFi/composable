@@ -19,6 +19,7 @@ async fn main() {
 				.short("p")
 				.long("prefix")
 				.value_name("PREFIX")
+				.required(true)
 				.help("sets the prefix")
 				.takes_value(true),
 		)
