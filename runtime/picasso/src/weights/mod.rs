@@ -3,6 +3,8 @@ pub mod balances;
 pub mod collator_selection;
 pub mod collective;
 pub mod crowdloan_bonus;
+#[cfg(feature = "develop")]
+pub mod crowdloan_rewards;
 pub mod democracy;
 pub mod frame_system;
 pub mod identity;

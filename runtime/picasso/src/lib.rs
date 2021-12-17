@@ -19,7 +19,7 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -777,6 +777,28 @@ impl assets::Config for Runtime {
 	type GovernanceRegistry = GovernanceRegistry;
 }
 
+parameter_types! {
+	  pub const InitialPayment: Perbill = Perbill::from_percent(50);
+	  pub const VestingStep: BlockNumber = 7 * DAYS;
+	  pub const Prefix: &'static [u8] = b"picasso-";
+}
+
+#[cfg(feature = "develop")]
+impl crowdloan_rewards::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Currency = Assets;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	// TODO(hussein-aitlahcen): should be the proxy account
+	type AssociationOrigin = EnsureRootOrHalfCouncil;
+	type Convert = ConvertInto;
+	type RelayChainAccountId = [u8; 32];
+	type InitialPayment = InitialPayment;
+	type VestingStep = VestingStep;
+	type Prefix = Prefix;
+	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -901,6 +923,7 @@ construct_runtime!(
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
 		Assets: assets::{Pallet, Call, Storage} = 57,
+	  CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 58,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1063,8 +1086,8 @@ impl_runtime_apis! {
 			#[cfg(feature = "develop")]
 			{
 				list_benchmark!(list, extra, vault, Vault);
-				list_benchmark!(list, extra, lending, Lending);
 				list_benchmark!(list, extra, oracle, Oracle);
+				list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
 			}
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -1117,9 +1140,9 @@ impl_runtime_apis! {
 
 			#[cfg(feature ="develop")]
 			{
-				add_benchmark!(params, batches, vault, Lending);
 				add_benchmark!(params, batches, vault, Vault);
 				add_benchmark!(params, batches, oracle, Oracle);
+				add_benchmark!(params, batches, crowdloan_rewards, CrowdloanRewards);
 			}
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
