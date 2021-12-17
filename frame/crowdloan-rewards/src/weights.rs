@@ -25,18 +25,18 @@ impl WeightInfo for () {
 		(0 as Weight)
 			// Standard Error: 109_000
 			.saturating_add((6_792_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(x as Weight)))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(x as Weight)))
+			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
+			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(x as Weight)))
+			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(x as Weight)))
 	}
 	// Storage: CrowdloanRewards VestingBlockStart (r:1 w:1)
 	fn initialize(x: u32) -> Weight {
 		(33_355_000 as Weight)
 			// Standard Error: 0
 			.saturating_add((1_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: CrowdloanRewards VestingBlockStart (r:1 w:0)
 	// Storage: CrowdloanRewards Rewards (r:1 w:1)
@@ -47,8 +47,8 @@ impl WeightInfo for () {
 		(169_323_000 as Weight)
 			// Standard Error: 1_000
 			.saturating_add((8_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
 	// Storage: CrowdloanRewards Associations (r:1 w:0)
 	// Storage: CrowdloanRewards VestingBlockStart (r:1 w:0)
@@ -59,7 +59,7 @@ impl WeightInfo for () {
 		(94_034_000 as Weight)
 			// Standard Error: 1_000
 			.saturating_add((31_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
 }

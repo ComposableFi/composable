@@ -192,7 +192,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Initialize the pallet at the current transaction block.
-		#[pallet::weight(<T as Config>::WeightInfo::initialize())]
+		#[pallet::weight(<T as Config>::WeightInfo::initialize(TotalContributors::<T>::get()))]
 		#[transactional]
 		pub fn initialize(origin: OriginFor<T>) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
@@ -203,7 +203,7 @@ pub mod pallet {
 		/// Populate pallet by adding more rewards.
 		/// Can be called multiple times. Idempotent.
 		/// Can only be called before `initialize`.
-		#[pallet::weight(<T as Config>::WeightInfo::populate())]
+		#[pallet::weight(<T as Config>::WeightInfo::populate(TotalContributors::<T>::get()))]
 		#[transactional]
 		pub fn populate(
 			origin: OriginFor<T>,
@@ -222,7 +222,7 @@ pub mod pallet {
 		/// ```haskell
 		/// proof = sign (concat prefix (hex reward_account))
 		/// ```
-		#[pallet::weight(<T as Config>::WeightInfo::associate())]
+		#[pallet::weight(<T as Config>::WeightInfo::associate(TotalContributors::<T>::get()))]
 		#[transactional]
 		pub fn associate(
 			origin: OriginFor<T>,
@@ -236,7 +236,7 @@ pub mod pallet {
 		/// Claim a reward from the associated reward account.
 		/// A previous call to `associate` should have been made.
 		/// If logic gate pass, no fees are applied.
-		#[pallet::weight(<T as Config>::WeightInfo::claim())]
+		#[pallet::weight(<T as Config>::WeightInfo::claim(TotalContributors::<T>::get()))]
 		#[transactional]
 		pub fn claim(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let reward_account = ensure_signed(origin)?;

@@ -21,7 +21,7 @@ const HOURS: BlockNumber = MINUTES * 60;
 const DAYS: BlockNumber = HOURS * 24;
 const WEEKS: BlockNumber = DAYS * 7;
 
-const ALICE: AccountId = AccountId32::new([0; 32]);
+pub const ALICE: AccountId = AccountId32::new([0; 32]);
 
 const PROOF_PREFIX: &[u8] = b"picasso-";
 
@@ -177,6 +177,7 @@ benchmarks! {
 
 impl_benchmark_test_suite!(
 	CrowdloanReward,
-	crate::mocks::ExtBuilder { balances: vec![(ALICE, 1_000_000_000_000)] }.build(),
+	crate::mocks::ExtBuilder { balances: vec![(crate::benchmarking::ALICE, 1_000_000_000_000)] }
+		.build(),
 	crate::mocks::Test,
 );
