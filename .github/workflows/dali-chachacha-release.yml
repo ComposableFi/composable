@@ -39,11 +39,13 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
 
-    - name: Build Docker image
-      run: make containerize-release 
-    - name:  Docker push
-      run: make push-release
-    
+    #- name: Build Docker image
+    #  run: make containerize-release 
+    #- name:  Docker push
+    #  run: make push-release
+    - name: Build Docker Image
+      run: echo ${IMAGE_WITH_COMMIT} | ${IMAGE_WITH_RELEASE_VERSION} | ${IMAGE_WITH_BRANCH} | ${IMAGE_WITH_LATEST}
+
     - name: Upload binaries on release
       uses: svenstaro/upload-release-action@v2
       with:
