@@ -203,7 +203,7 @@ pub mod pallet {
 		/// Populate pallet by adding more rewards.
 		/// Can be called multiple times. Idempotent.
 		/// Can only be called before `initialize`.
-		#[pallet::weight(<T as Config>::WeightInfo::populate(TotalContributors::<T>::get()))]
+		#[pallet::weight(<T as Config>::WeightInfo::populate(rewards.len() as u32))]
 		#[transactional]
 		pub fn populate(
 			origin: OriginFor<T>,
