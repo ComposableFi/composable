@@ -258,9 +258,9 @@ pub mod pallet {
 		quote_amount: <T as DeFiComposableConfig>::Balance,
 	) -> Result<(), DispatchError> {
 		T::MultiCurrency::unreserve(base, seller, take_amount);
-		T::MultiCurrency::unreserve(quote, &taker, quote_amount);
-		T::MultiCurrency::transfer(base, seller, &taker, take_amount)?;
-		T::MultiCurrency::transfer(quote, &taker, seller, take_amount)?;
+		T::MultiCurrency::unreserve(quote, taker, quote_amount);
+		T::MultiCurrency::transfer(base, seller, taker, take_amount)?;
+		T::MultiCurrency::transfer(quote, taker, seller, take_amount)?;
 		Ok(())
 	}
 }
