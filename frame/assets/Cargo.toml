@@ -43,6 +43,7 @@ development = ["governance-registry"]
 [features]
 default = ["std"]
 std = [
+    "composable-traits/std",
     "codec/std",
     "frame-support/std",
     "sp-runtime/std",

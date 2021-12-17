@@ -156,6 +156,7 @@
 #![allow(clippy::type_complexity)]
 
 use codec::{Codec, Decode, Encode, FullCodec, Input};
+use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
 use frame_support::{
 	ensure,
 	traits::{
@@ -168,7 +169,7 @@ use frame_support::{
 	transactional,
 	weights::Weight,
 };
-use orml_traits::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
+use orml_traits::{GetByKey, MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{Bounded, Dispatchable, Hash, Saturating, Zero},
@@ -317,7 +318,8 @@ pub mod pallet {
 				CurrencyId = Self::AssetId,
 			>;
 
-		type OriginFor: OriginMap<Self::AssetId, Self::Origin>;
+		type GovernanceRegistry: GetByKey<Self::AssetId, Result<SignedRawOrigin<Self::AccountId>, DispatchError>>
+			+ GovernanceRegistry<Self::AssetId, Self::AccountId>;
 
 		/// The period between a proposal being approved and enacted.
 		///
@@ -1836,8 +1838,9 @@ impl<T: Config> Pallet<T> {
 				let err_amount = T::NativeCurrency::release(&provider, deposit, true)?;
 				debug_assert_eq!(err_amount, deposit);
 				Self::deposit_event(Event::<T>::PreimageUsed(proposal_id.hash, provider, deposit));
-				let origin = T::OriginFor::try_origin_for(proposal_id.asset_id)?;
-				let res = proposal.dispatch(origin).map(|_| ()).map_err(|e| e.error);
+				let signed_raw_origin = T::GovernanceRegistry::get(&proposal_id.asset_id)?;
+				let raw_origin: frame_system::RawOrigin<T::AccountId> = signed_raw_origin.into();
+				let res = proposal.dispatch(raw_origin.into()).map(|_| ()).map_err(|e| e.error);
 				Self::deposit_event(Event::<T>::Executed(index, res));
 
 				Ok(())

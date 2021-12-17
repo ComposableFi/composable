@@ -59,6 +59,7 @@ fn split_vote_cancellation_should_work() {
 #[test]
 fn single_proposal_should_work() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		System::set_block_number(0);
 		assert_ok!(propose_set_balance_and_note(1, 2, 1));
 		let r = 0;
@@ -101,6 +102,7 @@ fn single_proposal_should_work() {
 #[test]
 fn controversial_voting_should_work() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		let r = Democracy::inject_referendum(
 			2,
 			set_balance_proposal_hash_and_note(2),
@@ -148,6 +150,7 @@ fn controversial_low_turnout_voting_should_work() {
 #[test]
 fn passing_low_turnout_voting_should_work() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		assert_eq!(Balances::free_balance(42), 0);
 		assert_eq!(Balances::total_issuance(), 310);
 

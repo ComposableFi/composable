@@ -40,6 +40,7 @@ fn missing_preimage_should_fail() {
 #[test]
 fn preimage_deposit_should_be_required_and_returned() {
 	new_test_ext_execute_with_cond(|operational| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		// fee of 100 is too much.
 		PREIMAGE_BYTE_DEPOSIT.with(|v| *v.borrow_mut() = 100);
 		assert_noop!(
@@ -164,6 +165,7 @@ fn preimage_deposit_should_be_reapable() {
 #[test]
 fn noting_imminent_preimage_for_free_should_work() {
 	new_test_ext_execute_with_cond(|operational| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		PREIMAGE_BYTE_DEPOSIT.with(|v| *v.borrow_mut() = 1);
 
 		let r = Democracy::inject_referendum(

@@ -22,7 +22,7 @@ use crate as pallet_democracy;
 use codec::Encode;
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types, parameter_types,
-	traits::{Contains, Everything, GenesisBuild, OnInitialize, SortedMembers},
+	traits::{Contains, EqualPrivilegeOnly, Everything, GenesisBuild, OnInitialize, SortedMembers},
 	weights::Weight,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
@@ -85,6 +85,7 @@ frame_support::construct_runtime!(
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Config, Event<T>},
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+		GovernanceRegistry: pallet_governance_registry::{Pallet, Call, Storage, Event<T>}
 	}
 );
 
@@ -135,6 +136,7 @@ impl pallet_scheduler::Config for Test {
 	type PalletsOrigin = OriginCaller;
 	type Call = Call;
 	type MaximumWeight = MaximumSchedulerWeight;
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type ScheduleOrigin = EnsureRoot<u64>;
 	type MaxScheduledPerBlock = ();
 	type WeightInfo = ();
@@ -236,7 +238,13 @@ impl Config for Test {
 	type PalletsOrigin = OriginCaller;
 	type WeightInfo = ();
 	type MaxProposals = MaxProposals;
-	type OriginFor = AlwaysRootOrigin;
+	type GovernanceRegistry = GovernanceRegistry;
+}
+
+impl pallet_governance_registry::Config for Test {
+	type AssetId = AssetId;
+	type WeightInfo = ();
+	type Event = Event;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

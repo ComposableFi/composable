@@ -19,6 +19,7 @@ fn nay(x: u8, balance: u64) -> AccountVote<u64> {
 #[test]
 fn voting_with_multi_currency_should_work() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DOT_ASSET).unwrap();
 		System::set_block_number(0);
 		let r = Democracy::inject_referendum(
 			2,
