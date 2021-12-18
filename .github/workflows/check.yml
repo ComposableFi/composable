@@ -6,9 +6,9 @@ on:
   pull_request:
     branches:
       - main
-      - develop 
+      - develop
       - dali-chachacha
-      - picasso    
+      - picasso
   workflow_dispatch:
 concurrency: ci-check
 jobs:
