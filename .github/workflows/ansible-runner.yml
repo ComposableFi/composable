@@ -49,4 +49,4 @@ jobs:
     - name: Run ansible playbook
       working-directory: "./.maintain/playbooks"
       run: |
-        ansible-playbook -l $TARGET $PLAYBOOK -i $INVENTORY_FILE  --user $USERNAME -e 'ansible_python_interpreter=/usr/bin/python3'
+        ansible-playbook -l $TARGET $PLAYBOOK --user $USERNAME -e 'ansible_python_interpreter=/usr/bin/python3'
