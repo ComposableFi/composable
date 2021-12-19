@@ -205,6 +205,8 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		// this cleanups all takes added into block, so we never store takes
+		// so we stay fast and prevent attack
 		fn on_finalize(_n: T::BlockNumber) {
 			for (order_id, mut takes) in <Takes<T>>::iter() {
 				// users payed N * WEIGHT before, we here pay N * (log N - 1) * Weight. We can

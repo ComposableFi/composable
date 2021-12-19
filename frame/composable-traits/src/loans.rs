@@ -23,9 +23,3 @@ impl<GroupId, Balance> PriceStructure<GroupId, Balance> {
 		Self { initial_price, preference: None }
 	}
 }
-
-// /// bank. vault owned - can transfer, cannot mint
-// type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-// 	+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-// 	// used to check balances before any storage updates allowing acting without rollback
-// 	+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;

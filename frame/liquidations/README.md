@@ -2,7 +2,7 @@
 
 Used to liquidate collateral from `lending` protocol.  Need to liquidate because of bad collateral factor. It should be sold on exchange as soon as possible.
 
-- off-chain bots monitors `lending` markets for liquidation opportunities of borrow pairs.
+- off-chain bots monitor `lending` markets for liquidation opportunities of borrow pairs.
 
 - uses different engines depending on available liquidity
 
