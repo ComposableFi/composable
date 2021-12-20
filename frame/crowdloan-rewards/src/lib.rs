@@ -253,7 +253,7 @@ pub mod pallet {
 						ethereum_recover(T::Prefix::get(), &reward_account_encoded, &eth_proof)
 							.ok_or(Error::<T>::InvalidProof)?;
 					Result::<_, DispatchError>::Ok(RemoteAccount::Ethereum(ethereum_address))
-				}
+				},
 				Proof::RelayChain(relay_account, relay_proof) => {
 					ensure!(
 						verify_relay(
@@ -265,7 +265,7 @@ pub mod pallet {
 						Error::<T>::InvalidProof
 					);
 					Ok(RemoteAccount::RelayChain(relay_account))
-				}
+				},
 			}?;
 			let claimed = Self::do_claim(remote_account.clone(), &reward_account)?;
 			Associations::<T>::insert(reward_account.clone(), remote_account.clone());
@@ -321,10 +321,10 @@ pub mod pallet {
 								// The user should have claimed the upfront payment + the vested
 								// amount until this window point.
 								let vested_reward = reward.total - upfront_payment;
-								upfront_payment
-									+ (vested_reward
-										.saturating_mul(T::Convert::convert(vesting_window))
-										/ T::Convert::convert(reward.vesting_period))
+								upfront_payment +
+									(vested_reward
+										.saturating_mul(T::Convert::convert(vesting_window)) /
+										T::Convert::convert(reward.vesting_period))
 							}
 						};
 						let available_to_claim = should_have_claimed - reward.claimed;

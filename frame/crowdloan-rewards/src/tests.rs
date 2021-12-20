@@ -27,12 +27,10 @@ enum ClaimKey {
 impl ClaimKey {
 	fn as_remote_public(&self) -> RemoteAccount<RelayChainAccountId> {
 		match self {
-			ClaimKey::Relay(relay_account) => {
-				RemoteAccount::RelayChain(relay_account.public().into())
-			}
-			ClaimKey::Eth(ethereum_account) => {
-				RemoteAccount::Ethereum(ethereum_address(ethereum_account))
-			}
+			ClaimKey::Relay(relay_account) =>
+				RemoteAccount::RelayChain(relay_account.public().into()),
+			ClaimKey::Eth(ethereum_account) =>
+				RemoteAccount::Ethereum(ethereum_address(ethereum_account)),
 		}
 	}
 	fn claim(&self, reward_account: AccountId) -> DispatchResultWithPostInfo {
