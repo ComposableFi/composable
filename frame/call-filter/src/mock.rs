@@ -68,6 +68,7 @@ ord_parameter_types! {
 impl Config for Runtime {
 	type Event = Event;
 	type UpdateOrigin = EnsureSignedBy<One, AccountId>;
+	type Hook = ();
 	type WeightInfo = ();
 }
 
@@ -81,7 +82,7 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: system::{Pallet, Call, Config, Storage, Event<T>},
-		CallFilter: call_filter::{Pallet, Storage, Call, Event<T>},
+		Filter: call_filter::{Pallet, Storage, Call, Event<T>},
 		Balances: pallet_balances::{Pallet, Storage, Call, Event<T>},
 	}
 );
@@ -97,7 +98,6 @@ impl Default for ExtBuilder {
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		let t = system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
-
 		t.into()
 	}
 }

@@ -797,6 +797,7 @@ impl Contains<Call> for BaseCallFilter {
 impl call_filter::Config for Runtime {
 	type Event = Event;
 	type UpdateOrigin = EnsureRoot<AccountId>;
+	type Hook = ();
 	type WeightInfo = ();
 }
 
