@@ -12,47 +12,40 @@ fn pause_transaction_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		System::set_block_number(1);
 
+		let balances_transfer = CallFilterEntry {
+			pallet_name: b"Balances".to_vec(),
+			function_name: b"transfer".to_vec(),
+		};
+		assert_noop!(Filter::disable(Origin::signed(5), balances_transfer.clone()), BadOrigin);
+
+		assert_eq!(Filter::disabled_calls(&balances_transfer), None);
+		assert_ok!(Filter::disable(Origin::signed(1), balances_transfer.clone()));
+		System::assert_last_event(Event::Filter(crate::Event::Disabled {
+			entry: balances_transfer.clone(),
+		}));
+		assert_eq!(Filter::disabled_calls(&balances_transfer), Some(()));
+
+		let filter_pause =
+			CallFilterEntry { pallet_name: b"Filter".to_vec(), function_name: b"disable".to_vec() };
+		let filter_pause_2 = CallFilterEntry {
+			pallet_name: b"Filter".to_vec(),
+			function_name: b"another_call".to_vec(),
+		};
+
 		assert_noop!(
-			CallFilter::disable(Origin::signed(5), b"Balances".to_vec(), b"transfer".to_vec()),
-			BadOrigin
+			Filter::disable(Origin::signed(1), filter_pause),
+			Error::<Runtime>::CannotDisable
+		);
+		assert_noop!(
+			Filter::disable(Origin::signed(1), filter_pause_2),
+			Error::<Runtime>::CannotDisable
 		);
 
-		assert_eq!(CallFilter::disabled_calls((b"Balances".to_vec(), b"transfer".to_vec())), None);
-		assert_ok!(CallFilter::disable(
-			Origin::signed(1),
-			b"Balances".to_vec(),
-			b"transfer".to_vec()
-		));
-		System::assert_last_event(Event::CallFilter(crate::Event::Disabled(
-			b"Balances".to_vec(),
-			b"transfer".to_vec(),
-		)));
-		assert_eq!(
-			CallFilter::disabled_calls((b"Balances".to_vec(), b"transfer".to_vec())),
-			Some(())
-		);
-
-		assert_noop!(
-			CallFilter::disable(
-				Origin::signed(1),
-				b"CallFilter".to_vec(),
-				b"pause_transaction".to_vec()
-			),
-			Error::<Runtime>::CannotPause
-		);
-		assert_noop!(
-			CallFilter::disable(
-				Origin::signed(1),
-				b"CallFilter".to_vec(),
-				b"some_other_call".to_vec()
-			),
-			Error::<Runtime>::CannotPause
-		);
-		assert_ok!(CallFilter::disable(
-			Origin::signed(1),
-			b"OtherPallet".to_vec(),
-			b"pause_transaction".to_vec()
-		));
+		let other = CallFilterEntry {
+			pallet_name: b"OtherPallet".to_vec(),
+			function_name: b"disable".to_vec(),
+		};
+		assert_ok!(Filter::disable(Origin::signed(1), other));
 	});
 }
 
@@ -61,51 +54,38 @@ fn enable_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		System::set_block_number(1);
 
-		assert_ok!(CallFilter::disable(
-			Origin::signed(1),
-			b"Balances".to_vec(),
-			b"transfer".to_vec()
-		));
-		assert_eq!(
-			CallFilter::disabled_calls((b"Balances".to_vec(), b"transfer".to_vec())),
-			Some(())
-		);
+		let balances_transfer = CallFilterEntry {
+			pallet_name: b"Balances".to_vec(),
+			function_name: b"transfer".to_vec(),
+		};
 
-		assert_noop!(
-			CallFilter::enable(Origin::signed(5), b"Balances".to_vec(), b"transfer".to_vec()),
-			BadOrigin
-		);
+		assert_ok!(Filter::disable(Origin::signed(1), balances_transfer.clone()));
+		assert_eq!(Filter::disabled_calls(&balances_transfer), Some(()));
 
-		assert_ok!(CallFilter::enable(
-			Origin::signed(1),
-			b"Balances".to_vec(),
-			b"transfer".to_vec()
-		));
-		System::assert_last_event(Event::CallFilter(crate::Event::TransactionUnpaused(
-			b"Balances".to_vec(),
-			b"transfer".to_vec(),
-		)));
-		assert_eq!(CallFilter::disabled_calls((b"Balances".to_vec(), b"transfer".to_vec())), None);
+		assert_noop!(Filter::enable(Origin::signed(5), balances_transfer.clone()), BadOrigin);
+
+		assert_ok!(Filter::enable(Origin::signed(1), balances_transfer.clone()));
+		System::assert_last_event(Event::Filter(crate::Event::Enabled {
+			entry: balances_transfer.clone(),
+		}));
+		assert_eq!(Filter::disabled_calls(&balances_transfer), None);
 	});
 }
 
 #[test]
 fn paused_transaction_filter_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert!(!CallFilter::contains(BALANCE_TRANSFER));
-		assert_ok!(CallFilter::disable(
-			Origin::signed(1),
-			b"Balances".to_vec(),
-			b"transfer".to_vec()
-		));
+		let balances_transfer = CallFilterEntry {
+			pallet_name: b"Balances".to_vec(),
+			function_name: b"transfer".to_vec(),
+		};
 
-		assert!(CallFilter::contains(BALANCE_TRANSFER));
-		assert_ok!(CallFilter::enable(
-			Origin::signed(1),
-			b"Balances".to_vec(),
-			b"transfer".to_vec()
-		));
+		assert!(!Filter::contains(BALANCE_TRANSFER));
+		assert_ok!(Filter::disable(Origin::signed(1), balances_transfer.clone()));
 
-		assert!(!CallFilter::contains(BALANCE_TRANSFER));
+		assert!(Filter::contains(BALANCE_TRANSFER));
+		assert_ok!(Filter::enable(Origin::signed(1), balances_transfer));
+
+		assert!(!Filter::contains(BALANCE_TRANSFER));
 	});
 }

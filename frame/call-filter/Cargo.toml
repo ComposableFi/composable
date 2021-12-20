@@ -15,6 +15,7 @@ system = { package = "frame-system", git = "https://github.com/paritytech/substr
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 sp-io= { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 scale-info = { version = "1.0.0", features = ["derive"], default-features = false }
+composable-traits = { path = "../../frame/composable-traits" , default-features = false}
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
