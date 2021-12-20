@@ -16,6 +16,7 @@
 
 //! Pallet to spam the XCM/UMP.
 
+#![cfg_attr(not(test), warn(clippy::disallowed_method))] // allow in tests
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};

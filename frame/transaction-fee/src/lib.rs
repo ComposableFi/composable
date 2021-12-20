@@ -3,6 +3,7 @@
 //! Loosely based on https://github.com/paritytech/substrate/blob/master/frame/transaction-payment/src/lib.rs
 //! but with added support for `MultiCurrency` using a `Dex` interface.
 
+#![cfg_attr(not(test), warn(clippy::disallowed_method))] // allow in tests
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
