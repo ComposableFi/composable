@@ -15,5 +15,5 @@ members = [
     "utils/subxt-clients",
     "utils/collator-sidecar",
     "crowdloan-rewards-api",
-    "utils/price-feed"
+    "utils/price-feed",
 ]

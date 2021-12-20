@@ -12,7 +12,7 @@ pub enum Proof<AccountId> {
 	Ethereum(EcdsaSignature),
 }
 
-#[derive(Clone, RuntimeDebug, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Hash, Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum RemoteAccount<AccountId> {
 	RelayChain(AccountId),
@@ -45,7 +45,7 @@ impl<'de> Deserialize<'de> for EthereumAddress {
 		if s.len() != 40 {
 			return Err(frame_support::serde::de::Error::custom(
 				"Bad length of Ethereum address (should be 42 including '0x')",
-			))
+			));
 		}
 		let raw: Vec<u8> = rustc_hex::FromHex::from_hex(s)
 			.map_err(|e| frame_support::serde::de::Error::custom(format!("{:?}", e)))?;
