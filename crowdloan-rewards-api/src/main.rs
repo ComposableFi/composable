@@ -1,8 +1,9 @@
 use std::{convert::Infallible, sync::Arc};
 
 use pallet_crowdloan_rewards::{
-	get_remote_account,
+	ethereum_recover, get_remote_account,
 	models::{Proof, RemoteAccount},
+	verify_relay,
 };
 use sp_core::{Decode, Encode};
 use sp_runtime::AccountId32;
@@ -75,8 +76,33 @@ async fn associate(
 		Err(_) => return Ok(StatusCode::BAD_REQUEST),
 	};
 
+	let remote_account = match associate_origin.proof {
+		Proof::Ethereum(eth_proof) => {
+			let reward_account_encoded = associate_origin
+				.reward_account
+				.using_encoded(|x| hex::encode(x).as_bytes().to_vec());
+			let ethereum_address =
+				match ethereum_recover(&prefix, &reward_account_encoded, &eth_proof) {
+					Some(_) => todo!(),
+					None => todo!(),
+				};
+		}
+		Proof::RelayChain(relay_account, relay_proof) => {
+			if verify_relay(
+							&prefix,
+							associate_origin.reward_account.clone(),
+							relay_account.clone(),
+							&relay_proof,
+						) {
+				
+			};
+		}
+	};
+
 	// currently errors due to type parameter T
 	// get_remote_account(associate_origin.proof, &associate_origin.reward_account, &prefix);
 	api.tx(); // .what (?)
 	Ok(StatusCode::OK)
 }
+
+mod contributors;

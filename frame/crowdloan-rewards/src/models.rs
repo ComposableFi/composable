@@ -19,7 +19,7 @@ pub enum RemoteAccount<AccountId> {
 	Ethereum(EthereumAddress),
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
+#[derive(Hash, Clone, Copy, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
 pub struct EthereumAddress(pub [u8; 20]);
 
 #[cfg(feature = "std")]
