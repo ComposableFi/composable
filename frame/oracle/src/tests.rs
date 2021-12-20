@@ -580,7 +580,7 @@ fn historic_pricing() {
 
 		do_price_update(0, 15);
 		let price_15 = Price { price: 101, block: 15 };
-		price_history = vec![price_5.clone(), price_10.clone(), price_15.clone()];
+		price_history = vec![price_5, price_10.clone(), price_15.clone()];
 
 		assert_eq!(Oracle::price_history(0), price_history);
 		assert_eq!(Oracle::price_history(0).len(), 3);
@@ -868,7 +868,7 @@ fn parse_price_works() {
 
 fn add_price_storage(price: u128, asset_id: u128, who: AccountId, block: u64) {
 	let price = PrePrice { price, block, who };
-	PrePrices::<Test>::mutate(asset_id.clone(), |current_prices| current_prices.push(price));
+	PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.push(price));
 	AnswerInTransit::<Test>::mutate(who, |transit| {
 		*transit = Some(transit.unwrap_or_else(Zero::zero) + 5)
 	});

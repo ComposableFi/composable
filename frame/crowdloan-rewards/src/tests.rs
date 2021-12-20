@@ -2,21 +2,18 @@ use crate::{
 	ethereum_recover, ethereum_signable_message,
 	mocks::{
 		AccountId, Balance, Balances, BlockNumber, CrowdloanRewards, ExtBuilder, Origin,
-		RelayChainAccountId, System, Test, ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, DAYS,
-		INITIAL_PAYMENT, MINIMUM_BALANCE, PROOF_PREFIX, VESTING_STEP, WEEKS,
+		RelayChainAccountId, System, Test, ACCOUNT_FREE_START, ALICE, INITIAL_PAYMENT,
+		PROOF_PREFIX, VESTING_STEP, WEEKS,
 	},
 	models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount},
-	verify_relay, Error, RemoteAccountOf, RewardAmountOf, VestingPeriodOf,
+	Error, RemoteAccountOf, RewardAmountOf, VestingPeriodOf,
 };
 use codec::Encode;
 use frame_support::{
-	assert_noop, assert_ok,
-	dispatch::{DispatchResult, DispatchResultWithPostInfo},
-	traits::Currency,
+	assert_noop, assert_ok, dispatch::DispatchResultWithPostInfo, traits::Currency,
 };
 use hex_literal::hex;
 use sp_core::{ed25519, keccak_256, Pair};
-use sp_runtime::MultiSignature;
 
 type RelayKey = ed25519::Pair;
 type EthKey = libsecp256k1::SecretKey;
@@ -30,10 +27,12 @@ enum ClaimKey {
 impl ClaimKey {
 	fn as_remote_public(&self) -> RemoteAccount<RelayChainAccountId> {
 		match self {
-			ClaimKey::Relay(relay_account) =>
-				RemoteAccount::RelayChain(relay_account.public().into()),
-			ClaimKey::Eth(ethereum_account) =>
-				RemoteAccount::Ethereum(ethereum_address(ethereum_account)),
+			ClaimKey::Relay(relay_account) => {
+				RemoteAccount::RelayChain(relay_account.public().into())
+			}
+			ClaimKey::Eth(ethereum_account) => {
+				RemoteAccount::Ethereum(ethereum_address(ethereum_account))
+			}
 		}
 	}
 	fn claim(&self, reward_account: AccountId) -> DispatchResultWithPostInfo {
@@ -272,7 +271,7 @@ fn test_not_a_contributor() {
 fn test_association_ok() {
 	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
-		for (picasso_account, remote_account) in accounts.clone().into_iter() {
+		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.associate(picasso_account));
 		}
 	});
@@ -282,7 +281,7 @@ fn test_association_ok() {
 fn test_association_ko() {
 	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
-		for (picasso_account, remote_account) in accounts.clone().into_iter() {
+		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NotAssociated);
 		}
 	});

@@ -25,7 +25,7 @@ pub type Balance = u128;
 pub type Amount = i128;
 pub type AccountId = u128;
 
-pub const NATIVE_CURRENCY_ID: MockCurrencyId = MockCurrencyId::PICA;
+pub const NATIVE_CURRENCY_ID: MockCurrencyId = MockCurrencyId::Pica;
 pub const MIN_VESTED_TRANSFER: u64 = 1_000_000;
 pub const MIN_REWARD: u128 = 1_000_000;
 
@@ -49,9 +49,9 @@ pub const CHARLIE: AccountId = 3;
 	proptest_derive::Arbitrary,
 )]
 pub enum MockCurrencyId {
-	PICA,
-	BTC,
-	ETH,
+	Pica,
+	Btc,
+	Eth,
 }
 
 parameter_types! {

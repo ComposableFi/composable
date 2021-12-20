@@ -559,9 +559,9 @@ mod tests {
 	#[test]
 	fn test_empty_drained_market() {
 		let mut jump_model = JumpModel::new_model(
-			FixedU128::from_float(0.010000000000000000),
-			FixedU128::from_float(0.110000000000000000),
-			FixedU128::from_float(0.310000000000000000),
+			FixedU128::from_float(0.01),
+			FixedU128::from_float(0.11),
+			FixedU128::from_float(0.31),
 			Percent::zero(),
 		)
 		.unwrap();
@@ -575,9 +575,9 @@ mod tests {
 	#[test]
 	fn test_slope() {
 		let mut jump_model = JumpModel::new_model(
-			FixedU128::from_float(0.010000000000000000),
-			FixedU128::from_float(0.110000000000000000),
-			FixedU128::from_float(0.310000000000000000),
+			FixedU128::from_float(0.01),
+			FixedU128::from_float(0.11),
+			FixedU128::from_float(0.31),
 			Percent::from_percent(80),
 		)
 		.unwrap();

@@ -1,20 +1,17 @@
-use crate::{self as pallet_crowdloan_rewards, models::RemoteAccount};
-use frame_support::{
-	construct_runtime, parameter_types,
-	traits::{EnsureOrigin, Everything, GenesisBuild},
-	PalletId,
-};
+use crate::{self as pallet_crowdloan_rewards};
+use frame_support::{construct_runtime, parameter_types, traits::Everything};
 use frame_system as system;
-use orml_traits::parameter_type_with_key;
+
 use sp_core::H256;
-use sp_keystore::{testing::KeyStore, SyncCryptoStore};
+
 use sp_runtime::{
 	testing::Header,
-	traits::{ConvertInto, IdentityLookup, One},
+	traits::{ConvertInto, IdentityLookup},
 	Perbill,
 };
-use system::{EnsureOneOf, EnsureRoot, EnsureSigned, EnsureSignedBy};
+use system::EnsureRoot;
 
+// REVIEW: Are these unused type aliases and constants needed? Or can they be removed?
 pub type CurrencyId = u64;
 pub type BlockNumber = u64;
 pub type AccountId = u64;

@@ -57,16 +57,18 @@ pub mod pallet {
 					.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
 				Ok(Price { price, block: () })
 			};
+
+			#[allow(clippy::inconsistent_digit_grouping)] // values are in cents
 			match asset {
 				/* NOTE(hussein-aitlahcen)
 					Ideally we would have all the static currency quoted against USD cents on chain.
 					So that we would be able to derive LP tokens price.
 				*/
-				MockCurrencyId::USDT => Ok(Price { price: amount, block: () }),
-				MockCurrencyId::PICA => derive_price(10_00, amount),
-				MockCurrencyId::BTC => derive_price(Self::btc_value(), amount),
-				MockCurrencyId::ETH => derive_price(3400_00, amount),
-				MockCurrencyId::LTC => derive_price(180_00, amount),
+				MockCurrencyId::Usdt => Ok(Price { price: amount, block: () }),
+				MockCurrencyId::Pica => derive_price(10_00, amount),
+				MockCurrencyId::Btc => derive_price(Self::btc_value(), amount),
+				MockCurrencyId::Eth => derive_price(3400_00, amount),
+				MockCurrencyId::Ltc => derive_price(180_00, amount),
 
 				/* NOTE(hussein-aitlahcen)
 					If we want users to be able to consider LP tokens as currency,
@@ -88,7 +90,7 @@ pub mod pallet {
 						.checked_mul_int(price)
 						.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
 					Ok(Price { price: derived, block })
-				},
+				}
 			}
 		}
 
