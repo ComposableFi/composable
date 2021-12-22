@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), warn(clippy::disallowed_method))] // allow in tests
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -399,8 +399,8 @@ pub mod pallet {
 			ensure!(n_coins == balances.len(), Error::<T>::InconsistentStorage);
 
 			ensure!(n_coins == amounts.len(), Error::<T>::IndexOutOfRange);
-			let amp_f = pool.amplification_coefficient;
-			let ann = Self::get_ann(amp_f, n_coins).ok_or(Error::<T>::Math)?;
+			let amplification_coefficient = pool.amplification_coefficient;
+			let ann = Self::get_ann(amplification_coefficient, n_coins).ok_or(Error::<T>::Math)?;
 
 			let old_balances: Vec<FixedU128> = balances
 				.iter()
@@ -414,25 +414,29 @@ pub mod pallet {
 			let token_supply = T::LpToken::total_issuance(pool_lp_asset);
 			let token_supply_u: u128 = token_supply.into();
 			let token_supply_f = FixedU128::saturating_from_integer(token_supply_u);
-			let mut new_balances = old_balances.clone();
-			for i in 0..n_coins {
-				if token_supply == zero {
-					ensure!(amounts[i] > zero, Error::<T>::WrongAssetAmount);
-				}
-				let amount_i: u128 = amounts[i].into();
-				new_balances[i] = new_balances[i]
-					.checked_add(&FixedU128::saturating_from_integer(amount_i))
-					.ok_or(Error::<T>::Math)?;
-			}
+
+			let mut new_balances = old_balances
+				.iter()
+				.zip(&amounts)
+				.map(|(balance, amount)| -> Result<_, _> {
+					if token_supply == zero {
+						ensure!(amount > &zero, Error::<T>::WrongAssetAmount);
+					}
+					balance
+						.checked_add(&FixedU128::saturating_from_integer(*amount))
+						.ok_or(Error::<T>::Math)
+				})
+				.collect::<Result<Vec<_>, _>>()?;
 
 			let d1 = Self::get_d(&new_balances, ann).ok_or(Error::<T>::Math)?;
 			ensure!(d1 > d0, Error::<T>::WrongAssetAmount);
+
 			let d1_b = d1.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
-			let mint_amount;
 			let mut fees = vec![FixedU128::zero(); n_coins];
+
 			// Only account for fees if we are not the first to deposit
-			if token_supply > zero {
-				// Deposit x + withdraw y would chargVe about same
+			let mint_amount = if token_supply > zero {
+				// Deposit x + withdraw y would charge about same
 				// fees as a swap. Otherwise, one could exchange w/o paying fees.
 				// And this formula leads to exactly that equality
 				// fee = pool.fee * n_coins / (4 * (n_coins - 1))
@@ -450,26 +454,35 @@ pub mod pallet {
 					)
 					.ok_or(Error::<T>::Math)?;
 				let admin_fee_f: FixedU128 = pool.admin_fee.into();
-				for (index, asset_id) in assets.iter().enumerate() {
-					// ideal_balance = d1 * old_balances[i] / d0
-					let ideal_balance =
-						(|| d1.checked_mul(&old_balances[index])?.checked_div(&d0))()
-							.ok_or(Error::<T>::Math)?;
 
-					let new_balance = new_balances[index];
+				for (((asset_id, &old_balance), new_balance), fee) in assets
+					.iter()
+					.zip(&old_balances)
+					.zip(new_balances.iter_mut())
+					.zip(fees.iter_mut())
+				{
+					// ideal_balance = d1 * old_balances[i] / d0
+					let ideal_balance = d1
+						.checked_mul(&old_balance)
+						.map(|x| x.checked_div(&d0))
+						.flatten()
+						.ok_or(Error::<T>::Math)?;
+
 					// difference = abs(ideal_balance - new_balance)
-					let difference = (if ideal_balance > new_balance {
+					let difference = if ideal_balance > *new_balance {
 						ideal_balance.checked_sub(&new_balance)
 					} else {
 						new_balance.checked_sub(&ideal_balance)
-					})
+					}
 					.ok_or(Error::<T>::Math)?;
 
-					fees[index] = fee_f.checked_mul(&difference).ok_or(Error::<T>::Math)?;
+					*fee = fee_f.checked_mul(&difference).ok_or(Error::<T>::Math)?;
+
 					// new_pool_balance = new_balance - (fees[i] * admin_fee)
-					let new_pool_balance =
-						(|| new_balance.checked_sub(&fees[index].checked_mul(&admin_fee_f)?))()
-							.ok_or(Error::<T>::Math)?;
+					let new_pool_balance = new_balance
+						.checked_sub(&fee.checked_mul(&admin_fee_f).ok_or(Error::<T>::Math)?)
+						.ok_or(Error::<T>::Math)?;
+
 					PoolAssetBalance::<T>::mutate(
 						pool_id,
 						asset_id,
@@ -482,45 +495,49 @@ pub mod pallet {
 						},
 					)?;
 
-					new_balances[index] =
-						new_balances[index].checked_sub(&fees[index]).ok_or(Error::<T>::Math)?;
+					*new_balance = new_balance.checked_sub(&fee).ok_or(Error::<T>::Math)?;
 				}
+
 				let d2 = Self::get_d(&new_balances, ann).ok_or(Error::<T>::Math)?;
 
 				// mint_amount = token_supply * (d2 - d0) / d0
-				let mint_amount_f =
-					(|| token_supply_f.checked_mul(&d2.checked_sub(&d0)?.checked_div(&d0)?))()
-						.ok_or(Error::<T>::Math)?;
-				mint_amount = mint_amount_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+				token_supply_f
+					.checked_mul(
+						&d2.checked_sub(&d0)
+							.ok_or(Error::<T>::Math)?
+							.checked_div(&d0)
+							.ok_or(Error::<T>::Math)?,
+					)
+					.ok_or(Error::<T>::Math)?
+					.into_inner()
+					.try_into()
+					.map_err(|_| Error::<T>::Math)?
 			} else {
-				for (index, asset_id) in assets.iter().enumerate() {
+				for (asset_id, new_balance) in assets.iter().zip(&new_balances) {
 					PoolAssetBalance::<T>::mutate(
 						pool_id,
 						asset_id,
 						|balance| -> DispatchResult {
-							*balance = new_balances[index]
-								.checked_mul_int(1u64)
-								.ok_or(Error::<T>::Math)?
-								.into();
+							*balance =
+								new_balance.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
 							Ok(())
 						},
 					)?;
 				}
-				mint_amount = d1_b;
-			}
+				d1_b
+			};
 
+			// REVIEW: should this expression be compared the other way?
 			ensure!(mint_amount >= min_mint_amount, Error::<T>::RequiredAmountNotReached);
 
 			let new_token_supply =
 				token_supply.checked_add(&mint_amount).ok_or(Error::<T>::Math)?;
 
 			// Ensure that for all tokens user has sufficient amount
-			for (i, amount) in amounts.iter().enumerate() {
-				ensure!(
-					T::LpToken::balance(assets[i], who) >= *amount,
-					Error::<T>::InsufficientFunds
-				);
+			for (amount, asset) in amounts.iter().zip(&assets) {
+				ensure!(T::LpToken::balance(*asset, who) >= *amount, Error::<T>::InsufficientFunds);
 			}
+
 			// Transfer funds to pool
 			for (i, amount) in amounts.iter().enumerate() {
 				if amount > &zero {
@@ -561,15 +578,17 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let zero = FixedU128::zero();
 			let b_zero = Self::Balance::zero();
+
 			ensure!(amount >= b_zero, Error::<T>::WrongAssetAmount);
+
 			let amount_u: u128 = amount.into();
 			let amount_f = FixedU128::saturating_from_integer(amount_u);
 
 			let min_amounts_f: Vec<FixedU128> = min_amounts
 				.iter()
-				.map(|b| {
-					let b_u: u128 = (*b).into();
-					FixedU128::saturating_from_integer(b_u)
+				.map(|balance| {
+					let balance: u128 = (*balance).into();
+					FixedU128::saturating_from_integer(balance)
 				})
 				.collect();
 
@@ -577,10 +596,12 @@ pub mod pallet {
 				PoolLPAsset::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
 			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
 			let n_coins = assets.len();
-			let mut balances = Vec::new();
-			for asset_id in &assets {
-				balances.push(PoolAssetBalance::<T>::get(pool_id, asset_id));
-			}
+
+			let balances: Vec<<T as Config>::Balance> = assets
+				.iter()
+				.copied()
+				.map(|asset_id| PoolAssetBalance::<T>::get(pool_id, asset_id))
+				.collect();
 
 			ensure!(n_coins == balances.len(), Error::<T>::InconsistentStorage);
 
@@ -589,30 +610,39 @@ pub mod pallet {
 			let token_supply = T::LpToken::total_issuance(pool_lp_asset);
 			let token_supply_u: u128 = token_supply.into();
 
-			let mut amounts_f = vec![FixedU128::zero(); n_coins];
+			let amounts_f = assets
+				.iter()
+				.zip(balances)
+				.zip(min_amounts_f)
+				.map(
+					|((asset_id, old_balance), min_amount_f)| -> Result<FixedU128, DispatchError> {
+						let old_balance: u128 = old_balance.into();
+						let old_balance = FixedU128::saturating_from_integer(old_balance);
+						// value = old_balance * n_amount / token_supply
+						let value = old_balance
+							.checked_mul(&amount_f)
+							.ok_or(Error::<T>::Math)?
+							.checked_div(&FixedU128::saturating_from_integer(token_supply_u))
+							.ok_or(Error::<T>::Math)?;
 
-			for (index, asset_id) in assets.iter().enumerate() {
-				let old_balance_u: u128 = balances[index].into();
-				let old_balance = FixedU128::saturating_from_integer(old_balance_u);
-				// value = old_balance * n_amount / token_supply
-				let value = (|| {
-					old_balance
-						.checked_mul(&amount_f)?
-						.checked_div(&FixedU128::saturating_from_integer(token_supply_u))
-				})()
-				.ok_or(Error::<T>::Math)?;
-				ensure!(value >= min_amounts_f[index], Error::<T>::RequiredAmountNotReached);
-				PoolAssetBalance::<T>::mutate(pool_id, asset_id, |balance| -> DispatchResult {
-					*balance = old_balance
-						.checked_sub(&value)
-						.ok_or(Error::<T>::InsufficientFunds)?
-						.checked_mul_int(1u64)
-						.ok_or(Error::<T>::Math)?
-						.into();
-					Ok(())
-				})?;
-				amounts_f[index] = value;
-			}
+						ensure!(value >= min_amount_f, Error::<T>::RequiredAmountNotReached);
+						PoolAssetBalance::<T>::mutate(
+							pool_id,
+							asset_id,
+							|balance| -> DispatchResult {
+								*balance = old_balance
+									.checked_sub(&value)
+									.ok_or(Error::<T>::InsufficientFunds)?
+									.checked_mul_int(1u64)
+									.ok_or(Error::<T>::Math)?
+									.into();
+								Ok(())
+							},
+						)?;
+						Ok(value)
+					},
+				)
+				.collect::<Result<Vec<_>, _>>()?;
 
 			let amounts: Vec<T::Balance> = amounts_f
 				.iter()
@@ -626,21 +656,21 @@ pub mod pallet {
 			T::LpToken::burn_from(pool_lp_asset, who, amount)?;
 
 			// Ensure that for all tokens we have sufficient amount
-			for (index, asset_id) in assets.iter().enumerate() {
+			for (asset_id, amount) in assets.iter().zip(&amounts) {
 				ensure!(
-					T::LpToken::balance(*asset_id, &Self::account_id(&pool_id)) >= amounts[index],
+					T::LpToken::balance(*asset_id, &Self::account_id(&pool_id)) >= *amount,
 					Error::<T>::InsufficientFunds
 				);
 			}
 
-			for i in 0..n_coins {
-				if amounts_f[i] > zero {
+			for (index, (amount_f, amount)) in amounts_f.iter().zip(&amounts).enumerate() {
+				if amount_f > &zero {
 					Self::transfer_liquidity_from_pool(
 						&Self::account_id(&pool_id),
 						pool_id,
-						i,
+						index,
 						who,
-						amounts[i],
+						*amount,
 					)?;
 				}
 			}
@@ -655,6 +685,8 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		// REVIEW: indexing
 		fn exchange(
 			who: &Self::AccountId,
 			pool_id: PoolId,
@@ -787,9 +819,9 @@ pub mod pallet {
 
 			let assets = assets.clone();
 
-			for (index, asset_id) in assets.iter().enumerate() {
-				let new_total_balance = total_balances[index]
-					.checked_sub(&admin_fees[index])
+			for ((asset_id, total_balance), admin_fee) in assets.iter().zip(&total_balances).zip(&admin_fees) {
+				let new_total_balance = total_balance
+					.checked_sub(&admin_fee)
 					.ok_or(Error::<T>::Math)?;
 				PoolAssetTotalBalance::<T>::mutate(
 					pool_id,
@@ -858,7 +890,7 @@ pub mod pallet {
 			let n = FixedU128::saturating_from_integer(u128::try_from(xp_f.len()).ok()?);
 			let sum = xp_f.iter().try_fold(zero, |s, x| s.checked_add(x))?;
 			if sum == zero {
-				return Some(zero)
+				return Some(zero);
 			}
 			let mut d = sum;
 
@@ -881,10 +913,10 @@ pub mod pallet {
 
 				if d > d_prev {
 					if d.checked_sub(&d_prev)? <= prec {
-						return Some(d)
+						return Some(d);
 					}
 				} else if d_prev.checked_sub(&d)? <= prec {
-					return Some(d)
+					return Some(d);
 				}
 			}
 			None
@@ -920,14 +952,14 @@ pub mod pallet {
 
 			// Same coin
 			if i == j {
-				return None
+				return None;
 			}
 			// j above n
 			if j >= xp_f.len() {
-				return None
+				return None;
 			}
 			if i >= xp_f.len() {
-				return None
+				return None;
 			}
 			let d_f = Self::get_d(xp_f, ann_f)?;
 			let mut c = d_f;
@@ -943,7 +975,7 @@ pub mod pallet {
 				} else if k != j {
 					x_k = *xp_k;
 				} else {
-					continue
+					continue;
 				}
 				// s = s + x_k
 				s = s.checked_add(&x_k)?;
@@ -973,10 +1005,10 @@ pub mod pallet {
 				// Equality with the specified precision
 				if y > y_prev {
 					if y.checked_sub(&y_prev)? <= prec {
-						return Some(y)
+						return Some(y);
 					}
 				} else if y_prev.checked_sub(&y)? <= prec {
-					return Some(y)
+					return Some(y);
 				}
 			}
 
@@ -1008,7 +1040,7 @@ pub mod pallet {
 			let n = FixedU128::try_from(xp_f.len() as u128).ok()?;
 
 			if i >= xp_f.len() {
-				return None
+				return None;
 			}
 
 			let mut c = d_f;
@@ -1016,7 +1048,7 @@ pub mod pallet {
 
 			for (k, xp_k) in xp_f.iter().enumerate() {
 				if k == i {
-					continue
+					continue;
 				}
 
 				let x = xp_k;
@@ -1042,16 +1074,17 @@ pub mod pallet {
 				// Equality with the specified precision
 				if y > y_prev {
 					if y.checked_sub(&y_prev)? <= prec {
-						return Some(y)
+						return Some(y);
 					}
 				} else if y_prev.checked_sub(&y)? <= prec {
-					return Some(y)
+					return Some(y);
 				}
 			}
 
 			None
 		}
 
+		// REVIEW: indexing
 		fn transfer_liquidity_into_pool(
 			pool_account_id: &T::AccountId,
 			pool_id: PoolId,
@@ -1074,6 +1107,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// REVIEW: indexing
 		fn transfer_liquidity_from_pool(
 			pool_account_id: &T::AccountId,
 			pool_id: PoolId,
