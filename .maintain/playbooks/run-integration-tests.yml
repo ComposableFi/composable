@@ -1,0 +1,202 @@
+---
+- hosts: "{{ target }}"
+  vars:
+    user: service
+    group: service
+    work_dir: /srv/composable-sandbox
+  tasks:
+
+  - name: Create a group
+    group:
+      name: "{{ user }}"
+      state: present
+    become: yes
+
+  - name: Create a user
+    user:
+      name: "{{ user }}"
+      state: present
+      shell: /bin/bash
+      home: "/home/{{ user }}"
+      group: "{{ group }}"
+    become: yes
+
+  - name: Create a work directory
+    ansible.builtin.file:
+      path: "{{ work_dir }}"
+      state: directory
+      mode: "0755"
+      owner: "{{ user }}"
+      group: "{{ group }}"
+    become: yes
+
+  - name: Download rustup-init.sh
+    get_url:
+      url: https://sh.rustup.rs
+      dest: "/home/{{ user }}/rustup-init.sh"
+      mode: '0440'
+    become: yes
+    become_user: "{{ user }}"
+
+  - name: Install Rust toolchain
+    ansible.builtin.shell: |
+      cat $HOME/rustup-init.sh | sh -s -- -y
+      source $HOME/.cargo/env
+      rustup default stable
+      rustup update
+      rustup update nightly
+      rustup target add wasm32-unknown-unknown --toolchain nightly
+      rustc --version
+      rustup show
+    args:
+      executable: /bin/bash
+    become: yes
+    become_user: "{{ user }}"
+
+  - name: Update repositories cache and install apt-transport-https
+    apt:
+      name: apt-transport-https
+      update_cache: yes
+    become: yes
+
+  - name: Add Yarn apt key
+    apt_key:
+      url: https://dl.yarnpkg.com/debian/pubkey.gpg
+    become: yes
+
+  - name: Add Yarn repository
+    apt_repository:
+      repo: "deb https://dl.yarnpkg.com/debian/ stable main"
+      filename: yarn
+    become: yes
+
+  - name: Download Node v16 installer
+    get_url:
+      url: https://deb.nodesource.com/setup_16.x
+      dest: "/tmp/setup_node.sh"
+      mode: '0440'
+    become: yes
+
+  - name: Add Node repository
+    ansible.builtin.shell: |
+      cat /tmp/setup_node.sh | bash
+    become: yes
+
+  - name: Update repositories cache and install nodejs and yarn
+    apt:
+      pkg:
+      - yarn
+      - nodejs
+      update_cache: yes
+      install_recommends: no
+    become: yes
+
+  - name: Clone composable repo
+    ansible.builtin.git:
+      repo: "https://{{ github_user | urlencode }}:{{ github_password | urlencode }}@github.com/ComposableFi/composable.git"
+      dest: "{{ work_dir }}/composable"
+      version: main
+    become: yes
+    become_user: "{{ user }}"
+
+  - name: Clone polkadot repo
+    ansible.builtin.git:
+      repo: https://github.com/paritytech/polkadot.git
+      dest: "{{ work_dir }}/polkadot"
+      version: v0.9.13
+    become: yes
+    become_user: "{{ user }}"
+
+  - name: Clone Basilisk-node repo
+    ansible.builtin.git:
+      repo: https://github.com/galacticcouncil/Basilisk-node.git
+      dest: "{{ work_dir }}/Basilisk-node"
+      version: v5.0.3
+    become: yes
+    become_user: "{{ user }}"
+
+  - name: Install dependencies of polkadot-launch
+    ansible.builtin.shell: yarn
+    args:
+      chdir: "{{ work_dir }}/composable/scripts/polkadot-launch"
+      executable: /bin/bash
+    become: yes
+    become_user: "{{ user }}"
+
+  - name: Install dependencies of integration tests and build integraion tests
+    ansible.builtin.shell: |
+      yarn
+      yarn build
+    args:
+      chdir: "{{ work_dir }}/composable/scripts/polkadot-launch/initialization"
+      executable: /bin/bash
+    become: yes
+    become_user: "{{ user }}"
+
+  - name: Create systemd service
+    template:
+      src: systemd/composable-sandbox.j2
+      dest: /etc/systemd/system/composable-sandbox.service
+      mode: "0600"
+    become: yes
+
+  - name: Stop composable-sandbox service, if running
+    ansible.builtin.systemd:
+      name: composable-sandbox
+      state: stopped
+      daemon_reload: yes
+      enabled: true
+    become: yes
+
+  - name: Compile composable
+    ansible.builtin.shell: |
+      source $HOME/.cargo/env
+      cargo build --release
+    args:
+      chdir: "{{ work_dir }}/composable"
+      executable: /bin/bash
+    become: yes
+    become_user: "{{ user }}"
+
+  - name: Compile polkadot
+    ansible.builtin.shell: |
+      source $HOME/.cargo/env
+      cargo build --release
+    args:
+      chdir: "{{ work_dir }}/polkadot"
+      executable: /bin/bash
+    become: yes
+    become_user: "{{ user }}"
+
+  - name: Compile Basilisk-node
+    ansible.builtin.shell: |
+      source $HOME/.cargo/env
+      cargo build --release
+    args:
+      chdir: "{{ work_dir }}/Basilisk-node"
+      executable: /bin/bash
+    become: yes
+    become_user: "{{ user }}"
+
+  - name: Start service composable-sandbox service
+    ansible.builtin.systemd:
+      name: composable-sandbox
+      state: started
+      daemon_reload: yes
+    become: yes
+
+  - name: Wait until the string " POLKADOT LAUNCH COMPLETE " is in the file /var/log/syslog before continuing
+    ansible.builtin.shell: |
+      tail -f /var/log/syslog | sed '/\sPOLKADOT LAUNCH COMPLETE\s/ q'
+    args:
+      executable: /bin/bash
+    become: yes
+
+  - name: Run integration tests
+    ansible.builtin.shell: |
+      yarn start >log 2>err
+    args:
+      chdir: "{{ work_dir }}/composable/scripts/polkadot-launch/initialization"
+      executable: /bin/bash
+    become: yes
+    become_user: "{{ user }}"
