@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), warn(clippy::disallowed_method))] // allow in tests
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
 
 pub mod chain_spec;
 mod client;

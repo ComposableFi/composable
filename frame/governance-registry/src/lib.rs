@@ -2,7 +2,7 @@
 //!
 //! Is used to add new assets into chain.
 
-#![cfg_attr(not(test), warn(clippy::disallowed_method))] // allow in tests
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;

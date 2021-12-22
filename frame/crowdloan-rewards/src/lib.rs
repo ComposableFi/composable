@@ -15,7 +15,7 @@ proof = sign (concat prefix (hex reward_account))
 Reference for proof mechanism: https://github.com/paritytech/polkadot/blob/master/runtime/common/src/claims.rs
 */
 
-#![cfg_attr(not(test), warn(clippy::disallowed_method))] // allow in tests
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,

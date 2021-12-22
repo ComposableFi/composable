@@ -40,12 +40,14 @@ impl<'de> Deserialize<'de> for EthereumAddress {
 		D: Deserializer<'de>,
 	{
 		let base_string = String::deserialize(deserializer)?;
-		let offset = if base_string.starts_with("0x") { 2 } else { 0 };
-		let s = &base_string[offset..];
+		// strip_prefix instead of trim_start_matches because strip_prefix only removes
+		// whereas trim_start_matches removes the prefix as many times at it appears
+		// (i.e. "11foo".trim_start_matches("1") == "foo", not "1foo")
+		let s = base_string.strip_prefix("0x").unwrap_or(&base_string);
 		if s.len() != 40 {
 			return Err(frame_support::serde::de::Error::custom(
 				"Bad length of Ethereum address (should be 42 including '0x')",
-			))
+			));
 		}
 		let raw: Vec<u8> = rustc_hex::FromHex::from_hex(s)
 			.map_err(|e| frame_support::serde::de::Error::custom(format!("{:?}", e)))?;
