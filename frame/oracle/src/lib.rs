@@ -740,7 +740,7 @@ pub mod pallet {
 				// max_answers is confirmed to be less than the len in the condition of the if block
 				// (in a block due to https://github.com/rust-lang/rust/issues/15701)
 				{
-					fresh_prices = fresh_prices[0..max_answers as usize].to_vec()
+					fresh_prices = fresh_prices[0..max_answers as usize].to_vec();
 				};
 			}
 
@@ -791,18 +791,23 @@ pub mod pallet {
 			});
 		}
 
+		// REVIEW: indexing
 		pub fn get_twap(
 			asset_id: T::AssetId,
 			mut price_weights: Vec<T::PriceValue>,
 		) -> Result<T::PriceValue, DispatchError> {
 			let precision: T::PriceValue = 100u128.into();
 			let historical_prices = Self::price_history(asset_id);
+
 			// add an extra to account for current price not stored in history
 			ensure!(historical_prices.len() + 1 >= price_weights.len(), Error::<T>::DepthTooLarge);
+
 			let sum = Self::price_values_sum(&price_weights);
 			ensure!(sum == precision, Error::<T>::MustSumTo100);
+
 			let last_weight = price_weights.pop().unwrap_or_else(|| 0u128.into());
 			ensure!(last_weight != 0u128.into(), Error::<T>::ArithmeticError);
+
 			let mut weighted_prices = price_weights
 				.iter()
 				.enumerate()
@@ -817,9 +822,12 @@ pub mod pallet {
 				.collect::<Vec<_>>();
 			let current_price = Self::prices(asset_id);
 			let current_weighted_price = last_weight.mul(current_price.price).div(precision);
+
 			weighted_prices.push(current_weighted_price);
+
 			let weighted_average = Self::price_values_sum(&weighted_prices);
 			ensure!(weighted_average != 0u128.into(), Error::<T>::ArithmeticError);
+
 			Ok(weighted_average)
 		}
 
@@ -829,6 +837,7 @@ pub mod pallet {
 				.fold(T::PriceValue::from(0u128), |acc, b| acc.saturating_add(*b))
 		}
 
+		// REVIEW: indexing
 		pub fn fetch_price_and_send_signed(price_id: &T::AssetId) -> Result<(), &'static str> {
 			let signer = Signer::<T, T::AuthorityId>::all_accounts();
 			if !signer.can_sign() {
