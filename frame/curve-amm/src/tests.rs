@@ -156,57 +156,82 @@ fn get_y_j_greater_than_n() {
 fn add_remove_liquidity() {
 	new_test_ext().execute_with(|| {
 		let assets = vec![MockCurrencyId::USDC, MockCurrencyId::USDT];
-		let amp_coeff = FixedU128::saturating_from_rational(1000i128, 1i128);
+		let amp_coeff = FixedU128::saturating_from_rational(1_000_i128, 1_i128);
 		let fee = Permill::zero();
 		let admin_fee = Permill::zero();
 
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
-		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, 200000));
-		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200000);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, 200_000));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200_000);
+
 		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 0);
-		assert_ok!(Tokens::mint_into(MockCurrencyId::USDC, &ALICE, 200000));
-		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 200000);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDC, &ALICE, 200_000));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 200_000);
+
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 0);
-		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &BOB, 200000));
-		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200000);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &BOB, 200_000));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200_000);
+
 		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 0);
-		assert_ok!(Tokens::mint_into(MockCurrencyId::USDC, &BOB, 200000));
-		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 200000);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDC, &BOB, 200_000));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 200_000);
+
 		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff, fee, admin_fee);
 		assert_ok!(&p);
 		let pool_id = p.unwrap();
+
 		let pool = CurveAmm::pool(pool_id);
 		assert!(pool.is_some());
+
 		let pool_lp_asset = CurveAmm::pool_lp_asset(pool_id);
 		assert!(pool_lp_asset.is_some());
 		let pool_lp_asset = pool_lp_asset.unwrap();
+
 		// 1 USDC = 1 USDT
-		let amounts = vec![130000u128, 130000u128];
-		assert_ok!(CurveAmm::add_liquidity(&ALICE, pool_id, amounts.clone(), 0u128));
-		let alice_balance = Tokens::balance(pool_lp_asset, &ALICE);
-		assert_ne!(alice_balance, 0);
-		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200000 - 130000);
-		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 200000 - 130000);
+		let amounts = vec![130_000_u128, 130_000_u128];
+
+		// add 130k of liquidity to both currencies to the pool
+		assert_ok!(CurveAmm::add_liquidity(&ALICE, pool_id, amounts.clone(), 0_u128));
+		let alice_lp_asset_balance = Tokens::balance(pool_lp_asset, &ALICE);
+		assert_ne!(alice_lp_asset_balance, 0);
+		assert_eq!(alice_lp_asset_balance, 260_000); // 130_000 * 2 tokens
+
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200_000 - 130_000);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 200_000 - 130_000);
 		let pool = CurveAmm::pool(pool_id);
 		assert!(pool.is_some());
-		assert_ok!(CurveAmm::add_liquidity(&BOB, pool_id, amounts.clone(), 0u128));
-		let bob_balance = Tokens::balance(pool_lp_asset, &BOB);
-		assert_ne!(bob_balance, 0);
-		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200000 - 130000);
-		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 200000 - 130000);
-		let min_amt = vec![0u128, 0u128];
-		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &CurveAmm::account_id(&pool_id)), 260000);
-		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)), 260000);
-		assert_ok!(CurveAmm::remove_liquidity(&ALICE, pool_id, alice_balance, min_amt.clone()));
+		assert_ok!(CurveAmm::add_liquidity(&BOB, pool_id, amounts.clone(), 0_u128));
+
+		let bob_lp_asset_balance = Tokens::balance(pool_lp_asset, &BOB);
+		assert_ne!(bob_lp_asset_balance, 0);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200_000 - 130_000);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 200_000 - 130_000);
+
+		let min_amt = vec![0_u128, 0_u128];
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &CurveAmm::account_id(&pool_id)), 260_000);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)), 260_000);
+
+		assert_ok!(CurveAmm::remove_liquidity(
+			&ALICE,
+			pool_id,
+			alice_lp_asset_balance,
+			min_amt.clone()
+		));
 		assert_eq!(Tokens::balance(pool_lp_asset, &ALICE), 0);
-		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200000);
-		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 200000);
-		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &CurveAmm::account_id(&pool_id)), 130000);
-		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)), 130000);
-		assert_ok!(CurveAmm::remove_liquidity(&BOB, pool_id, bob_balance, min_amt.clone()));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200_000);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 200_000);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &CurveAmm::account_id(&pool_id)), 130_000);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)), 130_000);
+
+		assert_ok!(CurveAmm::remove_liquidity(
+			&BOB,
+			pool_id,
+			bob_lp_asset_balance,
+			min_amt.clone()
+		));
 		assert_eq!(Tokens::balance(pool_lp_asset, &BOB), 0);
-		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200000);
-		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 200000);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &BOB), 200_000);
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &BOB), 200_000);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &CurveAmm::account_id(&pool_id)), 0);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &CurveAmm::account_id(&pool_id)), 0);
 	});
