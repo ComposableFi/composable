@@ -1,4 +1,5 @@
 ---
+# Creates new user space, runs full relay chain and several parachains, and runs integration tests on top 
 - hosts: "{{ target }}"
   vars:
     user: service
