@@ -798,7 +798,8 @@ pub mod pallet {
 			mut price_weights: Vec<T::PriceValue>,
 		) -> Result<T::PriceValue, DispatchError> {
 			let precision: T::PriceValue = 100u128.into();
-			let historical_prices = Self::price_history(asset_id);
+			let historical_prices: Vec<Price<T::PriceValue, T::BlockNumber>> =
+				Self::price_history(asset_id);
 
 			// add an extra to account for current price not stored in history
 			ensure!(historical_prices.len() + 1 >= price_weights.len(), Error::<T>::DepthTooLarge);
@@ -849,8 +850,11 @@ pub mod pallet {
 			}
 			// checks to make sure key from keystore has not already submitted price
 			let prices = PrePrices::<T>::get(*price_id);
-			let public_key = sp_io::crypto::sr25519_public_keys(CRYPTO_KEY_TYPE);
-			let account = AccountId32::new(public_key[0].0);
+			let public_keys: Vec<sp_core::sr25519::Public> =
+				sp_io::crypto::sr25519_public_keys(CRYPTO_KEY_TYPE);
+			let account = AccountId32::new(
+				public_keys.first().ok_or("No public keys for crypto key type `orac`")?.0,
+			);
 			let mut to32 = AccountId32::as_ref(&account);
 			let address: T::AccountId = T::AccountId::decode(&mut to32).unwrap_or_default();
 
