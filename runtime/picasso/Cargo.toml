@@ -57,6 +57,7 @@ assets-registry = { package = "pallet-assets-registry", path = '../../frame/asse
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false, optional = true }
 
 crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
+crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false, optional = true }
 
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
@@ -100,7 +101,6 @@ scale-info = { version = "1.0", default-features = false, features = ["derive"] 
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301", default-features = false }
 orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301", default-features = false }
 orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301", default-features = false }
-
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
@@ -191,6 +191,7 @@ runtime-benchmarks = [
 	"xcm-builder/runtime-benchmarks",
 	"indices/runtime-benchmarks",
 	"crowdloan-bonus/runtime-benchmarks",
+	"crowdloan-rewards/runtime-benchmarks",
 	"identity/runtime-benchmarks",
 	"multisig/runtime-benchmarks",
 	"membership/runtime-benchmarks",
@@ -201,9 +202,11 @@ runtime-benchmarks = [
 	"utility/runtime-benchmarks",
   "vault/runtime-benchmarks"
 ]
+
 develop = [
-    "assets",
-    "governance-registry",
+  "crowdloan-rewards",
+  "assets",
+  "governance-registry",
 	"assets-registry",
 	"assets",
 	"oracle",
