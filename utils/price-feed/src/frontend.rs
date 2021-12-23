@@ -122,8 +122,8 @@ fn normalize_price(
 	let dt = expected_exponent - q;
 	let normalized_price = match dt.signum() {
 		0 => p,
-		1 => p * u64::pow(10u64, dt as u32),
-		-1 => p / u64::pow(10u64, dt.abs() as u32),
+		1 => p * u64::pow(10_u64, dt as u32),
+		-1 => p / u64::pow(10_u64, dt.abs() as u32),
 		_ => unreachable!(),
 	};
 	NormalizedPrice(normalized_price)

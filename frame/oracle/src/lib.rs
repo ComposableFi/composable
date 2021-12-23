@@ -1,4 +1,5 @@
 #![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
 
@@ -579,7 +580,7 @@ pub mod pallet {
 			stake: BalanceOf<T>,
 		) -> DispatchResult {
 			let amount_staked = Self::oracle_stake(signer.clone())
-				.unwrap_or_else(|| 0u32.into())
+				.unwrap_or_else(|| 0_u32.into())
 				.checked_add(&stake)
 				.ok_or(Error::<T>::ExceedStake)?;
 			T::Currency::transfer(&who, &signer, stake, KeepAlive)?;
@@ -692,7 +693,7 @@ pub mod pallet {
 					let historical = Self::price_history(asset_id);
 					if (historical.len() as u32) < T::MaxHistory::get() {
 						PriceHistory::<T>::mutate(asset_id, |prices| {
-							if Self::prices(asset_id).block != 0u32.into() {
+							if Self::prices(asset_id).block != 0_u32.into() {
 								prices.push(Price { price, block });
 							}
 						})
@@ -763,7 +764,7 @@ pub mod pallet {
 			let mid = numbers.len() / 2;
 			if numbers.len() % 2 == 0 {
 				#[allow(clippy::indexing_slicing)] // mid is less than the len (len/2)
-				Some(numbers[mid - 1].saturating_add(numbers[mid]) / 2u32.into())
+				Some(numbers[mid - 1].saturating_add(numbers[mid]) / 2_u32.into())
 			} else {
 				#[allow(clippy::indexing_slicing)] // mid is less than the len (len/2)
 				Some(numbers[mid])
@@ -797,7 +798,7 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			mut price_weights: Vec<T::PriceValue>,
 		) -> Result<T::PriceValue, DispatchError> {
-			let precision: T::PriceValue = 100u128.into();
+			let precision: T::PriceValue = 100_u128.into();
 			let historical_prices: Vec<Price<T::PriceValue, T::BlockNumber>> =
 				Self::price_history(asset_id);
 
@@ -807,8 +808,8 @@ pub mod pallet {
 			let sum = Self::price_values_sum(&price_weights);
 			ensure!(sum == precision, Error::<T>::MustSumTo100);
 
-			let last_weight = price_weights.pop().unwrap_or_else(|| 0u128.into());
-			ensure!(last_weight != 0u128.into(), Error::<T>::ArithmeticError);
+			let last_weight = price_weights.pop().unwrap_or_else(|| 0_u128.into());
+			ensure!(last_weight != 0_u128.into(), Error::<T>::ArithmeticError);
 
 			let mut weighted_prices = price_weights
 				.iter()
@@ -828,7 +829,7 @@ pub mod pallet {
 			weighted_prices.push(current_weighted_price);
 
 			let weighted_average = Self::price_values_sum(&weighted_prices);
-			ensure!(weighted_average != 0u128.into(), Error::<T>::ArithmeticError);
+			ensure!(weighted_average != 0_u128.into(), Error::<T>::ArithmeticError);
 
 			Ok(weighted_average)
 		}
@@ -836,7 +837,7 @@ pub mod pallet {
 		fn price_values_sum(price_values: &[T::PriceValue]) -> T::PriceValue {
 			price_values
 				.iter()
-				.fold(T::PriceValue::from(0u128), |acc, b| acc.saturating_add(*b))
+				.fold(T::PriceValue::from(0_u128), |acc, b| acc.saturating_add(*b))
 		}
 
 		// REVIEW: indexing

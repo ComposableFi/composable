@@ -65,7 +65,7 @@ fn ethereum_proof(
 	);
 	let (sig, recovery_id) =
 		libsecp256k1::sign(&libsecp256k1::Message::parse(&msg), ethereum_account);
-	let mut r = [0u8; 65];
+	let mut r = [0_u8; 65];
 	r[0..64].copy_from_slice(&sig.serialize()[..]);
 	r[64] = recovery_id.serialize();
 	Proof::Ethereum(EcdsaSignature(r))

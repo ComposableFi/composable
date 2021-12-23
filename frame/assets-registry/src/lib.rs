@@ -7,6 +7,8 @@
 //! 4. Map of native token to this chain(here) is added unconditionally.
 
 #![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix)]
+#![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;

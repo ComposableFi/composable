@@ -62,7 +62,7 @@ pub fn calc_utilization_ratio(
 	let utilization_ratio = borrows
 		.checked_div(&total)
 		.expect("above checks prove it cannot error")
-		.checked_mul_int(100u16)
+		.checked_mul_int(100_u16)
 		.unwrap()
 		.try_into()
 		.unwrap();
@@ -299,8 +299,8 @@ impl DynamicPIDControllerModel {
 		utilization_ratio: FixedU128,
 	) -> Result<Rate, ArithmeticError> {
 		// compute error term `et = uo - ut`
-		let et: i128 = self.uo.into_inner().try_into().unwrap_or(0i128) -
-			utilization_ratio.into_inner().try_into().unwrap_or(0i128);
+		let et: i128 = self.uo.into_inner().try_into().unwrap_or(0_i128) -
+			utilization_ratio.into_inner().try_into().unwrap_or(0_i128);
 		let et: FixedI128 = FixedI128::from_inner(et);
 		// compute proportional term `pt = kp * et`
 		let pt = self.kp.checked_mul(&et).ok_or(ArithmeticError::Overflow)?;
@@ -319,13 +319,13 @@ impl DynamicPIDControllerModel {
 		// update interest_rate `ir = ir_t_1 + ut`
 		if ut.is_negative() {
 			let ut = ut.neg();
-			self.ir_t_1 = self
-				.ir_t_1
-				.saturating_sub(FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0u128)));
+			self.ir_t_1 = self.ir_t_1.saturating_sub(FixedU128::from_inner(
+				ut.into_inner().try_into().unwrap_or(0_u128),
+			));
 		} else {
-			self.ir_t_1 = self
-				.ir_t_1
-				.saturating_add(FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0u128)));
+			self.ir_t_1 = self.ir_t_1.saturating_add(FixedU128::from_inner(
+				ut.into_inner().try_into().unwrap_or(0_u128),
+			));
 		}
 		Ok(self.ir_t_1)
 	}
@@ -380,7 +380,7 @@ pub struct DoubleExponentModel {
 impl DoubleExponentModel {
 	/// Create a double exponent model
 	pub fn new_model(coefficients: [u8; 16]) -> Option<Self> {
-		let sum_of_coefficients = coefficients.iter().fold(0u16, |acc, &c| acc + c as u16);
+		let sum_of_coefficients = coefficients.iter().fold(0_u16, |acc, &c| acc + c as u16);
 		if sum_of_coefficients == EXPECTED_COEFFICIENTS_SUM {
 			return Some(DoubleExponentModel { coefficients })
 		}
@@ -531,10 +531,10 @@ mod tests {
 
 	fn valid_jump_model() -> impl Strategy<Value = JumpModelStrategy> {
 		(
-			(1..=10u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
-			(11..=30u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
+			(1..=10_u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
+			(11..=30_u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
 			(31..=50).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
-			(0..=100u8).prop_map(Percent::from_percent),
+			(0..=100_u8).prop_map(Percent::from_percent),
 		)
 			.prop_filter("Jump rate model", |(base, jump, full, _)| {
 				// tried high order strategy - failed as it tries to combine collections with not
@@ -603,7 +603,7 @@ mod tests {
 	fn proptest_jump_model() {
 		let mut runner = TestRunner::default();
 		runner
-			.run(&(valid_jump_model(), 0..=100u8), |(strategy, utilization)| {
+			.run(&(valid_jump_model(), 0..=100_u8), |(strategy, utilization)| {
 				let base_rate = strategy.base_rate;
 				let jump_rate = strategy.jump_percentage;
 				let full_rate = strategy.full_percentage;
@@ -626,7 +626,7 @@ mod tests {
 		let base_rate = Rate::saturating_from_rational(2, 100);
 		let jump_rate = Rate::saturating_from_rational(10, 100);
 		let full_rate = Rate::saturating_from_rational(32, 100);
-		let strategy = (0..=100u8, 1..=99u8)
+		let strategy = (0..=100_u8, 1..=99_u8)
 			.prop_map(|(optimal, utilization)| (optimal, utilization, utilization + 1));
 
 		let mut runner = TestRunner::default();

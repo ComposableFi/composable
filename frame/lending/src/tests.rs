@@ -177,7 +177,7 @@ fn accrue_interest_induction() {
 		.run(
 			&(
 				0..=2 * SECONDS_PER_YEAR / MILLISECS_PER_BLOCK,
-				(minimal..=35u32).prop_map(|i| 10u128.pow(i)),
+				(minimal..=35_u32).prop_map(|i| 10_u128.pow(i)),
 			),
 			|(slot, total_issued)| {
 				let (optimal, ref mut interest_rate_model) = new_jump_model();

@@ -276,9 +276,9 @@ where
 				force_authoring,
 				slot_duration,
 				// We got around 500ms for proposing
-				block_proposal_slot_portion: SlotProportion::new(1f32 / 24f32),
+				block_proposal_slot_portion: SlotProportion::new(1_f32 / 24_f32),
 				// And a maximum of 750ms if slots are skipped
-				max_block_proposal_slot_portion: Some(SlotProportion::new(1f32 / 16f32)),
+				max_block_proposal_slot_portion: Some(SlotProportion::new(1_f32 / 16_f32)),
 				telemetry,
 			}))
 		},

@@ -1,4 +1,5 @@
 #![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -444,8 +445,8 @@ pub mod pallet {
 				// fees as a swap. Otherwise, one could exchange w/o paying fees.
 				// And this formula leads to exactly that equality
 				// fee = pool.fee * n_coins / (4 * (n_coins - 1))
-				let one = FixedU128::saturating_from_integer(1u8);
-				let four = FixedU128::saturating_from_integer(4u8);
+				let one = FixedU128::saturating_from_integer(1_u8);
+				let four = FixedU128::saturating_from_integer(4_u8);
 				let n_coins_f = FixedU128::saturating_from_integer(n_coins as u128);
 				let fee_f: FixedU128 = pool.fee.into();
 				let fee_f = fee_f
@@ -962,7 +963,7 @@ pub mod pallet {
 		) -> Option<FixedU128> {
 			let zero = FixedU128::zero();
 			let prec = T::Precision::get();
-			let two = FixedU128::saturating_from_integer(2u8);
+			let two = FixedU128::saturating_from_integer(2_u8);
 			let n = FixedU128::try_from(xp_f.len() as u128).ok()?;
 
 			// Same coin
@@ -1051,7 +1052,7 @@ pub mod pallet {
 		) -> Option<FixedU128> {
 			let zero = FixedU128::zero();
 			let prec = T::Precision::get();
-			let two = FixedU128::saturating_from_integer(2u8);
+			let two = FixedU128::saturating_from_integer(2_u8);
 			let n = FixedU128::try_from(xp_f.len() as u128).ok()?;
 
 			if i >= xp_f.len() {

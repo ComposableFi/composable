@@ -4,6 +4,7 @@
 //! but with added support for `MultiCurrency` using a `Dex` interface.
 
 #![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
@@ -201,7 +202,7 @@ where
 		// a very very little potential gain in the future.
 		let dispatch_info = <E as GetDispatchInfo>::get_dispatch_info(&unchecked_extrinsic);
 
-		let partial_fee = Self::compute_fee(len, &dispatch_info, 0u32.into());
+		let partial_fee = Self::compute_fee(len, &dispatch_info, 0_u32.into());
 		let DispatchInfo { weight, class, .. } = dispatch_info;
 
 		RuntimeDispatchInfo { weight, class, partial_fee }
@@ -214,7 +215,7 @@ where
 		E: GetDispatchInfo,
 	{
 		let dispatch_info = <E as GetDispatchInfo>::get_dispatch_info(&unchecked_extrinsic);
-		Self::compute_fee_details(len, &dispatch_info, 0u32.into())
+		Self::compute_fee_details(len, &dispatch_info, 0_u32.into())
 	}
 
 	/// Compute the final fee value for a particular transaction.
