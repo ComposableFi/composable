@@ -160,6 +160,7 @@ std = [
 	"sp-consensus-aura/std",
     "scale-info/std",
 ]
+
 runtime-benchmarks = [
 	"benchmarking",
 	"support/runtime-benchmarks",
@@ -183,7 +184,9 @@ runtime-benchmarks = [
 	"collective/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
+	"kusama-runtime/runtime-benchmarks",
 ]
+
 develop = [
 	"assets",
 	"assets-registry",
