@@ -26,17 +26,20 @@ jobs:
           toolchain: stable
           override: true
       - uses: actions-rs/cargo@v1
-      - name: Cargo Check
+      - name: Check
         run: |
           rustup target add wasm32-unknown-unknown
           SKIP_WASM_BUILD=1 cargo check --all --benches
-      - name: Cargo Check Benchmark
+      - name: Benchmark
         run: |
           SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --workspace --release --exclude integration-tests
-      - name: Picasso Runtime Build
+      - name: Benchmark Develop
+        run: |
+          SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks,develop --workspace --release --exclude integration-tests
+      - name: Picasso
         run: |
           cargo build --release -p picasso-runtime
-      - name: Picasso Runtime Build with develop feature
+      - name: Picasso Develop
         run: |
           cargo build --release -p picasso-runtime --features develop
   linters:
