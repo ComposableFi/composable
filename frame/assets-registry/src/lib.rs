@@ -7,8 +7,7 @@
 //! 4. Map of native token to this chain(here) is added unconditionally.
 
 #![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
-#![warn(clippy::unseparated_literal_suffix)]
-#![warn(clippy::unseparated_literal_suffix)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
@@ -250,7 +249,7 @@ pub mod pallet {
 			let local_admin = <LocalAdmin<T>>::get();
 			let foreign_admin = <ForeignAdmin<T>>::get();
 			match current_candidate_status {
-				None =>
+				None => {
 					if who == local_admin {
 						<AssetsMappingCandidates<T>>::insert(
 							(local_asset_id, foreign_asset_id),
@@ -261,17 +260,20 @@ pub mod pallet {
 							(local_asset_id, foreign_asset_id),
 							CandidateStatus::ForeignAdminApproved,
 						);
-					},
-				Some(CandidateStatus::LocalAdminApproved) =>
+					}
+				}
+				Some(CandidateStatus::LocalAdminApproved) => {
 					if who == foreign_admin {
 						Self::set_location(local_asset_id, foreign_asset_id.clone())?;
 						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
-					},
-				Some(CandidateStatus::ForeignAdminApproved) =>
+					}
+				}
+				Some(CandidateStatus::ForeignAdminApproved) => {
 					if who == local_admin {
 						Self::set_location(local_asset_id, foreign_asset_id.clone())?;
 						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
-					},
+					}
+				}
 			};
 			Ok(().into())
 		}
@@ -282,8 +284,9 @@ pub mod pallet {
 		type Success = T::AccountId;
 		fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
 			o.into().and_then(|o| match (o, LocalAdmin::<T>::try_get()) {
-				(frame_system::RawOrigin::Signed(ref who), Ok(ref f)) if who == f =>
-					Ok(who.clone()),
+				(frame_system::RawOrigin::Signed(ref who), Ok(ref f)) if who == f => {
+					Ok(who.clone())
+				}
 				(r, _) => Err(T::Origin::from(r)),
 			})
 		}
@@ -300,8 +303,9 @@ pub mod pallet {
 		type Success = T::AccountId;
 		fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
 			o.into().and_then(|o| match (o, ForeignAdmin::<T>::try_get()) {
-				(frame_system::RawOrigin::Signed(ref who), Ok(ref f)) if who == f =>
-					Ok(who.clone()),
+				(frame_system::RawOrigin::Signed(ref who), Ok(ref f)) if who == f => {
+					Ok(who.clone())
+				}
 				(r, _) => Err(T::Origin::from(r)),
 			})
 		}
