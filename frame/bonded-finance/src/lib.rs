@@ -40,8 +40,10 @@
 //! - `cancel_offer` - Cancel a running offer, blocking further bond but not cancelling the
 //!   currently vested rewards.
 
+mod benchmarks;
 mod mock;
 mod tests;
+mod utils;
 
 pub use pallet::*;
 
@@ -56,8 +58,8 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
-			fungible::{Inspect as FungibleInspect, Transfer as FungibleTransfer},
-			fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
+			fungible::{self, Inspect as FungibleInspect, Transfer as FungibleTransfer},
+			fungibles::{self, Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
 		},
 		transactional, PalletId,
 	};
@@ -115,10 +117,11 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The native currency, used for the stake required to create an offer.
-		type NativeCurrency: FungibleTransfer<AccountIdOf<Self>>;
+		type NativeCurrency: fungible::Mutate<AccountIdOf<Self>>
+			+ fungible::Transfer<AccountIdOf<Self>>;
 
 		/// The multi currency system offers are based on.
-		type Currency: FungiblesTransfer<AccountIdOf<Self>>;
+		type Currency: fungibles::Mutate<AccountIdOf<Self>> + FungiblesTransfer<AccountIdOf<Self>>;
 
 		/// The dependency managing vesting transfer of rewards.
 		type Vesting: VestedTransfer<
@@ -241,10 +244,6 @@ pub mod pallet {
 			offer_id: T::BondOfferId,
 		) -> Result<(AccountIdOf<T>, BondOfferOf<T>), DispatchError> {
 			BondOffers::<T>::try_get(offer_id).map_err(|_| Error::<T>::BondOfferNotFound.into())
-		}
-
-		pub fn account_id(offer_id: T::BondOfferId) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account(offer_id)
 		}
 
 		#[transactional]
@@ -375,6 +374,10 @@ pub mod pallet {
 					},
 				}
 			})
+		}
+
+		pub(crate) fn account_id(offer_id: T::BondOfferId) -> AccountIdOf<T> {
+			T::PalletId::get().into_sub_account(offer_id)
 		}
 	}
 

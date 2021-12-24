@@ -6441,6 +6441,7 @@ name = "pallet-bonded-finance"
 version = "0.0.1"
 dependencies = [
  "composable-traits",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "orml-tokens",
@@ -7971,6 +7972,7 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
+ "pallet-bonded-finance",
  "pallet-call-filter",
  "pallet-collator-selection",
  "pallet-collective",
@@ -7994,6 +7996,7 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "pallet-vault",
+ "pallet-vesting 0.0.1",
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec",

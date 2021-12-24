@@ -96,3 +96,6 @@ hex = "0.4.3"
 default = []
 runtime-benchmarks = ["picasso-runtime/runtime-benchmarks", "composable-runtime/runtime-benchmarks"]
 ocw = []
+
+[package.metadata.cargo-udeps.ignore]
+normal = ["pallet-bonded-finance"]
