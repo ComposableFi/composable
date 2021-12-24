@@ -3,6 +3,7 @@
 #![cfg(test)]
 
 use super::*;
+use crate::utils::MIN_VESTED_TRANSFER;
 use composable_traits::bonded_finance::{BondDuration, BondOffer, BondOfferReward};
 use frame_support::{
 	error::BadOrigin,
