@@ -18,7 +18,7 @@
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_chain_ops, ComposableExecutor, PicassoExecutor},
+	service::{new_chain_ops, PicassoExecutor},
 };
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
@@ -30,11 +30,9 @@ use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
-use sc_client_api::execution_extensions::ExecutionStrategies;
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
-use sp_state_machine::ExecutionStrategy;
 use std::{io::Write, net::SocketAddr};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -166,27 +164,27 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
-		},
+		}
 		Some(Subcommand::CheckBlock(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.0, components.2))
 			})
-		},
+		}
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.0, config.database))
 			})
-		},
+		}
 		Some(Subcommand::ExportState(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.0, config.chain_spec))
 			})
-		},
+		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.0, components.2))
 			})
-		},
+		}
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -206,7 +204,7 @@ pub fn run() -> Result<()> {
 
 				cmd.run(config, polkadot_config)
 			})
-		},
+		}
 		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
 			Ok(cmd.run(components.0, components.1))
 		}),
@@ -231,7 +229,7 @@ pub fn run() -> Result<()> {
 			}
 
 			Ok(())
-		},
+		}
 		Some(Subcommand::ExportGenesisWasm(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
@@ -252,8 +250,8 @@ pub fn run() -> Result<()> {
 			}
 
 			Ok(())
-		},
-		Some(Subcommand::Benchmark(cmd)) =>
+		}
+		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 
@@ -262,23 +260,12 @@ pub fn run() -> Result<()> {
 				Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
 					.into())
-			},
+			}
+		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
-			runner.run_node_until_exit(|mut config| async move {
-				// This is so that users can sync our chain from genesis
-				// DO NOT REMOVE.
-				if config.chain_spec.id() == "picasso" {
-					config.execution_strategies = ExecutionStrategies {
-						syncing: ExecutionStrategy::AlwaysWasm,
-						block_construction: ExecutionStrategy::AlwaysWasm,
-						importing: ExecutionStrategy::AlwaysWasm,
-						offchain_worker: ExecutionStrategy::AlwaysWasm,
-						other: ExecutionStrategy::AlwaysWasm,
-					};
-				}
-
+			runner.run_node_until_exit(|config| async move {
 				let _ = &cli;
 				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
@@ -308,23 +295,9 @@ pub fn run() -> Result<()> {
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				let task_manager =
-					match config.chain_spec.id() {
-						"composable" =>
-							crate::service::start_node::<
-								composable_runtime::RuntimeApi,
-								ComposableExecutor,
-							>(config, polkadot_config, id)
-							.await?,
-						_ => crate::service::start_node::<
-							picasso_runtime::RuntimeApi,
-							PicassoExecutor,
-						>(config, polkadot_config, id)
-						.await?,
-					};
-				Ok(task_manager)
+				Ok(crate::service::start_node(config, polkadot_config, id).await?)
 			})
-		},
+		}
 	}
 }
 

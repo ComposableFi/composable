@@ -11,6 +11,7 @@ members = [
     "integration-tests",
     "node",
     "runtime/picasso",
+    "runtime/dali",
     "runtime/composable",
     "utils/subxt-clients",
     "utils/collator-sidecar",
