@@ -3,6 +3,7 @@
 #![cfg(test)]
 
 use super::*;
+use crate::utils::MIN_VESTED_TRANSFER;
 use frame_support::{
 	construct_runtime,
 	pallet_prelude::*,
@@ -26,7 +27,6 @@ pub type Amount = i128;
 pub type AccountId = u128;
 
 pub const NATIVE_CURRENCY_ID: MockCurrencyId = MockCurrencyId::PICA;
-pub const MIN_VESTED_TRANSFER: u64 = 1_000_000;
 pub const MIN_REWARD: u128 = 1_000_000;
 
 pub const ALICE: AccountId = 1;
@@ -126,7 +126,7 @@ impl orml_tokens::Config for Runtime {
 
 parameter_types! {
 	pub const MaxVestingSchedule: u32 = 2;
-	pub const MinVestedTransfer: u64 = MIN_VESTED_TRANSFER;
+	pub const MinVestedTransfer: u64 = MIN_VESTED_TRANSFER as _;
 }
 
 impl pallet_vesting::Config for Runtime {
@@ -169,12 +169,11 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Vesting: pallet_vesting::{Pallet, Storage, Call, Event<T>, Config<T>},
-	  Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
-	  BondedFinance: pallet::{Pallet, Call, Storage, Event<T>},
+		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		BondedFinance: pallet::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
-#[derive(Default)]
 pub struct ExtBuilder;
 
 impl ExtBuilder {

@@ -10,7 +10,20 @@ authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [package.metadata.cargo-udeps.ignore]
-normal = ["pallet-vault", "session-benchmarking", "assets-registry", "currency-factory", "oracle", "vault", "assets", "governance-registry", "call-filter", "orml-unknown-tokens", "orml-xtokens"]
+normal = [
+	"assets",
+	"assets-registry",
+	"call-filter",
+	"currency-factory",
+	"governance-registry",
+	"oracle",
+	"orml-unknown-tokens",
+	"orml-xtokens",
+	"pallet-bonded-finance",
+	"pallet-vault",
+	"session-benchmarking",
+	"vault",
+]
 
 [dependencies]
 frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
@@ -67,6 +80,8 @@ governance-registry = { package = "pallet-governance-registry", path = "../../fr
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false, optional = true}
 composable-traits = { path = "../../frame/composable-traits" , default-features = false}
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
+pallet-bonded-finance = { optional = true, path = "../../frame/bonded-finance", default-features = false }
+vesting = { optional = true, package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
@@ -136,6 +151,8 @@ std = [
 	"multisig/std",
 	"vault/std",
   	"assets/std",
+	"pallet-bonded-finance/std",
+	"vesting/std",
 	"governance-registry/std",
 	"call-filter/std",
 	"currency-factory/std",
@@ -198,18 +215,21 @@ runtime-benchmarks = [
 	"treasury/runtime-benchmarks",
 	"scheduler/runtime-benchmarks",
 	"collective/runtime-benchmarks",
+	"pallet-bonded-finance/runtime-benchmarks",
+	"vesting/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
-  "vault/runtime-benchmarks"
+  	"vault/runtime-benchmarks"
 ]
 
 develop = [
-  "crowdloan-rewards",
-  "assets",
-  "governance-registry",
-	"assets-registry",
 	"assets",
-	"oracle",
-	"vault",
+	"assets-registry",
+	"crowdloan-rewards",
 	"currency-factory",
+	"governance-registry",
+	"oracle",
+	"pallet-bonded-finance",
+	"vault",
+	"vesting",
 ]
