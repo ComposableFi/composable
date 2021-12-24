@@ -19,7 +19,9 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
+	traits::{
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
+	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -28,8 +30,6 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
-use sp_runtime::traits::AccountIdConversion;
 
 // A few exports that help ease life for downstream crates.
 pub use support::{
@@ -806,7 +806,7 @@ impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		#[cfg(feature = "develop")]
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false
+			return false;
 		}
 		!matches!(
 			call,
