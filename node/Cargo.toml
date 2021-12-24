@@ -22,6 +22,7 @@ structopt = "0.3.8"
 # Local Dependencies
 picasso-runtime = { path = "../runtime/picasso"  }
 composable-runtime = { path = "../runtime/composable" }
+dali-runtime = { path = "../runtime/dali" }
 common = { path = "../runtime/common"  }
 
 # FRAME Dependencies
