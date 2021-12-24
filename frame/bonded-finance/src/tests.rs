@@ -83,7 +83,7 @@ fn valid_offer() {
 		maturity: BondDuration::Finite { return_in: 1_000_000 },
 		reward: BondOfferReward {
 			asset: MockCurrencyId::Btc,
-			amount: 1_000_00_0_u128 * 100_000_u128,
+			amount: 1_000_000_u128 * 100_000_u128,
 			maturity: 96_u128,
 		}
 	}
