@@ -42,3 +42,37 @@ jobs:
       run: make containerize-release 
     - name:  Docker push
       run: make push-release
+    
+    - name: GenerateMD5
+      run: |
+        sudo apt install -y ucommon-utils
+        composabledalichecksum=$(md5sum target/release/composable | cut -d ' ' -f 1) && echo "$composabledalichecksum composable" >> checksum.md5.txt
+
+    - name: Upload Checksum
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        file: checksum.md5.txt
+        asset_name: checksum.md5.txt
+        tag: ${{ github.ref }}
+        overwrite: true
+
+    - name: Upload wasm for Release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        file: target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
+        asset_name: picasso_runtime.compact.wasm
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: "Composable Binary Runtime"
+    
+    - name: Upload Binary on Release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        file: target/release/composable
+        asset_name: composable-${{ env.RELEASE_VERSION }}
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: "Composable Binary Runtime"
