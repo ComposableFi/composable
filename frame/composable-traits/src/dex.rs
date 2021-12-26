@@ -99,6 +99,7 @@ pub trait SimpleExchange {
 		slippage: sp_runtime::Perbill,
 	) -> Result<Self::Balance, DispatchError>;
 }
+
 #[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, Debug)]
 pub struct ConstantProductPoolInfo<AccountId> {
 	/// Owner of pool

@@ -5,12 +5,12 @@ use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedMul, CheckedSub, Zero},
-	DispatchError, FixedPointOperand,
+	ArithmeticError, DispatchError, FixedPointOperand,
 };
 
 use crate::{
 	currency::{AssetIdLike, BalanceLike},
-	math::LiftedFixedBalance,
+	math::{LiftedFixedBalance, SafeArithmetic},
 };
 
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
@@ -22,9 +22,16 @@ pub struct Take<Balance> {
 	pub limit: Balance,
 }
 
-impl<Balance: PartialOrd + Zero> Take<Balance> {
+impl<Balance: PartialOrd + Zero + SafeArithmetic> Take<Balance> {
 	pub fn is_valid(&self) -> bool {
 		self.amount > Balance::zero() && self.limit > Balance::zero()
+	}
+	pub fn new(amount: Balance, limit: Balance) -> Self {
+		Self { amount, limit }
+	}
+
+	pub fn quote_amount(&self) -> Result<Balance, ArithmeticError> {
+		self.amount.safe_mul(&self.limit)
 	}
 }
 
@@ -35,9 +42,20 @@ pub struct Sell<AssetId, Balance> {
 	pub take: Take<Balance>,
 }
 
-impl<AssetId: PartialEq, Balance: PartialOrd + Zero> Sell<AssetId, Balance> {
+impl<AssetId: PartialEq, Balance: PartialOrd + Zero + SafeArithmetic> Sell<AssetId, Balance> {
 	pub fn is_valid(&self) -> bool {
 		self.take.is_valid() && self.pair.is_valid()
+	}
+	pub fn new(
+		base: AssetId,
+		quote: AssetId,
+		base_amount: Balance,
+		minimal_base_unit_price_in_quote: Balance,
+	) -> Self {
+		Self {
+			take: Take { amount: base_amount, limit: minimal_base_unit_price_in_quote },
+			pair: CurrencyPair { base, quote },
+		}
 	}
 }
 
@@ -77,15 +95,6 @@ impl<Balance: Default> Default for Take<Balance> {
 impl<AssetId: Default> Default for CurrencyPair<AssetId> {
 	fn default() -> Self {
 		Self { base: Default::default(), quote: Default::default() }
-	}
-}
-
-impl<AssetId, Balance> Sell<AssetId, Balance> {
-	pub fn new(base: AssetId, quote: AssetId, base_amount: Balance, quote_limit: Balance) -> Self {
-		Self {
-			take: Take { amount: base_amount, limit: quote_limit },
-			pair: CurrencyPair { base, quote },
-		}
 	}
 }
 
@@ -138,7 +147,7 @@ pub trait SellEngine<Configuration>: DeFiEngine {
 
 pub trait DeFiComposableConfig: frame_system::Config {
 	// what.
-	type AssetId: AssetIdLike + MaybeSerializeDeserialize + From<u128> + Default;
+	type AssetId: AssetIdLike + MaybeSerializeDeserialize + Default;
 
 	type Balance: BalanceLike
 		+ Default

@@ -14,6 +14,8 @@ serde = { version = "1", optional = true }
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+composable-traits = { default-features = false, path = "../composable-traits" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13"  }
 
 [dependencies.codec]
 default-features = false
@@ -28,4 +30,5 @@ std = [
     "codec/std",
     "sp-runtime/std",
     "scale-info/std",
+    "composable-traits/std",
 ]

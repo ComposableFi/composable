@@ -28,7 +28,7 @@ impl CurrencyId {
 
 impl PriceableAsset for CurrencyId {
 	#[inline]
-	fn smallest_unit_exponent(self) -> Exponent {
+	fn decimals(self) -> Exponent {
 		match self {
 			// NOTE(hussein-aitlahcen): arbitrary, can we please determine this in the PR?
 			CurrencyId::PICA => 8,

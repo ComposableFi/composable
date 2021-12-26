@@ -1521,6 +1521,8 @@ dependencies = [
 name = "composable-tests-helpers"
 version = "0.0.1"
 dependencies = [
+ "composable-traits",
+ "frame-support",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -6729,14 +6731,22 @@ dependencies = [
 name = "pallet-dutch-auctions"
 version = "0.0.1"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
  "frame-support",
  "frame-system",
+ "hex-literal",
  "num-traits",
+ "orml-tokens",
  "orml-traits",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-currency-factory",
+ "pallet-timestamp",
  "parity-scale-codec",
  "proptest 1.0.0",
  "scale-info",
+ "serde",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
