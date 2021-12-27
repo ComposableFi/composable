@@ -1,6 +1,6 @@
 use std::{collections::HashMap, hash::Hash};
 
-use pallet_crowdloan_rewards::models::RemoteAccount;
+use pallet_crowdloan_rewards::models::EthereumAddress;
 use serde::{Deserialize, Deserializer};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sp_runtime::AccountId32;
@@ -42,6 +42,13 @@ where
 	Ok(v.into_iter().map(|(k, Wrapper(v))| (k, v)).collect())
 }
 
+#[derive(Hash, Clone, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize, codec::Encode, codec::Decode)]
+#[serde(untagged)]
+pub enum RemoteAccount<AccountId> {
+	RelayChain(AccountId),
+	Ethereum(EthereumAddress),
+}
+
 #[cfg(test)]
 mod test_contributors_serde {
 	use super::*;
@@ -52,9 +59,9 @@ mod test_contributors_serde {
 		serde_json::from_str::<Contributors>(&contrib_json).unwrap();
 	}
 
-	// #[test]
-	// fn test_relay() {
-	// 	let _: AccountId32 =
-	// 		serde_json::from_str("\"<put address here>\"").unwrap();
-	// }
+	#[test]
+	fn test_relay() {
+		let _: RemoteAccount<AccountId32> =
+			serde_json::from_str("\"CcwtHHSWwKc53ANcftXhfqpMJNuU8kYRwDEVC5vmbMjdWVX\"").unwrap();
+	}
 }

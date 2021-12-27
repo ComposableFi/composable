@@ -1,16 +1,12 @@
 use std::{convert::Infallible, sync::Arc};
 
-use pallet_crowdloan_rewards::{
-	ethereum_recover,
-	models::{Proof, RemoteAccount},
-	verify_relay,
-};
+use pallet_crowdloan_rewards::{ethereum_recover, models::Proof, verify_relay};
 use sp_core::{Decode, Encode};
 use sp_runtime::AccountId32;
 use subxt_clients::picasso;
 use warp::{hyper::StatusCode, Filter};
 
-use crate::contributors::{get_contributors, Contributors};
+use crate::contributors::{get_contributors, Contributors, RemoteAccount};
 
 mod contributors;
 
@@ -46,9 +42,9 @@ async fn main() {
 	let associate_filter = warp::path("associate")
 		.and(warp::post())
 		.and(warp::body::bytes())
-		.and(with_data::<Arc<PicassoApi>>(api))
-		.and(with_data::<Prefix>(prefix))
-		.and(with_data::<Arc<Contributors>>(contributors))
+		.and(with_data(api))
+		.and(with_data(prefix))
+		.and(with_data(contributors))
 		.and_then(associate);
 
 	warp::serve(associate_filter).run(([127, 0, 0, 1], 3030)).await;
