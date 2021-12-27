@@ -51,7 +51,7 @@ pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
 use support::traits::EqualPrivilegeOnly;
 use system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
+	EnsureRoot, EnsureSigned,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 
@@ -789,8 +789,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type Balance = Balance;
 	type Currency = Assets;
 	type AdminOrigin = EnsureRootOrHalfCouncil;
-	// TODO(hussein-aitlahcen): should be the proxy account
-	type AssociationOrigin = EnsureRootOrHalfCouncil;
+	type AssociationOrigin = EnsureSigned<AccountId>;
 	type Convert = ConvertInto;
 	type RelayChainAccountId = [u8; 32];
 	type InitialPayment = InitialPayment;
