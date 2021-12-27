@@ -35,13 +35,13 @@
 	unused_extern_crates
 )]
 pub use pallet::*;
-#[cfg(test)]
-mod currency;
 pub mod math;
 #[cfg(test)]
-mod runtime;
-#[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod mock;
+
 pub mod weights;
 
 #[frame_support::pallet]

@@ -1,16 +1,13 @@
 use crate::{
 	self as pallet_dutch_auction,
-	currency::{MockCurrencyId, NativeAssetId},
+	mock::currency::{CurrencyId, NativeAssetId},
 };
 
-use composable_traits::{
-	defi::DeFiComposableConfig,
-	governance::{GovernanceRegistry, SignedRawOrigin},
-};
+use composable_traits::defi::DeFiComposableConfig;
 use frame_support::{ord_parameter_types, parameter_types, traits::Everything, PalletId};
 use frame_system::EnsureSignedBy;
 use hex_literal::hex;
-use orml_traits::{parameter_type_with_key, GetByKey};
+use orml_traits::parameter_type_with_key;
 use sp_core::{
 	sr25519::{Public, Signature},
 	H256,
@@ -19,6 +16,8 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 };
+
+use super::governance_registry::GovernanceRegistry;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
@@ -128,7 +127,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_type_with_key! {
-	pub TokensExistentialDeposit: |_currency_id: MockCurrencyId| -> Balance {
+	pub TokensExistentialDeposit: |_currency_id: CurrencyId| -> Balance {
 		0
 	};
 }
@@ -137,30 +136,12 @@ impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
-	type CurrencyId = MockCurrencyId;
+	type CurrencyId = CurrencyId;
 	type WeightInfo = ();
 	type ExistentialDeposits = TokensExistentialDeposit;
 	type OnDust = ();
 	type MaxLocks = ();
 	type DustRemovalWhitelist = Everything;
-}
-
-pub struct MockGovernanceRegistry;
-impl GovernanceRegistry<MockCurrencyId, AccountId> for MockGovernanceRegistry {
-	fn set(_k: MockCurrencyId, _value: composable_traits::governance::SignedRawOrigin<AccountId>) {}
-}
-
-impl
-	GetByKey<
-		MockCurrencyId,
-		Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError>,
-	> for MockGovernanceRegistry
-{
-	fn get(
-		_k: &MockCurrencyId,
-	) -> Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError> {
-		Ok(SignedRawOrigin::Root)
-	}
 }
 
 pub static ALICE: Public =
@@ -175,22 +156,22 @@ ord_parameter_types! {
 impl pallet_assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
 	type GenerateCurrencyId = LpTokenFactory;
-	type AssetId = MockCurrencyId;
+	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
-	type GovernanceRegistry = MockGovernanceRegistry;
+	type GovernanceRegistry = GovernanceRegistry;
 }
 
 parameter_types! {
-	pub const DynamicCurrencyIdInitial: MockCurrencyId = MockCurrencyId::LpToken(0);
+	pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LpToken(0);
 }
 
 impl pallet_currency_factory::Config for Runtime {
 	type Event = Event;
-	type DynamicCurrencyId = MockCurrencyId;
+	type DynamicCurrencyId = CurrencyId;
 	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
@@ -200,7 +181,7 @@ parameter_types! {
 
 // these make some pallets tight coupled onto shared trait
 impl DeFiComposableConfig for Runtime {
-	type AssetId = MockCurrencyId;
+	type AssetId = CurrencyId;
 	type Balance = Balance;
 }
 

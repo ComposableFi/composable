@@ -17,7 +17,7 @@ use sp_runtime::{ArithmeticError, DispatchError};
 	serde::Deserialize,
 	TypeInfo,
 )]
-pub enum MockCurrencyId {
+pub enum CurrencyId {
 	PICA,
 	BTC,
 	ETH,
@@ -47,29 +47,29 @@ pub enum MockCurrencyId {
 // 	fn native() -> Self::WellKnownAssetId;
 // }
 
-impl Default for MockCurrencyId {
+impl Default for CurrencyId {
 	fn default() -> Self {
-		MockCurrencyId::PICA
+		CurrencyId::PICA
 	}
 }
 
-impl PriceableAsset for MockCurrencyId {
+impl PriceableAsset for CurrencyId {
 	fn decimals(self) -> composable_traits::currency::Exponent {
 		match self {
-			MockCurrencyId::PICA => 0,
-			MockCurrencyId::BTC => 8,
-			MockCurrencyId::ETH => 18,
-			MockCurrencyId::LTC => 8,
-			MockCurrencyId::USDT => 2,
-			MockCurrencyId::LpToken(_) => 0,
+			CurrencyId::PICA => 0,
+			CurrencyId::BTC => 8,
+			CurrencyId::ETH => 18,
+			CurrencyId::LTC => 8,
+			CurrencyId::USDT => 2,
+			CurrencyId::LpToken(_) => 0,
 		}
 	}
 }
 
-impl DynamicCurrencyId for MockCurrencyId {
+impl DynamicCurrencyId for CurrencyId {
 	fn next(self) -> Result<Self, DispatchError> {
 		match self {
-			MockCurrencyId::LpToken(x) => Ok(MockCurrencyId::LpToken(
+			CurrencyId::LpToken(x) => Ok(CurrencyId::LpToken(
 				x.checked_add(1).ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?,
 			)),
 			_ => unreachable!(),
@@ -79,5 +79,5 @@ impl DynamicCurrencyId for MockCurrencyId {
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::PICA;
+	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
 }
