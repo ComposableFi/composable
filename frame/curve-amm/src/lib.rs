@@ -36,7 +36,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
-		dex::{CurveAmm, PoolId, PoolInfo, PoolTokenIndex},
+		dex::{CurveAmm, StableSwapPoolInfo},
 		math::LiftedFixedBalance,
 	};
 	use frame_support::{
@@ -124,6 +124,17 @@ pub mod pallet {
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
 			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
 		type Precision: Get<FixedU128>;
+		type PoolId: FullCodec
+			+ Default
+			+ TypeInfo
+			+ Eq
+			+ PartialEq
+			+ Ord
+			+ Copy
+			+ Debug
+			+ CheckedAdd
+			+ One;
+		type PoolTokenIndex: Copy + Debug + Eq + Into<u32>;
 	}
 
 	#[pallet::pallet]
@@ -133,22 +144,23 @@ pub mod pallet {
 	/// Current number of pools (also ID for the next created pool)
 	#[pallet::storage]
 	#[pallet::getter(fn pool_count)]
-	pub type PoolCount<T: Config> = StorageValue<_, PoolId, ValueQuery>;
+	pub type PoolCount<T: Config> = StorageValue<_, T::PoolId, ValueQuery>;
 
 	/// Existing pools
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
-	pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, PoolId, PoolInfo<T::AccountId>>;
+	pub type Pools<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::PoolId, StableSwapPoolInfo<T::AccountId>>;
 
 	/// Pool's LP asset
 	#[pallet::storage]
 	#[pallet::getter(fn pool_lp_asset)]
-	pub type PoolLPAsset<T: Config> = StorageMap<_, Blake2_128Concat, PoolId, T::AssetId>;
+	pub type PoolLPAsset<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, T::AssetId>;
 
 	/// List of assets supported by the pool
 	#[pallet::storage]
 	#[pallet::getter(fn pool_assets)]
-	pub type PoolAssets<T: Config> = StorageMap<_, Blake2_128Concat, PoolId, Vec<T::AssetId>>;
+	pub type PoolAssets<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, Vec<T::AssetId>>;
 
 	/// Balance of asset for given pool excluding admin_fee
 	#[pallet::storage]
@@ -156,7 +168,7 @@ pub mod pallet {
 	pub type PoolAssetBalance<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		PoolId,
+		T::PoolId,
 		Blake2_128Concat,
 		T::AssetId,
 		T::Balance,
@@ -169,7 +181,7 @@ pub mod pallet {
 	pub type PoolAssetTotalBalance<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		PoolId,
+		T::PoolId,
 		Blake2_128Concat,
 		T::AssetId,
 		T::Balance,
@@ -194,7 +206,7 @@ pub mod pallet {
 		/// Error occurred while performing math calculations
 		Math,
 		/// Specified asset amount is wrong
-		WrongAssetAmount,
+		AssetAmountMustBePositiveNumber,
 		/// Required amount of some token did not reached during adding or removing liquidity
 		RequiredAmountNotReached,
 		/// Source does not have required amount of coins to complete operation
@@ -208,20 +220,20 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Pool with specified id `PoolId` was created successfully by `T::AccountId`.
+		/// Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
 		///
 		/// Included values are:
 		/// - account identifier `T::AccountId`
-		/// - pool identifier `PoolId`
+		/// - pool identifier `T::PoolId`
 		///
 		/// \[who, pool_id\]
-		PoolCreated { who: T::AccountId, pool_id: PoolId },
+		PoolCreated { who: T::AccountId, pool_id: T::PoolId },
 
-		/// Liquidity added into the pool `PoolId` by `T::AccountId`.
+		/// Liquidity added into the pool `T::PoolId` by `T::AccountId`.
 		///
 		/// Included values are:
 		/// - account identifier `T::AccountId`
-		/// - pool identifier `PoolId`
+		/// - pool identifier `T::PoolId`
 		/// - added token amounts `Vec<T::Balance>`
 		/// - charged fees `Vec<T::Balance>`
 		/// - actual invariant `T::Balance`
@@ -231,7 +243,7 @@ pub mod pallet {
 		/// \[who, pool_id, token_amounts, fees, invariant, token_supply, mint_amount\]
 		LiquidityAdded {
 			who: T::AccountId,
-			pool_id: PoolId,
+			pool_id: T::PoolId,
 			token_amounts: Vec<T::Balance>,
 			fees: Vec<T::Balance>,
 			invariant: T::Balance,
@@ -239,11 +251,11 @@ pub mod pallet {
 			mint_amount: T::Balance,
 		},
 
-		/// Liquidity removed from pool `PoolId` by `T::AccountId` in balanced way.
+		/// Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
 		///
 		/// Included values are:
 		/// - account identifier `T::AccountId`
-		/// - pool identifier `PoolId`
+		/// - pool identifier `T::PoolId`
 		/// - removed token amounts `Vec<T::Balance>`
 		/// - charged fees `Vec<T::Balance>`
 		/// - actual token supply `T::Balance`
@@ -251,7 +263,7 @@ pub mod pallet {
 		/// \[who, pool_id, token_amounts, fees, token_supply\]
 		LiquidityRemoved {
 			who: T::AccountId,
-			pool_id: PoolId,
+			pool_id: T::PoolId,
 			token_amounts: Vec<T::Balance>,
 			fees: Vec<T::Balance>,
 			token_supply: T::Balance,
@@ -261,10 +273,10 @@ pub mod pallet {
 		///
 		/// Included values are:
 		/// - account identifier `T::AccountId`
-		/// - pool identifier `PoolId`
-		/// - index of sent token `PoolTokenIndex`
+		/// - pool identifier `T::PoolId`
+		/// - index of sent token `T::PoolTokenIndex`
 		/// - amount of sent token `T::Balance`
-		/// - index of received token `PoolTokenIndex`
+		/// - index of received token `T::PoolTokenIndex`
 		/// - amount of received token `T::Balance`
 		/// - charged fee `T::Balance`
 		///
@@ -272,26 +284,26 @@ pub mod pallet {
 		/// fee\]
 		TokenExchanged {
 			who: T::AccountId,
-			pool_id: PoolId,
-			sent_token_index: PoolTokenIndex,
+			pool_id: T::PoolId,
+			sent_token_index: T::PoolTokenIndex,
 			sent_amount: T::Balance,
-			received_token_index: PoolTokenIndex,
+			received_token_index: T::PoolTokenIndex,
 			received_amount: T::Balance,
 			fee: T::Balance,
 		},
 
-		/// Withdraw admin fees `Vec<T::Balance>` from pool `PoolId` by user `T::AccountId`
+		/// Withdraw admin fees `Vec<T::Balance>` from pool `T::PoolId` by user `T::AccountId`
 		///
 		/// Included values are:
 		/// - account identifier `T::AccountId`
-		/// - pool identifier `PoolId`
+		/// - pool identifier `T::PoolId`
 		/// - admin fee receiving account identifier `T::AccountId`
 		/// - withdrew admin fees `Vec<T::Balance>`
 		///
 		/// [who, pool_id, admin_fee_account, admin_fees]
 		AdminFeesWithdrawn {
 			who: T::AccountId,
-			pool_id: PoolId,
+			pool_id: T::PoolId,
 			admin_fee_account: T::AccountId,
 			admin_fees: Vec<T::Balance>,
 		},
@@ -304,89 +316,26 @@ pub mod pallet {
 		type AssetId = T::AssetId;
 		type Balance = T::Balance;
 		type AccountId = T::AccountId;
+		type PoolId = T::PoolId;
+		type PoolTokenIndex = T::PoolTokenIndex;
 
-		fn pool_count() -> PoolId {
+		fn pool_count() -> T::PoolId {
 			PoolCount::<T>::get()
-		}
-
-		fn pool(id: PoolId) -> Option<PoolInfo<Self::AccountId>> {
-			Pools::<T>::get(id)
-		}
-
-		fn create_pool(
-			who: &Self::AccountId,
-			assets: Vec<Self::AssetId>,
-			amplification_coefficient: FixedU128,
-			fee: Permill,
-			admin_fee: Permill,
-		) -> Result<PoolId, DispatchError> {
-			// Assets related checks
-			ensure!(assets.len() > 1, Error::<T>::NotEnoughAssets);
-			let unique_assets = BTreeSet::<T::AssetId>::from_iter(assets.iter().copied());
-			ensure!(unique_assets.len() == assets.len(), Error::<T>::DuplicateAssets);
-
-			// Add new pool
-			let pool_id =
-				PoolCount::<T>::try_mutate(|pool_count| -> Result<PoolId, DispatchError> {
-					let pool_id = *pool_count;
-
-					Pools::<T>::try_mutate_exists(pool_id, |maybe_pool_info| -> DispatchResult {
-						// We expect that PoolInfos have sequential keys.
-						// No PoolInfo can have key greater or equal to PoolCount
-						ensure!(maybe_pool_info.is_none(), Error::<T>::InconsistentStorage);
-
-						*maybe_pool_info = Some(PoolInfo {
-							owner: who.clone(),
-							amplification_coefficient,
-							fee,
-							admin_fee,
-						});
-
-						Ok(())
-					})?;
-
-					PoolLPAsset::<T>::try_mutate(pool_id, |lp_asset| -> DispatchResult {
-						ensure!(lp_asset.is_none(), Error::<T>::InconsistentStorage);
-						let asset = T::CurrencyFactory::create()?;
-						*lp_asset = Some(asset);
-						Ok(())
-					})?;
-
-					for asset_id in &assets {
-						PoolAssetBalance::<T>::insert(pool_id, asset_id, Self::Balance::zero());
-						PoolAssetTotalBalance::<T>::insert(
-							pool_id,
-							asset_id,
-							Self::Balance::zero(),
-						);
-					}
-
-					PoolAssets::<T>::try_mutate(pool_id, |pool_assets| -> DispatchResult {
-						ensure!(pool_assets.is_none(), Error::<T>::InconsistentStorage);
-						*pool_assets = Some(assets);
-						Ok(())
-					})?;
-
-					*pool_count = pool_id.checked_add(1).ok_or(Error::<T>::InconsistentStorage)?;
-
-					Ok(pool_id)
-				})?;
-
-			Self::deposit_event(Event::PoolCreated { who: who.clone(), pool_id });
-
-			Ok(pool_id)
 		}
 
 		fn add_liquidity(
 			who: &Self::AccountId,
-			pool_id: PoolId,
+			pool_id: T::PoolId,
 			amounts: Vec<Self::Balance>,
 			min_mint_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			let zero = Self::Balance::zero();
-			ensure!(amounts.iter().all(|&x| x >= zero), Error::<T>::WrongAssetAmount);
+			ensure!(
+				amounts.iter().all(|&x| x >= zero),
+				Error::<T>::AssetAmountMustBePositiveNumber
+			);
 
-			let pool = Pools::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let pool = Self::get_pool_info(pool_id).ok_or(Error::<T>::PoolNotFound)?;
 			let pool_lp_asset =
 				PoolLPAsset::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
 			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
@@ -418,7 +367,7 @@ pub mod pallet {
 			let mut new_balances = old_balances.clone();
 			for i in 0..n_coins {
 				if token_supply == zero {
-					ensure!(amounts[i] > zero, Error::<T>::WrongAssetAmount);
+					ensure!(amounts[i] > zero, Error::<T>::AssetAmountMustBePositiveNumber);
 				}
 				let amount_i: u128 = amounts[i].into();
 				new_balances[i] = new_balances[i]
@@ -427,7 +376,7 @@ pub mod pallet {
 			}
 
 			let d1 = Self::get_d(&new_balances, ann).ok_or(Error::<T>::Math)?;
-			ensure!(d1 > d0, Error::<T>::WrongAssetAmount);
+			ensure!(d1 > d0, Error::<T>::AssetAmountMustBePositiveNumber);
 			let d1_b = d1.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
 			let mint_amount;
 			let mut fees = vec![FixedU128::zero(); n_coins];
@@ -556,13 +505,13 @@ pub mod pallet {
 
 		fn remove_liquidity(
 			who: &Self::AccountId,
-			pool_id: PoolId,
+			pool_id: T::PoolId,
 			amount: Self::Balance,
 			min_amounts: Vec<Self::Balance>,
 		) -> Result<(), DispatchError> {
 			let zero = FixedU128::zero();
 			let b_zero = Self::Balance::zero();
-			ensure!(amount >= b_zero, Error::<T>::WrongAssetAmount);
+			ensure!(amount >= b_zero, Error::<T>::AssetAmountMustBePositiveNumber);
 			let amount_u: u128 = amount.into();
 			let amount_f = FixedU128::saturating_from_integer(amount_u);
 
@@ -658,20 +607,19 @@ pub mod pallet {
 		}
 		fn exchange(
 			who: &Self::AccountId,
-			pool_id: PoolId,
-			i_token: PoolTokenIndex,
-			j_token: PoolTokenIndex,
+			pool_id: T::PoolId,
+			i_token: T::PoolTokenIndex,
+			j_token: T::PoolTokenIndex,
 			dx: Self::Balance,
 			min_dy: Self::Balance,
 		) -> Result<(), DispatchError> {
 			let prec = T::Precision::get();
 			let zero_b = Self::Balance::zero();
-			ensure!(dx >= zero_b, Error::<T>::WrongAssetAmount);
+			ensure!(dx >= zero_b, Error::<T>::AssetAmountMustBePositiveNumber);
 
-			let pool = Pools::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
-
-			let i = i_token as usize;
-			let j = j_token as usize;
+			let pool = Self::get_pool_info(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let i = i_token.into() as usize;
+			let j = j_token.into() as usize;
 
 			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
 			let mut balances = Vec::new();
@@ -760,7 +708,7 @@ pub mod pallet {
 
 		fn withdraw_admin_fees(
 			who: &Self::AccountId,
-			pool_id: PoolId,
+			pool_id: T::PoolId,
 			admin_fee_account: &Self::AccountId,
 		) -> Result<(), DispatchError> {
 			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
@@ -824,6 +772,73 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		pub fn create_pool(
+			who: &T::AccountId,
+			assets: Vec<T::AssetId>,
+			amplification_coefficient: FixedU128,
+			fee: Permill,
+			admin_fee: Permill,
+		) -> Result<T::PoolId, DispatchError> {
+			// Assets related checks
+			ensure!(assets.len() > 1, Error::<T>::NotEnoughAssets);
+			let unique_assets = BTreeSet::<T::AssetId>::from_iter(assets.iter().copied());
+			ensure!(unique_assets.len() == assets.len(), Error::<T>::DuplicateAssets);
+
+			// Add new pool
+			let pool_id =
+				PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {
+					let pool_id = *pool_count;
+
+					Pools::<T>::try_mutate_exists(pool_id, |maybe_pool_info| -> DispatchResult {
+						// We expect that PoolInfos have sequential keys.
+						// No PoolInfo can have key greater or equal to PoolCount
+						ensure!(maybe_pool_info.is_none(), Error::<T>::InconsistentStorage);
+
+						*maybe_pool_info = Some(StableSwapPoolInfo {
+							owner: who.clone(),
+							amplification_coefficient,
+							fee,
+							admin_fee,
+						});
+
+						Ok(())
+					})?;
+
+					PoolLPAsset::<T>::try_mutate(pool_id, |lp_asset| -> DispatchResult {
+						ensure!(lp_asset.is_none(), Error::<T>::InconsistentStorage);
+						let asset = T::CurrencyFactory::create()?;
+						*lp_asset = Some(asset);
+						Ok(())
+					})?;
+
+					for asset_id in &assets {
+						PoolAssetBalance::<T>::insert(pool_id, asset_id, T::Balance::zero());
+						PoolAssetTotalBalance::<T>::insert(pool_id, asset_id, T::Balance::zero());
+					}
+
+					PoolAssets::<T>::try_mutate(pool_id, |pool_assets| -> DispatchResult {
+						ensure!(pool_assets.is_none(), Error::<T>::InconsistentStorage);
+						*pool_assets = Some(assets);
+						Ok(())
+					})?;
+
+					*pool_count = pool_id
+						.checked_add(&T::PoolId::one())
+						.ok_or(Error::<T>::InconsistentStorage)?;
+
+					Ok(pool_id)
+				})?;
+
+			Self::deposit_event(Event::PoolCreated { who: who.clone(), pool_id });
+
+			Ok(pool_id)
+		}
+
+		/// Return pool information for given pool_id.
+		pub fn get_pool_info(pool_id: T::PoolId) -> Option<StableSwapPoolInfo<T::AccountId>> {
+			Pools::<T>::get(pool_id)
+		}
+
 		/// Find `ann = amp * n^n` where `amp` - amplification coefficient,
 		/// `n` - number of coins.
 		pub fn get_ann(amp: FixedU128, n: usize) -> Option<FixedU128> {
@@ -1055,7 +1070,7 @@ pub mod pallet {
 
 		fn transfer_liquidity_into_pool(
 			pool_account_id: &T::AccountId,
-			pool_id: PoolId,
+			pool_id: T::PoolId,
 			source: &T::AccountId,
 			destination_asset_index: usize,
 			amount: T::Balance,
@@ -1077,7 +1092,7 @@ pub mod pallet {
 
 		fn transfer_liquidity_from_pool(
 			pool_account_id: &T::AccountId,
-			pool_id: PoolId,
+			pool_id: T::PoolId,
 			source_asset_index: usize,
 			destination: &T::AccountId,
 			amount: T::Balance,
@@ -1098,7 +1113,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		pub fn account_id(pool_id: &PoolId) -> T::AccountId {
+		pub fn account_id(pool_id: &T::PoolId) -> T::AccountId {
 			PALLET_ID.into_sub_account(pool_id)
 		}
 	}

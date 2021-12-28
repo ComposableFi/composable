@@ -19,7 +19,9 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
+	traits::{
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
+	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -28,8 +30,6 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
-use sp_runtime::traits::AccountIdConversion;
 
 // A few exports that help ease life for downstream crates.
 pub use support::{
@@ -777,6 +777,65 @@ impl assets::Config for Runtime {
 	type GovernanceRegistry = GovernanceRegistry;
 }
 
+parameter_types! {
+	  pub const InitialPayment: Perbill = Perbill::from_percent(50);
+	  pub const VestingStep: BlockNumber = 7 * DAYS;
+	  pub const Prefix: &'static [u8] = b"picasso-";
+}
+
+#[cfg(feature = "develop")]
+impl crowdloan_rewards::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Currency = Assets;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	// TODO(hussein-aitlahcen): should be the proxy account
+	type AssociationOrigin = EnsureRootOrHalfCouncil;
+	type Convert = ConvertInto;
+	type RelayChainAccountId = [u8; 32];
+	type InitialPayment = InitialPayment;
+	type VestingStep = VestingStep;
+	type Prefix = Prefix;
+	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
+}
+
+#[cfg(feature = "develop")]
+parameter_types! {
+	pub const MaxVestingSchedule: u32 = 2;
+	pub const MinVestedTransfer: u64 = 1_000_000;
+}
+
+#[cfg(feature = "develop")]
+impl vesting::Config for Runtime {
+	type Currency = Tokens;
+	type Event = Event;
+	type MaxVestingSchedules = MaxVestingSchedule;
+	type MinVestedTransfer = MinVestedTransfer;
+	type VestedTransferOrigin = system::EnsureSigned<AccountId>;
+	type WeightInfo = ();
+}
+
+#[cfg(feature = "develop")]
+parameter_types! {
+	pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
+	pub const MinReward: Balance = 1_000_000;
+	pub const Stake: Balance = 10_000;
+}
+
+#[cfg(feature = "develop")]
+impl pallet_bonded_finance::Config for Runtime {
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type BondOfferId = u64;
+	type Convert = sp_runtime::traits::ConvertInto;
+	type Currency = Tokens;
+	type Event = Event;
+	type MinReward = MinReward;
+	type NativeCurrency = Balances;
+	type PalletId = BondedFinanceId;
+	type Stake = Stake;
+	type Vesting = Vesting;
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -902,6 +961,9 @@ construct_runtime!(
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
 		Assets: assets::{Pallet, Call, Storage} = 57,
+		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 58,
+		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 59,
+		BondedFinance: pallet_bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1064,8 +1126,9 @@ impl_runtime_apis! {
 			#[cfg(feature = "develop")]
 			{
 				list_benchmark!(list, extra, vault, Vault);
-				list_benchmark!(list, extra, lending, Lending);
+				list_benchmark!(list, extra, pallet_bonded_finance, BondedFinance);
 				list_benchmark!(list, extra, oracle, Oracle);
+				list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
 			}
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -1118,9 +1181,10 @@ impl_runtime_apis! {
 
 			#[cfg(feature ="develop")]
 			{
-				add_benchmark!(params, batches, vault, Lending);
 				add_benchmark!(params, batches, vault, Vault);
+				add_benchmark!(params, batches, pallet_bonded_finance, BondedFinance);
 				add_benchmark!(params, batches, oracle, Oracle);
+				add_benchmark!(params, batches, crowdloan_rewards, CrowdloanRewards);
 			}
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
