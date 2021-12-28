@@ -1,0 +1,35 @@
+name: "Testnet Community Release"
+
+on:
+  pull_request: # debug
+    branches:   # debug
+      - main    # debug
+  push: 
+    branches: 
+      - main
+env:
+  CHAIN: "picasso"
+  RELEASE_VERSION: "latest"
+
+jobs:
+  build-and-publish:
+    runs-on: 
+        - self-hosted
+        - linux
+        - x64
+        - sre
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+        ref: picasso
+
+    - name: Build and Push Artifacts to gcloud
+      run: |
+        /home/runner/.cargo/bin/cargo build --release --bins
+        git rev-parse HEAD > revision
+        tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
+        tar -czvf picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
+        tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain-utils
+        tar -czvf revision-${RELEASE_VERSION}.tar.gz revision
+        gsutil mv *.tar.gz gs://composable-binaries/testnet-releases/picasso/
