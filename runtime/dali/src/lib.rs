@@ -19,9 +19,7 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero,
-	},
+	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -791,7 +789,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	// TODO(hussein-aitlahcen): should be the proxy account
 	type AssociationOrigin = EnsureRootOrHalfCouncil;
-	type Convert = ConvertInto;
+	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = [u8; 32];
 	type InitialPayment = InitialPayment;
 	type VestingStep = VestingStep;
