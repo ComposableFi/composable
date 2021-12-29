@@ -423,7 +423,6 @@ pub mod pallet {
 				.zip(&amounts)
 				.map(|(balance, amount)| -> Result<_, _> {
 					if token_supply == zero {
-						dbg!();
 						ensure!(amount > &zero, Error::<T>::WrongAssetAmount);
 					}
 					balance
@@ -433,7 +432,6 @@ pub mod pallet {
 				.collect::<Result<Vec<_>, _>>()?;
 
 			let d1 = Self::get_d(&new_balances, ann).ok_or(Error::<T>::Math)?;
-			dbg!();
 			ensure!(d1 > d0, Error::<T>::WrongAssetAmount);
 
 			let d1_b = d1.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
@@ -583,7 +581,6 @@ pub mod pallet {
 			let zero = FixedU128::zero();
 			let b_zero = Self::Balance::zero();
 
-			dbg!();
 			ensure!(amount >= b_zero, Error::<T>::WrongAssetAmount);
 
 			let amount_f = {
@@ -617,8 +614,6 @@ pub mod pallet {
 			let token_supply = T::LpToken::total_issuance(pool_lp_asset);
 			let token_supply_u: u128 = token_supply.into();
 
-			// dbg!(token_supply, token_supply_u);
-
 			let amounts_f = assets
 				.iter()
 				.zip(balances)
@@ -636,9 +631,8 @@ pub mod pallet {
 							.checked_div(&FixedU128::saturating_from_integer(token_supply_u))
 							.ok_or(Error::<T>::Math)?;
 
-						dbg!();
 						ensure!(value >= min_amount_f, Error::<T>::RequiredAmountNotReached);
-						dbg!();
+
 						PoolAssetBalance::<T>::mutate(
 							pool_id,
 							asset_id,
@@ -652,7 +646,6 @@ pub mod pallet {
 								Ok(())
 							},
 						)?;
-						dbg!();
 						Ok(value)
 					},
 				)
@@ -711,7 +704,7 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let prec = T::Precision::get();
 			let zero_b = Self::Balance::zero();
-			dbg!();
+
 			ensure!(dx >= zero_b, Error::<T>::WrongAssetAmount);
 
 			let pool = Pools::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
@@ -906,7 +899,7 @@ pub mod pallet {
 			let n = FixedU128::saturating_from_integer(u128::try_from(xp_f.len()).ok()?);
 			let sum = xp_f.iter().try_fold(zero, |s, x| s.checked_add(x))?;
 			if sum == zero {
-				return Some(zero)
+				return Some(zero);
 			}
 			let mut d = sum;
 
@@ -929,10 +922,10 @@ pub mod pallet {
 
 				if d > d_prev {
 					if d.checked_sub(&d_prev)? <= prec {
-						return Some(d)
+						return Some(d);
 					}
 				} else if d_prev.checked_sub(&d)? <= prec {
-					return Some(d)
+					return Some(d);
 				}
 			}
 			None
@@ -968,14 +961,14 @@ pub mod pallet {
 
 			// Same coin
 			if i == j {
-				return None
+				return None;
 			}
 			// j above n
 			if j >= xp_f.len() {
-				return None
+				return None;
 			}
 			if i >= xp_f.len() {
-				return None
+				return None;
 			}
 			let d_f = Self::get_d(xp_f, ann_f)?;
 			let mut c = d_f;
@@ -991,7 +984,7 @@ pub mod pallet {
 				} else if k != j {
 					x_k = *xp_k;
 				} else {
-					continue
+					continue;
 				}
 				// s = s + x_k
 				s = s.checked_add(&x_k)?;
@@ -1021,10 +1014,10 @@ pub mod pallet {
 				// Equality with the specified precision
 				if y > y_prev {
 					if y.checked_sub(&y_prev)? <= prec {
-						return Some(y)
+						return Some(y);
 					}
 				} else if y_prev.checked_sub(&y)? <= prec {
-					return Some(y)
+					return Some(y);
 				}
 			}
 
@@ -1056,7 +1049,7 @@ pub mod pallet {
 			let n = FixedU128::try_from(xp_f.len() as u128).ok()?;
 
 			if i >= xp_f.len() {
-				return None
+				return None;
 			}
 
 			let mut c = d_f;
@@ -1064,7 +1057,7 @@ pub mod pallet {
 
 			for (k, xp_k) in xp_f.iter().enumerate() {
 				if k == i {
-					continue
+					continue;
 				}
 
 				let x = xp_k;
@@ -1090,10 +1083,10 @@ pub mod pallet {
 				// Equality with the specified precision
 				if y > y_prev {
 					if y.checked_sub(&y_prev)? <= prec {
-						return Some(y)
+						return Some(y);
 					}
 				} else if y_prev.checked_sub(&y)? <= prec {
-					return Some(y)
+					return Some(y);
 				}
 			}
 
