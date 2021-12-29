@@ -488,7 +488,7 @@ where
 					let reward_account_encoded =
 						reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec());
 					match ethereum_recover(T::Prefix::get(), &reward_account_encoded, eth_proof) {
-						Some(ethereum_address) => RemoteAccount::Ethereum(ethereum_address),
+						Some(ethereum_address) => RemoteAccount::<<T as Config>::RelayChainAccountId>::Ethereum(ethereum_address),
 						None => {
 							return InvalidTransaction::Custom(ValidityError::InvalidProof as u8)
 								.into()
@@ -502,7 +502,7 @@ where
 						relay_account.clone(),
 						relay_proof,
 					) {
-						RemoteAccount::RelayChain(reward_account)
+						RemoteAccount::<<T as Config>::RelayChainAccountId>::RelayChain(*reward_account)
 					} else {
 						return InvalidTransaction::Custom(ValidityError::InvalidProof as u8)
 							.into();
@@ -512,6 +512,8 @@ where
 
 			if Rewards::<T>::get(remote_account).is_none() {
 				return InvalidTransaction::Custom(ValidityError::NoReward as u8).into();
+			} else {
+				Ok(ValidTransaction::default())
 			}
 		} else {
 			Ok(ValidTransaction::default())
