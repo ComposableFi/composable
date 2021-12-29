@@ -1,7 +1,5 @@
 name: CI Check
 
-# please update docker, toolchain toml and github action with toolchain at same time
-
 on:
   pull_request:
     branches:
@@ -10,7 +8,6 @@ on:
       - dali-chachacha
       - picasso
   workflow_dispatch:
-concurrency: ci-check
 jobs:
   check:
     runs-on:
@@ -36,12 +33,6 @@ jobs:
       - name: Benchmark Develop
         run: |
           SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks,develop --workspace --release --exclude integration-tests
-      - name: Picasso
-        run: |
-          cargo build --release -p picasso-runtime
-      - name: Picasso Develop
-        run: |
-          cargo build --release -p picasso-runtime --features develop
   linters:
     name: Linters
     runs-on:
@@ -57,28 +48,14 @@ jobs:
           toolchain: stable
           components: clippy
           override: true
-      - name: Install Rust components and targets
-        run: |
-          rustup target add wasm32-unknown-unknown
-          rustup component add rustfmt --toolchain nightly-x86_64-unknown-linux-gnu
-          rustup target add wasm32-unknown-unknown --toolchain nightly
       - name: Cargo fmt
         run: |
           cargo +nightly fmt -- --check
       - name: Hadolint
-        env:
-          HADOLINT_VERSION: v2.8.0
-        run: |
-          curl -L -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
-          chmod +x hadolint
-          ./hadolint --version
-          total_exit_code=0
-          while IFS= read -r file; do
-            echo "=== $file ==="
-            ./hadolint --config .hadolint.yaml $file || total_exit_code=$?
-            echo ""
-          done < <(find . -name "Dockerfile")
-          exit $total_exit_code
+      - uses: actions/checkout@v2 
+      - uses: hadolint/hadolint-action@v2.8.0
+        with:
+          dockerfile: docker/Dockerfile
       - name: Cargo clippy
         run: |
           cargo +nightly clippy -- -D warnings
@@ -117,4 +94,3 @@ jobs:
           SKIP_WASM_BUILD=1 cargo test
           SKIP_WASM_BUILD=1 cargo clean -p picasso-runtime
           SKIP_WASM_BUILD=1 cargo clean -p composable
-
