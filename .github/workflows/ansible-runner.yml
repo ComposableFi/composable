@@ -12,19 +12,22 @@ on:
         chain:
           required: true
           description: Chain to use, dali|picasso
+        inventory_file:
+          required: true
+          description: Inventory file to use
+        username:
+          required: true
+          description: Ansible Username
        
 
 env: 
   TARGET: ${{ github.event.inputs.target }}
   PLAYBOOK: ${{ github.event.inputs.playbook_file }}
-  INVENTORY_FILE: "gcp.yaml"
-<<<<<<< HEAD
-  ENVIRONMENT: ${{ github.event.inputs.environment }}
-=======
+  INVENTORY_FILE: ${{ github.event.inputs.inventory_file }}
   CHAIN: ${{ github.event.inputs.chain }}
   RELEASE_VERSION:
   ROOT_KEY: ${{ secrets.ROOT_KEY }}
->>>>>>> bbc78797a884a247a0eb17742f1eda5975252d60
+  USERNAME: ${{ github.event.inputs.username }}
 
 jobs:
   run-playbooks:
@@ -46,4 +49,4 @@ jobs:
     - name: Run ansible playbook
       working-directory: "./.maintain/playbooks"
       run: |
-        ansible-playbook -l $TARGET $PLAYBOOK -i $INVENTORY_FILE -e 'ansible_python_interpreter=/usr/bin/python3'
+        ansible-playbook -l $TARGET $PLAYBOOK -i $INVENTORY_FILE  --user $USERNAME -e 'ansible_python_interpreter=/usr/bin/python3'

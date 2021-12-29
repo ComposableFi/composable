@@ -45,13 +45,17 @@ mod mocks;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+pub mod weights;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::Codec;
-	use frame_support::{pallet_prelude::*, traits::fungible::Mutate};
+	use frame_support::{pallet_prelude::*, traits::fungible::Mutate, transactional};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
-	use sp_core::keccak_256;
+	use sp_io::hashing::keccak_256;
 	use sp_runtime::{
 		traits::{
 			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert, Saturating, Verify,
@@ -59,6 +63,9 @@ pub mod pallet {
 		},
 		AccountId32, MultiSignature, Perbill,
 	};
+	use sp_std::vec::Vec;
+
+	use crate::weights::WeightInfo;
 
 	use super::models::*;
 
@@ -143,6 +150,9 @@ pub mod pallet {
 		/// The arbitrary prefix used for the proof
 		#[pallet::constant]
 		type Prefix: Get<&'static [u8]>;
+
+		// Extrinsic weights
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::storage]
@@ -182,50 +192,25 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Initialize the pallet at the current transaction block.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::initialize(TotalContributors::<T>::get()))]
+		#[transactional]
 		pub fn initialize(origin: OriginFor<T>) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
 			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
-			let current_block = frame_system::Pallet::<T>::block_number();
-			VestingBlockStart::<T>::set(current_block);
-			Ok(())
+			Self::do_initialize()
 		}
 
 		/// Populate pallet by adding more rewards.
 		/// Can be called multiple times. Idempotent.
 		/// Can only be called before `initialize`.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::populate(rewards.len() as u32))]
+		#[transactional]
 		pub fn populate(
 			origin: OriginFor<T>,
 			rewards: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
 		) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
-			// Make sure we can't populate after any user has claim anything otherwise we are
-			// screwed.
-			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
-			rewards
-				.into_iter()
-				.for_each(|(remote_account, account_reward, vesting_period)| {
-					// Populate and possibly overwrite.
-					Rewards::<T>::insert(
-						remote_account,
-						Reward {
-							total: account_reward,
-							claimed: T::Balance::zero(),
-							vesting_period,
-						},
-					);
-				});
-			// NOTE(hussein-aitlahcen): recompute instead of adding to avoid issues with duplicates
-			let (total_rewards, total_contributors) = Rewards::<T>::iter_values().fold(
-				(T::Balance::zero(), 0),
-				|(total_rewards, total_contributors), contributor_reward| {
-					(total_rewards + contributor_reward.total, total_contributors + 1)
-				},
-			);
-			TotalRewards::<T>::set(total_rewards);
-			TotalContributors::<T>::set(total_contributors);
-			Ok(())
+			Self::do_populate(rewards)
 		}
 
 		/// Associate a reward account. A valid proof has to be provided.
@@ -237,13 +222,43 @@ pub mod pallet {
 		/// ```haskell
 		/// proof = sign (concat prefix (hex reward_account))
 		/// ```
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::associate(TotalContributors::<T>::get()))]
+		#[transactional]
 		pub fn associate(
 			origin: OriginFor<T>,
 			reward_account: T::AccountId,
 			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
 			T::AssociationOrigin::ensure_origin(origin)?;
+			Self::do_associate(reward_account, proof)
+		}
+
+		/// Claim a reward from the associated reward account.
+		/// A previous call to `associate` should have been made.
+		/// If logic gate pass, no fees are applied.
+		#[pallet::weight(<T as Config>::WeightInfo::claim(TotalContributors::<T>::get()))]
+		#[transactional]
+		pub fn claim(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			let reward_account = ensure_signed(origin)?;
+			let remote_account = Associations::<T>::try_get(&reward_account)
+				.map_err(|_| Error::<T>::NotAssociated)?;
+			let claimed = Self::do_claim(remote_account.clone(), &reward_account)?;
+			Self::deposit_event(Event::Claimed { remote_account, reward_account, amount: claimed });
+			Ok(Pays::No.into())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub fn do_initialize() -> DispatchResult {
+			let current_block = frame_system::Pallet::<T>::block_number();
+			VestingBlockStart::<T>::set(current_block);
+			Ok(())
+		}
+
+		pub fn do_associate(
+			reward_account: T::AccountId,
+			proof: ProofOf<T>,
+		) -> DispatchResultWithPostInfo {
 			let remote_account = match proof {
 				Proof::Ethereum(eth_proof) => {
 					let reward_account_encoded =
@@ -276,25 +291,40 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		/// Claim a reward from the associated reward account.
-		/// A previous call to `associate` should have been made.
-		/// If logic gate pass, no fees are applied.
-		#[pallet::weight(10_000)]
-		pub fn claim(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-			let reward_account = ensure_signed(origin)?;
-			let remote_account = Associations::<T>::try_get(&reward_account)
-				.map_err(|_| Error::<T>::NotAssociated)?;
-			let claimed = Self::do_claim(remote_account.clone(), &reward_account)?;
-			Self::deposit_event(Event::Claimed { remote_account, reward_account, amount: claimed });
-			Ok(Pays::No.into())
+		pub fn do_populate(
+			rewards: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
+		) -> DispatchResult {
+			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
+			let _ = Rewards::<T>::remove_all(None);
+			rewards
+				.into_iter()
+				.for_each(|(remote_account, account_reward, vesting_period)| {
+					// Populate and possibly overwrite.
+					Rewards::<T>::insert(
+						remote_account,
+						Reward {
+							total: account_reward,
+							claimed: T::Balance::zero(),
+							vesting_period,
+						},
+					);
+				});
+			// NOTE(hussein-aitlahcen): recompute instead of adding to avoid issues with duplicates
+			let (total_rewards, total_contributors) = Rewards::<T>::iter_values().fold(
+				(T::Balance::zero(), 0),
+				|(total_rewards, total_contributors), contributor_reward| {
+					(total_rewards + contributor_reward.total, total_contributors + 1)
+				},
+			);
+			TotalRewards::<T>::set(total_rewards);
+			TotalContributors::<T>::set(total_contributors);
+			Ok(())
 		}
-	}
 
-	impl<T: Config> Pallet<T> {
 		/// Do claim the reward for a given remote account, rewarding the `reward_account`.
 		/// Returns `InvalidProof` if the user is not a contributor or `NothingToClaim` if not
 		/// reward can be claimed yet.
-		fn do_claim(
+		pub fn do_claim(
 			remote_account: RemoteAccountOf<T>,
 			reward_account: &T::AccountId,
 		) -> Result<T::Balance, DispatchError> {
