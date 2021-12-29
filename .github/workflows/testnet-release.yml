@@ -1,9 +1,6 @@
 name: "Testnet Community Release"
 
 on:
-  pull_request: # debug
-    branches:   # debug
-      - main    # debug
   push: 
     branches: 
       - main
