@@ -188,6 +188,8 @@ impl curve_amm::Config for Test {
 	type CurrencyFactory = LpTokenFactory;
 	type Precision = Precision;
 	type LpToken = Tokens;
+	type PoolId = u32;
+	type PoolTokenIndex = u32;
 }
 
 // Build genesis storage according to the mock runtime.

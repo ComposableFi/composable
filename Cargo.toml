@@ -10,9 +10,10 @@ members = [
     "frame/*",
     "integration-tests",
     "node",
-    "price-feed",
     "runtime/picasso",
+    "runtime/dali",
     "runtime/composable",
     "utils/subxt-clients",
-    "utils/collator-sidecar"
+    "utils/collator-sidecar",
+    "utils/price-feed"
 ]

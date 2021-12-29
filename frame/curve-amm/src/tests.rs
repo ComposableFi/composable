@@ -175,7 +175,7 @@ fn add_remove_liquidity() {
 		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff, fee, admin_fee);
 		assert_ok!(&p);
 		let pool_id = p.unwrap();
-		let pool = CurveAmm::pool(pool_id);
+		let pool = CurveAmm::get_pool_info(pool_id);
 		assert!(pool.is_some());
 		let pool_lp_asset = CurveAmm::pool_lp_asset(pool_id);
 		assert!(pool_lp_asset.is_some());
@@ -187,7 +187,7 @@ fn add_remove_liquidity() {
 		assert_ne!(alice_balance, 0);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200000 - 130000);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 200000 - 130000);
-		let pool = CurveAmm::pool(pool_id);
+		let pool = CurveAmm::get_pool_info(pool_id);
 		assert!(pool.is_some());
 		assert_ok!(CurveAmm::add_liquidity(&BOB, pool_id, amounts.clone(), 0u128));
 		let bob_balance = Tokens::balance(pool_lp_asset, &BOB);
@@ -238,7 +238,7 @@ fn exchange_test() {
 		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff, fee, admin_fee);
 		assert_ok!(&p);
 		let pool_id = p.unwrap();
-		let pool = CurveAmm::pool(pool_id);
+		let pool = CurveAmm::get_pool_info(pool_id);
 		let pool_lp_asset = CurveAmm::pool_lp_asset(pool_id);
 		assert!(pool.is_some());
 		assert!(pool_lp_asset.is_some());
@@ -250,7 +250,7 @@ fn exchange_test() {
 		assert_ne!(alice_balance, 0);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 200000 - 130000);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &ALICE), 200000 - 130000);
-		let pool = CurveAmm::pool(pool_id);
+		let pool = CurveAmm::get_pool_info(pool_id);
 		assert!(pool.is_some());
 		assert_ok!(CurveAmm::add_liquidity(&BOB, pool_id, amounts.clone(), 0u128));
 		let bob_balance = Tokens::balance(pool_lp_asset, &BOB);
@@ -303,7 +303,7 @@ proptest! {
 		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff, fee, admin_fee);
 		assert_ok!(&p);
 		let pool_id = p.unwrap();
-		let pool = CurveAmm::pool(pool_id);
+		let pool = CurveAmm::get_pool_info(pool_id);
 		let pool_lp_asset = CurveAmm::pool_lp_asset(pool_id);
 		assert!(pool.is_some());
 		assert!(pool_lp_asset.is_some());
@@ -363,7 +363,7 @@ proptest! {
 		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff, fee, admin_fee);
 		assert_ok!(&p);
 		let pool_id = p.unwrap();
-		let pool = CurveAmm::pool(pool_id);
+		let pool = CurveAmm::get_pool_info(pool_id);
 		assert!(pool.is_some());
 		let pool_lp_asset = CurveAmm::pool_lp_asset(pool_id);
 		assert!(pool_lp_asset.is_some());
