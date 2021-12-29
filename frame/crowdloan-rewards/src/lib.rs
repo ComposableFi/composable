@@ -471,7 +471,7 @@ where
 	// </weight>
 	fn validate(
 		&self,
-		who: &Self::AccountId,
+		_who: &Self::AccountId,
 		call: &Self::Call,
 		_info: &DispatchInfoOf<Self::Call>,
 		_len: usize,
@@ -479,32 +479,20 @@ where
 		use frame_support::traits::Get;
 
 		if let Some(Call::associate { reward_account, proof }) = IsSubType::is_sub_type(call) {
-			match Associations::<T>::get(reward_account) {
-				Some(association) => {
-				}
-				None => {
-					return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8)
-						.into()
-				}
+			if Associations::<T>::get(reward_account).is_some() {
+				return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8).into();
 			}
 
-			let remote_account = match proof {
+			match proof {
 				Proof::Ethereum(eth_proof) => {
 					let reward_account_encoded =
 						reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec());
-					let ethereum_address = match ethereum_recover(
-						T::Prefix::get(),
-						&reward_account_encoded,
-						eth_proof,
-					) {
-						Some(ethereum_address) => ethereum_address,
+					match ethereum_recover(T::Prefix::get(), &reward_account_encoded, eth_proof) {
+						Some(_) => Ok(ValidTransaction::default()),
 						None => {
-							return InvalidTransaction::Custom(ValidityError::InvalidProof as u8)
-								.into()
+							InvalidTransaction::Custom(ValidityError::InvalidProof as u8).into()
 						}
-					};
-
-					RemoteAccount::Ethereum(ethereum_address)
+					}
 				}
 				Proof::RelayChain(relay_account, relay_proof) => {
 					if verify_relay(
@@ -513,20 +501,15 @@ where
 						relay_account.clone(),
 						relay_proof,
 					) {
-						RemoteAccount::RelayChain(relay_account.clone())
+						Ok(ValidTransaction::default())
 					} else {
-						return InvalidTransaction::Custom(ValidityError::InvalidProof as u8)
-							.into();
+						InvalidTransaction::Custom(ValidityError::InvalidProof as u8).into()
 					}
 				}
-			};
-
-			if let Some(reward) = Rewards::<T>::get(remote_account) {
-			} else {
-				return InvalidTransaction::Custom(ValidityError::NoReward as u8).into();
 			}
+		} else {
+			Ok(ValidTransaction::default())
 		}
-		Ok(ValidTransaction::default())
 	}
 }
 
