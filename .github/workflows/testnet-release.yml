@@ -3,30 +3,31 @@ name: "Testnet Community Release"
 on:
   push: 
     branches: 
-      - main
+    - main
+
 env:
-  CHAIN: "picasso"
+  CHAIN: "dali"
   RELEASE_VERSION: "latest"
 
 jobs:
   build-and-publish:
     runs-on: 
-        - self-hosted
-        - linux
-        - x64
-        - sre
+    - self-hosted
+    - linux
+    - x64
+    - sre
     steps:
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
-        ref: picasso
+        ref: main
 
     - name: Build and Push Artifacts to gcloud
       run: |
-        /home/runner/.cargo/bin/cargo build --release --bins
+        /home/runner/.cargo/bin/cargo build --release --bins --features develop
         git rev-parse HEAD > revision
-        tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
-        tar -czvf picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
+        tar -czvf composable-${CHAIN}-${RELEASE_VERSION}.tar.gz target/release/composable
+        tar -czvf ${CHAIN}_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz target/release/wbuild/rococo-runtime/rococo_runtime.compact.wasm
         tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain-utils
         tar -czvf revision-${RELEASE_VERSION}.tar.gz revision
-        gsutil mv *.tar.gz gs://composable-binaries/testnet-releases/picasso/
+        gsutil mv *.tar.gz gs://composable-binaries/testnet-releases/${CHAIN}/
