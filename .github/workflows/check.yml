@@ -51,7 +51,6 @@ jobs:
       - name: Cargo fmt
         run: |
           cargo +nightly fmt -- --check
-      - name: Hadolint
       - uses: hadolint/hadolint-action@v2.8.0
         with:
           dockerfile: docker/Dockerfile
