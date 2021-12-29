@@ -791,7 +791,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	// TODO(hussein-aitlahcen): should be the proxy account
 	type AssociationOrigin = EnsureRootOrHalfCouncil;
-	type Convert = ConvertInto;
+	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = [u8; 32];
 	type InitialPayment = InitialPayment;
 	type VestingStep = VestingStep;
