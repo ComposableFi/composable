@@ -48,7 +48,7 @@ pub use pallet::*;
 use scale_info::TypeInfo;
 use sp_runtime::traits::{DispatchInfoOf, SignedExtension};
 
-use crate::models::{Proof, RemoteAccount};
+use crate::models::{EthereumAddress, Proof, RemoteAccount};
 
 pub mod models;
 
@@ -483,14 +483,15 @@ where
 				return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8).into();
 			}
 
-			match proof {
+			let remote_account = match proof {
 				Proof::Ethereum(eth_proof) => {
 					let reward_account_encoded =
 						reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec());
 					match ethereum_recover(T::Prefix::get(), &reward_account_encoded, eth_proof) {
-						Some(_) => Ok(ValidTransaction::default()),
+						Some(ethereum_address) => RemoteAccount::Ethereum(ethereum_address),
 						None => {
-							InvalidTransaction::Custom(ValidityError::InvalidProof as u8).into()
+							return InvalidTransaction::Custom(ValidityError::InvalidProof as u8)
+								.into()
 						}
 					}
 				}
@@ -501,11 +502,16 @@ where
 						relay_account.clone(),
 						relay_proof,
 					) {
-						Ok(ValidTransaction::default())
+						RemoteAccount::RelayChain(reward_account)
 					} else {
-						InvalidTransaction::Custom(ValidityError::InvalidProof as u8).into()
+						return InvalidTransaction::Custom(ValidityError::InvalidProof as u8)
+							.into();
 					}
 				}
+			};
+
+			if Rewards::<T>::get(remote_account).is_none() {
+				return InvalidTransaction::Custom(ValidityError::NoReward as u8).into();
 			}
 		} else {
 			Ok(ValidTransaction::default())

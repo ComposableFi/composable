@@ -1831,32 +1831,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crowdloan-rewards-api"
-version = "0.1.0"
-dependencies = [
- "clap 2.34.0",
- "frame-support",
- "frame-system",
- "hex",
- "pallet-crowdloan-rewards",
- "parity-scale-codec",
- "rustc-hex",
- "scale-info",
- "serde",
- "serde-aux",
- "serde_json",
- "sp-arithmetic",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "subxt",
- "subxt-clients",
- "tokio",
- "warp",
-]
-
-[[package]]
 name = "crunchy"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11306,17 +11280,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4ad69dfbd3e45369132cc64e6748c2d65cdfb001a2b1c232d128b4ad60561c1"
 dependencies = [
  "serde_derive",
-]
-
-[[package]]
-name = "serde-aux"
-version = "3.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93abf9799c576f004252b2a05168d58527fb7c54de12e94b4d12fe3475ffad24"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
 ]
 
 [[package]]
