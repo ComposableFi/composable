@@ -23,6 +23,7 @@ pub mod pallet {
 		serde::Deserialize,
 		TypeInfo,
 	)]
+	#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
 	pub enum MockCurrencyId {
 		A,
 		B,

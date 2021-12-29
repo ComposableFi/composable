@@ -64,23 +64,24 @@ pub static UNRESERVED: Lazy<AccountId> = Lazy::new(|| {
 	serde::Deserialize,
 	TypeInfo,
 )]
+#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
 pub enum MockCurrencyId {
-	Pica,
-	Btc,
-	Eth,
-	Ltc,
-	Usdt,
+	PICA,
+	BTC,
+	ETH,
+	LTC,
+	USDT,
 	LpToken(u128),
 }
 
 impl From<u128> for MockCurrencyId {
 	fn from(id: u128) -> Self {
 		match id {
-			0 => MockCurrencyId::Pica,
-			1 => MockCurrencyId::Btc,
-			2 => MockCurrencyId::Eth,
-			3 => MockCurrencyId::Ltc,
-			4 => MockCurrencyId::Usdt,
+			0 => MockCurrencyId::PICA,
+			1 => MockCurrencyId::BTC,
+			2 => MockCurrencyId::ETH,
+			3 => MockCurrencyId::LTC,
+			4 => MockCurrencyId::USDT,
 			5 => MockCurrencyId::LpToken(0),
 			_ => unreachable!(),
 		}
@@ -89,18 +90,18 @@ impl From<u128> for MockCurrencyId {
 
 impl Default for MockCurrencyId {
 	fn default() -> Self {
-		MockCurrencyId::Pica
+		MockCurrencyId::PICA
 	}
 }
 
 impl PriceableAsset for MockCurrencyId {
 	fn smallest_unit_exponent(self) -> composable_traits::currency::Exponent {
 		match self {
-			MockCurrencyId::Pica => 0,
-			MockCurrencyId::Btc => 8,
-			MockCurrencyId::Eth => 18,
-			MockCurrencyId::Ltc => 8,
-			MockCurrencyId::Usdt => 2,
+			MockCurrencyId::PICA => 0,
+			MockCurrencyId::BTC => 8,
+			MockCurrencyId::ETH => 18,
+			MockCurrencyId::LTC => 8,
+			MockCurrencyId::USDT => 2,
 			MockCurrencyId::LpToken(_) => 0,
 		}
 	}
@@ -209,7 +210,7 @@ impl pallet_currency_factory::Config for Test {
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::Pica;
+	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::PICA;
 	pub const CreationDeposit: Balance = 10;
 	pub const RentPerBlock: Balance = 1;
 	pub const MinimumDeposit: Balance = 0;

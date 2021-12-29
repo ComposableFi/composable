@@ -25,7 +25,7 @@ pub type Balance = u128;
 pub type Amount = i128;
 pub type AccountId = u128;
 
-pub const NATIVE_CURRENCY_ID: MockCurrencyId = MockCurrencyId::Pica;
+pub const NATIVE_CURRENCY_ID: MockCurrencyId = MockCurrencyId::PICA;
 pub const MIN_VESTED_TRANSFER: u64 = 1_000_000;
 pub const MIN_REWARD: u128 = 1_000_000;
 
@@ -48,10 +48,11 @@ pub const CHARLIE: AccountId = 3;
 	TypeInfo,
 	proptest_derive::Arbitrary,
 )]
+#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
 pub enum MockCurrencyId {
-	Pica,
-	Btc,
-	Eth,
+	PICA,
+	BTC,
+	ETH,
 }
 
 parameter_types! {

@@ -37,9 +37,10 @@ pub const CHARLIE: AccountId = 3;
 	serde::Deserialize,
 	TypeInfo,
 )]
+#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
 pub enum MockCurrencyId {
-	Btc,
-	Eth,
+	BTC,
+	ETH,
 }
 
 parameter_types! {
@@ -149,7 +150,7 @@ impl ExtBuilder {
 		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 		orml_tokens::GenesisConfig::<Runtime> {
-			balances: vec![(ALICE, MockCurrencyId::Btc, 100), (CHARLIE, MockCurrencyId::Btc, 50)],
+			balances: vec![(ALICE, MockCurrencyId::BTC, 100), (CHARLIE, MockCurrencyId::BTC, 50)],
 		}
 		.assimilate_storage(&mut t)
 		.unwrap();
@@ -157,8 +158,8 @@ impl ExtBuilder {
 		vesting::GenesisConfig::<Runtime> {
 			vesting: vec![
 				// asset, who, start, period, period_count, per_period
-				(MockCurrencyId::Btc, CHARLIE, 2, 3, 1, 5),
-				(MockCurrencyId::Btc, CHARLIE, 2 + 3, 3, 3, 5),
+				(MockCurrencyId::BTC, CHARLIE, 2, 3, 1, 5),
+				(MockCurrencyId::BTC, CHARLIE, 2 + 3, 3, 3, 5),
 			],
 		}
 		.assimilate_storage(&mut t)

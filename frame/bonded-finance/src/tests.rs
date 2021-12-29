@@ -53,36 +53,36 @@ macro_rules! prop_assert_ok {
 #[test]
 fn valid_offer() {
 	assert!(BondOffer {
-		asset: MockCurrencyId::Btc,
+		asset: MockCurrencyId::BTC,
 		bond_price: MIN_VESTED_TRANSFER as _,
 		nb_of_bonds: 100_000_u128,
 		maturity: BondDuration::Infinite,
 		reward: BondOfferReward {
-			asset: MockCurrencyId::Pica,
+			asset: MockCurrencyId::PICA,
 			amount: 1_000_000_u128 * 100_000_u128,
 			maturity: 96_u128,
 		}
 	}
 	.valid(MinVestedTransfer::get() as _, MinReward::get()));
 	assert!(BondOffer {
-		asset: MockCurrencyId::Btc,
+		asset: MockCurrencyId::BTC,
 		bond_price: MIN_VESTED_TRANSFER as _,
 		nb_of_bonds: 1_u128,
 		maturity: BondDuration::Finite { return_in: 1 },
 		reward: BondOfferReward {
-			asset: MockCurrencyId::Btc,
+			asset: MockCurrencyId::BTC,
 			amount: 1_000_000_u128,
 			maturity: 96_u128,
 		}
 	}
 	.valid(MinVestedTransfer::get() as _, MinReward::get()));
 	assert!(BondOffer {
-		asset: MockCurrencyId::Btc,
+		asset: MockCurrencyId::BTC,
 		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
 		nb_of_bonds: 100_000_u128,
 		maturity: BondDuration::Finite { return_in: 1_000_000 },
 		reward: BondOfferReward {
-			asset: MockCurrencyId::Btc,
+			asset: MockCurrencyId::BTC,
 			amount: 1_000_000_u128 * 100_000_u128,
 			maturity: 96_u128,
 		}
@@ -94,12 +94,12 @@ fn valid_offer() {
 fn invalid_offer() {
 	// invalid bond_price
 	assert!(!BondOffer {
-		asset: MockCurrencyId::Btc,
+		asset: MockCurrencyId::BTC,
 		bond_price: MIN_VESTED_TRANSFER as u128 - 1,
 		nb_of_bonds: 100_000_u128,
 		maturity: BondDuration::Infinite,
 		reward: BondOfferReward {
-			asset: MockCurrencyId::Pica,
+			asset: MockCurrencyId::PICA,
 			amount: 1_000_000_u128,
 			maturity: 96_u128
 		}
@@ -108,12 +108,12 @@ fn invalid_offer() {
 
 	// invalid nb_of_bonds
 	assert!(!BondOffer {
-		asset: MockCurrencyId::Btc,
+		asset: MockCurrencyId::BTC,
 		bond_price: MIN_VESTED_TRANSFER as _,
 		nb_of_bonds: 0,
 		maturity: BondDuration::Finite { return_in: 1 },
 		reward: BondOfferReward {
-			asset: MockCurrencyId::Btc,
+			asset: MockCurrencyId::BTC,
 			amount: 1_000_000_u128,
 			maturity: 96_u128,
 		}
@@ -122,12 +122,12 @@ fn invalid_offer() {
 
 	// invalid maturity
 	assert!(!BondOffer {
-		asset: MockCurrencyId::Btc,
+		asset: MockCurrencyId::BTC,
 		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
 		nb_of_bonds: 100_000_u128,
 		maturity: BondDuration::Finite { return_in: 0 },
 		reward: BondOfferReward {
-			asset: MockCurrencyId::Btc,
+			asset: MockCurrencyId::BTC,
 			amount: 1_000_000_u128,
 			maturity: 96_u128,
 		}
@@ -136,22 +136,22 @@ fn invalid_offer() {
 
 	// invalid reward
 	assert!(!BondOffer {
-		asset: MockCurrencyId::Btc,
+		asset: MockCurrencyId::BTC,
 		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
 		nb_of_bonds: 100_000_u128,
 		maturity: BondDuration::Finite { return_in: 1_000_000 },
-		reward: BondOfferReward { asset: MockCurrencyId::Btc, amount: 0, maturity: 96_u128 }
+		reward: BondOfferReward { asset: MockCurrencyId::BTC, amount: 0, maturity: 96_u128 }
 	}
 	.valid(MinVestedTransfer::get() as _, MinReward::get()));
 
 	// invalid reward: < MinVested
 	assert!(!BondOffer {
-		asset: MockCurrencyId::Btc,
+		asset: MockCurrencyId::BTC,
 		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
 		nb_of_bonds: 100_000_u128,
 		maturity: BondDuration::Finite { return_in: 1_000_000 },
 		reward: BondOfferReward {
-			asset: MockCurrencyId::Btc,
+			asset: MockCurrencyId::BTC,
 			amount: 1_000_000_u128 * 100_000_u128 - 1,
 			maturity: 96_u128
 		}
@@ -160,12 +160,12 @@ fn invalid_offer() {
 
 	// invalid reward maturity
 	assert!(!BondOffer {
-		asset: MockCurrencyId::Btc,
+		asset: MockCurrencyId::BTC,
 		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
 		nb_of_bonds: 100_000_u128,
 		maturity: BondDuration::Finite { return_in: 1_000_000 },
 		reward: BondOfferReward {
-			asset: MockCurrencyId::Btc,
+			asset: MockCurrencyId::BTC,
 			amount: 1_000_000_u128,
 			maturity: 0_u128
 		}
@@ -190,12 +190,12 @@ prop_compose! {
 			  )
 			  -> BondOffer<MockCurrencyId, Balance, BlockNumber> {
 					  BondOffer {
-							  asset: MockCurrencyId::Btc,
+							  asset: MockCurrencyId::BTC,
 								bond_price,
 								nb_of_bonds,
 								maturity,
 							  reward: BondOfferReward {
-									  asset: MockCurrencyId::Eth,
+									  asset: MockCurrencyId::ETH,
 									  amount: Balance::max(MIN_REWARD.saturating_mul(nb_of_bonds), reward_amount),
 									  maturity: reward_maturity,
 							  }

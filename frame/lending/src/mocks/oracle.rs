@@ -64,11 +64,11 @@ pub mod pallet {
 					Ideally we would have all the static currency quoted against USD cents on chain.
 					So that we would be able to derive LP tokens price.
 				*/
-				MockCurrencyId::Usdt => Ok(Price { price: amount, block: () }),
-				MockCurrencyId::Pica => derive_price(10_00, amount),
-				MockCurrencyId::Btc => derive_price(Self::btc_value(), amount),
-				MockCurrencyId::Eth => derive_price(3400_00, amount),
-				MockCurrencyId::Ltc => derive_price(180_00, amount),
+				MockCurrencyId::USDT => Ok(Price { price: amount, block: () }),
+				MockCurrencyId::PICA => derive_price(10_00, amount),
+				MockCurrencyId::BTC => derive_price(Self::btc_value(), amount),
+				MockCurrencyId::ETH => derive_price(3400_00, amount),
+				MockCurrencyId::LTC => derive_price(180_00, amount),
 
 				/* NOTE(hussein-aitlahcen)
 					If we want users to be able to consider LP tokens as currency,
