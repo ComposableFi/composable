@@ -1,6 +1,8 @@
 name: CI Check
 
 on:
+  push:
+    branches: "cleanup-ci"
   pull_request:
     branches:
       - main
