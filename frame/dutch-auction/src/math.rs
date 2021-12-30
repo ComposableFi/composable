@@ -3,17 +3,14 @@
 //! https://github.com/makerdao/dss/blob/master/src/abaci.sol
 
 use composable_traits::{
-	auction::{LinearDecrease, StairstepExponentialDecrease},
+	auction::{AuctionStepFunction, LinearDecrease, StairstepExponentialDecrease},
 	loans::DurationSeconds,
 	math::{LiftedFixedBalance, SafeArithmetic},
 };
 
 use sp_runtime::{
-	traits::{
-		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
-		Saturating, Zero,
-	},
-	ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill,
+	traits::{Saturating, Zero},
+	ArithmeticError, FixedPointNumber,
 };
 
 pub trait AuctionTimeCurveModel {
@@ -23,6 +20,20 @@ pub trait AuctionTimeCurveModel {
 		initial_price: LiftedFixedBalance,
 		duration_since_start: DurationSeconds,
 	) -> Result<LiftedFixedBalance, ArithmeticError>;
+}
+
+impl AuctionTimeCurveModel for AuctionStepFunction {
+	fn price(
+		&self,
+		initial_price: composable_traits::math::LiftedFixedBalance,
+		duration_since_start: composable_traits::loans::DurationSeconds,
+	) -> Result<composable_traits::math::LiftedFixedBalance, sp_runtime::ArithmeticError> {
+		match self {
+			AuctionStepFunction::LinearDecrease(x) => x.price(initial_price, duration_since_start),
+			AuctionStepFunction::StairstepExponentialDecrease(x) =>
+				x.price(initial_price, duration_since_start),
+		}
+	}
 }
 
 /// Price calculation when price is decreased linearly in proportion to time:
@@ -65,8 +76,6 @@ impl AuctionTimeCurveModel for StairstepExponentialDecrease {
 
 #[cfg(test)]
 mod tests {
-	use core::time;
-	use std::convert::TryInto;
 
 	use composable_traits::{
 		auction::{LinearDecrease, StairstepExponentialDecrease},
@@ -76,16 +85,11 @@ mod tests {
 
 	use sp_arithmetic::assert_eq_error_rate;
 	use sp_runtime::{
-		offchain::Duration,
-		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
-			Saturating, Zero,
-		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill,
-		Perquintill,
+		traits::{One, Zero},
+		FixedPointNumber, Permill,
 	};
 
-	use crate::price_function::AuctionTimeCurveModel;
+	use crate::math::AuctionTimeCurveModel;
 
 	#[test]
 	pub fn test_linear_decrease() {
@@ -131,7 +135,7 @@ mod tests {
 		}
 	}
 
-	use proptest::{prop_assert, prop_assert_eq, strategy::Strategy, test_runner::TestRunner};
+	use proptest::{prop_assert, strategy::Strategy, test_runner::TestRunner};
 
 	#[test]
 	pub fn proptest_half_each_second_vs_linear() {

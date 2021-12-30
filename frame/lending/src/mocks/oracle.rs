@@ -51,7 +51,7 @@ pub mod pallet {
 		) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError> {
 			let derive_price = |p: u128, a: u128| {
 				let e = 10_u128
-					.checked_pow(asset.smallest_unit_exponent())
+					.checked_pow(asset.decimals())
 					.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
 				let price = multiply_by_rational(p, a, e)
 					.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;

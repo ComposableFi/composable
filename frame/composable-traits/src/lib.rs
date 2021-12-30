@@ -7,6 +7,7 @@ pub mod auction;
 pub mod bonded_finance;
 pub mod call_filter;
 pub mod currency;
+pub mod defi;
 pub mod dex;
 pub mod governance;
 pub mod lending;

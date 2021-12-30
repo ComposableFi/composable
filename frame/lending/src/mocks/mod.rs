@@ -1,18 +1,18 @@
 use crate::{self as pallet_lending, *};
 use composable_traits::{
 	currency::{DynamicCurrencyId, PriceableAsset},
-	dex::{Orderbook, Price, SellOrder},
-	loans::DeFiComposableConfig,
+	defi::DeFiComposableConfig,
+	governance::{GovernanceRegistry, SignedRawOrigin},
 };
 use frame_support::{
-	parameter_types,
-	sp_runtime::Permill,
+	ord_parameter_types, parameter_types,
 	traits::{Everything, OnFinalize, OnInitialize},
 	PalletId,
 };
+use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 use once_cell::sync::Lazy;
-use orml_traits::parameter_type_with_key;
+use orml_traits::{parameter_type_with_key, GetByKey};
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
 use sp_core::{sr25519::Signature, H256};
@@ -95,7 +95,7 @@ impl Default for MockCurrencyId {
 }
 
 impl PriceableAsset for MockCurrencyId {
-	fn smallest_unit_exponent(self) -> composable_traits::currency::Exponent {
+	fn decimals(self) -> composable_traits::currency::Exponent {
 		match self {
 			MockCurrencyId::PICA => 0,
 			MockCurrencyId::BTC => 8,
@@ -131,10 +131,11 @@ frame_support::construct_runtime!(
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Assets: pallet_assets::{Pallet, Call, Storage},
 		Liquidations: pallet_liquidations::{Pallet, Call, Event<T>},
 		Lending: pallet_lending::{Pallet, Call, Config, Storage, Event<T>},
 		Oracle: pallet_lending::mocks::oracle::{Pallet},
-		Auction: pallet_dutch_auctions::{Pallet, Event<T>},
+		DutchAuction: pallet_dutch_auctions::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -261,6 +262,39 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = Everything;
 }
 
+ord_parameter_types! {
+	pub const RootAccount: AccountId = *ALICE;
+}
+
+impl GovernanceRegistry<MockCurrencyId, AccountId> for () {
+	fn set(_k: MockCurrencyId, _value: composable_traits::governance::SignedRawOrigin<AccountId>) {}
+}
+
+impl
+	GetByKey<
+		MockCurrencyId,
+		Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError>,
+	> for ()
+{
+	fn get(
+		_k: &MockCurrencyId,
+	) -> Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError> {
+		Ok(SignedRawOrigin::Root)
+	}
+}
+
+impl pallet_assets::Config for Test {
+	type NativeAssetId = NativeAssetId;
+	type GenerateCurrencyId = LpTokenFactory;
+	type AssetId = MockCurrencyId;
+	type Balance = Balance;
+	type NativeCurrency = Balances;
+	type MultiCurrency = Tokens;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
+	type GovernanceRegistry = ();
+}
+
 impl crate::mocks::oracle::Config for Test {
 	type VaultId = VaultId;
 	type Vault = Vault;
@@ -269,68 +303,26 @@ impl crate::mocks::oracle::Config for Test {
 impl DeFiComposableConfig for Test {
 	type AssetId = MockCurrencyId;
 	type Balance = Balance;
-	type Currency = Tokens;
 }
 
-pub struct MockOrderbook;
-impl Orderbook for MockOrderbook {
-	type AssetId = MockCurrencyId;
-	type Balance = Balance;
-	type AccountId = AccountId;
-	type OrderId = u128;
-	type GroupId = AccountId;
-
-	fn post(
-		_account_from: &Self::AccountId,
-		_asset: Self::AssetId,
-		_want: Self::AssetId,
-		_source_amount: Self::Balance,
-		_source_price: Price<Self::GroupId, Self::Balance>,
-		_amm_slippage: Permill,
-	) -> Result<SellOrder<Self::OrderId, Self::AccountId>, DispatchError> {
-		Ok(SellOrder { id: 0, account: *ALICE })
-	}
-
-	fn market_sell(
-		_account: &Self::AccountId,
-		_asset: Self::AssetId,
-		_want: Self::AssetId,
-		_amount: Self::Balance,
-		_amm_slippage: Permill,
-	) -> Result<Self::OrderId, DispatchError> {
-		Ok(0)
-	}
-
-	fn patch(
-		_order_id: Self::OrderId,
-		_price: Price<Self::GroupId, Self::Balance>,
-	) -> Result<(), DispatchError> {
-		Ok(())
-	}
-
-	fn ask(
-		_account: &Self::AccountId,
-		_orders: impl Iterator<Item = Self::OrderId>,
-		_up_to: Self::Balance,
-	) -> Result<(), DispatchError> {
-		Ok(())
-	}
+parameter_types! {
+	pub DutchAuctionPalletId: PalletId = PalletId(*b"dutchauc");
 }
 
 impl pallet_dutch_auctions::Config for Test {
 	type Event = Event;
-	type DexOrderId = u128;
 	type OrderId = u128;
 	type UnixTime = Timestamp;
-	type Orderbook = MockOrderbook;
-	type GroupId = AccountId;
+	type MultiCurrency = Assets;
+	type WeightInfo = ();
+	type NativeCurrency = Assets;
+	type PalletId = DutchAuctionPalletId;
 }
 
 impl pallet_liquidations::Config for Test {
 	type Event = Event;
 	type UnixTime = Timestamp;
 	type Lending = Lending;
-	type DutchAuction = Auction;
 	type GroupId = AccountId;
 }
 

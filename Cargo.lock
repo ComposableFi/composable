@@ -6732,10 +6732,18 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "frame-system",
+ "hex-literal",
  "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-currency-factory",
+ "pallet-timestamp",
  "parity-scale-codec",
  "proptest 1.0.0",
  "scale-info",
+ "serde",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
@@ -6909,6 +6917,7 @@ dependencies = [
  "once_cell",
  "orml-tokens",
  "orml-traits",
+ "pallet-assets",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-dutch-auctions",
@@ -7101,23 +7110,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-keystore",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-order-book-dex"
-version = "0.0.1"
-dependencies = [
- "composable-traits",
- "frame-support",
- "frame-system",
- "num-traits",
- "parity-scale-codec",
- "scale-info",
- "sp-arithmetic",
- "sp-core",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]
