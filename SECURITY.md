@@ -15,6 +15,8 @@ When you report a security vulnerability please include:
 
 The more information you provide the better. We recommend submitting a report where you describe the vulnerability, show us how you found it and provide reproducible code samples.
 Providing mitigation advice is also recommended.
+
+The report should be submitted to security@composable.finance. 
  
 
 ## Responsible Disclosure   
@@ -29,4 +31,3 @@ What is currently in scope is finding bugs in a our code base running in a local
 
 ## Rewards   
 Rewards are granted depending on the severity of the vulnerability, ranging from $50 to $30.000, payed out in PICA tokens. 
-
