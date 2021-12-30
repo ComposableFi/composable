@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -235,7 +237,7 @@ pub mod pallet {
 								AuctionStepFunction::StairstepExponentialDecrease(parameters) =>
 									parameters.price(total_price, delta_time),
 							}?
-							.checked_mul_int(1u64)
+							.checked_mul_int(1_u64)
 							.ok_or(ArithmeticError::Overflow)?;
 
 							let price =

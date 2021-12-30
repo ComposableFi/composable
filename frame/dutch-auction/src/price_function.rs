@@ -112,7 +112,7 @@ mod tests {
 		let half = 10;
 
 		let calc = StairstepExponentialDecrease {
-			cut: Permill::from_float(2.71f64.powf(f64::ln(1.0 / 2.0) / half as f64)),
+			cut: Permill::from_float(2.71_f64.powf(f64::ln(1.0 / 2.0) / half as f64)),
 			step: 1,
 		};
 
@@ -141,7 +141,7 @@ mod tests {
 		let initial_price = LiftedFixedBalance::saturating_from_integer(1_000_000);
 		let calc_linear = LinearDecrease { total: time_max };
 		let calc_divide_by_2 =
-			StairstepExponentialDecrease { cut: Permill::from_rational(1u32, 2u32), step: 1 };
+			StairstepExponentialDecrease { cut: Permill::from_rational(1_u32, 2_u32), step: 1 };
 
 		// bases
 		assert_eq!(

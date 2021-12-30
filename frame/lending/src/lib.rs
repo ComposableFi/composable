@@ -1,5 +1,5 @@
-//!
-
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -1369,7 +1369,7 @@ pub mod pallet {
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, borrow_amount)?;
 			Ok(swap_back(borrow_amount_value.into(), &market.collateral_factor)?
-				.checked_mul_int(1u64)
+				.checked_mul_int(1_u64)
 				.ok_or(ArithmeticError::Overflow)?
 				.into())
 		}
@@ -1386,7 +1386,7 @@ pub mod pallet {
 				Ok(borrower
 					.borrow_for_collateral()
 					.map_err(|_| Error::<T>::NotEnoughCollateralToBorrowAmount)?
-					.checked_mul_int(1u64)
+					.checked_mul_int(1_u64)
 					.ok_or(ArithmeticError::Overflow)?
 					.into())
 			} else {
@@ -1510,7 +1510,7 @@ pub mod pallet {
 		let balance = principal
 			.checked_mul(&market_interest_index)
 			.and_then(|from_start_total| from_start_total.checked_div(&account_interest_index))
-			.and_then(|x| x.checked_mul_int(1u64))
+			.and_then(|x| x.checked_mul_int(1_u64))
 			.ok_or(ArithmeticError::Overflow)?;
 		Ok(Some(balance))
 	}

@@ -1,6 +1,7 @@
 use crate::{self as pallet_crowdloan_rewards};
 use frame_support::{construct_runtime, parameter_types, traits::Everything};
 use frame_system as system;
+
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
@@ -22,7 +23,7 @@ pub const WEEKS: BlockNumber = DAYS * 7;
 pub const VESTING_STEP: BlockNumber = 1 * WEEKS;
 pub const INITIAL_PAYMENT: Perbill = Perbill::from_percent(50);
 
-pub const ALICE: AccountId = AccountId32::new([0u8; 32]);
+pub const ALICE: AccountId = AccountId32::new([0; 32]);
 
 // picasso-{account_id}
 pub const PROOF_PREFIX: &[u8] = b"picasso-";

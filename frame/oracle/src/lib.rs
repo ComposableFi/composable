@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
 
@@ -578,7 +580,7 @@ pub mod pallet {
 			stake: BalanceOf<T>,
 		) -> DispatchResult {
 			let amount_staked = Self::oracle_stake(signer.clone())
-				.unwrap_or_else(|| 0u32.into())
+				.unwrap_or_else(|| 0_u32.into())
 				.checked_add(&stake)
 				.ok_or(Error::<T>::ExceedStake)?;
 			T::Currency::transfer(&who, &signer, stake, KeepAlive)?;
@@ -691,7 +693,7 @@ pub mod pallet {
 					let historical = Self::price_history(asset_id);
 					if (historical.len() as u32) < T::MaxHistory::get() {
 						PriceHistory::<T>::mutate(asset_id, |prices| {
-							if Self::prices(asset_id).block != 0u32.into() {
+							if Self::prices(asset_id).block != 0_u32.into() {
 								prices.push(Price { price, block });
 							}
 						})
@@ -720,9 +722,9 @@ pub mod pallet {
 		) {
 			let stale_block = block.saturating_sub(T::StalePrice::get());
 			let (staled_prices, mut fresh_prices) =
-				match pre_prices.iter().position(|p| p.block >= stale_block) {
-					Some(index) => {
-						Self::remove_price_in_transit(asset_id, &pre_prices[index].who);
+				match pre_prices.iter().enumerate().find(|(_, p)| p.block >= stale_block) {
+					Some((index, pre_price)) => {
+						Self::remove_price_in_transit(asset_id, &pre_price.who);
 						let fresh_prices = pre_prices.split_off(index);
 						(pre_prices, fresh_prices)
 					},
@@ -736,7 +738,12 @@ pub mod pallet {
 				for price in fresh_prices.iter().skip(pruned) {
 					Self::remove_price_in_transit(asset_id, &price.who);
 				}
-				fresh_prices = fresh_prices[0..max_answers as usize].to_vec();
+				#[allow(clippy::indexing_slicing)]
+				// max_answers is confirmed to be less than the len in the condition of the if
+				// block (in a block due to https://github.com/rust-lang/rust/issues/15701)
+				{
+					fresh_prices = fresh_prices[0..max_answers as usize].to_vec();
+				};
 			}
 
 			(staled_prices, fresh_prices)
@@ -756,8 +763,10 @@ pub mod pallet {
 
 			let mid = numbers.len() / 2;
 			if numbers.len() % 2 == 0 {
-				Some(numbers[mid - 1].saturating_add(numbers[mid]) / 2u32.into())
+				#[allow(clippy::indexing_slicing)] // mid is less than the len (len/2)
+				Some(numbers[mid - 1].saturating_add(numbers[mid]) / 2_u32.into())
 			} else {
+				#[allow(clippy::indexing_slicing)] // mid is less than the len (len/2)
 				Some(numbers[mid])
 			}
 		}
@@ -784,18 +793,24 @@ pub mod pallet {
 			});
 		}
 
+		// REVIEW: indexing
 		pub fn get_twap(
 			asset_id: T::AssetId,
 			mut price_weights: Vec<T::PriceValue>,
 		) -> Result<T::PriceValue, DispatchError> {
-			let precision: T::PriceValue = 100u128.into();
-			let historical_prices = Self::price_history(asset_id);
+			let precision: T::PriceValue = 100_u128.into();
+			let historical_prices: Vec<Price<T::PriceValue, T::BlockNumber>> =
+				Self::price_history(asset_id);
+
 			// add an extra to account for current price not stored in history
 			ensure!(historical_prices.len() + 1 >= price_weights.len(), Error::<T>::DepthTooLarge);
+
 			let sum = Self::price_values_sum(&price_weights);
 			ensure!(sum == precision, Error::<T>::MustSumTo100);
-			let last_weight = price_weights.pop().unwrap_or_else(|| 0u128.into());
-			ensure!(last_weight != 0u128.into(), Error::<T>::ArithmeticError);
+
+			let last_weight = price_weights.pop().unwrap_or_else(|| 0_u128.into());
+			ensure!(last_weight != 0_u128.into(), Error::<T>::ArithmeticError);
+
 			let mut weighted_prices = price_weights
 				.iter()
 				.enumerate()
@@ -810,18 +825,22 @@ pub mod pallet {
 				.collect::<Vec<_>>();
 			let current_price = Self::prices(asset_id);
 			let current_weighted_price = last_weight.mul(current_price.price).div(precision);
+
 			weighted_prices.push(current_weighted_price);
+
 			let weighted_average = Self::price_values_sum(&weighted_prices);
-			ensure!(weighted_average != 0u128.into(), Error::<T>::ArithmeticError);
+			ensure!(weighted_average != 0_u128.into(), Error::<T>::ArithmeticError);
+
 			Ok(weighted_average)
 		}
 
 		fn price_values_sum(price_values: &[T::PriceValue]) -> T::PriceValue {
 			price_values
 				.iter()
-				.fold(T::PriceValue::from(0u128), |acc, b| acc.saturating_add(*b))
+				.fold(T::PriceValue::from(0_u128), |acc, b| acc.saturating_add(*b))
 		}
 
+		// REVIEW: indexing
 		pub fn fetch_price_and_send_signed(price_id: &T::AssetId) -> Result<(), &'static str> {
 			let signer = Signer::<T, T::AuthorityId>::all_accounts();
 			if !signer.can_sign() {
@@ -832,8 +851,11 @@ pub mod pallet {
 			}
 			// checks to make sure key from keystore has not already submitted price
 			let prices = PrePrices::<T>::get(*price_id);
-			let public_key = sp_io::crypto::sr25519_public_keys(CRYPTO_KEY_TYPE);
-			let account = AccountId32::new(public_key[0].0);
+			let public_keys: Vec<sp_core::sr25519::Public> =
+				sp_io::crypto::sr25519_public_keys(CRYPTO_KEY_TYPE);
+			let account = AccountId32::new(
+				public_keys.first().ok_or("No public keys for crypto key type `orac`")?.0,
+			);
 			let mut to32 = AccountId32::as_ref(&account);
 			let address: T::AccountId = T::AccountId::decode(&mut to32).unwrap_or_default();
 

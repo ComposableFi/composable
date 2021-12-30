@@ -50,13 +50,15 @@ pub mod pallet {
 			amount: Balance,
 		) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError> {
 			let derive_price = |p: u128, a: u128| {
-				let e = 10u128
+				let e = 10_u128
 					.checked_pow(asset.smallest_unit_exponent())
 					.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
 				let price = multiply_by_rational(p, a, e)
 					.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
 				Ok(Price { price, block: () })
 			};
+
+			#[allow(clippy::inconsistent_digit_grouping)] // values are in cents
 			match asset {
 				/* NOTE(hussein-aitlahcen)
 					Ideally we would have all the static currency quoted against USD cents on chain.
@@ -96,7 +98,7 @@ pub mod pallet {
 			_of: Self::AssetId,
 			_weights: Vec<u128>,
 		) -> Result<Self::Balance, DispatchError> {
-			Ok(0u32.into())
+			Ok(0_u32.into())
 		}
 	}
 }

@@ -64,6 +64,7 @@ pub static UNRESERVED: Lazy<AccountId> = Lazy::new(|| {
 	serde::Deserialize,
 	TypeInfo,
 )]
+#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
 pub enum MockCurrencyId {
 	PICA,
 	BTC,
@@ -287,7 +288,7 @@ impl Orderbook for MockOrderbook {
 		_source_price: Price<Self::GroupId, Self::Balance>,
 		_amm_slippage: Permill,
 	) -> Result<SellOrder<Self::OrderId, Self::AccountId>, DispatchError> {
-		Ok(SellOrder { id: 0, account: ALICE.clone() })
+		Ok(SellOrder { id: 0, account: *ALICE })
 	}
 
 	fn market_sell(
@@ -402,7 +403,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		System::set_block_number(0);
 		Timestamp::set_timestamp(MILLISECS_PER_BLOCK);
 		// Initialize BTC price to 50000
-		pallet_lending::mocks::oracle::BTCValue::<Test>::set(50000u128);
+		pallet_lending::mocks::oracle::BTCValue::<Test>::set(50000_u128);
 	});
 	ext
 }

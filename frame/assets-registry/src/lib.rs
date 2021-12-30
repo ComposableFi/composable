@@ -5,6 +5,9 @@
 //! 2. Assets map added as candidate and waits for approval.
 //! 3. After approval map return mapped value.
 //! 4. Map of native token to this chain(here) is added unconditionally.
+
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
