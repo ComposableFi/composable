@@ -29,9 +29,9 @@ sp-io = { default-features = false,  git = "https://github.com/paritytech/substr
 sp-core = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 
-composable-traits = { default-features = false, version = "0.0.1", path = "../composable-traits" }
+composable-traits = { default-features = false, path = "../composable-traits" }
 pallet-oracle = { default-features = false, optional = true, version = "1.0.0", path = "../oracle" }
-pallet-vault = { default-features = false, version = "0.0.1", path = "../vault", optional = true }
+pallet-vault = { default-features = false, path = "../vault", optional = true }
 
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
@@ -49,10 +49,12 @@ orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
-pallet-liquidations = { version = "0.0.1", path = "../liquidations" }
-pallet-dutch-auctions = {version = "0.0.1", path = "../dutch-auction" }
-composable-tests-helpers = { version = "0.0.1", path = "../composable-tests-helpers", default-features = false }
+pallet-currency-factory = { path = "../currency-factory" }
+pallet-liquidations = { path = "../liquidations" }
+pallet-dutch-auctions = { path = "../dutch-auction", default-features = false }
+composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
+pallet-assets = { path = '../assets', default-features = false}
+
 
 [features]
 default = ["std"]
