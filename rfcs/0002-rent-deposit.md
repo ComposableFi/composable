@@ -8,8 +8,7 @@ This document descrbides various aspect of storage to be protected, consistent m
 
 It overview some existing storage spam protection mechanics in different p2p computation models too.
 
-## Existing spam proection models
-
+## Existing spam protection models
 
 ### Solana
 
@@ -38,7 +37,6 @@ These server as gates to public lists.
 Examples would be Order Book DEX Serum, which takes entry to create pool of 3 SOL (600) used.
 It prevent contract to be slow and polluting public list from garbage pairs
 
-
 ## Storage spam consequences
 
 There are 2 consequnces.
@@ -66,7 +64,7 @@ Each permissionless storage item of very large potential combinatorail nmber mus
 
 Each pallet for each storage item has its own rent requirmenets, so if one pallet calls other pallet, 2 can take rent.
 
-### Guidlenes
+### Guidelines
 
 We can consider next set of guidlines applicable when producing rent/deposit based models of storage consumption spam protection:
 
