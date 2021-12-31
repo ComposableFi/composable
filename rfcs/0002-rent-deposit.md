@@ -58,6 +58,8 @@ Rule does not work if set is extended with custom pool configurations or with cu
 When storage item is added by root or councel.
 So storage is just premission based.
 
+Alternative to rent in some situation is slashable stake. Until slashed and unlike rent, returned fully to staker.
+
 ## Proposal
 
 Each permissionless storage item of very large potential combinatorial number of items must be accompanited with deposit of native token.
@@ -66,7 +68,7 @@ Each permissionless storage item of very large potential combinatorial number of
 
 We can consider next set of guidlines applicable when producing rent/deposit based models of storage consumption spam protection:
 
-- Use `rent/reposit` symbols in code base to allow easy to find relevant places
+- Use `rent/deposit` symbols in code base to allow easy to find relevant places
 - Motivate user to delete dead storage items by paing back part of rent. Can make burn of storage item block depenendat, so of chain observers can get prize for burn calls.
 - Increase rent depending on how influential storage item is. Higher size or longer some user interface search list because, the higher price of rent is.
 - Rent should be captured on storage item creation, so can gracefully handel reconfiguration of rent after runtme upgrade.
