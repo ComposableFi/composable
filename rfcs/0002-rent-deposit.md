@@ -60,11 +60,9 @@ So storage is just premission based.
 
 ## Proposal
 
-Each permissionless storage item of very large potential combinatorail nmber must be accompanited with deposit of native token.
+Each permissionless storage item of very large potential combinatorial number of items must be accompanited with deposit of native token.
 
-Each pallet for each storage item has its own rent requirmenets, so if one pallet calls other pallet, 2 can take rent.
-
-### Guidelines
+### Considerations
 
 We can consider next set of guidlines applicable when producing rent/deposit based models of storage consumption spam protection:
 
@@ -74,3 +72,4 @@ We can consider next set of guidlines applicable when producing rent/deposit bas
 - Rent should be captured on storage item creation, so can gracefully handel reconfiguration of rent after runtme upgrade.
 - All rent must be documented as part of pallets docuemntation. Alternative would be to have RPC API prefixed with `function-name/rent/` to return rent size in native currency for all extrinsics taking rent.
 - If rent can be really big, add additional paramter into extrinsic indicating maximal rent user eager to pay for getting storage place holder (similar to slippage). This also would be good indicator to discover rent based dispatchables.
+- Each pallet for each storage item has its own rent requirmenets, so if one pallet calls other pallet, 2 can take rent. So can so simplify can allow rent free call from one pallet to other.
