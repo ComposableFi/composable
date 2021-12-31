@@ -68,7 +68,7 @@ Each pallet for each storage item has its own rent requirmenets, so if one palle
 
 ### Guidlenes
 
-We can consider next set of guidlines applicable when producing rent/deposit based models of storage consumption smap protection
+We can consider next set of guidlines applicable when producing rent/deposit based models of storage consumption spam protection:
 
 - Use `rent/reposit` symbols in code base to allow easy to find relevant places
 - Motivate user to delete dead storage items by paing back part of rent. Can make burn of storage item block depenendat, so of chain observers can get prize for burn calls.
@@ -76,8 +76,3 @@ We can consider next set of guidlines applicable when producing rent/deposit bas
 - Rent should be captured on storage item creation, so can gracefully handel reconfiguration of rent after runtme upgrade.
 - All rent must be documented as part of pallets docuemntation. Alternative would be to have RPC API prefixed with `function-name/rent/` to return rent size in native currency for all extrinsics taking rent.
 - If rent can be really big, add additional paramter into extrinsic indicating maximal rent user eager to pay for getting storage place holder (similar to slippage). This also would be good indicator to discover rent based dispatchables.
-
-
-
-
-
