@@ -47,9 +47,17 @@ Can if it will be econimical to attack pulling whole storage, will have hard tim
 So protecting storage is more important than CPU, as CPU attacks are only transient and easy fixed buy very hight multipliers.
 
 Another one is pefromance and polluting shared search lists. 
-Examples are long list of token pairs to choose DEX pool.
+Example, are long list of token pairs to choose DEX pool.
 
-## When can avoid paying storage rent/deposit?
+## Forms paying - Rent/Deposit/Stake
+
+Slashable stake. Until slashed and unlike rent, returned fully to staker during deletion.
+
+Rent deposit is not return fully as it is used to pay rent.
+
+Liqudity provider, in some form adds liqudity to market and locks it for some period.
+
+## When can avoid paying for storage?
 
 When count of storage items is finite. 
 Example, set of well known currency pairs to form pools.
@@ -57,8 +65,6 @@ Rule does not work if set is extended with custom pool configurations or with cu
 
 When storage item is added by root or councel.
 So storage is just premission based.
-
-Alternative to rent in some situation is slashable stake. Until slashed and unlike rent, returned fully to staker.
 
 ## Proposal
 
@@ -75,3 +81,4 @@ We can consider next set of guidlines applicable when producing rent/deposit bas
 - All rent must be documented as part of pallets docuemntation. Alternative would be to have RPC API prefixed with `function-name/rent/` to return rent size in native currency for all extrinsics taking rent.
 - If rent can be really big, add additional paramter into extrinsic indicating maximal rent user eager to pay for getting storage place holder (similar to slippage). This also would be good indicator to discover rent based dispatchables.
 - Each pallet for each storage item has its own rent requirmenets, so if one pallet calls other pallet, 2 can take rent. So can so simplify can allow rent free call from one pallet to other.
+- Can implement taking, so returning back can be imlemented after some time.
