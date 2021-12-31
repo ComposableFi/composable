@@ -78,56 +78,6 @@
 
   - name: Install dependencies
     block:
-    - name: Download rustup-init.sh
-      get_url:
-        url: https://sh.rustup.rs
-        dest: "/home/{{ user }}/rustup-init.sh"
-        mode: '0440'
-      become: yes
-      become_user: "{{ user }}"
-
-    - name: Install Rust toolchain
-      ansible.builtin.shell: |
-        cat $HOME/rustup-init.sh | sh -s -- -y
-        source $HOME/.cargo/env
-        rustup default stable
-        rustup update
-        rustup update nightly
-        rustup target add wasm32-unknown-unknown --toolchain nightly
-        rustc --version
-        rustup show
-      args:
-        executable: /bin/bash
-      become: yes
-      become_user: "{{ user }}"
-
-    - name: Update repositories cache and install dependencies for Substrate
-      apt:
-        pkg:
-        - build-essential
-        - clang
-        - curl
-        - libssl-dev
-        - libudev-dev
-        - llvm
-        - pkg-config
-        update_cache: yes
-        install_recommends: no
-      become: yes
-
-    - name: Install sccache
-      ansible.builtin.shell: |
-        source $HOME/.cargo/env
-        cargo install sccache
-        cat <<EOF > $HOME/.cargo/config
-        [build]
-        rustc-wrapper = "/home/{{ user }}/.cargo/bin/sccache"
-        EOF
-      args:
-        executable: /bin/bash
-      become: yes
-      become_user: "{{ user }}"
-
     - name: Update repositories cache and install apt-transport-https
       apt:
         name: apt-transport-https
@@ -168,6 +118,21 @@
 
   - name: Build and restart all
     block:
+    - name: Download basilisk, composable and polkadot
+      get_url:
+        url: "{{ item.url }}"
+        dest: "{{ item.dest }}"
+        mode: '0440'
+      become: yes
+      become_user: "{{ user }}"
+      loop:
+      - url: https://github.com/galacticcouncil/Basilisk-node/releases/download/v5.0.3/basilisk
+        dest: "/home/{{ user }}/basilisk"
+      - url: https://storage.googleapis.com/composable-binaries/testnet-releases/picasso/composable-latest.tar.gz
+        dest: "/home/{{ user }}/composable-latest.tar.gz"
+      - url: https://github.com/paritytech/polkadot/releases/download/v0.9.13/polkadot
+        dest: "/home/{{ user }}/polkadot"
+
     - name: Clone composable repo
       ansible.builtin.git:
         repo: "https://{{ github_user | urlencode }}:{{ github_password | urlencode }}@github.com/ComposableFi/composable.git"
@@ -177,23 +142,46 @@
       become: yes
       become_user: "{{ user }}"
 
-    - name: Clone polkadot repo
-      ansible.builtin.git:
-        repo: https://github.com/paritytech/polkadot.git
-        dest: "{{ work_dir }}/polkadot"
-        version: v0.9.13
-        force: true
-      become: yes
-      become_user: "{{ user }}"
+    - name: Create directories if it do not exist
+      ansible.builtin.file:
+        path: "{{ item.dir }}"
+        state: directory
+        mode: "0775"
+        owner: "{{ user }}"
+        group: "{{ group }}"
+      loop:
+      - { dir: "{{ work_dir }}/Basilisk-node/target/release" }
+      - { dir: "{{ work_dir }}/composable/target/release" }
+      - { dir: "{{ work_dir }}/polkadot/target/release" }
 
-    - name: Clone Basilisk-node repo
-      ansible.builtin.git:
-        repo: https://github.com/galacticcouncil/Basilisk-node.git
-        dest: "{{ work_dir }}/Basilisk-node"
-        version: v5.0.3
-        force: true
-      become: yes
-      become_user: "{{ user }}"
+    - name: "Extract /home/{{ user }}/composable-latest.tar.gz into /home/{{ user }}/composable"
+      ansible.builtin.unarchive:
+        src: "/home/{{ user }}/composable-latest.tar.gz"
+        dest: "/home/{{ user }}"
+        remote_src: yes
+
+    - name: Copy files with owner and permissions
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: "{{ user }}"
+        group: "{{ group }}"
+        mode: "0775"
+        remote_src: true
+      loop:
+      - { src: "/home/{{ user }}/basilisk", dest: "{{ work_dir }}/Basilisk-node/target/release" }
+      - { src: "/home/{{ user }}/target/release/composable", dest: "{{ work_dir }}/composable/target/release" }
+      - { src: "/home/{{ user }}/polkadot", dest: "{{ work_dir }}/polkadot/target/release" }
+
+    - name: Remove downloaded files
+      ansible.builtin.file:
+        path: "{{ item.file_path }}"
+        state: absent
+      loop:
+      - { file_path: "/home/{{ user }}/basilisk" }
+      - { file_path: "/home/{{ user }}/composable-latest.tar.gz" }
+      - { file_path: "/home/{{ user }}/polkadot" }
+      - { file_path: "/home/{{ user }}/target" }
 
     - name: Install dependencies of polkadot-launch
       ansible.builtin.shell: yarn
@@ -220,42 +208,6 @@
         daemon_reload: yes
         enabled: true
       become: yes
-
-    - name: Compile composable
-      ansible.builtin.shell: |
-        source $HOME/.cargo/env
-        cargo build --release
-      args:
-        chdir: "{{ work_dir }}/composable"
-        executable: /bin/bash
-      become: yes
-      become_user: "{{ user }}"
-      async: 7200
-      poll: 5
-
-    - name: Compile polkadot
-      ansible.builtin.shell: |
-        source $HOME/.cargo/env
-        cargo build --release
-      args:
-        chdir: "{{ work_dir }}/polkadot"
-        executable: /bin/bash
-      become: yes
-      become_user: "{{ user }}"
-      async: 7200
-      poll: 5
-
-    - name: Compile Basilisk-node
-      ansible.builtin.shell: |
-        source $HOME/.cargo/env
-        cargo build --release
-      args:
-        chdir: "{{ work_dir }}/Basilisk-node"
-        executable: /bin/bash
-      become: yes
-      become_user: "{{ user }}"
-      async: 7200
-      poll: 5
 
     - name: Start service composable-sandbox service
       ansible.builtin.systemd:

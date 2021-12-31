@@ -3,7 +3,7 @@
 ## Description
 
 This playbook does next:
-* builds `composable`, `basilisk` and `polkdot`
+* downloads `composable`, `basilisk` and `polkadot`
 * installs and configures [certbot](https://certbot.eff.org/) to get a [Let’s Encrypt](https://letsencrypt.org/) certificate for your domain
 * installs and configures [nginx](https://www.nginx.com/) to add a TLS termination using a [Let’s Encrypt](https://letsencrypt.org/) certificate
 * runs local cluster of Polkadot with configured `composable` and `basilisk` parachains using [polkadot-launch](https://github.com/paritytech/polkadot-launch)
