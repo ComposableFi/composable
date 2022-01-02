@@ -48,7 +48,7 @@ pub use pallet::*;
 use scale_info::TypeInfo;
 use sp_runtime::traits::{DispatchInfoOf, SignedExtension};
 
-use crate::models::{EthereumAddress, Proof, RemoteAccount};
+use crate::models::{Proof, RemoteAccount};
 
 pub mod models;
 
@@ -304,7 +304,7 @@ pub mod pallet {
 					ethereum_recover(prefix, &reward_account_encoded, &eth_proof)
 						.ok_or(Error::<T>::InvalidProof)?;
 				Result::<_, DispatchError>::Ok(RemoteAccount::Ethereum(ethereum_address))
-			}
+			},
 			Proof::RelayChain(relay_account, relay_proof) => {
 				ensure!(
 					verify_relay(
@@ -316,7 +316,7 @@ pub mod pallet {
 					Error::<T>::InvalidProof
 				);
 				Ok(RemoteAccount::RelayChain(relay_account))
-			}
+			},
 		}?;
 		Ok(remote_account)
 	}
@@ -351,10 +351,10 @@ pub mod pallet {
 								// The user should have claimed the upfront payment + the vested
 								// amount until this window point.
 								let vested_reward = reward.total - upfront_payment;
-								upfront_payment
-									+ (vested_reward
-										.saturating_mul(T::Convert::convert(vesting_window))
-										/ T::Convert::convert(reward.vesting_period))
+								upfront_payment +
+									(vested_reward
+										.saturating_mul(T::Convert::convert(vesting_window)) /
+										T::Convert::convert(reward.vesting_period))
 							}
 						};
 						let available_to_claim = should_have_claimed - reward.claimed;
@@ -480,7 +480,7 @@ where
 
 		if let Some(Call::associate { reward_account, proof }) = IsSubType::is_sub_type(call) {
 			if Associations::<T>::get(reward_account).is_some() {
-				return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8).into();
+				return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8).into()
 			}
 
 			let remote_account = match proof {
@@ -488,13 +488,15 @@ where
 					let reward_account_encoded =
 						reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec());
 					match ethereum_recover(T::Prefix::get(), &reward_account_encoded, eth_proof) {
-						Some(ethereum_address) => RemoteAccount::<<T as Config>::RelayChainAccountId>::Ethereum(ethereum_address),
-						None => {
+						Some(ethereum_address) =>
+							RemoteAccount::<<T as Config>::RelayChainAccountId>::Ethereum(
+								ethereum_address,
+							),
+						None =>
 							return InvalidTransaction::Custom(ValidityError::InvalidProof as u8)
-								.into()
-						}
+								.into(),
 					}
-				}
+				},
 				Proof::RelayChain(relay_account, relay_proof) => {
 					if verify_relay(
 						T::Prefix::get(),
@@ -502,16 +504,17 @@ where
 						relay_account.clone(),
 						relay_proof,
 					) {
-						RemoteAccount::<<T as Config>::RelayChainAccountId>::RelayChain(*reward_account)
+						RemoteAccount::<<T as Config>::RelayChainAccountId>::RelayChain(
+							relay_account.clone(),
+						)
 					} else {
-						return InvalidTransaction::Custom(ValidityError::InvalidProof as u8)
-							.into();
+						return InvalidTransaction::Custom(ValidityError::InvalidProof as u8).into()
 					}
-				}
+				},
 			};
 
 			if Rewards::<T>::get(remote_account).is_none() {
-				return InvalidTransaction::Custom(ValidityError::NoReward as u8).into();
+				InvalidTransaction::Custom(ValidityError::NoReward as u8).into()
 			} else {
 				Ok(ValidTransaction::default())
 			}
