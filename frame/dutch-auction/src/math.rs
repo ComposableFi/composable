@@ -50,12 +50,18 @@ impl AuctionTimeCurveModel for LinearDecrease {
 			// here we violate unit of measure to have best math
 			initial_price
 				.safe_mul(
+					// see https://github.com/paritytech/substrate/issues/10572
+					#[allow(clippy::disallowed_method)]
 					&LiftedFixedBalance::checked_from_integer(
 						self.total.saturating_sub(duration_since_start) as u128,
 					)
 					.unwrap(),
 				)?
-				.safe_div(&LiftedFixedBalance::checked_from_integer(self.total as u128).unwrap())
+				.safe_div(
+					// see https://github.com/paritytech/substrate/issues/10572
+					#[allow(clippy::disallowed_method)]
+					&LiftedFixedBalance::checked_from_integer(self.total as u128).unwrap(),
+				)
 		}
 	}
 }

@@ -143,6 +143,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn orders_index)]
+	#[allow(clippy::disallowed_type)] // OrderIdOnEmpty provides a default value
 	pub type OrdersIndex<T: Config> = StorageValue<_, T::OrderId, ValueQuery, OrderIdOnEmpty<T>>;
 
 	#[pallet::storage]
