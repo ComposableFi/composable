@@ -1,7 +1,10 @@
-use crate::{loans::Timestamp, rate_model::*};
+pub mod rate_model;
+use crate::{loans::Timestamp,};
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
 use sp_runtime::Percent;
+
+use self::rate_model::{*};
 
 pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
 

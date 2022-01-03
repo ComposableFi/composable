@@ -33,6 +33,7 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 pub mod weights;
+pub mod math;
 
 mod models;
 
@@ -49,7 +50,6 @@ pub mod pallet {
 		loans::{DurationSeconds, PriceStructure, Timestamp},
 		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
-		rate_model::*,
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
 	};
 	use frame_support::{
