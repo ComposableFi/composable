@@ -1,4 +1,7 @@
 pub mod rate_model;
+
+#[test]
+mod tests;
 use crate::{loans::Timestamp,};
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
