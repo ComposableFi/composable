@@ -214,7 +214,7 @@ fn jump_model_plotter() {
 	let optimal = Percent::from_percent(80);
 	let mut model = JumpModel::new(base_rate, jump_rate, full_rate, optimal).unwrap();
 
-	let area = BitMapBackend::new("./jump_model.png", (1024, 768)).into_drawing_area();
+	let area = BitMapBackend::new("./jump_model_plotter.png", (1024, 768)).into_drawing_area();
 	area.fill(&WHITE).unwrap();
 
 	let mut chart = ChartBuilder::on(&area)
@@ -275,9 +275,9 @@ fn curve_model_plotter() {
 #[test]
 fn dynamic_pid_model_plotter() {
 	use plotters::prelude::*;
-	let proportional_parameter = FixedI128::saturating_from_integer(5);
-	let integral_parameter = FixedI128::saturating_from_integer(0);
-	let derivative_parameter = FixedI128::saturating_from_integer(0);
+	let proportional_parameter = FixedI128::saturating_from_integer(1);
+	let integral_parameter = FixedI128::saturating_from_integer(1);
+	let derivative_parameter = FixedI128::saturating_from_integer(1);
 	let target_utilization = FixedU128::saturating_from_rational(80, 100);
 	let mut model =
 		DynamicPIDControllerModel::new(proportional_parameter, integral_parameter, derivative_parameter,  target_utilization).unwrap();
@@ -298,12 +298,10 @@ fn dynamic_pid_model_plotter() {
 	chart
 		.draw_series(LineSeries::new(
 			[
-				50, 55, 51, 57, 60, 66, 66, 66, 66, 77, 78, 50, 78, 88, 88, 90, 78, 79, 74, 74, 80,
-				80, 62, 59, 58, 59, 58, 60, 61, 62, 62, 62, 63, 80, 85, 99, 80, 81, 82, 60, 60, 40,
-				30, 31, 32, 40, 50, 51, 51, 40, 50, 60, 66, 69, 60, 80, 70, 70, 77, 70, 60, 56, 52,
-				50, 45, 44, 40, 30, 10, 30, 40, 50, 60, 70, 71, 71, 71, 70, 80, 80, 90, 91, 90, 91,
+				99, 55, 51, 57, 60, 66, 66, 66, 66, 77, 78, 50, 78, 88, 88, 90, 78, 79, 74, 74, 80,
+				90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 99,90,90,90,90,90,90,			
 				90, 91, 90, 91, 90, 91, 90, 91, 90, 91, 92, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90,
-				90, 90, 90, 90, 90, 90, 90, 90, 80, 80, 70, 71, 70, 71, 70, 71, 70, 71, 70, 68, 67,
+				90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 67,
 				66, 65, 64, 63, 62, 61, 50, 50, 40, 30,
 			]
 			.iter()
@@ -322,7 +320,7 @@ fn dynamic_pid_model_plotter() {
 #[test]
 fn double_exponents_model_plotter() {
 	use plotters::prelude::*;
-	let coefficients: [u8; 16] = [10, 40, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	let coefficients: [u8; 16] = [10, 10, 80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	let mut model = DoubleExponentModel::new(coefficients).unwrap();
 	let area = BitMapBackend::new("./double_exponents_model_plotter.png", (1024, 768)).into_drawing_area();
 	area.fill(&WHITE).unwrap();

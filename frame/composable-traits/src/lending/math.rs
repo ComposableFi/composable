@@ -55,7 +55,8 @@ pub trait InterestRate {
 	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate>;
 }
 
-/// Parallel interest rate model
+// TODO: all these are MayBeModels after SCALE decode, need to map to Models after validation
+/// Interest rate models
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, TypeInfo)]
 pub enum InterestRateModel {
@@ -120,6 +121,7 @@ impl InterestRateModel {
 	}
 }
 
+// TODO: Use enum_dispatch crate
 impl InterestRate for InterestRateModel {
 	/// Calculates the current borrow interest rate
 	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate> {
@@ -265,7 +267,7 @@ pub struct DynamicPIDControllerModel {
 	previous_integral_term: FixedI128,
 	/// `ir_t_1`
 	previous_interest_rate: FixedU128,
-	/// uo
+	/// `uo`
 	target_utilization: FixedU128,
 }
 
@@ -293,9 +295,11 @@ impl DynamicPIDControllerModel {
 		// compute u(t), control value `ut = pt + it + dt`
 		let ut = pt + it + dt;
 		// update interest_rate `ir = ir_t_1 + ut`
-		self.previous_interest_rate = self
-			.previous_interest_rate
-			.saturating_add(FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0u128))).max(FixedU128::zero());
+
+
+		self.previous_interest_rate = FixedU128::from_inner(self
+			.previous_interest_rate.into_inner().try_into().unwrap_or(0i128)
+			.saturating_add(&ut).into_inner().try_into().unwrap_or(0u128));
 		Ok(self.previous_interest_rate)
 	}
 
@@ -333,8 +337,6 @@ const EXPECTED_COEFFICIENTS_SUM: u16 = 100;
 /// The double exponent interest rate model
 /// Interest based on a polynomial of the utilization of the market.
 /// Interest = C_0 + C_1 * U^(2^0) + C_2 * U^(2^1) + C_3 * U^(2^2) ...
-/// C_0, C_1, C_2, ... coefficients are passed as packed u128.
-/// Each coefficient is of 8 byte. C_0 is at LSB and C_15 at MSB.
 /// For reference check https://github.com/dydxprotocol/solo/blob/master/contracts/external/interestsetters/DoubleExponentInterestSetter.sol
 /// https://web.archive.org/web/20210518033618/https://help.dydx.exchange/en/articles/2924246-how-do-interest-rates-work
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
@@ -356,19 +358,15 @@ impl DoubleExponentModel {
 
 impl InterestRate for DoubleExponentModel {
 	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate> {
-		let polynomial_0: FixedU128 = FixedU128::one();
-		let result_0: Rate = Rate::zero();
-		let res =
-			self.coefficients
-				.iter()
-				.try_fold((result_0, polynomial_0), |(res, poly), coeff| {
-					let coefficient = FixedU128::from_inner(u128::from(*coeff));
-					let result = res.checked_add(&coefficient.checked_mul(&poly)?)?;
-					let polynomial = poly.checked_mul(&utilization.into())?;
-					Some((result, polynomial))
-				});
-		res.map(|(r, _p)| r.checked_div(&FixedU128::from_inner(EXPECTED_COEFFICIENTS_SUM.into())))
-			.unwrap()
+		// as per model 
+		let mut polynomial: FixedU128 = utilization.into();
+		let mut result = FixedU128::saturating_from_integer(self.coefficients[0]);	
+		for i in 1..self.coefficients.len() {
+			result = result + FixedU128::saturating_from_integer(self.coefficients[i]) * polynomial;
+			polynomial = polynomial* polynomial;
+		}
+		let maximal = FixedU128::saturating_from_integer(EXPECTED_COEFFICIENTS_SUM);
+		Some(result / maximal)
 	}
 }
 
