@@ -16,7 +16,7 @@ fn init_jump_model_works() {
 	let full_rate = Rate::saturating_from_rational(32, 100);
 	let target_utilization = Percent::from_percent(80);
 	assert_eq!(
-		JumpModel::new_model(base_rate, jump_rate, full_rate, target_utilization).unwrap(),
+		JumpModel::new(base_rate, jump_rate, full_rate, target_utilization).unwrap(),
 		JumpModel {
 			base_rate: Rate::from_inner(20_000_000_000_000_000),
 			jump_rate: Rate::from_inner(100_000_000_000_000_000),
@@ -34,7 +34,7 @@ fn get_borrow_rate_works() {
 	let full_rate = Rate::saturating_from_rational(32, 100);
 	let target_utilization = Percent::from_percent(80);
 	let mut jump_model =
-		JumpModel::new_model(base_rate, jump_rate, full_rate, target_utilization).unwrap();
+		JumpModel::new(base_rate, jump_rate, full_rate, target_utilization).unwrap();
 	// normal rate
 	let mut cash: u128 = 500;
 	let borrows: u128 = 1000;
@@ -116,7 +116,7 @@ fn valid_jump_model() -> impl Strategy<Value = JumpModelStrategy> {
 
 #[test]
 fn test_empty_drained_market() {
-	let mut jump_model = JumpModel::new_model(
+	let mut jump_model = JumpModel::new(
 		FixedU128::from_float(0.010000000000000000),
 		FixedU128::from_float(0.110000000000000000),
 		FixedU128::from_float(0.310000000000000000),
@@ -132,7 +132,7 @@ fn test_empty_drained_market() {
 
 #[test]
 fn test_slope() {
-	let mut jump_model = JumpModel::new_model(
+	let mut jump_model = JumpModel::new(
 		FixedU128::from_float(0.010000000000000000),
 		FixedU128::from_float(0.110000000000000000),
 		FixedU128::from_float(0.310000000000000000),
@@ -167,7 +167,7 @@ fn proptest_jump_model() {
 			let full_rate = strategy.full_percentage;
 			let target_utilization = strategy.target_utilization;
 			let mut jump_model =
-				JumpModel::new_model(base_rate, jump_rate, full_rate, target_utilization).unwrap();
+				JumpModel::new(base_rate, jump_rate, full_rate, target_utilization).unwrap();
 
 			let utilization = Percent::from_percent(utilization);
 			let borrow_rate =
@@ -192,7 +192,7 @@ fn proptest_jump_model_rate() {
 			let utilization_1 = Percent::from_percent(previous);
 			let utilization_2 = Percent::from_percent(next);
 			let optimal = Percent::from_percent(optimal);
-			let mut model = JumpModel::new_model(base_rate, jump_rate, full_rate, optimal)
+			let mut model = JumpModel::new(base_rate, jump_rate, full_rate, optimal)
 				.expect("model should be defined");
 			let rate_1 = model.get_borrow_rate(utilization_1);
 			let rate_2 = model.get_borrow_rate(utilization_2);
@@ -212,7 +212,7 @@ fn jump_model_plotter() {
 	let jump_rate = Rate::saturating_from_rational(10, 100);
 	let full_rate = Rate::saturating_from_rational(32, 100);
 	let optimal = Percent::from_percent(80);
-	let mut model = JumpModel::new_model(base_rate, jump_rate, full_rate, optimal).unwrap();
+	let mut model = JumpModel::new(base_rate, jump_rate, full_rate, optimal).unwrap();
 
 	let area = BitMapBackend::new("./jump_model.png", (1024, 768)).into_drawing_area();
 	area.fill(&WHITE).unwrap();
@@ -275,15 +275,12 @@ fn curve_model_plotter() {
 #[test]
 fn dynamic_pid_model_plotter() {
 	use plotters::prelude::*;
-	let kp = FixedI128::saturating_from_rational(600, 100);
-	let ki = FixedI128::saturating_from_rational(200, 100);
-	let kd = FixedI128::saturating_from_rational(1275, 100);
-	let et_1 = FixedI128::from_inner(0i128);
-	let it_1 = FixedI128::from_inner(0i128);
-	let ir_t_1 = FixedU128::saturating_from_rational(500, 100);
-	let uo = FixedU128::saturating_from_rational(80, 100);
+	let proportional_parameter = FixedI128::saturating_from_integer(5);
+	let integral_parameter = FixedI128::saturating_from_integer(0);
+	let derivative_parameter = FixedI128::saturating_from_integer(0);
+	let target_utilization = FixedU128::saturating_from_rational(80, 100);
 	let mut model =
-		DynamicPIDControllerModel::new_model(kp, ki, kd, et_1, it_1, ir_t_1, uo).unwrap();
+		DynamicPIDControllerModel::new(proportional_parameter, integral_parameter, derivative_parameter,  target_utilization).unwrap();
 
 	let area = BitMapBackend::new("./dynamic_pid_model_plotter.png", (1024, 768)).into_drawing_area();
 	area.fill(&WHITE).unwrap();
@@ -295,7 +292,7 @@ fn dynamic_pid_model_plotter() {
 		.unwrap();
 	chart
 	.configure_mesh()
-	.x_desc("Utilization ratio %")
+	.x_desc("Time")
 	.y_desc("Borrow rate %")
 	.draw().unwrap();
 	chart
@@ -326,7 +323,7 @@ fn dynamic_pid_model_plotter() {
 fn double_exponents_model_plotter() {
 	use plotters::prelude::*;
 	let coefficients: [u8; 16] = [10, 40, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	let mut model = DoubleExponentModel::new_model(coefficients).unwrap();
+	let mut model = DoubleExponentModel::new(coefficients).unwrap();
 	let area = BitMapBackend::new("./double_exponents_model_plotter.png", (1024, 768)).into_drawing_area();
 	area.fill(&WHITE).unwrap();
 

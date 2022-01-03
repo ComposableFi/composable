@@ -84,7 +84,7 @@ impl InterestRateModel {
 		full_rate: Rate,
 		target_utilization: Percent,
 	) -> Option<Self> {
-		JumpModel::new_model(base_rate, jump_rate, full_rate, target_utilization).map(Self::Jump)
+		JumpModel::new(base_rate, jump_rate, full_rate, target_utilization).map(Self::Jump)
 	}
 
 	pub fn new_curve_model(base_rate: Rate) -> Option<Self> {
@@ -95,25 +95,19 @@ impl InterestRateModel {
 		proportional_parameter: FixedI128,
 		integral_parameter: FixedI128,
 		derivative_parameter: FixedI128,
-		previous_error_value: FixedI128,
-		previous_integral_term: FixedI128,
-		previous_interest_rate: FixedU128,
-		optimal_utilization_ratio: FixedU128,
+		target_utilization: FixedU128,
 	) -> Option<Self> {
-		DynamicPIDControllerModel::new_model(
+		DynamicPIDControllerModel::new(
 			proportional_parameter,
 			integral_parameter,
 			derivative_parameter,
-			previous_error_value,
-			previous_integral_term,
-			previous_interest_rate,
-			optimal_utilization_ratio,
+			target_utilization,			
 		)
 		.map(Self::DynamicPIDController)
 	}
 
 	pub fn new_double_exponent_model(coefficients: [u8; 16]) -> Option<Self> {
-		DoubleExponentModel::new_model(coefficients).map(Self::DoubleExponent)
+		DoubleExponentModel::new(coefficients).map(Self::DoubleExponent)
 	}
 
 	/// Calculates the current supply interest rate
@@ -162,7 +156,7 @@ impl JumpModel {
 	pub const MAX_FULL_RATE: Ratio = Ratio::from_inner(500_000_000_000_000_000); // 50%
 
 	/// Create a new rate model
-	pub fn new_model(
+	pub fn new(
 		base_rate: Ratio,
 		jump_rate: Ratio,
 		full_rate: Ratio,
@@ -249,7 +243,7 @@ impl InterestRate for CurveModel {
 /// https://www.delphidigital.io/reports/dynamic-interest-rate-model-based-on-control-theory/
 /// PID Controller (proportional-integral-derivative controller)
 /// Error term is calculated as `et = uo - ut`.
-/// Propertional term is calculated as `pt = kp * et`.
+/// Proportional term is calculated as `pt = kp * et`.
 /// Integral term is calculated as `it = it_1 + ki * et`, here `it_1` is previous_integral_term.
 /// Derivative term is calculated as `dt = kd * (et - et_1)`. here `et_1` is previous_error_value.
 /// Control value is calculated as `ut = pt + it + dt`.
@@ -259,20 +253,20 @@ impl InterestRate for CurveModel {
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
 pub struct DynamicPIDControllerModel {
-	/// proportional_parameter
-	kp: FixedI128,
-	/// integral_parameter
-	ki: FixedI128,
-	/// derivative_parameter
-	kd: FixedI128,
-	/// previous error value
-	et_1: FixedI128,
-	/// previous integral term
-	it_1: FixedI128,
-	/// previous interest rate
-	ir_t_1: FixedU128,
-	/// optimal utilization_ratio
-	uo: FixedU128,
+	/// `kp`
+	proportional_parameter: FixedI128,
+	/// `ki`
+	integral_parameter: FixedI128,
+	/// `kd`
+	derivative_parameter: FixedI128,
+	/// `et_1`
+	previous_error_value: FixedI128,
+	/// `it_1`
+	previous_integral_term: FixedI128,
+	/// `ir_t_1`
+	previous_interest_rate: FixedU128,
+	/// uo
+	target_utilization: FixedU128,
 }
 
 impl DynamicPIDControllerModel {
@@ -281,54 +275,44 @@ impl DynamicPIDControllerModel {
 		utilization_ratio: FixedU128,
 	) -> Result<Rate, ArithmeticError> {
 		// compute error term `et = uo - ut`
-		let et: i128 = self.uo.into_inner().try_into().unwrap_or(0i128) -
+		let et: i128 = self.target_utilization.into_inner().try_into().unwrap_or(0i128) -
 			utilization_ratio.into_inner().try_into().unwrap_or(0i128);
 		let et: FixedI128 = FixedI128::from_inner(et);
 		// compute proportional term `pt = kp * et`
-		let pt = self.kp.checked_mul(&et).ok_or(ArithmeticError::Overflow)?;
+		let pt = self.proportional_parameter.checked_mul(&et).ok_or(ArithmeticError::Overflow)?;
 		//compute integral term `it = it_1 + ki * et`
 		let it = self
-			.it_1
-			.checked_add(&self.ki.checked_mul(&et).ok_or(ArithmeticError::Overflow)?)
+			.previous_integral_term
+			.checked_add(&self.integral_parameter.checked_mul(&et).ok_or(ArithmeticError::Overflow)?)
 			.ok_or(ArithmeticError::Overflow)?;
-		self.it_1 = it;
+		self.previous_integral_term = it;
 		// compute derivative term `dt = kd * (et - et_1)`
-		let dt = self.kd.checked_mul(&(et - self.et_1)).ok_or(ArithmeticError::Overflow)?;
-		self.et_1 = et;
+		let dt = self.derivative_parameter.checked_mul(&(et - self.previous_error_value)).ok_or(ArithmeticError::Overflow)?;
+		self.previous_error_value = et;
 
 		// compute u(t), control value `ut = pt + it + dt`
 		let ut = pt + it + dt;
 		// update interest_rate `ir = ir_t_1 + ut`
-		if ut.is_negative() {
-			let ut = ut.neg();
-			self.ir_t_1 = self
-				.ir_t_1
-				.saturating_sub(FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0u128)));
-		} else {
-			self.ir_t_1 = self
-				.ir_t_1
-				.saturating_add(FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0u128)));
-		}
-		Ok(self.ir_t_1)
+		self.previous_interest_rate = self
+			.previous_interest_rate
+			.saturating_add(FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0u128))).max(FixedU128::zero());
+		Ok(self.previous_interest_rate)
 	}
 
-	pub fn new_model(
+	pub fn new(
 		proportional_parameter: FixedI128,
 		integral_parameter: FixedI128,
 		derivative_parameter: FixedI128,
-		previous_error_value: FixedI128,
-		previous_integral_term: FixedI128,
-		previous_interest_rate: FixedU128,
-		optimal_utilization_ratio: FixedU128,
+		target_utilization: FixedU128,
 	) -> Option<DynamicPIDControllerModel> {
 		Some(DynamicPIDControllerModel {
-			kp: proportional_parameter,
-			ki: integral_parameter,
-			kd: derivative_parameter,
-			et_1: previous_error_value,
-			it_1: previous_integral_term,
-			ir_t_1: previous_interest_rate,
-			uo: optimal_utilization_ratio,
+			proportional_parameter,
+			integral_parameter,
+			derivative_parameter,
+			previous_error_value : <_>::zero(),
+			previous_integral_term : <_>::zero(),
+			previous_interest_rate : <_>::zero(),
+			target_utilization,
 		})
 	}
 }
@@ -361,7 +345,7 @@ pub struct DoubleExponentModel {
 
 impl DoubleExponentModel {
 	/// Create a double exponent model
-	pub fn new_model(coefficients: [u8; 16]) -> Option<Self> {
+	pub fn new(coefficients: [u8; 16]) -> Option<Self> {
 		let sum_of_coefficients = coefficients.iter().fold(0u16, |acc, &c| acc + c as u16);
 		if sum_of_coefficients == EXPECTED_COEFFICIENTS_SUM {
 			return Some(DoubleExponentModel { coefficients })
