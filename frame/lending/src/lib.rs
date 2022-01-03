@@ -50,7 +50,7 @@ pub mod pallet {
 		loans::{DurationSeconds, PriceStructure, Timestamp},
 		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
-		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
+		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig}, defi::Rate,
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -1542,7 +1542,7 @@ pub mod pallet {
 			.get_borrow_rate(utilization_ratio)
 			.ok_or(Error::<T>::BorrowRateDoesNotExist)?;
 		let borrow_index_new =
-			increment_index(borrow_rate, borrow_index, delta_time)?.safe_add(&borrow_index)?;
+			increment_index(borrow_rate, borrow_index, delta_time)?;
 		let delta_interest_rate = borrow_rate
 			.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
 			.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))?;

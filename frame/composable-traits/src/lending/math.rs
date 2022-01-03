@@ -1,17 +1,3 @@
-// Copyright 2021 Composable Developer.
-// This file is part of Composable Finance.
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-// http://www.apache.org/licenses/LICENSE-2.0
-
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 use core::ops::Neg;
 
 use codec::{Decode, Encode};
@@ -26,10 +12,10 @@ use sp_runtime::{
 use sp_arithmetic::per_things::Percent;
 
 use crate::{
+	defi::Rate,
 	loans::{DurationSeconds, ONE_HOUR},
-	math::{LiftedFixedBalance, SafeArithmetic}, defi::Rate,
+	math::{LiftedFixedBalance, SafeArithmetic},
 };
-
 
 /// The fixed point number of suggested by substrate precision
 /// Must be (1.0.. because applied only to price normalized values
@@ -102,7 +88,7 @@ impl InterestRateModel {
 	}
 
 	pub fn new_curve_model(base_rate: Rate) -> Option<Self> {
-		CurveModel::new_model(base_rate).map(Self::Curve)
+		CurveModel::new(base_rate).map(Self::Curve)
 	}
 
 	pub fn new_dynamic_pid_model(
@@ -240,7 +226,7 @@ impl CurveModel {
 	pub const MAX_BASE_RATE: Rate = Rate::from_inner(Rate::DIV / 100 * 10); // 10%
 
 	/// Create a new curve model
-	pub fn new_model(base_rate: Rate) -> Option<CurveModel> {
+	pub fn new(base_rate: Rate) -> Option<CurveModel> {
 		let model = Self { base_rate };
 		if model.base_rate <= Self::MAX_BASE_RATE {
 			Some(model)
@@ -366,7 +352,7 @@ const EXPECTED_COEFFICIENTS_SUM: u16 = 100;
 /// C_0, C_1, C_2, ... coefficients are passed as packed u128.
 /// Each coefficient is of 8 byte. C_0 is at LSB and C_15 at MSB.
 /// For reference check https://github.com/dydxprotocol/solo/blob/master/contracts/external/interestsetters/DoubleExponentInterestSetter.sol
-/// https://help.dydx.exchange/en/articles/2924246-how-do-interest-rates-work
+/// https://web.archive.org/web/20210518033618/https://help.dydx.exchange/en/articles/2924246-how-do-interest-rates-work
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
 pub struct DoubleExponentModel {
@@ -413,6 +399,7 @@ pub fn accrued_interest(
 		.checked_div(SECONDS_PER_YEAR.into())
 }
 
+/// compounding increment of borrow index
 pub fn increment_index(
 	borrow_rate: Rate,
 	index: Rate,
@@ -421,7 +408,8 @@ pub fn increment_index(
 	borrow_rate
 		.safe_mul(&index)?
 		.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
-		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))
+		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))?
+		.safe_add(&index)
 }
 
 pub fn increment_borrow_rate(
