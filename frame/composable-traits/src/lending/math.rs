@@ -295,11 +295,17 @@ impl DynamicPIDControllerModel {
 		// compute u(t), control value `ut = pt + it + dt`
 		let ut = pt + it + dt;
 		// update interest_rate `ir = ir_t_1 + ut`
+		if ut.is_negative() {
+			let ut = ut.neg();
+			self.previous_interest_rate = self
+				.previous_interest_rate
+				.saturating_sub(FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0u128)));
+		} else {
+			self.previous_interest_rate = self
+				.previous_interest_rate
+				.saturating_add(FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0u128)));
+		}
 
-
-		self.previous_interest_rate = FixedU128::from_inner(self
-			.previous_interest_rate.into_inner().try_into().unwrap_or(0i128)
-			.saturating_add(&ut).into_inner().try_into().unwrap_or(0u128));
 		Ok(self.previous_interest_rate)
 	}
 

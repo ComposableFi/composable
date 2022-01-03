@@ -276,8 +276,8 @@ fn curve_model_plotter() {
 fn dynamic_pid_model_plotter() {
 	use plotters::prelude::*;
 	let proportional_parameter = FixedI128::saturating_from_integer(1);
-	let integral_parameter = FixedI128::saturating_from_integer(1);
-	let derivative_parameter = FixedI128::saturating_from_integer(1);
+	let integral_parameter = FixedI128::saturating_from_integer(3);
+	let derivative_parameter = FixedI128::saturating_from_integer(2);
 	let target_utilization = FixedU128::saturating_from_rational(80, 100);
 	let mut model =
 		DynamicPIDControllerModel::new(proportional_parameter, integral_parameter, derivative_parameter,  target_utilization).unwrap();
@@ -288,32 +288,56 @@ fn dynamic_pid_model_plotter() {
 	let mut chart = ChartBuilder::on(&area)
 		.set_label_area_size(LabelAreaPosition::Left, 50)
 		.set_label_area_size(LabelAreaPosition::Bottom, 50)
-		.build_cartesian_2d(0.0..200.0, 0.0..5000.0)
+		.set_label_area_size(LabelAreaPosition::Right, 100)
+		.build_cartesian_2d(0.0..100.0, 0.0..150.0)
 		.unwrap();
 	chart
 	.configure_mesh()
 	.x_desc("Time")
-	.y_desc("Borrow rate %")
+	.y_desc("%")
 	.draw().unwrap();
+
+
 	chart
 		.draw_series(LineSeries::new(
 			[
-				99, 55, 51, 57, 60, 66, 66, 66, 66, 77, 78, 50, 78, 88, 88, 90, 78, 79, 74, 74, 80,
-				90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 99,90,90,90,90,90,90,			
-				90, 91, 90, 91, 90, 91, 90, 91, 90, 91, 92, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90,
-				90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 67,
-				66, 65, 64, 63, 62, 61, 50, 50, 40, 30,
+				0, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,				
 			]
 			.iter()
 			.enumerate()
 			.map(|(i, x)| {
 				let utilization = Percent::from_percent(*x);
 				let rate = model.get_borrow_rate(utilization).unwrap();
-				(i as f64, rate.to_float() * 100.0)
+				(i as f64, rate.to_float() )
 			}),
 			&RED,
 		))
-		.unwrap();
+		.unwrap()
+		.label("Interest rate %");
+
+
+	chart
+		.draw_series(LineSeries::new(
+			[
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,	
+			]
+			.iter()
+			.enumerate()
+			.map(|(i, x)| {
+				(i as f64, *x as f64)
+			}),
+			&BLUE,
+		))
+		.unwrap()
+		.label("Target Utilization ratio %");
+
+		chart.configure_series_labels().border_style(&BLACK).draw().unwrap();
 }
 
 #[cfg(feature = "visualization")]
