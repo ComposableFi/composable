@@ -17,6 +17,7 @@ use sp_runtime::{ArithmeticError, DispatchError};
 	serde::Deserialize,
 	TypeInfo,
 )]
+#[allow(clippy::upper_case_acronyms)] // Currencies should be in CONSTANT_CASE
 pub enum CurrencyId {
 	PICA,
 	BTC,

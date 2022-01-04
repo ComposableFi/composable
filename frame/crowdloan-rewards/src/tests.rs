@@ -66,7 +66,7 @@ fn ethereum_proof(
 	);
 	let (sig, recovery_id) =
 		libsecp256k1::sign(&libsecp256k1::Message::parse(&msg), ethereum_account);
-	let mut r = [0u8; 65];
+	let mut r = [0_u8; 65];
 	r[0..64].copy_from_slice(&sig.serialize()[..]);
 	r[64] = recovery_id.serialize();
 	Proof::Ethereum(EcdsaSignature(r))
@@ -276,7 +276,7 @@ fn test_not_a_contributor() {
 fn test_association_ok() {
 	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
-		for (picasso_account, remote_account) in accounts.clone().into_iter() {
+		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.associate(picasso_account));
 		}
 	});
@@ -286,7 +286,7 @@ fn test_association_ok() {
 fn test_association_ko() {
 	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
-		for (picasso_account, remote_account) in accounts.clone().into_iter() {
+		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NotAssociated);
 		}
 	});
