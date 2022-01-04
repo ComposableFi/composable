@@ -54,6 +54,7 @@ macro_rules! prop_assert_ok {
 #[test]
 fn valid_offer() {
 	assert!(BondOffer {
+		beneficiary: ALICE,
 		asset: MockCurrencyId::BTC,
 		bond_price: MIN_VESTED_TRANSFER as _,
 		nb_of_bonds: 100_000_u128,
@@ -66,6 +67,7 @@ fn valid_offer() {
 	}
 	.valid(MinVestedTransfer::get() as _, MinReward::get()));
 	assert!(BondOffer {
+		beneficiary: ALICE,
 		asset: MockCurrencyId::BTC,
 		bond_price: MIN_VESTED_TRANSFER as _,
 		nb_of_bonds: 1_u128,
@@ -78,6 +80,7 @@ fn valid_offer() {
 	}
 	.valid(MinVestedTransfer::get() as _, MinReward::get()));
 	assert!(BondOffer {
+		beneficiary: ALICE,
 		asset: MockCurrencyId::BTC,
 		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
 		nb_of_bonds: 100_000_u128,
@@ -95,6 +98,7 @@ fn valid_offer() {
 fn invalid_offer() {
 	// invalid bond_price
 	assert!(!BondOffer {
+		beneficiary: ALICE,
 		asset: MockCurrencyId::BTC,
 		bond_price: MIN_VESTED_TRANSFER as u128 - 1,
 		nb_of_bonds: 100_000_u128,
@@ -109,6 +113,7 @@ fn invalid_offer() {
 
 	// invalid nb_of_bonds
 	assert!(!BondOffer {
+		beneficiary: ALICE,
 		asset: MockCurrencyId::BTC,
 		bond_price: MIN_VESTED_TRANSFER as _,
 		nb_of_bonds: 0,
@@ -123,6 +128,7 @@ fn invalid_offer() {
 
 	// invalid maturity
 	assert!(!BondOffer {
+		beneficiary: ALICE,
 		asset: MockCurrencyId::BTC,
 		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
 		nb_of_bonds: 100_000_u128,
@@ -137,6 +143,7 @@ fn invalid_offer() {
 
 	// invalid reward
 	assert!(!BondOffer {
+		beneficiary: ALICE,
 		asset: MockCurrencyId::BTC,
 		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
 		nb_of_bonds: 100_000_u128,
@@ -147,6 +154,7 @@ fn invalid_offer() {
 
 	// invalid reward: < MinVested
 	assert!(!BondOffer {
+		beneficiary: ALICE,
 		asset: MockCurrencyId::BTC,
 		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
 		nb_of_bonds: 100_000_u128,
@@ -161,6 +169,7 @@ fn invalid_offer() {
 
 	// invalid reward maturity
 	assert!(!BondOffer {
+		beneficiary: ALICE,
 		asset: MockCurrencyId::BTC,
 		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
 		nb_of_bonds: 100_000_u128,
@@ -189,8 +198,9 @@ prop_compose! {
 					  reward_amount in MIN_REWARD..Balance::MAX / 2,
 					  reward_maturity in 1..BlockNumber::MAX / 2
 			  )
-			  -> BondOffer<MockCurrencyId, Balance, BlockNumber> {
+			  -> BondOffer<AccountId, MockCurrencyId, Balance, BlockNumber> {
 					  BondOffer {
+							  beneficiary: ALICE,
 							  asset: MockCurrencyId::BTC,
 								bond_price,
 								nb_of_bonds,
@@ -442,6 +452,8 @@ proptest! {
 
 					  System::assert_last_event(Event::BondedFinance(crate::Event::OfferCancelled { offer_id }));
 
+						prop_assert_eq!(Tokens::balance(offer.reward.asset, &ALICE), offer.reward.amount);
+
 					  Ok(())
 			  })?;
 	  }
@@ -471,6 +483,8 @@ proptest! {
 					  );
 
 					  System::assert_last_event(Event::BondedFinance(crate::Event::OfferCancelled { offer_id }));
+
+						prop_assert_eq!(Tokens::balance(offer.reward.asset, &ALICE), offer.reward.amount);
 
 					  Ok(())
 			  })?;

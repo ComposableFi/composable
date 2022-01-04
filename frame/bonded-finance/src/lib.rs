@@ -82,7 +82,8 @@ pub mod pallet {
 		<<T as Config>::Currency as FungiblesInspect<AccountIdOf<T>>>::Balance;
 	pub(crate) type NativeBalanceOf<T> =
 		<<T as Config>::NativeCurrency as FungibleInspect<AccountIdOf<T>>>::Balance;
-	pub(crate) type BondOfferOf<T> = BondOffer<AssetIdOf<T>, BalanceOf<T>, BlockNumberOf<T>>;
+	pub(crate) type BondOfferOf<T> =
+		BondOffer<AccountIdOf<T>, AssetIdOf<T>, BalanceOf<T>, BlockNumberOf<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -221,7 +222,7 @@ pub mod pallet {
 		/// Emits a `OfferCancelled`.
 		#[pallet::weight(10_000)]
 		pub fn cancel(origin: OriginFor<T>, offer_id: T::BondOfferId) -> DispatchResult {
-			let (issuer, _) = Self::get_offer(offer_id)?;
+			let (issuer, offer) = Self::get_offer(offer_id)?;
 			match (ensure_signed(origin.clone()), T::AdminOrigin::ensure_origin(origin)) {
 				// Continue on admin origin
 				(_, Ok(_)) => {},
@@ -315,7 +316,7 @@ pub mod pallet {
 							.map_err(|_| ArithmeticError::Overflow)?,
 						);
 						let offer_account = Self::account_id(offer_id);
-						T::Currency::transfer(offer.asset, from, &offer_account, value, true)?;
+						T::Currency::transfer(offer.asset, from, &offer.beneficiary, value, true)?;
 						let current_block = frame_system::Pallet::<T>::current_block_number();
 						T::Vesting::vested_transfer(
 							offer.reward.asset,
@@ -332,7 +333,7 @@ pub mod pallet {
 							BondDuration::Finite { return_in } => {
 								T::Vesting::vested_transfer(
 									offer.asset,
-									&offer_account,
+									&offer.beneficiary,
 									from,
 									VestingSchedule {
 										start: current_block,
