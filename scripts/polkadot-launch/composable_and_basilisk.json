@@ -6,22 +6,26 @@
       {
         "name": "alice",
         "wsPort": 9944,
-        "port": 30444
+        "port": 30444,
+        "flags": ["--rpc-cors=all"]
       },
       {
         "name": "bob",
         "wsPort": 9955,
-        "port": 30555
+        "port": 30555,
+        "flags": ["--rpc-cors=all"]
       },
       {
         "name": "charlie",
         "wsPort": 9966,
-        "port": 30666
+        "port": 30666,
+        "flags": ["--rpc-cors=all"]
       },
       {
         "name": "dave",
         "wsPort": 9977,
-        "port": 30777
+        "port": 30777,
+        "flags": ["--rpc-cors=all"]
       }
     ],
     "runtime_genesis_config": {
