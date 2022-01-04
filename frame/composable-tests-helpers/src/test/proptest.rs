@@ -68,3 +68,36 @@ macro_rules! prop_assert_acceptable_computation_error {
 		);
 	}};
 }
+
+/// Accepts -2, -1, 0, 1, 2
+#[macro_export]
+macro_rules! prop_assert_zero_epsilon {
+	($x:expr) => {{
+		let epsilon = 2;
+		let upper = 0 + epsilon;
+		let lower = 0;
+		prop_assert!(upper >= $x && $x >= lower, "{} => {} >= {}", upper, $x, lower);
+	}};
+}
+
+/// Accept a 'dust' deviation
+#[macro_export]
+macro_rules! prop_assert_epsilon {
+	($x:expr, $y:expr) => {{
+		let precision = 1000;
+		let epsilon = 5;
+		let upper = precision + epsilon;
+		let lower = precision - epsilon;
+		let q = multiply_by_rational($x, precision, $y).expect("qed;");
+		prop_assert!(
+			upper >= q && q >= lower,
+			"({}) => {} >= {} * {} / {} >= {}",
+			q,
+			upper,
+			$x,
+			precision,
+			$y,
+			lower
+		);
+	}};
+}

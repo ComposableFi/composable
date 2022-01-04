@@ -1,6 +1,9 @@
 use frame_support::assert_ok;
 
 use crate::mock::*;
+use composable_tests_helpers::{
+	prop_assert_acceptable_computation_error, prop_assert_epsilon, prop_assert_zero_epsilon,
+};
 use composable_traits::dex::CurveAmm as CurveAmmTrait;
 use frame_support::traits::fungibles::{Inspect, Mutate};
 use proptest::prelude::*;
@@ -10,37 +13,6 @@ use sp_runtime::{
 	FixedPointNumber, FixedU128, Permill,
 };
 use sp_std::cmp::Ordering;
-
-/// Accepts -2, -1, 0, 1, 2
-macro_rules! prop_assert_zero_epsilon {
-	($x:expr) => {{
-		let epsilon = 2;
-		let upper = 0 + epsilon;
-		let lower = 0;
-		prop_assert!(upper >= $x && $x >= lower, "{} => {} >= {}", upper, $x, lower);
-	}};
-}
-
-/// Accept a 'dust' deviation
-macro_rules! prop_assert_epsilon {
-	($x:expr, $y:expr) => {{
-		let precision = 1000;
-		let epsilon = 5;
-		let upper = precision + epsilon;
-		let lower = precision - epsilon;
-		let q = multiply_by_rational($x, precision, $y).expect("qed;");
-		prop_assert!(
-			upper >= q && q >= lower,
-			"({}) => {} >= {} * {} / {} >= {}",
-			q,
-			upper,
-			$x,
-			precision,
-			$y,
-			lower
-		);
-	}};
-}
 
 #[test]
 fn compute_d_works() {
@@ -285,8 +257,10 @@ proptest! {
 	#![proptest_config(ProptestConfig::with_cases(10000))]
 
 	#[test]
-	fn proptest_exchange(alice_balance in 1..u32::MAX,
-						 bob_balance in 1..u32::MAX) {
+	fn proptest_exchange(
+		alice_balance in 1..u32::MAX,
+		bob_balance in 1..u32::MAX
+	) {
 
 	new_test_ext().execute_with(|| {
 		// configuration for DEX Pool
@@ -351,8 +325,10 @@ proptest! {
 	}
 
 	#[test]
-	fn proptest_add_remove_liquidity(alice_balance in 0..u32::MAX,
-									 bob_balance in 0..u32::MAX) {
+	fn proptest_add_remove_liquidity(
+		alice_balance in 0..u32::MAX,
+		bob_balance in 0..u32::MAX
+	) {
 	new_test_ext().execute_with(|| {
 		// configuration for DEX Pool
 		let assets = vec![USDC, USDT];
@@ -408,18 +384,18 @@ proptest! {
 		// ALICE removes liquidity from DEX pool.
 		assert_ok!(CurveAmm::remove_liquidity(&ALICE, pool_id, alice_lp_balance, min_amt.clone()));
 		prop_assert_zero_epsilon!(Tokens::balance(pool_lp_asset, &ALICE));
-		prop_assert_epsilon!(Tokens::balance(USDT, &ALICE), alice_balance as u128);
-		prop_assert_epsilon!(Tokens::balance(USDC, &ALICE), alice_balance as u128);
-		prop_assert_epsilon!(Tokens::balance(USDC, &CurveAmm::account_id(&pool_id)), bob_balance as u128);
-		prop_assert_epsilon!(Tokens::balance(USDT, &CurveAmm::account_id(&pool_id)), bob_balance as u128);
+		prop_assert_acceptable_computation_error!(Tokens::balance(USDT, &ALICE), alice_balance as u128);
+		prop_assert_acceptable_computation_error!(Tokens::balance(USDC, &ALICE), alice_balance as u128);
+		prop_assert_acceptable_computation_error!(Tokens::balance(USDC, &CurveAmm::account_id(&pool_id)), bob_balance as u128);
+		prop_assert_acceptable_computation_error!(Tokens::balance(USDT, &CurveAmm::account_id(&pool_id)), bob_balance as u128);
 
 		// BOB removes liquidity from DEX pool.
 		assert_ok!(CurveAmm::remove_liquidity(&BOB, pool_id, bob_lp_balance, min_amt.clone()));
 		prop_assert_zero_epsilon!(Tokens::balance(pool_lp_asset, &BOB));
 		prop_assert_zero_epsilon!(Tokens::balance(USDC, &CurveAmm::account_id(&pool_id)));
 		prop_assert_zero_epsilon!(Tokens::balance(USDT, &CurveAmm::account_id(&pool_id)));
-		prop_assert_epsilon!(Tokens::balance(USDT, &BOB), bob_balance as u128);
-		prop_assert_epsilon!(Tokens::balance(USDC, &BOB), bob_balance as u128);
+		prop_assert_acceptable_computation_error!(Tokens::balance(USDT, &BOB), bob_balance as u128);
+		prop_assert_acceptable_computation_error!(Tokens::balance(USDC, &BOB), bob_balance as u128);
 		Ok(())
 	}).unwrap();
 	}
