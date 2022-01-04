@@ -221,6 +221,7 @@ pub mod pallet {
 		///
 		/// Emits a `OfferCancelled`.
 		#[pallet::weight(10_000)]
+		#[transactional]
 		pub fn cancel(origin: OriginFor<T>, offer_id: T::BondOfferId) -> DispatchResult {
 			let (issuer, offer) = Self::get_offer(offer_id)?;
 			match (ensure_signed(origin.clone()), T::AdminOrigin::ensure_origin(origin)) {
