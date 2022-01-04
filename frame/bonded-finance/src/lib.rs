@@ -238,6 +238,13 @@ pub mod pallet {
 			};
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(&offer_account, &issuer, T::Stake::get(), true)?;
+			T::Currency::transfer(
+				offer.reward.asset,
+				&offer_account,
+				&issuer,
+				offer.reward.amount,
+				true,
+			)?;
 			BondOffers::<T>::remove(offer_id);
 			Self::deposit_event(Event::<T>::OfferCancelled { offer_id });
 			Ok(())
