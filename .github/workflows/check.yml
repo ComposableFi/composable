@@ -9,6 +9,7 @@ on:
       - develop
       - dali-chachacha
       - picasso
+      - ci-coverage
   workflow_dispatch:
 jobs:
   check:
