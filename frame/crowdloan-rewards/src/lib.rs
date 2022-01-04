@@ -46,7 +46,7 @@ use frame_support::{
 };
 pub use pallet::*;
 use scale_info::TypeInfo;
-use sp_runtime::traits::{DispatchInfoOf, SignedExtension};
+use sp_runtime::traits::{DispatchInfoOf, SignedExtension, Zero};
 
 use crate::models::{Proof, RemoteAccount};
 
@@ -83,9 +83,9 @@ pub mod pallet {
 
 	#[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo)]
 	pub struct Reward<Balance, BlockNumber> {
-		total: Balance,
-		claimed: Balance,
-		vesting_period: BlockNumber,
+		pub(crate) total: Balance,
+		pub(crate) claimed: Balance,
+		pub(crate) vesting_period: BlockNumber,
 	}
 
 	pub type RemoteAccountOf<T> = RemoteAccount<<T as Config>::RelayChainAccountId>;
@@ -256,7 +256,7 @@ pub mod pallet {
 		/// ```haskell
 		/// proof = sign (concat prefix (hex reward_account))
 		/// ```
-		#[pallet::weight(10_000)]
+		#[pallet::weight((10_000, Pays::No))]
 		pub fn associate(
 			origin: OriginFor<T>,
 			reward_account: T::AccountId,
@@ -418,7 +418,7 @@ pub mod pallet {
 	}
 }
 
-/// Validate `attest` calls prior to execution. Needed to avoid a DoS attack since they are
+/// Validate `associate` calls prior to execution. Needed to avoid a DoS attack since they are
 /// otherwise free to place on chain.
 #[derive(Encode, Decode, Clone, Eq, PartialEq, TypeInfo)]
 #[scale_info(skip_type_params(T))]
@@ -467,7 +467,7 @@ where
 	}
 
 	// <weight>
-	// The weight of this logic is included in the `attest` dispatchable.
+	// The weight of this logic is included in the `associate` dispatchable.
 	// </weight>
 	fn validate(
 		&self,
@@ -488,10 +488,7 @@ where
 					let reward_account_encoded =
 						reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec());
 					match ethereum_recover(T::Prefix::get(), &reward_account_encoded, eth_proof) {
-						Some(ethereum_address) =>
-							RemoteAccount::<<T as Config>::RelayChainAccountId>::Ethereum(
-								ethereum_address,
-							),
+						Some(ethereum_address) => RemoteAccount::Ethereum(ethereum_address),
 						None =>
 							return InvalidTransaction::Custom(ValidityError::InvalidProof as u8)
 								.into(),
@@ -504,19 +501,18 @@ where
 						relay_account.clone(),
 						relay_proof,
 					) {
-						RemoteAccount::<<T as Config>::RelayChainAccountId>::RelayChain(
-							relay_account.clone(),
-						)
+						RemoteAccount::RelayChain(relay_account.clone())
 					} else {
 						return InvalidTransaction::Custom(ValidityError::InvalidProof as u8).into()
 					}
 				},
 			};
 
-			if Rewards::<T>::get(remote_account).is_none() {
-				InvalidTransaction::Custom(ValidityError::NoReward as u8).into()
-			} else {
-				Ok(ValidTransaction::default())
+			match Rewards::<T>::get(remote_account) {
+				None => InvalidTransaction::Custom(ValidityError::NoReward as u8).into(),
+				Some(reward) if reward.total.is_zero() =>
+					InvalidTransaction::Custom(ValidityError::NoReward as u8).into(),
+				Some(_) => Ok(ValidTransaction::default()),
 			}
 		} else {
 			Ok(ValidTransaction::default())
