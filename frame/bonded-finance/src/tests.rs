@@ -272,8 +272,52 @@ proptest! {
 	  }
 
 	  #[test]
+	  fn expected_final_owner(offer in simple_offer(1)) {
+			  ExtBuilder::build().execute_with(|| {
+						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
+						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
+						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+					  prop_assert_ok!(offer_id);
+					  let offer_id = offer_id.expect("impossible; qed");
+
+					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
+					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds));
+					  prop_assert_eq!(
+							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds),
+							  Err(Error::<Runtime>::OfferCompleted.into())
+					  );
+
+
+					  match offer.maturity {
+							  BondDuration::Infinite => {
+									  prop_assert_eq!(
+											  Tokens::balance(offer.asset, &offer.beneficiary),
+											  offer.total_price().expect("impossible; qed;")
+									  );
+							  }
+							  BondDuration::Finite { return_in } => {
+									  prop_assert_eq!(
+											  Tokens::balance(offer.asset, &offer.beneficiary),
+											  0
+									  );
+									  System::set_block_number(return_in);
+									  prop_assert_ok!(Vesting::claim(Origin::signed(BOB), offer.asset));
+									  prop_assert_eq!(
+											  Tokens::balance(offer.asset, &BOB),
+											  offer.total_price().expect("impossible; qed;")
+									  );
+							  }
+					  }
+
+					  Ok(())
+			  })?;
+	  }
+
+	  #[test]
 	  fn isolated_accounts(offer_a in simple_offer(1), offer_b in simple_offer(1)) {
 			  ExtBuilder::build().execute_with(|| {
+					  System::set_block_number(1);
+
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer_a.reward.asset, &ALICE, offer_a.reward.amount));
 						let offer_a_id = BondedFinance::do_offer(&ALICE, offer_a.clone());
