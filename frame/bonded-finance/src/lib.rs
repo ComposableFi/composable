@@ -101,10 +101,6 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// The offer could not be found.
 		BondOfferNotFound,
-		/// Not enough native currency to create a new offer.
-		NotEnoughStake,
-		/// Not enough asset to bond.
-		NotEnoughAsset,
 		/// Someone tried  to submit an invalid offer.
 		InvalidBondOffer,
 		/// Someone tried to bond an already completed offer.
@@ -310,12 +306,6 @@ pub mod pallet {
 						// NOTE(hussein-aitlahcen): can't overflow, subsumed by `offer.valid()` in
 						// `do_offer`
 						let value = nb_of_bonds * offer.bond_price;
-						ensure!(
-							T::Currency::can_withdraw(offer.asset, from, value)
-								.into_result()
-								.is_ok(),
-							Error::<T>::NotEnoughAsset
-						);
 						let reward_share = T::Convert::convert(
 							multiply_by_rational(
 								T::Convert::convert(nb_of_bonds),
