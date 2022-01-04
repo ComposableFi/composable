@@ -1,0 +1,29 @@
+name: Run Piccaso Client Upgrade Playbook
+
+on: workflow_dispatch
+       
+
+env: 
+  ROOT_KEY: ${{ secrets.ROOT_KEY }}
+
+jobs:
+  run-playbooks:
+    runs-on: 
+        - self-hosted
+        - linux
+        - X64
+        - ansible-runner
+
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+
+    - name: Set env
+      run: |
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^'picasso'-[0-9]' | tail -1 )" >> $GITHUB_ENV
+
+    - name: Run ansible playbook
+      working-directory: "./.maintain/playbooks"
+      run: |
+        ansible-playbook -l all client-upgrade.yml -i picasso-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
