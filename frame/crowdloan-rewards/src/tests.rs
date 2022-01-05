@@ -452,6 +452,10 @@ fn already_associated_associate_transactions_are_recognized() {
 
 			let validate_result =
 				prevalidate_association.validate(&reward_account, &call, &dispatch_info, 0);
+
+			// this fails currently, not sure if it should be paid or not
+			// assert_eq!(dispatch_info.pays_fee, Pays::Yes);
+
 			assert_eq!(
 				validate_result,
 				TransactionValidity::Err(
