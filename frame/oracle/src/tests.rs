@@ -295,7 +295,7 @@ fn add_price() {
 		System::set_block_number(6);
 		// fails no stake
 		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128),
+			Oracle::submit_price(Origin::signed(account_1), 100_u128, 0_u128),
 			Error::<Test>::NotEnoughStake
 		);
 
@@ -309,28 +309,28 @@ fn add_price() {
 		assert_ok!(Oracle::add_stake(Origin::signed(account_4), 50));
 		assert_ok!(Oracle::add_stake(Origin::signed(account_5), 50));
 
-		assert_ok!(Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128));
-		assert_ok!(Oracle::submit_price(Origin::signed(account_2), 100u128, 0u128));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_1), 100_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_2), 100_u128, 0_u128));
 		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_2), 100u128, 0u128),
+			Oracle::submit_price(Origin::signed(account_2), 100_u128, 0_u128),
 			Error::<Test>::AlreadySubmitted
 		);
-		assert_ok!(Oracle::submit_price(Origin::signed(account_4), 100u128, 0u128));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_4), 100_u128, 0_u128));
 
 		assert_eq!(Oracle::answer_in_transit(account_1), Some(5));
 		assert_eq!(Oracle::answer_in_transit(account_2), Some(5));
 		assert_eq!(Oracle::answer_in_transit(account_4), Some(5));
 
 		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_5), 100u128, 0u128),
+			Oracle::submit_price(Origin::signed(account_5), 100_u128, 0_u128),
 			Error::<Test>::MaxPrices
 		);
 
-		let price = PrePrice { price: 100u128, block: 6, who: account_1 };
+		let price = PrePrice { price: 100_u128, block: 6, who: account_1 };
 
-		let price2 = PrePrice { price: 100u128, block: 6, who: account_2 };
+		let price2 = PrePrice { price: 100_u128, block: 6, who: account_2 };
 
-		let price4 = PrePrice { price: 100u128, block: 6, who: account_4 };
+		let price4 = PrePrice { price: 100_u128, block: 6, who: account_4 };
 
 		assert_eq!(Oracle::pre_prices(0), vec![price, price2, price4]);
 		System::set_block_number(2);
@@ -338,13 +338,13 @@ fn add_price() {
 
 		// fails price not requested
 		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_1), 100u128, 0u128),
+			Oracle::submit_price(Origin::signed(account_1), 100_u128, 0_u128),
 			Error::<Test>::PriceNotRequested
 		);
 
 		// non existent asset_id
 		assert_noop!(
-			Oracle::submit_price(Origin::signed(account_1), 100u128, 10u128),
+			Oracle::submit_price(Origin::signed(account_1), 100_u128, 10_u128),
 			Error::<Test>::MaxPrices
 		);
 	});
@@ -357,7 +357,7 @@ fn medianize_price() {
 		// should not panic
 		Oracle::get_median_price(&Oracle::pre_prices(0));
 		for i in 0..3 {
-			let price = i as u128 + 100u128;
+			let price = i as u128 + 100_u128;
 			add_price_storage(price, 0, account_1, 0);
 		}
 		let price = Oracle::get_median_price(&Oracle::pre_prices(0));
@@ -516,7 +516,7 @@ fn on_init() {
 		// set prices into storage
 		let account_1: AccountId = Default::default();
 		for i in 0..3 {
-			let price = i as u128 + 100u128;
+			let price = i as u128 + 100_u128;
 			add_price_storage(price, 0, account_1, 2);
 		}
 
@@ -529,7 +529,7 @@ fn on_init() {
 
 		// doesn't prune state if under min prices
 		for i in 0..2 {
-			let price = i as u128 + 100u128;
+			let price = i as u128 + 100_u128;
 			add_price_storage(price, 0, account_1, 3);
 		}
 
@@ -580,7 +580,7 @@ fn historic_pricing() {
 
 		do_price_update(0, 15);
 		let price_15 = Price { price: 101, block: 15 };
-		price_history = vec![price_5.clone(), price_10.clone(), price_15.clone()];
+		price_history = vec![price_5, price_10.clone(), price_15.clone()];
 
 		assert_eq!(Oracle::price_history(0), price_history);
 		assert_eq!(Oracle::price_history(0).len(), 3);
@@ -646,7 +646,7 @@ fn on_init_prune_scenerios() {
 		// set prices into storage
 		let account_1: AccountId = Default::default();
 		for i in 0..3 {
-			let price = i as u128 + 100u128;
+			let price = i as u128 + 100_u128;
 			add_price_storage(price, 0, account_1, 0);
 		}
 		// all pruned
@@ -656,12 +656,12 @@ fn on_init_prune_scenerios() {
 		assert_eq!(Oracle::pre_prices(0).len(), 0);
 
 		for i in 0..5 {
-			let price = i as u128 + 1u128;
+			let price = i as u128 + 1_u128;
 			add_price_storage(price, 0, account_1, 0);
 		}
 
 		for i in 0..3 {
-			let price = i as u128 + 100u128;
+			let price = i as u128 + 100_u128;
 			add_price_storage(price, 0, account_1, 3);
 		}
 
@@ -671,12 +671,12 @@ fn on_init_prune_scenerios() {
 		assert_eq!(Oracle::prices(0), price);
 
 		for i in 0..5 {
-			let price = i as u128 + 1u128;
+			let price = i as u128 + 1_u128;
 			add_price_storage(price, 0, account_1, 0);
 		}
 
 		for i in 0..2 {
-			let price = i as u128 + 300u128;
+			let price = i as u128 + 300_u128;
 			add_price_storage(price, 0, account_1, 3);
 		}
 
@@ -706,7 +706,7 @@ fn on_init_over_max_answers() {
 		// set prices into storage
 		let account_1: AccountId = Default::default();
 		for i in 0..5 {
-			let price = i as u128 + 100u128;
+			let price = i as u128 + 100_u128;
 			add_price_storage(price, 0, account_1, 0);
 		}
 
@@ -836,7 +836,7 @@ fn should_check_oracles_submitted_price() {
 			5
 		));
 
-		add_price_storage(100u128, 0, account_2, 0);
+		add_price_storage(100_u128, 0, account_2, 0);
 		// when
 		Oracle::fetch_price_and_send_signed(&0).unwrap();
 	});
@@ -868,7 +868,7 @@ fn parse_price_works() {
 
 fn add_price_storage(price: u128, asset_id: u128, who: AccountId, block: u64) {
 	let price = PrePrice { price, block, who };
-	PrePrices::<Test>::mutate(asset_id.clone(), |current_prices| current_prices.push(price));
+	PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.push(price));
 	AnswerInTransit::<Test>::mutate(who, |transit| {
 		*transit = Some(transit.unwrap_or_else(Zero::zero) + 5)
 	});
@@ -877,7 +877,7 @@ fn add_price_storage(price: u128, asset_id: u128, who: AccountId, block: u64) {
 fn do_price_update(asset_id: u128, block: u64) {
 	let account_1: AccountId = Default::default();
 	for i in 0..3 {
-		let price = i as u128 + 100u128;
+		let price = i as u128 + 100_u128;
 		add_price_storage(price, asset_id, account_1, block);
 	}
 

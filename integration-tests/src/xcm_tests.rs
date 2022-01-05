@@ -98,7 +98,7 @@ fn send_remark() {
 			(Parent, Parachain(DALI_PARA_ID)),
 			Xcm(vec![Transact {
 				origin_type: OriginKind::SovereignAccount,
-				require_weight_at_most: 40000 as u64,
+				require_weight_at_most: 40000,
 				call: remark.encode().into(),
 			}]),
 		));
@@ -128,7 +128,7 @@ fn withdraw_and_deposit_back() {
 				beneficiary: Parachain(PICASSO_PARA_ID).into(),
 			},
 		]);
-		assert_ok!(picasso_runtime::RelayerXcm::send_xcm(Here, Parent, message.clone(),));
+		assert_ok!(picasso_runtime::RelayerXcm::send_xcm(Here, Parent, message,));
 	});
 
 	KusamaRelay::execute_with(|| {

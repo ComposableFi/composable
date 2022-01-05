@@ -80,7 +80,7 @@ impl Get<system::limits::BlockWeights> for BlockWeights {
 		system::limits::BlockWeights::builder()
 			.base_block(0)
 			.for_class(DispatchClass::all(), |weights| {
-				weights.base_extrinsic = EXTRINSIC_BASE_WEIGHT.with(|v| *v.borrow()).into();
+				weights.base_extrinsic = EXTRINSIC_BASE_WEIGHT.with(|v| *v.borrow());
 			})
 			.for_class(DispatchClass::non_mandatory(), |weights| {
 				weights.max_total = 1024.into();

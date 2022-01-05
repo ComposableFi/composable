@@ -48,6 +48,7 @@ pub const CHARLIE: AccountId = 3;
 	TypeInfo,
 	proptest_derive::Arbitrary,
 )]
+#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
 pub enum MockCurrencyId {
 	PICA,
 	BTC,

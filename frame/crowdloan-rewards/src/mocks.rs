@@ -19,7 +19,7 @@ pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 pub const WEEKS: BlockNumber = DAYS * 7;
 
-pub const VESTING_STEP: BlockNumber = 1 * WEEKS;
+pub const VESTING_STEP: BlockNumber = WEEKS;
 pub const INITIAL_PAYMENT: Perbill = Perbill::from_percent(50);
 
 pub const ALICE: AccountId = AccountId32::new([0u8; 32]);
