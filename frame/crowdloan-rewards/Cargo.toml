@@ -17,7 +17,6 @@ version = "2.0.0"
 
 [dev-dependencies]
 serde = "1.0.119"
-# orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301", default-features = false }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 libsecp256k1 = { version = "0.7.0", default-features = false, features = [
     "hmac",
@@ -29,9 +28,6 @@ balances = { package = "pallet-balances", git = "https://github.com/paritytech/s
 ] }
 
 [dependencies]
-# should be a dev-dependency. see: https://github.com/rust-lang/cargo/issues/6915
-# balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
-
 ### Benchmarking
 hex-literal = { version = "0.3.3", optional = true }
 once_cell = { version = "1.8.0", optional = true }
@@ -59,6 +55,7 @@ hex = { version = "0.4", default-features = false, features = ["alloc"] }
 
 [features]
 default = ["std"]
+
 std = [
     "codec/std",
     "frame-support/std",
@@ -69,7 +66,6 @@ std = [
     "sp-std/std",
     "sp-arithmetic/std",
     "scale-info/std",
-    # "balances/std",
     "serde/std",
 ]
 
