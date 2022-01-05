@@ -63,8 +63,9 @@ where
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::{constants::PICA, Balance, BlockNumber, DAYS};
+	use crate::{Balance, BlockNumber, DAYS};
 	use collator_selection::IdentityCollator;
+	use composable_traits::currency::PriceableAsset;
 	use frame_support::{
 		ord_parameter_types, parameter_types,
 		traits::{Everything, FindAuthor, ValidatorRegistration},
@@ -241,7 +242,7 @@ mod tests {
 		/// percentage of proposal that most be bonded by the proposer
 		pub const ProposalBond: Permill = Permill::from_percent(5);
 		// TODO: rationale?
-		pub const ProposalBondMinimum: Balance = 5 * PICA;
+		pub ProposalBondMinimum: Balance = 5 * CurrencyId::PICA.unit::<Balance>();
 		pub const SpendPeriod: BlockNumber = 7 * DAYS;
 		pub const Burn: Permill = Permill::from_percent(0);
 

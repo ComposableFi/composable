@@ -1,6 +1,6 @@
 use crate::{self as pallet_lending, *};
 use composable_traits::{
-	currency::{DynamicCurrencyId, PriceableAsset},
+	currency::{DynamicCurrencyId, Exponent, PriceableAsset},
 	defi::DeFiComposableConfig,
 	governance::{GovernanceRegistry, SignedRawOrigin},
 };
@@ -95,7 +95,7 @@ impl Default for MockCurrencyId {
 }
 
 impl PriceableAsset for MockCurrencyId {
-	fn decimals(self) -> composable_traits::currency::Exponent {
+	fn decimals(&self) -> Exponent {
 		match self {
 			MockCurrencyId::PICA => 0,
 			MockCurrencyId::BTC => 8,
