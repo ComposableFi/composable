@@ -100,10 +100,10 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
-      - name: Install nightly toolchain for cargo-llvm-cov
+      - name: Install toolchain for cargo-llvm-cov
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           components: llvm-tools-preview
       - name: Install cargo-llvm-cov
         run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
