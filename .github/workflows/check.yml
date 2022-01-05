@@ -103,7 +103,7 @@ jobs:
       - name: Install toolchain for cargo-llvm-cov
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly-2021-11-29
           components: llvm-tools-preview
       - name: Install cargo-llvm-cov
         run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
@@ -111,7 +111,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly-2021-11-29
           override: true
       - name: Run Test (with coverage)
         run: |
