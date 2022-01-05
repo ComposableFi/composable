@@ -9,8 +9,8 @@ use support::traits::GenesisBuild;
 use xcm_emulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
 
 type Balances = u128;
-pub const ALICE: [u8; 32] = [4u8; 32];
-pub const BOB: [u8; 32] = [5u8; 32];
+pub const ALICE: [u8; 32] = [4_u8; 32];
+pub const BOB: [u8; 32] = [5_u8; 32];
 pub const PICA: Balances = 1_000_000_000_000;
 
 decl_test_parachain! {
@@ -55,7 +55,7 @@ decl_test_network! {
 
 fn default_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 	HostConfiguration {
-		validation_upgrade_frequency: 1u32,
+		validation_upgrade_frequency: 1_u32,
 		validation_upgrade_delay: 1,
 		code_retention_period: 1200,
 		max_code_size: MAX_CODE_SIZE,

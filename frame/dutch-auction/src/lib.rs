@@ -14,6 +14,8 @@
 //! more optimal. So takers appropriate tip to auction, not via transaction tip(not proportional to
 //! price) to parachain. Allows to win bids not by closes to parachain host machine.
 
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -141,6 +143,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn orders_index)]
+	#[allow(clippy::disallowed_type)] // OrderIdOnEmpty provides a default value
 	pub type OrdersIndex<T: Config> = StorageValue<_, T::OrderId, ValueQuery, OrderIdOnEmpty<T>>;
 
 	#[pallet::storage]

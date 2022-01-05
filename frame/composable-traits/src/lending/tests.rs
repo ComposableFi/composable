@@ -1,11 +1,10 @@
-
 use crate::defi::Rate;
 
 use super::*;
 use proptest::{prop_assert, strategy::Strategy, test_runner::TestRunner};
 use sp_runtime::{
 	traits::{One, Saturating, Zero},
-	FixedI128, FixedPointNumber, FixedU128,
+	FixedPointNumber, FixedU128,
 };
 
 // Test jump model
@@ -59,7 +58,6 @@ fn get_borrow_rate_works() {
 			normal_rate,
 	);
 }
-
 
 #[test]
 fn get_supply_rate_works() {
@@ -223,10 +221,11 @@ fn jump_model_plotter() {
 		.build_cartesian_2d(0.0..100.0, 0.0..100.0)
 		.unwrap();
 	chart
-	.configure_mesh()
-	.x_desc("Utilization ratio %")
-	.y_desc("Borrow rate %")
-	.draw().unwrap();
+		.configure_mesh()
+		.x_desc("Utilization ratio %")
+		.y_desc("Borrow rate %")
+		.draw()
+		.unwrap();
 	chart
 		.draw_series(LineSeries::new(
 			(0..=100).map(|x| {
@@ -255,10 +254,11 @@ fn curve_model_plotter() {
 		.build_cartesian_2d(0.0..100.0, 0.0..100.0)
 		.unwrap();
 	chart
-	.configure_mesh()
-	.x_desc("Utilization ratio %")
-	.y_desc("Borrow rate %")
-	.draw().unwrap();
+		.configure_mesh()
+		.x_desc("Utilization ratio %")
+		.y_desc("Borrow rate %")
+		.draw()
+		.unwrap();
 	chart
 		.draw_series(LineSeries::new(
 			(0..=100).map(|x| {
@@ -271,18 +271,28 @@ fn curve_model_plotter() {
 		.unwrap();
 }
 
+// ISSUE: given ideal real interest rate, borrow rate growth infinitely, which is wrong
 #[cfg(feature = "visualization")]
 #[test]
 fn dynamic_pid_model_plotter() {
 	use plotters::prelude::*;
-	let proportional_parameter = FixedI128::saturating_from_integer(1);
-	let integral_parameter = FixedI128::saturating_from_integer(3);
-	let derivative_parameter = FixedI128::saturating_from_integer(2);
+	use sp_runtime::FixedI128;
+	let proportional_parameter = FixedI128::saturating_from_rational(40, 100);
+	let integral_parameter = FixedI128::saturating_from_rational(50, 100);
+	let derivative_parameter = FixedI128::saturating_from_rational(30, 100);
 	let target_utilization = FixedU128::saturating_from_rational(80, 100);
-	let mut model =
-		DynamicPIDControllerModel::new(proportional_parameter, integral_parameter, derivative_parameter,  target_utilization).unwrap();
+	let initial_interest_rate = FixedU128::saturating_from_rational(13, 100);
+	let mut model = DynamicPIDControllerModel::new(
+		proportional_parameter,
+		integral_parameter,
+		derivative_parameter,
+		initial_interest_rate,
+		target_utilization,
+	)
+	.unwrap();
 
-	let area = BitMapBackend::new("./dynamic_pid_model_plotter.png", (1024, 768)).into_drawing_area();
+	let area =
+		BitMapBackend::new("./dynamic_pid_model_plotter.png", (1024, 768)).into_drawing_area();
 	area.fill(&WHITE).unwrap();
 
 	let mut chart = ChartBuilder::on(&area)
@@ -291,53 +301,45 @@ fn dynamic_pid_model_plotter() {
 		.set_label_area_size(LabelAreaPosition::Right, 100)
 		.build_cartesian_2d(0.0..100.0, 0.0..150.0)
 		.unwrap();
-	chart
-	.configure_mesh()
-	.x_desc("Time")
-	.y_desc("%")
-	.draw().unwrap();
-
+	chart.configure_mesh().x_desc("Time").y_desc("%").draw().unwrap();
 
 	chart
 		.draw_series(LineSeries::new(
 			[
-				0, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
-				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
-				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
-				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,				
+				0, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
 			]
 			.iter()
 			.enumerate()
 			.map(|(i, x)| {
 				let utilization = Percent::from_percent(*x);
 				let rate = model.get_borrow_rate(utilization).unwrap();
-				(i as f64, rate.to_float() )
+				(i as f64, rate.to_float())
 			}),
 			&RED,
 		))
 		.unwrap()
 		.label("Interest rate %");
 
-
 	chart
 		.draw_series(LineSeries::new(
 			[
-				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
-				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
-				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
-				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,	
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
+				80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80,
 			]
 			.iter()
 			.enumerate()
-			.map(|(i, x)| {
-				(i as f64, *x as f64)
-			}),
+			.map(|(i, x)| (i as f64, *x as f64)),
 			&BLUE,
 		))
 		.unwrap()
 		.label("Target Utilization ratio %");
 
-		chart.configure_series_labels().border_style(&BLACK).draw().unwrap();
+	chart.configure_series_labels().border_style(&BLACK).draw().unwrap();
 }
 
 #[cfg(feature = "visualization")]
@@ -346,11 +348,12 @@ fn double_exponents_model_plotter() {
 	use plotters::prelude::*;
 	let coefficients: [u8; 16] = [10, 10, 80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	let mut model = DoubleExponentModel::new(coefficients).unwrap();
-	let area = BitMapBackend::new("./double_exponents_model_plotter.png", (1024, 768)).into_drawing_area();
+	let area =
+		BitMapBackend::new("./double_exponents_model_plotter.png", (1024, 768)).into_drawing_area();
 	area.fill(&WHITE).unwrap();
 
 	let mut chart = ChartBuilder::on(&area)
-		.set_label_area_size(LabelAreaPosition::Left, 50)			
+		.set_label_area_size(LabelAreaPosition::Left, 50)
 		.set_label_area_size(LabelAreaPosition::Bottom, 50)
 		.build_cartesian_2d(0.0..100.0, 0.0..100.0)
 		.unwrap();

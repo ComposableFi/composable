@@ -1,6 +1,7 @@
 use composable_traits::{
+	defi::Rate,
+	lending::math::NormalizedCollateralFactor,
 	math::{LiftedFixedBalance, SafeArithmetic},
-	rate_model::{NormalizedCollateralFactor, Rate},
 };
 use sp_runtime::{traits::Saturating, ArithmeticError, Percent};
 

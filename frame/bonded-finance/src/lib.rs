@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -80,7 +82,8 @@ pub mod pallet {
 		<<T as Config>::Currency as FungiblesInspect<AccountIdOf<T>>>::Balance;
 	pub(crate) type NativeBalanceOf<T> =
 		<<T as Config>::NativeCurrency as FungibleInspect<AccountIdOf<T>>>::Balance;
-	pub(crate) type BondOfferOf<T> = BondOffer<AssetIdOf<T>, BalanceOf<T>, BlockNumberOf<T>>;
+	pub(crate) type BondOfferOf<T> =
+		BondOffer<AccountIdOf<T>, AssetIdOf<T>, BalanceOf<T>, BlockNumberOf<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -99,10 +102,6 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// The offer could not be found.
 		BondOfferNotFound,
-		/// Not enough native currency to create a new offer.
-		NotEnoughStake,
-		/// Not enough asset to bond.
-		NotEnoughAsset,
 		/// Someone tried  to submit an invalid offer.
 		InvalidBondOffer,
 		/// Someone tried to bond an already completed offer.
@@ -166,6 +165,9 @@ pub mod pallet {
 	/// The counter used to uniquely identify bond offers within this pallet.
 	#[pallet::storage]
 	#[pallet::getter(fn bond_offer_count)]
+	// `BondOfferOnEmpty<T>` explicitly defines the behaviour when empty, so `ValueQuery` is
+	// allowed.
+	#[allow(clippy::disallowed_type)]
 	pub type BondOfferCount<T: Config> =
 		StorageValue<_, T::BondOfferId, ValueQuery, BondOfferOnEmpty<T>>;
 
@@ -219,8 +221,9 @@ pub mod pallet {
 		///
 		/// Emits a `OfferCancelled`.
 		#[pallet::weight(10_000)]
+		#[transactional]
 		pub fn cancel(origin: OriginFor<T>, offer_id: T::BondOfferId) -> DispatchResult {
-			let (issuer, _) = Self::get_offer(offer_id)?;
+			let (issuer, offer) = Self::get_offer(offer_id)?;
 			match (ensure_signed(origin.clone()), T::AdminOrigin::ensure_origin(origin)) {
 				// Continue on admin origin
 				(_, Ok(_)) => {},
@@ -233,6 +236,13 @@ pub mod pallet {
 			};
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(&offer_account, &issuer, T::Stake::get(), true)?;
+			T::Currency::transfer(
+				offer.reward.asset,
+				&offer_account,
+				&issuer,
+				offer.reward.amount,
+				true,
+			)?;
 			BondOffers::<T>::remove(offer_id);
 			Self::deposit_event(Event::<T>::OfferCancelled { offer_id });
 			Ok(())
@@ -298,12 +308,6 @@ pub mod pallet {
 						// NOTE(hussein-aitlahcen): can't overflow, subsumed by `offer.valid()` in
 						// `do_offer`
 						let value = nb_of_bonds * offer.bond_price;
-						ensure!(
-							T::Currency::can_withdraw(offer.asset, from, value)
-								.into_result()
-								.is_ok(),
-							Error::<T>::NotEnoughAsset
-						);
 						let reward_share = T::Convert::convert(
 							multiply_by_rational(
 								T::Convert::convert(nb_of_bonds),
@@ -313,7 +317,7 @@ pub mod pallet {
 							.map_err(|_| ArithmeticError::Overflow)?,
 						);
 						let offer_account = Self::account_id(offer_id);
-						T::Currency::transfer(offer.asset, from, &offer_account, value, true)?;
+						T::Currency::transfer(offer.asset, from, &offer.beneficiary, value, true)?;
 						let current_block = frame_system::Pallet::<T>::current_block_number();
 						T::Vesting::vested_transfer(
 							offer.reward.asset,
@@ -330,7 +334,7 @@ pub mod pallet {
 							BondDuration::Finite { return_in } => {
 								T::Vesting::vested_transfer(
 									offer.asset,
-									&offer_account,
+									&offer.beneficiary,
 									from,
 									VestingSchedule {
 										start: current_block,

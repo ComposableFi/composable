@@ -13,9 +13,9 @@ use crate::{
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::{
 	currency::PriceableAsset,
-	lending::MarketConfigInput,
+	defi::Rate,
+	lending::{math::*, MarketConfigInput},
 	math::LiftedFixedBalance,
-	rate_model::*,
 	vault::{Deposit, VaultConfig},
 };
 use frame_support::{
@@ -177,7 +177,7 @@ fn accrue_interest_induction() {
 		.run(
 			&(
 				0..=2 * SECONDS_PER_YEAR / MILLISECS_PER_BLOCK,
-				(minimal..=35u32).prop_map(|i| 10u128.pow(i)),
+				(minimal..=35_u32).prop_map(|i| 10_u128.pow(i)),
 			),
 			|(slot, total_issued)| {
 				let (optimal, ref mut interest_rate_model) = new_jump_model();
@@ -323,9 +323,8 @@ fn new_jump_model() -> (Percent, InterestRateModel) {
 	let jump_rate = Rate::saturating_from_rational(10, 100);
 	let full_rate = Rate::saturating_from_rational(32, 100);
 	let optimal = Percent::from_percent(80);
-	let interest_rate_model = InterestRateModel::Jump(
-		JumpModel::new_model(base_rate, jump_rate, full_rate, optimal).unwrap(),
-	);
+	let interest_rate_model =
+		InterestRateModel::Jump(JumpModel::new(base_rate, jump_rate, full_rate, optimal).unwrap());
 	(optimal, interest_rate_model)
 }
 
@@ -464,7 +463,7 @@ fn test_vault_market_cannot_withdraw() {
 
 		// We don't even wait 1 block, which mean the market couldn't withdraw funds.
 		assert_noop!(
-			Lending::borrow_internal(&market, &ALICE, 1 * MockCurrencyId::BTC.unit::<Balance>()),
+			Lending::borrow_internal(&market, &ALICE, MockCurrencyId::BTC.unit::<Balance>()),
 			Error::<Test>::NotEnoughBorrowAsset
 		);
 	});
@@ -491,7 +490,7 @@ fn test_vault_market_can_withdraw() {
 		assert_ok!(Lending::borrow_internal(
 			&market,
 			&ALICE,
-			1 * MockCurrencyId::BTC.unit::<Balance>()
+			MockCurrencyId::BTC.unit::<Balance>()
 		),);
 	});
 }

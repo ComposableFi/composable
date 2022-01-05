@@ -44,10 +44,10 @@ pub fn calc_utilization_ratio(
 	let utilization_ratio = borrows
 		.checked_div(&total)
 		.expect("above checks prove it cannot error")
-		.checked_mul_int(100u16)
-		.unwrap()
+		.checked_mul_int(100_u16)
+		.ok_or(ArithmeticError::Overflow)?
 		.try_into()
-		.unwrap();
+		.map_err(|_| ArithmeticError::Overflow)?;
 	Ok(Percent::from_percent(utilization_ratio))
 }
 
@@ -74,7 +74,7 @@ impl Default for InterestRateModel {
 			Rate::saturating_from_rational(32, 100),
 			Percent::from_percent(80),
 		)
-		.unwrap()
+		.expect("default model is valid")
 	}
 }
 
@@ -96,13 +96,15 @@ impl InterestRateModel {
 		proportional_parameter: FixedI128,
 		integral_parameter: FixedI128,
 		derivative_parameter: FixedI128,
+		initial_interest_rate: FixedU128,
 		target_utilization: FixedU128,
 	) -> Option<Self> {
 		DynamicPIDControllerModel::new(
 			proportional_parameter,
 			integral_parameter,
 			derivative_parameter,
-			target_utilization,			
+			initial_interest_rate,
+			target_utilization,
 		)
 		.map(Self::DynamicPIDController)
 	}
@@ -277,19 +279,24 @@ impl DynamicPIDControllerModel {
 		utilization_ratio: FixedU128,
 	) -> Result<Rate, ArithmeticError> {
 		// compute error term `et = uo - ut`
-		let et: i128 = self.target_utilization.into_inner().try_into().unwrap_or(0i128) -
-			utilization_ratio.into_inner().try_into().unwrap_or(0i128);
+		let et: i128 = self.target_utilization.into_inner().try_into().unwrap_or(0_i128) -
+			utilization_ratio.into_inner().try_into().unwrap_or(0_i128);
 		let et: FixedI128 = FixedI128::from_inner(et);
 		// compute proportional term `pt = kp * et`
 		let pt = self.proportional_parameter.checked_mul(&et).ok_or(ArithmeticError::Overflow)?;
 		//compute integral term `it = it_1 + ki * et`
 		let it = self
 			.previous_integral_term
-			.checked_add(&self.integral_parameter.checked_mul(&et).ok_or(ArithmeticError::Overflow)?)
+			.checked_add(
+				&self.integral_parameter.checked_mul(&et).ok_or(ArithmeticError::Overflow)?,
+			)
 			.ok_or(ArithmeticError::Overflow)?;
 		self.previous_integral_term = it;
 		// compute derivative term `dt = kd * (et - et_1)`
-		let dt = self.derivative_parameter.checked_mul(&(et - self.previous_error_value)).ok_or(ArithmeticError::Overflow)?;
+		let dt = self
+			.derivative_parameter
+			.checked_mul(&(et - self.previous_error_value))
+			.ok_or(ArithmeticError::Overflow)?;
 		self.previous_error_value = et;
 
 		// compute u(t), control value `ut = pt + it + dt`
@@ -297,13 +304,13 @@ impl DynamicPIDControllerModel {
 		// update interest_rate `ir = ir_t_1 + ut`
 		if ut.is_negative() {
 			let ut = ut.neg();
-			self.previous_interest_rate = self
-				.previous_interest_rate
-				.saturating_sub(FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0u128)));
+			self.previous_interest_rate = self.previous_interest_rate.saturating_sub(
+				FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0_u128)),
+			);
 		} else {
-			self.previous_interest_rate = self
-				.previous_interest_rate
-				.saturating_add(FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0u128)));
+			self.previous_interest_rate = self.previous_interest_rate.saturating_add(
+				FixedU128::from_inner(ut.into_inner().try_into().unwrap_or(0_u128)),
+			);
 		}
 
 		Ok(self.previous_interest_rate)
@@ -313,15 +320,16 @@ impl DynamicPIDControllerModel {
 		proportional_parameter: FixedI128,
 		integral_parameter: FixedI128,
 		derivative_parameter: FixedI128,
+		initial_interest_rate: FixedU128,
 		target_utilization: FixedU128,
 	) -> Option<DynamicPIDControllerModel> {
 		Some(DynamicPIDControllerModel {
 			proportional_parameter,
 			integral_parameter,
 			derivative_parameter,
-			previous_error_value : <_>::zero(),
-			previous_integral_term : <_>::zero(),
-			previous_interest_rate : <_>::zero(),
+			previous_error_value: <_>::zero(),
+			previous_integral_term: <_>::zero(),
+			previous_interest_rate: initial_interest_rate,
 			target_utilization,
 		})
 	}
@@ -342,7 +350,7 @@ const EXPECTED_COEFFICIENTS_SUM: u16 = 100;
 
 /// The double exponent interest rate model
 /// Interest based on a polynomial of the utilization of the market.
-/// Interest = C_0 + C_1 * U^(2^0) + C_2 * U^(2^1) + C_3 * U^(2^2) ...
+/// Interest = C_0 + C_1 * U^(2^2) + C_2 * U^(2^4) + C_3 * U^(2^8) ...
 /// For reference check https://github.com/dydxprotocol/solo/blob/master/contracts/external/interestsetters/DoubleExponentInterestSetter.sol
 /// https://web.archive.org/web/20210518033618/https://help.dydx.exchange/en/articles/2924246-how-do-interest-rates-work
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
@@ -354,7 +362,7 @@ pub struct DoubleExponentModel {
 impl DoubleExponentModel {
 	/// Create a double exponent model
 	pub fn new(coefficients: [u8; 16]) -> Option<Self> {
-		let sum_of_coefficients = coefficients.iter().fold(0u16, |acc, &c| acc + c as u16);
+		let sum_of_coefficients = coefficients.iter().fold(0_u16, |acc, &c| acc + c as u16);
 		if sum_of_coefficients == EXPECTED_COEFFICIENTS_SUM {
 			return Some(DoubleExponentModel { coefficients })
 		}
@@ -364,13 +372,15 @@ impl DoubleExponentModel {
 
 impl InterestRate for DoubleExponentModel {
 	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate> {
-		// as per model 
-		let mut polynomial: FixedU128 = utilization.into();
-		let mut result = FixedU128::saturating_from_integer(self.coefficients[0]);	
-		for i in 1..self.coefficients.len() {
-			result = result + FixedU128::saturating_from_integer(self.coefficients[i]) * polynomial;
-			polynomial = polynomial* polynomial;
-		}
+		let polynomial: FixedU128 = utilization.into();
+		let (result, _) = self.coefficients.iter().skip(1).fold(
+			(FixedU128::saturating_from_integer(self.coefficients[0]), polynomial),
+			|(rate, polynomial), element| {
+				let polynomial = polynomial * polynomial;
+				let rate = rate + FixedU128::saturating_from_integer(*element) * polynomial;
+				(rate, polynomial)
+			},
+		);
 		let maximal = FixedU128::saturating_from_integer(EXPECTED_COEFFICIENTS_SUM);
 		Some(result / maximal)
 	}
