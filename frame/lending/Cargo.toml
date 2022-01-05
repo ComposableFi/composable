@@ -51,7 +51,7 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 pallet-currency-factory = { path = "../currency-factory" }
 pallet-liquidations = { path = "../liquidations" }
-pallet-dutch-auctions = { path = "../dutch-auction", default-features = false }
+pallet-dutch-auction = { path = "../dutch-auction", default-features = false }
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 pallet-assets = { path = '../assets', default-features = false}
 

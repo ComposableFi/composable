@@ -135,7 +135,7 @@ frame_support::construct_runtime!(
 		Liquidations: pallet_liquidations::{Pallet, Call, Event<T>},
 		Lending: pallet_lending::{Pallet, Call, Config, Storage, Event<T>},
 		Oracle: pallet_lending::mocks::oracle::{Pallet},
-		DutchAuction: pallet_dutch_auctions::{Pallet, Call, Storage, Event<T>},
+		DutchAuction: pallet_dutch_auction::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -301,7 +301,7 @@ impl crate::mocks::oracle::Config for Test {
 }
 
 impl DeFiComposableConfig for Test {
-	type AssetId = MockCurrencyId;
+	type MayBeAssetId = MockCurrencyId;
 	type Balance = Balance;
 }
 
@@ -309,14 +309,44 @@ parameter_types! {
 	pub DutchAuctionPalletId: PalletId = PalletId(*b"dutchauc");
 }
 
-impl pallet_dutch_auctions::Config for Test {
+// later will reuse mocks from that crate
+pub struct DutchAuctionsMocks;
+
+impl pallet_dutch_auction::weights::WeightInfo for DutchAuctionsMocks {
+	fn ask() -> frame_support::dispatch::Weight {
+		0
+	}
+
+	fn take() -> frame_support::dispatch::Weight {
+		0
+	}
+
+	fn liquidate() -> frame_support::dispatch::Weight {
+		0
+	}
+
+	fn known_overhead_for_on_finalize() -> frame_support::dispatch::Weight {
+		0
+	}
+}
+
+impl frame_support::weights::WeightToFeePolynomial for DutchAuctionsMocks {
+	type Balance = u128;
+
+	fn polynomial() -> frame_support::weights::WeightToFeeCoefficients<Self::Balance> {
+		todo!("will replace with mocks from relevant pallet")
+	}
+}
+
+impl pallet_dutch_auction::Config for Test {
 	type Event = Event;
 	type OrderId = u128;
 	type UnixTime = Timestamp;
 	type MultiCurrency = Assets;
-	type WeightInfo = ();
+	type WeightInfo = DutchAuctionsMocks;
 	type NativeCurrency = Assets;
 	type PalletId = DutchAuctionPalletId;
+	type WeightToFee = DutchAuctionsMocks;
 }
 
 impl pallet_liquidations::Config for Test {

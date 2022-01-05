@@ -23,6 +23,7 @@ normal = [
 	"pallet-vault",
 	"session-benchmarking",
 	"vault",
+	"pallet-dutch-auction",
 ]
 
 [dependencies]
@@ -82,6 +83,7 @@ composable-traits = { path = "../../frame/composable-traits" , default-features 
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 pallet-bonded-finance = { optional = true, path = "../../frame/bonded-finance", default-features = false }
 vesting = { optional = true, package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
+pallet-dutch-auction = { optional = true, package = "pallet-dutch-auction", path = "../../frame/dutch-auction", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
@@ -187,6 +189,7 @@ std = [
 	"assets/std",
 	"governance-registry/std",
 	"composable-traits/std",
+	"pallet-dutch-auction/std",
 ]
 runtime-benchmarks = [
 	"assets/runtime-benchmarks",
@@ -232,4 +235,5 @@ develop = [
 	"pallet-bonded-finance",
 	"vault",
 	"vesting",
+	"pallet-dutch-auction",
 ]
