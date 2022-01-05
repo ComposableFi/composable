@@ -20,7 +20,7 @@
     "tokenSymbol": "PICA"
   },
   "relay_chain": "kusama",
-  "para_id": 2104,
+  "para_id": 2087,
   "consensusEngine": null,
   "codeSubstitutes": {},
   "genesis": {
