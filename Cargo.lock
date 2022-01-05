@@ -6780,6 +6780,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-dex-router"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-currency-factory",
+ "pallet-curve-amm",
+ "pallet-uniswap-v2",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-dutch-auction"
 version = "0.0.1"
 dependencies = [

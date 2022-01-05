@@ -1,4 +1,4 @@
-use crate as constant_product_amm;
+use crate as dex_router;
 use composable_traits::currency::DynamicCurrencyId;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
@@ -26,6 +26,7 @@ use sp_runtime::{
 	serde::Deserialize,
 	TypeInfo,
 )]
+#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
 pub enum MockCurrencyId {
 	PICA,
 	BTC,
@@ -79,9 +80,11 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		ConstantProductAmm: constant_product_amm::{Pallet, Call, Storage, Event<T>},
+		CurveAmm: pallet_curve_amm::{Pallet, Call, Storage, Event<T>},
+		ConstantProductAmm: pallet_uniswap_v2::{Pallet, Call, Storage, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -159,6 +162,8 @@ pub type AssetId = MockCurrencyId;
 
 pub type Amount = i128;
 
+pub type PoolId = u32;
+
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
 		Zero::zero()
@@ -178,20 +183,52 @@ impl orml_tokens::Config for Test {
 }
 
 parameter_types! {
-	pub Precision: FixedU128 = FixedU128::saturating_from_rational(1, 1_000_000_000);
-	pub TestPalletID : PalletId = PalletId(*b"const_am");
+	pub CurveAmmPrecision: FixedU128 = FixedU128::saturating_from_rational(1, 1_000_000_000);
+	pub CurveAmmTestPalletID : PalletId = PalletId(*b"curve_am");
 }
 
-impl constant_product_amm::Config for Test {
+impl pallet_curve_amm::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
 	type Balance = Balance;
 	type CurrencyFactory = LpTokenFactory;
-	type Precision = Precision;
+	type Precision = CurveAmmPrecision;
 	type LpToken = Tokens;
+	type PoolId = PoolId;
+	type PoolTokenIndex = u32;
+	type PalletId = CurveAmmTestPalletID;
+}
+
+parameter_types! {
+	pub ConstantProductAmmPrecision: FixedU128 = FixedU128::saturating_from_rational(1, 1_000_000_000);
+	pub ConstantProductAmmTestPalletID : PalletId = PalletId(*b"const_am");
+}
+
+impl pallet_uniswap_v2::Config for Test {
+	type Event = Event;
+	type AssetId = AssetId;
+	type Balance = Balance;
+	type CurrencyFactory = LpTokenFactory;
+	type Precision = ConstantProductAmmPrecision;
+	type LpToken = Tokens;
+	type PoolId = PoolId;
+	type PoolTokenIndex = u32;
+	type PalletId = ConstantProductAmmTestPalletID;
+}
+parameter_types! {
+#[derive(TypeInfo)]
+	pub const MaxHopsCount : u32 = 4;
+}
+
+impl dex_router::Config for Test {
+	type Event = Event;
+	type AssetId = AssetId;
+	type Balance = Balance;
+	type MaxHopsInRoute = MaxHopsCount;
 	type PoolId = u32;
 	type PoolTokenIndex = u32;
-	type PalletId = TestPalletID;
+	type StableSwapDex = CurveAmm;
+	type ConstantProductDex = ConstantProductAmm;
 }
 
 // Build genesis storage according to the mock runtime.
