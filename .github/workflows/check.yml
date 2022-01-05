@@ -101,10 +101,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install toolchain for cargo-llvm-cov
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly-2021-11-29
-          components: llvm-tools-preview
+        run: |
+         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+         echo "$HOME/.cargo/bin:$PATH" >> $GITHUB_PATH
+      - run: |
+          rustup component add llvm-tools-preview
       - name: Install cargo-llvm-cov
         run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
       - name: Run Test (with coverage)
