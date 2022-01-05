@@ -1,6 +1,6 @@
 //! CurrencyId implementation
 
-use codec::{Decode, Encode};
+use codec::{CompactAs, Decode, Encode};
 use composable_traits::currency::{DynamicCurrencyId, Exponent, PriceableAsset};
 use scale_info::TypeInfo;
 use sp_runtime::{ArithmeticError, DispatchError, RuntimeDebug};
@@ -9,7 +9,9 @@ use sp_runtime::{ArithmeticError, DispatchError, RuntimeDebug};
 use serde::{Deserialize, Serialize};
 use sp_runtime::sp_std::ops::Deref;
 
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo)]
+#[derive(
+	Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo, CompactAs,
+)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[repr(transparent)]
 pub struct CurrencyId(u128);
@@ -26,7 +28,7 @@ impl CurrencyId {
 
 impl PriceableAsset for CurrencyId {
 	#[inline]
-	fn smallest_unit_exponent(self) -> Exponent {
+	fn decimals(self) -> Exponent {
 		match self {
 			// NOTE(hussein-aitlahcen): arbitrary, can we please determine this in the PR?
 			CurrencyId::PICA => 8,

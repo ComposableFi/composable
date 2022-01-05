@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -57,6 +59,9 @@ pub mod pallet {
 	/// The counter that track the latest generated currency id.
 	#[pallet::storage]
 	#[pallet::getter(fn currency_latest)]
+	// Absense of a set `CurrencyCounter` means we default to `T::DynamicCurrencyIdInitial`, so
+	// `ValueQuery` is allowed
+	#[allow(clippy::disallowed_type)]
 	pub type CurrencyCounter<T: Config> =
 		StorageValue<_, T::DynamicCurrencyId, ValueQuery, T::DynamicCurrencyIdInitial>;
 

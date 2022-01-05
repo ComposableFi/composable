@@ -26,7 +26,12 @@ fn vesting_from_chain_spec_works() {
 					|5     |5     |5    |
 					+------+------+-----+
 				*/
-				VestingSchedule { start: 2u64, period: 3u64, period_count: 1u32, per_period: 5u64 },
+				VestingSchedule {
+					start: 2_u64,
+					period: 3_u64,
+					period_count: 1_u32,
+					per_period: 5_u64
+				},
 				/*
 				  +------+------+-----+
 				  |block |vested|total|
@@ -40,10 +45,10 @@ fn vesting_from_chain_spec_works() {
 				  +------+------+-----+
 				*/
 				VestingSchedule {
-					start: 2u64 + 3u64,
-					period: 3u64,
-					period_count: 3u32,
-					per_period: 5u64,
+					start: 2_u64 + 3_u64,
+					period: 3_u64,
+					period_count: 3_u32,
+					per_period: 5_u64,
 				}
 			]
 		);
@@ -68,8 +73,12 @@ fn vested_transfer_works() {
 	ExtBuilder::build().execute_with(|| {
 		System::set_block_number(1);
 
-		let schedule =
-			VestingSchedule { start: 0u64, period: 10u64, period_count: 1u32, per_period: 100u64 };
+		let schedule = VestingSchedule {
+			start: 0_u64,
+			period: 10_u64,
+			period_count: 1_u32,
+			per_period: 100_u64,
+		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::signed(ALICE),
 			BOB,
@@ -89,8 +98,12 @@ fn vested_transfer_works() {
 #[test]
 fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule =
-			VestingSchedule { start: 0u64, period: 10u64, period_count: 2u32, per_period: 10u64 };
+		let schedule = VestingSchedule {
+			start: 0_u64,
+			period: 10_u64,
+			period_count: 2_u32,
+			per_period: 10_u64,
+		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::signed(ALICE),
 			BOB,
@@ -100,8 +113,12 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 
 		System::set_block_number(12);
 
-		let another_schedule =
-			VestingSchedule { start: 10u64, period: 13u64, period_count: 1u32, per_period: 7u64 };
+		let another_schedule = VestingSchedule {
+			start: 10_u64,
+			period: 13_u64,
+			period_count: 1_u32,
+			per_period: 7_u64,
+		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::signed(ALICE),
 			BOB,
@@ -111,7 +128,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 
 		assert_eq!(
 			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
-			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 17u64 })
+			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 17_u64 })
 		);
 	});
 }
@@ -119,8 +136,12 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 #[test]
 fn cannot_use_fund_if_not_claimed() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule =
-			VestingSchedule { start: 10u64, period: 10u64, period_count: 1u32, per_period: 50u64 };
+		let schedule = VestingSchedule {
+			start: 10_u64,
+			period: 10_u64,
+			period_count: 1_u32,
+			per_period: 50_u64,
+		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::signed(ALICE),
 			BOB,
@@ -134,15 +155,23 @@ fn cannot_use_fund_if_not_claimed() {
 #[test]
 fn vested_transfer_fails_if_zero_period_or_count() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule =
-			VestingSchedule { start: 1u64, period: 0u64, period_count: 1u32, per_period: 100u64 };
+		let schedule = VestingSchedule {
+			start: 1_u64,
+			period: 0_u64,
+			period_count: 1_u32,
+			per_period: 100_u64,
+		};
 		assert_noop!(
 			Vesting::vested_transfer(Origin::signed(ALICE), BOB, MockCurrencyId::BTC, schedule,),
 			Error::<Runtime>::ZeroVestingPeriod
 		);
 
-		let schedule =
-			VestingSchedule { start: 1u64, period: 1u64, period_count: 0u32, per_period: 100u64 };
+		let schedule = VestingSchedule {
+			start: 1_u64,
+			period: 1_u64,
+			period_count: 0_u32,
+			per_period: 100_u64,
+		};
 		assert_noop!(
 			Vesting::vested_transfer(Origin::signed(ALICE), BOB, MockCurrencyId::BTC, schedule,),
 			Error::<Runtime>::ZeroVestingPeriodCount
@@ -153,8 +182,12 @@ fn vested_transfer_fails_if_zero_period_or_count() {
 #[test]
 fn vested_transfer_fails_if_transfer_err() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule =
-			VestingSchedule { start: 1u64, period: 1u64, period_count: 1u32, per_period: 100u64 };
+		let schedule = VestingSchedule {
+			start: 1_u64,
+			period: 1_u64,
+			period_count: 1_u32,
+			per_period: 100_u64,
+		};
 		assert_noop!(
 			Vesting::vested_transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, schedule,),
 			orml_tokens::Error::<Runtime>::BalanceTooLow,
@@ -165,15 +198,23 @@ fn vested_transfer_fails_if_transfer_err() {
 #[test]
 fn vested_transfer_fails_if_overflow() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule =
-			VestingSchedule { start: 1u64, period: 1u64, period_count: 2u32, per_period: u64::MAX };
+		let schedule = VestingSchedule {
+			start: 1_u64,
+			period: 1_u64,
+			period_count: 2_u32,
+			per_period: u64::MAX,
+		};
 		assert_noop!(
 			Vesting::vested_transfer(Origin::signed(ALICE), BOB, MockCurrencyId::BTC, schedule,),
 			ArithmeticError::Overflow,
 		);
 
-		let another_schedule =
-			VestingSchedule { start: u64::MAX, period: 1u64, period_count: 2u32, per_period: 1u64 };
+		let another_schedule = VestingSchedule {
+			start: u64::MAX,
+			period: 1_u64,
+			period_count: 2_u32,
+			per_period: 1_u64,
+		};
 		assert_noop!(
 			Vesting::vested_transfer(
 				Origin::signed(ALICE),
@@ -189,8 +230,12 @@ fn vested_transfer_fails_if_overflow() {
 #[test]
 fn vested_transfer_fails_if_bad_origin() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule =
-			VestingSchedule { start: 0u64, period: 10u64, period_count: 1u32, per_period: 100u64 };
+		let schedule = VestingSchedule {
+			start: 0_u64,
+			period: 10_u64,
+			period_count: 1_u32,
+			per_period: 100_u64,
+		};
 		assert_noop!(
 			Vesting::vested_transfer(Origin::signed(CHARLIE), BOB, MockCurrencyId::BTC, schedule,),
 			BadOrigin
@@ -201,8 +246,12 @@ fn vested_transfer_fails_if_bad_origin() {
 #[test]
 fn claim_works() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule =
-			VestingSchedule { start: 0u64, period: 10u64, period_count: 2u32, per_period: 10u64 };
+		let schedule = VestingSchedule {
+			start: 0_u64,
+			period: 10_u64,
+			period_count: 2_u32,
+			per_period: 10_u64,
+		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::signed(ALICE),
 			BOB,
@@ -236,8 +285,12 @@ fn claim_works() {
 #[test]
 fn claim_for_works() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule =
-			VestingSchedule { start: 0u64, period: 10u64, period_count: 2u32, per_period: 10u64 };
+		let schedule = VestingSchedule {
+			start: 0_u64,
+			period: 10_u64,
+			period_count: 2_u32,
+			per_period: 10_u64,
+		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::signed(ALICE),
 			BOB,
@@ -249,7 +302,7 @@ fn claim_for_works() {
 
 		assert_eq!(
 			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
-			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 20u64 })
+			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 20_u64 })
 		);
 		assert!(VestingSchedules::<Runtime>::contains_key(&BOB, MockCurrencyId::BTC));
 
@@ -266,8 +319,12 @@ fn claim_for_works() {
 #[test]
 fn update_vesting_schedules_works() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule =
-			VestingSchedule { start: 0u64, period: 10u64, period_count: 2u32, per_period: 10u64 };
+		let schedule = VestingSchedule {
+			start: 0_u64,
+			period: 10_u64,
+			period_count: 2_u32,
+			per_period: 10_u64,
+		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::signed(ALICE),
 			BOB,
@@ -275,8 +332,12 @@ fn update_vesting_schedules_works() {
 			schedule,
 		));
 
-		let updated_schedule =
-			VestingSchedule { start: 0u64, period: 20u64, period_count: 2u32, per_period: 10u64 };
+		let updated_schedule = VestingSchedule {
+			start: 0_u64,
+			period: 20_u64,
+			period_count: 2_u32,
+			per_period: 10_u64,
+		};
 		assert_ok!(Vesting::update_vesting_schedules(
 			Origin::root(),
 			BOB,
@@ -296,7 +357,7 @@ fn update_vesting_schedules_works() {
 		assert!(VestingSchedules::<Runtime>::contains_key(BOB, MockCurrencyId::BTC));
 		assert_eq!(
 			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
-			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 10u64 })
+			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 10_u64 })
 		);
 		assert_ok!(Vesting::update_vesting_schedules(
 			Origin::root(),
@@ -313,7 +374,7 @@ fn update_vesting_schedules_works() {
 fn update_vesting_schedules_fails_if_unexpected_existing_locks() {
 	ExtBuilder::build().execute_with(|| {
 		assert_ok!(Tokens::transfer(Origin::signed(ALICE), BOB, MockCurrencyId::BTC, 1));
-		assert_ok!(Tokens::set_lock(*b"prelocks", MockCurrencyId::BTC, &BOB, 0u64));
+		assert_ok!(Tokens::set_lock(*b"prelocks", MockCurrencyId::BTC, &BOB, 0_u64));
 	});
 }
 
@@ -321,7 +382,7 @@ fn update_vesting_schedules_fails_if_unexpected_existing_locks() {
 fn vested_transfer_check_for_min() {
 	ExtBuilder::build().execute_with(|| {
 		let schedule =
-			VestingSchedule { start: 1u64, period: 1u64, period_count: 1u32, per_period: 3u64 };
+			VestingSchedule { start: 1_u64, period: 1_u64, period_count: 1_u32, per_period: 3_u64 };
 		assert_noop!(
 			Vesting::vested_transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, schedule,),
 			Error::<Runtime>::AmountLow
@@ -332,8 +393,12 @@ fn vested_transfer_check_for_min() {
 #[test]
 fn multiple_vesting_schedule_claim_works() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule =
-			VestingSchedule { start: 0u64, period: 10u64, period_count: 2u32, per_period: 10u64 };
+		let schedule = VestingSchedule {
+			start: 0_u64,
+			period: 10_u64,
+			period_count: 2_u32,
+			per_period: 10_u64,
+		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::signed(ALICE),
 			BOB,
@@ -341,8 +406,12 @@ fn multiple_vesting_schedule_claim_works() {
 			schedule.clone(),
 		));
 
-		let schedule2 =
-			VestingSchedule { start: 0u64, period: 10u64, period_count: 3u32, per_period: 10u64 };
+		let schedule2 = VestingSchedule {
+			start: 0_u64,
+			period: 10_u64,
+			period_count: 3_u32,
+			per_period: 10_u64,
+		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::signed(ALICE),
 			BOB,
@@ -374,8 +443,12 @@ fn multiple_vesting_schedule_claim_works() {
 #[test]
 fn exceeding_maximum_schedules_should_fail() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule =
-			VestingSchedule { start: 0u64, period: 10u64, period_count: 2u32, per_period: 10u64 };
+		let schedule = VestingSchedule {
+			start: 0_u64,
+			period: 10_u64,
+			period_count: 2_u32,
+			per_period: 10_u64,
+		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::signed(ALICE),
 			BOB,

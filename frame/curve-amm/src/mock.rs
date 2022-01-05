@@ -26,6 +26,7 @@ use sp_runtime::{
 	serde::Deserialize,
 	TypeInfo,
 )]
+#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
 pub enum MockCurrencyId {
 	PICA,
 	BTC,
@@ -188,6 +189,8 @@ impl curve_amm::Config for Test {
 	type CurrencyFactory = LpTokenFactory;
 	type Precision = Precision;
 	type LpToken = Tokens;
+	type PoolId = u32;
+	type PoolTokenIndex = u32;
 }
 
 // Build genesis storage according to the mock runtime.

@@ -37,6 +37,7 @@ pub const CHARLIE: AccountId = 3;
 	serde::Deserialize,
 	TypeInfo,
 )]
+#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
 pub enum MockCurrencyId {
 	BTC,
 	ETH,

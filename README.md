@@ -36,14 +36,13 @@ curl https://get.composable.finance | sh
 
 
 ## Run  
-After you have compiled the node, you can simply run it with: 
 
-```sh
-$ ./target/release/composable --dev --tmp
-```
+Since Composable is now a parachain, you need to run a full relaychain in addition to running Composable.
+In order to do so, install [yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable) and use the [polkadot-launch](scripts/polkadot-launch) script.
 
 
-### Pallets
+
+## Pallets
 Picasso ships with multiple custom made pallets such as:
 [Cubic Vault](frame/vault/README.md)    
 [Apollo](frame/oracle/README.md)

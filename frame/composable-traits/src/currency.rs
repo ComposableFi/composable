@@ -10,14 +10,17 @@ pub trait PriceableAsset
 where
 	Self: Copy,
 {
+	/// if currency has `decimals` of 3, than it will return
 	fn unit<T: From<u64>>(&self) -> T {
-		T::from(10u64.pow(self.smallest_unit_exponent()))
+		T::from(10_u64.pow(self.decimals() as u32))
 	}
-	fn smallest_unit_exponent(self) -> Exponent;
+
+	/// Return the decimals of an asset.
+	fn decimals(self) -> Exponent;
 }
 
 impl PriceableAsset for u128 {
-	fn smallest_unit_exponent(self) -> Exponent {
+	fn decimals(self) -> Exponent {
 		0
 	}
 }

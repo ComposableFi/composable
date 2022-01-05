@@ -8,7 +8,14 @@ rust-version = "1.56"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [package.metadata.cargo-udeps.ignore]
-normal = ["pallet-vault", "session-benchmarking", "currency-factory", "oracle", "vault"]
+normal = [
+	"currency-factory",
+	"oracle",
+	"pallet-bonded-finance",
+	"pallet-vault",
+	"session-benchmarking",
+	"vault"
+]
 
 [dependencies]
 frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
@@ -160,6 +167,7 @@ std = [
 	"sp-consensus-aura/std",
     "scale-info/std",
 ]
+
 runtime-benchmarks = [
 	"benchmarking",
 	"support/runtime-benchmarks",
@@ -183,7 +191,9 @@ runtime-benchmarks = [
 	"collective/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
+	"kusama-runtime/runtime-benchmarks",
 ]
+
 develop = [
 	"assets",
 	"assets-registry",

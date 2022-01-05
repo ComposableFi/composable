@@ -3,17 +3,14 @@
 //! https://github.com/makerdao/dss/blob/master/src/abaci.sol
 
 use composable_traits::{
-	auction::{LinearDecrease, StairstepExponentialDecrease},
+	auction::{AuctionStepFunction, LinearDecrease, StairstepExponentialDecrease},
 	loans::DurationSeconds,
 	math::{LiftedFixedBalance, SafeArithmetic},
 };
 
 use sp_runtime::{
-	traits::{
-		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
-		Saturating, Zero,
-	},
-	ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill, Perquintill,
+	traits::{Saturating, Zero},
+	ArithmeticError, FixedPointNumber,
 };
 
 pub trait AuctionTimeCurveModel {
@@ -23,6 +20,20 @@ pub trait AuctionTimeCurveModel {
 		initial_price: LiftedFixedBalance,
 		duration_since_start: DurationSeconds,
 	) -> Result<LiftedFixedBalance, ArithmeticError>;
+}
+
+impl AuctionTimeCurveModel for AuctionStepFunction {
+	fn price(
+		&self,
+		initial_price: composable_traits::math::LiftedFixedBalance,
+		duration_since_start: composable_traits::loans::DurationSeconds,
+	) -> Result<composable_traits::math::LiftedFixedBalance, sp_runtime::ArithmeticError> {
+		match self {
+			AuctionStepFunction::LinearDecrease(x) => x.price(initial_price, duration_since_start),
+			AuctionStepFunction::StairstepExponentialDecrease(x) =>
+				x.price(initial_price, duration_since_start),
+		}
+	}
 }
 
 /// Price calculation when price is decreased linearly in proportion to time:
@@ -39,12 +50,18 @@ impl AuctionTimeCurveModel for LinearDecrease {
 			// here we violate unit of measure to have best math
 			initial_price
 				.safe_mul(
+					// see https://github.com/paritytech/substrate/issues/10572
+					#[allow(clippy::disallowed_method)]
 					&LiftedFixedBalance::checked_from_integer(
 						self.total.saturating_sub(duration_since_start) as u128,
 					)
 					.unwrap(),
 				)?
-				.safe_div(&LiftedFixedBalance::checked_from_integer(self.total as u128).unwrap())
+				.safe_div(
+					// see https://github.com/paritytech/substrate/issues/10572
+					#[allow(clippy::disallowed_method)]
+					&LiftedFixedBalance::checked_from_integer(self.total as u128).unwrap(),
+				)
 		}
 	}
 }
@@ -65,8 +82,6 @@ impl AuctionTimeCurveModel for StairstepExponentialDecrease {
 
 #[cfg(test)]
 mod tests {
-	use core::time;
-	use std::convert::TryInto;
 
 	use composable_traits::{
 		auction::{LinearDecrease, StairstepExponentialDecrease},
@@ -76,16 +91,11 @@ mod tests {
 
 	use sp_arithmetic::assert_eq_error_rate;
 	use sp_runtime::{
-		offchain::Duration,
-		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
-			Saturating, Zero,
-		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128, Percent, Permill,
-		Perquintill,
+		traits::{One, Zero},
+		FixedPointNumber, Permill,
 	};
 
-	use crate::price_function::AuctionTimeCurveModel;
+	use crate::math::AuctionTimeCurveModel;
 
 	#[test]
 	pub fn test_linear_decrease() {
@@ -112,7 +122,7 @@ mod tests {
 		let half = 10;
 
 		let calc = StairstepExponentialDecrease {
-			cut: Permill::from_float(2.71f64.powf(f64::ln(1.0 / 2.0) / half as f64)),
+			cut: Permill::from_float(2.71_f64.powf(f64::ln(1.0 / 2.0) / half as f64)),
 			step: 1,
 		};
 
@@ -131,7 +141,7 @@ mod tests {
 		}
 	}
 
-	use proptest::{prop_assert, prop_assert_eq, strategy::Strategy, test_runner::TestRunner};
+	use proptest::{prop_assert, strategy::Strategy, test_runner::TestRunner};
 
 	#[test]
 	pub fn proptest_half_each_second_vs_linear() {
@@ -141,7 +151,7 @@ mod tests {
 		let initial_price = LiftedFixedBalance::saturating_from_integer(1_000_000);
 		let calc_linear = LinearDecrease { total: time_max };
 		let calc_divide_by_2 =
-			StairstepExponentialDecrease { cut: Permill::from_rational(1u32, 2u32), step: 1 };
+			StairstepExponentialDecrease { cut: Permill::from_rational(1_u32, 2_u32), step: 1 };
 
 		// bases
 		assert_eq!(
