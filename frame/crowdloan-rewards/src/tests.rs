@@ -2,17 +2,16 @@ use crate::{
 	ethereum_recover, ethereum_signable_message,
 	mocks::{
 		AccountId, Balance, Balances, BlockNumber, Call, CrowdloanRewards, ExtBuilder, Origin,
-		RelayChainAccountId, System, Test, ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, DAYS,
-		INITIAL_PAYMENT, MINIMUM_BALANCE, PROOF_PREFIX, VESTING_STEP, WEEKS,
+		RelayChainAccountId, System, Test, ALICE, INITIAL_PAYMENT, PROOF_PREFIX, VESTING_STEP,
+		WEEKS,
 	},
 	models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount},
-	verify_relay, Error, PrevalidateAssociation, RemoteAccountOf, RewardAmountOf, ValidityError,
-	VestingPeriodOf,
+	Error, PrevalidateAssociation, RemoteAccountOf, RewardAmountOf, ValidityError, VestingPeriodOf,
 };
 use codec::Encode;
 use frame_support::{
 	assert_noop, assert_ok,
-	dispatch::{DispatchResult, DispatchResultWithPostInfo, GetDispatchInfo},
+	dispatch::{DispatchResultWithPostInfo, GetDispatchInfo},
 	pallet_prelude::{InvalidTransaction, ValidTransaction},
 	traits::Currency,
 	unsigned::TransactionValidity,
@@ -20,7 +19,7 @@ use frame_support::{
 };
 use hex_literal::hex;
 use sp_core::{ed25519, keccak_256, Pair};
-use sp_runtime::traits::SignedExtension;
+use sp_runtime::{traits::SignedExtension, AccountId32};
 
 type RelayKey = ed25519::Pair;
 type EthKey = libsecp256k1::SecretKey;
@@ -34,10 +33,12 @@ enum ClaimKey {
 impl ClaimKey {
 	fn as_remote_public(&self) -> RemoteAccount<RelayChainAccountId> {
 		match self {
-			ClaimKey::Relay(relay_account) =>
-				RemoteAccount::RelayChain(relay_account.public().into()),
-			ClaimKey::Eth(ethereum_account) =>
-				RemoteAccount::Ethereum(ethereum_address(ethereum_account)),
+			ClaimKey::Relay(relay_account) => {
+				RemoteAccount::RelayChain(relay_account.public().into())
+			}
+			ClaimKey::Eth(ethereum_account) => {
+				RemoteAccount::Ethereum(ethereum_address(ethereum_account))
+			}
 		}
 	}
 	fn claim(&self, reward_account: AccountId) -> DispatchResultWithPostInfo {
@@ -46,13 +47,14 @@ impl ClaimKey {
 	fn associate(&self, reward_account: AccountId) -> DispatchResultWithPostInfo {
 		let proof = match self {
 			ClaimKey::Relay(relay_account) => relay_proof(relay_account, reward_account.clone()),
-			ClaimKey::Eth(ethereum_account) =>
-				ethereum_proof(ethereum_account, reward_account.clone()),
+			ClaimKey::Eth(ethereum_account) => {
+				ethereum_proof(ethereum_account, reward_account.clone())
+			}
 		};
 		CrowdloanRewards::associate(Origin::root(), reward_account, proof)
 	}
 
-	fn proof(self, reward_account: u64) -> Proof<[u8; 32]> {
+	fn proof(self, reward_account: AccountId32) -> Proof<[u8; 32]> {
 		match self {
 			ClaimKey::Relay(relay) => relay_proof(&relay, reward_account),
 			ClaimKey::Eth(eth) => ethereum_proof(&eth, reward_account),
@@ -102,7 +104,7 @@ fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	(0..count)
 		.map(|i| {
 			let account_id =
-				[[0u8; 16], (&(i as u128 + 1)).to_le_bytes()].concat().try_into().unwrap();
+				[[0_u8; 16], (&(i as u128 + 1)).to_le_bytes()].concat().try_into().unwrap();
 			(
 				AccountId::new(account_id),
 				ClaimKey::Relay(ed25519::Pair::from_seed(&keccak_256(
@@ -118,7 +120,7 @@ fn ethereum_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	(0..count)
 		.map(|i| {
 			let account_id =
-				[(&(i as u128 + 1)).to_le_bytes(), [0u8; 16]].concat().try_into().unwrap();
+				[(&(i as u128 + 1)).to_le_bytes(), [0_u8; 16]].concat().try_into().unwrap();
 			(
 				AccountId::new(account_id),
 				ClaimKey::Eth(EthKey::parse(&keccak_256(&i.to_le_bytes())).unwrap()),
@@ -411,12 +413,12 @@ fn valid_associate_transactions_are_free() {
 		for (reward_account, remote_account) in accounts {
 			let prevalidate_association = PrevalidateAssociation::<Test>::new();
 
-			let proof = match remote_account {
-				ClaimKey::Relay(relay) => relay_proof(&relay, reward_account),
-				ClaimKey::Eth(eth) => ethereum_proof(&eth, reward_account),
-			};
+			let proof = remote_account.proof(reward_account.clone());
 
-			let call = Call::CrowdloanRewards(crate::Call::associate { reward_account, proof });
+			let call = Call::CrowdloanRewards(crate::Call::associate {
+				reward_account: reward_account.clone(),
+				proof,
+			});
 			let dispatch_info = call.get_dispatch_info();
 
 			assert_eq!(dispatch_info.pays_fee, Pays::No);
@@ -435,17 +437,20 @@ fn already_associated_associate_transactions_are_recognized() {
 		for (reward_account, remote_account) in accounts.clone() {
 			assert_ok!(CrowdloanRewards::associate(
 				Origin::root(),
-				reward_account,
-				remote_account.proof(reward_account),
+				reward_account.clone(),
+				remote_account.proof(reward_account.clone()),
 			));
 		}
 
 		for (reward_account, remote_account) in accounts {
 			let prevalidate_association = PrevalidateAssociation::<Test>::new();
 
-			let proof = remote_account.proof(reward_account);
+			let proof = remote_account.proof(reward_account.clone());
 
-			let call = Call::CrowdloanRewards(crate::Call::associate { reward_account, proof });
+			let call = Call::CrowdloanRewards(crate::Call::associate {
+				reward_account: reward_account.clone(),
+				proof,
+			});
 			let dispatch_info = call.get_dispatch_info();
 
 			let validate_result =
@@ -462,15 +467,18 @@ fn already_associated_associate_transactions_are_recognized() {
 
 #[test]
 fn no_reward_associate_transactions_are_recognized() {
-	with_rewards(DEFAULT_NB_OF_CONTRIBUTORS, 0, 0, |_, accounts| {
+	with_rewards(DEFAULT_NB_OF_CONTRIBUTORS, 0, DEFAULT_VESTING_PERIOD, |_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 
 		for (reward_account, remote_account) in accounts {
 			let prevalidate_association = PrevalidateAssociation::<Test>::new();
 
-			let proof = remote_account.proof(reward_account);
+			let proof = remote_account.proof(reward_account.clone());
 
-			let call = Call::CrowdloanRewards(crate::Call::associate { reward_account, proof });
+			let call = Call::CrowdloanRewards(crate::Call::associate {
+				reward_account: reward_account.clone(),
+				proof,
+			});
 			let dispatch_info = call.get_dispatch_info();
 
 			let validate_result =

@@ -24,7 +24,6 @@ libsecp256k1 = { version = "0.7.0", default-features = false, features = [
     "static-context",
 ] }
 hex-literal = "0.3"
-libsecp256k1 = { version = "0.7.0", default-features = false, features = [ "hmac", "static-context"] }
 
 [dependencies]
 # should be a dev-dependency. see: https://github.com/rust-lang/cargo/issues/6915
@@ -33,10 +32,13 @@ balances = { package = "pallet-balances", git = "https://github.com/paritytech/s
 ### Benchmarking
 hex-literal = { version = "0.3.3", optional = true }
 once_cell = { version = "1.8.0", optional = true }
-libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, features = [ "hmac", "static-context"] }
+libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, features = [
+    "hmac",
+    "static-context",
+] }
 
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13"  }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 
 sp-application-crypto = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
@@ -69,13 +71,13 @@ std = [
 ]
 
 runtime-benchmarks = [
-  "hex-literal",
-  "once_cell",
-  "libsecp256k1",
-  "sp-application-crypto",
-  "sp-core/full_crypto",
-  "sp-application-crypto/full_crypto",
-	"frame-benchmarking/runtime-benchmarks",
-	"frame-support/runtime-benchmarks",
-	"frame-system/runtime-benchmarks",
+    "hex-literal",
+    "once_cell",
+    "libsecp256k1",
+    "sp-application-crypto",
+    "sp-core/full_crypto",
+    "sp-application-crypto/full_crypto",
+    "frame-benchmarking/runtime-benchmarks",
+    "frame-support/runtime-benchmarks",
+    "frame-system/runtime-benchmarks",
 ]
