@@ -107,7 +107,7 @@ pub mod pallet {
 			+ Debug
 			+ CheckedAdd
 			+ One;
-		type PoolTokenIndex: Copy + Debug + Eq + Into<u32>;
+		type PoolTokenIndex: Copy + Debug + Eq + Into<u32> + From<u8>;
 		type PalletId: Get<PalletId>;
 	}
 
@@ -276,6 +276,10 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type PoolId = T::PoolId;
 		type PoolTokenIndex = T::PoolTokenIndex;
+
+		fn pool_exists(pool_id: T::PoolId) -> bool {
+			Pools::<T>::contains_key(pool_id)
+		}
 
 		fn pool_count() -> T::PoolId {
 			PoolCount::<T>::get()
@@ -598,7 +602,7 @@ pub mod pallet {
 			j_token: T::PoolTokenIndex,
 			dx: Self::Balance,
 			min_dy: Self::Balance,
-		) -> Result<(), DispatchError> {
+		) -> Result<Self::Balance, DispatchError> {
 			let prec = T::Precision::get();
 			let zero_b = Self::Balance::zero();
 			ensure!(dx >= zero_b, Error::<T>::AssetAmountMustBePositiveNumber);
@@ -692,7 +696,7 @@ pub mod pallet {
 				received_amount: dy,
 				fee: dy_fee,
 			});
-			Ok(())
+			Ok(dy)
 		}
 
 		fn withdraw_admin_fees(

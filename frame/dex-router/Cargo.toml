@@ -1,0 +1,50 @@
+[package]
+name = "pallet-dex-router"
+version = "0.0.1"
+authors = ["Composable Developers"]
+homepage = "https://composable.finance"
+edition = "2021"
+rust-version = "1.56"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13"  }
+frame-system = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+
+sp-runtime = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-arithmetic = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-io = {  default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-core = {  default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+sp-std = {  default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+
+composable-traits = { path = "../composable-traits", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+serde = { version = '1', optional = true }
+pallet-curve-amm = { path = "../curve-amm", default-features = false }
+pallet-uniswap-v2 = { path = "../uniswap-v2", default-features = false }
+
+[dependencies.codec]
+default-features = false
+features = ["derive"]
+package = "parity-scale-codec"
+version = "2.0.0"
+
+[dev-dependencies]
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301" }
+pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
+
+[features]
+default = ["std"]
+std = [
+    "serde/std",
+    "codec/std",
+    "scale-info/std",
+    "frame-support/std",
+    "frame-system/std",
+    "sp-runtime/std",
+    "orml-traits/std",
+]
