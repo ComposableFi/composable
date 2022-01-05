@@ -33,12 +33,10 @@ enum ClaimKey {
 impl ClaimKey {
 	fn as_remote_public(&self) -> RemoteAccount<RelayChainAccountId> {
 		match self {
-			ClaimKey::Relay(relay_account) => {
-				RemoteAccount::RelayChain(relay_account.public().into())
-			}
-			ClaimKey::Eth(ethereum_account) => {
-				RemoteAccount::Ethereum(ethereum_address(ethereum_account))
-			}
+			ClaimKey::Relay(relay_account) =>
+				RemoteAccount::RelayChain(relay_account.public().into()),
+			ClaimKey::Eth(ethereum_account) =>
+				RemoteAccount::Ethereum(ethereum_address(ethereum_account)),
 		}
 	}
 	fn claim(&self, reward_account: AccountId) -> DispatchResultWithPostInfo {
@@ -47,9 +45,8 @@ impl ClaimKey {
 	fn associate(&self, reward_account: AccountId) -> DispatchResultWithPostInfo {
 		let proof = match self {
 			ClaimKey::Relay(relay_account) => relay_proof(relay_account, reward_account.clone()),
-			ClaimKey::Eth(ethereum_account) => {
-				ethereum_proof(ethereum_account, reward_account.clone())
-			}
+			ClaimKey::Eth(ethereum_account) =>
+				ethereum_proof(ethereum_account, reward_account.clone()),
 		};
 		CrowdloanRewards::associate(Origin::root(), reward_account, proof)
 	}
