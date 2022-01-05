@@ -38,8 +38,6 @@ Reference for proof mechanism: https://github.com/paritytech/polkadot/blob/maste
 	unused_extern_crates
 )]
 
-use std::fmt;
-
 use codec::{Decode, Encode};
 use frame_support::{
 	pallet_prelude::{InvalidTransaction, ValidTransaction},
@@ -479,7 +477,7 @@ pub struct PrevalidateAssociation<T: Config + Send + Sync>(sp_std::marker::Phant
 where
 	<T as frame_system::Config>::Call: IsSubType<Call<T>>;
 
-impl<T: Config + Send + Sync> fmt::Debug for PrevalidateAssociation<T>
+impl<T: Config + Send + Sync> sp_std::fmt::Debug for PrevalidateAssociation<T>
 where
 	<T as frame_system::Config>::Call: IsSubType<Call<T>>,
 {
