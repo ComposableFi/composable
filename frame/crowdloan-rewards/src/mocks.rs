@@ -8,6 +8,8 @@ use sp_runtime::{
 };
 use system::EnsureRoot;
 
+// another test comment
+
 pub type BlockNumber = u32;
 pub type AccountId = AccountId32;
 pub type RelayChainAccountId = [u8; 32];
