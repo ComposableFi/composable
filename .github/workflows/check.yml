@@ -9,6 +9,10 @@ on:
       - develop
       - release-*
   workflow_dispatch:
+
+env:
+  DOCKER_USER_OPTION: '$UID:$GID'
+
 jobs:
   check:
     runs-on:
@@ -17,6 +21,7 @@ jobs:
       - x64
       - sre
     steps:
+      - uses: xanantis/docker-file-ownership-fix@v1
       - uses: actions/checkout@v2
       - name: Setup toolchain
         run: |
