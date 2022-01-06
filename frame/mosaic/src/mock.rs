@@ -1,5 +1,9 @@
 use crate as pallet_mosaic;
-use frame_support::{ord_parameter_types, parameter_types, traits::Everything, PalletId};
+use frame_support::{
+	ord_parameter_types, parameter_types,
+	traits::{Everything, GenesisBuild},
+	PalletId,
+};
 use frame_system as system;
 use frame_system::EnsureSignedBy;
 use num_traits::Zero;
@@ -105,5 +109,27 @@ impl pallet_mosaic::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	ExtBuilder::default().build()
+}
+
+pub struct ExtBuilder {
+	balances: Vec<(AccountId, CurrencyId, Balance)>,
+}
+
+impl Default for ExtBuilder {
+	fn default() -> Self {
+		Self { balances: vec![(ALICE, 1, 1000000)] }
+	}
+}
+
+impl ExtBuilder {
+	pub fn build(self) -> sp_io::TestExternalities {
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+
+		orml_tokens::GenesisConfig::<Test> { balances: self.balances }
+			.assimilate_storage(&mut t)
+			.unwrap();
+
+		t.into()
+	}
 }

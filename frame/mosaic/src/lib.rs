@@ -15,15 +15,17 @@ pub use pallet::*;
 #[cfg(test)]
 mod mock;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
 
-	use crate::{decay::Decayable, relayer::StaleRelayer};
+	use crate::{
+		decay::Decayable,
+		relayer::{RelayerConfig, StaleRelayer},
+	};
 	use codec::FullCodec;
-	use crate::relayer::RelayerConfig;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
@@ -71,7 +73,7 @@ pub mod pallet {
 	pub type Relayer<T: Config> =
 		StorageValue<_, StaleRelayer<T::AccountId, T::BlockNumber>, ValueQuery>;
 
-	#[derive(Encode, Decode, TypeInfo)]
+	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
 	pub struct AssetInfo<BlockNumber, Balance, Decayable> {
 		last_deposit: BlockNumber,
 		budget: Balance,
@@ -88,7 +90,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	#[derive(Encode, Decode, TypeInfo)]
+	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
 	pub struct NetworkInfo<Balance> {
 		pub enabled: bool,
 		pub max_transfer_size: Balance,
@@ -109,6 +111,7 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
+	#[pallet::getter(fn outgoing_transactions)]
 	pub type OutgoingTransactions<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
@@ -133,7 +136,9 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		RelayerInitialized {},
+		RelayerSet {
+			relayer: AccoundIdOf<T>,
+		},
 		TransferOut {
 			id: Id,
 			to: EthereumAddress,
@@ -191,7 +196,8 @@ pub mod pallet {
 			relayer: T::AccountId,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			Relayer::<T>::set(StaleRelayer::new(relayer));
+			Relayer::<T>::set(StaleRelayer::new(relayer.clone()));
+			Self::deposit_event(Event::RelayerSet { relayer });
 			Ok(().into())
 		}
 
@@ -201,7 +207,7 @@ pub mod pallet {
 		///  - Only callable by the current relayer.
 		///  - TTL must be sufficiently long.
 		#[pallet::weight(10_000)]
-		pub fn rotate(
+		pub fn rotate_relayer(
 			origin: OriginFor<T>,
 			new: T::AccountId,
 			ttl: T::BlockNumber,
@@ -211,6 +217,17 @@ pub mod pallet {
 			let ttl = current_block.saturating_add(ttl);
 			let relayer = relayer.rotate(new, ttl);
 			Relayer::<T>::set(relayer.into());
+			Ok(().into())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn set_network(
+			origin: OriginFor<T>,
+			network_id: NetworkIdOf<T>,
+			network_info: NetworkInfo<BalanceOf<T>>,
+		) -> DispatchResultWithPostInfo {
+			ensure_relayer::<T>(origin)?;
+			NetworkInfos::<T>::insert(network_id, network_info);
 			Ok(().into())
 		}
 
@@ -470,6 +487,14 @@ pub mod pallet {
 		/// AccountId of the pallet, used to store all funds before actually moving them.
 		fn account_id() -> AccoundIdOf<T> {
 			T::PalletId::get().into_account()
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		/// Queries storage, returning the account_id of the current relayer.
+		pub fn relayer_account_id() -> Option<AccoundIdOf<T>> {
+			let current_block = <frame_system::Pallet<T>>::block_number();
+			Relayer::<T>::get().update(current_block).account_id().map(|acc| acc.clone())
 		}
 	}
 

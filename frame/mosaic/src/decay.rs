@@ -15,6 +15,12 @@ pub enum BudgetDecay<Number> {
 	Linear(LinearDecay<Number>),
 }
 
+impl<Number> BudgetDecay<Number> {
+	pub fn linear(n: Number) -> BudgetDecay<Number> {
+		BudgetDecay::Linear(LinearDecay { a: n })
+	}
+}
+
 impl<Balance, BlockNumber> Decayable<Balance, BlockNumber> for BudgetDecay<Balance>
 where
 	BlockNumber: CheckedSub + Into<Balance>,

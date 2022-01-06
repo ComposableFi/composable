@@ -22,13 +22,19 @@ impl<AccountId, BlockNumber: PartialOrd> StaleRelayer<AccountId, BlockNumber> {
 }
 
 /// Configuration for the relayer account.
-#[derive(Decode, Encode, TypeInfo)]
+#[derive(Debug, Decode, Encode, TypeInfo)]
 pub struct RelayerConfig<AccountId, BlockNumber> {
 	/// Current AccountId used by the relayer.
 	current: Option<AccountId>,
 
 	/// Scheduled update of the AccountId.
 	next: Option<Next<AccountId, BlockNumber>>,
+}
+
+impl<AccountId, BlockNumber> RelayerConfig<AccountId, BlockNumber> {
+	pub fn account_id(&self) -> Option<&AccountId> {
+		self.current.as_ref()
+	}
 }
 
 impl<AccountId, BlockNumber> From<RelayerConfig<AccountId, BlockNumber>>
@@ -46,7 +52,7 @@ impl<AccountId, BlockNumber> Default for RelayerConfig<AccountId, BlockNumber> {
 }
 
 /// Next relayer configuration to be used.
-#[derive(Decode, Encode, TypeInfo)]
+#[derive(Debug, Decode, Encode, TypeInfo)]
 pub struct Next<AccountId, BlockNumber> {
 	ttl: BlockNumber,
 	account: AccountId,
