@@ -5,7 +5,7 @@ use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedMul, CheckedSub, Zero},
-	ArithmeticError, DispatchError, FixedPointOperand,
+	ArithmeticError, DispatchError, FixedPointOperand, FixedU128,
 };
 
 use crate::{
@@ -190,3 +190,8 @@ pub trait DeFiComposableConfig: frame_system::Config {
 		+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
 			  // bit
 }
+
+/// The fixed point number from 0..to max.
+/// Unlike `Ratio` it can be more than 1.
+/// And unlike `NormalizedCollateralFactor`, it can be less than one.
+pub type Rate = FixedU128;

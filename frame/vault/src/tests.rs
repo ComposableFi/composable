@@ -15,7 +15,7 @@ use composable_tests_helpers::{
 	test::helper::default_acceptable_computation_error,
 };
 use composable_traits::{
-	rate_model::Rate,
+	defi::Rate,
 	vault::{
 		Deposit, FundsAvailability, ReportableStrategicVault, StrategicVault, Vault, VaultConfig,
 	},
