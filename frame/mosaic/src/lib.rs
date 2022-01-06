@@ -664,6 +664,14 @@ pub mod pallet {
 		}
 	}
 
+	impl<T: Config> Pallet<T> {
+		/// Queries storage, returning the account_id of the current relayer.
+		pub fn relayer_account_id() -> Option<AccoundIdOf<T>> {
+			let current_block = <frame_system::Pallet<T>>::block_number();
+			Relayer::<T>::get().update(current_block).account_id().map(|acc| acc.clone())
+		}
+	}
+
 	/// Convenience identifiers emitted by the pallet for relayer bookkeeping.
 	pub type Id = H256;
 
