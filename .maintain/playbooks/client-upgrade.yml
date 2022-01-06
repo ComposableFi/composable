@@ -7,10 +7,6 @@
           become: true
           command: supervisorctl stop composable
     
-        # - name: Remove Previous Version #ToDO: add --continue-on-error
-        #   become: yes
-        #   command: rm /usr/bin/composable
-    
         - name: Download composable binary {{ release_version }}
           become: yes
           get_url:

@@ -9,6 +9,10 @@ on:
       - develop
       - release-*
   workflow_dispatch:
+
+env:
+  DOCKER_USER_OPTION: '$UID:$GID'
+
 jobs:
   check:
     runs-on:
@@ -17,7 +21,11 @@ jobs:
       - x64
       - sre
     steps:
+      - uses: xanantis/docker-file-ownership-fix@v1
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          
       - name: Setup toolchain
         run: |
          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
