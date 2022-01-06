@@ -70,7 +70,7 @@ assets-registry = { package = "pallet-assets-registry", path = '../../frame/asse
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false, optional = true }
 
 crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
-crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
+crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false, optional = true }
 
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
@@ -229,7 +229,7 @@ runtime-benchmarks = [
 develop = [
 	"assets",
 	"assets-registry",
-	# "crowdloan-rewards",
+	"crowdloan-rewards",
 	"currency-factory",
 	"governance-registry",
 	"oracle",
