@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 #
-# check for any changes in the node/src/runtime, frame/ and primitives/sr_* trees. if
+# check for any changes in the node/src/runtime, frame/* and primitives/sr_* trees. if
 # there are any changes found, it should mark the PR breaksconsensus and
 # "auto-fail" the PR if there isn't a change in the runtime/src/lib.rs file
 # that alters the version.
@@ -89,7 +89,8 @@ else
 
 	source file directories:
 	- bin/node/src/runtime
-	- frame
+	- frame/*
+	- runtime/*
 	- primitives/sr-*
 
 	versions file: ${VERSIONS_FILE}
