@@ -27,6 +27,7 @@ jobs:
 
     - name: Build and Push Artifacts to gcloud
       run: |
+        /home/runner/.cargo/bin/cargo build --release --bins
         /home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
         /home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso
     - name: Login to DockerHub
