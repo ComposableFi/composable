@@ -7,6 +7,7 @@ pub trait WeightInfo {
 	fn known_overhead_for_on_finalize() -> Weight;
 }
 
+/// no weight
 impl WeightInfo for () {
 	fn ask() -> Weight {
 		0

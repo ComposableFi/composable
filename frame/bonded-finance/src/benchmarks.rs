@@ -19,7 +19,6 @@ use frame_support::{
 use frame_system::RawOrigin;
 
 const BALANCE: u64 = 10 * 1_000_000_000_000;
-
 fn assets<T>() -> [AssetIdOf<T>; 2]
 where
 	T: Config,

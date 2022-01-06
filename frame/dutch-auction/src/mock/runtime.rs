@@ -4,10 +4,16 @@ use crate::{
 };
 
 use composable_traits::defi::DeFiComposableConfig;
-use frame_support::{ord_parameter_types, parameter_types, traits::Everything, PalletId};
+use frame_support::{
+	ord_parameter_types, parameter_types,
+	traits::Everything,
+	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
+	PalletId,
+};
 use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 use orml_traits::parameter_type_with_key;
+use smallvec::smallvec;
 use sp_core::{
 	sr25519::{Public, Signature},
 	H256,
@@ -15,6 +21,7 @@ use sp_core::{
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
+	Perbill,
 };
 
 use super::governance_registry::GovernanceRegistry;
@@ -181,8 +188,26 @@ parameter_types! {
 
 // these make some pallets tight coupled onto shared trait
 impl DeFiComposableConfig for Runtime {
-	type AssetId = CurrencyId;
+	type MayBeAssetId = CurrencyId;
 	type Balance = Balance;
+}
+
+parameter_types! {
+	pub static WeightToFee: u128 = 1;
+}
+
+impl WeightToFeePolynomial for WeightToFee {
+	type Balance = u128;
+
+	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+		let one = WeightToFeeCoefficient {
+			degree: 1,
+			coeff_frac: Perbill::zero(),
+			coeff_integer: WEIGHT_TO_FEE.with(|v| *v.borrow()),
+			negative: false,
+		};
+		smallvec![one]
+	}
 }
 
 impl pallet_dutch_auction::Config for Runtime {
@@ -196,7 +221,28 @@ impl pallet_dutch_auction::Config for Runtime {
 
 	type WeightInfo = ();
 
+	type WeightToFee = WeightToFee;
+
 	type PalletId = DutchAuctionPalletId;
 
 	type NativeCurrency = Balances;
+}
+
+pub fn new_test_externalities() -> sp_io::TestExternalities {
+	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+	let balances = vec![
+		(AccountId::from(ALICE), 1_000_000_000_000_000_000_000_000),
+		(AccountId::from(BOB), 1_000_000_000_000_000_000_000_000),
+	];
+
+	pallet_balances::GenesisConfig::<Runtime> { balances: balances.clone() }
+		.assimilate_storage(&mut storage)
+		.unwrap();
+
+	let mut externatlities = sp_io::TestExternalities::new(storage);
+	externatlities.execute_with(|| {
+		System::set_block_number(42);
+		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
+	});
+	externatlities
 }

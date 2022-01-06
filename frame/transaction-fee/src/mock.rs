@@ -18,10 +18,7 @@ use primitives::currency::CurrencyId;
 use support::{
 	parameter_types,
 	traits::{Everything, Imbalance, OnUnbalanced},
-	weights::{
-		DispatchClass, DispatchInfo, PostDispatchInfo, Weight, WeightToFeeCoefficient,
-		WeightToFeeCoefficients, WeightToFeePolynomial,
-	},
+	weights::*,
 };
 
 type UncheckedExtrinsic = system::mocking::MockUncheckedExtrinsic<Runtime>;
