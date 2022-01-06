@@ -29,12 +29,12 @@ jobs:
       run: |
         /home/runner/.cargo/bin/cargo build --release --bins
         tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
-        tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain-utils
+        tar -czvf parachain-utils-${{ env.RELEASE_VERSION }}.tar.gz target/release/parachain-utils
         /home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
         /home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso
         tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
-        tar -czvf picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
-        tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain-utils
+        tar -czvf picasso_runtime.compact.wasm-${{ env.RELEASE_VERSION }}.tar.gz target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
+        tar -czvf parachain-utils-${{ env.RELEASE_VERSION }}.tar.gz target/release/parachain-utils
         gsutil cp *.tar.gz gs://composable-binaries/community-releases/${{ env.RELEASE_VERSION }}/ 
 
     - name: Login to DockerHub
