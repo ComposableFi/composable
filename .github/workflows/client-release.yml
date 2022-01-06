@@ -75,6 +75,10 @@ jobs:
         tag: ${{ github.ref }}
         overwrite: true
         body: "Composable Binary Runtime"
+    
+    - name: Build Cleanup
+      run: |
+        sh cleanup.sh
 
   dali-chacha-client-release:
     needs: [build-and-publish]
