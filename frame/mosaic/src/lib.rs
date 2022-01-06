@@ -1,3 +1,9 @@
+// TODO
+// 1. TEST!
+// 2. RPCs for relayer convenience.
+// 3. Refactor core logic to traits.
+// 4. Benchmarks and Weights!
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod decay;
@@ -17,7 +23,6 @@ pub mod pallet {
 
 	use crate::{decay::Decayable, relayer::StaleRelayer};
 	use codec::FullCodec;
-
 	use crate::relayer::RelayerConfig;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
@@ -42,7 +47,6 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type PalletId: Get<PalletId>;
-
 		type Assets: Mutate<AccoundIdOf<Self>> + Transfer<AccoundIdOf<Self>>;
 
 		type MinimumTTL: Get<BlockNumberOf<Self>>;
@@ -416,6 +420,8 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::TransferInto { to, asset_id, amount, id });
 			Ok(().into())
 		}
+
+		// TODO Add remove incoming transaction
 
 		/// Collects funds deposited by the relayer into the
 		#[pallet::weight(10_000)]
