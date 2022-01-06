@@ -35,7 +35,10 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, Zero};
 	use scale_info::TypeInfo;
-	use sp_runtime::traits::{AccountIdConversion, Saturating};
+	use sp_runtime::{
+		traits::{AccountIdConversion, Saturating},
+		DispatchError,
+	};
 	use sp_std::{fmt::Debug, str};
 
 	type AccoundIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -435,27 +438,41 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let (_caller, current_block) = ensure_relayer::<T>(origin)?;
 
-			let AssetInfo { last_deposit, penalty, budget, decay } =
-				AssetsInfo::<T>::get(asset_id).ok_or(Error::<T>::UnsupportedAsset)?;
-			let penalty = decay
-				.checked_decay(penalty, last_deposit, current_block)
-				.unwrap_or_else(Zero::zero);
-			let budget = budget.saturating_sub(penalty);
-			ensure!(budget > amount, Error::<T>::InsufficientBudget);
+			AssetsInfo::<T>::try_mutate_exists::<_, _, DispatchError, _>(asset_id, |info| {
+				let AssetInfo { last_deposit, penalty, budget, decay } =
+					info.take().ok_or(Error::<T>::UnsupportedAsset)?;
+				let penalty = decay
+					.checked_decay(penalty, last_deposit, current_block)
+					.unwrap_or_else(Zero::zero);
+				let budget = budget.saturating_sub(penalty);
+				ensure!(budget > amount, Error::<T>::InsufficientBudget);
 
-			T::Assets::mint_into(asset_id, &Self::account_id(), amount)?;
-			let lock_at = lock_time.saturating_add(current_block);
+				T::Assets::mint_into(asset_id, &Self::account_id(), amount)?;
+				let lock_at = lock_time.saturating_add(current_block);
 
-			IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev.as_mut() {
-				Some(tx) => *tx = (tx.0.saturating_add(amount), lock_at),
-				_ => *prev = Some((amount, lock_at)),
-			});
+				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| {
+					match prev.as_mut() {
+						Some(tx) => *tx = (tx.0.saturating_add(amount), lock_at),
+						_ => *prev = Some((amount, lock_at)),
+					}
+				});
 
-			Self::deposit_event(Event::<T>::TransferInto { to, asset_id, amount, id });
+				*info = Some(AssetInfo {
+					last_deposit: current_block,
+					budget,
+					penalty: penalty.saturating_add(amount),
+					decay,
+				});
+
+				Self::deposit_event(Event::<T>::TransferInto { to, asset_id, amount, id });
+				Ok(())
+			})?;
+
 			Ok(().into())
 		}
 
-		// TODO Add remove incoming transaction
+		// TODO Add remove incoming transaction. The relayer should be able to remove an unclaimed
+		// incoming transaction (which burns the funds, but does not reduce the penalty)
 
 		/// Collects funds deposited by the relayer into the
 		#[pallet::weight(10_000)]
@@ -511,7 +528,7 @@ pub mod pallet {
 		/// Queries storage, returning the account_id of the current relayer.
 		pub fn relayer_account_id() -> Option<AccoundIdOf<T>> {
 			let current_block = <frame_system::Pallet<T>>::block_number();
-			Relayer::<T>::get().update(current_block).account_id().map(|acc| acc.clone())
+			Relayer::<T>::get().update(current_block).account_id().cloned()
 		}
 	}
 
