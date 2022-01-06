@@ -14,6 +14,7 @@ use frame_support::{
 };
 use hex_literal::hex;
 use sp_core::{ed25519, keccak_256, Pair};
+use sp_runtime::AccountId32;
 
 type RelayKey = ed25519::Pair;
 type EthKey = libsecp256k1::SecretKey;
@@ -44,6 +45,13 @@ impl ClaimKey {
 		};
 		CrowdloanRewards::associate(Origin::root(), reward_account, proof)
 	}
+
+	fn proof(self, reward_account: AccountId32) -> Proof<[u8; 32]> {
+		match self {
+			ClaimKey::Relay(relay) => relay_proof(&relay, reward_account),
+			ClaimKey::Eth(eth) => ethereum_proof(&eth, reward_account),
+		}
+	}
 }
 
 fn relay_proof(relay_account: &RelayKey, reward_account: AccountId) -> Proof<RelayChainAccountId> {
@@ -66,7 +74,7 @@ fn ethereum_proof(
 	);
 	let (sig, recovery_id) =
 		libsecp256k1::sign(&libsecp256k1::Message::parse(&msg), ethereum_account);
-	let mut r = [0u8; 65];
+	let mut r = [0_u8; 65];
 	r[0..64].copy_from_slice(&sig.serialize()[..]);
 	r[64] = recovery_id.serialize();
 	Proof::Ethereum(EcdsaSignature(r))
@@ -88,7 +96,7 @@ fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	(0..count)
 		.map(|i| {
 			let account_id =
-				[[0u8; 16], (&(i as u128 + 1)).to_le_bytes()].concat().try_into().unwrap();
+				[[0_u8; 16], (&(i as u128 + 1)).to_le_bytes()].concat().try_into().unwrap();
 			(
 				AccountId::new(account_id),
 				ClaimKey::Relay(ed25519::Pair::from_seed(&keccak_256(
@@ -104,7 +112,7 @@ fn ethereum_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	(0..count)
 		.map(|i| {
 			let account_id =
-				[(&(i as u128 + 1)).to_le_bytes(), [0u8; 16]].concat().try_into().unwrap();
+				[(&(i as u128 + 1)).to_le_bytes(), [0_u8; 16]].concat().try_into().unwrap();
 			(
 				AccountId::new(account_id),
 				ClaimKey::Eth(EthKey::parse(&keccak_256(&i.to_le_bytes())).unwrap()),
@@ -276,7 +284,7 @@ fn test_not_a_contributor() {
 fn test_association_ok() {
 	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
-		for (picasso_account, remote_account) in accounts.clone().into_iter() {
+		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.associate(picasso_account));
 		}
 	});
@@ -286,7 +294,7 @@ fn test_association_ok() {
 fn test_association_ko() {
 	with_rewards_default(|_, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
-		for (picasso_account, remote_account) in accounts.clone().into_iter() {
+		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NotAssociated);
 		}
 	});
@@ -387,4 +395,131 @@ fn test_valid_eth_hardcoded() {
 		assert_ok!(CrowdloanRewards::claim(Origin::signed(ALICE)));
 		assert_eq!(CrowdloanRewards::claimed_rewards(), CrowdloanRewards::total_rewards());
 	});
+}
+
+mod test_prevalidate_association {
+	use super::{
+		with_rewards, with_rewards_default, ClaimKey, DEFAULT_NB_OF_CONTRIBUTORS,
+		DEFAULT_VESTING_PERIOD,
+	};
+
+	use crate::{
+		mocks::{Call, CrowdloanRewards, Origin, Test},
+		PrevalidateAssociation, ValidityError,
+	};
+
+	use frame_support::{
+		assert_ok,
+		dispatch::{Dispatchable, GetDispatchInfo},
+		pallet_prelude::{InvalidTransaction, ValidTransaction},
+		unsigned::TransactionValidity,
+		weights::Pays,
+	};
+	use sp_runtime::{traits::SignedExtension, AccountId32};
+
+	fn setup_call(
+		remote_account: ClaimKey,
+		reward_account: &AccountId32,
+	) -> (TransactionValidity, Call) {
+		let proof = remote_account.proof(reward_account.clone());
+		let call = Call::CrowdloanRewards(crate::Call::associate {
+			reward_account: reward_account.clone(),
+			proof,
+		});
+		let dispatch_info = call.get_dispatch_info();
+		let validate_result = PrevalidateAssociation::<Test>::new().validate(
+			reward_account,
+			&call,
+			&dispatch_info,
+			0,
+		);
+		(validate_result, call)
+	}
+
+	#[test]
+	fn valid_associate_transactions_are_free() {
+		with_rewards_default(|_, accounts| {
+			assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+
+			for (reward_account, remote_account) in accounts {
+				let (validate_result, call) = setup_call(remote_account, &reward_account);
+
+				assert_eq!(validate_result, Ok(ValidTransaction::default()));
+
+				assert_eq!(call.get_dispatch_info().pays_fee, Pays::No);
+
+				assert!(matches!(
+					call.dispatch(Origin::root()),
+					Ok(frame_support::dispatch::PostDispatchInfo {
+						actual_weight: _,
+						pays_fee: Pays::No
+					})
+				));
+			}
+		});
+	}
+
+	#[test]
+	fn already_associated_associate_transactions_are_recognized() {
+		with_rewards_default(|_, accounts| {
+			assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+
+			for (reward_account, remote_account) in accounts.clone() {
+				assert_ok!(CrowdloanRewards::associate(
+					Origin::root(),
+					reward_account.clone(),
+					remote_account.proof(reward_account.clone()),
+				));
+			}
+
+			for (reward_account, remote_account) in accounts {
+				let (validate_result, call) = setup_call(remote_account, &reward_account);
+
+				assert_eq!(
+					validate_result,
+					Err(InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8).into())
+				);
+
+				// make sure that invalid transactions are not free
+				assert!(matches!(
+					call.dispatch(Origin::root()),
+					Err(sp_runtime::DispatchErrorWithPostInfo {
+						post_info: frame_support::dispatch::PostDispatchInfo {
+							actual_weight: _,
+							pays_fee: Pays::Yes
+						},
+						error: _
+					})
+				));
+			}
+		});
+	}
+
+	#[test]
+	fn no_reward_associate_transactions_are_recognized() {
+		with_rewards(DEFAULT_NB_OF_CONTRIBUTORS, 0, DEFAULT_VESTING_PERIOD, |_, accounts| {
+			assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+
+			for (reward_account, remote_account) in accounts {
+				let (validate_result, call) = setup_call(remote_account, &reward_account);
+
+				assert_eq!(
+					validate_result,
+					Err(InvalidTransaction::Custom(ValidityError::NoReward as u8).into())
+				);
+
+				// make sure that invalid transactions are not free
+				assert!(matches!(
+					call.dispatch(Origin::root()),
+					Err(sp_runtime::DispatchErrorWithPostInfo {
+						post_info: frame_support::dispatch::PostDispatchInfo {
+							actual_weight: _,
+							pays_fee: Pays::Yes
+						},
+						error: _
+					})
+				));
+			}
+		});
+	}
 }

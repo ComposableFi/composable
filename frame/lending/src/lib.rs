@@ -1,5 +1,5 @@
-//!
-
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -405,6 +405,7 @@ pub mod pallet {
 	/// Lending instances counter
 	#[pallet::storage]
 	#[pallet::getter(fn lending_count)]
+	#[allow(clippy::disallowed_type)] // MarketIndex implements Default, so ValueQuery is ok here.
 	pub type LendingCount<T: Config> = StorageValue<_, MarketIndex, ValueQuery>;
 
 	/// Indexed lending instances
@@ -415,14 +416,13 @@ pub mod pallet {
 		Twox64Concat,
 		MarketIndex,
 		MarketConfig<T::VaultId, <T as Config>::AssetId, T::AccountId, T::GroupId>,
-		ValueQuery,
 	>;
 
 	/// Original debt values are on balances.
 	/// Debt token allows to simplify some debt management and implementation of features
 	#[pallet::storage]
 	#[pallet::getter(fn debt_currencies)]
-
+	#[allow(clippy::disallowed_type)] // AssetId implements default, so ValueQuery is ok here.
 	pub type DebtMarkets<T: Config> =
 		StorageMap<_, Twox64Concat, MarketIndex, <T as Config>::AssetId, ValueQuery>;
 
@@ -436,7 +436,7 @@ pub mod pallet {
 		Twox64Concat,
 		T::AccountId,
 		Ratio,
-		ValueQuery,
+		OptionQuery,
 	>;
 
 	/// Latest timestamp at which account borrowed from market.
@@ -455,6 +455,7 @@ pub mod pallet {
 	/// market borrow index
 	#[pallet::storage]
 	#[pallet::getter(fn borrow_index)]
+	#[allow(clippy::disallowed_type)] // MarketIndex implements default, so ValueQuery is ok here.
 	pub type BorrowIndex<T: Config> = StorageMap<_, Twox64Concat, MarketIndex, Ratio, ValueQuery>;
 
 	/// (Market, Account) -> Collateral
@@ -467,12 +468,13 @@ pub mod pallet {
 		Blake2_128Concat,
 		T::AccountId,
 		T::Balance,
-		ValueQuery,
+		OptionQuery,
 	>;
 
 	/// The timestamp of the previous block or defaults to timestamp at genesis.
 	#[pallet::storage]
 	#[pallet::getter(fn last_block_timestamp)]
+	#[allow(clippy::disallowed_type)] // Timestamp default is 0, which is valid in this context.
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	#[pallet::genesis_config]
@@ -935,7 +937,7 @@ pub mod pallet {
 		}
 
 		fn get_market(market_id: &MarketIndex) -> Result<MarketConfiguration<T>, DispatchError> {
-			Markets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist.into())
+			Markets::<T>::get(market_id).ok_or_else(|| Error::<T>::MarketDoesNotExist.into())
 		}
 
 		fn get_borrow_index(market_id: &MarketIndex) -> Result<FixedU128, DispatchError> {
@@ -959,7 +961,7 @@ pub mod pallet {
 			let market_index =
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let account_interest_index =
-				DebtIndex::<T>::try_get(market_id, debt_owner).map_or(Ratio::zero(), |index| index);
+				DebtIndex::<T>::get(market_id, debt_owner).unwrap_or_else(Ratio::zero);
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let existing_borrow_amount = T::MarketDebtCurrency::balance(debt_asset_id, debt_owner);
 			let amount_to_borrow: u128 = amount.into();
@@ -1333,10 +1335,10 @@ pub mod pallet {
 			let debt_asset_id =
 				DebtMarkets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
-			let account_debt = DebtIndex::<T>::try_get(market_id, account);
+			let account_debt = DebtIndex::<T>::get(market_id, account);
 
 			match account_debt {
-				Ok(account_interest_index) => {
+				Some(account_interest_index) => {
 					let principal = T::MarketDebtCurrency::balance_on_hold(debt_asset_id, account);
 					let market_interest_index = Self::get_borrow_index(market_id)?;
 
@@ -1349,7 +1351,7 @@ pub mod pallet {
 					Ok(balance.map(Into::into))
 				},
 				// no active borrow on  market for given account
-				Err(()) => Ok(Some(BorrowAmountOf::<Self>::zero())),
+				None => Ok(Some(BorrowAmountOf::<Self>::zero())),
 			}
 		}
 
@@ -1357,8 +1359,8 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
 		) -> Result<CollateralLpAmountOf<Self>, DispatchError> {
-			AccountCollateral::<T>::try_get(market_id, account)
-				.map_err(|_| Error::<T>::MarketCollateralWasNotDepositedByAccount.into())
+			AccountCollateral::<T>::get(market_id, account)
+				.ok_or_else(|| Error::<T>::MarketCollateralWasNotDepositedByAccount.into())
 		}
 
 		fn collateral_required(
@@ -1369,7 +1371,7 @@ pub mod pallet {
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, borrow_amount)?;
 			Ok(swap_back(borrow_amount_value.into(), &market.collateral_factor)?
-				.checked_mul_int(1u64)
+				.checked_mul_int(1_u64)
 				.ok_or(ArithmeticError::Overflow)?
 				.into())
 		}
@@ -1378,15 +1380,15 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
 		) -> Result<Self::Balance, DispatchError> {
-			let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
-				.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero());
+			let collateral_balance = AccountCollateral::<T>::get(market_id, account)
+				.unwrap_or_else(CollateralLpAmountOf::<Self>::zero);
 
 			if collateral_balance > T::Balance::zero() {
 				let borrower = Self::create_borrower_data(market_id, account)?;
 				Ok(borrower
 					.borrow_for_collateral()
 					.map_err(|_| Error::<T>::NotEnoughCollateralToBorrowAmount)?
-					.checked_mul_int(1u64)
+					.checked_mul_int(1_u64)
 					.ok_or(ArithmeticError::Overflow)?
 					.into())
 			} else {
@@ -1415,9 +1417,11 @@ pub mod pallet {
 			);
 
 			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
-				let new_collateral_balance =
-					(*collateral_balance).checked_add(&amount).ok_or(Error::<T>::Overflow)?;
-				*collateral_balance = new_collateral_balance;
+				let new_collateral_balance = collateral_balance
+					.unwrap_or_default()
+					.checked_add(&amount)
+					.ok_or(Error::<T>::Overflow)?;
+				collateral_balance.replace(new_collateral_balance);
 				Result::<(), Error<T>>::Ok(())
 			})?;
 			<T as Config>::Currency::transfer(
@@ -1478,9 +1482,11 @@ pub mod pallet {
 			);
 
 			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
-				let new_collateral_balance =
-					(*collateral_balance).checked_sub(&amount).ok_or(Error::<T>::Underflow)?;
-				*collateral_balance = new_collateral_balance;
+				let new_collateral_balance = collateral_balance
+					.unwrap_or_default()
+					.checked_sub(&amount)
+					.ok_or(Error::<T>::Overflow)?;
+				collateral_balance.replace(new_collateral_balance);
 				Result::<(), Error<T>>::Ok(())
 			})?;
 			<T as Config>::Currency::transfer(
@@ -1510,7 +1516,7 @@ pub mod pallet {
 		let balance = principal
 			.checked_mul(&market_interest_index)
 			.and_then(|from_start_total| from_start_total.checked_div(&account_interest_index))
-			.and_then(|x| x.checked_mul_int(1u64))
+			.and_then(|x| x.checked_mul_int(1_u64))
 			.ok_or(ArithmeticError::Overflow)?;
 		Ok(Some(balance))
 	}

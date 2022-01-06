@@ -12,7 +12,7 @@ where
 {
 	/// if currency has `decimals` of 3, than it will return
 	fn unit<T: From<u64>>(&self) -> T {
-		T::from(10u64.pow(self.decimals() as u32))
+		T::from(10_u64.pow(self.decimals() as u32))
 	}
 
 	/// Return the decimals of an asset.

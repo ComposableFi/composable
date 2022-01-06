@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -293,7 +295,7 @@ parameter_types! {
 	/// See `multiplier_can_grow_from_zero` in integration_tests.rs.
 	/// This value is currently only used by pallet-transaction-payment as an assertion that the
 	/// next multiplier is always > min value.
-	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
+	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_u128);
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
@@ -375,6 +377,7 @@ where
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			crowdloan_rewards::PrevalidateAssociation::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -980,6 +983,7 @@ pub type SignedExtra = (
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
 	transaction_payment::ChargeTransactionPayment<Runtime>,
+	crowdloan_rewards::PrevalidateAssociation<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;

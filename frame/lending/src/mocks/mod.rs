@@ -64,6 +64,7 @@ pub static UNRESERVED: Lazy<AccountId> = Lazy::new(|| {
 	serde::Deserialize,
 	TypeInfo,
 )]
+#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
 pub enum MockCurrencyId {
 	PICA,
 	BTC,
@@ -394,7 +395,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		System::set_block_number(0);
 		Timestamp::set_timestamp(MILLISECS_PER_BLOCK);
 		// Initialize BTC price to 50000
-		pallet_lending::mocks::oracle::BTCValue::<Test>::set(50000u128);
+		pallet_lending::mocks::oracle::BTCValue::<Test>::set(50000_u128);
 	});
 	ext
 }

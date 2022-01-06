@@ -34,6 +34,7 @@ where
 	T: Config,
 {
 	BondOffer {
+		beneficiary: whitelisted_caller(),
 		asset: bond_asset,
 		bond_price: BalanceOf::<T>::from(MIN_VESTED_TRANSFER),
 		maturity: BondDuration::Finite { return_in: BlockNumberOf::<T>::from(1u32) },
