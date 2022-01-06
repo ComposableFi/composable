@@ -78,8 +78,8 @@ primitives = { path = "../primitives", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false, optional = true }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false, optional = true }
 governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false, optional = true }
-currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false, optional = true}
-composable-traits = { path = "../../frame/composable-traits" , default-features = false}
+currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false, optional = true }
+composable-traits = { path = "../../frame/composable-traits", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 pallet-bonded-finance = { optional = true, path = "../../frame/bonded-finance", default-features = false }
 vesting = { optional = true, package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
@@ -93,7 +93,9 @@ transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rp
 benchmarking = { package = "frame-benchmarking", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false, optional = true }
 system-benchmarking = { package = "frame-system-benchmarking", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false, optional = true }
 hex-literal = { version = "0.3.1", optional = true }
-codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [
+	"derive",
+] }
 
 # Parachain Utilities
 cumulus-pallet-aura-ext = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.13", default-features = false }
@@ -112,7 +114,9 @@ xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.1
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13", default-features = false }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13", default-features = false }
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13", default-features = false }
-scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+scale-info = { version = "1.0", default-features = false, features = [
+	"derive",
+] }
 
 # orml XCM support
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301", default-features = false }
@@ -136,9 +140,9 @@ std = [
 	"sp-block-builder/std",
 	"sp-transaction-pool/std",
 	"sp-inherents/std",
-  	"support/std",
+	"support/std",
 	"executive/std",
- 	"frame-system/std",
+	"frame-system/std",
 	"utility/std",
 	"authorship/std",
 	"balances/std",
@@ -152,7 +156,7 @@ std = [
 	"identity/std",
 	"multisig/std",
 	"vault/std",
-  	"assets/std",
+	"assets/std",
 	"pallet-bonded-finance/std",
 	"vesting/std",
 	"governance-registry/std",
@@ -181,10 +185,10 @@ std = [
 	"xcm-executor/std",
 	"aura/std",
 	"sp-consensus-aura/std",
-    "scale-info/std",
+	"scale-info/std",
 	"orml-xtokens/std",
-    "orml-xcm-support/std",
-    "orml-unknown-tokens/std",
+	"orml-xcm-support/std",
+	"orml-unknown-tokens/std",
 	"assets-registry/std",
 	"assets/std",
 	"governance-registry/std",
@@ -222,7 +226,7 @@ runtime-benchmarks = [
 	"vesting/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
-  	"vault/runtime-benchmarks"
+	"vault/runtime-benchmarks",
 ]
 
 develop = [

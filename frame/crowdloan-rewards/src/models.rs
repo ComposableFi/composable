@@ -8,14 +8,14 @@ pub enum Proof<AccountId> {
 	Ethereum(EcdsaSignature),
 }
 
-#[derive(Clone, RuntimeDebug, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Hash, Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum RemoteAccount<AccountId> {
 	RelayChain(AccountId),
 	Ethereum(EthereumAddress),
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
+#[derive(Hash, Clone, Copy, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
 pub struct EthereumAddress(pub [u8; 20]);
 
 #[cfg(feature = "std")]
