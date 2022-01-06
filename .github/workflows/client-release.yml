@@ -15,7 +15,7 @@ jobs:
     steps:
     - name: cleanup #https://github.com/actions/checkout/issues/211
       run: |
-        chown -R $USER:$USER $GITHUB_WORKSPACE
+        rm -rf /home/runner/_work/composable/composable
 
     - uses: actions/checkout@v2
       with: 
