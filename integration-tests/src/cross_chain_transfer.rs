@@ -236,10 +236,7 @@ fn subscribe_version_notify_works() {
 	KusamaRelay::execute_with(|| {
 		kusama_runtime::System::assert_has_event(kusama_runtime::Event::XcmPallet(
 			pallet_xcm::Event::SupportedVersionChanged(
-				MultiLocation {
-					parents: 0,
-					interior: X1(Parachain(PICASSO_PARA_ID)),
-				},
+				MultiLocation { parents: 0, interior: X1(Parachain(PICASSO_PARA_ID)) },
 				2,
 			),
 		));
@@ -257,10 +254,7 @@ fn subscribe_version_notify_works() {
 		// picasso_runtime::System::assert_has_event(picasso_runtime::Event::PolkadotXcm(
 		picasso_runtime::System::assert_has_event(picasso_runtime::Event::RelayerXcm(
 			pallet_xcm::Event::SupportedVersionChanged(
-				MultiLocation {
-					parents: 1,
-					interior: Here,
-				},
+				MultiLocation { parents: 1, interior: Here },
 				2,
 			),
 		));
