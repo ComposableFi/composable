@@ -6734,10 +6734,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-dutch-auctions"
+name = "pallet-dutch-auction"
 version = "0.0.1"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex-literal",
@@ -6752,6 +6754,7 @@ dependencies = [
  "proptest 1.0.0",
  "scale-info",
  "serde",
+ "smallvec 1.7.0",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
@@ -6928,7 +6931,7 @@ dependencies = [
  "pallet-assets",
  "pallet-balances",
  "pallet-currency-factory",
- "pallet-dutch-auctions",
+ "pallet-dutch-auction",
  "pallet-liquidations",
  "pallet-oracle",
  "pallet-timestamp",
@@ -7980,6 +7983,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
  "pallet-democracy 4.0.0-dev",
+ "pallet-dutch-auction",
  "pallet-governance-registry",
  "pallet-identity",
  "pallet-indices",

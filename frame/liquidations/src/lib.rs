@@ -69,7 +69,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {}
 
 	impl<T: Config> Liquidation for Pallet<T> {
-		type AssetId = T::AssetId;
+		type AssetId = T::MayBeAssetId;
 
 		type Balance = T::Balance;
 

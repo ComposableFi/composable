@@ -38,9 +38,17 @@ Reference for proof mechanism: https://github.com/paritytech/polkadot/blob/maste
 	unused_extern_crates
 )]
 
+use codec::{Decode, Encode};
+use frame_support::{
+	pallet_prelude::{InvalidTransaction, ValidTransaction},
+	traits::IsSubType,
+	unsigned::{TransactionValidity, TransactionValidityError},
+};
 pub use pallet::*;
+use scale_info::TypeInfo;
+use sp_runtime::traits::{DispatchInfoOf, SignedExtension, Zero};
 
-mod models;
+pub mod models;
 
 #[cfg(test)]
 mod mocks;
@@ -69,13 +77,13 @@ pub mod pallet {
 
 	use crate::weights::WeightInfo;
 
-	use super::models::*;
+	use super::models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount};
 
 	#[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo)]
 	pub struct Reward<Balance, BlockNumber> {
-		total: Balance,
-		claimed: Balance,
-		vesting_period: BlockNumber,
+		pub(crate) total: Balance,
+		pub(crate) claimed: Balance,
+		pub(crate) vesting_period: BlockNumber,
 	}
 
 	pub type RemoteAccountOf<T> = RemoteAccount<<T as Config>::RelayChainAccountId>;
@@ -230,7 +238,7 @@ pub mod pallet {
 		/// ```haskell
 		/// proof = sign (concat prefix (hex reward_account))
 		/// ```
-		#[pallet::weight(<T as Config>::WeightInfo::associate(TotalContributors::<T>::get()))]
+		#[pallet::weight((<T as Config>::WeightInfo::associate(TotalContributors::<T>::get()), Pays::No))]
 		#[transactional]
 		pub fn associate(
 			origin: OriginFor<T>,
@@ -267,28 +275,7 @@ pub mod pallet {
 			reward_account: T::AccountId,
 			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
-			let remote_account = match proof {
-				Proof::Ethereum(eth_proof) => {
-					let reward_account_encoded =
-						reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec());
-					let ethereum_address =
-						ethereum_recover(T::Prefix::get(), &reward_account_encoded, &eth_proof)
-							.ok_or(Error::<T>::InvalidProof)?;
-					Result::<_, DispatchError>::Ok(RemoteAccount::Ethereum(ethereum_address))
-				},
-				Proof::RelayChain(relay_account, relay_proof) => {
-					ensure!(
-						verify_relay(
-							T::Prefix::get(),
-							reward_account.clone(),
-							relay_account.clone(),
-							&relay_proof
-						),
-						Error::<T>::InvalidProof
-					);
-					Ok(RemoteAccount::RelayChain(relay_account))
-				},
-			}?;
+			let remote_account = get_remote_account::<T>(proof, &reward_account, T::Prefix::get())?;
 			let claimed = Self::do_claim(remote_account.clone(), &reward_account)?;
 			Associations::<T>::insert(reward_account.clone(), remote_account.clone());
 			Self::deposit_event(Event::Associated {
@@ -378,6 +365,39 @@ pub mod pallet {
 		}
 	}
 
+	pub fn get_remote_account<T: Config>(
+		proof: Proof<<T as Config>::RelayChainAccountId>,
+		reward_account: &<T as frame_system::Config>::AccountId,
+		prefix: &[u8],
+	) -> Result<
+		RemoteAccount<<T as Config>::RelayChainAccountId>,
+		sp_runtime::DispatchErrorWithPostInfo<frame_support::dispatch::PostDispatchInfo>,
+	> {
+		let remote_account = match proof {
+			Proof::Ethereum(eth_proof) => {
+				let reward_account_encoded =
+					reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec());
+				let ethereum_address =
+					ethereum_recover(prefix, &reward_account_encoded, &eth_proof)
+						.ok_or(Error::<T>::InvalidProof)?;
+				Result::<_, DispatchError>::Ok(RemoteAccount::Ethereum(ethereum_address))
+			},
+			Proof::RelayChain(relay_account, relay_proof) => {
+				ensure!(
+					verify_relay(
+						prefix,
+						reward_account.clone(),
+						relay_account.clone(),
+						&relay_proof
+					),
+					Error::<T>::InvalidProof
+				);
+				Ok(RemoteAccount::RelayChain(relay_account))
+			},
+		}?;
+		Ok(remote_account)
+	}
+
 	/// Verify that the proof is valid for the given account.
 	pub fn verify_relay<AccountId: Encode, RelayChainAccountId: Into<AccountId32>>(
 		prefix: &[u8],
@@ -422,4 +442,97 @@ pub mod pallet {
 		);
 		Some(addr)
 	}
+}
+
+/// Validate `associate` calls prior to execution. Needed to avoid a DoS attack since they are
+/// otherwise free to place on chain.
+#[derive(Encode, Decode, Clone, Eq, PartialEq, TypeInfo)]
+#[scale_info(skip_type_params(T))]
+pub struct PrevalidateAssociation<T: Config + Send + Sync>(sp_std::marker::PhantomData<T>)
+where
+	<T as frame_system::Config>::Call: IsSubType<Call<T>>;
+
+impl<T: Config + Send + Sync> sp_std::fmt::Debug for PrevalidateAssociation<T>
+where
+	<T as frame_system::Config>::Call: IsSubType<Call<T>>,
+{
+	#[cfg(feature = "std")]
+	fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
+		write!(f, "PrevalidateAssociation")
+	}
+
+	#[cfg(not(feature = "std"))]
+	fn fmt(&self, _: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
+		Ok(())
+	}
+}
+
+#[allow(clippy::new_without_default)]
+impl<T: Config + Send + Sync> PrevalidateAssociation<T>
+where
+	<T as frame_system::Config>::Call: IsSubType<Call<T>>,
+{
+	/// Create new `SignedExtension` to validate crowdloan rewards association
+	pub fn new() -> Self {
+		Self(sp_std::marker::PhantomData)
+	}
+}
+
+impl<T: Config + Send + Sync> SignedExtension for PrevalidateAssociation<T>
+where
+	<T as frame_system::Config>::Call: IsSubType<Call<T>>,
+{
+	type AccountId = T::AccountId;
+	type Call = <T as frame_system::Config>::Call;
+	type AdditionalSigned = ();
+	type Pre = ();
+	const IDENTIFIER: &'static str = "PrevalidateAssociation";
+
+	fn additional_signed(&self) -> Result<Self::AdditionalSigned, TransactionValidityError> {
+		Ok(())
+	}
+
+	// <weight>
+	// The weight of this logic is included in the `associate` dispatchable.
+	// </weight>
+	fn validate(
+		&self,
+		_who: &Self::AccountId,
+		call: &Self::Call,
+		_info: &DispatchInfoOf<Self::Call>,
+		_len: usize,
+	) -> TransactionValidity {
+		use frame_support::traits::Get;
+
+		if let Some(Call::associate { reward_account, proof }) = IsSubType::is_sub_type(call) {
+			if Associations::<T>::get(reward_account).is_some() {
+				return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8).into()
+			}
+
+			let remote_account =
+				get_remote_account::<T>(proof.clone(), reward_account, T::Prefix::get()).map_err(
+					|_| {
+						Into::<TransactionValidityError>::into(InvalidTransaction::Custom(
+							ValidityError::InvalidProof as u8,
+						))
+					},
+				)?;
+
+			match Rewards::<T>::get(remote_account) {
+				None => InvalidTransaction::Custom(ValidityError::NoReward as u8).into(),
+				Some(reward) if reward.total.is_zero() =>
+					InvalidTransaction::Custom(ValidityError::NoReward as u8).into(),
+				Some(_) => Ok(ValidTransaction::default()),
+			}
+		} else {
+			Ok(ValidTransaction::default())
+		}
+	}
+}
+
+#[repr(u8)]
+pub enum ValidityError {
+	InvalidProof = 0,
+	NoReward = 1,
+	AlreadyAssociated = 2,
 }

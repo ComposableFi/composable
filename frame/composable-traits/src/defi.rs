@@ -5,7 +5,7 @@ use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedMul, CheckedSub, Zero},
-	ArithmeticError, DispatchError, FixedPointOperand,
+	ArithmeticError, DispatchError, FixedPointOperand, FixedU128,
 };
 
 use crate::{
@@ -44,7 +44,7 @@ pub struct Sell<AssetId, Balance> {
 
 impl<AssetId: PartialEq, Balance: PartialOrd + Zero + SafeArithmetic> Sell<AssetId, Balance> {
 	pub fn is_valid(&self) -> bool {
-		self.take.is_valid() && self.pair.is_valid()
+		self.take.is_valid()
 	}
 	pub fn new(
 		base: AssetId,
@@ -61,6 +61,9 @@ impl<AssetId: PartialEq, Balance: PartialOrd + Zero + SafeArithmetic> Sell<Asset
 
 /// given `base`, how much `quote` needed for unit
 /// see [currency pair](https://www.investopedia.com/terms/c/currencypair.asp)
+/// Pair with same base and quote is considered valid as it allows to have mixer, money laundering
+/// like behavior.
+#[repr(C)]
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
 pub struct CurrencyPair<AssetId> {
 	/// See [Base Currency](https://www.investopedia.com/terms/b/basecurrency.asp)
@@ -70,15 +73,37 @@ pub struct CurrencyPair<AssetId> {
 }
 
 impl<AssetId: PartialEq> CurrencyPair<AssetId> {
-	pub fn is_valid(&self) -> bool {
-		self.base != self.quote
+	pub fn new(base: AssetId, quote: AssetId) -> Self {
+		Self { base, quote }
+	}
+
+	///```rust
+	/// let pair = composable_traits::defi::CurrencyPair::<u128>::new(13, 42);
+	/// let slice =  pair.as_slice();
+	/// assert_eq!(slice[0], pair.base);
+	/// assert_eq!(slice[1], pair.quote);
+	/// ```
+	/// ```compile_fail
+	/// # let pair = composable_traits::defi::CurrencyPair::<u128>::new(13, 42);
+	/// # let slice =  pair.as_slice();
+	/// drop(pair);
+	/// let _ = slice[0];
+	/// ```
+	pub fn as_slice(&self) -> &[AssetId] {
+		unsafe { sp_std::slice::from_raw_parts(self as *const Self as *const AssetId, 2) }
+	}
+}
+
+impl<AssetId: PartialEq> AsRef<[AssetId]> for CurrencyPair<AssetId> {
+	fn as_ref(&self) -> &[AssetId] {
+		self.as_slice()
 	}
 }
 
 /// type parameters for traits in pure defi area
 pub trait DeFiEngine {
 	/// The asset ID type
-	type AssetId: AssetIdLike;
+	type MayBeAssetId: AssetIdLike;
 	/// The balance type of an account
 	type Balance: BalanceLike;
 	/// The user account identifier type for the runtime
@@ -129,7 +154,7 @@ pub trait SellEngine<Configuration>: DeFiEngine {
 	/// - `from_to` - account requesting sell
 	fn ask(
 		from_to: &Self::AccountId,
-		order: Sell<Self::AssetId, Self::Balance>,
+		order: Sell<Self::MayBeAssetId, Self::Balance>,
 		configuration: Configuration,
 	) -> Result<Self::OrderId, DispatchError>;
 	/// take order. get not found error if order never existed or was removed.
@@ -146,8 +171,7 @@ pub trait SellEngine<Configuration>: DeFiEngine {
 }
 
 pub trait DeFiComposableConfig: frame_system::Config {
-	// what.
-	type AssetId: AssetIdLike + MaybeSerializeDeserialize + Default;
+	type MayBeAssetId: AssetIdLike + MaybeSerializeDeserialize + Default;
 
 	type Balance: BalanceLike
 		+ Default
@@ -166,3 +190,8 @@ pub trait DeFiComposableConfig: frame_system::Config {
 		+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
 			  // bit
 }
+
+/// The fixed point number from 0..to max.
+/// Unlike `Ratio` it can be more than 1.
+/// And unlike `NormalizedCollateralFactor`, it can be less than one.
+pub type Rate = FixedU128;
