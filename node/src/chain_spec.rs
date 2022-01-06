@@ -1,4 +1,4 @@
-use common::{AccountId, AuraId, Balance};
+use common::{AccountId, AuraId};
 use cumulus_primitives_core::ParaId;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
@@ -10,7 +10,6 @@ pub mod picasso;
 // Parachin ID
 const PARA_ID: ParaId = ParaId::new(2000);
 
-const PICASSO_ED: Balance = picasso_runtime::EXISTENTIAL_DEPOSIT;
 /// The extensions for the [`ChainSpec`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension)]
 #[serde(deny_unknown_fields)]
@@ -111,7 +110,7 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 				],
 				dev_accounts(),
 				PARA_ID,
-				PICASSO_ED,
+				picasso_runtime::ExistentialDeposit::get(),
 			)
 		},
 		vec![],
@@ -153,7 +152,7 @@ pub fn composable_dev() -> composable::ChainSpec {
 				],
 				dev_accounts(),
 				PARA_ID,
-				PICASSO_ED,
+				picasso_runtime::ExistentialDeposit::get(),
 			)
 		},
 		vec![],

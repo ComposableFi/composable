@@ -55,7 +55,7 @@ impl Default for CurrencyId {
 }
 
 impl PriceableAsset for CurrencyId {
-	fn decimals(self) -> composable_traits::currency::Exponent {
+	fn decimals(&self) -> composable_traits::currency::Exponent {
 		match self {
 			CurrencyId::PICA => 0,
 			CurrencyId::BTC => 8,

@@ -26,16 +26,11 @@ impl CurrencyId {
 	pub const LOCAL_LP_TOKEN_START: CurrencyId = CurrencyId(u128::MAX / 2);
 }
 
+/// All assets are normalized to 12 decimals.
 impl PriceableAsset for CurrencyId {
-	#[inline]
-	fn decimals(self) -> Exponent {
-		match self {
-			// NOTE(hussein-aitlahcen): arbitrary, can we please determine this in the PR?
-			CurrencyId::PICA => 8,
-			CurrencyId::LAYR => 8,
-			CurrencyId::CROWD_LOAN => 8,
-			_ => 0,
-		}
+	#[inline(always)]
+	fn decimals(&self) -> Exponent {
+		12
 	}
 }
 
