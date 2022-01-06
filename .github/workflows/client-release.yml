@@ -2,8 +2,8 @@ name: "Dali-chachacha Community Release"
 
 on:
   push: 
-    branches: 
-      - 'one-release'
+    tags: 
+      - 'release-*'
 
 jobs:
   build-and-publish:
