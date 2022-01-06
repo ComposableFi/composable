@@ -15,7 +15,7 @@ jobs:
     steps:
     - name: cleanup #https://github.com/actions/checkout/issues/211
       run: |
-        sudo -S  rm -rf /home/runner/_work/composable/composable
+        echo ${{secrets.COMPOSABLE_GITHUB_TOKEN}} | sudo -S chown -R $USER:$USER $GITHUB_WORKSPACE
 
     - uses: actions/checkout@v2
       with: 
