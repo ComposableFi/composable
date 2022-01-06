@@ -139,6 +139,19 @@ pub mod pallet {
 		RelayerSet {
 			relayer: AccoundIdOf<T>,
 		},
+		RelayerRotated {
+			ttl: BlockNumberOf<T>,
+			account_id: AccoundIdOf<T>,
+		},
+		BudgetUpdated {
+			asset_id: AssetIdOf<T>,
+			amount: BalanceOf<T>,
+			decay: T::BudgetDecay,
+		},
+		NetworksUpdated {
+			network_id: NetworkIdOf<T>,
+			network_info: NetworkInfo<BalanceOf<T>>,
+		},
 		TransferOut {
 			id: Id,
 			to: EthereumAddress,
@@ -215,11 +228,13 @@ pub mod pallet {
 			ensure!(ttl > T::MinimumTTL::get(), Error::<T>::BadTTL);
 			let (relayer, current_block) = ensure_relayer::<T>(origin)?;
 			let ttl = current_block.saturating_add(ttl);
-			let relayer = relayer.rotate(new, ttl);
+			let relayer = relayer.rotate(new.clone(), ttl);
 			Relayer::<T>::set(relayer.into());
+			Self::deposit_event(Event::RelayerRotated { account_id: new, ttl });
 			Ok(().into())
 		}
 
+		/// Sets supported networks and maximum transaction sizes accepted by the relayer.
 		#[pallet::weight(10_000)]
 		pub fn set_network(
 			origin: OriginFor<T>,
@@ -227,11 +242,13 @@ pub mod pallet {
 			network_info: NetworkInfo<BalanceOf<T>>,
 		) -> DispatchResultWithPostInfo {
 			ensure_relayer::<T>(origin)?;
-			NetworkInfos::<T>::insert(network_id, network_info);
+			NetworkInfos::<T>::insert(network_id.clone(), network_info.clone());
+			Self::deposit_event(Event::NetworksUpdated { network_id, network_info });
 			Ok(().into())
 		}
 
-		/// Sets the relayer budget for _incoming_ transactions for specific assets.
+		/// Sets the relayer budget for _incoming_ transactions for specific assets. Does not reset
+		/// the current `penalty`.
 		///
 		/// # Restrictions
 		/// - Only callable by root
@@ -260,11 +277,11 @@ pub mod pallet {
 						last_deposit: current_block,
 						budget: amount,
 						penalty: Zero::zero(),
-						decay,
+						decay: decay.clone(),
 					});
 				*item = Some(new);
 			});
-
+			Self::deposit_event(Event::BudgetUpdated { asset_id, amount, decay });
 			Ok(().into())
 		}
 
