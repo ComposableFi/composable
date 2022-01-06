@@ -1,6 +1,6 @@
 [package]
 name = "composable"
-version = '3.0.0'
+version = '1.0.9'
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
 build = "build.rs"
@@ -99,3 +99,4 @@ ocw = []
 
 [package.metadata.cargo-udeps.ignore]
 normal = ["pallet-bonded-finance"]
+

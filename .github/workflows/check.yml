@@ -7,8 +7,7 @@ on:
     branches:
       - main
       - develop
-      - dali-chachacha
-      - picasso
+      - release-*
   workflow_dispatch:
 jobs:
   check:
