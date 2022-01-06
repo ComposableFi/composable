@@ -45,51 +45,14 @@ pub mod pallet {
 		PalletId,
 	};
 	use scale_info::TypeInfo;
-	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul,
 			CheckedSub, One, Zero,
 		},
-		FixedPointNumber, FixedPointOperand, FixedU128, KeyTypeId as CryptoKeyTypeId, Permill,
+		FixedPointNumber, FixedPointOperand, FixedU128, Permill,
 	};
 	use sp_std::{collections::btree_set::BTreeSet, fmt::Debug, iter::FromIterator};
-
-	pub const PALLET_ID: PalletId = PalletId(*b"CurveAmm");
-	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"camm");
-	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"camm");
-
-	pub mod crypto {
-		use super::KEY_TYPE;
-		use sp_core::sr25519::Signature as Sr25519Signature;
-		use sp_runtime::{
-			app_crypto::{app_crypto, sr25519},
-			traits::Verify,
-			MultiSignature, MultiSigner,
-		};
-		app_crypto!(sr25519, KEY_TYPE);
-
-		pub struct TestAuthId;
-
-		// implementation for runtime
-		impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
-			type RuntimeAppPublic = Public;
-			type GenericSignature = sp_core::sr25519::Signature;
-			type GenericPublic = sp_core::sr25519::Public;
-		}
-
-		// implementation for mock runtime in test
-		impl
-			frame_system::offchain::AppCrypto<
-				<Sr25519Signature as Verify>::Signer,
-				Sr25519Signature,
-			> for TestAuthId
-		{
-			type RuntimeAppPublic = Public;
-			type GenericSignature = sp_core::sr25519::Signature;
-			type GenericPublic = sp_core::sr25519::Public;
-		}
-	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -135,6 +98,7 @@ pub mod pallet {
 			+ CheckedAdd
 			+ One;
 		type PoolTokenIndex: Copy + Debug + Eq + Into<u32>;
+		type PalletId: Get<PalletId>;
 	}
 
 	#[pallet::pallet]
@@ -152,13 +116,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
 	pub type Pools<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::PoolId, StableSwapPoolInfo<T::AccountId>>;
-
-	/// Pool's LP asset
-	// FIXME: This should be named `PoolLpAsset, with the `LP` acronym in camel case: `Lp`
-	#[pallet::storage]
-	#[pallet::getter(fn pool_lp_asset)]
-	pub type PoolLPAsset<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, T::AssetId>;
+		StorageMap<_, Blake2_128Concat, T::PoolId, StableSwapPoolInfo<T::AccountId, T::AssetId>>;
 
 	/// List of assets supported by the pool
 	#[pallet::storage]
@@ -228,90 +186,72 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
-		///
-		/// Included values are:
-		/// - account identifier `T::AccountId`
-		/// - pool identifier `T::PoolId`
-		///
-		/// \[who, pool_id\]
-		PoolCreated { who: T::AccountId, pool_id: T::PoolId },
+		PoolCreated {
+			/// Account id of creator.
+			who: T::AccountId,
+			/// Id of newly created pool.
+			pool_id: T::PoolId,
+		},
 
 		/// Liquidity added into the pool `T::PoolId` by `T::AccountId`.
-		///
-		/// Included values are:
-		/// - account identifier `T::AccountId`
-		/// - pool identifier `T::PoolId`
-		/// - added token amounts `Vec<T::Balance>`
-		/// - charged fees `Vec<T::Balance>`
-		/// - actual invariant `T::Balance`
-		/// - actual token supply `T::Balance`
-		/// - minted amount `T::Balance`
-		///
-		/// \[who, pool_id, token_amounts, fees, invariant, token_supply, mint_amount\]
 		LiquidityAdded {
+			/// Account id who added liquidity.
 			who: T::AccountId,
+			/// Pool id to which liquidity added.
 			pool_id: T::PoolId,
+			/// Added token amounts.
 			token_amounts: Vec<T::Balance>,
+			/// Charged fees.
 			fees: Vec<T::Balance>,
+			/// Invariant after liquidity addition.
 			invariant: T::Balance,
+			/// Updated lp token supply.
 			token_supply: T::Balance,
+			/// Amount of minted lp tokens.
 			mint_amount: T::Balance,
 		},
 
 		/// Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
-		///
-		/// Included values are:
-		/// - account identifier `T::AccountId`
-		/// - pool identifier `T::PoolId`
-		/// - removed token amounts `Vec<T::Balance>`
-		/// - charged fees `Vec<T::Balance>`
-		/// - actual token supply `T::Balance`
-		///
-		/// \[who, pool_id, token_amounts, fees, token_supply\]
 		LiquidityRemoved {
+			/// Account id who removed liquidity.
 			who: T::AccountId,
+			/// Pool id to which liquidity added.
 			pool_id: T::PoolId,
+			/// Removed token amounts.
 			token_amounts: Vec<T::Balance>,
+			/// Charged fees.
 			fees: Vec<T::Balance>,
+			/// Updated lp token supply.
 			token_supply: T::Balance,
 		},
 
 		/// Token exchange happened.
-		///
-		/// Included values are:
-		/// - account identifier `T::AccountId`
-		/// - pool identifier `T::PoolId`
-		/// - index of sent token `T::PoolTokenIndex`
-		/// - amount of sent token `T::Balance`
-		/// - index of received token `T::PoolTokenIndex`
-		/// - amount of received token `T::Balance`
-		/// - charged fee `T::Balance`
-		///
-		/// \[who, pool_id, sent_token_index, sent_amount, received_token_index, received_amount,
-		/// fee\]
 		TokenExchanged {
+			/// Account id who exchanged token.
 			who: T::AccountId,
+			/// Pool id on which exchange done.
 			pool_id: T::PoolId,
+			/// Index of sent token.
 			sent_token_index: T::PoolTokenIndex,
+			/// Amount of sent token.
 			sent_amount: T::Balance,
+			/// Index of received token.
 			received_token_index: T::PoolTokenIndex,
+			/// Amount of received token.
 			received_amount: T::Balance,
+			/// Charged fees.
 			fee: T::Balance,
 		},
 
 		/// Withdraw admin fees `Vec<T::Balance>` from pool `T::PoolId` by user `T::AccountId`
-		///
-		/// Included values are:
-		/// - account identifier `T::AccountId`
-		/// - pool identifier `T::PoolId`
-		/// - admin fee receiving account identifier `T::AccountId`
-		/// - withdrew admin fees `Vec<T::Balance>`
-		///
-		/// [who, pool_id, admin_fee_account, admin_fees]
 		AdminFeesWithdrawn {
+			/// Account id which withdrew admin fee.
 			who: T::AccountId,
+			/// Pool id from which fee withdrew.
 			pool_id: T::PoolId,
+			/// Account id to which fee deposited.
 			admin_fee_account: T::AccountId,
+			/// Amounts of fees.
 			admin_fees: Vec<T::Balance>,
 		},
 	}
@@ -343,9 +283,7 @@ pub mod pallet {
 			);
 
 			let pool = Self::get_pool_info(pool_id).ok_or(Error::<T>::PoolNotFound)?;
-			let pool_lp_asset =
-				PoolLPAsset::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
-
+			let pool_lp_asset = pool.lp_token;
 			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
 			let old_balances = assets
 				.iter()
@@ -358,10 +296,6 @@ pub mod pallet {
 
 			let n_coins = assets.len();
 
-			// REVIEW: I'm not sure if this check needs to be dome? `PoolAssetBalance::<T>::get`
-			// doesn't appear to be fallible, but I could be missing something.
-			ensure!(assets.len() == old_balances.len(), Error::<T>::InconsistentStorage);
-			// If a check needs to be made, then it should be made against `amounts` as is done here
 			ensure!(assets.len() == amounts.len(), Error::<T>::IndexOutOfRange);
 
 			let amplification_coefficient = pool.amplification_coefficient;
@@ -551,18 +485,15 @@ pub mod pallet {
 				})
 				.collect();
 
-			let pool_lp_asset =
-				PoolLPAsset::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
+			let pool = Self::get_pool_info(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let pool_lp_asset = pool.lp_token;
 			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
-			// let n_coins = assets.len();
 
 			let balances: Vec<<T as Config>::Balance> = assets
 				.iter()
 				.copied()
 				.map(|asset_id| PoolAssetBalance::<T>::get(pool_id, asset_id))
 				.collect();
-
-			ensure!(assets.len() == balances.len(), Error::<T>::InconsistentStorage);
 
 			ensure!(assets.len() == min_amounts.len(), Error::<T>::IndexOutOfRange);
 
@@ -648,8 +579,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// REVIEW: indexing
-		#[allow(clippy::indexing_slicing)]
 		fn exchange(
 			who: &Self::AccountId,
 			pool_id: T::PoolId,
@@ -689,7 +618,8 @@ pub mod pallet {
 				.collect();
 
 			// xp[i] + dx
-			let x = xp[i].checked_add(&dx_f).ok_or(Error::<T>::Math)?;
+			let xp_i = xp.get(i).ok_or(Error::<T>::InconsistentStorage)?;
+			let x = xp_i.checked_add(&dx_f).ok_or(Error::<T>::Math)?;
 
 			let amp_f = pool.amplification_coefficient;
 			let ann = Self::get_ann(amp_f, n_coins).ok_or(Error::<T>::Math)?;
@@ -697,7 +627,8 @@ pub mod pallet {
 
 			// -1 just in case there were some rounding errors
 			// dy = xp[j] - y - 1
-			let dy_f = xp[j]
+			let xp_j = xp.get(j).ok_or(Error::<T>::InconsistentStorage)?;
+			let dy_f = xp_j
 				.checked_sub(&y)
 				.ok_or(Error::<T>::Math)?
 				.checked_sub(&prec)
@@ -712,14 +643,14 @@ pub mod pallet {
 			let admin_fee_f: FixedU128 = pool.admin_fee.into();
 			let dy_admin_fee_f = dy_fee_f.checked_mul(&admin_fee_f).ok_or(Error::<T>::Math)?;
 			let dy: Self::Balance = dy_f.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
-			let asset_id_i = assets[i];
-			let asset_id_j = assets[j];
+			let asset_id_i = assets.get(i).ok_or(Error::<T>::InconsistentStorage)?;
+			let asset_id_j = assets.get(j).ok_or(Error::<T>::InconsistentStorage)?;
 			PoolAssetBalance::<T>::mutate(pool_id, asset_id_i, |balance| -> DispatchResult {
 				*balance = x.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
 				Ok(())
 			})?;
 			// When rounding errors happen, we undercharge admin fee in favor of LP
-			let bal_j = xp[j]
+			let bal_j = xp_j
 				.checked_sub(&dy_f)
 				.ok_or(Error::<T>::Math)?
 				.checked_sub(&dy_admin_fee_f)
@@ -729,10 +660,10 @@ pub mod pallet {
 				Ok(())
 			})?;
 
-			ensure!(T::LpToken::balance(asset_id_i, &who) >= dx, Error::<T>::InsufficientFunds);
+			ensure!(T::LpToken::balance(*asset_id_i, &who) >= dx, Error::<T>::InsufficientFunds);
 
 			ensure!(
-				T::LpToken::balance(asset_id_j, &Self::account_id(&pool_id)) >= dy,
+				T::LpToken::balance(*asset_id_j, &Self::account_id(&pool_id)) >= dy,
 				Error::<T>::InsufficientFunds
 			);
 
@@ -839,21 +770,16 @@ pub mod pallet {
 						// We expect that PoolInfos have sequential keys.
 						// No PoolInfo can have key greater or equal to PoolCount
 						ensure!(maybe_pool_info.is_none(), Error::<T>::InconsistentStorage);
+						let lp_asset = T::CurrencyFactory::create()?;
 
 						*maybe_pool_info = Some(StableSwapPoolInfo {
 							owner: who.clone(),
+							lp_token: lp_asset,
 							amplification_coefficient,
 							fee,
 							admin_fee,
 						});
 
-						Ok(())
-					})?;
-
-					PoolLPAsset::<T>::try_mutate(pool_id, |lp_asset| -> DispatchResult {
-						ensure!(lp_asset.is_none(), Error::<T>::InconsistentStorage);
-						let asset = T::CurrencyFactory::create()?;
-						*lp_asset = Some(asset);
 						Ok(())
 					})?;
 
@@ -881,7 +807,9 @@ pub mod pallet {
 		}
 
 		/// Return pool information for given pool_id.
-		pub fn get_pool_info(pool_id: T::PoolId) -> Option<StableSwapPoolInfo<T::AccountId>> {
+		pub fn get_pool_info(
+			pool_id: T::PoolId,
+		) -> Option<StableSwapPoolInfo<T::AccountId, T::AssetId>> {
 			Pools::<T>::get(pool_id)
 		}
 
@@ -1114,8 +1042,6 @@ pub mod pallet {
 			None
 		}
 
-		// REVIEW: indexing
-		#[allow(clippy::indexing_slicing)]
 		fn transfer_liquidity_into_pool(
 			pool_account_id: &T::AccountId,
 			pool_id: T::PoolId,
@@ -1123,9 +1049,10 @@ pub mod pallet {
 			destination_asset_index: usize,
 			amount: T::Balance,
 		) -> DispatchResult {
-			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
-			let asset_id = assets[destination_asset_index];
-			T::LpToken::transfer(asset_id, source, pool_account_id, amount, true)?;
+			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let asset_id =
+				assets.get(destination_asset_index).ok_or(Error::<T>::IndexOutOfRange)?;
+			T::LpToken::transfer(*asset_id, source, pool_account_id, amount, true)?;
 			PoolAssetTotalBalance::<T>::mutate(
 				pool_id,
 				asset_id,
@@ -1138,8 +1065,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// REVIEW: indexing
-		#[allow(clippy::indexing_slicing)]
 		fn transfer_liquidity_from_pool(
 			pool_account_id: &T::AccountId,
 			pool_id: T::PoolId,
@@ -1147,9 +1072,9 @@ pub mod pallet {
 			destination: &T::AccountId,
 			amount: T::Balance,
 		) -> DispatchResult {
-			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
-			let asset_id = assets[source_asset_index];
-			T::LpToken::transfer(asset_id, pool_account_id, destination, amount, true)?;
+			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let asset_id = assets.get(source_asset_index).ok_or(Error::<T>::IndexOutOfRange)?;
+			T::LpToken::transfer(*asset_id, pool_account_id, destination, amount, true)?;
 
 			PoolAssetTotalBalance::<T>::mutate(
 				pool_id,
@@ -1164,7 +1089,7 @@ pub mod pallet {
 		}
 
 		pub fn account_id(pool_id: &T::PoolId) -> T::AccountId {
-			PALLET_ID.into_sub_account(pool_id)
+			T::PalletId::get().into_sub_account(pool_id)
 		}
 	}
 }

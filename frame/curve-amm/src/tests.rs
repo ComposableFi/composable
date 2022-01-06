@@ -181,10 +181,9 @@ fn add_remove_liquidity() {
 		let pool_id = p.unwrap();
 		let pool = CurveAmm::get_pool_info(pool_id);
 		assert!(pool.is_some());
+		let pool = pool.unwrap();
 
-		let pool_lp_asset = CurveAmm::pool_lp_asset(pool_id);
-		assert!(pool_lp_asset.is_some());
-		let pool_lp_asset = pool_lp_asset.unwrap();
+		let pool_lp_asset = pool.lp_token;
 
 		// 1 USDC = 1 USDT
 		let amounts = vec![130_000_u128, 130_000_u128];
@@ -259,10 +258,9 @@ fn exchange_test() {
 		assert_ok!(&p);
 		let pool_id = p.unwrap();
 		let pool = CurveAmm::get_pool_info(pool_id);
-		let pool_lp_asset = CurveAmm::pool_lp_asset(pool_id);
 		assert!(pool.is_some());
-		assert!(pool_lp_asset.is_some());
-		let pool_lp_asset = pool_lp_asset.unwrap();
+		let pool = pool.unwrap();
+		let pool_lp_asset = pool.lp_token;
 		// 1 USDC = 1 USDT
 		let amounts = vec![130000_u128, 130000_u128];
 		assert_ok!(CurveAmm::add_liquidity(&ALICE, pool_id, amounts.clone(), 0_u128));
@@ -324,10 +322,9 @@ proptest! {
 		assert_ok!(&p);
 		let pool_id = p.unwrap();
 		let pool = CurveAmm::get_pool_info(pool_id);
-		let pool_lp_asset = CurveAmm::pool_lp_asset(pool_id);
 		assert!(pool.is_some());
-		assert!(pool_lp_asset.is_some());
-		let pool_lp_asset = pool_lp_asset.unwrap();
+		let pool = pool.unwrap();
+		let pool_lp_asset = pool.lp_token;
 
 		// ALICE adds liquidity to DEX pool.
 		let alice_amounts = vec![alice_balance as u128, alice_balance as u128];
@@ -385,9 +382,8 @@ proptest! {
 		let pool_id = p.unwrap();
 		let pool = CurveAmm::get_pool_info(pool_id);
 		assert!(pool.is_some());
-		let pool_lp_asset = CurveAmm::pool_lp_asset(pool_id);
-		assert!(pool_lp_asset.is_some());
-		let pool_lp_asset = pool_lp_asset.unwrap();
+		let pool = pool.unwrap();
+		let pool_lp_asset = pool.lp_token;
 
 		// ALICE adds liquidity to DEX pool.
 		let alice_amounts = vec![alice_balance as u128, alice_balance as u128];
