@@ -19,6 +19,7 @@ LABEL description="Precompiled Docker image for Composable" \
       image.source="https://github.com/ComposableFi/composable/blob/main/docker/Dockerfile" \
       image.documentation="https://github.com/ComposableFi/composable#readme"
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN wget -c "https://storage.googleapis.com/composable-binaries/community-releases/${VERSION}/composable-${VERSION}.tar.gz" -O - | tar -xz
     
 RUN chmod +x target/release/composable && mv target/release/composable /usr/local/bin

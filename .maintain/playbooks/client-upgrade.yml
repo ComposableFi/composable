@@ -1,7 +1,6 @@
 ---
     - hosts: all
       vars:
-        chain: "{{ lookup('env','CHAIN') }}"
         release_version: "{{ lookup('env','RELEASE_VERSION') }}"
       tasks:
         - name: Stop Composable service
@@ -15,7 +14,7 @@
         - name: Download composable binary {{ release_version }}
           become: yes
           get_url:
-            url: https://storage.googleapis.com/composable-binaries/community-releases/{{ chain }}/composable-{{ release_version }}.tar.gz
+            url: https://storage.googleapis.com/composable-binaries/community-releases/{{ release_version }}/composable-{{ release_version }}.tar.gz
             dest: ~/
             mode: "+x"
       
