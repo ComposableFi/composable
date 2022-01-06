@@ -377,6 +377,7 @@ where
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			crowdloan_rewards::PrevalidateAssociation::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -982,6 +983,7 @@ pub type SignedExtra = (
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
 	transaction_payment::ChargeTransactionPayment<Runtime>,
+	crowdloan_rewards::PrevalidateAssociation<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
