@@ -15,8 +15,6 @@ proof = sign (concat prefix (hex reward_account))
 Reference for proof mechanism: https://github.com/paritytech/polkadot/blob/master/runtime/common/src/claims.rs
 */
 
-// temporary comment to test formatting with git pre-commit hook lkjdflksdjflkjlksdjf
-
 #![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
 #![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
