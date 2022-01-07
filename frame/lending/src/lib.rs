@@ -47,7 +47,7 @@ pub mod pallet {
 		currency::{CurrencyFactory, PriceableAsset},
 		defi::{Rate, DeFiEngine},
 		lending::{
-			math::*, BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, CreateInput,
+			math::*, BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, CreateInput, UpdateInput,
 		},
 		liquidation::Liquidation,
 		loans::{DurationSeconds, PriceStructure, Timestamp},
@@ -378,16 +378,20 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Event emitted when new lending market is created.
-		NewMarketCreated {
+		MarketCreated {
 			market_id: MarketIndex,
 			vault_id: T::VaultId,
 			manager: T::AccountId,
 			input : CreateInput<T::LiquidationStrategyId, T::MayBeAssetId>,
 		},
+		MarketUpdated {
+			market_id: MarketIndex,
+			input : UpdateInput<T::LiquidationStrategyId>,
+		},
 		/// Event emitted when collateral is deposited.
 		CollateralDeposited { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
 		/// Event emitted when collateral is withdrawed.
-		CollateralWithdrawed { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
+		CollateralWithdrawn { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
 		/// Event emitted when user borrows from given market.
 		Borrowed { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
 		/// Event emitted when user repays borrow of beneficiary in given market.
@@ -527,12 +531,25 @@ pub mod pallet {
 				who, 
 				input.clone(),
 			)?;
-			Self::deposit_event(Event::<T>::NewMarketCreated {
+			Self::deposit_event(Event::<T>::MarketCreated {
 				market_id,
 				vault_id,
 				manager: who,
 				input,
 			});
+			Ok(().into())
+		}		
+
+		#[pallet::weight(<T as Config>::WeightInfo::create_new_market())]
+		#[transactional]
+		pub fn update_market(
+			origin: OriginFor<T>,
+			input : UpdateInput<T::LiquidationStrategyId>
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			// 1. validate owner
+			// 2. update configuration
+			// 3. what is owner updates and forces liquidations? ok.
 			Ok(().into())
 		}		
 
@@ -566,7 +583,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			Self::withdraw_collateral_internal(&market_id, &sender, amount)?;
-			Self::deposit_event(Event::<T>::CollateralWithdrawed { sender, market_id, amount });
+			Self::deposit_event(Event::<T>::CollateralWithdrawn { sender, market_id, amount });
 			Ok(().into())
 		}
 
@@ -1493,14 +1510,14 @@ pub mod pallet {
 	pub fn swap(
 		collateral_balance: &LiftedFixedBalance,
 		collateral_price: &LiftedFixedBalance,
-		collateral_factor: &OneOrMoreFixedU128,
+		collateral_factor: &MoreThanOneFixedU128,
 	) -> Result<LiftedFixedBalance, ArithmeticError> {
 		collateral_balance.safe_mul(collateral_price)?.safe_div(collateral_factor)
 	}
 
 	pub fn swap_back(
 		borrow_balance_value: LiftedFixedBalance,
-		collateral_factor: &OneOrMoreFixedU128,
+		collateral_factor: &MoreThanOneFixedU128,
 	) -> Result<LiftedFixedBalance, ArithmeticError> {
 		borrow_balance_value.safe_mul(collateral_factor)
 	}

@@ -3,7 +3,7 @@ pub mod math;
 #[cfg(test)]
 mod tests;
 
-use crate::{time::Timestamp, defi::{CurrencyPair, DeFiEngine, OneOrMoreFixedU128}};
+use crate::{time::Timestamp, defi::{CurrencyPair, DeFiEngine, MoreThanOneFixedU128}};
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
 use sp_runtime::Percent;
@@ -16,31 +16,31 @@ pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 
 
 #[derive(Encode, Decode, Default, TypeInfo)]
-pub struct UpdateInput<LiquidatorId> {
+pub struct UpdateInput<LiquidationStrategyId> {
 	/// Reserve factor of market.
 	pub reserved_factor: Perquintill,
 	/// Collateral factor of market
-	pub collateral_factor: OneOrMoreFixedU128,
+	pub collateral_factor: MoreThanOneFixedU128,
 	///  warn borrower when loan's collateral/debt ratio
 	///  given percentage short to be under collaterized
 	pub under_collaterized_warn_percent: Percent,
 	/// liquidation engine id
-	pub liquidator: Vec<LiquidatorId>,
+	pub liquidator: Vec<LiquidationStrategyId>,
 	pub interest_rate_model: InterestRateModel,
 }
 
 
 /// input to create market extrinsic
 #[derive(Encode, Decode, Default, TypeInfo)]
-pub struct CreateInput<LiquidatorId, AssetId> {
+pub struct CreateInput<LiquidationStrategyId, AssetId> {
 	/// the part of market which can be changed
-	pub updatable: UpdateInput<LiquidatorId>,
+	pub updatable: UpdateInput<LiquidationStrategyId>,
 	/// collateral currency and borrow currency
 	/// in case of liquidation, collateral is base and borrow is quote
 	pub currency_pair: CurrencyPair<AssetId>,
 }
 
-impl<LiquidatorId, AssetId : Copy> CreateInput<LiquidatorId, AssetId> {
+impl<LiquidationStrategyId, AssetId : Copy> CreateInput<LiquidationStrategyId, AssetId> {
 	pub fn borrow_asset(&self)  -> AssetId {
 		self.currency_pair.quote
 	}
@@ -54,7 +54,7 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId> {
 	pub manager: AccountId,
 	pub borrow: VaultId,
 	pub collateral: AssetId,
-	pub collateral_factor: OneOrMoreFixedU128,
+	pub collateral_factor: MoreThanOneFixedU128,
 	pub interest_rate_model: InterestRateModel,
 	pub under_collaterized_warn_percent: Percent,
 	pub liquidator: Option<LiquidationStrategyId>,

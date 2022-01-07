@@ -197,7 +197,7 @@ pub type Rate = FixedU128;
 
 /// The fixed point number of suggested by substrate precision
 /// Must be (1.0.. because applied only to price normalized values
-pub type OneOrMoreFixedU128 = FixedU128;
+pub type MoreThanOneFixedU128 = FixedU128;
 
 /// Must be [0..1]
 pub type ZeroToOneFixedU128 = FixedU128;
