@@ -29,23 +29,36 @@ fn rotate_relayer() {
 	})
 }
 
+fn do_transfer_to() {
+	Mosaic::set_relayer(Origin::root(), ALICE).expect("root may call set_relayer");
+	Mosaic::set_network(
+		Origin::signed(ALICE),
+		1,
+		NetworkInfo { enabled: true, max_transfer_size: 100000 },
+	)
+	.expect("relayer may set network info");
+	Mosaic::set_budget(Origin::root(), 1, 10000, BudgetDecay::linear(10))
+		.expect("root may set budget");
+	Mosaic::transfer_to(Origin::signed(ALICE), 1, 1, [0; 20], 100, true)
+		.expect("transfer_to should work");
+	assert_eq!(Mosaic::outgoing_transactions(&ALICE, 1), Some((100, MinimumTimeLockPeriod::get())));
+
+	// normally we don't unit test events being emitted, but in this case it is very crucial for the
+	// relayer to observe the events.
+	todo!("check that the correct event was emitted")
+}
+
 #[test]
 fn transfer_to() {
 	new_test_ext().execute_with(|| {
-		Mosaic::set_relayer(Origin::root(), ALICE).expect("root may call set_relayer");
-		Mosaic::set_network(
-			Origin::signed(ALICE),
-			1,
-			NetworkInfo { enabled: true, max_transfer_size: 100000 },
-		)
-		.expect("relayer may set network info");
-		Mosaic::set_budget(Origin::root(), 1, 10000, BudgetDecay::linear(10))
-			.expect("root may set budget");
-		Mosaic::transfer_to(Origin::signed(ALICE), 1, 1, [0; 20], 100, true)
-			.expect("transfer_to should work");
-		assert_eq!(
-			Mosaic::outgoing_transactions(&ALICE, 1),
-			Some((100, MinimumTimeLockPeriod::get()))
-		)
+		do_transfer_to();
+	})
+}
+
+#[test]
+fn accept_transfer() {
+	new_test_ext().execute_with(|| {
+		do_transfer_to();
+		Mosaic::accept_transfer(Origin::signed(ALICE), ALICE, 1, 100).expect("accepting transfer should work");
 	})
 }

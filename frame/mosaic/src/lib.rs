@@ -35,8 +35,9 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use num_traits::{CheckedAdd, Zero};
 	use scale_info::TypeInfo;
+	use sp_core::H256;
 	use sp_runtime::{
-		traits::{AccountIdConversion, Saturating},
+		traits::{AccountIdConversion, Keccak256, Saturating},
 		DispatchError,
 	};
 	use sp_std::{fmt::Debug, str};
@@ -107,6 +108,10 @@ pub mod pallet {
 	#[pallet::getter(fn time_lock_period)]
 	pub type TimeLockPeriod<T: Config> =
 		StorageValue<_, BlockNumberOf<T>, ValueQuery, TimeLockPeriodOnEmpty<T>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn nonce)]
+	pub type Nonce<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::type_value]
 	pub fn TimeLockPeriodOnEmpty<T: Config>() -> BlockNumberOf<T> {
@@ -322,10 +327,9 @@ pub mod pallet {
 			ensure!(network_info.max_transfer_size > amount, Error::<T>::ExceedsMaxTransferSize);
 
 			T::Assets::transfer(asset_id, &caller, &Self::account_id(), amount, keep_alive)?;
-
-			let lock_until = <frame_system::Pallet<T>>::block_number()
-				.checked_add(&TimeLockPeriod::<T>::get())
-				.ok_or(Error::<T>::Overflow)?;
+			let now = <frame_system::Pallet<T>>::block_number();
+			let lock_until =
+				now.checked_add(&TimeLockPeriod::<T>::get()).ok_or(Error::<T>::Overflow)?;
 
 			OutgoingTransactions::<T>::try_mutate(
 				caller.clone(),
@@ -345,7 +349,7 @@ pub mod pallet {
 				},
 			)?;
 
-			let id = generate_id::<T>(&caller, &network_id, &asset_id, &address, &amount);
+			let id = generate_id::<T>(&caller, &network_id, &asset_id, &address, &amount, &now);
 			Self::deposit_event(Event::<T>::TransferOut { to: address, amount, network_id, id });
 
 			Ok(().into())
@@ -583,20 +587,27 @@ pub mod pallet {
 	}
 
 	/// Convenience identifiers emitted by the pallet for relayer bookkeeping.
-	pub type Id = [u8; 32];
+	pub type Id = H256;
 
 	/// Raw ethereum addresses.
 	pub type EthereumAddress = [u8; 20];
 
+	/// Uses Keccak256 to generate an identifier for
 	fn generate_id<T: Config>(
-		_to: &AccoundIdOf<T>,
-		_network_id: &NetworkIdOf<T>,
-		_asset_id: &AssetIdOf<T>,
-		_address: &EthereumAddress,
-		_amount: &BalanceOf<T>,
+		to: &AccoundIdOf<T>,
+		network_id: &NetworkIdOf<T>,
+		asset_id: &AssetIdOf<T>,
+		address: &EthereumAddress,
+		amount: &BalanceOf<T>,
+		block_number: &BlockNumberOf<T>,
 	) -> Id {
-		todo!(
-			"generate an id based of the hash of the input parameters, and an incrementing nonce."
-		)
+		use sp_runtime::traits::Hash;
+
+		let nonce = Nonce::<T>::mutate(|nonce| {
+			*nonce = nonce.wrapping_add(1);
+			*nonce
+		});
+
+		Keccak256::hash_of(&(to, network_id, asset_id, address, amount, &block_number, nonce))
 	}
 }
