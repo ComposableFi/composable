@@ -26,6 +26,7 @@ type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 
 pub const ALICE: AccountId = 1_u32;
 pub const BOB: AccountId = 2_u32;
+pub const RELAYER: AccountId = 3_u32;
 
 frame_support::construct_runtime!(
 	pub enum Test where

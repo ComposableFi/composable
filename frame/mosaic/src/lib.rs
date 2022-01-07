@@ -131,6 +131,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn incoming_transactions)]
 	pub type IncomingTransactions<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
@@ -543,7 +544,7 @@ pub mod pallet {
 				asset_id,
 				|deposit| {
 					let tx = deposit.ok_or(Error::<T>::NoClaimableTx)?;
-					ensure!(tx.1 > now, Error::<T>::NoClaimableTx);
+					ensure!(tx.1 < now, Error::<T>::NoClaimableTx);
 					T::Assets::transfer(asset_id, &Self::account_id(), &to, tx.0, true)?;
 					// Delete the deposit.
 					deposit.take();
@@ -573,8 +574,12 @@ pub mod pallet {
 	#[pallet::extra_constants]
 	impl<T: Config> Pallet<T> {
 		/// AccountId of the pallet, used to store all funds before actually moving them.
-		fn account_id() -> AccoundIdOf<T> {
+		pub fn account_id() -> AccoundIdOf<T> {
 			T::PalletId::get().into_account()
+		}
+
+		pub fn timelock_period() -> BlockNumberOf<T> {
+			TimeLockPeriod::<T>::get()
 		}
 	}
 

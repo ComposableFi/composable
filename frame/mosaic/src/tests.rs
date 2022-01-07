@@ -5,13 +5,24 @@
 /// 3. Add tests for linear decay.
 use crate::{mock::*, *};
 
+pub trait OriginExt {
+	fn relayer() -> Origin {
+		Origin::signed(RELAYER)
+	}
+
+	fn alice() -> Origin {
+		Origin::signed(ALICE)
+	}
+}
+
+impl OriginExt for Origin {}
+
 #[test]
 fn set_relayer() {
 	new_test_ext().execute_with(|| {
-		Mosaic::set_relayer(Origin::root(), ALICE).expect("root may call set_relayer");
-		assert_eq!(Mosaic::relayer_account_id(), Some(ALICE));
-		Mosaic::set_relayer(Origin::signed(ALICE), ALICE)
-			.expect_err("only root may call set_relayer");
+		Mosaic::set_relayer(Origin::root(), RELAYER).expect("root may call set_relayer");
+		assert_eq!(Mosaic::relayer_account_id(), Some(RELAYER));
+		Mosaic::set_relayer(Origin::relayer(), ALICE).expect_err("only root may call set_relayer");
 		Mosaic::set_relayer(Origin::none(), ALICE).expect_err("only root may call set_relayer");
 	})
 }
@@ -21,36 +32,49 @@ fn rotate_relayer() {
 	new_test_ext().execute_with(|| {
 		let ttl = 500;
 		let current_block = System::block_number();
-		Mosaic::set_relayer(Origin::root(), ALICE).expect("root may call set_relayer");
-		Mosaic::rotate_relayer(Origin::signed(ALICE), BOB, ttl)
-			.expect("relayer may rotate relayer");
+		Mosaic::set_relayer(Origin::root(), RELAYER).expect("root may call set_relayer");
+		Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl).expect("relayer may rotate relayer");
 		System::set_block_number(current_block + ttl + 2);
 		assert_eq!(Mosaic::relayer_account_id(), Some(BOB))
 	})
 }
 
-fn do_transfer_to() {
-	Mosaic::set_relayer(Origin::root(), ALICE).expect("root may call set_relayer");
+fn initialize() {
+	Mosaic::set_relayer(Origin::root(), RELAYER).expect("root may call set_relayer");
 	Mosaic::set_network(
-		Origin::signed(ALICE),
+		Origin::relayer(),
 		1,
 		NetworkInfo { enabled: true, max_transfer_size: 100000 },
 	)
 	.expect("relayer may set network info");
 	Mosaic::set_budget(Origin::root(), 1, 10000, BudgetDecay::linear(10))
 		.expect("root may set budget");
+}
+
+fn do_transfer_to() {
 	Mosaic::transfer_to(Origin::signed(ALICE), 1, 1, [0; 20], 100, true)
 		.expect("transfer_to should work");
 	assert_eq!(Mosaic::outgoing_transactions(&ALICE, 1), Some((100, MinimumTimeLockPeriod::get())));
 
 	// normally we don't unit test events being emitted, but in this case it is very crucial for the
 	// relayer to observe the events.
-	todo!("check that the correct event was emitted")
+	// todo!("check that the correct event was emitted")
+}
+
+fn do_timelocked_mint() {
+	let to = ALICE;
+	let asset_id = 1;
+
+	Mosaic::timelocked_mint(Origin::relayer(), asset_id, to, 50, 10, Default::default())
+		.expect("relayer should be able to mint");
+
+	assert_eq!(Mosaic::incoming_transactions(to, asset_id), Some((50, 10)));
 }
 
 #[test]
 fn transfer_to() {
 	new_test_ext().execute_with(|| {
+		initialize();
 		do_transfer_to();
 	})
 }
@@ -58,7 +82,66 @@ fn transfer_to() {
 #[test]
 fn accept_transfer() {
 	new_test_ext().execute_with(|| {
+		initialize();
 		do_transfer_to();
-		Mosaic::accept_transfer(Origin::signed(ALICE), ALICE, 1, 100).expect("accepting transfer should work");
+		Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 100)
+			.expect("accepting transfer should work");
+	})
+}
+
+#[test]
+fn claim_stale_to() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		do_transfer_to();
+		let current_block = System::block_number();
+		System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+		Mosaic::claim_stale_to(Origin::signed(ALICE), ALICE, 1)
+			.expect("claiming an outgoing transaction should work after the timelock period");
+	})
+}
+
+#[test]
+fn timelocked_mint() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		do_timelocked_mint();
+	})
+}
+
+#[test]
+fn rescind_timelocked_mint() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		do_timelocked_mint();
+		Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 40)
+			.expect("relayer should be able to rescind transactions");
+		assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((10, 10)));
+		Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 10)
+			.expect("relayer should be able to rescind transactions");
+		assert_eq!(Mosaic::incoming_transactions(ALICE, 1), None);
+	})
+}
+
+#[test]
+fn set_timelock_duration() {
+	new_test_ext().execute_with(|| {
+		Mosaic::set_timelock_duration(Origin::root(), MinimumTimeLockPeriod::get() + 1)
+			.expect("root may set the timelock period");
+	})
+}
+
+#[test]
+fn claim_to() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		do_timelocked_mint();
+		let current_block = System::block_number();
+		Mosaic::claim_to(Origin::alice(), 1, ALICE).expect_err(
+			"received funds should only be claimable after waiting for the relayer mandated time",
+		);
+		System::set_block_number(current_block + 10 + 1);
+		Mosaic::claim_to(Origin::alice(), 1, ALICE)
+			.expect("received funds should be claimable after time has passed");
 	})
 }
