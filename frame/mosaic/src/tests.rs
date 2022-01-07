@@ -727,3 +727,11 @@ fn claim_to() {
 			.expect("received funds should be claimable after time has passed");
 	})
 }
+
+#[test]
+fn accept_transfer() {
+	new_test_ext().execute_with(|| {
+		do_transfer_to();
+		Mosaic::accept_transfer(Origin::signed(ALICE), ALICE, 1, 100).expect("accepting transfer should work");
+	})
+}
