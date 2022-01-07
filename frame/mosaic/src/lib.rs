@@ -172,6 +172,11 @@ pub mod pallet {
 			asset_id: AssetIdOf<T>,
 			id: Id,
 		},
+		TransferIntoRescined {
+			account: AccoundIdOf<T>,
+			amount: BalanceOf<T>,
+			asset_id: AssetIdOf<T>,
+		},
 		TransferAccepted {
 			from: AccoundIdOf<T>,
 			asset_id: AssetIdOf<T>,
@@ -189,6 +194,7 @@ pub mod pallet {
 	pub enum Error<T> {
 		BadOrigin,
 		BadTTL,
+		BadTimelockPeriod,
 		UnsupportedAsset,
 		NetworkDisabled,
 		UnsupportedNetwork,
@@ -471,8 +477,52 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// TODO Add remove incoming transaction. The relayer should be able to remove an unclaimed
-		// incoming transaction (which burns the funds, but does not reduce the penalty)
+		#[pallet::weight(10_000)]
+		pub fn set_timelock_duration(
+			origin: OriginFor<T>,
+			period: BlockNumberOf<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			ensure!(period > T::MinimumTimeLockPeriod::get(), Error::<T>::BadTimelockPeriod);
+			TimeLockPeriod::<T>::set(period);
+			Ok(().into())
+		}
+
+		/// Burns funds waiting in incoming_transactions that are still unclaimed. May be used by
+		/// the relayer in case of finality issues on the other side of the bridge.
+		#[pallet::weight(10_000)]
+		#[transactional]
+		pub fn rescind_timelocked_mint(
+			origin: OriginFor<T>,
+			asset_id: AssetIdOf<T>,
+			account: AccoundIdOf<T>,
+			amount: BalanceOf<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure_relayer::<T>(origin)?;
+
+			IncomingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
+				account.clone(),
+				asset_id,
+				|prev| {
+					let tx = prev.as_mut().ok_or(Error::<T>::NoClaimableTx)?;
+					// Wipe the entire incoming transaction.
+					if tx.0 == amount {
+						*prev = None;
+					} else {
+						tx.0 = tx.0.saturating_sub(amount);
+					}
+					T::Assets::burn_from(asset_id, &Self::account_id(), amount)?;
+					Self::deposit_event(Event::<T>::TransferIntoRescined {
+						account,
+						amount,
+						asset_id,
+					});
+					Ok(())
+				},
+			)?;
+
+			Ok(().into())
+		}
 
 		/// Collects funds deposited by the relayer into the
 		#[pallet::weight(10_000)]
