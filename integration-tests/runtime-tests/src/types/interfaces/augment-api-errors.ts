@@ -16,6 +16,7 @@ declare module '@polkadot/api-base/types/errors' {
     assetsRegistry: {
       ForeignAssetIdAlreadyUsed: AugmentedError<ApiType>;
       LocalAssetIdAlreadyUsed: AugmentedError<ApiType>;
+      LocalAssetIdNotFound: AugmentedError<ApiType>;
       OnlyAllowedForAdmins: AugmentedError<ApiType>;
       /**
        * Generic error
@@ -385,6 +386,7 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     dutchAuction: {
+      NotEnoughNativeCurrentyToPayForAuction: AugmentedError<ApiType>;
       OrderNotFound: AugmentedError<ApiType>;
       OrderParametersIsInvalid: AugmentedError<ApiType>;
       RequestedOrderDoesNotExists: AugmentedError<ApiType>;

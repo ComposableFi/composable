@@ -26,6 +26,7 @@ use common::{
 	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use cumulus_primitives_core::ParaId;
+use composable_support::rpc_helpers::{SafeRpcWrapper, SafeRpcWrapperType};
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -55,7 +56,7 @@ pub use frame_support::{
 };
 
 use codec::Encode;
-use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
+use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use scale_info::TypeInfo;
 #[cfg(any(feature = "std", test))]
@@ -802,7 +803,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type Currency = Assets;
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
-	type RelayChainAccountId = [u8; 32];
+	type RelayChainAccountId = sp_runtime::AccountId32;
 	type InitialPayment = InitialPayment;
 	type VestingStep = VestingStep;
 	type Prefix = Prefix;
@@ -1056,6 +1057,26 @@ mod benches {
 }
 
 impl_runtime_apis! {
+	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
+		fn balance_of(asset_id: SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
+			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id.0, &account_id))
+		}
+	}
+
+	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
+		fn amount_available_to_claim_for(account_id: AccountId) -> SafeRpcWrapper<Balance> {
+			SafeRpcWrapper (
+			crowdloan_rewards::Associations::<Runtime>::get(account_id)
+				.map(crowdloan_rewards::Rewards::<Runtime>::get)
+				.flatten()
+				.as_ref()
+				.map(crowdloan_rewards::should_have_claimed::<Runtime>)
+				.unwrap_or_else(|| Ok(Balance::zero()))
+				.unwrap_or_else(|_| Balance::zero())
+			)
+		}
+	}
+
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
 			VERSION

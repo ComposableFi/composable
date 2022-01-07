@@ -67,7 +67,6 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 smallvec = "1.6.1"
 
 # local modules
-
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
@@ -78,10 +77,15 @@ assets = { package = "pallet-assets", path = '../../frame/assets', default-featu
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
+composable-support = { path = "../../frame/composable-support", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
 transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
+
+# local RPCs
+assets-runtime-api = { path = '../../frame/assets/runtime-api', default-features = false }
+crowdloan-rewards-runtime-api = { path = '../../frame/crowdloan-rewards/runtime-api', default-features = false }
 
 # Used for runtime benchmarking
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, optional = true }
@@ -175,6 +179,7 @@ std = [
 	"orml-xcm-support/std",
 	"orml-unknown-tokens/std",
 	"composable-traits/std",
+	"composable-support/std",
 	"governance-registry/std",
 	"currency-factory/std",
 	"assets/std",

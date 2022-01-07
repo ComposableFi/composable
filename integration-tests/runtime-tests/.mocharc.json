@@ -1,6 +1,5 @@
 {
   "diff": true,
-  "extension": ["js", "cjs", "mjs"],
   "package": "./package.json",
   "reporter": "mochawesome",
   "reporterOptions": {
@@ -14,9 +13,9 @@
   "timeout": 2000,
   "retries": 0,
   "ui": "bdd",
-  "watch-files": ["src/**/*.js", "src/**/*.ts"],
+  "watch-files": ["src/**/*.ts"],
   "watch-ignore": ["lib/vendor"],
-  "require": "src/utils/testSetup.js",
+  "require": "src/utils/testSetup.ts",
   "full-trace": true,
   "parallel": false
 }

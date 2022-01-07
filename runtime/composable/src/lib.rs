@@ -37,6 +37,7 @@ use sp_runtime::{
 	ApplyExtrinsicResult,
 };
 
+use composable_support::rpc_helpers::SafeRpcWrapper;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -464,6 +465,18 @@ impl collator_selection::Config for Runtime {
 	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
 }
 
+impl assets::Config for Runtime {
+	type NativeAssetId = NativeAssetId;
+	type GenerateCurrencyId = Factory;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type NativeCurrency = Balances;
+	type MultiCurrency = Tokens;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type GovernanceRegistry = GovernanceRegistry;
+}
+
 parameter_type_with_key! {
 	// TODO:
 	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
@@ -602,6 +615,8 @@ impl utility::Config for Runtime {
 }
 
 parameter_types! {
+	pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
+
 	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
@@ -614,6 +629,18 @@ parameter_types! {
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
+}
+
+impl governance_registry::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type WeightInfo = ();
+}
+
+impl currency_factory::Config for Runtime {
+	type Event = Event;
+	type DynamicCurrencyId = CurrencyId;
+	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
 impl democracy::Config for Runtime {
@@ -651,6 +678,36 @@ impl democracy::Config for Runtime {
 	type PreimageByteDeposit = PreimageByteDeposit;
 	type Scheduler = Scheduler;
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	  pub const InitialPayment: Perbill = Perbill::from_percent(50);
+	  pub const VestingStep: BlockNumber = 7 * DAYS;
+	  pub const Prefix: &'static [u8] = b"composable-";
+}
+
+impl crowdloan_rewards::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Currency = Assets;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type Convert = sp_runtime::traits::ConvertInto;
+	type RelayChainAccountId = [u8; 32];
+	type InitialPayment = InitialPayment;
+	type VestingStep = VestingStep;
+	type Prefix = Prefix;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const MaxStrategies: usize = 255;
+	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
+	pub CreationDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
+	pub RentPerBlock: Balance = CurrencyId::PICA.milli::<Balance>();
+	pub const VaultMinimumDeposit: Balance = 10_000;
+	pub const VaultMinimumWithdrawal: Balance = 10_000;
+	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -707,6 +764,9 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
+
+		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
+		Assets: assets::{Pallet, Call, Storage} = 57,
 	}
 );
 
@@ -771,6 +831,26 @@ mod benches {
 }
 
 impl_runtime_apis! {
+	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
+		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
+			SafeRpcWrapper(<Assets as frame_support::traits::fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
+		}
+	}
+
+	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
+		fn amount_available_to_claim_for(account_id: AccountId) -> SafeRpcWrapper<Balance> {
+			SafeRpcWrapper(
+			crowdloan_rewards::Associations::<Runtime>::get(account_id)
+				.map(crowdloan_rewards::Rewards::<Runtime>::get)
+				.flatten()
+				.as_ref()
+				.map(crowdloan_rewards::should_have_claimed::<Runtime>)
+				.unwrap_or_else(|| Ok(Balance::zero()))
+				.unwrap_or_else(|_| Balance::zero())
+			)
+		}
+	}
+
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
 			VERSION

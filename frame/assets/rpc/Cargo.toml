@@ -1,0 +1,45 @@
+[package]
+name = "assets-rpc"
+version = "0.0.1"
+authors = ["Composable Developers"]
+homepage = "https://composable.finance"
+edition = "2021"
+rust-version = "1.56"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+# substrate primitives
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-blockchain = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+
+# local
+composable-support = { path = "../../composable-support", default-features = false }
+
+scale-info = { version = "1.0", default-features = false, features = [
+    "derive",
+] }
+
+assets-runtime-api = { path = "../runtime-api", default-features = false }
+
+# rpc
+jsonrpc-core = "18.0.0"
+jsonrpc-core-client = "18.0.0"
+jsonrpc-derive = "18.0.0"
+
+codec = { default-features = false, features = [
+    "derive",
+], package = "parity-scale-codec", version = "2.0.0" }
+
+[features]
+default = ["std"]
+std = [
+    "assets-runtime-api/std",
+    "composable-support/std",
+    "codec/std",
+    "sp-runtime/std",
+    "sp-api/std",
+]

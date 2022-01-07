@@ -3,11 +3,13 @@
  * All tests can be found in the ./tests/ folder.
  **/
 
-import { QueryCrowdloanRewardsTests } from './tests/query/crowdloanRewards/queryCrowdloanRewardsTests';
-import { TxCrowdloanRewardsTests } from './tests/tx/crowdloanRewards/txCrowdloanRewardsTests';
+import { QueryCrowdloanRewardsTests } from '@composable/tests/query/crowdloanRewards/queryCrowdloanRewardsTests';
+import { TxCrowdloanRewardsTests } from '@composable/tests/tx/crowdloanRewards/txCrowdloanRewardsTests';
 import { TxBondedFinanceTests } from "@composable/tests/tx/bondedFinance/txBondedFinanceTests";
 import { runBefore, runAfter } from "@composable/utils/testSetup";
 import { TxOracleTests } from "@composable/tests/tx/oracle/txOracleTests";
+import { RpcAssetsTests } from './tests/rpc/assets/rpcAssetsTests';
+import { RpcCrowdloanRewardsTests } from './tests/rpc/crowdloanRewards/rpcCrowdloanRewardsTests';
 
 
 describe('Picasso Runtime Tests', function() {
@@ -43,10 +45,8 @@ describe('Picasso Runtime Tests', function() {
 
   // RPC Tests
   describe('RPC Tests', function () {
+    RpcAssetsTests.runRpcAssetsTests()
+    RpcCrowdloanRewardsTests.runRpcCrowdloanRewardsTests()
     // No RPC tests implemented yet!
   });
 });
-
-
-
-

@@ -53,7 +53,7 @@ pallet-currency-factory = { path = "../currency-factory" }
 pallet-liquidations = { path = "../liquidations" }
 pallet-dutch-auction = { path = "../dutch-auction", default-features = false }
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
-pallet-assets = { path = '../assets', default-features = false}
+pallet-assets = { path = '../assets', default-features = false }
 
 
 [features]
