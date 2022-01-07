@@ -45,9 +45,9 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::{CurrencyFactory, PriceableAsset},
-		defi::Rate,
+		defi::{Rate, DeFiEngine},
 		lending::{
-			math::*, BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput,
+			math::*, BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, CreateInput,
 		},
 		liquidation::Liquidation,
 		loans::{DurationSeconds, PriceStructure, Timestamp},
@@ -83,7 +83,7 @@ pub mod pallet {
 
 	type MarketConfiguration<T> = MarketConfig<
 		<T as Config>::VaultId,
-		<T as Config>::AssetId,
+		<T as Config>::MayBeAssetId,
 		<T as frame_system::Config>::AccountId,
 		<T as Config>::GroupId,
 	>;
@@ -150,17 +150,17 @@ pub mod pallet {
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
+		type Oracle: Oracle<AssetId = <Self as Config>::MayBeAssetId, Balance = Self::Balance>;
 		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 		type Vault: StrategicVault<
 			VaultId = Self::VaultId,
-			AssetId = <Self as Config>::AssetId,
+			AssetId = <Self as Config>::MayBeAssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 		>;
 
-		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
-		type AssetId: FullCodec
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::MayBeAssetId>;
+		type MayBeAssetId: FullCodec
 			+ Eq
 			+ PartialEq
 			+ Copy
@@ -188,17 +188,17 @@ pub mod pallet {
 			  // bit
 
 		/// vault owned - can transfer, cannot mint
-		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::MayBeAssetId>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::MayBeAssetId>;
 
 		/// market owned - debt token can be minted
-		type MarketDebtCurrency: Transfer<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
-			+ Mutate<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
-			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
-			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
+		type MarketDebtCurrency: Transfer<Self::AccountId, Balance = u128, AssetId = <Self as Config>::MayBeAssetId>
+			+ Mutate<Self::AccountId, Balance = u128, AssetId = <Self as Config>::MayBeAssetId>
+			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::MayBeAssetId>
+			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::MayBeAssetId>;
 
 		type Liquidation: Liquidation<
-			AssetId = Self::AssetId,
+			AssetId = Self::MayBeAssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 			GroupId = Self::GroupId,
@@ -207,24 +207,24 @@ pub mod pallet {
 		type MaxLendingCount: Get<u32>;
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type WeightInfo: WeightInfo;
-		type GroupId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
+		type LiquidationEngineId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
 	}
 	#[cfg(feature = "runtime-benchmarks")]
 	pub trait Config:
 		CreateSignedTransaction<Call<Self>> + frame_system::Config + pallet_oracle::Config
 	{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
+		type Oracle: Oracle<AssetId = <Self as Config>::MayBeAssetId, Balance = Self::Balance>;
 		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter + From<u64>;
 		type Vault: StrategicVault<
 			VaultId = Self::VaultId,
-			AssetId = <Self as Config>::AssetId,
+			AssetId = <Self as Config>::MayBeAssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 		>;
 
-		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
-		type AssetId: FullCodec
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::MayBeAssetId>;
+		type MayBeAssetId: FullCodec
 			+ Eq
 			+ PartialEq
 			+ Copy
@@ -253,17 +253,17 @@ pub mod pallet {
 			  // bit
 
 		/// vault owned - can transfer, cannot mint
-		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::MayBeAssetId>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::MayBeAssetId>;
 
 		/// market owned - debt token can be minted
-		type MarketDebtCurrency: Transfer<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
-			+ Mutate<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
-			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
-			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
+		type MarketDebtCurrency: Transfer<Self::AccountId, Balance = u128, AssetId = <Self as Config>::MayBeAssetId>
+			+ Mutate<Self::AccountId, Balance = u128, AssetId = <Self as Config>::MayBeAssetId>
+			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::MayBeAssetId>
+			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::MayBeAssetId>;
 
 		type Liquidation: Liquidation<
-			AssetId = <Self as Config>::AssetId,
+			AssetId = <Self as Config>::MayBeAssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 		>;
@@ -272,7 +272,7 @@ pub mod pallet {
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type WeightInfo: WeightInfo;
 
-		/// Id of 
+		/// Id of proxy to liquidate 
 		type LiquidationEngineId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
 	}
 
@@ -382,10 +382,7 @@ pub mod pallet {
 			market_id: MarketIndex,
 			vault_id: T::VaultId,
 			manager: T::AccountId,
-			borrow_asset_id: <T as Config>::AssetId,
-			collateral_asset_id: <T as Config>::AssetId,
-			reserved_factor: Perquintill,
-			collateral_factor: NormalizedCollateralFactor,
+			input : CreateInput<T::LiquidationEngineId, T::MayBeAssetId>,
 		},
 		/// Event emitted when collateral is deposited.
 		CollateralDeposited { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
@@ -419,7 +416,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		MarketIndex,
-		MarketConfig<T::VaultId, <T as Config>::AssetId, T::AccountId, T::GroupId>,
+		MarketConfig<T::VaultId, <T as Config>::MayBeAssetId, T::AccountId, T::LiquidationEngineId>,
 	>;
 
 	/// Original debt values are on balances.
@@ -428,7 +425,7 @@ pub mod pallet {
 	#[pallet::getter(fn debt_currencies)]
 	#[allow(clippy::disallowed_type)] // AssetId implements default, so ValueQuery is ok here.
 	pub type DebtMarkets<T: Config> =
-		StorageMap<_, Twox64Concat, MarketIndex, <T as Config>::AssetId, ValueQuery>;
+		StorageMap<_, Twox64Concat, MarketIndex, <T as Config>::MayBeAssetId, ValueQuery>;
 
 	/// at which lending index account did borrowed.
 	#[pallet::storage]
@@ -513,7 +510,7 @@ pub mod pallet {
 		}
 	}
 
-	pub type CreateInputOf<T> = CreateInput<T::GroupId, T::AssetId>;
+	pub type CreateInputOf<T:Config> = CreateInput<T::LiquidationEngineId, T::MayBeAssetId>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -521,39 +518,20 @@ pub mod pallet {
 		/// - `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause borrow & deposits of assets.
 		#[pallet::weight(<T as Config>::WeightInfo::create_new_market())]
 		#[transactional]
-		#[allow(clippy::too_many_arguments)]
-		pub fn create_new_market(
+		pub fn create_market(
 			origin: OriginFor<T>,
-			borrow_asset_id: <T as Config>::AssetId,
-			collateral_asset_id: <T as Config>::AssetId,
-			reserved_factor: Perquintill,
-			collateral_factor: NormalizedCollateralFactor,
-			under_collaterized_warn_percent: Percent,
-			interest_rate_model: InterestRateModel,
-			liquidator: Option<T::GroupId>,
+			input : CreateInput<T::LiquidationEngineId, T::MayBeAssetId>
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let market_config = MarketConfigInput {
-				reserved: reserved_factor,
-				manager: who.clone(),
-				collateral_factor,
-				under_collaterized_warn_percent,
-				liquidator,
-			};
 			let (market_id, vault_id) = Self::create(
-				borrow_asset_id,
-				collateral_asset_id,
-				market_config,
-				&interest_rate_model,
+				who, 
+				input.clone(),
 			)?;
 			Self::deposit_event(Event::<T>::NewMarketCreated {
 				market_id,
 				vault_id,
 				manager: who,
-				borrow_asset_id,
-				collateral_asset_id,
-				reserved_factor,
-				collateral_factor,
+				input,
 			});
 			Ok(().into())
 		}
@@ -667,12 +645,12 @@ pub mod pallet {
 			Ok(total_interest)
 		}
 
-		pub fn account_id(market_id: &<Self as Lending>::MarketId) -> <Self as Lending>::AccountId {
+		pub fn account_id(market_id: &<Self as Lending>::MarketId) -> <Self as DeFiEngine>::AccountId {
 			<Self as Lending>::account_id(market_id)
 		}
 		pub fn calc_utilization_ratio(
-			cash: &<Self as Lending>::Balance,
-			borrows: &<Self as Lending>::Balance,
+			cash: &<Self as DeFiEngine>::Balance,
+			borrows: &<Self as DeFiEngine>::Balance,
 		) -> Result<Percent, DispatchError> {
 			<Self as Lending>::calc_utilization_ratio(cash, borrows)
 		}
@@ -680,20 +658,20 @@ pub mod pallet {
 
 		pub fn deposit_collateral_internal(
 			market_id: &<Self as Lending>::MarketId,
-			account_id: &<Self as Lending>::AccountId,
+			account_id: &<Self as DeFiEngine>::AccountId,
 			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			<Self as Lending>::deposit_collateral(market_id, account_id, amount)
 		}
 		pub fn collateral_of_account(
 			market_id: &<Self as Lending>::MarketId,
-			account: &<Self as Lending>::AccountId,
-		) -> Result<<Self as Lending>::Balance, DispatchError> {
+			account: &<Self as DeFiEngine>::AccountId,
+		) -> Result<<Self as DeFiEngine>::Balance, DispatchError> {
 			<Self as Lending>::collateral_of_account(market_id, account)
 		}
 		pub fn withdraw_collateral_internal(
 			market_id: &<Self as Lending>::MarketId,
-			account: &<Self as Lending>::AccountId,
+			account: &<Self as DeFiEngine>::AccountId,
 			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			<Self as Lending>::withdraw_collateral(market_id, account, amount)
@@ -701,48 +679,48 @@ pub mod pallet {
 
 		pub fn get_borrow_limit(
 			market_id: &<Self as Lending>::MarketId,
-			account: &<Self as Lending>::AccountId,
-		) -> Result<<Self as Lending>::Balance, DispatchError> {
+			account: &<Self as DeFiEngine>::AccountId,
+		) -> Result<<Self as DeFiEngine>::Balance, DispatchError> {
 			<Self as Lending>::get_borrow_limit(market_id, account)
 		}
 
 		pub fn borrow_internal(
 			market_id: &<Self as Lending>::MarketId,
-			debt_owner: &<Self as Lending>::AccountId,
-			amount_to_borrow: <Self as Lending>::Balance,
+			debt_owner: &<Self as DeFiEngine>::AccountId,
+			amount_to_borrow: <Self as DeFiEngine>::Balance,
 		) -> Result<(), DispatchError> {
 			<Self as Lending>::borrow(market_id, debt_owner, amount_to_borrow)
 		}
 
 		pub fn borrow_balance_current(
 			market_id: &<Self as Lending>::MarketId,
-			account: &<Self as Lending>::AccountId,
+			account: &<Self as DeFiEngine>::AccountId,
 		) -> Result<Option<BorrowAmountOf<Self>>, DispatchError> {
 			<Self as Lending>::borrow_balance_current(market_id, account)
 		}
 
 		pub fn total_borrows(
 			market_id: &<Self as Lending>::MarketId,
-		) -> Result<<Self as Lending>::Balance, DispatchError> {
+		) -> Result<<Self as DeFiEngine>::Balance, DispatchError> {
 			<Self as Lending>::total_borrows(market_id)
 		}
 
 		pub fn total_cash(
 			market_id: &<Self as Lending>::MarketId,
-		) -> Result<<Self as Lending>::Balance, DispatchError> {
+		) -> Result<<Self as DeFiEngine>::Balance, DispatchError> {
 			<Self as Lending>::total_cash(market_id)
 		}
 
 		pub fn total_interest(
 			market_id: &<Self as Lending>::MarketId,
-		) -> Result<<Self as Lending>::Balance, DispatchError> {
+		) -> Result<<Self as DeFiEngine>::Balance, DispatchError> {
 			<Self as Lending>::total_interest(market_id)
 		}
 
 		pub fn repay_borrow_internal(
 			market_id: &<Self as Lending>::MarketId,
-			from: &<Self as Lending>::AccountId,
-			beneficiary: &<Self as Lending>::AccountId,
+			from: &<Self as DeFiEngine>::AccountId,
+			beneficiary: &<Self as DeFiEngine>::AccountId,
 			repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
 			<Self as Lending>::repay_borrow(market_id, from, beneficiary, repay_amount)
@@ -750,7 +728,7 @@ pub mod pallet {
 
 		pub fn create_borrower_data(
 			market_id: &<Self as Lending>::MarketId,
-			account: &<Self as Lending>::AccountId,
+			account: &<Self as DeFiEngine>::AccountId,
 		) -> Result<BorrowerData, DispatchError> {
 			let market = Self::get_market(market_id)?;
 			let collateral_balance = Self::collateral_of_account(market_id, account)?;
@@ -771,7 +749,7 @@ pub mod pallet {
 
 		pub fn should_liquidate(
 			market_id: &<Self as Lending>::MarketId,
-			account: &<Self as Lending>::AccountId,
+			account: &<Self as DeFiEngine>::AccountId,
 		) -> Result<bool, DispatchError> {
 			let borrower = Self::create_borrower_data(market_id, account)?;
 			let should_liquidate = borrower.should_liquidate()?;
@@ -780,7 +758,7 @@ pub mod pallet {
 
 		pub fn soon_under_collaterized(
 			market_id: &<Self as Lending>::MarketId,
-			account: &<Self as Lending>::AccountId,
+			account: &<Self as DeFiEngine>::AccountId,
 		) -> Result<bool, DispatchError> {
 			let borrower = Self::create_borrower_data(market_id, account)?;
 			let should_warn = borrower.should_warn()?;
@@ -792,7 +770,7 @@ pub mod pallet {
 		/// if there is any error then propagate that error.
 		pub fn liquidate_internal(
 			market_id: &<Self as Lending>::MarketId,
-			account: &<Self as Lending>::AccountId,
+			account: &<Self as DeFiEngine>::AccountId,
 		) -> Result<(), DispatchError> {
 			if Self::should_liquidate(market_id, account)? {
 				let market = Self::get_market(market_id)?;
@@ -935,7 +913,7 @@ pub mod pallet {
 		}
 
 		fn get_price(
-			asset_id: <T as Config>::AssetId,
+			asset_id: <T as Config>::MayBeAssetId,
 			amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
 			<T::Oracle as Oracle>::get_price(asset_id, amount)
@@ -974,7 +952,7 @@ pub mod pallet {
 			market_id: &MarketIndex,
 			debt_owner: &T::AccountId,
 			amount_to_borrow: BorrowAmountOf<Self>,
-			asset_id: <T as Config>::AssetId,
+			asset_id: <T as Config>::MayBeAssetId,
 			market: MarketConfiguration<T>,
 			market_account: &T::AccountId,
 		) -> Result<(), DispatchError> {
@@ -1016,7 +994,7 @@ pub mod pallet {
 			beneficiary: &T::AccountId,
 			repay_amount: BorrowAmountOf<Self>,
 			owed: BorrowAmountOf<Self>,
-			borrow_asset_id: <T as Config>::AssetId,
+			borrow_asset_id: <T as Config>::MayBeAssetId,
 			market_account: &T::AccountId,
 		) -> Result<(), DispatchError> {
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, beneficiary);
@@ -1028,7 +1006,7 @@ pub mod pallet {
 				);
 			}
 			ensure!(
-				repay_amount > <Self as Lending>::Balance::zero(),
+				repay_amount > <Self as DeFiEngine>::Balance::zero(),
 				Error::<T>::RepayAmountMustBeGraterThanZero
 			);
 			ensure!(repay_amount <= owed, Error::<T>::CannotRepayMoreThanBorrowAmount);
@@ -1049,31 +1027,31 @@ pub mod pallet {
 		}
 	}
 
+	impl<T:Config> DeFiEngine for Pallet<T> {
+		type MayBeAssetId = <T as Config>::MayBeAssetId;
+
+		type Balance = <T as Config>::Balance;
+
+		type AccountId = <T as frame_system::Config>::AccountId;
+	}
+
 	impl<T: Config> Lending for Pallet<T> {
-		/// we are operating only on vault types, so restricted by these
-		type AssetId = <T as Config>::AssetId;
 		type VaultId = <T::Vault as Vault>::VaultId;
-		type AccountId = <T::Vault as Vault>::AccountId;
-		type Balance = T::Balance;
-
 		type MarketId = MarketIndex;
-
 		type BlockNumber = T::BlockNumber;
-		type GroupId = T::GroupId;
+		type LiquidationEngineId = <T as Config>::LiquidationEngineId;
 
 		fn create(
-			borrow_asset: Self::AssetId,
-			collateral_asset: Self::AssetId,
-			config_input: MarketConfigInput<Self::AccountId, Self::GroupId>,
-			interest_rate_model: &InterestRateModel,
+			manager: Self::AccountId,
+			config_input: CreateInput<Self::LiquidationEngineId, Self::MayBeAssetId>,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			ensure!(
 				config_input.collateral_factor > 1.into(),
 				Error::<T>::CollateralFactorIsLessOrEqualOne
 			);
 
-			let collateral_asset_supported = <T::Oracle as Oracle>::is_supported(collateral_asset)?;
-			let borrow_asset_supported = <T::Oracle as Oracle>::is_supported(borrow_asset)?;
+			let collateral_asset_supported = <T::Oracle as Oracle>::is_supported(config_input.collateral_asset())?;
+			let borrow_asset_supported = <T::Oracle as Oracle>::is_supported(config_input.borrow_asset())?;
 			ensure!(
 				collateral_asset_supported && borrow_asset_supported,
 				Error::<T>::AssetNotSupportedByOracle
@@ -1092,13 +1070,13 @@ pub mod pallet {
 				let borrow_asset_vault = T::Vault::create(
 					Deposit::Existential,
 					VaultConfig {
-						asset_id: borrow_asset,
-						reserved: config_input.reserved,
-						manager: config_input.manager.clone(),
+						asset_id: config_input.borrow_asset(),
+						reserved: config_input.reserved_factor,
+						manager: manager.clone(),
 						strategies: [(
 							Self::account_id(&market_id),
 							// Borrowable = 100% - reserved
-							Perquintill::one().saturating_sub(config_input.reserved),
+							Perquintill::one().saturating_sub(config_input.reserved_factor),
 						)]
 						.iter()
 						.cloned()
@@ -1109,9 +1087,9 @@ pub mod pallet {
 				let config = MarketConfig {
 					manager: config_input.manager,
 					borrow: borrow_asset_vault.clone(),
-					collateral: collateral_asset,
+					collateral: config_input.collateral_asset(),
 					collateral_factor: config_input.collateral_factor,
-					interest_rate_model: *interest_rate_model,
+					interest_rate_model: config_input.interest_rate_model,
 					under_collaterized_warn_percent: config_input.under_collaterized_warn_percent,
 					liquidator: config_input.liquidator,
 				};
