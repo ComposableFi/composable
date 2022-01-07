@@ -3,36 +3,44 @@ pub mod math;
 #[cfg(test)]
 mod tests;
 
-use crate::loans::Timestamp;
+use crate::{loans::Timestamp, defi::{CurrencyPair, DeFiEngine}};
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
 use sp_runtime::Percent;
 
 use self::math::*;
 
-pub type CollateralLpAmountOf<T> = <T as Lending>::Balance;
+pub type CollateralLpAmountOf<T> = <T as DeFiEngine>::Balance;
 
-pub type BorrowAmountOf<T> = <T as Lending>::Balance;
+pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 
+
+/// input to create market extrinsic
 #[derive(Encode, Decode, Default, TypeInfo)]
-pub struct MarketConfigInput<AccountId, GroupId> {
-	pub reserved: Perquintill,
-	pub manager: AccountId,
-	/// can pause borrow & deposits of assets
+pub struct CreateInput<LiquidatorId, AssetId> {
+	/// Reserve factor of market.
+	pub reserved_factor: Perquintill,
+	/// Collateral factor of market
 	pub collateral_factor: NormalizedCollateralFactor,
+	///  warn borrower when loan's collateral/debt ratio
+	///  given percentage short to be under collaterized
 	pub under_collaterized_warn_percent: Percent,
-	pub liquidator: Option<GroupId>,
+	/// liquidation engine id
+	pub liquidator: Option<LiquidatorId>,
+	pub interest_rate_model: InterestRateModel,
+	/// collateral currency and borrow currency
+	/// in case of liquidation, collateral is base and borrow is quote
+	pub currency_pair: CurrencyPair<AssetId>,
 }
-
 #[derive(Encode, Decode, Default, TypeInfo)]
-pub struct MarketConfig<VaultId, AssetId, AccountId, GroupId> {
+pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationEngineId> {
 	pub manager: AccountId,
 	pub borrow: VaultId,
 	pub collateral: AssetId,
 	pub collateral_factor: NormalizedCollateralFactor,
 	pub interest_rate_model: InterestRateModel,
 	pub under_collaterized_warn_percent: Percent,
-	pub liquidator: Option<GroupId>,
+	pub liquidator: Option<LiquidationEngineId>,
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.
@@ -41,16 +49,14 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, GroupId> {
 /// Based on Blacksmith (Warp v2) IBSLendingPair.sol and Parallel Finance.
 /// Fees will be withdrawing to vault.
 /// Lenders with be rewarded via vault.
-pub trait Lending {
-	type AssetId;
+pub trait Lending : DeFiEngine {
 	type VaultId;
-	type MarketId;
-	/// (deposit VaultId, collateral VaultId) <-> MarketId
-	type AccountId;
-	type Balance;
+	type MarketId;	
 	type BlockNumber;
-	type GroupId;
-
+	/// id of dispatch used to liquidate collateral in case of undercollateralized asset
+	type LiquidationEngineId;
+	/// returned from extrinsic is guaranteed to be existing asset id at time of block execution
+	//type AssetId;
 	/// Generates the underlying owned vault that will hold borrowable asset (may be shared with
 	/// specific set of defined collaterals). Creates market for new pair in specified vault. if
 	/// market exists under specified manager, updates its parameters `deposit` - asset users want
@@ -88,11 +94,11 @@ pub trait Lending {
 	/// could decide to allocate a share for it, transferring from I and J to the borrow asset vault
 	/// of M. Their allocated share could differ because of the strategies being different,
 	/// but the lending Market would have all the lendable funds in a single vault.
-	fn create(
-		borrow_asset: Self::AssetId,
-		collateral_asset_vault: Self::AssetId,
-		config: MarketConfigInput<Self::AccountId, Self::GroupId>,
-		interest_rate_model: &InterestRateModel,
+	/// 
+	/// Returned `MarketId` is mapped one to one with (deposit VaultId, collateral VaultId) 
+	fn create(		
+		manager: Self::AccountId,
+		config: CreateInput<Self::LiquidationEngineId, Self::MayBeAssetId>,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 
 	/// AccountId of the market instance
@@ -123,7 +129,7 @@ pub trait Lending {
 	#[allow(clippy::type_complexity)]
 	fn get_all_markets() -> Vec<(
 		Self::MarketId,
-		MarketConfig<Self::VaultId, Self::AssetId, Self::AccountId, Self::GroupId>,
+		MarketConfig<Self::VaultId, Self::MayBeAssetId, Self::AccountId, Self::LiquidationEngineId>,
 	)>;
 
 	/// `amount_to_borrow` is the amount of the borrow asset lendings's vault shares the user wants

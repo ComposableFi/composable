@@ -14,7 +14,7 @@ use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_as
 use composable_traits::{
 	currency::PriceableAsset,
 	defi::Rate,
-	lending::{math::*, MarketConfigInput},
+	lending::{math::*, CreateInput},
 	math::LiftedFixedBalance,
 	vault::{Deposit, VaultConfig},
 };
@@ -58,7 +58,7 @@ fn create_market(
 	reserved: Perquintill,
 	collateral_factor: NormalizedCollateralFactor,
 ) -> (MarketIndex, BorrowAssetVault) {
-	let market_config = MarketConfigInput {
+	let market_config = CreateInput {
 		liquidator: None,
 		manager,
 		reserved,

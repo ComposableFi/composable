@@ -512,15 +512,12 @@ pub mod pallet {
 		}
 	}
 
+	pub type CreateInputOf<T> = CreateInput<T::GroupId, T::AssetId>;
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Create a new lending market.
-		/// - `origin` : Sender of this extrinsic. (Also manager for new market to be created.)
-		/// - `collateral_asset_id` : AssetId for collateral.
-		/// - `reserved_factor` : Reserve factor of market to be created.
-		/// - `collateral_factor` : Collateral factor of market to be created.
-		/// - `under_collaterized_warn_percent` : warn borrower when loan's collateral/debt ratio
-		///   given percentage short to be under collaterized
+		/// - `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause borrow & deposits of assets.
 		#[pallet::weight(<T as Config>::WeightInfo::create_new_market())]
 		#[transactional]
 		#[allow(clippy::too_many_arguments)]

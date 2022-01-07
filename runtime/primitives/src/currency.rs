@@ -70,13 +70,6 @@ use sp_runtime::{ArithmeticError, DispatchError, RuntimeDebug};
 use serde::{Deserialize, Serialize};
 use sp_runtime::sp_std::ops::Deref;
 
-/// `MayBe`CurrencyId as not each `u128` is valid id.
-#[derive(
-	Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo, CompactAs,
-)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[repr(transparent)]
-pub struct CurrencyId(pub u128);
 
 impl CurrencyId {
 	pub const INVALID: CurrencyId = CurrencyId(0);

@@ -4,7 +4,7 @@ use crate::Pallet as Lending;
 use composable_traits::{
 	lending::{
 		math::{InterestRateModel, NormalizedCollateralFactor},
-		Lending as LendingTrait, MarketConfigInput,
+		Lending as LendingTrait, CreateInput,
 	},
 	vault::Vault,
 };
@@ -45,7 +45,7 @@ fn create_market<T: Config>(
 	borrow_asset: u128,
 	collateral_asset: u128,
 ) -> (crate::MarketIndex, <T as Config>::VaultId) {
-	let market_config = MarketConfigInput {
+	let market_config = CreateInput {
 		liquidator: None,
 		manager,
 		reserved: Perquintill::from_percent(10),
