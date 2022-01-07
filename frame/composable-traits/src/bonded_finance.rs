@@ -14,7 +14,7 @@ pub trait BondedFinance {
 	/// Create a new offer.
 	fn offer(
 		from: &Self::AccountId,
-		offer: BondOffer<Self::AssetId, Self::Balance, Self::BlockNumber>,
+		offer: BondOffer<Self::AccountId, Self::AssetId, Self::Balance, Self::BlockNumber>,
 	) -> Result<Self::BondOfferId, DispatchError>;
 
 	/// Bond for an offer.
@@ -36,7 +36,9 @@ pub enum BondDuration<BlockNumber> {
 
 /// The Bond offer.
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct BondOffer<AssetId, Balance, BlockNumber> {
+pub struct BondOffer<AccountId, AssetId, Balance, BlockNumber> {
+	/// The account that will receive the locked assets.
+	pub beneficiary: AccountId,
 	/// Asset to be locked. Unlockable after `duration`.
 	pub asset: AssetId,
 	/// Price of a bond.
@@ -60,8 +62,8 @@ pub struct BondOfferReward<AssetId, Balance, BlockNumber> {
 	pub maturity: BlockNumber,
 }
 
-impl<AssetId, Balance: Zero + PartialOrd + SafeArithmetic, BlockNumber: Zero>
-	BondOffer<AssetId, Balance, BlockNumber>
+impl<AccountId, AssetId, Balance: Zero + PartialOrd + SafeArithmetic, BlockNumber: Zero>
+	BondOffer<AccountId, AssetId, Balance, BlockNumber>
 {
 	/// An offer is completed once all it's nb_of_bonds has been sold.
 	pub fn completed(&self) -> bool {

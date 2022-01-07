@@ -1,6 +1,6 @@
 use crate as curve_amm;
 use composable_traits::currency::DynamicCurrencyId;
-use frame_support::{parameter_types, traits::Everything};
+use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
 use scale_info::TypeInfo;
@@ -26,6 +26,7 @@ use sp_runtime::{
 	serde::Deserialize,
 	TypeInfo,
 )]
+#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
 pub enum MockCurrencyId {
 	PICA,
 	BTC,
@@ -179,6 +180,7 @@ impl orml_tokens::Config for Test {
 
 parameter_types! {
 	pub Precision: FixedU128 = FixedU128::saturating_from_rational(1, 1_000_000_000);
+	pub TestPalletID : PalletId = PalletId(*b"curve_am");
 }
 
 impl curve_amm::Config for Test {
@@ -188,6 +190,9 @@ impl curve_amm::Config for Test {
 	type CurrencyFactory = LpTokenFactory;
 	type Precision = Precision;
 	type LpToken = Tokens;
+	type PoolId = u32;
+	type PoolTokenIndex = u32;
+	type PalletId = TestPalletID;
 }
 
 // Build genesis storage according to the mock runtime.

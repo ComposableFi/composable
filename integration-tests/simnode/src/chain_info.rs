@@ -52,6 +52,7 @@ impl ChainInfo for PicassoChainInfo {
 			),
 			frame_system::CheckWeight::<Self::Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Self::Runtime>::from(0),
+			crowdloan_rewards::PrevalidateAssociation::<Self::Runtime>::new(),
 		)
 	}
 }

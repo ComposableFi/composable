@@ -1,3 +1,5 @@
+use core::ops::Div;
+
 use codec::FullCodec;
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
@@ -6,18 +8,22 @@ use sp_std::fmt::Debug;
 
 pub type Exponent = u32;
 
+/// A asset that can be priced.
 pub trait PriceableAsset
 where
 	Self: Copy,
 {
+	fn decimals(&self) -> Exponent;
 	fn unit<T: From<u64>>(&self) -> T {
-		T::from(10u64.pow(self.smallest_unit_exponent()))
+		T::from(10_u64.pow(self.decimals()))
 	}
-	fn smallest_unit_exponent(self) -> Exponent;
+	fn milli<T: From<u64> + Div<Output = T>>(&self) -> T {
+		self.unit::<T>() / T::from(1000_u64)
+	}
 }
 
 impl PriceableAsset for u128 {
-	fn smallest_unit_exponent(self) -> Exponent {
+	fn decimals(&self) -> Exponent {
 		0
 	}
 }

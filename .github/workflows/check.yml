@@ -7,10 +7,12 @@ on:
     branches:
       - main
       - develop
-      - dali-chachacha
-      - picasso
+      - release-*
   workflow_dispatch:
-concurrency: ci-check
+
+env:
+  DOCKER_USER_OPTION: '$UID:$GID'
+
 jobs:
   check:
     runs-on:
@@ -19,24 +21,28 @@ jobs:
       - x64
       - sre
     steps:
+      - uses: xanantis/docker-file-ownership-fix@v1
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: actions-rs/cargo@v1
-      - name: Cargo Check
+          fetch-depth: 0
+          
+      - name: Setup toolchain
         run: |
-          rustup target add wasm32-unknown-unknown
+         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+         echo "$HOME/.cargo/bin:$PATH" >> $GITHUB_PATH
+      - name: Check
+        run: |
           SKIP_WASM_BUILD=1 cargo check --all --benches
-      - name: Cargo Check Benchmark
+      - name: Benchmark
         run: |
           SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --workspace --release --exclude integration-tests
-      - name: Picasso Runtime Build
+      - name: Benchmark Develop
+        run: |
+          SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks,develop --workspace --release --exclude integration-tests
+      - name: Picasso
         run: |
           cargo build --release -p picasso-runtime
-      - name: Picasso Runtime Build with develop feature
+      - name: Picasso Develop
         run: |
           cargo build --release -p picasso-runtime --features develop
   linters:
@@ -48,20 +54,17 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          components: clippy
-          override: true
-      - name: Install Rust components and targets
+      - name: Setup toolchain
         run: |
-          rustup target add wasm32-unknown-unknown
-          rustup component add rustfmt --toolchain nightly-x86_64-unknown-linux-gnu
-          rustup target add wasm32-unknown-unknown --toolchain nightly
+         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+         echo "$HOME/.cargo/bin:$PATH" >> $GITHUB_PATH
+      - run: |
+          rustup show
+          rustup override unset
+          rustup show
       - name: Cargo fmt
         run: |
-          cargo +nightly fmt -- --check
+          cargo fmt -- --check
       - name: Hadolint
         env:
           HADOLINT_VERSION: v2.8.0
@@ -78,7 +81,7 @@ jobs:
           exit $total_exit_code
       - name: Cargo clippy
         run: |
-          cargo +nightly clippy -- -D warnings
+          cargo clippy -- -D warnings
       - name: Cargo udeps
         env:
           UDEPS_VERSION: v0.1.24
@@ -91,7 +94,7 @@ jobs:
           total_exit_code=0
           while IFS= read -r crate; do
             echo "=== $crate ==="
-            (cd "$crate"; SKIP_WASM_BUILD=1 cargo +nightly udeps -q --all-targets) || total_exit_code=$?
+            (cd "$crate"; SKIP_WASM_BUILD=1 cargo udeps -q --all-targets) || total_exit_code=$?
             echo ""
           done < <(find . -name "Cargo.toml" -not -path "./polkadot-launch/*" -not -path "./target/*" -exec dirname '{}' \;)
           exit $total_exit_code
@@ -104,14 +107,22 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - name: Run Test
+      - name: Install toolchain for cargo-llvm-cov
         run: |
-          SKIP_WASM_BUILD=1 cargo test
+         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+         echo "$HOME/.cargo/bin:$PATH" >> $GITHUB_PATH
+      - run: |
+          rustup component add llvm-tools-preview
+      - name: Install cargo-llvm-cov
+        run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
+      - name: Run Test (with coverage)
+        run: |
+          SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --lcov --output-path lcov.info
           SKIP_WASM_BUILD=1 cargo clean -p picasso-runtime
           SKIP_WASM_BUILD=1 cargo clean -p composable
-
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+          fail_ci_if_error: false

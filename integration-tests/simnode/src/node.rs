@@ -1,10 +1,10 @@
 use crate::PicassoChainInfo;
 use node::cli::Cli;
 use sc_cli::{CliConfiguration, SubstrateCli};
-use sc_consensus_manual_seal::consensus::aura::AuraConsensusDataProvider;
-use sc_consensus_manual_seal::consensus::timestamp::SlotTimestampProvider;
-use std::error::Error;
-use std::future::Future;
+use sc_consensus_manual_seal::consensus::{
+	aura::AuraConsensusDataProvider, timestamp::SlotTimestampProvider,
+};
+use std::{error::Error, future::Future};
 use structopt::StructOpt;
 use substrate_simnode::{
 	build_node_subsystems, build_runtime, ConfigOrChainSpec, Node, ParachainInherentSproof,

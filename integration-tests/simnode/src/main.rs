@@ -8,18 +8,16 @@ pub use chain_info::*;
 use picasso_runtime::Event;
 use sc_client_api::{call_executor::ExecutorProvider, CallExecutor};
 use sp_blockchain::HeaderBackend;
-use sp_runtime::generic::BlockId;
-use sp_runtime::AccountId32;
-use std::error::Error;
-use std::str::FromStr;
+use sp_runtime::{generic::BlockId, AccountId32};
+use std::{error::Error, str::FromStr};
 
 fn main() -> Result<(), Box<dyn Error>> {
 	node::run(|node| async move {
-		let from = AccountId32::from_str("5uAfQTqudXnnSgSMPVowwRjgNFxBDW2d5AQXP2vHDHy2yJ4w")?;
+		let sudo = AccountId32::from_str("5uAfQTqudXnnSgSMPVowwRjgNFxBDW2d5AQXP2vHDHy2yJ4w")?;
 
 		node.submit_extrinsic(
 			frame_system::Call::remark { remark: b"Hello World".to_vec() },
-			Some(from),
+			Some(sudo.clone()),
 		)
 		.await?;
 		node.seal_blocks(1).await;
@@ -29,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 			.executor()
 			.runtime_version(&BlockId::Hash(node.client().info().best_hash))?
 			.spec_version;
-		println!("\n\nold_runtime_version: {}\n\n", old_runtime_version);
+		println!("\nold_runtime_version: {}\n", old_runtime_version);
 
 		let code = picasso_runtime::WASM_BINARY
 			.ok_or("Polkadot development wasm not available")?
@@ -39,24 +37,18 @@ fn main() -> Result<(), Box<dyn Error>> {
 			call: Box::new(frame_system::Call::set_code { code }.into()),
 			weight: 0,
 		};
-		// let su = AccountId32::from_str("5z93WG1Lz47b8AjtVbMaLC4M8rohecXPMSjRDBaMUAbmeCi7")?;
-		let su = AccountId32::from_str("5uAfQTqudXnnSgSMPVowwRjgNFxBDW2d5AQXP2vHDHy2yJ4w")?;
-		node.submit_extrinsic(call, Some(su)).await?;
+		node.submit_extrinsic(call, Some(sudo)).await?;
 		node.seal_blocks(2).await;
 		// assert that the runtime has been updated by looking at events
-		let events = node
-			.events()
-			.into_iter()
-			.filter(|event| match event.event {
-				Event::ParachainSystem(parachain_system::Event::ValidationFunctionApplied(_)) => {
-					true
-				}
-				_ => false,
-			})
-			.collect::<Vec<_>>();
+		let events = node.events().into_iter().filter(|event| {
+			matches!(
+				event.event,
+				Event::ParachainSystem(parachain_system::Event::ValidationFunctionApplied(_))
+			)
+		});
 		// make sure event was emitted
 		assert_eq!(
-			events.len(),
+			events.count(),
 			1,
 			"system::Event::CodeUpdate not found in events: {:#?}",
 			node.events()
@@ -66,7 +58,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 			.executor()
 			.runtime_version(&BlockId::Hash(node.client().info().best_hash))?
 			.spec_version;
-		println!("\n\nnew_runtime_version: {}\n\n", new_runtime_version);
+		println!("\nnew_runtime_version: {}\n", new_runtime_version);
 
 		// just confirming
 		assert!(
@@ -75,6 +67,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 			new_runtime_version,
 			old_runtime_version,
 		);
+
+		// try to author 10 blocks, if it doesn't panic, all good.
+		node.seal_blocks(10).await;
 		Ok(())
 	})
 }

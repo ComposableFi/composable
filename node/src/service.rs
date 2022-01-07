@@ -6,7 +6,6 @@ use common::OpaqueBlock as Block;
 use cumulus_client_consensus_aura::{
 	build_aura_consensus, BuildAuraConsensusParams, SlotProportion,
 };
-use cumulus_client_consensus_common::ParachainConsensus;
 use cumulus_client_network::build_block_announce_validator;
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
@@ -21,19 +20,14 @@ use crate::{
 };
 use sc_client_api::ExecutorProvider;
 use sc_executor::NativeExecutionDispatch;
-use sc_network::NetworkService;
 use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::ConstructRuntimeApi;
 use sp_consensus::SlotData;
 #[cfg(feature = "ocw")]
 use sp_core::crypto::KeyTypeId;
-use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
-use substrate_prometheus_endpoint::Registry;
-
-type Hash = sp_core::H256;
 
 pub struct PicassoExecutor;
 
@@ -60,6 +54,20 @@ impl sc_executor::NativeExecutionDispatch for ComposableExecutor {
 
 	fn native_version() -> sc_executor::NativeVersion {
 		composable_runtime::native_version()
+	}
+}
+
+pub struct DaliExecutor;
+
+impl sc_executor::NativeExecutionDispatch for DaliExecutor {
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		dali_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		dali_runtime::native_version()
 	}
 }
 
@@ -187,8 +195,43 @@ where
 	Ok(params)
 }
 
-/// Start a normal parachain node.
-pub async fn start_node<RuntimeApi, Executor>(
+/// Start the right parachain subsystem for the right chainspec.
+pub async fn start_node(
+	config: Configuration,
+	polkadot_config: Configuration,
+	id: ParaId,
+) -> sc_service::error::Result<TaskManager> {
+	let task_manager =
+		match config.chain_spec.id() {
+			"composable" => crate::service::start_node_impl::<
+				composable_runtime::RuntimeApi,
+				ComposableExecutor,
+			>(config, polkadot_config, id)
+			.await?,
+			"dali-chachacha" | "dali-rococo" =>
+				crate::service::start_node_impl::<dali_runtime::RuntimeApi, PicassoExecutor>(
+					config,
+					polkadot_config,
+					id,
+				)
+				.await?,
+			_ =>
+				crate::service::start_node_impl::<picasso_runtime::RuntimeApi, PicassoExecutor>(
+					config,
+					polkadot_config,
+					id,
+				)
+				.await?,
+		};
+
+	Ok(task_manager)
+}
+
+/// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
+///
+/// This is the actual implementation that is abstract over the executor and the runtime api.
+#[sc_tracing::logging::prefix_logs_with("Parachain")]
+async fn start_node_impl<RuntimeApi, Executor>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	id: ParaId,
@@ -198,123 +241,8 @@ where
 		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi:
 		HostRuntimeApis<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
-	Executor: NativeExecutionDispatch + 'static,
-{
-	start_node_impl::<RuntimeApi, Executor, _>(
-		parachain_config,
-		polkadot_config,
-		id,
-		|client,
-		 prometheus_registry,
-		 telemetry,
-		 task_manager,
-		 relay_chain_node,
-		 transaction_pool,
-		 sync_oracle,
-		 keystore,
-		 force_authoring| {
-			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
-
-			let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
-				task_manager.spawn_handle(),
-				client.clone(),
-				transaction_pool,
-				prometheus_registry,
-				telemetry.clone(),
-			);
-
-			let relay_chain_backend = relay_chain_node.backend.clone();
-			let relay_chain_client = relay_chain_node.client.clone();
-			let backoff_authoring_blocks =
-				Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
-			Ok(build_aura_consensus::<
-				sp_consensus_aura::sr25519::AuthorityPair,
-				_,
-				_,
-				_,
-				_,
-				_,
-				_,
-				_,
-				_,
-				_,
-			>(BuildAuraConsensusParams {
-				proposer_factory,
-				create_inherent_data_providers: move |_, (relay_parent, validation_data)| {
-					let parachain_inherent =
-						cumulus_primitives_parachain_inherent::ParachainInherentData::create_at_with_client(
-							relay_parent,
-							&relay_chain_client,
-							&*relay_chain_backend,
-							&validation_data,
-							id,
-						);
-					async move {
-						let time = sp_timestamp::InherentDataProvider::from_system_time();
-
-						let slot =
-							sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
-								*time,
-								slot_duration.slot_duration(),
-							);
-
-						let parachain_inherent = parachain_inherent.ok_or_else(|| {
-							Box::<dyn std::error::Error + Send + Sync>::from(
-								"Failed to create parachain inherent",
-							)
-						})?;
-						Ok((time, slot, parachain_inherent))
-					}
-				},
-				block_import: client.clone(),
-				relay_chain_client: relay_chain_node.client.clone(),
-				relay_chain_backend: relay_chain_node.backend.clone(),
-				para_client: client,
-				backoff_authoring_blocks,
-				sync_oracle,
-				keystore,
-				force_authoring,
-				slot_duration,
-				// We got around 500ms for proposing
-				block_proposal_slot_portion: SlotProportion::new(1f32 / 24f32),
-				// And a maximum of 750ms if slots are skipped
-				max_block_proposal_slot_portion: Some(SlotProportion::new(1f32 / 16f32)),
-				telemetry,
-			}))
-		},
-	)
-	.await
-	.map(|(task_manager, _)| task_manager)
-}
-
-/// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
-///
-/// This is the actual implementation that is abstract over the executor and the runtime api.
-#[sc_tracing::logging::prefix_logs_with("Parachain")]
-async fn start_node_impl<RuntimeApi, Executor, BIC>(
-	parachain_config: Configuration,
-	polkadot_config: Configuration,
-	id: ParaId,
-	build_consensus: BIC,
-) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, Executor>>)>
-where
-	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
-	RuntimeApi::RuntimeApi:
-		HostRuntimeApis<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
 	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
-	BIC: FnOnce(
-		Arc<FullClient<RuntimeApi, Executor>>,
-		Option<&Registry>,
-		Option<TelemetryHandle>,
-		&TaskManager,
-		&polkadot_service::NewFull<polkadot_service::Client>,
-		Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>>,
-		Arc<NetworkService<Block, Hash>>,
-		SyncCryptoStorePtr,
-		bool,
-	) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
 {
 	if matches!(parachain_config.role, Role::Light) {
 		return Err("Light client not supported!".into())
@@ -420,17 +348,75 @@ where
 	};
 
 	if validator {
-		let parachain_consensus = build_consensus(
+		let keystore = params.keystore_container.sync_keystore();
+		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
+
+		let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
+			task_manager.spawn_handle(),
 			client.clone(),
+			transaction_pool,
 			prometheus_registry.as_ref(),
 			telemetry.as_ref().map(|t| t.handle()),
-			&task_manager,
-			&relay_chain_full_node,
-			transaction_pool,
-			network,
-			params.keystore_container.sync_keystore(),
+		);
+
+		let relay_chain_backend = relay_chain_full_node.backend.clone();
+		let relay_chain_client = relay_chain_full_node.client.clone();
+		let backoff_authoring_blocks =
+			Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
+		let parachain_consensus = build_aura_consensus::<
+			sp_consensus_aura::sr25519::AuthorityPair,
+			_,
+			_,
+			_,
+			_,
+			_,
+			_,
+			_,
+			_,
+			_,
+		>(BuildAuraConsensusParams {
+			proposer_factory,
+			create_inherent_data_providers: move |_, (relay_parent, validation_data)| {
+				let parachain_inherent =
+						cumulus_primitives_parachain_inherent::ParachainInherentData::create_at_with_client(
+							relay_parent,
+							&relay_chain_client,
+							&*relay_chain_backend,
+							&validation_data,
+							id,
+						);
+				async move {
+					let time = sp_timestamp::InherentDataProvider::from_system_time();
+
+					let slot =
+							sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
+								*time,
+								slot_duration.slot_duration(),
+							);
+
+					let parachain_inherent = parachain_inherent.ok_or_else(|| {
+						Box::<dyn std::error::Error + Send + Sync>::from(
+							"Failed to create parachain inherent",
+						)
+					})?;
+					Ok((time, slot, parachain_inherent))
+				}
+			},
+			block_import: client.clone(),
+			relay_chain_client: relay_chain_full_node.client.clone(),
+			relay_chain_backend: relay_chain_full_node.backend.clone(),
+			para_client: client.clone(),
+			backoff_authoring_blocks,
+			sync_oracle: network,
+			keystore,
 			force_authoring,
-		)?;
+			slot_duration,
+			// We got around 500ms for proposing
+			block_proposal_slot_portion: SlotProportion::new(1_f32 / 24_f32),
+			// And a maximum of 750ms if slots are skipped
+			max_block_proposal_slot_portion: Some(SlotProportion::new(1_f32 / 16_f32)),
+			telemetry: telemetry.as_ref().map(|t| t.handle()),
+		});
 
 		let spawner = task_manager.spawn_handle();
 
@@ -461,7 +447,7 @@ where
 
 	start_network.start_network();
 
-	Ok((task_manager, client))
+	Ok(task_manager)
 }
 
 /// Build the import queue for the the parachain runtime.

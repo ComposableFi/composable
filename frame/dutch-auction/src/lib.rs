@@ -1,3 +1,27 @@
+//! Dutch Auction
+//!
+//! Ask to sell on auction.
+//! Initial price can start from price above market.
+//! Diminishes with time.
+//! Takers can take for price same or higher.
+//! Higher takers take first.
+//! Sell(ask) orders stored on chain. Sell takes deposit from seller, returned during take or
+//! liquidation. Takes live only one block.
+//!
+//! # Take Sell Order
+//! Allows for best price to win during auction take. as takes are not executed immediately.
+//! When auction steps onto new value, several people will decide it worth it.
+//! They will know that highest price wins, so will try to overbid other, hopefully driving price to
+//! more optimal. So takers appropriate tip to auction, not via transaction tip(not proportional to
+//! price) to parachain. Allows to win bids not by closes to parachain host machine.
+//!
+//! # Sell Order deposit
+//! Sell takes deposit (as for accounts), to store sells for some time.
+//! We have to store lock deposit value with ask as it can change within time.
+//! Later deposit is used by pallet as initiative to liquidate garbage.
+
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -16,298 +40,337 @@
 	unused_parens,
 	while_true,
 	trivial_casts,
-	trivial_numeric_casts
+	unused_extern_crates
 )]
-#![allow(unused_imports)]
-#![allow(dead_code)]
-#![allow(unused_variables)]
-
 pub use pallet::*;
-mod mocks;
-mod price_function;
+pub mod math;
+#[cfg(test)]
+mod tests;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+mod mock;
+
+pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use codec::{Codec, Decode, Encode, FullCodec};
+	use codec::{Decode, Encode};
 	use composable_traits::{
-		auction::{AuctionState, AuctionStepFunction, DutchAuction},
-		dex::{Orderbook, Price, SimpleExchange},
-		loans::{DeFiComposableConfig, DurationSeconds, PriceStructure, Timestamp, ONE_HOUR},
-		math::{LiftedFixedBalance, SafeArithmetic, WrappingNext},
+		auction::AuctionStepFunction,
+		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
+		loans::DurationSeconds,
+		math::{SafeArithmetic, WrappingNext},
 	};
 	use frame_support::{
-		ensure,
-		pallet_prelude::{MaybeSerializeDeserialize, ValueQuery},
-		traits::{
-			fungibles::{Inspect, Mutate, Transfer},
-			tokens::WithdrawConsequence,
-			Currency, IsType, UnixTime,
-		},
-		Parameter, Twox64Concat,
+		pallet_prelude::*,
+		traits::{tokens::fungible::Transfer as NativeTransfer, IsType, UnixTime},
+		weights::WeightToFeePolynomial,
+		PalletId,
 	};
-
-	use frame_support::pallet_prelude::*;
-	use frame_system::{pallet_prelude::*, Account};
-	use num_traits::{CheckedDiv, SaturatingAdd, SaturatingSub, WrappingAdd};
-
+	use frame_system::{
+		ensure_signed,
+		pallet_prelude::{BlockNumberFor, OriginFor},
+	};
+	use num_traits::Zero;
 	use scale_info::TypeInfo;
-	use sp_runtime::{
-		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
-			Saturating, Zero,
-		},
-		ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128, Percent,
-		Permill, Perquintill,
-	};
-	use sp_std::{fmt::Debug, vec::Vec};
 
-	use crate::price_function::AuctionTimeCurveModel;
+	use crate::{math::*, weights::WeightInfo};
+	use orml_traits::{MultiCurrency, MultiReservableCurrency};
+	use sp_runtime::{
+		traits::{AccountIdConversion, Saturating},
+		DispatchError,
+	};
+	use sp_std::vec::Vec;
 
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
-	pub trait Config: DeFiComposableConfig {
+	pub trait Config: DeFiComposableConfig + frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type UnixTime: UnixTime;
-		type Orderbook: Orderbook<
-			AssetId = Self::AssetId,
-			Balance = Self::Balance,
-			AccountId = Self::AccountId,
-			OrderId = Self::DexOrderId,
-			GroupId = Self::GroupId,
-		>;
-		type DexOrderId: FullCodec + Default + TypeInfo;
-		type OrderId: FullCodec + Clone + Debug + Eq + Default + WrappingNext + TypeInfo;
-		type GroupId: FullCodec + Clone + Debug + PartialEq + Default + TypeInfo;
+		type OrderId: OrderIdLike + WrappingNext + Zero;
+		type MultiCurrency: MultiCurrency<
+				Self::AccountId,
+				CurrencyId = Self::MayBeAssetId,
+				Balance = <Self as DeFiComposableConfig>::Balance,
+			> + MultiReservableCurrency<
+				Self::AccountId,
+				CurrencyId = Self::MayBeAssetId,
+				Balance = <Self as DeFiComposableConfig>::Balance,
+			>;
+		type WeightInfo: WeightInfo;
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
+		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>;
+		/// Convert a weight value into a deductible fee based on the currency type.
+		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
 	}
+
+	#[derive(Encode, Decode, Default, TypeInfo, Clone, Debug, PartialEq)]
+	pub struct SellOrder<AssetId, Balance, AccountId, Context> {
+		pub from_to: AccountId,
+		pub order: Sell<AssetId, Balance>,
+		pub configuration: AuctionStepFunction,
+		/// context captured when sell started
+		pub context: Context,
+	}
+
+	#[derive(Encode, Decode, Default, TypeInfo, Clone, Debug, PartialEq)]
+	pub struct Context<Balance> {
+		pub added_at: DurationSeconds,
+		pub deposit: Balance,
+	}
+
+	#[derive(Encode, Decode, Default, TypeInfo)]
+	pub struct TakeOrder<Balance, AccountId> {
+		pub from_to: AccountId,
+		pub take: Take<Balance>,
+	}
+
+	// type aliases
+	pub type OrderIdOf<T> = <T as Config>::OrderId;
+	pub type SellOf<T> = SellOrder<
+		<T as DeFiComposableConfig>::MayBeAssetId,
+		<T as DeFiComposableConfig>::Balance,
+		<T as frame_system::Config>::AccountId,
+		Context<<T as DeFiComposableConfig>::Balance>,
+	>;
+
+	pub type TakeOf<T> =
+		TakeOrder<<T as DeFiComposableConfig>::Balance, <T as frame_system::Config>::AccountId>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// when auctions starts
-		AuctionWasStarted {
-			order_id: T::OrderId,
-		},
-
-		AuctionSuccess {
-			order_id: T::OrderId,
-		},
-
-		AuctionFatalFail {
-			order_id: T::OrderId,
-		},
+		OrderAdded { order_id: OrderIdOf<T>, order: SellOf<T> },
+		OrderRemoved { order_id: OrderIdOf<T> },
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		CannotWithdrawAmountEqualToDesiredAuction,
-		EitherTooMuchOfAuctions,
+		RequestedOrderDoesNotExists,
+		OrderParametersIsInvalid,
+		TakeParametersIsInvalid,
+		TakeLimitDoesNotSatisfiesOrder,
+		OrderNotFound,
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
-
-	/// auction can span several dex orders within its lifetime
-	#[derive(Encode, Decode, Default, TypeInfo)]
-	pub struct Order<DexOrderId, AccountId, AssetId, Balance, GroupId> {
-		/// when auction was created(started)
-		pub started: Timestamp,
-		/// how price decreases with time
-		pub function: AuctionStepFunction,
-		/// account who asked for auction and who owns amount to be sold
-		pub account_id: AccountId,
-		/// asset type desired to be sold
-		pub source_asset_id: AssetId,
-		/// account which holds amount to sell
-		pub source_account: AccountId,
-		/// asset type auction wants to get in exchange eventually
-		pub target_asset_id: AssetId,
-		/// account of desired(wanted) currency type to transfer amount after exchange
-		pub target_account: AccountId,
-		/// amount of source currency
-		pub source_total_amount: Balance,
-		/// price of source unit to start auction with.
-		pub source_initial_price: PriceStructure<GroupId, Balance>,
-		/// auction state
-		pub state: AuctionState<DexOrderId>,
-	}
-
-	type OrderIdOf<T> = <<T as Config>::Orderbook as Orderbook>::OrderId;
-
-	type OrderOf<T> = Order<
-		OrderIdOf<T>,
-		<T as frame_system::Config>::AccountId,
-		<T as DeFiComposableConfig>::AssetId,
-		<T as DeFiComposableConfig>::Balance,
-		<T as Config>::GroupId,
-	>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn orders)]
-	pub type Orders<T: Config> = StorageMap<_, Twox64Concat, T::OrderId, OrderOf<T>, ValueQuery>;
-
 	#[pallet::storage]
 	#[pallet::getter(fn orders_index)]
-	pub type OrdersIndex<T: Config> = StorageValue<_, T::OrderId, ValueQuery>;
+	#[allow(clippy::disallowed_type)] // OrderIdOnEmpty provides a default value
+	pub type OrdersIndex<T: Config> = StorageValue<_, T::OrderId, ValueQuery, OrderIdOnEmpty<T>>;
 
-	impl<T: Config + DeFiComposableConfig> DutchAuction for Pallet<T> {
-		type AccountId = T::AccountId;
+	#[pallet::storage]
+	#[pallet::getter(fn buys)]
+	pub type SellOrders<T: Config> =
+		StorageMap<_, Twox64Concat, OrderIdOf<T>, SellOf<T>, OptionQuery>;
 
-		type AssetId = T::AssetId;
+	/// one block storage, users payed N * WEIGHT for this Vec, so will not put bound here (neither
+	/// HydraDX does)
+	#[pallet::storage]
+	#[pallet::getter(fn takes)]
+	pub type Takes<T: Config> =
+		StorageMap<_, Twox64Concat, OrderIdOf<T>, Vec<TakeOf<T>>, OptionQuery>;
+
+	impl<T: Config + DeFiComposableConfig> DeFiEngine for Pallet<T> {
+		type MayBeAssetId = T::MayBeAssetId;
 
 		type Balance = T::Balance;
 
+		type AccountId = T::AccountId;
+	}
+
+	#[pallet::type_value]
+	pub fn OrderIdOnEmpty<T: Config>() -> T::OrderId {
+		T::OrderId::zero()
+	}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		/// sell `order` in auction with `configuration`
+		/// some deposit is taken for storing sell order
+		#[pallet::weight(T::WeightInfo::ask())]
+		pub fn ask(
+			origin: OriginFor<T>,
+			order: Sell<T::MayBeAssetId, T::Balance>,
+			configuration: AuctionStepFunction,
+		) -> DispatchResultWithPostInfo {
+			let who = &(ensure_signed(origin)?);
+			let order_id =
+				<Self as SellEngine<AuctionStepFunction>>::ask(who, order, configuration)?;
+
+			Self::deposit_event(Event::OrderAdded {
+				order_id,
+				order: SellOrders::<T>::get(order_id).expect("just added order exists"),
+			});
+			Ok(().into())
+		}
+
+		/// adds take to list, does not execute take immediately
+		#[pallet::weight(T::WeightInfo::take())]
+		pub fn take(
+			origin: OriginFor<T>,
+			order_id: T::OrderId,
+			take: Take<T::Balance>,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			<Self as SellEngine<AuctionStepFunction>>::take(&who, order_id, take)?;
+			Ok(().into())
+		}
+
+		/// allows to remove `order_id` from storage
+		#[pallet::weight(T::WeightInfo::liquidate())]
+		pub fn liquidate(origin: OriginFor<T>, order_id: T::OrderId) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let order = SellOrders::<T>::get(order_id).ok_or(Error::<T>::OrderNotFound)?;
+			ensure!(order.from_to == who, DispatchError::BadOrigin,);
+			// weights fees are of platform spam protection, so we do not interfere with
+			// this function but on pallet level, we allow "fee less" liquidation by owner
+			// we can later allow liquidate old orders(or orders with some block liquidation
+			// timeout set) using kind of account per order is possible, but may risk to
+			// pollute account system
+			let treasury = &T::PalletId::get().into_account();
+			T::MultiCurrency::unreserve(order.order.pair.base, &who, order.order.take.amount);
+			T::NativeCurrency::transfer(treasury, &order.from_to, order.context.deposit, true)?;
+
+			<SellOrders<T>>::remove(order_id);
+			Self::deposit_event(Event::OrderRemoved { order_id });
+
+			Ok(Pays::No.into())
+		}
+	}
+
+	impl<T: Config + DeFiComposableConfig> SellEngine<AuctionStepFunction> for Pallet<T> {
 		type OrderId = T::OrderId;
-
-		type Orderbook = T::Orderbook;
-
-		type GroupId = T::GroupId;
-
-		#[allow(clippy::type_complexity)]
-		type Order = Order<OrderIdOf<T>, T::AccountId, T::AssetId, T::Balance, T::GroupId>;
-
-		fn start(
-			account_id: &Self::AccountId,
-			source_asset_id: Self::AssetId,
-			source_account: &Self::AccountId,
-			target_asset_id: Self::AssetId,
-			target_account: &Self::AccountId,
-			total_amount: Self::Balance,
-			price: PriceStructure<Self::GroupId, Self::Balance>,
-			function: AuctionStepFunction,
+		fn ask(
+			from_to: &Self::AccountId,
+			order: Sell<Self::MayBeAssetId, Self::Balance>,
+			configuration: AuctionStepFunction,
 		) -> Result<Self::OrderId, DispatchError> {
-			// TODO: with remote foreign chain DEX it can pass several blocks before we get on DEX.
-			// so somehow need to lock (transfer) currency before foreign transactions settles
-			ensure!(
-				<T::Currency as Inspect<T::AccountId>>::can_withdraw(
-					source_asset_id,
-					account_id,
-					total_amount
-				)
-				.into_result()
-				.is_ok(),
-				Error::<T>::CannotWithdrawAmountEqualToDesiredAuction
-			);
-
-			// because dex call is in "other transaction" and same block can have 2 starts each
-			// passing check, but failing during dex call.
-			let order_id: T::OrderId = OrdersIndex::<T>::get();
-			OrdersIndex::<T>::set(order_id.next());
-
-			let order = Order {
-				started: T::UnixTime::now().as_secs(),
-				function,
-				account_id: account_id.clone(),
-				source_asset_id,
-				source_account: source_account.clone(),
-				target_asset_id,
-				target_account: target_account.clone(),
-				source_total_amount: total_amount,
-				source_initial_price: price,
-				state: AuctionState::AuctionStarted,
+			ensure!(order.is_valid(), Error::<T>::OrderParametersIsInvalid,);
+			let order_id = <OrdersIndex<T>>::mutate(|x| {
+				*x = x.next();
+				// in case of wrapping, will need to check existence of order/takes
+				*x
+			});
+			let treasury = &T::PalletId::get().into_account();
+			let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate());
+			T::NativeCurrency::transfer(from_to, treasury, deposit, true)?;
+			let now = T::UnixTime::now().as_secs();
+			let order = SellOf::<T> {
+				from_to: from_to.clone(),
+				configuration,
+				order,
+				context: Context::<Self::Balance> { added_at: now, deposit },
 			};
-			Orders::<T>::insert(order_id.clone(), order);
-			Self::deposit_event(Event::<T>::AuctionWasStarted { order_id: order_id.clone() });
+			T::MultiCurrency::reserve(order.order.pair.base, from_to, order.order.take.amount)?;
+			SellOrders::<T>::insert(order_id, order);
+
 			Ok(order_id)
 		}
 
-		fn off_chain_run_auctions(now: Timestamp) -> DispatchResult {
-			// avoid removing during iteration as unsafe
-			let mut removed = Vec::new();
-			for (order_id, order) in Orders::<T>::iter() {
-				match order.state {
-					AuctionState::AuctionStarted => {
-						if now > order.started + ONE_HOUR {
-							removed.push(order_id);
-						} else {
-							// for final protocol may be will need to transfer currency onto auction
-							// pallet sub account and send dex order with idempotency tracking id final protocol seems should include multistage lock/unlock https://github.com/paritytech/xcm-format or something
-							let delta_time = now - order.started;
-							let price: LiftedFixedBalance =
-								order.source_initial_price.initial_price.into();
-							let total_price = price.safe_mul(&order.source_total_amount.into())?;
-							let price = match order.function {
-								AuctionStepFunction::LinearDecrease(parameters) =>
-									parameters.price(total_price, delta_time),
-								AuctionStepFunction::StairstepExponentialDecrease(parameters) =>
-									parameters.price(total_price, delta_time),
-							}?
-							.checked_mul_int(1u64)
-							.ok_or(ArithmeticError::Overflow)?;
+		fn take(
+			from_to: &Self::AccountId,
+			order_id: Self::OrderId,
+			take: Take<Self::Balance>,
+		) -> Result<(), DispatchError> {
+			ensure!(take.is_valid(), Error::<T>::TakeParametersIsInvalid,);
+			let order = <SellOrders<T>>::try_get(order_id)
+				.map_err(|_x| Error::<T>::RequestedOrderDoesNotExists)?;
+			ensure!(
+				order.order.take.limit <= take.limit,
+				Error::<T>::TakeLimitDoesNotSatisfiesOrder,
+			);
+			let limit = order.order.take.limit.into();
+			// may consider storing calculation results within single block, so that finalize does
+			// not recalculates
+			let passed = T::UnixTime::now().as_secs() - order.context.added_at;
+			let _limit = order.configuration.price(limit, passed)?;
+			let quote_amount = take.quote_amount()?;
 
-							let price =
-								Price::<Self::GroupId, Self::Balance>::new_any(price.into());
-
-							let dex_order_intention = <T::Orderbook as Orderbook>::post(
-								&order.account_id,
-								order.source_asset_id,
-								order.target_asset_id,
-								order.source_total_amount,
-								price,
-								Permill::from_perthousand(5),
-							)?;
-
-							Orders::<T>::mutate(order_id, |order| {
-								// considers updating in place is
-								// safe during iteration
-								order.state = AuctionState::AuctionOnDex(dex_order_intention.id);
-							});
-						}
-					},
-					AuctionState::AuctionOnDex(_) => {
-						// waiting for off chain callback about order status
-						if now > order.started + ONE_HOUR {
-							removed.push(order_id);
-						}
-					},
-					_ => {
-						removed.push(order_id);
-					},
-				}
-			}
-
-			for r in removed.iter() {
-				Orders::<T>::remove(r);
-			}
+			T::MultiCurrency::reserve(order.order.pair.quote, from_to, quote_amount)?;
+			<Takes<T>>::append(order_id, TakeOf::<T> { from_to: from_to.clone(), take });
 
 			Ok(())
 		}
+	}
 
-		fn intention_updated(
-			order_id: &Self::OrderId,
-			action_event: composable_traits::auction::AuctionExchangeCallback,
-		) -> DispatchResult {
-			Orders::<T>::try_mutate(order_id, |order| match order.state {
-				AuctionState::AuctionStarted => {
-					match action_event {
-						composable_traits::auction::AuctionExchangeCallback::Success => {
-							Orders::<T>::remove(order_id);
-							Self::deposit_event(Event::<T>::AuctionSuccess {
-								order_id: order_id.clone(),
-							});
-						},
-						composable_traits::auction::AuctionExchangeCallback::RetryFail => {
-							order.state = AuctionState::AuctionStarted;
-							Orders::<T>::insert(order_id, order);
-						},
-						composable_traits::auction::AuctionExchangeCallback::FatalFail => {
-							Orders::<T>::remove(order_id);
-							Self::deposit_event(Event::<T>::AuctionFatalFail {
-								order_id: order_id.clone(),
-							});
-						},
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		// this cleanups all takes added into block, so we never store takes
+		// so we stay fast and prevent attack
+		fn on_finalize(_n: T::BlockNumber) {
+			for (order_id, mut takes) in <Takes<T>>::iter() {
+				// users payed N * WEIGHT before, we here pay N * (log N - 1) * Weight. We can
+				// retain pure N by first served principle so, not highest price.
+				takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));
+				let SellOrder { mut order, context: _, from_to: ref seller, configuration: _ } =
+					<SellOrders<T>>::get(order_id)
+						.expect("takes are added only onto existing orders");
+
+				// calculate real price
+				for take in takes {
+					let quote_amount = take.take.amount.saturating_mul(take.take.limit);
+					// what to do with orders which nobody ever takes? some kind of dust orders with
+					if order.take.amount == T::Balance::zero() {
+						T::MultiCurrency::unreserve(order.pair.quote, &take.from_to, quote_amount);
+					} else {
+						let take_amount = take.take.amount.min(order.take.amount);
+						order.take.amount -= take_amount;
+						let real_quote_amount = take_amount
+							.safe_mul(&take.take.limit)
+							.expect("was checked in take call");
+
+						exchange_reserved::<T>(
+							order.pair.base,
+							seller,
+							take_amount,
+							order.pair.quote,
+							&take.from_to,
+							real_quote_amount,
+						)
+						.expect("we forced locks beforehand");
+
+						if real_quote_amount < quote_amount {
+							T::MultiCurrency::unreserve(
+								order.pair.quote,
+								&take.from_to,
+								quote_amount - real_quote_amount,
+							);
+						}
 					}
-					Ok(())
-				},
-				_ => Ok(()),
-			})
+				}
+
+				if order.take.amount == T::Balance::zero() {
+					<SellOrders<T>>::remove(order_id);
+					Self::deposit_event(Event::OrderRemoved { order_id });
+				}
+			}
+			<Takes<T>>::remove_all(None);
 		}
 
-		fn get_auction_state(order_id: &Self::OrderId) -> Option<Self::Order> {
-			Orders::<T>::try_get(order_id).ok()
+		fn on_initialize(_n: T::BlockNumber) -> Weight {
+			T::WeightInfo::known_overhead_for_on_finalize()
 		}
+	}
+
+	/// feesless exchange of reserved currencies
+	fn exchange_reserved<T: Config>(
+		base: <T as DeFiComposableConfig>::MayBeAssetId,
+		seller: &<T as frame_system::Config>::AccountId,
+		take_amount: <T as DeFiComposableConfig>::Balance,
+		quote: <T as DeFiComposableConfig>::MayBeAssetId,
+		taker: &<T as frame_system::Config>::AccountId,
+		quote_amount: <T as DeFiComposableConfig>::Balance,
+	) -> Result<(), DispatchError> {
+		T::MultiCurrency::unreserve(base, seller, take_amount);
+		T::MultiCurrency::unreserve(quote, taker, quote_amount);
+		T::MultiCurrency::transfer(base, seller, taker, take_amount)?;
+		T::MultiCurrency::transfer(quote, taker, seller, quote_amount)?;
+		Ok(())
 	}
 }

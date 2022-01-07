@@ -26,6 +26,8 @@
 //! - `update_vesting_schedules` - Update all vesting schedules under an account, `root` origin
 //!   required.
 
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
@@ -134,6 +136,9 @@ pub mod module {
 	/// VestingSchedules: map AccountId => Vec<VestingSchedule>
 	#[pallet::storage]
 	#[pallet::getter(fn vesting_schedules)]
+	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
+	// use OptionQuery instead
+	#[allow(clippy::disallowed_type)]
 	pub type VestingSchedules<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,

@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod impls;
@@ -55,7 +57,7 @@ mod types {
 
 /// Common constants of statemint and statemine
 mod constants {
-	use super::types::{AccountId, Balance, BlockNumber, CouncilInstance};
+	use super::types::{AccountId, BlockNumber, CouncilInstance};
 	use frame_support::weights::{constants::WEIGHT_PER_SECOND, Weight};
 	use frame_system::{EnsureOneOf, EnsureRoot};
 	use sp_core::u32_trait::{_1, _2};
@@ -74,11 +76,6 @@ mod constants {
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 	pub const HOURS: BlockNumber = MINUTES * 60;
 	pub const DAYS: BlockNumber = HOURS * 24;
-
-	// PICA = 12 decimals
-	pub const PICA: Balance = 1_000_000_000_000;
-	pub const MILLI_PICA: Balance = PICA / 1_000;
-	pub const MICRO_PICA: Balance = MILLI_PICA / 1_000;
 
 	/// We assume that ~5% of the block weight is consumed by `on_initialize` handlers. This is
 	/// used to limit the maximal weight of a single extrinsic.

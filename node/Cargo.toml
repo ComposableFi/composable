@@ -1,6 +1,6 @@
 [package]
 name = "composable"
-version = '3.0.0'
+version = '1.0.9'
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
 build = "build.rs"
@@ -22,6 +22,7 @@ structopt = "0.3.8"
 # Local Dependencies
 picasso-runtime = { path = "../runtime/picasso"  }
 composable-runtime = { path = "../runtime/composable" }
+dali-runtime = { path = "../runtime/dali" }
 common = { path = "../runtime/common"  }
 
 # FRAME Dependencies
@@ -95,3 +96,7 @@ hex = "0.4.3"
 default = []
 runtime-benchmarks = ["picasso-runtime/runtime-benchmarks", "composable-runtime/runtime-benchmarks"]
 ocw = []
+
+[package.metadata.cargo-udeps.ignore]
+normal = ["pallet-bonded-finance"]
+

@@ -1,18 +1,18 @@
 use crate::{self as pallet_lending, *};
 use composable_traits::{
-	currency::{DynamicCurrencyId, PriceableAsset},
-	dex::{Orderbook, Price, SellOrder},
-	loans::DeFiComposableConfig,
+	currency::{DynamicCurrencyId, Exponent, PriceableAsset},
+	defi::DeFiComposableConfig,
+	governance::{GovernanceRegistry, SignedRawOrigin},
 };
 use frame_support::{
-	parameter_types,
-	sp_runtime::Permill,
+	ord_parameter_types, parameter_types,
 	traits::{Everything, OnFinalize, OnInitialize},
 	PalletId,
 };
+use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 use once_cell::sync::Lazy;
-use orml_traits::parameter_type_with_key;
+use orml_traits::{parameter_type_with_key, GetByKey};
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
 use sp_core::{sr25519::Signature, H256};
@@ -64,6 +64,7 @@ pub static UNRESERVED: Lazy<AccountId> = Lazy::new(|| {
 	serde::Deserialize,
 	TypeInfo,
 )]
+#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
 pub enum MockCurrencyId {
 	PICA,
 	BTC,
@@ -94,7 +95,7 @@ impl Default for MockCurrencyId {
 }
 
 impl PriceableAsset for MockCurrencyId {
-	fn smallest_unit_exponent(self) -> composable_traits::currency::Exponent {
+	fn decimals(&self) -> Exponent {
 		match self {
 			MockCurrencyId::PICA => 0,
 			MockCurrencyId::BTC => 8,
@@ -130,10 +131,11 @@ frame_support::construct_runtime!(
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Assets: pallet_assets::{Pallet, Call, Storage},
 		Liquidations: pallet_liquidations::{Pallet, Call, Event<T>},
 		Lending: pallet_lending::{Pallet, Call, Config, Storage, Event<T>},
 		Oracle: pallet_lending::mocks::oracle::{Pallet},
-		Auction: pallet_dutch_auctions::{Pallet, Event<T>},
+		DutchAuction: pallet_dutch_auction::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -260,76 +262,97 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = Everything;
 }
 
+ord_parameter_types! {
+	pub const RootAccount: AccountId = *ALICE;
+}
+
+impl GovernanceRegistry<MockCurrencyId, AccountId> for () {
+	fn set(_k: MockCurrencyId, _value: composable_traits::governance::SignedRawOrigin<AccountId>) {}
+}
+
+impl
+	GetByKey<
+		MockCurrencyId,
+		Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError>,
+	> for ()
+{
+	fn get(
+		_k: &MockCurrencyId,
+	) -> Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError> {
+		Ok(SignedRawOrigin::Root)
+	}
+}
+
+impl pallet_assets::Config for Test {
+	type NativeAssetId = NativeAssetId;
+	type GenerateCurrencyId = LpTokenFactory;
+	type AssetId = MockCurrencyId;
+	type Balance = Balance;
+	type NativeCurrency = Balances;
+	type MultiCurrency = Tokens;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
+	type GovernanceRegistry = ();
+}
+
 impl crate::mocks::oracle::Config for Test {
 	type VaultId = VaultId;
 	type Vault = Vault;
 }
 
 impl DeFiComposableConfig for Test {
-	type AssetId = MockCurrencyId;
+	type MayBeAssetId = MockCurrencyId;
 	type Balance = Balance;
-	type Currency = Tokens;
 }
 
-pub struct MockOrderbook;
-impl Orderbook for MockOrderbook {
-	type AssetId = MockCurrencyId;
-	type Balance = Balance;
-	type AccountId = AccountId;
-	type OrderId = u128;
-	type GroupId = AccountId;
+parameter_types! {
+	pub DutchAuctionPalletId: PalletId = PalletId(*b"dutchauc");
+}
 
-	fn post(
-		_account_from: &Self::AccountId,
-		_asset: Self::AssetId,
-		_want: Self::AssetId,
-		_source_amount: Self::Balance,
-		_source_price: Price<Self::GroupId, Self::Balance>,
-		_amm_slippage: Permill,
-	) -> Result<SellOrder<Self::OrderId, Self::AccountId>, DispatchError> {
-		Ok(SellOrder { id: 0, account: ALICE.clone() })
+// later will reuse mocks from that crate
+pub struct DutchAuctionsMocks;
+
+impl pallet_dutch_auction::weights::WeightInfo for DutchAuctionsMocks {
+	fn ask() -> frame_support::dispatch::Weight {
+		0
 	}
 
-	fn market_sell(
-		_account: &Self::AccountId,
-		_asset: Self::AssetId,
-		_want: Self::AssetId,
-		_amount: Self::Balance,
-		_amm_slippage: Permill,
-	) -> Result<Self::OrderId, DispatchError> {
-		Ok(0)
+	fn take() -> frame_support::dispatch::Weight {
+		0
 	}
 
-	fn patch(
-		_order_id: Self::OrderId,
-		_price: Price<Self::GroupId, Self::Balance>,
-	) -> Result<(), DispatchError> {
-		Ok(())
+	fn liquidate() -> frame_support::dispatch::Weight {
+		0
 	}
 
-	fn ask(
-		_account: &Self::AccountId,
-		_orders: impl Iterator<Item = Self::OrderId>,
-		_up_to: Self::Balance,
-	) -> Result<(), DispatchError> {
-		Ok(())
+	fn known_overhead_for_on_finalize() -> frame_support::dispatch::Weight {
+		0
 	}
 }
 
-impl pallet_dutch_auctions::Config for Test {
+impl frame_support::weights::WeightToFeePolynomial for DutchAuctionsMocks {
+	type Balance = u128;
+
+	fn polynomial() -> frame_support::weights::WeightToFeeCoefficients<Self::Balance> {
+		todo!("will replace with mocks from relevant pallet")
+	}
+}
+
+impl pallet_dutch_auction::Config for Test {
 	type Event = Event;
-	type DexOrderId = u128;
 	type OrderId = u128;
 	type UnixTime = Timestamp;
-	type Orderbook = MockOrderbook;
-	type GroupId = AccountId;
+	type MultiCurrency = Assets;
+	type WeightInfo = DutchAuctionsMocks;
+	type NativeCurrency = Assets;
+	type PalletId = DutchAuctionPalletId;
+	type WeightToFee = DutchAuctionsMocks;
 }
 
 impl pallet_liquidations::Config for Test {
 	type Event = Event;
 	type UnixTime = Timestamp;
 	type Lending = Lending;
-	type DutchAuction = Auction;
 	type GroupId = AccountId;
 }
 
@@ -402,7 +425,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		System::set_block_number(0);
 		Timestamp::set_timestamp(MILLISECS_PER_BLOCK);
 		// Initialize BTC price to 50000
-		pallet_lending::mocks::oracle::BTCValue::<Test>::set(50000u128);
+		pallet_lending::mocks::oracle::BTCValue::<Test>::set(50000_u128);
 	});
 	ext
 }

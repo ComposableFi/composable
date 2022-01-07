@@ -15,7 +15,7 @@ use composable_tests_helpers::{
 	test::helper::default_acceptable_computation_error,
 };
 use composable_traits::{
-	rate_model::Rate,
+	defi::Rate,
 	vault::{
 		Deposit, FundsAvailability, ReportableStrategicVault, StrategicVault, Vault, VaultConfig,
 	},
@@ -775,7 +775,7 @@ fn test_vault_claim_surcharge_rent_excempt() {
 		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
 			.expect("claiming surcharge for rent should work");
 		assert!(Balances::balance(&CHARLIE) == 0);
-		let vault = Vaults::vault_data(id);
+		let vault = Vaults::vault_data(id).unwrap();
 		assert!(!vault.capabilities.is_tombstoned());
 	})
 }
@@ -792,7 +792,7 @@ fn test_vault_claim_surcharge_rent_charge() {
 		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
 			.expect("claiming surcharge for rent should work");
 		assert!(Balances::balance(&CHARLIE) > 0);
-		let vault = Vaults::vault_data(id);
+		let vault = Vaults::vault_data(id).unwrap();
 		assert!(!vault.capabilities.is_tombstoned());
 	})
 }
@@ -809,7 +809,7 @@ fn test_vault_claim_surcharge_rent_evict() {
 		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
 			.expect("claiming surcharge for rent should work");
 		assert!(Balances::balance(&CHARLIE) > 0);
-		let vault = Vaults::vault_data(id);
+		let vault = Vaults::vault_data(id).unwrap();
 		assert!(vault.capabilities.is_tombstoned());
 	})
 }
@@ -826,10 +826,10 @@ fn test_vault_add_surcharge() {
 		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
 			.expect("claiming surcharge for rent should work");
 		assert!(Balances::balance(&CHARLIE) > 0);
-		let vault = Vaults::vault_data(id);
+		let vault = Vaults::vault_data(id).unwrap();
 		assert!(vault.capabilities.is_tombstoned());
 		Vaults::add_surcharge(Origin::signed(ALICE), id, CreationDeposit::get()).unwrap();
-		let vault = Vaults::vault_data(id);
+		let vault = Vaults::vault_data(id).unwrap();
 		assert!(!vault.capabilities.is_tombstoned());
 	})
 }
@@ -846,7 +846,7 @@ fn test_vault_delete_tombstoned() {
 			.expect("claiming surcharge for rent should work");
 		let after_surcharge_balance = Balances::balance(&CHARLIE);
 		assert!(after_surcharge_balance > 0);
-		let vault = Vaults::vault_data(id);
+		let vault = Vaults::vault_data(id).unwrap();
 		assert!(vault.capabilities.is_tombstoned());
 		System::set_block_number(1000000 + TombstoneDuration::get());
 		Vaults::delete_tombstoned(Origin::signed(CHARLIE), id, None).unwrap();
@@ -868,7 +868,7 @@ fn test_vault_delete_tombstoned_insufficient_time_fails() {
 		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
 			.expect("claiming surcharge for rent should work");
 		assert!(Balances::balance(&CHARLIE) > 0);
-		let vault = Vaults::vault_data(id);
+		let vault = Vaults::vault_data(id).unwrap();
 		assert!(vault.capabilities.is_tombstoned());
 		System::set_block_number(1000000 + TombstoneDuration::get() - 1);
 		Vaults::delete_tombstoned(Origin::signed(ALICE), id, None).unwrap_err();

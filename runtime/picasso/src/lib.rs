@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -11,15 +13,16 @@ mod xcmp;
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
+	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
+use composable_traits::currency::PriceableAsset;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
+	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -28,8 +31,6 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
-use sp_runtime::traits::AccountIdConversion;
 
 // A few exports that help ease life for downstream crates.
 pub use support::{
@@ -201,12 +202,12 @@ impl aura::Config for Runtime {
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
-	pub const BasicDeposit: Balance = 8 * PICA;
-	pub const FieldDeposit: Balance = 256 * MILLI_PICA;
+	pub BasicDeposit: Balance = 8 * CurrencyId::PICA.unit::<Balance>();
+	pub FieldDeposit: Balance = 256 * CurrencyId::PICA.milli::<Balance>();
 	pub const MaxAdditionalFields: u32 = 32;
 	pub const MaxRegistrars: u32 = 8;
 	pub const MaxSubAccounts: u32 = 32;
-	pub const SubAccountDeposit: Balance = 2 * PICA;
+	pub SubAccountDeposit: Balance = 2 * CurrencyId::PICA.unit::<Balance>();
 }
 
 impl identity::Config for Runtime {
@@ -225,8 +226,8 @@ impl identity::Config for Runtime {
 }
 
 parameter_types! {
-	pub const DepositBase: u64 = PICA as u64;
-	pub const DepositFactor: u64 = 32 * MILLI_PICA as u64;
+	pub DepositBase: u64 = CurrencyId::PICA.unit();
+	pub DepositFactor: u64 = 32 * CurrencyId::PICA.milli::<u64>();
 	pub const MaxSignatories: u16 = 5;
 }
 
@@ -255,12 +256,10 @@ impl timestamp::Config for Runtime {
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
 }
 
-/// minimum account balance is given as 0.1 PICA ~ 100 MILLI_PICA
-pub const EXISTENTIAL_DEPOSIT: Balance = 100 * MILLI_PICA;
-
 parameter_types! {
 	/// Minimum amount an account has to hold to stay in state.
-	pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
+	// minimum account balance is given as 0.1 PICA ~ 100 CurrencyId::PICA.milli()
+	pub ExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
 	/// Max locks that can be placed on an account. Capped for storage
 	/// concerns.
 	pub const MaxLocks: u32 = 50;
@@ -282,7 +281,7 @@ impl balances::Config for Runtime {
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
-	pub const TransactionByteFee: Balance = MILLI_PICA;
+	pub TransactionByteFee: Balance = CurrencyId::PICA.milli();
 
 	// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
@@ -295,7 +294,7 @@ parameter_types! {
 	/// See `multiplier_can_grow_from_zero` in integration_tests.rs.
 	/// This value is currently only used by pallet-transaction-payment as an assertion that the
 	/// next multiplier is always > min value.
-	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
+	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_u128);
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
@@ -303,7 +302,7 @@ pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		let p = MILLI_PICA;
+		let p = CurrencyId::PICA.milli::<Balance>();
 		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 		smallvec::smallvec![WeightToFeeCoefficient {
 			degree: 1,
@@ -331,7 +330,7 @@ impl sudo::Config for Runtime {
 
 parameter_types! {
 	/// Deposit required to get an index.
-	pub const IndexDeposit: Balance = 100 * PICA;
+	pub IndexDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
 }
 
 impl indices::Config for Runtime {
@@ -377,6 +376,8 @@ where
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			#[cfg(feature = "develop")]
+			crowdloan_rewards::PrevalidateAssociation::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -409,7 +410,7 @@ parameter_types! {
 	pub const StalePrice: BlockNumber = 5;
 
 	/// TODO: discuss with omar/cosmin
-	pub const MinStake: Balance = 1000 * PICA;
+	pub MinStake: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
 	// Shouldn't this be a ratio based on locked amount?
 	pub const SlashAmount: Balance = 5;
 	pub const MaxAnswerBound: u32 = 25;
@@ -571,7 +572,7 @@ parameter_types! {
 	/// percentage of proposal that most be bonded by the proposer
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	// TODO: rationale?
-	pub const ProposalBondMinimum: Balance = 5 * PICA;
+	pub ProposalBondMinimum: Balance = 5 * CurrencyId::PICA.unit::<Balance>();
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
 
@@ -656,11 +657,11 @@ parameter_types! {
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
 
-	pub MinimumDeposit: Balance = 100 * PICA;
+	pub MinimumDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	// TODO: prod value
-	pub PreimageByteDeposit: Balance = MILLI_PICA;
+	pub PreimageByteDeposit: Balance = CurrencyId::PICA.milli();
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -705,10 +706,10 @@ impl democracy::Config for Runtime {
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
-	pub const CreationDeposit: Balance = 10 * PICA;
-	pub const VaultExistentialDeposit: Balance = 1000 * PICA;
-	pub const RentPerBlock: Balance = MILLI_PICA;
+	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
+	pub CreationDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
+	pub RentPerBlock: Balance = CurrencyId::PICA.milli();
 	pub const VaultMinimumDeposit: Balance = 10_000;
 	pub const VaultMinimumWithdrawal: Balance = 10_000;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
@@ -777,6 +778,86 @@ impl assets::Config for Runtime {
 	type GovernanceRegistry = GovernanceRegistry;
 }
 
+parameter_types! {
+	  pub const InitialPayment: Perbill = Perbill::from_percent(50);
+	  pub const VestingStep: BlockNumber = 7 * DAYS;
+	  pub const Prefix: &'static [u8] = b"picasso-";
+}
+
+#[cfg(feature = "develop")]
+impl crowdloan_rewards::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Currency = Assets;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	// TODO(hussein-aitlahcen): should be the proxy account
+	type AssociationOrigin = EnsureRootOrHalfCouncil;
+	type Convert = sp_runtime::traits::ConvertInto;
+	type RelayChainAccountId = [u8; 32];
+	type InitialPayment = InitialPayment;
+	type VestingStep = VestingStep;
+	type Prefix = Prefix;
+	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
+}
+
+#[cfg(feature = "develop")]
+parameter_types! {
+	pub const MaxVestingSchedule: u32 = 2;
+	pub const MinVestedTransfer: u64 = 1_000_000;
+}
+
+#[cfg(feature = "develop")]
+impl vesting::Config for Runtime {
+	type Currency = Tokens;
+	type Event = Event;
+	type MaxVestingSchedules = MaxVestingSchedule;
+	type MinVestedTransfer = MinVestedTransfer;
+	type VestedTransferOrigin = system::EnsureSigned<AccountId>;
+	type WeightInfo = ();
+}
+
+#[cfg(feature = "develop")]
+parameter_types! {
+	pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
+	pub const MinReward: Balance = 1_000_000;
+	pub const Stake: Balance = 10_000;
+}
+
+#[cfg(feature = "develop")]
+impl pallet_bonded_finance::Config for Runtime {
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type BondOfferId = u64;
+	type Convert = sp_runtime::traits::ConvertInto;
+	type Currency = Tokens;
+	type Event = Event;
+	type MinReward = MinReward;
+	type NativeCurrency = Balances;
+	type PalletId = BondedFinanceId;
+	type Stake = Stake;
+	type Vesting = Vesting;
+}
+
+parameter_types! {
+	pub const DutchAuctionId: PalletId = PalletId(*b"dtch_ctn");
+}
+
+impl composable_traits::defi::DeFiComposableConfig for Runtime {
+	type MayBeAssetId = CurrencyId;
+	type Balance = Balance;
+}
+
+#[cfg(feature = "develop")]
+impl pallet_dutch_auction::Config for Runtime {
+	type NativeCurrency = Balances;
+	type Event = Event;
+	type MultiCurrency = Assets;
+	type PalletId = DutchAuctionId;
+	type WeightToFee = WeightToFee;
+	type OrderId = u128;
+	type UnixTime = Timestamp;
+	type WeightInfo = ();
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -784,7 +865,7 @@ impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		#[cfg(feature = "develop")]
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false;
+			return false
 		}
 		!matches!(
 			call,
@@ -797,6 +878,7 @@ impl Contains<Call> for BaseCallFilter {
 impl call_filter::Config for Runtime {
 	type Event = Event;
 	type UpdateOrigin = EnsureRoot<AccountId>;
+	type Hook = ();
 	type WeightInfo = ();
 }
 
@@ -901,6 +983,10 @@ construct_runtime!(
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
 		Assets: assets::{Pallet, Call, Storage} = 57,
+		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 58,
+		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 59,
+		BondedFinance: pallet_bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
+		DutchAuction: pallet_dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -910,6 +996,21 @@ construct_runtime!(
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+
+#[cfg(feature = "develop")]
+/// The SignedExtension to the basic transaction logic.
+pub type SignedExtra = (
+	system::CheckSpecVersion<Runtime>,
+	system::CheckTxVersion<Runtime>,
+	system::CheckGenesis<Runtime>,
+	system::CheckEra<Runtime>,
+	system::CheckNonce<Runtime>,
+	system::CheckWeight<Runtime>,
+	transaction_payment::ChargeTransactionPayment<Runtime>,
+	crowdloan_rewards::PrevalidateAssociation<Runtime>,
+);
+
+#[cfg(not(feature = "develop"))]
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	system::CheckSpecVersion<Runtime>,
@@ -920,6 +1021,7 @@ pub type SignedExtra = (
 	system::CheckWeight<Runtime>,
 	transaction_payment::ChargeTransactionPayment<Runtime>,
 );
+
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
@@ -1063,8 +1165,10 @@ impl_runtime_apis! {
 			#[cfg(feature = "develop")]
 			{
 				list_benchmark!(list, extra, vault, Vault);
-				list_benchmark!(list, extra, lending, Lending);
+				list_benchmark!(list, extra, pallet_bonded_finance, BondedFinance);
 				list_benchmark!(list, extra, oracle, Oracle);
+				list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
+				list_benchmark!(list, extra, dutch_auction, DutchAuction);
 			}
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -1117,9 +1221,11 @@ impl_runtime_apis! {
 
 			#[cfg(feature ="develop")]
 			{
-				add_benchmark!(params, batches, vault, Lending);
 				add_benchmark!(params, batches, vault, Vault);
+				add_benchmark!(params, batches, pallet_bonded_finance, BondedFinance);
 				add_benchmark!(params, batches, oracle, Oracle);
+				add_benchmark!(params, batches, crowdloan_rewards, CrowdloanRewards);
+				add_benchmark!(params, batches, dutch_auction, DutchAuction);
 			}
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

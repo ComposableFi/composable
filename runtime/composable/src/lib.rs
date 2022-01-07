@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -9,8 +11,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLI_PICA, NORMAL_DISPATCH_RATIO, PICA, SLOT_DURATION,
+	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
+use composable_traits::currency::PriceableAsset;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -216,12 +219,9 @@ impl timestamp::Config for Runtime {
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
 }
 
-/// minimum account balance is given as 0.1 PICA ~ 100 MILLI_PICA
-pub const EXISTENTIAL_DEPOSIT: Balance = 100 * MILLI_PICA;
-
 parameter_types! {
 	/// Minimum amount an account has to hold to stay in state.
-	pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
+  pub ExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
 	/// Max locks that can be placed on an account. Capped for storage
 	/// concerns.
 	pub const MaxLocks: u32 = 50;
@@ -243,7 +243,7 @@ impl balances::Config for Runtime {
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
-	pub const TransactionByteFee: Balance = MILLI_PICA;
+	pub TransactionByteFee: Balance = CurrencyId::PICA.milli::<Balance>();
 
 	// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
@@ -256,7 +256,7 @@ parameter_types! {
 	/// See `multiplier_can_grow_from_zero` in integration_tests.rs.
 	/// This value is currently only used by pallet-transaction-payment as an assertion that the
 	/// next multiplier is always > min value.
-	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
+	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_u128);
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
@@ -264,7 +264,7 @@ pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		let p = MILLI_PICA;
+		let p = CurrencyId::PICA.milli::<Balance>();
 		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 		smallvec::smallvec![WeightToFeeCoefficient {
 			degree: 1,
@@ -292,7 +292,7 @@ impl sudo::Config for Runtime {
 
 parameter_types! {
 	/// Deposit required to get an index.
-	pub const IndexDeposit: Balance = 100 * PICA;
+	pub IndexDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
 }
 
 impl indices::Config for Runtime {
@@ -499,7 +499,7 @@ parameter_types! {
 	/// percentage of proposal that most be bonded by the proposer
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	// TODO: rationale?
-	pub const ProposalBondMinimum: Balance = 5 * PICA;
+	pub ProposalBondMinimum: Balance = 5 * CurrencyId::PICA.unit::<Balance>();
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
 
@@ -584,11 +584,11 @@ parameter_types! {
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
 
-	pub MinimumDeposit: Balance = 100 * PICA;
+	pub MinimumDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	// TODO: prod value
-	pub PreimageByteDeposit: Balance = MILLI_PICA;
+	pub PreimageByteDeposit: Balance = CurrencyId::PICA.milli::<Balance>();
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -633,10 +633,10 @@ impl democracy::Config for Runtime {
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
-	pub const CreationDeposit: Balance = 10 * PICA;
-	pub const VaultExistentialDeposit: Balance = 1000 * PICA;
-	pub const RentPerBlock: Balance = MILLI_PICA;
+	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
+	pub CreationDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
+	pub RentPerBlock: Balance = CurrencyId::PICA.milli::<Balance>();
 	pub const VaultMinimumDeposit: Balance = 10_000;
 	pub const VaultMinimumWithdrawal: Balance = 10_000;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");

@@ -3,6 +3,8 @@
 //! Loosely based on https://github.com/paritytech/substrate/blob/master/frame/transaction-payment/src/lib.rs
 //! but with added support for `MultiCurrency` using a `Dex` interface.
 
+#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
@@ -119,6 +121,9 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn next_fee_multiplier)]
+	// `NextFeeMultiplierOnEmpty` explicitly defines what happens on empty, so `ValueQuery` is
+	// allowed.
+	#[allow(clippy::disallowed_type)]
 	pub type NextFeeMultiplier<T: Config> =
 		StorageValue<_, Multiplier, ValueQuery, NextFeeMultiplierOnEmpty>;
 
@@ -130,6 +135,8 @@ pub mod pallet {
 			});
 		}
 
+		// `integrity_test` is allowed to panic.
+		#[allow(clippy::disallowed_method)]
 		fn integrity_test() {
 			// given weight == u64, we build multipliers from `diff` of two weight values, which can
 			// at most be maximum block weight. Make sure that this can fit in a multiplier without
@@ -200,7 +207,7 @@ where
 		// a very very little potential gain in the future.
 		let dispatch_info = <E as GetDispatchInfo>::get_dispatch_info(&unchecked_extrinsic);
 
-		let partial_fee = Self::compute_fee(len, &dispatch_info, 0u32.into());
+		let partial_fee = Self::compute_fee(len, &dispatch_info, 0_u32.into());
 		let DispatchInfo { weight, class, .. } = dispatch_info;
 
 		RuntimeDispatchInfo { weight, class, partial_fee }
@@ -213,7 +220,7 @@ where
 		E: GetDispatchInfo,
 	{
 		let dispatch_info = <E as GetDispatchInfo>::get_dispatch_info(&unchecked_extrinsic);
-		Self::compute_fee_details(len, &dispatch_info, 0u32.into())
+		Self::compute_fee_details(len, &dispatch_info, 0_u32.into())
 	}
 
 	/// Compute the final fee value for a particular transaction.
