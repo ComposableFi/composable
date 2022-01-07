@@ -58,7 +58,7 @@ fn do_transfer_to() {
 
 	// normally we don't unit test events being emitted, but in this case it is very crucial for the
 	// relayer to observe the events.
-	// todo!("check that the correct event was emitted")
+	todo!("check that the correct event was emitted")
 }
 
 fn do_timelocked_mint() {
