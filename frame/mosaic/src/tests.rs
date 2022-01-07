@@ -731,7 +731,66 @@ fn claim_to() {
 #[test]
 fn accept_transfer() {
 	new_test_ext().execute_with(|| {
+		initialize();
 		do_transfer_to();
-		Mosaic::accept_transfer(Origin::signed(ALICE), ALICE, 1, 100).expect("accepting transfer should work");
+		Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 100)
+			.expect("accepting transfer should work");
+	})
+}
+
+#[test]
+fn claim_stale_to() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		do_transfer_to();
+		let current_block = System::block_number();
+		System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+		Mosaic::claim_stale_to(Origin::signed(ALICE), ALICE, 1)
+			.expect("claiming an outgoing transaction should work after the timelock period");
+	})
+}
+
+#[test]
+fn timelocked_mint() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		do_timelocked_mint();
+	})
+}
+
+#[test]
+fn rescind_timelocked_mint() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		do_timelocked_mint();
+		Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 40)
+			.expect("relayer should be able to rescind transactions");
+		assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((10, 10)));
+		Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 10)
+			.expect("relayer should be able to rescind transactions");
+		assert_eq!(Mosaic::incoming_transactions(ALICE, 1), None);
+	})
+}
+
+#[test]
+fn set_timelock_duration() {
+	new_test_ext().execute_with(|| {
+		Mosaic::set_timelock_duration(Origin::root(), MinimumTimeLockPeriod::get() + 1)
+			.expect("root may set the timelock period");
+	})
+}
+
+#[test]
+fn claim_to() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		do_timelocked_mint();
+		let current_block = System::block_number();
+		Mosaic::claim_to(Origin::alice(), 1, ALICE).expect_err(
+			"received funds should only be claimable after waiting for the relayer mandated time",
+		);
+		System::set_block_number(current_block + 10 + 1);
+		Mosaic::claim_to(Origin::alice(), 1, ALICE)
+			.expect("received funds should be claimable after time has passed");
 	})
 }

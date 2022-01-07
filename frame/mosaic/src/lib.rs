@@ -662,6 +662,10 @@ pub mod pallet {
 			let current_block = <frame_system::Pallet<T>>::block_number();
 			Relayer::<T>::get().update(current_block).account_id().cloned()
 		}
+
+		pub fn timelock_period() -> BlockNumberOf<T> {
+			TimeLockPeriod::<T>::get()
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
