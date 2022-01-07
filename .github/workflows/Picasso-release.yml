@@ -16,7 +16,7 @@ jobs:
         - sre
     strategy:
       matrix:
-        chain: ["polkadot"]
+        chain: ["dali-chachacha", "picasso"]
     steps:
     - uses: actions/checkout@v2
       with: 
