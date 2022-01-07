@@ -32,8 +32,6 @@ fn rotate_relayer() {
 #[test]
 fn transfer_to() {
 	new_test_ext().execute_with(|| {
-		let _ttl = 500;
-		let _current_block = System::block_number();
 		Mosaic::set_relayer(Origin::root(), ALICE).expect("root may call set_relayer");
 		Mosaic::set_network(
 			Origin::signed(ALICE),
