@@ -53,18 +53,19 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 smallvec = "1.6.1"
 
 # local modules
-assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false, optional = true }
-assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false, optional = true }
-
+assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }
+assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
 crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
-crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false, optional = true }
-
+crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
+pallet-bonded-finance = { path = "../../frame/bonded-finance", default-features = false }
+vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
+pallet-dutch-auction = { package = "pallet-dutch-auction", path = "../../frame/dutch-auction", default-features = false }
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
-oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false, optional = true }
-vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false, optional = true }
-governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false, optional = true }
-currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false, optional = true}
+oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
+vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
+governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false }
+currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
 composable-traits = { path = "../../frame/composable-traits" , default-features = false}
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 
@@ -201,15 +202,4 @@ runtime-benchmarks = [
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
   "vault/runtime-benchmarks"
-]
-
-develop = [
-  "crowdloan-rewards",
-  "assets",
-  "governance-registry",
-	"assets-registry",
-	"assets",
-	"oracle",
-	"vault",
-	"currency-factory",
 ]

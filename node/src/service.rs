@@ -203,12 +203,12 @@ pub async fn start_node(
 ) -> sc_service::error::Result<TaskManager> {
 	let task_manager =
 		match config.chain_spec.id() {
-			"composable" => crate::service::start_node_impl::<
+			"composable" | "composable-dev" => crate::service::start_node_impl::<
 				composable_runtime::RuntimeApi,
 				ComposableExecutor,
 			>(config, polkadot_config, id)
 			.await?,
-			"dali-chachacha" | "dali-rococo" =>
+			"dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" =>
 				crate::service::start_node_impl::<dali_runtime::RuntimeApi, PicassoExecutor>(
 					config,
 					polkadot_config,

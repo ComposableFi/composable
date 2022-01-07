@@ -6,7 +6,9 @@ use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{traits::IdentifyAccount, MultiSigner};
 pub mod composable;
+pub mod dali;
 pub mod picasso;
+
 // Parachin ID
 const PARA_ID: ParaId = ParaId::new(2000);
 
@@ -81,7 +83,6 @@ pub fn composable() -> composable::ChainSpec {
 
 // chain spec for single node environments
 pub fn picasso_dev() -> picasso::ChainSpec {
-	//TODO check properties
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PICA".into());
 	properties.insert("tokenDecimals".into(), 12.into());
@@ -121,9 +122,49 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 	)
 }
 
+// chain spec for local testnet environments
+pub fn dali_dev() -> dali::ChainSpec {
+	let mut properties = Properties::new();
+	properties.insert("tokenSymbol".into(), "DALI".into());
+	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("ss58Format".into(), 49.into());
+
+	dali::ChainSpec::from_genesis(
+		"Local Dali Testnet",
+		"dali",
+		ChainType::Development,
+		move || {
+			dali::genesis_config(
+				account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![
+					(
+						account_id_from_seed::<sr25519::Public>("Alice"),
+						get_collator_keys_from_seed("Alice"),
+					),
+					(
+						account_id_from_seed::<sr25519::Public>("Bob"),
+						get_collator_keys_from_seed("Bob"),
+					),
+					(
+						account_id_from_seed::<sr25519::Public>("Charlie"),
+						get_collator_keys_from_seed("Charlie"),
+					),
+				],
+				dev_accounts(),
+				PARA_ID,
+				dali_runtime::ExistentialDeposit::get(),
+			)
+		},
+		vec![],
+		None,
+		None,
+		Some(properties),
+		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: PARA_ID.into() },
+	)
+}
+
 // chain spec for single node environments
 pub fn composable_dev() -> composable::ChainSpec {
-	//TODO check properties
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "LAYR".into());
 	properties.insert("tokenDecimals".into(), 12.into());

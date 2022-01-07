@@ -24,7 +24,6 @@ balances = { package = "pallet-balances", git = "https://github.com/paritytech/s
 collective = { package = "pallet-collective", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 
-crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
 primitives = { path = "../primitives", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
@@ -51,7 +50,6 @@ std = [
 	"collator-selection/std",
 	"balances/std",
 	"collective/std",
-	"crowdloan-bonus/std",
 	"treasury/std",
 	"polkadot-primitives/std",
   "scale-info/std",

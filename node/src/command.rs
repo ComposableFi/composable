@@ -39,6 +39,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 	Ok(match id {
 		// Must define the default chain here because `export-genesis-state` command
 		// does not support `--chain` and `--parachain-id` arguments simultaneously.
+		"dali-dev" => Box::new(chain_spec::dali_dev()),
 		"picasso-dev" => Box::new(chain_spec::picasso_dev()),
 		"composable-dev" => Box::new(chain_spec::composable_dev()),
 		// Dali (Westend Relay)
