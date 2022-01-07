@@ -42,7 +42,7 @@ jobs:
       uses: chevdor/srtool-actions@v0.1.0
       with:
           #chain: ${{ matrix.chain }}
-          runtime_dir: ./runtime/picasso
+          runtime_dir: picasso-runtime
           
     - name: Srtool build Summary
       run: |
