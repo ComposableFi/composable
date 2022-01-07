@@ -29,10 +29,12 @@ pub mod pallet {
 
 	use codec::FullCodec;
 	use composable_traits::{
-		defi::DeFiComposableConfig, lending::Lending, liquidation::Liquidation,
+		defi::{DeFiComposableConfig, DeFiEngine, SellEngine},
+		lending::Lending,
+		liquidation::Liquidation,
 	};
 	use frame_support::{
-		traits::{IsType, UnixTime},
+		traits::{IsType, UnixTime, Get},
 		PalletId,
 	};
 
@@ -49,7 +51,12 @@ pub mod pallet {
 
 		type Lending: Lending;
 
-		type GroupId: Default + FullCodec;
+		type LiquidationStrategyId: Default + FullCodec;
+		
+		type OrderId: Default + FullCodec;
+
+		type PalletId: Get<PalletId>;
+
 	}
 
 	#[pallet::event]
@@ -67,27 +74,28 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
 
-	impl<T: Config> Liquidation for Pallet<T> {
-		type AssetId = T::MayBeAssetId;
+	impl<T: Config> DeFiEngine for Pallet<T> {
+		type MayBeAssetId = T::MayBeAssetId;
 
 		type Balance = T::Balance;
 
 		type AccountId = T::AccountId;
+	}
 
-		type LiquidationId = u128;
+	// #[pallet::genesis_build]
 
-		type GroupId = T::GroupId;
+	impl<T: Config> Liquidation for Pallet<T> {
+		
+		type LiquidationStrategyId = T::LiquidationStrategyId;
+
+		type OrderId = T::OrderId;
 
 		fn liquidate(
-			_source_account: &Self::AccountId,
-			_source_asset_id: Self::AssetId,
-			_source_asset_price: PriceStructure<Self::GroupId, Self::Balance>,
-			_target_asset_id: Self::AssetId,
-			_target_account: &Self::AccountId,
-			_total_amount: Self::Balance,
-		) -> Result<Self::LiquidationId, DispatchError> {
-			Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
-			todo!("call liquidation engines")
-		}
+				from_to: &Self::AccountId,
+				order: composable_traits::defi::Sell<Self::MayBeAssetId, Self::Balance>,		
+				configuration : Vec<Self::LiquidationStrategyId>,
+			) -> Result<Self::OrderId, DispatchError> {
+				todo!()
+			}
 	}
 }
