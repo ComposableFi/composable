@@ -1363,7 +1363,6 @@ dependencies = [
  "pallet-treasury",
  "parity-scale-codec",
  "polkadot-primitives",
- "primitives",
  "scale-info",
  "serde",
  "sp-consensus-aura",
@@ -6255,23 +6254,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ff55baddef9e4ad00f88b6c743a2a8062d4c6ade126c2a528644b8e444d52ce"
 dependencies = [
  "stable_deref_trait",
-]
-
-[[package]]
-name = "pallet-asset-tx-payment"
-version = "4.0.0-dev"
-source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.13#1681b1e8a82d7189b1fe32fe054a421a0cb96c0c"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-transaction-payment",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -11673,7 +11655,6 @@ dependencies = [
  "cumulus-test-relay-sproof-builder",
  "frame-benchmarking",
  "frame-system",
- "pallet-asset-tx-payment",
  "pallet-crowdloan-rewards",
  "pallet-sudo",
  "pallet-transaction-payment",

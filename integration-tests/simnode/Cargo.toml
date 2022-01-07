@@ -10,8 +10,6 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 
-pallet-asset-tx-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-
 sc-consensus-manual-seal = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }

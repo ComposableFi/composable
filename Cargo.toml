@@ -136,7 +136,6 @@ sc-network-gossip ={git = "https://github.com/composableFi/substrate" ,branch = 
 substrate-frame-rpc-system ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.13" }
 substrate-build-script-utils ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.13" }
 frame-try-runtime ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.13" }
-pallet-asset-tx-payment ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.13" }
 pallet-authority-discovery ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.13" }
 sp-authority-discovery ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.13" }
 pallet-bounties ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.13" }
