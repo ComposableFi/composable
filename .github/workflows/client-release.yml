@@ -42,20 +42,7 @@ jobs:
       uses: docker/login-action@v1 
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
-
-    - name: GenerateMD5
-      run: |
-        sudo apt install -y ucommon-utils
-        composabledalichecksum=$(md5sum target/release/composable | cut -d ' ' -f 1) && echo "$composabledalichecksum composable" >> checksum.md5.txt
-    
-    - name: Upload Checksum
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-        file: checksum.md5.txt
-        asset_name: checksum.md5.txt
-        tag: ${{ github.ref }}
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
     
     - name: Build Docker image
       run: make containerize-release 
