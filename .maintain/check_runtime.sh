@@ -88,10 +88,8 @@ else
 	just bump 'impl_version'. If they do change logic, bump 'spec_version'.
 
 	source file directories:
-	- bin/node/src/runtime
 	- frame/*
 	- runtime/*
-	- primitives/sr-*
 
 	versions file: ${VERSIONS_FILE}
 
