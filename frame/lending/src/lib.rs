@@ -272,7 +272,8 @@ pub mod pallet {
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type WeightInfo: WeightInfo;
 
-		type GroupId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
+		/// Id of 
+		type LiquidationEngineId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
 	}
 
 	#[pallet::pallet]
@@ -675,19 +676,8 @@ pub mod pallet {
 		) -> Result<Percent, DispatchError> {
 			<Self as Lending>::calc_utilization_ratio(cash, borrows)
 		}
-		pub fn create(
-			borrow_asset: <Self as Lending>::AssetId,
-			collateral_asset: <Self as Lending>::AssetId,
-			config_input: MarketConfigInput<<Self as Lending>::AccountId, T::GroupId>,
-			interest_rate_model: &InterestRateModel,
-		) -> Result<(<Self as Lending>::MarketId, <Self as Lending>::VaultId), DispatchError> {
-			<Self as Lending>::create(
-				borrow_asset,
-				collateral_asset,
-				config_input,
-				interest_rate_model,
-			)
-		}
+
+
 		pub fn deposit_collateral_internal(
 			market_id: &<Self as Lending>::MarketId,
 			account_id: &<Self as Lending>::AccountId,
