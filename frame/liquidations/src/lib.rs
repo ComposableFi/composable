@@ -30,7 +30,6 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_traits::{
 		defi::DeFiComposableConfig, lending::Lending, liquidation::Liquidation,
-		loans::PriceStructure,
 	};
 	use frame_support::{
 		traits::{IsType, UnixTime},

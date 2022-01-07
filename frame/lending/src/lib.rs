@@ -534,7 +534,7 @@ pub mod pallet {
 				input,
 			});
 			Ok(().into())
-		}
+		}		
 
 		/// Deposit collateral to market.
 		/// - `origin` : Sender of this extrinsic.
@@ -929,7 +929,7 @@ pub mod pallet {
 			let market_index =
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 			let account_interest_index =
-				DebtIndex::<T>::get(market_id, debt_owner).unwrap_or_else(Ratio::zero);
+				DebtIndex::<T>::get(market_id, debt_owner).unwrap_or_else(ZeroToOneFixedU128::zero);
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let existing_borrow_amount = T::MarketDebtCurrency::balance(debt_asset_id, debt_owner);
 			let amount_to_borrow: u128 = amount.into();
@@ -1097,7 +1097,7 @@ pub mod pallet {
 				let debt_asset_id = T::CurrencyFactory::create()?;
 				DebtMarkets::<T>::insert(market_id, debt_asset_id);
 				Markets::<T>::insert(market_id, config);
-				BorrowIndex::<T>::insert(market_id, Ratio::one());
+				BorrowIndex::<T>::insert(market_id, ZeroToOneFixedU128::one());
 
 				Ok((market_id, borrow_asset_vault))
 			})
@@ -1474,8 +1474,8 @@ pub mod pallet {
 	/// this case.
 	fn borrow_from_principal<T: Config>(
 		principal: <T as Config>::Balance,
-		market_interest_index: Ratio,
-		account_interest_index: Ratio,
+		market_interest_index: ZeroToOneFixedU128,
+		account_interest_index: ZeroToOneFixedU128,
 	) -> Result<Option<u64>, DispatchError> {
 		if principal.is_zero() {
 			return Ok(None)
@@ -1493,14 +1493,14 @@ pub mod pallet {
 	pub fn swap(
 		collateral_balance: &LiftedFixedBalance,
 		collateral_price: &LiftedFixedBalance,
-		collateral_factor: &NormalizedCollateralFactor,
+		collateral_factor: &OneOrMoreFixedU128,
 	) -> Result<LiftedFixedBalance, ArithmeticError> {
 		collateral_balance.safe_mul(collateral_price)?.safe_div(collateral_factor)
 	}
 
 	pub fn swap_back(
 		borrow_balance_value: LiftedFixedBalance,
-		collateral_factor: &NormalizedCollateralFactor,
+		collateral_factor: &OneOrMoreFixedU128,
 	) -> Result<LiftedFixedBalance, ArithmeticError> {
 		borrow_balance_value.safe_mul(collateral_factor)
 	}

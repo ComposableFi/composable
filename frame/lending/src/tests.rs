@@ -56,7 +56,7 @@ fn create_market(
 	collateral_asset: MockCurrencyId,
 	manager: AccountId,
 	reserved: Perquintill,
-	collateral_factor: NormalizedCollateralFactor,
+	collateral_factor: OneOrMoreFixedU128,
 ) -> (MarketIndex, BorrowAssetVault) {
 	let market_config = CreateInput {
 		liquidator: None,
@@ -82,7 +82,7 @@ fn create_simple_vaulted_market() -> ((MarketIndex, BorrowAssetVault), Collatera
 			collateral_asset,
 			*ALICE,
 			DEFAULT_MARKET_VAULT_RESERVE,
-			NormalizedCollateralFactor::saturating_from_rational(200, 100),
+			OneOrMoreFixedU128::saturating_from_rational(200, 100),
 		),
 		collateral_asset,
 	)
@@ -95,7 +95,7 @@ fn create_simple_market() -> (MarketIndex, BorrowAssetVault) {
 		MockCurrencyId::USDT,
 		*ALICE,
 		DEFAULT_MARKET_VAULT_RESERVE,
-		NormalizedCollateralFactor::saturating_from_rational(200, 100),
+		OneOrMoreFixedU128::saturating_from_rational(200, 100),
 	)
 }
 
@@ -103,7 +103,7 @@ fn create_simple_market() -> (MarketIndex, BorrowAssetVault) {
 fn accrue_interest_base_cases() {
 	let (optimal, ref mut interest_rate_model) = new_jump_model();
 	let stable_rate = interest_rate_model.get_borrow_rate(optimal).unwrap();
-	assert_eq!(stable_rate, Ratio::saturating_from_rational(10, 100));
+	assert_eq!(stable_rate, ZeroToOneFixedU128::saturating_from_rational(10, 100));
 	let borrow_index = Rate::saturating_from_integer(1);
 	let delta_time = SECONDS_PER_YEAR_NAIVE;
 	let total_issued = 100_000_000_000_000_000_000;
@@ -344,7 +344,7 @@ fn test_borrow_math() {
 	let borrower = BorrowerData::new(
 		100,
 		0,
-		NormalizedCollateralFactor::from_float(1.0),
+		OneOrMoreFixedU128::from_float(1.0),
 		Percent::from_float(0.10),
 	);
 	let borrow = borrower.borrow_for_collateral().unwrap();
@@ -584,7 +584,7 @@ fn test_liquidation() {
 			MockCurrencyId::BTC,
 			*ALICE,
 			Perquintill::from_percent(10),
-			NormalizedCollateralFactor::saturating_from_rational(2, 1),
+			OneOrMoreFixedU128::saturating_from_rational(2, 1),
 		);
 
 		Oracle::set_btc_price(100 * MockCurrencyId::USDT.unit::<Balance>());
@@ -634,7 +634,7 @@ fn test_warn_soon_under_collaterized() {
 			MockCurrencyId::BTC,
 			*ALICE,
 			Perquintill::from_percent(10),
-			NormalizedCollateralFactor::saturating_from_rational(2, 1),
+			OneOrMoreFixedU128::saturating_from_rational(2, 1),
 		);
 
 		// 1 BTC = 100 USDT
@@ -776,7 +776,7 @@ proptest! {
 		let borrower = BorrowerData::new(
 			collateral_balance * collateral_price,
 			borrower_balance_with_interest * borrow_price,
-			NormalizedCollateralFactor::from_float(1.0),
+			OneOrMoreFixedU128::from_float(1.0),
 			Percent::from_float(0.10), // 10%
 		);
 		let borrow = borrower.borrow_for_collateral();
@@ -856,7 +856,7 @@ proptest! {
 				lp_token_id,
 				*ALICE,
 				Perquintill::from_percent(10),
-				NormalizedCollateralFactor::saturating_from_rational(200, 100),
+				OneOrMoreFixedU128::saturating_from_rational(200, 100),
 			);
 
 			// Top level lp price should be transitively resolvable to the base asset price.

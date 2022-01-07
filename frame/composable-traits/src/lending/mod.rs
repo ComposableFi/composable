@@ -3,7 +3,7 @@ pub mod math;
 #[cfg(test)]
 mod tests;
 
-use crate::{loans::Timestamp, defi::{CurrencyPair, DeFiEngine}};
+use crate::{time::Timestamp, defi::{CurrencyPair, DeFiEngine, OneOrMoreFixedU128}};
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
 use sp_runtime::Percent;
@@ -15,32 +15,49 @@ pub type CollateralLpAmountOf<T> = <T as DeFiEngine>::Balance;
 pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 
 
-/// input to create market extrinsic
 #[derive(Encode, Decode, Default, TypeInfo)]
-pub struct CreateInput<LiquidatorId, AssetId> {
+pub struct UpdateInput<LiquidatorId> {
 	/// Reserve factor of market.
 	pub reserved_factor: Perquintill,
 	/// Collateral factor of market
-	pub collateral_factor: NormalizedCollateralFactor,
+	pub collateral_factor: OneOrMoreFixedU128,
 	///  warn borrower when loan's collateral/debt ratio
 	///  given percentage short to be under collaterized
 	pub under_collaterized_warn_percent: Percent,
 	/// liquidation engine id
-	pub liquidator: Option<LiquidatorId>,
+	pub liquidator: Vec<LiquidatorId>,
 	pub interest_rate_model: InterestRateModel,
+}
+
+
+/// input to create market extrinsic
+#[derive(Encode, Decode, Default, TypeInfo)]
+pub struct CreateInput<LiquidatorId, AssetId> {
+	/// the part of market which can be changed
+	pub updatable: UpdateInput<LiquidatorId>,
 	/// collateral currency and borrow currency
 	/// in case of liquidation, collateral is base and borrow is quote
 	pub currency_pair: CurrencyPair<AssetId>,
 }
+
+impl<LiquidatorId, AssetId : Copy> CreateInput<LiquidatorId, AssetId> {
+	pub fn borrow_asset(&self)  -> AssetId {
+		self.currency_pair.quote
+	}
+	pub fn collateral_asset(&self)  -> AssetId {
+		self.currency_pair.base
+	}
+} 
+
 #[derive(Encode, Decode, Default, TypeInfo)]
-pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationEngineId> {
+pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId> {
 	pub manager: AccountId,
 	pub borrow: VaultId,
 	pub collateral: AssetId,
-	pub collateral_factor: NormalizedCollateralFactor,
+	pub collateral_factor: OneOrMoreFixedU128,
 	pub interest_rate_model: InterestRateModel,
 	pub under_collaterized_warn_percent: Percent,
-	pub liquidator: Option<LiquidationEngineId>,
+	pub liquidator: Option<LiquidationStrategyId>,
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.
@@ -54,7 +71,7 @@ pub trait Lending : DeFiEngine {
 	type MarketId;	
 	type BlockNumber;
 	/// id of dispatch used to liquidate collateral in case of undercollateralized asset
-	type LiquidationEngineId;
+	type LiquidationStrategyId;
 	/// returned from extrinsic is guaranteed to be existing asset id at time of block execution
 	//type AssetId;
 	/// Generates the underlying owned vault that will hold borrowable asset (may be shared with
@@ -98,7 +115,7 @@ pub trait Lending : DeFiEngine {
 	/// Returned `MarketId` is mapped one to one with (deposit VaultId, collateral VaultId) 
 	fn create(		
 		manager: Self::AccountId,
-		config: CreateInput<Self::LiquidationEngineId, Self::MayBeAssetId>,
+		config: CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId>,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 
 	/// AccountId of the market instance
@@ -129,7 +146,7 @@ pub trait Lending : DeFiEngine {
 	#[allow(clippy::type_complexity)]
 	fn get_all_markets() -> Vec<(
 		Self::MarketId,
-		MarketConfig<Self::VaultId, Self::MayBeAssetId, Self::AccountId, Self::LiquidationEngineId>,
+		MarketConfig<Self::VaultId, Self::MayBeAssetId, Self::AccountId, Self::LiquidationStrategyId>,
 	)>;
 
 	/// `amount_to_borrow` is the amount of the borrow asset lendings's vault shares the user wants

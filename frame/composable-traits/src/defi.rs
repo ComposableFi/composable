@@ -19,6 +19,7 @@ pub struct Take<Balance> {
 	pub amount: Balance,
 	/// direction depends on referenced order type
 	/// either minimal or maximal amount of `quote` for given unit of `base`
+	/// depending on engine configuration, limit can be hard of flexible (change with time)
 	pub limit: Balance,
 }
 
@@ -192,6 +193,11 @@ pub trait DeFiComposableConfig: frame_system::Config {
 }
 
 /// The fixed point number from 0..to max.
-/// Unlike `Ratio` it can be more than 1.
-/// And unlike `NormalizedCollateralFactor`, it can be less than one.
 pub type Rate = FixedU128;
+
+/// The fixed point number of suggested by substrate precision
+/// Must be (1.0.. because applied only to price normalized values
+pub type OneOrMoreFixedU128 = FixedU128;
+
+/// Must be [0..1]
+pub type ZeroToOneFixedU128 = FixedU128;

@@ -3,7 +3,7 @@ use super::*;
 use crate::Pallet as Lending;
 use composable_traits::{
 	lending::{
-		math::{InterestRateModel, NormalizedCollateralFactor},
+		math::{InterestRateModel, OneOrMoreFixedU128},
 		Lending as LendingTrait, CreateInput,
 	},
 	vault::Vault,
@@ -49,7 +49,7 @@ fn create_market<T: Config>(
 		liquidator: None,
 		manager,
 		reserved: Perquintill::from_percent(10),
-		collateral_factor: NormalizedCollateralFactor::saturating_from_rational(200, 100),
+		collateral_factor: OneOrMoreFixedU128::saturating_from_rational(200, 100),
 		under_collaterized_warn_percent: Percent::from_percent(10),
 	};
 	Lending::<T>::create(
@@ -67,7 +67,7 @@ benchmarks! {
 		let borrow_asset_id = <T as Config>::AssetId::from(BTC);
 		let collateral_asset_id = <T as Config>::AssetId::from(USDT);
 		let reserved_factor = Perquintill::from_percent(10);
-		let collateral_factor = NormalizedCollateralFactor::saturating_from_rational(200, 100);
+		let collateral_factor = OneOrMoreFixedU128::saturating_from_rational(200, 100);
 		let under_collaterized_warn_percent = Percent::from_percent(10);
 		let market_id = MarketIndex::new(1);
 		let vault_id = 1u64.into();

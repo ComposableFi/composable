@@ -12,22 +12,11 @@ use sp_runtime::{
 use sp_arithmetic::per_things::Percent;
 
 use crate::{
-	defi::Rate,
-	loans::{DurationSeconds, ONE_HOUR},
+	defi::{Rate, ZeroToOneFixedU128},
+	time::{DurationSeconds, SECONDS_PER_YEAR_NAIVE},
 	math::{LiftedFixedBalance, SafeArithmetic},
 };
 
-/// The fixed point number of suggested by substrate precision
-/// Must be (1.0.. because applied only to price normalized values
-pub type NormalizedCollateralFactor = FixedU128;
-
-/// Must be [0..1]
-/// TODO: implement Ratio as wrapper over FixedU128
-pub type Ratio = FixedU128;
-
-/// current notion of year will take away 1/365 from lenders and give away to borrowers (as does no
-/// accounts to length of year)
-pub const SECONDS_PER_YEAR: DurationSeconds = 365 * 24 * ONE_HOUR;
 
 /// utilization_ratio = total_borrows / (total_cash + total_borrows)
 pub fn calc_utilization_ratio(
@@ -114,9 +103,9 @@ impl InterestRateModel {
 	}
 
 	/// Calculates the current supply interest rate
-	pub fn get_supply_rate(borrow_rate: Rate, util: Ratio, reserve_factor: Ratio) -> Rate {
+	pub fn get_supply_rate(borrow_rate: Rate, util: ZeroToOneFixedU128, reserve_factor: ZeroToOneFixedU128) -> Rate {
 		// ((1 - reserve_factor) * borrow_rate) * utilization
-		let one_minus_reserve_factor = Ratio::one().saturating_sub(reserve_factor);
+		let one_minus_reserve_factor = ZeroToOneFixedU128::one().saturating_sub(reserve_factor);
 		let rate_to_pool = borrow_rate.saturating_mul(one_minus_reserve_factor);
 
 		rate_to_pool.saturating_mul(util)
@@ -155,15 +144,15 @@ pub struct JumpModel {
 }
 
 impl JumpModel {
-	pub const MAX_BASE_RATE: Ratio = Ratio::from_inner(100_000_000_000_000_000); // 10%
-	pub const MAX_JUMP_RATE: Ratio = Ratio::from_inner(300_000_000_000_000_000); // 30%
-	pub const MAX_FULL_RATE: Ratio = Ratio::from_inner(500_000_000_000_000_000); // 50%
+	pub const MAX_BASE_RATE: ZeroToOneFixedU128 = ZeroToOneFixedU128::from_inner(100_000_000_000_000_000); // 10%
+	pub const MAX_JUMP_RATE: ZeroToOneFixedU128 = ZeroToOneFixedU128::from_inner(300_000_000_000_000_000); // 30%
+	pub const MAX_FULL_RATE: ZeroToOneFixedU128 = ZeroToOneFixedU128::from_inner(500_000_000_000_000_000); // 50%
 
 	/// Create a new rate model
 	pub fn new(
-		base_rate: Ratio,
-		jump_rate: Ratio,
-		full_rate: Ratio,
+		base_rate: ZeroToOneFixedU128,
+		jump_rate: ZeroToOneFixedU128,
+		full_rate: ZeroToOneFixedU128,
 		target_utilization: Percent,
 	) -> Option<JumpModel> {
 		let model = Self { base_rate, jump_rate, full_rate, target_utilization };
@@ -394,7 +383,7 @@ pub fn accrued_interest(
 	borrow_rate
 		.checked_mul_int(amount)?
 		.checked_mul(delta_time.into())?
-		.checked_div(SECONDS_PER_YEAR.into())
+		.checked_div(SECONDS_PER_YEAR_NAIVE.into())
 }
 
 /// compounding increment of borrow index
@@ -406,7 +395,7 @@ pub fn increment_index(
 	borrow_rate
 		.safe_mul(&index)?
 		.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
-		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))?
+		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR_NAIVE))?
 		.safe_add(&index)
 }
 
@@ -416,5 +405,5 @@ pub fn increment_borrow_rate(
 ) -> Result<Rate, ArithmeticError> {
 	borrow_rate
 		.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
-		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))
+		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR_NAIVE))
 }
