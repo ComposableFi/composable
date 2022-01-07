@@ -105,7 +105,7 @@ fn accrue_interest_base_cases() {
 	let stable_rate = interest_rate_model.get_borrow_rate(optimal).unwrap();
 	assert_eq!(stable_rate, Ratio::saturating_from_rational(10, 100));
 	let borrow_index = Rate::saturating_from_integer(1);
-	let delta_time = SECONDS_PER_YEAR;
+	let delta_time = SECONDS_PER_YEAR_NAIVE;
 	let total_issued = 100_000_000_000_000_000_000;
 	let accrued_debt = 0;
 	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
@@ -133,7 +133,7 @@ fn accrue_interest_base_cases() {
 	let error = 25;
 	assert_eq!(
 		accrued_increase,
-		10_000_000_000_000_000_000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR as u128 + error
+		10_000_000_000_000_000_000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR_NAIVE as u128 + error
 	);
 }
 
@@ -142,7 +142,7 @@ fn accrue_interest_edge_cases() {
 	let (_, ref mut interest_rate_model) = new_jump_model();
 	let utilization = Percent::from_percent(100);
 	let borrow_index = Rate::saturating_from_integer(1);
-	let delta_time = SECONDS_PER_YEAR;
+	let delta_time = SECONDS_PER_YEAR_NAIVE;
 	let total_issued = u128::MAX;
 	let accrued_debt = 0;
 	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
@@ -176,7 +176,7 @@ fn accrue_interest_induction() {
 	runner
 		.run(
 			&(
-				0..=2 * SECONDS_PER_YEAR / MILLISECS_PER_BLOCK,
+				0..=2 * SECONDS_PER_YEAR_NAIVE / MILLISECS_PER_BLOCK,
 				(minimal..=35_u32).prop_map(|i| 10_u128.pow(i)),
 			),
 			|(slot, total_issued)| {

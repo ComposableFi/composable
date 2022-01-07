@@ -207,7 +207,7 @@ pub mod pallet {
 		type MaxLendingCount: Get<u32>;
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		type WeightInfo: WeightInfo;
-		type LiquidationEngineId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
+		type LiquidationStrategyId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
 	}
 	#[cfg(feature = "runtime-benchmarks")]
 	pub trait Config:
@@ -273,7 +273,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// Id of proxy to liquidate 
-		type LiquidationEngineId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
+		type LiquidationStrategyId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
 	}
 
 	#[pallet::pallet]
@@ -382,7 +382,7 @@ pub mod pallet {
 			market_id: MarketIndex,
 			vault_id: T::VaultId,
 			manager: T::AccountId,
-			input : CreateInput<T::LiquidationEngineId, T::MayBeAssetId>,
+			input : CreateInput<T::LiquidationStrategyId, T::MayBeAssetId>,
 		},
 		/// Event emitted when collateral is deposited.
 		CollateralDeposited { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
@@ -416,7 +416,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		MarketIndex,
-		MarketConfig<T::VaultId, <T as Config>::MayBeAssetId, T::AccountId, T::LiquidationEngineId>,
+		MarketConfig<T::VaultId, <T as Config>::MayBeAssetId, T::AccountId, T::LiquidationStrategyId>,
 	>;
 
 	/// Original debt values are on balances.
@@ -510,7 +510,7 @@ pub mod pallet {
 		}
 	}
 
-	pub type CreateInputOf<T:Config> = CreateInput<T::LiquidationEngineId, T::MayBeAssetId>;
+	pub type CreateInputOf<T:Config> = CreateInput<T::LiquidationStrategyId, T::MayBeAssetId>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -520,7 +520,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn create_market(
 			origin: OriginFor<T>,
-			input : CreateInput<T::LiquidationEngineId, T::MayBeAssetId>
+			input : CreateInput<T::LiquidationStrategyId, T::MayBeAssetId>
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let (market_id, vault_id) = Self::create(
@@ -1039,11 +1039,11 @@ pub mod pallet {
 		type VaultId = <T::Vault as Vault>::VaultId;
 		type MarketId = MarketIndex;
 		type BlockNumber = T::BlockNumber;
-		type LiquidationEngineId = <T as Config>::LiquidationEngineId;
+		type LiquidationStrategyId = <T as Config>::LiquidationStrategyId;
 
 		fn create(
 			manager: Self::AccountId,
-			config_input: CreateInput<Self::LiquidationEngineId, Self::MayBeAssetId>,
+			config_input: CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId>,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			ensure!(
 				config_input.collateral_factor > 1.into(),
@@ -1518,7 +1518,7 @@ pub mod pallet {
 		let borrow_index_new = increment_index(borrow_rate, borrow_index, delta_time)?;
 		let delta_interest_rate = borrow_rate
 			.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
-			.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))?;
+			.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR_NAIVE))?;
 
 		let total_borrows = total_borrows.safe_mul(&LiftedFixedBalance::accuracy())?;
 		let accrue_increment = LiftedFixedBalance::from_inner(total_borrows)
