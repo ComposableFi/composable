@@ -14,16 +14,14 @@ jobs:
         - linux
         - x64
         - sre
+    strategy:
+      matrix:
+        chain: ["polkadot"]
     steps:
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
         ref: picasso
-
-    - name: GenerateMD5
-      run: |
-        sudo apt install -y ucommon-utils
-        composabledalichecksum=$(md5sum target/release/composable | cut -d ' ' -f 1) && echo "$composabledalichecksum composable" >> checksum.md5.txt
 
     - name: Set env
       run: |
@@ -41,8 +39,9 @@ jobs:
     - name: Build with srtool
       uses: chevdor/srtool-actions@v0.1.0
       with:
-          #chain: ${{ matrix.chain }}
-          runtime_dir: picasso-runtime
+          chain: ${{ matrix.chain }}
+          runtime_dir: ./runtime/picasso
+          package: picasso-runtime
           
     - name: Srtool build Summary
       run: |
