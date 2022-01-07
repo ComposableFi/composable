@@ -18,6 +18,7 @@ pub enum BudgetDecay<Number> {
 }
 
 impl<Number> BudgetDecay<Number> {
+	#[allow(dead_code)]
 	pub fn linear(n: Number) -> BudgetDecay<Number> {
 		BudgetDecay::Linear(LinearDecay { factor: n })
 	}
@@ -25,7 +26,7 @@ impl<Number> BudgetDecay<Number> {
 
 impl<Balance, BlockNumber> Decayable<Balance, BlockNumber> for BudgetDecay<Balance>
 where
-	BlockNumber: CheckedSub + Into<Balance>,
+	BlockNumber: CheckedSub + Saturating + Into<Balance>,
 	Balance: CheckedMul + Saturating + Zero,
 {
 	fn checked_decay(
@@ -48,7 +49,7 @@ pub struct LinearDecay<Number> {
 
 impl<Balance, BlockNumber> Decayable<Balance, BlockNumber> for LinearDecay<Balance>
 where
-	BlockNumber: CheckedSub + Into<Balance>,
+	BlockNumber: CheckedSub + Saturating + Into<Balance>,
 	Balance: CheckedMul + Saturating + Zero,
 {
 	fn checked_decay(
@@ -57,8 +58,26 @@ where
 		last: BlockNumber,
 		current: BlockNumber,
 	) -> Option<Balance> {
-		let diff = current.checked_sub(&last)?;
+		let diff = current.saturating_sub(last);
 		let reduction = diff.into().checked_mul(&self.factor)?;
 		Some(amount.saturating_sub(reduction))
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_linear_decrease() {
+		let mut penalty = 1000;
+		let prev = penalty.clone();
+		let decay = BudgetDecay::linear(10);
+
+		(0..=100).for_each(|x| {
+			penalty = decay.checked_decay(penalty, x - 1, x).unwrap();
+			println!("{} {}", prev, penalty);
+			assert!(prev > penalty);
+		});
 	}
 }

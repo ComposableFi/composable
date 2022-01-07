@@ -1,11 +1,11 @@
 use crate as pallet_mosaic;
 use frame_support::{
-	ord_parameter_types, parameter_types,
+	parameter_types,
 	traits::{Everything, GenesisBuild},
 	PalletId,
 };
 use frame_system as system;
-use frame_system::EnsureSignedBy;
+
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;
@@ -24,10 +24,8 @@ pub type CurrencyId = u32;
 type Block = frame_system::mocking::MockBlock<Test>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 
-pub const ROOT: AccountId = 0_u32;
 pub const ALICE: AccountId = 1_u32;
 pub const BOB: AccountId = 2_u32;
-pub const CHARLIE: AccountId = 3_u32;
 
 frame_support::construct_runtime!(
 	pub enum Test where
