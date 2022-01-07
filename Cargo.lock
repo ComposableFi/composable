@@ -1363,6 +1363,7 @@ dependencies = [
  "pallet-treasury",
  "parity-scale-codec",
  "polkadot-primitives",
+ "primitives",
  "scale-info",
  "serde",
  "sp-consensus-aura",
