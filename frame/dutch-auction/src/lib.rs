@@ -57,7 +57,7 @@ pub mod weights;
 pub mod pallet {
 	use codec::{Decode, Encode};
 	use composable_traits::{
-		auction::AuctionStepFunction,
+		auction::TimeReleaseFunction,
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
 		time::{DurationSeconds, Timestamp},
 		math::{SafeArithmetic, WrappingNext},
@@ -104,15 +104,13 @@ pub mod pallet {
 		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>;
 		/// Convert a weight value into a deductible fee based on the currency type.
 		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
-
-		type OrderQueue : Get<SellOf<Self>>;
 	}
 
 	#[derive(Encode, Decode, Default, TypeInfo, Clone, Debug, PartialEq)]
 	pub struct SellOrder<AssetId, Balance, AccountId, Context> {
 		pub from_to: AccountId,
 		pub order: Sell<AssetId, Balance>,
-		pub configuration: AuctionStepFunction,
+		pub configuration: TimeReleaseFunction,
 		/// context captured when sell started
 		pub context: Context,
 	}
@@ -193,32 +191,17 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
-		/// takes order from queue
-		#[pallet::weight(T::WeightInfo::pop_order())]
-		pub fn pop_order(_: OriginFor<T>) -> DispatchResultWithPostInfo{
-			let order = T::OrderQueue::get();
-			let order_id =
-			<Self as SellEngine<AuctionStepFunction>>::ask(&order.from_to, order.order, AuctionStepFunction::default())?;
-
-			Self::deposit_event(Event::OrderAdded {
-				order_id,
-				order: SellOrders::<T>::get(order_id).expect("just added order exists"),
-			});
-			Ok(().into())
-		}
-
 		/// sell `order` in auction with `configuration`
 		/// some deposit is taken for storing sell order
 		#[pallet::weight(T::WeightInfo::ask())]
 		pub fn ask(
 			origin: OriginFor<T>,
 			order: Sell<T::MayBeAssetId, T::Balance>,
-			configuration: AuctionStepFunction,
+			configuration: TimeReleaseFunction,
 		) -> DispatchResultWithPostInfo {
 			let who = &(ensure_signed(origin)?);
 			let order_id =
-				<Self as SellEngine<AuctionStepFunction>>::ask(who, order, configuration)?;
+				<Self as SellEngine<TimeReleaseFunction>>::ask(who, order, configuration)?;
 
 			Self::deposit_event(Event::OrderAdded {
 				order_id,
@@ -235,7 +218,7 @@ pub mod pallet {
 			take: Take<T::Balance>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as SellEngine<AuctionStepFunction>>::take(&who, order_id, take)?;
+			<Self as SellEngine<TimeReleaseFunction>>::take(&who, order_id, take)?;
 			Ok(().into())
 		}
 
@@ -261,12 +244,12 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config + DeFiComposableConfig> SellEngine<AuctionStepFunction> for Pallet<T> {
+	impl<T: Config + DeFiComposableConfig> SellEngine<TimeReleaseFunction> for Pallet<T> {
 		type OrderId = T::OrderId;
 		fn ask(
 			from_to: &Self::AccountId,
 			order: Sell<Self::MayBeAssetId, Self::Balance>,
-			configuration: AuctionStepFunction,
+			configuration: TimeReleaseFunction,
 		) -> Result<Self::OrderId, DispatchError> {
 			ensure!(order.is_valid(), Error::<T>::OrderParametersIsInvalid,);
 			let order_id = <OrdersIndex<T>>::mutate(|x| {

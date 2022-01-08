@@ -3,7 +3,7 @@
 //! https://github.com/makerdao/dss/blob/master/src/abaci.sol
 
 use composable_traits::{
-	auction::{AuctionStepFunction, LinearDecrease, StairstepExponentialDecrease},
+	auction::{TimeReleaseFunction, LinearDecrease, StairstepExponentialDecrease},
 	time::DurationSeconds,
 	math::{LiftedFixedBalance, SafeArithmetic},
 };
@@ -22,15 +22,15 @@ pub trait AuctionTimeCurveModel {
 	) -> Result<LiftedFixedBalance, ArithmeticError>;
 }
 
-impl AuctionTimeCurveModel for AuctionStepFunction {
+impl AuctionTimeCurveModel for TimeReleaseFunction {
 	fn price(
 		&self,
 		initial_price: composable_traits::math::LiftedFixedBalance,
 		duration_since_start: DurationSeconds,
 	) -> Result<composable_traits::math::LiftedFixedBalance, sp_runtime::ArithmeticError> {
 		match self {
-			AuctionStepFunction::LinearDecrease(x) => x.price(initial_price, duration_since_start),
-			AuctionStepFunction::StairstepExponentialDecrease(x) =>
+			TimeReleaseFunction::LinearDecrease(x) => x.price(initial_price, duration_since_start),
+			TimeReleaseFunction::StairstepExponentialDecrease(x) =>
 				x.price(initial_price, duration_since_start),
 		}
 	}

@@ -29,7 +29,6 @@ pub struct UpdateInput<LiquidationStrategyId> {
 	pub interest_rate_model: InterestRateModel,
 }
 
-
 /// input to create market extrinsic
 #[derive(Encode, Decode, Default, TypeInfo)]
 pub struct CreateInput<LiquidationStrategyId, AssetId> {

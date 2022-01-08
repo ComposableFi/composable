@@ -1,5 +1,5 @@
 use composable_traits::{
-	auction::{AuctionStepFunction, LinearDecrease},
+	auction::{TimeReleaseFunction, LinearDecrease},
 	defi::{Sell, Take},
 };
 use orml_traits::MultiReservableCurrency;
@@ -43,7 +43,7 @@ fn setup_sell() {
 		let seller = AccountId::from_raw(ALICE.0);
 		let sell = Sell::new(CurrencyId::BTC, CurrencyId::USDT, 1, 1000);
 		let invalid = crate::OrdersIndex::<Runtime>::get();
-		let configuration = AuctionStepFunction::LinearDecrease(LinearDecrease { total: 42 });
+		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 		let not_reserved = Assets::reserved_balance(CurrencyId::BTC, &ALICE);
 		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
 		let reserved = Assets::reserved_balance(CurrencyId::BTC, &ALICE);
@@ -68,7 +68,7 @@ fn with_immediate_exact_buy() {
 		let sell_amount = 1;
 		let take_amount = 1000;
 		let sell = Sell::new(CurrencyId::BTC, CurrencyId::USDT, sell_amount, take_amount);
-		let configuration = AuctionStepFunction::LinearDecrease(LinearDecrease { total: 42 });
+		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
 		let order_id = crate::OrdersIndex::<Runtime>::get();
 		let result = DutchAuction::take(Origin::signed(buyer), order_id, Take::new(1, 999));
@@ -98,7 +98,7 @@ fn with_two_takes_higher_than_limit_and_not_enough_for_all() {
 		let buyer = AccountId::from_raw(BOB.0);
 		let sell_amount = 3;
 		let take_amount = 1000;
-		let configuration = AuctionStepFunction::LinearDecrease(LinearDecrease { total: 42 });
+		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 
 		let sell = Sell::new(CurrencyId::BTC, CurrencyId::USDT, sell_amount, take_amount);
 		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
@@ -119,7 +119,7 @@ fn liquidation() {
 		Tokens::mint_into(CurrencyId::BTC, &ALICE, 10).unwrap();
 		let seller = AccountId::from_raw(ALICE.0);
 		let sell = Sell::new(CurrencyId::BTC, CurrencyId::USDT, 1, 1000);
-		let configuration = AuctionStepFunction::LinearDecrease(LinearDecrease { total: 42 });
+		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
 		let order_id = crate::OrdersIndex::<Runtime>::get();
 		let balance_before = <Balances as fungible::Inspect<_>>::balance(&ALICE);
