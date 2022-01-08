@@ -33,8 +33,8 @@ jobs:
         /home/runner/.cargo/bin/cargo build --release --bins
         tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
         tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain-utils
-        #/home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
-        #/home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso
+        /home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
+        /home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso
     
     #- name: Build with srtool
     #  uses: chevdor/srtool-actions@v0.2.0
@@ -95,8 +95,8 @@ jobs:
         asset_name: composable-${{ env.RELEASE_VERSION }}
         tag: ${{ github.ref }}
         overwrite: true
-        body: |
-          runtimeversion: $VERSION
-          proposal: $PROPOSAL
-          black2_256: $BLAKE2_256
+        #body: |
+        #  runtimeversion: $VERSION
+        #  proposal: $PROPOSAL
+        #  black2_256: $BLAKE2_256
           
