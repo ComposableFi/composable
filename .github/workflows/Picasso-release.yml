@@ -33,7 +33,7 @@ jobs:
         /home/runner/.cargo/bin/cargo build --release --bins
         tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
         tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain-utils
-        /home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
+        #/home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
         /home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso
     
     #- name: Build with srtool
@@ -54,15 +54,6 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} 
-    
-    - name: Upload Checksum
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-        file: checksum.md5.txt
-        asset_name: checksum.md5.txt
-        tag: ${{ github.ref }}
-        overwrite: true
 
     - name: Build Docker image
       run: make containerize-release 
