@@ -36,18 +36,18 @@ jobs:
         #/home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
         #/home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso
     
-    - name: Build with srtool
-      uses: chevdor/srtool-actions@v0.2.0
-      with:
-          chain: ${{ matrix.chain }}
-          package: picasso-runtime
-          runtime_dir: ./runtime/picasso
+    #- name: Build with srtool
+    #  uses: chevdor/srtool-actions@v0.2.0
+    #  with:
+    #      chain: ${{ matrix.chain }}
+    #      package: picasso-runtime
+    #      runtime_dir: ./runtime/picasso
           
-    - name: Srtool build Summary
-      run: |
-         echo "VERSION=${{ steps.srtool_build.outputs.version }}"
-         echo "PROPOSAL=${{ steps.srtool_build.outputs.proposal_hash }}"
-         echo "BLAKE2_256=${{ steps.srtool_build.outputs.blake2_256 }}"
+    #- name: Srtool build Summary
+    #  run: |
+    #     echo "VERSION=${{ steps.srtool_build.outputs.version }}"
+    #     echo "PROPOSAL=${{ steps.srtool_build.outputs.proposal_hash }}"
+    #     echo "BLAKE2_256=${{ steps.srtool_build.outputs.blake2_256 }}"
     
     - name: Login to DockerHub
       uses: docker/login-action@v1 
