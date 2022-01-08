@@ -31,16 +31,14 @@ pub mod pallet {
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, SellEngine},
 		lending::Lending,
-		liquidation::Liquidation,
+		liquidation::Liquidation, time::TimeReleaseFunction,
 	};
 	use frame_support::{
-		traits::{IsType, UnixTime, Get},
-		PalletId,
+		traits::{IsType, UnixTime, Get, GenesisBuild},
+		PalletId, dispatch::Dispatchable, Twox64Concat, pallet_prelude::{OptionQuery, StorageMap},
 	};
 
 	use sp_runtime::DispatchError;
-
-	pub const PALLET_ID: PalletId = PalletId(*b"Liqudati");
 
 	#[pallet::config]
 
@@ -49,14 +47,13 @@ pub mod pallet {
 
 		type UnixTime: UnixTime;
 
-		type Lending: Lending;
+		type DutchAuction: SellEngine<TimeReleaseFunction>; 
 
-		type LiquidationStrategyId: Default + FullCodec;
+		type LiquidationStrategyId: Default + FullCodec + Into<u64>;
 		
 		type OrderId: Default + FullCodec;
 
 		type PalletId: Get<PalletId>;
-
 	}
 
 	#[pallet::event]
@@ -64,6 +61,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		PositionWasSentToLiquidation {},
 	}
+
 	#[pallet::error]
 	pub enum Error<T> {}
 
@@ -72,7 +70,27 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		
+	}
+
+	// TODO: real flow to implement:
+	// ```plantuml
+	// `solves question - how pallet can invoke list of other pallets with different configuration types
+	// `so yet sharing some liqudation part and tracing liquidation id
+	// dutch_auction_strategy -> liquidation : Create new strategy id
+	// dutch_auction_strategy -> liquidation : Add Self Dispatchable call (baked with strategyid)
+	// liquidation -> liquidation: Add liquidation order 
+	// liquidation -> liquidation: Get Dispatchable by Strategyid
+	// liquidation --> dutch_auction_strategy: Invoke Dispatchable
+	// dutch_auction_strategy -> dutch_auction_strategy: Get liquidation configuration by id previosly baked into call
+	// dutch_auction_strategy --> liqudation: Pop next order
+	// dutch_auction_strategy -> dutch_auction_strategy: Start liqudaiton
+	// ```
+	// for now just build in luqidation here
+	#[pallet::storage]
+	#[pallet::getter(fn strategies)]
+	pub type Strategies<T:Config> = StorageMap<_, Twox64Concat, u64, TimeReleaseFunction, OptionQuery>; 
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
 		type MayBeAssetId = T::MayBeAssetId;
@@ -82,19 +100,38 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 	}
 
-	// #[pallet::genesis_build]
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		_phantom: sp_std::marker::PhantomData<T>,
+	}
+
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { _phantom: <_>::default() }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T:Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self){
+			//LiquidationStr
+		}
+	}
+
+	
 
 	impl<T: Config> Liquidation for Pallet<T> {
 		
 		type LiquidationStrategyId = T::LiquidationStrategyId;
 
-		type OrderId = T::OrderId;
+		type OrderId = T::OrderId;		
 
 		fn liquidate(
 				from_to: &Self::AccountId,
 				order: composable_traits::defi::Sell<Self::MayBeAssetId, Self::Balance>,		
 				configuration : Vec<Self::LiquidationStrategyId>,
 			) -> Result<Self::OrderId, DispatchError> {
+				
 				todo!()
 			}
 	}
