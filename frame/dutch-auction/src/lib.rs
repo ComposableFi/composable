@@ -59,7 +59,7 @@ pub mod pallet {
 	use composable_traits::{
 		auction::AuctionStepFunction,
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
-		loans::DurationSeconds,
+		time::DurationSeconds,
 		math::{SafeArithmetic, WrappingNext},
 	};
 	use frame_support::{
@@ -104,6 +104,8 @@ pub mod pallet {
 		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>;
 		/// Convert a weight value into a deductible fee based on the currency type.
 		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
+
+		type OrderQueue : Get<SellOf<Self>>;
 	}
 
 	#[derive(Encode, Decode, Default, TypeInfo, Clone, Debug, PartialEq)]
@@ -191,6 +193,14 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+
+		/// takes order from queue
+		#[pallet::weight(T::WeightInfo::pop_order())]
+		pub fn pop_order(_: OriginFor<T>) -> DispatchResultWithPostInfo{
+			let order = T::OrderQueue::get();
+			Ok(())
+		}
+
 		/// sell `order` in auction with `configuration`
 		/// some deposit is taken for storing sell order
 		#[pallet::weight(T::WeightInfo::ask())]
@@ -308,6 +318,7 @@ pub mod pallet {
 				// users payed N * WEIGHT before, we here pay N * (log N - 1) * Weight. We can
 				// retain pure N by first served principle so, not highest price.
 				takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));
+				
 				let SellOrder { mut order, context: _, from_to: ref seller, configuration: _ } =
 					<SellOrders<T>>::get(order_id)
 						.expect("takes are added only onto existing orders");

@@ -5,6 +5,7 @@ pub trait WeightInfo {
 	fn take() -> Weight;
 	fn liquidate() -> Weight;
 	fn known_overhead_for_on_finalize() -> Weight;
+	fn pop_order() -> Weight;
 }
 
 /// no weight
@@ -24,4 +25,8 @@ impl WeightInfo for () {
 	fn known_overhead_for_on_finalize() -> Weight {
 		0
 	}
+
+	fn pop_order() -> Weight {
+        0
+    }
 }

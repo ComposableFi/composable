@@ -4,7 +4,7 @@
 
 use composable_traits::{
 	auction::{AuctionStepFunction, LinearDecrease, StairstepExponentialDecrease},
-	loans::DurationSeconds,
+	time::DurationSeconds,
 	math::{LiftedFixedBalance, SafeArithmetic},
 };
 
@@ -26,7 +26,7 @@ impl AuctionTimeCurveModel for AuctionStepFunction {
 	fn price(
 		&self,
 		initial_price: composable_traits::math::LiftedFixedBalance,
-		duration_since_start: composable_traits::loans::DurationSeconds,
+		duration_since_start: DurationSeconds,
 	) -> Result<composable_traits::math::LiftedFixedBalance, sp_runtime::ArithmeticError> {
 		match self {
 			AuctionStepFunction::LinearDecrease(x) => x.price(initial_price, duration_since_start),
