@@ -59,7 +59,7 @@ pub mod pallet {
 	use composable_traits::{
 		auction::AuctionStepFunction,
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
-		time::DurationSeconds,
+		time::{DurationSeconds, Timestamp},
 		math::{SafeArithmetic, WrappingNext},
 	};
 	use frame_support::{
@@ -119,7 +119,7 @@ pub mod pallet {
 
 	#[derive(Encode, Decode, Default, TypeInfo, Clone, Debug, PartialEq)]
 	pub struct Context<Balance> {
-		pub added_at: DurationSeconds,
+		pub added_at: Timestamp,
 		pub deposit: Balance,
 	}
 
@@ -198,7 +198,14 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::pop_order())]
 		pub fn pop_order(_: OriginFor<T>) -> DispatchResultWithPostInfo{
 			let order = T::OrderQueue::get();
-			Ok(())
+			let order_id =
+			<Self as SellEngine<AuctionStepFunction>>::ask(&order.from_to, order.order, AuctionStepFunction::default())?;
+
+			Self::deposit_event(Event::OrderAdded {
+				order_id,
+				order: SellOrders::<T>::get(order_id).expect("just added order exists"),
+			});
+			Ok(().into())
 		}
 
 		/// sell `order` in auction with `configuration`
@@ -315,50 +322,47 @@ pub mod pallet {
 		// so we stay fast and prevent attack
 		fn on_finalize(_n: T::BlockNumber) {
 			for (order_id, mut takes) in <Takes<T>>::iter() {
-				// users payed N * WEIGHT before, we here pay N * (log N - 1) * Weight. We can
-				// retain pure N by first served principle so, not highest price.
-				takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));
-				
-				let SellOrder { mut order, context: _, from_to: ref seller, configuration: _ } =
-					<SellOrders<T>>::get(order_id)
-						.expect("takes are added only onto existing orders");
+				if let Some(SellOrder { mut order, context: _, from_to: ref seller, configuration: _ }) = <SellOrders<T>>::get(order_id) {
+					// users payed N * WEIGHT before, we here pay N * (log N - 1) * Weight. We can
+					// retain pure N by first served principle so, not highest price.
+					takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));				
+					// calculate real price
+					for take in takes {
+						let quote_amount = take.take.amount.saturating_mul(take.take.limit);
+						// what to do with orders which nobody ever takes? some kind of dust orders with
+						if order.take.amount == T::Balance::zero() {
+							T::MultiCurrency::unreserve(order.pair.quote, &take.from_to, quote_amount);
+						} else {
+							let take_amount = take.take.amount.min(order.take.amount);
+							order.take.amount -= take_amount;
+							let real_quote_amount = take_amount
+								.safe_mul(&take.take.limit)
+								.expect("was checked in take call");
 
-				// calculate real price
-				for take in takes {
-					let quote_amount = take.take.amount.saturating_mul(take.take.limit);
-					// what to do with orders which nobody ever takes? some kind of dust orders with
-					if order.take.amount == T::Balance::zero() {
-						T::MultiCurrency::unreserve(order.pair.quote, &take.from_to, quote_amount);
-					} else {
-						let take_amount = take.take.amount.min(order.take.amount);
-						order.take.amount -= take_amount;
-						let real_quote_amount = take_amount
-							.safe_mul(&take.take.limit)
-							.expect("was checked in take call");
-
-						exchange_reserved::<T>(
-							order.pair.base,
-							seller,
-							take_amount,
-							order.pair.quote,
-							&take.from_to,
-							real_quote_amount,
-						)
-						.expect("we forced locks beforehand");
-
-						if real_quote_amount < quote_amount {
-							T::MultiCurrency::unreserve(
+							exchange_reserved::<T>(
+								order.pair.base,
+								seller,
+								take_amount,
 								order.pair.quote,
 								&take.from_to,
-								quote_amount - real_quote_amount,
-							);
+								real_quote_amount,
+							)
+							.expect("we forced locks beforehand");
+
+							if real_quote_amount < quote_amount {
+								T::MultiCurrency::unreserve(
+									order.pair.quote,
+									&take.from_to,
+									quote_amount - real_quote_amount,
+								);
+							}
 						}
 					}
-				}
 
-				if order.take.amount == T::Balance::zero() {
-					<SellOrders<T>>::remove(order_id);
-					Self::deposit_event(Event::OrderRemoved { order_id });
+					if order.take.amount == T::Balance::zero() {
+						<SellOrders<T>>::remove(order_id);
+						Self::deposit_event(Event::OrderRemoved { order_id });
+					}
 				}
 			}
 			<Takes<T>>::remove_all(None);
