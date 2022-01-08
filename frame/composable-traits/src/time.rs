@@ -1,4 +1,8 @@
-//! Naive time
+//! Naive time things
+
+use frame_support::pallet_prelude::*;
+use scale_info::TypeInfo;
+use sp_runtime::Permill;
 
 /// `std::time::Duration` is not used because it is to precise with 128 bits and microseconds.
 pub type DurationSeconds = u64;
@@ -12,10 +16,6 @@ pub const ONE_HOUR: DurationSeconds = 60 * 60;
 /// accounts to length of year)
 pub const SECONDS_PER_YEAR_NAIVE: DurationSeconds = 365 * 24 * ONE_HOUR;
 
-use crate::{time::DurationSeconds, defi::{Sell, SellEngine}};
-use frame_support::pallet_prelude::*;
-use scale_info::TypeInfo;
-use sp_runtime::Permill;
 
 #[derive(Decode, Encode, Clone, TypeInfo, Debug, PartialEq)]
 pub enum TimeReleaseFunction {

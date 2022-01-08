@@ -3,8 +3,7 @@
 //! https://github.com/makerdao/dss/blob/master/src/abaci.sol
 
 use composable_traits::{
-	auction::{TimeReleaseFunction, LinearDecrease, StairstepExponentialDecrease},
-	time::DurationSeconds,
+	time::{DurationSeconds, TimeReleaseFunction, LinearDecrease, StairstepExponentialDecrease},
 	math::{LiftedFixedBalance, SafeArithmetic},
 };
 
@@ -84,8 +83,7 @@ impl AuctionTimeCurveModel for StairstepExponentialDecrease {
 mod tests {
 
 	use composable_traits::{
-		auction::{LinearDecrease, StairstepExponentialDecrease},
-		loans::{DurationSeconds, ONE_HOUR},
+		time::{DurationSeconds, ONE_HOUR, LinearDecrease, StairstepExponentialDecrease},
 		math::LiftedFixedBalance,
 	};
 

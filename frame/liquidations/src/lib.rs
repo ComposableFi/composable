@@ -31,14 +31,19 @@ pub mod pallet {
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, SellEngine},
 		lending::Lending,
-		liquidation::Liquidation, time::TimeReleaseFunction,
+		liquidation::Liquidation,
+		math::WrappingNext,
+		time::{TimeReleaseFunction, StairstepExponentialDecrease},
 	};
 	use frame_support::{
-		traits::{IsType, UnixTime, Get, GenesisBuild},
-		PalletId, dispatch::Dispatchable, Twox64Concat, pallet_prelude::{OptionQuery, StorageMap},
+		dispatch::Dispatchable,
+		pallet_prelude::{OptionQuery, StorageMap, StorageValue, ValueQuery},
+		traits::{GenesisBuild, Get, IsType, UnixTime},
+		PalletId, Twox64Concat,
 	};
 
-	use sp_runtime::DispatchError;
+	use scale_info::TypeInfo;
+	use sp_runtime::{DispatchError, Permill};
 
 	#[pallet::config]
 
@@ -47,10 +52,10 @@ pub mod pallet {
 
 		type UnixTime: UnixTime;
 
-		type DutchAuction: SellEngine<TimeReleaseFunction>; 
+		type DutchAuction: SellEngine<TimeReleaseFunction>;
 
-		type LiquidationStrategyId: Default + FullCodec + Into<u64>;
-		
+		type LiquidationStrategyId: Default + FullCodec + WrappingNext + TypeInfo;
+
 		type OrderId: Default + FullCodec;
 
 		type PalletId: Get<PalletId>;
@@ -70,9 +75,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-		
-	}
+	impl<T: Config> Pallet<T> {}
 
 	// TODO: real flow to implement:
 	// ```plantuml
@@ -80,7 +83,7 @@ pub mod pallet {
 	// `so yet sharing some liqudation part and tracing liquidation id
 	// dutch_auction_strategy -> liquidation : Create new strategy id
 	// dutch_auction_strategy -> liquidation : Add Self Dispatchable call (baked with strategyid)
-	// liquidation -> liquidation: Add liquidation order 
+	// liquidation -> liquidation: Add liquidation order
 	// liquidation -> liquidation: Get Dispatchable by Strategyid
 	// liquidation --> dutch_auction_strategy: Invoke Dispatchable
 	// dutch_auction_strategy -> dutch_auction_strategy: Get liquidation configuration by id previosly baked into call
@@ -90,7 +93,13 @@ pub mod pallet {
 	// for now just build in luqidation here
 	#[pallet::storage]
 	#[pallet::getter(fn strategies)]
-	pub type Strategies<T:Config> = StorageMap<_, Twox64Concat, u64, TimeReleaseFunction, OptionQuery>; 
+	pub type Strategies<T: Config> =
+		StorageMap<_, Twox64Concat, u64, TimeReleaseFunction, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn strategy_index)]
+	#[allow(clippy::disallowed_type)] // OrderIdOnEmpty provides a default value
+	pub type StrategyIndex<T: Config> = StorageValue<_, T::LiquidationStrategyId, ValueQuery>;
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
 		type MayBeAssetId = T::MayBeAssetId;
@@ -111,28 +120,40 @@ pub mod pallet {
 		}
 	}
 
-	#[pallet::genesis_build]
-	impl<T:Config> GenesisBuild<T> for GenesisConfig<T> {
-		fn build(&self){
-			//LiquidationStr
+	impl<T:Config>  Pallet<T> {
+		pub fn create_strategy_id() -> T::LiquidationStrategyId {
+			StrategyIndex::<T>::mutate(|x| {
+				*x = x.wrapping_next();
+				*x
+			})
 		}
 	}
 
-	
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {		
+			let index = Self::create_strategy_id();
+			let linear_ten_minutes = TimeReleaseFunction::LinearDecrease(LinearDecrease { total : 10 * 60});
+			Strategies::<T>::insert(index, linear_ten_minutes);
+
+			let index = Self::create_strategy_id();
+			let exponential = StairstepExponentialDecrease { step: 10, cut: Permill::from_rational(95, 100) };
+			let exponential = TimeReleaseFunction::LinearDecrease(exponential);
+			Strategies::<T>::insert(index, exponential);
+		}
+	}
 
 	impl<T: Config> Liquidation for Pallet<T> {
-		
 		type LiquidationStrategyId = T::LiquidationStrategyId;
 
-		type OrderId = T::OrderId;		
+		type OrderId = T::OrderId;
 
 		fn liquidate(
-				from_to: &Self::AccountId,
-				order: composable_traits::defi::Sell<Self::MayBeAssetId, Self::Balance>,		
-				configuration : Vec<Self::LiquidationStrategyId>,
-			) -> Result<Self::OrderId, DispatchError> {
-				
-				todo!()
-			}
+			from_to: &Self::AccountId,
+			order: composable_traits::defi::Sell<Self::MayBeAssetId, Self::Balance>,
+			configuration: Vec<Self::LiquidationStrategyId>,
+		) -> Result<Self::OrderId, DispatchError> {
+			let 
+		}
 	}
 }

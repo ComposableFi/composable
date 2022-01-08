@@ -1,5 +1,5 @@
 use composable_traits::{
-	auction::{TimeReleaseFunction, LinearDecrease},
+	time::{TimeReleaseFunction, LinearDecrease},
 	defi::{Sell, Take},
 };
 use orml_traits::MultiReservableCurrency;
