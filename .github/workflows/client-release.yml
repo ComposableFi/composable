@@ -9,7 +9,8 @@ on:
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
-  SCCACHE_GCS_BUCKET: composable-build-artefacts
+  SCCACHE_GCS_BUCKET: 'composable-build-artefacts'
+  RUSTC_WRAPPER: "/home/runner/.cargo/bin/sccache"
 
 jobs:
   build-and-publish:
