@@ -7,7 +7,7 @@ on:
     branches:
       - main
       - develop
-      - release-*
+      - release/*
   workflow_dispatch:
 
 env:
@@ -24,9 +24,8 @@ jobs:
       - uses: xanantis/docker-file-ownership-fix@v1
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 0
-
-      - name: Setup Dependencies
+          fetch-depth: 0     
+      - name: Setup toolchain
         run: |
          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
          echo "$HOME/.cargo/bin:$PATH" >> $GITHUB_PATH
@@ -36,9 +35,6 @@ jobs:
       - name: Benchmark
         run: |
           SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --workspace --release --exclude integration-tests
-      - name: Benchmark Develop
-        run: |
-          SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks,develop --workspace --release --exclude integration-tests
       - name: Picasso
         run: |
           cargo build --release -p picasso-runtime

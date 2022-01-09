@@ -2,10 +2,10 @@ name: Check Runtime
 on:
   push:
     branches:
-      - release-*
+      - release/*
   pull_request:
     branches:
-      - release-*
+      - release/*
 jobs:
   check-runtime:
     runs-on: ubuntu-latest
