@@ -1,6 +1,5 @@
 use composable_traits::{
-	defi::Rate,
-	lending::math::MoreThanOneFixedU128,
+	defi::{Rate, MoreThanOneFixedU128},
 	math::{LiftedFixedBalance, SafeArithmetic},
 };
 use sp_runtime::{traits::Saturating, ArithmeticError, Percent};

@@ -45,12 +45,11 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::{CurrencyFactory, PriceableAsset},
-		defi::{Rate, DeFiEngine},
+		defi::{Rate, DeFiEngine, ZeroToOneFixedU128},
 		lending::{
 			math::*, BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, CreateInput, UpdateInput,
 		},
 		liquidation::Liquidation,
-		loans::{DurationSeconds, PriceStructure, Timestamp},
 		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
@@ -85,7 +84,7 @@ pub mod pallet {
 		<T as Config>::VaultId,
 		<T as Config>::MayBeAssetId,
 		<T as frame_system::Config>::AccountId,
-		<T as Config>::GroupId,
+		<T as Config>::LiquidationStrategyId,
 	>;
 
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, TypeInfo)]
@@ -273,7 +272,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// Id of proxy to liquidate 
-		type LiquidationStrategyId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
+		type LiquidationStrategyId: Parameter + Default + PartialEq + Clone + Debug + TypeInfo;
 	}
 
 	#[pallet::pallet]
