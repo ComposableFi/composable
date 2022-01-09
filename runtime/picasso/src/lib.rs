@@ -376,6 +376,8 @@ where
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			#[cfg(feature = "develop")]
+			crowdloan_rewards::PrevalidateAssociation::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -835,6 +837,27 @@ impl pallet_bonded_finance::Config for Runtime {
 	type Vesting = Vesting;
 }
 
+parameter_types! {
+	pub const DutchAuctionId: PalletId = PalletId(*b"dtch_ctn");
+}
+
+impl composable_traits::defi::DeFiComposableConfig for Runtime {
+	type MayBeAssetId = CurrencyId;
+	type Balance = Balance;
+}
+
+#[cfg(feature = "develop")]
+impl pallet_dutch_auction::Config for Runtime {
+	type NativeCurrency = Balances;
+	type Event = Event;
+	type MultiCurrency = Assets;
+	type PalletId = DutchAuctionId;
+	type WeightToFee = WeightToFee;
+	type OrderId = u128;
+	type UnixTime = Timestamp;
+	type WeightInfo = ();
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -963,6 +986,7 @@ construct_runtime!(
 		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 58,
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 59,
 		BondedFinance: pallet_bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
+		DutchAuction: pallet_dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -972,6 +996,21 @@ construct_runtime!(
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+
+#[cfg(feature = "develop")]
+/// The SignedExtension to the basic transaction logic.
+pub type SignedExtra = (
+	system::CheckSpecVersion<Runtime>,
+	system::CheckTxVersion<Runtime>,
+	system::CheckGenesis<Runtime>,
+	system::CheckEra<Runtime>,
+	system::CheckNonce<Runtime>,
+	system::CheckWeight<Runtime>,
+	transaction_payment::ChargeTransactionPayment<Runtime>,
+	crowdloan_rewards::PrevalidateAssociation<Runtime>,
+);
+
+#[cfg(not(feature = "develop"))]
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	system::CheckSpecVersion<Runtime>,
@@ -982,6 +1021,7 @@ pub type SignedExtra = (
 	system::CheckWeight<Runtime>,
 	transaction_payment::ChargeTransactionPayment<Runtime>,
 );
+
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
@@ -1128,6 +1168,7 @@ impl_runtime_apis! {
 				list_benchmark!(list, extra, pallet_bonded_finance, BondedFinance);
 				list_benchmark!(list, extra, oracle, Oracle);
 				list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
+				list_benchmark!(list, extra, dutch_auction, DutchAuction);
 			}
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -1184,6 +1225,7 @@ impl_runtime_apis! {
 				add_benchmark!(params, batches, pallet_bonded_finance, BondedFinance);
 				add_benchmark!(params, batches, oracle, Oracle);
 				add_benchmark!(params, batches, crowdloan_rewards, CrowdloanRewards);
+				add_benchmark!(params, batches, dutch_auction, DutchAuction);
 			}
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

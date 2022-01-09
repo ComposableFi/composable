@@ -2,12 +2,10 @@ name: Check Runtime
 on:
   push:
     branches:
-      - main
-      - check_runtime_ci
+      - release-*
   pull_request:
     branches:
-      - dali-chachacha
-      - picasso
+      - release-*
 jobs:
   check-runtime:
     runs-on: ubuntu-latest

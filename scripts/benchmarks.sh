@@ -1,5 +1,6 @@
 #!/bin/bash
-
+# To run benchmarks `node` must be build with benchmarks enabled in release mode 
+# `cargo build --release --features runtime-benchmarks`
 steps=50
 repeat=20
 picassoOutput=./runtime/picasso/src/weights
@@ -20,6 +21,7 @@ pallets=(
 	crowdloan_bonus
 	utility
 	lending
+	dutch_auction
 )
 
 for p in ${pallets[@]}

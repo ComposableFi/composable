@@ -57,7 +57,7 @@ pub mod pallet {
 	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		rate_model::Rate,
+		defi::Rate,
 		vault::{
 			CapabilityVault, Deposit, FundsAvailability, ReportableStrategicVault, Vault,
 			VaultConfig,

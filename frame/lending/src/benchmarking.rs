@@ -2,8 +2,10 @@ use super::*;
 
 use crate::Pallet as Lending;
 use composable_traits::{
-	lending::{Lending as LendingTrait, MarketConfigInput},
-	rate_model::{InterestRateModel, NormalizedCollateralFactor},
+	lending::{
+		math::{InterestRateModel, NormalizedCollateralFactor},
+		Lending as LendingTrait, MarketConfigInput,
+	},
 	vault::Vault,
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};

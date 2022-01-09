@@ -67,9 +67,11 @@ pub trait CurveAmm {
 
 /// Pool type
 #[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, Debug)]
-pub struct StableSwapPoolInfo<AccountId> {
+pub struct StableSwapPoolInfo<AccountId, AssetId> {
 	/// Owner of pool
 	pub owner: AccountId,
+	/// AssetId of LP token,
+	pub lp_token: AssetId,
 	/// Initial amplification coefficient
 	pub amplification_coefficient: FixedU128,
 	/// Amount of the fee pool charges for the exchange

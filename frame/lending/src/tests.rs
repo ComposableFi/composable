@@ -13,9 +13,9 @@ use crate::{
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::{
 	currency::PriceableAsset,
-	lending::MarketConfigInput,
+	defi::Rate,
+	lending::{math::*, MarketConfigInput},
 	math::LiftedFixedBalance,
-	rate_model::*,
 	vault::{Deposit, VaultConfig},
 };
 use frame_support::{
@@ -323,9 +323,8 @@ fn new_jump_model() -> (Percent, InterestRateModel) {
 	let jump_rate = Rate::saturating_from_rational(10, 100);
 	let full_rate = Rate::saturating_from_rational(32, 100);
 	let optimal = Percent::from_percent(80);
-	let interest_rate_model = InterestRateModel::Jump(
-		JumpModel::new_model(base_rate, jump_rate, full_rate, optimal).unwrap(),
-	);
+	let interest_rate_model =
+		InterestRateModel::Jump(JumpModel::new(base_rate, jump_rate, full_rate, optimal).unwrap());
 	(optimal, interest_rate_model)
 }
 

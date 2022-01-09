@@ -1,3 +1,4 @@
+//! Lending pallet
 #![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
 #![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -44,12 +45,14 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::{CurrencyFactory, PriceableAsset},
-		lending::{BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput},
+		defi::Rate,
+		lending::{
+			math::*, BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput,
+		},
 		liquidation::Liquidation,
 		loans::{DurationSeconds, PriceStructure, Timestamp},
 		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
-		rate_model::*,
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
 	};
 	use frame_support::{
@@ -1290,7 +1293,7 @@ pub mod pallet {
 			cash: &Self::Balance,
 			borrows: &Self::Balance,
 		) -> Result<Percent, DispatchError> {
-			Ok(composable_traits::rate_model::calc_utilization_ratio(
+			Ok(composable_traits::lending::math::calc_utilization_ratio(
 				(*cash).into(),
 				(*borrows).into(),
 			)?)
@@ -1547,8 +1550,7 @@ pub mod pallet {
 		let borrow_rate = interest_rate_model
 			.get_borrow_rate(utilization_ratio)
 			.ok_or(Error::<T>::BorrowRateDoesNotExist)?;
-		let borrow_index_new =
-			increment_index(borrow_rate, borrow_index, delta_time)?.safe_add(&borrow_index)?;
+		let borrow_index_new = increment_index(borrow_rate, borrow_index, delta_time)?;
 		let delta_interest_rate = borrow_rate
 			.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
 			.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))?;

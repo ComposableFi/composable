@@ -5,14 +5,20 @@
 //! Diminishes with time.
 //! Takers can take for price same or higher.
 //! Higher takers take first.
-//! Sell orders stored on chain.
-//! Takes live only one block.
+//! Sell(ask) orders stored on chain. Sell takes deposit from seller, returned during take or
+//! liquidation. Takes live only one block.
 //!
+//! # Take Sell Order
 //! Allows for best price to win during auction take. as takes are not executed immediately.
 //! When auction steps onto new value, several people will decide it worth it.
 //! They will know that highest price wins, so will try to overbid other, hopefully driving price to
 //! more optimal. So takers appropriate tip to auction, not via transaction tip(not proportional to
 //! price) to parachain. Allows to win bids not by closes to parachain host machine.
+//!
+//! # Sell Order deposit
+//! Sell takes deposit (as for accounts), to store sells for some time.
+//! We have to store lock deposit value with ask as it can change within time.
+//! Later deposit is used by pallet as initiative to liquidate garbage.
 
 #![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
 #![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
@@ -41,7 +47,8 @@ pub mod math;
 #[cfg(test)]
 mod tests;
 
-#[cfg(test)]
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 mod mock;
 
 pub mod weights;
@@ -58,6 +65,7 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{tokens::fungible::Transfer as NativeTransfer, IsType, UnixTime},
+		weights::WeightToFeePolynomial,
 		PalletId,
 	};
 	use frame_system::{
@@ -83,25 +91,34 @@ pub mod pallet {
 		type OrderId: OrderIdLike + WrappingNext + Zero;
 		type MultiCurrency: MultiCurrency<
 				Self::AccountId,
-				CurrencyId = Self::AssetId,
+				CurrencyId = Self::MayBeAssetId,
 				Balance = <Self as DeFiComposableConfig>::Balance,
 			> + MultiReservableCurrency<
 				Self::AccountId,
-				CurrencyId = Self::AssetId,
+				CurrencyId = Self::MayBeAssetId,
 				Balance = <Self as DeFiComposableConfig>::Balance,
 			>;
 		type WeightInfo: WeightInfo;
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>;
+		/// Convert a weight value into a deductible fee based on the currency type.
+		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
 	}
 
 	#[derive(Encode, Decode, Default, TypeInfo, Clone, Debug, PartialEq)]
-	pub struct SellOrder<AssetId, Balance, AccountId, Moment> {
+	pub struct SellOrder<AssetId, Balance, AccountId, Context> {
 		pub from_to: AccountId,
 		pub order: Sell<AssetId, Balance>,
 		pub configuration: AuctionStepFunction,
-		pub added_at: Moment,
+		/// context captured when sell started
+		pub context: Context,
+	}
+
+	#[derive(Encode, Decode, Default, TypeInfo, Clone, Debug, PartialEq)]
+	pub struct Context<Balance> {
+		pub added_at: DurationSeconds,
+		pub deposit: Balance,
 	}
 
 	#[derive(Encode, Decode, Default, TypeInfo)]
@@ -113,10 +130,10 @@ pub mod pallet {
 	// type aliases
 	pub type OrderIdOf<T> = <T as Config>::OrderId;
 	pub type SellOf<T> = SellOrder<
-		<T as DeFiComposableConfig>::AssetId,
+		<T as DeFiComposableConfig>::MayBeAssetId,
 		<T as DeFiComposableConfig>::Balance,
 		<T as frame_system::Config>::AccountId,
-		DurationSeconds,
+		Context<<T as DeFiComposableConfig>::Balance>,
 	>;
 
 	pub type TakeOf<T> =
@@ -132,6 +149,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		RequestedOrderDoesNotExists,
+		OrderParametersIsInvalid,
 		TakeParametersIsInvalid,
 		TakeLimitDoesNotSatisfiesOrder,
 		OrderNotFound,
@@ -159,7 +177,7 @@ pub mod pallet {
 		StorageMap<_, Twox64Concat, OrderIdOf<T>, Vec<TakeOf<T>>, OptionQuery>;
 
 	impl<T: Config + DeFiComposableConfig> DeFiEngine for Pallet<T> {
-		type AssetId = T::AssetId;
+		type MayBeAssetId = T::MayBeAssetId;
 
 		type Balance = T::Balance;
 
@@ -174,20 +192,17 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// sell `order` in auction with `configuration`
+		/// some deposit is taken for storing sell order
 		#[pallet::weight(T::WeightInfo::ask())]
 		pub fn ask(
 			origin: OriginFor<T>,
-			order: Sell<T::AssetId, T::Balance>,
+			order: Sell<T::MayBeAssetId, T::Balance>,
 			configuration: AuctionStepFunction,
 		) -> DispatchResultWithPostInfo {
 			let who = &(ensure_signed(origin)?);
 			let order_id =
 				<Self as SellEngine<AuctionStepFunction>>::ask(who, order, configuration)?;
-			let treasury = &T::PalletId::get().into_account();
 
-			// we cannot take weight as it will go to runtime, not to pallet, so cannot return it
-			// back we could have create vault, so not sure if needed
-			T::NativeCurrency::transfer(who, treasury, T::WeightInfo::liquidate().into(), true)?;
 			Self::deposit_event(Event::OrderAdded {
 				order_id,
 				order: SellOrders::<T>::get(order_id).expect("just added order exists"),
@@ -220,16 +235,12 @@ pub mod pallet {
 			// pollute account system
 			let treasury = &T::PalletId::get().into_account();
 			T::MultiCurrency::unreserve(order.order.pair.base, &who, order.order.take.amount);
-			T::NativeCurrency::transfer(
-				treasury,
-				&order.from_to,
-				T::WeightInfo::liquidate().into(),
-				true,
-			)?;
+			T::NativeCurrency::transfer(treasury, &order.from_to, order.context.deposit, true)?;
+
 			<SellOrders<T>>::remove(order_id);
 			Self::deposit_event(Event::OrderRemoved { order_id });
 
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 	}
 
@@ -237,20 +248,24 @@ pub mod pallet {
 		type OrderId = T::OrderId;
 		fn ask(
 			from_to: &Self::AccountId,
-			order: Sell<Self::AssetId, Self::Balance>,
+			order: Sell<Self::MayBeAssetId, Self::Balance>,
 			configuration: AuctionStepFunction,
 		) -> Result<Self::OrderId, DispatchError> {
-			ensure!(order.is_valid(), Error::<T>::TakeParametersIsInvalid,);
+			ensure!(order.is_valid(), Error::<T>::OrderParametersIsInvalid,);
 			let order_id = <OrdersIndex<T>>::mutate(|x| {
 				*x = x.next();
 				// in case of wrapping, will need to check existence of order/takes
 				*x
 			});
+			let treasury = &T::PalletId::get().into_account();
+			let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate());
+			T::NativeCurrency::transfer(from_to, treasury, deposit, true)?;
+			let now = T::UnixTime::now().as_secs();
 			let order = SellOf::<T> {
 				from_to: from_to.clone(),
 				configuration,
 				order,
-				added_at: T::UnixTime::now().as_secs(),
+				context: Context::<Self::Balance> { added_at: now, deposit },
 			};
 			T::MultiCurrency::reserve(order.order.pair.base, from_to, order.order.take.amount)?;
 			SellOrders::<T>::insert(order_id, order);
@@ -273,7 +288,7 @@ pub mod pallet {
 			let limit = order.order.take.limit.into();
 			// may consider storing calculation results within single block, so that finalize does
 			// not recalculates
-			let passed = T::UnixTime::now().as_secs() - order.added_at;
+			let passed = T::UnixTime::now().as_secs() - order.context.added_at;
 			let _limit = order.configuration.price(limit, passed)?;
 			let quote_amount = take.quote_amount()?;
 
@@ -293,7 +308,7 @@ pub mod pallet {
 				// users payed N * WEIGHT before, we here pay N * (log N - 1) * Weight. We can
 				// retain pure N by first served principle so, not highest price.
 				takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));
-				let SellOrder { mut order, added_at: _, from_to: ref seller, configuration: _ } =
+				let SellOrder { mut order, context: _, from_to: ref seller, configuration: _ } =
 					<SellOrders<T>>::get(order_id)
 						.expect("takes are added only onto existing orders");
 
@@ -345,10 +360,10 @@ pub mod pallet {
 
 	/// feesless exchange of reserved currencies
 	fn exchange_reserved<T: Config>(
-		base: <T as DeFiComposableConfig>::AssetId,
+		base: <T as DeFiComposableConfig>::MayBeAssetId,
 		seller: &<T as frame_system::Config>::AccountId,
 		take_amount: <T as DeFiComposableConfig>::Balance,
-		quote: <T as DeFiComposableConfig>::AssetId,
+		quote: <T as DeFiComposableConfig>::MayBeAssetId,
 		taker: &<T as frame_system::Config>::AccountId,
 		quote_amount: <T as DeFiComposableConfig>::Balance,
 	) -> Result<(), DispatchError> {

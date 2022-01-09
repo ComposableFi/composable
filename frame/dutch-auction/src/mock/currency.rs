@@ -27,27 +27,6 @@ pub enum CurrencyId {
 	LpToken(u128),
 }
 
-/// seems need unifying type which stores and checks asset id boundaries, so not sure about design
-/// yet
-// pub trait ConstGet<T> {
-// 	const VALUE: T;
-// }
-
-// /// knows existing local assets and how to map them to simple numbers
-// pub trait LocalAssetsRegistry {
-// 	type AssetId : AssetIdLike;
-// 	/// assets which we well know and embedded into enum.
-// 	/// maximal of this is smaller than minimal `Assets`
-// 	type WellKnownAssetId : ConstGet<u8> + Into<Self::AssetId>;
-// 	/// Larger than maximal of `WellKnownAssetId` but smaller than minimal `DerivativeAssetId`.
-// 	type OtherAssetId : ConstGet<u128>  + Into<Self::AssetId>;
-// 	/// locally diluted derivative and liquidity assets.
-// 	/// larger than maximal `OtherAssetId`
-// 	type DerivativeAssetId: ConstGet<u128> + Into<Self::AssetId>;
-// 	fn try_from<N:Into<u128>>(number : N) -> Result<Self::AssetId, DispatchError>;
-// 	fn native() -> Self::WellKnownAssetId;
-// }
-
 impl Default for CurrencyId {
 	fn default() -> Self {
 		CurrencyId::PICA
