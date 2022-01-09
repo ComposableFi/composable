@@ -29,7 +29,6 @@ jobs:
   
     - name: Set env
       run: |
-        which sccache
         echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
         make version
 
