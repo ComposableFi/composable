@@ -39,18 +39,24 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 	Ok(match id {
 		// Must define the default chain here because `export-genesis-state` command
 		// does not support `--chain` and `--parachain-id` arguments simultaneously.
+		#[cfg(feature = "dali")]
 		"dali-dev" => Box::new(chain_spec::dali_dev()),
 		"picasso-dev" => Box::new(chain_spec::picasso_dev()),
+		#[cfg(feature = "composable")]
 		"composable-dev" => Box::new(chain_spec::composable_dev()),
 		// Dali (Westend Relay)
+		#[cfg(feature = "dali")]
 		"dali-westend" => Box::new(chain_spec::dali_westend()),
 		// Dali (Rococo Relay)
+		#[cfg(feature = "dali")]
 		"dali-rococo" => Box::new(chain_spec::dali_rococo()),
 		// Dali (Chachacha Relay)
+		#[cfg(feature = "dali")]
 		"dali-chachacha" => Box::new(chain_spec::dali_chachacha()),
 		// Picasso (Kusama Relay)
 		"picasso" => Box::new(chain_spec::picasso()),
 		// Composable (Polkadot Relay)
+		#[cfg(feature = "composable")]
 		"" | "composable" => Box::new(chain_spec::composable()),
 		path => Box::new(chain_spec::picasso::ChainSpec::from_json_file(
 			std::path::PathBuf::from(path),
@@ -89,7 +95,10 @@ impl SubstrateCli for Cli {
 
 	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		match spec.id() {
+			#[cfg(feature = "composable")]
 			"composable" | "composable-dev" => &composable_runtime::VERSION,
+			#[cfg(feature = "dali")]
+			"dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" => &dali_runtime::VERSION,
 			_ => &picasso_runtime::VERSION,
 		}
 	}

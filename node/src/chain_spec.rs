@@ -5,8 +5,12 @@ use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{traits::IdentifyAccount, MultiSigner};
+#[cfg(feature = "composable")]
 pub mod composable;
+
+#[cfg(feature = "dali")]
 pub mod dali;
+
 pub mod picasso;
 
 // Parachin ID
@@ -51,21 +55,24 @@ where
 	MultiSigner::from(from_seed::<TPublic>(seed)).into_account()
 }
 
+#[cfg(feature = "dali")]
 /// Dali (westend parachain)
 pub fn dali_westend() -> picasso::ChainSpec {
-	picasso::ChainSpec::from_json_bytes(include_bytes!("res/dali-westend.json").to_vec())
+	dali::ChainSpec::from_json_bytes(include_bytes!("res/dali-westend.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 
+#[cfg(feature = "dali")]
 /// Dali (rococo parachain)
 pub fn dali_rococo() -> picasso::ChainSpec {
-	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/dali-rococo.json").to_vec())
+	dali::ChainSpec::from_json_bytes(include_bytes!("./res/dali-rococo.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 
+#[cfg(feature = "dali")]
 /// Dali (chachacha parachain)
 pub fn dali_chachacha() -> picasso::ChainSpec {
-	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/dali-chachacha.json").to_vec())
+	dali::ChainSpec::from_json_bytes(include_bytes!("./res/dali-chachacha.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 
@@ -75,6 +82,7 @@ pub fn picasso() -> picasso::ChainSpec {
 		.expect("Picasso chain spec not found!")
 }
 
+#[cfg(feature = "picasso")]
 /// Composable (Polkadot parachain)
 pub fn composable() -> composable::ChainSpec {
 	composable::ChainSpec::from_json_bytes(include_bytes!("./res/composable.json").to_vec())
@@ -122,6 +130,7 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 	)
 }
 
+#[cfg(feature = "dali")]
 // chain spec for local testnet environments
 pub fn dali_dev() -> dali::ChainSpec {
 	let mut properties = Properties::new();
@@ -163,6 +172,7 @@ pub fn dali_dev() -> dali::ChainSpec {
 	)
 }
 
+#[cfg(feature = "composable,")]
 // chain spec for single node environments
 pub fn composable_dev() -> composable::ChainSpec {
 	let mut properties = Properties::new();

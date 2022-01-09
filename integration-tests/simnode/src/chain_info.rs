@@ -39,18 +39,16 @@ impl ChainInfo for PicassoChainInfo {
 		ParachainInherentData,
 	);
 
-	fn signed_extras(
-		from: <Self::Runtime as frame_system::Config>::AccountId,
-	) -> Self::SignedExtras {
+	fn signed_extras(from: <Self::Runtime as system::Config>::AccountId) -> Self::SignedExtras {
 		(
-			frame_system::CheckSpecVersion::<Self::Runtime>::new(),
-			frame_system::CheckTxVersion::<Self::Runtime>::new(),
-			frame_system::CheckGenesis::<Self::Runtime>::new(),
-			frame_system::CheckMortality::<Self::Runtime>::from(Era::Immortal),
-			frame_system::CheckNonce::<Self::Runtime>::from(
-				frame_system::Pallet::<Self::Runtime>::account_nonce(from),
+			system::CheckSpecVersion::<Self::Runtime>::new(),
+			system::CheckTxVersion::<Self::Runtime>::new(),
+			system::CheckGenesis::<Self::Runtime>::new(),
+			system::CheckMortality::<Self::Runtime>::from(Era::Immortal),
+			system::CheckNonce::<Self::Runtime>::from(
+				system::Pallet::<Self::Runtime>::account_nonce(from),
 			),
-			frame_system::CheckWeight::<Self::Runtime>::new(),
+			system::CheckWeight::<Self::Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Self::Runtime>::from(0),
 		)
 	}
