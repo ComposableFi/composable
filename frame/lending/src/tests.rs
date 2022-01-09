@@ -133,7 +133,8 @@ fn accrue_interest_base_cases() {
 	let error = 25;
 	assert_eq!(
 		accrued_increase,
-		10_000_000_000_000_000_000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR_NAIVE as u128 + error
+		10_000_000_000_000_000_000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR_NAIVE as u128 +
+			error
 	);
 }
 
@@ -341,12 +342,8 @@ fn test_calc_utilization_ratio() {
 
 #[test]
 fn test_borrow_math() {
-	let borrower = BorrowerData::new(
-		100,
-		0,
-		MoreThanOneFixedU128::from_float(1.0),
-		Percent::from_float(0.10),
-	);
+	let borrower =
+		BorrowerData::new(100, 0, MoreThanOneFixedU128::from_float(1.0), Percent::from_float(0.10));
 	let borrow = borrower.borrow_for_collateral().unwrap();
 	assert_eq!(borrow, LiftedFixedBalance::from(100));
 }

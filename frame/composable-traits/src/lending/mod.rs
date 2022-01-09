@@ -17,7 +17,7 @@ pub type CollateralLpAmountOf<T> = <T as DeFiEngine>::Balance;
 
 pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 
-#[derive(Encode, Decode, Default, TypeInfo)]
+#[derive(Encode, Decode, Default, TypeInfo, Debug, Clone, PartialEq)]
 pub struct UpdateInput<LiquidationStrategyId> {
 	/// Reserve factor of market.
 	pub reserved_factor: Perquintill,
@@ -27,12 +27,12 @@ pub struct UpdateInput<LiquidationStrategyId> {
 	///  given percentage short to be under collaterized
 	pub under_collaterized_warn_percent: Percent,
 	/// liquidation engine id
-	pub liquidator: Vec<LiquidationStrategyId>,
+	pub liquidators: Vec<LiquidationStrategyId>,
 	pub interest_rate_model: InterestRateModel,
 }
 
 /// input to create market extrinsic
-#[derive(Encode, Decode, Default, TypeInfo)]
+#[derive(Encode, Decode, Default, TypeInfo, Debug, Clone, PartialEq)]
 pub struct CreateInput<LiquidationStrategyId, AssetId> {
 	/// the part of market which can be changed
 	pub updatable: UpdateInput<LiquidationStrategyId>,
@@ -48,6 +48,10 @@ impl<LiquidationStrategyId, AssetId: Copy> CreateInput<LiquidationStrategyId, As
 	pub fn collateral_asset(&self) -> AssetId {
 		self.currency_pair.base
 	}
+
+	pub fn reserved_factor(&self) -> Perquintill {
+		self.updatable.reserved_factor
+	}
 }
 
 #[derive(Encode, Decode, Default, TypeInfo)]
@@ -58,7 +62,7 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId> {
 	pub collateral_factor: MoreThanOneFixedU128,
 	pub interest_rate_model: InterestRateModel,
 	pub under_collaterized_warn_percent: Percent,
-	pub liquidator: Option<LiquidationStrategyId>,
+	pub liquidators: Vec<LiquidationStrategyId>,
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.

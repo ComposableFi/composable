@@ -4,7 +4,7 @@ use crate::Pallet as Lending;
 use composable_traits::{
 	lending::{
 		math::{InterestRateModel, MoreThanOneFixedU128},
-		Lending as LendingTrait, CreateInput,
+		CreateInput, Lending as LendingTrait,
 	},
 	vault::Vault,
 };
