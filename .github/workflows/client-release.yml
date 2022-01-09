@@ -32,27 +32,28 @@ jobs:
         echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
         make version
 
-    # - name: ⚡ Cache
-    #   uses: actions/cache@v2
-    #   with:
-    #     path: |
-    #       ~/.cargo/registry
-    #       ~/.cargo/git
-    #       target
-    #     key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    - name: ⚡ Cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-    # - uses: actions-rs/toolchain@v1
-    #   with:
-    #     toolchain: stable
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
 
-    #   uses: actions-rs/cargo@v1
-    #   with:
-    #     command: build
-    #     args: --release --bins
+    - name: 🔨 Build
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release --bins
 
-    # - name: Archive build targets
-    #   run: |
-    #     tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
+    - name: Archive build targets
+      run: |
+        tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
 
 
   #   - name: Build and Push Artifacts to gcloud
