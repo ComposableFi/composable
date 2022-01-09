@@ -11673,6 +11673,7 @@ dependencies = [
  "sc-tracing",
  "sp-blockchain",
  "sp-consensus-aura",
+ "sp-io",
  "sp-keyring",
  "sp-runtime",
  "structopt",
@@ -12727,7 +12728,7 @@ dependencies = [
 [[package]]
 name = "substrate-simnode"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#40cde5376277007f2093c419f5ca84f0b5e9ebd9"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#14a6bf2650d15f9830cfe5ca66486d4ccfb8b0b3"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",
@@ -12737,6 +12738,7 @@ dependencies = [
  "jsonrpc-core",
  "log 0.4.14",
  "num-traits",
+ "parachain-info",
  "parity-scale-codec",
  "polkadot-primitives",
  "sc-basic-authorship",
@@ -12752,12 +12754,14 @@ dependencies = [
  "sc-rpc",
  "sc-rpc-server",
  "sc-service",
+ "sc-tracing",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
+ "sp-consensus-aura",
  "sp-consensus-babe",
  "sp-core",
  "sp-externalities",

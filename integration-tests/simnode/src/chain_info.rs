@@ -1,9 +1,10 @@
 use parachain_inherent::ParachainInherentData;
+use sc_cli::CliConfiguration;
 use sc_consensus_manual_seal::consensus::timestamp::SlotTimestampProvider;
 use sc_service::TFullBackend;
 use sp_runtime::generic::Era;
 use std::sync::Arc;
-use substrate_simnode::{ChainInfo, FullClientFor, SignatureVerificationOverride};
+use substrate_simnode::{ChainInfo, FullClientFor, SignatureVerificationOverride, SimnodeCli};
 
 /// A unit struct which implements `NativeExecutionDispatch` feeding in the
 /// hard-coded runtime.
@@ -22,6 +23,21 @@ impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
 	}
 }
 
+/// [`SimnodeCli`] implementation
+pub struct PicassoCli;
+
+impl SimnodeCli for PicassoCli {
+	type CliConfig = sc_cli::RunCmd;
+	type SubstrateCli = node::cli::Cli;
+
+	fn cli_config(cli: &Self::SubstrateCli) -> &Self::CliConfig {
+		&cli.run.base
+	}
+
+	fn log_filters(cli_config: &Self::CliConfig) -> Result<String, sc_cli::Error> {
+		cli_config.log_filters()
+	}
+}
 /// ChainInfo implementation.
 pub struct PicassoChainInfo;
 
@@ -38,6 +54,7 @@ impl ChainInfo for PicassoChainInfo {
 		sp_consensus_aura::inherents::InherentDataProvider,
 		ParachainInherentData,
 	);
+	type Cli = PicassoCli;
 
 	fn signed_extras(from: <Self::Runtime as system::Config>::AccountId) -> Self::SignedExtras {
 		(
