@@ -7,7 +7,7 @@ on:
     branches:
       - main
       - develop
-      - release-*
+      - releases
   workflow_dispatch:
 
 env:

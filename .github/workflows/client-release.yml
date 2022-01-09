@@ -4,9 +4,6 @@ on:
   push: 
     tags: 
       - '*'
-    branches:
-      - update-event-triggers
-
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
