@@ -72,6 +72,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 			old_runtime_version,
 		);
 
+		_parachain_info_storage_override_test(&node).await?;
+
 		// try to create blocks for a month, if it doesn't panic, all good.
 		node.seal_blocks((30 * DAYS) as usize).await;
 
@@ -80,7 +82,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 async fn _parachain_info_storage_override_test(
-	node: Node<PicassoChainInfo>,
+	node: &Node<PicassoChainInfo>,
 ) -> Result<(), Box<dyn Error>> {
 	// sudo account on-chain
 	let sudo = node.with_state(None, || sudo::Pallet::<Runtime>::key());
