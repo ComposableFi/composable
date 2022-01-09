@@ -7,7 +7,7 @@ on:
     branches:
       - main
       - develop
-      - release-*
+      - release/*
   workflow_dispatch:
 
 env:
@@ -36,15 +36,9 @@ jobs:
       - name: Benchmark
         run: |
           SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --workspace --release --exclude integration-tests
-      - name: Benchmark Develop
-        run: |
-          SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks,develop --workspace --release --exclude integration-tests
       - name: Picasso
         run: |
           cargo build --release -p picasso-runtime
-      - name: Picasso Develop
-        run: |
-          cargo build --release -p picasso-runtime --features develop
   linters:
     name: Linters
     runs-on:
