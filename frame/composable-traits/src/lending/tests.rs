@@ -1,4 +1,4 @@
-use crate::defi::Rate;
+use crate::defi::{Rate, ZeroToOneFixedU128};
 
 use super::*;
 use proptest::{prop_assert, strategy::Strategy, test_runner::TestRunner};

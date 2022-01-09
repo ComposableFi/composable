@@ -15,6 +15,6 @@ pub mod liquidation;
 pub mod math;
 pub mod oracle;
 pub mod privilege;
+pub mod time;
 pub mod vault;
 pub mod vesting;
-pub mod time;

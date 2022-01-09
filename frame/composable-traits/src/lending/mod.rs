@@ -3,7 +3,10 @@ pub mod math;
 #[cfg(test)]
 mod tests;
 
-use crate::{time::Timestamp, defi::{CurrencyPair, DeFiEngine, MoreThanOneFixedU128}};
+use crate::{
+	defi::{CurrencyPair, DeFiEngine, MoreThanOneFixedU128},
+	time::Timestamp,
+};
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
 use sp_runtime::Percent;
@@ -13,7 +16,6 @@ use self::math::*;
 pub type CollateralLpAmountOf<T> = <T as DeFiEngine>::Balance;
 
 pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
-
 
 #[derive(Encode, Decode, Default, TypeInfo)]
 pub struct UpdateInput<LiquidationStrategyId> {
@@ -39,14 +41,14 @@ pub struct CreateInput<LiquidationStrategyId, AssetId> {
 	pub currency_pair: CurrencyPair<AssetId>,
 }
 
-impl<LiquidationStrategyId, AssetId : Copy> CreateInput<LiquidationStrategyId, AssetId> {
-	pub fn borrow_asset(&self)  -> AssetId {
+impl<LiquidationStrategyId, AssetId: Copy> CreateInput<LiquidationStrategyId, AssetId> {
+	pub fn borrow_asset(&self) -> AssetId {
 		self.currency_pair.quote
 	}
-	pub fn collateral_asset(&self)  -> AssetId {
+	pub fn collateral_asset(&self) -> AssetId {
 		self.currency_pair.base
 	}
-} 
+}
 
 #[derive(Encode, Decode, Default, TypeInfo)]
 pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId> {
@@ -65,9 +67,9 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId> {
 /// Based on Blacksmith (Warp v2) IBSLendingPair.sol and Parallel Finance.
 /// Fees will be withdrawing to vault.
 /// Lenders with be rewarded via vault.
-pub trait Lending : DeFiEngine {
+pub trait Lending: DeFiEngine {
 	type VaultId;
-	type MarketId;	
+	type MarketId;
 	type BlockNumber;
 	/// id of dispatch used to liquidate collateral in case of undercollateralized asset
 	type LiquidationStrategyId;
@@ -110,9 +112,9 @@ pub trait Lending : DeFiEngine {
 	/// could decide to allocate a share for it, transferring from I and J to the borrow asset vault
 	/// of M. Their allocated share could differ because of the strategies being different,
 	/// but the lending Market would have all the lendable funds in a single vault.
-	/// 
-	/// Returned `MarketId` is mapped one to one with (deposit VaultId, collateral VaultId) 
-	fn create(		
+	///
+	/// Returned `MarketId` is mapped one to one with (deposit VaultId, collateral VaultId)
+	fn create(
 		manager: Self::AccountId,
 		config: CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId>,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
@@ -145,7 +147,12 @@ pub trait Lending : DeFiEngine {
 	#[allow(clippy::type_complexity)]
 	fn get_all_markets() -> Vec<(
 		Self::MarketId,
-		MarketConfig<Self::VaultId, Self::MayBeAssetId, Self::AccountId, Self::LiquidationStrategyId>,
+		MarketConfig<
+			Self::VaultId,
+			Self::MayBeAssetId,
+			Self::AccountId,
+			Self::LiquidationStrategyId,
+		>,
 	)>;
 
 	/// `amount_to_borrow` is the amount of the borrow asset lendings's vault shares the user wants

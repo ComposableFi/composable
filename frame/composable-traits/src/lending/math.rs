@@ -13,10 +13,9 @@ use sp_arithmetic::per_things::Percent;
 
 use crate::{
 	defi::{Rate, ZeroToOneFixedU128},
-	time::{DurationSeconds, SECONDS_PER_YEAR_NAIVE},
 	math::{LiftedFixedBalance, SafeArithmetic},
+	time::{DurationSeconds, SECONDS_PER_YEAR_NAIVE},
 };
-
 
 /// utilization_ratio = total_borrows / (total_cash + total_borrows)
 pub fn calc_utilization_ratio(
@@ -103,7 +102,11 @@ impl InterestRateModel {
 	}
 
 	/// Calculates the current supply interest rate
-	pub fn get_supply_rate(borrow_rate: Rate, util: ZeroToOneFixedU128, reserve_factor: ZeroToOneFixedU128) -> Rate {
+	pub fn get_supply_rate(
+		borrow_rate: Rate,
+		util: ZeroToOneFixedU128,
+		reserve_factor: ZeroToOneFixedU128,
+	) -> Rate {
 		// ((1 - reserve_factor) * borrow_rate) * utilization
 		let one_minus_reserve_factor = ZeroToOneFixedU128::one().saturating_sub(reserve_factor);
 		let rate_to_pool = borrow_rate.saturating_mul(one_minus_reserve_factor);
@@ -144,9 +147,12 @@ pub struct JumpModel {
 }
 
 impl JumpModel {
-	pub const MAX_BASE_RATE: ZeroToOneFixedU128 = ZeroToOneFixedU128::from_inner(100_000_000_000_000_000); // 10%
-	pub const MAX_JUMP_RATE: ZeroToOneFixedU128 = ZeroToOneFixedU128::from_inner(300_000_000_000_000_000); // 30%
-	pub const MAX_FULL_RATE: ZeroToOneFixedU128 = ZeroToOneFixedU128::from_inner(500_000_000_000_000_000); // 50%
+	pub const MAX_BASE_RATE: ZeroToOneFixedU128 =
+		ZeroToOneFixedU128::from_inner(100_000_000_000_000_000); // 10%
+	pub const MAX_JUMP_RATE: ZeroToOneFixedU128 =
+		ZeroToOneFixedU128::from_inner(300_000_000_000_000_000); // 30%
+	pub const MAX_FULL_RATE: ZeroToOneFixedU128 =
+		ZeroToOneFixedU128::from_inner(500_000_000_000_000_000); // 50%
 
 	/// Create a new rate model
 	pub fn new(

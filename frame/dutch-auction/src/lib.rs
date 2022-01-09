@@ -19,6 +19,13 @@
 //! Sell takes deposit (as for accounts), to store sells for some time.
 //! We have to store lock deposit value with ask as it can change within time.
 //! Later deposit is used by pallet as initiative to liquidate garbage.
+//! 
+//! # Price prediction
+//! Dutch action starts with configured price and than and other price value is f(t).
+//! So any external observer can predict what price will be on specified block.
+//!
+//! # DEX
+//! Currently this dutch auction does not tries to sell on external DEX.
 
 #![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
 #![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
@@ -57,9 +64,8 @@ pub mod weights;
 pub mod pallet {
 	use codec::{Decode, Encode};
 	use composable_traits::{
-		auction::TimeReleaseFunction,
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
-		time::{DurationSeconds, Timestamp},
+		time::{Timestamp, TimeReleaseFunction},
 		math::{SafeArithmetic, WrappingNext},
 	};
 	use frame_support::{
