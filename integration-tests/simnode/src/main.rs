@@ -17,7 +17,7 @@ use support::storage;
 
 fn main() -> Result<(), Box<dyn Error>> {
 	substrate_simnode::parachain_node::<PicassoChainInfo, _, _>(|node| async move {
-		let sudo = node.with_state(None, || sudo::Pallet::<Runtime>::key());
+		let sudo = node.with_state(None, sudo::Pallet::<Runtime>::key);
 
 		let old_runtime_version = node
 			.client()
@@ -86,7 +86,7 @@ async fn _parachain_info_storage_override_test(
 	node: &Node<PicassoChainInfo>,
 ) -> Result<(), Box<dyn Error>> {
 	// sudo account on-chain
-	let sudo = node.with_state(None, || sudo::Pallet::<Runtime>::key());
+	let sudo = node.with_state(None, sudo::Pallet::<Runtime>::key());
 
 	// gotten from
 	// hex::encode(&parachain_info::ParachainId::<Runtime>::storage_value_final_key().to_vec());
