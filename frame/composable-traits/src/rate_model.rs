@@ -655,7 +655,6 @@ mod tests {
 	}
 
 	#[cfg(feature = "visualization")]
-	#[test]
 	fn jump_model_plotter() {
 		use plotters::prelude::*;
 		let base_rate = Rate::saturating_from_rational(2, 100);
@@ -685,7 +684,6 @@ mod tests {
 			.unwrap();
 	}
 	#[cfg(feature = "visualization")]
-	#[test]
 	fn dynamic_pid_model_plotter() {
 		use plotters::prelude::*;
 		let kp = FixedI128::saturating_from_rational(600, 100);
@@ -731,7 +729,6 @@ mod tests {
 	}
 
 	#[cfg(feature = "visualization")]
-	#[test]
 	fn double_exponents_model_plotter() {
 		use plotters::prelude::*;
 		let coefficients: [u8; 16] = [60, 20, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];

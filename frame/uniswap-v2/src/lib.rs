@@ -36,6 +36,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
+		defi::CurrencyPair,
 		dex::{ConstantProductPoolInfo, CurveAmm},
 		math::LiftedFixedBalance,
 	};
@@ -158,10 +159,11 @@ pub mod pallet {
 	#[pallet::getter(fn pool_lp_asset)]
 	pub type PoolLPAsset<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, T::AssetId>;
 
-	/// List of assets supported by the pool
+	/// Pair of assets supported by the pool
 	#[pallet::storage]
 	#[pallet::getter(fn pool_assets)]
-	pub type PoolAssets<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, Vec<T::AssetId>>;
+	pub type PoolAssets<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::PoolId, CurrencyPair<T::AssetId>>;
 
 	/// Balance of asset for given pool excluding admin_fee
 	#[pallet::storage]
@@ -339,9 +341,10 @@ pub mod pallet {
 
 			let pool_lp_asset =
 				PoolLPAsset::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
-			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
+			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let assets = assets_pair.as_slice();
 			let mut balances = Vec::new();
-			for asset_id in &assets {
+			for asset_id in assets {
 				balances.push(PoolAssetBalance::<T>::get(pool_id, asset_id));
 			}
 
@@ -452,7 +455,7 @@ pub mod pallet {
 			T::LpToken::mint_into(pool_lp_asset, who, mint_amount)?;
 
 			let mut invariant = T::Balance::one();
-			for asset_id in &assets {
+			for asset_id in assets {
 				invariant *= PoolAssetBalance::<T>::get(pool_id, asset_id);
 			}
 
@@ -491,10 +494,11 @@ pub mod pallet {
 
 			let pool_lp_asset =
 				PoolLPAsset::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
-			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
+			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let assets = assets_pair.as_slice();
 			let n_coins = assets.len();
 			let mut balances = Vec::new();
-			for asset_id in &assets {
+			for asset_id in assets {
 				balances.push(PoolAssetBalance::<T>::get(pool_id, asset_id));
 			}
 
@@ -588,9 +592,10 @@ pub mod pallet {
 			let i: usize = i_token.into() as usize;
 			let j: usize = j_token.into() as usize;
 
-			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
+			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let assets = assets_pair.as_slice();
 			let mut balances = Vec::new();
-			for asset_id in &assets {
+			for asset_id in assets {
 				balances.push(PoolAssetBalance::<T>::get(pool_id, asset_id));
 			}
 			let n_coins = assets.len();
@@ -658,13 +663,14 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			admin_fee_account: &Self::AccountId,
 		) -> Result<(), DispatchError> {
-			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
+			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let assets = assets_pair.as_slice();
 			let mut balances = Vec::new();
-			for asset_id in &assets {
+			for asset_id in assets {
 				balances.push(PoolAssetBalance::<T>::get(pool_id, asset_id));
 			}
 			let mut total_balances = Vec::new();
-			for asset_id in &assets {
+			for asset_id in assets {
 				total_balances.push(PoolAssetTotalBalance::<T>::get(pool_id, asset_id));
 			}
 			let n_coins = assets.len();
@@ -699,7 +705,7 @@ pub mod pallet {
 
 			for (asset, amount) in assets.into_iter().zip(admin_fees.iter().copied()) {
 				T::LpToken::transfer(
-					asset,
+					*asset,
 					&Self::account_id(&pool_id),
 					admin_fee_account,
 					amount,
@@ -760,7 +766,10 @@ pub mod pallet {
 
 					PoolAssets::<T>::try_mutate(pool_id, |pool_assets| -> DispatchResult {
 						ensure!(pool_assets.is_none(), Error::<T>::InconsistentStorage);
-						*pool_assets = Some(assets);
+						*pool_assets = Some(CurrencyPair::new(
+							*assets.get(0).ok_or(Error::<T>::IndexOutOfRange)?,
+							*assets.get(1).ok_or(Error::<T>::IndexOutOfRange)?,
+						));
 						Ok(())
 					})?;
 
@@ -815,7 +824,8 @@ pub mod pallet {
 			destination_asset_index: usize,
 			amount: T::Balance,
 		) -> DispatchResult {
-			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
+			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let assets = assets_pair.as_slice();
 			let asset_id = assets[destination_asset_index];
 			T::LpToken::transfer(asset_id, source, pool_account_id, amount, true)?;
 			PoolAssetTotalBalance::<T>::mutate(
@@ -837,7 +847,8 @@ pub mod pallet {
 			destination: &T::AccountId,
 			amount: T::Balance,
 		) -> DispatchResult {
-			let assets = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
+			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let assets = assets_pair.as_slice();
 			let asset_id = assets[source_asset_index];
 			T::LpToken::transfer(asset_id, pool_account_id, destination, amount, true)?;
 
