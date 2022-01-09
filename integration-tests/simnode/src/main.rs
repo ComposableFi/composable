@@ -4,7 +4,6 @@
 mod chain_info;
 
 pub use chain_info::*;
-use codec::Encode;
 use common::DAYS;
 use picasso_runtime::{Event, Runtime};
 use polkadot_primitives::v1::UpgradeGoAhead;
@@ -86,7 +85,7 @@ async fn _parachain_info_storage_override_test(
 	node: &Node<PicassoChainInfo>,
 ) -> Result<(), Box<dyn Error>> {
 	// sudo account on-chain
-	let sudo = node.with_state(None, sudo::Pallet::<Runtime>::key());
+	let sudo = node.with_state(None, sudo::Pallet::<Runtime>::key);
 
 	// gotten from
 	// hex::encode(&parachain_info::ParachainId::<Runtime>::storage_value_final_key().to_vec());
