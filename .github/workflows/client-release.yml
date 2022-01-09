@@ -46,7 +46,7 @@ jobs:
     - name: 🔨 Build
       uses: actions-rs/cargo@v1
       with:
-        command: build --release --bins
+        command: build --all-targets
 
     - name: Archive build targets
       run: |
