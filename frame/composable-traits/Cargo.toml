@@ -44,3 +44,6 @@ std = [
     "xcm/std",
 ]
 visualization = ["plotters"]
+
+[package.metadata.cargo-udeps.ignore]
+normal = ["plotters"]
