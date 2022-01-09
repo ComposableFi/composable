@@ -27,24 +27,23 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use codec::{FullCodec, Encode, Decode};
+	use codec::{Decode, Encode, FullCodec};
 	use composable_traits::{
-		defi::{DeFiComposableConfig, DeFiEngine, SellEngine, Sell},
-		lending::Lending,
+		defi::{DeFiComposableConfig, DeFiEngine, Sell, SellEngine},
 		liquidation::Liquidation,
 		math::WrappingNext,
-		time::{TimeReleaseFunction, StairstepExponentialDecrease, LinearDecrease},
+		time::{LinearDecrease, StairstepExponentialDecrease, TimeReleaseFunction},
 	};
 	use frame_support::{
 		dispatch::Dispatchable,
 		pallet_prelude::{OptionQuery, StorageMap, StorageValue, ValueQuery},
 		traits::{GenesisBuild, Get, IsType, UnixTime},
-		PalletId, Twox64Concat, Parameter,
+		PalletId, Parameter, Twox64Concat,
 	};
 
 	use scale_info::TypeInfo;
 	use sp_runtime::{DispatchError, Permill};
-	
+
 	#[pallet::config]
 
 	pub trait Config: frame_system::Config + DeFiComposableConfig {
@@ -52,9 +51,15 @@ pub mod pallet {
 
 		type UnixTime: UnixTime;
 
-		type DutchAuction: SellEngine<TimeReleaseFunction, OrderId = Self::OrderId, MayBeAssetId = <Self as DeFiComposableConfig>::MayBeAssetId, Balance = Self::Balance, AccountId = Self::AccountId>;
+		type DutchAuction: SellEngine<
+			TimeReleaseFunction,
+			OrderId = Self::OrderId,
+			MayBeAssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+		>;
 
-		type LiquidationStrategyId: Default + FullCodec + WrappingNext + TypeInfo;
+		type LiquidationStrategyId: Default + FullCodec + WrappingNext + Parameter + Copy;
 
 		type OrderId: Default + FullCodec;
 
@@ -98,8 +103,13 @@ pub mod pallet {
 	// for now just build in liquidation here
 	#[pallet::storage]
 	#[pallet::getter(fn strategies)]
-	pub type Strategies<T: Config> =
-		StorageMap<_, Twox64Concat, T::LiquidationStrategyId, LiquidationStrategyConfiguration<T>, OptionQuery>;
+	pub type Strategies<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		T::LiquidationStrategyId,
+		LiquidationStrategyConfiguration<T::Liquidate, T::Balance>,
+		OptionQuery,
+	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn strategy_index)]
@@ -109,7 +119,8 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn default_strategy_index)]
 	#[allow(clippy::disallowed_type)]
-	pub type DefaultStrategyIndex<T: Config> = StorageValue<_, T::LiquidationStrategyId, ValueQuery>;
+	pub type DefaultStrategyIndex<T: Config> =
+		StorageValue<_, T::LiquidationStrategyId, ValueQuery>;
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
 		type MayBeAssetId = T::MayBeAssetId;
@@ -130,7 +141,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T:Config>  Pallet<T> {
+	impl<T: Config> Pallet<T> {
 		pub fn create_strategy_id() -> T::LiquidationStrategyId {
 			StrategyIndex::<T>::mutate(|x| {
 				*x = x.next();
@@ -140,22 +151,27 @@ pub mod pallet {
 	}
 
 	#[derive(Clone, Debug, Encode, Decode, TypeInfo)]
-	pub enum LiquidationStrategyConfiguration<T:Config> {
+	pub enum LiquidationStrategyConfiguration<Dispatch, Balance> {
 		DutchAuction(TimeReleaseFunction),
-		Other { liquidate: T::Liquidate, minimum_price: T::Balance }
+		Other { liquidate: Dispatch, minimum_price: Balance },
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
-		fn build(&self) {		
+		fn build(&self) {
 			let index = Pallet::<T>::create_strategy_id();
 			DefaultStrategyIndex::<T>::set(index);
-			let linear_ten_minutes = LiquidationStrategyConfiguration::DutchAuction(TimeReleaseFunction::LinearDecrease(LinearDecrease { total : 10 * 60}));
+			let linear_ten_minutes = LiquidationStrategyConfiguration::DutchAuction(
+				TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 10 * 60 }),
+			);
 			Strategies::<T>::insert(index, linear_ten_minutes);
 
 			let index = Pallet::<T>::create_strategy_id();
-			let exponential = StairstepExponentialDecrease { step: 10, cut: Permill::from_rational(95_u16, 100) };
-			let exponential = LiquidationStrategyConfiguration::DutchAuction(TimeReleaseFunction::LinearDecrease(exponential));
+			let exponential =
+				StairstepExponentialDecrease { step: 10, cut: Permill::from_rational(95_u32, 100) };
+			let exponential = LiquidationStrategyConfiguration::DutchAuction(
+				TimeReleaseFunction::StairstepExponentialDecrease(exponential),
+			);
 			Strategies::<T>::insert(index, exponential);
 		}
 	}
@@ -170,16 +186,29 @@ pub mod pallet {
 			order: Sell<Self::MayBeAssetId, Self::Balance>,
 			configuration: Vec<Self::LiquidationStrategyId>,
 		) -> Result<T::OrderId, DispatchError> {
-			 if configuration.is_empty() {
-				 let configuration = Strategies::<T>::get(DefaultStrategyIndex::<T>::get()).expect("default always exists");
-				 return Ok(T::DutchAuction::ask(from_to, order, configuration)?)
-			}
-			else {
+			if configuration.is_empty() {
+				let configuration = Strategies::<T>::get(DefaultStrategyIndex::<T>::get())
+					.expect("default always exists");
+				match configuration {
+					LiquidationStrategyConfiguration::DutchAuction(configuration) =>
+						{
+							Self::deposit_event(Event::<T>::PositionWasSentToLiquidation{});
+							return Ok(T::DutchAuction::ask(from_to, order, configuration)?)
+						},
+					_ => todo!("liquidation registered during runtime"),
+				}
+			} else {
 				for id in configuration {
 					let configuration = Strategies::<T>::get(id);
 					if let Some(configuration) = configuration {
-						let result = T::DutchAuction::ask(from_to, order, configuration);	
+						let result = match configuration {
+							LiquidationStrategyConfiguration::DutchAuction(configuration) =>
+								T::DutchAuction::ask(from_to, order.clone(), configuration),
+							_ => todo!("liquidation registered during runtime"),
+						};
+
 						if result.is_ok() {
+							Self::deposit_event(Event::<T>::PositionWasSentToLiquidation{});
 							return Ok(result?)
 						}
 					}
@@ -187,7 +216,6 @@ pub mod pallet {
 			}
 
 			Err(Error::<T>::NoLiquidationEngineFound.into())
-			 
 		}
 	}
 }
