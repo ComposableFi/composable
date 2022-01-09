@@ -18,7 +18,6 @@ pallets=(
 	collective
 	democracy
 	collator_selection
-	crowdloan_bonus
 	utility
 	lending
 	dutch_auction

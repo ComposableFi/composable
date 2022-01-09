@@ -55,7 +55,6 @@ smallvec = "1.6.1"
 # local modules
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
-crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
 pallet-bonded-finance = { path = "../../frame/bonded-finance", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
@@ -127,7 +126,6 @@ std = [
 	"authorship/std",
 	"balances/std",
 	"randomness-collective-flip/std",
-	"crowdloan-bonus/std",
 	"timestamp/std",
 	"session/std",
 	"sudo/std",
@@ -191,7 +189,6 @@ runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"indices/runtime-benchmarks",
-	"crowdloan-bonus/runtime-benchmarks",
 	"crowdloan-rewards/runtime-benchmarks",
 	"identity/runtime-benchmarks",
 	"multisig/runtime-benchmarks",
