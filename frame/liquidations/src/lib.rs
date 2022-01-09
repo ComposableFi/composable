@@ -27,24 +27,24 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use codec::FullCodec;
+	use codec::{FullCodec, Encode, Decode};
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, SellEngine, Sell},
 		lending::Lending,
 		liquidation::Liquidation,
 		math::WrappingNext,
-		time::{TimeReleaseFunction, StairstepExponentialDecrease},
+		time::{TimeReleaseFunction, StairstepExponentialDecrease, LinearDecrease},
 	};
 	use frame_support::{
 		dispatch::Dispatchable,
 		pallet_prelude::{OptionQuery, StorageMap, StorageValue, ValueQuery},
 		traits::{GenesisBuild, Get, IsType, UnixTime},
-		PalletId, Twox64Concat,
+		PalletId, Twox64Concat, Parameter,
 	};
 
 	use scale_info::TypeInfo;
 	use sp_runtime::{DispatchError, Permill};
-
+	
 	#[pallet::config]
 
 	pub trait Config: frame_system::Config + DeFiComposableConfig {
@@ -52,13 +52,16 @@ pub mod pallet {
 
 		type UnixTime: UnixTime;
 
-		type DutchAuction: SellEngine<TimeReleaseFunction>;
+		type DutchAuction: SellEngine<TimeReleaseFunction, OrderId = Self::OrderId, MayBeAssetId = <Self as DeFiComposableConfig>::MayBeAssetId, Balance = Self::Balance, AccountId = Self::AccountId>;
 
 		type LiquidationStrategyId: Default + FullCodec + WrappingNext + TypeInfo;
 
 		type OrderId: Default + FullCodec;
 
 		type PalletId: Get<PalletId>;
+
+		/// when called, engine pops latest order to liquidate and pushes back result
+		type Liquidate: Parameter + Dispatchable<Origin = Self::Origin> + From<Call<Self>>;
 	}
 
 	#[pallet::event]
@@ -96,7 +99,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn strategies)]
 	pub type Strategies<T: Config> =
-		StorageMap<_, Twox64Concat, u64, TimeReleaseFunction, OptionQuery>;
+		StorageMap<_, Twox64Concat, T::LiquidationStrategyId, LiquidationStrategyConfiguration<T>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn strategy_index)]
@@ -130,23 +133,29 @@ pub mod pallet {
 	impl<T:Config>  Pallet<T> {
 		pub fn create_strategy_id() -> T::LiquidationStrategyId {
 			StrategyIndex::<T>::mutate(|x| {
-				*x = x.wrapping_next();
+				*x = x.next();
 				*x
 			})
 		}
 	}
 
+	#[derive(Clone, Debug, Encode, Decode, TypeInfo)]
+	pub enum LiquidationStrategyConfiguration<T:Config> {
+		DutchAuction(TimeReleaseFunction),
+		Other { liquidate: T::Liquidate, minimum_price: T::Balance }
+	}
+
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {		
-			let index = Self::create_strategy_id();
+			let index = Pallet::<T>::create_strategy_id();
 			DefaultStrategyIndex::<T>::set(index);
-			let linear_ten_minutes = TimeReleaseFunction::LinearDecrease(LinearDecrease { total : 10 * 60});
+			let linear_ten_minutes = LiquidationStrategyConfiguration::DutchAuction(TimeReleaseFunction::LinearDecrease(LinearDecrease { total : 10 * 60}));
 			Strategies::<T>::insert(index, linear_ten_minutes);
 
-			let index = Self::create_strategy_id();
-			let exponential = StairstepExponentialDecrease { step: 10, cut: Permill::from_rational(95, 100) };
-			let exponential = TimeReleaseFunction::LinearDecrease(exponential);
+			let index = Pallet::<T>::create_strategy_id();
+			let exponential = StairstepExponentialDecrease { step: 10, cut: Permill::from_rational(95_u16, 100) };
+			let exponential = LiquidationStrategyConfiguration::DutchAuction(TimeReleaseFunction::LinearDecrease(exponential));
 			Strategies::<T>::insert(index, exponential);
 		}
 	}
@@ -160,10 +169,10 @@ pub mod pallet {
 			from_to: &Self::AccountId,
 			order: Sell<Self::MayBeAssetId, Self::Balance>,
 			configuration: Vec<Self::LiquidationStrategyId>,
-		) -> Result<Self::OrderId, DispatchError> {
+		) -> Result<T::OrderId, DispatchError> {
 			 if configuration.is_empty() {
 				 let configuration = Strategies::<T>::get(DefaultStrategyIndex::<T>::get()).expect("default always exists");
-				 T::DutchAuction::ask(from_to, order, configuration)
+				 return Ok(T::DutchAuction::ask(from_to, order, configuration)?)
 			}
 			else {
 				for id in configuration {
@@ -171,7 +180,7 @@ pub mod pallet {
 					if let Some(configuration) = configuration {
 						let result = T::DutchAuction::ask(from_to, order, configuration);	
 						if result.is_ok() {
-							Ok(())
+							return Ok(result?)
 						}
 					}
 				}
