@@ -11657,6 +11657,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "hex",
  "pallet-crowdloan-rewards",
  "pallet-sudo",
  "pallet-transaction-payment",

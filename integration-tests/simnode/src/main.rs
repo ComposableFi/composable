@@ -13,7 +13,7 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::generic::BlockId;
 use std::error::Error;
 use substrate_simnode::Node;
-use support::storage::{self, generator::StorageValue};
+use support::storage;
 
 fn main() -> Result<(), Box<dyn Error>> {
 	substrate_simnode::parachain_node::<PicassoChainInfo, _, _>(|node| async move {
@@ -72,6 +72,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 			old_runtime_version,
 		);
 
+		// test the storage override tx
 		_parachain_info_storage_override_test(&node).await?;
 
 		// try to create blocks for a month, if it doesn't panic, all good.
@@ -87,15 +88,17 @@ async fn _parachain_info_storage_override_test(
 	// sudo account on-chain
 	let sudo = node.with_state(None, || sudo::Pallet::<Runtime>::key());
 
-	// fetch the storage key
-	let key = parachain_info::ParachainId::<Runtime>::storage_value_final_key().to_vec();
+	// gotten from
+	// hex::encode(&parachain_info::ParachainId::<Runtime>::storage_value_final_key().to_vec());
+	let key = hex::decode("0d715f2646c8f85767b5d2764bb2782604a74d81251e398fd8a0a4d55023bb3f")?;
 
 	let raw_key_value: Option<u32> = node.with_state(None, || storage::unhashed::get(&key[..]));
 
 	assert_eq!(raw_key_value, Some(2104));
 	let new_para_id: u32 = 2087;
 
-	let value = new_para_id.encode();
+	// gotten from hex::encode(new_para_id.encode())
+	let value = hex::decode("27080000")?;
 
 	let call = sudo::Call::sudo_unchecked_weight {
 		call: Box::new(system::Call::set_storage { items: vec![(key.clone(), value)] }.into()),
