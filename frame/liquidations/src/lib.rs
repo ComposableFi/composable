@@ -29,7 +29,7 @@ pub mod pallet {
 
 	use codec::FullCodec;
 	use composable_traits::{
-		defi::{DeFiComposableConfig, DeFiEngine, SellEngine},
+		defi::{DeFiComposableConfig, DeFiEngine, SellEngine, Sell},
 		lending::Lending,
 		liquidation::Liquidation,
 		math::WrappingNext,
@@ -68,7 +68,9 @@ pub mod pallet {
 	}
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		NoLiquidationEngineFound,
+	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -80,17 +82,17 @@ pub mod pallet {
 	// TODO: real flow to implement:
 	// ```plantuml
 	// `solves question - how pallet can invoke list of other pallets with different configuration types
-	// `so yet sharing some liqudation part and tracing liquidation id
+	// `so yet sharing some liquidation part and tracing liquidation id
 	// dutch_auction_strategy -> liquidation : Create new strategy id
 	// dutch_auction_strategy -> liquidation : Add Self Dispatchable call (baked with strategyid)
 	// liquidation -> liquidation: Add liquidation order
 	// liquidation -> liquidation: Get Dispatchable by Strategyid
 	// liquidation --> dutch_auction_strategy: Invoke Dispatchable
 	// dutch_auction_strategy -> dutch_auction_strategy: Get liquidation configuration by id previosly baked into call
-	// dutch_auction_strategy --> liqudation: Pop next order
+	// dutch_auction_strategy --> liquidation: Pop next order
 	// dutch_auction_strategy -> dutch_auction_strategy: Start liqudaiton
 	// ```
-	// for now just build in luqidation here
+	// for now just build in liquidation here
 	#[pallet::storage]
 	#[pallet::getter(fn strategies)]
 	pub type Strategies<T: Config> =
@@ -98,8 +100,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn strategy_index)]
-	#[allow(clippy::disallowed_type)] // OrderIdOnEmpty provides a default value
+	#[allow(clippy::disallowed_type)]
 	pub type StrategyIndex<T: Config> = StorageValue<_, T::LiquidationStrategyId, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn default_strategy_index)]
+	#[allow(clippy::disallowed_type)]
+	pub type DefaultStrategyIndex<T: Config> = StorageValue<_, T::LiquidationStrategyId, ValueQuery>;
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
 		type MayBeAssetId = T::MayBeAssetId;
@@ -133,6 +140,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {		
 			let index = Self::create_strategy_id();
+			DefaultStrategyIndex::<T>::set(index);
 			let linear_ten_minutes = TimeReleaseFunction::LinearDecrease(LinearDecrease { total : 10 * 60});
 			Strategies::<T>::insert(index, linear_ten_minutes);
 
@@ -150,10 +158,27 @@ pub mod pallet {
 
 		fn liquidate(
 			from_to: &Self::AccountId,
-			order: composable_traits::defi::Sell<Self::MayBeAssetId, Self::Balance>,
+			order: Sell<Self::MayBeAssetId, Self::Balance>,
 			configuration: Vec<Self::LiquidationStrategyId>,
 		) -> Result<Self::OrderId, DispatchError> {
-			let 
+			 if configuration.is_empty() {
+				 let configuration = Strategies::<T>::get(DefaultStrategyIndex::<T>::get()).expect("default always exists");
+				 T::DutchAuction::ask(from_to, order, configuration)
+			}
+			else {
+				for id in configuration {
+					let configuration = Strategies::<T>::get(id);
+					if let Some(configuration) = configuration {
+						let result = T::DutchAuction::ask(from_to, order, configuration);	
+						if result.is_ok() {
+							Ok(())
+						}
+					}
+				}
+			}
+
+			Err(Error::<T>::NoLiquidationEngineFound.into())
+			 
 		}
 	}
 }
