@@ -28,6 +28,8 @@ pub trait Oracle {
 	/// 1 BTC = 10^8 sats
 	/// get_price(BTC, 1_00000000) = price(1BTC) * 1_00000000 / 10^8 = $50000
 
+	/// # Diluted assets
+	/// 
 	/// Implementation ensure that a LP token price can be resolved as long as the base asset price
 	/// is resolvable.
 	///```haskell
