@@ -6,6 +6,7 @@ on:
       - 'picasso-*'
 env:
   CHAIN: "picasso"
+  DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
   build-and-publish:
@@ -18,6 +19,7 @@ jobs:
       matrix:
         chain: ["dali-chachacha", "picasso"]
     steps:
+    - uses: xanantis/docker-file-ownership-fix@v1
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
