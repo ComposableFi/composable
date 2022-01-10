@@ -4,9 +4,7 @@
 		clippy::disallowed_method,
 		clippy::disallowed_type,
 		clippy::indexing_slicing,
-		// TODO: enable me after this crate is stablized. todo macros are still denied in the release pipeline, but for
-		// regular development allowed.
-		// clippy::todo,
+		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
@@ -100,7 +98,7 @@ pub mod pallet {
 			_total_amount: Self::Balance,
 		) -> Result<Self::LiquidationId, DispatchError> {
 			Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
-			todo!("call liquidation engines")
+			Err(DispatchError::Other("todo"))
 		}
 	}
 }
