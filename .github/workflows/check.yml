@@ -15,20 +15,15 @@ env:
 
 jobs:
   check:
+    name: Check 
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
     steps:
-      - name: cleanup #https://github.com/actions/checkout/issues/211
-        run: |
-          chown -R `stat --printf=%u /github/workspace/.` /github/workspace/*
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0     
-      - name: Check
-        run: |
+      - run: |
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --all --benches
       - name: Benchmark
         run: |
