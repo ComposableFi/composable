@@ -22,12 +22,8 @@ jobs:
       - x64
       - sre
     steps:
-      - name: Cleanup
-        run: |
-          echo $USER
       - uses: actions/checkout@v2
       - run: |
-          rm -rf /home/runner/_work/composable/composable
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --all --benches
       - name: Benchmark
         run: |
