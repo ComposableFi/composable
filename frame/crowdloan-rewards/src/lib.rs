@@ -263,13 +263,13 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn do_initialize() -> DispatchResult {
+		pub(crate) fn do_initialize() -> DispatchResult {
 			let current_block = frame_system::Pallet::<T>::block_number();
 			VestingBlockStart::<T>::set(Some(current_block));
 			Ok(())
 		}
 
-		pub fn do_associate(
+		pub(crate) fn do_associate(
 			reward_account: T::AccountId,
 			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
@@ -290,7 +290,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		pub fn do_populate(
+		pub(crate) fn do_populate(
 			rewards: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
 		) -> DispatchResult {
 			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
@@ -323,7 +323,7 @@ pub mod pallet {
 		/// Do claim the reward for a given remote account, rewarding the `reward_account`.
 		/// Returns `InvalidProof` if the user is not a contributor or `NothingToClaim` if not
 		/// reward can be claimed yet.
-		pub fn do_claim(
+		pub(crate) fn do_claim(
 			remote_account: RemoteAccountOf<T>,
 			reward_account: &T::AccountId,
 		) -> Result<T::Balance, DispatchError> {
