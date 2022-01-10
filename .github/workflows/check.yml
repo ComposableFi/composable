@@ -90,21 +90,6 @@ jobs:
         with:
           toolchain: stable
 
-      - name: 🔨 Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release -p simnode
-
-      # - name: Simnode Test
-      #   run: |
-      #     YDATE=$(date -d yesterday +'%m-%d-%Y')
-      #     FILENAME=cl-1-$YDATE.zip
-      #     GS_BUCKET="composable-picasso-data-sync"
-      #     sudo gsutil cp gs://$GS_BUCKET/$FILENAME .
-      #     sudo unzip $FILENAME -d  /tmp/db
-      #     ./target/release/simnode --chain=picasso --base-path=/tmp/db --wasm-runtime-overrides=./target/release/picasso_runtime.compact.wasm --pruning=archive --execution=wasm
-
       - uses: actions/checkout@v2
       - run: |
           /home/runner/.cargo/bin/rustup component add llvm-tools-preview
