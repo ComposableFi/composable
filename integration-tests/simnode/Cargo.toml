@@ -37,6 +37,6 @@ polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch =
 codec = { package = "parity-scale-codec", version = "2.0.0" }
 
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-
+num-traits = "0.2.14"
 structopt = "0.3.25"
 hex = "0.4.3"

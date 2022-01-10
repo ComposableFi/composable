@@ -11630,6 +11630,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
+ "num-traits",
  "pallet-crowdloan-rewards",
  "pallet-sudo",
  "pallet-transaction-payment",
