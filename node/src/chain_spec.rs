@@ -57,21 +57,21 @@ where
 
 #[cfg(feature = "dali")]
 /// Dali (westend parachain)
-pub fn dali_westend() -> picasso::ChainSpec {
+pub fn dali_westend() -> dali::ChainSpec {
 	dali::ChainSpec::from_json_bytes(include_bytes!("res/dali-westend.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 
 #[cfg(feature = "dali")]
 /// Dali (rococo parachain)
-pub fn dali_rococo() -> picasso::ChainSpec {
+pub fn dali_rococo() -> dali::ChainSpec {
 	dali::ChainSpec::from_json_bytes(include_bytes!("./res/dali-rococo.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 
 #[cfg(feature = "dali")]
 /// Dali (chachacha parachain)
-pub fn dali_chachacha() -> picasso::ChainSpec {
+pub fn dali_chachacha() -> dali::ChainSpec {
 	dali::ChainSpec::from_json_bytes(include_bytes!("./res/dali-chachacha.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
@@ -82,7 +82,7 @@ pub fn picasso() -> picasso::ChainSpec {
 		.expect("Picasso chain spec not found!")
 }
 
-#[cfg(feature = "picasso")]
+#[cfg(feature = "composable")]
 /// Composable (Polkadot parachain)
 pub fn composable() -> composable::ChainSpec {
 	composable::ChainSpec::from_json_bytes(include_bytes!("./res/composable.json").to_vec())
@@ -172,7 +172,7 @@ pub fn dali_dev() -> dali::ChainSpec {
 	)
 }
 
-#[cfg(feature = "composable,")]
+#[cfg(feature = "composable")]
 // chain spec for single node environments
 pub fn composable_dev() -> composable::ChainSpec {
 	let mut properties = Properties::new();
