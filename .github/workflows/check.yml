@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: cleanup #https://github.com/actions/checkout/issues/211
         run: |
-          chown -R $USER:$USER $GITHUB_WORKSPACE
+          chown -R `stat --printf=%u /github/workspace/.` /github/workspace/*
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0     
