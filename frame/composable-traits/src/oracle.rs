@@ -1,7 +1,8 @@
 use frame_support::{dispatch::DispatchError, pallet_prelude::*};
+use sp_runtime::FixedU128;
 use sp_std::vec::Vec;
 
-use crate::currency::PriceableAsset;
+use crate::{currency::PriceableAsset, defi::CurrencyPair};
 
 #[derive(Encode, Decode, Default, Debug, PartialEq)]
 pub struct Price<PriceValue, BlockNumber> {
@@ -53,4 +54,15 @@ pub trait Oracle {
 		of: Self::AssetId,
 		weighting: Vec<Self::Balance>,
 	) -> Result<Self::Balance, DispatchError>;
+
+	/// Up to oracle how it decides ration. 
+	/// If there is no direct trading pair, can estimate via common pair.
+	/// base_in_common / quote_in_common
+	/// ```ignore
+	/// 1 BTC == 1000 stable
+	/// 1 DAI == 100 stable
+	/// 1000 / 1000 = 10
+	/// 1 BTC / 1 DAI = 10 
+	/// ```
+	fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<FixedU128, DispatchError>;	
 }

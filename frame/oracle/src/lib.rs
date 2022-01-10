@@ -20,11 +20,14 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
+		defi::CurrencyPair,
+		math::SafeArithmetic,
 		currency::PriceableAsset,
 		oracle::{Oracle, Price as LastPrice},
 	};
 	use core::ops::{Div, Mul};
 	use frame_support::{
+	
 		dispatch::{DispatchResult, DispatchResultWithPostInfo},
 		pallet_prelude::*,
 		traits::{
@@ -42,13 +45,15 @@ pub mod pallet {
 		pallet_prelude::*,
 		Config as SystemConfig,
 	};
+	
 	use lite_json::json::JsonValue;
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
+		
 		offchain::{http, Duration},
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
-		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
+		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug, FixedU128, FixedPointNumber,
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec, vec::Vec};
 
@@ -378,6 +383,14 @@ pub mod pallet {
 			weighting: Vec<Self::Balance>,
 		) -> Result<Self::Balance, DispatchError> {
 			Self::get_twap(of, weighting)
+		}
+		
+		fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<FixedU128, DispatchError> {
+			let base : u128 = Self::get_price(pair.base, (10^12u32).into())?.price.into();
+			let quote : u128 = Self::get_price(pair.quote, (10^12u32).into())?.price.into();
+			let base = FixedU128::saturating_from_integer(base);
+			let quote = FixedU128::saturating_from_integer(quote);
+			Ok(base.safe_div(&quote)?)
 		}
 	}
 

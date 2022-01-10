@@ -45,7 +45,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory, PriceableAsset},
-		defi::{DeFiComposableConfig, DeFiEngine, MoreThanOneFixedU128, Rate, ZeroToOneFixedU128},
+		defi::{DeFiComposableConfig, DeFiEngine, MoreThanOneFixedU128, Rate, ZeroToOneFixedU128, Sell, CurrencyPair},
 		lending::{
 			math::*, BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig,
 			UpdateInput,
@@ -754,25 +754,21 @@ pub mod pallet {
 			account: &<Self as DeFiEngine>::AccountId,
 		) -> Result<(), DispatchError> {
 			if Self::should_liquidate(market_id, account)? {
+				
 				let market = Self::get_market(market_id)?;
 				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 				let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
-				let collateral_price =
-					Self::get_price(market.collateral, market.collateral.unit())?;
-				// let source_target_account = Self::account_id(market_id);
-				todo!();
-			// T::Liquidation::liquidate(
-			// 	&source_target_account,
-			// 	market.collateral,
-			// 	PriceStructure::new(collateral_price),
-			// 	borrow_asset,
-			// 	&source_target_account,
-			// 	collateral_to_liquidate,
-			// )
-			// .map(|_| ())
-			} else {
-				Ok(())
-			}
+				let source_target_account = Self::account_id(market_id);
+				let unit_price = T::Oracle::get_ratio(CurrencyPair::new(market.collateral, borrow_asset))?;
+				let sell = Sell::new(
+					market.collateral,
+					borrow_asset,
+					collateral_to_liquidate,
+					unit_price.into(),
+				);
+				T::Liquidation::liquidate(&source_target_account, sell, market.liquidators)?;	
+			} 
+			Ok(())
 		}
 
 		pub(crate) fn initialize_block(

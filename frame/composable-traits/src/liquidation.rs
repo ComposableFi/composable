@@ -14,6 +14,6 @@ pub trait Liquidation: DeFiEngine {
 	fn liquidate(
 		from_to: &Self::AccountId,
 		order: Sell<Self::MayBeAssetId, Self::Balance>,
-		configuration: Vec<Self::LiquidationStrategyId>,
+		configuration: sp_std::vec::Vec<Self::LiquidationStrategyId>,
 	) -> Result<Self::OrderId, DispatchError>;
 }
