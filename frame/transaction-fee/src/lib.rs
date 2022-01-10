@@ -146,7 +146,7 @@ pub mod pallet {
 		}
 
 		// `integrity_test` is allowed to panic.
-		#[allow(clippy::disallowed_method)]
+		#[allow(clippy::disallowed_method, clippy::expect_used)]
 		fn integrity_test() {
 			// given weight == u64, we build multipliers from `diff` of two weight values, which can
 			// at most be maximum block weight. Make sure that this can fit in a multiplier without
@@ -155,9 +155,12 @@ pub mod pallet {
 			assert!(
 				<Multiplier as sp_runtime::traits::Bounded>::max_value() >=
 					Multiplier::checked_from_integer(
-						T::BlockWeights::get().max_block.try_into().unwrap()
+						T::BlockWeights::get()
+							.max_block
+							.try_into()
+							.expect("Blockweights.max_block should be present")
 					)
-					.unwrap(),
+					.expect("Multiplier from Blockweights should not overflow"),
 			);
 
 			// This is the minimum value of the multiplier. Make sure that if we collapse to this

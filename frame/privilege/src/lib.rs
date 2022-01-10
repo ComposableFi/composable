@@ -199,7 +199,7 @@ pub mod pallet {
 			_group_id: Self::GroupId,
 			_account_id: Self::AccountId,
 		) -> Result<bool, DispatchError> {
-			todo!()
+			Err(DispatchError::Other("todo"))
 		}
 	}
 

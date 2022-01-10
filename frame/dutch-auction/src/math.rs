@@ -57,7 +57,8 @@ impl AuctionTimeCurveModel for LinearDecrease {
 				)?
 				.safe_div(
 					// see https://github.com/paritytech/substrate/issues/10572
-					&LiftedFixedBalance::checked_from_integer(self.total as u128).ok_or(ArithmeticError::Overflow)?,
+					&LiftedFixedBalance::checked_from_integer(self.total as u128)
+						.ok_or(ArithmeticError::Overflow)?,
 				)
 		}
 	}

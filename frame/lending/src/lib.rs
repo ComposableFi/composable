@@ -1,13 +1,11 @@
 //! Lending pallet
 #![cfg_attr(
-	not(test),
+	not(any(test, feature = "runtime-benchmarks")),
 	warn(
 		clippy::disallowed_method,
 		clippy::disallowed_type,
 		clippy::indexing_slicing,
-		// TODO: enable me after this crate is stablized. todo macros are still denied in the release pipeline, but for
-		// regular development allowed.
-		// clippy::todo,
+		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
