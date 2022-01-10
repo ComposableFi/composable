@@ -114,6 +114,7 @@ pub mod pallet {
 		InvalidClaim,
 		NothingToClaim,
 		NotAssociated,
+		AlreadyAssociated,
 	}
 
 	#[pallet::config]
@@ -139,9 +140,6 @@ pub mod pallet {
 
 		/// The origin that is allowed to `initialize` the pallet.
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
-
-		/// The origin that is allowed to `associate` relay/eth account to their reward account.
-		type AssociationOrigin: EnsureOrigin<Self::Origin>;
 
 		/// A conversion function frop `Self::BlockNumber` to `Self::Balance`
 		type Convert: Convert<Self::BlockNumber, Self::Balance>;
@@ -238,14 +236,14 @@ pub mod pallet {
 		/// ```haskell
 		/// proof = sign (concat prefix (hex reward_account))
 		/// ```
-		#[pallet::weight((<T as Config>::WeightInfo::associate(TotalContributors::<T>::get()), Pays::No))]
+		#[pallet::weight(<T as Config>::WeightInfo::associate(TotalContributors::<T>::get()))]
 		#[transactional]
 		pub fn associate(
 			origin: OriginFor<T>,
 			reward_account: T::AccountId,
 			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
-			T::AssociationOrigin::ensure_origin(origin)?;
+			ensure_none(origin)?;
 			Self::do_associate(reward_account, proof)
 		}
 
@@ -276,6 +274,12 @@ pub mod pallet {
 			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let remote_account = get_remote_account::<T>(proof, &reward_account, T::Prefix::get())?;
+			// NOTE(hussein-aitlahcen): this is also checked by the signed extension. theoretically
+			// useless, but 1:1 to make it clear
+			ensure!(
+				!Associations::<T>::contains_key(reward_account.clone()),
+				Error::<T>::AlreadyAssociated
+			);
 			let claimed = Self::do_claim(remote_account.clone(), &reward_account)?;
 			Associations::<T>::insert(reward_account.clone(), remote_account.clone());
 			Self::deposit_event(Event::Associated {
