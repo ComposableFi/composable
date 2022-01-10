@@ -107,7 +107,7 @@ jobs:
 
       - uses: actions/checkout@v2
       - run: |
-        /home/runner/.cargo/bin/rustup component add llvm-tools-preview
+          /home/runner/.cargo/bin/rustup component add llvm-tools-preview
       - name: Install cargo-llvm-cov
         run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
       - name: Run Test (with coverage)
