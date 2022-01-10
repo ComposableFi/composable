@@ -1,14 +1,17 @@
-name: "Dali-chachacha Community Release"
+name: "Community Release (Dali Chacha)"
 
 on:
   push: 
     tags: 
       - '*'
     branches:
-      - update-event-triggers
+      - feature/add-cache-build
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
+  SCCACHE_GCS_BUCKET: 'composable-build-artefacts'
+  RUSTC_WRAPPER: "/home/runner/.cargo/bin/sccache"
+  SCCACHE_GCS_RW_MODE: "READ_WRITE"
 
 jobs:
   build-and-publish:
@@ -17,6 +20,8 @@ jobs:
         - linux
         - x64
         - sre
+    strategy: 
+      fail-fast: true
     steps:
     - uses: xanantis/docker-file-ownership-fix@v1
     - uses: actions/checkout@v2
@@ -27,9 +32,20 @@ jobs:
       run: |
         echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
         make version
-    - name: Build and Push Artifacts to gcloud
+
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+
+    - name: 🔨 Build
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release --bins
+
+    - name: Archive build targets
       run: |
-        /home/runner/.cargo/bin/cargo build --release --bins
+        tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/
         tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
         tar -czvf picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
         tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain-utils
@@ -43,6 +59,7 @@ jobs:
 
     - name: Build Docker image
       run: make containerize-release 
+
     - name:  Docker push
       run: make push-release
 

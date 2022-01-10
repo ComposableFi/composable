@@ -70,11 +70,6 @@ pub type Barrier = (
 	AllowSubscriptionsFrom<Everything>,
 );
 
-/// No local origins on this chain are allowed to dispatch XCM sends/executions.
-/// https://medium.com/kusama-network/kusamas-governance-thwarts-would-be-attacker-9023180f6fb
-#[cfg(not(feature = "develop"))]
-pub type LocalOriginToLocation = ();
-#[cfg(feature = "develop")]
 pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, RelayNetwork>;
 
 /// The means for routing XCM messages which are not for local execution into the right message
@@ -122,7 +117,6 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	XcmPassthrough<Origin>,
 );
 
-#[cfg(feature = "develop")]
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	crate::Assets,
 	UnknownTokens,
@@ -138,11 +132,9 @@ parameter_types! {
 	pub const MaxInstructions: u32 = 10_000;
 }
 
-#[cfg(feature = "develop")]
 pub struct TradePassthrough();
 
 /// any payment to pass
-#[cfg(feature = "develop")]
 impl WeightTrader for TradePassthrough {
 	fn new() -> Self {
 		Self()
@@ -158,11 +150,6 @@ pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
 	type Call = Call;
 	type XcmSender = XcmRouter;
-
-	#[cfg(not(feature = "develop"))]
-	type AssetTransactor = ();
-	// How to withdraw and deposit an asset.
-	#[cfg(feature = "develop")]
 	type AssetTransactor = LocalAssetTransactor;
 
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
@@ -172,14 +159,7 @@ impl xcm_executor::Config for XcmConfig {
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
 
-	#[cfg(not(feature = "develop"))]
-	type Trader = ();
-	#[cfg(feature = "develop")]
 	type Trader = TradePassthrough;
-
-	#[cfg(not(feature = "develop"))]
-	type ResponseHandler = ();
-	#[cfg(feature = "develop")]
 	type ResponseHandler = RelayerXcm;
 
 	type SubscriptionService = RelayerXcm;
@@ -191,7 +171,6 @@ parameter_types! {
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into())));
 }
 
-#[cfg(feature = "develop")]
 impl orml_xtokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -205,7 +184,6 @@ impl orml_xtokens::Config for Runtime {
 	type LocationInverter = LocationInverter<Ancestry>;
 }
 
-#[cfg(feature = "develop")]
 impl orml_unknown_tokens::Config for Runtime {
 	type Event = Event;
 }
@@ -218,12 +196,10 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 }
 
 /// Converts currency to and from local and remote
-#[cfg(feature = "develop")]
 pub struct CurrencyIdConvert;
 
 /// converts local currency into remote,
 /// native currency is built in
-#[cfg(feature = "develop")]
 impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
 		match id {
@@ -259,7 +235,6 @@ impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for Currency
 
 /// converts from Relay parent chain to child chain currency
 /// expected that currency in location is in format well known for local chain
-#[cfg(feature = "develop")]
 impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!("converting {:?} on {:?}", &location, ParachainInfo::parachain_id());
@@ -298,7 +273,6 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 }
 
 /// covert remote to local, usually when receiving transfer
-#[cfg(feature = "develop")]
 impl Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
 		log::trace!("converting {:?}", &asset);
@@ -317,9 +291,6 @@ impl pallet_xcm::Config for Runtime {
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	/// https://medium.com/kusama-network/kusamas-governance-thwarts-would-be-attacker-9023180f6fb
-	#[cfg(not(feature = "develop"))]
-	type XcmExecuteFilter = Nothing;
-	#[cfg(feature = "develop")]
 	type XcmExecuteFilter = Everything;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;

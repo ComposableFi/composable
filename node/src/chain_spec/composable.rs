@@ -1,5 +1,5 @@
 use common::{AccountId, AuraId, Balance};
-use composable_runtime::{self as parachain_runtime, GenesisConfig};
+use composable_runtime::GenesisConfig;
 
 use super::{Extensions, ParaId};
 
@@ -9,8 +9,8 @@ pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
-pub fn session_keys(keys: AuraId) -> parachain_runtime::opaque::SessionKeys {
-	parachain_runtime::opaque::SessionKeys { aura: keys }
+pub fn session_keys(keys: AuraId) -> composable_runtime::opaque::SessionKeys {
+	composable_runtime::opaque::SessionKeys { aura: keys }
 }
 /// Generates the genesis config for picasso
 pub fn genesis_config(
@@ -19,27 +19,27 @@ pub fn genesis_config(
 	accounts: Vec<AccountId>,
 	id: ParaId,
 	existential_deposit: Balance,
-) -> parachain_runtime::GenesisConfig {
-	parachain_runtime::GenesisConfig {
-		system: parachain_runtime::SystemConfig {
-			code: parachain_runtime::WASM_BINARY
+) -> composable_runtime::GenesisConfig {
+	composable_runtime::GenesisConfig {
+		system: composable_runtime::SystemConfig {
+			code: composable_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 		},
-		balances: parachain_runtime::BalancesConfig {
+		balances: composable_runtime::BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
 			balances: accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
 		},
 		aura: Default::default(),
-		sudo: parachain_runtime::SudoConfig {
+		sudo: composable_runtime::SudoConfig {
 			// Assign network admin rights.
 			key: root,
 		},
-		indices: parachain_runtime::IndicesConfig { indices: vec![] },
-		parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
+		indices: composable_runtime::IndicesConfig { indices: vec![] },
+		parachain_info: composable_runtime::ParachainInfoConfig { parachain_id: id },
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
-		session: parachain_runtime::SessionConfig {
+		session: composable_runtime::SessionConfig {
 			keys: invulnerables
 				.iter()
 				.cloned()
@@ -52,12 +52,12 @@ pub fn genesis_config(
 				})
 				.collect(),
 		},
-		collator_selection: parachain_runtime::CollatorSelectionConfig {
+		collator_selection: composable_runtime::CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
 			candidacy_bond: existential_deposit * 16,
 			..Default::default()
 		},
-		council_membership: parachain_runtime::CouncilMembershipConfig {
+		council_membership: composable_runtime::CouncilMembershipConfig {
 			members: vec![],
 			..Default::default()
 		},
