@@ -1,5 +1,17 @@
 //
-
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		// TODO: enable me after this crate is stablized. todo macros are still denied in the release pipeline, but for
+		// regular development allowed.
+		// clippy::indexing_slicing,
+		// clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -135,6 +147,7 @@ pub mod pallet {
 			+ Copy
 			+ Debug
 			+ CheckedAdd
+			+ Zero
 			+ One;
 		type PoolTokenIndex: Copy + Debug + Eq + Into<u32>;
 	}
@@ -146,8 +159,13 @@ pub mod pallet {
 	/// Current number of pools (also ID for the next created pool)
 	#[pallet::storage]
 	#[pallet::getter(fn pool_count)]
-	pub type PoolCount<T: Config> = StorageValue<_, T::PoolId, ValueQuery>;
+	#[allow(clippy::disallowed_type)]
+	pub type PoolCount<T: Config> = StorageValue<_, T::PoolId, ValueQuery, PoolCountOnEmpty<T>>;
 
+	#[pallet::type_value]
+	pub fn PoolCountOnEmpty<T: Config>() -> T::PoolId {
+		Zero::zero()
+	}
 	/// Existing pools
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
@@ -168,6 +186,7 @@ pub mod pallet {
 	/// Balance of asset for given pool excluding admin_fee
 	#[pallet::storage]
 	#[pallet::getter(fn pool_asset_balance)]
+	#[allow(clippy::disallowed_type)]
 	pub type PoolAssetBalance<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -176,11 +195,18 @@ pub mod pallet {
 		T::AssetId,
 		T::Balance,
 		ValueQuery,
+		PoolAssetBalanceOnEmpty<T>,
 	>;
+
+	#[pallet::type_value]
+	pub fn PoolAssetBalanceOnEmpty<T: Config>() -> T::Balance {
+		Zero::zero()
+	}
 
 	/// Balance of asset for given pool including admin_fee
 	#[pallet::storage]
 	#[pallet::getter(fn pool_asset_total_balance)]
+	#[allow(clippy::disallowed_type)]
 	pub type PoolAssetTotalBalance<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -189,7 +215,13 @@ pub mod pallet {
 		T::AssetId,
 		T::Balance,
 		ValueQuery,
+		PoolAssetTotalBalanceOnEmpty<T>,
 	>;
+
+	#[pallet::type_value]
+	pub fn PoolAssetTotalBalanceOnEmpty<T: Config>() -> T::Balance {
+		Zero::zero()
+	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
