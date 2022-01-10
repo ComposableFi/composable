@@ -115,7 +115,7 @@ impl<T: frame_system::Config> democracy::WeightInfo for WeightInfo<T> {
 	}
 
 	fn on_initialize_base_with_launch_period(_r: u32) -> Weight {
-		todo!()
+		(0 as Weight)
 	}
 
 	fn delegate(r: u32) -> Weight {

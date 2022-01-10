@@ -482,18 +482,6 @@ parameter_types! {
 	pub const TokenTotal: Balance = 200_000_000_000_000_000;
 }
 
-impl crowdloan_bonus::Config for Runtime {
-	type Event = Event;
-	type LiquidRewardId = LiquidRewardId;
-	type CurrencyId = CrowdloanCurrencyId;
-	type TokenTotal = TokenTotal;
-	type JumpStart = EnsureRootOrHalfCouncil;
-	type Currency = Tokens;
-	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type WeightInfo = weights::crowdloan_bonus::WeightInfo<Runtime>;
-}
-
 parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
 	/// percentage of proposal that most be bonded by the proposer
@@ -694,7 +682,6 @@ construct_runtime!(
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
-		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 50,
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
 	}
 );
@@ -848,7 +835,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, scheduler, Scheduler);
 			list_benchmark!(list, extra, democracy, Democracy);
 			list_benchmark!(list, extra, collective, Council);
-			list_benchmark!(list, extra, crowdloan_bonus, LiquidCrowdloan);
 			list_benchmark!(list, extra, utility, Utility);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -894,7 +880,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, scheduler, Scheduler);
 			add_benchmark!(params, batches, democracy, Democracy);
 			add_benchmark!(params, batches, collective, Council);
-			add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
 			add_benchmark!(params, batches, utility, Utility);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

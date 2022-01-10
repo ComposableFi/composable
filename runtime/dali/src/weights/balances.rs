@@ -58,6 +58,6 @@ impl<T: frame_system::Config> balances::WeightInfo for WeightInfo<T> {
 	}
 
 	fn force_unreserve() -> Weight {
-		todo!()
+		(0 as Weight)
 	}
 }

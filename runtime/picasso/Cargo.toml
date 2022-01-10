@@ -67,23 +67,11 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 smallvec = "1.6.1"
 
 # local modules
-assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false, optional = true }
-assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false, optional = true }
-
-crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
-crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false, optional = true }
 
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
-oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false, optional = true }
-vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false, optional = true }
-governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false, optional = true }
-currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false, optional = true }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
-pallet-bonded-finance = { optional = true, path = "../../frame/bonded-finance", default-features = false }
-vesting = { optional = true, package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
-pallet-dutch-auction = { optional = true, package = "pallet-dutch-auction", path = "../../frame/dutch-auction", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
@@ -147,21 +135,13 @@ std = [
 	"authorship/std",
 	"balances/std",
 	"randomness-collective-flip/std",
-	"crowdloan-bonus/std",
 	"timestamp/std",
 	"session/std",
 	"sudo/std",
 	"indices/std",
-	"oracle/std",
 	"identity/std",
 	"multisig/std",
-	"vault/std",
-	"assets/std",
-	"pallet-bonded-finance/std",
-	"vesting/std",
-	"governance-registry/std",
 	"call-filter/std",
-	"currency-factory/std",
 	"orml-tokens/std",
 	"orml-traits/std",
 	"treasury/std",
@@ -189,14 +169,9 @@ std = [
 	"orml-xtokens/std",
 	"orml-xcm-support/std",
 	"orml-unknown-tokens/std",
-	"assets-registry/std",
-	"assets/std",
-	"governance-registry/std",
 	"composable-traits/std",
-	"pallet-dutch-auction/std",
 ]
 runtime-benchmarks = [
-	"assets/runtime-benchmarks",
 	"balances/runtime-benchmarks",
 	"benchmarking",
 	"support/runtime-benchmarks",
@@ -205,8 +180,6 @@ runtime-benchmarks = [
 	"hex-literal",
 	"balances/runtime-benchmarks",
 	"timestamp/runtime-benchmarks",
-	"assets-registry/runtime-benchmarks",
-	"oracle/runtime-benchmarks",
 	"collective/runtime-benchmarks",
 	"collator-selection/runtime-benchmarks",
 	"session-benchmarking/runtime-benchmarks",
@@ -214,30 +187,13 @@ runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"indices/runtime-benchmarks",
-	"crowdloan-bonus/runtime-benchmarks",
-	"crowdloan-rewards/runtime-benchmarks",
 	"identity/runtime-benchmarks",
 	"multisig/runtime-benchmarks",
 	"membership/runtime-benchmarks",
 	"treasury/runtime-benchmarks",
 	"scheduler/runtime-benchmarks",
 	"collective/runtime-benchmarks",
-	"pallet-bonded-finance/runtime-benchmarks",
-	"vesting/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
-	"vault/runtime-benchmarks",
 ]
 
-develop = [
-	"assets",
-	"assets-registry",
-	"crowdloan-rewards",
-	"currency-factory",
-	"governance-registry",
-	"oracle",
-	"pallet-bonded-finance",
-	"vault",
-	"vesting",
-	"pallet-dutch-auction",
-]
