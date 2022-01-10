@@ -447,7 +447,6 @@ impl authorship::Config for Runtime {
 	type EventHandler = (CollatorSelection,);
 }
 
-//TODO set
 parameter_types! {
 	pub const Period: u32 = 6 * HOURS;
 	pub const Offset: u32 = 0;

@@ -1,5 +1,23 @@
-[profile.release]
-panic = "unwind"
+[[bin]]
+name = "composable"
+path = "src/main.rs"
+
+[package]
+name = "composable"
+version = '1.0.9'
+authors = ["Composable Developers"]
+homepage = "https://composable.finance"
+edition = "2018"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+composable-node = { path = "node", features = [ "composable", "dali" ]  }
+color-eyre = { version = "0.5.11", default-features = false }
+
+[features]
+runtime-benchmarks= [ "composable-node/runtime-benchmarks" ]
 
 [workspace]
 members = [
@@ -18,6 +36,14 @@ members = [
     "utils/collator-sidecar",
     "utils/price-feed"
 ]
+
+[profile.release]
+# Polkadot runtime requires unwinding.
+panic = "unwind"
+
+[profile.production]
+inherits = "release"
+lto = true
 
 [patch."https://github.com/paritytech/substrate"]
 frame-benchmarking ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.13" }
