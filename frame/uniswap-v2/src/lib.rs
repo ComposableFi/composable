@@ -4,8 +4,10 @@
 	warn(
 		clippy::disallowed_method,
 		clippy::disallowed_type,
-		clippy::indexing_slicing,
-		clippy::todo,
+		// TODO: enable me after this crate is stablized. todo macros are still denied in the release pipeline, but for
+		// regular development allowed.
+		// clippy::indexing_slicing,
+		// clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)

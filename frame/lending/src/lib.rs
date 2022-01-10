@@ -5,12 +5,14 @@
 		clippy::disallowed_method,
 		clippy::disallowed_type,
 		clippy::indexing_slicing,
-		clippy::todo,
+		// TODO: enable me after this crate is stablized. todo macros are still denied in the release pipeline, but for
+		// regular development allowed.
+		// clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,

@@ -2,10 +2,12 @@
 	not(test),
 	warn(
 		clippy::disallowed_method,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
-		clippy::panic
+		// // impl_runtime_apis will generate code that contains a `panic!`. Implementations should still avoid using panics.
+		// clippy::panic
 	)
 )]
 #![cfg_attr(not(feature = "std"), no_std)]
