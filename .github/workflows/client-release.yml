@@ -5,7 +5,7 @@ on:
     tags: 
       - '*'
     branches:
-      - feature/add-cache-build
+      - feature/simnode-workflow
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
@@ -33,18 +33,9 @@ jobs:
         echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
         make version
 
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-
-    - name: 🔨 Build
-      uses: actions-rs/cargo@v1
-      with:
-        command: build
-        args: --release --bins
-
     - name: Archive build targets
       run: |
+        cargo build  --release --bins 
         tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/
         tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
         tar -czvf picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm

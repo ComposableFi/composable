@@ -34,6 +34,7 @@ last_github_release(){
   done
 }
 
+
 # Checks whether a tag on github has been verified
 # repo: 'organization/repo'
 # tagver: 'v1.2.3'
@@ -56,6 +57,7 @@ check_tag () {
     return 1
   fi
 }
+
 
 # Checks whether a given PR has a given label.
 # repo: 'organization/repo'

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 #
 # check for any changes in the node/src/runtime, frame/* and primitives/sr_* trees. if
@@ -11,7 +11,7 @@ set -e # fail on any error
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
 
-VERSIONS_FILE="runtime/picasso/src/lib.rs"
+declare -a VERSIONS_FILES=("runtime/picasso/src/lib.rs" "runtime/dali/src/lib.rs" "runtime/composable/src/lib.rs" )
 
 boldprint () { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
 boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done; printf "|\n" ; }
@@ -20,32 +20,38 @@ boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${
 boldprint "latest 10 commits of ${GITHUB_REF_NAME}"
 git log --graph --oneline --decorate=short -n 10
 
+for VERSIONS_FILE in "${VERSIONS_FILES[@]}" 
+do
+  echo "$VERSIONS_FILE"
+  boldprint "check if the wasm sources changed"
+done
 
-boldprint "check if the wasm sources changed"
-if ! has_runtime_changes origin/main "${GITHUB_REF_NAME}"
+simnode_check () {
+  VERSIONS_FILE="$1"
+if has_runtime_changes origin/main "${GITHUB_REF_NAME}" && check_runtime $VERSIONS_FILE
 then
 	boldcat <<-EOT
 
-	no changes to the runtime source code detected
+    YDATE=$(date -d yesterday +'%m-%d-%Y')
+    FILENAME=cl-1-$YDATE.zip
+    GS_BUCKET="composable-picasso-data-sync"
+    sudo gsutil cp gs://$GS_BUCKET/$FILENAME .
+    sudo unzip $FILENAME -d  /tmp/db
+	./target/release/simnode --chain=picasso --base-path=/tmp/db --pruning=archive --execution=wasm
 
 	EOT
 
 	exit 0
 fi
+}
 
 
-
-# check for spec_version updates: if the spec versions changed, then there is
-# consensus-critical logic that has changed. the runtime wasm blobs must be
-# rebuilt.
-
+check_runtime() {
+  VERSIONS_FILE="$1"
 add_spec_version="$(git diff tags/release ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 	| sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
 sub_spec_version="$(git diff tags/release ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 	| sed -n -r "s/^\-[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
-
-
-
 if [ "${add_spec_version}" != "${sub_spec_version}" ]
 then
 
@@ -95,6 +101,10 @@ else
 
 	EOT
 fi
+}
+
+boldprint "check if the runtime changed and run simnode"
+simnode_check $VERSIONS_FILE
 
 # dropped through. there's something wrong;  exit 1.
 
