@@ -26,6 +26,7 @@ pub mod pallet {
 		relayer::{RelayerConfig, StaleRelayer},
 	};
 	use codec::FullCodec;
+	use composable_traits::math::SafeArithmetic;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
@@ -33,7 +34,7 @@ pub mod pallet {
 		transactional, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use num_traits::{CheckedAdd, Zero};
+	use num_traits::Zero;
 	use scale_info::TypeInfo;
 	use sp_core::H256;
 	use sp_runtime::{
@@ -325,23 +326,21 @@ pub mod pallet {
 			let network_info =
 				NetworkInfos::<T>::get(network_id.clone()).ok_or(Error::<T>::UnsupportedNetwork)?;
 			ensure!(network_info.enabled, Error::<T>::NetworkDisabled);
-			ensure!(network_info.max_transfer_size > amount, Error::<T>::ExceedsMaxTransferSize);
+			ensure!(network_info.max_transfer_size >= amount, Error::<T>::ExceedsMaxTransferSize);
 
 			T::Assets::transfer(asset_id, &caller, &Self::account_id(), amount, keep_alive)?;
 			let now = <frame_system::Pallet<T>>::block_number();
-			let lock_until =
-				now.checked_add(&TimeLockPeriod::<T>::get()).ok_or(Error::<T>::Overflow)?;
+			let lock_until = now.safe_add(&TimeLockPeriod::<T>::get())?;
 
 			OutgoingTransactions::<T>::try_mutate(
 				caller.clone(),
 				asset_id,
-				|prev| -> Result<(), Error<T>> {
+				|prev| -> Result<(), DispatchError> {
 					match prev.as_mut() {
 						// If we already have an outgoing tx, we update the lock_time and add the
 						// amount.
 						Some((already_locked, _)) => {
-							let amount =
-								amount.checked_add(already_locked).ok_or(Error::<T>::Overflow)?;
+							let amount = amount.safe_add(already_locked)?;
 							*prev = Some((amount, lock_until))
 						},
 						None => *prev = Some((amount, lock_until)),
@@ -386,7 +385,7 @@ pub mod pallet {
 
 						// No remaing funds need to be transferred for this asset, so we can delete
 						// the storage item.
-						if amount == tx.0 {
+						if amount == balance {
 							*maybe_tx = None
 						}
 
@@ -420,10 +419,10 @@ pub mod pallet {
 				caller.clone(),
 				asset_id,
 				|prev| -> Result<(), DispatchError> {
-					let amount = match prev {
-						Some(tx) if tx.1 < now => {
-							T::Assets::transfer(asset_id, &Self::account_id(), &to, tx.0, true)?;
-							tx.0
+					let amount = match *prev {
+						Some((balance, lock_time)) if lock_time < now => {
+							T::Assets::transfer(asset_id, &Self::account_id(), &to, balance, true)?;
+							balance
 						},
 						_ => return Err(Error::<T>::NoStaleTransactions.into()),
 					};
@@ -461,11 +460,10 @@ pub mod pallet {
 				T::Assets::mint_into(asset_id, &Self::account_id(), amount)?;
 				let lock_at = lock_time.saturating_add(current_block);
 
-				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| {
-					match prev.as_mut() {
-						Some(tx) => *tx = (tx.0.saturating_add(amount), lock_at),
-						_ => *prev = Some((amount, lock_at)),
-					}
+				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
+					Some((balance, _)) =>
+						*prev = Some(((*balance).saturating_add(amount), lock_at)),
+					_ => *prev = Some((amount, lock_at)),
 				});
 
 				*info = Some(AssetInfo {
