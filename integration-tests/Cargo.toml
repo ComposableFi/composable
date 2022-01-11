@@ -56,7 +56,6 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 smallvec = "1.6.1"
 
 # local modules
-crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../frame/crowdloan-bonus', default-features = false }
 common = { path = "../runtime/common", default-features = false }
 primitives = { path = "../runtime/primitives", default-features = false }
 oracle = { package = "pallet-oracle", path = "../frame/oracle", default-features = false }
@@ -106,7 +105,7 @@ xcm-emulator = { git = "https://github.com/dzmitry-lahoda-forks/xcm-simulator", 
 kusama-runtime = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13" }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13" }
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13" }
-picasso-runtime = { path = "../runtime/picasso", default-features = false, features = ["develop"]}
+picasso-runtime = { package = "dali-runtime", path = "../runtime/dali", default-features = false }
 
 [dev-dependencies]
 env_logger = "0.9.0"
@@ -133,7 +132,6 @@ std = [
 	"authorship/std",
 	"balances/std",
 	"randomness-collective-flip/std",
-	"crowdloan-bonus/std",
 	"timestamp/std",
 	"session/std",
 	"sudo/std",
@@ -184,7 +182,6 @@ runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"indices/runtime-benchmarks",
-	"crowdloan-bonus/runtime-benchmarks",
 	"membership/runtime-benchmarks",
 	"treasury/runtime-benchmarks",
 	"scheduler/runtime-benchmarks",

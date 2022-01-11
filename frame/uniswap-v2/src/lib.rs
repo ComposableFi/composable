@@ -1,5 +1,17 @@
 //
-
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		// TODO: enable me after this crate is stablized. todo macros are still denied in the release pipeline, but for
+		// regular development allowed.
+		// clippy::indexing_slicing,
+		// clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -46,51 +58,14 @@ pub mod pallet {
 		PalletId,
 	};
 	use scale_info::TypeInfo;
-	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul,
 			CheckedSub, IntegerSquareRoot, One, Zero,
 		},
-		FixedPointNumber, FixedPointOperand, FixedU128, KeyTypeId as CryptoKeyTypeId, Permill,
+		FixedPointNumber, FixedPointOperand, FixedU128, Permill,
 	};
 	use sp_std::{collections::btree_set::BTreeSet, fmt::Debug, iter::FromIterator};
-
-	pub const PALLET_ID: PalletId = PalletId(*b"Uni-swap");
-	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"uswp");
-	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"uswp");
-
-	pub mod crypto {
-		use super::KEY_TYPE;
-		use sp_core::sr25519::Signature as Sr25519Signature;
-		use sp_runtime::{
-			app_crypto::{app_crypto, sr25519},
-			traits::Verify,
-			MultiSignature, MultiSigner,
-		};
-		app_crypto!(sr25519, KEY_TYPE);
-
-		pub struct TestAuthId;
-
-		// implementation for runtime
-		impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
-			type RuntimeAppPublic = Public;
-			type GenericSignature = sp_core::sr25519::Signature;
-			type GenericPublic = sp_core::sr25519::Public;
-		}
-
-		// implementation for mock runtime in test
-		impl
-			frame_system::offchain::AppCrypto<
-				<Sr25519Signature as Verify>::Signer,
-				Sr25519Signature,
-			> for TestAuthId
-		{
-			type RuntimeAppPublic = Public;
-			type GenericSignature = sp_core::sr25519::Signature;
-			type GenericPublic = sp_core::sr25519::Public;
-		}
-	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -135,8 +110,10 @@ pub mod pallet {
 			+ Copy
 			+ Debug
 			+ CheckedAdd
+			+ Zero
 			+ One;
 		type PoolTokenIndex: Copy + Debug + Eq + Into<u32>;
+		type PalletId: Get<PalletId>;
 	}
 
 	#[pallet::pallet]
@@ -146,18 +123,22 @@ pub mod pallet {
 	/// Current number of pools (also ID for the next created pool)
 	#[pallet::storage]
 	#[pallet::getter(fn pool_count)]
-	pub type PoolCount<T: Config> = StorageValue<_, T::PoolId, ValueQuery>;
+	#[allow(clippy::disallowed_type)]
+	pub type PoolCount<T: Config> = StorageValue<_, T::PoolId, ValueQuery, PoolCountOnEmpty<T>>;
 
+	#[pallet::type_value]
+	pub fn PoolCountOnEmpty<T: Config>() -> T::PoolId {
+		Zero::zero()
+	}
 	/// Existing pools
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
-	pub type Pools<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::PoolId, ConstantProductPoolInfo<T::AccountId>>;
-
-	/// Pool's LP asset
-	#[pallet::storage]
-	#[pallet::getter(fn pool_lp_asset)]
-	pub type PoolLPAsset<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, T::AssetId>;
+	pub type Pools<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::PoolId,
+		ConstantProductPoolInfo<T::AccountId, T::AssetId>,
+	>;
 
 	/// Pair of assets supported by the pool
 	#[pallet::storage]
@@ -168,6 +149,7 @@ pub mod pallet {
 	/// Balance of asset for given pool excluding admin_fee
 	#[pallet::storage]
 	#[pallet::getter(fn pool_asset_balance)]
+	#[allow(clippy::disallowed_type)]
 	pub type PoolAssetBalance<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -176,11 +158,18 @@ pub mod pallet {
 		T::AssetId,
 		T::Balance,
 		ValueQuery,
+		PoolAssetBalanceOnEmpty<T>,
 	>;
+
+	#[pallet::type_value]
+	pub fn PoolAssetBalanceOnEmpty<T: Config>() -> T::Balance {
+		Zero::zero()
+	}
 
 	/// Balance of asset for given pool including admin_fee
 	#[pallet::storage]
 	#[pallet::getter(fn pool_asset_total_balance)]
+	#[allow(clippy::disallowed_type)]
 	pub type PoolAssetTotalBalance<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -189,7 +178,13 @@ pub mod pallet {
 		T::AssetId,
 		T::Balance,
 		ValueQuery,
+		PoolAssetTotalBalanceOnEmpty<T>,
 	>;
+
+	#[pallet::type_value]
+	pub fn PoolAssetTotalBalanceOnEmpty<T: Config>() -> T::Balance {
+		Zero::zero()
+	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
@@ -224,90 +219,72 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
-		///
-		/// Included values are:
-		/// - account identifier `T::AccountId`
-		/// - pool identifier `T::PoolId`
-		///
-		/// \[who, pool_id\]
-		PoolCreated { who: T::AccountId, pool_id: T::PoolId },
+		PoolCreated {
+			/// Account id of creator.
+			who: T::AccountId,
+			/// Id of newly created pool.
+			pool_id: T::PoolId,
+		},
 
 		/// Liquidity added into the pool `T::PoolId` by `T::AccountId`.
-		///
-		/// Included values are:
-		/// - account identifier `T::AccountId`
-		/// - pool identifier `T::PoolId`
-		/// - added token amounts `Vec<T::Balance>`
-		/// - charged fees `Vec<T::Balance>`
-		/// - actual invariant `T::Balance`
-		/// - actual token supply `T::Balance`
-		/// - minted amount `T::Balance`
-		///
-		/// \[who, pool_id, token_amounts, fees, invariant, token_supply, mint_amount\]
 		LiquidityAdded {
+			/// Account id who added liquidity.
 			who: T::AccountId,
+			/// Pool id to which liquidity added.
 			pool_id: T::PoolId,
+			/// Added token amounts.
 			token_amounts: Vec<T::Balance>,
+			/// Charged fees.
 			fees: Vec<T::Balance>,
+			/// Invariant after liquidity addition.
 			invariant: T::Balance,
+			/// Updated lp token supply.
 			token_supply: T::Balance,
+			/// Amount of minted lp tokens.
 			mint_amount: T::Balance,
 		},
 
 		/// Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
-		///
-		/// Included values are:
-		/// - account identifier `T::AccountId`
-		/// - pool identifier `T::PoolId`
-		/// - removed token amounts `Vec<T::Balance>`
-		/// - charged fees `Vec<T::Balance>`
-		/// - actual token supply `T::Balance`
-		///
-		/// \[who, pool_id, token_amounts, fees, token_supply\]
 		LiquidityRemoved {
+			/// Account id who removed liquidity.
 			who: T::AccountId,
+			/// Pool id to which liquidity added.
 			pool_id: T::PoolId,
+			/// Removed token amounts.
 			token_amounts: Vec<T::Balance>,
+			/// Charged fees.
 			fees: Vec<T::Balance>,
+			/// Updated lp token supply.
 			token_supply: T::Balance,
 		},
 
 		/// Token exchange happened.
-		///
-		/// Included values are:
-		/// - account identifier `T::AccountId`
-		/// - pool identifier `T::PoolId`
-		/// - index of sent token `T::PoolTokenIndex`
-		/// - amount of sent token `T::Balance`
-		/// - index of received token `T::PoolTokenIndex`
-		/// - amount of received token `T::Balance`
-		/// - charged fee `T::Balance`
-		///
-		/// \[who, pool_id, sent_token_index, sent_amount, received_token_index, received_amount,
-		/// fee\]
 		TokenExchanged {
+			/// Account id who exchanged token.
 			who: T::AccountId,
+			/// Pool id on which exchange done.
 			pool_id: T::PoolId,
+			/// Index of sent token.
 			sent_token_index: T::PoolTokenIndex,
+			/// Amount of sent token.
 			sent_amount: T::Balance,
+			/// Index of received token.
 			received_token_index: T::PoolTokenIndex,
+			/// Amount of received token.
 			received_amount: T::Balance,
+			/// Charged fees.
 			fee: T::Balance,
 		},
 
 		/// Withdraw admin fees `Vec<T::Balance>` from pool `T::PoolId` by user `T::AccountId`
-		///
-		/// Included values are:
-		/// - account identifier `T::AccountId`
-		/// - pool identifier `T::PoolId`
-		/// - admin fee receiving account identifier `T::AccountId`
-		/// - withdrew admin fees `Vec<T::Balance>`
-		///
-		/// [who, pool_id, admin_fee_account, admin_fees]
 		AdminFeesWithdrawn {
+			/// Account id which withdrew admin fee.
 			who: T::AccountId,
+			/// Pool id from which fee withdrew.
 			pool_id: T::PoolId,
+			/// Account id to which fee deposited.
 			admin_fee_account: T::AccountId,
+			/// Amounts of fees.
 			admin_fees: Vec<T::Balance>,
 		},
 	}
@@ -339,8 +316,8 @@ pub mod pallet {
 				Error::<T>::AssetAmountMustBePositiveNumber
 			);
 
-			let pool_lp_asset =
-				PoolLPAsset::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
+			let pool = Self::get_pool_info(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let pool_lp_asset = pool.lp_token;
 			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
 			let assets = assets_pair.as_slice();
 			let mut balances = Vec::new();
@@ -361,28 +338,29 @@ pub mod pallet {
 					FixedU128::saturating_from_integer(b_u)
 				})
 				.collect();
-			let old_balance_a = old_balances[0];
-			let old_balance_b = old_balances[1];
-			let amount_a_u: u128 = amounts[0].into();
-			let amount_b_u: u128 = amounts[1].into();
+			let old_balance_a = old_balances.get(0).ok_or(Error::<T>::IndexOutOfRange)?;
+			let old_balance_b = old_balances.get(1).ok_or(Error::<T>::IndexOutOfRange)?;
+			let amount_a_u: u128 = (*amounts.get(0).ok_or(Error::<T>::IndexOutOfRange)?).into();
+			let amount_b_u: u128 = (*amounts.get(1).ok_or(Error::<T>::IndexOutOfRange)?).into();
 			let amount_a_desired = FixedU128::saturating_from_integer(amount_a_u);
 			let amount_b_desired = FixedU128::saturating_from_integer(amount_b_u);
 			let amount_a;
 			let amount_b;
 
-			if old_balance_a == FixedU128::zero() && old_balance_b == FixedU128::zero() {
+			if *old_balance_a == FixedU128::zero() && *old_balance_b == FixedU128::zero() {
 				amount_a = amount_a_desired;
 				amount_b = amount_b_desired;
 			} else {
-				let amount_b_optimal = Self::quote(amount_a_desired, old_balance_a, old_balance_b)
-					.ok_or(Error::<T>::Math)?;
+				let amount_b_optimal =
+					Self::quote(amount_a_desired, *old_balance_a, *old_balance_b)
+						.ok_or(Error::<T>::Math)?;
 
 				if amount_b_optimal <= amount_b_desired {
 					amount_a = amount_a_desired;
 					amount_b = amount_b_optimal;
 				} else {
 					let amount_a_optimal =
-						Self::quote(amount_b_desired, old_balance_b, old_balance_a)
+						Self::quote(amount_b_desired, *old_balance_b, *old_balance_a)
 							.ok_or(Error::<T>::Math)?;
 					assert!(amount_a_optimal <= amount_a_desired);
 					amount_a = amount_a_optimal;
@@ -397,7 +375,7 @@ pub mod pallet {
 			if token_supply_u == 0 {
 				let mint_amount_f = amount_a.checked_mul(&amount_b).ok_or(Error::<T>::Math)?;
 				let mint_amount_b: T::Balance =
-					mint_amount_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+					mint_amount_f.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
 				mint_amount = mint_amount_b.integer_sqrt();
 			} else {
 				let mint_a = amount_a
@@ -411,19 +389,19 @@ pub mod pallet {
 					.checked_div(&old_balance_b)
 					.ok_or(Error::<T>::Math)?;
 				let mint_amount_f = mint_a.min(mint_b);
-				mint_amount = mint_amount_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+				mint_amount = mint_amount_f.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
 			}
 
-			let asset_id_a = assets[0];
-			let asset_id_b = assets[1];
+			let asset_id_a = *assets.get(0).ok_or(Error::<T>::IndexOutOfRange)?;
+			let asset_id_b = *assets.get(1).ok_or(Error::<T>::IndexOutOfRange)?;
 			let new_balance_a = old_balance_a.checked_add(&amount_a).ok_or(Error::<T>::Math)?;
 			let new_balance_b = old_balance_b.checked_add(&amount_b).ok_or(Error::<T>::Math)?;
 			PoolAssetBalance::<T>::mutate(pool_id, asset_id_a, |balance| -> DispatchResult {
-				*balance = new_balance_a.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+				*balance = new_balance_a.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
 				Ok(())
 			})?;
 			PoolAssetBalance::<T>::mutate(pool_id, asset_id_b, |balance| -> DispatchResult {
-				*balance = new_balance_b.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+				*balance = new_balance_b.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
 				Ok(())
 			})?;
 
@@ -434,8 +412,9 @@ pub mod pallet {
 
 			// Ensure that for all tokens user has sufficient amount
 			for (i, amount) in amounts.iter().enumerate() {
+				let asset_i = assets.get(i).ok_or(Error::<T>::IndexOutOfRange)?;
 				ensure!(
-					T::LpToken::balance(assets[i], who) >= *amount,
+					T::LpToken::balance(*asset_i, who) >= *amount,
 					Error::<T>::InsufficientFunds
 				);
 			}
@@ -492,8 +471,8 @@ pub mod pallet {
 				})
 				.collect();
 
-			let pool_lp_asset =
-				PoolLPAsset::<T>::get(pool_id).ok_or(Error::<T>::InconsistentStorage)?;
+			let pool = Self::get_pool_info(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let pool_lp_asset = pool.lp_token;
 			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
 			let assets = assets_pair.as_slice();
 			let n_coins = assets.len();
@@ -512,7 +491,8 @@ pub mod pallet {
 			let mut amounts_f = vec![FixedU128::zero(); n_coins];
 
 			for (index, asset_id) in assets.iter().enumerate() {
-				let old_balance_u: u128 = balances[index].into();
+				let old_balance_u: u128 =
+					(*balances.get(index).ok_or(Error::<T>::IndexOutOfRange)?).into();
 				let old_balance = FixedU128::saturating_from_integer(old_balance_u);
 				// value = old_balance * n_amount / token_supply
 				let value = (|| {
@@ -521,22 +501,24 @@ pub mod pallet {
 						.checked_div(&FixedU128::saturating_from_integer(token_supply_u))
 				})()
 				.ok_or(Error::<T>::Math)?;
-				ensure!(value >= min_amounts_f[index], Error::<T>::RequiredAmountNotReached);
+				let expected_min_amount =
+					min_amounts_f.get(index).ok_or(Error::<T>::IndexOutOfRange)?;
+				ensure!(value >= *expected_min_amount, Error::<T>::RequiredAmountNotReached);
 				PoolAssetBalance::<T>::mutate(pool_id, asset_id, |balance| -> DispatchResult {
 					*balance = old_balance
 						.checked_sub(&value)
 						.ok_or(Error::<T>::InsufficientFunds)?
-						.checked_mul_int(1u64)
+						.checked_mul_int(1_u64)
 						.ok_or(Error::<T>::Math)?
 						.into();
 					Ok(())
 				})?;
-				amounts_f[index] = value;
+				amounts_f.insert(index, value);
 			}
 
 			let amounts: Vec<T::Balance> = amounts_f
 				.iter()
-				.map(|b_f| Ok(b_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into()))
+				.map(|b_f| Ok(b_f.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into()))
 				.collect::<Result<Vec<T::Balance>, Error<T>>>()?;
 
 			let new_token_supply = token_supply.checked_sub(&amount).ok_or(Error::<T>::Math)?;
@@ -547,20 +529,23 @@ pub mod pallet {
 
 			// Ensure that for all tokens we have sufficient amount
 			for (index, asset_id) in assets.iter().enumerate() {
+				let amount_i = *amounts.get(index).ok_or(Error::<T>::IndexOutOfRange)?;
 				ensure!(
-					T::LpToken::balance(*asset_id, &Self::account_id(&pool_id)) >= amounts[index],
+					T::LpToken::balance(*asset_id, &Self::account_id(&pool_id)) >= amount_i,
 					Error::<T>::InsufficientFunds
 				);
 			}
 
 			for i in 0..n_coins {
-				if amounts_f[i] > zero {
+				let amount_f_i = *amounts_f.get(i).ok_or(Error::<T>::IndexOutOfRange)?;
+				let amount_i = *amounts.get(i).ok_or(Error::<T>::IndexOutOfRange)?;
+				if amount_f_i > zero {
 					Self::transfer_liquidity_from_pool(
 						&Self::account_id(&pool_id),
 						pool_id,
 						i,
 						who,
-						amounts[i],
+						amount_i,
 					)?;
 				}
 			}
@@ -614,25 +599,27 @@ pub mod pallet {
 					FixedU128::saturating_from_integer(b_u)
 				})
 				.collect();
-			let x = xp[i].checked_add(&dx_f).ok_or(Error::<T>::Math)?;
-			let dy_f = Self::get_y_out(dx_f, xp[i], xp[j]).ok_or(Error::<T>::Math)?;
+			let xp_i = *xp.get(i).ok_or(Error::<T>::IndexOutOfRange)?;
+			let xp_j = *xp.get(j).ok_or(Error::<T>::IndexOutOfRange)?;
+			let x = xp_i.checked_add(&dx_f).ok_or(Error::<T>::Math)?;
+			let dy_f = Self::get_y_out(dx_f, xp_i, xp_j).ok_or(Error::<T>::Math)?;
 
 			let fee_f: FixedU128 = pool.fee.into();
 			let dy_fee_f = dy_f.checked_mul(&fee_f).ok_or(Error::<T>::Math)?;
-			let dy_fee = dy_fee_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+			let dy_fee = dy_fee_f.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
 			let dy_f = dy_f.checked_sub(&dy_fee_f).ok_or(Error::<T>::Math)?;
 			ensure!(dy_f >= min_dy_f, Error::<T>::RequiredAmountNotReached);
 
-			let dy: Self::Balance = dy_f.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
-			let asset_id_i = assets[i];
-			let asset_id_j = assets[j];
+			let dy: Self::Balance = dy_f.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
+			let asset_id_i = *assets.get(i).ok_or(Error::<T>::IndexOutOfRange)?;
+			let asset_id_j = *assets.get(j).ok_or(Error::<T>::IndexOutOfRange)?;
 			PoolAssetBalance::<T>::mutate(pool_id, asset_id_i, |balance| -> DispatchResult {
-				*balance = x.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+				*balance = x.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
 				Ok(())
 			})?;
-			let bal_j = xp[j].checked_sub(&dy_f).ok_or(Error::<T>::Math)?;
+			let bal_j = xp_j.checked_sub(&dy_f).ok_or(Error::<T>::Math)?;
 			PoolAssetBalance::<T>::mutate(pool_id, asset_id_j, |balance| -> DispatchResult {
-				*balance = bal_j.checked_mul_int(1u64).ok_or(Error::<T>::Math)?.into();
+				*balance = bal_j.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
 				Ok(())
 			})?;
 
@@ -690,9 +677,11 @@ pub mod pallet {
 			let assets = assets.clone();
 
 			for (index, asset_id) in assets.iter().enumerate() {
-				let new_total_balance = total_balances[index]
-					.checked_sub(&admin_fees[index])
-					.ok_or(Error::<T>::Math)?;
+				let total_balance =
+					*total_balances.get(index).ok_or(Error::<T>::IndexOutOfRange)?;
+				let admin_fee = *admin_fees.get(index).ok_or(Error::<T>::IndexOutOfRange)?;
+				let new_total_balance =
+					total_balance.checked_sub(&admin_fee).ok_or(Error::<T>::Math)?;
 				PoolAssetTotalBalance::<T>::mutate(
 					pool_id,
 					asset_id,
@@ -745,17 +734,14 @@ pub mod pallet {
 						// We expect that PoolInfos have sequential keys.
 						// No PoolInfo can have key greater or equal to PoolCount
 						ensure!(maybe_pool_info.is_none(), Error::<T>::InconsistentStorage);
+						let lp_asset = T::CurrencyFactory::create()?;
 
-						*maybe_pool_info =
-							Some(ConstantProductPoolInfo { owner: who.clone(), fee });
+						*maybe_pool_info = Some(ConstantProductPoolInfo {
+							owner: who.clone(),
+							lp_token: lp_asset,
+							fee,
+						});
 
-						Ok(())
-					})?;
-
-					PoolLPAsset::<T>::try_mutate(pool_id, |lp_asset| -> DispatchResult {
-						ensure!(lp_asset.is_none(), Error::<T>::InconsistentStorage);
-						let asset = T::CurrencyFactory::create()?;
-						*lp_asset = Some(asset);
 						Ok(())
 					})?;
 
@@ -786,7 +772,9 @@ pub mod pallet {
 		}
 
 		/// Return pool information for given pool_id.
-		pub fn get_pool_info(pool_id: T::PoolId) -> Option<ConstantProductPoolInfo<T::AccountId>> {
+		pub fn get_pool_info(
+			pool_id: T::PoolId,
+		) -> Option<ConstantProductPoolInfo<T::AccountId, T::AssetId>> {
 			Pools::<T>::get(pool_id)
 		}
 
@@ -826,8 +814,9 @@ pub mod pallet {
 		) -> DispatchResult {
 			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
 			let assets = assets_pair.as_slice();
-			let asset_id = assets[destination_asset_index];
-			T::LpToken::transfer(asset_id, source, pool_account_id, amount, true)?;
+			let asset_id =
+				assets.get(destination_asset_index).ok_or(Error::<T>::IndexOutOfRange)?;
+			T::LpToken::transfer(*asset_id, source, pool_account_id, amount, true)?;
 			PoolAssetTotalBalance::<T>::mutate(
 				pool_id,
 				asset_id,
@@ -849,8 +838,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
 			let assets = assets_pair.as_slice();
-			let asset_id = assets[source_asset_index];
-			T::LpToken::transfer(asset_id, pool_account_id, destination, amount, true)?;
+			let asset_id = assets.get(source_asset_index).ok_or(Error::<T>::IndexOutOfRange)?;
+			T::LpToken::transfer(*asset_id, pool_account_id, destination, amount, true)?;
 
 			PoolAssetTotalBalance::<T>::mutate(
 				pool_id,
@@ -865,7 +854,7 @@ pub mod pallet {
 		}
 
 		pub fn account_id(pool_id: &T::PoolId) -> T::AccountId {
-			PALLET_ID.into_sub_account(pool_id)
+			T::PalletId::get().into_sub_account(pool_id)
 		}
 	}
 }

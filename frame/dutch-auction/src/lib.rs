@@ -27,7 +27,17 @@
 //! # DEX
 //! Currently this dutch auction does not tries to sell on external DEX.
 
-#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
 #![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(

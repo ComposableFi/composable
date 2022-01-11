@@ -8,12 +8,12 @@
 use std::sync::Arc;
 
 use common::{AccountId, AccountIndex, Balance};
-use picasso_runtime::opaque::Block;
 pub use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_runtime::traits::Block;
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
@@ -26,14 +26,15 @@ pub struct FullDeps<C, P> {
 }
 
 /// Instantiate all full RPC extensions.
-pub fn create<C, P>(deps: FullDeps<C, P>) -> jsonrpc_core::IoHandler<sc_rpc::Metadata>
+pub fn create<C, P, B>(deps: FullDeps<C, P>) -> jsonrpc_core::IoHandler<sc_rpc::Metadata>
 where
-	C: ProvideRuntimeApi<Block>,
-	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
+	B: Block,
+	C: ProvideRuntimeApi<B>,
+	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
 	C: Send + Sync + 'static,
-	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, AccountIndex>,
-	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	C::Api: BlockBuilder<Block>,
+	C::Api: substrate_frame_rpc_system::AccountNonceApi<B, AccountId, AccountIndex>,
+	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<B, Balance>,
+	C::Api: BlockBuilder<B>,
 	P: TransactionPool + 'static,
 {
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};

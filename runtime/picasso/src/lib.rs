@@ -1,4 +1,15 @@
-#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		// // impl_runtime_apis will generate code that contains a `panic!`. Implementations should still avoid using panics.
+		// clippy::panic
+	)
+)]
 #![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
@@ -15,7 +26,6 @@ use common::{
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
 	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
-use composable_traits::currency::PriceableAsset;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -89,9 +99,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
-	//   the compatible custom types.
-	spec_version: 200,
+	spec_version: 2000,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -376,8 +384,6 @@ where
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-			#[cfg(feature = "develop")]
-			crowdloan_rewards::PrevalidateAssociation::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -418,24 +424,6 @@ parameter_types! {
 	pub const MaxHistory: u32 = 20;
 }
 
-#[cfg(feature = "develop")]
-impl oracle::Config for Runtime {
-	type Currency = Balances;
-	type Event = Event;
-	type AuthorityId = oracle::crypto::BathurstStId;
-	type AssetId = CurrencyId;
-	type PriceValue = u128;
-	type StakeLock = StakeLock;
-	type MinStake = MinStake;
-	type StalePrice = StalePrice;
-	type AddOracle = EnsureRootOrHalfCouncil;
-	type SlashAmount = SlashAmount;
-	type MaxAnswerBound = MaxAnswerBound;
-	type MaxAssetsCount = MaxAssetsCount;
-	type MaxHistory = MaxHistory;
-	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
-}
-
 // Parachain stuff.
 // See https://github.com/paritytech/cumulus/blob/polkadot-v0.9.8/polkadot-parachains/rococo/src/lib.rs for details.
 parameter_types! {
@@ -469,7 +457,6 @@ impl authorship::Config for Runtime {
 	type EventHandler = (CollatorSelection,);
 }
 
-//TODO set
 parameter_types! {
 	pub const Period: u32 = 6 * HOURS;
 	pub const Offset: u32 = 0;
@@ -546,25 +533,6 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
-}
-
-parameter_types! {
-	pub const LiquidRewardId: PalletId = PalletId(*b"Liquided");
-	pub const CrowdloanCurrencyId: CurrencyId = CurrencyId::CROWD_LOAN;
-	/// total contributed to our crowdloan.
-	pub const TokenTotal: Balance = 200_000_000_000_000_000;
-}
-
-impl crowdloan_bonus::Config for Runtime {
-	type Event = Event;
-	type LiquidRewardId = LiquidRewardId;
-	type CurrencyId = CrowdloanCurrencyId;
-	type TokenTotal = TokenTotal;
-	type JumpStart = EnsureRootOrHalfCouncil;
-	type Currency = Tokens;
-	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type WeightInfo = weights::crowdloan_bonus::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -704,169 +672,11 @@ impl democracy::Config for Runtime {
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	pub const MaxStrategies: usize = 255;
-	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
-	pub CreationDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
-	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
-	pub RentPerBlock: Balance = CurrencyId::PICA.milli();
-	pub const VaultMinimumDeposit: Balance = 10_000;
-	pub const VaultMinimumWithdrawal: Balance = 10_000;
-	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
-	pub const TombstoneDuration: BlockNumber = DAYS * 7;
-}
-
-#[cfg(feature = "develop")]
-impl vault::Config for Runtime {
-	type Event = Event;
-	type Balance = Balance;
-	type CurrencyFactory = Factory;
-	type AssetId = CurrencyId;
-	type Currency = Assets;
-	type Convert = sp_runtime::traits::ConvertInto;
-	type PalletId = VaultPalletId;
-	type MaxStrategies = MaxStrategies;
-	type CreationDeposit = CreationDeposit;
-	type ExistentialDeposit = VaultExistentialDeposit;
-	type RentPerBlock = RentPerBlock;
-	type NativeCurrency = Balances;
-	type MinimumDeposit = VaultMinimumDeposit;
-	type MinimumWithdrawal = VaultMinimumWithdrawal;
-	type TombstoneDuration = TombstoneDuration;
-	type VaultId = u64;
-	type WeightInfo = weights::vault::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-	pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
-}
-
-#[cfg(feature = "develop")]
-impl currency_factory::Config for Runtime {
-	type Event = Event;
-	type DynamicCurrencyId = CurrencyId;
-	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
-}
-
-#[cfg(feature = "develop")]
-impl assets_registry::Config for Runtime {
-	type Event = Event;
-	type LocalAssetId = CurrencyId;
-	type ForeignAssetId = composable_traits::assets::XcmAssetLocation;
-	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
-	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
-	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
-}
-
-#[cfg(feature = "develop")]
-impl governance_registry::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type WeightInfo = ();
-}
-
-#[cfg(feature = "develop")]
-impl assets::Config for Runtime {
-	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = Factory;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
-	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrHalfCouncil;
-	type GovernanceRegistry = GovernanceRegistry;
-}
-
-parameter_types! {
-	  pub const InitialPayment: Perbill = Perbill::from_percent(50);
-	  pub const VestingStep: BlockNumber = 7 * DAYS;
-	  pub const Prefix: &'static [u8] = b"picasso-";
-}
-
-#[cfg(feature = "develop")]
-impl crowdloan_rewards::Config for Runtime {
-	type Event = Event;
-	type Balance = Balance;
-	type Currency = Assets;
-	type AdminOrigin = EnsureRootOrHalfCouncil;
-	// TODO(hussein-aitlahcen): should be the proxy account
-	type AssociationOrigin = EnsureRootOrHalfCouncil;
-	type Convert = sp_runtime::traits::ConvertInto;
-	type RelayChainAccountId = [u8; 32];
-	type InitialPayment = InitialPayment;
-	type VestingStep = VestingStep;
-	type Prefix = Prefix;
-	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
-}
-
-#[cfg(feature = "develop")]
-parameter_types! {
-	pub const MaxVestingSchedule: u32 = 2;
-	pub const MinVestedTransfer: u64 = 1_000_000;
-}
-
-#[cfg(feature = "develop")]
-impl vesting::Config for Runtime {
-	type Currency = Tokens;
-	type Event = Event;
-	type MaxVestingSchedules = MaxVestingSchedule;
-	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = system::EnsureSigned<AccountId>;
-	type WeightInfo = ();
-}
-
-#[cfg(feature = "develop")]
-parameter_types! {
-	pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
-	pub const MinReward: Balance = 1_000_000;
-	pub const Stake: Balance = 10_000;
-}
-
-#[cfg(feature = "develop")]
-impl pallet_bonded_finance::Config for Runtime {
-	type AdminOrigin = EnsureRoot<AccountId>;
-	type BondOfferId = u64;
-	type Convert = sp_runtime::traits::ConvertInto;
-	type Currency = Tokens;
-	type Event = Event;
-	type MinReward = MinReward;
-	type NativeCurrency = Balances;
-	type PalletId = BondedFinanceId;
-	type Stake = Stake;
-	type Vesting = Vesting;
-}
-
-parameter_types! {
-	pub const DutchAuctionId: PalletId = PalletId(*b"dtch_ctn");
-}
-
-impl composable_traits::defi::DeFiComposableConfig for Runtime {
-	type MayBeAssetId = CurrencyId;
-	type Balance = Balance;
-}
-
-#[cfg(feature = "develop")]
-impl pallet_dutch_auction::Config for Runtime {
-	type NativeCurrency = Balances;
-	type Event = Event;
-	type MultiCurrency = Assets;
-	type PalletId = DutchAuctionId;
-	type WeightToFee = WeightToFee;
-	type OrderId = u128;
-	type UnixTime = Timestamp;
-	type WeightInfo = ();
-}
-
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
-		#[cfg(feature = "develop")]
-		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false
-		}
 		!matches!(
 			call,
 			Call::Balances(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_)
@@ -874,16 +684,7 @@ impl Contains<Call> for BaseCallFilter {
 	}
 }
 
-#[cfg(feature = "develop")]
-impl call_filter::Config for Runtime {
-	type Event = Event;
-	type UpdateOrigin = EnsureRoot<AccountId>;
-	type Hook = ();
-	type WeightInfo = ();
-}
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
-#[cfg(not(feature = "develop"))] // https://github.com/paritytech/substrate/issues/10286
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -925,70 +726,7 @@ construct_runtime!(
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
-		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 50,
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
-	}
-);
-
-#[cfg(feature = "develop")]
-construct_runtime!(
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = opaque::Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
-	{
-		System: system::{Pallet, Call, Config, Storage, Event<T>} = 0,
-		Timestamp: timestamp::{Pallet, Call, Storage, Inherent} = 1,
-		Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,
-		RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage} = 3,
-		TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
-		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
-		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
-		Identity: identity::{Call, Event<T>, Pallet, Storage} = 7,
-		Multisig: multisig::{Call, Event<T>, Pallet, Storage} = 8,
-
-		// Parachains stuff
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
-		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 11,
-
-		// Collator support. the order of these 5 are important and shall not change.
-		Authorship: authorship::{Pallet, Call, Storage} = 20,
-		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
-		Session: session::{Pallet, Call, Storage, Event, Config<T>} = 22,
-		Aura: aura::{Pallet, Storage, Config<T>} = 23,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 24,
-
-		// Governance utilities
-		Council: collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 30,
-		CouncilMembership: membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 31,
-		Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 32,
-		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
-		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
-		Utility: utility::{Pallet, Call, Event} = 35,
-
-		// XCM helpers.
-		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
-		RelayerXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
-		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
-		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
-		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 44,
-		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 45,
-
-
-		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 50,
-		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
-		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 52,
-		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
-		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
-		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
-		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
-		Assets: assets::{Pallet, Call, Storage} = 57,
-		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 58,
-		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 59,
-		BondedFinance: pallet_bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
-		DutchAuction: pallet_dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
-
-		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
 
@@ -997,20 +735,6 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
-#[cfg(feature = "develop")]
-/// The SignedExtension to the basic transaction logic.
-pub type SignedExtra = (
-	system::CheckSpecVersion<Runtime>,
-	system::CheckTxVersion<Runtime>,
-	system::CheckGenesis<Runtime>,
-	system::CheckEra<Runtime>,
-	system::CheckNonce<Runtime>,
-	system::CheckWeight<Runtime>,
-	transaction_payment::ChargeTransactionPayment<Runtime>,
-	crowdloan_rewards::PrevalidateAssociation<Runtime>,
-);
-
-#[cfg(not(feature = "develop"))]
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	system::CheckSpecVersion<Runtime>,
@@ -1157,19 +881,9 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, scheduler, Scheduler);
 			list_benchmark!(list, extra, democracy, Democracy);
 			list_benchmark!(list, extra, collective, Council);
-			list_benchmark!(list, extra, crowdloan_bonus, LiquidCrowdloan);
 			list_benchmark!(list, extra, utility, Utility);
 			list_benchmark!(list, extra, identity, Identity);
 			list_benchmark!(list, extra, multisig, Multisig);
-
-			#[cfg(feature = "develop")]
-			{
-				list_benchmark!(list, extra, vault, Vault);
-				list_benchmark!(list, extra, pallet_bonded_finance, BondedFinance);
-				list_benchmark!(list, extra, oracle, Oracle);
-				list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
-				list_benchmark!(list, extra, dutch_auction, DutchAuction);
-			}
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1214,19 +928,9 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, scheduler, Scheduler);
 			add_benchmark!(params, batches, democracy, Democracy);
 			add_benchmark!(params, batches, collective, Council);
-			add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
 			add_benchmark!(params, batches, utility, Utility);
 			add_benchmark!(params, batches, identity, Identity);
 			add_benchmark!(params, batches, multisig, Multisig);
-
-			#[cfg(feature ="develop")]
-			{
-				add_benchmark!(params, batches, vault, Vault);
-				add_benchmark!(params, batches, pallet_bonded_finance, BondedFinance);
-				add_benchmark!(params, batches, oracle, Oracle);
-				add_benchmark!(params, batches, crowdloan_rewards, CrowdloanRewards);
-				add_benchmark!(params, batches, dutch_auction, DutchAuction);
-			}
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

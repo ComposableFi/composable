@@ -1,6 +1,6 @@
 FROM composablefi/rust:latest
 
-ARG VERSION=v1.0.9
+ARG VERSION
 
 USER root
 
@@ -23,8 +23,6 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl "https://storage.googleapis.com/composable-binaries/community-releases/${VERSION}/composable-${VERSION}.tar.gz" | tar -xz
     
 RUN chmod +x target/release/composable && mv target/release/composable /usr/local/bin
-
-RUN composable --version
 
 RUN useradd -m -u 1001 -U -s /bin/sh -d /composable composable && \
     mkdir -p /composable/.local/share/local_testnet && \

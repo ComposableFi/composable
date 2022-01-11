@@ -66,8 +66,6 @@ smallvec = "1.6.1"
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false, optional = true }
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false, optional = true }
 
-crowdloan-bonus = { package = "pallet-crowdloan-bonus", path = '../../frame/crowdloan-bonus', default-features = false }
-
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false, optional = true }
@@ -136,7 +134,6 @@ std = [
     "authorship/std",
     "balances/std",
     "randomness-collective-flip/std",
-    "crowdloan-bonus/std",
     "timestamp/std",
     "session/std",
     "sudo/std",
@@ -197,7 +194,6 @@ runtime-benchmarks = [
     "sp-runtime/runtime-benchmarks",
     "xcm-builder/runtime-benchmarks",
     "indices/runtime-benchmarks",
-    "crowdloan-bonus/runtime-benchmarks",
     "membership/runtime-benchmarks",
     "treasury/runtime-benchmarks",
     "scheduler/runtime-benchmarks",

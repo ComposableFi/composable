@@ -149,8 +149,20 @@
 //!
 //! - `cancel_referendum` - Removes a referendum.
 //! - `cancel_queued` - Cancels a proposal that is queued for enactment.
-//! - `clear_public_proposal` - Removes all public proposals.
 
+//!
+//! - `clear_public_proposal` - Removes all public proposals.
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
 #![recursion_limit = "256"]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::type_complexity)]
@@ -437,11 +449,13 @@ pub mod pallet {
 	/// The number of (public) proposals that have been made so far.
 	#[pallet::storage]
 	#[pallet::getter(fn public_prop_count)]
-	pub type PublicPropCount<T> = StorageValue<_, PropIndex, ValueQuery>;
+	pub type PublicPropCount<T> = StorageValue<_, PropIndex, OptionQuery>;
 
 	/// The public proposals. Unsorted. The second item is the proposal's hash.
 	#[pallet::storage]
 	#[pallet::getter(fn public_props)]
+	// Usage of ValueQuery was audited by parity and allowed for now.
+	#[allow(clippy::disallowed_type)]
 	pub type PublicProps<T: Config> = StorageValue<
 		_,
 		Vec<(PropIndex, ProposalId<T::Hash, T::AssetId>, T::AccountId)>,
@@ -471,12 +485,16 @@ pub mod pallet {
 	/// The next free referendum index, aka the number of referenda started so far.
 	#[pallet::storage]
 	#[pallet::getter(fn referendum_count)]
+	// Usage of ValueQuery was audited by parity and allowed for now.
+	#[allow(clippy::disallowed_type)]
 	pub type ReferendumCount<T> = StorageValue<_, ReferendumIndex, ValueQuery>;
 
 	/// The lowest referendum index representing an unbaked referendum. Equal to
 	/// `ReferendumCount` if there isn't a unbaked referendum.
 	#[pallet::storage]
 	#[pallet::getter(fn lowest_unbaked)]
+	// Usage of ValueQuery was audited by parity and allowed for now.
+	#[allow(clippy::disallowed_type)]
 	pub type LowestUnbaked<T> = StorageValue<_, ReferendumIndex, ValueQuery>;
 
 	/// Information concerning any given referendum.
@@ -497,6 +515,8 @@ pub mod pallet {
 	/// TWOX-NOTE: SAFE as `AccountId`s are crypto hashes anyway and `AssetId` is not
 	/// user-controlled data.
 	#[pallet::storage]
+	// Usage of ValueQuery was audited by parity and allowed for now.
+	#[allow(clippy::disallowed_type)]
 	pub type VotingOf<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
@@ -518,6 +538,8 @@ pub mod pallet {
 	// TODO: There should be any number of tabling origins, not just public and "external"
 	// (council). https://github.com/paritytech/substrate/issues/5322
 	#[pallet::storage]
+	// Usage of ValueQuery was audited by parity and allowed for now.
+	#[allow(clippy::disallowed_type)]
 	pub type LastTabledWasExternal<T> = StorageValue<_, bool, ValueQuery>;
 
 	/// The referendum to be tabled whenever it would be valid to table an external proposal.
@@ -540,6 +562,8 @@ pub mod pallet {
 
 	/// Record of all proposals that have been subject to emergency cancellation.
 	#[pallet::storage]
+	// Usage of ValueQuery was audited by parity and allowed for now.
+	#[allow(clippy::disallowed_type)]
 	pub type Cancellations<T: Config> =
 		StorageMap<_, Identity, ProposalId<T::Hash, T::AssetId>, bool, ValueQuery>;
 
@@ -709,7 +733,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			ensure!(value >= T::MinimumDeposit::get(), Error::<T>::ValueLow);
 			let id = ProposalId { hash: proposal_hash, asset_id };
-			let index = Self::public_prop_count();
+			let index = Self::public_prop_count().unwrap_or(0);
 			let real_prop_count = PublicProps::<T>::decode_len().unwrap_or(0) as u32;
 			let max_proposals = T::MaxProposals::get();
 			ensure!(real_prop_count < max_proposals, Error::<T>::TooManyProposals);
@@ -1512,6 +1536,8 @@ impl<T: Config> Pallet<T> {
 			(who, status.proposal_id.asset_id),
 			|voting| -> DispatchResult {
 				if let Voting::Direct { ref mut votes, delegations, .. } = voting {
+					// `binary_search_by_key` is guaranteed to provide a valid slice index.
+					#[allow(clippy::indexing_slicing)]
 					match votes.binary_search_by_key(&ref_index, |i| i.0) {
 						Ok(i) => {
 							// Shouldn't be possible to fail, but we handle it gracefully.
@@ -1563,18 +1589,20 @@ impl<T: Config> Pallet<T> {
 				let i = votes
 					.binary_search_by_key(&ref_index, |i| i.0)
 					.map_err(|_| Error::<T>::NotVoter)?;
+				let vote = votes.get(i).ok_or(Error::<T>::NotVoter)?;
+
 				match info {
 					Some(ReferendumInfo::Ongoing(mut status)) => {
 						ensure!(matches!(scope, UnvoteScope::Any), Error::<T>::NoPermission);
 						// Shouldn't be possible to fail, but we handle it gracefully.
-						status.tally.remove(votes[i].1).ok_or(ArithmeticError::Underflow)?;
-						if let Some(approve) = votes[i].1.as_standard() {
+						status.tally.remove(vote.1).ok_or(ArithmeticError::Underflow)?;
+						if let Some(approve) = vote.1.as_standard() {
 							status.tally.reduce(approve, *delegations);
 						}
 						ReferendumInfoOf::<T>::insert(ref_index, ReferendumInfo::Ongoing(status));
 					},
 					Some(ReferendumInfo::Finished { end, approved }) => {
-						if let Some((lock_periods, balance)) = votes[i].1.locked_if(approved) {
+						if let Some((lock_periods, balance)) = vote.1.locked_if(approved) {
 							let unlock_at = end + T::VoteLockingPeriod::get() * lock_periods.into();
 							let now = frame_system::Pallet::<T>::block_number();
 							if now < unlock_at {
@@ -1984,7 +2012,9 @@ impl<T: Config> Pallet<T> {
 		let key = <Preimages<T>>::hashed_key_for(proposal_id);
 		let bytes = sp_io::storage::read(&key, &mut buf, 0).ok_or(Error::<T>::NotImminent)?;
 		// The value may be smaller that 1 byte.
-		let mut input = &buf[0..buf.len().min(bytes as usize)];
+		let mut input = buf
+			.get(0..buf.len().min(bytes as usize))
+			.ok_or(DispatchError::Other("indexing out of bounds"))?;
 
 		match input.read_byte() {
 			Ok(0) => Ok(()), // PreimageStatus::Missing is variant 0
@@ -2014,7 +2044,9 @@ impl<T: Config> Pallet<T> {
 		let key = <Preimages<T>>::hashed_key_for(proposal_id);
 		let bytes = sp_io::storage::read(&key, &mut buf, 0).ok_or(Error::<T>::PreimageMissing)?;
 		// The value may be smaller that 6 bytes.
-		let mut input = &buf[0..buf.len().min(bytes as usize)];
+		let mut input = buf
+			.get(0..buf.len().min(bytes as usize))
+			.ok_or(DispatchError::Other("indexing out of bounds"))?;
 
 		match input.read_byte() {
 			Ok(1) => (), // Check that input exists and is second variant.
@@ -2099,7 +2131,7 @@ fn decode_compact_u32_at(key: &[u8]) -> Option<u32> {
 	let mut buf = [0u8; 5];
 	let bytes = sp_io::storage::read(key, &mut buf, 0)?;
 	// The value may be smaller than 5 bytes.
-	let mut input = &buf[0..buf.len().min(bytes as usize)];
+	let mut input = buf.get(0..buf.len().min(bytes as usize))?;
 	match codec::Compact::<u32>::decode(&mut input) {
 		Ok(c) => Some(c.0),
 		Err(_) => {

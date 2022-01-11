@@ -1,5 +1,5 @@
 [package]
-name = "composable"
+name = "composable-node"
 version = '1.0.9'
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
@@ -9,9 +9,6 @@ edition = "2018"
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
-[[bin]]
-name = "composable"
-
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.0.0" }
 jsonrpc-core = "18"
@@ -20,9 +17,9 @@ serde = { version = "1.0.119", features = ["derive"] }
 structopt = "0.3.8"
 
 # Local Dependencies
-picasso-runtime = { path = "../runtime/picasso"  }
-composable-runtime = { path = "../runtime/composable" }
-dali-runtime = { path = "../runtime/dali" }
+picasso-runtime = { path = "../runtime/picasso" }
+composable-runtime = { path = "../runtime/composable", optional = true }
+dali-runtime = { path = "../runtime/dali", optional = true }
 common = { path = "../runtime/common"  }
 
 # FRAME Dependencies
@@ -94,8 +91,10 @@ hex = "0.4.3"
 
 [features]
 default = []
-runtime-benchmarks = ["picasso-runtime/runtime-benchmarks", "composable-runtime/runtime-benchmarks"]
+runtime-benchmarks = ["picasso-runtime/runtime-benchmarks", "composable-runtime/runtime-benchmarks", "dali-runtime/runtime-benchmarks"]
 ocw = []
+dali = ["dali-runtime"]
+composable = ["composable-runtime"]
 
 [package.metadata.cargo-udeps.ignore]
 normal = ["pallet-bonded-finance"]

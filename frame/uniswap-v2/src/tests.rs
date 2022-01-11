@@ -36,9 +36,8 @@ fn add_remove_liquidity() {
 		let pool_id = p.unwrap();
 		let pool = ConstantProductAmm::get_pool_info(pool_id);
 		assert!(pool.is_some());
-		let pool_lp_asset = ConstantProductAmm::pool_lp_asset(pool_id);
-		assert!(pool_lp_asset.is_some());
-		let pool_lp_asset = pool_lp_asset.unwrap();
+		let pool = pool.unwrap();
+		let pool_lp_asset = pool.lp_token;
 		// 1 USDC = 1 USDT
 
 		// Add liquidity from ALICE's account to pool
@@ -145,10 +144,9 @@ fn exchange_test() {
 		assert_ok!(&p);
 		let pool_id = p.unwrap();
 		let pool = ConstantProductAmm::get_pool_info(pool_id);
-		let pool_lp_asset = ConstantProductAmm::pool_lp_asset(pool_id);
 		assert!(pool.is_some());
-		assert!(pool_lp_asset.is_some());
-		let pool_lp_asset = pool_lp_asset.unwrap();
+		let pool = pool.unwrap();
+		let pool_lp_asset = pool.lp_token;
 		// 1 USDC = 1 USDT
 		// Add liquidity from ALICE's account to pool
 		let amounts = vec![130000u128, 130000u128];

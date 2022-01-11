@@ -1,6 +1,16 @@
 //! Lending pallet
-#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![cfg_attr(
+	not(any(test, feature = "runtime-benchmarks")),
+	warn(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
+#![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -44,13 +54,22 @@ pub mod pallet {
 	use crate::{models::BorrowerData, weights::WeightInfo};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
+<<<<<<< HEAD
 		currency::{BalanceLike, CurrencyFactory, PriceableAsset},
 		defi::{DeFiComposableConfig, DeFiEngine, MoreThanOneFixedU128, Rate, ZeroToOneFixedU128, Sell, CurrencyPair},
+=======
+		currency::CurrencyFactory,
+		defi::Rate,
+>>>>>>> dz/oracle-api
 		lending::{
 			math::*, BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig,
 			UpdateInput,
 		},
 		liquidation::Liquidation,
+<<<<<<< HEAD
+=======
+		loans::{DurationSeconds, Timestamp},
+>>>>>>> dz/oracle-api
 		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
 		time::{DurationSeconds, Timestamp, SECONDS_PER_YEAR_NAIVE},
@@ -77,7 +96,7 @@ pub mod pallet {
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
 		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128,
+		ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128,
 		KeyTypeId as CryptoKeyTypeId, Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec, vec::Vec};
@@ -164,7 +183,36 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 		>;
 
+<<<<<<< HEAD
 		type CurrencyFactory: CurrencyFactory<<Self as DeFiComposableConfig>::MayBeAssetId>;
+=======
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
+		type AssetId: FullCodec
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ TypeInfo;
+
+		type Balance: Default
+			+ Parameter
+			+ Codec
+			+ Copy
+			+ Ord
+			+ CheckedAdd
+			+ CheckedSub
+			+ CheckedMul
+			+ SaturatingSub
+			+ AtLeast32BitUnsigned
+			+ From<u64> // at least 64 bit
+			+ Zero
+			+ FixedPointOperand
+			+ Into<LiftedFixedBalance> // integer part not more than bits in this
+			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
+			  // bit
+>>>>>>> dz/oracle-api
 
 		/// vault owned - can transfer, cannot mint
 		type Currency: Transfer<
@@ -197,7 +245,75 @@ pub mod pallet {
 			>;
 
 		type Liquidation: Liquidation<
+<<<<<<< HEAD
 			MayBeAssetId = Self::MayBeAssetId,
+=======
+			AssetId = Self::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+			GroupId = Self::GroupId,
+		>;
+		type UnixTime: UnixTime;
+		type MaxLendingCount: Get<u32>;
+		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
+		type WeightInfo: WeightInfo;
+		type GroupId: FullCodec + Default + PartialEq + Clone + Debug + TypeInfo;
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait Config:
+		CreateSignedTransaction<Call<Self>> + frame_system::Config + pallet_oracle::Config
+	{
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Oracle: Oracle<AssetId = <Self as Config>::AssetId, Balance = Self::Balance>;
+		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter + From<u64>;
+		type Vault: StrategicVault<
+			VaultId = Self::VaultId,
+			AssetId = <Self as Config>::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+		>;
+
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
+		type AssetId: FullCodec
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ From<u128>
+			+ Debug
+			+ Default
+			+ TypeInfo;
+
+		type Balance: Default
+			+ Parameter
+			+ Codec
+			+ Copy
+			+ Ord
+			+ CheckedAdd
+			+ CheckedSub
+			+ CheckedMul
+			+ SaturatingSub
+			+ AtLeast32BitUnsigned
+			+ From<u64> // at least 64 bit
+			+ Zero
+			+ FixedPointOperand
+			+ Into<LiftedFixedBalance> // integer part not more than bits in this
+			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
+			  // bit
+
+		/// vault owned - can transfer, cannot mint
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
+
+		/// market owned - debt token can be minted
+		type MarketDebtCurrency: Transfer<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
+			+ Mutate<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
+			+ MutateHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>
+			+ InspectHold<Self::AccountId, Balance = u128, AssetId = <Self as Config>::AssetId>;
+
+		type Liquidation: Liquidation<
+			AssetId = <Self as Config>::AssetId,
+>>>>>>> dz/oracle-api
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 			LiquidationStrategyId = Self::LiquidationStrategyId,
@@ -307,6 +423,7 @@ pub mod pallet {
 		RepayAmountMustBeGraterThanZero,
 		ExceedLendingCount,
 		LiquidationFailed,
+		BorrowerDataCalculationFailed,
 	}
 
 	#[pallet::event]
@@ -754,6 +871,7 @@ pub mod pallet {
 			account: &<Self as DeFiEngine>::AccountId,
 		) -> Result<(), DispatchError> {
 			if Self::should_liquidate(market_id, account)? {
+<<<<<<< HEAD
 				
 				let market = Self::get_market(market_id)?;
 				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
@@ -769,6 +887,12 @@ pub mod pallet {
 				T::Liquidation::liquidate(&source_target_account, sell, market.liquidators)?;	
 			} 
 			Ok(())
+=======
+				Err(DispatchError::Other("TODO: work happens in other branch"))
+			} else {
+				Ok(())
+			}
+>>>>>>> dz/oracle-api
 		}
 
 		pub(crate) fn initialize_block(
@@ -828,6 +952,10 @@ pub mod pallet {
 				} else {
 					errors.iter().for_each(|e| {
 						if let Err(e) = e {
+							#[cfg(test)]
+							{
+								panic!("test failed with {:?}", e);
+							}
 							log::error!(
 								"This should never happen, could not initialize block!!! {:#?} {:#?}",
 								block_number,
@@ -942,17 +1070,25 @@ pub mod pallet {
 			}
 
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-			let borrow_limit_value = Self::get_borrow_limit(market_id, debt_owner)?;
+
+			let borrow_limit = Self::get_borrow_limit(market_id, debt_owner)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, amount_to_borrow)?;
+			dbg!("{:?}", borrow_limit);
+			dbg!("{:?}", amount_to_borrow);
+			dbg!("{:?}", amount_to_borrow);
 			ensure!(
-				borrow_limit_value >= borrow_amount_value,
+				borrow_limit >= borrow_amount_value,
 				Error::<T>::NotEnoughCollateralToBorrowAmount
 			);
-
+			dbg!("{:?}", <T as Config>::Currency::balance(borrow_asset, market_account));
 			ensure!(
-				<T as Config>::Currency::can_withdraw(asset_id, market_account, amount_to_borrow)
-					.into_result()
-					.is_ok(),
+				<T as Config>::Currency::can_withdraw(
+					borrow_asset,
+					market_account,
+					amount_to_borrow
+				)
+				.into_result()
+				.is_ok(),
 				Error::<T>::NotEnoughBorrowAsset,
 			);
 			ensure!(
@@ -1287,7 +1423,7 @@ pub mod pallet {
 				DebtMarkets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
 			let account_debt = DebtIndex::<T>::get(market_id, account);
-
+			dbg!("{:?}", account_debt);
 			match account_debt {
 				Some(account_interest_index) => {
 					let principal = T::MarketDebtCurrency::balance_on_hold(debt_asset_id, account);
@@ -1338,7 +1474,7 @@ pub mod pallet {
 				let borrower = Self::create_borrower_data(market_id, account)?;
 				Ok(borrower
 					.borrow_for_collateral()
-					.map_err(|_| Error::<T>::NotEnoughCollateralToBorrowAmount)?
+					.map_err(|_| Error::<T>::BorrowerDataCalculationFailed)?
 					.checked_mul_int(1_u64)
 					.ok_or(ArithmeticError::Overflow)?
 					.into())

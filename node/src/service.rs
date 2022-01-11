@@ -43,8 +43,10 @@ impl sc_executor::NativeExecutionDispatch for PicassoExecutor {
 	}
 }
 
+#[cfg(feature = "composable")]
 pub struct ComposableExecutor;
 
+#[cfg(feature = "composable")]
 impl sc_executor::NativeExecutionDispatch for ComposableExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
@@ -57,8 +59,10 @@ impl sc_executor::NativeExecutionDispatch for ComposableExecutor {
 	}
 }
 
+#[cfg(feature = "dali")]
 pub struct DaliExecutor;
 
+#[cfg(feature = "dali")]
 impl sc_executor::NativeExecutionDispatch for DaliExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
@@ -88,9 +92,20 @@ pub fn new_chain_ops(
 	sc_service::Error,
 > {
 	let components = match config.chain_spec.id() {
-		"composable" => {
+		#[cfg(feature = "composable")]
+		"composable" | "composable-dev" => {
 			let components =
 				new_partial::<composable_runtime::RuntimeApi, ComposableExecutor>(config)?;
+			(
+				Arc::new(Client::from(components.client)),
+				components.backend,
+				components.import_queue,
+				components.task_manager,
+			)
+		},
+		#[cfg(feature = "dali")]
+		"dali" | "dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" => {
+			let components = new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(config)?;
 			(
 				Arc::new(Client::from(components.client)),
 				components.backend,
@@ -203,25 +218,28 @@ pub async fn start_node(
 ) -> sc_service::error::Result<TaskManager> {
 	let task_manager =
 		match config.chain_spec.id() {
-			"composable" => crate::service::start_node_impl::<
+			#[cfg(feature = "composable")]
+			"composable" | "composable-dev" => crate::service::start_node_impl::<
 				composable_runtime::RuntimeApi,
 				ComposableExecutor,
 			>(config, polkadot_config, id)
 			.await?,
-			"dali-chachacha" | "dali-rococo" =>
-				crate::service::start_node_impl::<dali_runtime::RuntimeApi, PicassoExecutor>(
+			#[cfg(feature = "dali")]
+			"dali" | "dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" =>
+				crate::service::start_node_impl::<dali_runtime::RuntimeApi, DaliExecutor>(
 					config,
 					polkadot_config,
 					id,
 				)
 				.await?,
-			_ =>
+			"picasso" | "picasso-dev" =>
 				crate::service::start_node_impl::<picasso_runtime::RuntimeApi, PicassoExecutor>(
 					config,
 					polkadot_config,
 					id,
 				)
 				.await?,
+			_ => panic!("Unknown chain_id: {}", config.chain_spec.id()),
 		};
 
 	Ok(task_manager)

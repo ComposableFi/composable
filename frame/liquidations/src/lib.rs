@@ -1,5 +1,15 @@
-#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
+#![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -182,6 +192,7 @@ pub mod pallet {
 		type OrderId = T::OrderId;
 
 		fn liquidate(
+<<<<<<< HEAD
 			from_to: &Self::AccountId,
 			order: Sell<Self::MayBeAssetId, Self::Balance>,
 			configuration: Vec<Self::LiquidationStrategyId>,
@@ -216,6 +227,17 @@ pub mod pallet {
 			}
 
 			Err(Error::<T>::NoLiquidationEngineFound.into())
+=======
+			_source_account: &Self::AccountId,
+			_source_asset_id: Self::AssetId,
+			_source_asset_price: PriceStructure<Self::GroupId, Self::Balance>,
+			_target_asset_id: Self::AssetId,
+			_target_account: &Self::AccountId,
+			_total_amount: Self::Balance,
+		) -> Result<Self::LiquidationId, DispatchError> {
+			Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
+			Err(DispatchError::Other("todo"))
+>>>>>>> dz/oracle-api
 		}
 	}
 }
