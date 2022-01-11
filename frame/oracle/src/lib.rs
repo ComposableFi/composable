@@ -30,14 +30,8 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-<<<<<<< HEAD
-		defi::CurrencyPair,
-		math::SafeArithmetic,
-		currency::PriceableAsset,
-=======
 		currency::LocalAssets,
 		math::SafeArithmetic,
->>>>>>> dz/oracle-api
 		oracle::{Oracle, Price as LastPrice},
 	};
 	use core::ops::{Div, Mul};
@@ -68,12 +62,8 @@ pub mod pallet {
 		
 		offchain::{http, Duration},
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
-<<<<<<< HEAD
-		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug, FixedU128, FixedPointNumber,
-=======
 		AccountId32, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId, PerThing, Percent,
 		RuntimeDebug,
->>>>>>> dz/oracle-api
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec, vec::Vec};
 
@@ -403,12 +393,6 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			Self::get_twap(of, weighting)
 		}
-<<<<<<< HEAD
-		
-		fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<FixedU128, DispatchError> {
-			let base : u128 = Self::get_price(pair.base, (10^12u32).into())?.price.into();
-			let quote : u128 = Self::get_price(pair.quote, (10^12u32).into())?.price.into();
-=======
 
 		fn get_ratio(
 			pair: composable_traits::defi::CurrencyPair<Self::AssetId>,
@@ -421,7 +405,6 @@ pub mod pallet {
 				Self::get_price(pair.quote, (10 ^ T::LocalAssets::decimals(pair.base)?).into())?
 					.price
 					.into();
->>>>>>> dz/oracle-api
 			let base = FixedU128::saturating_from_integer(base);
 			let quote = FixedU128::saturating_from_integer(quote);
 			Ok(base.safe_div(&quote)?)

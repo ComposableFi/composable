@@ -3,11 +3,6 @@ use frame_support::{dispatch::DispatchError, pallet_prelude::*};
 use sp_runtime::FixedU128;
 use sp_std::vec::Vec;
 
-<<<<<<< HEAD
-use crate::{currency::PriceableAsset, defi::CurrencyPair};
-
-=======
->>>>>>> dz/oracle-api
 #[derive(Encode, Decode, Default, Debug, PartialEq)]
 pub struct Price<PriceValue, BlockNumber> {
 	pub price: PriceValue,
@@ -35,19 +30,12 @@ pub trait Oracle {
 	///
 	/// E.g. for BTC, the price is expressed for 1 BTC, but the amount is in sats:
 	/// 1 BTC = 10^8 sats
-<<<<<<< HEAD
-	/// get_price(BTC, 1_00000000) = price(1BTC) * 1_00000000 / 10^8 = $50000
-
-	/// # Diluted assets
-	/// 
-=======
 	/// So that:
 	/// `get_price(BTC, 1_00000000) = price(1BTC) * 1_00000000 / 10^8 = $50_000 = 5_000_000 USDT
 	/// cents`
 	///
 	/// # Diluted assets
 	///
->>>>>>> dz/oracle-api
 	/// Implementation ensure that a LP token price can be resolved as long as the base asset price
 	/// is resolvable.
 	///```haskell
@@ -77,18 +65,6 @@ pub trait Oracle {
 		weighting: Vec<Self::Balance>,
 	) -> Result<Self::Balance, DispatchError>;
 
-<<<<<<< HEAD
-	/// Up to oracle how it decides ration. 
-	/// If there is no direct trading pair, can estimate via common pair.
-	/// base_in_common / quote_in_common
-	/// ```ignore
-	/// 1 BTC == 1000 stable
-	/// 1 DAI == 100 stable
-	/// 1000 / 1000 = 10
-	/// 1 BTC / 1 DAI = 10 
-	/// ```
-	fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<FixedU128, DispatchError>;	
-=======
 	/// Up to oracle how it decides ratio.
 	/// If there is no direct trading pair, can estimate via common pair (to which all currencies
 	/// are normalized). General formula
@@ -100,5 +76,4 @@ pub trait Oracle {
 	/// let needed_base_for_quote = base_amount * ratio; // 300.0
 	/// ```
 	fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<FixedU128, DispatchError>;
->>>>>>> dz/oracle-api
 }

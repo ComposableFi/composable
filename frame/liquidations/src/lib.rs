@@ -32,6 +32,8 @@
 	unused_extern_crates
 )]
 
+mod weights;
+
 pub use pallet::*;
 
 #[frame_support::pallet]
@@ -52,7 +54,7 @@ pub mod pallet {
 	};
 
 	use scale_info::TypeInfo;
-	use sp_runtime::{DispatchError, Permill};
+	use sp_runtime::{DispatchError, Permill, Perquintill};
 
 	#[pallet::config]
 
@@ -77,6 +79,8 @@ pub mod pallet {
 
 		/// when called, engine pops latest order to liquidate and pushes back result
 		type Liquidate: Parameter + Dispatchable<Origin = Self::Origin> + From<Call<Self>>;
+		type WeightInfo : WeightInfo;
+		type ParachainId : FullCodec + Default + Parameter + Clone;
 	}
 
 	#[pallet::event]
@@ -95,22 +99,14 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
 
-	// TODO: real flow to implement:
-	// ```plantuml
-	// `solves question - how pallet can invoke list of other pallets with different configuration types
-	// `so yet sharing some liquidation part and tracing liquidation id
-	// dutch_auction_strategy -> liquidation : Create new strategy id
-	// dutch_auction_strategy -> liquidation : Add Self Dispatchable call (baked with strategyid)
-	// liquidation -> liquidation: Add liquidation order
-	// liquidation -> liquidation: Get Dispatchable by Strategyid
-	// liquidation --> dutch_auction_strategy: Invoke Dispatchable
-	// dutch_auction_strategy -> dutch_auction_strategy: Get liquidation configuration by id previosly baked into call
-	// dutch_auction_strategy --> liquidation: Pop next order
-	// dutch_auction_strategy -> dutch_auction_strategy: Start liqudaiton
-	// ```
-	// for now just build in liquidation here
+		#[pallet::weight(T::WeightInfo::add_liqudation_strategy())]		
+		pub fn add_liqudation_strategy(origing: OriginFor<T>, _configuraiton: LiquidationStrategyConfiguration<T::Dispatch, T::Balance, T::ParachainId> ) -> DispatchResultWithPostInfo{
+			Err(DispatchError::Other("TODO: "))
+		}
+	}
+
 	#[pallet::storage]
 	#[pallet::getter(fn strategies)]
 	pub type Strategies<T: Config> = StorageMap<
@@ -161,9 +157,24 @@ pub mod pallet {
 	}
 
 	#[derive(Clone, Debug, Encode, Decode, TypeInfo)]
-	pub enum LiquidationStrategyConfiguration<Dispatch, Balance> {
+	pub enum LiquidationStrategyConfiguration<ParachainId> {
 		DutchAuction(TimeReleaseFunction),
-		Other { liquidate: Dispatch, minimum_price: Balance },
+		UniswapV2 { slippage: Perquintill },
+		XcmpDex {parachain_id: ParachainId } ,
+		// Building fully decoupled flow is described bellow. Will avoid that for now.
+		// ```plantuml
+		// `solves question - how pallet can invoke list of other pallets with different configuration types
+		// `so yet sharing some liquidation part and tracing liquidation id
+		// dutch_auction_strategy -> liquidation : Create new strategy id
+		// dutch_auction_strategy -> liquidation : Add Self Dispatchable call (baked with strategyid)
+		// liquidation -> liquidation: Add liquidation order
+		// liquidation -> liquidation: Get Dispatchable by Strategyid
+		// liquidation --> dutch_auction_strategy: Invoke Dispatchable
+		// dutch_auction_strategy -> dutch_auction_strategy: Get liquidation configuration by id previosly baked into call
+		// dutch_auction_strategy --> liquidation: Pop next order
+		// dutch_auction_strategy -> dutch_auction_strategy: Start liqudaiton
+		// ```
+		//Dynamic { liquidate: Dispatch, minimum_price: Balance },
 	}
 
 	#[pallet::genesis_build]
@@ -192,7 +203,6 @@ pub mod pallet {
 		type OrderId = T::OrderId;
 
 		fn liquidate(
-<<<<<<< HEAD
 			from_to: &Self::AccountId,
 			order: Sell<Self::MayBeAssetId, Self::Balance>,
 			configuration: Vec<Self::LiquidationStrategyId>,
@@ -206,7 +216,7 @@ pub mod pallet {
 							Self::deposit_event(Event::<T>::PositionWasSentToLiquidation{});
 							return Ok(T::DutchAuction::ask(from_to, order, configuration)?)
 						},
-					_ => todo!("liquidation registered during runtime"),
+					_ => return Err(DispatchError::Other("TODO")),
 				}
 			} else {
 				for id in configuration {
@@ -215,7 +225,7 @@ pub mod pallet {
 						let result = match configuration {
 							LiquidationStrategyConfiguration::DutchAuction(configuration) =>
 								T::DutchAuction::ask(from_to, order.clone(), configuration),
-							_ => todo!("liquidation registered during runtime"),
+							_ => return Err(DispatchError::Other("TODO")),
 						};
 
 						if result.is_ok() {
@@ -227,17 +237,6 @@ pub mod pallet {
 			}
 
 			Err(Error::<T>::NoLiquidationEngineFound.into())
-=======
-			_source_account: &Self::AccountId,
-			_source_asset_id: Self::AssetId,
-			_source_asset_price: PriceStructure<Self::GroupId, Self::Balance>,
-			_target_asset_id: Self::AssetId,
-			_target_account: &Self::AccountId,
-			_total_amount: Self::Balance,
-		) -> Result<Self::LiquidationId, DispatchError> {
-			Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
-			Err(DispatchError::Other("todo"))
->>>>>>> dz/oracle-api
 		}
 	}
 }

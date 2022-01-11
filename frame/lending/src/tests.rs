@@ -96,11 +96,7 @@ fn create_simple_market() -> (MarketIndex, BorrowAssetVault) {
 		MockCurrencyId::USDT,
 		*ALICE,
 		DEFAULT_MARKET_VAULT_RESERVE,
-<<<<<<< HEAD
-		MoreThanOneFixedU128::saturating_from_rational(200, 100),
-=======
 		NormalizedCollateralFactor::saturating_from_rational(DEFAULT_COLLATERAL_FACTOR * 100, 100),
->>>>>>> dz/oracle-api
 	)
 }
 
