@@ -40,6 +40,8 @@ fn rotate_relayer() {
 }
 
 fn initialize() {
+    System::set_block_number(1);
+
 	Mosaic::set_relayer(Origin::root(), RELAYER).expect("root may call set_relayer");
 	Mosaic::set_network(
 		Origin::relayer(),
@@ -52,13 +54,42 @@ fn initialize() {
 }
 
 fn do_transfer_to() {
-	Mosaic::transfer_to(Origin::signed(ALICE), 1, 1, [0; 20], 100, true)
-		.expect("transfer_to should work");
-	assert_eq!(Mosaic::outgoing_transactions(&ALICE, 1), Some((100, MinimumTimeLockPeriod::get())));
 
-	// normally we don't unit test events being emitted, but in this case it is very crucial for the
-	// relayer to observe the events.
-	todo!("check that the correct event was emitted")
+    let ethereum_address = [0; 20];
+    let amount = 100;
+    let network_id = 1;
+    let asset_id = 1;
+
+	Mosaic::transfer_to(Origin::signed(ALICE), network_id, asset_id, ethereum_address, amount, true)
+		.expect("transfer_to should work");
+	assert_eq!(Mosaic::outgoing_transactions(&ALICE, 1), Some((100, MinimumTimeLockPeriod::get() + System::block_number())));
+
+    // normally we don't unit test events being emitted, but in this case it is very crucial for the
+    // relayer to observe the events.
+
+
+    // When a transfer is made, the nonce is incremented. However, nonce is one of the dependencies
+    // for `generate_id`, we want to check if the events match, so we decrement the nonce and
+    // increment it back when we're done
+    // TODO: this is a hack, cfr: CU-1ubrf2y
+    Nonce::<Test>::mutate(|nonce| {
+        *nonce = nonce.wrapping_sub(1);
+        *nonce
+    });
+
+    let id = generate_id::<Test>(&ALICE, &network_id, &asset_id, &ethereum_address, &amount, &System::block_number());
+    Nonce::<Test>::mutate(|nonce| {
+        *nonce = nonce.wrapping_add(1);
+        *nonce
+    });
+
+
+    System::assert_last_event(mock::Event::Mosaic(crate::Event::TransferOut {
+        id,
+        to: ethereum_address,
+        amount,
+        network_id,
+    }));
 }
 
 fn do_timelocked_mint() {

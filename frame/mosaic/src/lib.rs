@@ -599,7 +599,7 @@ pub mod pallet {
 	pub type EthereumAddress = [u8; 20];
 
 	/// Uses Keccak256 to generate an identifier for
-	fn generate_id<T: Config>(
+	pub(crate) fn generate_id<T: Config>(
         to: &AccountIdOf<T>,
         network_id: &NetworkIdOf<T>,
         asset_id: &AssetIdOf<T>,
