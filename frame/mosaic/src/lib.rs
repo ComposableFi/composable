@@ -43,10 +43,10 @@ pub mod pallet {
 	};
 	use sp_std::{fmt::Debug, str};
 
-	type AccoundIdOf<T> = <T as frame_system::Config>::AccountId;
-	type BalanceOf<T> = <<T as Config>::Assets as Inspect<AccoundIdOf<T>>>::Balance;
+	type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+	type BalanceOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::Balance;
 	type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
-	type AssetIdOf<T> = <<T as Config>::Assets as Inspect<AccoundIdOf<T>>>::AssetId;
+	type AssetIdOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::AssetId;
 	type NetworkIdOf<T> = <T as Config>::NetworkId;
 
 	#[pallet::config]
@@ -54,7 +54,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type PalletId: Get<PalletId>;
-		type Assets: Mutate<AccoundIdOf<Self>> + Transfer<AccoundIdOf<Self>>;
+		type Assets: Mutate<AccountIdOf<Self>> + Transfer<AccountIdOf<Self>>;
 
 		type MinimumTTL: Get<BlockNumberOf<Self>>;
 		type MinimumTimeLockPeriod: Get<BlockNumberOf<Self>>;
@@ -124,7 +124,7 @@ pub mod pallet {
 	pub type OutgoingTransactions<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
-		AccoundIdOf<T>,
+		AccountIdOf<T>,
 		Twox64Concat,
 		AssetIdOf<T>,
 		(BalanceOf<T>, BlockNumberFor<T>),
@@ -136,7 +136,7 @@ pub mod pallet {
 	pub type IncomingTransactions<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
-		AccoundIdOf<T>,
+		AccountIdOf<T>,
 		Twox64Concat,
 		AssetIdOf<T>,
 		(BalanceOf<T>, BlockNumberFor<T>),
@@ -147,11 +147,11 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		RelayerSet {
-			relayer: AccoundIdOf<T>,
+			relayer: AccountIdOf<T>,
 		},
 		RelayerRotated {
 			ttl: BlockNumberOf<T>,
-			account_id: AccoundIdOf<T>,
+			account_id: AccountIdOf<T>,
 		},
 		BudgetUpdated {
 			asset_id: AssetIdOf<T>,
@@ -169,29 +169,29 @@ pub mod pallet {
 			network_id: NetworkIdOf<T>,
 		},
 		StaleTxClaimed {
-			to: AccoundIdOf<T>,
-			by: AccoundIdOf<T>,
+			to: AccountIdOf<T>,
+			by: AccountIdOf<T>,
 			amount: BalanceOf<T>,
 		},
 		TransferInto {
-			to: AccoundIdOf<T>,
+			to: AccountIdOf<T>,
 			amount: BalanceOf<T>,
 			asset_id: AssetIdOf<T>,
 			id: Id,
 		},
 		TransferIntoRescined {
-			account: AccoundIdOf<T>,
+			account: AccountIdOf<T>,
 			amount: BalanceOf<T>,
 			asset_id: AssetIdOf<T>,
 		},
 		TransferAccepted {
-			from: AccoundIdOf<T>,
+			from: AccountIdOf<T>,
 			asset_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
 		},
 		TransferClaimed {
-			by: AccoundIdOf<T>,
-			to: AccoundIdOf<T>,
+			by: AccountIdOf<T>,
+			to: AccountIdOf<T>,
 			asset_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
 		},
@@ -328,7 +328,7 @@ pub mod pallet {
 			ensure!(network_info.enabled, Error::<T>::NetworkDisabled);
 			ensure!(network_info.max_transfer_size >= amount, Error::<T>::ExceedsMaxTransferSize);
 
-			T::Assets::transfer(asset_id, &caller, &Self::account_id(), amount, keep_alive)?;
+			T::Assets::transfer(asset_id, &caller, &Self::sub_account_id(&caller), amount, keep_alive)?;
 			let now = <frame_system::Pallet<T>>::block_number();
 			let lock_until = now.safe_add(&TimeLockPeriod::<T>::get())?;
 
@@ -369,10 +369,10 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn accept_transfer(
-			origin: OriginFor<T>,
-			from: AccoundIdOf<T>,
-			asset_id: AssetIdOf<T>,
-			amount: BalanceOf<T>,
+            origin: OriginFor<T>,
+            from: AccountIdOf<T>,
+            asset_id: AssetIdOf<T>,
+            amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_relayer::<T>(origin)?;
 			OutgoingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
@@ -381,7 +381,7 @@ pub mod pallet {
 				|maybe_tx| match *maybe_tx {
 					Some((balance, _)) => {
 						ensure!(amount <= balance, Error::<T>::AmountMismatch);
-						T::Assets::burn_from(asset_id, &Self::account_id(), amount)?;
+						T::Assets::burn_from(asset_id, &Self::sub_account_id(&from), amount)?;
 
 						// No remaing funds need to be transferred for this asset, so we can delete
 						// the storage item.
@@ -407,9 +407,9 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn claim_stale_to(
-			origin: OriginFor<T>,
-			asset_id: AssetIdOf<T>,
-			to: AccoundIdOf<T>,
+            origin: OriginFor<T>,
+            asset_id: AssetIdOf<T>,
+            to: AccountIdOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 
@@ -421,7 +421,7 @@ pub mod pallet {
 				|prev| -> Result<(), DispatchError> {
 					let amount = match *prev {
 						Some((balance, lock_time)) if lock_time < now => {
-							T::Assets::transfer(asset_id, &Self::account_id(), &to, balance, true)?;
+							T::Assets::transfer(asset_id, &Self::sub_account_id(&caller), &to, balance, true)?;
 							balance
 						},
 						_ => return Err(Error::<T>::NoStaleTransactions.into()),
@@ -439,12 +439,12 @@ pub mod pallet {
 		/// `lock_time` blocks have expired.
 		#[pallet::weight(10_000)]
 		pub fn timelocked_mint(
-			origin: OriginFor<T>,
-			asset_id: AssetIdOf<T>,
-			to: AccoundIdOf<T>,
-			amount: BalanceOf<T>,
-			lock_time: BlockNumberOf<T>,
-			id: Id,
+            origin: OriginFor<T>,
+            asset_id: AssetIdOf<T>,
+            to: AccountIdOf<T>,
+            amount: BalanceOf<T>,
+            lock_time: BlockNumberOf<T>,
+            id: Id,
 		) -> DispatchResultWithPostInfo {
 			let (_caller, current_block) = ensure_relayer::<T>(origin)?;
 
@@ -457,7 +457,7 @@ pub mod pallet {
 				let budget = budget.saturating_sub(penalty);
 				ensure!(budget > amount, Error::<T>::InsufficientBudget);
 
-				T::Assets::mint_into(asset_id, &Self::account_id(), amount)?;
+				T::Assets::mint_into(asset_id, &Self::sub_account_id(&to), amount)?;
 				let lock_at = lock_time.saturating_add(current_block);
 
 				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
@@ -496,10 +496,10 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn rescind_timelocked_mint(
-			origin: OriginFor<T>,
-			asset_id: AssetIdOf<T>,
-			account: AccoundIdOf<T>,
-			amount: BalanceOf<T>,
+            origin: OriginFor<T>,
+            asset_id: AssetIdOf<T>,
+            account: AccountIdOf<T>,
+            amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_relayer::<T>(origin)?;
 
@@ -514,7 +514,7 @@ pub mod pallet {
 					} else {
 						tx.0 = tx.0.saturating_sub(amount);
 					}
-					T::Assets::burn_from(asset_id, &Self::account_id(), amount)?;
+					T::Assets::burn_from(asset_id, &Self::sub_account_id(&account), amount)?;
 					Self::deposit_event(Event::<T>::TransferIntoRescined {
 						account,
 						amount,
@@ -530,9 +530,9 @@ pub mod pallet {
 		/// Collects funds deposited by the relayer into the
 		#[pallet::weight(10_000)]
 		pub fn claim_to(
-			origin: OriginFor<T>,
-			asset_id: AssetIdOf<T>,
-			to: AccoundIdOf<T>,
+            origin: OriginFor<T>,
+            asset_id: AssetIdOf<T>,
+            to: AccountIdOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 			let now = <frame_system::Pallet<T>>::block_number();
@@ -543,7 +543,7 @@ pub mod pallet {
 				|deposit| {
 					let tx = deposit.ok_or(Error::<T>::NoClaimableTx)?;
 					ensure!(tx.1 < now, Error::<T>::NoClaimableTx);
-					T::Assets::transfer(asset_id, &Self::account_id(), &to, tx.0, true)?;
+					T::Assets::transfer(asset_id, &Self::sub_account_id(&caller), &to, tx.0, true)?;
 					// Delete the deposit.
 					deposit.take();
 					Self::deposit_event(Event::<T>::TransferClaimed {
@@ -561,7 +561,7 @@ pub mod pallet {
 
 	fn ensure_relayer<T: Config>(
 		origin: OriginFor<T>,
-	) -> Result<(RelayerConfig<AccoundIdOf<T>, BlockNumberOf<T>>, BlockNumberOf<T>), Error<T>> {
+	) -> Result<(RelayerConfig<AccountIdOf<T>, BlockNumberOf<T>>, BlockNumberOf<T>), Error<T>> {
 		let acc = ensure_signed(origin).map_err(|_| Error::<T>::BadOrigin)?;
 		let current_block = <frame_system::Pallet<T>>::block_number();
 		let relayer = Relayer::<T>::get().update(current_block);
@@ -571,12 +571,6 @@ pub mod pallet {
 
 	#[pallet::extra_constants]
 	impl<T: Config> Pallet<T> {
-		/// AccountId of the pallet, used to store all funds before actually moving them.
-		pub fn account_id() -> AccoundIdOf<T> {
-			// TODO: SUB ACCOUNT
-			todo!();
-			T::PalletId::get().into_account()
-		}
 
 		pub fn timelock_period() -> BlockNumberOf<T> {
 			TimeLockPeriod::<T>::get()
@@ -584,8 +578,15 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+        /// AccountId of the pallet, used to store all funds before actually moving them.
+        pub fn sub_account_id(user_account: &AccountIdOf<T>) -> AccountIdOf<T> {
+            // TODO: SUB ACCOUNT
+            // todo!();
+            T::PalletId::get().into_sub_account(user_account)
+        }
+
 		/// Queries storage, returning the account_id of the current relayer.
-		pub fn relayer_account_id() -> Option<AccoundIdOf<T>> {
+		pub fn relayer_account_id() -> Option<AccountIdOf<T>> {
 			let current_block = <frame_system::Pallet<T>>::block_number();
 			Relayer::<T>::get().update(current_block).account_id().cloned()
 		}
@@ -599,12 +600,12 @@ pub mod pallet {
 
 	/// Uses Keccak256 to generate an identifier for
 	fn generate_id<T: Config>(
-		to: &AccoundIdOf<T>,
-		network_id: &NetworkIdOf<T>,
-		asset_id: &AssetIdOf<T>,
-		address: &EthereumAddress,
-		amount: &BalanceOf<T>,
-		block_number: &BlockNumberOf<T>,
+        to: &AccountIdOf<T>,
+        network_id: &NetworkIdOf<T>,
+        asset_id: &AssetIdOf<T>,
+        address: &EthereumAddress,
+        amount: &BalanceOf<T>,
+        block_number: &BlockNumberOf<T>,
 	) -> Id {
 		use sp_runtime::traits::Hash;
 
