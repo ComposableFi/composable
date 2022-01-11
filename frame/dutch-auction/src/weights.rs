@@ -1,3 +1,4 @@
+#![allow(unused_parens, unused_imports, clippy::unnecessary_cast)]
 use frame_support::{pallet_prelude::Weight, traits::Get, weights::constants::RocksDbWeight};
 use sp_std::marker::PhantomData;
 

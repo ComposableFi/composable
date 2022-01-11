@@ -212,7 +212,7 @@ pub mod pallet {
 		}
 
 		/// adds take to list, does not execute take immediately
-		#[pallet::weight(T::WeightInfo::take(42))] // FIXME: need to use correct a value instead of 42
+		#[pallet::weight(T::WeightInfo::take(42))] // FIXME: need to update benchmark and weight for this extrinsic
 		pub fn take(
 			origin: OriginFor<T>,
 			order_id: T::OrderId,
