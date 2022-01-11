@@ -4,9 +4,9 @@ on:
   push: 
     tags: 
       - '*'
-    branches:
-      - feature/simnode-workflow
-
+    braches:
+      - feature/workflow-test
+      
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
   SCCACHE_GCS_BUCKET: 'composable-build-artefacts'
@@ -32,16 +32,50 @@ jobs:
         echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
         make version
 
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+
+    - name: 🔨 Build Composable Artifacts
+      run: |
+        /home/runner/.cargo/bin/cargo build --release -p composable 
+        /home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
+        /home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso
+
     - name: Archive build targets
       run: |
-        cargo build  --release --bins 
-        cargo install 
-        tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/
         tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
-        tar -czvf picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
-        tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain-utils
+        tar -czvf picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
         gsutil cp *.tar.gz gs://composable-binaries/community-releases/${{ env.RELEASE_VERSION }}/ 
 
+    - name: Upload Compact wasm
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        file: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
+        asset_name: picasso_runtime.compact.wasm
+        tag: ${{ github.ref }}
+        overwrite: true
+
+    - name: Upload Compressed wasm
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        file: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.compressed.wasm
+        asset_name: picasso_runtime.compact.compressed.wasm
+        tag: ${{ github.ref }}
+        overwrite: true
+
+    - name: Upload Binary on Release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        file: target/release/composable
+        asset_name: composable-${{ env.RELEASE_VERSION }}
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: "Composable Binary Runtime"
+      
     - name: Login to DockerHub
       uses: docker/login-action@v1 
       with:
@@ -75,4 +109,3 @@ jobs:
       working-directory: "./.maintain/playbooks"
       run: |
         ansible-playbook -l _environment_testnet client-upgrade.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
-
