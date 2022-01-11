@@ -23,7 +23,11 @@ Specifically, you will need to:
 1) You will need to have a [new](https://docs.github.com/en/authentication/managing-commit-signature-verification/generating-a-new-gpg-key) or [existing](https://docs.github.com/en/authentication/managing-commit-signature-verification/checking-for-existing-gpg-keys) GPG key that is [associated to one of your valid GitHub emails](https://docs.github.com/en/authentication/managing-commit-signature-verification/associating-an-email-with-your-gpg-key)
 2) [Add the GPG key to your GitHub account](https://docs.github.com/en/authentication/managing-commit-signature-verification/adding-a-new-gpg-key-to-your-github-account)
 3) [Tell your local git client to use the GPG key](https://docs.github.com/en/authentication/managing-commit-signature-verification/telling-git-about-your-signing-key)
-4) Use the `-S` signing flag when you [commit](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits)
+4) Use the `-S` signing flag when you [commit](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits)  
+Alternatively, you can set `commit.gpgsign` to `true` so git will do this automatically
+```bash
+git config --global commit.gpgsign true
+```
 
 ## Other Notes
 * Keep the scope of PR changes small and easy to review
