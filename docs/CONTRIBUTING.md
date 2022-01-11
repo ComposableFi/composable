@@ -2,9 +2,9 @@
 We have a few guidelines and requirements to ensure correct workflows are followed while contributing to the composable project.
 ## First Things First
 Before contributing, go through the documentation found in `~/docs/`.  Specifically:  
-* [rust-setup.md](./docs/rust-setup.md) - A walkthrough for installing and configuring Rust and other tools in your develop    ment environment  
-* [proptest.md](./docs/proptest.md) - A guide to our approach and philosophy for automated testing  
-* [benchmarking.md](./docs/benchmarking.md) - A guide for benchmarking pallet changes  
+* [rust-setup.md](./rust-setup.md) - A walkthrough for installing and configuring Rust and other tools in your develop    ment environment  
+* [proptest.md](./proptest.md) - A guide to our approach and philosophy for automated testing  
+* [benchmarking.md](./benchmarking.md) - A guide for benchmarking pallet changes  
 ## Workflow
 When contributing code changes, follow this general process to ensure the CI pipeline processes code and that your work is accessible via ClickUp.  
 1) Create a git branch with a short name that is descriptive of the issue/feature you are working on  
