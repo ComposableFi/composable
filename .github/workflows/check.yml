@@ -7,7 +7,7 @@ on:
     branches:
       - main
       - develop
-      - release-*
+      - releases
   workflow_dispatch:
 
 env:
@@ -23,14 +23,18 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0     
-      - name: Check
+      - run: |
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --all --benches
+
+      - name: Check for runtime changes
+        working-directory: "./.maintain/"
         run: |
-          SKIP_WASM_BUILD=1 cargo check --all --benches
+          sh check_runtime.sh
+
       - name: Benchmark
         run: |
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --features=runtime-benchmarks --workspace --release --exclude integration-tests
+          
       - name: Picasso
         run: |
           /home/runner/.cargo/bin/cargo build --release -p picasso-runtime
@@ -87,6 +91,9 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
       - run: |
           /home/runner/.cargo/bin/rustup component add llvm-tools-preview
       - name: Install cargo-llvm-cov
