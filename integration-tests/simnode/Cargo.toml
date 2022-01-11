@@ -28,7 +28,7 @@ sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "pol
 sproof-builder = { package = "cumulus-test-relay-sproof-builder", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.13" }
 picasso-runtime = { path = "../../runtime/picasso" }
 common = { path = "../../runtime/common" }
-node = { package = "composable", path = "../../node" }
+node = { package = "composable-node", path = "../../node" }
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = "../../frame/crowdloan-rewards" }
 parachain-inherent = { package = "cumulus-primitives-parachain-inherent", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.13" }
 parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.13" }

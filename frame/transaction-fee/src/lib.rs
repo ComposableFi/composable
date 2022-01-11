@@ -3,8 +3,18 @@
 //! Loosely based on https://github.com/paritytech/substrate/blob/master/frame/transaction-payment/src/lib.rs
 //! but with added support for `MultiCurrency` using a `Dex` interface.
 
-#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
+#![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
@@ -136,7 +146,7 @@ pub mod pallet {
 		}
 
 		// `integrity_test` is allowed to panic.
-		#[allow(clippy::disallowed_method)]
+		#[allow(clippy::disallowed_method, clippy::expect_used)]
 		fn integrity_test() {
 			// given weight == u64, we build multipliers from `diff` of two weight values, which can
 			// at most be maximum block weight. Make sure that this can fit in a multiplier without
@@ -145,9 +155,12 @@ pub mod pallet {
 			assert!(
 				<Multiplier as sp_runtime::traits::Bounded>::max_value() >=
 					Multiplier::checked_from_integer(
-						T::BlockWeights::get().max_block.try_into().unwrap()
+						T::BlockWeights::get()
+							.max_block
+							.try_into()
+							.expect("Blockweights.max_block should be present")
 					)
-					.unwrap(),
+					.expect("Multiplier from Blockweights should not overflow"),
 			);
 
 			// This is the minimum value of the multiplier. Make sure that if we collapse to this
