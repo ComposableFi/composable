@@ -15,6 +15,7 @@ env:
 
 jobs:
   check:
+    name: Check 
     runs-on:
       - self-hosted
       - linux
@@ -22,10 +23,7 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0     
-      - name: Check
-        run: |
+      - run: |
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --all --benches
       - name: Benchmark
         run: |
@@ -89,8 +87,6 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-
-      - uses: actions/checkout@v2
       - run: |
           /home/runner/.cargo/bin/rustup component add llvm-tools-preview
       - name: Install cargo-llvm-cov
