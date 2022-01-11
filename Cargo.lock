@@ -7093,6 +7093,7 @@ dependencies = [
  "orml-traits",
  "pallet-balances",
  "parity-scale-codec",
+ "plotters",
  "scale-info",
  "sp-core",
  "sp-io",

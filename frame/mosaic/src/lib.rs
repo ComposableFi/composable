@@ -379,10 +379,10 @@ pub mod pallet {
 			OutgoingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
 				from.clone(),
 				asset_id,
-				|maybe_tx| match maybe_tx.as_mut() {
-					Some(tx) => {
-						ensure!(amount <= tx.0, Error::<T>::AmountMismatch);
-						T::Assets::burn_from(asset_id, &Self::account_id(), tx.0)?;
+				|maybe_tx| match *maybe_tx {
+					Some((balance, _)) => {
+						ensure!(amount <= balance, Error::<T>::AmountMismatch);
+						T::Assets::burn_from(asset_id, &Self::account_id(), amount)?;
 
 						// No remaing funds need to be transferred for this asset, so we can delete
 						// the storage item.
