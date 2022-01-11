@@ -35,6 +35,7 @@ jobs:
     - name: Archive build targets
       run: |
         cargo build  --release --bins 
+        cargo install 
         tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/
         tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
         tar -czvf picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
