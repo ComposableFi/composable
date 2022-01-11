@@ -92,14 +92,17 @@ fn do_transfer_to() {
     }));
 }
 
-fn do_timelocked_mint() {
+fn do_timelocked_mint(lock_time: u64) {
 	let to = ALICE;
 	let asset_id = 1;
 
-	Mosaic::timelocked_mint(Origin::relayer(), asset_id, to, 50, 10, Default::default())
+    let initial_block = System::block_number();
+    let amount = 50;
+
+    Mosaic::timelocked_mint(Origin::relayer(), asset_id, to, amount, lock_time, Default::default())
 		.expect("relayer should be able to mint");
 
-	assert_eq!(Mosaic::incoming_transactions(to, asset_id), Some((50, 10)));
+	assert_eq!(Mosaic::incoming_transactions(to, asset_id), Some((amount, initial_block + lock_time)));
 }
 
 #[test]
@@ -136,7 +139,7 @@ fn claim_stale_to() {
 fn timelocked_mint() {
 	new_test_ext().execute_with(|| {
 		initialize();
-		do_timelocked_mint();
+		do_timelocked_mint(10);
 	})
 }
 
@@ -144,13 +147,18 @@ fn timelocked_mint() {
 fn rescind_timelocked_mint() {
 	new_test_ext().execute_with(|| {
 		initialize();
-		do_timelocked_mint();
+        let lock_time = 10;
+		do_timelocked_mint(lock_time);
+
+        let initial_block = System::block_number();
+
 		Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 40)
 			.expect("relayer should be able to rescind transactions");
-		assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((10, 10)));
-		Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 10)
+        assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((10, initial_block + lock_time)));
+        let transfer_amount = 9;
+        Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, transfer_amount)
 			.expect("relayer should be able to rescind transactions");
-		assert_eq!(Mosaic::incoming_transactions(ALICE, 1), None);
+		assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((1, 11)));
 	})
 }
 
@@ -166,12 +174,13 @@ fn set_timelock_duration() {
 fn claim_to() {
 	new_test_ext().execute_with(|| {
 		initialize();
-		do_timelocked_mint();
+        let lock_time = 10;
+		do_timelocked_mint(lock_time);
 		let current_block = System::block_number();
 		Mosaic::claim_to(Origin::alice(), 1, ALICE).expect_err(
 			"received funds should only be claimable after waiting for the relayer mandated time",
 		);
-		System::set_block_number(current_block + 10 + 1);
+		System::set_block_number(current_block + lock_time + 1);
 		Mosaic::claim_to(Origin::alice(), 1, ALICE)
 			.expect("received funds should be claimable after time has passed");
 	})
