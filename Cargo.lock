@@ -11626,6 +11626,8 @@ dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",
  "cumulus-test-relay-sproof-builder",
+ "dali-runtime",
+ "derive_more",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
