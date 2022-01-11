@@ -1,32 +1,11 @@
-use core::ops::Div;
-
 use codec::FullCodec;
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::traits::AtLeast32BitUnsigned;
 use sp_std::fmt::Debug;
 
+/// really u8, but easy to do math operations
 pub type Exponent = u32;
-
-/// A asset that can be priced.
-pub trait PriceableAsset
-where
-	Self: Copy,
-{
-	fn decimals(&self) -> Exponent;
-	fn unit<T: From<u64>>(&self) -> T {
-		T::from(10_u64.pow(self.decimals()))
-	}
-	fn milli<T: From<u64> + Div<Output = T>>(&self) -> T {
-		self.unit::<T>() / T::from(1000_u64)
-	}
-}
-
-impl PriceableAsset for u128 {
-	fn decimals(&self) -> Exponent {
-		0
-	}
-}
 
 /* NOTE(hussein-aitlahcen):
  I initially added a generic type to index into the generatable sub-range but realised it was
@@ -46,8 +25,27 @@ where
 
 /// Creates a new asset, compatible with [`MultiCurrency`](https://docs.rs/orml-traits/0.4.0/orml_traits/currency/trait.MultiCurrency.html).
 /// The implementor should ensure that a new `CurrencyId` is created and collisions are avoided.
+/// Is about Local assets representations. These may differ remotely.
 pub trait CurrencyFactory<CurrencyId> {
 	fn create() -> Result<CurrencyId, DispatchError>;
+}
+
+pub trait LocalAssets<MayBeAssetId> {
+	/// decimals of of big unit over minimal unit
+	/// ORML also has separate trait on Balances to inspect decimals, that is not on type it self
+	fn decimals(currency_id: MayBeAssetId) -> Result<Exponent, DispatchError>;
+
+	fn unit<T: From<u64>>(currency_id: MayBeAssetId) -> Result<T, DispatchError> {
+		let exponent = Self::decimals(currency_id)?;
+		Ok(10_u64.pow(exponent).into())
+	}
+}
+
+/// when we store assets in native form to chain in smallest units or for mock in tests
+impl<MayBeAssetId> LocalAssets<MayBeAssetId> for () {
+	fn decimals(_currency_id: MayBeAssetId) -> Result<Exponent, DispatchError> {
+		Ok(0)
+	}
 }
 
 pub trait BalanceLike:

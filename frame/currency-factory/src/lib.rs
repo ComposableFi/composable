@@ -1,3 +1,5 @@
+//! Overview
+//! Allows to add new assets internally. User facing mutating API is provided by other pallets.
 #![cfg_attr(
 	not(test),
 	warn(
@@ -37,7 +39,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_traits::currency::{CurrencyFactory, DynamicCurrencyId};
+	use composable_traits::currency::{CurrencyFactory, DynamicCurrencyId, Exponent, LocalAssets};
 	use frame_support::{pallet_prelude::*, PalletId};
 	use scale_info::TypeInfo;
 
@@ -83,6 +85,13 @@ pub mod pallet {
 				*c = c_next;
 				Ok(c_next)
 			})
+		}
+	}
+
+	impl<T: Config> LocalAssets<T::DynamicCurrencyId> for Pallet<T> {
+		fn decimals(_currency_id: T::DynamicCurrencyId) -> Result<Exponent, DispatchError> {
+			// All assets are normalized to 12 decimals.
+			Ok(12)
 		}
 	}
 }

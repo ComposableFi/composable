@@ -133,6 +133,7 @@ impl pallet_oracle::Config for Test {
 	type MaxAssetsCount = MaxAssetsCount;
 	type MaxHistory = MaxHistory;
 	type WeightInfo = ();
+	type LocalAssets = ();
 }
 
 // Build genesis storage according to the mock runtime.

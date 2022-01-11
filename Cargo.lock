@@ -1276,9 +1276,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.0.1"
+version = "3.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1121e32687f7f90b905d4775273305baa4f32cd418923e9b0fa726533221857"
+checksum = "1957aa4a5fb388f0a0a73ce7556c5b42025b874e5cdc2c670775e346e97adec0"
 dependencies = [
  "atty",
  "bitflags",
@@ -1293,11 +1293,11 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.0.0"
+version = "3.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1b9752c030a14235a0bd5ef3ad60a1dcac8468c30921327fc8af36b20c790b9"
+checksum = "517358c28fcef6607bf6f76108e02afad7e82297d132a6b846dcc1fc3efcd153"
 dependencies = [
- "heck",
+ "heck 0.4.0",
  "proc-macro-error",
  "proc-macro2 1.0.36",
  "quote 1.0.14",
@@ -2701,7 +2701,7 @@ version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c5f0096a91d210159eceb2ff5e1c4da18388a170e1e3ce948aac9c8fdbbf595"
 dependencies = [
- "heck",
+ "heck 0.3.3",
  "proc-macro2 1.0.36",
  "quote 1.0.14",
  "syn 1.0.84",
@@ -3713,6 +3713,12 @@ checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
 dependencies = [
  "unicode-segmentation",
 ]
+
+[[package]]
+name = "heck"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2540771e65fc8cb83cd6e8a237f70c319bd5c29f78ed1084ba5d50eeac86f7f9"
 
 [[package]]
 name = "hermit-abi"
@@ -9253,7 +9259,7 @@ version = "0.1.0"
 dependencies = [
  "binance",
  "chrono",
- "clap 3.0.1",
+ "clap 3.0.6",
  "custom_derive",
  "enum_derive",
  "env_logger 0.9.0",
@@ -9447,7 +9453,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62941722fb675d463659e49c4f3fe1fe792ff24fe5bbaa9c08cd3b98a1c354f5"
 dependencies = [
  "bytes 1.1.0",
- "heck",
+ "heck 0.3.3",
  "itertools",
  "lazy_static",
  "log 0.4.14",
@@ -11631,9 +11637,9 @@ dependencies = [
 
 [[package]]
 name = "signal-hook-tokio"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6c5d32165ff8b94e68e7b3bdecb1b082e958c22434b363482cfb89dcd6f3ff8"
+checksum = "213241f76fb1e37e27de3b6aa1b068a2c333233b59cca6634f634b80a27ecf1e"
 dependencies = [
  "futures-core",
  "libc",
@@ -12659,7 +12665,7 @@ version = "0.4.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dcb5ae327f9cc13b68763b5749770cb9e048a99bd9dfdfa58d0cf05d5f64afe0"
 dependencies = [
- "heck",
+ "heck 0.3.3",
  "proc-macro-error",
  "proc-macro2 1.0.36",
  "quote 1.0.14",
@@ -12681,7 +12687,7 @@ version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "339f799d8b549e3744c7ac7feb216383e4005d94bdb22561b3ab8f3b808ae9fb"
 dependencies = [
- "heck",
+ "heck 0.3.3",
  "proc-macro2 1.0.36",
  "quote 1.0.14",
  "syn 1.0.84",
@@ -12860,7 +12866,7 @@ dependencies = [
  "async-trait",
  "darling",
  "frame-metadata",
- "heck",
+ "heck 0.3.3",
  "parity-scale-codec",
  "proc-macro-crate 0.1.5",
  "proc-macro-error",
@@ -12878,7 +12884,7 @@ dependencies = [
  "async-trait",
  "darling",
  "frame-metadata",
- "heck",
+ "heck 0.3.3",
  "parity-scale-codec",
  "proc-macro-crate 0.1.5",
  "proc-macro-error",
