@@ -24,20 +24,20 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --all --benches
+          SKIP_WASM_BUILD=1 cargo check --all --benches
 
       - name: Check for runtime changes
         working-directory: "./.maintain/"
         run: |
           sh check_runtime.sh
 
-      - name: Benchmark
+      - name: Benchmark 
         run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --features=runtime-benchmarks --workspace --release --exclude integration-tests
+          SKIP_WASM_BUILD=1 cargo check --features=runtime-benchmarks --workspace --release --exclude integration-tests
           
       - name: Picasso
         run: |
-          /home/runner/.cargo/bin/cargo build --release -p picasso-runtime
+          cargo build --release -p picasso-runtime
   linters:
     name: Linters
     runs-on:
@@ -48,12 +48,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-          /home/runner/.cargo/bin/rustup show
-          /home/runner/.cargo/bin/rustup override unset
-          /home/runner/.cargo/bin/rustup show
+          rustup show
+          rustup override unset
+          rustup show
       - name: Cargo fmt
         run: |
-          /home/runner/.cargo/bin/cargo fmt -- --check
+          cargo fmt -- --check
       - name: Hadolint
         env:
           HADOLINT_VERSION: v2.8.0
@@ -70,7 +70,7 @@ jobs:
           exit $total_exit_code
       - name: Cargo clippy
         run: |
-          /home/runner/.cargo/bin/cargo clippy -- -D warnings
+          cargo clippy -- -D warnings
       - name: Cargo udeps
         env:
           UDEPS_VERSION: v0.1.24
@@ -95,14 +95,14 @@ jobs:
         with:
           toolchain: stable
       - run: |
-          /home/runner/.cargo/bin/rustup component add llvm-tools-preview
+          rustup component add llvm-tools-preview
       - name: Install cargo-llvm-cov
         run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
       - name: Run Test (with coverage)
         run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo llvm-cov --workspace --lcov --output-path lcov.info
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo clean -p picasso-runtime
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo clean -p composable
+          SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --lcov --output-path lcov.info
+          SKIP_WASM_BUILD=1 cargo clean -p picasso-runtime
+          SKIP_WASM_BUILD=1 cargo clean -p composable
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:

@@ -20,12 +20,6 @@ boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${
 boldprint "latest 10 commits of ${GITHUB_REF_NAME}"
 git log --graph --oneline --decorate=short -n 10
 
-for VERSIONS_FILE in "${VERSIONS_FILES[@]}" 
-do
-  echo "$VERSIONS_FILE"
-  boldprint "check if the wasm sources changed"
-done
-
 simnode_check () {
   VERSIONS_FILE="$1"
 if has_runtime_changes origin/main "${GITHUB_REF_NAME}" && check_runtime $VERSIONS_FILE
@@ -104,8 +98,12 @@ fi
 }
 
 boldprint "check if the runtime changed and run simnode"
-simnode_check $VERSIONS_FILE
-
+for VERSIONS_FILE in "${VERSIONS_FILES[@]}" 
+do
+  echo "$VERSIONS_FILE"
+  boldprint "check if the wasm sources changed"
+  simnode_check $VERSIONS_FILE
+done
 # dropped through. there's something wrong;  exit 1.
 
 exit 1
