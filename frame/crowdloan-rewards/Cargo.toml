@@ -35,6 +35,9 @@ libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, f
     "hmac",
     "static-context",
 ] }
+balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false, features = [
+    "std",
+], optional = true }
 
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
@@ -73,6 +76,7 @@ runtime-benchmarks = [
     "hex-literal",
     "once_cell",
     "libsecp256k1",
+    "balances",
     "sp-application-crypto",
     "sp-core/full_crypto",
     "sp-application-crypto/full_crypto",

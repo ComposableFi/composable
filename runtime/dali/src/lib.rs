@@ -779,8 +779,6 @@ impl crowdloan_rewards::Config for Runtime {
 	type Balance = Balance;
 	type Currency = Assets;
 	type AdminOrigin = EnsureRootOrHalfCouncil;
-	// TODO(hussein-aitlahcen): should be the proxy account
-	type AssociationOrigin = EnsureRootOrHalfCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = [u8; 32];
 	type InitialPayment = InitialPayment;
@@ -813,7 +811,7 @@ impl call_filter::Config for Runtime {
 
 parameter_types! {
 	pub const MaxVestingSchedule: u32 = 2;
-	pub const MinVestedTransfer: u64 = 1_000_000;
+	pub MinVestedTransfer: u64 = 10 * CurrencyId::PICA.unit::<u64>();
 }
 
 impl vesting::Config for Runtime {
@@ -827,8 +825,8 @@ impl vesting::Config for Runtime {
 
 parameter_types! {
 	pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
-	pub const MinReward: Balance = 1_000_000;
-	pub const Stake: Balance = 10_000;
+	pub MinReward: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
+	pub Stake: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
 }
 
 impl pallet_bonded_finance::Config for Runtime {
