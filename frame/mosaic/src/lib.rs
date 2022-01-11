@@ -573,6 +573,8 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// AccountId of the pallet, used to store all funds before actually moving them.
 		pub fn account_id() -> AccoundIdOf<T> {
+			// TODO: SUB ACCOUNT
+			todo!();
 			T::PalletId::get().into_account()
 		}
 
