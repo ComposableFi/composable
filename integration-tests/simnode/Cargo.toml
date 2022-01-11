@@ -27,8 +27,9 @@ sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 sproof-builder = { package = "cumulus-test-relay-sproof-builder", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.13" }
 picasso-runtime = { path = "../../runtime/picasso" }
+dali-runtime = { path = "../../runtime/dali" }
 common = { path = "../../runtime/common" }
-node = { package = "composable-node", path = "../../node" }
+node = { package = "composable-node", path = "../../node", features = ["dali"] }
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = "../../frame/crowdloan-rewards" }
 parachain-inherent = { package = "cumulus-primitives-parachain-inherent", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.13" }
 parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.13" }
@@ -37,6 +38,7 @@ polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch =
 codec = { package = "parity-scale-codec", version = "2.0.0" }
 
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-
+num-traits = "0.2.14"
 structopt = "0.3.25"
 hex = "0.4.3"
+derive_more = "0.99.17"

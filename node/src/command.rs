@@ -52,7 +52,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"dali-rococo" => Box::new(chain_spec::dali_rococo()),
 		// Dali (Chachacha Relay)
 		#[cfg(feature = "dali")]
-		"dali-chachacha" => Box::new(chain_spec::dali_chachacha()),
+		"dali" | "dali-chachacha" => Box::new(chain_spec::dali_chachacha()),
 		// Picasso (Kusama Relay)
 		"picasso" => Box::new(chain_spec::picasso()),
 		// Composable (Polkadot Relay)
@@ -97,9 +97,13 @@ impl SubstrateCli for Cli {
 		match spec.id() {
 			#[cfg(feature = "composable")]
 			"composable" | "composable-dev" => &composable_runtime::VERSION,
+			// dali chains
 			#[cfg(feature = "dali")]
-			"dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" => &dali_runtime::VERSION,
-			_ => &picasso_runtime::VERSION,
+			"dali" | "dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" =>
+				&dali_runtime::VERSION,
+			// picasso chains
+			"picasso" | "picasso-dev" => &picasso_runtime::VERSION,
+			_ => panic!("Unknown chain_id: {}", spec.id()),
 		}
 	}
 }

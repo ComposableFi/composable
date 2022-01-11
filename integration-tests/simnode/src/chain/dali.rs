@@ -1,10 +1,11 @@
+use crate::{cli::ComposableCli, tests};
+use common::DAYS;
 use parachain_inherent::ParachainInherentData;
-use sc_cli::CliConfiguration;
 use sc_consensus_manual_seal::consensus::timestamp::SlotTimestampProvider;
 use sc_service::TFullBackend;
 use sp_runtime::generic::Era;
-use std::sync::Arc;
-use substrate_simnode::{ChainInfo, FullClientFor, SignatureVerificationOverride, SimnodeCli};
+use std::{error::Error, sync::Arc};
+use substrate_simnode::{FullClientFor, SignatureVerificationOverride};
 
 /// A unit struct which implements `NativeExecutionDispatch` feeding in the
 /// hard-coded runtime.
@@ -15,46 +16,31 @@ impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
 		(frame_benchmarking::benchmarking::HostFunctions, SignatureVerificationOverride);
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		picasso_runtime::api::dispatch(method, data)
+		dali_runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		picasso_runtime::native_version()
+		dali_runtime::native_version()
 	}
 }
 
-/// [`SimnodeCli`] implementation
-pub struct PicassoCli;
-
-impl SimnodeCli for PicassoCli {
-	type CliConfig = sc_cli::RunCmd;
-	type SubstrateCli = node::cli::Cli;
-
-	fn cli_config(cli: &Self::SubstrateCli) -> &Self::CliConfig {
-		&cli.run.base
-	}
-
-	fn log_filters(cli_config: &Self::CliConfig) -> Result<String, sc_cli::Error> {
-		cli_config.log_filters()
-	}
-}
 /// ChainInfo implementation.
-pub struct PicassoChainInfo;
+pub struct ChainInfo;
 
-impl ChainInfo for PicassoChainInfo {
+impl substrate_simnode::ChainInfo for ChainInfo {
 	type Block = common::OpaqueBlock;
 	type ExecutorDispatch = ExecutorDispatch;
-	type Runtime = picasso_runtime::Runtime;
-	type RuntimeApi = picasso_runtime::RuntimeApi;
+	type Runtime = dali_runtime::Runtime;
+	type RuntimeApi = dali_runtime::RuntimeApi;
 	type SelectChain = sc_consensus::LongestChain<TFullBackend<Self::Block>, Self::Block>;
 	type BlockImport = Arc<FullClientFor<Self>>;
-	type SignedExtras = picasso_runtime::SignedExtra;
+	type SignedExtras = dali_runtime::SignedExtra;
 	type InherentDataProviders = (
 		SlotTimestampProvider,
 		sp_consensus_aura::inherents::InherentDataProvider,
 		ParachainInherentData,
 	);
-	type Cli = PicassoCli;
+	type Cli = ComposableCli;
 
 	fn signed_extras(from: <Self::Runtime as system::Config>::AccountId) -> Self::SignedExtras {
 		(
@@ -67,6 +53,23 @@ impl ChainInfo for PicassoChainInfo {
 			),
 			system::CheckWeight::<Self::Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Self::Runtime>::from(0),
+			crowdloan_rewards::PrevalidateAssociation::<Self::Runtime>::new(),
 		)
 	}
+}
+
+/// run all integration tests
+pub fn run() -> Result<(), Box<dyn Error>> {
+	substrate_simnode::parachain_node::<ChainInfo, _, _>(|node| async move {
+		// test code-substitute for dali, by authoring blocks past the launch period
+		// node.seal_blocks(10).await;
+		// test runtime upgrades
+		let code = dali_runtime::WASM_BINARY.ok_or("Dali wasm not available")?.to_vec();
+		tests::runtime_upgrade::parachain_runtime_upgrades(&node, code).await?;
+
+		// try to create blocks for a month, if it doesn't panic, all good.
+		node.seal_blocks((30 * DAYS) as usize).await;
+
+		Ok(())
+	})
 }
