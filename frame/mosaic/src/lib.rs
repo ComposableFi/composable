@@ -669,8 +669,15 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+        /// AccountId of the pallet, used to store all funds before actually moving them.
+        pub fn sub_account_id(user_account: &AccountIdOf<T>) -> AccountIdOf<T> {
+            // TODO: SUB ACCOUNT
+            // todo!();
+            T::PalletId::get().into_sub_account(user_account)
+        }
+
 		/// Queries storage, returning the account_id of the current relayer.
-		pub fn relayer_account_id() -> Option<AccoundIdOf<T>> {
+		pub fn relayer_account_id() -> Option<AccountIdOf<T>> {
 			let current_block = <frame_system::Pallet<T>>::block_number();
 			Relayer::<T>::get().update(current_block).account_id().cloned()
 		}
