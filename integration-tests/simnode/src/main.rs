@@ -18,6 +18,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 	substrate_simnode::parachain_node::<PicassoChainInfo, _, _>(|node| async move {
 		let sudo = node.with_state(None, sudo::Pallet::<Runtime>::key);
 
+		// test code-substitute for picasso, by authoring blocks past the launch period
+		node.seal_blocks(10).await;
+
 		let old_runtime_version = node
 			.client()
 			.executor()
