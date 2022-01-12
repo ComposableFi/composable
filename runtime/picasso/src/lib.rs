@@ -818,6 +818,7 @@ construct_runtime!(
 		Assets: assets::{Pallet, Call, Storage} = 55,
 		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 56,
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 57,
+		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 58,
 	}
 );
 

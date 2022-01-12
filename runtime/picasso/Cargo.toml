@@ -77,6 +77,7 @@ governance-registry = { package = "pallet-governance-registry", path = "../../fr
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
+bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
