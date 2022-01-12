@@ -47,9 +47,9 @@ fi
 
 check_runtime() {
   VERSIONS_FILE="$1"
-add_spec_version="$(git diff tags/${RELEASE_VERSION} ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
+add_spec_version="$(git diff tags/"${RELEASE_VERSION}" ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 	| sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
-sub_spec_version="$(git diff tags/${RELEASE_VERSION} ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
+sub_spec_version="$(git diff tags/"${RELEASE_VERSION}" ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 	| sed -n -r "s/^\-[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
 if [ "${add_spec_version}" != "${sub_spec_version}" ]
 then
@@ -67,9 +67,9 @@ else
 	# check for impl_version updates: if only the impl versions changed, we assume
 	# there is no consensus-critical logic that has changed.
 	
-	add_impl_version="$(git diff tags/${RELEASE_VERSION} ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
+	add_impl_version="$(git diff tags/"${RELEASE_VERSION}" ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 		| sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
-	sub_impl_version="$(git diff tags/${RELEASE_VERSION} ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
+	sub_impl_version="$(git diff tags/"${RELEASE_VERSION}" ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 		| sed -n -r 's/^\-[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
 
 
