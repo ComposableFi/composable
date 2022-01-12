@@ -682,6 +682,12 @@ impl currency_factory::Config for Runtime {
 	type DynamicCurrencyId = CurrencyId;
 	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
+
+impl governance_registry::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type WeightInfo = ();
+}
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -738,6 +744,7 @@ construct_runtime!(
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
+		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 54,
 	}
 );
 
