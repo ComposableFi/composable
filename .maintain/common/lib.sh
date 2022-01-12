@@ -105,12 +105,12 @@ curl -XPOST -d "$1" "https://matrix.parity.io/_matrix/client/r0/rooms/$2/send/m.
 }
 
 # Check for runtime changes between two commits. This is defined as any changes
-# to bin/node/src/runtime, frame/ and primitives/sr_* trees.
+# to runtime/, frame/
 has_runtime_changes() {
   from=$1
   to=$2
   if git diff --name-only "${from}...${to}" \
-    | grep -q -e '^frame/' -e '^primitives/'
+    | grep -q -e '^frame/' -e "^runtime/$3/"
   then
     return 0
   else
