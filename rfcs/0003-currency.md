@@ -1,7 +1,57 @@
 
 # [DRAFT]
 
-Currency API.
+This documents overview what currency is, whats is properties are and what API should we have to run various scenarios safely and efficiently.
+
+It mostly considers technica and safety propeties of currency, not bussiness part of it.
+
+Governance of currencies is mostly out of scope of this document too.
+
+## What is currency?
+
+Identity of currency is positive integer. Any positive integer may be currency id, but not all integers are currency ids. That is `MayBeCurrencyId`.
+
+Once id was recoreded into ledger it never can be removed. So it can be restricted and disabled in some form later (`soft deleted`).
+
+Given we mapped `MayBeCurrencyId` into `CurrencyId` we can think of next infromation about it:
+
+- `Amount`. Given id, we can ask for total supply of currency in consensus of ledger. Amount of 10 of currenc is equal to amount of 10 of same currency - it is fungible.
+- `Decimals`. Currency may have unit and minimal amount. Unit usually 10 to some power like 6 or 9. Unit usually is priceable and comprehedible by people.  While minimal amount can be used to operat micro transactions and helf to minimize rounding errors. Ledgers operate only in decimal currencies. Zero decimals is viable currency too. Mostly pallets operat in decimals oblivion manner. 
+- `Symbol`. Currency may have human readable symbol. Like `XBTC`. This is list is target for governance to prevent spam and fishing.
+- `Native Currency`. Currency which is used to pay for operation on platforms. There could be several layers of native currency in single consensus. Native currency of consensus and native currency of protocol built on top.
+
+Above properies apply to local currencies, so to make econimics operate, need to integrate external sources of currencies to. Here we obtain more propertis.
+
+- `Remote Currency Id`. We can have local currency id. Using some forms of cross consesnsus mechanism (like relayers) we can `transfer` currency from one chain to other. So currency may have `Chain Id` from which it came along with id it has on that chain. 
+- `Remote Currency Decimals`. When transfer happens, we should know what  given `Amount` transfered means for that currency on our local netowrk. We need to know what are inimal amounts and decimals currency has remotely. This works off chain sources too, like Oracles. This may lead to precision loss and loss of currency too. In worth case transfer back and forth will print money. Example, remotely BTC can have 8 decimals, while locally we can have 12.
+- `Trusted Currency`. If there is surce of currency, like Ethereum. And there is trusted consensus (parachain) which can transfer `Etherium` currency into Polkadot relay chains ecosystem. Than that trusted consesus can be used to transfer remote currency to local with 1 to 1 correspondance. So lack of reverse of trust is open question. Process can be improved by setting up oracles which monitor burn proves on each chain. In theory burns and proves could be manual to allow manual.
+- `Mapped currency`.  Given possible lack of trust and difference of decimals, we come up the need for market to decide how well these are aligned. So if remote yBTC has local id of 42 and remote id of (200, 13) with 8 decimals and local xBTC has id of 1 and 12 decimals, than local DEX pool ratio of 10_000 should be created. Large enough pools are quantive trust. Automatic mapping and User Interface can help to handle.
+- `Remote Symbols`. 
+
+All currencies are derived, so some currencies can be derived in local consensus. So:
+- `Dillution`. If currency was direcly derived from protocol in local consensus than can tell exact ration of one amount needed to swap for other amount. With time currency amounts can change (locked, unlocked, minted), which will changed dillution factor. So we cannot tell nothing about external currencies dillution factors, only Oracles can tell. In this case we can observer whole chain of of tokens as they wrap each other and dillute. Process is not nessecary bidirectional.
+
+Also each protocol can have non direcly expressable propeties:
+- `Inflation`. Currency supply may be limited, frozen, minting speed depends on time or some activity, time locked. 
+
+## Currency is valid/exists
+
+Having API which assets `MayBeCurrencyId` and returns boolean separately will waste resources. 
+
+Any API accepting MayBeCurrencyId does some form of check. 
+
+Example, if currency does not exists, it cannot be locked, reserverd, transfered because there is 0 of it.
+
+If there will be need to API like that, API which transforms `MayBeCurrencyId` to `CurrencyId` can be created. 
+So rest code if exstrinsic can operate safely without any checks.
+
+## Assets registry
+
+What assets registry should proved in general, with link to our assets/assters-registy and registy-govenrancne pallets.
+
+## XCM and other cross consensus protocols
+ 
+## API considerations
 
  Asset id as if it was deserialized, not necessary exists.
  We could check asset id during serde, but that:
@@ -18,8 +68,8 @@ Currency API.
 
  Given above we stick with possibly wrong asset id passed into API.
 
- # Assert id pallet design   
- ```ignore
+ ## Almos working rust code
+ ```rust, ignore
  pub trait MaximalConstGet<T> {
      const VALUE: T;
  }
@@ -107,10 +157,3 @@ Currency API.
          self.0
      }
  }
-
- - assets-registy
- - xcm and other protocols
- - equal currency (btc from btc or eth from eth)
- - non comparable (btc from hydra)
- - decimals of xcm, our btc with 12 and their btc with 8 decimals transfers
- - symbols
