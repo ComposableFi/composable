@@ -1,4 +1,4 @@
-//! Common codes for defi pallets
+//! Common codes and conventions for DeFi pallets
 
 use codec::{Codec, Decode, Encode, FullCodec};
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
@@ -10,7 +10,8 @@ use sp_runtime::{
 
 use crate::{
 	currency::{AssetIdLike, BalanceLike},
-	math::{LiftedFixedBalance, SafeArithmetic},
+	defi::{LiftedFixedBalance},
+	math::{SafeArithmetic},
 };
 
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
@@ -25,9 +26,9 @@ pub struct Take<Balance> {
 
 impl<Balance: PartialOrd + Zero + SafeArithmetic> Take<Balance> {
 	pub fn is_valid(&self) -> bool {
-		self.amount > Balance::zero() && self.limit > Balance::zero()
+		self.amount > Balance::zero() && self.limit > Ratio::zero()
 	}
-	pub fn new(amount: Balance, limit: Balance) -> Self {
+	pub fn new(amount: Balance, limit: Ratio) -> Self {
 		Self { amount, limit }
 	}
 
@@ -51,7 +52,7 @@ impl<AssetId: PartialEq, Balance: PartialOrd + Zero + SafeArithmetic> Sell<Asset
 		base: AssetId,
 		quote: AssetId,
 		base_amount: Balance,
-		minimal_base_unit_price_in_quote: Balance,
+		minimal_base_unit_price_in_quote: Ratio,
 	) -> Self {
 		Self {
 			take: Take { amount: base_amount, limit: minimal_base_unit_price_in_quote },
@@ -192,7 +193,7 @@ pub trait DeFiComposableConfig: frame_system::Config {
 			  // bit
 }
 
-/// The fixed point number from 0..to max.
+/// The fixed point number from 0..to max 
 pub type Rate = FixedU128;
 
 /// The fixed point number of suggested by substrate precision
@@ -201,3 +202,12 @@ pub type MoreThanOneFixedU128 = FixedU128;
 
 /// Must be [0..1]
 pub type ZeroToOneFixedU128 = FixedU128;
+
+/// Number like of higher bits, so that amount and balance calculations are done it it with higher
+/// precision via fixed point.
+/// While this is 128 bit, cannot support u128 because 18 bits are for of mantissa (so maximal
+/// integer is 110 bit). Can support u128 if lift upper to use FixedU256 analog.
+pub type LiftedFixedBalance = FixedU128;
+
+/// unitless ratio of one thing to other. 
+pub type Ratio = FixedU128;

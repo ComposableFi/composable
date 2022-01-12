@@ -1,4 +1,4 @@
-use crate::{currency::LocalAssets, defi::CurrencyPair};
+use crate::{currency::LocalAssets, defi::{CurrencyPair, Ratio}};
 use frame_support::{dispatch::DispatchError, pallet_prelude::*};
 use sp_runtime::FixedU128;
 use sp_std::vec::Vec;
@@ -76,5 +76,5 @@ pub trait Oracle {
 	/// let base_amount = 3.0;
 	/// let needed_base_for_quote = base_amount * ratio; // 300.0
 	/// ```
-	fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<FixedU128, DispatchError>;
+	fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<Ratio, DispatchError>;
 }
