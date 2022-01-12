@@ -42,6 +42,19 @@ fn add_asset_and_info() {
 			SLASH
 		));
 
+		// does not increment if exists
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			ASSET_ID,
+			THRESHOLD,
+			MIN_ANSWERS,
+			MAX_ANSWERS,
+			BLOCK_INTERVAL,
+			REWARD,
+			SLASH
+		));
+		assert_eq!(Oracle::assets_count(), 1);
+
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
 			ASSET_ID + 1,
@@ -62,8 +75,9 @@ fn add_asset_and_info() {
 			slash: SLASH,
 		};
 		// id now activated and count incremented
-		assert_eq!(Oracle::asset_info(1), asset_info);
+		assert_eq!(Oracle::asset_info(1), Some(asset_info));
 		assert_eq!(Oracle::assets_count(), 2);
+
 		// fails with non permission
 		let account_1: AccountId = Default::default();
 		assert_noop!(
