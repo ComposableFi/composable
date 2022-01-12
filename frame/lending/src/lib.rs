@@ -55,13 +55,13 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
-		defi::{Rate, ZeroToOneFixedU128, MoreThanOneFixedU128, DeFiEngine, Sell, CurrencyPair, DeFiComposableConfig},
+		defi::{Rate, ZeroToOneFixedU128, MoreThanOneFixedU128, DeFiEngine, Sell, CurrencyPair, DeFiComposableConfig, LiftedFixedBalance},
 		lending::{
 			math::{self, *}, BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig,
 			UpdateInput,
 		},
 		liquidation::Liquidation,
-		math::{LiftedFixedBalance, SafeArithmetic},
+		math::{SafeArithmetic},
 		oracle::Oracle,
 		time::{DurationSeconds, Timestamp, SECONDS_PER_YEAR_NAIVE},
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},

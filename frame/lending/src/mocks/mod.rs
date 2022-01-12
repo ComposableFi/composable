@@ -339,8 +339,23 @@ impl pallet_dutch_auction::Config for Test {
 impl pallet_liquidations::Config for Test {
 	type Event = Event;
 	type UnixTime = Timestamp;
-	type Lending = Lending;
-	type GroupId = AccountId;
+
+	type DutchAuction;
+
+
+	type LiquidationStrategyId;
+
+
+	type OrderId;
+
+
+	type PalletId;
+
+
+	type WeightInfo;
+
+	type ParachainId;
+	
 }
 
 pub type Extrinsic = TestXt<Call, ()>;
@@ -377,13 +392,13 @@ parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 }
 
+
 impl pallet_lending::Config for Test {
 	type Oracle = Oracle;
 	type VaultId = VaultId;
 	type Vault = Vault;
 	type Event = Event;
 	type AssetId = MockCurrencyId;
-	type Balance = Balance;
 	type Currency = Tokens;
 	type CurrencyFactory = LpTokenFactory;
 	type MarketDebtCurrency = Tokens;
@@ -393,6 +408,7 @@ impl pallet_lending::Config for Test {
 	type AuthorityId = crypto::TestAuthId;
 	type WeightInfo = ();
 	type GroupId = AccountId;
+	type LiquidationStrategyId = u32;
 }
 
 // Build genesis storage according to the mock runtime.

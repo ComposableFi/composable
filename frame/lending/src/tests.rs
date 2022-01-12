@@ -13,10 +13,10 @@ use crate::{
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::{
 	currency::{CurrencyFactory, LocalAssets},
-	defi::Rate,
+	defi::{Rate, ZeroToOneFixedU128, MoreThanOneFixedU128},
 	lending::{math::*, CreateInput},
 	math::LiftedFixedBalance,
-	vault::{Deposit, VaultConfig},
+	vault::{Deposit, VaultConfig}, time::SECONDS_PER_YEAR_NAIVE,
 };
 use frame_support::{
 	assert_noop, assert_ok,
@@ -33,7 +33,7 @@ type CollateralAsset = MockCurrencyId;
 
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
-const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
+const DEFAULT_COLLATERAL_FACTOR: u64 = 2;
 
 /// Create a very simple vault for the given currency, 100% is reserved.
 fn create_simple_vault(
