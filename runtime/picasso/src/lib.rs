@@ -418,8 +418,6 @@ parameter_types! {
 
 	/// TODO: discuss with omar/cosmin
 	pub MinStake: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
-	// Shouldn't this be a ratio based on locked amount?
-	pub const SlashAmount: Balance = 5;
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
