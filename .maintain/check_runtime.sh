@@ -17,6 +17,8 @@ declare -a VERSIONS_FILES=(
   "runtime/composable/src/lib.rs,composable,composable"
 )
 
+RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )
+
 boldprint () { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
 boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done; printf "|\n" ; }
 
@@ -45,9 +47,9 @@ fi
 
 check_runtime() {
   VERSIONS_FILE="$1"
-add_spec_version="$(git diff tags/picasso-1.2.4 ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
+add_spec_version="$(git diff tags/${RELEASE_VERSION} ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 	| sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
-sub_spec_version="$(git diff tags/picasso-1.2.4 ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
+sub_spec_version="$(git diff tags/${RELEASE_VERSION} ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 	| sed -n -r "s/^\-[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
 if [ "${add_spec_version}" != "${sub_spec_version}" ]
 then
@@ -64,10 +66,10 @@ then
 else
 	# check for impl_version updates: if only the impl versions changed, we assume
 	# there is no consensus-critical logic that has changed.
-
-	add_impl_version="$(git diff tags/picasso-1.2.4 ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
+	
+	add_impl_version="$(git diff tags/${RELEASE_VERSION} ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 		| sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
-	sub_impl_version="$(git diff tags/picasso-1.2.4 ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
+	sub_impl_version="$(git diff tags/${RELEASE_VERSION} ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 		| sed -n -r 's/^\-[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
 
 
