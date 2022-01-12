@@ -103,7 +103,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_version: 2000,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2,
+	transaction_version: 1,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -385,7 +385,6 @@ where
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-			crowdloan_rewards::PrevalidateAssociation::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -674,90 +673,6 @@ impl democracy::Config for Runtime {
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	  pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
-}
-
-impl currency_factory::Config for Runtime {
-	type Event = Event;
-	type DynamicCurrencyId = CurrencyId;
-	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
-}
-
-impl governance_registry::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
-}
-
-impl assets::Config for Runtime {
-	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = Factory;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
-	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrHalfCouncil;
-	type GovernanceRegistry = GovernanceRegistry;
-}
-
-parameter_types! {
-  pub const InitialPayment: Perbill = Perbill::from_percent(25);
-	pub const VestingStep: BlockNumber = 7 * DAYS;
-  pub const Prefix: &'static [u8] = b"picasso-";
-}
-
-impl crowdloan_rewards::Config for Runtime {
-	type Event = Event;
-	type Balance = Balance;
-	type Currency = Assets;
-	type AdminOrigin = EnsureRootOrHalfCouncil;
-	type Convert = sp_runtime::traits::ConvertInto;
-	type RelayChainAccountId = [u8; 32];
-	type InitialPayment = InitialPayment;
-	type VestingStep = VestingStep;
-	type Prefix = Prefix;
-	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-	  pub const MaxVestingSchedule: u32 = 128;
-	  pub MinVestedTransfer: u64 = CurrencyId::PICA.milli::<u64>();
-}
-
-impl vesting::Config for Runtime {
-	type Currency = Assets;
-	type Event = Event;
-	type MaxVestingSchedules = MaxVestingSchedule;
-	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = system::EnsureSigned<AccountId>;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	  pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
-	  pub MinReward: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
-	  pub Stake: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
-}
-
-impl bonded_finance::Config for Runtime {
-	type AdminOrigin = EnsureRoot<AccountId>;
-	type BondOfferId = u64;
-	type Convert = sp_runtime::traits::ConvertInto;
-	type Currency = Assets;
-	type Event = Event;
-	type MinReward = MinReward;
-	type NativeCurrency = Balances;
-	type PalletId = BondedFinanceId;
-	type Stake = Stake;
-	type Vesting = Vesting;
-}
-
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -813,12 +728,6 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
-		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
-		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 54,
-		Assets: assets::{Pallet, Call, Storage} = 55,
-		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 56,
-		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 57,
-		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 58,
 	}
 );
 
@@ -836,7 +745,6 @@ pub type SignedExtra = (
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
 	transaction_payment::ChargeTransactionPayment<Runtime>,
-	crowdloan_rewards::PrevalidateAssociation<Runtime>,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
@@ -977,7 +885,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, utility, Utility);
 			list_benchmark!(list, extra, identity, Identity);
 			list_benchmark!(list, extra, multisig, Multisig);
-		  list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1025,7 +932,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, utility, Utility);
 			add_benchmark!(params, batches, identity, Identity);
 			add_benchmark!(params, batches, multisig, Multisig);
-			add_benchmark!(params, batches, crowdloan_rewards, CrowdloanRewards);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
