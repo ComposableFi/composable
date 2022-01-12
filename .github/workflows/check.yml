@@ -28,7 +28,7 @@ jobs:
 
       - name: Check for runtime changes
         working-directory: "./.maintain/"
-        run: /bin/bash check_runtime.sh
+        run: ./check_runtime.sh
 
       - name: Benchmark 
         run: |
