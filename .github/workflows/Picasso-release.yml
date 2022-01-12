@@ -34,9 +34,15 @@ jobs:
         /home/runner/.cargo/bin/cargo build --release --bins
         tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
         tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain-utils
-        /home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
-        /home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso
     
+    - name: Build with srtool
+      run: |
+        /home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
+        /home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso > srtool.out
+        tl=$(sed -n '$=' srtool.out)
+        itl=$(sed -n '/Package/=' srtool.out)
+        sed -n "$itl,$tl"p srtool.out
+
     #- name: Build with srtool
     #  uses: chevdor/srtool-actions@v0.2.0
     #  with:
