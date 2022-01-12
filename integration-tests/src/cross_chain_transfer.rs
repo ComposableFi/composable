@@ -251,7 +251,6 @@ fn subscribe_version_notify_works() {
 		assert_ok!(r);
 	});
 	Picasso::execute_with(|| {
-		// picasso_runtime::System::assert_has_event(picasso_runtime::Event::PolkadotXcm(
 		picasso_runtime::System::assert_has_event(picasso_runtime::Event::RelayerXcm(
 			pallet_xcm::Event::SupportedVersionChanged(
 				MultiLocation { parents: 1, interior: Here },
@@ -259,31 +258,4 @@ fn subscribe_version_notify_works() {
 			),
 		));
 	});
-
-	/*
-	// para chain subscribe version notify of sibling chain
-	Picasso::execute_with(|| {
-		let r = pallet_xcm::Pallet::<picasso_runtime::Runtime>::force_subscribe_version_notify(
-			picasso_runtime::Origin::root(),
-			Box::new((Parent, Parachain(2001)).into()),
-		);
-		assert_ok!(r);
-	});
-	Picasso::execute_with(|| {
-		assert!(picasso_runtime::System::events().iter().any(|r| {
-			println!("r: {:?}", r);
-			matches!(
-				r.event,
-				picasso_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent(Some(_)))
-			)
-		}));
-	});
-	Sibling::execute_with(|| {
-		assert!(System::events().iter().any(|r| matches!(
-			r.event,
-			picasso_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent(Some(_)))
-				| karura_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::Success(Some(_)))
-		)));
-	});
-	*/
 }
