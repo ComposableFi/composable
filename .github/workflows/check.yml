@@ -26,7 +26,7 @@ jobs:
       - name: Set Cargo path
         run: export PATH=/home/runner/.cargo/bin/cargo:$PATH
       - run: |
-          SKIP_WASM_BUILD=1 cargo check --all --benches
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --all --benches
 
       - name: Check for runtime changes
         working-directory: "./.maintain/"
