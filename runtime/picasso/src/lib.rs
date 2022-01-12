@@ -724,6 +724,40 @@ impl crowdloan_rewards::Config for Runtime {
 	type Prefix = Prefix;
 	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
 }
+
+parameter_types! {
+	  pub const MaxVestingSchedule: u32 = 128;
+	  pub MinVestedTransfer: u64 = CurrencyId::PICA.milli::<u64>();
+}
+
+impl vesting::Config for Runtime {
+	type Currency = Assets;
+	type Event = Event;
+	type MaxVestingSchedules = MaxVestingSchedule;
+	type MinVestedTransfer = MinVestedTransfer;
+	type VestedTransferOrigin = system::EnsureSigned<AccountId>;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	  pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
+	  pub MinReward: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+	  pub Stake: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+}
+
+impl bonded_finance::Config for Runtime {
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type BondOfferId = u64;
+	type Convert = sp_runtime::traits::ConvertInto;
+	type Currency = Assets;
+	type Event = Event;
+	type MinReward = MinReward;
+	type NativeCurrency = Balances;
+	type PalletId = BondedFinanceId;
+	type Stake = Stake;
+	type Vesting = Vesting;
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -783,6 +817,7 @@ construct_runtime!(
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 54,
 		Assets: assets::{Pallet, Call, Storage} = 55,
 		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 56,
+		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 57,
 	}
 );
 
