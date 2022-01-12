@@ -26,6 +26,12 @@ boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${
 boldprint "latest 10 commits of ${GITHUB_REF_NAME}"
 git log --graph --oneline --decorate=short -n 10
 
+boldprint "make sure the master branch and release tag are available in shallow clones"
+git fetch --depth="${GIT_DEPTH:-100}" origin master
+git fetch --depth="${GIT_DEPTH:-100}" origin release
+git tag -f release FETCH_HEAD
+git log -n1 release
+
 simnode_check () {
   VERSIONS_FILE="$1"
 if has_runtime_changes origin/main "${GITHUB_REF_NAME}" $3 && check_runtime $VERSIONS_FILE $2
@@ -47,9 +53,9 @@ fi
 
 check_runtime() {
   VERSIONS_FILE="$1"
-add_spec_version="$(git diff "tags/${RELEASE_VERSION}" ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
+add_spec_version="$(git diff origin tags/releases ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 	| sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
-sub_spec_version="$(git diff "tags/${RELEASE_VERSION}" ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
+sub_spec_version="$(git diff tags/releases ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 	| sed -n -r "s/^\-[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
 if [ "${add_spec_version}" != "${sub_spec_version}" ]
 then
@@ -67,9 +73,9 @@ else
 	# check for impl_version updates: if only the impl versions changed, we assume
 	# there is no consensus-critical logic that has changed.
 	
-	add_impl_version="$(git diff "tags/${RELEASE_VERSION}" ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
+	add_impl_version="$(git diff tags/releases ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 		| sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
-	sub_impl_version="$(git diff "tags/${RELEASE_VERSION}" ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
+	sub_impl_version="$(git diff tags/releases ${GITHUB_SHA} -- "${VERSIONS_FILE}" \
 		| sed -n -r 's/^\-[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
 
 
