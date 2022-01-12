@@ -37,18 +37,16 @@ git log -n1 releases
 simnode_check () {
   VERSIONS_FILE="$1"
 if has_runtime_changes origin/main "${GITHUB_REF_NAME}" $3 && check_runtime $VERSIONS_FILE $2
+  boldprint "Checking for conditions to run simnode"
 then
   boldprint "Running simnode"
-	boldcat <<-EOT
-
-    YDATE=$(date -d yesterday +'%m-%d-%Y')
+	YDATE=$(date -d yesterday +'%m-%d-%Y')
     FILENAME=cl-1-$YDATE.zip
     GS_BUCKET="composable-$2-data-sync"
     sudo gsutil cp gs://$GS_BUCKET/$FILENAME .
     sudo unzip $FILENAME -d  /tmp/db
 	./target/release/simnode --chain=$2 --base-path=/tmp/db --pruning=archive --execution=wasm
 
-	EOT
 fi
 }
 
@@ -121,7 +119,6 @@ for i in "${VERSIONS_FILES[@]}"; do
 done
 
 # dropped through. there's something wrong;  exit 1.
-
 exit 1
 
 # vim: noexpandtab
