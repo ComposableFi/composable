@@ -127,7 +127,6 @@ impl pallet_oracle::Config for Test {
 	type StalePrice = StalePrice;
 	type MinStake = MinStake;
 	type AddOracle = EnsureSignedBy<RootAccount, sp_core::sr25519::Public>;
-	type SlashAmount = SlashAmount;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
 	type MaxHistory = MaxHistory;
