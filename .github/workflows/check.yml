@@ -23,6 +23,8 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
+      - name: Set Cargo path
+        run: export PATH=/home/runner/.cargo/bin/cargo:$PATH
       - run: |
           SKIP_WASM_BUILD=1 cargo check --all --benches
 
