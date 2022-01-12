@@ -103,9 +103,11 @@ pub trait SimpleExchange {
 }
 
 #[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, Debug)]
-pub struct ConstantProductPoolInfo<AccountId> {
+pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	/// Owner of pool
 	pub owner: AccountId,
+	/// AssetId of LP token,
+	pub lp_token: AssetId,
 	/// Amount of the fee pool charges for the exchange
 	pub fee: Permill,
 }
