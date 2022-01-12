@@ -11,7 +11,7 @@ set -e # fail on any error
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
 
-declare -a VERSIONS_FILES=("runtime/picasso/src/lib.rs" "runtime/dali/src/lib.rs" "runtime/composable/src/lib.rs" )
+VERSIONS_FILES=("runtime/picasso/src/lib.rs" "runtime/dali/src/lib.rs" "runtime/composable/src/lib.rs")
 
 boldprint () { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
 boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done; printf "|\n" ; }
