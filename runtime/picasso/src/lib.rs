@@ -103,7 +103,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_version: 2000,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
+	transaction_version: 2,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -385,6 +385,7 @@ where
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			crowdloan_rewards::PrevalidateAssociation::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -704,6 +705,25 @@ impl assets::Config for Runtime {
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type GovernanceRegistry = GovernanceRegistry;
 }
+
+parameter_types! {
+  pub const InitialPayment: Perbill = Perbill::from_percent(25);
+	pub const VestingStep: BlockNumber = 7 * DAYS;
+  pub const Prefix: &'static [u8] = b"picasso-";
+}
+
+impl crowdloan_rewards::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Currency = Assets;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type Convert = sp_runtime::traits::ConvertInto;
+	type RelayChainAccountId = [u8; 32];
+	type InitialPayment = InitialPayment;
+	type VestingStep = VestingStep;
+	type Prefix = Prefix;
+	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
+}
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -762,6 +782,7 @@ construct_runtime!(
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 54,
 		Assets: assets::{Pallet, Call, Storage} = 55,
+		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 56,
 	}
 );
 
@@ -779,6 +800,7 @@ pub type SignedExtra = (
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
 	transaction_payment::ChargeTransactionPayment<Runtime>,
+	crowdloan_rewards::PrevalidateAssociation<Runtime>,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
@@ -919,6 +941,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, utility, Utility);
 			list_benchmark!(list, extra, identity, Identity);
 			list_benchmark!(list, extra, multisig, Multisig);
+		  list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -966,6 +989,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, utility, Utility);
 			add_benchmark!(params, batches, identity, Identity);
 			add_benchmark!(params, batches, multisig, Multisig);
+			add_benchmark!(params, batches, crowdloan_rewards, CrowdloanRewards);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
