@@ -55,9 +55,9 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
-		defi::Rate,
+		defi::{Rate, ZeroToOneFixedU128, MoreThanOneFixedU128, DeFiEngine, Sell, CurrencyPair, DeFiComposableConfig},
 		lending::{
-			math::*, BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig,
+			math::{self, *}, BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig,
 			UpdateInput,
 		},
 		liquidation::Liquidation,
@@ -765,7 +765,6 @@ pub mod pallet {
 			account: &<Self as DeFiEngine>::AccountId,
 		) -> Result<(), DispatchError> {
 			if Self::should_liquidate(market_id, account)? {
-				
 				let market = Self::get_market(market_id)?;
 				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 				let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
@@ -775,7 +774,7 @@ pub mod pallet {
 					market.collateral,
 					borrow_asset,
 					collateral_to_liquidate,
-					unit_price.into(),
+					unit_price,
 				);
 				T::Liquidation::liquidate(&source_target_account, sell, market.liquidators)?;	
 			} 
@@ -1264,7 +1263,7 @@ pub mod pallet {
 			cash: &Self::Balance,
 			borrows: &Self::Balance,
 		) -> Result<Percent, DispatchError> {
-			Ok(composable_traits::lending::math::calc_utilization_ratio(
+			Ok(math::calc_utilization_ratio(
 				(*cash).into(),
 				(*borrows).into(),
 			)?)

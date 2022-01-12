@@ -19,8 +19,8 @@ pub struct Take<Balance> {
 	pub amount: Balance,
 	/// direction depends on referenced order type
 	/// either minimal or maximal amount of `quote` for given `base`
-	/// depending on engine configuration, limit can be hard of flexible (change with time)
-	pub limit: Balance,
+	/// depending on engine configuration, `limit` can be hard or flexible (change with time)
+	pub limit: LiftedFixedBalance,
 }
 
 impl<Balance: PartialOrd + Zero + SafeArithmetic> Take<Balance> {

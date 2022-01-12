@@ -65,6 +65,7 @@ pub trait Oracle {
 		weighting: Vec<Self::Balance>,
 	) -> Result<Self::Balance, DispatchError>;
 
+	/// How much of `quote` for unit `base` Oracle suggests to take.  
 	/// Up to oracle how it decides ratio.
 	/// If there is no direct trading pair, can estimate via common pair (to which all currencies
 	/// are normalized). General formula
