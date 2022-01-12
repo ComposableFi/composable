@@ -1,6 +1,5 @@
 #!/bin/bash
 #
-#
 # check for any changes in the node/src/runtime, frame/* and primitives/sr_* trees. if
 # there are any changes found, it should mark the PR breaksconsensus and
 # "auto-fail" the PR if there isn't a change in the runtime/src/lib.rs file
