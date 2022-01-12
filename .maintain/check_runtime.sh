@@ -26,8 +26,8 @@ boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${
 boldprint "latest 10 commits of ${GITHUB_REF_NAME}"
 git log --graph --oneline --decorate=short -n 10
 
-boldprint "make sure the master branch and release tag are available in shallow clones"
-git fetch --depth="${GIT_DEPTH:-100}" origin master
+boldprint "make sure the main branch and release tag are available in shallow clones"
+git fetch --depth="${GIT_DEPTH:-100}" origin main
 git fetch --depth="${GIT_DEPTH:-100}" origin release
 git tag -f release FETCH_HEAD
 git log -n1 release
