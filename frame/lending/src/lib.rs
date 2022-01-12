@@ -959,14 +959,10 @@ pub mod pallet {
 
 			let borrow_limit = Self::get_borrow_limit(market_id, debt_owner)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, amount_to_borrow)?;
-			dbg!("{:?}", borrow_limit);
-			dbg!("{:?}", amount_to_borrow);
-			dbg!("{:?}", amount_to_borrow);
 			ensure!(
 				borrow_limit >= borrow_amount_value,
 				Error::<T>::NotEnoughCollateralToBorrowAmount
 			);
-			dbg!("{:?}", <T as Config>::Currency::balance(borrow_asset, market_account));
 			ensure!(
 				<T as Config>::Currency::can_withdraw(
 					borrow_asset,
@@ -1309,7 +1305,6 @@ pub mod pallet {
 				DebtMarkets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
 			let account_debt = DebtIndex::<T>::get(market_id, account);
-			dbg!("{:?}", account_debt);
 			match account_debt {
 				Some(account_interest_index) => {
 					let principal = T::MarketDebtCurrency::balance_on_hold(debt_asset_id, account);
