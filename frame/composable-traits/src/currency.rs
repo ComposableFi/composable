@@ -33,16 +33,17 @@ pub trait CurrencyFactory<CurrencyId> {
 /// Local presentation of asset information.
 /// Most pallets do not need it.
 pub trait LocalAssets<MayBeAssetId> {
-    /// decimals of of big unit over minimal unit
-    ///	ORML also has separate trait on Balances to inspect decimals, that is not on type it self
-    fn decimals(currency_id: MayBeAssetId) -> Result<Exponent, DispatchError>;
-    /// Amount which humans operate as `1` usually.
-    /// Amount is probably priceable by Oracles.
-    /// Amount resonably higher than minimal tradeable amount or minial trading step on DEX.
-    fn unit<T: From<u64>>(currency_id: MayBeAssetId) -> Result<T, DispatchError> {
-    	let exponent = Self::decimals(currency_id)?;
-    	Ok(10_u64.pow(exponent).into())
-    }
+	/// decimals of of big unit over minimal unit.
+	/// orml also has separate trait on Balances to inspect decimals, that is not on type it self
+	fn decimals(currency_id: MayBeAssetId) -> Result<Exponent, DispatchError>;
+
+	/// Amount which humans operate as `1` usually.
+	/// Amount is probably priceable by Oracles.
+	/// Amount resonably higher than minimal tradeable amount or minial trading step on DEX.
+	fn unit<T: From<u64>>(currency_id: MayBeAssetId) -> Result<T, DispatchError> {
+		let exponent = Self::decimals(currency_id)?;
+		Ok(10_u64.pow(exponent).into())
+	}
 }
 
 /// when we store assets in native form to chain in smallest units or for mock in tests
