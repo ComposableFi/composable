@@ -245,7 +245,8 @@ fn accrue_interest_plotter() {
 	#[cfg(feature = "visualization")]
 	{
 		use plotters::prelude::*;
-		let area = BitMapBackend::new("./accrue_interest.png", (1024, 768)).into_drawing_area();
+		let area =
+			BitMapBackend::new("./accrue_interest_plotter.png", (1024, 768)).into_drawing_area();
 		area.fill(&WHITE).unwrap();
 
 		let mut chart = ChartBuilder::on(&area)
@@ -288,8 +289,12 @@ fn test_borrow_repay_in_same_block() {
 			process_block(i);
 		}
 
+		let price =
+			|currency_id, amount| Oracle::get_price(currency_id, amount).expect("impossible").price;
+
 		assert_eq!(Lending::borrow_balance_current(&market, &ALICE), Ok(Some(0)));
-		let alice_limit = 100;
+		let limit_normalized = Lending::get_borrow_limit(&market, &ALICE).unwrap();
+		let alice_limit = limit_normalized / price(MockCurrencyId::BTC, 1);
 		assert_eq!(Lending::total_cash(&market), Ok(total_cash));
 		process_block(1);
 		assert_ok!(Lending::borrow_internal(&market, &ALICE, alice_limit / 4));
@@ -360,9 +365,7 @@ fn borrow_flow() {
 			price(MockCurrencyId::USDT, 1000);
 		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &ALICE, collateral_amount));
-		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), collateral_amount);
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, collateral_amount));
-		assert_eq!(Tokens::balance(MockCurrencyId::USDT, &ALICE), 0);
 		let limit_normalized = Lending::get_borrow_limit(&market, &ALICE).unwrap();
 		let limit = limit_normalized / price(MockCurrencyId::BTC, 1);
 		assert_eq!(limit, alice_capable_btc / DEFAULT_COLLATERAL_FACTOR);
@@ -430,7 +433,6 @@ fn borrow_flow() {
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, collateral_amount));
 
 		let alice_limit = Lending::get_borrow_limit(&market, &ALICE).unwrap();
-		dbg!("{:?}", alice_limit);
 		assert!(price(MockCurrencyId::BTC, alice_capable_btc) > alice_limit);
 		assert!(alice_limit > price(MockCurrencyId::BTC, alice_borrow));
 
