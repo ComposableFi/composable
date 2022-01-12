@@ -52,7 +52,9 @@ where
 	println!("\nold_runtime_version: {}\n", old_runtime_version);
 
 	let call = sudo::Call::sudo_unchecked_weight {
-		call: Box::new(system::Call::set_code { code }.into()),
+		// Former Dali runtime had the spec_name of Picasso. Changing it to Dali requires
+		// `without_checks`.
+		call: Box::new(system::Call::set_code_without_checks { code }.into()),
 		weight: 0,
 	};
 	node.submit_extrinsic(call, Some(sudo)).await?;
