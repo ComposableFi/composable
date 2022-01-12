@@ -42,7 +42,7 @@ then
   boldprint "Running simnode"
 	YDATE=$(date -d yesterday +'%m-%d-%Y')
     FILENAME=cl-1-$YDATE.zip
-    GS_BUCKET="composable-$2-data-sync"
+    GS_BUCKET="composable-$2-data-store"
     sudo gsutil cp gs://$GS_BUCKET/$FILENAME .
     sudo unzip $FILENAME -d  /tmp/db
 	./target/release/simnode --chain=$2 --base-path=/tmp/db --pruning=archive --execution=wasm
