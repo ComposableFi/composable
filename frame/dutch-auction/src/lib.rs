@@ -72,6 +72,7 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
+	pub use crate::weights::WeightInfo;
 	use codec::{Decode, Encode};
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
@@ -91,7 +92,7 @@ pub mod pallet {
 	use num_traits::Zero;
 	use scale_info::TypeInfo;
 
-	use crate::{math::*, weights::WeightInfo};
+	use crate::math::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
 	use sp_runtime::{
 		traits::{AccountIdConversion, Saturating},
@@ -227,7 +228,7 @@ pub mod pallet {
 		}
 
 		/// adds take to list, does not execute take immediately
-		#[pallet::weight(T::WeightInfo::take())]
+		#[pallet::weight(T::WeightInfo::take(42))] // FIXME: need to update benchmark and weight for this extrinsic
 		pub fn take(
 			origin: OriginFor<T>,
 			order_id: T::OrderId,
