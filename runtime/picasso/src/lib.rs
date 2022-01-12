@@ -673,6 +673,15 @@ impl democracy::Config for Runtime {
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	  pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
+}
+
+impl currency_factory::Config for Runtime {
+	type Event = Event;
+	type DynamicCurrencyId = CurrencyId;
+	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
+}
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -728,6 +737,7 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
+		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
 	}
 );
 
