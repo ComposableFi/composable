@@ -688,6 +688,22 @@ impl governance_registry::Config for Runtime {
 	type AssetId = CurrencyId;
 	type WeightInfo = ();
 }
+
+parameter_types! {
+	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
+}
+
+impl assets::Config for Runtime {
+	type NativeAssetId = NativeAssetId;
+	type GenerateCurrencyId = Factory;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type NativeCurrency = Balances;
+	type MultiCurrency = Tokens;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type GovernanceRegistry = GovernanceRegistry;
+}
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -745,6 +761,7 @@ construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 54,
+		Assets: assets::{Pallet, Call, Storage} = 55,
 	}
 );
 
