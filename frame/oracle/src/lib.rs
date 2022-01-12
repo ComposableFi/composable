@@ -553,7 +553,7 @@ pub mod pallet {
 				block: frame_system::Pallet::<T>::block_number(),
 				who: who.clone(),
 			};
-			let asset_info = Self::asset_info(asset_id).unwrap_or_default();
+			let asset_info = Self::asset_info(asset_id).ok_or(Error::<T>::InvalidAssetId)?;
 			PrePrices::<T>::try_mutate(asset_id, |current_prices| -> Result<(), DispatchError> {
 				// There can convert current_prices.len() to u32 safely
 				// because current_prices.len() limited by u32
@@ -802,8 +802,12 @@ pub mod pallet {
 		pub fn is_requested(price_id: &T::AssetId) -> bool {
 			let last_update = Self::prices(price_id);
 			let current_block = frame_system::Pallet::<T>::block_number();
-			let asset_info = Self::asset_info(price_id).unwrap_or_default();
-			last_update.block + asset_info.block_interval < current_block
+			let asset_info = Self::asset_info(price_id);
+			if asset_info.is_none() {
+				false
+			} else {
+				last_update.block + asset_info.unwrap_or_default().block_interval < current_block
+			}
 		}
 
 		pub fn remove_price_in_transit(asset_id: &T::AssetId, who: &T::AccountId) {
