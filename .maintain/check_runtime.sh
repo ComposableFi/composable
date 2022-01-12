@@ -18,6 +18,9 @@ declare -a VERSIONS_FILES=(
 )
 
 RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^[0-9]' | tail -1 )
+COMMIT_SHA=$(git rev-parse --short=9 HEAD)
+GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
+
 
 boldprint () { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
 boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done; printf "|\n" ; }
