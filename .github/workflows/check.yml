@@ -23,6 +23,8 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
+        with: 
+          fetch-depth: 0
       - name: Set Cargo path
         run: export PATH=/home/runner/.cargo/bin/cargo:$PATH
       - run: |
@@ -48,6 +50,8 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
+        with: 
+          fetch-depth: 0
       - run: |
           /home/runner/.cargo/bin/rustup show
           /home/runner/.cargo/bin/rustup override unset
@@ -92,6 +96,8 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
+        with: 
+          fetch-depth: 0
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
