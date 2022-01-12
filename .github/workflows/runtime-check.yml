@@ -19,5 +19,6 @@ jobs:
       - name: Check for runtime changes
         working-directory: "./.maintain/"
         run: |
+          git fetch
           ./check_runtime.sh
 
