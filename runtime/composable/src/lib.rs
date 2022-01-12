@@ -1,5 +1,16 @@
-#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		// // impl_runtime_apis will generate code that contains a `panic!`. Implementations should still avoid using panics.
+		// clippy::panic
+	)
+)]
+#![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -482,18 +493,6 @@ parameter_types! {
 	pub const TokenTotal: Balance = 200_000_000_000_000_000;
 }
 
-impl crowdloan_bonus::Config for Runtime {
-	type Event = Event;
-	type LiquidRewardId = LiquidRewardId;
-	type CurrencyId = CrowdloanCurrencyId;
-	type TokenTotal = TokenTotal;
-	type JumpStart = EnsureRootOrHalfCouncil;
-	type Currency = Tokens;
-	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type WeightInfo = weights::crowdloan_bonus::WeightInfo<Runtime>;
-}
-
 parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
 	/// percentage of proposal that most be bonded by the proposer
@@ -694,7 +693,6 @@ construct_runtime!(
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
-		LiquidCrowdloan: crowdloan_bonus::{Pallet, Call, Storage, Event<T>} = 50,
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
 	}
 );
@@ -848,7 +846,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, scheduler, Scheduler);
 			list_benchmark!(list, extra, democracy, Democracy);
 			list_benchmark!(list, extra, collective, Council);
-			list_benchmark!(list, extra, crowdloan_bonus, LiquidCrowdloan);
 			list_benchmark!(list, extra, utility, Utility);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -894,7 +891,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, scheduler, Scheduler);
 			add_benchmark!(params, batches, democracy, Democracy);
 			add_benchmark!(params, batches, collective, Council);
-			add_benchmark!(params, batches, crowdloan_bonus, LiquidCrowdloan);
 			add_benchmark!(params, batches, utility, Utility);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

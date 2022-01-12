@@ -41,7 +41,7 @@
   "parachains": [
     {
       "bin": "../../target/release/composable",
-      "chain":"picasso-dev",
+      "chain":"dali-dev",
       "balance": "1000000000000000000000",
       "nodes": [
         {

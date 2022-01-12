@@ -2,10 +2,11 @@ name: Check Runtime
 on:
   push:
     branches:
-      - main
       - release-*
+      - main
   pull_request:
     branches:
+      - release-*
       - main
 jobs:
   check-runtime:
