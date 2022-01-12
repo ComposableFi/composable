@@ -12,8 +12,8 @@ use sp_runtime::{
 use sp_arithmetic::per_things::Percent;
 
 use crate::{
-	defi::{Rate, ZeroToOneFixedU128},
-	math::{LiftedFixedBalance, SafeArithmetic},
+	defi::{LiftedFixedBalance, Rate, ZeroToOneFixedU128},
+	math::{SafeArithmetic},
 	time::{DurationSeconds, SECONDS_PER_YEAR_NAIVE},
 };
 

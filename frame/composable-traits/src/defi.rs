@@ -9,8 +9,7 @@ use sp_runtime::{
 };
 
 use crate::{
-	currency::{AssetIdLike, BalanceLike},
-	defi::{LiftedFixedBalance},
+	currency::{AssetIdLike, BalanceLike, MathBalance},
 	math::{SafeArithmetic},
 };
 
@@ -24,7 +23,7 @@ pub struct Take<Balance> {
 	pub limit: LiftedFixedBalance,
 }
 
-impl<Balance: PartialOrd + Zero + SafeArithmetic> Take<Balance> {
+impl<Balance: MathBalance> Take<Balance> {
 	pub fn is_valid(&self) -> bool {
 		self.amount > Balance::zero() && self.limit > Ratio::zero()
 	}
@@ -33,7 +32,11 @@ impl<Balance: PartialOrd + Zero + SafeArithmetic> Take<Balance> {
 	}
 
 	pub fn quote_amount(&self) -> Result<Balance, ArithmeticError> {
-		self.amount.safe_mul(&self.limit)
+		self.limit.safe_mul(&self.amount.into())?.try_into().map_err(|_| ArithmeticError::Overflow)
+	}
+
+	pub fn price(&self, amount: Balance) -> Result<Balance, ArithmeticError> {
+		self.limit.safe_mul(&amount.into())?.try_into().map_err(|_| ArithmeticError::Overflow)
 	}
 }
 
@@ -44,7 +47,7 @@ pub struct Sell<AssetId, Balance> {
 	pub take: Take<Balance>,
 }
 
-impl<AssetId: PartialEq, Balance: PartialOrd + Zero + SafeArithmetic> Sell<AssetId, Balance> {
+impl<AssetId: PartialEq, Balance: MathBalance> Sell<AssetId, Balance> {
 	pub fn is_valid(&self) -> bool {
 		self.take.is_valid()
 	}

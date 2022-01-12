@@ -1,8 +1,10 @@
 use codec::FullCodec;
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
-use sp_runtime::traits::AtLeast32BitUnsigned;
+use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 use sp_std::fmt::Debug;
+
+use crate::{defi::LiftedFixedBalance, math::SafeArithmetic};
 
 /// really u8, but easy to do math operations
 pub type Exponent = u32;
@@ -74,6 +76,22 @@ impl<
 			+ MaxEncodedLen
 			+ TypeInfo,
 	> BalanceLike for T
+{
+}
+
+pub trait MathBalance:
+	PartialOrd 
+	+ Zero 
+	+ SafeArithmetic 
+	+ TryFrom<LiftedFixedBalance> 
+	+ From<u64> 
+	+ Into<LiftedFixedBalance> 
+	+ Copy 
+{
+}
+impl<
+		T: PartialOrd + Zero + SafeArithmetic + TryFrom<LiftedFixedBalance> + From<u64> + Into<LiftedFixedBalance> + Copy,
+	> MathBalance for T
 {
 }
 
