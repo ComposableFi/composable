@@ -15,7 +15,16 @@ proof = sign (concat prefix (hex reward_account))
 Reference for proof mechanism: https://github.com/paritytech/polkadot/blob/master/runtime/common/src/claims.rs
 */
 
-#![cfg_attr(not(test), warn(clippy::disallowed_method, clippy::indexing_slicing))] // allow in tests
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_method,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
 #![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
@@ -50,7 +59,11 @@ use sp_runtime::traits::{DispatchInfoOf, SignedExtension, Zero};
 
 pub mod models;
 
-#[cfg(test)]
+#[cfg(any(feature = "runtime-benchmarks", test))]
+// NOTE(hussein-aitlahcen): benchmarks/tests are dependent on structures living in mocks, but it is
+// not an intersection
+// perhaps refactor to avoid the `dead_code` here: CU-1zv8y2t
+#[allow(dead_code)]
 mod mocks;
 #[cfg(test)]
 mod tests;
@@ -114,6 +127,7 @@ pub mod pallet {
 		InvalidClaim,
 		NothingToClaim,
 		NotAssociated,
+		AlreadyAssociated,
 	}
 
 	#[pallet::config]
@@ -139,9 +153,6 @@ pub mod pallet {
 
 		/// The origin that is allowed to `initialize` the pallet.
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
-
-		/// The origin that is allowed to `associate` relay/eth account to their reward account.
-		type AssociationOrigin: EnsureOrigin<Self::Origin>;
 
 		/// A conversion function frop `Self::BlockNumber` to `Self::Balance`
 		type Convert: Convert<Self::BlockNumber, Self::Balance>;
@@ -238,14 +249,14 @@ pub mod pallet {
 		/// ```haskell
 		/// proof = sign (concat prefix (hex reward_account))
 		/// ```
-		#[pallet::weight((<T as Config>::WeightInfo::associate(TotalContributors::<T>::get()), Pays::No))]
+		#[pallet::weight(<T as Config>::WeightInfo::associate(TotalContributors::<T>::get()))]
 		#[transactional]
 		pub fn associate(
 			origin: OriginFor<T>,
 			reward_account: T::AccountId,
 			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
-			T::AssociationOrigin::ensure_origin(origin)?;
+			ensure_none(origin)?;
 			Self::do_associate(reward_account, proof)
 		}
 
@@ -265,17 +276,23 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn do_initialize() -> DispatchResult {
+		pub(crate) fn do_initialize() -> DispatchResult {
 			let current_block = frame_system::Pallet::<T>::block_number();
 			VestingBlockStart::<T>::set(Some(current_block));
 			Ok(())
 		}
 
-		pub fn do_associate(
+		pub(crate) fn do_associate(
 			reward_account: T::AccountId,
 			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let remote_account = get_remote_account::<T>(proof, &reward_account, T::Prefix::get())?;
+			// NOTE(hussein-aitlahcen): this is also checked by the signed extension. theoretically
+			// useless, but 1:1 to make it clear
+			ensure!(
+				!Associations::<T>::contains_key(reward_account.clone()),
+				Error::<T>::AlreadyAssociated
+			);
 			let claimed = Self::do_claim(remote_account.clone(), &reward_account)?;
 			Associations::<T>::insert(reward_account.clone(), remote_account.clone());
 			Self::deposit_event(Event::Associated {
@@ -286,7 +303,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		pub fn do_populate(
+		pub(crate) fn do_populate(
 			rewards: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
 		) -> DispatchResult {
 			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
@@ -319,7 +336,7 @@ pub mod pallet {
 		/// Do claim the reward for a given remote account, rewarding the `reward_account`.
 		/// Returns `InvalidProof` if the user is not a contributor or `NothingToClaim` if not
 		/// reward can be claimed yet.
-		pub fn do_claim(
+		pub(crate) fn do_claim(
 			remote_account: RemoteAccountOf<T>,
 			reward_account: &T::AccountId,
 		) -> Result<T::Balance, DispatchError> {
@@ -405,12 +422,8 @@ pub mod pallet {
 		relay_account: RelayChainAccountId,
 		proof: &MultiSignature,
 	) -> bool {
-		let wrapped_prefix: &[u8] = b"<Bytes>";
-		let wrapped_postfix: &[u8] = b"</Bytes>";
-		let mut msg = wrapped_prefix.to_vec();
-		msg.append(&mut prefix.to_vec());
+		let mut msg = prefix.to_vec();
 		msg.append(&mut reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()));
-		msg.append(&mut wrapped_postfix.to_vec());
 		proof.verify(&msg[..], &relay_account.into())
 	}
 
