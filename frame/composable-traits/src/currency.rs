@@ -83,14 +83,19 @@ pub trait MathBalance:
 	PartialOrd 
 	+ Zero 
 	+ SafeArithmetic 
-	+ TryFrom<LiftedFixedBalance> 
+	+ From<u128>
 	+ From<u64> 
-	+ Into<LiftedFixedBalance> 
 	+ Copy 
 {
 }
 impl<
-		T: PartialOrd + Zero + SafeArithmetic + TryFrom<LiftedFixedBalance> + From<u64> + Into<LiftedFixedBalance> + Copy,
+		T: 
+		PartialOrd 
+		+ Zero
+		 + SafeArithmetic 
+		 + From<u128> 
+		 + From<u64> 
+		 + Copy,
 	> MathBalance for T
 {
 }

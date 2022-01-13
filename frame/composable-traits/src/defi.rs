@@ -5,7 +5,7 @@ use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedMul, CheckedSub, Zero},
-	ArithmeticError, DispatchError, FixedPointOperand, FixedU128,
+	ArithmeticError, DispatchError, FixedPointOperand, FixedU128, FixedPointNumber,
 };
 
 use crate::{
@@ -27,18 +27,30 @@ impl<Balance: MathBalance> Take<Balance> {
 	pub fn is_valid(&self) -> bool {
 		self.amount > Balance::zero() && self.limit > Ratio::zero()
 	}
+
+	/// case when relation of base is integer and base is larger than quote in price
+	pub fn new_with_smaller(amount: Balance, limit: Balance) -> Self {
+		Self { amount, limit : LiftedFixedBalance::checked_from_integer() }
+	}
+
 	pub fn new(amount: Balance, limit: Ratio) -> Self {
 		Self { amount, limit }
 	}
 
 	pub fn quote_amount(&self) -> Result<Balance, ArithmeticError> {
-		self.limit.safe_mul(&self.amount.into())?.try_into().map_err(|_| ArithmeticError::Overflow)
+		let result : LiftedFixedBalance = self.limit.safe_mul(&self.amount.into())?;
+		//let x : u128 = result.try_into().unwrap();
+		todo!()
+		// if.try_into().map_err(|_| ArithmeticError::Overflow)
 	}
 
-	pub fn price(&self, amount: Balance) -> Result<Balance, ArithmeticError> {
-		self.limit.safe_mul(&amount.into())?.try_into().map_err(|_| ArithmeticError::Overflow)
+	pub fn price(&self, amount: Balance) -> Result<Balance, ArithmeticError> {	
+		todo!()
+		//self.limit.safe_mul(&amount.into())?.try_into().map_err(|_| ArithmeticError::Overflow)
 	}
 }
+
+
 
 /// take `quote` currency and give `base` currency
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
@@ -179,6 +191,7 @@ pub trait DeFiComposableConfig: frame_system::Config {
 	type MayBeAssetId: AssetIdLike + MaybeSerializeDeserialize + Default;
 
 	type Balance: BalanceLike
+		+ MathBalance
 		+ Default
 		+ Parameter
 		+ Codec
@@ -191,7 +204,6 @@ pub trait DeFiComposableConfig: frame_system::Config {
 		+ From<u64> // at least 64 bit
 		+ Zero
 		+ FixedPointOperand
-		+ Into<LiftedFixedBalance> // integer part not more than bits in this
 		+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
 			  // bit
 }
@@ -214,3 +226,28 @@ pub type LiftedFixedBalance = FixedU128;
 
 /// unitless ratio of one thing to other. 
 pub type Ratio = FixedU128;
+
+
+
+#[cfg(test)]
+mod tests {
+    use crate::defi::LiftedFixedBalance;
+
+    use super::{Take, Ratio};
+	use sp_runtime::FixedPointNumber;
+	
+	#[test]
+	fn take_ratio() {
+		let take = Take::new(100_u128, Ratio::saturating_from_integer(10_u32));
+
+	}
+
+	#[test]
+	fn fixed_into_u128_floor() {
+		use sp_runtime::{FixedPointNumber, FixedPointOperand};
+		let inner = LiftedFixedBalance::from_inner(42_u128);
+		let floor = LiftedFixedBalance::from_inner(42_u128).floor().into_inner();
+		let integer = LiftedFixedBalance::saturating_from_integer(42_u128);
+		assert!(0 == floor && floor < inner && inner < integer);	
+	}
+}
