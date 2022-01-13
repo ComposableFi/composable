@@ -20,8 +20,8 @@ impl BorrowerData {
 		under_collaterized_warn_percent: Percent,
 	) -> Self {
 		Self {
-			collateral_balance_value: LiftedFixedBalance::from_inner(collateral_balance_value.into()),
-			borrow_balance_value: LiftedFixedBalance::from_inner(borrow_balance_value.into()),
+			collateral_balance_value: LiftedFixedBalance::saturating_from_integer(collateral_balance_value.into()),
+			borrow_balance_value: LiftedFixedBalance::saturating_from_integer(borrow_balance_value.into()),
 			collateral_factor,
 			under_collaterized_warn_percent,
 		}

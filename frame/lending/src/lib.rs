@@ -190,19 +190,19 @@ pub mod pallet {
 		/// market owned - debt token can be minted
 		type MarketDebtCurrency: Transfer<
 				Self::AccountId,
-				Balance = u128,
+				Balance = Self::Balance,
 				AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
 			> + Mutate<
 				Self::AccountId,
-				Balance = u128,
+				Balance = Self::Balance,
 				AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
 			> + MutateHold<
 				Self::AccountId,
-				Balance = u128,
+				Balance = Self::Balance,
 				AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
 			> + InspectHold<
 				Self::AccountId,
-				Balance = u128,
+				Balance = Self::Balance,
 				AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
 			>;
 
@@ -629,7 +629,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn total_interest_accurate(
 			market_id: &<Self as Lending>::MarketId,
-		) -> Result<u128, DispatchError> {
+		) -> Result<T::Balance, DispatchError> {
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let total_interest =
 				T::MarketDebtCurrency::balance(debt_asset_id, &Self::account_id(market_id));
@@ -916,7 +916,7 @@ pub mod pallet {
 		fn updated_account_interest_index(
 			market_id: &MarketIndex,
 			debt_owner: &T::AccountId,
-			amount: T::Balance,
+			amount_to_borrow: T::Balance,
 		) -> Result<FixedU128, DispatchError> {
 			let market_index =
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
@@ -924,15 +924,11 @@ pub mod pallet {
 				DebtIndex::<T>::get(market_id, debt_owner).unwrap_or_else(ZeroToOneFixedU128::zero);
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let existing_borrow_amount = T::MarketDebtCurrency::balance(debt_asset_id, debt_owner);
-			let amount_to_borrow: u128 = amount.into();
-			let amount_to_borrow = amount_to_borrow
-				.checked_mul(LiftedFixedBalance::accuracy())
-				.ok_or(Error::<T>::Overflow)?;
+
 			T::MarketDebtCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
 			T::MarketDebtCurrency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
 			let total_borrow_amount = existing_borrow_amount
-				.checked_add(amount_to_borrow)
-				.ok_or(Error::<T>::Overflow)?;
+				.safe_add(&amount_to_borrow)?;
 			let existing_borrow_share =
 				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
 			let new_borrow_share = Percent::from_rational(amount_to_borrow, total_borrow_amount);
@@ -1162,11 +1158,11 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 			from: &Self::AccountId,
 			beneficiary: &Self::AccountId,
-			repay_amount: Option<BorrowAmountOf<Self>>,
+			total_repay_amount: Option<BorrowAmountOf<Self>>,
 		) -> Result<(), DispatchError> {
 			let market = Self::get_market(market_id)?;
 			if let Some(owed) = Self::borrow_balance_current(market_id, beneficiary)? {
-				let repay_amount = repay_amount.unwrap_or(owed);
+				let total_repay_amount = total_repay_amount.unwrap_or(owed);
 				let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
 				let market_account = Self::account_id(market_id);
 
@@ -1174,7 +1170,7 @@ pub mod pallet {
 					market_id,
 					from,
 					beneficiary,
-					repay_amount,
+					total_repay_amount,
 					owed,
 					borrow_asset_id,
 					&market_account,
@@ -1182,9 +1178,9 @@ pub mod pallet {
 
 				let debt_asset_id = DebtMarkets::<T>::get(market_id);
 
-				let burn_amount: u128 =
-					<T as Config>::Currency::balance(debt_asset_id, beneficiary).into();
-				let total_repay_amount: u128 = repay_amount.into();
+				let burn_amount =
+					<T as Config>::Currency::balance(debt_asset_id, beneficiary);
+				
 				let mut remaining_borrow_amount =
 					T::MarketDebtCurrency::balance(debt_asset_id, &market_account);
 				if total_repay_amount <= burn_amount {
@@ -1219,12 +1215,12 @@ pub mod pallet {
 					borrow_asset_id,
 					from,
 					&market_account,
-					repay_amount,
+					total_repay_amount,
 					false,
 				)
 				.expect("must be able to transfer because of above checks");
 
-				if remaining_borrow_amount == 0 {
+				if remaining_borrow_amount == T::Balance::zero() {
 					BorrowTimestamp::<T>::remove(market_id, beneficiary);
 					DebtIndex::<T>::remove(market_id, beneficiary);
 				}
@@ -1238,15 +1234,15 @@ pub mod pallet {
 			let accrued_debt =
 				T::MarketDebtCurrency::balance(debt_asset_id, &Self::account_id(market_id));
 			let total_issued = T::MarketDebtCurrency::total_issuance(debt_asset_id);
-			let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
-			Ok((total_borrows as u64).into())
+			let total_borrows = total_issued - accrued_debt;
+			Ok(total_borrows)
 		}
 
 		fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let total_interest =
 				T::MarketDebtCurrency::balance(debt_asset_id, &Self::account_id(market_id));
-			Ok(((total_interest / LiftedFixedBalance::accuracy()) as u64).into())
+			Ok(total_interest)
 		}
 
 		fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
@@ -1260,8 +1256,8 @@ pub mod pallet {
 			borrows: Self::Balance,
 		) -> Result<Percent, DispatchError> {
 			Ok(math::calc_utilization_ratio(
-				LiftedFixedBalance::from_inner(cash.into()),
-				LiftedFixedBalance::from_inner(borrows.into()),
+				LiftedFixedBalance::saturating_from_integer(cash.into()),
+				LiftedFixedBalance::saturating_from_integer(borrows.into()),
 			)?)
 		}
 
@@ -1288,7 +1284,7 @@ pub mod pallet {
 				&mut market.interest_rate_model,
 				borrow_index,
 				delta_time,
-				total_borrows.into(),
+				total_borrows,
 			)?;
 
 			BorrowIndex::<T>::insert(market_id, borrow_index_new);
@@ -1311,7 +1307,7 @@ pub mod pallet {
 					let market_interest_index = Self::get_borrow_index(market_id)?;
 
 					let balance = borrow_from_principal::<T>(
-						((principal / LiftedFixedBalance::accuracy()) as u64).into(),
+						principal,
 						market_interest_index,
 						account_interest_index,
 					)?;
@@ -1339,7 +1335,7 @@ pub mod pallet {
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, borrow_amount)?;
 			Ok(
-			 	LiftedFixedBalance::from_inner(borrow_amount_value.into())
+			 	LiftedFixedBalance::saturating_from_integer(borrow_amount_value.into())
 				.safe_mul(&market.collateral_factor)?
 				.checked_mul_int(1_u64)
 				.ok_or(ArithmeticError::Overflow)?
@@ -1482,7 +1478,7 @@ pub mod pallet {
 		if principal.is_zero() {
 			return Ok(None)
 		}
-		let principal = LiftedFixedBalance::from_inner(principal.into());
+		let principal = LiftedFixedBalance::saturating_from_integer(principal.into());
 		let balance = principal
 			.checked_mul(&market_interest_index)
 			.and_then(|from_start_total| from_start_total.checked_div(&account_interest_index))
@@ -1504,10 +1500,10 @@ pub mod pallet {
 	pub fn accrue_interest_internal<T: Config, I: InterestRate>(
 		utilization_ratio: Percent,
 		interest_rate_model: &mut I,
-		borrow_index: Rate,
+		borrow_index: ZeroToOneFixedU128,
 		delta_time: DurationSeconds,
-		total_borrows: u128,
-	) -> Result<(u128, Rate), DispatchError> {
+		total_borrows: T::Balance,
+	) -> Result<(T::Balance, Rate), DispatchError> {
 		let borrow_rate = interest_rate_model
 			.get_borrow_rate(utilization_ratio)
 			.ok_or(Error::<T>::BorrowRateDoesNotExist)?;
@@ -1516,10 +1512,11 @@ pub mod pallet {
 			.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
 			.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR_NAIVE))?;
 
-		let total_borrows = total_borrows.safe_mul(&LiftedFixedBalance::accuracy())?;
-		let accrue_increment = LiftedFixedBalance::from_inner(total_borrows)
+		let accrue_increment = LiftedFixedBalance::saturating_from_integer(total_borrows)
 			.safe_mul(&delta_interest_rate)?
-			.into_inner();
+			.into_inner()
+			/ LiftedFixedBalance::DIV;
+		let accrue_increment = accrue_increment.try_into().map_err(|_| ArithmeticError::Overflow)?;
 		Ok((accrue_increment, borrow_index_new))
 	}
 }
