@@ -1,0 +1,22 @@
+name: Check Runtime
+on:
+  push:
+    branches:
+      - release-*
+      - main
+  pull_request:
+    branches:
+      - release-*
+      - main
+jobs:
+  check-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with: 
+          fetch-depth: 0
+
+      - name: Check for runtime changes
+        working-directory: "./.maintain/"
+        run: |
+          sh check_runtime.sh

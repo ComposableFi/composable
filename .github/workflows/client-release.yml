@@ -1,0 +1,86 @@
+name: "Community Release (Dali Chacha)"
+
+on:
+  push: 
+    tags: 
+      - '*'
+    branches:
+      - feature/add-cache-build
+
+env:
+  DOCKER_USER_OPTION: '$UID:$GID'
+  SCCACHE_GCS_BUCKET: 'composable-build-artefacts'
+  RUSTC_WRAPPER: "/home/runner/.cargo/bin/sccache"
+  SCCACHE_GCS_RW_MODE: "READ_WRITE"
+
+jobs:
+  build-and-publish:
+    runs-on: 
+        - self-hosted
+        - linux
+        - x64
+        - sre
+    strategy: 
+      fail-fast: true
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+  
+    - name: Set env
+      run: |
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+        make version
+
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+
+    - name: 🔨 Build
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release --bins
+
+    - name: Archive build targets
+      run: |
+        tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/
+        tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
+        tar -czvf picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz target/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
+        tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain-utils
+        gsutil cp *.tar.gz gs://composable-binaries/community-releases/${{ env.RELEASE_VERSION }}/ 
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1 
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
+
+    - name: Build Docker image
+      run: make containerize-release 
+
+    - name:  Docker push
+      run: make push-release
+
+  dali-chacha-client-release:
+    needs: [build-and-publish]
+    runs-on: 
+      - self-hosted
+      - linux
+      - X64
+      - ansible-runner
+
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+
+    - name: Set env
+      run: |
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+
+    - name: Run ansible playbook
+      working-directory: "./.maintain/playbooks"
+      run: |
+        ansible-playbook -l _environment_testnet client-upgrade.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
+

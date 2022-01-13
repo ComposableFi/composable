@@ -1,0 +1,23 @@
+[package]
+name = "collator-sidecar"
+version = "0.1.0"
+authors = ["Composable Developers"]
+homepage = "https://composable.finance"
+edition = "2018"
+
+[dependencies]
+env_logger = "0.8.4"
+tide = "0.16"
+async-std = { version = "1", features = ["attributes", "tokio1"] }
+serde = { version = "1", features = ["derive"] }
+url = "1"
+tokio = { version = "1.12.0", features  = ["macros", "rt-multi-thread"] }
+structopt = "0.3.25"
+
+jsonrpc-core-client = { version = "18", features = ["ws"] }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+picasso = { package = "picasso-runtime", path = "../../runtime/picasso" }
+common = { path = "../../runtime/common" }
+
+[package.metadata.cargo-udeps.ignore]
+normal = ["pallet-bonded-finance"]

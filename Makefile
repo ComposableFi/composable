@@ -2,15 +2,16 @@ COMMIT_SHA:=$(shell git rev-parse --short=9 HEAD)
 BRANCH_NAME:=$(shell git rev-parse --abbrev-ref HEAD | tr '/' '-')
 REPO=composablefi
 SERVICE_NAME=composable
-INSTALL_DIR=./docker/
+INSTALL_DIR=docker/
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
-RELEASE_VERSION:=$(shell git fetch -t && git describe --tags $(shell git rev-list --tags --max-count=1))
+RELEASE_VERSION:=$(shell git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
+CARGO_VERSION:=$(shell git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 | cut -c2-)
 AUTO_UPDATE:=1
 
 
 IMAGE?=${IMAGE_URL}:${COMMIT_SHA}
 IMAGE_WITH_COMMIT=${IMAGE}
-IMAGE_WITH_RELEASE_VERSION=${IMAGE_URL}:${RELEASE_VERSION}
+IMAGE_WITH_RELEASE_VERSION:=${IMAGE_URL}:${RELEASE_VERSION}
 IMAGE_WITH_BRANCH:=${IMAGE_URL}:${BRANCH_NAME}
 IMAGE_WITH_LATEST:=${IMAGE_URL}:latest
 
@@ -33,20 +34,37 @@ style-check:
 	@rustup component add rustfmt 2> /dev/null
 	cargo +nightly fmt --all -- --check
 
+style:
+	@rustup component add rustfmt 2> /dev/null
+	cargo +nightly fmt --all
+
 lint:
 	@rustup component add clippy 2> /dev/null
 	cargo clippy --all-targets --all-features -- -D warnings
 
+udeps:
+	SKIP_WASM_BUILD=1 cargo +nightly udeps -q --all-targets
+
 dev:
 	cargo run
 
-containerize:
+.PHONY: version
+version:
+	@if [ ${RELEASE_VERSION} ]; then \
+	sed -i "s|^version =.*|version = '"${CARGO_VERSION}"'|" node/Cargo.toml; \
+	fi;
+
+.PHONY: containerize-release
+containerize-release: version containerize
+
+containerize: 
 	@docker build \
-	--build-arg SERVICE_DIR=${INSTALL_DIR} \
+	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg VERSION=${RELEASE_VERSION} \
        	-f ${INSTALL_DIR}/Dockerfile \
-       	--no-cache -t ${IMAGE_WITH_COMMIT} \
-        -t ${IMAGE_WITH_BRANCH} \
-        -t ${IMAGE_WITH_LATEST} \
+		-t ${IMAGE_WITH_COMMIT} \
+		-t ${IMAGE_WITH_RELEASE_VERSION} \
+		-t ${IMAGE_WITH_BRANCH} \
+		-t ${IMAGE_WITH_LATEST} \
 	. 1>/dev/null
 
 push:
@@ -54,6 +72,9 @@ push:
 	@docker push ${IMAGE_WITH_BRANCH}
 	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 	@docker push ${IMAGE_WITH_LATEST}
+
+push-release:
+	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 
 stop:
 	@docker-compose down
@@ -67,7 +88,7 @@ else
 endif
 
 
-.PHONY: build test docs style-check lint up down containerize dev push install stop
+.PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release
 
 
 #----------------------------------------------------------------------

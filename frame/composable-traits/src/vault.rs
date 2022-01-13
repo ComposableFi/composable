@@ -1,4 +1,3 @@
-use crate::rate_model::Rate;
 use codec::Codec;
 use frame_support::{
 	pallet_prelude::*,
@@ -6,6 +5,8 @@ use frame_support::{
 	sp_std::{collections::btree_map::BTreeMap, fmt::Debug},
 };
 use scale_info::TypeInfo;
+
+use crate::defi::Rate;
 
 /// An indication for strategies as to how they should be rebalancing. Strategies should evaluate if
 /// it is worth it to deposit or withdraw based on fees.
@@ -55,8 +56,10 @@ where
 	AccountId: core::cmp::Ord,
 {
 	pub asset_id: CurrencyId,
+	/// Idle amount of assets for withdraw
 	pub reserved: Perquintill,
 	pub manager: AccountId,
+	/// Not the vault strategy per si but rather a pool of funds that are used for strategies
 	pub strategies: BTreeMap<AccountId, Perquintill>,
 }
 

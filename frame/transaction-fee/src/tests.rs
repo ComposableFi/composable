@@ -37,8 +37,8 @@ fn can_pay_fees_easily() {
 			let fees = 10 + 10 + 5; // length fee (1:1) + weight fee (1:1) + base weight (1:1)
 			assert_eq!(Tokens::free_balance(CurrencyId::LAYR, &1), 100 - fees);
 
-			assert_eq!(TIP_UNBALANCED_AMOUNT.with(|val| val.borrow().clone()), 0);
-			assert_eq!(FEE_UNBALANCED_AMOUNT.with(|val| val.borrow().clone()), 0);
+			assert_eq!(TIP_UNBALANCED_AMOUNT.with(|val| *val.borrow()), 0);
+			assert_eq!(FEE_UNBALANCED_AMOUNT.with(|val| *val.borrow()), 0);
 		});
 }
 
@@ -60,16 +60,16 @@ fn refund_on_post_dispatch() {
 			let fees = 10 + 10 + 5; // length fee (1:1) + weight fee (1:1) + base weight (1:1)
 			assert_eq!(Tokens::free_balance(CurrencyId::LAYR, &1), 100 - fees);
 
-			assert_eq!(TIP_UNBALANCED_AMOUNT.with(|val| val.borrow().clone()), 0);
-			assert_eq!(FEE_UNBALANCED_AMOUNT.with(|val| val.borrow().clone()), 0);
+			assert_eq!(TIP_UNBALANCED_AMOUNT.with(|val| *val.borrow()), 0);
+			assert_eq!(FEE_UNBALANCED_AMOUNT.with(|val| *val.borrow()), 0);
 
 			assert_eq!(
 				ChargeTransactionFee::<Runtime>::post_dispatch(pre, &info, &post_info, 10, &Ok(())),
 				Ok(())
 			);
 
-			assert_eq!(TIP_UNBALANCED_AMOUNT.with(|val| val.borrow().clone()), 0);
-			assert_eq!(FEE_UNBALANCED_AMOUNT.with(|val| val.borrow().clone()), 20);
+			assert_eq!(TIP_UNBALANCED_AMOUNT.with(|val| *val.borrow()), 0);
+			assert_eq!(FEE_UNBALANCED_AMOUNT.with(|val| *val.borrow()), 20);
 			// actual weight is 5, so 5 should be refunded
 			assert_eq!(Tokens::free_balance(CurrencyId::LAYR, &1), 100 - (fees - 5));
 		});
@@ -93,8 +93,8 @@ fn can_swap_to_pay_fees() {
 					.pre_dispatch(&1, &CALL, &info, 10)
 					.unwrap();
 
-			assert_eq!(TIP_UNBALANCED_AMOUNT.with(|val| val.borrow().clone()), 0);
-			assert_eq!(FEE_UNBALANCED_AMOUNT.with(|val| val.borrow().clone()), 0);
+			assert_eq!(TIP_UNBALANCED_AMOUNT.with(|val| *val.borrow()), 0);
+			assert_eq!(FEE_UNBALANCED_AMOUNT.with(|val| *val.borrow()), 0);
 
 			assert_eq!(
 				ChargeTransactionFee::<Runtime>::post_dispatch(pre, &info, &post_info, 10, &Ok(())),
@@ -102,8 +102,8 @@ fn can_swap_to_pay_fees() {
 			);
 
 			// assert that swap succeeded and was used to pay fees
-			assert_eq!(TIP_UNBALANCED_AMOUNT.with(|val| val.borrow().clone()), 0);
-			assert_eq!(FEE_UNBALANCED_AMOUNT.with(|val| val.borrow().clone()), 25);
+			assert_eq!(TIP_UNBALANCED_AMOUNT.with(|val| *val.borrow()), 0);
+			assert_eq!(FEE_UNBALANCED_AMOUNT.with(|val| *val.borrow()), 25);
 			// assert that user now has minimum layr deposit
 			assert_eq!(Tokens::free_balance(CurrencyId::LAYR, &1), 1);
 		});
@@ -392,7 +392,7 @@ fn zero_transfer_on_free_transaction() {
 			let pre = ChargeTransactionFee::<Runtime>::from(0, Default::default(), None)
 				.pre_dispatch(&user, &CALL, &dispatch_info, len)
 				.unwrap();
-			assert_eq!(Tokens::total_balance(CurrencyId::LAYR, &(&user)), 0);
+			assert_eq!(Tokens::total_balance(CurrencyId::LAYR, &user), 0);
 			assert_ok!(ChargeTransactionFee::<Runtime>::post_dispatch(
 				pre,
 				&dispatch_info,
@@ -400,7 +400,7 @@ fn zero_transfer_on_free_transaction() {
 				len,
 				&Ok(())
 			));
-			assert_eq!(Tokens::total_balance(CurrencyId::LAYR, &(&user)), 0);
+			assert_eq!(Tokens::total_balance(CurrencyId::LAYR, &user), 0);
 			// No events for such a scenario
 			assert_eq!(System::events().len(), 0);
 		});

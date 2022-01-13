@@ -1,3 +1,15 @@
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)]
+#![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod impls;
@@ -31,22 +43,31 @@ mod types {
 	/// Index of a transaction in the chain.
 	pub type Index = u32;
 
+	/// The address format for describing accounts.
+	pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
+
 	/// A hash of some data used by the chain.
 	pub type Hash = sp_core::H256;
 
 	/// Digest item type.
-	pub type DigestItem = sp_runtime::generic::DigestItem<Hash>;
+	pub type DigestItem = sp_runtime::generic::DigestItem;
 
 	// Aura consensus authority.
 	pub type AuraId = sp_consensus_aura::sr25519::AuthorityId;
 
 	/// Council Instance
 	pub type CouncilInstance = collective::Instance1;
+
+	/// Concrete header
+	pub type Header = sp_runtime::generic::Header<BlockNumber, sp_runtime::traits::BlakeTwo256>;
+
+	/// Opaque block
+	pub type OpaqueBlock = sp_runtime::generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
 }
 
 /// Common constants of statemint and statemine
 mod constants {
-	use super::types::{AccountId, Balance, BlockNumber, CouncilInstance};
+	use super::types::{AccountId, BlockNumber, CouncilInstance};
 	use frame_support::weights::{constants::WEIGHT_PER_SECOND, Weight};
 	use frame_system::{EnsureOneOf, EnsureRoot};
 	use sp_core::u32_trait::{_1, _2};
@@ -58,18 +79,13 @@ mod constants {
 	/// slot_duration()`.
 	///
 	/// Change this to adjust the block time.
-	pub const MILLISECS_PER_BLOCK: u64 = 6000;
+	pub const MILLISECS_PER_BLOCK: u64 = 12000;
 	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 	// Time is measured by number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 	pub const HOURS: BlockNumber = MINUTES * 60;
 	pub const DAYS: BlockNumber = HOURS * 24;
-
-	// PICA = 12 decimals
-	pub const PICA: Balance = 1_000_000_000_000;
-	pub const MILLI_PICA: Balance = PICA / 1_000;
-	pub const MICRO_PICA: Balance = MILLI_PICA / 1_000;
 
 	/// We assume that ~5% of the block weight is consumed by `on_initialize` handlers. This is
 	/// used to limit the maximal weight of a single extrinsic.
@@ -80,7 +96,7 @@ mod constants {
 	pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 	/// We allow for 2 seconds of compute with a 6 second average block time.
-	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND * 2;
+	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 
 	/// Origin for either root or half of general council
 	pub type EnsureRootOrHalfCouncil = EnsureOneOf<

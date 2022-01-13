@@ -1,5 +1,5 @@
 use common::{AccountId, AuraId, Balance};
-use picasso_runtime::{self as parachain_runtime, GenesisConfig};
+use picasso_runtime::GenesisConfig;
 
 use super::{Extensions, ParaId};
 
@@ -9,8 +9,8 @@ pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
-pub fn picasso_session_keys(keys: AuraId) -> parachain_runtime::opaque::SessionKeys {
-	parachain_runtime::opaque::SessionKeys { aura: keys }
+pub fn picasso_session_keys(keys: AuraId) -> picasso_runtime::opaque::SessionKeys {
+	picasso_runtime::opaque::SessionKeys { aura: keys }
 }
 /// Generates the genesis config for picasso
 pub fn genesis_config(
@@ -19,25 +19,24 @@ pub fn genesis_config(
 	accounts: Vec<AccountId>,
 	id: ParaId,
 	existential_deposit: Balance,
-) -> parachain_runtime::GenesisConfig {
-	parachain_runtime::GenesisConfig {
-		system: parachain_runtime::SystemConfig {
-			code: parachain_runtime::WASM_BINARY
+) -> picasso_runtime::GenesisConfig {
+	picasso_runtime::GenesisConfig {
+		system: picasso_runtime::SystemConfig {
+			code: picasso_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
-			changes_trie_config: Default::default(),
 		},
-		balances: parachain_runtime::BalancesConfig {
+		balances: picasso_runtime::BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
 			balances: accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
 		},
 		aura: Default::default(),
-		sudo: parachain_runtime::SudoConfig {
+		sudo: picasso_runtime::SudoConfig {
 			// Assign network admin rights.
 			key: root,
 		},
-		indices: parachain_runtime::IndicesConfig { indices: vec![] },
-		parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
+		indices: picasso_runtime::IndicesConfig { indices: vec![] },
+		parachain_info: picasso_runtime::ParachainInfoConfig { parachain_id: id },
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
 		session: picasso_runtime::SessionConfig {
@@ -53,7 +52,7 @@ pub fn genesis_config(
 				})
 				.collect(),
 		},
-		collator_selection: parachain_runtime::CollatorSelectionConfig {
+		collator_selection: picasso_runtime::CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
 			candidacy_bond: existential_deposit * 16,
 			..Default::default()

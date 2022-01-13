@@ -23,6 +23,7 @@ pub mod pallet {
 		serde::Deserialize,
 		TypeInfo,
 	)]
+	#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
 	pub enum MockCurrencyId {
 		A,
 		B,
@@ -34,6 +35,18 @@ pub mod pallet {
 	impl Default for MockCurrencyId {
 		fn default() -> Self {
 			MockCurrencyId::A
+		}
+	}
+
+	impl From<u128> for MockCurrencyId {
+		fn from(id: u128) -> Self {
+			match id {
+				0 => MockCurrencyId::A,
+				1 => MockCurrencyId::B,
+				2 => MockCurrencyId::C,
+				3 => MockCurrencyId::D,
+				x => MockCurrencyId::LpToken(x as u32),
+			}
 		}
 	}
 
@@ -54,6 +67,9 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn vault_count)]
+	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
+	// use OptionQuery instead
+	#[allow(clippy::disallowed_type)]
 	pub type CurrencyCounter<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::call]

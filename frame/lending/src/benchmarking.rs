@@ -2,8 +2,10 @@ use super::*;
 
 use crate::Pallet as Lending;
 use composable_traits::{
-	lending::{Lending as LendingTrait, MarketConfigInput},
-	rate_model::{InterestRateModel, NormalizedCollateralFactor},
+	lending::{
+		math::{InterestRateModel, NormalizedCollateralFactor},
+		Lending as LendingTrait, MarketConfigInput,
+	},
 	vault::Vault,
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
@@ -44,6 +46,7 @@ fn create_market<T: Config>(
 	collateral_asset: u128,
 ) -> (crate::MarketIndex, <T as Config>::VaultId) {
 	let market_config = MarketConfigInput {
+		liquidator: None,
 		manager,
 		reserved: Perquintill::from_percent(10),
 		collateral_factor: NormalizedCollateralFactor::saturating_from_rational(200, 100),
@@ -76,7 +79,8 @@ benchmarks! {
 		reserved_factor,
 		collateral_factor,
 		under_collaterized_warn_percent,
-		InterestRateModel::default()
+		InterestRateModel::default(),
+	  None
 	)
 	verify {
 		assert_last_event::<T>(Event::NewMarketCreated {

@@ -7,7 +7,25 @@ use sp_runtime::{traits::Saturating, SaturatedConversion};
 pub enum Verdict<T: Config> {
 	Exempt,
 	Charge { remaining: BalanceOf<T>, payable: BalanceOf<T> },
-	Evict { reward: BalanceOf<T> },
+	Evict,
+}
+
+pub fn deposit_from_balance<T: Config>(amount: T::Balance) -> Deposit<T::Balance, T::BlockNumber> {
+	if amount > T::ExistentialDeposit::get() {
+		Deposit::Existential
+	} else {
+		Deposit::Rent { amount, at: <frame_system::Pallet<T>>::block_number() }
+	}
+}
+
+pub fn evaluate_deletion<T: Config>(
+	current_block: BlockNumberOf<T>,
+	deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
+) -> bool {
+	match deposit {
+		Deposit::Existential => false,
+		Deposit::Rent { at, .. } => current_block.saturating_sub(at) >= T::TombstoneDuration::get(),
+	}
 }
 
 pub fn evaluate_eviction<T: Config>(
@@ -25,7 +43,7 @@ pub fn evaluate_eviction<T: Config>(
 				let rent_due = T::RentPerBlock::get().saturating_mul(num_blocks);
 				let should_evict = rent_due >= amount;
 				if should_evict {
-					return Verdict::Evict { reward: amount }
+					return Verdict::Evict
 				}
 				Verdict::Charge { remaining: amount.saturating_sub(rent_due), payable: rent_due }
 			}
@@ -70,7 +88,7 @@ mod tests {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_eq!(
 				evaluate_eviction::<Test>(11, Deposit::Rent { amount: 10, at: 0 }),
-				Verdict::Evict { reward: 10 }
+				Verdict::Evict
 			)
 		})
 	}

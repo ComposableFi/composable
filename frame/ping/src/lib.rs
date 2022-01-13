@@ -16,6 +16,18 @@
 
 //! Pallet to spam the XCM/UMP.
 
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
+#![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};
@@ -54,10 +66,14 @@ pub mod pallet {
 
 	/// The target parachains to ping.
 	#[pallet::storage]
+	// Targets is an empty Vec by default, which causes the pallet not to ping any targets.
+	#[allow(clippy::disallowed_type)]
 	pub(super) type Targets<T: Config> = StorageValue<_, Vec<(ParaId, Vec<u8>)>, ValueQuery>;
 
 	/// The total number of pings sent.
 	#[pallet::storage]
+	// Absence of PingCount is equivalent to 0, so ValueQuery is valid here.
+	#[allow(clippy::disallowed_type)]
 	pub(super) type PingCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	/// The sent pings.

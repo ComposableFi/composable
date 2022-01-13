@@ -1,31 +1,39 @@
-FROM paritytech/ci-linux:production as builder
-LABEL description="This is the build stage for Composable. Here we create the binary."
+FROM composablefi/rust:latest
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends apt-transport-https ca-certificates curl gnupg2 software-properties-common
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add - \
-    && add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends cron docker-ce vim \
+ARG VERSION
+
+USER root
+
+RUN apt-get update -y && apt-get install wget curl -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-USER root 
-
-ARG VERSION=stable
-ARG PROFILE=release
 WORKDIR /composable
 
 COPY . /composable
-# please update docker, toolchain toml and github action with toolchain at same time
-# there is no parity docker with same version, any later version breaks 3.0 parity (need to use 4.0)
-RUN rustup install ${VERSION}-x86_64-unknown-linux-gnu \
-    && rustup default $VERSION \
-    && rustup target add wasm32-unknown-unknown
-# RUN pwd && ls && cd node && cargo build --$PROFILE
 
-EXPOSE 30333 9933 9944
-VOLUME ["/data"]
+LABEL description="Precompiled Docker image for Composable" \
+      image.author="dayo@composable.finance, sre@composable.finance" \
+      image.vendor="Composable Finance" \
+      image.description="Composable is a hyper liquidity infrastructure layer for DeFi assets powered by Layer 2 Ethereum and Polkadot." \
+      image.source="https://github.com/ComposableFi/composable/blob/main/docker/Dockerfile" \
+      image.documentation="https://github.com/ComposableFi/composable#readme"
 
-CMD ["cargo"]
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN curl "https://storage.googleapis.com/composable-binaries/community-releases/${VERSION}/composable-${VERSION}.tar.gz" | tar -xz
+    
+RUN chmod +x target/release/composable && mv target/release/composable /usr/local/bin
+
+RUN useradd -m -u 1001 -U -s /bin/sh -d /composable composable && \
+    mkdir -p /composable/.local/share/local_testnet && \
+    mkdir /data && \
+    chown -R composable:composable /data && \
+    chown -R composable:composable /composable/.local/share/local_testnet && \
+    ln -s /data /composable/.local/share/local_testnet 
+USER composable
+
+EXPOSE 30333 9933 9944 9615
+
+VOLUME ["/data"] 
+
+CMD ["composable", "--version"]
