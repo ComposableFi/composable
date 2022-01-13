@@ -1,11 +1,11 @@
 use super::*;
-use crate::{Pallet as DutchAuction, mock::currency::CurrencyId};
+use crate::{mock::currency::CurrencyId, Pallet as DutchAuction};
 use codec::{Decode, Encode};
-use sp_runtime::{FixedPointNumber};
-use composable_traits::defi::{CurrencyPair, DeFiComposableConfig, Sell, Take, Ratio};
+use composable_traits::defi::{CurrencyPair, DeFiComposableConfig, Ratio, Sell, Take};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::{fungibles::Mutate, Hooks};
 use frame_system::{pallet_prelude::BlockNumberFor, RawOrigin};
+use sp_runtime::FixedPointNumber;
 use sp_std::prelude::*;
 
 // meaningless sell of 1 to 1
@@ -59,7 +59,7 @@ benchmarks! {
 		let account_id : T::AccountId = whitelisted_caller();
 		let caller = RawOrigin::Signed(account_id.clone());
 		let amount: T::Balance = 1_000_000_000_000_u64.into();
-		
+
 		let mut encoded = CurrencyId::PICA.encode();
 		let native_asset_id = T::MayBeAssetId::decode(&mut &encoded[..]).unwrap();
 		<T as pallet::Config>::MultiCurrency::mint_into(native_asset_id, &account_id, amount).unwrap();

@@ -1,18 +1,14 @@
 //! Common codes and conventions for DeFi pallets
-
 use codec::{Codec, Decode, Encode, FullCodec};
-use sp_std::convert::TryFrom;
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use scale_info::TypeInfo;
 use sp_runtime::{
+	helpers_128bit::multiply_by_rational,
 	traits::{CheckedAdd, CheckedMul, CheckedSub, Zero},
-	ArithmeticError, DispatchError, FixedPointOperand, FixedU128, FixedPointNumber, helpers_128bit::multiply_by_rational,
+	ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128,
 };
 
-use crate::{
-	currency::{AssetIdLike, BalanceLike, MathBalance},
-	math::{SafeArithmetic},
-};
+use crate::currency::{AssetIdLike, BalanceLike, MathBalance};
 
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
 pub struct Take<Balance> {
@@ -34,16 +30,15 @@ impl<Balance: MathBalance> Take<Balance> {
 	}
 
 	pub fn quote_limit_amount(&self) -> Result<Balance, ArithmeticError> {
-		self.quote_amount(*&self.amount)
+		self.quote_amount(self.amount)
 	}
 
-	pub fn quote_amount(&self, amount: Balance) -> Result<Balance, ArithmeticError> {	
-		let result = multiply_by_rational(amount.into(), self.limit.into_inner(), Ratio::DIV).map_err(|_| ArithmeticError::Overflow)?;
+	pub fn quote_amount(&self, amount: Balance) -> Result<Balance, ArithmeticError> {
+		let result = multiply_by_rational(amount.into(), self.limit.into_inner(), Ratio::DIV)
+			.map_err(|_| ArithmeticError::Overflow)?;
 		result.try_into().map_err(|_| ArithmeticError::Overflow)
 	}
 }
-
-
 
 /// take `quote` currency and give `base` currency
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
@@ -201,11 +196,14 @@ pub trait DeFiComposableConfig: frame_system::Config {
 			  // bit
 }
 
-/// The fixed point number from 0..to max 
+/// The fixed point number from 0..to max
 pub type Rate = FixedU128;
 
+/// Is [1..MAX]
+pub type OneOrMoreFixedU128 = FixedU128;
+
 /// The fixed point number of suggested by substrate precision
-/// Must be (1.0.. because applied only to price normalized values
+/// Must be (1.0..MAX] because applied only to price normalized values
 pub type MoreThanOneFixedU128 = FixedU128;
 
 /// Must be [0..1]
@@ -217,25 +215,23 @@ pub type ZeroToOneFixedU128 = FixedU128;
 /// integer is 110 bit). Can support u128 if lift upper to use FixedU256 analog.
 pub type LiftedFixedBalance = FixedU128;
 
-/// unitless ratio of one thing to other. 
+/// unitless ratio of one thing to other.
 pub type Ratio = FixedU128;
-
-
 
 #[cfg(test)]
 mod tests {
-    use crate::defi::LiftedFixedBalance;
+	use crate::defi::LiftedFixedBalance;
 
-    use super::{Take, Ratio};
+	use super::{Ratio, Take};
 	use sp_runtime::FixedPointNumber;
-	
+
 	#[test]
 	fn take_ratio_half() {
 		let price = 10;
 		let amount = 100_u128;
 		let take = Take::new(amount, Ratio::saturating_from_integer(price));
-		let result = take.quote_amount(amount/2).unwrap();
-		assert_eq!(result, price * amount/ 2);
+		let result = take.quote_amount(amount / 2).unwrap();
+		assert_eq!(result, price * amount / 2);
 	}
 
 	#[test]

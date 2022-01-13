@@ -3,9 +3,9 @@
 //! https://github.com/makerdao/dss/blob/master/src/abaci.sol
 
 use composable_traits::{
-	time::{DurationSeconds, TimeReleaseFunction, LinearDecrease, StairstepExponentialDecrease},
-	math::{SafeArithmetic},
 	defi::LiftedFixedBalance,
+	math::SafeArithmetic,
+	time::{DurationSeconds, LinearDecrease, StairstepExponentialDecrease, TimeReleaseFunction},
 };
 
 use sp_runtime::{
@@ -82,8 +82,8 @@ impl AuctionTimeCurveModel for StairstepExponentialDecrease {
 mod tests {
 
 	use composable_traits::{
-		time::{DurationSeconds, ONE_HOUR, LinearDecrease, StairstepExponentialDecrease},
 		defi::LiftedFixedBalance,
+		time::{DurationSeconds, LinearDecrease, StairstepExponentialDecrease, ONE_HOUR},
 	};
 
 	use sp_arithmetic::assert_eq_error_rate;

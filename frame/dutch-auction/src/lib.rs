@@ -19,7 +19,7 @@
 //! Sell takes deposit (as for accounts), to store sells for some time.
 //! We have to store lock deposit value with ask as it can change within time.
 //! Later deposit is used by pallet as initiative to liquidate garbage.
-//! 
+//!
 //! # Price prediction
 //! Dutch action starts with configured price and than and other price value is f(t).
 //! So any external observer can predict what price will be on specified block.
@@ -76,8 +76,8 @@ pub mod pallet {
 	use codec::{Decode, Encode};
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
-		time::{Timestamp, TimeReleaseFunction},
-		math::{SafeArithmetic, WrappingNext},
+		math::WrappingNext,
+		time::{TimeReleaseFunction, Timestamp},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -94,10 +94,7 @@ pub mod pallet {
 
 	use crate::math::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
-	use sp_runtime::{
-		traits::{AccountIdConversion, Saturating},
-		DispatchError,
-	};
+	use sp_runtime::{traits::AccountIdConversion, DispatchError};
 	use sp_std::vec::Vec;
 
 	#[pallet::config]
@@ -302,7 +299,7 @@ pub mod pallet {
 				order.order.take.limit <= take.limit,
 				Error::<T>::TakeLimitDoesNotSatisfiesOrder,
 			);
-			let limit = order.order.take.limit.into();
+			let limit = order.order.take.limit;
 			// may consider storing calculation results within single block, so that finalize does
 			// not recalculates
 			let passed = T::UnixTime::now().as_secs() - order.context.added_at;
@@ -322,21 +319,33 @@ pub mod pallet {
 		// so we stay fast and prevent attack
 		fn on_finalize(_n: T::BlockNumber) {
 			for (order_id, mut takes) in <Takes<T>>::iter() {
-				if let Some(SellOrder { mut order, context: _, from_to: ref seller, configuration: _ }) = <SellOrders<T>>::get(order_id) {
+				if let Some(SellOrder {
+					mut order,
+					context: _,
+					from_to: ref seller,
+					configuration: _,
+				}) = <SellOrders<T>>::get(order_id)
+				{
 					// users payed N * WEIGHT before, we here pay N * (log N - 1) * Weight. We can
 					// retain pure N by first served principle so, not highest price.
-					takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));				
+					takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));
 					// calculate real price
 					for take in takes {
-						let quote_amount = take.take.quote_limit_amount().expect("was checked in take call");
-						// what to do with orders which nobody ever takes? some kind of dust orders with
+						let quote_amount =
+							take.take.quote_limit_amount().expect("was checked in take call");
+						// what to do with orders which nobody ever takes? some kind of dust orders
+						// with
 						if order.take.amount == T::Balance::zero() {
-							T::MultiCurrency::unreserve(order.pair.quote, &take.from_to, quote_amount);
+							T::MultiCurrency::unreserve(
+								order.pair.quote,
+								&take.from_to,
+								quote_amount,
+							);
 						} else {
 							let take_amount = take.take.amount.min(order.take.amount);
 							order.take.amount -= take_amount;
-							let real_quote_amount = take.take.quote_amount(take_amount)
-								.expect("was taken via min");
+							let real_quote_amount =
+								take.take.quote_amount(take_amount).expect("was taken via min");
 
 							exchange_reserved::<T>(
 								order.pair.base,

@@ -13,7 +13,7 @@ use sp_arithmetic::per_things::Percent;
 
 use crate::{
 	defi::{LiftedFixedBalance, Rate, ZeroToOneFixedU128},
-	math::{SafeArithmetic},
+	math::SafeArithmetic,
 	time::{DurationSeconds, SECONDS_PER_YEAR_NAIVE},
 };
 
@@ -148,11 +148,11 @@ pub struct JumpModel {
 
 impl JumpModel {
 	pub const MAX_BASE_RATE: ZeroToOneFixedU128 =
-		ZeroToOneFixedU128::from_inner(ZeroToOneFixedU128::DIV *10 / 100);
+		ZeroToOneFixedU128::from_inner(ZeroToOneFixedU128::DIV * 10 / 100);
 	pub const MAX_JUMP_RATE: ZeroToOneFixedU128 =
-		ZeroToOneFixedU128::from_inner(ZeroToOneFixedU128::DIV * 30 / 100); 
+		ZeroToOneFixedU128::from_inner(ZeroToOneFixedU128::DIV * 30 / 100);
 	pub const MAX_FULL_RATE: ZeroToOneFixedU128 =
-		ZeroToOneFixedU128::from_inner(ZeroToOneFixedU128::DIV * 50 / 100); 
+		ZeroToOneFixedU128::from_inner(ZeroToOneFixedU128::DIV * 50 / 100);
 
 	/// Create a new rate model
 	pub fn new(

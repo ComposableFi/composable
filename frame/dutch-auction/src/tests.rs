@@ -1,6 +1,6 @@
 use composable_traits::{
-	time::{TimeReleaseFunction, LinearDecrease},
-	defi::{Sell, Take, LiftedFixedBalance},
+	defi::{LiftedFixedBalance, Sell, Take},
+	time::{LinearDecrease, TimeReleaseFunction},
 };
 use orml_traits::MultiReservableCurrency;
 
@@ -12,11 +12,11 @@ use frame_support::{
 		Hooks,
 	},
 };
-use sp_runtime::{FixedPointNumber, traits::AccountIdConversion};
+use sp_runtime::{traits::AccountIdConversion, FixedPointNumber};
 
 use crate::mock::{currency::CurrencyId, runtime::*};
 
-fn fixed(n:u64) -> LiftedFixedBalance {
+fn fixed(n: u64) -> LiftedFixedBalance {
 	LiftedFixedBalance::saturating_from_integer(n)
 }
 
@@ -51,18 +51,21 @@ fn setup_sell() {
 		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 		let not_reserved = Assets::reserved_balance(CurrencyId::BTC, &ALICE);
 		let gas = Assets::balance(CurrencyId::PICA, &ALICE);
-		let treasury = Assets::balance(CurrencyId::PICA, &DutchAuctionPalletId::get().into_account());
+		let treasury =
+			Assets::balance(CurrencyId::PICA, &DutchAuctionPalletId::get().into_account());
 		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
-		let treasury_added = Assets::balance(CurrencyId::PICA, &DutchAuctionPalletId::get().into_account()) - treasury;
+		let treasury_added =
+			Assets::balance(CurrencyId::PICA, &DutchAuctionPalletId::get().into_account()) -
+				treasury;
 		assert!(treasury_added > 0);
 		assert!(treasury_added >= <() as crate::weights::WeightInfo>::liquidate());
 		let reserved = Assets::reserved_balance(CurrencyId::BTC, &ALICE);
 		assert!(not_reserved < reserved && reserved == 1);
 		let order_id = crate::OrdersIndex::<Runtime>::get();
 		assert_ne!(invalid, order_id);
-		let ask_gas = <() as crate::weights::WeightInfo>::ask();	
+		let ask_gas = <() as crate::weights::WeightInfo>::ask();
 		let remaining_gas = Assets::balance(CurrencyId::PICA, &ALICE);
-		assert!(gas < remaining_gas +  ask_gas + treasury_added);
+		assert!(gas < remaining_gas + ask_gas + treasury_added);
 	});
 }
 

@@ -4,7 +4,7 @@ use scale_info::TypeInfo;
 use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 use sp_std::fmt::Debug;
 
-use crate::{defi::LiftedFixedBalance, math::SafeArithmetic};
+use crate::math::SafeArithmetic;
 
 /// really u8, but easy to do math operations
 pub type Exponent = u32;
@@ -79,28 +79,15 @@ impl<
 {
 }
 
-/// limited counted number trait which maximal number is more than `u64`,  but not more than `u128`, so inner type is either u64 or u128
-/// with helpers for producing `ArithmeticError`s instead of `Option`s.  
+/// limited counted number trait which maximal number is more than `u64`,  but not more than `u128`,
+/// so inner type is either u64 or u128 with helpers for producing `ArithmeticError`s instead of
+/// `Option`s.
 pub trait MathBalance:
-	PartialOrd 
-	+ Zero 
-	+ SafeArithmetic 
-	+ Into<u128>
-	+ TryFrom<u128>
-	+ From<u64> 
-	+ Copy 
+	PartialOrd + Zero + SafeArithmetic + Into<u128> + TryFrom<u128> + From<u64> + Copy
 {
 }
-impl<
-		T: 
-		PartialOrd 
-		+ Zero
-		 + SafeArithmetic 
-		 + Into<u128> 
-		 + TryFrom<u128>		 
-		 + From<u64> 
-		 + Copy,
-	> MathBalance for T
+impl<T: PartialOrd + Zero + SafeArithmetic + Into<u128> + TryFrom<u128> + From<u64> + Copy>
+	MathBalance for T
 {
 }
 

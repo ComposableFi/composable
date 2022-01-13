@@ -1,6 +1,8 @@
-use crate::{currency::LocalAssets, defi::{CurrencyPair, Ratio}};
+use crate::{
+	currency::LocalAssets,
+	defi::{CurrencyPair, Ratio},
+};
 use frame_support::{dispatch::DispatchError, pallet_prelude::*};
-use sp_runtime::FixedU128;
 use sp_std::vec::Vec;
 
 #[derive(Encode, Decode, Default, Debug, PartialEq)]

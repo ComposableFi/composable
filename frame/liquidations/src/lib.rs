@@ -47,17 +47,17 @@ pub mod pallet {
 		time::{LinearDecrease, StairstepExponentialDecrease, TimeReleaseFunction},
 	};
 	use frame_support::{
-		dispatch::{Dispatchable, DispatchResultWithPostInfo},
-		pallet_prelude::{OptionQuery, StorageMap, StorageValue, ValueQuery},
+		dispatch::DispatchResultWithPostInfo,
+		pallet_prelude::{OptionQuery, StorageMap, StorageValue},
 		traits::{GenesisBuild, Get, IsType, UnixTime},
 		PalletId, Parameter, Twox64Concat,
 	};
 
 	use frame_system::pallet_prelude::OriginFor;
-use scale_info::TypeInfo;
+	use scale_info::TypeInfo;
 	use sp_runtime::{DispatchError, Permill, Perquintill};
 
-use crate::weights::WeightInfo;
+	use crate::weights::WeightInfo;
 
 	#[pallet::config]
 
@@ -80,10 +80,10 @@ use crate::weights::WeightInfo;
 
 		type PalletId: Get<PalletId>;
 
-		/// when called, engine pops latest order to liquidate and pushes back result
-		type Liquidate: Parameter + Dispatchable<Origin = Self::Origin> + From<Call<Self>>;
-		type WeightInfo : WeightInfo;
-		type ParachainId : FullCodec + Default + Parameter + Clone;
+		// /// when called, engine pops latest order to liquidate and pushes back result
+		// type Liquidate: Parameter + Dispatchable<Origin = Self::Origin> + From<Call<Self>>;
+		type WeightInfo: WeightInfo;
+		type ParachainId: FullCodec + Default + Parameter + Clone;
 	}
 
 	#[pallet::event]
@@ -103,9 +103,11 @@ use crate::weights::WeightInfo;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
-		#[pallet::weight(T::WeightInfo::add_liquidation_strategy())]		
-		pub fn add_liqudation_strategy(origing: OriginFor<T>, _configuraiton: LiquidationStrategyConfiguration<T::ParachainId> ) -> DispatchResultWithPostInfo{
+		#[pallet::weight(T::WeightInfo::add_liquidation_strategy())]
+		pub fn add_liqudation_strategy(
+			_origin: OriginFor<T>,
+			_configuraiton: LiquidationStrategyConfiguration<T::ParachainId>,
+		) -> DispatchResultWithPostInfo {
 			Err(DispatchError::Other("no implemented").into())
 		}
 	}
@@ -123,13 +125,14 @@ use crate::weights::WeightInfo;
 	#[pallet::storage]
 	#[pallet::getter(fn strategy_index)]
 	#[allow(clippy::disallowed_type)]
-	pub type StrategyIndex<T: Config> = StorageValue<_, T::LiquidationStrategyId, ValueQuery>;
+	pub type StrategyIndex<T: Config> =
+		StorageValue<_, T::LiquidationStrategyId, frame_support::pallet_prelude::ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn default_strategy_index)]
 	#[allow(clippy::disallowed_type)]
 	pub type DefaultStrategyIndex<T: Config> =
-		StorageValue<_, T::LiquidationStrategyId, ValueQuery>;
+		StorageValue<_, T::LiquidationStrategyId, frame_support::pallet_prelude::ValueQuery>;
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
 		type MayBeAssetId = T::MayBeAssetId;
@@ -163,21 +166,21 @@ use crate::weights::WeightInfo;
 	pub enum LiquidationStrategyConfiguration<ParachainId> {
 		DutchAuction(TimeReleaseFunction),
 		UniswapV2 { slippage: Perquintill },
-		XcmDex {parachain_id: ParachainId } ,
-		// Building fully decoupled flow is described bellow. Will avoid that for now.
-		// ```plantuml
-		// `solves question - how pallet can invoke list of other pallets with different configuration types
-		// `so yet sharing some liquidation part and tracing liquidation id
-		// dutch_auction_strategy -> liquidation : Create new strategy id
-		// dutch_auction_strategy -> liquidation : Add Self Dispatchable call (baked with strategyid)
-		// liquidation -> liquidation: Add liquidation order
-		// liquidation -> liquidation: Get Dispatchable by Strategyid
-		// liquidation --> dutch_auction_strategy: Invoke Dispatchable
-		// dutch_auction_strategy -> dutch_auction_strategy: Get liquidation configuration by id previosly baked into call
-		// dutch_auction_strategy --> liquidation: Pop next order
-		// dutch_auction_strategy -> dutch_auction_strategy: Start liqudaiton
-		// ```
-		//Dynamic { liquidate: Dispatch, minimum_price: Balance },
+		XcmDex { parachain_id: ParachainId },
+		/* Building fully decoupled flow is described bellow. Will avoid that for now.
+		 * ```plantuml
+		 * `solves question - how pallet can invoke list of other pallets with different configuration types
+		 * `so yet sharing some liquidation part and tracing liquidation id
+		 * dutch_auction_strategy -> liquidation : Create new strategy id
+		 * dutch_auction_strategy -> liquidation : Add Self Dispatchable call (baked with strategyid)
+		 * liquidation -> liquidation: Add liquidation order
+		 * liquidation -> liquidation: Get Dispatchable by Strategyid
+		 * liquidation --> dutch_auction_strategy: Invoke Dispatchable
+		 * dutch_auction_strategy -> dutch_auction_strategy: Get liquidation configuration by id previosly baked into call
+		 * dutch_auction_strategy --> liquidation: Pop next order
+		 * dutch_auction_strategy -> dutch_auction_strategy: Start liqudaiton
+		 * ```
+		 *Dynamic { liquidate: Dispatch, minimum_price: Balance }, */
 	}
 
 	#[pallet::genesis_build]
@@ -214,11 +217,10 @@ use crate::weights::WeightInfo;
 				let configuration = Strategies::<T>::get(DefaultStrategyIndex::<T>::get())
 					.expect("default always exists");
 				match configuration {
-					LiquidationStrategyConfiguration::DutchAuction(configuration) =>
-						{
-							Self::deposit_event(Event::<T>::PositionWasSentToLiquidation{});
-							return Ok(T::DutchAuction::ask(from_to, order, configuration)?)
-						},
+					LiquidationStrategyConfiguration::DutchAuction(configuration) => {
+						Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
+						return T::DutchAuction::ask(from_to, order, configuration)
+					},
 					_ => return Err(DispatchError::Other("TODO")),
 				}
 			} else {
@@ -232,8 +234,8 @@ use crate::weights::WeightInfo;
 						};
 
 						if result.is_ok() {
-							Self::deposit_event(Event::<T>::PositionWasSentToLiquidation{});
-							return Ok(result?)
+							Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
+							return result
 						}
 					}
 				}

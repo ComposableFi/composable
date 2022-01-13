@@ -1,6 +1,6 @@
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero},
-	ArithmeticError, FixedU128,
+	ArithmeticError,
 };
 
 /// little bit slower than maximizing performance by knowing constraints.

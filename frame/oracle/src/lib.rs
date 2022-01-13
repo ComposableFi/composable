@@ -36,7 +36,6 @@ pub mod pallet {
 	};
 	use core::ops::{Div, Mul};
 	use frame_support::{
-	
 		dispatch::{DispatchResult, DispatchResultWithPostInfo},
 		pallet_prelude::*,
 		traits::{
@@ -54,12 +53,11 @@ pub mod pallet {
 		pallet_prelude::*,
 		Config as SystemConfig,
 	};
-	
+
 	use lite_json::json::JsonValue;
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
-		
 		offchain::{http, Duration},
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
 		AccountId32, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId, PerThing, Percent,
