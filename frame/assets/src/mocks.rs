@@ -19,6 +19,11 @@ pub type AssetId = u64;
 pub type Amount = i128;
 pub type Balance = u64;
 
+pub const EVE: AccountId = 3;
+pub const ACCOUNT_FREE_START: AccountId = EVE + 1;
+
+pub const MINIMUM_BALANCE: Balance = 1;
+
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -129,12 +134,12 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 }
 
+pub const BALANCES: [(AccountId, Balance); 4] = [(0, 1000), (1, 1000), (2, 1000), (3, 1000)];
+
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	let genesis = pallet_balances::GenesisConfig::<Test> {
-		balances: vec![(0, 1000), (1, 1000), (2, 1000), (3, 1000)],
-	};
+	let genesis = pallet_balances::GenesisConfig::<Test> { balances: Vec::from(BALANCES) };
 	genesis.assimilate_storage(&mut t).unwrap();
 	t.into()
 }

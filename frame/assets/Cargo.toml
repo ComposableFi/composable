@@ -36,6 +36,8 @@ version = "2.0.0"
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301" }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry", default-features = false }
+proptest = "0.9.6"
+composable-tests-helpers = { version = "0.0.1", path = "../composable-tests-helpers", default-features = false }
 
 [package.metadata.cargo-udeps.ignore]
 development = ["governance-registry"]
