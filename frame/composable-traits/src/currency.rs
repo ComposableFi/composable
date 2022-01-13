@@ -79,6 +79,8 @@ impl<
 {
 }
 
+/// limited counted number trait which maximal number is more than `u64`,  but not more than `u128`, so inner type is either u64 or u128
+/// with helpers for producing `ArithmeticError`s instead of `Option`s.  
 pub trait MathBalance:
 	PartialOrd 
 	+ Zero 

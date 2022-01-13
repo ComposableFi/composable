@@ -148,11 +148,11 @@ pub struct JumpModel {
 
 impl JumpModel {
 	pub const MAX_BASE_RATE: ZeroToOneFixedU128 =
-		ZeroToOneFixedU128::from_inner(100_000_000_000_000_000); // 10%
+		ZeroToOneFixedU128::from_inner(ZeroToOneFixedU128::DIV *10 / 100);
 	pub const MAX_JUMP_RATE: ZeroToOneFixedU128 =
-		ZeroToOneFixedU128::from_inner(300_000_000_000_000_000); // 30%
+		ZeroToOneFixedU128::from_inner(ZeroToOneFixedU128::DIV * 30 / 100); 
 	pub const MAX_FULL_RATE: ZeroToOneFixedU128 =
-		ZeroToOneFixedU128::from_inner(500_000_000_000_000_000); // 50%
+		ZeroToOneFixedU128::from_inner(ZeroToOneFixedU128::DIV * 50 / 100); 
 
 	/// Create a new rate model
 	pub fn new(

@@ -200,8 +200,8 @@ pub trait Lending: DeFiEngine {
 	/// utilization_ratio = total_borrows / (total_cash + total_borrows).
 	/// utilization ratio is 0 when there are no borrows.
 	fn calc_utilization_ratio(
-		cash: &Self::Balance,
-		borrows: &Self::Balance,
+		cash: Self::Balance,
+		borrows: Self::Balance,
 	) -> Result<Percent, DispatchError>;
 
 	/// Borrow asset amount account should repay to be debt free for specific market pair.

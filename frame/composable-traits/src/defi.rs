@@ -29,11 +29,6 @@ impl<Balance: MathBalance> Take<Balance> {
 		self.amount > Balance::zero() && self.limit > Ratio::zero()
 	}
 
-	/// case when relation of base is integer and base is larger than quote in price
-	pub fn new_with_smaller(amount: Balance, limit: Balance) -> Self {
-		Self { amount, limit : LiftedFixedBalance::from_inner(limit.into()) }
-	}
-
 	pub fn new(amount: Balance, limit: Ratio) -> Self {
 		Self { amount, limit }
 	}
@@ -43,7 +38,7 @@ impl<Balance: MathBalance> Take<Balance> {
 	}
 
 	pub fn quote_amount(&self, amount: Balance) -> Result<Balance, ArithmeticError> {	
-		let result = multiply_by_rational(amount.into(), self.limit.into_inner(), LiftedFixedBalance::DIV).map_err(|_| ArithmeticError::Overflow)?;
+		let result = multiply_by_rational(amount.into(), self.limit.into_inner(), Ratio::DIV).map_err(|_| ArithmeticError::Overflow)?;
 		result.try_into().map_err(|_| ArithmeticError::Overflow)
 	}
 }
@@ -235,21 +230,20 @@ mod tests {
 	use sp_runtime::FixedPointNumber;
 	
 	#[test]
-	fn take_ratio() {
+	fn take_ratio_half() {
 		let price = 10;
 		let amount = 100_u128;
 		let take = Take::new(amount, Ratio::saturating_from_integer(price));
 		let result = take.quote_amount(amount/2).unwrap();
 		assert_eq!(result, price * amount/ 2);
-
 	}
 
-	// #[test]
-	// fn fixed_into_u128_floor() {
-	// 	use sp_runtime::{FixedPointNumber, FixedPointOperand};
-	// 	let inner = LiftedFixedBalance::from_inner(42_u128);
-	// 	let floor = LiftedFixedBalance::from_inner(42_u128).floor().into_inner();
-	// 	let integer = LiftedFixedBalance::saturating_from_integer(42_u128);
-	// 	assert!(0 == floor && floor < inner && inner < integer);	
-	// }
+	#[test]
+	fn take_ratio_half_amount_half_price() {
+		let price_part = 50;
+		let amount = 100_u128;
+		let take = Take::new(amount, Ratio::saturating_from_rational(price_part, 100));
+		let result = take.quote_amount(amount).unwrap();
+		assert_eq!(result, price_part * amount / 100);
+	}
 }
