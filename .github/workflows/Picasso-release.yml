@@ -47,8 +47,13 @@ jobs:
         tl=$(sed -n '$=' srtool.out)
         itl=$(sed -n '/Package/=' srtool.out)
         echo $itl, $tl
-        outsrtool=$(sed -n "$itl,$tl"p srtool.out)
+        echo "outsrtool=$(sed -n "$itl,$tl"p srtool.out)"
         echo  $outsrtool
+    
+    - name: Get wasm info
+      run: |
+        cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
+        subwasm info --input ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
 
     #- name: Build with srtool
     #  uses: chevdor/srtool-actions@v0.2.0
@@ -92,5 +97,4 @@ jobs:
         tag: ${{ github.ref }}
         overwrite: true
         body: |
-          $outsrtool
-          
+          Completed wasm build Information
