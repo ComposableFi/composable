@@ -1,18 +1,6 @@
 /* eslint-disable no-trailing-spaces */
-import {Promise} from 'bluebird';
-
-Promise.config({
-  // Enable warnings
-  warnings: true,
-  // Enable long stack traces
-  longStackTraces: true,
-  // Enable cancellation
-  cancellation: true,
-  // Enable monitoring
-  monitoring: true,
-  // Enable async hooks
-  asyncHooks: true,
-});
+import { sendAndWaitForSuccess } from '@composable/utils/polkadotjs';
+import { IKeyringPair } from '@polkadot/types/types';
 
 /**
  * Contains all TX tests for the pallet:
@@ -34,52 +22,22 @@ export class TxBondedFinanceTests {
   /**
    * Tests tx.bondedFinance.offer successfully. SUDO Check!
    */
-  private static async txBondedFinanceOfferTest(wallet) {
+  private static txBondedFinanceOfferTest(wallet: IKeyringPair) {
     // ToDo: Find good parameter for reward.asset
     const requestParameters = {
       beneficiary: wallet.publicKey,
       asset: 1,
-      bondPrice: 1,
-      nbOfBonds: 10000000000000,
-      maturity: {Finite:{returnIn:50}},
-      reward: {asset: [170,141,183,460,469,231,731,687,303,715,884,105,728], amount: 10, maturity: 1}
+      bondPrice: 10000000000000, // pub const MIN_VESTED_TRANSFER: u32 = 1_000_000;
+      nbOfBonds: 1,
+      maturity: { Finite: { returnIn: 10 } },
+      reward: { asset: 1, amount: 100000000000000, maturity: 1 } // pub MinReward: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
     };
-    try {
-      return new Promise(function (resolve, reject) {
-        global.api.tx.bondedFinance.offer(requestParameters)
-        .signAndSend(wallet, { nonce: -1 }, ({ events=[], status }) => {
-          console.debug('txBondedFinanceOfferTest: Transaction status: ', status.type);
-          if (status.isFinalized) {
-            events
-            // find/filter for failed events
-            .filter(({ event }) =>
-              global.api.events.system.ExtrinsicFailed.is(event)
-            )
-            // we know that data for system.ExtrinsicFailed is
-            // (DispatchError, DispatchInfo)
-            .forEach(({ event: { data: [error, info] } }) => {
-              if (error.isModule) {
-                // for module errors, we have the section indexed, lookup
-                const decoded = global.api.registry.findMetaError(error.asModule);
-                const { docs, method, section } = decoded;
-
-                console.log(`${section}.${method}: ${docs.join(' ')}`);
-                throw new Error('txBondedFinanceOfferTest: ExtrinsicFailed!');
-              } else {
-                // Other, CannotLookup, BadOrigin, no extra info
-                console.log(error.toString());
-                throw new Error('txBondedFinanceOfferTest: ExtrinsicFailed!');
-              }
-            });
-            // If no errors have occured, resolve promise.
-            // ToDo (D. Roth): Add checks
-            resolve();
-          }
-        });
-      });
-    } catch (exc) {
-      console.error(exc);
-    }
+    return sendAndWaitForSuccess(
+      global.api,
+      wallet,
+      global.api.events.bondedFinance.NewOffer.is,
+      global.api.tx.bondedFinance.offer(requestParameters)
+    );
   }
 }
 

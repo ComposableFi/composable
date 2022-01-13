@@ -1,14 +1,12 @@
 /* eslint-disable no-trailing-spaces */
-import { ApiPromise } from '@polkadot/api';
 import { expect } from 'chai';
-
 
 export class QueryCrowdloanRewardsTests {
   /**
-   * 
+   *
    */
   public static runQueryCrowdloanRewardsTests() {
-    describe('query.crowdloanRewards.account Tests', function () {
+    describe('query.crowdloanRewards.account Tests', function() {
       this.timeout(0);
       it('query.crowdloanRewards.claimedRewards Tests', async function() {
         await QueryCrowdloanRewardsTests.queryCrowdloanRewardsClaimedRewardsTest();
@@ -38,8 +36,7 @@ export class QueryCrowdloanRewardsTests {
     const expectedClaimedRewards = 500000000000;
     const claimedRewards = await global.api.query.crowdloanRewards.claimedRewards();
     console.debug("claimedRewards: " + claimedRewards);
-    expect(claimedRewards).to.satisfy((s)=>{return typeof(s) == typeof(Object)});
-    expect(parseInt(claimedRewards)).to.equal(expectedClaimedRewards);
+    expect(claimedRewards.toNumber()).to.equal(expectedClaimedRewards);
   }
 
   /**
@@ -51,33 +48,30 @@ export class QueryCrowdloanRewardsTests {
     console.debug('queryCrowdloanRewardsTotalContributorsTest');
     const expectedTotalContributors = 100;
     const totalContributors = await global.api.query.crowdloanRewards.totalContributors();
-    expect(totalContributors).to.satisfy((s)=>{return typeof(s) == typeof(Object)});
-    expect(parseInt(totalContributors)).to.equal(expectedTotalContributors);
+    expect(totalContributors.toNumber()).to.equal(expectedTotalContributors);
   }
 
   /**
    * Checks for a successful return of
    * query.crowdloanRewards.totalRewards()
    */
-   private static async queryCrowdloanRewardsTotalRewardsTest() {
+  private static async queryCrowdloanRewardsTotalRewardsTest() {
     // ToDo (D. Roth): Consider removing expected value test and only check for result type.
     console.debug('queryCrowdloanRewardsTotalRewardsTest');
     const expectedTotalRewards = 5050000000000000;
     const totalRewards = await global.api.query.crowdloanRewards.totalRewards();
-    expect(totalRewards).to.satisfy((s)=>{return typeof(s) == typeof(Object)});
-    expect(parseInt(totalRewards)).to.equal(expectedTotalRewards);
+    expect(totalRewards.toNumber()).to.equal(expectedTotalRewards);
   }
 
   /**
    * Checks for a successful return of
    * query.crowdloanRewards.vestingBlockStart()
    */
-   private static async queryCrowdloanRewardsVestingBlockStartTest() {
+  private static async queryCrowdloanRewardsVestingBlockStartTest() {
     // ToDo (D. Roth): Consider removing expected value test and only check for result type.
     console.debug('queryCrowdloanRewardsVestingBlockStartTest');
     const vestingBlockStart = await global.api.query.crowdloanRewards.vestingBlockStart();
-    expect(vestingBlockStart).to.satisfy((s)=>{return typeof(s) == typeof(Object)});
-    expect(parseInt(vestingBlockStart)).to.be.an('integer');
+    expect(vestingBlockStart.isSome).to.be.true
   }
 }
 
