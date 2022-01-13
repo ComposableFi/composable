@@ -13,7 +13,7 @@ with a fixed supply, including:
 * Strategy Re-balancing.
 * Surcharge Claims and Rent.
 
-To use it in your runtime, you need to implement the vault's [`Config`].
+To use it in your runtime, you need to implement the vault's [`Config`](crate::Config).
 
 ## Concepts
 
@@ -27,7 +27,7 @@ To use it in your runtime, you need to implement the vault's [`Config`].
 
 ## Reusing the Vault
 
-Pallets depending on the vault should use the [vault](composable_traits::vault) traits. When managing the reaping and deposits is too difficult due to the creation of many vaults, or prohibitively expensive; create the vault with an existential deposit. You should ensure that you delete the vault yourself once it is no longer required.
+Pallets depending on the vault should use the [vault](composable-traits::vault) traits. When managing the reaping and deposits is too difficult due to the creation of many vaults, or prohibitively expensive; create the vault with an existential deposit. You should ensure that you delete the vault yourself once it is no longer required.
 
 ## Emergency Shutdown
 
