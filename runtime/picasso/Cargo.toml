@@ -172,6 +172,7 @@ std = [
 	"orml-xcm-support/std",
 	"orml-unknown-tokens/std",
 	"composable-traits/std",
+	"crowdloan-rewards/std",
 ]
 runtime-benchmarks = [
 	"balances/runtime-benchmarks",
@@ -197,5 +198,6 @@ runtime-benchmarks = [
 	"collective/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
+	"crowdloan-rewards/frame-benchmarking"
 ]
 
