@@ -41,21 +41,16 @@ jobs:
         /home/runner/.cargo/bin/cargo build --release -p composable 
         /home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
         /home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso
+        tl=$(sed -n '$=' srtool.out)
+        itl=$(sed -n '/Package/=' srtool.out)
+        echo $itl, $tl
+        outsrtool=$(sed -n "$itl,$tl"p srtool.out)
 
     - name: Archive build targets
       run: |
         tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
         tar -czvf picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
         gsutil cp *.tar.gz gs://composable-binaries/community-releases/${{ env.RELEASE_VERSION }}/ 
-
-    - name: Upload Compact wasm
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-        file: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
-        asset_name: picasso_runtime.compact.wasm
-        tag: ${{ github.ref }}
-        overwrite: true
 
     - name: Upload Compressed wasm
       uses: svenstaro/upload-release-action@v2
