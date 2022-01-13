@@ -18,7 +18,12 @@ jobs:
     strategy:
       matrix:
         chain: ["dali-chachacha", "picasso"]
+    
     steps:
+    - name: cleanup 
+      run: |
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
