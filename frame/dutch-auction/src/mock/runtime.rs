@@ -28,7 +28,8 @@ use super::governance_registry::GovernanceRegistry;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
-pub type Balance = u64;
+pub type Balance = u128;
+pub type OrderId = u32;
 pub type Amount = i64;
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
@@ -127,7 +128,7 @@ parameter_types! {
 }
 
 impl pallet_timestamp::Config for Runtime {
-	type Moment = u64;
+	type Moment = composable_traits::time::Timestamp;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
@@ -215,7 +216,7 @@ impl pallet_dutch_auction::Config for Runtime {
 
 	type UnixTime = Timestamp;
 
-	type OrderId = u8;
+	type OrderId = OrderId;
 
 	type MultiCurrency = Assets;
 

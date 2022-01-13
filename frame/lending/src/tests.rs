@@ -3,16 +3,15 @@ use std::ops::Mul;
 use crate::{
 	accrue_interest_internal,
 	mocks::{
-		new_test_ext, process_block, AccountId, Balance, BlockNumber, Lending, LpTokenFactory,
-		MockCurrencyId, Oracle, Origin, Test, Tokens, Vault, VaultId, ALICE, BOB, CHARLIE,
-		MILLISECS_PER_BLOCK, MINIMUM_BALANCE, UNRESERVED,
+		new_test_ext, process_block, AccountId, Balance, BlockNumber, Lending, MockCurrencyId,
+		Oracle, Origin, Test, Tokens, Vault, VaultId, ALICE, BOB, CHARLIE, MILLISECS_PER_BLOCK,
+		MINIMUM_BALANCE, UNRESERVED,
 	},
 	models::BorrowerData,
 	Error, MarketIndex,
 };
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::{
-	currency::{CurrencyFactory, LocalAssets},
 	defi::{CurrencyPair, LiftedFixedBalance, MoreThanOneFixedU128, Rate, ZeroToOneFixedU128},
 	lending::{math::*, CreateInput, UpdateInput},
 	time::SECONDS_PER_YEAR_NAIVE,
@@ -70,7 +69,6 @@ fn create_market(
 		},
 		currency_pair: CurrencyPair::new(collateral_asset, borrow_asset),
 	};
-	let interest_rate_model = InterestRateModel::default();
 	<Lending as composable_traits::lending::Lending>::create(manager, config).unwrap()
 }
 
@@ -233,8 +231,8 @@ fn accrue_interest_plotter() {
 	let total_borrows = total_issued - accrued_debt;
 	// no sure how handle in rust previous + next (so map has access to previous result)
 	let mut previous = 0;
-	const total_blocks: u64 = 1000;
-	let _data: Vec<_> = (0..total_blocks)
+	const TOTAL_BLOCKS: u64 = 1000;
+	let _data: Vec<_> = (0..TOTAL_BLOCKS)
 		.map(|x| {
 			let (accrue_increment, _) = accrue_interest_internal::<Test, InterestRateModel>(
 				optimal,
@@ -253,7 +251,7 @@ fn accrue_interest_plotter() {
 		optimal,
 		interest_rate_model,
 		Rate::checked_from_integer(1).unwrap(),
-		total_blocks * MILLISECS_PER_BLOCK,
+		TOTAL_BLOCKS * MILLISECS_PER_BLOCK,
 		total_borrows,
 	)
 	.unwrap();
@@ -410,6 +408,7 @@ fn borrow_flow() {
 			process_block(i);
 		}
 		let interest_after = Lending::total_interest_accurate(&market).unwrap();
+		assert!(interest_before < interest_after);
 
 		let limit_normalized = Lending::get_borrow_limit(&market, &ALICE).unwrap();
 		let new_limit = limit_normalized / price(MockCurrencyId::BTC, 1);

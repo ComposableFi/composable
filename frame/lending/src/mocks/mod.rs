@@ -1,6 +1,6 @@
 use crate::{self as pallet_lending, *};
 use composable_traits::{
-	currency::{DynamicCurrencyId, Exponent},
+	currency::DynamicCurrencyId,
 	defi::DeFiComposableConfig,
 	governance::{GovernanceRegistry, SignedRawOrigin},
 };

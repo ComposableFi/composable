@@ -16,7 +16,7 @@ use sp_runtime::{traits::AccountIdConversion, FixedPointNumber};
 
 use crate::mock::{currency::CurrencyId, runtime::*};
 
-fn fixed(n: u64) -> LiftedFixedBalance {
+fn fixed(n: u128) -> LiftedFixedBalance {
 	LiftedFixedBalance::saturating_from_integer(n)
 }
 
@@ -37,6 +37,7 @@ pub fn new_test_externalities() -> sp_io::TestExternalities {
 	externatlities
 }
 
+// ensure that we take extra for sell, at least amount to remove
 #[test]
 fn setup_sell() {
 	new_test_externalities().execute_with(|| {
@@ -58,12 +59,12 @@ fn setup_sell() {
 			Assets::balance(CurrencyId::PICA, &DutchAuctionPalletId::get().into_account()) -
 				treasury;
 		assert!(treasury_added > 0);
-		assert!(treasury_added >= <() as crate::weights::WeightInfo>::liquidate());
+		assert!(treasury_added >= <() as crate::weights::WeightInfo>::liquidate() as u128);
 		let reserved = Assets::reserved_balance(CurrencyId::BTC, &ALICE);
 		assert!(not_reserved < reserved && reserved == 1);
 		let order_id = crate::OrdersIndex::<Runtime>::get();
 		assert_ne!(invalid, order_id);
-		let ask_gas = <() as crate::weights::WeightInfo>::ask();
+		let ask_gas = <() as crate::weights::WeightInfo>::ask() as u128;
 		let remaining_gas = Assets::balance(CurrencyId::PICA, &ALICE);
 		assert!(gas < remaining_gas + ask_gas + treasury_added);
 	});
@@ -79,7 +80,7 @@ fn with_immediate_exact_buy() {
 		let seller = AccountId::from_raw(ALICE.0);
 		let buyer = AccountId::from_raw(BOB.0);
 		let sell_amount = 1;
-		let take_amount = 1000;
+		let take_amount = 1000_u128;
 		let sell = Sell::new(CurrencyId::BTC, CurrencyId::USDT, sell_amount, fixed(take_amount));
 		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();

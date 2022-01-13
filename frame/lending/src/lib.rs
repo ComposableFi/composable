@@ -833,15 +833,11 @@ pub mod pallet {
 				} else {
 					errors.iter().for_each(|e| {
 						if let Err(e) = e {
-							#[cfg(test)]
-							{
-								panic!("test failed with {:?}", e);
-							}
 							log::error!(
-								"This should never happen, could not initialize block!!! {:#?} {:#?}",
-								block_number,
-								e
-							)
+									"This should never happen, could not initialize block!!! {:#?} {:#?}",
+									block_number,
+									e
+								)
 						}
 					});
 					TransactionOutcome::Rollback(0)
