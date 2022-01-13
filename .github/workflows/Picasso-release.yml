@@ -43,6 +43,7 @@ jobs:
         itl=$(sed -n '/Package/=' srtool.out)
         echo $itl, $tl
         outsrtool=$(sed -n "$itl,$tl"p srtool.out)
+        echo  $outsrtool
 
     #- name: Build with srtool
     #  uses: chevdor/srtool-actions@v0.2.0
