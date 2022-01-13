@@ -32,7 +32,9 @@ jobs:
 
       - name: Check for runtime changes
         working-directory: "./.maintain/"
-        run: ./check_runtime.sh
+        run: |
+          /home/runner/.cargo/bin/cargo cargo build --release -p simnode
+          ./check_runtime.sh
 
       - name: Benchmark 
         run: |
