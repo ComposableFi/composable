@@ -4,7 +4,7 @@ Substrate allows us to easily make privileged calls and actions with the built-i
 
 *ensure_root(origin);*
 
-Thanks to these functions, we are able to perform privledged calls from various accounts. Such as   
+Thanks to these functions, we are able to perform privledged calls from various accounts. Such as
 upgrading the current blockchain. Only accounts that has the correct keys can execute functions that only  
 allow Root origin to call them, meaning normal accounts can not execute them.  
 
@@ -31,7 +31,7 @@ Checking privledges of the origin with substrate:
 
 
 ## Examples:  
-In order to use ensure_root we need to store the account key that is allowed to use   
+In order to use ensure_root we need to store the account key that is allowed to use
 the privileged functions and then execute the ensure_root command.
 
 ```rust
@@ -56,8 +56,8 @@ decl_module! {
 ...
 ```    
 
-In this example, we create a privileged function and gives the sender/caller/origin root   
-privledges using the *ensure_root(origin)* function. Then we give the origin a reward of 1337 units.    
+In this example, we create a privileged function and gives the sender/caller/origin root
+privledges using the *ensure_root(origin)* function. Then we give the origin a reward of 1337 units.
 
 
 Or if we want to write write functions that modify the heap(the programs allocated memory) we can do that:
@@ -88,7 +88,7 @@ pub fn root_print(origin: OriginFor<T>) -> DispatchResult {   // Let's create a 
 ```
 
 ## Protecting sudo functions   
-In order to write safe functions that can execute privledged functions such as upgrading   
+In order to write safe functions that can execute privledged functions such as upgrading
 our chain, we want to add a check, that verifies that the person using the function is allowed to do so.
 This we can do with the *ensure_signed*(and scream if it fails) function from the frame_system library.  
 We can simply do this by using the ensured_signed function then check the key and throw an error with  
@@ -113,14 +113,14 @@ fn powerfunction(origin: OriginFor<T>) {
 
 
 ### References:  
-https://substrate.dev/rustdocs/v3.0.0/frame_system/struct.EnsureRoot.html    
-https://substrate.dev/rustdocs/v3.0.0/frame_system/struct.EnsureSigned.html    
-https://github.com/paritytech/substrate/blob/master/frame/support/src/traits/dispatch.rs#L24   
-https://github.com/ComposableFi/composable-node-beta/blob/main/pallets/oracle/src/lib.rs#L276     
-https://github.com/ComposableFi/composable-node-beta/blob/oracle/runtime/src/lib.rs#L312    
-https://www.shawntabrizi.com/substrate/the-sudo-story-in-substrate/    
-https://substrate.dev/docs/en/knowledgebase/runtime/origin  
-https://substrate.dev/docs/en/tutorials/forkless-upgrade/sudo-upgrade   
-https://github.com/paritytech/substrate/tree/master/frame/sudo    
+https://substrate.dev/rustdocs/v3.0.0/frame_system/struct.EnsureRoot.html
+https://substrate.dev/rustdocs/v3.0.0/frame_system/struct.EnsureSigned.html
+https://github.com/paritytech/substrate/blob/master/frame/support/src/traits/dispatch.rs#L24
+https://github.com/ComposableFi/composable-node-beta/blob/main/pallets/oracle/src/lib.rs#L276
+https://github.com/ComposableFi/composable-node-beta/blob/oracle/runtime/src/lib.rs#L312
+https://www.shawntabrizi.com/substrate/the-sudo-story-in-substrate/
+https://substrate.dev/docs/en/knowledgebase/runtime/origin
+https://substrate.dev/docs/en/tutorials/forkless-upgrade/sudo-upgrade
+https://github.com/paritytech/substrate/tree/master/frame/sudo
 
 
