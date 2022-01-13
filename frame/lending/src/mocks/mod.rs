@@ -31,8 +31,17 @@ type Block = frame_system::mocking::MockBlock<Test>;
 pub type Balance = u128;
 pub type Amount = i128;
 pub type BlockNumber = u64;
-
 pub type VaultId = u64;
+
+pub type LiquidationStrategyId = u32;
+pub type OrderId = u32;
+
+parameter_types! {
+	pub const LiquidationsPalletId : PalletId = PalletId(*b"liqd_tns");
+}
+
+pub	type ParachainId = u32;
+
 
 pub const MINIMUM_BALANCE: Balance = 1000;
 
@@ -318,7 +327,7 @@ impl pallet_dutch_auction::weights::WeightInfo for DutchAuctionsMocks {
 }
 
 impl frame_support::weights::WeightToFeePolynomial for DutchAuctionsMocks {
-	type Balance = u128;
+	type Balance = Balance;
 
 	fn polynomial() -> frame_support::weights::WeightToFeeCoefficients<Self::Balance> {
 		todo!("will replace with mocks from relevant pallet")
@@ -327,7 +336,7 @@ impl frame_support::weights::WeightToFeePolynomial for DutchAuctionsMocks {
 
 impl pallet_dutch_auction::Config for Test {
 	type Event = Event;
-	type OrderId = u128;
+	type OrderId = OrderId;
 	type UnixTime = Timestamp;
 	type MultiCurrency = Assets;
 	type WeightInfo = DutchAuctionsMocks;
@@ -339,23 +348,12 @@ impl pallet_dutch_auction::Config for Test {
 impl pallet_liquidations::Config for Test {
 	type Event = Event;
 	type UnixTime = Timestamp;
-
-	type DutchAuction;
-
-
-	type LiquidationStrategyId;
-
-
-	type OrderId;
-
-
-	type PalletId;
-
-
-	type WeightInfo;
-
-	type ParachainId;
-	
+	type DutchAuction = DutchAuction;
+	type LiquidationStrategyId = LiquidationStrategyId;
+	type OrderId = OrderId;
+	type PalletId = LiquidationsPalletId;
+	type WeightInfo = ();
+	type ParachainId = ParachainId;
 }
 
 pub type Extrinsic = TestXt<Call, ()>;
@@ -398,7 +396,6 @@ impl pallet_lending::Config for Test {
 	type VaultId = VaultId;
 	type Vault = Vault;
 	type Event = Event;
-	type AssetId = MockCurrencyId;
 	type Currency = Tokens;
 	type CurrencyFactory = LpTokenFactory;
 	type MarketDebtCurrency = Tokens;
@@ -407,8 +404,7 @@ impl pallet_lending::Config for Test {
 	type MaxLendingCount = MaxLendingCount;
 	type AuthorityId = crypto::TestAuthId;
 	type WeightInfo = ();
-	type GroupId = AccountId;
-	type LiquidationStrategyId = u32;
+	type LiquidationStrategyId = LiquidationStrategyId;
 }
 
 // Build genesis storage according to the mock runtime.
