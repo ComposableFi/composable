@@ -815,7 +815,7 @@ parameter_types! {
 }
 
 impl vesting::Config for Runtime {
-	type Currency = Tokens;
+	type Currency = Assets;
 	type Event = Event;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
@@ -833,7 +833,7 @@ impl bonded_finance::Config for Runtime {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type BondOfferId = u64;
 	type Convert = sp_runtime::traits::ConvertInto;
-	type Currency = Tokens;
+	type Currency = Assets;
 	type Event = Event;
 	type MinReward = MinReward;
 	type NativeCurrency = Balances;

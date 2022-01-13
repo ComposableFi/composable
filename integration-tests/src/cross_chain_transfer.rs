@@ -221,3 +221,41 @@ fn transfer_insufficient_amount_should_fail() {
 		);
 	});
 }
+
+#[test]
+fn subscribe_version_notify_works() {
+	env_logger_init();
+	// relay chain subscribe version notify of para chain
+	KusamaRelay::execute_with(|| {
+		let r = pallet_xcm::Pallet::<kusama_runtime::Runtime>::force_subscribe_version_notify(
+			kusama_runtime::Origin::root(),
+			Box::new(Parachain(PICASSO_PARA_ID).into().into()),
+		);
+		assert_ok!(r);
+	});
+	KusamaRelay::execute_with(|| {
+		kusama_runtime::System::assert_has_event(kusama_runtime::Event::XcmPallet(
+			pallet_xcm::Event::SupportedVersionChanged(
+				MultiLocation { parents: 0, interior: X1(Parachain(PICASSO_PARA_ID)) },
+				2,
+			),
+		));
+	});
+
+	// para chain subscribe version notify of relay chain
+	Picasso::execute_with(|| {
+		let r = pallet_xcm::Pallet::<picasso_runtime::Runtime>::force_subscribe_version_notify(
+			picasso_runtime::Origin::root(),
+			Box::new(Parent.into()),
+		);
+		assert_ok!(r);
+	});
+	Picasso::execute_with(|| {
+		picasso_runtime::System::assert_has_event(picasso_runtime::Event::RelayerXcm(
+			pallet_xcm::Event::SupportedVersionChanged(
+				MultiLocation { parents: 1, interior: Here },
+				2,
+			),
+		));
+	});
+}
