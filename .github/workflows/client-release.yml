@@ -70,12 +70,12 @@ jobs:
     - name:  Docker push
       run: make push-release
     
-    - name: Upload Compressed wasm
+    - name: Upload Compact wasm
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-        file: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.compressed.wasm
-        asset_name: picasso_runtime.compact.compressed.wasm
+        file: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
+        asset_name: picasso_runtime.compact.wasm
         tag: ${{ github.ref }}
         overwrite: true
     
