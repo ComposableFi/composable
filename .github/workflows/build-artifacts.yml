@@ -1,11 +1,10 @@
-name: "Community Release (Dali Chacha)"
+name: "Build Artifacts"
 
 on:
+  workflow_dispatch:
   push: 
     tags: 
       - '*'
-    braches:
-      - feature/workflow-test
       
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
@@ -38,7 +37,7 @@ jobs:
 
     - name: 🔨 Build Composable Artifacts
       run: |
-        /home/runner/.cargo/bin/cargo build --release -p composable 
+        /home/runner/.cargo/bin/cargo build --release --bins
         /home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
         /home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso
         tl=$(sed -n '$=' srtool.out)
@@ -70,18 +69,7 @@ jobs:
         tag: ${{ github.ref }}
         overwrite: true
         body: "Composable Binary Runtime"
-      
-    - name: Login to DockerHub
-      uses: docker/login-action@v1 
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
 
-    - name: Build Docker image
-      run: make containerize-release 
-
-    - name:  Docker push
-      run: make push-release
 
   dali-chacha-client-release:
     needs: [build-and-publish]

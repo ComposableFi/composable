@@ -30,11 +30,6 @@ jobs:
       - run: |
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --all --benches
 
-      - name: Check for runtime changes
-        working-directory: "./.maintain/"
-        run: |
-          ./check_runtime.sh
-
       - name: Benchmark 
         run: |
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --features=runtime-benchmarks --workspace --release --exclude integration-tests
@@ -118,7 +113,8 @@ jobs:
       - name: Benchmark Test
         run: |
           /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
-          /home/runner/.cargo/bin/cargo build -p composable --features=runtime-benchmarks
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo build --features=runtime-benchmarks --workspace --release --exclude integration-tests
+          SKIP_WASM_BUILD=1  /home/runner/.cargo/bin/cargo build -p composable --features=runtime-benchmarks
           ./scripts/benchmark.sh
           git add runtime
           git commit -m "Updates weightss"
