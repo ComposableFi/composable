@@ -11,7 +11,7 @@
         HOST=$(echo $HOSTNAME)
         FILENAME=$HOST-$DATE.zip
         BACKUP_DIR="/var/lib/composable-data/chains"
-        GS_BUCKET="composable-picasso-data-store"
+        GS_BUCKET="picasso-data-store"
         zip -r $FILENAME $BACKUP_DIR
         gsutil mv $FILENAME gs://$GS_BUCKET/
       args:

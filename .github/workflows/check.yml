@@ -87,6 +87,22 @@ jobs:
           /home/runner/.cargo/bin/cargo udeps --version
           SKIP_WASM_BUILD=1 cargo udeps --workspace --all-features
         continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.  
+  benachmark: 
+    name: Benchmark
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - bmark
+    steps:
+      - uses: actions/checkout@v2
+        run: |
+          cargo build -p composable --features=runtime-benchmark
+          ./scripts/benchmark.sh
+          git add runtime
+          git commit -m "Updates weightss"
+
+        
   test:
     name: Unit Test
     runs-on:
