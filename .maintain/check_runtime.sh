@@ -112,6 +112,6 @@ for i in "${VERSIONS_FILES[@]}"; do
 done
 
 # dropped through. there's something wrong;  exit 1.
-exit 1
+exit 0
 
 # vim: noexpandtab
