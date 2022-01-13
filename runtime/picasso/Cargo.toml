@@ -2,7 +2,7 @@
 name = "picasso-runtime"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.56"
+
 description = "Picasso, Kusama Parachain Runtime Implementation"
 authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 
@@ -23,7 +23,6 @@ normal = [
 	"pallet-vault",
 	"session-benchmarking",
 	"vault",
-	"pallet-dutch-auction",
 ]
 
 [dependencies]
