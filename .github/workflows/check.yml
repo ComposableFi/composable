@@ -99,7 +99,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Benchmark Test
         run: |
-          rustup target add wasm32-unknown-unknown --toolchain nightly
+          /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
           /home/runner/.cargo/bin/cargo build -p composable --features=runtime-benchmarks
           ./scripts/benchmark.sh
           git add runtime
