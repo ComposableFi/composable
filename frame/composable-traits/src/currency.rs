@@ -1,8 +1,10 @@
 use codec::FullCodec;
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
-use sp_runtime::traits::AtLeast32BitUnsigned;
+use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 use sp_std::fmt::Debug;
+
+use crate::math::SafeArithmetic;
 
 /// really u8, but easy to do math operations
 pub type Exponent = u32;
@@ -74,6 +76,18 @@ impl<
 			+ MaxEncodedLen
 			+ TypeInfo,
 	> BalanceLike for T
+{
+}
+
+/// limited counted number trait which maximal number is more than `u64`,  but not more than `u128`,
+/// so inner type is either u64 or u128 with helpers for producing `ArithmeticError`s instead of
+/// `Option`s.
+pub trait MathBalance:
+	PartialOrd + Zero + SafeArithmetic + Into<u128> + TryFrom<u128> + From<u64> + Copy
+{
+}
+impl<T: PartialOrd + Zero + SafeArithmetic + Into<u128> + TryFrom<u128> + From<u64> + Copy>
+	MathBalance for T
 {
 }
 

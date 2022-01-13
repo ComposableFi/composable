@@ -1,4 +1,4 @@
-use crate::defi::Rate;
+use crate::defi::{Rate, ZeroToOneFixedU128};
 
 use super::*;
 use proptest::{prop_assert, strategy::Strategy, test_runner::TestRunner};
@@ -62,12 +62,12 @@ fn get_borrow_rate_works() {
 #[test]
 fn get_supply_rate_works() {
 	let borrow_rate = Rate::saturating_from_rational(2, 100);
-	let util = Ratio::saturating_from_rational(50, 100);
-	let reserve_factor = Ratio::zero();
+	let util = ZeroToOneFixedU128::saturating_from_rational(50, 100);
+	let reserve_factor = ZeroToOneFixedU128::zero();
 	let supply_rate = InterestRateModel::get_supply_rate(borrow_rate, util, reserve_factor);
 	assert_eq!(
 		supply_rate,
-		borrow_rate.saturating_mul(Ratio::one().saturating_sub(reserve_factor) * util),
+		borrow_rate.saturating_mul(ZeroToOneFixedU128::one().saturating_sub(reserve_factor) * util),
 	);
 }
 
@@ -84,17 +84,17 @@ fn curve_model_correctly_calculates_borrow_rate() {
 
 #[derive(Debug, Clone)]
 struct JumpModelStrategy {
-	pub base_rate: Ratio,
-	pub jump_percentage: Ratio,
-	pub full_percentage: Ratio,
+	pub base_rate: ZeroToOneFixedU128,
+	pub jump_percentage: ZeroToOneFixedU128,
+	pub full_percentage: ZeroToOneFixedU128,
 	pub target_utilization: Percent,
 }
 
 fn valid_jump_model() -> impl Strategy<Value = JumpModelStrategy> {
 	(
-		(1..=10u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
-		(11..=30u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
-		(31..=50).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
+		(1..=10u32).prop_map(|x| ZeroToOneFixedU128::saturating_from_rational(x, 100)),
+		(11..=30u32).prop_map(|x| ZeroToOneFixedU128::saturating_from_rational(x, 100)),
+		(31..=50).prop_map(|x| ZeroToOneFixedU128::saturating_from_rational(x, 100)),
 		(0..=100u8).prop_map(Percent::from_percent),
 	)
 		.prop_filter("Jump rate model", |(base, jump, full, _)| {

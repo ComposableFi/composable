@@ -3,29 +3,29 @@ use std::ops::Mul;
 use crate::{
 	accrue_interest_internal,
 	mocks::{
-		new_test_ext, process_block, AccountId, Balance, BlockNumber, Lending, LpTokenFactory,
-		MockCurrencyId, Oracle, Origin, Test, Tokens, Vault, VaultId, ALICE, BOB, CHARLIE,
-		MILLISECS_PER_BLOCK, MINIMUM_BALANCE, UNRESERVED,
+		new_test_ext, process_block, AccountId, Balance, BlockNumber, Lending, MockCurrencyId,
+		Oracle, Origin, Test, Tokens, Vault, VaultId, ALICE, BOB, CHARLIE, MILLISECS_PER_BLOCK,
+		MINIMUM_BALANCE, UNRESERVED,
 	},
 	models::BorrowerData,
 	Error, MarketIndex,
 };
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::{
-	currency::{CurrencyFactory, LocalAssets},
-	defi::Rate,
-	lending::{math::*, MarketConfigInput},
-	math::LiftedFixedBalance,
+	defi::{CurrencyPair, LiftedFixedBalance, MoreThanOneFixedU128, Rate, ZeroToOneFixedU128},
+	lending::{math::*, CreateInput, UpdateInput},
+	time::SECONDS_PER_YEAR_NAIVE,
 	vault::{Deposit, VaultConfig},
 };
 use frame_support::{
-	assert_noop, assert_ok,
+	assert_err, assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
 use pallet_vault::models::VaultInfo;
 use proptest::{prelude::*, test_runner::TestRunner};
+use sp_arithmetic::assert_eq_error_rate;
 use sp_core::U256;
-use sp_runtime::{FixedPointNumber, Percent, Perquintill};
+use sp_runtime::{ArithmeticError, FixedPointNumber, Percent, Perquintill};
 
 type BorrowAssetVault = VaultId;
 
@@ -57,20 +57,19 @@ fn create_market(
 	collateral_asset: MockCurrencyId,
 	manager: AccountId,
 	reserved: Perquintill,
-	collateral_factor: NormalizedCollateralFactor,
+	collateral_factor: MoreThanOneFixedU128,
 ) -> (MarketIndex, BorrowAssetVault) {
-	let market_config = MarketConfigInput {
-		liquidator: None,
-		manager,
-		reserved,
-		collateral_factor,
-		under_collaterized_warn_percent: Percent::from_float(0.10),
+	let config = CreateInput {
+		updatable: UpdateInput {
+			reserved_factor: reserved,
+			collateral_factor,
+			under_collaterized_warn_percent: Percent::from_float(0.10),
+			liquidators: vec![],
+			interest_rate_model: InterestRateModel::default(),
+		},
+		currency_pair: CurrencyPair::new(collateral_asset, borrow_asset),
 	};
-	let interest_rate_model = InterestRateModel::default();
-	let market =
-		Lending::create(borrow_asset, collateral_asset, market_config, &interest_rate_model);
-	assert_ok!(market);
-	market.expect("unreachable; qed;")
+	<Lending as composable_traits::lending::Lending>::create(manager, config).unwrap()
 }
 
 /// Create a market with a USDT vault LP token as collateral
@@ -83,7 +82,7 @@ fn create_simple_vaulted_market() -> ((MarketIndex, BorrowAssetVault), Collatera
 			collateral_asset,
 			*ALICE,
 			DEFAULT_MARKET_VAULT_RESERVE,
-			NormalizedCollateralFactor::saturating_from_rational(200, 100),
+			MoreThanOneFixedU128::saturating_from_rational(200, 100),
 		),
 		collateral_asset,
 	)
@@ -96,20 +95,31 @@ fn create_simple_market() -> (MarketIndex, BorrowAssetVault) {
 		MockCurrencyId::USDT,
 		*ALICE,
 		DEFAULT_MARKET_VAULT_RESERVE,
-		NormalizedCollateralFactor::saturating_from_rational(DEFAULT_COLLATERAL_FACTOR * 100, 100),
+		MoreThanOneFixedU128::saturating_from_rational(DEFAULT_COLLATERAL_FACTOR * 100, 100),
 	)
+}
+
+/// some model with sane parameter
+fn new_jump_model() -> (Percent, InterestRateModel) {
+	let base_rate = Rate::saturating_from_rational(2, 100);
+	let jump_rate = Rate::saturating_from_rational(10, 100);
+	let full_rate = Rate::saturating_from_rational(32, 100);
+	let optimal = Percent::from_percent(80);
+	let interest_rate_model =
+		InterestRateModel::Jump(JumpModel::new(base_rate, jump_rate, full_rate, optimal).unwrap());
+	(optimal, interest_rate_model)
 }
 
 #[test]
 fn accrue_interest_base_cases() {
 	let (optimal, ref mut interest_rate_model) = new_jump_model();
 	let stable_rate = interest_rate_model.get_borrow_rate(optimal).unwrap();
-	assert_eq!(stable_rate, Ratio::saturating_from_rational(10, 100));
-	let borrow_index = Rate::saturating_from_integer(1);
-	let delta_time = SECONDS_PER_YEAR;
+	assert_eq!(stable_rate, ZeroToOneFixedU128::saturating_from_rational(10_u128, 100_u128));
+	let borrow_index = Rate::saturating_from_integer(1_u128);
+	let delta_time = SECONDS_PER_YEAR_NAIVE;
 	let total_issued = 100_000_000_000_000_000_000;
 	let accrued_debt = 0;
-	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
+	let total_borrows = total_issued - accrued_debt;
 	let (accrued_increase, _) = accrue_interest_internal::<Test, InterestRateModel>(
 		optimal,
 		interest_rate_model,
@@ -134,34 +144,22 @@ fn accrue_interest_base_cases() {
 	let error = 25;
 	assert_eq!(
 		accrued_increase,
-		10_000_000_000_000_000_000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR as u128 + error
+		10_000_000_000_000_000_000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR_NAIVE as u128 +
+			error
 	);
 }
 
 #[test]
-fn accrue_interest_edge_cases() {
+fn apr_for_zero() {
 	let (_, ref mut interest_rate_model) = new_jump_model();
 	let utilization = Percent::from_percent(100);
-	let borrow_index = Rate::saturating_from_integer(1);
-	let delta_time = SECONDS_PER_YEAR;
-	let total_issued = u128::MAX;
-	let accrued_debt = 0;
-	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
-	let (accrued_increase, _) = accrue_interest_internal::<Test, InterestRateModel>(
-		utilization,
-		interest_rate_model,
-		borrow_index,
-		delta_time,
-		total_borrows,
-	)
-	.unwrap();
-	assert_eq!(accrued_increase, 108890357414700308308160000000000000000);
+	let borrow_index = Rate::saturating_from_integer(1_u128);
 
 	let (accrued_increase, _) = accrue_interest_internal::<Test, InterestRateModel>(
 		utilization,
 		interest_rate_model,
 		borrow_index,
-		delta_time,
+		SECONDS_PER_YEAR_NAIVE,
 		0,
 	)
 	.unwrap();
@@ -169,16 +167,32 @@ fn accrue_interest_edge_cases() {
 }
 
 #[test]
+fn apr_for_year_for_max() {
+	let (_, ref mut interest_rate_model) = new_jump_model();
+	let utilization = Percent::from_percent(80);
+	let borrow_index = Rate::saturating_from_integer(1_u128);
+	let total_borrows = u128::MAX;
+	let result = accrue_interest_internal::<Test, InterestRateModel>(
+		utilization,
+		interest_rate_model,
+		borrow_index,
+		SECONDS_PER_YEAR_NAIVE,
+		total_borrows,
+	);
+	assert_err!(result, ArithmeticError::Overflow);
+}
+
+#[test]
 fn accrue_interest_induction() {
-	let borrow_index = Rate::saturating_from_integer(1);
-	let minimal = 18; // current precision and minimal time delta do not allow to accrue on less than this power of 10
+	let borrow_index = Rate::saturating_from_integer(1_u128);
+	let minimal: u128 = 100;
 	let mut runner = TestRunner::default();
-	let accrued_debt = 0;
+	let accrued_debt: u128 = 0;
 	runner
 		.run(
 			&(
-				0..=2 * SECONDS_PER_YEAR / MILLISECS_PER_BLOCK,
-				(minimal..=35_u32).prop_map(|i| 10_u128.pow(i)),
+				0..=2 * SECONDS_PER_YEAR_NAIVE / MILLISECS_PER_BLOCK,
+				(minimal..=minimal * 1_000_000_000),
 			),
 			|(slot, total_issued)| {
 				let (optimal, ref mut interest_rate_model) = new_jump_model();
@@ -188,7 +202,7 @@ fn accrue_interest_induction() {
 						interest_rate_model,
 						borrow_index,
 						slot * MILLISECS_PER_BLOCK,
-						(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
+						total_issued - accrued_debt,
 					)
 					.unwrap();
 				let (accrued_increase_2, borrow_index_2) =
@@ -197,7 +211,7 @@ fn accrue_interest_induction() {
 						interest_rate_model,
 						borrow_index,
 						(slot + 1) * MILLISECS_PER_BLOCK,
-						(total_issued - accrued_debt) / LiftedFixedBalance::accuracy(),
+						total_issued - accrued_debt,
 					)
 					.unwrap();
 				prop_assert!(accrued_increase_1 < accrued_increase_2);
@@ -211,13 +225,14 @@ fn accrue_interest_induction() {
 #[test]
 fn accrue_interest_plotter() {
 	let (optimal, ref mut interest_rate_model) = new_jump_model();
-	let borrow_index = Rate::checked_from_integer(1).unwrap();
-	let total_issued = 10_000_000;
+	let borrow_index = MoreThanOneFixedU128::checked_from_integer(1).unwrap();
+	let total_issued = 10_000_000_000;
 	let accrued_debt = 0;
-	let total_borrows = (total_issued - accrued_debt) / LiftedFixedBalance::accuracy();
+	let total_borrows = total_issued - accrued_debt;
 	// no sure how handle in rust previous + next (so map has access to previous result)
 	let mut previous = 0;
-	let _data: Vec<_> = (0..=1000)
+	const TOTAL_BLOCKS: u64 = 1000;
+	let _data: Vec<_> = (0..TOTAL_BLOCKS)
 		.map(|x| {
 			let (accrue_increment, _) = accrue_interest_internal::<Test, InterestRateModel>(
 				optimal,
@@ -236,11 +251,11 @@ fn accrue_interest_plotter() {
 		optimal,
 		interest_rate_model,
 		Rate::checked_from_integer(1).unwrap(),
-		1000 * MILLISECS_PER_BLOCK,
+		TOTAL_BLOCKS * MILLISECS_PER_BLOCK,
 		total_borrows,
 	)
 	.unwrap();
-	assert_eq!(previous, total_accrued);
+	assert_eq_error_rate!(previous, total_accrued, 1_000);
 
 	#[cfg(feature = "visualization")]
 	{
@@ -316,34 +331,23 @@ fn test_borrow_repay_in_same_block() {
 	});
 }
 
-/// some model with sane parameter
-fn new_jump_model() -> (Percent, InterestRateModel) {
-	let base_rate = Rate::saturating_from_rational(2, 100);
-	let jump_rate = Rate::saturating_from_rational(10, 100);
-	let full_rate = Rate::saturating_from_rational(32, 100);
-	let optimal = Percent::from_percent(80);
-	let interest_rate_model =
-		InterestRateModel::Jump(JumpModel::new(base_rate, jump_rate, full_rate, optimal).unwrap());
-	(optimal, interest_rate_model)
-}
-
 #[test]
 fn test_calc_utilization_ratio() {
 	// 50% borrow
-	assert_eq!(Lending::calc_utilization_ratio(&1, &1).unwrap(), Percent::from_percent(50));
-	assert_eq!(Lending::calc_utilization_ratio(&100, &100).unwrap(), Percent::from_percent(50));
+	assert_eq!(Lending::calc_utilization_ratio(1, 1).unwrap(), Percent::from_percent(50));
+	assert_eq!(Lending::calc_utilization_ratio(100, 100).unwrap(), Percent::from_percent(50));
 	// no borrow
-	assert_eq!(Lending::calc_utilization_ratio(&1, &0).unwrap(), Percent::zero());
+	assert_eq!(Lending::calc_utilization_ratio(1, 0).unwrap(), Percent::zero());
 	// full borrow
-	assert_eq!(Lending::calc_utilization_ratio(&0, &1).unwrap(), Percent::from_percent(100));
+	assert_eq!(Lending::calc_utilization_ratio(0, 1).unwrap(), Percent::from_percent(100));
 }
 
 #[test]
 fn test_borrow_math() {
 	let borrower = BorrowerData::new(
-		100,
+		100_u128,
 		0,
-		NormalizedCollateralFactor::from_float(1.0),
+		MoreThanOneFixedU128::from_float(1.0),
 		Percent::from_float(0.10),
 	);
 	let borrow = borrower.borrow_for_collateral().unwrap();
@@ -404,6 +408,7 @@ fn borrow_flow() {
 			process_block(i);
 		}
 		let interest_after = Lending::total_interest_accurate(&market).unwrap();
+		assert!(interest_before < interest_after);
 
 		let limit_normalized = Lending::get_borrow_limit(&market, &ALICE).unwrap();
 		let new_limit = limit_normalized / price(MockCurrencyId::BTC, 1);
@@ -581,7 +586,7 @@ fn test_liquidation() {
 			MockCurrencyId::BTC,
 			*ALICE,
 			Perquintill::from_percent(10),
-			NormalizedCollateralFactor::saturating_from_rational(2, 1),
+			MoreThanOneFixedU128::saturating_from_rational(2, 1),
 		);
 
 		Oracle::set_btc_price(100);
@@ -631,7 +636,7 @@ fn test_warn_soon_under_collaterized() {
 			MockCurrencyId::BTC,
 			*ALICE,
 			Perquintill::from_percent(10),
-			NormalizedCollateralFactor::saturating_from_rational(2, 1),
+			MoreThanOneFixedU128::saturating_from_rational(2, 1),
 		);
 
 		// 1 BTC = 100 USDT
@@ -770,7 +775,7 @@ proptest! {
 		let borrower = BorrowerData::new(
 			collateral_balance * collateral_price,
 			borrower_balance_with_interest * borrow_price,
-			NormalizedCollateralFactor::from_float(1.0),
+			MoreThanOneFixedU128::from_float(1.0),
 			Percent::from_float(0.10), // 10%
 		);
 		let borrow = borrower.borrow_for_collateral();
@@ -850,7 +855,7 @@ proptest! {
 				lp_token_id,
 				*ALICE,
 				Perquintill::from_percent(10),
-				NormalizedCollateralFactor::saturating_from_rational(200, 100),
+				MoreThanOneFixedU128::saturating_from_rational(200, 100),
 			);
 
 			// Top level lp price should be transitively resolvable to the base asset price.

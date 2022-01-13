@@ -53,6 +53,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		Config as SystemConfig,
 	};
+
 	use lite_json::json::JsonValue;
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
