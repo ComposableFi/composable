@@ -33,7 +33,7 @@ type CollateralAsset = MockCurrencyId;
 
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
-const DEFAULT_COLLATERAL_FACTOR: u64 = 2;
+const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
 
 /// Create a very simple vault for the given currency, 100% is reserved.
 fn create_simple_vault(
@@ -104,8 +104,8 @@ fn create_simple_market() -> (MarketIndex, BorrowAssetVault) {
 fn accrue_interest_base_cases() {
 	let (optimal, ref mut interest_rate_model) = new_jump_model();
 	let stable_rate = interest_rate_model.get_borrow_rate(optimal).unwrap();
-	assert_eq!(stable_rate, ZeroToOneFixedU128::saturating_from_rational(10, 100));
-	let borrow_index = Rate::saturating_from_integer(1);
+	assert_eq!(stable_rate, ZeroToOneFixedU128::saturating_from_rational(10_u128, 100));
+	let borrow_index = Rate::saturating_from_integer(1_u128);
 	let delta_time = SECONDS_PER_YEAR_NAIVE;
 	let total_issued = 100_000_000_000_000_000_000;
 	let accrued_debt = 0;
@@ -143,7 +143,7 @@ fn accrue_interest_base_cases() {
 fn accrue_interest_edge_cases() {
 	let (_, ref mut interest_rate_model) = new_jump_model();
 	let utilization = Percent::from_percent(100);
-	let borrow_index = Rate::saturating_from_integer(1);
+	let borrow_index = Rate::saturating_from_integer(1_u128);
 	let delta_time = SECONDS_PER_YEAR_NAIVE;
 	let total_issued = u128::MAX;
 	let accrued_debt = 0;
@@ -171,7 +171,7 @@ fn accrue_interest_edge_cases() {
 
 #[test]
 fn accrue_interest_induction() {
-	let borrow_index = Rate::saturating_from_integer(1);
+	let borrow_index = Rate::saturating_from_integer(1_u128);
 	let minimal = 18; // current precision and minimal time delta do not allow to accrue on less than this power of 10
 	let mut runner = TestRunner::default();
 	let accrued_debt = 0;
@@ -331,18 +331,18 @@ fn new_jump_model() -> (Percent, InterestRateModel) {
 #[test]
 fn test_calc_utilization_ratio() {
 	// 50% borrow
-	assert_eq!(Lending::calc_utilization_ratio(&1, &1).unwrap(), Percent::from_percent(50));
-	assert_eq!(Lending::calc_utilization_ratio(&100, &100).unwrap(), Percent::from_percent(50));
+	assert_eq!(Lending::calc_utilization_ratio(1, 1).unwrap(), Percent::from_percent(50));
+	assert_eq!(Lending::calc_utilization_ratio(100, 100).unwrap(), Percent::from_percent(50));
 	// no borrow
-	assert_eq!(Lending::calc_utilization_ratio(&1, &0).unwrap(), Percent::zero());
+	assert_eq!(Lending::calc_utilization_ratio(1, 0).unwrap(), Percent::zero());
 	// full borrow
-	assert_eq!(Lending::calc_utilization_ratio(&0, &1).unwrap(), Percent::from_percent(100));
+	assert_eq!(Lending::calc_utilization_ratio(0, 1).unwrap(), Percent::from_percent(100));
 }
 
 #[test]
 fn test_borrow_math() {
 	let borrower =
-		BorrowerData::new(100, 0, MoreThanOneFixedU128::from_float(1.0), Percent::from_float(0.10));
+		BorrowerData::new(100_u128, 0, MoreThanOneFixedU128::from_float(1.0), Percent::from_float(0.10));
 	let borrow = borrower.borrow_for_collateral().unwrap();
 	assert_eq!(borrow, LiftedFixedBalance::from(100));
 }

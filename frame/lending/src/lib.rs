@@ -523,7 +523,7 @@ pub mod pallet {
 			// 1. validate owner
 			// 2. update configuration
 			// 3. what is owner updates and forces liquidations? ok.
-			Ok(().into())
+			Err(DispatchError::Other("not implemented").into())
 		}
 
 		/// Deposit collateral to market.
@@ -642,8 +642,8 @@ pub mod pallet {
 			<Self as Lending>::account_id(market_id)
 		}
 		pub fn calc_utilization_ratio(
-			cash: &<Self as DeFiEngine>::Balance,
-			borrows: &<Self as DeFiEngine>::Balance,
+			cash: <Self as DeFiEngine>::Balance,
+			borrows: <Self as DeFiEngine>::Balance,
 		) -> Result<Percent, DispatchError> {
 			<Self as Lending>::calc_utilization_ratio(cash, borrows)
 		}
@@ -1256,12 +1256,12 @@ pub mod pallet {
 		}
 
 		fn calc_utilization_ratio(
-			cash: &Self::Balance,
-			borrows: &Self::Balance,
+			cash: Self::Balance,
+			borrows: Self::Balance,
 		) -> Result<Percent, DispatchError> {
 			Ok(math::calc_utilization_ratio(
-				(*cash).into(),
-				(*borrows).into(),
+				LiftedFixedBalance::from_inner(cash.into()),
+				LiftedFixedBalance::from_inner(borrows.into()),
 			)?)
 		}
 
@@ -1276,7 +1276,7 @@ pub mod pallet {
 
 			let total_borrows = Self::total_borrows(market_id)?;
 			let total_cash = Self::total_cash(market_id)?;
-			let utilization_ratio = Self::calc_utilization_ratio(&total_cash, &total_borrows)?;
+			let utilization_ratio = Self::calc_utilization_ratio(total_cash, total_borrows)?;
 			let mut market = Self::get_market(market_id)?;
 			let delta_time =
 				now.checked_sub(Self::last_block_timestamp()).ok_or(Error::<T>::Underflow)?;
@@ -1338,7 +1338,9 @@ pub mod pallet {
 			let market = Self::get_market(market_id)?;
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, borrow_amount)?;
-			Ok(swap_back(borrow_amount_value.into(), &market.collateral_factor)?
+			Ok(
+			 	LiftedFixedBalance::from_inner(borrow_amount_value.into())
+				.safe_mul(&market.collateral_factor)?
 				.checked_mul_int(1_u64)
 				.ok_or(ArithmeticError::Overflow)?
 				.into())
@@ -1480,7 +1482,7 @@ pub mod pallet {
 		if principal.is_zero() {
 			return Ok(None)
 		}
-		let principal: LiftedFixedBalance = principal.into();
+		let principal = LiftedFixedBalance::from_inner(principal.into());
 		let balance = principal
 			.checked_mul(&market_interest_index)
 			.and_then(|from_start_total| from_start_total.checked_div(&account_interest_index))
@@ -1498,12 +1500,6 @@ pub mod pallet {
 		collateral_balance.safe_mul(collateral_price)?.safe_div(collateral_factor)
 	}
 
-	pub fn swap_back(
-		borrow_balance_value: LiftedFixedBalance,
-		collateral_factor: &MoreThanOneFixedU128,
-	) -> Result<LiftedFixedBalance, ArithmeticError> {
-		borrow_balance_value.safe_mul(collateral_factor)
-	}
 
 	pub fn accrue_interest_internal<T: Config, I: InterestRate>(
 		utilization_ratio: Percent,
