@@ -171,8 +171,14 @@ std = [
 	"orml-xcm-support/std",
 	"orml-unknown-tokens/std",
 	"composable-traits/std",
+	"governance-registry/std",
+	"currency-factory/std",
+	"assets/std",
+	"vesting/std",
+	"bonded-finance/std",
 	"crowdloan-rewards/std",
 ]
+
 runtime-benchmarks = [
 	"balances/runtime-benchmarks",
 	"benchmarking",
@@ -197,6 +203,10 @@ runtime-benchmarks = [
 	"collective/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
-	"crowdloan-rewards/frame-benchmarking"
+	"crowdloan-rewards/runtime-benchmarks",
+	"currency-factory/runtime-benchmarks",
+	"assets/runtime-benchmarks",
+	"vesting/runtime-benchmarks",
+	"bonded-finance/runtime-benchmarks",
 ]
 

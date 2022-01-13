@@ -119,7 +119,7 @@ std = [
 	"sp-block-builder/std",
 	"sp-transaction-pool/std",
 	"sp-inherents/std",
-  	"support/std",
+ 	"support/std",
 	"executive/std",
  	"frame-system/std",
 	"utility/std",
@@ -134,7 +134,7 @@ std = [
 	"identity/std",
 	"multisig/std",
 	"vault/std",
-  	"assets/std",
+ 	"assets/std",
 	"governance-registry/std",
 	"call-filter/std",
 	"currency-factory/std",
@@ -161,14 +161,17 @@ std = [
 	"xcm-executor/std",
 	"aura/std",
 	"sp-consensus-aura/std",
-    "scale-info/std",
+  "scale-info/std",
 	"orml-xtokens/std",
-    "orml-xcm-support/std",
-    "orml-unknown-tokens/std",
+  "orml-xcm-support/std",
+  "orml-unknown-tokens/std",
 	"assets-registry/std",
 	"assets/std",
 	"governance-registry/std",
 	"composable-traits/std",
+  "crowdloan-rewards/std",
+  "bonded-finance/std",
+  "vesting/std"
 ]
 runtime-benchmarks = [
 	"assets/runtime-benchmarks",
@@ -198,5 +201,8 @@ runtime-benchmarks = [
 	"collective/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
-	"vault/runtime-benchmarks"
+	"vault/runtime-benchmarks",
+  "vesting/runtime-benchmarks",
+  "assets/runtime-benchmarks",
+	"bonded-finance/runtime-benchmarks",
 ]

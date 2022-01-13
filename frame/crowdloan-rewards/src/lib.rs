@@ -59,17 +59,14 @@ use sp_runtime::traits::{DispatchInfoOf, SignedExtension, Zero};
 
 pub mod models;
 
-#[cfg(any(feature = "runtime-benchmarks", test))]
-// NOTE(hussein-aitlahcen): benchmarks/tests are dependent on structures living in mocks, but it is
-// not an intersection
-// perhaps refactor to avoid the `dead_code` here: CU-1zv8y2t
-#[allow(dead_code)]
+#[cfg(test)]
 mod mocks;
 #[cfg(test)]
 mod tests;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
+// #[cfg(feature = "runtime-benchmarks")]
+// mod benchmarking;
+
 pub mod weights;
 
 #[frame_support::pallet]

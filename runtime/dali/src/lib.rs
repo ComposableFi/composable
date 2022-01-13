@@ -1076,7 +1076,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, multisig, Multisig);
 			list_benchmark!(list, extra, vault, Vault);
 			list_benchmark!(list, extra, oracle, Oracle);
-			list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
 			list_benchmark!(list, extra, dutch_auction, DutchAuction);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -1127,7 +1126,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, multisig, Multisig);
 			add_benchmark!(params, batches, vault, Vault);
 			add_benchmark!(params, batches, oracle, Oracle);
-			add_benchmark!(params, batches, crowdloan_rewards, CrowdloanRewards);
 			add_benchmark!(params, batches, dutch_auction, DutchAuction);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
