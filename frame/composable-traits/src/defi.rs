@@ -1,11 +1,12 @@
 //! Common codes and conventions for DeFi pallets
 
 use codec::{Codec, Decode, Encode, FullCodec};
+use sp_std::convert::TryFrom;
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedMul, CheckedSub, Zero},
-	ArithmeticError, DispatchError, FixedPointOperand, FixedU128, FixedPointNumber,
+	ArithmeticError, DispatchError, FixedPointOperand, FixedU128, FixedPointNumber, helpers_128bit::multiply_by_rational,
 };
 
 use crate::{
@@ -30,23 +31,20 @@ impl<Balance: MathBalance> Take<Balance> {
 
 	/// case when relation of base is integer and base is larger than quote in price
 	pub fn new_with_smaller(amount: Balance, limit: Balance) -> Self {
-		Self { amount, limit : LiftedFixedBalance::checked_from_integer() }
+		Self { amount, limit : LiftedFixedBalance::from_inner(limit.into()) }
 	}
 
 	pub fn new(amount: Balance, limit: Ratio) -> Self {
 		Self { amount, limit }
 	}
 
-	pub fn quote_amount(&self) -> Result<Balance, ArithmeticError> {
-		let result : LiftedFixedBalance = self.limit.safe_mul(&self.amount.into())?;
-		//let x : u128 = result.try_into().unwrap();
-		todo!()
-		// if.try_into().map_err(|_| ArithmeticError::Overflow)
+	pub fn quote_limit_amount(&self) -> Result<Balance, ArithmeticError> {
+		self.quote_amount(*&self.amount)
 	}
 
-	pub fn price(&self, amount: Balance) -> Result<Balance, ArithmeticError> {	
-		todo!()
-		//self.limit.safe_mul(&amount.into())?.try_into().map_err(|_| ArithmeticError::Overflow)
+	pub fn quote_amount(&self, amount: Balance) -> Result<Balance, ArithmeticError> {	
+		let result = multiply_by_rational(amount.into(), self.limit.into_inner(), LiftedFixedBalance::DIV).map_err(|_| ArithmeticError::Overflow)?;
+		result.try_into().map_err(|_| ArithmeticError::Overflow)
 	}
 }
 
@@ -238,16 +236,20 @@ mod tests {
 	
 	#[test]
 	fn take_ratio() {
-		let take = Take::new(100_u128, Ratio::saturating_from_integer(10_u32));
+		let price = 10;
+		let amount = 100_u128;
+		let take = Take::new(amount, Ratio::saturating_from_integer(price));
+		let result = take.quote_amount(amount/2).unwrap();
+		assert_eq!(result, price * amount/ 2);
 
 	}
 
-	#[test]
-	fn fixed_into_u128_floor() {
-		use sp_runtime::{FixedPointNumber, FixedPointOperand};
-		let inner = LiftedFixedBalance::from_inner(42_u128);
-		let floor = LiftedFixedBalance::from_inner(42_u128).floor().into_inner();
-		let integer = LiftedFixedBalance::saturating_from_integer(42_u128);
-		assert!(0 == floor && floor < inner && inner < integer);	
-	}
+	// #[test]
+	// fn fixed_into_u128_floor() {
+	// 	use sp_runtime::{FixedPointNumber, FixedPointOperand};
+	// 	let inner = LiftedFixedBalance::from_inner(42_u128);
+	// 	let floor = LiftedFixedBalance::from_inner(42_u128).floor().into_inner();
+	// 	let integer = LiftedFixedBalance::saturating_from_integer(42_u128);
+	// 	assert!(0 == floor && floor < inner && inner < integer);	
+	// }
 }

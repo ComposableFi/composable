@@ -28,7 +28,7 @@ use super::governance_registry::GovernanceRegistry;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
-pub type Balance = u128;
+pub type Balance = u64;
 pub type Amount = i64;
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
@@ -193,11 +193,11 @@ impl DeFiComposableConfig for Runtime {
 }
 
 parameter_types! {
-	pub static WeightToFee: u128 = 1;
+	pub static WeightToFee: Balance = 1;
 }
 
 impl WeightToFeePolynomial for WeightToFee {
-	type Balance = u128;
+	type Balance = Balance;
 
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		let one = WeightToFeeCoefficient {

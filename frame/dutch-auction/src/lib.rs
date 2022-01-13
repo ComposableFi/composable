@@ -307,7 +307,7 @@ pub mod pallet {
 			// not recalculates
 			let passed = T::UnixTime::now().as_secs() - order.context.added_at;
 			let _limit = order.configuration.price(limit, passed)?;
-			let quote_amount = take.quote_amount()?;
+			let quote_amount = take.quote_limit_amount()?;
 
 			T::MultiCurrency::reserve(order.order.pair.quote, from_to, quote_amount)?;
 			<Takes<T>>::append(order_id, TakeOf::<T> { from_to: from_to.clone(), take });
@@ -328,16 +328,15 @@ pub mod pallet {
 					takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));				
 					// calculate real price
 					for take in takes {
-						let quote_amount = take.take.amount.saturating_mul(take.take.limit);
+						let quote_amount = take.take.quote_limit_amount().expect("was checked in take call");
 						// what to do with orders which nobody ever takes? some kind of dust orders with
 						if order.take.amount == T::Balance::zero() {
 							T::MultiCurrency::unreserve(order.pair.quote, &take.from_to, quote_amount);
 						} else {
 							let take_amount = take.take.amount.min(order.take.amount);
 							order.take.amount -= take_amount;
-							let real_quote_amount = take_amount
-								.safe_mul(&take.take.limit)
-								.expect("was checked in take call");
+							let real_quote_amount = take.take.quote_amount(take_amount)
+								.expect("was taken via min");
 
 							exchange_reserved::<T>(
 								order.pair.base,

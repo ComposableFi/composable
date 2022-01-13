@@ -83,7 +83,8 @@ pub trait MathBalance:
 	PartialOrd 
 	+ Zero 
 	+ SafeArithmetic 
-	+ From<u128>
+	+ Into<u128>
+	+ TryFrom<u128>
 	+ From<u64> 
 	+ Copy 
 {
@@ -93,7 +94,8 @@ impl<
 		PartialOrd 
 		+ Zero
 		 + SafeArithmetic 
-		 + From<u128> 
+		 + Into<u128> 
+		 + TryFrom<u128>		 
 		 + From<u64> 
 		 + Copy,
 	> MathBalance for T

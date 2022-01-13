@@ -7,7 +7,6 @@ pub trait WeightInfo {
 	fn take(_x: u32) -> Weight;
 	fn liquidate() -> Weight;
 	fn known_overhead_for_on_finalize() -> Weight;
-	fn pop_order() -> Weight;
 }
 
 /// Weight functions for `dutch_auction`.
@@ -82,8 +81,4 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
-
-	fn pop_order() -> Weight {
-        0
-    }
 }

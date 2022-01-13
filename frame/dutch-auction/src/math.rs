@@ -4,7 +4,8 @@
 
 use composable_traits::{
 	time::{DurationSeconds, TimeReleaseFunction, LinearDecrease, StairstepExponentialDecrease},
-	math::{LiftedFixedBalance, SafeArithmetic},
+	math::{SafeArithmetic},
+	defi::LiftedFixedBalance,
 };
 
 use sp_runtime::{
@@ -24,9 +25,9 @@ pub trait AuctionTimeCurveModel {
 impl AuctionTimeCurveModel for TimeReleaseFunction {
 	fn price(
 		&self,
-		initial_price: composable_traits::math::LiftedFixedBalance,
+		initial_price: LiftedFixedBalance,
 		duration_since_start: DurationSeconds,
-	) -> Result<composable_traits::math::LiftedFixedBalance, sp_runtime::ArithmeticError> {
+	) -> Result<LiftedFixedBalance, sp_runtime::ArithmeticError> {
 		match self {
 			TimeReleaseFunction::LinearDecrease(x) => x.price(initial_price, duration_since_start),
 			TimeReleaseFunction::StairstepExponentialDecrease(x) =>
@@ -82,7 +83,7 @@ mod tests {
 
 	use composable_traits::{
 		time::{DurationSeconds, ONE_HOUR, LinearDecrease, StairstepExponentialDecrease},
-		math::LiftedFixedBalance,
+		defi::LiftedFixedBalance,
 	};
 
 	use sp_arithmetic::assert_eq_error_rate;
