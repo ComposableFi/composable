@@ -45,6 +45,7 @@ then
     GS_BUCKET="picasso-data-store"
     sudo gsutil cp gs://$GS_BUCKET/$FILENAME .
     sudo unzip $FILENAME -d  /tmp/db
+	/home/runner/.cargo/bin/cargo cargo build --release -p simnode
 	./target/release/simnode --chain=$2 --base-path=/tmp/db --pruning=archive --execution=wasm
 
 fi
