@@ -47,14 +47,17 @@ pub mod pallet {
 		time::{LinearDecrease, StairstepExponentialDecrease, TimeReleaseFunction},
 	};
 	use frame_support::{
-		dispatch::Dispatchable,
+		dispatch::{Dispatchable, DispatchResultWithPostInfo},
 		pallet_prelude::{OptionQuery, StorageMap, StorageValue, ValueQuery},
 		traits::{GenesisBuild, Get, IsType, UnixTime},
 		PalletId, Parameter, Twox64Concat,
 	};
 
-	use scale_info::TypeInfo;
+	use frame_system::pallet_prelude::OriginFor;
+use scale_info::TypeInfo;
 	use sp_runtime::{DispatchError, Permill, Perquintill};
+
+use crate::weights::WeightInfo;
 
 	#[pallet::config]
 
@@ -101,9 +104,9 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 
-		#[pallet::weight(T::WeightInfo::add_liqudation_strategy())]		
-		pub fn add_liqudation_strategy(origing: OriginFor<T>, _configuraiton: LiquidationStrategyConfiguration<T::Dispatch, T::Balance, T::ParachainId> ) -> DispatchResultWithPostInfo{
-			Err(DispatchError::Other("TODO: "))
+		#[pallet::weight(T::WeightInfo::add_liquidation_strategy())]		
+		pub fn add_liqudation_strategy(origing: OriginFor<T>, _configuraiton: LiquidationStrategyConfiguration<T::ParachainId> ) -> DispatchResultWithPostInfo{
+			Err(DispatchError::Other("no implemented").into())
 		}
 	}
 
@@ -113,7 +116,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		T::LiquidationStrategyId,
-		LiquidationStrategyConfiguration<T::Liquidate, T::Balance>,
+		LiquidationStrategyConfiguration<T::ParachainId>,
 		OptionQuery,
 	>;
 
@@ -156,11 +159,11 @@ pub mod pallet {
 		}
 	}
 
-	#[derive(Clone, Debug, Encode, Decode, TypeInfo)]
+	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
 	pub enum LiquidationStrategyConfiguration<ParachainId> {
 		DutchAuction(TimeReleaseFunction),
 		UniswapV2 { slippage: Perquintill },
-		XcmpDex {parachain_id: ParachainId } ,
+		XcmDex {parachain_id: ParachainId } ,
 		// Building fully decoupled flow is described bellow. Will avoid that for now.
 		// ```plantuml
 		// `solves question - how pallet can invoke list of other pallets with different configuration types
