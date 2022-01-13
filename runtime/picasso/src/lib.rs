@@ -977,7 +977,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, utility, Utility);
 			list_benchmark!(list, extra, identity, Identity);
 			list_benchmark!(list, extra, multisig, Multisig);
-		  list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1025,7 +1024,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, utility, Utility);
 			add_benchmark!(params, batches, identity, Identity);
 			add_benchmark!(params, batches, multisig, Multisig);
-			add_benchmark!(params, batches, crowdloan_rewards, CrowdloanRewards);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
