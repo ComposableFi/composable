@@ -28,7 +28,7 @@ jobs:
       - name: Set Cargo path
         run: export PATH=/home/runner/.cargo/bin/cargo:$PATH
       - run: |
-          SKIP_WASM_BUILD=1 cargo check --all --benches
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --all --benches
 
       - name: Check for runtime changes
         working-directory: "./.maintain/"
@@ -98,7 +98,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Benchmark Test
         run: |
-          cargo build -p composable --features=runtime-benchmark
+          /home/runner/.cargo/bin/cargo build -p composable --features=runtime-benchmark
           ./scripts/benchmark.sh
           git add runtime
           git commit -m "Updates weightss"
