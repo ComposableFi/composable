@@ -829,7 +829,7 @@ parameter_types! {
 	pub Stake: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
 }
 
-impl pallet_bonded_finance::Config for Runtime {
+impl bonded_finance::Config for Runtime {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type BondOfferId = u64;
 	type Convert = sp_runtime::traits::ConvertInto;
@@ -851,7 +851,7 @@ impl composable_traits::defi::DeFiComposableConfig for Runtime {
 	type Balance = Balance;
 }
 
-impl pallet_dutch_auction::Config for Runtime {
+impl dutch_auction::Config for Runtime {
 	type NativeCurrency = Balances;
 	type Event = Event;
 	type MultiCurrency = Assets;
@@ -859,7 +859,7 @@ impl pallet_dutch_auction::Config for Runtime {
 	type WeightToFee = WeightToFee;
 	type OrderId = u128;
 	type UnixTime = Timestamp;
-	type WeightInfo = ();
+	type WeightInfo = weights::dutch_auction::WeightInfo<Runtime>;
 }
 
 construct_runtime!(
@@ -914,8 +914,8 @@ construct_runtime!(
 		Assets: assets::{Pallet, Call, Storage} = 57,
 		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 58,
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 59,
-		BondedFinance: pallet_bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
-		DutchAuction: pallet_dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
+		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
+		DutchAuction: dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1074,12 +1074,10 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, utility, Utility);
 			list_benchmark!(list, extra, identity, Identity);
 			list_benchmark!(list, extra, multisig, Multisig);
-
-			{
-				list_benchmark!(list, extra, vault, Vault);
-				list_benchmark!(list, extra, oracle, Oracle);
-				list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
-			}
+			list_benchmark!(list, extra, vault, Vault);
+			list_benchmark!(list, extra, oracle, Oracle);
+			list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
+			list_benchmark!(list, extra, dutch_auction, DutchAuction);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1130,6 +1128,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, vault, Vault);
 			add_benchmark!(params, batches, oracle, Oracle);
 			add_benchmark!(params, batches, crowdloan_rewards, CrowdloanRewards);
+			add_benchmark!(params, batches, dutch_auction, DutchAuction);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
