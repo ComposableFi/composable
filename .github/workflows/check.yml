@@ -96,6 +96,7 @@ jobs:
       - bmark
     steps:
       - uses: actions/checkout@v2
+      - name: Benchmark Test
         run: |
           cargo build -p composable --features=runtime-benchmark
           ./scripts/benchmark.sh
