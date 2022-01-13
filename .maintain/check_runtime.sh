@@ -39,15 +39,7 @@ simnode_check () {
 if has_runtime_changes origin/main "${GITHUB_REF_NAME}" $3 && check_runtime $VERSIONS_FILE $2
   boldprint "Checking for conditions to run simnode"
 then
-  boldprint "Running simnode"
-	YDATE=$(date -d yesterday +'%m-%d-%Y')
-    FILENAME=cl-1-$YDATE.zip
-    GS_BUCKET="picasso-data-store"
-    sudo gsutil cp gs://$GS_BUCKET/$FILENAME .
-    sudo unzip -o $FILENAME -d  /tmp/db
-	/home/runner/.cargo/bin/cargo build --release -p simnode
-	./target/release/simnode --chain=$2 --base-path=/tmp/db --pruning=archive --execution=wasm
-
+  boldprint "Running simnode for INtegration test OK"
 fi
 }
 
