@@ -1,8 +1,9 @@
 use composable_traits::{
+	currency::MathBalance,
 	defi::{LiftedFixedBalance, MoreThanOneFixedU128, Rate},
-	math::{SafeArithmetic}, currency::MathBalance,
+	math::SafeArithmetic,
 };
-use sp_runtime::{ FixedPointNumber,  {traits::Saturating, ArithmeticError, Percent}};
+use sp_runtime::{traits::Saturating, ArithmeticError, FixedPointNumber, Percent};
 
 pub struct BorrowerData {
 	pub collateral_balance_value: LiftedFixedBalance,
@@ -14,14 +15,18 @@ pub struct BorrowerData {
 impl BorrowerData {
 	#[inline(always)]
 	pub fn new<T: MathBalance>(
-		collateral_balance_value: T ,
+		collateral_balance_value: T,
 		borrow_balance_value: T,
 		collateral_factor: MoreThanOneFixedU128,
 		under_collaterized_warn_percent: Percent,
 	) -> Self {
 		Self {
-			collateral_balance_value: LiftedFixedBalance::saturating_from_integer(collateral_balance_value.into()),
-			borrow_balance_value: LiftedFixedBalance::saturating_from_integer(borrow_balance_value.into()),
+			collateral_balance_value: LiftedFixedBalance::saturating_from_integer(
+				collateral_balance_value.into(),
+			),
+			borrow_balance_value: LiftedFixedBalance::saturating_from_integer(
+				borrow_balance_value.into(),
+			),
 			collateral_factor,
 			under_collaterized_warn_percent,
 		}

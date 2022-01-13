@@ -52,16 +52,16 @@ pub use crate::weights::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::{models::BorrowerData, weights::WeightInfo};
-	use codec::{Codec, FullCodec};
+	use codec::Codec;
 	use composable_traits::{
 		currency::CurrencyFactory,
-		defi::{Rate, ZeroToOneFixedU128, MoreThanOneFixedU128, DeFiEngine, Sell, CurrencyPair, DeFiComposableConfig, LiftedFixedBalance},
+		defi::*,
 		lending::{
-			math::{self, *}, BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig,
-			UpdateInput,
+			math::{self, *},
+			BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig, UpdateInput,
 		},
 		liquidation::Liquidation,
-		math::{SafeArithmetic},
+		math::SafeArithmetic,
 		oracle::Oracle,
 		time::{DurationSeconds, Timestamp, SECONDS_PER_YEAR_NAIVE},
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
@@ -80,15 +80,12 @@ pub mod pallet {
 		offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},
 		pallet_prelude::*,
 	};
-	use num_traits::{CheckedDiv, SaturatingSub};
+	use num_traits::CheckedDiv;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
-		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
-			Saturating, Zero,
-		},
-		ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128,
-		KeyTypeId as CryptoKeyTypeId, Percent, Perquintill,
+		traits::{AccountIdConversion, CheckedAdd, CheckedMul, CheckedSub, One, Saturating, Zero},
+		ArithmeticError, DispatchError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
+		Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec, vec::Vec};
 
@@ -489,6 +486,7 @@ pub mod pallet {
 		}
 	}
 
+	#[allow(type_alias_bounds)] // false positive
 	pub type CreateInputOf<T: Config> = CreateInput<T::LiquidationStrategyId, T::MayBeAssetId>;
 
 	#[pallet::call]
@@ -517,9 +515,9 @@ pub mod pallet {
 		#[transactional]
 		pub fn update_market(
 			origin: OriginFor<T>,
-			input: UpdateInput<T::LiquidationStrategyId>,
+			_input: UpdateInput<T::LiquidationStrategyId>,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
+			let _who = ensure_signed(origin)?;
 			// 1. validate owner
 			// 2. update configuration
 			// 3. what is owner updates and forces liquidations? ok.
@@ -769,15 +767,12 @@ pub mod pallet {
 				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 				let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
 				let source_target_account = Self::account_id(market_id);
-				let unit_price = T::Oracle::get_ratio(CurrencyPair::new(market.collateral, borrow_asset))?;
-				let sell = Sell::new(
-					market.collateral,
-					borrow_asset,
-					collateral_to_liquidate,
-					unit_price,
-				);
-				T::Liquidation::liquidate(&source_target_account, sell, market.liquidators)?;	
-			} 
+				let unit_price =
+					T::Oracle::get_ratio(CurrencyPair::new(market.collateral, borrow_asset))?;
+				let sell =
+					Sell::new(market.collateral, borrow_asset, collateral_to_liquidate, unit_price);
+				T::Liquidation::liquidate(&source_target_account, sell, market.liquidators)?;
+			}
 			Ok(())
 		}
 
@@ -927,8 +922,7 @@ pub mod pallet {
 
 			T::MarketDebtCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
 			T::MarketDebtCurrency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
-			let total_borrow_amount = existing_borrow_amount
-				.safe_add(&amount_to_borrow)?;
+			let total_borrow_amount = existing_borrow_amount.safe_add(&amount_to_borrow)?;
 			let existing_borrow_share =
 				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
 			let new_borrow_share = Percent::from_rational(amount_to_borrow, total_borrow_amount);
@@ -940,7 +934,6 @@ pub mod pallet {
 			market_id: &MarketIndex,
 			debt_owner: &T::AccountId,
 			amount_to_borrow: BorrowAmountOf<Self>,
-			asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
 			market: MarketConfiguration<T>,
 			market_account: &T::AccountId,
 		) -> Result<(), DispatchError> {
@@ -1129,14 +1122,7 @@ pub mod pallet {
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 			let market_account = Self::account_id(market_id);
 
-			Self::can_borrow(
-				market_id,
-				debt_owner,
-				amount_to_borrow,
-				borrow_asset,
-				market,
-				&market_account,
-			)?;
+			Self::can_borrow(market_id, debt_owner, amount_to_borrow, market, &market_account)?;
 
 			let new_account_interest_index =
 				Self::updated_account_interest_index(market_id, debt_owner, amount_to_borrow)?;
@@ -1178,9 +1164,8 @@ pub mod pallet {
 
 				let debt_asset_id = DebtMarkets::<T>::get(market_id);
 
-				let burn_amount =
-					<T as Config>::Currency::balance(debt_asset_id, beneficiary);
-				
+				let burn_amount = <T as Config>::Currency::balance(debt_asset_id, beneficiary);
+
 				let mut remaining_borrow_amount =
 					T::MarketDebtCurrency::balance(debt_asset_id, &market_account);
 				if total_repay_amount <= burn_amount {
@@ -1334,8 +1319,7 @@ pub mod pallet {
 			let market = Self::get_market(market_id)?;
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, borrow_amount)?;
-			Ok(
-			 	LiftedFixedBalance::saturating_from_integer(borrow_amount_value.into())
+			Ok(LiftedFixedBalance::saturating_from_integer(borrow_amount_value.into())
 				.safe_mul(&market.collateral_factor)?
 				.checked_mul_int(1_u64)
 				.ok_or(ArithmeticError::Overflow)?
@@ -1496,11 +1480,10 @@ pub mod pallet {
 		collateral_balance.safe_mul(collateral_price)?.safe_div(collateral_factor)
 	}
 
-
 	pub fn accrue_interest_internal<T: Config, I: InterestRate>(
 		utilization_ratio: Percent,
 		interest_rate_model: &mut I,
-		borrow_index: ZeroToOneFixedU128,
+		borrow_index: OneOrMoreFixedU128,
 		delta_time: DurationSeconds,
 		total_borrows: T::Balance,
 	) -> Result<(T::Balance, Rate), DispatchError> {
@@ -1511,12 +1494,13 @@ pub mod pallet {
 		let delta_interest_rate = borrow_rate
 			.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
 			.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR_NAIVE))?;
-
-		let accrue_increment = LiftedFixedBalance::saturating_from_integer(total_borrows)
-			.safe_mul(&delta_interest_rate)?
-			.into_inner()
-			/ LiftedFixedBalance::DIV;
-		let accrue_increment = accrue_increment.try_into().map_err(|_| ArithmeticError::Overflow)?;
+		let total_borrows: FixedU128 =
+			FixedU128::checked_from_integer(Into::<u128>::into(total_borrows))
+				.ok_or(ArithmeticError::Overflow)?;
+		let accrue_increment =
+			total_borrows.safe_mul(&delta_interest_rate)?.into_inner() / LiftedFixedBalance::DIV;
+		let accrue_increment =
+			accrue_increment.try_into().map_err(|_| ArithmeticError::Overflow)?;
 		Ok((accrue_increment, borrow_index_new))
 	}
 }

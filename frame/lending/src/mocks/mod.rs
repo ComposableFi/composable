@@ -40,8 +40,7 @@ parameter_types! {
 	pub const LiquidationsPalletId : PalletId = PalletId(*b"liqd_tns");
 }
 
-pub	type ParachainId = u32;
-
+pub type ParachainId = u32;
 
 pub const MINIMUM_BALANCE: Balance = 1000;
 
@@ -389,7 +388,6 @@ where
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 }
-
 
 impl pallet_lending::Config for Test {
 	type Oracle = Oracle;
