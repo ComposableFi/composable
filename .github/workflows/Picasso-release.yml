@@ -51,16 +51,15 @@ jobs:
         echo  $outsrtool
     
     - name: Get wasm info
+      id: wasmout
       run: |
         /home/runner/.cargo/bin/cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
-        subwasm info --input ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
+        /home/runner/.cargo/bin/subwasm info --input ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
 
     #- name: Build with srtool
     #  uses: chevdor/srtool-actions@v0.2.0
     #  with:
     #      chain: ${{ matrix.chain }}
-    #      package: picasso-runtime
-    #      runtime_dir: ./runtime/picasso
           
     #- name: Srtool build Summary
     #  run: |
@@ -97,4 +96,4 @@ jobs:
         tag: ${{ github.ref }}
         overwrite: true
         body: |
-          Completed wasm build Information
+          echo '${{ steps.wasmout.outputs }}'
