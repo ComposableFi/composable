@@ -47,6 +47,10 @@ jobs:
           /home/runner/.cargo/bin/rustup show
           /home/runner/.cargo/bin/rustup override unset
           /home/runner/.cargo/bin/rustup show
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
       - name: Cargo fmt
         run: |
           /home/runner/.cargo/bin/cargo fmt -- --check
@@ -63,6 +67,20 @@ jobs:
             ./hadolint --config .hadolint.yaml $file || total_exit_code=$?
             echo ""
           done < <(find . -name "Dockerfile")
+          exit $total_exit_code
+      - name: Remark
+        run: |
+          npm install yarn
+          ./node_modules/.bin/yarn add remark-cli \
+            remark-lint-mdash-style \
+            https://github.com/typeable/remark-validate-links#anchors \
+            remark-preset-lint-recommended \
+            remark-lint-no-dead-urls
+
+          total_exit_code=0
+          while IFS= read -r file; do
+              ./node_modules/.bin/remark -f $file || total_exit_code=$?
+          done < <(find . -name "*.md" -not -path "*/node_modules/*" -not -path "./.github/*")
           exit $total_exit_code
       - name: Cargo clippy
         run: |
@@ -97,8 +115,6 @@ jobs:
       - name: Run Test (with coverage)
         run: |
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo llvm-cov --workspace --lcov --output-path lcov.info
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo clean -p picasso-runtime
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo clean -p composable
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
