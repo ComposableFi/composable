@@ -50,23 +50,6 @@ jobs:
         echo "outsrtool=$(sed -n "$itl,$tl"p srtool.out)"
         echo  $outsrtool
     
-    - name: Get wasm info
-      id: wasmout
-      run: |
-        /home/runner/.cargo/bin/cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
-        /home/runner/.cargo/bin/subwasm info ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
-
-    #- name: Build with srtool
-    #  uses: chevdor/srtool-actions@v0.2.0
-    #  with:
-    #      chain: ${{ matrix.chain }}
-          
-    #- name: Srtool build Summary
-    #  run: |
-    #     echo "VERSION=${{ steps.srtool_build.outputs.version }}"
-    #     echo "PROPOSAL=${{ steps.srtool_build.outputs.proposal_hash }}"
-    #     echo "BLAKE2_256=${{ steps.srtool_build.outputs.blake2_256 }}"
-    
     - name: Login to DockerHub
       uses: docker/login-action@v1 
       with:
@@ -86,6 +69,17 @@ jobs:
         asset_name: picasso_runtime.compact.wasm
         tag: ${{ github.ref }}
         overwrite: true
+
+    - name: Get wasm info
+      id: wasmout
+      run: |
+        /home/runner/.cargo/bin/cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
+        /home/runner/.cargo/bin/subwasm info ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm >> release.md
+        r=$(cat path/to/release.md)                       
+        r="${r//'%'/'%25'}"                               
+        r="${r//$'\n'/'%0A'}"                             
+        r="${r//$'\r'/'%0D'}"                             
+        echo "::set-output name=RELEASE_BODY::$r
     
     - name: Upload Binary on Release
       uses: svenstaro/upload-release-action@v2
@@ -96,4 +90,6 @@ jobs:
         tag: ${{ github.ref }}
         overwrite: true
         body: |
-          echo '${{ steps.wasmout.outputs }}'
+          echo '${{ steps.wasmout.outputs.RELEASE_BODY }}'
+
+    
