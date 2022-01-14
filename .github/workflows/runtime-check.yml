@@ -27,7 +27,7 @@ jobs:
         run: echo ${{ env.RUNTIME_CHECK }}
 
       - name: Run Simnode
-        if: "${{ steps.check_runtime.outputs.runtime_changes == 1}}"
+        if: "$${{ env.RUNTIME_CHECK }} == 1"
         run: |
           YDATE=$(date -d yesterday +'%m-%d-%Y')
           FILENAME=cl-1-$YDATE.zip
