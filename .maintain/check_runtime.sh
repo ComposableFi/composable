@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # check for any changes in the runtime/ and frame/*. if
 # there are any changes found, it should mark the PR breaksconsensus and

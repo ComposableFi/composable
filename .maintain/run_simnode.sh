@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Runs simnode for runtimes whose files have changed.
 
