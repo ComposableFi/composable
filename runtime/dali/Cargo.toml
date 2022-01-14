@@ -2,7 +2,7 @@
 name = "dali-runtime"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.56"
+
 description = "Dali, Testnet Parachain Runtime Implementation"
 authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 
@@ -56,9 +56,9 @@ smallvec = "1.6.1"
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
-pallet-bonded-finance = { path = "../../frame/bonded-finance", default-features = false }
+bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
-pallet-dutch-auction = { package = "pallet-dutch-auction", path = "../../frame/dutch-auction", default-features = false }
+ dutch-auction = { package = "pallet-dutch-auction", path = "../../frame/dutch-auction", default-features = false }
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
@@ -119,7 +119,7 @@ std = [
 	"sp-block-builder/std",
 	"sp-transaction-pool/std",
 	"sp-inherents/std",
-  	"support/std",
+ 	"support/std",
 	"executive/std",
  	"frame-system/std",
 	"utility/std",
@@ -134,7 +134,7 @@ std = [
 	"identity/std",
 	"multisig/std",
 	"vault/std",
-  	"assets/std",
+ 	"assets/std",
 	"governance-registry/std",
 	"call-filter/std",
 	"currency-factory/std",
@@ -161,14 +161,18 @@ std = [
 	"xcm-executor/std",
 	"aura/std",
 	"sp-consensus-aura/std",
-    "scale-info/std",
+  "scale-info/std",
 	"orml-xtokens/std",
-    "orml-xcm-support/std",
-    "orml-unknown-tokens/std",
+  "orml-xcm-support/std",
+  "orml-unknown-tokens/std",
 	"assets-registry/std",
 	"assets/std",
 	"governance-registry/std",
 	"composable-traits/std",
+  "crowdloan-rewards/std",
+  "bonded-finance/std",
+	"dutch-auction/std",
+	"vesting/std"
 ]
 runtime-benchmarks = [
 	"assets/runtime-benchmarks",
@@ -198,5 +202,9 @@ runtime-benchmarks = [
 	"collective/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
-  "vault/runtime-benchmarks"
+	"vault/runtime-benchmarks",
+  "vesting/runtime-benchmarks",
+  "assets/runtime-benchmarks",
+	"bonded-finance/runtime-benchmarks",
+	"dutch-auction/runtime-benchmarks",
 ]

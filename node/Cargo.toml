@@ -95,6 +95,8 @@ runtime-benchmarks = ["picasso-runtime/runtime-benchmarks", "composable-runtime/
 ocw = []
 dali = ["dali-runtime"]
 composable = ["composable-runtime"]
+std = ["picasso-runtime/std", "composable-runtime/std", "dali-runtime/std"]
+
 
 [package.metadata.cargo-udeps.ignore]
 normal = ["pallet-bonded-finance"]

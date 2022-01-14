@@ -317,7 +317,7 @@ impl pallet_dutch_auction::weights::WeightInfo for DutchAuctionsMocks {
 		0
 	}
 
-	fn take() -> frame_support::dispatch::Weight {
+	fn take(_x: u32) -> frame_support::dispatch::Weight {
 		0
 	}
 

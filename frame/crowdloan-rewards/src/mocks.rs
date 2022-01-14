@@ -12,6 +12,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 	AccountId32, Perbill,
 };
+use sp_std::vec::Vec;
 use system::EnsureRoot;
 
 pub type RelayKey = ed25519::Pair;
