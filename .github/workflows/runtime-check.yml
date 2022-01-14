@@ -24,7 +24,7 @@ jobs:
           echo "::set-output name=runtime_changes::$RUNTIME_CHECK"
 
       - name: Echo output
-        run: echo ${{ steps.check_runtime.outputs.runtime_changes}}
+        run: echo ${{ env.RUNTIME_CHECK }}
 
       - name: Run Simnode
         if: "${{ steps.check_runtime.outputs.runtime_changes == 1}}"
