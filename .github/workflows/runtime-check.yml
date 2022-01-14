@@ -29,6 +29,7 @@ jobs:
         if: "$${{ env.RUNTIME_CHECK }} == 1"
         run: |
           /home/runner/.cargo/bin/rustup update nightly
+          /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown
           /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
           /home/runner/.cargo/bin/cargo build --release -p simnode
           YDATE=$(date -d yesterday +'%m-%d-%Y')
