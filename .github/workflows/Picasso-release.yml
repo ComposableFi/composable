@@ -90,6 +90,6 @@ jobs:
         tag: ${{ github.ref }}
         overwrite: true
         body: |
-          "This is the release"
+          ${{ steps.wasmout.outputs.RELEASE_BODY }}
 
     
