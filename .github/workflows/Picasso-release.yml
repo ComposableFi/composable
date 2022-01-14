@@ -79,7 +79,7 @@ jobs:
         r="${r//'%'/'%25'}"                               
         r="${r//$'\n'/'%0A'}"                             
         r="${r//$'\r'/'%0D'}"                             
-        echo "::set-output name=RELEASE_BODY::$r
+        echo "::set-output name=RELEASE_BODY::$r"
     
     - name: Upload Binary on Release
       uses: svenstaro/upload-release-action@v2
