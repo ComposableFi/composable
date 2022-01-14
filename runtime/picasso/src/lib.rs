@@ -103,7 +103,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_version: 2000,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2,
+	transaction_version: 1,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -385,7 +385,6 @@ where
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-			crowdloan_rewards::PrevalidateAssociation::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -816,7 +815,7 @@ construct_runtime!(
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 54,
 		Assets: assets::{Pallet, Call, Storage} = 55,
-		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 56,
+		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 57,
 		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 58,
 	}
@@ -836,7 +835,6 @@ pub type SignedExtra = (
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
 	transaction_payment::ChargeTransactionPayment<Runtime>,
-	crowdloan_rewards::PrevalidateAssociation<Runtime>,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
