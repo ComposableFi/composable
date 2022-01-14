@@ -74,7 +74,7 @@ jobs:
           exit $total_exit_code
       - name: Remark
         run: |
-        npm install yarn
+          npm install yarn
           ./node_modules/.bin/yarn add remark-cli \
             remark-lint-mdash-style \
             https://github.com/typeable/remark-validate-links#anchors \
