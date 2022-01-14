@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# check for any changes in the node/src/runtime, frame/* and primitives/sr_* trees. if
+# check for any changes in the runtime/ and frame/*. if
 # there are any changes found, it should mark the PR breaksconsensus and
 # "auto-fail" the PR if there isn't a change in the runtime/src/lib.rs file
 # that alters the version.
@@ -36,7 +36,7 @@ git log -n1 releases
 
 simnode_check () {
   VERSIONS_FILE="$1"
-if has_runtime_changes origin/main "${GITHUB_REF_NAME}" $3 && check_runtime $VERSIONS_FILE $2
+if has_runtime_changes release/${RELEASE_VERSION} "${GITHUB_REF_NAME}" $3 && check_runtime $VERSIONS_FILE $2
   boldprint "Checking for conditions to run simnode"
 then
   boldprint "Running simnode for INtegration test OK"
