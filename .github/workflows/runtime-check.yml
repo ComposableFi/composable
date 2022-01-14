@@ -26,7 +26,14 @@ jobs:
       - name: Run Simnode
         if: "${{ steps.check_runtime.outputs.runtime_changes == 1}}"
         run: |
-          
+          YDATE=$(date -d yesterday +'%m-%d-%Y')
+          FILENAME=cl-1-$YDATE.zip
+          GS_BUCKET="picasso-data-store"
+          sudo gsutil cp gs://$GS_BUCKET/$FILENAME .
+          sudo unzip -o $FILENAME -d  /tmp/db
+          sudo wget "https://storage.googleapis.com/composable-binaries/simnode"
+          sudo chmod +x simnode
+          sudo ./simnode --chain=$2 --base-path=/tmp/db/ --pruning=archive --execution=wasm
 
   benchmark: 
     name: Benchmark
@@ -45,11 +52,6 @@ jobs:
           ./scripts/benchmarks.sh
           git add runtime
           git commit -m "Updates weights"
-
-      - name: Push changes to branch
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
+          git push origin ${{ github.ref }}
 
 
