@@ -104,7 +104,7 @@ pub fn new_chain_ops(
 			)
 		},
 		#[cfg(feature = "dali")]
-		"dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" => {
+		"dali" | "dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" => {
 			let components = new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(config)?;
 			(
 				Arc::new(Client::from(components.client)),
@@ -225,20 +225,21 @@ pub async fn start_node(
 			>(config, polkadot_config, id)
 			.await?,
 			#[cfg(feature = "dali")]
-			"dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" =>
+			"dali" | "dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" =>
 				crate::service::start_node_impl::<dali_runtime::RuntimeApi, DaliExecutor>(
 					config,
 					polkadot_config,
 					id,
 				)
 				.await?,
-			_ =>
+			"picasso" | "picasso-dev" =>
 				crate::service::start_node_impl::<picasso_runtime::RuntimeApi, PicassoExecutor>(
 					config,
 					polkadot_config,
 					id,
 				)
 				.await?,
+			_ => panic!("Unknown chain_id: {}", config.chain_spec.id()),
 		};
 
 	Ok(task_manager)

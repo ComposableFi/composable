@@ -4,6 +4,7 @@ pub mod collator_selection;
 pub mod collective;
 pub mod crowdloan_rewards;
 pub mod democracy;
+pub mod dutch_auction;
 pub mod frame_system;
 pub mod identity;
 pub mod indices;

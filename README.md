@@ -1,7 +1,7 @@
 
 <p align="center">
 
-# Composable Node     
+# Composable Node
   <img alt="Composable Finance" title="Composable Finance" src="composable.png">
 </p>
 
@@ -44,7 +44,7 @@ In order to do so, install [yarn](https://classic.yarnpkg.com/lang/en/docs/insta
 
 ## Pallets
 Picasso ships with multiple custom made pallets such as:
-[Cubic Vault](frame/vault/README.md)    
+[Cubic Vault](frame/vault/README.md)
 [Apollo](frame/oracle/README.md)
 
 and several others you can find in the frame folder.

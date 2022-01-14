@@ -79,7 +79,7 @@ hydra_xcm_executor -> hydra_assets: Dispatch to call relevant pallet for accepti
 
 - https://medium.com/polkadot-network/xcm-part-ii-versioning-and-compatibility-b313fc257b83
 - https://medium.com/polkadot-network/xcm-part-iii-execution-and-error-management-ceb8155dd166
-- [xcmp format]:https://github.com/paritytech/xcm-format/blob/master/README.md
+- https://github.com/paritytech/xcm-format/blob/master/README.md
 - https://research.web3.foundation/en/latest/polkadot/XCMP/index.html
 - https://medium.com/polkadot-network/xcm-the-cross-consensus-message-format-3b77b1373392
 

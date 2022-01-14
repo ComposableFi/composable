@@ -5,7 +5,7 @@ title: Installation
 This page will guide you through the steps needed to prepare a computer for development with the
 Substrate Node Template. Since Substrate is built with
 [the Rust programming language](https://www.rust-lang.org/), the first thing you will need to do is
-prepare the computer for Rust development - these steps will vary based on the computer's operating
+prepare the computer for Rust development ― these steps will vary based on the computer's operating
 system. Once Rust is configured, you will use its toolchains to interact with Rust projects; the
 commands for Rust's toolchains will be the same for all supported, Unix-based operating systems.
 

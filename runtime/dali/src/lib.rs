@@ -1,3 +1,15 @@
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		// // impl_runtime_apis will generate code that contains a `panic!`. Implementations should still avoid using panics.
+		// clippy::panic
+	)
+)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -373,7 +385,6 @@ where
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-			crowdloan_rewards::PrevalidateAssociation::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -767,8 +778,6 @@ impl crowdloan_rewards::Config for Runtime {
 	type Balance = Balance;
 	type Currency = Assets;
 	type AdminOrigin = EnsureRootOrHalfCouncil;
-	// TODO(hussein-aitlahcen): should be the proxy account
-	type AssociationOrigin = EnsureRootOrHalfCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = [u8; 32];
 	type InitialPayment = InitialPayment;
@@ -801,11 +810,11 @@ impl call_filter::Config for Runtime {
 
 parameter_types! {
 	pub const MaxVestingSchedule: u32 = 2;
-	pub const MinVestedTransfer: u64 = 1_000_000;
+	pub MinVestedTransfer: u64 = 10 * CurrencyId::PICA.unit::<u64>();
 }
 
 impl vesting::Config for Runtime {
-	type Currency = Tokens;
+	type Currency = Assets;
 	type Event = Event;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
@@ -815,15 +824,15 @@ impl vesting::Config for Runtime {
 
 parameter_types! {
 	pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
-	pub const MinReward: Balance = 1_000_000;
-	pub const Stake: Balance = 10_000;
+	pub MinReward: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
+	pub Stake: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
 }
 
-impl pallet_bonded_finance::Config for Runtime {
+impl bonded_finance::Config for Runtime {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type BondOfferId = u64;
 	type Convert = sp_runtime::traits::ConvertInto;
-	type Currency = Tokens;
+	type Currency = Assets;
 	type Event = Event;
 	type MinReward = MinReward;
 	type NativeCurrency = Balances;
@@ -841,7 +850,7 @@ impl composable_traits::defi::DeFiComposableConfig for Runtime {
 	type Balance = Balance;
 }
 
-impl pallet_dutch_auction::Config for Runtime {
+impl dutch_auction::Config for Runtime {
 	type NativeCurrency = Balances;
 	type Event = Event;
 	type MultiCurrency = Assets;
@@ -849,7 +858,7 @@ impl pallet_dutch_auction::Config for Runtime {
 	type WeightToFee = WeightToFee;
 	type OrderId = u128;
 	type UnixTime = Timestamp;
-	type WeightInfo = ();
+	type WeightInfo = weights::dutch_auction::WeightInfo<Runtime>;
 }
 
 construct_runtime!(
@@ -902,10 +911,10 @@ construct_runtime!(
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
 		Assets: assets::{Pallet, Call, Storage} = 57,
-		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 58,
+		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 58,
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 59,
-		BondedFinance: pallet_bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
-		DutchAuction: pallet_dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
+		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
+		DutchAuction: dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -924,7 +933,6 @@ pub type SignedExtra = (
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
 	transaction_payment::ChargeTransactionPayment<Runtime>,
-	crowdloan_rewards::PrevalidateAssociation<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -1064,12 +1072,9 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, utility, Utility);
 			list_benchmark!(list, extra, identity, Identity);
 			list_benchmark!(list, extra, multisig, Multisig);
-
-			{
-				list_benchmark!(list, extra, vault, Vault);
-				list_benchmark!(list, extra, oracle, Oracle);
-				list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
-			}
+			list_benchmark!(list, extra, vault, Vault);
+			list_benchmark!(list, extra, oracle, Oracle);
+			list_benchmark!(list, extra, dutch_auction, DutchAuction);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1119,7 +1124,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, multisig, Multisig);
 			add_benchmark!(params, batches, vault, Vault);
 			add_benchmark!(params, batches, oracle, Oracle);
-			add_benchmark!(params, batches, crowdloan_rewards, CrowdloanRewards);
+			add_benchmark!(params, batches, dutch_auction, DutchAuction);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
