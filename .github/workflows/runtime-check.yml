@@ -20,7 +20,7 @@ jobs:
         working-directory: "./.maintain/"
         id: check_runtime
         run: |
-          ./check_runtime.sh
+          sh check_runtime.sh
 
       - name: Echo output
         run: echo ${{ env.RUNTIME_CHECK }}
@@ -30,7 +30,7 @@ jobs:
         working-directory: "./.maintain/"
         id: run_simnode
         run: |
-          ./run_simnode.sh
+          sh run_simnode.sh
 
   benchmark: 
     name: Benchmark
@@ -46,7 +46,7 @@ jobs:
         working-directory: "./.maintain/"
         id: run_benchmarks
         run: |
-          ./run_benchmarks.sh
+          sh run_benchmarks.sh
           
 
 
