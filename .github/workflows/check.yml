@@ -119,7 +119,7 @@ jobs:
           git commit -m "Updates weights"
 
       - name: Push changes to branch
-      - uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
           branch: ${{ github.ref }}
