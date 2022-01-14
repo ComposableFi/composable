@@ -2368,6 +2368,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
  "pallet-democracy 4.0.0-dev",
+ "pallet-dutch-auction",
  "pallet-governance-registry",
  "pallet-identity",
  "pallet-indices",
