@@ -17,8 +17,8 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
-  check:
-    name: Check 
+  check-benchmarks:
+    name: Check Benchmarks
     runs-on:
       - self-hosted
       - linux
@@ -26,14 +26,23 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
-      - run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --all --benches
-      - name: Benchmark
+      - name: Compile Check with WASM
         run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --features=runtime-benchmarks --workspace --release --exclude integration-tests
-      - name: Picasso
+          /home/runner/.cargo/bin/cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
+
+  check-std:
+    name: Check STD
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
+      - uses: actions/checkout@v2
+      - name: Compile check with std
         run: |
-          /home/runner/.cargo/bin/cargo build --release -p picasso-runtime
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --features=std --workspace --exclude integration-tests
+
   linters:
     name: Linters
     runs-on:
