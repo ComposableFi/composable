@@ -14,7 +14,7 @@ jobs:
         - self-hosted
         - linux
         - x64
-        - sre
+        #- sre
     strategy:
       matrix:
         chain: ["dali-chachacha", "picasso"]
