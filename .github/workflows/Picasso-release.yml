@@ -39,7 +39,7 @@ jobs:
         echo "Test Release" > release.md
     
     - name: Upload Binary on Release
-      uses: svenstaro/upload-release-action@v2
+      uses: svenstaro/upload-release-action@2.2.1
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
         file: release.md
@@ -48,6 +48,12 @@ jobs:
         #asset_name: composable-${{ env.RELEASE_VERSION }}
         tag: ${{ github.ref }}
         overwrite: true
-        body: "Build Successful"
+    
+    - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          body_path: release.md
+          token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }
 
     
