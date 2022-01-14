@@ -27,7 +27,7 @@ export class TxBondedFinanceTests {
     const requestParameters = {
       beneficiary: wallet.publicKey,
       asset: 1,
-      bondPrice: 10000000000000, // pub const MIN_VESTED_TRANSFER: u32 = 1_000_000;
+      bondPrice: api.consts.vesting.minVestedTransfer,
       nbOfBonds: 1,
       maturity: { Finite: { returnIn: 10 } },
       reward: { asset: 1, amount: 100000000000000, maturity: 1 } // pub MinReward: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
