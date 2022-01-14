@@ -26,14 +26,9 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
-      - run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --all --benches
-      - name: Benchmark
+      - name: Compile Check
         run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --features=runtime-benchmarks --workspace --release --exclude integration-tests
-      - name: Picasso
-        run: |
-          /home/runner/.cargo/bin/cargo build --release -p picasso-runtime
+          /home/runner/.cargo/bin/cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
   linters:
     name: Linters
     runs-on:
