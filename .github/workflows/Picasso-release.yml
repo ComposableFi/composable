@@ -90,6 +90,6 @@ jobs:
         tag: ${{ github.ref }}
         overwrite: true
         body: |
-          ${{ steps.wasmout.outputs.RELEASE_BODY }}
+          "Build Successful"
 
     
