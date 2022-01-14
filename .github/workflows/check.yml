@@ -55,10 +55,6 @@ jobs:
           /home/runner/.cargo/bin/rustup show
           /home/runner/.cargo/bin/rustup override unset
           /home/runner/.cargo/bin/rustup show
-      - name: Use Node.js 14.x
-        uses: actions/setup-node@v2
-        with:
-          node-version: 14.x
       - name: Cargo fmt
         run: |
           /home/runner/.cargo/bin/cargo fmt -- --check
@@ -78,8 +74,7 @@ jobs:
           exit $total_exit_code
       - name: Remark
         run: |
-          npm install yarn
-          ./node_modules/.bin/yarn add remark-cli \
+          yarn add remark-cli \
             remark-lint-mdash-style \
             https://github.com/typeable/remark-validate-links#anchors \
             remark-preset-lint-recommended \
