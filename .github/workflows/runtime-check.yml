@@ -18,7 +18,38 @@ jobs:
 
       - name: Check for runtime changes
         working-directory: "./.maintain/"
+        id: check_runtime
         run: |
           ./check_runtime.sh
+          echo "::set-output name=runtime_changes::$(echo $RUNTIME_CHECK)"
+
+      - name: Run Simnode
+        if: "${{ steps.check_runtime.outputs.runtime_changes == 1}}"
+        run: |
+          
+
+  benchmark: 
+    name: Benchmark
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - bmark
+    steps:
+      - uses: actions/checkout@v2
+      - name: Benchmark Test
+        if: "${{ steps.check_runtime.outputs.runtime_changes == 1}}"
+        run: |
+          /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
+          /home/runner/.cargo/bin/cargo build -p composable --features=runtime-benchmarks
+          ./scripts/benchmarks.sh
+          git add runtime
+          git commit -m "Updates weights"
+
+      - name: Push changes to branch
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
 
 
