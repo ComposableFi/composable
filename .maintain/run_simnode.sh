@@ -2,7 +2,7 @@
 #
 # Runs simnode for runtimes whose files have changed.
 
-set -e # fail on any error
+#set -e # fail on any error
 
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
