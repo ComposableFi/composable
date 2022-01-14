@@ -18,16 +18,42 @@ jobs:
 
       - name: Check for runtime changes
         working-directory: "./.maintain/"
+        id: check_runtime
         run: |
           ./check_runtime.sh
 
-      # - name: Simnode integration test
-      #   run : |
-      #     YDATE=$(date -d yesterday +'%m-%d-%Y')
-      #     FILENAME=cl-1-$YDATE.zip
-      #     GS_BUCKET="picasso-data-store"
-      #     sudo gsutil cp gs://$GS_BUCKET/$FILENAME .
-      #     sudo unzip -o $FILENAME -d  /tmp/db
-      #     sudo wget simmode
-      #     simnode --chain=$2 --base-path=/tmp/db --pruning=archive --execution=wasm
+      - name: Echo output
+        run: echo ${{ env.RUNTIME_CHECK }}
+
+      - name: Run Simnode
+        if: "$${{ env.RUNTIME_CHECK }} == 1"
+        run: |
+          YDATE=$(date -d yesterday +'%m-%d-%Y')
+          FILENAME=cl-1-$YDATE.zip
+          GS_BUCKET="picasso-data-store"
+          sudo gsutil cp gs://$GS_BUCKET/$FILENAME .
+          sudo unzip -o $FILENAME -d  /tmp/db
+          sudo wget "https://storage.googleapis.com/composable-binaries/simnode"
+          sudo chmod +x simnode
+          sudo ./simnode --chain=$2 --base-path=/tmp/db/ --pruning=archive --execution=wasm
+
+  benchmark: 
+    name: Benchmark
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - bmark
+    steps:
+      - uses: actions/checkout@v2
+      - name: Benchmark Test
+        if: "$${{ env.RUNTIME_CHECK }} == 1"
+        run: |
+          /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
+          /home/runner/.cargo/bin/cargo build -p composable --features=runtime-benchmarks
+          ./scripts/benchmarks.sh
+          git add runtime
+          git commit -m "Updates weights"
+          git push origin ${{ github.ref }}
+
 

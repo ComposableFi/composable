@@ -40,6 +40,8 @@ if has_runtime_changes origin/main "${GITHUB_REF_NAME}" $3 && check_runtime $VER
   boldprint "Checking for conditions to run simnode"
 then
   boldprint "Running simnode for INtegration test OK"
+	echo "RUNTIME_CHECK=1" >> $GITHUB_ENV
+  	
 fi
 }
 
