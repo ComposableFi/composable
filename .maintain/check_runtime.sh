@@ -47,7 +47,7 @@ then
 	sudo unzip -o $FILENAME -d  /tmp/db
 	sudo wget "https://storage.googleapis.com/composable-binaries/simnode"
 	sudo chmod +x simnode
-	./simnode --chain=$2 --base-path=/tmp/db --pruning=archive --execution=wasm
+	sudo ./simnode --chain=$2 --base-path=/tmp/db --pruning=archive --execution=wasm
 fi
 }
 
