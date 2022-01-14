@@ -10,6 +10,7 @@
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
 
+# shellcheck disable=SC2039
 VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
   "runtime/dali/src/lib.rs,dali-chachacha,dali"
@@ -36,11 +37,11 @@ git log -n1 releases
 
 simnode_check () {
   VERSIONS_FILE="$1"
-if has_runtime_changes release/${RELEASE_VERSION} "${GITHUB_REF_NAME}" $3 && check_runtime $VERSIONS_FILE $2
+if has_runtime_changes release/"${RELEASE_VERSION}" "${GITHUB_REF_NAME}" "$3" && check_runtime "$VERSIONS_FILE" "$2"
   boldprint "Checking for conditions to run simnode"
 then
   boldprint "Running simnode for INtegration test OK"
-	echo "RUNTIME_CHECK=1" >> $GITHUB_ENV
+	echo "RUNTIME_CHECK=1" >> "$GITHUB_ENV"
   	
 fi
 }
@@ -68,9 +69,9 @@ else
 	# check for impl_version updates: if only the impl versions changed, we assume
 	# there is no consensus-critical logic that has changed.
 	
-	add_impl_version="$(git diff tags/releases ${GITHUB_REF_NAME} -- "${VERSIONS_FILE}" \
+	add_impl_version="$(git diff tags/releases "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" \
 		| sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
-	sub_impl_version="$(git diff tags/releases ${GITHUB_REF_NAME} -- "${VERSIONS_FILE}" \
+	sub_impl_version="$(git diff tags/releases "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" \
 		| sed -n -r 's/^\-[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
 
 
