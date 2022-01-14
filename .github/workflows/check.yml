@@ -115,7 +115,7 @@ jobs:
           /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo build --features=runtime-benchmarks --workspace --release --exclude integration-tests
           SKIP_WASM_BUILD=1  /home/runner/.cargo/bin/cargo build -p composable --features=runtime-benchmarks
-          ./scripts/benchmark.sh
+          ./scripts/benchmarks.sh
           git add runtime
           git commit -m "Updates weightss"
 
