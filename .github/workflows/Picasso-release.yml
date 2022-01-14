@@ -34,52 +34,7 @@ jobs:
         echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^picasso-[0-9]' | tail -1 )" >> $GITHUB_ENV
         make version
 
-    - name: Build and Push Artifacts to gcloud
-      run: |
-        /home/runner/.cargo/bin/cargo build --release --bins
-        tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
-        tar -czvf parachain-utils-${RELEASE_VERSION}.tar.gz target/release/parachain-utils
 
-    - name: Build with srtool
-      run: |
-        /home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
-        /home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso > srtool.out
-        tl=$(sed -n '$=' srtool.out)
-        itl=$(sed -n '/Package/=' srtool.out)
-        echo $itl, $tl
-        echo "outsrtool=$(sed -n "$itl,$tl"p srtool.out)"
-        echo  $outsrtool
-    
-    - name: Login to DockerHub
-      uses: docker/login-action@v1 
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} 
-
-    - name: Build Docker image
-      run: make containerize-release 
-    - name:  Docker push
-      run: make push-release
-
-    - name: Upload Compact wasm
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-        file: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
-        asset_name: picasso_runtime.compact.wasm
-        tag: ${{ github.ref }}
-        overwrite: true
-
-    - name: Get wasm info
-      id: wasmout
-      run: |
-        /home/runner/.cargo/bin/cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
-        /home/runner/.cargo/bin/subwasm info ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm >> release.md
-        r=$(cat release.md)                       
-        r="${r//'%'/'%25'}"                               
-        r="${r//$'\n'/'%0A'}"                             
-        r="${r//$'\r'/'%0D'}"                             
-        echo "::set-output name=RELEASE_BODY::$r"
     
     - name: Upload Binary on Release
       uses: svenstaro/upload-release-action@v2
