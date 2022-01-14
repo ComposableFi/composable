@@ -50,10 +50,10 @@ jobs:
         overwrite: true
     
     - name: Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          body_path: release.md
-          token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        body_path: release.md
+        token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 
     
