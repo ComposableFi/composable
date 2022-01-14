@@ -17,7 +17,8 @@ composable-node = { path = "node", features = [ "composable", "dali" ]  }
 color-eyre = { version = "0.5.11", default-features = false }
 
 [features]
-runtime-benchmarks= [ "composable-node/runtime-benchmarks" ]
+runtime-benchmarks = [ "composable-node/runtime-benchmarks" ]
+std = [ "composable-node/std" ]
 
 [workspace]
 members = [
