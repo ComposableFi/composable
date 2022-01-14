@@ -23,6 +23,10 @@ jobs:
           ./check_runtime.sh
           echo "::set-output name=runtime_changes::$(echo $RUNTIME_CHECK)"
 
+      - name: Echo output
+        run: |
+          echo ${{ steps.check_runtime.outputs.runtime_changes}}
+
       - name: Run Simnode
         if: "${{ steps.check_runtime.outputs.runtime_changes == 1}}"
         run: |
