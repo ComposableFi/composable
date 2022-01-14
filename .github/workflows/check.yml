@@ -74,7 +74,8 @@ jobs:
           exit $total_exit_code
       - name: Remark
         run: |
-          yarn add remark-cli \
+        npm install yarn
+          ./node_modules/.bin/yarn add remark-cli \
             remark-lint-mdash-style \
             https://github.com/typeable/remark-validate-links#anchors \
             remark-preset-lint-recommended \
@@ -113,7 +114,7 @@ jobs:
         run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
       - name: Run Test (with coverage)
         run: |
-          SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --lcov --output-path lcov.info
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo llvm-cov --workspace --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
