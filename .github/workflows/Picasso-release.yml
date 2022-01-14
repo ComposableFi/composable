@@ -47,7 +47,7 @@ jobs:
         #file: target/release/composable
         #asset_name: composable-${{ env.RELEASE_VERSION }}
         tag: ${{ github.ref }}
-        body: |
-          "Build Successful"
+        overwrite: true
+        body: "Build Successful"
 
     
