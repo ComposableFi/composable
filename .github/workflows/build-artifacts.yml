@@ -31,10 +31,6 @@ jobs:
         echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
         make version
 
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-
     - name: 🔨 Build Composable Artifacts
       run: |
         /home/runner/.cargo/bin/cargo build --release --bins
