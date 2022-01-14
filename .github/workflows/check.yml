@@ -72,20 +72,6 @@ jobs:
             echo ""
           done < <(find . -name "Dockerfile")
           exit $total_exit_code
-      - name: Remark
-        run: |
-          npm install yarn
-          ./node_modules/.bin/yarn add remark-cli \
-            remark-lint-mdash-style \
-            https://github.com/typeable/remark-validate-links#anchors \
-            remark-preset-lint-recommended \
-            remark-lint-no-dead-urls
-
-          total_exit_code=0
-          while IFS= read -r file; do
-              ./node_modules/.bin/remark -f $file || total_exit_code=$?
-          done < <(find . -name "*.md" -not -path "*/node_modules/*" -not -path "./.github/*")
-          exit $total_exit_code
       - name: Cargo clippy
         run: |
           /home/runner/.cargo/bin/cargo +nightly clippy -- -D warnings
@@ -114,6 +100,7 @@ jobs:
         run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
       - name: Run Test (with coverage)
         run: |
+          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain nightly
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo llvm-cov --workspace --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
