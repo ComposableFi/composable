@@ -40,8 +40,8 @@ jobs:
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-        file: target/release/composable
-        asset_name: composable-${{ env.RELEASE_VERSION }}
+        #file: target/release/composable
+        #asset_name: composable-${{ env.RELEASE_VERSION }}
         tag: ${{ github.ref }}
         overwrite: true
         body: |
