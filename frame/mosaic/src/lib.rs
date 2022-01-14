@@ -119,6 +119,7 @@ pub mod pallet {
 		T::MinimumTimeLockPeriod::get()
 	}
 
+    /// Locked outgoing tx out of Picasso, that a relayer needs to process.
 	#[pallet::storage]
 	#[pallet::getter(fn outgoing_transactions)]
 	pub type OutgoingTransactions<T: Config> = StorageDoubleMap<
@@ -131,6 +132,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+    /// Locked incoming tx into Picasso that the user needs to claim.
 	#[pallet::storage]
 	#[pallet::getter(fn incoming_transactions)]
 	pub type IncomingTransactions<T: Config> = StorageDoubleMap<
@@ -162,17 +164,20 @@ pub mod pallet {
 			network_id: NetworkIdOf<T>,
 			network_info: NetworkInfo<BalanceOf<T>>,
 		},
+        /// An outgoing tx is created, and locked in the outgoing tx pool.
 		TransferOut {
 			id: Id,
 			to: EthereumAddress,
 			amount: BalanceOf<T>,
 			network_id: NetworkIdOf<T>,
 		},
+        /// User claimed outgoing tx that was not (yet) picked up by the relayer
 		StaleTxClaimed {
 			to: AccountIdOf<T>,
 			by: AccountIdOf<T>,
 			amount: BalanceOf<T>,
 		},
+        /// An incoming tx is created and waiting for the user to claim.
 		TransferInto {
 			to: AccountIdOf<T>,
 			amount: BalanceOf<T>,
@@ -210,6 +215,7 @@ pub mod pallet {
 		InsufficientBudget,
 		ExceedsMaxTransferSize,
 		NoClaimableTx,
+        TxStillLocked,
 		NoOutgoingTx,
 		AmountMismatch,
 	}
@@ -527,7 +533,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Collects funds deposited by the relayer into the
+		/// Collects funds deposited by the relayer into the owner's account
 		#[pallet::weight(10_000)]
 		pub fn claim_to(
             origin: OriginFor<T>,
@@ -538,19 +544,19 @@ pub mod pallet {
 			let now = <frame_system::Pallet<T>>::block_number();
 
 			IncomingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
-				to.clone(),
+				caller.clone(),
 				asset_id,
 				|deposit| {
-					let tx = deposit.ok_or(Error::<T>::NoClaimableTx)?;
-					ensure!(tx.1 < now, Error::<T>::NoClaimableTx);
-					T::Assets::transfer(asset_id, &Self::sub_account_id(&caller), &to, tx.0, true)?;
-					// Delete the deposit.
+					let (amount, unlock_after) = deposit.ok_or(Error::<T>::NoClaimableTx)?;
+					ensure!(unlock_after < now, Error::<T>::TxStillLocked);
+					T::Assets::transfer(asset_id, &Self::sub_account_id(&caller), &to, amount, true)?;
+                    // Delete the deposit.
 					deposit.take();
 					Self::deposit_event(Event::<T>::TransferClaimed {
 						by: caller,
 						to,
 						asset_id,
-						amount: tx.0,
+						amount,
 					});
 					Ok(())
 				},
