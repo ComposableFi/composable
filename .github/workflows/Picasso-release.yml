@@ -54,6 +54,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           body_path: release.md
-          token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }
+          token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 
     
