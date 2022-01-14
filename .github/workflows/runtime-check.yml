@@ -48,7 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Benchmark Test
-        if: "${{ steps.check_runtime.outputs.runtime_changes == 1}}"
+        if: "$${{ env.RUNTIME_CHECK }} == 1"
         run: |
           /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
           /home/runner/.cargo/bin/cargo build -p composable --features=runtime-benchmarks
