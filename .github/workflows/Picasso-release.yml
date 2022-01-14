@@ -75,7 +75,7 @@ jobs:
       run: |
         /home/runner/.cargo/bin/cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
         /home/runner/.cargo/bin/subwasm info ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm >> release.md
-        r=$(cat path/to/release.md)                       
+        r=$(cat release.md)                       
         r="${r//'%'/'%25'}"                               
         r="${r//$'\n'/'%0A'}"                             
         r="${r//$'\r'/'%0D'}"                             
