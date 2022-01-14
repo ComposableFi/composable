@@ -5,12 +5,12 @@ use sc_executor::NativeElseWasmExecutor;
 use sc_service::TFullCallExecutor;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{
-	generic::{BlockId, UncheckedExtrinsic},
+	generic::BlockId,
 	traits::{Block as BlockT, Header},
-	AccountId32, MultiAddress, MultiSignature,
+	AccountId32,
 };
 use std::error::Error;
-use substrate_simnode::{ChainInfo, Node};
+use substrate_simnode::{ChainInfo, Node, UncheckedExtrinsicFor};
 
 // generic tests for runtime upgrades
 pub(crate) async fn parachain_runtime_upgrades<T>(
@@ -25,17 +25,7 @@ where
 	<TFullCallExecutor<T::Block, NativeElseWasmExecutor<T::ExecutorDispatch>> as CallExecutor<
 		T::Block,
 	>>::Error: std::fmt::Debug,
-	<T::Block as BlockT>::Extrinsic: From<
-		UncheckedExtrinsic<
-			MultiAddress<
-				<T::Runtime as system::Config>::AccountId,
-				<T::Runtime as system::Config>::Index,
-			>,
-			<T::Runtime as system::Config>::Call,
-			MultiSignature,
-			T::SignedExtras,
-		>,
-	>,
+	<T::Block as BlockT>::Extrinsic: From<UncheckedExtrinsicFor<T>>,
 	<T::Runtime as system::Config>::Call:
 		From<system::Call<T::Runtime>> + From<sudo::Call<T::Runtime>>,
 	<T::Runtime as sudo::Config>::Call: From<system::Call<T::Runtime>>,

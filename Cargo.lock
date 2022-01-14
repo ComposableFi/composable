@@ -12759,7 +12759,7 @@ dependencies = [
 [[package]]
 name = "substrate-simnode"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#14a6bf2650d15f9830cfe5ca66486d4ccfb8b0b3"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#4e01ef5542559b21c01b2a603bb8cfb60cdc470d"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",
