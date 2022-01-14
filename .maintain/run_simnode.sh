@@ -7,7 +7,7 @@ set -e # fail on any error
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
 
-declare -a VERSIONS_FILES=(
+VERSIONS_FILES=(
   "picasso,picasso"
   "dali-chachacha,dali"
   "composable,composable"
