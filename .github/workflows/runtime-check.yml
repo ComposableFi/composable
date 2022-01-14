@@ -21,7 +21,7 @@ jobs:
         id: check_runtime
         run: |
           ./check_runtime.sh
-          echo "::set-output name=runtime_changes::$(echo $RUNTIME_CHECK)"
+          echo "::set-output name=runtime_changes::{{ env.RUNTIME_CHANGES }}"
 
       - name: Echo output
         run: |
