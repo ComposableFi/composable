@@ -23,6 +23,7 @@ jobs:
       - name: Compile Check with WASM
         run: |
           echo $PATH
+          cat ~/.bashrc
           which cargo
           cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
 
