@@ -20,7 +20,7 @@ jobs:
         working-directory: "./.maintain/"
         id: check_runtime
         run: |
-          ./check_runtime.sh
+          ./check_runtime
 
   #     - name: Echo output
   #       run: echo ${{ env.RUNTIME_CHECK }}
