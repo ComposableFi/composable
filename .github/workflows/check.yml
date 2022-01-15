@@ -23,6 +23,7 @@ jobs:
       - name: Compile Check with WASM
         run: |
           source $HOME/.bashrc
+          printenv
           cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
 
   # check-std:
