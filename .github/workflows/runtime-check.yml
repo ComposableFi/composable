@@ -16,11 +16,11 @@ jobs:
         with: 
           fetch-depth: 0
 
-  #     - name: Check for runtime changes
-  #       working-directory: "./.maintain/"
-  #       id: check_runtime
-  #       run: |
-  #         sh check_runtime.sh
+      - name: Check for runtime changes
+        working-directory: "./.maintain/"
+        id: check_runtime
+        run: |
+          sh check_runtime.sh
 
   #     - name: Echo output
   #       run: echo ${{ env.RUNTIME_CHECK }}
