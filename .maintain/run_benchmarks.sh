@@ -1,13 +1,13 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Runs benchmarks for runtimes whose files have changed.
 
-set -e # fail on any error
+#set -e # fail on any error
 
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
 
-declare -a VERSIONS_FILES=(
+VERSIONS_FILES=(
   "runtime/picasso/src/weights,picasso,picasso"
   "runtime/dali/src/weights,dali-chachacha,dali"
   "runtime/composable/src/weights,composable,composable"
