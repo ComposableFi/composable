@@ -10,9 +10,6 @@ on:
       - releases
   workflow_dispatch:
 
-env:
-  DOCKER_USER_OPTION: '$UID:$GID'
-
 jobs:
   check-benchmarks:
     name: Check Benchmarks
