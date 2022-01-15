@@ -16,37 +16,37 @@ jobs:
         with: 
           fetch-depth: 0
 
-      - name: Check for runtime changes
-        working-directory: "./.maintain/"
-        id: check_runtime
-        run: |
-          sh check_runtime.sh
+  #     - name: Check for runtime changes
+  #       working-directory: "./.maintain/"
+  #       id: check_runtime
+  #       run: |
+  #         sh check_runtime.sh
 
-      - name: Echo output
-        run: echo ${{ env.RUNTIME_CHECK }}
+  #     - name: Echo output
+  #       run: echo ${{ env.RUNTIME_CHECK }}
 
-      - name: Run Simnode
-        if: "$${{ env.RUNTIME_CHECK }} == 1"
-        working-directory: "./.maintain/"
-        id: run_simnode
-        run: |
-          sh run_simnode.sh
+  #     - name: Run Simnode
+  #       if: "$${{ env.RUNTIME_CHECK }} == 1"
+  #       working-directory: "./.maintain/"
+  #       id: run_simnode
+  #       run: |
+  #         sh run_simnode.sh
 
-  benchmark: 
-    name: Benchmark
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - bmark
-    steps:
-      - uses: actions/checkout@v2
-      - name: Benchmark Test
-        if: "$${{ env.RUNTIME_CHECK }} == 1"
-        working-directory: "./.maintain/"
-        id: run_benchmarks
-        run: |
-          sh run_benchmarks.sh
+  # benchmark: 
+  #   name: Benchmark
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - bmark
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Benchmark Test
+  #       if: "$${{ env.RUNTIME_CHECK }} == 1"
+  #       working-directory: "./.maintain/"
+  #       id: run_benchmarks
+  #       run: |
+  #         sh run_benchmarks.sh
           
 
 

@@ -27,84 +27,84 @@ jobs:
         run: |
           cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
 
-  check-std:
-    name: Check STD
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    steps:
-      - uses: actions/checkout@v2
-      - name: Compile check with std
-        run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --features=std --workspace --exclude integration-tests
+  # check-std:
+  #   name: Check STD
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Compile check with std
+  #       run: |
+  #         SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --features=std --workspace --exclude integration-tests
 
-  linters:
-    name: Linters
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    steps:
-      - uses: actions/checkout@v2
-        with: 
-          fetch-depth: 0
-      - run: |
-          /home/runner/.cargo/bin/rustup show
-          /home/runner/.cargo/bin/rustup override unset
-          /home/runner/.cargo/bin/rustup show
-      - name: Cargo fmt
-        run: |
-          /home/runner/.cargo/bin/cargo +nightly fmt -- --check
-      - name: Hadolint
-        env:
-          HADOLINT_VERSION: v2.8.0
-        run: |
-          curl -L -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
-          chmod +x hadolint
-          ./hadolint --version
-          total_exit_code=0
-          while IFS= read -r file; do
-            echo "=== $file ==="
-            ./hadolint --config .hadolint.yaml $file || total_exit_code=$?
-            echo ""
-          done < <(find . -name "Dockerfile")
-          exit $total_exit_code
-      - name: Cargo clippy
-        run: |
-          /home/runner/.cargo/bin/cargo +nightly clippy -- -D warnings
-      - name: Cargo udeps
-        env:
-          UDEPS_VERSION: v0.1.24
-        run: |
-          curl -L -O "https://github.com/est31/cargo-udeps/releases/download/${UDEPS_VERSION}/cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
-          tar xzf "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
-          cp "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu/cargo-udeps" ~/.cargo/bin/
-          rm -r "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu"
-          /home/runner/.cargo/bin/cargo udeps --version
-          SKIP_WASM_BUILD=1 cargo udeps --workspace --all-features
-        continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.  
+  # linters:
+  #   name: Linters
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with: 
+  #         fetch-depth: 0
+  #     - run: |
+  #         /home/runner/.cargo/bin/rustup show
+  #         /home/runner/.cargo/bin/rustup override unset
+  #         /home/runner/.cargo/bin/rustup show
+  #     - name: Cargo fmt
+  #       run: |
+  #         /home/runner/.cargo/bin/cargo +nightly fmt -- --check
+  #     - name: Hadolint
+  #       env:
+  #         HADOLINT_VERSION: v2.8.0
+  #       run: |
+  #         curl -L -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
+  #         chmod +x hadolint
+  #         ./hadolint --version
+  #         total_exit_code=0
+  #         while IFS= read -r file; do
+  #           echo "=== $file ==="
+  #           ./hadolint --config .hadolint.yaml $file || total_exit_code=$?
+  #           echo ""
+  #         done < <(find . -name "Dockerfile")
+  #         exit $total_exit_code
+  #     - name: Cargo clippy
+  #       run: |
+  #         /home/runner/.cargo/bin/cargo +nightly clippy -- -D warnings
+  #     - name: Cargo udeps
+  #       env:
+  #         UDEPS_VERSION: v0.1.24
+  #       run: |
+  #         curl -L -O "https://github.com/est31/cargo-udeps/releases/download/${UDEPS_VERSION}/cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+  #         tar xzf "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+  #         cp "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu/cargo-udeps" ~/.cargo/bin/
+  #         rm -r "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu"
+  #         /home/runner/.cargo/bin/cargo udeps --version
+  #         SKIP_WASM_BUILD=1 cargo udeps --workspace --all-features
+  #       continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.  
         
-  test:
-    name: Unit Test
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install cargo-llvm-cov
-        run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
-      - name: Run Test (with coverage)
-        run: |
-          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain nightly
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo llvm-cov --workspace --lcov --output-path lcov.info
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: lcov.info
-          fail_ci_if_error: false
+  # test:
+  #   name: Unit Test
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Install cargo-llvm-cov
+  #       run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
+  #     - name: Run Test (with coverage)
+  #       run: |
+  #         /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain nightly
+  #         SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo llvm-cov --workspace --lcov --output-path lcov.info
+  #     - name: Upload coverage to Codecov
+  #       uses: codecov/codecov-action@v1
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }}
+  #         files: lcov.info
+  #         fail_ci_if_error: false
