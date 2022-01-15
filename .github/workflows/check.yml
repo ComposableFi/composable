@@ -25,6 +25,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Compile Check with WASM
         run: |
+          echo $USER
+          which cargo
           cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
 
   # check-std:
