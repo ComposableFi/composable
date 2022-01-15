@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Compile Check with WASM
         run: |
-          echo $USER
+          echo $PATH
           which cargo
           cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
 
