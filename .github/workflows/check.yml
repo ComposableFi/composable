@@ -23,7 +23,6 @@ jobs:
       - name: Compile Check with WASM
         run: |
           whoami
-          which cargo
           printenv
 
   # check-std:
