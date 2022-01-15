@@ -22,9 +22,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: Compile Check with WASM
         run: |
-          echo $PATH
-          cat ~/.bashrc
+          source ~/.bashrc
           which cargo
+          echo $PATH
           cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
 
   # check-std:
