@@ -55,6 +55,10 @@ jobs:
           /home/runner/.cargo/bin/rustup show
           /home/runner/.cargo/bin/rustup override unset
           /home/runner/.cargo/bin/rustup show
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
       - name: Cargo fmt
         run: |
           /home/runner/.cargo/bin/cargo +nightly fmt -- --check
