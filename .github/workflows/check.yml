@@ -64,7 +64,7 @@ jobs:
           dockerfile: docker/Dockerfile
       - name: Cargo clippy
         run: |
-          /home/runner/.cargo/bin/cargo +nightly clippy -- -D warnings
+          /home/runner/.cargo/bin/cargo clippy -- -D warnings
       - name: Cargo udeps
         env:
           UDEPS_VERSION: v0.1.24
