@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Compile Check with WASM
         run: |
-          whoami
+          source $HOME/.bashrc
           printenv
 
   # check-std:
