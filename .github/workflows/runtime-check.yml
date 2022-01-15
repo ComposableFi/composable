@@ -2,7 +2,7 @@ name: Check Runtime
 on:
   push:
     branches:
-      - release-*
+      - releases
       - main
   pull_request:
     branches:
@@ -30,7 +30,7 @@ jobs:
         working-directory: "./.maintain/"
         id: run_simnode
         run: |
-          ./run_simnode.sh
+          ./run_simnode
 
   benchmark: 
     name: Benchmark
