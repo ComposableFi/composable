@@ -24,7 +24,8 @@ jobs:
         run: |
           source $HOME/.bashrc
           printenv
-          cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
+      - name: Check
+        run: cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
 
   # check-std:
   #   name: Check STD
