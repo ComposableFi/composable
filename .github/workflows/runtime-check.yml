@@ -30,7 +30,7 @@ jobs:
         working-directory: "./.maintain/"
         id: run_simnode
         run: |
-          sh run_simnode.sh
+          ./run_simnode.sh
 
   benchmark: 
     name: Benchmark
@@ -46,7 +46,7 @@ jobs:
         working-directory: "./.maintain/"
         id: run_benchmarks
         run: |
-          sh run_benchmarks.sh
+          ./run_benchmarks
           
 
 

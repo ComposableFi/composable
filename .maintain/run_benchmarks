@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Runs benchmarks for runtimes whose files have changed.
 
