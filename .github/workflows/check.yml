@@ -23,8 +23,8 @@ jobs:
       - name: Compile Check with WASM
         run: |
           whoami
-          source ~/.bashrc
           which cargo
+          printenv
 
   # check-std:
   #   name: Check STD
