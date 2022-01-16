@@ -14,6 +14,12 @@ sanitised_git_logs(){
   sed 's/^/* /g'
 }
 
+get_latest_release() {
+  curl --silent "https://api.github.com/repos/$1/releases/latest" | # Get latest release from GitHub api
+    grep '"tag_name":' |                                            # Get tag line
+    sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
+}
+
 # Returns the last published release on github
 # Note: we can't just use /latest because that ignores prereleases
 # repo: 'organization/repo'
@@ -111,6 +117,21 @@ has_runtime_changes() {
   to=$2
   if git diff --name-only "${from}...${to}" \
     | grep -q -e '^frame/' -e "^runtime/$3/"
+  then
+    return 0
+  else
+    return 1
+  fi
+}
+
+
+# Check for client changes between two commits. This is defined as any changes
+# to node/, src/
+has_client_changes() {
+  from=$1
+  to=$2
+  if git diff --name-only "${from}...${to}" \
+    | grep -q -e '^node/' -e "^src/"
   then
     return 0
   else

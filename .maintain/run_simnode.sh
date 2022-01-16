@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+# Runs simnode for runtimes whose files have changed.
+
+#set -e # fail on any error
+
+#shellcheck source=../common/lib.sh
+. "$(dirname "${0}")/./common/lib.sh"
+
+# shellcheck disable=SC2039
+VERSIONS_FILES=(
+  "picasso,picasso"
+  "dali-chachacha,dali"
+  # "composable,composable"
+)
+
+LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
+GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+boldprint () { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
+boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done; printf "|\n" ; }
+
+
+run_simnode () {
+  CHAIN="$1"
+  FOLDER="$2"
+if has_runtime_changes "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" "$FOLDER"
+then
+    echo "Running simnode for $CHAIN"
+	  /home/runner/.cargo/bin/rustup update nightly
+    /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
+    /home/runner/.cargo/bin/cargo build --release -p simnode
+    YDATE=$(date -d yesterday +'%m-%d-%Y')
+    FILENAME=cl-1-$YDATE.zip
+    GS_BUCKET="picasso-data-store"
+    sudo gsutil cp gs://$GS_BUCKET/"$FILENAME" .
+    sudo unzip -o "$FILENAME" -d  /tmp/db
+    ./target/release/simnode --chain="$CHAIN" --base-path=/tmp/db/ --pruning=archive --execution=wasm
+fi
+}
+
+echo "check if the runtime changed and run simnode"
+# shellcheck disable=SC2039
+for i in "${VERSIONS_FILES[@]}"; do
+  while IFS=',' read -r chain folder; do
+      boldprint "check if the wasm sources changed for $chain"
+      # shellcheck disable=SC2086
+      run_simnode "$chain" $folder
+  done <<< "$i"
+done
+

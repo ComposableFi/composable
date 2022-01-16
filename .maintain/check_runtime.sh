@@ -1,23 +1,23 @@
 #!/bin/bash
 #
-# check for any changes in the node/src/runtime, frame/* and primitives/sr_* trees. if
+# check for any changes in the runtime/ and frame/*. if
 # there are any changes found, it should mark the PR breaksconsensus and
 # "auto-fail" the PR if there isn't a change in the runtime/src/lib.rs file
 # that alters the version.
 
-set -e # fail on any error
+#set -e # fail on any error
 
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
 
-declare -a VERSIONS_FILES=(
+# shellcheck disable=SC2039
+VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
   "runtime/dali/src/lib.rs,dali-chachacha,dali"
-  "runtime/composable/src/lib.rs,composable,composable"
+   "runtime/composable/src/lib.rs,composable,composable"
 )
 
-#RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^[0-9]' | tail -1 )
-RELEASE_VERSION=$(gh release list -L=1)
+RELEASE_VERSION=$(get_latest_release ComposableFi/composable)
 COMMIT_SHA=$(git rev-parse --short=9 HEAD)
 GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
 
@@ -31,27 +31,25 @@ git log --graph --oneline --decorate=short -n 10
 
 boldprint "make sure the main branch and release tag are available in shallow clones"
 git fetch --depth="${GIT_DEPTH:-100}" origin main
-git fetch --depth="${GIT_DEPTH:-100}" origin releases
-git tag -f releases FETCH_HEAD
-git log -n1 releases
+git fetch --depth="${GIT_DEPTH:-100}" origin "${RELEASE_VERSION}"
+git tag -f "${RELEASE_VERSION}" FETCH_HEAD
+git log -n1 "${RELEASE_VERSION}"
 
 simnode_check () {
   VERSIONS_FILE="$1"
-if has_runtime_changes origin/main "${GITHUB_REF_NAME}" $3 && check_runtime $VERSIONS_FILE $2
-  boldprint "Checking for conditions to run simnode"
+if has_runtime_changes "${RELEASE_VERSION}" "${GITHUB_REF_NAME}" "$3" && check_runtime "$VERSIONS_FILE" "$2"
 then
-  boldprint "Running simnode for INtegration test OK"
-	echo "RUNTIME_CHECK=1" >> $GITHUB_ENV
-  	
+   boldprint "Checking for conditions to run simnode"
+	echo "RUNTIME_CHECK=1" >> "$GITHUB_ENV"
 fi
 }
 
 
 check_runtime() {
   VERSIONS_FILE="$1"
-add_spec_version="$(git diff origin tags/releases ${GITHUB_REF_NAME} -- "${VERSIONS_FILE}" \
+add_spec_version="$(git diff origin "${RELEASE_VERSION}" ${GITHUB_REF_NAME} -- "${VERSIONS_FILE}" \
 	| sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
-sub_spec_version="$(git diff tags/releases ${GITHUB_REF_NAME} -- "${VERSIONS_FILE}" \
+sub_spec_version="$(git diff "${RELEASE_VERSION}" ${GITHUB_REF_NAME} -- "${VERSIONS_FILE}" \
 	| sed -n -r "s/^\-[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
 if [ "${add_spec_version}" != "${sub_spec_version}" ]
 then
@@ -69,9 +67,9 @@ else
 	# check for impl_version updates: if only the impl versions changed, we assume
 	# there is no consensus-critical logic that has changed.
 	
-	add_impl_version="$(git diff tags/releases ${GITHUB_REF_NAME} -- "${VERSIONS_FILE}" \
+	add_impl_version="$(git diff "${RELEASE_VERSION}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" \
 		| sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
-	sub_impl_version="$(git diff tags/releases ${GITHUB_REF_NAME} -- "${VERSIONS_FILE}" \
+	sub_impl_version="$(git diff "${RELEASE_VERSION}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" \
 		| sed -n -r 's/^\-[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
 
 
@@ -108,15 +106,8 @@ fi
 boldprint "check if the runtime changed and run simnode"
 for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
-      echo "$chain"
-      boldprint "check if the wasm sources changed"
-      $snodeout = simnode_check $output $chain $folder
-	  if [ $snodeout == 1 ]
-	  then
-		echo "# $chain" >> release.md
-		/home/runner/.cargo/bin/cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
-        /home/runner/.cargo/bin/subwasm info ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm >> release.md
-	  fi
+      boldprint "check if the wasm sources changed for $chain"
+      simnode_check $output $chain $folder
   done <<< "$i"
 done
 
