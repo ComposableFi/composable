@@ -69,12 +69,18 @@ impl<AssetId: PartialEq, Balance: MathBalance> Sell<AssetId, Balance> {
 /// Pair with same base and quote is considered valid as it allows to have mixer, money laundering
 /// like behavior.
 #[repr(C)]
-#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)] 
 pub struct CurrencyPair<AssetId> {
-	/// See [Base Currency](https://www.investopedia.com/terms/b/basecurrency.asp)
+	/// See [Base Currency](https://www.investopedia.com/terms/b/basecurrency.asp).
+	/// Also can be named `native`(to the market) currency.
 	pub base: AssetId,
-	/// counter currency
+	/// Counter currency. 
+	/// Also can be named `price` currency.
 	pub quote: AssetId,
+}
+
+/// Generically pair can be of external URI/location, not copy.
+impl<AssetId: Copy> Copy for CurrencyPair<AssetId> { 
 }
 
 impl<AssetId: PartialEq> CurrencyPair<AssetId> {
@@ -96,6 +102,10 @@ impl<AssetId: PartialEq> CurrencyPair<AssetId> {
 	/// ```
 	pub fn as_slice(&self) -> &[AssetId] {
 		unsafe { sp_std::slice::from_raw_parts(self as *const Self as *const AssetId, 2) }
+	}
+
+	pub fn reverse(&mut self) {
+		sp_std::mem::swap(&mut self.quote, &mut  self.base)
 	}
 }
 

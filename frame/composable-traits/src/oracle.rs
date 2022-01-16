@@ -62,6 +62,7 @@ pub trait Oracle {
 		Self::get_price(asset, unit).map(|_| true)
 	}
 
+	/// Time Weighted Average Price
 	fn get_twap(
 		of: Self::AssetId,
 		weighting: Vec<Self::Balance>,

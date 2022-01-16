@@ -54,7 +54,6 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 			),
 			system::CheckWeight::<Self::Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Self::Runtime>::from(0),
-			crowdloan_rewards::PrevalidateAssociation::<Self::Runtime>::new(),
 		)
 	}
 }
