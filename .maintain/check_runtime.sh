@@ -16,7 +16,8 @@ declare -a VERSIONS_FILES=(
   "runtime/composable/src/lib.rs,composable,composable"
 )
 
-RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^[0-9]' | tail -1 )
+#RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^[0-9]' | tail -1 )
+RELEASE_VERSION=$(gh release list -L=1)
 COMMIT_SHA=$(git rev-parse --short=9 HEAD)
 GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
 

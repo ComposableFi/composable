@@ -16,6 +16,10 @@ jobs:
         with: 
           fetch-depth: 0
 
+      - name: Install Github CLI 
+        run: |
+          dpkg -i https://github.com/cli/cli/releases/download/v2.4.0/gh_2.4.0_linux_386.deb
+
       - name: Check for runtime changes
         working-directory: "./.maintain/"
         id: check_runtime
