@@ -11,7 +11,7 @@
 VERSIONS_FILES=(
   "picasso,picasso"
   "dali-chachacha,dali"
-  "composable,composable"
+  # "composable,composable"
 )
 
 LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)

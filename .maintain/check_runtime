@@ -14,7 +14,7 @@
 VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
   "runtime/dali/src/lib.rs,dali-chachacha,dali"
-  "runtime/composable/src/lib.rs,composable,composable"
+#   "runtime/composable/src/lib.rs,composable,composable"
 )
 
 RELEASE_VERSION=$(get_latest_release ComposableFi/composable)

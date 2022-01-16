@@ -10,7 +10,7 @@
 VERSIONS_FILES=(
   "runtime/picasso/src/weights,picasso,picasso"
   "runtime/dali/src/weights,dali-chachacha,dali"
-  "runtime/composable/src/weights,composable,composable"
+  # "runtime/composable/src/weights,composable,composable"
 )
 
 LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
@@ -51,7 +51,7 @@ then
     done
 git add .
 git commit -m "Updates weights"
-git push origin $GITHUB_REF_NAME # does this work?
+# git push origin $GITHUB_REF_NAME 
 fi
 }
 
