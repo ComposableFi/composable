@@ -73,9 +73,11 @@ impl<AssetId: PartialEq, Balance: MathBalance> Sell<AssetId, Balance> {
 pub struct CurrencyPair<AssetId> {
 	/// See [Base Currency](https://www.investopedia.com/terms/b/basecurrency.asp).
 	/// Also can be named `native`(to the market) currency.
+	/// Usually less stable, can be used as collateral.
 	pub base: AssetId,
 	/// Counter currency. 
-	/// Also can be named `price` currency.
+	/// Also can be named `price` currency. 
+	/// Usually more stable, may be `borrowable` asset. 
 	pub quote: AssetId,
 }
 

@@ -315,6 +315,7 @@ pub mod pallet {
 		ExceedLendingCount,
 		LiquidationFailed,
 		BorrowerDataCalculationFailed,
+		Unauthorized,
 	}
 
 	#[pallet::event]
@@ -511,17 +512,30 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// owner must be very careful calling this
 		#[pallet::weight(<T as Config>::WeightInfo::create_new_market())]
 		#[transactional]
 		pub fn update_market(
 			origin: OriginFor<T>,
-			_input: UpdateInput<T::LiquidationStrategyId>,
+			market_id: MarketIndex,
+			input: UpdateInput<T::LiquidationStrategyId>,
 		) -> DispatchResultWithPostInfo {
-			let _who = ensure_signed(origin)?;
-			// 1. validate owner
-			// 2. update configuration
-			// 3. what is owner updates and forces liquidations? ok.
-			Err(DispatchError::Other("not implemented").into())
+			let who = ensure_signed(origin)?;
+			Markets::<T>::mutate(&market_id, |market| {
+				if let Some(market) = market {
+					ensure!(who == market.manager, Error::<T>::Unauthorized);
+
+					market.collateral_factor = input.collateral_factor;
+					market.interest_rate_model = input.interest_rate_model;
+					market.under_collaterized_warn_percent = input.under_collaterized_warn_percent;
+					market.liquidators = input.liquidators.clone();
+					Ok(())
+				} else {
+					Err(Error::<T>::MarketDoesNotExist)
+				}
+			})?;
+			Self::deposit_event(Event::<T>::MarketUpdated { market_id, input });
+			Ok(().into())
 		}
 
 		/// Deposit collateral to market.
@@ -1059,8 +1073,7 @@ pub mod pallet {
 						strategies: [(
 							Self::account_id(&market_id),
 							// Borrowable = 100% - reserved
-							Perquintill::one()
-								.saturating_sub(config_input.updatable.reserved_factor),
+							Perquintill::one().saturating_sub(config_input.reserved_factor()),
 						)]
 						.iter()
 						.cloned()

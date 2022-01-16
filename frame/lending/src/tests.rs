@@ -61,12 +61,12 @@ fn create_market(
 ) -> (MarketIndex, BorrowAssetVault) {
 	let config = CreateInput {
 		updatable: UpdateInput {
-			reserved_factor: reserved,
 			collateral_factor,
 			under_collaterized_warn_percent: Percent::from_float(0.10),
 			liquidators: vec![],
 			interest_rate_model: InterestRateModel::default(),
 		},
+		reserved_factor: reserved,
 		currency_pair: CurrencyPair::new(collateral_asset, borrow_asset),
 	};
 	<Lending as composable_traits::lending::Lending>::create(manager, config).unwrap()

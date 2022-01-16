@@ -205,7 +205,6 @@ pub mod pallet {
 
 	impl<T: Config> Liquidation for Pallet<T> {
 		type LiquidationStrategyId = T::LiquidationStrategyId;
-
 		type OrderId = T::OrderId;
 
 		fn liquidate(
@@ -213,30 +212,26 @@ pub mod pallet {
 			order: Sell<Self::MayBeAssetId, Self::Balance>,
 			configuration: Vec<Self::LiquidationStrategyId>,
 		) -> Result<T::OrderId, DispatchError> {
+			let mut configuration = configuration;
 			if configuration.is_empty() {
-				let configuration = Strategies::<T>::get(DefaultStrategyIndex::<T>::get())
-					.expect("default always exists");
-				match configuration {
-					LiquidationStrategyConfiguration::DutchAuction(configuration) => {
-						Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
-						return T::DutchAuction::ask(from_to, order, configuration)
-					},
-					_ => return Err(DispatchError::Other("TODO")),
-				}
-			} else {
-				for id in configuration {
-					let configuration = Strategies::<T>::get(id);
-					if let Some(configuration) = configuration {
-						let result = match configuration {
-							LiquidationStrategyConfiguration::DutchAuction(configuration) =>
-								T::DutchAuction::ask(from_to, order.clone(), configuration),
-							_ => return Err(DispatchError::Other("TODO")),
-						};
+				configuration.push(DefaultStrategyIndex::<T>::get())
+			};
 
-						if result.is_ok() {
-							Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
-							return result
-						}
+			for id in configuration {
+				let configuration = Strategies::<T>::get(id);
+				if let Some(configuration) = configuration {
+					let result = match configuration {
+						LiquidationStrategyConfiguration::DutchAuction(configuration) =>
+							T::DutchAuction::ask(from_to, order.clone(), configuration),
+						_ =>
+							return Err(DispatchError::Other(
+								"as for now, only auction liquidators implemented",
+							)),
+					};
+
+					if result.is_ok() {
+						Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
+						return result
 					}
 				}
 			}

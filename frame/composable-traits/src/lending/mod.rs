@@ -19,8 +19,6 @@ pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 
 #[derive(Encode, Decode, Default, TypeInfo, Debug, Clone, PartialEq)]
 pub struct UpdateInput<LiquidationStrategyId> {
-	/// Reserve factor of market.
-	pub reserved_factor: Perquintill,
 	/// Collateral factor of market
 	pub collateral_factor: MoreThanOneFixedU128,
 	///  warn borrower when loan's collateral/debt ratio
@@ -39,6 +37,8 @@ pub struct CreateInput<LiquidationStrategyId, AssetId> {
 	/// collateral currency and borrow currency
 	/// in case of liquidation, collateral is base and borrow is quote
 	pub currency_pair: CurrencyPair<AssetId>,
+	/// Reserve factor of market borrow vault.
+	pub reserved_factor: Perquintill,
 }
 
 impl<LiquidationStrategyId, AssetId: Copy> CreateInput<LiquidationStrategyId, AssetId> {
@@ -50,7 +50,7 @@ impl<LiquidationStrategyId, AssetId: Copy> CreateInput<LiquidationStrategyId, As
 	}
 
 	pub fn reserved_factor(&self) -> Perquintill {
-		self.updatable.reserved_factor
+		self.reserved_factor
 	}
 }
 
