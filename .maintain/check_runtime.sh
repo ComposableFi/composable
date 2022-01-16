@@ -110,7 +110,8 @@ for i in "${VERSIONS_FILES[@]}"; do
       echo "$chain"
       boldprint "check if the wasm sources changed"
       $snodeout = simnode_check $output $chain $folder
-	  if $snodeout == 1
+	  if [ $snodeout == 1 ]
+	  then
 		echo "# $chain" >> release.md
 		/home/runner/.cargo/bin/cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
         /home/runner/.cargo/bin/subwasm info ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm >> release.md
