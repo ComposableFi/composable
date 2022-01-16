@@ -10,16 +10,9 @@
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
 
-LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
-GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
-
-
-boldprint () { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
-boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done; printf "|\n" ; }
-
-
 if has_client_changes "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}"
 then
+  boldprint "Building new client binaries"
   cargo build --release -p composable
   tar -czvf composable-${{ RELEASE_VERSION }}.tar.gz target/release/composable
   tar -czvf picasso_runtime.compact.wasm-${RELEASE_VERSION}.tar.gz runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm

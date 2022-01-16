@@ -13,13 +13,6 @@ VERSIONS_FILES=(
   "runtime/composable/src/weights,composable,composable"
 )
 
-LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
-GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
-
-boldprint () { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
-boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done; printf "|\n" ; }
-
-
 steps=50
 repeat=20
 
@@ -45,15 +38,12 @@ pallets=(
 /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
 /home/runner/.cargo/bin/cargo build --release -p composable --features=runtime-benchmarks
 
-
 run_benchmarks () {
     OUTPUT=$1
     CHAIN=$2
-    FOLDER=$3
-    if has_runtime_changes "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" $FOLDER
-then
     # shellcheck disable=SC2068
     boldprint "Running benchmarks for $CHAIN"
+    # shellcheck disable=SC2068
     for p in ${pallets[@]}; do
 	    ./target/release/composable benchmark \
 		    --chain="$CHAIN" \
@@ -68,13 +58,15 @@ then
     done
 git add .
 git commit -m "Updates weights"
-# git push origin $GITHUB_REF_NAME 
-fi
+# git push origin $GITHUB_REF_NAME TODO: commit changes back to branch
 }
 
-boldprint "Running benchmarks"
 for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
-      run_benchmarks $output $chain $folder
+    if has_runtime_changes "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" "$folder"
+    then
+      boldprint "Running benchmarks for $chain"
+      run_benchmarks $output $chain
+    fi
   done <<< "$i"
 done

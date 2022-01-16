@@ -17,18 +17,20 @@ VERSIONS_FILES=(
    "runtime/composable/src/lib.rs,composable,composable"
 )
 
-LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
-GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
-
-/home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
-/home/runner/.cargo/bin/cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
-
-boldprint () { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
-boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done; printf "|\n" ; }
+# Install the neccessary tools needed for building
+cargo install --git https://github.com/chevdor/srtool-cli
+cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
 
 
+build_runtime () {
+  chain=$3
+  # srtool for reproducible builds
+  srtool build --package "$chain"-runtime --profile release --runtime-dir ./runtime/"$chain"
+  # subwasm for runtime metadata
+  subwasm info ./runtime/"$chain"/target/srtool/release/wbuild/"$chain"-runtime/"$chain"_runtime.compact.wasm >> "$chain"-release.md
+}
 
-boldprint "check if the runtime changed and run simnode"
+# Check which runtimes have changed and build them
 for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
     boldprint "check if the wasm sources changed for $chain"
@@ -39,8 +41,3 @@ for i in "${VERSIONS_FILES[@]}"; do
   done <<< "$i"
 done
 
-build_runtime () {
-  chain=$3
-  /home/runner/.cargo/bin/srtool build --package "$chain"-runtime --profile release --runtime-dir ./runtime/"$chain"
-  /home/runner/.cargo/bin/subwasm info ./runtime/"$chain"/target/srtool/release/wbuild/"$chain"-runtime/"$chain"_runtime.compact.wasm >> "$chain"-release.md
-}

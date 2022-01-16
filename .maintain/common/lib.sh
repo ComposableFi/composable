@@ -138,3 +138,69 @@ has_client_changes() {
     return 1
   fi
 }
+
+# checks if the spec/impl version has increased
+check_runtime() {
+  VERSIONS_FILE="$1"
+add_spec_version="$(git diff origin "${RELEASE_VERSION}" ${GITHUB_REF_NAME} -- "${VERSIONS_FILE}" \
+	| sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
+sub_spec_version="$(git diff "${RELEASE_VERSION}" ${GITHUB_REF_NAME} -- "${VERSIONS_FILE}" \
+	| sed -n -r "s/^\-[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
+if [ "${add_spec_version}" != "${sub_spec_version}" ]
+then
+
+	boldcat <<-EOT
+
+		changes to the runtime sources and changes in the spec version.
+
+		spec_version: ${sub_spec_version} -> ${add_spec_version}
+
+	EOT
+	return 0
+
+else
+	# check for impl_version updates: if only the impl versions changed, we assume
+	# there is no consensus-critical logic that has changed.
+
+	add_impl_version="$(git diff "${RELEASE_VERSION}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" \
+		| sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
+	sub_impl_version="$(git diff "${RELEASE_VERSION}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" \
+		| sed -n -r 's/^\-[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
+
+
+	# see if the impl version changed
+	if [ "${add_impl_version}" != "${sub_impl_version}" ]
+	then
+		boldcat <<-EOT
+
+		changes to the runtime sources and changes in the impl version.
+
+		impl_version: ${sub_impl_version} -> ${add_impl_version}
+
+		EOT
+		return 0
+	fi
+
+
+	boldcat <<-EOT
+
+	wasm source files changed but not the spec/impl version. If changes made do not alter logic,
+	just bump 'impl_version'. If they do change logic, bump 'spec_version'.
+
+	source file directories:
+	- frame/*
+	- runtime/$2/*
+
+	versions file: ${VERSIONS_FILE}
+
+	EOT
+	return 1
+fi
+}
+
+
+boldprint () { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
+boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done; printf "|\n" ; }
+
+LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
+GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
