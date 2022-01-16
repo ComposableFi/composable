@@ -10,7 +10,7 @@
 VERSIONS_FILES=(
   "runtime/picasso/src/weights,picasso,picasso"
   "runtime/dali/src/weights,dali-chachacha,dali"
-  # "runtime/composable/src/weights,composable,composable"
+  "runtime/composable/src/weights,composable,composable"
 )
 
 LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
@@ -23,6 +23,23 @@ boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${
 steps=50
 repeat=20
 
+pallets=(
+	oracle
+	frame_system
+	timestamp
+	session
+	balances
+	indices
+	membership
+	treasury
+	scheduler
+	collective
+	democracy
+	collator_selection
+	utility
+	lending
+	dutch_auction
+)
 
 /home/runner/.cargo/bin/rustup install nightly
 /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly

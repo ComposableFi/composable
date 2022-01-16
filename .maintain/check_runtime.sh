@@ -14,7 +14,7 @@
 VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
   "runtime/dali/src/lib.rs,dali-chachacha,dali"
-#   "runtime/composable/src/lib.rs,composable,composable"
+   "runtime/composable/src/lib.rs,composable,composable"
 )
 
 RELEASE_VERSION=$(get_latest_release ComposableFi/composable)
@@ -38,11 +38,9 @@ git log -n1 "${RELEASE_VERSION}"
 simnode_check () {
   VERSIONS_FILE="$1"
 if has_runtime_changes "${RELEASE_VERSION}" "${GITHUB_REF_NAME}" "$3" && check_runtime "$VERSIONS_FILE" "$2"
-  boldprint "Checking for conditions to run simnode"
 then
-  boldprint "Running simnode for INtegration test OK"
+   boldprint "Checking for conditions to run simnode"
 	echo "RUNTIME_CHECK=1" >> "$GITHUB_ENV"
-  	
 fi
 }
 
