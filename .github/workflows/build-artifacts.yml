@@ -31,14 +31,19 @@ jobs:
         echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
         make version
 
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+
     - name: 🔨 Build Composable Artifacts
       run: |
         /home/runner/.cargo/bin/cargo build --release --bins
-
-    - name: Build wasm with srtool
-      run: |
         /home/runner/.cargo/bin/cargo install --git https://github.com/chevdor/srtool-cli
-        /home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso > srtool.out
+        /home/runner/.cargo/bin/srtool build --package picasso-runtime --profile release --runtime-dir ./runtime/picasso
+        tl=$(sed -n '$=' srtool.out)
+        itl=$(sed -n '/Package/=' srtool.out)
+        echo $itl, $tl
+        outsrtool=$(sed -n "$itl,$tl"p srtool.out)
 
     - name: Archive build targets
       run: |
@@ -54,32 +59,16 @@ jobs:
         asset_name: picasso_runtime.compact.compressed.wasm
         tag: ${{ github.ref }}
         overwrite: true
-    
-    - name: Get wasm info
-      id: wasmout
-      run: |
-        /home/runner/.cargo/bin/cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
-        /home/runner/.cargo/bin/subwasm info ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm >> release.md
 
     - name: Upload Binary on Release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
         file: target/release/composable
-        asset_name: composable
+        asset_name: composable-${{ env.RELEASE_VERSION }}
         tag: ${{ github.ref }}
         overwrite: true
-    
-    - name: Update Release Note
-      run: |
-        sed -i '1i # Code ' release.md
-
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        body_path: release.md
-        token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        body: "Composable Binary Runtime"
 
 
   dali-chacha-client-release:
