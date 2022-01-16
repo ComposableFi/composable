@@ -117,3 +117,18 @@ has_runtime_changes() {
     return 1
   fi
 }
+
+
+# Check for client changes between two commits. This is defined as any changes
+# to node/, src/
+has_client_changes() {
+  from=$1
+  to=$2
+  if git diff --name-only "${from}...${to}" \
+    | grep -q -e '^node/' -e "^src/"
+  then
+    return 0
+  else
+    return 1
+  fi
+}
