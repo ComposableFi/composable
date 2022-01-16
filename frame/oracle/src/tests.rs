@@ -3,6 +3,7 @@ use crate::{
 	AssetInfo, Error, PrePrice, Price, Withdraw, *,
 };
 use codec::Decode;
+use composable_traits::defi::CurrencyPair;
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::{Currency, OnInitialize},
@@ -14,7 +15,7 @@ use sp_io::TestExternalities;
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{
 	traits::{BadOrigin, Zero},
-	Percent, RuntimeAppPublic,
+	FixedPointNumber, FixedU128, Percent, RuntimeAppPublic,
 };
 use std::sync::Arc;
 
@@ -592,6 +593,51 @@ fn historic_pricing() {
 		assert_eq!(Oracle::price_history(0), price_history);
 		assert_eq!(Oracle::price_history(0).len(), 3);
 	});
+}
+
+#[test]
+fn price_of_amount() {
+	new_test_ext().execute_with(|| {
+		let value = 100500;
+		let id = 42;
+		let amount = 10000;
+
+		let price = Price { price: value, block: System::block_number() };
+		Prices::<Test>::insert(id, price);
+		let total_price =
+			<Oracle as composable_traits::oracle::Oracle>::get_price(id, amount).unwrap();
+
+		assert_eq!(total_price.price, value * amount)
+	});
+}
+#[test]
+fn ratio_human_case() {
+	new_test_ext().execute_with(|| {
+		let price = Price { price: 10000, block: System::block_number() };
+		Prices::<Test>::insert(13, price);
+		let price = Price { price: 100, block: System::block_number() };
+		Prices::<Test>::insert(42, price);
+		let mut pair = CurrencyPair::new(13, 42);
+
+		let ratio = <Oracle as composable_traits::oracle::Oracle>::get_ratio(pair).unwrap();
+		assert_eq!(ratio, FixedU128::saturating_from_integer(100));
+		pair.reverse();
+		let ratio = <Oracle as composable_traits::oracle::Oracle>::get_ratio(pair).unwrap();
+		assert_eq!(ratio, FixedU128::saturating_from_rational(1_u32, 100_u32));
+	})
+}
+
+#[test]
+fn ratio_base_is_way_less_smaller() {
+	new_test_ext().execute_with(|| {
+		let price = Price { price: 1, block: System::block_number() };
+		Prices::<Test>::insert(13, price);
+		let price = Price { price: 10_u128.pow(12), block: System::block_number() };
+		Prices::<Test>::insert(42, price);
+		let pair = CurrencyPair::new(13, 42);
+		let ratio = <Oracle as composable_traits::oracle::Oracle>::get_ratio(pair).unwrap();
+		assert_eq!(ratio, FixedU128::saturating_from_rational(1, 1000000000000_u64));
+	})
 }
 
 #[test]

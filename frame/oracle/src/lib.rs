@@ -163,8 +163,10 @@ pub mod pallet {
 		pub who: AccountId,
 	}
 
+	// block timestamped value
 	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo, Clone)]
 	pub struct Price<PriceValue, BlockNumber> {
+		/// value
 		pub price: PriceValue,
 		pub block: BlockNumber,
 	}
@@ -377,11 +379,11 @@ pub mod pallet {
 
 		fn get_price(
 			asset: Self::AssetId,
-			_amount: Self::Balance,
+			amount: Self::Balance,
 		) -> Result<LastPrice<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
 				Prices::<T>::try_get(asset).map_err(|_| Error::<T>::PriceNotFound)?;
-			Ok(LastPrice { price, block })
+			Ok(LastPrice { price: price.safe_mul(&amount)?, block })
 		}
 
 		fn get_twap(
