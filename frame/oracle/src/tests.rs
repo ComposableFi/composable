@@ -623,6 +623,7 @@ fn ratio_human_case() {
 		assert_eq!(ratio, FixedU128::saturating_from_integer(100));
 		pair.reverse();
 		let ratio = <Oracle as composable_traits::oracle::Oracle>::get_ratio(pair).unwrap();
+
 		assert_eq!(ratio, FixedU128::saturating_from_rational(1_u32, 100_u32));
 	})
 }
@@ -635,7 +636,9 @@ fn ratio_base_is_way_less_smaller() {
 		let price = Price { price: 10_u128.pow(12), block: System::block_number() };
 		Prices::<Test>::insert(42, price);
 		let pair = CurrencyPair::new(13, 42);
+
 		let ratio = <Oracle as composable_traits::oracle::Oracle>::get_ratio(pair).unwrap();
+
 		assert_eq!(ratio, FixedU128::saturating_from_rational(1, 1000000000000_u64));
 	})
 }
