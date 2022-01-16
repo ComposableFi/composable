@@ -7,8 +7,14 @@ on:
     branches:
       - main
       - develop
-      - releases
+      - release/*
+  push:
+    branches:
+      - main    
   workflow_dispatch:
+
+env:
+  DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
   check-benchmarks:
@@ -22,10 +28,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Compile Check with WASM
         run: |
-          source $HOME/.bashrc
-          printenv
-      - name: Check
-        run: /home/runner/.cargo/bin/cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
+          /home/runner/.cargo/bin/cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
 
   check-std:
     name: Check STD
@@ -49,8 +52,6 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
-        with: 
-          fetch-depth: 0
       - run: |
           /home/runner/.cargo/bin/rustup show
           /home/runner/.cargo/bin/rustup override unset
@@ -61,11 +62,21 @@ jobs:
           node-version: 14.x
       - name: Cargo fmt
         run: |
-          /home/runner/.cargo/bin/cargo +nightly fmt -- --check
+          /home/runner/.cargo/bin/cargo fmt -- --check
       - name: Hadolint
-        uses: hadolint/hadolint-action@v1.6.0
-        with:
-          dockerfile: docker/Dockerfile
+        env:
+          HADOLINT_VERSION: v2.8.0
+        run: |
+          curl -L -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
+          chmod +x hadolint
+          ./hadolint --version
+          total_exit_code=0
+          while IFS= read -r file; do
+            echo "=== $file ==="
+            ./hadolint --config .hadolint.yaml $file || total_exit_code=$?
+            echo ""
+          done < <(find . -name "Dockerfile")
+          exit $total_exit_code
       - name: Remark
         run: |
           npm install yarn
@@ -74,6 +85,7 @@ jobs:
             https://github.com/typeable/remark-validate-links#anchors \
             remark-preset-lint-recommended \
             remark-lint-no-dead-urls
+
           total_exit_code=0
           while IFS= read -r file; do
               ./node_modules/.bin/remark -f $file || total_exit_code=$?
@@ -90,9 +102,9 @@ jobs:
           tar xzf "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
           cp "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu/cargo-udeps" ~/.cargo/bin/
           rm -r "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu"
-          /home/runner/.cargo/bin/cargo udeps --version
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo udeps --workspace --all-features
-        continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.       
+          cargo udeps --version
+          SKIP_WASM_BUILD=1 cargo udeps --workspace --all-features
+        continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.  
   test:
     name: Unit Test
     runs-on:
