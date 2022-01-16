@@ -33,7 +33,7 @@ run_benchmarks () {
     OUTPUT=$1
     CHAIN=$2
     FOLDER=$3
-    if has_runtime_changes "${LATEST_TAG_NAME}" origin/"${GITHUB_REF_NAME}" $FOLDER
+    if has_runtime_changes "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" $FOLDER
 then
     # shellcheck disable=SC2068
     boldprint "Running benchmarks for $CHAIN"
