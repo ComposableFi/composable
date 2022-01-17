@@ -449,8 +449,17 @@ fn test_payout_slash() {
 		let four = PrePrice { price: 400, block: 0, who: account_4 };
 
 		let five = PrePrice { price: 100, block: 0, who: account_5 };
+
+		let asset_info = AssetInfo {
+			threshold: Percent::from_percent(0),
+			min_answers: 0,
+			max_answers: 0,
+			block_interval: 0,
+			reward: 0,
+			slash: 0,
+		};
 		// doesn't panic when percent not set
-		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
+		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0, &asset_info);
 		assert_eq!(Balances::free_balance(account_1), 100);
 
 		assert_ok!(Oracle::add_asset_and_info(
@@ -470,7 +479,12 @@ fn test_payout_slash() {
 		assert_eq!(Oracle::answer_in_transit(account_1), Some(5));
 		assert_eq!(Oracle::answer_in_transit(account_2), Some(5));
 
-		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
+		Oracle::handle_payout(
+			&vec![one, two, three, four, five],
+			100,
+			0,
+			&Oracle::asset_info(0).unwrap(),
+		);
 
 		assert_eq!(Oracle::answer_in_transit(account_1), Some(0));
 		assert_eq!(Oracle::answer_in_transit(account_2), Some(0));
@@ -493,7 +507,12 @@ fn test_payout_slash() {
 			4,
 			5
 		));
-		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
+		Oracle::handle_payout(
+			&vec![one, two, three, four, five],
+			100,
+			0,
+			&Oracle::asset_info(0).unwrap(),
+		);
 
 		// account 4 gets slashed 2 5 and 1 gets rewarded
 		assert_eq!(Balances::free_balance(account_1), 90);
@@ -748,7 +767,7 @@ fn prune_old_pre_prices_edgecase() {
 			reward: 5,
 			slash: 5,
 		};
-		Oracle::prune_old_pre_prices(asset_info, vec![], 0, &0);
+		Oracle::prune_old_pre_prices(&asset_info, vec![], 0);
 	});
 }
 
@@ -821,7 +840,7 @@ fn should_submit_signed_transaction_on_chain() {
 		));
 
 		// when
-		Oracle::fetch_price_and_send_signed(&0).unwrap();
+		Oracle::fetch_price_and_send_signed(&0, Oracle::asset_info(0).unwrap()).unwrap();
 		// then
 		let tx = pool_state.write().transactions.pop().unwrap();
 		assert!(pool_state.read().transactions.is_empty());
@@ -852,7 +871,7 @@ fn should_check_oracles_submitted_price() {
 
 		add_price_storage(100_u128, 0, account_2, 0);
 		// when
-		Oracle::fetch_price_and_send_signed(&0).unwrap();
+		Oracle::fetch_price_and_send_signed(&0, Oracle::asset_info(0).unwrap()).unwrap();
 	});
 }
 
@@ -860,9 +879,16 @@ fn should_check_oracles_submitted_price() {
 #[should_panic = "Max answers reached"]
 fn should_check_oracles_max_answer() {
 	let (mut t, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
-
+	let asset_info = AssetInfo {
+		threshold: Percent::from_percent(0),
+		min_answers: 0,
+		max_answers: 0,
+		block_interval: 0,
+		reward: 0,
+		slash: 0,
+	};
 	t.execute_with(|| {
-		Oracle::fetch_price_and_send_signed(&0).unwrap();
+		Oracle::fetch_price_and_send_signed(&0, asset_info).unwrap();
 	});
 }
 
