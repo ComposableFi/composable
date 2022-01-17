@@ -1,7 +1,15 @@
 /* eslint-disable no-trailing-spaces */
-import { sendAndWaitForSuccess } from '@composable/utils/polkadotjs';
-import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from "chai";
+import {
+  txBondedFinanceCancelSudoSuccessTest,
+  txBondedFinanceCancelFailureTest,
+  txBondedFinanceCancelSuccessTest
+} from '@composable/tests/tx/bondedFinance/testHandlers/cancelTests';
+import {
+  txBondedFinanceOfferFailureTest,
+  txBondedFinanceOfferSuccessTest
+} from "@composable/tests/tx/bondedFinance/testHandlers/offerTests";
+import {txBondedFinanceBondSuccessTest} from "@composable/tests/tx/bondedFinance/testHandlers/bondTests";
 
 /**
  * Contains all TX tests for the pallet:
@@ -36,7 +44,7 @@ export class TxBondedFinanceTests {
             maturity: api.createType('u32', 1)
           }
         };
-        const { data: [result], } = await TxBondedFinanceTests.txBondedFinanceOfferSuccessTest(walletAlice, requestParameters);
+        const { data: [result], } = await txBondedFinanceOfferSuccessTest(walletAlice, requestParameters);
         expect(result.toNumber()).to.be.a('number');
       });
 
@@ -54,7 +62,7 @@ export class TxBondedFinanceTests {
             maturity: api.createType('u32', 1)
           }
         };
-        const { data: [result], } = await TxBondedFinanceTests.txBondedFinanceOfferSuccessTest(walletBob, requestParameters);
+        const { data: [result], } = await txBondedFinanceOfferSuccessTest(walletBob, requestParameters);
         expect(result.toNumber()).to.be.a('number');
       });
 
@@ -65,7 +73,7 @@ export class TxBondedFinanceTests {
       it('Can bond to newly created offer', async function () {
         const offerId = api.createType('u64', 1);
         const nbOfBonds = api.createType('u128', 1);
-        await TxBondedFinanceTests.txBondedFinanceBondSuccessTest(walletBob, offerId, nbOfBonds);
+        await txBondedFinanceBondSuccessTest(walletBob, offerId, nbOfBonds);
       });
     });
 
@@ -89,7 +97,7 @@ export class TxBondedFinanceTests {
             maturity: api.createType('u32', 1)
           }
         };
-        const {data: [result],} = await TxBondedFinanceTests.txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
+        const {data: [result],} = await txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
         expect(result.toNumber()).to.be.a('number');
       });
 
@@ -107,7 +115,38 @@ export class TxBondedFinanceTests {
             maturity: api.createType('u32', 1)
           }
         };
-        const {data: [result],} = await TxBondedFinanceTests.txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
+        const {data: [result],} = await txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
+        expect(result.toNumber()).to.be.a('number');
+      });
+
+      // #5 Alice can't create offer with the reward amount too low.
+      it('Should not be able to create offer (reward.asset does not exist)', async function () {
+        const requestParameters = {
+          beneficiary: walletAlice.publicKey,
+          asset: api.createType('u128', 1),
+          bondPrice: api.consts.bondedFinance.stake,
+          nbOfBonds: api.createType('u128', 10),
+          maturity: {Finite: {returnIn: api.createType('u32', 16)}},
+          reward: {
+            asset: api.createType('u128', 1337),
+            amount: api.consts.bondedFinance.minReward,
+            maturity: api.createType('u32', 1)
+          }
+        };
+        const {data: [result],} = await txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
+        expect(result.toNumber()).to.be.a('number');
+      });
+    });
+
+    /**
+     * Runs FAILURE tests for bondedFinance.cancel(offerId)
+     */
+    describe('tx.bondedFinance.cancel Failure Tests', function () {
+      // Timeout set to 2 minutes
+      this.timeout(2*60*1000);
+      it('Should not be able to cancel offer that doesn\'t exist', async function () {
+        const offerId = 1337;
+        const { data: [result], } = await txBondedFinanceCancelFailureTest(walletAlice, offerId);
         expect(result.toNumber()).to.be.a('number');
       });
     });
@@ -121,139 +160,17 @@ export class TxBondedFinanceTests {
       // #6 Alice should be able to cancel her offer.
       it('Can cancel offer created in first bondedFinance.offer test by creator', async function () {
         const offerId = 1;
-        const { data: [result], } = await TxBondedFinanceTests.txBondedFinanceCancelSuccessTest(walletAlice, offerId);
-        console.debug(result);
+        const { data: [result], } = await txBondedFinanceCancelSuccessTest(walletAlice, offerId);
         expect(result.toNumber()).to.be.a('number');
       });
 
       // #7 A sudo command should be able to cancel an offer.
       it('Can sudo (diff. account) cancel offer created in second bondedFinance.offer', async function () {
         const offerId = 2;
-        const { data: [result], } = await TxBondedFinanceTests.txBondedFinanceCancelSudoSuccessTest(walletAlice, offerId);
+        const { data: [result], } = await txBondedFinanceCancelSudoSuccessTest(walletAlice, offerId);
         expect(result.isOk).to.be.true;
       });
     });
-
-    /**
-     * Runs FAILURE tests for bondedFinance.cancel(offerId)
-     */
-    describe('tx.bondedFinance.cancel Failure Tests', function () {
-      // Timeout set to 2 minutes
-      this.timeout(2*60*1000);
-      it('Should not be able to cancel offer that doesn\'t exist', async function () {
-        const offerId = 1337;
-        const { data: [result], } = await TxBondedFinanceTests.txBondedFinanceCancelFailureTest(walletAlice, offerId);
-        expect(result.toNumber()).to.be.a('number');
-      });
-    });
-  }
-
-  /**
-   * The implementation of the tests start here.
-   */
-
-  /**
-   * Tests tx.bondedFinance.offer with provided parameters that should succeed.
-   * @param {IKeyringPair} wallet Connected API Promise.
-   * @param {} requestParameters wallet public key
-   */
-  private static txBondedFinanceOfferSuccessTest(wallet: IKeyringPair, requestParameters) {
-    return sendAndWaitForSuccess(
-      api,
-      wallet,
-      api.events.bondedFinance.NewOffer.is,
-      api.tx.bondedFinance.offer(requestParameters),
-    );
-  }
-
-  /**
-   * Tests tx.bondedFinance.offer with provided parameters that should fail.
-   * @param {IKeyringPair} wallet Connected API Promise.
-   * @param {} requestParameters wallet public key
-   */
-  private static txBondedFinanceOfferFailureTest(wallet: IKeyringPair, requestParameters) {
-    return sendAndWaitForSuccess(
-      api,
-      wallet,
-      api.events.system.ExtrinsicFailed.is,
-      api.tx.bondedFinance.offer(requestParameters),
-      true
-    );
-  }
-
-  /**
-   * Tests tx.bondedFinance.offer with provided parameters that should succeed.
-   * @param {IKeyringPair} wallet Connected API Promise.
-   * @param {u64} offerId
-   * @param {u128} nbOfBonds
-   */
-  private static txBondedFinanceBondSuccessTest(wallet: IKeyringPair, offerId, nbOfBonds) {
-    return sendAndWaitForSuccess(
-      api,
-      wallet,
-      api.events.bondedFinance.NewBond.is,
-      api.tx.bondedFinance.bond(offerId, nbOfBonds),
-    );
-  }
-
-  /**
-   * Tests tx.bondedFinance.offer with provided parameters that should fail.
-   * @param {IKeyringPair} wallet Connected API Promise.
-   * @param {u64} offerId
-   * @param {u128} nbOfBonds
-   */
-  private static txBondedFinanceBondFailureTest(wallet: IKeyringPair, offerId, nbOfBonds) {
-    return sendAndWaitForSuccess(
-      api,
-      wallet,
-      api.events.system.ExtrinsicFailed.is,
-      api.tx.bondedFinance.bond(offerId, nbOfBonds),
-      true
-    );
-  }
-
-  /**
-   * Tests tx.bondedFinance.cancel with provided parameters that should succeed.
-   * @param {IKeyringPair} wallet Connected API Promise.
-   * @param {u64} offerId
-   */
-  private static txBondedFinanceCancelSuccessTest(wallet: IKeyringPair, offerId) {
-    return sendAndWaitForSuccess(
-      api,
-      wallet,
-      api.events.bondedFinance.OfferCancelled.is,
-      api.tx.bondedFinance.cancel(offerId),
-    );
-  }
-
-  /**
-   * Tests tx.bondedFinance.cancel with provided parameters that should fail.
-   * @param {IKeyringPair} wallet Connected API Promise.
-   * @param {u64} offerId
-   */
-  private static txBondedFinanceCancelFailureTest(wallet: IKeyringPair, offerId) {
-    return sendAndWaitForSuccess(
-      api,
-      wallet,
-      api.events.system.ExtrinsicFailed.is,
-      api.tx.bondedFinance.cancel(offerId),
-      true
-    );
-  }
-
-  /**
-   * Tests tx.bondedFinance.cancel as SUDO with provided parameters that should succeed.
-   * @param {IKeyringPair} wallet Connected API Promise w/ sudo rights.
-   * @param {u64} offerId
-   */
-  private static txBondedFinanceCancelSudoSuccessTest(wallet: IKeyringPair, offerId) {
-    return sendAndWaitForSuccess(
-      api,
-      wallet,
-      api.events.sudo.Sudid.is, api.tx.sudo.sudo(
-        api.tx.bondedFinance.cancel(offerId),
-      )
-    );
   }
 }
 

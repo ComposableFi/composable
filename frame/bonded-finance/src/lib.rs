@@ -251,7 +251,7 @@ pub mod pallet {
 				&offer_account,
 				&issuer,
 				offer.reward.amount,
-				true,
+				false,
 			)?;
 			BondOffers::<T>::remove(offer_id);
 			Self::deposit_event(Event::<T>::OfferCancelled { offer_id });
