@@ -35,17 +35,13 @@ jobs:
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
         extraPullNames: composable-community
 
-    - name: Install toolchain
-      run: |
-        rustup show
-
     - name: Set env
       run: |
         echo "RELEASE_VERSION=$GITHUB_SHA" >> $GITHUB_ENV
 
     - name: Push artifact
       run: |
-        cargo build --release 
+        /home/runner/.cargo/bin/cargo build --release 
         tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
         gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
 
