@@ -1,9 +1,5 @@
 name: Check Runtime
 on:
-  push:
-    branches:
-      - releases
-      - main
   pull_request:
     branches:
       - releases
