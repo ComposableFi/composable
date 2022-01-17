@@ -47,12 +47,33 @@ jobs:
       run: |
         ./runtime_release.sh
 
-    - name: Upload Compressed wasm # TODO only upload wasm that has changed
+    - name: Upload Compact Picasso wasm # TODO only upload wasm that has changed
       uses: svenstaro/upload-release-action@v2
+      if: "$${{ env.picasso-wasm }} == 1"
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-        file: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.compressed.wasm
+        file: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
         asset_name: picasso_runtime.compact.compressed.wasm
+        tag: ${{ github.ref }}
+        overwrite: true
+    
+    - name: Upload Compact Dali wasm # TODO only upload wasm that has changed
+      uses: svenstaro/upload-release-action@v2
+      if: "$${{ env.dali-wasm }} == 1"
+      with:
+        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        file: ./runtime/dali/target/srtool/release/wbuild/dali-runtime/dali_runtime.compact.wasm
+        asset_name: dali_runtime.compact.compressed.wasm
+        tag: ${{ github.ref }}
+        overwrite: true
+    
+    - name: Upload Compact Composable wasm # TODO only upload wasm that has changed
+      uses: svenstaro/upload-release-action@v2
+      if: "$${{ env.composable-wasm }} == 1"
+      with:
+        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        file: ./runtime/picasso/target/srtool/release/wbuild/composable-runtime/composable_runtime.compact.wasm
+        asset_name: composable_runtime.compact.compressed.wasm
         tag: ${{ github.ref }}
         overwrite: true
 
