@@ -37,7 +37,7 @@ jobs:
 
     - name: 🔨 Build and Upload Composable Binary
       working-directory: "./.maintain/"
-      id: runtime_release
+      id: client_release
       run: |
         ./client_release.sh
 
