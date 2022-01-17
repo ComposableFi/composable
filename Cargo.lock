@@ -1538,6 +1538,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "composable-support"
+version = "0.0.1"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "proptest 1.0.0",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "composable-tests-helpers"
 version = "0.0.1"
 dependencies = [
