@@ -147,9 +147,9 @@ boldcat() {
 # checks if the spec/impl version has increased
 check_runtime() {
   VERSIONS_FILE="$1"
-  add_spec_version="$(git diff origin "${LATEST_TAG_NAME}" ${GITHUB_REF_NAME} -- "${VERSIONS_FILE}" |
+  add_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
     sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
-  sub_spec_version="$(git diff "${LATEST_TAG_NAME}" ${GITHUB_REF_NAME} -- "${VERSIONS_FILE}" |
+  sub_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
     sed -n -r "s/^\-[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
   if [ "${add_spec_version}" != "${sub_spec_version}" ]; then
 

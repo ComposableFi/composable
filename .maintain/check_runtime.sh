@@ -17,14 +17,14 @@ VERSIONS_FILES=(
   "runtime/composable/src/lib.rs,composable,composable"
 )
 
-# boldprint "latest 10 commits of ${GITHUB_REF_NAME}"
-# git log --graph --oneline --decorate=short -n 10
+ boldprint "latest 10 commits of ${GITHUB_REF_NAME}"
+ git log --graph --oneline --decorate=short -n 10
 
-# boldprint "make sure the main branch and release tag are available in shallow clones"
-# git fetch --depth="${GIT_DEPTH:-100}" origin main
-# git fetch --depth="${GIT_DEPTH:-100}" origin "${RELEASE_VERSION}"
-# git tag -f "${RELEASE_VERSION}" FETCH_HEAD
-# git log -n1 "${RELEASE_VERSION}"
+ boldprint "make sure the main branch and release tag are available in shallow clones"
+ git fetch --depth="${GIT_DEPTH:-100}" origin main
+ git fetch --depth="${GIT_DEPTH:-100}" origin "${LATEST_TAG_NAME}"
+ git tag -f "${LATEST_TAG_NAME}" FETCH_HEAD
+ git log -n1 "${LATEST_TAG_NAME}"
 
 simnode_check() {
   VERSIONS_FILE="$1"

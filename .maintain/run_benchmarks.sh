@@ -34,6 +34,13 @@ pallets=(
 	dutch_auction
 )
 
+ boldprint "make sure the main branch and release tag are available in shallow clones"
+ git fetch --depth="${GIT_DEPTH:-100}" origin main
+ git fetch --depth="${GIT_DEPTH:-100}" origin "${LATEST_TAG_NAME}"
+ git tag -f "${LATEST_TAG_NAME}" FETCH_HEAD
+ git log -n1 "${LATEST_TAG_NAME}"
+
+
 /home/runner/.cargo/bin/rustup install nightly
 /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
 /home/runner/.cargo/bin/cargo build --release -p composable --features=runtime-benchmarks
@@ -60,7 +67,7 @@ run_benchmarks() {
   PASSWORD=$(gcloud secrets versions access latest --secret=github-api-token)
   git remote set-url origin https://$USERNAME:$PASSWORD@github.com/ComposableFi/composable.git
   git add .
-  git commit -m "Updates weights"
+  git commit -m "Updates weights for $CHAIN"
   git push origin $GITHUB_REF_NAME
 }
 
