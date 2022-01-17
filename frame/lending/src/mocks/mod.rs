@@ -394,7 +394,7 @@ impl pallet_lending::Config for Test {
 	type VaultId = VaultId;
 	type Vault = Vault;
 	type Event = Event;
-	type Currency = Tokens;
+	type MultiCurrency = Tokens;
 	type CurrencyFactory = LpTokenFactory;
 	type MarketDebtCurrency = Tokens;
 	type Liquidation = Liquidations;

@@ -5,7 +5,7 @@ use scale_info::TypeInfo;
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
 	traits::{CheckedAdd, CheckedMul, CheckedSub, Zero},
-	ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128,
+	ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128, Permill,
 };
 
 use crate::currency::{AssetIdLike, BalanceLike, MathBalance};
