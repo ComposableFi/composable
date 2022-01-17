@@ -17,10 +17,10 @@ VERSIONS_FILES=(
    "runtime/composable/src/lib.rs,composable,composable"
 )
 
- boldprint "latest 10 commits of ${GITHUB_REF_NAME}"
+ echo "latest 10 commits of ${GITHUB_REF_NAME}"
  git log --graph --oneline --decorate=short -n 10
 
- boldprint "make sure the main branch and release tag are available in shallow clones"
+ echo "make sure the main branch and release tag are available in shallow clones"
  git fetch --depth="${GIT_DEPTH:-100}" origin main
  git fetch --depth="${GIT_DEPTH:-100}" origin "${LATEST_TAG_NAME}"
  git tag -f "${LATEST_TAG_NAME}" FETCH_HEAD
@@ -30,14 +30,14 @@ simnode_check() {
   VERSIONS_FILE="$1"
   if has_runtime_changes "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" "$3" && check_runtime "$VERSIONS_FILE" "$2"
   then
-    boldprint "Wasm sources have changed"
+    echo "Wasm sources have changed"
     echo "RUNTIME_CHECK=1" >> "$GITHUB_ENV"
   fi
 }
 
 for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
-    boldprint "check if the wasm sources changed for $chain"
+    echo "check if the wasm sources changed for $chain"
     simnode_check $output $folder
   done <<< "$i"
 done

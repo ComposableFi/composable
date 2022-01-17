@@ -34,7 +34,7 @@ pallets=(
 	dutch_auction
 )
 
- boldprint "make sure the main branch and release tag are available in shallow clones"
+ echo "make sure the main branch and release tag are available in shallow clones"
  git fetch --depth="${GIT_DEPTH:-100}" origin main
  git fetch --depth="${GIT_DEPTH:-100}" origin "${LATEST_TAG_NAME}"
  git tag -f "${LATEST_TAG_NAME}" FETCH_HEAD
@@ -50,7 +50,7 @@ run_benchmarks() {
   CHAIN=$2
   FOLDER=$3
   # shellcheck disable=SC2068
-  boldprint "Running benchmarks for $CHAIN"
+  echo "Running benchmarks for $CHAIN"
   # shellcheck disable=SC2068
   for p in ${pallets[@]}; do
     ./target/release/composable benchmark \

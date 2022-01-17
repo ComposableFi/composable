@@ -1,10 +1,6 @@
 #!/bin/bash
 
 api_base="https://api.github.com/repos"
-<<<<<<< HEAD
-LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
-=======
->>>>>>> 082c2a96d40ad5d977b1ee9a87fa748e49b70719
 GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
 
 # Function to take 2 git tags/commits and get any lines from commit messages
@@ -17,15 +13,6 @@ sanitised_git_logs() {
     sed 's/^* //g' |
     # And add them all back
     sed 's/^/* /g'
-<<<<<<< HEAD
-}
-
-get_latest_release() {
-  curl --silent "https://api.github.com/repos/$1/releases/latest" | # Get latest release from GitHub api
-    grep '"tag_name":' |                                            # Get tag line
-    sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
-=======
->>>>>>> 082c2a96d40ad5d977b1ee9a87fa748e49b70719
 }
 
 get_latest_release() {
