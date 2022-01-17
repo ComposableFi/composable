@@ -137,7 +137,7 @@ version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fcb51a0695d8f838b1ee009b3fbf66bda078cd64590202a864a8f3e8c4315c47"
 dependencies = [
- "getrandom 0.2.3",
+ "getrandom 0.2.4",
  "once_cell",
  "version_check 0.9.4",
 ]
@@ -934,7 +934,7 @@ dependencies = [
  "bp-runtime",
  "frame-support",
  "parity-scale-codec",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-api",
  "sp-runtime",
  "sp-std",
@@ -1519,7 +1519,7 @@ dependencies = [
  "polkadot-parachain",
  "primitives",
  "scale-info",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
@@ -1535,6 +1535,20 @@ dependencies = [
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "composable-support"
+version = "0.0.1"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "proptest 1.0.0",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -1719,7 +1733,7 @@ dependencies = [
  "gimli 0.25.0",
  "log 0.4.14",
  "regalloc",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "target-lexicon",
 ]
 
@@ -1756,7 +1770,7 @@ checksum = "e07339bd461766deb7605169de039e01954768ff730fa1254e149001884a8525"
 dependencies = [
  "cranelift-codegen",
  "log 0.4.14",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "target-lexicon",
 ]
 
@@ -1782,7 +1796,7 @@ dependencies = [
  "cranelift-frontend",
  "itertools",
  "log 0.4.14",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "wasmparser",
  "wasmtime-types",
 ]
@@ -2392,7 +2406,7 @@ dependencies = [
  "polkadot-parachain",
  "primitives",
  "scale-info",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
@@ -3189,7 +3203,7 @@ dependencies = [
  "paste 1.0.6",
  "scale-info",
  "serde",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-arithmetic",
  "sp-core",
  "sp-core-hashing-proc-macro",
@@ -3535,9 +3549,9 @@ dependencies = [
 
 [[package]]
 name = "getrandom"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fcd999463524c52659517fe2cea98493cfe485d10565e7b0fb07dbba7ad2753"
+checksum = "418d37c8b1d42553c93648be529cb70f920d3baf8ef469b74b9638df426e0b4c"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
@@ -4209,7 +4223,7 @@ dependencies = [
  "polkadot-runtime-parachains",
  "primitives",
  "scale-info",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
@@ -4720,7 +4734,7 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_derive",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-api",
  "sp-arithmetic",
  "sp-authority-discovery",
@@ -4760,7 +4774,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "45a3f58dc069ec0e205a27f5b45920722a46faed802a0541538241af6228f512"
 dependencies = [
  "parity-util-mem",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
 ]
 
 [[package]]
@@ -4789,7 +4803,7 @@ dependencies = [
  "parking_lot 0.11.2",
  "regex",
  "rocksdb",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
 ]
 
 [[package]]
@@ -4879,7 +4893,7 @@ dependencies = [
  "multiaddr",
  "parking_lot 0.11.2",
  "pin-project 1.0.10",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "wasm-timer",
 ]
 
@@ -4910,7 +4924,11 @@ dependencies = [
  "ring",
  "rw-stream-sink",
  "sha2 0.9.9",
+<<<<<<< HEAD
  "smallvec 1.7.0",
+=======
+ "smallvec 1.8.0",
+>>>>>>> 696789dd5ce8065548eb66f3a0227ffb27503efa
  "thiserror",
  "unsigned-varint 0.7.1",
  "void",
@@ -4938,7 +4956,7 @@ dependencies = [
  "futures 0.3.19",
  "libp2p-core",
  "log 0.4.14",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "trust-dns-resolver",
 ]
 
@@ -4957,7 +4975,7 @@ dependencies = [
  "prost",
  "prost-build",
  "rand 0.7.3",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
 ]
 
 [[package]]
@@ -4981,7 +4999,11 @@ dependencies = [
  "rand 0.7.3",
  "regex",
  "sha2 0.9.9",
+<<<<<<< HEAD
  "smallvec 1.7.0",
+=======
+ "smallvec 1.8.0",
+>>>>>>> 696789dd5ce8065548eb66f3a0227ffb27503efa
  "unsigned-varint 0.7.1",
  "wasm-timer",
 ]
@@ -4999,7 +5021,7 @@ dependencies = [
  "lru 0.6.6",
  "prost",
  "prost-build",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "wasm-timer",
 ]
 
@@ -5022,7 +5044,11 @@ dependencies = [
  "prost-build",
  "rand 0.7.3",
  "sha2 0.9.9",
+<<<<<<< HEAD
  "smallvec 1.7.0",
+=======
+ "smallvec 1.8.0",
+>>>>>>> 696789dd5ce8065548eb66f3a0227ffb27503efa
  "uint",
  "unsigned-varint 0.7.1",
  "void",
@@ -5045,7 +5071,7 @@ dependencies = [
  "libp2p-swarm",
  "log 0.4.14",
  "rand 0.8.4",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "socket2 0.4.2",
  "void",
 ]
@@ -5078,7 +5104,7 @@ dependencies = [
  "nohash-hasher",
  "parking_lot 0.11.2",
  "rand 0.7.3",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "unsigned-varint 0.7.1",
 ]
 
@@ -5167,7 +5193,7 @@ dependencies = [
  "prost",
  "prost-build",
  "rand 0.7.3",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "unsigned-varint 0.7.1",
  "void",
  "wasm-timer",
@@ -5209,7 +5235,7 @@ dependencies = [
  "log 0.4.14",
  "lru 0.7.2",
  "rand 0.7.3",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "unsigned-varint 0.7.1",
  "wasm-timer",
 ]
@@ -5225,7 +5251,7 @@ dependencies = [
  "libp2p-core",
  "log 0.4.14",
  "rand 0.7.3",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "void",
  "wasm-timer",
 ]
@@ -5891,7 +5917,7 @@ dependencies = [
  "futures 0.3.19",
  "log 0.4.14",
  "pin-project 1.0.10",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "unsigned-varint 0.7.1",
 ]
 
@@ -6605,7 +6631,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -6776,7 +6802,7 @@ dependencies = [
  "proptest 1.0.0",
  "scale-info",
  "serde",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
@@ -6811,7 +6837,7 @@ dependencies = [
 [[package]]
 name = "pallet-elections-phragmen"
 version = "5.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13#fcc54a72973d03afe7bf9e3ef2736050b3f33465"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13#afb74de23dfe2994e7ce38c0870efb9734e966f7"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7397,7 +7423,7 @@ dependencies = [
  "parity-scale-codec",
  "primitives",
  "scale-info",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7414,7 +7440,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7703,7 +7729,7 @@ dependencies = [
  "parity-util-mem-derive",
  "parking_lot 0.11.2",
  "primitive-types",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "winapi 0.3.9",
 ]
 
@@ -7814,7 +7840,7 @@ dependencies = [
  "cloudabi",
  "libc",
  "redox_syscall 0.1.57",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "winapi 0.3.9",
 ]
 
@@ -7828,7 +7854,7 @@ dependencies = [
  "instant",
  "libc",
  "redox_syscall 0.2.10",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "winapi 0.3.9",
 ]
 
@@ -8024,7 +8050,7 @@ dependencies = [
  "polkadot-parachain",
  "primitives",
  "scale-info",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
@@ -8754,7 +8780,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-statement-table",
  "sc-network",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "substrate-prometheus-endpoint",
  "thiserror",
 ]
@@ -8967,7 +8993,7 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_derive",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-api",
  "sp-authority-discovery",
  "sp-block-builder",
@@ -9666,7 +9692,7 @@ version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d34f1408f55294453790c48b2f1ebbb1c5b4b7563eb1f418bcfcfdbb06ebb4e7"
 dependencies = [
- "getrandom 0.2.3",
+ "getrandom 0.2.4",
 ]
 
 [[package]]
@@ -9838,7 +9864,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "528532f3d801c87aec9def2add9ca802fe569e44a544afe633765267840abe64"
 dependencies = [
- "getrandom 0.2.3",
+ "getrandom 0.2.4",
  "redox_syscall 0.2.10",
 ]
 
@@ -9883,7 +9909,7 @@ checksum = "a6304468554ed921da3d32c355ea107b8d13d7b8996c3adfb7aab48d3bc321f4"
 dependencies = [
  "log 0.4.14",
  "rustc-hash",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
 ]
 
 [[package]]
@@ -10088,7 +10114,7 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_derive",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-api",
  "sp-authority-discovery",
  "sp-block-builder",
@@ -10930,7 +10956,7 @@ dependencies = [
  "sc-utils",
  "serde",
  "serde_json",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-arithmetic",
  "sp-blockchain",
  "sp-consensus",
@@ -11758,9 +11784,9 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "1.7.0"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ecab6c735a6bb4139c0caafd0cc3635748bbb3acf4550e8138122099251f309"
+checksum = "f2dd574626839106c320a323308629dcb1acfc96e32a8cba364ddc61ac23ee83"
 
 [[package]]
 name = "snap"
@@ -12365,7 +12391,7 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.11.2",
  "rand 0.7.3",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "sp-core",
  "sp-externalities",
  "sp-panic-handler",
@@ -12759,7 +12785,7 @@ dependencies = [
 [[package]]
 name = "substrate-simnode"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#14a6bf2650d15f9830cfe5ca66486d4ccfb8b0b3"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#4e01ef5542559b21c01b2a603bb8cfb60cdc470d"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",
@@ -13438,7 +13464,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sharded-slab",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "thread_local",
  "tracing",
  "tracing-core",
@@ -13462,7 +13488,7 @@ dependencies = [
  "hashbrown",
  "log 0.4.14",
  "rustc-hex",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
 ]
 
 [[package]]
@@ -13492,7 +13518,7 @@ dependencies = [
  "lazy_static",
  "log 0.4.14",
  "rand 0.8.4",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "thiserror",
  "tinyvec",
  "url 2.2.2",
@@ -13512,7 +13538,7 @@ dependencies = [
  "lru-cache",
  "parking_lot 0.11.2",
  "resolv-conf",
- "smallvec 1.7.0",
+ "smallvec 1.8.0",
  "thiserror",
  "trust-dns-proto",
 ]
