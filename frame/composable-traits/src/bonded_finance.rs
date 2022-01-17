@@ -40,8 +40,9 @@ pub struct BondOffer<AccountId, AssetId, Balance, BlockNumber> {
 	/// The account that will receive the locked assets.
 	pub beneficiary: AccountId,
 	/// Asset to be locked. Unlockable after `duration`.
+	/// Asset which `beneficiary` wants to get for his offer.
 	pub asset: AssetId,
-	/// Price of a bond.
+	/// Price of a bond unit in `asset`.
 	pub bond_price: Balance,
 	/// Number of bonds. We use the Balance type for the sake of simplicity.
 	pub nb_of_bonds: Balance,
@@ -51,7 +52,7 @@ pub struct BondOffer<AccountId, AssetId, Balance, BlockNumber> {
 	pub reward: BondOfferReward<AssetId, Balance, BlockNumber>,
 }
 
-/// The Bond reward.
+/// The Bond reward. Asset and rules reward will be given.
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct BondOfferReward<AssetId, Balance, BlockNumber> {
 	/// The actual reward asset.

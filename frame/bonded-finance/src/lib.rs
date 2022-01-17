@@ -38,18 +38,22 @@
 //! ## Overview
 //!
 //! A simple pallet providing means of submitting bond offers.
+//! 
+//! Alice offers some bond priced in specific assets per bond as some amount of shares.
+//! At same time she provides reward asset which will be vested into account which takes bond offers.
+//! She locks some native currency to make the offer registered. 
+//! 
+//! Bob bonds parts of shares from offer by transfer some asset amount desired by Alice. 
+//! Bob will be vested part of reward amount during maturity period from that moment.
+//! It the end of some period Bob may or may be not be return with amount he provided to Alice - 
+//! depends on how offer was setup.   
 //!
+//! Alice may cancel offer and prevent new bonds on offer, she gets her native tokens back.
+//! All existing vesting periods continue to be executed.
+//! 
 //! ## Interface
 //!
-//! This pallet implements the `BondedFinance` trait from `composable-traits`.
-//!
-//! ## Dispatchable Functions
-//!
-//! - `offer` - Register a new bond offer, allowing use to later bond it.
-//! - `bond` - Bond to an offer, the user should provide the number of nb_of_bonds a user is willing
-//!   to buy.
-//! - `cancel_offer` - Cancel a running offer, blocking further bond but not cancelling the
-//!   currently vested rewards.
+//! This pallet implements the `composable_traits::bonded_finance::BondedFinance`.
 
 mod benchmarks;
 mod mock;
@@ -193,7 +197,10 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Create a new offer.
+
+
+
+		/// Create a new offer. So later can `bond` it.
 		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must have the
 		/// appropriate funds.
@@ -206,7 +213,9 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Bond to an offer.
+		/// Bond to an offer. 
+		/// And user should provide the number of contracts she is willing to buy. 
+		/// On offer completion (a.k.a. no more contract on the offer), the `stake` put by the creator is refunded.
 		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must have the
 		/// appropriate funds.
@@ -224,12 +233,12 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Cancel an offer.
-		///
+		/// Cancel a running offer. Blocking further bond but not cancelling the
+		/// currently vested rewards. The `stake` put by the creator is refunded.
 		/// The dispatch origin for this call must be _Signed_ and the sender must be `AdminOrigin`
 		///
 		/// Emits a `OfferCancelled`.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(10_000)] // TODO: add weights
 		#[transactional]
 		pub fn cancel(origin: OriginFor<T>, offer_id: T::BondOfferId) -> DispatchResult {
 			let (issuer, offer) = Self::get_offer(offer_id)?;
@@ -314,7 +323,7 @@ pub mod pallet {
 								nb_of_bonds <= offer.nb_of_bonds,
 							Error::<T>::InvalidNumberOfBonds
 						);
-						// NOTE(hussein-aitlahcen): can't overflow, subsumed by `offer.valid()` in
+						// can't overflow, subsumed by `offer.valid()` in
 						// `do_offer`
 						let value = nb_of_bonds * offer.bond_price;
 						let reward_share = T::Convert::convert(
@@ -354,7 +363,6 @@ pub mod pallet {
 								)?;
 							},
 							BondDuration::Infinite => {
-								// NOTE(hussein-aitlahcen): in the case of an inifite duration for
 								// the offer, the liquidity is never returned to the bonder, meaning
 								// that the protocol is now owning the funds.
 							},
