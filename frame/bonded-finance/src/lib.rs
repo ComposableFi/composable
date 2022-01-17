@@ -156,6 +156,7 @@ pub mod pallet {
 		/// The minimum reward for an offer.
 		///
 		/// Must be > T::Vesting::MinVestedTransfer.
+		#[pallet::constant]
 		type MinReward: Get<BalanceOf<Self>>;
 
 		/// The origin that is allowed to cancel bond offers.

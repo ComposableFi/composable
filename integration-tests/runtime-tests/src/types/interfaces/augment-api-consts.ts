@@ -42,6 +42,12 @@ declare module '@polkadot/api-base/types/consts' {
     };
     bondedFinance: {
       /**
+       * The minimum reward for an offer.
+       * 
+       * Must be > T::Vesting::MinVestedTransfer.
+       **/
+      minReward: u128 & AugmentedConst<ApiType>;
+      /**
        * The pallet ID, required to create sub-accounts used by offers.
        **/
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
