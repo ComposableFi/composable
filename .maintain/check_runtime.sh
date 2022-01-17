@@ -10,14 +10,21 @@
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
 
+<<<<<<< HEAD
 LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
 GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
 
+=======
+>>>>>>> 082c2a96d40ad5d977b1ee9a87fa748e49b70719
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
   "runtime/dali/src/lib.rs,dali-chachacha,dali"
+<<<<<<< HEAD
   # "runtime/composable/src/lib.rs,composable,composable"
+=======
+   "runtime/composable/src/lib.rs,composable,composable"
+>>>>>>> 082c2a96d40ad5d977b1ee9a87fa748e49b70719
 )
 
  boldprint "latest 10 commits of ${GITHUB_REF_NAME}"
@@ -42,7 +49,11 @@ for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
     boldprint "check if the wasm sources changed for $chain"
     simnode_check $output $folder
+<<<<<<< HEAD
   done <<<"$i"
+=======
+  done <<< "$i"
+>>>>>>> 082c2a96d40ad5d977b1ee9a87fa748e49b70719
 done
 
 # dropped through. there's something wrong;  exit 1.

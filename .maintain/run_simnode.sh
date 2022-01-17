@@ -14,9 +14,12 @@ VERSIONS_FILES=(
   # "composable,composable" # TODO: add simnode suppport for composable
 )
 
+<<<<<<< HEAD
 LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
 GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
 
+=======
+>>>>>>> 082c2a96d40ad5d977b1ee9a87fa748e49b70719
 /home/runner/.cargo/bin/rustup update nightly
 /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
 /home/runner/.cargo/bin/cargo build --release -p simnode
