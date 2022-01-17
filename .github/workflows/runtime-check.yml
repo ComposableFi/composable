@@ -2,7 +2,7 @@ name: Check Runtime
 on:
   push:
     branches:
-      - release-*
+      - releases
       - main
   pull_request:
     branches:
@@ -10,7 +10,11 @@ on:
       - main
 jobs:
   check-runtime:
-    runs-on: ubuntu-latest
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
     steps:
       - uses: actions/checkout@v2
         with: 
@@ -18,5 +22,35 @@ jobs:
 
       - name: Check for runtime changes
         working-directory: "./.maintain/"
+        id: check_runtime
         run: |
-          sh check_runtime.sh
+          ./check_runtime.sh
+
+      - name: Echo output
+        run: echo ${{ env.RUNTIME_CHECK }}
+
+      - name: Run Simnode
+        if: "$${{ env.RUNTIME_CHECK }} == 1"
+        working-directory: "./.maintain/"
+        id: run_simnode
+        run: |
+          ./run_simnode.sh
+
+  benchmark: 
+    name: Benchmark
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - bmark
+    steps:
+      - uses: actions/checkout@v2
+      - name: Benchmark Test
+        if: "$${{ env.RUNTIME_CHECK }} == 1"
+        working-directory: "./.maintain/"
+        id: run_benchmarks
+        run: |
+          ./run_benchmarks.sh
+          
+
+
