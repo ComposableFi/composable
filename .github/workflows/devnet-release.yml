@@ -48,7 +48,7 @@ jobs:
 
     - name: Push artifact
       run: |
-        cargo build --release -p composable-node
+        cargo build --release 
         tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
         gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
 
