@@ -30,36 +30,36 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> scheduler::WeightInfo for WeightInfo<T> {
 	// Storage: Scheduler Agenda (r:1 w:1)
 	fn schedule(s: u32, ) -> Weight {
-		(14_682_000 as Weight)
-			// Standard Error: 1_000
-			.saturating_add((14_000 as Weight).saturating_mul(s as Weight))
+		(27_124_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((94_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Scheduler Agenda (r:1 w:1)
 	// Storage: Scheduler Lookup (r:0 w:1)
 	fn cancel(s: u32, ) -> Weight {
-		(13_922_000 as Weight)
-			// Standard Error: 2_000
-			.saturating_add((589_000 as Weight).saturating_mul(s as Weight))
+		(23_760_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((1_359_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Scheduler Lookup (r:1 w:1)
 	// Storage: Scheduler Agenda (r:1 w:1)
 	fn schedule_named(s: u32, ) -> Weight {
-		(18_226_000 as Weight)
-			// Standard Error: 2_000
-			.saturating_add((32_000 as Weight).saturating_mul(s as Weight))
+		(30_349_000 as Weight)
+			// Standard Error: 1_000
+			.saturating_add((138_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Scheduler Lookup (r:1 w:1)
 	// Storage: Scheduler Agenda (r:1 w:1)
 	fn cancel_named(s: u32, ) -> Weight {
-		(15_695_000 as Weight)
-			// Standard Error: 2_000
-			.saturating_add((605_000 as Weight).saturating_mul(s as Weight))
+		(26_851_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((1_370_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
