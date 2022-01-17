@@ -3,15 +3,12 @@ name: "Devnet Community Release"
 on:
   push:
     branches:
-      - nix-devnet
+      - nix-devnet-fix
 
 jobs:
   deploy-devnet:
     runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+      - ubuntu-latest
     concurrency:
       group: deploy-devnet
       cancel-in-progress: false
@@ -41,7 +38,7 @@ jobs:
 
     - name: Push artifact
       run: |
-        /home/runner/.cargo/bin/cargo build --release 
+        /home/runner/.cargo/bin/cargo build --release
         tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
         gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
 
