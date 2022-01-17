@@ -129,7 +129,7 @@ std = [
 	"sp-block-builder/std",
 	"sp-transaction-pool/std",
 	"sp-inherents/std",
-	"support/std",
+	"frame-support/std",
 	"executive/std",
 	"frame-system/std",
 	"utility/std",
@@ -182,7 +182,7 @@ std = [
 runtime-benchmarks = [
 	"balances/runtime-benchmarks",
 	"benchmarking",
-	"support/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
 	"system-benchmarking",
 	"frame-system/runtime-benchmarks",
 	"hex-literal",

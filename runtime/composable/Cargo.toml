@@ -26,7 +26,7 @@ normal = [
 
 [dependencies]
 frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
-support = { package = "frame-support", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 executive = { package = "frame-executive", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 
 # primitives
@@ -127,7 +127,7 @@ std = [
     "sp-block-builder/std",
     "sp-transaction-pool/std",
     "sp-inherents/std",
-    "support/std",
+    "frame-support/std",
     "executive/std",
     "frame-system/std",
     "utility/std",
@@ -179,7 +179,7 @@ runtime-benchmarks = [
     "assets/runtime-benchmarks",
     "balances/runtime-benchmarks",
     "benchmarking",
-    "support/runtime-benchmarks",
+    "frame-support/runtime-benchmarks",
     "system-benchmarking",
     "frame-system/runtime-benchmarks",
     "hex-literal",

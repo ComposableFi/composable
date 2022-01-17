@@ -1,8 +1,8 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
+use frame_support::{traits::Get, weights::Weight};
 use sp_std::marker::PhantomData;
-use support::{traits::Get, weights::Weight};
 
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
