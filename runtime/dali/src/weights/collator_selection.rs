@@ -1,8 +1,8 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
+use frame_support::{traits::Get, weights::Weight};
 use sp_std::marker::PhantomData;
-use support::{traits::Get, weights::Weight};
 
 /// Weights for pallet_collator_selection using the Substrate node and recommended hardware.
 pub struct WeightInfo<T>(PhantomData<T>);
