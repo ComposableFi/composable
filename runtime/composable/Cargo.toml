@@ -2,7 +2,7 @@
 name = "composable-runtime"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.56"
+
 description = "Composable, Polkadot Parachain Runtime Implementation"
 authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 

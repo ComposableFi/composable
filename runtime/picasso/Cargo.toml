@@ -2,7 +2,7 @@
 name = "picasso-runtime"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.56"
+
 description = "Picasso, Kusama Parachain Runtime Implementation"
 authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 
@@ -23,7 +23,6 @@ normal = [
 	"pallet-vault",
 	"session-benchmarking",
 	"vault",
-	"pallet-dutch-auction",
 ]
 
 [dependencies]
@@ -172,12 +171,12 @@ std = [
 	"orml-xcm-support/std",
 	"orml-unknown-tokens/std",
 	"composable-traits/std",
-  "governance-registry/std",
-  "currency-factory/std",
-  "assets/std",
-  "vesting/std",
-  "bonded-finance/std",
-  "crowdloan-rewards/std",
+	"governance-registry/std",
+	"currency-factory/std",
+	"assets/std",
+	"vesting/std",
+	"bonded-finance/std",
+	"crowdloan-rewards/std",
 ]
 
 runtime-benchmarks = [
@@ -204,10 +203,10 @@ runtime-benchmarks = [
 	"collective/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
-  "crowdloan-rewards/runtime-benchmarks",
-  "currency-factory/runtime-benchmarks",
-  "assets/runtime-benchmarks",
-  "vesting/runtime-benchmarks",
-  "bonded-finance/runtime-benchmarks",
+	"crowdloan-rewards/runtime-benchmarks",
+	"currency-factory/runtime-benchmarks",
+	"assets/runtime-benchmarks",
+	"vesting/runtime-benchmarks",
+	"bonded-finance/runtime-benchmarks",
 ]
 
