@@ -8,7 +8,10 @@ on:
 jobs:
   deploy-devnet:
     runs-on:
-      - ubuntu-latest
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: deploy-devnet
       cancel-in-progress: false
@@ -32,15 +35,9 @@ jobs:
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
         extraPullNames: composable-community
 
-    - uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: nightly-2021-11-30
-        override: true
-
-    - name: Install wasm
+    - name: Install toolchain
       run: |
-        rustup target add wasm32-unknown-unknown
+        rustup show
 
     - name: Set env
       run: |
