@@ -4924,11 +4924,7 @@ dependencies = [
  "ring",
  "rw-stream-sink",
  "sha2 0.9.9",
-<<<<<<< HEAD
- "smallvec 1.7.0",
-=======
  "smallvec 1.8.0",
->>>>>>> 696789dd5ce8065548eb66f3a0227ffb27503efa
  "thiserror",
  "unsigned-varint 0.7.1",
  "void",
@@ -4999,11 +4995,7 @@ dependencies = [
  "rand 0.7.3",
  "regex",
  "sha2 0.9.9",
-<<<<<<< HEAD
- "smallvec 1.7.0",
-=======
  "smallvec 1.8.0",
->>>>>>> 696789dd5ce8065548eb66f3a0227ffb27503efa
  "unsigned-varint 0.7.1",
  "wasm-timer",
 ]
