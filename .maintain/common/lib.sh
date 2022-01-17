@@ -1,6 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
 api_base="https://api.github.com/repos"
+GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
 
 # Function to take 2 git tags/commits and get any lines from commit messages
 # that contain something that looks like a PR reference: e.g., (#1234)
@@ -19,6 +20,7 @@ get_latest_release() {
     grep '"tag_name":' |                                            # Get tag line
     sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
 }
+LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
 
 # Returns the last published release on github
 # Note: we can't just use /latest because that ignores prereleases
@@ -118,7 +120,40 @@ has_runtime_changes() {
   if git diff --name-only "${from}...${to}" |
     grep -q -e '^frame/' -e "^runtime/$3/"; then
     return 0
+
   else
+    # check for impl_version updates: if only the impl versions changed, we assume
+    # there is no consensus-critical logic that has changed.
+
+    add_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+      sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
+    sub_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+      sed -n -r 's/^\-[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
+
+    # see if the impl version changed
+    if [ "${add_impl_version}" != "${sub_impl_version}" ]; then
+      boldcat <<-EOT
+
+		changes to the runtime sources and changes in the impl version.
+
+		impl_version: ${sub_impl_version} -> ${add_impl_version}
+
+		EOT
+      return 0
+    fi
+
+    boldcat <<-EOT
+
+	wasm source files changed but not the spec/impl version. If changes made do not alter logic,
+	just bump 'impl_version'. If they do change logic, bump 'spec_version'.
+
+	source file directories:
+	- frame/*
+	- runtime/$2/*
+
+	versions file: ${VERSIONS_FILE}
+
+	EOT
     return 1
   fi
 }
@@ -135,9 +170,6 @@ has_client_changes() {
     return 1
   fi
 }
-
-LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
-GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
 
 boldprint() { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
 boldcat() {

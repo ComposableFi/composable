@@ -14,7 +14,7 @@
 VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
   "runtime/dali/src/lib.rs,dali-chachacha,dali"
-  "runtime/composable/src/lib.rs,composable,composable"
+   "runtime/composable/src/lib.rs,composable,composable"
 )
 
  boldprint "latest 10 commits of ${GITHUB_REF_NAME}"
@@ -39,7 +39,7 @@ for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
     boldprint "check if the wasm sources changed for $chain"
     simnode_check $output $folder
-  done <<<"$i"
+  done <<< "$i"
 done
 
 # dropped through. there's something wrong;  exit 1.
