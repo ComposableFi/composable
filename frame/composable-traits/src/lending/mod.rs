@@ -192,7 +192,7 @@ pub trait Lending {
 		borrow_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
-	/// Returns the borrow limit for an account in normalized price.
+	/// Returns the borrow limit for an account in `Oracle` price.
 	/// Calculation uses indexes from start of block time.
 	/// Depends on overall collateral put by user into vault.
 	/// This borrow limit of specific user, depends only on prices and users collateral, not on

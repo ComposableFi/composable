@@ -59,10 +59,12 @@ impl<AssetId: PartialEq, Balance: PartialOrd + Zero + SafeArithmetic> Sell<Asset
 	}
 }
 
-/// given `base`, how much `quote` needed for unit
-/// see [currency pair](https://www.investopedia.com/terms/c/currencypair.asp)
-/// Pair with same base and quote is considered valid as it allows to have mixer, money laundering
-/// like behavior.
+/// See [currency pair](https://www.investopedia.com/terms/c/currencypair.asp)
+/// Pair with same `base` and `quote` is considered valid as it allows to have mixer, money
+/// laundering like behavior.
+/// Can be used with Oracles, DEXes.
+/// Example, can do - give `base`, how much `quote` needed for unit.
+/// Can be local `Copy` `AssetId` or remote XCM asset id pair.
 #[repr(C)]
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
 pub struct CurrencyPair<AssetId> {
@@ -74,7 +76,7 @@ pub struct CurrencyPair<AssetId> {
 	pub quote: AssetId,
 }
 
-/// Generically pair can be of external URI/location, not copy.
+/// `AssetId` is Copy, than consider pair to be Copy
 impl<AssetId: Copy> Copy for CurrencyPair<AssetId> {}
 
 impl<AssetId: PartialEq> CurrencyPair<AssetId> {
