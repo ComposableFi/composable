@@ -8,6 +8,9 @@ on:
       - main
       - develop
       - releases
+  push:
+    branches:
+      - main    
   workflow_dispatch:
 
 env:
