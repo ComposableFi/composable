@@ -15,6 +15,7 @@ pub trait WeightInfo {
 	fn withdraw_collateral() -> Weight;
 	fn borrow() -> Weight;
 	fn repay_borrow() -> Weight;
+	fn liquidate(i:u32) -> Weight;
 	fn now() -> Weight;
 	fn accrue_interest() -> Weight;
 	fn account_id() -> Weight;

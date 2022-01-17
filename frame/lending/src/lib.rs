@@ -85,7 +85,7 @@ pub mod pallet {
 	use sp_runtime::{
 		traits::{AccountIdConversion, CheckedAdd, CheckedMul, CheckedSub, One, Saturating, Zero},
 		ArithmeticError, DispatchError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
-		Percent, Perquintill,
+		Percent, Perquintill, Permill,
 	};
 	use sp_std::{fmt::Debug, vec, vec::Vec};
 
@@ -173,19 +173,7 @@ pub mod pallet {
 
 		type CurrencyFactory: CurrencyFactory<<Self as DeFiComposableConfig>::MayBeAssetId>;
 
-		/// vault owned - can transfer, cannot mint
-		type Currency: Transfer<
-				Self::AccountId,
-				Balance = Self::Balance,
-				AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
-			> + Mutate<
-				Self::AccountId,
-				Balance = Self::Balance,
-				AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
-			>;
-
-		/// market owned - debt token can be minted
-		type MarketDebtCurrency: Transfer<
+		type MultiCurrency: Transfer<
 				Self::AccountId,
 				Balance = Self::Balance,
 				AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
@@ -216,6 +204,29 @@ pub mod pallet {
 
 		/// Id of proxy to liquidate
 		type LiquidationStrategyId: Parameter + Default + PartialEq + Clone + Debug + TypeInfo;
+
+
+		/// In case of success to liquidation call, caller is rewarded with part of `collateral` asset.
+		/// User can liquidate it immediately too.
+		/// # Why not borrow directly? 
+		/// We have borrow reserve. It may risk be not enough to cover all collateral. And may be other risks.
+		/// 
+		/// # Why not native weight currency? 
+		/// Risk to allow earn currency from thin air or DDoS. 
+		/// Like if we return amount of PICA equal to weight of liquidation call, may produce liquidation loops with fake currencies to earn PICA.
+		/// 
+		/// # Why not collateral reward? 
+		/// We may have dead pools sitting with near zero cost of collaterals nobody wants to liquidate. 
+		/// This is easy to detect for inactive markets. 
+		/// We can GC that without liquidation at all later.
+		#[path::constant]
+		type MinimalLiqudaitonReward :Get<Permill>;
+		
+		/// Minimal price of borrow asset in Oracle price required to create
+		/// Creators puts that amount and it is staked under Vault account. 
+		/// So he does not owns it anymore.
+		#[path::constant]
+		type MarketCreationStake : Get<Self::Balance>;
 	}
 
 	#[pallet::pallet]
@@ -623,16 +634,16 @@ pub mod pallet {
 		/// liquidation.
 		/// - `origin` : Sender of this extrinsic.
 		/// - `market_id` : Market index from which `borrower` has taken borrow.
-		#[pallet::weight(1000)]
+		#[pallet::weight(<T as Config>::WeightInfo::liquidate(borrowers.len()))]
 		#[transactional]
 		pub fn liquidate(
 			origin: OriginFor<T>,
 			market_id: MarketIndex,
-			borrower: T::AccountId,
+			borrowers: Vec<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
 			let _sender = ensure_signed(origin)?;
 			// TODO: should this be restricted to certain users?
-			Self::liquidate_internal(&market_id, &borrower)?;
+			Self::liquidate_internal(&market_id, borrowers)?;
 			Self::deposit_event(Event::LiquidationInitiated { market_id, account: borrower });
 			Ok(().into())
 		}
@@ -774,7 +785,7 @@ pub mod pallet {
 		/// if there is any error then propagate that error.
 		pub fn liquidate_internal(
 			market_id: &<Self as Lending>::MarketId,
-			account: &<Self as DeFiEngine>::AccountId,
+			borrowers: Vec<<Self as DeFiEngine>::AccountId>,
 		) -> Result<(), DispatchError> {
 			if Self::should_liquidate(market_id, account)? {
 				let market = Self::get_market(market_id)?;
