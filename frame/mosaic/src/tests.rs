@@ -3,6 +3,32 @@
 /// 1. Test each extrinsic
 /// 2. Make sure unlocks etc are respected (timing)
 /// 3. Add tests for linear decay.
+///
+///
+/// grouping tests
+///
+/// test every failure case
+/// every error that an extrinsic can return
+///
+/// all the happy path cases
+///
+///
+/// interaction logic between extrinsics
+/// such as:
+///  transfer_to -> waiting for a block (til lock_time expires) -> claiming
+///         check if the funds are correctly moved to the user's account
+///
+///  transfer_to -> waiting for a block -> relayer accepts transfer -> (til lock_time expires) -> we should no longer be able to claim
+///
+///  incoming -> waiting til lock_time expires -> claiming
+///
+///  incoming -> wainting for a block -> relayer cancels transfer (finality issue) -> we should no longer be able to claim
+///
+///
+///  For every test, make sure that you check wether the funds moved to the correct (sub) accounts.
+///
+///
+///
 use crate::{decay::*, mock::*, *};
 use frame_support::{
 	assert_noop, assert_ok,
@@ -198,10 +224,10 @@ mod transfer_to {
 
             let network_id = 1;
             assert_ok!(Mosaic::set_network(
-			Origin::relayer(),
-			network_id,
-			NetworkInfo { enabled: true, max_transfer_size },
-		));
+                Origin::relayer(),
+                network_id,
+                NetworkInfo { enabled: true, max_transfer_size },
+            ));
 
             let asset_id = 1;
             assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, 10000, BudgetDecay::linear(10)));
@@ -210,9 +236,9 @@ mod transfer_to {
             let amount = max_transfer_size + 1;
             assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
             assert_noop!(
-			Mosaic::transfer_to(Origin::signed(ALICE), network_id, asset_id, [0; 20], amount, true),
-			Error::<Test>::ExceedsMaxTransferSize
-		);
+                Mosaic::transfer_to(Origin::signed(ALICE), network_id, asset_id, [0; 20], amount, true),
+                Error::<Test>::ExceedsMaxTransferSize
+            );
         })
     }
 
