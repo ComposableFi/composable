@@ -565,7 +565,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
 			account: AccountIdOf<T>,
-			untrunsted_amount: BalanceOf<T>,
+			untrusted_amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_relayer::<T>(origin)?;
 
@@ -573,16 +573,12 @@ pub mod pallet {
 				account.clone(),
 				asset_id,
 				|prev| {
-					let tx = prev.as_mut().ok_or(Error::<T>::NoClaimableTx)?;
-					ensure!(untrusted_amount <= tx.0, Error::<T>::AmountMismatch);
-					if tx.0 == untrusted_amount {
-						// When we burn the entire tx_amount, we wipe the entire incoming
-						// transaction.
+					let (balance, _) = prev.as_mut().ok_or(Error::<T>::NoClaimableTx)?;
+					// Wipe the entire incoming transaction.
+					if *balance == untrusted_amount {
 						*prev = None;
 					} else {
-						// When we burning a part of the tx_amount,we keep the transaction so that
-						// the rest can be burnt later.
-						tx.0 = tx.0.saturating_sub(untrusted_amount);
+						*balance = balance.saturating_sub(untrusted_amount);
 					}
 					T::Assets::burn_from(
 						asset_id,
@@ -590,7 +586,7 @@ pub mod pallet {
 							transaction_type: TransactionType::Incoming,
 							account_id: account.clone(),
 						}),
-						amount,
+						untrusted_amount,
 					)?;
 					Self::deposit_event(Event::<T>::TransferIntoRescined {
 						account,
