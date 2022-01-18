@@ -2,8 +2,8 @@
 #![cfg_attr(
 	not(any(test, feature = "runtime-benchmarks")),
 	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
+		clippy::disallowed_method,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -418,7 +418,7 @@ pub mod pallet {
 	/// Lending instances counter
 	#[pallet::storage]
 	#[pallet::getter(fn lending_count)]
-	#[allow(clippy::disallowed_types)] // MarketIndex implements Default, so ValueQuery is ok here.
+	#[allow(clippy::disallowed_type)] // MarketIndex implements Default, so ValueQuery is ok here.
 	pub type LendingCount<T: Config> = StorageValue<_, MarketIndex, ValueQuery>;
 
 	/// Indexed lending instances
@@ -435,7 +435,7 @@ pub mod pallet {
 	/// Debt token allows to simplify some debt management and implementation of features
 	#[pallet::storage]
 	#[pallet::getter(fn debt_currencies)]
-	#[allow(clippy::disallowed_types)] // AssetId implements default, so ValueQuery is ok here.
+	#[allow(clippy::disallowed_type)] // AssetId implements default, so ValueQuery is ok here.
 	pub type DebtMarkets<T: Config> =
 		StorageMap<_, Twox64Concat, MarketIndex, <T as Config>::AssetId, ValueQuery>;
 
@@ -468,7 +468,7 @@ pub mod pallet {
 	/// market borrow index
 	#[pallet::storage]
 	#[pallet::getter(fn borrow_index)]
-	#[allow(clippy::disallowed_types)] // MarketIndex implements default, so ValueQuery is ok here.
+	#[allow(clippy::disallowed_type)] // MarketIndex implements default, so ValueQuery is ok here.
 	pub type BorrowIndex<T: Config> = StorageMap<_, Twox64Concat, MarketIndex, Ratio, ValueQuery>;
 
 	/// (Market, Account) -> Collateral
@@ -487,7 +487,7 @@ pub mod pallet {
 	/// The timestamp of the previous block or defaults to timestamp at genesis.
 	#[pallet::storage]
 	#[pallet::getter(fn last_block_timestamp)]
-	#[allow(clippy::disallowed_types)] // Timestamp default is 0, which is valid in this context.
+	#[allow(clippy::disallowed_type)] // Timestamp default is 0, which is valid in this context.
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	#[pallet::genesis_config]

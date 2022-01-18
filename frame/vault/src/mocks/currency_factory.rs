@@ -69,7 +69,7 @@ pub mod pallet {
 	#[pallet::getter(fn vault_count)]
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type CurrencyCounter<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::call]

@@ -28,7 +28,7 @@ pub mod pallet {
 	#[pallet::getter(fn btc_value)]
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type BTCValue<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	impl<T: Config> Pallet<T> {

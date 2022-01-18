@@ -1,15 +1,15 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
+		clippy::disallowed_method,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -120,7 +120,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pool_count)]
 	// Absence of pool count is equivalent to 0, so ValueQuery is allowed.
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type PoolCount<T: Config> = StorageValue<_, T::PoolId, ValueQuery>;
 
 	/// Existing pools
@@ -139,7 +139,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pool_asset_balance)]
 	// Absence of pool asset balance is equivalent to 0, so ValueQuery is allowed.
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type PoolAssetBalance<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -154,7 +154,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pool_asset_total_balance)]
 	// Absence of pool asset balance is equivalent to 0, so ValueQuery is allowed.
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type PoolAssetTotalBalance<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,

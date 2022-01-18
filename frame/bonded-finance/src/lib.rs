@@ -1,14 +1,14 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
+		clippy::disallowed_method,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
-)] // allow in tests#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+)] // allow in tests#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -176,7 +176,7 @@ pub mod pallet {
 	#[pallet::getter(fn bond_offer_count)]
 	// `BondOfferOnEmpty<T>` explicitly defines the behaviour when empty, so `ValueQuery` is
 	// allowed.
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type BondOfferCount<T: Config> =
 		StorageValue<_, T::BondOfferId, ValueQuery, BondOfferOnEmpty<T>>;
 

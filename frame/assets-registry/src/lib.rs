@@ -9,8 +9,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
+		clippy::disallowed_method,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -80,14 +80,14 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn local_admin)]
 	/// Local admin account
-	#[allow(clippy::disallowed_types)] // LocalAdminOnEmpty provides a default value, so ValueQuery is ok here.
+	#[allow(clippy::disallowed_type)] // LocalAdminOnEmpty provides a default value, so ValueQuery is ok here.
 	pub type LocalAdmin<T: Config> =
 		StorageValue<_, T::AccountId, ValueQuery, LocalAdminOnEmpty<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_admin)]
 	/// Foreign admin account
-	#[allow(clippy::disallowed_types)] // ForeignAdminOnEmpty provides a default value, so ValueQuery is ok here.
+	#[allow(clippy::disallowed_type)] // ForeignAdminOnEmpty provides a default value, so ValueQuery is ok here.
 	pub type ForeignAdmin<T: Config> =
 		StorageValue<_, T::AccountId, ValueQuery, ForeignAdminOnEmpty<T>>;
 
