@@ -28,7 +28,7 @@ impl<T: CheckedAdd + CheckedMul + CheckedDiv + CheckedSub + Zero> SafeArithmetic
 	#[inline(always)]
 	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
 		if rhs.is_zero() {
-			return Err(ArithmeticError::DivisionByZero)
+			return Err(ArithmeticError::DivisionByZero);
 		}
 
 		self.checked_div(rhs).ok_or(ArithmeticError::Overflow)
@@ -51,6 +51,7 @@ impl<T: CheckedAdd + CheckedMul + CheckedDiv + CheckedSub + Zero> SafeArithmetic
 pub trait WrappingNext {
 	/// pallet must be coded that way that wrapping around does not do harm except of error
 	/// so additional check should be check on pallet level
+	#[must_use]
 	fn next(&self) -> Self;
 }
 
