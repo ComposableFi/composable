@@ -32,7 +32,7 @@ jobs:
         if: "$${{ env.RUNTIME_CHECK }} == 1"
         id: run_simnode
         run: |
-          .maintain/check_runtime.sh
+          .maintain/run_sminode.sh
 
   benchmark: 
     name: Benchmark
