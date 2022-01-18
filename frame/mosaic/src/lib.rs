@@ -148,9 +148,11 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		RelayerSet {
+        /// The account of the relayer has been set.
+        RelayerSet {
 			relayer: AccountIdOf<T>,
 		},
+        /// The relayer has been rotated to `account_id`.
 		RelayerRotated {
 			ttl: BlockNumberOf<T>,
 			account_id: AccountIdOf<T>,
@@ -160,6 +162,7 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			decay: T::BudgetDecay,
 		},
+        /// The `NetworkInfos` `network_info` was updated for `network_id`.
 		NetworksUpdated {
 			network_id: NetworkIdOf<T>,
 			network_info: NetworkInfo<BalanceOf<T>>,
@@ -184,16 +187,20 @@ pub mod pallet {
 			asset_id: AssetIdOf<T>,
 			id: Id,
 		},
+        /// When we have finality issues occur on the Ethereum chain,
+        /// we burn the locked `IncomingTransaction` for which we know that it is invalid.
 		TransferIntoRescined {
 			account: AccountIdOf<T>,
 			amount: BalanceOf<T>,
 			asset_id: AssetIdOf<T>,
 		},
+        /// The relayer accepted the user's `OutgoingTransaction`.
 		TransferAccepted {
 			from: AccountIdOf<T>,
 			asset_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
 		},
+        /// The user claims his `IncomingTransaction` and unlocks the locked amount.
 		TransferClaimed {
 			by: AccountIdOf<T>,
 			to: AccountIdOf<T>,
@@ -505,7 +512,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             asset_id: AssetIdOf<T>,
             account: AccountIdOf<T>,
-            amount: BalanceOf<T>,
+            untrusted_amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_relayer::<T>(origin)?;
 
@@ -514,16 +521,19 @@ pub mod pallet {
 				asset_id,
 				|prev| {
 					let tx = prev.as_mut().ok_or(Error::<T>::NoClaimableTx)?;
-					// Wipe the entire incoming transaction.
-					if tx.0 == amount {
+                    ensure!(untrusted_amount <= tx.0, Error::<T>::AmountMismatch);
+					if tx.0 == untrusted_amount {
+					    // When we burn the entire tx_amount, we wipe the entire incoming transaction.
 						*prev = None;
 					} else {
-						tx.0 = tx.0.saturating_sub(amount);
+                        // When we burning a part of the tx_amount,we keep the transaction so that
+                        // the rest can be burnt later.
+                        tx.0 = tx.0.saturating_sub(untrusted_amount);
 					}
-					T::Assets::burn_from(asset_id, &Self::sub_account_id(&account), amount)?;
+					T::Assets::burn_from(asset_id, &Self::sub_account_id(&account), untrusted_amount)?;
 					Self::deposit_event(Event::<T>::TransferIntoRescined {
 						account,
-						amount,
+						amount: untrusted_amount,
 						asset_id,
 					});
 					Ok(())
@@ -586,8 +596,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
         /// AccountId of the pallet, used to store all funds before actually moving them.
         pub fn sub_account_id(user_account: &AccountIdOf<T>) -> AccountIdOf<T> {
-            // TODO: SUB ACCOUNT
-            // todo!();
+            // TODO: use a different account for incoming and outgoing transactions.
             T::PalletId::get().into_sub_account(user_account)
         }
 
