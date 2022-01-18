@@ -19,7 +19,7 @@ pub type BlockNumber = u64;
 pub type NetworkId = u32;
 pub type Balance = u128;
 pub type Amount = i128;
-pub type CurrencyId = u32;
+pub type AssetId = u32;
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -72,7 +72,7 @@ impl system::Config for Test {
 }
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+	pub ExistentialDeposits: |_currency_id: AssetId| -> Balance {
 		Zero::zero()
 	};
 }
@@ -81,7 +81,7 @@ impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
-	type CurrencyId = CurrencyId;
+	type CurrencyId = AssetId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
@@ -112,7 +112,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 pub struct ExtBuilder {
-	balances: Vec<(AccountId, CurrencyId, Balance)>,
+	balances: Vec<(AccountId, AssetId, Balance)>,
 }
 
 impl Default for ExtBuilder {

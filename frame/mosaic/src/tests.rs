@@ -106,12 +106,8 @@ fn do_transfer_to() {
 	}));
 }
 
-fn do_timelocked_mint(lock_time: u64) {
-	let to = ALICE;
-	let asset_id = 1;
-
+fn do_timelocked_mint(to: AccountId, asset_id: AssetId, amount: Balance, lock_time: u64) {
 	let initial_block = System::block_number();
-	let amount = 50;
 
 	Mosaic::timelocked_mint(Origin::relayer(), asset_id, to, amount, lock_time, Default::default())
 		.expect("relayer should be able to mint");
@@ -156,7 +152,7 @@ fn claim_stale_to() {
 fn timelocked_mint() {
 	new_test_ext().execute_with(|| {
 		initialize();
-		do_timelocked_mint(10);
+		do_timelocked_mint(ALICE, 1, 50, 10);
 	})
 }
 
@@ -165,7 +161,7 @@ fn rescind_timelocked_mint() {
 	new_test_ext().execute_with(|| {
 		initialize();
 		let lock_time = 10;
-		do_timelocked_mint(lock_time);
+		do_timelocked_mint(ALICE, 1, 50, lock_time);
 
 		let initial_block = System::block_number();
 
@@ -192,7 +188,7 @@ fn claim_to() {
 	new_test_ext().execute_with(|| {
 		initialize();
 		let lock_time = 10;
-		do_timelocked_mint(lock_time);
+		do_timelocked_mint(ALICE, 1, 50, lock_time);
 		let current_block = System::block_number();
 		Mosaic::claim_to(Origin::alice(), 1, ALICE).expect_err(
 			"received funds should only be claimable after waiting for the relayer mandated time",
