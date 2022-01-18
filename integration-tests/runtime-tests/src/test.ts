@@ -4,19 +4,12 @@
  **/
 
 import { QueryCrowdloanRewardsTests } from './tests/query/crowdloanRewards/queryCrowdloanRewardsTests';
-import { QuerySystemAccountTests } from './tests/query/system/querySystemAccountTests';
-import { QueryTokenTests } from './tests/query/tokens/queryTokenTests';
 import { TxCrowdloanRewardsTests } from './tests/tx/crowdloanRewards/txCrowdloanRewardsTests';
+import { TxBondedFinanceTests } from "@composable/tests/tx/bondedFinance/txBondedFinanceTests";
 
 
 
 // Query Tests
-
-// Query.System.Account Tests
-QuerySystemAccountTests.runQuerySystemAccountTests();
-
-// Query.Token Tests
-QueryTokenTests.runQueryTokenTests();
 
 // Query Crowdloan Rewards Tests
 QueryCrowdloanRewardsTests.runQueryCrowdloanRewardsTests();
@@ -26,5 +19,8 @@ QueryCrowdloanRewardsTests.runQueryCrowdloanRewardsTests();
 
 // TX Crowdloan Rewards Tests
 TxCrowdloanRewardsTests.runTxCrowdloanRewardsTests();
+
+// TX bondedFinance Tests
+TxBondedFinanceTests.runTxBondedFinanceTests();
 
 // RPC Tests
