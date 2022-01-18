@@ -36,20 +36,20 @@ jobs:
         toolchain: stable
 
     - name: 🔨 Build and Upload Composable Binary
-      working-directory: "./.maintain/"
+      #working-directory: "./.maintain/"
       id: client_release
       run: |
-        ./client_release.sh
+        ./maintain/client_release.sh
 
     - name: Build wasm with srtool
-      working-directory: "./.maintain/"
+      #working-directory: "./.maintain/"
       id: runtime_release
       run: |
-        ./runtime_release.sh
+        ./maintain/runtime_release.sh
 
     - name: Upload Compact Picasso wasm # TODO only upload wasm that has changed
       uses: svenstaro/upload-release-action@v2
-      if: "$${{ env.picasso-wasm }} == 1"
+      if: "${{ env.picasso-wasm }} == 1"
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
         file: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
@@ -59,7 +59,7 @@ jobs:
     
     - name: Upload Compact Dali wasm # TODO only upload wasm that has changed
       uses: svenstaro/upload-release-action@v2
-      if: "$${{ env.dali-wasm }} == 1"
+      if: "${{ env.dali-wasm }} == 1"
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
         file: ./runtime/dali/target/srtool/release/wbuild/dali-runtime/dali_runtime.compact.wasm
@@ -69,7 +69,7 @@ jobs:
     
     - name: Upload Compact Composable wasm # TODO only upload wasm that has changed
       uses: svenstaro/upload-release-action@v2
-      if: "$${{ env.composable-wasm }} == 1"
+      if: "${{ env.composable-wasm }} == 1"
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
         file: ./runtime/picasso/target/srtool/release/wbuild/composable-runtime/composable_runtime.compact.wasm
