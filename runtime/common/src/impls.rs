@@ -55,7 +55,6 @@ mod tests {
 	use super::*;
 	use crate::{Balance, BlockNumber, DAYS};
 	use collator_selection::IdentityCollator;
-	use composable_traits::currency::PriceableAsset;
 	use frame_support::{
 		ord_parameter_types, parameter_types,
 		traits::{Everything, FindAuthor, ValidatorRegistration},

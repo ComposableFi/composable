@@ -1,4 +1,4 @@
-use composable_traits::currency::{DynamicCurrencyId, PriceableAsset};
+use composable_traits::currency::DynamicCurrencyId;
 use frame_support::parameter_types;
 use scale_info::TypeInfo;
 use sp_runtime::{ArithmeticError, DispatchError};
@@ -30,19 +30,6 @@ pub enum CurrencyId {
 impl Default for CurrencyId {
 	fn default() -> Self {
 		CurrencyId::PICA
-	}
-}
-
-impl PriceableAsset for CurrencyId {
-	fn decimals(&self) -> composable_traits::currency::Exponent {
-		match self {
-			CurrencyId::PICA => 0,
-			CurrencyId::BTC => 8,
-			CurrencyId::ETH => 18,
-			CurrencyId::LTC => 8,
-			CurrencyId::USDT => 2,
-			CurrencyId::LpToken(_) => 0,
-		}
 	}
 }
 
