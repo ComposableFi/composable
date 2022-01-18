@@ -1,0 +1,31 @@
+[env]
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+
+
+[tasks.fmt]
+workspace = false
+script = '''
+cargo +nightly fmt
+'''
+
+[tasks.build]
+workspace = false
+args = ["build", "--release"]
+
+[tasks.polkadot]
+workspace = false
+script = '''
+if [ ! -d "../polkadot" ] ; then
+    git clone -b v0.9.13 https://github.com/paritytech/polkadot ../polkadot
+fi
+cd ../polkadot && cargo build --release 
+'''
+
+[tasks.devnet]
+workspace = false
+dependencies = ["build", "polkadot"]
+script = '''
+cargo run --release -- --version
+cd ../polkadot && cargo run --release -- --version && pwd && cd ../composable
+cd scripts/polkadot-launch && yarn && yarn composable
+'''
