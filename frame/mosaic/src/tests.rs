@@ -770,10 +770,10 @@ mod transfer_to {
 
             let network_id = 1;
             assert_ok!(Mosaic::set_network(
-			Origin::relayer(),
-			network_id,
-			NetworkInfo { enabled: true, max_transfer_size },
-		));
+                Origin::relayer(),
+                network_id,
+                NetworkInfo { enabled: true, max_transfer_size },
+            ));
 
             let asset_id = 1;
             assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, 10000, BudgetDecay::linear(10)));
@@ -782,9 +782,9 @@ mod transfer_to {
             let amount = max_transfer_size + 1;
             assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
             assert_noop!(
-			Mosaic::transfer_to(Origin::signed(ALICE), network_id, asset_id, [0; 20], amount, true),
-			Error::<Test>::ExceedsMaxTransferSize
-		);
+                Mosaic::transfer_to(Origin::signed(ALICE), network_id, asset_id, [0; 20], amount, true),
+                Error::<Test>::ExceedsMaxTransferSize
+            );
         })
     }
 
