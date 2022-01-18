@@ -70,7 +70,7 @@ mod currency {
 				account in accounts(),
 				(first, second, third) in valid_amounts_without_overflow_3()
 			) {
-		new_test_ext().execute_with(|| {
+		   new_test_ext().execute_with(|| {
 			macro_rules! assert_issuance {
 			($val:expr) => {
 				let issuance = BALANCES.iter().fold(0, | sum, (_, val)| val + sum);
@@ -180,7 +180,7 @@ mod reservable_currency {
 	proptest! {
 		#![proptest_config(ProptestConfig::with_cases(10000))]
 
-				#[test]
+		#[test]
 		fn test_can_reserve_implementation(
 			account_1 in accounts(),
 			(first, _, _) in valid_amounts_without_overflow_3()
@@ -226,7 +226,7 @@ mod reservable_currency {
 			}).unwrap();
 		}
 
-				#[test]
+		#[test]
 		fn test_slash_reserve_implementation(
 			account_1 in accounts(),
 			(first, second, third) in valid_amounts_without_overflow_3()
@@ -289,7 +289,7 @@ mod reservable_currency {
 
 		#[test]
 		fn test_unreserve_implementation(
-			(account_1) in accounts(),
+			account_1 in accounts(),
 			(first, second, third) in valid_amounts_without_overflow_3()
 		) {
 			new_test_ext().execute_with(|| {
