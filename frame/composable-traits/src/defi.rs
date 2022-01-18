@@ -59,18 +59,25 @@ impl<AssetId: PartialEq, Balance: PartialOrd + Zero + SafeArithmetic> Sell<Asset
 	}
 }
 
-/// given `base`, how much `quote` needed for unit
-/// see [currency pair](https://www.investopedia.com/terms/c/currencypair.asp)
-/// Pair with same base and quote is considered valid as it allows to have mixer, money laundering
-/// like behavior.
+/// See [currency pair](https://www.investopedia.com/terms/c/currencypair.asp)
+/// Pair with same `base` and `quote` is considered valid as it allows to have mixer, money
+/// laundering like behavior.
+/// Can be used with Oracles, DEXes.
+/// Example, can do - give `base`, how much `quote` needed for unit.
+/// Can be local `Copy` `AssetId` or remote XCM asset id pair.
 #[repr(C)]
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
 pub struct CurrencyPair<AssetId> {
-	/// See [Base Currency](https://www.investopedia.com/terms/b/basecurrency.asp)
+	/// See [Base Currency](https://www.investopedia.com/terms/b/basecurrency.asp).
+	/// Also can be named `native`(to the market) currency.
 	pub base: AssetId,
-	/// counter currency
+	/// Counter currency.
+	/// Also can be named `price` currency.
 	pub quote: AssetId,
 }
+
+/// `AssetId` is Copy, than consider pair to be Copy
+impl<AssetId: Copy> Copy for CurrencyPair<AssetId> {}
 
 impl<AssetId: PartialEq> CurrencyPair<AssetId> {
 	pub fn new(base: AssetId, quote: AssetId) -> Self {
@@ -91,6 +98,10 @@ impl<AssetId: PartialEq> CurrencyPair<AssetId> {
 	/// ```
 	pub fn as_slice(&self) -> &[AssetId] {
 		unsafe { sp_std::slice::from_raw_parts(self as *const Self as *const AssetId, 2) }
+	}
+
+	pub fn reverse(&mut self) {
+		sp_std::mem::swap(&mut self.quote, &mut self.base)
 	}
 }
 
