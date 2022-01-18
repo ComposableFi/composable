@@ -30,19 +30,19 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> collator_selection::WeightInfo for WeightInfo<T> {
 	// Storage: CollatorSelection Invulnerables (r:0 w:1)
 	fn set_invulnerables(b: u32, ) -> Weight {
-		(16_563_000 as Weight)
+		(16_784_000 as Weight)
 			// Standard Error: 0
 			.saturating_add((37_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: CollatorSelection DesiredCandidates (r:0 w:1)
 	fn set_desired_candidates() -> Weight {
-		(14_698_000 as Weight)
+		(14_691_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: CollatorSelection CandidacyBond (r:0 w:1)
 	fn set_candidacy_bond() -> Weight {
-		(15_297_000 as Weight)
+		(15_446_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: CollatorSelection Candidates (r:1 w:1)
@@ -52,18 +52,18 @@ impl<T: frame_system::Config> collator_selection::WeightInfo for WeightInfo<T> {
 	// Storage: CollatorSelection CandidacyBond (r:1 w:0)
 	// Storage: CollatorSelection LastAuthoredBlock (r:0 w:1)
 	fn register_as_candidate(c: u32, ) -> Weight {
-		(90_330_000 as Weight)
+		(90_019_000 as Weight)
 			// Standard Error: 1_000
-			.saturating_add((155_000 as Weight).saturating_mul(c as Weight))
+			.saturating_add((158_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: CollatorSelection Candidates (r:1 w:1)
 	// Storage: CollatorSelection LastAuthoredBlock (r:0 w:1)
 	fn leave_intent(c: u32, ) -> Weight {
-		(88_053_000 as Weight)
-			// Standard Error: 2_000
-			.saturating_add((218_000 as Weight).saturating_mul(c as Weight))
+		(80_560_000 as Weight)
+			// Standard Error: 1_000
+			.saturating_add((229_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -71,7 +71,7 @@ impl<T: frame_system::Config> collator_selection::WeightInfo for WeightInfo<T> {
 	// Storage: System BlockWeight (r:1 w:1)
 	// Storage: CollatorSelection LastAuthoredBlock (r:0 w:1)
 	fn note_author() -> Weight {
-		(61_932_000 as Weight)
+		(67_646_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -82,10 +82,10 @@ impl<T: frame_system::Config> collator_selection::WeightInfo for WeightInfo<T> {
 	// Storage: System BlockWeight (r:1 w:1)
 	fn new_session(r: u32, c: u32, ) -> Weight {
 		(0 as Weight)
-			// Standard Error: 4_252_000
-			.saturating_add((22_668_000 as Weight).saturating_mul(r as Weight))
-			// Standard Error: 4_252_000
-			.saturating_add((112_210_000 as Weight).saturating_mul(c as Weight))
+			// Standard Error: 4_247_000
+			.saturating_add((22_276_000 as Weight).saturating_mul(r as Weight))
+			// Standard Error: 4_247_000
+			.saturating_add((112_079_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(c as Weight)))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(r as Weight)))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(c as Weight)))
