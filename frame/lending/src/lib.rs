@@ -297,17 +297,17 @@ pub mod pallet {
 			let one_read = T::DbWeight::get().reads(1);
 			weight += u64::from(call_counters.now) * <T as Config>::WeightInfo::now();
 			weight += u64::from(call_counters.read_markets) * one_read;
-			weight += u64::from(call_counters.accrue_interest)
-				* <T as Config>::WeightInfo::accrue_interest();
+			weight += u64::from(call_counters.accrue_interest) *
+				<T as Config>::WeightInfo::accrue_interest();
 			weight += u64::from(call_counters.account_id) * <T as Config>::WeightInfo::account_id();
-			weight += u64::from(call_counters.available_funds)
-				* <T as Config>::WeightInfo::available_funds();
-			weight += u64::from(call_counters.handle_withdrawable)
-				* <T as Config>::WeightInfo::handle_withdrawable();
-			weight += u64::from(call_counters.handle_depositable)
-				* <T as Config>::WeightInfo::handle_depositable();
-			weight += u64::from(call_counters.handle_must_liquidate)
-				* <T as Config>::WeightInfo::handle_must_liquidate();
+			weight += u64::from(call_counters.available_funds) *
+				<T as Config>::WeightInfo::available_funds();
+			weight += u64::from(call_counters.handle_withdrawable) *
+				<T as Config>::WeightInfo::handle_withdrawable();
+			weight += u64::from(call_counters.handle_depositable) *
+				<T as Config>::WeightInfo::handle_depositable();
+			weight += u64::from(call_counters.handle_must_liquidate) *
+				<T as Config>::WeightInfo::handle_must_liquidate();
 
 			// TODO: move following loop to OCW
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
@@ -324,7 +324,7 @@ pub mod pallet {
 			let signer = Signer::<T, <T as Config>::AuthorityId>::all_accounts();
 			if !signer.can_sign() {
 				log::warn!("No signer");
-				return;
+				return
 			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
 				let results = signer.send_signed_transaction(|_account| {
@@ -872,15 +872,15 @@ pub mod pallet {
 							FundsAvailability::Withdrawable(balance) => {
 								Self::handle_withdrawable(&config, &market_account, balance)?;
 								call_counters.handle_withdrawable += 1;
-							}
+							},
 							FundsAvailability::Depositable(balance) => {
 								Self::handle_depositable(&config, &market_account, balance)?;
 								call_counters.handle_depositable += 1;
-							}
+							},
 							FundsAvailability::MustLiquidate => {
 								Self::handle_must_liquidate(&config, &market_account)?;
 								call_counters.handle_must_liquidate += 1;
-							}
+							},
 						}
 
 						call_counters.available_funds += 1;
@@ -989,8 +989,8 @@ pub mod pallet {
 			let existing_borrow_share =
 				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
 			let new_borrow_share = Percent::from_rational(amount_to_borrow, total_borrow_amount);
-			Ok((market_index * new_borrow_share.into())
-				+ (account_interest_index * existing_borrow_share.into()))
+			Ok((market_index * new_borrow_share.into()) +
+				(account_interest_index * existing_borrow_share.into()))
 		}
 
 		fn can_borrow(
@@ -1004,7 +1004,7 @@ pub mod pallet {
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
 			if let Some(time) = latest_borrow_timestamp {
 				if time >= Self::last_block_timestamp() {
-					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into());
+					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into())
 				}
 			}
 
@@ -1362,7 +1362,7 @@ pub mod pallet {
 					)?;
 
 					Ok(balance.map(Into::into))
-				}
+				},
 				// no active borrow on  market for given account
 				None => Ok(Some(BorrowAmountOf::<Self>::zero())),
 			}
@@ -1424,8 +1424,8 @@ pub mod pallet {
 			);
 
 			ensure!(
-				<T as Config>::Currency::can_deposit(market.collateral, &market_account, amount)
-					== DepositConsequence::Success,
+				<T as Config>::Currency::can_deposit(market.collateral, &market_account, amount) ==
+					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 
@@ -1483,8 +1483,8 @@ pub mod pallet {
 
 			let market_account = Self::account_id(market_id);
 			ensure!(
-				<T as Config>::Currency::can_deposit(market.collateral, account, amount)
-					== DepositConsequence::Success,
+				<T as Config>::Currency::can_deposit(market.collateral, account, amount) ==
+					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 			ensure!(
@@ -1523,7 +1523,7 @@ pub mod pallet {
 		account_interest_index: Ratio,
 	) -> Result<Option<u64>, DispatchError> {
 		if principal.is_zero() {
-			return Ok(None);
+			return Ok(None)
 		}
 		let principal: LiftedFixedBalance = principal.into();
 		let balance = principal

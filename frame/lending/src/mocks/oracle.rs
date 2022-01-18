@@ -93,7 +93,7 @@ pub mod pallet {
 						.checked_mul_int(price)
 						.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
 					Ok(Price { price: derived, block })
-				}
+				},
 			}
 		}
 

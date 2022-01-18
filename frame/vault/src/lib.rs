@@ -501,7 +501,7 @@ pub mod pallet {
 						let reward = T::NativeCurrency::reducible_balance(account, false);
 						T::NativeCurrency::transfer(account, &reward_address, reward, false)?;
 						Ok(().into())
-					}
+					},
 					Verdict::Charge { remaining, payable } => {
 						vault.deposit = Deposit::Rent { amount: remaining, at: current_block };
 						// If this transfer call fails due to the vaults account not being kept
@@ -515,7 +515,7 @@ pub mod pallet {
 							true,
 						)?;
 						Ok(().into())
-					}
+					},
 				}
 			})
 		}
@@ -565,7 +565,7 @@ pub mod pallet {
 					<frame_system::Pallet<T>>::block_number(),
 					vault.deposit,
 				) {
-					return Err(Error::<T>::TombstoneDurationNotExceeded.into());
+					return Err(Error::<T>::TombstoneDurationNotExceeded.into())
 				} else {
 					let deletion_reward_account = &Self::deletion_reward_account(dest);
 					let reward =
@@ -833,8 +833,8 @@ pub mod pallet {
 			let vault_aum = Self::assets_under_management(vault_id)?;
 			if vault_aum.is_zero() {
 				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, amount)
-						== DepositConsequence::Success,
+					T::Currency::can_deposit(vault.lp_token_id, from, amount) ==
+						DepositConsequence::Success,
 					Error::<T>::MintFailed
 				);
 
@@ -864,8 +864,8 @@ pub mod pallet {
 				ensure!(lp > T::Balance::zero(), Error::<T>::InsufficientCreationDeposit);
 
 				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, lp)
-						== DepositConsequence::Success,
+					T::Currency::can_deposit(vault.lp_token_id, from, lp) ==
+						DepositConsequence::Success,
 					Error::<T>::MintFailed
 				);
 
@@ -1025,7 +1025,7 @@ pub mod pallet {
 					} else {
 						Ok(FundsAvailability::Withdrawable(max_allowed - balance))
 					}
-				}
+				},
 				(_, _) => Ok(FundsAvailability::MustLiquidate),
 			}
 		}
