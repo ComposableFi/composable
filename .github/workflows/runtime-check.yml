@@ -15,26 +15,25 @@ jobs:
       - linux
       - x64
       - sre
+    if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v2
         with: 
           fetch-depth: 0
 
       - name: Check for runtime changes
-        working-directory: "./.maintain/"
         id: check_runtime
         run: |
-          ./check_runtime.sh
+          .maintain/check_runtime.sh
 
       - name: Echo output
         run: echo ${{ env.RUNTIME_CHECK }}
 
       - name: Run Simnode
         if: "$${{ env.RUNTIME_CHECK }} == 1"
-        working-directory: "./.maintain/"
         id: run_simnode
         run: |
-          ./run_simnode.sh
+          .maintain/run_simnode.sh
 
   benchmark: 
     name: Benchmark
@@ -43,14 +42,14 @@ jobs:
       - linux
       - x64
       - bmark
+    if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v2
       - name: Benchmark Test
         if: "$${{ env.RUNTIME_CHECK }} == 1"
-        working-directory: "./.maintain/"
         id: run_benchmarks
         run: |
-          ./run_benchmarks.sh
+          .maintain/run_benchmarks.sh
           
 
 
