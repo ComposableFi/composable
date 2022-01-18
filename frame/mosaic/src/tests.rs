@@ -745,7 +745,7 @@ fn claim_stale_to() {
 		do_transfer_to();
 		let current_block = System::block_number();
 		System::set_block_number(current_block + Mosaic::timelock_period() + 1);
-		Mosaic::claim_stale_to(Origin::signed(ALICE), ALICE, 1)
+		Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE)
 			.expect("claiming an outgoing transaction should work after the timelock period");
 	})
 }

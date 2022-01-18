@@ -132,6 +132,12 @@ pub mod pallet {
 			};
 			[prefix.to_vec(), self.account_id.encode()]
 		}
+		pub fn outgoing(account_id: AccountIdOf<T>) -> Self {
+			SubAccount { transaction_type: TransactionType::Outgoing, account_id }
+		}
+		pub fn incoming(account_id: AccountIdOf<T>) -> Self {
+			SubAccount { transaction_type: TransactionType::Incoming, account_id }
+		}
 	}
 
 	#[pallet::storage]
