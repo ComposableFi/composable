@@ -762,16 +762,16 @@ fn timelocked_mint() {
 fn rescind_timelocked_mint() {
 	new_test_ext().execute_with(|| {
 		initialize();
-        let lock_time = 10;
+		let lock_time = 10;
 		do_timelocked_mint(lock_time);
 
-        let initial_block = System::block_number();
+		let initial_block = System::block_number();
 
 		Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 40)
 			.expect("relayer should be able to rescind transactions");
-        assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((10, initial_block + lock_time)));
-        let transfer_amount = 9;
-        Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, transfer_amount)
+		assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((10, initial_block + lock_time)));
+		let transfer_amount = 9;
+		Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, transfer_amount)
 			.expect("relayer should be able to rescind transactions");
 		assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((1, 11)));
 	})
@@ -789,7 +789,7 @@ fn set_timelock_duration() {
 fn claim_to() {
 	new_test_ext().execute_with(|| {
 		initialize();
-        let lock_time = 10;
+		let lock_time = 10;
 		do_timelocked_mint(lock_time);
 		let current_block = System::block_number();
 		Mosaic::claim_to(Origin::alice(), 1, ALICE).expect_err(
