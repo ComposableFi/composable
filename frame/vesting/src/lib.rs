@@ -29,8 +29,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -148,7 +148,7 @@ pub mod module {
 	#[pallet::getter(fn vesting_schedules)]
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type VestingSchedules<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -348,7 +348,7 @@ impl<T: Config> Pallet<T> {
 		if bounded_schedules.len().is_zero() {
 			<VestingSchedules<T>>::remove(who, asset);
 			T::Currency::remove_lock(VESTING_LOCK_ID, asset, who)?;
-			return Ok(())
+			return Ok(());
 		}
 
 		let total_amount =

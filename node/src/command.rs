@@ -103,9 +103,8 @@ impl SubstrateCli for Cli {
 			"composable" | "composable-dev" => &composable_runtime::VERSION,
 			// dali chains
 			#[cfg(feature = "dali")]
-			"dali" | "dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" => {
-				&dali_runtime::VERSION
-			}
+			"dali" | "dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" =>
+				&dali_runtime::VERSION,
 			// picasso chains
 			"picasso" | "picasso-dev" => &picasso_runtime::VERSION,
 			_ => panic!("Unknown chain_id: {}", spec.id()),
@@ -183,27 +182,27 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
-		}
+		},
 		Some(Subcommand::CheckBlock(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.0, components.2))
 			})
-		}
+		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.0, config.database))
 			})
-		}
+		},
 		Some(Subcommand::ExportState(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.0, config.chain_spec))
 			})
-		}
+		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.0, components.2))
 			})
-		}
+		},
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -223,7 +222,7 @@ pub fn run() -> Result<()> {
 
 				cmd.run(config, polkadot_config)
 			})
-		}
+		},
 		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
 			Ok(cmd.run(components.0, components.1))
 		}),
@@ -248,7 +247,7 @@ pub fn run() -> Result<()> {
 			}
 
 			Ok(())
-		}
+		},
 		Some(Subcommand::ExportGenesisWasm(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
@@ -269,8 +268,8 @@ pub fn run() -> Result<()> {
 			}
 
 			Ok(())
-		}
-		Some(Subcommand::Benchmark(cmd)) => {
+		},
+		Some(Subcommand::Benchmark(cmd)) =>
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 
@@ -286,8 +285,7 @@ pub fn run() -> Result<()> {
 				Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
 					.into())
-			}
-		}
+			},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
@@ -323,7 +321,7 @@ pub fn run() -> Result<()> {
 
 				Ok(crate::service::start_node(config, polkadot_config, id).await?)
 			})
-		}
+		},
 	}
 }
 

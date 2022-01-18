@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -106,7 +106,7 @@ pub mod pallet {
 	#[pallet::getter(fn account_privileges)]
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type AccountPrivileges<T: Config> =
 		StorageMap<_, Blake2_128Concat, AccountIdOf<T>, Privilege, ValueQuery>;
 
@@ -114,7 +114,7 @@ pub mod pallet {
 	#[pallet::getter(fn group_privileges)]
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type GroupPrivileges<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::GroupId, Privilege, ValueQuery>;
 
@@ -122,7 +122,7 @@ pub mod pallet {
 	#[pallet::getter(fn group_members)]
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type GroupMembers<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::GroupId, PrivilegedGroupSet<AccountIdOf<T>>, ValueQuery>;
 
@@ -130,14 +130,14 @@ pub mod pallet {
 	#[pallet::getter(fn group_id_last)]
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type GroupId<T: Config> = StorageValue<_, T::GroupId, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn group_count)]
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type GroupCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	impl<T: Config> InspectPrivilege for Pallet<T> {
@@ -261,7 +261,7 @@ pub mod pallet {
 							account_id: *account_id,
 						});
 						Ok(())
-					},
+					}
 				}
 			})
 		}

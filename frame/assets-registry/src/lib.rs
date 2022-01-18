@@ -9,8 +9,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -80,14 +80,14 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn local_admin)]
 	/// Local admin account
-	#[allow(clippy::disallowed_type)] // LocalAdminOnEmpty provides a default value, so ValueQuery is ok here.
+	#[allow(clippy::disallowed_types)] // LocalAdminOnEmpty provides a default value, so ValueQuery is ok here.
 	pub type LocalAdmin<T: Config> =
 		StorageValue<_, T::AccountId, ValueQuery, LocalAdminOnEmpty<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_admin)]
 	/// Foreign admin account
-	#[allow(clippy::disallowed_type)] // ForeignAdminOnEmpty provides a default value, so ValueQuery is ok here.
+	#[allow(clippy::disallowed_types)] // ForeignAdminOnEmpty provides a default value, so ValueQuery is ok here.
 	pub type ForeignAdmin<T: Config> =
 		StorageValue<_, T::AccountId, ValueQuery, ForeignAdminOnEmpty<T>>;
 
@@ -273,7 +273,7 @@ pub mod pallet {
 			let local_admin = <LocalAdmin<T>>::get();
 			let foreign_admin = <ForeignAdmin<T>>::get();
 			match current_candidate_status {
-				None =>
+				None => {
 					if who == local_admin {
 						<AssetsMappingCandidates<T>>::insert(
 							(local_asset_id, foreign_asset_id),
@@ -284,17 +284,20 @@ pub mod pallet {
 							(local_asset_id, foreign_asset_id),
 							CandidateStatus::ForeignAdminApproved,
 						);
-					},
-				Some(CandidateStatus::LocalAdminApproved) =>
+					}
+				}
+				Some(CandidateStatus::LocalAdminApproved) => {
 					if who == foreign_admin {
 						Self::set_location(local_asset_id, foreign_asset_id.clone())?;
 						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
-					},
-				Some(CandidateStatus::ForeignAdminApproved) =>
+					}
+				}
+				Some(CandidateStatus::ForeignAdminApproved) => {
 					if who == local_admin {
 						Self::set_location(local_asset_id, foreign_asset_id.clone())?;
 						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
-					},
+					}
+				}
 			};
 			Ok(().into())
 		}
@@ -305,8 +308,9 @@ pub mod pallet {
 		type Success = T::AccountId;
 		fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
 			o.into().and_then(|o| match (o, LocalAdmin::<T>::try_get()) {
-				(frame_system::RawOrigin::Signed(ref who), Ok(ref f)) if who == f =>
-					Ok(who.clone()),
+				(frame_system::RawOrigin::Signed(ref who), Ok(ref f)) if who == f => {
+					Ok(who.clone())
+				}
 				(r, _) => Err(T::Origin::from(r)),
 			})
 		}
@@ -323,8 +327,9 @@ pub mod pallet {
 		type Success = T::AccountId;
 		fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
 			o.into().and_then(|o| match (o, ForeignAdmin::<T>::try_get()) {
-				(frame_system::RawOrigin::Signed(ref who), Ok(ref f)) if who == f =>
-					Ok(who.clone()),
+				(frame_system::RawOrigin::Signed(ref who), Ok(ref f)) if who == f => {
+					Ok(who.clone())
+				}
 				(r, _) => Err(T::Origin::from(r)),
 			})
 		}

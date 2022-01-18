@@ -234,7 +234,7 @@ impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for Currency
 					ParachainInfo::parachain_id()
 				);
 				None
-			}
+			},
 			CurrencyId::PICA => Some(MultiLocation::new(
 				1,
 				X2(Parachain(ParachainInfo::parachain_id().into()), GeneralKey(id.encode())),
@@ -252,7 +252,7 @@ impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for Currency
 					);
 					None
 				}
-			}
+			},
 		}
 	}
 }
@@ -275,13 +275,13 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 						_ => {
 							log::error!("failed converting currency");
 							None
-						}
+						},
 					}
 				} else {
 					log::error!("failed converting currency");
 					None
 				}
-			}
+			},
 			// delegate to asset-registry
 			_ => {
 				let result = <AssetsRegistry as RemoteAssetRegistry>::location_to_asset(
@@ -292,7 +292,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 					log::error!("failed converting currency");
 				}
 				result
-			}
+			},
 		}
 	}
 }
