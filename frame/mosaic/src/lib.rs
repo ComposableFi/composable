@@ -86,6 +86,27 @@ pub mod pallet {
 		decay: Decayable,
 	}
 
+	pub enum TransactionType {
+		Incoming,
+		Outgoing,
+	}
+
+	/// User incoming/outgoing accounts, that hold the funds for transactions to happen.
+	pub struct SubAccount<T: Config> {
+		transaction_type: TransactionType,
+		account_id: AccountIdOf<T>,
+	}
+
+	impl<T: Config> SubAccount<T> {
+		pub fn to_id(&self) -> impl Encode {
+			let prefix = match self.transaction_type {
+				TransactionType::Incoming => b"incoming________",
+				TransactionType::Outgoing => b"outgoing________",
+			};
+			[prefix.to_vec(), self.account_id.encode()]
+		}
+	}
+
 	#[pallet::storage]
 	pub type AssetsInfo<T: Config> = StorageMap<
 		_,
@@ -119,7 +140,7 @@ pub mod pallet {
 		T::MinimumTimeLockPeriod::get()
 	}
 
-    /// Locked outgoing tx out of Picasso, that a relayer needs to process.
+	/// Locked outgoing tx out of Picasso, that a relayer needs to process.
 	#[pallet::storage]
 	#[pallet::getter(fn outgoing_transactions)]
 	pub type OutgoingTransactions<T: Config> = StorageDoubleMap<
@@ -132,7 +153,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-    /// Locked incoming tx into Picasso that the user needs to claim.
+	/// Locked incoming tx into Picasso that the user needs to claim.
 	#[pallet::storage]
 	#[pallet::getter(fn incoming_transactions)]
 	pub type IncomingTransactions<T: Config> = StorageDoubleMap<
@@ -148,11 +169,11 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-        /// The account of the relayer has been set.
-        RelayerSet {
+		/// The account of the relayer has been set.
+		RelayerSet {
 			relayer: AccountIdOf<T>,
 		},
-        /// The relayer has been rotated to `account_id`.
+		/// The relayer has been rotated to `account_id`.
 		RelayerRotated {
 			ttl: BlockNumberOf<T>,
 			account_id: AccountIdOf<T>,
@@ -162,45 +183,45 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			decay: T::BudgetDecay,
 		},
-        /// The `NetworkInfos` `network_info` was updated for `network_id`.
+		/// The `NetworkInfos` `network_info` was updated for `network_id`.
 		NetworksUpdated {
 			network_id: NetworkIdOf<T>,
 			network_info: NetworkInfo<BalanceOf<T>>,
 		},
-        /// An outgoing tx is created, and locked in the outgoing tx pool.
+		/// An outgoing tx is created, and locked in the outgoing tx pool.
 		TransferOut {
 			id: Id,
 			to: EthereumAddress,
 			amount: BalanceOf<T>,
 			network_id: NetworkIdOf<T>,
 		},
-        /// User claimed outgoing tx that was not (yet) picked up by the relayer
+		/// User claimed outgoing tx that was not (yet) picked up by the relayer
 		StaleTxClaimed {
 			to: AccountIdOf<T>,
 			by: AccountIdOf<T>,
 			amount: BalanceOf<T>,
 		},
-        /// An incoming tx is created and waiting for the user to claim.
+		/// An incoming tx is created and waiting for the user to claim.
 		TransferInto {
 			to: AccountIdOf<T>,
 			amount: BalanceOf<T>,
 			asset_id: AssetIdOf<T>,
 			id: Id,
 		},
-        /// When we have finality issues occur on the Ethereum chain,
-        /// we burn the locked `IncomingTransaction` for which we know that it is invalid.
+		/// When we have finality issues occur on the Ethereum chain,
+		/// we burn the locked `IncomingTransaction` for which we know that it is invalid.
 		TransferIntoRescined {
 			account: AccountIdOf<T>,
 			amount: BalanceOf<T>,
 			asset_id: AssetIdOf<T>,
 		},
-        /// The relayer accepted the user's `OutgoingTransaction`.
+		/// The relayer accepted the user's `OutgoingTransaction`.
 		TransferAccepted {
 			from: AccountIdOf<T>,
 			asset_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
 		},
-        /// The user claims his `IncomingTransaction` and unlocks the locked amount.
+		/// The user claims his `IncomingTransaction` and unlocks the locked amount.
 		TransferClaimed {
 			by: AccountIdOf<T>,
 			to: AccountIdOf<T>,
@@ -222,7 +243,7 @@ pub mod pallet {
 		InsufficientBudget,
 		ExceedsMaxTransferSize,
 		NoClaimableTx,
-        TxStillLocked,
+		TxStillLocked,
 		NoOutgoingTx,
 		AmountMismatch,
 	}
@@ -341,7 +362,16 @@ pub mod pallet {
 			ensure!(network_info.enabled, Error::<T>::NetworkDisabled);
 			ensure!(network_info.max_transfer_size >= amount, Error::<T>::ExceedsMaxTransferSize);
 
-			T::Assets::transfer(asset_id, &caller, &Self::sub_account_id(&caller), amount, keep_alive)?;
+			T::Assets::transfer(
+				asset_id,
+				&caller,
+				&Self::sub_account_id(SubAccount {
+					transaction_type: TransactionType::Outgoing,
+					account_id: caller.clone(),
+				}),
+				amount,
+				keep_alive,
+			)?;
 			let now = <frame_system::Pallet<T>>::block_number();
 			let lock_until = now.safe_add(&TimeLockPeriod::<T>::get())?;
 
@@ -382,10 +412,10 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn accept_transfer(
-            origin: OriginFor<T>,
-            from: AccountIdOf<T>,
-            asset_id: AssetIdOf<T>,
-            amount: BalanceOf<T>,
+			origin: OriginFor<T>,
+			from: AccountIdOf<T>,
+			asset_id: AssetIdOf<T>,
+			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_relayer::<T>(origin)?;
 			OutgoingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
@@ -394,7 +424,14 @@ pub mod pallet {
 				|maybe_tx| match *maybe_tx {
 					Some((balance, _)) => {
 						ensure!(amount <= balance, Error::<T>::AmountMismatch);
-						T::Assets::burn_from(asset_id, &Self::sub_account_id(&from), amount)?;
+						T::Assets::burn_from(
+							asset_id,
+							&Self::sub_account_id(SubAccount {
+								transaction_type: TransactionType::Outgoing,
+								account_id: from.clone(),
+							}),
+							amount,
+						)?;
 
 						// No remaing funds need to be transferred for this asset, so we can delete
 						// the storage item.
@@ -420,9 +457,9 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn claim_stale_to(
-            origin: OriginFor<T>,
-            asset_id: AssetIdOf<T>,
-            to: AccountIdOf<T>,
+			origin: OriginFor<T>,
+			asset_id: AssetIdOf<T>,
+			to: AccountIdOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 
@@ -434,7 +471,16 @@ pub mod pallet {
 				|prev| -> Result<(), DispatchError> {
 					let amount = match *prev {
 						Some((balance, lock_time)) if lock_time < now => {
-							T::Assets::transfer(asset_id, &Self::sub_account_id(&caller), &to, balance, true)?;
+							T::Assets::transfer(
+								asset_id,
+								&Self::sub_account_id(SubAccount {
+									transaction_type: TransactionType::Outgoing,
+									account_id: caller.clone(),
+								}),
+								&to,
+								balance,
+								true,
+							)?;
 							balance
 						},
 						_ => return Err(Error::<T>::NoStaleTransactions.into()),
@@ -452,12 +498,12 @@ pub mod pallet {
 		/// `lock_time` blocks have expired.
 		#[pallet::weight(10_000)]
 		pub fn timelocked_mint(
-            origin: OriginFor<T>,
-            asset_id: AssetIdOf<T>,
-            to: AccountIdOf<T>,
-            amount: BalanceOf<T>,
-            lock_time: BlockNumberOf<T>,
-            id: Id,
+			origin: OriginFor<T>,
+			asset_id: AssetIdOf<T>,
+			to: AccountIdOf<T>,
+			amount: BalanceOf<T>,
+			lock_time: BlockNumberOf<T>,
+			id: Id,
 		) -> DispatchResultWithPostInfo {
 			let (_caller, current_block) = ensure_relayer::<T>(origin)?;
 
@@ -470,7 +516,14 @@ pub mod pallet {
 				let budget = budget.saturating_sub(penalty);
 				ensure!(budget > amount, Error::<T>::InsufficientBudget);
 
-				T::Assets::mint_into(asset_id, &Self::sub_account_id(&to), amount)?;
+				T::Assets::mint_into(
+					asset_id,
+					&Self::sub_account_id(SubAccount {
+						transaction_type: TransactionType::Incoming,
+						account_id: to.clone(),
+					}),
+					amount,
+				)?;
 				let lock_at = lock_time.saturating_add(current_block);
 
 				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
@@ -509,10 +562,10 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn rescind_timelocked_mint(
-            origin: OriginFor<T>,
-            asset_id: AssetIdOf<T>,
-            account: AccountIdOf<T>,
-            untrusted_amount: BalanceOf<T>,
+			origin: OriginFor<T>,
+			asset_id: AssetIdOf<T>,
+			account: AccountIdOf<T>,
+			untrunsted_amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_relayer::<T>(origin)?;
 
@@ -521,16 +574,24 @@ pub mod pallet {
 				asset_id,
 				|prev| {
 					let tx = prev.as_mut().ok_or(Error::<T>::NoClaimableTx)?;
-                    ensure!(untrusted_amount <= tx.0, Error::<T>::AmountMismatch);
+					ensure!(untrusted_amount <= tx.0, Error::<T>::AmountMismatch);
 					if tx.0 == untrusted_amount {
-					    // When we burn the entire tx_amount, we wipe the entire incoming transaction.
+						// When we burn the entire tx_amount, we wipe the entire incoming
+						// transaction.
 						*prev = None;
 					} else {
-                        // When we burning a part of the tx_amount,we keep the transaction so that
-                        // the rest can be burnt later.
-                        tx.0 = tx.0.saturating_sub(untrusted_amount);
+						// When we burning a part of the tx_amount,we keep the transaction so that
+						// the rest can be burnt later.
+						tx.0 = tx.0.saturating_sub(untrusted_amount);
 					}
-					T::Assets::burn_from(asset_id, &Self::sub_account_id(&account), untrusted_amount)?;
+					T::Assets::burn_from(
+						asset_id,
+						&Self::sub_account_id(SubAccount {
+							transaction_type: TransactionType::Incoming,
+							account_id: account.clone(),
+						}),
+						amount,
+					)?;
 					Self::deposit_event(Event::<T>::TransferIntoRescined {
 						account,
 						amount: untrusted_amount,
@@ -546,9 +607,9 @@ pub mod pallet {
 		/// Collects funds deposited by the relayer into the owner's account
 		#[pallet::weight(10_000)]
 		pub fn claim_to(
-            origin: OriginFor<T>,
-            asset_id: AssetIdOf<T>,
-            to: AccountIdOf<T>,
+			origin: OriginFor<T>,
+			asset_id: AssetIdOf<T>,
+			to: AccountIdOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 			let now = <frame_system::Pallet<T>>::block_number();
@@ -559,8 +620,17 @@ pub mod pallet {
 				|deposit| {
 					let (amount, unlock_after) = deposit.ok_or(Error::<T>::NoClaimableTx)?;
 					ensure!(unlock_after < now, Error::<T>::TxStillLocked);
-					T::Assets::transfer(asset_id, &Self::sub_account_id(&caller), &to, amount, true)?;
-                    // Delete the deposit.
+					T::Assets::transfer(
+						asset_id,
+						&Self::sub_account_id(SubAccount {
+							transaction_type: TransactionType::Incoming,
+							account_id: caller.clone(),
+						}),
+						&to,
+						amount,
+						true,
+					)?;
+					// Delete the deposit.
 					deposit.take();
 					Self::deposit_event(Event::<T>::TransferClaimed {
 						by: caller,
@@ -587,18 +657,16 @@ pub mod pallet {
 
 	#[pallet::extra_constants]
 	impl<T: Config> Pallet<T> {
-
 		pub fn timelock_period() -> BlockNumberOf<T> {
 			TimeLockPeriod::<T>::get()
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
-        /// AccountId of the pallet, used to store all funds before actually moving them.
-        pub fn sub_account_id(user_account: &AccountIdOf<T>) -> AccountIdOf<T> {
-            // TODO: use a different account for incoming and outgoing transactions.
-            T::PalletId::get().into_sub_account(user_account)
-        }
+		/// AccountId of the pallet, used to store all funds before actually moving them.
+		pub fn sub_account_id(sub_account: SubAccount<T>) -> AccountIdOf<T> {
+			T::PalletId::get().into_sub_account(sub_account.to_id())
+		}
 
 		/// Queries storage, returning the account_id of the current relayer.
 		pub fn relayer_account_id() -> Option<AccountIdOf<T>> {
@@ -615,12 +683,12 @@ pub mod pallet {
 
 	/// Uses Keccak256 to generate an identifier for
 	pub(crate) fn generate_id<T: Config>(
-        to: &AccountIdOf<T>,
-        network_id: &NetworkIdOf<T>,
-        asset_id: &AssetIdOf<T>,
-        address: &EthereumAddress,
-        amount: &BalanceOf<T>,
-        block_number: &BlockNumberOf<T>,
+		to: &AccountIdOf<T>,
+		network_id: &NetworkIdOf<T>,
+		asset_id: &AssetIdOf<T>,
+		address: &EthereumAddress,
+		amount: &BalanceOf<T>,
+		block_number: &BlockNumberOf<T>,
 	) -> Id {
 		use sp_runtime::traits::Hash;
 
