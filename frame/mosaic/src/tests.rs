@@ -3,7 +3,12 @@
 /// 1. Test each extrinsic
 /// 2. Make sure unlocks etc are respected (timing)
 /// 3. Add tests for linear decay.
-use crate::{mock::*, *};
+use crate::{decay::*, mock::*, *};
+use frame_support::{
+	assert_noop, assert_ok,
+	traits::fungibles::{Inspect, Mutate},
+};
+use sp_runtime::DispatchError;
 
 pub trait OriginExt {
 	fn relayer() -> Origin {
@@ -20,25 +25,183 @@ impl OriginExt for Origin {}
 #[test]
 fn set_relayer() {
 	new_test_ext().execute_with(|| {
-		Mosaic::set_relayer(Origin::root(), RELAYER).expect("root may call set_relayer");
+		assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 		assert_eq!(Mosaic::relayer_account_id(), Some(RELAYER));
-		Mosaic::set_relayer(Origin::relayer(), ALICE).expect_err("only root may call set_relayer");
-		Mosaic::set_relayer(Origin::none(), ALICE).expect_err("only root may call set_relayer");
 	})
 }
 
 #[test]
-fn rotate_relayer() {
+fn relayer_cannot_set_relayer() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(Mosaic::set_relayer(Origin::relayer(), ALICE), DispatchError::BadOrigin);
+	})
+}
+
+#[test]
+fn none_cannot_set_relayer() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(Mosaic::set_relayer(Origin::none(), ALICE), DispatchError::BadOrigin);
+	})
+}
+
+#[test]
+fn relayer_can_rotate_relayer() {
 	new_test_ext().execute_with(|| {
 		let ttl = 500;
 		let current_block = System::block_number();
-		Mosaic::set_relayer(Origin::root(), RELAYER).expect("root may call set_relayer");
-		Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl).expect("relayer may rotate relayer");
+		assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+		assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl));
 		System::set_block_number(current_block + ttl + 2);
 		assert_eq!(Mosaic::relayer_account_id(), Some(BOB))
 	})
 }
 
+#[test]
+fn arbitrary_account_cannot_rotate_relayer() {
+	new_test_ext().execute_with(|| {
+		let ttl = 500;
+		assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+		assert_noop!(
+			Mosaic::rotate_relayer(Origin::signed(ALICE), BOB, ttl),
+			DispatchError::BadOrigin
+		);
+	})
+}
+
+#[test]
+fn root_can_set_budget() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Mosaic::set_budget(Origin::root(), 1, 1, BudgetDecay::linear(5)));
+	})
+}
+
+#[test]
+fn arbitrary_user_cannot_set_budget() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(
+			Mosaic::set_budget(Origin::signed(ALICE), 1, 1, BudgetDecay::linear(5)),
+			DispatchError::BadOrigin
+		);
+	})
+}
+
+#[test]
+fn budget_are_isolated() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Mosaic::set_budget(Origin::root(), 1, 0xCAFEBABE, BudgetDecay::linear(10)));
+		assert_ok!(Mosaic::set_budget(Origin::root(), 2, 0xDEADC0DE, BudgetDecay::linear(5)));
+		assert_eq!(Mosaic::asset_infos(1).expect("budget must exists").budget, 0xCAFEBABE);
+		assert_eq!(Mosaic::asset_infos(2).expect("budget must exists").budget, 0xDEADC0DE);
+	})
+}
+
+#[test]
+fn transfer_to_move_funds_to_outgoing() {
+	ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+		initialize();
+
+		let amount = 100;
+		let network_id = 1;
+		let asset_id = 1;
+
+		assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+		let account_balance = || Tokens::balance(asset_id, &ALICE);
+		let outgoing_balance =
+			|| Tokens::balance(asset_id, &Mosaic::sub_account_id(SubAccount::outgoing(ALICE)));
+		assert_eq!(account_balance(), amount);
+		assert_eq!(outgoing_balance(), 0);
+		assert_ok!(Mosaic::transfer_to(
+			Origin::signed(ALICE),
+			network_id,
+			asset_id,
+			[0; 20],
+			amount,
+			true
+		));
+		assert_eq!(account_balance(), 0);
+		assert_eq!(outgoing_balance(), amount);
+	})
+}
+
+#[test]
+fn incoming_outgoing_accounts_are_isolated() {
+	ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+		initialize();
+
+		let amount = 100;
+		let network_id = 1;
+		let asset_id = 1;
+
+		assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+		let account_balance = || Tokens::balance(asset_id, &ALICE);
+		let balance_of = |t| Tokens::balance(asset_id, &Mosaic::sub_account_id(t));
+		assert_eq!(account_balance(), amount);
+		assert_eq!(balance_of(SubAccount::outgoing(ALICE)), 0);
+		assert_eq!(balance_of(SubAccount::incoming(ALICE)), 0);
+		assert_ok!(Mosaic::transfer_to(
+			Origin::signed(ALICE),
+			network_id,
+			asset_id,
+			[0; 20],
+			amount,
+			true
+		));
+		assert_eq!(account_balance(), 0);
+		assert_eq!(balance_of(SubAccount::outgoing(ALICE)), amount);
+		assert_eq!(balance_of(SubAccount::incoming(ALICE)), 0);
+	})
+}
+
+#[test]
+fn transfer_to_unsupported_asset() {
+	ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+		assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+		assert_ok!(Mosaic::set_network(
+			Origin::relayer(),
+			1,
+			NetworkInfo { enabled: true, max_transfer_size: 100000 },
+		));
+
+		// We don't register the asset
+
+		let amount = 100;
+		let network_id = 1;
+		let asset_id = 1;
+
+		assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+		assert_noop!(
+			Mosaic::transfer_to(Origin::signed(ALICE), network_id, asset_id, [0; 20], amount, true),
+			Error::<Test>::UnsupportedAsset
+		);
+	})
+}
+
+#[test]
+fn transfer_to_exceeds_max_transfer_size() {
+	ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+		let max_transfer_size = 100000;
+
+		assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+		let network_id = 1;
+		assert_ok!(Mosaic::set_network(
+			Origin::relayer(),
+			network_id,
+			NetworkInfo { enabled: true, max_transfer_size },
+		));
+
+		let asset_id = 1;
+		assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, 10000, BudgetDecay::linear(10)));
+
+		// We exceed the max transfer size
+		let amount = max_transfer_size + 1;
+		assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+		assert_noop!(
+			Mosaic::transfer_to(Origin::signed(ALICE), network_id, asset_id, [0; 20], amount, true),
+			Error::<Test>::ExceedsMaxTransferSize
+		);
+	})
+}
 fn initialize() {
 	System::set_block_number(1);
 
@@ -143,7 +306,7 @@ fn claim_stale_to() {
 		do_transfer_to();
 		let current_block = System::block_number();
 		System::set_block_number(current_block + Mosaic::timelock_period() + 1);
-		Mosaic::claim_stale_to(Origin::signed(ALICE), ALICE, 1)
+		Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE)
 			.expect("claiming an outgoing transaction should work after the timelock period");
 	})
 }

@@ -80,10 +80,10 @@ pub mod pallet {
 
 	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
 	pub struct AssetInfo<BlockNumber, Balance, Decayable> {
-		last_deposit: BlockNumber,
-		budget: Balance,
-		penalty: Balance,
-		decay: Decayable,
+		pub last_deposit: BlockNumber,
+		pub budget: Balance,
+		pub penalty: Balance,
+		pub decay: Decayable,
 	}
 
 	pub enum TransactionType {
@@ -105,9 +105,16 @@ pub mod pallet {
 			};
 			[prefix.to_vec(), self.account_id.encode()]
 		}
+		pub fn outgoing(account_id: AccountIdOf<T>) -> Self {
+			SubAccount { transaction_type: TransactionType::Outgoing, account_id }
+		}
+		pub fn incoming(account_id: AccountIdOf<T>) -> Self {
+			SubAccount { transaction_type: TransactionType::Incoming, account_id }
+		}
 	}
 
 	#[pallet::storage]
+	#[pallet::getter(fn asset_infos)]
 	pub type AssetsInfo<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
@@ -232,7 +239,6 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		BadOrigin,
 		BadTTL,
 		BadTimelockPeriod,
 		UnsupportedAsset,
@@ -365,10 +371,7 @@ pub mod pallet {
 			T::Assets::transfer(
 				asset_id,
 				&caller,
-				&Self::sub_account_id(SubAccount {
-					transaction_type: TransactionType::Outgoing,
-					account_id: caller.clone(),
-				}),
+				&Self::sub_account_id(SubAccount::outgoing(caller.clone())),
 				amount,
 				keep_alive,
 			)?;
@@ -426,10 +429,7 @@ pub mod pallet {
 						ensure!(amount <= balance, Error::<T>::AmountMismatch);
 						T::Assets::burn_from(
 							asset_id,
-							&Self::sub_account_id(SubAccount {
-								transaction_type: TransactionType::Outgoing,
-								account_id: from.clone(),
-							}),
+							&Self::sub_account_id(SubAccount::outgoing(from.clone())),
 							amount,
 						)?;
 
@@ -473,10 +473,7 @@ pub mod pallet {
 						Some((balance, lock_time)) if lock_time < now => {
 							T::Assets::transfer(
 								asset_id,
-								&Self::sub_account_id(SubAccount {
-									transaction_type: TransactionType::Outgoing,
-									account_id: caller.clone(),
-								}),
+								&Self::sub_account_id(SubAccount::outgoing(caller.clone())),
 								&to,
 								balance,
 								true,
@@ -518,10 +515,7 @@ pub mod pallet {
 
 				T::Assets::mint_into(
 					asset_id,
-					&Self::sub_account_id(SubAccount {
-						transaction_type: TransactionType::Incoming,
-						account_id: to.clone(),
-					}),
+					&Self::sub_account_id(SubAccount::incoming(to.clone())),
 					amount,
 				)?;
 				let lock_at = lock_time.saturating_add(current_block);
@@ -582,10 +576,7 @@ pub mod pallet {
 					}
 					T::Assets::burn_from(
 						asset_id,
-						&Self::sub_account_id(SubAccount {
-							transaction_type: TransactionType::Incoming,
-							account_id: account.clone(),
-						}),
+						&Self::sub_account_id(SubAccount::incoming(account.clone())),
 						untrusted_amount,
 					)?;
 					Self::deposit_event(Event::<T>::TransferIntoRescined {
@@ -618,10 +609,7 @@ pub mod pallet {
 					ensure!(unlock_after < now, Error::<T>::TxStillLocked);
 					T::Assets::transfer(
 						asset_id,
-						&Self::sub_account_id(SubAccount {
-							transaction_type: TransactionType::Incoming,
-							account_id: caller.clone(),
-						}),
+						&Self::sub_account_id(SubAccount::incoming(caller.clone())),
 						&to,
 						amount,
 						true,
@@ -643,11 +631,12 @@ pub mod pallet {
 
 	fn ensure_relayer<T: Config>(
 		origin: OriginFor<T>,
-	) -> Result<(RelayerConfig<AccountIdOf<T>, BlockNumberOf<T>>, BlockNumberOf<T>), Error<T>> {
-		let acc = ensure_signed(origin).map_err(|_| Error::<T>::BadOrigin)?;
+	) -> Result<(RelayerConfig<AccountIdOf<T>, BlockNumberOf<T>>, BlockNumberOf<T>), DispatchError>
+	{
+		let acc = ensure_signed(origin).map_err(|_| DispatchError::BadOrigin)?;
 		let current_block = <frame_system::Pallet<T>>::block_number();
 		let relayer = Relayer::<T>::get().update(current_block);
-		ensure!(relayer.is_relayer(&acc), Error::<T>::BadOrigin);
+		ensure!(relayer.is_relayer(&acc), DispatchError::BadOrigin);
 		Ok((relayer, current_block))
 	}
 

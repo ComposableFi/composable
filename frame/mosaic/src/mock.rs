@@ -14,7 +14,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 };
 
-pub type AccountId = u32;
+pub type AccountId = u128;
 pub type BlockNumber = u64;
 pub type NetworkId = u32;
 pub type Balance = u128;
@@ -24,9 +24,9 @@ pub type AssetId = u32;
 type Block = frame_system::mocking::MockBlock<Test>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 
-pub const ALICE: AccountId = 1_u32;
-pub const BOB: AccountId = 2_u32;
-pub const RELAYER: AccountId = 3_u32;
+pub const ALICE: AccountId = 1_u128;
+pub const BOB: AccountId = 2_u128;
+pub const RELAYER: AccountId = 3_u128;
 
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -112,7 +112,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 pub struct ExtBuilder {
-	balances: Vec<(AccountId, AssetId, Balance)>,
+	pub balances: Vec<(AccountId, AssetId, Balance)>,
 }
 
 impl Default for ExtBuilder {
