@@ -113,6 +113,27 @@ pub mod pallet {
 		}
 	}
 
+	pub enum TransactionType {
+		Incoming,
+		Outgoing,
+	}
+
+	/// User incoming/outgoing accounts, that hold the funds for transactions to happen.
+	pub struct SubAccount<T: Config> {
+		transaction_type: TransactionType,
+		account_id: AccountIdOf<T>,
+	}
+
+	impl<T: Config> SubAccount<T> {
+		pub fn to_id(&self) -> impl Encode {
+			let prefix = match self.transaction_type {
+				TransactionType::Incoming => b"incoming________",
+				TransactionType::Outgoing => b"outgoing________",
+			};
+			[prefix.to_vec(), self.account_id.encode()]
+		}
+	}
+
 	#[pallet::storage]
 	#[pallet::getter(fn asset_infos)]
 	pub type AssetsInfo<T: Config> = StorageMap<
@@ -669,11 +690,10 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-        /// AccountId of the pallet, used to store all funds before actually moving them.
-        pub fn sub_account_id(user_account: &AccountIdOf<T>) -> AccountIdOf<T> {
-            // TODO: use a different account for incoming and outgoing transactions.
-            T::PalletId::get().into_sub_account(user_account)
-        }
+		/// AccountId of the pallet, used to store all funds before actually moving them.
+		pub fn sub_account_id(sub_account: SubAccount<T>) -> AccountIdOf<T> {
+			T::PalletId::get().into_sub_account(sub_account.to_id())
+		}
 
 		/// Queries storage, returning the account_id of the current relayer.
 		pub fn relayer_account_id() -> Option<AccountIdOf<T>> {
