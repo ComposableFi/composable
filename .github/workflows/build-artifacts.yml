@@ -36,16 +36,16 @@ jobs:
         toolchain: stable
 
     - name: 🔨 Build and Upload Composable Binary
-      #working-directory: "./.maintain/"
+      working-directory: "./.maintain/"
       id: client_release
       run: |
-        ././maintain/client_release.sh
+        ./client_release.sh
 
     - name: Build wasm with srtool
-      #working-directory: "./.maintain/"
+      working-directory: "./.maintain/"
       id: runtime_release
       run: |
-        ./.maintain/runtime_release.sh
+        ./runtime_release.sh
 
     - name: Upload Compact Picasso wasm # TODO only upload wasm that has changed
       uses: svenstaro/upload-release-action@v2
