@@ -15,6 +15,7 @@ jobs:
       - linux
       - x64
       - sre
+    if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v2
         with: 
@@ -41,6 +42,7 @@ jobs:
       - linux
       - x64
       - bmark
+    if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v2
       - name: Benchmark Test
