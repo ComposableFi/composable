@@ -18,6 +18,7 @@ VERSIONS_FILES=(
 /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
 /home/runner/.cargo/bin/cargo build --release -p simnode
 sudo chown -R runner:runner target/release/simnode && sudo chmod +x target/release/simnode
+sudo chown -R  runner:runner /tmp/db
 YDATE=$(date -d yesterday +'%m-%d-%Y')
 
 run_simnode() {
