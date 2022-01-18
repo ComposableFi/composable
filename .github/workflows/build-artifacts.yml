@@ -3,6 +3,8 @@ name: "Build Artifacts"
 on:
   workflow_dispatch:
   push: 
+    branches: 
+      - fix-release
     tags: 
       - '*'
       
@@ -36,23 +38,42 @@ jobs:
         toolchain: stable
 
     - name: 🔨 Build and Upload Composable Binary
-      working-directory: "./.maintain/"
-      id: runtime_release
+      id: client_release
       run: |
-        ./client_release.sh
+        .maintain/client_release.sh
 
     - name: Build wasm with srtool
-      working-directory: "./.maintain/"
       id: runtime_release
       run: |
-        ./runtime_release.sh
+        .maintain/runtime_release.sh
 
-    - name: Upload Compressed wasm # TODO only upload wasm that has changed
+    - name: Upload Compact Picasso wasm # TODO only upload wasm that has changed
       uses: svenstaro/upload-release-action@v2
+      if: "$${{ env.picasso-wasm }} == 1"
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-        file: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.compressed.wasm
+        file: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
         asset_name: picasso_runtime.compact.compressed.wasm
+        tag: ${{ github.ref }}
+        overwrite: true
+    
+    - name: Upload Compact Dali wasm # TODO only upload wasm that has changed
+      uses: svenstaro/upload-release-action@v2
+      if: "$${{ env.dali-wasm }} == 1"
+      with:
+        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        file: ./runtime/dali/target/srtool/release/wbuild/dali-runtime/dali_runtime.compact.wasm
+        asset_name: dali_runtime.compact.compressed.wasm
+        tag: ${{ github.ref }}
+        overwrite: true
+    
+    - name: Upload Compact Composable wasm # TODO only upload wasm that has changed
+      uses: svenstaro/upload-release-action@v2
+      if: "$${{ env.composable-wasm }} == 1"
+      with:
+        repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        file: ./runtime/picasso/target/srtool/release/wbuild/composable-runtime/composable_runtime.compact.wasm
+        asset_name: composable_runtime.compact.compressed.wasm
         tag: ${{ github.ref }}
         overwrite: true
 
@@ -66,8 +87,7 @@ jobs:
         overwrite: true
     
     - name: Update Release Note
-      run: |
-        sed -i '1i # Code ' release.md
+      run: sed -i '1i # Code ' release.md
 
     - name: Release
       uses: softprops/action-gh-release@v1
@@ -95,6 +115,4 @@ jobs:
         echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
 
     - name: Run ansible playbook
-      working-directory: "./.maintain/playbooks"
-      run: |
-        ansible-playbook -l _environment_testnet client-upgrade.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
+      run: ansible-playbook -l _environment_testnet client-upgrade.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'

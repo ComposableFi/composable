@@ -23,8 +23,7 @@ jobs:
 
       - name: Check for runtime changes
         id: check_runtime
-        run: |
-          .maintain/check_runtime.sh
+        run: .maintain/check_runtime.sh
 
       - name: Echo output
         run: echo ${{ env.RUNTIME_CHECK }}
@@ -32,8 +31,7 @@ jobs:
       - name: Run Simnode
         if: "$${{ env.RUNTIME_CHECK }} == 1"
         id: run_simnode
-        run: |
-          .maintain/run_simnode.sh
+        run: .maintain/run_simnode.sh
 
   benchmark: 
     name: Benchmark
@@ -48,8 +46,7 @@ jobs:
       - name: Benchmark Test
         if: "$${{ env.RUNTIME_CHECK }} == 1"
         id: run_benchmarks
-        run: |
-          .maintain/run_benchmarks.sh
+        run: .maintain/run_benchmarks.sh
           
 
 
