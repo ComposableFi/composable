@@ -49,7 +49,7 @@ jobs:
 
     - name: Upload Compact Picasso wasm # TODO only upload wasm that has changed
       uses: svenstaro/upload-release-action@v2
-      if: "${{ env.CHAINNAME }} == 'picasso'
+      if: "${{ env.CHAINNAME }} == 'picasso'"
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
         file: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
@@ -59,7 +59,7 @@ jobs:
     
     - name: Upload Compact Dali wasm # TODO only upload wasm that has changed
       uses: svenstaro/upload-release-action@v2
-      if: "${{ env.CHAINNAME }} == 'dali'
+      if: "${{ env.CHAINNAME }} == 'dali'"
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
         file: ./runtime/dali/target/srtool/release/wbuild/dali-runtime/dali_runtime.compact.wasm
