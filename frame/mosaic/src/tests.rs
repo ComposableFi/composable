@@ -95,33 +95,6 @@ fn budget_are_isolated() {
 	})
 }
 
-#[test]
-fn transfer_to_move_funds_to_outgoing() {
-	ExtBuilder { balances: Default::default() }.build().execute_with(|| {
-		initialize();
-
-		let amount = 100;
-		let network_id = 1;
-		let asset_id = 1;
-
-		assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
-		let account_balance = || Tokens::balance(asset_id, &ALICE);
-		let outgoing_balance =
-			|| Tokens::balance(asset_id, &Mosaic::sub_account_id(SubAccount::outgoing(ALICE)));
-		assert_eq!(account_balance(), amount);
-		assert_eq!(outgoing_balance(), 0);
-		assert_ok!(Mosaic::transfer_to(
-			Origin::signed(ALICE),
-			network_id,
-			asset_id,
-			[0; 20],
-			amount,
-			true
-		));
-		assert_eq!(account_balance(), 0);
-		assert_eq!(outgoing_balance(), amount);
-	})
-}
 
 #[test]
 fn incoming_outgoing_accounts_are_isolated() {
@@ -152,56 +125,8 @@ fn incoming_outgoing_accounts_are_isolated() {
 	})
 }
 
-#[test]
-fn transfer_to_unsupported_asset() {
-	ExtBuilder { balances: Default::default() }.build().execute_with(|| {
-		assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
-		assert_ok!(Mosaic::set_network(
-			Origin::relayer(),
-			1,
-			NetworkInfo { enabled: true, max_transfer_size: 100000 },
-		));
 
-		// We don't register the asset
 
-		let amount = 100;
-		let network_id = 1;
-		let asset_id = 1;
-
-		assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
-		assert_noop!(
-			Mosaic::transfer_to(Origin::signed(ALICE), network_id, asset_id, [0; 20], amount, true),
-			Error::<Test>::UnsupportedAsset
-		);
-	})
-}
-
-#[test]
-fn transfer_to_exceeds_max_transfer_size() {
-	ExtBuilder { balances: Default::default() }.build().execute_with(|| {
-		let max_transfer_size = 100000;
-
-		assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
-
-		let network_id = 1;
-		assert_ok!(Mosaic::set_network(
-			Origin::relayer(),
-			network_id,
-			NetworkInfo { enabled: true, max_transfer_size },
-		));
-
-		let asset_id = 1;
-		assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, 10000, BudgetDecay::linear(10)));
-
-		// We exceed the max transfer size
-		let amount = max_transfer_size + 1;
-		assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
-		assert_noop!(
-			Mosaic::transfer_to(Origin::signed(ALICE), network_id, asset_id, [0; 20], amount, true),
-			Error::<Test>::ExceedsMaxTransferSize
-		);
-	})
-}
 fn initialize() {
 	System::set_block_number(1);
 
@@ -216,58 +141,7 @@ fn initialize() {
 		.expect("root may set budget");
 }
 
-fn do_transfer_to() {
-	let ethereum_address = [0; 20];
-	let amount = 100;
-	let network_id = 1;
-	let asset_id = 1;
 
-	Mosaic::transfer_to(
-		Origin::signed(ALICE),
-		network_id,
-		asset_id,
-		ethereum_address,
-		amount,
-		true,
-	)
-	.expect("transfer_to should work");
-	assert_eq!(
-		Mosaic::outgoing_transactions(&ALICE, 1),
-		Some((100, MinimumTimeLockPeriod::get() + System::block_number()))
-	);
-
-	// normally we don't unit test events being emitted, but in this case it is very crucial for the
-	// relayer to observe the events.
-
-	// When a transfer is made, the nonce is incremented. However, nonce is one of the dependencies
-	// for `generate_id`, we want to check if the events match, so we decrement the nonce and
-	// increment it back when we're done
-	// TODO: this is a hack, cfr: CU-1ubrf2y
-	Nonce::<Test>::mutate(|nonce| {
-		*nonce = nonce.wrapping_sub(1);
-		*nonce
-	});
-
-	let id = generate_id::<Test>(
-		&ALICE,
-		&network_id,
-		&asset_id,
-		&ethereum_address,
-		&amount,
-		&System::block_number(),
-	);
-	Nonce::<Test>::mutate(|nonce| {
-		*nonce = nonce.wrapping_add(1);
-		*nonce
-	});
-
-	System::assert_last_event(mock::Event::Mosaic(crate::Event::TransferOut {
-		id,
-		to: ethereum_address,
-		amount,
-		network_id,
-	}));
-}
 
 fn do_timelocked_mint(to: AccountId, asset_id: AssetId, amount: Balance, lock_time: u64) {
 	let initial_block = System::block_number();
@@ -281,34 +155,172 @@ fn do_timelocked_mint(to: AccountId, asset_id: AssetId, amount: Balance, lock_ti
 	);
 }
 
-#[test]
-fn transfer_to() {
-	new_test_ext().execute_with(|| {
-		initialize();
-		do_transfer_to();
-	})
-}
 
-#[test]
-fn accept_transfer() {
-	new_test_ext().execute_with(|| {
-		initialize();
-		do_transfer_to();
-		Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 100)
-			.expect("accepting transfer should work");
-	})
-}
+mod transfer_to {
+    use super::*;
 
-#[test]
-fn claim_stale_to() {
-	new_test_ext().execute_with(|| {
-		initialize();
-		do_transfer_to();
-		let current_block = System::block_number();
-		System::set_block_number(current_block + Mosaic::timelock_period() + 1);
-		Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE)
-			.expect("claiming an outgoing transaction should work after the timelock period");
-	})
+    #[test]
+    fn transfer_to() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            do_transfer_to();
+        })
+    }
+
+    #[test]
+    fn accept_transfer() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            do_transfer_to();
+            Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 100)
+                .expect("accepting transfer should work");
+        })
+    }
+
+    #[test]
+    fn claim_stale_to() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            do_transfer_to();
+            let current_block = System::block_number();
+            System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+            Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE)
+                .expect("claiming an outgoing transaction should work after the timelock period");
+        })
+    }
+
+    #[test]
+    fn transfer_to_exceeds_max_transfer_size() {
+        ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+            let max_transfer_size = 100000;
+
+            assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+            let network_id = 1;
+            assert_ok!(Mosaic::set_network(
+			Origin::relayer(),
+			network_id,
+			NetworkInfo { enabled: true, max_transfer_size },
+		));
+
+            let asset_id = 1;
+            assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, 10000, BudgetDecay::linear(10)));
+
+            // We exceed the max transfer size
+            let amount = max_transfer_size + 1;
+            assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+            assert_noop!(
+			Mosaic::transfer_to(Origin::signed(ALICE), network_id, asset_id, [0; 20], amount, true),
+			Error::<Test>::ExceedsMaxTransferSize
+		);
+        })
+    }
+
+
+    #[test]
+    fn transfer_to_move_funds_to_outgoing() {
+        ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+            initialize();
+
+            let amount = 100;
+            let network_id = 1;
+            let asset_id = 1;
+
+            assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+            let account_balance = || Tokens::balance(asset_id, &ALICE);
+            let outgoing_balance =
+                || Tokens::balance(asset_id, &Mosaic::sub_account_id(SubAccount::outgoing(ALICE)));
+            assert_eq!(account_balance(), amount);
+            assert_eq!(outgoing_balance(), 0);
+            assert_ok!(Mosaic::transfer_to(
+			Origin::signed(ALICE),
+			network_id,
+			asset_id,
+			[0; 20],
+			amount,
+			true
+		));
+            assert_eq!(account_balance(), 0);
+            assert_eq!(outgoing_balance(), amount);
+        })
+    }
+
+    #[test]
+    fn transfer_to_unsupported_asset() {
+        ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+            assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+            assert_ok!(Mosaic::set_network(
+			Origin::relayer(),
+			1,
+			NetworkInfo { enabled: true, max_transfer_size: 100000 },
+		));
+
+            // We don't register the asset
+
+            let amount = 100;
+            let network_id = 1;
+            let asset_id = 1;
+
+            assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+            assert_noop!(
+			Mosaic::transfer_to(Origin::signed(ALICE), network_id, asset_id, [0; 20], amount, true),
+			Error::<Test>::UnsupportedAsset
+		);
+        })
+    }
+
+    fn do_transfer_to() {
+        let ethereum_address = [0; 20];
+        let amount = 100;
+        let network_id = 1;
+        let asset_id = 1;
+
+        Mosaic::transfer_to(
+            Origin::signed(ALICE),
+            network_id,
+            asset_id,
+            ethereum_address,
+            amount,
+            true,
+        )
+            .expect("transfer_to should work");
+        assert_eq!(
+            Mosaic::outgoing_transactions(&ALICE, 1),
+            Some((100, MinimumTimeLockPeriod::get() + System::block_number()))
+        );
+
+        // normally we don't unit test events being emitted, but in this case it is very crucial for the
+        // relayer to observe the events.
+
+        // When a transfer is made, the nonce is incremented. However, nonce is one of the dependencies
+        // for `generate_id`, we want to check if the events match, so we decrement the nonce and
+        // increment it back when we're done
+        // TODO: this is a hack, cfr: CU-1ubrf2y
+        Nonce::<Test>::mutate(|nonce| {
+            *nonce = nonce.wrapping_sub(1);
+            *nonce
+        });
+
+        let id = generate_id::<Test>(
+            &ALICE,
+            &network_id,
+            &asset_id,
+            &ethereum_address,
+            &amount,
+            &System::block_number(),
+        );
+        Nonce::<Test>::mutate(|nonce| {
+            *nonce = nonce.wrapping_add(1);
+            *nonce
+        });
+
+        System::assert_last_event(mock::Event::Mosaic(crate::Event::TransferOut {
+            id,
+            to: ethereum_address,
+            amount,
+            network_id,
+        }));
+    }
 }
 
 #[test]
