@@ -40,7 +40,7 @@ fn rotate_relayer() {
 }
 
 fn initialize() {
-    System::set_block_number(1);
+	System::set_block_number(1);
 
 	Mosaic::set_relayer(Origin::root(), RELAYER).expect("root may call set_relayer");
 	Mosaic::set_network(
@@ -54,55 +54,72 @@ fn initialize() {
 }
 
 fn do_transfer_to() {
+	let ethereum_address = [0; 20];
+	let amount = 100;
+	let network_id = 1;
+	let asset_id = 1;
 
-    let ethereum_address = [0; 20];
-    let amount = 100;
-    let network_id = 1;
-    let asset_id = 1;
+	Mosaic::transfer_to(
+		Origin::signed(ALICE),
+		network_id,
+		asset_id,
+		ethereum_address,
+		amount,
+		true,
+	)
+	.expect("transfer_to should work");
+	assert_eq!(
+		Mosaic::outgoing_transactions(&ALICE, 1),
+		Some((100, MinimumTimeLockPeriod::get() + System::block_number()))
+	);
 
-	Mosaic::transfer_to(Origin::signed(ALICE), network_id, asset_id, ethereum_address, amount, true)
-		.expect("transfer_to should work");
-	assert_eq!(Mosaic::outgoing_transactions(&ALICE, 1), Some((100, MinimumTimeLockPeriod::get() + System::block_number())));
+	// normally we don't unit test events being emitted, but in this case it is very crucial for the
+	// relayer to observe the events.
 
-    // normally we don't unit test events being emitted, but in this case it is very crucial for the
-    // relayer to observe the events.
+	// When a transfer is made, the nonce is incremented. However, nonce is one of the dependencies
+	// for `generate_id`, we want to check if the events match, so we decrement the nonce and
+	// increment it back when we're done
+	// TODO: this is a hack, cfr: CU-1ubrf2y
+	Nonce::<Test>::mutate(|nonce| {
+		*nonce = nonce.wrapping_sub(1);
+		*nonce
+	});
 
+	let id = generate_id::<Test>(
+		&ALICE,
+		&network_id,
+		&asset_id,
+		&ethereum_address,
+		&amount,
+		&System::block_number(),
+	);
+	Nonce::<Test>::mutate(|nonce| {
+		*nonce = nonce.wrapping_add(1);
+		*nonce
+	});
 
-    // When a transfer is made, the nonce is incremented. However, nonce is one of the dependencies
-    // for `generate_id`, we want to check if the events match, so we decrement the nonce and
-    // increment it back when we're done
-    // TODO: this is a hack, cfr: CU-1ubrf2y
-    Nonce::<Test>::mutate(|nonce| {
-        *nonce = nonce.wrapping_sub(1);
-        *nonce
-    });
-
-    let id = generate_id::<Test>(&ALICE, &network_id, &asset_id, &ethereum_address, &amount, &System::block_number());
-    Nonce::<Test>::mutate(|nonce| {
-        *nonce = nonce.wrapping_add(1);
-        *nonce
-    });
-
-
-    System::assert_last_event(mock::Event::Mosaic(crate::Event::TransferOut {
-        id,
-        to: ethereum_address,
-        amount,
-        network_id,
-    }));
+	System::assert_last_event(mock::Event::Mosaic(crate::Event::TransferOut {
+		id,
+		to: ethereum_address,
+		amount,
+		network_id,
+	}));
 }
 
 fn do_timelocked_mint(lock_time: u64) {
 	let to = ALICE;
 	let asset_id = 1;
 
-    let initial_block = System::block_number();
-    let amount = 50;
+	let initial_block = System::block_number();
+	let amount = 50;
 
-    Mosaic::timelocked_mint(Origin::relayer(), asset_id, to, amount, lock_time, Default::default())
+	Mosaic::timelocked_mint(Origin::relayer(), asset_id, to, amount, lock_time, Default::default())
 		.expect("relayer should be able to mint");
 
-	assert_eq!(Mosaic::incoming_transactions(to, asset_id), Some((amount, initial_block + lock_time)));
+	assert_eq!(
+		Mosaic::incoming_transactions(to, asset_id),
+		Some((amount, initial_block + lock_time))
+	);
 }
 
 #[test]
@@ -147,16 +164,16 @@ fn timelocked_mint() {
 fn rescind_timelocked_mint() {
 	new_test_ext().execute_with(|| {
 		initialize();
-        let lock_time = 10;
+		let lock_time = 10;
 		do_timelocked_mint(lock_time);
 
-        let initial_block = System::block_number();
+		let initial_block = System::block_number();
 
 		Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 40)
 			.expect("relayer should be able to rescind transactions");
-        assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((10, initial_block + lock_time)));
-        let transfer_amount = 9;
-        Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, transfer_amount)
+		assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((10, initial_block + lock_time)));
+		let transfer_amount = 9;
+		Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, transfer_amount)
 			.expect("relayer should be able to rescind transactions");
 		assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((1, 11)));
 	})
@@ -174,7 +191,7 @@ fn set_timelock_duration() {
 fn claim_to() {
 	new_test_ext().execute_with(|| {
 		initialize();
-        let lock_time = 10;
+		let lock_time = 10;
 		do_timelocked_mint(lock_time);
 		let current_block = System::block_number();
 		Mosaic::claim_to(Origin::alice(), 1, ALICE).expect_err(
