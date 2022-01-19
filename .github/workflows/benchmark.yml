@@ -1,7 +1,10 @@
-name: Run Benchmark
+name: Run Benchmarks
 
-on: 
-  workflow_dispatch:
+on:
+  pull_request:
+    branches:
+      - releases
+      - main
 
 jobs:
   benchmark: 
@@ -21,6 +24,7 @@ jobs:
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
         id: check_runtime
+        if: github.event.label.name == 'needs-benchmarks'
         run: .maintain/check_runtime.sh
       
       - name: Benchmark Test
