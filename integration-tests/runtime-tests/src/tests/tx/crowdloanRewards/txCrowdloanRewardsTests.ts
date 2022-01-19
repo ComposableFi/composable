@@ -11,7 +11,7 @@ const toHexString = bytes =>
 
 // The prefix is defined as pallet config
 const proofMessage = (account: IKeyringPair) =>
-  "picasso-" + toHexString(account.publicKey);
+  "<Bytes>picasso-" + toHexString(account.publicKey) + "</Bytes>";
 
 const ethAccount = (seed: number) =>
   web3.eth.accounts.privateKeyToAccount("0x" + seed.toString(16).padStart(64, '0'))
