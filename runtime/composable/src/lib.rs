@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
+		clippy::disallowed_method,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -24,7 +24,6 @@ use common::{
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
 	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
-use composable_traits::currency::PriceableAsset;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;

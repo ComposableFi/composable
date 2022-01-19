@@ -1,15 +1,17 @@
+//! Overview
+//! Allows to add new assets internally. User facing mutating API is provided by other pallets.
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
+		clippy::disallowed_method,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -37,7 +39,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_traits::currency::{CurrencyFactory, DynamicCurrencyId};
+	use composable_traits::currency::{CurrencyFactory, DynamicCurrencyId, Exponent, LocalAssets};
 	use frame_support::{pallet_prelude::*, PalletId};
 	use scale_info::TypeInfo;
 
@@ -71,7 +73,7 @@ pub mod pallet {
 	#[pallet::getter(fn currency_latest)]
 	// Absense of a set `CurrencyCounter` means we default to `T::DynamicCurrencyIdInitial`, so
 	// `ValueQuery` is allowed
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type CurrencyCounter<T: Config> =
 		StorageValue<_, T::DynamicCurrencyId, ValueQuery, T::DynamicCurrencyIdInitial>;
 
@@ -83,6 +85,13 @@ pub mod pallet {
 				*c = c_next;
 				Ok(c_next)
 			})
+		}
+	}
+
+	impl<T: Config> LocalAssets<T::DynamicCurrencyId> for Pallet<T> {
+		fn decimals(_currency_id: T::DynamicCurrencyId) -> Result<Exponent, DispatchError> {
+			// All assets are normalized to 12 decimals.
+			Ok(12)
 		}
 	}
 }

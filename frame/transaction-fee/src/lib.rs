@@ -6,8 +6,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
+		clippy::disallowed_method,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -133,7 +133,7 @@ pub mod pallet {
 	#[pallet::getter(fn next_fee_multiplier)]
 	// `NextFeeMultiplierOnEmpty` explicitly defines what happens on empty, so `ValueQuery` is
 	// allowed.
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type NextFeeMultiplier<T: Config> =
 		StorageValue<_, Multiplier, ValueQuery, NextFeeMultiplierOnEmpty>;
 
@@ -146,15 +146,15 @@ pub mod pallet {
 		}
 
 		// `integrity_test` is allowed to panic.
-		#[allow(clippy::disallowed_methods, clippy::expect_used)]
+		#[allow(clippy::disallowed_method, clippy::expect_used)]
 		fn integrity_test() {
 			// given weight == u64, we build multipliers from `diff` of two weight values, which can
 			// at most be maximum block weight. Make sure that this can fit in a multiplier without
 			// loss.
 			use sp_std::convert::TryInto;
 			assert!(
-				<Multiplier as sp_runtime::traits::Bounded>::max_value()
-					>= Multiplier::checked_from_integer(
+				<Multiplier as sp_runtime::traits::Bounded>::max_value() >=
+					Multiplier::checked_from_integer(
 						T::BlockWeights::get()
 							.max_block
 							.try_into()
@@ -168,8 +168,8 @@ pub mod pallet {
 			// that if we collapse to minimum, the trend will be positive with a weight value
 			// which is 1% more than the target.
 			let min_value = T::FeeMultiplierUpdate::min();
-			let mut target = T::FeeMultiplierUpdate::target()
-				* T::BlockWeights::get().get(DispatchClass::Normal).max_total.expect(
+			let mut target = T::FeeMultiplierUpdate::target() *
+				T::BlockWeights::get().get(DispatchClass::Normal).max_total.expect(
 					"Setting `max_total` for `Normal` dispatch class is not compatible with \
 					`transaction-payment` pallet.",
 				);
@@ -177,7 +177,7 @@ pub mod pallet {
 			let addition = target / 100;
 			if addition == 0 {
 				// this is most likely because in a test setup we set everything to ().
-				return;
+				return
 			}
 			target += addition;
 
@@ -343,8 +343,8 @@ where
 		let total_native = T::NativeCurrency::total_balance(who);
 
 		// check native balance if is enough
-		let native_is_enough = fee.saturating_add(native_existential_deposit) <= total_native
-			&& T::NativeCurrency::free_balance(who).checked_sub(&fee).map_or(
+		let native_is_enough = fee.saturating_add(native_existential_deposit) <= total_native &&
+			T::NativeCurrency::free_balance(who).checked_sub(&fee).map_or(
 				false,
 				|new_free_balance| {
 					T::NativeCurrency::ensure_can_withdraw(who, fee, reason, new_free_balance)
@@ -367,11 +367,11 @@ where
 					amount,
 					*slippage,
 				)?;
-			}
+			},
 			// user didn't specify some asset to pay and they dont have enough native tokens to pay
 			(None, false) => return Err(DispatchError::Other("Not enough tokens")),
 			// they have enough native tokens to pay.
-			_ => {}
+			_ => {},
 		}
 
 		Ok(())
@@ -432,7 +432,7 @@ where
 
 		// Only mess with balances if fee is not zero.
 		if fee.is_zero() {
-			return Ok((fee, None));
+			return Ok((fee, None))
 		}
 
 		let reason = if tip.is_zero() {

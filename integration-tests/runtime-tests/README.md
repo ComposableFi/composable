@@ -21,6 +21,11 @@ $ npm run init
 $ npm run test
 ```
 
+### To run the type generator:
+```bash
+$ npm run gen
+```
+
 
 ## ToDo:
 * Add all general test cases.
@@ -43,7 +48,8 @@ Else the test will timeout before any results, causing a headache and wondering 
 e.g.
 ```typescript
 describe('Imaginary Test', function () {
-  this.timeout(0); // <--
+  // Timeout set to 2 minutes
+  this.timeout(2*60*1000); // <--
   it('Imaginary test part', async (done) => {
       // Test Stuff...
   });

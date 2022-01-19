@@ -4,12 +4,14 @@ pub use pallet::*;
 pub mod pallet {
 	use codec::Codec;
 	use composable_traits::{
-		currency::PriceableAsset,
+		currency::LocalAssets,
 		oracle::{Oracle, Price},
 		vault::Vault,
 	};
 	use frame_support::pallet_prelude::*;
-	use sp_runtime::{helpers_128bit::multiply_by_rational, ArithmeticError, FixedPointNumber};
+	use sp_runtime::{
+		helpers_128bit::multiply_by_rational, ArithmeticError, DispatchError, FixedPointNumber,
+	};
 	use sp_std::fmt::Debug;
 
 	use crate::mocks::{Balance, MockCurrencyId};
@@ -28,7 +30,7 @@ pub mod pallet {
 	#[pallet::getter(fn btc_value)]
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type BTCValue<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	impl<T: Config> Pallet<T> {
@@ -47,6 +49,7 @@ pub mod pallet {
 		type AssetId = MockCurrencyId;
 		type Balance = Balance;
 		type Timestamp = ();
+		type LocalAssets = ();
 
 		fn get_price(
 			asset: Self::AssetId,
@@ -54,7 +57,7 @@ pub mod pallet {
 		) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError> {
 			let derive_price = |p: u128, a: u128| {
 				let e = 10_u128
-					.checked_pow(asset.decimals())
+					.checked_pow(Self::LocalAssets::decimals(asset)?)
 					.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
 				let price = multiply_by_rational(p, a, e)
 					.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
@@ -93,7 +96,7 @@ pub mod pallet {
 						.checked_mul_int(price)
 						.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
 					Ok(Price { price: derived, block })
-				}
+				},
 			}
 		}
 
@@ -102,6 +105,12 @@ pub mod pallet {
 			_weights: Vec<u128>,
 		) -> Result<Self::Balance, DispatchError> {
 			Ok(0_u32.into())
+		}
+
+		fn get_ratio(
+			_pair: composable_traits::defi::CurrencyPair<Self::AssetId>,
+		) -> Result<sp_runtime::FixedU128, DispatchError> {
+			Err(DispatchError::Other("No implemented"))
 		}
 	}
 }

@@ -2,15 +2,15 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
+		clippy::disallowed_method,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
 pub use pallet::*;
@@ -30,7 +30,8 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		currency::PriceableAsset,
+		currency::LocalAssets,
+		math::SafeArithmetic,
 		oracle::{Oracle, Price as LastPrice},
 	};
 	use core::ops::{Div, Mul};
@@ -58,7 +59,8 @@ pub mod pallet {
 	use sp_runtime::{
 		offchain::{http, Duration},
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
-		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
+		AccountId32, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId, PerThing, Percent,
+		RuntimeDebug,
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec, vec::Vec};
 
@@ -111,8 +113,7 @@ pub mod pallet {
 			+ Into<u128>
 			+ Debug
 			+ Default
-			+ TypeInfo
-			+ PriceableAsset;
+			+ TypeInfo;
 		type PriceValue: Default
 			+ Parameter
 			+ Codec
@@ -146,6 +147,7 @@ pub mod pallet {
 
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
+		type LocalAssets: LocalAssets<Self::AssetId>;
 	}
 
 	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
@@ -161,8 +163,10 @@ pub mod pallet {
 		pub who: AccountId,
 	}
 
+	// block timestamped value
 	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo, Clone)]
 	pub struct Price<PriceValue, BlockNumber> {
+		/// value
 		pub price: PriceValue,
 		pub block: BlockNumber,
 	}
@@ -186,7 +190,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn assets_count)]
-	#[allow(clippy::disallowed_types)] // Default asset count of 0 is valid in this context
+	#[allow(clippy::disallowed_type)] // Default asset count of 0 is valid in this context
 	/// Total amount of assets
 	pub type AssetsCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
@@ -225,7 +229,7 @@ pub mod pallet {
 	// REVIEW: (benluelo) I think there's probably a better way to use this with an OptionQuery,
 	// instead of checking against defaults.
 	/// Price for an asset and blocknumber asset was updated at
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type Prices<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -236,7 +240,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn price_history)]
-	#[allow(clippy::disallowed_types)] // default history for an asset is an empty list, which is valid in this context.
+	#[allow(clippy::disallowed_type)] // default history for an asset is an empty list, which is valid in this context.
 	/// Price for an asset and blocknumber asset was updated at
 	pub type PriceHistory<T: Config> = StorageMap<
 		_,
@@ -248,7 +252,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn pre_prices)]
-	#[allow(clippy::disallowed_types)] // default history for an asset is an empty list, which is valid in this context.
+	#[allow(clippy::disallowed_type)] // default history for an asset is an empty list, which is valid in this context.
 	/// Temporary prices before aggregated
 	pub type PrePrices<T: Config> = StorageMap<
 		_,
@@ -262,7 +266,7 @@ pub mod pallet {
 	#[pallet::getter(fn asset_info)]
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	/// Information about asset, including precision threshold and max/min answers
 	pub type AssetsInfo<T: Config> = StorageMap<
 		_,
@@ -371,16 +375,15 @@ pub mod pallet {
 		type Balance = T::PriceValue;
 		type AssetId = T::AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
+		type LocalAssets = T::LocalAssets;
 
-		// TODO(hussein-aitlahcen):
-		// implement the amount based computation with decimals once it's been completely defined
 		fn get_price(
 			asset: Self::AssetId,
-			_amount: Self::Balance,
+			amount: Self::Balance,
 		) -> Result<LastPrice<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
 				Prices::<T>::try_get(asset).map_err(|_| Error::<T>::PriceNotFound)?;
-			Ok(LastPrice { price, block })
+			Ok(LastPrice { price: price.safe_mul(&amount)?, block })
 		}
 
 		fn get_twap(
@@ -388,6 +391,22 @@ pub mod pallet {
 			weighting: Vec<Self::Balance>,
 		) -> Result<Self::Balance, DispatchError> {
 			Self::get_twap(of, weighting)
+		}
+
+		fn get_ratio(
+			pair: composable_traits::defi::CurrencyPair<Self::AssetId>,
+		) -> Result<sp_runtime::FixedU128, DispatchError> {
+			let base: u128 =
+				Self::get_price(pair.base, (10 ^ T::LocalAssets::decimals(pair.base)?).into())?
+					.price
+					.into();
+			let quote: u128 =
+				Self::get_price(pair.quote, (10 ^ T::LocalAssets::decimals(pair.base)?).into())?
+					.price
+					.into();
+			let base = FixedU128::saturating_from_integer(base);
+			let quote = FixedU128::saturating_from_integer(quote);
+			Ok(base.safe_div(&quote)?)
 		}
 	}
 
@@ -538,9 +557,10 @@ pub mod pallet {
 			let author_stake = OracleStake::<T>::get(&who).unwrap_or_else(Zero::zero);
 			ensure!(Self::is_requested(&asset_id), Error::<T>::PriceNotRequested);
 			ensure!(
-				author_stake
-					>= T::MinStake::get()
-						.saturating_add(Self::answer_in_transit(&who).unwrap_or_else(Zero::zero)),
+				author_stake >=
+					T::MinStake::get().saturating_add(
+						Self::answer_in_transit(&who).unwrap_or_else(Zero::zero)
+					),
 				Error::<T>::NotEnoughStake
 			);
 
@@ -555,10 +575,10 @@ pub mod pallet {
 				// because current_prices.len() limited by u32
 				// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 				if current_prices.len() as u32 >= asset_info.max_answers {
-					return Err(Error::<T>::MaxPrices.into());
+					return Err(Error::<T>::MaxPrices.into())
 				}
 				if current_prices.iter().any(|candidate| candidate.who == who) {
-					return Err(Error::<T>::AlreadySubmitted.into());
+					return Err(Error::<T>::AlreadySubmitted.into())
 				}
 				current_prices.push(set_price);
 				Ok(())
@@ -743,7 +763,7 @@ pub mod pallet {
 						Self::remove_price_in_transit(asset_id, &pre_price.who);
 						let fresh_prices = pre_prices.split_off(index);
 						(pre_prices, fresh_prices)
-					}
+					},
 					None => (pre_prices, vec![]),
 				};
 
@@ -769,7 +789,7 @@ pub mod pallet {
 			prices: &[PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>],
 		) -> Option<T::PriceValue> {
 			if prices.is_empty() {
-				return None;
+				return None
 			}
 
 			let mut numbers: Vec<T::PriceValue> =
@@ -864,7 +884,7 @@ pub mod pallet {
 				log::info!("no signer");
 				return Err(
 					"No local accounts available. Consider adding one via `author_insertKey` RPC.",
-				);
+				)
 			}
 			// checks to make sure key from keystore has not already submitted price
 			let prices = PrePrices::<T>::get(*price_id);
@@ -878,12 +898,12 @@ pub mod pallet {
 
 			if prices.len() as u32 >= Self::asset_info(price_id).max_answers {
 				log::info!("Max answers reached");
-				return Err("Max answers reached");
+				return Err("Max answers reached")
 			}
 
 			if prices.into_iter().any(|price| price.who == address) {
 				log::info!("Tx already submitted");
-				return Err("Tx already submitted");
+				return Err("Tx already submitted")
 			}
 			// Make an external HTTP request to fetch the current price.
 			// Note this call will block until response is received.
@@ -941,7 +961,7 @@ pub mod pallet {
 			// Let's check the status code before we proceed to reading the response.
 			if response.code != 200 {
 				log::warn!("Unexpected status code: {}", response.code);
-				return Err(http::Error::Unknown);
+				return Err(http::Error::Unknown)
 			}
 
 			let body = response.body().collect::<Vec<u8>>();
@@ -957,7 +977,7 @@ pub mod pallet {
 				None => {
 					log::warn!("Unable to extract price from the response: {:?}", body_str);
 					Err(http::Error::Unknown)
-				}
+				},
 			}?;
 
 			log::warn!("Got price: {} cents", price);
@@ -975,7 +995,7 @@ pub mod pallet {
 						JsonValue::Number(number) => number,
 						_ => return None,
 					}
-				}
+				},
 				_ => return None,
 			};
 			Some(price.integer as u64)

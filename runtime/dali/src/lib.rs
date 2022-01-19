@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
+		clippy::disallowed_method,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -25,7 +25,6 @@ use common::{
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
 	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
-use composable_traits::currency::PriceableAsset;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -440,6 +439,7 @@ impl oracle::Config for Runtime {
 	type MaxAssetsCount = MaxAssetsCount;
 	type MaxHistory = MaxHistory;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
+	type LocalAssets = Factory;
 }
 
 // Parachain stuff.
@@ -792,7 +792,7 @@ pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false;
+			return false
 		}
 		!matches!(
 			call,

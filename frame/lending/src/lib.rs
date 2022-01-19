@@ -2,8 +2,8 @@
 #![cfg_attr(
 	not(any(test, feature = "runtime-benchmarks")),
 	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
+		clippy::disallowed_method,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -54,13 +54,13 @@ pub mod pallet {
 	use crate::{models::BorrowerData, weights::WeightInfo};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		currency::{CurrencyFactory, PriceableAsset},
+		currency::CurrencyFactory,
 		defi::Rate,
 		lending::{
 			math::*, BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput,
 		},
 		liquidation::Liquidation,
-		loans::{DurationSeconds, PriceStructure, Timestamp},
+		loans::{DurationSeconds, Timestamp},
 		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
@@ -86,7 +86,7 @@ pub mod pallet {
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
 		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128,
+		ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128,
 		KeyTypeId as CryptoKeyTypeId, Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec, vec::Vec};
@@ -177,8 +177,7 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ Debug
 			+ Default
-			+ TypeInfo
-			+ PriceableAsset;
+			+ TypeInfo;
 
 		type Balance: Default
 			+ Parameter
@@ -242,8 +241,7 @@ pub mod pallet {
 			+ From<u128>
 			+ Debug
 			+ Default
-			+ TypeInfo
-			+ PriceableAsset;
+			+ TypeInfo;
 
 		type Balance: Default
 			+ Parameter
@@ -297,17 +295,17 @@ pub mod pallet {
 			let one_read = T::DbWeight::get().reads(1);
 			weight += u64::from(call_counters.now) * <T as Config>::WeightInfo::now();
 			weight += u64::from(call_counters.read_markets) * one_read;
-			weight += u64::from(call_counters.accrue_interest)
-				* <T as Config>::WeightInfo::accrue_interest();
+			weight += u64::from(call_counters.accrue_interest) *
+				<T as Config>::WeightInfo::accrue_interest();
 			weight += u64::from(call_counters.account_id) * <T as Config>::WeightInfo::account_id();
-			weight += u64::from(call_counters.available_funds)
-				* <T as Config>::WeightInfo::available_funds();
-			weight += u64::from(call_counters.handle_withdrawable)
-				* <T as Config>::WeightInfo::handle_withdrawable();
-			weight += u64::from(call_counters.handle_depositable)
-				* <T as Config>::WeightInfo::handle_depositable();
-			weight += u64::from(call_counters.handle_must_liquidate)
-				* <T as Config>::WeightInfo::handle_must_liquidate();
+			weight += u64::from(call_counters.available_funds) *
+				<T as Config>::WeightInfo::available_funds();
+			weight += u64::from(call_counters.handle_withdrawable) *
+				<T as Config>::WeightInfo::handle_withdrawable();
+			weight += u64::from(call_counters.handle_depositable) *
+				<T as Config>::WeightInfo::handle_depositable();
+			weight += u64::from(call_counters.handle_must_liquidate) *
+				<T as Config>::WeightInfo::handle_must_liquidate();
 
 			// TODO: move following loop to OCW
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
@@ -324,7 +322,7 @@ pub mod pallet {
 			let signer = Signer::<T, <T as Config>::AuthorityId>::all_accounts();
 			if !signer.can_sign() {
 				log::warn!("No signer");
-				return;
+				return
 			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
 				let results = signer.send_signed_transaction(|_account| {
@@ -381,6 +379,7 @@ pub mod pallet {
 		RepayAmountMustBeGraterThanZero,
 		ExceedLendingCount,
 		LiquidationFailed,
+		BorrowerDataCalculationFailed,
 	}
 
 	#[pallet::event]
@@ -418,7 +417,7 @@ pub mod pallet {
 	/// Lending instances counter
 	#[pallet::storage]
 	#[pallet::getter(fn lending_count)]
-	#[allow(clippy::disallowed_types)] // MarketIndex implements Default, so ValueQuery is ok here.
+	#[allow(clippy::disallowed_type)] // MarketIndex implements Default, so ValueQuery is ok here.
 	pub type LendingCount<T: Config> = StorageValue<_, MarketIndex, ValueQuery>;
 
 	/// Indexed lending instances
@@ -435,7 +434,7 @@ pub mod pallet {
 	/// Debt token allows to simplify some debt management and implementation of features
 	#[pallet::storage]
 	#[pallet::getter(fn debt_currencies)]
-	#[allow(clippy::disallowed_types)] // AssetId implements default, so ValueQuery is ok here.
+	#[allow(clippy::disallowed_type)] // AssetId implements default, so ValueQuery is ok here.
 	pub type DebtMarkets<T: Config> =
 		StorageMap<_, Twox64Concat, MarketIndex, <T as Config>::AssetId, ValueQuery>;
 
@@ -468,7 +467,7 @@ pub mod pallet {
 	/// market borrow index
 	#[pallet::storage]
 	#[pallet::getter(fn borrow_index)]
-	#[allow(clippy::disallowed_types)] // MarketIndex implements default, so ValueQuery is ok here.
+	#[allow(clippy::disallowed_type)] // MarketIndex implements default, so ValueQuery is ok here.
 	pub type BorrowIndex<T: Config> = StorageMap<_, Twox64Concat, MarketIndex, Ratio, ValueQuery>;
 
 	/// (Market, Account) -> Collateral
@@ -487,7 +486,7 @@ pub mod pallet {
 	/// The timestamp of the previous block or defaults to timestamp at genesis.
 	#[pallet::storage]
 	#[pallet::getter(fn last_block_timestamp)]
-	#[allow(clippy::disallowed_types)] // Timestamp default is 0, which is valid in this context.
+	#[allow(clippy::disallowed_type)] // Timestamp default is 0, which is valid in this context.
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	#[pallet::genesis_config]
@@ -818,21 +817,7 @@ pub mod pallet {
 			account: &<Self as Lending>::AccountId,
 		) -> Result<(), DispatchError> {
 			if Self::should_liquidate(market_id, account)? {
-				let market = Self::get_market(market_id)?;
-				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-				let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
-				let collateral_price =
-					Self::get_price(market.collateral, market.collateral.unit())?;
-				let source_target_account = Self::account_id(market_id);
-				T::Liquidation::liquidate(
-					&source_target_account,
-					market.collateral,
-					PriceStructure::new(collateral_price),
-					borrow_asset,
-					&source_target_account,
-					collateral_to_liquidate,
-				)
-				.map(|_| ())
+				Err(DispatchError::Other("TODO: work happens in other branch"))
 			} else {
 				Ok(())
 			}
@@ -872,15 +857,15 @@ pub mod pallet {
 							FundsAvailability::Withdrawable(balance) => {
 								Self::handle_withdrawable(&config, &market_account, balance)?;
 								call_counters.handle_withdrawable += 1;
-							}
+							},
 							FundsAvailability::Depositable(balance) => {
 								Self::handle_depositable(&config, &market_account, balance)?;
 								call_counters.handle_depositable += 1;
-							}
+							},
 							FundsAvailability::MustLiquidate => {
 								Self::handle_must_liquidate(&config, &market_account)?;
 								call_counters.handle_must_liquidate += 1;
-							}
+							},
 						}
 
 						call_counters.available_funds += 1;
@@ -895,6 +880,10 @@ pub mod pallet {
 				} else {
 					errors.iter().for_each(|e| {
 						if let Err(e) = e {
+							#[cfg(test)]
+							{
+								panic!("test failed with {:?}", e);
+							}
 							log::error!(
 								"This should never happen, could not initialize block!!! {:#?} {:#?}",
 								block_number,
@@ -989,8 +978,8 @@ pub mod pallet {
 			let existing_borrow_share =
 				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
 			let new_borrow_share = Percent::from_rational(amount_to_borrow, total_borrow_amount);
-			Ok((market_index * new_borrow_share.into())
-				+ (account_interest_index * existing_borrow_share.into()))
+			Ok((market_index * new_borrow_share.into()) +
+				(account_interest_index * existing_borrow_share.into()))
 		}
 
 		fn can_borrow(
@@ -1004,22 +993,26 @@ pub mod pallet {
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
 			if let Some(time) = latest_borrow_timestamp {
 				if time >= Self::last_block_timestamp() {
-					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into());
+					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into())
 				}
 			}
 
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-			let borrow_limit_value = Self::get_borrow_limit(market_id, debt_owner)?;
+
+			let borrow_limit = Self::get_borrow_limit(market_id, debt_owner)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, amount_to_borrow)?;
 			ensure!(
-				borrow_limit_value >= borrow_amount_value,
+				borrow_limit >= borrow_amount_value,
 				Error::<T>::NotEnoughCollateralToBorrowAmount
 			);
-
 			ensure!(
-				<T as Config>::Currency::can_withdraw(asset_id, market_account, amount_to_borrow)
-					.into_result()
-					.is_ok(),
+				<T as Config>::Currency::can_withdraw(
+					borrow_asset,
+					market_account,
+					amount_to_borrow
+				)
+				.into_result()
+				.is_ok(),
 				Error::<T>::NotEnoughBorrowAsset,
 			);
 			ensure!(
@@ -1349,7 +1342,6 @@ pub mod pallet {
 				DebtMarkets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
 			let account_debt = DebtIndex::<T>::get(market_id, account);
-
 			match account_debt {
 				Some(account_interest_index) => {
 					let principal = T::MarketDebtCurrency::balance_on_hold(debt_asset_id, account);
@@ -1362,7 +1354,7 @@ pub mod pallet {
 					)?;
 
 					Ok(balance.map(Into::into))
-				}
+				},
 				// no active borrow on  market for given account
 				None => Ok(Some(BorrowAmountOf::<Self>::zero())),
 			}
@@ -1400,7 +1392,7 @@ pub mod pallet {
 				let borrower = Self::create_borrower_data(market_id, account)?;
 				Ok(borrower
 					.borrow_for_collateral()
-					.map_err(|_| Error::<T>::NotEnoughCollateralToBorrowAmount)?
+					.map_err(|_| Error::<T>::BorrowerDataCalculationFailed)?
 					.checked_mul_int(1_u64)
 					.ok_or(ArithmeticError::Overflow)?
 					.into())
@@ -1424,8 +1416,8 @@ pub mod pallet {
 			);
 
 			ensure!(
-				<T as Config>::Currency::can_deposit(market.collateral, &market_account, amount)
-					== DepositConsequence::Success,
+				<T as Config>::Currency::can_deposit(market.collateral, &market_account, amount) ==
+					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 
@@ -1483,8 +1475,8 @@ pub mod pallet {
 
 			let market_account = Self::account_id(market_id);
 			ensure!(
-				<T as Config>::Currency::can_deposit(market.collateral, account, amount)
-					== DepositConsequence::Success,
+				<T as Config>::Currency::can_deposit(market.collateral, account, amount) ==
+					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 			ensure!(
@@ -1523,7 +1515,7 @@ pub mod pallet {
 		account_interest_index: Ratio,
 	) -> Result<Option<u64>, DispatchError> {
 		if principal.is_zero() {
-			return Ok(None);
+			return Ok(None)
 		}
 		let principal: LiftedFixedBalance = principal.into();
 		let balance = principal
