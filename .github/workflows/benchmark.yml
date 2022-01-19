@@ -17,13 +17,13 @@ jobs:
 
       - name: Check for runtime changes
         env:
-          BASE_BRANCH: github.event.pull_request.base.ref
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
         id: check_runtime
         run: .maintain/check_runtime.sh
       
       - name: Benchmark Test
         env:
-          BASE_BRANCH: github.event.pull_request.base.ref
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
         if: "$${{ env.RUNTIME_CHECK }} == 1"
         id: run_benchmarks
         run: .maintain/run_benchmarks.sh
