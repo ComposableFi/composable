@@ -1,6 +1,8 @@
-use crate::{currency::LocalAssets, defi::CurrencyPair};
+use crate::{
+	currency::LocalAssets,
+	defi::{CurrencyPair, Ratio},
+};
 use frame_support::{dispatch::DispatchError, pallet_prelude::*};
-use sp_runtime::FixedU128;
 use sp_std::vec::Vec;
 
 #[derive(Encode, Decode, Default, Debug, PartialEq)]
@@ -66,6 +68,7 @@ pub trait Oracle {
 		weighting: Vec<Self::Balance>,
 	) -> Result<Self::Balance, DispatchError>;
 
+	/// How much of `quote` for unit `base` Oracle suggests to take.  
 	/// Up to oracle how it decides ratio.
 	/// If there is no direct trading pair, can estimate via common pair (to which all currencies
 	/// are normalized). General formula
@@ -76,5 +79,5 @@ pub trait Oracle {
 	/// let base_amount = 3.0;
 	/// let needed_base_for_quote = base_amount * ratio; // 300.0
 	/// ```
-	fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<FixedU128, DispatchError>;
+	fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<Ratio, DispatchError>;
 }
