@@ -7,7 +7,7 @@ use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 use cumulus_primitives_core::ParaId;
-use support::{
+use frame_support::{
 	construct_runtime, log, match_type, parameter_types,
 	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
 	weights::{

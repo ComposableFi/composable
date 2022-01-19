@@ -1,0 +1,45 @@
+name: "Docker Release"
+
+on:
+  workflow_dispatch:
+  push: 
+    tags: 
+      - '*'
+      
+env:
+  DOCKER_USER_OPTION: '$UID:$GID'
+  SCCACHE_GCS_BUCKET: 'composable-build-artefacts'
+  RUSTC_WRAPPER: "/home/runner/.cargo/bin/sccache"
+  SCCACHE_GCS_RW_MODE: "READ_WRITE"
+
+jobs:
+  build-and-publish:
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    strategy: 
+      fail-fast: true
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+  
+    - name: Set env
+      run: |
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+        make version
+      
+    - name: Login to DockerHub
+      uses: docker/login-action@v1 
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
+
+    - name: Build Docker image
+      run: make containerize-release 
+
+    - name:  Docker push
+      run: make push-release
+

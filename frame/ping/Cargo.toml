@@ -2,7 +2,7 @@
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
 edition = "2021"
-rust-version = "1.56"
+
 name = "pallet-ping"
 version = "0.1.0"
 
