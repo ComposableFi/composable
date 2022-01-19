@@ -22,6 +22,13 @@ get_latest_release() {
 }
 LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
 
+ if [[ $BASE_BRANCH == "releases" ]] # this is a pr to the releases branch, use the latest tag instead
+ then
+   BASE_BRANCH=$LATEST_TAG_NAME
+   git tag -f "${BASE_BRANCH}" FETCH_HEAD
+   git log -n1 "${BASE_BRANCH}"
+ fi
+
 # Returns the last published release on github
 # Note: we can't just use /latest because that ignores prereleases
 # repo: 'organization/repo'

@@ -34,10 +34,6 @@ pallets=(
 	dutch_auction
 )
 
- echo "make sure the main branch and release tag are available in shallow clones"
- git fetch --depth="${GIT_DEPTH:-100}" origin "${BASE_BRANCH}"
-
-
 /home/runner/.cargo/bin/rustup install nightly
 /home/runner/.cargo/bin/rustup  target add wasm32-unknown-unknown --toolchain nightly
 /home/runner/.cargo/bin/cargo  build --release -p composable --features=runtime-benchmarks
