@@ -8,26 +8,28 @@ get_latest_release() {
     sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
 }
 
-# this is a pr to the releases branch, use the second to last tag instead
- if [[ $BASE_BRANCH == "releases" ]]
- then
-#   BASE_BRANCH=$(gh release list -L=5 | sed -n '5 p' | awk '{print $(NF-1)}')
-#   echo $BASE_BRANCH
-   LATEST_TAG_NAME=$BASE_BRANCH
-#   git fetch origin tag "${BASE_BRANCH}" --no-tags
-   elif [[  $BASE_BRANCH == "master" ]]; then
-     LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
-     git fetch origin tag "${LATEST_TAG_NAME}" --no-tags
- fi
+boldprint() { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
+boldcat() {
+  printf "|\n"
+  while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done
+  printf "|\n"
+}
+
+LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
+#LATEST_TAG_NAME=$(gh release list -L=5 | sed -n '5 p' | awk '{print $(NF-1)}')
+boldprint $LATEST_TAG_NAME
+git fetch origin tag "${LATEST_TAG_NAME}" --no-tags
 
 # Check for runtime changes between two commits. This is defined as any changes
 # to runtime/, frame/
 has_runtime_changes() {
   from=$1
   to=$2
+  echo "diffing $from & $to"
   if git diff --name-only "${from}...${to}" |
     grep -q -e '^frame/' -e "^runtime/$3/"; then
     return 0
+
   else
     return 1
   fi
@@ -44,13 +46,6 @@ has_client_changes() {
   else
     return 1
   fi
-}
-
-boldprint() { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
-boldcat() {
-  printf "|\n"
-  while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done
-  printf "|\n"
 }
 
 # checks if the spec/impl version has increased

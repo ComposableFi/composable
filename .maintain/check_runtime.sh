@@ -22,7 +22,7 @@ VERSIONS_FILES=(
 
 simnode_check() {
   VERSIONS_FILE="$1"
-  if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_REF_NAME}" "$3" && check_runtime "$VERSIONS_FILE" "$2"
+  if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_REF_NAME}" "$2" && check_runtime "$VERSIONS_FILE" "$2"
   then
     echo "Wasm sources have changed"
     echo "RUNTIME_CHECK=1" >> "$GITHUB_ENV"
