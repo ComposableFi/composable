@@ -53,6 +53,17 @@ impl<T: Validate<U> + Validate<V>, U, V> Validate<(U, V)> for T {
 	}
 }
 
+// as per substrate pattern and existing macroses for similar purposes, they tend to make things flat
+impl<T: Validate<U> + Validate<V> + Validate<W>, U, V, W> Validate<(U, V, W)> for T {
+	#[inline(always)]
+	fn validate(self) -> Result<Self, &'static str> {
+		let value = Validate::<U>::validate(self)?;
+		let value = Validate::<V>::validate(value)?;
+		let value = Validate::<W>::validate(value)?;
+		Ok(value)
+	}
+}
+
 impl<T: codec::Decode + Validate<(U, V)>, U, V> codec::Decode for Validated<T, (U, V)> {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
 		let value = Validate::validate(T::decode(input)?)

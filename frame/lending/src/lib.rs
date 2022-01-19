@@ -234,7 +234,15 @@ pub mod pallet {
 		/// 
 		/// Borrow may have very small price. Will imbalance some markets on creation.
 		/// 
-		/// # Why not native 
+		/// # Why not native parachain token?
+		/// 
+		/// Possible option. But I doubt closing market as easy as transferring back rent.  So it is not exactly platform rent only.
+		/// 
+		/// # Why borrow amount priced by Oracle?
+		/// 
+		/// We depend on Oracle to price in Lending. So we know price anyway. 
+		/// We normalized price over all markets and protect from spam all possible pairs equally.
+		/// Locking borrow amount ensures manager can create market wit borrow assets, and we force him to really create it.  
 		#[path::constant]
 		type MarketCreationStake : Get<Self::Balance>;
 	}
@@ -1104,9 +1112,10 @@ pub mod pallet {
 				
 				let initial_price_amont =  T::MarketCreationStake::get();
 				let initial_pool_size = T::Oracle::get_price_inverse(config_input.borrow_asset(), initial_price_amont)?;
-				T::MultiCurrency::transfer()
-
-				//<T::Vault as Vault>::
+				
+				// transfer to vault on behalf of market from user
+				T::MultiCurrency::transfer(config_input.borrow_asset(), &manager, &Self::account_id(market_id), initial_pool_size, true)?;
+				<T::Vault as Vault>::deposit(borrow_asset_vault, &Self::account_id(market_id), initial_pool_size);
 
 				let config = MarketConfig {
 					manager,
