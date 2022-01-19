@@ -350,10 +350,10 @@ pub mod pallet {
 								// The user should have claimed the upfront payment + the vested
 								// amount until this window point.
 								let vested_reward = reward.total - upfront_payment;
-								upfront_payment
-									+ (vested_reward
-										.saturating_mul(T::Convert::convert(vesting_window))
-										/ T::Convert::convert(reward.vesting_period))
+								upfront_payment +
+									(vested_reward
+										.saturating_mul(T::Convert::convert(vesting_window)) /
+										T::Convert::convert(reward.vesting_period))
 							}
 						};
 						let available_to_claim = should_have_claimed - reward.claimed;
@@ -452,8 +452,7 @@ pub mod pallet {
 		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			if let Call::associate { reward_account, proof } = call {
 				if Associations::<T>::get(reward_account).is_some() {
-					return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8)
-						.into();
+					return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8).into()
 				}
 				let remote_account =
 					get_remote_account::<T>(proof.clone(), reward_account, T::Prefix::get())
@@ -464,14 +463,12 @@ pub mod pallet {
 						})?;
 				match Rewards::<T>::get(remote_account.clone()) {
 					None => InvalidTransaction::Custom(ValidityError::NoReward as u8).into(),
-					Some(reward) if reward.total.is_zero() => {
-						InvalidTransaction::Custom(ValidityError::NoReward as u8).into()
-					},
-					Some(_) => {
+					Some(reward) if reward.total.is_zero() =>
+						InvalidTransaction::Custom(ValidityError::NoReward as u8).into(),
+					Some(_) =>
 						ValidTransaction::with_tag_prefix("CrowdloanRewardsAssociationCheck")
 							.and_provides(remote_account)
-							.build()
-					},
+							.build(),
 				}
 			} else {
 				Err(InvalidTransaction::Call.into())

@@ -343,7 +343,7 @@ pub mod pallet {
 		asset_id: &T::AssetId,
 	) -> Result<(), DispatchError> {
 		if T::AdminOrigin::ensure_origin(origin.clone()).is_ok() {
-			return Ok(());
+			return Ok(())
 		}
 
 		match origin.into() {
@@ -740,14 +740,14 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> DispatchResult {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::set_balance(who, amount);
+					return <<T as Config>::NativeCurrency>::set_balance(who, amount)
 				}
 				<<T as Config>::MultiCurrency>::set_balance(asset, who, amount)
 			}
 
 			fn set_total_issuance(asset: Self::AssetId, amount: Self::Balance) {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::set_total_issuance(amount);
+					return <<T as Config>::NativeCurrency>::set_total_issuance(amount)
 				}
 				<<T as Config>::MultiCurrency>::set_total_issuance(asset, amount)
 			}
@@ -758,7 +758,7 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::decrease_balance(who, amount);
+					return <<T as Config>::NativeCurrency>::decrease_balance(who, amount)
 				}
 				<<T as Config>::MultiCurrency>::decrease_balance(asset, who, amount)
 			}
@@ -769,7 +769,7 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> Self::Balance {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::decrease_balance_at_most(who, amount);
+					return <<T as Config>::NativeCurrency>::decrease_balance_at_most(who, amount)
 				}
 				<<T as Config>::MultiCurrency>::decrease_balance_at_most(asset, who, amount)
 			}
@@ -780,7 +780,7 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::increase_balance(who, amount);
+					return <<T as Config>::NativeCurrency>::increase_balance(who, amount)
 				}
 				<<T as Config>::MultiCurrency>::increase_balance(asset, who, amount)
 			}
@@ -791,7 +791,7 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> Self::Balance {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::increase_balance_at_most(who, amount);
+					return <<T as Config>::NativeCurrency>::increase_balance_at_most(who, amount)
 				}
 				<<T as Config>::MultiCurrency>::increase_balance_at_most(asset, who, amount)
 			}
@@ -814,7 +814,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::transfer(
 						source, dest, amount, keep_alive,
-					);
+					)
 				}
 				<<T as Config>::MultiCurrency>::transfer(asset, source, dest, amount, keep_alive)
 			}
@@ -839,7 +839,7 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> DispatchResult {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::hold(who, amount);
+					return <<T as Config>::NativeCurrency>::hold(who, amount)
 				}
 				<<T as Config>::MultiCurrency>::hold(asset, who, amount)
 			}
@@ -851,7 +851,7 @@ pub mod pallet {
 				best_effort: bool,
 			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::release(who, amount, best_effort);
+					return <<T as Config>::NativeCurrency>::release(who, amount, best_effort)
 				}
 				<<T as Config>::MultiCurrency>::release(asset, who, amount, best_effort)
 			}
@@ -871,7 +871,7 @@ pub mod pallet {
 						amount,
 						best_effort,
 						on_hold,
-					);
+					)
 				}
 				<<T as Config>::MultiCurrency>::transfer_held(
 					asset,
@@ -899,7 +899,7 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> DispatchResult {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::mint_into(who, amount);
+					return <<T as Config>::NativeCurrency>::mint_into(who, amount)
 				}
 				<<T as Config>::MultiCurrency>::mint_into(asset, who, amount)
 			}
@@ -909,7 +909,7 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::burn_from(who, amount);
+					return <<T as Config>::NativeCurrency>::burn_from(who, amount)
 				}
 				<<T as Config>::MultiCurrency>::burn_from(asset, who, amount)
 			}
@@ -920,7 +920,7 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::slash(who, amount);
+					return <<T as Config>::NativeCurrency>::slash(who, amount)
 				}
 				<<T as Config>::MultiCurrency>::slash(asset, who, amount)
 			}
@@ -931,7 +931,7 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::teleport(source, dest, amount);
+					return <<T as Config>::NativeCurrency>::teleport(source, dest, amount)
 				}
 				<<T as Config>::MultiCurrency>::teleport(asset, source, dest, amount)
 			}
@@ -949,21 +949,21 @@ pub mod pallet {
 
 			fn total_issuance(asset: Self::AssetId) -> Self::Balance {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::total_issuance();
+					return <<T as Config>::NativeCurrency>::total_issuance()
 				}
 				<<T as Config>::MultiCurrency>::total_issuance(asset)
 			}
 
 			fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::minimum_balance();
+					return <<T as Config>::NativeCurrency>::minimum_balance()
 				}
 				<<T as Config>::MultiCurrency>::minimum_balance(asset)
 			}
 
 			fn balance(asset: Self::AssetId, who: &T::AccountId) -> Self::Balance {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::balance(who);
+					return <<T as Config>::NativeCurrency>::balance(who)
 				}
 				<<T as Config>::MultiCurrency>::balance(asset, who)
 			}
@@ -974,7 +974,7 @@ pub mod pallet {
 				keep_alive: bool,
 			) -> Self::Balance {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::reducible_balance(who, keep_alive);
+					return <<T as Config>::NativeCurrency>::reducible_balance(who, keep_alive)
 				}
 				<<T as Config>::MultiCurrency>::reducible_balance(asset, who, keep_alive)
 			}
@@ -985,7 +985,7 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> DepositConsequence {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::can_deposit(who, amount);
+					return <<T as Config>::NativeCurrency>::can_deposit(who, amount)
 				}
 				<<T as Config>::MultiCurrency>::can_deposit(asset, who, amount)
 			}
@@ -996,7 +996,7 @@ pub mod pallet {
 				amount: Self::Balance,
 			) -> WithdrawConsequence<Self::Balance> {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::can_withdraw(who, amount);
+					return <<T as Config>::NativeCurrency>::can_withdraw(who, amount)
 				}
 				<<T as Config>::MultiCurrency>::can_withdraw(asset, who, amount)
 			}
@@ -1011,14 +1011,14 @@ pub mod pallet {
 		{
 			fn balance_on_hold(asset: Self::AssetId, who: &T::AccountId) -> Self::Balance {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::balance_on_hold(who);
+					return <<T as Config>::NativeCurrency>::balance_on_hold(who)
 				}
 				<<T as Config>::MultiCurrency>::balance_on_hold(asset, who)
 			}
 
 			fn can_hold(asset: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> bool {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::can_hold(who, amount);
+					return <<T as Config>::NativeCurrency>::can_hold(who, amount)
 				}
 				<<T as Config>::MultiCurrency>::can_hold(asset, who, amount)
 			}
