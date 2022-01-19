@@ -120,10 +120,10 @@ pub mod pallet {
 					Ok(()) => {
 						Pings::<T>::insert(seq, n);
 						Self::deposit_event(Event::PingSent(para, seq, payload));
-					}
+					},
 					Err(e) => {
 						Self::deposit_event(Event::ErrorSendingPing(e, para, seq, payload));
-					}
+					},
 				}
 			}
 		}

@@ -235,13 +235,12 @@ pub mod pallet {
 			let (issuer, offer) = Self::get_offer(offer_id)?;
 			match (ensure_signed(origin.clone()), T::AdminOrigin::ensure_origin(origin)) {
 				// Continue on admin origin
-				(_, Ok(_)) => {}
+				(_, Ok(_)) => {},
 				// Only issuer is allowed
-				(Ok(account), _) => {
+				(Ok(account), _) =>
 					if issuer != account {
-						return Err(DispatchError::BadOrigin);
-					}
-				}
+						return Err(DispatchError::BadOrigin)
+					},
 				_ => return Err(DispatchError::BadOrigin),
 			};
 			let offer_account = Self::account_id(offer_id);
@@ -311,8 +310,8 @@ pub mod pallet {
 							Error::<T>::OfferCompleted
 						);
 						ensure!(
-							nb_of_bonds > BalanceOf::<T>::zero()
-								&& nb_of_bonds <= offer.nb_of_bonds,
+							nb_of_bonds > BalanceOf::<T>::zero() &&
+								nb_of_bonds <= offer.nb_of_bonds,
 							Error::<T>::InvalidNumberOfBonds
 						);
 						// NOTE(hussein-aitlahcen): can't overflow, subsumed by `offer.valid()` in
@@ -353,12 +352,12 @@ pub mod pallet {
 										per_period: value,
 									},
 								)?;
-							}
+							},
 							BondDuration::Infinite => {
 								// NOTE(hussein-aitlahcen): in the case of an inifite duration for
 								// the offer, the liquidity is never returned to the bonder, meaning
 								// that the protocol is now owning the funds.
-							}
+							},
 						}
 						// NOTE(hussein-aitlahcen): can't overflow as checked to be <
 						// offer.nb_of_bonds prior to this
@@ -385,7 +384,7 @@ pub mod pallet {
 							new_bond_event();
 						}
 						Ok(reward_share)
-					}
+					},
 				}
 			})
 		}

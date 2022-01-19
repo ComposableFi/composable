@@ -261,7 +261,7 @@ pub mod pallet {
 							account_id: *account_id,
 						});
 						Ok(())
-					}
+					},
 				}
 			})
 		}

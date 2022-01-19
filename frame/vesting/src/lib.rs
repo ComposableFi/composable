@@ -348,7 +348,7 @@ impl<T: Config> Pallet<T> {
 		if bounded_schedules.len().is_zero() {
 			<VestingSchedules<T>>::remove(who, asset);
 			T::Currency::remove_lock(VESTING_LOCK_ID, asset, who)?;
-			return Ok(());
+			return Ok(())
 		}
 
 		let total_amount =
