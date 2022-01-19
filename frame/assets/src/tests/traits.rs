@@ -189,9 +189,7 @@ mod reservable_currency {
 
 				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::can_reserve(&account_1, first), false);
 				assert_issuance!(0);
-
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first).peek(), first);
-
 				assert_issuance!(first);
 				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::can_reserve(&account_1, first), true);
 
@@ -199,7 +197,6 @@ mod reservable_currency {
 			}).unwrap();
 		}
 
-		/// Covers all the methods from the ReservableCurrency trait.
 		#[test]
 		fn test_reserve_implementation(
 			account_1 in accounts(),
@@ -209,15 +206,12 @@ mod reservable_currency {
 
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first).peek(), first);
 				assert_issuance!(first);
-
 				//increase user balance
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_into_existing(&account_1, second).unwrap().peek(), second);
 				assert_issuance!(first+second);
-
 				//increase user balance
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_into_existing(&account_1, third).unwrap().peek(), third);
 				assert_issuance!(first+second+third);
-
 				//reserve
 				prop_assert_ok!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserve(&account_1, first+second));
 				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), first+second);
@@ -234,10 +228,8 @@ mod reservable_currency {
 			new_test_ext().execute_with(|| {
 
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first+second+third).peek(), first+second+third);
-
 				//reserve
 				prop_assert_ok!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserve(&account_1, first+second));
-
 				let total_issuance = <Pallet::<Test> as Currency<AccountId>>::total_issuance();
 				//slash
 				let (_, difference) = <Pallet::<Test> as ReservableCurrency<AccountId>>::slash_reserved(&account_1, third);
@@ -269,17 +261,13 @@ mod reservable_currency {
 
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first + second + third).peek(), first + second + third);
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_2, first).peek(), first);
-
 				prop_assert_ok!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserve(&account_1, first+second+third));
-
 				//repatriate to free balance
 				let repatriate_free = <Pallet::<Test> as ReservableCurrency<AccountId>>::repatriate_reserved(&account_1, &account_2, second, BalanceStatus::Free).unwrap();
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_2),first + (second - repatriate_free));
-
 				//repatriate to reserved balance
 				let repatriate_reserved = <Pallet::<Test> as ReservableCurrency<AccountId>>::repatriate_reserved(&account_1, &account_2, third, BalanceStatus::Reserved).unwrap();
 				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_2), third - repatriate_reserved);
-
 				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), first + (repatriate_free + repatriate_reserved));
 
 				Ok(())
@@ -294,36 +282,22 @@ mod reservable_currency {
 		) {
 			new_test_ext().execute_with(|| {
 
-
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first + second + third).peek(), first + second + third);
-
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), first + second + third);
-
 				prop_assert_ok!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserve(&account_1, first+second+third));
-
 				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), first + second + third);
-
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), 0);
-
 				//repatriate to free balance
 				let mut remaining = <Pallet::<Test> as ReservableCurrency<AccountId>>::unreserve(&account_1, third);
-
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), third - remaining);
-
 				let mut free_balance = <Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1);
-
 				remaining = <Pallet::<Test> as ReservableCurrency<AccountId>>::unreserve(&account_1, second);
-
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), free_balance + (second - remaining));
 
 				free_balance = <Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1);
-
 				remaining = <Pallet::<Test> as ReservableCurrency<AccountId>>::unreserve(&account_1, first);
-
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), free_balance + (first - remaining));
-
 				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), 0);
-
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), first + second + third);
 
 				Ok(())
