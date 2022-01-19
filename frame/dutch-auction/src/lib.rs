@@ -73,6 +73,8 @@ pub mod pallet {
 		loans::DurationSeconds,
 		math::{SafeArithmetic, WrappingNext},
 	};
+	#[cfg(feature = "runtime-benchmarks")]
+	use frame_support::traits::Currency;
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{tokens::fungible::Transfer as NativeTransfer, IsType, UnixTime},
@@ -96,6 +98,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type UnixTime: UnixTime;
@@ -113,6 +116,27 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>;
+		/// Convert a weight value into a deductible fee based on the currency type.
+		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait Config: DeFiComposableConfig + frame_system::Config {
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type UnixTime: UnixTime;
+		type OrderId: OrderIdLike + WrappingNext + Zero;
+		type MultiCurrency: MultiCurrency<
+				Self::AccountId,
+				CurrencyId = Self::MayBeAssetId,
+				Balance = <Self as DeFiComposableConfig>::Balance,
+			> + MultiReservableCurrency<
+				Self::AccountId,
+				CurrencyId = Self::MayBeAssetId,
+				Balance = <Self as DeFiComposableConfig>::Balance,
+			>;
+		type WeightInfo: WeightInfo;
+		type PalletId: Get<PalletId>;
+		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>
+			+ Currency<Self::AccountId>;
 		/// Convert a weight value into a deductible fee based on the currency type.
 		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
 	}
@@ -222,7 +246,7 @@ pub mod pallet {
 		}
 
 		/// adds take to list, does not execute take immediately
-		#[pallet::weight(T::WeightInfo::take(42))] // FIXME: need to update benchmark and weight for this extrinsic
+		#[pallet::weight(T::WeightInfo::take())]
 		pub fn take(
 			origin: OriginFor<T>,
 			order_id: T::OrderId,
@@ -246,7 +270,12 @@ pub mod pallet {
 			// pollute account system
 			let treasury = &T::PalletId::get().into_account();
 			T::MultiCurrency::unreserve(order.order.pair.base, &who, order.order.take.amount);
-			T::NativeCurrency::transfer(treasury, &order.from_to, order.context.deposit, true)?;
+			<T::NativeCurrency as NativeTransfer<T::AccountId>>::transfer(
+				treasury,
+				&order.from_to,
+				order.context.deposit,
+				true,
+			)?;
 
 			<SellOrders<T>>::remove(order_id);
 			Self::deposit_event(Event::OrderRemoved { order_id });
@@ -270,7 +299,9 @@ pub mod pallet {
 			});
 			let treasury = &T::PalletId::get().into_account();
 			let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate());
-			T::NativeCurrency::transfer(from_to, treasury, deposit, true)?;
+			<T::NativeCurrency as NativeTransfer<T::AccountId>>::transfer(
+				from_to, treasury, deposit, true,
+			)?;
 			let now = T::UnixTime::now().as_secs();
 			let order = SellOf::<T> {
 				from_to: from_to.clone(),

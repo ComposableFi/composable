@@ -3,8 +3,9 @@ use crate::Pallet as DutchAuction;
 use codec::Decode;
 use composable_traits::defi::{CurrencyPair, DeFiComposableConfig, Sell, Take};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
-use frame_support::traits::{fungibles::Mutate, Hooks};
+use frame_support::traits::{fungibles::Mutate, Currency, Get, Hooks};
 use frame_system::{pallet_prelude::BlockNumberFor, RawOrigin};
+use sp_runtime::traits::{AccountIdConversion, Saturating};
 use sp_std::prelude::*;
 
 // meaningless sell of 1 to 1
@@ -35,6 +36,17 @@ where
 	)
 }
 
+fn mint_native_tokens<T>(account_id: &T::AccountId)
+where
+	T: Config,
+{
+	let treasury = &T::PalletId::get().into_account();
+	let native_token_amount = <T as pallet::Config>::NativeCurrency::minimum_balance()
+		.saturating_mul(1_000_000_000u32.into());
+	<T as pallet::Config>::NativeCurrency::make_free_balance_be(&treasury, native_token_amount);
+	<T as pallet::Config>::NativeCurrency::make_free_balance_be(account_id, native_token_amount);
+}
+
 benchmarks! {
 	where_clause {
 		where
@@ -46,6 +58,7 @@ benchmarks! {
 		let account_id : T::AccountId = whitelisted_caller();
 		let caller = RawOrigin::Signed(account_id.clone());
 		let amount: T::Balance = 1_000_000u64.into();
+		mint_native_tokens::<T>(&account_id);
 		<T as pallet::Config>::MultiCurrency::mint_into(sell.pair.base, &account_id, amount).unwrap();
 		}: _(
 			caller,
@@ -53,19 +66,17 @@ benchmarks! {
 			<_>::default()
 		)
 	take {
-		let x in 1..2^16;
 		let sell = sell_identity::<T>();
 		let account_id : T::AccountId = whitelisted_caller();
 		let caller = RawOrigin::Signed(account_id.clone());
 		let amount: T::Balance = 1_000_000u64.into();
+		mint_native_tokens::<T>(&account_id);
 		<T as pallet::Config>::MultiCurrency::mint_into(sell.pair.base, &account_id, amount).unwrap();
 		<T as pallet::Config>::MultiCurrency::mint_into(sell.pair.quote, &account_id, amount).unwrap();
 		DutchAuction::<T>::ask(caller.clone().into(), sell, <_>::default()).unwrap();
 		let order_id = OrdersIndex::<T>::get();
 		let take_order = take_identity::<T>();
-		for i in 0..x {
-			DutchAuction::<T>::take(caller.clone().into(), order_id, take_order.clone()).unwrap();
-		}
+		DutchAuction::<T>::take(caller.clone().into(), order_id, take_order.clone()).unwrap();
 		}: _(
 			caller,
 			order_id,
@@ -76,6 +87,7 @@ benchmarks! {
 		let account_id : T::AccountId = whitelisted_caller();
 		let caller = RawOrigin::Signed(account_id.clone());
 		let amount: T::Balance = 1_000_000u64.into();
+		mint_native_tokens::<T>(&account_id);
 		<T as pallet::Config>::MultiCurrency::mint_into(sell.pair.base, &account_id, amount).unwrap();
 		DutchAuction::<T>::ask(caller.clone().into(), sell, <_>::default()).unwrap();
 		let order_id = OrdersIndex::<T>::get();
@@ -88,7 +100,7 @@ benchmarks! {
 		let account_id : T::AccountId = whitelisted_caller();
 		let caller = RawOrigin::Signed(account_id.clone());
 		let amount: T::Balance = 1_000_000u64.into();
-
+		mint_native_tokens::<T>(&account_id);
 		<T as pallet::Config>::MultiCurrency::mint_into(sell.pair.base, &account_id, amount).unwrap();
 		<T as pallet::Config>::MultiCurrency::mint_into(sell.pair.quote, &account_id, amount).unwrap();
 		DutchAuction::<T>::ask(caller.clone().into(), sell, <_>::default()).unwrap();
@@ -98,7 +110,6 @@ benchmarks! {
 	} : {
 		<DutchAuction::<T> as Hooks<BlockNumberFor<T>>>::on_finalize(T::BlockNumber::default())
 	}
-
 }
 
 impl_benchmark_test_suite!(
