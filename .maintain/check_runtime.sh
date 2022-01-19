@@ -26,6 +26,8 @@ simnode_check() {
   then
     echo "Wasm sources have changed"
     echo "RUNTIME_CHECK=1" >> "$GITHUB_ENV"
+    else
+      echo "RUNTIME_CHECK=0" >> "$GITHUB_ENV"
   fi
 }
 
