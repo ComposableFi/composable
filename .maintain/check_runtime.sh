@@ -25,16 +25,16 @@ simnode_check() {
   if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_REF_NAME}" "$2" && check_runtime "$VERSIONS_FILE" "$2"
   then
     echo "Wasm sources have changed"
-    echo "::set-output name=$3::true$"
+    echo "RUNTIME_CHECK=1" >> $GITHUB_ENV
     else
-      echo "RUNTIME_CHECK=0" >> "$GITHUB_ENV"
+      echo "RUNTIME_CHECK=0" >> $GITHUB_ENV
   fi
 }
 
 for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
     boldprint "Check if the wasm sources changed for $chain"
-    simnode_check $output $chain $folder
+    simnode_check $output $folder
   done <<< "$i"
 done
 
