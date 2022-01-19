@@ -24,11 +24,18 @@ jobs:
         run: .maintain/check_runtime.sh
 
       - name: Echo output
-        run: echo ${{ env.RUNTIME_CHECK }}
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          DALI: steps.check_runtime.outputs.dali
+          PICASSO: steps.check_runtime.outputs.picasso
+          COMPOSABLE: steps.check_runtime.outputs.composable
+        run: echo ${{ env.BASE_BRANCH }} ${{ env.DALI }} ${{ env.PICASSO }} ${{ env.PICASSO }}
 
       - name: Run Simnode
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-        if: "${{ env.RUNTIME_CHECK }} == 1"
+          DALI: steps.check_runtime.outputs.dali
+          PICASSO: steps.check_runtime.outputs.picasso
+          COMPOSABLE: steps.check_runtime.outputs.composable
         id: run_simnode
         run: .maintain/run_simnode.sh
