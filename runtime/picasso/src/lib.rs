@@ -43,7 +43,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
-pub use support::{
+pub use frame_support::{
 	construct_runtime, match_type, parameter_types,
 	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
 	weights::{
@@ -55,11 +55,11 @@ pub use support::{
 };
 
 use codec::Encode;
+use frame_support::traits::EqualPrivilegeOnly;
 use frame_system as system;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
-use support::traits::EqualPrivilegeOnly;
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -953,10 +953,10 @@ impl_runtime_apis! {
 	impl benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
 			Vec<benchmarking::BenchmarkList>,
-			Vec<support::traits::StorageInfo>,
+			Vec<frame_support::traits::StorageInfo>,
 		) {
 			use benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
-			use support::traits::StorageInfoTrait;
+			use frame_support::traits::StorageInfoTrait;
 			use system_benchmarking::Pallet as SystemBench;
 
 			let mut list = Vec::<BenchmarkList>::new();

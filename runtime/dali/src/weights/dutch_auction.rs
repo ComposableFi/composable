@@ -22,7 +22,7 @@
 #![allow(unused_imports)]
 
 use sp_std::marker::PhantomData;
-use support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::Weight};
 
 /// Weight functions for `dutch_auction`.
 pub struct WeightInfo<T>(PhantomData<T>);
