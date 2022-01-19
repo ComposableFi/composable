@@ -35,10 +35,7 @@ pallets=(
 )
 
  echo "make sure the main branch and release tag are available in shallow clones"
- git fetch --depth="${GIT_DEPTH:-100}" origin main
  git fetch --depth="${GIT_DEPTH:-100}" origin "${BASE_BRANCH}"
- git tag -f "${BASE_BRANCH}" FETCH_HEAD
- git log -n1 "${BASE_BRANCH}"
 
 
 /home/runner/.cargo/bin/rustup install nightly

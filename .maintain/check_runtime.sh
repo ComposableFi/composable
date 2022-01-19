@@ -21,7 +21,6 @@ VERSIONS_FILES=(
  git log --graph --oneline --decorate=short -n 10
 
  echo "make sure the main branch and release tag are available in shallow clones"
- git fetch --depth="${GIT_DEPTH:-100}" origin main
  git fetch --depth="${GIT_DEPTH:-100}" origin "${BASE_BRANCH}"
 
 simnode_check() {
