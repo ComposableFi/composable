@@ -208,14 +208,17 @@ pub mod pallet {
 
 		/// In case of success to liquidation call, caller is rewarded with part of `collateral` asset.
 		/// User can liquidate it immediately too.
+		/// 
 		/// # Why not borrow directly? 
 		/// We have borrow reserve. It may risk be not enough to cover all collateral. And may be other risks.
 		/// 
 		/// # Why not native weight currency? 
+		/// 
 		/// Risk to allow earn currency from thin air or DDoS. 
 		/// Like if we return amount of PICA equal to weight of liquidation call, may produce liquidation loops with fake currencies to earn PICA.
 		/// 
 		/// # Why not collateral reward? 
+		/// 
 		/// We may have dead pools sitting with near zero cost of collaterals nobody wants to liquidate. 
 		/// This is easy to detect for inactive markets. 
 		/// We can GC that without liquidation at all later.
@@ -226,6 +229,12 @@ pub mod pallet {
 		/// Creators puts that amount and it is staked under Vault account. 
 		/// So he does not owns it anymore.
 		/// So borrow is both stake and tool to create market.
+		/// 
+		/// # Why not borrow amount? 
+		/// 
+		/// Borrow may have very small price. Will imbalance some markets on creation.
+		/// 
+		/// # Why not native 
 		#[path::constant]
 		type MarketCreationStake : Get<Self::Balance>;
 	}
@@ -1092,6 +1101,12 @@ pub mod pallet {
 						.collect(),
 					},
 				)?;
+				
+				let initial_price_amont =  T::MarketCreationStake::get();
+				let initial_pool_size = T::Oracle::get_price_inverse(config_input.borrow_asset(), initial_price_amont)?;
+				T::MultiCurrency::transfer()
+
+				//<T::Vault as Vault>::
 
 				let config = MarketConfig {
 					manager,

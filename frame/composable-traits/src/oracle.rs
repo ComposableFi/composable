@@ -49,6 +49,8 @@ pub trait Oracle {
 	/// price (Base BTC) = 5000000
 	/// price (Vaulted base stock_dilution_rate) = price base * stock_dilution_rate
 	/// ```
+	/// 
+	/// Semantically this method is `get_ratio` for `asset_id` and price pegging asset multiplied by `amount`
 	fn get_price(
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
@@ -80,4 +82,8 @@ pub trait Oracle {
 	/// let needed_base_for_quote = base_amount * ratio; // 300.0
 	/// ```
 	fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<Ratio, DispatchError>;
+
+	/// Given `asset_id` and `amount` of price asset, 
+	/// wat amount of  `asset_id` will be required to be priceable for 
+	fn get_price_inverse(asset_id: Self::AssetId, amount: Self::Balance) -> Result<Self::Balance, DispatchError>;
 }
