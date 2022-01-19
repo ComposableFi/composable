@@ -1,7 +1,7 @@
 #!/bin/bash
 
 api_base="https://api.github.com/repos"
-GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
+GITHUB_REF_NAME=$(git branch --show-current)
 
 # Function to take 2 git tags/commits and get any lines from commit messages
 # that contain something that looks like a PR reference: e.g., (#1234)
@@ -20,6 +20,7 @@ get_latest_release() {
     grep '"tag_name":' |                                            # Get tag line
     sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
 }
+LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
 
 # Returns the last published release on github
 # Note: we can't just use /latest because that ignores prereleases
@@ -147,9 +148,9 @@ boldcat() {
 # checks if the spec/impl version has increased
 check_runtime() {
   VERSIONS_FILE="$1"
-  add_spec_version="$(git diff "${BASE_BRANCH}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+  add_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
     sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
-  sub_spec_version="$(git diff "${BASE_BRANCH}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+  sub_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
     sed -n -r "s/^\-[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
   if [ "${add_spec_version}" != "${sub_spec_version}" ]; then
 
@@ -166,9 +167,9 @@ check_runtime() {
     # check for impl_version updates: if only the impl versions changed, we assume
     # there is no consensus-critical logic that has changed.
 
-    add_impl_version="$(git diff "${BASE_BRANCH}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+    add_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
       sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
-    sub_impl_version="$(git diff "${BASE_BRANCH}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+    sub_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
       sed -n -r 's/^\-[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
 
     # see if the impl version changed
