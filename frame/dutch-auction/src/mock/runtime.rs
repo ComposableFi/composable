@@ -229,14 +229,13 @@ impl pallet_dutch_auction::Config for Runtime {
 	type NativeCurrency = Balances;
 }
 
+#[allow(dead_code)] // not really dead
 pub fn new_test_externalities() -> sp_io::TestExternalities {
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
-	let balances = vec![
-		(AccountId::from(ALICE), 1_000_000_000_000_000_000_000_000),
-		(AccountId::from(BOB), 1_000_000_000_000_000_000_000_000),
-	];
+	let balances =
+		vec![(ALICE, 1_000_000_000_000_000_000_000_000), (BOB, 1_000_000_000_000_000_000_000_000)];
 
-	pallet_balances::GenesisConfig::<Runtime> { balances: balances.clone() }
+	pallet_balances::GenesisConfig::<Runtime> { balances }
 		.assimilate_storage(&mut storage)
 		.unwrap();
 

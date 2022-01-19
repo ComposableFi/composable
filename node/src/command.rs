@@ -14,6 +14,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#[cfg(feature = "composable")]
+use crate::service::ComposableExecutor;
+#[cfg(feature = "dali")]
+use crate::service::DaliExecutor;
 
 use crate::{
 	chain_spec,
@@ -269,7 +273,14 @@ pub fn run() -> Result<()> {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 
-				runner.sync_run(|config| cmd.run::<Block, PicassoExecutor>(config))
+				runner.sync_run(|config| match config.chain_spec.id() {
+					id if id.contains("picasso") => cmd.run::<Block, PicassoExecutor>(config),
+					#[cfg(feature = "dali")]
+					id if id.contains("dali") => cmd.run::<Block, DaliExecutor>(config),
+					#[cfg(feature = "composable")]
+					id if id.contains("composable") => cmd.run::<Block, ComposableExecutor>(config),
+					id => panic!("Unknown Id: {}", id),
+				})
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."

@@ -97,9 +97,10 @@ impl<AssetId: PartialEq> CurrencyPair<AssetId> {
 	/// assert_eq!(slice[0], pair.base);
 	/// assert_eq!(slice[1], pair.quote);
 	/// ```
-	/// ```compile_fail
+	/// ```rust
 	/// # let pair = composable_traits::defi::CurrencyPair::<u128>::new(13, 42);
 	/// # let slice =  pair.as_slice();
+	/// // it is copy
 	/// drop(pair);
 	/// let _ = slice[0];
 	/// ```
@@ -233,8 +234,11 @@ pub type Ratio = FixedU128;
 
 #[cfg(test)]
 mod tests {
+<<<<<<< HEAD
 	use crate::defi::LiftedFixedBalance;
 
+=======
+>>>>>>> main
 	use super::{Ratio, Take};
 	use sp_runtime::FixedPointNumber;
 

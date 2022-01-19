@@ -48,9 +48,8 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
-		defi::CurrencyPair,
+		defi::{CurrencyPair, LiftedFixedBalance},
 		dex::{ConstantProductPoolInfo, CurveAmm},
-		math::LiftedFixedBalance,
 	};
 	use frame_support::{
 		pallet_prelude::*,

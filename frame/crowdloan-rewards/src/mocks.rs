@@ -167,12 +167,11 @@ impl ClaimKey {
 	}
 }
 
-pub fn relay_proof(
-	relay_account: &RelayKey,
-	reward_account: AccountId,
-) -> Proof<RelayChainAccountId> {
-	let mut msg = PROOF_PREFIX.to_vec();
+fn relay_proof(relay_account: &RelayKey, reward_account: AccountId) -> Proof<RelayChainAccountId> {
+	let mut msg = b"<Bytes>".to_vec();
+	msg.append(&mut PROOF_PREFIX.to_vec());
 	msg.append(&mut reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()));
+	msg.append(&mut b"</Bytes>".to_vec());
 	Proof::RelayChain(relay_account.public().into(), relay_account.sign(&msg).into())
 }
 

@@ -11,14 +11,14 @@ use sp_std::prelude::*;
 // meaningless sell of 1 to 1
 pub fn sell_identity<T: Config>(
 ) -> Sell<<T as DeFiComposableConfig>::MayBeAssetId, <T as DeFiComposableConfig>::Balance> {
-	let one: <T as DeFiComposableConfig>::Balance = 1u64.into();
+	let one: <T as DeFiComposableConfig>::Balance = 1_u64.into();
 	let pair = assets::<T>();
 	Sell::new(pair.base, pair.quote, one, Ratio::saturating_from_integer(one))
 }
 
 // meaningless take of 1 to 1
 pub fn take_identity<T: Config>() -> Take<<T as DeFiComposableConfig>::Balance> {
-	let one: <T as DeFiComposableConfig>::Balance = 1u64.into();
+	let one: <T as DeFiComposableConfig>::Balance = 1_u64.into();
 	Take::new(one, Ratio::saturating_from_integer(one))
 }
 
@@ -28,8 +28,8 @@ fn assets<T>() -> CurrencyPair<AssetIdOf<T>>
 where
 	T: Config,
 {
-	let a = 0u128.to_be_bytes();
-	let b = 1u128.to_be_bytes();
+	let a = 0_u128.to_be_bytes();
+	let b = 1_u128.to_be_bytes();
 	CurrencyPair::new(
 		AssetIdOf::<T>::decode(&mut &a[..]).unwrap(),
 		AssetIdOf::<T>::decode(&mut &b[..]).unwrap(),
@@ -60,7 +60,11 @@ benchmarks! {
 		let caller = RawOrigin::Signed(account_id.clone());
 		let amount: T::Balance = 1_000_000_000_000_u64.into();
 
+<<<<<<< HEAD
 		let mut encoded = CurrencyId::PICA.encode();
+=======
+		let encoded = CurrencyId::PICA.encode();
+>>>>>>> main
 		let native_asset_id = T::MayBeAssetId::decode(&mut &encoded[..]).unwrap();
 		<T as pallet::Config>::MultiCurrency::mint_into(native_asset_id, &account_id, amount).unwrap();
 
@@ -83,7 +87,11 @@ benchmarks! {
 		let caller = RawOrigin::Signed(account_id.clone());
 		let amount: T::Balance = 1_000_000_000_000_u64.into();
 
+<<<<<<< HEAD
 		let mut encoded = CurrencyId::PICA.encode();
+=======
+		let encoded = CurrencyId::PICA.encode();
+>>>>>>> main
 		let native_asset_id = T::MayBeAssetId::decode(&mut &encoded[..]).unwrap();
 		<T as pallet::Config>::MultiCurrency::mint_into(native_asset_id, &account_id, amount).unwrap();
 
@@ -101,7 +109,11 @@ benchmarks! {
 		let caller = RawOrigin::Signed(account_id.clone());
 		let amount: T::Balance = 1_000_000_000_000_u64.into();
 
+<<<<<<< HEAD
 		let mut encoded = CurrencyId::PICA.encode();
+=======
+		let encoded = CurrencyId::PICA.encode();
+>>>>>>> main
 		let native_asset_id = T::MayBeAssetId::decode(&mut &encoded[..]).unwrap();
 		<T as pallet::Config>::MultiCurrency::mint_into(native_asset_id, &account_id, amount).unwrap();
 
@@ -111,7 +123,7 @@ benchmarks! {
 		DutchAuction::<T>::ask(caller.clone().into(), sell, <_>::default()).unwrap();
 		let order_id = OrdersIndex::<T>::get();
 		let take_order = take_identity::<T>();
-		DutchAuction::<T>::take(caller.clone().into(), order_id, take_order.clone()).unwrap();
+		DutchAuction::<T>::take(caller.into(), order_id, take_order).unwrap();
 	} : {
 		<DutchAuction::<T> as Hooks<BlockNumberFor<T>>>::on_finalize(T::BlockNumber::default())
 	}

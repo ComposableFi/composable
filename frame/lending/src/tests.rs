@@ -711,6 +711,13 @@ prop_compose! {
 }
 
 prop_compose! {
+	fn valid_cash_borrow()(cash in 1..u32::MAX)(borrow in 0..cash, cash in Just(cash))
+		-> (u32, u32) {
+			(cash, borrow)
+	}
+}
+
+prop_compose! {
 	fn valid_amounts_without_overflow_2()
 		(x in MINIMUM_BALANCE..u64::MAX as Balance / 2,
 		 y in MINIMUM_BALANCE..u64::MAX as Balance / 2) -> (Balance, Balance) {
@@ -832,6 +839,14 @@ proptest! {
 			prop_assert_ok!(Lending::withdraw_collateral_internal(&market, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(collateral_asset, &ALICE), amount);
 
+			Ok(())
+		})?;
+	}
+
+	#[test]
+	fn calc_utilization_ratio_proptest((cash, borrow) in valid_cash_borrow()) {
+		new_test_ext().execute_with(|| {
+			prop_assert_eq!(Lending::calc_utilization_ratio(cash.into(), borrow.into()).unwrap(), Percent::from_float(borrow as f64 / (cash as f64 + borrow as f64)));
 			Ok(())
 		})?;
 	}

@@ -173,7 +173,23 @@ pub mod pallet {
 
 		type CurrencyFactory: CurrencyFactory<<Self as DeFiComposableConfig>::MayBeAssetId>;
 
+<<<<<<< HEAD
 		type MultiCurrency: Transfer<
+=======
+		/// vault owned - can transfer, cannot mint
+		type Currency: Transfer<
+				Self::AccountId,
+				Balance = Self::Balance,
+				AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
+			> + Mutate<
+				Self::AccountId,
+				Balance = Self::Balance,
+				AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
+			>;
+
+		/// market owned - debt token can be minted
+		type MarketDebtCurrency: Transfer<
+>>>>>>> main
 				Self::AccountId,
 				Balance = Self::Balance,
 				AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
@@ -204,6 +220,7 @@ pub mod pallet {
 
 		/// Id of proxy to liquidate
 		type LiquidationStrategyId: Parameter + Default + PartialEq + Clone + Debug + TypeInfo;
+<<<<<<< HEAD
 
 
 		/// In case of success to liquidation call, caller is rewarded with part of `collateral` asset.
@@ -228,6 +245,8 @@ pub mod pallet {
 		/// So borrow is both stake and tool to create market.
 		#[path::constant]
 		type MarketCreationStake : Get<Self::Balance>;
+=======
+>>>>>>> main
 	}
 
 	#[pallet::pallet]
@@ -785,7 +804,11 @@ pub mod pallet {
 		/// if there is any error then propagate that error.
 		pub fn liquidate_internal(
 			market_id: &<Self as Lending>::MarketId,
+<<<<<<< HEAD
 			borrowers: Vec<<Self as DeFiEngine>::AccountId>,
+=======
+			account: &<Self as DeFiEngine>::AccountId,
+>>>>>>> main
 		) -> Result<(), DispatchError> {
 			if Self::should_liquidate(market_id, account)? {
 				let market = Self::get_market(market_id)?;
