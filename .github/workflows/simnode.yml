@@ -1,15 +1,11 @@
-name: Check Runtime
+name: Run Simnode
 on:
-  push:
-    branches:
-      - releases
-      - main
   pull_request:
     branches:
       - releases
       - main
 jobs:
-  check-runtime:
+  simnode:
     runs-on: 
       - self-hosted
       - linux
@@ -33,20 +29,5 @@ jobs:
         id: run_simnode
         run: .maintain/run_simnode.sh
 
-  benchmark: 
-    name: Benchmark
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - bmark
-    if: github.event.pull_request.draft == false
-    steps:
-      - uses: actions/checkout@v2
-      - name: Benchmark Test
-        if: "$${{ env.RUNTIME_CHECK }} == 1"
-        id: run_benchmarks
-        run: .maintain/run_benchmarks.sh
-          
 
 
