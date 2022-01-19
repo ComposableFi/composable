@@ -30,7 +30,8 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		currency::PriceableAsset,
+		currency::LocalAssets,
+		math::SafeArithmetic,
 		oracle::{Oracle, Price as LastPrice},
 	};
 	use core::ops::{Div, Mul};
@@ -58,7 +59,8 @@ pub mod pallet {
 	use sp_runtime::{
 		offchain::{http, Duration},
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
-		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
+		AccountId32, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId, PerThing, Percent,
+		RuntimeDebug,
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec, vec::Vec};
 
@@ -111,8 +113,7 @@ pub mod pallet {
 			+ Into<u128>
 			+ Debug
 			+ Default
-			+ TypeInfo
-			+ PriceableAsset;
+			+ TypeInfo;
 		type PriceValue: Default
 			+ Parameter
 			+ Codec
@@ -146,6 +147,7 @@ pub mod pallet {
 
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
+		type LocalAssets: LocalAssets<Self::AssetId>;
 	}
 
 	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
@@ -161,8 +163,10 @@ pub mod pallet {
 		pub who: AccountId,
 	}
 
+	// block timestamped value
 	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo, Clone)]
 	pub struct Price<PriceValue, BlockNumber> {
+		/// value
 		pub price: PriceValue,
 		pub block: BlockNumber,
 	}
@@ -371,16 +375,15 @@ pub mod pallet {
 		type Balance = T::PriceValue;
 		type AssetId = T::AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
+		type LocalAssets = T::LocalAssets;
 
-		// TODO(hussein-aitlahcen):
-		// implement the amount based computation with decimals once it's been completely defined
 		fn get_price(
 			asset: Self::AssetId,
-			_amount: Self::Balance,
+			amount: Self::Balance,
 		) -> Result<LastPrice<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
 				Prices::<T>::try_get(asset).map_err(|_| Error::<T>::PriceNotFound)?;
-			Ok(LastPrice { price, block })
+			Ok(LastPrice { price: price.safe_mul(&amount)?, block })
 		}
 
 		fn get_twap(
@@ -388,6 +391,22 @@ pub mod pallet {
 			weighting: Vec<Self::Balance>,
 		) -> Result<Self::Balance, DispatchError> {
 			Self::get_twap(of, weighting)
+		}
+
+		fn get_ratio(
+			pair: composable_traits::defi::CurrencyPair<Self::AssetId>,
+		) -> Result<sp_runtime::FixedU128, DispatchError> {
+			let base: u128 =
+				Self::get_price(pair.base, (10 ^ T::LocalAssets::decimals(pair.base)?).into())?
+					.price
+					.into();
+			let quote: u128 =
+				Self::get_price(pair.quote, (10 ^ T::LocalAssets::decimals(pair.base)?).into())?
+					.price
+					.into();
+			let base = FixedU128::saturating_from_integer(base);
+			let quote = FixedU128::saturating_from_integer(quote);
+			Ok(base.safe_div(&quote)?)
 		}
 	}
 

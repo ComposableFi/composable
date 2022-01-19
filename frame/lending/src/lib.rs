@@ -54,13 +54,13 @@ pub mod pallet {
 	use crate::{models::BorrowerData, weights::WeightInfo};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		currency::{CurrencyFactory, PriceableAsset},
+		currency::CurrencyFactory,
 		defi::Rate,
 		lending::{
 			math::*, BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, MarketConfigInput,
 		},
 		liquidation::Liquidation,
-		loans::{DurationSeconds, PriceStructure, Timestamp},
+		loans::{DurationSeconds, Timestamp},
 		math::{LiftedFixedBalance, SafeArithmetic},
 		oracle::Oracle,
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
@@ -86,7 +86,7 @@ pub mod pallet {
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One,
 			Saturating, Zero,
 		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand, FixedU128,
+		ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128,
 		KeyTypeId as CryptoKeyTypeId, Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec, vec::Vec};
@@ -177,8 +177,7 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ Debug
 			+ Default
-			+ TypeInfo
-			+ PriceableAsset;
+			+ TypeInfo;
 
 		type Balance: Default
 			+ Parameter
@@ -242,8 +241,7 @@ pub mod pallet {
 			+ From<u128>
 			+ Debug
 			+ Default
-			+ TypeInfo
-			+ PriceableAsset;
+			+ TypeInfo;
 
 		type Balance: Default
 			+ Parameter
@@ -381,6 +379,7 @@ pub mod pallet {
 		RepayAmountMustBeGraterThanZero,
 		ExceedLendingCount,
 		LiquidationFailed,
+		BorrowerDataCalculationFailed,
 	}
 
 	#[pallet::event]
@@ -818,21 +817,7 @@ pub mod pallet {
 			account: &<Self as Lending>::AccountId,
 		) -> Result<(), DispatchError> {
 			if Self::should_liquidate(market_id, account)? {
-				let market = Self::get_market(market_id)?;
-				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-				let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
-				let collateral_price =
-					Self::get_price(market.collateral, market.collateral.unit())?;
-				let source_target_account = Self::account_id(market_id);
-				T::Liquidation::liquidate(
-					&source_target_account,
-					market.collateral,
-					PriceStructure::new(collateral_price),
-					borrow_asset,
-					&source_target_account,
-					collateral_to_liquidate,
-				)
-				.map(|_| ())
+				Err(DispatchError::Other("TODO: work happens in other branch"))
 			} else {
 				Ok(())
 			}
@@ -895,6 +880,10 @@ pub mod pallet {
 				} else {
 					errors.iter().for_each(|e| {
 						if let Err(e) = e {
+							#[cfg(test)]
+							{
+								panic!("test failed with {:?}", e);
+							}
 							log::error!(
 								"This should never happen, could not initialize block!!! {:#?} {:#?}",
 								block_number,
@@ -1009,17 +998,21 @@ pub mod pallet {
 			}
 
 			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-			let borrow_limit_value = Self::get_borrow_limit(market_id, debt_owner)?;
+
+			let borrow_limit = Self::get_borrow_limit(market_id, debt_owner)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, amount_to_borrow)?;
 			ensure!(
-				borrow_limit_value >= borrow_amount_value,
+				borrow_limit >= borrow_amount_value,
 				Error::<T>::NotEnoughCollateralToBorrowAmount
 			);
-
 			ensure!(
-				<T as Config>::Currency::can_withdraw(asset_id, market_account, amount_to_borrow)
-					.into_result()
-					.is_ok(),
+				<T as Config>::Currency::can_withdraw(
+					borrow_asset,
+					market_account,
+					amount_to_borrow
+				)
+				.into_result()
+				.is_ok(),
 				Error::<T>::NotEnoughBorrowAsset,
 			);
 			ensure!(
@@ -1349,7 +1342,6 @@ pub mod pallet {
 				DebtMarkets::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
 			let account_debt = DebtIndex::<T>::get(market_id, account);
-
 			match account_debt {
 				Some(account_interest_index) => {
 					let principal = T::MarketDebtCurrency::balance_on_hold(debt_asset_id, account);
@@ -1400,7 +1392,7 @@ pub mod pallet {
 				let borrower = Self::create_borrower_data(market_id, account)?;
 				Ok(borrower
 					.borrow_for_collateral()
-					.map_err(|_| Error::<T>::NotEnoughCollateralToBorrowAmount)?
+					.map_err(|_| Error::<T>::BorrowerDataCalculationFailed)?
 					.checked_mul_int(1_u64)
 					.ok_or(ArithmeticError::Overflow)?
 					.into())

@@ -39,15 +39,11 @@ pub fn calc_utilization_ratio(
 	}
 
 	let total = cash.safe_add(&borrows)?;
-	// also max value is 1.00000000000000000, it still fails with u8, so mul by u16 and cast to u8
-	// safely
 	let utilization_ratio = borrows
 		.checked_div(&total)
 		.expect("above checks prove it cannot error")
-		.checked_mul_int(100_u16)
-		.ok_or(ArithmeticError::Overflow)?
-		.try_into()
-		.map_err(|_| ArithmeticError::Overflow)?;
+		.checked_mul_int(100_u8)
+		.ok_or(ArithmeticError::Overflow)?;
 	Ok(Percent::from_percent(utilization_ratio))
 }
 

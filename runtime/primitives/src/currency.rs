@@ -1,68 +1,7 @@
 //! CurrencyId implementation
-/// Asset id as if it was deserialized, not necessary exists.
-/// We could check asset id during serde, but that:
-/// - will make serde setup complicated (need to write and consistently apply static singletons
-///   to all places with asset id)
-/// - validate will involve at minimum in memory cache call (in worth case db call) during
-///   extrinsic invocation
-/// - will need to disable this during calls when it is really no need for validation (new
-///   currency mapping)
-/// - normal path will pay price (validate each time), in instead when fail pays only (like
-///   trying to transfer non existing asset id)
-/// - we cannot guarantee existence of asset as it may be removed during transaction (so we
-///   should make removal exclusive case)
-///
-/// Given above we stick with possibly wrong asset id passed into API.
-///
-/// # Assert id pallet design   
-/// ```ignore
-/// pub trait MaximalConstGet<T> {
-///     const VALUE: T;
-/// }
-/// /// knows existing local assets and how to map them to simple numbers
-/// pub trait LocalAssetsRegistry {
-///    /// asset id which is exist from now in current block
-///    /// valid does not means usable, it can be subject to deletion or not yet approved to be used
-///    type AssetId : AssetIdLike + Into<Self::MayBeAssetId>;
-///    /// just id after serde
-///    type MayBeAssetId : AssetIdLike + From<Self::AssetId>;
-///    /// assets which we well know and embedded into `enum`.
-///    /// maximal of this is smaller than minimal `OtherAssetId`
-///    /// can always convert to valid asset id
-///    type WellKnownAssetId : MaximalConstGet<u8> + Into<Self::AssetId> + Into<Self::MayBeAssetId> + Decimals<WellKnownAssetId> + TryFrom<u8>;
-///
-///    /// Larger than maximal of `WellKnownAssetId` but smaller than minimal `DerivativeAssetId`.
-///    type OtherAssetId : MinimalConstGet<Self::WellKnownAssetId> + MaximalConstGet<u128>  + Into<Self::AssetId> + Into<Self::MayBeAssetId>;
-///    /// allows to get next asset id
-///    /// can consider split out producing assets interface into separate trait
-///    type NextOtherAssetId = ErrorNext<OtherAssetId>;
-///
-///    /// locally diluted derivative and liquidity assets.
-///    /// larger than maximal `OtherAssetId`
-///    /// `Self::OtherAssetId` may be diluted(derived/wrapped), but only remote.
-///    type DerivativeAssetId: MinimalConstGet<Self::OtherAssetId> + Into<Self::AssetId>;
-///    /// may consider split out asset producing trait
-///    type NextDerivativeAssetId = ErrorNext<Self::DerivativeAssetId>;
-///
-///    // note: fn to be replaced with Get or traits, just shortcuted here
-///  
-///    fn try_from<N:From<MayBeAssetId>>(value : N) -> Result<Self::AssetId, DispatchError>;
-///    /// one unique native asset id
-///    fn native() -> Self::WellKnownAssetId;
-///
-///    /// really u8, but easy to do math operations
-///    /// ORML also has separate trait on Balances to inspect decimals, that is not on type it self
-///    fn decimals(asset_id: Self::AssetId) -> u32;
-/// }
-/// /// read remote paths
-/// /// registering is separate trait
-/// pub trait RemoteAssetRegistry : LocalAssetsRegistry {
-///    fn substrate(asset_id: Self::AssetId) -> Self:XcmPath;
-///    fn remote(asset_id: Self::AssetId, network_id:) -> Self::Path;
-/// }
-/// ```
 use codec::{CompactAs, Decode, Encode};
-use composable_traits::currency::{DynamicCurrencyId, Exponent, PriceableAsset};
+use composable_traits::currency::{DynamicCurrencyId, Exponent};
+use core::ops::Div;
 use scale_info::TypeInfo;
 use sp_runtime::{ArithmeticError, DispatchError, RuntimeDebug};
 
@@ -84,15 +23,17 @@ impl CurrencyId {
 	pub const LAYR: CurrencyId = CurrencyId(2);
 	pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
 	pub const KSM: CurrencyId = CurrencyId(4);
-
 	pub const LOCAL_LP_TOKEN_START: CurrencyId = CurrencyId(u128::MAX / 2);
-}
 
-/// All assets are normalized to 12 decimals.
-impl PriceableAsset for CurrencyId {
 	#[inline(always)]
-	fn decimals(&self) -> Exponent {
+	pub fn decimals(&self) -> Exponent {
 		12
+	}
+	pub fn unit<T: From<u64>>(&self) -> T {
+		T::from(10_u64.pow(self.decimals()))
+	}
+	pub fn milli<T: From<u64> + Div<Output = T>>(&self) -> T {
+		self.unit::<T>() / T::from(1000_u64)
 	}
 }
 

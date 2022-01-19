@@ -47,28 +47,6 @@ pub type Ratio = FixedU128;
 /// accounts to length of year)
 pub const SECONDS_PER_YEAR: DurationSeconds = 365 * 24 * ONE_HOUR;
 
-/// utilization_ratio = total_borrows / (total_cash + total_borrows)
-pub fn calc_utilization_ratio(
-	cash: LiftedFixedBalance,
-	borrows: LiftedFixedBalance,
-) -> Result<Percent, ArithmeticError> {
-	if borrows.is_zero() {
-		return Ok(Percent::zero());
-	}
-
-	let total = cash.safe_add(&borrows)?;
-	// also max value is 1.00000000000000000, it still fails with u8, so mul by u16 and cast to u8
-	// safely
-	let utilization_ratio = borrows
-		.checked_div(&total)
-		.expect("above checks prove it cannot error")
-		.checked_mul_int(100_u16)
-		.ok_or(ArithmeticError::Overflow)?
-		.try_into()
-		.map_err(|_| ArithmeticError::Overflow)?;
-	Ok(Percent::from_percent(utilization_ratio))
-}
-
 pub trait InterestRate {
 	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate>;
 }
