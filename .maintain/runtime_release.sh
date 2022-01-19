@@ -13,8 +13,8 @@
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
-  "runtime/dali/src/lib.rs,dali-chachacha,dali"
-   "runtime/composable/src/lib.rs,composable,composable"
+  # "runtime/dali/src/lib.rs,dali-chachacha,dali"
+  #  "runtime/composable/src/lib.rs,composable,composable"
 )
 
 # Install the neccessary tools needed for building
@@ -25,9 +25,10 @@ cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
 build_runtime () {
   chain=$3
   # srtool for reproducible builds
-  srtool build --package "$chain"-runtime --profile release --runtime-dir ./runtime/"$chain"
+  srtool build --package "$chain"-runtime --profile release --runtime-dir runtime/"$chain"
   # subwasm for runtime metadata
-  subwasm info ./runtime/"$chain"/target/srtool/release/wbuild/"$chain"-runtime/"$chain"_runtime.compact.wasm >> "$chain"-release.md
+  echo "# $chain Runtime " >> release.md
+  subwasm info ./runtime/"$chain"/target/srtool/release/wbuild/"$chain"-runtime/"$chain"_runtime.compact.wasm >> release.md
 }
 
 # Check which runtimes have changed and build them
@@ -37,7 +38,7 @@ for i in "${VERSIONS_FILES[@]}"; do
     if has_runtime_changes "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" "$folder"
     then
       build_runtime $output $chain $folder
+      echo "$chain-wasm=1" >> "$GITHUB_ENV"
     fi
   done <<< "$i"
 done
-
