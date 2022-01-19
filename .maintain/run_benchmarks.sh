@@ -69,9 +69,10 @@ run_benchmarks() {
   USERNAME=$(gcloud secrets versions access latest --secret=github-api-username)
   PASSWORD=$(gcloud secrets versions access latest --secret=github-api-token)
   git remote set-url origin https://"$USERNAME":"$PASSWORD"@github.com/ComposableFi/composable.git
-  git add runtime/$FOLDER
+  git pull origin "$GITHUB_REF_NAME"
+  git add runtime/"$FOLDER"
   git commit -m "Updates weights for $CHAIN"
-  git push origin $GITHUB_REF_NAME
+  git push origin "$GITHUB_REF_NAME"
   # ToDO: Setup gpg signing and create a bot account for pushing
 }
 
