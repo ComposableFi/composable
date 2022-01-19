@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push: 
     branches: 
-      - fix-release
+      - update-benchmark-workflow
     tags: 
       - '*'
       
@@ -41,6 +41,9 @@ jobs:
       id: client_release
       run: |
         .maintain/client_release.sh
+
+    - name: Echo Output
+      run: echo $${{ env.picasso-wasm }}
 
     - name: Build wasm with srtool
       id: runtime_release

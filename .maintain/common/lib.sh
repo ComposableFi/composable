@@ -1,7 +1,7 @@
 #!/bin/bash
 
 api_base="https://api.github.com/repos"
-GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
+GITHUB_REF_NAME=$(git rev-parse HEAD)
 
 # Function to take 2 git tags/commits and get any lines from commit messages
 # that contain something that looks like a PR reference: e.g., (#1234)
@@ -21,6 +21,13 @@ get_latest_release() {
     sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
 }
 LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
+
+ if [[ $BASE_BRANCH == "releases" ]] # this is a pr to the releases branch, use the latest tag instead
+ then
+   BASE_BRANCH=$LATEST_TAG_NAME
+   git tag -f "${BASE_BRANCH}" FETCH_HEAD
+   git log -n1 "${BASE_BRANCH}"
+ fi
 
 # Returns the last published release on github
 # Note: we can't just use /latest because that ignores prereleases

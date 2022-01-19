@@ -21,14 +21,11 @@ VERSIONS_FILES=(
  git log --graph --oneline --decorate=short -n 10
 
  echo "make sure the main branch and release tag are available in shallow clones"
- git fetch --depth="${GIT_DEPTH:-100}" origin main
- git fetch --depth="${GIT_DEPTH:-100}" origin "${LATEST_TAG_NAME}"
- git tag -f "${LATEST_TAG_NAME}" FETCH_HEAD
- git log -n1 "${LATEST_TAG_NAME}"
+ git fetch --depth="${GIT_DEPTH:-100}" origin "${BASE_BRANCH}"
 
 simnode_check() {
   VERSIONS_FILE="$1"
-  if has_runtime_changes "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" "$3" && check_runtime "$VERSIONS_FILE" "$2"
+  if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_REF_NAME}" "$3" && check_runtime "$VERSIONS_FILE" "$2"
   then
     echo "Wasm sources have changed"
     echo "RUNTIME_CHECK=1" >> "$GITHUB_ENV"
