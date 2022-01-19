@@ -5,7 +5,7 @@ version = "0.0.1"
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
 edition = "2021"
-rust-version = "1.56"
+
 
 [dependencies]
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }

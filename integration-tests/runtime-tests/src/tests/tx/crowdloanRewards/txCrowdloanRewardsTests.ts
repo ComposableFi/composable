@@ -1,42 +1,45 @@
 /* eslint-disable no-trailing-spaces */
 import R from 'ramda';
-import {Promise} from 'bluebird';
+import { PalletCrowdloanRewardsModelsRemoteAccount } from '@composable/types/interfaces';
+import { sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess } from '@composable/utils/polkadotjs';
+import { u128, u32 } from '@polkadot/types-codec';
+import { expect } from 'chai';
+import { IKeyringPair } from '@polkadot/types/types';
 
-Promise.config({
-  // Enable warnings
-  warnings: true,
-  // Enable long stack traces
-  longStackTraces: true,
-  // Enable cancellation
-  cancellation: true,
-  // Enable monitoring
-  monitoring: true,
-  // Enable async hooks
-  asyncHooks: true,
-});
+const toHexString = bytes =>
+  Array.prototype.map.call(bytes, x => ('0' + (x & 0xFF).toString(16)).slice(-2)).join('');
 
+// The prefix is defined as pallet config
+const proofMessage = (account: IKeyringPair) =>
+  "picasso-" + toHexString(account.publicKey);
+
+const ethAccount = (seed: number) =>
+  web3.eth.accounts.privateKeyToAccount("0x" + seed.toString(16).padStart(64, '0'))
 
 export class TxCrowdloanRewardsTests {
   /**
-   * ToDo: Split crowdloanRewardGenerator.ts into multiple tests below
-   * 
    * Task order list:
-   *  * Populate
-   *  * Initialize
-   *  * Associate
-   *  * Claim
+   *  * Populate the list of contributors
+   *  * Initialize the crowdloan
+   *  * Associate a picassso account
    */
   public static runTxCrowdloanRewardsTests() {
-    describe('tx.crowdloanRewards Tests', function () {
-      this.timeout(0);
-      it('tx.crowdloanRewards.populate', async function () {
-        await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTest();
-        console.debug();
+    describe('CrowdloanRewards Tests', function() {
+      // 2 minutes timeout
+      this.timeout(60 * 2 * 1000);
+      it('Can populate the list of contributors', async function() {
+        const { data: [result], } = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTest();
+        expect(result.isOk).to.be.true;
       });
-
-      
-      it('tx.crowdloanRewards.initialize', async function () {
-        await TxCrowdloanRewardsTests.txCrowdloanRewardsInitializeTest();
+      it('Can initialize the crowdloan', async function() {
+        const { data: [result], } = await TxCrowdloanRewardsTests.txCrowdloanRewardsInitializeTest();
+        expect(result.isOk).to.be.true;
+      });
+      it('Can associate a picasso account', async function() {
+        await Promise.all([
+          TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTests(),
+          TxCrowdloanRewardsTests.txCrowdloanRewardsRelayAssociateTests(),
+        ]);
       });
     });
   }
@@ -44,95 +47,82 @@ export class TxCrowdloanRewardsTests {
   /**
    * tx.crowdloanRewards.populate
    */
-  private static async txCrowdloanRewardsInitializeTest() {
+  private static txCrowdloanRewardsInitializeTest() {
     // ToDo (D. Roth): Pass api and keyring instead of directly reading from global.
-
-    const sudoKey = global.walletAlice;
-    return new Promise(function (resolve, reject) {
-      global.api.tx.sudo.sudo(
-        global.api.tx.crowdloanRewards.initialize()
-      ).signAndSend(sudoKey, { nonce: -1 }, ({ events=[], status }) => {
-        console.debug('txCrowdloanRewardsInitializeTest: Transaction status:', status.type);
-        if (status.isFinalized) {
-          console.debug('txCrowdloanRewardsInitializeTest: Finalized Transaction status:', status.type);
-          events
-            // find/filter for failed events
-            .filter(({ event }) =>
-              global.api.events.system.ExtrinsicFailed.is(event)
-            )
-            // we know that data for system.ExtrinsicFailed is
-            // (DispatchError, DispatchInfo)
-            .forEach(({ event: { data: [error, info] } }) => {
-              if (error.isModule) {
-                // for module errors, we have the section indexed, lookup
-                const decoded = global.api.registry.findMetaError(error.asModule);
-                const { docs, method, section } = decoded;
-
-                console.log(`${section}.${method}: ${docs.join(' ')}`);
-                throw new Error('txCrowdloanRewardsPopulateTest: ExtrinsicFailed!');
-              } else {
-                // Other, CannotLookup, BadOrigin, no extra info
-                console.log(error.toString());
-                throw new Error('txCrowdloanRewardsPopulateTest: ExtrinsicFailed!');
-              }
-            });
-            // ToDo (D. Roth): Add checks        
-            resolve();
-        }
-      });
-    });
+    const sudoKey = walletAlice;
+    return sendAndWaitForSuccess(
+      api,
+      sudoKey,
+      api.events.sudo.Sudid.is,
+      api.tx.sudo.sudo(
+        api.tx.crowdloanRewards.initialize()
+      )
+    );
   }
 
   /**
-   * 
+   *
    */
   private static async txCrowdloanRewardsPopulateTest() {
     // ToDo (D. Roth): Pass api and keyring instead of directly reading from global.
-    const sudoKey = global.walletAlice;
-    const vesting48weeks = 100800;
-    const accounts =
-      R.unfold(n => n > 100 ? false : [[
-        { RelayChain: global.walletAlice.derive("/contributor-" + n.toString()).publicKey },
-        n * 1_000_000_000_000,
-        vesting48weeks
+    const sudoKey = walletAlice;
+    const vesting48weeks = api.createType('u32', 100800);
+    const reward = api.createType('u128', 1_000_000_000_000);
+    const relay_accounts =
+      R.unfold<number, [PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]>(n => n > 50 ? false : [[
+        api.createType(
+          'PalletCrowdloanRewardsModelsRemoteAccount',
+          { RelayChain: walletAlice.derive("/contributor-" + n.toString()).publicKey }
+        ),
+        reward,
+        vesting48weeks,
       ], n + 1], 1);
-    try {
-      return new Promise(function (resolve, reject) {
-        global.api.tx.sudo.sudo(
-          global.api.tx.crowdloanRewards.populate(accounts)
-        ).signAndSend(sudoKey, { nonce: -1 }, ({ events=[], status }) => {
-          if (status.isFinalized) {
-            events
-            // find/filter for failed events
-            .filter(({ event }) =>
-              global.api.events.system.ExtrinsicFailed.is(event)
-            )
-            // we know that data for system.ExtrinsicFailed is
-            // (DispatchError, DispatchInfo)
-            .forEach(({ event: { data: [error, info] } }) => {
-              if (error.isModule) {
-                // for module errors, we have the section indexed, lookup
-                const decoded = global.api.registry.findMetaError(error.asModule);
-                const { docs, method, section } = decoded;
+    const eth_accounts =
+      R.unfold<number, [PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]>(n => n > 50 ? false : [[
+        api.createType(
+          'PalletCrowdloanRewardsModelsRemoteAccount',
+          { Ethereum: ethAccount(n).address }
+        ),
+        reward,
+        vesting48weeks,
+      ], n + 1], 1);
+    const accounts = relay_accounts.concat(eth_accounts);
+    return await sendAndWaitForSuccess(
+      api,
+      sudoKey,
+      api.events.sudo.Sudid.is, api.tx.sudo.sudo(
+        api.tx.crowdloanRewards.populate(accounts)
+      )
+    );
+  }
 
-                console.log(`${section}.${method}: ${docs.join(' ')}`);
-                throw new Error('txCrowdloanRewardsPopulateTest: ExtrinsicFailed!');
-              } else {
-                // Other, CannotLookup, BadOrigin, no extra info
-                console.log(error.toString());
-                throw new Error('txCrowdloanRewardsPopulateTest: ExtrinsicFailed!');
-              }
-            });
-            // ToDo (D. Roth): Add checks
-            resolve();
-          }
-        });
-      });
-    }catch (exc) {
-      console.error(exc);
-    }
+  private static async txCrowdloanRewardsRelayAssociateTests() {
+    const contributor = walletAlice.derive("/contributor-1");
+    // arbitrary, user defined reward account
+    const contributorRewardAccount = contributor.derive("/reward");
+    const proof = contributor.sign(proofMessage(contributorRewardAccount));
+    return await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(
+        contributorRewardAccount.publicKey,
+        { RelayChain: [contributor.publicKey, { Sr25519: proof }] }
+      )
+    );
+  }
+
+  private static async txCrowdloanRewardsEthAssociateTests() {
+    const contributor = ethAccount(1);
+    // arbitrary, user defined reward account
+    const contributorRewardAccount = walletAlice.derive("/reward-eth-1");
+    const proof = contributor.sign(proofMessage(contributorRewardAccount));
+    return await sendUnsignedAndWaitForSuccess(
+      api,
+      api.events.crowdloanRewards.Associated.is,
+      api.tx.crowdloanRewards.associate(
+        contributorRewardAccount.publicKey,
+        { Ethereum: proof.signature }
+      )
+    );
   }
 }
-
-// Uncomment to debug
-TxCrowdloanRewardsTests.runTxCrowdloanRewardsTests();

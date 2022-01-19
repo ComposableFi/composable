@@ -2,7 +2,7 @@
 name = "picasso-runtime"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.56"
+
 description = "Picasso, Kusama Parachain Runtime Implementation"
 authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 
@@ -23,12 +23,11 @@ normal = [
 	"pallet-vault",
 	"session-benchmarking",
 	"vault",
-	"pallet-dutch-auction",
 ]
 
 [dependencies]
 frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
-support = { package = "frame-support", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 executive = { package = "frame-executive", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 
 # primitives
@@ -130,7 +129,7 @@ std = [
 	"sp-block-builder/std",
 	"sp-transaction-pool/std",
 	"sp-inherents/std",
-	"support/std",
+	"frame-support/std",
 	"executive/std",
 	"frame-system/std",
 	"utility/std",
@@ -172,18 +171,18 @@ std = [
 	"orml-xcm-support/std",
 	"orml-unknown-tokens/std",
 	"composable-traits/std",
-  "governance-registry/std",
-  "currency-factory/std",
-  "assets/std",
-  "vesting/std",
-  "bonded-finance/std",
-  "crowdloan-rewards/std",
+	"governance-registry/std",
+	"currency-factory/std",
+	"assets/std",
+	"vesting/std",
+	"bonded-finance/std",
+	"crowdloan-rewards/std",
 ]
 
 runtime-benchmarks = [
 	"balances/runtime-benchmarks",
 	"benchmarking",
-	"support/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
 	"system-benchmarking",
 	"frame-system/runtime-benchmarks",
 	"hex-literal",
@@ -204,10 +203,10 @@ runtime-benchmarks = [
 	"collective/runtime-benchmarks",
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
-  "crowdloan-rewards/runtime-benchmarks",
-  "currency-factory/runtime-benchmarks",
-  "assets/runtime-benchmarks",
-  "vesting/runtime-benchmarks",
-  "bonded-finance/runtime-benchmarks",
+	"crowdloan-rewards/runtime-benchmarks",
+	"currency-factory/runtime-benchmarks",
+	"assets/runtime-benchmarks",
+	"vesting/runtime-benchmarks",
+	"bonded-finance/runtime-benchmarks",
 ]
 
