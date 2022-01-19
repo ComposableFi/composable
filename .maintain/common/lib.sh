@@ -1,7 +1,7 @@
 #!/bin/bash
 
 api_base="https://api.github.com/repos"
-GITHUB_REF_NAME=$(git branch --show-current)
+GITHUB_REF_NAME=$(git rev-parse HEAD)
 
 # Function to take 2 git tags/commits and get any lines from commit messages
 # that contain something that looks like a PR reference: e.g., (#1234)
