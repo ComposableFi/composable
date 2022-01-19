@@ -4,19 +4,9 @@ use scale_info::TypeInfo;
 use sp_runtime::{ArithmeticError, DispatchError};
 
 #[derive(
-	PartialOrd,
-	Ord,
-	PartialEq,
-	Eq,
-	Debug,
-	Copy,
-	Clone,
-	codec::Encode,
-	codec::Decode,
-	serde::Serialize,
-	serde::Deserialize,
-	TypeInfo,
+	PartialOrd, Ord, PartialEq, Eq, Debug, Copy, Clone, codec::Encode, codec::Decode, TypeInfo,
 )]
+#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 #[allow(clippy::upper_case_acronyms)] // Currencies should be in CONSTANT_CASE
 pub enum CurrencyId {
 	PICA,
@@ -45,6 +35,5 @@ impl DynamicCurrencyId for CurrencyId {
 }
 
 parameter_types! {
-	pub const MaxStrategies: usize = 255;
 	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
 }
