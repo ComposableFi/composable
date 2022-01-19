@@ -155,8 +155,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
+		clippy::disallowed_method,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -455,7 +455,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn public_props)]
 	// Usage of ValueQuery was audited by parity and allowed for now.
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type PublicProps<T: Config> = StorageValue<
 		_,
 		Vec<(PropIndex, ProposalId<T::Hash, T::AssetId>, T::AccountId)>,
@@ -486,7 +486,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn referendum_count)]
 	// Usage of ValueQuery was audited by parity and allowed for now.
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type ReferendumCount<T> = StorageValue<_, ReferendumIndex, ValueQuery>;
 
 	/// The lowest referendum index representing an unbaked referendum. Equal to
@@ -494,7 +494,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn lowest_unbaked)]
 	// Usage of ValueQuery was audited by parity and allowed for now.
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type LowestUnbaked<T> = StorageValue<_, ReferendumIndex, ValueQuery>;
 
 	/// Information concerning any given referendum.
@@ -516,7 +516,7 @@ pub mod pallet {
 	/// user-controlled data.
 	#[pallet::storage]
 	// Usage of ValueQuery was audited by parity and allowed for now.
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type VotingOf<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
@@ -539,7 +539,7 @@ pub mod pallet {
 	// (council). https://github.com/paritytech/substrate/issues/5322
 	#[pallet::storage]
 	// Usage of ValueQuery was audited by parity and allowed for now.
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type LastTabledWasExternal<T> = StorageValue<_, bool, ValueQuery>;
 
 	/// The referendum to be tabled whenever it would be valid to table an external proposal.
@@ -563,7 +563,7 @@ pub mod pallet {
 	/// Record of all proposals that have been subject to emergency cancellation.
 	#[pallet::storage]
 	// Usage of ValueQuery was audited by parity and allowed for now.
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type Cancellations<T: Config> =
 		StorageMap<_, Identity, ProposalId<T::Hash, T::AssetId>, bool, ValueQuery>;
 
@@ -983,7 +983,7 @@ pub mod pallet {
 			if let Some((e_proposal_id, _)) = <NextExternal<T>>::get() {
 				ensure!(id == e_proposal_id, Error::<T>::ProposalMissing);
 			} else {
-				return Err(Error::<T>::NoProposal.into())
+				return Err(Error::<T>::NoProposal.into());
 			}
 
 			let mut existing_vetoers =
@@ -1220,8 +1220,9 @@ pub mod pallet {
 
 			let (provider, deposit, since, expiry) = <Preimages<T>>::get(&id)
 				.and_then(|m| match m {
-					PreimageStatus::Available { provider, deposit, since, expiry, .. } =>
-						Some((provider, deposit, since, expiry)),
+					PreimageStatus::Available { provider, deposit, since, expiry, .. } => {
+						Some((provider, deposit, since, expiry))
+					},
 					_ => None,
 				})
 				.ok_or(Error::<T>::PreimageMissing)?;
@@ -1982,8 +1983,8 @@ impl<T: Config> Pallet<T> {
 		//   of unbaked referendum is bounded by this number. In case those number have changed in a
 		//   runtime upgrade the formula should be adjusted but the bound should still be sensible.
 		<LowestUnbaked<T>>::mutate(|ref_index| {
-			while *ref_index < last &&
-				Self::referendum_info(*ref_index)
+			while *ref_index < last
+				&& Self::referendum_info(*ref_index)
 					.map_or(true, |info| matches!(info, ReferendumInfo::Finished { .. }))
 			{
 				*ref_index += 1
@@ -2053,7 +2054,7 @@ impl<T: Config> Pallet<T> {
 			Ok(0) => return Err(Error::<T>::PreimageMissing.into()),
 			_ => {
 				sp_runtime::print("Failed to decode `PreimageStatus` variant");
-				return Err(Error::<T>::PreimageMissing.into())
+				return Err(Error::<T>::PreimageMissing.into());
 			},
 		}
 

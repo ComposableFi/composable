@@ -2,8 +2,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
+		clippy::disallowed_method,
+		clippy::disallowed_type,
 		// TODO: enable me after this crate is stablized. todo macros are still denied in the release pipeline, but for
 		// regular development allowed.
 		// clippy::indexing_slicing,
@@ -123,7 +123,7 @@ pub mod pallet {
 	/// Current number of pools (also ID for the next created pool)
 	#[pallet::storage]
 	#[pallet::getter(fn pool_count)]
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type PoolCount<T: Config> = StorageValue<_, T::PoolId, ValueQuery, PoolCountOnEmpty<T>>;
 
 	#[pallet::type_value]
@@ -149,7 +149,7 @@ pub mod pallet {
 	/// Balance of asset for given pool excluding admin_fee
 	#[pallet::storage]
 	#[pallet::getter(fn pool_asset_balance)]
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type PoolAssetBalance<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -169,7 +169,7 @@ pub mod pallet {
 	/// Balance of asset for given pool including admin_fee
 	#[pallet::storage]
 	#[pallet::getter(fn pool_asset_total_balance)]
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type PoolAssetTotalBalance<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,

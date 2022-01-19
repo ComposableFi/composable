@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
+		clippy::disallowed_method,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -282,7 +282,7 @@ pub mod pallet {
 	/// Cleaned up vaults do not decrement the counter.
 	#[pallet::storage]
 	#[pallet::getter(fn vault_count)]
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type VaultCount<T: Config> = StorageValue<_, T::VaultId, ValueQuery>;
 
 	/// Info for each specific vaults.
@@ -302,7 +302,7 @@ pub mod pallet {
 	#[pallet::getter(fn capital_structure)]
 	// Bit questionable to have this be ValueQuery, as technically that makes it difficult to
 	// determine if a strategy is connected to a vault vs not having an allocation at all.
-	#[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_type)]
 	pub type CapitalStructure<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -565,7 +565,7 @@ pub mod pallet {
 					<frame_system::Pallet<T>>::block_number(),
 					vault.deposit,
 				) {
-					return Err(Error::<T>::TombstoneDurationNotExceeded.into())
+					return Err(Error::<T>::TombstoneDurationNotExceeded.into());
 				} else {
 					let deletion_reward_account = &Self::deletion_reward_account(dest);
 					let reward =
@@ -833,8 +833,8 @@ pub mod pallet {
 			let vault_aum = Self::assets_under_management(vault_id)?;
 			if vault_aum.is_zero() {
 				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, amount) ==
-						DepositConsequence::Success,
+					T::Currency::can_deposit(vault.lp_token_id, from, amount)
+						== DepositConsequence::Success,
 					Error::<T>::MintFailed
 				);
 
@@ -864,8 +864,8 @@ pub mod pallet {
 				ensure!(lp > T::Balance::zero(), Error::<T>::InsufficientCreationDeposit);
 
 				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, lp) ==
-						DepositConsequence::Success,
+					T::Currency::can_deposit(vault.lp_token_id, from, lp)
+						== DepositConsequence::Success,
 					Error::<T>::MintFailed
 				);
 

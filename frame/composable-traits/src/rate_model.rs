@@ -85,7 +85,7 @@ pub enum InterestRateModel {
 
 impl Default for InterestRateModel {
 	// unwrap is used with known parameters, and unit tested right below.
-	#[allow(clippy::disallowed_methods)]
+	#[allow(clippy::disallowed_method)]
 	fn default() -> Self {
 		Self::new_jump_model(
 			Rate::saturating_from_rational(2, 100),
@@ -159,10 +159,10 @@ impl InterestRate for InterestRateModel {
 			Self::Curve(curve) => curve.get_borrow_rate(utilization),
 			Self::DynamicPIDController(dynamic_pid_model) => {
 				dynamic_pid_model.get_borrow_rate(utilization)
-			}
+			},
 			Self::DoubleExponent(double_exponents_model) => {
 				double_exponents_model.get_borrow_rate(utilization)
-			}
+			},
 		}
 	}
 }
@@ -223,7 +223,7 @@ impl InterestRate for JumpModel {
 						.checked_div(&self.target_utilization.into())?
 						.checked_add(&self.base_rate)?,
 				)
-			}
+			},
 			Ordering::Equal => Some(self.jump_rate),
 			Ordering::Greater => {
 				//  (utilization - target_utilization)*(full_rate - jump_rate) / ( 1 -
@@ -237,7 +237,7 @@ impl InterestRate for JumpModel {
 						.checked_div(&available.into())?
 						.checked_add(&self.jump_rate)?,
 				)
-			}
+			},
 		}
 	}
 }
