@@ -38,6 +38,7 @@ for i in "${VERSIONS_FILES[@]}"; do
     if has_runtime_changes "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" "$folder"
     then
       build_runtime $output $chain $folder
+      
       echo "$chain-wasm=1" >> "$GITHUB_ENV"
     fi
   done <<< "$i"
