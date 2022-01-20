@@ -44,7 +44,7 @@ for i in "${VERSIONS_FILES[@]}"; do
       build_runtime $output $chain $folder
       CHANGES=gh view release tag $CURRENT_TAG
       echo $CHANGES | sed '1,/--/  d' >> release.md
-      echo "$chain-wasm=1" >> "$GITHUB_ENV"
+      echo "$chain_wasm=1" >> "$GITHUB_ENV"
     fi
   done <<< "$i"
 done
