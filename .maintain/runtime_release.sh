@@ -26,12 +26,6 @@ PREV_TAG=$(gh release list -L=1 | sed -n '1 p' | awk '{print $(NF-1)}')
 cargo install --git https://github.com/chevdor/srtool-cli
 cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
 
-cat <<EOT >> release.md
-\`\`\`
-$INFO
-\`\`\`
-EOT
-
 build_runtime () {
   chain=$3
   # srtool for reproducible builds
@@ -39,7 +33,11 @@ build_runtime () {
   # subwasm for runtime metadata
   echo "# $chain Runtime " >> release.md
   INFO=$(subwasm info ./runtime/"$chain"/target/srtool/release/wbuild/"$chain"-runtime/"$chain"_runtime.compact.wasm)
-  echo "```"$INFO"```" >> release.md
+  cat <<EOT >> release.md
+\`\`\`
+$INFO
+\`\`\`
+EOT
 }
 
 # Check which runtimes have changed and build them
