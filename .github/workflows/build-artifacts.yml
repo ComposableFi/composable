@@ -11,6 +11,7 @@ env:
   SCCACHE_GCS_BUCKET: 'composable-build-artefacts'
   RUSTC_WRAPPER: "/home/runner/.cargo/bin/sccache"
   SCCACHE_GCS_RW_MODE: "READ_WRITE"
+  GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 
 jobs:
   build-and-publish:
