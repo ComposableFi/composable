@@ -11,7 +11,6 @@ env:
   SCCACHE_GCS_BUCKET: 'composable-build-artefacts'
   RUSTC_WRAPPER: "/home/runner/.cargo/bin/sccache"
   SCCACHE_GCS_RW_MODE: "READ_WRITE"
-  GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 
 jobs:
   build-and-publish:
@@ -43,16 +42,15 @@ jobs:
       with:
         toolchain: stable
 
-    - name: 🔨 Run Client Release
+    - name: 🔨 Build and Upload Composable Binary
       id: client_release
       run: |
-        gh auth login
         .maintain/client_release.sh
 
     - name: Echo Output
       run: echo ${{ env.picasso-wasm }}
 
-    - name: Run Runtime Release
+    - name: Build wasm with srtool
       id: runtime_release
       run: |
         .maintain/runtime_release.sh

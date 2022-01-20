@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - test-upload-from-output
+
+env:
+  GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 jobs:
   build-and-publish:
     runs-on: 
@@ -35,6 +38,7 @@ jobs:
     - name: 🔨 Build and Upload Composable Binary
       id: client_release
       run: |
+        gh auth login 
         .maintain/client_release.sh
 
     - name: Build wasm with srtool
