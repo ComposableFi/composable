@@ -50,6 +50,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 
+    - name: printenv
+      run: printenv
+
     - name: Upload Compact Picasso wasm
       id: upload-release-asset 
       if: env.picasso_wasm == 1
