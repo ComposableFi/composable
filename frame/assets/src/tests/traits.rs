@@ -296,9 +296,71 @@ mod lockable_multicurrency {
 
 			 prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),0);
 			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account,first + second + third));
+
 			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first);
 			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, second + third ));
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
+
+			 // ensure set_lock updates lock with same id
+			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account,  second);
+			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account,  first + third ));
+			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
+
+			  // ensure set_lock updates lock with same id
+			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account,  third);
+			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account,  first + second ));
+			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
+
+			Ok(())
+		  }).unwrap();
+	   }
+
+		 #[test]
+	   fn test_extend_lock_implementation(
+			(account) in accounts(),
+			asset_id in asset(),
+			(first, second, third) in valid_amounts_without_overflow_3()) {
+
+			new_test_ext_multi_currency().execute_with(|| {
+
+			 prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),0);
+			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account,first + second + third));
+
+			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first);
+			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, second + third ));
+			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
+
+			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::extend_lock(*b"prelocks", asset_id, &account, second);
+			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, third ));
+			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
+
+			 // ensure set_lock updates lock with same id
+			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account,  third);
+			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second));
+			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
+			Ok(())
+		  }).unwrap();
+	   }
+
+		#[test]
+	   fn test_remove_lock_implementation(
+			(account) in accounts(),
+			asset_id in asset(),
+			(first, second, third) in valid_amounts_without_overflow_3()) {
+
+			new_test_ext_multi_currency().execute_with(|| {
+
+			 prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),0);
+			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account,first + second + third));
+
+			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first + second + third);
+			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
+			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first ).is_err());
+			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, second ).is_err());
+			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, third).is_err());
+
+			prop_assert_ok!(<Pallet::<Test> as MultiLockableCurrency<AccountId>>::remove_lock(*b"prelocks", asset_id, &account));
+			prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third));
 
 			Ok(())
 		  }).unwrap();
