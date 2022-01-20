@@ -78,7 +78,6 @@ parameter_types! {
 	pub const StakeLock: u64 = 1;
 	pub const MinStake: u64 = 1;
 	pub const StalePrice: u64 = 2;
-	pub const SlashAmount: u64 = 5;
 	pub const MaxAnswerBound: u32 = 5;
 	pub const MaxAssetsCount: u32 = 2;
 	pub const MaxHistory: u32 = 3;
@@ -128,7 +127,6 @@ impl pallet_oracle::Config for Test {
 	type StalePrice = StalePrice;
 	type MinStake = MinStake;
 	type AddOracle = EnsureSignedBy<RootAccount, sp_core::sr25519::Public>;
-	type SlashAmount = SlashAmount;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
 	type MaxHistory = MaxHistory;

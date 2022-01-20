@@ -13,9 +13,13 @@
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
-  # "runtime/dali/src/lib.rs,dali-chachacha,dali"
-  #  "runtime/composable/src/lib.rs,composable,composable"
+   "runtime/dali/src/lib.rs,dali-chachacha,dali"
+    "runtime/composable/src/lib.rs,composable,composable"
 )
+# Because this script runs when a tag has been published, the previous tag is the
+# last two tags
+PREV_TAG=$(gh release list -L=2 | sed -n '2 p' | awk '{print $(NF-1)}')
+CURRENT_TAG=$(gh release list -L=1 | sed -n '1 p' | awk '{print $(NF-1)}')
 
 # Install the neccessary tools needed for building
 cargo install --git https://github.com/chevdor/srtool-cli
@@ -35,10 +39,11 @@ build_runtime () {
 for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
     echo "check if the wasm sources changed for $chain"
-    if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_REF_NAME}" "$folder"
+    if has_runtime_changes "${PREV_TAG}" "${GITHUB_REF_NAME}" "$folder"
     then
       build_runtime $output $chain $folder
-      
+      CHANGES=gh view release tag $CURRENT_TAG
+      echo $CHANGES | sed '1,/--/  d' >> release.md
       echo "$chain-wasm=1" >> "$GITHUB_ENV"
     fi
   done <<< "$i"
