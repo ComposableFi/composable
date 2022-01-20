@@ -19,6 +19,7 @@ VERSIONS_FILES=(
 # Because this script runs when a tag has been published, the previous tag is the
 # last two tags
 PREV_TAG=$(gh release list -L=2 | sed -n '2 p' | awk '{print $(NF-1)}')
+CURRENT_TAG=$(gh release list -L=1 | sed -n '1 p' | awk '{print $(NF-1)}')
 
 # Install the neccessary tools needed for building
 cargo install --git https://github.com/chevdor/srtool-cli
@@ -41,7 +42,8 @@ for i in "${VERSIONS_FILES[@]}"; do
     if has_runtime_changes "${PREV_TAG}" "${GITHUB_REF_NAME}" "$folder"
     then
       build_runtime $output $chain $folder
-      
+      CHANGES=gh view release tag $CURRENT_TAG
+      echo $CHANGES | sed '1,/--/  d' >> release.md
       echo "$chain-wasm=1" >> "$GITHUB_ENV"
     fi
   done <<< "$i"
