@@ -34,13 +34,14 @@ jobs:
       with:
         toolchain: stable
 
-    - name: Run client release
-      id: client_release
+    - name: Install srtool
       run: |
         cargo install --git https://github.com/chevdor/srtool-cli
         cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
 
     - name: Run runtime release
+      env:
+        GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }} 
       id: runtime_release
       run: |
         .maintain/runtime_release.sh
