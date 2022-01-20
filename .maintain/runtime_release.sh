@@ -47,8 +47,6 @@ for i in "${VERSIONS_FILES[@]}"; do
     if has_runtime_changes "${PREV_TAG}" "${GITHUB_REF_NAME}" "$folder"
     then
       build_runtime $output $chain $folder
-      RELEASE_CHANGES=$(cat release.md) 
-      echo "CHANGES=$RELEASE_CHANGES" >> "$GITHUB_ENV"
       echo ""$chain"_wasm=1" >> "$GITHUB_ENV"
     fi
   done <<< "$i"
