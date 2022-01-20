@@ -9,9 +9,9 @@ pub struct Validated<T, U> {
 	_marker: PhantomData<U>,
 }
 
-impl<T: Copy, U> Validated<T, U> {
+impl<T, U> Validated<T, U> {
 	#[inline(always)]
-	pub fn value(&self) -> T {
+	pub fn value(self) -> T {
 		self.value
 	}
 }

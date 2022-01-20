@@ -59,7 +59,8 @@ use composable_traits::{
 		defi::*,
 		lending::{
 			math::{self, *},
-			BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig, UpdateInput,
+			BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig, UpdateInput, MarketModelValid, 
+			CurrencyPairIsNotSame,
 		},
 		liquidation::Liquidation,
 		math::SafeArithmetic,
@@ -72,10 +73,12 @@ use composable_traits::{
 		storage::{with_transaction, TransactionOutcome},
 		traits::{
 			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
+			fungible::{Transfer as NativeTransfer, Inspect as NativeInspect},
 			tokens::DepositConsequence,
 			UnixTime,
 		},
 		transactional, PalletId,
+		weights::WeightToFeePolynomial,
 	};
 	use frame_system::{
 		offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},
@@ -86,7 +89,7 @@ use composable_traits::{
 	use sp_runtime::{
 		traits::{AccountIdConversion, CheckedAdd, CheckedMul, CheckedSub, One, Saturating, Zero},
 		ArithmeticError, DispatchError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
-		Percent, Perquintill, Permill,
+		Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec, vec::Vec};
 
@@ -119,7 +122,7 @@ use composable_traits::{
 		handle_must_liquidate: u32,
 	}
 
-	pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
+	//pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"lend");
 	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"lend");
 
@@ -205,33 +208,13 @@ use composable_traits::{
 
 		/// Id of proxy to liquidate
 		type LiquidationStrategyId: Parameter + Default + PartialEq + Clone + Debug + TypeInfo;
-
-
-		/// In case of success to liquidation call, caller is rewarded with part of `collateral` asset.
-		/// User can liquidate it immediately too.
-		/// 
-		/// # Why not borrow directly? 
-		/// We have borrow reserve. It may risk be not enough to cover all collateral. And may be other risks.
-		/// 
-		/// # Why not native weight currency? 
-		/// 
-		/// Risk to allow earn currency from thin air or DDoS. 
-		/// Like if we return amount of PICA equal to weight of liquidation call, may produce liquidation loops with fake currencies to earn PICA.
-		/// 
-		/// # Why not collateral reward? 
-		/// 
-		/// We may have dead pools sitting with near zero cost of collaterals nobody wants to liquidate. 
-		/// This is easy to detect for inactive markets. 
-		/// We can GC that without liquidation at all later.
-		#[pallet::constant]
-		type MinimalLiqudaitonReward :Get<Permill>;
 		
 		/// Minimal price of borrow asset in Oracle price required to create
 		/// Creators puts that amount and it is staked under Vault account. 
 		/// So he does not owns it anymore.
 		/// So borrow is both stake and tool to create market.
 		/// 
-		/// # Why not borrow amount? 
+		/// # Why not pure borrow amount minimum? 
 		/// 
 		/// Borrow may have very small price. Will imbalance some markets on creation.
 		/// 
@@ -246,6 +229,14 @@ use composable_traits::{
 		/// Locking borrow amount ensures manager can create market wit borrow assets, and we force him to really create it.  
 		#[pallet::constant]
 		type MarketCreationStake : Get<Self::Balance>;
+
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
+		type NativeCurrency: 
+				NativeTransfer<Self::AccountId, Balance = Self::Balance> 
+				+ NativeInspect<Self::AccountId, Balance = Self::Balance>;
+		/// Convert a weight value into a deductible fee based on the currency type.
+		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
 	}
 
 	#[pallet::pallet]
@@ -337,6 +328,7 @@ use composable_traits::{
 		LiquidationFailed,
 		BorrowerDataCalculationFailed,
 		Unauthorized,
+		NotEnoughRent,
 	}
 
 	#[pallet::event]
@@ -450,6 +442,18 @@ use composable_traits::{
 		OptionQuery,
 	>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn borrow_rent)]
+	pub type BorrowRent<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		MarketIndex,
+		Twox64Concat,
+		T::AccountId,
+		T::Balance,
+		OptionQuery,
+	>;
+
 	/// market borrow index
 	#[pallet::storage]
 	#[pallet::getter(fn borrow_index)]
@@ -511,6 +515,7 @@ use composable_traits::{
 	#[allow(type_alias_bounds)] // false positive
 	pub type CreateInputOf<T: Config> = CreateInput<T::LiquidationStrategyId, T::MayBeAssetId>;
 
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Create a new lending market.
@@ -520,9 +525,10 @@ use composable_traits::{
 		#[transactional]
 		pub fn create_market(
 			origin: OriginFor<T>,
-			input: Validated<CreateInputOf<T>, Valid>,
+			input: Validated<CreateInputOf<T>, (MarketModelValid, CurrencyPairIsNotSame)>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
+			let input = input.value();
 			let (market_id, vault_id) = Self::create(who.clone(), input.clone())?;
 			Self::deposit_event(Event::<T>::MarketCreated {
 				market_id,
@@ -651,9 +657,9 @@ use composable_traits::{
 			market_id: MarketIndex,
 			borrowers: Vec<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
-			let _sender = ensure_signed(origin)?;
+			let ref sender = ensure_signed(origin)?;
 			// TODO: should this be restricted to certain users?
-			Self::liquidate_internal(&market_id, borrowers.clone())?;
+			Self::liquidate_internal(Some(sender), &market_id, borrowers.clone())?;
 			Self::deposit_event(Event::LiquidationInitiated { market_id, borrowers });
 			Ok(().into())
 		}
@@ -794,6 +800,7 @@ use composable_traits::{
 		/// if liquidation is required and `liquidate` is successful then return `Ok(true)`
 		/// if there is any error then propagate that error.
 		pub fn liquidate_internal(
+			liquidator: Option<&<Self as DeFiEngine>::AccountId>,
 			market_id: &<Self as Lending>::MarketId,
 			borrowers: Vec<<Self as DeFiEngine>::AccountId>,
 		) -> Result<(), DispatchError> {
@@ -808,6 +815,12 @@ use composable_traits::{
 					let sell =
 						Sell::new(market.collateral, borrow_asset, collateral_to_liquidate, unit_price);
 					T::Liquidation::liquidate(&source_target_account, sell, market.liquidators)?;
+					
+					if let Some(deposit) = BorrowRent::<T>::get(market_id, account) {
+						let market_account = Self::account_id(market_id);
+						let liquidator = liquidator.unwrap_or(account);
+						<T as Config>::NativeCurrency::transfer(&market_account, &liquidator, deposit, true)?;
+					}
 				}
 			}
 			Ok(())
@@ -996,6 +1009,20 @@ use composable_traits::{
 				.is_ok(),
 				Error::<T>::NotEnoughBorrowAsset,
 			);
+			if !BorrowRent::<T>::contains_key(market_id, debt_owner) {
+				let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate(1));
+
+					ensure!(
+					<T as Config>::NativeCurrency::can_withdraw(
+						debt_owner,
+						deposit,
+					)
+					.into_result()
+					.is_ok(),
+					Error::<T>::NotEnoughRent,
+					);	
+			}
+			
 			ensure!(
 				!matches!(
 					T::Vault::available_funds(&market.borrow, market_account)?,
@@ -1134,7 +1161,7 @@ use composable_traits::{
 		}
 
 		fn account_id(market_id: &Self::MarketId) -> Self::AccountId {
-			PALLET_ID.into_sub_account(market_id)
+			T::PalletId::get().into_sub_account(market_id)
 		}
 
 		fn get_markets_for_borrow(borrow: Self::VaultId) -> Vec<Self::MarketId> {
@@ -1176,6 +1203,12 @@ use composable_traits::{
 			)?;
 			DebtIndex::<T>::insert(market_id, debt_owner, new_account_interest_index);
 			BorrowTimestamp::<T>::insert(market_id, debt_owner, Self::last_block_timestamp());
+
+			if !BorrowRent::<T>::contains_key(market_id, debt_owner) {
+				let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate(1));
+				<T as Config>::NativeCurrency::transfer(debt_owner, &market_account, deposit, true)?;
+				BorrowRent::<T>::insert(market_id, debt_owner, deposit);
+			}
 
 			Ok(())
 		}
