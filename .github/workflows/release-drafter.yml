@@ -49,6 +49,8 @@ jobs:
 
     - uses: release-drafter/release-drafter@v5
       id: release_drafter
+      with:
+        prerelease: true
       env:
         GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 
@@ -57,6 +59,8 @@ jobs:
         node-version: '16'
 
     - name: Get Body
+      env:
+        GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
       run: |
         cd scripts/github && npm install
         npm run update-release-body -- --id=${{ steps.release_drafter.outputs.id  }} --repo=composableFi/composable --body="${{ steps.release_drafter.outputs.body }}" --metadata="$GITHUB_WORKSPACE/release.md"
