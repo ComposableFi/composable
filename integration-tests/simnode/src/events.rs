@@ -1,4 +1,5 @@
 /// Concrete event type for verbose event asserts in tests.
+#[allow(clippy::large_enum_variant)]
 #[derive(derive_more::From)]
 pub enum AllRuntimeEvents {
 	/// Picassoo runtime events
