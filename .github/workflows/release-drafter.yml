@@ -28,7 +28,6 @@ jobs:
         toolchain: stable
 
     - name: 🔨 Install srtool
-      id: client_release
       run: |
         cargo install --git https://github.com/chevdor/srtool-cli
         cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
