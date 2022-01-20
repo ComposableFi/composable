@@ -44,6 +44,7 @@ jobs:
         COMPOSABLE_GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }} 
       id: runtime_release
       run: |
+        export COMPOSABLE_GITHUB_TOKEN=${{ secrets.COMPOSABLE_GITHUB_TOKEN }} 
         .maintain/runtime_release.sh
 
     - uses: release-drafter/release-drafter@v5
