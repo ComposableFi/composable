@@ -1,5 +1,12 @@
-name-template: v$NEXT_PATCH_VERSION 🌈
-tag-template: v$NEXT_PATCH_VERSION
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+template: |
+  # What's Changed
+
+  $CHANGES
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
+
 categories:
   - title: '🚀 Features'
     labels:
@@ -12,38 +19,25 @@ categories:
       - 'bug'
   - title: '🧰 Maintenance'
     label: 'chore'
+
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
-change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
-autolabeler:
-  - label: 'chore'
-    files:
-      - '*.md'
-    branch:
-      - '/docs{0,1}\/.+/'
-  - label: 'bug'
-    branch:
-      - '/fix\/.+/'
-    title:
-      - '/fix/i'
-  - label: 'enhancement'
-    branch:
-      - '/feature\/.+/'
-    body:
-      - '/JIRA-[0-9]{1,4}/'
+
 version-resolver:
   major:
     labels:
-      - 'major'
+      - 'type: breaking'
   minor:
     labels:
-      - 'minor'
+      - 'type: feature'
   patch:
     labels:
-      - 'patch'
-  default: patch
-commitish: releases
-template: |
-  ## Changes
+      - 'type: bug'
+      - 'type: maintenance'
+      - 'type: docs'
+      - 'type: dependencies'
+      - 'type: security'
 
-  $CHANGES
-  
+commitish: releases
+
+exclude-labels:
+  - 'skip-changelog'
