@@ -26,6 +26,11 @@ PREV_TAG=$(gh release list -L=1 | sed -n '1 p' | awk '{print $(NF-1)}')
 cargo install --git https://github.com/chevdor/srtool-cli
 cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
 
+cat <<EOT >> release.md
+\`\`\`
+$INFO
+\`\`\`
+EOT
 
 build_runtime () {
   chain=$3
