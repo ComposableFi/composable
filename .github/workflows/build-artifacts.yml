@@ -43,15 +43,16 @@ jobs:
       with:
         toolchain: stable
 
-    - name: 🔨 Build and Upload Composable Binary
+    - name: 🔨 Run Client Release
       id: client_release
       run: |
+        gh auth login
         .maintain/client_release.sh
 
     - name: Echo Output
       run: echo ${{ env.picasso-wasm }}
 
-    - name: Build wasm with srtool
+    - name: Run Runtime Release
       id: runtime_release
       run: |
         .maintain/runtime_release.sh
