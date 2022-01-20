@@ -59,7 +59,7 @@ jobs:
     - name: Get Body
       run: |
         cd scripts/github && npm install
-        npm run update-release-body -- --id=${{ steps.release_drafter.outputs.id  }} --repo=composableFi/composable --body="${{ steps.release_drafter.outputs.body }}" --metadata="$GITHUB_WORKSPACE/readme.md"
+        npm run update-release-body -- --id=${{ steps.release_drafter.outputs.id  }} --repo=composableFi/composable --body="${{ steps.release_drafter.outputs.body }}" --metadata="$GITHUB_WORKSPACE/release.md"
         cd $GITHUB_WORKSPACE
 
     - name: Upload Compact ${{ matrix.runtime }} wasm
