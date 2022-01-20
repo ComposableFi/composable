@@ -34,9 +34,9 @@ build_runtime () {
   echo "# $chain Runtime " >> release.md
   INFO=$(subwasm info ./runtime/"$chain"/target/srtool/release/wbuild/"$chain"-runtime/"$chain"_runtime.compact.wasm)
   cat <<EOT >> release.md
-\`\`\`
+<code>
 $INFO
-\`\`\`
+</code>
 EOT
 }
 
