@@ -92,17 +92,10 @@ struct JumpModelStrategy {
 
 fn valid_jump_model() -> impl Strategy<Value = JumpModelStrategy> {
 	(
-<<<<<<< HEAD
-		(1..=10u32).prop_map(|x| ZeroToOneFixedU128::saturating_from_rational(x, 100)),
-		(11..=30u32).prop_map(|x| ZeroToOneFixedU128::saturating_from_rational(x, 100)),
-		(31..=50).prop_map(|x| ZeroToOneFixedU128::saturating_from_rational(x, 100)),
-		(0..=100u8).prop_map(Percent::from_percent),
-=======
 		(1..=10_u32).prop_map(|x| ZeroToOneFixedU128::saturating_from_rational(x, 100)),
 		(11..=30_u32).prop_map(|x| ZeroToOneFixedU128::saturating_from_rational(x, 100)),
 		(31..=50).prop_map(|x| ZeroToOneFixedU128::saturating_from_rational(x, 100)),
 		(0..=100_u8).prop_map(Percent::from_percent),
->>>>>>> main
 	)
 		.prop_filter("Jump rate model", |(base, jump, full, _)| {
 			// tried high order strategy - failed as it tries to combine collections with not

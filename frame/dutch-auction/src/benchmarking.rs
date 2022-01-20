@@ -60,11 +60,7 @@ benchmarks! {
 		let caller = RawOrigin::Signed(account_id.clone());
 		let amount: T::Balance = 1_000_000_000_000_u64.into();
 
-<<<<<<< HEAD
-		let mut encoded = CurrencyId::PICA.encode();
-=======
 		let encoded = CurrencyId::PICA.encode();
->>>>>>> main
 		let native_asset_id = T::MayBeAssetId::decode(&mut &encoded[..]).unwrap();
 		<T as pallet::Config>::MultiCurrency::mint_into(native_asset_id, &account_id, amount).unwrap();
 
@@ -87,11 +83,7 @@ benchmarks! {
 		let caller = RawOrigin::Signed(account_id.clone());
 		let amount: T::Balance = 1_000_000_000_000_u64.into();
 
-<<<<<<< HEAD
-		let mut encoded = CurrencyId::PICA.encode();
-=======
 		let encoded = CurrencyId::PICA.encode();
->>>>>>> main
 		let native_asset_id = T::MayBeAssetId::decode(&mut &encoded[..]).unwrap();
 		<T as pallet::Config>::MultiCurrency::mint_into(native_asset_id, &account_id, amount).unwrap();
 
@@ -109,11 +101,7 @@ benchmarks! {
 		let caller = RawOrigin::Signed(account_id.clone());
 		let amount: T::Balance = 1_000_000_000_000_u64.into();
 
-<<<<<<< HEAD
-		let mut encoded = CurrencyId::PICA.encode();
-=======
 		let encoded = CurrencyId::PICA.encode();
->>>>>>> main
 		let native_asset_id = T::MayBeAssetId::decode(&mut &encoded[..]).unwrap();
 		<T as pallet::Config>::MultiCurrency::mint_into(native_asset_id, &account_id, amount).unwrap();
 

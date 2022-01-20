@@ -7,6 +7,7 @@ use crate::{
 	defi::{CurrencyPair, DeFiEngine, MoreThanOneFixedU128},
 	time::Timestamp,
 };
+use composable_support::validation::Validate;
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
 use sp_runtime::Percent;
@@ -39,6 +40,26 @@ pub struct CreateInput<LiquidationStrategyId, AssetId> {
 	pub currency_pair: CurrencyPair<AssetId>,
 	/// Reserve factor of market borrow vault.
 	pub reserved_factor: Perquintill,
+}
+
+struct MarketModelValid;
+
+impl<LiquidationStrategyId, Asset : Eq> Validate<MarketModelValid> for CreateInput<LiquidationStrategyId, Asset> {
+    fn validate(self) -> Result<Self, &'static str> {
+        if self.updatable.collateral_factor > MoreThanOneFixedU128::one()
+    }
+}
+
+
+struct CurrencyPairIsNotSame;
+impl<LiquidationStrategyId, Asset : Eq> Validate<CurrencyPairIsNotSame> for CreateInput<LiquidationStrategyId, Asset> {
+    fn validate(self) -> Result<Self, &'static str> {
+        if self.currency_pair.base == self.currency_pair.quote {
+			Err("currency pair must be different assets")
+		} else {
+			Ok(self)
+		}
+    }
 }
 
 impl<LiquidationStrategyId, AssetId: Copy> CreateInput<LiquidationStrategyId, AssetId> {

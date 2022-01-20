@@ -1,5 +1,6 @@
 use core::{marker::PhantomData, ops::Deref};
 use scale_info::TypeInfo;
+use sp_runtime::DispatchError;
 
 /// Black box that embbed the validated value.
 #[derive(Default, Copy, Clone, PartialEq, Eq, Debug, TypeInfo)]
@@ -30,7 +31,13 @@ impl<T, U> AsRef<T> for Validated<T, U> {
 	}
 }
 
+
+pub trait ValidateDispatch<U> : Sized {
+	fn validate(self) -> Result<Self, DispatchError>;
+}
+
 pub trait Validate<U>: Sized {
+	// use string here because in serde layer there is not dispatch
 	fn validate(self) -> Result<Self, &'static str>;
 }
 
@@ -77,7 +84,7 @@ impl<T: Validate<U> + Validate<V> + Validate<W>, U, V, W> Validate<(U, V, W)> fo
 	}
 }
 
-impl<T: codec::Decode + Validate<(U, V)>, U, V> codec::Decode for Validated<T, (U, V)> {
+impl<T: codec::Decode + Validate<U>, U> codec::Decode for Validated<T, U> {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
 		let value = Validate::validate(T::decode(input)?)
 			.map_err(|desc| Into::<codec::Error>::into(desc))?;
@@ -87,18 +94,6 @@ impl<T: codec::Decode + Validate<(U, V)>, U, V> codec::Decode for Validated<T, (
 		T::skip(input)
 	}
 }
-
-impl<T: codec::Decode + Validate<(U, V, W)>, U, V, W> codec::Decode for Validated<T, (U, V, W)> {
-	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
-		let value = Validate::validate(T::decode(input)?)
-			.map_err(|desc| Into::<codec::Error>::into(desc))?;
-		Ok(Validated { value, _marker: PhantomData })
-	}
-	fn skip<I: codec::Input>(input: &mut I) -> Result<(), codec::Error> {
-		T::skip(input)
-	}
-}
-
 
 impl<T: codec::Encode + codec::Decode + Validate<U>, U> codec::WrapperTypeEncode
 	for Validated<T, U>
@@ -160,6 +155,16 @@ mod test {
 		let invalid = X { a: 0xDEADC0DE, b: 0xCAFEBABE };
 		let bytes = invalid.encode();
 		assert!(Validated::<X, CheckARange>::decode(&mut &bytes[..]).is_err());
+	}
+
+	#[test]
+	fn encode_decode_validated_encode_decode() {
+		let original = X { a: 0xDEADC0DE, b: 0xCAFEBABE };
+		let bytes = original.encode();
+		let wrapped = Validated::<X, Valid>::decode(&mut &bytes[..]).unwrap();
+		let bytes = wrapped.encode();
+		let reencoded = X::decode(&mut &bytes[..]).unwrap();
+		assert_eq!(reencoded, original);
 	}
 
 	#[test]

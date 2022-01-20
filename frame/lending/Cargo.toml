@@ -30,6 +30,7 @@ sp-core = { default-features = false,  git = "https://github.com/paritytech/subs
 sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 
 composable-traits = { default-features = false, path = "../composable-traits" }
+composable-support = { default-features = false, path = "../composable-support" }
 pallet-oracle = { default-features = false, optional = true, version = "1.0.0", path = "../oracle" }
 pallet-vault = { default-features = false, path = "../vault", optional = true }
 

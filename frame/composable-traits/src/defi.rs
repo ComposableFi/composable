@@ -234,11 +234,8 @@ pub type Ratio = FixedU128;
 
 #[cfg(test)]
 mod tests {
-<<<<<<< HEAD
 	use crate::defi::LiftedFixedBalance;
 
-=======
->>>>>>> main
 	use super::{Ratio, Take};
 	use sp_runtime::FixedPointNumber;
 

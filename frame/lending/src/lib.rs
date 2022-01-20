@@ -53,7 +53,8 @@ pub use crate::weights::WeightInfo;
 pub mod pallet {
 	use crate::{models::BorrowerData, weights::WeightInfo};
 	use codec::Codec;
-	use composable_traits::{
+	use composable_support::validation::Validated;
+use composable_traits::{
 		currency::CurrencyFactory,
 		defi::*,
 		lending::{
@@ -222,7 +223,7 @@ pub mod pallet {
 		/// We may have dead pools sitting with near zero cost of collaterals nobody wants to liquidate. 
 		/// This is easy to detect for inactive markets. 
 		/// We can GC that without liquidation at all later.
-		#[path::constant]
+		#[pallet::constant]
 		type MinimalLiqudaitonReward :Get<Permill>;
 		
 		/// Minimal price of borrow asset in Oracle price required to create
@@ -243,7 +244,7 @@ pub mod pallet {
 		/// We depend on Oracle to price in Lending. So we know price anyway. 
 		/// We normalized price over all markets and protect from spam all possible pairs equally.
 		/// Locking borrow amount ensures manager can create market wit borrow assets, and we force him to really create it.  
-		#[path::constant]
+		#[pallet::constant]
 		type MarketCreationStake : Get<Self::Balance>;
 	}
 
@@ -269,15 +270,7 @@ pub mod pallet {
 			weight += u64::from(call_counters.handle_depositable) *
 				<T as Config>::WeightInfo::handle_depositable();
 			weight += u64::from(call_counters.handle_must_liquidate) *
-				<T as Config>::WeightInfo::handle_must_liquidate();
-
-			// TODO: move following loop to OCW
-			for (market_id, account, _) in DebtIndex::<T>::iter() {
-				if Self::liquidate_internal(&market_id, &account).is_ok() {
-					Self::deposit_event(Event::LiquidationInitiated { market_id, account });
-				}
-			}
-
+				<T as Config>::WeightInfo::handle_must_liquidate();		
 			weight
 		}
 
@@ -388,7 +381,7 @@ pub mod pallet {
 		/// Event emitted when a liquidation is initiated for a loan.
 		LiquidationInitiated {
 			market_id: MarketIndex,
-			account: T::AccountId,
+			borrowers: Vec<T::AccountId>,
 		},
 		/// Event emitted to warn that loan may go under collaterized soon.
 		SoonMayUnderCollaterized {
@@ -527,7 +520,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn create_market(
 			origin: OriginFor<T>,
-			input: CreateInput<T::LiquidationStrategyId, T::MayBeAssetId>,
+			input: Validated<CreateInputOf<T>, Valid>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let (market_id, vault_id) = Self::create(who.clone(), input.clone())?;
@@ -651,7 +644,7 @@ pub mod pallet {
 		/// liquidation.
 		/// - `origin` : Sender of this extrinsic.
 		/// - `market_id` : Market index from which `borrower` has taken borrow.
-		#[pallet::weight(<T as Config>::WeightInfo::liquidate(borrowers.len()))]
+		#[pallet::weight(<T as Config>::WeightInfo::liquidate(borrowers.len() as Weight))]
 		#[transactional]
 		pub fn liquidate(
 			origin: OriginFor<T>,
@@ -660,8 +653,8 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _sender = ensure_signed(origin)?;
 			// TODO: should this be restricted to certain users?
-			Self::liquidate_internal(&market_id, borrowers)?;
-			Self::deposit_event(Event::LiquidationInitiated { market_id, account: borrower });
+			Self::liquidate_internal(&market_id, borrowers.clone())?;
+			Self::deposit_event(Event::LiquidationInitiated { market_id, borrowers });
 			Ok(().into())
 		}
 	}
@@ -672,7 +665,7 @@ pub mod pallet {
 		) -> Result<T::Balance, DispatchError> {
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let total_interest =
-				T::MarketDebtCurrency::balance(debt_asset_id, &Self::account_id(market_id));
+				<T as Config>::MultiCurrency::balance(debt_asset_id, &Self::account_id(market_id));
 			Ok(total_interest)
 		}
 
@@ -804,16 +797,18 @@ pub mod pallet {
 			market_id: &<Self as Lending>::MarketId,
 			borrowers: Vec<<Self as DeFiEngine>::AccountId>,
 		) -> Result<(), DispatchError> {
-			if Self::should_liquidate(market_id, account)? {
-				let market = Self::get_market(market_id)?;
-				let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-				let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
-				let source_target_account = Self::account_id(market_id);
-				let unit_price =
-					T::Oracle::get_ratio(CurrencyPair::new(market.collateral, borrow_asset))?;
-				let sell =
-					Sell::new(market.collateral, borrow_asset, collateral_to_liquidate, unit_price);
-				T::Liquidation::liquidate(&source_target_account, sell, market.liquidators)?;
+			for account in borrowers.iter() {
+				if Self::should_liquidate(market_id, account)? {
+					let market = Self::get_market(market_id)?;
+					let borrow_asset = T::Vault::asset_id(&market.borrow)?;
+					let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
+					let source_target_account = Self::account_id(market_id);
+					let unit_price =
+						T::Oracle::get_ratio(CurrencyPair::new(market.collateral, borrow_asset))?;
+					let sell =
+						Sell::new(market.collateral, borrow_asset, collateral_to_liquidate, unit_price);
+					T::Liquidation::liquidate(&source_target_account, sell, market.liquidators)?;
+				}
 			}
 			Ok(())
 		}
@@ -914,7 +909,7 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let asset_id = <T::Vault as Vault>::asset_id(&config.borrow)?;
 			let balance =
-				<T as Config>::Currency::reducible_balance(asset_id, market_account, false)
+				<T as Config>::MultiCurrency::reducible_balance(asset_id, market_account, false)
 					.min(balance);
 			<T::Vault as StrategicVault>::deposit(&config.borrow, market_account, balance)
 		}
@@ -925,7 +920,7 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let asset_id = <T::Vault as Vault>::asset_id(&config.borrow)?;
 			let balance =
-				<T as Config>::Currency::reducible_balance(asset_id, market_account, false);
+				<T as Config>::MultiCurrency::reducible_balance(asset_id, market_account, false);
 			<T::Vault as StrategicVault>::deposit(&config.borrow, market_account, balance)
 		}
 
@@ -956,11 +951,11 @@ pub mod pallet {
 			let account_interest_index =
 				DebtIndex::<T>::get(market_id, debt_owner).unwrap_or_else(ZeroToOneFixedU128::zero);
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			let existing_borrow_amount = T::MarketDebtCurrency::balance(debt_asset_id, debt_owner);
+			let existing_borrow_amount = <T as Config>::MultiCurrency::balance(debt_asset_id, debt_owner);
 
-			T::MarketDebtCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
+			<T as Config>::MultiCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
 			// TODO: decide if need to split out dept teacking vs debt token
-			T::MarketDebtCurrency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
+			<T as Config>::MultiCurrency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
 			let total_borrow_amount = existing_borrow_amount.safe_add(&amount_to_borrow)?;
 			let existing_borrow_share =
 				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
@@ -992,7 +987,7 @@ pub mod pallet {
 				Error::<T>::NotEnoughCollateralToBorrowAmount
 			);
 			ensure!(
-				<T as Config>::Currency::can_withdraw(
+				<T as Config>::MultiCurrency::can_withdraw(
 					borrow_asset,
 					market_account,
 					amount_to_borrow
@@ -1035,13 +1030,13 @@ pub mod pallet {
 			);
 			ensure!(repay_amount <= owed, Error::<T>::CannotRepayMoreThanBorrowAmount);
 			ensure!(
-				<T as Config>::Currency::can_withdraw(borrow_asset_id, from, repay_amount)
+				<T as Config>::MultiCurrency::can_withdraw(borrow_asset_id, from, repay_amount)
 					.into_result()
 					.is_ok(),
 				Error::<T>::CannotWithdrawFromProvidedBorrowAccount
 			);
 			ensure!(
-				<T as Config>::Currency::can_deposit(borrow_asset_id, market_account, repay_amount)
+				<T as Config>::MultiCurrency::can_deposit(borrow_asset_id, market_account, repay_amount)
 					.into_result()
 					.is_ok(),
 				Error::<T>::TransferFailed
@@ -1067,7 +1062,7 @@ pub mod pallet {
 
 		fn create(
 			manager: Self::AccountId,
-			config_input: CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId>,
+			config_input:  CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId>,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			ensure!(
 				config_input.updatable.collateral_factor > 1.into(),
@@ -1110,12 +1105,12 @@ pub mod pallet {
 					},
 				)?;
 				
-				let initial_price_amont =  T::MarketCreationStake::get();
-				let initial_pool_size = T::Oracle::get_price_inverse(config_input.borrow_asset(), initial_price_amont)?;
 				
+				let initial_price_amont =  T::MarketCreationStake::get();
+				let initial_pool_size = T::Oracle::get_price_inverse(config_input.borrow_asset(), initial_price_amont)?;				
 				// transfer to vault on behalf of market from user
-				T::MultiCurrency::transfer(config_input.borrow_asset(), &manager, &Self::account_id(market_id), initial_pool_size, true)?;
-				<T::Vault as Vault>::deposit(borrow_asset_vault, &Self::account_id(market_id), initial_pool_size);
+				T::MultiCurrency::transfer(config_input.borrow_asset(), &manager, &Self::account_id(&market_id), initial_pool_size, true)?;
+				<T::Vault as Vault>::deposit(&borrow_asset_vault, &Self::account_id(&market_id), initial_pool_size)?;
 
 				let config = MarketConfig {
 					manager,
@@ -1172,7 +1167,7 @@ pub mod pallet {
 			let new_account_interest_index =
 				Self::updated_account_interest_index(market_id, debt_owner, amount_to_borrow)?;
 
-			<T as Config>::Currency::transfer(
+			<T as Config>::MultiCurrency::transfer(
 				borrow_asset,
 				&market_account,
 				debt_owner,
@@ -1209,20 +1204,20 @@ pub mod pallet {
 
 				let debt_asset_id = DebtMarkets::<T>::get(market_id);
 
-				let burn_amount = <T as Config>::Currency::balance(debt_asset_id, beneficiary);
+				let burn_amount = <T as Config>::MultiCurrency::balance(debt_asset_id, beneficiary);
 
 				let mut remaining_borrow_amount =
-					T::MarketDebtCurrency::balance(debt_asset_id, &market_account);
+					<T as Config>::MultiCurrency::balance(debt_asset_id, &market_account);
 				if total_repay_amount <= burn_amount {
 					// only repay interest
-					T::MarketDebtCurrency::release(
+					<T as Config>::MultiCurrency::release(
 						debt_asset_id,
 						beneficiary,
 						total_repay_amount,
 						true,
 					)
 					.expect("can always release held debt balance");
-					T::MarketDebtCurrency::burn_from(
+					<T as Config>::MultiCurrency::burn_from(
 						debt_asset_id,
 						beneficiary,
 						total_repay_amount,
@@ -1232,16 +1227,16 @@ pub mod pallet {
 					let repay_borrow_amount = total_repay_amount - burn_amount;
 
 					remaining_borrow_amount -= repay_borrow_amount;
-					T::MarketDebtCurrency::burn_from(debt_asset_id, &market_account, repay_borrow_amount).expect(
+					<T as Config>::MultiCurrency::burn_from(debt_asset_id, &market_account, repay_borrow_amount).expect(
 						"debt balance of market must be of parts of debts of borrowers and can reduce it",
 					);
-					T::MarketDebtCurrency::release(debt_asset_id, beneficiary, burn_amount, true)
+					<T as Config>::MultiCurrency::release(debt_asset_id, beneficiary, burn_amount, true)
 						.expect("can always release held debt balance");
-					T::MarketDebtCurrency::burn_from(debt_asset_id, beneficiary, burn_amount)
+					<T as Config>::MultiCurrency::burn_from(debt_asset_id, beneficiary, burn_amount)
 						.expect("can always burn debt balance");
 				}
 				// TODO: fuzzing is must to uncover cases when sum != total
-				<T as Config>::Currency::transfer(
+				<T as Config>::MultiCurrency::transfer(
 					borrow_asset_id,
 					from,
 					&market_account,
@@ -1262,8 +1257,8 @@ pub mod pallet {
 		fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let accrued_debt =
-				T::MarketDebtCurrency::balance(debt_asset_id, &Self::account_id(market_id));
-			let total_issued = T::MarketDebtCurrency::total_issuance(debt_asset_id);
+				<T as Config>::MultiCurrency::balance(debt_asset_id, &Self::account_id(market_id));
+			let total_issued = <T as Config>::MultiCurrency::total_issuance(debt_asset_id);
 			let total_borrows = total_issued - accrued_debt;
 			Ok(total_borrows)
 		}
@@ -1271,14 +1266,14 @@ pub mod pallet {
 		fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let total_interest =
-				T::MarketDebtCurrency::balance(debt_asset_id, &Self::account_id(market_id));
+				<T as Config>::MultiCurrency::balance(debt_asset_id, &Self::account_id(market_id));
 			Ok(total_interest)
 		}
 
 		fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			let market = Self::get_market(market_id)?;
 			let borrow_id = T::Vault::asset_id(&market.borrow)?;
-			Ok(<T as Config>::Currency::balance(borrow_id, &Self::account_id(market_id)))
+			Ok(<T as Config>::MultiCurrency::balance(borrow_id, &Self::account_id(market_id)))
 		}
 
 		fn calc_utilization_ratio(
@@ -1318,7 +1313,7 @@ pub mod pallet {
 			)?;
 
 			BorrowIndex::<T>::insert(market_id, borrow_index_new);
-			T::MarketDebtCurrency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)?;
+			<T as Config>::MultiCurrency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)?;
 
 			Ok(())
 		}
@@ -1333,7 +1328,7 @@ pub mod pallet {
 			let account_debt = DebtIndex::<T>::get(market_id, account);
 			match account_debt {
 				Some(account_interest_index) => {
-					let principal = T::MarketDebtCurrency::balance_on_hold(debt_asset_id, account);
+					let principal = <T as Config>::MultiCurrency::balance_on_hold(debt_asset_id, account);
 					let market_interest_index = Self::get_borrow_index(market_id)?;
 
 					let balance = borrow_from_principal::<T>(
@@ -1399,14 +1394,14 @@ pub mod pallet {
 			let market = Self::get_market(market_id)?;
 			let market_account = Self::account_id(market_id);
 			ensure!(
-				<T as Config>::Currency::can_withdraw(market.collateral, account, amount)
+				<T as Config>::MultiCurrency::can_withdraw(market.collateral, account, amount)
 					.into_result()
 					.is_ok(),
 				Error::<T>::TransferFailed
 			);
 
 			ensure!(
-				<T as Config>::Currency::can_deposit(market.collateral, &market_account, amount) ==
+				<T as Config>::MultiCurrency::can_deposit(market.collateral, &market_account, amount) ==
 					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
@@ -1419,7 +1414,7 @@ pub mod pallet {
 				collateral_balance.replace(new_collateral_balance);
 				Result::<(), Error<T>>::Ok(())
 			})?;
-			<T as Config>::Currency::transfer(
+			<T as Config>::MultiCurrency::transfer(
 				market.collateral,
 				account,
 				&market_account,
@@ -1465,12 +1460,12 @@ pub mod pallet {
 
 			let market_account = Self::account_id(market_id);
 			ensure!(
-				<T as Config>::Currency::can_deposit(market.collateral, account, amount) ==
+				<T as Config>::MultiCurrency::can_deposit(market.collateral, account, amount) ==
 					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 			ensure!(
-				<T as Config>::Currency::can_withdraw(market.collateral, &market_account, amount)
+				<T as Config>::MultiCurrency::can_withdraw(market.collateral, &market_account, amount)
 					.into_result()
 					.is_ok(),
 				Error::<T>::TransferFailed
@@ -1484,7 +1479,7 @@ pub mod pallet {
 				collateral_balance.replace(new_collateral_balance);
 				Result::<(), Error<T>>::Ok(())
 			})?;
-			<T as Config>::Currency::transfer(
+			<T as Config>::MultiCurrency::transfer(
 				market.collateral,
 				&market_account,
 				account,
