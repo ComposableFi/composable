@@ -21,6 +21,5 @@ then
   boldprint "Building new client binaries"
   cargo build --release -p composable
   tar -czvf composable-"${RELEASE_VERSION}".tar.gz target/release/composable
-  tar -czvf picasso_runtime.compact.wasm-"${RELEASE_VERSION}".tar.gz runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
   gsutil cp *.tar.gz gs://composable-binaries/community-releases/"${RELEASE_VERSION}"/
 fi

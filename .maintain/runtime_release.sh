@@ -13,8 +13,8 @@ set -e # fail on any error
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
-   "runtime/dali/src/lib.rs,dali-chachacha,dali"
-    "runtime/composable/src/lib.rs,composable,composable"
+  # "runtime/dali/src/lib.rs,dali-chachacha,dali"
+  # "runtime/composable/src/lib.rs,composable,composable"
 )
 # Because this script runs when a tag has been published, the previous tag is the
 # last two tags
@@ -43,7 +43,7 @@ for i in "${VERSIONS_FILES[@]}"; do
     if has_runtime_changes "${PREV_TAG}" "${GITHUB_REF_NAME}" "$folder"
     then
       build_runtime $output $chain $folder
-      CHANGES=gh view release tag $CURRENT_TAG
+      CHANGES=$(gh view release tag $CURRENT_TAG)
       echo "$CHANGES" | sed '1,/--/  d' >> release.md
       RELEASE_CHANGES=$(cat release.md) 
       echo "CHANGES=$RELEASE_CHANGES" >> "$GITHUB_ENV"
