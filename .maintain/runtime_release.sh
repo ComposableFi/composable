@@ -5,7 +5,7 @@
 # "auto-fail" the PR if there isn't a change in the runtime/src/lib.rs file
 # that alters the version.
 
-#set -e # fail on any error
+set -e # fail on any error
 
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
@@ -32,7 +32,8 @@ build_runtime () {
   srtool build --package "$chain"-runtime --profile release --runtime-dir runtime/"$chain"
   # subwasm for runtime metadata
   echo "# $chain Runtime " >> release.md
-  subwasm info ./runtime/"$chain"/target/srtool/release/wbuild/"$chain"-runtime/"$chain"_runtime.compact.wasm >> release.md
+  INFO=$(subwasm info ./runtime/"$chain"/target/srtool/release/wbuild/"$chain"-runtime/"$chain"_runtime.compact.wasm)
+  echo "\n```"$INFO"```\n" >> release.md
 }
 
 # Check which runtimes have changed and build them
@@ -43,8 +44,10 @@ for i in "${VERSIONS_FILES[@]}"; do
     then
       build_runtime $output $chain $folder
       CHANGES=gh view release tag $CURRENT_TAG
-      echo $CHANGES | sed '1,/--/  d' >> release.md
-      echo "$chain-wasm=1" >> "$GITHUB_ENV"
+      echo "$CHANGES" | sed '1,/--/  d' >> release.md
+      RELEASE_CHANGES=$(cat release.md) 
+      echo "CHANGES=$RELEASE_CHANGES" >> "$GITHUB_ENV"
+      echo "$chain_wasm=1" >> "$GITHUB_ENV"
     fi
   done <<< "$i"
 done
