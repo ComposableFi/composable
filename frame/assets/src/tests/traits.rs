@@ -169,7 +169,7 @@ mod currency {
 mod multicurrency_currency {
 	use super::*;
 	use frame_support::traits::{tokens::Imbalance, ExistenceRequirement, WithdrawReasons};
-	use orml_traits::currency::{MultiCurrency, MultiReservableCurrency};
+	use orml_traits::currency::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
 
 	proptest! {
 		#![proptest_config(ProptestConfig::with_cases(10000))]
@@ -267,11 +267,43 @@ mod multicurrency_currency {
 				remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account, third);
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  free_balance + ( third - remaining));
 
-
+				//lock
+				free_balance = <Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account);
+				<Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first);
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  first + second + third);
 
 				Ok(())
 			}).unwrap();
 		}
+	}
+}
+
+mod lockable_multicurrency {
+	use super::*;
+	use frame_support::traits::{tokens::Imbalance, ExistenceRequirement, WithdrawReasons};
+	use orml_traits::currency::{MultiCurrency, MultiLockableCurrency};
+
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(10000))]
+
+	   #[test]
+	   fn test_set_lock_implementation(
+			(account) in accounts(),
+			asset_id in asset(),
+			(first, second, third) in valid_amounts_without_overflow_3()) {
+
+			new_test_ext_multi_currency().execute_with(|| {
+
+			 prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),0);
+			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account,first + second + third));
+			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first);
+			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, second + third ));
+			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
+
+			Ok(())
+		  }).unwrap();
+	   }
+
 	}
 }
 
