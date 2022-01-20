@@ -63,7 +63,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
       run: |
         cd scripts/github && npm install
-        echo "${{ steps.release_drafter.outputs.body }}" >> $GITHUB_WORKSPACE/release.md
+        printf "\n%s" "${{ steps.release_drafter.outputs.body }}" >> $GITHUB_WORKSPACE/release.md
         npm run update-release-body -- --id=${{ steps.release_drafter.outputs.id  }} --repo=composableFi/composable --body="$GITHUB_WORKSPACE/release.md"
         cd $GITHUB_WORKSPACE
 
