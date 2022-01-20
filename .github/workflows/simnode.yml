@@ -1,0 +1,37 @@
+name: Run Simnode
+on:
+  pull_request:
+    branches:
+      - releases
+      - main
+jobs:
+  simnode:
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+        
+      - uses: actions/checkout@v2
+        with: 
+          ref: main
+
+      - name: Check for runtime changes
+        id: check_runtime
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+        run: .maintain/check_runtime.sh
+
+      - name: Run Simnode
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+        if: env.RUNTIME_CHECK == 1
+        id: run_simnode
+        run: .maintain/run_simnode.sh
