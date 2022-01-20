@@ -1,7 +1,10 @@
 use crate::*;
 
 use composable_traits::currency::CurrencyFactory;
-use frame_support::{parameter_types, traits::Everything};
+use frame_support::{
+	parameter_types,
+	traits::{Everything, GenesisBuild},
+};
 use frame_system as system;
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
@@ -12,6 +15,10 @@ use sp_runtime::{
 };
 use system::EnsureRoot;
 
+//
+
+//
+
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub type Block = frame_system::mocking::MockBlock<Test>;
 pub type AccountId = u64;
@@ -19,10 +26,17 @@ pub type AssetId = u64;
 pub type Amount = i128;
 pub type Balance = u64;
 
+pub const ALICE: AccountId = 1;
+pub const BOB: AccountId = 2;
+
 pub const EVE: AccountId = 3;
 pub const ACCOUNT_FREE_START: AccountId = EVE + 1;
 
 pub const MINIMUM_BALANCE: Balance = 1;
+
+pub const ASSET_1: AssetId = 1;
+pub const ASSET_2: AssetId = 2;
+pub const ASSET_FREE_START: AssetId = ASSET_2 + 1;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -136,10 +150,24 @@ impl pallet_balances::Config for Test {
 
 pub const BALANCES: [(AccountId, Balance); 4] = [(0, 1000), (1, 1000), (2, 1000), (3, 1000)];
 
-// Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	let genesis = pallet_balances::GenesisConfig::<Test> { balances: Vec::from(BALANCES) };
 	genesis.assimilate_storage(&mut t).unwrap();
 	t.into()
+}
+
+pub fn new_test_ext_multi_currency() -> sp_io::TestExternalities {
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
+
+	let balances: Vec<(AccountId, AssetId, Balance)> =
+		vec![(ALICE, ASSET_1, 1000), (BOB, ASSET_2, 1000)];
+
+	orml_tokens::GenesisConfig::<Test> { balances }
+		.assimilate_storage(&mut t)
+		.unwrap();
+
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| System::set_block_number(1));
+	ext
 }

@@ -3,7 +3,8 @@
 use crate::*;
 use composable_tests_helpers::prop_assert_ok;
 use mocks::{
-	new_test_ext, AccountId, Balance, Test, ACCOUNT_FREE_START, BALANCES, MINIMUM_BALANCE,
+	new_test_ext, new_test_ext_multi_currency, AccountId, AssetId, Balance, Test,
+	ACCOUNT_FREE_START, ALICE, ASSET_1, ASSET_2, ASSET_FREE_START, BALANCES, BOB, MINIMUM_BALANCE,
 };
 use proptest::prelude::*;
 
@@ -55,6 +56,13 @@ prop_compose! {
 		}
 }
 
+prop_compose! {
+	fn asset()
+		(x in ASSET_FREE_START..AssetId::MAX) -> AssetId {
+			x
+		}
+}
+
 mod currency {
 	use super::*;
 	use frame_support::traits::{
@@ -65,97 +73,204 @@ mod currency {
 			#![proptest_config(ProptestConfig::with_cases(10000))]
 
 			/// Covers all the methods from the currency trait.
-			#[test]
-			fn test_trait_implementation(
-				account in accounts(),
+	#[test]
+	fn test_trait_implementation(account in accounts(),
 				(first, second, third) in valid_amounts_without_overflow_3()
 			) {
-		   new_test_ext().execute_with(|| {
-			macro_rules! assert_issuance {
-			($val:expr) => {
-				let issuance = BALANCES.iter().fold(0, | sum, (_, val)| val + sum);
-				prop_assert_eq!(
-				<Pallet::<Test> as Currency<AccountId>>::total_issuance(),
-					issuance + $val
-			  );
-			}
+
+			   new_test_ext().execute_with(|| {
+
+				macro_rules! assert_issuance {
+				($val:expr) => {
+					let issuance = BALANCES.iter().fold(0, | sum, (_, val)| val + sum);
+					prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_issuance(),issuance + $val);
+				   }
+				 }
+
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::minimum_balance(), MINIMUM_BALANCE);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), 0);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account), 0);
+				assert_issuance!(0);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account,first).peek(), first);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), first);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account), first);
+				assert_issuance!(first);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_into_existing(&account,
+				second).unwrap().peek(), second);
+				prop_assert_eq!(<Pallet::<Test> as
+				Currency<AccountId>>::total_balance(&account), first + second);
+				prop_assert_eq!(<Pallet::<Test>
+				as Currency<AccountId>>::free_balance(&account), first + second);
+				assert_issuance!(first + second);
+
+				prop_assert!(<Pallet::<Test> as Currency<AccountId>>::can_slash(&account, first + second));
+				let (_, difference) = <Pallet::<Test> as Currency<AccountId>>::slash(&account, third);
+				let balance = if first + second > third {
+					prop_assert_eq!(difference, 0);
+					let balance = (first + second) - third;
+					prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), balance);
+					assert_issuance!(balance);
+					balance
+				} else {
+					prop_assert_eq!(difference, third - (first + second));
+					prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), 0);
+					assert_issuance!(0);
+					0
+				};
+
+				let issue = <Pallet::<Test> as Currency<AccountId>>::issue(second);
+				let added = issue.peek();
+				prop_assert_eq!(added, second);
+				if balance == 0 {
+					<Pallet::<Test> as Currency<AccountId>>::resolve_creating(&account, issue);
+				} else {
+					<Pallet::<Test> as Currency<AccountId>>::resolve_into_existing(&account, issue).unwrap();
+				}
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), balance + added);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account), balance + added );
+
+				assert_issuance!(balance + added);
+
+				prop_assert!(!<Pallet::<Test> as Currency<AccountId>>::ensure_can_withdraw(&account, balance + added, WithdrawReasons::TRANSFER, 0).is_err());
+				prop_assert!( <Pallet::<Test> as Currency<AccountId>>::withdraw(&account, balance + added, WithdrawReasons::TRANSFER, ExistenceRequirement::KeepAlive).is_err());
+				prop_assert!(<Pallet::<Test> as Currency<AccountId>>::withdraw(&account, balance + added,WithdrawReasons::TRANSFER, ExistenceRequirement::AllowDeath).is_ok() 				);
+				<Pallet::<Test> as Currency<AccountId>>::make_free_balance_be(&account, first);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), first);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account), first);
+
+				assert_issuance!(first);
+
+				let burned = <Pallet::<Test> as Currency<AccountId>>::burn(second);
+				let diff = <Pallet::<Test> as Currency<AccountId>>::settle(&account, burned,WithdrawReasons::all(), ExistenceRequirement::AllowDeath);
+
+				if second > first {
+					prop_assert!(diff.is_err());
+				} else {
+					prop_assert_ok!(diff);
+				}
+
+				<Pallet::<Test> as Currency<AccountId>>::make_free_balance_be(&account, third);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), third);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account), third);
+
+				let receiver = &(account + 1);
+				prop_assert_ok!(<Pallet::<Test> as Currency<AccountId>>::transfer(&account, receiver, third,
+				ExistenceRequirement::AllowDeath));
+				prop_assert_eq!(<Pallet::<Test> as
+				Currency<AccountId>>::total_balance(receiver), third);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(receiver), third);
+				Ok(())
+
+			 }).unwrap();
+		}
+	}
+}
+
+mod multicurrency_currency {
+	use super::*;
+	use frame_support::traits::{tokens::Imbalance, ExistenceRequirement, WithdrawReasons};
+	use orml_traits::currency::{MultiCurrency, MultiReservableCurrency};
+
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(10000))]
+
+		#[test]
+		fn test_minimum_balance_implementation(
+			account in accounts(),
+			asset_id in asset(),
+			(_first, _second, _third) in valid_amounts_without_overflow_3()) {
+			new_test_ext_multi_currency().execute_with(|| {
+
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::minimum_balance(asset_id), 0);
+				Ok(())
+			}).unwrap();
 		}
 
-	prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::minimum_balance(), MINIMUM_BALANCE);
-	prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), 0);
-	prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account), 0);
-	assert_issuance!(0);
-	prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account,first).peek(), first);
-	prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), first);
-	prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account), first);
-	assert_issuance!(first);
-	prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_into_existing(&account,
-	second).unwrap().peek(), second);
-	prop_assert_eq!(<Pallet::<Test> as
-	Currency<AccountId>>::total_balance(&account), first + second);
-	prop_assert_eq!(<Pallet::<Test>
-	as Currency<AccountId>>::free_balance(&account), first + second);
-	assert_issuance!(first + second);
+		#[test]
+		fn test_total_balance_implementation(
+			account in accounts(),
+			asset_id in asset(),
+			(first, second, third) in valid_amounts_without_overflow_3()) {
+			new_test_ext_multi_currency().execute_with(|| {
 
-	prop_assert!(<Pallet::<Test> as Currency<AccountId>>::can_slash(&account, first + second));
-	let (_, difference) = <Pallet::<Test> as Currency<AccountId>>::slash(&account, third);
-	let balance = if first + second > third {
-		prop_assert_eq!(difference, 0);
-		let balance = (first + second) - third;
-		prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), balance);
-		assert_issuance!(balance);
-		balance
-	} else {
-		prop_assert_eq!(difference, third - (first + second));
-		prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), 0);
-		assert_issuance!(0);
-		0
-	};
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::total_balance(asset_id,&account), 0);
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account, first));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::total_balance(asset_id,&account), first);
 
-	let issue = <Pallet::<Test> as Currency<AccountId>>::issue(second);
-	let added = issue.peek();
-	prop_assert_eq!(added, second);
-	if balance == 0 {
-		<Pallet::<Test> as Currency<AccountId>>::resolve_creating(&account, issue);
-	} else {
-		<Pallet::<Test> as Currency<AccountId>>::resolve_into_existing(&account, issue).unwrap();
-	}
-	prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), balance + added);
-	prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account), balance + added );
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account, second));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::total_balance(asset_id,&account), first + second);
 
-	assert_issuance!(balance + added);
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account, third));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::total_balance(asset_id,&account), first + second + third);
+				Ok(())
+			}).unwrap();
+		}
 
-	prop_assert!(!<Pallet::<Test> as Currency<AccountId>>::ensure_can_withdraw(&account, balance + added, WithdrawReasons::TRANSFER, 0).is_err());
-	prop_assert!( <Pallet::<Test> as Currency<AccountId>>::withdraw(&account, balance + added, WithdrawReasons::TRANSFER, ExistenceRequirement::KeepAlive).is_err());
-	prop_assert!(<Pallet::<Test> as Currency<AccountId>>::withdraw(&account, balance + added,WithdrawReasons::TRANSFER, ExistenceRequirement::AllowDeath).is_ok() 				);
-	<Pallet::<Test> as Currency<AccountId>>::make_free_balance_be(&account, first);
-	prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), first);
-	prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account), first);
+		#[test]
+		fn test_total_issuance_implementation(
+			(account_1, account_2) in accounts_2(),
+			asset_id in asset(),
+			(first, second, third) in valid_amounts_without_overflow_3()
+			) {
 
-	assert_issuance!(first);
+			new_test_ext_multi_currency().execute_with(|| {
 
-	let burned = <Pallet::<Test> as Currency<AccountId>>::burn(second);
-	let diff = <Pallet::<Test> as Currency<AccountId>>::settle(&account, burned,WithdrawReasons::all(), ExistenceRequirement::AllowDeath);
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::total_issuance(asset_id), 0);
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account_1, first));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::total_issuance(asset_id), first);
 
-	if second > first {
-		prop_assert!(diff.is_err());
-	} else {
-		prop_assert_ok!(diff);
-	}
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account_2, second));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::total_issuance(asset_id), first + second);
 
-	<Pallet::<Test> as Currency<AccountId>>::make_free_balance_be(&account, third);
-	prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_balance(&account), third);
-	prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account), third);
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account_1, third));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::total_issuance(asset_id), first + second + third);
+				Ok(())
+			}).unwrap();
+		}
 
-	let receiver = &(account + 1);
-	prop_assert_ok!(<Pallet::<Test> as Currency<AccountId>>::transfer(&account, receiver, third,
-	ExistenceRequirement::AllowDeath));
-	prop_assert_eq!(<Pallet::<Test> as
-	Currency<AccountId>>::total_balance(receiver), third);
-	prop_assert_eq!(<Pallet::<Test> as
-	Currency<AccountId>>::free_balance(receiver), third);
-		Ok(())
-		}).unwrap();
+		#[test]
+		fn test_free_balance_implementation(
+			(account) in accounts(),
+			asset_id in asset(),
+			(first, second, third) in valid_amounts_without_overflow_3()
+			) {
+
+			new_test_ext_multi_currency().execute_with(|| {
+
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account), 0);
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account, first));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account), first);
+
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account, second));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account), first + second);
+
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account, third));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account), first + second + third);
+
+				prop_assert_ok!(<Pallet::<Test> as MultiReservableCurrency<AccountId>>::reserve(asset_id, &account, first));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account), second + third);
+
+				prop_assert_ok!(<Pallet::<Test> as MultiReservableCurrency<AccountId>>::reserve(asset_id, &account, second));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  third);
+
+				prop_assert_ok!(<Pallet::<Test> as MultiReservableCurrency<AccountId>>::reserve(asset_id, &account, third));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  0);
+				//
+				let mut remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account, first);
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  first - remaining);
+
+				let mut free_balance = <Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account);
+				remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account, second);
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  free_balance + ( second - remaining));
+
+				let mut free_balance = <Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account);
+				remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account, third);
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  free_balance + ( third - remaining));
+
+
+
+				Ok(())
+			}).unwrap();
 		}
 	}
 }
