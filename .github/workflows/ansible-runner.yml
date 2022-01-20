@@ -19,8 +19,10 @@ jobs:
     steps:
     - name: Clean up
       continue-on-error: true
-      run: docker system prune --force --all --volumes
-      
+      run: |
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+        docker system prune --force --all --volumes
+
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0

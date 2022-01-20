@@ -12,6 +12,12 @@ jobs:
       - ansible-runner
 
     steps:
+    - name: Clean up
+      continue-on-error: true
+      run: |
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+        docker system prune --force --all --volumes
+        
     - name: Run ansible playbook
       working-directory: "./.maintain/playbooks"
       run: |
@@ -27,7 +33,9 @@ jobs:
     steps:
     - name: Clean up
       continue-on-error: true
-      run: docker system prune --force --all --volumes
+      run: |
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+        docker system prune --force --all --volumes
 
     - name: Run ansible playbook
       working-directory: "./.maintain/playbooks"
