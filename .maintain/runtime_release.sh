@@ -18,13 +18,12 @@ VERSIONS_FILES=(
 )
 # Because this script runs when a tag has been published, the previous tag is the
 # last two tags
+echo "$COMPOSABLE_GITHUB_TOKEN" > token.txt
+gh auth login --with-token < token.txt
 PREV_TAG=$(gh release list -L=2 | sed -n '2 p' | awk '{print $(NF-1)}')
 CURRENT_TAG=$(gh release list -L=1 | sed -n '1 p' | awk '{print $(NF-1)}')
 
 # Install the neccessary tools needed for building
-echo "$COMPOSABLE_GITHUB_TOKEN"
-echo "$COMPOSABLE_GITHUB_TOKEN" > token.txt
-gh auth login --with-token < token.txt
 cargo install --git https://github.com/chevdor/srtool-cli
 cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
 
