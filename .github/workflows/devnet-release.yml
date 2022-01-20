@@ -42,16 +42,12 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         profile: minimal
-        toolchain: nightly-2021-08-22
+        toolchain: nightly-2021-11-29
         target: wasm32-unknown-unknown
-
-    - name: Install Rust Stable
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
         override: true
         default: true
+
+    - uses: Swatinem/rust-cache@v1
 
     - name: Set env
       run: |
