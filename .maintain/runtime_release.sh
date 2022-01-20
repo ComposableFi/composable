@@ -20,8 +20,7 @@ VERSIONS_FILES=(
 # last two tags
 echo "$COMPOSABLE_GITHUB_TOKEN" > token.txt
 gh auth login --with-token < token.txt
-PREV_TAG=$(gh release list -L=2 | sed -n '2 p' | awk '{print $(NF-1)}')
-CURRENT_TAG=$(gh release list -L=1 | sed -n '1 p' | awk '{print $(NF-1)}')
+PREV_TAG=$(gh release list -L=1 | sed -n '1 p' | awk '{print $(NF-1)}')
 
 # Install the neccessary tools needed for building
 cargo install --git https://github.com/chevdor/srtool-cli
@@ -45,8 +44,6 @@ for i in "${VERSIONS_FILES[@]}"; do
     if has_runtime_changes "${PREV_TAG}" "${GITHUB_REF_NAME}" "$folder"
     then
       build_runtime $output $chain $folder
-      CHANGES=$(gh view release tag $CURRENT_TAG)
-      echo "$CHANGES" | sed '1,/--/  d' >> release.md
       RELEASE_CHANGES=$(cat release.md) 
       echo "CHANGES=$RELEASE_CHANGES" >> "$GITHUB_ENV"
       echo "$chain_wasm=1" >> "$GITHUB_ENV"
