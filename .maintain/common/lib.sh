@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
 
