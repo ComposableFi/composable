@@ -335,7 +335,7 @@ mod lockable_multicurrency {
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
 
 			 // ensure set_lock updates lock with same id
-			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account,  third);
+			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::extend_lock(*b"prelocks", asset_id, &account,  third);
 			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second));
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
 			Ok(())
