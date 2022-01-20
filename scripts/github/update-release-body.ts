@@ -11,7 +11,7 @@ async function main() {
                 type: "string",
                 describe: "id of the release to update",
             },
-            changes: {
+            body: {
                 type: "string",
                 describe: "newly updated body",
             },
@@ -19,16 +19,11 @@ async function main() {
                 type: "string",
                 describe: "repo for the release",
             },
-            metadata: {
-                type: "string",
-                describe: "runtime metadata in md format",
-            },
         })
-        .demandOption(["id", "body", "repo", "metadata"])
+        .demandOption(["id", "body", "repo"])
         .help().argv;
-    const metadata = fs.readFileSync(argv.metadata).toString();
+    const body = fs.readFileSync(argv.body).toString();
 
-    const body = `${metadata}\n\n${argv.body}`
     const octokit = new Octokit({
         auth: process.env.GITHUB_TOKEN || undefined,
     });
