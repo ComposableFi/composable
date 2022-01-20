@@ -25,6 +25,12 @@ jobs:
       - x64
       - sre
     steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+
       - uses: actions/checkout@v2
       - name: Compile Check with WASM
         run: |

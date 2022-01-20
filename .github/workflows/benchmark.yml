@@ -13,6 +13,12 @@ jobs:
       - bmark
     if: github.event.pull_request.draft == false
     steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+
       - uses: actions/checkout@v2
         with:
           ref: main
