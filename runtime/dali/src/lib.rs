@@ -43,7 +43,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
-pub use support::{
+pub use frame_support::{
 	construct_runtime, match_type, parameter_types,
 	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
 	weights::{
@@ -55,11 +55,11 @@ pub use support::{
 };
 
 use codec::Encode;
+use frame_support::traits::EqualPrivilegeOnly;
 use frame_system as system;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
-use support::traits::EqualPrivilegeOnly;
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -93,15 +93,15 @@ pub mod opaque {
 //   https://substrate.dev/docs/en/knowledgebase/runtime/upgrades#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("dali"),
-	impl_name: create_runtime_str!("dali"),
+	spec_name: create_runtime_str!("picasso"),
+	impl_name: create_runtime_str!("picasso"),
 	authoring_version: 1,
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2000,
+	spec_version: 100,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1053,10 +1053,10 @@ impl_runtime_apis! {
 	impl benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
 			Vec<benchmarking::BenchmarkList>,
-			Vec<support::traits::StorageInfo>,
+			Vec<frame_support::traits::StorageInfo>,
 		) {
 			use benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
-			use support::traits::StorageInfoTrait;
+			use frame_support::traits::StorageInfoTrait;
 			use system_benchmarking::Pallet as SystemBench;
 
 			let mut list = Vec::<BenchmarkList>::new();

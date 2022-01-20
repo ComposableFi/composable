@@ -1,14 +1,17 @@
 name: Check Runtime
 on:
-  push:
-    branches:
-      - releases
   pull_request:
     branches:
       - releases
+      - main
 jobs:
   check-runtime:
-    runs-on: ubuntu-latest
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    if: github.event.pull_request.draft == false
     steps:
       - uses: actions/checkout@v2
         with: 

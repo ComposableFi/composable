@@ -1,12 +1,6 @@
-name-template: 'v$RESOLVED_VERSION'
-tag-template: 'v$RESOLVED_VERSION'
-template: |
-  # What's Changed
-
-  $CHANGES
-
-  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
-
+name-template: v$NEXT_PATCH_VERSION 🌈
+tag-template: v$NEXT_PATCH_VERSION
+commitish: releases
 categories:
   - title: '🚀 Features'
     labels:
