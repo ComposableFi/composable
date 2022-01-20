@@ -12,11 +12,6 @@ categories:
       - 'bug'
   - title: '🧰 Maintenance'
     label: 'chore'
-  - title: 'Changelog'
-    label: 
-      - major
-      - minor
-      - patch
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
 autolabeler:
