@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 #
 # check for any changes in the node/src/runtime, frame/* and primitives/sr_* trees. if
