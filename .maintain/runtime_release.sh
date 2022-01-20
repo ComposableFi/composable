@@ -34,7 +34,7 @@ build_runtime () {
   # subwasm for runtime metadata
   echo "# $chain Runtime " >> release.md
   INFO=$(subwasm info ./runtime/"$chain"/target/srtool/release/wbuild/"$chain"-runtime/"$chain"_runtime.compact.wasm)
-  echo "\n```"$INFO"```\n" >> release.md
+  echo "```"$INFO"```" >> release.md
 }
 
 # Check which runtimes have changed and build them
@@ -46,7 +46,7 @@ for i in "${VERSIONS_FILES[@]}"; do
       build_runtime $output $chain $folder
       RELEASE_CHANGES=$(cat release.md) 
       echo "CHANGES=$RELEASE_CHANGES" >> "$GITHUB_ENV"
-      echo "$chain_wasm=1" >> "$GITHUB_ENV"
+      echo ""$chain"_wasm=1" >> "$GITHUB_ENV"
     fi
   done <<< "$i"
 done
