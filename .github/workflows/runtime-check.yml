@@ -15,6 +15,5 @@ jobs:
           fetch-depth: 0
 
       - name: Check for runtime changes
-        working-directory: "./.maintain/"
         run: |
-          sh check_runtime.sh
+          .maintain/check_runtime.sh
