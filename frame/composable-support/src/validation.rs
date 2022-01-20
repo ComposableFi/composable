@@ -35,9 +35,20 @@ pub trait Validate<U>: Sized {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct QED;
+pub enum Valid {}
 
-impl<T> Validate<QED> for T {
+#[derive(Debug, Eq, PartialEq)]
+pub enum Invalid {}
+
+
+impl<T> Validate<Invalid> for T {
+	#[inline(always)]
+	fn validate(self) -> Result<Self, &'static str> {
+		Err("not valid")
+	}
+}
+
+impl<T> Validate<Valid> for T {
 	#[inline(always)]
 	fn validate(self) -> Result<Self, &'static str> {
 		Ok(self)
@@ -54,6 +65,8 @@ impl<T: Validate<U> + Validate<V>, U, V> Validate<(U, V)> for T {
 }
 
 // as per substrate pattern and existing macroses for similar purposes, they tend to make things flat
+// like `#[impl_trait_for_tuples::impl_for_tuples(30)]`
+// so if we will need more than 3, can consider it
 impl<T: Validate<U> + Validate<V> + Validate<W>, U, V, W> Validate<(U, V, W)> for T {
 	#[inline(always)]
 	fn validate(self) -> Result<Self, &'static str> {
@@ -75,6 +88,18 @@ impl<T: codec::Decode + Validate<(U, V)>, U, V> codec::Decode for Validated<T, (
 	}
 }
 
+impl<T: codec::Decode + Validate<(U, V, W)>, U, V, W> codec::Decode for Validated<T, (U, V, W)> {
+	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
+		let value = Validate::validate(T::decode(input)?)
+			.map_err(|desc| Into::<codec::Error>::into(desc))?;
+		Ok(Validated { value, _marker: PhantomData })
+	}
+	fn skip<I: codec::Input>(input: &mut I) -> Result<(), codec::Error> {
+		T::skip(input)
+	}
+}
+
+
 impl<T: codec::Encode + codec::Decode + Validate<U>, U> codec::WrapperTypeEncode
 	for Validated<T, U>
 {
@@ -90,9 +115,9 @@ mod test {
 	#[derive(Debug, Eq, PartialEq)]
 	struct ValidBRange;
 
-	type CheckARange = (ValidARange, QED);
-	type CheckBRange = (ValidBRange, QED);
-	type CheckABRange = (ValidARange, (ValidBRange, QED));
+	type CheckARange = (ValidARange, Valid);
+	type CheckBRange = (ValidBRange, Valid);
+	type CheckABRange = (ValidARange, (ValidBRange, Valid));
 
 	#[derive(Debug, Eq, PartialEq, codec::Encode, codec::Decode)]
 	struct X {
@@ -183,5 +208,22 @@ mod test {
 		let invalid = X { a: 10, b: 0xDEADC0DE };
 		let bytes = invalid.encode();
 		assert!(Validated::<X, CheckABRange>::decode(&mut &bytes[..]).is_err());
+	}
+
+	#[test]
+	fn valid_triple() {
+		let value = X { a: 10, b: 0xDEADC0DE };
+		let bytes = value.encode();
+		assert_eq!(
+			Ok(Validated { value, _marker: PhantomData }),
+			Validated::<X, (Valid, Valid, Valid)>::decode(&mut &bytes[..])
+		);
+	}
+
+	#[test]
+	fn valid_invalid_valid() {
+		let value = X { a: 10, b: 0xDEADC0DE };
+		let bytes = value.encode();
+		assert!(Validated::<X, (Valid, Invalid, Valid)>::decode(&mut &bytes[..]).is_err());
 	}
 }
