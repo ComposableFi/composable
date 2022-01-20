@@ -76,6 +76,7 @@ jobs:
         upload_url: ${{ steps.release_drafter.outputs.upload_url }} 
         asset_path: ./runtime/${{ matrix.runtime }}/target/srtool/release/wbuild/${{ matrix.runtime }}-runtime/${{ matrix.runtime }}_runtime.compact.wasm
         asset_name: ${{ matrix.runtime }}_runtime.compact.wasm
+        asset_content_type: application/octet-stream
 
     - name: 🔨 Build and Upload Composable Binary
       run: |
