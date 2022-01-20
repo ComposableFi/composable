@@ -41,7 +41,6 @@ jobs:
         cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
 
     - name: 🔨 Build and Upload Composable Binary
-      id: client_release
       run: |
         .maintain/client_release.sh
 
