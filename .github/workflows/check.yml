@@ -25,10 +25,11 @@ jobs:
       - x64
       - sre
     steps:
-      - uses: actions/checkout@v2
       - name: Clean up
         continue-on-error: true
         run: docker system prune --force --all --volumes
+
+      - uses: actions/checkout@v2
       - name: Compile Check with WASM
         run: |
           /home/runner/.cargo/bin/cargo check --features=runtime-benchmarks --workspace --exclude integration-tests

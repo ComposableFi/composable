@@ -17,6 +17,10 @@ jobs:
         - ansible-runner
 
     steps:
+    - name: Clean up
+      continue-on-error: true
+      run: docker system prune --force --all --volumes
+      
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
