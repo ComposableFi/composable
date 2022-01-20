@@ -59,7 +59,7 @@ jobs:
     - name: Get Body
       run: |
         cd scripts/github && yarn install
-        yarn update-release-body --id=${{ steps.release_drafter.outputs.id  }} --repo=composableFi/composable --body="${{ env.CHANGES  }}\n\n${{ steps.release_drafter.outputs.body }}"
+        yarn update-release-body --id=${{ steps.release_drafter.outputs.id  }} --repo=composableFi/composable --body=${{ steps.release_drafter.outputs.body }} --metadata="/home/runner/_work/composable/composable/readme.md"
         cd $GITHUB_WORKSPACE
 
     - name: Upload Compact ${{ matrix.runtime }} wasm
