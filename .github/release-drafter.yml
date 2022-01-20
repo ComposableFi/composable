@@ -41,6 +41,7 @@ version-resolver:
     labels:
       - 'patch'
   default: patch
+commitish: releases
 template: |
   ## Changes
 
