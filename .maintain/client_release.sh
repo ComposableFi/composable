@@ -11,9 +11,12 @@
 . "$(dirname "${0}")/./common/lib.sh"
 
 RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )
+# Because this script runs when a tag has been published, the previous tag is the
+# last two tags
+PREV_TAG=$(gh release list -L=2 | sed -n '2 p' | awk '{print $(NF-1)}')
 
 
-if has_client_changes "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}"
+if has_client_changes "${PREV_TAG}" "${GITHUB_REF_NAME}"
 then
   boldprint "Building new client binaries"
   cargo build --release -p composable
