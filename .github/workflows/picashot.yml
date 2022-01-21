@@ -1,5 +1,8 @@
 name: Check Runtime
 on:
+  push:
+    branches:
+      - update-picashot
   workflow_dispatch:
   schedule:
     - cron:  '0 0 * * *'
