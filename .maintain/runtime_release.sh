@@ -13,8 +13,8 @@ set -e # fail on any error
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
-  # "runtime/dali/src/lib.rs,dali-chachacha,dali"
-  # "runtime/composable/src/lib.rs,composable,composable"
+   "runtime/dali/src/lib.rs,dali-chachacha,dali"
+   "runtime/composable/src/lib.rs,composable,composable"
 )
 # Because this script runs when a tag has been published, the previous tag is the
 # last two tags
