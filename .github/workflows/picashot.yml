@@ -22,8 +22,9 @@ jobs:
         docker system prune --force --all --volumes
         
     - name: Run ansible playbook
-      working-directory: "./.maintain/playbooks"
+      working-directory: ".maintain/playbooks"
       run: |
+        pwd
         ansible-playbook -l _mainnet_collator_yes picashot.yml -i picasso-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
 
   dalishot:
@@ -32,7 +33,6 @@ jobs:
       - linux
       - X64
       - ansible-runner
-
     steps:
     - name: Clean up
       continue-on-error: true
