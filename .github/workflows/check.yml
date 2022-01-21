@@ -57,7 +57,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Rustup show
         run: |
-          /home/runner/.cargo/bin/rustup show
+         rustup show
       - uses: actions/checkout@v2
       - name: Run Test (with coverage)
         run: |
