@@ -30,3 +30,5 @@ scripts/polkadot-launch/*.log
 
 target
 .env
+
+yarn-error.log
