@@ -46,8 +46,8 @@ jobs:
     container:
       image: paritytech/ci-linux:production
     steps:
-      - name: Run Test (with coverage)
       - uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Run Test (with coverage)
         run: |
           # integration tests can't be compiled with --feature=runtime-benchmarks
           # TODO: https://github.com/ComposableFi/composable/issues/535
@@ -71,7 +71,8 @@ jobs:
       image: paritytech/ci-linux:production
     steps:
       - uses: actions/checkout@v2
-      - run: |
+      - name: Rustup show
+        run: |
           rustup show
       - name: Use Node.js 14.x
         uses: actions/setup-node@v2
