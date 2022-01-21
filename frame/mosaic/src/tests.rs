@@ -80,6 +80,10 @@ mod set_relayer {
             assert_noop!(Mosaic::set_relayer(Origin::signed(ALICE), ALICE), DispatchError::BadOrigin);
         })
     }
+}
+
+mod rotate_relayer {
+    use super::*;
 
     #[test]
     fn relayer_can_rotate_relayer() {
@@ -92,20 +96,33 @@ mod set_relayer {
             assert_eq!(Mosaic::relayer_account_id(), Some(BOB))
         })
     }
+
+    #[test]
+    fn arbitrary_account_cannot_rotate_relayer() {
+        new_test_ext().execute_with(|| {
+            let ttl = 500;
+            assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+            assert_noop!(
+                Mosaic::rotate_relayer(Origin::signed(ALICE), BOB, ttl),
+                DispatchError::BadOrigin
+            );
+        })
+    }
+
+    #[test]
+    fn none_cannot_rotate_relayer() {
+        new_test_ext().execute_with(|| {
+            let ttl = 500;
+            assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+            assert_noop!(
+                Mosaic::rotate_relayer(Origin::none(), BOB, ttl),
+                DispatchError::BadOrigin
+            );
+        })
+    }
 }
 
 
-#[test]
-fn arbitrary_account_cannot_rotate_relayer() {
-	new_test_ext().execute_with(|| {
-		let ttl = 500;
-		assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
-		assert_noop!(
-			Mosaic::rotate_relayer(Origin::signed(ALICE), BOB, ttl),
-			DispatchError::BadOrigin
-		);
-	})
-}
 
 #[test]
 fn root_can_set_budget() {
