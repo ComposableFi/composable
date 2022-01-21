@@ -80,20 +80,12 @@ jobs:
       - name: Cargo fmt
         run: |
           cargo +nightly fmt --all -- --check
+      
       - name: Hadolint
-        env:
-          HADOLINT_VERSION: v2.8.0
-        run: |
-          curl -L -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
-          chmod +x hadolint
-          ./hadolint --version
-          total_exit_code=0
-          while IFS= read -r file; do
-            echo "=== $file ==="
-            ./hadolint --config .hadolint.yaml $file || total_exit_code=$?
-            echo ""
-          done < <(find . -name "Dockerfile")
-          exit $total_exit_code
+        uses: hadolint/hadolint-action@v1.6.0
+          with:
+            dockerfile: docker/Dockerfile
+
       - name: Remark
         run: |
           npm install yarn
