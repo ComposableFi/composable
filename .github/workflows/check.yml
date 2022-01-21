@@ -8,16 +8,14 @@ on:
       - main
       - develop
       - releases
-  push:
-    branches:
-      - main    
+  
   workflow_dispatch:
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
-  check-benchmarks:
+  substrate-check:
     name: Check Benchmarks
     runs-on:
       - self-hosted
@@ -34,12 +32,12 @@ jobs:
           docker system prune --force --all --volumes
 
       - uses: actions/checkout@v2
-      - name: Compile Check with WASM
+      - name: cargo check --all --benches
         run: |
-          cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
+          SKIP_WASM_BUILD=1 cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
 
-  check-std:
-    name: Check STD
+  substrate-tests:
+    name: Unit Tests 
     runs-on:
       - self-hosted
       - linux
@@ -49,9 +47,20 @@ jobs:
       image: paritytech/ci-linux:production
     steps:
       - uses: actions/checkout@v2
-      - name: Compile check with std
+      - name: Install cargo-llvm-cov
+        run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
+      - name: Run Test (with coverage)
         run: |
-          SKIP_WASM_BUILD=1 cargo check --features=std --workspace --exclude integration-tests
+          # integration tests can't be compiled with --feature=runtime-benchmarks
+          # TODO: https://github.com/ComposableFi/composable/issues/535
+          SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --exclude=integration-tests --lcov --output-path lcov.info 
+      - name: Upload coverage to Codecov
+        continue-on-error: true
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+          fail_ci_if_error: false
 
   linters:
     name: Linters
@@ -103,7 +112,7 @@ jobs:
           exit $total_exit_code
       - name: Cargo clippy
         run: |
-          SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly clippy --all-targets
+          SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly clippy --all-targets 
       - name: Cargo udeps
         env:
           UDEPS_VERSION: v0.1.24
@@ -115,27 +124,4 @@ jobs:
           cargo udeps --version
           SKIP_WASM_BUILD=1 cargo udeps --workspace --all-features
         continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.  
-  test:
-    name: Unit Test
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    container:
-      image: paritytech/ci-linux:production
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install cargo-llvm-cov
-        run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
-      - name: Run Test (with coverage)
-        run: |
-          SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --lcov --output-path lcov.info
-          cargo test --workspace --locked --release --verbose --features runtime-benchmarks # check runtime-benchmarks work
-      - name: Upload coverage to Codecov
-        continue-on-error: true
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: lcov.info
-          fail_ci_if_error: false
+
