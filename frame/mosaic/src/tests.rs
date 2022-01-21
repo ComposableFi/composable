@@ -91,9 +91,28 @@ mod rotate_relayer {
             let ttl = 500;
             let current_block = System::block_number();
             assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+            // first rotation
             assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl));
-            System::set_block_number(current_block + ttl + 2);
-            assert_eq!(Mosaic::relayer_account_id(), Some(BOB))
+            System::set_block_number(current_block + ttl);
+            assert_eq!(Mosaic::relayer_account_id(), Some(BOB));
+
+            // second rotation
+            assert_ok!(Mosaic::rotate_relayer(Origin::signed(BOB), CHARLIE, ttl));
+            System::set_block_number(current_block + 2 * ttl);
+            assert_eq!(Mosaic::relayer_account_id(), Some(CHARLIE));
+        })
+    }
+
+    #[test]
+    fn relayer_must_not_rotate_early() {
+        new_test_ext().execute_with(|| {
+            let ttl = 500;
+            let current_block = System::block_number();
+            assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+            assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl));
+            System::set_block_number(current_block + ttl - 1); // just before the ttl
+            assert_eq!(Mosaic::relayer_account_id(), Some(RELAYER)); // not BOB
         })
     }
 
@@ -147,36 +166,81 @@ mod set_network {
             assert_noop!(Mosaic::set_network(Origin::root(), network_id, network_info.clone()), DispatchError::BadOrigin);
         })
     }
+
+    #[test]
+    fn none_cannot_set_network() {
+        let network_id = 3;
+        let network_info = 	NetworkInfo { enabled: false, max_transfer_size: 100000 };
+        new_test_ext().execute_with(|| {
+            assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+            assert_noop!(Mosaic::set_network(Origin::none(), network_id, network_info.clone()), DispatchError::BadOrigin);
+        })
+    }
+
 }
 
 
 
-#[test]
-fn root_can_set_budget() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(Mosaic::set_budget(Origin::root(), 1, 1, BudgetDecay::linear(5)));
-	})
+
+
+mod budget {
+    use super::*;
+
+    mod set_budget {
+        use super::*;
+
+        #[test]
+        fn root_can_set_budget() {
+            new_test_ext().execute_with(|| {
+                assert_ok!(Mosaic::set_budget(Origin::root(), 1, 1, BudgetDecay::linear(5)));
+            })
+        }
+
+        #[test]
+        fn arbitrary_user_cannot_set_budget() {
+            new_test_ext().execute_with(|| {
+                assert_noop!(
+                Mosaic::set_budget(Origin::signed(ALICE), 1, 1, BudgetDecay::linear(5)),
+                DispatchError::BadOrigin);
+            })
+        }
+
+        #[test]
+        fn none_cannot_set_budget() {
+            new_test_ext().execute_with(|| {
+                assert_noop!(
+                Mosaic::set_budget(Origin::none(), 1, 1, BudgetDecay::linear(5)),
+                DispatchError::BadOrigin);
+            })
+        }
+    }
+
+    #[test]
+    fn budget_are_isolated() {
+        new_test_ext().execute_with(|| {
+            assert_ok!(Mosaic::set_budget(Origin::root(), 1, 0xCAFEBABE, BudgetDecay::linear(10)));
+            assert_ok!(Mosaic::set_budget(Origin::root(), 2, 0xDEADC0DE, BudgetDecay::linear(5)));
+            assert_eq!(Mosaic::asset_infos(1).expect("budget must exists").budget, 0xCAFEBABE);
+            assert_eq!(Mosaic::asset_infos(2).expect("budget must exists").budget, 0xDEADC0DE);
+        })
+    }
+
+
+    #[test]
+    fn last_deposit_does_not_change_after_updating_budget() {
+        new_test_ext().execute_with(|| {
+            let initial_block = System::block_number();
+            assert_ok!(Mosaic::set_budget(Origin::root(), 1, 0xCAFEBABE, BudgetDecay::linear(10)));
+            assert_eq!(Mosaic::asset_infos(1).expect("budget must exists").last_deposit, initial_block);
+
+            System::set_block_number(initial_block + 1);
+            assert_ok!(Mosaic::set_budget(Origin::root(), 1, 0xDEADC0DE, BudgetDecay::linear(10)));
+            assert_eq!(Mosaic::asset_infos(1).expect("budget must exists").last_deposit, initial_block);
+        })
+    }
 }
 
-#[test]
-fn arbitrary_user_cannot_set_budget() {
-	new_test_ext().execute_with(|| {
-		assert_noop!(
-			Mosaic::set_budget(Origin::signed(ALICE), 1, 1, BudgetDecay::linear(5)),
-			DispatchError::BadOrigin
-		);
-	})
-}
-
-#[test]
-fn budget_are_isolated() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(Mosaic::set_budget(Origin::root(), 1, 0xCAFEBABE, BudgetDecay::linear(10)));
-		assert_ok!(Mosaic::set_budget(Origin::root(), 2, 0xDEADC0DE, BudgetDecay::linear(5)));
-		assert_eq!(Mosaic::asset_infos(1).expect("budget must exists").budget, 0xCAFEBABE);
-		assert_eq!(Mosaic::asset_infos(2).expect("budget must exists").budget, 0xDEADC0DE);
-	})
-}
 
 
 #[test]
