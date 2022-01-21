@@ -20,11 +20,18 @@ pub struct BoundedSortedVec<T: Ord, S>(SortedVec<T>, PhantomData<S>);
 impl<T: Decode + Ord, S: Get<u32>> Decode for BoundedSortedVec<T, S> {
 	#[inline]
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
+		use is_sorted::IsSorted;
+
 		let inner = Vec::<T>::decode(input)?;
 		if inner.len() > S::get() as usize {
 			return Err("BoundedSortedVec exceeds its limit".into())
 		}
-		Ok(Self(SortedVec::from_unsorted(inner), PhantomData))
+
+		if !IsSorted::is_sorted(&mut inner.iter()) {
+			return Err("input is not sorted".into())
+		}
+		// checked above
+		Ok(Self(SortedVec::unchecked_from(inner), PhantomData))
 	}
 
 	#[inline]
@@ -339,6 +346,15 @@ pub mod test {
 		assert_eq!(
 			BoundedSortedVec::<u32, Four>::decode(&mut &v.encode()[..]),
 			Err("BoundedSortedVec exceeds its limit".into()),
+		);
+	}
+
+	#[test]
+	fn unsorted_fail_to_decode() {
+		let v: Vec<u32> = vec![1, 2, 5, 4];
+		assert_eq!(
+			BoundedSortedVec::<u32, Four>::decode(&mut &v.encode()[..]),
+			Err("input is not sorted".into()),
 		);
 	}
 }

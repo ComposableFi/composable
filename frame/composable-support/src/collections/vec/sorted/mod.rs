@@ -24,8 +24,15 @@ impl<T: Ord> WrapperTypeEncode for SortedVec<T> {}
 
 impl<T: Decode + Ord> Decode for SortedVec<T> {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
+		use is_sorted::IsSorted;
+
 		let inner = Vec::<T>::decode(input)?;
-		Ok(Self::from_unsorted(inner))
+
+		if !IsSorted::is_sorted(&mut inner.iter()) {
+			Err("input is not sorted".into())
+		} else {
+			Ok(Self::unchecked_from(inner))
+		}
 	}
 
 	fn skip<I: codec::Input>(input: &mut I) -> Result<(), codec::Error> {
@@ -444,5 +451,14 @@ mod tests {
 	fn test_deserialize_unsorted() {
 		let s = "[99,-11,-10,2,5,10,17]";
 		let _ = serde_json::from_str::<SortedVec<i32>>(s).unwrap();
+	}
+
+	#[test]
+	fn unsorted_fail_to_decode() {
+		let v: Vec<u32> = vec![1, 2, 5, 4];
+		assert_eq!(
+			SortedVec::<u32>::decode(&mut &v.encode()[..]),
+			Err("input is not sorted".into()),
+		);
 	}
 }
