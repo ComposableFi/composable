@@ -34,3 +34,4 @@ target
 node_modules/
 **/yarn-error.log
 **/.yarn/
+rust-toolchain.toml
