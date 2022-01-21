@@ -35,9 +35,9 @@ prop_compose! {
 
 prop_compose! {
 	fn valid_amounts_without_overflow_3()
-		(x in MINIMUM_BALANCE..Balance::MAX / 3,
-		 y in MINIMUM_BALANCE..Balance::MAX / 3,
-		 z in MINIMUM_BALANCE..Balance::MAX / 3) -> (Balance, Balance, Balance) {
+		(x in (MINIMUM_BALANCE..(Balance::MAX / 3) - 10) ,
+		 y in (MINIMUM_BALANCE..(Balance::MAX / 3) - 10) ,
+		 z in (MINIMUM_BALANCE..(Balance::MAX / 3) - 10) ) -> (Balance, Balance, Balance) {
 			(x, y, z)
 		}
 }
@@ -166,7 +166,153 @@ mod currency {
 	}
 }
 
-mod multicurrency_currency {
+mod reservable_currency {
+	use super::*;
+	use frame_support::traits::tokens::{
+		currency::{Currency, ReservableCurrency},
+		BalanceStatus, Imbalance,
+	};
+
+	macro_rules! assert_issuance {
+		($val:expr) => {
+			let issuance = BALANCES.iter().fold(0, |sum, (_, val)| val + sum);
+			prop_assert_eq!(
+				<Pallet::<Test> as Currency<AccountId>>::total_issuance(),
+				issuance + $val
+			);
+		};
+	}
+
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(10000))]
+
+		#[test]
+		fn test_can_reserve_implementation(
+			account_1 in accounts(),
+			(first, _, _) in valid_amounts_without_overflow_3()
+		) {
+			new_test_ext().execute_with(|| {
+
+				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::can_reserve(&account_1, first), false);
+				assert_issuance!(0);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first).peek(), first);
+				assert_issuance!(first);
+				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::can_reserve(&account_1, first), true);
+
+				Ok(())
+			}).unwrap();
+		}
+
+		#[test]
+		fn test_reserve_implementation(
+			account_1 in accounts(),
+			(first, second, third) in valid_amounts_without_overflow_3()
+		) {
+			new_test_ext().execute_with(|| {
+
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first).peek(), first);
+				assert_issuance!(first);
+				//increase user balance
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_into_existing(&account_1, second).unwrap().peek(), second);
+				assert_issuance!(first+second);
+				//increase user balance
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_into_existing(&account_1, third).unwrap().peek(), third);
+				assert_issuance!(first+second+third);
+				//reserve
+				prop_assert_ok!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserve(&account_1, first+second));
+				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), first+second);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), third);
+				Ok(())
+			}).unwrap();
+		}
+
+		#[test]
+		fn test_slash_reserve_implementation(
+			account_1 in accounts(),
+			(first, second, third) in valid_amounts_without_overflow_3()
+		) {
+			new_test_ext().execute_with(|| {
+
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first+second+third).peek(), first+second+third);
+				//reserve
+				prop_assert_ok!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserve(&account_1, first+second));
+				let total_issuance = <Pallet::<Test> as Currency<AccountId>>::total_issuance();
+				//slash
+				let (_, difference) = <Pallet::<Test> as ReservableCurrency<AccountId>>::slash_reserved(&account_1, third);
+				let _balance = if  first + second > third {
+					prop_assert_eq!(difference, 0);
+					let balance = (first + second) - third;
+					// check reserve balance after slash
+					prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_issuance(),total_issuance-(third-difference));
+					prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), balance);
+
+					balance
+				} else {
+					prop_assert_eq!(difference, third - (first + second ));
+					prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_issuance(),total_issuance-(third-difference));
+					prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), 0);
+					0
+				};
+
+				Ok(())
+			}).unwrap();
+		}
+
+		#[test]
+		fn test_repariate_reserve_implementation(
+			(account_1, account_2) in accounts_2(),
+			(first, second, third) in valid_amounts_without_overflow_3()
+		) {
+			new_test_ext().execute_with(|| {
+
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first + second + third).peek(), first + second + third);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_2, first).peek(), first);
+				prop_assert_ok!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserve(&account_1, first+second+third));
+				//repatriate to free balance
+				let repatriate_free = <Pallet::<Test> as ReservableCurrency<AccountId>>::repatriate_reserved(&account_1, &account_2, second, BalanceStatus::Free).unwrap();
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_2),first + (second - repatriate_free));
+				//repatriate to reserved balance
+				let repatriate_reserved = <Pallet::<Test> as ReservableCurrency<AccountId>>::repatriate_reserved(&account_1, &account_2, third, BalanceStatus::Reserved).unwrap();
+				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_2), third - repatriate_reserved);
+				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), first + (repatriate_free + repatriate_reserved));
+
+				Ok(())
+			}).unwrap();
+		}
+
+
+		#[test]
+		fn test_unreserve_implementation(
+			account_1 in accounts(),
+			(first, second, third) in valid_amounts_without_overflow_3()
+		) {
+			new_test_ext().execute_with(|| {
+
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first + second + third).peek(), first + second + third);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), first + second + third);
+				prop_assert_ok!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserve(&account_1, first+second+third));
+				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), first + second + third);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), 0);
+				//repatriate to free balance
+				let mut remaining = <Pallet::<Test> as ReservableCurrency<AccountId>>::unreserve(&account_1, third);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), third - remaining);
+				let mut free_balance = <Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1);
+				remaining = <Pallet::<Test> as ReservableCurrency<AccountId>>::unreserve(&account_1, second);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), free_balance + (second - remaining));
+
+				free_balance = <Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1);
+				remaining = <Pallet::<Test> as ReservableCurrency<AccountId>>::unreserve(&account_1, first);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), free_balance + (first - remaining));
+				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), 0);
+				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), first + second + third);
+
+				Ok(())
+			}).unwrap();
+		}
+	}
+}
+
+mod multicurrency {
 	use super::*;
 	use frame_support::traits::{tokens::Imbalance, ExistenceRequirement, WithdrawReasons};
 	use orml_traits::currency::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
@@ -368,22 +514,10 @@ mod lockable_multicurrency {
 	}
 }
 
-mod reservable_currency {
+mod reservable_multicurrency {
 	use super::*;
-	use frame_support::traits::tokens::{
-		currency::{Currency, ReservableCurrency},
-		BalanceStatus, Imbalance,
-	};
-
-	macro_rules! assert_issuance {
-		($val:expr) => {
-			let issuance = BALANCES.iter().fold(0, |sum, (_, val)| val + sum);
-			prop_assert_eq!(
-				<Pallet::<Test> as Currency<AccountId>>::total_issuance(),
-				issuance + $val
-			);
-		};
-	}
+	use frame_support::traits::tokens::{BalanceStatus, Imbalance};
+	use orml_traits::currency::{MultiCurrency, MultiReservableCurrency};
 
 	proptest! {
 		#![proptest_config(ProptestConfig::with_cases(10000))]
@@ -391,15 +525,14 @@ mod reservable_currency {
 		#[test]
 		fn test_can_reserve_implementation(
 			account_1 in accounts(),
+			asset_id in asset(),
 			(first, _, _) in valid_amounts_without_overflow_3()
 		) {
 			new_test_ext().execute_with(|| {
 
-				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::can_reserve(&account_1, first), false);
-				assert_issuance!(0);
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first).peek(), first);
-				assert_issuance!(first);
-				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::can_reserve(&account_1, first), true);
+				prop_assert_eq!(<Pallet::<Test> as MultiReservableCurrency<AssetId>>::can_reserve(asset_id, &account_1, first), false);
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AssetId>>::deposit(asset_id,&account_1, first));
+				prop_assert_eq!(<Pallet::<Test> as MultiReservableCurrency<AssetId>>::can_reserve(asset_id, &account_1, first), true);
 
 				Ok(())
 			}).unwrap();
@@ -408,22 +541,25 @@ mod reservable_currency {
 		#[test]
 		fn test_reserve_implementation(
 			account_1 in accounts(),
+			asset_id in asset(),
 			(first, second, third) in valid_amounts_without_overflow_3()
 		) {
-			new_test_ext().execute_with(|| {
+			new_test_ext_multi_currency().execute_with(|| {
 
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first).peek(), first);
-				assert_issuance!(first);
-				//increase user balance
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_into_existing(&account_1, second).unwrap().peek(), second);
-				assert_issuance!(first+second);
-				//increase user balance
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_into_existing(&account_1, third).unwrap().peek(), third);
-				assert_issuance!(first+second+third);
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AssetId>>::deposit(asset_id,&account_1, first));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AssetId>>::total_issuance(asset_id), first);
+
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AssetId>>::deposit(asset_id,&account_1, second));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AssetId>>::total_issuance(asset_id), first + second);
+
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AssetId>>::deposit(asset_id,&account_1, third));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AssetId>>::total_issuance(asset_id), first + second + third);
+
 				//reserve
-				prop_assert_ok!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserve(&account_1, first+second));
-				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), first+second);
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), third);
+				prop_assert_ok!(<Pallet::<Test> as MultiReservableCurrency<AccountId>>::reserve(asset_id, &account_1, first + second));
+				prop_assert_eq!(<Pallet::<Test> as MultiReservableCurrency<AccountId>>::reserved_balance(asset_id, &account_1), first + second);
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id, &account_1), third);
+
 				Ok(())
 			}).unwrap();
 		}
@@ -431,28 +567,29 @@ mod reservable_currency {
 		#[test]
 		fn test_slash_reserve_implementation(
 			account_1 in accounts(),
+			asset_id in asset(),
 			(first, second, third) in valid_amounts_without_overflow_3()
 		) {
-			new_test_ext().execute_with(|| {
+			new_test_ext_multi_currency().execute_with(|| {
 
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first+second+third).peek(), first+second+third);
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AssetId>>::deposit(asset_id, &account_1, first+second+third));
 				//reserve
-				prop_assert_ok!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserve(&account_1, first+second));
-				let total_issuance = <Pallet::<Test> as Currency<AccountId>>::total_issuance();
+				prop_assert_ok!(<Pallet::<Test> as MultiReservableCurrency<AssetId>>::reserve(asset_id, &account_1, first+second));
+				 let total_issuance = <Pallet::<Test> as MultiCurrency<AssetId>>::total_issuance(asset_id);
 				//slash
-				let (_, difference) = <Pallet::<Test> as ReservableCurrency<AccountId>>::slash_reserved(&account_1, third);
+				let  difference = <Pallet::<Test> as MultiReservableCurrency<AssetId>>::slash_reserved(asset_id, &account_1, third);
 				let _balance = if  first + second > third {
 					prop_assert_eq!(difference, 0);
 					let balance = (first + second) - third;
 					// check reserve balance after slash
-					prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_issuance(),total_issuance-(third-difference));
-					prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), balance);
+					prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AssetId>>::total_issuance(asset_id),total_issuance-(third-difference));
+					prop_assert_eq!(<Pallet::<Test> as MultiReservableCurrency<AssetId>>::reserved_balance(asset_id, &account_1), balance);
 
 					balance
 				} else {
 					prop_assert_eq!(difference, third - (first + second ));
-					prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::total_issuance(),total_issuance-(third-difference));
-					prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), 0);
+					prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AssetId>>::total_issuance(asset_id),total_issuance-(third-difference));
+					prop_assert_eq!(<Pallet::<Test> as MultiReservableCurrency<AssetId>>::reserved_balance(asset_id, &account_1), 0);
 					0
 				};
 
@@ -463,20 +600,20 @@ mod reservable_currency {
 		#[test]
 		fn test_repariate_reserve_implementation(
 			(account_1, account_2) in accounts_2(),
+			   asset_id in asset(),
 			(first, second, third) in valid_amounts_without_overflow_3()
 		) {
-			new_test_ext().execute_with(|| {
+			new_test_ext_multi_currency().execute_with(|| {
 
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first + second + third).peek(), first + second + third);
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_2, first).peek(), first);
-				prop_assert_ok!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserve(&account_1, first+second+third));
-				//repatriate to free balance
-				let repatriate_free = <Pallet::<Test> as ReservableCurrency<AccountId>>::repatriate_reserved(&account_1, &account_2, second, BalanceStatus::Free).unwrap();
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_2),first + (second - repatriate_free));
-				//repatriate to reserved balance
-				let repatriate_reserved = <Pallet::<Test> as ReservableCurrency<AccountId>>::repatriate_reserved(&account_1, &account_2, third, BalanceStatus::Reserved).unwrap();
-				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_2), third - repatriate_reserved);
-				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), first + (repatriate_free + repatriate_reserved));
+			   prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AssetId>>::deposit(asset_id, &account_1, first+second));
+			   prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AssetId>>::deposit(asset_id, &account_2, first));
+			   prop_assert_ok!(<Pallet::<Test> as MultiReservableCurrency<AssetId>>::reserve(asset_id, &account_1, first + second ));
+			   //repatriate to free balance
+			   let repatriate_free = <Pallet::<Test> as MultiReservableCurrency<AssetId>>::repatriate_reserved(asset_id, &account_1, &account_2, second, BalanceStatus::Free).unwrap();
+			   prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AssetId>>::free_balance(asset_id, &account_2), first + (second - repatriate_free));
+
+			   prop_assert_eq!(<Pallet::<Test> as MultiReservableCurrency<AssetId>>::reserved_balance(asset_id, &account_1), first + repatriate_free );
+
 
 				Ok(())
 			}).unwrap();
@@ -486,27 +623,28 @@ mod reservable_currency {
 		#[test]
 		fn test_unreserve_implementation(
 			account_1 in accounts(),
+			 asset_id in asset(),
 			(first, second, third) in valid_amounts_without_overflow_3()
 		) {
 			new_test_ext().execute_with(|| {
 
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::deposit_creating(&account_1, first + second + third).peek(), first + second + third);
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), first + second + third);
-				prop_assert_ok!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserve(&account_1, first+second+third));
-				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), first + second + third);
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), 0);
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AssetId>>::deposit(asset_id, &account_1, first + second + third));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AssetId>>::free_balance(asset_id, &account_1), first + second + third);
+				prop_assert_ok!(<Pallet::<Test> as MultiReservableCurrency<AssetId>>::reserve(asset_id,&account_1, first+second+third));
+				prop_assert_eq!(<Pallet::<Test> as MultiReservableCurrency<AssetId>>::reserved_balance(asset_id, &account_1), first + second + third);
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AssetId>>::free_balance(asset_id, &account_1), 0);
 				//repatriate to free balance
-				let mut remaining = <Pallet::<Test> as ReservableCurrency<AccountId>>::unreserve(&account_1, third);
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), third - remaining);
-				let mut free_balance = <Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1);
-				remaining = <Pallet::<Test> as ReservableCurrency<AccountId>>::unreserve(&account_1, second);
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), free_balance + (second - remaining));
+				let mut remaining = <Pallet::<Test> as MultiReservableCurrency<AssetId>>::unreserve(asset_id, &account_1, third);
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AssetId>>::free_balance(asset_id, &account_1), third - remaining);
+				let mut free_balance = <Pallet::<Test> as MultiCurrency<AssetId>>::free_balance(asset_id, &account_1);
+				remaining = <Pallet::<Test> as MultiReservableCurrency<AssetId>>::unreserve(asset_id, &account_1, second);
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AssetId>>::free_balance(asset_id, &account_1), free_balance + (second - remaining));
 
-				free_balance = <Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1);
-				remaining = <Pallet::<Test> as ReservableCurrency<AccountId>>::unreserve(&account_1, first);
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), free_balance + (first - remaining));
-				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), 0);
-				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), first + second + third);
+				free_balance = <Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id, &account_1);
+				remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account_1, first);
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id, &account_1), free_balance + (first - remaining));
+				prop_assert_eq!(<Pallet::<Test> as MultiReservableCurrency<AccountId>>::reserved_balance(asset_id, &account_1), 0);
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id, &account_1), first + second + third);
 
 				Ok(())
 			}).unwrap();
