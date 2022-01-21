@@ -44,14 +44,13 @@ jobs:
       - x64
       - sre
     steps:
-      - uses: taiki-e/install-action@cargo-llvm-cov
       - name: Run Test (with coverage)
+        continue-on-error: true
         run: |
           # integration tests can't be compiled with --feature=runtime-benchmarks
           # TODO: https://github.com/ComposableFi/composable/issues/535
           SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --exclude=integration-tests --lcov --output-path lcov.info 
       - name: Upload coverage to Codecov
-        continue-on-error: true
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -81,20 +80,10 @@ jobs:
           cargo +nightly fmt --all -- --check
       
       - name: Hadolint
-        env:
-          HADOLINT_VERSION: v2.8.0
-        run: |
-          curl -L -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
-          chmod +x hadolint
-          ./hadolint --version
-          total_exit_code=0
-          while IFS= read -r file; do
-            echo "=== $file ==="
-            ./hadolint --config .hadolint.yaml $file || total_exit_code=$?
-            echo ""
-          done <<(find . -name "Dockerfile")
-          exit $total_exit_code
-
+      - uses: hadolint/hadolint-action@v1.6.0
+        with:
+          dockerfile: docker/Dockerfile
+        
       - name: Remark
         run: |
           npm install yarn
