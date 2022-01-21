@@ -46,6 +46,8 @@ jobs:
       - linux
       - x64
       - sre
+    container:
+      image: paritytech/ci-linux:production      
     steps:
       - name: Clean up
         continue-on-error: true
@@ -58,13 +60,12 @@ jobs:
           /home/runner/.cargo/bin/rustup show
       - uses: actions/checkout@v2
       - name: Run Test (with coverage)
-        continue-on-error: true
         run: |
           # integration tests can't be compiled with --feature=runtime-benchmarks
           # TODO: https://github.com/ComposableFi/composable/issues/535
-          /home/runner/.cargo/bin/cargo install -f cargo-llvm-cov
-          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain nightly
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --exclude=integration-tests --lcov --output-path lcov.info 
+          cargo install -f cargo-llvm-cov
+          rustup component add llvm-tools-preview --toolchain nightly
+          SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --exclude=integration-tests --lcov --output-path lcov.info 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
