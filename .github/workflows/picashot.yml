@@ -1,4 +1,4 @@
-name: Check Runtime
+name: Picashot
 on:
   push:
     branches: 
