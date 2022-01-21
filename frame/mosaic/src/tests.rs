@@ -122,6 +122,33 @@ mod rotate_relayer {
     }
 }
 
+mod set_network {
+    use super::*;
+
+    #[test]
+    fn relayer_can_set_network() {
+        let network_id = 3;
+        let network_info = 	NetworkInfo { enabled: false, max_transfer_size: 100000 };
+        new_test_ext().execute_with(|| {
+            assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+            assert_ok!(Mosaic::set_network(Origin::relayer(), network_id, network_info.clone()));
+            assert_eq!(Mosaic::network_infos(network_id), Some(network_info));
+        })
+    }
+
+    #[test]
+    fn root_cannot_set_network() {
+        let network_id = 3;
+        let network_info = 	NetworkInfo { enabled: false, max_transfer_size: 100000 };
+        new_test_ext().execute_with(|| {
+            assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+            assert_noop!(Mosaic::set_network(Origin::root(), network_id, network_info.clone()), DispatchError::BadOrigin);
+        })
+    }
+}
+
 
 
 #[test]

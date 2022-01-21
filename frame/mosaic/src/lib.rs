@@ -130,6 +130,7 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
+    #[pallet::getter(fn network_infos)]
 	pub type NetworkInfos<T: Config> =
 		StorageMap<_, Twox64Concat, NetworkIdOf<T>, NetworkInfo<BalanceOf<T>>, OptionQuery>;
 
