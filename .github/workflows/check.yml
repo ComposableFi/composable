@@ -30,7 +30,10 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
-
+      - uses: actions/checkout@v2
+      - name: Rustup show
+        run: |
+          rustup show
       - uses: actions/checkout@v2
       - name: cargo check --all --benches
         run: |
@@ -43,15 +46,20 @@ jobs:
       - linux
       - x64
       - sre
+    container:
+      image: paritytech/ci-linux:production
     steps:
-      - uses: taiki-e/install-action@cargo-llvm-cov
+      - uses: actions/checkout@v2
+      - name: Rustup show
+        run: |
+          rustup show
+      - uses: actions/checkout@v2
       - name: Run Test (with coverage)
         run: |
           # integration tests can't be compiled with --feature=runtime-benchmarks
           # TODO: https://github.com/ComposableFi/composable/issues/535
           SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --exclude=integration-tests --lcov --output-path lcov.info 
       - name: Upload coverage to Codecov
-        continue-on-error: true
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -83,6 +91,7 @@ jobs:
       - name: Hadolint
         env:
           HADOLINT_VERSION: v2.8.0
+        continue-on-error: true # this step is such a pita
         run: |
           curl -L -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
           chmod +x hadolint
