@@ -1,4 +1,4 @@
-name: Release Drafter
+name: ParityTech
 on:
   push:
     branches:
@@ -20,8 +20,7 @@ jobs:
           
       - name: ParityTech
         run: |
-          SKIP_WASM_BUILD=1 time cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
+          SKIP_WASM_BUILD=1 cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
           cargo test --workspace --locked --release --verbose --features runtime-benchmarks # check runtime-benchmarks work
-          SKIP_WASM_BUILD=1 
-          env -u RUSTFLAGS 
-          cargo +nightly clippy --all-targets 
+          SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly clippy --all-targets 
+          cargo +nightly fmt --all -- --check

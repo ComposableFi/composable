@@ -24,6 +24,8 @@ jobs:
       - linux
       - x64
       - sre
+    container:
+      image: paritytech/ci-linux:production
     steps:
       - name: Clean up
         continue-on-error: true
@@ -43,6 +45,8 @@ jobs:
       - linux
       - x64
       - sre
+    container:
+      image: paritytech/ci-linux:production
     steps:
       - uses: actions/checkout@v2
       - name: Compile check with std
@@ -56,6 +60,8 @@ jobs:
       - linux
       - x64
       - sre
+    container:
+      image: paritytech/ci-linux:production
     steps:
       - uses: actions/checkout@v2
       - run: |
@@ -66,7 +72,7 @@ jobs:
           node-version: 14.x
       - name: Cargo fmt
         run: |
-          /home/runner/.cargo/bin/cargo fmt -- --check
+          cargo +nightly fmt --all -- --check
       - name: Hadolint
         env:
           HADOLINT_VERSION: v2.8.0
@@ -97,7 +103,7 @@ jobs:
           exit $total_exit_code
       - name: Cargo clippy
         run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo clippy --workspace -- -D warnings
+          SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly clippy --all-targets
       - name: Cargo udeps
         env:
           UDEPS_VERSION: v0.1.24
@@ -116,14 +122,18 @@ jobs:
       - linux
       - x64
       - sre
+    container:
+      image: paritytech/ci-linux:production
     steps:
       - uses: actions/checkout@v2
       - name: Install cargo-llvm-cov
         run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
       - name: Run Test (with coverage)
         run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo llvm-cov --workspace --lcov --output-path lcov.info
+          SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --lcov --output-path lcov.info
+          cargo test --workspace --locked --release --verbose --features runtime-benchmarks # check runtime-benchmarks work
       - name: Upload coverage to Codecov
+        continue-on-error: true
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
