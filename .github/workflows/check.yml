@@ -63,7 +63,7 @@ jobs:
         run: |
           # integration tests can't be compiled with --feature=runtime-benchmarks
           # TODO: https://github.com/ComposableFi/composable/issues/535
-          apt update && apt install -y lsb-release wget software-properties-common
+          apt update && apt install -y lsb-release wget software-properties-common gnupg2
           bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
           cargo install -f cargo-llvm-cov
           rustup component add llvm-tools-preview --toolchain nightly
