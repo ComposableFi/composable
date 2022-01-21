@@ -2,7 +2,7 @@
 #
 # Runs benchmarks for runtimes whose files have changed.
 
-set -e # fail on any error
+#set -e # fail on any error
 
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
@@ -33,13 +33,6 @@ pallets=(
 	lending
 	dutch_auction
 )
-
- echo "make sure the main branch and release tag are available in shallow clones"
- git fetch --depth="${GIT_DEPTH:-100}" origin main
- git fetch --depth="${GIT_DEPTH:-100}" origin "${LATEST_TAG_NAME}"
- git tag -f "${LATEST_TAG_NAME}" FETCH_HEAD
- git log -n1 "${LATEST_TAG_NAME}"
-
 
 /home/runner/.cargo/bin/rustup install nightly
 /home/runner/.cargo/bin/rustup  target add wasm32-unknown-unknown --toolchain nightly
@@ -78,7 +71,7 @@ run_benchmarks() {
 
 for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
-    if has_runtime_changes "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" "$folder"; then
+    if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_REF_NAME}" "$folder"; then
       run_benchmarks $output $chain $folder
     fi
   done <<<"$i"

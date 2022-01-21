@@ -8,14 +8,39 @@ on:
       - main
       - develop
       - releases
+  push:
+    branches:
+      - main    
   workflow_dispatch:
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
-  check:
-    name: Check 
+  check-benchmarks:
+    name: Check Benchmarks
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+
+      - uses: actions/checkout@v2
+      - name: Clean up
+        continue-on-error: true
+        run: docker system prune --force --all --volumes
+      - name: Compile Check with WASM
+        run: |
+          /home/runner/.cargo/bin/cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
+
+  check-std:
+    name: Check STD
     runs-on:
       - self-hosted
       - linux
@@ -23,14 +48,10 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
-      - run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --all --benches
-      - name: Benchmark
+      - name: Compile check with std
         run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --features=runtime-benchmarks --workspace --release --exclude integration-tests
-      - name: Picasso
-        run: |
-          /home/runner/.cargo/bin/cargo build --release -p picasso-runtime
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --features=std --workspace --exclude integration-tests
+
   linters:
     name: Linters
     runs-on:
@@ -41,14 +62,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-          /home/runner/.cargo/bin/rustup install nightly-2021-11-29
-          /home/runner/.cargo/bin/rustup target add --toolchain=nightly-2021-11-29 wasm32-unknown-unknown
           /home/runner/.cargo/bin/rustup show
-          /home/runner/.cargo/bin/rustup override unset
-          /home/runner/.cargo/bin/rustup show
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
       - name: Cargo fmt
         run: |
-          /home/runner/.cargo/bin/cargo +nightly-2021-11-29 fmt -- --check
+          /home/runner/.cargo/bin/cargo fmt -- --check
       - name: Hadolint
         env:
           HADOLINT_VERSION: v2.8.0
@@ -63,9 +84,23 @@ jobs:
             echo ""
           done < <(find . -name "Dockerfile")
           exit $total_exit_code
+      - name: Remark
+        run: |
+          npm install yarn
+          ./node_modules/.bin/yarn add remark-cli \
+            remark-lint-mdash-style \
+            https://github.com/typeable/remark-validate-links#anchors \
+            remark-preset-lint-recommended \
+            remark-lint-no-dead-urls
+
+          total_exit_code=0
+          while IFS= read -r file; do
+              ./node_modules/.bin/remark -f $file || total_exit_code=$?
+          done < <(find . -name "*.md" -not -path "*/node_modules/*" -not -path "./.github/*")
+          exit $total_exit_code
       - name: Cargo clippy
         run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-29 clippy -- -D warnings
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo clippy --workspace -- -D warnings
       - name: Cargo udeps
         env:
           UDEPS_VERSION: v0.1.24
@@ -74,8 +109,8 @@ jobs:
           tar xzf "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
           cp "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu/cargo-udeps" ~/.cargo/bin/
           rm -r "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu"
-          /home/runner/.cargo/bin/cargo +nightly-2021-11-29 udeps --version
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-29 udeps --workspace --all-features
+          /home/runner/.cargo/bin/cargo udeps --version
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo udeps --workspace --all-features
         continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.  
   test:
     name: Unit Test
@@ -86,18 +121,11 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - run: |
-          /home/runner/.cargo/bin/rustup component add llvm-tools-preview
       - name: Install cargo-llvm-cov
         run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
       - name: Run Test (with coverage)
         run: |
-          /home/runner/.cargo/bin/rustup install nightly-2021-11-29
-          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly-2021-11-29
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-29 llvm-cov --workspace --lcov --output-path lcov.info
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo llvm-cov --workspace --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:

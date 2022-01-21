@@ -2,7 +2,7 @@
 #
 # Runs simnode for runtimes whose files have changed.
 
-set -e # fail on any error
+#set -e # fail on any error
 
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
@@ -35,7 +35,7 @@ run_simnode() {
 for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r chain folder; do
     echo "check if the wasm sources changed for $chain"
-    if has_runtime_changes "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" "$folder"; then
+    if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_REF_NAME}" "$folder"; then
       # shellcheck disable=SC2086
       run_simnode $chain
     fi
