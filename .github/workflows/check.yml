@@ -24,7 +24,8 @@ jobs:
       - linux
       - x64
       - sre
-    container: { image: paritytech/ci-linux:production }
+    container: 
+      image: paritytech/ci-linux:production
     steps:
       - name: Clean up
         continue-on-error: true
