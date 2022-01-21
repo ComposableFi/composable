@@ -46,10 +46,8 @@ jobs:
     container:
       image: paritytech/ci-linux:production
     steps:
-      - uses: actions/checkout@v2
-      - name: Install cargo-llvm-cov
-        run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
       - name: Run Test (with coverage)
+      - uses: taiki-e/install-action@cargo-llvm-cov
         run: |
           # integration tests can't be compiled with --feature=runtime-benchmarks
           # TODO: https://github.com/ComposableFi/composable/issues/535
