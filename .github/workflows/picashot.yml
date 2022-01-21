@@ -1,5 +1,6 @@
 name: Check Runtime
 on:
+  workflow_dispatch:
   schedule:
     - cron:  '0 0 * * *'
 jobs:
@@ -15,4 +16,17 @@ jobs:
       working-directory: "./.maintain/playbooks"
       run: |
         ansible-playbook -l _mainnet_collator_yes picashot.yml -i picasso-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
+
+  dalishot:
+  runs-on: 
+    - self-hosted
+    - linux
+    - X64
+    - ansible-runner
+
+  steps:
+  - name: Run ansible playbook
+    working-directory: "./.maintain/playbooks"
+    run: |
+      ansible-playbook -l _collator_node_yes picashot.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
 

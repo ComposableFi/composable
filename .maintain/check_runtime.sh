@@ -1,7 +1,6 @@
 #!/bin/bash
 #
-#
-# check for any changes in the node/src/runtime, frame/* and primitives/sr_* trees. if
+# check for any changes in the runtime/ and frame/*. if
 # there are any changes found, it should mark the PR breaksconsensus and
 # "auto-fail" the PR if there isn't a change in the runtime/src/lib.rs file
 # that alters the version.
@@ -27,8 +26,6 @@ simnode_check() {
   then
     echo "Wasm sources have changed"
     echo "RUNTIME_CHECK=1" >> $GITHUB_ENV
-    else
-      echo "RUNTIME_CHECK=0" >> $GITHUB_ENV
   fi
 }
 
@@ -40,7 +37,6 @@ for i in "${VERSIONS_FILES[@]}"; do
 done
 
 # dropped through. there's something wrong;  exit 1.
-
-exit 1
+exit 0
 
 # vim: noexpandtab

@@ -101,3 +101,11 @@ check_runtime() {
     exit 1 # Exit because user needs to bump spec version
   fi
 }
+
+boldprint() { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
+boldcat() {
+  printf "|\n"
+  while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done
+  printf "|\n"
+}
+

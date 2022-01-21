@@ -5,7 +5,7 @@
 # "auto-fail" the PR if there isn't a change in the runtime/src/lib.rs file
 # that alters the version.
 
-#set -e # fail on any error
+set -e # fail on any error
 
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
@@ -23,4 +23,5 @@ then
   tar -czvf composable-"${RELEASE_VERSION}".tar.gz target/release/composable
   tar -czvf picasso_runtime.compact.wasm-"${RELEASE_VERSION}".tar.gz runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
   gsutil cp *.tar.gz gs://composable-binaries/community-releases/"${RELEASE_VERSION}"/
+  echo "client_release=1" >> "$GITHUB_ENV"
 fi
