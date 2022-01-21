@@ -31,14 +31,9 @@ build_runtime () {
   # srtool for reproducible builds
   srtool build --package "$chain"-runtime --profile release --runtime-dir runtime/"$chain"
   # subwasm for runtime metadata
-  printf "# %s Runtime\n" "$(echo $chain | awk '{ print toupper(substr($0, 1, 1)) substr($0, 2) }')" >> release.md
+  printf "\n# %s Runtime\n\n" "$(echo $chain | awk '{ print toupper(substr($0, 1, 1)) substr($0, 2) }')" >> release.md
   INFO=$(subwasm info ./runtime/"$chain"/target/srtool/release/wbuild/"$chain"-runtime/"$chain"_runtime.compact.wasm)
-  cat <<EOT >> release.md
-\`\`\`
-$INFO
-\`\`\`
-
-EOT
+  printf "\`\`\`\n%s\n\`\`\`\n" "$INFO" >> release.md
 }
 
 # Check which runtimes have changed and build them
