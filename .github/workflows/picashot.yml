@@ -20,7 +20,8 @@ jobs:
       run: |
         sudo chown -R $USER:$USER $GITHUB_WORKSPACE
         docker system prune --force --all --volumes
-        
+
+    - uses: actions/checkout@v2        
     - name: Run ansible playbook
       working-directory: "./.maintain/playbooks"
       run: |
@@ -41,7 +42,8 @@ jobs:
       run: |
         sudo chown -R $USER:$USER $GITHUB_WORKSPACE
         docker system prune --force --all --volumes
-
+        
+    - uses: actions/checkout@v2    
     - name: Run ansible playbook
       working-directory: "./.maintain/playbooks"
       run: |
