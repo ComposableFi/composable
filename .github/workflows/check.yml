@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Compile Check with WASM
         run: |
-          cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
+          SKIP_WASM_BUILD=1 time cargo +nightly check --benches --all
 
   check-std:
     name: Check STD
