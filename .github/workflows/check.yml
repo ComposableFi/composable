@@ -47,7 +47,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Compile check with std
         run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --features=std --workspace --exclude integration-tests
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --workspace --exclude integration-tests
 
   linters:
     name: Linters
