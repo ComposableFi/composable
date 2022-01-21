@@ -25,6 +25,7 @@ jobs:
       working-directory: ".maintain/playbooks"
       run: |
         pwd
+        ls
         ansible-playbook -l _mainnet_collator_yes picashot.yml -i picasso-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
 
   dalishot:
