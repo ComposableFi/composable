@@ -93,7 +93,7 @@ jobs:
             echo "=== $file ==="
             ./hadolint --config .hadolint.yaml $file || total_exit_code=$?
             echo ""
-          done < <(find . -name "Dockerfile")
+          done << (find . -name "Dockerfile")
           exit $total_exit_code
       - name: Remark
         run: |
