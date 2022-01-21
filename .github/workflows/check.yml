@@ -66,7 +66,7 @@ jobs:
           node-version: 14.x
       - name: Cargo fmt
         run: |
-          /home/runner/.cargo/bin/cargo fmt -- --check
+          /home/runner/.cargo/bin/cargo +nightly-2021-11-29 fmt -- --check
       - name: Hadolint
         env:
           HADOLINT_VERSION: v2.8.0
@@ -97,7 +97,7 @@ jobs:
           exit $total_exit_code
       - name: Cargo clippy
         run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo clippy --workspace -- -D warnings
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-29 clippy --workspace -- -D warnings
       - name: Cargo udeps
         env:
           UDEPS_VERSION: v0.1.24
@@ -107,7 +107,7 @@ jobs:
           cp "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu/cargo-udeps" ~/.cargo/bin/
           rm -r "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu"
           /home/runner/.cargo/bin/cargo udeps --version
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo udeps --workspace --all-features
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-29 udeps --workspace --all-features
         continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.  
   test:
     name: Unit Test
@@ -122,7 +122,7 @@ jobs:
         run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
       - name: Run Test (with coverage)
         run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo llvm-cov --workspace --lcov --output-path lcov.info
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-29 llvm-cov --workspace --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:

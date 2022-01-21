@@ -5,7 +5,7 @@
 # "auto-fail" the PR if there isn't a change in the runtime/src/lib.rs file
 # that alters the version.
 
-#set -e # fail on any error
+set -e # fail on any error
 
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
