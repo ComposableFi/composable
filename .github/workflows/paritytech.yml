@@ -1,0 +1,23 @@
+name: Release Drafter
+on:
+  push:
+    branches:
+      - test-paritytech
+
+jobs:
+  paritytech:
+    runs-on: ubuntu-latest
+    container:
+      image: paritytech/ci-linux:production
+    steps:
+      - uses: actions/checkout@v2
+        with: 
+          fetch-depth: 0
+          
+      - name: ParityTech
+        run: |
+          SKIP_WASM_BUILD=1 time cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
+          cargo test --workspace --locked --release --verbose --features runtime-benchmarks # check runtime-benchmarks work
+          SKIP_WASM_BUILD=1 
+          env -u RUSTFLAGS 
+          cargo +nightly clippy --all-targets 
