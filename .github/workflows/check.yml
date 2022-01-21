@@ -47,6 +47,12 @@ jobs:
       - x64
       - sre
     steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+
       - uses: actions/checkout@v2
       - name: Compile check with std
         run: |
@@ -60,6 +66,12 @@ jobs:
       - x64
       - sre
     steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+
       - uses: actions/checkout@v2
       - run: |
           /home/runner/.cargo/bin/rustup show
@@ -120,6 +132,12 @@ jobs:
       - x64
       - sre
     steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+          
       - uses: actions/checkout@v2
       - name: Install cargo-llvm-cov
         run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
