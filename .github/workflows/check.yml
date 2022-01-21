@@ -63,7 +63,7 @@ jobs:
         run: |
           # integration tests can't be compiled with --feature=runtime-benchmarks
           # TODO: https://github.com/ComposableFi/composable/issues/535
-          sudo apt-get install -y llvm
+          apt-get install -y llvm
           cargo install -f cargo-llvm-cov
           rustup component add llvm-tools-preview --toolchain nightly
           SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --exclude=integration-tests --lcov --output-path lcov.info 
