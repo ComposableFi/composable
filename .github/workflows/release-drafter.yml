@@ -66,7 +66,7 @@ jobs:
         cd $GITHUB_WORKSPACE
 
     - name: Upload Compact Dali wasm
-      id: upload-release-asset
+      id: upload-dali-wasm
       if: env.dali_wasm == 1
       uses: actions/upload-release-asset@v1
       env:
@@ -78,7 +78,7 @@ jobs:
         asset_content_type: application/octet-stream
 
     - name: Upload Compact Picasso wasm
-      id: upload-release-asset
+      id: upload-picasso-wasm
       if: env.picasso_wasm == 1
       uses: actions/upload-release-asset@v1
       env:
@@ -90,7 +90,7 @@ jobs:
         asset_content_type: application/octet-stream
 
     - name: Upload Compact Composable wasm
-      id: upload-release-asset
+      id: upload-composable-wasm
       if: env.composable_wasm == 1
       uses: actions/upload-release-asset@v1
       env:
@@ -106,7 +106,7 @@ jobs:
         .maintain/client_release.sh
 
     - name: Upload Composable Node Binaries
-      id: upload-release-asset
+      id: upload-composable-binary
       if: env.client_release == 1
       uses: actions/upload-release-asset@v1
       env:
