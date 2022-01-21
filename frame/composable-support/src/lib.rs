@@ -12,4 +12,5 @@
 #![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod collections;
 pub mod validation;
