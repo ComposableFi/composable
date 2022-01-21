@@ -43,8 +43,8 @@ jobs:
       - linux
       - x64
       - sre
-    container:
-      image: paritytech/ci-linux:production
+    #container:
+    #  image: paritytech/ci-linux:production
     steps:
       - uses: taiki-e/install-action@cargo-llvm-cov
       - name: Run Test (with coverage)
