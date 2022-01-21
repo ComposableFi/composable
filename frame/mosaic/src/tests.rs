@@ -48,39 +48,52 @@ pub trait OriginExt {
 
 impl OriginExt for Origin {}
 
-#[test]
-fn set_relayer() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
-		assert_eq!(Mosaic::relayer_account_id(), Some(RELAYER));
-	})
+
+mod set_relayer {
+    use super::*;
+
+    #[test]
+    fn set_relayer() {
+        new_test_ext().execute_with(|| {
+            assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+            assert_eq!(Mosaic::relayer_account_id(), Some(RELAYER));
+        })
+    }
+
+    #[test]
+    fn relayer_cannot_set_relayer() {
+        new_test_ext().execute_with(|| {
+            assert_noop!(Mosaic::set_relayer(Origin::relayer(), ALICE), DispatchError::BadOrigin);
+        })
+    }
+
+    #[test]
+    fn none_cannot_set_relayer() {
+        new_test_ext().execute_with(|| {
+            assert_noop!(Mosaic::set_relayer(Origin::none(), ALICE), DispatchError::BadOrigin);
+        })
+    }
+
+    #[test]
+    fn alice_cannot_set_relayer() {
+        new_test_ext().execute_with(|| {
+            assert_noop!(Mosaic::set_relayer(Origin::signed(ALICE), ALICE), DispatchError::BadOrigin);
+        })
+    }
+
+    #[test]
+    fn relayer_can_rotate_relayer() {
+        new_test_ext().execute_with(|| {
+            let ttl = 500;
+            let current_block = System::block_number();
+            assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+            assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl));
+            System::set_block_number(current_block + ttl + 2);
+            assert_eq!(Mosaic::relayer_account_id(), Some(BOB))
+        })
+    }
 }
 
-#[test]
-fn relayer_cannot_set_relayer() {
-	new_test_ext().execute_with(|| {
-		assert_noop!(Mosaic::set_relayer(Origin::relayer(), ALICE), DispatchError::BadOrigin);
-	})
-}
-
-#[test]
-fn none_cannot_set_relayer() {
-	new_test_ext().execute_with(|| {
-		assert_noop!(Mosaic::set_relayer(Origin::none(), ALICE), DispatchError::BadOrigin);
-	})
-}
-
-#[test]
-fn relayer_can_rotate_relayer() {
-	new_test_ext().execute_with(|| {
-		let ttl = 500;
-		let current_block = System::block_number();
-		assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
-		assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl));
-		System::set_block_number(current_block + ttl + 2);
-		assert_eq!(Mosaic::relayer_account_id(), Some(BOB))
-	})
-}
 
 #[test]
 fn arbitrary_account_cannot_rotate_relayer() {

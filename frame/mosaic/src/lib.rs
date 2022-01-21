@@ -457,7 +457,7 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn claim_stale_to(
-			origin: OriginFor<T>,
+            origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
 			to: AccountIdOf<T>,
 		) -> DispatchResultWithPostInfo {
