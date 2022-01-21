@@ -5,7 +5,7 @@ on:
       - paritytech
 
 jobs:
-  paritytech:
+  substrate-ci:
     runs-on: 
         - self-hosted
         - linux
@@ -18,7 +18,7 @@ jobs:
         with: 
           fetch-depth: 0
           
-      - name: ParityTech
+      - name: CI Checks
         run: |
           SKIP_WASM_BUILD=1 cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
           cargo test --workspace --locked --release --verbose --features runtime-benchmarks # check runtime-benchmarks work
