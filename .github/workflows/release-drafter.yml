@@ -49,8 +49,6 @@ jobs:
 
     - uses: release-drafter/release-drafter@v5
       id: release_drafter
-      with:
-        prerelease: true
       env:
         GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 
@@ -67,19 +65,55 @@ jobs:
         npm run update-release-body -- --id=${{ steps.release_drafter.outputs.id  }} --repo=composableFi/composable --body="$GITHUB_WORKSPACE/release.md"
         cd $GITHUB_WORKSPACE
 
-    - name: Upload Compact ${{ matrix.runtime }} wasm
-      id: upload-release-asset 
-      if: env.${{ matrix.runtime }}_wasm == 1
+    - name: Upload Compact Dali wasm
+      id: upload-release-asset
+      if: env.dali_wasm == 1
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.release_drafter.outputs.upload_url }} 
-        asset_path: ./runtime/${{ matrix.runtime }}/target/srtool/release/wbuild/${{ matrix.runtime }}-runtime/${{ matrix.runtime }}_runtime.compact.wasm
-        asset_name: ${{ matrix.runtime }}_runtime.compact.wasm
+        upload_url: ${{ steps.release_drafter.outputs.upload_url }}
+        asset_path: ./runtime/dali/target/srtool/release/wbuild/dali-runtime/dali_runtime.compact.wasm
+        asset_name: dali_runtime.compact.wasm
+        asset_content_type: application/octet-stream
+
+    - name: Upload Compact Picasso wasm
+      id: upload-release-asset
+      if: env.picasso_wasm == 1
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release_drafter.outputs.upload_url }}
+        asset_path: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
+        asset_name: picasso_runtime.compact.wasm
+        asset_content_type: application/octet-stream
+
+    - name: Upload Compact Composable wasm
+      id: upload-release-asset
+      if: env.composable_wasm == 1
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release_drafter.outputs.upload_url }}
+        asset_path: ./runtime/composable/target/srtool/release/wbuild/composable-runtime/composable_runtime.compact.wasm
+        asset_name: picasso_runtime.compact.wasm
         asset_content_type: application/octet-stream
 
     - name: 🔨 Build and Upload Composable Binary
       run: |
         .maintain/client_release.sh
+
+    - name: Upload Composable Node Binaries
+      id: upload-release-asset
+      if: env.client_release == 1
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release_drafter.outputs.upload_url }}
+        asset_path: ./target/release/composable
+        asset_name: composable
+        asset_content_type: application/octet-stream
 

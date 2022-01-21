@@ -22,4 +22,6 @@ then
   cargo build --release -p composable
   tar -czvf composable-"${RELEASE_VERSION}".tar.gz target/release/composable
   gsutil cp *.tar.gz gs://composable-binaries/community-releases/"${RELEASE_VERSION}"/
+  echo "client_release=1" >> "$GITHUB_ENV"
+
 fi
