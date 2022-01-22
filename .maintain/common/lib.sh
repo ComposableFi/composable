@@ -17,7 +17,7 @@ boldcat() {
 
 LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
 #LATEST_TAG_NAME=$(gh release list -L=5 | sed -n '5 p' | awk '{print $(NF-1)}')
-boldprint $LATEST_TAG_NAME
+boldprint "LATEST_TAG_NAME=$LATEST_TAG_NAME"
 git fetch origin tag "${LATEST_TAG_NAME}" --no-tags
 
 # We want to get the tag of the most reccent release.
