@@ -303,7 +303,7 @@ fn do_timelocked_mint(to: AccountId, asset_id: AssetId, amount: Balance, lock_ti
 }
 
 
-mod transfer_to {
+mod transfers {
     use super::*;
 
     #[test]
@@ -325,6 +325,18 @@ mod transfer_to {
     }
 
     #[test]
+    fn cannot_accept_transfer_larger_than_balance() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            do_transfer_to();
+            assert_noop!(
+                Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 101),
+                Error::<Test>::AmountMismatch
+            );
+        })
+    }
+
+    #[test]
     fn claim_stale_to() {
         new_test_ext().execute_with(|| {
             initialize();
@@ -333,6 +345,63 @@ mod transfer_to {
             System::set_block_number(current_block + Mosaic::timelock_period() + 1);
             Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE)
                 .expect("claiming an outgoing transaction should work after the timelock period");
+        })
+    }
+
+    #[test]
+    fn cannot_claim_stale_to_early() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            do_transfer_to();
+            let current_block = System::block_number();
+            System::set_block_number(current_block + Mosaic::timelock_period() - 1);
+            assert_noop!(
+                Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE),
+                Error::<Test>::NoStaleTransactions
+            );
+        })
+    }
+
+    #[test]
+    fn cannot_claim_after_relayer_accepts_transfer() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            do_transfer_to();
+            assert_ok!(Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 100));
+            let current_block = System::block_number();
+            System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+            assert_noop!(
+                Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE),
+                Error::<Test>::NoStaleTransactions
+            );
+        })
+    }
+
+    #[test]
+    fn relayer_cannot_accept_transfer_after_claim() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            do_transfer_to();
+            let current_block = System::block_number();
+            System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+            assert_ok!(Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE));
+            assert_noop!(
+                Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 100),
+                Error::<Test>::NoOutgoingTx
+            );
+        })
+    }
+
+    #[test]
+    fn can_claim_stale_after_partial_accept_transfer() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            do_transfer_to();
+            let current_block = System::block_number();
+            System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+            assert_ok!(Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 20));
+            // System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+            assert_ok!(Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE));
         })
     }
 
@@ -468,6 +537,10 @@ mod transfer_to {
             network_id,
         }));
     }
+}
+
+mod accept_transfer {
+
 }
 
 #[test]

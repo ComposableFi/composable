@@ -34,7 +34,7 @@ pub mod pallet {
 		transactional, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use num_traits::Zero;
+	use num_traits::{CheckedSub, Zero};
 	use scale_info::TypeInfo;
 	use sp_core::H256;
 	use sp_runtime::{
@@ -426,7 +426,7 @@ pub mod pallet {
 				from.clone(),
 				asset_id,
 				|maybe_tx| match *maybe_tx {
-					Some((balance, _)) => {
+					Some((balance, lock_period)) => {
 						ensure!(amount <= balance, Error::<T>::AmountMismatch);
 						T::Assets::burn_from(
 							asset_id,
@@ -438,7 +438,10 @@ pub mod pallet {
 						// the storage item.
 						if amount == balance {
 							*maybe_tx = None
-						}
+						} else {
+                            let new_balance = balance.checked_sub(&amount).ok_or(Error::<T>::AmountMismatch)?;
+                            *maybe_tx = Some((new_balance, lock_period));
+                        }
 
 						Self::deposit_event(Event::<T>::TransferAccepted {
 							from,
@@ -477,7 +480,7 @@ pub mod pallet {
 								&Self::sub_account_id(SubAccount::outgoing(caller.clone())),
 								&to,
 								balance,
-								true,
+								false,
 							)?;
 							balance
 						},
@@ -613,7 +616,7 @@ pub mod pallet {
 						&Self::sub_account_id(SubAccount::incoming(caller.clone())),
 						&to,
 						amount,
-						true,
+						false,
 					)?;
 					// Delete the deposit.
 					deposit.take();
