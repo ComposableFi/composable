@@ -1,5 +1,4 @@
-name: Check Runtime
-on:
+name: Picashot
   workflow_dispatch:
   schedule:
     - cron:  '0 0 * * *'
@@ -12,21 +11,33 @@ jobs:
       - ansible-runner
 
     steps:
-    - name: Run ansible playbook
-      working-directory: "./.maintain/playbooks"
+    - name: Clean up
+      continue-on-error: true
       run: |
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+        docker system prune --force --all --volumes
+        
+    - name: Run ansible playbook
+      working-directory: ".maintain/playbooks"
+      run: |
+        pwd
+        ls
         ansible-playbook -l _mainnet_collator_yes picashot.yml -i picasso-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
 
   dalishot:
-  runs-on: 
-    - self-hosted
-    - linux
-    - X64
-    - ansible-runner
+    runs-on: 
+      - self-hosted
+      - linux
+      - X64
+      - ansible-runner
+    steps:
+    - name: Clean up
+      continue-on-error: true
+      run: |
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+        docker system prune --force --all --volumes
 
-  steps:
-  - name: Run ansible playbook
-    working-directory: "./.maintain/playbooks"
-    run: |
-      ansible-playbook -l _collator_node_yes picashot.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
-
+    - name: Run ansible playbook
+      working-directory: "./.maintain/playbooks"
+      run: |
+        ansible-playbook -l _collator_node_yes picashot.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
