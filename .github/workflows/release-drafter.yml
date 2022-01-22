@@ -45,15 +45,6 @@ jobs:
     - uses: release-drafter/release-drafter@v5
       id: release_drafter
 
-    - name: Clean up
-      continue-on-error: true
-      run: |
-        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-
-    - uses: actions/setup-node@v2
-      with:
-        node-version: '16'
-
     - name: Add runtime metadata to release body
       run: |
         cd scripts/github && npm install
