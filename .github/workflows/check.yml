@@ -8,17 +8,37 @@ on:
       - main
       - develop
       - releases
-  push:
-    branches:
-      - main    
-  workflow_dispatch:
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
-  check-benchmarks:
+  substrate-check:
     name: Check Benchmarks
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: paritytech/ci-linux:production
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+      - name: Rustup show
+        run: |
+          rustup show
+      - uses: actions/checkout@v2
+      - name: cargo check --all --benches
+        run: |
+          SKIP_WASM_BUILD=1 cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
+
+  substrate-test-coverage:
+    name: Unit Tests (With Coverage)
     runs-on:
       - self-hosted
       - linux
@@ -30,24 +50,54 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
-      
       - uses: actions/checkout@v2
-      - name: Compile Check with WASM
+      - name: Rustup show
         run: |
-          /home/runner/.cargo/bin/cargo check --features=runtime-benchmarks --workspace --exclude integration-tests
-
-  check-std:
-    name: Check STD
+         /home/runner/.cargo/bin/rustup show
+      - uses: actions/checkout@v2
+      - name: Run Test (with coverage)
+        run: |
+          # integration tests can't be compiled with --feature=runtime-benchmarks
+          # TODO: https://github.com/ComposableFi/composable/issues/535
+          /home/runner/.cargo/bin/cargo install -f cargo-llvm-cov
+          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly-2021-11-08
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-08 llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --exclude=integration-tests --lcov --output-path lcov.info 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+          fail_ci_if_error: false
+  
+  substrate-tests:
+    name: Unit Tests 
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
+    container:
+      image: paritytech/ci-linux:production      
     steps:
-      - uses: actions/checkout@v2
-      - name: Compile check with std
+      - name: Clean up
+        continue-on-error: true
         run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo check --features=std --workspace --exclude integration-tests
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+      - name: Rustup show
+        run: |
+         rustup show
+      - uses: actions/checkout@v2
+      - name: Run Test (with coverage)
+        run: |
+          SKIP_WASM_BUILD=1 cargo test --workspace --locked --release --verbose --features=runtime-benchmarks --exclude=integration-tests
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+          fail_ci_if_error: false
 
   linters:
     name: Linters
@@ -56,20 +106,25 @@ jobs:
       - linux
       - x64
       - sre
+    container:
+      image: paritytech/ci-linux:production
     steps:
       - uses: actions/checkout@v2
-      - run: |
-          /home/runner/.cargo/bin/rustup show
+      - name: Rustup show
+        run: |
+          rustup show
       - name: Use Node.js 14.x
         uses: actions/setup-node@v2
         with:
           node-version: 14.x
       - name: Cargo fmt
         run: |
-          /home/runner/.cargo/bin/cargo fmt -- --check
+          cargo +nightly fmt --all -- --check
+      
       - name: Hadolint
         env:
           HADOLINT_VERSION: v2.8.0
+        continue-on-error: true # this step is such a pita
         run: |
           curl -L -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
           chmod +x hadolint
@@ -79,9 +134,11 @@ jobs:
             echo "=== $file ==="
             ./hadolint --config .hadolint.yaml $file || total_exit_code=$?
             echo ""
-          done < <(find . -name "Dockerfile")
+          done << (find . -name "Dockerfile")
           exit $total_exit_code
+
       - name: Remark
+        continue-on-error: true # this step is such a pita
         run: |
           npm install yarn
           ./node_modules/.bin/yarn add remark-cli \
@@ -93,11 +150,11 @@ jobs:
           total_exit_code=0
           while IFS= read -r file; do
               ./node_modules/.bin/remark -f $file || total_exit_code=$?
-          done < <(find . -name "*.md" -not -path "*/node_modules/*" -not -path "./.github/*")
+          done << (find . -name "*.md" -not -path "*/node_modules/*" -not -path "./.github/*")
           exit $total_exit_code
       - name: Cargo clippy
         run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo clippy --workspace -- -D warnings
+          SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly clippy --all-targets 
       - name: Cargo udeps
         env:
           UDEPS_VERSION: v0.1.24
@@ -106,26 +163,7 @@ jobs:
           tar xzf "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
           cp "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu/cargo-udeps" ~/.cargo/bin/
           rm -r "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu"
-          /home/runner/.cargo/bin/cargo udeps --version
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo udeps --workspace --all-features
+          cargo udeps --version
+          SKIP_WASM_BUILD=1 cargo udeps --workspace --all-features
         continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.  
-  test:
-    name: Unit Test
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install cargo-llvm-cov
-        run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
-      - name: Run Test (with coverage)
-        run: |
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-29 llvm-cov --features=runtime-benchmarks --workspace --lcov --output-path lcov.info
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: lcov.info
-          fail_ci_if_error: false
+

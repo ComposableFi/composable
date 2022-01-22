@@ -31,4 +31,7 @@ scripts/polkadot-launch/*.log
 target
 .env
 
-yarn-error.log
+node_modules/
+**/yarn-error.log
+**/.yarn/
+rust-toolchain.toml
