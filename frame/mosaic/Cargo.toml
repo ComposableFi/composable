@@ -42,6 +42,7 @@ plotters =  {version = "0.3.1", optional = true}
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+proptest = "0.9.6"
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301", default-features = false }
 

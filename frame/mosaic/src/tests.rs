@@ -34,6 +34,10 @@ use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
+
+use proptest::prelude::*;
+
+
 use sp_runtime::{DispatchError, TokenError};
 
 pub trait OriginExt {
@@ -51,7 +55,6 @@ pub trait OriginExt {
 }
 
 impl OriginExt for Origin {}
-
 
 mod set_relayer {
     use super::*;
@@ -881,28 +884,33 @@ mod claim_to {
         })
     }
 
-    #[test]
-    fn claim_to_increases_your_balance() {
-        new_test_ext().execute_with(|| {
-            initialize();
-            let lock_time = 10;
-            let amount = 50;
-            let asset_id = 1;
-            do_timelocked_mint(ALICE, asset_id, amount, lock_time);
-            System::set_block_number(System::block_number() + lock_time + 1);
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(10000))]
 
-            let before_balance = Tokens::balance(asset_id, &ALICE);
+        #[test]
+        fn claim_to_increases_your_balance(
+            amount in 1..10000u128, // 10000 is the budget max
+        ) {
+            new_test_ext().execute_with(|| {
+                initialize();
+                let lock_time = 10;
+                let asset_id = 1;
+                do_timelocked_mint(ALICE, asset_id, amount, lock_time);
+                System::set_block_number(System::block_number() + lock_time + 1);
 
-            Mosaic::claim_to(Origin::alice(), asset_id, ALICE)
-                .expect("received funds should be claimable the first time");
+                let before_balance = Tokens::balance(asset_id, &ALICE);
 
+                Mosaic::claim_to(Origin::alice(), asset_id, ALICE)
+                    .expect("received funds should be claimable the first time");
 
-            let after_balance = Tokens::balance(asset_id, &ALICE);
+                let after_balance = Tokens::balance(asset_id, &ALICE);
 
-            assert_eq!(before_balance + amount, after_balance);
-        })
+                assert_eq!(before_balance + amount, after_balance);
+
+                dbg!(amount);
+            })
+        }
     }
-
 }
 
 mod transfer_to {
