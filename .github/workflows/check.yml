@@ -39,6 +39,40 @@ jobs:
         run: |
           SKIP_WASM_BUILD=1 cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
 
+  substrate-test-coverage:
+    name: Unit Tests (With Coverage)
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+      - name: Rustup show
+        run: |
+         rustup show
+      - uses: actions/checkout@v2
+      - name: Run Test (with coverage)
+        run: |
+          # integration tests can't be compiled with --feature=runtime-benchmarks
+          # TODO: https://github.com/ComposableFi/composable/issues/535
+          apt update && apt install -y lsb-release wget software-properties-common gnupg2
+          bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+          cargo install -f cargo-llvm-cov
+          rustup component add llvm-tools-preview --toolchain nightly
+          SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --exclude=integration-tests --lcov --output-path lcov.info 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+          fail_ci_if_error: false
+  
   substrate-tests:
     name: Unit Tests 
     runs-on:
@@ -61,13 +95,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Run Test (with coverage)
         run: |
-          # integration tests can't be compiled with --feature=runtime-benchmarks
-          # TODO: https://github.com/ComposableFi/composable/issues/535
-          apt update && apt install -y lsb-release wget software-properties-common gnupg2
-          bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
-          cargo install -f cargo-llvm-cov
-          rustup component add llvm-tools-preview --toolchain nightly
-          SKIP_WASM_BUILD=1 cargo llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --exclude=integration-tests --lcov --output-path lcov.info 
+          SKIP_WASM_BUILD=1 cargo test --workspace --locked --release --verbose --features=runtime-benchmarks --exclude=integration-tests
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
