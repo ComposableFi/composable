@@ -6,6 +6,7 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+  USER: runner
 jobs:
   build-and-publish:
     runs-on: 
