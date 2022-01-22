@@ -539,43 +539,112 @@ mod transfers {
     }
 }
 
-mod accept_transfer {
+mod timelocked_mint {
+    use super::*;
 
+    #[test]
+    fn timelocked_mint() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            do_timelocked_mint(ALICE, 1, 50, 10);
+        })
+    }
+
+
+    #[test]
+    fn cannot_mint_unsupported_assets() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let unsupported_asset_id = 42;
+            assert_noop!(
+                Mosaic::timelocked_mint(Origin::relayer(), unsupported_asset_id, ALICE, 50, 10,  Default::default()),
+                Error::<Test>::UnsupportedAsset
+            );
+        })
+    }
+
+    #[test]
+    fn cannot_mint_more_than_budget() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            assert_noop!(
+                Mosaic::timelocked_mint(Origin::relayer(), 1, ALICE, 10001, 10,  Default::default()),
+                Error::<Test>::InsufficientBudget
+            );
+        })
+    }
+
+
+    #[test]
+    fn rescind_timelocked_mint() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let lock_time = 10;
+            do_timelocked_mint(ALICE, 1, 50, lock_time);
+
+            let initial_block = System::block_number();
+
+            Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 40)
+                .expect("relayer should be able to rescind transactions");
+            assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((10, initial_block + lock_time)));
+            let transfer_amount = 9;
+            Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, transfer_amount)
+                .expect("relayer should be able to rescind transactions");
+            assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((1, 11)));
+        })
+    }
 }
 
-#[test]
-fn timelocked_mint() {
-	new_test_ext().execute_with(|| {
-		initialize();
-		do_timelocked_mint(ALICE, 1, 50, 10);
-	})
-}
+mod set_timelock_duration {
+    use super::*;
 
-#[test]
-fn rescind_timelocked_mint() {
-	new_test_ext().execute_with(|| {
-		initialize();
-		let lock_time = 10;
-		do_timelocked_mint(ALICE, 1, 50, lock_time);
+    #[test]
+    fn set_timelock_duration() {
+        new_test_ext().execute_with(|| {
+            Mosaic::set_timelock_duration(Origin::root(), MinimumTimeLockPeriod::get() + 1)
+                .expect("root may set the timelock period");
+        })
+    }
 
-		let initial_block = System::block_number();
+    #[test]
+    fn set_timelock_duration_with_non_root() {
+        new_test_ext().execute_with(|| {
+            assert_noop!(
+                Mosaic::set_timelock_duration(Origin::signed(ALICE), MinimumTimeLockPeriod::get() + 1),
+                DispatchError::BadOrigin
+            );
+        })
+    }
 
-		Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 40)
-			.expect("relayer should be able to rescind transactions");
-		assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((10, initial_block + lock_time)));
-		let transfer_amount = 9;
-		Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, transfer_amount)
-			.expect("relayer should be able to rescind transactions");
-		assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((1, 11)));
-	})
-}
+    #[test]
+    fn set_timelock_duration_with_origin_none() {
+        new_test_ext().execute_with(|| {
+            assert_noop!(
+                Mosaic::set_timelock_duration(Origin::none(), MinimumTimeLockPeriod::get() + 1),
+                DispatchError::BadOrigin
+            );
+        })
+    }
 
-#[test]
-fn set_timelock_duration() {
-	new_test_ext().execute_with(|| {
-		Mosaic::set_timelock_duration(Origin::root(), MinimumTimeLockPeriod::get() + 1)
-			.expect("root may set the timelock period");
-	})
+    #[test]
+    fn set_timelock_duration_with_invalid_period() {
+        new_test_ext().execute_with(|| {
+            assert_noop!(
+                Mosaic::set_timelock_duration(Origin::root(), 0),
+                Error::<Test>::BadTimelockPeriod
+            );
+        })
+    }
+
+    #[test]
+    fn set_timelock_duration_with_invalid_period_2() {
+        new_test_ext().execute_with(|| {
+            assert_noop!(
+                Mosaic::set_timelock_duration(Origin::root(), MinimumTimeLockPeriod::get() - 1),
+                Error::<Test>::BadTimelockPeriod
+            );
+        })
+    }
 }
 
 #[test]
