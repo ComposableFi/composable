@@ -6,7 +6,6 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-  USER: runner
 jobs:
   build-and-publish:
     runs-on: 
@@ -48,6 +47,7 @@ jobs:
 
     - name: Add runtime metadata to release body
       run: |
+        sudo su $USER
         cd scripts/github && npm install
         printf "\n%s" "${{ steps.release_drafter.outputs.body }}" >> $GITHUB_WORKSPACE/release.md
         npm run update-release-body -- --id=${{ steps.release_drafter.outputs.id  }} --repo=composableFi/composable --body="$GITHUB_WORKSPACE/release.md"
