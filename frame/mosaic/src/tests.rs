@@ -34,7 +34,7 @@ use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
-use sp_runtime::DispatchError;
+use sp_runtime::{DispatchError, TokenError};
 
 pub trait OriginExt {
 	fn relayer() -> Origin {
@@ -44,6 +44,10 @@ pub trait OriginExt {
 	fn alice() -> Origin {
 		Origin::signed(ALICE)
 	}
+
+    fn bob() -> Origin {
+        Origin::signed(BOB)
+    }
 }
 
 impl OriginExt for Origin {}
@@ -660,6 +664,92 @@ mod timelocked_mint {
     }
 }
 
+
+mod rescind_timelocked_mint {
+    use sp_runtime::DispatchError::Token;
+    use super::*;
+
+    #[test]
+    fn cannot_rescind_timelocked_mint_if_no_transaction() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            assert_noop!(
+                Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 50),
+                Error::<Test>::NoClaimableTx
+            );
+        })
+    }
+
+    #[test]
+    fn cannot_rescind_timelocked_mint_if_wrong_asset_id() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let lock_time = 10;
+            do_timelocked_mint(ALICE, 1, 50, lock_time);
+            assert_noop!(
+                Mosaic::rescind_timelocked_mint(Origin::relayer(), 2, ALICE, 50),
+                Error::<Test>::NoClaimableTx
+            );
+        })
+    }
+
+    #[test]
+    fn cannot_rescind_timelocked_mint_if_wrong_account() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let lock_time = 10;
+            do_timelocked_mint(ALICE, 1, 50, lock_time);
+            assert_noop!(
+                Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, BOB, 50),
+                Error::<Test>::NoClaimableTx
+            );
+        })
+    }
+
+    #[test]
+    fn cannot_rescind_timelocked_mint_if_wrong_amount() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let lock_time = 10;
+            let amount = 50;
+            do_timelocked_mint(ALICE, 1, amount, lock_time);
+            assert_noop!(
+                Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, amount + 1),
+                TokenError::NoFunds
+            );
+        })
+    }
+
+    #[test]
+    fn rescind_timelocked_mint_in_two_steps() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let lock_time = 10;
+            let start_amount = 50;
+            do_timelocked_mint(ALICE, 1, start_amount, lock_time);
+            assert_eq!(
+                Mosaic::incoming_transactions(ALICE, 1),
+                Some((start_amount, lock_time + System::block_number()))
+            );
+
+            let rescind_amount = 9;
+            Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, rescind_amount)
+                .expect("relayer should be able to rescind transactions");
+            assert_eq!(
+                Mosaic::incoming_transactions(ALICE, 1),
+                Some((start_amount - rescind_amount, lock_time + System::block_number()))
+            );
+
+            Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, start_amount - rescind_amount)
+                .expect("relayer should be able to rescind transactions");
+
+            assert_eq!(Mosaic::incoming_transactions(ALICE, 1), None);
+        })
+    }
+
+
+}
+
 mod set_timelock_duration {
     use super::*;
 
@@ -712,20 +802,107 @@ mod set_timelock_duration {
     }
 }
 
-#[test]
-fn claim_to() {
-	new_test_ext().execute_with(|| {
-		initialize();
-		let lock_time = 10;
-		do_timelocked_mint(ALICE, 1, 50, lock_time);
-		let current_block = System::block_number();
-		Mosaic::claim_to(Origin::alice(), 1, ALICE).expect_err(
-			"received funds should only be claimable after waiting for the relayer mandated time",
-		);
-		System::set_block_number(current_block + lock_time + 1);
-		Mosaic::claim_to(Origin::alice(), 1, ALICE)
-			.expect("received funds should be claimable after time has passed");
-	})
+
+mod claim_to {
+    use super::*;
+
+    #[test]
+    fn claim_to() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let lock_time = 10;
+            do_timelocked_mint(ALICE, 1, 50, lock_time);
+            let current_block = System::block_number();
+            Mosaic::claim_to(Origin::alice(), 1, ALICE).expect_err(
+                "received funds should only be claimable after waiting for the relayer mandated time",
+            );
+            System::set_block_number(current_block + lock_time + 1);
+            Mosaic::claim_to(Origin::alice(), 1, ALICE)
+                .expect("received funds should be claimable after time has passed");
+        })
+    }
+
+    #[test]
+    fn none_cannot_claim_to() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let lock_time = 10;
+            do_timelocked_mint(ALICE, 1, 50, lock_time);
+            System::set_block_number(System::block_number() + lock_time + 1);
+            assert_noop!(
+                Mosaic::claim_to(Origin::none(), 1, ALICE),
+                DispatchError::BadOrigin
+            );
+        })
+    }
+
+    #[test]
+    fn cannot_claim_to_twice() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let lock_time = 10;
+            do_timelocked_mint(ALICE, 1, 50, lock_time);
+            System::set_block_number(System::block_number() + lock_time + 1);
+            Mosaic::claim_to(Origin::alice(), 1, ALICE)
+                .expect("received funds should be claimable the first time");
+            assert_noop!(
+                Mosaic::claim_to(Origin::alice(), 1, ALICE),
+                Error::<Test>::NoClaimableTx
+            );
+        })
+    }
+
+    #[test]
+    fn cannot_claim_to_too_early() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let lock_time = 10;
+            do_timelocked_mint(ALICE, 1, 50, lock_time);
+            System::set_block_number(System::block_number() + lock_time - 1);
+
+            assert_noop!(
+                Mosaic::claim_to(Origin::alice(), 1, ALICE),
+                Error::<Test>::TxStillLocked
+            );
+        })
+    }
+
+    #[test]
+    fn cannot_claim_if_you_have_nothing_to_claim() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let lock_time = 10;
+            do_timelocked_mint(ALICE, 1, 50, lock_time);
+            System::set_block_number(System::block_number() + lock_time + 1);
+            assert_noop!(
+                Mosaic::claim_to(Origin::bob(), 1, BOB),
+                Error::<Test>::NoClaimableTx
+            );
+        })
+    }
+
+    #[test]
+    fn claim_to_increases_your_balance() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let lock_time = 10;
+            let amount = 50;
+            let asset_id = 1;
+            do_timelocked_mint(ALICE, asset_id, amount, lock_time);
+            System::set_block_number(System::block_number() + lock_time + 1);
+
+            let before_balance = Tokens::balance(asset_id, &ALICE);
+
+            Mosaic::claim_to(Origin::alice(), asset_id, ALICE)
+                .expect("received funds should be claimable the first time");
+
+
+            let after_balance = Tokens::balance(asset_id, &ALICE);
+
+            assert_eq!(before_balance + amount, after_balance);
+        })
+    }
+
 }
 
 mod transfer_to {
