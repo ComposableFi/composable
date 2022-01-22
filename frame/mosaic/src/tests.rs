@@ -574,6 +574,71 @@ mod timelocked_mint {
         })
     }
 
+    #[test]
+    fn only_relayer_can_timelocked_mint() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            assert_noop!(
+                Mosaic::timelocked_mint(Origin::signed(ALICE), 1, ALICE, 50, 10,  Default::default()),
+                DispatchError::BadOrigin
+            );
+        })
+    }
+
+    #[test]
+    fn none_cannot_timelocked_mint() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            assert_noop!(
+                Mosaic::timelocked_mint(Origin::none(), 1, ALICE, 50, 10,  Default::default()),
+                DispatchError::BadOrigin
+            );
+        })
+    }
+
+    #[test]
+    fn timelocked_mint_adds_to_incoming_transactions() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let amount = 50;
+            let lock_time = 10;
+            Mosaic::timelocked_mint(Origin::relayer(), 1, ALICE, amount, lock_time,  Default::default())
+                .expect("timelocked_mint should work");
+            assert_eq!(
+                Mosaic::incoming_transactions(ALICE, 1),
+                Some((amount, lock_time + System::block_number()))
+            );
+        })
+    }
+
+    #[test]
+    fn timelocked_mint_updates_incoming_transactions() {
+        new_test_ext().execute_with(|| {
+            initialize();
+            let amount = 50;
+            let lock_time = 10;
+
+            Mosaic::timelocked_mint(Origin::relayer(), 1, ALICE, amount, lock_time,  Default::default())
+                .expect("timelocked_mint should work");
+            assert_eq!(
+                Mosaic::incoming_transactions(ALICE, 1),
+                Some((amount, lock_time + System::block_number()))
+            );
+
+            let amount_2 = 100;
+            let new_lock_time = 20;
+
+            Mosaic::timelocked_mint(Origin::relayer(), 1, ALICE, amount_2, new_lock_time,  Default::default())
+                .expect("timelocked_mint should work");
+
+            assert_eq!(
+                Mosaic::incoming_transactions(ALICE, 1),
+                Some((amount + amount_2, new_lock_time + System::block_number()))
+            );
+
+        })
+    }
+
 
     #[test]
     fn rescind_timelocked_mint() {
