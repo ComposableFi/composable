@@ -28,6 +28,7 @@ PREV_TAG_OR_COMMIT=$(gh release list -L=1 | sed -n '1 p' | awk '{print $(NF-1)}'
 # workflow which runs on push. Lets diff with the last commit in the base branch then.
 if [[ $PREV_TAG_OR_COMMIT == *"untagged"* ]]; then
     PREV_TAG_OR_COMMIT=$(git log -n 1 --skip 1 --pretty=format:"%H")
+    boldprint "PREV_TAG_OR_COMMIT=$PREV_TAG_OR_COMMIT"
 fi
 
 # Check for runtime changes between two commits. This is defined as any changes
