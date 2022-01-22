@@ -3,8 +3,6 @@ name: "Build Artifacts"
 on:
   workflow_dispatch:
   push: 
-    branches: 
-      - fix-release
     tags: 
       - '*'
       
@@ -24,6 +22,13 @@ jobs:
     strategy: 
       fail-fast: true
     steps:
+    - name: Clean up
+      continue-on-error: true
+      run: |
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+        docker system prune --force --all --volumes
+
+
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
@@ -42,6 +47,9 @@ jobs:
       run: |
         .maintain/client_release.sh
 
+    - name: Echo Output
+      run: echo ${{ env.picasso-wasm }}
+
     - name: Build wasm with srtool
       id: runtime_release
       run: |
@@ -49,7 +57,7 @@ jobs:
 
     - name: Upload Compact Picasso wasm # TODO only upload wasm that has changed
       uses: svenstaro/upload-release-action@v2
-      if: env.picasso_wasm == 1
+      if: "${{ env.picasso-wasm }} == 1"
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
         file: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
@@ -59,7 +67,7 @@ jobs:
     
     - name: Upload Compact Dali wasm # TODO only upload wasm that has changed
       uses: svenstaro/upload-release-action@v2
-      if: env.dali_wasm == 1
+      if: "${{ env.dali-wasm }} == 1"
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
         file: ./runtime/dali/target/srtool/release/wbuild/dali-runtime/dali_runtime.compact.wasm
@@ -69,7 +77,7 @@ jobs:
     
     - name: Upload Compact Composable wasm # TODO only upload wasm that has changed
       uses: svenstaro/upload-release-action@v2
-      if: env.composable_wasm == 1
+      if: "${{ env.composable-wasm }} == 1"
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
         file: ./runtime/picasso/target/srtool/release/wbuild/composable-runtime/composable_runtime.compact.wasm
@@ -79,13 +87,15 @@ jobs:
 
     - name: Upload Binary on Release # TODO Only upload binary if client files have changed
       uses: svenstaro/upload-release-action@v2
-      if: env.client_release == 1
       with:
         repo_token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
         file: target/release/composable
         asset_name: composable
         tag: ${{ github.ref }}
         overwrite: true
+    
+    - name: Update Release Note
+      run: sed -i '1i # Code ' release.md
 
     - name: Release
       uses: softprops/action-gh-release@v1
