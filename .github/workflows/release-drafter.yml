@@ -45,9 +45,17 @@ jobs:
     - uses: release-drafter/release-drafter@v5
       id: release_drafter
 
+    - name: Set Permission
+      continue-on-error: true
+      run: |
+        sudo su runner
+
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+
     - name: Add runtime metadata to release body
       run: |
-        sudo su $USER
         cd scripts/github && npm install
         printf "\n%s" "${{ steps.release_drafter.outputs.body }}" >> $GITHUB_WORKSPACE/release.md
         npm run update-release-body -- --id=${{ steps.release_drafter.outputs.id  }} --repo=composableFi/composable --body="$GITHUB_WORKSPACE/release.md"
