@@ -56,6 +56,15 @@ pub trait OriginExt {
 
 impl OriginExt for Origin {}
 
+prop_compose! {
+	fn account_id()
+		(x in 1..AccountId::MAX) -> AccountId {
+			x
+		}
+}
+
+
+
 mod set_relayer {
     use super::*;
 
@@ -870,20 +879,6 @@ mod claim_to {
         })
     }
 
-    #[test]
-    fn cannot_claim_if_you_have_nothing_to_claim() {
-        new_test_ext().execute_with(|| {
-            initialize();
-            let lock_time = 10;
-            do_timelocked_mint(ALICE, 1, 50, lock_time);
-            System::set_block_number(System::block_number() + lock_time + 1);
-            assert_noop!(
-                Mosaic::claim_to(Origin::bob(), 1, BOB),
-                Error::<Test>::NoClaimableTx
-            );
-        })
-    }
-
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(10000))]
 
@@ -908,6 +903,26 @@ mod claim_to {
                 assert_eq!(before_balance + amount, after_balance);
 
                 dbg!(amount);
+            })
+        }
+
+        #[test]
+        fn cannot_claim_if_you_have_nothing_to_claim(
+            amount in 1..10000u128, // 10000 is the budget max
+            lock_time in 1..100u64,
+            account_a in account_id(),
+            account_b in account_id(),
+        ) {
+            prop_assume!(account_a != account_b);
+
+            new_test_ext().execute_with(|| {
+                initialize();
+                do_timelocked_mint(account_a, 1, amount, lock_time);
+                System::set_block_number(System::block_number() + lock_time + 1);
+                assert_noop!(
+                    Mosaic::claim_to(Origin::signed(account_b), 1, account_b),
+                    Error::<Test>::NoClaimableTx
+                );
             })
         }
     }
