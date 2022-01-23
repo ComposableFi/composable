@@ -54,13 +54,13 @@ pub mod pallet {
 	use crate::{models::BorrowerData, weights::WeightInfo};
 	use codec::Codec;
 	use composable_support::validation::Validated;
-use composable_traits::{
+	use composable_traits::{
 		currency::CurrencyFactory,
 		defi::*,
 		lending::{
 			math::{self, *},
-			BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig, UpdateInput, MarketModelValid, 
-			CurrencyPairIsNotSame,
+			BorrowAmountOf, CollateralLpAmountOf, CreateInput, CurrencyPairIsNotSame, Lending,
+			MarketConfig, MarketModelValid, UpdateInput,
 		},
 		liquidation::Liquidation,
 		math::SafeArithmetic,
@@ -72,13 +72,14 @@ use composable_traits::{
 		pallet_prelude::*,
 		storage::{with_transaction, TransactionOutcome},
 		traits::{
+			fungible::{Inspect as NativeInspect, Transfer as NativeTransfer},
 			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
-			fungible::{Transfer as NativeTransfer, Inspect as NativeInspect},
 			tokens::DepositConsequence,
 			UnixTime,
 		},
-		transactional, PalletId,
+		transactional,
 		weights::WeightToFeePolynomial,
+		PalletId,
 	};
 	use frame_system::{
 		offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},
@@ -208,33 +209,34 @@ use composable_traits::{
 
 		/// Id of proxy to liquidate
 		type LiquidationStrategyId: Parameter + Default + PartialEq + Clone + Debug + TypeInfo;
-		
+
 		/// Minimal price of borrow asset in Oracle price required to create
-		/// Creators puts that amount and it is staked under Vault account. 
+		/// Creators puts that amount and it is staked under Vault account.
 		/// So he does not owns it anymore.
 		/// So borrow is both stake and tool to create market.
-		/// 
-		/// # Why not pure borrow amount minimum? 
-		/// 
+		///
+		/// # Why not pure borrow amount minimum?
+		///
 		/// Borrow may have very small price. Will imbalance some markets on creation.
-		/// 
+		///
 		/// # Why not native parachain token?
-		/// 
-		/// Possible option. But I doubt closing market as easy as transferring back rent.  So it is not exactly platform rent only.
-		/// 
+		///
+		/// Possible option. But I doubt closing market as easy as transferring back rent.  So it is
+		/// not exactly platform rent only.
+		///
 		/// # Why borrow amount priced by Oracle?
-		/// 
-		/// We depend on Oracle to price in Lending. So we know price anyway. 
+		///
+		/// We depend on Oracle to price in Lending. So we know price anyway.
 		/// We normalized price over all markets and protect from spam all possible pairs equally.
-		/// Locking borrow amount ensures manager can create market wit borrow assets, and we force him to really create it.  
+		/// Locking borrow amount ensures manager can create market wit borrow assets, and we force
+		/// him to really create it.
 		#[pallet::constant]
-		type MarketCreationStake : Get<Self::Balance>;
+		type MarketCreationStake: Get<Self::Balance>;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
-		type NativeCurrency: 
-				NativeTransfer<Self::AccountId, Balance = Self::Balance> 
-				+ NativeInspect<Self::AccountId, Balance = Self::Balance>;
+		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>
+			+ NativeInspect<Self::AccountId, Balance = Self::Balance>;
 		/// Convert a weight value into a deductible fee based on the currency type.
 		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
 	}
@@ -261,7 +263,7 @@ use composable_traits::{
 			weight += u64::from(call_counters.handle_depositable) *
 				<T as Config>::WeightInfo::handle_depositable();
 			weight += u64::from(call_counters.handle_must_liquidate) *
-				<T as Config>::WeightInfo::handle_must_liquidate();		
+				<T as Config>::WeightInfo::handle_must_liquidate();
 			weight
 		}
 
@@ -273,8 +275,9 @@ use composable_traits::{
 				return
 			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
-				let results = signer.send_signed_transaction(|_account| {					
-					Call::liquidate { market_id, borrowers: vec![account.clone()] }
+				let results = signer.send_signed_transaction(|_account| Call::liquidate {
+					market_id,
+					borrowers: vec![account.clone()],
 				});
 
 				for (_acc, res) in &results {
@@ -329,6 +332,7 @@ use composable_traits::{
 		BorrowerDataCalculationFailed,
 		Unauthorized,
 		NotEnoughRent,
+		PriceOfInitialBorrowVaultShoyldBeGreaterThanZero,
 	}
 
 	#[pallet::event]
@@ -514,7 +518,6 @@ use composable_traits::{
 
 	#[allow(type_alias_bounds)] // false positive
 	pub type CreateInputOf<T: Config> = CreateInput<T::LiquidationStrategyId, T::MayBeAssetId>;
-
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -812,14 +815,23 @@ use composable_traits::{
 					let source_target_account = Self::account_id(market_id);
 					let unit_price =
 						T::Oracle::get_ratio(CurrencyPair::new(market.collateral, borrow_asset))?;
-					let sell =
-						Sell::new(market.collateral, borrow_asset, collateral_to_liquidate, unit_price);
+					let sell = Sell::new(
+						market.collateral,
+						borrow_asset,
+						collateral_to_liquidate,
+						unit_price,
+					);
 					T::Liquidation::liquidate(&source_target_account, sell, market.liquidators)?;
-					
+
 					if let Some(deposit) = BorrowRent::<T>::get(market_id, account) {
 						let market_account = Self::account_id(market_id);
 						let liquidator = liquidator.unwrap_or(account);
-						<T as Config>::NativeCurrency::transfer(&market_account, liquidator, deposit, true)?;
+						<T as Config>::NativeCurrency::transfer(
+							&market_account,
+							liquidator,
+							deposit,
+							true,
+						)?;
 					}
 				}
 			}
@@ -964,7 +976,8 @@ use composable_traits::{
 			let account_interest_index =
 				DebtIndex::<T>::get(market_id, debt_owner).unwrap_or_else(ZeroToOneFixedU128::zero);
 			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-			let existing_borrow_amount = <T as Config>::MultiCurrency::balance(debt_asset_id, debt_owner);
+			let existing_borrow_amount =
+				<T as Config>::MultiCurrency::balance(debt_asset_id, debt_owner);
 
 			<T as Config>::MultiCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
 			// TODO: decide if need to split out dept teacking vs debt token
@@ -1012,17 +1025,14 @@ use composable_traits::{
 			if !BorrowRent::<T>::contains_key(market_id, debt_owner) {
 				let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate(1));
 
-					ensure!(
-					<T as Config>::NativeCurrency::can_withdraw(
-						debt_owner,
-						deposit,
-					)
-					.into_result()
-					.is_ok(),
+				ensure!(
+					<T as Config>::NativeCurrency::can_withdraw(debt_owner, deposit,)
+						.into_result()
+						.is_ok(),
 					Error::<T>::NotEnoughRent,
-					);	
+				);
 			}
-			
+
 			ensure!(
 				!matches!(
 					T::Vault::available_funds(&market.borrow, market_account)?,
@@ -1063,9 +1073,13 @@ use composable_traits::{
 				Error::<T>::CannotWithdrawFromProvidedBorrowAccount
 			);
 			ensure!(
-				<T as Config>::MultiCurrency::can_deposit(borrow_asset_id, market_account, repay_amount)
-					.into_result()
-					.is_ok(),
+				<T as Config>::MultiCurrency::can_deposit(
+					borrow_asset_id,
+					market_account,
+					repay_amount
+				)
+				.into_result()
+				.is_ok(),
 				Error::<T>::TransferFailed
 			);
 
@@ -1089,7 +1103,7 @@ use composable_traits::{
 
 		fn create(
 			manager: Self::AccountId,
-			config_input:  CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId>,
+			config_input: CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId>,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			ensure!(
 				config_input.updatable.collateral_factor > 1.into(),
@@ -1131,13 +1145,33 @@ use composable_traits::{
 						.collect(),
 					},
 				)?;
+
+				let initial_price_amount = T::MarketCreationStake::get();
+				let initial_pool_size =
+					T::Oracle::get_price_inverse(config_input.borrow_asset(), initial_price_amount)?;
+				ensure!(
+					initial_pool_size > T::Balance::zero(),
+					Error::<T>::PriceOfInitialBorrowVaultShoyldBeGreaterThanZero
+				);
+				T::MultiCurrency::transfer(
+					config_input.borrow_asset(),
+					&manager,
+					&Self::account_id(&market_id),
+					initial_pool_size,
+					false,
+				)?;
+				let x = T::MultiCurrency::balance(config_input.borrow_asset(), &Self::account_id(&market_id));
+				ensure!(
+					x > T::Balance::zero(),
+					Error::<T>::PriceOfInitialBorrowVaultShoyldBeGreaterThanZero
+				);
 				
-				
-				let initial_price_amont =  T::MarketCreationStake::get();
-				let initial_pool_size = T::Oracle::get_price_inverse(config_input.borrow_asset(), initial_price_amont)?;				
-				// transfer to vault on behalf of market from user
-				T::MultiCurrency::transfer(config_input.borrow_asset(), &manager, &Self::account_id(&market_id), initial_pool_size, true)?;
-				<T::Vault as Vault>::deposit(&borrow_asset_vault, &Self::account_id(&market_id), initial_pool_size)?;
+				// TODO: discuss on why we do not reposit all amount to vault
+				// <T::Vault as Vault>::deposit(
+				// 	&borrow_asset_vault,
+				// 	&Self::account_id(&market_id),
+				// 	initial_pool_size,
+				// )?;
 
 				let config = MarketConfig {
 					manager,
@@ -1206,7 +1240,12 @@ use composable_traits::{
 
 			if !BorrowRent::<T>::contains_key(market_id, debt_owner) {
 				let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate(1));
-				<T as Config>::NativeCurrency::transfer(debt_owner, &market_account, deposit, true)?;
+				<T as Config>::NativeCurrency::transfer(
+					debt_owner,
+					&market_account,
+					deposit,
+					true,
+				)?;
 				BorrowRent::<T>::insert(market_id, debt_owner, deposit);
 			}
 
@@ -1263,10 +1302,19 @@ use composable_traits::{
 					<T as Config>::MultiCurrency::burn_from(debt_asset_id, &market_account, repay_borrow_amount).expect(
 						"debt balance of market must be of parts of debts of borrowers and can reduce it",
 					);
-					<T as Config>::MultiCurrency::release(debt_asset_id, beneficiary, burn_amount, true)
-						.expect("can always release held debt balance");
-					<T as Config>::MultiCurrency::burn_from(debt_asset_id, beneficiary, burn_amount)
-						.expect("can always burn debt balance");
+					<T as Config>::MultiCurrency::release(
+						debt_asset_id,
+						beneficiary,
+						burn_amount,
+						true,
+					)
+					.expect("can always release held debt balance");
+					<T as Config>::MultiCurrency::burn_from(
+						debt_asset_id,
+						beneficiary,
+						burn_amount,
+					)
+					.expect("can always burn debt balance");
 				}
 				// TODO: fuzzing is must to uncover cases when sum != total
 				<T as Config>::MultiCurrency::transfer(
@@ -1346,7 +1394,11 @@ use composable_traits::{
 			)?;
 
 			BorrowIndex::<T>::insert(market_id, borrow_index_new);
-			<T as Config>::MultiCurrency::mint_into(debt_asset_id, &Self::account_id(market_id), accrued)?;
+			<T as Config>::MultiCurrency::mint_into(
+				debt_asset_id,
+				&Self::account_id(market_id),
+				accrued,
+			)?;
 
 			Ok(())
 		}
@@ -1361,7 +1413,8 @@ use composable_traits::{
 			let account_debt = DebtIndex::<T>::get(market_id, account);
 			match account_debt {
 				Some(account_interest_index) => {
-					let principal = <T as Config>::MultiCurrency::balance_on_hold(debt_asset_id, account);
+					let principal =
+						<T as Config>::MultiCurrency::balance_on_hold(debt_asset_id, account);
 					let market_interest_index = Self::get_borrow_index(market_id)?;
 
 					let balance = borrow_from_principal::<T>(
@@ -1434,8 +1487,11 @@ use composable_traits::{
 			);
 
 			ensure!(
-				<T as Config>::MultiCurrency::can_deposit(market.collateral, &market_account, amount) ==
-					DepositConsequence::Success,
+				<T as Config>::MultiCurrency::can_deposit(
+					market.collateral,
+					&market_account,
+					amount
+				) == DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 
@@ -1498,9 +1554,13 @@ use composable_traits::{
 				Error::<T>::TransferFailed
 			);
 			ensure!(
-				<T as Config>::MultiCurrency::can_withdraw(market.collateral, &market_account, amount)
-					.into_result()
-					.is_ok(),
+				<T as Config>::MultiCurrency::can_withdraw(
+					market.collateral,
+					&market_account,
+					amount
+				)
+				.into_result()
+				.is_ok(),
 				Error::<T>::TransferFailed
 			);
 

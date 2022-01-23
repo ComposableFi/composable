@@ -1,3 +1,4 @@
+use self::currency::CurrencyId;
 use crate::{self as pallet_lending, *};
 use composable_traits::{
 	currency::DynamicCurrencyId,
@@ -7,13 +8,15 @@ use composable_traits::{
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, OnFinalize, OnInitialize},
-	PalletId, weights::{WeightToFeePolynomial, WeightToFeeCoefficients, WeightToFeeCoefficient},
+	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
+	PalletId,
 };
 use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 use once_cell::sync::Lazy;
 use orml_traits::{parameter_type_with_key, GetByKey};
 use scale_info::TypeInfo;
+use smallvec::smallvec;
 use sp_arithmetic::traits::Zero;
 use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
@@ -23,11 +26,9 @@ use sp_runtime::{
 	},
 	ArithmeticError, DispatchError, Perbill,
 };
-use smallvec::smallvec;
-use self::currency::CurrencyId;
 
-pub mod oracle;
 pub mod currency;
+pub mod oracle;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -60,7 +61,6 @@ pub static CHARLIE: Lazy<AccountId> = Lazy::new(|| {
 pub static UNRESERVED: Lazy<AccountId> = Lazy::new(|| {
 	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000003"))
 });
-
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -337,7 +337,7 @@ where
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
-	pub MarketCreationStake : Balance = 100000;
+	pub MarketCreationStake : Balance = 10^15;
 }
 
 parameter_types! {
@@ -375,7 +375,6 @@ impl pallet_lending::Config for Test {
 	type MarketCreationStake = MarketCreationStake;
 
 	type WeightToFee = WeightToFee;
-
 }
 
 // Build genesis storage according to the mock runtime.

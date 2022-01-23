@@ -3,9 +3,9 @@ use std::ops::Mul;
 use crate::{
 	accrue_interest_internal,
 	mocks::{
-		new_test_ext, process_block, AccountId, Balance, BlockNumber, Lending, currency::CurrencyId,
-		Oracle, Origin, Test, Tokens, Vault, VaultId, ALICE, BOB, CHARLIE, MILLISECS_PER_BLOCK,
-		MINIMUM_BALANCE, UNRESERVED,
+		currency::CurrencyId, new_test_ext, process_block, AccountId, Balance, BlockNumber,
+		Lending, Oracle, Origin, Test, Tokens, Vault, VaultId, ALICE, BOB, CHARLIE,
+		MILLISECS_PER_BLOCK, MINIMUM_BALANCE, UNRESERVED,
 	},
 	models::BorrowerData,
 	Error, MarketIndex,
@@ -34,6 +34,7 @@ type CollateralAsset = CurrencyId;
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
+const INITIAL_BORROW_ASSET_AMOUNT : u128 = 10^30;
 
 /// Create a very simple vault for the given currency, 100% is reserved.
 fn create_simple_vault(
@@ -69,6 +70,7 @@ fn create_market(
 		reserved_factor: reserved,
 		currency_pair: CurrencyPair::new(collateral_asset, borrow_asset),
 	};
+	Tokens::mint_into(borrow_asset, &manager, 1_000_000_000).unwrap();
 	<Lending as composable_traits::lending::Lending>::create(manager, config).unwrap()
 }
 
@@ -284,26 +286,38 @@ fn accrue_interest_plotter() {
 }
 
 #[test]
-fn can_create_market() {
+fn can_create_valid_market() {
 	new_test_ext().execute_with(|| {
-	let borrow_asset = CurrencyId::BTC;
-    let collateral_asset = CurrencyId::USDT;
-    let manager = *ALICE;
-    let collateral_factor = MoreThanOneFixedU128::saturating_from_rational(DEFAULT_COLLATERAL_FACTOR * 100, 100);
-	let config = CreateInput {
-		updatable: UpdateInput {
-			collateral_factor,
-			under_collaterized_warn_percent: Percent::from_float(0.10),
-			liquidators: vec![],
-			interest_rate_model: InterestRateModel::default(),
-		},
-		reserved_factor: DEFAULT_MARKET_VAULT_RESERVE,
-		currency_pair: CurrencyPair::new(collateral_asset, borrow_asset),
-	};
-	let created = <Lending as composable_traits::lending::Lending>::create(manager, config)
-	//assert_err!(created, )
-
-	})
+		let borrow_asset = CurrencyId::BTC;
+		let collateral_asset = CurrencyId::USDT;
+		let manager = *ALICE;
+		let collateral_factor =
+			MoreThanOneFixedU128::saturating_from_rational(DEFAULT_COLLATERAL_FACTOR * 100, 100);
+		let config = CreateInput {
+			updatable: UpdateInput {
+				collateral_factor,
+				under_collaterized_warn_percent: Percent::from_float(0.10),
+				liquidators: vec![],
+				interest_rate_model: InterestRateModel::default(),
+			},
+			reserved_factor: DEFAULT_MARKET_VAULT_RESERVE,
+			currency_pair: CurrencyPair::new(collateral_asset, borrow_asset),
+		};
+		let created = <Lending as composable_traits::lending::Lending>::create(manager, config.clone());
+		assert!(!created.is_ok());
+		Tokens::mint_into(borrow_asset, &manager, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
+		let created = <Lending as composable_traits::lending::Lending>::create(manager, config);
+		assert_ok!(created);
+		let new_balance= Tokens::balance(borrow_asset, &manager);
+		assert!(new_balance < INITIAL_BORROW_ASSET_AMOUNT);
+		let (market_id, borrow_vault_id) = created.unwrap();
+		
+		let vault_borrow_id = <Vault as composable_traits::vault::Vault>::asset_id(&borrow_vault_id).unwrap();
+		assert_eq!(vault_borrow_id, borrow_asset);
+		
+		let initial_total_cash = Lending::total_cash(&market_id).unwrap();
+		assert!(initial_total_cash>0);
+	});
 }
 
 #[test]
@@ -381,6 +395,8 @@ fn test_borrow_math() {
 fn borrow_flow() {
 	new_test_ext().execute_with(|| {
 		let (market, vault) = create_simple_market();
+		let initial_total_cash = Lending::total_cash(&market).unwrap();
+		assert!(initial_total_cash>0);
 		let unit = 1_000_000_000;
 		Oracle::set_btc_price(50000);
 
@@ -388,8 +404,8 @@ fn borrow_flow() {
 			|currency_id, amount| Oracle::get_price(currency_id, amount).expect("impossible").price;
 
 		let alice_capable_btc = 100 * unit;
-		let collateral_amount = alice_capable_btc * price(CurrencyId::BTC, 1000) /
-			price(CurrencyId::USDT, 1000);
+		let collateral_amount =
+			alice_capable_btc * price(CurrencyId::BTC, 1000) / price(CurrencyId::USDT, 1000);
 		assert_eq!(Tokens::balance(CurrencyId::USDT, &ALICE), 0);
 		assert_ok!(Tokens::mint_into(CurrencyId::USDT, &ALICE, collateral_amount));
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, collateral_amount));
@@ -410,7 +426,7 @@ fn borrow_flow() {
 			process_block(i);
 		}
 
-		let expected_cash = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(borrow_asset_deposit);
+		let expected_cash = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(borrow_asset_deposit) + initial_total_cash;
 		assert_eq!(Lending::total_cash(&market), Ok(expected_cash));
 
 		let alice_borrow = alice_capable_btc / DEFAULT_COLLATERAL_FACTOR / 10;
@@ -586,11 +602,7 @@ fn borrow_repay() {
 			&ALICE,
 			alice_repay_amount.unwrap() - alice_limit
 		));
-		assert_ok!(Tokens::mint_into(
-			CurrencyId::BTC,
-			&BOB,
-			bob_repay_amount.unwrap() - bob_limit
-		));
+		assert_ok!(Tokens::mint_into(CurrencyId::BTC, &BOB, bob_repay_amount.unwrap() - bob_limit));
 		// ALICE , BOB both repay's loan. their USDT balance should have decreased because of
 		// interest paid on borrows
 		assert_ok!(Lending::repay_borrow_internal(&market, &BOB, &BOB, bob_repay_amount));

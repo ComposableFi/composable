@@ -24,7 +24,6 @@ use sp_runtime::{
 	ArithmeticError, DispatchError,
 };
 
-
 #[derive(
 	PartialOrd,
 	Ord,

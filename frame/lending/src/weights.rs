@@ -15,7 +15,7 @@ pub trait WeightInfo {
 	fn withdraw_collateral() -> Weight;
 	fn borrow() -> Weight;
 	fn repay_borrow() -> Weight;
-	fn liquidate(positions_count:Weight) -> Weight;
+	fn liquidate(positions_count: Weight) -> Weight;
 	fn now() -> Weight;
 	fn accrue_interest() -> Weight;
 	fn account_id() -> Weight;
@@ -81,7 +81,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 
-fn liquidate(positions_count:Weight) -> Weight {
-        10000*positions_count
-    }
+	fn liquidate(positions_count: Weight) -> Weight {
+		10000 * positions_count
+	}
 }

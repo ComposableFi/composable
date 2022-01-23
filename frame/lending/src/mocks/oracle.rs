@@ -14,7 +14,7 @@ pub mod pallet {
 	};
 	use sp_std::fmt::Debug;
 
-	use crate::mocks::{Balance, currency::CurrencyId,};
+	use crate::mocks::{currency::CurrencyId, Balance};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -113,9 +113,12 @@ pub mod pallet {
 			Err(DispatchError::Other("No implemented"))
 		}
 
-		fn get_price_inverse(asset_id: Self::AssetId, amount: Self::Balance) -> Result<Self::Balance, DispatchError> {
-			let price_of_one = Self::get_price(asset_id, 1)?;
-			let inversed = amount / price_of_one.price;
+		fn get_price_inverse(
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			let price = Self::get_price(asset_id, 10^12)?;
+			let inversed = amount / price.price / 10^12; 
 			Ok(inversed)
 		}
 	}
