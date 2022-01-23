@@ -83,6 +83,12 @@ pub struct CurrencyPair<AssetId> {
 	pub quote: AssetId,
 }
 
+impl<AssetId> From<(AssetId, AssetId)> for CurrencyPair<AssetId> {
+	fn from(other: (AssetId, AssetId)) -> Self {
+		Self { base: other.0, quote: other.1 }
+	}
+}
+
 /// `AssetId` is Copy, than consider pair to be Copy
 impl<AssetId: Copy> Copy for CurrencyPair<AssetId> {}
 
@@ -234,6 +240,8 @@ pub type Ratio = FixedU128;
 
 #[cfg(test)]
 mod tests {
+	use crate::defi::LiftedFixedBalance;
+
 	use super::{Ratio, Take};
 	use sp_runtime::FixedPointNumber;
 

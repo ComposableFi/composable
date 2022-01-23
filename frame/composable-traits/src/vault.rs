@@ -75,6 +75,7 @@ pub trait Vault {
 	/// underlying asset id
 	fn asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
 
+	/// asset issues for underlying `asset_id`
 	fn lp_asset_id(vault_id: &Self::VaultId) -> Result<Self::AssetId, DispatchError>;
 
 	fn account_id(vault: &Self::VaultId) -> Self::AccountId;
@@ -142,12 +143,6 @@ pub trait CapabilityVault: Vault {
 	/// Indicates if the vault is allowing deposits. If the vault is stopped, tombstoned or if
 	/// withdrawals are disabled, this returns `false`.
 	fn deposits_allowed(vault_id: &Self::VaultId) -> Result<bool, DispatchError>;
-}
-
-pub trait LpTokenVault {
-	type AssetId;
-
-	fn lp_asset_id() -> Self::AssetId;
 }
 
 /// A vault which can be used by different strategies, such as pallets and smart contracts, to

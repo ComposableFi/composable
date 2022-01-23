@@ -1,3 +1,4 @@
+use self::currency::CurrencyId;
 use crate::{self as pallet_lending, *};
 use composable_traits::{
 	currency::DynamicCurrencyId,
@@ -7,6 +8,7 @@ use composable_traits::{
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, OnFinalize, OnInitialize},
+	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 	PalletId,
 };
 use frame_system::EnsureSignedBy;
@@ -14,6 +16,7 @@ use hex_literal::hex;
 use once_cell::sync::Lazy;
 use orml_traits::{parameter_type_with_key, GetByKey};
 use scale_info::TypeInfo;
+use smallvec::smallvec;
 use sp_arithmetic::traits::Zero;
 use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
@@ -21,9 +24,10 @@ use sp_runtime::{
 	traits::{
 		BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify,
 	},
-	ArithmeticError, DispatchError,
+	ArithmeticError, DispatchError, Perbill,
 };
 
+pub mod currency;
 pub mod oracle;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -57,61 +61,6 @@ pub static CHARLIE: Lazy<AccountId> = Lazy::new(|| {
 pub static UNRESERVED: Lazy<AccountId> = Lazy::new(|| {
 	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000003"))
 });
-
-#[derive(
-	PartialOrd,
-	Ord,
-	PartialEq,
-	Eq,
-	Debug,
-	Copy,
-	Clone,
-	codec::Encode,
-	codec::Decode,
-	serde::Serialize,
-	serde::Deserialize,
-	TypeInfo,
-)]
-#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
-pub enum MockCurrencyId {
-	PICA,
-	BTC,
-	ETH,
-	LTC,
-	USDT,
-	LpToken(u128),
-}
-
-impl From<u128> for MockCurrencyId {
-	fn from(id: u128) -> Self {
-		match id {
-			0 => MockCurrencyId::PICA,
-			1 => MockCurrencyId::BTC,
-			2 => MockCurrencyId::ETH,
-			3 => MockCurrencyId::LTC,
-			4 => MockCurrencyId::USDT,
-			5 => MockCurrencyId::LpToken(0),
-			_ => unreachable!(),
-		}
-	}
-}
-
-impl Default for MockCurrencyId {
-	fn default() -> Self {
-		MockCurrencyId::PICA
-	}
-}
-
-impl DynamicCurrencyId for MockCurrencyId {
-	fn next(self) -> Result<Self, DispatchError> {
-		match self {
-			MockCurrencyId::LpToken(x) => Ok(MockCurrencyId::LpToken(
-				x.checked_add(1).ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?,
-			)),
-			_ => unreachable!(),
-		}
-	}
-}
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -195,18 +144,18 @@ impl pallet_timestamp::Config for Test {
 }
 
 parameter_types! {
-	pub const DynamicCurrencyIdInitial: MockCurrencyId = MockCurrencyId::LpToken(0);
+	pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LpToken(0);
 }
 
 impl pallet_currency_factory::Config for Test {
 	type Event = Event;
-	type DynamicCurrencyId = MockCurrencyId;
+	type DynamicCurrencyId = CurrencyId;
 	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::PICA;
+	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
 	pub const CreationDeposit: Balance = 10;
 	pub const RentPerBlock: Balance = 1;
 	pub const MinimumDeposit: Balance = 0;
@@ -218,7 +167,7 @@ parameter_types! {
 impl pallet_vault::Config for Test {
 	type Event = Event;
 	type Currency = Tokens;
-	type AssetId = MockCurrencyId;
+	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type MaxStrategies = MaxStrategies;
 	type CurrencyFactory = LpTokenFactory;
@@ -236,7 +185,7 @@ impl pallet_vault::Config for Test {
 }
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
+	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
 		Zero::zero()
 	};
 }
@@ -249,7 +198,7 @@ impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
-	type CurrencyId = MockCurrencyId;
+	type CurrencyId = CurrencyId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
@@ -261,18 +210,18 @@ ord_parameter_types! {
 	pub const RootAccount: AccountId = *ALICE;
 }
 
-impl GovernanceRegistry<MockCurrencyId, AccountId> for () {
-	fn set(_k: MockCurrencyId, _value: composable_traits::governance::SignedRawOrigin<AccountId>) {}
+impl GovernanceRegistry<CurrencyId, AccountId> for () {
+	fn set(_k: CurrencyId, _value: composable_traits::governance::SignedRawOrigin<AccountId>) {}
 }
 
 impl
 	GetByKey<
-		MockCurrencyId,
+		CurrencyId,
 		Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError>,
 	> for ()
 {
 	fn get(
-		_k: &MockCurrencyId,
+		_k: &CurrencyId,
 	) -> Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError> {
 		Ok(SignedRawOrigin::Root)
 	}
@@ -281,7 +230,7 @@ impl
 impl pallet_assets::Config for Test {
 	type NativeAssetId = NativeAssetId;
 	type GenerateCurrencyId = LpTokenFactory;
-	type AssetId = MockCurrencyId;
+	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
@@ -296,7 +245,7 @@ impl crate::mocks::oracle::Config for Test {
 }
 
 impl DeFiComposableConfig for Test {
-	type MayBeAssetId = MockCurrencyId;
+	type MayBeAssetId = CurrencyId;
 	type Balance = Balance;
 }
 
@@ -387,6 +336,25 @@ where
 
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
+	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
+	pub MarketCreationStake : Balance = 10^15;
+}
+
+parameter_types! {
+	pub static WeightToFee: Balance = 1;
+}
+impl WeightToFeePolynomial for WeightToFee {
+	type Balance = Balance;
+
+	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+		let one = WeightToFeeCoefficient {
+			degree: 1,
+			coeff_frac: Perbill::zero(),
+			coeff_integer: WEIGHT_TO_FEE.with(|v| *v.borrow()),
+			negative: false,
+		};
+		smallvec![one]
+	}
 }
 
 impl pallet_lending::Config for Test {
@@ -394,21 +362,25 @@ impl pallet_lending::Config for Test {
 	type VaultId = VaultId;
 	type Vault = Vault;
 	type Event = Event;
-	type Currency = Tokens;
+	type NativeCurrency = Balances;
+	type MultiCurrency = Tokens;
 	type CurrencyFactory = LpTokenFactory;
-	type MarketDebtCurrency = Tokens;
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
 	type AuthorityId = crypto::TestAuthId;
 	type WeightInfo = ();
 	type LiquidationStrategyId = LiquidationStrategyId;
+	type PalletId = LendingPalletId;
+	type MarketCreationStake = MarketCreationStake;
+
+	type WeightToFee = WeightToFee;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	let balances = vec![];
+	let balances = vec![(*ALICE, 1_000_000_000), (*BOB, 1_000_000_000), (*CHARLIE, 1_000_000_000)];
 
 	pallet_balances::GenesisConfig::<Test> { balances }
 		.assimilate_storage(&mut storage)
