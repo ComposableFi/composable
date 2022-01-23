@@ -408,9 +408,12 @@ pub mod pallet {
 			Ok(base.safe_div(&quote)?)
 		}
 
-		fn get_price_inverse(_asset_id: Self::AssetId, _amount: Self::Balance) -> Result<Self::Balance, DispatchError> {
-				Err(DispatchError::Other("not implemented"))
-		}	
+		fn get_price_inverse(
+			_asset_id: Self::AssetId,
+			_amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			Err(DispatchError::Other("not implemented"))
+		}
 	}
 
 	#[pallet::call]

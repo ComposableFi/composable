@@ -10,7 +10,7 @@ use crate::{
 use composable_support::validation::Validate;
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
-use sp_runtime::{Percent, traits::One};
+use sp_runtime::{traits::One, Percent};
 
 use self::math::*;
 
@@ -47,27 +47,31 @@ pub struct MarketModelValid;
 #[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
 pub struct CurrencyPairIsNotSame;
 
-impl<LiquidationStrategyId, Asset : Eq> Validate<MarketModelValid> for CreateInput<LiquidationStrategyId, Asset> {
-    fn validate(self) -> Result<Self, &'static str> {
-        if self.updatable.collateral_factor < MoreThanOneFixedU128::one() {
+impl<LiquidationStrategyId, Asset: Eq> Validate<MarketModelValid>
+	for CreateInput<LiquidationStrategyId, Asset>
+{
+	fn validate(self) -> Result<Self, &'static str> {
+		if self.updatable.collateral_factor < MoreThanOneFixedU128::one() {
 			return Err("collateral factor must be >=1")
 		}
-			
-		let interest_rate_model = Validate::<InteresteRateModelIsValid>::validate(self.updatable.interest_rate_model)?;
 
-		Ok(Self { updatable : UpdateInput { interest_rate_model, ..self.updatable}, ..self})
-    }
+		let interest_rate_model =
+			Validate::<InteresteRateModelIsValid>::validate(self.updatable.interest_rate_model)?;
+
+		Ok(Self { updatable: UpdateInput { interest_rate_model, ..self.updatable }, ..self })
+	}
 }
 
-
-impl<LiquidationStrategyId, Asset : Eq> Validate<CurrencyPairIsNotSame> for CreateInput<LiquidationStrategyId, Asset> {
-    fn validate(self) -> Result<Self, &'static str> {
-        if self.currency_pair.base == self.currency_pair.quote {
+impl<LiquidationStrategyId, Asset: Eq> Validate<CurrencyPairIsNotSame>
+	for CreateInput<LiquidationStrategyId, Asset>
+{
+	fn validate(self) -> Result<Self, &'static str> {
+		if self.currency_pair.base == self.currency_pair.quote {
 			Err("currency pair must be different assets")
 		} else {
 			Ok(self)
 		}
-    }
+	}
 }
 
 impl<LiquidationStrategyId, AssetId: Copy> CreateInput<LiquidationStrategyId, AssetId> {

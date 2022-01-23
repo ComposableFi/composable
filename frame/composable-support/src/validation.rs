@@ -31,8 +31,7 @@ impl<T, U> AsRef<T> for Validated<T, U> {
 	}
 }
 
-
-pub trait ValidateDispatch<U> : Sized {
+pub trait ValidateDispatch<U>: Sized {
 	fn validate(self) -> Result<Self, DispatchError>;
 }
 
@@ -46,7 +45,6 @@ pub enum Valid {}
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Invalid {}
-
 
 impl<T> Validate<Invalid> for T {
 	#[inline(always)]
@@ -71,8 +69,8 @@ impl<T: Validate<U> + Validate<V>, U, V> Validate<(U, V)> for T {
 	}
 }
 
-// as per substrate pattern and existing macroses for similar purposes, they tend to make things flat
-// like `#[impl_trait_for_tuples::impl_for_tuples(30)]`
+// as per substrate pattern and existing macroses for similar purposes, they tend to make things
+// flat like `#[impl_trait_for_tuples::impl_for_tuples(30)]`
 // so if we will need more than 3, can consider it
 impl<T: Validate<U> + Validate<V> + Validate<W>, U, V, W> Validate<(U, V, W)> for T {
 	#[inline(always)]

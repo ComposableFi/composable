@@ -6989,6 +6989,7 @@ dependencies = [
  "proptest 0.9.6",
  "scale-info",
  "serde",
+ "smallvec 1.8.0",
  "sp-arithmetic",
  "sp-core",
  "sp-io",

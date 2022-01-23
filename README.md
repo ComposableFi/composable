@@ -18,7 +18,7 @@ Picasso is our custom built kusama parachain, based on the substrate framework.
 
 For linux, FreeBSD, OpenBSD and macOS:
 
-```sh
+~~```sh~~
 rustup update
 rustup update nightly
 rustup target add wasm32-unknown-unknown --toolchain nightly

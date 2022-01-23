@@ -84,9 +84,9 @@ pub struct CurrencyPair<AssetId> {
 }
 
 impl<AssetId> From<(AssetId, AssetId)> for CurrencyPair<AssetId> {
-    fn from(other: (AssetId, AssetId)) -> Self {
-        Self { base : other.0, quote : other.1}
-    }
+	fn from(other: (AssetId, AssetId)) -> Self {
+		Self { base: other.0, quote: other.1 }
+	}
 }
 
 /// `AssetId` is Copy, than consider pair to be Copy

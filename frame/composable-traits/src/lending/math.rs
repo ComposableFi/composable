@@ -1,7 +1,7 @@
 use core::ops::Neg;
 
 use codec::{Decode, Encode};
-use composable_support::validation::{Validate};
+use composable_support::validation::Validate;
 use scale_info::TypeInfo;
 use sp_std::{cmp::Ordering, convert::TryInto};
 
@@ -114,17 +114,30 @@ impl InterestRateModel {
 
 pub struct InteresteRateModelIsValid;
 impl Validate<InteresteRateModelIsValid> for InterestRateModel {
-    fn validate(self) -> Result<Self, &'static str> {
-		const ERROR : &str  = "interest rate model is not valid";
-        match self {
-            InterestRateModel::Jump(x) => JumpModel::new(x.base_rate, x.jump_rate, x.full_rate, x.target_utilization).ok_or(ERROR).map(InterestRateModel::Jump),
-            InterestRateModel::Curve(x) => CurveModel::new(x.base_rate).ok_or(ERROR).map(InterestRateModel::Curve),
-            InterestRateModel::DynamicPIDController(x) => DynamicPIDControllerModel::new(x.proportional_parameter, x.integral_parameter, x.derivative_parameter, x.previous_interest_rate, x.target_utilization)
-			.ok_or(ERROR).map(InterestRateModel::DynamicPIDController),
-            InterestRateModel::DoubleExponent(x) => DoubleExponentModel::new(x.coefficients).ok_or(ERROR).map(InterestRateModel::DoubleExponent),
-        }
-    }
-} 
+	fn validate(self) -> Result<Self, &'static str> {
+		const ERROR: &str = "interest rate model is not valid";
+		match self {
+			InterestRateModel::Jump(x) =>
+				JumpModel::new(x.base_rate, x.jump_rate, x.full_rate, x.target_utilization)
+					.ok_or(ERROR)
+					.map(InterestRateModel::Jump),
+			InterestRateModel::Curve(x) =>
+				CurveModel::new(x.base_rate).ok_or(ERROR).map(InterestRateModel::Curve),
+			InterestRateModel::DynamicPIDController(x) => DynamicPIDControllerModel::new(
+				x.proportional_parameter,
+				x.integral_parameter,
+				x.derivative_parameter,
+				x.previous_interest_rate,
+				x.target_utilization,
+			)
+			.ok_or(ERROR)
+			.map(InterestRateModel::DynamicPIDController),
+			InterestRateModel::DoubleExponent(x) => DoubleExponentModel::new(x.coefficients)
+				.ok_or(ERROR)
+				.map(InterestRateModel::DoubleExponent),
+		}
+	}
+}
 
 // TODO: Use enum_dispatch crate
 impl InterestRate for InterestRateModel {
@@ -172,12 +185,11 @@ impl JumpModel {
 		full_rate: ZeroToOneFixedU128,
 		target_utilization: Percent,
 	) -> Option<JumpModel> {
-		
 		if base_rate <= Self::MAX_BASE_RATE &&
-		jump_rate <= Self::MAX_JUMP_RATE &&
-		full_rate <= Self::MAX_FULL_RATE &&
-		base_rate <= jump_rate &&
-		jump_rate <= full_rate
+			jump_rate <= Self::MAX_JUMP_RATE &&
+			full_rate <= Self::MAX_FULL_RATE &&
+			base_rate <= jump_rate &&
+			jump_rate <= full_rate
 		{
 			let model = Self { base_rate, jump_rate, full_rate, target_utilization };
 			Some(model)
@@ -331,8 +343,7 @@ impl DynamicPIDControllerModel {
 	) -> Option<DynamicPIDControllerModel> {
 		if target_utilization > ZeroToOneFixedU128::one() {
 			None
-		}
-		else {
+		} else {
 			Some(DynamicPIDControllerModel {
 				proportional_parameter,
 				integral_parameter,

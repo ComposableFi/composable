@@ -38,19 +38,19 @@
 //! ## Overview
 //!
 //! A simple pallet providing means of submitting bond offers.
-//! 
+//!
 //! Alice offers some bond priced in specific assets per bond as some amount of shares.
-//! At same time she provides reward asset which will be vested into account which takes bond offers.
-//! She locks some native currency to make the offer registered. 
-//! 
-//! Bob bonds parts of shares from offer by transfer some asset amount desired by Alice. 
+//! At same time she provides reward asset which will be vested into account which takes bond
+//! offers. She locks some native currency to make the offer registered.
+//!
+//! Bob bonds parts of shares from offer by transfer some asset amount desired by Alice.
 //! Bob will be vested part of reward amount during maturity period from that moment.
-//! It the end of some period Bob may or may be not be return with amount he provided to Alice - 
+//! It the end of some period Bob may or may be not be return with amount he provided to Alice -
 //! depends on how offer was setup.   
 //!
 //! Alice may cancel offer and prevent new bonds on offer, she gets her native tokens back.
 //! All existing vesting periods continue to be executed.
-//! 
+//!
 //! ## Interface
 //!
 //! This pallet implements the `composable_traits::bonded_finance::BondedFinance`.
@@ -198,9 +198,6 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
-
-
 		/// Create a new offer. So later can `bond` it.
 		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must have the
@@ -214,9 +211,10 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Bond to an offer. 
-		/// And user should provide the number of contracts she is willing to buy. 
-		/// On offer completion (a.k.a. no more contract on the offer), the `stake` put by the creator is refunded.
+		/// Bond to an offer.
+		/// And user should provide the number of contracts she is willing to buy.
+		/// On offer completion (a.k.a. no more contract on the offer), the `stake` put by the
+		/// creator is refunded.
 		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must have the
 		/// appropriate funds.
