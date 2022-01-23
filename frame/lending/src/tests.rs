@@ -34,7 +34,7 @@ type CollateralAsset = CurrencyId;
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
-const INITIAL_BORROW_ASSET_AMOUNT : u128 = 10^30;
+const INITIAL_BORROW_ASSET_AMOUNT: u128 = 10 ^ 30;
 
 /// Create a very simple vault for the given currency, 100% is reserved.
 fn create_simple_vault(
@@ -303,20 +303,22 @@ fn can_create_valid_market() {
 			reserved_factor: DEFAULT_MARKET_VAULT_RESERVE,
 			currency_pair: CurrencyPair::new(collateral_asset, borrow_asset),
 		};
-		let created = <Lending as composable_traits::lending::Lending>::create(manager, config.clone());
+		let created =
+			<Lending as composable_traits::lending::Lending>::create(manager, config.clone());
 		assert!(!created.is_ok());
 		Tokens::mint_into(borrow_asset, &manager, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
 		let created = <Lending as composable_traits::lending::Lending>::create(manager, config);
 		assert_ok!(created);
-		let new_balance= Tokens::balance(borrow_asset, &manager);
+		let new_balance = Tokens::balance(borrow_asset, &manager);
 		assert!(new_balance < INITIAL_BORROW_ASSET_AMOUNT);
 		let (market_id, borrow_vault_id) = created.unwrap();
-		
-		let vault_borrow_id = <Vault as composable_traits::vault::Vault>::asset_id(&borrow_vault_id).unwrap();
+
+		let vault_borrow_id =
+			<Vault as composable_traits::vault::Vault>::asset_id(&borrow_vault_id).unwrap();
 		assert_eq!(vault_borrow_id, borrow_asset);
-		
+
 		let initial_total_cash = Lending::total_cash(&market_id).unwrap();
-		assert!(initial_total_cash>0);
+		assert!(initial_total_cash > 0);
 	});
 }
 
@@ -334,7 +336,8 @@ fn test_borrow_repay_in_same_block() {
 		let borrow_asset_deposit = 900000;
 		assert_ok!(Tokens::mint_into(CurrencyId::BTC, &CHARLIE, borrow_asset_deposit));
 		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, borrow_asset_deposit));
-		let mut total_cash = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(borrow_asset_deposit) + initial_total_cash;
+		let mut total_cash =
+			DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(borrow_asset_deposit) + initial_total_cash;
 
 		// Allow the market to initialize it's account by withdrawing
 		// from the vault
@@ -397,7 +400,7 @@ fn borrow_flow() {
 	new_test_ext().execute_with(|| {
 		let (market, vault) = create_simple_market();
 		let initial_total_cash = Lending::total_cash(&market).unwrap();
-		assert!(initial_total_cash>0);
+		assert!(initial_total_cash > 0);
 		let unit = 1_000_000_000;
 		Oracle::set_btc_price(50000);
 
@@ -427,7 +430,8 @@ fn borrow_flow() {
 			process_block(i);
 		}
 
-		let expected_cash = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(borrow_asset_deposit) + initial_total_cash;
+		let expected_cash =
+			DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(borrow_asset_deposit) + initial_total_cash;
 		assert_eq!(Lending::total_cash(&market), Ok(expected_cash));
 
 		let alice_borrow = alice_capable_btc / DEFAULT_COLLATERAL_FACTOR / 10;

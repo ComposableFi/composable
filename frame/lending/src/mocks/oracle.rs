@@ -117,8 +117,8 @@ pub mod pallet {
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			let price = Self::get_price(asset_id, 10^12)?;
-			let inversed = amount / price.price / 10^12; 
+			let price = Self::get_price(asset_id, 10 ^ 12)?;
+			let inversed = amount / price.price / 10 ^ 12;
 			Ok(inversed)
 		}
 	}

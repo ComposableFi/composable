@@ -1147,8 +1147,10 @@ pub mod pallet {
 				)?;
 
 				let initial_price_amount = T::MarketCreationStake::get();
-				let initial_pool_size =
-					T::Oracle::get_price_inverse(config_input.borrow_asset(), initial_price_amount)?;
+				let initial_pool_size = T::Oracle::get_price_inverse(
+					config_input.borrow_asset(),
+					initial_price_amount,
+				)?;
 				ensure!(
 					initial_pool_size > T::Balance::zero(),
 					Error::<T>::PriceOfInitialBorrowVaultShoyldBeGreaterThanZero
@@ -1160,12 +1162,15 @@ pub mod pallet {
 					initial_pool_size,
 					false,
 				)?;
-				let x = T::MultiCurrency::balance(config_input.borrow_asset(), &Self::account_id(&market_id));
+				let x = T::MultiCurrency::balance(
+					config_input.borrow_asset(),
+					&Self::account_id(&market_id),
+				);
 				ensure!(
 					x > T::Balance::zero(),
 					Error::<T>::PriceOfInitialBorrowVaultShoyldBeGreaterThanZero
 				);
-				
+
 				// TODO: discuss on why we do not reposit all amount to vault
 				// <T::Vault as Vault>::deposit(
 				// 	&borrow_asset_vault,
@@ -1329,13 +1334,15 @@ pub mod pallet {
 				if remaining_borrow_amount == T::Balance::zero() {
 					BorrowTimestamp::<T>::remove(market_id, beneficiary);
 					DebtIndex::<T>::remove(market_id, beneficiary);
-	let rent = BorrowRent::<T>::get(market_id, beneficiary).expect("protocol maintains rent if there is debt");
+					let rent = BorrowRent::<T>::get(market_id, beneficiary)
+						.expect("protocol maintains rent if there is debt");
 					<T as Config>::NativeCurrency::transfer(
 						&market_account,
 						beneficiary,
 						rent,
 						false,
-					).expect("there is enough rent to transfer back by protocol");
+					)
+					.expect("there is enough rent to transfer back by protocol");
 				}
 			}
 

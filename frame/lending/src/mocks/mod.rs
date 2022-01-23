@@ -380,11 +380,7 @@ impl pallet_lending::Config for Test {
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	let balances = vec![
-		(*ALICE, 1_000_000_000),
-		(*BOB, 1_000_000_000),
-		(*CHARLIE, 1_000_000_000),
-	];
+	let balances = vec![(*ALICE, 1_000_000_000), (*BOB, 1_000_000_000), (*CHARLIE, 1_000_000_000)];
 
 	pallet_balances::GenesisConfig::<Test> { balances }
 		.assimilate_storage(&mut storage)
