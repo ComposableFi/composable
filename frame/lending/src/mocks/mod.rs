@@ -24,6 +24,8 @@ use sp_runtime::{
 	ArithmeticError, DispatchError,
 };
 
+use self::currency::CurrencyId;
+
 pub mod oracle;
 mod currency;
 
@@ -142,18 +144,18 @@ impl pallet_timestamp::Config for Test {
 }
 
 parameter_types! {
-	pub const DynamicCurrencyIdInitial: MockCurrencyId = MockCurrencyId::LpToken(0);
+	pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LpToken(0);
 }
 
 impl pallet_currency_factory::Config for Test {
 	type Event = Event;
-	type DynamicCurrencyId = MockCurrencyId;
+	type DynamicCurrencyId = CurrencyId;
 	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
 }
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::PICA;
+	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
 	pub const CreationDeposit: Balance = 10;
 	pub const RentPerBlock: Balance = 1;
 	pub const MinimumDeposit: Balance = 0;
@@ -165,7 +167,7 @@ parameter_types! {
 impl pallet_vault::Config for Test {
 	type Event = Event;
 	type Currency = Tokens;
-	type AssetId = MockCurrencyId;
+	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type MaxStrategies = MaxStrategies;
 	type CurrencyFactory = LpTokenFactory;
@@ -183,7 +185,7 @@ impl pallet_vault::Config for Test {
 }
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
+	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
 		Zero::zero()
 	};
 }
@@ -196,7 +198,7 @@ impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
-	type CurrencyId = MockCurrencyId;
+	type CurrencyId = CurrencyId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
@@ -208,18 +210,18 @@ ord_parameter_types! {
 	pub const RootAccount: AccountId = *ALICE;
 }
 
-impl GovernanceRegistry<MockCurrencyId, AccountId> for () {
-	fn set(_k: MockCurrencyId, _value: composable_traits::governance::SignedRawOrigin<AccountId>) {}
+impl GovernanceRegistry<CurrencyId, AccountId> for () {
+	fn set(_k: CurrencyId, _value: composable_traits::governance::SignedRawOrigin<AccountId>) {}
 }
 
 impl
 	GetByKey<
-		MockCurrencyId,
+		CurrencyId,
 		Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError>,
 	> for ()
 {
 	fn get(
-		_k: &MockCurrencyId,
+		_k: &CurrencyId,
 	) -> Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError> {
 		Ok(SignedRawOrigin::Root)
 	}
@@ -228,7 +230,7 @@ impl
 impl pallet_assets::Config for Test {
 	type NativeAssetId = NativeAssetId;
 	type GenerateCurrencyId = LpTokenFactory;
-	type AssetId = MockCurrencyId;
+	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
@@ -243,7 +245,7 @@ impl crate::mocks::oracle::Config for Test {
 }
 
 impl DeFiComposableConfig for Test {
-	type MayBeAssetId = MockCurrencyId;
+	type MayBeAssetId = CurrencyId;
 	type Balance = Balance;
 }
 
@@ -334,6 +336,8 @@ where
 
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
+	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
+	pub MarketCreationStake : Balance = 100;
 }
 
 impl pallet_lending::Config for Test {
@@ -341,15 +345,17 @@ impl pallet_lending::Config for Test {
 	type VaultId = VaultId;
 	type Vault = Vault;
 	type Event = Event;
+	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
 	type CurrencyFactory = LpTokenFactory;
-	type MarketDebtCurrency = Tokens;
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
 	type AuthorityId = crypto::TestAuthId;
 	type WeightInfo = ();
 	type LiquidationStrategyId = LiquidationStrategyId;
+	type PalletId = LendingPalletId;
+	type MarketCreationStake = MarketCreationStake;
 }
 
 // Build genesis storage according to the mock runtime.

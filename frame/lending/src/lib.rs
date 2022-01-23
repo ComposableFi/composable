@@ -657,7 +657,7 @@ use composable_traits::{
 			market_id: MarketIndex,
 			borrowers: Vec<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
-			let ref sender = ensure_signed(origin)?;
+			let sender = &(ensure_signed(origin)?);
 			// TODO: should this be restricted to certain users?
 			Self::liquidate_internal(Some(sender), &market_id, borrowers.clone())?;
 			Self::deposit_event(Event::LiquidationInitiated { market_id, borrowers });
@@ -819,7 +819,7 @@ use composable_traits::{
 					if let Some(deposit) = BorrowRent::<T>::get(market_id, account) {
 						let market_account = Self::account_id(market_id);
 						let liquidator = liquidator.unwrap_or(account);
-						<T as Config>::NativeCurrency::transfer(&market_account, &liquidator, deposit, true)?;
+						<T as Config>::NativeCurrency::transfer(&market_account, liquidator, deposit, true)?;
 					}
 				}
 			}

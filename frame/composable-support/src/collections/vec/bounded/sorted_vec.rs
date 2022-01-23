@@ -5,7 +5,7 @@ use core::{
 	slice::SliceIndex,
 };
 use frame_support::{traits::Get, BoundedVec};
-use sp_std::{convert::TryFrom, fmt, marker::PhantomData, prelude::*};
+use sp_std::{convert::TryFrom, marker::PhantomData, prelude::*};
 
 /// A bounded, sorted vector.
 ///

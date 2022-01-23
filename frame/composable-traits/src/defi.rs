@@ -5,7 +5,7 @@ use scale_info::TypeInfo;
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
 	traits::{CheckedAdd, CheckedMul, CheckedSub, Zero},
-	ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128, Permill,
+	ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128,
 };
 
 use crate::currency::{AssetIdLike, BalanceLike, MathBalance};
@@ -81,6 +81,12 @@ pub struct CurrencyPair<AssetId> {
 	/// Also can be named `price` currency.
 	/// Usually more stable, may be `borrowable` asset.
 	pub quote: AssetId,
+}
+
+impl<AssetId> From<(AssetId, AssetId)> for CurrencyPair<AssetId> {
+    fn from(other: (AssetId, AssetId)) -> Self {
+        Self { base : other.0, quote : other.1}
+    }
 }
 
 /// `AssetId` is Copy, than consider pair to be Copy
