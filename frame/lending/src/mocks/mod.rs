@@ -7,7 +7,7 @@ use composable_traits::{
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, OnFinalize, OnInitialize},
-	PalletId,
+	PalletId, weights::{WeightToFeePolynomial, WeightToFeeCoefficients, WeightToFeeCoefficient},
 };
 use frame_system::EnsureSignedBy;
 use hex_literal::hex;
@@ -21,13 +21,13 @@ use sp_runtime::{
 	traits::{
 		BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify,
 	},
-	ArithmeticError, DispatchError,
+	ArithmeticError, DispatchError, Perbill,
 };
-
+use smallvec::smallvec;
 use self::currency::CurrencyId;
 
 pub mod oracle;
-mod currency;
+pub mod currency;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -337,7 +337,24 @@ where
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
-	pub MarketCreationStake : Balance = 100;
+	pub MarketCreationStake : Balance = 100000;
+}
+
+parameter_types! {
+	pub static WeightToFee: Balance = 1;
+}
+impl WeightToFeePolynomial for WeightToFee {
+	type Balance = Balance;
+
+	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+		let one = WeightToFeeCoefficient {
+			degree: 1,
+			coeff_frac: Perbill::zero(),
+			coeff_integer: WEIGHT_TO_FEE.with(|v| *v.borrow()),
+			negative: false,
+		};
+		smallvec![one]
+	}
 }
 
 impl pallet_lending::Config for Test {
@@ -356,6 +373,9 @@ impl pallet_lending::Config for Test {
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type PalletId = LendingPalletId;
 	type MarketCreationStake = MarketCreationStake;
+
+	type WeightToFee = WeightToFee;
+
 }
 
 // Build genesis storage according to the mock runtime.

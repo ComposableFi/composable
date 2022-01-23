@@ -113,8 +113,10 @@ pub mod pallet {
 			Err(DispatchError::Other("No implemented"))
 		}
 
-fn get_price_inverse(asset_id: Self::AssetId, amount: Self::Balance) -> Result<Self::Balance, DispatchError> {
-        todo!()
-    }
+		fn get_price_inverse(asset_id: Self::AssetId, amount: Self::Balance) -> Result<Self::Balance, DispatchError> {
+			let price_of_one = Self::get_price(asset_id, 1)?;
+			let inversed = amount / price_of_one.price;
+			Ok(inversed)
+		}
 	}
 }
