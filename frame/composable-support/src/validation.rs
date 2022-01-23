@@ -86,8 +86,7 @@ impl<T: Validate<U> + Validate<V> + Validate<W>, U, V, W> Validate<(U, V, W)> fo
 
 impl<T: codec::Decode + Validate<U>, U> codec::Decode for Validated<T, U> {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
-		let value = Validate::validate(T::decode(input)?)
-			.map_err(|desc| Into::<codec::Error>::into(desc))?;
+		let value = Validate::validate(T::decode(input)?).map_err(Into::<codec::Error>::into)?;
 		Ok(Validated { value, _marker: PhantomData })
 	}
 	fn skip<I: codec::Input>(input: &mut I) -> Result<(), codec::Error> {

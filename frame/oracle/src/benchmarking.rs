@@ -154,7 +154,7 @@ benchmarks! {
 		.collect::<Vec<_>>();
 		PrePrices::<T>::insert(asset_id, pre_prices);
 	}: {
-		Oracle::<T>::update_pre_prices(asset_id, asset_info, block)
+		Oracle::<T>::update_pre_prices(asset_id, &asset_info, block)
 	}
 
 	update_price {

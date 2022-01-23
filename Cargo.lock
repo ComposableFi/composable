@@ -1543,9 +1543,13 @@ version = "0.0.1"
 dependencies = [
  "frame-support",
  "frame-system",
+ "is_sorted",
  "parity-scale-codec",
  "proptest 1.0.0",
  "scale-info",
+ "serde",
+ "serde_json",
+ "sorted-vec",
  "sp-arithmetic",
  "sp-runtime",
  "sp-std",
@@ -4295,6 +4299,12 @@ name = "ipnet"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68f2d64f2edebec4ce84ad108148e67e1064789bee435edc5b60ad398714a3a9"
+
+[[package]]
+name = "is_sorted"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "357376465c37db3372ef6a00585d336ed3d0f11d4345eef77ebcb05865392b21"
 
 [[package]]
 name = "itertools"
@@ -11847,6 +11857,12 @@ dependencies = [
  "rand 0.8.4",
  "sha-1 0.9.8",
 ]
+
+[[package]]
+name = "sorted-vec"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4210e1a17d165a0c1d4a233af1e3b36fb21b1359042767a4d2c73554f5f8c2aa"
 
 [[package]]
 name = "sp-api"
