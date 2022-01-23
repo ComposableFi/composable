@@ -89,15 +89,9 @@ jobs:
         run: |
          rustup show
       - uses: actions/checkout@v2
-      - name: Run Test (with coverage)
+      - name: Run Test
         run: |
           SKIP_WASM_BUILD=1 cargo test --workspace --locked --release --verbose --features=runtime-benchmarks --exclude=integration-tests
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: lcov.info
-          fail_ci_if_error: false
 
   linters:
     name: Linters

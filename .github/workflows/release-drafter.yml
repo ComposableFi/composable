@@ -15,8 +15,6 @@ jobs:
         - sre
     strategy: 
       fail-fast: true
-      matrix: 
-        runtime: [picasso]
     steps:
     - name: Clean up
       continue-on-error: true
@@ -61,7 +59,7 @@ jobs:
         npm run update-release-body -- --id=${{ steps.release_drafter.outputs.id  }} --repo=composableFi/composable --body="$GITHUB_WORKSPACE/release.md"
         cd $GITHUB_WORKSPACE
 
-    - name: Upload Compact Dali wasm
+    - name: Upload Dali wasm
       id: upload-dali-wasm
       if: env.dali_wasm == 1
       uses: actions/upload-release-asset@v1
@@ -71,7 +69,7 @@ jobs:
         asset_name: dali_runtime.compact.wasm
         asset_content_type: application/octet-stream
 
-    - name: Upload Compact Picasso wasm
+    - name: Upload Picasso wasm
       id: upload-picasso-wasm
       if: env.picasso_wasm == 1
       uses: actions/upload-release-asset@v1
@@ -81,7 +79,7 @@ jobs:
         asset_name: picasso_runtime.compact.wasm
         asset_content_type: application/octet-stream
 
-    - name: Upload Compact Composable wasm
+    - name: Upload Composable wasm
       id: upload-composable-wasm
       if: env.composable_wasm == 1
       uses: actions/upload-release-asset@v1
@@ -91,7 +89,7 @@ jobs:
         asset_name: composable_runtime.compact.wasm
         asset_content_type: application/octet-stream
 
-    - name: 🔨 Build and Upload Composable Binary
+    - name: 🔨 Build Composable Binary
       run: |
         .maintain/client_release.sh
 
