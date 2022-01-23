@@ -1239,7 +1239,7 @@ pub mod pallet {
 			BorrowTimestamp::<T>::insert(market_id, debt_owner, Self::last_block_timestamp());
 
 			if !BorrowRent::<T>::contains_key(market_id, debt_owner) {
-				let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate(1));
+				let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate(2));
 				<T as Config>::NativeCurrency::transfer(
 					debt_owner,
 					&market_account,
@@ -1329,6 +1329,13 @@ pub mod pallet {
 				if remaining_borrow_amount == T::Balance::zero() {
 					BorrowTimestamp::<T>::remove(market_id, beneficiary);
 					DebtIndex::<T>::remove(market_id, beneficiary);
+	let rent = BorrowRent::<T>::get(market_id, beneficiary).expect("protocol maintains rent if there is debt");
+					<T as Config>::NativeCurrency::transfer(
+						&market_account,
+						beneficiary,
+						rent,
+						false,
+					).expect("there is enough rent to transfer back by protocol");
 				}
 			}
 

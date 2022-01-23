@@ -324,16 +324,17 @@ fn can_create_valid_market() {
 fn test_borrow_repay_in_same_block() {
 	new_test_ext().execute_with(|| {
 		let collateral_amount = 900000000;
-		let (market, vault) = create_simple_market();
+		let (market_id, vault) = create_simple_market();
+		let initial_total_cash = Lending::total_cash(&market_id).unwrap();
 		assert_ok!(Tokens::mint_into(CurrencyId::USDT, &ALICE, collateral_amount));
 
-		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, collateral_amount));
+		assert_ok!(Lending::deposit_collateral_internal(&market_id, &ALICE, collateral_amount));
 		assert_eq!(Tokens::balance(CurrencyId::USDT, &ALICE), 0);
 
 		let borrow_asset_deposit = 900000;
 		assert_ok!(Tokens::mint_into(CurrencyId::BTC, &CHARLIE, borrow_asset_deposit));
 		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, borrow_asset_deposit));
-		let mut total_cash = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(borrow_asset_deposit);
+		let mut total_cash = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(borrow_asset_deposit) + initial_total_cash;
 
 		// Allow the market to initialize it's account by withdrawing
 		// from the vault
@@ -344,17 +345,17 @@ fn test_borrow_repay_in_same_block() {
 		let price =
 			|currency_id, amount| Oracle::get_price(currency_id, amount).expect("impossible").price;
 
-		assert_eq!(Lending::borrow_balance_current(&market, &ALICE), Ok(Some(0)));
-		let limit_normalized = Lending::get_borrow_limit(&market, &ALICE).unwrap();
+		assert_eq!(Lending::borrow_balance_current(&market_id, &ALICE), Ok(Some(0)));
+		let limit_normalized = Lending::get_borrow_limit(&market_id, &ALICE).unwrap();
 		let alice_limit = limit_normalized / price(CurrencyId::BTC, 1);
-		assert_eq!(Lending::total_cash(&market), Ok(total_cash));
+		assert_eq!(Lending::total_cash(&market_id), Ok(total_cash));
 		process_block(1);
-		assert_ok!(Lending::borrow_internal(&market, &ALICE, alice_limit / 4));
+		assert_ok!(Lending::borrow_internal(&market_id, &ALICE, alice_limit / 4));
 		total_cash -= alice_limit / 4;
 		let total_borrows = alice_limit / 4;
-		assert_eq!(Lending::total_cash(&market), Ok(total_cash));
-		assert_eq!(Lending::total_borrows(&market), Ok(total_borrows));
-		let alice_repay_amount = Lending::borrow_balance_current(&market, &ALICE).unwrap();
+		assert_eq!(Lending::total_cash(&market_id), Ok(total_cash));
+		assert_eq!(Lending::total_borrows(&market_id), Ok(total_borrows));
+		let alice_repay_amount = Lending::borrow_balance_current(&market_id, &ALICE).unwrap();
 		// MINT required BTC so that ALICE and BOB can repay the borrow.
 		assert_ok!(Tokens::mint_into(
 			CurrencyId::BTC,
@@ -362,7 +363,7 @@ fn test_borrow_repay_in_same_block() {
 			alice_repay_amount.unwrap() - (alice_limit / 4)
 		));
 		assert_noop!(
-			Lending::repay_borrow_internal(&market, &ALICE, &ALICE, alice_repay_amount),
+			Lending::repay_borrow_internal(&market_id, &ALICE, &ALICE, alice_repay_amount),
 			Error::<Test>::BorrowAndRepayInSameBlockIsNotSupported
 		);
 	});
@@ -490,21 +491,19 @@ fn borrow_flow() {
 }
 
 #[test]
-fn test_vault_market_cannot_withdraw() {
+fn vault_takes_part_of_borrow_so_cannot_withdraw() {
 	new_test_ext().execute_with(|| {
-		let (market, vault_id) = create_simple_market();
-
-		let deposit_usdt = 1_000_000;
+		let (market_id, vault_id) = create_simple_market();
+		let initial_total_cash = Lending::total_cash(&market_id).unwrap();
+		let deposit_usdt = 1_000_000_000;
 		let deposit_btc = 10;
 		assert_ok!(Tokens::mint_into(CurrencyId::USDT, &ALICE, deposit_usdt));
 		assert_ok!(Tokens::mint_into(CurrencyId::BTC, &ALICE, deposit_btc));
 
 		assert_ok!(Vault::deposit(Origin::signed(*ALICE), vault_id, deposit_btc));
-		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, deposit_usdt));
-
-		// We don't even wait 1 block, which mean the market couldn't withdraw funds.
+		assert_ok!(Lending::deposit_collateral_internal(&market_id, &ALICE, deposit_usdt));
 		assert_noop!(
-			Lending::borrow_internal(&market, &ALICE, deposit_btc),
+			Lending::borrow_internal(&market_id, &ALICE, deposit_btc + initial_total_cash),
 			Error::<Test>::NotEnoughBorrowAsset
 		);
 	});
@@ -931,9 +930,7 @@ proptest! {
 			prop_assert_ne!(Lending::account_id(&market_id1), Lending::account_id(&market_id2));
 
 			// Alice lend an amount in market1 vault
-			prop_assert_eq!(Tokens::balance(CurrencyId::BTC, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(CurrencyId::BTC, &ALICE, amount1));
-			prop_assert_eq!(Tokens::balance(CurrencyId::BTC, &ALICE), amount1);
 			prop_assert_ok!(Vault::deposit(Origin::signed(*ALICE), vault_id1, amount1));
 
 			// Bob lend an amount in market2 vault

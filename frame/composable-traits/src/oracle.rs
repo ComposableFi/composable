@@ -83,7 +83,7 @@ pub trait Oracle {
 	/// ```
 	fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<Ratio, DispatchError>;
 
-	/// Given `asset_id` and `amount` of price asset, 
-	/// wat amount of  `asset_id` will be required to be priceable for 
+	/// Given `asset_id` and `amount` of price asset.
+	/// Returns what amount of  `asset_id` will be required to be same price as `amount` of normalized currency 
 	fn get_price_inverse(asset_id: Self::AssetId, amount: Self::Balance) -> Result<Self::Balance, DispatchError>;
 }

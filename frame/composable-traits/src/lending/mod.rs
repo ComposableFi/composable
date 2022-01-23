@@ -224,6 +224,7 @@ pub trait Lending: DeFiEngine {
 	/// ```
 	fn accrue_interest(market_id: &Self::MarketId, now: Timestamp) -> Result<(), DispatchError>;
 
+	/// current borrowable balance of market
 	fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
 	/// utilization_ratio = total_borrows / (total_cash + total_borrows).
