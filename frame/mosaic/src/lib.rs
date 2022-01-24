@@ -9,7 +9,7 @@
 mod decay;
 mod relayer;
 
-pub use decay::{BudgetDecay, Decayable};
+pub use decay::{BudgetPenaltyDecayer, Decayer};
 pub use pallet::*;
 
 #[cfg(test)]
@@ -22,8 +22,8 @@ mod tests;
 pub mod pallet {
 
 	use crate::{
-		decay::Decayable,
-		relayer::{RelayerConfig, StaleRelayer},
+        decay::Decayer,
+        relayer::{RelayerConfig, StaleRelayer},
 	};
 	use codec::FullCodec;
 	use composable_traits::math::SafeArithmetic;
@@ -59,7 +59,7 @@ pub mod pallet {
 		type MinimumTTL: Get<BlockNumberOf<Self>>;
 		type MinimumTimeLockPeriod: Get<BlockNumberOf<Self>>;
 
-		type BudgetDecay: Decayable<BalanceOf<Self>, BlockNumberOf<Self>>
+		type BudgetPenaltyDecayer: Decayer<BalanceOf<Self>, BlockNumberOf<Self>>
 			+ Clone
 			+ Encode
 			+ Decode
@@ -79,11 +79,11 @@ pub mod pallet {
 		StorageValue<_, StaleRelayer<T::AccountId, T::BlockNumber>, ValueQuery>;
 
 	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
-	pub struct AssetInfo<BlockNumber, Balance, Decayable> {
+	pub struct AssetInfo<BlockNumber, Balance, Decayer> {
 		pub last_deposit: BlockNumber,
 		pub budget: Balance,
 		pub penalty: Balance,
-		pub decay: Decayable,
+		pub penalty_decayer: Decayer,
 	}
 
 	pub enum TransactionType {
@@ -146,7 +146,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		AssetIdOf<T>,
-		AssetInfo<BlockNumberFor<T>, BalanceOf<T>, T::BudgetDecay>,
+		AssetInfo<BlockNumberFor<T>, BalanceOf<T>, T::BudgetPenaltyDecayer>,
 		OptionQuery,
 	>;
 
@@ -216,7 +216,7 @@ pub mod pallet {
 		BudgetUpdated {
 			asset_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			decay: T::BudgetDecay,
+			decay: T::BudgetPenaltyDecayer,
 		},
 		/// The `NetworkInfos` `network_info` was updated for `network_id`.
 		NetworksUpdated {
@@ -339,10 +339,10 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn set_budget(
-			origin: OriginFor<T>,
-			asset_id: AssetIdOf<T>,
-			amount: BalanceOf<T>,
-			decay: T::BudgetDecay,
+            origin: OriginFor<T>,
+            asset_id: AssetIdOf<T>,
+            amount: BalanceOf<T>,
+            decay: T::BudgetPenaltyDecayer,
 		) -> DispatchResultWithPostInfo {
 			// Can also be token governance associated I reckon, as Angular holders should be able
 			// to grant mosaic permission to mint. We'll save that for phase 3.
@@ -354,14 +354,14 @@ pub mod pallet {
 					.take()
 					.map(|mut asset_info| {
 						asset_info.budget = amount;
-						asset_info.decay = decay.clone();
+						asset_info.penalty_decayer = decay.clone();
 						asset_info
 					})
 					.unwrap_or_else(|| AssetInfo {
 						last_deposit: current_block,
 						budget: amount,
 						penalty: Zero::zero(),
-						decay: decay.clone(),
+						penalty_decayer: decay.clone(),
 					});
 				*item = Some(new);
 			});
@@ -536,13 +536,15 @@ pub mod pallet {
 			let (_caller, current_block) = ensure_relayer::<T>(origin)?;
 
 			AssetsInfo::<T>::try_mutate_exists::<_, _, DispatchError, _>(asset_id, |info| {
-				let AssetInfo { last_deposit, penalty, budget, decay } =
+				let AssetInfo { last_deposit, penalty, budget, penalty_decayer: decay } =
 					info.take().ok_or(Error::<T>::UnsupportedAsset)?;
-				let penalty = decay
+
+				let new_penalty = decay
 					.checked_decay(penalty, last_deposit, current_block)
 					.unwrap_or_else(Zero::zero);
-				let budget = budget.saturating_sub(penalty);
-				ensure!(budget > amount, Error::<T>::InsufficientBudget);
+
+				let actual_budget = budget.saturating_sub(new_penalty);
+				ensure!(actual_budget > amount, Error::<T>::InsufficientBudget);
 
 				T::Assets::mint_into(
 					asset_id,
@@ -559,9 +561,9 @@ pub mod pallet {
 
 				*info = Some(AssetInfo {
 					last_deposit: current_block,
-					budget,
-					penalty: penalty.saturating_add(amount),
-					decay,
+                    budget: actual_budget,
+					penalty: new_penalty.saturating_add(amount),
+                    penalty_decayer: decay,
 				});
 
 				Self::deposit_event(Event::<T>::TransferInto { to, asset_id, amount, id });

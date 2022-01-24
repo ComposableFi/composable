@@ -245,7 +245,7 @@ mod budget {
         #[test]
         fn root_can_set_budget() {
             new_test_ext().execute_with(|| {
-                assert_ok!(Mosaic::set_budget(Origin::root(), 1, 1, BudgetDecay::linear(5)));
+                assert_ok!(Mosaic::set_budget(Origin::root(), 1, 1, BudgetPenaltyDecayer::linear(5)));
             })
         }
 
@@ -253,7 +253,7 @@ mod budget {
         fn arbitrary_user_cannot_set_budget() {
             new_test_ext().execute_with(|| {
                 assert_noop!(
-                Mosaic::set_budget(Origin::signed(ALICE), 1, 1, BudgetDecay::linear(5)),
+                Mosaic::set_budget(Origin::signed(ALICE), 1, 1, BudgetPenaltyDecayer::linear(5)),
                 DispatchError::BadOrigin);
             })
         }
@@ -262,7 +262,7 @@ mod budget {
         fn none_cannot_set_budget() {
             new_test_ext().execute_with(|| {
                 assert_noop!(
-                Mosaic::set_budget(Origin::none(), 1, 1, BudgetDecay::linear(5)),
+                Mosaic::set_budget(Origin::none(), 1, 1, BudgetPenaltyDecayer::linear(5)),
                 DispatchError::BadOrigin);
             })
         }
@@ -271,8 +271,8 @@ mod budget {
     #[test]
     fn budget_are_isolated() {
         new_test_ext().execute_with(|| {
-            assert_ok!(Mosaic::set_budget(Origin::root(), 1, 0xCAFEBABE, BudgetDecay::linear(10)));
-            assert_ok!(Mosaic::set_budget(Origin::root(), 2, 0xDEADC0DE, BudgetDecay::linear(5)));
+            assert_ok!(Mosaic::set_budget(Origin::root(), 1, 0xCAFEBABE, BudgetPenaltyDecayer::linear(10)));
+            assert_ok!(Mosaic::set_budget(Origin::root(), 2, 0xDEADC0DE, BudgetPenaltyDecayer::linear(5)));
             assert_eq!(Mosaic::asset_infos(1).expect("budget must exists").budget, 0xCAFEBABE);
             assert_eq!(Mosaic::asset_infos(2).expect("budget must exists").budget, 0xDEADC0DE);
         })
@@ -283,11 +283,11 @@ mod budget {
     fn last_deposit_does_not_change_after_updating_budget() {
         new_test_ext().execute_with(|| {
             let initial_block = System::block_number();
-            assert_ok!(Mosaic::set_budget(Origin::root(), 1, 0xCAFEBABE, BudgetDecay::linear(10)));
+            assert_ok!(Mosaic::set_budget(Origin::root(), 1, 0xCAFEBABE, BudgetPenaltyDecayer::linear(10)));
             assert_eq!(Mosaic::asset_infos(1).expect("budget must exists").last_deposit, initial_block);
 
             System::set_block_number(initial_block + 1);
-            assert_ok!(Mosaic::set_budget(Origin::root(), 1, 0xDEADC0DE, BudgetDecay::linear(10)));
+            assert_ok!(Mosaic::set_budget(Origin::root(), 1, 0xDEADC0DE, BudgetPenaltyDecayer::linear(10)));
             assert_eq!(Mosaic::asset_infos(1).expect("budget must exists").last_deposit, initial_block);
         })
     }
@@ -336,7 +336,7 @@ fn initialize() {
 		NetworkInfo { enabled: true, max_transfer_size: 100000 },
 	)
 	.expect("relayer may set network info");
-	Mosaic::set_budget(Origin::root(), 1, BUDGET, BudgetDecay::linear(10))
+	Mosaic::set_budget(Origin::root(), 1, BUDGET, BudgetPenaltyDecayer::linear(10))
 		.expect("root may set budget");
 }
 
@@ -472,7 +472,7 @@ mod transfers {
             ));
 
             let asset_id = 1;
-            assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, 10000, BudgetDecay::linear(10)));
+            assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, 10000, BudgetPenaltyDecayer::linear(10)));
 
             // We exceed the max transfer size
             let amount = max_transfer_size + 1;
@@ -709,6 +709,46 @@ mod timelocked_mint {
                 .expect("relayer should be able to rescind transactions");
             assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((1, 11)));
         })
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(10000))]
+
+        #[test]
+        fn budget_is_decayed_when_minting(
+            decay in 1..100u128, // todo,
+            max_transfer_size in 1..10_000_000u128,
+            asset_id in 1..100u32,
+            start_block in 1..10_000u64,
+            budget in 1..10_000_000u128
+        ) {
+            new_test_ext().execute_with(|| {
+                // initialize
+                System::set_block_number(start_block);
+
+                prop_assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+                prop_assert_ok!(Mosaic::set_network(
+                    Origin::relayer(),
+                    asset_id,
+                    NetworkInfo { enabled: true, max_transfer_size },
+                ), "relayer may set network info");
+                prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
+
+                // test
+
+                // budget = 10_000. decay = 10. penalty = 0
+                // we mint 1_000
+                // budget = 10_000. decay = 10. penalty = 1_000 => actual_budget = 10_000 - 1_000 = 9_000
+                // wait for 100 blocks
+                // new_penalty = prev_penalty - (current_block - last_mint_block) * decay
+                // new_penalty = prev_penalty - 100 * decay
+                // new_penalty = 1_000 - 100 * 10 = 0
+
+                // actual_budget = budget - current_penalty
+
+                Ok(())
+            })?;
+        }
     }
 }
 

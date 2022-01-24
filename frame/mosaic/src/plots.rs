@@ -9,10 +9,10 @@ fn main() {
 
 #[cfg(feature = "visualization")]
 fn plot_linear_decay(n: u128) {
-	use decay::{BudgetDecay, Decayable};
+	use decay::{BudgetPenaltyDecayer, Decayer};
 	use plotters::prelude::*;
 
-	let decay = BudgetDecay::linear(n);
+	let decay = BudgetPenaltyDecayer::linear(n);
 	let mut penalty = 80;
 	let blocks: u128 = 100;
 
