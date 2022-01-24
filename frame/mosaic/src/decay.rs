@@ -1,18 +1,15 @@
 use frame_support::pallet_prelude::*;
-use num_traits::{CheckedDiv, CheckedMul, CheckedSub, Saturating, Zero, One, CheckedAdd};
+use num_traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero};
 
 pub trait Decayer<Balance, BlockNumber> {
 	fn checked_decay(
-        &self,
-        amount: Balance,
-        last_decay_block: BlockNumber,
-        current_block: BlockNumber,
+		&self,
+		amount: Balance,
+		last_decay_block: BlockNumber,
+		current_block: BlockNumber,
 	) -> Option<Balance>;
 
-    fn full_recovery_period(
-        &self,
-        amount: Balance,
-    ) -> Option<BlockNumber>;
+	fn full_recovery_period(&self, amount: Balance) -> Option<BlockNumber>;
 }
 
 /// Recommend type for storing the decay function of a penalty.
@@ -25,11 +22,12 @@ pub enum BudgetPenaltyDecayer<Balance, BlockNumber> {
 impl<Balance, BlockNumber> BudgetPenaltyDecayer<Balance, BlockNumber> {
 	#[allow(dead_code)]
 	pub fn linear(n: Balance) -> BudgetPenaltyDecayer<Balance, BlockNumber> {
-		BudgetPenaltyDecayer::Linear(LinearDecay { factor: n, _marker: PhantomData})
+		BudgetPenaltyDecayer::Linear(LinearDecay { factor: n, _marker: PhantomData })
 	}
 }
 
-impl<Balance, BlockNumber> Decayer<Balance, BlockNumber> for BudgetPenaltyDecayer<Balance, BlockNumber>
+impl<Balance, BlockNumber> Decayer<Balance, BlockNumber>
+	for BudgetPenaltyDecayer<Balance, BlockNumber>
 where
 	BlockNumber: CheckedSub + Saturating + Into<Balance> + TryFrom<Balance> + One + CheckedAdd,
 	Balance: CheckedMul + CheckedDiv + Saturating + Zero,
@@ -45,21 +43,18 @@ where
 		}
 	}
 
-    fn full_recovery_period(
-        &self,
-        amount: Balance,
-    ) -> Option<BlockNumber> {
-        match self {
-            BudgetPenaltyDecayer::Linear(lin) => lin.full_recovery_period(amount),
-        }
-    }
+	fn full_recovery_period(&self, amount: Balance) -> Option<BlockNumber> {
+		match self {
+			BudgetPenaltyDecayer::Linear(lin) => lin.full_recovery_period(amount),
+		}
+	}
 }
 
 #[derive(Decode, Encode, TypeInfo, Default, Debug, PartialEq, Clone)]
 pub struct LinearDecay<Balance, BlockNumber> {
 	/// Factor by which we decay every block.
 	factor: Balance,
-    _marker: core::marker::PhantomData<BlockNumber>,
+	_marker: core::marker::PhantomData<BlockNumber>,
 }
 
 impl<Balance, BlockNumber> Decayer<Balance, BlockNumber> for LinearDecay<Balance, BlockNumber>
@@ -78,18 +73,13 @@ where
 		Some(amount.saturating_sub(reduction))
 	}
 
-    fn full_recovery_period(
-        &self,
-        amount: Balance,
-    ) -> Option<BlockNumber> {
-        let full_period = amount.checked_div(&self.factor)?;
-        let block_full_period: BlockNumber = TryFrom::<Balance>::try_from(full_period).ok()?;
-        let block_full_period_plus_one: BlockNumber = block_full_period.checked_add(&One::one())?;
-        Some(block_full_period_plus_one)
-    }
+	fn full_recovery_period(&self, amount: Balance) -> Option<BlockNumber> {
+		let full_period = amount.checked_div(&self.factor)?;
+		let block_full_period: BlockNumber = TryFrom::<Balance>::try_from(full_period).ok()?;
+		let block_full_period_plus_one: BlockNumber = block_full_period.checked_add(&One::one())?;
+		Some(block_full_period_plus_one)
+	}
 }
-
-
 
 #[cfg(test)]
 mod tests {

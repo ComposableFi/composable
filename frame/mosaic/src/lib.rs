@@ -22,8 +22,8 @@ mod tests;
 pub mod pallet {
 
 	use crate::{
-        decay::Decayer,
-        relayer::{RelayerConfig, StaleRelayer},
+		decay::Decayer,
+		relayer::{RelayerConfig, StaleRelayer},
 	};
 	use codec::FullCodec;
 	use composable_traits::math::SafeArithmetic;
@@ -157,7 +157,7 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-    #[pallet::getter(fn network_infos)]
+	#[pallet::getter(fn network_infos)]
 	pub type NetworkInfos<T: Config> =
 		StorageMap<_, Twox64Concat, NetworkIdOf<T>, NetworkInfo<BalanceOf<T>>, OptionQuery>;
 
@@ -205,24 +205,16 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// The account of the relayer has been set.
-		RelayerSet {
-			relayer: AccountIdOf<T>,
-		},
+		RelayerSet { relayer: AccountIdOf<T> },
 		/// The relayer has been rotated to `account_id`.
-		RelayerRotated {
-			ttl: BlockNumberOf<T>,
-			account_id: AccountIdOf<T>,
-		},
+		RelayerRotated { ttl: BlockNumberOf<T>, account_id: AccountIdOf<T> },
 		BudgetUpdated {
 			asset_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
 			decay: T::BudgetPenaltyDecayer,
 		},
 		/// The `NetworkInfos` `network_info` was updated for `network_id`.
-		NetworksUpdated {
-			network_id: NetworkIdOf<T>,
-			network_info: NetworkInfo<BalanceOf<T>>,
-		},
+		NetworksUpdated { network_id: NetworkIdOf<T>, network_info: NetworkInfo<BalanceOf<T>> },
 		/// An outgoing tx is created, and locked in the outgoing tx pool.
 		TransferOut {
 			id: Id,
@@ -231,18 +223,9 @@ pub mod pallet {
 			network_id: NetworkIdOf<T>,
 		},
 		/// User claimed outgoing tx that was not (yet) picked up by the relayer
-		StaleTxClaimed {
-			to: AccountIdOf<T>,
-			by: AccountIdOf<T>,
-			amount: BalanceOf<T>,
-		},
+		StaleTxClaimed { to: AccountIdOf<T>, by: AccountIdOf<T>, amount: BalanceOf<T> },
 		/// An incoming tx is created and waiting for the user to claim.
-		TransferInto {
-			to: AccountIdOf<T>,
-			amount: BalanceOf<T>,
-			asset_id: AssetIdOf<T>,
-			id: Id,
-		},
+		TransferInto { to: AccountIdOf<T>, amount: BalanceOf<T>, asset_id: AssetIdOf<T>, id: Id },
 		/// When we have finality issues occur on the Ethereum chain,
 		/// we burn the locked `IncomingTransaction` for which we know that it is invalid.
 		TransferIntoRescined {
@@ -251,11 +234,7 @@ pub mod pallet {
 			asset_id: AssetIdOf<T>,
 		},
 		/// The relayer accepted the user's `OutgoingTransaction`.
-		TransferAccepted {
-			from: AccountIdOf<T>,
-			asset_id: AssetIdOf<T>,
-			amount: BalanceOf<T>,
-		},
+		TransferAccepted { from: AccountIdOf<T>, asset_id: AssetIdOf<T>, amount: BalanceOf<T> },
 		/// The user claims his `IncomingTransaction` and unlocks the locked amount.
 		TransferClaimed {
 			by: AccountIdOf<T>,
@@ -339,10 +318,10 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn set_budget(
-            origin: OriginFor<T>,
-            asset_id: AssetIdOf<T>,
-            amount: BalanceOf<T>,
-            decay: T::BudgetPenaltyDecayer,
+			origin: OriginFor<T>,
+			asset_id: AssetIdOf<T>,
+			amount: BalanceOf<T>,
+			decay: T::BudgetPenaltyDecayer,
 		) -> DispatchResultWithPostInfo {
 			// Can also be token governance associated I reckon, as Angular holders should be able
 			// to grant mosaic permission to mint. We'll save that for phase 3.
@@ -466,9 +445,10 @@ pub mod pallet {
 						if amount == balance {
 							*maybe_tx = None
 						} else {
-                            let new_balance = balance.checked_sub(&amount).ok_or(Error::<T>::AmountMismatch)?;
-                            *maybe_tx = Some((new_balance, lock_period));
-                        }
+							let new_balance =
+								balance.checked_sub(&amount).ok_or(Error::<T>::AmountMismatch)?;
+							*maybe_tx = Some((new_balance, lock_period));
+						}
 
 						Self::deposit_event(Event::<T>::TransferAccepted {
 							from,
@@ -488,7 +468,7 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn claim_stale_to(
-            origin: OriginFor<T>,
+			origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
 			to: AccountIdOf<T>,
 		) -> DispatchResultWithPostInfo {
@@ -545,8 +525,8 @@ pub mod pallet {
 
 				let penalised_budget = budget.saturating_sub(new_penalty);
 
-                // Check if the relayer has a sufficient budget to mint the requested amount.
-                ensure!(amount <= penalised_budget, Error::<T>::InsufficientBudget);
+				// Check if the relayer has a sufficient budget to mint the requested amount.
+				ensure!(amount <= penalised_budget, Error::<T>::InsufficientBudget);
 
 				T::Assets::mint_into(
 					asset_id,
@@ -564,9 +544,9 @@ pub mod pallet {
 
 				*info = Some(AssetInfo {
 					last_mint_block: current_block,
-                    budget,
+					budget,
 					penalty: new_penalty.saturating_add(amount),
-                    penalty_decayer,
+					penalty_decayer,
 				});
 
 				Self::deposit_event(Event::<T>::TransferInto { to, asset_id, amount, id });
