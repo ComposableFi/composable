@@ -29,7 +29,6 @@
 ///
 ///  For every test, make sure that you check wether the funds moved to the correct (sub)
 /// accounts.
-///
 use crate::{decay::*, mock::*, *};
 use frame_support::{
 	assert_noop, assert_ok,
