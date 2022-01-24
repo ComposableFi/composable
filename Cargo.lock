@@ -1559,6 +1559,7 @@ dependencies = [
 name = "composable-tests-helpers"
 version = "0.0.1"
 dependencies = [
+ "frame-support",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -7083,6 +7084,7 @@ dependencies = [
 name = "pallet-mosaic"
 version = "0.1.0"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
