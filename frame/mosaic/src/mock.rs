@@ -102,7 +102,7 @@ impl pallet_mosaic::Config for Test {
 	type Assets = Tokens;
 	type MinimumTTL = MinimumTTL;
 	type MinimumTimeLockPeriod = MinimumTimeLockPeriod;
-	type BudgetPenaltyDecayer = pallet_mosaic::BudgetPenaltyDecayer<Balance>;
+	type BudgetPenaltyDecayer = pallet_mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
 
 	type NetworkId = NetworkId;
 }

@@ -80,7 +80,7 @@ pub mod pallet {
 
 	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
 	pub struct AssetInfo<BlockNumber, Balance, Decayer> {
-		pub last_deposit: BlockNumber,
+		pub last_mint_block: BlockNumber,
 		pub budget: Balance,
 		pub penalty: Balance,
 		pub penalty_decayer: Decayer,
@@ -358,7 +358,7 @@ pub mod pallet {
 						asset_info
 					})
 					.unwrap_or_else(|| AssetInfo {
-						last_deposit: current_block,
+						last_mint_block: current_block,
 						budget: amount,
 						penalty: Zero::zero(),
 						penalty_decayer: decay.clone(),
@@ -536,22 +536,25 @@ pub mod pallet {
 			let (_caller, current_block) = ensure_relayer::<T>(origin)?;
 
 			AssetsInfo::<T>::try_mutate_exists::<_, _, DispatchError, _>(asset_id, |info| {
-				let AssetInfo { last_deposit, penalty, budget, penalty_decayer: decay } =
+				let AssetInfo { last_mint_block, penalty, budget, penalty_decayer } =
 					info.take().ok_or(Error::<T>::UnsupportedAsset)?;
 
-				let new_penalty = decay
-					.checked_decay(penalty, last_deposit, current_block)
+				let new_penalty = penalty_decayer
+					.checked_decay(penalty, last_mint_block, current_block)
 					.unwrap_or_else(Zero::zero);
 
-				let actual_budget = budget.saturating_sub(new_penalty);
-				ensure!(actual_budget > amount, Error::<T>::InsufficientBudget);
+				let penalised_budget = budget.saturating_sub(new_penalty);
+
+                // Check if the relayer has a sufficient budget to mint the requested amount.
+                ensure!(amount <= penalised_budget, Error::<T>::InsufficientBudget);
 
 				T::Assets::mint_into(
 					asset_id,
 					&Self::sub_account_id(SubAccount::incoming(to.clone())),
 					amount,
 				)?;
-				let lock_at = lock_time.saturating_add(current_block);
+
+				let lock_at = current_block.saturating_add(lock_time);
 
 				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
 					Some((balance, _)) =>
@@ -560,10 +563,10 @@ pub mod pallet {
 				});
 
 				*info = Some(AssetInfo {
-					last_deposit: current_block,
-                    budget: actual_budget,
+					last_mint_block: current_block,
+                    budget,
 					penalty: new_penalty.saturating_add(amount),
-                    penalty_decayer: decay,
+                    penalty_decayer,
 				});
 
 				Self::deposit_event(Event::<T>::TransferInto { to, asset_id, amount, id });

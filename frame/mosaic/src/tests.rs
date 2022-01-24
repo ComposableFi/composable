@@ -85,18 +85,23 @@ prop_compose! {
         }
 }
 
-prop_compose! {
-    fn blocks_too_early(lock_time: u64)
-        (x in 1..lock_time) -> u64 {
-            x
-        }
-}
+
 
 prop_compose! {
     fn wait_after_lock_gen()
         (x in 1..1000u64) -> u64 {
             x
         }
+}
+
+prop_compose! {
+    fn budget_with_split()
+         (budget in 1..10_000_000u128, split in 1..100u128) -> (Balance, Balance, Balance) {
+            let first_part = (budget * split) / 100u128;
+            let second_part = budget - first_part;
+
+            (budget, first_part, second_part)
+    }
 }
 
 
@@ -284,11 +289,11 @@ mod budget {
         new_test_ext().execute_with(|| {
             let initial_block = System::block_number();
             assert_ok!(Mosaic::set_budget(Origin::root(), 1, 0xCAFEBABE, BudgetPenaltyDecayer::linear(10)));
-            assert_eq!(Mosaic::asset_infos(1).expect("budget must exists").last_deposit, initial_block);
+            assert_eq!(Mosaic::asset_infos(1).expect("budget must exists").last_mint_block, initial_block);
 
             System::set_block_number(initial_block + 1);
             assert_ok!(Mosaic::set_budget(Origin::root(), 1, 0xDEADC0DE, BudgetPenaltyDecayer::linear(10)));
-            assert_eq!(Mosaic::asset_infos(1).expect("budget must exists").last_deposit, initial_block);
+            assert_eq!(Mosaic::asset_infos(1).expect("budget must exists").last_mint_block, initial_block);
         })
     }
 }
@@ -715,12 +720,13 @@ mod timelocked_mint {
         #![proptest_config(ProptestConfig::with_cases(10000))]
 
         #[test]
-        fn budget_is_decayed_when_minting(
+        fn can_mint_up_to_the_penalised_budget(
+            account_a in account_id(),
             decay in 1..100u128, // todo,
             max_transfer_size in 1..10_000_000u128,
             asset_id in 1..100u32,
             start_block in 1..10_000u64,
-            budget in 1..10_000_000u128
+            (budget, first_part, second_part) in budget_with_split(),
         ) {
             new_test_ext().execute_with(|| {
                 // initialize
@@ -734,17 +740,106 @@ mod timelocked_mint {
                 ), "relayer may set network info");
                 prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
 
-                // test
 
-                // budget = 10_000. decay = 10. penalty = 0
-                // we mint 1_000
-                // budget = 10_000. decay = 10. penalty = 1_000 => actual_budget = 10_000 - 1_000 = 9_000
-                // wait for 100 blocks
-                // new_penalty = prev_penalty - (current_block - last_mint_block) * decay
-                // new_penalty = prev_penalty - 100 * decay
-                // new_penalty = 1_000 - 100 * 10 = 0
+                // We've split the budget in two parts. Both within the budget
+                prop_assert_eq!(budget, first_part + second_part);
+                // When mint the first part of the budget, it should be fine.
+                prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, first_part, 0, Default::default()));
+                // The new penalised_budget should be budget - first_part.
+                // Whenwe mint the second part of the budget, it should be fine because it matches the penalised_budget.
+                prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, second_part, 0, Default::default()));
 
-                // actual_budget = budget - current_penalty
+                Ok(())
+            })?;
+        }
+
+        #[test]
+        fn cannot_mint_more_than_the_penalised_budget(
+            account_a in account_id(),
+            decay in 1..100u128, // todo,
+            max_transfer_size in 1..10_000_000u128,
+            asset_id in 1..100u32,
+            start_block in 1..10_000u64,
+            (budget, first_part, second_part) in budget_with_split(),
+        ) {
+            new_test_ext().execute_with(|| {
+                // initialize
+                System::set_block_number(start_block);
+
+                prop_assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+                prop_assert_ok!(Mosaic::set_network(
+                    Origin::relayer(),
+                    asset_id,
+                    NetworkInfo { enabled: true, max_transfer_size },
+                ), "relayer may set network info");
+                prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
+
+
+                // We've split the budget in two parts. Both within the budget
+                prop_assert_eq!(budget, first_part + second_part);
+                // When mint the first part of the budget, it should be fine.
+                prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, first_part, 0, Default::default()));
+                // The new penalised_budget should be budget - first_part.
+                // When we mint the second part of the budget, it should be fine because it matches the penalised_budget.
+                prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, second_part, 0, Default::default()));
+                // When we mint more than the penalised budget, it should fail.
+                prop_assert_noop!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, 1, 0, Default::default()), Error::<Test>::InsufficientBudget);
+                Ok(())
+            })?;
+        }
+
+        #[test]
+        fn should_be_able_to_mint_again_after_waiting_for_penalty_to_decay(
+            account_a in account_id(),
+            decay_factor in 1..100u128, // todo,
+            max_transfer_size in 1..10_000_000u128,
+            asset_id in 1..100u32,
+            start_block in 1..10_000u64,
+            (budget, first_part, second_part) in budget_with_split(),
+            iteration_count in 2..10u64,
+        ) {
+            prop_assume!(budget > decay_factor);
+
+            new_test_ext().execute_with(|| {
+
+                // initialize
+                System::set_block_number(start_block);
+
+                let budget_penalty_decayer = BudgetPenaltyDecayer::linear(decay_factor);
+
+                prop_assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+                prop_assert_ok!(Mosaic::set_network(
+                    Origin::relayer(),
+                    asset_id,
+                    NetworkInfo { enabled: true, max_transfer_size },
+                ), "relayer may set network info");
+                prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, budget_penalty_decayer.clone()), "root may set budget");
+
+
+                // We've split the budget in two parts. Both within the budget
+                prop_assert_eq!(budget, first_part + second_part);
+
+
+                let budget_recovery_period: BlockNumber = budget_penalty_decayer.full_recovery_period(budget)
+                        .expect("impossible as per the prop_assume! above, qed");
+
+
+                for _ in 0..iteration_count {
+
+                    // When mint the first part of the budget, it should be fine.
+                    prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, first_part, 0, Default::default()));
+                    // The new penalised_budget should be budget - first_part.
+                    // When we mint the second part of the budget, it should be fine because it matches the penalised_budget.
+                    prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, second_part, 0, Default::default()));
+
+
+                    // When we mint more than the penalised budget, it should fail.
+                    prop_assert_noop!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, 1, 0, Default::default()), Error::<Test>::InsufficientBudget);
+
+
+                    // We wait until the budget has recovered
+                    System::set_block_number(System::block_number() + budget_recovery_period);
+                }
 
                 Ok(())
             })?;
