@@ -38,6 +38,12 @@ use frame_support::{
 use proptest::prelude::*;
 
 
+use composable_tests_helpers::{
+    prop_assert_ok,
+    prop_assert_noop,
+};
+
+
 use sp_runtime::{DispatchError, TokenError};
 
 pub trait OriginExt {
@@ -54,6 +60,8 @@ pub trait OriginExt {
     }
 }
 
+const BUDGET: Balance = 10000;
+
 impl OriginExt for Origin {}
 
 prop_compose! {
@@ -61,6 +69,34 @@ prop_compose! {
 		(x in 1..AccountId::MAX) -> AccountId {
 			x
 		}
+}
+
+prop_compose! {
+    fn amount_within_budget()
+        (x in 1..BUDGET) -> Balance {
+            x
+        }
+}
+
+prop_compose! {
+    fn lock_time_gen()
+        (x in 1..10000u64) -> u64 {
+            x
+        }
+}
+
+prop_compose! {
+    fn blocks_too_early(lock_time: u64)
+        (x in 1..lock_time) -> u64 {
+            x
+        }
+}
+
+prop_compose! {
+    fn wait_after_lock_gen()
+        (x in 1..1000u64) -> u64 {
+            x
+        }
 }
 
 
@@ -300,7 +336,7 @@ fn initialize() {
 		NetworkInfo { enabled: true, max_transfer_size: 100000 },
 	)
 	.expect("relayer may set network info");
-	Mosaic::set_budget(Origin::root(), 1, 10000, BudgetDecay::linear(10))
+	Mosaic::set_budget(Origin::root(), 1, BUDGET, BudgetDecay::linear(10))
 		.expect("root may set budget");
 }
 
@@ -678,7 +714,6 @@ mod timelocked_mint {
 
 
 mod rescind_timelocked_mint {
-    use sp_runtime::DispatchError::Token;
     use super::*;
 
     #[test]
@@ -818,98 +853,120 @@ mod set_timelock_duration {
 mod claim_to {
     use super::*;
 
-    #[test]
-    fn claim_to() {
-        new_test_ext().execute_with(|| {
-            initialize();
-            let lock_time = 10;
-            do_timelocked_mint(ALICE, 1, 50, lock_time);
-            let current_block = System::block_number();
-            Mosaic::claim_to(Origin::alice(), 1, ALICE).expect_err(
-                "received funds should only be claimable after waiting for the relayer mandated time",
-            );
-            System::set_block_number(current_block + lock_time + 1);
-            Mosaic::claim_to(Origin::alice(), 1, ALICE)
-                .expect("received funds should be claimable after time has passed");
-        })
-    }
-
-    #[test]
-    fn none_cannot_claim_to() {
-        new_test_ext().execute_with(|| {
-            initialize();
-            let lock_time = 10;
-            do_timelocked_mint(ALICE, 1, 50, lock_time);
-            System::set_block_number(System::block_number() + lock_time + 1);
-            assert_noop!(
-                Mosaic::claim_to(Origin::none(), 1, ALICE),
-                DispatchError::BadOrigin
-            );
-        })
-    }
-
-    #[test]
-    fn cannot_claim_to_twice() {
-        new_test_ext().execute_with(|| {
-            initialize();
-            let lock_time = 10;
-            do_timelocked_mint(ALICE, 1, 50, lock_time);
-            System::set_block_number(System::block_number() + lock_time + 1);
-            Mosaic::claim_to(Origin::alice(), 1, ALICE)
-                .expect("received funds should be claimable the first time");
-            assert_noop!(
-                Mosaic::claim_to(Origin::alice(), 1, ALICE),
-                Error::<Test>::NoClaimableTx
-            );
-        })
-    }
-
-    #[test]
-    fn cannot_claim_to_too_early() {
-        new_test_ext().execute_with(|| {
-            initialize();
-            let lock_time = 10;
-            do_timelocked_mint(ALICE, 1, 50, lock_time);
-            System::set_block_number(System::block_number() + lock_time - 1);
-
-            assert_noop!(
-                Mosaic::claim_to(Origin::alice(), 1, ALICE),
-                Error::<Test>::TxStillLocked
-            );
-        })
-    }
 
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(10000))]
 
         #[test]
-        fn claim_to_increases_your_balance(
-            amount in 1..10000u128, // 10000 is the budget max
+        fn claim_to(
+            amount in amount_within_budget(),
+            account_a in account_id(),
+            lock_time in lock_time_gen(),
+            wait_time in wait_after_lock_gen(),
         ) {
             new_test_ext().execute_with(|| {
                 initialize();
-                let lock_time = 10;
+                do_timelocked_mint(account_a, 1, amount, lock_time);
+                let current_block = System::block_number();
+                prop_assert_noop!(Mosaic::claim_to(Origin::signed(account_a), 1, account_a), Error::<Test>::TxStillLocked);
+                System::set_block_number(current_block + lock_time + wait_time);
+                prop_assert_ok!(Mosaic::claim_to(Origin::signed(account_a), 1, account_a));
+                Ok(())
+            })?;
+        }
+
+        #[test]
+        fn none_cannot_claim_to(
+            amount in amount_within_budget(),
+            account_a in account_id(),
+            lock_time in lock_time_gen(),
+            wait_time in wait_after_lock_gen(),
+        ) {
+            new_test_ext().execute_with(|| {
+                initialize();
+                do_timelocked_mint(ALICE, 1, amount, lock_time);
+                System::set_block_number(System::block_number() + lock_time + wait_time);
+                prop_assert_noop!(
+                    Mosaic::claim_to(Origin::none(), 1, account_a),
+                    DispatchError::BadOrigin
+                );
+                Ok(())
+            })?;
+        }
+
+        #[test]
+        fn cannot_claim_to_twice(
+            amount in amount_within_budget(),
+            account_a in account_id(),
+            lock_time in lock_time_gen(),
+            wait_time in wait_after_lock_gen(),
+        ) {
+            ExtBuilder::default().build().execute_with(|| {
+                initialize();
+                do_timelocked_mint(account_a, 1, amount, lock_time);
+                System::set_block_number(System::block_number() + lock_time + wait_time);
+                prop_assert_ok!(Mosaic::claim_to(Origin::signed(account_a), 1, account_a));
+                prop_assert_noop!(
+                    Mosaic::claim_to(Origin::signed(account_a), 1, account_a),
+                    Error::<Test>::NoClaimableTx
+                );
+                Ok(())
+            })?;
+        }
+
+
+        #[test]
+        fn cannot_claim_to_too_early(
+            amount in amount_within_budget(),
+            account_a in account_id(),
+            lock_time in lock_time_gen(),
+            early in 1..5u64,
+        ) {
+            prop_assume!(early < lock_time);
+
+            new_test_ext().execute_with(|| {
+                initialize();
+                do_timelocked_mint(account_a, 1, amount, lock_time);
+                System::set_block_number(System::block_number() + lock_time - early);
+
+                prop_assert_noop!(
+                    Mosaic::claim_to(Origin::signed(account_a), 1, account_a),
+                    Error::<Test>::TxStillLocked
+                );
+                Ok(())
+            })?;
+        }
+
+
+
+        #[test]
+        fn claim_to_increases_your_balance(
+            amount in amount_within_budget(),
+            account_a in account_id(),
+            lock_time in lock_time_gen(),
+            wait_after_lock in wait_after_lock_gen(),
+        ) {
+            new_test_ext().execute_with(|| {
+                initialize();
                 let asset_id = 1;
-                do_timelocked_mint(ALICE, asset_id, amount, lock_time);
-                System::set_block_number(System::block_number() + lock_time + 1);
+                do_timelocked_mint(account_a, asset_id, amount, lock_time);
+                System::set_block_number(System::block_number() + lock_time + wait_after_lock);
 
-                let before_balance = Tokens::balance(asset_id, &ALICE);
+                let before_balance = Tokens::balance(asset_id, &account_a);
+                prop_assert_ok!(Mosaic::claim_to(Origin::signed(account_a), asset_id, account_a));
 
-                Mosaic::claim_to(Origin::alice(), asset_id, ALICE)
-                    .expect("received funds should be claimable the first time");
+                let after_balance = Tokens::balance(asset_id, &account_a);
 
-                let after_balance = Tokens::balance(asset_id, &ALICE);
-
-                assert_eq!(before_balance + amount, after_balance);
-
-                dbg!(amount);
-            })
+                prop_assert_eq!(before_balance + amount, after_balance);
+                Ok(())
+            })?;
         }
 
         #[test]
         fn cannot_claim_if_you_have_nothing_to_claim(
-            amount in 1..10000u128, // 10000 is the budget max
-            lock_time in 1..100u64,
+            amount in amount_within_budget(), // 10000 is the budget max
+            lock_time in lock_time_gen(),
+            wait_after_lock in wait_after_lock_gen(),
             account_a in account_id(),
             account_b in account_id(),
         ) {
@@ -918,12 +975,13 @@ mod claim_to {
             new_test_ext().execute_with(|| {
                 initialize();
                 do_timelocked_mint(account_a, 1, amount, lock_time);
-                System::set_block_number(System::block_number() + lock_time + 1);
-                assert_noop!(
+                System::set_block_number(System::block_number() + lock_time + wait_after_lock);
+                prop_assert_noop!(
                     Mosaic::claim_to(Origin::signed(account_b), 1, account_b),
                     Error::<Test>::NoClaimableTx
                 );
-            })
+                Ok(())
+            })?;
         }
     }
 }
