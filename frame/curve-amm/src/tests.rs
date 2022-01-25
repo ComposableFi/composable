@@ -42,6 +42,19 @@ macro_rules! prop_assert_epsilon {
 	}};
 }
 
+fn create_pool(assets: Vec<AssetId>, amounts: Vec<Balance>, amp_coeff: FixedU128, fee: Permill, admin_fee: Permill) -> PoolId {
+		assert_ok!(Tokens::mint_into(assets[0], &ALICE, amounts[0]));
+		assert_ok!(Tokens::mint_into(assets[1], &ALICE, amounts[1]));
+		assert_ok!(Tokens::mint_into(assets[0], &BOB, amounts[0]));
+		assert_ok!(Tokens::mint_into(assets[1], &BOB, amounts[1]));
+		let p = CurveAmm::create_pool(&ALICE, assets, amp_coeff, fee, admin_fee);
+		assert_ok!(&p);
+		let pool_id = p.unwrap();
+		assert_ok!(CurveAmm::add_liquidity(&ALICE, pool_id, amounts.clone(), 0_u128));
+		assert_ok!(CurveAmm::add_liquidity(&BOB, pool_id, amounts.clone(), 0_u128));
+        pool_id
+}
+
 #[test]
 fn compute_d_works() {
 	let xp = vec![
@@ -150,6 +163,27 @@ fn get_y_j_greater_than_n() {
 	let result = CurveAmm::get_y(i, j, x, &xp, ann);
 
 	assert_eq!(result, None);
+}
+
+#[test]
+fn test_get_price() {
+
+	new_test_ext().execute_with(|| {
+		let assets = vec![MockCurrencyId::USDC, MockCurrencyId::USDT];
+		let amp_coeff = FixedU128::saturating_from_rational(1_000_i128, 1_i128);
+		let fee = Permill::zero();
+		let admin_fee = Permill::zero();
+        let amounts = vec![999999999u128, 999999999u128];
+        let pool_id = create_pool(assets, amounts, amp_coeff, fee, admin_fee);
+        let balance = 100u128;
+        let price_usdc = CurveAmm::get_price(pool_id, MockCurrencyId::USDC, balance);
+        assert_ok!(price_usdc);
+        let price_usdc = price_usdc.unwrap();
+        let price_usdt = CurveAmm::get_price(pool_id, MockCurrencyId::USDT, balance);
+        assert_ok!(price_usdt);
+        let price_usdt = price_usdt.unwrap();
+        assert!(price_usdc == price_usdt);
+    });
 }
 
 #[test]

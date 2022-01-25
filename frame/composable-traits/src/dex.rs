@@ -28,6 +28,12 @@ pub trait CurveAmm {
 	/// Current number of pools (also ID for the next created pool)
 	fn pool_count() -> Self::PoolId;
 
+    /// Get pool token index for given asset_id.
+    fn get_token_index(pool_id: Self::PoolId, asset_id: Self::AssetId) -> Result<Self::PoolTokenIndex, DispatchError>;
+
+    /// Get price for given units of given asset.
+    fn get_price(pool_id: Self::PoolId, asset_id: Self::AssetId, balance: Self::Balance) -> Result<Self::Balance, DispatchError>;
+
 	/// Deposit coins into the pool
 	/// `amounts` - list of amounts of coins to deposit,
 	/// `min_mint_amount` - minimum amout of LP tokens to mint from the deposit.

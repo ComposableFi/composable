@@ -169,8 +169,8 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Could not create new asset
-		AssetNotCreated,
+		/// Given asset is not used in pool.
+	    AssetNotFound,
 		/// Values in the storage are inconsistent
 		InconsistentStorage,
 		/// Not enough assets provided
@@ -189,8 +189,6 @@ pub mod pallet {
 		InsufficientFunds,
 		/// Specified index is out of range
 		IndexOutOfRange,
-		/// The `AssetChecker` can use this error in case it can't provide better error
-		ExternalAssetCheckFailed,
 	}
 
 	#[pallet::event]
@@ -284,6 +282,70 @@ pub mod pallet {
 		fn pool_count() -> T::PoolId {
 			PoolCount::<T>::get()
 		}
+
+        fn get_token_index(pool_id: T::PoolId, asset_id : Self::AssetId) -> Result<Self::PoolTokenIndex, DispatchError> {
+			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+            if assets_pair.base == asset_id {
+                Ok(0.into())
+            } else if assets_pair.quote == asset_id {
+                Ok(1.into())
+            } else {
+                Err(Error::<T>::AssetNotFound.into())
+            }
+        }
+
+        fn get_price(pool_id: Self::PoolId, asset_id: Self::AssetId, balance: Self::Balance) -> Result<Self::Balance, DispatchError> {
+			let prec = T::Precision::get();
+           let token_index = Self::get_token_index(pool_id, asset_id)?; 
+
+			let pool = Self::get_pool_info(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let assets = assets_pair.as_slice();
+			let mut balances = Vec::new();
+			for asset_id in assets {
+				balances.push(PoolAssetBalance::<T>::get(pool_id, asset_id));
+			}
+			let n_coins = assets.len();
+
+			let i = token_index.into() as usize;
+			let j = if i == 0 {1} else {0};
+			ensure!(i < n_coins && j < n_coins, Error::<T>::IndexOutOfRange);
+
+			let dx_u: u128 = balance.into();
+			let dx_f = FixedU128::saturating_from_integer(dx_u);
+
+			let xp: Vec<FixedU128> = balances
+				.iter()
+				.map(|b| {
+					let b_u: u128 = (*b).into();
+					FixedU128::saturating_from_integer(b_u)
+				})
+				.collect();
+
+			// xp[i] + dx
+			let xp_i = xp.get(i).ok_or(Error::<T>::InconsistentStorage)?;
+			let x = xp_i.checked_add(&dx_f).ok_or(Error::<T>::Math)?;
+
+			let amp_f = pool.amplification_coefficient;
+			let ann = Self::get_ann(amp_f, n_coins).ok_or(Error::<T>::Math)?;
+			let y = Self::get_y(i, j, x, &xp, ann).ok_or(Error::<T>::Math)?;
+
+			// -1 just in case there were some rounding errors
+			// dy = xp[j] - y - 1
+			let xp_j = xp.get(j).ok_or(Error::<T>::InconsistentStorage)?;
+			let dy_f = xp_j
+				.checked_sub(&y)
+				.ok_or(Error::<T>::Math)?
+				.checked_sub(&prec)
+				.ok_or(Error::<T>::Math)?;
+
+			let fee_f: FixedU128 = pool.fee.into();
+			let dy_fee_f = dy_f.checked_mul(&fee_f).ok_or(Error::<T>::Math)?;
+			let dy_f = dy_f.checked_sub(&dy_fee_f).ok_or(Error::<T>::Math)?;
+
+			let dy: Self::Balance = dy_f.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
+            Ok(dy)
+        }
 
 		fn add_liquidity(
 			who: &Self::AccountId,

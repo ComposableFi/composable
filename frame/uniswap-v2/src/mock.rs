@@ -159,6 +159,8 @@ pub type AssetId = MockCurrencyId;
 
 pub type Amount = i128;
 
+pub type PoolId = u32;
+
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
 		Zero::zero()
@@ -189,7 +191,7 @@ impl constant_product_amm::Config for Test {
 	type CurrencyFactory = LpTokenFactory;
 	type Precision = Precision;
 	type LpToken = Tokens;
-	type PoolId = u32;
+	type PoolId = PoolId;
 	type PoolTokenIndex = u32;
 	type PalletId = TestPalletID;
 }
