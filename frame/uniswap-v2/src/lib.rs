@@ -114,7 +114,6 @@ pub mod pallet {
 			+ CheckedAdd
 			+ Zero
 			+ One;
-		type PoolTokenIndex: Copy + Debug + Eq + Into<u32> + From<u8>;
 		type PalletId: Get<PalletId>;
 	}
 
@@ -193,8 +192,8 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Could not create new asset
-		AssetNotCreated,
+		/// Given asset is not used in pool.
+		AssetNotFound,
 		/// Values in the storage are inconsistent
 		InconsistentStorage,
 		/// Not enough assets provided
@@ -213,8 +212,6 @@ pub mod pallet {
 		InsufficientFunds,
 		/// Specified index is out of range
 		IndexOutOfRange,
-		/// The `AssetChecker` can use this error in case it can't provide better error
-		ExternalAssetCheckFailed,
 	}
 
 	#[pallet::event]
@@ -266,12 +263,12 @@ pub mod pallet {
 			who: T::AccountId,
 			/// Pool id on which exchange done.
 			pool_id: T::PoolId,
-			/// Index of sent token.
-			sent_token_index: T::PoolTokenIndex,
+			/// Id of asset used as input.
+			base_asset: T::AssetId,
 			/// Amount of sent token.
 			sent_amount: T::Balance,
-			/// Index of received token.
-			received_token_index: T::PoolTokenIndex,
+			/// Id of asset used as output.
+			quote_asset: T::AssetId,
 			/// Amount of received token.
 			received_amount: T::Balance,
 			/// Charged fees.
@@ -299,7 +296,6 @@ pub mod pallet {
 		type Balance = T::Balance;
 		type AccountId = T::AccountId;
 		type PoolId = T::PoolId;
-		type PoolTokenIndex = T::PoolTokenIndex;
 
 		fn pool_exists(pool_id: T::PoolId) -> bool {
 			Pools::<T>::contains_key(pool_id)
@@ -307,6 +303,74 @@ pub mod pallet {
 
 		fn pool_count() -> T::PoolId {
 			PoolCount::<T>::get()
+		}
+
+		fn get_exchange_value(
+			pool_id: Self::PoolId,
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let mut base_asset = assets_pair.base;
+			let mut quote_asset = assets_pair.quote;
+			if asset_id == quote_asset {
+				base_asset = assets_pair.quote;
+				quote_asset = assets_pair.base;
+			} else if asset_id != base_asset {
+				return Err(Error::<T>::AssetNotFound.into())
+			}
+			let base_asset_balance = PoolAssetBalance::<T>::get(pool_id, base_asset);
+			let quote_asset_balance = PoolAssetBalance::<T>::get(pool_id, quote_asset);
+			let base_asset_balance_f = Self::to_fixed_point_balance(base_asset_balance);
+			let quote_asset_balance_f = Self::to_fixed_point_balance(quote_asset_balance);
+			let xp = vec![base_asset_balance_f, quote_asset_balance_f];
+
+			let dx_f = Self::to_fixed_point_balance(amount);
+
+			sp_std::if_std! {
+				println!("xp {:?}", xp);
+			}
+			let xp_i = *xp.get(0).ok_or(Error::<T>::IndexOutOfRange)?;
+			let xp_j = *xp.get(1).ok_or(Error::<T>::IndexOutOfRange)?;
+			let dy_f = Self::get_y_out(dx_f, xp_i, xp_j).ok_or(Error::<T>::Math)?;
+
+			sp_std::if_std! {
+				println!("dx_f {:?}, xp_i {:?}, xp_j {:?}, dy_f {:?}", dx_f, xp_i, xp_j, dy_f);
+			}
+			let dy = Self::to_balance(dy_f)?;
+			Ok(dy)
+		}
+
+		fn buy(
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let mut exchange_asset = assets_pair.quote;
+			if asset_id == assets_pair.quote {
+				exchange_asset = assets_pair.base;
+			} else if asset_id != assets_pair.base {
+				return Err(Error::<T>::AssetNotFound.into())
+			}
+			// Since when buying asset user can't executed exchange as he don't know how much
+			// amount of token he has to trade-in to get expected buy tokens.
+			// So we compute price assuming user wants to sell instead of buy.
+			// And then do exchange computed amount with token indices flipped.
+			let dx = Self::get_exchange_value(pool_id, asset_id, amount)?;
+			Self::update_balance(who, &pool_id, &exchange_asset, dx, &asset_id, amount)?;
+			Ok(amount)
+		}
+
+		fn sell(
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			let dy = Self::exchange(who, pool_id, asset_id, amount, Self::Balance::zero())?;
+			Ok(dy)
 		}
 
 		fn add_liquidity(
@@ -427,11 +491,12 @@ pub mod pallet {
 			// Transfer funds to pool
 			for (i, amount) in amounts.iter().enumerate() {
 				if amount > &zero {
+					let asset_id = assets.get(i).ok_or(Error::<T>::IndexOutOfRange)?;
 					Self::transfer_liquidity_into_pool(
 						&Self::account_id(&pool_id),
 						pool_id,
 						who,
-						i,
+						*asset_id,
 						*amount,
 					)?;
 				}
@@ -546,10 +611,11 @@ pub mod pallet {
 				let amount_f_i = *amounts_f.get(i).ok_or(Error::<T>::IndexOutOfRange)?;
 				let amount_i = *amounts.get(i).ok_or(Error::<T>::IndexOutOfRange)?;
 				if amount_f_i > zero {
+					let asset_id = assets.get(i).ok_or(Error::<T>::IndexOutOfRange)?;
 					Self::transfer_liquidity_from_pool(
 						&Self::account_id(&pool_id),
 						pool_id,
-						i,
+						*asset_id,
 						who,
 						amount_i,
 					)?;
@@ -570,8 +636,7 @@ pub mod pallet {
 		fn exchange(
 			who: &Self::AccountId,
 			pool_id: T::PoolId,
-			i_token: T::PoolTokenIndex,
-			j_token: T::PoolTokenIndex,
+			asset_id: Self::AssetId,
 			dx: Self::Balance,
 			min_dy: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
@@ -580,71 +645,34 @@ pub mod pallet {
 
 			let pool = Self::get_pool_info(pool_id).ok_or(Error::<T>::PoolNotFound)?;
 
-			let i: usize = i_token.into() as usize;
-			let j: usize = j_token.into() as usize;
-
 			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
-			let assets = assets_pair.as_slice();
-			let mut balances = Vec::new();
-			for asset_id in assets {
-				balances.push(PoolAssetBalance::<T>::get(pool_id, asset_id));
+			let mut base_asset = assets_pair.base;
+			let mut quote_asset = assets_pair.quote;
+			if asset_id == quote_asset {
+				base_asset = assets_pair.quote;
+				quote_asset = assets_pair.base;
+			} else if asset_id != base_asset {
+				return Err(Error::<T>::AssetNotFound.into())
 			}
-			let n_coins = assets.len();
-
-			ensure!(i < n_coins && j < n_coins, Error::<T>::IndexOutOfRange);
-
-			let dx_u: u128 = dx.into();
-			let dx_f = FixedU128::saturating_from_integer(dx_u);
-			let min_dy_u: u128 = min_dy.into();
-			let min_dy_f = FixedU128::saturating_from_integer(min_dy_u);
-
-			let xp: Vec<FixedU128> = balances
-				.iter()
-				.map(|b| {
-					let b_u: u128 = (*b).into();
-					FixedU128::saturating_from_integer(b_u)
-				})
-				.collect();
-			let xp_i = *xp.get(i).ok_or(Error::<T>::IndexOutOfRange)?;
-			let xp_j = *xp.get(j).ok_or(Error::<T>::IndexOutOfRange)?;
-			let x = xp_i.checked_add(&dx_f).ok_or(Error::<T>::Math)?;
-			let dy_f = Self::get_y_out(dx_f, xp_i, xp_j).ok_or(Error::<T>::Math)?;
+			let dy = Self::get_exchange_value(pool_id, base_asset, dx)?;
+			let dy_f = Self::to_fixed_point_balance(dy);
+			let min_dy_f = Self::to_fixed_point_balance(min_dy);
 
 			let fee_f: FixedU128 = pool.fee.into();
 			let dy_fee_f = dy_f.checked_mul(&fee_f).ok_or(Error::<T>::Math)?;
-			let dy_fee = dy_fee_f.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
 			let dy_f = dy_f.checked_sub(&dy_fee_f).ok_or(Error::<T>::Math)?;
 			ensure!(dy_f >= min_dy_f, Error::<T>::RequiredAmountNotReached);
 
-			let dy: Self::Balance = dy_f.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
-			let asset_id_i = *assets.get(i).ok_or(Error::<T>::IndexOutOfRange)?;
-			let asset_id_j = *assets.get(j).ok_or(Error::<T>::IndexOutOfRange)?;
-			PoolAssetBalance::<T>::mutate(pool_id, asset_id_i, |balance| -> DispatchResult {
-				*balance = x.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
-				Ok(())
-			})?;
-			let bal_j = xp_j.checked_sub(&dy_f).ok_or(Error::<T>::Math)?;
-			PoolAssetBalance::<T>::mutate(pool_id, asset_id_j, |balance| -> DispatchResult {
-				*balance = bal_j.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into();
-				Ok(())
-			})?;
-
-			ensure!(T::LpToken::balance(asset_id_i, &who) >= dx, Error::<T>::InsufficientFunds);
-
-			ensure!(
-				T::LpToken::balance(asset_id_j, &Self::account_id(&pool_id)) >= dy,
-				Error::<T>::InsufficientFunds
-			);
-
-			Self::transfer_liquidity_into_pool(&Self::account_id(&pool_id), pool_id, &who, i, dx)?;
-			Self::transfer_liquidity_from_pool(&Self::account_id(&pool_id), pool_id, j, &who, dy)?;
+			Self::update_balance(who, &pool_id, &base_asset, dx, &quote_asset, dy)?;
+			let dy_fee = Self::to_balance(dy_fee_f)?;
+			let dy = Self::to_balance(dy_f)?;
 
 			Self::deposit_event(Event::TokenExchanged {
 				who: who.clone(),
 				pool_id,
-				sent_token_index: i_token,
+				base_asset,
 				sent_amount: dx,
-				received_token_index: j_token,
+				quote_asset,
 				received_amount: dy,
 				fee: dy_fee,
 			});
@@ -811,51 +839,109 @@ pub mod pallet {
 			numerator.checked_div(&denominator)
 		}
 
+		fn to_fixed_point_balance(balance: T::Balance) -> FixedU128 {
+			let b_u: u128 = balance.into();
+			FixedU128::saturating_from_integer(b_u)
+		}
+
+		fn to_balance(balance_f: FixedU128) -> Result<T::Balance, DispatchError> {
+			Ok(balance_f.checked_mul_int(1_u64).ok_or(Error::<T>::Math)?.into())
+		}
+
+		fn update_balance(
+			who: &T::AccountId,
+			pool_id: &T::PoolId,
+			base_asset: &T::AssetId,
+			d_base_amount: T::Balance,
+			quote_asset: &T::AssetId,
+			d_quote_amount: T::Balance,
+		) -> Result<(), DispatchError> {
+			ensure!(
+				T::LpToken::balance(*base_asset, &who) >= d_base_amount,
+				Error::<T>::InsufficientFunds
+			);
+
+			ensure!(
+				T::LpToken::balance(*quote_asset, &Self::account_id(&pool_id)) >= d_quote_amount,
+				Error::<T>::InsufficientFunds
+			);
+			let pool = Self::get_pool_info(*pool_id).ok_or(Error::<T>::PoolNotFound)?;
+			let base_asset_balance = PoolAssetBalance::<T>::get(pool_id, base_asset);
+			let quote_asset_balance = PoolAssetBalance::<T>::get(pool_id, quote_asset);
+			let base_asset_balance_f = Self::to_fixed_point_balance(base_asset_balance);
+			let quote_asset_balance_f = Self::to_fixed_point_balance(quote_asset_balance);
+			let d_base_amount_f = Self::to_fixed_point_balance(d_base_amount);
+			let d_quote_amount_f = Self::to_fixed_point_balance(d_quote_amount);
+			let new_base_asset_balance_f =
+				base_asset_balance_f.checked_add(&d_base_amount_f).ok_or(Error::<T>::Math)?;
+			let fee_f: FixedU128 = pool.fee.into();
+			let amount_fee_f = d_quote_amount_f.checked_mul(&fee_f).ok_or(Error::<T>::Math)?;
+			let quote_asset_tx_amount_f =
+				d_quote_amount_f.checked_sub(&amount_fee_f).ok_or(Error::<T>::Math)?;
+			let new_quote_asset_balance_f = quote_asset_balance_f
+				.checked_sub(&quote_asset_tx_amount_f)
+				.ok_or(Error::<T>::Math)?;
+			PoolAssetBalance::<T>::mutate(pool_id, base_asset, |balance| -> DispatchResult {
+				*balance = Self::to_balance(new_base_asset_balance_f)?;
+				Ok(())
+			})?;
+			PoolAssetBalance::<T>::mutate(pool_id, quote_asset, |balance| -> DispatchResult {
+				*balance = Self::to_balance(new_quote_asset_balance_f)?;
+				Ok(())
+			})?;
+			let quote_asset_tx_amount = Self::to_balance(quote_asset_tx_amount_f)?;
+			Self::transfer_liquidity_into_pool(
+				&Self::account_id(&pool_id),
+				*pool_id,
+				&who,
+				*base_asset,
+				d_base_amount,
+			)?;
+			Self::transfer_liquidity_from_pool(
+				&Self::account_id(&pool_id),
+				*pool_id,
+				*quote_asset,
+				&who,
+				quote_asset_tx_amount,
+			)?;
+			Ok(())
+		}
+
 		fn transfer_liquidity_into_pool(
 			pool_account_id: &T::AccountId,
 			pool_id: T::PoolId,
 			source: &T::AccountId,
-			destination_asset_index: usize,
+			destination_asset: T::AssetId,
 			amount: T::Balance,
 		) -> DispatchResult {
-			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
-			let assets = assets_pair.as_slice();
-			let asset_id =
-				assets.get(destination_asset_index).ok_or(Error::<T>::IndexOutOfRange)?;
-			T::LpToken::transfer(*asset_id, source, pool_account_id, amount, true)?;
+			T::LpToken::transfer(destination_asset, source, pool_account_id, amount, true)?;
 			PoolAssetTotalBalance::<T>::mutate(
 				pool_id,
-				asset_id,
+				destination_asset,
 				|total_balance| -> DispatchResult {
 					*total_balance = total_balance.checked_add(&amount).ok_or(Error::<T>::Math)?;
 					Ok(())
 				},
 			)?;
-
 			Ok(())
 		}
 
 		fn transfer_liquidity_from_pool(
 			pool_account_id: &T::AccountId,
 			pool_id: T::PoolId,
-			source_asset_index: usize,
+			source_asset: T::AssetId,
 			destination: &T::AccountId,
 			amount: T::Balance,
 		) -> DispatchResult {
-			let assets_pair = PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?;
-			let assets = assets_pair.as_slice();
-			let asset_id = assets.get(source_asset_index).ok_or(Error::<T>::IndexOutOfRange)?;
-			T::LpToken::transfer(*asset_id, pool_account_id, destination, amount, true)?;
-
+			T::LpToken::transfer(source_asset, pool_account_id, destination, amount, true)?;
 			PoolAssetTotalBalance::<T>::mutate(
 				pool_id,
-				asset_id,
+				source_asset,
 				|total_balance| -> DispatchResult {
 					*total_balance = total_balance.checked_sub(&amount).ok_or(Error::<T>::Math)?;
 					Ok(())
 				},
 			)?;
-
 			Ok(())
 		}
 
