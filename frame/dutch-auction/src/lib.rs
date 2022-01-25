@@ -19,6 +19,13 @@
 //! Sell takes deposit (as for accounts), to store sells for some time.
 //! We have to store lock deposit value with ask as it can change within time.
 //! Later deposit is used by pallet as initiative to liquidate garbage.
+//!
+//! # Price prediction
+//! Dutch action starts with configured price and than and other price value is f(t).
+//! So any external observer can predict what price will be on specified block.
+//!
+//! # DEX
+//! Currently this dutch auction does not tries to sell on external DEX.
 
 #![cfg_attr(
 	not(test),
@@ -68,11 +75,12 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::{Decode, Encode};
 	use composable_traits::{
-		auction::AuctionStepFunction,
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
-		loans::DurationSeconds,
-		math::{SafeArithmetic, WrappingNext},
+		math::WrappingNext,
+		time::{TimeReleaseFunction, Timestamp},
 	};
+	#[cfg(feature = "runtime-benchmarks")]
+	use frame_support::traits::Currency;
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{tokens::fungible::Transfer as NativeTransfer, IsType, UnixTime},
@@ -88,14 +96,12 @@ pub mod pallet {
 
 	use crate::math::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
-	use sp_runtime::{
-		traits::{AccountIdConversion, Saturating},
-		DispatchError,
-	};
+	use sp_runtime::{traits::AccountIdConversion, DispatchError};
 	use sp_std::vec::Vec;
 
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type UnixTime: UnixTime;
@@ -116,19 +122,40 @@ pub mod pallet {
 		/// Convert a weight value into a deductible fee based on the currency type.
 		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
 	}
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait Config: DeFiComposableConfig + frame_system::Config {
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type UnixTime: UnixTime;
+		type OrderId: OrderIdLike + WrappingNext + Zero;
+		type MultiCurrency: MultiCurrency<
+				Self::AccountId,
+				CurrencyId = Self::MayBeAssetId,
+				Balance = <Self as DeFiComposableConfig>::Balance,
+			> + MultiReservableCurrency<
+				Self::AccountId,
+				CurrencyId = Self::MayBeAssetId,
+				Balance = <Self as DeFiComposableConfig>::Balance,
+			>;
+		type WeightInfo: WeightInfo;
+		type PalletId: Get<PalletId>;
+		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>
+			+ Currency<Self::AccountId>;
+		/// Convert a weight value into a deductible fee based on the currency type.
+		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
+	}
 
 	#[derive(Encode, Decode, Default, TypeInfo, Clone, Debug, PartialEq)]
 	pub struct SellOrder<AssetId, Balance, AccountId, Context> {
 		pub from_to: AccountId,
 		pub order: Sell<AssetId, Balance>,
-		pub configuration: AuctionStepFunction,
+		pub configuration: TimeReleaseFunction,
 		/// context captured when sell started
 		pub context: Context,
 	}
 
 	#[derive(Encode, Decode, Default, TypeInfo, Clone, Debug, PartialEq)]
 	pub struct Context<Balance> {
-		pub added_at: DurationSeconds,
+		pub added_at: Timestamp,
 		pub deposit: Balance,
 	}
 
@@ -208,11 +235,11 @@ pub mod pallet {
 		pub fn ask(
 			origin: OriginFor<T>,
 			order: Sell<T::MayBeAssetId, T::Balance>,
-			configuration: AuctionStepFunction,
+			configuration: TimeReleaseFunction,
 		) -> DispatchResultWithPostInfo {
 			let who = &(ensure_signed(origin)?);
 			let order_id =
-				<Self as SellEngine<AuctionStepFunction>>::ask(who, order, configuration)?;
+				<Self as SellEngine<TimeReleaseFunction>>::ask(who, order, configuration)?;
 
 			Self::deposit_event(Event::OrderAdded {
 				order_id,
@@ -222,14 +249,14 @@ pub mod pallet {
 		}
 
 		/// adds take to list, does not execute take immediately
-		#[pallet::weight(T::WeightInfo::take(42))] // FIXME: need to update benchmark and weight for this extrinsic
+		#[pallet::weight(T::WeightInfo::take())]
 		pub fn take(
 			origin: OriginFor<T>,
 			order_id: T::OrderId,
 			take: Take<T::Balance>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as SellEngine<AuctionStepFunction>>::take(&who, order_id, take)?;
+			<Self as SellEngine<TimeReleaseFunction>>::take(&who, order_id, take)?;
 			Ok(().into())
 		}
 
@@ -246,7 +273,12 @@ pub mod pallet {
 			// pollute account system
 			let treasury = &T::PalletId::get().into_account();
 			T::MultiCurrency::unreserve(order.order.pair.base, &who, order.order.take.amount);
-			T::NativeCurrency::transfer(treasury, &order.from_to, order.context.deposit, true)?;
+			<T::NativeCurrency as NativeTransfer<T::AccountId>>::transfer(
+				treasury,
+				&order.from_to,
+				order.context.deposit,
+				true,
+			)?;
 
 			<SellOrders<T>>::remove(order_id);
 			Self::deposit_event(Event::OrderRemoved { order_id });
@@ -255,12 +287,12 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config + DeFiComposableConfig> SellEngine<AuctionStepFunction> for Pallet<T> {
+	impl<T: Config + DeFiComposableConfig> SellEngine<TimeReleaseFunction> for Pallet<T> {
 		type OrderId = T::OrderId;
 		fn ask(
 			from_to: &Self::AccountId,
 			order: Sell<Self::MayBeAssetId, Self::Balance>,
-			configuration: AuctionStepFunction,
+			configuration: TimeReleaseFunction,
 		) -> Result<Self::OrderId, DispatchError> {
 			ensure!(order.is_valid(), Error::<T>::OrderParametersIsInvalid,);
 			let order_id = <OrdersIndex<T>>::mutate(|x| {
@@ -270,7 +302,9 @@ pub mod pallet {
 			});
 			let treasury = &T::PalletId::get().into_account();
 			let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate());
-			T::NativeCurrency::transfer(from_to, treasury, deposit, true)?;
+			<T::NativeCurrency as NativeTransfer<T::AccountId>>::transfer(
+				from_to, treasury, deposit, true,
+			)?;
 			let now = T::UnixTime::now().as_secs();
 			let order = SellOf::<T> {
 				from_to: from_to.clone(),
@@ -296,12 +330,12 @@ pub mod pallet {
 				order.order.take.limit <= take.limit,
 				Error::<T>::TakeLimitDoesNotSatisfiesOrder,
 			);
-			let limit = order.order.take.limit.into();
+			let limit = order.order.take.limit;
 			// may consider storing calculation results within single block, so that finalize does
 			// not recalculates
 			let passed = T::UnixTime::now().as_secs() - order.context.added_at;
 			let _limit = order.configuration.price(limit, passed)?;
-			let quote_amount = take.quote_amount()?;
+			let quote_amount = take.quote_limit_amount()?;
 
 			T::MultiCurrency::reserve(order.order.pair.quote, from_to, quote_amount)?;
 			<Takes<T>>::append(order_id, TakeOf::<T> { from_to: from_to.clone(), take });
@@ -316,49 +350,58 @@ pub mod pallet {
 		// so we stay fast and prevent attack
 		fn on_finalize(_n: T::BlockNumber) {
 			for (order_id, mut takes) in <Takes<T>>::iter() {
-				// users payed N * WEIGHT before, we here pay N * (log N - 1) * Weight. We can
-				// retain pure N by first served principle so, not highest price.
-				takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));
-				let SellOrder { mut order, context: _, from_to: ref seller, configuration: _ } =
-					<SellOrders<T>>::get(order_id)
-						.expect("takes are added only onto existing orders");
-
-				// calculate real price
-				for take in takes {
-					let quote_amount = take.take.amount.saturating_mul(take.take.limit);
-					// what to do with orders which nobody ever takes? some kind of dust orders with
-					if order.take.amount == T::Balance::zero() {
-						T::MultiCurrency::unreserve(order.pair.quote, &take.from_to, quote_amount);
-					} else {
-						let take_amount = take.take.amount.min(order.take.amount);
-						order.take.amount -= take_amount;
-						let real_quote_amount = take_amount
-							.safe_mul(&take.take.limit)
-							.expect("was checked in take call");
-
-						exchange_reserved::<T>(
-							order.pair.base,
-							seller,
-							take_amount,
-							order.pair.quote,
-							&take.from_to,
-							real_quote_amount,
-						)
-						.expect("we forced locks beforehand");
-
-						if real_quote_amount < quote_amount {
+				if let Some(SellOrder {
+					mut order,
+					context: _,
+					from_to: ref seller,
+					configuration: _,
+				}) = <SellOrders<T>>::get(order_id)
+				{
+					// users payed N * WEIGHT before, we here pay N * (log N - 1) * Weight. We can
+					// retain pure N by first served principle so, not highest price.
+					takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));
+					// calculate real price
+					for take in takes {
+						let quote_amount =
+							take.take.quote_limit_amount().expect("was checked in take call");
+						// what to do with orders which nobody ever takes? some kind of dust orders
+						// with
+						if order.take.amount == T::Balance::zero() {
 							T::MultiCurrency::unreserve(
 								order.pair.quote,
 								&take.from_to,
-								quote_amount - real_quote_amount,
+								quote_amount,
 							);
+						} else {
+							let take_amount = take.take.amount.min(order.take.amount);
+							order.take.amount -= take_amount;
+							let real_quote_amount =
+								take.take.quote_amount(take_amount).expect("was taken via min");
+
+							exchange_reserved::<T>(
+								order.pair.base,
+								seller,
+								take_amount,
+								order.pair.quote,
+								&take.from_to,
+								real_quote_amount,
+							)
+							.expect("we forced locks beforehand");
+
+							if real_quote_amount < quote_amount {
+								T::MultiCurrency::unreserve(
+									order.pair.quote,
+									&take.from_to,
+									quote_amount - real_quote_amount,
+								);
+							}
 						}
 					}
-				}
 
-				if order.take.amount == T::Balance::zero() {
-					<SellOrders<T>>::remove(order_id);
-					Self::deposit_event(Event::OrderRemoved { order_id });
+					if order.take.amount == T::Balance::zero() {
+						<SellOrders<T>>::remove(order_id);
+						Self::deposit_event(Event::OrderRemoved { order_id });
+					}
 				}
 			}
 			<Takes<T>>::remove_all(None);

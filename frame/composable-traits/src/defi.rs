@@ -1,37 +1,42 @@
-//! Common codes for defi pallets
-
+//! Common codes and conventions for DeFi pallets
 use codec::{Codec, Decode, Encode, FullCodec};
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use scale_info::TypeInfo;
 use sp_runtime::{
+	helpers_128bit::multiply_by_rational,
 	traits::{CheckedAdd, CheckedMul, CheckedSub, Zero},
-	ArithmeticError, DispatchError, FixedPointOperand, FixedU128,
+	ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128,
 };
 
-use crate::{
-	currency::{AssetIdLike, BalanceLike},
-	math::{LiftedFixedBalance, SafeArithmetic},
-};
+use crate::currency::{AssetIdLike, BalanceLike, MathBalance};
 
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
 pub struct Take<Balance> {
 	/// amount of `base`
 	pub amount: Balance,
 	/// direction depends on referenced order type
-	/// either minimal or maximal amount of `quote` for given unit of `base`
-	pub limit: Balance,
+	/// either minimal or maximal amount of `quote` for given `base`
+	/// depending on engine configuration, `limit` can be hard or flexible (change with time)
+	pub limit: LiftedFixedBalance,
 }
 
-impl<Balance: PartialOrd + Zero + SafeArithmetic> Take<Balance> {
+impl<Balance: MathBalance> Take<Balance> {
 	pub fn is_valid(&self) -> bool {
-		self.amount > Balance::zero() && self.limit > Balance::zero()
+		self.amount > Balance::zero() && self.limit > Ratio::zero()
 	}
-	pub fn new(amount: Balance, limit: Balance) -> Self {
+
+	pub fn new(amount: Balance, limit: Ratio) -> Self {
 		Self { amount, limit }
 	}
 
-	pub fn quote_amount(&self) -> Result<Balance, ArithmeticError> {
-		self.amount.safe_mul(&self.limit)
+	pub fn quote_limit_amount(&self) -> Result<Balance, ArithmeticError> {
+		self.quote_amount(self.amount)
+	}
+
+	pub fn quote_amount(&self, amount: Balance) -> Result<Balance, ArithmeticError> {
+		let result = multiply_by_rational(amount.into(), self.limit.into_inner(), Ratio::DIV)
+			.map_err(|_| ArithmeticError::Overflow)?;
+		result.try_into().map_err(|_| ArithmeticError::Overflow)
 	}
 }
 
@@ -42,7 +47,7 @@ pub struct Sell<AssetId, Balance> {
 	pub take: Take<Balance>,
 }
 
-impl<AssetId: PartialEq, Balance: PartialOrd + Zero + SafeArithmetic> Sell<AssetId, Balance> {
+impl<AssetId: PartialEq, Balance: MathBalance> Sell<AssetId, Balance> {
 	pub fn is_valid(&self) -> bool {
 		self.take.is_valid()
 	}
@@ -50,7 +55,7 @@ impl<AssetId: PartialEq, Balance: PartialOrd + Zero + SafeArithmetic> Sell<Asset
 		base: AssetId,
 		quote: AssetId,
 		base_amount: Balance,
-		minimal_base_unit_price_in_quote: Balance,
+		minimal_base_unit_price_in_quote: Ratio,
 	) -> Self {
 		Self {
 			take: Take { amount: base_amount, limit: minimal_base_unit_price_in_quote },
@@ -59,18 +64,27 @@ impl<AssetId: PartialEq, Balance: PartialOrd + Zero + SafeArithmetic> Sell<Asset
 	}
 }
 
-/// given `base`, how much `quote` needed for unit
-/// see [currency pair](https://www.investopedia.com/terms/c/currencypair.asp)
-/// Pair with same base and quote is considered valid as it allows to have mixer, money laundering
-/// like behavior.
+/// See [currency pair](https://www.investopedia.com/terms/c/currencypair.asp)
+/// Pair with same `base` and `quote` is considered valid as it allows to have mixer, money
+/// laundering like behavior.
+/// Can be used with Oracles, DEXes.
+/// Example, can do - give `base`, how much `quote` needed for unit.
+/// Can be local `Copy` `AssetId` or remote XCM asset id pair.
 #[repr(C)]
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
 pub struct CurrencyPair<AssetId> {
-	/// See [Base Currency](https://www.investopedia.com/terms/b/basecurrency.asp)
+	/// See [Base Currency](https://www.investopedia.com/terms/b/basecurrency.asp).
+	/// Also can be named `native`(to the market) currency.
+	/// Usually less stable, can be used as collateral.
 	pub base: AssetId,
-	/// counter currency
+	/// Counter currency.
+	/// Also can be named `price` currency.
+	/// Usually more stable, may be `borrowable` asset.
 	pub quote: AssetId,
 }
+
+/// `AssetId` is Copy, than consider pair to be Copy
+impl<AssetId: Copy> Copy for CurrencyPair<AssetId> {}
 
 impl<AssetId: PartialEq> CurrencyPair<AssetId> {
 	pub fn new(base: AssetId, quote: AssetId) -> Self {
@@ -83,14 +97,19 @@ impl<AssetId: PartialEq> CurrencyPair<AssetId> {
 	/// assert_eq!(slice[0], pair.base);
 	/// assert_eq!(slice[1], pair.quote);
 	/// ```
-	/// ```compile_fail
+	/// ```rust
 	/// # let pair = composable_traits::defi::CurrencyPair::<u128>::new(13, 42);
 	/// # let slice =  pair.as_slice();
+	/// // it is copy
 	/// drop(pair);
 	/// let _ = slice[0];
 	/// ```
 	pub fn as_slice(&self) -> &[AssetId] {
 		unsafe { sp_std::slice::from_raw_parts(self as *const Self as *const AssetId, 2) }
+	}
+
+	pub fn reverse(&mut self) {
+		sp_std::mem::swap(&mut self.quote, &mut self.base)
 	}
 }
 
@@ -174,6 +193,7 @@ pub trait DeFiComposableConfig: frame_system::Config {
 	type MayBeAssetId: AssetIdLike + MaybeSerializeDeserialize + Default;
 
 	type Balance: BalanceLike
+		+ MathBalance
 		+ Default
 		+ Parameter
 		+ Codec
@@ -186,12 +206,52 @@ pub trait DeFiComposableConfig: frame_system::Config {
 		+ From<u64> // at least 64 bit
 		+ Zero
 		+ FixedPointOperand
-		+ Into<LiftedFixedBalance> // integer part not more than bits in this
 		+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
 			  // bit
 }
 
-/// The fixed point number from 0..to max.
-/// Unlike `Ratio` it can be more than 1.
-/// And unlike `NormalizedCollateralFactor`, it can be less than one.
+/// The fixed point number from 0..to max
 pub type Rate = FixedU128;
+
+/// Is [1..MAX]
+pub type OneOrMoreFixedU128 = FixedU128;
+
+/// The fixed point number of suggested by substrate precision
+/// Must be (1.0..MAX] because applied only to price normalized values
+pub type MoreThanOneFixedU128 = FixedU128;
+
+/// Must be [0..1]
+pub type ZeroToOneFixedU128 = FixedU128;
+
+/// Number like of higher bits, so that amount and balance calculations are done it it with higher
+/// precision via fixed point.
+/// While this is 128 bit, cannot support u128 because 18 bits are for of mantissa (so maximal
+/// integer is 110 bit). Can support u128 if lift upper to use FixedU256 analog.
+pub type LiftedFixedBalance = FixedU128;
+
+/// unitless ratio of one thing to other.
+pub type Ratio = FixedU128;
+
+#[cfg(test)]
+mod tests {
+	use super::{Ratio, Take};
+	use sp_runtime::FixedPointNumber;
+
+	#[test]
+	fn take_ratio_half() {
+		let price = 10;
+		let amount = 100_u128;
+		let take = Take::new(amount, Ratio::saturating_from_integer(price));
+		let result = take.quote_amount(amount / 2).unwrap();
+		assert_eq!(result, price * amount / 2);
+	}
+
+	#[test]
+	fn take_ratio_half_amount_half_price() {
+		let price_part = 50;
+		let amount = 100_u128;
+		let take = Take::new(amount, Ratio::saturating_from_rational(price_part, 100));
+		let result = take.quote_amount(amount).unwrap();
+		assert_eq!(result, price_part * amount / 100);
+	}
+}

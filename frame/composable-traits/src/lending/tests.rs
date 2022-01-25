@@ -1,4 +1,4 @@
-use crate::defi::Rate;
+use crate::defi::{Rate, ZeroToOneFixedU128};
 
 use super::*;
 use proptest::{prop_assert, strategy::Strategy, test_runner::TestRunner};
@@ -62,12 +62,12 @@ fn get_borrow_rate_works() {
 #[test]
 fn get_supply_rate_works() {
 	let borrow_rate = Rate::saturating_from_rational(2, 100);
-	let util = Ratio::saturating_from_rational(50, 100);
-	let reserve_factor = Ratio::zero();
+	let util = ZeroToOneFixedU128::saturating_from_rational(50, 100);
+	let reserve_factor = ZeroToOneFixedU128::zero();
 	let supply_rate = InterestRateModel::get_supply_rate(borrow_rate, util, reserve_factor);
 	assert_eq!(
 		supply_rate,
-		borrow_rate.saturating_mul(Ratio::one().saturating_sub(reserve_factor) * util),
+		borrow_rate.saturating_mul(ZeroToOneFixedU128::one().saturating_sub(reserve_factor) * util),
 	);
 }
 
@@ -78,24 +78,24 @@ fn curve_model_correctly_calculates_borrow_rate() {
 		model.get_borrow_rate(Percent::from_percent(80)).unwrap(),
 		// curve model has arbitrary power parameters leading to changes in precision of high
 		// power
-		Rate::from_inner(140000000000000000)
+		Rate::from_inner(Rate::DIV / 100 * 14)
 	);
 }
 
 #[derive(Debug, Clone)]
 struct JumpModelStrategy {
-	pub base_rate: Ratio,
-	pub jump_percentage: Ratio,
-	pub full_percentage: Ratio,
+	pub base_rate: ZeroToOneFixedU128,
+	pub jump_percentage: ZeroToOneFixedU128,
+	pub full_percentage: ZeroToOneFixedU128,
 	pub target_utilization: Percent,
 }
 
 fn valid_jump_model() -> impl Strategy<Value = JumpModelStrategy> {
 	(
-		(1..=10u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
-		(11..=30u32).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
-		(31..=50).prop_map(|x| Ratio::saturating_from_rational(x, 100)),
-		(0..=100u8).prop_map(Percent::from_percent),
+		(1..=10_u32).prop_map(|x| ZeroToOneFixedU128::saturating_from_rational(x, 100)),
+		(11..=30_u32).prop_map(|x| ZeroToOneFixedU128::saturating_from_rational(x, 100)),
+		(31..=50).prop_map(|x| ZeroToOneFixedU128::saturating_from_rational(x, 100)),
+		(0..=100_u8).prop_map(Percent::from_percent),
 	)
 		.prop_filter("Jump rate model", |(base, jump, full, _)| {
 			// tried high order strategy - failed as it tries to combine collections with not
@@ -115,9 +115,9 @@ fn valid_jump_model() -> impl Strategy<Value = JumpModelStrategy> {
 #[test]
 fn test_empty_drained_market() {
 	let mut jump_model = JumpModel::new(
-		FixedU128::from_float(0.010000000000000000),
-		FixedU128::from_float(0.110000000000000000),
-		FixedU128::from_float(0.310000000000000000),
+		FixedU128::from_float(0.01),
+		FixedU128::from_float(0.11),
+		FixedU128::from_float(0.31),
 		Percent::zero(),
 	)
 	.unwrap();
@@ -131,9 +131,9 @@ fn test_empty_drained_market() {
 #[test]
 fn test_slope() {
 	let mut jump_model = JumpModel::new(
-		FixedU128::from_float(0.010000000000000000),
-		FixedU128::from_float(0.110000000000000000),
-		FixedU128::from_float(0.310000000000000000),
+		FixedU128::from_float(0.01),
+		FixedU128::from_float(0.11),
+		FixedU128::from_float(0.31),
 		Percent::from_percent(80),
 	)
 	.unwrap();
@@ -159,7 +159,7 @@ fn test_slope() {
 fn proptest_jump_model() {
 	let mut runner = TestRunner::default();
 	runner
-		.run(&(valid_jump_model(), 0..=100u8), |(strategy, utilization)| {
+		.run(&(valid_jump_model(), 0..=100_u8), |(strategy, utilization)| {
 			let base_rate = strategy.base_rate;
 			let jump_rate = strategy.jump_percentage;
 			let full_rate = strategy.full_percentage;
@@ -181,7 +181,7 @@ fn proptest_jump_model_rate() {
 	let base_rate = Rate::saturating_from_rational(2, 100);
 	let jump_rate = Rate::saturating_from_rational(10, 100);
 	let full_rate = Rate::saturating_from_rational(32, 100);
-	let strategy = (0..=100u8, 1..=99u8)
+	let strategy = (0..=100_u8, 1..=99_u8)
 		.prop_map(|(optimal, utilization)| (optimal, utilization, utilization + 1));
 
 	let mut runner = TestRunner::default();

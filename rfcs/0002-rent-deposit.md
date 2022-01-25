@@ -49,7 +49,7 @@ So protecting storage is more important than CPU, as CPU attacks are only transi
 Another one is pefromance and polluting shared search lists. 
 Example, are long list of token pairs to choose DEX pool.
 
-## Forms paying - Rent/Deposit/Stake
+## Forms paying ― Rent/Deposit/Stake
 
 Slashable stake. Until slashed and unlike rent, returned fully to staker during deletion.
 

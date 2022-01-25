@@ -7,7 +7,7 @@ Need to do to run 4 relay chain nodes and 1 Composable's collator:
 	```bash
 	old_pwd=$(pwd)
 	cd ../..
-	cargo build --release --features develop
+	cargo build --release
 	target/release/composable --version
 	cd "$old_pwd"
     ```
@@ -49,7 +49,7 @@ Need to do to run 4 relay chain nodes, 2 Composable's collators and 2 Basilisk's
 	```bash
 	old_pwd=$(pwd)
 	cd ../..
-	cargo build --release --features develop
+	cargo build --release
 	target/release/composable --version
 	cd "$old_pwd"
     ```

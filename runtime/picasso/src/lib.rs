@@ -26,7 +26,6 @@ use common::{
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
 	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
-use composable_traits::currency::PriceableAsset;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -44,7 +43,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
-pub use support::{
+pub use frame_support::{
 	construct_runtime, match_type, parameter_types,
 	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
 	weights::{
@@ -56,11 +55,11 @@ pub use support::{
 };
 
 use codec::Encode;
+use frame_support::traits::EqualPrivilegeOnly;
 use frame_system as system;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
-use support::traits::EqualPrivilegeOnly;
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -103,7 +102,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_version: 2000,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2,
+	transaction_version: 1,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -385,7 +384,6 @@ where
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-			crowdloan_rewards::PrevalidateAssociation::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -419,8 +417,6 @@ parameter_types! {
 
 	/// TODO: discuss with omar/cosmin
 	pub MinStake: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
-	// Shouldn't this be a ratio based on locked amount?
-	pub const SlashAmount: Balance = 5;
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
@@ -816,7 +812,7 @@ construct_runtime!(
 		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 54,
 		Assets: assets::{Pallet, Call, Storage} = 55,
-		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 56,
+		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 57,
 		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 58,
 	}
@@ -836,7 +832,6 @@ pub type SignedExtra = (
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
 	transaction_payment::ChargeTransactionPayment<Runtime>,
-	crowdloan_rewards::PrevalidateAssociation<Runtime>,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
@@ -956,10 +951,10 @@ impl_runtime_apis! {
 	impl benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
 			Vec<benchmarking::BenchmarkList>,
-			Vec<support::traits::StorageInfo>,
+			Vec<frame_support::traits::StorageInfo>,
 		) {
 			use benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
-			use support::traits::StorageInfoTrait;
+			use frame_support::traits::StorageInfoTrait;
 			use system_benchmarking::Pallet as SystemBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
@@ -977,7 +972,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, utility, Utility);
 			list_benchmark!(list, extra, identity, Identity);
 			list_benchmark!(list, extra, multisig, Multisig);
-		  list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1025,7 +1019,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, utility, Utility);
 			add_benchmark!(params, batches, identity, Identity);
 			add_benchmark!(params, batches, multisig, Multisig);
-			add_benchmark!(params, batches, crowdloan_rewards, CrowdloanRewards);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

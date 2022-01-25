@@ -2,11 +2,11 @@
 #![allow(unused_imports)]
 #![allow(clippy::unnecessary_cast)]
 
-use sp_std::marker::PhantomData;
-use support::{
+use frame_support::{
 	traits::Get,
 	weights::{constants::RocksDbWeight, Weight},
 };
+use sp_std::marker::PhantomData;
 
 /// Default weights.
 pub struct WeightInfo<T>(PhantomData<T>);

@@ -1,22 +1,12 @@
-use composable_traits::currency::{DynamicCurrencyId, PriceableAsset};
+use composable_traits::currency::DynamicCurrencyId;
 use frame_support::parameter_types;
 use scale_info::TypeInfo;
 use sp_runtime::{ArithmeticError, DispatchError};
 
 #[derive(
-	PartialOrd,
-	Ord,
-	PartialEq,
-	Eq,
-	Debug,
-	Copy,
-	Clone,
-	codec::Encode,
-	codec::Decode,
-	serde::Serialize,
-	serde::Deserialize,
-	TypeInfo,
+	PartialOrd, Ord, PartialEq, Eq, Debug, Copy, Clone, codec::Encode, codec::Decode, TypeInfo,
 )]
+#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 #[allow(clippy::upper_case_acronyms)] // Currencies should be in CONSTANT_CASE
 pub enum CurrencyId {
 	PICA,
@@ -33,19 +23,6 @@ impl Default for CurrencyId {
 	}
 }
 
-impl PriceableAsset for CurrencyId {
-	fn decimals(&self) -> composable_traits::currency::Exponent {
-		match self {
-			CurrencyId::PICA => 0,
-			CurrencyId::BTC => 8,
-			CurrencyId::ETH => 18,
-			CurrencyId::LTC => 8,
-			CurrencyId::USDT => 2,
-			CurrencyId::LpToken(_) => 0,
-		}
-	}
-}
-
 impl DynamicCurrencyId for CurrencyId {
 	fn next(self) -> Result<Self, DispatchError> {
 		match self {
@@ -58,6 +35,5 @@ impl DynamicCurrencyId for CurrencyId {
 }
 
 parameter_types! {
-	pub const MaxStrategies: usize = 255;
 	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
 }

@@ -3,8 +3,8 @@ use super::*;
 use crate::Pallet as Lending;
 use composable_traits::{
 	lending::{
-		math::{InterestRateModel, NormalizedCollateralFactor},
-		Lending as LendingTrait, MarketConfigInput,
+		math::{InterestRateModel, MoreThanOneFixedU128},
+		CreateInput, Lending as LendingTrait,
 	},
 	vault::Vault,
 };
@@ -45,11 +45,11 @@ fn create_market<T: Config>(
 	borrow_asset: u128,
 	collateral_asset: u128,
 ) -> (crate::MarketIndex, <T as Config>::VaultId) {
-	let market_config = MarketConfigInput {
+	let market_config = CreateInput {
 		liquidator: None,
 		manager,
 		reserved: Perquintill::from_percent(10),
-		collateral_factor: NormalizedCollateralFactor::saturating_from_rational(200, 100),
+		collateral_factor: MoreThanOneFixedU128::saturating_from_rational(200, 100),
 		under_collaterized_warn_percent: Percent::from_percent(10),
 	};
 	Lending::<T>::create(
@@ -67,7 +67,7 @@ benchmarks! {
 		let borrow_asset_id = <T as Config>::AssetId::from(BTC);
 		let collateral_asset_id = <T as Config>::AssetId::from(USDT);
 		let reserved_factor = Perquintill::from_percent(10);
-		let collateral_factor = NormalizedCollateralFactor::saturating_from_rational(200, 100);
+		let collateral_factor = MoreThanOneFixedU128::saturating_from_rational(200, 100);
 		let under_collaterized_warn_percent = Percent::from_percent(10);
 		let market_id = MarketIndex::new(1);
 		let vault_id = 1u64.into();
@@ -120,7 +120,7 @@ benchmarks! {
 		Lending::<T>::deposit_collateral_internal(&market, &caller, amount).unwrap();
 	}: _(RawOrigin::Signed(caller.clone()), market, amount)
 	verify {
-		assert_last_event::<T>(Event::CollateralWithdrawed {
+		assert_last_event::<T>(Event::CollateralWithdrawn {
 			sender: caller,
 			market_id: market,
 			amount

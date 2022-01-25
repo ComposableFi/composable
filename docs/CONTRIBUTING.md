@@ -4,9 +4,9 @@ We have a few guidelines and requirements to ensure correct workflows are follow
 
 ## First Things First
 Before contributing, go through the documentation found in `~/docs/`.  Specifically:  
-* [rust-setup.md](./rust-setup.md) - A walkthrough for installing and configuring Rust and other tools in your develop    ment environment  
-* [proptest.md](./proptest.md) - A guide to our approach and philosophy for automated testing  
-* [benchmarking.md](./benchmarking.md) - A guide for benchmarking pallet changes  
+* [rust-setup.md](./rust-setup.md) ― A walkthrough for installing and configuring Rust and other tools in your develop    ment environment  
+* [proptest.md](./proptest.md) ― A guide to our approach and philosophy for automated testing  
+* [benchmarking.md](./benchmarking.md) ― A guide for benchmarking pallet changes  
 
 ## Workflow
 When contributing code changes, follow this general process to ensure the CI pipeline processes code and that your work is accessible via ClickUp.  

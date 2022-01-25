@@ -30,7 +30,8 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		currency::PriceableAsset,
+		currency::LocalAssets,
+		math::SafeArithmetic,
 		oracle::{Oracle, Price as LastPrice},
 	};
 	use core::ops::{Div, Mul};
@@ -52,13 +53,15 @@ pub mod pallet {
 		pallet_prelude::*,
 		Config as SystemConfig,
 	};
+
 	use lite_json::json::JsonValue;
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
 		offchain::{http, Duration},
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
-		AccountId32, KeyTypeId as CryptoKeyTypeId, PerThing, Percent, RuntimeDebug,
+		AccountId32, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId, PerThing, Percent,
+		RuntimeDebug,
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec, vec::Vec};
 
@@ -111,8 +114,7 @@ pub mod pallet {
 			+ Into<u128>
 			+ Debug
 			+ Default
-			+ TypeInfo
-			+ PriceableAsset;
+			+ TypeInfo;
 		type PriceValue: Default
 			+ Parameter
 			+ Codec
@@ -135,8 +137,6 @@ pub mod pallet {
 		type StalePrice: Get<Self::BlockNumber>;
 		/// Origin to add new price types
 		type AddOracle: EnsureOrigin<Self::Origin>;
-		/// Slash for an incorrect answer
-		type SlashAmount: Get<BalanceOf<Self>>;
 		/// Upper bound for max answers for a price
 		type MaxAnswerBound: Get<u32>;
 		/// Upper bound for total assets available for the oracle
@@ -146,6 +146,7 @@ pub mod pallet {
 
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
+		type LocalAssets: LocalAssets<Self::AssetId>;
 	}
 
 	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
@@ -161,8 +162,10 @@ pub mod pallet {
 		pub who: AccountId,
 	}
 
+	// block timestamped value
 	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo, Clone)]
 	pub struct Price<PriceValue, BlockNumber> {
+		/// value
 		pub price: PriceValue,
 		pub block: BlockNumber,
 	}
@@ -269,7 +272,7 @@ pub mod pallet {
 		Blake2_128Concat,
 		T::AssetId,
 		AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
-		ValueQuery,
+		OptionQuery,
 	>;
 
 	#[pallet::event]
@@ -371,16 +374,15 @@ pub mod pallet {
 		type Balance = T::PriceValue;
 		type AssetId = T::AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
+		type LocalAssets = T::LocalAssets;
 
-		// TODO(hussein-aitlahcen):
-		// implement the amount based computation with decimals once it's been completely defined
 		fn get_price(
 			asset: Self::AssetId,
-			_amount: Self::Balance,
+			amount: Self::Balance,
 		) -> Result<LastPrice<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
 				Prices::<T>::try_get(asset).map_err(|_| Error::<T>::PriceNotFound)?;
-			Ok(LastPrice { price, block })
+			Ok(LastPrice { price: price.safe_mul(&amount)?, block })
 		}
 
 		fn get_twap(
@@ -388,6 +390,22 @@ pub mod pallet {
 			weighting: Vec<Self::Balance>,
 		) -> Result<Self::Balance, DispatchError> {
 			Self::get_twap(of, weighting)
+		}
+
+		fn get_ratio(
+			pair: composable_traits::defi::CurrencyPair<Self::AssetId>,
+		) -> Result<sp_runtime::FixedU128, DispatchError> {
+			let base: u128 =
+				Self::get_price(pair.base, (10 ^ T::LocalAssets::decimals(pair.base)?).into())?
+					.price
+					.into();
+			let quote: u128 =
+				Self::get_price(pair.quote, (10 ^ T::LocalAssets::decimals(pair.base)?).into())?
+					.price
+					.into();
+			let base = FixedU128::saturating_from_integer(base);
+			let quote = FixedU128::saturating_from_integer(quote);
+			Ok(base.safe_div(&quote)?)
 		}
 	}
 
@@ -427,8 +445,13 @@ pub mod pallet {
 			);
 			let asset_info =
 				AssetInfo { threshold, min_answers, max_answers, block_interval, reward, slash };
+
+			let current_asset_info = Self::asset_info(asset_id);
+			if current_asset_info.is_none() {
+				AssetsCount::<T>::mutate(|a| *a += 1);
+			}
+
 			AssetsInfo::<T>::insert(asset_id, asset_info);
-			AssetsCount::<T>::mutate(|a| *a += 1);
 			Self::deposit_event(Event::AssetInfoChange(
 				asset_id,
 				threshold,
@@ -550,7 +573,7 @@ pub mod pallet {
 				block: frame_system::Pallet::<T>::block_number(),
 				who: who.clone(),
 			};
-			let asset_info = AssetsInfo::<T>::get(asset_id);
+			let asset_info = Self::asset_info(asset_id).ok_or(Error::<T>::InvalidAssetId)?;
 			PrePrices::<T>::try_mutate(asset_id, |current_prices| -> Result<(), DispatchError> {
 				// There can convert current_prices.len() to u32 safely
 				// because current_prices.len() limited by u32
@@ -611,8 +634,8 @@ pub mod pallet {
 			pre_prices: &[PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>],
 			price: T::PriceValue,
 			asset_id: T::AssetId,
+			asset_info: &AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
 		) {
-			let asset_info = Self::asset_info(asset_id);
 			for answer in pre_prices {
 				let accuracy: Percent = if answer.price < price {
 					PerThing::from_rational(answer.price, price)
@@ -620,7 +643,7 @@ pub mod pallet {
 					let adjusted_number = price.saturating_sub(answer.price - price);
 					PerThing::from_rational(adjusted_number, price)
 				};
-				let min_accuracy = AssetsInfo::<T>::get(asset_id).threshold;
+				let min_accuracy = asset_info.threshold;
 				if accuracy < min_accuracy {
 					let slash_amount = asset_info.slash;
 					let try_slash = T::Currency::can_slash(&answer.who, slash_amount);
@@ -647,8 +670,8 @@ pub mod pallet {
 						asset_id,
 						reward_amount,
 					));
-				}
-				Self::remove_price_in_transit(&asset_id, &answer.who);
+				};
+				Self::remove_price_in_transit(&answer.who, asset_info)
 			}
 		}
 
@@ -658,7 +681,7 @@ pub mod pallet {
 			for (asset_id, asset_info) in AssetsInfo::<T>::iter() {
 				total_weight += one_read;
 				let (removed_pre_prices_len, pre_prices) =
-					Self::update_pre_prices(asset_id, asset_info.clone(), block);
+					Self::update_pre_prices(asset_id, &asset_info, block);
 				total_weight += T::WeightInfo::update_pre_prices(removed_pre_prices_len as u32);
 				let pre_prices_len = pre_prices.len();
 				Self::update_price(asset_id, asset_info.clone(), block, pre_prices);
@@ -670,7 +693,7 @@ pub mod pallet {
 		#[allow(clippy::type_complexity)]
 		pub fn update_pre_prices(
 			asset_id: T::AssetId,
-			asset_info: AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
+			asset_info: &AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
 			block: T::BlockNumber,
 		) -> (usize, Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>) {
 			// TODO maybe add a check if price is requested, is less operations?
@@ -682,8 +705,7 @@ pub mod pallet {
 			// because pre_pruned_prices.len() limited by u32
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 			if pre_pruned_prices.len() as u32 >= asset_info.min_answers {
-				let res =
-					Self::prune_old_pre_prices(asset_info, pre_pruned_prices, block, &asset_id);
+				let res = Self::prune_old_pre_prices(asset_info, pre_pruned_prices, block);
 				let staled_prices = res.0;
 				pre_prices = res.1;
 				for p in staled_prices {
@@ -722,17 +744,16 @@ pub mod pallet {
 					}
 					PrePrices::<T>::remove(asset_id);
 
-					Self::handle_payout(&pre_prices, price, asset_id);
+					Self::handle_payout(&pre_prices, price, asset_id, &asset_info);
 				}
 			}
 		}
 
 		#[allow(clippy::type_complexity)]
 		pub fn prune_old_pre_prices(
-			asset_info: AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
+			asset_info: &AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
 			mut pre_prices: Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 			block: T::BlockNumber,
-			asset_id: &T::AssetId,
 		) -> (
 			Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
 			Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
@@ -741,7 +762,7 @@ pub mod pallet {
 			let (staled_prices, mut fresh_prices) =
 				match pre_prices.iter().enumerate().find(|(_, p)| p.block >= stale_block) {
 					Some((index, pre_price)) => {
-						Self::remove_price_in_transit(asset_id, &pre_price.who);
+						Self::remove_price_in_transit(&pre_price.who, asset_info);
 						let fresh_prices = pre_prices.split_off(index);
 						(pre_prices, fresh_prices)
 					},
@@ -753,7 +774,7 @@ pub mod pallet {
 			if fresh_prices.len() as u32 > max_answers {
 				let pruned = fresh_prices.len() - max_answers as usize;
 				for price in fresh_prices.iter().skip(pruned) {
-					Self::remove_price_in_transit(asset_id, &price.who);
+					Self::remove_price_in_transit(&price.who, asset_info);
 				}
 				#[allow(clippy::indexing_slicing)]
 				// max_answers is confirmed to be less than the len in the condition of the if
@@ -789,9 +810,9 @@ pub mod pallet {
 		}
 
 		pub fn check_requests() {
-			for (i, _) in AssetsInfo::<T>::iter() {
+			for (i, asset_info) in AssetsInfo::<T>::iter() {
 				if Self::is_requested(&i) {
-					let _ = Self::fetch_price_and_send_signed(&i);
+					let _ = Self::fetch_price_and_send_signed(&i, asset_info);
 				}
 			}
 		}
@@ -800,11 +821,17 @@ pub mod pallet {
 			let last_update = Self::prices(price_id);
 			let current_block = frame_system::Pallet::<T>::block_number();
 			let asset_info = Self::asset_info(price_id);
-			last_update.block + asset_info.block_interval < current_block
+			if asset_info.is_none() {
+				false
+			} else {
+				last_update.block + asset_info.unwrap_or_default().block_interval < current_block
+			}
 		}
 
-		pub fn remove_price_in_transit(asset_id: &T::AssetId, who: &T::AccountId) {
-			let asset_info = AssetsInfo::<T>::get(asset_id);
+		pub fn remove_price_in_transit(
+			who: &T::AccountId,
+			asset_info: &AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
+		) {
 			AnswerInTransit::<T>::mutate(&who, |transit| {
 				*transit = Some(transit.unwrap_or_else(Zero::zero).saturating_sub(asset_info.slash))
 			});
@@ -859,7 +886,10 @@ pub mod pallet {
 		}
 
 		// REVIEW: indexing
-		pub fn fetch_price_and_send_signed(price_id: &T::AssetId) -> Result<(), &'static str> {
+		pub fn fetch_price_and_send_signed(
+			price_id: &T::AssetId,
+			asset_info: AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
+		) -> Result<(), &'static str> {
 			let signer = Signer::<T, T::AuthorityId>::all_accounts();
 			if !signer.can_sign() {
 				log::info!("no signer");
@@ -877,7 +907,7 @@ pub mod pallet {
 			let mut to32 = AccountId32::as_ref(&account);
 			let address: T::AccountId = T::AccountId::decode(&mut to32).unwrap_or_default();
 
-			if prices.len() as u32 >= Self::asset_info(price_id).max_answers {
+			if prices.len() as u32 >= asset_info.max_answers {
 				log::info!("Max answers reached");
 				return Err("Max answers reached")
 			}

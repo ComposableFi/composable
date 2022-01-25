@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
 edition = "2021"
-rust-version = "1.56"
+
 
 [dependencies]
 serde = { version = "1.0.124", optional = true }

@@ -1,13 +1,7 @@
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero},
-	ArithmeticError, FixedU128,
+	ArithmeticError,
 };
-
-/// Number like of higher bits, so that amount and balance calculations are done it it with higher
-/// precision via fixed point.
-/// While this is 128 bit, cannot support u128 because 18 bits are for of mantissa (so maximal
-/// integer is 110 bit). Can support u128 if lift upper to use FixedU256 analog.
-pub type LiftedFixedBalance = FixedU128;
 
 /// little bit slower than maximizing performance by knowing constraints.
 /// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if
