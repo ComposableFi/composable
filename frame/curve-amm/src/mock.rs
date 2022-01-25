@@ -105,6 +105,7 @@ impl pallet_balances::Config for Test {
 pub type Balance = u128;
 pub type AssetId = u128;
 pub type Amount = i128;
+pub type PoolId = u32;
 
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: AssetId| -> Balance {
@@ -136,8 +137,7 @@ impl curve_amm::Config for Test {
 	type CurrencyFactory = LpTokenFactory;
 	type Precision = Precision;
 	type LpToken = Tokens;
-	type PoolId = u32;
-	type PoolTokenIndex = u32;
+	type PoolId = PoolId;
 	type PalletId = TestPalletID;
 }
 

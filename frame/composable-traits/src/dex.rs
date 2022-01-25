@@ -15,9 +15,6 @@ pub trait CurveAmm {
 	type Balance;
 	/// The user account identifier type for the runtime
 	type AccountId;
-	/// Type that represents index type of token in the pool passed from the outside as an extrinsic
-	/// argument.
-	type PoolTokenIndex;
 
 	/// Type that represents pool id
 	type PoolId;
@@ -27,6 +24,30 @@ pub trait CurveAmm {
 
 	/// Current number of pools (also ID for the next created pool)
 	fn pool_count() -> Self::PoolId;
+
+	/// Get pure exchange value for given units of given asset. (Note this does not include fees.)
+	fn get_exchange_value(
+		pool_id: Self::PoolId,
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
+
+	/// Buy given units of given asset from the pool.
+	/// In buy user does not know how much assets he/she has to exchange to get desired amount.
+	fn buy(
+		who: &Self::AccountId,
+		pool_id: Self::PoolId,
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
+
+	/// Sell given units of given asset to the pool.
+	fn sell(
+		who: &Self::AccountId,
+		pool_id: Self::PoolId,
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
 
 	/// Deposit coins into the pool
 	/// `amounts` - list of amounts of coins to deposit,
@@ -50,15 +71,13 @@ pub trait CurveAmm {
 	) -> Result<(), DispatchError>;
 
 	/// Perform an exchange between two coins.
-	/// `i` - index value of the coin to send,
-	/// `j` - index value of the coin to receive,
+	/// `asset_id` - id of asset being exchanged.
 	/// `dx` - amount of `i` being exchanged,
 	/// `min_dy` - minimum amount of `j` to receive.
 	fn exchange(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		i: Self::PoolTokenIndex,
-		j: Self::PoolTokenIndex,
+		asset_id: Self::AssetId,
 		dx: Self::Balance,
 		min_dy: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;

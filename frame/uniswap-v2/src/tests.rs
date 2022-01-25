@@ -5,6 +5,49 @@ use composable_traits::dex::CurveAmm as ConstantProductAmmTrait;
 use frame_support::traits::fungibles::{Inspect, Mutate};
 use sp_runtime::Permill;
 
+fn create_pool(
+	assets: Vec<AssetId>,
+	amounts: Vec<Balance>,
+	fee: Permill,
+	admin_fee: Permill,
+) -> PoolId {
+	assert_ok!(Tokens::mint_into(assets[0], &ALICE, amounts[0]));
+	assert_ok!(Tokens::mint_into(assets[1], &ALICE, amounts[1]));
+	assert_ok!(Tokens::mint_into(assets[0], &BOB, amounts[0]));
+	assert_ok!(Tokens::mint_into(assets[1], &BOB, amounts[1]));
+	let p = ConstantProductAmm::create_pool(&ALICE, assets, fee, admin_fee);
+	assert_ok!(&p);
+	let pool_id = p.unwrap();
+	assert_ok!(ConstantProductAmm::add_liquidity(&ALICE, pool_id, amounts.clone(), 0_u128));
+	assert_ok!(ConstantProductAmm::add_liquidity(&BOB, pool_id, amounts.clone(), 0_u128));
+	pool_id
+}
+
+#[test]
+fn test_get_exchange_value() {
+	new_test_ext().execute_with(|| {
+		let assets = vec![MockCurrencyId::ETH, MockCurrencyId::USDT];
+		let fee = Permill::zero();
+		let admin_fee = Permill::zero();
+		let amounts = vec![10000, 30000000];
+		let pool_id = create_pool(assets, amounts, fee, admin_fee);
+		let eth_price = ConstantProductAmm::get_exchange_value(pool_id, MockCurrencyId::ETH, 1u128);
+		assert_ok!(eth_price);
+		let eth_price = eth_price.unwrap();
+		assert!(eth_price <= 3000);
+		assert!(eth_price > 2990);
+		// check price for 3100 USDT (additional 100$ so that it returns 1 ETH)
+		let usdt_price =
+			ConstantProductAmm::get_exchange_value(pool_id, MockCurrencyId::USDT, 3100u128);
+		assert_ok!(usdt_price);
+		let usdt_price = usdt_price.unwrap();
+		sp_std::if_std! {
+			println!("usdt_price {:?}", usdt_price);
+		}
+		assert!(usdt_price == 1);
+	});
+}
+
 #[test]
 fn add_remove_liquidity() {
 	new_test_ext().execute_with(|| {
@@ -147,10 +190,26 @@ fn exchange_test() {
 		assert_eq!(Tokens::balance(USDC, &BOB), 200000 - 130000);
 		assert_eq!(Tokens::balance(USDC, &CHARLIE), 0);
 		// CHARLIE exchanges USDT for USDC
-		assert_ok!(ConstantProductAmm::exchange(&CHARLIE, pool_id, 1, 0, 65000, 0));
+		assert_ok!(ConstantProductAmm::exchange(&CHARLIE, pool_id, MockCurrencyId::USDT, 65000, 0));
 		sp_std::if_std! {
 			println!("CHARLIE's USDC balance {:?}" , Tokens::balance(   USDC, &CHARLIE));
 		}
 		assert!(65000 >= Tokens::balance(USDC, &CHARLIE));
+	});
+}
+
+#[test]
+fn buy_test() {
+	new_test_ext().execute_with(|| {
+		let assets = vec![MockCurrencyId::USDC, MockCurrencyId::USDT];
+		let fee = Permill::zero();
+		let admin_fee = Permill::zero();
+
+		let amounts = vec![200000u128, 200000u128];
+		let pool_id = create_pool(assets, amounts, fee, admin_fee);
+		assert_ok!(Tokens::mint_into(MockCurrencyId::USDT, &CHARLIE, 200000));
+		assert_eq!(Tokens::balance(MockCurrencyId::USDC, &CHARLIE), 0);
+		assert_ok!(ConstantProductAmm::buy(&CHARLIE, pool_id, MockCurrencyId::USDC, 1000));
+		assert!(1000 - Tokens::balance(MockCurrencyId::USDC, &CHARLIE) < 10);
 	});
 }
