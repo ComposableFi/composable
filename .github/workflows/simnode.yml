@@ -33,19 +33,19 @@ jobs:
         run: |
           echo "Running on pr: ${{ steps.branch-name.outputs.current_branch }}"
 
-      # - name: Check for runtime changes
-      #   id: check_runtime
-      #   env:
-      #     BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-      #     GITHUB_REF: ${{ github.ref_name }}
+      - name: Check for runtime changes
+        id: check_runtime
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_REF: ${{ github.ref_name }}
 
-      #   run: .maintain/check_runtime.sh
+        run: .maintain/check_runtime.sh
 
-      # - name: Run Simnode
-      #   env:
-      #     BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-      #     GITHUB_REF: ${{ github.ref_name	 }}
+      - name: Run Simnode
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_REF_NAME: ${{ steps.branch-name.outputs.current_branch }}
 
-      #   if: env.RUNTIME_CHECK == 1
-      #   id: run_simnode
-      #   run: .maintain/run_simnode.sh
+        if: env.RUNTIME_CHECK == 1
+        id: run_simnode
+        run: .maintain/run_simnode.sh
