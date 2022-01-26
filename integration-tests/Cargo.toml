@@ -100,11 +100,11 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 
 # added on top of runtime for emulation of network
 paste = "1.0.5"
-polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13" }
+polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13", default-features = false }
 xcm-emulator = { git = "https://github.com/dzmitry-lahoda-forks/xcm-simulator", branch = "dz/0.9.13", default-features = false }
-kusama-runtime = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13" }
-polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13" }
-polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13" }
+kusama-runtime = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13", default-features = false }
+polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13", default-features = false }
+polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13", default-features = false }
 picasso-runtime = { package = "dali-runtime", path = "../runtime/dali", default-features = false }
 
 [dev-dependencies]
@@ -125,9 +125,9 @@ std = [
 	"sp-block-builder/std",
 	"sp-transaction-pool/std",
 	"sp-inherents/std",
-    "support/std",
+  "support/std",
 	"executive/std",
-    "frame-system/std",
+  "frame-system/std",
 	"utility/std",
 	"authorship/std",
 	"balances/std",
@@ -163,7 +163,11 @@ std = [
 	"xcm-executor/std",
 	"aura/std",
 	"sp-consensus-aura/std",
-    "scale-info/std",
+  "scale-info/std",
+  "kusama-runtime/std",
+  "polkadot-core-primitives/std",
+  "polkadot-primitives/std",
+  "polkadot-runtime-parachains/std",
 ]
 
 runtime-benchmarks = [
@@ -189,6 +193,9 @@ runtime-benchmarks = [
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
 	"kusama-runtime/runtime-benchmarks",
+  "picasso-runtime/runtime-benchmarks",
+  "polkadot-primitives/runtime-benchmarks",
+  "polkadot-runtime-parachains/runtime-benchmarks",
 ]
 
 develop = [
