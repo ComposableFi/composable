@@ -10,6 +10,8 @@ set -e # fail on any error
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
 
+
+
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
