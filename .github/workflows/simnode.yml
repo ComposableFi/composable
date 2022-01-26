@@ -28,7 +28,7 @@ jobs:
         id: check_runtime
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-          GITHUB_REF: ${{ github.ref }}
+          GITHUB_REF: ${{ github.ref_name }}
 
         run: .maintain/check_runtime.sh
 
