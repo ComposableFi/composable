@@ -35,7 +35,7 @@ jobs:
       - name: Runtime wasm builds
         id: runtime_release
         env:
-          GITHUB_REF_NAME: ${{ github.base_ref }}
+
         run: |
           .maintain/runtime_release.sh
 
@@ -90,7 +90,7 @@ jobs:
 
       - name: 🔨 Build Composable Binary
         env:
-          GITHUB_REF_NAME: ${{ github.base_ref }}
+
         run: |
           .maintain/client_release.sh
 

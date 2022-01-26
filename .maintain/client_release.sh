@@ -10,14 +10,12 @@
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
 
-RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )
+RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
 # Because this script runs when a tag has been published, the previous tag is the
 # last two tags
 PREV_TAG=$(gh release list -L=2 | sed -n '2 p' | awk '{print $(NF-1)}')
 
-
-if has_client_changes "${PREV_TAG}" "${GITHUB_REF_NAME}"
-then
+if has_client_changes "${PREV_TAG}" "${GITHUB_SHA}"; then
   boldprint "Building new client binaries"
   cargo build --release -p composable
   tar -czvf composable-"${RELEASE_VERSION}".tar.gz target/release/composable
