@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
+GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD | tr '/' '-')
 
 get_latest_release() {
   curl --silent "https://api.github.com/repos/$1/releases/latest" | # Get latest release from GitHub api
