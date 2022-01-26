@@ -20,8 +20,6 @@ jobs:
           docker system prune --force --all --volumes
         
       - uses: actions/checkout@v2
-        with: 
-          ref: main
 
       - name: Check for runtime changes
         id: check_runtime
