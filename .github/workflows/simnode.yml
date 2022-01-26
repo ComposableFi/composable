@@ -18,6 +18,7 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
+          git --version 
 
       - name: Get branch name
         id: branch-name
