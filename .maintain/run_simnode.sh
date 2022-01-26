@@ -7,9 +7,6 @@
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
 
-echo "make sure the main branch and release tag are available in shallow clones"
-git fetch --depth="${GIT_DEPTH:-100}" origin "${BASE_BRANCH}"
-
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
   "picasso,picasso"

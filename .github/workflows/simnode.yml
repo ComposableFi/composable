@@ -18,6 +18,8 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
+          echo "make sure the main branch and release tag are available in shallow clones"
+          git fetch --depth="${GIT_DEPTH:-100}" origin "${BASE_BRANCH}"
         
       - uses: actions/checkout@v2
         with: 
