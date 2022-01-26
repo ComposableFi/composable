@@ -110,7 +110,7 @@ fn set_metadata_tests() {
 			AssetsRegistry::set_metadata(
 				Origin::signed(ALICE),
 				local_asset_id,
-				Metadata { decimals: 12 }
+				ForeignMetadata { decimals: 12 }
 			),
 			Error::<Test>::LocalAssetIdNotFound
 		);
@@ -128,7 +128,7 @@ fn set_metadata_tests() {
 		assert_ok!(AssetsRegistry::set_metadata(
 			Origin::signed(ALICE),
 			local_asset_id,
-			Metadata { decimals: 12 }
+			ForeignMetadata { decimals: 12 }
 		));
 	})
 }

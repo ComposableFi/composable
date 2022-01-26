@@ -74,7 +74,7 @@ pub mod pallet {
 	}
 
 	#[derive(Debug, Clone, Copy, PartialEq, Eq, Encode, Decode, TypeInfo)]
-	pub struct Metadata {
+	pub struct ForeignMetadata {
 		pub decimals: u8,
 	}
 
@@ -120,10 +120,10 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn asset_metadata)]
-	/// Mapping local asset to asset metadata.
-	pub type AssetMetadata<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::LocalAssetId, Metadata, OptionQuery>;
+	#[pallet::getter(fn foreign_asset_metadata)]
+	/// Mapping local asset to foreign asset metadata.
+	pub type ForeignAssetMetadata<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::LocalAssetId, ForeignMetadata, OptionQuery>;
 
 	#[pallet::type_value]
 	pub fn LocalAdminOnEmpty<T: Config>() -> T::AccountId {
@@ -244,16 +244,16 @@ pub mod pallet {
 		pub fn set_metadata(
 			origin: OriginFor<T>,
 			local_asset_id: T::LocalAssetId,
-			metadata: Metadata,
+			metadata: ForeignMetadata,
 		) -> DispatchResultWithPostInfo {
-			let _who = ensure_signed(origin.clone())?;
+			let _ = ensure_signed(origin.clone())?;
 			Self::ensure_admins_only(origin)?;
 			ensure!(
 				<LocalToForeign<T>>::contains_key(local_asset_id),
 				Error::<T>::LocalAssetIdNotFound
 			);
 
-			<AssetMetadata<T>>::insert(local_asset_id, metadata);
+			<ForeignAssetMetadata<T>>::insert(local_asset_id, metadata);
 			Self::deposit_event(Event::AssetMetadataUpdated(local_asset_id));
 			Ok(().into())
 		}
