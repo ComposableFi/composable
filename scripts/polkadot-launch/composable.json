@@ -26,6 +26,12 @@
         "wsPort": 9977,
         "basePath": "/tmp/polkadot-launch/relaychains/dave",
         "port": 30777
+      },
+      {
+        "name": "ferdie",
+        "wsPort": 9978,
+        "basePath": "/tmp/polkadot-launch/relaychains/ferdie",
+        "port": 30778
       }
     ],
     "genesis": {
