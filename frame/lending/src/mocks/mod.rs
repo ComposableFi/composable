@@ -7,7 +7,7 @@ use composable_traits::{
 };
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{Everything, OnFinalize, OnInitialize},
+	traits::{Everything, GenesisBuild, OnFinalize, OnInitialize},
 	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 	PalletId,
 };
@@ -274,11 +274,17 @@ impl pallet_dutch_auction::weights::WeightInfo for DutchAuctionsMocks {
 	}
 }
 
-impl frame_support::weights::WeightToFeePolynomial for DutchAuctionsMocks {
+impl WeightToFeePolynomial for DutchAuctionsMocks {
 	type Balance = Balance;
 
-	fn polynomial() -> frame_support::weights::WeightToFeeCoefficients<Self::Balance> {
-		todo!("will replace with mocks from relevant pallet")
+	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+		let one = WeightToFeeCoefficient {
+			degree: 1,
+			coeff_frac: Perbill::zero(),
+			coeff_integer: WEIGHT_TO_FEE.with(|v| *v.borrow()),
+			negative: false,
+		};
+		smallvec![one]
 	}
 }
 
@@ -387,6 +393,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.unwrap();
 	pallet_lending::GenesisConfig {}
 		.assimilate_storage::<Test>(&mut storage)
+		.unwrap();
+	GenesisBuild::<Test>::assimilate_storage(&pallet_liquidations::GenesisConfig {}, &mut storage)
 		.unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(storage);

@@ -76,7 +76,7 @@ pub mod pallet {
 
 		type LiquidationStrategyId: Default + FullCodec + WrappingNext + Parameter + Copy;
 
-		type OrderId: Default + FullCodec;
+		type OrderId: Default + FullCodec + sp_std::fmt::Debug;
 
 		type PalletId: Get<PalletId>;
 
@@ -108,7 +108,7 @@ pub mod pallet {
 			_origin: OriginFor<T>,
 			_configuraiton: LiquidationStrategyConfiguration<T::ParachainId>,
 		) -> DispatchResultWithPostInfo {
-			Err(DispatchError::Other("no implemented").into())
+			Err(DispatchError::Other("add_liqudation_strategy: no implemented").into())
 		}
 	}
 
@@ -142,16 +142,9 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 	}
 
+	#[derive(Default)]
 	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config> {
-		_phantom: sp_std::marker::PhantomData<T>,
-	}
-
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			Self { _phantom: <_>::default() }
-		}
-	}
+	pub struct GenesisConfig;
 
 	impl<T: Config> Pallet<T> {
 		pub fn create_strategy_id() -> T::LiquidationStrategyId {
@@ -184,10 +177,11 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			let index = Pallet::<T>::create_strategy_id();
 			DefaultStrategyIndex::<T>::set(index);
+
 			let linear_ten_minutes = LiquidationStrategyConfiguration::DutchAuction(
 				TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 10 * 60 }),
 			);
@@ -228,7 +222,6 @@ pub mod pallet {
 								"as for now, only auction liquidators implemented",
 							)),
 					};
-
 					if result.is_ok() {
 						Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
 						return result

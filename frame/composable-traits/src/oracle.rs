@@ -22,6 +22,8 @@ pub trait Oracle {
 	/// Which is 0.01 of USDT. `Result::Err` is returned if `asset_id` not supported or price
 	/// information not available.
 	///
+	/// Returns last price as it known.
+	///
 	/// # Normal assets
 	///
 	/// Assuming we have a price `price` for an unit (not smallest) of `asset_id` in USDT cents.

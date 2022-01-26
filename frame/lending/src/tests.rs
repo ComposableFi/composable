@@ -615,9 +615,8 @@ fn borrow_repay() {
 	});
 }
 
-#[ignore = "until we reimplement liquidation engine"]
 #[test]
-fn test_liquidation() {
+fn liquidation() {
 	new_test_ext().execute_with(|| {
 		let (market, vault) = create_market(
 			CurrencyId::USDT,
@@ -630,19 +629,13 @@ fn test_liquidation() {
 		Oracle::set_btc_price(100);
 
 		let two_btc_amount = 2;
-		assert_eq!(Tokens::balance(CurrencyId::BTC, &ALICE), 0);
 		assert_ok!(Tokens::mint_into(CurrencyId::BTC, &ALICE, two_btc_amount));
-		assert_eq!(Tokens::balance(CurrencyId::BTC, &ALICE), two_btc_amount);
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, two_btc_amount));
 		assert_eq!(Tokens::balance(CurrencyId::BTC, &ALICE), 0);
 
 		let usdt_amt = u32::MAX as Balance;
-		assert_eq!(Tokens::balance(CurrencyId::USDT, &CHARLIE), 0);
 		assert_ok!(Tokens::mint_into(CurrencyId::USDT, &CHARLIE, usdt_amt));
-		assert_eq!(Tokens::balance(CurrencyId::USDT, &CHARLIE), usdt_amt);
 		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, usdt_amt));
-
-		assert_eq!(Lending::borrow_balance_current(&market, &ALICE), Ok(Some(0)));
 
 		// Allow the market to initialize it's account by withdrawing
 		// from the vault
@@ -651,8 +644,8 @@ fn test_liquidation() {
 		}
 
 		let borrow_limit = Lending::get_borrow_limit(&market, &ALICE).expect("impossible");
+		assert!(borrow_limit > 0);
 
-		// Borrow the maximum
 		assert_ok!(Lending::borrow_internal(&market, &ALICE, borrow_limit));
 
 		for i in 2..10000 {

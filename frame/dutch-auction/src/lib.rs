@@ -191,6 +191,7 @@ pub mod pallet {
 		TakeParametersIsInvalid,
 		TakeLimitDoesNotSatisfiesOrder,
 		OrderNotFound,
+		NotEnoughNativeCurrentyToPayForAuction,
 	}
 
 	#[pallet::pallet]
@@ -304,7 +305,9 @@ pub mod pallet {
 			let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate());
 			<T::NativeCurrency as NativeTransfer<T::AccountId>>::transfer(
 				from_to, treasury, deposit, true,
-			)?;
+			)
+			.map_err(|_| Error::<T>::NotEnoughNativeCurrentyToPayForAuction)?;
+
 			let now = T::UnixTime::now().as_secs();
 			let order = SellOf::<T> {
 				from_to: from_to.clone(),
@@ -312,6 +315,7 @@ pub mod pallet {
 				order,
 				context: Context::<Self::Balance> { added_at: now, deposit },
 			};
+
 			T::MultiCurrency::reserve(order.order.pair.base, from_to, order.order.take.amount)?;
 			SellOrders::<T>::insert(order_id, order);
 

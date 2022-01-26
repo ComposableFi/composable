@@ -662,6 +662,23 @@ fn ratio_human_case() {
 }
 
 #[test]
+fn inverses() {
+	new_test_ext().execute_with(|| {
+		let price = Price { price: 1, block: System::block_number() };
+		Prices::<Test>::insert(13, price);
+		let inverse =
+			<Oracle as composable_traits::oracle::Oracle>::get_price_inverse(13, 1).unwrap();
+		assert_eq!(inverse, 1);
+
+		let price = Price { price: 1, block: System::block_number() };
+		Prices::<Test>::insert(13, price);
+		let inverse =
+			<Oracle as composable_traits::oracle::Oracle>::get_price_inverse(13, 2).unwrap();
+		assert_eq!(inverse, 2);
+	})
+}
+
+#[test]
 fn ratio_base_is_way_less_smaller() {
 	new_test_ext().execute_with(|| {
 		let price = Price { price: 1, block: System::block_number() };

@@ -10,24 +10,13 @@ pub struct Validated<T, U> {
 }
 
 impl<T, U> Validated<T, U> {
+	pub fn new(value: T, _validator: U) -> Self {
+		Self { value, _marker: PhantomData }
+	}
+
 	#[inline(always)]
-	pub fn value(self) -> T {
+	pub fn value_unsafe(self) -> T {
 		self.value
-	}
-}
-
-impl<T, U> Deref for Validated<T, U> {
-	type Target = T;
-	#[inline(always)]
-	fn deref(&self) -> &Self::Target {
-		&self.value
-	}
-}
-
-impl<T, U> AsRef<T> for Validated<T, U> {
-	#[inline(always)]
-	fn as_ref(&self) -> &T {
-		&self.value
 	}
 }
 
@@ -40,11 +29,11 @@ pub trait Validate<U>: Sized {
 	fn validate(self) -> Result<Self, &'static str>;
 }
 
-#[derive(Debug, Eq, PartialEq)]
-pub enum Valid {}
+#[derive(Debug, Eq, PartialEq, Default)]
+pub struct Valid;
 
-#[derive(Debug, Eq, PartialEq)]
-pub enum Invalid {}
+#[derive(Debug, Eq, PartialEq, Default)]
+pub struct Invalid;
 
 impl<T> Validate<Invalid> for T {
 	#[inline(always)]
@@ -82,9 +71,16 @@ impl<T: Validate<U> + Validate<V> + Validate<W>, U, V, W> Validate<(U, V, W)> fo
 	}
 }
 
+impl<T: Validate<U>, U> Validated<T, U> {
+	pub fn value(self) -> Result<T, &'static str> {
+		let value = self.value_unsafe();
+		Validate::<U>::validate(value)
+	}
+}
+
 impl<T: codec::Decode + Validate<U>, U> codec::Decode for Validated<T, U> {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
-		let value = Validate::validate(T::decode(input)?).map_err(Into::<codec::Error>::into)?;
+		let value = T::decode(input)?;
 		Ok(Validated { value, _marker: PhantomData })
 	}
 	fn skip<I: codec::Input>(input: &mut I) -> Result<(), codec::Error> {
@@ -92,6 +88,14 @@ impl<T: codec::Decode + Validate<U>, U> codec::Decode for Validated<T, U> {
 	}
 }
 
+/// just to have `WrapperTypeEncode` work
+impl<T, U> Deref for Validated<T, U> {
+	type Target = T;
+	#[inline(always)]
+	fn deref(&self) -> &Self::Target {
+		&self.value
+	}
+}
 impl<T: codec::Encode + codec::Decode + Validate<U>, U> codec::WrapperTypeEncode
 	for Validated<T, U>
 {
@@ -101,17 +105,24 @@ impl<T: codec::Encode + codec::Decode + Validate<U>, U> codec::WrapperTypeEncode
 mod test {
 	use super::*;
 	use codec::{Decode, Encode};
+	use frame_support::assert_ok;
 
-	#[derive(Debug, Eq, PartialEq)]
+	#[derive(Debug, Eq, PartialEq, Default)]
 	struct ValidARange;
-	#[derive(Debug, Eq, PartialEq)]
+	#[derive(Debug, Eq, PartialEq, Default)]
 	struct ValidBRange;
 
-	type CheckARange = (ValidARange, Valid);
-	type CheckBRange = (ValidBRange, Valid);
-	type CheckABRange = (ValidARange, (ValidBRange, Valid));
+	type CheckARangeTag = (ValidARange, Valid);
+	type CheckBRangeTag = (ValidBRange, Valid);
+	type CheckABRangeTag = (ValidARange, (ValidBRange, Valid));
+	type ManyValidatorsTags = (ValidARange, (ValidBRange, (Invalid, Valid)));
+	// note: next seems is not supported yet
+	// type NestedValidated = (Validated<X, Valid>, Validated<Y,  Valid>);
+	// #[derive(Debug, Eq, PartialEq, codec::Encode, codec::Decode, Default)]
+	// struct Y {
+	// }
 
-	#[derive(Debug, Eq, PartialEq, codec::Encode, codec::Decode)]
+	#[derive(Debug, Eq, PartialEq, codec::Encode, codec::Decode, Default)]
 	struct X {
 		a: u32,
 		b: u32,
@@ -138,12 +149,26 @@ mod test {
 	}
 
 	#[test]
+	fn nested_validator() {
+		let valid = X { a: 10, b: 0xCAFEBABE };
+		assert!(Validate::<ManyValidatorsTags>::validate(valid).is_err());
+	}
+
+	#[test]
+	fn value() {
+		let value = Validated::new(42, Valid).value();
+		assert_ok!(value);
+		let value = Validated::new(42, Invalid).value();
+		assert!(value.is_err());
+	}
+
+	#[test]
 	fn test_valid_a() {
 		let valid = X { a: 10, b: 0xCAFEBABE };
 		let bytes = valid.encode();
 		assert_eq!(
 			Ok(Validated { value: valid, _marker: PhantomData }),
-			Validated::<X, CheckARange>::decode(&mut &bytes[..])
+			Validated::<X, CheckARangeTag>::decode(&mut &bytes[..])
 		);
 	}
 
@@ -151,7 +176,8 @@ mod test {
 	fn test_invalid_a() {
 		let invalid = X { a: 0xDEADC0DE, b: 0xCAFEBABE };
 		let bytes = invalid.encode();
-		assert!(Validated::<X, CheckARange>::decode(&mut &bytes[..]).is_err());
+		let invalid = Validated::<X, CheckARangeTag>::decode(&mut &bytes[..]).unwrap();
+		assert!(invalid.value().is_err());
 	}
 
 	#[test]
@@ -170,7 +196,7 @@ mod test {
 		let bytes = valid.encode();
 		assert_eq!(
 			Ok(Validated { value: valid, _marker: PhantomData }),
-			Validated::<X, CheckBRange>::decode(&mut &bytes[..])
+			Validated::<X, CheckBRangeTag>::decode(&mut &bytes[..])
 		);
 	}
 
@@ -178,7 +204,8 @@ mod test {
 	fn test_invalid_b() {
 		let invalid = X { a: 0xCAFEBABE, b: 0xDEADC0DE };
 		let bytes = invalid.encode();
-		assert!(Validated::<X, CheckBRange>::decode(&mut &bytes[..]).is_err());
+		let invalid = Validated::<X, CheckBRangeTag>::decode(&mut &bytes[..]).unwrap();
+		assert!(invalid.value().is_err());
 	}
 
 	#[test]
@@ -187,7 +214,7 @@ mod test {
 		let bytes = valid.encode();
 		assert_eq!(
 			Ok(Validated { value: valid, _marker: PhantomData }),
-			Validated::<X, CheckABRange>::decode(&mut &bytes[..])
+			Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..])
 		);
 	}
 
@@ -195,21 +222,24 @@ mod test {
 	fn test_invalid_ab() {
 		let invalid = X { a: 0xDEADC0DE, b: 0xCAFEBABE };
 		let bytes = invalid.encode();
-		assert!(Validated::<X, CheckABRange>::decode(&mut &bytes[..]).is_err());
+		let invalid = Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..]).unwrap();
+		assert!(invalid.value().is_err());
 	}
 
 	#[test]
 	fn test_invalid_a_ab() {
 		let invalid = X { a: 0xDEADC0DE, b: 10 };
 		let bytes = invalid.encode();
-		assert!(Validated::<X, CheckABRange>::decode(&mut &bytes[..]).is_err());
+		let invalid = Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..]).unwrap();
+		assert!(invalid.value().is_err());
 	}
 
 	#[test]
 	fn test_invalid_b_ab() {
 		let invalid = X { a: 10, b: 0xDEADC0DE };
 		let bytes = invalid.encode();
-		assert!(Validated::<X, CheckABRange>::decode(&mut &bytes[..]).is_err());
+		let invalid = Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..]).unwrap();
+		assert!(invalid.value().is_err());
 	}
 
 	#[test]
@@ -226,6 +256,8 @@ mod test {
 	fn valid_invalid_valid() {
 		let value = X { a: 10, b: 0xDEADC0DE };
 		let bytes = value.encode();
-		assert!(Validated::<X, (Valid, Invalid, Valid)>::decode(&mut &bytes[..]).is_err());
+
+		let invalid = Validated::<X, (Valid, Invalid, Valid)>::decode(&mut &bytes[..]).unwrap();
+		assert!(invalid.value().is_err());
 	}
 }

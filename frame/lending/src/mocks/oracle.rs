@@ -5,12 +5,14 @@ pub mod pallet {
 	use codec::Codec;
 	use composable_traits::{
 		currency::LocalAssets,
+		math::SafeArithmetic,
 		oracle::{Oracle, Price},
 		vault::Vault,
 	};
 	use frame_support::pallet_prelude::*;
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational, ArithmeticError, DispatchError, FixedPointNumber,
+		FixedU128,
 	};
 	use sp_std::fmt::Debug;
 
@@ -108,9 +110,13 @@ pub mod pallet {
 		}
 
 		fn get_ratio(
-			_pair: composable_traits::defi::CurrencyPair<Self::AssetId>,
+			pair: composable_traits::defi::CurrencyPair<Self::AssetId>,
 		) -> Result<sp_runtime::FixedU128, DispatchError> {
-			Err(DispatchError::Other("No implemented"))
+			let base: u128 = Self::get_price(pair.base, (10_u32 ^ 12).into())?.price.into();
+			let quote: u128 = Self::get_price(pair.quote, (10_u32 ^ 12).into())?.price.into();
+			let base = FixedU128::saturating_from_integer(base);
+			let quote = FixedU128::saturating_from_integer(quote);
+			Ok(base.safe_div(&quote)?)
 		}
 
 		fn get_price_inverse(
