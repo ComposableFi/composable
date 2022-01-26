@@ -29,6 +29,7 @@ jobs:
       - name: Check for runtime changes
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_REF_NAME: ${{ github.sha }}
         id: check_runtime
         if: github.event.label.name == 'needs-benchmarks'
         run: .maintain/check_runtime.sh
@@ -36,6 +37,7 @@ jobs:
       - name: Benchmark Test
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_REF_NAME: ${{ github.sha }}
         if: env.RUNTIME_CHECK == 1
         id: run_benchmarks
         run: .maintain/run_benchmarks.sh

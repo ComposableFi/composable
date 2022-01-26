@@ -34,6 +34,8 @@ jobs:
 
     - name: Runtime wasm builds
       id: runtime_release
+      env:
+        GITHUB_REF_NAME: ${{ github.sha }}
       run: |
         .maintain/runtime_release.sh
 
@@ -87,6 +89,8 @@ jobs:
         asset_content_type: application/octet-stream
 
     - name: 🔨 Build Composable Binary
+      env:
+        GITHUB_REF_NAME: ${{ github.sha }}
       run: |
         .maintain/client_release.sh
 
