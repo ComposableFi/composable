@@ -1,4 +1,4 @@
-use core::{marker::PhantomData, ops::Deref};
+use core::marker::PhantomData;
 use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
 
@@ -88,14 +88,21 @@ impl<T: codec::Decode + Validate<U>, U> codec::Decode for Validated<T, U> {
 	}
 }
 
-/// just to have `WrapperTypeEncode` work
-impl<T, U> Deref for Validated<T, U> {
-	type Target = T;
-	#[inline(always)]
-	fn deref(&self) -> &Self::Target {
-		&self.value
+pub(crate) mod private {
+	use std::ops::Deref;
+
+	use super::Validated;
+
+	/// just to have `WrapperTypeEncode` work
+	impl<T, U> Deref for Validated<T, U> {
+		type Target = T;
+		#[doc(hidden)]
+		fn deref(&self) -> &Self::Target {
+			&self.value
+		}
 	}
 }
+
 impl<T: codec::Encode + codec::Decode + Validate<U>, U> codec::WrapperTypeEncode
 	for Validated<T, U>
 {
