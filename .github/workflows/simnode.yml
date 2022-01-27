@@ -18,7 +18,6 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
-          git branch -r
 
       - uses: actions/checkout@v2
         with: 
@@ -36,8 +35,7 @@ jobs:
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
 
         run: |
-          git branch -r
-          .maintain/check_runtime.sh
+          sh maintain/check_runtime.sh
 
       - name: Run Simnode
         env:
