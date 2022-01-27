@@ -15,7 +15,15 @@ RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
 # last two tags
 PREV_TAG=$(gh release list -L=2 | sed -n '2 p' | awk '{print $(NF-1)}')
 
+<<<<<<< HEAD
 if has_client_changes "${PREV_TAG}" "${GITHUB_BRANCH_NAME}"; then
+=======
+<<<<<<< HEAD
+if has_client_changes "${PREV_TAG}" "${GITHUB_REF_NAME}"; then
+=======
+if has_client_changes "${PREV_TAG}" "${GITHUB_BRANCH_NAME}"; then
+>>>>>>> 4e412506f4d028973080e6d5375510848c8ae6fe
+>>>>>>> 41d283a7710c03fce70ae62af3d133e03a21fbcc
   boldprint "Building new client binaries"
   cargo build --release -p composable
   tar -czvf composable-"${RELEASE_VERSION}".tar.gz target/release/composable
