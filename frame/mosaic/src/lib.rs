@@ -105,10 +105,10 @@ pub mod pallet {
 			};
 			[prefix.to_vec(), self.account_id.encode()]
 		}
-		pub fn outgoing(account_id: AccountIdOf<T>) -> Self {
+		pub fn new_outgoing(account_id: AccountIdOf<T>) -> Self {
 			SubAccount { transaction_type: TransactionType::Outgoing, account_id }
 		}
-		pub fn incoming(account_id: AccountIdOf<T>) -> Self {
+		pub fn new_incoming(account_id: AccountIdOf<T>) -> Self {
 			SubAccount { transaction_type: TransactionType::Incoming, account_id }
 		}
 	}
@@ -379,7 +379,7 @@ pub mod pallet {
 			T::Assets::transfer(
 				asset_id,
 				&caller,
-				&Self::sub_account_id(SubAccount::outgoing(caller.clone())),
+				&Self::sub_account_id(SubAccount::new_outgoing(caller.clone())),
 				amount,
 				keep_alive,
 			)?;
@@ -437,7 +437,7 @@ pub mod pallet {
 						ensure!(amount <= balance, Error::<T>::AmountMismatch);
 						T::Assets::burn_from(
 							asset_id,
-							&Self::sub_account_id(SubAccount::outgoing(from.clone())),
+							&Self::sub_account_id(SubAccount::new_outgoing(from.clone())),
 							amount,
 						)?;
 
@@ -485,7 +485,7 @@ pub mod pallet {
 						Some((balance, lock_time)) if lock_time < now => {
 							T::Assets::transfer(
 								asset_id,
-								&Self::sub_account_id(SubAccount::outgoing(caller.clone())),
+								&Self::sub_account_id(SubAccount::new_outgoing(caller.clone())),
 								&to,
 								balance,
 								false,
@@ -531,15 +531,16 @@ pub mod pallet {
 
 				T::Assets::mint_into(
 					asset_id,
-					&Self::sub_account_id(SubAccount::incoming(to.clone())),
+					&Self::sub_account_id(SubAccount::new_incoming(to.clone())),
 					amount,
 				)?;
 
 				let lock_at = current_block.saturating_add(lock_time);
 
 				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
-					Some((balance, _)) =>
-						*prev = Some(((*balance).saturating_add(amount), lock_at)),
+					Some((balance, _)) => {
+						*prev = Some(((*balance).saturating_add(amount), lock_at))
+					},
 					_ => *prev = Some((amount, lock_at)),
 				});
 
@@ -593,7 +594,7 @@ pub mod pallet {
 					}
 					T::Assets::burn_from(
 						asset_id,
-						&Self::sub_account_id(SubAccount::incoming(account.clone())),
+						&Self::sub_account_id(SubAccount::new_incoming(account.clone())),
 						untrusted_amount,
 					)?;
 					Self::deposit_event(Event::<T>::TransferIntoRescined {
@@ -626,7 +627,7 @@ pub mod pallet {
 					ensure!(unlock_after < now, Error::<T>::TxStillLocked);
 					T::Assets::transfer(
 						asset_id,
-						&Self::sub_account_id(SubAccount::incoming(caller.clone())),
+						&Self::sub_account_id(SubAccount::new_incoming(caller.clone())),
 						&to,
 						amount,
 						false,

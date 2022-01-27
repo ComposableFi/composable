@@ -362,8 +362,8 @@ fn incoming_outgoing_accounts_are_isolated() {
 		let account_balance = || Tokens::balance(asset_id, &ALICE);
 		let balance_of = |t| Tokens::balance(asset_id, &Mosaic::sub_account_id(t));
 		assert_eq!(account_balance(), amount);
-		assert_eq!(balance_of(SubAccount::outgoing(ALICE)), 0);
-		assert_eq!(balance_of(SubAccount::incoming(ALICE)), 0);
+		assert_eq!(balance_of(SubAccount::new_outgoing(ALICE)), 0);
+		assert_eq!(balance_of(SubAccount::new_incoming(ALICE)), 0);
 		assert_ok!(Mosaic::transfer_to(
 			Origin::signed(ALICE),
 			network_id,
@@ -373,8 +373,8 @@ fn incoming_outgoing_accounts_are_isolated() {
 			true
 		));
 		assert_eq!(account_balance(), 0);
-		assert_eq!(balance_of(SubAccount::outgoing(ALICE)), amount);
-		assert_eq!(balance_of(SubAccount::incoming(ALICE)), 0);
+		assert_eq!(balance_of(SubAccount::new_outgoing(ALICE)), amount);
+		assert_eq!(balance_of(SubAccount::new_incoming(ALICE)), 0);
 	})
 }
 
@@ -556,8 +556,9 @@ mod transfers {
 
 			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 			let account_balance = || Tokens::balance(asset_id, &ALICE);
-			let outgoing_balance =
-				|| Tokens::balance(asset_id, &Mosaic::sub_account_id(SubAccount::outgoing(ALICE)));
+			let outgoing_balance = || {
+				Tokens::balance(asset_id, &Mosaic::sub_account_id(SubAccount::new_outgoing(ALICE)))
+			};
 			assert_eq!(account_balance(), amount);
 			assert_eq!(outgoing_balance(), 0);
 			assert_ok!(Mosaic::transfer_to(
