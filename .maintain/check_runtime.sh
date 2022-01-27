@@ -21,6 +21,13 @@ VERSIONS_FILES=(
 
 echo "make sure the main branch and release tag are available in shallow clones"
 git fetch --depth="${GIT_DEPTH:-100}" origin "${BASE_BRANCH}"
+git fetch --depth="${GIT_DEPTH:-100}" origin main
+git fetch --depth="${GIT_DEPTH:-100}" origin releases
+git fetch --depth="${GIT_DEPTH:-100}" origin "${GITHUB_BRANCH_NAME}"
+
+
+git tag -f release FETCH_HEAD
+git log -n1 release
 
 simnode_check() {
   VERSIONS_FILE="$1"
