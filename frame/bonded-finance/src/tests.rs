@@ -205,11 +205,11 @@ fn bond_offer_cc_e005bce405358673d3249e53d51e474d4b135bdf8f2b0b82f94f525c0efbdbf
 				half_nb_of_bonds * offer.bond_price
 			));
 
-			let offer_id = BondedFinance::do_offer(&ALICE, offer.clone()).unwrap();	
+			let offer_id = BondedFinance::do_offer(&ALICE, offer.clone()).unwrap();
 
 			let bob_reward = BondedFinance::do_bond(offer_id, &BOB, half_nb_of_bonds).unwrap();
 			prop_assert_acceptable_computation_error!(bob_reward, half_reward, 3);
-			
+
 			Ok(())
 		})
 		.unwrap();

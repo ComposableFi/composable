@@ -531,7 +531,7 @@ pub mod pallet {
 			input: Validated<CreateInputOf<T>, (MarketModelValid, CurrencyPairIsNotSame)>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let input = input.value().map_err(DispatchError::Other)?;
+			let input = input.value();
 			let (market_id, vault_id) = Self::create(who.clone(), input.clone())?;
 			Self::deposit_event(Event::<T>::MarketCreated {
 				market_id,

@@ -9,16 +9,12 @@ pub struct Validated<T, U> {
 	_marker: PhantomData<U>,
 }
 
-impl<T, U> Validated<T, U> {
-	pub fn new(value: T, _validator: U) -> Self {
-		Self { value, _marker: PhantomData }
-	}
-
-	#[inline(always)]
-	/// # Safety
-	/// Call `value()`.
-	pub unsafe fn value_unsafe(self) -> T {
-		self.value
+impl<T, U> Validated<T, U>
+where
+	Validated<T, U>: Validate<U>,
+{
+	pub fn new(value: T, _validator_tag: U) -> Result<Self, &'static str> {
+		Validate::<U>::validate(Self { value, _marker: PhantomData })
 	}
 }
 
@@ -74,17 +70,14 @@ impl<T: Validate<U> + Validate<V> + Validate<W>, U, V, W> Validate<(U, V, W)> fo
 }
 
 impl<T: Validate<U>, U> Validated<T, U> {
-	pub fn value(self) -> Result<T, &'static str> {
-		unsafe {
-			let value = self.value_unsafe();
-			Validate::<U>::validate(value)
-		}
+	pub fn value(self) -> T {
+		self.value
 	}
 }
 
 impl<T: codec::Decode + Validate<U>, U> codec::Decode for Validated<T, U> {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
-		let value = T::decode(input)?;
+		let value = Validate::<U>::validate(T::decode(input)?)?;
 		Ok(Validated { value, _marker: PhantomData })
 	}
 	fn skip<I: codec::Input>(input: &mut I) -> Result<(), codec::Error> {
@@ -167,9 +160,9 @@ mod test {
 
 	#[test]
 	fn value() {
-		let value = Validated::new(42, Valid).value();
+		let value = Validated::new(42, Valid);
 		assert_ok!(value);
-		let value = Validated::new(42, Invalid).value();
+		let value = Validated::new(42, Invalid);
 		assert!(value.is_err());
 	}
 
@@ -187,8 +180,8 @@ mod test {
 	fn test_invalid_a() {
 		let invalid = X { a: 0xDEADC0DE, b: 0xCAFEBABE };
 		let bytes = invalid.encode();
-		let invalid = Validated::<X, CheckARangeTag>::decode(&mut &bytes[..]).unwrap();
-		assert!(invalid.value().is_err());
+		let invalid = Validated::<X, CheckARangeTag>::decode(&mut &bytes[..]);
+		assert!(invalid.is_err());
 	}
 
 	#[test]
@@ -216,8 +209,8 @@ mod test {
 	fn test_invalid_b() {
 		let invalid = X { a: 0xCAFEBABE, b: 0xDEADC0DE };
 		let bytes = invalid.encode();
-		let invalid = Validated::<X, CheckBRangeTag>::decode(&mut &bytes[..]).unwrap();
-		assert!(invalid.value().is_err());
+		let invalid = Validated::<X, CheckBRangeTag>::decode(&mut &bytes[..]);
+		assert!(invalid.is_err());
 	}
 
 	#[test]
@@ -234,24 +227,24 @@ mod test {
 	fn test_invalid_ab() {
 		let invalid = X { a: 0xDEADC0DE, b: 0xCAFEBABE };
 		let bytes = invalid.encode();
-		let invalid = Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..]).unwrap();
-		assert!(invalid.value().is_err());
+		let invalid = Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..]);
+		assert!(invalid.is_err());
 	}
 
 	#[test]
 	fn test_invalid_a_ab() {
 		let invalid = X { a: 0xDEADC0DE, b: 10 };
 		let bytes = invalid.encode();
-		let invalid = Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..]).unwrap();
-		assert!(invalid.value().is_err());
+		let invalid = Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..]);
+		assert!(invalid.is_err());
 	}
 
 	#[test]
 	fn test_invalid_b_ab() {
 		let invalid = X { a: 10, b: 0xDEADC0DE };
 		let bytes = invalid.encode();
-		let invalid = Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..]).unwrap();
-		assert!(invalid.value().is_err());
+		let invalid = Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..]);
+		assert!(invalid.is_err());
 	}
 
 	#[test]
@@ -269,7 +262,7 @@ mod test {
 		let value = X { a: 10, b: 0xDEADC0DE };
 		let bytes = value.encode();
 
-		let invalid = Validated::<X, (Valid, Invalid, Valid)>::decode(&mut &bytes[..]).unwrap();
-		assert!(invalid.value().is_err());
+		let invalid = Validated::<X, (Valid, Invalid, Valid)>::decode(&mut &bytes[..]);
+		assert!(invalid.is_err());
 	}
 }
