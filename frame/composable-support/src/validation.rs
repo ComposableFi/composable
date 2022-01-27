@@ -15,7 +15,9 @@ impl<T, U> Validated<T, U> {
 	}
 
 	#[inline(always)]
-	pub fn value_unsafe(self) -> T {
+	/// # Safety
+	/// Call `value()`.
+	pub unsafe fn value_unsafe(self) -> T {
 		self.value
 	}
 }
@@ -73,8 +75,10 @@ impl<T: Validate<U> + Validate<V> + Validate<W>, U, V, W> Validate<(U, V, W)> fo
 
 impl<T: Validate<U>, U> Validated<T, U> {
 	pub fn value(self) -> Result<T, &'static str> {
-		let value = self.value_unsafe();
-		Validate::<U>::validate(value)
+		unsafe {
+			let value = self.value_unsafe();
+			Validate::<U>::validate(value)
+		}
 	}
 }
 
@@ -89,7 +93,7 @@ impl<T: codec::Decode + Validate<U>, U> codec::Decode for Validated<T, U> {
 }
 
 pub(crate) mod private {
-	use std::ops::Deref;
+	use sp_std::ops::Deref;
 
 	use super::Validated;
 
@@ -192,6 +196,7 @@ mod test {
 		let original = X { a: 0xDEADC0DE, b: 0xCAFEBABE };
 		let bytes = original.encode();
 		let wrapped = Validated::<X, Valid>::decode(&mut &bytes[..]).unwrap();
+
 		let bytes = wrapped.encode();
 		let reencoded = X::decode(&mut &bytes[..]).unwrap();
 		assert_eq!(reencoded, original);

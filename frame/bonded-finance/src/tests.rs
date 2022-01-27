@@ -179,6 +179,42 @@ prop_compose! {
 			  }
 }
 
+#[test]
+fn bond_offer_cc_e005bce405358673d3249e53d51e474d4b135bdf8f2b0b82f94f525c0efbdbf8() {
+	ExtBuilder::build()
+		.execute_with(|| {
+			let offer = BondOffer {
+				beneficiary: 1,
+				asset: MockCurrencyId::BTC,
+				bond_price: 1000000,
+				nb_of_bonds: 381,
+				maturity: BondDuration::Infinite,
+				reward: BondOfferReward {
+					asset: MockCurrencyId::ETH,
+					amount: 381000000,
+					maturity: 1,
+				},
+			};
+			prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
+			prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
+			let half_nb_of_bonds = offer.nb_of_bonds / 2;
+			let half_reward = offer.reward.amount / 2;
+			prop_assert_ok!(Tokens::mint_into(
+				offer.asset,
+				&BOB,
+				half_nb_of_bonds * offer.bond_price
+			));
+
+			let offer_id = BondedFinance::do_offer(&ALICE, offer.clone()).unwrap();	
+
+			let bob_reward = BondedFinance::do_bond(offer_id, &BOB, half_nb_of_bonds).unwrap();
+			prop_assert_acceptable_computation_error!(bob_reward, half_reward, 3);
+			
+			Ok(())
+		})
+		.unwrap();
+}
+
 proptest! {
 	  #![proptest_config(ProptestConfig::with_cases(10_000))]
 
@@ -401,8 +437,8 @@ proptest! {
 					  prop_assert_ok!(charlie_reward);
 					  let charlie_reward = charlie_reward.expect("impossible; qed;");
 
-						prop_assert_acceptable_computation_error!(bob_reward, half_reward);
-					  prop_assert_acceptable_computation_error!(charlie_reward, half_reward);
+					  prop_assert_acceptable_computation_error!(bob_reward, half_reward, 3);
+					  prop_assert_acceptable_computation_error!(charlie_reward, half_reward, 3);
 
 					  prop_assert!(Tokens::can_withdraw(offer.reward.asset, &BOB, bob_reward) == WithdrawConsequence::Frozen);
 					  prop_assert!(Tokens::can_withdraw(offer.reward.asset, &CHARLIE, charlie_reward) == WithdrawConsequence::Frozen);
