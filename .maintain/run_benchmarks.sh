@@ -62,16 +62,16 @@ run_benchmarks() {
   USERNAME=$(gcloud secrets versions access latest --secret=github-api-username)
   PASSWORD=$(gcloud secrets versions access latest --secret=github-api-token)
   git remote set-url origin https://"$USERNAME":"$PASSWORD"@github.com/ComposableFi/composable.git
-  git pull origin "$GITHUB_REF_NAME"
+  git pull origin "$GITHUB_BRANCH_NAME"
   git add runtime/"$FOLDER"
   git commit -m "Updates weights for $CHAIN"
-  git push origin "$GITHUB_REF_NAME"
+  git push origin "$GITHUB_BRANCH_NAME"
   # ToDO: Setup gpg signing and create a bot account for pushing
 }
 
 for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
-    if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_REF_NAME}" "$folder"; then
+    if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_BRANCH_NAME}" "$folder"; then
       run_benchmarks $output $chain $folder
     fi
   done <<<"$i"

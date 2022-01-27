@@ -38,7 +38,11 @@ build_runtime() {
 for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
     echo "check if the wasm sources changed for $chain"
+<<<<<<< HEAD
     if has_runtime_changes "${PREV_TAG}" "${GITHUB_REF_NAME}" "$folder"; then
+=======
+    if has_runtime_changes "${PREV_TAG}" "${GITHUB_BRANCH_NAME}" "$folder"; then
+>>>>>>> 4e412506f4d028973080e6d5375510848c8ae6fe
       build_runtime $output $chain $folder
       CHANGES=gh view release tag $CURRENT_TAG
       echo $CHANGES | sed '1,/--/  d' >>release.md
