@@ -18,21 +18,18 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
-          echo "make sure the main branch and release tag are available in shallow clones"
-          git fetch --depth="${GIT_DEPTH:-100}" origin "${BASE_BRANCH}"
-        
-      - uses: actions/checkout@v2
-        with: 
-          fetch-depth: 0
+          git --version 
 
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v5.1
 
-      - name: Running on a pull request branch.
-        if: steps.branch-name.outputs.is_default == 'false'
+
+      - name: Manual git checkout
         run: |
-          echo "Running on pr: ${{ steps.branch-name.outputs.current_branch }}"
+          git clone https://github.com/ComposableFi/composable.git && cd composable
+          git fetch && git checkout ${{ steps.branch-name.outputs.current_branch }}
+
 
       - name: Check for runtime changes
         id: check_runtime
