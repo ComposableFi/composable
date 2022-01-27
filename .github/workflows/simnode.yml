@@ -38,6 +38,7 @@ jobs:
       - name: Run Simnode
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
 
         if: env.RUNTIME_CHECK == 1
         id: run_simnode

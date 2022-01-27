@@ -27,9 +27,14 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
+
       - name: Check for runtime changes
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
 
         id: check_runtime
         if: github.event.label.name == 'needs-benchmarks'
@@ -38,6 +43,7 @@ jobs:
       - name: Benchmark Test
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
 
         if: env.RUNTIME_CHECK == 1
         id: run_benchmarks
