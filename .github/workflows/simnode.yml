@@ -18,7 +18,7 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
-          git --version 
+          git rm --cached -r .
 
       - uses: actions/checkout@v2
         with: 
