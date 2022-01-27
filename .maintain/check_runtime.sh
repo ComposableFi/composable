@@ -10,6 +10,8 @@ set -e # fail on any error
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/./common/lib.sh"
 
+
+
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
@@ -19,12 +21,19 @@ VERSIONS_FILES=(
 
 echo "make sure the main branch and release tag are available in shallow clones"
 git fetch --depth="${GIT_DEPTH:-100}" origin "${BASE_BRANCH}"
+git fetch --depth="${GIT_DEPTH:-100}" origin main
+git fetch --depth="${GIT_DEPTH:-100}" origin releases
+git fetch --depth="${GIT_DEPTH:-100}" origin "${GITHUB_BRANCH_NAME}"
+
+
+git tag -f release FETCH_HEAD
+git log -n1 release
 
 simnode_check() {
   VERSIONS_FILE="$1"
-  if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_REF_NAME}" "$2" && check_runtime "$VERSIONS_FILE" "$2"; then
+  if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_BRANCH_NAME}"  "$2" && check_runtime "$VERSIONS_FILE" "$2"; then
     echo "Wasm sources have changed for $3"
-    echo "RUNTIME_CHECK=1" >>$GITHUB_ENV
+    echo "RUNTIME_CHECK=1" >> "$GITHUB_ENV"
   fi
 }
 

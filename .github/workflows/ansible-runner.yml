@@ -3,8 +3,6 @@ name: Run Ansible Playbooks
 on: 
   workflow_dispatch:
     
-       
-
 env: 
   ROOT_KEY: ${{ secrets.ROOT_KEY }}
 
