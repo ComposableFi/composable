@@ -32,7 +32,7 @@ jobs:
       - name: Check for runtime changes
         id: check_runtime
         env:
-          BASE_BRANCH: ${{ github.event.base.ref }}
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
 
         run: |
