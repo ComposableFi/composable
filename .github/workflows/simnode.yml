@@ -6,7 +6,7 @@ on:
       - main
 jobs:
   simnode:
-    runs-on: 
+    runs-on:
       - self-hosted
       - linux
       - x64
@@ -18,7 +18,7 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
-        
+
       - uses: actions/checkout@v2
         with: 
           fetch-depth: 0

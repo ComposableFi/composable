@@ -1,7 +1,5 @@
 #!/bin/bash
 
-GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
-
 get_latest_release() {
   curl --silent "https://api.github.com/repos/$1/releases/latest" | # Get latest release from GitHub api
     grep '"tag_name":' |                                            # Get tag line
@@ -51,9 +49,9 @@ has_client_changes() {
 # checks if the spec/impl version has increased
 check_runtime() {
   VERSIONS_FILE="$1"
-  add_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+  add_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_BRANCH_NAME}" -- "${VERSIONS_FILE}" |
     sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
-  sub_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+  sub_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_BRANCH_NAME}" -- "${VERSIONS_FILE}" |
     sed -n -r "s/^\-[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
   if [ "${add_spec_version}" != "${sub_spec_version}" ]; then
 
@@ -70,9 +68,9 @@ check_runtime() {
     # check for impl_version updates: if only the impl versions changed, we assume
     # there is no consensus-critical logic that has changed.
 
-    add_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+    add_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_BRANCH_NAME}" -- "${VERSIONS_FILE}" |
       sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
-    sub_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+    sub_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_BRANCH_NAME}" -- "${VERSIONS_FILE}" |
       sed -n -r 's/^\-[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
 
     # see if the impl version changed
