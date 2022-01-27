@@ -1,11 +1,5 @@
 #!/bin/bash
 
-echo "make sure the main branch and release tag are available in shallow clones"
-git fetch --depth="${GIT_DEPTH:-100}" origin "${BASE_BRANCH}"
-git fetch --depth="${GIT_DEPTH:-100}" origin main
-git fetch --depth="${GIT_DEPTH:-100}" origin releases
-git fetch --depth="${GIT_DEPTH:-100}" origin "${GITHUB_BRANCH_NAME}"
-
 get_latest_release() {
   curl --silent "https://api.github.com/repos/$1/releases/latest" | # Get latest release from GitHub api
     grep '"tag_name":' |                                            # Get tag line
