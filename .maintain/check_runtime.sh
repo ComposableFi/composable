@@ -31,7 +31,7 @@ git log -n1 release
 
 simnode_check() {
   VERSIONS_FILE="$1"
-  if has_runtime_changes origin/"${BASE_BRANCH}" "${GITHUB_BRANCH_NAME}" "$2" && check_runtime "$VERSIONS_FILE" "$2"; then
+  if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_BRANCH_NAME}" "$2" && check_runtime "$VERSIONS_FILE" "$2"; then
     echo "Wasm sources have changed for $3"
     echo "RUNTIME_CHECK=1" >> "$GITHUB_ENV"
   fi
