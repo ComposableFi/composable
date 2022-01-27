@@ -91,7 +91,7 @@ hex = "0.4.3"
 
 [features]
 default = []
-runtime-benchmarks = ["picasso-runtime/runtime-benchmarks", "composable-runtime/runtime-benchmarks", "dali-runtime/runtime-benchmarks"]
+runtime-benchmarks = ["polkadot-service/runtime-benchmarks", "picasso-runtime/runtime-benchmarks", "composable-runtime/runtime-benchmarks", "dali-runtime/runtime-benchmarks"]
 ocw = []
 dali = ["dali-runtime"]
 composable = ["composable-runtime"]
