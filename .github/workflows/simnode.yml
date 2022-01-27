@@ -42,7 +42,7 @@ jobs:
         id: check_runtime
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-          GITHUB_REF: ${{ github.ref }}
+          GITHUB_REF: ${{ github.ref_name }}
 
         run: |
           .maintain/check_runtime.sh
@@ -50,7 +50,7 @@ jobs:
       - name: Run Simnode
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-          GITHUB_BRANCH_NAME: ${GITHUB_REF##*/}
+          GITHUB_REF: ${{ github.ref_name	 }}
 
         if: env.RUNTIME_CHECK == 1
         id: run_simnode
