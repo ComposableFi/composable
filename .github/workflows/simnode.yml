@@ -23,6 +23,9 @@ jobs:
         with: 
           fetch-depth: 0
 
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
 
       - name: Check for runtime changes
         id: check_runtime
@@ -33,6 +36,8 @@ jobs:
       - name: Run Simnode
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_BRANCH_NAME: ${GITHUB_REF##*/}
+
         if: env.RUNTIME_CHECK == 1
         id: run_simnode
         run: .maintain/run_simnode.sh
