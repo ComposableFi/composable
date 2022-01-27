@@ -35,18 +35,11 @@ jobs:
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
       - uses: actions/checkout@v2
-<<<<<<< HEAD
-      - name: Clean up
-        continue-on-error: true
-        run: docker system prune --force --all --volumes
-      - name: Compile Check with WASM
-=======
       - name: Rustup show
         run: |
           rustup show
       - uses: actions/checkout@v2
       - name: cargo check --all --benches
->>>>>>> ff39c92f7eabfa3218adfb252cef89ba7b3593f3
         run: |
           SKIP_WASM_BUILD=1 cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
 
