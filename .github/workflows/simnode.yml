@@ -20,20 +20,35 @@ jobs:
           docker system prune --force --all --volumes
 
       - uses: actions/checkout@v2
-        with:
+        with: 
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}  
+          ref: ${{ steps.branch-name.outputs.current_branch }}
+
+      - name: Reset main to get latest commit
+        shell: bash
+        run: |
+          echo "Triggered by commit $(git log -1 --format='%H')"
+          git pull --no-commit
+          git reset --hard origin/main
+          echo "Jumped to commit $(git log -1 --format='%H')"
+
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
 
       - name: Check for runtime changes
         id: check_runtime
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
 
-        run: .maintain/check_runtime.sh
+        run: |
+          .maintain/check_runtime.sh
 
       - name: Run Simnode
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_BRANCH_NAME: ${GITHUB_REF##*/}
 
         if: env.RUNTIME_CHECK == 1
         id: run_simnode
