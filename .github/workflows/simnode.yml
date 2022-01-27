@@ -21,21 +21,9 @@ jobs:
           echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr / -)" >> $GITHUB_ENV
         
       - uses: actions/checkout@v2
-        with: 
+        with:
           fetch-depth: 0
-          ref: ${{ steps.branch-name.outputs.current_branch }}
-
-      - name: Reset main to get latest commit
-        shell: bash
-        run: |
-          echo "Triggered by commit $(git log -1 --format='%H')"
-          git pull --no-commit
-          git reset --hard origin/main
-          echo "Jumped to commit $(git log -1 --format='%H')"
-
-      - name: Get branch name
-        id: branch-name
-        uses: tj-actions/branch-names@v5.1
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Check for runtime changes
         id: check_runtime
@@ -49,7 +37,8 @@ jobs:
       - name: Run Simnode
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-          GITHUB_REF_NAME: ${{ env.BRANCH_NAME }}
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
+
         if: env.RUNTIME_CHECK == 1
         id: run_simnode
         run: .maintain/run_simnode.sh
