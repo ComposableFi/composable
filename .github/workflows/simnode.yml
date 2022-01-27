@@ -25,19 +25,27 @@ jobs:
         with: 
           fetch-depth: 0
 
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
+
+      - name: Running on a pull request branch.
+        if: steps.branch-name.outputs.is_default == 'false'
+        run: |
+          echo "Running on pr: ${{ steps.branch-name.outputs.current_branch }}"
+
       - name: Check for runtime changes
         id: check_runtime
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-          GITHUB_REF: ${{ github.ref_name }}
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
 
-        run: |
-          .maintain/check_runtime.sh
+        run: .maintain/check_runtime.sh
 
       - name: Run Simnode
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-          GITHUB_REF: ${{ github.ref_name	 }}
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
 
         if: env.RUNTIME_CHECK == 1
         id: run_simnode
