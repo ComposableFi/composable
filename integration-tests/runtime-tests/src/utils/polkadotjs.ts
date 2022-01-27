@@ -1,6 +1,7 @@
 import { ApiPromise } from '@polkadot/api';
 import { AnyTuple, IEvent } from '@polkadot/types/types';
 import { SubmittableExtrinsic, AddressOrPair } from '@polkadot/api/types';
+import {expect} from "chai";
 
 export async function sendUnsignedAndWaitForSuccess<T extends AnyTuple>(
   api: ApiPromise,
@@ -19,6 +20,28 @@ export async function sendAndWaitForSuccess<T extends AnyTuple>(
   intendedToFail=false
 ): Promise<IEvent<T>> {
   return await sendAndWaitFor(api, sender, filter, call, intendedToFail);
+}
+
+export async function waitForBlocks(n=1) {
+  return await waitForBlockHandler(n);
+}
+
+/**
+ * Helper to wait for n blocks.
+ * @param n Block wait duration.
+ */
+export async function waitForBlockHandler(n) {
+  const originBlock = await api.query.system.number();
+  let currentBlock = await api.query.system.number();
+  while(currentBlock.toNumber() < originBlock.toNumber()+n) {
+    await sleep(3000);
+    currentBlock = await api.query.system.number();
+  }
+  return currentBlock;
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**
@@ -83,13 +106,13 @@ export function sendAndWaitFor<T extends AnyTuple>(
 ): Promise<IEvent<T>> {
   return new Promise<IEvent<T>>(function (resolve, reject) {
     call
-      .signAndSend(sender, { nonce: -1 }, function (res) {
-        const { dispatchError, status } = res;
+      .signAndSend(sender, {nonce: -1}, function (res) {
+        const {dispatchError, status} = res;
         if (dispatchError) {
           if (dispatchError.isModule) {
             // for module errors, we have the section indexed, lookup
             const decoded = api.registry.findMetaError(dispatchError.asModule);
-            const { docs, name, section } = decoded;
+            const {docs, name, section} = decoded;
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
               if (filter(event))
@@ -122,12 +145,24 @@ export function sendAndWaitFor<T extends AnyTuple>(
               if (filter(event))
                 resolve(event);
             }
-            reject(Error("Event record not found"));
+            reject(Error("1014: Priority is too low:"));
           }
         }
       })
-      .catch(function (e) {
-        reject(Error(e.stack));
+      .catch(async function (e) {
+        if (e.message.contains("1014: Priority is too low:")) {
+          // This happens when we send 2 transaction from the same wallet, at the same time.
+          // We solve it by waiting 2 seconds and retrying it.
+          await sleep(2000);
+          const {data: [result],} = await sendAndWaitFor(api, sender, filter, call, intendedToFail).catch(function (exc) {
+            reject(exc);
+            return {data:[exc]};
+          });
+          expect(result).to.not.be.an('Error');
+          resolve(result);
+        }
+        else
+          reject(Error(e.stack));
       });
   });
 }

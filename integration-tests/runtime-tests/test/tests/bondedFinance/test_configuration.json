@@ -1,0 +1,26 @@
+{
+  "enabledTests": {
+    "enabled": true,
+    "offer_bond__success": {
+      "enabled": true,
+      "create1": true,
+      "create2": true,
+      "bond": true
+    },
+    "offer_bond__failure": {
+      "enabled": true,
+      "create_offer_price_lt_MIN_VESTED_TRANSFER": true,
+      "create_offer_reward_amt_lt_MinReward": true,
+      "create_offer_reward_asset_not_exist": true
+    },
+    "cancel_failure": {
+      "enabled": true,
+      "cancel_offer_not_exist": true
+    },
+    "cancel_success": {
+      "enabled": true,
+      "cancel_by_creator": true,
+      "cancel_by_sudo": true
+    }
+  }
+}

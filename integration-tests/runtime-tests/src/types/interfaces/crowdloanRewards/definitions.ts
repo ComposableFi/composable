@@ -19,32 +19,32 @@ export default {
     },
   },
   types: {
+    ComposableTraitsAssetsXcmAssetLocation: "Null",
+    PalletCrowdloanRewardsModelsReward: "Null",
     PalletCrowdloanRewardsModelsRemoteAccount: {
       _enum: {
         RelayChain: 'AccountId32',
         Ethereum: 'EthereumAccountId'
       }
     },
-    PalletCrowdloanRewardsModelsProof: {
-      _enum: {
-        RelayChain: '(AccountId32, MultiSignature)',
-        Ethereum: 'EcdsaSignature'
-      }
-    },
-    PalletCrowdloanRewardsReward: "Null",
+    ComposableTraitsCallFilterCallFilterEntry: "Null",
     PalletAssetsRegistryCandidateStatus: "Null",
     SpConsensusAuraSr25519AppSr25519Public: "Null",
+    ComposableTraitsBondedFinanceBondOffer: "Null",
     PalletCollatorSelectionCandidateInfo: "Null",
+    PalletCrowdloanRewardsReward: "Null",
     PalletDemocracyVoteThreshold: "Null",
     PalletDemocracyPreimageStatus: "Null",
     PalletDemocracyReferendumInfo: "Null",
+    PalletPreimageRequestStatus: "Null",
     PalletDemocracyReleases: "Null",
     PalletDemocracyVoteVoting: "Null",
     CumulusPalletDmpQueueConfigData: "Null",
+    PalletDutchAuctionSellOrder: "Null",
+    ComposableTraitsVestingVestingSchedule: "Null",
     CumulusPalletDmpQueuePageIndexData: "Null",
-    PalletAssetsRegistryForeignMetadata: {
-      decimals: 'u32'
-    },
+    PalletDutchAuctionTakeOrder: "Null",
+    ComposableTraitsGovernanceSignedRawOrigin: "Null",
     PalletIdentityRegistration: "Null",
     PalletIdentityRegistrarInfo: "Null",
     PalletOracleAssetInfo: "Null",
@@ -59,6 +59,7 @@ export default {
     PolkadotPrimitivesV1PersistedValidationData: "PersistedValidationData",
     PalletSchedulerScheduledV2: "Null",
     PalletSchedulerReleases: "Null",
+    PalletSchedulerScheduledV3: "Null",
     DaliRuntimeOpaqueSessionKeys: "Null",
     OrmlTokensAccountData: "Null",
     OrmlTokensBalanceLock: "Null",
@@ -66,30 +67,42 @@ export default {
     PalletVaultModelsStrategyOverview: "Null",
     PalletVaultModelsVaultInfo: "Null",
     CumulusPalletXcmpQueueInboundStatus: "Null",
+    CumulusPalletXcmpQueueInboundChannelDetails: "Null",
     PolkadotParachainPrimitivesXcmpMessageFormat: "Null",
     CumulusPalletXcmpQueueOutboundStatus: "Null",
     CumulusPalletXcmpQueueQueueConfigData: "Null",
+    CumulusPalletXcmpQueueOutboundChannelDetails: "Null",
+    PalletCrowdloanRewardsModelsProof: {
+      _enum: {
+        RelayChain: '(AccountId32, MultiSignature)',
+        Ethereum: 'EcdsaSignature'
+      }
+    },
     PalletDemocracyConviction: "Null",
     PalletDemocracyVoteAccountVote: "Null",
+    ComposableTraitsDefiSell: "Null",
+    ComposableTraitsAuctionAuctionStepFunction: "Null",
+    ComposableTraitsDefiTake: "Null",
+    ComposableTraitsTimeTimeReleaseFunction: "Null",
     PalletIdentityJudgement: "Null",
     PalletIdentityBitFlags: "Null",
     PalletIdentityIdentityInfo: "Null",
     CumulusPrimitivesParachainInherentParachainInherentData: 'ParachainInherentData',
     DaliRuntimeOriginCaller: "Null",
-    XcmVersionedMultiAsset: "Null",
-
-    ComposableTraitsAssetsXcmAssetLocation: "Null",
-    ComposableTraitsCallFilterCallFilterEntry: "Null",
-    ComposableTraitsBondedFinanceBondOffer: "Null",
-    ComposableTraitsVestingVestingSchedule: "Null",
-    ComposableTraitsGovernanceSignedRawOrigin: "Null",
     ComposableTraitsVaultVaultConfig: "Null",
-    ComposableTraitsDefiSell: "Null",
-    ComposableTraitsAuctionAuctionStepFunction: "Null",
-    ComposableTraitsDefiTake: "Null",
-    ComposableTraitsTimeTimeReleaseFunction: "Null",
-
-    PalletDutchAuctionSellOrder: "Null",
-    PalletDutchAuctionTakeOrder: "Null",
+    XcmVersionedMultiAsset: "Null",
+    PalletMosaicNetworkInfo: {
+      enabled: "bool",
+      maxTransferSize: "Balance"
+    },
+    PalletMosaicDecayBudgetPenaltyDecayer: "Null",
+    PalletAssetsRegistryForeignMetadata: "Null",
+    PalletMosaicAssetInfo: "Null",
+    PalletMosaicRelayerStaleRelayer: "Null",
+    FrameSupportScheduleMaybeHashed: "Null",
+    FrameSupportScheduleLookupError: "Null",
+    PalletCurrencyFactoryRanges: "Null",
+    PalletCurrencyFactoryRangesRange: "Null",
+    PalletLiquidationsLiquidationStrategyConfiguration: "Null"
   },
 };

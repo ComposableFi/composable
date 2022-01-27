@@ -1,0 +1,8 @@
+{
+  "enabledTests": {
+    "rpc": {
+      "enabled": true,
+      "balanceOf__success": true
+    }
+  }
+}
