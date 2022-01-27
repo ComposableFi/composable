@@ -21,9 +21,12 @@ jobs:
           echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr / -)" >> $GITHUB_ENV
         
       - uses: actions/checkout@v2
-        with:
+        with: 
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
 
       - name: Check for runtime changes
         id: check_runtime
@@ -37,7 +40,7 @@ jobs:
       - name: Run Simnode
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
+          GITHUB_BRANCH_NAME: ${GITHUB_REF##*/}
 
         if: env.RUNTIME_CHECK == 1
         id: run_simnode
