@@ -76,7 +76,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub type Relayer<T: Config> =
-		StorageValue<_, StaleRelayer<T::AccountId, T::BlockNumber>, ValueQuery>;
+		StorageValue<_, StaleRelayer<T::AccountId, T::BlockNumber>, OptionQuery>;
 
 	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
 	pub struct AssetInfo<BlockNumber, Balance, Decayer> {
@@ -246,6 +246,7 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		RelayerNotSet,
 		BadTTL,
 		BadTimelockPeriod,
 		UnsupportedAsset,
@@ -272,7 +273,7 @@ pub mod pallet {
 			relayer: T::AccountId,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			Relayer::<T>::set(StaleRelayer::new(relayer.clone()));
+			Relayer::<T>::set(Some(StaleRelayer::new(relayer.clone())));
 			Self::deposit_event(Event::RelayerSet { relayer });
 			Ok(().into())
 		}
@@ -289,10 +290,10 @@ pub mod pallet {
 			ttl: T::BlockNumber,
 		) -> DispatchResultWithPostInfo {
 			ensure!(ttl > T::MinimumTTL::get(), Error::<T>::BadTTL);
-			let (relayer, current_block) = ensure_relayer::<T>(origin)?;
+			let (relayer, current_block) = Self::ensure_relayer(origin)?;
 			let ttl = current_block.saturating_add(ttl);
 			let relayer = relayer.rotate(new.clone(), ttl);
-			Relayer::<T>::set(relayer.into());
+			Relayer::<T>::set(Some(relayer.into()));
 			Self::deposit_event(Event::RelayerRotated { account_id: new, ttl });
 			Ok(().into())
 		}
@@ -304,7 +305,7 @@ pub mod pallet {
 			network_id: NetworkIdOf<T>,
 			network_info: NetworkInfo<BalanceOf<T>>,
 		) -> DispatchResultWithPostInfo {
-			ensure_relayer::<T>(origin)?;
+			Self::ensure_relayer(origin)?;
 			NetworkInfos::<T>::insert(network_id.clone(), network_info.clone());
 			Self::deposit_event(Event::NetworksUpdated { network_id, network_info });
 			Ok(().into())
@@ -427,7 +428,7 @@ pub mod pallet {
 			asset_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
-			ensure_relayer::<T>(origin)?;
+			Self::ensure_relayer(origin)?;
 			OutgoingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
 				from.clone(),
 				asset_id,
@@ -513,7 +514,7 @@ pub mod pallet {
 			lock_time: BlockNumberOf<T>,
 			id: Id,
 		) -> DispatchResultWithPostInfo {
-			let (_caller, current_block) = ensure_relayer::<T>(origin)?;
+			let (_caller, current_block) = Self::ensure_relayer(origin)?;
 
 			AssetsInfo::<T>::try_mutate_exists::<_, _, DispatchError, _>(asset_id, |info| {
 				let AssetInfo { last_mint_block, penalty, budget, penalty_decayer } =
@@ -577,7 +578,7 @@ pub mod pallet {
 			account: AccountIdOf<T>,
 			untrusted_amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
-			ensure_relayer::<T>(origin)?;
+			Self::ensure_relayer(origin)?;
 
 			IncomingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
 				account.clone(),
@@ -645,17 +646,6 @@ pub mod pallet {
 		}
 	}
 
-	fn ensure_relayer<T: Config>(
-		origin: OriginFor<T>,
-	) -> Result<(RelayerConfig<AccountIdOf<T>, BlockNumberOf<T>>, BlockNumberOf<T>), DispatchError>
-	{
-		let acc = ensure_signed(origin).map_err(|_| DispatchError::BadOrigin)?;
-		let current_block = <frame_system::Pallet<T>>::block_number();
-		let relayer = Relayer::<T>::get().update(current_block);
-		ensure!(relayer.is_relayer(&acc), DispatchError::BadOrigin);
-		Ok((relayer, current_block))
-	}
-
 	#[pallet::extra_constants]
 	impl<T: Config> Pallet<T> {
 		pub fn timelock_period() -> BlockNumberOf<T> {
@@ -670,9 +660,27 @@ pub mod pallet {
 		}
 
 		/// Queries storage, returning the account_id of the current relayer.
-		pub fn relayer_account_id() -> Option<AccountIdOf<T>> {
+		pub fn relayer_account_id() -> Result<AccountIdOf<T>, DispatchError> {
 			let current_block = <frame_system::Pallet<T>>::block_number();
-			Relayer::<T>::get().update(current_block).account_id().cloned()
+			Ok(Relayer::<T>::get()
+				.ok_or(Error::<T>::RelayerNotSet)?
+				.update(current_block)
+				.account_id()
+				.clone())
+		}
+
+		pub(crate) fn ensure_relayer(
+			origin: OriginFor<T>,
+		) -> Result<
+			(RelayerConfig<AccountIdOf<T>, BlockNumberOf<T>>, BlockNumberOf<T>),
+			DispatchError,
+		> {
+			let acc = ensure_signed(origin).map_err(|_| DispatchError::BadOrigin)?;
+			let current_block = <frame_system::Pallet<T>>::block_number();
+			let relayer =
+				Relayer::<T>::get().ok_or(Error::<T>::RelayerNotSet)?.update(current_block);
+			ensure!(relayer.is_relayer(&acc), DispatchError::BadOrigin);
+			Ok((relayer, current_block))
 		}
 
 		pub fn timelock_period() -> BlockNumberOf<T> {

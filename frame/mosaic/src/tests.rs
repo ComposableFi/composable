@@ -30,15 +30,12 @@
 ///  For every test, make sure that you check wether the funds moved to the correct (sub)
 /// accounts.
 use crate::{decay::*, mock::*, *};
+use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
 use frame_support::{
-	assert_noop, assert_ok,
+	assert_err, assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
-
 use proptest::prelude::*;
-
-use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
-
 use sp_runtime::{DispatchError, TokenError};
 
 pub trait OriginExt {
@@ -97,6 +94,28 @@ prop_compose! {
 	}
 }
 
+mod ensure_relayer {
+	use super::*;
+
+	#[test]
+	fn ensure_relayer_is_set() {
+		new_test_ext().execute_with(|| {
+			assert_err!(
+				Mosaic::ensure_relayer(Origin::signed(ALICE)),
+				Error::<Test>::RelayerNotSet
+			);
+		})
+	}
+
+	#[test]
+	fn ensure_relayer_origin_checked() {
+		new_test_ext().execute_with(|| {
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_err!(Mosaic::ensure_relayer(Origin::signed(ALICE)), DispatchError::BadOrigin);
+		})
+	}
+}
+
 mod set_relayer {
 	use super::*;
 
@@ -104,7 +123,7 @@ mod set_relayer {
 	fn set_relayer() {
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
-			assert_eq!(Mosaic::relayer_account_id(), Some(RELAYER));
+			assert_eq!(Mosaic::relayer_account_id(), Ok(RELAYER));
 		})
 	}
 
@@ -146,12 +165,12 @@ mod rotate_relayer {
 			// first rotation
 			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl));
 			System::set_block_number(current_block + ttl);
-			assert_eq!(Mosaic::relayer_account_id(), Some(BOB));
+			assert_eq!(Mosaic::relayer_account_id(), Ok(BOB));
 
 			// second rotation
 			assert_ok!(Mosaic::rotate_relayer(Origin::signed(BOB), CHARLIE, ttl));
 			System::set_block_number(current_block + 2 * ttl);
-			assert_eq!(Mosaic::relayer_account_id(), Some(CHARLIE));
+			assert_eq!(Mosaic::relayer_account_id(), Ok(CHARLIE));
 		})
 	}
 
@@ -163,7 +182,7 @@ mod rotate_relayer {
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl));
 			System::set_block_number(current_block + ttl - 1); // just before the ttl
-			assert_eq!(Mosaic::relayer_account_id(), Some(RELAYER)); // not BOB
+			assert_eq!(Mosaic::relayer_account_id(), Ok(RELAYER)); // not BOB
 		})
 	}
 
