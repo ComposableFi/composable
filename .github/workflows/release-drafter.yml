@@ -27,48 +27,18 @@ jobs:
       with:
         toolchain: stable
 
-<<<<<<< HEAD
-    - name: 🔨 Install srtool
-      id: client_release
-=======
     - name: Install srtool
->>>>>>> ff39c92f7eabfa3218adfb252cef89ba7b3593f3
       run: |
         cargo install --git https://github.com/chevdor/srtool-cli
         cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
 
-<<<<<<< HEAD
-    - name: 🔨 Build and Upload Composable Binary
-      id: client_release
-      run: |
-        .maintain/client_release.sh
-
-    - name: Build wasm with srtool
-=======
     - name: Runtime wasm builds
->>>>>>> ff39c92f7eabfa3218adfb252cef89ba7b3593f3
       id: runtime_release
       run: |
         .maintain/runtime_release.sh
 
     - uses: release-drafter/release-drafter@v5
       id: release_drafter
-<<<<<<< HEAD
-      env:
-        GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-
-    - name: Upload Compact Picasso wasm
-      id: upload-release-asset 
-      if: env.picasso_wasm == 1
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release_drafter.outputs.upload_url }} 
-        asset_path: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
-        asset_name: picasso_runtime.compact.wasm
-
-=======
 
     - name: Set Permission
       continue-on-error: true
@@ -130,4 +100,3 @@ jobs:
         asset_path: ./target/release/composable
         asset_name: composable
         asset_content_type: application/octet-stream
->>>>>>> ff39c92f7eabfa3218adfb252cef89ba7b3593f3

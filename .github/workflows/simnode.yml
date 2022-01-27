@@ -18,7 +18,8 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
-          echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr / -)" >> $GITHUB_ENV
+          echo "make sure the main branch and release tag are available in shallow clones"
+          git fetch --depth="${GIT_DEPTH:-100}" origin "${BASE_BRANCH}"
         
       - uses: actions/checkout@v2
         with: 
@@ -50,11 +51,14 @@ jobs:
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
 <<<<<<< HEAD
+<<<<<<< HEAD
           GITHUB_BRANCH_NAME: ${GITHUB_REF##*/}
 
 =======
           GITHUB_REF_NAME: ${{ env.BRANCH_NAME }}
 >>>>>>> 8dd5efff... Update checkout action
+=======
+>>>>>>> 77e77a97... Update checkout action
         if: env.RUNTIME_CHECK == 1
         id: run_simnode
         run: .maintain/run_simnode.sh
