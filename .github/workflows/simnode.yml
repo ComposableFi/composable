@@ -23,6 +23,7 @@ jobs:
       - uses: actions/checkout@v2
         with: 
           fetch-depth: 0
+          ref: ${{ steps.branch-name.outputs.current_branch }}
 
       - name: Get branch name
         id: branch-name
