@@ -31,7 +31,10 @@ jobs:
         id: check_runtime
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-        run: .maintain/check_runtime.sh
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
+
+        run: |
+          .maintain/check_runtime.sh
 
       - name: Run Simnode
         env:
