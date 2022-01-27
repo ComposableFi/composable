@@ -28,7 +28,6 @@ jobs:
         shell: bash
         run: |
           echo "Triggered by commit $(git log -1 --format='%H')"
-          git pull --no-commit
           git reset --hard origin/main
           echo "Jumped to commit $(git log -1 --format='%H')"
 
