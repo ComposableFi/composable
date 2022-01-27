@@ -1,6 +1,10 @@
 #!/bin/bash
 
-GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
+echo "make sure the main branch and release tag are available in shallow clones"
+git fetch --depth="${GIT_DEPTH:-100}" origin "${BASE_BRANCH}"
+git fetch --depth="${GIT_DEPTH:-100}" origin main
+git fetch --depth="${GIT_DEPTH:-100}" origin releases
+git fetch --depth="${GIT_DEPTH:-100}" origin "${GITHUB_BRANCH_NAME}"
 
 get_latest_release() {
   curl --silent "https://api.github.com/repos/$1/releases/latest" | # Get latest release from GitHub api
@@ -26,7 +30,7 @@ has_runtime_changes() {
   from=$1
   to=$2
   echo "diffing $from & $to"
-  if git diff --name-only "${from}...${to}" |
+  if git diff --name-only "origin/${from}...origin/${to}" |
     grep -q -e '^frame/' -e "^runtime/$3/"; then
     return 0
 
@@ -51,9 +55,9 @@ has_client_changes() {
 # checks if the spec/impl version has increased
 check_runtime() {
   VERSIONS_FILE="$1"
-  add_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+  add_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_BRANCH_NAME}" -- "${VERSIONS_FILE}" |
     sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
-  sub_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+  sub_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_BRANCH_NAME}" -- "${VERSIONS_FILE}" |
     sed -n -r "s/^\-[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
   if [ "${add_spec_version}" != "${sub_spec_version}" ]; then
 
@@ -70,9 +74,9 @@ check_runtime() {
     # check for impl_version updates: if only the impl versions changed, we assume
     # there is no consensus-critical logic that has changed.
 
-    add_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+    add_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_BRANCH_NAME}" -- "${VERSIONS_FILE}" |
       sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
-    sub_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+    sub_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_BRANCH_NAME}" -- "${VERSIONS_FILE}" |
       sed -n -r 's/^\-[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
 
     # see if the impl version changed
