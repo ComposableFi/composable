@@ -69,6 +69,19 @@ impl<T: Validate<U> + Validate<V> + Validate<W>, U, V, W> Validate<(U, V, W)> fo
 	}
 }
 
+impl<T: Validate<U> + Validate<V> + Validate<W> + Validate<Z>, U, V, W, Z> Validate<(U, V, W, Z)>
+	for T
+{
+	#[inline(always)]
+	fn validate(self) -> Result<Self, &'static str> {
+		let value = Validate::<U>::validate(self)?;
+		let value = Validate::<V>::validate(value)?;
+		let value = Validate::<W>::validate(value)?;
+		let value = Validate::<Z>::validate(value)?;
+		Ok(value)
+	}
+}
+
 impl<T: Validate<U>, U> Validated<T, U> {
 	pub fn value(self) -> T {
 		self.value
@@ -119,14 +132,13 @@ mod test {
 	type CheckARangeTag = (ValidARange, Valid);
 	type CheckBRangeTag = (ValidBRange, Valid);
 	type CheckABRangeTag = (ValidARange, (ValidBRange, Valid));
-	type ManyValidatorsTags = (ValidARange, (ValidBRange, (Invalid, Valid)));
 	// note: next seems is not supported yet
 	// type NestedValidated = (Validated<X, Valid>, Validated<Y,  Valid>);
 	// #[derive(Debug, Eq, PartialEq, codec::Encode, codec::Decode, Default)]
 	// struct Y {
 	// }
 
-	#[derive(Debug, Eq, PartialEq, codec::Encode, codec::Decode, Default)]
+	#[derive(Debug, Eq, PartialEq, codec::Encode, codec::Decode, Default, Clone)]
 	struct X {
 		a: u32,
 		b: u32,
@@ -155,7 +167,21 @@ mod test {
 	#[test]
 	fn nested_validator() {
 		let valid = X { a: 10, b: 0xCAFEBABE };
-		assert!(Validate::<ManyValidatorsTags>::validate(valid).is_err());
+
+		type ManyValidatorsTagsNested = (ValidARange, (ValidBRange, (Invalid, Valid)));
+
+		assert!(Validate::<ManyValidatorsTagsNested>::validate(valid).is_err());
+	}
+
+	#[test]
+	fn either_nested_or_flat() {
+		let valid = X { a: 10, b: 0xCAFEBABE };
+		type ManyValidatorsTagsNested = (ValidARange, (ValidBRange, (Invalid, Valid)));
+		type ManyValidatorsTagsFlat = (ValidARange, ValidBRange, Invalid, Valid);
+		assert_eq!(
+			Validate::<ManyValidatorsTagsNested>::validate(valid.clone()),
+			Validate::<ManyValidatorsTagsFlat>::validate(valid)
+		);
 	}
 
 	#[test]

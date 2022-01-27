@@ -230,6 +230,10 @@ pub mod pallet {
 		/// We normalized price over all markets and protect from spam all possible pairs equally.
 		/// Locking borrow amount ensures manager can create market wit borrow assets, and we force
 		/// him to really create it.
+		///
+		/// This solution forces to have amount before creating market.
+		/// Vault can take that amount if reconfigured so, but that may be changed during runtime
+		/// upgrades.
 		#[pallet::constant]
 		type MarketCreationStake: Get<Self::Balance>;
 
@@ -971,17 +975,21 @@ pub mod pallet {
 			debt_owner: &T::AccountId,
 			amount_to_borrow: T::Balance,
 		) -> Result<FixedU128, DispatchError> {
+			let debt_asset_id = DebtMarkets::<T>::get(market_id);
+
 			let market_index =
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
+
 			let account_interest_index =
 				DebtIndex::<T>::get(market_id, debt_owner).unwrap_or_else(ZeroToOneFixedU128::zero);
-			let debt_asset_id = DebtMarkets::<T>::get(market_id);
 			let existing_borrow_amount =
 				<T as Config>::MultiCurrency::balance(debt_asset_id, debt_owner);
 
+			// TODO: split out math from update, make update last step
 			<T as Config>::MultiCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
-			// TODO: decide if need to split out dept teacking vs debt token
+			// TODO: decide if need to split out dept tracking vs debt token
 			<T as Config>::MultiCurrency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
+
 			let total_borrow_amount = existing_borrow_amount.safe_add(&amount_to_borrow)?;
 			let existing_borrow_share =
 				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
@@ -1249,6 +1257,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// must be called in transaction
 		fn repay_borrow(
 			market_id: &Self::MarketId,
 			from: &Self::AccountId,
@@ -1277,64 +1286,56 @@ pub mod pallet {
 
 				let mut remaining_borrow_amount =
 					<T as Config>::MultiCurrency::balance(debt_asset_id, &market_account);
-				if total_repay_amount <= burn_amount {
-					// only repay interest
-					<T as Config>::MultiCurrency::release(
-						debt_asset_id,
-						beneficiary,
-						total_repay_amount,
-						true,
-					)
-					.expect("can always release held debt balance");
-					<T as Config>::MultiCurrency::burn_from(
-						debt_asset_id,
-						beneficiary,
-						total_repay_amount,
-					)
-					.expect("can always burn debt balance");
+
+				// BUG: so each time we repay, we must burn from market and from account, evidently
+				// this is not case now NOTE: we do not ++ borrow on each user, but on market total,
+				// so that there gas burn too much, so real borrow is borrow * (market index /
+				// borrower index) TODO: cover relation with test and fix it
+				let debt_to_release = if total_repay_amount <= burn_amount {
+					total_repay_amount
 				} else {
 					let repay_borrow_amount = total_repay_amount - burn_amount;
-
 					remaining_borrow_amount -= repay_borrow_amount;
-					<T as Config>::MultiCurrency::burn_from(debt_asset_id, &market_account, repay_borrow_amount).expect(
-						"debt balance of market must be of parts of debts of borrowers and can reduce it",
-					);
-					<T as Config>::MultiCurrency::release(
-						debt_asset_id,
-						beneficiary,
-						burn_amount,
-						true,
-					)
-					.expect("can always release held debt balance");
 					<T as Config>::MultiCurrency::burn_from(
 						debt_asset_id,
-						beneficiary,
-						burn_amount,
-					)
-					.expect("can always burn debt balance");
-				}
-				// TODO: fuzzing is must to uncover cases when sum != total
+						&market_account,
+						repay_borrow_amount,
+					)?;
+					burn_amount
+				};
+
+				// release_and_burn
+				<T as Config>::MultiCurrency::release(
+					debt_asset_id,
+					beneficiary,
+					debt_to_release,
+					true,
+				)?;
+				<T as Config>::MultiCurrency::burn_from(
+					debt_asset_id,
+					beneficiary,
+					debt_to_release,
+				)?;
+
 				<T as Config>::MultiCurrency::transfer(
 					borrow_asset_id,
 					from,
 					&market_account,
-					total_repay_amount,
+					debt_to_release,
 					false,
-				)
-				.expect("must be able to transfer because of above checks");
+				)?;
 
 				if remaining_borrow_amount == T::Balance::zero() {
 					BorrowTimestamp::<T>::remove(market_id, beneficiary);
 					DebtIndex::<T>::remove(market_id, beneficiary);
-					let rent = BorrowRent::<T>::get(market_id, beneficiary)
-						.expect("protocol maintains rent if there is debt");
-					<T as Config>::NativeCurrency::transfer(
-						&market_account,
-						beneficiary,
-						rent,
-						false,
-					)
-					.expect("there is enough rent to transfer back by protocol");
+					if let Some(rent) = BorrowRent::<T>::get(market_id, beneficiary) {
+						<T as Config>::NativeCurrency::transfer(
+							&market_account,
+							beneficiary,
+							rent,
+							false,
+						)?;
+					}
 				}
 			}
 
