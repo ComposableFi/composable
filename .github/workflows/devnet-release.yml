@@ -3,7 +3,7 @@ name: "Devnet Community Release"
 on:
   push:
     branches:
-      - parity-ci-devnet
+      - main
 
 jobs:
   deploy-devnet:
