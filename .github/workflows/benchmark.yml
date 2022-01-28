@@ -37,7 +37,8 @@ jobs:
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
 
         id: check_runtime
-        if: github.event.label.name == 'needs-benchmarks'
+        #if: github.event.label.name == 'needs-benchmarks'
+        if: contains( github.event.pull_request.labels.*.name, 'needs-benchmarks')
         run: .maintain/check_runtime.sh
 
       - name: Benchmark Test
