@@ -27,7 +27,10 @@ export default {
     PalletIdentityRegistration: "Null",
     PalletIdentityRegistrarInfo: "Null",
     PalletOracleAssetInfo: "Null",
-    PalletOracleWithdraw: "Null",
+    PalletOracleWithdraw: {
+      stake: 'u128',
+      unlockBlock: 'u32'
+    },
     PalletOraclePrePrice: "Null",
     PalletOraclePrice: "Null",
     PolkadotPrimitivesV1AbridgedHostConfiguration: "Null",
@@ -56,6 +59,7 @@ export default {
     ComposableTraitsDefiSell: "Null",
     ComposableTraitsAuctionAuctionStepFunction: "Null",
     ComposableTraitsDefiTake: "Null",
+    ComposableTraitsTimeTimeReleaseFunction: "Null",
     PalletIdentityJudgement: "Null",
     PalletIdentityBitFlags: "Null",
     PalletIdentityIdentityInfo: "Null",

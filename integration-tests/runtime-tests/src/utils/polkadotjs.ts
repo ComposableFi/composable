@@ -35,9 +35,9 @@ export function sendUnsignedAndWaitFor<T extends AnyTuple>(
   call: SubmittableExtrinsic<"promise">,
   intendedToFail:boolean
 ): Promise<IEvent<T>> {
-  return new Promise<IEvent<T>>((resolve, reject) => {
+  return new Promise<IEvent<T>>(function (resolve, reject) {
     call
-      .send(res => {
+      .send(function (res) {
         const { dispatchError, status } = res;
         if (dispatchError) {
           if (dispatchError.isModule) {
@@ -49,6 +49,8 @@ export function sendUnsignedAndWaitFor<T extends AnyTuple>(
           }
         }
         if (status.isInBlock || status.isFinalized) {
+          if (res.events.find(e => filter(e.event)) == undefined)
+            return reject(status.toString());
           const event = res.events.find(e => filter(e.event)).event;
           if (filter(event)) {
             resolve(event);
@@ -57,8 +59,8 @@ export function sendUnsignedAndWaitFor<T extends AnyTuple>(
           }
         }
       })
-      .catch((e) => {
-        reject(Error(e.message));
+      .catch(function (e) {
+        reject(Error(e.stack));
       });
   });
 }
@@ -79,9 +81,9 @@ export function sendAndWaitFor<T extends AnyTuple>(
   call: SubmittableExtrinsic<"promise">,
   intendedToFail:boolean
 ): Promise<IEvent<T>> {
-  return new Promise<IEvent<T>>((resolve, reject) => {
+  return new Promise<IEvent<T>>(function (resolve, reject) {
     call
-      .signAndSend(sender, { nonce: -1 }, res => {
+      .signAndSend(sender, { nonce: -1 }, function (res) {
         const { dispatchError, status } = res;
         if (dispatchError) {
           if (dispatchError.isModule) {
@@ -104,6 +106,8 @@ export function sendAndWaitFor<T extends AnyTuple>(
           }
         }
         if (status.isInBlock || status.isFinalized) {
+          if (res.events.find(e => filter(e.event)) == undefined)
+            return reject(status.toString());
           const event = res.events.find(e => filter(e.event)).event;
           if (filter(event)) {
             if (intendedToFail) {
@@ -122,8 +126,8 @@ export function sendAndWaitFor<T extends AnyTuple>(
           }
         }
       })
-      .catch((e) => {
-        reject(Error(e.message));
+      .catch(function (e) {
+        reject(Error(e.stack));
       });
   });
 }

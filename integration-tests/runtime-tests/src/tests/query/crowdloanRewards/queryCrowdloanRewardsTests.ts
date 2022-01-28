@@ -40,7 +40,6 @@ export class QueryCrowdloanRewardsTests {
    * query.crowdloanRewards.totalContributors()
    */
   private static async queryCrowdloanRewardsTotalContributorsTest() {
-    console.debug('queryCrowdloanRewardsTotalContributorsTest');
     const totalContributors = await api.query.crowdloanRewards.totalContributors();
     expect(totalContributors.toNumber()).to.be.a('number');
   }
