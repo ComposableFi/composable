@@ -131,14 +131,14 @@ pub enum DexRoute<PoolId, MaxHops: Get<u32>> {
 	Direct(BoundedVec<DexRouteNode<PoolId>, MaxHops>),
 }
 
-pub trait DexRouter<AccountId, AssetId, PoolId, Balance> {
+pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
 	/// If route is `None` then delete existing entry for `asset_pair`
 	/// If route is `Some` and no entry exist for `asset_pair` then add new entry
 	/// else update existing entry.
 	fn update_route(
 		who: &AccountId,
 		asset_pair: CurrencyPair<AssetId>,
-		route: Option<Vec<DexRouteNode<PoolId>>>,
+		route: Option<BoundedVec<DexRouteNode<PoolId>, MaxHops>>,
 	) -> Result<(), DispatchError>;
 	/// If route exist return `Some(Vec<PoolId>)`, else `None`.
 	fn get_route(asset_pair: CurrencyPair<AssetId>) -> Option<Vec<DexRouteNode<PoolId>>>;
