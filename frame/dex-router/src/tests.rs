@@ -1,7 +1,7 @@
-use frame_support::assert_ok;
+use frame_support::{assert_noop, assert_ok};
 use sp_runtime::{FixedPointNumber, FixedU128, Permill};
 
-use crate::mock::*;
+use crate::{mock::*, Error};
 use composable_traits::{
 	defi::CurrencyPair,
 	dex::{CurveAmm as CurveAmmTrait, DexRouteNode, DexRouter as DexRouterTrait},
@@ -53,23 +53,121 @@ fn create_constant_product_amm_pool(
 	pool_id
 }
 
-#[test]
-fn simple_test() {
-	new_test_ext().execute_with(|| {
-		let assets = vec![MockCurrencyId::USDC, MockCurrencyId::USDT];
-		let amp_coeff = FixedU128::saturating_from_rational(1000_i128, 1_i128);
-		let amounts = vec![100000, 100000];
-		let fee = Permill::zero();
-		let admin_fee = Permill::zero();
+fn create_usdc_usdt_pool() -> PoolId {
+	let amp_coeff = FixedU128::saturating_from_rational(1000_i128, 1_i128);
+	let fee = Permill::zero();
+	let admin_fee = Permill::zero();
+	let assets = vec![MockCurrencyId::USDC, MockCurrencyId::USDT];
+	let amounts = vec![100000, 100000];
+	create_curve_amm_pool(assets, amounts, amp_coeff, fee, admin_fee)
+}
 
-		let usdc_usdt_pool = create_curve_amm_pool(assets, amounts, amp_coeff, fee, admin_fee);
-		let assets = vec![MockCurrencyId::ETH, MockCurrencyId::USDC];
-		let amounts = vec![1000, 3000000];
-		let eth_usdc_pool = create_constant_product_amm_pool(assets, amounts, fee, admin_fee);
+fn create_eth_usdc_pool() -> PoolId {
+	let fee = Permill::zero();
+	let admin_fee = Permill::zero();
+	let assets = vec![MockCurrencyId::ETH, MockCurrencyId::USDC];
+	let amounts = vec![1000, 3000000];
+	create_constant_product_amm_pool(assets, amounts, fee, admin_fee)
+}
+
+#[test]
+fn get_route_tests() {
+	new_test_ext().execute_with(|| {
 		let currency_pair = CurrencyPair { base: MockCurrencyId::ETH, quote: MockCurrencyId::USDT };
-		let dex_route =
-			vec![DexRouteNode::Uniswap(eth_usdc_pool), DexRouteNode::Curve(usdc_usdt_pool)];
-		assert_ok!(DexRouter::update_route(&ALICE, currency_pair, Some(dex_route)));
+		assert_eq!(DexRouter::get_route(currency_pair), None);
+
+		let dex_route = vec![
+			DexRouteNode::Uniswap(create_eth_usdc_pool()),
+			DexRouteNode::Curve(create_usdc_usdt_pool()),
+		];
+		assert_ok!(DexRouter::update_route(
+			&ALICE,
+			currency_pair,
+			Some(dex_route.clone().try_into().unwrap())
+		));
+		assert_eq!(DexRouter::get_route(currency_pair), Some(dex_route));
+	});
+}
+
+#[test]
+fn update_route_tests() {
+	new_test_ext().execute_with(|| {
+		let currency_pair = CurrencyPair { base: MockCurrencyId::ETH, quote: MockCurrencyId::USDT };
+		assert_eq!(DexRouter::get_route(currency_pair), None);
+
+		// insert
+		let dex_route = vec![
+			DexRouteNode::Uniswap(create_eth_usdc_pool()),
+			DexRouteNode::Curve(create_usdc_usdt_pool()),
+		];
+		assert_ok!(DexRouter::update_route(
+			&ALICE,
+			currency_pair,
+			Some(dex_route.clone().try_into().unwrap())
+		));
+		assert_eq!(DexRouter::get_route(currency_pair), Some(dex_route));
+
+		// update
+		let dex_route = vec![
+			DexRouteNode::Curve(create_usdc_usdt_pool()),
+			DexRouteNode::Uniswap(create_eth_usdc_pool()),
+		];
+		assert_ok!(DexRouter::update_route(
+			&ALICE,
+			currency_pair,
+			Some(dex_route.clone().try_into().unwrap())
+		));
+		assert_eq!(DexRouter::get_route(currency_pair), Some(dex_route));
+
+		// delete
+		assert_ok!(DexRouter::update_route(&ALICE, currency_pair, None));
+		assert_eq!(DexRouter::get_route(currency_pair), None);
+
+		// invalid route, case #1
+		let dex_route = vec![
+			DexRouteNode::Curve(create_usdc_usdt_pool()),
+			DexRouteNode::Curve(42), // fake route
+			DexRouteNode::Uniswap(create_eth_usdc_pool()),
+		];
+		assert_noop!(
+			DexRouter::update_route(
+				&ALICE,
+				currency_pair,
+				Some(dex_route.clone().try_into().unwrap())
+			),
+			Error::<Test>::PoolDoesNotExist,
+		);
+
+		// invalid route, case #2
+		let dex_route = vec![
+			DexRouteNode::Curve(create_usdc_usdt_pool()),
+			DexRouteNode::Uniswap(create_eth_usdc_pool()),
+			DexRouteNode::Uniswap(42), // fake route
+		];
+		assert_noop!(
+			DexRouter::update_route(
+				&ALICE,
+				currency_pair,
+				Some(dex_route.clone().try_into().unwrap())
+			),
+			Error::<Test>::PoolDoesNotExist,
+		);
+	});
+}
+
+#[test]
+fn exchange_tests() {
+	new_test_ext().execute_with(|| {
+		let currency_pair = CurrencyPair { base: MockCurrencyId::ETH, quote: MockCurrencyId::USDT };
+		let dex_route = vec![
+			DexRouteNode::Uniswap(create_eth_usdc_pool()),
+			DexRouteNode::Curve(create_usdc_usdt_pool()),
+		];
+		assert_ok!(DexRouter::update_route(
+			&ALICE,
+			currency_pair,
+			Some(dex_route.try_into().unwrap())
+		));
 		assert_ok!(Tokens::mint_into(MockCurrencyId::ETH, &CHARLIE, 10u128));
 		let dy = DexRouter::exchange(&CHARLIE, currency_pair, 1u128);
 		assert_ok!(dy);

@@ -145,83 +145,91 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
 
-	impl<T: Config> Pallet<T> {}
-
-	impl<T: Config> DexRouter<T::AccountId, T::AssetId, T::PoolId, T::Balance> for Pallet<T> {
-		fn update_route(
+	impl<T: Config> Pallet<T> {
+		fn do_update_route(
 			who: &T::AccountId,
 			asset_pair: CurrencyPair<T::AssetId>,
-			route: Option<Vec<DexRouteNode<T::PoolId>>>,
+			route: BoundedVec<DexRouteNode<T::PoolId>, T::MaxHopsInRoute>,
 		) -> Result<(), DispatchError> {
 			let k1 = asset_pair.base;
 			let k2 = asset_pair.quote;
-			match route {
-				Some(route_vec) => {
-					for r in &route_vec {
-						match r {
-							DexRouteNode::Curve(pool_id) => {
-								if !T::StableSwapDex::pool_exists(*pool_id) {
-									return Err(Error::<T>::PoolDoesNotExist.into())
-								}
-							},
-							DexRouteNode::Uniswap(pool_id) => {
-								if !T::ConstantProductDex::pool_exists(*pool_id) {
-									return Err(Error::<T>::PoolDoesNotExist.into())
-								}
-							},
-						}
-					}
-					let bounded_route =
-						route_vec.clone().try_into().map_err(|_| Error::<T>::MaxHopsExceeded)?;
-					let existing_route = DexRoutes::<T>::get(k1, k2);
-					DexRoutes::<T>::insert(k1, k2, DexRoute::Direct(bounded_route));
-					match existing_route {
-						Some(existing_route) => {
-							let old_route = match existing_route {
-								DexRoute::Direct(bounded_vec) => bounded_vec.into_inner(),
-							};
-							Self::deposit_event(Event::RouteUpdated {
-								who: who.clone(),
-								x_asset_id: k1,
-								y_asset_id: k2,
-								old_route,
-								updated_route: route_vec,
-							});
-						},
-						None => {
-							Self::deposit_event(Event::RouteAdded {
-								who: who.clone(),
-								x_asset_id: k1,
-								y_asset_id: k2,
-								route: route_vec,
-							});
-						},
-					}
-				},
-				None =>
-					if let Some(deleted_route) = DexRoutes::<T>::take(k1, k2) {
-						let deleted_route = match deleted_route {
-							DexRoute::Direct(bounded_vec) => bounded_vec.into_inner(),
-						};
-						Self::deposit_event(Event::RouteDeleted {
-							who: who.clone(),
-							x_asset_id: k1,
-							y_asset_id: k2,
-							route: deleted_route,
-						});
+			for r in route.as_slice() {
+				match r {
+					DexRouteNode::Curve(pool_id) => {
+						ensure!(
+							T::StableSwapDex::pool_exists(*pool_id),
+							Error::<T>::PoolDoesNotExist
+						)
 					},
+					DexRouteNode::Uniswap(pool_id) => {
+						ensure!(
+							T::ConstantProductDex::pool_exists(*pool_id),
+							Error::<T>::PoolDoesNotExist
+						)
+					},
+				}
+			}
+			let existing_route = DexRoutes::<T>::get(k1, k2);
+
+			DexRoutes::<T>::insert(k1, k2, DexRoute::Direct(route.clone()));
+			let event = match existing_route {
+				Some(DexRoute::Direct(old_route)) => Event::RouteUpdated {
+					who: who.clone(),
+					x_asset_id: k1,
+					y_asset_id: k2,
+					old_route: old_route.into_inner(),
+					updated_route: route.to_vec(),
+				},
+				None => Event::RouteAdded {
+					who: who.clone(),
+					x_asset_id: k1,
+					y_asset_id: k2,
+					route: route.to_vec(),
+				},
+			};
+			Self::deposit_event(event);
+			Ok(())
+		}
+
+		fn do_delete_route(
+			who: &T::AccountId,
+			asset_pair: CurrencyPair<T::AssetId>,
+		) -> Result<(), DispatchError> {
+			let k1 = asset_pair.base;
+			let k2 = asset_pair.quote;
+			if let Some(DexRoute::Direct(deleted_route)) = DexRoutes::<T>::take(k1, k2) {
+				Self::deposit_event(Event::RouteDeleted {
+					who: who.clone(),
+					x_asset_id: k1,
+					y_asset_id: k2,
+					route: deleted_route.into_inner(),
+				});
+			}
+
+			Ok(())
+		}
+	}
+
+	impl<T: Config> DexRouter<T::AccountId, T::AssetId, T::PoolId, T::Balance, T::MaxHopsInRoute>
+		for Pallet<T>
+	{
+		fn update_route(
+			who: &T::AccountId,
+			asset_pair: CurrencyPair<T::AssetId>,
+			route: Option<BoundedVec<DexRouteNode<T::PoolId>, T::MaxHopsInRoute>>,
+		) -> Result<(), DispatchError> {
+			match route {
+				Some(bounded_route) => Self::do_update_route(who, asset_pair, bounded_route)?,
+				None => Self::do_delete_route(who, asset_pair)?,
 			}
 			Ok(())
 		}
+
 		fn get_route(asset_pair: CurrencyPair<T::AssetId>) -> Option<Vec<DexRouteNode<T::PoolId>>> {
-			let route = DexRoutes::<T>::get(asset_pair.base, asset_pair.quote);
-			if let Some(route) = route {
-				match route {
-					DexRoute::Direct(bounded_vec) => return Some(bounded_vec.into_inner()),
-				}
-			}
-			None
+			DexRoutes::<T>::get(asset_pair.base, asset_pair.quote)
+				.map(|DexRoute::Direct(route)| route.into_inner())
 		}
+
 		fn exchange(
 			who: &T::AccountId,
 			asset_pair: CurrencyPair<T::AssetId>,
