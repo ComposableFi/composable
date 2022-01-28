@@ -14,6 +14,9 @@ jobs:
       - linux
       - x64
       - bmark
+    concurrency:
+      group: bench-${{ github.ref }}
+      cancel-in-progress: true
     if: github.event.pull_request.draft == false
     steps:
       - name: Clean up
