@@ -46,5 +46,7 @@ std = [
     "frame-support/std",
     "frame-system/std",
     "sp-runtime/std",
+    "pallet-curve-amm/std",
     "orml-traits/std",
+    "pallet-uniswap-v2/std",
 ]
