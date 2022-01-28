@@ -58,10 +58,11 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
+		helpers_128bit::multiply_by_rational,
 		offchain::{http, Duration},
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
-		AccountId32, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId, PerThing, Percent,
-		RuntimeDebug,
+		AccountId32, ArithmeticError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
+		PerThing, Percent, RuntimeDebug,
 	};
 	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec, vec::Vec};
 
@@ -377,12 +378,20 @@ pub mod pallet {
 		type LocalAssets = T::LocalAssets;
 
 		fn get_price(
-			asset: Self::AssetId,
+			asset_id: Self::AssetId,
 			amount: Self::Balance,
 		) -> Result<LastPrice<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
-				Prices::<T>::try_get(asset).map_err(|_| Error::<T>::PriceNotFound)?;
-			Ok(LastPrice { price: price.safe_mul(&amount)?, block })
+				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
+			let unit = 10_u128
+				.checked_pow(Self::LocalAssets::decimals(asset_id)?)
+				.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+			let price = multiply_by_rational(price.into(), amount.into(), unit)
+				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+			let price = price
+				.try_into()
+				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+			Ok(LastPrice { price, block })
 		}
 
 		fn get_twap(
@@ -406,6 +415,26 @@ pub mod pallet {
 			let base = FixedU128::saturating_from_integer(base);
 			let quote = FixedU128::saturating_from_integer(quote);
 			Ok(base.safe_div(&quote)?)
+		}
+
+		fn get_price_inverse(
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			// imagine 10^3 == 1_000 costs 4
+			// so 1 costs 0,
+			// and amount of normalized desired is 10
+			// 10 * 1_000 / 4 = 2_500
+			// so we need 2_500 asset amount to pay for 10 normalized
+			let unit = 10 ^ (T::LocalAssets::decimals(asset_id))?;
+			let price_asset_for_unit: u128 = Self::get_price(asset_id, unit.into())?.price.into();
+			let amount: u128 = amount.into();
+			let result = multiply_by_rational(amount, unit as u128, price_asset_for_unit)?;
+			let result: u64 = result
+				.try_into()
+				.map_err(|_| Into::<DispatchError>::into(ArithmeticError::Overflow))?;
+
+			Ok(result.into())
 		}
 	}
 

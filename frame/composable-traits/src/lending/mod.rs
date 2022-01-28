@@ -7,9 +7,10 @@ use crate::{
 	defi::{CurrencyPair, DeFiEngine, MoreThanOneFixedU128},
 	time::Timestamp,
 };
+use composable_support::validation::Validate;
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
-use sp_runtime::Percent;
+use sp_runtime::{traits::One, Percent};
 
 use self::math::*;
 
@@ -39,6 +40,38 @@ pub struct CreateInput<LiquidationStrategyId, AssetId> {
 	pub currency_pair: CurrencyPair<AssetId>,
 	/// Reserve factor of market borrow vault.
 	pub reserved_factor: Perquintill,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+pub struct MarketModelValid;
+#[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+pub struct CurrencyPairIsNotSame;
+
+impl<LiquidationStrategyId, Asset: Eq> Validate<MarketModelValid>
+	for CreateInput<LiquidationStrategyId, Asset>
+{
+	fn validate(self) -> Result<Self, &'static str> {
+		if self.updatable.collateral_factor < MoreThanOneFixedU128::one() {
+			return Err("collateral factor must be >=1")
+		}
+
+		let interest_rate_model =
+			Validate::<InteresteRateModelIsValid>::validate(self.updatable.interest_rate_model)?;
+
+		Ok(Self { updatable: UpdateInput { interest_rate_model, ..self.updatable }, ..self })
+	}
+}
+
+impl<LiquidationStrategyId, Asset: Eq> Validate<CurrencyPairIsNotSame>
+	for CreateInput<LiquidationStrategyId, Asset>
+{
+	fn validate(self) -> Result<Self, &'static str> {
+		if self.currency_pair.base == self.currency_pair.quote {
+			Err("currency pair must be different assets")
+		} else {
+			Ok(self)
+		}
+	}
 }
 
 impl<LiquidationStrategyId, AssetId: Copy> CreateInput<LiquidationStrategyId, AssetId> {
@@ -195,6 +228,7 @@ pub trait Lending: DeFiEngine {
 	/// ```
 	fn accrue_interest(market_id: &Self::MarketId, now: Timestamp) -> Result<(), DispatchError>;
 
+	/// current borrowable balance of market
 	fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
 	/// utilization_ratio = total_borrows / (total_cash + total_borrows).
