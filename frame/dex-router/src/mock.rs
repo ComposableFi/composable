@@ -217,7 +217,7 @@ impl pallet_uniswap_v2::Config for Test {
 }
 parameter_types! {
 #[derive(TypeInfo)]
-	pub const MaxHopsCount : u32 = 4;
+	pub const MaxHopsCount: u32 = 4;
 }
 
 impl dex_router::Config for Test {
