@@ -2,6 +2,8 @@ use frame_support::pallet_prelude::*;
 use num_traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero};
 
 pub trait Decayer<Balance, BlockNumber> {
+	/// Decay the `amount` proportionally to the time elapsed `current_block - last_decay_block`
+	/// Returns `None` if an input value is invalid
 	fn checked_decay(
 		&self,
 		amount: Balance,
@@ -9,6 +11,8 @@ pub trait Decayer<Balance, BlockNumber> {
 		last_decay_block: BlockNumber,
 	) -> Option<Balance>;
 
+	/// Determine how many blocks are required to pass until the `amount` fully recover from this decayer.
+	/// Returns `None` if the recovery period cannot be computed.
 	fn full_recovery_period(&self, amount: Balance) -> Option<BlockNumber>;
 }
 
