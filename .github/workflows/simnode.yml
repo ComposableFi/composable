@@ -6,7 +6,7 @@ on:
       - main
 jobs:
   simnode:
-    runs-on: 
+    runs-on:
       - self-hosted
       - linux
       - x64
@@ -18,20 +18,28 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
-        
+
       - uses: actions/checkout@v2
-        with: 
-          ref: main
+        with:
+          fetch-depth: 0
+
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
 
       - name: Check for runtime changes
         id: check_runtime
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
+
         run: .maintain/check_runtime.sh
 
       - name: Run Simnode
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
+
         if: env.RUNTIME_CHECK == 1
         id: run_simnode
         run: .maintain/run_simnode.sh

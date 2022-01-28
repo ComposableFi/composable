@@ -73,6 +73,11 @@ pub mod pallet {
 		ForeignAdminApproved,
 	}
 
+	#[derive(Debug, Clone, Copy, PartialEq, Eq, Encode, Decode, TypeInfo)]
+	pub struct ForeignMetadata {
+		pub decimals: u8,
+	}
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
@@ -113,6 +118,12 @@ pub mod pallet {
 		CandidateStatus,
 		OptionQuery,
 	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn foreign_asset_metadata)]
+	/// Mapping local asset to foreign asset metadata.
+	pub type ForeignAssetMetadata<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::LocalAssetId, ForeignMetadata, OptionQuery>;
 
 	#[pallet::type_value]
 	pub fn LocalAdminOnEmpty<T: Config>() -> T::AccountId {
@@ -170,6 +181,7 @@ pub mod pallet {
 			local_asset_id: T::LocalAssetId,
 			foreign_asset_id: T::ForeignAssetId,
 		},
+		AssetMetadataUpdated(T::LocalAssetId),
 	}
 
 	#[pallet::error]
@@ -177,6 +189,7 @@ pub mod pallet {
 		OnlyAllowedForAdmins,
 		LocalAssetIdAlreadyUsed,
 		ForeignAssetIdAlreadyUsed,
+		LocalAssetIdNotFound,
 	}
 
 	#[pallet::call]
@@ -224,6 +237,24 @@ pub mod pallet {
 				local_asset_id,
 				foreign_asset_id,
 			});
+			Ok(().into())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn set_metadata(
+			origin: OriginFor<T>,
+			local_asset_id: T::LocalAssetId,
+			metadata: ForeignMetadata,
+		) -> DispatchResultWithPostInfo {
+			let _ = ensure_signed(origin.clone())?;
+			Self::ensure_admins_only(origin)?;
+			ensure!(
+				<LocalToForeign<T>>::contains_key(local_asset_id),
+				Error::<T>::LocalAssetIdNotFound
+			);
+
+			<ForeignAssetMetadata<T>>::insert(local_asset_id, metadata);
+			Self::deposit_event(Event::AssetMetadataUpdated(local_asset_id));
 			Ok(().into())
 		}
 	}

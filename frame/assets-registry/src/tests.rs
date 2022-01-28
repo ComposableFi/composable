@@ -98,3 +98,37 @@ fn approve_assets_mapping_candidate_tests() {
 		);
 	})
 }
+
+#[test]
+fn set_metadata_tests() {
+	new_test_ext().execute_with(|| {
+		let (local_asset_id, foreign_asset_id) = (0, 100);
+		assert_ok!(AssetsRegistry::set_local_admin(Origin::signed(ROOT), ALICE));
+		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::signed(ROOT), BOB));
+
+		assert_noop!(
+			AssetsRegistry::set_metadata(
+				Origin::signed(ALICE),
+				local_asset_id,
+				ForeignMetadata { decimals: 12 }
+			),
+			Error::<Test>::LocalAssetIdNotFound
+		);
+
+		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
+			Origin::signed(ALICE),
+			local_asset_id,
+			foreign_asset_id
+		));
+		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
+			Origin::signed(BOB),
+			local_asset_id,
+			foreign_asset_id
+		));
+		assert_ok!(AssetsRegistry::set_metadata(
+			Origin::signed(ALICE),
+			local_asset_id,
+			ForeignMetadata { decimals: 12 }
+		));
+	})
+}
