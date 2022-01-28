@@ -11,10 +11,6 @@ on:
   
   workflow_dispatch:
 
-concurrency:
-  group: ${{ github.ref }}
-  cancel-in-progress: true
-
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
@@ -26,6 +22,9 @@ jobs:
       - linux
       - x64
       - sre
+    concurrency:
+      group: check-${{ github.ref }}
+      cancel-in-progress: true
     container:
       image: paritytech/ci-linux:production
     steps:
@@ -50,6 +49,9 @@ jobs:
       - linux
       - x64
       - sre
+    concurrency:
+      group: testcov-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - name: Clean up
         continue-on-error: true
@@ -82,6 +84,9 @@ jobs:
       - linux
       - x64
       - sre
+    concurrency:
+      group: tests-${{ github.ref }}
+      cancel-in-progress: true
     container:
       image: paritytech/ci-linux:production      
     steps:
@@ -106,6 +111,9 @@ jobs:
       - linux
       - x64
       - sre
+    concurrency:
+      group: lint-${{ github.ref }}
+      cancel-in-progress: true
     container:
       image: paritytech/ci-linux:production
     steps:

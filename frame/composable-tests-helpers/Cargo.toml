@@ -3,7 +3,7 @@ name = "composable-tests-helpers"
 version = "0.0.1"
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
-edition = "2018"
+edition = "2021"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -14,6 +14,8 @@ serde = { version = "1", optional = true }
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13"  }
+
 
 [dependencies.codec]
 default-features = false
@@ -28,4 +30,5 @@ std = [
     "codec/std",
     "sp-runtime/std",
     "scale-info/std",
+    "frame-support/std",
 ]

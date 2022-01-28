@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { Enum, Null } from '@polkadot/types-codec';
+import type { Enum, Null, Struct, u128, u32 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { EthereumAccountId } from '@polkadot/types/interfaces/eth';
 import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/extrinsics';
@@ -28,6 +28,9 @@ export interface ComposableTraitsDefiTake extends Null {}
 
 /** @name ComposableTraitsGovernanceSignedRawOrigin */
 export interface ComposableTraitsGovernanceSignedRawOrigin extends Null {}
+
+/** @name ComposableTraitsTimeTimeReleaseFunction */
+export interface ComposableTraitsTimeTimeReleaseFunction extends Null {}
 
 /** @name ComposableTraitsVaultVaultConfig */
 export interface ComposableTraitsVaultVaultConfig extends Null {}
@@ -147,7 +150,10 @@ export interface PalletOraclePrePrice extends Null {}
 export interface PalletOraclePrice extends Null {}
 
 /** @name PalletOracleWithdraw */
-export interface PalletOracleWithdraw extends Null {}
+export interface PalletOracleWithdraw extends Struct {
+  readonly stake: u128;
+  readonly unlockBlock: u32;
+}
 
 /** @name PalletSchedulerReleases */
 export interface PalletSchedulerReleases extends Null {}

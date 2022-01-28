@@ -432,7 +432,7 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * Information about asset, including precision threshold and max/min answers
        **/
-      assetsInfo: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<PalletOracleAssetInfo>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      assetsInfo: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<PalletOracleAssetInfo>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       /**
        * Mapping Controller key to signer key
        **/
