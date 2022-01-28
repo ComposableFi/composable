@@ -233,6 +233,12 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			asset_id: AssetIdOf<T>,
 		},
+		/// The relayer partially accepted the user's `OutgoingTransaction`.
+		PartialTransferAccepted {
+			from: AccountIdOf<T>,
+			asset_id: AssetIdOf<T>,
+			amount: BalanceOf<T>,
+		},
 		/// The relayer accepted the user's `OutgoingTransaction`.
 		TransferAccepted { from: AccountIdOf<T>, asset_id: AssetIdOf<T>, amount: BalanceOf<T> },
 		/// The user claims his `IncomingTransaction` and unlocks the locked amount.
@@ -444,18 +450,23 @@ pub mod pallet {
 						// No remaing funds need to be transferred for this asset, so we can delete
 						// the storage item.
 						if amount == balance {
-							*maybe_tx = None
+							*maybe_tx = None;
+							Self::deposit_event(Event::<T>::TransferAccepted {
+								from,
+								asset_id,
+								amount,
+							});
 						} else {
 							let new_balance =
 								balance.checked_sub(&amount).ok_or(Error::<T>::AmountMismatch)?;
 							*maybe_tx = Some((new_balance, lock_period));
+							Self::deposit_event(Event::<T>::PartialTransferAccepted {
+								from,
+								asset_id,
+								amount,
+							});
 						}
 
-						Self::deposit_event(Event::<T>::TransferAccepted {
-							from,
-							asset_id,
-							amount,
-						});
 						Ok(())
 					},
 					None => Err(Error::<T>::NoOutgoingTx.into()),
