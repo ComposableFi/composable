@@ -389,15 +389,15 @@ pub mod pallet {
 			OutgoingTransactions::<T>::try_mutate(
 				caller.clone(),
 				asset_id,
-				|prev| -> Result<(), DispatchError> {
-					match prev.as_mut() {
+				|tx| -> Result<(), DispatchError> {
+					match tx.as_mut() {
 						// If we already have an outgoing tx, we update the lock_time and add the
 						// amount.
 						Some((already_locked, _)) => {
 							let amount = amount.safe_add(already_locked)?;
-							*prev = Some((amount, lock_until))
+							*tx = Some((amount, lock_until))
 						},
-						None => *prev = Some((amount, lock_until)),
+						None => *tx = Some((amount, lock_until)),
 					}
 					Ok(())
 				},
