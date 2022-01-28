@@ -1,5 +1,4 @@
 /// Equivalent of assert_ok when inside a proptest context.
-
 #[macro_export]
 macro_rules! prop_assert_ok {
     ($cond:expr) => {
