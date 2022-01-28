@@ -102,7 +102,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
 	spec_version: 2000,
-	impl_version: 1,
+	impl_version: 2,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 };
@@ -790,7 +790,7 @@ pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false
+			return false;
 		}
 		!matches!(
 			call,
