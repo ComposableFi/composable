@@ -1559,6 +1559,7 @@ dependencies = [
 name = "composable-tests-helpers"
 version = "0.0.1"
 dependencies = [
+ "frame-support",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -7077,6 +7078,31 @@ dependencies = [
  "sp-blockchain",
  "sp-core",
  "sp-runtime",
+]
+
+[[package]]
+name = "pallet-mosaic"
+version = "0.1.0"
+dependencies = [
+ "composable-tests-helpers",
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log 0.4.14",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "parity-scale-codec",
+ "plotters",
+ "proptest 0.9.6",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
 ]
 
 [[package]]
