@@ -74,9 +74,10 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	#[pallet::storage]
-	pub type Relayer<T: Config> =
-		StorageValue<_, StaleRelayer<T::AccountId, T::BlockNumber>, OptionQuery>;
+	pub enum TransactionType {
+		Incoming,
+		Outgoing,
+	}
 
 	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
 	pub struct AssetInfo<BlockNumber, Balance, Decayer> {
@@ -86,9 +87,10 @@ pub mod pallet {
 		pub penalty_decayer: Decayer,
 	}
 
-	pub enum TransactionType {
-		Incoming,
-		Outgoing,
+	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
+	pub struct NetworkInfo<Balance> {
+		pub enabled: bool,
+		pub max_transfer_size: Balance,
 	}
 
 	/// User incoming/outgoing accounts, that hold the funds for transactions to happen.
@@ -113,32 +115,9 @@ pub mod pallet {
 		}
 	}
 
-	pub enum TransactionType {
-		Incoming,
-		Outgoing,
-	}
-
-	/// User incoming/outgoing accounts, that hold the funds for transactions to happen.
-	pub struct SubAccount<T: Config> {
-		transaction_type: TransactionType,
-		account_id: AccountIdOf<T>,
-	}
-
-	impl<T: Config> SubAccount<T> {
-		pub fn to_id(&self) -> impl Encode {
-			let prefix = match self.transaction_type {
-				TransactionType::Incoming => b"incoming________",
-				TransactionType::Outgoing => b"outgoing________",
-			};
-			[prefix.to_vec(), self.account_id.encode()]
-		}
-		pub fn outgoing(account_id: AccountIdOf<T>) -> Self {
-			SubAccount { transaction_type: TransactionType::Outgoing, account_id }
-		}
-		pub fn incoming(account_id: AccountIdOf<T>) -> Self {
-			SubAccount { transaction_type: TransactionType::Incoming, account_id }
-		}
-	}
+	#[pallet::storage]
+	pub type Relayer<T: Config> =
+		StorageValue<_, StaleRelayer<T::AccountId, T::BlockNumber>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn asset_infos)]
@@ -149,12 +128,6 @@ pub mod pallet {
 		AssetInfo<BlockNumberFor<T>, BalanceOf<T>, T::BudgetPenaltyDecayer>,
 		OptionQuery,
 	>;
-
-	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
-	pub struct NetworkInfo<Balance> {
-		pub enabled: bool,
-		pub max_transfer_size: Balance,
-	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn network_infos)]
@@ -549,9 +522,8 @@ pub mod pallet {
 				let lock_at = current_block.saturating_add(lock_time);
 
 				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
-					Some((balance, _)) => {
-						*prev = Some(((*balance).saturating_add(amount), lock_at))
-					},
+					Some((balance, _)) =>
+						*prev = Some(((*balance).saturating_add(amount), lock_at)),
 					_ => *prev = Some((amount, lock_at)),
 				});
 
@@ -693,23 +665,6 @@ pub mod pallet {
 				Relayer::<T>::get().ok_or(Error::<T>::RelayerNotSet)?.update(current_block);
 			ensure!(relayer.is_relayer(&acc), DispatchError::BadOrigin);
 			Ok((relayer, current_block))
-		}
-
-		pub fn timelock_period() -> BlockNumberOf<T> {
-			TimeLockPeriod::<T>::get()
-		}
-	}
-
-	impl<T: Config> Pallet<T> {
-		/// AccountId of the pallet, used to store all funds before actually moving them.
-		pub fn sub_account_id(sub_account: SubAccount<T>) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account(sub_account.to_id())
-		}
-
-		/// Queries storage, returning the account_id of the current relayer.
-		pub fn relayer_account_id() -> Option<AccountIdOf<T>> {
-			let current_block = <frame_system::Pallet<T>>::block_number();
-			Relayer::<T>::get().update(current_block).account_id().cloned()
 		}
 	}
 
