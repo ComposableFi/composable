@@ -5,8 +5,8 @@ pub trait Decayer<Balance, BlockNumber> {
 	fn checked_decay(
 		&self,
 		amount: Balance,
-		last_decay_block: BlockNumber,
 		current_block: BlockNumber,
+		last_decay_block: BlockNumber,
 	) -> Option<Balance>;
 
 	fn full_recovery_period(&self, amount: Balance) -> Option<BlockNumber>;
@@ -35,11 +35,11 @@ where
 	fn checked_decay(
 		&self,
 		amount: Balance,
-		last: BlockNumber,
 		current: BlockNumber,
+		last: BlockNumber,
 	) -> Option<Balance> {
 		match self {
-			BudgetPenaltyDecayer::Linear(lin) => lin.checked_decay(amount, last, current),
+			BudgetPenaltyDecayer::Linear(lin) => lin.checked_decay(amount, current, last),
 		}
 	}
 
@@ -65,8 +65,8 @@ where
 	fn checked_decay(
 		&self,
 		amount: Balance,
-		last: BlockNumber,
 		current: BlockNumber,
+		last: BlockNumber,
 	) -> Option<Balance> {
 		let diff = current.saturating_sub(last);
 		let reduction = diff.into().checked_mul(&self.factor)?;
@@ -92,7 +92,7 @@ mod tests {
 		let penalty_decayer = BudgetPenaltyDecayer::linear(10);
 
 		(0..=100).for_each(|x| {
-			penalty = penalty_decayer.checked_decay(penalty, x - 1, x).unwrap();
+			penalty = penalty_decayer.checked_decay(penalty, x, x - 1).unwrap();
 			assert!(prev > penalty);
 		});
 	}

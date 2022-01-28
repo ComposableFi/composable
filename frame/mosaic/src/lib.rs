@@ -521,7 +521,7 @@ pub mod pallet {
 					info.take().ok_or(Error::<T>::UnsupportedAsset)?;
 
 				let new_penalty = penalty_decayer
-					.checked_decay(penalty, last_mint_block, current_block)
+					.checked_decay(penalty, current_block, last_mint_block)
 					.unwrap_or_else(Zero::zero);
 
 				let penalised_budget = budget.saturating_sub(new_penalty);
@@ -538,8 +538,9 @@ pub mod pallet {
 				let lock_at = current_block.saturating_add(lock_time);
 
 				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
-					Some((balance, _)) =>
-						*prev = Some(((*balance).saturating_add(amount), lock_at)),
+					Some((balance, _)) => {
+						*prev = Some(((*balance).saturating_add(amount), lock_at))
+					},
 					_ => *prev = Some((amount, lock_at)),
 				});
 
