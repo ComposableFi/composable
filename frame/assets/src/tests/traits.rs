@@ -161,7 +161,7 @@ mod currency {
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(receiver), third);
 				Ok(())
 
-			 }).unwrap();
+			 })?;
 		}
 	}
 }
@@ -200,7 +200,7 @@ mod reservable_currency {
 				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::can_reserve(&account_1, first), true);
 
 				Ok(())
-			}).unwrap();
+			})?;
 		}
 
 		#[test]
@@ -223,7 +223,7 @@ mod reservable_currency {
 				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), first+second);
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), third);
 				Ok(())
-			}).unwrap();
+			})?;
 		}
 
 		#[test]
@@ -255,7 +255,7 @@ mod reservable_currency {
 				};
 
 				Ok(())
-			}).unwrap();
+			})?;
 		}
 
 		#[test]
@@ -277,9 +277,8 @@ mod reservable_currency {
 				prop_assert_eq!(<Pallet::<Test> as ReservableCurrency<AccountId>>::reserved_balance(&account_1), first + (repatriate_free + repatriate_reserved));
 
 				Ok(())
-			}).unwrap();
+			})?;
 		}
-
 
 		#[test]
 		fn test_unreserve_implementation(
@@ -307,7 +306,7 @@ mod reservable_currency {
 				prop_assert_eq!(<Pallet::<Test> as Currency<AccountId>>::free_balance(&account_1), first + second + third);
 
 				Ok(())
-			}).unwrap();
+			})?;
 		}
 	}
 }
@@ -329,7 +328,7 @@ mod multicurrency {
 
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::minimum_balance(asset_id), 0);
 				Ok(())
-			}).unwrap();
+			})?;
 		}
 
 		#[test]
@@ -349,7 +348,7 @@ mod multicurrency {
 				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account, third));
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::total_balance(asset_id,&account), first + second + third);
 				Ok(())
-			}).unwrap();
+			})?;
 		}
 
 		#[test]
@@ -371,7 +370,7 @@ mod multicurrency {
 				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account_1, third));
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::total_issuance(asset_id), first + second + third);
 				Ok(())
-			}).unwrap();
+			})?;
 		}
 
 		#[test]
@@ -412,14 +411,13 @@ mod multicurrency {
 				let mut free_balance = <Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account);
 				remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account, third);
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  free_balance + ( third - remaining));
-
 				//lock
 				free_balance = <Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account);
 				<Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first);
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  first + second + third);
 
 				Ok(())
-			}).unwrap();
+			})?;
 		}
 	}
 }
@@ -458,7 +456,7 @@ mod lockable_multicurrency {
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
 
 			Ok(())
-		  }).unwrap();
+		  })?;
 	   }
 
 		 #[test]
@@ -484,7 +482,7 @@ mod lockable_multicurrency {
 			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second));
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
 			Ok(())
-		  }).unwrap();
+		  })?;
 	   }
 
 		#[test]
@@ -508,7 +506,7 @@ mod lockable_multicurrency {
 			prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third));
 
 			Ok(())
-		  }).unwrap();
+		  })?;
 	   }
 
 	}
@@ -535,7 +533,7 @@ mod reservable_multicurrency {
 				prop_assert_eq!(<Pallet::<Test> as MultiReservableCurrency<AssetId>>::can_reserve(asset_id, &account_1, first), true);
 
 				Ok(())
-			}).unwrap();
+			})?;
 		}
 
 		#[test]
@@ -645,7 +643,7 @@ mod reservable_multicurrency {
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id, &account_1), first + second + third);
 
 				Ok(())
-			}).unwrap();
+			})?;
 		}
 	}
 }
