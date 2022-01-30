@@ -651,12 +651,3 @@ mod reservable_multicurrency {
 		}
 	}
 }
-
-/*
-type PositiveImbalance: Imbalance<Self::Balance, Opposite = Self::NegativeImbalance>
-The opaque token type for an imbalance. This is returned by unbalanced operations and must be dealt with. It may be dropped but cannot be cloned.
-
-[src]
-type NegativeImbalance: Imbalance<Self::Balance, Opposite = Self::PositiveImbalance>
-The opaque token type for an imbalance. This is returned by unbalanced operations and must be dealt with. It may be dropped but cannot be cloned.
-*/
