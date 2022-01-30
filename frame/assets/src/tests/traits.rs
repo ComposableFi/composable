@@ -611,12 +611,10 @@ mod reservable_multicurrency {
 			   //repatriate to free balance
 			   let repatriate_free = <Pallet::<Test> as MultiReservableCurrency<AssetId>>::repatriate_reserved(asset_id, &account_1, &account_2, second, BalanceStatus::Free).unwrap();
 			   prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AssetId>>::free_balance(asset_id, &account_2), first + (second - repatriate_free));
-
 			   prop_assert_eq!(<Pallet::<Test> as MultiReservableCurrency<AssetId>>::reserved_balance(asset_id, &account_1), first + repatriate_free );
 
-
 				Ok(())
-			}).unwrap();
+			})?;
 		}
 
 
