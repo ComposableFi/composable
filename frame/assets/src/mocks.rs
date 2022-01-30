@@ -15,10 +15,6 @@ use sp_runtime::{
 };
 use system::EnsureRoot;
 
-//
-
-//
-
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub type Block = frame_system::mocking::MockBlock<Test>;
 pub type AccountId = u64;
