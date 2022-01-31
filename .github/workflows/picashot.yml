@@ -1,4 +1,4 @@
-name: Check Runtime
+name: Picasso and Dali Snapshot
 on:
   push:
     branches:
@@ -22,9 +22,8 @@ jobs:
         docker system prune --force --all --volumes
         
     - name: Run ansible playbook
-      working-directory: "./.maintain/playbooks"
       run: |
-        ansible-playbook -l _mainnet_collator_yes picashot.yml -i picasso-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
+        ansible-playbook -l _mainnet_collator_yes .maintain/playbooks/picashot.yml -i /opt/ansible/inventory/picasso-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
 
   dalishot:
     runs-on: 
@@ -41,6 +40,5 @@ jobs:
         docker system prune --force --all --volumes
 
     - name: Run ansible playbook
-      working-directory: "./.maintain/playbooks"
       run: |
         ansible-playbook -l _collator_node_yes dalishot.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
