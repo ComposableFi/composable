@@ -1,8 +1,5 @@
 name: Picasso and Dali Snapshot
 on:
-  push:
-    branches:
-      - fix-dalishot
   workflow_dispatch:
   schedule:
     - cron:  '0 0 * * *'
