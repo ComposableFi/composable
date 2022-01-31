@@ -3,7 +3,7 @@
 box Composable #LightYellow
   actor "Root or Collective" as composable_authority
   actor "Alice" as alice
-  actor "Bob" as Bob
+  actor "Bob" as bob
   participant "Assets Registy" as assets_registry_pallet
 end box
 
@@ -21,14 +21,22 @@ note across: Bob can approve an asset mapping candidate
 
 ...
 
-alice -> assets_registry_pallet: Approve an asset mapping candidate with local_asset_id = 1 and foreign_asset_id = 1
+alice -> assets_registry_pallet: Approve an asset mapping candidate with local_asset_id = x and foreign_asset_id = y
 
 ...
 
-Bob -> assets_registry_pallet: Approve an asset mapping candidate with local_asset_id = 1 and foreign_asset_id = 1
+bob -> assets_registry_pallet: Approve an asset mapping candidate with local_asset_id = x and foreign_asset_id = y
 note over assets_registry_pallet
-asset mapping for local_asset_id = 1
-and foreign_asset_id = 1 stored
+asset mapping for local_asset_id = x
+and foreign_asset_id = y stored
 end note
+
+note across: Alice and Bob can set metadata of asset mapping for local_asset_id = x and foreign_asset_id = y
+
+alt
+alice -> assets_registry_pallet: Set metadata of asset mapping for local_asset_id = x and foreign asset = y
+else
+bob -> assets_registry_pallet: Set metadata of asset mapping for local_asset_id = x and foreign asset = y
+end
 
 @enduml
