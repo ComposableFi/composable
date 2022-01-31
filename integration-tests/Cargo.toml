@@ -105,7 +105,7 @@ xcm-emulator = { git = "https://github.com/dzmitry-lahoda-forks/xcm-simulator", 
 kusama-runtime = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13", default-features = false }
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.13", default-features = false }
-picasso-runtime = { package = "dali-runtime", path = "../runtime/dali", default-features = false }
+dali-runtime = { package = "dali-runtime", path = "../runtime/dali", default-features = false }
 
 [dev-dependencies]
 env_logger = "0.9.0"
@@ -145,7 +145,7 @@ std = [
 	"democracy/std",
 	"scheduler/std",
 	"common/std",
-	"picasso-runtime/std",
+	"dali-runtime/std",
 	"primitives/std",
 	"collective/std",
 	"transaction-payment/std",
@@ -163,11 +163,11 @@ std = [
 	"xcm-executor/std",
 	"aura/std",
 	"sp-consensus-aura/std",
-  "scale-info/std",
-  "kusama-runtime/std",
-  "polkadot-core-primitives/std",
-  "polkadot-primitives/std",
-  "polkadot-runtime-parachains/std",
+    "scale-info/std",
+    "kusama-runtime/std",
+    "polkadot-core-primitives/std",
+    "polkadot-primitives/std",
+    "polkadot-runtime-parachains/std",
 ]
 
 runtime-benchmarks = [
@@ -193,9 +193,9 @@ runtime-benchmarks = [
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
 	"kusama-runtime/runtime-benchmarks",
-  "picasso-runtime/runtime-benchmarks",
-  "polkadot-primitives/runtime-benchmarks",
-  "polkadot-runtime-parachains/runtime-benchmarks",
+    "dali-runtime/runtime-benchmarks",
+    "polkadot-primitives/runtime-benchmarks",
+    "polkadot-runtime-parachains/runtime-benchmarks",
 ]
 
 develop = [

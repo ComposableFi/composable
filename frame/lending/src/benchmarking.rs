@@ -112,8 +112,8 @@ benchmarks! {
 
 	withdraw_collateral {
 		let caller: T::AccountId = whitelisted_caller();
-		let market: MarketIndex = MarketIndex::new(1u32);
-		let amount: T::Balance = 1_000_000u64.into();
+		let market: MarketIndex = MarketIndex::new(1_u32);
+		let amount: T::Balance = 1_000_000_u64.into();
 		set_prices::<T>();
 		let (market, _vault_id) = create_market::<T>(caller.clone(), BTC, USDT);
 		<T as pallet::Config>::Currency::mint_into(USDT.into(), &caller, amount).unwrap();
@@ -208,12 +208,12 @@ benchmarks! {
 
 	handle_withdrawable {
 		let caller: T::AccountId = whitelisted_caller();
-		let (borrow_asset_id, collateral_asset_id) = (1u32, 2u32);
+		let (borrow_asset_id, collateral_asset_id) = (1_u32, 2u32);
 		set_price::<T>(borrow_asset_id.into(), u64::from(borrow_asset_id) * 10);
 		set_price::<T>(collateral_asset_id.into(), u64::from(collateral_asset_id) * 10);
 		let (market_id, vault_id) = create_market::<T>(caller.clone(), borrow_asset_id.into(), collateral_asset_id.into());
 		let market_config = Markets::<T>::try_get(market_id).unwrap();
-		let balance = 0u32.into();
+		let balance = 0_u32.into();
 	}: {
 		Lending::<T>::handle_withdrawable(&market_config, &caller, balance).unwrap()
 	}

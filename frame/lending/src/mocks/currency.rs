@@ -1,28 +1,6 @@
-use crate::{self as pallet_lending, *};
-use composable_traits::{
-	currency::DynamicCurrencyId,
-	defi::DeFiComposableConfig,
-	governance::{GovernanceRegistry, SignedRawOrigin},
-};
-use frame_support::{
-	ord_parameter_types, parameter_types,
-	traits::{Everything, OnFinalize, OnInitialize},
-	PalletId,
-};
-use frame_system::EnsureSignedBy;
-use hex_literal::hex;
-use once_cell::sync::Lazy;
-use orml_traits::{parameter_type_with_key, GetByKey};
+use composable_traits::currency::DynamicCurrencyId;
 use scale_info::TypeInfo;
-use sp_arithmetic::traits::Zero;
-use sp_core::{sr25519::Signature, H256};
-use sp_runtime::{
-	testing::{Header, TestXt},
-	traits::{
-		BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify,
-	},
-	ArithmeticError, DispatchError,
-};
+use sp_runtime::{ArithmeticError, DispatchError};
 
 #[derive(
 	PartialOrd,

@@ -1,7 +1,7 @@
 //! Lending pallet
 #![cfg_attr(
 	not(any(test, feature = "runtime-benchmarks")),
-	warn(
+	deny(
 		clippy::disallowed_method,
 		clippy::disallowed_type,
 		clippy::indexing_slicing,
@@ -12,7 +12,9 @@
 )] // allow in tests
 #![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![warn(
+#![deny(
+	unused_imports,
+	clippy::useless_conversion,
 	bad_style,
 	bare_trait_objects,
 	const_err,
