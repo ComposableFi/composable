@@ -167,10 +167,10 @@ jobs:
           SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly clippy --all-targets
 
       - name: Cargo Single Depedency
-        description: Speed up builds and reduced security check surface
+        # description: Speed up builds and reduced security check surface
         run: |
-         /home/runner/.cargo/bin/cargo install -f cargo-deny
-         /home/runner/.cargo/bin/cargo deny check  --hide-inclusion-graph Ban
+         cargo install -f cargo-deny
+         cargo deny check  --hide-inclusion-graph Ban
 
       - name: Cargo udeps
         env:
