@@ -56,7 +56,9 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 		type Assets: Mutate<AccountIdOf<Self>> + Transfer<AccountIdOf<Self>>;
 
+		#[pallet::constant]
 		type MinimumTTL: Get<BlockNumberOf<Self>>;
+		#[pallet::constant]
 		type MinimumTimeLockPeriod: Get<BlockNumberOf<Self>>;
 
 		type BudgetPenaltyDecayer: Decayer<BalanceOf<Self>, BlockNumberOf<Self>>
@@ -116,6 +118,7 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
+	#[pallet::getter(fn relayer)]
 	pub type Relayer<T: Config> =
 		StorageValue<_, StaleRelayer<T::AccountId, T::BlockNumber>, OptionQuery>;
 

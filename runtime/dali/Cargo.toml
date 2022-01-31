@@ -58,7 +58,7 @@ assets = { package = "pallet-assets", path = '../../frame/assets', default-featu
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
- dutch-auction = { package = "pallet-dutch-auction", path = "../../frame/dutch-auction", default-features = false }
+dutch-auction = { package = "pallet-dutch-auction", path = "../../frame/dutch-auction", default-features = false }
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
@@ -67,6 +67,7 @@ governance-registry = { package = "pallet-governance-registry", path = "../../fr
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
 composable-traits = { path = "../../frame/composable-traits" , default-features = false}
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
+mosaic = { package = "pallet-mosaic", path = "../../frame/mosaic", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
@@ -172,7 +173,8 @@ std = [
   "crowdloan-rewards/std",
   "bonded-finance/std",
 	"dutch-auction/std",
-	"vesting/std"
+	"vesting/std",
+  "mosaic/std"
 ]
 runtime-benchmarks = [
 	"assets/runtime-benchmarks",
@@ -207,4 +209,5 @@ runtime-benchmarks = [
   "assets/runtime-benchmarks",
 	"bonded-finance/runtime-benchmarks",
 	"dutch-auction/runtime-benchmarks",
+  "mosaic/runtime-benchmarks"
 ]

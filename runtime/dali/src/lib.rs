@@ -859,6 +859,22 @@ impl dutch_auction::Config for Runtime {
 	type WeightInfo = weights::dutch_auction::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+  pub const MosaicId: PalletId = PalletId(*b"plmosaic");
+	pub const MinimumTTL: BlockNumber = 10;
+	pub const MinimumTimeLockPeriod: BlockNumber = 20;
+}
+
+impl mosaic::Config for Runtime {
+	type Event = Event;
+	type PalletId = MosaicId;
+	type Assets = Assets;
+	type MinimumTTL = MinimumTTL;
+	type MinimumTimeLockPeriod = MinimumTimeLockPeriod;
+	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
+	type NetworkId = u32;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -913,6 +929,7 @@ construct_runtime!(
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 59,
 		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
 		DutchAuction: dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
+		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
