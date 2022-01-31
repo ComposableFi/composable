@@ -40,4 +40,4 @@ jobs:
     - name: Run ansible playbook
       working-directory: "./.maintain/playbooks"
       run: |
-        ansible-playbook -l _collator_node_yes picashot.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
+        ansible-playbook -l _collator_node_yes dalishot.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
