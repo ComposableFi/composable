@@ -9,6 +9,9 @@
 mod decay;
 mod relayer;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 pub use decay::{BudgetPenaltyDecayer, Decayer};
 pub use pallet::*;
 
