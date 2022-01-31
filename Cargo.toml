@@ -24,8 +24,6 @@ std = [ "composable-node/std" ]
 members = [
     "runtime/common",
     "runtime/primitives",
-    "utils/faucet-server",
-    "utils/parachain-utils",
     "frame/*",
     "integration-tests",
     "integration-tests/simnode",
@@ -33,8 +31,6 @@ members = [
     "runtime/picasso",
     "runtime/dali",
     "runtime/composable",
-    "utils/subxt-clients",
-    "utils/collator-sidecar",
     "utils/price-feed"
 ]
 
