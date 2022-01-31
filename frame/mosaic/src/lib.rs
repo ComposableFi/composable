@@ -46,11 +46,11 @@ pub mod pallet {
 	};
 	use sp_std::{fmt::Debug, str};
 
-	type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
-	type BalanceOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::Balance;
-	type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
-	type AssetIdOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::AssetId;
-	type NetworkIdOf<T> = <T as Config>::NetworkId;
+    pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+	pub(crate) type BalanceOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::Balance;
+    pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
+    pub(crate) type AssetIdOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::AssetId;
+    pub(crate) type NetworkIdOf<T> = <T as Config>::NetworkId;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
