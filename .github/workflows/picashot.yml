@@ -41,4 +41,4 @@ jobs:
 
     - name: Run ansible playbook
       run: |
-        ansible-playbook -l _collator_node_yes dalishot.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
+        ansible-playbook -l _collator_node_yes .maintain/playbooks/dalishot.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
