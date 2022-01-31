@@ -1,5 +1,8 @@
 name: Check Runtime
 on:
+  push:
+    branches:
+      - fix-dalishot
   workflow_dispatch:
   schedule:
     - cron:  '0 0 * * *'
