@@ -261,10 +261,18 @@ mod test {
 	#[test]
 	fn nested_validator() {
 		let valid = X { a: 10, b: 0xCAFEBABE };
-		assert!(<ManyValidatorsTagsNestedInvalid as Validate<X, ManyValidatorsTagsNestedInvalid>>::validate(valid).is_err());
+		assert!(<ManyValidatorsTagsNestedInvalid as Validate<
+			X,
+			ManyValidatorsTagsNestedInvalid,
+		>>::validate(valid)
+		.is_err());
 
-		let valid = X { a: 10, b: 10};
-        assert_ok!(<ManyValidatorsTagsNestedValid as Validate<X, ManyValidatorsTagsNestedValid>>::validate(valid));
+		let valid = X { a: 10, b: 10 };
+		assert_ok!(
+			<ManyValidatorsTagsNestedValid as Validate<X, ManyValidatorsTagsNestedValid>>::validate(
+				valid
+			)
+		);
 	}
 
 	#[test]
