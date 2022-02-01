@@ -126,7 +126,7 @@ fn update_route_tests() {
 		// invalid route, case #1
 		let dex_route = vec![
 			DexRouteNode::Curve(create_usdc_usdt_pool()),
-			DexRouteNode::Curve(42), // fake route
+			DexRouteNode::Curve(42), // fake route node
 			DexRouteNode::Uniswap(create_eth_usdc_pool()),
 		];
 		assert_noop!(
@@ -142,7 +142,7 @@ fn update_route_tests() {
 		let dex_route = vec![
 			DexRouteNode::Curve(create_usdc_usdt_pool()),
 			DexRouteNode::Uniswap(create_eth_usdc_pool()),
-			DexRouteNode::Uniswap(42), // fake route
+			DexRouteNode::Uniswap(42), // fake route node
 		];
 		assert_noop!(
 			DexRouter::update_route(

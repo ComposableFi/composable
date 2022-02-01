@@ -1,5 +1,5 @@
 use codec::{Decode, Encode};
-use frame_support::{traits::Get, BoundedVec, RuntimeDebug};
+use frame_support::{pallet_prelude::MaxEncodedLen, traits::Get, BoundedVec, RuntimeDebug};
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchError, FixedU128, Permill};
 use sp_std::vec::Vec;
@@ -118,7 +118,7 @@ pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	pub fee: Permill,
 }
 
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
+#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, MaxEncodedLen, RuntimeDebug)]
 pub enum DexRouteNode<PoolId> {
 	Curve(PoolId),
 	Uniswap(PoolId),
@@ -126,7 +126,7 @@ pub enum DexRouteNode<PoolId> {
 
 /// Describes route for DEX.
 /// `Direct` gives vector of pool_id to use as router.
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
+#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, MaxEncodedLen, RuntimeDebug)]
 pub enum DexRoute<PoolId, MaxHops: Get<u32>> {
 	Direct(BoundedVec<DexRouteNode<PoolId>, MaxHops>),
 }
