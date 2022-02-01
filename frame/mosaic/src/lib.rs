@@ -11,6 +11,7 @@ mod relayer;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+pub mod weights;
 
 pub use decay::{BudgetPenaltyDecayer, Decayer};
 pub use pallet::*;
@@ -27,6 +28,7 @@ pub mod pallet {
 	use crate::{
 		decay::Decayer,
 		relayer::{RelayerConfig, StaleRelayer},
+		weights::WeightInfo,
 	};
 	use codec::FullCodec;
 	use composable_traits::math::SafeArithmetic;
@@ -46,11 +48,11 @@ pub mod pallet {
 	};
 	use sp_std::{fmt::Debug, str};
 
-    pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type BalanceOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::Balance;
-    pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
-    pub(crate) type AssetIdOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::AssetId;
-    pub(crate) type NetworkIdOf<T> = <T as Config>::NetworkId;
+	pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
+	pub(crate) type AssetIdOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::AssetId;
+	pub(crate) type NetworkIdOf<T> = <T as Config>::NetworkId;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -78,6 +80,8 @@ pub mod pallet {
 		/// Origin capable of setting the relayer. Inteded to be RootOrHalfCouncil, as it is also
 		/// used as the origin capable of stopping attackers.
 		type ControlOrigin: EnsureOrigin<Self::Origin>;
+
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]

@@ -816,7 +816,7 @@ pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false
+			return false;
 		}
 		!matches!(
 			call,
@@ -906,6 +906,7 @@ impl mosaic::Config for Runtime {
 	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
 	type NetworkId = u32;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = ();
 }
 
 construct_runtime!(
@@ -1029,6 +1030,7 @@ mod benches {
 		[vault, Vault]
 		[oracle, Oracle]
 		[dutch_auction, DutchAuction]
+		[mosaic, Mosaic]
 	);
 }
 

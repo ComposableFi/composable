@@ -105,9 +105,9 @@ impl pallet_mosaic::Config for Test {
 	type MinimumTTL = MinimumTTL;
 	type MinimumTimeLockPeriod = MinimumTimeLockPeriod;
 	type BudgetPenaltyDecayer = pallet_mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
-
 	type NetworkId = NetworkId;
 	type ControlOrigin = EnsureRoot<Self::AccountId>;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
