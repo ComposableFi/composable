@@ -5,18 +5,22 @@ use sp_runtime::traits::BadOrigin;
 #[test]
 fn set_local_admin_tests() {
 	new_test_ext().execute_with(|| {
-		assert_noop!(AssetsRegistry::set_local_admin(Origin::signed(ALICE), ALICE), BadOrigin,);
+		assert_eq!(AssetsRegistry::local_admin(), None);
+		assert_noop!(AssetsRegistry::set_local_admin(Origin::signed(ALICE), ALICE), BadOrigin);
 
 		assert_ok!(AssetsRegistry::set_local_admin(Origin::signed(ROOT), ALICE));
+		assert_eq!(AssetsRegistry::local_admin(), Some(ALICE));
 	})
 }
 
 #[test]
 fn set_foreign_admin_tests() {
 	new_test_ext().execute_with(|| {
-		assert_noop!(AssetsRegistry::set_foreign_admin(Origin::signed(BOB), BOB), BadOrigin,);
+		assert_eq!(AssetsRegistry::foreign_admin(), None);
+		assert_noop!(AssetsRegistry::set_foreign_admin(Origin::signed(BOB), BOB), BadOrigin);
 
 		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::signed(ROOT), BOB));
+		assert_eq!(AssetsRegistry::foreign_admin(), Some(BOB));
 	})
 }
 
