@@ -2,9 +2,8 @@ name: Run Simnode
 
 on:
   pull_request:
-    branches:
-      - releases
-      - main
+    types:
+      - labeled
 
 jobs:
   simnode:
@@ -44,7 +43,7 @@ jobs:
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
-
+        if: contains( github.event.pull_request.labels.*.name, 'needs-benchmarks')
         if: env.RUNTIME_CHECK == 1
         id: run_simnode
         run: .maintain/run_simnode.sh
