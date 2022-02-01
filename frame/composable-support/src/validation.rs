@@ -106,7 +106,7 @@ pub struct Invalid;
 
 impl<T> Validate<T, Invalid> for Invalid {
 	#[inline(always)]
-	fn validate(_extinsic_input: T) -> Result<T, &'static str> {
+	fn validate(_input: T) -> Result<T, &'static str> {
 		Err("not valid")
 	}
 }
@@ -125,8 +125,8 @@ where
 {
 	#[inline(always)]
 	fn validate(input: T) -> Result<T, &'static str> {
-		let value = <U as Validate<T, U>>::validate(input)?;
-		let value = <V as Validate<T, V>>::validate(value)?;
+		let value = U::validate(input)?;
+		let value = V::validate(value)?;
 		Ok(value)
 	}
 }
@@ -142,9 +142,9 @@ where
 {
 	#[inline(always)]
 	fn validate(input: T) -> Result<T, &'static str> {
-		let value = <U as Validate<T, U>>::validate(input)?;
-		let value = <V as Validate<T, V>>::validate(value)?;
-		let value = <W as Validate<T, W>>::validate(value)?;
+		let value = U::validate(input)?;
+		let value = V::validate(value)?;
+		let value = W::validate(value)?;
 		Ok(value)
 	}
 }
@@ -158,10 +158,10 @@ where
 {
 	#[inline(always)]
 	fn validate(input: T) -> Result<T, &'static str> {
-		let value = <U as Validate<T, U>>::validate(input)?;
-		let value = <V as Validate<T, V>>::validate(value)?;
-		let value = <W as Validate<T, W>>::validate(value)?;
-		let value = <Z as Validate<T, Z>>::validate(value)?;
+		let value = U::validate(input)?;
+		let value = V::validate(value)?;
+		let value = W::validate(value)?;
+		let value = Z::validate(value)?;
 		Ok(value)
 	}
 }
