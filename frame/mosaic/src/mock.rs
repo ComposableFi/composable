@@ -13,6 +13,7 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use system::EnsureRoot;
 
 pub type AccountId = u128;
 pub type BlockNumber = u64;
