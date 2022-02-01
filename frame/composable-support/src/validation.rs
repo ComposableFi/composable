@@ -53,7 +53,7 @@ impl<T> Validate<T, Valid> for Valid {
 	}
 }
 
-impl<T, U, V> Validate<T, (U, V)> for U
+impl<T, U, V> Validate<T, (U, V)> for (U, V)
 where
 	U: Validate<T, U>,
 	V: Validate<T, V>,
@@ -69,7 +69,7 @@ where
 // as per substrate pattern and existing macroses for similar purposes, they tend to make things
 // flat like `#[impl_trait_for_tuples::impl_for_tuples(30)]`
 // so if we will need more than 3, can consider it
-impl<T, U, V, W> Validate<T, (U, V, W)> for U
+impl<T, U, V, W> Validate<T, (U, V, W)> for (U, V, W)
 where
 	U: Validate<T, U>,
 	V: Validate<T, V>,
@@ -84,7 +84,7 @@ where
 	}
 }
 
-impl<T, U, V, W, Z> Validate<T, (U, V, W, Z)> for U
+impl<T, U, V, W, Z> Validate<T, (U, V, W, Z)> for (U, V, W, Z)
 where
 	U: Validate<T, U>,
 	V: Validate<T, V>,
@@ -220,7 +220,7 @@ mod test {
 		let value = X { a: 10, b: 0xCAFEBABE };
 
 		assert!(
-			<ValidARange as Validate<X, ManyValidatorsTagsFlatInvalid>>::validate(value).is_err()
+			<ManyValidatorsTagsFlatInvalid as Validate<X, ManyValidatorsTagsFlatInvalid>>::validate(value).is_err()
 		);
 	}
 
@@ -228,7 +228,12 @@ mod test {
 	fn flat_validator_multiple_valid() {
 		let value = X { a: 10, b: 0xCAFEBABE };
 
-		assert!(<ValidARange as Validate<X, ManyValidatorsTagsFlatValid>>::validate(value).is_err());
+		assert!(
+			<ManyValidatorsTagsFlatValid as Validate<X, ManyValidatorsTagsFlatValid>>::validate(
+				value
+			)
+			.is_err()
+		);
 	}
 
 	#[test]
@@ -237,8 +242,6 @@ mod test {
 		assert_ok!(value);
 		let value = Validated::new(42, Invalid);
 		assert!(value.is_err());
-		let some_x = X { a: 10, b: 0xCAFEBABE };
-		let value = Validated::new(some_x, ValidARange);
 	}
 
 	#[test]
