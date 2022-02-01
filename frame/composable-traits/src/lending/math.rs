@@ -24,7 +24,7 @@ pub fn calc_utilization_ratio(
 	borrows: LiftedFixedBalance,
 ) -> Result<Percent, ArithmeticError> {
 	if borrows.is_zero() {
-		return Ok(Percent::zero())
+		return Ok(Percent::zero());
 	}
 
 	let total = cash.safe_add(&borrows)?;
@@ -113,16 +113,18 @@ impl InterestRateModel {
 }
 
 pub struct InteresteRateModelIsValid;
-impl Validate<InteresteRateModelIsValid> for InterestRateModel {
-	fn validate(self) -> Result<Self, &'static str> {
+impl Validate<InterestRateModel, InteresteRateModelIsValid> for InteresteRateModelIsValid {
+	fn validate(interest_rate_model: InterestRateModel) -> Result<InterestRateModel, &'static str> {
 		const ERROR: &str = "interest rate model is not valid";
-		match self {
-			InterestRateModel::Jump(x) =>
+		match interest_rate_model {
+			InterestRateModel::Jump(x) => {
 				JumpModel::new(x.base_rate, x.jump_rate, x.full_rate, x.target_utilization)
 					.ok_or(ERROR)
-					.map(InterestRateModel::Jump),
-			InterestRateModel::Curve(x) =>
-				CurveModel::new(x.base_rate).ok_or(ERROR).map(InterestRateModel::Curve),
+					.map(InterestRateModel::Jump)
+			},
+			InterestRateModel::Curve(x) => {
+				CurveModel::new(x.base_rate).ok_or(ERROR).map(InterestRateModel::Curve)
+			},
 			InterestRateModel::DynamicPIDController(x) => DynamicPIDControllerModel::new(
 				x.proportional_parameter,
 				x.integral_parameter,
@@ -146,10 +148,12 @@ impl InterestRate for InterestRateModel {
 		match self {
 			Self::Jump(jump) => jump.get_borrow_rate(utilization),
 			Self::Curve(curve) => curve.get_borrow_rate(utilization),
-			Self::DynamicPIDController(dynamic_pid_model) =>
-				dynamic_pid_model.get_borrow_rate(utilization),
-			Self::DoubleExponent(double_exponents_model) =>
-				double_exponents_model.get_borrow_rate(utilization),
+			Self::DynamicPIDController(dynamic_pid_model) => {
+				dynamic_pid_model.get_borrow_rate(utilization)
+			},
+			Self::DoubleExponent(double_exponents_model) => {
+				double_exponents_model.get_borrow_rate(utilization)
+			},
 		}
 	}
 }
@@ -185,11 +189,11 @@ impl JumpModel {
 		full_rate: ZeroToOneFixedU128,
 		target_utilization: Percent,
 	) -> Option<JumpModel> {
-		if base_rate <= Self::MAX_BASE_RATE &&
-			jump_rate <= Self::MAX_JUMP_RATE &&
-			full_rate <= Self::MAX_FULL_RATE &&
-			base_rate <= jump_rate &&
-			jump_rate <= full_rate
+		if base_rate <= Self::MAX_BASE_RATE
+			&& jump_rate <= Self::MAX_JUMP_RATE
+			&& full_rate <= Self::MAX_FULL_RATE
+			&& base_rate <= jump_rate
+			&& jump_rate <= full_rate
 		{
 			let model = Self { base_rate, jump_rate, full_rate, target_utilization };
 			Some(model)
@@ -297,8 +301,8 @@ impl DynamicPIDControllerModel {
 		utilization_ratio: FixedU128,
 	) -> Result<Rate, ArithmeticError> {
 		// compute error term `et = uo - ut`
-		let et: i128 = self.target_utilization.into_inner().try_into().unwrap_or(0_i128) -
-			utilization_ratio.into_inner().try_into().unwrap_or(0_i128);
+		let et: i128 = self.target_utilization.into_inner().try_into().unwrap_or(0_i128)
+			- utilization_ratio.into_inner().try_into().unwrap_or(0_i128);
 		let et: FixedI128 = FixedI128::from_inner(et);
 		// compute proportional term `pt = kp * et`
 		let pt = self.proportional_parameter.checked_mul(&et).ok_or(ArithmeticError::Overflow)?;
@@ -362,7 +366,7 @@ impl InterestRate for DynamicPIDControllerModel {
 		// const NINE: usize = 9;
 		let utilization: Rate = utilization.into();
 		if let Ok(interest_rate) = Self::get_output_utilization_ratio(self, utilization) {
-			return Some(interest_rate)
+			return Some(interest_rate);
 		}
 		None
 	}
@@ -386,7 +390,7 @@ impl DoubleExponentModel {
 	pub fn new(coefficients: [u8; 16]) -> Option<Self> {
 		let sum_of_coefficients = coefficients.iter().fold(0_u16, |acc, &c| acc + c as u16);
 		if sum_of_coefficients == EXPECTED_COEFFICIENTS_SUM {
-			return Some(DoubleExponentModel { coefficients })
+			return Some(DoubleExponentModel { coefficients });
 		}
 		None
 	}

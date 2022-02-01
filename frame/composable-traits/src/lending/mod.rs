@@ -47,29 +47,39 @@ pub struct MarketModelValid;
 #[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
 pub struct CurrencyPairIsNotSame;
 
-impl<LiquidationStrategyId, Asset: Eq> Validate<MarketModelValid>
-	for CreateInput<LiquidationStrategyId, Asset>
+impl<LiquidationStrategyId, Asset: Eq>
+	Validate<CreateInput<LiquidationStrategyId, Asset>, MarketModelValid> for MarketModelValid
 {
-	fn validate(self) -> Result<Self, &'static str> {
-		if self.updatable.collateral_factor < MoreThanOneFixedU128::one() {
-			return Err("collateral factor must be >=1")
+	fn validate(
+		create_input: CreateInput<LiquidationStrategyId, Asset>,
+	) -> Result<CreateInput<LiquidationStrategyId, Asset>, &'static str> {
+		if create_input.updatable.collateral_factor < MoreThanOneFixedU128::one() {
+			return Err("collateral factor must be >= 1");
 		}
 
-		let interest_rate_model =
-			Validate::<InteresteRateModelIsValid>::validate(self.updatable.interest_rate_model)?;
+		let interest_rate_model = <InteresteRateModelIsValid as Validate<
+			InterestRateModel,
+			InteresteRateModelIsValid,
+		>>::validate(create_input.updatable.interest_rate_model)?;
 
-		Ok(Self { updatable: UpdateInput { interest_rate_model, ..self.updatable }, ..self })
+		Ok(CreateInput {
+			updatable: UpdateInput { interest_rate_model, ..create_input.updatable },
+			..create_input
+		})
 	}
 }
 
-impl<LiquidationStrategyId, Asset: Eq> Validate<CurrencyPairIsNotSame>
-	for CreateInput<LiquidationStrategyId, Asset>
+impl<LiquidationStrategyId, Asset: Eq>
+	Validate<CreateInput<LiquidationStrategyId, Asset>, CurrencyPairIsNotSame>
+	for CurrencyPairIsNotSame
 {
-	fn validate(self) -> Result<Self, &'static str> {
-		if self.currency_pair.base == self.currency_pair.quote {
+	fn validate(
+		create_input: CreateInput<LiquidationStrategyId, Asset>,
+	) -> Result<CreateInput<LiquidationStrategyId, Asset>, &'static str> {
+		if create_input.currency_pair.base == create_input.currency_pair.quote {
 			Err("currency pair must be different assets")
 		} else {
-			Ok(self)
+			Ok(create_input)
 		}
 	}
 }
