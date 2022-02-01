@@ -6,50 +6,61 @@
 //! # Example
 //! ## Single Validation
 //! ```
-//! pub struct SomeExtrinsicInput;
-//! #[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
-//! pub struct ValidateSomeExtrinsicInput;
+//! use composable_support::validation::{self, Validate, Validated};
+//! use scale_info::TypeInfo;
 //!
-//! impl Validate<SomeExtrinsicInput, ValidateSomeExtrinsicInput>
-//!     for ValidateSomeExtrinsicInput {
-//!     fn validate(input: SomeExtrinsicInput) -> Result<SomeExtrinsicInput, &'static str> {
+//! pub struct SomeInput;
+//!
+//! #[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+//! pub struct ValidateSomeInput;
+//!
+//! impl Validate<SomeInput, ValidateSomeInput>
+//!     for ValidateSomeInput {
+//!     fn validate(input: SomeInput) -> Result<SomeInput, &'static str> {
 //!         // ... validation code
+//!         Ok(input)
 //!     }
 //! }
 //!
-//! pub type CheckSomeCondition = (ValidateSomeExtrinsicInput, validation::Valid);
+//! pub type CheckSomeCondition = (ValidateSomeInput, validation::Valid);
 //!
-//! pub someExtrinsic(input: Validated<SomeExtrinsicInput, CheckSomeCondition>) {
+//! pub fn someExtrinsic(input: Validated<SomeInput, CheckSomeCondition>) {
 //!     // ... extrinsic code
 //! }
 //! ```
 //!
 //! ## Multiple Validations (Up to 3)
 //! ```
-//! pub struct SomeExtrinsicInput;
+//! use composable_support::validation::{self, Validate, Validated};
+//! use scale_info::TypeInfo;
+//!
+//! pub struct SomeInput;
+//!
 //! #[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
-//! pub struct ValidateSomeExtrinsicInput;
+//! pub struct ValidateSomeInput;
 //!
 //! #[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
 //! pub struct ValidateAnotherCondition;
 //!
-//! impl Validate<SomeExtrinsicInput, ValidateSomeExtrinsicInput>
-//!     for ValidateSomeExtrinsicInput {
-//!     fn validate(input: SomeExtrinsicInput) -> Result<SomeExtrinsicInput, &'static str> {
+//! impl Validate<SomeInput, ValidateSomeInput>
+//!     for ValidateSomeInput {
+//!     fn validate(input: SomeInput) -> Result<SomeInput, &'static str> {
 //!         // ... validation code
+//!         return Ok(input)
 //!     }
 //! }
 //!
-//! impl Validate<SomeExtrinsicInput, ValidateAnotherCondition>
+//! impl Validate<SomeInput, ValidateAnotherCondition>
 //!     for ValidateAnotherCondition {
-//!     fn validate(input: SomeExtrinsicInput) -> Result<SomeExtrinsicInput, &'static str> {
+//!     fn validate(input: SomeInput) -> Result<SomeInput, &'static str> {
 //!         // ... validation code
+//!         return Ok(input)
 //!     }
 //! }
 //!
-//! pub type CheckSomeConditions = (ValidateSomeExtrinsicInput, ValidateAnotherCondition, validation::Valid);
+//! pub type CheckSomeConditions = (ValidateSomeInput, ValidateAnotherCondition, validation::Valid);
 //!
-//! pub someExtrinsic(input: Validated<SomeExtrinsicInput, CheckSomeConditions>) {
+//! pub fn someExtrinsic(input: Validated<SomeInput, CheckSomeConditions>) {
 //!     // ... extrinsic code
 //! }
 //! ```
