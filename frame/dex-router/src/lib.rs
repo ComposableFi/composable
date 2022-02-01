@@ -230,6 +230,7 @@ pub mod pallet {
 				.map(|DexRoute::Direct(route)| route.into_inner())
 		}
 
+		// TODO: expected minimum value can be provided from input parameter.
 		fn exchange(
 			who: &T::AccountId,
 			asset_pair: CurrencyPair<T::AssetId>,
