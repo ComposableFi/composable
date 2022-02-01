@@ -860,7 +860,7 @@ impl dutch_auction::Config for Runtime {
 }
 
 parameter_types! {
-  pub const MosaicId: PalletId = PalletId(*b"plmosaic");
+	  pub const MosaicId: PalletId = PalletId(*b"plmosaic");
 	pub const MinimumTTL: BlockNumber = 10;
 	pub const MinimumTimeLockPeriod: BlockNumber = 20;
 }
@@ -873,6 +873,7 @@ impl mosaic::Config for Runtime {
 	type MinimumTimeLockPeriod = MinimumTimeLockPeriod;
 	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
 	type NetworkId = u32;
+	type ControlOrigin = EnsureRootOrHalfCouncil;
 }
 
 construct_runtime!(

@@ -70,6 +70,10 @@ pub mod pallet {
 			+ PartialEq;
 
 		type NetworkId: FullCodec + TypeInfo + Clone + Debug + PartialEq;
+
+		/// Origin capable of setting the relayer. Inteded to be RootOrHalfCouncil, as it is also
+		/// used as the origin capable of stopping attackers.
+		type ControlOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::pallet]
@@ -254,7 +258,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			relayer: T::AccountId,
 		) -> DispatchResultWithPostInfo {
-			ensure_root(origin)?;
+			T::ControlOrigin::ensure_origin(origin)?;
 			Relayer::<T>::set(Some(StaleRelayer::new(relayer.clone())));
 			Self::deposit_event(Event::RelayerSet { relayer });
 			Ok(().into())
@@ -308,7 +312,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			// Can also be token governance associated I reckon, as Angular holders should be able
 			// to grant mosaic permission to mint. We'll save that for phase 3.
-			ensure_root(origin)?;
+			T::ControlOrigin::ensure_origin(origin)?;
 			let current_block = <frame_system::Pallet<T>>::block_number();
 
 			AssetsInfo::<T>::mutate(asset_id, |item| {
@@ -549,7 +553,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			period: BlockNumberOf<T>,
 		) -> DispatchResultWithPostInfo {
-			ensure_root(origin)?;
+			T::ControlOrigin::ensure_origin(origin)?;
 			ensure!(period > T::MinimumTimeLockPeriod::get(), Error::<T>::BadTimelockPeriod);
 			TimeLockPeriod::<T>::set(period);
 			Ok(().into())

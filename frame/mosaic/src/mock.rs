@@ -13,6 +13,7 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use system::EnsureRoot;
 
 pub type AccountId = u128;
 pub type BlockNumber = u64;
@@ -105,6 +106,7 @@ impl pallet_mosaic::Config for Test {
 	type BudgetPenaltyDecayer = pallet_mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
 
 	type NetworkId = NetworkId;
+	type ControlOrigin = EnsureRoot<Self::AccountId>;
 }
 
 // Build genesis storage according to the mock runtime.
