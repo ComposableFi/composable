@@ -1,3 +1,59 @@
+//! Module for validating extrinsic inputs
+//!
+//! This module is made of two main parts that are needed to validate an
+//! extrinsic input, the `Validated` struct and the `Valitate` trait.
+//!
+//! # Example
+//! ## Single Validation
+//! ```
+//! pub struct SomeExtrinsicInput;
+//! #[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+//! pub struct ValidateSomeExtrinsicInput;
+//!
+//! impl Validate<SomeExtrinsicInput, ValidateSomeExtrinsicInput>
+//!     for ValidateSomeExtrinsicInput {
+//!     fn validate(input: SomeExtrinsicInput) -> Result<SomeExtrinsicInput, &'static str> {
+//!         // ... validation code
+//!     }
+//! }
+//!
+//! pub type CheckSomeCondition = (ValidateSomeExtrinsicInput, validation::Valid);
+//!
+//! pub someExtrinsic(input: Validated<SomeExtrinsicInput, CheckSomeCondition>) {
+//!     // ... extrinsic code
+//! }
+//! ```
+//!
+//! ## Multiple Validations (Up to 3)
+//! ```
+//! pub struct SomeExtrinsicInput;
+//! #[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+//! pub struct ValidateSomeExtrinsicInput;
+//!
+//! #[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+//! pub struct ValidateAnotherCondition;
+//!
+//! impl Validate<SomeExtrinsicInput, ValidateSomeExtrinsicInput>
+//!     for ValidateSomeExtrinsicInput {
+//!     fn validate(input: SomeExtrinsicInput) -> Result<SomeExtrinsicInput, &'static str> {
+//!         // ... validation code
+//!     }
+//! }
+//!
+//! impl Validate<SomeExtrinsicInput, ValidateAnotherCondition>
+//!     for ValidateAnotherCondition {
+//!     fn validate(input: SomeExtrinsicInput) -> Result<SomeExtrinsicInput, &'static str> {
+//!         // ... validation code
+//!     }
+//! }
+//!
+//! pub type CheckSomeConditions = (ValidateSomeExtrinsicInput, ValidateAnotherCondition, validation::Valid);
+//!
+//! pub someExtrinsic(input: Validated<SomeExtrinsicInput, CheckSomeConditions>) {
+//!     // ... extrinsic code
+//! }
+//! ```
+
 use core::marker::PhantomData;
 use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
