@@ -95,7 +95,7 @@ pub trait ValidateDispatch<U>: Sized {
 
 pub trait Validate<T, U> {
 	// use string here because in serde layer there is not dispatch
-	fn validate(extrinsic_input: T) -> Result<T, &'static str>;
+	fn validate(input: T) -> Result<T, &'static str>;
 }
 
 #[derive(Debug, Eq, PartialEq, Default)]
@@ -113,8 +113,8 @@ impl<T> Validate<T, Invalid> for Invalid {
 
 impl<T> Validate<T, Valid> for Valid {
 	#[inline(always)]
-	fn validate(extrinsic_input: T) -> Result<T, &'static str> {
-		Ok(extrinsic_input)
+	fn validate(input: T) -> Result<T, &'static str> {
+		Ok(input)
 	}
 }
 
@@ -124,8 +124,8 @@ where
 	V: Validate<T, V>,
 {
 	#[inline(always)]
-	fn validate(extrinsic_input: T) -> Result<T, &'static str> {
-		let value = <U as Validate<T, U>>::validate(extrinsic_input)?;
+	fn validate(input: T) -> Result<T, &'static str> {
+		let value = <U as Validate<T, U>>::validate(input)?;
 		let value = <V as Validate<T, V>>::validate(value)?;
 		Ok(value)
 	}
@@ -141,8 +141,8 @@ where
 	W: Validate<T, W>,
 {
 	#[inline(always)]
-	fn validate(extrinsic_input: T) -> Result<T, &'static str> {
-		let value = <U as Validate<T, U>>::validate(extrinsic_input)?;
+	fn validate(input: T) -> Result<T, &'static str> {
+		let value = <U as Validate<T, U>>::validate(input)?;
 		let value = <V as Validate<T, V>>::validate(value)?;
 		let value = <W as Validate<T, W>>::validate(value)?;
 		Ok(value)
@@ -157,8 +157,8 @@ where
 	Z: Validate<T, Z>,
 {
 	#[inline(always)]
-	fn validate(extrinsic_input: T) -> Result<T, &'static str> {
-		let value = <U as Validate<T, U>>::validate(extrinsic_input)?;
+	fn validate(input: T) -> Result<T, &'static str> {
+		let value = <U as Validate<T, U>>::validate(input)?;
 		let value = <V as Validate<T, V>>::validate(value)?;
 		let value = <W as Validate<T, W>>::validate(value)?;
 		let value = <Z as Validate<T, Z>>::validate(value)?;
@@ -203,8 +203,8 @@ impl<T: codec::Encode + codec::Decode, U: Validate<T, U>> codec::WrapperTypeEnco
 }
 
 impl<T, U: Validate<T, U>> Validate<T, U> for Validated<T, U> {
-	fn validate(extrinsic_input: T) -> Result<T, &'static str> {
-		<U as Validate<T, U>>::validate(extrinsic_input)
+	fn validate(input: T) -> Result<T, &'static str> {
+		<U as Validate<T, U>>::validate(input)
 	}
 }
 
@@ -239,21 +239,21 @@ mod test {
 	}
 
 	impl Validate<X, ValidARange> for ValidARange {
-		fn validate(extrinsic_input: X) -> Result<X, &'static str> {
-			if extrinsic_input.a > 10 {
+		fn validate(input: X) -> Result<X, &'static str> {
+			if input.a > 10 {
 				Err("Out of range")
 			} else {
-				Ok(extrinsic_input)
+				Ok(input)
 			}
 		}
 	}
 
 	impl Validate<X, ValidBRange> for ValidBRange {
-		fn validate(extrinsic_input: X) -> Result<X, &'static str> {
-			if extrinsic_input.b > 10 {
+		fn validate(input: X) -> Result<X, &'static str> {
+			if input.b > 10 {
 				Err("Out of range")
 			} else {
-				Ok(extrinsic_input)
+				Ok(input)
 			}
 		}
 	}
