@@ -11,10 +11,16 @@ pub struct Validated<T, U> {
 
 impl<T, U> Validated<T, U>
 where
-	Validated<T, U>: Validate<U>,
+	Validated<T, U>: Validate<T, U>,
+	U: Validate<T, U>,
 {
 	pub fn new(value: T, _validator_tag: U) -> Result<Self, &'static str> {
-		Validate::<U>::validate(Self { value, _marker: PhantomData })
+		// Validate::<U>::validate(Self { value, _marker: PhantomData })
+		// Ok(Self { value: Validate::<T, U>::validate(value), _marker: PhantomData })
+		match <U as Validate<T, U>>::validate(value) {
+			Ok(value) => Ok(Self { value, _marker: PhantomData }),
+			Err(e) => Err(e),
+		}
 	}
 }
 
@@ -22,9 +28,9 @@ pub trait ValidateDispatch<U>: Sized {
 	fn validate(self) -> Result<Self, DispatchError>;
 }
 
-pub trait Validate<U>: Sized {
+pub trait Validate<T, U> {
 	// use string here because in serde layer there is not dispatch
-	fn validate(self) -> Result<Self, &'static str>;
+	fn validate(extrinsic_input: T) -> Result<T, &'static str>;
 }
 
 #[derive(Debug, Eq, PartialEq, Default)]
@@ -33,25 +39,29 @@ pub struct Valid;
 #[derive(Debug, Eq, PartialEq, Default)]
 pub struct Invalid;
 
-impl<T> Validate<Invalid> for T {
+impl<T> Validate<T, Invalid> for Invalid {
 	#[inline(always)]
-	fn validate(self) -> Result<Self, &'static str> {
+	fn validate(_extinsic_input: T) -> Result<T, &'static str> {
 		Err("not valid")
 	}
 }
 
-impl<T> Validate<Valid> for T {
+impl<T> Validate<T, Valid> for Valid {
 	#[inline(always)]
-	fn validate(self) -> Result<Self, &'static str> {
-		Ok(self)
+	fn validate(extrinsic_input: T) -> Result<T, &'static str> {
+		Ok(extrinsic_input)
 	}
 }
 
-impl<T: Validate<U> + Validate<V>, U, V> Validate<(U, V)> for T {
+impl<T, U, V> Validate<T, (U, V)> for U
+where
+	U: Validate<T, U>,
+	V: Validate<T, V>,
+{
 	#[inline(always)]
-	fn validate(self) -> Result<Self, &'static str> {
-		let value = Validate::<U>::validate(self)?;
-		let value = Validate::<V>::validate(value)?;
+	fn validate(extrinsic_input: T) -> Result<T, &'static str> {
+		let value = <U as Validate<T, U>>::validate(extrinsic_input)?;
+		let value = <V as Validate<T, V>>::validate(value)?;
 		Ok(value)
 	}
 }
@@ -59,38 +69,47 @@ impl<T: Validate<U> + Validate<V>, U, V> Validate<(U, V)> for T {
 // as per substrate pattern and existing macroses for similar purposes, they tend to make things
 // flat like `#[impl_trait_for_tuples::impl_for_tuples(30)]`
 // so if we will need more than 3, can consider it
-impl<T: Validate<U> + Validate<V> + Validate<W>, U, V, W> Validate<(U, V, W)> for T {
-	#[inline(always)]
-	fn validate(self) -> Result<Self, &'static str> {
-		let value = Validate::<U>::validate(self)?;
-		let value = Validate::<V>::validate(value)?;
-		let value = Validate::<W>::validate(value)?;
-		Ok(value)
-	}
-}
-
-impl<T: Validate<U> + Validate<V> + Validate<W> + Validate<Z>, U, V, W, Z> Validate<(U, V, W, Z)>
-	for T
+impl<T, U, V, W> Validate<T, (U, V, W)> for U
+where
+	U: Validate<T, U>,
+	V: Validate<T, V>,
+	W: Validate<T, W>,
 {
 	#[inline(always)]
-	fn validate(self) -> Result<Self, &'static str> {
-		let value = Validate::<U>::validate(self)?;
-		let value = Validate::<V>::validate(value)?;
-		let value = Validate::<W>::validate(value)?;
-		let value = Validate::<Z>::validate(value)?;
+	fn validate(extrinsic_input: T) -> Result<T, &'static str> {
+		let value = <U as Validate<T, U>>::validate(extrinsic_input)?;
+		let value = <V as Validate<T, V>>::validate(value)?;
+		let value = <W as Validate<T, W>>::validate(value)?;
 		Ok(value)
 	}
 }
 
-impl<T: Validate<U>, U> Validated<T, U> {
+impl<T, U, V, W, Z> Validate<T, (U, V, W, Z)> for U
+where
+	U: Validate<T, U>,
+	V: Validate<T, V>,
+	W: Validate<T, W>,
+	Z: Validate<T, Z>,
+{
+	#[inline(always)]
+	fn validate(extrinsic_input: T) -> Result<T, &'static str> {
+		let value = <U as Validate<T, U>>::validate(extrinsic_input)?;
+		let value = <V as Validate<T, V>>::validate(value)?;
+		let value = <W as Validate<T, W>>::validate(value)?;
+		let value = <Z as Validate<T, Z>>::validate(value)?;
+		Ok(value)
+	}
+}
+
+impl<T, U: Validate<T, U>> Validated<T, U> {
 	pub fn value(self) -> T {
 		self.value
 	}
 }
 
-impl<T: codec::Decode + Validate<U>, U> codec::Decode for Validated<T, U> {
+impl<T: codec::Decode, U: Validate<T, U>> codec::Decode for Validated<T, U> {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
-		let value = Validate::<U>::validate(T::decode(input)?)?;
+		let value = <U as Validate<T, U>>::validate(T::decode(input)?)?;
 		Ok(Validated { value, _marker: PhantomData })
 	}
 	fn skip<I: codec::Input>(input: &mut I) -> Result<(), codec::Error> {
@@ -113,9 +132,20 @@ pub(crate) mod private {
 	}
 }
 
-impl<T: codec::Encode + codec::Decode + Validate<U>, U> codec::WrapperTypeEncode
+impl<T: codec::Encode + codec::Decode, U: Validate<T, U>> codec::WrapperTypeEncode
 	for Validated<T, U>
 {
+}
+
+// impl<T: codec::Encode + codec::Decode, U: Validate<T, U>> codec::WrapperTypeDecode
+// 	for Validated<T, U>
+// {
+// }
+
+impl<T, U: Validate<T, U>> Validate<T, U> for Validated<T, U> {
+	fn validate(extrinsic_input: T) -> Result<T, &'static str> {
+		<U as Validate<T, U>>::validate(extrinsic_input)
+	}
 }
 
 #[cfg(test)]
@@ -132,6 +162,9 @@ mod test {
 	type CheckARangeTag = (ValidARange, Valid);
 	type CheckBRangeTag = (ValidBRange, Valid);
 	type CheckABRangeTag = (ValidARange, (ValidBRange, Valid));
+	// type ManyValidatorsTagsNested = (ValidARange, (ValidBRange, (Invalid, Valid)));
+	type ManyValidatorsTagsFlatInvalid = (ValidARange, ValidBRange, Invalid, Valid);
+	type ManyValidatorsTagsFlatValid = (ValidARange, ValidBRange, Valid);
 	// note: next seems is not supported yet
 	// type NestedValidated = (Validated<X, Valid>, Validated<Y,  Valid>);
 	// #[derive(Debug, Eq, PartialEq, codec::Encode, codec::Decode, Default)]
@@ -144,44 +177,58 @@ mod test {
 		b: u32,
 	}
 
-	impl Validate<ValidARange> for X {
-		fn validate(self) -> Result<X, &'static str> {
-			if self.a > 10 {
+	impl Validate<X, ValidARange> for ValidARange {
+		fn validate(extrinsic_input: X) -> Result<X, &'static str> {
+			if extrinsic_input.a > 10 {
 				Err("Out of range")
 			} else {
-				Ok(self)
+				Ok(extrinsic_input)
 			}
 		}
 	}
 
-	impl Validate<ValidBRange> for X {
-		fn validate(self) -> Result<X, &'static str> {
-			if self.b > 10 {
+	impl Validate<X, ValidBRange> for ValidBRange {
+		fn validate(extrinsic_input: X) -> Result<X, &'static str> {
+			if extrinsic_input.b > 10 {
 				Err("Out of range")
 			} else {
-				Ok(self)
+				Ok(extrinsic_input)
 			}
 		}
 	}
 
+	// #[test]
+	// fn nested_validator() {
+	// 	let valid = X { a: 10, b: 0xCAFEBABE };
+	//
+	// 	assert!(Validate::<X, ManyValidatorsTagsNested>::validate(valid).is_err());
+	// }
+	//
+	// #[test]
+	// fn either_nested_or_flat() {
+	// 	let valid = X { a: 10, b: 0xCAFEBABE };
+	// 	assert_eq!(
+	// 		<ManyValidatorsTagsNested as Validate<X, ManyValidatorsTagsNested>>::validate(
+	// 			valid.clone()
+	// 		),
+	// 		Validate::<X, ManyValidatorsTagsFlat>::validate(valid)
+	// 	);
+	// }
+
 	#[test]
-	fn nested_validator() {
-		let valid = X { a: 10, b: 0xCAFEBABE };
+	fn flat_validator_multiple_invalid() {
+		let value = X { a: 10, b: 0xCAFEBABE };
 
-		type ManyValidatorsTagsNested = (ValidARange, (ValidBRange, (Invalid, Valid)));
-
-		assert!(Validate::<ManyValidatorsTagsNested>::validate(valid).is_err());
-	}
-
-	#[test]
-	fn either_nested_or_flat() {
-		let valid = X { a: 10, b: 0xCAFEBABE };
-		type ManyValidatorsTagsNested = (ValidARange, (ValidBRange, (Invalid, Valid)));
-		type ManyValidatorsTagsFlat = (ValidARange, ValidBRange, Invalid, Valid);
-		assert_eq!(
-			Validate::<ManyValidatorsTagsNested>::validate(valid.clone()),
-			Validate::<ManyValidatorsTagsFlat>::validate(valid)
+		assert!(
+			<ValidARange as Validate<X, ManyValidatorsTagsFlatInvalid>>::validate(value).is_err()
 		);
+	}
+
+	#[test]
+	fn flat_validator_multiple_valid() {
+		let value = X { a: 10, b: 0xCAFEBABE };
+
+		assert!(<ValidARange as Validate<X, ManyValidatorsTagsFlatValid>>::validate(value).is_err());
 	}
 
 	#[test]
@@ -190,12 +237,15 @@ mod test {
 		assert_ok!(value);
 		let value = Validated::new(42, Invalid);
 		assert!(value.is_err());
+		let some_x = X { a: 10, b: 0xCAFEBABE };
+		let value = Validated::new(some_x, ValidARange);
 	}
 
 	#[test]
 	fn test_valid_a() {
 		let valid = X { a: 10, b: 0xCAFEBABE };
 		let bytes = valid.encode();
+
 		assert_eq!(
 			Ok(Validated { value: valid, _marker: PhantomData }),
 			Validated::<X, CheckARangeTag>::decode(&mut &bytes[..])
