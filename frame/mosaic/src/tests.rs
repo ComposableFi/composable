@@ -823,7 +823,7 @@ mod timelocked_mint {
 			decay in 1..100u128, // todo,
 			max_transfer_size in 1..10_000_000u128,
 			asset_id in 1..100u128,
-            network_id in 1..100u32,
+			network_id in 1..100u32,
 			start_block in 1..10_000u64,
 			(budget, first_part, second_part) in budget_with_split(),
 		) {
@@ -858,7 +858,7 @@ mod timelocked_mint {
 			decay in 1..100u128, // todo,
 			max_transfer_size in 1..10_000_000u128,
 			asset_id in 1..100u128,
-            network_id in 1..100u32,
+			network_id in 1..100u32,
 			start_block in 1..10_000u64,
 			(budget, first_part, second_part) in budget_with_split(),
 		) {
@@ -894,7 +894,7 @@ mod timelocked_mint {
 			decay_factor in 1..100u128, // todo,
 			max_transfer_size in 1..10_000_000u128,
 			asset_id in 1..100u128,
-            network_id in 1..100u32,
+			network_id in 1..100u32,
 			start_block in 1..10_000u64,
 			(budget, first_part, second_part) in budget_with_split(),
 			iteration_count in 2..10u64,

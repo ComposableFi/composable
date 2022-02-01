@@ -70,7 +70,7 @@ benchmarks! {
 		let transfer_amount: BalanceOf<T> = TRANSFER_AMOUNT.into();
 
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
-  }: _(RawOrigin::Signed(alice), network_id, asset_id, address, transfer_amount, true)
+  }: _(RawOrigin::Signed(alice), network_id, asset_id, address, transfer_amount, false)
 
   accept_transfer {
 		let relayer: T::AccountId = whitelisted_caller();
@@ -94,7 +94,7 @@ benchmarks! {
 		let transfer_amount: BalanceOf<T> = TRANSFER_AMOUNT.into();
 
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
-	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id, asset_id, address, transfer_amount, true));
+	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id, asset_id, address, transfer_amount, false));
   }: _(RawOrigin::Signed(relayer), alice, asset_id, transfer_amount)
 
   claim_stale_to {
@@ -119,7 +119,7 @@ benchmarks! {
 		let transfer_amount: BalanceOf<T> = TRANSFER_AMOUNT.into();
 
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
-	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id, asset_id, address, transfer_amount, true));
+	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id, asset_id, address, transfer_amount, false));
 		frame_system::Pallet::<T>::set_block_number(T::MinimumTimeLockPeriod::get() + 1.into());
   }: _(RawOrigin::Signed(alice.clone()), asset_id, alice.clone())
 
@@ -146,7 +146,7 @@ benchmarks! {
 
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
 
-	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id.clone(), asset_id, address, transfer_amount, true));
+	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id.clone(), asset_id, address, transfer_amount, false));
 	  assert_ok!(Mosaic::<T>::accept_transfer(RawOrigin::Signed(relayer.clone()).into(), alice.clone(), asset_id, transfer_amount));
 	  let current_block = frame_system::Pallet::<T>::block_number();
 	  let tx_id = generate_id::<T>(&alice, &network_id, &asset_id, &address, &transfer_amount, &current_block);
@@ -178,7 +178,7 @@ benchmarks! {
 
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
 
-	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id.clone(), asset_id, address, transfer_amount, true));
+	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id.clone(), asset_id, address, transfer_amount, false));
 	  assert_ok!(Mosaic::<T>::accept_transfer(RawOrigin::Signed(relayer.clone()).into(), alice.clone(), asset_id, transfer_amount));
 	  let current_block = frame_system::Pallet::<T>::block_number();
 	  let tx_id = generate_id::<T>(&alice, &network_id, &asset_id, &address, &transfer_amount, &current_block);
@@ -210,7 +210,7 @@ benchmarks! {
 
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
 
-	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id.clone(), asset_id, address, transfer_amount, true));
+	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id.clone(), asset_id, address, transfer_amount, false));
 	  assert_ok!(Mosaic::<T>::accept_transfer(RawOrigin::Signed(relayer.clone()).into(), alice.clone(), asset_id, transfer_amount));
 	  let current_block = frame_system::Pallet::<T>::block_number();
 	  let tx_id = generate_id::<T>(&alice, &network_id, &asset_id, &address, &transfer_amount, &current_block);

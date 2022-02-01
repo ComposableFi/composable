@@ -261,7 +261,7 @@ pub mod pallet {
 		/// Sets the current relayer configuration. This is enacted immediately and invalidates
 		/// inflight, incoming transactions from the previous relayer. Budgets remain in place
 		/// however.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::set_relayer())]
 		pub fn set_relayer(
 			origin: OriginFor<T>,
 			relayer: T::AccountId,
@@ -277,7 +277,7 @@ pub mod pallet {
 		/// # Restrictions
 		///  - Only callable by the current relayer.
 		///  - TTL must be sufficiently long.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::rotate_relayer())]
 		pub fn rotate_relayer(
 			origin: OriginFor<T>,
 			new: T::AccountId,
@@ -293,7 +293,7 @@ pub mod pallet {
 		}
 
 		/// Sets supported networks and maximum transaction sizes accepted by the relayer.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::set_network())]
 		pub fn set_network(
 			origin: OriginFor<T>,
 			network_id: NetworkIdOf<T>,
@@ -310,7 +310,7 @@ pub mod pallet {
 		///
 		/// # Restrictions
 		/// - Only callable by root
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::set_budget())]
 		#[transactional]
 		pub fn set_budget(
 			origin: OriginFor<T>,
@@ -353,7 +353,7 @@ pub mod pallet {
 		/// - Origin must have sufficient funds.
 		/// - Transfers near Balance::max may result in overflows, which are caught and returned as
 		///   an error.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::transfer_to())]
 		#[transactional]
 		pub fn transfer_to(
 			origin: OriginFor<T>,
@@ -414,7 +414,7 @@ pub mod pallet {
 		/// # Note
 		/// - Reclaim period is not reset if not all the funds are moved; menaing that the clock
 		///   remains ticking for the relayer to pick up the rest of the transaction.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::accept_transfer())]
 		#[transactional]
 		pub fn accept_transfer(
 			origin: OriginFor<T>,
@@ -465,7 +465,7 @@ pub mod pallet {
 
 		/// Claims user funds from the `OutgoingTransactions`, in case that the relayer has not
 		/// picked them up.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::claim_stale_to())]
 		#[transactional]
 		pub fn claim_stale_to(
 			origin: OriginFor<T>,
@@ -509,7 +509,7 @@ pub mod pallet {
 
 		/// Mints new tokens into the pallet's wallet, ready for the user to be picked up after
 		/// `lock_time` blocks have expired.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::timelocked_mint())]
 		pub fn timelocked_mint(
 			origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
@@ -561,7 +561,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::set_timelock_duration())]
 		pub fn set_timelock_duration(
 			origin: OriginFor<T>,
 			period: BlockNumberOf<T>,
@@ -574,7 +574,7 @@ pub mod pallet {
 
 		/// Burns funds waiting in incoming_transactions that are still unclaimed. May be used by
 		/// the relayer in case of finality issues on the other side of the bridge.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::rescind_timelocked_mint())]
 		#[transactional]
 		pub fn rescind_timelocked_mint(
 			origin: OriginFor<T>,
@@ -613,7 +613,7 @@ pub mod pallet {
 		}
 
 		/// Collects funds deposited by the relayer into the owner's account
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::claim_to())]
 		pub fn claim_to(
 			origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
