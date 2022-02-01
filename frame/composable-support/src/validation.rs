@@ -82,8 +82,6 @@ where
 	U: Validate<T, U>,
 {
 	pub fn new(value: T, _validator_tag: U) -> Result<Self, &'static str> {
-		// Validate::<U>::validate(Self { value, _marker: PhantomData })
-		// Ok(Self { value: Validate::<T, U>::validate(value), _marker: PhantomData })
 		match <U as Validate<T, U>>::validate(value) {
 			Ok(value) => Ok(Self { value, _marker: PhantomData }),
 			Err(e) => Err(e),
@@ -203,11 +201,6 @@ impl<T: codec::Encode + codec::Decode, U: Validate<T, U>> codec::WrapperTypeEnco
 	for Validated<T, U>
 {
 }
-
-// impl<T: codec::Encode + codec::Decode, U: Validate<T, U>> codec::WrapperTypeDecode
-// 	for Validated<T, U>
-// {
-// }
 
 impl<T, U: Validate<T, U>> Validate<T, U> for Validated<T, U> {
 	fn validate(extrinsic_input: T) -> Result<T, &'static str> {
