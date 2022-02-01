@@ -222,7 +222,8 @@ mod test {
 	type CheckARangeTag = (ValidARange, Valid);
 	type CheckBRangeTag = (ValidBRange, Valid);
 	type CheckABRangeTag = (ValidARange, (ValidBRange, Valid));
-	// type ManyValidatorsTagsNested = (ValidARange, (ValidBRange, (Invalid, Valid)));
+	type ManyValidatorsTagsNestedInvalid = (ValidARange, (ValidBRange, (Invalid, Valid)));
+	type ManyValidatorsTagsNestedValid = (ValidARange, (ValidBRange, Valid));
 	type ManyValidatorsTagsFlatInvalid = (ValidARange, ValidBRange, Invalid, Valid);
 	type ManyValidatorsTagsFlatValid = (ValidARange, ValidBRange, Valid);
 	// note: next seems is not supported yet
@@ -257,23 +258,25 @@ mod test {
 		}
 	}
 
-	// #[test]
-	// fn nested_validator() {
-	// 	let valid = X { a: 10, b: 0xCAFEBABE };
-	//
-	// 	assert!(Validate::<X, ManyValidatorsTagsNested>::validate(valid).is_err());
-	// }
-	//
-	// #[test]
-	// fn either_nested_or_flat() {
-	// 	let valid = X { a: 10, b: 0xCAFEBABE };
-	// 	assert_eq!(
-	// 		<ManyValidatorsTagsNested as Validate<X, ManyValidatorsTagsNested>>::validate(
-	// 			valid.clone()
-	// 		),
-	// 		Validate::<X, ManyValidatorsTagsFlat>::validate(valid)
-	// 	);
-	// }
+	#[test]
+	fn nested_validator() {
+		let valid = X { a: 10, b: 0xCAFEBABE };
+		assert!(<ManyValidatorsTagsNestedInvalid as Validate<X, ManyValidatorsTagsNestedInvalid>>::validate(valid).is_err());
+
+		let valid = X { a: 10, b: 10};
+        assert_ok!(<ManyValidatorsTagsNestedValid as Validate<X, ManyValidatorsTagsNestedValid>>::validate(valid));
+	}
+
+	#[test]
+	fn either_nested_or_flat() {
+		let valid = X { a: 10, b: 0xCAFEBABE };
+		assert_eq!(
+			<ManyValidatorsTagsNestedInvalid as Validate<X, ManyValidatorsTagsNestedInvalid>>::validate(
+				valid.clone()
+			),
+			<ManyValidatorsTagsFlatInvalid as Validate<X, ManyValidatorsTagsFlatInvalid>>::validate(valid)
+		);
+	}
 
 	#[test]
 	fn flat_validator_multiple_invalid() {
