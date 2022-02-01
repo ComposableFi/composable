@@ -20,7 +20,7 @@ pub type BlockNumber = u64;
 pub type NetworkId = u32;
 pub type Balance = u128;
 pub type Amount = i128;
-pub type AssetId = u32;
+pub type AssetId = u128;
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
