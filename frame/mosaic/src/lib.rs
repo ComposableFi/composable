@@ -477,18 +477,23 @@ pub mod pallet {
 				asset_id,
 				|prev| -> Result<(), DispatchError> {
 					let amount = match *prev {
-						Some((balance, lock_time)) if lock_time < now => {
-							T::Assets::transfer(
-								asset_id,
-								&Self::sub_account_id(SubAccount::new_outgoing(caller.clone())),
-								&to,
-								balance,
-								false,
-							)?;
-							balance
+						Some((balance, lock_time)) => {
+							let still_locked = lock_time >= now;
+							if still_locked {
+								Err(Error::<T>::TxStillLocked)
+							} else {
+								T::Assets::transfer(
+									asset_id,
+									&Self::sub_account_id(SubAccount::new_outgoing(caller.clone())),
+									&to,
+									balance,
+									false,
+								)?;
+								Ok(balance)
+							}
 						},
-						_ => return Err(Error::<T>::NoStaleTransactions.into()),
-					};
+						_ => Err(Error::<T>::NoStaleTransactions),
+					}?;
 
 					*prev = None;
 					Self::deposit_event(Event::<T>::StaleTxClaimed { to, by: caller, amount });
