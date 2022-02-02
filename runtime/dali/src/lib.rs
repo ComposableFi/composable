@@ -439,7 +439,7 @@ impl oracle::Config for Runtime {
 	type Event = Event;
 	type AuthorityId = oracle::crypto::BathurstStId;
 	type AssetId = CurrencyId;
-	type PriceValue = u128;
+	type PriceValue = Balance;
 	type StakeLock = StakeLock;
 	type MinStake = MinStake;
 	type StalePrice = StalePrice;
