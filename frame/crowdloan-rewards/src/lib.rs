@@ -81,7 +81,7 @@ pub mod pallet {
 
 	use super::models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount};
 
-	#[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo)]
+	#[derive(Encode, Decode, PartialEq, Copy, Clone, MaxEncodedLen, TypeInfo)]
 	pub struct Reward<Balance, BlockNumber> {
 		pub(crate) total: Balance,
 		pub(crate) claimed: Balance,

@@ -25,7 +25,7 @@ pub enum FundsAvailability<Balance> {
 	MustLiquidate,
 }
 
-#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, TypeInfo)]
+#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, MaxEncodedLen, TypeInfo)]
 pub enum Deposit<Balance, BlockNumber> {
 	/// Indicates that the vault has deposited an amount large enough to forever be exempt from
 	/// rent payments.

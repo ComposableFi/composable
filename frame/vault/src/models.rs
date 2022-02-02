@@ -4,7 +4,7 @@ use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::Perquintill;
 
-#[derive(Copy, Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
+#[derive(Copy, Clone, Encode, Decode, Default, Debug, PartialEq, MaxEncodedLen, TypeInfo)]
 pub struct VaultInfo<AccountId, Balance, CurrencyId, BlockNumber> {
 	pub asset_id: CurrencyId,
 	pub lp_token_id: CurrencyId,

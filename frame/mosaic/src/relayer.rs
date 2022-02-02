@@ -2,7 +2,7 @@ use frame_support::pallet_prelude::*;
 
 /// A wrapper around the `Relayer` configuration which forces the user to respect the TTL and update
 /// the relayer `AccountId` if mandated.
-#[derive(Decode, Encode, TypeInfo)]
+#[derive(Decode, Encode, MaxEncodedLen, TypeInfo)]
 pub struct StaleRelayer<AccountId, BlockNumber> {
 	relayer: RelayerConfig<AccountId, BlockNumber>,
 }
@@ -22,7 +22,7 @@ impl<AccountId, BlockNumber: PartialOrd> StaleRelayer<AccountId, BlockNumber> {
 }
 
 /// Configuration for the relayer account.
-#[derive(PartialEq, Eq, Debug, Decode, Encode, TypeInfo)]
+#[derive(PartialEq, Eq, Debug, Decode, Encode, MaxEncodedLen, TypeInfo)]
 pub struct RelayerConfig<AccountId, BlockNumber> {
 	/// Current AccountId used by the relayer.
 	current: AccountId,
@@ -45,7 +45,7 @@ impl<AccountId, BlockNumber> From<RelayerConfig<AccountId, BlockNumber>>
 }
 
 /// Next relayer configuration to be used.
-#[derive(PartialEq, Eq, Debug, Decode, Encode, TypeInfo)]
+#[derive(PartialEq, Eq, Debug, Decode, Encode, MaxEncodedLen, TypeInfo)]
 pub struct Next<AccountId, BlockNumber> {
 	ttl: BlockNumber,
 	account: AccountId,
