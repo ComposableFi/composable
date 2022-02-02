@@ -155,7 +155,7 @@ pub mod pallet {
 		}
 	}
 
-	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
+	#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
 	pub enum LiquidationStrategyConfiguration<ParachainId> {
 		DutchAuction(TimeReleaseFunction),
 		UniswapV2 { slippage: Perquintill },

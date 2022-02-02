@@ -85,7 +85,7 @@ pub mod pallet {
 		Outgoing,
 	}
 
-	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
+	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
 	pub struct AssetInfo<BlockNumber, Balance, Decayer> {
 		pub last_mint_block: BlockNumber,
 		pub budget: Balance,
@@ -93,7 +93,7 @@ pub mod pallet {
 		pub penalty_decayer: Decayer,
 	}
 
-	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
+	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
 	pub struct NetworkInfo<Balance> {
 		pub enabled: bool,
 		pub max_transfer_size: Balance,

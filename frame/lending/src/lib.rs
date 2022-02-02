@@ -103,7 +103,7 @@ pub mod pallet {
 		<T as Config>::LiquidationStrategyId,
 	>;
 
-	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, TypeInfo)]
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, MaxEncodedLen, TypeInfo)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
 
