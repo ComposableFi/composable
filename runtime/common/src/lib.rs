@@ -13,7 +13,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod impls;
+pub mod xcmp;
+use composable_traits::oracle::MinimalOracle;
 pub use constants::*;
+use frame_support::parameter_types;
+use orml_traits::parameter_type_with_key;
+use primitives::currency::CurrencyId;
+use sp_runtime::DispatchError;
+use num_traits::Zero;
 pub use types::*;
 
 /// Common types of statemint and statemine and dali and picasso and composable.
@@ -123,4 +130,46 @@ mod constants {
 		EnsureRoot<AccountId>,
 		collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilInstance>,
 	>;
+}
+
+parameter_types! {
+	/// Existential deposit (ED for short) is minimum amount an account has to hold to stay in state.
+	pub NativeExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
+}
+
+pub struct PriceConverter;
+
+impl MinimalOracle for PriceConverter {
+	type AssetId = CurrencyId;
+
+	type Balance = Balance;
+
+	fn get_price_inverse(
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
+	) -> Result<Self::Balance, sp_runtime::DispatchError> {
+		match asset_id {
+			CurrencyId::PICA => Ok(amount),
+			CurrencyId::KSM => Ok(amount / 10),
+			_ => Err(DispatchError::Other("cannot pay with given weight")),
+		}
+	}
+}
+
+pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
+	match *currency_id {
+		CurrencyId::PICA => NativeExistentialDeposit::get(),
+		CurrencyId::KSM =>
+			PriceConverter::get_price_inverse(CurrencyId::KSM, NativeExistentialDeposit::get())
+				.expect("Could not convert because unknown currency."),
+		_ => Balance::zero() // NOTE: zero for now to merge, than need to fix it as separate task
+		//_ => NativeExistentialDeposit::get(),
+	}
+}
+
+parameter_type_with_key! {
+	// Minimum amount an account has to hold to stay in state
+	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+		multi_existential_deposits(currency_id)
+	};
 }

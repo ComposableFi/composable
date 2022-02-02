@@ -26,13 +26,12 @@ pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, MosaicRemoteAssetId, Signature,
-	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES, NORMAL_DISPATCH_RATIO,
-	SLOT_DURATION,
+	CouncilInstance, EnsureRootOrHalfCouncil, Hash, MosaicRemoteAssetId, MultiExistentialDeposits,
+	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use cumulus_primitives_core::ParaId;
-use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -279,8 +278,6 @@ impl timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	/// Minimum amount an account has to hold to stay in state.
-  pub ExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
 	/// Max locks that can be placed on an account. Capped for storage
 	/// concerns.
 	pub const MaxLocks: u32 = 50;
@@ -295,7 +292,7 @@ impl balances::Config for Runtime {
 	/// The ubiquitous event type.
 	type Event = Event;
 	type DustRemoval = Treasury;
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = common::NativeExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
@@ -442,7 +439,7 @@ impl oracle::Config for Runtime {
 	type Event = Event;
 	type AuthorityId = oracle::crypto::BathurstStId;
 	type AssetId = CurrencyId;
-	type PriceValue = u128;
+	type PriceValue = Balance;
 	type StakeLock = StakeLock;
 	type MinStake = MinStake;
 	type StalePrice = StalePrice;
@@ -535,13 +532,6 @@ impl collator_selection::Config for Runtime {
 	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
 }
 
-parameter_type_with_key! {
-	// TODO:
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		Zero::zero()
-	};
-}
-
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
@@ -561,7 +551,7 @@ impl orml_tokens::Config for Runtime {
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
 	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
-	type ExistentialDeposits = ExistentialDeposits;
+	type ExistentialDeposits = MultiExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
@@ -774,7 +764,8 @@ impl currency_factory::Config for Runtime {
 impl assets_registry::Config for Runtime {
 	type Event = Event;
 	type LocalAssetId = CurrencyId;
-	type ForeignAssetId = composable_traits::assets::XcmAssetLocation;
+	type ForeignAssetId = CurrencyId;
+	type Location = composable_traits::assets::XcmAssetLocation;
 	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
 	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
 	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;

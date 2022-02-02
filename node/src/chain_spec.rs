@@ -162,7 +162,7 @@ pub fn dali_dev() -> dali::ChainSpec {
 				],
 				dev_accounts(),
 				PARA_ID,
-				dali_runtime::ExistentialDeposit::get(),
+				common::NativeExistentialDeposit::get(),
 			)
 		},
 		vec![],

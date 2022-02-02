@@ -5535,6 +5535,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex-literal",
  "kusama-runtime",
+ "num-traits",
  "orml-tokens",
  "orml-traits",
  "pallet-assets",

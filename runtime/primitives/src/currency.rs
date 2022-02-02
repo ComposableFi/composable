@@ -10,6 +10,15 @@ use composable_support::rpc_helpers::FromHexStr;
 use serde::{Deserialize, Serialize};
 use sp_runtime::sp_std::ops::Deref;
 
+/// Trait used to write generalized code over well know currencies
+/// We use const to allow for match on these
+pub trait WellKnownCurrency<AssetId: Copy> {
+	const NATIVE: AssetId;
+	/// usually we expect running with relay,
+	/// but if  not, than degenrative case would be this equal to `NATIVE`
+	const RELAY_NATIVE: AssetId;
+}
+
 #[derive(
 	Encode,
 	Decode,
@@ -27,6 +36,12 @@ use sp_runtime::sp_std::ops::Deref;
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[repr(transparent)]
 pub struct CurrencyId(pub u128);
+
+impl WellKnownCurrency<CurrencyId> for CurrencyId {
+	const NATIVE: CurrencyId = CurrencyId::PICA;
+
+	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
+}
 
 impl CurrencyId {
 	pub const INVALID: CurrencyId = CurrencyId(0);
