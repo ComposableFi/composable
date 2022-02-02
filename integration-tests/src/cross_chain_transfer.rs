@@ -3,8 +3,8 @@ use codec::Encode;
 use common::AccountId;
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 use cumulus_primitives_core::ParaId;
+use dali_runtime as picasso_runtime;
 use orml_traits::currency::MultiCurrency;
-use picasso_runtime as dali_runtime;
 use primitives::currency::*;
 use sp_runtime::traits::AccountIdConversion;
 use support::assert_ok;
@@ -388,7 +388,7 @@ fn subscribe_version_notify_works() {
 	Picasso::execute_with(|| {
 		let r = pallet_xcm::Pallet::<picasso_runtime::Runtime>::force_subscribe_version_notify(
 			picasso_runtime::Origin::root(),
-			Box::new((Parent, Parachain(2001)).into()),
+			Box::new((Parent, Parachain(PICASSO_PARA_ID)).into()),
 		);
 		assert_ok!(r);
 	});

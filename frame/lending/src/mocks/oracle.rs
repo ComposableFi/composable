@@ -112,8 +112,8 @@ pub mod pallet {
 		fn get_ratio(
 			pair: composable_traits::defi::CurrencyPair<Self::AssetId>,
 		) -> Result<sp_runtime::FixedU128, DispatchError> {
-			let base: u128 = Self::get_price(pair.base, (10_u32 ^ 12).into())?.price.into();
-			let quote: u128 = Self::get_price(pair.quote, (10_u32 ^ 12).into())?.price.into();
+			let base: u128 = Self::get_price(pair.base, (10_u32 ^ 12).into())?.price;
+			let quote: u128 = Self::get_price(pair.quote, (10_u32 ^ 12).into())?.price;
 			let base = FixedU128::saturating_from_integer(base);
 			let quote = FixedU128::saturating_from_integer(quote);
 			Ok(base.safe_div(&quote)?)
@@ -124,7 +124,7 @@ pub mod pallet {
 			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			let price = Self::get_price(asset_id, 10 ^ 12)?;
-			let inversed = amount / price.price / 10 ^ 12;
+			let inversed = (amount / price.price / 10) ^ 12;
 			Ok(inversed)
 		}
 	}

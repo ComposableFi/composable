@@ -46,7 +46,7 @@ use xcm_executor::{
 };
 
 parameter_types! {
-	// pub const RelayLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
+	pub KsmLocation: MultiLocation = MultiLocation::parent();
 	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
@@ -60,7 +60,25 @@ match_type! {
 	};
 }
 
+/// this is debug struct implementing as many XCMP interfaces as possible
+/// it just dumps content, no modification.
+/// returns default expected
+pub struct XcmpDebug;
+
+impl xcm_executor::traits::ShouldExecute for XcmpDebug {
+	fn should_execute<Call>(
+		origin: &MultiLocation,
+		message: &mut Xcm<Call>,
+		max_weight: Weight,
+		weight_credit: &mut Weight,
+	) -> Result<(), ()> {
+		log::trace!("{:?} {:?} {:?} {:?}", origin, message, max_weight, weight_credit);
+		Err(())
+	}
+}
+
 pub type Barrier = (
+	XcmpDebug,
 	TakeWeightCredit,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	xcm_builder::AllowUnpaidExecutionFrom<SpecParachain>,
@@ -132,6 +150,7 @@ parameter_types! {
 	pub const MaxInstructions: u32 = 10_000;
 }
 
+// TODO: as of now we allow any, but need to decide on payments as in Acala
 pub struct TradePassthrough();
 
 /// any payment to pass
@@ -188,9 +207,12 @@ impl orml_unknown_tokens::Config for Runtime {
 	type Event = Event;
 }
 
+/// is collaed to convert some account id to account id on other network
+/// as of now it is same as in Acala/Hydra
 pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
+		//  considers any other network using globally unique ids
 		X1(AccountId32 { network: NetworkId::Any, id: account.into() }).into()
 	}
 }
@@ -204,7 +226,7 @@ impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for Currency
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
 		match id {
 			CurrencyId::INVALID => {
-				log::trace!(
+				log::warn!(
 					"mapping for {:?} on {:?} parachain not found",
 					id,
 					ParachainInfo::parachain_id()
@@ -221,7 +243,7 @@ impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for Currency
 				{
 					Some(location)
 				} else {
-					log::trace!(
+					log::warn!(
 						"mapping for {:?} on {:?} parachain not found",
 						id,
 						ParachainInfo::parachain_id()

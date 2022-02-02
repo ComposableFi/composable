@@ -33,7 +33,7 @@ primitives = { path = "../primitives", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-serde = { version = "1.0.119" }
+serde = { version = "1.0.130" }
 authorship = { package = "pallet-authorship", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301" }

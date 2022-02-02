@@ -37,7 +37,7 @@ scale-info = { version = "1.0", default-features = false, features = ["derive"] 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 parking_lot = "0.11.2"
-serde = "1.0.119"
+serde = "1.0.130"
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 
 [features]

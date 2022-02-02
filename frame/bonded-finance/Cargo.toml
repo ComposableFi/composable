@@ -33,7 +33,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 composable-traits = { path = "../../frame/composable-traits" }
 proptest = "1.0"
 proptest-derive = "0.3"
-serde = { version = "1.0.124" }
+serde = { version = "1.0.130" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301" }
 pallet-vesting = { path = "../../frame/vesting" }
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }

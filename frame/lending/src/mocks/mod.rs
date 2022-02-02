@@ -1,7 +1,6 @@
 use self::currency::CurrencyId;
 use crate::{self as pallet_lending, *};
 use composable_traits::{
-	currency::DynamicCurrencyId,
 	defi::DeFiComposableConfig,
 	governance::{GovernanceRegistry, SignedRawOrigin},
 };
@@ -15,7 +14,6 @@ use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 use once_cell::sync::Lazy;
 use orml_traits::{parameter_type_with_key, GetByKey};
-use scale_info::TypeInfo;
 use smallvec::smallvec;
 use sp_arithmetic::traits::Zero;
 use sp_core::{sr25519::Signature, H256};
@@ -24,7 +22,7 @@ use sp_runtime::{
 	traits::{
 		BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify,
 	},
-	ArithmeticError, DispatchError, Perbill,
+	Perbill,
 };
 
 pub mod currency;
