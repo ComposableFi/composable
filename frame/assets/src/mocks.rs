@@ -24,8 +24,9 @@ pub type Balance = u64;
 
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
-
 pub const CHARLIE: AccountId = 3;
+pub const DARWIN = AccountId = 4;
+
 pub const ACCOUNT_FREE_START: AccountId = CHARLIE + 1;
 
 pub const MINIMUM_BALANCE: Balance = 1;
@@ -144,7 +145,7 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 }
 
-pub const BALANCES: [(AccountId, Balance); 4] = [(0, 1000), (1, 1000), (2, 1000), (3, 1000)];
+pub const BALANCES: [(AccountId, Balance); 4] = [(ALICE, 1000), (BOB, 1000), (CHARLIE, 1000), (DARWIN, 1000)];
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
