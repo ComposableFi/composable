@@ -12,6 +12,8 @@ use xcm_emulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain
 type Balances = u128;
 pub const ALICE: [u8; 32] = [4_u8; 32];
 pub const BOB: [u8; 32] = [5_u8; 32];
+pub const CHARLIE: [u8; 32] = [6_u8; 32];
+
 pub const PICA: Balances = 1_000_000_000_000;
 pub const KSM: Balances = PICA / 50;
 
@@ -48,6 +50,10 @@ decl_test_relay_chain! {
 // keep in sync with parachains, as macro does not allows for names
 pub const PICASSO_PARA_ID: u32 = 2000;
 pub const DALI_PARA_ID: u32 = 3000;
+
+/// for now unknow sibling is Dali, unti functional will diverge
+pub const SIBLING_PARA_ID: u32 = DALI_PARA_ID;
+
 decl_test_network! {
 	pub struct KusamaNetwork {
 		relay_chain = KusamaRelay,

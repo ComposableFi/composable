@@ -51,3 +51,6 @@ mod cross_chain_transfer;
 
 #[cfg(test)]
 mod runtime_tests;
+
+#[cfg(test)]
+mod helpers;
