@@ -773,6 +773,7 @@ impl bonded_finance::Config for Runtime {
 	type PalletId = BondedFinanceId;
 	type Stake = Stake;
 	type Vesting = Vesting;
+	type WeightInfo = weights::bonded_finance::WeightInfo<Runtime>;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -901,6 +902,7 @@ mod benches {
 		[identity, Identity]
 		[multisig, Multisig]
 		[currency_factory, CurrencyFactory]
+		[bonded_finance, BondedFinance]
 	);
 }
 

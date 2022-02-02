@@ -15,6 +15,7 @@ pub trait BondedFinance {
 	fn offer(
 		from: &Self::AccountId,
 		offer: BondOffer<Self::AccountId, Self::AssetId, Self::Balance, Self::BlockNumber>,
+		keep_alive: bool,
 	) -> Result<Self::BondOfferId, DispatchError>;
 
 	/// Bond for an offer.
@@ -22,6 +23,7 @@ pub trait BondedFinance {
 		offer: Self::BondOfferId,
 		from: &Self::AccountId,
 		nb_of_bonds: Self::Balance,
+		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 }
 
@@ -82,17 +84,20 @@ impl<AccountId, AssetId, Balance: Zero + PartialOrd + SafeArithmetic, BlockNumbe
 		};
 		let valid_price = self.bond_price >= min_transfer;
 		let nonzero_nb_of_bonds = !self.nb_of_bonds.is_zero();
-		let valid_reward = self.reward.amount >= min_reward &&
-			self.reward
+		let valid_reward = self.reward.amount >= min_reward
+			&& self
+				.reward
 				.amount
 				.safe_div(&self.nb_of_bonds)
-				.unwrap_or_else(|_| Balance::zero()) >=
-				min_transfer;
+				.unwrap_or_else(|_| Balance::zero())
+				>= min_transfer;
 		let nonzero_reward_maturity = !self.reward.maturity.is_zero();
 		let valid_total = self.total_price().is_ok();
-		nonzero_maturity &&
-			nonzero_nb_of_bonds &&
-			valid_price && nonzero_reward_maturity &&
-			valid_reward && valid_total
+		nonzero_maturity
+			&& nonzero_nb_of_bonds
+			&& valid_price
+			&& nonzero_reward_maturity
+			&& valid_reward
+			&& valid_total
 	}
 }

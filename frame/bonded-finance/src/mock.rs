@@ -3,7 +3,6 @@
 #![cfg(test)]
 
 use super::*;
-use crate::utils::MIN_VESTED_TRANSFER;
 use frame_support::{
 	construct_runtime,
 	pallet_prelude::*,
@@ -26,6 +25,7 @@ pub type Balance = u128;
 pub type Amount = i128;
 pub type AccountId = u128;
 
+pub const MIN_VESTED_TRANSFER: u128 = 100;
 pub const NATIVE_CURRENCY_ID: MockCurrencyId = MockCurrencyId::PICA;
 pub const MIN_REWARD: u128 = 1_000_000;
 
@@ -159,6 +159,7 @@ impl pallet::Config for Runtime {
 	type MinReward = MinReward;
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type Convert = ConvertInto;
+	type WeightInfo = ();
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;

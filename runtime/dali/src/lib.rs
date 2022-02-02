@@ -815,7 +815,7 @@ pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false
+			return false;
 		}
 		!matches!(
 			call,
@@ -868,6 +868,7 @@ impl bonded_finance::Config for Runtime {
 	type PalletId = BondedFinanceId;
 	type Stake = Stake;
 	type Vesting = Vesting;
+	type WeightInfo = weights::bonded_finance::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -1050,6 +1051,7 @@ mod benches {
 		[currency_factory, CurrencyFactory]
 		[mosaic, Mosaic]
 		[liquidations, Liquidations]
+		[bonded_finance, BondedFinance]
 	);
 }
 
