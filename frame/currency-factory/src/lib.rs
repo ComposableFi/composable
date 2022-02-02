@@ -36,12 +36,17 @@
 
 pub use pallet::*;
 
+mod ranges;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
 	use composable_traits::currency::{CurrencyFactory, DynamicCurrencyId, Exponent, LocalAssets};
 	use frame_support::{pallet_prelude::*, PalletId};
 	use scale_info::TypeInfo;
+	use sp_runtime::traits::Saturating;
+
+	use crate::ranges::Ranges;
 
 	pub const PALLET_ID: PalletId = PalletId(*b"pal_curf");
 
@@ -55,13 +60,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-
-		/// The currency which can be created from thin air.
-		type DynamicCurrencyId: FullCodec + MaxEncodedLen + Copy + DynamicCurrencyId + TypeInfo;
-
-		/// The initial currency id from which we are able to generate the next.
-		#[pallet::constant]
-		type DynamicCurrencyIdInitial: Get<Self::DynamicCurrencyId>;
+		type AssetId: FullCodec + Copy + TypeInfo + From<u128> + Saturating + Clone + Ord;
 	}
 
 	#[pallet::pallet]
@@ -74,22 +73,22 @@ pub mod pallet {
 	// Absense of a set `CurrencyCounter` means we default to `T::DynamicCurrencyIdInitial`, so
 	// `ValueQuery` is allowed
 	#[allow(clippy::disallowed_type)]
-	pub type CurrencyCounter<T: Config> =
-		StorageValue<_, T::DynamicCurrencyId, ValueQuery, T::DynamicCurrencyIdInitial>;
+	pub type AssetIdRanges<T: Config> =
+		StorageValue<_, Ranges<T::AssetId>, ValueQuery, RangesOnEmpty<T>>;
 
-	impl<T: Config> CurrencyFactory<T::DynamicCurrencyId> for Pallet<T> {
-		fn create() -> Result<T::DynamicCurrencyId, DispatchError> {
-			CurrencyCounter::<T>::mutate(|c| {
-				let c_current = *c;
-				let c_next = c_current.next()?;
-				*c = c_next;
-				Ok(c_next)
-			})
+	#[pallet::type_value]
+	pub fn RangesOnEmpty<T: Config>() -> Ranges<T::AssetId> {
+		Ranges::new()
+	}
+
+	impl<T: Config> CurrencyFactory<T::AssetId> for Pallet<T> {
+		fn create() -> Result<T::AssetId, DispatchError> {
+			AssetIdRanges::<T>::mutate(|range| range.increment_tokens())
 		}
 	}
 
-	impl<T: Config> LocalAssets<T::DynamicCurrencyId> for Pallet<T> {
-		fn decimals(_currency_id: T::DynamicCurrencyId) -> Result<Exponent, DispatchError> {
+	impl<T: Config> LocalAssets<T::AssetId> for Pallet<T> {
+		fn decimals(_currency_id: T::AssetId) -> Result<Exponent, DispatchError> {
 			// All assets are normalized to 12 decimals.
 			Ok(12)
 		}
