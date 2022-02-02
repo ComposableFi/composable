@@ -34,5 +34,12 @@ cd scripts/polkadot-launch && yarn && yarn composable
 workspace=false
 script='''
 # we cannot use toolchain setting as different parts of codebase require different compiler
-cargo +stable-x86_64-unknown-linux-gnu test --package local-integration-tests --features local-integration-tests
+cargo +stable test --package local-integration-tests --features local-integration-tests --no-default-features
+'''
+
+[tasks.run-local-integration-tests-debug]
+workspace=false
+script='''
+RUST_BACKTRACE=1 RUST_LOG=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace
+cargo +stable test --package local-integration-tests --features local-integration-tests --no-default-features -- --nocapture --test-threads=1
 '''

@@ -8,7 +8,7 @@ use codec::{Decode, Encode};
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
-	construct_runtime, log, match_type, parameter_types,
+	construct_runtime, ensure, log, match_type, parameter_types,
 	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -26,22 +26,23 @@ use sp_runtime::{
 	ApplyExtrinsicResult,
 };
 
-use orml_traits::parameter_type_with_key;
+use orml_traits::{location::Reserve, parameter_type_with_key};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 use xcm::latest::{prelude::*, Error};
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
-	AllowTopLevelPaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds, LocationInverter,
-	ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds,
+	LocationInverter, ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative,
+	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
+	SovereignSignedViaLocation, TakeWeightCredit,
 };
 use xcm_executor::{
-	traits::{TransactAsset, WeightTrader},
+	traits::{FilterAssetLocation, ShouldExecute, TransactAsset, WeightTrader},
 	Assets, Config, XcmExecutor,
 };
 
@@ -53,10 +54,13 @@ parameter_types! {
 }
 
 // here we should add any partner network for zero cost transactions
+// 1000 is statmeing - see kusama runtime setup
+// (1, Here) - jump 1 up, and say here - Relay
+// (1, 1000) - jump 1 up and go to child 1000
 match_type! {
-	pub type SpecParachain: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: X1(Parachain(2000)) } |
-			MultiLocation { parents: 1, interior: X1(Parachain(3000)) }
+	pub type WellKnownsChains: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: Here } |
+			MultiLocation { parents: 1, interior: X1(Parachain(1000)) }
 	};
 }
 
@@ -72,20 +76,39 @@ impl xcm_executor::traits::ShouldExecute for XcmpDebug {
 		max_weight: Weight,
 		weight_credit: &mut Weight,
 	) -> Result<(), ()> {
-		log::trace!("{:?} {:?} {:?} {:?}", origin, message, max_weight, weight_credit);
+		log::trace!(target: "should_execute", "{:?} {:?} {:?} {:?}", origin, message, max_weight, weight_credit);
 		Err(())
+	}
+}
+
+/// NOTE: there could be payments taken on other side, so cannot rely on this to work end to end
+pub struct DebugAllowUnpaidExecutionFrom<T>(PhantomData<T>);
+impl<T: Contains<MultiLocation>> ShouldExecute for DebugAllowUnpaidExecutionFrom<T> {
+	fn should_execute<Call>(
+		origin: &MultiLocation,
+		_message: &mut Xcm<Call>,
+		_max_weight: Weight,
+		_weight_credit: &mut Weight,
+	) -> Result<(), ()> {
+		log::trace!(
+			target: "xcm::barriers",
+			"AllowUnpaidExecutionFrom origin: {:?}, message: {:?}, max_weight: {:?}, weight_credit: {:?}, contains: {:?}",
+			origin, _message, _max_weight, _weight_credit, T::contains(origin),
+		);
+		ensure!(T::contains(origin), ());
+		Ok(())
 	}
 }
 
 pub type Barrier = (
 	XcmpDebug,
-	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-	xcm_builder::AllowUnpaidExecutionFrom<SpecParachain>,
+	//DebugAllowUnpaidExecutionFrom<WellKnownsChains>,
 	// Expected responses are OK.
 	AllowKnownQueryResponses<RelayerXcm>,
 	// Subscriptions for version tracking are OK.
 	AllowSubscriptionsFrom<Everything>,
+	AllowTopLevelPaidExecutionFrom<Everything>,
+	TakeWeightCredit,
 );
 
 pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, RelayNetwork>;
@@ -147,25 +170,84 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	(),
 >;
 
-parameter_types! {
-	pub const BaseXcmWeight: Weight = 0;
-	pub const MaxInstructions: u32 = 10_000;
+// TODO: port multi pay from Acala, mostly KSM/DOT
+pub struct TransactionFeePoolTrader<Converter> {
+	_marker: PhantomData<Converter>,
 }
 
-// TODO: as of now we allow any, but need to decide on payments as in Acala
-pub struct TradePassthrough();
-
-/// any payment to pass
-impl WeightTrader for TradePassthrough {
+impl<Converter: Convert<MultiLocation, Option<CurrencyId>>> WeightTrader
+	for TransactionFeePoolTrader<Converter>
+{
 	fn new() -> Self {
-		Self()
+		Self { _marker: PhantomData::<Converter>::default() }
 	}
 
-	fn buy_weight(&mut self, _weight: Weight, payment: Assets) -> Result<Assets, Error> {
-		// Just let it through for now
-		Ok(payment)
+	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, Error> {
+		// this is for trusted chains origin, see `f` if any
+		// TODO: dicuss if we need payments from Relay chain or common goods chains?
+		if weight.is_zero() {
+			return Ok(payment)
+		}
+
+		// only support first fungible assets now.
+		let asset_id = payment
+			.fungible
+			.iter()
+			.next()
+			.map_or(Err(XcmError::TooExpensive), |v| Ok(v.0))?;
+
+		if let AssetId::Concrete(ref multi_location) = asset_id.clone() {
+			if let Some(token_id) = Converter::convert(multi_location.clone()) {
+				if token_id == CurrencyId::PICA || token_id == CurrencyId::KSM {
+					// CU-1wme602
+					// TODO: port swap for KSM/DOT from Acala (here it is just 1/50 constant)
+					// NOTE: Acala does many currencies, but we can limit to only 1 (because
+					// everybody can swap into Relay native currency)
+					let required = if token_id == CurrencyId::KSM { weight / 50 } else { weight };
+					let required =
+						MultiAsset { id: asset_id.clone(), fun: Fungible(required as u128) };
+
+					log::trace!(target : "xcml::buy_weight", "{:?} {:?} ", required, payment );
+					let unused =
+						payment.checked_sub(required).map_err(|_| XcmError::TooExpensive)?;
+					// TODO: port refund_weight and trasfner from treasury from Acala
+					return Ok(unused)
+				}
+			}
+		}
+
+		log::info!(target : "xcml::buy_weight", "required {:?}; provided {:?};", weight, payment );
+		Err(XcmError::TooExpensive)
 	}
 }
+pub struct RelayReserverFromParachain;
+impl FilterAssetLocation for RelayReserverFromParachain {
+	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
+		// NOTE: In Acala there is not such thing
+		// if asset is KSM and send from some parachain then allow for  that
+		asset.reserve() == Some(MultiLocation::parent()) &&
+			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
+	}
+}
+
+pub struct DebugMultiNativeAsset;
+impl FilterAssetLocation for DebugMultiNativeAsset {
+	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
+		log::trace!(
+			target: "xcmp::filter_asset_location",
+			"asset: {:?}; origin: {:?}; reserve: {:?};",
+			&asset,
+			&origin,
+			&asset.clone().reserve(),
+		);
+		false
+	}
+}
+
+type IsReserveAssetLocationFilter =
+	(DebugMultiNativeAsset, MultiNativeAsset, RelayReserverFromParachain);
+
+type Trader = TransactionFeePoolTrader<CurrencyIdConvert>;
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -174,13 +256,13 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTransactor = LocalAssetTransactor;
 
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = MultiNativeAsset;
+	type IsReserve = IsReserveAssetLocationFilter;
 	type IsTeleporter = (); // <- should be enough to allow teleportation of PICA
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
-	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 
-	type Trader = TradePassthrough;
+	type Trader = Trader;
 	type ResponseHandler = RelayerXcm;
 
 	type SubscriptionService = RelayerXcm;
@@ -190,7 +272,12 @@ impl xcm_executor::Config for XcmConfig {
 
 parameter_types! {
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into())));
-  pub const MaxAssetsForTransfer: usize = 10;
+	// safe value to start to transfer 1 asset only in one message (as in Acala)
+	pub const MaxAssetsForTransfer: usize = 1;
+}
+
+parameter_types! {
+	pub const BaseXcmWeight: Weight = 100_000_000;
 }
 
 impl orml_xtokens::Config for Runtime {
@@ -201,7 +288,7 @@ impl orml_xtokens::Config for Runtime {
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = SelfLocation;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
@@ -230,7 +317,8 @@ impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for Currency
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
 		match id {
 			CurrencyId::INVALID => {
-				log::warn!(
+				log::info!(
+					target: "xcmp:convert",
 					"mapping for {:?} on {:?} parachain not found",
 					id,
 					ParachainInfo::parachain_id()
@@ -241,13 +329,15 @@ impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for Currency
 				1,
 				X2(Parachain(ParachainInfo::parachain_id().into()), GeneralKey(id.encode())),
 			)),
+			CurrencyId::KSM => Some(MultiLocation::parent()),
 			_ => {
 				if let Some(location) =
 					<AssetsRegistry as RemoteAssetRegistry>::asset_to_location(id).map(Into::into)
 				{
 					Some(location)
 				} else {
-					log::warn!(
+					log::trace!(
+						target: "xcmp:convert",
 						"mapping for {:?} on {:?} parachain not found",
 						id,
 						ParachainInfo::parachain_id()
@@ -263,7 +353,7 @@ impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for Currency
 /// expected that currency in location is in format well known for local chain
 impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
-		log::trace!("converting {:?} on {:?}", &location, ParachainInfo::parachain_id());
+		log::trace!(target: "xcmp::convert", "converting {:?} on {:?}", &location, ParachainInfo::parachain_id());
 		match location {
 			MultiLocation { parents, interior: X2(Parachain(id), GeneralKey(key)) }
 				if parents == 1 && ParaId::from(id) == ParachainInfo::parachain_id() =>
@@ -282,6 +372,11 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 					log::error!("failed converting currency");
 					None
 				}
+			},
+			// TODO: make this const expression to filter parent
+			MultiLocation { parents: 1, interior: Here } => {
+				// ISSUE: will need to be more clever on DOT
+				Some(CurrencyId::KSM)
 			},
 			// delegate to asset-registry
 			_ => {
@@ -311,18 +406,26 @@ impl Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert {
 	}
 }
 
+// make setup as in Acala, max instructions seems resoanble, for weigth may consider to  settle with
+// our PICA
+parameter_types! {
+	// One XCM operation is 200_000_000 weight, cross-chain transfer ~= 2x of transfer.
+	pub const UnitWeightCost: Weight = 200_000_000;
+	pub const MaxInstructions: u32 = 100;
+}
+
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	/// https://medium.com/kusama-network/kusamas-governance-thwarts-would-be-attacker-9023180f6fb
-	type XcmExecuteFilter = Everything;
+	type XcmExecuteFilter = Nothing;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = Everything;
 	type LocationInverter = LocationInverter<Ancestry>;
-	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type Origin = Origin;
 	type Call = Call;
 
@@ -330,6 +433,7 @@ impl pallet_xcm::Config for Runtime {
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
+/// cumulus is defalt implementation  of queue integrated with polkadot and kusama runtimes
 impl cumulus_pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
@@ -340,6 +444,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type VersionWrapper = ();
 	type ChannelInfo = ParachainSystem;
+	// NOTE: we could consider allowance for some chains (see Acala tests ports  PRs)
 	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
 }
 

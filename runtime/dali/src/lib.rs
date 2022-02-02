@@ -15,11 +15,15 @@
 #![recursion_limit = "256"]
 
 // Make the WASM binary available.
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "wasm-builder"))]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
 mod xcmp;
+
+// TODO: consider moving this to shared runtime
+pub use xcmp::{MaxInstructions, UnitWeightCost};
+
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
