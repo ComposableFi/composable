@@ -25,8 +25,8 @@ pub type Balance = u64;
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
 
-pub const EVE: AccountId = 3;
-pub const ACCOUNT_FREE_START: AccountId = EVE + 1;
+pub const CHARLIE: AccountId = 3;
+pub const ACCOUNT_FREE_START: AccountId = CHARLIE + 1;
 
 pub const MINIMUM_BALANCE: Balance = 1;
 
