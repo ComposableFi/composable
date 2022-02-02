@@ -151,13 +151,14 @@ registries = [
 # Lint level for when multiple versions of the same crate are detected
 multiple-versions = "warn"
 # Lint level for when a crate version requirement is `*`
-wildcards = "warn"
+# * is for git rev too
+wildcards = "allow"
 # The graph highlighting used when creating dotgraphs for crates
 # with multiple versions
 # * lowest-version - The path to the lowest versioned duplicate is highlighted
 # * simplest-path - The path to the version with the fewest edges is highlighted
 # * all - Both lowest-version and simplest-path are used
-highlight = "all"
+highlight = "lowest-version"
 # List of crates that are allowed. Use with care!
 allow = [
     #{ name = "ansi_term", version = "=0.11.0" },
@@ -174,7 +175,17 @@ deny = [
 ]
 # Certain crates/versions that will be skipped when doing duplicate detection.
 skip = [
-    #{ name = "ansi_term", version = "=0.11.0" },
+    # unfortunately substrate itself depends on several versions, to allow for it 
+    { name = "wasi", version = "=0.10.0+wasi-snapshot-preview1" },
+    { name = "smallvec", version = "=0.6.14" },
+    { name = "sha2", version = "=0.9.9" },
+    { name = "semver", version = "=1.0.4" },
+    { name = "rustc_version", version = "=0.4.0" },
+    { name = "redox_syscall", version = "=0.2.10" },
+    { name = "pbkdf2", version = "=0.8.0" },
+    { name = "rand_xorshift", version = "=0.3.0" },
+    { name = "rand_pcg", version = "=0.2.1" },
+    { name = "opaque-debug", version = "=0.3.0" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate
 # detection. Unlike skip, it also includes the entire tree of transitive

@@ -170,7 +170,8 @@ jobs:
         # description: Speed up builds and reduced security check surface
         run: |
          cargo install -f cargo-deny
-         cargo deny check  --hide-inclusion-graph Ban
+         # start from minimal dependency crate
+         cargo deny  --manifest-path ./frame/composable-support/Cargo.toml check Ban
 
       - name: Cargo udeps
         env:
