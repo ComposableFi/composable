@@ -16,24 +16,6 @@ VERSIONS_FILES=(
 steps=50
 repeat=20
 
-pallets=(
-  oracle
-  frame_system
-  timestamp
-  session
-  balances
-  indices
-  membership
-  treasury
-  scheduler
-  collective
-  democracy
-  collator_selection
-  utility
-  lending
-  dutch_auction
-)
-
 /home/runner/.cargo/bin/rustup install nightly
 /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
 /home/runner/.cargo/bin/cargo build --release -p composable --features=runtime-benchmarks
@@ -50,13 +32,12 @@ run_benchmarks() {
       --chain="$CHAIN" \
       --execution=wasm \
       --wasm-execution=compiled \
-      --pallet="$p" \
+      --pallet="*" \
       --extrinsic='*' \
       --steps=$steps \
       --repeat=$repeat \
       --raw \
-      --output="$OUTPUT" \
-      --log error 
+      --output="$OUTPUT"
   done
   git config --global user.email "haroldsphinx@gmail.com"
   git config --global user.name "haroldsphinx"
