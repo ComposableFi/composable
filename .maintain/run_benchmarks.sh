@@ -27,19 +27,17 @@ run_benchmarks() {
   # shellcheck disable=SC2068
   echo "Running benchmarks for $CHAIN"
   # shellcheck disable=SC2068
-  for p in ${pallets[@]}; do
-    ./target/release/composable benchmark \
-      --chain="$CHAIN" \
-      --execution=wasm \
-      --wasm-execution=compiled \
-      --pallet="*" \
-      --extrinsic='*' \
-      --steps=$steps \
-      --repeat=$repeat \
-      --raw \
-      --output="$OUTPUT" \
-      --log error
-  done
+  ./target/release/composable benchmark \
+    --chain="$CHAIN" \
+    --execution=wasm \
+    --wasm-execution=compiled \
+    --pallet="*" \
+    --extrinsic='*' \
+    --steps=$steps \
+    --repeat=$repeat \
+    --raw \
+    --output="$OUTPUT" \
+    --log error
   git config --global user.email "haroldsphinx@gmail.com"
   git config --global user.name "haroldsphinx"
   USERNAME=$(gcloud secrets versions access latest --secret=github-api-username)
@@ -54,8 +52,8 @@ run_benchmarks() {
 
 for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
-    if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_BRANCH_NAME}" "$folder"; then
-      run_benchmarks $output $chain $folder
-    fi
+    # if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_BRANCH_NAME}" "$folder"; then
+    run_benchmarks $output $chain $folder
+    # fi
   done <<<"$i"
 done
