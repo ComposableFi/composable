@@ -276,6 +276,12 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type PoolId = T::PoolId;
 
+		fn currency_pair(
+			pool_id: Self::PoolId,
+		) -> Result<CurrencyPair<Self::AssetId>, DispatchError> {
+			Ok(PoolAssets::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound)?)
+		}
+
 		fn pool_exists(pool_id: T::PoolId) -> bool {
 			Pools::<T>::contains_key(pool_id)
 		}

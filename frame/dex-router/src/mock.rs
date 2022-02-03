@@ -145,7 +145,6 @@ impl pallet_curve_amm::Config for Test {
 	type Precision = CurveAmmPrecision;
 	type LpToken = Tokens;
 	type PoolId = PoolId;
-	type PoolTokenIndex = u32;
 	type PalletId = CurveAmmTestPalletID;
 }
 
@@ -162,7 +161,6 @@ impl pallet_uniswap_v2::Config for Test {
 	type Precision = ConstantProductAmmPrecision;
 	type LpToken = Tokens;
 	type PoolId = PoolId;
-	type PoolTokenIndex = u32;
 	type PalletId = ConstantProductAmmTestPalletID;
 }
 parameter_types! {
@@ -176,7 +174,6 @@ impl dex_router::Config for Test {
 	type Balance = Balance;
 	type MaxHopsInRoute = MaxHopsCount;
 	type PoolId = u32;
-	type PoolTokenIndex = u32;
 	type StableSwapDex = CurveAmm;
 	type ConstantProductDex = ConstantProductAmm;
 }

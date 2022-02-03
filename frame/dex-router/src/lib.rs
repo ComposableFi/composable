@@ -77,19 +77,16 @@ pub mod pallet {
 			+ CheckedAdd
 			+ Zero
 			+ One;
-		type PoolTokenIndex: Copy + Debug + Eq + Into<u32> + From<u8>;
 		type StableSwapDex: CurveAmm<
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
-			PoolTokenIndex = Self::PoolTokenIndex,
 			PoolId = Self::PoolId,
 		>;
 		type ConstantProductDex: CurveAmm<
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
-			PoolTokenIndex = Self::PoolTokenIndex,
 			PoolId = Self::PoolId,
 		>;
 	}
@@ -245,11 +242,11 @@ pub mod pallet {
 			for route_node in &route {
 				match route_node {
 					DexRouteNode::Curve(pool_id) => {
+						let currency_pair = T::StableSwapDex::currency_pair(*pool_id)?;
 						dy_t = T::StableSwapDex::exchange(
 							who,
 							*pool_id,
-							0_u8.into(),
-							1_u8.into(),
+							currency_pair.base,
 							dx_t,
 							T::Balance::zero(),
 						)
@@ -257,11 +254,11 @@ pub mod pallet {
 						dx_t = dy_t;
 					},
 					DexRouteNode::Uniswap(pool_id) => {
+						let currency_pair = T::ConstantProductDex::currency_pair(*pool_id)?;
 						dy_t = T::ConstantProductDex::exchange(
 							who,
 							*pool_id,
-							0_u8.into(),
-							1_u8.into(),
+							currency_pair.base,
 							dx_t,
 							T::Balance::zero(),
 						)

@@ -19,6 +19,9 @@ pub trait CurveAmm {
 	/// Type that represents pool id
 	type PoolId;
 
+	/// Get currency_pair used in pool.
+	fn currency_pair(pool_id: Self::PoolId) -> Result<CurrencyPair<Self::AssetId>, DispatchError>;
+
 	/// Check pool with given id exists.
 	fn pool_exists(pool_id: Self::PoolId) -> bool;
 
@@ -32,7 +35,7 @@ pub trait CurveAmm {
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
-	/// Buy given units of given asset from the pool.
+	/// Buy given `amount` of given asset from the pool.
 	/// In buy user does not know how much assets he/she has to exchange to get desired amount.
 	fn buy(
 		who: &Self::AccountId,
@@ -41,7 +44,8 @@ pub trait CurveAmm {
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
-	/// Sell given units of given asset to the pool.
+	/// Sell given `amount` of given asset to the pool.
+	/// In sell user specifies `amount` of asset he/she wants to exchange to get other asset.
 	fn sell(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
