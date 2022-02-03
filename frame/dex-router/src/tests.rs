@@ -24,7 +24,7 @@ fn create_curve_amm_pool(
 	let pool_id = p.unwrap();
 	// 1 USDC = 1 USDT
 	assert_ok!(CurveAmm::add_liquidity(&ALICE, pool_id, amounts.clone(), 0_u128));
-	assert_ok!(CurveAmm::add_liquidity(&BOB, pool_id, amounts.clone(), 0_u128));
+	assert_ok!(CurveAmm::add_liquidity(&BOB, pool_id, amounts, 0_u128));
 	pool_id
 }
 
@@ -45,9 +45,9 @@ fn create_constant_product_amm_pool(
 	assert_ok!(&p);
 	let pool_id = p.unwrap();
 	// Add liquidity from ALICE's account to pool
-	assert_ok!(ConstantProductAmm::add_liquidity(&ALICE, pool_id, amounts.clone(), 0u128));
+	assert_ok!(ConstantProductAmm::add_liquidity(&ALICE, pool_id, amounts.clone(), 0_u128));
 	// Add liquidity from BOB's account to pool
-	assert_ok!(ConstantProductAmm::add_liquidity(&BOB, pool_id, amounts.clone(), 0u128));
+	assert_ok!(ConstantProductAmm::add_liquidity(&BOB, pool_id, amounts, 0_u128));
 	pool_id
 }
 
@@ -128,11 +128,7 @@ fn update_route_tests() {
 			DexRouteNode::Uniswap(create_eth_usdc_pool()),
 		];
 		assert_noop!(
-			DexRouter::update_route(
-				&ALICE,
-				currency_pair,
-				Some(dex_route.clone().try_into().unwrap())
-			),
+			DexRouter::update_route(&ALICE, currency_pair, Some(dex_route.try_into().unwrap())),
 			Error::<Test>::PoolDoesNotExist,
 		);
 
@@ -143,11 +139,7 @@ fn update_route_tests() {
 			DexRouteNode::Uniswap(42), // fake route
 		];
 		assert_noop!(
-			DexRouter::update_route(
-				&ALICE,
-				currency_pair,
-				Some(dex_route.clone().try_into().unwrap())
-			),
+			DexRouter::update_route(&ALICE, currency_pair, Some(dex_route.try_into().unwrap())),
 			Error::<Test>::PoolDoesNotExist,
 		);
 	});
@@ -166,8 +158,8 @@ fn exchange_tests() {
 			currency_pair,
 			Some(dex_route.try_into().unwrap())
 		));
-		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 10u128));
-		let dy = DexRouter::exchange(&CHARLIE, currency_pair, 1u128);
+		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 10_u128));
+		let dy = DexRouter::exchange(&CHARLIE, currency_pair, 1_u128);
 		assert_ok!(dy);
 		let dy = dy.unwrap();
 		assert!(3000 >= dy);

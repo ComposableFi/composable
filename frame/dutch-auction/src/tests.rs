@@ -1,7 +1,4 @@
-use crate::mock::{
-	currency::{CurrencyId, *},
-	runtime::*,
-};
+use crate::mock::{currency::*, runtime::*};
 use composable_traits::{
 	defi::{LiftedFixedBalance, Sell, Take},
 	time::{LinearDecrease, TimeReleaseFunction},

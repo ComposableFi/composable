@@ -2,7 +2,7 @@ use crate as curve_amm;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
-use scale_info::TypeInfo;
+
 use sp_arithmetic::{traits::Zero, FixedU128};
 use sp_core::H256;
 use sp_runtime::{
@@ -14,10 +14,7 @@ use system::EnsureRoot;
 
 pub type CurrencyId = u128;
 
-pub const PICA: CurrencyId = 0;
-pub const BTC: CurrencyId = 1;
 pub const USDT: CurrencyId = 2;
-pub const ETH: CurrencyId = 3;
 pub const USDC: CurrencyId = 4;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
