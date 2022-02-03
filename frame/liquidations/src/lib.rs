@@ -220,18 +220,16 @@ pub mod pallet {
 				let configuration = Strategies::<T>::get(id);
 				if let Some(configuration) = configuration {
 					let result = match configuration {
-						LiquidationStrategyConfiguration::DutchAuction(configuration) => {
-							T::DutchAuction::ask(from_to, order.clone(), configuration)
-						},
-						_ => {
+						LiquidationStrategyConfiguration::DutchAuction(configuration) =>
+							T::DutchAuction::ask(from_to, order.clone(), configuration),
+						_ =>
 							return Err(DispatchError::Other(
 								"as for now, only auction liquidators implemented",
-							))
-						},
+							)),
 					};
 					if result.is_ok() {
 						Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
-						return result;
+						return result
 					}
 				}
 			}

@@ -599,9 +599,10 @@ pub mod pallet {
 			let author_stake = OracleStake::<T>::get(&who).unwrap_or_else(Zero::zero);
 			ensure!(Self::is_requested(&asset_id), Error::<T>::PriceNotRequested);
 			ensure!(
-				author_stake
-					>= T::MinStake::get()
-						.saturating_add(Self::answer_in_transit(&who).unwrap_or_else(Zero::zero)),
+				author_stake >=
+					T::MinStake::get().saturating_add(
+						Self::answer_in_transit(&who).unwrap_or_else(Zero::zero)
+					),
 				Error::<T>::NotEnoughStake
 			);
 
@@ -616,10 +617,10 @@ pub mod pallet {
 				// because current_prices.len() limited by u32
 				// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 				if current_prices.len() as u32 >= asset_info.max_answers {
-					return Err(Error::<T>::MaxPrices.into());
+					return Err(Error::<T>::MaxPrices.into())
 				}
 				if current_prices.iter().any(|candidate| candidate.who == who) {
-					return Err(Error::<T>::AlreadySubmitted.into());
+					return Err(Error::<T>::AlreadySubmitted.into())
 				}
 				current_prices.push(set_price);
 				Ok(())
@@ -832,7 +833,7 @@ pub mod pallet {
 			prices: &[PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>],
 		) -> Option<T::PriceValue> {
 			if prices.is_empty() {
-				return None;
+				return None
 			}
 
 			let mut numbers: Vec<T::PriceValue> =
@@ -935,7 +936,7 @@ pub mod pallet {
 				log::info!("no signer");
 				return Err(
 					"No local accounts available. Consider adding one via `author_insertKey` RPC.",
-				);
+				)
 			}
 			// checks to make sure key from keystore has not already submitted price
 			let prices = PrePrices::<T>::get(*price_id);
@@ -949,12 +950,12 @@ pub mod pallet {
 
 			if prices.len() as u32 >= asset_info.max_answers {
 				log::info!("Max answers reached");
-				return Err("Max answers reached");
+				return Err("Max answers reached")
 			}
 
 			if prices.into_iter().any(|price| price.who == address) {
 				log::info!("Tx already submitted");
-				return Err("Tx already submitted");
+				return Err("Tx already submitted")
 			}
 			// Make an external HTTP request to fetch the current price.
 			// Note this call will block until response is received.
@@ -1012,7 +1013,7 @@ pub mod pallet {
 			// Let's check the status code before we proceed to reading the response.
 			if response.code != 200 {
 				log::warn!("Unexpected status code: {}", response.code);
-				return Err(http::Error::Unknown);
+				return Err(http::Error::Unknown)
 			}
 
 			let body = response.body().collect::<Vec<u8>>();

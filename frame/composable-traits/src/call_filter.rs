@@ -33,7 +33,7 @@ pub struct CallFilterEntry<S: Get<u32>> {
 
 impl<S: Get<u32>> CallFilterEntry<S> {
 	pub fn valid(&self) -> bool {
-		sp_std::str::from_utf8(&self.pallet_name).is_ok()
-			&& sp_std::str::from_utf8(&self.function_name).is_ok()
+		sp_std::str::from_utf8(&self.pallet_name).is_ok() &&
+			sp_std::str::from_utf8(&self.function_name).is_ok()
 	}
 }

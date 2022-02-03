@@ -173,9 +173,8 @@ pub mod pallet {
 				BoundedVec::try_from(pallet_name.as_bytes().to_vec()),
 				BoundedVec::try_from(function_name.as_bytes().to_vec()),
 			) {
-				(Ok(pallet_name), Ok(function_name)) => {
-					DisabledCalls::<T>::contains_key(CallFilterEntry { pallet_name, function_name })
-				},
+				(Ok(pallet_name), Ok(function_name)) =>
+					DisabledCalls::<T>::contains_key(CallFilterEntry { pallet_name, function_name }),
 				_ => false,
 			}
 		}

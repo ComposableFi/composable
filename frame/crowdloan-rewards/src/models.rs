@@ -52,7 +52,7 @@ impl<'de> frame_support::Deserialize<'de> for EthereumAddress {
 		if s.len() != 40 {
 			return Err(frame_support::serde::de::Error::custom(
 				"Bad length of Ethereum address (should be 42 including '0x')",
-			));
+			))
 		}
 		let raw: Vec<u8> = rustc_hex::FromHex::from_hex(s)
 			.map_err(|e| frame_support::serde::de::Error::custom(format!("{:?}", e)))?;

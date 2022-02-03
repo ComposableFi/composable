@@ -13,6 +13,7 @@ env_logger = "0.8.4"
 log = "0.4.14"
 url = "1.7"
 sp-runtime = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+frame-system = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 derive_more = "0.99.16"
 tokio = {version = "1", features = ["full"]}
 codec = { package = "parity-scale-codec", version = "2.2.0", default-features = false }
@@ -26,8 +27,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 common = { package = "common", path = "../../runtime/common" }
-subxt = { git = "https://github.com/composableFi/subxt", branch = "seun-0.9.13" }
-subxt-clients = { path = "../subxt-clients" }
+substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch = "master" }
 
 [dev-dependencies]
 hex = "0.4.3"

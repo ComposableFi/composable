@@ -52,7 +52,7 @@ impl<LiquidationStrategyId, Asset: Eq> Validate<MarketModelValid>
 {
 	fn validate(self) -> Result<Self, &'static str> {
 		if self.updatable.collateral_factor < MoreThanOneFixedU128::one() {
-			return Err("collateral factor must be >=1");
+			return Err("collateral factor must be >=1")
 		}
 
 		let interest_rate_model =

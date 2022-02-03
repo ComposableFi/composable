@@ -872,7 +872,7 @@ pub mod pallet {
 			let n = FixedU128::saturating_from_integer(u128::try_from(xp_f.len()).ok()?);
 			let sum = xp_f.iter().try_fold(zero, |s, x| s.checked_add(x))?;
 			if sum == zero {
-				return Some(zero);
+				return Some(zero)
 			}
 			let mut d = sum;
 
@@ -895,10 +895,10 @@ pub mod pallet {
 
 				if d > d_prev {
 					if d.checked_sub(&d_prev)? <= prec {
-						return Some(d);
+						return Some(d)
 					}
 				} else if d_prev.checked_sub(&d)? <= prec {
-					return Some(d);
+					return Some(d)
 				}
 			}
 			None
@@ -934,14 +934,14 @@ pub mod pallet {
 
 			// Same coin
 			if i == j {
-				return None;
+				return None
 			}
 			// j above n
 			if j >= xp_f.len() {
-				return None;
+				return None
 			}
 			if i >= xp_f.len() {
-				return None;
+				return None
 			}
 			let d_f = Self::get_d(xp_f, ann_f)?;
 			let mut c = d_f;
@@ -957,7 +957,7 @@ pub mod pallet {
 				} else if k != j {
 					x_k = *xp_k;
 				} else {
-					continue;
+					continue
 				}
 				// s = s + x_k
 				s = s.checked_add(&x_k)?;
@@ -987,10 +987,10 @@ pub mod pallet {
 				// Equality with the specified precision
 				if y > y_prev {
 					if y.checked_sub(&y_prev)? <= prec {
-						return Some(y);
+						return Some(y)
 					}
 				} else if y_prev.checked_sub(&y)? <= prec {
-					return Some(y);
+					return Some(y)
 				}
 			}
 
@@ -1022,7 +1022,7 @@ pub mod pallet {
 			let n = FixedU128::try_from(xp_f.len() as u128).ok()?;
 
 			if i >= xp_f.len() {
-				return None;
+				return None
 			}
 
 			let mut c = d_f;
@@ -1030,7 +1030,7 @@ pub mod pallet {
 
 			for (k, xp_k) in xp_f.iter().enumerate() {
 				if k == i {
-					continue;
+					continue
 				}
 
 				let x = xp_k;
@@ -1056,10 +1056,10 @@ pub mod pallet {
 				// Equality with the specified precision
 				if y > y_prev {
 					if y.checked_sub(&y_prev)? <= prec {
-						return Some(y);
+						return Some(y)
 					}
 				} else if y_prev.checked_sub(&y)? <= prec {
-					return Some(y);
+					return Some(y)
 				}
 			}
 
