@@ -1,6 +1,6 @@
 use crate::*;
 
-use composable_traits::currency::CurrencyFactory;
+use composable_traits::currency::{CurrencyFactory, RangeId};
 use frame_support::{parameter_types, traits::Everything};
 use frame_system as system;
 use num_traits::Zero;
@@ -47,7 +47,7 @@ parameter_types! {
 pub struct CurrencyIdGenerator;
 
 impl CurrencyFactory<AssetId> for CurrencyIdGenerator {
-	fn create() -> Result<AssetId, sp_runtime::DispatchError> {
+	fn create(_: RangeId) -> Result<AssetId, sp_runtime::DispatchError> {
 		Ok(1_u64)
 	}
 }

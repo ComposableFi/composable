@@ -1414,6 +1414,7 @@ dependencies = [
  "composable-support",
  "frame-support",
  "frame-system",
+ "orml-traits",
  "parity-scale-codec",
  "plotters",
  "proptest 1.0.0",
@@ -6291,10 +6292,14 @@ dependencies = [
 name = "pallet-currency-factory"
 version = "0.0.1"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-balances",
  "parity-scale-codec",
+ "proptest 0.9.6",
  "scale-info",
  "sp-arithmetic",
  "sp-core",

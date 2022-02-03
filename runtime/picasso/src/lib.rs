@@ -693,14 +693,12 @@ impl democracy::Config for Runtime {
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	  pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
-}
-
 impl currency_factory::Config for Runtime {
 	type Event = Event;
-	type DynamicCurrencyId = CurrencyId;
-	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
+	type AssetId = CurrencyId;
+	type AddOrigin = EnsureRootOrHalfCouncil;
+	type ReserveOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
 }
 
 impl governance_registry::Config for Runtime {
@@ -715,7 +713,7 @@ parameter_types! {
 
 impl assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = Factory;
+	type GenerateCurrencyId = CurrencyFactory;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type NativeCurrency = Balances;
@@ -726,9 +724,9 @@ impl assets::Config for Runtime {
 }
 
 parameter_types! {
-  pub const InitialPayment: Perbill = Perbill::from_percent(25);
+	  pub const InitialPayment: Perbill = Perbill::from_percent(25);
 	pub const VestingStep: BlockNumber = 7 * DAYS;
-  pub const Prefix: &'static [u8] = b"picasso-";
+	  pub const Prefix: &'static [u8] = b"picasso-";
 }
 
 impl crowdloan_rewards::Config for Runtime {
@@ -833,7 +831,7 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
-		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
+		CurrencyFactory: currency_factory::{Pallet, Storage, Event<T>} = 53,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 54,
 		Assets: assets::{Pallet, Call, Storage} = 55,
 		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
@@ -1059,7 +1057,21 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			add_benchmarks!(params, batches);
+			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
+			add_benchmark!(params, batches, balances, Balances);
+			add_benchmark!(params, batches, timestamp, Timestamp);
+			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
+			add_benchmark!(params, batches, collator_selection, CollatorSelection);
+			add_benchmark!(params, batches, indices, Indices);
+			add_benchmark!(params, batches, membership, CouncilMembership);
+			add_benchmark!(params, batches, treasury, Treasury);
+			add_benchmark!(params, batches, scheduler, Scheduler);
+			add_benchmark!(params, batches, democracy, Democracy);
+			add_benchmark!(params, batches, collective, Council);
+			add_benchmark!(params, batches, utility, Utility);
+			add_benchmark!(params, batches, identity, Identity);
+			add_benchmark!(params, batches, multisig, Multisig);
+			add_benchmark!(params, batches, currency_factory, CurrencyFactory);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

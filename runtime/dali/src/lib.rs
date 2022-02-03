@@ -443,7 +443,7 @@ impl oracle::Config for Runtime {
 	type MaxHistory = MaxHistory;
 	type MaxPrePrices = MaxPrePrices;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
-	type LocalAssets = Factory;
+	type LocalAssets = CurrencyFactory;
 }
 
 // Parachain stuff.
@@ -737,7 +737,7 @@ parameter_types! {
 impl vault::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type CurrencyFactory = Factory;
+	type CurrencyFactory = CurrencyFactory;
 	type AssetId = CurrencyId;
 	type Currency = Assets;
 	type Convert = sp_runtime::traits::ConvertInto;
@@ -754,14 +754,12 @@ impl vault::Config for Runtime {
 	type WeightInfo = weights::vault::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
-}
-
 impl currency_factory::Config for Runtime {
 	type Event = Event;
-	type DynamicCurrencyId = CurrencyId;
-	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
+	type AssetId = CurrencyId;
+	type AddOrigin = EnsureRootOrHalfCouncil;
+	type ReserveOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
 }
 
 impl assets_registry::Config for Runtime {
@@ -781,7 +779,7 @@ impl governance_registry::Config for Runtime {
 
 impl assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = Factory;
+	type GenerateCurrencyId = CurrencyFactory;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type NativeCurrency = Balances;
@@ -954,7 +952,7 @@ construct_runtime!(
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
 		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 52,
-		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
+		CurrencyFactory: currency_factory::{Pallet, Storage, Event<T>} = 53,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
@@ -1187,7 +1185,24 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			add_benchmarks!(params, batches);
+			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
+			add_benchmark!(params, batches, balances, Balances);
+			add_benchmark!(params, batches, timestamp, Timestamp);
+			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
+			add_benchmark!(params, batches, collator_selection, CollatorSelection);
+			add_benchmark!(params, batches, indices, Indices);
+			add_benchmark!(params, batches, membership, CouncilMembership);
+			add_benchmark!(params, batches, treasury, Treasury);
+			add_benchmark!(params, batches, scheduler, Scheduler);
+			add_benchmark!(params, batches, democracy, Democracy);
+			add_benchmark!(params, batches, collective, Council);
+			add_benchmark!(params, batches, utility, Utility);
+			add_benchmark!(params, batches, identity, Identity);
+			add_benchmark!(params, batches, multisig, Multisig);
+			add_benchmark!(params, batches, vault, Vault);
+			add_benchmark!(params, batches, oracle, Oracle);
+			add_benchmark!(params, batches, dutch_auction, DutchAuction);
+			add_benchmark!(params, batches, currency_factory, CurrencyFactory);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

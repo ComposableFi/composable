@@ -1,5 +1,4 @@
 use crate as dex_router;
-use composable_traits::currency::DynamicCurrencyId;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -9,64 +8,21 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	ArithmeticError, DispatchError, FixedPointNumber,
+	FixedPointNumber,
 };
+use system::EnsureRoot;
 
-#[derive(
-	PartialOrd,
-	Ord,
-	PartialEq,
-	Eq,
-	Debug,
-	Copy,
-	Clone,
-	codec::Encode,
-	codec::Decode,
-	codec::MaxEncodedLen,
-	serde::Serialize,
-	serde::Deserialize,
-	TypeInfo,
-)]
-#[allow(clippy::upper_case_acronyms)] // currencies should be CONSTANT_CASE
-pub enum MockCurrencyId {
-	PICA,
-	BTC,
-	ETH,
-	LTC,
-	USDT,
-	USDC,
-	LpToken(u128),
-}
 
-impl Default for MockCurrencyId {
-	fn default() -> Self {
-		MockCurrencyId::PICA
-	}
-}
+pub type CurrencyId = u128;
 
-impl From<u128> for MockCurrencyId {
-	fn from(id: u128) -> Self {
-		match id {
-			0 => MockCurrencyId::PICA,
-			1 => MockCurrencyId::BTC,
-			2 => MockCurrencyId::ETH,
-			3 => MockCurrencyId::LTC,
-			4 => MockCurrencyId::USDT,
-			5 => MockCurrencyId::LpToken(0),
-			_ => unreachable!(),
-		}
-	}
-}
+pub const PICA: CurrencyId = 0;
+pub const BTC: CurrencyId = 1;
+pub const USDT: CurrencyId = 2;
+pub const ETH: CurrencyId = 3;
+pub const USDC: CurrencyId = 4;
 
-impl DynamicCurrencyId for MockCurrencyId {
-	fn next(self) -> Result<Self, DispatchError> {
-		match self {
-			MockCurrencyId::LpToken(x) => Ok(MockCurrencyId::LpToken(
-				x.checked_add(1).ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?,
-			)),
-			_ => unreachable!(),
-		}
-	}
+parameter_types! {
+	pub const NativeAssetId: CurrencyId = 0;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -89,14 +45,12 @@ frame_support::construct_runtime!(
 	}
 );
 
-parameter_types! {
-	pub const DynamicCurrencyIdInitial: MockCurrencyId = MockCurrencyId::LpToken(0);
-}
-
 impl pallet_currency_factory::Config for Test {
 	type Event = Event;
-	type DynamicCurrencyId = MockCurrencyId;
-	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
+	type AssetId = CurrencyId;
+	type AddOrigin = EnsureRoot<AccountId>;
+	type ReserveOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -159,15 +113,12 @@ impl pallet_balances::Config for Test {
 }
 
 pub type Balance = u128;
-
-pub type AssetId = MockCurrencyId;
-
+pub type AssetId = u128;
 pub type Amount = i128;
-
 pub type PoolId = u32;
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: MockCurrencyId| -> Balance {
+	pub ExistentialDeposits: |_currency_id: AssetId| -> Balance {
 		Zero::zero()
 	};
 }
@@ -176,7 +127,7 @@ impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
-	type CurrencyId = MockCurrencyId;
+	type CurrencyId = AssetId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();

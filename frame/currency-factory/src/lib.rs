@@ -35,23 +35,42 @@
 )]
 
 pub use pallet::*;
+pub use weights::{SubstrateWeight, WeightInfo};
 
 mod ranges;
+mod weights;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+#[cfg(test)]
+mod mocks;
+#[cfg(test)]
+mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::{
+		ranges::{Range, RangeId, Ranges},
+		weights::WeightInfo,
+	};
 	use codec::FullCodec;
-	use composable_traits::currency::{CurrencyFactory, DynamicCurrencyId, Exponent, LocalAssets};
-	use frame_support::{pallet_prelude::*, PalletId};
+	use composable_traits::currency::{CurrencyFactory, Exponent, LocalAssets};
+	use frame_support::{pallet_prelude::*, traits::EnsureOrigin, PalletId};
+	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
-	use sp_runtime::traits::Saturating;
-
-	use crate::ranges::Ranges;
+	use sp_runtime::{
+		traits::{CheckedAdd, Saturating},
+		DispatchError,
+	};
 
 	pub const PALLET_ID: PalletId = PalletId(*b"pal_curf");
 
 	#[pallet::event]
-	pub enum Event<T: Config> {}
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		RangeCreated { range: Range<T::AssetId> },
+	}
 
 	#[pallet::error]
 	pub enum Error<T> {}
@@ -60,18 +79,31 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type AssetId: FullCodec + Copy + TypeInfo + From<u128> + Saturating + Clone + Ord;
+
+		/// The currency which can be created from thin air.
+		type AssetId: FullCodec
+			+ Copy
+			+ TypeInfo
+			+ From<u128>
+			+ Saturating
+			+ Clone
+			+ Ord
+			+ CheckedAdd
+			+ core::fmt::Debug
+			+ MaxEncodedLen;
+
+		type AddOrigin: EnsureOrigin<Self::Origin>;
+		type ReserveOrigin: EnsureOrigin<Self::Origin>;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	/// The counter that track the latest generated currency id.
 	#[pallet::storage]
-	#[pallet::getter(fn currency_latest)]
-	// Absense of a set `CurrencyCounter` means we default to `T::DynamicCurrencyIdInitial`, so
-	// `ValueQuery` is allowed
+	#[pallet::getter(fn asset_id_rages)]
+	// Storage is intialized using RangesOnEmpty, so ValueQuery is allowed.
 	#[allow(clippy::disallowed_type)]
 	pub type AssetIdRanges<T: Config> =
 		StorageValue<_, Ranges<T::AssetId>, ValueQuery, RangesOnEmpty<T>>;
@@ -81,9 +113,27 @@ pub mod pallet {
 		Ranges::new()
 	}
 
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		#[pallet::weight(T::WeightInfo::add_range())]
+		pub fn add_range(origin: OriginFor<T>, length: u64) -> DispatchResultWithPostInfo {
+			T::AddOrigin::ensure_origin(origin)?;
+			if let Some(range) = AssetIdRanges::<T>::try_mutate(
+				|range| -> Result<Option<Range<T::AssetId>>, DispatchError> {
+					range.append(length.into())?;
+					Ok(range.last().cloned())
+				},
+			)? {
+				Self::deposit_event(Event::<T>::RangeCreated { range })
+			}
+
+			Ok(().into())
+		}
+	}
+
 	impl<T: Config> CurrencyFactory<T::AssetId> for Pallet<T> {
-		fn create() -> Result<T::AssetId, DispatchError> {
-			AssetIdRanges::<T>::mutate(|range| range.increment_tokens())
+		fn create(id: RangeId) -> Result<T::AssetId, DispatchError> {
+			AssetIdRanges::<T>::mutate(|range| range.increment(id))
 		}
 	}
 
