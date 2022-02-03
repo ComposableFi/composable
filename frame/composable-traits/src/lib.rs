@@ -49,6 +49,7 @@ pub mod liquidation;
 pub mod mosaic;
 pub mod nft;
 pub mod oracle;
+pub mod pool;
 pub mod privilege;
 pub mod staking;
 pub mod time;
