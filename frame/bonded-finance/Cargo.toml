@@ -27,14 +27,14 @@ sp-std = { default-features = false,  git = "https://github.com/paritytech/subst
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "63b32194e7b9aff6a6350d2d4434525de4eec7c1", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
 
 [dev-dependencies]
 composable-traits = { path = "../../frame/composable-traits" }
 proptest = "1.0"
 proptest-derive = "0.3"
 serde = { version = "1.0.130" }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "63b32194e7b9aff6a6350d2d4434525de4eec7c1" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
 pallet-vesting = { path = "../../frame/vesting" }
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 

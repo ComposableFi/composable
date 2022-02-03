@@ -37,8 +37,8 @@ scale-info = { version = "1.0", default-features = false, features = ["derive"] 
 once_cell = "1.8.0"
 proptest = "0.9.6"
 serde = "1.0.130"
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "63b32194e7b9aff6a6350d2d4434525de4eec7c1" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "63b32194e7b9aff6a6350d2d4434525de4eec7c1", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 composable-tests-helpers = { version = "0.0.1", path = "../composable-tests-helpers", default-features = false }
 

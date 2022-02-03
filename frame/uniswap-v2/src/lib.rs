@@ -70,6 +70,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type AssetId: FullCodec
+			+ MaxEncodedLen
 			+ Eq
 			+ PartialEq
 			+ Copy
@@ -81,6 +82,7 @@ pub mod pallet {
 		type Balance: Default
 			+ Parameter
 			+ Codec
+			+ MaxEncodedLen
 			+ Copy
 			+ Ord
 			+ CheckedAdd
@@ -101,6 +103,7 @@ pub mod pallet {
 			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
 		type Precision: Get<FixedU128>;
 		type PoolId: FullCodec
+			+ MaxEncodedLen
 			+ Default
 			+ TypeInfo
 			+ Eq

@@ -57,7 +57,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The currency which can be created from thin air.
-		type DynamicCurrencyId: FullCodec + Copy + DynamicCurrencyId + TypeInfo;
+		type DynamicCurrencyId: FullCodec + MaxEncodedLen + Copy + DynamicCurrencyId + TypeInfo;
 
 		/// The initial currency id from which we are able to generate the next.
 		#[pallet::constant]

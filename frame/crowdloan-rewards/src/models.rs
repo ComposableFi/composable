@@ -2,7 +2,14 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{MultiSignature, RuntimeDebug};
 
-#[derive(Clone, RuntimeDebug, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo, MaxEncodedLen)]
+pub struct Reward<Balance, BlockNumber> {
+	pub(crate) total: Balance,
+	pub(crate) claimed: Balance,
+	pub(crate) vesting_period: BlockNumber,
+}
+
+#[derive(Clone, RuntimeDebug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum Proof<AccountId> {
 	RelayChain(AccountId, MultiSignature),
 	Ethereum(EcdsaSignature),
@@ -45,7 +52,7 @@ impl<'de> frame_support::Deserialize<'de> for EthereumAddress {
 		if s.len() != 40 {
 			return Err(frame_support::serde::de::Error::custom(
 				"Bad length of Ethereum address (should be 42 including '0x')",
-			))
+			));
 		}
 		let raw: Vec<u8> = rustc_hex::FromHex::from_hex(s)
 			.map_err(|e| frame_support::serde::de::Error::custom(format!("{:?}", e)))?;
@@ -55,7 +62,7 @@ impl<'de> frame_support::Deserialize<'de> for EthereumAddress {
 	}
 }
 
-#[derive(Encode, Decode, Clone, TypeInfo)]
+#[derive(Encode, Decode, Clone, MaxEncodedLen, TypeInfo)]
 pub struct EcdsaSignature(pub [u8; 65]);
 
 impl PartialEq for EcdsaSignature {

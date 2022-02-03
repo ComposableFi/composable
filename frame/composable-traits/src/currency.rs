@@ -55,6 +55,7 @@ impl<MayBeAssetId> LocalAssets<MayBeAssetId> for () {
 	}
 }
 
+// FIXME(hussein-aitlahcen): this trait already exist under frame_support, named Balance
 pub trait BalanceLike:
 	AtLeast32BitUnsigned
 	+ FullCodec
@@ -94,5 +95,10 @@ impl<T: PartialOrd + Zero + SafeArithmetic + Into<u128> + TryFrom<u128> + From<u
 // hack to imitate type alias until it is in stable
 // named with like implying it is`like` is is necessary to be `AssetId`, but may be not enough (if
 // something is `AssetIdLike` than it is not always asset)
-pub trait AssetIdLike: FullCodec + Copy + Eq + PartialEq + Debug + TypeInfo {}
-impl<T: FullCodec + Copy + Eq + PartialEq + Debug + TypeInfo> AssetIdLike for T {}
+
+// FIXME(hussein-aitlahcen): this trait already exists in frame_support, named `AssetId`
+pub trait AssetIdLike:
+	FullCodec + MaxEncodedLen + Copy + Eq + PartialEq + Debug + TypeInfo
+{
+}
+impl<T: FullCodec + MaxEncodedLen + Copy + Eq + PartialEq + Debug + TypeInfo> AssetIdLike for T {}
