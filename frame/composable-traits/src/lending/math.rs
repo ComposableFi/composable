@@ -113,10 +113,10 @@ impl InterestRateModel {
 }
 
 pub struct InteresteRateModelIsValid;
-impl Validate<InteresteRateModelIsValid> for InterestRateModel {
-	fn validate(self) -> Result<Self, &'static str> {
+impl Validate<InterestRateModel, InteresteRateModelIsValid> for InteresteRateModelIsValid {
+	fn validate(interest_rate_model: InterestRateModel) -> Result<InterestRateModel, &'static str> {
 		const ERROR: &str = "interest rate model is not valid";
-		match self {
+		match interest_rate_model {
 			InterestRateModel::Jump(x) =>
 				JumpModel::new(x.base_rate, x.jump_rate, x.full_rate, x.target_utilization)
 					.ok_or(ERROR)
