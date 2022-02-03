@@ -37,7 +37,8 @@ run_benchmarks() {
       --steps=$steps \
       --repeat=$repeat \
       --raw \
-      --output="$OUTPUT"
+      --output="$OUTPUT" \
+      --log error
   done
   git config --global user.email "haroldsphinx@gmail.com"
   git config --global user.name "haroldsphinx"
