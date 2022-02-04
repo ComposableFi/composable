@@ -866,8 +866,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, democracy, Democracy);
 			list_benchmark!(list, extra, collective, Council);
 			list_benchmark!(list, extra, utility, Utility);
-			list_benchmark!(list, extra, identity, Identity);
-			list_benchmark!(list, extra, multisig, Multisig);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
