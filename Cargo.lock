@@ -1335,7 +1335,7 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-currency-factory",
- "pallet-democracy",
+ "pallet-democracy 4.0.0-dev",
  "pallet-governance-registry",
  "pallet-indices",
  "pallet-membership",
@@ -2368,7 +2368,7 @@ dependencies = [
  "pallet-collective",
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
- "pallet-democracy",
+ "pallet-democracy 4.0.0-dev",
  "pallet-dutch-auction",
  "pallet-governance-registry",
  "pallet-identity",
@@ -4006,7 +4006,7 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-currency-factory",
- "pallet-democracy",
+ "pallet-democracy 4.0.0-dev",
  "pallet-governance-registry",
  "pallet-indices",
  "pallet-membership",
@@ -4492,7 +4492,7 @@ dependencies = [
  "pallet-balances",
  "pallet-bounties",
  "pallet-collective",
- "pallet-democracy",
+ "pallet-democracy 4.0.0-dev",
  "pallet-election-provider-multi-phase",
  "pallet-elections-phragmen 5.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.16)",
  "pallet-gilt",
@@ -6541,6 +6541,29 @@ dependencies = [
 
 [[package]]
 name = "pallet-democracy"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-governance-registry",
+ "pallet-preimage",
+ "pallet-scheduler",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core 4.1.0-dev",
+ "sp-io",
+ "sp-runtime 4.1.0-dev",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-democracy"
 version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.16#d78e92de5aeaea1b4df48c639eb88d5b93cf19ef"
 dependencies = [
@@ -6771,6 +6794,43 @@ dependencies = [
  "sp-core 4.1.0-dev",
  "sp-io",
  "sp-keyring",
+ "sp-runtime 4.1.0-dev",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-lending"
+version = "0.0.1"
+dependencies = [
+ "composable-support",
+ "composable-tests-helpers",
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log 0.4.14",
+ "num-traits",
+ "once_cell",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-currency-factory",
+ "pallet-dutch-auction",
+ "pallet-liquidations",
+ "pallet-oracle",
+ "pallet-timestamp",
+ "pallet-vault",
+ "parity-scale-codec",
+ "plotters",
+ "proptest 0.9.6",
+ "scale-info",
+ "serde",
+ "smallvec 1.8.0",
+ "sp-arithmetic",
+ "sp-core 4.1.0-dev",
+ "sp-io",
  "sp-runtime 4.1.0-dev",
  "sp-std",
 ]
@@ -7879,7 +7939,7 @@ dependencies = [
  "pallet-collective",
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
- "pallet-democracy",
+ "pallet-democracy 4.0.0-dev",
  "pallet-governance-registry",
  "pallet-identity",
  "pallet-indices",
@@ -8932,7 +8992,7 @@ dependencies = [
  "pallet-balances",
  "pallet-bounties",
  "pallet-collective",
- "pallet-democracy",
+ "pallet-democracy 4.0.0-dev",
  "pallet-election-provider-multi-phase",
  "pallet-elections-phragmen 5.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13)",
  "pallet-grandpa",
@@ -9012,7 +9072,7 @@ dependencies = [
  "pallet-balances",
  "pallet-bounties",
  "pallet-collective",
- "pallet-democracy",
+ "pallet-democracy 4.0.0-dev",
  "pallet-election-provider-multi-phase",
  "pallet-elections-phragmen 5.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.16)",
  "pallet-grandpa",
@@ -14470,7 +14530,7 @@ dependencies = [
  "pallet-bags-list",
  "pallet-balances",
  "pallet-collective",
- "pallet-democracy",
+ "pallet-democracy 4.0.0-dev",
  "pallet-election-provider-multi-phase",
  "pallet-elections-phragmen 5.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.16)",
  "pallet-grandpa",
