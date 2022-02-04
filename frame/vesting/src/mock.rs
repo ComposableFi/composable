@@ -33,6 +33,7 @@ pub const CHARLIE: AccountId = 3;
 	Clone,
 	codec::Encode,
 	codec::Decode,
+	codec::MaxEncodedLen,
 	serde::Serialize,
 	serde::Deserialize,
 	TypeInfo,
@@ -71,6 +72,7 @@ impl frame_system::Config for Runtime {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 pub struct EnsureAliceOrBob;

@@ -19,6 +19,7 @@ pub mod pallet {
 		Clone,
 		codec::Encode,
 		codec::Decode,
+		codec::MaxEncodedLen,
 		serde::Serialize,
 		serde::Deserialize,
 		TypeInfo,

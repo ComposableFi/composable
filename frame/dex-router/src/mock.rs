@@ -22,6 +22,7 @@ use sp_runtime::{
 	Clone,
 	codec::Encode,
 	codec::Decode,
+	codec::MaxEncodedLen,
 	serde::Serialize,
 	serde::Deserialize,
 	TypeInfo,
@@ -138,6 +139,7 @@ impl system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
@@ -216,7 +218,7 @@ impl pallet_uniswap_v2::Config for Test {
 	type PalletId = ConstantProductAmmTestPalletID;
 }
 parameter_types! {
-#[derive(TypeInfo)]
+  #[derive(codec::Encode, codec::Decode, codec::MaxEncodedLen, TypeInfo)]
 	pub const MaxHopsCount: u32 = 4;
 }
 

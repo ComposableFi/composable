@@ -53,8 +53,8 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::traits::{EqualPrivilegeOnly, Get};
+use codec::Encode;
+use frame_support::traits::EqualPrivilegeOnly;
 use frame_system as system;
 use scale_info::TypeInfo;
 #[cfg(any(feature = "std", test))]
@@ -824,12 +824,9 @@ impl Contains<Call> for BaseCallFilter {
 	}
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, MaxEncodedLen, TypeInfo)]
-pub struct MaxStringSize;
-impl Get<u32> for MaxStringSize {
-	fn get() -> u32 {
-		100
-	}
+parameter_types! {
+  #[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
+	pub const MaxStringSize: u32 = 100;
 }
 
 impl call_filter::Config for Runtime {
