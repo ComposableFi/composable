@@ -1202,7 +1202,7 @@ dependencies = [
  "frame-system",
  "num-traits",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "pallet-authorship",
  "pallet-balances",
  "pallet-collator-selection",
@@ -1320,7 +1320,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex-literal",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
@@ -1338,6 +1338,7 @@ dependencies = [
  "pallet-indices",
  "pallet-membership",
  "pallet-oracle",
+ "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
@@ -2322,7 +2323,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex-literal",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
@@ -2346,6 +2347,7 @@ dependencies = [
  "pallet-mosaic",
  "pallet-multisig",
  "pallet-oracle",
+ "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
@@ -3933,7 +3935,7 @@ dependencies = [
  "hex-literal",
  "kusama-runtime",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "pallet-assets",
  "pallet-assets-registry",
  "pallet-aura",
@@ -5857,7 +5859,7 @@ source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -5873,25 +5875,7 @@ dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
  "num-traits",
- "orml-utilities 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-io",
- "sp-runtime 4.1.0-dev",
- "sp-std",
- "xcm 0.9.16",
-]
-
-[[package]]
-name = "orml-traits"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=63b32194e7b9aff6a6350d2d4434525de4eec7c1#63b32194e7b9aff6a6350d2d4434525de4eec7c1"
-dependencies = [
- "frame-support",
- "impl-trait-for-tuples",
- "num-traits",
- "orml-utilities 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=63b32194e7b9aff6a6350d2d4434525de4eec7c1)",
+ "orml-utilities",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -5904,7 +5888,7 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=63b32194e7b9aff6a6350d2d4434525de4eec7c1#63b32194e7b9aff6a6350d2d4434525de4eec7c1"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6#2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5931,26 +5915,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-utilities"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=63b32194e7b9aff6a6350d2d4434525de4eec7c1#63b32194e7b9aff6a6350d2d4434525de4eec7c1"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-io",
- "sp-runtime 4.1.0-dev",
- "sp-std",
-]
-
-[[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=63b32194e7b9aff6a6350d2d4434525de4eec7c1#63b32194e7b9aff6a6350d2d4434525de4eec7c1"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6#2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6"
 dependencies = [
  "frame-support",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=63b32194e7b9aff6a6350d2d4434525de4eec7c1)",
+ "orml-traits",
  "parity-scale-codec",
  "sp-runtime 4.1.0-dev",
  "sp-std",
@@ -5961,12 +5931,12 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=63b32194e7b9aff6a6350d2d4434525de4eec7c1#63b32194e7b9aff6a6350d2d4434525de4eec7c1"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6#2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6"
 dependencies = [
  "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.16)",
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=63b32194e7b9aff6a6350d2d4434525de4eec7c1)",
+ "orml-traits",
  "orml-xcm-support",
  "parity-scale-codec",
  "scale-info",
@@ -6012,7 +5982,7 @@ dependencies = [
  "frame-system",
  "num-traits",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "pallet-balances",
  "pallet-governance-registry",
  "parity-scale-codec",
@@ -6200,7 +6170,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "pallet-vesting 0.0.1",
  "parity-scale-codec",
  "proptest 1.0.0",
@@ -6398,7 +6368,7 @@ dependencies = [
  "log 0.4.14",
  "num-traits",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-oracle",
@@ -6424,7 +6394,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "pallet-balances",
  "pallet-governance-registry",
  "pallet-scheduler",
@@ -6461,7 +6431,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-curve-amm",
@@ -6488,7 +6458,7 @@ dependencies = [
  "hex-literal",
  "num-traits",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "pallet-assets",
  "pallet-balances",
  "pallet-currency-factory",
@@ -6586,7 +6556,7 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
@@ -6688,7 +6658,7 @@ dependencies = [
  "num-traits",
  "once_cell",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "pallet-assets",
  "pallet-balances",
  "pallet-currency-factory",
@@ -6807,7 +6777,7 @@ dependencies = [
  "log 0.4.14",
  "num-traits",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "parity-scale-codec",
  "plotters",
  "proptest 0.9.6",
@@ -7172,7 +7142,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "primitives",
@@ -7257,7 +7227,7 @@ dependencies = [
  "log 0.4.14",
  "num-traits",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-oracle",
@@ -7303,7 +7273,7 @@ dependencies = [
  "num-traits",
  "once_cell",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "pallet-balances",
  "parity-scale-codec",
  "proptest 0.9.6",
@@ -7324,7 +7294,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -7792,7 +7762,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex-literal",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6)",
+ "orml-traits",
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
@@ -7812,6 +7782,7 @@ dependencies = [
  "pallet-indices",
  "pallet-membership",
  "pallet-multisig",
+ "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
