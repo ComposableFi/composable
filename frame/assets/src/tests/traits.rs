@@ -590,7 +590,7 @@ mod reservable_multicurrency {
 				};
 
 				Ok(())
-			}).unwrap();
+			})?;
 		}
 
 		#[test]
@@ -616,7 +616,7 @@ mod reservable_multicurrency {
 
 		#[test]
 		fn test_unreserve_implementation(
-			account_1 in accounts(),
+			 account_1 in accounts(),
 			 asset_id in asset(),
 			(first, second, third) in valid_amounts_without_overflow_3()
 		) {
