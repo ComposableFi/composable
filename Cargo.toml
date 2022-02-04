@@ -23,12 +23,11 @@ std = [ "composable-node/std" ]
 
 
 [workspace]
-exclude = ["integration-tests", "frame/transaction-fee"]
+exclude = ["frame/transaction-fee"]
 members = [
     "runtime/common",
     "runtime/primitives",
     "frame/*",
-    "integration-tests",
     "integration-tests/simnode",
     "node",
     "runtime/picasso",
