@@ -28,7 +28,6 @@ members = [
     "runtime/common",
     "runtime/primitives",
     "frame/*",
-    "integration-tests/simnode",
     "node",
     "runtime/picasso",
     "runtime/dali",
