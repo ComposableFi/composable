@@ -38,7 +38,7 @@ impl<T: frame_system::Config> frame_system::WeightInfo for WeightInfo<T> {
 	fn remark_with_event(b: u32, ) -> Weight {
 		(0 as Weight)
 			// Standard Error: 0
-			.saturating_add((2_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add((3_000 as Weight).saturating_mul(b as Weight))
 	}
 	// Storage: System Digest (r:1 w:1)
 	// Storage: unknown [0x3a686561707061676573] (r:0 w:1)
