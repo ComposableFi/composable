@@ -7,6 +7,7 @@ use composable_traits::defi::CurrencyPair;
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::{Currency, OnInitialize},
+	BoundedVec,
 };
 use pallet_balances::Error as BalancesError;
 use parking_lot::RwLock;
@@ -80,7 +81,7 @@ fn add_asset_and_info() {
 		assert_eq!(Oracle::assets_count(), 2);
 
 		// fails with non permission
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		assert_noop!(
 			Oracle::add_asset_and_info(
 				Origin::signed(account_1),
@@ -184,7 +185,7 @@ fn add_asset_and_info() {
 #[test]
 fn set_signer() {
 	new_test_ext().execute_with(|| {
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		let account_2 = get_account_2();
 		let account_3 = get_account_3();
 		let account_4 = get_account_4();
@@ -216,7 +217,7 @@ fn set_signer() {
 #[test]
 fn add_stake() {
 	new_test_ext().execute_with(|| {
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		let account_2 = get_account_2();
 		// fails no controller set
 		assert_noop!(Oracle::add_stake(Origin::signed(account_1), 50), Error::<Test>::UnsetSigner);
@@ -254,7 +255,7 @@ fn add_stake() {
 #[test]
 fn remove_and_reclaim_stake() {
 	new_test_ext().execute_with(|| {
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		let account_2 = get_account_2();
 		let account_3 = get_account_3();
 
@@ -291,7 +292,7 @@ fn remove_and_reclaim_stake() {
 #[test]
 fn add_price() {
 	new_test_ext().execute_with(|| {
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		let account_2 = get_account_2();
 		let account_4 = get_account_4();
 		let account_5 = get_account_5();
@@ -368,7 +369,7 @@ fn add_price() {
 #[test]
 fn medianize_price() {
 	new_test_ext().execute_with(|| {
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		// should not panic
 		Oracle::get_median_price(&Oracle::pre_prices(0));
 		for i in 0..3 {
@@ -437,7 +438,7 @@ fn is_requested() {
 #[test]
 fn test_payout_slash() {
 	new_test_ext().execute_with(|| {
-		let account_1 = Default::default();
+		let account_1 = get_account_1();
 		let account_2 = get_account_2();
 		let account_3 = get_account_3();
 		let account_4 = get_account_4();
@@ -548,7 +549,7 @@ fn on_init() {
 			5
 		));
 		// set prices into storage
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		for i in 0..3 {
 			let price = i as u128 + 100_u128;
 			add_price_storage(price, 0, account_1, 2);
@@ -743,7 +744,7 @@ fn on_init_prune_scenerios() {
 			5
 		));
 		// set prices into storage
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		for i in 0..3 {
 			let price = i as u128 + 100_u128;
 			add_price_storage(price, 0, account_1, 0);
@@ -803,7 +804,7 @@ fn on_init_over_max_answers() {
 			5
 		));
 		// set prices into storage
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		for i in 0..5 {
 			let price = i as u128 + 100_u128;
 			add_price_storage(price, 0, account_1, 0);
@@ -974,14 +975,14 @@ fn parse_price_works() {
 
 fn add_price_storage(price: u128, asset_id: u128, who: AccountId, block: u64) {
 	let price = PrePrice { price, block, who };
-	PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.push(price));
+	PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.try_push(price).unwrap());
 	AnswerInTransit::<Test>::mutate(who, |transit| {
 		*transit = Some(transit.unwrap_or_else(Zero::zero) + 5)
 	});
 }
 
 fn do_price_update(asset_id: u128, block: u64) {
-	let account_1: AccountId = Default::default();
+	let account_1 = get_account_1();
 	for i in 0..3 {
 		let price = i as u128 + 100_u128;
 		add_price_storage(price, asset_id, account_1, block);
@@ -994,7 +995,7 @@ fn do_price_update(asset_id: u128, block: u64) {
 }
 
 fn set_historic_prices(asset_id: u128, historic_prices: Vec<Price<u128, u64>>) {
-	PriceHistory::<Test>::insert(asset_id, historic_prices);
+	PriceHistory::<Test>::insert(asset_id, BoundedVec::try_from(historic_prices).unwrap());
 }
 
 fn price_oracle_response(state: &mut testing::OffchainState, price_id: &str) {

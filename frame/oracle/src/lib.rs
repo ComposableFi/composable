@@ -43,9 +43,7 @@ pub mod pallet {
 			ExistenceRequirement::{AllowDeath, KeepAlive},
 			ReservableCurrency,
 		},
-		transactional,
 		weights::{DispatchClass::Operational, Pays},
-		PalletId,
 	};
 	use frame_system::{
 		offchain::{
@@ -365,6 +363,7 @@ pub mod pallet {
 		BlockIntervalLength,
 		/// There was an error transferring
 		TransferError,
+		MaxHistory,
 		MaxPrePrices,
 	}
 
@@ -606,11 +605,6 @@ pub mod pallet {
 				Error::<T>::NotEnoughStake
 			);
 
-			let set_price = PrePrice {
-				price,
-				block: frame_system::Pallet::<T>::block_number(),
-				who: who.clone(),
-			};
 			let asset_info = Self::asset_info(asset_id).ok_or(Error::<T>::InvalidAssetId)?;
 			PrePrices::<T>::try_mutate(asset_id, |current_prices| -> Result<(), DispatchError> {
 				// There can convert current_prices.len() to u32 safely
@@ -622,7 +616,14 @@ pub mod pallet {
 				if current_prices.iter().any(|candidate| candidate.who == who) {
 					return Err(Error::<T>::AlreadySubmitted.into())
 				}
-				current_prices.push(set_price);
+				current_prices
+					.try_push(PrePrice {
+						price,
+						block: frame_system::Pallet::<T>::block_number(),
+						who: who.clone(),
+					})
+					.map_err(|_| Error::<T>::MaxPrePrices)?;
+
 				Ok(())
 			})?;
 
@@ -713,18 +714,22 @@ pub mod pallet {
 			}
 		}
 
-		#[transactional]
 		pub fn update_prices(block: T::BlockNumber) -> Weight {
 			let mut total_weight: Weight = Zero::zero();
 			let one_read = T::DbWeight::get().reads(1);
 			for (asset_id, asset_info) in AssetsInfo::<T>::iter() {
 				total_weight += one_read;
-				let (removed_pre_prices_len, pre_prices) =
-					Self::update_pre_prices(asset_id, &asset_info, block);
-				total_weight += T::WeightInfo::update_pre_prices(removed_pre_prices_len as u32);
-				let pre_prices_len = pre_prices.len();
-				Self::update_price(asset_id, asset_info.clone(), block, pre_prices);
-				total_weight += T::WeightInfo::update_price(pre_prices_len as u32);
+				if let Ok((removed_pre_prices_len, pre_prices)) =
+					Self::update_pre_prices(asset_id, &asset_info, block)
+				{
+					total_weight += T::WeightInfo::update_pre_prices(removed_pre_prices_len as u32);
+					let pre_prices_len = pre_prices.len();
+
+					// We can ignore `Error::<T>::MaxHistory` because it can not be
+					// because we control the length of items of `PriceHistory`.
+					let _ = Self::update_price(asset_id, asset_info.clone(), block, pre_prices);
+					total_weight += T::WeightInfo::update_price(pre_prices_len as u32);
+				};
 			}
 			total_weight
 		}
@@ -734,7 +739,10 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			asset_info: &AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
 			block: T::BlockNumber,
-		) -> (usize, Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>) {
+		) -> Result<
+			(usize, Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>),
+			DispatchError,
+		> {
 			// TODO maybe add a check if price is requested, is less operations?
 			let pre_pruned_prices = PrePrices::<T>::get(asset_id);
 			let prev_pre_prices_len = pre_pruned_prices.len();
@@ -744,7 +752,8 @@ pub mod pallet {
 			// because pre_pruned_prices.len() limited by u32
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 			if pre_pruned_prices.len() as u32 >= asset_info.min_answers {
-				let res = Self::prune_old_pre_prices(asset_info, pre_pruned_prices.to_vec(), block);
+				let res =
+					Self::prune_old_pre_prices(asset_info, pre_pruned_prices.into_inner(), block);
 				let staled_prices = res.0;
 				pre_prices = res.1;
 				for p in staled_prices {
@@ -752,11 +761,12 @@ pub mod pallet {
 				}
 				PrePrices::<T>::insert(
 					asset_id,
-					pre_prices.try_into().map_err(|_| Error::<T>::MaxPrePrices)?,
+					BoundedVec::try_from(pre_prices.clone())
+						.map_err(|_| Error::<T>::MaxPrePrices)?,
 				);
 			}
 
-			(prev_pre_prices_len - pre_prices.len(), pre_prices)
+			Ok((prev_pre_prices_len - pre_prices.len(), pre_prices))
 		}
 
 		pub fn update_price(
@@ -764,31 +774,30 @@ pub mod pallet {
 			asset_info: AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
 			block: T::BlockNumber,
 			pre_prices: Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
-		) {
+		) -> DispatchResult {
 			// There can convert pre_prices.len() to u32 safely
 			// because pre_prices.len() limited by u32
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 			if pre_prices.len() as u32 >= asset_info.min_answers {
 				if let Some(price) = Self::get_median_price(&pre_prices) {
 					Prices::<T>::insert(asset_id, Price { price, block });
-					let historical = Self::price_history(asset_id);
-					if (historical.len() as u32) < T::MaxHistory::get() {
-						PriceHistory::<T>::mutate(asset_id, |prices| {
-							if Self::prices(asset_id).block != 0_u32.into() {
-								prices.push(Price { price, block });
-							}
-						})
-					} else {
-						PriceHistory::<T>::mutate(asset_id, |prices| {
+					PriceHistory::<T>::try_mutate(asset_id, |prices| -> DispatchResult {
+						if prices.len() as u32 >= T::MaxHistory::get() {
 							prices.remove(0);
-							prices.push(Price { price, block });
-						})
-					}
+						}
+						if block != 0_u32.into() {
+							prices
+								.try_push(Price { price, block })
+								.map_err(|_| Error::<T>::MaxHistory)?;
+						}
+						Ok(())
+					})?;
 					PrePrices::<T>::remove(asset_id);
 
 					Self::handle_payout(&pre_prices, price, asset_id, &asset_info);
 				}
 			}
+			Ok(())
 		}
 
 		#[allow(clippy::type_complexity)]
@@ -946,7 +955,8 @@ pub mod pallet {
 				public_keys.first().ok_or("No public keys for crypto key type `orac`")?.0,
 			);
 			let mut to32 = AccountId32::as_ref(&account);
-			let address: T::AccountId = T::AccountId::decode(&mut to32).unwrap_or_default();
+			let address: T::AccountId =
+				T::AccountId::decode(&mut to32).map_err(|_| "Could not decode account")?;
 
 			if prices.len() as u32 >= asset_info.max_answers {
 				log::info!("Max answers reached");
