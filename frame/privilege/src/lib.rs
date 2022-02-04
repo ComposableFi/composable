@@ -41,14 +41,12 @@ pub mod pallet {
 		math::WrappingNext,
 		privilege::{
 			InspectPrivilege, InspectPrivilegeGroup, MutatePrivilege, MutatePrivilegeGroup,
-			Privilege, PrivilegedGroupOf, PrivilegedGroupSet,
+			Privilege, PrivilegedGroupOf,
 		},
 	};
-	use frame_support::{pallet_prelude::*, PalletId};
+	use frame_support::pallet_prelude::*;
 	use sp_runtime::traits::MaybeDisplay;
 	use sp_std::fmt::Debug;
-
-	pub const PALLET_ID: PalletId = PalletId(*b"pal_priv");
 
 	type AccountIdOf<T> = <T as Config>::AccountId;
 
@@ -132,8 +130,13 @@ pub mod pallet {
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
 	#[allow(clippy::disallowed_type)]
-	pub type GroupMembers<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::GroupId, PrivilegedGroupOf<Pallet<T>>, ValueQuery>;
+	pub type GroupMembers<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::GroupId,
+		BoundedVec<<T as Config>::AccountId, T::MaxMember>,
+		ValueQuery,
+	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn group_id_last)]
@@ -195,7 +198,7 @@ pub mod pallet {
 	impl<T: Config> InspectPrivilegeGroup for Pallet<T> {
 		type AccountId = AccountIdOf<T>;
 		type GroupId = T::GroupId;
-		type Group = PrivilegedGroupSet<BoundedVec<Self::AccountId, T::MaxMember>>;
+		type Group = BoundedVec<Self::AccountId, T::MaxMember>;
 
 		fn privilege(group_id: Self::GroupId) -> Result<Privilege, DispatchError> {
 			GroupPrivileges::<T>::try_get(group_id).map_err(|_| Error::<T>::GroupNotFound.into())
@@ -206,16 +209,17 @@ pub mod pallet {
 		}
 
 		fn is_privileged(
-			_group_id: Self::GroupId,
-			_account_id: Self::AccountId,
+			group_id: Self::GroupId,
+			account_id: Self::AccountId,
 		) -> Result<bool, DispatchError> {
-			Err(DispatchError::Other("todo"))
+			let members = Self::members(group_id)?;
+			Ok(members.contains(&account_id))
 		}
 	}
 
 	impl<T: Config> MutatePrivilegeGroup for Pallet<T> {
 		fn create(
-			PrivilegedGroupSet(group): PrivilegedGroupOf<Self>,
+			group: PrivilegedGroupOf<Self>,
 			privilege: Privilege,
 		) -> Result<Self::GroupId, DispatchError> {
 			ensure!(GroupCount::<T>::get() < T::MaxGroup::get(), Error::<T>::TooManyGroup);
@@ -223,16 +227,15 @@ pub mod pallet {
 				let group_id = previous_group_id.next();
 				*previous_group_id = group_id;
 
-				// make sure all accounts has the according privilege
-				let privilege_held =
-					group.iter().all(|account_id| Self::has_privilege(account_id, privilege));
-
-				ensure!(privilege_held, Error::<T>::GroupPrivilegeNotHeld);
-
 				GroupCount::<T>::mutate(|x| *x += 1);
 				GroupPrivileges::<T>::insert(group_id, privilege);
-				GroupMembers::<T>::insert(group_id, PrivilegedGroupSet(group));
+				// NOTE(hussein-aitlahcen): we don't know if it's correctly sorted at creation, hence we promote member per member.
+				GroupMembers::<T>::insert(group_id, BoundedVec::with_bounded_capacity(group.len()));
 				Self::deposit_event(Event::GroupCreated { group_id, privilege });
+
+				for member in group {
+					<Self as MutatePrivilegeGroup>::promote(group_id, &member)?;
+				}
 
 				Ok(group_id)
 			})
@@ -255,17 +258,12 @@ pub mod pallet {
 		fn promote(group_id: Self::GroupId, account_id: &Self::AccountId) -> DispatchResult {
 			let privilege = Self::privilege(group_id)?;
 			ensure!(Self::has_privilege(account_id, privilege), Error::<T>::GroupPrivilegeNotHeld);
-			GroupMembers::<T>::try_mutate(group_id, |PrivilegedGroupSet(group)| {
-				ensure!(group.len() < T::MaxMember::get() as usize, Error::<T>::TooManyMember);
-				/* NOTE(hussein-aitlahcen):
-					No hashset on-chain, is there a better way?
-					This shouldn't happen so much, probably only done by governance.
-				*/
+			GroupMembers::<T>::try_mutate(group_id, |group| {
 				// Match to make it clear that in case of Ok => already present
 				match group.binary_search(account_id) {
 					Ok(_) => Err(Error::<T>::AlreadyGroupMember.into()),
 					Err(i) => {
-						group.insert(i, *account_id);
+						group.try_insert(i, *account_id).map_err(|_| Error::<T>::TooManyMember)?;
 						Self::deposit_event(Event::GroupMemberAdded {
 							group_id,
 							account_id: *account_id,
@@ -282,7 +280,7 @@ pub mod pallet {
 			 Currently it's not the case.
 		*/
 		fn revoke(group_id: Self::GroupId, account_id: &Self::AccountId) -> DispatchResult {
-			GroupMembers::<T>::try_mutate(group_id, |PrivilegedGroupSet(group)| {
+			GroupMembers::<T>::try_mutate(group_id, |group| {
 				/* NOTE(hussein-aitlahcen):
 				   No hashset on-chain, is there a better way?
 				   This shouldn't happen so much, probably only done by governance.

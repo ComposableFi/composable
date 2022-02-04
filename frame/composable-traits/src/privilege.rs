@@ -38,12 +38,7 @@ pub trait MutatePrivilege: InspectPrivilege {
 	fn revoke(account_id: &Self::AccountId, privilege: Privilege) -> DispatchResult;
 }
 
-#[repr(transparent)]
-#[derive(Default, Encode, Decode, MaxEncodedLen, TypeInfo)]
-/// A privileged group.
-pub struct PrivilegedGroupSet<T>(pub T);
-
-pub type PrivilegedGroupOf<T> = PrivilegedGroupSet<<T as InspectPrivilegeGroup>::Group>;
+pub type PrivilegedGroupOf<T> = <T as InspectPrivilegeGroup>::Group;
 
 /// An privilege group, a set of privileged accounts.
 pub trait InspectPrivilegeGroup {
