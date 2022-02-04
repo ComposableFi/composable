@@ -4,7 +4,7 @@ use crate::*;
 use composable_tests_helpers::prop_assert_ok;
 use mocks::{
 	new_test_ext, new_test_ext_multi_currency, AccountId, AssetId, Balance, Test,
-	ACCOUNT_FREE_START, ALICE, ASSET_1, ASSET_2, ASSET_FREE_START, BALANCES, BOB, MINIMUM_BALANCE,
+	ACCOUNT_FREE_START, ASSET_FREE_START, BALANCES, MINIMUM_BALANCE,
 };
 use proptest::prelude::*;
 
@@ -313,7 +313,6 @@ mod reservable_currency {
 
 mod multicurrency {
 	use super::*;
-	use frame_support::traits::{tokens::Imbalance, ExistenceRequirement, WithdrawReasons};
 	use orml_traits::currency::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
 
 	proptest! {
@@ -375,7 +374,7 @@ mod multicurrency {
 
 		#[test]
 		fn test_free_balance_implementation(
-			(account) in accounts(),
+			(account in accounts(),
 			asset_id in asset(),
 			(first, second, third) in valid_amounts_without_overflow_3()
 			) {
@@ -424,7 +423,6 @@ mod multicurrency {
 
 mod lockable_multicurrency {
 	use super::*;
-	use frame_support::traits::{tokens::Imbalance, ExistenceRequirement, WithdrawReasons};
 	use orml_traits::currency::{MultiCurrency, MultiLockableCurrency};
 
 	proptest! {
@@ -432,7 +430,7 @@ mod lockable_multicurrency {
 
 	   #[test]
 	   fn test_set_lock_implementation(
-			(account) in accounts(),
+			account in accounts(),
 			asset_id in asset(),
 			(first, second, third) in valid_amounts_without_overflow_3()) {
 
@@ -461,7 +459,7 @@ mod lockable_multicurrency {
 
 		 #[test]
 	   fn test_extend_lock_implementation(
-			(account) in accounts(),
+			account in accounts(),
 			asset_id in asset(),
 			(first, second, third) in valid_amounts_without_overflow_3()) {
 
@@ -487,7 +485,7 @@ mod lockable_multicurrency {
 
 		#[test]
 	   fn test_remove_lock_implementation(
-			(account) in accounts(),
+			account in accounts(),
 			asset_id in asset(),
 			(first, second, third) in valid_amounts_without_overflow_3()) {
 
@@ -514,7 +512,6 @@ mod lockable_multicurrency {
 
 mod reservable_multicurrency {
 	use super::*;
-	use frame_support::traits::tokens::{BalanceStatus, Imbalance};
 	use orml_traits::currency::{MultiCurrency, MultiReservableCurrency};
 
 	proptest! {
