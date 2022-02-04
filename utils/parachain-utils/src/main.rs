@@ -114,6 +114,7 @@ impl<T: ConstructExt + Send + Sync> State<T> {
 enum Error {
 	SubXt(SubstrateXtError),
 	Rpc(RpcError),
+	Io(std::io::Error),
 }
 
 #[tokio::main]
@@ -127,7 +128,7 @@ async fn main() -> Result<(), Error> {
 				// Main::RotateKeys => rotate_keys(&state).await?,
 				Main::UpgradeRuntime { path } => {
 					let wasm = std::fs::read(path).unwrap();
-					upgrade_runtime(wasm, &state).await.map_err(|e| Error::SubXt(e))?;
+					upgrade_runtime(wasm, &state).await?;
 				},
 			};
 		},
@@ -138,7 +139,7 @@ async fn main() -> Result<(), Error> {
 				// Main::RotateKeys => rotate_keys(&state).await?,
 				Main::UpgradeRuntime { path } => {
 					let wasm = std::fs::read(path).unwrap();
-					upgrade_runtime(wasm, &state).await.map_err(|e| Error::SubXt(e))?;
+					upgrade_runtime(wasm, &state).await?;
 				},
 			};
 		},
