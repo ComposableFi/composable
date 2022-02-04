@@ -6,7 +6,7 @@ pub mod democracy;
 pub mod frame_system;
 pub mod indices;
 pub mod membership;
-pub mod scheduler;
+// pub mod scheduler;
 pub mod session;
 pub mod timestamp;
 pub mod tokens;

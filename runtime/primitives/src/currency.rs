@@ -1,5 +1,5 @@
 //! CurrencyId implementation
-use codec::{CompactAs, Decode, Encode};
+use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
 use composable_traits::currency::{DynamicCurrencyId, Exponent};
 use core::ops::Div;
 use scale_info::TypeInfo;
@@ -11,7 +11,18 @@ use sp_runtime::sp_std::ops::Deref;
 
 /// `MayBe`CurrencyId as not each `u128` is valid id.
 #[derive(
-	Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo, CompactAs,
+	Encode,
+	Decode,
+	MaxEncodedLen,
+	Eq,
+	PartialEq,
+	Copy,
+	Clone,
+	RuntimeDebug,
+	PartialOrd,
+	Ord,
+	TypeInfo,
+	CompactAs,
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[repr(transparent)]

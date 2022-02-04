@@ -41,7 +41,7 @@ impl<Balance: MathBalance> Take<Balance> {
 }
 
 /// take `quote` currency and give `base` currency
-#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
 pub struct Sell<AssetId, Balance> {
 	pub pair: CurrencyPair<AssetId>,
 	pub take: Take<Balance>,
