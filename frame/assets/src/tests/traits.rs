@@ -374,7 +374,7 @@ mod multicurrency {
 
 		#[test]
 		fn test_free_balance_implementation(
-			(account in accounts(),
+			account in accounts(),
 			asset_id in asset(),
 			(first, second, third) in valid_amounts_without_overflow_3()
 			) {
