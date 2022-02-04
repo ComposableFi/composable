@@ -33,7 +33,7 @@ pub fn genesis_config(
 		aura: Default::default(),
 		sudo: dali_runtime::SudoConfig {
 			// Assign network admin rights.
-			key: root,
+			key: Some(root),
 		},
 		indices: dali_runtime::IndicesConfig { indices: vec![] },
 		parachain_info: dali_runtime::ParachainInfoConfig { parachain_id: id },

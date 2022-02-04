@@ -1,16 +1,15 @@
 // std
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 // Cumulus Imports
 use common::OpaqueBlock as Block;
-use cumulus_client_consensus_aura::{
-	build_aura_consensus, BuildAuraConsensusParams, SlotProportion,
-};
-use cumulus_client_network::build_block_announce_validator;
+use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
+use cumulus_client_network::BlockAnnounceValidator;
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
 };
 use cumulus_primitives_core::ParaId;
+use cumulus_relay_chain_local::build_relay_chain_interface;
 
 // Substrate Imports
 use crate::{
@@ -165,6 +164,7 @@ where
 		config.wasm_method,
 		config.default_heap_pages,
 		config.max_runtime_instances,
+		config.runtime_cache_size,
 	);
 
 	let (client, backend, keystore_container, task_manager) =
@@ -226,20 +226,22 @@ pub async fn start_node(
 			>(config, polkadot_config, id)
 			.await?,
 			#[cfg(feature = "dali")]
-			chain if chain.contains("dali") =>
+			chain if chain.contains("dali") => {
 				crate::service::start_node_impl::<dali_runtime::RuntimeApi, DaliExecutor>(
 					config,
 					polkadot_config,
 					id,
 				)
-				.await?,
-			chain if chain.contains("picasso") =>
+				.await?
+			},
+			chain if chain.contains("picasso") => {
 				crate::service::start_node_impl::<picasso_runtime::RuntimeApi, PicassoExecutor>(
 					config,
 					polkadot_config,
 					id,
 				)
-				.await?,
+				.await?
+			},
 			_ => panic!("Unknown chain_id: {}", config.chain_spec.id()),
 		};
 
@@ -264,7 +266,7 @@ where
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 {
 	if matches!(parachain_config.role, Role::Light) {
-		return Err("Light client not supported!".into())
+		return Err("Light client not supported!".into());
 	}
 
 	let parachain_config = prepare_node_config(parachain_config);
@@ -292,27 +294,23 @@ where
 
 	let (mut telemetry, telemetry_worker_handle) = params.other;
 
-	let relay_chain_full_node =
-		cumulus_client_service::build_polkadot_full_node(polkadot_config, telemetry_worker_handle)
+	let client = params.client.clone();
+	let backend = params.backend.clone();
+	let mut task_manager = params.task_manager;
+
+	let (relay_chain_interface, collator_key) =
+		build_relay_chain_interface(polkadot_config, telemetry_worker_handle, &mut task_manager)
 			.map_err(|e| match e {
 				polkadot_service::Error::Sub(x) => x,
 				s => format!("{}", s).into(),
 			})?;
 
-	let client = params.client.clone();
-	let backend = params.backend.clone();
-	let block_announce_validator = build_block_announce_validator(
-		relay_chain_full_node.client.clone(),
-		id,
-		Box::new(relay_chain_full_node.network.clone()),
-		relay_chain_full_node.backend.clone(),
-	);
+	let block_announce_validator = BlockAnnounceValidator::new(relay_chain_interface.clone(), id);
 
 	let force_authoring = parachain_config.force_authoring;
 	let validator = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
-	let mut task_manager = params.task_manager;
 	let import_queue = cumulus_client_service::SharedImportQueue::new(params.import_queue);
 	let (network, system_rpc_tx, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
@@ -322,7 +320,9 @@ where
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue: import_queue.clone(),
 			warp_sync: None,
-			block_announce_validator_builder: Some(Box::new(|_| block_announce_validator)),
+			block_announce_validator_builder: Some(Box::new(|_| {
+				Box::new(block_announce_validator)
+			})),
 		})?;
 
 	if parachain_config.offchain_worker.enabled {
@@ -366,6 +366,8 @@ where
 		Arc::new(move |hash, data| network.announce_block(hash, data))
 	};
 
+	let relay_chain_slot_duration = Duration::from_secs(6);
+
 	if validator {
 		let keystore = params.keystore_container.sync_keystore();
 		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
@@ -378,77 +380,69 @@ where
 			telemetry.as_ref().map(|t| t.handle()),
 		);
 
-		let relay_chain_backend = relay_chain_full_node.backend.clone();
-		let relay_chain_client = relay_chain_full_node.client.clone();
 		let backoff_authoring_blocks =
 			Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
-		let parachain_consensus = build_aura_consensus::<
-			sp_consensus_aura::sr25519::AuthorityPair,
-			_,
-			_,
-			_,
-			_,
-			_,
-			_,
-			_,
-			_,
-			_,
-		>(BuildAuraConsensusParams {
-			proposer_factory,
-			create_inherent_data_providers: move |_, (relay_parent, validation_data)| {
-				let parachain_inherent =
-						cumulus_primitives_parachain_inherent::ParachainInherentData::create_at_with_client(
+
+		let relay_chain_interface_inherent = relay_chain_interface.clone();
+		let parachain_consensus =
+			AuraConsensus::build::<sp_consensus_aura::sr25519::AuthorityPair, _, _, _, _, _, _>(
+				BuildAuraConsensusParams {
+					proposer_factory,
+					create_inherent_data_providers: move |_, (relay_parent, validation_data)| {
+						let relay_chain_interface_inherent = relay_chain_interface_inherent.clone();
+						async move {
+							let parachain_inherent = cumulus_primitives_parachain_inherent::ParachainInherentData::create_at(
 							relay_parent,
-							&relay_chain_client,
-							&*relay_chain_backend,
+							&relay_chain_interface_inherent,
 							&validation_data,
 							id,
-						);
-				async move {
-					let time = sp_timestamp::InherentDataProvider::from_system_time();
+						)
+						.await;
+							let time = sp_timestamp::InherentDataProvider::from_system_time();
 
-					let slot =
+							let slot =
 							sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
 								*time,
 								slot_duration.slot_duration(),
 							);
 
-					let parachain_inherent = parachain_inherent.ok_or_else(|| {
-						Box::<dyn std::error::Error + Send + Sync>::from(
-							"Failed to create parachain inherent",
-						)
-					})?;
-					Ok((time, slot, parachain_inherent))
-				}
-			},
-			block_import: client.clone(),
-			relay_chain_client: relay_chain_full_node.client.clone(),
-			relay_chain_backend: relay_chain_full_node.backend.clone(),
-			para_client: client.clone(),
-			backoff_authoring_blocks,
-			sync_oracle: network,
-			keystore,
-			force_authoring,
-			slot_duration,
-			// We got around 500ms for proposing
-			block_proposal_slot_portion: SlotProportion::new(1_f32 / 24_f32),
-			// And a maximum of 750ms if slots are skipped
-			max_block_proposal_slot_portion: Some(SlotProportion::new(1_f32 / 16_f32)),
-			telemetry: telemetry.as_ref().map(|t| t.handle()),
-		});
+							let parachain_inherent = parachain_inherent.ok_or_else(|| {
+								Box::<dyn std::error::Error + Send + Sync>::from(
+									"Failed to create parachain inherent",
+								)
+							})?;
+							Ok((time, slot, parachain_inherent))
+						}
+					},
+					block_import: client.clone(),
+					para_client: client.clone(),
+					backoff_authoring_blocks,
+					sync_oracle: network,
+					keystore,
+					force_authoring,
+					slot_duration,
+					// We got around 500ms for proposing
+					block_proposal_slot_portion: SlotProportion::new(1_f32 / 24_f32),
+					// And a maximum of 750ms if slots are skipped
+					max_block_proposal_slot_portion: Some(SlotProportion::new(1_f32 / 16_f32)),
+					telemetry: telemetry.as_ref().map(|t| t.handle()),
+				},
+			);
 
 		let spawner = task_manager.spawn_handle();
 
 		let params = StartCollatorParams {
 			para_id: id,
+			relay_chain_interface: relay_chain_interface.clone(),
 			block_status: client.clone(),
 			announce_block,
 			client: client.clone(),
 			task_manager: &mut task_manager,
-			relay_chain_full_node,
 			spawner,
 			parachain_consensus,
 			import_queue,
+			collator_key,
+			relay_chain_slot_duration,
 		};
 
 		start_collator(params).await?;
@@ -458,7 +452,9 @@ where
 			announce_block,
 			task_manager: &mut task_manager,
 			para_id: id,
-			relay_chain_full_node,
+			relay_chain_interface,
+			relay_chain_slot_duration,
+			import_queue,
 		};
 
 		start_full_node(params)?;
