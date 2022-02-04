@@ -421,6 +421,7 @@ parameter_types! {
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
+	pub const MaxPrePrices: u32 = 40;
 }
 
 impl oracle::Config for Runtime {
@@ -436,6 +437,7 @@ impl oracle::Config for Runtime {
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
 	type MaxHistory = MaxHistory;
+	type MaxPrePrices = MaxPrePrices;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 	type LocalAssets = Factory;
 }
