@@ -513,6 +513,7 @@ mod lockable_multicurrency {
 mod reservable_multicurrency {
 	use super::*;
 	use orml_traits::currency::{MultiCurrency, MultiReservableCurrency};
+	use frame_support::traits::tokens::BalanceStatus;
 
 	proptest! {
 		#![proptest_config(ProptestConfig::with_cases(10000))]
