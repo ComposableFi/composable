@@ -226,22 +226,20 @@ pub async fn start_node(
 			>(config, polkadot_config, id)
 			.await?,
 			#[cfg(feature = "dali")]
-			chain if chain.contains("dali") => {
+			chain if chain.contains("dali") =>
 				crate::service::start_node_impl::<dali_runtime::RuntimeApi, DaliExecutor>(
 					config,
 					polkadot_config,
 					id,
 				)
-				.await?
-			},
-			chain if chain.contains("picasso") => {
+				.await?,
+			chain if chain.contains("picasso") =>
 				crate::service::start_node_impl::<picasso_runtime::RuntimeApi, PicassoExecutor>(
 					config,
 					polkadot_config,
 					id,
 				)
-				.await?
-			},
+				.await?,
 			_ => panic!("Unknown chain_id: {}", config.chain_spec.id()),
 		};
 
@@ -266,7 +264,7 @@ where
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 {
 	if matches!(parachain_config.role, Role::Light) {
-		return Err("Light client not supported!".into());
+		return Err("Light client not supported!".into())
 	}
 
 	let parachain_config = prepare_node_config(parachain_config);
