@@ -229,7 +229,8 @@ pub mod pallet {
 
 				GroupCount::<T>::mutate(|x| *x += 1);
 				GroupPrivileges::<T>::insert(group_id, privilege);
-				// NOTE(hussein-aitlahcen): we don't know if it's correctly sorted at creation, hence we promote member per member.
+				// NOTE(hussein-aitlahcen): we don't know if it's correctly sorted at creation,
+				// hence we promote member per member.
 				GroupMembers::<T>::insert(group_id, BoundedVec::with_bounded_capacity(group.len()));
 				Self::deposit_event(Event::GroupCreated { group_id, privilege });
 

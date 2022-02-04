@@ -986,7 +986,7 @@ pub mod pallet {
 			if let Some((e_proposal_id, _)) = <NextExternal<T>>::get() {
 				ensure!(id == e_proposal_id, Error::<T>::ProposalMissing);
 			} else {
-				return Err(Error::<T>::NoProposal.into());
+				return Err(Error::<T>::NoProposal.into())
 			}
 
 			let mut existing_vetoers =
@@ -1223,9 +1223,8 @@ pub mod pallet {
 
 			let (provider, deposit, since, expiry) = <Preimages<T>>::get(&id)
 				.and_then(|m| match m {
-					PreimageStatus::Available { provider, deposit, since, expiry, .. } => {
-						Some((provider, deposit, since, expiry))
-					},
+					PreimageStatus::Available { provider, deposit, since, expiry, .. } =>
+						Some((provider, deposit, since, expiry)),
 					_ => None,
 				})
 				.ok_or(Error::<T>::PreimageMissing)?;
@@ -1986,8 +1985,8 @@ impl<T: Config> Pallet<T> {
 		//   of unbaked referendum is bounded by this number. In case those number have changed in a
 		//   runtime upgrade the formula should be adjusted but the bound should still be sensible.
 		<LowestUnbaked<T>>::mutate(|ref_index| {
-			while *ref_index < last
-				&& Self::referendum_info(*ref_index)
+			while *ref_index < last &&
+				Self::referendum_info(*ref_index)
 					.map_or(true, |info| matches!(info, ReferendumInfo::Finished { .. }))
 			{
 				*ref_index += 1
@@ -2057,7 +2056,7 @@ impl<T: Config> Pallet<T> {
 			Ok(0) => return Err(Error::<T>::PreimageMissing.into()),
 			_ => {
 				sp_runtime::print("Failed to decode `PreimageStatus` variant");
-				return Err(Error::<T>::PreimageMissing.into());
+				return Err(Error::<T>::PreimageMissing.into())
 			},
 		}
 
