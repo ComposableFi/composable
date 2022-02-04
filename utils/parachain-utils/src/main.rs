@@ -13,6 +13,8 @@ use substrate_xt::{Client, ConstructExt, ExtrinsicError, SubstrateXtError};
 mod events;
 use events::{match_event, AllRuntimeEvents};
 
+const DALI: &'static str = "dali";
+const PICASSO: &'static str = "picasso";
 /// The command options
 #[derive(Debug, StructOpt, Clone)]
 pub enum Main {
@@ -42,17 +44,17 @@ struct Env {
 
 struct State<T: ConstructExt> {
 	/// Subxt api
-	api: Client<T>,
+	api: Box<Client<T>>,
 	/// Pair signer
 	signer: T::Pair,
 	/// Env variables
 	env: Env,
 }
 
-fn build_client(chain_id: &str, ws_url: &str) -> impl ConstructExt {
+fn build_client(chain_id: &str, ws_url: &str) -> Box<dyn ConstructExt> {
 	struct XtConstructor;
 	match chain_id {
-		"picasso" => {
+		PICASSO => {
 			impl ConstructExt for XtConstructor {
 				type Runtime = PicaRuntime;
 				type Pair = sp_core::sr25519::Pair;
@@ -74,10 +76,10 @@ fn build_client(chain_id: &str, ws_url: &str) -> impl ConstructExt {
 				}
 			}
 
-			Client::<XtConstructor>::new(ws_url).await.unwrap()
+			Box::new(Client::<XtConstructor>::new(ws_url).await.unwrap())
 		},
 
-		"dali" => {
+		DALI => {
 			impl ConstructExt for XtConstructor {
 				type Runtime = DaliRuntime;
 				type Pair = sp_core::sr25519::Pair;
@@ -99,7 +101,7 @@ fn build_client(chain_id: &str, ws_url: &str) -> impl ConstructExt {
 				}
 			}
 
-			Client::<XtConstructor>::new(ws_url).await.unwrap()
+			Box::new(Client::<XtConstructor>::new(ws_url).await.unwrap())
 		},
 		_ => panic!("Unsupported chain_id: {}", chain_id),
 	}
