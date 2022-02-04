@@ -134,7 +134,7 @@ async fn main() -> Result<(), Error> {
 		// Main::RotateKeys => rotate_keys(&state).await?,
 		Main::UpgradeRuntime { path } => {
 			let wasm = std::fs::read(path).unwrap();
-			upgrade_runtime(wasm, &state).await?
+			upgrade_runtime(wasm, &state).await.map_err(|e| Error::SubXt(e))?;
 		},
 	};
 
