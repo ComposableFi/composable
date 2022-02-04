@@ -494,7 +494,7 @@ mod lockable_multicurrency {
 			 prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),0);
 			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account,first + second + third));
 
-			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first + second + third)?;
+			 prop_assert_ok!(<Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first + second + third));
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first ).is_err());
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, second ).is_err());
