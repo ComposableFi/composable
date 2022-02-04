@@ -34,6 +34,8 @@ impl Config for Test {
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
+	pub const MaxConsumers: u32 = 10;
+	pub const MaxOverFlow: u32 = 10;
 }
 
 impl system::Config for Test {
@@ -60,6 +62,7 @@ impl system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
+	type MaxConsumers = (MaxConsumers, MaxOverFlow);
 }
 
 parameter_types! {

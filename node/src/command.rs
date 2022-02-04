@@ -99,14 +99,14 @@ impl SubstrateCli for Cli {
 
 	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		match spec.id() {
+			// composable-chains
 			#[cfg(feature = "composable")]
-			"composable" | "composable-dev" => &composable_runtime::VERSION,
+			chain if chain.contains("composable") => &composable_runtime::VERSION,
 			// dali chains
 			#[cfg(feature = "dali")]
-			"dali" | "dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" =>
-				&dali_runtime::VERSION,
+			chain if chain.contains("dali") => &dali_runtime::VERSION,
 			// picasso chains
-			"picasso" | "picasso-dev" => &picasso_runtime::VERSION,
+			chain if chain.contains("picasso") => &picasso_runtime::VERSION,
 			_ => panic!("Unknown chain_id: {}", spec.id()),
 		}
 	}
@@ -279,7 +279,7 @@ pub fn run() -> Result<()> {
 					id if id.contains("dali") => cmd.run::<Block, DaliExecutor>(config),
 					#[cfg(feature = "composable")]
 					id if id.contains("composable") => cmd.run::<Block, ComposableExecutor>(config),
-					id => panic!("Unknown Id: {}", id),
+					id => panic!("Unknown Chain: {}", id),
 				})
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \

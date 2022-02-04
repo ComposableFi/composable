@@ -89,12 +89,21 @@ pub mod pallet {
 			+ TypeInfo
 			+ Copy;
 
-		type GroupId: FullCodec + WrappingNext + Default + Debug + Copy + PartialEq + TypeInfo;
+		type GroupId: FullCodec
+			+ MaxEncodedLen
+			+ WrappingNext
+			+ Default
+			+ Debug
+			+ Copy
+			+ PartialEq
+			+ TypeInfo;
 
 		/// The max number of groups this pallet can handle.
+		#[pallet::constant]
 		type MaxGroup: Get<u32>;
 
 		/// The max number of member a group can handle.
+		#[pallet::constant]
 		type MaxMember: Get<u32>;
 	}
 
@@ -124,7 +133,7 @@ pub mod pallet {
 	// use OptionQuery instead
 	#[allow(clippy::disallowed_type)]
 	pub type GroupMembers<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::GroupId, PrivilegedGroupSet<AccountIdOf<T>>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, T::GroupId, PrivilegedGroupOf<Pallet<T>>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn group_id_last)]
@@ -186,6 +195,7 @@ pub mod pallet {
 	impl<T: Config> InspectPrivilegeGroup for Pallet<T> {
 		type AccountId = AccountIdOf<T>;
 		type GroupId = T::GroupId;
+		type Group = PrivilegedGroupSet<BoundedVec<Self::AccountId, T::MaxMember>>;
 
 		fn privilege(group_id: Self::GroupId) -> Result<Privilege, DispatchError> {
 			GroupPrivileges::<T>::try_get(group_id).map_err(|_| Error::<T>::GroupNotFound.into())

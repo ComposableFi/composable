@@ -65,11 +65,12 @@ pub mod pallet {
 			+ Clone
 			+ Encode
 			+ Decode
+			+ MaxEncodedLen
 			+ Debug
 			+ TypeInfo
 			+ PartialEq;
 
-		type NetworkId: FullCodec + TypeInfo + Clone + Debug + PartialEq;
+		type NetworkId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq;
 
 		/// Origin capable of setting the relayer. Inteded to be RootOrHalfCouncil, as it is also
 		/// used as the origin capable of stopping attackers.

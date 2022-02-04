@@ -93,7 +93,7 @@ pub fn new_chain_ops(
 > {
 	let components = match config.chain_spec.id() {
 		#[cfg(feature = "composable")]
-		"composable" | "composable-dev" => {
+		chain if chain.contains("composable") => {
 			let components =
 				new_partial::<composable_runtime::RuntimeApi, ComposableExecutor>(config)?;
 			(
@@ -104,7 +104,7 @@ pub fn new_chain_ops(
 			)
 		},
 		#[cfg(feature = "dali")]
-		"dali" | "dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" => {
+		chain if chain.contains("dali") => {
 			let components = new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(config)?;
 			(
 				Arc::new(Client::from(components.client)),
@@ -113,7 +113,7 @@ pub fn new_chain_ops(
 				components.task_manager,
 			)
 		},
-		_ => {
+		chain if chain.contains("picasso") => {
 			let components = new_partial::<picasso_runtime::RuntimeApi, PicassoExecutor>(config)?;
 			(
 				Arc::new(Client::from(components.client)),
@@ -122,6 +122,7 @@ pub fn new_chain_ops(
 				components.task_manager,
 			)
 		},
+		chain => panic!("Unknown chain: {}", chain),
 	};
 
 	Ok(components)
@@ -219,20 +220,20 @@ pub async fn start_node(
 	let task_manager =
 		match config.chain_spec.id() {
 			#[cfg(feature = "composable")]
-			"composable" | "composable-dev" => crate::service::start_node_impl::<
+			chain if chain.contains("composable") => crate::service::start_node_impl::<
 				composable_runtime::RuntimeApi,
 				ComposableExecutor,
 			>(config, polkadot_config, id)
 			.await?,
 			#[cfg(feature = "dali")]
-			"dali" | "dali-chachacha" | "dali-rococo" | "dali-westend" | "dali-dev" =>
+			chain if chain.contains("dali") =>
 				crate::service::start_node_impl::<dali_runtime::RuntimeApi, DaliExecutor>(
 					config,
 					polkadot_config,
 					id,
 				)
 				.await?,
-			"picasso" | "picasso-dev" =>
+			chain if chain.contains("picasso") =>
 				crate::service::start_node_impl::<picasso_runtime::RuntimeApi, PicassoExecutor>(
 					config,
 					polkadot_config,

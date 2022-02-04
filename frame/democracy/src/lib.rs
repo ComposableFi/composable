@@ -293,6 +293,7 @@ pub mod pallet {
 		type Balance: Default
 			+ Parameter
 			+ Codec
+			+ MaxEncodedLen
 			+ Copy
 			+ Ord
 			+ CheckedAdd
@@ -304,6 +305,7 @@ pub mod pallet {
 			+ TypeInfo;
 
 		type AssetId: FullCodec
+			+ MaxEncodedLen
 			+ Eq
 			+ PartialEq
 			+ Copy

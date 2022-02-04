@@ -48,6 +48,7 @@ pub mod pallet {
 			+ PartialEq
 			+ Copy
 			+ MaybeSerializeDeserialize
+			+ MaxEncodedLen
 			+ From<u128>
 			+ Into<u128>
 			+ Debug
@@ -56,6 +57,7 @@ pub mod pallet {
 		type ForeignAssetId: FullCodec
 			+ Eq
 			+ PartialEq
+			+ MaxEncodedLen
 			// we wrap non serde type, so until written custom serde, cannot handle that
 			// + MaybeSerializeDeserialize
 			+ Debug

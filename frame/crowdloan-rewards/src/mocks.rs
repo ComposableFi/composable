@@ -39,6 +39,8 @@ pub const PROOF_PREFIX: &[u8] = b"picasso-";
 
 parameter_types! {
 	pub const BlockHashCount: u32 = 250;
+	pub const MaxConsumers: u32 = 10;
+	pub const MaxOverFlow: u32 = 10;
 }
 
 impl system::Config for Test {
@@ -65,6 +67,7 @@ impl system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
+	type MaxConsumers = (MaxConsumers, MaxOverFlow);
 }
 
 impl balances::Config for Test {

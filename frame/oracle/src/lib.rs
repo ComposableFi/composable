@@ -43,7 +43,9 @@ pub mod pallet {
 			ExistenceRequirement::{AllowDeath, KeepAlive},
 			ReservableCurrency,
 		},
+		transactional,
 		weights::{DispatchClass::Operational, Pays},
+		PalletId,
 	};
 	use frame_system::{
 		offchain::{
@@ -111,6 +113,7 @@ pub mod pallet {
 			+ PartialEq
 			+ Copy
 			+ MaybeSerializeDeserialize
+			+ MaxEncodedLen
 			+ From<u128>
 			+ Into<u128>
 			+ Debug
@@ -128,6 +131,7 @@ pub mod pallet {
 			+ From<u64>
 			+ From<u128>
 			+ Into<u128>
+			+ MaxEncodedLen
 			+ Zero;
 		type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 		/// The Min stake for an oracle
@@ -143,20 +147,24 @@ pub mod pallet {
 		/// Upper bound for total assets available for the oracle
 		type MaxAssetsCount: Get<u32>;
 
+		#[pallet::constant]
 		type MaxHistory: Get<u32>;
+
+		#[pallet::constant]
+		type MaxPrePrices: Get<u32>;
 
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
 		type LocalAssets: LocalAssets<Self::AssetId>;
 	}
 
-	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo)]
 	pub struct Withdraw<Balance, BlockNumber> {
 		pub stake: Balance,
 		pub unlock_block: BlockNumber,
 	}
 
-	#[derive(Encode, Decode, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
 	pub struct PrePrice<PriceValue, BlockNumber, AccountId> {
 		pub price: PriceValue,
 		pub block: BlockNumber,
@@ -164,14 +172,14 @@ pub mod pallet {
 	}
 
 	// block timestamped value
-	#[derive(Encode, Decode, Default, Debug, PartialEq, TypeInfo, Clone)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
 	pub struct Price<PriceValue, BlockNumber> {
 		/// value
 		pub price: PriceValue,
 		pub block: BlockNumber,
 	}
 
-	#[derive(Encode, Decode, Default, Debug, PartialEq, Clone, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Clone, TypeInfo)]
 	pub struct AssetInfo<Percent, BlockNumber, Balance> {
 		pub threshold: Percent,
 		pub min_answers: u32,
@@ -246,7 +254,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::AssetId,
-		Vec<Price<T::PriceValue, T::BlockNumber>>,
+		BoundedVec<Price<T::PriceValue, T::BlockNumber>, T::MaxHistory>,
 		ValueQuery,
 	>;
 
@@ -258,7 +266,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::AssetId,
-		Vec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>>,
+		BoundedVec<PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>, T::MaxPrePrices>,
 		ValueQuery,
 	>;
 
@@ -357,6 +365,7 @@ pub mod pallet {
 		BlockIntervalLength,
 		/// There was an error transferring
 		TransferError,
+		MaxPrePrices,
 	}
 
 	#[pallet::hooks]
@@ -704,6 +713,7 @@ pub mod pallet {
 			}
 		}
 
+		#[transactional]
 		pub fn update_prices(block: T::BlockNumber) -> Weight {
 			let mut total_weight: Weight = Zero::zero();
 			let one_read = T::DbWeight::get().reads(1);
@@ -734,13 +744,16 @@ pub mod pallet {
 			// because pre_pruned_prices.len() limited by u32
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 			if pre_pruned_prices.len() as u32 >= asset_info.min_answers {
-				let res = Self::prune_old_pre_prices(asset_info, pre_pruned_prices, block);
+				let res = Self::prune_old_pre_prices(asset_info, pre_pruned_prices.to_vec(), block);
 				let staled_prices = res.0;
 				pre_prices = res.1;
 				for p in staled_prices {
 					Self::deposit_event(Event::AnswerPruned(p.who.clone(), p.price));
 				}
-				PrePrices::<T>::insert(asset_id, pre_prices.clone());
+				PrePrices::<T>::insert(
+					asset_id,
+					pre_prices.try_into().map_err(|_| Error::<T>::MaxPrePrices)?,
+				);
 			}
 
 			(prev_pre_prices_len - pre_prices.len(), pre_prices)
@@ -873,8 +886,7 @@ pub mod pallet {
 			mut price_weights: Vec<T::PriceValue>,
 		) -> Result<T::PriceValue, DispatchError> {
 			let precision: T::PriceValue = 100_u128.into();
-			let historical_prices: Vec<Price<T::PriceValue, T::BlockNumber>> =
-				Self::price_history(asset_id);
+			let historical_prices = Self::price_history(asset_id);
 
 			// add an extra to account for current price not stored in history
 			ensure!(historical_prices.len() + 1 >= price_weights.len(), Error::<T>::DepthTooLarge);

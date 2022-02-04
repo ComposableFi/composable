@@ -13,7 +13,7 @@ pub struct VaultInfo<AccountId, Balance, CurrencyId, BlockNumber> {
 	pub capabilities: Capabilities,
 }
 
-#[derive(Copy, Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
+#[derive(Copy, Clone, Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo)]
 pub struct StrategyOverview<Balance> {
 	// The allocation of this strategy
 	pub allocation: Perquintill,
