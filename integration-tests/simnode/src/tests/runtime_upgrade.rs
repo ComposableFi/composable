@@ -25,17 +25,7 @@ where
 	<TFullCallExecutor<T::Block, NativeElseWasmExecutor<T::ExecutorDispatch>> as CallExecutor<
 		T::Block,
 	>>::Error: std::fmt::Debug,
-	<T::Block as BlockT>::Extrinsic: From<
-		UncheckedExtrinsic<
-			MultiAddress<
-				<T::Runtime as system::Config>::AccountId,
-				<T::Runtime as system::Config>::Index,
-			>,
-			<T::Runtime as system::Config>::Call,
-			MultiSignature,
-			T::SignedExtras,
-		>,
-	>,
+	<T::Block as BlockT>::Extrinsic: From<UncheckedExtrinsicFor<T>>,
 	<T::Runtime as system::Config>::Call:
 		From<system::Call<T::Runtime>> + From<sudo::Call<T::Runtime>>,
 	<T::Runtime as sudo::Config>::Call: From<system::Call<T::Runtime>>,

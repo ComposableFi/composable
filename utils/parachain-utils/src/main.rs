@@ -1,20 +1,20 @@
-use codec::{Decode, Encode};
-use dali_runtime::{Runtime as DaliRuntime, SignedExtra as DaliSignedExtra};
-use jsonrpc_core_client::{futures::StreamExt, transports::ws, RpcChannel, RpcError};
+use codec::Encode;
+use jsonrpc_core_client::RpcError;
 use parachain_system::Call as ParachainSystemCall;
-use picasso_runtime::{Runtime as PicaRuntime, SignedExtra as PicaSignedExtra};
-use sc_rpc::author::AuthorClient;
 use serde::Deserialize;
-use sp_core::{sr25519, Pair, H256};
-use sp_runtime::{traits::IdentifyAccount, MultiSigner};
-use std::str::FromStr;
+use sp_core::{crypto::AccountId32, sr25519, Pair, H256};
+use sp_runtime::{generic::Era, MultiSignature, MultiSigner};
 use structopt::StructOpt;
-use substrate_xt::{Client, ConstructExt, ExtrinsicError, SubstrateXtError};
+use substrate_xt::{AdrressFor, Client, ConstructExt, ExtrinsicError, SubstrateXtError};
+
+#[macro_use]
 mod events;
-use events::{match_event, AllRuntimeEvents};
+
+use events::AllRuntimeEvents;
 
 const DALI: &'static str = "dali";
 const PICASSO: &'static str = "picasso";
+
 /// The command options
 #[derive(Debug, StructOpt, Clone)]
 pub enum Main {
@@ -29,9 +29,12 @@ pub enum Main {
 /// The chain option
 #[derive(Debug, StructOpt, Clone)]
 pub struct Chain {
-	/// Chain id [`picasso` or `dali`]
+	/// Chain id [`picasso`, `composable` or `dali`]
 	#[structopt(long)]
 	chain_id: String,
+
+	#[structopt(subcommand)]
+	main: Main,
 }
 
 #[derive(Deserialize, Debug)]
@@ -43,79 +46,67 @@ struct Env {
 }
 
 struct State<T: ConstructExt> {
-	/// Subxt api
-	api: Box<Client<T>>,
+	/// substrate-xt client
+	api: Client<T>,
 	/// Pair signer
-	signer: T::Pair,
-	/// Env variables
-	env: Env,
+	signer: sr25519::Pair,
 }
 
-fn build_client(chain_id: &str, ws_url: &str) -> Box<dyn ConstructExt> {
-	struct XtConstructor;
-	match chain_id {
-		PICASSO => {
-			impl ConstructExt for XtConstructor {
-				type Runtime = PicaRuntime;
-				type Pair = sp_core::sr25519::Pair;
-				type SignedExtra = PicaSignedExtra;
+struct DaliXtConstructor;
 
-				fn signed_extras(
-					account_id: <Self::Runtime as frame_system::Config>::AccountId,
-				) -> Self::SignedExtra {
-					let nonce = frame_system::Pallet::<Self::Runtime>::account_nonce(account_id);
-					(
-						frame_system::CheckSpecVersion::<Runtime>::new(),
-						frame_system::CheckTxVersion::<Runtime>::new(),
-						frame_system::CheckGenesis::<Runtime>::new(),
-						frame_system::CheckEra::<Runtime>::from(Era::Immortal),
-						frame_system::CheckNonce::<Runtime>::from(nonce),
-						frame_system::CheckWeight::<Runtime>::new(),
-						transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
-					)
-				}
-			}
+impl ConstructExt for DaliXtConstructor {
+	type Runtime = dali_runtime::Runtime;
+	type Pair = sp_core::sr25519::Pair;
+	type SignedExtra = dali_runtime::SignedExtra;
 
-			Box::new(Client::<XtConstructor>::new(ws_url).await.unwrap())
-		},
-
-		DALI => {
-			impl ConstructExt for XtConstructor {
-				type Runtime = DaliRuntime;
-				type Pair = sp_core::sr25519::Pair;
-				type SignedExtra = DaliSignedExtra;
-
-				fn signed_extras(
-					account_id: <Self::Runtime as frame_system::Config>::AccountId,
-				) -> Self::SignedExtra {
-					let nonce = frame_system::Pallet::<Self::Runtime>::account_nonce(account_id);
-					(
-						frame_system::CheckSpecVersion::<Runtime>::new(),
-						frame_system::CheckTxVersion::<Runtime>::new(),
-						frame_system::CheckGenesis::<Runtime>::new(),
-						frame_system::CheckEra::<Runtime>::from(Era::Immortal),
-						frame_system::CheckNonce::<Runtime>::from(nonce),
-						frame_system::CheckWeight::<Runtime>::new(),
-						transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
-					)
-				}
-			}
-
-			Box::new(Client::<XtConstructor>::new(ws_url).await.unwrap())
-		},
-		_ => panic!("Unsupported chain_id: {}", chain_id),
+	fn signed_extras(
+		account_id: <Self::Runtime as frame_system::Config>::AccountId,
+	) -> Self::SignedExtra {
+		let nonce = frame_system::Pallet::<Self::Runtime>::account_nonce(account_id);
+		(
+			frame_system::CheckSpecVersion::<Self::Runtime>::new(),
+			frame_system::CheckTxVersion::<Self::Runtime>::new(),
+			frame_system::CheckGenesis::<Self::Runtime>::new(),
+			frame_system::CheckEra::<Self::Runtime>::from(Era::Immortal),
+			frame_system::CheckNonce::<Self::Runtime>::from(nonce),
+			frame_system::CheckWeight::<Self::Runtime>::new(),
+			transaction_payment::ChargeTransactionPayment::<Self::Runtime>::from(0),
+		)
 	}
 }
 
-impl<T: ConstructExt> State<T> {
-	async fn new(chain_id: &str) -> Self {
+struct PicassoXtConstructor;
+
+impl ConstructExt for PicassoXtConstructor {
+	type Runtime = picasso_runtime::Runtime;
+	type Pair = sp_core::sr25519::Pair;
+	type SignedExtra = picasso_runtime::SignedExtra;
+
+	fn signed_extras(
+		account_id: <Self::Runtime as frame_system::Config>::AccountId,
+	) -> Self::SignedExtra {
+		let nonce = frame_system::Pallet::<Self::Runtime>::account_nonce(account_id);
+		(
+			frame_system::CheckSpecVersion::<Self::Runtime>::new(),
+			frame_system::CheckTxVersion::<Self::Runtime>::new(),
+			frame_system::CheckGenesis::<Self::Runtime>::new(),
+			frame_system::CheckEra::<Self::Runtime>::from(Era::Immortal),
+			frame_system::CheckNonce::<Self::Runtime>::from(nonce),
+			frame_system::CheckWeight::<Self::Runtime>::new(),
+			transaction_payment::ChargeTransactionPayment::<Self::Runtime>::from(0),
+		)
+	}
+}
+
+impl<T: ConstructExt + Send + Sync> State<T> {
+	async fn new() -> Self {
 		let env = envy::from_env::<Env>().unwrap();
 		// create the signer
 		let signer = sr25519::Pair::from_string(&env.root_key, None).unwrap();
 
-		let api = build_client(chain_id, &env.rpc_node);
+		let api = Client::new(&env.rpc_node).await.unwrap();
 
-		State { api, signer, env }
+		State { api, signer }
 	}
 }
 
@@ -129,15 +120,29 @@ enum Error {
 async fn main() -> Result<(), Error> {
 	env_logger::init();
 	let chain = Chain::from_args();
-	let main = Main::from_args();
-	let state = State::new(chain.chain_id).await;
-
-	match main {
-		// Main::RotateKeys => rotate_keys(&state).await?,
-		Main::UpgradeRuntime { path } => {
-			let wasm = std::fs::read(path).unwrap();
-			upgrade_runtime(wasm, &state).await.map_err(|e| Error::SubXt(e))?;
+	match &*chain.chain_id {
+		PICASSO => {
+			let state = State::<PicassoXtConstructor>::new().await;
+			match chain.main {
+				// Main::RotateKeys => rotate_keys(&state).await?,
+				Main::UpgradeRuntime { path } => {
+					let wasm = std::fs::read(path).unwrap();
+					upgrade_runtime(wasm, &state).await.map_err(|e| Error::SubXt(e))?;
+				},
+			};
 		},
+
+		DALI => {
+			let state = State::<DaliXtConstructor>::new().await;
+			match chain.main {
+				// Main::RotateKeys => rotate_keys(&state).await?,
+				Main::UpgradeRuntime { path } => {
+					let wasm = std::fs::read(path).unwrap();
+					upgrade_runtime(wasm, &state).await.map_err(|e| Error::SubXt(e))?;
+				},
+			};
+		},
+		_ => panic!("Unsupported chain_id: {}", chain.chain_id),
 	};
 
 	Ok(())
@@ -186,44 +191,56 @@ async fn main() -> Result<(), Error> {
 // 	Ok(())
 // }
 
-async fn upgrade_runtime<T: ConstructExt>(
+/// Generic function to upgrade runtime.
+async fn upgrade_runtime<T: ConstructExt<Pair = sr25519::Pair> + Send + Sync>(
 	code: Vec<u8>,
 	state: &State<T>,
-) -> Result<(), SubstrateXtError> {
-	let code_hash: H256 = sp_io::hashing::blake2_256(&code).into();
+) -> Result<(), SubstrateXtError>
+where
+	<T::Runtime as frame_system::Config>::AccountId: From<AccountId32>,
+	<T::Runtime as frame_system::Config>::Event: Into<AllRuntimeEvents>,
+	<T::Runtime as frame_system::Config>::Call: Encode + Send + Sync,
+	T::Runtime: parachain_system::Config + frame_system::Config,
+	<T::Runtime as frame_system::Config>::Hash: From<H256>,
+	MultiSigner: From<<T::Pair as sp_core::Pair>::Public>,
+	MultiSignature: From<<T::Pair as Pair>::Signature>,
+	AdrressFor<T>: From<AccountId32>,
+	<T::Runtime as frame_system::Config>::Call: From<parachain_system::Call<T::Runtime>>,
+{
+	let code_hash = H256::from(sp_io::hashing::blake2_256(&code));
 
-	let call = ParachainSystemCall::authorize_upgrade { code_hash };
+	let call = ParachainSystemCall::authorize_upgrade { code_hash: code_hash.into() };
 	let xt = state.api.construct_extrinsic(call.into(), state.signer.clone())?;
 	let progress = state.api.submit_and_watch(xt).await?;
 
-	let events =
-		state.api.with_rpc_externalities(Some(progress.wait_for_in_block().await?), || {
+	let events = state
+		.api
+		.with_rpc_externalities(Some(progress.wait_for_finalized().await?), || {
 			frame_system::Pallet::<<T as ConstructExt>::Runtime>::events()
 		});
-	let has_event = events.iter().any(|event| {
+	let has_event = events.into_iter().any(|event| {
 		match_event!(
 			event.event.into(),
 			ParachainSystem,
-			parachain_system::Event::UpgradeAuthorized
+			parachain_system::Event::UpgradeAuthorized(_)
 		)
 	});
 
 	if !has_event {
-		return Err(ExtrinsicError::Custom("Failed to authorize upgrade".into()).into())
+		return Err(ExtrinsicError::Custom("Failed to authorize upgrade".into()).into());
 	}
 
-	let call = <<T as ConstructExt>::Runtime as frame_system::Config>::Call::ParachainSystem(
-		ParachainSystemCall::enact_authorized_upgrade { code },
-	);
+	let call = ParachainSystemCall::enact_authorized_upgrade { code };
 	let xt = state.api.construct_extrinsic(call.into(), state.signer.clone())?;
 	let progress = state.api.submit_and_watch(xt).await?;
 
-	let events =
-		state.api.with_rpc_externalities(Some(progress.wait_for_in_block().await?), || {
+	let events = state
+		.api
+		.with_rpc_externalities(Some(progress.wait_for_finalized().await?), || {
 			frame_system::Pallet::<<T as ConstructExt>::Runtime>::events()
 		});
 
-	let has_event = events.iter().any(|event| {
+	let has_event = events.into_iter().any(|event| {
 		match_event!(
 			event.event.into(),
 			ParachainSystem,
@@ -231,10 +248,10 @@ async fn upgrade_runtime<T: ConstructExt>(
 		)
 	});
 	if !has_event {
-		return Err(ExtrinsicError::Custom("Failed to enact upgrade".into()).into())
+		return Err(ExtrinsicError::Custom("Failed to enact upgrade".into()).into());
 	}
 
-	log::info!("Runtime upgrade proposed, extrinsic hash: {}", result.extrinsic_hash());
+	log::info!("Runtime upgrade proposed");
 
 	Ok(())
 }
