@@ -25,7 +25,7 @@ pub type Balance = u64;
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
 pub const CHARLIE: AccountId = 3;
-pub const DARWIN = AccountId = 4;
+pub const DARWIN: AccountId = 4;
 
 pub const ACCOUNT_FREE_START: AccountId = CHARLIE + 1;
 
