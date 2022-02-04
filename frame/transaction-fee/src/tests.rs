@@ -64,7 +64,13 @@ fn refund_on_post_dispatch() {
 			assert_eq!(FEE_UNBALANCED_AMOUNT.with(|val| *val.borrow()), 0);
 
 			assert_eq!(
-				ChargeTransactionFee::<Runtime>::post_dispatch(pre, &info, &post_info, 10, &Ok(())),
+				ChargeTransactionFee::<Runtime>::post_dispatch(
+					Some(pre),
+					&info,
+					&post_info,
+					10,
+					&Ok(())
+				),
 				Ok(())
 			);
 
@@ -97,7 +103,13 @@ fn can_swap_to_pay_fees() {
 			assert_eq!(FEE_UNBALANCED_AMOUNT.with(|val| *val.borrow()), 0);
 
 			assert_eq!(
-				ChargeTransactionFee::<Runtime>::post_dispatch(pre, &info, &post_info, 10, &Ok(())),
+				ChargeTransactionFee::<Runtime>::post_dispatch(
+					Some(pre),
+					&info,
+					&post_info,
+					10,
+					&Ok(())
+				),
 				Ok(())
 			);
 
@@ -330,7 +342,7 @@ fn refund_does_not_recreate_account() {
 			assert_eq!(Tokens::free_balance(CurrencyId::LAYR, &1), 0);
 
 			assert_ok!(ChargeTransactionFee::<Runtime>::post_dispatch(
-				pre,
+				Some(pre),
 				&info,
 				&post,
 				len,
@@ -338,14 +350,14 @@ fn refund_does_not_recreate_account() {
 			));
 			assert_eq!(Tokens::free_balance(CurrencyId::LAYR, &1), 0);
 			// Transfer Event
-			System::assert_has_event(Event::Tokens(orml_tokens::Event::Transfer(
-				CurrencyId::LAYR,
-				1,
-				2,
-				80,
-			)));
+			System::assert_has_event(Event::Tokens(orml_tokens::Event::Transfer {
+				currency_id: CurrencyId::LAYR,
+				from: 1,
+				to: 2,
+				amount: 80,
+			}));
 			// Killed Event
-			System::assert_has_event(Event::System(system::Event::KilledAccount(1)));
+			System::assert_has_event(Event::System(system::Event::KilledAccount { account: 1 }));
 		});
 }
 
@@ -366,7 +378,7 @@ fn actual_weight_higher_than_max_refunds_nothing() {
 			assert_eq!(Tokens::free_balance(CurrencyId::LAYR, &2), 200 - 5 - 10 - 100 - 5);
 
 			assert_ok!(ChargeTransactionFee::<Runtime>::post_dispatch(
-				pre,
+				Some(pre),
 				&info,
 				&post,
 				len,
@@ -394,7 +406,7 @@ fn zero_transfer_on_free_transaction() {
 				.unwrap();
 			assert_eq!(Tokens::total_balance(CurrencyId::LAYR, &user), 0);
 			assert_ok!(ChargeTransactionFee::<Runtime>::post_dispatch(
-				pre,
+				Some(pre),
 				&dispatch_info,
 				&Default::default(),
 				len,
@@ -425,8 +437,14 @@ fn refund_consistent_with_actual_weight() {
 				.pre_dispatch(&2, &CALL, &info, len)
 				.unwrap();
 
-			ChargeTransactionFee::<Runtime>::post_dispatch(pre, &info, &post_info, len, &Ok(()))
-				.unwrap();
+			ChargeTransactionFee::<Runtime>::post_dispatch(
+				Some(pre),
+				&info,
+				&post_info,
+				len,
+				&Ok(()),
+			)
+			.unwrap();
 
 			let refund_based_fee = prev_balance - Tokens::free_balance(CurrencyId::LAYR, &2);
 			let actual_fee =
@@ -457,8 +475,14 @@ fn post_info_can_change_pays_fee() {
 				.pre_dispatch(&2, &CALL, &info, len)
 				.unwrap();
 
-			ChargeTransactionFee::<Runtime>::post_dispatch(pre, &info, &post_info, len, &Ok(()))
-				.unwrap();
+			ChargeTransactionFee::<Runtime>::post_dispatch(
+				Some(pre),
+				&info,
+				&post_info,
+				len,
+				&Ok(()),
+			)
+			.unwrap();
 
 			let refund_based_fee = prev_balance - Tokens::free_balance(CurrencyId::LAYR, &2);
 			let actual_fee =

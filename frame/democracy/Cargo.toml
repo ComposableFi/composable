@@ -30,6 +30,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 pallet-governance-registry = { path = "../governance-registry" }
 pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+pallet-preimage = { package = "pallet-preimage", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 [features]
 default = ["std"]
