@@ -31,7 +31,8 @@ members = [
     "runtime/picasso",
     "runtime/dali",
     "runtime/composable",
-    "utils/price-feed"
+    "utils/price-feed",
+    "utils/parachain-utils"
 ]
 
 [profile.release]
@@ -172,6 +173,7 @@ pallet-im-online ={git = "https://github.com/composableFi/substrate" ,branch = "
 pallet-indices ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.16" }
 pallet-membership ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.16" }
 pallet-mmr ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.16" }
+pallet-preimage ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.16" }
 pallet-mmr-primitives ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.16" }
 pallet-multisig ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.16" }
 pallet-offences-benchmarking ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.16" }
