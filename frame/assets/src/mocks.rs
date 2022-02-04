@@ -145,7 +145,8 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 }
 
-pub const BALANCES: [(AccountId, Balance); 4] = [(ALICE, 1000), (BOB, 1000), (CHARLIE, 1000), (DARWIN, 1000)];
+pub const BALANCES: [(AccountId, Balance); 4] =
+	[(ALICE, 1000), (BOB, 1000), (CHARLIE, 1000), (DARWIN, 1000)];
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
