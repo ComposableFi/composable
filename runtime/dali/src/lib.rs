@@ -1151,7 +1151,23 @@ impl_runtime_apis! {
 
 			let mut list = Vec::<BenchmarkList>::new();
 
-			list_benchmarks!(list, extra);
+			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			list_benchmark!(list, extra, balances, Balances);
+			list_benchmark!(list, extra, timestamp, Timestamp);
+			list_benchmark!(list, extra, collator_selection, CollatorSelection);
+			list_benchmark!(list, extra, indices, Indices);
+			list_benchmark!(list, extra, membership, CouncilMembership);
+			list_benchmark!(list, extra, treasury, Treasury);
+			list_benchmark!(list, extra, scheduler, Scheduler);
+			list_benchmark!(list, extra, democracy, Democracy);
+			list_benchmark!(list, extra, collective, Council);
+			list_benchmark!(list, extra, utility, Utility);
+			list_benchmark!(list, extra, identity, Identity);
+			list_benchmark!(list, extra, multisig, Multisig);
+			list_benchmark!(list, extra, vault, Vault);
+			list_benchmark!(list, extra, oracle, Oracle);
+			list_benchmark!(list, extra, dutch_auction, DutchAuction);
+			list_benchmark!(list, extra, currency_factory, CurrencyFactory);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
