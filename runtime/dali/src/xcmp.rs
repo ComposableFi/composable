@@ -33,6 +33,7 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use sp_std::prelude::*;
+use system::EnsureNone;
 use xcm::latest::{prelude::*, Error};
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
@@ -135,6 +136,8 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	XcmPassthrough<Origin>,
 );
 
+
+
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	crate::Assets,
 	UnknownTokens,
@@ -143,6 +146,7 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	LocationToAccountId,
 	CurrencyId,
 	CurrencyIdConvert,
+	(),
 >;
 
 parameter_types! {
@@ -188,6 +192,7 @@ impl xcm_executor::Config for XcmConfig {
 
 parameter_types! {
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into())));
+	pub MaxAssetsForTransfer : usize =  1;
 }
 
 impl orml_xtokens::Config for Runtime {
@@ -201,6 +206,7 @@ impl orml_xtokens::Config for Runtime {
 	type Weigher = FixedWeightBounds<BaseXcmWeight, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;
+	type MaxAssetsForTransfer = MaxAssetsForTransfer;
 }
 
 impl orml_unknown_tokens::Config for Runtime {
@@ -336,6 +342,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type VersionWrapper = ();
 	type ChannelInfo = ParachainSystem;
+	type ExecuteOverweightOrigin = EnsureNone<AccountId>; // NOTE: Noboduy allowed, so we should consider allowance for some chains (see Acala tests ports  PRs)   
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {

@@ -1,5 +1,5 @@
 //! Interfaces to managed assets
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::dispatch::DispatchResult;
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
@@ -9,7 +9,7 @@ use sp_std::vec::Vec;
 use xcm::latest::MultiLocation;
 
 /// works only with concrete assets
-#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
+#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct XcmAssetLocation(
 	#[cfg_attr(feature = "std", serde(with = "MultiLocationDef"))] pub xcm::latest::MultiLocation,
