@@ -20,7 +20,10 @@ color-eyre = { version = "0.5.11", default-features = false }
 runtime-benchmarks = [ "composable-node/runtime-benchmarks" ]
 std = [ "composable-node/std" ]
 
+
+
 [workspace]
+exclude = ["integration-tests", "frame/transaction-fee"]
 members = [
     "runtime/common",
     "runtime/primitives",
