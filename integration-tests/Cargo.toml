@@ -101,7 +101,7 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 # added on top of runtime for emulation of network
 paste = "1.0.5"
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16", default-features = false }
-xcm-emulator = { git = "https://github.com/dzmitry-lahoda-forks/xcm-simulator", branch = "dz/0.9.13", default-features = false }
+xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "a250ffc998bac4831c5692c591dee7bc13f3aead", default-features = false }
 kusama-runtime = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16", default-features = false }
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16", default-features = false }
