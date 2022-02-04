@@ -860,8 +860,13 @@ pub type SignedExtra = (
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
-pub type Executive =
-	executive::Executive<Runtime, Block, system::ChainContext<Runtime>, Runtime, AllPallets>;
+pub type Executive = executive::Executive<
+	Runtime,
+	Block,
+	system::ChainContext<Runtime>,
+	Runtime,
+	AllPalletsReversedWithSystemFirst,
+>;
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
