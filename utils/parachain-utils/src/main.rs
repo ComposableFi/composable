@@ -64,6 +64,7 @@ impl ConstructExt for DaliXtConstructor {
 	) -> Self::SignedExtra {
 		let nonce = frame_system::Pallet::<Self::Runtime>::account_nonce(account_id);
 		(
+			frame_system::CheckNonZeroSender::<Self::Runtime>::new(),
 			frame_system::CheckSpecVersion::<Self::Runtime>::new(),
 			frame_system::CheckTxVersion::<Self::Runtime>::new(),
 			frame_system::CheckGenesis::<Self::Runtime>::new(),
@@ -87,6 +88,7 @@ impl ConstructExt for PicassoXtConstructor {
 	) -> Self::SignedExtra {
 		let nonce = frame_system::Pallet::<Self::Runtime>::account_nonce(account_id);
 		(
+			frame_system::CheckNonZeroSender::<Self::Runtime>::new(),
 			frame_system::CheckSpecVersion::<Self::Runtime>::new(),
 			frame_system::CheckTxVersion::<Self::Runtime>::new(),
 			frame_system::CheckGenesis::<Self::Runtime>::new(),
@@ -228,7 +230,7 @@ where
 	});
 
 	if !has_event {
-		return Err(ExtrinsicError::Custom("Failed to authorize upgrade".into()).into())
+		return Err(ExtrinsicError::Custom("Failed to authorize upgrade".into()).into());
 	}
 
 	let call = ParachainSystemCall::enact_authorized_upgrade { code };
@@ -249,7 +251,7 @@ where
 		)
 	});
 	if !has_event {
-		return Err(ExtrinsicError::Custom("Failed to enact upgrade".into()).into())
+		return Err(ExtrinsicError::Custom("Failed to enact upgrade".into()).into());
 	}
 
 	log::info!("Runtime upgrade proposed");
