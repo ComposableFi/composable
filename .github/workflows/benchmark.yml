@@ -47,7 +47,7 @@ jobs:
         run: .maintain/check_runtime.sh
 
       - name: Test commit changes
-        runs: echo "RUntime update" >> runtime/picasso/runtime.txt
+        run: echo "RUntime update" >> runtime/picasso/runtime.txt
 
       - uses: EndBug/add-and-commit@v8 
         with: 
