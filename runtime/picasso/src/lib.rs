@@ -55,7 +55,7 @@ pub use frame_support::{
 };
 
 use codec::Encode;
-use frame_support::traits::EqualPrivilegeOnly;
+use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -102,7 +102,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_version: 2004,
 	impl_version: 2,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2,
+	transaction_version: 3,
 	state_version: 0,
 };
 
@@ -379,6 +379,7 @@ where
 			.saturating_sub(1);
 		let era = Era::mortal(period, current_block);
 		let extra = (
+			system::CheckNonZeroSender::<Runtime>::new(),
 			system::CheckSpecVersion::<Runtime>::new(),
 			system::CheckTxVersion::<Runtime>::new(),
 			system::CheckGenesis::<Runtime>::new(),
@@ -823,7 +824,7 @@ construct_runtime!(
 		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 		Utility: utility::{Pallet, Call, Event} = 35,
-	  Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
+		Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
@@ -848,6 +849,7 @@ pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+	system::CheckNonZeroSender<Runtime>,
 	system::CheckSpecVersion<Runtime>,
 	system::CheckTxVersion<Runtime>,
 	system::CheckGenesis<Runtime>,
@@ -857,6 +859,14 @@ pub type SignedExtra = (
 	transaction_payment::ChargeTransactionPayment<Runtime>,
 );
 
+// Migration for scheduler pallet to move from a plain Call to a CallOrHash.
+pub struct SchedulerMigrationV3;
+impl OnRuntimeUpgrade for SchedulerMigrationV3 {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		Scheduler::migrate_v2_to_v3()
+	}
+}
+
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
@@ -865,8 +875,35 @@ pub type Executive = executive::Executive<
 	Block,
 	system::ChainContext<Runtime>,
 	Runtime,
-	AllPalletsReversedWithSystemFirst,
+	AllPalletsWithSystem,
+	(SchedulerMigrationV3),
 >;
+
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benches {
+	use frame_benchmarking::define_benchmarks;
+
+	define_benchmarks!(
+		[frame_system, SystemBench::<Runtime>]
+		[pallet_balances, Balances]
+		[pallet_session, SessionBench::<Runtime>]
+		[pallet_timestamp, Timestamp]
+		[pallet_collator_selection, CollatorSelection]
+		[indices, Indices]
+		[membership, CouncilMembership]
+		[treasury, Treasury]
+		[scheduler, Scheduler]
+		[democracy, Democracy]
+		[collective, Council]
+		[utility, Utility]
+		[identity, Identity]
+		[multisig, Multisig]
+	);
+}
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
@@ -976,30 +1013,19 @@ impl_runtime_apis! {
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	impl benchmarking::Benchmark<Block> for Runtime {
+	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
-			Vec<benchmarking::BenchmarkList>,
+			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_benchmarking::{Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use system_benchmarking::Pallet as SystemBench;
+			use session_benchmarking::Pallet as SessionBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 
-			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, balances, Balances);
-			list_benchmark!(list, extra, timestamp, Timestamp);
-			list_benchmark!(list, extra, collator_selection, CollatorSelection);
-			list_benchmark!(list, extra, indices, Indices);
-			list_benchmark!(list, extra, membership, CouncilMembership);
-			list_benchmark!(list, extra, treasury, Treasury);
-			list_benchmark!(list, extra, scheduler, Scheduler);
-			list_benchmark!(list, extra, democracy, Democracy);
-			list_benchmark!(list, extra, collective, Council);
-			list_benchmark!(list, extra, utility, Utility);
-			list_benchmark!(list, extra, identity, Identity);
-			list_benchmark!(list, extra, multisig, Multisig);
+			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1007,9 +1033,9 @@ impl_runtime_apis! {
 		}
 
 		fn dispatch_benchmark(
-			config: benchmarking::BenchmarkConfig
-		) -> Result<Vec<benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+			config: frame_benchmarking::BenchmarkConfig
+		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
+			use frame_benchmarking::{Benchmarking, BenchmarkBatch, TrackedStorageKey};
 
 			use system_benchmarking::Pallet as SystemBench;
 			impl system_benchmarking::Config for Runtime {}
@@ -1033,20 +1059,7 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, balances, Balances);
-			add_benchmark!(params, batches, timestamp, Timestamp);
-			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
-			add_benchmark!(params, batches, collator_selection, CollatorSelection);
-			add_benchmark!(params, batches, indices, Indices);
-			add_benchmark!(params, batches, membership, CouncilMembership);
-			add_benchmark!(params, batches, treasury, Treasury);
-			add_benchmark!(params, batches, scheduler, Scheduler);
-			add_benchmark!(params, batches, democracy, Democracy);
-			add_benchmark!(params, batches, collective, Council);
-			add_benchmark!(params, batches, utility, Utility);
-			add_benchmark!(params, batches, identity, Identity);
-			add_benchmark!(params, batches, multisig, Multisig);
+			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
