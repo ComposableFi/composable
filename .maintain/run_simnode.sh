@@ -28,7 +28,7 @@ run_simnode() {
   GS_BUCKET="$CHAIN-data-store"
   sudo gsutil cp gs://$GS_BUCKET/"$FILENAME" .
   sudo unzip -o "$FILENAME" -d /tmp/db
-  ./target/release/simnode --chain="$CHAIN" --base-path=/tmp/db/ --pruning=archive --execution=wasm
+  ./target/release/simnode --chain="$CHAIN" --base-path=/tmp/db/var/lib/composable-data --pruning=archive --execution=wasm
 }
 
 # shellcheck disable=SC2039
