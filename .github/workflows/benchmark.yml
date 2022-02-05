@@ -47,13 +47,15 @@ jobs:
         run: .maintain/check_runtime.sh
 
       - name: Test commit changes
-        run: echo "RUntime update" >> runtime/picasso/runtime.txt
+        run: | 
+          echo "RUntime update" >> runtime/picasso/runtime.txt
 
       - uses: EndBug/add-and-commit@v8 
         with: 
           add: 'runtime/picasso'
           message: 'Pushing benchmark changes'
           push: "true"
+          new_branch: ${{ steps.branch-name.outputs.current_branch }}
 
 
       - name: Benchmark Test
