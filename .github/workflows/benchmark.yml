@@ -46,7 +46,6 @@ jobs:
         if: contains( github.event.pull_request.labels.*.name, 'needs-benchmarks')
         run: .maintain/check_runtime.sh
 
-
       - name: Benchmark Test
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
