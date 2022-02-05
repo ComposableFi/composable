@@ -2,44 +2,26 @@
 
 # [Overview](https://app.clickup.com/20465559/v/dc/kghwq-20761/kghwq-3621)
 
-## What
+See overview of more bussiness and architectural state of lending and all know features.
 
-Lending = Loans + Liquidation
+## Technical Reference
 
-Lending calls Oracle and Vault
+Lending = Self + [Liquidations](liqudaitons) + [Oracle](../oracle) + [Vault](../vault) + OCW
 
-Oracle = only Pairs with Prices are allowed
+Market = Isolated Currency Pair  + Configuration. 
 
-Vault = Vault provides and recalls liquidity into/from Lending via protocol.
+Oracle = only Pairs with Prices are allowed.
 
-Lending uses Vault for operation to withdraw assets and deposit back.
+Vault = Vault provides and recalls liquidity into/from Lending via protocol. User must put amount of Borrow into Vault for Market creation. Lenders put borrow asset into Vault. Borrowers put collateral into Vault, get xCollateral, and use it to get borrow for collateral. Borrower pays rent for his position.
 
-Liquidation uses DEX for swaps.
+OCW(or anybody) watches for under collateralized Poisitons and sends them to Liquidations. Liquidator is  rewarded with rent payed by borrower.
 
-DEX depends on Lending for leverage
-
-## Markets
-
-Can create isolated pairs which are supported Vault and Oracle.
-
-## Test
-
-There is known way to setup oracle and vault via extrinsic, and there is way to mint proper amounts to test users, then can deposit/borrow/repay via lending according rules via extrinsics.
-
-## Lending Vault
+## Known limitations and constraints
 
 As of now Lending does not handles cases when vault changes its decisions during single block.
 
-### Block level
+Lending is executed after Vault. On block initialization. If can withdraw from Vault, than withdraws. If can deposit back, deposits maximal part available. If must liquidate, than deposit back all.
 
-Lending is executed after Vault.
+On borrow, if must liquidate or not enough funds(we got maximal amount during initialization), borrow fails.
 
-On block initialization. If can withdraw, than withdraws. If can deposit back, deposits maximal part available. If must liquidate, than deposit back all.
-
-### On borrow
-
-If must liquidate or not enough funds(we got maximal amount during initialization), borrow fails.
-
-### On repay
-
-Repay, do nothing to vault. It actually allows to use some deposit asset by other transactions in same block to borrow (event if we should deposit back into vault).
+On repay, do nothing to vault. It actually allows to use some deposit asset by other transactions in same block to borrow (event if we should deposit back into vault).
