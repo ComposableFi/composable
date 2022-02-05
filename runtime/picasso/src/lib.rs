@@ -876,7 +876,7 @@ pub type Executive = executive::Executive<
 	system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(SchedulerMigrationV3),
+	SchedulerMigrationV3,
 >;
 
 #[cfg(feature = "runtime-benchmarks")]

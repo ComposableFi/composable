@@ -54,7 +54,7 @@ pub use frame_support::{
 };
 
 use codec::Encode;
-use frame_support::traits::EqualPrivilegeOnly;
+use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use scale_info::TypeInfo;
 #[cfg(any(feature = "std", test))]
@@ -986,6 +986,14 @@ pub type SignedExtra = (
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+
+// Migration for scheduler pallet to move from a plain Call to a CallOrHash.
+pub struct SchedulerMigrationV3;
+impl OnRuntimeUpgrade for SchedulerMigrationV3 {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		Scheduler::migrate_v2_to_v3()
+	}
+}
 /// Executive: handles dispatch to the various modules.
 pub type Executive = executive::Executive<
 	Runtime,
@@ -993,6 +1001,7 @@ pub type Executive = executive::Executive<
 	system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	SchedulerMigrationV3,
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
