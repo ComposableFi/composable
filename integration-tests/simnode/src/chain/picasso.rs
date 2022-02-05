@@ -80,7 +80,7 @@ async fn _parachain_info_storage_override_test(
 	node: &Node<ChainInfo>,
 ) -> Result<(), Box<dyn Error>> {
 	// sudo account on-chain
-	let sudo = node.with_state(None, sudo::Pallet::<picasso_runtime::Runtime>::key);
+	let sudo = node.with_state(None, sudo::Pallet::<picasso_runtime::Runtime>::key).unwrap();
 
 	// gotten from
 	// hex::encode(&parachain_info::ParachainId::<Runtime>::storage_value_final_key().to_vec());

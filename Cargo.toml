@@ -33,7 +33,8 @@ members = [
     "runtime/dali",
     "runtime/composable",
     "utils/price-feed",
-    "utils/parachain-utils"
+    "utils/parachain-utils",
+    "integration-tests/simnode"
 ]
 
 [profile.release]

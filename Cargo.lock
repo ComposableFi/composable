@@ -10387,6 +10387,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "sc-consensus-manual-seal"
+version = "0.10.0-dev"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.16#d78e92de5aeaea1b4df48c639eb88d5b93cf19ef"
+dependencies = [
+ "assert_matches",
+ "async-trait",
+ "derive_more",
+ "futures 0.3.19",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "log 0.4.14",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-aura",
+ "sc-consensus-babe",
+ "sc-consensus-epochs",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-consensus-babe",
+ "sp-consensus-slots",
+ "sp-core",
+ "sp-inherents",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-timestamp",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
 name = "sc-consensus-slots"
 version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.16#d78e92de5aeaea1b4df48c639eb88d5b93cf19ef"
@@ -11382,6 +11418,46 @@ dependencies = [
  "num-complex",
  "num-traits",
  "paste 1.0.6",
+]
+
+[[package]]
+name = "simnode"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "composable-node",
+ "cumulus-client-cli",
+ "cumulus-pallet-parachain-system",
+ "cumulus-primitives-parachain-inherent",
+ "cumulus-test-relay-sproof-builder",
+ "dali-runtime",
+ "derive_more",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "num-traits",
+ "pallet-crowdloan-rewards",
+ "pallet-sudo",
+ "pallet-transaction-payment",
+ "parachain-info",
+ "parity-scale-codec",
+ "picasso-runtime",
+ "polkadot-primitives",
+ "sc-cli",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-manual-seal",
+ "sc-executor",
+ "sc-service",
+ "sc-tracing",
+ "sp-blockchain",
+ "sp-consensus-aura",
+ "sp-io",
+ "sp-keyring",
+ "sp-runtime",
+ "structopt",
+ "substrate-simnode",
 ]
 
 [[package]]
@@ -12394,6 +12470,59 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate-simnode"
+version = "0.1.0"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#2b0abe5319927f85246461b5fb2772d23c113972"
+dependencies = [
+ "cumulus-pallet-parachain-system",
+ "cumulus-primitives-parachain-inherent",
+ "cumulus-test-relay-sproof-builder",
+ "frame-system",
+ "futures 0.3.19",
+ "jsonrpc-core",
+ "log 0.4.14",
+ "num-traits",
+ "parachain-info",
+ "parity-scale-codec",
+ "polkadot-primitives",
+ "sc-basic-authorship",
+ "sc-cli",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-babe",
+ "sc-consensus-manual-seal",
+ "sc-executor",
+ "sc-finality-grandpa",
+ "sc-informant",
+ "sc-network",
+ "sc-rpc",
+ "sc-rpc-server",
+ "sc-service",
+ "sc-tracing",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-externalities",
+ "sp-finality-grandpa",
+ "sp-inherents",
+ "sp-keyring",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-runtime-interface",
+ "sp-session",
+ "sp-state-machine",
+ "sp-transaction-pool",
+ "sp-wasm-interface",
+ "tokio",
+]
+
+[[package]]
 name = "substrate-wasm-builder"
 version = "5.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.16#d78e92de5aeaea1b4df48c639eb88d5b93cf19ef"
@@ -12901,7 +13030,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.9.0",
  "regex",
  "serde",
  "serde_json",
@@ -13082,8 +13211,8 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 1.0.0",
- "rand 0.8.4",
+ "cfg-if 0.1.10",
+ "rand 0.6.5",
  "static_assertions",
 ]
 
@@ -14098,8 +14227,3 @@ dependencies = [
  "cc",
  "libc",
 ]
-
-[[patch.unused]]
-name = "sc-consensus-manual-seal"
-version = "0.10.0-dev"
-source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.16#d78e92de5aeaea1b4df48c639eb88d5b93cf19ef"

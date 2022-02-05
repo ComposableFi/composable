@@ -5,12 +5,12 @@ use sc_executor::NativeElseWasmExecutor;
 use sc_service::TFullCallExecutor;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{
-	generic::{BlockId, UncheckedExtrinsic},
+	generic::BlockId,
 	traits::{Block as BlockT, Header},
-	AccountId32, MultiAddress, MultiSignature,
+	AccountId32,
 };
 use std::error::Error;
-use substrate_simnode::{ChainInfo, Node};
+use substrate_simnode::{ChainInfo, Node, UncheckedExtrinsicFor};
 
 // generic tests for runtime upgrades
 pub(crate) async fn parachain_runtime_upgrades<T>(
@@ -31,7 +31,7 @@ where
 	<T::Runtime as sudo::Config>::Call: From<system::Call<T::Runtime>>,
 	<<T::Block as BlockT>::Header as Header>::Number: num_traits::cast::AsPrimitive<u32>,
 {
-	let sudo = node.with_state(None, sudo::Pallet::<T::Runtime>::key);
+	let sudo = node.with_state(None, sudo::Pallet::<T::Runtime>::key).unwrap();
 
 	let old_runtime_version = node
 		.client()
