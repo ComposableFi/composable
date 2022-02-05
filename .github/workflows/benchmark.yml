@@ -37,6 +37,25 @@ jobs:
         id: branch-name
         uses: tj-actions/branch-names@v5.1
 
+      - name: Check for runtime changes
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
+
+        id: check_runtime
+        if: contains( github.event.pull_request.labels.*.name, 'needs-benchmarks')
+        run: .maintain/check_runtime.sh
+
+      - name: Test commit changes
+        runs: echo "RUntime update" >> runtime/picasso/runtime.txt
+
+      - uses: EndBug/add-and-commit@v8 
+        with: 
+          add: 'runtime/picasso'
+          message: 'Pushing benchmark changes'
+          push: "true"
+
+
       - name: Benchmark Test
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
@@ -45,10 +64,3 @@ jobs:
         if: env.RUNTIME_CHECK == 1
         id: run_benchmarks
         run: .maintain/run_benchmarks.sh
-
-      - uses: EndBug/add-and-commit@v8 
-        with: 
-          add: 'runtime/picasso'
-          message: 'Pushing benchmark changes'
-          push: "true"
-
