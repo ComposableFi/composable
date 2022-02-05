@@ -62,13 +62,13 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 /// run all integration tests
 pub fn run() -> Result<(), Box<dyn Error>> {
 	substrate_simnode::parachain_node::<ChainInfo, _, _>(|node| async move {
+		// test the storage override tx
+		_parachain_info_storage_override_test(&node).await?;
+
 		// test code-substitute for picasso, by authoring blocks past the launch period
-		node.seal_blocks(10).await;
 		// test runtime upgrades
 		let code = picasso_runtime::WASM_BINARY.ok_or("Picasso wasm not available")?.to_vec();
 		tests::runtime_upgrade::parachain_runtime_upgrades(&node, code).await?;
-		// test the storage override tx
-		_parachain_info_storage_override_test(&node).await?;
 
 		// try to create blocks for a month, if it doesn't panic, all good.
 		node.seal_blocks((30 * DAYS) as usize).await;
@@ -89,21 +89,7 @@ async fn _parachain_info_storage_override_test(
 
 	let raw_key_value: Option<u32> = node.with_state(None, || storage::unhashed::get(&key[..]));
 
-	assert_eq!(raw_key_value, Some(2104));
-	let new_para_id: u32 = 2087;
-
-	// gotten from hex::encode(new_para_id.encode())
-	let value = hex::decode("27080000")?;
-
-	let call = sudo::Call::sudo_unchecked_weight {
-		call: Box::new(system::Call::set_storage { items: vec![(key.clone(), value)] }.into()),
-		weight: 0,
-	};
-	node.submit_extrinsic(call, Some(sudo.clone())).await?;
-	node.seal_blocks(1).await;
-	let raw_key_value: Option<u32> = node.with_state(None, || storage::unhashed::get(&key[..]));
-
-	assert_eq!(raw_key_value, Some(new_para_id));
+	assert_eq!(raw_key_value, Some(2087));
 
 	Ok(())
 }
