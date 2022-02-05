@@ -18,7 +18,7 @@ VERSIONS_FILES=(
 /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
 /home/runner/.cargo/bin/cargo build --release -p simnode
 sudo chown -R runner:runner target/release/simnode && sudo chmod +x target/release/simnode
-sudo chown -R runner:runner /tmp/db
+sudo mkdir -p /tmp/db && sudo chown -R runner:runner /tmp/db
 YDATE=$(date -d yesterday +'%m-%d-%Y')
 
 run_simnode() {
@@ -28,7 +28,7 @@ run_simnode() {
   GS_BUCKET="$CHAIN-data-store"
   sudo gsutil cp gs://$GS_BUCKET/"$FILENAME" .
   sudo unzip -o "$FILENAME" -d /tmp/db
-  ./target/release/simnode --chain="$CHAIN" --base-path=/tmp/db/ --pruning=archive --execution=wasm
+  ./target/release/simnode --chain="$CHAIN" --base-path=/tmp/db/var/lib/composable-data/ --pruning=archive --execution=wasm
 }
 
 # shellcheck disable=SC2039

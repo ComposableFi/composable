@@ -41,9 +41,18 @@ jobs:
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
+
         id: check_runtime
         if: contains( github.event.pull_request.labels.*.name, 'needs-benchmarks')
         run: .maintain/check_runtime.sh
+
+      - uses: EndBug/add-and-commit@v8 
+        with: 
+          add: 'runtime/picasso'
+          message: 'Pushing benchmark changes'
+          push: "true"
+          new_branch: ${{ steps.branch-name.outputs.current_branch }}
+
 
       - name: Benchmark Test
         env:
