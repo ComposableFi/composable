@@ -46,10 +46,6 @@ jobs:
         if: contains( github.event.pull_request.labels.*.name, 'needs-benchmarks')
         run: .maintain/check_runtime.sh
 
-      - name: Test commit changes
-        run: | 
-          echo "RUntime update" >> runtime/picasso/runtime.txt
-
       - uses: EndBug/add-and-commit@v8 
         with: 
           add: 'runtime/picasso'
