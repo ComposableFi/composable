@@ -230,7 +230,7 @@ where
 	});
 
 	if !has_event {
-		return Err(ExtrinsicError::Custom("Failed to authorize upgrade".into()).into());
+		return Err(ExtrinsicError::Custom("Failed to authorize upgrade".into()).into())
 	}
 
 	let call = ParachainSystemCall::enact_authorized_upgrade { code };
@@ -251,7 +251,7 @@ where
 		)
 	});
 	if !has_event {
-		return Err(ExtrinsicError::Custom("Failed to enact upgrade".into()).into());
+		return Err(ExtrinsicError::Custom("Failed to enact upgrade".into()).into())
 	}
 
 	log::info!("Runtime upgrade proposed");
