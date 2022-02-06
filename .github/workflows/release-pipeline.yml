@@ -49,8 +49,8 @@ jobs:
 
       - name: Set Permission
         continue-on-error: true
-       run: |
-         sudo chown -R runner:runner /usr/bin/node
+        run: |
+          sudo chown -R runner:runner /usr/bin/node
 
       - uses: actions/setup-node@v2
         with:
