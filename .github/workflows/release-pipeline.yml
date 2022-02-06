@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - releases
+env:
+  GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 jobs:
   build-and-publish:
     runs-on:
@@ -39,8 +41,6 @@ jobs:
 
       - name: Runtime wasm builds
         id: runtime_release
-        env:
-
         run: |
           .maintain/runtime_release.sh
 
@@ -94,8 +94,6 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: 🔨 Build Composable Binary
-        env:
-
         run: |
           .maintain/client_release.sh
 
