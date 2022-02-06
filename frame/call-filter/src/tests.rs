@@ -13,8 +13,8 @@ fn pause_transaction_work() {
 		System::set_block_number(1);
 
 		let balances_transfer = CallFilterEntry {
-			pallet_name: b"Balances".to_vec(),
-			function_name: b"transfer".to_vec(),
+			pallet_name: b"Balances".to_vec().try_into().unwrap(),
+			function_name: b"transfer".to_vec().try_into().unwrap(),
 		};
 		assert_noop!(Filter::disable(Origin::signed(5), balances_transfer.clone()), BadOrigin);
 
@@ -25,11 +25,13 @@ fn pause_transaction_work() {
 		}));
 		assert_eq!(Filter::disabled_calls(&balances_transfer), Some(()));
 
-		let filter_pause =
-			CallFilterEntry { pallet_name: b"Filter".to_vec(), function_name: b"disable".to_vec() };
+		let filter_pause = CallFilterEntry {
+			pallet_name: b"Filter".to_vec().try_into().unwrap(),
+			function_name: b"disable".to_vec().try_into().unwrap(),
+		};
 		let filter_pause_2 = CallFilterEntry {
-			pallet_name: b"Filter".to_vec(),
-			function_name: b"another_call".to_vec(),
+			pallet_name: b"Filter".to_vec().try_into().unwrap(),
+			function_name: b"another_call".to_vec().try_into().unwrap(),
 		};
 
 		assert_noop!(
@@ -42,8 +44,8 @@ fn pause_transaction_work() {
 		);
 
 		let other = CallFilterEntry {
-			pallet_name: b"OtherPallet".to_vec(),
-			function_name: b"disable".to_vec(),
+			pallet_name: b"OtherPallet".to_vec().try_into().unwrap(),
+			function_name: b"disable".to_vec().try_into().unwrap(),
 		};
 		assert_ok!(Filter::disable(Origin::signed(1), other));
 	});
@@ -55,8 +57,8 @@ fn enable_work() {
 		System::set_block_number(1);
 
 		let balances_transfer = CallFilterEntry {
-			pallet_name: b"Balances".to_vec(),
-			function_name: b"transfer".to_vec(),
+			pallet_name: b"Balances".to_vec().try_into().unwrap(),
+			function_name: b"transfer".to_vec().try_into().unwrap(),
 		};
 
 		assert_ok!(Filter::disable(Origin::signed(1), balances_transfer.clone()));
@@ -76,8 +78,8 @@ fn enable_work() {
 fn paused_transaction_filter_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		let balances_transfer = CallFilterEntry {
-			pallet_name: b"Balances".to_vec(),
-			function_name: b"transfer".to_vec(),
+			pallet_name: b"Balances".to_vec().try_into().unwrap(),
+			function_name: b"transfer".to_vec().try_into().unwrap(),
 		};
 
 		assert!(!Filter::contains(BALANCE_TRANSFER));

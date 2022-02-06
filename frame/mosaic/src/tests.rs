@@ -1,0 +1,1415 @@
+/// TODO
+///
+/// 1. Test each extrinsic
+/// 2. Make sure unlocks etc are respected (timing)
+/// 3. Add tests for linear decay.
+///
+///
+/// grouping tests
+///
+/// test every failure case
+/// every error that an extrinsic can return
+///
+/// all the happy path cases
+///
+///
+/// interaction logic between extrinsics
+/// such as:
+///  transfer_to -> waiting for a block (til lock_time expires) -> claiming
+///         check if the funds are correctly moved to the user's account
+///
+///  transfer_to -> waiting for a block -> relayer accepts transfer -> (til lock_time expires)
+/// -> we should no longer be able to claim
+///
+///  incoming -> waiting til lock_time expires -> claiming
+///
+///  incoming -> wainting for a block -> relayer cancels transfer (finality issue) -> we should
+/// no longer be able to claim
+///
+///
+///  For every test, make sure that you check wether the funds moved to the correct (sub)
+/// accounts.
+use crate::{decay::*, mock::*, *};
+use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
+use frame_support::{
+	assert_err, assert_noop, assert_ok,
+	traits::fungibles::{Inspect, Mutate},
+};
+use proptest::prelude::*;
+use sp_runtime::{DispatchError, TokenError};
+
+pub trait OriginExt {
+	fn relayer() -> Origin {
+		Origin::signed(RELAYER)
+	}
+
+	fn alice() -> Origin {
+		Origin::signed(ALICE)
+	}
+
+	fn bob() -> Origin {
+		Origin::signed(BOB)
+	}
+}
+
+const BUDGET: Balance = 10000;
+
+impl OriginExt for Origin {}
+
+prop_compose! {
+	fn account_id()
+		(x in 1..AccountId::MAX) -> AccountId {
+			x
+		}
+}
+
+prop_compose! {
+	fn amount_within_budget()
+		(x in 1..BUDGET) -> Balance {
+			x
+		}
+}
+
+prop_compose! {
+	fn lock_time_gen()
+		(x in 1..10000u64) -> u64 {
+			x
+		}
+}
+
+prop_compose! {
+	fn wait_after_lock_gen()
+		(x in 1..1000u64) -> u64 {
+			x
+		}
+}
+
+prop_compose! {
+	fn budget_with_split()
+		 (budget in 1..10_000_000u128, split in 1..100u128) -> (Balance, Balance, Balance) {
+			let first_part = (budget * split) / 100u128;
+			let second_part = budget - first_part;
+
+			(budget, first_part, second_part)
+	}
+}
+
+mod ensure_relayer {
+	use super::*;
+
+	#[test]
+	fn ensure_relayer_is_set() {
+		new_test_ext().execute_with(|| {
+			assert_err!(
+				Mosaic::ensure_relayer(Origin::signed(ALICE)),
+				Error::<Test>::RelayerNotSet
+			);
+		})
+	}
+
+	#[test]
+	fn ensure_relayer_origin_checked() {
+		new_test_ext().execute_with(|| {
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_err!(Mosaic::ensure_relayer(Origin::signed(ALICE)), DispatchError::BadOrigin);
+		})
+	}
+}
+
+mod set_relayer {
+	use super::*;
+
+	#[test]
+	fn set_relayer() {
+		new_test_ext().execute_with(|| {
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_eq!(Mosaic::relayer_account_id(), Ok(RELAYER));
+		})
+	}
+
+	#[test]
+	fn relayer_cannot_set_relayer() {
+		new_test_ext().execute_with(|| {
+			assert_noop!(Mosaic::set_relayer(Origin::relayer(), ALICE), DispatchError::BadOrigin);
+		})
+	}
+
+	#[test]
+	fn none_cannot_set_relayer() {
+		new_test_ext().execute_with(|| {
+			assert_noop!(Mosaic::set_relayer(Origin::none(), ALICE), DispatchError::BadOrigin);
+		})
+	}
+
+	#[test]
+	fn alice_cannot_set_relayer() {
+		new_test_ext().execute_with(|| {
+			assert_noop!(
+				Mosaic::set_relayer(Origin::signed(ALICE), ALICE),
+				DispatchError::BadOrigin
+			);
+		})
+	}
+}
+
+mod rotate_relayer {
+	use super::*;
+
+	#[test]
+	fn relayer_can_rotate_relayer() {
+		new_test_ext().execute_with(|| {
+			let ttl = 500;
+			let current_block = System::block_number();
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+			// first rotation
+			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl));
+			System::set_block_number(current_block + ttl);
+			assert_eq!(Mosaic::relayer_account_id(), Ok(BOB));
+
+			// second rotation
+			assert_ok!(Mosaic::rotate_relayer(Origin::signed(BOB), CHARLIE, ttl));
+			System::set_block_number(current_block + 2 * ttl);
+			assert_eq!(Mosaic::relayer_account_id(), Ok(CHARLIE));
+		})
+	}
+
+	#[test]
+	fn relayer_must_not_rotate_early() {
+		new_test_ext().execute_with(|| {
+			let ttl = 500;
+			let current_block = System::block_number();
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl));
+			System::set_block_number(current_block + ttl - 1); // just before the ttl
+			assert_eq!(Mosaic::relayer_account_id(), Ok(RELAYER)); // not BOB
+		})
+	}
+
+	#[test]
+	fn arbitrary_account_cannot_rotate_relayer() {
+		new_test_ext().execute_with(|| {
+			let ttl = 500;
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_noop!(
+				Mosaic::rotate_relayer(Origin::signed(ALICE), BOB, ttl),
+				DispatchError::BadOrigin
+			);
+		})
+	}
+
+	#[test]
+	fn none_cannot_rotate_relayer() {
+		new_test_ext().execute_with(|| {
+			let ttl = 500;
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_noop!(
+				Mosaic::rotate_relayer(Origin::none(), BOB, ttl),
+				DispatchError::BadOrigin
+			);
+		})
+	}
+}
+
+mod set_network {
+	use super::*;
+
+	#[test]
+	fn relayer_can_set_network() {
+		let network_id = 3;
+		let network_info = NetworkInfo { enabled: false, max_transfer_size: 100000 };
+		new_test_ext().execute_with(|| {
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+			assert_ok!(Mosaic::set_network(Origin::relayer(), network_id, network_info.clone()));
+			assert_eq!(Mosaic::network_infos(network_id), Some(network_info));
+		})
+	}
+
+	#[test]
+	fn root_cannot_set_network() {
+		let network_id = 3;
+		let network_info = NetworkInfo { enabled: false, max_transfer_size: 100000 };
+		new_test_ext().execute_with(|| {
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+			assert_noop!(
+				Mosaic::set_network(Origin::root(), network_id, network_info.clone()),
+				DispatchError::BadOrigin
+			);
+		})
+	}
+
+	#[test]
+	fn none_cannot_set_network() {
+		let network_id = 3;
+		let network_info = NetworkInfo { enabled: false, max_transfer_size: 100000 };
+		new_test_ext().execute_with(|| {
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+			assert_noop!(
+				Mosaic::set_network(Origin::none(), network_id, network_info.clone()),
+				DispatchError::BadOrigin
+			);
+		})
+	}
+}
+
+mod budget {
+	use super::*;
+
+	mod set_budget {
+		use super::*;
+
+		#[test]
+		fn root_can_set_budget() {
+			new_test_ext().execute_with(|| {
+				assert_ok!(Mosaic::set_budget(
+					Origin::root(),
+					1,
+					1,
+					BudgetPenaltyDecayer::linear(5)
+				));
+			})
+		}
+
+		#[test]
+		fn arbitrary_user_cannot_set_budget() {
+			new_test_ext().execute_with(|| {
+				assert_noop!(
+					Mosaic::set_budget(
+						Origin::signed(ALICE),
+						1,
+						1,
+						BudgetPenaltyDecayer::linear(5)
+					),
+					DispatchError::BadOrigin
+				);
+			})
+		}
+
+		#[test]
+		fn none_cannot_set_budget() {
+			new_test_ext().execute_with(|| {
+				assert_noop!(
+					Mosaic::set_budget(Origin::none(), 1, 1, BudgetPenaltyDecayer::linear(5)),
+					DispatchError::BadOrigin
+				);
+			})
+		}
+	}
+
+	#[test]
+	fn budget_are_isolated() {
+		new_test_ext().execute_with(|| {
+			assert_ok!(Mosaic::set_budget(
+				Origin::root(),
+				1,
+				0xCAFEBABE,
+				BudgetPenaltyDecayer::linear(10)
+			));
+			assert_ok!(Mosaic::set_budget(
+				Origin::root(),
+				2,
+				0xDEADC0DE,
+				BudgetPenaltyDecayer::linear(5)
+			));
+			assert_eq!(Mosaic::asset_infos(1).expect("budget must exists").budget, 0xCAFEBABE);
+			assert_eq!(Mosaic::asset_infos(2).expect("budget must exists").budget, 0xDEADC0DE);
+		})
+	}
+
+	#[test]
+	fn last_deposit_does_not_change_after_updating_budget() {
+		new_test_ext().execute_with(|| {
+			let initial_block = System::block_number();
+			assert_ok!(Mosaic::set_budget(
+				Origin::root(),
+				1,
+				0xCAFEBABE,
+				BudgetPenaltyDecayer::linear(10)
+			));
+			assert_eq!(
+				Mosaic::asset_infos(1).expect("budget must exists").last_mint_block,
+				initial_block
+			);
+
+			System::set_block_number(initial_block + 1);
+			assert_ok!(Mosaic::set_budget(
+				Origin::root(),
+				1,
+				0xDEADC0DE,
+				BudgetPenaltyDecayer::linear(10)
+			));
+			assert_eq!(
+				Mosaic::asset_infos(1).expect("budget must exists").last_mint_block,
+				initial_block
+			);
+		})
+	}
+}
+
+#[test]
+fn incoming_outgoing_accounts_are_isolated() {
+	ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+		initialize();
+
+		let amount = 100;
+		let network_id = 1;
+		let asset_id = 1;
+
+		assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+		let account_balance = || Tokens::balance(asset_id, &ALICE);
+		let balance_of = |t| Tokens::balance(asset_id, &Mosaic::sub_account_id(t));
+		assert_eq!(account_balance(), amount);
+		assert_eq!(balance_of(SubAccount::new_outgoing(ALICE)), 0);
+		assert_eq!(balance_of(SubAccount::new_incoming(ALICE)), 0);
+		assert_ok!(Mosaic::transfer_to(
+			Origin::signed(ALICE),
+			network_id,
+			asset_id,
+			[0; 20],
+			amount,
+			true
+		));
+		assert_eq!(account_balance(), 0);
+		assert_eq!(balance_of(SubAccount::new_outgoing(ALICE)), amount);
+		assert_eq!(balance_of(SubAccount::new_incoming(ALICE)), 0);
+	})
+}
+
+fn initialize() {
+	System::set_block_number(1);
+
+	Mosaic::set_relayer(Origin::root(), RELAYER).expect("root may call set_relayer");
+	Mosaic::set_network(
+		Origin::relayer(),
+		1,
+		NetworkInfo { enabled: true, max_transfer_size: 100000 },
+	)
+	.expect("relayer may set network info");
+	Mosaic::set_budget(Origin::root(), 1, BUDGET, BudgetPenaltyDecayer::linear(10))
+		.expect("root may set budget");
+}
+
+fn do_timelocked_mint(to: AccountId, asset_id: AssetId, amount: Balance, lock_time: u64) {
+	let initial_block = System::block_number();
+
+	Mosaic::timelocked_mint(Origin::relayer(), asset_id, to, amount, lock_time, Default::default())
+		.expect("relayer should be able to mint");
+
+	assert_eq!(
+		Mosaic::incoming_transactions(to, asset_id),
+		Some((amount, initial_block + lock_time))
+	);
+}
+
+mod transfers {
+	use super::*;
+
+	#[test]
+	fn transfer_to() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+		})
+	}
+
+	#[test]
+	fn accept_transfer() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 100)
+				.expect("accepting transfer should work");
+		})
+	}
+
+	#[test]
+	fn cannot_accept_transfer_larger_than_balance() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			assert_noop!(
+				Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 101),
+				Error::<Test>::AmountMismatch
+			);
+		})
+	}
+
+	#[test]
+	fn claim_stale_to() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			let current_block = System::block_number();
+			System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+			Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE)
+				.expect("claiming an outgoing transaction should work after the timelock period");
+		})
+	}
+
+	#[test]
+	fn cannot_claim_stale_to_early() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			let current_block = System::block_number();
+			System::set_block_number(current_block + Mosaic::timelock_period() - 1);
+			assert_noop!(
+				Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE),
+				Error::<Test>::NoStaleTransactions
+			);
+		})
+	}
+
+	#[test]
+	fn cannot_claim_after_relayer_accepts_transfer() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			assert_ok!(Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 100));
+			let current_block = System::block_number();
+			System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+			assert_noop!(
+				Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE),
+				Error::<Test>::NoStaleTransactions
+			);
+		})
+	}
+
+	#[test]
+	fn relayer_cannot_accept_transfer_after_claim() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			let current_block = System::block_number();
+			System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+			assert_ok!(Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE));
+			assert_noop!(
+				Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 100),
+				Error::<Test>::NoOutgoingTx
+			);
+		})
+	}
+
+	#[test]
+	fn can_claim_stale_after_partial_accept_transfer() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			let current_block = System::block_number();
+			System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+			assert_ok!(Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 20));
+			// System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+			assert_ok!(Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE));
+		})
+	}
+
+	#[test]
+	fn transfer_to_exceeds_max_transfer_size() {
+		ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+			let max_transfer_size = 100000;
+
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+			let network_id = 1;
+			assert_ok!(Mosaic::set_network(
+				Origin::relayer(),
+				network_id,
+				NetworkInfo { enabled: true, max_transfer_size },
+			));
+
+			let asset_id = 1;
+			assert_ok!(Mosaic::set_budget(
+				Origin::root(),
+				asset_id,
+				10000,
+				BudgetPenaltyDecayer::linear(10)
+			));
+
+			// We exceed the max transfer size
+			let amount = max_transfer_size + 1;
+			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+			assert_noop!(
+				Mosaic::transfer_to(
+					Origin::signed(ALICE),
+					network_id,
+					asset_id,
+					[0; 20],
+					amount,
+					true
+				),
+				Error::<Test>::ExceedsMaxTransferSize
+			);
+		})
+	}
+
+	#[test]
+	fn transfer_to_move_funds_to_outgoing() {
+		ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+			initialize();
+
+			let amount = 100;
+			let network_id = 1;
+			let asset_id = 1;
+
+			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+			let account_balance = || Tokens::balance(asset_id, &ALICE);
+			let outgoing_balance = || {
+				Tokens::balance(asset_id, &Mosaic::sub_account_id(SubAccount::new_outgoing(ALICE)))
+			};
+			assert_eq!(account_balance(), amount);
+			assert_eq!(outgoing_balance(), 0);
+			assert_ok!(Mosaic::transfer_to(
+				Origin::signed(ALICE),
+				network_id,
+				asset_id,
+				[0; 20],
+				amount,
+				true
+			));
+			assert_eq!(account_balance(), 0);
+			assert_eq!(outgoing_balance(), amount);
+		})
+	}
+
+	#[test]
+	fn transfer_to_unsupported_asset() {
+		ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::set_network(
+				Origin::relayer(),
+				1,
+				NetworkInfo { enabled: true, max_transfer_size: 100000 },
+			));
+
+			// We don't register the asset
+
+			let amount = 100;
+			let network_id = 1;
+			let asset_id = 1;
+
+			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+			assert_noop!(
+				Mosaic::transfer_to(
+					Origin::signed(ALICE),
+					network_id,
+					asset_id,
+					[0; 20],
+					amount,
+					true
+				),
+				Error::<Test>::UnsupportedAsset
+			);
+		})
+	}
+
+	fn do_transfer_to() {
+		let ethereum_address = [0; 20];
+		let amount = 100;
+		let network_id = 1;
+		let asset_id = 1;
+
+		Mosaic::transfer_to(
+			Origin::signed(ALICE),
+			network_id,
+			asset_id,
+			ethereum_address,
+			amount,
+			true,
+		)
+		.expect("transfer_to should work");
+		assert_eq!(
+			Mosaic::outgoing_transactions(&ALICE, 1),
+			Some((100, MinimumTimeLockPeriod::get() + System::block_number()))
+		);
+
+		// normally we don't unit test events being emitted, but in this case it is very crucial for
+		// the relayer to observe the events.
+
+		// When a transfer is made, the nonce is incremented. However, nonce is one of the
+		// dependencies for `generate_id`, we want to check if the events match, so we decrement the
+		// nonce and increment it back when we're done
+		// TODO: this is a hack, cfr: CU-1ubrf2y
+		Nonce::<Test>::mutate(|nonce| {
+			*nonce = nonce.wrapping_sub(1);
+			*nonce
+		});
+
+		let id = generate_id::<Test>(
+			&ALICE,
+			&network_id,
+			&asset_id,
+			&ethereum_address,
+			&amount,
+			&System::block_number(),
+		);
+		Nonce::<Test>::mutate(|nonce| {
+			*nonce = nonce.wrapping_add(1);
+			*nonce
+		});
+
+		System::assert_last_event(mock::Event::Mosaic(crate::Event::TransferOut {
+			id,
+			to: ethereum_address,
+			amount,
+			network_id,
+		}));
+	}
+}
+
+mod timelocked_mint {
+	use super::*;
+
+	#[test]
+	fn timelocked_mint() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_timelocked_mint(ALICE, 1, 50, 10);
+		})
+	}
+
+	#[test]
+	fn cannot_mint_unsupported_assets() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			let unsupported_asset_id = 42;
+			assert_noop!(
+				Mosaic::timelocked_mint(
+					Origin::relayer(),
+					unsupported_asset_id,
+					ALICE,
+					50,
+					10,
+					Default::default()
+				),
+				Error::<Test>::UnsupportedAsset
+			);
+		})
+	}
+
+	#[test]
+	fn cannot_mint_more_than_budget() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			assert_noop!(
+				Mosaic::timelocked_mint(Origin::relayer(), 1, ALICE, 10001, 10, Default::default()),
+				Error::<Test>::InsufficientBudget
+			);
+		})
+	}
+
+	#[test]
+	fn only_relayer_can_timelocked_mint() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			assert_noop!(
+				Mosaic::timelocked_mint(
+					Origin::signed(ALICE),
+					1,
+					ALICE,
+					50,
+					10,
+					Default::default()
+				),
+				DispatchError::BadOrigin
+			);
+		})
+	}
+
+	#[test]
+	fn none_cannot_timelocked_mint() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			assert_noop!(
+				Mosaic::timelocked_mint(Origin::none(), 1, ALICE, 50, 10, Default::default()),
+				DispatchError::BadOrigin
+			);
+		})
+	}
+
+	#[test]
+	fn timelocked_mint_adds_to_incoming_transactions() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			let amount = 50;
+			let lock_time = 10;
+			Mosaic::timelocked_mint(
+				Origin::relayer(),
+				1,
+				ALICE,
+				amount,
+				lock_time,
+				Default::default(),
+			)
+			.expect("timelocked_mint should work");
+			assert_eq!(
+				Mosaic::incoming_transactions(ALICE, 1),
+				Some((amount, lock_time + System::block_number()))
+			);
+		})
+	}
+
+	#[test]
+	fn timelocked_mint_updates_incoming_transactions() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			let amount = 50;
+			let lock_time = 10;
+
+			Mosaic::timelocked_mint(
+				Origin::relayer(),
+				1,
+				ALICE,
+				amount,
+				lock_time,
+				Default::default(),
+			)
+			.expect("timelocked_mint should work");
+			assert_eq!(
+				Mosaic::incoming_transactions(ALICE, 1),
+				Some((amount, lock_time + System::block_number()))
+			);
+
+			let amount_2 = 100;
+			let new_lock_time = 20;
+
+			Mosaic::timelocked_mint(
+				Origin::relayer(),
+				1,
+				ALICE,
+				amount_2,
+				new_lock_time,
+				Default::default(),
+			)
+			.expect("timelocked_mint should work");
+
+			assert_eq!(
+				Mosaic::incoming_transactions(ALICE, 1),
+				Some((amount + amount_2, new_lock_time + System::block_number()))
+			);
+		})
+	}
+
+	#[test]
+	fn rescind_timelocked_mint() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			let lock_time = 10;
+			do_timelocked_mint(ALICE, 1, 50, lock_time);
+
+			let initial_block = System::block_number();
+
+			Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 40)
+				.expect("relayer should be able to rescind transactions");
+			assert_eq!(
+				Mosaic::incoming_transactions(ALICE, 1),
+				Some((10, initial_block + lock_time))
+			);
+			let transfer_amount = 9;
+			Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, transfer_amount)
+				.expect("relayer should be able to rescind transactions");
+			assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((1, 11)));
+		})
+	}
+
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(10000))]
+
+		#[test]
+		fn can_mint_up_to_the_penalised_budget(
+			account_a in account_id(),
+			decay in 1..100u128, // todo,
+			max_transfer_size in 1..10_000_000u128,
+			asset_id in 1..100u32,
+			start_block in 1..10_000u64,
+			(budget, first_part, second_part) in budget_with_split(),
+		) {
+			new_test_ext().execute_with(|| {
+				// initialize
+				System::set_block_number(start_block);
+
+				prop_assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+				prop_assert_ok!(Mosaic::set_network(
+					Origin::relayer(),
+					asset_id,
+					NetworkInfo { enabled: true, max_transfer_size },
+				), "relayer may set network info");
+				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
+
+
+				// We've split the budget in two parts. Both within the budget
+				prop_assert_eq!(budget, first_part + second_part);
+				// When mint the first part of the budget, it should be fine.
+				prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, first_part, 0, Default::default()));
+				// The new penalised_budget should be budget - first_part.
+				// Whenwe mint the second part of the budget, it should be fine because it matches the penalised_budget.
+				prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, second_part, 0, Default::default()));
+
+				Ok(())
+			})?;
+		}
+
+		#[test]
+		fn cannot_mint_more_than_the_penalised_budget(
+			account_a in account_id(),
+			decay in 1..100u128, // todo,
+			max_transfer_size in 1..10_000_000u128,
+			asset_id in 1..100u32,
+			start_block in 1..10_000u64,
+			(budget, first_part, second_part) in budget_with_split(),
+		) {
+			new_test_ext().execute_with(|| {
+				// initialize
+				System::set_block_number(start_block);
+
+				prop_assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+				prop_assert_ok!(Mosaic::set_network(
+					Origin::relayer(),
+					asset_id,
+					NetworkInfo { enabled: true, max_transfer_size },
+				), "relayer may set network info");
+				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
+
+
+				// We've split the budget in two parts. Both within the budget
+				prop_assert_eq!(budget, first_part + second_part);
+				// When mint the first part of the budget, it should be fine.
+				prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, first_part, 0, Default::default()));
+				// The new penalised_budget should be budget - first_part.
+				// When we mint the second part of the budget, it should be fine because it matches the penalised_budget.
+				prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, second_part, 0, Default::default()));
+				// When we mint more than the penalised budget, it should fail.
+				prop_assert_noop!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, 1, 0, Default::default()), Error::<Test>::InsufficientBudget);
+				Ok(())
+			})?;
+		}
+
+		#[test]
+		fn should_be_able_to_mint_again_after_waiting_for_penalty_to_decay(
+			account_a in account_id(),
+			decay_factor in 1..100u128, // todo,
+			max_transfer_size in 1..10_000_000u128,
+			asset_id in 1..100u32,
+			start_block in 1..10_000u64,
+			(budget, first_part, second_part) in budget_with_split(),
+			iteration_count in 2..10u64,
+		) {
+			prop_assume!(budget > decay_factor);
+
+			new_test_ext().execute_with(|| {
+
+				// initialize
+				System::set_block_number(start_block);
+
+				let budget_penalty_decayer = BudgetPenaltyDecayer::linear(decay_factor);
+
+				prop_assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+				prop_assert_ok!(Mosaic::set_network(
+					Origin::relayer(),
+					asset_id,
+					NetworkInfo { enabled: true, max_transfer_size },
+				), "relayer may set network info");
+				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, budget_penalty_decayer.clone()), "root may set budget");
+
+
+				// We've split the budget in two parts. Both within the budget
+				prop_assert_eq!(budget, first_part + second_part);
+
+
+				let budget_recovery_period: BlockNumber = budget_penalty_decayer.full_recovery_period(budget)
+						.expect("impossible as per the prop_assume! above, qed");
+
+
+				for _ in 0..iteration_count {
+
+					// When mint the first part of the budget, it should be fine.
+					prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, first_part, 0, Default::default()));
+					// The new penalised_budget should be budget - first_part.
+					// When we mint the second part of the budget, it should be fine because it matches the penalised_budget.
+					prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, second_part, 0, Default::default()));
+
+
+					// When we mint more than the penalised budget, it should fail.
+					prop_assert_noop!(Mosaic::timelocked_mint(Origin::relayer(), asset_id, account_a, 1, 0, Default::default()), Error::<Test>::InsufficientBudget);
+
+
+					// We wait until the budget has recovered
+					System::set_block_number(System::block_number() + budget_recovery_period);
+				}
+
+				Ok(())
+			})?;
+		}
+	}
+}
+
+mod rescind_timelocked_mint {
+	use super::*;
+
+	#[test]
+	fn cannot_rescind_timelocked_mint_if_no_transaction() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			assert_noop!(
+				Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 50),
+				Error::<Test>::NoClaimableTx
+			);
+		})
+	}
+
+	#[test]
+	fn cannot_rescind_timelocked_mint_if_wrong_asset_id() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			let lock_time = 10;
+			do_timelocked_mint(ALICE, 1, 50, lock_time);
+			assert_noop!(
+				Mosaic::rescind_timelocked_mint(Origin::relayer(), 2, ALICE, 50),
+				Error::<Test>::NoClaimableTx
+			);
+		})
+	}
+
+	#[test]
+	fn cannot_rescind_timelocked_mint_if_wrong_account() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			let lock_time = 10;
+			do_timelocked_mint(ALICE, 1, 50, lock_time);
+			assert_noop!(
+				Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, BOB, 50),
+				Error::<Test>::NoClaimableTx
+			);
+		})
+	}
+
+	#[test]
+	fn cannot_rescind_timelocked_mint_if_wrong_amount() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			let lock_time = 10;
+			let amount = 50;
+			do_timelocked_mint(ALICE, 1, amount, lock_time);
+			assert_noop!(
+				Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, amount + 1),
+				TokenError::NoFunds
+			);
+		})
+	}
+
+	#[test]
+	fn rescind_timelocked_mint_in_two_steps() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			let lock_time = 10;
+			let start_amount = 50;
+			do_timelocked_mint(ALICE, 1, start_amount, lock_time);
+			assert_eq!(
+				Mosaic::incoming_transactions(ALICE, 1),
+				Some((start_amount, lock_time + System::block_number()))
+			);
+
+			let rescind_amount = 9;
+			Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, rescind_amount)
+				.expect("relayer should be able to rescind transactions");
+			assert_eq!(
+				Mosaic::incoming_transactions(ALICE, 1),
+				Some((start_amount - rescind_amount, lock_time + System::block_number()))
+			);
+
+			Mosaic::rescind_timelocked_mint(
+				Origin::relayer(),
+				1,
+				ALICE,
+				start_amount - rescind_amount,
+			)
+			.expect("relayer should be able to rescind transactions");
+
+			assert_eq!(Mosaic::incoming_transactions(ALICE, 1), None);
+		})
+	}
+}
+
+mod set_timelock_duration {
+	use super::*;
+
+	#[test]
+	fn set_timelock_duration() {
+		new_test_ext().execute_with(|| {
+			Mosaic::set_timelock_duration(Origin::root(), MinimumTimeLockPeriod::get() + 1)
+				.expect("root may set the timelock period");
+		})
+	}
+
+	#[test]
+	fn set_timelock_duration_with_non_root() {
+		new_test_ext().execute_with(|| {
+			assert_noop!(
+				Mosaic::set_timelock_duration(
+					Origin::signed(ALICE),
+					MinimumTimeLockPeriod::get() + 1
+				),
+				DispatchError::BadOrigin
+			);
+		})
+	}
+
+	#[test]
+	fn set_timelock_duration_with_origin_none() {
+		new_test_ext().execute_with(|| {
+			assert_noop!(
+				Mosaic::set_timelock_duration(Origin::none(), MinimumTimeLockPeriod::get() + 1),
+				DispatchError::BadOrigin
+			);
+		})
+	}
+
+	#[test]
+	fn set_timelock_duration_with_invalid_period() {
+		new_test_ext().execute_with(|| {
+			assert_noop!(
+				Mosaic::set_timelock_duration(Origin::root(), 0),
+				Error::<Test>::BadTimelockPeriod
+			);
+		})
+	}
+
+	#[test]
+	fn set_timelock_duration_with_invalid_period_2() {
+		new_test_ext().execute_with(|| {
+			assert_noop!(
+				Mosaic::set_timelock_duration(Origin::root(), MinimumTimeLockPeriod::get() - 1),
+				Error::<Test>::BadTimelockPeriod
+			);
+		})
+	}
+}
+
+mod transfer_to {
+	use super::*;
+
+	#[test]
+	fn transfer_to() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+		})
+	}
+
+	#[test]
+	fn accept_transfer() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 100)
+				.expect("accepting transfer should work");
+		})
+	}
+
+	#[test]
+	fn cannot_accept_transfer_larger_than_balance() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			assert_noop!(
+				Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 101),
+				Error::<Test>::AmountMismatch
+			);
+		})
+	}
+
+	#[test]
+	fn claim_stale_to() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			let current_block = System::block_number();
+			System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+			Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE)
+				.expect("claiming an outgoing transaction should work after the timelock period");
+		})
+	}
+
+	#[test]
+	fn cannot_claim_stale_to_early() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			let current_block = System::block_number();
+			System::set_block_number(current_block + Mosaic::timelock_period() - 1);
+			assert_noop!(
+				Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE),
+				Error::<Test>::NoStaleTransactions
+			);
+		})
+	}
+
+	#[test]
+	fn cannot_claim_after_relayer_accepts_transfer() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			assert_ok!(Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 100));
+			let current_block = System::block_number();
+			System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+			assert_noop!(
+				Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE),
+				Error::<Test>::NoStaleTransactions
+			);
+		})
+	}
+
+	#[test]
+	fn relayer_cannot_accept_transfer_after_claim() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			let current_block = System::block_number();
+			System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+			assert_ok!(Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE));
+			assert_noop!(
+				Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 100),
+				Error::<Test>::NoOutgoingTx
+			);
+		})
+	}
+
+	#[test]
+	fn can_claim_stale_after_partial_accept_transfer() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			do_transfer_to();
+			let current_block = System::block_number();
+			System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+			assert_ok!(Mosaic::accept_transfer(Origin::relayer(), ALICE, 1, 20));
+			// System::set_block_number(current_block + Mosaic::timelock_period() + 1);
+			assert_ok!(Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE));
+		})
+	}
+
+	#[test]
+	fn transfer_to_exceeds_max_transfer_size() {
+		ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+			let max_transfer_size = 100000;
+
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+			let network_id = 1;
+			assert_ok!(Mosaic::set_network(
+				Origin::relayer(),
+				network_id,
+				NetworkInfo { enabled: true, max_transfer_size },
+			));
+
+			let asset_id = 1;
+			assert_ok!(Mosaic::set_budget(
+				Origin::root(),
+				asset_id,
+				10000,
+				BudgetPenaltyDecayer::linear(10)
+			));
+
+			// We exceed the max transfer size
+			let amount = max_transfer_size + 1;
+			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+			assert_noop!(
+				Mosaic::transfer_to(
+					Origin::signed(ALICE),
+					network_id,
+					asset_id,
+					[0; 20],
+					amount,
+					true
+				),
+				Error::<Test>::ExceedsMaxTransferSize
+			);
+		})
+	}
+
+	#[test]
+	fn transfer_to_move_funds_to_outgoing() {
+		ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+			initialize();
+
+			let amount = 100;
+			let network_id = 1;
+			let asset_id = 1;
+
+			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+			let account_balance = || Tokens::balance(asset_id, &ALICE);
+			let outgoing_balance = || {
+				Tokens::balance(asset_id, &Mosaic::sub_account_id(SubAccount::new_outgoing(ALICE)))
+			};
+			assert_eq!(account_balance(), amount);
+			assert_eq!(outgoing_balance(), 0);
+			assert_ok!(Mosaic::transfer_to(
+				Origin::signed(ALICE),
+				network_id,
+				asset_id,
+				[0; 20],
+				amount,
+				true
+			));
+			assert_eq!(account_balance(), 0);
+			assert_eq!(outgoing_balance(), amount);
+		})
+	}
+
+	#[test]
+	fn transfer_to_unsupported_asset() {
+		ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::set_network(
+				Origin::relayer(),
+				1,
+				NetworkInfo { enabled: true, max_transfer_size: 100000 },
+			));
+
+			// We don't register the asset
+
+			let amount = 100;
+			let network_id = 1;
+			let asset_id = 1;
+
+			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+			assert_noop!(
+				Mosaic::transfer_to(
+					Origin::signed(ALICE),
+					network_id,
+					asset_id,
+					[0; 20],
+					amount,
+					true
+				),
+				Error::<Test>::UnsupportedAsset
+			);
+		})
+	}
+
+	fn do_transfer_to() {
+		let ethereum_address = [0; 20];
+		let amount = 100;
+		let network_id = 1;
+		let asset_id = 1;
+
+		Mosaic::transfer_to(
+			Origin::signed(ALICE),
+			network_id,
+			asset_id,
+			ethereum_address,
+			amount,
+			true,
+		)
+		.expect("transfer_to should work");
+		assert_eq!(
+			Mosaic::outgoing_transactions(&ALICE, 1),
+			Some((100, MinimumTimeLockPeriod::get() + System::block_number()))
+		);
+
+		// normally we don't unit test events being emitted, but in this case it is very crucial for
+		// the relayer to observe the events.
+
+		// When a transfer is made, the nonce is incremented. However, nonce is one of the
+		// dependencies for `generate_id`, we want to check if the events match, so we decrement the
+		// nonce and increment it back when we're done
+		// TODO: this is a hack, cfr: CU-1ubrf2y
+		Nonce::<Test>::mutate(|nonce| {
+			*nonce = nonce.wrapping_sub(1);
+			*nonce
+		});
+
+		let id = generate_id::<Test>(
+			&ALICE,
+			&network_id,
+			&asset_id,
+			&ethereum_address,
+			&amount,
+			&System::block_number(),
+		);
+		Nonce::<Test>::mutate(|nonce| {
+			*nonce = nonce.wrapping_add(1);
+			*nonce
+		});
+
+		System::assert_last_event(mock::Event::Mosaic(crate::Event::TransferOut {
+			id,
+			to: ethereum_address,
+			amount,
+			network_id,
+		}));
+	}
+}
+
+mod accept_transfer {
+	use super::*;
+
+	#[test]
+	fn cannot_mint_unsupported_assets() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			let unsupported_asset_id = 42;
+			assert_noop!(
+				Mosaic::timelocked_mint(
+					Origin::relayer(),
+					unsupported_asset_id,
+					ALICE,
+					50,
+					10,
+					Default::default()
+				),
+				Error::<Test>::UnsupportedAsset
+			);
+		})
+	}
+
+	#[test]
+	fn cannot_mint_more_than_budget() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			assert_noop!(
+				Mosaic::timelocked_mint(Origin::relayer(), 1, ALICE, 10001, 10, Default::default()),
+				Error::<Test>::InsufficientBudget
+			);
+		})
+	}
+
+	#[test]
+	fn rescind_timelocked_mint() {
+		new_test_ext().execute_with(|| {
+			initialize();
+			let lock_time = 10;
+			do_timelocked_mint(ALICE, 1, 50, lock_time);
+
+			let initial_block = System::block_number();
+
+			Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, 40)
+				.expect("relayer should be able to rescind transactions");
+			assert_eq!(
+				Mosaic::incoming_transactions(ALICE, 1),
+				Some((10, initial_block + lock_time))
+			);
+			let transfer_amount = 9;
+			Mosaic::rescind_timelocked_mint(Origin::relayer(), 1, ALICE, transfer_amount)
+				.expect("relayer should be able to rescind transactions");
+			assert_eq!(Mosaic::incoming_transactions(ALICE, 1), Some((1, 11)));
+		})
+	}
+}
+
+#[test]
+fn claim_to() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		let lock_time = 10;
+		do_timelocked_mint(ALICE, 1, 50, lock_time);
+		let current_block = System::block_number();
+		Mosaic::claim_to(Origin::alice(), 1, ALICE).expect_err(
+			"received funds should only be claimable after waiting for the relayer mandated time",
+		);
+		System::set_block_number(current_block + lock_time + 1);
+		Mosaic::claim_to(Origin::alice(), 1, ALICE)
+			.expect("received funds should be claimable after time has passed");
+	})
+}

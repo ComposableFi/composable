@@ -5,7 +5,7 @@ use scale_info::TypeInfo;
 bitflags! {
 	/// Capabilities (or more accurately, `incapabilities`) restrict functionality of specific vault
 	/// instances.
-	#[derive(Encode, Decode, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
 	pub struct Capabilities: u32 {
 		/// Tomb-stoning a vault is schedules it for deletion.
 		const TOMBSTONED = 0b000000001;

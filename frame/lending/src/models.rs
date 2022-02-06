@@ -1,28 +1,32 @@
 use composable_traits::{
-	defi::Rate,
-	lending::math::NormalizedCollateralFactor,
-	math::{LiftedFixedBalance, SafeArithmetic},
+	currency::MathBalance,
+	defi::{LiftedFixedBalance, MoreThanOneFixedU128, Rate},
+	math::SafeArithmetic,
 };
-use sp_runtime::{traits::Saturating, ArithmeticError, Percent};
+use sp_runtime::{traits::Saturating, ArithmeticError, FixedPointNumber, Percent};
 
 pub struct BorrowerData {
 	pub collateral_balance_value: LiftedFixedBalance,
 	pub borrow_balance_value: LiftedFixedBalance,
-	pub collateral_factor: NormalizedCollateralFactor,
+	pub collateral_factor: MoreThanOneFixedU128,
 	pub under_collaterized_warn_percent: Percent,
 }
 
 impl BorrowerData {
 	#[inline(always)]
-	pub fn new<T: Into<LiftedFixedBalance>>(
+	pub fn new<T: MathBalance>(
 		collateral_balance_value: T,
 		borrow_balance_value: T,
-		collateral_factor: NormalizedCollateralFactor,
+		collateral_factor: MoreThanOneFixedU128,
 		under_collaterized_warn_percent: Percent,
 	) -> Self {
 		Self {
-			collateral_balance_value: collateral_balance_value.into(),
-			borrow_balance_value: borrow_balance_value.into(),
+			collateral_balance_value: LiftedFixedBalance::saturating_from_integer(
+				collateral_balance_value.into(),
+			),
+			borrow_balance_value: LiftedFixedBalance::saturating_from_integer(
+				borrow_balance_value.into(),
+			),
 			collateral_factor,
 			under_collaterized_warn_percent,
 		}
@@ -52,7 +56,7 @@ impl BorrowerData {
 	}
 
 	#[inline(always)]
-	pub fn safe_collateral_factor(&self) -> Result<NormalizedCollateralFactor, ArithmeticError> {
+	pub fn safe_collateral_factor(&self) -> Result<MoreThanOneFixedU128, ArithmeticError> {
 		self.collateral_factor.safe_add(
 			&self.collateral_factor.safe_mul(&self.under_collaterized_warn_percent.into())?,
 		)

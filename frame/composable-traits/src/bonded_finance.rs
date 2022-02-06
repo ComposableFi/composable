@@ -26,7 +26,7 @@ pub trait BondedFinance {
 }
 
 /// The Bond duration.
-#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+#[derive(Clone, Encode, Decode, PartialEq, Eq, MaxEncodedLen, RuntimeDebug, TypeInfo)]
 pub enum BondDuration<BlockNumber> {
 	/// Finite duration, liquidity is returned after a number of `blocks`.
 	Finite { return_in: BlockNumber },
@@ -35,13 +35,14 @@ pub enum BondDuration<BlockNumber> {
 }
 
 /// The Bond offer.
-#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+#[derive(Clone, Encode, Decode, PartialEq, Eq, MaxEncodedLen, RuntimeDebug, TypeInfo)]
 pub struct BondOffer<AccountId, AssetId, Balance, BlockNumber> {
 	/// The account that will receive the locked assets.
 	pub beneficiary: AccountId,
 	/// Asset to be locked. Unlockable after `duration`.
+	/// Asset which `beneficiary` wants to get for his offer.
 	pub asset: AssetId,
-	/// Price of a bond.
+	/// Price of a bond unit in `asset`.
 	pub bond_price: Balance,
 	/// Number of bonds. We use the Balance type for the sake of simplicity.
 	pub nb_of_bonds: Balance,
@@ -51,8 +52,8 @@ pub struct BondOffer<AccountId, AssetId, Balance, BlockNumber> {
 	pub reward: BondOfferReward<AssetId, Balance, BlockNumber>,
 }
 
-/// The Bond reward.
-#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+/// The Bond reward. Asset and rules reward will be given.
+#[derive(Clone, Encode, Decode, PartialEq, Eq, MaxEncodedLen, RuntimeDebug, TypeInfo)]
 pub struct BondOfferReward<AssetId, Balance, BlockNumber> {
 	/// The actual reward asset.
 	pub asset: AssetId,

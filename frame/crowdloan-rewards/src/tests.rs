@@ -287,38 +287,21 @@ mod test_prevalidate_association {
 		with_rewards, with_rewards_default, ClaimKey, DEFAULT_NB_OF_CONTRIBUTORS,
 		DEFAULT_VESTING_PERIOD,
 	};
-
 	use crate::{
-		mocks::{Call, CrowdloanRewards, Origin, Test},
-		PrevalidateAssociation, ValidityError,
+		mocks::{CrowdloanRewards, Origin},
+		ValidityError,
 	};
-
 	use frame_support::{
 		assert_ok,
-		dispatch::{Dispatchable, GetDispatchInfo},
-		pallet_prelude::InvalidTransaction,
+		pallet_prelude::{InvalidTransaction, ValidateUnsigned},
 		unsigned::TransactionValidity,
-		weights::Pays,
 	};
-	use sp_runtime::{traits::SignedExtension, AccountId32};
+	use sp_runtime::{transaction_validity::TransactionSource, AccountId32};
 
-	fn setup_call(
-		remote_account: ClaimKey,
-		reward_account: &AccountId32,
-	) -> (TransactionValidity, Call) {
+	fn setup_call(remote_account: ClaimKey, reward_account: &AccountId32) -> TransactionValidity {
 		let proof = remote_account.proof(reward_account.clone());
-		let call = Call::CrowdloanRewards(crate::Call::associate {
-			reward_account: reward_account.clone(),
-			proof,
-		});
-		let dispatch_info = call.get_dispatch_info();
-		let validate_result = PrevalidateAssociation::<Test>::new().validate(
-			reward_account,
-			&call,
-			&dispatch_info,
-			0,
-		);
-		(validate_result, call)
+		let call = crate::Call::associate { reward_account: reward_account.clone(), proof };
+		CrowdloanRewards::validate_unsigned(TransactionSource::External, &call)
 	}
 
 	#[test]
@@ -335,24 +318,11 @@ mod test_prevalidate_association {
 			}
 
 			for (reward_account, remote_account) in accounts {
-				let (validate_result, call) = setup_call(remote_account, &reward_account);
-
+				let validate_result = setup_call(remote_account, &reward_account);
 				assert_eq!(
 					validate_result,
 					Err(InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8).into())
 				);
-
-				// make sure that invalid transactions are not free
-				assert!(matches!(
-					call.dispatch(Origin::root()),
-					Err(sp_runtime::DispatchErrorWithPostInfo {
-						post_info: frame_support::dispatch::PostDispatchInfo {
-							actual_weight: _,
-							pays_fee: Pays::Yes
-						},
-						error: _
-					})
-				));
 			}
 		});
 	}
@@ -363,24 +333,11 @@ mod test_prevalidate_association {
 			assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 
 			for (reward_account, remote_account) in accounts {
-				let (validate_result, call) = setup_call(remote_account, &reward_account);
-
+				let validate_result = setup_call(remote_account, &reward_account);
 				assert_eq!(
 					validate_result,
 					Err(InvalidTransaction::Custom(ValidityError::NoReward as u8).into())
 				);
-
-				// make sure that invalid transactions are not free
-				assert!(matches!(
-					call.dispatch(Origin::root()),
-					Err(sp_runtime::DispatchErrorWithPostInfo {
-						post_info: frame_support::dispatch::PostDispatchInfo {
-							actual_weight: _,
-							pays_fee: Pays::Yes
-						},
-						error: _
-					})
-				));
 			}
 		});
 	}

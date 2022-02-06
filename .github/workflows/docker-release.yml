@@ -49,3 +49,4 @@ jobs:
 
     - name:  Docker push
       run: make push-release
+

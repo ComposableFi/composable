@@ -1,10 +1,9 @@
 use bitflags::bitflags;
 use frame_support::pallet_prelude::*;
-use sp_std::vec::Vec;
 
 bitflags! {
 	/// Privilege of an account.
-	#[derive(Encode, Decode, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
 	pub struct Privilege: u32 {
 		/// An account we prioritize in liquidation processes.
 		/// In a dutch auction for instance, the account will be able to buy at a previous block price,
@@ -39,17 +38,13 @@ pub trait MutatePrivilege: InspectPrivilege {
 	fn revoke(account_id: &Self::AccountId, privilege: Privilege) -> DispatchResult;
 }
 
-#[repr(transparent)]
-#[derive(Default, Encode, Decode, TypeInfo)]
-/// A privileged group.
-pub struct PrivilegedGroupSet<T>(pub Vec<T>);
-
-pub type PrivilegedGroupOf<T> = PrivilegedGroupSet<<T as InspectPrivilegeGroup>::AccountId>;
+pub type PrivilegedGroupOf<T> = <T as InspectPrivilegeGroup>::Group;
 
 /// An privilege group, a set of privileged accounts.
 pub trait InspectPrivilegeGroup {
 	type AccountId: Copy;
 	type GroupId;
+	type Group;
 
 	/// Retrieve the privilege that is held for all the members.
 	/// Implementation should ensure that this privilege is held for all the members.
@@ -62,7 +57,7 @@ pub trait InspectPrivilegeGroup {
 	) -> Result<bool, DispatchError>;
 
 	/// Retrieve a group of privileged accounts.
-	fn members(group_id: Self::GroupId) -> Result<PrivilegedGroupOf<Self>, DispatchError>;
+	fn members(group_id: Self::GroupId) -> Result<Self::Group, DispatchError>;
 }
 
 /// An privilege group, a set of privileged accounts.
@@ -70,10 +65,7 @@ pub trait MutatePrivilegeGroup: InspectPrivilegeGroup {
 	/// Create a group of privileged accounts.
 	/// The implementation should ensure that this group is consistent,
 	/// meaning that every user within the group has the given privilege.
-	fn create(
-		group: PrivilegedGroupOf<Self>,
-		privilege: Privilege,
-	) -> Result<Self::GroupId, DispatchError>;
+	fn create(group: Self::Group, privilege: Privilege) -> Result<Self::GroupId, DispatchError>;
 
 	/// Delete a group of privileged accounts.
 	fn delete(group_id: Self::GroupId) -> DispatchResult;

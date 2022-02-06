@@ -67,29 +67,31 @@ pub mod pallet {
 		type ForeignAdminOrigin: EnsureOrigin<Self::Origin>;
 	}
 
-	#[derive(Debug, Clone, Copy, PartialEq, Eq, Encode, Decode, TypeInfo)]
+	#[derive(Debug, Clone, Copy, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 	pub enum CandidateStatus {
 		LocalAdminApproved,
 		ForeignAdminApproved,
 	}
 
+	#[derive(Debug, Clone, Copy, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+	pub struct ForeignMetadata {
+		pub decimals: u8,
+	}
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
 	#[pallet::getter(fn local_admin)]
 	/// Local admin account
-	#[allow(clippy::disallowed_type)] // LocalAdminOnEmpty provides a default value, so ValueQuery is ok here.
-	pub type LocalAdmin<T: Config> =
-		StorageValue<_, T::AccountId, ValueQuery, LocalAdminOnEmpty<T>>;
+	pub type LocalAdmin<T: Config> = StorageValue<_, T::AccountId>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_admin)]
 	/// Foreign admin account
-	#[allow(clippy::disallowed_type)] // ForeignAdminOnEmpty provides a default value, so ValueQuery is ok here.
-	pub type ForeignAdmin<T: Config> =
-		StorageValue<_, T::AccountId, ValueQuery, ForeignAdminOnEmpty<T>>;
+	pub type ForeignAdmin<T: Config> = StorageValue<_, T::AccountId>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn from_local_asset)]
@@ -114,15 +116,11 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	#[pallet::type_value]
-	pub fn LocalAdminOnEmpty<T: Config>() -> T::AccountId {
-		T::AccountId::default()
-	}
-
-	#[pallet::type_value]
-	pub fn ForeignAdminOnEmpty<T: Config>() -> T::AccountId {
-		T::AccountId::default()
-	}
+	#[pallet::storage]
+	#[pallet::getter(fn foreign_asset_metadata)]
+	/// Mapping local asset to foreign asset metadata.
+	pub type ForeignAssetMetadata<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::LocalAssetId, ForeignMetadata, OptionQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -170,6 +168,7 @@ pub mod pallet {
 			local_asset_id: T::LocalAssetId,
 			foreign_asset_id: T::ForeignAssetId,
 		},
+		AssetMetadataUpdated(T::LocalAssetId),
 	}
 
 	#[pallet::error]
@@ -177,6 +176,7 @@ pub mod pallet {
 		OnlyAllowedForAdmins,
 		LocalAssetIdAlreadyUsed,
 		ForeignAssetIdAlreadyUsed,
+		LocalAssetIdNotFound,
 	}
 
 	#[pallet::call]
@@ -224,6 +224,24 @@ pub mod pallet {
 				local_asset_id,
 				foreign_asset_id,
 			});
+			Ok(().into())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn set_metadata(
+			origin: OriginFor<T>,
+			local_asset_id: T::LocalAssetId,
+			metadata: ForeignMetadata,
+		) -> DispatchResultWithPostInfo {
+			let _ = ensure_signed(origin.clone())?;
+			Self::ensure_admins_only(origin)?;
+			ensure!(
+				<LocalToForeign<T>>::contains_key(local_asset_id),
+				Error::<T>::LocalAssetIdNotFound
+			);
+
+			<ForeignAssetMetadata<T>>::insert(local_asset_id, metadata);
+			Self::deposit_event(Event::AssetMetadataUpdated(local_asset_id));
 			Ok(().into())
 		}
 	}
@@ -274,7 +292,7 @@ pub mod pallet {
 			let foreign_admin = <ForeignAdmin<T>>::get();
 			match current_candidate_status {
 				None =>
-					if who == local_admin {
+					if Some(who) == local_admin {
 						<AssetsMappingCandidates<T>>::insert(
 							(local_asset_id, foreign_asset_id),
 							CandidateStatus::LocalAdminApproved,
@@ -286,12 +304,12 @@ pub mod pallet {
 						);
 					},
 				Some(CandidateStatus::LocalAdminApproved) =>
-					if who == foreign_admin {
+					if Some(who) == foreign_admin {
 						Self::set_location(local_asset_id, foreign_asset_id.clone())?;
 						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
 					},
 				Some(CandidateStatus::ForeignAdminApproved) =>
-					if who == local_admin {
+					if Some(who) == local_admin {
 						Self::set_location(local_asset_id, foreign_asset_id.clone())?;
 						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
 					},

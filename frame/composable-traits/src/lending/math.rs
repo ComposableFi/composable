@@ -1,6 +1,7 @@
 use core::ops::Neg;
 
 use codec::{Decode, Encode};
+use composable_support::validation::Validate;
 use scale_info::TypeInfo;
 use sp_std::{cmp::Ordering, convert::TryInto};
 
@@ -12,22 +13,10 @@ use sp_runtime::{
 use sp_arithmetic::per_things::Percent;
 
 use crate::{
-	defi::Rate,
-	loans::{DurationSeconds, ONE_HOUR},
-	math::{LiftedFixedBalance, SafeArithmetic},
+	defi::{LiftedFixedBalance, Rate, ZeroToOneFixedU128},
+	math::SafeArithmetic,
+	time::{DurationSeconds, SECONDS_PER_YEAR_NAIVE},
 };
-
-/// The fixed point number of suggested by substrate precision
-/// Must be (1.0.. because applied only to price normalized values
-pub type NormalizedCollateralFactor = FixedU128;
-
-/// Must be [0..1]
-/// TODO: implement Ratio as wrapper over FixedU128
-pub type Ratio = FixedU128;
-
-/// current notion of year will take away 1/365 from lenders and give away to borrowers (as does no
-/// accounts to length of year)
-pub const SECONDS_PER_YEAR: DurationSeconds = 365 * 24 * ONE_HOUR;
 
 /// utilization_ratio = total_borrows / (total_cash + total_borrows)
 pub fn calc_utilization_ratio(
@@ -39,15 +28,11 @@ pub fn calc_utilization_ratio(
 	}
 
 	let total = cash.safe_add(&borrows)?;
-	// also max value is 1.00000000000000000, it still fails with u8, so mul by u16 and cast to u8
-	// safely
 	let utilization_ratio = borrows
 		.checked_div(&total)
 		.expect("above checks prove it cannot error")
-		.checked_mul_int(100_u16)
-		.ok_or(ArithmeticError::Overflow)?
-		.try_into()
-		.map_err(|_| ArithmeticError::Overflow)?;
+		.checked_mul_int(100_u8)
+		.ok_or(ArithmeticError::Overflow)?;
 	Ok(Percent::from_percent(utilization_ratio))
 }
 
@@ -114,12 +99,43 @@ impl InterestRateModel {
 	}
 
 	/// Calculates the current supply interest rate
-	pub fn get_supply_rate(borrow_rate: Rate, util: Ratio, reserve_factor: Ratio) -> Rate {
+	pub fn get_supply_rate(
+		borrow_rate: Rate,
+		util: ZeroToOneFixedU128,
+		reserve_factor: ZeroToOneFixedU128,
+	) -> Rate {
 		// ((1 - reserve_factor) * borrow_rate) * utilization
-		let one_minus_reserve_factor = Ratio::one().saturating_sub(reserve_factor);
+		let one_minus_reserve_factor = ZeroToOneFixedU128::one().saturating_sub(reserve_factor);
 		let rate_to_pool = borrow_rate.saturating_mul(one_minus_reserve_factor);
 
 		rate_to_pool.saturating_mul(util)
+	}
+}
+
+pub struct InteresteRateModelIsValid;
+impl Validate<InterestRateModel, InteresteRateModelIsValid> for InteresteRateModelIsValid {
+	fn validate(interest_rate_model: InterestRateModel) -> Result<InterestRateModel, &'static str> {
+		const ERROR: &str = "interest rate model is not valid";
+		match interest_rate_model {
+			InterestRateModel::Jump(x) =>
+				JumpModel::new(x.base_rate, x.jump_rate, x.full_rate, x.target_utilization)
+					.ok_or(ERROR)
+					.map(InterestRateModel::Jump),
+			InterestRateModel::Curve(x) =>
+				CurveModel::new(x.base_rate).ok_or(ERROR).map(InterestRateModel::Curve),
+			InterestRateModel::DynamicPIDController(x) => DynamicPIDControllerModel::new(
+				x.proportional_parameter,
+				x.integral_parameter,
+				x.derivative_parameter,
+				x.previous_interest_rate,
+				x.target_utilization,
+			)
+			.ok_or(ERROR)
+			.map(InterestRateModel::DynamicPIDController),
+			InterestRateModel::DoubleExponent(x) => DoubleExponentModel::new(x.coefficients)
+				.ok_or(ERROR)
+				.map(InterestRateModel::DoubleExponent),
+		}
 	}
 }
 
@@ -155,25 +171,27 @@ pub struct JumpModel {
 }
 
 impl JumpModel {
-	pub const MAX_BASE_RATE: Ratio = Ratio::from_inner(100_000_000_000_000_000); // 10%
-	pub const MAX_JUMP_RATE: Ratio = Ratio::from_inner(300_000_000_000_000_000); // 30%
-	pub const MAX_FULL_RATE: Ratio = Ratio::from_inner(500_000_000_000_000_000); // 50%
+	pub const MAX_BASE_RATE: ZeroToOneFixedU128 =
+		ZeroToOneFixedU128::from_inner(ZeroToOneFixedU128::DIV * 10 / 100);
+	pub const MAX_JUMP_RATE: ZeroToOneFixedU128 =
+		ZeroToOneFixedU128::from_inner(ZeroToOneFixedU128::DIV * 30 / 100);
+	pub const MAX_FULL_RATE: ZeroToOneFixedU128 =
+		ZeroToOneFixedU128::from_inner(ZeroToOneFixedU128::DIV * 50 / 100);
 
 	/// Create a new rate model
 	pub fn new(
-		base_rate: Ratio,
-		jump_rate: Ratio,
-		full_rate: Ratio,
+		base_rate: ZeroToOneFixedU128,
+		jump_rate: ZeroToOneFixedU128,
+		full_rate: ZeroToOneFixedU128,
 		target_utilization: Percent,
 	) -> Option<JumpModel> {
-		let model = Self { base_rate, jump_rate, full_rate, target_utilization };
-
-		if model.base_rate <= Self::MAX_BASE_RATE &&
-			model.jump_rate <= Self::MAX_JUMP_RATE &&
-			model.full_rate <= Self::MAX_FULL_RATE &&
-			model.base_rate <= model.jump_rate &&
-			model.jump_rate <= model.full_rate
+		if base_rate <= Self::MAX_BASE_RATE &&
+			jump_rate <= Self::MAX_JUMP_RATE &&
+			full_rate <= Self::MAX_FULL_RATE &&
+			base_rate <= jump_rate &&
+			jump_rate <= full_rate
 		{
+			let model = Self { base_rate, jump_rate, full_rate, target_utilization };
 			Some(model)
 		} else {
 			None
@@ -321,17 +339,21 @@ impl DynamicPIDControllerModel {
 		integral_parameter: FixedI128,
 		derivative_parameter: FixedI128,
 		initial_interest_rate: FixedU128,
-		target_utilization: FixedU128,
+		target_utilization: ZeroToOneFixedU128,
 	) -> Option<DynamicPIDControllerModel> {
-		Some(DynamicPIDControllerModel {
-			proportional_parameter,
-			integral_parameter,
-			derivative_parameter,
-			previous_error_value: <_>::zero(),
-			previous_integral_term: <_>::zero(),
-			previous_interest_rate: initial_interest_rate,
-			target_utilization,
-		})
+		if target_utilization > ZeroToOneFixedU128::one() {
+			None
+		} else {
+			Some(DynamicPIDControllerModel {
+				proportional_parameter,
+				integral_parameter,
+				derivative_parameter,
+				previous_error_value: <_>::zero(),
+				previous_integral_term: <_>::zero(),
+				previous_interest_rate: initial_interest_rate,
+				target_utilization,
+			})
+		}
 	}
 }
 
@@ -394,7 +416,7 @@ pub fn accrued_interest(
 	borrow_rate
 		.checked_mul_int(amount)?
 		.checked_mul(delta_time.into())?
-		.checked_div(SECONDS_PER_YEAR.into())
+		.checked_div(SECONDS_PER_YEAR_NAIVE.into())
 }
 
 /// compounding increment of borrow index
@@ -406,7 +428,7 @@ pub fn increment_index(
 	borrow_rate
 		.safe_mul(&index)?
 		.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
-		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))?
+		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR_NAIVE))?
 		.safe_add(&index)
 }
 
@@ -416,5 +438,5 @@ pub fn increment_borrow_rate(
 ) -> Result<Rate, ArithmeticError> {
 	borrow_rate
 		.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
-		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR))
+		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR_NAIVE))
 }

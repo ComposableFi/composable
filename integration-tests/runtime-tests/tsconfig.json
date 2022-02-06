@@ -10,7 +10,20 @@
     "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "baseUrl": "./",
+    "paths":{
+      "@composable/*": [
+        "./src/*"
+      ],
+      "@polkadot/api/augment": [
+        "./src/types/interfaces/augment-api.ts"
+      ],
+      "@polkadot/types/augment": [
+        "./src/types/interfaces/augment-types.ts"
+      ]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "src/**/**.d.ts"]

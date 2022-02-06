@@ -3,9 +3,11 @@ use crate::{
 	AssetInfo, Error, PrePrice, Price, Withdraw, *,
 };
 use codec::Decode;
+use composable_traits::defi::CurrencyPair;
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::{Currency, OnInitialize},
+	BoundedVec,
 };
 use pallet_balances::Error as BalancesError;
 use parking_lot::RwLock;
@@ -14,7 +16,7 @@ use sp_io::TestExternalities;
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{
 	traits::{BadOrigin, Zero},
-	Percent, RuntimeAppPublic,
+	FixedPointNumber, FixedU128, Percent, RuntimeAppPublic,
 };
 use std::sync::Arc;
 
@@ -42,6 +44,19 @@ fn add_asset_and_info() {
 			SLASH
 		));
 
+		// does not increment if exists
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			ASSET_ID,
+			THRESHOLD,
+			MIN_ANSWERS,
+			MAX_ANSWERS,
+			BLOCK_INTERVAL,
+			REWARD,
+			SLASH
+		));
+		assert_eq!(Oracle::assets_count(), 1);
+
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
 			ASSET_ID + 1,
@@ -62,10 +77,11 @@ fn add_asset_and_info() {
 			slash: SLASH,
 		};
 		// id now activated and count incremented
-		assert_eq!(Oracle::asset_info(1), asset_info);
+		assert_eq!(Oracle::asset_info(1), Some(asset_info));
 		assert_eq!(Oracle::assets_count(), 2);
+
 		// fails with non permission
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		assert_noop!(
 			Oracle::add_asset_and_info(
 				Origin::signed(account_1),
@@ -169,7 +185,7 @@ fn add_asset_and_info() {
 #[test]
 fn set_signer() {
 	new_test_ext().execute_with(|| {
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		let account_2 = get_account_2();
 		let account_3 = get_account_3();
 		let account_4 = get_account_4();
@@ -201,7 +217,7 @@ fn set_signer() {
 #[test]
 fn add_stake() {
 	new_test_ext().execute_with(|| {
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		let account_2 = get_account_2();
 		// fails no controller set
 		assert_noop!(Oracle::add_stake(Origin::signed(account_1), 50), Error::<Test>::UnsetSigner);
@@ -239,7 +255,7 @@ fn add_stake() {
 #[test]
 fn remove_and_reclaim_stake() {
 	new_test_ext().execute_with(|| {
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		let account_2 = get_account_2();
 		let account_3 = get_account_3();
 
@@ -276,7 +292,7 @@ fn remove_and_reclaim_stake() {
 #[test]
 fn add_price() {
 	new_test_ext().execute_with(|| {
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		let account_2 = get_account_2();
 		let account_4 = get_account_4();
 		let account_5 = get_account_5();
@@ -345,7 +361,7 @@ fn add_price() {
 		// non existent asset_id
 		assert_noop!(
 			Oracle::submit_price(Origin::signed(account_1), 100_u128, 10_u128),
-			Error::<Test>::MaxPrices
+			Error::<Test>::PriceNotRequested
 		);
 	});
 }
@@ -353,7 +369,7 @@ fn add_price() {
 #[test]
 fn medianize_price() {
 	new_test_ext().execute_with(|| {
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		// should not panic
 		Oracle::get_median_price(&Oracle::pre_prices(0));
 		for i in 0..3 {
@@ -422,7 +438,7 @@ fn is_requested() {
 #[test]
 fn test_payout_slash() {
 	new_test_ext().execute_with(|| {
-		let account_1 = Default::default();
+		let account_1 = get_account_1();
 		let account_2 = get_account_2();
 		let account_3 = get_account_3();
 		let account_4 = get_account_4();
@@ -435,8 +451,17 @@ fn test_payout_slash() {
 		let four = PrePrice { price: 400, block: 0, who: account_4 };
 
 		let five = PrePrice { price: 100, block: 0, who: account_5 };
+
+		let asset_info = AssetInfo {
+			threshold: Percent::from_percent(0),
+			min_answers: 0,
+			max_answers: 0,
+			block_interval: 0,
+			reward: 0,
+			slash: 0,
+		};
 		// doesn't panic when percent not set
-		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
+		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0, &asset_info);
 		assert_eq!(Balances::free_balance(account_1), 100);
 
 		assert_ok!(Oracle::add_asset_and_info(
@@ -456,7 +481,12 @@ fn test_payout_slash() {
 		assert_eq!(Oracle::answer_in_transit(account_1), Some(5));
 		assert_eq!(Oracle::answer_in_transit(account_2), Some(5));
 
-		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
+		Oracle::handle_payout(
+			&vec![one, two, three, four, five],
+			100,
+			0,
+			&Oracle::asset_info(0).unwrap(),
+		);
 
 		assert_eq!(Oracle::answer_in_transit(account_1), Some(0));
 		assert_eq!(Oracle::answer_in_transit(account_2), Some(0));
@@ -479,7 +509,12 @@ fn test_payout_slash() {
 			4,
 			5
 		));
-		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0);
+		Oracle::handle_payout(
+			&vec![one, two, three, four, five],
+			100,
+			0,
+			&Oracle::asset_info(0).unwrap(),
+		);
 
 		// account 4 gets slashed 2 5 and 1 gets rewarded
 		assert_eq!(Balances::free_balance(account_1), 90);
@@ -514,7 +549,7 @@ fn on_init() {
 			5
 		));
 		// set prices into storage
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		for i in 0..3 {
 			let price = i as u128 + 100_u128;
 			add_price_storage(price, 0, account_1, 2);
@@ -595,6 +630,71 @@ fn historic_pricing() {
 }
 
 #[test]
+fn price_of_amount() {
+	new_test_ext().execute_with(|| {
+		let value = 100500;
+		let id = 42;
+		let amount = 10000;
+
+		let price = Price { price: value, block: System::block_number() };
+		Prices::<Test>::insert(id, price);
+		let total_price =
+			<Oracle as composable_traits::oracle::Oracle>::get_price(id, amount).unwrap();
+
+		assert_eq!(total_price.price, value * amount)
+	});
+}
+#[test]
+fn ratio_human_case() {
+	new_test_ext().execute_with(|| {
+		let price = Price { price: 10000, block: System::block_number() };
+		Prices::<Test>::insert(13, price);
+		let price = Price { price: 100, block: System::block_number() };
+		Prices::<Test>::insert(42, price);
+		let mut pair = CurrencyPair::new(13, 42);
+
+		let ratio = <Oracle as composable_traits::oracle::Oracle>::get_ratio(pair).unwrap();
+		assert_eq!(ratio, FixedU128::saturating_from_integer(100));
+		pair.reverse();
+		let ratio = <Oracle as composable_traits::oracle::Oracle>::get_ratio(pair).unwrap();
+
+		assert_eq!(ratio, FixedU128::saturating_from_rational(1_u32, 100_u32));
+	})
+}
+
+#[test]
+fn inverses() {
+	new_test_ext().execute_with(|| {
+		let price = Price { price: 1, block: System::block_number() };
+		Prices::<Test>::insert(13, price);
+		let inverse =
+			<Oracle as composable_traits::oracle::Oracle>::get_price_inverse(13, 1).unwrap();
+		assert_eq!(inverse, 1);
+
+		let price = Price { price: 1, block: System::block_number() };
+		Prices::<Test>::insert(13, price);
+		let inverse =
+			<Oracle as composable_traits::oracle::Oracle>::get_price_inverse(13, 2).unwrap();
+		assert_eq!(inverse, 2);
+	})
+}
+
+#[test]
+fn ratio_base_is_way_less_smaller() {
+	new_test_ext().execute_with(|| {
+		let price = Price { price: 1, block: System::block_number() };
+		Prices::<Test>::insert(13, price);
+		let price = Price { price: 10_u128.pow(12), block: System::block_number() };
+		Prices::<Test>::insert(42, price);
+		let pair = CurrencyPair::new(13, 42);
+
+		let ratio = <Oracle as composable_traits::oracle::Oracle>::get_ratio(pair).unwrap();
+
+		assert_eq!(ratio, FixedU128::saturating_from_rational(1, 1000000000000_u64));
+	})
+}
+
+#[test]
 fn get_twap() {
 	new_test_ext().execute_with(|| {
 		// add and request oracle id
@@ -644,7 +744,7 @@ fn on_init_prune_scenerios() {
 			5
 		));
 		// set prices into storage
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		for i in 0..3 {
 			let price = i as u128 + 100_u128;
 			add_price_storage(price, 0, account_1, 0);
@@ -704,7 +804,7 @@ fn on_init_over_max_answers() {
 			5
 		));
 		// set prices into storage
-		let account_1: AccountId = Default::default();
+		let account_1 = get_account_1();
 		for i in 0..5 {
 			let price = i as u128 + 100_u128;
 			add_price_storage(price, 0, account_1, 0);
@@ -734,7 +834,7 @@ fn prune_old_pre_prices_edgecase() {
 			reward: 5,
 			slash: 5,
 		};
-		Oracle::prune_old_pre_prices(asset_info, vec![], 0, &0);
+		Oracle::prune_old_pre_prices(&asset_info, vec![], 0);
 	});
 }
 
@@ -807,7 +907,7 @@ fn should_submit_signed_transaction_on_chain() {
 		));
 
 		// when
-		Oracle::fetch_price_and_send_signed(&0).unwrap();
+		Oracle::fetch_price_and_send_signed(&0, Oracle::asset_info(0).unwrap()).unwrap();
 		// then
 		let tx = pool_state.write().transactions.pop().unwrap();
 		assert!(pool_state.read().transactions.is_empty());
@@ -838,7 +938,7 @@ fn should_check_oracles_submitted_price() {
 
 		add_price_storage(100_u128, 0, account_2, 0);
 		// when
-		Oracle::fetch_price_and_send_signed(&0).unwrap();
+		Oracle::fetch_price_and_send_signed(&0, Oracle::asset_info(0).unwrap()).unwrap();
 	});
 }
 
@@ -846,9 +946,16 @@ fn should_check_oracles_submitted_price() {
 #[should_panic = "Max answers reached"]
 fn should_check_oracles_max_answer() {
 	let (mut t, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
-
+	let asset_info = AssetInfo {
+		threshold: Percent::from_percent(0),
+		min_answers: 0,
+		max_answers: 0,
+		block_interval: 0,
+		reward: 0,
+		slash: 0,
+	};
 	t.execute_with(|| {
-		Oracle::fetch_price_and_send_signed(&0).unwrap();
+		Oracle::fetch_price_and_send_signed(&0, asset_info).unwrap();
 	});
 }
 
@@ -868,14 +975,14 @@ fn parse_price_works() {
 
 fn add_price_storage(price: u128, asset_id: u128, who: AccountId, block: u64) {
 	let price = PrePrice { price, block, who };
-	PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.push(price));
+	PrePrices::<Test>::mutate(asset_id, |current_prices| current_prices.try_push(price).unwrap());
 	AnswerInTransit::<Test>::mutate(who, |transit| {
 		*transit = Some(transit.unwrap_or_else(Zero::zero) + 5)
 	});
 }
 
 fn do_price_update(asset_id: u128, block: u64) {
-	let account_1: AccountId = Default::default();
+	let account_1 = get_account_1();
 	for i in 0..3 {
 		let price = i as u128 + 100_u128;
 		add_price_storage(price, asset_id, account_1, block);
@@ -888,7 +995,7 @@ fn do_price_update(asset_id: u128, block: u64) {
 }
 
 fn set_historic_prices(asset_id: u128, historic_prices: Vec<Price<u128, u64>>) {
-	PriceHistory::<Test>::insert(asset_id, historic_prices);
+	PriceHistory::<Test>::insert(asset_id, BoundedVec::try_from(historic_prices).unwrap());
 }
 
 fn price_oracle_response(state: &mut testing::OffchainState, price_id: &str) {

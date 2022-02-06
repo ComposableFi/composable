@@ -33,7 +33,7 @@ pub fn genesis_config(
 		aura: Default::default(),
 		sudo: composable_runtime::SudoConfig {
 			// Assign network admin rights.
-			key: root,
+			key: Some(root),
 		},
 		indices: composable_runtime::IndicesConfig { indices: vec![] },
 		parachain_info: composable_runtime::ParachainInfoConfig { parachain_id: id },

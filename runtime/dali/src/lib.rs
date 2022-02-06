@@ -25,7 +25,6 @@ use common::{
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
 	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
-use composable_traits::currency::PriceableAsset;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -55,8 +54,9 @@ pub use frame_support::{
 };
 
 use codec::Encode;
-use frame_support::traits::EqualPrivilegeOnly;
+use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
+use scale_info::TypeInfo;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
@@ -65,6 +65,7 @@ use system::{
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
+pub use xcmp::XcmConfig;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -93,18 +94,19 @@ pub mod opaque {
 //   https://substrate.dev/docs/en/knowledgebase/runtime/upgrades#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("picasso"),
-	impl_name: create_runtime_str!("picasso"),
+	spec_name: create_runtime_str!("dali"),
+	impl_name: create_runtime_str!("dali"),
 	authoring_version: 1,
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 100,
-	impl_version: 1,
+	spec_version: 1000,
+	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
+	transaction_version: 3,
+	state_version: 0,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -194,6 +196,7 @@ impl system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade. Used not default since we're a parachain.
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 impl randomness_collective_flip::Config for Runtime {}
@@ -378,6 +381,7 @@ where
 			.saturating_sub(1);
 		let era = Era::mortal(period, current_block);
 		let extra = (
+			system::CheckNonZeroSender::<Runtime>::new(),
 			system::CheckSpecVersion::<Runtime>::new(),
 			system::CheckTxVersion::<Runtime>::new(),
 			system::CheckGenesis::<Runtime>::new(),
@@ -385,7 +389,6 @@ where
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
 			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-			crowdloan_rewards::PrevalidateAssociation::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -419,11 +422,10 @@ parameter_types! {
 
 	/// TODO: discuss with omar/cosmin
 	pub MinStake: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
-	// Shouldn't this be a ratio based on locked amount?
-	pub const SlashAmount: Balance = 5;
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
+	pub const MaxPrePrices: u32 = 40;
 }
 
 impl oracle::Config for Runtime {
@@ -436,11 +438,12 @@ impl oracle::Config for Runtime {
 	type MinStake = MinStake;
 	type StalePrice = StalePrice;
 	type AddOracle = EnsureRootOrHalfCouncil;
-	type SlashAmount = SlashAmount;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
 	type MaxHistory = MaxHistory;
+	type MaxPrePrices = MaxPrePrices;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
+	type LocalAssets = Factory;
 }
 
 // Parachain stuff.
@@ -454,7 +457,7 @@ parameter_types! {
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
-	type OnValidationData = ();
+	type OnSystemEvent = ();
 	type SelfParaId = parachain_info::Pallet<Runtime>;
 	type OutboundXcmpMessageSource = XcmpQueue;
 	type DmpMessageHandler = DmpQueue;
@@ -568,6 +571,7 @@ parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	// TODO: rationale?
 	pub ProposalBondMinimum: Balance = 5 * CurrencyId::PICA.unit::<Balance>();
+	pub ProposalBondMaximum: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
 
@@ -583,6 +587,7 @@ impl treasury::Config for Runtime {
 	type OnSlash = Treasury;
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
+	type ProposalBondMaximum = ProposalBondMaximum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type MaxApprovals = MaxApprovals;
@@ -626,6 +631,7 @@ parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
 	RuntimeBlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
+  pub const NoPreimagePostponement: Option<u32> = Some(10);
 }
 
 impl scheduler::Config for Runtime {
@@ -637,7 +643,9 @@ impl scheduler::Config for Runtime {
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
+	type PreimageProvider = Preimage;
+	type NoPreimagePostponement = NoPreimagePostponement;
+	type WeightInfo = scheduler::weights::SubstrateWeight<Runtime>;
 }
 
 impl utility::Config for Runtime {
@@ -697,6 +705,21 @@ impl democracy::Config for Runtime {
 	type PreimageByteDeposit = PreimageByteDeposit;
 	type Scheduler = Scheduler;
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	pub const PreimageMaxSize: u32 = 4096 * 1024;
+	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+}
+
+impl preimage::Config for Runtime {
+	type WeightInfo = preimage::weights::SubstrateWeight<Runtime>;
+	type Event = Event;
+	type Currency = Balances;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type MaxSize = PreimageMaxSize;
+	type BaseDeposit = PreimageBaseDeposit;
+	type ByteDeposit = PreimageByteDeposit;
 }
 
 parameter_types! {
@@ -802,11 +825,17 @@ impl Contains<Call> for BaseCallFilter {
 	}
 }
 
+parameter_types! {
+  #[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
+	pub const MaxStringSize: u32 = 100;
+}
+
 impl call_filter::Config for Runtime {
 	type Event = Event;
 	type UpdateOrigin = EnsureRoot<AccountId>;
 	type Hook = ();
 	type WeightInfo = ();
+	type MaxStringSize = MaxStringSize;
 }
 
 parameter_types! {
@@ -829,7 +858,7 @@ parameter_types! {
 	pub Stake: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
 }
 
-impl pallet_bonded_finance::Config for Runtime {
+impl bonded_finance::Config for Runtime {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type BondOfferId = u64;
 	type Convert = sp_runtime::traits::ConvertInto;
@@ -851,7 +880,7 @@ impl composable_traits::defi::DeFiComposableConfig for Runtime {
 	type Balance = Balance;
 }
 
-impl pallet_dutch_auction::Config for Runtime {
+impl dutch_auction::Config for Runtime {
 	type NativeCurrency = Balances;
 	type Event = Event;
 	type MultiCurrency = Assets;
@@ -859,7 +888,24 @@ impl pallet_dutch_auction::Config for Runtime {
 	type WeightToFee = WeightToFee;
 	type OrderId = u128;
 	type UnixTime = Timestamp;
-	type WeightInfo = ();
+	type WeightInfo = weights::dutch_auction::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	  pub const MosaicId: PalletId = PalletId(*b"plmosaic");
+	pub const MinimumTTL: BlockNumber = 10;
+	pub const MinimumTimeLockPeriod: BlockNumber = 20;
+}
+
+impl mosaic::Config for Runtime {
+	type Event = Event;
+	type PalletId = MosaicId;
+	type Assets = Assets;
+	type MinimumTTL = MinimumTTL;
+	type MinimumTimeLockPeriod = MinimumTimeLockPeriod;
+	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
+	type NetworkId = u32;
+	type ControlOrigin = EnsureRootOrHalfCouncil;
 }
 
 construct_runtime!(
@@ -896,6 +942,7 @@ construct_runtime!(
 		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 		Utility: utility::{Pallet, Call, Event} = 35,
+		  Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
@@ -912,10 +959,11 @@ construct_runtime!(
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
 		Assets: assets::{Pallet, Call, Storage} = 57,
-		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 58,
+		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 58,
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 59,
-		BondedFinance: pallet_bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
-		DutchAuction: pallet_dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
+		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
+		DutchAuction: dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
+		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -927,6 +975,7 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+	system::CheckNonZeroSender<Runtime>,
 	system::CheckSpecVersion<Runtime>,
 	system::CheckTxVersion<Runtime>,
 	system::CheckGenesis<Runtime>,
@@ -934,13 +983,54 @@ pub type SignedExtra = (
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
 	transaction_payment::ChargeTransactionPayment<Runtime>,
-	crowdloan_rewards::PrevalidateAssociation<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+
+// Migration for scheduler pallet to move from a plain Call to a CallOrHash.
+pub struct SchedulerMigrationV3;
+impl OnRuntimeUpgrade for SchedulerMigrationV3 {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		Scheduler::migrate_v2_to_v3()
+	}
+}
 /// Executive: handles dispatch to the various modules.
-pub type Executive =
-	executive::Executive<Runtime, Block, system::ChainContext<Runtime>, Runtime, AllPallets>;
+pub type Executive = executive::Executive<
+	Runtime,
+	Block,
+	system::ChainContext<Runtime>,
+	Runtime,
+	AllPalletsWithSystem,
+	SchedulerMigrationV3,
+>;
+
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benches {
+	use frame_benchmarking::define_benchmarks;
+	define_benchmarks!(
+		[frame_system, SystemBench::<Runtime>]
+		[balances, Balances]
+		[session, SessionBench::<Runtime>]
+		[timestamp, Timestamp]
+		[collator_selection, CollatorSelection]
+		[indices, Indices]
+		[membership, CouncilMembership]
+		[treasury, Treasury]
+		[scheduler, Scheduler]
+		[democracy, Democracy]
+		[collective, Council]
+		[utility, Utility]
+		[identity, Identity]
+		[multisig, Multisig]
+		[vault, Vault]
+		[oracle, Oracle]
+		[dutch_auction, DutchAuction]
+	);
+}
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
@@ -1023,8 +1113,8 @@ impl_runtime_apis! {
 	}
 
 	impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
-		fn collect_collation_info() -> cumulus_primitives_core::CollationInfo {
-			ParachainSystem::collect_collation_info()
+		fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
+			ParachainSystem::collect_collation_info(header)
 		}
 	}
 
@@ -1050,36 +1140,20 @@ impl_runtime_apis! {
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	impl benchmarking::Benchmark<Block> for Runtime {
+	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
-			Vec<benchmarking::BenchmarkList>,
+			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_benchmarking::{Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use system_benchmarking::Pallet as SystemBench;
+			use session_benchmarking::Pallet as SessionBench;
+
 
 			let mut list = Vec::<BenchmarkList>::new();
 
-			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, balances, Balances);
-			list_benchmark!(list, extra, timestamp, Timestamp);
-			list_benchmark!(list, extra, collator_selection, CollatorSelection);
-			list_benchmark!(list, extra, indices, Indices);
-			list_benchmark!(list, extra, membership, CouncilMembership);
-			list_benchmark!(list, extra, treasury, Treasury);
-			list_benchmark!(list, extra, scheduler, Scheduler);
-			list_benchmark!(list, extra, democracy, Democracy);
-			list_benchmark!(list, extra, collective, Council);
-			list_benchmark!(list, extra, utility, Utility);
-			list_benchmark!(list, extra, identity, Identity);
-			list_benchmark!(list, extra, multisig, Multisig);
-
-			{
-				list_benchmark!(list, extra, vault, Vault);
-				list_benchmark!(list, extra, oracle, Oracle);
-				list_benchmark!(list, extra, crowdloan_rewards, CrowdloanRewards);
-			}
+			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1087,9 +1161,9 @@ impl_runtime_apis! {
 		}
 
 		fn dispatch_benchmark(
-			config: benchmarking::BenchmarkConfig
-		) -> Result<Vec<benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+			config: frame_benchmarking::BenchmarkConfig
+		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
+			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
 			use system_benchmarking::Pallet as SystemBench;
 			impl system_benchmarking::Config for Runtime {}
@@ -1113,23 +1187,7 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, balances, Balances);
-			add_benchmark!(params, batches, timestamp, Timestamp);
-			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
-			add_benchmark!(params, batches, collator_selection, CollatorSelection);
-			add_benchmark!(params, batches, indices, Indices);
-			add_benchmark!(params, batches, membership, CouncilMembership);
-			add_benchmark!(params, batches, treasury, Treasury);
-			add_benchmark!(params, batches, scheduler, Scheduler);
-			add_benchmark!(params, batches, democracy, Democracy);
-			add_benchmark!(params, batches, collective, Council);
-			add_benchmark!(params, batches, utility, Utility);
-			add_benchmark!(params, batches, identity, Identity);
-			add_benchmark!(params, batches, multisig, Multisig);
-			add_benchmark!(params, batches, vault, Vault);
-			add_benchmark!(params, batches, oracle, Oracle);
-			add_benchmark!(params, batches, crowdloan_rewards, CrowdloanRewards);
+			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

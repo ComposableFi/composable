@@ -34,14 +34,14 @@ benchmarks! {
 		let asset_id: T::AssetId = ASSET_ID.into();
 		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
 		let amount: T::Balance = TRANSFER_AMOUNT.into();
-		T::MultiCurrency::mint_into(asset_id, &caller, amount).unwrap();
+		T::MultiCurrency::mint_into(asset_id, &caller, amount).expect("always can mint in test");
 	}: _(RawOrigin::Signed(caller), asset_id, dest, amount, true)
 
 	transfer_native {
 		let caller: T::AccountId = whitelisted_caller();
 		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
 		let amount: T::Balance = TRANSFER_AMOUNT.into();
-		T::NativeCurrency::mint_into(&caller, amount).unwrap();
+		T::NativeCurrency::mint_into(&caller, amount).expect("always can mint in test");
 	}: _(RawOrigin::Signed(caller), dest, amount, false)
 
 	force_transfer {
@@ -50,7 +50,7 @@ benchmarks! {
 		let from = T::Lookup::unlookup(FROM_ACCOUNT.into());
 		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
 		let amount: T::Balance = TRANSFER_AMOUNT.into();
-		T::MultiCurrency::mint_into(asset_id, &caller, amount).unwrap();
+		T::MultiCurrency::mint_into(asset_id, &caller, amount).expect("always can mint in test");
 	}: _(RawOrigin::Root, asset_id, from, dest, amount, false)
 
 	force_transfer_native {
@@ -58,7 +58,7 @@ benchmarks! {
 		let from = T::Lookup::unlookup(FROM_ACCOUNT.into());
 		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
 		let amount: T::Balance = TRANSFER_AMOUNT.into();
-		T::NativeCurrency::mint_into(&caller, amount).unwrap();
+		T::NativeCurrency::mint_into(&caller, amount).expect("always can mint in test");
 	}: _(RawOrigin::Root, from, dest, amount, false)
 
 	transfer_all {
@@ -66,14 +66,14 @@ benchmarks! {
 		let asset_id: T::AssetId = ASSET_ID.into();
 		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
 		let amount: T::Balance = TRANSFER_AMOUNT.into();
-		T::MultiCurrency::mint_into(asset_id, &caller, amount).unwrap();
+		T::MultiCurrency::mint_into(asset_id, &caller, amount).expect("always can mint in test");
 	}: _(RawOrigin::Signed(caller), asset_id, dest, false)
 
 	transfer_all_native {
 		let caller: T::AccountId = whitelisted_caller();
 		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
 		let amount: T::Balance = TRANSFER_AMOUNT.into();
-		T::NativeCurrency::mint_into(&caller, amount).unwrap();
+		T::NativeCurrency::mint_into(&caller, amount).expect("always can mint in test");
 	}: _(RawOrigin::Signed(caller), dest, false)
 
 	mint_initialize {
@@ -98,7 +98,7 @@ benchmarks! {
 		let asset_id: T::AssetId = ASSET_ID.into();
 		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
 		let amount: T::Balance = TRANSFER_AMOUNT.into();
-		T::MultiCurrency::mint_into(asset_id, &caller, amount).unwrap();
+		T::MultiCurrency::mint_into(asset_id, &caller, amount).expect("always can mint in test");
 	}: _(RawOrigin::Root, asset_id, dest, amount)
 
 }

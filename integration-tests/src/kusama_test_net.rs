@@ -1,6 +1,7 @@
 //! Setup of Picasso running as if it is on Kusama relay
 use common::AccountId;
 use cumulus_primitives_core::ParaId;
+use dali_runtime as picasso_runtime;
 use polkadot_primitives::v1::{BlockNumber, MAX_CODE_SIZE, MAX_POV_SIZE};
 use polkadot_runtime_parachains::configuration::HostConfiguration;
 use primitives::currency::CurrencyId;
@@ -25,8 +26,8 @@ decl_test_parachain! {
 // and then decide how to imitate hydra
 decl_test_parachain! {
 	pub struct Dali {
-		Runtime = picasso_runtime::Runtime,
-		Origin = picasso_runtime::Origin,
+		Runtime = dali_runtime::Runtime,
+		Origin = dali_runtime::Origin,
 		new_ext = picasso_ext(DALI_PARA_ID),
 	}
 }
@@ -127,7 +128,7 @@ pub const ALICE_PARACHAIN_KSM: u128 = 13 * 1_000_000_000_000;
 
 pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	let parachain_id = parachain_id.into();
-	use picasso_runtime::{Runtime, System};
+	use dali_runtime::{Runtime, System};
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 	balances::GenesisConfig::<Runtime> {
 		balances: vec![(AccountId::from(ALICE), ALICE_PARACHAIN_BALANCE)],

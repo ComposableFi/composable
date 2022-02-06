@@ -24,7 +24,7 @@ pub trait VestedTransfer {
 ///
 /// Benefits would be granted gradually, `per_period` amount every `period`
 /// of blocks after `start`.
-#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct VestingSchedule<BlockNumber, Balance: HasCompact> {
 	/// Vesting starting block
 	pub start: BlockNumber,

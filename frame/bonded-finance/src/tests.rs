@@ -401,8 +401,8 @@ proptest! {
 					  prop_assert_ok!(charlie_reward);
 					  let charlie_reward = charlie_reward.expect("impossible; qed;");
 
-						prop_assert_acceptable_computation_error!(bob_reward, half_reward);
-					  prop_assert_acceptable_computation_error!(charlie_reward, half_reward);
+					  prop_assert_acceptable_computation_error!(bob_reward, half_reward, 3);
+					  prop_assert_acceptable_computation_error!(charlie_reward, half_reward, 3);
 
 					  prop_assert!(Tokens::can_withdraw(offer.reward.asset, &BOB, bob_reward) == WithdrawConsequence::Frozen);
 					  prop_assert!(Tokens::can_withdraw(offer.reward.asset, &CHARLIE, charlie_reward) == WithdrawConsequence::Frozen);
