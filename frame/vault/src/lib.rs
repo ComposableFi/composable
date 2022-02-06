@@ -124,6 +124,7 @@ pub mod pallet {
 		type Balance: Default
 			+ Parameter
 			+ Codec
+			+ MaxEncodedLen
 			+ Copy
 			+ Ord
 			+ CheckedAdd
@@ -135,6 +136,7 @@ pub mod pallet {
 			+ Zero;
 		type CurrencyFactory: CurrencyFactory<Self::AssetId>;
 		type AssetId: FullCodec
+			+ MaxEncodedLen
 			+ Eq
 			+ PartialEq
 			+ Copy
@@ -151,6 +153,7 @@ pub mod pallet {
 			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
 		type VaultId: AddAssign
 			+ FullCodec
+			+ MaxEncodedLen
 			+ One
 			+ Eq
 			+ PartialEq
@@ -184,6 +187,7 @@ pub mod pallet {
 		type Balance: Default
 			+ Parameter
 			+ Codec
+			+ MaxEncodedLen
 			+ Copy
 			+ Ord
 			+ CheckedAdd
@@ -200,6 +204,7 @@ pub mod pallet {
 
 		/// The `AssetId` used by the pallet. Corresponds the the Ids used by the Currency pallet.
 		type AssetId: FullCodec
+			+ MaxEncodedLen
 			+ Eq
 			+ PartialEq
 			+ Copy
@@ -221,6 +226,7 @@ pub mod pallet {
 		/// Key type for the vaults. `VaultId` uniquely identifies a vault. The identifiers are
 		type VaultId: AddAssign
 			+ FullCodec
+			+ MaxEncodedLen
 			+ One
 			+ Eq
 			+ PartialEq
@@ -747,7 +753,7 @@ pub mod pallet {
 					manager: config.manager,
 					asset_id: config.asset_id,
 					deposit,
-					..Default::default()
+					capabilities: Default::default(),
 				};
 
 				Vaults::<T>::insert(id, vault_info.clone());

@@ -5,4 +5,7 @@
 
 # .github/ @haroldsphinx @seunlanlege
 docker/ @haroldsphinx @seunlanlege
+runtime/ @seunlanlege
+node/ @seunlanlege
+
 Makefile @haroldsphinx

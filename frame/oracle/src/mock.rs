@@ -1,6 +1,8 @@
 use crate as pallet_oracle;
 use crate::*;
-use frame_support::{ord_parameter_types, parameter_types, traits::Everything};
+use frame_support::{
+	ord_parameter_types, pallet_prelude::ConstU32, parameter_types, traits::Everything,
+};
 use frame_system as system;
 use frame_system::EnsureSignedBy;
 use sp_core::{sr25519::Signature, H256};
@@ -56,6 +58,7 @@ impl system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {
@@ -78,10 +81,10 @@ parameter_types! {
 	pub const StakeLock: u64 = 1;
 	pub const MinStake: u64 = 1;
 	pub const StalePrice: u64 = 2;
-	pub const SlashAmount: u64 = 5;
 	pub const MaxAnswerBound: u32 = 5;
 	pub const MaxAssetsCount: u32 = 2;
 	pub const MaxHistory: u32 = 3;
+	pub const MaxPrePrices: u32 = 12;
 }
 
 ord_parameter_types! {
@@ -128,11 +131,12 @@ impl pallet_oracle::Config for Test {
 	type StalePrice = StalePrice;
 	type MinStake = MinStake;
 	type AddOracle = EnsureSignedBy<RootAccount, sp_core::sr25519::Public>;
-	type SlashAmount = SlashAmount;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
 	type MaxHistory = MaxHistory;
+	type MaxPrePrices = MaxPrePrices;
 	type WeightInfo = ();
+	type LocalAssets = ();
 }
 
 // Build genesis storage according to the mock runtime.
@@ -140,7 +144,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	let genesis = pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
-			(Default::default(), 100),
+			(get_account_1(), 100),
 			(get_account_2(), 100),
 			(get_account_4(), 100),
 			(get_account_5(), 100),
@@ -148,6 +152,18 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	};
 	genesis.assimilate_storage(&mut t).unwrap();
 	t.into()
+}
+
+pub fn get_account_1() -> AccountId {
+	const PHRASE: &str =
+		"elite reward rabbit exotic course desk miracle involve old surface educate direct";
+	let keystore = KeyStore::new();
+	SyncCryptoStore::sr25519_generate_new(
+		&keystore,
+		crate::crypto::Public::ID,
+		Some(&format!("{}/hunter1", PHRASE)),
+	)
+	.unwrap()
 }
 
 pub fn get_account_2() -> AccountId {

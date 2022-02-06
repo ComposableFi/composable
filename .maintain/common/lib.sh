@@ -17,19 +17,8 @@ boldcat() {
 
 LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
 #LATEST_TAG_NAME=$(gh release list -L=5 | sed -n '5 p' | awk '{print $(NF-1)}')
-boldprint "LATEST_TAG_NAME=$LATEST_TAG_NAME"
+boldprint $LATEST_TAG_NAME
 git fetch origin tag "${LATEST_TAG_NAME}" --no-tags
-
-# We want to get the tag of the most reccent release.
-# Used by client/runtime_release.sh
-PREV_TAG_OR_COMMIT=$(gh release list -L=1 | sed -n '1 p' | awk '{print $(NF-1)}')
-# This is a special case where a draft release is already in progress.
-# which also means that this is either a runtime_release/client_release
-# workflow which runs on push. Lets diff with the last commit in the base branch then.
-if [[ $PREV_TAG_OR_COMMIT == *"untagged"* ]]; then
-    PREV_TAG_OR_COMMIT=$(git log -n 1 --skip 1 --pretty=format:"%H")
-    boldprint "PREV_TAG_OR_COMMIT=$PREV_TAG_OR_COMMIT"
-fi
 
 # Check for runtime changes between two commits. This is defined as any changes
 # to runtime/, frame/
@@ -37,7 +26,7 @@ has_runtime_changes() {
   from=$1
   to=$2
   echo "diffing $from & $to"
-  if git diff --name-only "${from}...${to}" |
+  if git diff --name-only "origin/${from}...origin/${to}" |
     grep -q -e '^frame/' -e "^runtime/$3/"; then
     return 0
 
@@ -62,9 +51,9 @@ has_client_changes() {
 # checks if the spec/impl version has increased
 check_runtime() {
   VERSIONS_FILE="$1"
-  add_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+  add_spec_version="$(git diff "${LATEST_TAG_NAME}" "origin/${GITHUB_BRANCH_NAME}" -- "${VERSIONS_FILE}" |
     sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
-  sub_spec_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+  sub_spec_version="$(git diff "${LATEST_TAG_NAME}" "origin/${GITHUB_BRANCH_NAME}" -- "${VERSIONS_FILE}" |
     sed -n -r "s/^\-[[:space:]]+spec_version: +([0-9]+),$/\1/p")"
   if [ "${add_spec_version}" != "${sub_spec_version}" ]; then
 
@@ -81,9 +70,9 @@ check_runtime() {
     # check for impl_version updates: if only the impl versions changed, we assume
     # there is no consensus-critical logic that has changed.
 
-    add_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+    add_impl_version="$(git diff "${LATEST_TAG_NAME}" "origin/${GITHUB_BRANCH_NAME}" -- "${VERSIONS_FILE}" |
       sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
-    sub_impl_version="$(git diff "${LATEST_TAG_NAME}" "${GITHUB_REF_NAME}" -- "${VERSIONS_FILE}" |
+    sub_impl_version="$(git diff "${LATEST_TAG_NAME}" "origin/${GITHUB_BRANCH_NAME}" -- "${VERSIONS_FILE}" |
       sed -n -r 's/^\-[[:space:]]+impl_version: +([0-9]+),$/\1/p')"
 
     # see if the impl version changed

@@ -1,0 +1,22 @@
+{
+  "diff": true,
+  "extension": ["js", "cjs", "mjs"],
+  "package": "./package.json",
+  "reporter": "mochawesome",
+  "reporterOptions": {
+    "reportFilename": "mochawesome-report",
+    "quiet": false,
+    "overwrite": true,
+    "html": true,
+    "json": true
+  },
+  "slow": 75,
+  "timeout": 2000,
+  "retries": 0,
+  "ui": "bdd",
+  "watch-files": ["src/**/*.js", "src/**/*.ts"],
+  "watch-ignore": ["lib/vendor"],
+  "require": "src/utils/testSetup.js",
+  "full-trace": true,
+  "parallel": false
+}

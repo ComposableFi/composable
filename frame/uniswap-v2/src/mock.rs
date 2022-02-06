@@ -22,6 +22,7 @@ use sp_runtime::{
 	Clone,
 	codec::Encode,
 	codec::Decode,
+	codec::MaxEncodedLen,
 	serde::Serialize,
 	serde::Deserialize,
 	TypeInfo,
@@ -135,6 +136,7 @@ impl system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
@@ -179,7 +181,7 @@ impl orml_tokens::Config for Test {
 
 parameter_types! {
 	pub Precision: FixedU128 = FixedU128::saturating_from_rational(1, 1_000_000_000);
-	pub TestPalletID : PalletId = PalletId(*b"curve_am");
+	pub TestPalletID : PalletId = PalletId(*b"const_am");
 }
 
 impl constant_product_amm::Config for Test {

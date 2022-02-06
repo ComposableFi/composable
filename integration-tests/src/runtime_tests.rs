@@ -13,7 +13,7 @@ fn channel_to_relay() {
 	env_logger_init();
 	KusamaNetwork::reset();
 	Picasso::execute_with(|| {
-		let status = <picasso_runtime::ParachainSystem as GetChannelInfo>::get_channel_status(
+		let status = <dali_runtime::ParachainSystem as GetChannelInfo>::get_channel_status(
 			ParaId::new(2090),
 		);
 		assert!(matches!(status, ChannelStatus::Closed));
@@ -26,7 +26,7 @@ fn channel_to_self() {
 	env_logger_init();
 	KusamaNetwork::reset();
 	Picasso::execute_with(|| {
-		let status = <picasso_runtime::ParachainSystem as GetChannelInfo>::get_channel_status(
+		let status = <dali_runtime::ParachainSystem as GetChannelInfo>::get_channel_status(
 			ParaId::new(PICASSO_PARA_ID),
 		);
 		assert!(matches!(status, ChannelStatus::Ready(_, _)));
@@ -39,7 +39,7 @@ fn channel_to_parachain() {
 	env_logger_init();
 	KusamaNetwork::reset();
 	Picasso::execute_with(|| {
-		let status = <picasso_runtime::ParachainSystem as GetChannelInfo>::get_channel_status(
+		let status = <dali_runtime::ParachainSystem as GetChannelInfo>::get_channel_status(
 			ParaId::new(DALI_PARA_ID),
 		);
 

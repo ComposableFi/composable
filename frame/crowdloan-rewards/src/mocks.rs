@@ -12,6 +12,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 	AccountId32, Perbill,
 };
+use sp_std::vec::Vec;
 use system::EnsureRoot;
 
 pub type RelayKey = ed25519::Pair;
@@ -38,6 +39,8 @@ pub const PROOF_PREFIX: &[u8] = b"picasso-";
 
 parameter_types! {
 	pub const BlockHashCount: u32 = 250;
+	pub const MaxConsumers: u32 = 10;
+	pub const MaxOverFlow: u32 = 10;
 }
 
 impl system::Config for Test {
@@ -64,6 +67,7 @@ impl system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
+	type MaxConsumers = (MaxConsumers, MaxOverFlow);
 }
 
 impl balances::Config for Test {
@@ -166,12 +170,11 @@ impl ClaimKey {
 	}
 }
 
-pub fn relay_proof(
-	relay_account: &RelayKey,
-	reward_account: AccountId,
-) -> Proof<RelayChainAccountId> {
-	let mut msg = PROOF_PREFIX.to_vec();
+fn relay_proof(relay_account: &RelayKey, reward_account: AccountId) -> Proof<RelayChainAccountId> {
+	let mut msg = b"<Bytes>".to_vec();
+	msg.append(&mut PROOF_PREFIX.to_vec());
 	msg.append(&mut reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()));
+	msg.append(&mut b"</Bytes>".to_vec());
 	Proof::RelayChain(relay_account.public().into(), relay_account.sign(&msg).into())
 }
 

@@ -3,8 +3,8 @@ use super::*;
 use crate::Pallet as Lending;
 use composable_traits::{
 	lending::{
-		math::{InterestRateModel, NormalizedCollateralFactor},
-		Lending as LendingTrait, MarketConfigInput,
+		math::{InterestRateModel, MoreThanOneFixedU128},
+		CreateInput, Lending as LendingTrait,
 	},
 	vault::Vault,
 };
@@ -45,11 +45,11 @@ fn create_market<T: Config>(
 	borrow_asset: u128,
 	collateral_asset: u128,
 ) -> (crate::MarketIndex, <T as Config>::VaultId) {
-	let market_config = MarketConfigInput {
+	let market_config = CreateInput {
 		liquidator: None,
 		manager,
 		reserved: Perquintill::from_percent(10),
-		collateral_factor: NormalizedCollateralFactor::saturating_from_rational(200, 100),
+		collateral_factor: MoreThanOneFixedU128::saturating_from_rational(200, 100),
 		under_collaterized_warn_percent: Percent::from_percent(10),
 	};
 	Lending::<T>::create(
@@ -67,7 +67,7 @@ benchmarks! {
 		let borrow_asset_id = <T as Config>::AssetId::from(BTC);
 		let collateral_asset_id = <T as Config>::AssetId::from(USDT);
 		let reserved_factor = Perquintill::from_percent(10);
-		let collateral_factor = NormalizedCollateralFactor::saturating_from_rational(200, 100);
+		let collateral_factor = MoreThanOneFixedU128::saturating_from_rational(200, 100);
 		let under_collaterized_warn_percent = Percent::from_percent(10);
 		let market_id = MarketIndex::new(1);
 		let vault_id = 1u64.into();
@@ -112,15 +112,15 @@ benchmarks! {
 
 	withdraw_collateral {
 		let caller: T::AccountId = whitelisted_caller();
-		let market: MarketIndex = MarketIndex::new(1u32);
-		let amount: T::Balance = 1_000_000u64.into();
+		let market: MarketIndex = MarketIndex::new(1_u32);
+		let amount: T::Balance = 1_000_000_u64.into();
 		set_prices::<T>();
 		let (market, _vault_id) = create_market::<T>(caller.clone(), BTC, USDT);
 		<T as pallet::Config>::Currency::mint_into(USDT.into(), &caller, amount).unwrap();
 		Lending::<T>::deposit_collateral_internal(&market, &caller, amount).unwrap();
 	}: _(RawOrigin::Signed(caller.clone()), market, amount)
 	verify {
-		assert_last_event::<T>(Event::CollateralWithdrawed {
+		assert_last_event::<T>(Event::CollateralWithdrawn {
 			sender: caller,
 			market_id: market,
 			amount
@@ -208,12 +208,12 @@ benchmarks! {
 
 	handle_withdrawable {
 		let caller: T::AccountId = whitelisted_caller();
-		let (borrow_asset_id, collateral_asset_id) = (1u32, 2u32);
+		let (borrow_asset_id, collateral_asset_id) = (1_u32, 2u32);
 		set_price::<T>(borrow_asset_id.into(), u64::from(borrow_asset_id) * 10);
 		set_price::<T>(collateral_asset_id.into(), u64::from(collateral_asset_id) * 10);
 		let (market_id, vault_id) = create_market::<T>(caller.clone(), borrow_asset_id.into(), collateral_asset_id.into());
 		let market_config = Markets::<T>::try_get(market_id).unwrap();
-		let balance = 0u32.into();
+		let balance = 0_u32.into();
 	}: {
 		Lending::<T>::handle_withdrawable(&market_config, &caller, balance).unwrap()
 	}

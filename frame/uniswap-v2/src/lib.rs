@@ -48,9 +48,8 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
-		defi::CurrencyPair,
+		defi::{CurrencyPair, LiftedFixedBalance},
 		dex::{ConstantProductPoolInfo, CurveAmm},
-		math::LiftedFixedBalance,
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -71,6 +70,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type AssetId: FullCodec
+			+ MaxEncodedLen
 			+ Eq
 			+ PartialEq
 			+ Copy
@@ -82,6 +82,7 @@ pub mod pallet {
 		type Balance: Default
 			+ Parameter
 			+ Codec
+			+ MaxEncodedLen
 			+ Copy
 			+ Ord
 			+ CheckedAdd
@@ -102,6 +103,7 @@ pub mod pallet {
 			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
 		type Precision: Get<FixedU128>;
 		type PoolId: FullCodec
+			+ MaxEncodedLen
 			+ Default
 			+ TypeInfo
 			+ Eq
@@ -112,7 +114,7 @@ pub mod pallet {
 			+ CheckedAdd
 			+ Zero
 			+ One;
-		type PoolTokenIndex: Copy + Debug + Eq + Into<u32>;
+		type PoolTokenIndex: Copy + Debug + Eq + Into<u32> + From<u8>;
 		type PalletId: Get<PalletId>;
 	}
 
@@ -298,6 +300,10 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type PoolId = T::PoolId;
 		type PoolTokenIndex = T::PoolTokenIndex;
+
+		fn pool_exists(pool_id: T::PoolId) -> bool {
+			Pools::<T>::contains_key(pool_id)
+		}
 
 		fn pool_count() -> T::PoolId {
 			PoolCount::<T>::get()
@@ -568,7 +574,7 @@ pub mod pallet {
 			j_token: T::PoolTokenIndex,
 			dx: Self::Balance,
 			min_dy: Self::Balance,
-		) -> Result<(), DispatchError> {
+		) -> Result<Self::Balance, DispatchError> {
 			let zero_b = Self::Balance::zero();
 			ensure!(dx >= zero_b, Error::<T>::AssetAmountMustBePositiveNumber);
 
@@ -642,7 +648,7 @@ pub mod pallet {
 				received_amount: dy,
 				fee: dy_fee,
 			});
-			Ok(())
+			Ok(dy)
 		}
 
 		fn withdraw_admin_fees(

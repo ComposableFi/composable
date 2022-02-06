@@ -125,6 +125,7 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 		vec![],
 		None,
 		None,
+		None,
 		Some(properties),
 		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: PARA_ID.into() },
 	)
@@ -167,6 +168,7 @@ pub fn dali_dev() -> dali::ChainSpec {
 		vec![],
 		None,
 		None,
+		None,
 		Some(properties),
 		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: PARA_ID.into() },
 	)
@@ -207,6 +209,7 @@ pub fn composable_dev() -> composable::ChainSpec {
 			)
 		},
 		vec![],
+		None,
 		None,
 		None,
 		Some(properties),
