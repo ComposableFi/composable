@@ -4,7 +4,7 @@ path = "src/main.rs"
 
 [package]
 name = "composable"
-version = '2.0.0'
+version = "1.0.9"
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
 edition = "2018"
