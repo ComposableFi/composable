@@ -52,6 +52,12 @@ jobs:
       #  run: |
       #    sudo su runner
 
+      - name: Check Permission
+        run: |
+            whoami
+            df -h
+            
+
       - uses: actions/setup-node@v2
         with:
           node-version: "16"
