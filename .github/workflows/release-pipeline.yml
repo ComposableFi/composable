@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - releases
+      - set-runner-permission 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 jobs:
@@ -51,6 +52,7 @@ jobs:
         continue-on-error: true
         run: |
           sudo chown -R runner:runner /usr/bin/node
+          node --version 
 
       - uses: actions/setup-node@v2
         with:
