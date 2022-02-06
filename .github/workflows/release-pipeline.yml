@@ -52,14 +52,9 @@ jobs:
        run: |
          sudo chown -R runner:runner /usr/bin/node
 
-      #- name: Check Permission
-      #  run: |
-      #      whoami
-      #      df -h
-
       - uses: actions/setup-node@v2
-       with:
-         onode-version: "16"
+        with:
+         node-version: "16"
 
       - name: Add runtime metadata to release body
         run: |
