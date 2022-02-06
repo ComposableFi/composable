@@ -51,6 +51,12 @@ dev:
 .PHONY: version
 version:
 	@if [ ${RELEASE_VERSION} ]; then \
+	sed -i "s|^version =.*|version = '"${RELEASE_VERSION}"'|" node/Cargo.toml; \
+	fi;
+
+.PHONY: docker-version
+docker-version:
+	@if [ ${RELEASE_VERSION} ]; then \
 	sed -i "s|^version =.*|version = '"${CARGO_VERSION}"'|" node/Cargo.toml; \
 	fi;
 
