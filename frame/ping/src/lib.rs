@@ -47,6 +47,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	/// The module configuration trait.
@@ -62,13 +63,23 @@ pub mod pallet {
 		type Call: From<Call<Self>> + Encode;
 
 		type XcmSender: SendXcm;
+
+		#[pallet::constant]
+		type MaxTargets: Get<u32>;
+
+		#[pallet::constant]
+		type MaxPayload: Get<u32>;
 	}
 
 	/// The target parachains to ping.
 	#[pallet::storage]
-	// Targets is an empty Vec by default, which causes the pallet not to ping any targets.
+	// Targets is an empty BoundedVec by default, which causes the pallet not to ping any targets.
 	#[allow(clippy::disallowed_type)]
-	pub(super) type Targets<T: Config> = StorageValue<_, Vec<(ParaId, Vec<u8>)>, ValueQuery>;
+	pub(super) type Targets<T: Config> = StorageValue<
+		_,
+		BoundedVec<(ParaId, BoundedVec<u8, T::MaxPayload>), T::MaxTargets>,
+		ValueQuery,
+	>;
 
 	/// The total number of pings sent.
 	#[pallet::storage]
@@ -94,7 +105,9 @@ pub mod pallet {
 	}
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		MaxPayload,
+	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -111,7 +124,7 @@ pub mod pallet {
 						require_weight_at_most: 1_000,
 						call: <T as Config>::Call::from(Call::<T>::ping {
 							seq,
-							payload: payload.clone(),
+							payload: payload.to_vec(),
 						})
 						.encode()
 						.into(),
@@ -119,10 +132,15 @@ pub mod pallet {
 				) {
 					Ok(()) => {
 						Pings::<T>::insert(seq, n);
-						Self::deposit_event(Event::PingSent(para, seq, payload));
+						Self::deposit_event(Event::PingSent(para, seq, payload.to_vec()));
 					},
 					Err(e) => {
-						Self::deposit_event(Event::ErrorSendingPing(e, para, seq, payload));
+						Self::deposit_event(Event::ErrorSendingPing(
+							e,
+							para,
+							seq,
+							payload.to_vec(),
+						));
 					},
 				}
 			}
@@ -134,7 +152,12 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn start(origin: OriginFor<T>, para: ParaId, payload: Vec<u8>) -> DispatchResult {
 			ensure_root(origin)?;
-			Targets::<T>::mutate(|t| t.push((para, payload)));
+			let payload = payload.try_into().map_err(|_| Error::<T>::MaxPayload)?;
+			Targets::<T>::mutate(|t| -> DispatchResult {
+				t.try_push((para, payload)).map_err(|_| Error::<T>::MaxPayload)?;
+				Ok(())
+			})?;
+
 			Ok(())
 		}
 
@@ -146,8 +169,12 @@ pub mod pallet {
 			payload: Vec<u8>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
+			let payload = BoundedVec::try_from(payload).map_err(|_| Error::<T>::MaxPayload)?;
 			for _ in 0..count {
-				Targets::<T>::mutate(|t| t.push((para, payload.clone())));
+				Targets::<T>::try_mutate(|t| -> DispatchResult {
+					t.try_push((para, payload.clone())).map_err(|_| Error::<T>::MaxPayload)?;
+					Ok(())
+				})?;
 			}
 			Ok(())
 		}

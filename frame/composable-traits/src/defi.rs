@@ -1,5 +1,5 @@
 //! Common codes and conventions for DeFi pallets
-use codec::{Codec, Decode, Encode, FullCodec};
+use codec::{Codec, Decode, Encode, FullCodec, MaxEncodedLen};
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use scale_info::TypeInfo;
 use sp_runtime::{
@@ -10,7 +10,7 @@ use sp_runtime::{
 
 use crate::currency::{AssetIdLike, BalanceLike, MathBalance};
 
-#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
 pub struct Take<Balance> {
 	/// amount of `base`
 	pub amount: Balance,
@@ -41,7 +41,7 @@ impl<Balance: MathBalance> Take<Balance> {
 }
 
 /// take `quote` currency and give `base` currency
-#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
 pub struct Sell<AssetId, Balance> {
 	pub pair: CurrencyPair<AssetId>,
 	pub take: Take<Balance>,
@@ -71,7 +71,7 @@ impl<AssetId: PartialEq, Balance: MathBalance> Sell<AssetId, Balance> {
 /// Example, can do - give `base`, how much `quote` needed for unit.
 /// Can be local `Copy` `AssetId` or remote XCM asset id pair.
 #[repr(C)]
-#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
 pub struct CurrencyPair<AssetId> {
 	/// See [Base Currency](https://www.investopedia.com/terms/b/basecurrency.asp).
 	/// Also can be named `native`(to the market) currency.
@@ -157,11 +157,20 @@ impl<AssetId: Default, Balance: Default> Default for Sell<AssetId, Balance> {
 
 /// order is something that lives some some time until taken
 pub trait OrderIdLike:
-	FullCodec + Copy + Eq + PartialEq + sp_std::fmt::Debug + TypeInfo + sp_std::hash::Hash + Default
+	FullCodec
+	+ MaxEncodedLen
+	+ Copy
+	+ Eq
+	+ PartialEq
+	+ sp_std::fmt::Debug
+	+ TypeInfo
+	+ sp_std::hash::Hash
+	+ Default
 {
 }
 impl<
 		T: FullCodec
+			+ MaxEncodedLen
 			+ Copy
 			+ Eq
 			+ PartialEq

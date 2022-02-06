@@ -66,7 +66,6 @@ pub mod pallet {
 	use codec::Codec;
 	use frame_support::{pallet_prelude::*, traits::fungible::Mutate, transactional};
 	use frame_system::pallet_prelude::*;
-	use scale_info::TypeInfo;
 	use sp_io::hashing::keccak_256;
 	use sp_runtime::{
 		traits::{
@@ -79,14 +78,7 @@ pub mod pallet {
 
 	use crate::weights::WeightInfo;
 
-	use super::models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount};
-
-	#[derive(Encode, Decode, PartialEq, Copy, Clone, MaxEncodedLen, TypeInfo)]
-	pub struct Reward<Balance, BlockNumber> {
-		pub(crate) total: Balance,
-		pub(crate) claimed: Balance,
-		pub(crate) vesting_period: BlockNumber,
-	}
+	use super::models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount, Reward};
 
 	pub type RemoteAccountOf<T> = RemoteAccount<<T as Config>::RelayChainAccountId>;
 	pub type RewardOf<T> = Reward<<T as Config>::Balance, <T as frame_system::Config>::BlockNumber>;
@@ -135,6 +127,7 @@ pub mod pallet {
 			+ CheckedMul
 			+ AtLeast32BitUnsigned
 			+ MaybeSerializeDeserialize
+			+ MaxEncodedLen
 			+ Zero;
 
 		/// The currency used to mint the rewards
@@ -147,7 +140,11 @@ pub mod pallet {
 		type Convert: Convert<Self::BlockNumber, Self::Balance>;
 
 		/// The relay chain account id.
-		type RelayChainAccountId: Parameter + MaybeSerializeDeserialize + Into<AccountId32> + Ord;
+		type RelayChainAccountId: Parameter
+			+ MaybeSerializeDeserialize
+			+ MaxEncodedLen
+			+ Into<AccountId32>
+			+ Ord;
 
 		/// The upfront liquidity unlocked at first claim.
 		#[pallet::constant]

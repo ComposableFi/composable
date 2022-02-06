@@ -4,7 +4,17 @@ use scale_info::TypeInfo;
 use sp_runtime::{ArithmeticError, DispatchError};
 
 #[derive(
-	PartialOrd, Ord, PartialEq, Eq, Debug, Copy, Clone, codec::Encode, codec::Decode, TypeInfo,
+	PartialOrd,
+	Ord,
+	PartialEq,
+	Eq,
+	Debug,
+	Copy,
+	Clone,
+	codec::Encode,
+	codec::Decode,
+	codec::MaxEncodedLen,
+	TypeInfo,
 )]
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 #[allow(clippy::upper_case_acronyms)] // Currencies should be in CONSTANT_CASE

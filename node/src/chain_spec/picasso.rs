@@ -33,7 +33,7 @@ pub fn genesis_config(
 		aura: Default::default(),
 		sudo: picasso_runtime::SudoConfig {
 			// Assign network admin rights.
-			key: root,
+			key: Some(root),
 		},
 		indices: picasso_runtime::IndicesConfig { indices: vec![] },
 		parachain_info: picasso_runtime::ParachainInfoConfig { parachain_id: id },

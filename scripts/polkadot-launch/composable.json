@@ -50,7 +50,6 @@
   "parachains": [
     {
       "bin": "../../target/release/composable",
-      "balance": "1000000000000000000000",
       "chain": "dali-dev",
       "nodes": [
         {

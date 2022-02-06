@@ -2,7 +2,14 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{MultiSignature, RuntimeDebug};
 
-#[derive(Clone, RuntimeDebug, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo, MaxEncodedLen)]
+pub struct Reward<Balance, BlockNumber> {
+	pub(crate) total: Balance,
+	pub(crate) claimed: Balance,
+	pub(crate) vesting_period: BlockNumber,
+}
+
+#[derive(Clone, RuntimeDebug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum Proof<AccountId> {
 	RelayChain(AccountId, MultiSignature),
 	Ethereum(EcdsaSignature),
@@ -55,7 +62,7 @@ impl<'de> frame_support::Deserialize<'de> for EthereumAddress {
 	}
 }
 
-#[derive(Encode, Decode, Clone, TypeInfo)]
+#[derive(Encode, Decode, Clone, MaxEncodedLen, TypeInfo)]
 pub struct EcdsaSignature(pub [u8; 65]);
 
 impl PartialEq for EcdsaSignature {

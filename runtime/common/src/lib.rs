@@ -68,8 +68,11 @@ mod types {
 /// Common constants of statemint and statemine
 mod constants {
 	use super::types::{AccountId, BlockNumber, CouncilInstance};
-	use frame_support::weights::{constants::WEIGHT_PER_SECOND, Weight};
-	use frame_system::{EnsureOneOf, EnsureRoot};
+	use frame_support::{
+		traits::EnsureOneOf,
+		weights::{constants::WEIGHT_PER_SECOND, Weight},
+	};
+	use frame_system::EnsureRoot;
 	use sp_core::u32_trait::{_1, _2};
 	use sp_runtime::Perbill;
 
@@ -100,7 +103,6 @@ mod constants {
 
 	/// Origin for either root or half of general council
 	pub type EnsureRootOrHalfCouncil = EnsureOneOf<
-		AccountId,
 		EnsureRoot<AccountId>,
 		collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilInstance>,
 	>;

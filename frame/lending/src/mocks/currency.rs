@@ -12,6 +12,7 @@ use sp_runtime::{ArithmeticError, DispatchError};
 	Clone,
 	codec::Encode,
 	codec::Decode,
+	codec::MaxEncodedLen,
 	serde::Serialize,
 	serde::Deserialize,
 	TypeInfo,

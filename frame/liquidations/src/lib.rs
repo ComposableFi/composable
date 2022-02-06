@@ -39,7 +39,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use codec::{Decode, Encode, FullCodec};
+	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, Sell, SellEngine},
 		liquidation::Liquidation,
@@ -74,16 +74,21 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 		>;
 
-		type LiquidationStrategyId: Default + FullCodec + WrappingNext + Parameter + Copy;
+		type LiquidationStrategyId: Default
+			+ FullCodec
+			+ MaxEncodedLen
+			+ WrappingNext
+			+ Parameter
+			+ Copy;
 
-		type OrderId: Default + FullCodec + sp_std::fmt::Debug;
+		type OrderId: Default + FullCodec + MaxEncodedLen + sp_std::fmt::Debug;
 
 		type PalletId: Get<PalletId>;
 
 		// /// when called, engine pops latest order to liquidate and pushes back result
 		// type Liquidate: Parameter + Dispatchable<Origin = Self::Origin> + From<Call<Self>>;
 		type WeightInfo: WeightInfo;
-		type ParachainId: FullCodec + Default + Parameter + Clone;
+		type ParachainId: FullCodec + MaxEncodedLen + Default + Parameter + Clone;
 	}
 
 	#[pallet::event]
@@ -155,7 +160,7 @@ pub mod pallet {
 		}
 	}
 
-	#[derive(Clone, Debug, PartialEq, Encode, Decode, TypeInfo)]
+	#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 	pub enum LiquidationStrategyConfiguration<ParachainId> {
 		DutchAuction(TimeReleaseFunction),
 		UniswapV2 { slippage: Perquintill },

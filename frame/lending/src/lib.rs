@@ -170,7 +170,7 @@ pub mod pallet {
 			AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
 			Balance = <Self as DeFiComposableConfig>::Balance,
 		>;
-		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
+		type VaultId: Clone + Codec + MaxEncodedLen + Debug + PartialEq + Default + Parameter;
 		type Vault: StrategicVault<
 			VaultId = Self::VaultId,
 			AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
@@ -249,6 +249,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]

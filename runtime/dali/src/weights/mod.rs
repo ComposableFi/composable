@@ -11,7 +11,7 @@ pub mod indices;
 pub mod membership;
 pub mod multisig;
 pub mod oracle;
-pub mod scheduler;
+// pub mod scheduler;
 pub mod session;
 pub mod timestamp;
 pub mod tokens;

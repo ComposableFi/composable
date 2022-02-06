@@ -11,39 +11,20 @@ chains=(
 steps=50
 repeat=20
 
-pallets=(
-	oracle
-	frame_system
-	timestamp
-	session
-	balances
-	indices
-	membership
-	treasury
-	scheduler
-	collective
-	democracy
-	collator_selection
-	utility
-	lending
-	dutch_auction
-)
 
 # shellcheck disable=SC2068
 for i in ${chains[@]}; do
   while IFS=',' read -r output chain; do
     # shellcheck disable=SC2068
-    for p in ${pallets[@]}; do
 	    ./target/release/composable benchmark \
 		    --chain="$chain" \
 		    --execution=wasm \
 		    --wasm-execution=compiled \
-		    --pallet="$p"  \
+		    --pallet="*"  \
 		    --extrinsic='*' \
 		    --steps=$steps  \
 		    --repeat=$repeat \
 		    --raw  \
 		    --output="$output"
-    done
   done <<< "$i"
 done
