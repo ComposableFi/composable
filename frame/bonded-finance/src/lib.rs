@@ -218,6 +218,8 @@ pub mod pallet {
 		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must have the
 		/// appropriate funds.
+		/// Allow the issuer to ask for his account to be kept alive using the `keep_alive`
+		/// parameter.
 		///
 		/// Emits a `NewOffer`.
 		#[pallet::weight(T::WeightInfo::offer())]
@@ -239,6 +241,9 @@ pub mod pallet {
 		/// The dispatch origin for this call must be _Signed_ and the sender must have the
 		/// appropriate funds.
 		///
+		/// Allow the bonder to ask for his account to be kept alive using the `keep_alive`
+		/// parameter.
+		///
 		/// Emits a `NewBond`.
 		/// Possibily Emits a `OfferCompleted`.
 		#[pallet::weight(T::WeightInfo::bond())]
@@ -258,7 +263,7 @@ pub mod pallet {
 		/// The dispatch origin for this call must be _Signed_ and the sender must be `AdminOrigin`
 		///
 		/// Emits a `OfferCancelled`.
-		#[pallet::weight(T::WeightInfo::cancel())] // TODO: add weights
+		#[pallet::weight(T::WeightInfo::cancel())]
 		#[transactional]
 		pub fn cancel(origin: OriginFor<T>, offer_id: T::BondOfferId) -> DispatchResult {
 			let (issuer, offer) = Self::get_offer(offer_id)?;
