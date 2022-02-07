@@ -42,8 +42,8 @@ jobs:
         run: |
           SKIP_WASM_BUILD=1 cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
 
-  substrate-test-coverage:
-    name: Unit Tests (With Coverage)
+  substrate-code-coverage:
+    name: Code Coverage
     runs-on:
       - self-hosted
       - linux
@@ -63,19 +63,15 @@ jobs:
         run: |
          /home/runner/.cargo/bin/rustup show
       - uses: actions/checkout@v2
-      - name: Run Test (with coverage)
+      - name: Run Tarpaulin
         run: |
-          # integration tests can't be compiled with --feature=runtime-benchmarks
-          # TODO: https://github.com/ComposableFi/composable/issues/535
-          /home/runner/.cargo/bin/cargo install -f cargo-llvm-cov
-          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly-2021-11-08
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-08 llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
+          /home/runner/.cargo/bin/cargo install cargo-tarpaulin
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo tarpaulin --verbose --features=runtime-benchmarks --workspace --locked --out Xml
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: lcov.info
-          fail_ci_if_error: false
+          fail_ci_if_error: true
   
   substrate-tests:
     name: Unit Tests 
