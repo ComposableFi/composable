@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - releases
+      - create-clean-release
 jobs:
   build-and-publish:
     runs-on:
