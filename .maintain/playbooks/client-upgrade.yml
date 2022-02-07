@@ -9,8 +9,8 @@
 
     - name: Download composable binary {{ release_version }}
       become: yes
-      get_url:
-        url: https://storage.googleapis.com/composable-binaries/community-releases/{{ release_version }}/composable-{{ release_version }}.tar.gz
+      get_url: 
+        url: https://github.com/ComposableFi/composable/releases/download/{{ release_version }}/composable
         dest: ~/
         mode: "+x"
   
