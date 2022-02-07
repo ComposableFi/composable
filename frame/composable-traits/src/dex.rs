@@ -165,10 +165,22 @@ pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
 	) -> Result<(), DispatchError>;
 	/// If route exist return `Some(Vec<PoolId>)`, else `None`.
 	fn get_route(asset_pair: CurrencyPair<AssetId>) -> Option<Vec<DexRouteNode<PoolId>>>;
-	/// Exchange `dx` of given `asset_pair` to get `dy`.
+	/// Exchange `dx` of `base` asset of `asset_pair` with associated route.
 	fn exchange(
 		who: &AccountId,
 		asset_pair: CurrencyPair<AssetId>,
 		dx: Balance,
+	) -> Result<Balance, DispatchError>;
+	/// Sell `amount` of `base` asset of asset_pair with associated route.
+	fn sell(
+		who: &AccountId,
+		asset_pair: CurrencyPair<AssetId>,
+		amount: Balance,
+	) -> Result<Balance, DispatchError>;
+	/// Buy `amount` of `quote` asset of asset_pair with associated route.
+	fn buy(
+		who: &AccountId,
+		asset_pair: CurrencyPair<AssetId>,
+		amount: Balance,
 	) -> Result<Balance, DispatchError>;
 }
