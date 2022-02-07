@@ -23,46 +23,46 @@ pub trait WeightInfo {
 // For backwards compatibility and tests
 impl WeightInfo for () {
     fn set_relayer() -> Weight {
-        0 as Weight
+      10_000 as Weight
     }
 
     fn rotate_relayer() -> Weight {
-      0 as Weight
+      10_000 as Weight
     }
 
     fn set_network() -> Weight {
-      0 as Weight
+      10_000 as Weight
     }
 
     fn set_budget() -> Weight {
-      0 as Weight
+      10_000 as Weight
     }
 
     fn transfer_to() -> Weight {
-        0 as Weight
+      10_000 as Weight
     }
 
     fn accept_transfer() -> Weight {
-        0 as Weight
+      10_000 as Weight
     }
 
     fn claim_stale_to() -> Weight {
-        0 as Weight
+      10_000 as Weight
     }
 
     fn timelocked_mint() -> Weight {
-        0 as Weight
+      10_000 as Weight
     }
 
     fn set_timelock_duration() -> Weight {
-        0 as Weight
+      10_000 as Weight
     }
 
     fn rescind_timelocked_mint() -> Weight {
-        0 as Weight
+      10_000 as Weight
     }
 
     fn claim_to() -> Weight {
-        0 as Weight
+      10_000 as Weight
     }
 }
