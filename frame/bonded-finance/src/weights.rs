@@ -13,12 +13,12 @@ pub trait WeightInfo {
 
 impl WeightInfo for () {
 	fn offer() -> Weight {
-    0 as Weight
+    10_000 as Weight
 	}
 	fn bond() -> Weight {
-    0 as Weight
+    10_000 as Weight
 	}
 	fn cancel() -> Weight {
-    0 as Weight
+    10_000 as Weight
 	}
 }
