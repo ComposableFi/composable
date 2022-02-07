@@ -116,7 +116,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.release_drafter.outputs.upload_url }}
-          asset_path: ./
+          asset_path: ./composable-"${RELEASE_VERSION}".tar.gz
           asset_name: composable-"${RELEASE_VERSION}".tar.gz
           asset_content_type: application/octet-stream
 
