@@ -30,6 +30,7 @@ pub mod pallet {
 		},
 		FixedPointOperand,
 	};
+	use std::collections::VecDeque;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -268,6 +269,95 @@ pub mod pallet {
 				}
 			}
 			Ok(dy_t)
+		}
+
+		fn sell(
+			who: &T::AccountId,
+			asset_pair: CurrencyPair<T::AssetId>,
+			amount: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			Self::exchange(who, asset_pair, amount)
+		}
+
+		fn buy(
+			who: &T::AccountId,
+			asset_pair: CurrencyPair<T::AssetId>,
+			amount: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			let route = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
+			let mut stack: VecDeque<T::Balance> = VecDeque::new();
+			stack.reserve(route.len());
+			let mut dy_t = amount;
+			let mut dx_t;
+			for route_node in route.iter().rev() {
+				match route_node {
+					DexRouteNode::Curve(pool_id) => {
+						let currency_pair = T::StableSwapDex::currency_pair(*pool_id)?;
+						dx_t = T::StableSwapDex::get_exchange_value(
+							*pool_id,
+							currency_pair.quote,
+							dy_t,
+						)
+						.map_err(|_| Error::<T>::ExchangeError)?;
+						stack.push_front(dx_t);
+						dy_t = dx_t;
+					},
+					DexRouteNode::Uniswap(pool_id) => {
+						let currency_pair = T::ConstantProductDex::currency_pair(*pool_id)?;
+						dx_t = T::ConstantProductDex::get_exchange_value(
+							*pool_id,
+							currency_pair.quote,
+							dy_t,
+						)
+						.map_err(|_| Error::<T>::ExchangeError)?;
+						stack.push_front(dx_t);
+						dy_t = dx_t;
+					},
+				}
+			}
+			sp_std::if_std! {
+				println!("stack {:?}", stack);
+			}
+			for route_node in route {
+				match route_node {
+					DexRouteNode::Curve(pool_id) => {
+						let currency_pair = T::StableSwapDex::currency_pair(pool_id)?;
+						let dx_t = stack
+							.pop_front()
+							.expect("impossible as stack has same length as route");
+						let _res = T::StableSwapDex::exchange(
+							who,
+							pool_id,
+							currency_pair.base,
+							dx_t,
+							T::Balance::zero(),
+						)
+						.map_err(|_| Error::<T>::ExchangeError)?;
+						sp_std::if_std! {
+							println!("dx_t {:?}, res {:?}", dx_t, _res);
+						}
+					},
+					DexRouteNode::Uniswap(pool_id) => {
+						let currency_pair = T::ConstantProductDex::currency_pair(pool_id)?;
+						let dx_t = stack
+							.pop_front()
+							.expect("impossible as stack has same length as route");
+						let _res = T::ConstantProductDex::exchange(
+							who,
+							pool_id,
+							currency_pair.base,
+							dx_t,
+							T::Balance::zero(),
+						)
+						.map_err(|_| Error::<T>::ExchangeError)?;
+						sp_std::if_std! {
+							println!("dx_t {:?}, res {:?}", dx_t, _res);
+						}
+					},
+				}
+			}
+			// TODO
+			Ok(T::Balance::zero())
 		}
 	}
 }

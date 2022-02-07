@@ -166,3 +166,25 @@ fn exchange_tests() {
 		assert!(2995 < dy);
 	});
 }
+
+#[test]
+fn buy_test() {
+	new_test_ext().execute_with(|| {
+		let currency_pair = CurrencyPair { base: MockCurrencyId::ETH, quote: MockCurrencyId::USDT };
+		let dex_route = vec![
+			DexRouteNode::Uniswap(create_eth_usdc_pool()),
+			DexRouteNode::Curve(create_usdc_usdt_pool()),
+		];
+		assert_ok!(DexRouter::update_route(
+			&ALICE,
+			currency_pair,
+			Some(dex_route.try_into().unwrap())
+		));
+		assert_ok!(Tokens::mint_into(MockCurrencyId::ETH, &CHARLIE, 10u128));
+		let dy = DexRouter::buy(&CHARLIE, currency_pair, 3100u128);
+		assert_ok!(dy);
+		let dy = dy.unwrap();
+		assert!(3000 >= dy);
+		assert!(2995 < dy);
+	});
+}

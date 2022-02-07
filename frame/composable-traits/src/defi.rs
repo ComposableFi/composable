@@ -249,7 +249,6 @@ pub type Ratio = FixedU128;
 
 #[cfg(test)]
 mod tests {
-
 	use super::{Ratio, Take};
 	use sp_runtime::FixedPointNumber;
 
