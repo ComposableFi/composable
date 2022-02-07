@@ -175,7 +175,10 @@ std = [
     "assets-registry/std",
     "assets/std",
     "governance-registry/std",
-    "preimage/std"
+    "preimage/std",
+    "membership/std",
+	"system-rpc-runtime-api/std",
+	"transaction-payment-rpc-runtime-api/std",
 ]
 runtime-benchmarks = [
     "assets/runtime-benchmarks",
