@@ -12,7 +12,6 @@ use sp_runtime::{
 };
 use system::EnsureRoot;
 
-
 pub type CurrencyId = u128;
 
 pub const USDT: CurrencyId = 2;

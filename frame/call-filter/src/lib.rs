@@ -103,7 +103,7 @@ pub mod pallet {
 			ensure!(entry.valid(), Error::<T>::InvalidString);
 			// We are not allowed to disable this pallet.
 			ensure!(
-				&entry.pallet_name.to_vec() != <Self as PalletInfoAccess>::name().as_bytes(),
+				entry.pallet_name.to_vec() != <Self as PalletInfoAccess>::name().as_bytes(),
 				Error::<T>::CannotDisable
 			);
 			Self::do_disable(&entry)?;
