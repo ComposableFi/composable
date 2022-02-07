@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - releases
+      - create-clean-release
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 jobs:
@@ -100,12 +101,20 @@ jobs:
         run: |
           .maintain/client_release.sh
 
+      - name: Build Client Release
+        run : |
+          make version
+          cargo build --release -p composable
+          tar -czvf composable-"${RELEASE_VERSION}".tar.gz target/release/composable
+
       - name: Upload Composable Node Binaries
         id: upload-composable-binary
-        if: env.client_release == 1
+        if: env.CLIENT_RELEASE == 1
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.release_drafter.outputs.upload_url }}
-          asset_path: ./target/release/composable
+          asset_path: ./composable-"${RELEASE_VERSION}".tar.gz
           asset_name: composable
           asset_content_type: application/octet-stream
+
+      
