@@ -109,15 +109,14 @@ jobs:
       - name: Build Client Release
         run : |
           cargo build --release -p composable
-          tar -czvf composable-"${RELEASE_VERSION}".tar.gz target/release/composable
 
       - name: Upload Composable Node Binaries
         id: upload-composable-binary
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.release_drafter.outputs.upload_url }}
-          asset_path: ./composable-"${RELEASE_VERSION}".tar.gz
-          asset_name: composable-"${RELEASE_VERSION}".tar.gz
+          asset_path: ./target/release/composable
+          asset_name: composable
           asset_content_type: application/octet-stream
 
 
