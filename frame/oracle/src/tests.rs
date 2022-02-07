@@ -23,6 +23,8 @@ use std::sync::Arc;
 use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
 use composable_support::validation::{Validate, Validated};
 use core::{fmt, marker::PhantomData};
+use proptest::prelude::*;
+
 #[test]
 fn add_asset_and_info() {
 	new_test_ext().execute_with(|| {
