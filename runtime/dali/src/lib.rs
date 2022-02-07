@@ -103,7 +103,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
 	spec_version: 1000,
-	impl_version: 3,
+	impl_version: 4,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
 	state_version: 0,
@@ -906,6 +906,7 @@ impl mosaic::Config for Runtime {
 	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
 	type NetworkId = u32;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
 }
 
 construct_runtime!(
@@ -1029,6 +1030,7 @@ mod benches {
 		[vault, Vault]
 		[oracle, Oracle]
 		[dutch_auction, DutchAuction]
+		[mosaic, Mosaic]
 	);
 }
 
