@@ -7673,6 +7673,7 @@ dependencies = [
 name = "pallet-uniswap-v2"
 version = "0.0.1"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -7687,6 +7688,7 @@ dependencies = [
  "pallet-vault",
  "parity-scale-codec",
  "plotters",
+ "proptest 1.0.0",
  "scale-info",
  "serde",
  "sp-arithmetic",

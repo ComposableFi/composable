@@ -85,6 +85,12 @@ pub struct CurrencyPair<AssetId> {
 	pub quote: AssetId,
 }
 
+impl<AssetId: Copy> CurrencyPair<AssetId> {
+	pub fn swap(&self) -> Self {
+		Self { base: self.quote, quote: self.quote }
+	}
+}
+
 impl<AssetId> From<(AssetId, AssetId)> for CurrencyPair<AssetId> {
 	fn from(other: (AssetId, AssetId)) -> Self {
 		Self { base: other.0, quote: other.1 }

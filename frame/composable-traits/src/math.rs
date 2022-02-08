@@ -1,7 +1,13 @@
 use sp_runtime::{
+	helpers_128bit::multiply_by_rational,
 	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero},
 	ArithmeticError,
 };
+
+/// Thin convenient wrapper to lift the Result in a Dispatch context.
+pub fn safe_multiply_by_rational(a: u128, b: u128, c: u128) -> Result<u128, ArithmeticError> {
+	multiply_by_rational(a, b, c).map_err(|_| ArithmeticError::Overflow)
+}
 
 /// little bit slower than maximizing performance by knowing constraints.
 /// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if
@@ -22,7 +28,7 @@ impl<T: CheckedAdd + CheckedMul + CheckedDiv + CheckedSub + Zero> SafeArithmetic
 	#[inline(always)]
 	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
 		if rhs.is_zero() {
-			return Err(ArithmeticError::DivisionByZero)
+			return Err(ArithmeticError::DivisionByZero);
 		}
 
 		self.checked_div(rhs).ok_or(ArithmeticError::Overflow)
