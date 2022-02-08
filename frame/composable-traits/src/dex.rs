@@ -15,18 +15,8 @@ pub trait CurveAmm {
 	type Balance;
 	/// The user account identifier type for the runtime
 	type AccountId;
-
 	/// Type that represents pool id
 	type PoolId;
-
-	/// Get currency_pair used in pool.
-	fn currency_pair(pool_id: Self::PoolId) -> Result<CurrencyPair<Self::AssetId>, DispatchError>;
-
-	/// Check pool with given id exists.
-	fn pool_exists(pool_id: Self::PoolId) -> bool;
-
-	/// Current number of pools (also ID for the next created pool)
-	fn pool_count() -> Self::PoolId;
 
 	/// Get pure exchange value for given units of given asset. (Note this does not include fees.)
 	fn get_exchange_value(
@@ -42,6 +32,7 @@ pub trait CurveAmm {
 		pool_id: Self::PoolId,
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
+		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
 	/// Sell given `amount` of given asset to the pool.
@@ -51,6 +42,7 @@ pub trait CurveAmm {
 		pool_id: Self::PoolId,
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
+		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
 	/// Deposit coins into the pool
@@ -61,6 +53,7 @@ pub trait CurveAmm {
 		pool_id: Self::PoolId,
 		amounts: Vec<Self::Balance>,
 		min_mint_amount: Self::Balance,
+		keep_alive: bool,
 	) -> Result<(), DispatchError>;
 
 	/// Withdraw coins from the pool.
@@ -70,28 +63,21 @@ pub trait CurveAmm {
 	fn remove_liquidity(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		amount: Self::Balance,
+		lp_amount: Self::Balance,
 		min_amounts: Vec<Self::Balance>,
 	) -> Result<(), DispatchError>;
 
-	/// Perform an exchange between two coins.
-	/// `asset_id` - id of asset being exchanged.
-	/// `dx` - amount of `i` being exchanged,
-	/// `min_dy` - minimum amount of `j` to receive.
+	/// Perform an exchange.
+	/// This operation is a buy order on the provided `pair`, effectively trading the quote asset against the base one.
+	/// The pair can be swapped to execute a sell order.
 	fn exchange(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		asset_id: Self::AssetId,
-		dx: Self::Balance,
-		min_dy: Self::Balance,
+		pair: CurrencyPair<Self::AssetId>,
+		amount: Self::Balance,
+		min_receive: Self::Balance,
+		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
-
-	/// Withdraw admin fees
-	fn withdraw_admin_fees(
-		who: &Self::AccountId,
-		pool_id: Self::PoolId,
-		admin_fee_account: &Self::AccountId,
-	) -> Result<(), DispatchError>;
 }
 
 /// Pool type
@@ -131,14 +117,18 @@ pub trait SimpleExchange {
 	) -> Result<Self::Balance, DispatchError>;
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, RuntimeDebug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, RuntimeDebug)]
 pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	/// Owner of pool
 	pub owner: AccountId,
+	/// Swappable assets
+	pub pair: CurrencyPair<AssetId>,
 	/// AssetId of LP token,
 	pub lp_token: AssetId,
 	/// Amount of the fee pool charges for the exchange
 	pub fee: Permill,
+	/// Amount of the fee pool charges for the exchange
+	pub owner_fee: Permill,
 }
 
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
