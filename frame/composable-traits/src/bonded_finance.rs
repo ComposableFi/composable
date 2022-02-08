@@ -1,7 +1,7 @@
+use composable_support::validation::{Valid, Validate};
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, ArithmeticError};
-use composable_support::{validation::{Validate, Valid} };
 
 use crate::math::SafeArithmetic;
 
@@ -64,7 +64,6 @@ pub struct BondOfferReward<AssetId, Balance, BlockNumber> {
 	pub maturity: BlockNumber,
 }
 
-  
 // #[cfg(test)]
 // mod test {
 // 	use super::*;
@@ -82,7 +81,7 @@ pub struct BondOfferReward<AssetId, Balance, BlockNumber> {
 
 // 	#[test]
 // 	fn test_validate_bond_offer() {
-// 		let invalid = BondOffer::<u64, u64, u64, u64> { 
+// 		let invalid = BondOffer::<u64, u64, u64, u64> {
 // 			beneficiary : 23_u64,
 // 			asset: 10_u64,
 // 			bond_price: 12_u64,
@@ -102,7 +101,7 @@ pub struct BondOfferReward<AssetId, Balance, BlockNumber> {
 // 		>>::validate(invalid)
 // 		.is_err());
 
-// 		let valid = BondOffer::<u64, u64, u64, u64> { 
+// 		let valid = BondOffer::<u64, u64, u64, u64> {
 // 			beneficiary : 23_u64,
 // 			asset: 10_u64,
 // 			bond_price: 12_u64,
@@ -116,8 +115,8 @@ pub struct BondOfferReward<AssetId, Balance, BlockNumber> {
 
 // 		};
 // 		assert_ok!(
-// 			<CheckValidBondOfferTag as Validate<BondOffer<u64, u64, u64, u64>, CheckValidBondOfferTag>>::validate(
-// 				valid
+// 			<CheckValidBondOfferTag as Validate<BondOffer<u64, u64, u64, u64>,
+// CheckValidBondOfferTag>>::validate( 				valid
 // 			)
 // 		);
 // 	}

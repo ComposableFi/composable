@@ -65,11 +65,12 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::validation::{ValidBondOffer, ValidBondOfferTrait};
 	use codec::FullCodec;
-	use crate::validation::{ValidBondOfferTrait, ValidBondOffer};
+	use composable_support::validation::{Validate, Validated};
 	use composable_traits::{
 		bonded_finance::{BondDuration, BondOffer, BondedFinance},
-		math::{WrappingNext,SafeArithmetic},
+		math::{SafeArithmetic, WrappingNext},
 		vesting::{VestedTransfer, VestingSchedule},
 	};
 	use frame_support::{
@@ -88,7 +89,6 @@ pub mod pallet {
 		ArithmeticError,
 	};
 	use sp_std::fmt::Debug;
-	use composable_support::{validation::{Validate, Validated}};
 
 	pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -435,12 +435,14 @@ pub mod pallet {
 		}
 	}
 
-	impl<T> ValidBondOfferTrait<BalanceOf<T>> for ValidBondOffer<T> where T: Config {
-
+	impl<T> ValidBondOfferTrait<BalanceOf<T>> for ValidBondOffer<T>
+	where
+		T: Config,
+	{
 		fn min_transfer() -> BalanceOf<T> {
 			T::MinReward::get()
 		}
-		fn min_reward() ->BalanceOf<T> {
+		fn min_reward() -> BalanceOf<T> {
 			<T::Vesting as VestedTransfer>::MinVestedTransfer::get()
 		}
 	}
