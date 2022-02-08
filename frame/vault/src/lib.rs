@@ -67,6 +67,7 @@ pub mod pallet {
 	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
+		currency::RangeId,
 		defi::Rate,
 		vault::{
 			CapabilityVault, Deposit, FundsAvailability, ReportableStrategicVault, Vault,
@@ -732,8 +733,10 @@ pub mod pallet {
 					Error::<T>::AllocationMustSumToOne
 				);
 
-				let lp_token_id =
-					{ T::CurrencyFactory::create().map_err(|_| Error::<T>::CannotCreateAsset)? };
+				let lp_token_id = {
+					T::CurrencyFactory::create(RangeId::LP_TOKENS)
+						.map_err(|_| Error::<T>::CannotCreateAsset)?
+				};
 
 				config.strategies.into_iter().for_each(|(account_id, allocation)| {
 					CapitalStructure::<T>::insert(

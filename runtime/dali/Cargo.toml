@@ -210,9 +210,10 @@ runtime-benchmarks = [
 	"democracy/runtime-benchmarks",
 	"utility/runtime-benchmarks",
 	"vault/runtime-benchmarks",
-  "vesting/runtime-benchmarks",
-  "assets/runtime-benchmarks",
+	"vesting/runtime-benchmarks",
+	"assets/runtime-benchmarks",
 	"bonded-finance/runtime-benchmarks",
 	"dutch-auction/runtime-benchmarks",
-  "mosaic/runtime-benchmarks"
+	"mosaic/runtime-benchmarks",
+	"currency-factory/runtime-benchmarks",
 ]

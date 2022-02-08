@@ -740,7 +740,7 @@ pub mod pallet {
 						// We expect that PoolInfos have sequential keys.
 						// No PoolInfo can have key greater or equal to PoolCount
 						ensure!(maybe_pool_info.is_none(), Error::<T>::InconsistentStorage);
-						let lp_asset = T::CurrencyFactory::create()?;
+						let lp_asset = T::CurrencyFactory::reserve_lp_token_id()?;
 
 						*maybe_pool_info = Some(ConstantProductPoolInfo {
 							owner: who.clone(),
