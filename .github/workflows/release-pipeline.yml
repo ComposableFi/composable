@@ -59,6 +59,13 @@ jobs:
         with:
          node-version: "16"
 
+      - name: Run Client Upgrade
+        run: |
+          make version
+          cargo build --release -p composable
+          tar -czvf composable-"${RELEASE_VERSION}".tar.gz target/release/composable
+          gsutil cp *.tar.gz gs://composable-binaries/community-releases/"${RELEASE_VERSION}"/
+
       - name: Add runtime metadata to release body
         run: |
           cd scripts/github && npm install
