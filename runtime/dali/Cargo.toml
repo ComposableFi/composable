@@ -60,6 +60,7 @@ crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 dutch-auction = { package = "pallet-dutch-auction", path = "../../frame/dutch-auction", default-features = false }
+liquidations = { package = "pallet-liquidations", path = "../../frame/liquidations", default-features = false }
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
@@ -174,12 +175,14 @@ std = [
 	"crowdloan-rewards/std",
 	"bonded-finance/std",
 	"dutch-auction/std",
+	"liquidations/std",
 	"vesting/std",
 	"mosaic/std",
 	"preimage/std",
 	"membership/std",
 	"system-rpc-runtime-api/std",
 	"transaction-payment-rpc-runtime-api/std",
+	"liquidations/std",
 ]
 runtime-benchmarks = [
 	"assets/runtime-benchmarks",
@@ -216,4 +219,5 @@ runtime-benchmarks = [
 	"dutch-auction/runtime-benchmarks",
 	"mosaic/runtime-benchmarks",
 	"currency-factory/runtime-benchmarks",
+	"liquidations/runtime-benchmarks",
 ]

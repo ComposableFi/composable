@@ -12,6 +12,7 @@ use frame_support::{
 	},
 };
 use orml_traits::MultiReservableCurrency;
+use proptest::prop_assert;
 use sp_runtime::{traits::AccountIdConversion, FixedPointNumber};
 
 fn fixed(n: u128) -> LiftedFixedBalance {
@@ -124,26 +125,25 @@ fn with_two_takes_higher_than_limit_and_not_enough_for_all() {
 
 #[test]
 fn liquidation() {
-	new_test_externalities().execute_with(|| {
-		Tokens::mint_into(BTC, &ALICE, 10).unwrap();
-		let seller = AccountId::from_raw(ALICE.0);
-		let sell = Sell::new(BTC, USDT, 1, fixed(1000));
-		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
-		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
-		let order_id = crate::OrdersIndex::<Runtime>::get();
-		let _balance_before = <Balances as fungible::Inspect<_>>::balance(&ALICE);
-		DutchAuction::liquidate(Origin::signed(seller), order_id).unwrap();
+	new_test_externalities()
+		.execute_with(|| {
+			Tokens::mint_into(BTC, &ALICE, 10).unwrap();
+			let seller = AccountId::from_raw(ALICE.0);
+			let sell = Sell::new(BTC, USDT, 1, fixed(1000));
+			let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
+			DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
+			let order_id = crate::OrdersIndex::<Runtime>::get();
+			let balance_before = <Balances as fungible::Inspect<_>>::balance(&ALICE);
+			DutchAuction::liquidate(Origin::signed(seller), order_id).unwrap();
 
-		// TODO: Fix the check below
-		// let balance_after = <Balances as fungible::Inspect<_>>::balance(&ALICE);
-		// assert!(
-		// 	balance_before - <() as crate::weights::WeightInfo>::liquidate() as u128 ==
-		// 		balance_after
-		// );
+			let balance_after = <Balances as fungible::Inspect<_>>::balance(&ALICE);
+			prop_assert!(balance_before < balance_after, "cleaning up is incetivised");
 
-		let not_found = crate::SellOrders::<Runtime>::get(order_id);
-		assert!(not_found.is_none());
-		let reserved = <Assets as MultiReservableCurrency<_>>::reserved_balance(BTC, &ALICE);
-		assert_eq!(reserved, 0);
-	});
+			let not_found = crate::SellOrders::<Runtime>::get(order_id);
+			assert!(not_found.is_none());
+			let reserved = <Assets as MultiReservableCurrency<_>>::reserved_balance(BTC, &ALICE);
+			assert_eq!(reserved, 0);
+			Ok(())
+		})
+		.unwrap();
 }
