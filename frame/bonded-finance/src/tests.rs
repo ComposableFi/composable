@@ -545,3 +545,69 @@ proptest! {
 			  })?;
 	  }
 }
+
+
+#[cfg(test)]
+mod test {
+	use super::*;
+	use codec::{Decode, Encode};
+	use frame_support::assert_ok;
+
+	use composable_traits::{
+		bonded_finance::{BondDuration, BondOffer},
+		math::{SafeArithmetic}
+	};	
+	use validation::{CheckValidBondOfferTag, ValidBondOffer, ValidBondOfferTrait};
+	use sp_runtime::{traits::Zero};
+	use composable_support::{validation::{Validate, Valid}};
+	use core::marker::PhantomData;
+
+	impl<Balance: From<u64>> ValidBondOfferTrait<Balance> for ValidBondOffer<u64> {
+		fn min_transfer() -> Balance {
+			Balance::from(10_u64)
+		}
+		fn min_reward() -> Balance {
+			Balance::from(20_u64)
+		}
+	}
+
+	#[test]
+	fn test_validate_bond_offer() {
+		let invalid = BondOffer::<u64, u64, u64, u64> { 
+			beneficiary : 23_u64,
+			asset: 10_u64,
+			bond_price: 12_u64,
+			nb_of_bonds: 30_u64,
+			maturity: BondDuration::Finite { return_in: 1 },
+			reward: BondOfferReward {
+				 asset: 2_u64,
+				 amount: 20,
+				 maturity: 45_u64
+			}
+
+		};
+
+		assert!(<CheckValidBondOfferTag<u64> as Validate<
+			BondOffer<u64, u64, u64, u64>,
+			CheckValidBondOfferTag<u64>,
+		>>::validate(invalid)
+		.is_err());
+
+		let valid = BondOffer::<u64, u64, u64, u64> { 
+			beneficiary : 23_u64,
+			asset: 10_u64,
+			bond_price: 12_u64,
+			nb_of_bonds: 30_u64,
+			maturity: BondDuration::Finite { return_in: 1 },
+			reward: BondOfferReward {
+				 asset: 2_u64,
+				 amount: 2000_u64,
+				 maturity: 45_u64
+			}
+
+		};
+
+		assert_ok!(<CheckValidBondOfferTag<u64> as Validate<BondOffer<u64, u64, u64, u64>, CheckValidBondOfferTag<u64>,
+			>>::validate(valid));
+	}
+}
