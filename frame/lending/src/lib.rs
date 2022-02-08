@@ -245,6 +245,8 @@ pub mod pallet {
 			+ NativeInspect<Self::AccountId, Balance = Self::Balance>;
 		/// Convert a weight value into a deductible fee based on the currency type.
 		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
+
+		type LiquidatorOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::pallet]
@@ -667,9 +669,9 @@ pub mod pallet {
 			market_id: MarketIndex,
 			borrowers: Vec<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
-			let sender = &(ensure_signed(origin)?);
-			// TODO: should this be restricted to certain users?
-			Self::liquidate_internal(Some(sender), &market_id, borrowers.clone())?;
+			let sender = ensure_signed(origin.clone())?;
+			T::LiquidatorOrigin::ensure_origin(origin)?;
+			Self::liquidate_internal(&sender, &market_id, borrowers.clone())?;
 			Self::deposit_event(Event::LiquidationInitiated { market_id, borrowers });
 			Ok(().into())
 		}
@@ -810,7 +812,7 @@ pub mod pallet {
 		/// if liquidation is required and `liquidate` is successful then return `Ok(true)`
 		/// if there is any error then propagate that error.
 		pub fn liquidate_internal(
-			liquidator: Option<&<Self as DeFiEngine>::AccountId>,
+			liquidator: &<Self as DeFiEngine>::AccountId,
 			market_id: &<Self as Lending>::MarketId,
 			borrowers: Vec<<Self as DeFiEngine>::AccountId>,
 		) -> Result<(), DispatchError> {
@@ -832,7 +834,6 @@ pub mod pallet {
 
 					if let Some(deposit) = BorrowRent::<T>::get(market_id, account) {
 						let market_account = Self::account_id(market_id);
-						let liquidator = liquidator.unwrap_or(account);
 						<T as Config>::NativeCurrency::transfer(
 							&market_account,
 							liquidator,
@@ -977,9 +978,8 @@ pub mod pallet {
 			market_id: &MarketIndex,
 			debt_owner: &T::AccountId,
 			amount_to_borrow: T::Balance,
+			debt_asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
 		) -> Result<FixedU128, DispatchError> {
-			let debt_asset_id = DebtMarkets::<T>::get(market_id);
-
 			let market_index =
 				BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist)?;
 
@@ -988,11 +988,20 @@ pub mod pallet {
 			let existing_borrow_amount =
 				<T as Config>::MultiCurrency::balance(debt_asset_id, debt_owner);
 
-			// TODO: split out math from update, make update last step
-			<T as Config>::MultiCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
-			// TODO: decide if need to split out dept tracking vs debt token
-			<T as Config>::MultiCurrency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
+			Self::calc_updated_account_interest_index(
+				market_index,
+				amount_to_borrow,
+				existing_borrow_amount,
+				account_interest_index,
+			)
+		}
 
+		fn calc_updated_account_interest_index(
+			market_index: ZeroToOneFixedU128,
+			amount_to_borrow: T::Balance,
+			existing_borrow_amount: T::Balance,
+			account_interest_index: ZeroToOneFixedU128,
+		) -> Result<FixedU128, DispatchError> {
 			let total_borrow_amount = existing_borrow_amount.safe_add(&amount_to_borrow)?;
 			let existing_borrow_share =
 				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
@@ -1233,9 +1242,16 @@ pub mod pallet {
 
 			Self::can_borrow(market_id, debt_owner, amount_to_borrow, market, &market_account)?;
 
-			let new_account_interest_index =
-				Self::updated_account_interest_index(market_id, debt_owner, amount_to_borrow)?;
+			let debt_asset_id = DebtMarkets::<T>::get(market_id);
+			let new_account_interest_index = Self::updated_account_interest_index(
+				market_id,
+				debt_owner,
+				amount_to_borrow,
+				debt_asset_id,
+			)?;
 
+			<T as Config>::MultiCurrency::mint_into(debt_asset_id, debt_owner, amount_to_borrow)?;
+			<T as Config>::MultiCurrency::hold(debt_asset_id, debt_owner, amount_to_borrow)?;
 			<T as Config>::MultiCurrency::transfer(
 				borrow_asset,
 				&market_account,
