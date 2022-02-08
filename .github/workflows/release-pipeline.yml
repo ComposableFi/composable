@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - releases
+      - create-clean-release
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 jobs:
@@ -116,3 +117,4 @@ jobs:
           asset_path: ./target/release/composable
           asset_name: composable
           asset_content_type: application/octet-stream
+          
