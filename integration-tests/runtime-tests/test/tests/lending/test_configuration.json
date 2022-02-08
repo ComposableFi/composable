@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "enabledTests": {
+    "runBeforeBaseSetup": true,
+    "runBeforeMintLendingAsset": true,
+    "runBeforeCreateAssetVault": false,
+    "runBeforeCreateOracle": true,
+    "runBeforeSetOracleSigner": true,
+    "runBeforeSubmitPriceOracle": true,
+    "canCreateLiquidationStrategy": {
+      "createLiquidationStrategyDutchAuctionLinearDecrease": true
+    },
+    "canCreateLendingMarket": {
+      "createMarketJumpInterestRateModel": true,
+      "createMarketCurveInterestRateModel": true
+    }
+  }
+}
