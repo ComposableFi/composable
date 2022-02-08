@@ -65,7 +65,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::validation::{ValidBondOffer, ValidBondOfferTrait};
+	use crate::validation::{ValidBondOffer, BondOfferComparer};
 	use codec::FullCodec;
 	use composable_support::validation::{Validate, Validated};
 	use composable_traits::{
@@ -435,7 +435,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T> ValidBondOfferTrait<BalanceOf<T>> for ValidBondOffer<T>
+	impl<T> BondOfferComparer<BalanceOf<T>> for ValidBondOffer<T>
 	where
 		T: Config,
 	{

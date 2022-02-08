@@ -13,7 +13,7 @@ pub struct ValidBondOffer<T> {
 	phantom: PhantomData<T>,
 }
 
-pub trait ValidBondOfferTrait<T> {
+pub trait BondOfferComparer<T> {
 	fn min_transfer() -> T;
 	fn min_reward() -> T;
 }
@@ -25,7 +25,7 @@ impl< AccountId,
 	> Validate<BondOffer<AccountId, AssetId, Balance, BlockNumber>, ValidBondOffer<u64>>
 	for ValidBondOffer<Balance>
 where
-	ValidBondOffer<Balance>: ValidBondOfferTrait<Balance>,
+	ValidBondOffer<Balance>: BondOfferComparer<Balance>,
 {
 	fn validate(
 		input: BondOffer<AccountId, AssetId, Balance, BlockNumber>,
