@@ -59,7 +59,6 @@ std = [
     "frame-support/std",
     "codec/std",
 	"composable-traits/std",
-    "orml-tokens/std",
 ]
 
 runtime-benchmarks = [

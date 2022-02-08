@@ -44,7 +44,6 @@ orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 hex-literal = {version = "0.3.3", default-features = false }
 composable-tests-helpers = {  path = "../composable-tests-helpers" }
 
-
 [features]
 default = ["std"]
 std = [
@@ -58,7 +57,6 @@ std = [
     "sp-arithmetic/std",
 	"composable-traits/std",
     "scale-info/std",
-    "orml-tokens/std",
 ]
 
 runtime-benchmarks = [
