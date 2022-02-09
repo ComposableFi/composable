@@ -29,7 +29,6 @@ has_runtime_changes() {
   if git diff --name-only "origin/${from}...origin/${to}" |
     grep -q -e '^frame/' -e "^runtime/$3/"; then
     return 0
-
   else
     return 1
   fi
