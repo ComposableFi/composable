@@ -19,11 +19,15 @@ jobs:
       run: |
         sudo chown -R $USER:$USER $GITHUB_WORKSPACE
         docker system prune --force --all --volumes
+    - uses: actions/setup-node@v2
+      with:
+        node-version: "16"
 
     - name: Get commits
       id: get_commit
       run: |
-        yarn get-commit-for-pr --repo=composableFi/composable --commit_sha=$GITHUB_SHA #on push only
+        cd scripts/github && npm install
+        npm run get-commit-for-pr --repo=composableFi/composable --commit_sha=$GITHUB_SHA
         echo ${{ steps.get_commit.outputs }} >> outputs.txt
         cat outputs.txt
 
