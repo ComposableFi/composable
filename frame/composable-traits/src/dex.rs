@@ -30,8 +30,7 @@ pub trait CurveAmm {
 	fn buy(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		asset_id: Self::AssetId,
-		amount: Self::Balance,
+		base_amount: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
@@ -40,8 +39,7 @@ pub trait CurveAmm {
 	fn sell(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		asset_id: Self::AssetId,
-		amount: Self::Balance,
+		quote_amount: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
@@ -51,7 +49,8 @@ pub trait CurveAmm {
 	fn add_liquidity(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		amounts: Vec<Self::Balance>,
+		base_amount: Self::Balance,
+		quote_amount: Self::Balance,
 		min_mint_amount: Self::Balance,
 		keep_alive: bool,
 	) -> Result<(), DispatchError>;
@@ -64,7 +63,8 @@ pub trait CurveAmm {
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
-		min_amounts: Vec<Self::Balance>,
+		min_base_amount: Self::Balance,
+		min_quote_amount: Self::Balance,
 	) -> Result<(), DispatchError>;
 
 	/// Perform an exchange.

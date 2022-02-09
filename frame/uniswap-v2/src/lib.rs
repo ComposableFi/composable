@@ -184,7 +184,7 @@ pub mod pallet {
 		},
 
 		/// Token exchange happened.
-		Swap {
+		Swapped {
 			/// Account id who exchanged token.
 			who: T::AccountId,
 			/// Pool id on which exchange done.
@@ -217,19 +217,26 @@ pub mod pallet {
 			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			let pair = if asset_id == pool.pair.quote { pool.pair } else { pool.pair.swap() };
-			let (base_amount, _, _, _) = Self::do_get_exchange_value(pool_id, pair, amount, false)?;
-			Ok(base_amount)
+			let pool_account = Self::account_id(&pool_id);
+			let pair = if asset_id == pool.pair.base {
+				pool.pair
+			} else {
+				pool.pair.swap()
+			};
+			let pool_base_aum = T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
+			let pool_quote_aum = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
+			let exchange_amount = safe_multiply_by_rational(pool_quote_aum, T::Convert::convert(amount), pool_base_aum)?;
+			Ok(T::Convert::convert(exchange_amount))
 		}
 
 		fn add_liquidity(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
-			amounts: Vec<Self::Balance>,
+			base_amount: Self::Balance,
+			quote_amount: Self::Balance,
 			min_mint_amount: Self::Balance,
 			keep_alive: bool,
 		) -> Result<(), DispatchError> {
-			let base_amount = *amounts.get(0).ok_or(Error::<T>::MissingAmount)?;
 			ensure!(base_amount > T::Balance::zero(), Error::<T>::InvalidAmount);
 
 			let pool = Self::get_pool(pool_id)?;
@@ -247,7 +254,6 @@ pub mod pallet {
 			let first_deposit = lp_issued.is_zero();
 			let (quote_amount, lp_to_mint) = if first_deposit {
 				let base_amount = T::Convert::convert(base_amount);
-				let quote_amount = *amounts.get(1).ok_or(Error::<T>::MissingAmount)?;
 				ensure!(quote_amount > T::Balance::zero(), Error::<T>::InvalidAmount);
 				let quote_amount = T::Convert::convert(quote_amount);
 				let lp_to_mint = base_amount
@@ -285,11 +291,10 @@ pub mod pallet {
 			who: &Self::AccountId,
 			pool_id: T::PoolId,
 			lp_amount: Self::Balance,
-			min_amounts: Vec<Self::Balance>,
+			min_base_amount: Self::Balance,
+			min_quote_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			let min_base_amount = *min_amounts.get(0).ok_or(Error::<T>::MissingAmount)?;
-			let min_quote_amount = *min_amounts.get(1).ok_or(Error::<T>::MissingAmount)?;
 
 			let pool_account = Self::account_id(&pool_id);
 			let pool_base_aum =
@@ -334,35 +339,37 @@ pub mod pallet {
 		fn buy(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
-			_asset_id: Self::AssetId,
-			amount: Self::Balance,
+			base_amount: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			Self::exchange(who, pool_id, pool.pair, amount, T::Balance::zero(), keep_alive)
+			let quote_amount = Self::get_exchange_value(pool_id, pool.pair.base, base_amount)?;
+			Self::exchange(who, pool_id, pool.pair, quote_amount, T::Balance::zero(), keep_alive)
 		}
 
 		/// In the case of a sell for uniswap, we just buy the swapped pair.
 		fn sell(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
-			_assset_id: Self::AssetId,
-			amount: Self::Balance,
+			base_amount: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			Self::exchange(who, pool_id, pool.pair.swap(), amount, T::Balance::zero(), keep_alive)
+			Self::exchange(
+				who,
+				pool_id,
+				pool.pair.swap(),
+				base_amount,
+				T::Balance::zero(),
+				keep_alive,
+			)
 		}
 
-		// NOTE(hussein-aitlahcen): the direction of the order (buy/sell) is determined by the order
-		// of the pair. This code will execute a buy on a/b, the user providing the quote asset b
-		// for base asset a. Selling a for b is done by swapping the pair prior to calling
-		// `exchange`.
 		fn exchange(
 			who: &Self::AccountId,
 			pool_id: T::PoolId,
 			pair: CurrencyPair<Self::AssetId>,
-			amount: Self::Balance,
+			quote_amount: Self::Balance,
 			min_receive: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
@@ -372,7 +379,7 @@ pub mod pallet {
 			ensure!(pair == pool.pair, Error::<T>::PairMismatch);
 
 			let (base_amount, quote_amount, lp_fees, owner_fees) =
-				Self::do_get_exchange_value(pool_id, pair, amount, true)?;
+				Self::do_swap(pool_id, pair, quote_amount, true)?;
 			let quote_amount_including_fees =
 				quote_amount.safe_add(&lp_fees)?.safe_add(&owner_fees)?;
 
@@ -390,7 +397,7 @@ pub mod pallet {
 			T::Assets::transfer(pair.quote, &pool_account, &pool.owner, owner_fees, false)?;
 			T::Assets::transfer(pair.base, &pool_account, who, base_amount, false)?;
 
-			Self::deposit_event(Event::<T>::Swap {
+			Self::deposit_event(Event::<T>::Swapped {
 				pool_id,
 				who: who.clone(),
 				base_asset: pair.base,
@@ -453,17 +460,17 @@ pub mod pallet {
 		}
 
 		/// Assume that the pair is valid for the pool
-		pub(crate) fn do_get_exchange_value(
+		pub(crate) fn do_swap(
 			pool_id: T::PoolId,
 			pair: CurrencyPair<T::AssetId>,
-			amount: T::Balance,
+			quote_amount: T::Balance,
 			apply_fees: bool,
 		) -> Result<(T::Balance, T::Balance, T::Balance, T::Balance), DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			let pool_base_aum = T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
 			let pool_quote_aum = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
-			let quote_amount = T::Convert::convert(amount);
+			let quote_amount = T::Convert::convert(quote_amount);
 
 			let (lp_fee, owner_fee) = if apply_fees {
 				let lp_fee = pool.fee.mul_floor(quote_amount);

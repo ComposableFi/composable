@@ -92,9 +92,11 @@ impl<AssetId: PartialEq> PartialEq for CurrencyPair<AssetId> {
 	}
 }
 
+impl<AssetId: PartialEq> Eq for CurrencyPair<AssetId> {}
+
 impl<AssetId: Copy> CurrencyPair<AssetId> {
 	pub fn swap(&self) -> Self {
-		Self { base: self.quote, quote: self.quote }
+		Self { base: self.quote, quote: self.base }
 	}
 }
 

@@ -2,70 +2,21 @@ use crate as constant_product_amm;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
-use sp_arithmetic::{traits::Zero, FixedU128};
+use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
-	ArithmeticError, DispatchError, FixedPointNumber,
 };
 use system::EnsureRoot;
 
-#[derive(
-	PartialOrd,
-	Ord,
-	PartialEq,
-	Eq,
-	Debug,
-	Copy,
-	Clone,
-	codec::Encode,
-	codec::Decode,
-	codec::MaxEncodedLen,
-	serde::Serialize,
-	serde::Deserialize,
-	TypeInfo,
-)]
-pub enum TestAssetId {
-	PICA,
-	BTC,
-	ETH,
-	LTC,
-	USDT,
-	USDC,
-	LpToken(u128),
-}
+type AssetId = u128;
 
-impl Default for TestAssetId {
-	fn default() -> Self {
-		TestAssetId::PICA
-	}
-}
+pub const BTC: AssetId = 0;
+pub const ETH: AssetId = 1;
+pub const USDT: AssetId = 2;
+pub const USDC: AssetId = 3;
 
-impl From<u128> for TestAssetId {
-	fn from(id: u128) -> Self {
-		match id {
-			0 => TestAssetId::PICA,
-			1 => TestAssetId::BTC,
-			2 => TestAssetId::ETH,
-			3 => TestAssetId::LTC,
-			4 => TestAssetId::USDT,
-			5 => TestAssetId::LpToken(0),
-			_ => unreachable!(),
-		}
-	}
-}
-
-impl DynamicCurrencyId for TestAssetId {
-	fn next(self) -> Result<Self, DispatchError> {
-		match self {
-			TestAssetId::LpToken(x) => Ok(TestAssetId::LpToken(
-				x.checked_add(1).ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?,
-			)),
-			_ => unreachable!(),
-		}
-	}
-}
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -86,13 +37,14 @@ frame_support::construct_runtime!(
 );
 
 parameter_types! {
-	pub const DynamicCurrencyIdInitial: TestAssetId = TestAssetId::LpToken(0);
 }
 
 impl pallet_currency_factory::Config for Test {
 	type Event = Event;
-	type DynamicCurrencyId = TestAssetId;
-	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
+	type AssetId = AssetId;
+	type AddOrigin = EnsureRoot<AccountId>;
+	type ReserveOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -161,7 +113,7 @@ pub type Amount = i128;
 pub type PoolId = u32;
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: TestAssetId| -> Balance {
+	pub ExistentialDeposits: |_currency_id: AssetId| -> Balance {
 		Zero::zero()
 	};
 }
@@ -170,7 +122,7 @@ impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
-	type CurrencyId = TestAssetId;
+	type CurrencyId = AssetId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
@@ -184,7 +136,7 @@ parameter_types! {
 
 impl constant_product_amm::Config for Test {
 	type Event = Event;
-	type AssetId = TestAssetId;
+	type AssetId = AssetId;
 	type Balance = Balance;
 	type CurrencyFactory = LpTokenFactory;
 	type Assets = Tokens;
