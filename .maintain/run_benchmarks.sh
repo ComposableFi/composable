@@ -43,8 +43,8 @@ run_benchmarks() {
 
 for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
-    # if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_BRANCH_NAME}" "$folder"; then
+     if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_BRANCH_NAME}" "$folder"; then
     run_benchmarks $output $chain $folder
-    # fi
+     fi
   done <<<"$i"
 done
