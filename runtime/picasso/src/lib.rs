@@ -55,7 +55,7 @@ pub use frame_support::{
 };
 
 use codec::Encode;
-use frame_support::traits::EqualPrivilegeOnly;
+use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -99,10 +99,11 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 2004,
-	impl_version: 2,
+	spec_version: 1000,
+	impl_version: 4,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
+	transaction_version: 3,
+	state_version: 0,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -192,6 +193,7 @@ impl system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade. Used not default since we're a parachain.
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 impl randomness_collective_flip::Config for Runtime {}
@@ -377,6 +379,7 @@ where
 			.saturating_sub(1);
 		let era = Era::mortal(period, current_block);
 		let extra = (
+			system::CheckNonZeroSender::<Runtime>::new(),
 			system::CheckSpecVersion::<Runtime>::new(),
 			system::CheckTxVersion::<Runtime>::new(),
 			system::CheckGenesis::<Runtime>::new(),
@@ -433,7 +436,7 @@ parameter_types! {
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
-	type OnValidationData = ();
+	type OnSystemEvent = ();
 	type SelfParaId = parachain_info::Pallet<Runtime>;
 	type OutboundXcmpMessageSource = XcmpQueue;
 	type DmpMessageHandler = DmpQueue;
@@ -539,6 +542,7 @@ parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	// TODO: rationale?
 	pub ProposalBondMinimum: Balance = 5 * CurrencyId::PICA.unit::<Balance>();
+	pub ProposalBondMaximum: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
 
@@ -554,6 +558,7 @@ impl treasury::Config for Runtime {
 	type OnSlash = Treasury;
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
+	type ProposalBondMaximum = ProposalBondMaximum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type MaxApprovals = MaxApprovals;
@@ -597,6 +602,7 @@ parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
 	RuntimeBlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
+  pub const NoPreimagePostponement: Option<u32> = Some(10);
 }
 
 impl scheduler::Config for Runtime {
@@ -608,7 +614,24 @@ impl scheduler::Config for Runtime {
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
+	type PreimageProvider = Preimage;
+	type NoPreimagePostponement = NoPreimagePostponement;
+	type WeightInfo = scheduler::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+	pub const PreimageMaxSize: u32 = 4096 * 1024;
+	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+}
+
+impl preimage::Config for Runtime {
+	type WeightInfo = preimage::weights::SubstrateWeight<Runtime>;
+	type Event = Event;
+	type Currency = Balances;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type MaxSize = PreimageMaxSize;
+	type BaseDeposit = PreimageBaseDeposit;
+	type ByteDeposit = PreimageByteDeposit;
 }
 
 impl utility::Config for Runtime {
@@ -670,14 +693,12 @@ impl democracy::Config for Runtime {
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	  pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
-}
-
 impl currency_factory::Config for Runtime {
 	type Event = Event;
-	type DynamicCurrencyId = CurrencyId;
-	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
+	type AssetId = CurrencyId;
+	type AddOrigin = EnsureRootOrHalfCouncil;
+	type ReserveOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
 }
 
 impl governance_registry::Config for Runtime {
@@ -692,7 +713,7 @@ parameter_types! {
 
 impl assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = Factory;
+	type GenerateCurrencyId = CurrencyFactory;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type NativeCurrency = Balances;
@@ -703,9 +724,9 @@ impl assets::Config for Runtime {
 }
 
 parameter_types! {
-  pub const InitialPayment: Perbill = Perbill::from_percent(25);
+	  pub const InitialPayment: Perbill = Perbill::from_percent(25);
 	pub const VestingStep: BlockNumber = 7 * DAYS;
-  pub const Prefix: &'static [u8] = b"picasso-";
+	  pub const Prefix: &'static [u8] = b"picasso-";
 }
 
 impl crowdloan_rewards::Config for Runtime {
@@ -801,6 +822,7 @@ construct_runtime!(
 		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 		Utility: utility::{Pallet, Call, Event} = 35,
+		Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
@@ -809,7 +831,7 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
-		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
+		CurrencyFactory: currency_factory::{Pallet, Storage, Event<T>} = 53,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 54,
 		Assets: assets::{Pallet, Call, Storage} = 55,
 		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
@@ -825,6 +847,7 @@ pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+	system::CheckNonZeroSender<Runtime>,
 	system::CheckSpecVersion<Runtime>,
 	system::CheckTxVersion<Runtime>,
 	system::CheckGenesis<Runtime>,
@@ -834,11 +857,51 @@ pub type SignedExtra = (
 	transaction_payment::ChargeTransactionPayment<Runtime>,
 );
 
+// Migration for scheduler pallet to move from a plain Call to a CallOrHash.
+pub struct SchedulerMigrationV3;
+impl OnRuntimeUpgrade for SchedulerMigrationV3 {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		Scheduler::migrate_v2_to_v3()
+	}
+}
+
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
-pub type Executive =
-	executive::Executive<Runtime, Block, system::ChainContext<Runtime>, Runtime, AllPallets>;
+pub type Executive = executive::Executive<
+	Runtime,
+	Block,
+	system::ChainContext<Runtime>,
+	Runtime,
+	AllPalletsWithSystem,
+	SchedulerMigrationV3,
+>;
+
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benches {
+	use frame_benchmarking::define_benchmarks;
+
+	define_benchmarks!(
+		[frame_system, SystemBench::<Runtime>]
+		[balances, Balances]
+		[session, SessionBench::<Runtime>]
+		[timestamp, Timestamp]
+		[collator_selection, CollatorSelection]
+		[indices, Indices]
+		[membership, CouncilMembership]
+		[treasury, Treasury]
+		[scheduler, Scheduler]
+		[democracy, Democracy]
+		[collective, Council]
+		[utility, Utility]
+		[identity, Identity]
+		[multisig, Multisig]
+	);
+}
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
@@ -921,8 +984,8 @@ impl_runtime_apis! {
 	}
 
 	impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
-		fn collect_collation_info() -> cumulus_primitives_core::CollationInfo {
-			ParachainSystem::collect_collation_info()
+		fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
+			ParachainSystem::collect_collation_info(header)
 		}
 	}
 
@@ -948,14 +1011,15 @@ impl_runtime_apis! {
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	impl benchmarking::Benchmark<Block> for Runtime {
+	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
-			Vec<benchmarking::BenchmarkList>,
+			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_benchmarking::{Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use system_benchmarking::Pallet as SystemBench;
+			use session_benchmarking::Pallet as SessionBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 
@@ -972,6 +1036,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, utility, Utility);
 			list_benchmark!(list, extra, identity, Identity);
 			list_benchmark!(list, extra, multisig, Multisig);
+			list_benchmark!(list, extra, currency_factory, CurrencyFactory);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -979,9 +1044,9 @@ impl_runtime_apis! {
 		}
 
 		fn dispatch_benchmark(
-			config: benchmarking::BenchmarkConfig
-		) -> Result<Vec<benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+			config: frame_benchmarking::BenchmarkConfig
+		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
+			use frame_benchmarking::{Benchmarking, BenchmarkBatch, TrackedStorageKey};
 
 			use system_benchmarking::Pallet as SystemBench;
 			impl system_benchmarking::Config for Runtime {}
@@ -1019,6 +1084,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, utility, Utility);
 			add_benchmark!(params, batches, identity, Identity);
 			add_benchmark!(params, batches, multisig, Multisig);
+			add_benchmark!(params, batches, currency_factory, CurrencyFactory);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

@@ -532,14 +532,13 @@ where
 	}
 
 	fn post_dispatch(
-		pre: Self::Pre,
+		pre: Option<Self::Pre>,
 		info: &DispatchInfoOf<Self::Call>,
 		post_info: &PostDispatchInfoOf<Self::Call>,
 		len: usize,
 		_result: &DispatchResult,
 	) -> Result<(), TransactionValidityError> {
-		let (tip, who, imbalance, fee) = pre;
-		if let Some(paid) = imbalance {
+		if let Some((tip, who, Some(paid), fee)) = pre {
 			let actual_fee = Pallet::<T>::compute_actual_fee(len as u32, info, post_info, tip);
 			let refund = fee.saturating_sub(actual_fee);
 			// refund to the the account that paid the fees. If this fails, the

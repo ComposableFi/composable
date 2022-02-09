@@ -1,4 +1,5 @@
 use self::currency::CurrencyId;
+pub use self::currency::*;
 use crate::{self as pallet_lending, *};
 use composable_traits::{
 	defi::DeFiComposableConfig,
@@ -10,7 +11,7 @@ use frame_support::{
 	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 	PalletId,
 };
-use frame_system::EnsureSignedBy;
+use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 use once_cell::sync::Lazy;
 use orml_traits::{parameter_type_with_key, GetByKey};
@@ -110,6 +111,7 @@ impl frame_system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
@@ -141,19 +143,17 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LpToken(0);
-}
-
 impl pallet_currency_factory::Config for Test {
 	type Event = Event;
-	type DynamicCurrencyId = CurrencyId;
-	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
+	type AssetId = CurrencyId;
+	type AddOrigin = EnsureRoot<AccountId>;
+	type ReserveOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
 }
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
+	pub const NativeAssetId: CurrencyId = PICA;
 	pub const CreationDeposit: Balance = 10;
 	pub const RentPerBlock: Balance = 1;
 	pub const MinimumDeposit: Balance = 0;
@@ -208,15 +208,17 @@ ord_parameter_types! {
 	pub const RootAccount: AccountId = *ALICE;
 }
 
-impl GovernanceRegistry<CurrencyId, AccountId> for () {
-	fn set(_k: CurrencyId, _value: composable_traits::governance::SignedRawOrigin<AccountId>) {}
+pub struct NoopRegistry;
+
+impl<CurrencyId, AccountId> GovernanceRegistry<CurrencyId, AccountId> for NoopRegistry {
+	fn set(_k: CurrencyId, _value: SignedRawOrigin<AccountId>) {}
 }
 
-impl
+impl<CurrencyId>
 	GetByKey<
 		CurrencyId,
 		Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError>,
-	> for ()
+	> for NoopRegistry
 {
 	fn get(
 		_k: &CurrencyId,
@@ -234,7 +236,7 @@ impl pallet_assets::Config for Test {
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
-	type GovernanceRegistry = ();
+	type GovernanceRegistry = NoopRegistry;
 }
 
 impl crate::mocks::oracle::Config for Test {

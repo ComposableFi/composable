@@ -144,7 +144,15 @@ pub mod pallet {
 		>;
 
 		/// The ID of a bond offer.
-		type BondOfferId: Copy + Clone + Eq + Debug + Zero + WrappingNext + FullCodec + TypeInfo;
+		type BondOfferId: Copy
+			+ Clone
+			+ Eq
+			+ Debug
+			+ Zero
+			+ WrappingNext
+			+ FullCodec
+			+ MaxEncodedLen
+			+ TypeInfo;
 
 		/// The dependency managing conversion of balance to u128 required for reward computation.
 		type Convert: Convert<BalanceOf<Self>, u128> + Convert<u128, BalanceOf<Self>>;

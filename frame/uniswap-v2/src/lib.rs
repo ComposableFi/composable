@@ -70,6 +70,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type AssetId: FullCodec
+			+ MaxEncodedLen
 			+ Eq
 			+ PartialEq
 			+ Copy
@@ -81,6 +82,7 @@ pub mod pallet {
 		type Balance: Default
 			+ Parameter
 			+ Codec
+			+ MaxEncodedLen
 			+ Copy
 			+ Ord
 			+ CheckedAdd
@@ -101,6 +103,7 @@ pub mod pallet {
 			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
 		type Precision: Get<FixedU128>;
 		type PoolId: FullCodec
+			+ MaxEncodedLen
 			+ Default
 			+ TypeInfo
 			+ Eq
@@ -737,7 +740,7 @@ pub mod pallet {
 						// We expect that PoolInfos have sequential keys.
 						// No PoolInfo can have key greater or equal to PoolCount
 						ensure!(maybe_pool_info.is_none(), Error::<T>::InconsistentStorage);
-						let lp_asset = T::CurrencyFactory::create()?;
+						let lp_asset = T::CurrencyFactory::reserve_lp_token_id()?;
 
 						*maybe_pool_info = Some(ConstantProductPoolInfo {
 							owner: who.clone(),

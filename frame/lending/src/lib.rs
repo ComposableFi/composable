@@ -170,7 +170,7 @@ pub mod pallet {
 			AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
 			Balance = <Self as DeFiComposableConfig>::Balance,
 		>;
-		type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
+		type VaultId: Clone + Codec + MaxEncodedLen + Debug + PartialEq + Default + Parameter;
 		type Vault: StrategicVault<
 			VaultId = Self::VaultId,
 			AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
@@ -249,6 +249,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]
@@ -1192,7 +1193,7 @@ pub mod pallet {
 					liquidators: config_input.updatable.liquidators,
 				};
 
-				let debt_asset_id = T::CurrencyFactory::create()?;
+				let debt_asset_id = T::CurrencyFactory::reserve_lp_token_id()?;
 				DebtMarkets::<T>::insert(market_id, debt_asset_id);
 				Markets::<T>::insert(market_id, config);
 				BorrowIndex::<T>::insert(market_id, ZeroToOneFixedU128::one());

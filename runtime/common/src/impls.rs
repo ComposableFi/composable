@@ -122,6 +122,7 @@ mod tests {
 		type SystemWeightInfo = ();
 		type SS58Prefix = ();
 		type OnSetCode = ();
+		type MaxConsumers = frame_support::traits::ConstU32<16>;
 	}
 
 	parameter_types! {
@@ -208,21 +209,22 @@ mod tests {
 		type EventHandler = ();
 	}
 
+	impl sudo::Config for Test {
+		type Event = Event;
+		type Call = Call;
+	}
+
 	parameter_types! {
 		pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
 		/// percentage of proposal that most be bonded by the proposer
 		pub const ProposalBond: Permill = Permill::from_percent(5);
 		// TODO: rationale?
 		pub ProposalBondMinimum: Balance = 5 * CurrencyId::PICA.unit::<Balance>();
+		pub ProposalBondMaximum: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
 		pub const SpendPeriod: BlockNumber = 7 * DAYS;
 		pub const Burn: Permill = Permill::from_percent(0);
 
 		pub const MaxApprovals: u32 = 30;
-	}
-
-	impl sudo::Config for Test {
-		type Event = Event;
-		type Call = Call;
 	}
 
 	impl treasury::Config for Test {
@@ -234,6 +236,7 @@ mod tests {
 		type OnSlash = Treasury;
 		type ProposalBond = ProposalBond;
 		type ProposalBondMinimum = ProposalBondMinimum;
+		type ProposalBondMaximum = ProposalBondMaximum;
 		type SpendPeriod = SpendPeriod;
 		type Burn = Burn;
 		type MaxApprovals = MaxApprovals;

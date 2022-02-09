@@ -35,6 +35,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type AssetId: FullCodec
+			+ MaxEncodedLen
 			+ Eq
 			+ PartialEq
 			+ Copy
@@ -46,6 +47,7 @@ pub mod pallet {
 		type Balance: Default
 			+ Parameter
 			+ Codec
+			+ MaxEncodedLen
 			+ Copy
 			+ Ord
 			+ CheckedAdd
@@ -62,8 +64,9 @@ pub mod pallet {
 			  // bit
 		/// The maximum hops in the route.
 		#[pallet::constant]
-		type MaxHopsInRoute: Get<u32> + TypeInfo;
+		type MaxHopsInRoute: Get<u32> + MaxEncodedLen + TypeInfo;
 		type PoolId: FullCodec
+			+ MaxEncodedLen
 			+ Default
 			+ TypeInfo
 			+ Eq

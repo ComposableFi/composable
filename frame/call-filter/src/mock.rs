@@ -42,6 +42,7 @@ impl system::Config for Runtime {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {
@@ -65,11 +66,20 @@ ord_parameter_types! {
 	pub const One: AccountId = 1;
 }
 
+#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, core::fmt::Debug)]
+pub struct MaxStringSize;
+impl Get<u32> for MaxStringSize {
+	fn get() -> u32 {
+		100
+	}
+}
+
 impl Config for Runtime {
 	type Event = Event;
 	type UpdateOrigin = EnsureSignedBy<One, AccountId>;
 	type Hook = ();
 	type WeightInfo = ();
+	type MaxStringSize = MaxStringSize;
 }
 
 type UncheckedExtrinsic = system::mocking::MockUncheckedExtrinsic<Runtime>;

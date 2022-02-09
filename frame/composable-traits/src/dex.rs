@@ -1,4 +1,4 @@
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{traits::Get, BoundedVec, RuntimeDebug};
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchError, FixedU128, Permill};
@@ -72,7 +72,7 @@ pub trait CurveAmm {
 }
 
 /// Pool type
-#[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, RuntimeDebug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, RuntimeDebug)]
 pub struct StableSwapPoolInfo<AccountId, AssetId> {
 	/// Owner of pool
 	pub owner: AccountId,
@@ -108,7 +108,7 @@ pub trait SimpleExchange {
 	) -> Result<Self::Balance, DispatchError>;
 }
 
-#[derive(Encode, Decode, TypeInfo, Clone, Default, PartialEq, Eq, RuntimeDebug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, RuntimeDebug)]
 pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	/// Owner of pool
 	pub owner: AccountId,
@@ -118,7 +118,7 @@ pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	pub fee: Permill,
 }
 
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum DexRouteNode<PoolId> {
 	Curve(PoolId),
 	Uniswap(PoolId),
@@ -126,7 +126,7 @@ pub enum DexRouteNode<PoolId> {
 
 /// Describes route for DEX.
 /// `Direct` gives vector of pool_id to use as router.
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum DexRoute<PoolId, MaxHops: Get<u32>> {
 	Direct(BoundedVec<DexRouteNode<PoolId>, MaxHops>),
 }

@@ -144,7 +144,7 @@ pub mod pallet {
 		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
 	}
 
-	#[derive(Encode, Decode, Default, TypeInfo, Clone, Debug, PartialEq)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo, Clone, Debug, PartialEq)]
 	pub struct SellOrder<AssetId, Balance, AccountId, Context> {
 		pub from_to: AccountId,
 		pub order: Sell<AssetId, Balance>,
@@ -153,13 +153,13 @@ pub mod pallet {
 		pub context: Context,
 	}
 
-	#[derive(Encode, Decode, Default, TypeInfo, Clone, Debug, PartialEq)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo, Clone, Debug, PartialEq)]
 	pub struct Context<Balance> {
 		pub added_at: Timestamp,
 		pub deposit: Balance,
 	}
 
-	#[derive(Encode, Decode, Default, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo)]
 	pub struct TakeOrder<Balance, AccountId> {
 		pub from_to: AccountId,
 		pub take: Take<Balance>,
@@ -196,6 +196,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
