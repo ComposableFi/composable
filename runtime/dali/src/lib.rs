@@ -25,6 +25,7 @@ use common::{
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
 	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
+use cumulus_primitives_core::ParaId;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -890,7 +891,7 @@ impl dutch_auction::Config for Runtime {
 }
 
 parameter_types! {
-	  pub const MosaicId: PalletId = PalletId(*b"plmosaic");
+	pub const MosaicId: PalletId = PalletId(*b"plmosaic");
 	pub const MinimumTTL: BlockNumber = 10;
 	pub const MinimumTimeLockPeriod: BlockNumber = 20;
 }
@@ -905,6 +906,23 @@ impl mosaic::Config for Runtime {
 	type NetworkId = u32;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
+}
+
+pub type LiquidationStrategyId = u32;
+pub type OrderId = u128;
+
+parameter_types! {
+	pub const LiquidationsPalletId: PalletId = PalletId(*b"liqdatns");
+}
+impl liquidations::Config for Runtime {
+	type Event = Event;
+	type UnixTime = Timestamp;
+	type DutchAuction = DutchAuction;
+	type LiquidationStrategyId = LiquidationStrategyId;
+	type OrderId = OrderId;
+	type WeightInfo = ();
+	type ParachainId = ParaId;
+	type PalletId = LiquidationsPalletId;
 }
 
 construct_runtime!(
@@ -963,6 +981,7 @@ construct_runtime!(
 		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
 		DutchAuction: dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
+		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1029,6 +1048,7 @@ mod benches {
 		[oracle, Oracle]
 		[dutch_auction, DutchAuction]
 		[mosaic, Mosaic]
+		[liquidations, Liquidations]
 	);
 }
 
@@ -1170,6 +1190,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, oracle, Oracle);
 			list_benchmark!(list, extra, dutch_auction, DutchAuction);
 			list_benchmark!(list, extra, currency_factory, CurrencyFactory);
+			list_benchmark!(list, extra, liquidations, Liquidations);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1221,6 +1242,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, oracle, Oracle);
 			add_benchmark!(params, batches, dutch_auction, DutchAuction);
 			add_benchmark!(params, batches, currency_factory, CurrencyFactory);
+			add_benchmark!(params, batches, liquidations, Liquidations);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

@@ -4,7 +4,7 @@ Liquidation uses DEX and auctions for swaps.
 
 Uses different engines depending on available liquidity and configuration. 
 
-Each liqudaiton strategy parameters can be changed by owner of strategy.
+Each liqudaiton strategy parameters can be changed by strategy's owner.
 
 Default engine is [Dutch Auction](../dutch-auction)
 ## References
