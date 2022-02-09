@@ -1,5 +1,73 @@
-use core::{marker::PhantomData, ops::Deref};
+//! Module for validating extrinsic inputs
+//!
+//! This module is made of two main parts that are needed to validate an
+//! extrinsic input, the `Validated` struct and the `Valitate` trait.
+//!
+//! # Example
+//! ## Single Validation
+//! ```
+//! use composable_support::validation::{self, Validate, Validated};
+//! use scale_info::TypeInfo;
+//!
+//! pub struct SomeInput;
+//!
+//! #[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+//! pub struct ValidateSomeInput;
+//!
+//! impl Validate<SomeInput, ValidateSomeInput>
+//!     for ValidateSomeInput {
+//!     fn validate(input: SomeInput) -> Result<SomeInput, &'static str> {
+//!         // ... validation code
+//!         Ok(input)
+//!     }
+//! }
+//!
+//! pub type CheckSomeCondition = (ValidateSomeInput, validation::Valid);
+//!
+//! pub fn someExtrinsic(input: Validated<SomeInput, CheckSomeCondition>) {
+//!     // ... extrinsic code
+//! }
+//! ```
+//!
+//! ## Multiple Validations (Up to 3)
+//! ```
+//! use composable_support::validation::{self, Validate, Validated};
+//! use scale_info::TypeInfo;
+//!
+//! pub struct SomeInput;
+//!
+//! #[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+//! pub struct ValidateSomeInput;
+//!
+//! #[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+//! pub struct ValidateAnotherCondition;
+//!
+//! impl Validate<SomeInput, ValidateSomeInput>
+//!     for ValidateSomeInput {
+//!     fn validate(input: SomeInput) -> Result<SomeInput, &'static str> {
+//!         // ... validation code
+//!         return Ok(input)
+//!     }
+//! }
+//!
+//! impl Validate<SomeInput, ValidateAnotherCondition>
+//!     for ValidateAnotherCondition {
+//!     fn validate(input: SomeInput) -> Result<SomeInput, &'static str> {
+//!         // ... validation code
+//!         return Ok(input)
+//!     }
+//! }
+//!
+//! pub type CheckSomeConditions = (ValidateSomeInput, ValidateAnotherCondition, validation::Valid);
+//!
+//! pub fn someExtrinsic(input: Validated<SomeInput, CheckSomeConditions>) {
+//!     // ... extrinsic code
+//! }
+//! ```
+
+use core::marker::PhantomData;
 use scale_info::TypeInfo;
+use sp_runtime::DispatchError;
 
 /// Black box that embbed the validated value.
 #[derive(Default, Copy, Clone, PartialEq, Eq, Debug, TypeInfo)]
@@ -8,54 +76,105 @@ pub struct Validated<T, U> {
 	_marker: PhantomData<U>,
 }
 
-impl<T: Copy, U> Validated<T, U> {
-	#[inline(always)]
-	pub fn value(&self) -> T {
-		self.value
+impl<T, U> Validated<T, U>
+where
+	Validated<T, U>: Validate<T, U>,
+	U: Validate<T, U>,
+{
+	pub fn new(value: T, _validator_tag: U) -> Result<Self, &'static str> {
+		match <U as Validate<T, U>>::validate(value) {
+			Ok(value) => Ok(Self { value, _marker: PhantomData }),
+			Err(e) => Err(e),
+		}
 	}
 }
 
-impl<T, U> Deref for Validated<T, U> {
-	type Target = T;
+pub trait ValidateDispatch<U>: Sized {
+	fn validate(self) -> Result<Self, DispatchError>;
+}
+
+pub trait Validate<T, U> {
+	// use string here because in serde layer there is not dispatch
+	fn validate(input: T) -> Result<T, &'static str>;
+}
+
+#[derive(Debug, Eq, PartialEq, Default)]
+pub struct Valid;
+
+#[derive(Debug, Eq, PartialEq, Default)]
+pub struct Invalid;
+
+impl<T> Validate<T, Invalid> for Invalid {
 	#[inline(always)]
-	fn deref(&self) -> &Self::Target {
-		&self.value
+	fn validate(_input: T) -> Result<T, &'static str> {
+		Err("not valid")
 	}
 }
 
-impl<T, U> AsRef<T> for Validated<T, U> {
+impl<T> Validate<T, Valid> for Valid {
 	#[inline(always)]
-	fn as_ref(&self) -> &T {
-		&self.value
+	fn validate(input: T) -> Result<T, &'static str> {
+		Ok(input)
 	}
 }
 
-pub trait Validate<U>: Sized {
-	fn validate(self) -> Result<Self, &'static str>;
-}
-
-#[derive(Debug, Eq, PartialEq)]
-pub struct QED;
-
-impl<T> Validate<QED> for T {
+impl<T, U, V> Validate<T, (U, V)> for (U, V)
+where
+	U: Validate<T, U>,
+	V: Validate<T, V>,
+{
 	#[inline(always)]
-	fn validate(self) -> Result<Self, &'static str> {
-		Ok(self)
-	}
-}
-
-impl<T: Validate<U> + Validate<V>, U, V> Validate<(U, V)> for T {
-	#[inline(always)]
-	fn validate(self) -> Result<Self, &'static str> {
-		let value = Validate::<U>::validate(self)?;
-		let value = Validate::<V>::validate(value)?;
+	fn validate(input: T) -> Result<T, &'static str> {
+		let value = U::validate(input)?;
+		let value = V::validate(value)?;
 		Ok(value)
 	}
 }
 
-impl<T: codec::Decode + Validate<(U, V)>, U, V> codec::Decode for Validated<T, (U, V)> {
+// as per substrate pattern and existing macroses for similar purposes, they tend to make things
+// flat like `#[impl_trait_for_tuples::impl_for_tuples(30)]`
+// so if we will need more than 3, can consider it
+impl<T, U, V, W> Validate<T, (U, V, W)> for (U, V, W)
+where
+	U: Validate<T, U>,
+	V: Validate<T, V>,
+	W: Validate<T, W>,
+{
+	#[inline(always)]
+	fn validate(input: T) -> Result<T, &'static str> {
+		let value = U::validate(input)?;
+		let value = V::validate(value)?;
+		let value = W::validate(value)?;
+		Ok(value)
+	}
+}
+
+impl<T, U, V, W, Z> Validate<T, (U, V, W, Z)> for (U, V, W, Z)
+where
+	U: Validate<T, U>,
+	V: Validate<T, V>,
+	W: Validate<T, W>,
+	Z: Validate<T, Z>,
+{
+	#[inline(always)]
+	fn validate(input: T) -> Result<T, &'static str> {
+		let value = U::validate(input)?;
+		let value = V::validate(value)?;
+		let value = W::validate(value)?;
+		let value = Z::validate(value)?;
+		Ok(value)
+	}
+}
+
+impl<T, U: Validate<T, U>> Validated<T, U> {
+	pub fn value(self) -> T {
+		self.value
+	}
+}
+
+impl<T: codec::Decode, U: Validate<T, U>> codec::Decode for Validated<T, U> {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
-		let value = Validate::validate(T::decode(input)?).map_err(Into::<codec::Error>::into)?;
+		let value = <U as Validate<T, U>>::validate(T::decode(input)?)?;
 		Ok(Validated { value, _marker: PhantomData })
 	}
 	fn skip<I: codec::Input>(input: &mut I) -> Result<(), codec::Error> {
@@ -63,58 +182,147 @@ impl<T: codec::Decode + Validate<(U, V)>, U, V> codec::Decode for Validated<T, (
 	}
 }
 
-impl<T: codec::Encode + codec::Decode + Validate<U>, U> codec::WrapperTypeEncode
+pub(crate) mod private {
+	use sp_std::ops::Deref;
+
+	use super::Validated;
+
+	/// just to have `WrapperTypeEncode` work
+	impl<T, U> Deref for Validated<T, U> {
+		type Target = T;
+		#[doc(hidden)]
+		fn deref(&self) -> &Self::Target {
+			&self.value
+		}
+	}
+}
+
+impl<T: codec::Encode + codec::Decode, U: Validate<T, U>> codec::WrapperTypeEncode
 	for Validated<T, U>
 {
+}
+
+impl<T, U: Validate<T, U>> Validate<T, U> for Validated<T, U> {
+	fn validate(input: T) -> Result<T, &'static str> {
+		<U as Validate<T, U>>::validate(input)
+	}
 }
 
 #[cfg(test)]
 mod test {
 	use super::*;
 	use codec::{Decode, Encode};
+	use frame_support::assert_ok;
 
-	#[derive(Debug, Eq, PartialEq)]
+	#[derive(Debug, Eq, PartialEq, Default)]
 	struct ValidARange;
-	#[derive(Debug, Eq, PartialEq)]
+	#[derive(Debug, Eq, PartialEq, Default)]
 	struct ValidBRange;
 
-	type CheckARange = (ValidARange, QED);
-	type CheckBRange = (ValidBRange, QED);
-	type CheckABRange = (ValidARange, (ValidBRange, QED));
+	type CheckARangeTag = (ValidARange, Valid);
+	type CheckBRangeTag = (ValidBRange, Valid);
+	type CheckABRangeTag = (ValidARange, (ValidBRange, Valid));
+	type ManyValidatorsTagsNestedInvalid = (ValidARange, (ValidBRange, (Invalid, Valid)));
+	type ManyValidatorsTagsNestedValid = (ValidARange, (ValidBRange, Valid));
+	type ManyValidatorsTagsFlatInvalid = (ValidARange, ValidBRange, Invalid, Valid);
+	type ManyValidatorsTagsFlatValid = (ValidARange, ValidBRange, Valid);
+	// note: next seems is not supported yet
+	// type NestedValidated = (Validated<X, Valid>, Validated<Y,  Valid>);
+	// #[derive(Debug, Eq, PartialEq, codec::Encode, codec::Decode, Default)]
+	// struct Y {
+	// }
 
-	#[derive(Debug, Eq, PartialEq, codec::Encode, codec::Decode)]
+	#[derive(Debug, Eq, PartialEq, codec::Encode, codec::Decode, Default, Clone)]
 	struct X {
 		a: u32,
 		b: u32,
 	}
 
-	impl Validate<ValidARange> for X {
-		fn validate(self) -> Result<X, &'static str> {
-			if self.a > 10 {
+	impl Validate<X, ValidARange> for ValidARange {
+		fn validate(input: X) -> Result<X, &'static str> {
+			if input.a > 10 {
 				Err("Out of range")
 			} else {
-				Ok(self)
+				Ok(input)
 			}
 		}
 	}
 
-	impl Validate<ValidBRange> for X {
-		fn validate(self) -> Result<X, &'static str> {
-			if self.b > 10 {
+	impl Validate<X, ValidBRange> for ValidBRange {
+		fn validate(input: X) -> Result<X, &'static str> {
+			if input.b > 10 {
 				Err("Out of range")
 			} else {
-				Ok(self)
+				Ok(input)
 			}
 		}
+	}
+
+	#[test]
+	fn nested_validator() {
+		let valid = X { a: 10, b: 0xCAFEBABE };
+		assert!(<ManyValidatorsTagsNestedInvalid as Validate<
+			X,
+			ManyValidatorsTagsNestedInvalid,
+		>>::validate(valid)
+		.is_err());
+
+		let valid = X { a: 10, b: 10 };
+		assert_ok!(
+			<ManyValidatorsTagsNestedValid as Validate<X, ManyValidatorsTagsNestedValid>>::validate(
+				valid
+			)
+		);
+	}
+
+	#[test]
+	fn either_nested_or_flat() {
+		let valid = X { a: 10, b: 0xCAFEBABE };
+		assert_eq!(
+			<ManyValidatorsTagsNestedInvalid as Validate<X, ManyValidatorsTagsNestedInvalid>>::validate(
+				valid.clone()
+			),
+			<ManyValidatorsTagsFlatInvalid as Validate<X, ManyValidatorsTagsFlatInvalid>>::validate(valid)
+		);
+	}
+
+	#[test]
+	fn flat_validator_multiple_invalid() {
+		let value = X { a: 10, b: 0xCAFEBABE };
+
+		assert!(
+			<ManyValidatorsTagsFlatInvalid as Validate<X, ManyValidatorsTagsFlatInvalid>>::validate(value).is_err()
+		);
+	}
+
+	#[test]
+	fn flat_validator_multiple_valid() {
+		let value = X { a: 10, b: 0xCAFEBABE };
+
+		assert!(
+			<ManyValidatorsTagsFlatValid as Validate<X, ManyValidatorsTagsFlatValid>>::validate(
+				value
+			)
+			.is_err()
+		);
+	}
+
+	#[test]
+	fn value() {
+		let value = Validated::new(42, Valid);
+		assert_ok!(value);
+		let value = Validated::new(42, Invalid);
+		assert!(value.is_err());
 	}
 
 	#[test]
 	fn test_valid_a() {
 		let valid = X { a: 10, b: 0xCAFEBABE };
 		let bytes = valid.encode();
+
 		assert_eq!(
 			Ok(Validated { value: valid, _marker: PhantomData }),
-			Validated::<X, CheckARange>::decode(&mut &bytes[..])
+			Validated::<X, CheckARangeTag>::decode(&mut &bytes[..])
 		);
 	}
 
@@ -122,7 +330,19 @@ mod test {
 	fn test_invalid_a() {
 		let invalid = X { a: 0xDEADC0DE, b: 0xCAFEBABE };
 		let bytes = invalid.encode();
-		assert!(Validated::<X, CheckARange>::decode(&mut &bytes[..]).is_err());
+		let invalid = Validated::<X, CheckARangeTag>::decode(&mut &bytes[..]);
+		assert!(invalid.is_err());
+	}
+
+	#[test]
+	fn encode_decode_validated_encode_decode() {
+		let original = X { a: 0xDEADC0DE, b: 0xCAFEBABE };
+		let bytes = original.encode();
+		let wrapped = Validated::<X, Valid>::decode(&mut &bytes[..]).unwrap();
+
+		let bytes = wrapped.encode();
+		let reencoded = X::decode(&mut &bytes[..]).unwrap();
+		assert_eq!(reencoded, original);
 	}
 
 	#[test]
@@ -131,7 +351,7 @@ mod test {
 		let bytes = valid.encode();
 		assert_eq!(
 			Ok(Validated { value: valid, _marker: PhantomData }),
-			Validated::<X, CheckBRange>::decode(&mut &bytes[..])
+			Validated::<X, CheckBRangeTag>::decode(&mut &bytes[..])
 		);
 	}
 
@@ -139,7 +359,8 @@ mod test {
 	fn test_invalid_b() {
 		let invalid = X { a: 0xCAFEBABE, b: 0xDEADC0DE };
 		let bytes = invalid.encode();
-		assert!(Validated::<X, CheckBRange>::decode(&mut &bytes[..]).is_err());
+		let invalid = Validated::<X, CheckBRangeTag>::decode(&mut &bytes[..]);
+		assert!(invalid.is_err());
 	}
 
 	#[test]
@@ -148,7 +369,7 @@ mod test {
 		let bytes = valid.encode();
 		assert_eq!(
 			Ok(Validated { value: valid, _marker: PhantomData }),
-			Validated::<X, CheckABRange>::decode(&mut &bytes[..])
+			Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..])
 		);
 	}
 
@@ -156,20 +377,42 @@ mod test {
 	fn test_invalid_ab() {
 		let invalid = X { a: 0xDEADC0DE, b: 0xCAFEBABE };
 		let bytes = invalid.encode();
-		assert!(Validated::<X, CheckABRange>::decode(&mut &bytes[..]).is_err());
+		let invalid = Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..]);
+		assert!(invalid.is_err());
 	}
 
 	#[test]
 	fn test_invalid_a_ab() {
 		let invalid = X { a: 0xDEADC0DE, b: 10 };
 		let bytes = invalid.encode();
-		assert!(Validated::<X, CheckABRange>::decode(&mut &bytes[..]).is_err());
+		let invalid = Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..]);
+		assert!(invalid.is_err());
 	}
 
 	#[test]
 	fn test_invalid_b_ab() {
 		let invalid = X { a: 10, b: 0xDEADC0DE };
 		let bytes = invalid.encode();
-		assert!(Validated::<X, CheckABRange>::decode(&mut &bytes[..]).is_err());
+		let invalid = Validated::<X, CheckABRangeTag>::decode(&mut &bytes[..]);
+		assert!(invalid.is_err());
+	}
+
+	#[test]
+	fn valid_triple() {
+		let value = X { a: 10, b: 0xDEADC0DE };
+		let bytes = value.encode();
+		assert_eq!(
+			Ok(Validated { value, _marker: PhantomData }),
+			Validated::<X, (Valid, Valid, Valid)>::decode(&mut &bytes[..])
+		);
+	}
+
+	#[test]
+	fn valid_invalid_valid() {
+		let value = X { a: 10, b: 0xDEADC0DE };
+		let bytes = value.encode();
+
+		let invalid = Validated::<X, (Valid, Invalid, Valid)>::decode(&mut &bytes[..]);
+		assert!(invalid.is_err());
 	}
 }

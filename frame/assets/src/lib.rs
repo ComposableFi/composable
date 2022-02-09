@@ -81,7 +81,7 @@ pub mod weights;
 pub mod pallet {
 	use crate::weights::WeightInfo;
 	use composable_traits::{
-		currency::{AssetIdLike, BalanceLike, CurrencyFactory},
+		currency::{AssetIdLike, BalanceLike, CurrencyFactory, RangeId},
 		governance::{GovernanceRegistry, SignedRawOrigin},
 	};
 	use frame_support::{
@@ -282,7 +282,7 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			let id = T::GenerateCurrencyId::create()?;
+			let id = T::GenerateCurrencyId::create(RangeId::TOKENS)?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(().into())
@@ -300,7 +300,7 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			let id = T::GenerateCurrencyId::create()?;
+			let id = T::GenerateCurrencyId::create(RangeId::TOKENS)?;
 			let governance_origin = T::Lookup::lookup(governance_origin)?;
 			T::GovernanceRegistry::set(id, SignedRawOrigin::Signed(governance_origin));
 			let dest = T::Lookup::lookup(dest)?;

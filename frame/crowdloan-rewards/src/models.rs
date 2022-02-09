@@ -1,21 +1,30 @@
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{MultiSignature, RuntimeDebug};
 
-#[derive(Clone, RuntimeDebug, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo, MaxEncodedLen)]
+pub struct Reward<Balance, BlockNumber> {
+	pub(crate) total: Balance,
+	pub(crate) claimed: Balance,
+	pub(crate) vesting_period: BlockNumber,
+}
+
+#[derive(Clone, RuntimeDebug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum Proof<AccountId> {
 	RelayChain(AccountId, MultiSignature),
 	Ethereum(EcdsaSignature),
 }
 
-#[derive(Hash, Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo)]
+#[derive(Hash, Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum RemoteAccount<AccountId> {
 	RelayChain(AccountId),
 	Ethereum(EthereumAddress),
 }
 
-#[derive(Hash, Clone, Copy, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
+#[derive(
+	Hash, Clone, Copy, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
+)]
 pub struct EthereumAddress(pub [u8; 20]);
 
 #[cfg(feature = "std")]
@@ -53,7 +62,7 @@ impl<'de> frame_support::Deserialize<'de> for EthereumAddress {
 	}
 }
 
-#[derive(Encode, Decode, Clone, TypeInfo)]
+#[derive(Encode, Decode, Clone, MaxEncodedLen, TypeInfo)]
 pub struct EcdsaSignature(pub [u8; 65]);
 
 impl PartialEq for EcdsaSignature {

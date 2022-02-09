@@ -2,14 +2,10 @@ use super::*;
 
 use crate::Pallet as Lending;
 use composable_traits::{
-	lending::{
-		math::{InterestRateModel, MoreThanOneFixedU128},
-		CreateInput, Lending as LendingTrait,
-	},
+	lending::{math::InterestRateModel, CreateInput, Lending as LendingTrait},
 	vault::Vault,
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
-use frame_support::traits::fungibles::Mutate;
 use frame_system::{EventRecord, RawOrigin};
 use sp_runtime::{FixedPointNumber, Percent, Perquintill};
 use sp_std::prelude::*;
@@ -25,7 +21,7 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 const BTC: u128 = 1000;
 const USDT: u128 = 2000;
 
-fn set_price<T: Config>(asset_id: u128, price: u64) {
+fn set_price<T: Config + pallet_oracle::Config>(asset_id: u128, price: u64) {
 	pallet_oracle::Prices::<T>::insert(
 		<T as pallet_oracle::Config>::AssetId::from(asset_id),
 		pallet_oracle::Price {
@@ -35,12 +31,12 @@ fn set_price<T: Config>(asset_id: u128, price: u64) {
 	);
 }
 
-fn set_prices<T: Config>() {
+fn set_prices<T: Config + pallet_oracle::Config>() {
 	set_price::<T>(BTC, 48_000u64);
 	set_price::<T>(USDT, 1u64);
 }
 
-fn create_market<T: Config>(
+fn create_market<T: Config + pallet_oracle::Config>(
 	manager: T::AccountId,
 	borrow_asset: u128,
 	collateral_asset: u128,
@@ -112,8 +108,8 @@ benchmarks! {
 
 	withdraw_collateral {
 		let caller: T::AccountId = whitelisted_caller();
-		let market: MarketIndex = MarketIndex::new(1u32);
-		let amount: T::Balance = 1_000_000u64.into();
+		let market: MarketIndex = MarketIndex::new(1_u32);
+		let amount: T::Balance = 1_000_000_u64.into();
 		set_prices::<T>();
 		let (market, _vault_id) = create_market::<T>(caller.clone(), BTC, USDT);
 		<T as pallet::Config>::Currency::mint_into(USDT.into(), &caller, amount).unwrap();
@@ -208,12 +204,12 @@ benchmarks! {
 
 	handle_withdrawable {
 		let caller: T::AccountId = whitelisted_caller();
-		let (borrow_asset_id, collateral_asset_id) = (1u32, 2u32);
+		let (borrow_asset_id, collateral_asset_id) = (1_u32, 2u32);
 		set_price::<T>(borrow_asset_id.into(), u64::from(borrow_asset_id) * 10);
 		set_price::<T>(collateral_asset_id.into(), u64::from(collateral_asset_id) * 10);
 		let (market_id, vault_id) = create_market::<T>(caller.clone(), borrow_asset_id.into(), collateral_asset_id.into());
 		let market_config = Markets::<T>::try_get(market_id).unwrap();
-		let balance = 0u32.into();
+		let balance = 0_u32.into();
 	}: {
 		Lending::<T>::handle_withdrawable(&market_config, &caller, balance).unwrap()
 	}

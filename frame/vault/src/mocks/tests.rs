@@ -57,6 +57,7 @@ impl system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
@@ -155,14 +156,9 @@ construct_runtime!(
 	}
 );
 
+#[derive(Default)]
 pub struct ExtBuilder {
 	balances: Vec<(AccountId, MockCurrencyId, Balance)>,
-}
-
-impl Default for ExtBuilder {
-	fn default() -> Self {
-		Self { balances: Vec::new() }
-	}
 }
 
 impl ExtBuilder {

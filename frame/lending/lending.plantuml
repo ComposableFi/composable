@@ -1,73 +1,56 @@
 @startuml
+  actor Alice as alice
+  actor Bob as bob
+  actor Charlie as charlie
+  participant Lending as lending
+  participant Liquidation as liqudation
+  control Governance as governance
 
-actor Alice as a
-actor Bob as b
-actor Charlie as ac
-participant Lending as l
-participant Liquidation as k
-participant Auction as au
-participant "Order Book DEX" as d
-boundary "Parachain with DEX" as p
-control "OCW Auction" as oa
-control "OCW Lending" as ol
-control "OCW Oracle" as m
+  participant Vault as vault
+  participant "Sell Engine" as sell
+  control "OCW Lending" as lending_bot
+  control "OCW Oracle" as oracle_bot
 
-group Governance
-
-
-  a -> l: Create market pair for assets ids (tokens, symbols)
-  l -> Vault: Check assets are supported and create vault for collateral
-  l -> Oracle: Check assets are supported
-  ...
-  Governance -> Vault : Allocate to Lending
-  l -> Vault : Withdraw Borrowed Asset
-
-end
-
-...
-
-group Borrow
-
-  b -> Vault : transfer collateral
-  Vault -> b : transfer cCollateral(wrapped token)
-  b -> l : Deposit cCollateral
-  ...
-  b -> l : Borrow (collateralized)
-  ...
-  l -> l : accrue interest
-  ...
-  b -> l : repay borrow + interest
-
-end
-
-...
-
-group Liqudaiton (IN PROGRESS)
-
-  ac -> l : Borrow
+  group Governance
+    alice -> lending: Create market pair for assets ids (tokens, symbols), pay rent, configure
+    lending -> oracle: Check assets are supported
+    lending -> vault: Create vault to store collateral asset
+    ...
+    governance -> vault : Allocate to Lending pair resources
+    lending -> vault : Withdraw Borrowed Asset
+  end
 
   ...
 
-
-  m -> Oracle : Make collateral factor bad
-
-  ol -> l : Liquidate Charlie collateral
-
-  l -> k: Liquidate
-
-  k -> au: Dutch Auction sell Collateral
-
-  oa --> d: Sell on Order Book DEX
-
-  ...
-
-  p  --> d: Prove of swap tokens and update DEX order state
-
+  group Borrow and Repay
+    bob -> vault : Transfer collateral
+    vault -> bob : Transfer cCollateral(wrapped token)
+    bob -> lending : Deposit cCollateral
+    ...
+    bob -> lending : Borrow with collateral in price more than borrow price
+    lending -> bob : Take rent for holding position
+    ...
+    lending -> lending : Accrue interest with each block
+    ...
+    bob -> lending : (Partially)repay borrow + interest
+  end
 
   ...
 
-  oa -> au : Finalize auction
-
-end
+  group Liqudaiton (IN PROGRESS)
+    charlie -> lending : Borrow
+    ...
+    oracle_bot -> oracle : Make collateral factor bad
+    lending_bot -> lending : Liquidate Charlie collateral
+    lending -> liqudation: Liquidate
+    liqudation -> sell: Sell via choses strategy
+    note left
+      - default is auction (multiblock)
+      - can be DEX or external (XCMP) DEX 
+      - XCMP is multi block process
+    end note
+    ...
+    lending_bot -> lending : Finalize liqudaiton
+  end
 
 @enduml

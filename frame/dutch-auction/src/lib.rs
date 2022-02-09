@@ -144,7 +144,7 @@ pub mod pallet {
 		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
 	}
 
-	#[derive(Encode, Decode, Default, TypeInfo, Clone, Debug, PartialEq)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo, Clone, Debug, PartialEq)]
 	pub struct SellOrder<AssetId, Balance, AccountId, Context> {
 		pub from_to: AccountId,
 		pub order: Sell<AssetId, Balance>,
@@ -153,13 +153,13 @@ pub mod pallet {
 		pub context: Context,
 	}
 
-	#[derive(Encode, Decode, Default, TypeInfo, Clone, Debug, PartialEq)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo, Clone, Debug, PartialEq)]
 	pub struct Context<Balance> {
 		pub added_at: Timestamp,
 		pub deposit: Balance,
 	}
 
-	#[derive(Encode, Decode, Default, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo)]
 	pub struct TakeOrder<Balance, AccountId> {
 		pub from_to: AccountId,
 		pub take: Take<Balance>,
@@ -191,10 +191,12 @@ pub mod pallet {
 		TakeParametersIsInvalid,
 		TakeLimitDoesNotSatisfiesOrder,
 		OrderNotFound,
+		NotEnoughNativeCurrentyToPayForAuction,
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
@@ -304,7 +306,9 @@ pub mod pallet {
 			let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate());
 			<T::NativeCurrency as NativeTransfer<T::AccountId>>::transfer(
 				from_to, treasury, deposit, true,
-			)?;
+			)
+			.map_err(|_| Error::<T>::NotEnoughNativeCurrentyToPayForAuction)?;
+
 			let now = T::UnixTime::now().as_secs();
 			let order = SellOf::<T> {
 				from_to: from_to.clone(),
@@ -312,6 +316,7 @@ pub mod pallet {
 				order,
 				context: Context::<Self::Balance> { added_at: now, deposit },
 			};
+
 			T::MultiCurrency::reserve(order.order.pair.base, from_to, order.order.take.amount)?;
 			SellOrders::<T>::insert(order_id, order);
 

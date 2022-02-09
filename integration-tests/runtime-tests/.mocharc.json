@@ -3,10 +3,20 @@
   "extension": ["js", "cjs", "mjs"],
   "package": "./package.json",
   "reporter": "mochawesome",
-  "slow": "75",
-  "timeout": "2000",
+  "reporterOptions": {
+    "reportFilename": "mochawesome-report",
+    "quiet": false,
+    "overwrite": true,
+    "html": true,
+    "json": true
+  },
+  "slow": 75,
+  "timeout": 2000,
+  "retries": 0,
   "ui": "bdd",
-  "watch-files": ["lib/**/*.js", "test/**/*.js"],
+  "watch-files": ["src/**/*.js", "src/**/*.ts"],
   "watch-ignore": ["lib/vendor"],
-  "require": "src/utils/testSetup.js"
+  "require": "src/utils/testSetup.js",
+  "full-trace": true,
+  "parallel": false
 }

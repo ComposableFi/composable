@@ -67,6 +67,7 @@ pub mod pallet {
 	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
+		currency::RangeId,
 		defi::Rate,
 		vault::{
 			CapabilityVault, Deposit, FundsAvailability, ReportableStrategicVault, Vault,
@@ -124,6 +125,7 @@ pub mod pallet {
 		type Balance: Default
 			+ Parameter
 			+ Codec
+			+ MaxEncodedLen
 			+ Copy
 			+ Ord
 			+ CheckedAdd
@@ -135,6 +137,7 @@ pub mod pallet {
 			+ Zero;
 		type CurrencyFactory: CurrencyFactory<Self::AssetId>;
 		type AssetId: FullCodec
+			+ MaxEncodedLen
 			+ Eq
 			+ PartialEq
 			+ Copy
@@ -151,6 +154,7 @@ pub mod pallet {
 			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
 		type VaultId: AddAssign
 			+ FullCodec
+			+ MaxEncodedLen
 			+ One
 			+ Eq
 			+ PartialEq
@@ -184,6 +188,7 @@ pub mod pallet {
 		type Balance: Default
 			+ Parameter
 			+ Codec
+			+ MaxEncodedLen
 			+ Copy
 			+ Ord
 			+ CheckedAdd
@@ -200,6 +205,7 @@ pub mod pallet {
 
 		/// The `AssetId` used by the pallet. Corresponds the the Ids used by the Currency pallet.
 		type AssetId: FullCodec
+			+ MaxEncodedLen
 			+ Eq
 			+ PartialEq
 			+ Copy
@@ -221,6 +227,7 @@ pub mod pallet {
 		/// Key type for the vaults. `VaultId` uniquely identifies a vault. The identifiers are
 		type VaultId: AddAssign
 			+ FullCodec
+			+ MaxEncodedLen
 			+ One
 			+ Eq
 			+ PartialEq
@@ -726,8 +733,10 @@ pub mod pallet {
 					Error::<T>::AllocationMustSumToOne
 				);
 
-				let lp_token_id =
-					{ T::CurrencyFactory::create().map_err(|_| Error::<T>::CannotCreateAsset)? };
+				let lp_token_id = {
+					T::CurrencyFactory::create(RangeId::LP_TOKENS)
+						.map_err(|_| Error::<T>::CannotCreateAsset)?
+				};
 
 				config.strategies.into_iter().for_each(|(account_id, allocation)| {
 					CapitalStructure::<T>::insert(
@@ -747,7 +756,7 @@ pub mod pallet {
 					manager: config.manager,
 					asset_id: config.asset_id,
 					deposit,
-					..Default::default()
+					capabilities: Default::default(),
 				};
 
 				Vaults::<T>::insert(id, vault_info.clone());

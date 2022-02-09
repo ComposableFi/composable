@@ -5,13 +5,14 @@ import { sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess } from '@composabl
 import { u128, u32 } from '@polkadot/types-codec';
 import { expect } from 'chai';
 import { IKeyringPair } from '@polkadot/types/types';
+import {KeyringPair} from "@polkadot/keyring/types";
 
 const toHexString = bytes =>
   Array.prototype.map.call(bytes, x => ('0' + (x & 0xFF).toString(16)).slice(-2)).join('');
 
 // The prefix is defined as pallet config
-const proofMessage = (account: IKeyringPair) =>
-  "<Bytes>picasso-" + toHexString(account.publicKey) + "</Bytes>";
+const proofMessage = (account: IKeyringPair, isEth=false) =>
+  (isEth ? "picasso-" : "<Bytes>picasso-") + toHexString(account.publicKey) + (isEth ? "" : "</Bytes>");
 
 const ethAccount = (seed: number) =>
   web3.eth.accounts.privateKeyToAccount("0x" + seed.toString(16).padStart(64, '0'))
@@ -28,17 +29,22 @@ export class TxCrowdloanRewardsTests {
       // 2 minutes timeout
       this.timeout(60 * 2 * 1000);
       it('Can populate the list of contributors', async function() {
-        const { data: [result], } = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTest();
+        const sudoWallet = walletAlice;
+        const { data: [result], } = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTest(sudoWallet);
         expect(result.isOk).to.be.true;
       });
+
       it('Can initialize the crowdloan', async function() {
-        const { data: [result], } = await TxCrowdloanRewardsTests.txCrowdloanRewardsInitializeTest();
+        const sudoWallet = walletAlice;
+        const { data: [result], } = await TxCrowdloanRewardsTests.txCrowdloanRewardsInitializeTest(sudoWallet);
         expect(result.isOk).to.be.true;
       });
+
       it('Can associate a picasso account', async function() {
+        const wallet = walletAlice;
         await Promise.all([
-          TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTests(),
-          TxCrowdloanRewardsTests.txCrowdloanRewardsRelayAssociateTests(),
+          TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTests(wallet),
+          TxCrowdloanRewardsTests.txCrowdloanRewardsRelayAssociateTests(wallet),
         ]);
       });
     });
@@ -47,9 +53,7 @@ export class TxCrowdloanRewardsTests {
   /**
    * tx.crowdloanRewards.populate
    */
-  private static txCrowdloanRewardsInitializeTest() {
-    // ToDo (D. Roth): Pass api and keyring instead of directly reading from global.
-    const sudoKey = walletAlice;
+  private static txCrowdloanRewardsInitializeTest(sudoKey:KeyringPair) {
     return sendAndWaitForSuccess(
       api,
       sudoKey,
@@ -63,9 +67,7 @@ export class TxCrowdloanRewardsTests {
   /**
    *
    */
-  private static async txCrowdloanRewardsPopulateTest() {
-    // ToDo (D. Roth): Pass api and keyring instead of directly reading from global.
-    const sudoKey = walletAlice;
+  private static async txCrowdloanRewardsPopulateTest(sudoKey:KeyringPair) {
     const vesting48weeks = api.createType('u32', 100800);
     const reward = api.createType('u128', 1_000_000_000_000);
     const relay_accounts =
@@ -96,8 +98,8 @@ export class TxCrowdloanRewardsTests {
     );
   }
 
-  private static async txCrowdloanRewardsRelayAssociateTests() {
-    const contributor = walletAlice.derive("/contributor-1");
+  private static async txCrowdloanRewardsRelayAssociateTests(wallet:KeyringPair) {
+    const contributor = wallet.derive("/contributor-1");
     // arbitrary, user defined reward account
     const contributorRewardAccount = contributor.derive("/reward");
     const proof = contributor.sign(proofMessage(contributorRewardAccount));
@@ -111,11 +113,11 @@ export class TxCrowdloanRewardsTests {
     );
   }
 
-  private static async txCrowdloanRewardsEthAssociateTests() {
+  private static async txCrowdloanRewardsEthAssociateTests(wallet:KeyringPair) {
     const contributor = ethAccount(1);
     // arbitrary, user defined reward account
-    const contributorRewardAccount = walletAlice.derive("/reward-eth-1");
-    const proof = contributor.sign(proofMessage(contributorRewardAccount));
+    const contributorRewardAccount = wallet.derive("/reward-eth-1");
+    const proof = contributor.sign(proofMessage(contributorRewardAccount, true));
     return await sendUnsignedAndWaitForSuccess(
       api,
       api.events.crowdloanRewards.Associated.is,

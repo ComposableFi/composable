@@ -5,18 +5,22 @@ use sp_runtime::traits::BadOrigin;
 #[test]
 fn set_local_admin_tests() {
 	new_test_ext().execute_with(|| {
-		assert_noop!(AssetsRegistry::set_local_admin(Origin::signed(ALICE), ALICE), BadOrigin,);
+		assert_eq!(AssetsRegistry::local_admin(), None);
+		assert_noop!(AssetsRegistry::set_local_admin(Origin::signed(ALICE), ALICE), BadOrigin);
 
 		assert_ok!(AssetsRegistry::set_local_admin(Origin::signed(ROOT), ALICE));
+		assert_eq!(AssetsRegistry::local_admin(), Some(ALICE));
 	})
 }
 
 #[test]
 fn set_foreign_admin_tests() {
 	new_test_ext().execute_with(|| {
-		assert_noop!(AssetsRegistry::set_foreign_admin(Origin::signed(BOB), BOB), BadOrigin,);
+		assert_eq!(AssetsRegistry::foreign_admin(), None);
+		assert_noop!(AssetsRegistry::set_foreign_admin(Origin::signed(BOB), BOB), BadOrigin);
 
 		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::signed(ROOT), BOB));
+		assert_eq!(AssetsRegistry::foreign_admin(), Some(BOB));
 	})
 }
 
@@ -96,5 +100,39 @@ fn approve_assets_mapping_candidate_tests() {
 			AssetsRegistry::from_foreign_asset(other_foreign_asset_id),
 			Some(other_local_asset_id)
 		);
+	})
+}
+
+#[test]
+fn set_metadata_tests() {
+	new_test_ext().execute_with(|| {
+		let (local_asset_id, foreign_asset_id) = (0, 100);
+		assert_ok!(AssetsRegistry::set_local_admin(Origin::signed(ROOT), ALICE));
+		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::signed(ROOT), BOB));
+
+		assert_noop!(
+			AssetsRegistry::set_metadata(
+				Origin::signed(ALICE),
+				local_asset_id,
+				ForeignMetadata { decimals: 12 }
+			),
+			Error::<Test>::LocalAssetIdNotFound
+		);
+
+		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
+			Origin::signed(ALICE),
+			local_asset_id,
+			foreign_asset_id
+		));
+		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
+			Origin::signed(BOB),
+			local_asset_id,
+			foreign_asset_id
+		));
+		assert_ok!(AssetsRegistry::set_metadata(
+			Origin::signed(ALICE),
+			local_asset_id,
+			ForeignMetadata { decimals: 12 }
+		));
 	})
 }

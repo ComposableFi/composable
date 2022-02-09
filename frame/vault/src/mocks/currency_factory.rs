@@ -3,6 +3,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::traits::CurrencyFactory;
+	use composable_traits::currency::RangeId;
 	use frame_support::{pallet_prelude::*, PalletId};
 	use frame_system::pallet_prelude::OriginFor;
 	use scale_info::TypeInfo;
@@ -19,6 +20,7 @@ pub mod pallet {
 		Clone,
 		codec::Encode,
 		codec::Decode,
+		codec::MaxEncodedLen,
 		serde::Serialize,
 		serde::Deserialize,
 		TypeInfo,
@@ -75,15 +77,15 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
-		pub fn create(_origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-			let currency_id = <Self as CurrencyFactory<MockCurrencyId>>::create()?;
+		pub fn create(_origin: OriginFor<T>, id: RangeId) -> DispatchResultWithPostInfo {
+			let currency_id = <Self as CurrencyFactory<MockCurrencyId>>::create(id)?;
 			Self::deposit_event(Event::Created(currency_id));
 			Ok(().into())
 		}
 	}
 
 	impl<T: Config> CurrencyFactory<MockCurrencyId> for Pallet<T> {
-		fn create() -> Result<MockCurrencyId, DispatchError> {
+		fn create(_: RangeId) -> Result<MockCurrencyId, DispatchError> {
 			let lp_token_id = CurrencyCounter::<T>::mutate(|c| {
 				*c += 1;
 				*c

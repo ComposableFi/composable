@@ -9,12 +9,9 @@
 [![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/composablefi/composable)](https://github.com/composablefi/composable/tags) [![Twitter](https://img.shields.io/badge/Twitter-gray?logo=twitter)](https://twitter.com/ComposableFin) [![Discord](https://img.shields.io/badge/Discord-gray?logo=discord)](https://discord.gg/pFZn2GCn65) [![Telegram](https://img.shields.io/badge/Telegram-gray?logo=telegram)](https://t.me/ComposableFinanceAnnouncements) [![Medium](https://img.shields.io/badge/Medium-gray?logo=medium)](https://composablefi.medium.com/)
 
 
-Picasso is our custom built kusama parachain, based on the substrate framework.
+Picasso is our custom built Kusama parachain, based on the substrate framework.
 
-
-
-
-## Install   
+## Install
 
 For linux, FreeBSD, OpenBSD and macOS:
 
@@ -26,7 +23,7 @@ git clone https://github.com/composableFi/composable
 cd composable/
 sh scripts/init.sh
 cargo build --release
-```   
+```
 
 or you can simply install it with this one liner:    
 

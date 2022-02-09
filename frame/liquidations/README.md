@@ -1,13 +1,12 @@
 # Overview
 
-Used to liquidate collateral from `lending` protocol.  Need to liquidate because of bad collateral factor. It should be sold on exchange as soon as possible.
+Liquidation uses DEX and auctions for swaps. 
 
-- off-chain bots monitor `lending` markets for liquidation opportunities of borrow pairs.
+Uses different engines depending on available liquidity and configuration. 
 
-- uses different engines depending on available liquidity
+Each liqudaiton strategy parameters can be changed by strategy's owner.
 
-- default engine is `dutch-auction`
-
+Default engine is [Dutch Auction](../dutch-auction)
 ## References
 
 https://docs.makerdao.com/smart-contract-modules/dog-and-clipper-detailed-documentation

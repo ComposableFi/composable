@@ -1,6 +1,6 @@
 use crate::*;
 
-use composable_traits::currency::CurrencyFactory;
+use composable_traits::currency::{CurrencyFactory, RangeId};
 use frame_support::{
 	parameter_types,
 	traits::{Everything, GenesisBuild},
@@ -63,7 +63,7 @@ parameter_types! {
 pub struct CurrencyIdGenerator;
 
 impl CurrencyFactory<AssetId> for CurrencyIdGenerator {
-	fn create() -> Result<AssetId, sp_runtime::DispatchError> {
+	fn create(_: RangeId) -> Result<AssetId, sp_runtime::DispatchError> {
 		Ok(1_u64)
 	}
 }
@@ -127,6 +127,7 @@ impl system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {

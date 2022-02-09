@@ -44,6 +44,7 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 
 	fn signed_extras(from: <Self::Runtime as system::Config>::AccountId) -> Self::SignedExtras {
 		(
+			system::CheckNonZeroSender::<Self::Runtime>::new(),
 			system::CheckSpecVersion::<Self::Runtime>::new(),
 			system::CheckTxVersion::<Self::Runtime>::new(),
 			system::CheckGenesis::<Self::Runtime>::new(),

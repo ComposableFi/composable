@@ -1,6 +1,6 @@
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_method,
 		clippy::disallowed_type,
 		clippy::indexing_slicing,
@@ -9,9 +9,9 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix)]
+#![deny(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![warn(
+#![deny(
 	bad_style,
 	bare_trait_objects,
 	const_err,
@@ -32,6 +32,12 @@
 	unused_extern_crates
 )]
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+mod mock;
+
+#[cfg(test)]
+mod tests;
 mod weights;
 
 pub use pallet::*;
@@ -39,7 +45,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use codec::{Decode, Encode, FullCodec};
+	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, Sell, SellEngine},
 		liquidation::Liquidation,
@@ -49,13 +55,17 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::{OptionQuery, StorageMap, StorageValue},
-		traits::{GenesisBuild, Get, IsType, UnixTime},
+		traits::{Get, IsType, UnixTime},
 		PalletId, Parameter, Twox64Concat,
 	};
+
+	#[cfg(feature = "std")]
+	use frame_support::traits::GenesisBuild;
 
 	use frame_system::pallet_prelude::OriginFor;
 	use scale_info::TypeInfo;
 	use sp_runtime::{DispatchError, Permill, Perquintill};
+	use sp_std::vec::Vec;
 
 	use crate::weights::WeightInfo;
 
@@ -74,16 +84,21 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 		>;
 
-		type LiquidationStrategyId: Default + FullCodec + WrappingNext + Parameter + Copy;
+		type LiquidationStrategyId: Default
+			+ FullCodec
+			+ MaxEncodedLen
+			+ WrappingNext
+			+ Parameter
+			+ Copy;
 
-		type OrderId: Default + FullCodec;
+		type OrderId: Default + FullCodec + MaxEncodedLen + sp_std::fmt::Debug;
 
 		type PalletId: Get<PalletId>;
 
 		// /// when called, engine pops latest order to liquidate and pushes back result
 		// type Liquidate: Parameter + Dispatchable<Origin = Self::Origin> + From<Call<Self>>;
 		type WeightInfo: WeightInfo;
-		type ParachainId: FullCodec + Default + Parameter + Clone;
+		type ParachainId: FullCodec + MaxEncodedLen + Default + Parameter + Clone;
 	}
 
 	#[pallet::event]
@@ -108,7 +123,7 @@ pub mod pallet {
 			_origin: OriginFor<T>,
 			_configuraiton: LiquidationStrategyConfiguration<T::ParachainId>,
 		) -> DispatchResultWithPostInfo {
-			Err(DispatchError::Other("no implemented").into())
+			Err(DispatchError::Other("add_liqudation_strategy: no implemented").into())
 		}
 	}
 
@@ -142,16 +157,10 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 	}
 
+	#[cfg(feature = "std")]
+	#[derive(Default)]
 	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config> {
-		_phantom: sp_std::marker::PhantomData<T>,
-	}
-
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			Self { _phantom: <_>::default() }
-		}
-	}
+	pub struct GenesisConfig;
 
 	impl<T: Config> Pallet<T> {
 		pub fn create_strategy_id() -> T::LiquidationStrategyId {
@@ -162,7 +171,7 @@ pub mod pallet {
 		}
 	}
 
-	#[derive(Clone, Debug, Encode, Decode, TypeInfo, PartialEq)]
+	#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 	pub enum LiquidationStrategyConfiguration<ParachainId> {
 		DutchAuction(TimeReleaseFunction),
 		UniswapV2 { slippage: Perquintill },
@@ -183,11 +192,13 @@ pub mod pallet {
 		 *Dynamic { liquidate: Dispatch, minimum_price: Balance }, */
 	}
 
+	#[cfg(feature = "std")]
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			let index = Pallet::<T>::create_strategy_id();
 			DefaultStrategyIndex::<T>::set(index);
+
 			let linear_ten_minutes = LiquidationStrategyConfiguration::DutchAuction(
 				TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 10 * 60 }),
 			);
@@ -228,7 +239,6 @@ pub mod pallet {
 								"as for now, only auction liquidators implemented",
 							)),
 					};
-
 					if result.is_ok() {
 						Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
 						return result

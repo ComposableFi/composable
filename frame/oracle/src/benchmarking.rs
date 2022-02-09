@@ -6,6 +6,7 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whiteli
 use frame_support::{
 	assert_ok,
 	traits::{Currency, EnsureOrigin, Get},
+	BoundedVec,
 };
 use frame_system::{EventRecord, RawOrigin};
 use sp_runtime::{DispatchResult, Percent};
@@ -122,7 +123,7 @@ benchmarks! {
 					block: frame_system::Pallet::<T>::block_number(),
 					who: price_submitter.clone(),
 				};
-				current_prices.push(set_price);
+				current_prices.try_push(set_price).unwrap();
 			}
 			Ok(())
 		})?;
@@ -152,7 +153,7 @@ benchmarks! {
 			}
 		})
 		.collect::<Vec<_>>();
-		PrePrices::<T>::insert(asset_id, pre_prices);
+		PrePrices::<T>::insert(asset_id, BoundedVec::try_from(pre_prices).unwrap());
 	}: {
 		Oracle::<T>::update_pre_prices(asset_id, &asset_info, block)
 	}
@@ -180,7 +181,7 @@ benchmarks! {
 		.collect::<Vec<_>>();
 		// the worst scenerio is when we need to remove a price first so gonna need to fill the price history
 		let price = Price { price: 100u32.into(), block };
-		let historic_prices = vec![price; T::MaxHistory::get() as usize];
+		let historic_prices = BoundedVec::try_from(vec![price; T::MaxHistory::get() as usize]).unwrap();
 		PriceHistory::<T>::insert(asset_id, historic_prices);
 	}: {
 		Oracle::<T>::update_price(asset_id, asset_info.into(), block, pre_prices)

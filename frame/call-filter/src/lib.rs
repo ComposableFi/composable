@@ -36,6 +36,8 @@ pub mod pallet {
 
 	use super::*;
 
+	type CallFilterEntryOf<T> = CallFilterEntry<<T as Config>::MaxStringSize>;
+
 	#[pallet::config]
 	pub trait Config: system::Config {
 		/// Overarching event type
@@ -44,8 +46,18 @@ pub mod pallet {
 		/// The origin which may set filter.
 		type UpdateOrigin: EnsureOrigin<Self::Origin>;
 
+		#[pallet::constant]
+		type MaxStringSize: Get<u32>
+			+ TypeInfo
+			+ core::fmt::Debug
+			+ MaxEncodedLen
+			+ Copy
+			+ Clone
+			+ PartialEq
+			+ Eq;
+
 		/// A hook that is able to block us from disabling/enabling an extrinsic.
-		type Hook: CallFilterHook;
+		type Hook: CallFilterHook<Self::MaxStringSize>;
 
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
@@ -63,17 +75,15 @@ pub mod pallet {
 	#[pallet::generate_deposit(fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Paused transaction
-		Disabled { entry: CallFilterEntry },
+		Disabled { entry: CallFilterEntryOf<T> },
 		/// Unpaused transaction
-		Enabled { entry: CallFilterEntry },
+		Enabled { entry: CallFilterEntryOf<T> },
 	}
 
 	/// The list of disabled extrinsics.
-	///
-	/// CallFilterEntry -> ()
 	#[pallet::storage]
 	#[pallet::getter(fn disabled_calls)]
-	pub type DisabledCalls<T: Config> = StorageMap<_, Twox64Concat, CallFilterEntry, ()>;
+	pub type DisabledCalls<T: Config> = StorageMap<_, Twox64Concat, CallFilterEntryOf<T>, ()>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -88,12 +98,12 @@ pub mod pallet {
 		/// Possibly emits a `Disabled` event.
 		#[pallet::weight(T::WeightInfo::disable())]
 		#[transactional]
-		pub fn disable(origin: OriginFor<T>, entry: CallFilterEntry) -> DispatchResult {
+		pub fn disable(origin: OriginFor<T>, entry: CallFilterEntryOf<T>) -> DispatchResult {
 			T::UpdateOrigin::ensure_origin(origin)?;
 			ensure!(entry.valid(), Error::<T>::InvalidString);
 			// We are not allowed to disable this pallet.
 			ensure!(
-				entry.pallet_name != <Self as PalletInfoAccess>::name().as_bytes(),
+				entry.pallet_name.to_vec() != <Self as PalletInfoAccess>::name().as_bytes(),
 				Error::<T>::CannotDisable
 			);
 			Self::do_disable(&entry)?;
@@ -108,7 +118,7 @@ pub mod pallet {
 		/// Possibly emits an `Enabled` event.
 		#[pallet::weight(T::WeightInfo::enable())]
 		#[transactional]
-		pub fn enable(origin: OriginFor<T>, entry: CallFilterEntry) -> DispatchResult {
+		pub fn enable(origin: OriginFor<T>, entry: CallFilterEntryOf<T>) -> DispatchResult {
 			T::UpdateOrigin::ensure_origin(origin)?;
 			ensure!(entry.valid(), Error::<T>::InvalidString);
 			Self::do_enable(&entry)?;
@@ -117,11 +127,11 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn disabled(entry: &CallFilterEntry) -> bool {
+		pub(crate) fn disabled(entry: &CallFilterEntryOf<T>) -> bool {
 			DisabledCalls::<T>::contains_key(entry)
 		}
 
-		pub(crate) fn do_enable(entry: &CallFilterEntry) -> DispatchResult {
+		pub(crate) fn do_enable(entry: &CallFilterEntryOf<T>) -> DispatchResult {
 			if Self::disabled(entry) {
 				T::Hook::enable_hook(entry)?;
 				DisabledCalls::<T>::remove(entry);
@@ -130,7 +140,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		pub(crate) fn do_disable(entry: &CallFilterEntry) -> DispatchResult {
+		pub(crate) fn do_disable(entry: &CallFilterEntryOf<T>) -> DispatchResult {
 			if !Self::disabled(entry) {
 				T::Hook::disable_hook(entry)?;
 				DisabledCalls::<T>::insert(entry, ());
@@ -140,15 +150,15 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> CallFilter for Pallet<T> {
-		fn disabled(entry: &CallFilterEntry) -> bool {
+	impl<T: Config> CallFilter<T::MaxStringSize> for Pallet<T> {
+		fn disabled(entry: &CallFilterEntryOf<T>) -> bool {
 			Self::disabled(entry)
 		}
-		fn enable(entry: &CallFilterEntry) -> DispatchResult {
+		fn enable(entry: &CallFilterEntryOf<T>) -> DispatchResult {
 			Self::do_enable(entry)
 		}
 
-		fn disable(entry: &CallFilterEntry) -> DispatchResult {
+		fn disable(entry: &CallFilterEntryOf<T>) -> DispatchResult {
 			Self::do_disable(entry)
 		}
 	}
@@ -159,10 +169,14 @@ pub mod pallet {
 	{
 		fn contains(call: &T::Call) -> bool {
 			let CallMetadata { function_name, pallet_name } = call.get_call_metadata();
-			DisabledCalls::<T>::contains_key(CallFilterEntry {
-				pallet_name: pallet_name.as_bytes().to_vec(),
-				function_name: function_name.as_bytes().to_vec(),
-			})
+			match (
+				BoundedVec::try_from(pallet_name.as_bytes().to_vec()),
+				BoundedVec::try_from(function_name.as_bytes().to_vec()),
+			) {
+				(Ok(pallet_name), Ok(function_name)) =>
+					DisabledCalls::<T>::contains_key(CallFilterEntry { pallet_name, function_name }),
+				_ => false,
+			}
 		}
 	}
 }

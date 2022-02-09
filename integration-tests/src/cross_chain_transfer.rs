@@ -3,13 +3,14 @@ use codec::Encode;
 use common::AccountId;
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 use cumulus_primitives_core::ParaId;
+use dali_runtime as picasso_runtime;
 use orml_traits::currency::MultiCurrency;
-use picasso_runtime as dali_runtime;
 use primitives::currency::*;
 use sp_runtime::traits::AccountIdConversion;
 use support::assert_ok;
 use xcm::latest::prelude::*;
 use xcm_emulator::TestExt;
+use xcm_executor::XcmExecutor;
 
 /// assumes that our parachain has native relay token on relay account
 /// and kusama can send xcm message to our network and transfer native token onto local network
@@ -202,7 +203,7 @@ fn transfer_insufficient_amount_should_fail() {
 				MultiLocation::new(
 					1,
 					X2(
-						Junction::Parachain(2000),
+						Junction::Parachain(PICASSO_PARA_ID),
 						Junction::AccountId32 { id: BOB, network: NetworkId::Any }
 					)
 				)
@@ -222,9 +223,133 @@ fn transfer_insufficient_amount_should_fail() {
 	});
 }
 
+/// Acala's tests
 #[test]
+#[ignore]
+fn transfer_from_relay_chain_deposit_to_treasury_if_below_ed() {
+	KusamaRelay::execute_with(|| {
+		assert_ok!(kusama_runtime::XcmPallet::reserve_transfer_assets(
+			kusama_runtime::Origin::signed(ALICE.into()),
+			Box::new(Parachain(PICASSO_PARA_ID).into().into()),
+			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
+			Box::new((Here, 128_000_111).into()),
+			0
+		));
+	});
+
+	Picasso::execute_with(|| {
+		assert_eq!(
+			picasso_runtime::Tokens::free_balance(CurrencyId::KSM, &AccountId::from(BOB)),
+			0
+		);
+		assert_eq!(
+			picasso_runtime::Tokens::free_balance(
+				CurrencyId::KSM,
+				&picasso_runtime::TreasuryAccount::get()
+			),
+			1_000_128_000_111
+		);
+	});
+}
+
+#[test]
+#[ignore]
+fn xcm_transfer_execution_barrier_trader_works() {
+	let expect_weight_limit = 600_000_000;
+	let weight_limit_too_low = 500_000_000;
+	let unit_instruction_weight = 200_000_000;
+
+	// relay-chain use normal account to send xcm, destination para-chain can't pass Barrier check
+	let message = Xcm(vec![
+		ReserveAssetDeposited((Parent, 100).into()),
+		BuyExecution { fees: (Parent, 100).into(), weight_limit: Unlimited },
+		DepositAsset { assets: All.into(), max_assets: 1, beneficiary: Here.into() },
+	]);
+	KusamaRelay::execute_with(|| {
+		let r = pallet_xcm::Pallet::<kusama_runtime::Runtime>::send(
+			kusama_runtime::Origin::signed(ALICE.into()),
+			Box::new(Parachain(PICASSO_PARA_ID).into().into()),
+			Box::new(xcm::VersionedXcm::from(message)),
+		);
+		assert_ok!(r);
+	});
+	Picasso::execute_with(|| {
+		assert!(picasso_runtime::System::events().iter().any(|r| matches!(
+			r.event,
+			picasso_runtime::Event::DmpQueue(cumulus_pallet_dmp_queue::Event::ExecutedDownward(
+				_,
+				Outcome::Error(XcmError::Barrier)
+			))
+		)));
+	});
+
+	// AllowTopLevelPaidExecutionFrom barrier test case:
+	// para-chain use XcmExecutor `execute_xcm()` method to execute xcm.
+	// if `weight_limit` in BuyExecution is less than `xcm_weight(max_weight)`, then Barrier can't
+	// pass. other situation when `weight_limit` is `Unlimited` or large than `xcm_weight`, then
+	// it's ok.
+	let message = Xcm::<picasso_runtime::Call>(vec![
+		ReserveAssetDeposited((Parent, 100).into()),
+		BuyExecution { fees: (Parent, 100).into(), weight_limit: Limited(weight_limit_too_low) },
+		DepositAsset { assets: All.into(), max_assets: 1, beneficiary: Here.into() },
+	]);
+	Picasso::execute_with(|| {
+		let r = XcmExecutor::<picasso_runtime::XcmConfig>::execute_xcm(
+			Parent,
+			message,
+			expect_weight_limit,
+		);
+		assert_eq!(r, Outcome::Error(XcmError::Barrier));
+	});
+
+	// trader inside BuyExecution have TooExpensive error if payment less than calculated weight
+	// amount. the minimum of calculated weight amount(`FixedRateOfFungible<KsmPerSecond>`) is
+	// 96_000_000
+	let message = Xcm::<picasso_runtime::Call>(vec![
+		ReserveAssetDeposited((Parent, 95_999_999).into()),
+		BuyExecution {
+			fees: (Parent, 95_999_999).into(),
+			weight_limit: Limited(expect_weight_limit),
+		},
+		DepositAsset { assets: All.into(), max_assets: 1, beneficiary: Here.into() },
+	]);
+	Picasso::execute_with(|| {
+		let r = XcmExecutor::<picasso_runtime::XcmConfig>::execute_xcm(
+			Parent,
+			message,
+			expect_weight_limit,
+		);
+		assert_eq!(
+			r,
+			Outcome::Incomplete(
+				expect_weight_limit - unit_instruction_weight,
+				XcmError::TooExpensive
+			)
+		);
+	});
+
+	// all situation fulfilled, execute success
+	let message = Xcm::<picasso_runtime::Call>(vec![
+		ReserveAssetDeposited((Parent, 96_000_000).into()),
+		BuyExecution {
+			fees: (Parent, 96_000_000).into(),
+			weight_limit: Limited(expect_weight_limit),
+		},
+		DepositAsset { assets: All.into(), max_assets: 1, beneficiary: Here.into() },
+	]);
+	Picasso::execute_with(|| {
+		let r = XcmExecutor::<picasso_runtime::XcmConfig>::execute_xcm(
+			Parent,
+			message,
+			expect_weight_limit,
+		);
+		assert_eq!(r, Outcome::Complete(expect_weight_limit));
+	});
+}
+
+#[test]
+#[ignore]
 fn subscribe_version_notify_works() {
-	env_logger_init();
 	// relay chain subscribe version notify of para chain
 	KusamaRelay::execute_with(|| {
 		let r = pallet_xcm::Pallet::<kusama_runtime::Runtime>::force_subscribe_version_notify(
@@ -257,5 +382,32 @@ fn subscribe_version_notify_works() {
 				2,
 			),
 		));
+	});
+
+	// para chain subscribe version notify of sibling chain
+	Picasso::execute_with(|| {
+		let r = pallet_xcm::Pallet::<picasso_runtime::Runtime>::force_subscribe_version_notify(
+			picasso_runtime::Origin::root(),
+			Box::new((Parent, Parachain(PICASSO_PARA_ID)).into()),
+		);
+		assert_ok!(r);
+	});
+	Picasso::execute_with(|| {
+		assert!(picasso_runtime::System::events().iter().any(|r| matches!(
+			r.event,
+			picasso_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent(
+				Some(_)
+			))
+		)));
+	});
+	Dali::execute_with(|| {
+		assert!(dali_runtime::System::events().iter().any(|r| matches!(
+			r.event,
+			picasso_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent(
+				Some(_)
+			)) | picasso_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::Success(
+				Some(_)
+			))
+		)));
 	});
 }

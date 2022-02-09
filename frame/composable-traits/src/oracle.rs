@@ -22,6 +22,8 @@ pub trait Oracle {
 	/// Which is 0.01 of USDT. `Result::Err` is returned if `asset_id` not supported or price
 	/// information not available.
 	///
+	/// Returns last price as it known.
+	///
 	/// # Normal assets
 	///
 	/// Assuming we have a price `price` for an unit (not smallest) of `asset_id` in USDT cents.
@@ -49,6 +51,9 @@ pub trait Oracle {
 	/// price (Base BTC) = 5000000
 	/// price (Vaulted base stock_dilution_rate) = price base * stock_dilution_rate
 	/// ```
+	///
+	/// Semantically this method is `get_ratio` for `asset_id` and price pegging asset multiplied by
+	/// `amount`
 	fn get_price(
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
@@ -80,4 +85,12 @@ pub trait Oracle {
 	/// let needed_base_for_quote = base_amount * ratio; // 300.0
 	/// ```
 	fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<Ratio, DispatchError>;
+
+	/// Given `asset_id` and `amount` of price asset.
+	/// Returns what amount of  `asset_id` will be required to be same price as `amount` of
+	/// normalized currency
+	fn get_price_inverse(
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
 }
