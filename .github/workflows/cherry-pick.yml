@@ -1,7 +1,37 @@
-name: "Auto cherry pick labelled PRs"
-
-on:
+name: Auto Cherry Pick
+on: 
   push:
     branches:
       - main
 
+jobs:
+  cherry-pick-commits:
+    runs-on: 
+        - self-hosted
+        - linux
+        - X64
+        - sre
+
+    steps:
+    - name: Clean up
+      continue-on-error: true
+      run: |
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+        docker system prune --force --all --volumes
+
+    - name: Get commits
+      id: get_commit
+      run: |
+        yarn get-commit-for-pr --repo=composableFi/composable --commit_sha=$GITHUB_SHA #on push only
+        echo ${{ steps.get_commit.outputs }} >> outputs.txt
+        cat outputs.txt
+
+    - name: Run cherry pick actions
+      if: ${{ steps.get_commit.outputs.cherry_pick == 1 }}
+      uses: gorillio/github-action-cherry-pick@master
+      with:
+        pr_branch: '0.1.x'
+      env:
+        GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        GITBOT_EMAIL: <BOT_EMAIL>
+        DRY_RUN: false
