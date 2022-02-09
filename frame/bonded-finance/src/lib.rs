@@ -216,9 +216,10 @@ pub mod pallet {
 		///
 		/// Emits a `NewOffer`.
 		#[pallet::weight(10_000)]
-		pub fn offer(origin: OriginFor<T>, offer: BondOfferOf<T>) -> DispatchResult {
+		pub fn offer(origin: OriginFor<T>, offer: Validated<BondOfferOf<T>, ValidBondOffer<T>>) -> DispatchResult {
 			let from = ensure_signed(origin)?;
-			Self::do_offer(&from, offer)?;
+			let value = offer.value();
+			Self::do_offer(&from, value)?;
 			Ok(())
 		}
 
