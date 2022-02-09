@@ -46,14 +46,6 @@ jobs:
       - uses: release-drafter/release-drafter@v5
         id: release_drafter
 
-      # - name: Set env
-      #   env:
-      #     RELEASE_VERSION: ${{ steps.release_drafter.outputs.tag_name }}
-      #   run: |
-      #     RELEASE_VERSION="${RELEASE_VERSION:1}"
-      #     echo $RELEASE_VERSION
-      #     make version
-
       - name: Set Permission
         continue-on-error: true
         run: |
@@ -114,6 +106,7 @@ jobs:
           # this is so that the binary version corresponds with the release tag.
           RELEASE_VERSION: ${{ steps.release_drafter.outputs.tag_name }}
         run: |
+          RELEASE_VERSION=${RELEASE_VERSION:1} # remove the 'v' at the beginining of the tag name
           .maintain/client_release.sh
 
       # This uploads the client binary built in the previous step to the release draft
