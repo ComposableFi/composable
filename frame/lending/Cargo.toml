@@ -45,6 +45,7 @@ scale-info = { version = "1.0", default-features = false, features = [
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
+composable-traits = { path = "../composable-traits", features = ["test-utils"] }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 hex-literal = "0.3.3"
 once_cell = "1.8.0"

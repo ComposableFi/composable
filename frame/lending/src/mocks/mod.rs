@@ -1,6 +1,7 @@
 use self::currency::CurrencyId;
 pub use self::currency::*;
 use crate::{self as pallet_lending, *};
+use composable_support::math::safe::SafeAdd;
 use composable_traits::{
 	currency::{Exponent, LocalAssets},
 	defi::DeFiComposableConfig,
@@ -238,9 +239,9 @@ impl pallet_assets::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinBalance : Balance = 0;
-	pub const MinU32 : u32 = 0;
-	pub const MinU64 : u64 = 0;
+	pub const MinBalance: Balance = 0;
+	pub const MinU32: u32 = 0;
+	pub const MinU64: u64 = 0;
 }
 
 pub struct Decimals;
@@ -373,7 +374,7 @@ where
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
-	pub OracleMarketCreationStake : Balance = NORMALIZED::one();
+	pub OracleMarketCreationStake: Balance = NORMALIZED::ONE;
 }
 
 parameter_types! {
@@ -403,7 +404,7 @@ impl pallet_lending::Config for Runtime {
 	type CurrencyFactory = LpTokenFactory;
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
-	type MaxLendingCount = MaxLendingCount;
+	type MaxMarketCount = MaxLendingCount;
 	type AuthorityId = crypto::TestAuthId;
 	type WeightInfo = ();
 	type LiquidationStrategyId = LiquidationStrategyId;
@@ -413,8 +414,11 @@ impl pallet_lending::Config for Runtime {
 	type WeightToFee = WeightToFee;
 }
 
-pub fn set_price(asset_id: CurrencyId, balance: Balance) {
-	let price = Price { price: balance, block: System::block_number() };
+/// Convenience function to set the price of an asset in [`pallet_oracle::Prices`].
+///
+/// Sets the price at the current `System::block_number()`.
+pub fn set_price(asset_id: CurrencyId, new_price: Balance) {
+	let price = Price { price: new_price, block: System::block_number() };
 	pallet_oracle::Prices::<Runtime>::insert(asset_id, price);
 }
 
@@ -437,31 +441,37 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	let mut ext = sp_io::TestExternalities::new(storage);
 	ext.execute_with(|| {
-		System::set_block_number(0);
+		System::set_block_number(1);
 		Timestamp::set_timestamp(MILLISECS_PER_BLOCK);
 	});
 	ext
 }
 
-/// Progress to the given block, and then finalize the block.
-#[allow(dead_code)]
-pub fn run_to_block(n: BlockNumber) {
-	Lending::on_finalize(System::block_number());
-	for b in (System::block_number() + 1)..=n {
-		next_block(b);
-		if b != n {
-			Lending::on_finalize(System::block_number());
-		}
-	}
+// BLOCK HELPERS
+
+/// Processes the specified amount alls [`next_block()`] and then calls
+/// [`Lending::finalize`](OnFinalize::on_finalize).
+pub fn process_and_progress_blocks(blocks_to_process: usize) {
+	(0..blocks_to_process).for_each(|_| {
+		let new_block = next_block();
+		Lending::on_finalize(new_block);
+	})
 }
 
-pub fn process_block(n: BlockNumber) {
-	next_block(n);
-	Lending::on_finalize(n);
-}
+/// Progresses to the next block, initializes the block with
+/// [`Lending::on_initialize`](OnInitialize::on_initialize), and then sets the timestamp to where it
+/// should be for the block. Returns the next block.
+pub fn next_block() -> BlockNumber {
+	let next_block = System::block_number()
+		.safe_add(&1)
+		.expect("hit the numeric limit for block number");
 
-pub fn next_block(n: u64) {
-	System::set_block_number(n);
-	Lending::on_initialize(n);
-	Timestamp::set_timestamp(MILLISECS_PER_BLOCK * n);
+	// println!("PROCESSING BLOCK {}", next_block); // uncomment if you want to obliterate your
+	// terminal
+
+	System::set_block_number(next_block);
+	Timestamp::set_timestamp(MILLISECS_PER_BLOCK * next_block);
+	Lending::on_initialize(next_block);
+
+	next_block
 }
