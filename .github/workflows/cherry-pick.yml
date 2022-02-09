@@ -1,0 +1,41 @@
+name: Auto Cherry Pick
+on: 
+  push:
+    branches:
+      - main
+      - create-clean-release
+
+jobs:
+  cherry-pick-commits:
+    runs-on: 
+        - self-hosted
+        - linux
+        - X64
+        - sre
+
+    steps:
+    - name: Clean up
+      continue-on-error: true
+      run: |
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+        docker system prune --force --all --volumes
+    - uses: actions/setup-node@v2
+      with:
+        node-version: "16"
+
+    - name: Get commits
+      id: get_commit
+      run: |
+        cd scripts/github && npm install
+        npm run get-commit-for-pr -- --repo=composableFi/composable --commit_sha=$GITHUB_SHA
+        echo ${{ steps.get_commit.outputs }}
+
+    - name: Run cherry pick actions
+      if: ${{ steps.get_commit.outputs.cherry_pick == 1 }}
+      uses: gorillio/github-action-cherry-pick@master
+      with:
+        pr_branch: '0.1.x'
+      env:
+        GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        GITBOT_EMAIL: <BOT_EMAIL>
+        DRY_RUN: false
