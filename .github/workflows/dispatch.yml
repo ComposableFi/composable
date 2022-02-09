@@ -1,7 +1,8 @@
-name: Run Ansible Playbooks
-
+name: Workflow Dispatcher
 on: 
-  workflow_dispatch:
+  push:
+    branches:
+        - github-workflows-dispatch
     
        
 
