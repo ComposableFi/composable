@@ -19,7 +19,7 @@ pub trait BondOfferComparer<T> {
 	fn min_reward() -> T;
 }
 
-impl<T: Config + TypeInfo> Validate<BondOfferOf<T>, ValidBondOffer<T>> for ValidBondOffer<T> where
+impl<T: Config> Validate<BondOfferOf<T>, ValidBondOffer<T>> for ValidBondOffer<T> where
 	ValidBondOffer<T>: BondOfferComparer<BalanceOf<T>> {
 
 	fn validate(input: BondOfferOf<T>) -> Result<BondOfferOf<T>, &'static str> {
