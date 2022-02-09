@@ -28,7 +28,7 @@ impl<T: CheckedAdd + CheckedMul + CheckedDiv + CheckedSub + Zero> SafeArithmetic
 	#[inline(always)]
 	fn safe_div(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
 		if rhs.is_zero() {
-			return Err(ArithmeticError::DivisionByZero);
+			return Err(ArithmeticError::DivisionByZero)
 		}
 
 		self.checked_div(rhs).ok_or(ArithmeticError::Overflow)

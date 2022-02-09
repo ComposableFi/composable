@@ -354,9 +354,10 @@ pub mod pallet {
 			Self::exchange(who, pool_id, pool.pair.swap(), amount, T::Balance::zero(), keep_alive)
 		}
 
-		// NOTE(hussein-aitlahcen): the direction of the order (buy/sell) is determined by the order of the pair.
-		// This code will execute a buy on a/b, the user providing the quote asset b for base asset a.
-		// Selling a for b is done by swapping the pair prior to calling `exchange`.
+		// NOTE(hussein-aitlahcen): the direction of the order (buy/sell) is determined by the order
+		// of the pair. This code will execute a buy on a/b, the user providing the quote asset b
+		// for base asset a. Selling a for b is done by swapping the pair prior to calling
+		// `exchange`.
 		fn exchange(
 			who: &Self::AccountId,
 			pool_id: T::PoolId,
@@ -366,7 +367,8 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			// /!\ NOTE(hussein-aitlahcen): after this check, do not use pool.pair as the provided pair might have been swapped
+			// /!\ NOTE(hussein-aitlahcen): after this check, do not use pool.pair as the provided
+			// pair might have been swapped
 			ensure!(pair == pool.pair, Error::<T>::PairMismatch);
 
 			let (base_amount, quote_amount, lp_fees, owner_fees) =

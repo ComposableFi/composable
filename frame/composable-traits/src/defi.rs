@@ -87,8 +87,8 @@ pub struct CurrencyPair<AssetId> {
 
 impl<AssetId: PartialEq> PartialEq for CurrencyPair<AssetId> {
 	fn eq(&self, other: &Self) -> bool {
-		(self.base == other.base && self.quote == other.quote)
-			|| (self.base == other.quote && self.quote == other.base)
+		(self.base == other.base && self.quote == other.quote) ||
+			(self.base == other.quote && self.quote == other.base)
 	}
 }
 

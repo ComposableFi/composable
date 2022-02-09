@@ -68,8 +68,8 @@ pub trait CurveAmm {
 	) -> Result<(), DispatchError>;
 
 	/// Perform an exchange.
-	/// This operation is a buy order on the provided `pair`, effectively trading the quote asset against the base one.
-	/// The pair can be swapped to execute a sell order.
+	/// This operation is a buy order on the provided `pair`, effectively trading the quote asset
+	/// against the base one. The pair can be swapped to execute a sell order.
 	fn exchange(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,

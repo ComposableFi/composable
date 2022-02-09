@@ -1,8 +1,10 @@
 use crate::mock::*;
 use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 use composable_traits::{defi::CurrencyPair, dex::CurveAmm as ConstantProductAmmTrait};
-use frame_support::assert_ok;
-use frame_support::traits::fungibles::{Inspect, Mutate};
+use frame_support::{
+	assert_ok,
+	traits::fungibles::{Inspect, Mutate},
+};
 use proptest::prelude::*;
 use sp_runtime::Permill;
 
