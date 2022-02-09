@@ -42,9 +42,9 @@ pub struct CreateInput<LiquidationStrategyId, AssetId> {
 	pub reserved_factor: Perquintill,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+#[derive(Clone, Copy, Debug, PartialEq, TypeInfo, Default)]
 pub struct MarketModelValid;
-#[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+#[derive(Clone, Copy, Debug, PartialEq, TypeInfo, Default)]
 pub struct CurrencyPairIsNotSame;
 
 impl<LiquidationStrategyId, Asset: Eq>

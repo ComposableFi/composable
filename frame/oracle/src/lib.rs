@@ -32,7 +32,7 @@ pub mod pallet {
 	use composable_traits::{
 		currency::LocalAssets,
 		math::SafeArithmetic,
-		oracle::{Oracle, Price as LastPrice},
+		oracle::{Oracle, Price},
 	};
 	use core::ops::{Div, Mul};
 	use frame_support::{
@@ -167,14 +167,6 @@ pub mod pallet {
 		pub price: PriceValue,
 		pub block: BlockNumber,
 		pub who: AccountId,
-	}
-
-	// block timestamped value
-	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
-	pub struct Price<PriceValue, BlockNumber> {
-		/// value
-		pub price: PriceValue,
-		pub block: BlockNumber,
 	}
 
 	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Clone, TypeInfo)]
@@ -388,7 +380,7 @@ pub mod pallet {
 		fn get_price(
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
-		) -> Result<LastPrice<Self::Balance, Self::Timestamp>, DispatchError> {
+		) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
 				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
 			let unit = 10_u128
@@ -399,7 +391,7 @@ pub mod pallet {
 			let price = price
 				.try_into()
 				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			Ok(LastPrice { price, block })
+			Ok(Price { price, block })
 		}
 
 		fn get_twap(
@@ -420,6 +412,7 @@ pub mod pallet {
 				Self::get_price(pair.quote, (10 ^ T::LocalAssets::decimals(pair.base)?).into())?
 					.price
 					.into();
+
 			let base = FixedU128::saturating_from_integer(base);
 			let quote = FixedU128::saturating_from_integer(quote);
 			Ok(base.safe_div(&quote)?)
@@ -436,6 +429,7 @@ pub mod pallet {
 			// so we need 2_500 asset amount to pay for 10 normalized
 			let unit = 10 ^ (T::LocalAssets::decimals(asset_id))?;
 			let price_asset_for_unit: u128 = Self::get_price(asset_id, unit.into())?.price.into();
+
 			let amount: u128 = amount.into();
 			let result = multiply_by_rational(amount, unit as u128, price_asset_for_unit)?;
 			let result: u64 = result

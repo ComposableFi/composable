@@ -22,7 +22,7 @@ libsecp256k1 = { version = "0.7.0", default-features = false, features = [
     "hmac",
     "static-context",
 ] }
-hex-literal = "0.3"
+hex-literal = "0.3.3"
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, features = [ "std" ]}
 
 [dependencies]
