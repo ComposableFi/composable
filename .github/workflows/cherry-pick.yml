@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - create-clean-release
 
 jobs:
   cherry-pick-commits:
