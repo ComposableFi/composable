@@ -381,7 +381,6 @@ impl pallet_lending::Config for Test {
 	type MarketCreationStake = MarketCreationStake;
 
 	type WeightToFee = WeightToFee;
-	type LiquidatorOrigin = EnsureSignedBy<RootAccount, AccountId>;
 }
 
 // Build genesis storage according to the mock runtime.

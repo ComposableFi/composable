@@ -245,8 +245,6 @@ pub mod pallet {
 			+ NativeInspect<Self::AccountId, Balance = Self::Balance>;
 		/// Convert a weight value into a deductible fee based on the currency type.
 		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
-
-		type LiquidatorOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::pallet]
@@ -670,7 +668,6 @@ pub mod pallet {
 			borrowers: Vec<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin.clone())?;
-			T::LiquidatorOrigin::ensure_origin(origin)?;
 			Self::liquidate_internal(&sender, &market_id, borrowers.clone())?;
 			Self::deposit_event(Event::LiquidationInitiated { market_id, borrowers });
 			Ok(().into())
