@@ -22,7 +22,7 @@ impl< AccountId,
 		AssetId,
 		Balance: PartialOrd + Zero + SafeArithmetic + From<u64>,
 		BlockNumber: Zero,
-	> Validate<BondOffer<AccountId, AssetId, Balance, BlockNumber>, ValidBondOffer<u64>>
+	> Validate<BondOffer<AccountId, AssetId, Balance, BlockNumber>, ValidBondOffer<Balance>>
 	for ValidBondOffer<Balance>
 where
 	ValidBondOffer<Balance>: BondOfferComparer<Balance>,
