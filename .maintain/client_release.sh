@@ -17,7 +17,6 @@ PREV_TAG=$(gh release list -L=2 | sed -n '2 p' | awk '{print $(NF-1)}')
 
 if has_client_changes "${PREV_TAG}" "${GITHUB_REF_NAME}"; then
   boldprint "Building new client binaries"
-  make version
   cargo build --release -p composable
   tar -czvf composable-"${RELEASE_VERSION}".tar.gz target/release/composable
   gsutil cp *.tar.gz gs://composable-binaries/community-releases/"${RELEASE_VERSION}"/

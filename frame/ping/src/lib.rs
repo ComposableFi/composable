@@ -107,6 +107,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		MaxPayload,
+		MaxTargets,
 	}
 
 	#[pallet::hooks]
@@ -154,7 +155,7 @@ pub mod pallet {
 			ensure_root(origin)?;
 			let payload = payload.try_into().map_err(|_| Error::<T>::MaxPayload)?;
 			Targets::<T>::mutate(|t| -> DispatchResult {
-				t.try_push((para, payload)).map_err(|_| Error::<T>::MaxPayload)?;
+				t.try_push((para, payload)).map_err(|_| Error::<T>::MaxTargets)?;
 				Ok(())
 			})?;
 
@@ -172,7 +173,7 @@ pub mod pallet {
 			let payload = BoundedVec::try_from(payload).map_err(|_| Error::<T>::MaxPayload)?;
 			for _ in 0..count {
 				Targets::<T>::try_mutate(|t| -> DispatchResult {
-					t.try_push((para, payload.clone())).map_err(|_| Error::<T>::MaxPayload)?;
+					t.try_push((para, payload.clone())).map_err(|_| Error::<T>::MaxTargets)?;
 					Ok(())
 				})?;
 			}

@@ -1,0 +1,13 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 20efd142f10163db65eea259510a93ad472d6a49ba67a0b646fff6435290e1b6 # shrinks to account = 4, (first, second, third) = (0, 1, 0)
+cc 327525ca501c2ab7a4f4daa1da4ac84d07c9d97c5c6372d1b3a0fa81f717286e # shrinks to account = 4, (first, second, third) = (1, 1, 2)
+cc ce3d124e22f20c67299bc947d380cdf0b56ad321da80d72237c9fe7a962252be # shrinks to account = 4, (first, second, third) = (1, 3342962607543325202, 1671481303771662602)
+cc 71383057429331bfd457611b053a060b320d28a421143048c99aad89d5a03290 # shrinks to (account) = 4, asset_id = 3, (first, second, third) = (4709514521593592090, 1, 1)
+cc 746973a4cd4c0eee46780b4c04065c56a8c0d38e818330ed4e7ac0505749f012 # shrinks to (account) = 4, asset_id = 3, (first, second, third) = (1, 1, 3)
+cc 0c3343591f4e77c3d1a8831359b078519456ea59d95de2f27496dcf3c82055f3 # shrinks to (account_1, account_2) = (4, 9223372036854775808), asset_id = 3, (first, second, third) = (4916917311941080572, 2680442143551704399, 5932467306275686073)
+cc 4509a63e6fb6971b695c912359b3d00c5ff20a48fa9c71bb2414578a6fcf8f0f # shrinks to (account_1, account_2) = (4, 9223372036854775808), asset_id = 3, (first, second, third) = (2533881501136709277, 5066758077698663498, 5779346417175515343)

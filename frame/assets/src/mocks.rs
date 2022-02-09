@@ -1,7 +1,10 @@
 use crate::*;
 
-use composable_traits::currency::CurrencyFactory;
-use frame_support::{parameter_types, traits::Everything};
+use composable_traits::currency::{CurrencyFactory, RangeId};
+use frame_support::{
+	parameter_types,
+	traits::{Everything, GenesisBuild},
+};
 use frame_system as system;
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
@@ -18,6 +21,19 @@ pub type AccountId = u64;
 pub type AssetId = u64;
 pub type Amount = i128;
 pub type Balance = u64;
+
+pub const ALICE: AccountId = 1;
+pub const BOB: AccountId = 2;
+pub const CHARLIE: AccountId = 3;
+pub const DARWIN: AccountId = 4;
+
+pub const ACCOUNT_FREE_START: AccountId = CHARLIE + 1;
+
+pub const MINIMUM_BALANCE: Balance = 1;
+
+pub const ASSET_1: AssetId = 1;
+pub const ASSET_2: AssetId = 2;
+pub const ASSET_FREE_START: AssetId = ASSET_2 + 1;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -47,7 +63,7 @@ parameter_types! {
 pub struct CurrencyIdGenerator;
 
 impl CurrencyFactory<AssetId> for CurrencyIdGenerator {
-	fn create() -> Result<AssetId, sp_runtime::DispatchError> {
+	fn create(_: RangeId) -> Result<AssetId, sp_runtime::DispatchError> {
 		Ok(1_u64)
 	}
 }
@@ -130,12 +146,27 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 }
 
-// Build genesis storage according to the mock runtime.
+pub const BALANCES: [(AccountId, Balance); 4] =
+	[(ALICE, 1000), (BOB, 1000), (CHARLIE, 1000), (DARWIN, 1000)];
+
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	let genesis = pallet_balances::GenesisConfig::<Test> {
-		balances: vec![(0, 1000), (1, 1000), (2, 1000), (3, 1000)],
-	};
+	let genesis = pallet_balances::GenesisConfig::<Test> { balances: Vec::from(BALANCES) };
 	genesis.assimilate_storage(&mut t).unwrap();
 	t.into()
+}
+
+pub fn new_test_ext_multi_currency() -> sp_io::TestExternalities {
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
+
+	let balances: Vec<(AccountId, AssetId, Balance)> =
+		vec![(ALICE, ASSET_1, 1000), (BOB, ASSET_2, 1000)];
+
+	orml_tokens::GenesisConfig::<Test> { balances }
+		.assimilate_storage(&mut t)
+		.unwrap();
+
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| System::set_block_number(1));
+	ext
 }

@@ -1193,7 +1193,7 @@ pub mod pallet {
 					liquidators: config_input.updatable.liquidators,
 				};
 
-				let debt_asset_id = T::CurrencyFactory::create()?;
+				let debt_asset_id = T::CurrencyFactory::reserve_lp_token_id()?;
 				DebtMarkets::<T>::insert(market_id, debt_asset_id);
 				Markets::<T>::insert(market_id, config);
 				BorrowIndex::<T>::insert(market_id, ZeroToOneFixedU128::one());

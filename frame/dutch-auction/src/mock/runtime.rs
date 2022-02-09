@@ -10,7 +10,7 @@ use frame_support::{
 	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 	PalletId,
 };
-use frame_system::EnsureSignedBy;
+use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 use orml_traits::parameter_type_with_key;
 use smallvec::smallvec;
@@ -175,14 +175,12 @@ impl pallet_assets::Config for Runtime {
 	type GovernanceRegistry = GovernanceRegistry;
 }
 
-parameter_types! {
-	pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LpToken(0);
-}
-
 impl pallet_currency_factory::Config for Runtime {
 	type Event = Event;
-	type DynamicCurrencyId = CurrencyId;
-	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
+	type AssetId = CurrencyId;
+	type AddOrigin = EnsureRoot<AccountId>;
+	type ReserveOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -215,19 +213,12 @@ impl WeightToFeePolynomial for WeightToFee {
 
 impl pallet_dutch_auction::Config for Runtime {
 	type Event = Event;
-
 	type UnixTime = Timestamp;
-
 	type OrderId = OrderId;
-
 	type MultiCurrency = Assets;
-
 	type WeightInfo = ();
-
 	type WeightToFee = WeightToFee;
-
 	type PalletId = DutchAuctionPalletId;
-
 	type NativeCurrency = Balances;
 }
 

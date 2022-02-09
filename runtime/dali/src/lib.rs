@@ -25,6 +25,7 @@ use common::{
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
 	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
+use cumulus_primitives_core::ParaId;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -103,7 +104,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
 	spec_version: 1000,
-	impl_version: 3,
+	impl_version: 4,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
 	state_version: 0,
@@ -443,7 +444,7 @@ impl oracle::Config for Runtime {
 	type MaxHistory = MaxHistory;
 	type MaxPrePrices = MaxPrePrices;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
-	type LocalAssets = Factory;
+	type LocalAssets = CurrencyFactory;
 }
 
 // Parachain stuff.
@@ -737,7 +738,7 @@ parameter_types! {
 impl vault::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type CurrencyFactory = Factory;
+	type CurrencyFactory = CurrencyFactory;
 	type AssetId = CurrencyId;
 	type Currency = Assets;
 	type Convert = sp_runtime::traits::ConvertInto;
@@ -754,14 +755,12 @@ impl vault::Config for Runtime {
 	type WeightInfo = weights::vault::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
-}
-
 impl currency_factory::Config for Runtime {
 	type Event = Event;
-	type DynamicCurrencyId = CurrencyId;
-	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
+	type AssetId = CurrencyId;
+	type AddOrigin = EnsureRootOrHalfCouncil;
+	type ReserveOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
 }
 
 impl assets_registry::Config for Runtime {
@@ -781,7 +780,7 @@ impl governance_registry::Config for Runtime {
 
 impl assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = Factory;
+	type GenerateCurrencyId = CurrencyFactory;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type NativeCurrency = Balances;
@@ -892,7 +891,7 @@ impl dutch_auction::Config for Runtime {
 }
 
 parameter_types! {
-	  pub const MosaicId: PalletId = PalletId(*b"plmosaic");
+	pub const MosaicId: PalletId = PalletId(*b"plmosaic");
 	pub const MinimumTTL: BlockNumber = 10;
 	pub const MinimumTimeLockPeriod: BlockNumber = 20;
 }
@@ -906,6 +905,24 @@ impl mosaic::Config for Runtime {
 	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
 	type NetworkId = u32;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
+}
+
+pub type LiquidationStrategyId = u32;
+pub type OrderId = u128;
+
+parameter_types! {
+	pub const LiquidationsPalletId: PalletId = PalletId(*b"liqdatns");
+}
+impl liquidations::Config for Runtime {
+	type Event = Event;
+	type UnixTime = Timestamp;
+	type DutchAuction = DutchAuction;
+	type LiquidationStrategyId = LiquidationStrategyId;
+	type OrderId = OrderId;
+	type WeightInfo = ();
+	type ParachainId = ParaId;
+	type PalletId = LiquidationsPalletId;
 }
 
 construct_runtime!(
@@ -954,7 +971,7 @@ construct_runtime!(
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
 		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 52,
-		Factory: currency_factory::{Pallet, Storage, Event<T>} = 53,
+		CurrencyFactory: currency_factory::{Pallet, Storage, Event<T>} = 53,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
@@ -964,6 +981,7 @@ construct_runtime!(
 		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
 		DutchAuction: dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
+		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1029,6 +1047,8 @@ mod benches {
 		[vault, Vault]
 		[oracle, Oracle]
 		[dutch_auction, DutchAuction]
+		[mosaic, Mosaic]
+		[liquidations, Liquidations]
 	);
 }
 
@@ -1153,7 +1173,24 @@ impl_runtime_apis! {
 
 			let mut list = Vec::<BenchmarkList>::new();
 
-			list_benchmarks!(list, extra);
+			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			list_benchmark!(list, extra, balances, Balances);
+			list_benchmark!(list, extra, timestamp, Timestamp);
+			list_benchmark!(list, extra, collator_selection, CollatorSelection);
+			list_benchmark!(list, extra, indices, Indices);
+			list_benchmark!(list, extra, membership, CouncilMembership);
+			list_benchmark!(list, extra, treasury, Treasury);
+			list_benchmark!(list, extra, scheduler, Scheduler);
+			list_benchmark!(list, extra, democracy, Democracy);
+			list_benchmark!(list, extra, collective, Council);
+			list_benchmark!(list, extra, utility, Utility);
+			list_benchmark!(list, extra, identity, Identity);
+			list_benchmark!(list, extra, multisig, Multisig);
+			list_benchmark!(list, extra, vault, Vault);
+			list_benchmark!(list, extra, oracle, Oracle);
+			list_benchmark!(list, extra, dutch_auction, DutchAuction);
+			list_benchmark!(list, extra, currency_factory, CurrencyFactory);
+			list_benchmark!(list, extra, liquidations, Liquidations);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1187,7 +1224,25 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			add_benchmarks!(params, batches);
+			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
+			add_benchmark!(params, batches, balances, Balances);
+			add_benchmark!(params, batches, timestamp, Timestamp);
+			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
+			add_benchmark!(params, batches, collator_selection, CollatorSelection);
+			add_benchmark!(params, batches, indices, Indices);
+			add_benchmark!(params, batches, membership, CouncilMembership);
+			add_benchmark!(params, batches, treasury, Treasury);
+			add_benchmark!(params, batches, scheduler, Scheduler);
+			add_benchmark!(params, batches, democracy, Democracy);
+			add_benchmark!(params, batches, collective, Council);
+			add_benchmark!(params, batches, utility, Utility);
+			add_benchmark!(params, batches, identity, Identity);
+			add_benchmark!(params, batches, multisig, Multisig);
+			add_benchmark!(params, batches, vault, Vault);
+			add_benchmark!(params, batches, oracle, Oracle);
+			add_benchmark!(params, batches, dutch_auction, DutchAuction);
+			add_benchmark!(params, batches, currency_factory, CurrencyFactory);
+			add_benchmark!(params, batches, liquidations, Liquidations);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

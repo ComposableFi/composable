@@ -116,14 +116,9 @@ construct_runtime!(
 	}
 );
 
+#[derive(Default)]
 pub struct ExtBuilder {
 	pub(crate) balances: Vec<(AccountId, Balance)>,
-}
-
-impl Default for ExtBuilder {
-	fn default() -> Self {
-		Self { balances: Default::default() }
-	}
 }
 
 impl ExtBuilder {
