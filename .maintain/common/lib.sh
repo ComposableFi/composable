@@ -20,6 +20,16 @@ LATEST_TAG_NAME=$(get_latest_release ComposableFi/composable)
 boldprint $LATEST_TAG_NAME
 git fetch origin tag "${LATEST_TAG_NAME}" --no-tags
 
+# We want to get the tag of the most reccent release.
+# Used by client/runtime_release.sh
+PREV_TAG_OR_COMMIT=$(gh release list -L=1 | sed -n '1 p' | awk '{print $(NF-1)}')
+# This is a special case where a draft release is already in progress.
+# which also means that this is either a runtime_release/client_release
+# workflow which runs on push. Lets diff with the last commit in the base branch then.
+if [[ $PREV_TAG_OR_COMMIT == *"untagged"* ]]; then
+    PREV_TAG_OR_COMMIT=$(git log -n 1 --skip 1 --pretty=format:"%H")
+fi
+
 # Check for runtime changes between two commits. This is defined as any changes
 # to runtime/, frame/
 has_runtime_changes() {

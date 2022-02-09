@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-      - seun-ci-fixes
 
 jobs:
   cherry-pick-commits:
@@ -23,8 +22,6 @@ jobs:
       run: |
         cd scripts/github && npm install
         npm run get-commit-for-pr -- --repo=composableFi/composable --commit_sha=$GITHUB_SHA
-        echo ${{ steps.get_commit.outputs }}
-        
 
     - name: Run cherry pick actions
       if: ${{ steps.get_commit.outputs.cherry_pick == 1 }}

@@ -3,7 +3,8 @@ on:
   push:
     branches:
       - releases
-      - create-clean-release
+      - seun-ci-fixes
+
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 jobs:
@@ -38,8 +39,6 @@ jobs:
       # Attempt to build runtimes whose sources have changed. (runtime/picasso, runtime/dali, runtime/composable)
       - name: Runtime wasm builds
         id: runtime_release
-        env:
-
         run: |
           .maintain/runtime_release.sh
 
