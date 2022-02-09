@@ -3,24 +3,23 @@ use composable_traits::{
 	bonded_finance::{BondDuration, BondOffer},
 	math::SafeArithmetic,
 };
+use scale_info::TypeInfo;
 use core::marker::PhantomData;
 use sp_runtime::traits::Zero;
 
-pub type CheckValidBondOfferTag<T> = (ValidBondOffer<T>, Valid);
-
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, Clone, Copy, PartialEq, TypeInfo)]
 pub struct ValidBondOffer<T> {
 	phantom: PhantomData<T>,
 }
 
-pub trait BondOfferComparer<T> {
+pub trait BondOfferComparer<T, U> {
 	fn min_transfer() -> T;
-	fn min_reward() -> T;
+	fn min_reward() -> U;
 }
 
 impl< AccountId,
 		AssetId,
-		Balance: PartialOrd + Zero + SafeArithmetic + From<Balance>,
+		Balance: PartialOrd + Zero + SafeArithmetic + From<u128>,
 		BlockNumber: Zero,
 	> Validate<BondOffer<AccountId, AssetId, Balance, BlockNumber>, ValidBondOffer<Balance>>
 	for ValidBondOffer<Balance>
