@@ -32,6 +32,8 @@ async function main() {
         }
     )
 
+    console.debug(data.data)
+
     if (data.data.length > 0) {
         if (data.data[0].labels.some(label => label.name === "needs-backport")) {
             core.setOutput("cherry_pick", 1)
