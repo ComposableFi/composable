@@ -1,0 +1,7 @@
+name: "Auto cherry pick labelled PRs"
+
+on:
+  push:
+    branches:
+      - main
+
