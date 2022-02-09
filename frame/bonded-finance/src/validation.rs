@@ -20,7 +20,7 @@ pub trait BondOfferComparer<T> {
 
 impl< AccountId,
 		AssetId,
-		Balance: PartialOrd + Zero + SafeArithmetic + From<u64>,
+		Balance: PartialOrd + Zero + SafeArithmetic + From<Balance>,
 		BlockNumber: Zero,
 	> Validate<BondOffer<AccountId, AssetId, Balance, BlockNumber>, ValidBondOffer<Balance>>
 	for ValidBondOffer<Balance>
@@ -30,7 +30,8 @@ where
 	fn validate(
 		input: BondOffer<AccountId, AssetId, Balance, BlockNumber>,
 	) -> Result<BondOffer<AccountId, AssetId, Balance, BlockNumber>, &'static str> {
-		let nonzero_maturity = match &input.maturity {
+		
+        let nonzero_maturity = match &input.maturity {
 			BondDuration::Finite { return_in } => !return_in.is_zero(),
 			BondDuration::Infinite => true,
 		};
