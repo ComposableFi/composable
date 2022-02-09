@@ -12,6 +12,6 @@
   },
   "scripts": {
     "update-release-body": "ts-node ./update-release-body.ts",
-    "get-commit-for-pr": "ts-node ./get-commit-for-pr.ts.ts"
+    "get-commit-for-pr": "ts-node ./get-commit-for-pr.ts"
   }
 }
