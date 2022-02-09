@@ -1,0 +1,25 @@
+name: Run Ansible Playbooks
+
+on: 
+  issue_comment:
+    types: [created]
+
+jobs:
+  run-playbooks:
+    runs-on: 
+        - self-hosted
+        - linux
+        - X64
+        - sre
+
+    steps:
+    - name: Run Simnode
+      uses: peter-evans/slash-command-dispatch@v2
+      with:
+        token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        commands: |
+          simnode
+          benchmark
+        dispatch-type: workflow
+
+   
