@@ -39,7 +39,7 @@ pub trait CurveAmm {
 	fn sell(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		quote_amount: Self::Balance,
+		base_amount: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
