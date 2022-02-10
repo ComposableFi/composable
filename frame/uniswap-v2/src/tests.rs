@@ -4,7 +4,7 @@ use composable_tests_helpers::test::helper::{
 };
 use composable_traits::{defi::CurrencyPair, dex::CurveAmm as ConstantProductAmmTrait};
 use frame_support::{
-	assert_err_with_weight, assert_ok,
+	assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
 use sp_runtime::Permill;
@@ -40,7 +40,7 @@ fn test() {
 
 		let unit = 1_000_000_000_000;
 
-    let nb_of_btc = 100;
+		let nb_of_btc = 100;
 
 		// 100 BTC/45M USDT
 		let initial_btc = nb_of_btc * unit;
@@ -55,9 +55,9 @@ fn test() {
 		// Add the liquidity
 		assert_ok!(Uni::add_liquidity(&ALICE, pool_id, initial_btc, initial_usdt, 0, false));
 
-    // 1 unit of btc = 45k unit of usdt
+		// 1 unit of btc = 45k unit of usdt
 		let ratio = Uni::get_exchange_value(pool_id, BTC, unit).expect("impossible; qed;");
-    assert_eq!(ratio, (initial_usdt / initial_btc) * unit);
+		assert_eq!(ratio, (initial_usdt / initial_btc) * unit);
 
 		let initial_pool_invariant = current_pool_product();
 
