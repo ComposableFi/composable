@@ -102,3 +102,22 @@ prop_compose! {
 ```
 
 This small introduction is not meant to fully cover proptest but rather to give a quick and practical overview of its feature. To learn more about it, you should probably read [the proptest documentation](https://altsysrq.github.io/rustdoc/proptest/1.0.0/proptest/index.html).
+
+## Setting up a pallet for propetests
+First, add the `proptest` and `composable-tests-helpers` dependencies to the pallet's `Cargo.toml`:
+```toml
+[dev-dependencies]
+proptest = "0.9.6" # or a newer version 
+composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
+```
+
+Then, within the pallet's `tests.rs`, use `proptest`, along with our `composable_tests_helpers`:
+```rust
+use proptest::prelude::*;
+use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
+
+```
+
+Finally, like mentioned above, wrap the existing tests in a `proptest!` macro, 
+replace hardcoded test values with the randomly generated values,
+and replace the `assert_noop` and `assert_ok` with `prop_assert_noop` and `prop_assert_ok`.
