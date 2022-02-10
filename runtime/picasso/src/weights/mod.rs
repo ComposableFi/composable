@@ -1,5 +1,6 @@
 #![allow(clippy::unnecessary_cast)]
 pub mod balances;
+pub mod bonded_finance;
 pub mod collator_selection;
 pub mod collective;
 pub mod crowdloan_rewards;

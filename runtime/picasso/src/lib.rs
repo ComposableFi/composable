@@ -100,7 +100,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	spec_version: 1000,
-	impl_version: 4,
+	impl_version: 5,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
 	state_version: 0,
@@ -773,6 +773,7 @@ impl bonded_finance::Config for Runtime {
 	type PalletId = BondedFinanceId;
 	type Stake = Stake;
 	type Vesting = Vesting;
+	type WeightInfo = weights::bonded_finance::WeightInfo<Runtime>;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -901,6 +902,7 @@ mod benches {
 		[identity, Identity]
 		[multisig, Multisig]
 		[currency_factory, CurrencyFactory]
+		[bonded_finance, BondedFinance]
 	);
 }
 

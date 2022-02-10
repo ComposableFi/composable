@@ -1,0 +1,9 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 35820e14563de841f5eda240ea61961e3c4d920b9aceda728dac1e0fa94677e1 # shrinks to offer = BondOffer { beneficiary: 1, asset: BTC, bond_price: 1000000, nb_of_bonds: 1, maturity: BondDuration::Infinite, reward: BondOfferReward { asset: ETH, amount: 1000000, maturity: 1 } }
+cc 101ee1a90f927af96e09f0ba0009aab288692d1d15941e07f6ee521371c3c59d # shrinks to offer = BondOffer { beneficiary: 1, asset: BTC, bond_price: 1000000, nb_of_bonds: 2, maturity: BondDuration::Infinite, reward: BondOfferReward { asset: ETH, amount: 2000000, maturity: 1 } }
+cc 7b071ed45fc65b0f4a10540fe45e768cbc7861a0ff586bb86192d4bee4f2bb85 # shrinks to offer = BondOffer { beneficiary: 1, asset: BTC, bond_price: 1000000, nb_of_bonds: 2, maturity: BondDuration::Infinite, reward: BondOfferReward { asset: ETH, amount: 2000000, maturity: 1 } }
