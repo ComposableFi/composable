@@ -10,7 +10,7 @@ use core::marker::PhantomData;
 use sp_runtime::traits::Zero;
 use crate::{pallet::BalanceOf, Config, BondOfferOf};
 
-#[derive(Debug, Eq, Clone, Copy, PartialEq, Decode, TypeInfo)]
+#[derive(Debug,  Clone, Copy, Decode, TypeInfo)]
 pub struct ValidBondOffer<T> {
 	phantom: PhantomData<T>,
 }
