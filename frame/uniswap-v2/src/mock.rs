@@ -1,4 +1,4 @@
-use crate as constant_product_amm;
+use crate as pallet_uniswap_v2;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -13,10 +13,7 @@ use system::EnsureRoot;
 type AssetId = u128;
 
 pub const BTC: AssetId = 0;
-pub const ETH: AssetId = 1;
-pub const USDT: AssetId = 2;
-pub const USDC: AssetId = 3;
-
+pub const USDT: AssetId = 1;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -30,14 +27,13 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		Uni: constant_product_amm::{Pallet, Call, Storage, Event<T>},
+		Uni: pallet_uniswap_v2::{Pallet, Storage, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
-		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
-parameter_types! {
-}
+parameter_types! {}
 
 impl pallet_currency_factory::Config for Test {
 	type Event = Event;
@@ -134,7 +130,7 @@ parameter_types! {
 	pub TestPalletID : PalletId = PalletId(*b"const_am");
 }
 
-impl constant_product_amm::Config for Test {
+impl pallet_uniswap_v2::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
 	type Balance = Balance;
@@ -143,6 +139,7 @@ impl constant_product_amm::Config for Test {
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type PalletId = TestPalletID;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

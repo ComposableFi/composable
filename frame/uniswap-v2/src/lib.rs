@@ -4,10 +4,8 @@
 	warn(
 		clippy::disallowed_method,
 		clippy::disallowed_type,
-		// TODO: enable me after this crate is stablized. todo macros are still denied in the release pipeline, but for
-		// regular development allowed.
-		// clippy::indexing_slicing,
-		// clippy::todo,
+		clippy::indexing_slicing,
+		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
@@ -45,6 +43,7 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -58,17 +57,17 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::fungibles::{Inspect, Mutate, Transfer},
-		PalletId,
+		transactional, PalletId,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
 	use sp_runtime::{
-		traits::{
-			AccountIdConversion, CheckedAdd, Convert, IntegerSquareRoot, One, Zero,
-		},
+		traits::{AccountIdConversion, CheckedAdd, Convert, IntegerSquareRoot, One, Zero},
 		ArithmeticError, Permill,
 	};
 	use sp_std::fmt::Debug;
+
+	use crate::weights::WeightInfo;
 
 	type PoolOf<T> =
 		ConstantProductPoolInfo<<T as frame_system::Config>::AccountId, <T as Config>::AssetId>;
@@ -76,6 +75,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
 		type AssetId: FullCodec
 			+ MaxEncodedLen
 			+ Eq
@@ -86,6 +86,7 @@ pub mod pallet {
 			+ Default
 			+ TypeInfo
 			+ Ord;
+
 		type Balance: Default
 			+ Parameter
 			+ Codec
@@ -94,11 +95,15 @@ pub mod pallet {
 			+ Zero
 			+ Ord
 			+ SafeArithmetic;
+
 		type Convert: Convert<u128, Self::Balance> + Convert<Self::Balance, u128>;
+
 		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
+
 		type Assets: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
 			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
+
 		type PoolId: FullCodec
 			+ MaxEncodedLen
 			+ Default
@@ -111,8 +116,11 @@ pub mod pallet {
 			+ SafeArithmetic
 			+ Zero
 			+ One;
+
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -129,6 +137,7 @@ pub mod pallet {
 	pub fn PoolCountOnEmpty<T: Config>() -> T::PoolId {
 		Zero::zero()
 	}
+
 	/// Existing pools
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
@@ -213,7 +222,7 @@ pub mod pallet {
 		/// Create a new pool.
 		///
 		/// Emits `PoolCreated` even when successful.
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::create())]
 		pub fn create(
 			origin: OriginFor<T>,
 			pair: CurrencyPair<T::AssetId>,
@@ -230,7 +239,7 @@ pub mod pallet {
 		/// The `base_amount` always represent the base asset amount (A/B => A).
 		///
 		/// Emits `Swapped` event when successful.
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::buy())]
 		pub fn buy(
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
@@ -247,7 +256,7 @@ pub mod pallet {
 		/// The `base_amount` always represent the base asset amount (A/B => A).
 		///
 		/// Emits `Swapped` event when successful.
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::sell())]
 		pub fn sell(
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
@@ -259,7 +268,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Execute a specific exchange operation.
+		/// Execute a specific swap operation.
 		///
 		/// Buy operation if the pair is the original pool pair (A/B).
 		/// Sell operation if the pair is the original pool pair swapped (B/A).
@@ -267,8 +276,8 @@ pub mod pallet {
 		/// The `quote_amount` is always the quote asset amount (A/B => B), (B/A => A).
 		///
 		/// Emits `Swapped` event when successful.
-		#[pallet::weight(0)]
-		pub fn exchange(
+		#[pallet::weight(T::WeightInfo::swap())]
+		pub fn swap(
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
 			pair: CurrencyPair<T::AssetId>,
@@ -313,6 +322,7 @@ pub mod pallet {
 			Ok(T::Convert::convert(exchange_amount))
 		}
 
+		#[transactional]
 		fn add_liquidity(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
@@ -333,8 +343,6 @@ pub mod pallet {
 			let lp_issued = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
 
 			// https://uniswap.org/whitepaper.pdf
-			// first deposit => s_minted = sqrt(x_deposited * y_deposited)
-			// next deposit => s_minted = s_starting * x_deposited / x_starting
 			let first_deposit = lp_issued.is_zero();
 			let (quote_amount, lp_to_mint) = if first_deposit {
 				let base_amount = T::Convert::convert(base_amount);
@@ -371,6 +379,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[transactional]
 		fn remove_liquidity(
 			who: &Self::AccountId,
 			pool_id: T::PoolId,
@@ -419,6 +428,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[transactional]
 		fn buy(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
@@ -427,9 +437,17 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let quote_amount = Self::get_exchange_value(pool_id, pool.pair.base, base_amount)?;
-			Self::exchange(who, pool_id, pool.pair, quote_amount, T::Balance::zero(), keep_alive)
+			<Self as CurveAmm>::exchange(
+				who,
+				pool_id,
+				pool.pair,
+				quote_amount,
+				T::Balance::zero(),
+				keep_alive,
+			)
 		}
 
+		#[transactional]
 		fn sell(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
@@ -437,7 +455,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			Self::exchange(
+			<Self as CurveAmm>::exchange(
 				who,
 				pool_id,
 				pool.pair.swap(),
@@ -447,6 +465,7 @@ pub mod pallet {
 			)
 		}
 
+		#[transactional]
 		fn exchange(
 			who: &Self::AccountId,
 			pool_id: T::PoolId,
@@ -494,13 +513,14 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		#[transactional]
 		pub(crate) fn do_create_pool(
 			who: &T::AccountId,
 			pair: CurrencyPair<T::AssetId>,
 			fee: Permill,
 			owner_fee: Permill,
 		) -> Result<T::PoolId, DispatchError> {
-			// TODO(hussein-aitlahcen): do we allow such pair?
+			// NOTE(hussein-aitlahcen): do we allow such pair?
 			ensure!(pair.base != pair.quote, Error::<T>::InvalidPair);
 
 			let total_fees = fee.checked_add(&owner_fee).ok_or(ArithmeticError::Overflow)?;

@@ -19,10 +19,11 @@ pub trait CurveAmm {
 	type PoolId;
 
 	/// Get pure exchange value for given units of given asset. (Note this does not include fees.)
-  /// `pool_id` the pool containing the `asset_id`.
-  /// `asset_id` the asset the user is interested in.
-  /// `amount` the amount of `asset_id` the user want to obtain.
-  /// Return the amount of quote asset if `asset_id` is base asset, otherwise the amount of base asset.
+	/// `pool_id` the pool containing the `asset_id`.
+	/// `asset_id` the asset the user is interested in.
+	/// `amount` the amount of `asset_id` the user want to obtain.
+	/// Return the amount of quote asset if `asset_id` is base asset, otherwise the amount of base
+	/// asset.
 	fn get_exchange_value(
 		pool_id: Self::PoolId,
 		asset_id: Self::AssetId,
@@ -74,7 +75,7 @@ pub trait CurveAmm {
 	/// Perform an exchange.
 	/// This operation is a buy order on the provided `pair`, effectively trading the quote asset
 	/// against the base one. The pair can be swapped to execute a sell order.
-  /// Implementor must check the pair.
+	/// Implementor must check the pair.
 	fn exchange(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,

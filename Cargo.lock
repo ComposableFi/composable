@@ -7684,8 +7684,6 @@ dependencies = [
  "orml-traits",
  "pallet-balances",
  "pallet-currency-factory",
- "pallet-oracle",
- "pallet-vault",
  "parity-scale-codec",
  "plotters",
  "proptest 1.0.0",

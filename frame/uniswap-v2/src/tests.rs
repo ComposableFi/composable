@@ -2,7 +2,7 @@ use crate::mock::*;
 use composable_tests_helpers::test::helper::{
 	acceptable_computation_error, default_acceptable_computation_error,
 };
-use composable_traits::{defi::CurrencyPair, dex::CurveAmm as ConstantProductAmmTrait};
+use composable_traits::{defi::CurrencyPair, dex::CurveAmm};
 use frame_support::{
 	assert_ok,
 	traits::fungibles::{Inspect, Mutate},
@@ -40,11 +40,13 @@ fn test() {
 
 		let unit = 1_000_000_000_000;
 
+		let btc_price = 45_000;
+
 		let nb_of_btc = 100;
 
 		// 100 BTC/4.5M USDT
 		let initial_btc = nb_of_btc * unit;
-		let initial_usdt = nb_of_btc * 45_000 * unit;
+		let initial_usdt = nb_of_btc * btc_price * unit;
 
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
@@ -53,10 +55,18 @@ fn test() {
 		let initial_user_invariant = current_product(ALICE);
 
 		// Add the liquidity
-		assert_ok!(Uni::add_liquidity(&ALICE, pool_id, initial_btc, initial_usdt, 0, false));
+		assert_ok!(<Uni as CurveAmm>::add_liquidity(
+			&ALICE,
+			pool_id,
+			initial_btc,
+			initial_usdt,
+			0,
+			false
+		));
 
 		// 1 unit of btc = 45k unit of usdt
-		let ratio = Uni::get_exchange_value(pool_id, BTC, unit).expect("impossible; qed;");
+		let ratio =
+			<Uni as CurveAmm>::get_exchange_value(pool_id, BTC, unit).expect("impossible; qed;");
 		assert_eq!(ratio, (initial_usdt / initial_btc) * unit);
 
 		let initial_pool_invariant = current_pool_product();
@@ -67,7 +77,7 @@ fn test() {
 		let swap_btc = unit;
 		assert_ok!(Tokens::mint_into(BTC, &BOB, swap_btc));
 
-		Uni::sell(&BOB, pool_id, swap_btc, false).expect("impossible; qed;");
+		<Uni as CurveAmm>::sell(&BOB, pool_id, swap_btc, false).expect("impossible; qed;");
 
 		let new_pool_invariant = current_pool_product();
 		assert_ok!(default_acceptable_computation_error(
@@ -75,7 +85,7 @@ fn test() {
 			new_pool_invariant
 		));
 
-		Uni::buy(&BOB, pool_id, swap_btc, false).expect("impossible; qed;");
+		<Uni as CurveAmm>::buy(&BOB, pool_id, swap_btc, false).expect("impossible; qed;");
 
 		let precision = 100;
 		let bob_btc = Tokens::balance(BTC, &BOB);
@@ -88,7 +98,7 @@ fn test() {
 		));
 
 		let lp = Tokens::balance(pool.lp_token, &ALICE);
-		assert_ok!(Uni::remove_liquidity(&ALICE, pool_id, lp, 0, 0));
+		assert_ok!(<Uni as CurveAmm>::remove_liquidity(&ALICE, pool_id, lp, 0, 0));
 
 		// Alice should get back a different amount of tokens.
 		let alice_btc = Tokens::balance(BTC, &ALICE);
