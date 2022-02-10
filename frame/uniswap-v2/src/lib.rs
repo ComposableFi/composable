@@ -43,6 +43,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, FullCodec};
@@ -483,12 +486,25 @@ pub mod pallet {
 			} else {
 				(0, 0)
 			};
+
+      /* a = out_base, b = in_quote, x = pool base, y = pool quote
+         k = xy
+
+         given any b,
+         a = x - (k / b + y)
+           = (b * x) / (b + y)
+      */
 			let quote_amount_excluding_fees =
 				quote_amount.safe_sub(&lp_fee)?.safe_sub(&owner_fee)?;
-			let pq_plus_q = pool_quote_aum.safe_add(&quote_amount_excluding_fees)?;
-			let invariant = pool_quote_aum.safe_mul(&pool_base_aum)?;
-			let base_amount =
-				pool_base_aum.safe_mul(&pq_plus_q)?.safe_sub(&invariant)?.safe_div(&pq_plus_q)?;
+
+      let x = pool_base_aum;
+      let y = pool_quote_aum;
+      let b = quote_amount_excluding_fees;
+
+      let b_plus_y = b.safe_add(&y)?;
+			let a = safe_multiply_by_rational(b, x, b_plus_y)?;
+
+      let base_amount = a;
 
 			ensure!(base_amount > 0 && quote_amount_excluding_fees > 0, Error::<T>::InvalidAmount);
 
