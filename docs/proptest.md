@@ -107,7 +107,7 @@ This small introduction is not meant to fully cover proptest but rather to give 
 First, add the `proptest` and `composable-tests-helpers` dev-dependencies to the pallet's `Cargo.toml`:
 ```toml
 [dev-dependencies]
-proptest = "0.9.6" # or a newer version 
+proptest = "1.0.0" # or a newer version 
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 ```
 

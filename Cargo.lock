@@ -7390,7 +7390,7 @@ dependencies = [
  "pallet-balances",
  "parity-scale-codec",
  "parking_lot 0.11.2",
- "proptest 0.9.6",
+ "proptest 1.0.0",
  "scale-info",
  "serde",
  "serde_json",
