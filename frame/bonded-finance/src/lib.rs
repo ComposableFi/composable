@@ -67,10 +67,10 @@ pub use pallet::*;
 pub mod pallet {
 	use crate::validation::{ValidBondOffer, BondOfferComparer};
 	use codec::FullCodec;
-	use composable_support::validation::{Validate, Validated};
+	use composable_support::validation::{Validated};
 	use composable_traits::{
 		bonded_finance::{BondDuration, BondOffer, BondedFinance},
-		math::{SafeArithmetic, WrappingNext},
+		math::{WrappingNext},
 		vesting::{VestedTransfer, VestingSchedule},
 	};
 	use frame_support::{

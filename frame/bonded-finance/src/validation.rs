@@ -3,13 +3,14 @@ use composable_traits::{
 	bonded_finance::{BondDuration},
 	math::SafeArithmetic,
 };
-use codec::{Decode, Encode};
-use scale_info::TypeInfo;
+use codec::{Decode};
+use scale_info::{TypeInfo};
+use scale_info;
 use core::marker::PhantomData;
 use sp_runtime::traits::Zero;
 use crate::{pallet::BalanceOf, Config, BondOfferOf};
 
-#[derive(Debug, Eq, Clone, Copy, PartialEq, TypeInfo, Decode)]
+#[derive(Debug, Eq, Clone, Copy, PartialEq, Decode, TypeInfo)]
 pub struct ValidBondOffer<T> {
 	phantom: PhantomData<T>,
 }
@@ -19,8 +20,8 @@ pub trait BondOfferComparer<T> {
 	fn min_reward() -> T;
 }
 
-impl<T: Config + TypeInfo> Validate<BondOfferOf<T>, ValidBondOffer<T>> for ValidBondOffer<T> where
-	ValidBondOffer<T>: BondOfferComparer<BalanceOf<T>> {
+impl<T: Config > Validate<BondOfferOf<T>, ValidBondOffer<T>> for ValidBondOffer<T> where
+	ValidBondOffer<T>: BondOfferComparer<BalanceOf<T>> + Decode{
 
 	fn validate(input: BondOfferOf<T>) -> Result<BondOfferOf<T>, &'static str> {
 		
