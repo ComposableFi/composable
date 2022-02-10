@@ -61,18 +61,6 @@ impl core::fmt::LowerHex for CurrencyId {
 	}
 }
 
-// NOTE(hussein-aitlahcen): we could add an index to DynamicCurrency to differentiate sub-ranges
-// This implementation is only valid if the initial value used to step using next is
-// LOCAL_LP_TOKEN_START
-impl DynamicCurrencyId for CurrencyId {
-	#[inline]
-	fn next(self) -> Result<Self, sp_runtime::DispatchError> {
-		let CurrencyId(x) = self;
-		let y = x.checked_add(1).ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-		Ok(CurrencyId(y))
-	}
-}
-
 impl Default for CurrencyId {
 	#[inline]
 	fn default() -> Self {

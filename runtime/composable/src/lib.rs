@@ -467,7 +467,7 @@ impl collator_selection::Config for Runtime {
 
 impl assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = Factory;
+	type GenerateCurrencyId = CurrencyFactory;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type NativeCurrency = Balances;
@@ -615,8 +615,6 @@ impl utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const DynamicCurrencyIdInitial: CurrencyId = CurrencyId::LOCAL_LP_TOKEN_START;
-
 	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
@@ -639,8 +637,11 @@ impl governance_registry::Config for Runtime {
 
 impl currency_factory::Config for Runtime {
 	type Event = Event;
-	type DynamicCurrencyId = CurrencyId;
-	type DynamicCurrencyIdInitial = DynamicCurrencyIdInitial;
+	type AssetId = CurrencyId;
+	type AddOrigin = EnsureRootOrHalfCouncil;
+	type ReserveOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = ();
+	// type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
 }
 
 impl democracy::Config for Runtime {
@@ -755,7 +756,7 @@ construct_runtime!(
 		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 		Utility: utility::{Pallet, Call, Event} = 35,
-	  Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
+		  Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
@@ -765,8 +766,10 @@ construct_runtime!(
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
 
+		CurrencyFactory: currency_factory::{Pallet, Storage, Event<T>} = 53,
 		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
 		Assets: assets::{Pallet, Call, Storage} = 57,
+		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 58,
 	}
 );
 
