@@ -60,9 +60,12 @@ pub mod pallet {
 		traits::fungibles::{Inspect, Mutate, Transfer},
 		PalletId,
 	};
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
 	use sp_runtime::{
-		traits::{AccountIdConversion, CheckedAdd, Convert, IntegerSquareRoot, One, Zero},
+		traits::{
+			AccountIdConversion, CheckedAdd, Convert, IntegerSquareRoot, One, Zero,
+		},
 		ArithmeticError, Permill,
 	};
 	use sp_std::fmt::Debug;
@@ -206,7 +209,85 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		/// Create a new pool.
+		///
+		/// Emits `PoolCreated` even when successful.
+		#[pallet::weight(0)]
+		pub fn create(
+			origin: OriginFor<T>,
+			pair: CurrencyPair<T::AssetId>,
+			fee: Permill,
+			owner_fee: Permill,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = Self::do_create_pool(&who, pair, fee, owner_fee)?;
+			Ok(())
+		}
+
+		/// Execute a buy order on a pool.
+		///
+		/// The `base_amount` always represent the base asset amount (A/B => A).
+		///
+		/// Emits `Swapped` event when successful.
+		#[pallet::weight(0)]
+		pub fn buy(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			base_amount: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as CurveAmm>::buy(&who, pool_id, base_amount, keep_alive)?;
+			Ok(())
+		}
+
+		/// Execute a sell order on a pool.
+		///
+		/// The `base_amount` always represent the base asset amount (A/B => A).
+		///
+		/// Emits `Swapped` event when successful.
+		#[pallet::weight(0)]
+		pub fn sell(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			base_amount: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as CurveAmm>::sell(&who, pool_id, base_amount, keep_alive)?;
+			Ok(())
+		}
+
+		/// Execute a specific exchange operation.
+		///
+		/// Buy operation if the pair is the original pool pair (A/B).
+		/// Sell operation if the pair is the original pool pair swapped (B/A).
+		///
+		/// The `quote_amount` is always the quote asset amount (A/B => B), (B/A => A).
+		///
+		/// Emits `Swapped` event when successful.
+		#[pallet::weight(0)]
+		pub fn exchange(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			pair: CurrencyPair<T::AssetId>,
+			quote_amount: T::Balance,
+			min_receive: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as CurveAmm>::exchange(
+				&who,
+				pool_id,
+				pair,
+				quote_amount,
+				min_receive,
+				keep_alive,
+			)?;
+			Ok(())
+		}
+	}
 
 	impl<T: Config> CurveAmm for Pallet<T> {
 		type AssetId = T::AssetId;
@@ -221,14 +302,14 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let pair = if asset_id == pool.pair.base {
-				pool.pair
-			} else {
-				pool.pair.swap()
-			};
+			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
 			let pool_base_aum = T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
 			let pool_quote_aum = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
-			let exchange_amount = safe_multiply_by_rational(pool_quote_aum, T::Convert::convert(amount), pool_base_aum)?;
+			let exchange_amount = safe_multiply_by_rational(
+				pool_quote_aum,
+				T::Convert::convert(amount),
+				pool_base_aum,
+			)?;
 			Ok(T::Convert::convert(exchange_amount))
 		}
 
@@ -338,7 +419,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// In the case of a buy for uniswap, we just buy on the pair.
 		fn buy(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
@@ -350,7 +430,6 @@ pub mod pallet {
 			Self::exchange(who, pool_id, pool.pair, quote_amount, T::Balance::zero(), keep_alive)
 		}
 
-		/// In the case of a sell for uniswap, we just buy the swapped pair.
 		fn sell(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
@@ -382,9 +461,9 @@ pub mod pallet {
 			ensure!(pair == pool.pair, Error::<T>::PairMismatch);
 
 			let (base_amount, quote_amount, lp_fees, owner_fees) =
-				Self::do_swap(pool_id, pair, quote_amount, true)?;
-			let quote_amount_including_fees =
-				quote_amount.safe_add(&lp_fees)?.safe_add(&owner_fees)?;
+				Self::do_compute_swap(pool_id, pair, quote_amount, true)?;
+			let total_fees = lp_fees.safe_add(&owner_fees)?;
+			let quote_amount_including_fees = quote_amount.safe_add(&total_fees)?;
 
 			ensure!(base_amount >= min_receive, Error::<T>::CannotRespectMinimumRequested);
 
@@ -407,7 +486,7 @@ pub mod pallet {
 				quote_asset: pair.quote,
 				base_amount,
 				quote_amount,
-				fee: T::Balance::zero(),
+				fee: total_fees,
 			});
 
 			Ok(base_amount)
@@ -415,7 +494,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn create_pool(
+		pub(crate) fn do_create_pool(
 			who: &T::AccountId,
 			pair: CurrencyPair<T::AssetId>,
 			fee: Permill,
@@ -463,7 +542,7 @@ pub mod pallet {
 		}
 
 		/// Assume that the pair is valid for the pool
-		pub(crate) fn do_swap(
+		pub(crate) fn do_compute_swap(
 			pool_id: T::PoolId,
 			pair: CurrencyPair<T::AssetId>,
 			quote_amount: T::Balance,
@@ -477,8 +556,8 @@ pub mod pallet {
 
 			// https://uniswap.org/whitepaper.pdf
 			// 3.2.1
-      // we do not inflate the lp for the owner fees
-      // cut is done before enforcing the invariant
+			// we do not inflate the lp for the owner fees
+			// cut is done before enforcing the invariant
 			let (lp_fee, owner_fee) = if apply_fees {
 				let lp_fee = pool.fee.mul_floor(quote_amount);
 				let owner_fee = pool.owner_fee.mul_floor(quote_amount);
@@ -487,24 +566,24 @@ pub mod pallet {
 				(0, 0)
 			};
 
-      /* a = out_base, b = in_quote, x = pool base, y = pool quote
-         k = xy
+			/* a = out_base, b = in_quote, x = pool base, y = pool quote
+			   k = xy
 
-         given any b,
-         a = x - (k / b + y)
-           = (b * x) / (b + y)
-      */
+			   given any b,
+			   a = x - (k / b + y)
+				 = (b * x) / (b + y)
+			*/
 			let quote_amount_excluding_fees =
 				quote_amount.safe_sub(&lp_fee)?.safe_sub(&owner_fee)?;
 
-      let x = pool_base_aum;
-      let y = pool_quote_aum;
-      let b = quote_amount_excluding_fees;
+			let x = pool_base_aum;
+			let y = pool_quote_aum;
+			let b = quote_amount_excluding_fees;
 
-      let b_plus_y = b.safe_add(&y)?;
+			let b_plus_y = b.safe_add(&y)?;
 			let a = safe_multiply_by_rational(b, x, b_plus_y)?;
 
-      let base_amount = a;
+			let base_amount = a;
 
 			ensure!(base_amount > 0 && quote_amount_excluding_fees > 0, Error::<T>::InvalidAmount);
 

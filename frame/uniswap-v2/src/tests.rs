@@ -21,7 +21,7 @@ use sp_runtime::Permill;
 #[test]
 fn test() {
 	new_test_ext().execute_with(|| {
-		let pool_id = Uni::create_pool(
+		let pool_id = Uni::do_create_pool(
 			&ALICE,
 			CurrencyPair::new(BTC, USDT),
 			Permill::zero(),
@@ -42,7 +42,7 @@ fn test() {
 
 		let nb_of_btc = 100;
 
-		// 100 BTC/45M USDT
+		// 100 BTC/4.5M USDT
 		let initial_btc = nb_of_btc * unit;
 		let initial_usdt = nb_of_btc * 45_000 * unit;
 
