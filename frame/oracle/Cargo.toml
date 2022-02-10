@@ -40,6 +40,8 @@ scale-info = { version = "1.0", default-features = false, features = [
 ] }
 
 [dev-dependencies]
+proptest = "0.9.6"
+composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 parking_lot = "0.11.2"
 serde = "1.0.130"

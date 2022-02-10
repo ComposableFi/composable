@@ -22,116 +22,185 @@ use std::sync::Arc;
 
 use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
 use composable_support::validation::{Validate, Validated};
+use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
 use core::{fmt, marker::PhantomData};
 use proptest::prelude::*;
 
-#[test]
-fn add_asset_and_info() {
-	new_test_ext().execute_with(|| {
-		const ASSET_ID: u128 = 1;
-		const MIN_ANSWERS: u32 = 3;
-		const MAX_ANSWERS: u32 = 5;
-		const THRESHOLD: Percent = Percent::from_percent(80);
-		const BLOCK_INTERVAL: u64 = 5;
-		const REWARD: u64 = 5;
-		const SLASH: u64 = 5;
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(10_000))]
 
-		let account_2 = get_account_2();
-		assert_ok!(Oracle::add_asset_and_info(
-			Origin::signed(account_2),
-			ASSET_ID,
-			Validated::new(THRESHOLD).unwrap(),
-			Validated::new(MIN_ANSWERS).unwrap(),
-			Validated::new(MAX_ANSWERS).unwrap(),
-			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
-			REWARD,
-			SLASH
-		));
 
-		// does not increment if exists
-		assert_ok!(Oracle::add_asset_and_info(
-			Origin::signed(account_2),
-			ASSET_ID,
-			Validated::new(THRESHOLD).unwrap(),
-			Validated::new(MIN_ANSWERS).unwrap(),
-			Validated::new(MAX_ANSWERS).unwrap(),
-			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
-			REWARD,
-			SLASH
-		));
-		assert_eq!(Oracle::assets_count(), 1);
+	#[test]
+	fn add_asset_and_info(
+		ASSET_ID in 1..u128::MAX, // When ASSET_ID = 0, we get an error: Module { index: 2, error: 20, message: Some("ExceedAssetsCount") }
+		MIN_ANSWERS in 1..u32::MAX,
+		MAX_ANSWERS in 1..u32::MAX,
+		BLOCK_INTERVAL in 5..20u64, // TODO(cor): find suitable range. The minimum is Oracle::Config::StalePrice, which is currently configured to be 5.
+		threshold in 0..100u8,
+		REWARD in 0..u64::MAX,
+		SLASH in 0..u64::MAX,
+	) {
+		new_test_ext().execute_with(|| {
+			prop_assume!(MIN_ANSWERS < MAX_ANSWERS);
+			// const ASSET_ID: u128 = 1;
+			// const MIN_ANSWERS: u32 = 3;
+			// const MAX_ANSWERS: u32 = 5;
+			let THRESHOLD: Percent = Percent::from_percent(threshold);
+			// const BLOCK_INTERVAL: u64 = 5;
+			// const REWARD: u64 = 5;
+			// const SLASH: u64 = 5;
 
-		assert_ok!(Oracle::add_asset_and_info(
-			Origin::signed(account_2),
-			ASSET_ID + 1,
-			Validated::new(THRESHOLD).unwrap(),
-			Validated::new(MIN_ANSWERS).unwrap(),
-			Validated::new(MAX_ANSWERS).unwrap(),
-			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
-			REWARD,
-			SLASH
-		));
-
-		let asset_info = AssetInfo {
-			threshold: THRESHOLD,
-			min_answers: MIN_ANSWERS,
-			max_answers: MAX_ANSWERS,
-			block_interval: BLOCK_INTERVAL,
-			reward: REWARD,
-			slash: SLASH,
-		};
-
-		// id now activated and count incremented
-		assert_eq!(Oracle::asset_info(1), Some(asset_info));
-		assert_eq!(Oracle::assets_count(), 2);
-
-		// fails with non permission
-		let account_1 = get_account_1();
-		assert_noop!(
-			Oracle::add_asset_and_info(
-				Origin::signed(account_1),
-				ASSET_ID,
-				Validated::new(THRESHOLD).unwrap(),
-				Validated::new(MIN_ANSWERS).unwrap(),
-				Validated::new(MAX_ANSWERS).unwrap(),
-				Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL)
-					.unwrap(),
-				REWARD,
-				SLASH
-			),
-			BadOrigin
-		);
-
-		assert_noop!(
-			Oracle::add_asset_and_info(
+			// passes
+			let account_2 = get_account_2();
+			prop_assert_ok!(Oracle::add_asset_and_info(
 				Origin::signed(account_2),
 				ASSET_ID,
-				Validated::new(THRESHOLD).unwrap(),
-				Validated::new(MIN_ANSWERS).unwrap(),
-				Validated::new(MAX_ANSWERS).unwrap(),
-				Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL)
-					.unwrap(),
+				THRESHOLD,
+				MIN_ANSWERS,
+				MAX_ANSWERS,
+				BLOCK_INTERVAL,
 				REWARD,
 				SLASH
-			),
-			Error::<Test>::ExceedAssetsCount
-		);
+			));
 
-		assert_noop!(
-			Oracle::add_asset_and_info(
+			// does not increment if exists
+			prop_assert_ok!(Oracle::add_asset_and_info(
 				Origin::signed(account_2),
-				ASSET_ID + 2,
-				Validated::new(THRESHOLD).unwrap(),
-				Validated::new(MIN_ANSWERS).unwrap(),
-				Validated::new(MAX_ANSWERS).unwrap(),
-				Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL)
-					.unwrap(),
+				ASSET_ID,
+				THRESHOLD,
+				MIN_ANSWERS,
+				MAX_ANSWERS,
+				BLOCK_INTERVAL,
 				REWARD,
 				SLASH
-			),
-			Error::<Test>::ExceedAssetsCount
-		);
-	});
+			));
+			prop_assert_eq!(Oracle::assets_count(), 1);
+
+			prop_assert_ok!(Oracle::add_asset_and_info(
+				Origin::signed(account_2),
+				ASSET_ID + 1,
+				THRESHOLD,
+				MIN_ANSWERS,
+				MAX_ANSWERS,
+				BLOCK_INTERVAL,
+				REWARD,
+				SLASH
+			));
+
+			let asset_info = AssetInfo {
+				threshold: THRESHOLD,
+				min_answers: MIN_ANSWERS,
+				max_answers: MAX_ANSWERS,
+				block_interval: BLOCK_INTERVAL,
+				reward: REWARD,
+				slash: SLASH,
+			};
+			// id now activated and count incremented
+			prop_assert_eq!(Oracle::asset_info(1), Some(asset_info));
+			prop_assert_eq!(Oracle::assets_count(), 2);
+
+			// fails with non permission
+			let account_1 = get_account_1();
+			prop_assert_noop!(
+				Oracle::add_asset_and_info(
+					Origin::signed(account_1),
+					ASSET_ID,
+					THRESHOLD,
+					MAX_ANSWERS,
+					MAX_ANSWERS,
+					BLOCK_INTERVAL,
+					REWARD,
+					SLASH
+				),
+				BadOrigin
+			);
+
+			prop_assert_noop!(
+				Oracle::add_asset_and_info(
+					Origin::signed(account_2),
+					ASSET_ID,
+					THRESHOLD,
+					MAX_ANSWERS,
+					MIN_ANSWERS,
+					BLOCK_INTERVAL,
+					REWARD,
+					SLASH
+				),
+				Error::<Test>::MaxAnswersLessThanMinAnswers
+			);
+
+			prop_assert_noop!(
+				Oracle::add_asset_and_info(
+					Origin::signed(account_2),
+					ASSET_ID,
+					Percent::from_percent(100),
+					MIN_ANSWERS,
+					MAX_ANSWERS,
+					BLOCK_INTERVAL,
+					REWARD,
+					SLASH
+				),
+				Error::<Test>::ExceedThreshold
+			);
+
+			prop_assert_noop!(
+				Oracle::add_asset_and_info(
+					Origin::signed(account_2),
+					ASSET_ID,
+					THRESHOLD,
+					MIN_ANSWERS,
+					MAX_ANSWERS + 1,
+					BLOCK_INTERVAL,
+					REWARD,
+					SLASH
+				),
+				Error::<Test>::ExceedMaxAnswers
+			);
+
+			prop_assert_noop!(
+				Oracle::add_asset_and_info(
+					Origin::signed(account_2),
+					ASSET_ID,
+					THRESHOLD,
+					0,
+					MAX_ANSWERS,
+					BLOCK_INTERVAL,
+					REWARD,
+					SLASH
+				),
+				Error::<Test>::InvalidMinAnswers
+			);
+
+			prop_assert_noop!(
+				Oracle::add_asset_and_info(
+					Origin::signed(account_2),
+					ASSET_ID + 2,
+					THRESHOLD,
+					MIN_ANSWERS,
+					MAX_ANSWERS,
+					BLOCK_INTERVAL,
+					REWARD,
+					SLASH
+				),
+				Error::<Test>::ExceedAssetsCount
+			);
+
+			prop_assert_noop!(
+				Oracle::add_asset_and_info(
+					Origin::signed(account_2),
+					ASSET_ID,
+					THRESHOLD,
+					MIN_ANSWERS,
+					MAX_ANSWERS,
+					BLOCK_INTERVAL - 4,
+					REWARD,
+					SLASH
+				),
+				Error::<Test>::BlockIntervalLength
+			);
+			Ok(())
+		})?;
+	}
 }
 
 #[test]
