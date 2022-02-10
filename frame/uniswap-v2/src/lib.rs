@@ -472,6 +472,10 @@ pub mod pallet {
 			let pool_quote_aum = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
 			let quote_amount = T::Convert::convert(quote_amount);
 
+			// https://uniswap.org/whitepaper.pdf
+			// 3.2.1
+      // we do not inflate the lp for the owner fees
+      // cut is done before enforcing the invariant
 			let (lp_fee, owner_fee) = if apply_fees {
 				let lp_fee = pool.fee.mul_floor(quote_amount);
 				let owner_fee = pool.owner_fee.mul_floor(quote_amount);
