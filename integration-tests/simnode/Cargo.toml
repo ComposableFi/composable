@@ -21,7 +21,6 @@ sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }

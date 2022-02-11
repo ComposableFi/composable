@@ -11480,7 +11480,6 @@ dependencies = [
  "sp-io",
  "sp-keyring",
  "sp-runtime",
- "sp-session",
  "structopt",
  "substrate-simnode",
 ]
