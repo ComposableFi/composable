@@ -29,7 +29,7 @@ use proptest::prelude::*;
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(10_000))]
 
-use sp_core::sr25519;
+use sp_core::{H256, sr25519};
 
 prop_compose! {
     fn asset_info()
@@ -62,6 +62,14 @@ prop_compose! {
         }
 }
 
+prop_compose! {
+	fn account_id()
+		(x in 0..u64::MAX) -> AccountId {
+            let h256 = H256::from_low_u64_be(x);
+			AccountId::from_h256(h256)
+		}
+}
+
 
 mod add_asset_and_info {
     use super::*;
@@ -76,6 +84,7 @@ mod add_asset_and_info {
         ) {
             new_test_ext().execute_with(|| -> Result<(), TestCaseError> {
                 let root_account = get_root_account();
+
                 prop_assert_ok!(Oracle::add_asset_and_info(
                     Origin::signed(root_account),
                     asset_id,
@@ -111,7 +120,7 @@ mod add_asset_and_info {
                     asset_info_1.slash,
                 ));
 
-                // does not increment if exists
+                // does not increment asset_count because we have info for the same asset_id
                 prop_assert_ok!(Oracle::add_asset_and_info(
                     Origin::signed(root_account),
                     asset_id,
@@ -128,37 +137,32 @@ mod add_asset_and_info {
             })?;
         }
 
-        // #[test]
-        // fn fails_when_no_permission(
-        //     ASSET_ID in 1..u128::MAX, // When ASSET_ID = 0, we get an error: Module { index: 2, error: 20, message: Some("ExceedAssetsCount") }
-        //     MIN_ANSWERS in 1..u32::MAX,
-        //     MAX_ANSWERS in 1..u32::MAX,
-        //     BLOCK_INTERVAL in 5..20u64, // TODO(cor): find suitable range. The minimum is Oracle::Config::StalePrice, which is currently configured to be 5.
-        //     threshold in 0..100u8,
-        //     REWARD in 0..u64::MAX,
-        //     SLASH in 0..u64::MAX,
-        // ) {
-        //     new_test_ext().execute_with(|| {
-        //         prop_assume!(MIN_ANSWERS < MAX_ANSWERS);
-        //         let THRESHOLD: Percent = Percent::from_percent(threshold);
-        //
-        //         let account_1 = get_account_1();
-        //         prop_assert_noop!(
-        //             Oracle::add_asset_and_info(
-        //                 Origin::signed(account_1),
-        //                 ASSET_ID,
-        //                 THRESHOLD,
-        //                 MAX_ANSWERS,
-        //                 MAX_ANSWERS,
-        //                 BLOCK_INTERVAL,
-        //                 REWARD,
-        //                 SLASH
-        //             ),
-        //             BadOrigin
-        //         );
-        //         Ok(())
-        //     })?;
-        // }
+        #[test]
+        fn fails_when_non_root_account(
+            asset_id in asset_id(),
+            asset_info in asset_info(),
+            account_id in account_id(),
+        ) {
+            // very small chance of happening, but for correctness' sake ;)
+            prop_assume!(account_id != get_root_account());
+
+            new_test_ext().execute_with(|| {
+                prop_assert_noop!(
+                    Oracle::add_asset_and_info(
+                        Origin::signed(account_id),
+                        asset_id,
+                        asset_info.threshold,
+                        asset_info.min_answers,
+                        asset_info.max_answers,
+                        asset_info.block_interval,
+                        asset_info.reward,
+                        asset_info.slash,
+                    ),
+                    BadOrigin
+                );
+                Ok(())
+            })?;
+        }
 
 
 
