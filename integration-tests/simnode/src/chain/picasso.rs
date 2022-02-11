@@ -72,7 +72,7 @@ async fn _parachain_info_storage_override_test(
 
 	let raw_key_value: Option<u32> = node.with_state(None, || storage::unhashed::get(&key[..]));
 
-	assert_eq!(raw_key_value, Some(2104));
+	assert_eq!(raw_key_value, Some(2087));
 
 	Ok(())
 }
