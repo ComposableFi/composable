@@ -5,3 +5,4 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc b6dd37d9a1a86b283f373926540a558d445b88b0c394f73f91fc6311b0232b48 # shrinks to ASSET_ID = 0, MIN_ANSWERS = 0, MAX_ANSWERS = 1, BLOCK_INTERVAL = 2, threshold = 0, REWARD = 0, SLASH = 0
+cc 3616adf544711fe5fa2974e6c3d1e5494a12f17dca7b2dac21de689ba495849a # shrinks to ASSET_ID = 1, MIN_ANSWERS = 1, MAX_ANSWERS = 1, BLOCK_INTERVAL = 2, threshold = 0, REWARD = 0, SLASH = 0

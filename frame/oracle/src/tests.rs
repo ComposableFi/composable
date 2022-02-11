@@ -37,14 +37,14 @@ mod add_asset_and_info {
     use super::*;
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(1_000))]
+        #![proptest_config(ProptestConfig::with_cases(10_000))]
 
         #[test]
         fn normal_asset_and_info_assert(
-            ASSET_ID in 1..u128::MAX, // When ASSET_ID = 0, we get an error: Module { index: 2, error: 20, message: Some("ExceedAssetsCount") }
-            MIN_ANSWERS in 1..MAX_ANSWER_BOUND, // cannot be higher than MAX_ANSWERS
-            MAX_ANSWERS in 1..MAX_ANSWER_BOUND, // upper bound should be less than Oracle::Config::MaxAnswerBound
-            BLOCK_INTERVAL in 5..20u64, // TODO(cor): find suitable range. The minimum is Oracle::Config::StalePrice, which is currently configured to be 5.
+            ASSET_ID in 0..u128::MAX,
+            MIN_ANSWERS in 1..MaxAnswerBound::get(),
+            MAX_ANSWERS in 1..MaxAnswerBound::get(),
+            BLOCK_INTERVAL in (StalePrice::get()+1)..(BlockNumber::MAX/16),
             threshold in 0..100u8,
             REWARD in 0..u64::MAX,
             SLASH in 0..u64::MAX,
