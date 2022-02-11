@@ -24,10 +24,6 @@ std = ["composable-node/std"]
 exclude = ["frame/transaction-fee"]
 members = [
     "frame/*",
-    "frame/assets/rpc",
-    "frame/assets/runtime-api",
-    "frame/crowdloan-rewards/rpc",
-    "frame/crowdloan-rewards/runtime-api",
 
     "node",
 
