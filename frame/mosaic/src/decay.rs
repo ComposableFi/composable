@@ -92,7 +92,7 @@ mod tests {
 	#[test]
 	fn test_linear_decrease() {
 		let mut penalty = 1000;
-		let prev = penalty.clone();
+		let prev = penalty;
 		let penalty_decayer = BudgetPenaltyDecayer::linear(10);
 
 		(0..=100).for_each(|x| {

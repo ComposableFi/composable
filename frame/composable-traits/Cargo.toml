@@ -16,6 +16,7 @@ xcm = { default-features = false, package = "xcm", git = "https://github.com/par
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
 
 composable-support = {default-features = false, path = "../composable-support"}
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }

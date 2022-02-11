@@ -1414,6 +1414,7 @@ dependencies = [
  "composable-support",
  "frame-support",
  "frame-system",
+ "orml-traits",
  "parity-scale-codec",
  "plotters",
  "proptest 1.0.0",
@@ -2245,6 +2246,7 @@ dependencies = [
  "pallet-governance-registry",
  "pallet-identity",
  "pallet-indices",
+ "pallet-liquidations",
  "pallet-membership",
  "pallet-mosaic",
  "pallet-multisig",
@@ -5922,6 +5924,7 @@ checksum = "2386b4ebe91c2f7f51082d4cefa145d030e33a1842a96b12e4885cc3c01f7a55"
 name = "pallet-assets"
 version = "0.0.1"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -5932,6 +5935,7 @@ dependencies = [
  "pallet-balances",
  "pallet-governance-registry",
  "parity-scale-codec",
+ "proptest 0.9.6",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -6291,10 +6295,14 @@ dependencies = [
 name = "pallet-currency-factory"
 version = "0.0.1"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-balances",
  "parity-scale-codec",
+ "proptest 0.9.6",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -6614,12 +6622,24 @@ dependencies = [
 name = "pallet-liquidations"
 version = "0.0.1"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "hex-literal",
  "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-currency-factory",
+ "pallet-dutch-auction",
+ "pallet-timestamp",
  "parity-scale-codec",
+ "proptest 1.0.0",
  "scale-info",
+ "smallvec 1.8.0",
  "sp-arithmetic",
  "sp-core",
  "sp-io",

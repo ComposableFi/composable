@@ -356,7 +356,7 @@ fn incoming_outgoing_accounts_are_isolated() {
 
 		let amount = 100;
 		let network_id = 1;
-		let asset_id = 1;
+		let asset_id: u128 = 1u128;
 
 		assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 		let account_balance = || Tokens::balance(asset_id, &ALICE);
@@ -458,7 +458,7 @@ mod transfers {
 			System::set_block_number(current_block + Mosaic::timelock_period() - 1);
 			assert_noop!(
 				Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE),
-				Error::<Test>::NoStaleTransactions
+				Error::<Test>::TxStillLocked
 			);
 		})
 	}
@@ -520,7 +520,7 @@ mod transfers {
 				NetworkInfo { enabled: true, max_transfer_size },
 			));
 
-			let asset_id = 1;
+			let asset_id: u128 = 1;
 			assert_ok!(Mosaic::set_budget(
 				Origin::root(),
 				asset_id,
@@ -552,7 +552,7 @@ mod transfers {
 
 			let amount = 100;
 			let network_id = 1;
-			let asset_id = 1;
+			let asset_id: u128 = 1;
 
 			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 			let account_balance = || Tokens::balance(asset_id, &ALICE);
@@ -588,7 +588,7 @@ mod transfers {
 
 			let amount = 100;
 			let network_id = 1;
-			let asset_id = 1;
+			let asset_id: u128 = 1;
 
 			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 			assert_noop!(
@@ -609,7 +609,7 @@ mod transfers {
 		let ethereum_address = [0; 20];
 		let amount = 100;
 		let network_id = 1;
-		let asset_id = 1;
+		let asset_id: u128 = 1;
 
 		Mosaic::transfer_to(
 			Origin::signed(ALICE),
@@ -674,7 +674,7 @@ mod timelocked_mint {
 	fn cannot_mint_unsupported_assets() {
 		new_test_ext().execute_with(|| {
 			initialize();
-			let unsupported_asset_id = 42;
+			let unsupported_asset_id: u128 = 42;
 			assert_noop!(
 				Mosaic::timelocked_mint(
 					Origin::relayer(),
@@ -822,7 +822,8 @@ mod timelocked_mint {
 			account_a in account_id(),
 			decay in 1..100u128, // todo,
 			max_transfer_size in 1..10_000_000u128,
-			asset_id in 1..100u32,
+			asset_id in 1..100u128,
+			network_id in 1..100u32,
 			start_block in 1..10_000u64,
 			(budget, first_part, second_part) in budget_with_split(),
 		) {
@@ -833,7 +834,7 @@ mod timelocked_mint {
 				prop_assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 				prop_assert_ok!(Mosaic::set_network(
 					Origin::relayer(),
-					asset_id,
+					network_id,
 					NetworkInfo { enabled: true, max_transfer_size },
 				), "relayer may set network info");
 				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
@@ -856,7 +857,8 @@ mod timelocked_mint {
 			account_a in account_id(),
 			decay in 1..100u128, // todo,
 			max_transfer_size in 1..10_000_000u128,
-			asset_id in 1..100u32,
+			asset_id in 1..100u128,
+			network_id in 1..100u32,
 			start_block in 1..10_000u64,
 			(budget, first_part, second_part) in budget_with_split(),
 		) {
@@ -867,7 +869,7 @@ mod timelocked_mint {
 				prop_assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 				prop_assert_ok!(Mosaic::set_network(
 					Origin::relayer(),
-					asset_id,
+					network_id,
 					NetworkInfo { enabled: true, max_transfer_size },
 				), "relayer may set network info");
 				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
@@ -891,7 +893,8 @@ mod timelocked_mint {
 			account_a in account_id(),
 			decay_factor in 1..100u128, // todo,
 			max_transfer_size in 1..10_000_000u128,
-			asset_id in 1..100u32,
+			asset_id in 1..100u128,
+			network_id in 1..100u32,
 			start_block in 1..10_000u64,
 			(budget, first_part, second_part) in budget_with_split(),
 			iteration_count in 2..10u64,
@@ -908,7 +911,7 @@ mod timelocked_mint {
 				prop_assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 				prop_assert_ok!(Mosaic::set_network(
 					Origin::relayer(),
-					asset_id,
+					network_id,
 					NetworkInfo { enabled: true, max_transfer_size },
 				), "relayer may set network info");
 				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, budget_penalty_decayer.clone()), "root may set budget");
@@ -1141,7 +1144,7 @@ mod transfer_to {
 			System::set_block_number(current_block + Mosaic::timelock_period() - 1);
 			assert_noop!(
 				Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE),
-				Error::<Test>::NoStaleTransactions
+				Error::<Test>::TxStillLocked
 			);
 		})
 	}
@@ -1203,7 +1206,7 @@ mod transfer_to {
 				NetworkInfo { enabled: true, max_transfer_size },
 			));
 
-			let asset_id = 1;
+			let asset_id: u128 = 1;
 			assert_ok!(Mosaic::set_budget(
 				Origin::root(),
 				asset_id,
@@ -1235,7 +1238,7 @@ mod transfer_to {
 
 			let amount = 100;
 			let network_id = 1;
-			let asset_id = 1;
+			let asset_id: u128 = 1;
 
 			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 			let account_balance = || Tokens::balance(asset_id, &ALICE);
@@ -1271,7 +1274,7 @@ mod transfer_to {
 
 			let amount = 100;
 			let network_id = 1;
-			let asset_id = 1;
+			let asset_id: u128 = 1;
 
 			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 			assert_noop!(
@@ -1292,7 +1295,7 @@ mod transfer_to {
 		let ethereum_address = [0; 20];
 		let amount = 100;
 		let network_id = 1;
-		let asset_id = 1;
+		let asset_id: u128 = 1;
 
 		Mosaic::transfer_to(
 			Origin::signed(ALICE),
@@ -1349,7 +1352,7 @@ mod accept_transfer {
 	fn cannot_mint_unsupported_assets() {
 		new_test_ext().execute_with(|| {
 			initialize();
-			let unsupported_asset_id = 42;
+			let unsupported_asset_id: u128 = 42;
 			assert_noop!(
 				Mosaic::timelocked_mint(
 					Origin::relayer(),

@@ -165,9 +165,19 @@ we want to enable needs to be added to the Vec list we are creating in this func
 So simply add it with the [add_benchmark](https://docs.rs/frame-benchmarking/3.0.0/frame_benchmarking/macro.add_benchmark.html) macro function:
 
 ```rust
-...
-add_benchmark!(params, batches, <>)
-...
+// ...
+add_benchmark!(params, batches, balances, Balances);
+// ...
+```
+
+or [define_benchmarks](https://github.com/paritytech/substrate/blob/master/frame/benchmarking/src/lib.rs#L1834-L1869) macro (it's available starting with `polkadot-v0.9.16` branch):
+
+```rust
+define_benchmarks!(
+	// ...
+	[balances, Balances]
+	// ...
+);
 ```
 
 Read more about the benchmarking library here:
