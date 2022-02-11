@@ -71,18 +71,6 @@ let
         bin = relaychain-bin;
         chain = relaychain-spec;
         nodes = map (make-node tmp-directory "relaychain") polkadot.nodes;
-        genesis = {
-          runtime = {
-            runtime_genesis_config = {
-              configuration = {
-                config = {
-                  validation_upgrade_frequency = 1;
-                  validation_upgrade_delay = 1;
-                };
-              };
-            };
-          };
-        };
       };
       parachains = [
         {
