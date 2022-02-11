@@ -70,10 +70,25 @@ use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
 use sp_std::{fmt};
 /// Black box that embbed the validated value.
-#[derive(Default, Copy, Clone, PartialEq, Eq, TypeInfo)]
+#[derive(Default, Copy, Clone)]
 pub struct Validated<T, U> {
 	value: T,
 	_marker: PhantomData<U>,
+}
+
+impl<T, U> TypeInfo for Validated<T, U> where T: TypeInfo,
+{
+	type Identity = <T as TypeInfo>::Identity;
+
+	fn type_info() -> scale_info::Type {
+		T::type_info()
+	}
+}
+
+impl<T, U> PartialEq for Validated<T, U> where T: PartialEq {
+	fn eq(&self, other: &Self) -> bool {
+		self.value == other.value
+	}
 }
 
 impl<T, U> fmt::Debug for Validated<T, U>  {

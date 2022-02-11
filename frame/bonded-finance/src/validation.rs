@@ -4,13 +4,11 @@ use composable_traits::{
 	math::SafeArithmetic,
 };
 use codec::{Decode};
-use scale_info::{TypeInfo};
-use scale_info;
 use core::marker::PhantomData;
 use sp_runtime::traits::Zero;
 use crate::{pallet::BalanceOf, Config, BondOfferOf};
 
-#[derive(Debug,  Clone, Copy, Decode, TypeInfo)]
+#[derive(Debug,  Clone, Copy, Decode)]
 pub struct ValidBondOffer<T> {
 	phantom: PhantomData<T>,
 }
