@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "david/tx-runtime-api"}
-simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "david/tx-runtime-api" }
+substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "master"}
+simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "master" }
 
 system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 support = { package = "frame-support", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
