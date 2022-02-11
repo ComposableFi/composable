@@ -4,14 +4,13 @@ use crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi;
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
 use jsonrpc_derive::rpc;
-use num_traits::{CheckedAdd, CheckedMul, CheckedSub, Zero};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{
 	generic::BlockId,
 	traits::{AtLeast32BitUnsigned, Block as BlockT},
 };
-use sp_std::sync::Arc;
+use sp_std::{marker::PhantomData, sync::Arc};
 
 #[rpc]
 pub trait CrowdloanRewardsApi<BlockHash, AccountId, Balance>
@@ -28,10 +27,8 @@ where
 
 /// A struct that implements the `CrowdloanRewardsApi`.
 pub struct CrowdloanRewards<C, Block> {
-	// If you have more generics, no need to Assets<C, M, N, P, ...>
-	// just use a tuple like Assets<C, (M, N, P, ...)>
 	client: Arc<C>,
-	_marker: sp_std::marker::PhantomData<Block>,
+	_marker: PhantomData<Block>,
 }
 
 impl<C, M> CrowdloanRewards<C, M> {
@@ -46,21 +43,7 @@ impl<C, Block, AccountId, Balance> CrowdloanRewardsApi<<Block as BlockT>::Hash, 
 where
 	Block: BlockT,
 	AccountId: Send + Sync + Parameter + MaybeSerializeDeserialize + Ord + 'static,
-	Balance: Send
-		+ Sync
-		+ Default
-		+ Parameter
-		+ Codec
-		+ Copy
-		+ Ord
-		+ CheckedAdd
-		+ CheckedSub
-		+ CheckedMul
-		+ AtLeast32BitUnsigned
-		+ MaybeSerializeDeserialize
-		+ Zero
-		+ 'static
-		+ SafeRpcWrapperType,
+	Balance: Send + Sync + 'static + SafeRpcWrapperType,
 	C: Send + Sync + ProvideRuntimeApi<Block> + HeaderBackend<Block> + 'static,
 	C::Api: CrowdloanRewardsRuntimeApi<Block, AccountId, Balance>,
 {
