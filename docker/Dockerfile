@@ -21,14 +21,24 @@ LABEL description="Precompiled Docker image for Composable" \
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN curl "https://storage.googleapis.com/composable-binaries/community-releases/${VERSION}/composable-${VERSION}.tar.gz" | tar -xz 
-RUN chmod +x target/release/composable && mv target/release/composable /usr/local/bin
-RUN useradd -m -u 1001 -U -s /bin/sh -d /composable composable
-RUN mkdir -p /composable/.local/share/local_testnet
-RUN mkdir /data
-RUN chown -R composable:composable /data
-RUN chown -R composable:composable /composable/.local/share/local_testnet
-RUN ln -s /data /composable/.local/share/local_testnet 
+#RUN curl "https://storage.googleapis.com/composable-binaries/community-releases/${VERSION}/composable-${VERSION}.tar.gz" | tar -xz \
+#    chmod +x target/release/composable && mv target/release/composable /usr/local/bin \
+#    useradd -m -u 1001 -U -s /bin/sh -d /composable composable && \
+#    mkdir -p /composable/.local/share/local_testnet && \
+#    mkdir /data && \
+#    chown -R composable:composable /data && \
+#    chown -R composable:composable /composable/.local/share/local_testnet && \
+#    ln -s /data /composable/.local/share/local_testnet
+
+RUN curl "https://storage.googleapis.com/composable-binaries/community-releases/${VERSION}/composable-${VERSION}.tar.gz" | tar -xz \
+    chmod +x target/release/composable && mv target/release/composable /usr/local/bin
+#RUN 
+#RUN useradd -m -u 1001 -U -s /bin/sh -d /composable composable
+#RUN mkdir -p /composable/.local/share/local_testnet
+#RUN mkdir /data
+#RUN chown -R composable:composable /data
+#RUN chown -R composable:composable /composable/.local/share/local_testnet
+#RUN ln -s /data /composable/.local/share/local_testnet 
 
 USER composable
 
