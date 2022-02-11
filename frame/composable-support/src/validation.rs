@@ -65,15 +65,43 @@
 //! }
 //! ```
 
-use core::marker::PhantomData;
+use core::{marker::PhantomData, fmt};
 use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
 
 /// Black box that embbed the validated value.
-#[derive(Default, Copy, Clone, PartialEq, Eq, Debug, TypeInfo)]
+#[derive(Default, Copy, Clone)]
 pub struct Validated<T, U> {
 	value: T,
 	_marker: PhantomData<U>,
+}
+
+impl<T, U> TypeInfo for Validated<T, U>
+where T: TypeInfo,
+{
+    type Identity = <T as TypeInfo>::Identity;
+
+    fn type_info() -> scale_info::Type {
+        T::type_info()
+    }
+}
+
+impl<T, U> PartialEq for Validated<T, U>
+where T: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
+}
+
+impl<T, U> Eq for Validated<T, U> where T: PartialEq + Eq {}
+
+impl<T, U> fmt::Debug for Validated<T, U>
+where T: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.value.fmt(f)
+    }
 }
 
 impl<T, U> Validated<T, U>
