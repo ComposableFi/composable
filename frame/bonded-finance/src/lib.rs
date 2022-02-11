@@ -60,19 +60,16 @@ mod benchmarks;
 
 mod mock;
 mod tests;
-// mod utils;
-pub mod validation;
 pub mod weights;
 
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::validation::{ValidBondOffer, BondOfferComparer};
 	use codec::FullCodec;
 	use composable_support::validation::{Validated};
 	use composable_traits::{
-		bonded_finance::{BondDuration, BondOffer, BondedFinance},
+		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
 		math::{WrappingNext},
 		vesting::{VestedTransfer, VestingSchedule},
 	};
@@ -225,17 +222,17 @@ pub mod pallet {
 		/// parameter.
 		///
 		/// Emits a `NewOffer`.
+		/// 
         #[pallet::weight(T::WeightInfo::offer())]
 		pub fn offer(
 			origin: OriginFor<T>, 
-			offer: Validated<BondOfferOf<T>, ValidBondOffer<T>>,
+			offer: Validated<BondOfferOf<T>, ValidBondOffer<T::MinReward, <T::Vesting as VestedTransfer>::MinVestedTransfer>>,
 			keep_alive: bool) -> DispatchResult {
 			let from = ensure_signed(origin)?;
 			let value = offer.value();
 			Self::do_offer(&from, value, keep_alive)?;
 			Ok(())
 		}
-
 		/// Bond to an offer.
 		/// And user should provide the number of contracts she is willing to buy.
 		/// On offer completion (a.k.a. no more contract on the offer), the `stake` put by the
@@ -440,10 +437,12 @@ pub mod pallet {
 		type Balance = BalanceOf<T>;
 		type BlockNumber = BlockNumberOf<T>;
 		type BondOfferId = T::BondOfferId;
+		type MinReward = T::MinReward;
+		type MinVestedTransfer =  <T::Vesting as VestedTransfer>::MinVestedTransfer;
 
 		fn offer(
 			from: &Self::AccountId,
-			offer: Validated<BondOfferOf<T>, ValidBondOffer<T>>,
+			offer: Validated<BondOfferOf<T>, ValidBondOffer<Self::MinReward, Self::MinVestedTransfer>>,
 			keep_alive: bool,
 		) -> Result<Self::BondOfferId, DispatchError> {
 			Self::do_offer(from, offer.value(), keep_alive)
@@ -456,18 +455,6 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			Self::do_bond(offer, from, nb_of_bonds, keep_alive)
-		}
-	}
-
-	impl<T> BondOfferComparer<BalanceOf<T>> for ValidBondOffer<T>
-	where
-		T: Config,
-	{
-		fn min_transfer() -> BalanceOf<T> {
-			T::MinReward::get()
-		}
-		fn min_reward() -> BalanceOf<T> {
-			<T::Vesting as VestedTransfer>::MinVestedTransfer::get()
 		}
 	}
 }

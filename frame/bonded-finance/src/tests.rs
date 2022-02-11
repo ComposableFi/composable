@@ -125,7 +125,7 @@ fn invalid_offer() {
 		maturity: BondDuration::Finite { return_in: 1_000_000 },
 		reward: BondOfferReward {
 			asset: MockCurrencyId::BTC,
-			amount: 1_000_000_u128 * 100_000_u128 - 1,
+			amount: 1_000_u128 * 1_000_u128 - 1,
 			maturity: 96_u128
 		}
 	}
@@ -548,48 +548,44 @@ proptest! {
 #[cfg(test)]
 mod test {
 	use super::*;
-	use codec::{Decode, Encode};
 	use frame_support::assert_ok;
-	use crate::{pallet::BalanceOf, Config, BondOfferOf};
-	use composable_support::validation::{Valid, Validate};
+	use crate::{BondOfferOf};
+	use composable_support::validation::{Validate};
 	use composable_traits::{
-		bonded_finance::{BondDuration, BondOffer},
-		math::SafeArithmetic,
+		bonded_finance::{BondDuration, ValidBondOffer},
 	};
 	use mock::Runtime;
-	use core::marker::PhantomData;
-	use sp_runtime::traits::Zero;
-	use validation::{ValidBondOffer, BondOfferComparer};
 
 	#[test]
 	fn test_validate_bond_offer() {
 		let invalid = BondOfferOf::<Runtime> {
 			beneficiary: 23_u128,
 			asset: mock::MockCurrencyId::PICA,
-			bond_price: 12_u128,
+			bond_price: 1u128,
 			nb_of_bonds: 30_u128,
 			maturity: BondDuration::Finite { return_in: 1 },
-			reward: BondOfferReward { asset: mock::MockCurrencyId::PICA, amount: 20_u128, maturity: 45_u64 },
+			reward: BondOfferReward { asset: mock::MockCurrencyId::PICA, amount: 10_000_000_u128, maturity: 45_u64 },
 		};
 
-		assert!(<ValidBondOffer<Runtime> as Validate<
+		assert!(
+			<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
-			ValidBondOffer<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
 		>>::validate(invalid)
 		.is_err());
 
 		let valid = BondOfferOf::<Runtime> {
 			beneficiary: 23_u128,
 			asset: mock::MockCurrencyId::PICA,
-			bond_price: 12_u128,
-			nb_of_bonds: 30_u128,
+			bond_price: 1000_000u128,
+			nb_of_bonds: 2_u128,
 			maturity: BondDuration::Finite { return_in: 1 },
-			reward: BondOfferReward { asset: mock::MockCurrencyId::PICA, amount: 10_000_000_u128, maturity: 45_u64 },
+			reward: BondOfferReward { asset: mock::MockCurrencyId::PICA, amount: 1_000_000_000_u128, maturity: 45_u64 },
 		};
 
-		// assert_ok!(<ValidBondOffer<u64> as Validate<
-		// 	BondOffer<u64, u64, u64, u64>,
-		// 	ValidBondOffer<u64>,
-		// >>::validate(valid));
+		assert_ok!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(valid));
 	}
 }
