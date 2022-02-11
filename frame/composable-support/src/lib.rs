@@ -13,7 +13,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod collections;
-pub mod validation;
-
-// #[cfg(feature = "std")]
 pub mod rpc_helpers;
+pub mod validation;
