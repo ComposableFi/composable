@@ -1,9 +1,8 @@
-use frame_support::pallet_prelude::*;
-use scale_info::TypeInfo;
-use sp_runtime::{traits::Zero, ArithmeticError};
-use frame_support::traits::Get;
 use crate::math::SafeArithmetic;
 use composable_support::validation::{Validate, Validated};
+use frame_support::{pallet_prelude::*, traits::Get};
+use scale_info::TypeInfo;
+use sp_runtime::{traits::Zero, ArithmeticError};
 
 pub trait BondedFinance {
 	type AccountId;
@@ -17,8 +16,10 @@ pub trait BondedFinance {
 	/// Create a new offer.
 	fn offer(
 		from: &Self::AccountId,
-		offer: Validated<BondOffer<Self::AccountId, Self::AssetId, Self::Balance, Self::BlockNumber>, 
-		ValidBondOffer<Self::MinReward, Self::MinVestedTransfer>>,
+		offer: Validated<
+			BondOffer<Self::AccountId, Self::AssetId, Self::Balance, Self::BlockNumber>,
+			ValidBondOffer<Self::MinReward, Self::MinVestedTransfer>,
+		>,
 		keep_alive: bool,
 	) -> Result<Self::BondOfferId, DispatchError>;
 
@@ -75,25 +76,35 @@ pub struct ValidBondOffer<U, V> {
 	_m2: PhantomData<V>,
 }
 
-impl<U, V> Copy for ValidBondOffer<U, V>{}
+impl<U, V> Copy for ValidBondOffer<U, V> {}
 
 impl<U, V> Clone for ValidBondOffer<U, V> {
 	fn clone(&self) -> Self {
 		*self
 	}
-} 
+}
 
-impl<MinTransfer, MinReward, AccountId, AssetId, Balance: Zero + PartialOrd + SafeArithmetic, BlockNumber: Zero>
-        Validate<BondOffer<AccountId, AssetId, Balance, BlockNumber>, 
-        ValidBondOffer<MinTransfer, MinReward>> for ValidBondOffer<MinTransfer, MinReward>
-		where ValidBondOffer<MinTransfer, MinReward>: Decode, 
-		      MinTransfer: Get<Balance>, 
-			  MinReward: Get<Balance> {
-
-	fn validate(input: BondOffer<AccountId, AssetId, Balance, BlockNumber>) -> 
-	        Result<BondOffer<AccountId, AssetId, Balance, BlockNumber>, &'static str> {
-		
-        let nonzero_maturity = match &input.maturity {
+impl<
+		MinTransfer,
+		MinReward,
+		AccountId,
+		AssetId,
+		Balance: Zero + PartialOrd + SafeArithmetic,
+		BlockNumber: Zero,
+	>
+	Validate<
+		BondOffer<AccountId, AssetId, Balance, BlockNumber>,
+		ValidBondOffer<MinTransfer, MinReward>,
+	> for ValidBondOffer<MinTransfer, MinReward>
+where
+	ValidBondOffer<MinTransfer, MinReward>: Decode,
+	MinTransfer: Get<Balance>,
+	MinReward: Get<Balance>,
+{
+	fn validate(
+		input: BondOffer<AccountId, AssetId, Balance, BlockNumber>,
+	) -> Result<BondOffer<AccountId, AssetId, Balance, BlockNumber>, &'static str> {
+		let nonzero_maturity = match &input.maturity {
 			BondDuration::Finite { return_in } => !return_in.is_zero(),
 			BondDuration::Infinite => true,
 		};
@@ -110,12 +121,13 @@ impl<MinTransfer, MinReward, AccountId, AssetId, Balance: Zero + PartialOrd + Sa
 			return Err("invalid nb_of_bonds")
 		}
 
-		let valid_reward = input.reward.amount >=  MinReward::get() &&
+		let valid_reward = input.reward.amount >= MinReward::get() &&
 			input
 				.reward
 				.amount
 				.safe_div(&input.nb_of_bonds)
-				.unwrap_or_else(|_| Balance::zero()) >=MinTransfer::get();
+				.unwrap_or_else(|_| Balance::zero()) >=
+				MinTransfer::get();
 
 		if !valid_reward {
 			return Err("invalid reward")

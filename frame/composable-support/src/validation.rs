@@ -68,7 +68,7 @@
 use core::marker::PhantomData;
 use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
-use sp_std::{fmt};
+use sp_std::fmt;
 /// Black box that embbed the validated value.
 #[derive(Default, Copy, Clone)]
 pub struct Validated<T, U> {
@@ -76,7 +76,9 @@ pub struct Validated<T, U> {
 	_marker: PhantomData<U>,
 }
 
-impl<T, U> TypeInfo for Validated<T, U> where T: TypeInfo,
+impl<T, U> TypeInfo for Validated<T, U>
+where
+	T: TypeInfo,
 {
 	type Identity = <T as TypeInfo>::Identity;
 
@@ -85,16 +87,19 @@ impl<T, U> TypeInfo for Validated<T, U> where T: TypeInfo,
 	}
 }
 
-impl<T, U> PartialEq for Validated<T, U> where T: PartialEq {
+impl<T, U> PartialEq for Validated<T, U>
+where
+	T: PartialEq,
+{
 	fn eq(&self, other: &Self) -> bool {
 		self.value == other.value
 	}
 }
 
-impl<T, U> fmt::Debug for Validated<T, U>  {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "")
-    }
+impl<T, U> fmt::Debug for Validated<T, U> {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "")
+	}
 }
 
 impl<T, U> Validated<T, U>
@@ -193,7 +198,7 @@ impl<T, U: Validate<T, U>> Validated<T, U> {
 	}
 }
 
-impl<T:codec::Decode, U: Validate<T, U>> codec::Decode for Validated<T, U> {
+impl<T: codec::Decode, U: Validate<T, U>> codec::Decode for Validated<T, U> {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
 		let value = <U as Validate<T, U>>::validate(T::decode(input)?)?;
 		Ok(Validated { value, _marker: PhantomData })

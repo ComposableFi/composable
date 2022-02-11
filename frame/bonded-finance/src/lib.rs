@@ -67,10 +67,10 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_support::validation::{Validated};
+	use composable_support::validation::Validated;
 	use composable_traits::{
 		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
-		math::{WrappingNext},
+		math::WrappingNext,
 		vesting::{VestedTransfer, VestingSchedule},
 	};
 	use frame_support::{
@@ -222,12 +222,15 @@ pub mod pallet {
 		/// parameter.
 		///
 		/// Emits a `NewOffer`.
-		/// 
-        #[pallet::weight(T::WeightInfo::offer())]
+		#[pallet::weight(T::WeightInfo::offer())]
 		pub fn offer(
-			origin: OriginFor<T>, 
-			offer: Validated<BondOfferOf<T>, ValidBondOffer<T::MinReward, <T::Vesting as VestedTransfer>::MinVestedTransfer>>,
-			keep_alive: bool) -> DispatchResult {
+			origin: OriginFor<T>,
+			offer: Validated<
+				BondOfferOf<T>,
+				ValidBondOffer<T::MinReward, <T::Vesting as VestedTransfer>::MinVestedTransfer>,
+			>,
+			keep_alive: bool,
+		) -> DispatchResult {
 			let from = ensure_signed(origin)?;
 			let value = offer.value();
 			Self::do_offer(&from, value, keep_alive)?;
@@ -306,7 +309,6 @@ pub mod pallet {
 			offer: BondOfferOf<T>,
 			keep_alive: bool,
 		) -> Result<T::BondOfferId, DispatchError> {
-		
 			let offer_id = BondOfferCount::<T>::mutate(|offer_id| {
 				*offer_id = offer_id.next();
 				*offer_id
@@ -438,11 +440,14 @@ pub mod pallet {
 		type BlockNumber = BlockNumberOf<T>;
 		type BondOfferId = T::BondOfferId;
 		type MinReward = T::MinReward;
-		type MinVestedTransfer =  <T::Vesting as VestedTransfer>::MinVestedTransfer;
+		type MinVestedTransfer = <T::Vesting as VestedTransfer>::MinVestedTransfer;
 
 		fn offer(
 			from: &Self::AccountId,
-			offer: Validated<BondOfferOf<T>, ValidBondOffer<Self::MinReward, Self::MinVestedTransfer>>,
+			offer: Validated<
+				BondOfferOf<T>,
+				ValidBondOffer<Self::MinReward, Self::MinVestedTransfer>,
+			>,
 			keep_alive: bool,
 		) -> Result<Self::BondOfferId, DispatchError> {
 			Self::do_offer(from, offer.value(), keep_alive)

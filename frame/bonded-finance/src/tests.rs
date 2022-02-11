@@ -548,12 +548,10 @@ proptest! {
 #[cfg(test)]
 mod test {
 	use super::*;
+	use crate::BondOfferOf;
+	use composable_support::validation::Validate;
+	use composable_traits::bonded_finance::{BondDuration, ValidBondOffer};
 	use frame_support::assert_ok;
-	use crate::{BondOfferOf};
-	use composable_support::validation::{Validate};
-	use composable_traits::{
-		bonded_finance::{BondDuration, ValidBondOffer},
-	};
 	use mock::Runtime;
 
 	#[test]
@@ -564,11 +562,14 @@ mod test {
 			bond_price: 1u128,
 			nb_of_bonds: 30_u128,
 			maturity: BondDuration::Finite { return_in: 1 },
-			reward: BondOfferReward { asset: mock::MockCurrencyId::PICA, amount: 10_000_000_u128, maturity: 45_u64 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::PICA,
+				amount: 10_000_000_u128,
+				maturity: 45_u64,
+			},
 		};
 
-		assert!(
-			<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
 		>>::validate(invalid)
@@ -580,7 +581,11 @@ mod test {
 			bond_price: 1000_000u128,
 			nb_of_bonds: 2_u128,
 			maturity: BondDuration::Finite { return_in: 1 },
-			reward: BondOfferReward { asset: mock::MockCurrencyId::PICA, amount: 1_000_000_000_u128, maturity: 45_u64 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::PICA,
+				amount: 1_000_000_000_u128,
+				maturity: 45_u64,
+			},
 		};
 
 		assert_ok!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
