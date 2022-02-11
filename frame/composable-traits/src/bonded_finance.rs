@@ -3,7 +3,6 @@ use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, ArithmeticError};
 
 use crate::math::SafeArithmetic;
-use bonded_finance::validation::ValidBondOffer;
 use composable_support::validation::{Validated};
 
 pub trait BondedFinance {
@@ -16,7 +15,7 @@ pub trait BondedFinance {
 	/// Create a new offer.
 	fn offer(
 		from: &Self::AccountId,
-		offer: Validated<BondOffer<Self::AccountId, Self::AssetId, Self::Balance, Self::BlockNumber>, ValidBondOffer<&Self>>,
+		offer: BondOffer<Self::AccountId, Self::AssetId, Self::Balance, Self::BlockNumber>,
 		keep_alive: bool,
 	) -> Result<Self::BondOfferId, DispatchError>;
 
