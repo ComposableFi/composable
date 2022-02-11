@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "master" }
+substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "david/tx-runtime-api"}
+simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "david/tx-runtime-api" }
 
 system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 support = { package = "frame-support", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
@@ -20,9 +21,11 @@ sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sproof-builder = { package = "cumulus-test-relay-sproof-builder", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16" }

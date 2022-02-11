@@ -2269,6 +2269,7 @@ dependencies = [
  "polkadot-parachain",
  "primitives",
  "scale-info",
+ "simnode-runtime-apis",
  "smallvec 1.8.0",
  "sp-api",
  "sp-block-builder",
@@ -7726,6 +7727,7 @@ dependencies = [
  "polkadot-parachain",
  "primitives",
  "scale-info",
+ "simnode-runtime-apis",
  "smallvec 1.8.0",
  "sp-api",
  "sp-block-builder",
@@ -11471,13 +11473,26 @@ dependencies = [
  "sc-executor",
  "sc-service",
  "sc-tracing",
+ "simnode-runtime-apis",
+ "sp-api",
  "sp-blockchain",
  "sp-consensus-aura",
  "sp-io",
  "sp-keyring",
  "sp-runtime",
+ "sp-session",
  "structopt",
  "substrate-simnode",
+]
+
+[[package]]
+name = "simnode-runtime-apis"
+version = "0.1.0"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=david/tx-runtime-api#9146abd857046acc5e5f08b679a8bb1c782d252a"
+dependencies = [
+ "parity-scale-codec",
+ "sp-api",
+ "sp-std",
 ]
 
 [[package]]
@@ -12492,7 +12507,7 @@ dependencies = [
 [[package]]
 name = "substrate-simnode"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#2f38150ffefe65cd346ed6a9a5c6d970333b24a9"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=david/tx-runtime-api#9146abd857046acc5e5f08b679a8bb1c782d252a"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",
@@ -12521,6 +12536,7 @@ dependencies = [
  "sc-tracing",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
+ "simnode-runtime-apis",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
@@ -13050,7 +13066,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.9.0",
+ "parking_lot 0.10.2",
  "regex",
  "serde",
  "serde_json",
@@ -13231,8 +13247,8 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 0.1.10",
- "rand 0.6.5",
+ "cfg-if 1.0.0",
+ "rand 0.8.4",
  "static_assertions",
 ]
 
