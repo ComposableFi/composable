@@ -29,28 +29,28 @@ use proptest::prelude::*;
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(10_000))]
 
-use sp_core::{H256, sr25519};
+use sp_core::H256;
 
 prop_compose! {
     fn asset_info()
         (
-            MIN_ANSWERS in 1..MaxAnswerBound::get(),
-            MAX_ANSWERS in 1..MaxAnswerBound::get(),
-            BLOCK_INTERVAL in (StalePrice::get()+1)..(BlockNumber::MAX/16),
+            min_answers in 1..MaxAnswerBound::get(),
+            max_answers in 1..MaxAnswerBound::get(),
+            block_interval in (StalePrice::get()+1)..(BlockNumber::MAX/16),
             threshold in 0..100u8,
-            REWARD in 0..u64::MAX,
-            SLASH in 0..u64::MAX,
+            reward in 0..u64::MAX,
+            slash in 0..u64::MAX,
         ) -> AssetInfo<Percent, BlockNumber, Balance> {
-            let MIN_ANSWERS = MAX_ANSWERS.saturating_sub(MIN_ANSWERS) + 1;
-            let THRESHOLD: Percent = Percent::from_percent(threshold);
+            let min_answers = max_answers.saturating_sub(min_answers) + 1;
+            let threshold: Percent = Percent::from_percent(threshold);
 
             AssetInfo {
-                threshold: THRESHOLD,
-                min_answers: MIN_ANSWERS,
-                max_answers: MAX_ANSWERS,
-                block_interval: BLOCK_INTERVAL,
-                reward: REWARD,
-                slash: SLASH,
+                threshold,
+                min_answers,
+                max_answers,
+                block_interval,
+                reward,
+                slash,
             }
         }
 }
@@ -82,7 +82,7 @@ mod add_asset_and_info {
             asset_id in asset_id(),
             asset_info in asset_info(),
         ) {
-            new_test_ext().execute_with(|| -> Result<(), TestCaseError> {
+            new_test_ext().execute_with(|| {
                 let root_account = get_root_account();
 
                 prop_assert_ok!(Oracle::add_asset_and_info(
@@ -165,182 +165,245 @@ mod add_asset_and_info {
         }
 
 
+        #[test]
+        fn can_have_multiple_assets(
+            asset_id_1 in asset_id(),
+            asset_id_2 in asset_id(),
+            asset_info_1 in asset_info(),
+            asset_info_2 in asset_info(),
+        ) {
+            new_test_ext().execute_with(|| {
+                let root_account = get_root_account();
+
+                prop_assert_ok!(Oracle::add_asset_and_info(
+                    Origin::signed(root_account),
+                    asset_id_1,
+                    asset_info_1.threshold,
+                    asset_info_1.min_answers,
+                    asset_info_1.max_answers,
+                    asset_info_1.block_interval,
+                    asset_info_1.reward,
+                    asset_info_1.slash,
+                ));
+
+                prop_assert_ok!(Oracle::add_asset_and_info(
+                    Origin::signed(root_account),
+                    asset_id_2,
+                    asset_info_2.threshold,
+                    asset_info_2.min_answers,
+                    asset_info_2.max_answers,
+                    asset_info_2.block_interval,
+                    asset_info_2.reward,
+                    asset_info_2.slash,
+                ));
+
+                prop_assert_eq!(Oracle::asset_info(asset_id_1), Some(asset_info_1));
+                prop_assert_eq!(Oracle::asset_info(asset_id_2), Some(asset_info_2));
+                prop_assert_eq!(Oracle::assets_count(), 2);
+
+                Ok(())
+            })?;
+        }
 
 
 
+        #[test]
+        fn max_answers_cannot_be_less_than_min_answers(
+            asset_id in asset_id(),
+            asset_info in asset_info(),
+        ) {
+            let root_account = get_root_account();
 
-    //
-    //     #[test]
-    //     fn add_asset_and_info(
-    //         ASSET_ID in 1..u128::MAX, // When ASSET_ID = 0, we get an error: Module { index: 2, error: 20, message: Some("ExceedAssetsCount") }
-    //         MIN_ANSWERS in 1..u32::MAX,
-    //         MAX_ANSWERS in 1..u32::MAX,
-    //         BLOCK_INTERVAL in 5..20u64, // TODO(cor): find suitable range. The minimum is Oracle::Config::StalePrice, which is currently configured to be 5.
-    //         threshold in 0..100u8,
-    //         REWARD in 0..u64::MAX,
-    //         SLASH in 0..u64::MAX,
-    //     ) {
-    //         new_test_ext().execute_with(|| {
-    //             prop_assume!(MIN_ANSWERS < MAX_ANSWERS);
-    //             // const ASSET_ID: u128 = 1;
-    //             // const MIN_ANSWERS: u32 = 3;
-    //             // const MAX_ANSWERS: u32 = 5;
-    //             let THRESHOLD: Percent = Percent::from_percent(threshold);
-    //             // const BLOCK_INTERVAL: u64 = 5;
-    //             // const REWARD: u64 = 5;
-    //             // const SLASH: u64 = 5;
-    //
-    //             // passes
-    //             let account_2 = get_account_2();
-    //             prop_assert_ok!(Oracle::add_asset_and_info(
-    //                 Origin::signed(account_2),
-    //                 ASSET_ID,
-    //                 THRESHOLD,
-    //                 MIN_ANSWERS,
-    //                 MAX_ANSWERS,
-    //                 BLOCK_INTERVAL,
-    //                 REWARD,
-    //                 SLASH
-    //             ));
-    //
-    //             // does not increment if exists
-    //             prop_assert_ok!(Oracle::add_asset_and_info(
-    //                 Origin::signed(account_2),
-    //                 ASSET_ID,
-    //                 THRESHOLD,
-    //                 MIN_ANSWERS,
-    //                 MAX_ANSWERS,
-    //                 BLOCK_INTERVAL,
-    //                 REWARD,
-    //                 SLASH
-    //             ));
-    //             prop_assert_eq!(Oracle::assets_count(), 1);
-    //
-    //             prop_assert_ok!(Oracle::add_asset_and_info(
-    //                 Origin::signed(account_2),
-    //                 ASSET_ID + 1,
-    //                 THRESHOLD,
-    //                 MIN_ANSWERS,
-    //                 MAX_ANSWERS,
-    //                 BLOCK_INTERVAL,
-    //                 REWARD,
-    //                 SLASH
-    //             ));
-    //
-    //             let asset_info = AssetInfo {
-    //                 threshold: THRESHOLD,
-    //                 min_answers: MIN_ANSWERS,
-    //                 max_answers: MAX_ANSWERS,
-    //                 block_interval: BLOCK_INTERVAL,
-    //                 reward: REWARD,
-    //                 slash: SLASH,
-    //             };
-    //             // id now activated and count incremented
-    //             prop_assert_eq!(Oracle::asset_info(1), Some(asset_info));
-    //             prop_assert_eq!(Oracle::assets_count(), 2);
-    //
-    //             // fails with non permission
-    //             let account_1 = get_account_1();
-    //             prop_assert_noop!(
-    //                 Oracle::add_asset_and_info(
-    //                     Origin::signed(account_1),
-    //                     ASSET_ID,
-    //                     THRESHOLD,
-    //                     MAX_ANSWERS,
-    //                     MAX_ANSWERS,
-    //                     BLOCK_INTERVAL,
-    //                     REWARD,
-    //                     SLASH
-    //                 ),
-    //                 BadOrigin
-    //             );
-    //
-    //             prop_assert_noop!(
-    //                 Oracle::add_asset_and_info(
-    //                     Origin::signed(account_2),
-    //                     ASSET_ID,
-    //                     THRESHOLD,
-    //                     MAX_ANSWERS,
-    //                     MIN_ANSWERS,
-    //                     BLOCK_INTERVAL,
-    //                     REWARD,
-    //                     SLASH
-    //                 ),
-    //                 Error::<Test>::MaxAnswersLessThanMinAnswers
-    //             );
-    //
-    //             prop_assert_noop!(
-    //                 Oracle::add_asset_and_info(
-    //                     Origin::signed(account_2),
-    //                     ASSET_ID,
-    //                     Percent::from_percent(100),
-    //                     MIN_ANSWERS,
-    //                     MAX_ANSWERS,
-    //                     BLOCK_INTERVAL,
-    //                     REWARD,
-    //                     SLASH
-    //                 ),
-    //                 Error::<Test>::ExceedThreshold
-    //             );
-    //
-    //             prop_assert_noop!(
-    //                 Oracle::add_asset_and_info(
-    //                     Origin::signed(account_2),
-    //                     ASSET_ID,
-    //                     THRESHOLD,
-    //                     MIN_ANSWERS,
-    //                     MAX_ANSWERS + 1,
-    //                     BLOCK_INTERVAL,
-    //                     REWARD,
-    //                     SLASH
-    //                 ),
-    //                 Error::<Test>::ExceedMaxAnswers
-    //             );
-    //
-    //             prop_assert_noop!(
-    //                 Oracle::add_asset_and_info(
-    //                     Origin::signed(account_2),
-    //                     ASSET_ID,
-    //                     THRESHOLD,
-    //                     0,
-    //                     MAX_ANSWERS,
-    //                     BLOCK_INTERVAL,
-    //                     REWARD,
-    //                     SLASH
-    //                 ),
-    //                 Error::<Test>::InvalidMinAnswers
-    //             );
-    //
-    //             prop_assert_noop!(
-    //                 Oracle::add_asset_and_info(
-    //                     Origin::signed(account_2),
-    //                     ASSET_ID + 2,
-    //                     THRESHOLD,
-    //                     MIN_ANSWERS,
-    //                     MAX_ANSWERS,
-    //                     BLOCK_INTERVAL,
-    //                     REWARD,
-    //                     SLASH
-    //                 ),
-    //                 Error::<Test>::ExceedAssetsCount
-    //             );
-    //
-    //             prop_assert_noop!(
-    //                 Oracle::add_asset_and_info(
-    //                     Origin::signed(account_2),
-    //                     ASSET_ID,
-    //                     THRESHOLD,
-    //                     MIN_ANSWERS,
-    //                     MAX_ANSWERS,
-    //                     BLOCK_INTERVAL - 4,
-    //                     REWARD,
-    //                     SLASH
-    //                 ),
-    //                 Error::<Test>::BlockIntervalLength
-    //             );
-    //             Ok(())
-    //         })?;
-    //     }
+            new_test_ext().execute_with(|| {
+                prop_assert_noop!(
+                    Oracle::add_asset_and_info(
+                        Origin::signed(root_account),
+                        asset_id,
+                        asset_info.threshold,       // notice that max and min are reversed:
+                        asset_info.max_answers,     // MIN
+                        asset_info.min_answers - 1, // MAX
+                        asset_info.block_interval,
+                        asset_info.reward,
+                        asset_info.slash,
+                    ),
+                    Error::<Test>::MaxAnswersLessThanMinAnswers
+                );
+
+                Ok(())
+            })?;
+        }
+
+
+
+        #[test]
+        fn threshold_cannot_be_100(
+            asset_id in asset_id(),
+            asset_info in asset_info(),
+        ) {
+            let root_account = get_root_account();
+
+            new_test_ext().execute_with(|| {
+                prop_assert_noop!(
+                    Oracle::add_asset_and_info(
+                        Origin::signed(root_account),
+                        asset_id,
+                        Percent::from_percent(100), // <- notice that this is 100%
+                        asset_info.min_answers,
+                        asset_info.max_answers,
+                        asset_info.block_interval,
+                        asset_info.reward,
+                        asset_info.slash,
+                    ),
+                    Error::<Test>::ExceedThreshold
+                );
+
+                Ok(())
+            })?;
+        }
+
+
+        #[test]
+        fn max_answers_cannot_be_more_than_max_answer_bound(
+            asset_id in asset_id(),
+            asset_info in asset_info(),
+        ) {
+            let root_account = get_root_account();
+
+            new_test_ext().execute_with(|| {
+                prop_assert_noop!(
+                    Oracle::add_asset_and_info(
+                        Origin::signed(root_account),
+                        asset_id,
+                        asset_info.threshold,
+                        asset_info.min_answers,
+                        MaxAnswerBound::get() + 1, // <- notice that this is more than MaxAnswerBound
+                        asset_info.block_interval,
+                        asset_info.reward,
+                        asset_info.slash,
+                    ),
+                    Error::<Test>::ExceedMaxAnswers
+                );
+
+                Ok(())
+            })?;
+        }
+
+        #[test]
+        fn min_answers_cannot_be_0(
+            asset_id in asset_id(),
+            asset_info in asset_info(),
+        ) {
+            let root_account = get_root_account();
+
+            new_test_ext().execute_with(|| {
+                prop_assert_noop!(
+                    Oracle::add_asset_and_info(
+                        Origin::signed(root_account),
+                        asset_id,
+                        asset_info.threshold,
+                        0, // <- notice that this is 0
+                        asset_info.max_answers,
+                        asset_info.block_interval,
+                        asset_info.reward,
+                        asset_info.slash,
+                    ),
+                    Error::<Test>::InvalidMinAnswers
+                );
+
+                Ok(())
+            })?;
+        }
+
+        #[test]
+        fn cannot_exceed_max_assets_count(
+            asset_id_1 in asset_id(),
+            asset_id_2 in asset_id(),
+            asset_id_3 in asset_id(),
+            asset_info_1 in asset_info(),
+            asset_info_2 in asset_info(),
+            asset_info_3 in asset_info(),
+        ) {
+            new_test_ext().execute_with(|| {
+                let root_account = get_root_account();
+
+                // First we create 2 assets, which is allowed because within mock.rs, we see:
+                // pub const MaxAssetsCount: u32 = 2;
+                // it would be nicer to do this in a loop up to MaxAssetsCount,
+                // but AFAIK it is not possible to generate props within the proptest body.
+
+                // If the following check fails, that means that the mock.rs was changed,
+                // and therefore this test should also be changed.
+                prop_assert_eq!(MaxAssetsCount::get(), 2u32);
+
+                prop_assert_ok!(Oracle::add_asset_and_info(
+                    Origin::signed(root_account),
+                    asset_id_1,
+                    asset_info_1.threshold,
+                    asset_info_1.min_answers,
+                    asset_info_1.max_answers,
+                    asset_info_1.block_interval,
+                    asset_info_1.reward,
+                    asset_info_1.slash,
+                ));
+
+                prop_assert_ok!(Oracle::add_asset_and_info(
+                    Origin::signed(root_account),
+                    asset_id_2,
+                    asset_info_2.threshold,
+                    asset_info_2.min_answers,
+                    asset_info_2.max_answers,
+                    asset_info_2.block_interval,
+                    asset_info_2.reward,
+                    asset_info_2.slash,
+                ));
+
+                prop_assert_eq!(Oracle::asset_info(asset_id_1), Some(asset_info_1));
+                prop_assert_eq!(Oracle::asset_info(asset_id_2), Some(asset_info_2));
+                prop_assert_eq!(Oracle::assets_count(), 2);
+
+
+                prop_assert_noop!(Oracle::add_asset_and_info(
+                    Origin::signed(root_account),
+                    asset_id_3,
+                    asset_info_3.threshold,
+                    asset_info_3.min_answers,
+                    asset_info_3.max_answers,
+                    asset_info_3.block_interval,
+                    asset_info_3.reward,
+                    asset_info_3.slash,
+                ),
+                Error::<Test>::ExceedAssetsCount);
+
+                Ok(())
+            })?;
+        }
+
+    #[test]
+        fn block_interval_cannot_be_less_than_stale_price(
+            asset_id in asset_id(),
+            asset_info in asset_info(),
+            invalid_block_interval in 0..StalePrice::get(),
+        ) {
+            let root_account = get_root_account();
+
+            new_test_ext().execute_with(|| {
+                prop_assert_noop!(
+                    Oracle::add_asset_and_info(
+                        Origin::signed(root_account),
+                        asset_id,
+                        asset_info.threshold,
+                        asset_info.min_answers,
+                        asset_info.max_answers,
+                        invalid_block_interval,
+                        asset_info.reward,
+                        asset_info.slash,
+                    ),
+                    Error::<Test>::BlockIntervalLength
+                );
+
+                Ok(())
+            })?;
+        }
     }
 }
 

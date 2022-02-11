@@ -86,6 +86,7 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 }
 
+
 parameter_types! {
 	pub const StakeLock: u64 = 1;
 	pub const MinStake: u64 = 1;
