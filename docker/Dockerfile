@@ -29,7 +29,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 #    chown -R composable:composable /composable/.local/share/local_testnet && \
 #    ln -s /data /composable/.local/share/local_testnet 
 
-RUN curl "https://storage.googleapis.com/composable-binaries/community-releases/${RELEASE_VERSION}/composable-${RELEASE_VERSION}.tar.gz" | tar -xz 
+RUN curl "https://storage.googleapis.com/composable-binaries/community-releases/${VERSION}/composable-${VERSION}.tar.gz" | tar -xz 
 RUN ls
 RUN chmod +x target/release/composable && mv target/release/composable /usr/local/bin
 RUN useradd -m -u 1001 -U -s /bin/sh -d /composable composable
