@@ -290,13 +290,7 @@ pub mod pallet {
 			from: &AccountIdOf<T>,
 			offer: BondOfferOf<T>,
 		) -> Result<T::BondOfferId, DispatchError> {
-			ensure!(
-				offer.valid(
-					<T::Vesting as VestedTransfer>::MinVestedTransfer::get(),
-					T::MinReward::get()
-				),
-				Error::<T>::InvalidBondOffer
-			);
+		
 			let offer_id = BondOfferCount::<T>::mutate(|offer_id| {
 				*offer_id = offer_id.next();
 				*offer_id
