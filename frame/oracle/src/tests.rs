@@ -31,6 +31,36 @@ proptest! {
 
 use sp_core::sr25519;
 
+prop_compose! {
+    fn asset_info()
+        (
+            MIN_ANSWERS in 1..MaxAnswerBound::get(),
+            MAX_ANSWERS in 1..MaxAnswerBound::get(),
+            BLOCK_INTERVAL in (StalePrice::get()+1)..(BlockNumber::MAX/16),
+            threshold in 0..100u8,
+            REWARD in 0..u64::MAX,
+            SLASH in 0..u64::MAX,
+        ) -> AssetInfo<Percent, BlockNumber, Balance> {
+            let MIN_ANSWERS = MAX_ANSWERS.saturating_sub(MIN_ANSWERS) + 1;
+            let THRESHOLD: Percent = Percent::from_percent(threshold);
+
+            AssetInfo {
+                threshold: THRESHOLD,
+                min_answers: MIN_ANSWERS,
+                max_answers: MAX_ANSWERS,
+                block_interval: BLOCK_INTERVAL,
+                reward: REWARD,
+                slash: SLASH,
+            }
+        }
+}
+
+prop_compose! {
+    fn asset_id()
+        (x in 0..AssetId::MAX) -> AssetId {
+            x
+        }
+}
 
 
 mod add_asset_and_info {
@@ -41,32 +71,20 @@ mod add_asset_and_info {
 
         #[test]
         fn normal_asset_and_info_assert(
-            ASSET_ID in 0..u128::MAX,
-            MIN_ANSWERS in 1..MaxAnswerBound::get(),
-            MAX_ANSWERS in 1..MaxAnswerBound::get(),
-            BLOCK_INTERVAL in (StalePrice::get()+1)..(BlockNumber::MAX/16),
-            threshold in 0..100u8,
-            REWARD in 0..u64::MAX,
-            SLASH in 0..u64::MAX,
+            asset_id in asset_id(),
+            asset_info in asset_info(),
         ) {
-            // assume max_answers > min_answers
-            let MIN_ANSWERS = MAX_ANSWERS.saturating_sub(MIN_ANSWERS) + 1;
             new_test_ext().execute_with(|| -> Result<(), TestCaseError> {
-                let THRESHOLD: Percent = Percent::from_percent(threshold);
-
-                // let account_2 = get_account_2(); // maybe this is the reason why proptest runs are taking very long?
-                // let account_2 = sr25519::Public([1u8; 32]);
-                // Balances::make_free_balance_be(&account_2, 100);
                 let account_2 = get_account_2();
                 prop_assert_ok!(Oracle::add_asset_and_info(
                     Origin::signed(account_2),
-                    ASSET_ID,
-                    THRESHOLD,
-                    MIN_ANSWERS,
-                    MAX_ANSWERS,
-                    BLOCK_INTERVAL,
-                    REWARD,
-                    SLASH
+                    asset_id,
+                    asset_info.threshold,
+                    asset_info.min_answers,
+                    asset_info.max_answers,
+                    asset_info.block_interval,
+                    asset_info.reward,
+                    asset_info.slash,
                 ));
 
                 Ok(())

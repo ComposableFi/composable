@@ -73,8 +73,9 @@ parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
 
+pub type Balance = u64;
 impl pallet_balances::Config for Test {
-	type Balance = u64;
+	type Balance = Balance;
 	type Event = Event;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
@@ -129,11 +130,13 @@ where
 	}
 }
 
+
+pub type AssetId = u128;
 impl pallet_oracle::Config for Test {
 	type Event = Event;
 	type AuthorityId = crypto::BathurstStId;
 	type Currency = Balances;
-	type AssetId = u128;
+	type AssetId = AssetId;
 	type PriceValue = u128;
 	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
