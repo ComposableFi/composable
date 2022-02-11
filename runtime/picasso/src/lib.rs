@@ -1010,36 +1010,29 @@ impl_runtime_apis! {
 		}
 	}
 
+	#[cfg(feature = "sim-node")]
 	impl simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime {
-		fn create_transaction(call: Call, signer: Option<AccountId>) -> Option<Vec<u8>> {
+		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
 			use sp_runtime::{
-				generic::{Era, SignedPayload}, MultiSignature,
+				generic::Era, MultiSignature,
 				traits::StaticLookup,
 			};
 			use sp_core::sr25519;
-			let ext = if let Some(signer) = signer {
-				let nonce = frame_system::Pallet::<Runtime>::account_nonce(signer.clone());
-
-
-				let extra = (
-					system::CheckNonZeroSender::<Runtime>::new(),
-					system::CheckSpecVersion::<Runtime>::new(),
-					system::CheckTxVersion::<Runtime>::new(),
-					system::CheckGenesis::<Runtime>::new(),
-					system::CheckEra::<Runtime>::from(Era::Immortal),
-					system::CheckNonce::<Runtime>::from(nonce),
-					system::CheckWeight::<Runtime>::new(), 
-					transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
-				);
-
-				let signature = MultiSignature::from(sr25519::Signature([0u8;64]));
-				let address = AccountIdLookup::unlookup(signer);
-				UncheckedExtrinsic::new_signed(call, address, signature, extra)
-			}
-			else {
-				UncheckedExtrinsic::new_unsigned(call)
-			};
-			Some(ext.encode())
+			let nonce = frame_system::Pallet::<Runtime>::account_nonce(signer.clone());
+			let extra = (
+				system::CheckNonZeroSender::<Runtime>::new(),
+				system::CheckSpecVersion::<Runtime>::new(),
+				system::CheckTxVersion::<Runtime>::new(),
+				system::CheckGenesis::<Runtime>::new(),
+				system::CheckEra::<Runtime>::from(Era::Immortal),
+				system::CheckNonce::<Runtime>::from(nonce),
+				system::CheckWeight::<Runtime>::new(),
+				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
+			);
+			let signature = MultiSignature::from(sr25519::Signature([0u8;64]));
+			let address = AccountIdLookup::unlookup(signer);
+			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
+			ext.encode()
 		}
 	}
 

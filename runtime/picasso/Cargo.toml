@@ -218,4 +218,4 @@ runtime-benchmarks = [
 	"vesting/runtime-benchmarks",
 	"bonded-finance/runtime-benchmarks",
 ]
-
+sim-node = []

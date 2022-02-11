@@ -11488,7 +11488,7 @@ dependencies = [
 [[package]]
 name = "simnode-runtime-apis"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=david/tx-runtime-api#9146abd857046acc5e5f08b679a8bb1c782d252a"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=david/tx-runtime-api#92f36e6598ab6984e687a253f1894b96d6e6e99d"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -12507,7 +12507,7 @@ dependencies = [
 [[package]]
 name = "substrate-simnode"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=david/tx-runtime-api#9146abd857046acc5e5f08b679a8bb1c782d252a"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=david/tx-runtime-api#92f36e6598ab6984e687a253f1894b96d6e6e99d"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",

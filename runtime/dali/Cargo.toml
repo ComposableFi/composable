@@ -226,3 +226,4 @@ runtime-benchmarks = [
 	"currency-factory/runtime-benchmarks",
 	"liquidations/runtime-benchmarks",
 ]
+sim-node = []
