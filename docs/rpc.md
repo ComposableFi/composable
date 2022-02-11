@@ -15,16 +15,6 @@ frame
       Cargo.toml
 ```
 
-Add the two new crates to the composable workspace file (top level Cargo.toml):
-
-```toml
-members = [
-    # add these lines
-    "frame/pallet-name/rpc",
-    "frame/pallet-name/runtime-api",
-]
-```
-
 ## Runtime API Crate
 
 ### In `Cargo.toml`
@@ -43,9 +33,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-codec = { default-features = false, features = [
-    "derive",
-], package = "parity-scale-codec", version = "2.0.0" }
+codec = { default-features = false, features = ["derive"], package = "parity-scale-codec", version = "2.0.0" }
 
 # ...any other dependencies, as per usual
 
@@ -92,73 +80,72 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # substrate primitives
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-blockchain = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
-scale-info = { version = "1.0", default-features = false, features = ["derive"] }
-codec = { default-features = false, features = ["derive"], package = "parity-scale-codec", version = "2.0.0" }
+# SCALE
+scale-info = { version = "1.0", features = ["derive"] }
+codec = { version = "2.0.0", package = "parity-scale-codec", features = ["derive"] }
 
-pallet-name-runtime-api = { path = "../runtime-api", default-features = false }
+# local
+pallet-name-runtime-api = { path = "../runtime-api" }
 
 # rpc
 jsonrpc-core = "18.0.0"
 jsonrpc-core-client = "18.0.0"
 jsonrpc-derive = "18.0.0"
-
-[features]
-default = ["std"]
-std = [
-    "pallet-name-runtime-api/std",
-    "codec/std",
-    "sp-runtime/std",
-    "sp-api/std",
-]
 ```
+
+Note that this crate will only be included in the node and not the runtime, so there is no need for a `std` feature.
 
 ### In `lib.rs`
 
 Required imports:
 
 ```rust
-use PALLET_NAME_runtime_api::PALLET_NAME_RuntimeApi;
+use pallet_name_runtime_api::PalletNameRuntimeApi;
 use codec::Codec;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
 use jsonrpc_derive::rpc;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
-use sp_std::sync::Arc;
+use sp_std::{sync::Arc, marker::PhantomData};
 ```
 
-This defines the RPC itself; the name of the RPC needs to follow the pattern of `moduleName_functionName`.
+This defines the RPC itself. The name of the RPC needs to follow the pattern of `moduleName_functionName`.
+
+**Note**: Any types that either are or are a wrapper type around `u128/i128` will need to be wrapped in `composable_support::rpc_helpers::SafeRpcWrapper`.
 
 ```rust
 #[rpc]
-pub trait PALLET_NAME_Api<BlockHash, /* ...any generic parameters... */>
+pub trait PalletNameApi<BlockHash, /* ...any generic parameters... */>
 where
-    GENERIC_PARAMATER: Codec,
+    GENERIC_PARAMETER: Codec, // if the type is a u128/i128, this should be SafeRpcWrapperType instead of Codec (Codec is a supertrait of SafeRpcWrapperType)
 {
-    // the name of the rpc must be module_function, where both module
+    // the name of the rpc must be moduleName_functionName, where both module
     // and function are camelCase and are seperated by an underscore.
     #[rpc(name = "palletName_rpcFunctionName")]
     fn rpc_function_name(
         &self,
         // any additional parameters here
+        // if the type is or wraps a 128 bit integer, it should be declared as follows:
+        u128_ish: SafeRpcWrapper</* whatever the type is */>
         at: Option<BlockHash>, // `at` should be last
     ) -> RpcResult<ReturnType>;
 }
 ```
 
-This is a struct that will inplement the above API. It contains the client to make the RPC calls.
+This is a struct that will implement the above API. It contains the client to make the RPC calls.
 
-If there are more generics, instead of adding more parameters (`Assets<C, M, N, P, ...>`), just use a tuple instead: `Assets<C, (M, N, P, ...)`
+If there are more generics, instead of adding more parameters (`PalletName<C, M, N, P, ...>`), just use a tuple instead: `PalletName<C, (M, N, P, ...)`
 
 ```rust
 pub struct PalletName<C, Block> {
     client: Arc<C>,
-    _marker: sp_std::marker::PhantomData<Block>,
+    _marker: PhantomData<Block>,
 }
 
 impl<C, M> PalletName<C, M> {
@@ -170,20 +157,24 @@ impl<C, M> PalletName<C, M> {
 
 ```rust
 impl<C, Block, /* ...any generic parameters... */>
-    AssetsApi<<Block as BlockT>::Hash, /* ...any generic parameters... */>
-    for Assets<C, /* ...any generic parameters, enclosed in a tuple... */>
+    PalletNameApi<<Block as BlockT>::Hash, /* ...any generic parameters... */>
+    for PalletName<C, /* ...any generic parameters, enclosed in a tuple... */>
 where
     Block: BlockT,
-    GENERIC_PARAMETER: Codec + Send + Sync + 'static, // all generic parameters must have at least these bounds
+    // all generic parameters must have at least these bounds
+    // if the type is a u128/i128, this should be SafeRpcWrapperType instead of Codec (Codec is a supertrait of SafeRpcWrapperType)
+    GENERIC_PARAMETER: Codec + Send + Sync + 'static,
     C: Send + Sync + 'static,
     C: ProvideRuntimeApi<Block>,
     C: HeaderBackend<Block>,
-    C::Api: AssetsRuntimeApi<Block, AssetId, AccountId, Balance>,
+    C::Api: PalletNameRuntimeApi<Block, AssetId, AccountId, Balance>,
 {
     fn rpc_function_name(
         &self,
         // any additional parameters here
-        at: Option<<Block as BlockT>::Hash>, // `at` must be last
+        // if the type is or wraps a 128 bit integer, it should be declared as follows:
+        u128_ish: SafeRpcWrapper</* whatever the type is */>
+        at: Option<<Block as BlockT>::Hash>, // `at` should be last
     ) -> RpcResult<ReturnType> {
         let api = self.client.runtime_api();
         let at = BlockId::hash(at.unwrap_or_else(|| {
@@ -274,6 +265,136 @@ Note that this assumes that the pallet has already been added to the runtime and
 
 ## Integration Tests
 
-## Also see
+/home/ben/codeprojects/composable/integration-tests/runtime-tests/src/types/interfaces/definitions.ts
+
+### Type Definitions
+
+Create a folder here: `integration-tests/runtime-tests/src/types/interfaces/pallet-name`
+
+And then within that folder, create a file `defintions.ts` with the following structure:
+
+```typescript
+export default {
+  rpc: {
+    // the functionName part of the RPC call as defined in the `#[rpc(name="")]` annotation on the rust definition
+    rpcFunctionName: {
+      description: "Provide a short description of the RPC here.",
+      params: [
+        // define the paramaters in the same order as defined in the rust RPC
+        {
+          name: "parameter_name",
+          type: "ParameterType"
+        },
+        // see note below
+        {
+          name: "at",
+          type: "Hash",
+          isOptional: true,
+        },
+      ],
+      type: "ReturnType"
+    },
+    // if there are multiple RPCs, they can all be defined here
+  },
+  types: {
+      // define any custom types for the pallet here
+      // see the note below for more information
+  },
+};
+```
+
+Then, in `integration-tests/runtime-tests/src/types/interfaces/definitions.ts`, add the following line:
+
+```typescript
+export { default as palletName } from "./palletName/definitions";
+```
+
+Notes:
+
+* `at` is mandatory, and is defined as the last parameter in the rust RPC definition for a reason:
+  Most of the time when calling an RPC the block hash can be omitted, and the best hash will be assumed if one is not provided.
+
+  Having it as the last parameter makes calling the RPC simpler:
+
+  ```typescript
+  palletName.rpcFunctionName(param1, param2)
+  ```
+
+  Instead of:
+
+  ```typescript
+  palletName.rpcFunctionName(null, param1, param2)
+  ```
+
+  If `at` were defined first.
+
+  Technically, it is possible to define `at` anywhere in the RPC definition, but putting it last for all of them makes the RPCs simpler and more consistent.
+
+* If this is a preexisting pallet, they are most likely already defined in the type definitions for `crowdloanRewards` (for reasons that don't need to be covered in this document) and can just be moved over to this file.
+
+  Even if there are no types to declare, still define an empty object or else everything will explode.
+
+### Tests
+
+Create a folder here: `integration-tests/runtime-tests/src/tests/rpc/pallet-name`
+
+And then within that folder, create a file `rpcPalletName.ts` with the following structure:
+
+```typescript
+/* eslint-disable no-trailing-spaces */
+import { /* any custom defined types that are needed for the RPC */ } from '@composable/types/interfaces';
+import { expect } from 'chai';
+
+
+export class RpcPalletNameTests {
+    /**
+     * 
+     */
+    public static runRpcPalletNameTests() {
+        describe('rpc.palletName.functionName Tests', function () {
+            it('STUB', async () => {
+                const result = await RpcPalletNameTests.rpcPalletNameTest(/* parameters */);
+                // see note below about bignumbers
+                // (this is just an example assertion)
+                expect(result).to.be.a["bignumber"].that.equals('0');
+            });
+        });
+    }
+
+    /**
+     * 
+     */
+    private static async rpcPalletNameTest(/* parameters */) {
+        // api is a global variable
+        return await api.rpc.palletName.functionName(/* parameters */);
+    }
+}
+
+// Uncomment to debug
+// RpcPalletNameTests.runRpcPalletNameTests();
+```
+
+Finally, in `integration-tests/runtime-tests/src/test.ts`, import the above class and add it's tests to the `RPC Tests` test suite:
+
+```typescript
+// ...stub...
+import { RpcPalletNameTests } from '@composable/tests/rpc/palletName/rpcPalletNameTests'; // <- add this
+
+describe('Picasso Runtime Tests', function () {
+    // ...stub...
+        describe('RPC Tests', function () {
+        // ...stub...
+        RpcPalletNameTests.runRpcPalletNameTests() // <- add this
+    });
+});
+```
+
+Notes:
+
+* If the type being compared against is a `u128`/`i128` on the rust side and has been wrapped in `SafeRpcWrapper`, it will be a bn.js `BN` (big number) here. `chai-bn` is used for asssertions with `BN`s but typescript can't quite figure out that it's being used; using `["bignumber"]` instead of `.bignumber` circumvents the typechecker a bit and allows it to pass without a `@ts-ignore` comment.
+
+  Thanks Dominik for figuring this one out!
+
+## Additional Resources
 
 For a good overview of how custom RPCs work, see <https://core.tetcoin.org/recipes/custom-rpc.html>.
