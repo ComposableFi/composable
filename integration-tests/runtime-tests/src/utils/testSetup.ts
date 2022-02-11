@@ -18,12 +18,8 @@ export async function runBefore() {
 
   // Enable and inject BN dependency
   chai.use(require('chai-bn')(BN));
-
-  // console.log(JSON.stringify(definitions, null, 4));
   const rpc = Object.keys(definitions).reduce((accumulator, key) => ({ ...accumulator, [key]: definitions[key].rpc }), {});
   const types = Object.values(definitions).reduce((accumulator, { types }) => ({ ...accumulator, ...types }), {});
-  // console.log("rpc: ", JSON.stringify(rpc, null, 4));
-  // console.log("types: ", JSON.stringify(types, null, 4));
 
   global.endpoint = `ws://${args.h}:${args.p}`;
   const provider = new WsProvider(global.endpoint);

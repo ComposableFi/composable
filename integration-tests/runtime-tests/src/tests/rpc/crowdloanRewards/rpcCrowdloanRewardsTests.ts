@@ -1,5 +1,4 @@
 /* eslint-disable no-trailing-spaces */
-import { ApiPromise } from '@polkadot/api';
 import { expect } from 'chai';
 
 

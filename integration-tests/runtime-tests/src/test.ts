@@ -8,25 +8,25 @@ import { TxCrowdloanRewardsTests } from '@composable/tests/tx/crowdloanRewards/t
 import { TxBondedFinanceTests } from "@composable/tests/tx/bondedFinance/txBondedFinanceTests";
 import { runBefore, runAfter } from "@composable/utils/testSetup";
 import { TxOracleTests } from "@composable/tests/tx/oracle/txOracleTests";
-import { RpcAssetsTests } from './tests/rpc/assets/rpcAssetsTests';
-import { RpcCrowdloanRewardsTests } from './tests/rpc/crowdloanRewards/rpcCrowdloanRewardsTests';
+import { RpcAssetsTests } from '@composable/tests/rpc/assets/rpcAssetsTests';
+import { RpcCrowdloanRewardsTests } from '@composable/tests/rpc/crowdloanRewards/rpcCrowdloanRewardsTests';
 
 
-describe('Picasso Runtime Tests', function() {
+describe('Picasso Runtime Tests', function () {
   before(async function () {
     // Set timeout to 1 minute.
-    this.timeout(60*1000);
+    this.timeout(60 * 1000);
     await runBefore();
   });
 
-  after(async function() {
+  after(async function () {
     // Set timeout to 1 minute.
-    this.timeout(60*1000);
+    this.timeout(60 * 1000);
     await runAfter();
   });
 
   // Query Tests
-  describe('Query Tests', function() {
+  describe('Query Tests', function () {
     // Query Crowdloan Rewards Tests
     QueryCrowdloanRewardsTests.runQueryCrowdloanRewardsTests();
   });
