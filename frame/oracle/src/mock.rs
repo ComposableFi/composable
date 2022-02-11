@@ -5,7 +5,7 @@ use frame_support::{
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use sp_core::{sr25519::Signature, H256};
+use sp_core::{sr25519::Signature, H256, sr25519};
 use sp_keystore::{testing::KeyStore, SyncCryptoStore};
 use sp_runtime::{
 	testing::{Header, TestXt},
@@ -15,6 +15,8 @@ use sp_runtime::{
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+
+pub const MAX_ANSWER_BOUND: u32 = 5;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -85,7 +87,7 @@ parameter_types! {
 	pub const StakeLock: u64 = 1;
 	pub const MinStake: u64 = 1;
 	pub const StalePrice: u64 = 2;
-	pub const MaxAnswerBound: u32 = 5;
+	pub const MaxAnswerBound: u32 = MAX_ANSWER_BOUND;
 	pub const MaxAssetsCount: u32 = 2;
 	pub const MaxHistory: u32 = 3;
 	pub const MaxPrePrices: u32 = 12;
@@ -158,60 +160,67 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	t.into()
 }
 
-pub fn get_account_1() -> AccountId {
-	const PHRASE: &str =
-		"elite reward rabbit exotic course desk miracle involve old surface educate direct";
-	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap()
+pub const fn get_account_1() -> AccountId {
+	// const PHRASE: &str =
+	// 	"elite reward rabbit exotic course desk miracle involve old surface educate direct";
+	// let keystore = KeyStore::new();
+	// SyncCryptoStore::sr25519_generate_new(
+	// 	&keystore,
+	// 	crate::crypto::Public::ID,
+	// 	Some(&format!("{}/hunter1", PHRASE)),
+	// )
+	// .unwrap()
+    sr25519::Public([1u8; 32])
 }
 
-pub fn get_account_2() -> AccountId {
-	const PHRASE: &str =
-		"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
-	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap()
+pub const fn get_account_2() -> AccountId {
+	// const PHRASE: &str =
+	// 	"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
+	// let keystore = KeyStore::new();
+	// SyncCryptoStore::sr25519_generate_new(
+	// 	&keystore,
+	// 	crate::crypto::Public::ID,
+	// 	Some(&format!("{}/hunter1", PHRASE)),
+	// )
+	// .unwrap()
+
+    // let account_2 = get_account_2(); // maybe this is the reason why proptest runs are taking very long?
+    sr25519::Public([2u8; 32])
 }
 
-pub fn get_account_3() -> AccountId {
-	const PHRASE: &str =
-		"know keen dinner rigid attend sentence demise aunt chronic flash energy parrot";
-	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap()
+pub const fn get_account_3() -> AccountId {
+	// const PHRASE: &str =
+	// 	"know keen dinner rigid attend sentence demise aunt chronic flash energy parrot";
+	// let keystore = KeyStore::new();
+	// SyncCryptoStore::sr25519_generate_new(
+	// 	&keystore,
+	// 	crate::crypto::Public::ID,
+	// 	Some(&format!("{}/hunter1", PHRASE)),
+	// )
+	// .unwrap()
+    sr25519::Public([3u8; 32])
 }
 
 pub fn get_account_4() -> AccountId {
-	const PHRASE: &str = "wild fog rather logic flame media blade aerobic either toast cost damp";
-	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap()
+	// const PHRASE: &str = "wild fog rather logic flame media blade aerobic either toast cost damp";
+	// let keystore = KeyStore::new();
+	// SyncCryptoStore::sr25519_generate_new(
+	// 	&keystore,
+	// 	crate::crypto::Public::ID,
+	// 	Some(&format!("{}/hunter1", PHRASE)),
+	// )
+	// .unwrap()
+    sr25519::Public([4u8; 32])
 }
 
 pub fn get_account_5() -> AccountId {
-	const PHRASE: &str = "topic say join drop loud labor little chest public squeeze fossil coil";
-	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap()
+	// const PHRASE: &str = "topic say join drop loud labor little chest public squeeze fossil coil";
+	// let keystore = KeyStore::new();
+	// SyncCryptoStore::sr25519_generate_new(
+	// 	&keystore,
+	// 	crate::crypto::Public::ID,
+	// 	Some(&format!("{}/hunter1", PHRASE)),
+	// )
+	// .unwrap()
+    sr25519::Public([5u8; 32])
 }

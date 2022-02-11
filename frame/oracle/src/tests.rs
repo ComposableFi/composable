@@ -29,178 +29,292 @@ use proptest::prelude::*;
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(10_000))]
 
+use sp_core::sr25519;
 
-	#[test]
-	fn add_asset_and_info(
-		ASSET_ID in 1..u128::MAX, // When ASSET_ID = 0, we get an error: Module { index: 2, error: 20, message: Some("ExceedAssetsCount") }
-		MIN_ANSWERS in 1..u32::MAX,
-		MAX_ANSWERS in 1..u32::MAX,
-		BLOCK_INTERVAL in 5..20u64, // TODO(cor): find suitable range. The minimum is Oracle::Config::StalePrice, which is currently configured to be 5.
-		threshold in 0..100u8,
-		REWARD in 0..u64::MAX,
-		SLASH in 0..u64::MAX,
-	) {
-		new_test_ext().execute_with(|| {
-			prop_assume!(MIN_ANSWERS < MAX_ANSWERS);
-			// const ASSET_ID: u128 = 1;
-			// const MIN_ANSWERS: u32 = 3;
-			// const MAX_ANSWERS: u32 = 5;
-			let THRESHOLD: Percent = Percent::from_percent(threshold);
-			// const BLOCK_INTERVAL: u64 = 5;
-			// const REWARD: u64 = 5;
-			// const SLASH: u64 = 5;
 
-			// passes
-			let account_2 = get_account_2();
-			prop_assert_ok!(Oracle::add_asset_and_info(
-				Origin::signed(account_2),
-				ASSET_ID,
-				THRESHOLD,
-				MIN_ANSWERS,
-				MAX_ANSWERS,
-				BLOCK_INTERVAL,
-				REWARD,
-				SLASH
-			));
 
-			// does not increment if exists
-			prop_assert_ok!(Oracle::add_asset_and_info(
-				Origin::signed(account_2),
-				ASSET_ID,
-				THRESHOLD,
-				MIN_ANSWERS,
-				MAX_ANSWERS,
-				BLOCK_INTERVAL,
-				REWARD,
-				SLASH
-			));
-			prop_assert_eq!(Oracle::assets_count(), 1);
+mod add_asset_and_info {
+    use super::*;
 
-			prop_assert_ok!(Oracle::add_asset_and_info(
-				Origin::signed(account_2),
-				ASSET_ID + 1,
-				THRESHOLD,
-				MIN_ANSWERS,
-				MAX_ANSWERS,
-				BLOCK_INTERVAL,
-				REWARD,
-				SLASH
-			));
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(1_000))]
 
-			let asset_info = AssetInfo {
-				threshold: THRESHOLD,
-				min_answers: MIN_ANSWERS,
-				max_answers: MAX_ANSWERS,
-				block_interval: BLOCK_INTERVAL,
-				reward: REWARD,
-				slash: SLASH,
-			};
-			// id now activated and count incremented
-			prop_assert_eq!(Oracle::asset_info(1), Some(asset_info));
-			prop_assert_eq!(Oracle::assets_count(), 2);
+        #[test]
+        fn normal_asset_and_info_assert(
+            ASSET_ID in 1..u128::MAX, // When ASSET_ID = 0, we get an error: Module { index: 2, error: 20, message: Some("ExceedAssetsCount") }
+            MIN_ANSWERS in 1..MAX_ANSWER_BOUND, // cannot be higher than MAX_ANSWERS
+            MAX_ANSWERS in 1..MAX_ANSWER_BOUND, // upper bound should be less than Oracle::Config::MaxAnswerBound
+            BLOCK_INTERVAL in 5..20u64, // TODO(cor): find suitable range. The minimum is Oracle::Config::StalePrice, which is currently configured to be 5.
+            threshold in 0..100u8,
+            REWARD in 0..u64::MAX,
+            SLASH in 0..u64::MAX,
+        ) {
+            // assume max_answers > min_answers
+            let MIN_ANSWERS = MAX_ANSWERS.saturating_sub(MIN_ANSWERS) + 1;
+            new_test_ext().execute_with(|| -> Result<(), TestCaseError> {
+                let THRESHOLD: Percent = Percent::from_percent(threshold);
 
-			// fails with non permission
-			let account_1 = get_account_1();
-			prop_assert_noop!(
-				Oracle::add_asset_and_info(
-					Origin::signed(account_1),
-					ASSET_ID,
-					THRESHOLD,
-					MAX_ANSWERS,
-					MAX_ANSWERS,
-					BLOCK_INTERVAL,
-					REWARD,
-					SLASH
-				),
-				BadOrigin
-			);
+                // let account_2 = get_account_2(); // maybe this is the reason why proptest runs are taking very long?
+                // let account_2 = sr25519::Public([1u8; 32]);
+                // Balances::make_free_balance_be(&account_2, 100);
+                let account_2 = get_account_2();
+                prop_assert_ok!(Oracle::add_asset_and_info(
+                    Origin::signed(account_2),
+                    ASSET_ID,
+                    THRESHOLD,
+                    MIN_ANSWERS,
+                    MAX_ANSWERS,
+                    BLOCK_INTERVAL,
+                    REWARD,
+                    SLASH
+                ));
 
-			prop_assert_noop!(
-				Oracle::add_asset_and_info(
-					Origin::signed(account_2),
-					ASSET_ID,
-					THRESHOLD,
-					MAX_ANSWERS,
-					MIN_ANSWERS,
-					BLOCK_INTERVAL,
-					REWARD,
-					SLASH
-				),
-				Error::<Test>::MaxAnswersLessThanMinAnswers
-			);
+                Ok(())
+            })?;
+        }
 
-			prop_assert_noop!(
-				Oracle::add_asset_and_info(
-					Origin::signed(account_2),
-					ASSET_ID,
-					Percent::from_percent(100),
-					MIN_ANSWERS,
-					MAX_ANSWERS,
-					BLOCK_INTERVAL,
-					REWARD,
-					SLASH
-				),
-				Error::<Test>::ExceedThreshold
-			);
+        // #[test]
+        // fn asset_count_should_not_increase_when_updating_asset_info() {
+        //     new_test_ext().execute_with(|| {
+        //         let account_2 = get_account_2();
+        //         prop_assert_ok!(Oracle::add_asset_and_info(
+        //             Origin::signed(account_2),
+        //             ASSET_ID,
+        //             THRESHOLD,
+        //             MIN_ANSWERS,
+        //             MAX_ANSWERS,
+        //             BLOCK_INTERVAL,
+        //             REWARD,
+        //             SLASH
+        //         ));
+        //
+        //         // does not increment if exists
+        //         prop_assert_ok!(Oracle::add_asset_and_info(
+        //             Origin::signed(account_2),
+        //             ASSET_ID,
+        //             THRESHOLD,
+        //             MIN_ANSWERS,
+        //             MAX_ANSWERS,
+        //             BLOCK_INTERVAL,
+        //             REWARD,
+        //             SLASH
+        //         ));
+        //         prop_assert_eq!(Oracle::assets_count(), 1);
+        //
+        //         Ok(())
+        //     })?;
+        // }
 
-			prop_assert_noop!(
-				Oracle::add_asset_and_info(
-					Origin::signed(account_2),
-					ASSET_ID,
-					THRESHOLD,
-					MIN_ANSWERS,
-					MAX_ANSWERS + 1,
-					BLOCK_INTERVAL,
-					REWARD,
-					SLASH
-				),
-				Error::<Test>::ExceedMaxAnswers
-			);
+        // #[test]
+        // fn fails_when_no_permission(
+        //     ASSET_ID in 1..u128::MAX, // When ASSET_ID = 0, we get an error: Module { index: 2, error: 20, message: Some("ExceedAssetsCount") }
+        //     MIN_ANSWERS in 1..u32::MAX,
+        //     MAX_ANSWERS in 1..u32::MAX,
+        //     BLOCK_INTERVAL in 5..20u64, // TODO(cor): find suitable range. The minimum is Oracle::Config::StalePrice, which is currently configured to be 5.
+        //     threshold in 0..100u8,
+        //     REWARD in 0..u64::MAX,
+        //     SLASH in 0..u64::MAX,
+        // ) {
+        //     new_test_ext().execute_with(|| {
+        //         prop_assume!(MIN_ANSWERS < MAX_ANSWERS);
+        //         let THRESHOLD: Percent = Percent::from_percent(threshold);
+        //
+        //         let account_1 = get_account_1();
+        //         prop_assert_noop!(
+        //             Oracle::add_asset_and_info(
+        //                 Origin::signed(account_1),
+        //                 ASSET_ID,
+        //                 THRESHOLD,
+        //                 MAX_ANSWERS,
+        //                 MAX_ANSWERS,
+        //                 BLOCK_INTERVAL,
+        //                 REWARD,
+        //                 SLASH
+        //             ),
+        //             BadOrigin
+        //         );
+        //         Ok(())
+        //     })?;
+        // }
 
-			prop_assert_noop!(
-				Oracle::add_asset_and_info(
-					Origin::signed(account_2),
-					ASSET_ID,
-					THRESHOLD,
-					0,
-					MAX_ANSWERS,
-					BLOCK_INTERVAL,
-					REWARD,
-					SLASH
-				),
-				Error::<Test>::InvalidMinAnswers
-			);
 
-			prop_assert_noop!(
-				Oracle::add_asset_and_info(
-					Origin::signed(account_2),
-					ASSET_ID + 2,
-					THRESHOLD,
-					MIN_ANSWERS,
-					MAX_ANSWERS,
-					BLOCK_INTERVAL,
-					REWARD,
-					SLASH
-				),
-				Error::<Test>::ExceedAssetsCount
-			);
 
-			prop_assert_noop!(
-				Oracle::add_asset_and_info(
-					Origin::signed(account_2),
-					ASSET_ID,
-					THRESHOLD,
-					MIN_ANSWERS,
-					MAX_ANSWERS,
-					BLOCK_INTERVAL - 4,
-					REWARD,
-					SLASH
-				),
-				Error::<Test>::BlockIntervalLength
-			);
-			Ok(())
-		})?;
-	}
+
+
+
+    //
+    //     #[test]
+    //     fn add_asset_and_info(
+    //         ASSET_ID in 1..u128::MAX, // When ASSET_ID = 0, we get an error: Module { index: 2, error: 20, message: Some("ExceedAssetsCount") }
+    //         MIN_ANSWERS in 1..u32::MAX,
+    //         MAX_ANSWERS in 1..u32::MAX,
+    //         BLOCK_INTERVAL in 5..20u64, // TODO(cor): find suitable range. The minimum is Oracle::Config::StalePrice, which is currently configured to be 5.
+    //         threshold in 0..100u8,
+    //         REWARD in 0..u64::MAX,
+    //         SLASH in 0..u64::MAX,
+    //     ) {
+    //         new_test_ext().execute_with(|| {
+    //             prop_assume!(MIN_ANSWERS < MAX_ANSWERS);
+    //             // const ASSET_ID: u128 = 1;
+    //             // const MIN_ANSWERS: u32 = 3;
+    //             // const MAX_ANSWERS: u32 = 5;
+    //             let THRESHOLD: Percent = Percent::from_percent(threshold);
+    //             // const BLOCK_INTERVAL: u64 = 5;
+    //             // const REWARD: u64 = 5;
+    //             // const SLASH: u64 = 5;
+    //
+    //             // passes
+    //             let account_2 = get_account_2();
+    //             prop_assert_ok!(Oracle::add_asset_and_info(
+    //                 Origin::signed(account_2),
+    //                 ASSET_ID,
+    //                 THRESHOLD,
+    //                 MIN_ANSWERS,
+    //                 MAX_ANSWERS,
+    //                 BLOCK_INTERVAL,
+    //                 REWARD,
+    //                 SLASH
+    //             ));
+    //
+    //             // does not increment if exists
+    //             prop_assert_ok!(Oracle::add_asset_and_info(
+    //                 Origin::signed(account_2),
+    //                 ASSET_ID,
+    //                 THRESHOLD,
+    //                 MIN_ANSWERS,
+    //                 MAX_ANSWERS,
+    //                 BLOCK_INTERVAL,
+    //                 REWARD,
+    //                 SLASH
+    //             ));
+    //             prop_assert_eq!(Oracle::assets_count(), 1);
+    //
+    //             prop_assert_ok!(Oracle::add_asset_and_info(
+    //                 Origin::signed(account_2),
+    //                 ASSET_ID + 1,
+    //                 THRESHOLD,
+    //                 MIN_ANSWERS,
+    //                 MAX_ANSWERS,
+    //                 BLOCK_INTERVAL,
+    //                 REWARD,
+    //                 SLASH
+    //             ));
+    //
+    //             let asset_info = AssetInfo {
+    //                 threshold: THRESHOLD,
+    //                 min_answers: MIN_ANSWERS,
+    //                 max_answers: MAX_ANSWERS,
+    //                 block_interval: BLOCK_INTERVAL,
+    //                 reward: REWARD,
+    //                 slash: SLASH,
+    //             };
+    //             // id now activated and count incremented
+    //             prop_assert_eq!(Oracle::asset_info(1), Some(asset_info));
+    //             prop_assert_eq!(Oracle::assets_count(), 2);
+    //
+    //             // fails with non permission
+    //             let account_1 = get_account_1();
+    //             prop_assert_noop!(
+    //                 Oracle::add_asset_and_info(
+    //                     Origin::signed(account_1),
+    //                     ASSET_ID,
+    //                     THRESHOLD,
+    //                     MAX_ANSWERS,
+    //                     MAX_ANSWERS,
+    //                     BLOCK_INTERVAL,
+    //                     REWARD,
+    //                     SLASH
+    //                 ),
+    //                 BadOrigin
+    //             );
+    //
+    //             prop_assert_noop!(
+    //                 Oracle::add_asset_and_info(
+    //                     Origin::signed(account_2),
+    //                     ASSET_ID,
+    //                     THRESHOLD,
+    //                     MAX_ANSWERS,
+    //                     MIN_ANSWERS,
+    //                     BLOCK_INTERVAL,
+    //                     REWARD,
+    //                     SLASH
+    //                 ),
+    //                 Error::<Test>::MaxAnswersLessThanMinAnswers
+    //             );
+    //
+    //             prop_assert_noop!(
+    //                 Oracle::add_asset_and_info(
+    //                     Origin::signed(account_2),
+    //                     ASSET_ID,
+    //                     Percent::from_percent(100),
+    //                     MIN_ANSWERS,
+    //                     MAX_ANSWERS,
+    //                     BLOCK_INTERVAL,
+    //                     REWARD,
+    //                     SLASH
+    //                 ),
+    //                 Error::<Test>::ExceedThreshold
+    //             );
+    //
+    //             prop_assert_noop!(
+    //                 Oracle::add_asset_and_info(
+    //                     Origin::signed(account_2),
+    //                     ASSET_ID,
+    //                     THRESHOLD,
+    //                     MIN_ANSWERS,
+    //                     MAX_ANSWERS + 1,
+    //                     BLOCK_INTERVAL,
+    //                     REWARD,
+    //                     SLASH
+    //                 ),
+    //                 Error::<Test>::ExceedMaxAnswers
+    //             );
+    //
+    //             prop_assert_noop!(
+    //                 Oracle::add_asset_and_info(
+    //                     Origin::signed(account_2),
+    //                     ASSET_ID,
+    //                     THRESHOLD,
+    //                     0,
+    //                     MAX_ANSWERS,
+    //                     BLOCK_INTERVAL,
+    //                     REWARD,
+    //                     SLASH
+    //                 ),
+    //                 Error::<Test>::InvalidMinAnswers
+    //             );
+    //
+    //             prop_assert_noop!(
+    //                 Oracle::add_asset_and_info(
+    //                     Origin::signed(account_2),
+    //                     ASSET_ID + 2,
+    //                     THRESHOLD,
+    //                     MIN_ANSWERS,
+    //                     MAX_ANSWERS,
+    //                     BLOCK_INTERVAL,
+    //                     REWARD,
+    //                     SLASH
+    //                 ),
+    //                 Error::<Test>::ExceedAssetsCount
+    //             );
+    //
+    //             prop_assert_noop!(
+    //                 Oracle::add_asset_and_info(
+    //                     Origin::signed(account_2),
+    //                     ASSET_ID,
+    //                     THRESHOLD,
+    //                     MIN_ANSWERS,
+    //                     MAX_ANSWERS,
+    //                     BLOCK_INTERVAL - 4,
+    //                     REWARD,
+    //                     SLASH
+    //                 ),
+    //                 Error::<Test>::BlockIntervalLength
+    //             );
+    //             Ok(())
+    //         })?;
+    //     }
+    }
 }
 
 #[test]
@@ -862,7 +976,7 @@ fn prune_old_pre_prices_edgecase() {
 
 #[test]
 fn should_make_http_call_and_parse_result() {
-	let (mut t, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
+	let (mut t, _, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
 
 	t.execute_with(|| {
 		// when
@@ -874,7 +988,7 @@ fn should_make_http_call_and_parse_result() {
 
 #[test]
 fn knows_how_to_mock_several_http_calls() {
-	let (mut t, _) = offchain_worker_env(|state| {
+	let (mut t, _, _) = offchain_worker_env(|state| {
 		state.expect_request(testing::PendingRequest {
 			method: "GET".into(),
 			uri: "http://localhost:3001/price/0".into(),
@@ -913,7 +1027,7 @@ fn knows_how_to_mock_several_http_calls() {
 
 #[test]
 fn should_submit_signed_transaction_on_chain() {
-	let (mut t, pool_state) = offchain_worker_env(|state| price_oracle_response(state, "0"));
+	let (mut t, _, pool_state) = offchain_worker_env(|state| price_oracle_response(state, "0"));
 
 	t.execute_with(|| {
 		let account_2 = get_account_2();
@@ -942,7 +1056,7 @@ fn should_submit_signed_transaction_on_chain() {
 #[test]
 #[should_panic = "Tx already submitted"]
 fn should_check_oracles_submitted_price() {
-	let (mut t, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
+	let (mut t, oracle_account_id, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
 
 	t.execute_with(|| {
 		let account_2 = get_account_2();
@@ -958,7 +1072,7 @@ fn should_check_oracles_submitted_price() {
 			5
 		));
 
-		add_price_storage(100_u128, 0, account_2, 0);
+		add_price_storage(100_u128, 0, oracle_account_id, 0);
 		// when
 		Oracle::fetch_price_and_send_signed(&0, Oracle::asset_info(0).unwrap()).unwrap();
 	});
@@ -967,7 +1081,7 @@ fn should_check_oracles_submitted_price() {
 #[test]
 #[should_panic = "Max answers reached"]
 fn should_check_oracles_max_answer() {
-	let (mut t, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
+	let (mut t, _, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
 	let asset_info = AssetInfo {
 		threshold: Percent::from_percent(0),
 		min_answers: 0,
@@ -1035,14 +1149,14 @@ fn price_oracle_response(state: &mut testing::OffchainState, price_id: &str) {
 
 fn offchain_worker_env(
 	state_updater: fn(&mut testing::OffchainState),
-) -> (TestExternalities, Arc<RwLock<testing::PoolState>>) {
+) -> (TestExternalities, AccountId, Arc<RwLock<testing::PoolState>>) {
 	const PHRASE: &str =
 		"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
 
 	let (offchain, offchain_state) = testing::TestOffchainExt::new();
 	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
 	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
+	let account_id = SyncCryptoStore::sr25519_generate_new(
 		&keystore,
 		crate::crypto::Public::ID,
 		Some(&format!("{}/hunter1", PHRASE)),
@@ -1057,7 +1171,7 @@ fn offchain_worker_env(
 
 	state_updater(&mut offchain_state.write());
 
-	(t, pool_state)
+	(t, account_id, pool_state)
 }
 
 #[cfg(test)]
