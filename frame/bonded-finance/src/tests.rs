@@ -3,7 +3,6 @@
 #![cfg(test)]
 
 use super::*;
-use crate::utils::MIN_VESTED_TRANSFER;
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::bonded_finance::{BondDuration, BondOffer, BondOfferReward};
 use frame_support::{
@@ -585,7 +584,7 @@ mod test {
 			bond_price: 12_u128,
 			nb_of_bonds: 30_u128,
 			maturity: BondDuration::Finite { return_in: 1 },
-			reward: BondOfferReward { asset: mock::MockCurrencyId::PICA, amount: 2000_u, maturity: 45_u64 },
+			reward: BondOfferReward { asset: mock::MockCurrencyId::PICA, amount: 10_000_000_u128, maturity: 45_u64 },
 		};
 
 		// assert_ok!(<ValidBondOffer<u64> as Validate<
