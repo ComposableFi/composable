@@ -75,9 +75,9 @@ mod add_asset_and_info {
             asset_info in asset_info(),
         ) {
             new_test_ext().execute_with(|| -> Result<(), TestCaseError> {
-                let account_2 = get_account_2();
+                let root_account = get_root_account();
                 prop_assert_ok!(Oracle::add_asset_and_info(
-                    Origin::signed(account_2),
+                    Origin::signed(root_account),
                     asset_id,
                     asset_info.threshold,
                     asset_info.min_answers,
@@ -91,37 +91,42 @@ mod add_asset_and_info {
             })?;
         }
 
-        // #[test]
-        // fn asset_count_should_not_increase_when_updating_asset_info() {
-        //     new_test_ext().execute_with(|| {
-        //         let account_2 = get_account_2();
-        //         prop_assert_ok!(Oracle::add_asset_and_info(
-        //             Origin::signed(account_2),
-        //             ASSET_ID,
-        //             THRESHOLD,
-        //             MIN_ANSWERS,
-        //             MAX_ANSWERS,
-        //             BLOCK_INTERVAL,
-        //             REWARD,
-        //             SLASH
-        //         ));
-        //
-        //         // does not increment if exists
-        //         prop_assert_ok!(Oracle::add_asset_and_info(
-        //             Origin::signed(account_2),
-        //             ASSET_ID,
-        //             THRESHOLD,
-        //             MIN_ANSWERS,
-        //             MAX_ANSWERS,
-        //             BLOCK_INTERVAL,
-        //             REWARD,
-        //             SLASH
-        //         ));
-        //         prop_assert_eq!(Oracle::assets_count(), 1);
-        //
-        //         Ok(())
-        //     })?;
-        // }
+        #[test]
+        fn asset_count_should_not_increase_when_updating_asset_info(
+            asset_id in asset_id(),
+            asset_info_1 in asset_info(),
+            asset_info_2 in asset_info(),
+        ) {
+            new_test_ext().execute_with(|| {
+                let root_account = get_root_account();
+
+                prop_assert_ok!(Oracle::add_asset_and_info(
+                    Origin::signed(root_account),
+                    asset_id,
+                    asset_info_1.threshold,
+                    asset_info_1.min_answers,
+                    asset_info_1.max_answers,
+                    asset_info_1.block_interval,
+                    asset_info_1.reward,
+                    asset_info_1.slash,
+                ));
+
+                // does not increment if exists
+                prop_assert_ok!(Oracle::add_asset_and_info(
+                    Origin::signed(root_account),
+                    asset_id,
+                    asset_info_2.threshold,
+                    asset_info_2.min_answers,
+                    asset_info_2.max_answers,
+                    asset_info_2.block_interval,
+                    asset_info_2.reward,
+                    asset_info_2.slash,
+                ));
+                prop_assert_eq!(Oracle::assets_count(), 1);
+
+                Ok(())
+            })?;
+        }
 
         // #[test]
         // fn fails_when_no_permission(
@@ -339,7 +344,7 @@ mod add_asset_and_info {
 fn set_signer() {
 	new_test_ext().execute_with(|| {
 		let account_1 = get_account_1();
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 		let account_3 = get_account_3();
 		let account_4 = get_account_4();
 		let account_5 = get_account_5();
@@ -371,7 +376,7 @@ fn set_signer() {
 fn add_stake() {
 	new_test_ext().execute_with(|| {
 		let account_1 = get_account_1();
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 		// fails no controller set
 		assert_noop!(Oracle::add_stake(Origin::signed(account_1), 50), Error::<Test>::UnsetSigner);
 
@@ -409,7 +414,7 @@ fn add_stake() {
 fn remove_and_reclaim_stake() {
 	new_test_ext().execute_with(|| {
 		let account_1 = get_account_1();
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 		let account_3 = get_account_3();
 
 		assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_2));
@@ -446,7 +451,7 @@ fn remove_and_reclaim_stake() {
 fn add_price() {
 	new_test_ext().execute_with(|| {
 		let account_1 = get_account_1();
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 		let account_4 = get_account_4();
 		let account_5 = get_account_5();
 
@@ -538,7 +543,7 @@ fn medianize_price() {
 #[should_panic = "No `keystore` associated for the current context!"]
 fn check_request() {
 	new_test_ext().execute_with(|| {
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
 			0,
@@ -564,7 +569,7 @@ fn not_check_request() {
 #[test]
 fn is_requested() {
 	new_test_ext().execute_with(|| {
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
 			0,
@@ -592,7 +597,7 @@ fn is_requested() {
 fn test_payout_slash() {
 	new_test_ext().execute_with(|| {
 		let account_1 = get_account_1();
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 		let account_3 = get_account_3();
 		let account_4 = get_account_4();
 		let account_5 = get_account_5();
@@ -690,7 +695,7 @@ fn on_init() {
 		assert_eq!(Oracle::prices(0), price);
 
 		// add and request oracle id
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
 			0,
@@ -732,7 +737,7 @@ fn on_init() {
 fn historic_pricing() {
 	new_test_ext().execute_with(|| {
 		// add and request oracle id
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
 			0,
@@ -852,7 +857,7 @@ fn ratio_base_is_way_less_smaller() {
 fn get_twap() {
 	new_test_ext().execute_with(|| {
 		// add and request oracle id
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
 			0,
@@ -886,7 +891,7 @@ fn get_twap() {
 fn on_init_prune_scenerios() {
 	new_test_ext().execute_with(|| {
 		// add and request oracle id
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
 			0,
@@ -946,7 +951,7 @@ fn on_init_prune_scenerios() {
 fn on_init_over_max_answers() {
 	new_test_ext().execute_with(|| {
 		// add and request oracle id
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
 			0,
@@ -1048,7 +1053,7 @@ fn should_submit_signed_transaction_on_chain() {
 	let (mut t, _, pool_state) = offchain_worker_env(|state| price_oracle_response(state, "0"));
 
 	t.execute_with(|| {
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
 			0,
@@ -1077,7 +1082,7 @@ fn should_check_oracles_submitted_price() {
 	let (mut t, oracle_account_id, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
 
 	t.execute_with(|| {
-		let account_2 = get_account_2();
+		let account_2 = get_root_account();
 
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),

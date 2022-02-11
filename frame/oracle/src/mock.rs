@@ -97,7 +97,7 @@ parameter_types! {
 }
 
 ord_parameter_types! {
-	pub const RootAccount: AccountId = get_account_2();
+	pub const RootAccount: AccountId = get_root_account();
 }
 
 pub type Extrinsic = TestXt<Call, ()>;
@@ -155,10 +155,10 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	let genesis = pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
-			(get_account_1(), 100),
-			(get_account_2(), 100),
-			(get_account_4(), 100),
-			(get_account_5(), 100),
+            (get_account_1(), 100),
+            (get_root_account(), 100),
+            (get_account_4(), 100),
+            (get_account_5(), 100),
 		],
 	};
 	genesis.assimilate_storage(&mut t).unwrap();
@@ -169,7 +169,7 @@ pub const fn get_account_1() -> AccountId {
     sr25519::Public([1u8; 32])
 }
 
-pub const fn get_account_2() -> AccountId {
+pub const fn get_root_account() -> AccountId {
     sr25519::Public([2u8; 32])
 }
 
