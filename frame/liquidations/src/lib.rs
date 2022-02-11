@@ -1,6 +1,6 @@
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_method,
 		clippy::disallowed_type,
 		clippy::indexing_slicing,
@@ -9,9 +9,9 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix)]
+#![deny(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![warn(
+#![deny(
 	bad_style,
 	bare_trait_objects,
 	const_err,
@@ -32,6 +32,12 @@
 	unused_extern_crates
 )]
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+mod mock;
+
+#[cfg(test)]
+mod tests;
 mod weights;
 
 pub use pallet::*;
@@ -49,13 +55,17 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::{OptionQuery, StorageMap, StorageValue},
-		traits::{GenesisBuild, Get, IsType, UnixTime},
+		traits::{Get, IsType, UnixTime},
 		PalletId, Parameter, Twox64Concat,
 	};
+
+	#[cfg(feature = "std")]
+	use frame_support::traits::GenesisBuild;
 
 	use frame_system::pallet_prelude::OriginFor;
 	use scale_info::TypeInfo;
 	use sp_runtime::{DispatchError, Permill, Perquintill};
+	use sp_std::vec::Vec;
 
 	use crate::weights::WeightInfo;
 
@@ -147,6 +157,7 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 	}
 
+	#[cfg(feature = "std")]
 	#[derive(Default)]
 	#[pallet::genesis_config]
 	pub struct GenesisConfig;
@@ -181,6 +192,7 @@ pub mod pallet {
 		 *Dynamic { liquidate: Dispatch, minimum_price: Balance }, */
 	}
 
+	#[cfg(feature = "std")]
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {

@@ -4,15 +4,14 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
+    "@actions/core": "^1.6.0",
     "octokit": "^1.7.1",
     "ts-node": "^10.4.0",
     "typescript": "^4.5.4",
     "yargs": "^17.3.1"
   },
   "scripts": {
-    "update-release-body": "ts-node ./update-release-body.ts"
+    "update-release-body": "ts-node ./update-release-body.ts",
+    "get-commit-for-pr": "ts-node ./get-commit-for-pr.ts"
   }
 }
-
-
-  

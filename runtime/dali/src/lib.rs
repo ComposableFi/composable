@@ -25,6 +25,7 @@ use common::{
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
 	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
+use cumulus_primitives_core::ParaId;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -103,7 +104,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
 	spec_version: 1000,
-	impl_version: 4,
+	impl_version: 5,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
 	state_version: 0,
@@ -867,6 +868,7 @@ impl bonded_finance::Config for Runtime {
 	type PalletId = BondedFinanceId;
 	type Stake = Stake;
 	type Vesting = Vesting;
+	type WeightInfo = weights::bonded_finance::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -890,7 +892,7 @@ impl dutch_auction::Config for Runtime {
 }
 
 parameter_types! {
-	  pub const MosaicId: PalletId = PalletId(*b"plmosaic");
+	pub const MosaicId: PalletId = PalletId(*b"plmosaic");
 	pub const MinimumTTL: BlockNumber = 10;
 	pub const MinimumTimeLockPeriod: BlockNumber = 20;
 }
@@ -905,6 +907,23 @@ impl mosaic::Config for Runtime {
 	type NetworkId = u32;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
+}
+
+pub type LiquidationStrategyId = u32;
+pub type OrderId = u128;
+
+parameter_types! {
+	pub const LiquidationsPalletId: PalletId = PalletId(*b"liqdatns");
+}
+impl liquidations::Config for Runtime {
+	type Event = Event;
+	type UnixTime = Timestamp;
+	type DutchAuction = DutchAuction;
+	type LiquidationStrategyId = LiquidationStrategyId;
+	type OrderId = OrderId;
+	type WeightInfo = ();
+	type ParachainId = ParaId;
+	type PalletId = LiquidationsPalletId;
 }
 
 construct_runtime!(
@@ -963,6 +982,7 @@ construct_runtime!(
 		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
 		DutchAuction: dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
+		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1028,7 +1048,10 @@ mod benches {
 		[vault, Vault]
 		[oracle, Oracle]
 		[dutch_auction, DutchAuction]
+		[currency_factory, CurrencyFactory]
 		[mosaic, Mosaic]
+		[liquidations, Liquidations]
+		[bonded_finance, BondedFinance]
 	);
 }
 
@@ -1153,23 +1176,7 @@ impl_runtime_apis! {
 
 			let mut list = Vec::<BenchmarkList>::new();
 
-			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, balances, Balances);
-			list_benchmark!(list, extra, timestamp, Timestamp);
-			list_benchmark!(list, extra, collator_selection, CollatorSelection);
-			list_benchmark!(list, extra, indices, Indices);
-			list_benchmark!(list, extra, membership, CouncilMembership);
-			list_benchmark!(list, extra, treasury, Treasury);
-			list_benchmark!(list, extra, scheduler, Scheduler);
-			list_benchmark!(list, extra, democracy, Democracy);
-			list_benchmark!(list, extra, collective, Council);
-			list_benchmark!(list, extra, utility, Utility);
-			list_benchmark!(list, extra, identity, Identity);
-			list_benchmark!(list, extra, multisig, Multisig);
-			list_benchmark!(list, extra, vault, Vault);
-			list_benchmark!(list, extra, oracle, Oracle);
-			list_benchmark!(list, extra, dutch_auction, DutchAuction);
-			list_benchmark!(list, extra, currency_factory, CurrencyFactory);
+			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1179,7 +1186,7 @@ impl_runtime_apis! {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+			use frame_benchmarking::{Benchmarking, BenchmarkBatch, TrackedStorageKey};
 
 			use system_benchmarking::Pallet as SystemBench;
 			impl system_benchmarking::Config for Runtime {}
@@ -1202,25 +1209,7 @@ impl_runtime_apis! {
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
-
-			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, balances, Balances);
-			add_benchmark!(params, batches, timestamp, Timestamp);
-			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
-			add_benchmark!(params, batches, collator_selection, CollatorSelection);
-			add_benchmark!(params, batches, indices, Indices);
-			add_benchmark!(params, batches, membership, CouncilMembership);
-			add_benchmark!(params, batches, treasury, Treasury);
-			add_benchmark!(params, batches, scheduler, Scheduler);
-			add_benchmark!(params, batches, democracy, Democracy);
-			add_benchmark!(params, batches, collective, Council);
-			add_benchmark!(params, batches, utility, Utility);
-			add_benchmark!(params, batches, identity, Identity);
-			add_benchmark!(params, batches, multisig, Multisig);
-			add_benchmark!(params, batches, vault, Vault);
-			add_benchmark!(params, batches, oracle, Oracle);
-			add_benchmark!(params, batches, dutch_auction, DutchAuction);
-			add_benchmark!(params, batches, currency_factory, CurrencyFactory);
+			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

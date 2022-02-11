@@ -641,7 +641,7 @@ fn liquidation() {
 		// Collateral going down imply liquidation
 		Oracle::set_btc_price(99);
 
-		assert_ok!(Lending::liquidate_internal(None, &market, vec![*ALICE]));
+		assert_ok!(Lending::liquidate_internal(&ALICE, &market, vec![*ALICE]));
 	});
 }
 

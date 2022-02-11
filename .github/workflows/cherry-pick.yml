@@ -1,0 +1,34 @@
+name: Auto Cherry Pick
+on: 
+  push:
+    branches:
+      - main
+
+jobs:
+  cherry-pick-commits:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/setup-node@v2
+      with:
+        node-version: "16"
+
+    - name: checkout
+      uses: actions/checkout@v1
+      
+    - name: Get commits
+      id: get_commit
+      run: |
+        cd scripts/github && npm install
+        npm run get-commit-for-pr -- --repo=composableFi/composable --commit_sha=$GITHUB_SHA
+
+    - name: Run cherry pick actions
+      if: ${{ steps.get_commit.outputs.cherry_pick == 1 }}
+      uses: composablefi/github-action-cherry-pick@master
+      with:
+        pr_branch: 'releases'
+      env:
+        GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+        GITBOT_EMAIL: haroldsphinx@gmail.com
+        DRY_RUN: false
