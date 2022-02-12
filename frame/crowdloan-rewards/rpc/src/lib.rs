@@ -1,4 +1,3 @@
-use codec::Codec;
 use composable_support::rpc_helpers::{SafeRpcWrapper, SafeRpcWrapperType};
 use crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi;
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
@@ -6,10 +5,7 @@ use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
 use jsonrpc_derive::rpc;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::{
-	generic::BlockId,
-	traits::{AtLeast32BitUnsigned, Block as BlockT},
-};
+use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::{marker::PhantomData, sync::Arc};
 
 #[rpc]
