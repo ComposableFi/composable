@@ -66,6 +66,7 @@ What assets registry should proved in general, with link to our assets/assters-r
    trying to transfer non existing asset id)
  - we cannot guarantee existence of asset as it may be removed during transaction (so we
    should make removal exclusive case)
+ - should allow to split currency into some ranges defined during genesis 
 
  Given above we stick with possibly wrong asset id passed into API.
 
