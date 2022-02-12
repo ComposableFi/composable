@@ -30,6 +30,7 @@ Above properies apply to local currencies, so to make econimics operate, need to
 
 All currencies are derived, so some currencies can be derived in local consensus. So:
 - `Dillution`. If currency was direcly derived from protocol in local consensus than can tell exact ration of one amount needed to swap for other amount. With time currency amounts can change (locked, unlocked, minted), which will changed dillution factor. So we cannot tell nothing about external currencies dillution factors, only Oracles can tell. In this case we can observer whole chain of of tokens as they wrap each other and dillute. Process is not nessecary bidirectional.
+- `Local Simple Dillution` - when for each amount there is mint of other amount, may be allowing different reserver/hold propreties. May eventually be not one to one as other can be burnt. But because of can witness total supply, can say ratio. So what to do if curreny transfered from and to system?
 
 Also each protocol can have non direcly expressable propeties:
 - `Inflation`. Currency supply may be limited, frozen, minting speed depends on time or some activity, time locked. 
