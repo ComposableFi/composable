@@ -1,6 +1,6 @@
 [package]
 name = "composable-node"
-version = '1.0.9'
+version = '2.0.1'
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
 build = "build.rs"
