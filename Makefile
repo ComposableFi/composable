@@ -5,7 +5,7 @@ SERVICE_NAME=composable
 INSTALL_DIR=docker/
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
 RELEASE_VERSION:=$(shell git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
-CARGO_VERSION:=$(sed -i '' "s|^version =.*|version = "${VERSION}"|" node/Cargo.toml)
+CARGO_VERSION:=$(shell sed -i "s|^version =.*|version = "${VERSION}"|" node/Cargo.toml)
 AUTO_UPDATE:=1
 
 
