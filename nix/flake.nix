@@ -1,8 +1,8 @@
 {
   description = "Composable Devnet Scripts";
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/81cef6b70fb5d5cdba5a0fef3f714c2dadaf0d6d";
-    flake-utils.url = "github:numtide/flake-utils/74f7e4319258e287b0f9cb95426c9853b282730b";
+    nixpkgs.url = "github:nixos/nixpkgs/ec7d9d4c182c54acd649674cf1023d40a0539eb7";
+    flake-utils.url = "github:numtide/flake-utils/3cecb5b042f7f209c56ffd8371b2711a290ec797";
     localtunnel-src = {
       url = "github:localtunnel/localtunnel/c8e85f49624d606730779fc4295a38fd0e650af5";
       flake = false;
@@ -118,6 +118,8 @@
                   );
                 });
             })];
+            # FIXME: nixops depends on nixpkgs for the virtual machine initial conf...
+            NIX_PATH = "nixpkgs=${pkgs.path}";
           };
           defaultPackage = packages.devnet;
           devShell = pkgs.mkShell {

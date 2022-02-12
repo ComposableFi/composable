@@ -70,6 +70,7 @@ std = [
     "sp-arithmetic/std",
     "composable-traits/std",
     "pallet-vault/std",
+    "orml-tokens/std",
     "scale-info/std",
 ]
 

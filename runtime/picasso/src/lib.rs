@@ -100,7 +100,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	spec_version: 1000,
-	impl_version: 4,
+	impl_version: 5,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
 	state_version: 0,
@@ -773,6 +773,7 @@ impl bonded_finance::Config for Runtime {
 	type PalletId = BondedFinanceId;
 	type Stake = Stake;
 	type Vesting = Vesting;
+	type WeightInfo = weights::bonded_finance::WeightInfo<Runtime>;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -900,6 +901,8 @@ mod benches {
 		[utility, Utility]
 		[identity, Identity]
 		[multisig, Multisig]
+		[currency_factory, CurrencyFactory]
+		[bonded_finance, BondedFinance]
 	);
 }
 
@@ -1022,21 +1025,7 @@ impl_runtime_apis! {
 			use session_benchmarking::Pallet as SessionBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
-
-			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, balances, Balances);
-			list_benchmark!(list, extra, timestamp, Timestamp);
-			list_benchmark!(list, extra, collator_selection, CollatorSelection);
-			list_benchmark!(list, extra, indices, Indices);
-			list_benchmark!(list, extra, membership, CouncilMembership);
-			list_benchmark!(list, extra, treasury, Treasury);
-			list_benchmark!(list, extra, scheduler, Scheduler);
-			list_benchmark!(list, extra, democracy, Democracy);
-			list_benchmark!(list, extra, collective, Council);
-			list_benchmark!(list, extra, utility, Utility);
-			list_benchmark!(list, extra, identity, Identity);
-			list_benchmark!(list, extra, multisig, Multisig);
-			list_benchmark!(list, extra, currency_factory, CurrencyFactory);
+			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1069,22 +1058,7 @@ impl_runtime_apis! {
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
-
-			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, balances, Balances);
-			add_benchmark!(params, batches, timestamp, Timestamp);
-			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
-			add_benchmark!(params, batches, collator_selection, CollatorSelection);
-			add_benchmark!(params, batches, indices, Indices);
-			add_benchmark!(params, batches, membership, CouncilMembership);
-			add_benchmark!(params, batches, treasury, Treasury);
-			add_benchmark!(params, batches, scheduler, Scheduler);
-			add_benchmark!(params, batches, democracy, Democracy);
-			add_benchmark!(params, batches, collective, Council);
-			add_benchmark!(params, batches, utility, Utility);
-			add_benchmark!(params, batches, identity, Identity);
-			add_benchmark!(params, batches, multisig, Multisig);
-			add_benchmark!(params, batches, currency_factory, CurrencyFactory);
+			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
