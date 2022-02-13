@@ -107,7 +107,6 @@ jobs:
           # this is so that the binary version corresponds with the release tag.
           RELEASE_VERSION: ${{ steps.release_drafter.outputs.tag_name }}
         run: |
-          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)" >> $GITHUB_ENV
           make version
           .maintain/client_release.sh
 
