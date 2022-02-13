@@ -76,13 +76,13 @@ pub struct Validated<T, U> {
 	_marker: PhantomData<U>,
 }
 
-impl <T, U> Default for Validated<T, U>
+impl<T, U> Default for Validated<T, U>
 where
-    T: Default
+	T: Default,
 {
-    fn default() -> Self {
-        Validated { value: T::default(), _marker: PhantomData }
-    }
+	fn default() -> Self {
+		Validated { value: T::default(), _marker: PhantomData }
+	}
 }
 
 impl<T, U> TypeInfo for Validated<T, U>
