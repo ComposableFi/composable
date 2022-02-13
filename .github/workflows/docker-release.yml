@@ -21,6 +21,9 @@ jobs:
       - linux
       - x64
       - sre
+    concurrency:
+      group: docker-${{ github.ref }}
+      cancel-in-progress: true
     strategy: 
       fail-fast: true
     steps:
@@ -73,6 +76,9 @@ jobs:
         - linux
         - X64
         - ansible-runner
+    concurrency:
+      group: client-${{ github.ref }}
+      cancel-in-progress: true
 
     steps:
     - name: Clean up

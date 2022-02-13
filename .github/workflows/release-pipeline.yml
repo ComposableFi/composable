@@ -103,9 +103,6 @@ jobs:
       # between this commit and the previous tag.
       # DO NOT REMOVE
       - name: 🔨 Build Composable Binary
-        env:
-          # this is so that the binary version corresponds with the release tag.
-          RELEASE_VERSION: ${{ steps.release_drafter.outputs.tag_name }}
         run: |
           make version
           .maintain/client_release.sh
