@@ -112,7 +112,7 @@ where
 	Validated<T, U>: Validate<T, U>,
 	U: Validate<T, U>,
 {
-	pub fn new(value: T, _validator_tag: U) -> Result<Self, &'static str> {
+	pub fn new(value: T) -> Result<Self, &'static str> {
 		match <U as Validate<T, U>>::validate(value) {
 			Ok(value) => Ok(Self { value, _marker: PhantomData }),
 			Err(e) => Err(e),
@@ -340,9 +340,9 @@ mod test {
 
 	#[test]
 	fn value() {
-		let value = Validated::new(42, Valid);
+		let value = Validated::<_, Valid>::new(42);
 		assert_ok!(value);
-		let value = Validated::new(42, Invalid);
+		let value = Validated::<_, Invalid>::new(42);
 		assert!(value.is_err());
 	}
 
