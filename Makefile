@@ -4,8 +4,8 @@ REPO=composablefi
 SERVICE_NAME=composable
 INSTALL_DIR=docker/
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
-RELEASE_VERSION:=$(shell git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
-CARGO_VERSION:=$(shell sed -i "s|^version =.*|version = "${VERSION}"|" node/Cargo.toml)
+RELEASE_VERSION:=$(shell git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 | cut -c2-)
+CARGO_VERSION:=$(shell git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )
 AUTO_UPDATE:=1
 
 
@@ -54,12 +54,13 @@ version:
 	sed -i "s|^version =.*|version = '"${RELEASE_VERSION}"'|" node/Cargo.toml; \
 	fi;
 
+
 .PHONY: containerize-release
 containerize-release: version containerize
 
 containerize: 
 	@docker build \
-	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg VERSION=${RELEASE_VERSION} \
+	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg VERSION=${CARGO_VERSION} \
        	-f ${INSTALL_DIR}/Dockerfile \
 		-t ${IMAGE_WITH_COMMIT} \
 		-t ${IMAGE_WITH_RELEASE_VERSION} \
