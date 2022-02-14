@@ -21,7 +21,7 @@ for i in ${chains[@]}; do
 		    --execution=wasm \
 		    --wasm-execution=compiled \
 		    --pallet="*"  \
-		    --extrinsic='*' \
+		    --extrinsic='pallet_lending' \
 		    --steps=$steps  \
 		    --repeat=$repeat \
 		    --raw  \
