@@ -45,6 +45,7 @@ orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
 pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
 proptest = "1.0"
+composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 
 [features]
 default = ["std"]

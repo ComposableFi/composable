@@ -1,7 +1,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{traits::Get, BoundedVec, RuntimeDebug};
 use scale_info::TypeInfo;
-use sp_runtime::{DispatchError, FixedU128, Permill};
+use sp_runtime::{DispatchError, Permill};
 use sp_std::vec::Vec;
 
 use crate::defi::CurrencyPair;
@@ -17,6 +17,10 @@ pub trait CurveAmm {
 	type AccountId;
 	/// Type that represents pool id
 	type PoolId;
+
+	fn pool_exists(pool_id: Self::PoolId) -> bool;
+
+	fn currency_pair(pool_id: Self::PoolId) -> Result<CurrencyPair<Self::AssetId>, DispatchError>;
 
 	/// Get pure exchange value for given units of given asset. (Note this does not include fees.)
 	/// `pool_id` the pool containing the `asset_id`.
@@ -35,7 +39,8 @@ pub trait CurveAmm {
 	fn buy(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		base_amount: Self::Balance,
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
@@ -44,7 +49,8 @@ pub trait CurveAmm {
 	fn sell(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		base_amount: Self::Balance,
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
@@ -91,14 +97,16 @@ pub trait CurveAmm {
 pub struct StableSwapPoolInfo<AccountId, AssetId> {
 	/// Owner of pool
 	pub owner: AccountId,
+	/// Swappable assets
+	pub pair: CurrencyPair<AssetId>,
 	/// AssetId of LP token,
 	pub lp_token: AssetId,
 	/// Initial amplification coefficient
-	pub amplification_coefficient: FixedU128,
-	/// Amount of the fee pool charges for the exchange
+	pub amplification_coefficient: u16,
+	/// Amount of the fee pool charges for the exchange, this goes to liquidity provider.
 	pub fee: Permill,
-	/// Amount of the admin fee pool charges for the exchange
-	pub admin_fee: Permill,
+	/// Amount of the fee pool charges for the exchange
+	pub protocol_fee: Permill,
 }
 
 /// Describes a simple exchanges which does not allow advanced configurations such as slippage.
@@ -179,4 +187,12 @@ pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
 		asset_pair: CurrencyPair<AssetId>,
 		amount: Balance,
 	) -> Result<Balance, DispatchError>;
+}
+
+pub struct ConversionError;
+
+/// Similar to `sp_runtime::traits::Convert` but in case if type `A` can't be converted to
+/// `B` it returns Error.
+pub trait SafeConvert<A, B> {
+	fn convert(a: A) -> Result<B, ConversionError>;
 }

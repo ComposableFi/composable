@@ -1,14 +1,15 @@
 use crate as curve_amm;
+use composable_traits::dex::{ConversionError, SafeConvert};
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
 
-use sp_arithmetic::{traits::Zero, FixedU128};
+use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-	FixedPointNumber,
+	traits::{BlakeTwo256, Convert, IdentityLookup},
+	FixedPointNumber, FixedU128, Permill,
 };
 use system::EnsureRoot;
 
@@ -29,7 +30,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		CurveAmm: curve_amm::{Pallet, Call, Storage, Event<T>},
+		StableSwap: curve_amm::{Pallet, Call, Storage, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
@@ -106,6 +107,33 @@ pub type Balance = u128;
 pub type AssetId = u128;
 pub type Amount = i128;
 pub type PoolId = u32;
+pub type Number = FixedU128;
+
+pub struct ConvertType;
+
+impl SafeConvert<Balance, Number> for ConvertType {
+	fn convert(a: Balance) -> Result<Number, composable_traits::dex::ConversionError> {
+		FixedU128::checked_from_integer(a).ok_or(ConversionError)
+	}
+}
+
+impl Convert<Permill, Number> for ConvertType {
+	fn convert(a: Permill) -> Number {
+		a.into()
+	}
+}
+
+impl Convert<u16, Number> for ConvertType {
+	fn convert(a: u16) -> Number {
+		FixedU128::saturating_from_integer(a)
+	}
+}
+
+impl SafeConvert<Number, Balance> for ConvertType {
+	fn convert(a: Number) -> Result<Balance, composable_traits::dex::ConversionError> {
+		(a.into_inner() / FixedU128::DIV).try_into().map_err(|_| ConversionError)
+	}
+}
 
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: AssetId| -> Balance {
@@ -126,7 +154,7 @@ impl orml_tokens::Config for Test {
 }
 
 parameter_types! {
-	pub Precision: FixedU128 = FixedU128::saturating_from_rational(1, 1_000_000_000);
+	pub Precision: u128 = 100_u128;
 	pub TestPalletID : PalletId = PalletId(*b"curve_am");
 }
 
@@ -134,11 +162,14 @@ impl curve_amm::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
 	type Balance = Balance;
+	type Number = Number;
 	type CurrencyFactory = LpTokenFactory;
 	type Precision = Precision;
-	type LpToken = Tokens;
+	type Assets = Tokens;
+	type Convert = ConvertType;
 	type PoolId = PoolId;
 	type PalletId = TestPalletID;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

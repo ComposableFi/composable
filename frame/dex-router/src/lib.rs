@@ -21,6 +21,7 @@ pub mod pallet {
 	use composable_traits::{
 		defi::{CurrencyPair, LiftedFixedBalance},
 		dex::{CurveAmm, DexRoute, DexRouteNode, DexRouter},
+		math::SafeArithmetic,
 	};
 	use core::fmt::Debug;
 	use frame_support::pallet_prelude::*;
@@ -50,19 +51,9 @@ pub mod pallet {
 			+ Codec
 			+ MaxEncodedLen
 			+ Copy
-			+ Ord
-			+ CheckedAdd
-			+ CheckedSub
-			+ CheckedMul
-			+ AtLeast32BitUnsigned
-			+ From<u64> // at least 64 bit
 			+ Zero
-			+ One
-			+ IntegerSquareRoot
-			+ FixedPointOperand
-			+ Into<LiftedFixedBalance>
-			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
-			  // bit
+			+ Ord
+			+ SafeArithmetic;
 		/// The maximum hops in the route.
 		#[pallet::constant]
 		type MaxHopsInRoute: Get<u32> + MaxEncodedLen + TypeInfo;
@@ -247,9 +238,10 @@ pub mod pallet {
 						dy_t = T::StableSwapDex::exchange(
 							who,
 							*pool_id,
-							currency_pair.base,
+							currency_pair,
 							dx_t,
 							T::Balance::zero(),
+							true,
 						)
 						.map_err(|_| Error::<T>::ExchangeError)?;
 						dx_t = dy_t;
@@ -259,9 +251,10 @@ pub mod pallet {
 						dy_t = T::ConstantProductDex::exchange(
 							who,
 							*pool_id,
-							currency_pair.base,
+							currency_pair,
 							dx_t,
 							T::Balance::zero(),
+							true,
 						)
 						.map_err(|_| Error::<T>::ExchangeError)?;
 						dx_t = dy_t;
@@ -328,9 +321,10 @@ pub mod pallet {
 						let _res = T::StableSwapDex::exchange(
 							who,
 							pool_id,
-							currency_pair.base,
+							currency_pair,
 							dx_t,
 							T::Balance::zero(),
+							true,
 						)
 						.map_err(|_| Error::<T>::ExchangeError)?;
 						sp_std::if_std! {
@@ -345,9 +339,10 @@ pub mod pallet {
 						let _res = T::ConstantProductDex::exchange(
 							who,
 							pool_id,
-							currency_pair.base,
+							currency_pair,
 							dx_t,
 							T::Balance::zero(),
+							true,
 						)
 						.map_err(|_| Error::<T>::ExchangeError)?;
 						sp_std::if_std! {

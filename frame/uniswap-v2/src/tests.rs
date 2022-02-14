@@ -77,7 +77,7 @@ fn test() {
 		let swap_btc = unit;
 		assert_ok!(Tokens::mint_into(BTC, &BOB, swap_btc));
 
-		<Uni as CurveAmm>::sell(&BOB, pool_id, swap_btc, false).expect("impossible; qed;");
+		<Uni as CurveAmm>::sell(&BOB, pool_id, BTC, swap_btc, false).expect("impossible; qed;");
 
 		let new_pool_invariant = current_pool_product();
 		assert_ok!(default_acceptable_computation_error(
@@ -85,7 +85,7 @@ fn test() {
 			new_pool_invariant
 		));
 
-		<Uni as CurveAmm>::buy(&BOB, pool_id, swap_btc, false).expect("impossible; qed;");
+		<Uni as CurveAmm>::buy(&BOB, pool_id, BTC, swap_btc, false).expect("impossible; qed;");
 
 		let precision = 100;
 		let bob_btc = Tokens::balance(BTC, &BOB);

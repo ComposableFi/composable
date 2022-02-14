@@ -1,4 +1,5 @@
 use crate as dex_router;
+use composable_traits::dex::{ConversionError, SafeConvert};
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -7,8 +8,8 @@ use sp_arithmetic::{traits::Zero, FixedU128};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-	FixedPointNumber,
+	traits::{BlakeTwo256, Convert, ConvertInto, IdentityLookup},
+	FixedPointNumber, Permill,
 };
 use system::EnsureRoot;
 
@@ -133,19 +134,52 @@ impl orml_tokens::Config for Test {
 }
 
 parameter_types! {
-	pub CurveAmmPrecision: FixedU128 = FixedU128::saturating_from_rational(1, 1_000_000_000);
+	pub CurveAmmPrecision: u128 = 100;
 	pub CurveAmmTestPalletID : PalletId = PalletId(*b"curve_am");
+}
+
+pub type Number = FixedU128;
+pub struct ConvertType;
+
+impl SafeConvert<Balance, Number> for ConvertType {
+	fn convert(a: Balance) -> Result<Number, composable_traits::dex::ConversionError> {
+		let accuracy = 1_000_000_000_000;
+		let value = a.checked_mul(accuracy).ok_or(ConversionError)?;
+		Ok(FixedU128::from_inner(value))
+	}
+}
+
+impl Convert<Permill, Number> for ConvertType {
+	fn convert(a: Permill) -> Number {
+		a.into()
+	}
+}
+
+impl Convert<u16, Number> for ConvertType {
+	fn convert(a: u16) -> Number {
+		FixedU128::saturating_from_integer(a)
+	}
+}
+
+impl SafeConvert<Number, Balance> for ConvertType {
+	fn convert(a: Number) -> Result<Balance, composable_traits::dex::ConversionError> {
+		let accuracy = 1_000_000_000_000;
+		(a.into_inner() / accuracy).try_into().map_err(|_| ConversionError)
+	}
 }
 
 impl pallet_curve_amm::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
 	type Balance = Balance;
+	type Number = Number;
 	type CurrencyFactory = LpTokenFactory;
+	type Convert = ConvertType;
 	type Precision = CurveAmmPrecision;
-	type LpToken = Tokens;
+	type Assets = Tokens;
 	type PoolId = PoolId;
 	type PalletId = CurveAmmTestPalletID;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -158,10 +192,11 @@ impl pallet_uniswap_v2::Config for Test {
 	type AssetId = AssetId;
 	type Balance = Balance;
 	type CurrencyFactory = LpTokenFactory;
-	type Precision = ConstantProductAmmPrecision;
-	type LpToken = Tokens;
+	type Convert = ConvertInto;
+	type Assets = Tokens;
 	type PoolId = PoolId;
 	type PalletId = ConstantProductAmmTestPalletID;
+	type WeightInfo = ();
 }
 parameter_types! {
   #[derive(codec::Encode, codec::Decode, codec::MaxEncodedLen, TypeInfo)]

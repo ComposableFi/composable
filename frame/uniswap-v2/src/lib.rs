@@ -243,11 +243,12 @@ pub mod pallet {
 		pub fn buy(
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
-			base_amount: T::Balance,
+			asset_id: T::AssetId,
+			amount: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::buy(&who, pool_id, base_amount, keep_alive)?;
+			let _ = <Self as CurveAmm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
 			Ok(())
 		}
 
@@ -260,11 +261,12 @@ pub mod pallet {
 		pub fn sell(
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
-			base_amount: T::Balance,
+			asset_id: T::AssetId,
+			amount: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::sell(&who, pool_id, base_amount, keep_alive)?;
+			let _ = <Self as CurveAmm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
 			Ok(())
 		}
 
@@ -303,6 +305,17 @@ pub mod pallet {
 		type Balance = T::Balance;
 		type AccountId = T::AccountId;
 		type PoolId = T::PoolId;
+
+		fn pool_exists(pool_id: Self::PoolId) -> bool {
+			Pools::<T>::contains_key(pool_id)
+		}
+
+		fn currency_pair(
+			pool_id: Self::PoolId,
+		) -> Result<CurrencyPair<Self::AssetId>, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			Ok(pool.pair)
+		}
 
 		fn get_exchange_value(
 			pool_id: Self::PoolId,
@@ -394,17 +407,17 @@ pub mod pallet {
 				T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
 			let pool_quote_aum =
 				T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
-			let lp_issued = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
+			let lp_issued = T::Assets::total_issuance(pool.lp_token);
 
 			let base_amount = T::Convert::convert(safe_multiply_by_rational(
 				T::Convert::convert(lp_amount),
 				pool_base_aum,
-				lp_issued,
+				T::Convert::convert(lp_issued),
 			)?);
 			let quote_amount = T::Convert::convert(safe_multiply_by_rational(
 				T::Convert::convert(lp_amount),
 				pool_quote_aum,
-				lp_issued,
+				T::Convert::convert(lp_issued),
 			)?);
 
 			ensure!(
@@ -422,7 +435,7 @@ pub mod pallet {
 				who: who.clone(),
 				base_amount,
 				quote_amount,
-				total_issuance: T::Convert::convert(lp_issued),
+				total_issuance: lp_issued.safe_sub(&lp_amount)?,
 			});
 
 			Ok(())
@@ -432,15 +445,17 @@ pub mod pallet {
 		fn buy(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
-			base_amount: Self::Balance,
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			let quote_amount = Self::get_exchange_value(pool_id, pool.pair.base, base_amount)?;
+			let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
+			let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
 			<Self as CurveAmm>::exchange(
 				who,
 				pool_id,
-				pool.pair,
+				pair,
 				quote_amount,
 				T::Balance::zero(),
 				keep_alive,
@@ -451,18 +466,13 @@ pub mod pallet {
 		fn sell(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
-			base_amount: Self::Balance,
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			<Self as CurveAmm>::exchange(
-				who,
-				pool_id,
-				pool.pair.swap(),
-				base_amount,
-				T::Balance::zero(),
-				keep_alive,
-			)
+			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
+			<Self as CurveAmm>::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
 		}
 
 		#[transactional]
@@ -514,7 +524,7 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		#[transactional]
-		pub(crate) fn do_create_pool(
+		pub fn do_create_pool(
 			who: &T::AccountId,
 			pair: CurrencyPair<T::AssetId>,
 			fee: Permill,
