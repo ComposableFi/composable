@@ -8,6 +8,7 @@ on:
       - main
       - develop
       - releases
+      - fix-slash-for-chatops
 
 jobs:
   simnode:
