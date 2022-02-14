@@ -1,9 +1,6 @@
 name: Simnode and Benchmark Triggers
 
 on: 
-  push:
-    branches: 
-      - fix-slash-for-chatops
   issue_comment:
     types: [created]
 
