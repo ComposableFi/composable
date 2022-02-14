@@ -6,9 +6,7 @@ on:
     types: [labeled]
     branches:
       - main
-      - develop
       - releases
-      - fix-slash-for-chatops
 
 jobs:
   benchmark:
