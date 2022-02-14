@@ -31,7 +31,7 @@ build_runtime () {
 for i in "${VERSIONS_FILES[@]}"; do
   while IFS=',' read -r output chain folder; do
     echo "check if the wasm sources changed for $chain"
-    if has_runtime_changes "${PREV_TAG_OR_COMMIT}" "${GITHUB_REF_NAME}" "$folder"
+    if has_runtime_changes "${PREV_TAG_OR_COMMIT}" "origin/${GITHUB_REF_NAME}" "$folder"
     then
       build_runtime $output $chain $folder
       echo ""$chain"_wasm=1" >> "$GITHUB_ENV"

@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "master" }
+substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "master"}
+simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "master" }
 
 system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 support = { package = "frame-support", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
@@ -23,11 +24,12 @@ sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = 
 
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sproof-builder = { package = "cumulus-test-relay-sproof-builder", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16" }
-picasso-runtime = { path = "../../runtime/picasso" }
-dali-runtime = { path = "../../runtime/dali" }
+picasso-runtime = { path = "../../runtime/picasso", features = ["sim-node"] }
+dali-runtime = { path = "../../runtime/dali", features = ["sim-node"] }
 common = { path = "../../runtime/common" }
 node = { package = "composable-node", path = "../../node", features = ["dali"] }
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = "../../frame/crowdloan-rewards" }
