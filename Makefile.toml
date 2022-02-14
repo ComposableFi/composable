@@ -29,3 +29,10 @@ cargo run --release -- --version
 cd ../polkadot && cargo run --release -- --version && pwd && cd ../composable
 cd scripts/polkadot-launch && yarn && yarn composable
 '''
+
+[tasks.run-local-integration-tests]
+workspace=false
+script='''
+# we cannot use toolchain setting as different parts of codebase require different compiler
+cargo +stable-x86_64-unknown-linux-gnu test --package local-integration-tests --features local-integration-tests
+'''

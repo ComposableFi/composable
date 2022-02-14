@@ -1,9 +1,5 @@
 #![allow(clippy::upper_case_acronyms)]
-<<<<<<< HEAD
 use sp_std::ops::Deref;
-=======
-use std::ops::Deref;
->>>>>>> lending into runtime
 
 pub type CurrencyId = u128;
 

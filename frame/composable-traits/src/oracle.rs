@@ -91,11 +91,7 @@ pub trait Oracle {
 	/// Given `asset_id` and `amount` of price asset.
 	/// Returns what amount of  `asset_id` will be required to be same price as `amount` of
 	/// normalized currency
-<<<<<<< HEAD
 	/// `amount` - in smallest units
-=======
-	/// `amount` - in smalles units
->>>>>>> lending into runtime
 	fn get_price_inverse(
 		asset_id: Self::AssetId,
 		amount: Self::Balance,

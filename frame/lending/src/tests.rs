@@ -1,14 +1,9 @@
 //! Test for Lending. Runtime is almost real.
-<<<<<<< HEAD
 //! TODO: cover testing events - so make sure that each even is handled at least once
 //! (events can be obtained from System pallet as in banchmarking.rs before this commit)
 //! TODO: OCW of liqudaitons (like in Oracle)
 //! TODO: test on small numbers via proptests - detect edge case what is minimal amounts it starts
 //! to accure(and miminal block delta), and maximal amounts when it overflows
-=======
-//! TODO: cover testing events - so make sure that each even is handled at leas once
-//! (events can be obtained from System pallet as in banchmarking.rs before this commit)
->>>>>>> lending into runtime
 
 use std::ops::Mul;
 
@@ -302,16 +297,9 @@ fn can_create_valid_market() {
 		let expected = 50_000 * USDT::one();
 		set_price(BTC::ID, expected);
 		set_price(USDT::ID, USDT::one());
-<<<<<<< HEAD
 		let price = <Oracle as composable_traits::oracle::Oracle>::get_price(BTC::ID, BTC::one())
 			.expect("impossible")
 			.price;
-=======
-		let price =
-			<Oracle as composable_traits::oracle::Oracle>::get_price(BTC::ID, 10_u128.pow(12))
-				.expect("impossible")
-				.price;
->>>>>>> lending into runtime
 		assert_eq!(price, expected);
 
 		let manager = *ALICE;
@@ -822,11 +810,7 @@ proptest! {
 			let (market_id1, vault_id1) = create_simple_market();
 			let m1 = Tokens::balance(USDT::ID, &Lending::account_id(&market_id1));
 			let (market_id2, vault_id2) = create_simple_market();
-<<<<<<< HEAD
 			let m2 = Tokens::balance(USDT::ID, &Lending::account_id(&market_id2));
-=======
-			let _m2 = Tokens::balance(USDT::ID, &Lending::account_id(&market_id2));
->>>>>>> lending into runtime
 
 			prop_assert_ne!(market_id1, market_id2);
 			prop_assert_ne!(Lending::account_id(&market_id1), Lending::account_id(&market_id2));
@@ -840,27 +824,16 @@ proptest! {
 			(1..2).for_each(process_block);
 
 			let expected_market1_balance = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(amount1);
-<<<<<<< HEAD
 			let expected_market2_balance = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(10*amount2);
-=======
-			let _expected_market2_balance = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(10*amount2);
->>>>>>> lending into runtime
 
 			prop_assert_acceptable_computation_error!(
 				Tokens::balance(USDT::ID, &Lending::account_id(&market_id1)) - m1,
 				expected_market1_balance
 			);
-<<<<<<< HEAD
 			prop_assert_acceptable_computation_error!(
 				Tokens::balance(USDT::ID, &Lending::account_id(&market_id2)) - m2,
 				expected_market2_balance
 			);
-=======
-			// prop_assert_acceptable_computation_error!(
-			// 	Tokens::balance(USDT::ID, &Lending::account_id(&market_id2)) - m2,
-			// 	expected_market2_balance
-			// );
->>>>>>> lending into runtime
 
 			Ok(())
 		})?;

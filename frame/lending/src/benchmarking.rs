@@ -98,11 +98,7 @@ benchmarks! {
 		<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.base, &caller, bank).unwrap();
 		<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.quote, &caller, bank).unwrap();
 	} : {
-<<<<<<< HEAD
 		Lending::<T>::create_market(origin.into(), Validated::new(input).unwrap()).unwrap()
-=======
-		Lending::<T>::create_market(origin.into(), Validated::new(input, <_>::default()).unwrap()).unwrap()
->>>>>>> lending into runtime
 	}
 	deposit_collateral {
 		let caller= whitelisted_caller::<T::AccountId>();
@@ -114,11 +110,7 @@ benchmarks! {
 		set_prices::<T>();
 		<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.base, &caller, bank).unwrap();
 		<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.quote, &caller, bank).unwrap();
-<<<<<<< HEAD
 		Lending::<T>::create_market(origin.clone().into(), Validated::new(input).unwrap()).unwrap();
-=======
-		Lending::<T>::create_market(origin.clone().into(), Validated::new(input, <_>::default()).unwrap()).unwrap();
->>>>>>> lending into runtime
 		let market_id = MarketIndex::new(1);
 		}:  {
 			Lending::<T>::deposit_collateral(origin.into(), market_id, amount).unwrap();
@@ -134,11 +126,7 @@ benchmarks! {
 			set_prices::<T>();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.base, &caller, bank).unwrap();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.quote, &caller, bank).unwrap();
-<<<<<<< HEAD
 			Lending::<T>::create_market(origin.clone().into(), Validated::new(input).unwrap()).unwrap();
-=======
-			Lending::<T>::create_market(origin.clone().into(), Validated::new(input, <_>::default()).unwrap()).unwrap();
->>>>>>> lending into runtime
 			let market_id = MarketIndex::new(1);
 			Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount).unwrap();
 		}:  {
@@ -157,11 +145,7 @@ benchmarks! {
 			<pallet_balances::Pallet::<T> as frame_support::traits::fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.base, &caller, bank).unwrap();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.quote, &caller, bank).unwrap();
-<<<<<<< HEAD
 			Lending::<T>::create_market(origin.clone().into(), Validated::new(input).unwrap()).unwrap();
-=======
-			Lending::<T>::create_market(origin.clone().into(), Validated::new(input, <_>::default()).unwrap()).unwrap();
->>>>>>> lending into runtime
 			let market_id = MarketIndex::new(1);
 			Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount).unwrap();
 		}:  {
@@ -180,11 +164,7 @@ benchmarks! {
 			<pallet_balances::Pallet::<T> as frame_support::traits::fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.base, &caller, bank).unwrap();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.quote, &caller, bank).unwrap();
-<<<<<<< HEAD
 			Lending::<T>::create_market(origin.clone().into(), Validated::new(input).unwrap()).unwrap();
-=======
-			Lending::<T>::create_market(origin.clone().into(), Validated::new(input, <_>::default()).unwrap()).unwrap();
->>>>>>> lending into runtime
 			let market_id = MarketIndex::new(1);
 			Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount).unwrap();
 			Lending::<T>::borrow(origin.clone().into(), market_id, borrow_amount).unwrap();
@@ -212,11 +192,7 @@ benchmarks! {
 			<pallet_balances::Pallet::<T> as frame_support::traits::fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.base, &caller, bank).unwrap();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.quote, &caller, bank).unwrap();
-<<<<<<< HEAD
 			Lending::<T>::create_market(origin.clone().into(), Validated::new(input).unwrap()).unwrap();
-=======
-			Lending::<T>::create_market(origin.clone().into(), Validated::new(input, <_>::default()).unwrap()).unwrap();
->>>>>>> lending into runtime
 			let market_id = MarketIndex::new(1);
 			Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount).unwrap();
 			Lending::<T>::borrow(origin.into(), market_id, borrow_amount).unwrap();
@@ -238,11 +214,7 @@ benchmarks! {
 			<pallet_balances::Pallet::<T> as frame_support::traits::fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.base, &caller, bank).unwrap();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.quote, &caller, bank).unwrap();
-<<<<<<< HEAD
 			Lending::<T>::create_market(origin.into(), Validated::new(input).unwrap()).unwrap();
-=======
-			Lending::<T>::create_market(origin.into(), Validated::new(input, <_>::default()).unwrap()).unwrap();
->>>>>>> lending into runtime
 			let market_id = MarketIndex::new(1);
 		}:  {
 			// TODO: fix it, make timestamp depend on x increased OR make the value passed be DELTA
@@ -260,11 +232,7 @@ benchmarks! {
 				<pallet_balances::Pallet::<T> as frame_support::traits::fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 				<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.base, &caller, bank).unwrap();
 				<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.quote, &caller, bank).unwrap();
-<<<<<<< HEAD
 				Lending::<T>::create_market(origin.into(), Validated::new(input).unwrap()).unwrap();
-=======
-				Lending::<T>::create_market(origin.into(), Validated::new(input, <_>::default()).unwrap()).unwrap();
->>>>>>> lending into runtime
 				let market_id = MarketIndex::new(1);
 				let market_config = Markets::<T>::try_get(market_id).unwrap();
 			}:  {
@@ -283,11 +251,7 @@ benchmarks! {
 				<pallet_balances::Pallet::<T> as frame_support::traits::fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 				<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.base, &caller, bank).unwrap();
 				<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.quote, &caller, bank).unwrap();
-<<<<<<< HEAD
 				Lending::<T>::create_market(origin.clone().into(), Validated::new(input).unwrap()).unwrap();
-=======
-				Lending::<T>::create_market(origin.clone().into(), Validated::new(input, <_>::default()).unwrap()).unwrap();
->>>>>>> lending into runtime
 				let market_id = MarketIndex::new(1);
 				Lending::<T>::deposit_collateral(origin.into(), market_id, amount).unwrap();
 				let market_config = Markets::<T>::try_get(market_id).unwrap();
@@ -310,11 +274,7 @@ benchmarks! {
 			<pallet_balances::Pallet::<T> as frame_support::traits::fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.base, &caller, bank).unwrap();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.quote, &caller, bank).unwrap();
-<<<<<<< HEAD
 			Lending::<T>::create_market(origin.clone().into(), Validated::new(input).unwrap()).unwrap();
-=======
-			Lending::<T>::create_market(origin.clone().into(), Validated::new(input, <_>::default()).unwrap()).unwrap();
->>>>>>> lending into runtime
 			let market_id = MarketIndex::new(1);
 			Lending::<T>::deposit_collateral(origin.into(), market_id, amount).unwrap();
 			let market_config = Markets::<T>::try_get(market_id).unwrap();
@@ -337,11 +297,7 @@ benchmarks! {
 			<pallet_balances::Pallet::<T> as frame_support::traits::fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.base, &caller, bank).unwrap();
 			<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.quote, &caller, bank).unwrap();
-<<<<<<< HEAD
 			Lending::<T>::create_market(origin.clone().into(), Validated::new(input).unwrap()).unwrap();
-=======
-			Lending::<T>::create_market(origin.clone().into(), Validated::new(input, <_>::default()).unwrap()).unwrap();
->>>>>>> lending into runtime
 			let market_id = MarketIndex::new(1);
 			Lending::<T>::deposit_collateral(origin.into(), market_id, amount).unwrap();
 			let market_config = Markets::<T>::try_get(market_id).unwrap();
