@@ -2,6 +2,11 @@ name: Run Simnode
 
 on:
   workflow_dispatch:
+  pull_request:
+    types: [ labeled, synchronize, opened, reopened ]
+    branches:
+      - main
+      - releases
 
 jobs:
   simnode:
@@ -31,16 +36,16 @@ jobs:
 
       - name: Check for runtime changes
         id: check_runtime
+        if: contains( github.event.pull_request.labels.*.name, 'needs-simnode')
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
-
         run: .maintain/check_runtime.sh
 
       - name: Run Simnode
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
-        if: contains( github.event.pull_request.labels.*.name, 'needs-simnode') && env.RUNTIME_CHECK == 1
+        if: env.RUNTIME_CHECK == 1
         id: run_simnode
         run: .maintain/run_simnode.sh
