@@ -67,7 +67,6 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 smallvec = "1.6.1"
 
 # local modules
-
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
@@ -78,10 +77,15 @@ assets = { package = "pallet-assets", path = '../../frame/assets', default-featu
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
+composable-support = { path = "../../frame/composable-support", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
 transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
+
+# local RPCs
+assets-runtime-api = { path = '../../frame/assets/runtime-api', default-features = false }
+crowdloan-rewards-runtime-api = { path = '../../frame/crowdloan-rewards/runtime-api', default-features = false }
 
 # Used for runtime benchmarking
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, optional = true }
@@ -112,6 +116,9 @@ scale-info = { version = "1.0", default-features = false, features = ["derive"] 
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
 orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
 orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
+
+# simnode support
+simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode",  default-features = false, branch = "master" }
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
@@ -172,6 +179,7 @@ std = [
 	"orml-xcm-support/std",
 	"orml-unknown-tokens/std",
 	"composable-traits/std",
+	"composable-support/std",
 	"governance-registry/std",
 	"currency-factory/std",
 	"assets/std",
@@ -182,6 +190,7 @@ std = [
 	"membership/std",
 	"system-rpc-runtime-api/std",
 	"transaction-payment-rpc-runtime-api/std",
+	"simnode-apis/std"
 ]
 
 runtime-benchmarks = [
@@ -214,4 +223,4 @@ runtime-benchmarks = [
 	"vesting/runtime-benchmarks",
 	"bonded-finance/runtime-benchmarks",
 ]
-
+sim-node = []

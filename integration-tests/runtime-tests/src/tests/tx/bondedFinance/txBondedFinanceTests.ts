@@ -1,5 +1,5 @@
 /* eslint-disable no-trailing-spaces */
-import {expect} from "chai";
+import { expect } from "chai";
 import {
   txBondedFinanceCancelSudoSuccessTest,
   txBondedFinanceCancelFailureTest,
@@ -9,7 +9,7 @@ import {
   txBondedFinanceOfferFailureTest,
   txBondedFinanceOfferSuccessTest
 } from "@composable/tests/tx/bondedFinance/testHandlers/offerTests";
-import {txBondedFinanceBondSuccessTest} from "@composable/tests/tx/bondedFinance/testHandlers/bondTests";
+import { txBondedFinanceBondSuccessTest } from "@composable/tests/tx/bondedFinance/testHandlers/bondTests";
 
 /**
  * Contains all TX tests for the pallet:
@@ -22,13 +22,13 @@ export class TxBondedFinanceTests {
    * ToDo (D. Roth): The tests assume you're running them on a fresh chain. Instead of assuming, use the test returns.
    */
   public static runTxBondedFinanceTests() {
-    describe('tx.bondedFinance Tests', function() {
+    describe('tx.bondedFinance Tests', function () {
       /**
        * bondedFinance.offer(...) Success Tests
        */
       describe('tx.bondedFinance.offer & .bond Success Tests', function () {
         // Timeout set to 2 minutes
-        this.timeout(2*60*1000);
+        this.timeout(2 * 60 * 1000);
         // #1 Create offer using Alice's wallet.
         it('Can create a new offer', async function () {
           const requestParameters = {
@@ -81,22 +81,22 @@ export class TxBondedFinanceTests {
        */
       describe('tx.bondedFinance.offer Failure Tests', function () {
         // Timeout set to 2 minutes
-        this.timeout(2*60*1000);
+        this.timeout(2 * 60 * 1000);
         // #4 Alice can't create am offer with the bond price too low.
         it('Should not be able to create offer (bondPrice < MIN_VESTED_TRANSFER)', async function () {
           const requestParameters = {
             beneficiary: walletAlice.publicKey,
             asset: api.createType('u128', 1),
-            bondPrice: api.createType('u128', api.consts.bondedFinance.stake.toNumber()-1),
+            bondPrice: api.createType('u128', api.consts.bondedFinance.stake.toNumber() - 1),
             nbOfBonds: api.createType('u128', 10),
-            maturity: {Finite: {returnIn: api.createType('u32', 16)}},
+            maturity: { Finite: { returnIn: api.createType('u32', 16) } },
             reward: {
               asset: api.createType('u128', 1),
               amount: api.consts.bondedFinance.minReward,
               maturity: api.createType('u32', 1)
             }
           };
-          const {data: [result],} = await txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
+          const { data: [result], } = await txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
           expect(result.toNumber()).to.be.a('number');
         });
 
@@ -107,14 +107,14 @@ export class TxBondedFinanceTests {
             asset: api.createType('u128', 1),
             bondPrice: api.consts.bondedFinance.stake,
             nbOfBonds: api.createType('u128', 10),
-            maturity: {Finite: {returnIn: api.createType('u32', 16)}},
+            maturity: { Finite: { returnIn: api.createType('u32', 16) } },
             reward: {
               asset: api.createType('u128', 1),
-              amount: api.createType('u128', api.consts.bondedFinance.minReward.toNumber()-1),
+              amount: api.createType('u128', api.consts.bondedFinance.minReward.toNumber() - 1),
               maturity: api.createType('u32', 1)
             }
           };
-          const {data: [result],} = await txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
+          const { data: [result], } = await txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
           expect(result.toNumber()).to.be.a('number');
         });
 
@@ -125,14 +125,14 @@ export class TxBondedFinanceTests {
             asset: api.createType('u128', 1),
             bondPrice: api.consts.bondedFinance.stake,
             nbOfBonds: api.createType('u128', 10),
-            maturity: {Finite: {returnIn: api.createType('u32', 16)}},
+            maturity: { Finite: { returnIn: api.createType('u32', 16) } },
             reward: {
               asset: api.createType('u128', 1337),
               amount: api.consts.bondedFinance.minReward,
               maturity: api.createType('u32', 1)
             }
           };
-          const {data: [result],} = await txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
+          const { data: [result], } = await txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
           expect(result.toNumber()).to.be.a('number');
         });
       });
@@ -142,7 +142,7 @@ export class TxBondedFinanceTests {
        */
       describe('tx.bondedFinance.cancel Failure Tests', function () {
         // Timeout set to 2 minutes
-        this.timeout(2*60*1000);
+        this.timeout(2 * 60 * 1000);
         it('Should not be able to cancel offer that doesn\'t exist', async function () {
           const offerId = 1337;
           const { data: [result], } = await txBondedFinanceCancelFailureTest(walletAlice, offerId);
@@ -155,7 +155,7 @@ export class TxBondedFinanceTests {
        */
       describe('tx.bondedFinance.cancel Success Tests', function () {
         // Timeout set to 2 minutes
-        this.timeout(2*60*1000);
+        this.timeout(2 * 60 * 1000);
         // #6 Alice should be able to cancel her offer.
         it('Can cancel offer created in first bondedFinance.offer test by creator', async function () {
           const offerId = 1;
