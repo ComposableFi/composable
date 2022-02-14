@@ -62,29 +62,37 @@ preimage = { package = "pallet-preimage", git = "https://github.com/paritytech/s
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
 smallvec = "1.6.1"
+crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
 
 # local modules
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false, optional = true }
-assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false, optional = true }
+assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
 
 common = { path = "../common", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false, optional = true }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false, optional = true }
-governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false, optional = true }
-currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false, optional = true}
-composable-traits = { path = "../../frame/composable-traits" , default-features = false}
+governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false }
+currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
+composable-traits = { path = "../../frame/composable-traits", default-features = false }
+composable-support = { path = "../../frame/composable-support", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
 transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
 
+# local RPCs
+assets-runtime-api = { path = '../../frame/assets/runtime-api', default-features = false }
+crowdloan-rewards-runtime-api = { path = '../../frame/crowdloan-rewards/runtime-api', default-features = false }
+
 # Used for runtime benchmarking
 frame-benchmarking = { package = "frame-benchmarking", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, optional = true }
 system-benchmarking = { package = "frame-system-benchmarking", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, optional = true }
 hex-literal = { version = "0.3.1", optional = true }
-codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [
+    "derive",
+] }
 
 # Parachain Utilities
 cumulus-pallet-aura-ext = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16", default-features = false }
@@ -118,6 +126,7 @@ substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", bran
 default = ["std"]
 std = [
     "codec/std",
+    "composable-support/std",
     "sp-api/std",
     "sp-std/std",
     "sp-core/std",
@@ -173,7 +182,6 @@ std = [
     "orml-xcm-support/std",
     "orml-unknown-tokens/std",
     "assets-registry/std",
-    "assets/std",
     "governance-registry/std",
     "preimage/std",
     "membership/std",

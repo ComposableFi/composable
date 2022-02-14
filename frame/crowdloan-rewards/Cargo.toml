@@ -26,26 +26,27 @@ hex-literal = "0.3"
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, features = [ "std" ]}
 
 [dependencies]
-### Benchmarking
+# Benchmarking
 hex-literal = { version = "0.3.3", optional = true }
-libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, features = [
-    "hmac",
-    "static-context",
-] }
+libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, features = ["hmac","static-context"] }
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-application-crypto = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
+# FRAME
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
+# substrate primitives
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-scale-info = { version = "1.0", default-features = false, features = [
-    "derive",
-] }
+
+# SCALE
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+
+# misc
 serde = { version = "1.0.130", optional = true }
 rustc-hex = { version = "2.1.0", default-features = false }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }

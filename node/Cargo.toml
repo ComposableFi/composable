@@ -20,7 +20,16 @@ structopt = "0.3.8"
 picasso-runtime = { path = "../runtime/picasso" }
 composable-runtime = { path = "../runtime/composable", optional = true }
 dali-runtime = { path = "../runtime/dali", optional = true }
-common = { path = "../runtime/common"  }
+common = { path = "../runtime/common" }
+primitives = { path = "../runtime/primitives" }
+
+pallet-crowdloan-rewards = { path = "../frame/crowdloan-rewards" }
+pallet-assets = { path = "../frame/assets" }
+
+assets-rpc = { path = "../frame/assets/rpc" }
+assets-runtime-api = { path = "../frame/assets/runtime-api" }
+crowdloan-rewards-rpc = { path = "../frame/crowdloan-rewards/rpc" }
+crowdloan-rewards-runtime-api = { path = "../frame/crowdloan-rewards/runtime-api" }
 
 # FRAME Dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
@@ -93,7 +102,12 @@ hex = "0.4.3"
 
 [features]
 default = []
-runtime-benchmarks = ["polkadot-service/runtime-benchmarks", "picasso-runtime/runtime-benchmarks", "composable-runtime/runtime-benchmarks", "dali-runtime/runtime-benchmarks"]
+runtime-benchmarks = [
+    "polkadot-service/runtime-benchmarks",
+    "picasso-runtime/runtime-benchmarks",
+    "composable-runtime/runtime-benchmarks",
+    "dali-runtime/runtime-benchmarks",
+]
 ocw = []
 dali = ["dali-runtime"]
 composable = ["composable-runtime"]

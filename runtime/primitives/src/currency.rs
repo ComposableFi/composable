@@ -5,6 +5,7 @@ use core::ops::Div;
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 
+use composable_support::rpc_helpers::FromHexStr;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_runtime::sp_std::ops::Deref;
@@ -43,6 +44,20 @@ impl CurrencyId {
 	}
 	pub fn milli<T: From<u64> + Div<Output = T>>(&self) -> T {
 		self.unit::<T>() / T::from(1000_u64)
+	}
+}
+
+impl FromHexStr for CurrencyId {
+	type Err = <u128 as FromHexStr>::Err;
+
+	fn from_hex_str(src: &str) -> core::result::Result<Self, Self::Err> {
+		u128::from_hex_str(src).map(CurrencyId)
+	}
+}
+
+impl core::fmt::LowerHex for CurrencyId {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		core::fmt::LowerHex::fmt(&self.0, f)
 	}
 }
 
