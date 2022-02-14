@@ -16,7 +16,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 	let chain_id = cli.run.base.chain_id(false)?;
 
 	match &*chain_id {
-		"picasso" => picasso::run()?,
+		chain if chain.contains("picasso") => picasso::run()?,
 		"dali-chachacha" => dali::run()?,
 		_ => panic!("Unsupported chain_id: {}", chain_id),
 	};

@@ -3,7 +3,6 @@ use common::DAYS;
 use parachain_inherent::ParachainInherentData;
 use sc_consensus_manual_seal::consensus::timestamp::SlotTimestampProvider;
 use sc_service::TFullBackend;
-use sp_runtime::generic::Era;
 use std::{error::Error, sync::Arc};
 use substrate_simnode::{FullClientFor, SignatureVerificationOverride};
 
@@ -34,28 +33,12 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 	type RuntimeApi = dali_runtime::RuntimeApi;
 	type SelectChain = sc_consensus::LongestChain<TFullBackend<Self::Block>, Self::Block>;
 	type BlockImport = Arc<FullClientFor<Self>>;
-	type SignedExtras = dali_runtime::SignedExtra;
 	type InherentDataProviders = (
 		SlotTimestampProvider,
 		sp_consensus_aura::inherents::InherentDataProvider,
 		ParachainInherentData,
 	);
 	type Cli = ComposableCli;
-
-	fn signed_extras(from: <Self::Runtime as system::Config>::AccountId) -> Self::SignedExtras {
-		(
-			system::CheckNonZeroSender::<Self::Runtime>::new(),
-			system::CheckSpecVersion::<Self::Runtime>::new(),
-			system::CheckTxVersion::<Self::Runtime>::new(),
-			system::CheckGenesis::<Self::Runtime>::new(),
-			system::CheckMortality::<Self::Runtime>::from(Era::Immortal),
-			system::CheckNonce::<Self::Runtime>::from(
-				system::Pallet::<Self::Runtime>::account_nonce(from),
-			),
-			system::CheckWeight::<Self::Runtime>::new(),
-			transaction_payment::ChargeTransactionPayment::<Self::Runtime>::from(0),
-		)
-	}
 }
 
 /// run all integration tests
