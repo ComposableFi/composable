@@ -1,19 +1,17 @@
-name: Run Ansible Playbooks
+name: Chatops Triggers
 
 on: 
+  push:
+    branches: 
+      - fix-slash-for-chatops
   issue_comment:
     types: [created]
 
 jobs:
-  run-playbooks:
-    runs-on: 
-        - self-hosted
-        - linux
-        - X64
-        - sre
-
+  simnode-and-benhcmark-triggers:
+    runs-on: ubuntu-latest
     steps:
-    - name: Run Simnode
+    - name: Simnode and Benchmark Triggers
       uses: peter-evans/slash-command-dispatch@v2
       with:
         token: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
