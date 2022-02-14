@@ -40,7 +40,6 @@ jobs:
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
-
         id: check_runtime
         if: contains( github.event.pull_request.labels.*.name, 'needs-benchmarks')
         run: .maintain/check_runtime.sh
@@ -49,7 +48,6 @@ jobs:
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
-
         if: env.RUNTIME_CHECK == 1
         id: run_benchmarks
         run: .maintain/run_benchmarks.sh

@@ -36,6 +36,7 @@ jobs:
 
       - name: Check for runtime changes
         id: check_runtime
+        if: contains( github.event.pull_request.labels.*.name, 'needs-simnode')
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
@@ -45,6 +46,6 @@ jobs:
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
-        if: contains( github.event.pull_request.labels.*.name, 'needs-simnode') && env.RUNTIME_CHECK == 1
+        if: env.RUNTIME_CHECK == 1
         id: run_simnode
         run: .maintain/run_simnode.sh
