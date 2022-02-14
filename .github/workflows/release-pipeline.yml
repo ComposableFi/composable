@@ -107,6 +107,7 @@ jobs:
           RELEASE_VERSION: ${{ steps.release_drafter.outputs.tag_name }}
         run: |
           RELEASE_VERSION=${RELEASE_VERSION:1} # remove the 'v' at the beginining of the tag name
+          make version
           .maintain/client_release.sh
 
       # This uploads the client binary built in the previous step to the release draft
@@ -123,3 +124,14 @@ jobs:
           asset_path: ./target/release/composable
           asset_name: composable
           asset_content_type: application/octet-stream
+
+      - name: Release Notification
+        uses: stormwarning/action-release-notification@v1
+        with:
+          channel: releases
+          message: Composable has a new release!!!
+          actions: '[{"text": "View changelog 🎉", "url": "CHANGELOG.md"},{"text": "View docs 📚", "url": "https://github.com/ComposableFi/composable/releases/tag/${{ env.RELEASE_VERSION }}"}]'
+        env:
+          SLACKBOT_TOKEN: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+
