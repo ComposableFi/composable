@@ -22,8 +22,8 @@ version = "2.0.0"
 frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.16' }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16"  }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
+pallet-balances = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
 
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
@@ -33,7 +33,7 @@ sp-std = { default-features = false,  git = "https://github.com/paritytech/subst
 
 composable-traits = { default-features = false, path = "../composable-traits" }
 composable-support = { default-features = false, path = "../composable-support" }
-pallet-oracle = { default-features = false, optional = true, version = "1.0.0", path = "../oracle" }
+pallet-oracle = { default-features = false, optional = true, path = "../oracle" }
 pallet-vault = { default-features = false, path = "../vault", optional = true }
 
 log = { version = "0.4.14", default-features = false }
@@ -81,6 +81,7 @@ runtime-benchmarks = [
     "frame-support/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
     "pallet-oracle/runtime-benchmarks",
+    "pallet-vault/runtime-benchmarks",
     "pallet-timestamp/runtime-benchmarks",
     "pallet-balances/runtime-benchmarks",
 ]

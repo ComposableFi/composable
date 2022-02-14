@@ -1,5 +1,5 @@
 #![allow(clippy::upper_case_acronyms)]
-use std::ops::Deref;
+use sp_std::ops::Deref;
 
 pub type CurrencyId = u128;
 
