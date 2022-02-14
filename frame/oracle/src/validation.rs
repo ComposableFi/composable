@@ -50,7 +50,7 @@ impl Validate<Percent,ValidThreshhold > for ValidThreshhold {
     }
 }
 
-impl<MaxAnswer + PartialEq + PartialOrd, MaxAnswerBound> 
+impl<MaxAnswer: PartialEq + PartialOrd, MaxAnswerBound> 
     Validate<MaxAnswer, ValidMaxAnswer<MaxAnswerBound>>
        for ValidMaxAnswer<MaxAnswerBound>  where  MaxAnswerBound: Get<MaxAnswer> 
        {
