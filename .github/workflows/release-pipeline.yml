@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - releases
-      - ci-upgrade
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
@@ -103,8 +102,11 @@ jobs:
       # between this commit and the previous tag.
       # DO NOT REMOVE
       - name: 🔨 Build Composable Binary
+        env:
+          # this is so that the binary version corresponds with the release tag.
+          RELEASE_VERSION: ${{ steps.release_drafter.outputs.tag_name }}
         run: |
-          make version
+          RELEASE_VERSION=${RELEASE_VERSION:1} # remove the 'v' at the beginining of the tag name
           .maintain/client_release.sh
 
       # This uploads the client binary built in the previous step to the release draft
