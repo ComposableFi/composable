@@ -6812,6 +6812,7 @@ dependencies = [
 name = "pallet-oracle"
 version = "1.0.0"
 dependencies = [
+ "composable-support",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",

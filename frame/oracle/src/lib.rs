@@ -15,6 +15,8 @@
 #![allow(clippy::too_many_arguments)]
 pub use pallet::*;
 
+mod validation;
+
 #[cfg(test)]
 mod mock;
 
@@ -53,7 +55,8 @@ pub mod pallet {
 		pallet_prelude::*,
 		Config as SystemConfig,
 	};
-
+	use crate::validation::{ValidMinAnswers,ValidMaxAnswer, ValidThreshhold};
+    use composable_support::validation::{Validated};
 	use lite_json::json::JsonValue;
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
@@ -463,18 +466,22 @@ pub mod pallet {
 		pub fn add_asset_and_info(
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
-			threshold: Percent,
-			min_answers: u32,
-			max_answers: u32,
+			valid_threshold: Validated<Percent, ValidThreshhold>,
+			valid_min_answers: Validated<u32, ValidMinAnswers>,
+			valid_max_answers: Validated<u32, ValidMaxAnswer<T::MaxAnswerBound>>,
 			block_interval: T::BlockNumber,
 			reward: BalanceOf<T>,
 			slash: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
+
 			T::AddOracle::ensure_origin(origin)?;
-			ensure!(min_answers > 0, Error::<T>::InvalidMinAnswers);
+           
+			let threshold = valid_threshold.value();
+			let min_answers = valid_min_answers.value();
+			let max_answers = valid_max_answers.value();
+
 			ensure!(max_answers >= min_answers, Error::<T>::MaxAnswersLessThanMinAnswers);
-			ensure!(threshold < Percent::from_percent(100), Error::<T>::ExceedThreshold);
-			ensure!(max_answers <= T::MaxAnswerBound::get(), Error::<T>::ExceedMaxAnswers);
+			
 			ensure!(block_interval > T::StalePrice::get(), Error::<T>::BlockIntervalLength);
 			ensure!(
 				AssetsCount::<T>::get() < T::MaxAssetsCount::get(),
