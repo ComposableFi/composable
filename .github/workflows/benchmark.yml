@@ -3,7 +3,7 @@ name: Run Benchmarks
 on:
   workflow_dispatch:
   pull_request:
-    types: [labeled]
+    types: [labeled, synchronize, opened, reopened]
     branches:
       - main
       - releases
