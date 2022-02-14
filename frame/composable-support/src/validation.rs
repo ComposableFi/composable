@@ -65,15 +65,46 @@
 //! }
 //! ```
 
-use core::marker::PhantomData;
+use core::{fmt, marker::PhantomData};
 use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
 
 /// Black box that embbed the validated value.
-#[derive(Default, Copy, Clone, PartialEq, Eq, Debug, TypeInfo)]
+#[derive(Default, Copy, Clone)]
 pub struct Validated<T, U> {
 	value: T,
 	_marker: PhantomData<U>,
+}
+
+impl<T, U> TypeInfo for Validated<T, U>
+where
+	T: TypeInfo,
+{
+	type Identity = <T as TypeInfo>::Identity;
+
+	fn type_info() -> scale_info::Type {
+		T::type_info()
+	}
+}
+
+impl<T, U> PartialEq for Validated<T, U>
+where
+	T: PartialEq,
+{
+	fn eq(&self, other: &Self) -> bool {
+		self.value == other.value
+	}
+}
+
+impl<T, U> Eq for Validated<T, U> where T: PartialEq + Eq {}
+
+impl<T, U> fmt::Debug for Validated<T, U>
+where
+	T: core::fmt::Debug,
+{
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		self.value.fmt(f)
+	}
 }
 
 impl<T, U> Validated<T, U>
@@ -81,7 +112,7 @@ where
 	Validated<T, U>: Validate<T, U>,
 	U: Validate<T, U>,
 {
-	pub fn new(value: T, _validator_tag: U) -> Result<Self, &'static str> {
+	pub fn new(value: T) -> Result<Self, &'static str> {
 		match <U as Validate<T, U>>::validate(value) {
 			Ok(value) => Ok(Self { value, _marker: PhantomData }),
 			Err(e) => Err(e),
@@ -309,9 +340,9 @@ mod test {
 
 	#[test]
 	fn value() {
-		let value = Validated::new(42, Valid);
+		let value = Validated::<_, Valid>::new(42);
 		assert_ok!(value);
-		let value = Validated::new(42, Invalid);
+		let value = Validated::<_, Invalid>::new(42);
 		assert!(value.is_err());
 	}
 
