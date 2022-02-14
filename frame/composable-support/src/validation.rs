@@ -70,19 +70,10 @@ use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
 
 /// Black box that embbed the validated value.
-#[derive(Copy, Clone)]
+#[derive(Default, Copy, Clone)]
 pub struct Validated<T, U> {
 	value: T,
 	_marker: PhantomData<U>,
-}
-
-impl<T, U> Default for Validated<T, U>
-where
-	T: Default,
-{
-	fn default() -> Self {
-		Validated { value: T::default(), _marker: PhantomData }
-	}
 }
 
 impl<T, U> TypeInfo for Validated<T, U>
