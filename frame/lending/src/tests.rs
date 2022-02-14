@@ -1,6 +1,7 @@
 //! Test for Lending. Runtime is almost real.
 //! TODO: cover testing events - so make sure that each even is handled at leas once
 //! (events can be obtained from System pallet as in banchmarking.rs before this commit)
+//! TODO: OCW of liqudaitons (like in Oracle)
 
 use std::ops::Mul;
 

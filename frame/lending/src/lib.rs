@@ -290,6 +290,7 @@ pub mod pallet {
 				return
 			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
+				// TODO: check that it should liqudate before liqudaitons
 				let results = signer.send_signed_transaction(|_account| Call::liquidate {
 					market_id,
 					borrowers: vec![account.clone()],
