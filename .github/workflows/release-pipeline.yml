@@ -49,7 +49,7 @@ jobs:
       - name: Set Permission
         continue-on-error: true
         run: |
-          sudo su runner
+          sudo su runner && chmod -R 777  /home/runner/_work/_tool/node/
 
       - uses: actions/setup-node@v2
         with:
