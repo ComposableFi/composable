@@ -1,4 +1,4 @@
-name: Chatops Triggers
+name: Simnode and Benchmark Triggers
 
 on: 
   push:
