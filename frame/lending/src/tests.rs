@@ -809,7 +809,7 @@ proptest! {
 			let (market_id1, vault_id1) = create_simple_market();
 			let m1 = Tokens::balance(USDT::ID, &Lending::account_id(&market_id1));
 			let (market_id2, vault_id2) = create_simple_market();
-			let _m2 = Tokens::balance(USDT::ID, &Lending::account_id(&market_id2));
+			let m2 = Tokens::balance(USDT::ID, &Lending::account_id(&market_id2));
 
 			prop_assert_ne!(market_id1, market_id2);
 			prop_assert_ne!(Lending::account_id(&market_id1), Lending::account_id(&market_id2));
@@ -823,16 +823,16 @@ proptest! {
 			(1..2).for_each(process_block);
 
 			let expected_market1_balance = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(amount1);
-			let _expected_market2_balance = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(10*amount2);
+			let expected_market2_balance = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(10*amount2);
 
 			prop_assert_acceptable_computation_error!(
 				Tokens::balance(USDT::ID, &Lending::account_id(&market_id1)) - m1,
 				expected_market1_balance
 			);
-			// prop_assert_acceptable_computation_error!(
-			// 	Tokens::balance(USDT::ID, &Lending::account_id(&market_id2)) - m2,
-			// 	expected_market2_balance
-			// );
+			prop_assert_acceptable_computation_error!(
+				Tokens::balance(USDT::ID, &Lending::account_id(&market_id2)) - m2,
+				expected_market2_balance
+			);
 
 			Ok(())
 		})?;
