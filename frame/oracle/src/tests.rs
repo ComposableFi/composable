@@ -454,6 +454,7 @@ mod set_signer {
         fn signer_can_also_become_controller(
             signer_account_1 in account_id(), // Will also become a controller.
             signer_account_2 in account_id(), // Will become the signer associated with the controller above.
+            stake_balance in MinStake::get()..Balance::MAX, // need balance to set signer_account_2 as signer.
         ) {
             new_test_ext().execute_with(|| {
                 prop_assume!(signer_account_1 != signer_account_2);
@@ -463,7 +464,7 @@ mod set_signer {
                 prop_assert_eq!(Oracle::controller_to_signer(root_account), Some(signer_account_1));
                 prop_assert_eq!(Oracle::signer_to_controller(signer_account_1), Some(root_account));
 
-                Balances::make_free_balance_be(&signer_account_1, 100); // need balance to set signer_account_2
+                Balances::make_free_balance_be(&signer_account_1, stake_balance);
 
                 prop_assert_ok!(Oracle::set_signer(Origin::signed(signer_account_1), signer_account_2));
                 prop_assert_eq!(Oracle::controller_to_signer(signer_account_1), Some(signer_account_2));
