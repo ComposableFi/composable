@@ -55,7 +55,8 @@ pub mod pallet {
 		pallet_prelude::*,
 		Config as SystemConfig,
 	};
-	use crate::validation::{ValidMinAnswers,ValidMaxAnswer, ValidThreshhold};
+	use crate::validation::{ValidMinAnswers,ValidMaxAnswer, 
+		ValidThreshhold, ValidBlockInterval};
     use composable_support::validation::{Validated};
 	use lite_json::json::JsonValue;
 	use scale_info::TypeInfo;
@@ -469,7 +470,7 @@ pub mod pallet {
 			valid_threshold: Validated<Percent, ValidThreshhold>,
 			valid_min_answers: Validated<u32, ValidMinAnswers>,
 			valid_max_answers: Validated<u32, ValidMaxAnswer<T::MaxAnswerBound>>,
-			block_interval: T::BlockNumber,
+			valid_block_interval: Validated<T::BlockNumber, ValidBlockInterval<T::StalePrice>>,
 			reward: BalanceOf<T>,
 			slash: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
@@ -479,14 +480,15 @@ pub mod pallet {
 			let threshold = valid_threshold.value();
 			let min_answers = valid_min_answers.value();
 			let max_answers = valid_max_answers.value();
+			let block_interval = valid_block_interval.value();
 
 			ensure!(max_answers >= min_answers, Error::<T>::MaxAnswersLessThanMinAnswers);
-			
-			ensure!(block_interval > T::StalePrice::get(), Error::<T>::BlockIntervalLength);
+
 			ensure!(
 				AssetsCount::<T>::get() < T::MaxAssetsCount::get(),
 				Error::<T>::ExceedAssetsCount
 			);
+
 			let asset_info =
 				AssetInfo { threshold, min_answers, max_answers, block_interval, reward, slash };
 

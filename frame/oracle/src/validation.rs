@@ -27,6 +27,19 @@ impl<U> Clone for ValidMaxAnswer<U> {
     }
 }
 
+#[derive(Debug, Decode)]
+pub struct ValidBlockInterval<U> {
+    pub m: PhantomData<U>,
+}
+
+impl<U> Copy for ValidBlockInterval<U>{}
+
+impl<U> Clone for ValidBlockInterval<U> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
 impl<MinAnswer: Zero + PartialEq + Eq + Ord +  PartialOrd> Validate<MinAnswer, ValidMinAnswers> for ValidMinAnswers {
     
     fn validate(input: MinAnswer) -> Result<MinAnswer, &'static str> {
@@ -63,4 +76,19 @@ impl<MaxAnswer: PartialEq + PartialOrd, MaxAnswerBound>
             Ok(input)
         }
  }
+
+ impl<BlockInterval:  PartialOrd, StalePrice> 
+    Validate<BlockInterval, ValidBlockInterval<StalePrice>> 
+    for ValidBlockInterval<StalePrice> where StalePrice: Get<BlockInterval> ,
+     ValidBlockInterval<StalePrice> : Decode
+    {
+       fn validate(input: BlockInterval) -> Result<BlockInterval, &'static str> {
+           
+         if input <= StalePrice::get() {
+            return Err("INVALID_BLOCK_INTERVAL_LENGTH")
+         }
+
+         Ok(input)
+       } 
+}
     
