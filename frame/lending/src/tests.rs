@@ -1,7 +1,9 @@
 //! Test for Lending. Runtime is almost real.
-//! TODO: cover testing events - so make sure that each even is handled at leas once
+//! TODO: cover testing events - so make sure that each even is handled at least once
 //! (events can be obtained from System pallet as in banchmarking.rs before this commit)
 //! TODO: OCW of liqudaitons (like in Oracle)
+//! TODO: test on small numbers via proptests - detect edge case what is minimal amounts it starts
+//! to accure(and miminal block delta), and maximal amounts when it overflows
 
 use std::ops::Mul;
 
@@ -295,10 +297,9 @@ fn can_create_valid_market() {
 		let expected = 50_000 * USDT::one();
 		set_price(BTC::ID, expected);
 		set_price(USDT::ID, USDT::one());
-		let price =
-			<Oracle as composable_traits::oracle::Oracle>::get_price(BTC::ID, 10_u128.pow(12))
-				.expect("impossible")
-				.price;
+		let price = <Oracle as composable_traits::oracle::Oracle>::get_price(BTC::ID, BTC::one())
+			.expect("impossible")
+			.price;
 		assert_eq!(price, expected);
 
 		let manager = *ALICE;
