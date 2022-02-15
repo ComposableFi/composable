@@ -372,6 +372,17 @@ pub mod pallet {
 		}
 	}
 
+	/// Returns the amount available to claim for the specified account.
+	pub fn amount_available_to_claim_for<T: Config>(
+		account_id: <T as frame_system::Config>::AccountId,
+	) -> Result<T::Balance, DispatchError> {
+		let association = Associations::<T>::get(account_id).ok_or(Error::<T>::NotAssociated)?;
+		let reward = Rewards::<T>::get(association).ok_or(Error::<T>::NothingToClaim)?;
+		let should_have_claimed = should_have_claimed::<T>(&reward)?;
+		let available_to_claim = should_have_claimed - reward.claimed;
+		Ok(available_to_claim)
+	}
+
 	pub fn get_remote_account<T: Config>(
 		proof: Proof<<T as Config>::RelayChainAccountId>,
 		reward_account: &<T as frame_system::Config>::AccountId,
