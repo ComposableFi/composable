@@ -210,7 +210,17 @@ pub mod pallet {
 		pub fn initialize(origin: OriginFor<T>) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
 			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
-			Self::do_initialize()
+			let current_block = frame_system::Pallet::<T>::block_number();
+			Self::do_initialize(current_block)
+		}
+
+		/// Initialize the pallet at the given transaction block.
+		#[pallet::weight(<T as Config>::WeightInfo::initialize(TotalContributors::<T>::get()))]
+		#[transactional]
+		pub fn initialize_at(origin: OriginFor<T>, at: T::BlockNumber) -> DispatchResult {
+			T::AdminOrigin::ensure_origin(origin)?;
+			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
+			Self::do_initialize(at)
 		}
 
 		/// Populate pallet by adding more rewards.
@@ -262,9 +272,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn do_initialize() -> DispatchResult {
-			let current_block = frame_system::Pallet::<T>::block_number();
-			VestingBlockStart::<T>::set(Some(current_block));
+		pub(crate) fn do_initialize(at: T::BlockNumber) -> DispatchResult {
+			VestingBlockStart::<T>::set(Some(at));
 			Ok(())
 		}
 

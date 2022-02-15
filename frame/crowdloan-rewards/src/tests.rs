@@ -96,6 +96,15 @@ fn test_initialize_ok() {
 }
 
 #[test]
+fn test_initialize_at_ok() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_ok!(CrowdloanRewards::initialize_at(Origin::root(), 10));
+		assert_eq!(CrowdloanRewards::total_rewards(), 0);
+		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
+	});
+}
+
+#[test]
 fn test_initialize_once() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
