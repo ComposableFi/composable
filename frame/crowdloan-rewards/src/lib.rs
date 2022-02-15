@@ -326,33 +326,11 @@ pub mod pallet {
 			remote_account: RemoteAccountOf<T>,
 			reward_account: &T::AccountId,
 		) -> Result<T::Balance, DispatchError> {
-			let start = VestingBlockStart::<T>::get().ok_or(Error::<T>::NotInitialized)?;
 			Rewards::<T>::try_mutate(remote_account, |reward| {
 				reward
 					.as_mut()
 					.map(|reward| {
-						let upfront_payment = T::InitialPayment::get().mul_floor(reward.total);
-						let should_have_claimed = {
-							let current_block = frame_system::Pallet::<T>::block_number();
-							// Current point in time
-							let vesting_point = current_block.saturating_sub(start);
-							if vesting_point >= reward.vesting_period {
-								// If the user is claiming when the period is over, he should
-								// probably have already claimed everything.
-								reward.total
-							} else {
-								let vesting_step = T::VestingStep::get();
-								// Current window, rounded to previous window.
-								let vesting_window = vesting_point - (vesting_point % vesting_step);
-								// The user should have claimed the upfront payment + the vested
-								// amount until this window point.
-								let vested_reward = reward.total - upfront_payment;
-								upfront_payment +
-									(vested_reward
-										.saturating_mul(T::Convert::convert(vesting_window)) /
-										T::Convert::convert(reward.vesting_period))
-							}
-						};
+						let should_have_claimed = should_have_claimed::<T>(reward)?;
 						let available_to_claim = should_have_claimed - reward.claimed;
 						ensure!(
 							available_to_claim > T::Balance::zero(),
@@ -365,6 +343,32 @@ pub mod pallet {
 					})
 					.unwrap_or_else(|| Err(Error::<T>::InvalidProof.into()))
 			})
+		}
+	}
+
+	pub fn should_have_claimed<T: Config>(
+		reward: &Reward<<T as Config>::Balance, <T as frame_system::Config>::BlockNumber>,
+	) -> Result<T::Balance, DispatchError> {
+		let start = VestingBlockStart::<T>::get().ok_or(Error::<T>::NotInitialized)?;
+		let upfront_payment = T::InitialPayment::get().mul_floor(reward.total);
+
+		let current_block = frame_system::Pallet::<T>::block_number();
+		// Current point in time
+		let vesting_point = current_block.saturating_sub(start);
+		if vesting_point >= reward.vesting_period {
+			// If the user is claiming when the period is over, he should
+			// probably have already claimed everything.
+			Ok(reward.total)
+		} else {
+			let vesting_step = T::VestingStep::get();
+			// Current window, rounded to previous window.
+			let vesting_window = vesting_point - (vesting_point % vesting_step);
+			// The user should have claimed the upfront payment + the vested
+			// amount until this window point.
+			let vested_reward = reward.total - upfront_payment;
+			Ok(upfront_payment +
+				(vested_reward.saturating_mul(T::Convert::convert(vesting_window)) /
+					T::Convert::convert(reward.vesting_period)))
 		}
 	}
 

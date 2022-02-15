@@ -74,6 +74,11 @@ export interface OrmlTokensBalanceLock extends Null {}
 /** @name PalletAssetsRegistryCandidateStatus */
 export interface PalletAssetsRegistryCandidateStatus extends Null {}
 
+/** @name PalletAssetsRegistryForeignMetadata */
+export interface PalletAssetsRegistryForeignMetadata extends Struct {
+  readonly decimals: u32;
+}
+
 /** @name PalletCollatorSelectionCandidateInfo */
 export interface PalletCollatorSelectionCandidateInfo extends Null {}
 
@@ -185,4 +190,4 @@ export interface SpConsensusAuraSr25519AppSr25519Public extends Null {}
 /** @name XcmVersionedMultiAsset */
 export interface XcmVersionedMultiAsset extends Null {}
 
-export type PHANTOM_DEFAULT = 'default';
+export type PHANTOM_CROWDLOANREWARDS = 'crowdloanRewards';
