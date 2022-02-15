@@ -41,6 +41,7 @@ mod capabilities;
 pub mod models;
 mod rent;
 mod traits;
+mod validation;
 
 pub use crate::weights::WeightInfo;
 pub use capabilities::Capabilities;
@@ -102,6 +103,9 @@ pub mod pallet {
 		ArithmeticError, DispatchError, FixedPointNumber, Perquintill,
 	};
 	use sp_std::fmt::Debug;
+    use crate::validation::ValidateCreationDeposit;
+    use composable_support::validation::Validated;
+
 	#[allow(missing_docs)]
 	pub type AssetIdOf<T> =
 		<<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
@@ -531,11 +535,12 @@ pub mod pallet {
 		pub fn add_surcharge(
 			origin: OriginFor<T>,
 			dest: T::VaultId,
-			amount: T::Balance,
+			amount: Validated<BalanceOf<T>, ValidateCreationDeposit<T>>,
 		) -> DispatchResultWithPostInfo {
 			let origin = ensure_signed(origin)?;
 
-			ensure!(amount >= T::CreationDeposit::get(), Error::<T>::InsufficientCreationDeposit);
+			// ensure!(amount >= T::CreationDeposit::get(), Error::<T>::InsufficientCreationDeposit);
+            let amount = amount.value();
 
 			Vaults::<T>::try_mutate_exists(dest, |vault| -> DispatchResultWithPostInfo {
 				let mut vault = vault.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;

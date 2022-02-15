@@ -26,6 +26,7 @@ use frame_support::{
 };
 use proptest::prelude::*;
 use sp_runtime::{helpers_128bit::multiply_by_rational, FixedPointNumber, Perbill, Perquintill};
+use composable_support::validation::Validated;
 
 const DEFAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 // dependent on the previous value, both should be changed
@@ -828,7 +829,8 @@ fn test_vault_add_surcharge() {
 		assert!(Balances::balance(&CHARLIE) > 0);
 		let vault = Vaults::vault_data(id).unwrap();
 		assert!(vault.capabilities.is_tombstoned());
-		Vaults::add_surcharge(Origin::signed(ALICE), id, CreationDeposit::get()).unwrap();
+		// Vaults::add_surcharge(Origin::signed(ALICE), id, CreationDeposit::get()).unwrap();
+		Vaults::add_surcharge(Origin::signed(ALICE), id, Validated::new(CreationDeposit::get()).unwrap()).unwrap();
 		let vault = Vaults::vault_data(id).unwrap();
 		assert!(!vault.capabilities.is_tombstoned());
 	})
