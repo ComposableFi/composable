@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - releases
-      - rollout-new-release
+      - ci-upgrade
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
@@ -50,7 +50,7 @@ jobs:
       - name: Set Permission
         continue-on-error: true
         run: |
-          sudo su runner && chmod -R 777  /home/runner/_work/_tool/node/
+          sudo su runner
 
       - uses: actions/setup-node@v2
         with:
@@ -104,7 +104,6 @@ jobs:
       # DO NOT REMOVE
       - name: 🔨 Build Composable Binary
         run: |
-          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 | cut -c2- )" >> $GITHUB_ENV
           make version
           .maintain/client_release.sh
 
@@ -122,3 +121,14 @@ jobs:
           asset_path: ./target/release/composable
           asset_name: composable
           asset_content_type: application/octet-stream
+
+      - name: Release Notification
+        uses: stormwarning/action-release-notification@v1
+        with:
+          channel: releases
+          message: Composable has a new release!!!
+          actions: '[{"text": "View changelog 🎉", "url": "CHANGELOG.md"},{"text": "View docs 📚", "url": "https://github.com/ComposableFi/composable/releases/tag/${{ env.RELEASE_VERSION }}"}]'
+        env:
+          SLACKBOT_TOKEN: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+
