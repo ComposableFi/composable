@@ -330,15 +330,15 @@ Notes:
 
   Technically, it is possible to define `at` anywhere in the RPC definition, but putting it last for all of them makes the RPCs simpler and more consistent.
 
-* If this is a preexisting pallet, they are most likely already defined in the type definitions for `crowdloanRewards` (for reasons that don't need to be covered in this document) and can just be moved over to this file.
+* If this is a preexisting pallet, the types for it are most likely already defined in the type definitions for `crowdloanRewards` (for reasons that don't need to be covered in this document) and can just be moved over to this file.
 
   Even if there are no types to declare, still define an empty object or else everything will explode.
 
 ### Tests
 
-Create a folder here: `integration-tests/runtime-tests/src/tests/rpc/pallet-name`
+Create a folder here (if it doesn't already exist): `integration-tests/runtime-tests/test/tests/pallet-name`
 
-And then within that folder, create a file `rpcPalletName.ts` with the following structure:
+And then within that folder, create a file `rpcPalletNameTests.ts` with the following structure:
 
 ```typescript
 /* eslint-disable no-trailing-spaces */
@@ -346,47 +346,30 @@ import { /* any custom defined types that are needed for the RPC */ } from '@com
 import { expect } from 'chai';
 
 
+describe('query.palletName.account Tests', function() {
+  // Set timeout to 1 minute.
+  this.timeout(60*1000); // <- increaase this if tests are timing out
+
+  // repeat this block as needed for every test case defined in the class below.
+  it('rpc.palletName.functionName Tests', async function() {
+    await RpcPalletNameTests.rpcPalletNameFunctionNameTest();
+  });
+});
+
+
 export class RpcPalletNameTests {
     /**
      * 
      */
-    public static runRpcPalletNameTests() {
-        describe('rpc.palletName.functionName Tests', function () {
-            it('STUB', async () => {
-                const result = await RpcPalletNameTests.rpcPalletNameTest(/* parameters */);
-                // see note below about bignumbers
-                // (this is just an example assertion)
-                expect(result).to.be.a["bignumber"].that.equals('0');
-            });
-        });
-    }
-
-    /**
-     * 
-     */
-    private static async rpcPalletNameTest(/* parameters */) {
+    public static async rpcPalletNameFunctionNameTest() {
         // api is a global variable
-        return await api.rpc.palletName.functionName(/* parameters */);
+        const result = await api.rpc.palletName.functionName(/* parameters */);
+
+        // see note below about bignumbers
+        // (this is just an example assertion)
+        expect(result).to.be.a["bignumber"].that.equals('0');
     }
 }
-
-// Uncomment to debug
-// RpcPalletNameTests.runRpcPalletNameTests();
-```
-
-Finally, in `integration-tests/runtime-tests/src/test.ts`, import the above class and add it's tests to the `RPC Tests` test suite:
-
-```typescript
-// ...stub...
-import { RpcPalletNameTests } from '@composable/tests/rpc/palletName/rpcPalletNameTests'; // <- add this
-
-describe('Picasso Runtime Tests', function () {
-    // ...stub...
-        describe('RPC Tests', function () {
-        // ...stub...
-        RpcPalletNameTests.runRpcPalletNameTests() // <- add this
-    });
-});
 ```
 
 Notes:
