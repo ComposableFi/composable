@@ -1317,7 +1317,7 @@ pub mod pallet {
 					total_repay_amount
 				} else {
 					let repay_borrow_amount = total_repay_amount - burn_amount;
-					remaining_borrow_amount -=
+					remaining_borrow_amount =
 						remaining_borrow_amount.safe_sub(&repay_borrow_amount)?;
 					<T as Config>::MultiCurrency::burn_from(
 						debt_asset_id,
