@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - releases
+      - rollout-new-release
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
