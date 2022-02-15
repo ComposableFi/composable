@@ -31,3 +31,5 @@ What is currently in scope is finding bugs in a our code base running in a local
 
 ## Rewards   
 Rewards are granted depending on the severity of the vulnerability, ranging from $50 to $30.000, payed out in PICA tokens. 
+
+testing our cicd
