@@ -5,7 +5,7 @@
     ],
     "basilisk_collator_url": "ws://127.0.0.1:9998",
     "composable_collator_url": "ws://127.0.0.1:9988",
-    "basilisk_para_id": 200,
+    "basilisk_para_id": 2090,
     "composable_para_id": 2000
 }
 
