@@ -407,36 +407,73 @@ mod add_asset_and_info {
     }
 }
 
-#[test]
-fn set_signer() {
-	new_test_ext().execute_with(|| {
-		let account_1 = get_account_1();
-		let account_2 = get_root_account();
-		let account_3 = get_account_3();
-		let account_4 = get_account_4();
-		let account_5 = get_account_5();
+mod set_signer {
+    use super::*;
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(10_000))]
 
-		assert_ok!(Oracle::set_signer(Origin::signed(account_2), account_1));
-		assert_eq!(Oracle::controller_to_signer(account_2), Some(account_1));
-		assert_eq!(Oracle::signer_to_controller(account_1), Some(account_2));
+        #[test]
+        fn root_can_be_controller_and_set_signer(
+            signer_account in account_id(),
+            // account_3 in account_id(),
+            // account_4 in account_id(),
+            // account_5 in account_id(),
+        ) {
+            new_test_ext().execute_with(|| {
+                // let account_1 = get_account_1();
+                let root_account = get_root_account();
+                // let account_3 = get_account_3();
+                // let account_4 = get_account_4();
+                // let account_5 = get_account_5();
 
-		assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_5));
-		assert_eq!(Oracle::controller_to_signer(account_1), Some(account_5));
-		assert_eq!(Oracle::signer_to_controller(account_5), Some(account_1));
+                prop_assert_ok!(Oracle::set_signer(Origin::signed(root_account), signer_account));
+                prop_assert_eq!(Oracle::controller_to_signer(root_account), Some(signer_account));
+                prop_assert_eq!(Oracle::signer_to_controller(signer_account), Some(root_account));
 
-		assert_noop!(
-			Oracle::set_signer(Origin::signed(account_3), account_4),
-			BalancesError::<Test>::InsufficientBalance
-		);
-		assert_noop!(
-			Oracle::set_signer(Origin::signed(account_4), account_1),
-			Error::<Test>::SignerUsed
-		);
-		assert_noop!(
-			Oracle::set_signer(Origin::signed(account_1), account_2),
-			Error::<Test>::ControllerUsed
-		);
-	});
+                // prop_assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_5));
+                // prop_assert_eq!(Oracle::controller_to_signer(account_1), Some(account_5));
+                // prop_assert_eq!(Oracle::signer_to_controller(account_5), Some(account_1));
+                //
+                // prop_assert_noop!(
+                //     Oracle::set_signer(Origin::signed(account_3), account_4),
+                //     BalancesError::<Test>::InsufficientBalance
+                // );
+                // prop_assert_noop!(
+                //     Oracle::set_signer(Origin::signed(account_4), account_1),
+                //     Error::<Test>::SignerUsed
+                // );
+                // prop_assert_noop!(
+                //     Oracle::set_signer(Origin::signed(account_1), root_account),
+                //     Error::<Test>::ControllerUsed
+                // );
+                Ok(())
+            })?;
+        }
+
+        #[test]
+        fn signer_can_also_become_controller(
+            signer_account_1 in account_id(), // Will also become a controller.
+            signer_account_2 in account_id(), // Will become the signer associated with the controller above.
+        ) {
+            new_test_ext().execute_with(|| {
+                prop_assume!(signer_account_1 != signer_account_2);
+                let root_account = get_root_account();
+
+                prop_assert_ok!(Oracle::set_signer(Origin::signed(root_account), signer_account_1));
+                prop_assert_eq!(Oracle::controller_to_signer(root_account), Some(signer_account_1));
+                prop_assert_eq!(Oracle::signer_to_controller(signer_account_1), Some(root_account));
+
+                Balances::make_free_balance_be(&signer_account_1, 100); // need balance to set signer_account_2
+
+                prop_assert_ok!(Oracle::set_signer(Origin::signed(signer_account_1), signer_account_2));
+                prop_assert_eq!(Oracle::controller_to_signer(signer_account_1), Some(signer_account_2));
+                prop_assert_eq!(Oracle::signer_to_controller(signer_account_2), Some(signer_account_1));
+
+                Ok(())
+            })?;
+        }
+    }
+
 }
 
 #[test]
