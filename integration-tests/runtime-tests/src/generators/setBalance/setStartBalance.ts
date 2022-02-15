@@ -1,21 +1,29 @@
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import {args} from "../../utils/args";
+import {expect} from "chai";
+import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import {args} from "@composable/utils/args";
+
 
 /**
- * Generates a test transaction.
- * This is mainly an example on how to add a new generator.
-**/
-export class testTransactionGenerator {
+ * Mints balance for specified wallets.
+ **/
+export class startBalanceGenerator {
   /**
    * Sends test transaction from Alice to Bob.
    * @param {ApiPromise} api Connected API Promise.
    * @param {Keyring} walletSender Wallet sending asset.
    * @param {Keyring} walletReceiverAddress Wallet receiving asset.
-  **/
-  public static async testTransaction(api: ApiPromise, walletSender, walletReceiverAddress) {
-    const transfer = api.tx.assets.transferNative(walletReceiverAddress, 12345678910, true);
-    const hash = await transfer.signAndSend(walletSender, { nonce: -1 });
-    console.debug('Transfer sent with hash', hash.toHex());
+   **/
+  public static async setBalance(api: ApiPromise, sudoKey, walletReceiverAddress) {
+    const {data: [result1],} = await sendAndWaitForSuccess(
+      api,
+      sudoKey,
+      api.events.sudo.Sudid.is,
+      api.tx.sudo.sudo(
+        api.tx.assets.mintInto(1, walletReceiverAddress.publicKey, 555555555555)
+      )
+    );
+    expect(result1.isOk).to.be.true;
   }
 }
 
@@ -28,7 +36,8 @@ async function main() {
   const keyring = new Keyring({ type: 'sr25519' });
   const walletAlice = keyring.addFromUri('//Alice');
   const walletBob = keyring.addFromUri('//Bob');
-  await testTransactionGenerator.testTransaction(api, walletAlice, walletBob.address);
+  await startBalanceGenerator.setBalance(api, walletAlice, walletAlice.address);
+  await startBalanceGenerator.setBalance(api, walletAlice, walletBob.address);
   console.info("setStartBalance finished!");
   await api.disconnect();
 }
