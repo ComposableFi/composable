@@ -10,6 +10,7 @@ use crate::{
 	models::VaultInfo,
 	*,
 };
+use composable_support::validation::Validated;
 use composable_tests_helpers::{
 	prop_assert_acceptable_computation_error, prop_assert_ok,
 	test::helper::default_acceptable_computation_error,
@@ -26,7 +27,6 @@ use frame_support::{
 };
 use proptest::prelude::*;
 use sp_runtime::{helpers_128bit::multiply_by_rational, FixedPointNumber, Perbill, Perquintill};
-use composable_support::validation::Validated;
 
 const DEFAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 // dependent on the previous value, both should be changed
@@ -38,15 +38,15 @@ fn create_vault_with_share(
 	strategy_share: Perquintill,
 	reserved: Perquintill,
 ) -> (u64, VaultInfo<AccountId, Balance, MockCurrencyId, BlockNumber>) {
-	let v = Vaults::do_create_vault(
-		Deposit::Existential,
-		VaultConfig {
-			asset_id,
-			manager: ALICE,
-			reserved,
-			strategies: [(strategy_account_id, strategy_share)].iter().cloned().collect(),
-		},
-	);
+	let config = VaultConfig {
+		asset_id,
+		manager: ALICE,
+		reserved,
+		strategies: [(strategy_account_id, strategy_share)].iter().cloned().collect(),
+	};
+
+	let v = Vaults::do_create_vault(Deposit::Existential, Validated::new(config).unwrap());
+
 	assert_ok!(&v);
 	v.expect("unreachable; qed;")
 }
@@ -830,7 +830,12 @@ fn test_vault_add_surcharge() {
 		let vault = Vaults::vault_data(id).unwrap();
 		assert!(vault.capabilities.is_tombstoned());
 		// Vaults::add_surcharge(Origin::signed(ALICE), id, CreationDeposit::get()).unwrap();
-		Vaults::add_surcharge(Origin::signed(ALICE), id, Validated::new(CreationDeposit::get()).unwrap()).unwrap();
+		Vaults::add_surcharge(
+			Origin::signed(ALICE),
+			id,
+			Validated::new(CreationDeposit::get()).unwrap(),
+		)
+		.unwrap();
 		let vault = Vaults::vault_data(id).unwrap();
 		assert!(!vault.capabilities.is_tombstoned());
 	})

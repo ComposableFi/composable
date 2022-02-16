@@ -64,9 +64,11 @@ pub mod pallet {
 		models::StrategyOverview,
 		rent::{self, Verdict},
 		traits::{CurrencyFactory, StrategicVault},
+		validation::{ValidateCreationDeposit, ValidateMaxStrategies},
 		weights::WeightInfo,
 	};
 	use codec::{Codec, FullCodec};
+	use composable_support::validation::Validated;
 	use composable_traits::{
 		currency::RangeId,
 		defi::Rate,
@@ -103,8 +105,6 @@ pub mod pallet {
 		ArithmeticError, DispatchError, FixedPointNumber, Perquintill,
 	};
 	use sp_std::fmt::Debug;
-    use crate::validation::ValidateCreationDeposit;
-    use composable_support::validation::Validated;
 
 	#[allow(missing_docs)]
 	pub type AssetIdOf<T> =
@@ -539,8 +539,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let origin = ensure_signed(origin)?;
 
-			// ensure!(amount >= T::CreationDeposit::get(), Error::<T>::InsufficientCreationDeposit);
-            let amount = amount.value();
+			let amount = amount.value();
 
 			Vaults::<T>::try_mutate_exists(dest, |vault| -> DispatchResultWithPostInfo {
 				let mut vault = vault.as_mut().ok_or(Error::<T>::VaultDoesNotExist)?;
@@ -703,7 +702,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn do_create_vault(
 			deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
-			config: VaultConfig<T::AccountId, T::AssetId>,
+			config: Validated<VaultConfig<T::AccountId, T::AssetId>, ValidateMaxStrategies<T>>,
 		) -> Result<(T::VaultId, VaultInfo<T>), DispatchError> {
 			// 1. check config
 			// 2. lock endowment
@@ -717,10 +716,7 @@ pub mod pallet {
 
 				// Perhaps later on, we'll make this configurable per creator account id, if we want
 				// to allow special projects to create more complex vaults.
-				ensure!(
-					config.strategies.len() <= T::MaxStrategies::get(),
-					Error::<T>::TooManyStrategies
-				);
+				let config = config.value();
 
 				// We do allow vaults without strategies, since strategies can be decided on later
 				// through governance. If strategies are present, their allocations must sum up to
@@ -963,7 +959,11 @@ pub mod pallet {
 			deposit: Deposit<Self::Balance, Self::BlockNumber>,
 			config: VaultConfig<Self::AccountId, Self::AssetId>,
 		) -> Result<Self::VaultId, DispatchError> {
-			Self::do_create_vault(deposit, config).map(|(id, _)| id)
+			match Validated::new(config) {
+				Ok(validated_config) =>
+					Self::do_create_vault(deposit, validated_config).map(|(id, _)| id),
+				Err(_) => Err(DispatchError::from(Error::<T>::TooManyStrategies)),
+			}
 		}
 
 		fn deposit(
