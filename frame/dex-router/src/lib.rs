@@ -19,18 +19,13 @@ mod tests;
 pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		defi::{CurrencyPair, LiftedFixedBalance},
+		defi::CurrencyPair,
 		dex::{CurveAmm, DexRoute, DexRouteNode, DexRouter},
 		math::SafeArithmetic,
 	};
 	use core::fmt::Debug;
 	use frame_support::pallet_prelude::*;
-	use sp_runtime::{
-		traits::{
-			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, IntegerSquareRoot, One, Zero,
-		},
-		FixedPointOperand,
-	};
+	use sp_runtime::traits::{CheckedAdd, One, Zero};
 	use std::collections::VecDeque;
 
 	#[pallet::config]

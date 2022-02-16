@@ -48,7 +48,7 @@ pub mod pallet {
 		currency::{CurrencyFactory, RangeId},
 		defi::CurrencyPair,
 		dex::{CurveAmm, SafeConvert, StableSwapPoolInfo},
-		math::{safe_multiply_by_rational, SafeArithmetic},
+		math::SafeArithmetic,
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -543,11 +543,6 @@ pub mod pallet {
 				Error::<T>::CannotRespectMinimumRequested
 			);
 			let pool_account = Self::account_id(&pool_id);
-			let user_base_bal = T::Assets::balance(pool.pair.base, &who);
-			let user_quote_bal = T::Assets::balance(pool.pair.quote, &who);
-			sp_std::if_std! {
-				println!("base {:?}, quote {:?}, user_base_bal {:?}, user_quote_bal {:?}, base_amount {:?}", pool.pair.base, pool.pair.quote, user_base_bal, user_quote_bal, base_amount);
-			}
 			T::Assets::transfer(pair.base, who, &pool_account, base_amount, keep_alive)?;
 
 			// NOTE(hussein-aitlance): no need to keep alive the pool account
@@ -673,18 +668,12 @@ pub mod pallet {
 				let d_prev = d;
 				// d = (ann * sum + d_p * n) * d / ((ann - 1) * d + (n + 1) * d_p)
 
-				sp_std::if_std! {
-						println!("d {:?} ", d);
-				}
 				let t1 = ann.safe_mul(&sum)?.safe_add(&d_p.safe_mul(&n)?)?;
 				let t2 = ann
 					.safe_sub(&one)?
 					.safe_mul(&d)?
 					.safe_add(&n.safe_add(&one)?.safe_mul(&d_p)?)?;
 				d = t1.safe_mul(&d)?.safe_div(&t2)?;
-				sp_std::if_std! {
-						println!("t1 {:?}, t2 {:?}, d {:?} ", t1, t2, d);
-				}
 
 				if d > d_prev {
 					if d.safe_sub(&d_prev)? <= prec {
@@ -725,9 +714,6 @@ pub mod pallet {
 			let d_n = d.safe_div(&n)?;
 			let b = s.safe_add(&d_ann)?; // substract d later, otherwise Underflows
 			let c = d_ann.safe_mul(&d_n)?.safe_div(&p)?.safe_mul(&d_n)?;
-			sp_std::if_std! {
-				println!("s {:?}, p {:?}, d_ann {:?}, d_n {:?}, b {:?}, c {:?}",s, p, d_ann, d_n, b, c);
-			}
 
 			let mut y = d;
 
@@ -736,9 +722,6 @@ pub mod pallet {
 				// y = (y^2 + c) / (2y + b)
 				let tt1 = y.safe_mul(&y)?.safe_add(&c)?;
 				let tt2 = two.safe_mul(&y)?.safe_add(&b)?.safe_sub(&d)?;
-				sp_std::if_std! {
-					println!("tt1 {:?}, tt2 {:?}",tt1, tt2);
-				}
 
 				y = tt1.safe_div(&tt2)?;
 

@@ -131,6 +131,7 @@ impl Convert<u16, Number> for ConvertType {
 
 impl SafeConvert<Number, Balance> for ConvertType {
 	fn convert(a: Number) -> Result<Balance, composable_traits::dex::ConversionError> {
+		let a = a.round();
 		(a.into_inner() / FixedU128::DIV).try_into().map_err(|_| ConversionError)
 	}
 }
