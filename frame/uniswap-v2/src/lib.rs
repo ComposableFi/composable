@@ -450,7 +450,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
+			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
 			let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
 			<Self as CurveAmm>::exchange(
 				who,
@@ -471,7 +471,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
+			let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
 			<Self as CurveAmm>::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
 		}
 
