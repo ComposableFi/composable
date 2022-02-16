@@ -473,6 +473,14 @@ pub mod pallet {
 
 		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			if let Call::associate { reward_account, proof } = call {
+				let now = frame_system::Pallet::<T>::block_number();
+				let enabled = VestingBlockStart::<T>::get()
+					.ok_or(InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8))? <=
+					now;
+				if !enabled {
+					return InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8).into()
+				}
+
 				if Associations::<T>::get(reward_account).is_some() {
 					return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8).into()
 				}
@@ -503,5 +511,6 @@ pub mod pallet {
 		InvalidProof = 0,
 		NoReward = 1,
 		AlreadyAssociated = 2,
+		NotClaimableYet = 3,
 	}
 }
