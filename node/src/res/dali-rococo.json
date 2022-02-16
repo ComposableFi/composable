@@ -3,7 +3,9 @@
   "id": "dali",
   "chainType": "Live",
   "bootNodes": [
-    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWMKaQ798NrmfSEF2S6duMckR61q3dqCkMcuJ5pMDMcHJk"
+    "/dns/bn1.composablefinance.ninja/tcp/30334/p2p/12D3KooWNTHjzEd5WRYAKzavt2fnBf2e7xoYD9UJtiByFxHAykce",
+    "/dns/bn1.composablefinance.ninja/tcp/30334/p2p/12D3KooWAaVe7Gi4AcczXNUgVZzL5N3cLx9gbDLyKbjVYdAu6N4J",
+    "/dns/bn1.composablefinance.ninja/tcp/30334/p2p/12D3KooWS64zXbFEeRaEt1Kag9rmirEgK3cZ8bE91JQv5FxFRBVn"
   ],
   "telemetryEndpoints": [
     [
