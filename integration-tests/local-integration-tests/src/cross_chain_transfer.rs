@@ -226,7 +226,7 @@ fn transfer_insufficient_amount_should_fail() {
 /// Acala's tests
 #[test]
 #[ignore]
-fn transfer_from_relay_chain_deposit_to_treasury_if_below_ed() {
+fn transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit() {
 	KusamaRelay::execute_with(|| {
 		assert_ok!(kusama_runtime::XcmPallet::reserve_transfer_assets(
 			kusama_runtime::Origin::signed(ALICE.into()),
@@ -347,48 +347,13 @@ fn xcm_transfer_execution_barrier_trader_works() {
 	});
 }
 
+/// source: Acala
 #[test]
-#[ignore]
-fn subscribe_version_notify_works() {
-	// relay chain subscribe version notify of para chain
-	KusamaRelay::execute_with(|| {
-		let r = pallet_xcm::Pallet::<kusama_runtime::Runtime>::force_subscribe_version_notify(
-			kusama_runtime::Origin::root(),
-			Box::new(Parachain(PICASSO_PARA_ID).into().into()),
-		);
-		assert_ok!(r);
-	});
-	KusamaRelay::execute_with(|| {
-		kusama_runtime::System::assert_has_event(kusama_runtime::Event::XcmPallet(
-			pallet_xcm::Event::SupportedVersionChanged(
-				MultiLocation { parents: 0, interior: X1(Parachain(PICASSO_PARA_ID)) },
-				2,
-			),
-		));
-	});
-
-	// para chain subscribe version notify of relay chain
+fn para_chain_subscribe_version_notify_of_sibling_chain() {
 	Picasso::execute_with(|| {
 		let r = pallet_xcm::Pallet::<picasso_runtime::Runtime>::force_subscribe_version_notify(
 			picasso_runtime::Origin::root(),
-			Box::new(Parent.into()),
-		);
-		assert_ok!(r);
-	});
-	Picasso::execute_with(|| {
-		picasso_runtime::System::assert_has_event(picasso_runtime::Event::RelayerXcm(
-			pallet_xcm::Event::SupportedVersionChanged(
-				MultiLocation { parents: 1, interior: Here },
-				2,
-			),
-		));
-	});
-
-	// para chain subscribe version notify of sibling chain
-	Picasso::execute_with(|| {
-		let r = pallet_xcm::Pallet::<picasso_runtime::Runtime>::force_subscribe_version_notify(
-			picasso_runtime::Origin::root(),
-			Box::new((Parent, Parachain(PICASSO_PARA_ID)).into()),
+			Box::new((Parent, Parachain(DALI_PARA_ID)).into()),
 		);
 		assert_ok!(r);
 	});
@@ -409,5 +374,45 @@ fn subscribe_version_notify_works() {
 				Some(_)
 			))
 		)));
+	});
+}
+
+/// source: Acala
+#[test]
+fn para_chain_subscribe_version_notify_of_relay_chain() {
+	Picasso::execute_with(|| {
+		let r = pallet_xcm::Pallet::<picasso_runtime::Runtime>::force_subscribe_version_notify(
+			picasso_runtime::Origin::root(),
+			Box::new(Parent.into()),
+		);
+		assert_ok!(r);
+	});
+	Picasso::execute_with(|| {
+		picasso_runtime::System::assert_has_event(picasso_runtime::Event::RelayerXcm(
+			pallet_xcm::Event::SupportedVersionChanged(
+				MultiLocation { parents: 1, interior: Here },
+				2,
+			),
+		));
+	});
+}
+
+/// source: Acala
+#[test]
+fn relay_chain_subscribe_version_notify_of_para_chain() {
+	KusamaRelay::execute_with(|| {
+		let r = pallet_xcm::Pallet::<kusama_runtime::Runtime>::force_subscribe_version_notify(
+			kusama_runtime::Origin::root(),
+			Box::new(Parachain(PICASSO_PARA_ID).into().into()),
+		);
+		assert_ok!(r);
+	});
+	KusamaRelay::execute_with(|| {
+		kusama_runtime::System::assert_has_event(kusama_runtime::Event::XcmPallet(
+			pallet_xcm::Event::SupportedVersionChanged(
+				MultiLocation { parents: 0, interior: X1(Parachain(PICASSO_PARA_ID)) },
+				2,
+			),
+		));
 	});
 }

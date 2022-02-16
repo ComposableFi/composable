@@ -11,7 +11,7 @@ use common::AccountId;
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 use cumulus_primitives_core::ParaId;
 use dali_runtime as picasso_runtime;
-use kusama_runtime::*;
+use picasso_runtime::XcmConfig;
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
 use support::assert_ok;
@@ -106,9 +106,10 @@ fn send_remark() {
 
 	Dali::execute_with(|| {
 		use dali_runtime::{Event, System};
-		assert!(System::events()
-			.iter()
-			.any(|r| matches!(r.event, Event::System(frame_system::Event::Remarked(_, _)))));
+		assert!(System::events().iter().any(|r| matches!(
+			r.event,
+			Event::System(frame_system::Event::Remarked { sender: _, hash: _ })
+		)));
 	});
 }
 
