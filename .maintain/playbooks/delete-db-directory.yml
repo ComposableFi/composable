@@ -12,3 +12,10 @@
       args:
         executable: /bin/bash
       register: stdout
+
+    - name: Copy runner config Script
+      copy:
+        src: composable-rococo.conf
+        dest: /etc/supervisor/conf.d/composable.conf
+        owner: composable
+        group: 0755
