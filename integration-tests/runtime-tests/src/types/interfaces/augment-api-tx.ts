@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiSell, ComposableTraitsDefiTake, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVaultVaultConfig, ComposableTraitsVestingVestingSchedule, CumulusPrimitivesParachainInherentParachainInherentData, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, PalletAssetsRegistryForeignMetadata, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyConviction, PalletDemocracyVoteAccountVote, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, XcmVersionedMultiAsset } from '@composable/types/interfaces/crowdloanRewards';
+import type { ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiSell, ComposableTraitsDefiTake, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVaultVaultConfig, ComposableTraitsVestingVestingSchedule, CumulusPrimitivesParachainInherentParachainInherentData, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, FrameSupportScheduleMaybeHashed, PalletAssetsRegistryForeignMetadata, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyConviction, PalletDemocracyVoteAccountVote, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletLiquidationsLiquidationStrategyConfiguration, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, XcmVersionedMultiAsset } from '@composable/types/interfaces/crowdloanRewards';
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Data } from '@polkadot/types';
 import type { Bytes, Compact, Option, U8aFixed, Vec, WrapperKeepOpaque, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
@@ -213,10 +213,13 @@ declare module '@polkadot/api-base/types/submittable' {
        * The dispatch origin for this call must be _Signed_ and the sender must have the
        * appropriate funds.
        * 
+       * Allow the bonder to ask for his account to be kept alive using the `keep_alive`
+       * parameter.
+       * 
        * Emits a `NewBond`.
        * Possibily Emits a `OfferCompleted`.
        **/
-      bond: AugmentedSubmittable<(offerId: u64 | AnyNumber | Uint8Array, nbOfBonds: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, u128]>;
+      bond: AugmentedSubmittable<(offerId: u64 | AnyNumber | Uint8Array, nbOfBonds: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, u128, bool]>;
       /**
        * Cancel a running offer. Blocking further bond but not cancelling the
        * currently vested rewards. The `stake` put by the creator is refunded.
@@ -230,10 +233,12 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * The dispatch origin for this call must be _Signed_ and the sender must have the
        * appropriate funds.
+       * Allow the issuer to ask for his account to be kept alive using the `keep_alive`
+       * parameter.
        * 
        * Emits a `NewOffer`.
        **/
-      offer: AugmentedSubmittable<(offer: ComposableTraitsBondedFinanceBondOffer | { beneficiary?: any; asset?: any; bondPrice?: any; nbOfBonds?: any; maturity?: any; reward?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsBondedFinanceBondOffer]>;
+      offer: AugmentedSubmittable<(offer: ComposableTraitsBondedFinanceBondOffer | { beneficiary?: any; asset?: any; bondPrice?: any; nbOfBonds?: any; maturity?: any; reward?: any } | string | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsBondedFinanceBondOffer, bool]>;
       /**
        * Generic tx
        **/

@@ -16,9 +16,12 @@ pub mod impls;
 pub use constants::*;
 pub use types::*;
 
-/// Common types of statemint and statemine.
+/// Common types of statemint and statemine and dali and picasso and composable.
 mod types {
 	use sp_runtime::traits::{IdentifyAccount, Verify};
+
+	// todo move it into more shared directory so it can be shared with
+	// tests, integration, benchmark, (simnode?)
 
 	/// An index to a block.
 	pub type BlockNumber = u32;

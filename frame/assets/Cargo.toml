@@ -5,7 +5,6 @@ authors = ["Composable Developers"]
 homepage = "https://composable.finance"
 edition = "2021"
 
-
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
@@ -36,7 +35,7 @@ num-traits = { version = "0.2.14", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry", default-features = false }
-proptest = "0.9.6"
+proptest = "1.0"
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 
 [package.metadata.cargo-udeps.ignore]

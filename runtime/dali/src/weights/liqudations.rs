@@ -5,7 +5,6 @@
 use frame_support::{traits::Get, weights::Weight};
 use sp_std::marker::PhantomData;
 
-/// Weight functions for `mosaic`.
 pub struct WeightInfo<T>(PhantomData<T>);
 
 impl<T: frame_system::Config> liquidation::weights::WeightInfo for WeightInfo<T> {

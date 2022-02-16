@@ -5,6 +5,7 @@ use composable_traits::{
 };
 use sp_runtime::{traits::Saturating, ArithmeticError, FixedPointNumber, Percent};
 
+#[derive(Debug)]
 pub struct BorrowerData {
 	pub collateral_balance_value: LiftedFixedBalance,
 	pub borrow_balance_value: LiftedFixedBalance,

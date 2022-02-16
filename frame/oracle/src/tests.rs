@@ -1,9 +1,9 @@
 use crate::{
 	mock::{AccountId, Call, Extrinsic, *},
-	AssetInfo, Error, PrePrice, Price, Withdraw, *,
+	AssetInfo, Error, PrePrice, Withdraw, *,
 };
 use codec::Decode;
-use composable_traits::defi::CurrencyPair;
+use composable_traits::{defi::CurrencyPair, oracle::Price};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::{Currency, OnInitialize},

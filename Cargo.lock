@@ -1423,7 +1423,7 @@ dependencies = [
  "frame-system",
  "is_sorted",
  "parity-scale-codec",
- "proptest 1.0.0",
+ "proptest",
  "scale-info",
  "serde",
  "serde_json",
@@ -1456,7 +1456,7 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "plotters",
- "proptest 1.0.0",
+ "proptest",
  "scale-info",
  "serde",
  "sp-arithmetic",
@@ -2316,6 +2316,7 @@ dependencies = [
  "pallet-governance-registry",
  "pallet-identity",
  "pallet-indices",
+ "pallet-lending",
  "pallet-liquidations",
  "pallet-membership",
  "pallet-mosaic",
@@ -5985,7 +5986,7 @@ dependencies = [
  "pallet-balances",
  "pallet-governance-registry",
  "parity-scale-codec",
- "proptest 0.9.6",
+ "proptest",
  "scale-info",
  "sp-api",
  "sp-arithmetic",
@@ -6174,7 +6175,7 @@ dependencies = [
  "orml-traits",
  "pallet-vesting 0.0.1",
  "parity-scale-codec",
- "proptest 1.0.0",
+ "proptest",
  "proptest-derive",
  "scale-info",
  "serde",
@@ -6353,7 +6354,7 @@ dependencies = [
  "frame-system",
  "pallet-balances",
  "parity-scale-codec",
- "proptest 0.9.6",
+ "proptest",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -6380,7 +6381,7 @@ dependencies = [
  "pallet-vault",
  "parity-scale-codec",
  "plotters",
- "proptest 0.9.6",
+ "proptest",
  "scale-info",
  "serde",
  "sp-arithmetic",
@@ -6470,7 +6471,7 @@ dependencies = [
  "pallet-currency-factory",
  "pallet-timestamp",
  "parity-scale-codec",
- "proptest 1.0.0",
+ "proptest",
  "scale-info",
  "serde",
  "smallvec 1.8.0",
@@ -6658,7 +6659,7 @@ dependencies = [
  "pallet-vault",
  "parity-scale-codec",
  "plotters",
- "proptest 0.9.6",
+ "proptest",
  "scale-info",
  "serde",
  "smallvec 1.8.0",
@@ -6688,7 +6689,7 @@ dependencies = [
  "pallet-dutch-auction",
  "pallet-timestamp",
  "parity-scale-codec",
- "proptest 1.0.0",
+ "proptest",
  "scale-info",
  "smallvec 1.8.0",
  "sp-arithmetic",
@@ -6781,7 +6782,7 @@ dependencies = [
  "orml-traits",
  "parity-scale-codec",
  "plotters",
- "proptest 0.9.6",
+ "proptest",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -7257,7 +7258,7 @@ dependencies = [
  "orml-traits",
  "pallet-balances",
  "parity-scale-codec",
- "proptest 0.9.6",
+ "proptest",
  "scale-info",
  "serde",
  "sp-arithmetic",
@@ -9205,26 +9206,6 @@ dependencies = [
 
 [[package]]
 name = "proptest"
-version = "0.9.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01c477819b845fe023d33583ebf10c9f62518c8d79a0960ba5c36d6ac8a55a5b"
-dependencies = [
- "bit-set",
- "bitflags",
- "byteorder",
- "lazy_static",
- "num-traits",
- "quick-error 1.2.3",
- "rand 0.6.5",
- "rand_chacha 0.1.1",
- "rand_xorshift 0.1.1",
- "regex-syntax",
- "rusty-fork 0.2.2",
- "tempfile",
-]
-
-[[package]]
-name = "proptest"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e0d9cc07f18492d879586c92b485def06bc850da3118075cd45d50e9c95b0e5"
@@ -9239,7 +9220,7 @@ dependencies = [
  "rand_chacha 0.3.1",
  "rand_xorshift 0.3.0",
  "regex-syntax",
- "rusty-fork 0.3.0",
+ "rusty-fork",
  "tempfile",
 ]
 
@@ -10058,18 +10039,6 @@ name = "rustversion"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2cc38e8fa666e2de3c4aba7edeb5ffc5246c1c2ed0e3d17e560aeeba736b23f"
-
-[[package]]
-name = "rusty-fork"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3dd93264e10c577503e926bd1430193eeb5d21b059148910082245309b424fae"
-dependencies = [
- "fnv",
- "quick-error 1.2.3",
- "tempfile",
- "wait-timeout",
-]
 
 [[package]]
 name = "rusty-fork"

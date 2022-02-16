@@ -105,7 +105,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
 	spec_version: 1000,
-	impl_version: 5,
+	impl_version: 8,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
 	state_version: 0,
@@ -927,6 +927,31 @@ impl liquidations::Config for Runtime {
 	type PalletId = LiquidationsPalletId;
 }
 
+parameter_types! {
+	pub const MaxLendingCount: u32 = 10;
+	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
+	pub OracleMarketCreationStake : Balance = 300;
+}
+
+impl lending::Config for Runtime {
+	type Event = Event;
+	type Oracle = Oracle;
+	type VaultId = u64;
+	type Vault = Vault;
+	type CurrencyFactory = CurrencyFactory;
+	type MultiCurrency = Assets;
+	type Liquidation = Liquidations;
+	type UnixTime = Timestamp;
+	type MaxLendingCount = MaxLendingCount;
+	type AuthorityId = oracle::crypto::BathurstStId;
+	type WeightInfo = ();
+	type LiquidationStrategyId = u32;
+	type OracleMarketCreationStake = OracleMarketCreationStake;
+	type PalletId = LendingPalletId;
+	type NativeCurrency = Balances;
+	type WeightToFee = WeightToFee;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -961,7 +986,7 @@ construct_runtime!(
 		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 		Utility: utility::{Pallet, Call, Event} = 35,
-		  Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
+		Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
@@ -984,6 +1009,7 @@ construct_runtime!(
 		DutchAuction: dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
 		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
+		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1053,6 +1079,7 @@ mod benches {
 		[mosaic, Mosaic]
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
+		[lending, Lending]
 	);
 }
 
@@ -1222,13 +1249,9 @@ impl_runtime_apis! {
 			use system_benchmarking::Pallet as SystemBench;
 			use session_benchmarking::Pallet as SessionBench;
 
-
 			let mut list = Vec::<BenchmarkList>::new();
-
 			list_benchmarks!(list, extra);
-
 			let storage_info = AllPalletsWithSystem::storage_info();
-
 			return (list, storage_info)
 		}
 

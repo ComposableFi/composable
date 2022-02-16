@@ -44,7 +44,7 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "p
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
 pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
-proptest = "0.9.6"
+proptest = "1.0"
 
 [features]
 default = ["std"]

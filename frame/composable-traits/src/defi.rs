@@ -8,6 +8,8 @@ use sp_runtime::{
 	ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128,
 };
 
+use sp_std::fmt::Debug;
+
 use crate::currency::{AssetIdLike, BalanceLike, MathBalance};
 
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
@@ -205,7 +207,7 @@ pub trait SellEngine<Configuration>: DeFiEngine {
 }
 
 pub trait DeFiComposableConfig: frame_system::Config {
-	type MayBeAssetId: AssetIdLike + MaybeSerializeDeserialize + Default;
+	type MayBeAssetId: AssetIdLike + MaybeSerializeDeserialize + Default + MaxEncodedLen + Debug;
 
 	type Balance: BalanceLike
 		+ MathBalance
