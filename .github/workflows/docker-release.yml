@@ -2,10 +2,10 @@ name: "Docker Release"
 
 on:
   workflow_dispatch:
-    branches:
-      - update-make-version
-    tags: 
-      - '*'
+  branches:
+    - update-make-version
+  tags: 
+    - '*'
       
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
