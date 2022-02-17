@@ -6,6 +6,7 @@ use crate::{
 	models::BorrowerData,
 	Error, MarketIndex,
 };
+use composable_support::validation::Validated;
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::{
 	defi::{CurrencyPair, LiftedFixedBalance, MoreThanOneFixedU128, Rate, ZeroToOneFixedU128},
@@ -36,15 +37,13 @@ const INITIAL_BORROW_ASSET_AMOUNT: u128 = 10 ^ 30;
 fn create_simple_vault(
 	asset_id: CurrencyId,
 ) -> (VaultId, VaultInfo<AccountId, Balance, CurrencyId, BlockNumber>) {
-	let v = Vault::do_create_vault(
-		Deposit::Existential,
-		VaultConfig {
-			asset_id,
-			manager: *ALICE,
-			reserved: Perquintill::from_percent(100),
-			strategies: [].iter().cloned().collect(),
-		},
-	);
+	let config = VaultConfig {
+		asset_id,
+		manager: *ALICE,
+		reserved: Perquintill::from_percent(100),
+		strategies: [].iter().cloned().collect(),
+	};
+	let v = Vault::do_create_vault(Deposit::Existential, Validated::new(config).unwrap());
 	assert_ok!(&v);
 	v.expect("unreachable; qed;")
 }
