@@ -63,7 +63,7 @@ jobs:
         file: docker/Dockerfile
         platforms: linux/arm64,linux/ppc64le,linux/arm/v7
         push: true
-        tags: composablefi/${env.RELEASE_VERSION}
+        tags: composablefi/composable:${{ env.RELEASE_VERSION }}
 
     #- name:  Docker push
     #  run: make push-release
