@@ -20,9 +20,8 @@ use sp_runtime::{
 };
 use std::sync::Arc;
 
-use crate::validation::{ValidMinAnswers,ValidMaxAnswer, 
-	ValidThreshhold, ValidBlockInterval};
-use composable_support::validation::{Validated,Validate};
+use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
+use composable_support::validation::{Validate, Validated};
 use core::{fmt, marker::PhantomData};
 #[test]
 fn add_asset_and_info() {
@@ -41,20 +40,20 @@ fn add_asset_and_info() {
 			ASSET_ID,
 			Validated::new(THRESHOLD).unwrap(),
 			Validated::new(MIN_ANSWERS).unwrap(),
-		    Validated::new(MAX_ANSWERS).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
+			Validated::new(MAX_ANSWERS).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
 			REWARD,
 			SLASH
 		));
-		
+
 		// does not increment if exists
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
 			ASSET_ID,
 			Validated::new(THRESHOLD).unwrap(),
 			Validated::new(MIN_ANSWERS).unwrap(),
-		    Validated::new(MAX_ANSWERS).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
+			Validated::new(MAX_ANSWERS).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
 			REWARD,
 			SLASH
 		));
@@ -65,8 +64,8 @@ fn add_asset_and_info() {
 			ASSET_ID + 1,
 			Validated::new(THRESHOLD).unwrap(),
 			Validated::new(MIN_ANSWERS).unwrap(),
-		    Validated::new(MAX_ANSWERS).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
+			Validated::new(MAX_ANSWERS).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
 			REWARD,
 			SLASH
 		));
@@ -79,7 +78,7 @@ fn add_asset_and_info() {
 			reward: REWARD,
 			slash: SLASH,
 		};
-		
+
 		// id now activated and count incremented
 		assert_eq!(Oracle::asset_info(1), Some(asset_info));
 		assert_eq!(Oracle::assets_count(), 2);
@@ -93,7 +92,8 @@ fn add_asset_and_info() {
 				Validated::new(THRESHOLD).unwrap(),
 				Validated::new(MIN_ANSWERS).unwrap(),
 				Validated::new(MAX_ANSWERS).unwrap(),
-				Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
+				Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL)
+					.unwrap(),
 				REWARD,
 				SLASH
 			),
@@ -107,7 +107,8 @@ fn add_asset_and_info() {
 				Validated::new(THRESHOLD).unwrap(),
 				Validated::new(MIN_ANSWERS).unwrap(),
 				Validated::new(MAX_ANSWERS).unwrap(),
-				Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
+				Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL)
+					.unwrap(),
 				REWARD,
 				SLASH
 			),
@@ -121,13 +122,13 @@ fn add_asset_and_info() {
 				Validated::new(THRESHOLD).unwrap(),
 				Validated::new(MIN_ANSWERS).unwrap(),
 				Validated::new(MAX_ANSWERS).unwrap(),
-				Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
+				Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL)
+					.unwrap(),
 				REWARD,
 				SLASH
 			),
 			Error::<Test>::ExceedAssetsCount
 		);
-
 	});
 }
 
@@ -253,7 +254,6 @@ fn add_price() {
 			Validated::new(3).unwrap(),
 			Validated::new(3).unwrap(),
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
-
 			5,
 			5
 		));
@@ -341,8 +341,8 @@ fn check_request() {
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
 			Validated::new(3).unwrap(),
-		    Validated::new(5).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			5,
 			5
 		));
@@ -367,8 +367,8 @@ fn is_requested() {
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
 			Validated::new(3).unwrap(),
-		    Validated::new(5).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			5,
 			5
 		));
@@ -419,8 +419,8 @@ fn test_payout_slash() {
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
 			Validated::new(3).unwrap(),
-		    Validated::new(5).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			5,
 			5
 		));
@@ -454,8 +454,8 @@ fn test_payout_slash() {
 			0,
 			Validated::new(Percent::from_percent(90)).unwrap(),
 			Validated::new(3).unwrap(),
-		    Validated::new(5).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			4,
 			5
 		));
@@ -493,8 +493,8 @@ fn on_init() {
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
 			Validated::new(3).unwrap(),
-		    Validated::new(5).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			5,
 			5
 		));
@@ -535,8 +535,8 @@ fn historic_pricing() {
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
 			Validated::new(3).unwrap(),
-		    Validated::new(5).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			5,
 			5
 		));
@@ -655,8 +655,8 @@ fn get_twap() {
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
 			Validated::new(3).unwrap(),
-		    Validated::new(5).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			5,
 			5
 		));
@@ -689,8 +689,8 @@ fn on_init_prune_scenerios() {
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
 			Validated::new(3).unwrap(),
-		    Validated::new(5).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			5,
 			5
 		));
@@ -749,8 +749,8 @@ fn on_init_over_max_answers() {
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
 			Validated::new(1).unwrap(),
-		    Validated::new(2).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			Validated::new(2).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			5,
 			5
 		));
@@ -851,8 +851,8 @@ fn should_submit_signed_transaction_on_chain() {
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
 			Validated::new(3).unwrap(),
-		    Validated::new(5).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			5,
 			5
 		));
@@ -881,8 +881,8 @@ fn should_check_oracles_submitted_price() {
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
 			Validated::new(3).unwrap(),
-		    Validated::new(5).unwrap(),
-		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			5,
 			5
 		));
@@ -993,71 +993,84 @@ fn offchain_worker_env(
 mod test {
 	use super::*;
 	use composable_support::validation::Validate;
-	use validation::{ValidThreshhold, ValidMaxAnswer,ValidBlockInterval, ValidMinAnswers};
 	use frame_support::assert_ok;
 	use mock::Test;
+	use validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
 
 	#[test]
 	fn test_threshold_valid_case() {
-	
-		assert_ok!(<ValidThreshhold as Validate<Percent,ValidThreshhold>>::validate(Percent::from_percent(99)));
+		assert_ok!(<ValidThreshhold as Validate<Percent, ValidThreshhold>>::validate(
+			Percent::from_percent(99)
+		));
 	}
 
 	#[test]
 	fn test_threshold_invalid_case() {
-	
-		assert!(<ValidThreshhold as Validate<Percent,ValidThreshhold>>::validate(Percent::from_percent(100))
+		assert!(<ValidThreshhold as Validate<Percent, ValidThreshhold>>::validate(
+			Percent::from_percent(100)
+		)
 		.is_err());
 
-		assert!(<ValidThreshhold as Validate<
-			Percent,
-			ValidThreshhold>>::validate(Percent::from_percent(110))
+		assert!(<ValidThreshhold as Validate<Percent, ValidThreshhold>>::validate(
+			Percent::from_percent(110)
+		)
 		.is_err());
 	}
 
 	#[test]
 	fn test_threshold() {
-	
-		assert!(<ValidThreshhold as Validate<Percent,ValidThreshhold>>::validate(Percent::from_percent(100))
+		assert!(<ValidThreshhold as Validate<Percent, ValidThreshhold>>::validate(
+			Percent::from_percent(100)
+		)
 		.is_err());
 
-		assert!(<ValidThreshhold as Validate<
-			Percent,
-			ValidThreshhold>>::validate(Percent::from_percent(110))
+		assert!(<ValidThreshhold as Validate<Percent, ValidThreshhold>>::validate(
+			Percent::from_percent(110)
+		)
 		.is_err());
 	}
 
 	#[test]
 	fn test_max_answer_valid_case() {
-		assert_ok!(<ValidMaxAnswer<MaxAnswerBound> as Validate<u32, ValidMaxAnswer<MaxAnswerBound>>>::validate(2_u32));
+		assert_ok!(<ValidMaxAnswer<MaxAnswerBound> as Validate<
+			u32,
+			ValidMaxAnswer<MaxAnswerBound>,
+		>>::validate(2_u32));
 	}
 
 	#[test]
 	fn test_max_answer_invalid_case() {
-		assert!(<ValidMaxAnswer<MaxAnswerBound> as Validate<u32, ValidMaxAnswer<MaxAnswerBound>>>::validate(10_u32)
+		assert!(<ValidMaxAnswer<MaxAnswerBound> as Validate<
+			u32,
+			ValidMaxAnswer<MaxAnswerBound>,
+		>>::validate(10_u32)
 		.is_err());
 	}
 
-	#[test] 
+	#[test]
 	fn test_min_answer_valid_case() {
-		assert!(<ValidMinAnswers as Validate<u32, ValidMinAnswers>>::validate(0_u32)
-		.is_err());
+		assert!(<ValidMinAnswers as Validate<u32, ValidMinAnswers>>::validate(0_u32).is_err());
 	}
 
-	#[test] 
+	#[test]
 	fn test_min_answer_invalid_case() {
 		assert_ok!(<ValidMinAnswers as Validate<u32, ValidMinAnswers>>::validate(1_u32));
 	}
 
-	#[test] 
+	#[test]
 	fn test_block_interval_valid_case() {
-		assert_ok!(<ValidBlockInterval<StalePrice> as Validate<BlockNumber, ValidBlockInterval<StalePrice>>>::validate(100_u64));
+		assert_ok!(<ValidBlockInterval<StalePrice> as Validate<
+			BlockNumber,
+			ValidBlockInterval<StalePrice>,
+		>>::validate(100_u64));
 	}
 
-	#[test] 
+	#[test]
 	fn test_block_interval_invalid_case() {
-		assert!(<ValidBlockInterval<StalePrice> as Validate<BlockNumber, ValidBlockInterval<StalePrice>>>::validate(2_u64)
+		assert!(<ValidBlockInterval<StalePrice> as Validate<
+			BlockNumber,
+			ValidBlockInterval<StalePrice>,
+		>>::validate(2_u64)
 		.is_err());
 	}
-
 }

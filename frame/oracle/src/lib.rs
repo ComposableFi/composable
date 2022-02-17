@@ -29,8 +29,10 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
+	use composable_support::validation::Validated;
 	use composable_traits::{
 		currency::LocalAssets,
 		math::SafeArithmetic,
@@ -55,9 +57,6 @@ pub mod pallet {
 		pallet_prelude::*,
 		Config as SystemConfig,
 	};
-	use crate::validation::{ValidMinAnswers,ValidMaxAnswer, 
-		ValidThreshhold, ValidBlockInterval};
-    use composable_support::validation::{Validated};
 	use lite_json::json::JsonValue;
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
@@ -469,9 +468,8 @@ pub mod pallet {
 			reward: BalanceOf<T>,
 			slash: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
-
 			T::AddOracle::ensure_origin(origin)?;
-           
+
 			let threshold = valid_threshold.value();
 			let min_answers = valid_min_answers.value();
 			let max_answers = valid_max_answers.value();

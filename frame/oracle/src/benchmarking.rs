@@ -13,9 +13,8 @@ use frame_system::{EventRecord, RawOrigin};
 use sp_runtime::{DispatchResult, Percent};
 use sp_std::{prelude::*, vec};
 
-use crate::validation::{ValidMinAnswers,ValidMaxAnswer, 
-	ValidThreshhold, ValidBlockInterval};
-use composable_support::validation::{Validated,Validate};
+use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
+use composable_support::validation::{Validate, Validated};
 
 pub type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
