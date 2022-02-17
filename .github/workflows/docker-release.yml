@@ -65,6 +65,4 @@ jobs:
         push: true
         tags: composablefi/composable:${{ env.RELEASE_VERSION }}
 
-    #- name:  Docker push
-    #  run: make push-release
 
