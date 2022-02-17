@@ -1,6 +1,7 @@
 use super::*;
 
 use crate::Pallet as Vault;
+use composable_support::validation::Validated;
 use composable_traits::vault::{CapabilityVault, Deposit, Vault as VaultTrait, VaultConfig};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
@@ -10,7 +11,6 @@ use frame_support::{
 use frame_system::{EventRecord, Pallet as System, RawOrigin};
 use sp_runtime::Perquintill;
 use sp_std::prelude::*;
-use composable_support::validation::Validated;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	let events = frame_system::Pallet::<T>::events();
@@ -31,16 +31,13 @@ fn create_vault_extended<T: Config>(
 	reserved: Perquintill,
 	deposit_: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
 ) -> (T::VaultId, VaultInfo<T>) {
-    let config = VaultConfig {
-			asset_id: T::AssetId::from(asset_id),
-			manager: whitelisted_caller(),
-			reserved,
-			strategies: [(strategy_account_id, strategy_share)].iter().cloned().collect(),
-		};
-	let v = Vault::<T>::do_create_vault(
-		deposit_,
-		Validated::new(config).unwrap(),
-	);
+	let config = VaultConfig {
+		asset_id: T::AssetId::from(asset_id),
+		manager: whitelisted_caller(),
+		reserved,
+		strategies: [(strategy_account_id, strategy_share)].iter().cloned().collect(),
+	};
+	let v = Vault::<T>::do_create_vault(deposit_, Validated::new(config).unwrap());
 	assert_ok!(&v);
 	v.expect("unreachable; qed;")
 }
