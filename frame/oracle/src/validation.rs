@@ -40,6 +40,22 @@ impl<U> Clone for ValidBlockInterval<U> {
     }
 }
 
+#[derive(Debug, Decode)]
+pub struct ValidAssetId<U> {
+    u: PhantomData<U>,
+}
+
+impl<U> Copy for ValidAssetId<U>{}
+
+impl<U> Clone for ValidAssetId<U> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+#[derive(Debug, Decode)]
+pub struct IsRequested;
+
 impl<MinAnswer: Zero + PartialEq + Eq + Ord +  PartialOrd> Validate<MinAnswer, ValidMinAnswers> for ValidMinAnswers {
     
     fn validate(input: MinAnswer) -> Result<MinAnswer, &'static str> {
@@ -63,7 +79,7 @@ impl Validate<Percent,ValidThreshhold > for ValidThreshhold {
     }
 }
 
-impl<MaxAnswer: PartialEq + PartialOrd, MaxAnswerBound> 
+impl<MaxAnswer: PartialEq + Eq + PartialOrd, MaxAnswerBound> 
     Validate<MaxAnswer, ValidMaxAnswer<MaxAnswerBound>>
        for ValidMaxAnswer<MaxAnswerBound>  where  MaxAnswerBound: Get<MaxAnswer> 
        {
@@ -85,10 +101,31 @@ impl<MaxAnswer: PartialEq + PartialOrd, MaxAnswerBound>
        fn validate(input: BlockInterval) -> Result<BlockInterval, &'static str> {
            
          if input <= StalePrice::get() {
-            return Err("INVALID_BLOCK_INTERVAL_LENGTH")
+            return Err("INVALID_BLOCK_INTERVAL_LENGTH");
          }
 
          Ok(input)
        } 
 }
     
+// impl<AssetId: Copy + Clone,F> Validate<AssetId, ValidAssetId<IsRequested, F>> 
+//    for ValidAssetId<IsRequested, F> where IsRequested:Get<F>, F: Fn(AssetId)->bool{
+//     fn validate(input: AssetId ) -> Result<AssetId, &'static str> {
+        
+//         if IsRequested::get()(input) == false {
+//             return Err("PRICE_NOT_REQUESTED")
+//         }
+//         Ok(input)
+//     }
+// }
+
+impl<AssetId: Copy + Clone,IsRequested> Validate<AssetId, ValidAssetId<IsRequested>> 
+   for ValidAssetId<IsRequested> where ValidAssetId<IsRequested>:Get<IsRequested>, IsRequested: Fn(AssetId)->bool{
+    fn validate(input: AssetId ) -> Result<AssetId, &'static str> {
+        
+        if ValidAssetId::<IsRequested>::get()(input) == false {
+            return Err("PRICE_NOT_REQUESTED")
+        }
+        Ok(input)
+    }
+}

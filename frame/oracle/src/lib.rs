@@ -56,7 +56,7 @@ pub mod pallet {
 		Config as SystemConfig,
 	};
 	use crate::validation::{ValidMinAnswers,ValidMaxAnswer, 
-		ValidThreshhold, ValidBlockInterval};
+		ValidThreshhold, ValidBlockInterval, ValidAssetId};
     use composable_support::validation::{Validated};
 	use lite_json::json::JsonValue;
 	use scale_info::TypeInfo;
@@ -601,7 +601,7 @@ pub mod pallet {
 		pub fn submit_price(
 			origin: OriginFor<T>,
 			price: T::PriceValue,
-			asset_id: T::AssetId,
+			asset_id: Validated<T::AssetId, ValidAssetId<Self::is_requested>> //T::AssetId,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let author_stake = OracleStake::<T>::get(&who).unwrap_or_else(Zero::zero);
