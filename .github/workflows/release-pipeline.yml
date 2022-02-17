@@ -49,7 +49,7 @@ jobs:
       - name: Set Permission
         continue-on-error: true
         run: |
-          sudo su runner
+          sudo su runner && chmod -R 777  /home/runner/_work/_tool/node/
 
       - uses: actions/setup-node@v2
         with:
@@ -107,6 +107,7 @@ jobs:
           RELEASE_VERSION: ${{ steps.release_drafter.outputs.tag_name }}
         run: |
           RELEASE_VERSION=${RELEASE_VERSION:1} # remove the 'v' at the beginining of the tag name
+          make version
           .maintain/client_release.sh
 
       # This uploads the client binary built in the previous step to the release draft

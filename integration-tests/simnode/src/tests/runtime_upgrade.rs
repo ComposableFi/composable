@@ -3,14 +3,16 @@ use polkadot_primitives::v1::UpgradeGoAhead;
 use sc_client_api::{CallExecutor, ExecutorProvider};
 use sc_executor::NativeElseWasmExecutor;
 use sc_service::TFullCallExecutor;
+use simnode_apis::CreateTransactionApi;
+use sp_api::ConstructRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{
 	generic::BlockId,
 	traits::{Block as BlockT, Header},
-	AccountId32,
+	AccountId32, OpaqueExtrinsic,
 };
 use std::error::Error;
-use substrate_simnode::{ChainInfo, Node, UncheckedExtrinsicFor};
+use substrate_simnode::{ChainInfo, FullClientFor, Node};
 
 // generic tests for runtime upgrades
 pub(crate) async fn parachain_runtime_upgrades<T>(
@@ -22,14 +24,22 @@ where
 	<T as ChainInfo>::Runtime:
 		system::Config<AccountId = AccountId32> + sudo::Config + parachain_info::Config,
 	<T::Runtime as system::Config>::Event: Into<AllRuntimeEvents> + Clone,
+	<T::RuntimeApi as ConstructRuntimeApi<T::Block, FullClientFor<T>>>::RuntimeApi:
+		CreateTransactionApi<
+			T::Block,
+			<T::Runtime as system::Config>::AccountId,
+			<T::Runtime as system::Config>::Call,
+		>,
+	<<T as ChainInfo>::Runtime as system::Config>::AccountId: codec::Codec,
+	<<T as ChainInfo>::Runtime as system::Config>::Call: codec::Codec,
 	<TFullCallExecutor<T::Block, NativeElseWasmExecutor<T::ExecutorDispatch>> as CallExecutor<
 		T::Block,
 	>>::Error: std::fmt::Debug,
-	<T::Block as BlockT>::Extrinsic: From<UncheckedExtrinsicFor<T>>,
 	<T::Runtime as system::Config>::Call:
 		From<system::Call<T::Runtime>> + From<sudo::Call<T::Runtime>>,
 	<T::Runtime as sudo::Config>::Call: From<system::Call<T::Runtime>>,
 	<<T::Block as BlockT>::Header as Header>::Number: num_traits::cast::AsPrimitive<u32>,
+	<<T as ChainInfo>::Block as BlockT>::Extrinsic: From<OpaqueExtrinsic>,
 {
 	let sudo = node.with_state(None, sudo::Pallet::<T::Runtime>::key).unwrap();
 
@@ -47,7 +57,7 @@ where
 		call: Box::new(system::Call::set_code_without_checks { code }.into()),
 		weight: 0,
 	};
-	node.submit_extrinsic(call, Some(sudo)).await?;
+	node.submit_extrinsic(call, sudo).await?;
 	node.seal_blocks(1).await;
 
 	// give upgrade signal in the sproofed parachain inherents
