@@ -239,9 +239,9 @@ impl pallet_assets::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinBalance : Balance = 0;
-	pub const MinU32 : u32 = 0;
-	pub const MinU64 : u64 = 0;
+	pub const MinBalance: Balance = 0;
+	pub const MinU32: u32 = 0;
+	pub const MinU64: u64 = 0;
 }
 
 pub struct Decimals;
@@ -408,8 +408,11 @@ impl pallet_lending::Config for Runtime {
 	type WeightToFee = WeightToFee;
 }
 
-pub fn set_price(asset_id: CurrencyId, balance: Balance) {
-	let price = Price { price: balance, block: System::block_number() };
+/// Convenience function to set the price of an asset in [`pallet_oracle::Prices`].
+///
+/// Sets the price at the current `System::block_number()`.
+pub fn set_price(asset_id: CurrencyId, new_price: Balance) {
+	let price = Price { price: new_price, block: System::block_number() };
 	pallet_oracle::Prices::<Runtime>::insert(asset_id, price);
 }
 

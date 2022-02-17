@@ -112,7 +112,11 @@ pub mod pallet {
 
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, MaxEncodedLen, TypeInfo)]
 	#[repr(transparent)]
-	pub struct MarketIndex(u32);
+	pub struct MarketIndex(
+		#[cfg(test)] // to allow pattern matching in tests
+		pub u32,
+		#[cfg(not(test))] u32,
+	);
 
 	impl MarketIndex {
 		pub fn new(i: u32) -> Self {

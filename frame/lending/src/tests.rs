@@ -624,7 +624,7 @@ fn liquidation() {
 			USDT::ID,
 			BTC::ID,
 			*ALICE,
-			Perquintill::from_percent(10),
+			DEFAULT_MARKET_VAULT_RESERVE,
 			MoreThanOneFixedU128::saturating_from_rational(2, 1),
 		);
 
@@ -663,7 +663,7 @@ fn test_warn_soon_under_collaterized() {
 			USDT::ID,
 			BTC::ID,
 			*ALICE,
-			Perquintill::from_percent(10),
+			DEFAULT_MARKET_VAULT_RESERVE,
 			MoreThanOneFixedU128::saturating_from_rational(2, 1),
 		);
 
@@ -795,7 +795,7 @@ proptest! {
 	fn market_collateral_deposit_withdraw_higher_amount_fails(amount in valid_amount_without_overflow()) {
 		new_test_ext().execute_with(|| {
 			let (market, _vault) = create_simple_market();
-			prop_assert_ok!(Tokens::mint_into( BTC::ID, &ALICE, amount ));
+			prop_assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, amount));
 			prop_assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, amount ));
 
 			prop_assert_eq!(
@@ -864,5 +864,69 @@ proptest! {
 
 			Ok(())
 		})?;
+	}
+}
+
+// Event tests
+
+#[test]
+fn test_market_created_event() {
+	new_test_ext().execute_with(|| {
+		// progress to an arbitrary block to reset events
+		System::set_block_number(1000);
+
+		#[allow(non_camel_case_types)]
+		type ASSET_1 = Currency<123_456_789, 12>;
+		#[allow(non_camel_case_types)]
+		type ASSET_2 = Currency<987_654_321, 12>;
+
+		set_price(ASSET_1::ID, 50_000 * NORAMLIZED::one());
+		set_price(ASSET_2::ID, NORAMLIZED::one());
+
+		Tokens::mint_into(ASSET_1::ID, &*ALICE, ASSET_1::units(1000)).unwrap();
+		Tokens::mint_into(ASSET_2::ID, &*ALICE, ASSET_2::units(100)).unwrap();
+
+		let input = default_create_input(CurrencyPair::new(ASSET_1::ID, ASSET_2::ID));
+
+		Lending::create_market(Origin::signed(*ALICE), Validated::new(input.clone()).unwrap())
+			.unwrap();
+
+		assert!(matches!(
+			System::events().last(),
+			Some(EventRecord {
+				topics: event_topics,
+				phase: Phase::Initialization,
+				event: Event::Lending(crate::Event::MarketCreated {
+					input: event_input,
+					market_id: MarketIndex(1),
+					vault_id: 1,
+					manager: event_manager,
+				}),
+			})
+			if &input == event_input
+			   && event_manager == &*ALICE
+			   && event_topics.is_empty()
+		))
+	})
+}
+
+// HELPERS
+
+/// Creates a "deafult" [`CreateInput`], with the specified [`CurrencyPair`], for use in testing.
+fn default_create_input<AssetId>(
+	currency_pair: CurrencyPair<AssetId>,
+) -> CreateInput<u32, AssetId> {
+	CreateInput {
+		updatable: UpdateInput {
+			collateral_factor: MoreThanOneFixedU128::saturating_from_rational(
+				DEFAULT_COLLATERAL_FACTOR * 100_u128,
+				100_i32,
+			),
+			under_collaterized_warn_percent: Percent::from_float(0.10),
+			liquidators: vec![],
+			interest_rate_model: InterestRateModel::default(),
+		},
+		reserved_factor: DEFAULT_MARKET_VAULT_RESERVE,
+		currency_pair,
 	}
 }
