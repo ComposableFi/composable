@@ -138,44 +138,12 @@ parameter_types! {
 	pub CurveAmmTestPalletID : PalletId = PalletId(*b"curve_am");
 }
 
-pub type Number = FixedU128;
-pub struct ConvertType;
-
-impl SafeConvert<Balance, Number> for ConvertType {
-	fn convert(a: Balance) -> Result<Number, composable_traits::dex::ConversionError> {
-		let accuracy = 1_000_000_000_000;
-		let value = a.checked_mul(accuracy).ok_or(ConversionError)?;
-		Ok(FixedU128::from_inner(value))
-	}
-}
-
-impl Convert<Permill, Number> for ConvertType {
-	fn convert(a: Permill) -> Number {
-		a.into()
-	}
-}
-
-impl Convert<u16, Number> for ConvertType {
-	fn convert(a: u16) -> Number {
-		FixedU128::saturating_from_integer(a)
-	}
-}
-
-impl SafeConvert<Number, Balance> for ConvertType {
-	fn convert(a: Number) -> Result<Balance, composable_traits::dex::ConversionError> {
-		let accuracy = 1_000_000_000_000;
-		(a.into_inner() / accuracy).try_into().map_err(|_| ConversionError)
-	}
-}
-
 impl pallet_curve_amm::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
 	type Balance = Balance;
-	type Number = Number;
 	type CurrencyFactory = LpTokenFactory;
-	type Convert = ConvertType;
-	type Precision = CurveAmmPrecision;
+	type Convert = ConvertInto;
 	type Assets = Tokens;
 	type PoolId = PoolId;
 	type PalletId = CurveAmmTestPalletID;

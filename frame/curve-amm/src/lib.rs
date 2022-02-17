@@ -43,17 +43,21 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+mod maths;
 mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::weights::WeightInfo;
+	use crate::{
+		maths::{compute_d, compute_quote},
+		weights::WeightInfo,
+	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::{CurrencyFactory, RangeId},
 		defi::CurrencyPair,
 		dex::{CurveAmm, SafeConvert, StableSwapPoolInfo},
-		math::SafeArithmetic,
+		math::{safe_multiply_by_rational, SafeArithmetic},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -93,16 +97,11 @@ pub mod pallet {
 			+ Zero
 			+ One
 			+ SafeArithmetic;
-		type Number: Parameter + Copy + Eq + Ord + SafeArithmetic + Zero + One;
-		type Convert: SafeConvert<Self::Number, Self::Balance>
-			+ SafeConvert<Self::Balance, Self::Number>
-			+ Convert<u16, Self::Number>
-			+ Convert<Permill, Self::Number>;
+		type Convert: Convert<u128, Self::Balance> + Convert<Self::Balance, u128>;
 		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
 		type Assets: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
 			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
-		type Precision: Get<Self::Number>;
 		type PoolId: FullCodec
 			+ MaxEncodedLen
 			+ Default
@@ -307,26 +306,15 @@ pub mod pallet {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
-			let pool_base_aum = <T::Convert as SafeConvert<T::Balance, T::Number>>::convert(
-				T::Assets::balance(pair.base, &pool_account),
-			)
-			.map_err(|_| Error::<T>::ConversionError)?;
-			let pool_quote_aum = <T::Convert as SafeConvert<T::Balance, T::Number>>::convert(
-				T::Assets::balance(pair.quote, &pool_account),
-			)
-			.map_err(|_| Error::<T>::ConversionError)?;
-			let amount = <T::Convert as SafeConvert<T::Balance, T::Number>>::convert(amount)
-				.map_err(|_| Error::<T>::ConversionError)?;
+			let pool_base_aum = T::Assets::balance(pair.base, &pool_account);
+			let pool_quote_aum = T::Assets::balance(pair.quote, &pool_account);
 			let n = 2_u16;
-			let ann = Self::get_ann(pool.amplification_coefficient, n)?;
-			let d = Self::get_d(pool_base_aum, pool_quote_aum, ann)?;
+			let amp = T::Convert::convert(pool.amplification_coefficient.into());
+			let d = Self::get_d(pool_base_aum, pool_quote_aum, amp)?;
 			let new_base_amount = pool_base_aum.safe_add(&amount)?;
-			let new_quote_amount = Self::get_quote(new_base_amount, ann, d)?;
+			let new_quote_amount = Self::get_quote(new_base_amount, amp, d)?;
 			let exchange_value = pool_quote_aum.safe_sub(&new_quote_amount)?;
-			let exchange_amount =
-				<T::Convert as SafeConvert<T::Number, T::Balance>>::convert(exchange_value)
-					.map_err(|_| Error::<T>::ConversionError)?;
-			Ok(exchange_amount)
+			Ok(exchange_value)
 		}
 
 		#[transactional]
@@ -374,35 +362,19 @@ pub mod pallet {
 			let zero = Self::Balance::zero();
 			ensure!(base_amount > zero, Error::<T>::AssetAmountMustBePositiveNumber);
 			ensure!(quote_amount > zero, Error::<T>::AssetAmountMustBePositiveNumber);
-			let zero = T::Number::zero();
 			// pool supports only 2 assets
 			let n = 2_u16;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let pool_base_aum = <T::Convert as SafeConvert<T::Balance, T::Number>>::convert(
-				T::Assets::balance(pool.pair.base, &pool_account),
-			)
-			.map_err(|_| Error::<T>::ConversionError)?;
-			let pool_quote_aum = <T::Convert as SafeConvert<T::Balance, T::Number>>::convert(
-				T::Assets::balance(pool.pair.quote, &pool_account),
-			)
-			.map_err(|_| Error::<T>::ConversionError)?;
+			let pool_base_aum = T::Assets::balance(pool.pair.base, &pool_account);
+			let pool_quote_aum = T::Assets::balance(pool.pair.quote, &pool_account);
 
-			let base_amount =
-				<T::Convert as SafeConvert<T::Balance, T::Number>>::convert(base_amount)
-					.map_err(|_| Error::<T>::ConversionError)?;
-			let quote_amount =
-				<T::Convert as SafeConvert<T::Balance, T::Number>>::convert(quote_amount)
-					.map_err(|_| Error::<T>::ConversionError)?;
-			let lp_issued = <T::Convert as SafeConvert<T::Balance, T::Number>>::convert(
-				T::Assets::total_issuance(pool.lp_token),
-			)
-			.map_err(|_| Error::<T>::ConversionError)?;
-			let ann = Self::get_ann(pool.amplification_coefficient, n)?;
-			let d0 = Self::get_d(pool_base_aum, pool_quote_aum, ann)?;
+			let lp_issued = T::Assets::total_issuance(pool.lp_token);
+			let amp = T::Convert::convert(pool.amplification_coefficient.into());
+			let d0 = Self::get_d(pool_base_aum, pool_quote_aum, amp)?;
 			let new_base_amount = pool_base_aum.safe_add(&base_amount)?;
 			let new_quote_amount = pool_quote_aum.safe_add(&quote_amount)?;
-			let d1 = Self::get_d(new_base_amount, new_quote_amount, ann)?;
+			let d1 = Self::get_d(new_base_amount, new_quote_amount, amp)?;
 			ensure!(d1 > d0, Error::<T>::AssetAmountMustBePositiveNumber);
 
 			let (mint_amount, base_protocol_fee, quote_protocol_fee) = if lp_issued > zero {
@@ -410,20 +382,27 @@ pub mod pallet {
 				// fees as a swap. Otherwise, one could exchange w/o paying fees.
 				// And this formula leads to exactly that equality
 				// fee = pool.fee * n_coins / (4 * (n_coins - 1))
-				let one = <T::Convert as Convert<u16, T::Number>>::convert(1_u16);
-				let four = <T::Convert as Convert<u16, T::Number>>::convert(4_u16);
+				let one = T::Convert::convert(1_u128);
+				let four = T::Convert::convert(4_u128);
 				// pool supports only two coins.
-				let n = <T::Convert as Convert<u16, T::Number>>::convert(2_u16);
-				let share = n.safe_div(&four.safe_mul(&n.safe_sub(&one)?)?)?;
-				let fee = <T::Convert as Convert<Permill, T::Number>>::convert(pool.fee);
-				let protocol_fee =
-					<T::Convert as Convert<Permill, T::Number>>::convert(pool.protocol_fee);
-				let fee = fee.safe_mul(&share)?;
-				// let fee: T::Balance = T::Convert::convert(fee);
+				let n = T::Convert::convert(2_u128);
+				let share: u128 =
+					T::Convert::convert(n.safe_div(&four.safe_mul(&n.safe_sub(&one)?)?)?);
+				let fee = pool.fee.mul_floor(share);
+				let protocol_fee = pool.protocol_fee.mul_floor(fee);
+				let fee = T::Convert::convert(fee);
+				let protocol_fee = T::Convert::convert(protocol_fee);
 
-				// ideal_balance = d1 * old_balances[i] / d0
-				let ideal_base_balance = d1.safe_mul(&pool_base_aum)?.safe_div(&d0)?;
-				let ideal_quote_balance = d1.safe_mul(&pool_quote_aum)?.safe_div(&d0)?;
+				let ideal_base_balance = T::Convert::convert(safe_multiply_by_rational(
+					T::Convert::convert(d1),
+					T::Convert::convert(pool_base_aum),
+					T::Convert::convert(d0),
+				)?);
+				let ideal_quote_balance = T::Convert::convert(safe_multiply_by_rational(
+					T::Convert::convert(d1),
+					T::Convert::convert(pool_quote_aum),
+					T::Convert::convert(d0),
+				)?);
 
 				let base_difference = Self::abs_difference(ideal_base_balance, new_base_amount)?;
 				let quote_difference = Self::abs_difference(ideal_quote_balance, new_quote_amount)?;
@@ -435,28 +414,17 @@ pub mod pallet {
 				let new_base_balance = new_base_amount.safe_sub(&base_fee)?;
 				let new_quote_balance = new_quote_amount.safe_sub(&quote_fee)?;
 
-				let d2 = Self::get_d(new_base_balance, new_quote_balance, ann)?;
-				let mint_amount = lp_issued.safe_mul(&d2.safe_sub(&d0)?)?.safe_div(&d0)?;
+				let d2 = Self::get_d(new_base_balance, new_quote_balance, amp)?;
+				let mint_amount = T::Convert::convert(safe_multiply_by_rational(
+					T::Convert::convert(lp_issued),
+					T::Convert::convert(d2.safe_sub(&d0)?),
+					T::Convert::convert(d0),
+				)?);
 				(mint_amount, base_protocol_fee, quote_protocol_fee)
 			} else {
-				(d1, T::Number::zero(), T::Number::zero())
+				(d1, T::Balance::zero(), T::Balance::zero())
 			};
 
-			let mint_amount =
-				<T::Convert as SafeConvert<T::Number, T::Balance>>::convert(mint_amount)
-					.map_err(|_| Error::<T>::ConversionError)?;
-			let base_amount =
-				<T::Convert as SafeConvert<T::Number, T::Balance>>::convert(base_amount)
-					.map_err(|_| Error::<T>::ConversionError)?;
-			let quote_amount =
-				<T::Convert as SafeConvert<T::Number, T::Balance>>::convert(quote_amount)
-					.map_err(|_| Error::<T>::ConversionError)?;
-			let base_protocol_fee =
-				<T::Convert as SafeConvert<T::Number, T::Balance>>::convert(base_protocol_fee)
-					.map_err(|_| Error::<T>::ConversionError)?;
-			let quote_protocol_fee =
-				<T::Convert as SafeConvert<T::Number, T::Balance>>::convert(quote_protocol_fee)
-					.map_err(|_| Error::<T>::ConversionError)?;
 			ensure!(mint_amount >= min_mint_amount, Error::<T>::RequiredAmountNotReached);
 
 			T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
@@ -501,29 +469,19 @@ pub mod pallet {
 			let pool = Self::get_pool(pool_id)?;
 
 			let pool_account = Self::account_id(&pool_id);
-			let pool_base_aum = <T::Convert as SafeConvert<T::Balance, T::Number>>::convert(
-				T::Assets::balance(pool.pair.base, &pool_account),
-			)
-			.map_err(|_| Error::<T>::ConversionError)?;
-			let pool_quote_aum = <T::Convert as SafeConvert<T::Balance, T::Number>>::convert(
-				T::Assets::balance(pool.pair.quote, &pool_account),
-			)
-			.map_err(|_| Error::<T>::ConversionError)?;
-			let lp_issued = <T::Convert as SafeConvert<T::Balance, T::Number>>::convert(
-				T::Assets::total_issuance(pool.lp_token),
-			)
-			.map_err(|_| Error::<T>::ConversionError)?;
-
-			let lp_amount = <T::Convert as SafeConvert<T::Balance, T::Number>>::convert(lp_amount)
-				.map_err(|_| Error::<T>::ConversionError)?;
-			let base_amount = lp_amount.safe_mul(&pool_base_aum)?.safe_div(&lp_issued)?;
-			let quote_amount = lp_amount.safe_mul(&pool_quote_aum)?.safe_div(&lp_issued)?;
-			let min_base_amount =
-				<T::Convert as SafeConvert<T::Balance, T::Number>>::convert(min_base_amount)
-					.map_err(|_| Error::<T>::ConversionError)?;
-			let min_quote_amount =
-				<T::Convert as SafeConvert<T::Balance, T::Number>>::convert(min_quote_amount)
-					.map_err(|_| Error::<T>::ConversionError)?;
+			let pool_base_aum = T::Assets::balance(pool.pair.base, &pool_account);
+			let pool_quote_aum = T::Assets::balance(pool.pair.quote, &pool_account);
+			let lp_issued = T::Assets::total_issuance(pool.lp_token);
+			let base_amount = T::Convert::convert(safe_multiply_by_rational(
+				T::Convert::convert(lp_amount),
+				T::Convert::convert(pool_base_aum),
+				T::Convert::convert(lp_issued),
+			)?);
+			let quote_amount = T::Convert::convert(safe_multiply_by_rational(
+				T::Convert::convert(lp_amount),
+				T::Convert::convert(pool_quote_aum),
+				T::Convert::convert(lp_issued),
+			)?);
 
 			ensure!(
 				base_amount >= min_base_amount && quote_amount >= min_quote_amount,
@@ -532,17 +490,6 @@ pub mod pallet {
 
 			let total_issuance = lp_issued.safe_sub(&lp_amount)?;
 
-			let base_amount =
-				<T::Convert as SafeConvert<T::Number, T::Balance>>::convert(base_amount)
-					.map_err(|_| Error::<T>::ConversionError)?;
-			let quote_amount =
-				<T::Convert as SafeConvert<T::Number, T::Balance>>::convert(quote_amount)
-					.map_err(|_| Error::<T>::ConversionError)?;
-			let lp_amount = <T::Convert as SafeConvert<T::Number, T::Balance>>::convert(lp_amount)
-				.map_err(|_| Error::<T>::ConversionError)?;
-			let total_issuance =
-				<T::Convert as SafeConvert<T::Number, T::Balance>>::convert(total_issuance)
-					.map_err(|_| Error::<T>::ConversionError)?;
 			// NOTE(hussein-aitlance): no need to keep alive the pool account
 			T::Assets::transfer(pool.pair.base, &pool_account, who, base_amount, false)?;
 			T::Assets::transfer(pool.pair.quote, &pool_account, who, quote_amount, false)?;
@@ -653,16 +600,6 @@ pub mod pallet {
 			T::PalletId::get().into_sub_account(pool_id)
 		}
 
-		/// Find `ann = amp * n^n` where `amp` - amplification coefficient,
-		/// `n` - number of coins.
-		pub fn get_ann(amp: u16, n: u16) -> Result<T::Number, DispatchError> {
-			let mut ann = <T::Convert as Convert<u16, T::Number>>::convert(amp);
-			for _ in 0..n {
-				ann = ann.safe_mul(&<T::Convert as Convert<u16, T::Number>>::convert(n))?;
-			}
-			Ok(ann)
-		}
-
 		/// # Notes
 		///
 		/// D invariant calculation in non-overflowing integer operations iteratively
@@ -677,48 +614,17 @@ pub mod pallet {
 		/// D[j + 1] = (A * n^n * sum(x_i) - D[j]^(n+1) / (n^n * prod(x_i))) / (A * n^n - 1)
 		/// ```
 		pub fn get_d(
-			base_asset_aum: T::Number,
-			quote_asset_aum: T::Number,
-			ann: T::Number,
-		) -> Result<T::Number, DispatchError> {
-			let zero = T::Number::zero();
-			let one = T::Number::one();
-			let prec = T::Precision::get();
-			let sum = base_asset_aum.safe_add(&quote_asset_aum)?;
-			// currently only 2 assets are supported.
-			if sum == zero {
-				return Ok(zero)
-			}
+			base_asset_aum: T::Balance,
+			quote_asset_aum: T::Balance,
+			amp_coeff: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			let d = compute_d(
+				T::Convert::convert(base_asset_aum),
+				T::Convert::convert(quote_asset_aum),
+				T::Convert::convert(amp_coeff),
+			)?;
 
-			let n = <T::Convert as Convert<u16, T::Number>>::convert(2_u16);
-			let mut d = sum;
-
-			for _ in 0..255 {
-				let mut d_p = d;
-				// d_p = d_p * d / (x * n)
-
-				d_p = d_p.safe_mul(&d.safe_div(&base_asset_aum.safe_mul(&n)?)?)?;
-				d_p = d_p.safe_mul(&d.safe_div(&quote_asset_aum.safe_mul(&n)?)?)?;
-
-				let d_prev = d;
-				// d = (ann * sum + d_p * n) * d / ((ann - 1) * d + (n + 1) * d_p)
-
-				let t1 = ann.safe_mul(&sum)?.safe_add(&d_p.safe_mul(&n)?)?;
-				let t2 = ann
-					.safe_sub(&one)?
-					.safe_mul(&d)?
-					.safe_add(&n.safe_add(&one)?.safe_mul(&d_p)?)?;
-				d = t1.safe_mul(&d)?.safe_div(&t2)?;
-
-				if d > d_prev {
-					if d.safe_sub(&d_prev)? <= prec {
-						return Ok(d)
-					}
-				} else if d_prev.safe_sub(&d)? <= prec {
-					return Ok(d)
-				}
-			}
-			return Err(Error::<T>::CouldNotComputeInvariant.into())
+			Ok(T::Convert::convert(d))
 		}
 
 		/// See https://github.com/equilibrium-eosdt/equilibrium-curve-amm/blob/master/docs/deducing-get_y-formulas.pdf
@@ -735,47 +641,22 @@ pub mod pallet {
 		/// x_1 = (x_1^2 + c) / (2 * x_1 + b)
 		/// ```
 		pub fn get_quote(
-			new_base: T::Number,
-			ann: T::Number,
-			d: T::Number,
-		) -> Result<T::Number, DispatchError> {
-			let prec = T::Precision::get();
-			let n = <T::Convert as Convert<u16, T::Number>>::convert(2_u16);
-			let two = <T::Convert as Convert<u16, T::Number>>::convert(2_u16);
-			// s and p are same as input base amount as pool supports only 2 assets.
-			let s = new_base;
-			let p = new_base;
-			let d_ann = d.safe_div(&ann)?;
-			let d_n = d.safe_div(&n)?;
-			let b = s.safe_add(&d_ann)?; // substract d later, otherwise Underflows
-			let c = d_ann.safe_mul(&d_n)?.safe_div(&p)?.safe_mul(&d_n)?;
-
-			let mut y = d;
-
-			for _ in 0..255 {
-				let y_prev = y;
-				// y = (y^2 + c) / (2y + b)
-				let tt1 = y.safe_mul(&y)?.safe_add(&c)?;
-				let tt2 = two.safe_mul(&y)?.safe_add(&b)?.safe_sub(&d)?;
-
-				y = tt1.safe_div(&tt2)?;
-
-				if y > y_prev {
-					if y.safe_sub(&y_prev)? <= prec {
-						return Ok(y)
-					}
-				} else if y_prev.safe_sub(&y)? <= prec {
-					return Ok(y)
-				}
-			}
-
-			return Err(Error::<T>::CouldNotComputeQuote.into())
+			new_base: T::Balance,
+			amp_coeff: T::Balance,
+			d: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			let quote = compute_quote(
+				T::Convert::convert(new_base),
+				T::Convert::convert(amp_coeff),
+				T::Convert::convert(d),
+			)?;
+			Ok(T::Convert::convert(quote))
 		}
 
 		fn abs_difference(
-			new_balance: T::Number,
-			old_balance: T::Number,
-		) -> Result<T::Number, DispatchError> {
+			new_balance: T::Balance,
+			old_balance: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
 			let difference = if old_balance > new_balance {
 				old_balance.safe_sub(&new_balance)
 			} else {
@@ -792,33 +673,19 @@ pub mod pallet {
 		) -> Result<(T::Balance, T::Balance, T::Balance, T::Balance), DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let quote_amount = Self::get_exchange_value(pool_id, pair.base, base_amount)?;
-			let quote_amount =
-				<T::Convert as SafeConvert<T::Balance, T::Number>>::convert(quote_amount)
-					.map_err(|_| Error::<T>::ConversionError)?;
-			let fee = <T::Convert as Convert<Permill, T::Number>>::convert(pool.fee);
-			let protocol_fee =
-				<T::Convert as Convert<Permill, T::Number>>::convert(pool.protocol_fee);
+			let quote_amount_u: u128 = T::Convert::convert(quote_amount);
 
 			let (lp_fee, protocol_fee) = if apply_fees {
-				let lp_fee = fee.safe_mul(&quote_amount)?;
-				let protocol_fee = protocol_fee.safe_mul(&lp_fee)?;
+				let lp_fee = pool.fee.mul_floor(quote_amount_u);
+				let protocol_fee = pool.protocol_fee.mul_floor(lp_fee);
+				let lp_fee = T::Convert::convert(lp_fee);
+				let protocol_fee = T::Convert::convert(protocol_fee);
 				(lp_fee, protocol_fee)
 			} else {
-				(T::Number::zero(), T::Number::zero())
+				(T::Balance::zero(), T::Balance::zero())
 			};
 
 			let quote_amount_excluding_fees = quote_amount.safe_sub(&lp_fee)?;
-
-			let quote_amount_excluding_fees =
-				<T::Convert as SafeConvert<T::Number, T::Balance>>::convert(
-					quote_amount_excluding_fees,
-				)
-				.map_err(|_| Error::<T>::ConversionError)?;
-			let lp_fee = <T::Convert as SafeConvert<T::Number, T::Balance>>::convert(lp_fee)
-				.map_err(|_| Error::<T>::ConversionError)?;
-			let protocol_fee =
-				<T::Convert as SafeConvert<T::Number, T::Balance>>::convert(protocol_fee)
-					.map_err(|_| Error::<T>::ConversionError)?;
 			Ok((base_amount, quote_amount_excluding_fees, lp_fee, protocol_fee))
 		}
 	}

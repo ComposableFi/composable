@@ -7687,7 +7687,7 @@ dependencies = [
  "pallet-currency-factory",
  "parity-scale-codec",
  "plotters",
- "proptest 1.0.0",
+ "proptest",
  "scale-info",
  "serde",
  "sp-arithmetic",

@@ -8,7 +8,7 @@ use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, Convert, IdentityLookup},
+	traits::{BlakeTwo256, Convert, ConvertInto, IdentityLookup},
 	FixedPointNumber, FixedU128, Permill,
 };
 use system::EnsureRoot;
@@ -107,34 +107,6 @@ pub type Balance = u128;
 pub type AssetId = u128;
 pub type Amount = i128;
 pub type PoolId = u32;
-pub type Number = FixedU128;
-
-pub struct ConvertType;
-
-impl SafeConvert<Balance, Number> for ConvertType {
-	fn convert(a: Balance) -> Result<Number, composable_traits::dex::ConversionError> {
-		FixedU128::checked_from_integer(a).ok_or(ConversionError)
-	}
-}
-
-impl Convert<Permill, Number> for ConvertType {
-	fn convert(a: Permill) -> Number {
-		a.into()
-	}
-}
-
-impl Convert<u16, Number> for ConvertType {
-	fn convert(a: u16) -> Number {
-		FixedU128::saturating_from_integer(a)
-	}
-}
-
-impl SafeConvert<Number, Balance> for ConvertType {
-	fn convert(a: Number) -> Result<Balance, composable_traits::dex::ConversionError> {
-		let a = a.round();
-		(a.into_inner() / FixedU128::DIV).try_into().map_err(|_| ConversionError)
-	}
-}
 
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: AssetId| -> Balance {
@@ -163,11 +135,9 @@ impl curve_amm::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
 	type Balance = Balance;
-	type Number = Number;
 	type CurrencyFactory = LpTokenFactory;
-	type Precision = Precision;
 	type Assets = Tokens;
-	type Convert = ConvertType;
+	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type PalletId = TestPalletID;
 	type WeightInfo = ();

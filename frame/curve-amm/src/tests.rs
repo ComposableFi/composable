@@ -12,12 +12,6 @@ use crate::mock::StableSwap;
 
 use sp_runtime::{Permill, TokenError};
 
-// TODO
-/*
-- test lp mint/burn
-- test high slippage scenario
-*/
-
 fn create_pool(
 	base_asset: AssetId,
 	quote_asset: AssetId,
@@ -57,7 +51,7 @@ fn test() {
 		let pool_id = StableSwap::do_create_pool(
 			&ALICE,
 			CurrencyPair::new(USDC, USDT),
-			10000_u16,
+			100_u16,
 			Permill::zero(),
 			Permill::zero(),
 		)
@@ -65,14 +59,15 @@ fn test() {
 
 		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
 
-		let usdc_price = 1;
+		let unit = 1_000_000_000_000_u128;
+		let usdc_price = 1 * unit;
 
-		let nb_of_usdc = 1_000_000;
-		let usdt_price = 1;
+		let nb_of_usdc = 1_000_000_000;
+		let usdt_price = 1 * unit;
 
-		let nb_of_usdt = 1_000_000;
+		let nb_of_usdt = 1_000_000_000;
 
-		// 1M USDC/1M USDT
+		// 10^9 USDC/10^9 USDT
 		let initial_usdc = nb_of_usdc * usdc_price;
 		let initial_usdt = nb_of_usdt * usdt_price;
 
@@ -90,12 +85,13 @@ fn test() {
 			false
 		));
 
+		let precision = 100;
 		// 1 unit of usdc == 1 unit of usdt
-		let ratio = <StableSwap as CurveAmm>::get_exchange_value(pool_id, USDC, 1_u128)
+		let ratio = <StableSwap as CurveAmm>::get_exchange_value(pool_id, USDC, unit)
 			.expect("impossible; qed;");
-		assert_eq!(ratio, 1_u128);
+		assert_ok!(acceptable_computation_error(ratio, unit, precision));
 
-		let swap_usdc = 100_u128;
+		let swap_usdc = 100_u128 * unit;
 		assert_ok!(Tokens::mint_into(USDC, &BOB, swap_usdc));
 
 		<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDC, swap_usdc, false)
@@ -104,7 +100,6 @@ fn test() {
 		<StableSwap as CurveAmm>::buy(&BOB, pool_id, USDC, swap_usdc, false)
 			.expect("impossible; qed;");
 
-		let precision = 100;
 		let bob_usdc = Tokens::balance(USDC, &BOB);
 
 		assert_ok!(acceptable_computation_error(bob_usdc.into(), swap_usdc.into(), precision));
@@ -120,35 +115,72 @@ fn test() {
 	});
 }
 
+//- test lp mint/burn
+#[test]
+fn add_remove_lp() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = 1_000_000_000_000_u128 * unit;
+		let initial_usdc = 1_000_000_000_000_u128 * unit;
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			100_u16,
+			Permill::zero(),
+			Permill::zero(),
+		);
+		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let bob_usdc = 1000 * unit;
+		let bob_usdt = 1000 * unit;
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
+		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
+
+		let lp = Tokens::balance(pool.lp_token, &BOB);
+		assert_eq!(lp, 0_u128);
+		// Add the liquidity
+		assert_ok!(<StableSwap as CurveAmm>::add_liquidity(
+			&BOB, pool_id, bob_usdc, bob_usdt, 0, false
+		));
+		let lp = Tokens::balance(pool.lp_token, &BOB);
+		// must have received some lp tokens
+		assert!(lp > 0_u128);
+		assert_ok!(<StableSwap as CurveAmm>::remove_liquidity(&BOB, pool_id, lp, 0, 0));
+		let lp = Tokens::balance(pool.lp_token, &BOB);
+		// all lp tokens must have been burnt
+		assert_eq!(lp, 0_u128);
+	});
+}
+
 // 
 // - test error if trying to remove > lp than we have
 #[test]
 fn remove_lp_failure() {
 	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = 1_000_000_000_000_u128 * unit;
+		let initial_usdc = 1_000_000_000_000_u128 * unit;
 		let pool_id = create_pool(
 			USDC,
 			USDT,
-			1_000_000_00,
-			1_000_000_00,
-			1000_u16,
+			initial_usdc,
+			initial_usdt,
+			100_u16,
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let initial_usdt = 1000;
-		let initial_usdc = 1000;
 		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let bob_usdc = 1000 * unit;
+		let bob_usdt = 1000 * unit;
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(USDC, &BOB, initial_usdc));
-		assert_ok!(Tokens::mint_into(USDT, &BOB, initial_usdt));
+		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
+		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 
 		// Add the liquidity
 		assert_ok!(<StableSwap as CurveAmm>::add_liquidity(
-			&BOB,
-			pool_id,
-			initial_usdc,
-			initial_usdt,
-			0,
-			false
+			&BOB, pool_id, bob_usdc, bob_usdt, 0, false
 		));
 		let lp = Tokens::balance(pool.lp_token, &BOB);
 		assert_err!(
@@ -163,17 +195,25 @@ fn remove_lp_failure() {
 #[test]
 fn lp_fee() {
 	new_test_ext().execute_with(|| {
+		let precision = 100;
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = 1_000_000_000_000_u128 * unit;
+		let initial_usdc = 1_000_000_000_000_u128 * unit;
 		let lp_fee = Permill::from_float(0.05);
 		let pool_id =
-			create_pool(USDC, USDT, 1_000_000_00, 1_000_000_00, 1000_u16, lp_fee, Permill::zero());
-		let initial_usdt = 1000;
+			create_pool(USDC, USDT, initial_usdc, initial_usdt, 100_u16, lp_fee, Permill::zero());
+		let bob_usdt = 1000 * unit;
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(USDT, &BOB, initial_usdt));
+		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 
-		assert_ok!(<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, initial_usdt, false));
+		assert_ok!(<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, bob_usdt, false));
 		let usdc_balance = Tokens::balance(USDC, &BOB);
-		// received usdc should initial_usdt - lp_fee
-		assert_eq!(usdc_balance, initial_usdt - lp_fee.mul_ceil(initial_usdt));
+		// received usdc should bob_usdt - lp_fee
+		assert_ok!(acceptable_computation_error(
+			usdc_balance,
+			bob_usdt - lp_fee.mul_ceil(bob_usdt),
+			precision
+		));
 	});
 }
 
@@ -182,20 +222,61 @@ fn lp_fee() {
 #[test]
 fn protocol_fee() {
 	new_test_ext().execute_with(|| {
+		let precision = 100;
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = 1_000_000_000_000_u128 * unit;
+		let initial_usdc = 1_000_000_000_000_u128 * unit;
 		let lp_fee = Permill::from_float(0.05);
-		let protocol_fee = Permill::from_float(0.1);
+		let protocol_fee = Permill::from_float(0.01); // 10% of lp fees goes to pool owner
 		let pool_id =
-			create_pool(USDC, USDT, 1_000_000_00, 1_000_000_00, 1000_u16, lp_fee, protocol_fee);
-		let initial_usdt = 1000;
+			create_pool(USDC, USDT, initial_usdc, initial_usdt, 100_u16, lp_fee, protocol_fee);
+		let bob_usdt = 1000 * unit;
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(USDT, &BOB, initial_usdt));
-
-		assert_ok!(<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, initial_usdt, false));
+		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
+		assert_ok!(<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, bob_usdt, false));
 		let usdc_balance = Tokens::balance(USDC, &BOB);
-		// received usdc should initial_usdt - lp_fee
-		assert_eq!(usdc_balance, initial_usdt - lp_fee.mul_ceil(initial_usdt));
+		// received usdc should bob_usdt - lp_fee
+		assert_ok!(acceptable_computation_error(
+			usdc_balance,
+			bob_usdt - lp_fee.mul_floor(bob_usdt),
+			precision
+		));
 		// from lp_fee 1 % (as per protocol_fee) goes to pool owner (ALICE)
 		let alice_usdc_bal = Tokens::balance(USDC, &ALICE);
-		assert_eq!(alice_usdc_bal, 5_u128);
+		assert_ok!(acceptable_computation_error(
+			alice_usdc_bal,
+			protocol_fee.mul_floor(lp_fee.mul_floor(bob_usdt)),
+			precision
+		));
+	});
+}
+
+// 
+// - test high slippage scenario
+// trying to exchange a large value, will result in high_slippage scenario
+// there should be substential difference between expected exchange value and received amount.
+#[test]
+fn high_slippage() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = 1_000_000_000_000_u128 * unit;
+		let initial_usdc = 1_000_000_000_000_u128 * unit;
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			100_u16,
+			Permill::zero(),
+			Permill::zero(),
+		);
+		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let bob_usdt = 1_000_000_000_00_u128 * unit;
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
+
+		assert_ok!(<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, bob_usdt, false));
+		let usdc_balance = Tokens::balance(USDC, &BOB);
+		assert!((bob_usdt - usdc_balance) > 5_u128);
 	});
 }
