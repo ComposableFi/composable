@@ -5,8 +5,8 @@ on:
   push:
     branches:
       - update-make-version
-  tags: 
-    - '*'
+    tags: 
+      - '*'
       
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
