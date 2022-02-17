@@ -41,8 +41,13 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+mod weights;
+
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::{CurrencyFactory, RangeId},
@@ -55,7 +60,7 @@ pub mod pallet {
 		traits::fungibles::{Inspect, Mutate, Transfer},
 		transactional, PalletId,
 	};
-	use frame_system::WeightInfo;
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{AccountIdConversion, CheckedAdd, Convert, One, Zero},
@@ -144,29 +149,11 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Given asset is not used in pool.
-		AssetNotFound,
-		/// Values in the storage are inconsistent
-		InconsistentStorage,
-		/// Not enough assets provided
-		NotEnoughAssets,
-		/// Some provided assets are not unique
-		DuplicateAssets,
-		/// Error occurred while performing math calculations
-		Math,
-		/// Specified asset amount is wrong
 		AssetAmountMustBePositiveNumber,
-		/// Required amount of some token did not reached during adding or removing liquidity
 		RequiredAmountNotReached,
-		/// Source does not have required amount of coins to complete operation
-		InsufficientFunds,
-		/// Specified index is out of range
-		IndexOutOfRange,
 		InvalidFees,
 		InvalidPair,
 		PoolNotFound,
-		InvalidAmount,
-		MissingAmount,
 		PairMismatch,
 		CannotRespectMinimumRequested,
 		CouldNotComputeQuote,
@@ -230,22 +217,70 @@ pub mod pallet {
 			/// Charged fees.
 			fee: T::Balance,
 		},
-
-		/// Withdraw admin fees `Vec<T::Balance>` from pool `T::PoolId` by user `T::AccountId`
-		AdminFeesWithdrawn {
-			/// Account id which withdrew admin fee.
-			who: T::AccountId,
-			/// Pool id from which fee withdrew.
-			pool_id: T::PoolId,
-			/// Account id to which fee deposited.
-			admin_fee_account: T::AccountId,
-			/// Amounts of fees.
-			admin_fees: Vec<T::Balance>,
-		},
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		#[pallet::weight(T::WeightInfo::create())]
+		pub fn create(
+			origin: OriginFor<T>,
+			pair: CurrencyPair<T::AssetId>,
+			amplification_coefficient: u16,
+			fee: Permill,
+			owner_fee: Permill,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = Self::do_create_pool(&who, pair, amplification_coefficient, fee, owner_fee)?;
+			Ok(())
+		}
+
+		#[pallet::weight(T::WeightInfo::buy())]
+		pub fn buy(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			asset_id: T::AssetId,
+			amount: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as CurveAmm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
+			Ok(())
+		}
+
+		#[pallet::weight(T::WeightInfo::sell())]
+		pub fn sell(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			asset_id: T::AssetId,
+			amount: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as CurveAmm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
+			Ok(())
+		}
+
+		#[pallet::weight(T::WeightInfo::swap())]
+		pub fn swap(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			pair: CurrencyPair<T::AssetId>,
+			base_amount: T::Balance,
+			min_receive: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as CurveAmm>::exchange(
+				&who,
+				pool_id,
+				pair,
+				base_amount,
+				min_receive,
+				keep_alive,
+			)?;
+			Ok(())
+		}
+	}
 
 	impl<T: Config> CurveAmm for Pallet<T> {
 		type AssetId = T::AssetId;
@@ -772,8 +807,7 @@ pub mod pallet {
 				(T::Number::zero(), T::Number::zero())
 			};
 
-			let quote_amount_excluding_fees =
-				quote_amount.safe_sub(&lp_fee)?.safe_sub(&protocol_fee)?;
+			let quote_amount_excluding_fees = quote_amount.safe_sub(&lp_fee)?;
 
 			let quote_amount_excluding_fees =
 				<T::Convert as SafeConvert<T::Number, T::Balance>>::convert(

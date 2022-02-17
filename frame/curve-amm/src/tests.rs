@@ -4,22 +4,52 @@ use composable_tests_helpers::test::helper::{
 };
 use composable_traits::{defi::CurrencyPair, dex::CurveAmm};
 use frame_support::{
-	assert_ok,
+	assert_err, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
 
 use crate::mock::StableSwap;
 
-use sp_runtime::Permill;
+use sp_runtime::{Permill, TokenError};
 
 // TODO
 /*
 - test lp mint/burn
-- test error if trying to remove > lp than we have
 - test high slippage scenario
-- test lp fees
-- test admin fees
 */
+
+fn create_pool(
+	base_asset: AssetId,
+	quote_asset: AssetId,
+	base_amount: Balance,
+	quote_amount: Balance,
+	amplification_factor: u16,
+	lp_fee: Permill,
+	protocol_fee: Permill,
+) -> PoolId {
+	let pool_id = StableSwap::do_create_pool(
+		&ALICE,
+		CurrencyPair::new(base_asset, quote_asset),
+		amplification_factor,
+		lp_fee,
+		protocol_fee,
+	)
+	.expect("impossible; qed;");
+	// Mint the tokens
+	assert_ok!(Tokens::mint_into(base_asset, &ALICE, base_amount));
+	assert_ok!(Tokens::mint_into(quote_asset, &ALICE, quote_amount));
+
+	// Add the liquidity
+	assert_ok!(<StableSwap as CurveAmm>::add_liquidity(
+		&ALICE,
+		pool_id,
+		base_amount,
+		quote_amount,
+		0,
+		false
+	));
+	pool_id
+}
 
 #[test]
 fn test() {
@@ -87,5 +117,85 @@ fn test() {
 		let alice_usdt = Tokens::balance(USDT, &ALICE);
 		assert_ok!(default_acceptable_computation_error(alice_usdc.into(), initial_usdc.into()));
 		assert_ok!(default_acceptable_computation_error(alice_usdt.into(), initial_usdt.into()));
+	});
+}
+
+// 
+// - test error if trying to remove > lp than we have
+#[test]
+fn remove_lp_failure() {
+	new_test_ext().execute_with(|| {
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			1_000_000_00,
+			1_000_000_00,
+			1000_u16,
+			Permill::zero(),
+			Permill::zero(),
+		);
+		let initial_usdt = 1000;
+		let initial_usdc = 1000;
+		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(USDC, &BOB, initial_usdc));
+		assert_ok!(Tokens::mint_into(USDT, &BOB, initial_usdt));
+
+		// Add the liquidity
+		assert_ok!(<StableSwap as CurveAmm>::add_liquidity(
+			&BOB,
+			pool_id,
+			initial_usdc,
+			initial_usdt,
+			0,
+			false
+		));
+		let lp = Tokens::balance(pool.lp_token, &BOB);
+		assert_err!(
+			<StableSwap as CurveAmm>::remove_liquidity(&BOB, pool_id, lp + 1, 0, 0),
+			TokenError::NoFunds
+		);
+	});
+}
+
+// 
+// - test lp fees
+#[test]
+fn lp_fee() {
+	new_test_ext().execute_with(|| {
+		let lp_fee = Permill::from_float(0.05);
+		let pool_id =
+			create_pool(USDC, USDT, 1_000_000_00, 1_000_000_00, 1000_u16, lp_fee, Permill::zero());
+		let initial_usdt = 1000;
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(USDT, &BOB, initial_usdt));
+
+		assert_ok!(<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, initial_usdt, false));
+		let usdc_balance = Tokens::balance(USDC, &BOB);
+		// received usdc should initial_usdt - lp_fee
+		assert_eq!(usdc_balance, initial_usdt - lp_fee.mul_ceil(initial_usdt));
+	});
+}
+
+// 
+// - test protocol fees
+#[test]
+fn protocol_fee() {
+	new_test_ext().execute_with(|| {
+		let lp_fee = Permill::from_float(0.05);
+		let protocol_fee = Permill::from_float(0.1);
+		let pool_id =
+			create_pool(USDC, USDT, 1_000_000_00, 1_000_000_00, 1000_u16, lp_fee, protocol_fee);
+		let initial_usdt = 1000;
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(USDT, &BOB, initial_usdt));
+
+		assert_ok!(<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, initial_usdt, false));
+		let usdc_balance = Tokens::balance(USDC, &BOB);
+		// received usdc should initial_usdt - lp_fee
+		assert_eq!(usdc_balance, initial_usdt - lp_fee.mul_ceil(initial_usdt));
+		// from lp_fee 1 % (as per protocol_fee) goes to pool owner (ALICE)
+		let alice_usdc_bal = Tokens::balance(USDC, &ALICE);
+		assert_eq!(alice_usdc_bal, 5_u128);
 	});
 }
