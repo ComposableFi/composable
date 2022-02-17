@@ -10,6 +10,7 @@ use frame_support::{
 use frame_system::{EventRecord, Pallet as System, RawOrigin};
 use sp_runtime::Perquintill;
 use sp_std::prelude::*;
+use composable_support::validation::Validated;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	let events = frame_system::Pallet::<T>::events();
@@ -30,14 +31,15 @@ fn create_vault_extended<T: Config>(
 	reserved: Perquintill,
 	deposit_: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
 ) -> (T::VaultId, VaultInfo<T>) {
-	let v = Vault::<T>::do_create_vault(
-		deposit_,
-		VaultConfig {
+    let config = VaultConfig {
 			asset_id: T::AssetId::from(asset_id),
 			manager: whitelisted_caller(),
 			reserved,
 			strategies: [(strategy_account_id, strategy_share)].iter().cloned().collect(),
-		},
+		};
+	let v = Vault::<T>::do_create_vault(
+		deposit_,
+		Validated::new(config).unwrap(),
 	);
 	assert_ok!(&v);
 	v.expect("unreachable; qed;")
@@ -141,7 +143,7 @@ benchmarks! {
 	add_surcharge {
 		let caller: T::AccountId = whitelisted_caller();
 		let amount = T::CreationDeposit::get() * 10u32.into();
-		let add_amount = T::CreationDeposit::get();
+		let add_amount = Validated::new(T::CreationDeposit::get()).unwrap();
 		let block = System::<T>::block_number();
 		let deposit_ = Deposit::Rent { amount, at: block };
 		T::Currency::mint_into(T::AssetId::from(A), &caller, amount * 2u32.into())?;
