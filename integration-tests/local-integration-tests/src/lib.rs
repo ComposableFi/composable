@@ -1,3 +1,16 @@
+#![cfg_attr(
+	not(any(test, feature = "runtime-benchmarks")),
+	deny(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
+#![warn(clippy::unseparated_literal_suffix)]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![deny(
 	unused_imports,
 	clippy::useless_conversion,

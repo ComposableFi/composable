@@ -1,5 +1,3 @@
-use substrate_wasm_builder::WasmBuilder;
-
 fn main() {
 	// NOTE: could make reproducible clean builds like next:
 	// - remove this file
@@ -9,9 +7,9 @@ fn main() {
 	// - make cargo make to build this package for wasm target with all proper env vars
 	// - make sure that CI/CD gets wasm only via make file to make builds more reproducible
 	// - document that maximal reproducability is possible if to build in layered docker
-	#[cfg(not(feature = "local-integration-tests"))]
+	#[cfg(feature = "wasm-builder")]
 	{
-		WasmBuilder::new()
+		substrate_wasm_builder::WasmBuilder::new()
 			.with_current_project()
 			.export_heap_base()
 			.import_memory()

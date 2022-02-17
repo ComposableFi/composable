@@ -114,7 +114,9 @@ dali-runtime = { package = "dali-runtime", path = "../../runtime/dali", default-
 env_logger = "0.9.0"
 
 [features]
-local-integration-tests = []
+local-integration-tests = [
+	"dali-runtime/local-integration-tests"
+]
 default = ["std", "develop", "local-integration-tests"]
 std = [
 	"codec/std",

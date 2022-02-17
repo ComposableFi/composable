@@ -13,6 +13,7 @@ type Balances = u128;
 pub const ALICE: [u8; 32] = [4_u8; 32];
 pub const BOB: [u8; 32] = [5_u8; 32];
 pub const PICA: Balances = 1_000_000_000_000;
+pub const KSM: Balances = PICA / 50;
 
 decl_test_parachain! {
 	pub struct Picasso {
@@ -47,7 +48,6 @@ decl_test_relay_chain! {
 // keep in sync with parachains, as macro does not allows for names
 pub const PICASSO_PARA_ID: u32 = 2000;
 pub const DALI_PARA_ID: u32 = 3000;
-
 decl_test_network! {
 	pub struct KusamaNetwork {
 		relay_chain = KusamaRelay,
@@ -102,6 +102,7 @@ pub const PICASSO_RELAY_BALANCE: u128 = 10 * PICA;
 pub fn kusama_ext() -> sp_io::TestExternalities {
 	use kusama_runtime::{Runtime, System};
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+	// TODO: remove implicit assets and mint these directly in test
 	balances::GenesisConfig::<Runtime> {
 		balances: vec![
 			(AccountId::from(ALICE), ALICE_RELAY_BALANCE),
@@ -146,6 +147,7 @@ pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 		&mut storage,
 	)
 	.unwrap();
+	// TODO: remove implicit assets and mint these directly in test
 	orml_tokens::GenesisConfig::<Runtime> {
 		balances: vec![
 			(AccountId::from(ALICE), CurrencyId::PICA, ALICE_PARACHAIN_PICA),
