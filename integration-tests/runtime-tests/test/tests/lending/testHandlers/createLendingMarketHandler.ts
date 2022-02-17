@@ -10,14 +10,12 @@ export async function createLendingMarketHandler(
   currencyPair,
   reservedFactor
 ) {
-  const input = api.createType('ComposableSupportValidationValidated', {
-    value: api.createType('ComposableTraitsLendingCreateInput', {
-      updatable: api.createType('ComposableTraitsLendingUpdateInput', {
-        collateralFactor: collateralFactor,
-        underCollaterializedWarnPercent: underCollaterializedWarnPercent,
-        liquidators: liquidators,
-        interestRateModel: interestRateModel,
-      }),
+  const input = api.createType('ComposableTraitsLendingCreateInput', {
+    updatable: api.createType('ComposableTraitsLendingUpdateInput', {
+      collateralFactor: collateralFactor,
+      underCollaterializedWarnPercent: underCollaterializedWarnPercent,
+      liquidators: liquidators,
+      interestRateModel: interestRateModel,
       currencyPair: currencyPair
     }),
     reservedFactor: reservedFactor
