@@ -57,14 +57,16 @@ version:
 containerize-release: version containerize
 
 containerize: 
-	@docker build \
+	@docker buildx build \
 	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg VERSION=${RELEASE_VERSION} \
        	-f ${INSTALL_DIR}/Dockerfile \
 		-t ${IMAGE_WITH_COMMIT} \
 		-t ${IMAGE_WITH_RELEASE_VERSION} \
 		-t ${IMAGE_WITH_BRANCH} \
 		-t ${IMAGE_WITH_LATEST} \
+		--platform linux/amd64,linux/arm/v7,linux/arm64 \
 	. 1>/dev/null
+
 
 push:
 	@docker push ${IMAGE_WITH_COMMIT}
