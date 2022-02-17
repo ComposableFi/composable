@@ -1,10 +1,7 @@
-use crate::pallet::Config;
 use composable_support::validation::Validate;
-use composable_traits::math::SafeArithmetic;
 use frame_support::{pallet_prelude::*, traits::Get};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, Percent};
-use sp_std::fmt;
 
 #[derive(Debug, Decode, Copy, Clone, PartialEq, TypeInfo)]
 pub struct ValidMinAnswers;

@@ -13,9 +13,6 @@ use frame_system::{EventRecord, RawOrigin};
 use sp_runtime::{DispatchResult, Percent};
 use sp_std::{prelude::*, vec};
 
-use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
-use composable_support::validation::{Validate, Validated};
-
 pub type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
@@ -41,10 +38,10 @@ benchmarks! {
 	add_asset_and_info {
 		let caller = T::AddOracle::successful_origin();
 		let asset_id = 1;
-		Validated::new(Percent::from_percent(80)).unwrap(),
-		Validated::new(3).unwrap(),
-		Validated::new(5).unwrap(),
-		Validated::<T::BlockNumber, ValidBlockInterval<T::StalePrice>>::new(5).unwrap(),
+		Validated::new(Percent::from_percent(80)).unwrap();
+		Validated::new(3).unwrap();
+		Validated::new(5).unwrap();
+		Validated::<T::BlockNumber, ValidBlockInterval<T::StalePrice>>::new(5).unwrap();
 		let reward: BalanceOf<T> = T::Currency::minimum_balance();
 		let slash: BalanceOf<T> = T::Currency::minimum_balance();
 
