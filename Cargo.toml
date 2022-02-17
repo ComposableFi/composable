@@ -36,7 +36,7 @@ members = [
 
     "utils/parachain-utils",
     "utils/price-feed",
-
+    "utils/collator-sidecar",
     "integration-tests/simnode",
 ]
 
