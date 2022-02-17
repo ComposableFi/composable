@@ -1097,13 +1097,8 @@ impl_runtime_apis! {
 	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
 		fn amount_available_to_claim_for(account_id: AccountId) -> SafeRpcWrapper<Balance> {
 			SafeRpcWrapper (
-			crowdloan_rewards::Associations::<Runtime>::get(account_id)
-				.map(crowdloan_rewards::Rewards::<Runtime>::get)
-				.flatten()
-				.as_ref()
-				.map(crowdloan_rewards::should_have_claimed::<Runtime>)
-				.unwrap_or_else(|| Ok(Balance::zero()))
-				.unwrap_or_else(|_| Balance::zero())
+				crowdloan_rewards::amount_available_to_claim_for::<Runtime>(account_id)
+					.unwrap_or_else(|_| Balance::zero())
 			)
 		}
 	}
