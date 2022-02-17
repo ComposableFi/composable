@@ -38,15 +38,13 @@ macro_rules! whitelist {
 }
 
 benchmarks! {
-	let block_interval: T::BlockNumber = 5u32.into();
-
 	add_asset_and_info {
 		let caller = T::AddOracle::successful_origin();
 		let asset_id = 1;
 		Validated::new(Percent::from_percent(80)).unwrap(),
 		Validated::new(3).unwrap(),
 		Validated::new(5).unwrap(),
-		Validated::<T::BlockNumber, ValidBlockInterval<T::StalePrice>>::new(block_interval).unwrap(),
+		Validated::<T::BlockNumber, ValidBlockInterval<T::StalePrice>>::new(5).unwrap(),
 		let reward: BalanceOf<T> = T::Currency::minimum_balance();
 		let slash: BalanceOf<T> = T::Currency::minimum_balance();
 
