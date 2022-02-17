@@ -13,7 +13,5 @@ set -e # fail on any error
 if has_client_changes "${PREV_TAG_OR_COMMIT}" "origin/${GITHUB_REF_NAME}"; then
   boldprint "Building new client binaries"
   cargo build --release -p composable
-  tar -czvf composable-"${RELEASE_VERSION}".tar.gz target/release/composable
-  gsutil cp *.tar.gz gs://composable-binaries/community-releases/"${RELEASE_VERSION}"/
   echo "client_release=1" >> "$GITHUB_ENV"
 fi
