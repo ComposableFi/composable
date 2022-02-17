@@ -55,7 +55,7 @@ jobs:
     - name: Build Docker image
       run: make containerize-release
 
-    - name: Build
+    - name: Build for Multiple Arch
       uses: docker/build-push-action@v2
       with:
         builder: ${{ steps.buildx.outputs.name }}
@@ -63,7 +63,7 @@ jobs:
         file: docker/Dockerfile
         platforms: linux/arm64,linux/ppc64le,linux/arm/v7
         push: true
-        tags: ${RELEASE_VERSION}
+        tags: ${{ RELEASE_VERSION }}
 
     - name:  Docker push
       run: make push-release
