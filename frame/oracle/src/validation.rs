@@ -107,25 +107,3 @@ impl<MaxAnswer: PartialEq + Eq + PartialOrd, MaxAnswerBound>
          Ok(input)
        } 
 }
-    
-// impl<AssetId: Copy + Clone,F> Validate<AssetId, ValidAssetId<IsRequested, F>> 
-//    for ValidAssetId<IsRequested, F> where IsRequested:Get<F>, F: Fn(AssetId)->bool{
-//     fn validate(input: AssetId ) -> Result<AssetId, &'static str> {
-        
-//         if IsRequested::get()(input) == false {
-//             return Err("PRICE_NOT_REQUESTED")
-//         }
-//         Ok(input)
-//     }
-// }
-
-impl<AssetId: Copy + Clone,IsRequested> Validate<AssetId, ValidAssetId<IsRequested>> 
-   for ValidAssetId<IsRequested> where ValidAssetId<IsRequested>:Get<IsRequested>, IsRequested: Fn(AssetId)->bool{
-    fn validate(input: AssetId ) -> Result<AssetId, &'static str> {
-        
-        if ValidAssetId::<IsRequested>::get()(input) == false {
-            return Err("PRICE_NOT_REQUESTED")
-        }
-        Ok(input)
-    }
-}

@@ -56,7 +56,7 @@ pub mod pallet {
 		Config as SystemConfig,
 	};
 	use crate::validation::{ValidMinAnswers,ValidMaxAnswer, 
-		ValidThreshhold, ValidBlockInterval, ValidAssetId};
+		ValidThreshhold, ValidBlockInterval};
     use composable_support::validation::{Validated};
 	use lite_json::json::JsonValue;
 	use scale_info::TypeInfo;
@@ -388,6 +388,7 @@ pub mod pallet {
 		type AssetId = T::AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 		type LocalAssets = T::LocalAssets;
+		type MaxAnswerBound = T::MaxAnswerBound;
 
 		fn get_price(
 			asset_id: Self::AssetId,
@@ -601,7 +602,7 @@ pub mod pallet {
 		pub fn submit_price(
 			origin: OriginFor<T>,
 			price: T::PriceValue,
-			asset_id: Validated<T::AssetId, ValidAssetId<Self::is_requested>> //T::AssetId,
+			asset_id: T::AssetId,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let author_stake = OracleStake::<T>::get(&who).unwrap_or_else(Zero::zero);
