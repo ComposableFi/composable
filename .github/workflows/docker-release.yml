@@ -37,12 +37,6 @@ jobs:
       with: 
         fetch-depth: 0
 
-    - name: Build Composable Artifacts
-      run: |
-        /home/runner/.cargo/bin/cargo build --release -p composable
-        tar -czvf composable-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
-        gsutil cp composable-${{ env.RELEASE_VERSION }}.tar.gz gs://composable-binaries/community-releases/${{ env.RELEASE_VERSION }}/
-      
     - name: Login to DockerHub
       uses: docker/login-action@v1 
       with:
@@ -52,12 +46,10 @@ jobs:
     - name: Build Docker image
       run: |
         RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
-        RELEASE_VERSION=${RELEASE_VERSION:1} # remove the 'v' at the beginining of the tag name
-        echo $RELEASE_VERSION
-        make containerize-release
+        make containerize
 
     - name:  Docker push
-      run: make push-release
+      run: make push
 
     - uses: 8398a7/action-slack@v3
       with:

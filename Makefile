@@ -58,7 +58,7 @@ containerize-release: version containerize
 
 containerize: 
 	@docker build \
-	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg VERSION=v${RELEASE_VERSION} \
+	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg VERSION=${RELEASE_VERSION} \
        	-f ${INSTALL_DIR}/Dockerfile \
 		-t ${IMAGE_WITH_COMMIT} \
 		-t ${IMAGE_WITH_RELEASE_VERSION} \
