@@ -1,7 +1,8 @@
 /* eslint-disable no-var */
-import '@composable/types/interfaces/augment-api';
-import '@composable/types/interfaces/augment-types';
-import * as definitions from '@composable/types/interfaces/definitions';
+import '@composable/../../src/types/interfaces/augment-api';
+import '@composable/../../src/types/interfaces/augment-types';
+import * as definitions from '@composable/../../src/types/interfaces/definitions';
+
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 import { ApiOptions } from '@polkadot/api/types';
 import Web3 from 'web3';
@@ -12,7 +13,9 @@ global.testSudoCommands = true;
 // ToDo (D. Roth): Read public/private keys from external file to be usable in live environment.
 //       and ability to specify keys using env variables or using run parameters.
 
-export async function runBefore() {
+exports.mochaHooks = {
+  async beforeAll() {
+    this.timeout(5*60*1000);
   const chai = require('chai');
   const BN = require('bn.js');
 
@@ -35,17 +38,16 @@ export async function runBefore() {
   // then run the next hook in this array
   global.keyring = new Keyring({ type: 'sr25519' });
 
-  if (global.useTestnetWallets === true) {
-    global.walletAlice = global.keyring.addFromUri('//Alice');
-    global.walletBob = global.keyring.addFromUri('//Bob');
-    global.walletCharlie = global.keyring.addFromUri('//Charlie');
-    global.walletDave = global.keyring.addFromUri('//Dave');
-    global.walletEve = global.keyring.addFromUri('//Eve');
-    global.walletFerdie = global.keyring.addFromUri('//Ferdie');
+    if (global.useTestnetWallets === true) {
+      global.walletAlice = global.keyring.addFromUri('//Alice');
+      global.walletBob = global.keyring.addFromUri('//Bob');
+      global.walletCharlie = global.keyring.addFromUri('//Charlie');
+      global.walletDave = global.keyring.addFromUri('//Dave');
+      global.walletEve = global.keyring.addFromUri('//Eve');
+      global.walletFerdie = global.keyring.addFromUri('//Ferdie');
+    }
+  },
+  async afterAll() {
+    return await global.api.disconnect();
   }
-  return;
-}
-
-export async function runAfter() {
-  await global.api.disconnect();
 }

@@ -5,8 +5,10 @@ use crate::{
 use frame_support::{dispatch::DispatchError, pallet_prelude::*};
 use sp_std::vec::Vec;
 
-#[derive(Encode, Decode, Default, Debug, PartialEq)]
+// block timestamped value
+#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
 pub struct Price<PriceValue, BlockNumber> {
+	/// value
 	pub price: PriceValue,
 	pub block: BlockNumber,
 }
@@ -92,6 +94,7 @@ pub trait Oracle {
 	/// Given `asset_id` and `amount` of price asset.
 	/// Returns what amount of  `asset_id` will be required to be same price as `amount` of
 	/// normalized currency
+	/// `amount` - in smallest units
 	fn get_price_inverse(
 		asset_id: Self::AssetId,
 		amount: Self::Balance,

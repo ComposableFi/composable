@@ -32,7 +32,7 @@
       "parachainsConfiguration": {
         "config": {
           "validation_upgrade_frequency": 1,
-          "validation_upgrade_delay": 1
+          "validation_upgrade_delay": 10
         }
       }
     }
@@ -58,7 +58,6 @@
     },
     {
       "bin": "../../../Basilisk-node/target/release/basilisk",
-      "id": "200",
       "chain":"local",
       "balance": "1000000000000000000000",
       "nodes": [
@@ -77,14 +76,14 @@
   ],
   "hrmpChannels": [
     {
-      "sender": 200,
-      "recipient": 2000,
+      "sender": 2000,
+      "recipient": 2090,
       "maxCapacity": 8,
       "maxMessageSize": 512
     },
     {
-      "sender": 2000,
-      "recipient": 200,
+      "sender": 2090,
+      "recipient": 2000,
       "maxCapacity": 8,
       "maxMessageSize": 512
     }

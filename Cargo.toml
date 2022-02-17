@@ -17,14 +17,15 @@ composable-node = { path = "node", features = ["composable", "dali"] }
 color-eyre = { version = "0.5.11", default-features = false }
 
 [features]
-runtime-benchmarks = ["composable-node/runtime-benchmarks"]
-std = ["composable-node/std"]
+runtime-benchmarks = [ "composable-node/runtime-benchmarks" ]
+std = [ "composable-node/std" ]
+local-integration-tests = []
 
 [workspace]
 exclude = ["frame/transaction-fee"]
 members = [
     "frame/*",
-
+    "integration-tests/local-integration-tests",
     "node",
 
     "runtime/common",
@@ -35,7 +36,7 @@ members = [
 
     "utils/parachain-utils",
     "utils/price-feed",
-
+    "utils/collator-sidecar",
     "integration-tests/simnode",
 ]
 

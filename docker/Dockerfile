@@ -10,8 +10,6 @@ RUN apt-get update -y && apt-get install wget curl -y --no-install-recommends \
 
 WORKDIR /composable
 
-COPY . /composable
-
 LABEL description="Precompiled Docker image for Composable" \
       image.author="dayo@composable.finance, sre@composable.finance" \
       image.vendor="Composable Finance" \
@@ -20,9 +18,9 @@ LABEL description="Precompiled Docker image for Composable" \
       image.documentation="https://github.com/ComposableFi/composable#readme"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN curl "https://storage.googleapis.com/composable-binaries/community-releases/${VERSION}/composable-${VERSION}.tar.gz" | tar -xz 
+RUN curl -o composable "https://github.com/ComposableFi/composable/releases/download/${VERSION}/composable"  
     
-RUN mv target/release/composable /usr/local/bin && chmod +x /usr/local/bin/composable  
+RUN mv composable /usr/local/bin && chmod +x /usr/local/bin/composable  
 
 RUN useradd -m -u 1001 -U -s /bin/bash -d /composable composable && \
     mkdir -p /composable/.local/share/local_testnet && \

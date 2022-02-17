@@ -1,12 +1,12 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { Enum, Null, Struct, u128, u32 } from '@polkadot/types-codec';
+import type { Enum, Null, Struct, bool, u128, u32 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { EthereumAccountId } from '@polkadot/types/interfaces/eth';
 import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/extrinsics';
 import type { ParachainInherentData, PersistedValidationData } from '@polkadot/types/interfaces/parachains';
-import type { AccountId32 } from '@polkadot/types/interfaces/runtime';
+import type { AccountId32, Balance } from '@polkadot/types/interfaces/runtime';
 
 /** @name ComposableTraitsAssetsXcmAssetLocation */
 export interface ComposableTraitsAssetsXcmAssetLocation extends Null {}
@@ -47,8 +47,14 @@ export interface CumulusPalletDmpQueuePageIndexData extends Null {}
 /** @name CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot */
 export interface CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot extends Null {}
 
+/** @name CumulusPalletXcmpQueueInboundChannelDetails */
+export interface CumulusPalletXcmpQueueInboundChannelDetails extends Null {}
+
 /** @name CumulusPalletXcmpQueueInboundStatus */
 export interface CumulusPalletXcmpQueueInboundStatus extends Null {}
+
+/** @name CumulusPalletXcmpQueueOutboundChannelDetails */
+export interface CumulusPalletXcmpQueueOutboundChannelDetails extends Null {}
 
 /** @name CumulusPalletXcmpQueueOutboundStatus */
 export interface CumulusPalletXcmpQueueOutboundStatus extends Null {}
@@ -65,6 +71,12 @@ export interface DaliRuntimeOpaqueSessionKeys extends Null {}
 /** @name DaliRuntimeOriginCaller */
 export interface DaliRuntimeOriginCaller extends Null {}
 
+/** @name FrameSupportScheduleLookupError */
+export interface FrameSupportScheduleLookupError extends Null {}
+
+/** @name FrameSupportScheduleMaybeHashed */
+export interface FrameSupportScheduleMaybeHashed extends Null {}
+
 /** @name OrmlTokensAccountData */
 export interface OrmlTokensAccountData extends Null {}
 
@@ -75,9 +87,7 @@ export interface OrmlTokensBalanceLock extends Null {}
 export interface PalletAssetsRegistryCandidateStatus extends Null {}
 
 /** @name PalletAssetsRegistryForeignMetadata */
-export interface PalletAssetsRegistryForeignMetadata extends Struct {
-  readonly decimals: u32;
-}
+export interface PalletAssetsRegistryForeignMetadata extends Null {}
 
 /** @name PalletCollatorSelectionCandidateInfo */
 export interface PalletCollatorSelectionCandidateInfo extends Null {}
@@ -100,8 +110,17 @@ export interface PalletCrowdloanRewardsModelsRemoteAccount extends Enum {
   readonly type: 'RelayChain' | 'Ethereum';
 }
 
+/** @name PalletCrowdloanRewardsModelsReward */
+export interface PalletCrowdloanRewardsModelsReward extends Null {}
+
 /** @name PalletCrowdloanRewardsReward */
 export interface PalletCrowdloanRewardsReward extends Null {}
+
+/** @name PalletCurrencyFactoryRanges */
+export interface PalletCurrencyFactoryRanges extends Null {}
+
+/** @name PalletCurrencyFactoryRangesRange */
+export interface PalletCurrencyFactoryRangesRange extends Null {}
 
 /** @name PalletDemocracyConviction */
 export interface PalletDemocracyConviction extends Null {}
@@ -145,6 +164,24 @@ export interface PalletIdentityRegistrarInfo extends Null {}
 /** @name PalletIdentityRegistration */
 export interface PalletIdentityRegistration extends Null {}
 
+/** @name PalletLiquidationsLiquidationStrategyConfiguration */
+export interface PalletLiquidationsLiquidationStrategyConfiguration extends Null {}
+
+/** @name PalletMosaicAssetInfo */
+export interface PalletMosaicAssetInfo extends Null {}
+
+/** @name PalletMosaicDecayBudgetPenaltyDecayer */
+export interface PalletMosaicDecayBudgetPenaltyDecayer extends Null {}
+
+/** @name PalletMosaicNetworkInfo */
+export interface PalletMosaicNetworkInfo extends Struct {
+  readonly enabled: bool;
+  readonly maxTransferSize: Balance;
+}
+
+/** @name PalletMosaicRelayerStaleRelayer */
+export interface PalletMosaicRelayerStaleRelayer extends Null {}
+
 /** @name PalletOracleAssetInfo */
 export interface PalletOracleAssetInfo extends Null {}
 
@@ -160,11 +197,17 @@ export interface PalletOracleWithdraw extends Struct {
   readonly unlockBlock: u32;
 }
 
+/** @name PalletPreimageRequestStatus */
+export interface PalletPreimageRequestStatus extends Null {}
+
 /** @name PalletSchedulerReleases */
 export interface PalletSchedulerReleases extends Null {}
 
 /** @name PalletSchedulerScheduledV2 */
 export interface PalletSchedulerScheduledV2 extends Null {}
+
+/** @name PalletSchedulerScheduledV3 */
+export interface PalletSchedulerScheduledV3 extends Null {}
 
 /** @name PalletTreasuryProposal */
 export interface PalletTreasuryProposal extends Null {}

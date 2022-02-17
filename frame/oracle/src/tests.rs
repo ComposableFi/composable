@@ -1,10 +1,9 @@
 use crate::{
 	mock::{AccountId, Call, Extrinsic, *},
-	AssetInfo, Error, PrePrice, Price, Withdraw, *,
+	AssetInfo, Error, PrePrice, Withdraw, *,
 };
 use codec::Decode;
-use composable_traits::defi::CurrencyPair;
-use composable_traits::oracle::Oracle as OracleTrait;
+use composable_traits::{defi::CurrencyPair, oracle::Price};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::{Currency, OnInitialize},
@@ -803,128 +802,128 @@ fn should_make_http_call_and_parse_result() {
 	});
 }
 
-// #[test]
-// fn knows_how_to_mock_several_http_calls() {
-// 	let (mut t, _) = offchain_worker_env(|state| {
-// 		state.expect_request(testing::PendingRequest {
-// 			method: "GET".into(),
-// 			uri: "http://localhost:3001/price/0".into(),
-// 			response: Some(br#"{"0": 100}"#.to_vec()),
-// 			sent: true,
-// 			..Default::default()
-// 		});
+#[test]
+fn knows_how_to_mock_several_http_calls() {
+	let (mut t, _) = offchain_worker_env(|state| {
+		state.expect_request(testing::PendingRequest {
+			method: "GET".into(),
+			uri: "http://localhost:3001/price/0".into(),
+			response: Some(br#"{"0": 100}"#.to_vec()),
+			sent: true,
+			..Default::default()
+		});
 
-// 		state.expect_request(testing::PendingRequest {
-// 			method: "GET".into(),
-// 			uri: "http://localhost:3001/price/0".into(),
-// 			response: Some(br#"{"0": 200}"#.to_vec()),
-// 			sent: true,
-// 			..Default::default()
-// 		});
+		state.expect_request(testing::PendingRequest {
+			method: "GET".into(),
+			uri: "http://localhost:3001/price/0".into(),
+			response: Some(br#"{"0": 200}"#.to_vec()),
+			sent: true,
+			..Default::default()
+		});
 
-// 		state.expect_request(testing::PendingRequest {
-// 			method: "GET".into(),
-// 			uri: "http://localhost:3001/price/0".into(),
-// 			response: Some(br#"{"0": 300}"#.to_vec()),
-// 			sent: true,
-// 			..Default::default()
-// 		});
-// 	});
+		state.expect_request(testing::PendingRequest {
+			method: "GET".into(),
+			uri: "http://localhost:3001/price/0".into(),
+			response: Some(br#"{"0": 300}"#.to_vec()),
+			sent: true,
+			..Default::default()
+		});
+	});
 
-// 	t.execute_with(|| {
-// 		let price1 = Oracle::fetch_price(&0).unwrap();
-// 		let price2 = Oracle::fetch_price(&0).unwrap();
-// 		let price3 = Oracle::fetch_price(&0).unwrap();
+	t.execute_with(|| {
+		let price1 = Oracle::fetch_price(&0).unwrap();
+		let price2 = Oracle::fetch_price(&0).unwrap();
+		let price3 = Oracle::fetch_price(&0).unwrap();
 
-// 		assert_eq!(price1, 100);
-// 		assert_eq!(price2, 200);
-// 		assert_eq!(price3, 300);
-// 	})
-// }
+		assert_eq!(price1, 100);
+		assert_eq!(price2, 200);
+		assert_eq!(price3, 300);
+	})
+}
 
-// #[test]
-// fn should_submit_signed_transaction_on_chain() {
-// 	let (mut t, pool_state) = offchain_worker_env(|state| price_oracle_response(state, "0"));
+#[test]
+fn should_submit_signed_transaction_on_chain() {
+	let (mut t, pool_state) = offchain_worker_env(|state| price_oracle_response(state, "0"));
 
-// 	t.execute_with(|| {
-// 		let account_2 = get_account_2();
-// 		assert_ok!(Oracle::add_asset_and_info(
-// 			Origin::signed(account_2),
-// 			0,
-// 			Percent::from_percent(80),
-// 			3,
-// 			3,
-// 			5,
-// 			5,
-// 			5
-// 		));
+	t.execute_with(|| {
+		let account_2 = get_account_2();
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(3).unwrap(),
+		    Validated::new(5).unwrap(),
+		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			5,
+			5
+		));
 
-// 		// when
-// 		Oracle::fetch_price_and_send_signed(&0, Oracle::asset_info(0).unwrap()).unwrap();
-// 		// then
-// 		let tx = pool_state.write().transactions.pop().unwrap();
-// 		assert!(pool_state.read().transactions.is_empty());
-// 		let tx = Extrinsic::decode(&mut &*tx).unwrap();
-// 		assert_eq!(tx.signature.unwrap().0, 0);
-// 		assert_eq!(tx.call, Call::Oracle(crate::Call::submit_price { price: 15523, asset_id: 0 }));
-// 	});
-// }
+		// when
+		Oracle::fetch_price_and_send_signed(&0, Oracle::asset_info(0).unwrap()).unwrap();
+		// then
+		let tx = pool_state.write().transactions.pop().unwrap();
+		assert!(pool_state.read().transactions.is_empty());
+		let tx = Extrinsic::decode(&mut &*tx).unwrap();
+		assert_eq!(tx.signature.unwrap().0, 0);
+		assert_eq!(tx.call, Call::Oracle(crate::Call::submit_price { price: 15523, asset_id: 0 }));
+	});
+}
 
-// #[test]
-// #[should_panic = "Tx already submitted"]
-// fn should_check_oracles_submitted_price() {
-// 	let (mut t, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
+#[test]
+#[should_panic = "Tx already submitted"]
+fn should_check_oracles_submitted_price() {
+	let (mut t, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
 
-// 	t.execute_with(|| {
-// 		let account_2 = get_account_2();
+	t.execute_with(|| {
+		let account_2 = get_account_2();
 
-// 		assert_ok!(Oracle::add_asset_and_info(
-// 			Origin::signed(account_2),
-// 			0,
-// 			Percent::from_percent(80),
-// 			3,
-// 			3,
-// 			5,
-// 			5,
-// 			5
-// 		));
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(3).unwrap(),
+		    Validated::new(5).unwrap(),
+		    Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			5,
+			5
+		));
 
-// 		add_price_storage(100_u128, 0, account_2, 0);
-// 		// when
-// 		Oracle::fetch_price_and_send_signed(&0, Oracle::asset_info(0).unwrap()).unwrap();
-// 	});
-// }
+		add_price_storage(100_u128, 0, account_2, 0);
+		// when
+		Oracle::fetch_price_and_send_signed(&0, Oracle::asset_info(0).unwrap()).unwrap();
+	});
+}
 
-// #[test]
-// #[should_panic = "Max answers reached"]
-// fn should_check_oracles_max_answer() {
-// 	let (mut t, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
-// 	let asset_info = AssetInfo {
-// 		threshold: Percent::from_percent(0),
-// 		min_answers: 0,
-// 		max_answers: 0,
-// 		block_interval: 0,
-// 		reward: 0,
-// 		slash: 0,
-// 	};
-// 	t.execute_with(|| {
-// 		Oracle::fetch_price_and_send_signed(&0, asset_info).unwrap();
-// 	});
-// }
+#[test]
+#[should_panic = "Max answers reached"]
+fn should_check_oracles_max_answer() {
+	let (mut t, _) = offchain_worker_env(|state| price_oracle_response(state, "0"));
+	let asset_info = AssetInfo {
+		threshold: Percent::from_percent(0),
+		min_answers: 0,
+		max_answers: 0,
+		block_interval: 0,
+		reward: 0,
+		slash: 0,
+	};
+	t.execute_with(|| {
+		Oracle::fetch_price_and_send_signed(&0, asset_info).unwrap();
+	});
+}
 
-// #[test]
-// fn parse_price_works() {
-// 	let test_data = vec![
-// 		("{\"1\":6536.92}", Some(6536)),
-// 		("{\"1\":650000000}", Some(650000000)),
-// 		("{\"2\":6536}", None),
-// 		("{\"0\":\"6432\"}", None),
-// 	];
+#[test]
+fn parse_price_works() {
+	let test_data = vec![
+		("{\"1\":6536.92}", Some(6536)),
+		("{\"1\":650000000}", Some(650000000)),
+		("{\"2\":6536}", None),
+		("{\"0\":\"6432\"}", None),
+	];
 
-// 	for (json, expected) in test_data {
-// 		assert_eq!(expected, Oracle::parse_price(json, "1"));
-// 	}
-// }
+	for (json, expected) in test_data {
+		assert_eq!(expected, Oracle::parse_price(json, "1"));
+	}
+}
 
 fn add_price_storage(price: u128, asset_id: u128, who: AccountId, block: u64) {
 	let price = PrePrice { price, block, who };
@@ -994,11 +993,8 @@ fn offchain_worker_env(
 #[cfg(test)]
 mod test {
 	use super::*;
-	// use crate::BondOfferOf;
 	use composable_support::validation::Validate;
-	use composable_traits::oracle::{Oracle as OracleTrait};
 	use validation::{ValidThreshhold, ValidMaxAnswer,ValidBlockInterval, ValidMinAnswers};
-	// use composable_traits::bonded_finance::{BondDuration, ValidBondOffer};
 	use frame_support::assert_ok;
 	use mock::Test;
 

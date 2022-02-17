@@ -2,6 +2,7 @@ use super::*;
 
 #[allow(unused)]
 use crate::Pallet as Oracle;
+use composable_traits::oracle::Price;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	assert_ok,

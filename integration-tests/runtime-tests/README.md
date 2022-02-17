@@ -26,6 +26,11 @@ $ npm run test
 $ npm run gen
 ```
 
+### If you want to check for dependency updates:
+```bash
+$ npm run check_dep_updates
+```
+
 
 ## ToDo:
 * Add all general test cases.
@@ -50,15 +55,8 @@ e.g.
 describe('Imaginary Test', function () {
   // Timeout set to 2 minutes
   this.timeout(2*60*1000); // <--
-  it('Imaginary test part', async (done) => {
-      // Test Stuff...
+  it('Imaginary test part', async function (done) {
+    // Test Stuff...
   });
 });
 ```
-
-
-## License
-Temporary:
-[GNU AGPLv3](https://choosealicense.com/licenses/agpl-3.0/)
-
-Final License TBD.
