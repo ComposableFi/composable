@@ -133,6 +133,7 @@ simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/pol
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 [features]
+local-integration-tests = []
 default = ["std"]
 std = [
 	"codec/std",
