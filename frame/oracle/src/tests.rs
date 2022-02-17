@@ -47,7 +47,6 @@ fn add_asset_and_info() {
 			SLASH
 		));
 		
-
 		// does not increment if exists
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
