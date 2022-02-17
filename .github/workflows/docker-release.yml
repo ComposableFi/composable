@@ -52,9 +52,7 @@ jobs:
     - name: Build Docker image
       run: |
         RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
-        RELEASE_VERSION=${RELEASE_VERSION:1} # remove the 'v' at the beginining of the tag name
-        echo $RELEASE_VERSION
-        make containerize-release
+        RELEASE_VERSION=${RELEASE_VERSION:1} make containerize-release
 
     - name:  Docker push
       run: make push-release
