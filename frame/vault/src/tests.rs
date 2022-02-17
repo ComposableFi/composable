@@ -829,7 +829,6 @@ fn test_vault_add_surcharge() {
 		assert!(Balances::balance(&CHARLIE) > 0);
 		let vault = Vaults::vault_data(id).unwrap();
 		assert!(vault.capabilities.is_tombstoned());
-		// Vaults::add_surcharge(Origin::signed(ALICE), id, CreationDeposit::get()).unwrap();
 		Vaults::add_surcharge(
 			Origin::signed(ALICE),
 			id,
