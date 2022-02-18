@@ -2,9 +2,6 @@ name: "Release Rollout"
 
 on:
   workflow_dispatch:
-  push: 
-    branches:
-      - ansible-update
 jobs:
   dali-client-release:
     runs-on: 
