@@ -17,12 +17,14 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 beefy-mmr = { package = "pallet-beefy-mmr", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 beefy-merkle-tree = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", features = ["keccak"] }
 beefy-primitives = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16"}
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+mmr-lib = { package = "ckb-merkle-mountain-range", default-features = false, version = "0.3.2" }
 
 [features]
 default = ["std"]
 std = [
     "codec/std",
+    "mmr-lib/std",
     "sp-std/std",
     "sp-runtime/std",
     "sp-core/std",

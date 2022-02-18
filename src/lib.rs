@@ -19,15 +19,17 @@ pub mod primitives;
 pub mod traits;
 
 use crate::error::BeefyClientError;
-use crate::primitives::{BeefyAuthoritySet, MmrUpdateProof};
+use crate::primitives::{BeefyAuthoritySet, Hasher, MmrUpdateProof, MMR_ROOT_ID};
 use crate::traits::{StorageRead, StorageWrite};
 use codec::Encode;
-use sp_core::ByteArray;
+use sp_core::{ByteArray, H256};
 use sp_core_hashing::keccak_256;
 use sp_io::crypto;
 use sp_runtime::traits::Convert;
 
 use sp_std::prelude::*;
+#[cfg(not(feature = "std"))]
+use sp_std::vec;
 
 pub trait BeefyLightClient {
     type Store: StorageRead + StorageWrite;
@@ -58,7 +60,7 @@ pub trait BeefyLightClient {
         let encoded_commitment = mmr_update.signed_commitment.commitment.encode();
         let commitment_hash = keccak_256(&*encoded_commitment);
 
-        let mut authority_leaves = mmr_update
+        let authority_leaves = mmr_update
             .signed_commitment
             .signatures
             .into_iter()
@@ -73,10 +75,10 @@ pub trait BeefyLightClient {
                     .ok_or_else(|| BeefyClientError::InvalidSignature)
             })
             .collect::<Result<Vec<_>, BeefyClientError>>()?;
-        authority_leaves.sort();
 
         let mut authorities_changed = false;
-        let root = beefy_merkle_tree::merkle_root::<beefy_merkle_tree::Keccak256, _, _>(authority_leaves);
+        let root =
+            beefy_merkle_tree::merkle_root::<beefy_merkle_tree::Keccak256, _, _>(authority_leaves);
         if current_authority_set.id == validator_set_id {
             if current_authority_set.merkle_root != root.into() {
                 return Err(BeefyClientError::InvalidRootHash);
@@ -87,6 +89,38 @@ pub trait BeefyLightClient {
             }
 
             authorities_changed = true;
+        }
+
+        let latest_beefy_height = Self::Store::latest_height()?;
+
+        if mmr_update.signed_commitment.commitment.block_number <= latest_beefy_height {
+            return Err(BeefyClientError::InvalidMmrUpdate);
+        }
+
+        // Move on to verify mmr_proof
+        let mmr_size = mmr_lib::leaf_index_to_mmr_size(mmr_update.latest_mmr_leaf_with_index.index);
+        let proof = mmr_lib::MerkleProof::<H256, Hasher<H256>>::new(mmr_size, mmr_update.mmr_proof);
+        let mmr_root_vec = mmr_update
+            .signed_commitment
+            .commitment
+            .payload
+            .into_iter()
+            .find(|item| item.0 == MMR_ROOT_ID)
+            .ok_or_else(|| BeefyClientError::InvalidMmrUpdate)?
+            .1
+            .clone();
+        if mmr_root_vec.len() != 32 {
+            return Err(BeefyClientError::InvalidRootHash);
+        }
+        let mut mmr_root_hash = [0u8; 32];
+        mmr_root_hash.copy_from_slice(&mmr_root_vec);
+
+        let leaf_pos = mmr_lib::leaf_index_to_pos(mmr_update.latest_mmr_leaf_with_index.index);
+        let mmr_leaf_hash = keccak_256(&mmr_update.latest_mmr_leaf_with_index.leaf.encode());
+
+        match proof.verify(mmr_root_hash.into(), vec![(leaf_pos, mmr_leaf_hash.into())]) {
+            Ok(false) | Err(_) => return Err(BeefyClientError::InvalidMmrProof),
+            _ => {}
         }
 
         Ok(())

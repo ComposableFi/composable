@@ -11,4 +11,6 @@ pub enum BeefyClientError {
     InvalidSignature,
     /// Some invalid merkle root hash
     InvalidRootHash,
+    /// Some invalid mmr proof
+    InvalidMmrProof,
 }
