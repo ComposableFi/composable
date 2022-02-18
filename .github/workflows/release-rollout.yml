@@ -7,36 +7,31 @@ on:
       - ansible-update
 jobs:
   dali-client-release:
-    concurrency:
-      group: release-${{ github.ref }}
-      cancel-in-progress: true
-    strategy: 
-      fail-fast: true
     runs-on: 
-        - self-hosted
-        - linux
-        - X64
-        - ansible-runner
+      - self-hosted
+      - linux
+      - X64
+      - ansible-runner
     steps:
-        - name: Clean up
+      - name: Clean up
         continue-on-error: true
         run: |
             sudo chown -R $USER:$USER $GITHUB_WORKSPACE
             docker system prune --force --all --volumes
-        - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
         with: 
             fetch-depth: 0
 
-        - name: Set env
+      - name: Set env
         run: |
             echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
 
-        - name: Run ansible playbook
+      - name: Run ansible playbook
         working-directory: "./.maintain/playbooks"
         run: |
             ansible-playbook -l _environment_testnet client-upgrade.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
 
-        - name: Notify sre-tasks slack channel
+      - name: Notify sre-tasks slack channel
         uses: rtCamp/action-slack-notify@v2
         env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
