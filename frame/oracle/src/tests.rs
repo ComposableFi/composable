@@ -456,8 +456,9 @@ mod set_signer {
             signer_account_2 in account_id(), // Will become the signer associated with the controller above.
             stake_balance in MinStake::get()..Balance::MAX, // need balance to set signer_account_2 as signer.
         ) {
+            prop_assume!(signer_account_1 != signer_account_2);
+
             new_test_ext().execute_with(|| {
-                prop_assume!(signer_account_1 != signer_account_2);
                 let root_account = get_root_account();
 
                 prop_assert_ok!(Oracle::set_signer(Origin::signed(root_account), signer_account_1));
@@ -473,6 +474,28 @@ mod set_signer {
                 Ok(())
             })?;
         }
+
+        #[test]
+        fn need_min_stake_balance(
+            signer_account in account_id(),
+            controller_account in account_id(),
+            controller_balance in 0..MinStake::get(),
+        ) {
+            prop_assume!(signer_account != controller_account);
+
+            new_test_ext().execute_with(|| {
+                Balances::make_free_balance_be(&controller_account, controller_balance);
+
+                prop_assert_noop!(
+                    Oracle::set_signer(Origin::signed(controller_account), signer_account),
+                    BalancesError::<Test>::InsufficientBalance
+                );
+
+                Ok(())
+            })?;
+        }
+
+
     }
 
 }
