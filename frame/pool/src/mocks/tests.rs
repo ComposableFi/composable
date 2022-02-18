@@ -23,7 +23,8 @@ pub type AccountId = u128;
 pub type Balance = u128;
 pub type Amount = i128;
 
-// pub const MINIMUM_BALANCE: Balance = 1_000;
+pub const MINIMUM_DEPOSIT: Balance = 1_000;
+pub const MAXIMUM_DEPOSIT: Balance = 10_000;
 
 pub const ALICE: AccountId = 0;
 pub const BOB: AccountId = 1;
@@ -79,10 +80,8 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 }
 
-
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::A;
 	pub const CreationDeposit: Balance = 10;
 	pub const ExistentialDeposit: Balance = 1000;
 	pub const RentPerBlock: Balance = 1;
@@ -114,6 +113,7 @@ impl pallet_vault::Config for Test {
 }
 
 parameter_types! {
+	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::A;
 	pub const TestPoolPalletID: PalletId = PalletId(*b"testpool");
 	pub const MinimumAmount: Balance = 10;
 	pub Epsilon: Perquintill = Perquintill::from_float(0.0000000000000001);
@@ -124,6 +124,7 @@ impl pallet_pool::Config for Test {
 	type Vault = Vaults;
 	type Currency = Tokens;
 	type CurrencyFactory = Factory;
+	type PoolId = u64;
 	type NativeAssetId = NativeAssetId;
 	type AssetId = MockCurrencyId;
 	type Balance = Balance;
