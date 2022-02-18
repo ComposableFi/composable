@@ -11,7 +11,7 @@ use common::AccountId;
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 use cumulus_primitives_core::ParaId;
 use dali_runtime as picasso_runtime;
-use kusama_runtime::*;
+use picasso_runtime::{UnitWeightCost, XcmConfig};
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
 use support::assert_ok;
@@ -76,10 +76,12 @@ fn initiate_reserver_withdraw_on_relay() {
 				xcm: Xcm(vec![]),
 			},
 		]);
+		let units = xcm.len() as u64;
 
 		let executed = <picasso_runtime::Runtime as cumulus_pallet_xcmp_queue::Config>::XcmExecutor::execute_xcm_in_credit(origin, xcm, 10000000000, 10000000000);
+
 		match executed {
-			Outcome::Complete(0) => {},
+			Outcome::Complete(weight) if weight == UnitWeightCost::get() * units => {},
 			_ => unreachable!("{:?}", executed),
 		}
 	});
@@ -88,27 +90,33 @@ fn initiate_reserver_withdraw_on_relay() {
 #[test]
 fn send_remark() {
 	KusamaNetwork::reset();
-
+	env_logger_init();
 	let remark = picasso_runtime::Call::System(
 		frame_system::Call::<picasso_runtime::Runtime>::remark_with_event { remark: vec![1, 2, 3] },
 	);
+	let execution = (UnitWeightCost::get() * 5) as u128;
 	Picasso::execute_with(|| {
 		assert_ok!(picasso_runtime::RelayerXcm::send_xcm(
 			Here,
 			(Parent, Parachain(DALI_PARA_ID)),
-			Xcm(vec![Transact {
-				origin_type: OriginKind::SovereignAccount,
-				require_weight_at_most: 40000,
-				call: remark.encode().into(),
-			}]),
+			Xcm(vec![
+				ReserveAssetDeposited((Parent, execution).into()),
+				BuyExecution { fees: (Parent, execution).into(), weight_limit: Unlimited },
+				Transact {
+					origin_type: OriginKind::SovereignAccount,
+					require_weight_at_most: execution as u64,
+					call: remark.encode().into(),
+				}
+			]),
 		));
 	});
 
 	Dali::execute_with(|| {
 		use dali_runtime::{Event, System};
-		assert!(System::events()
-			.iter()
-			.any(|r| matches!(r.event, Event::System(frame_system::Event::Remarked(_, _)))));
+		assert!(System::events().iter().any(|r| matches!(
+			r.event,
+			Event::System(frame_system::Event::Remarked { sender: _, hash: _ })
+		)));
 	});
 }
 
@@ -138,3 +146,6 @@ fn withdraw_and_deposit_back() {
 		);
 	});
 }
+
+#[test]
+fn location_of_deposit_asset() {}

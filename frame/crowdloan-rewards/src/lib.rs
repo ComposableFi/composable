@@ -109,6 +109,7 @@ pub mod pallet {
 		NothingToClaim,
 		NotAssociated,
 		AlreadyAssociated,
+		NotClaimableYet,
 	}
 
 	#[pallet::config]
@@ -209,8 +210,18 @@ pub mod pallet {
 		#[transactional]
 		pub fn initialize(origin: OriginFor<T>) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
+			let current_block = frame_system::Pallet::<T>::block_number();
 			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
-			Self::do_initialize()
+			Self::do_initialize(current_block)
+		}
+
+		/// Initialize the pallet at the given transaction block.
+		#[pallet::weight(<T as Config>::WeightInfo::initialize(TotalContributors::<T>::get()))]
+		#[transactional]
+		pub fn initialize_at(origin: OriginFor<T>, at: T::BlockNumber) -> DispatchResult {
+			T::AdminOrigin::ensure_origin(origin)?;
+			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
+			Self::do_initialize(at)
 		}
 
 		/// Populate pallet by adding more rewards.
@@ -262,9 +273,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn do_initialize() -> DispatchResult {
-			let current_block = frame_system::Pallet::<T>::block_number();
-			VestingBlockStart::<T>::set(Some(current_block));
+		pub(crate) fn do_initialize(at: T::BlockNumber) -> DispatchResult {
+			VestingBlockStart::<T>::set(Some(at));
 			Ok(())
 		}
 
@@ -272,6 +282,9 @@ pub mod pallet {
 			reward_account: T::AccountId,
 			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
+			let now = frame_system::Pallet::<T>::block_number();
+			let enabled = VestingBlockStart::<T>::get().ok_or(Error::<T>::NotInitialized)? <= now;
+			ensure!(enabled, Error::<T>::NotClaimableYet);
 			let remote_account = get_remote_account::<T>(proof, &reward_account, T::Prefix::get())?;
 			// NOTE(hussein-aitlahcen): this is also checked by the signed extension. theoretically
 			// useless, but 1:1 to make it clear
@@ -311,7 +324,10 @@ pub mod pallet {
 			let (total_rewards, total_contributors) = Rewards::<T>::iter_values().fold(
 				(T::Balance::zero(), 0),
 				|(total_rewards, total_contributors), contributor_reward| {
-					(total_rewards + contributor_reward.total, total_contributors + 1)
+					(
+						total_rewards.saturating_add(contributor_reward.total),
+						total_contributors.saturating_add(1),
+					)
 				},
 			);
 			TotalRewards::<T>::set(total_rewards);
@@ -331,14 +347,14 @@ pub mod pallet {
 					.as_mut()
 					.map(|reward| {
 						let should_have_claimed = should_have_claimed::<T>(reward)?;
-						let available_to_claim = should_have_claimed - reward.claimed;
+						let available_to_claim = should_have_claimed.saturating_sub(reward.claimed);
 						ensure!(
 							available_to_claim > T::Balance::zero(),
 							Error::<T>::NothingToClaim
 						);
 						T::Currency::mint_into(reward_account, available_to_claim)?;
-						(*reward).claimed += available_to_claim;
-						ClaimedRewards::<T>::mutate(|x| *x += available_to_claim);
+						(*reward).claimed = available_to_claim.saturating_add(reward.claimed);
+						ClaimedRewards::<T>::mutate(|x| *x = x.saturating_add(available_to_claim));
 						Ok(available_to_claim)
 					})
 					.unwrap_or_else(|| Err(Error::<T>::InvalidProof.into()))
@@ -362,14 +378,26 @@ pub mod pallet {
 		} else {
 			let vesting_step = T::VestingStep::get();
 			// Current window, rounded to previous window.
-			let vesting_window = vesting_point - (vesting_point % vesting_step);
+			let vesting_window = vesting_point.saturating_sub(vesting_point % vesting_step);
 			// The user should have claimed the upfront payment + the vested
 			// amount until this window point.
-			let vested_reward = reward.total - upfront_payment;
-			Ok(upfront_payment +
-				(vested_reward.saturating_mul(T::Convert::convert(vesting_window)) /
-					T::Convert::convert(reward.vesting_period)))
+			let vested_reward = reward.total.saturating_sub(upfront_payment);
+			Ok(upfront_payment.saturating_add(
+				vested_reward.saturating_mul(T::Convert::convert(vesting_window)) /
+					T::Convert::convert(reward.vesting_period),
+			))
 		}
+	}
+
+	/// Returns the amount available to claim for the specified account.
+	pub fn amount_available_to_claim_for<T: Config>(
+		account_id: <T as frame_system::Config>::AccountId,
+	) -> Result<T::Balance, DispatchError> {
+		let association = Associations::<T>::get(account_id).ok_or(Error::<T>::NotAssociated)?;
+		let reward = Rewards::<T>::get(association).ok_or(Error::<T>::NothingToClaim)?;
+		let should_have_claimed = should_have_claimed::<T>(&reward)?;
+		let available_to_claim = should_have_claimed - reward.claimed;
+		Ok(available_to_claim)
 	}
 
 	pub fn get_remote_account<T: Config>(
@@ -456,6 +484,14 @@ pub mod pallet {
 
 		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			if let Call::associate { reward_account, proof } = call {
+				let now = frame_system::Pallet::<T>::block_number();
+				let enabled = VestingBlockStart::<T>::get()
+					.ok_or(InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8))? <=
+					now;
+				if !enabled {
+					return InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8).into()
+				}
+
 				if Associations::<T>::get(reward_account).is_some() {
 					return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8).into()
 				}
@@ -486,5 +522,6 @@ pub mod pallet {
 		InvalidProof = 0,
 		NoReward = 1,
 		AlreadyAssociated = 2,
+		NotClaimableYet = 3,
 	}
 }

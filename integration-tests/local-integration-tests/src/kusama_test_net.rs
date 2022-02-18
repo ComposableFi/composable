@@ -13,11 +13,14 @@ type Balances = u128;
 pub const ALICE: [u8; 32] = [4_u8; 32];
 pub const BOB: [u8; 32] = [5_u8; 32];
 pub const PICA: Balances = 1_000_000_000_000;
+pub const KSM: Balances = PICA / 50;
 
 decl_test_parachain! {
 	pub struct Picasso {
 		Runtime = picasso_runtime::Runtime,
 		Origin = picasso_runtime::Origin,
+		XcmpMessageHandler = picasso_runtime::XcmpQueue,
+		DmpMessageHandler = picasso_runtime::DmpQueue,
 		new_ext = picasso_ext(PICASSO_PARA_ID),
 	}
 }
@@ -28,6 +31,8 @@ decl_test_parachain! {
 	pub struct Dali {
 		Runtime = dali_runtime::Runtime,
 		Origin = dali_runtime::Origin,
+		XcmpMessageHandler = dali_runtime::XcmpQueue,
+		DmpMessageHandler = dali_runtime::DmpQueue,
 		new_ext = picasso_ext(DALI_PARA_ID),
 	}
 }
@@ -35,7 +40,7 @@ decl_test_parachain! {
 decl_test_relay_chain! {
 	pub struct KusamaRelay {
 		Runtime = kusama_runtime::Runtime,
-		XcmConfig = kusama_runtime::XcmConfig,
+		XcmConfig = kusama_runtime::xcm_config::XcmConfig,
 		new_ext = kusama_ext(),
 	}
 }
@@ -43,7 +48,6 @@ decl_test_relay_chain! {
 // keep in sync with parachains, as macro does not allows for names
 pub const PICASSO_PARA_ID: u32 = 2000;
 pub const DALI_PARA_ID: u32 = 3000;
-
 decl_test_network! {
 	pub struct KusamaNetwork {
 		relay_chain = KusamaRelay,
@@ -56,14 +60,15 @@ decl_test_network! {
 
 fn default_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 	HostConfiguration {
-		validation_upgrade_frequency: 1_u32,
-		validation_upgrade_delay: 1,
+		validation_upgrade_cooldown: 1_u32,
+		validation_upgrade_delay: 5,
 		code_retention_period: 1200,
 		max_code_size: MAX_CODE_SIZE,
 		max_pov_size: MAX_POV_SIZE,
 		max_head_data_size: 32 * 1024,
 		group_rotation_frequency: 20,
 		chain_availability_period: 4,
+		minimum_validation_upgrade_delay: 5,
 		thread_availability_period: 4,
 		max_upward_queue_count: 8,
 		max_upward_queue_size: 1024 * 1024,
@@ -97,6 +102,7 @@ pub const PICASSO_RELAY_BALANCE: u128 = 10 * PICA;
 pub fn kusama_ext() -> sp_io::TestExternalities {
 	use kusama_runtime::{Runtime, System};
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+	// TODO: remove implicit assets and mint these directly in test
 	balances::GenesisConfig::<Runtime> {
 		balances: vec![
 			(AccountId::from(ALICE), ALICE_RELAY_BALANCE),
@@ -141,6 +147,7 @@ pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 		&mut storage,
 	)
 	.unwrap();
+	// TODO: remove implicit assets and mint these directly in test
 	orml_tokens::GenesisConfig::<Runtime> {
 		balances: vec![
 			(AccountId::from(ALICE), CurrencyId::PICA, ALICE_PARACHAIN_PICA),

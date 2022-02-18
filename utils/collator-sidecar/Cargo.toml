@@ -18,6 +18,3 @@ jsonrpc-core-client = { version = "18", features = ["ws"] }
 sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 picasso = { package = "picasso-runtime", path = "../../runtime/picasso" }
 common = { path = "../../runtime/common" }
-
-[package.metadata.cargo-udeps.ignore]
-normal = ["pallet-bonded-finance"]

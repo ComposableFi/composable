@@ -4,7 +4,6 @@ REPO=composablefi
 SERVICE_NAME=composable
 INSTALL_DIR=docker/
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
-CARGO_VERSION:=$(shell git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )
 AUTO_UPDATE:=1
 
 
@@ -50,7 +49,7 @@ dev:
 .PHONY: version
 version:
 	@if [ ${RELEASE_VERSION} ]; then \
-	sed -i "s|^version =.*|version = '"${RELEASE_VERSION}"'|" node/Cargo.toml; \
+	sed -i "s|^version =.*|version = '"${RELEASE_VERSION}"'|" Cargo.toml; \
 	fi;
 
 
@@ -59,7 +58,7 @@ containerize-release: version containerize
 
 containerize: 
 	@docker build \
-	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg VERSION=${CARGO_VERSION} \
+	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg VERSION=${RELEASE_VERSION} \
        	-f ${INSTALL_DIR}/Dockerfile \
 		-t ${IMAGE_WITH_COMMIT} \
 		-t ${IMAGE_WITH_RELEASE_VERSION} \
@@ -76,6 +75,9 @@ push:
 push-release:
 	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 
+containerize-composable-sandbox:
+	docker build -t composable-sandbox:${COMMIT_SHA} -t composable-sandbox:latest -f docker/composable-sandbox.docker .
+
 stop:
 	@docker-compose down
 
@@ -88,7 +90,7 @@ else
 endif
 
 
-.PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release
+.PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release containerize-composable-sandbox
 
 
 #----------------------------------------------------------------------
