@@ -4,8 +4,7 @@ on:
   workflow_dispatch:
   push: 
     branches:
-        - ansible-update
-
+      - ansible-update
 jobs:
   dali-client-release:
     concurrency:
