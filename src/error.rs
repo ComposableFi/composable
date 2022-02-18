@@ -3,6 +3,12 @@ pub enum BeefyClientError {
     StorageReadError,
     /// Failed to write a value to storage
     StorageWriteError,
-    /// Error deriving [`sp_core::H256`] from `Vec<u8>`
-    HashDecodeError,
+    /// Error decoding some value
+    DecodingError,
+    /// Invalid Mmr Update
+    InvalidMmrUpdate,
+    /// Error recovering public key from signature
+    InvalidSignature,
+    /// Some invalid merkle root hash
+    InvalidRootHash,
 }

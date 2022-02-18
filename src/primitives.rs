@@ -1,23 +1,24 @@
+use codec::{Decode, Encode};
 use sp_core::H256;
 use sp_std::prelude::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Encode, Decode)]
 pub struct Commitment {
-    mmr_root_hash: H256,
-    block_number: u32,
-    validator_set_id: u64,
+    pub payload: Vec<u8>,
+    pub block_number: u32,
+    pub validator_set_id: u64,
 }
 
 #[derive(Debug, Clone)]
 pub struct AuthoritySignature {
-    signature: [u8; 65],
-    authority_index: u64,
+    pub signature: [u8; 65],
+    pub authority_index: u64,
 }
 
 #[derive(Debug, Clone)]
 pub struct SignedCommitment {
-    commitment: Commitment,
-    signatures: Vec<AuthoritySignature>,
+    pub commitment: Commitment,
+    pub signatures: Vec<AuthoritySignature>,
 }
 
 #[derive(Debug, Clone)]
@@ -30,24 +31,24 @@ pub struct MmrLeaf<BlockNumber, Hash, MerkleRoot> {
 
 #[derive(Debug, Clone)]
 pub struct MmrLeafWithIndex {
-    leaf: MmrLeaf<u32, H256, H256>, // see beefy_primitives
-    index: u64,
+    pub leaf: MmrLeaf<u32, H256, H256>, // see beefy_primitives
+    pub index: u64,
 }
 
 #[derive(Debug, Clone)]
 pub struct MmrUpdateProof {
-    signed_commitment: SignedCommitment,
-    latest_mmr_leaf_with_index: MmrLeafWithIndex,
-    mmr_proof: Vec<H256>,
+    pub signed_commitment: SignedCommitment,
+    pub latest_mmr_leaf_with_index: MmrLeafWithIndex,
+    pub mmr_proof: Vec<H256>,
 }
 
 #[derive(Debug, Clone)]
 pub struct BeefyAuthoritySet {
     // id of set, should be strictly increasing by 1.
-    pub(crate) id: u64,
+    pub id: u64,
     // len of all authorities, mmr_root_hash is considered final if we have sigs from
     // 2/3 + 1 of all authorities
-    pub(crate) len: u64,
+    pub len: u64,
     // merkle root of all authority public keys
-    pub(crate) merkle_root: H256,
+    pub merkle_root: H256,
 }
