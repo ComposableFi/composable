@@ -129,15 +129,12 @@ pub trait Validate<T, U> {
 	fn validate(input: T) -> Result<T, &'static str>;
 }
 
-pub trait TryIntoValidated<T, U> {
-	fn try_into_validated(self) -> Result<Validated<T, U>, &'static str>;
+pub trait TryIntoValidated<T> {
+	fn try_into_validated<U: Validate<T, U>>(self) -> Result<Validated<T, U>, &'static str>;
 }
 
-impl<T, U> TryIntoValidated<T, U> for T
-where
-	U: Validate<T, U>,
-{
-	fn try_into_validated(self) -> Result<Validated<T, U>, &'static str> {
+impl<T> TryIntoValidated<T> for T {
+	fn try_into_validated<U: Validate<T, U>>(self) -> Result<Validated<T, U>, &'static str> {
 		Validated::new(self)
 	}
 }
@@ -462,14 +459,14 @@ mod test {
 
 	#[test]
 	fn try_into_valid() {
-		let value: Validated<_, Valid> = 42_u32.try_into_validated().unwrap();
+		let value = 42_u32.try_into_validated::<Valid>().unwrap();
 
 		assert_eq!(value, Validated { value: 42, _marker: PhantomData });
 	}
 
 	#[test]
 	fn try_into_invalid() {
-		let value: Result<Validated<_, Invalid>, _> = 42_u32.try_into_validated();
+		let value = 42_u32.try_into_validated::<Invalid>();
 
 		assert!(value.is_err());
 	}
