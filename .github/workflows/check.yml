@@ -3,6 +3,9 @@ name: CI Check
 # please update docker, toolchain toml and github action with toolchain at same time
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
@@ -71,7 +74,7 @@ jobs:
           /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly-2021-11-08
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-08 llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.info
