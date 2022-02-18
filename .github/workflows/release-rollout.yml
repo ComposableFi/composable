@@ -2,6 +2,9 @@ name: "Release Rollout"
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+        - ansible-update
 jobs:
   dali-client-release:
     runs-on: 
@@ -58,6 +61,7 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
+
       - uses: actions/checkout@v2
         with: 
           fetch-depth: 0
