@@ -124,14 +124,3 @@ jobs:
           asset_path: ./target/release/composable
           asset_name: composable
           asset_content_type: application/octet-stream
-
-      - name: Release Notification
-        uses: stormwarning/action-release-notification@v1
-        with:
-          channel: releases
-          message: Composable has a new release!!!
-          actions: '[{"text": "View changelog 🎉", "url": "CHANGELOG.md"},{"text": "View docs 📚", "url": "https://github.com/ComposableFi/composable/releases/tag/${{ env.RELEASE_VERSION }}"}]'
-        env:
-          SLACKBOT_TOKEN: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-
