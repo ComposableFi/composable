@@ -45,9 +45,14 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod maths;
+
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::weights::WeightInfo;
+	use crate::{
+		maths::{compute_spot_price, compute_out_given_in},
+		weights::WeightInfo,
+	};
 	use codec::{Codec, FullCodec};
 	use composable_support::validation::{Validate, Validated};
 	use composable_traits::{
@@ -471,46 +476,17 @@ pub mod pallet {
 
 			let weights = pool.sale.current_weights(current_block)?;
 
-			/*
-			https://balancer.fi/whitepaper.pdf, (15)
-				  ai = amount in = quote_amount
-				  ao = amount out = base_amount
-				  bi = balance in = quote asset balance
-				  bo = balance out = base asset balance
-			wi = weight in
-			wo = weight out
-				   */
 			let (wo, wi) =
 				if pair.base == pool.pair.base { weights } else { (weights.1, weights.0) };
 
 			let pool_account = Self::account_id(&pool_id);
-			let bi = Decimal::from_u128(T::Convert::convert(T::Assets::balance(
-				pair.quote,
-				&pool_account,
-			)))
-			.ok_or(ArithmeticError::Overflow)?;
-			let bo = Decimal::from_u128(T::Convert::convert(T::Assets::balance(
-				pair.base,
-				&pool_account,
-			)))
-			.ok_or(ArithmeticError::Overflow)?;
+			let bi = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
+			let bo = T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
+			let base_unit = T::LocalAssets::unit::<u128>(pair.base)?;
 
-			let full_percent =
-				Decimal::from_u32(Permill::one().deconstruct()).ok_or(ArithmeticError::Overflow)?;
-			let wi_numer = Decimal::from_u32(wi.deconstruct()).ok_or(ArithmeticError::Overflow)?;
-			let wi = wi_numer.safe_div(&full_percent)?;
-			let wo_numer = Decimal::from_u32(wo.deconstruct()).ok_or(ArithmeticError::Overflow)?;
-			let wo = wo_numer.safe_div(&full_percent)?;
-			let bi_div_wi = bi.safe_div(&wi)?;
-			let bo_div_wo = bo.safe_div(&wo)?;
-			let spot_price = bi_div_wi.safe_div(&bo_div_wo)?;
+			let spot_price = compute_spot_price(wi, wo, bi, bo, base_unit)?;
 
-			let base_unit = Decimal::from_u128(T::LocalAssets::unit::<u128>(pair.base)?)
-				.ok_or(ArithmeticError::Overflow)?;
-
-			Ok(T::Convert::convert(
-				spot_price.safe_mul(&base_unit)?.to_u128().ok_or(ArithmeticError::Overflow)?,
-			))
+			Ok(T::Convert::convert(spot_price))
 		}
 
 		pub(crate) fn do_get_exchange(
@@ -527,45 +503,17 @@ pub mod pallet {
 
 			let weights = pool.sale.current_weights(current_block)?;
 
-			/*
-			https://balancer.fi/whitepaper.pdf, (15)
-				  ai = amount in = quote_amount
-				  ao = amount out = base_amount
-				  bi = balance in = quote asset balance
-				  bo = balance out = base asset balance
-			wi = weight in
-			wo = weight out
-				   */
 			let (wo, wi) =
 				if pair.base == pool.pair.base { weights } else { (weights.1, weights.0) };
 
 			let pool_account = Self::account_id(&pool_id);
+			let ai = T::Convert::convert(quote_amount);
+			let bi = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
+			let bo = T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
 
-			let ai = Decimal::from_u128(T::Convert::convert(quote_amount))
-				.ok_or(ArithmeticError::Overflow)?;
-			let bi = Decimal::from_u128(T::Convert::convert(T::Assets::balance(
-				pair.quote,
-				&pool_account,
-			)))
-			.ok_or(ArithmeticError::Overflow)?;
-			let bo = Decimal::from_u128(T::Convert::convert(T::Assets::balance(
-				pair.base,
-				&pool_account,
-			)))
-			.ok_or(ArithmeticError::Overflow)?;
-			let weight_numer =
-				Decimal::from_u32(wi.deconstruct()).ok_or(ArithmeticError::Overflow)?;
-			let weight_denom =
-				Decimal::from_u32(wo.deconstruct()).ok_or(ArithmeticError::Overflow)?;
-			let weight_power = weight_numer.safe_div(&weight_denom)?;
-			let bi_div_bi_plus_ai = bi.safe_div(&bi.safe_add(&ai)?)?;
-			let term_to_weight_power =
-				bi_div_bi_plus_ai.checked_powd(weight_power).ok_or(ArithmeticError::Overflow)?;
-			let one_minus_term = Decimal::one().safe_sub(&term_to_weight_power)?;
-			let ao = bo.safe_mul(&one_minus_term)?.to_u128().ok_or(ArithmeticError::Overflow)?;
-			let base_amount = T::Convert::convert(ao);
+			let base_amount = compute_out_given_in(wi, wo, bi, bo, ai)?;
 
-			Ok(base_amount)
+			Ok(T::Convert::convert(base_amount))
 		}
 	}
 

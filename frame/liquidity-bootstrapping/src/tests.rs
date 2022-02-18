@@ -1,13 +1,7 @@
 use crate::{mock::*, *};
 use composable_support::validation::Validated;
-use composable_tests_helpers::test::helper::{
-	acceptable_computation_error, default_acceptable_computation_error,
-};
 use composable_traits::{defi::CurrencyPair, dex::CurveAmm};
-use frame_support::{
-	assert_ok,
-	traits::fungibles::{Inspect, Mutate},
-};
+use frame_support::{assert_ok, traits::fungibles::Mutate};
 use sp_runtime::Permill;
 
 #[test]
@@ -47,11 +41,18 @@ fn test() {
 		#[cfg(feature = "visualization")]
 		{
 			let points = (pool.sale.start..pool.sale.end)
-				.map(|block| (block, LBP::do_spot_price(pool_id, pool.pair, block).expect("impossible; qed;") as f64 / unit as f64));
+				.map(|block| {
+					(
+						block,
+						LBP::do_spot_price(pool_id, pool.pair, block).expect("impossible; qed;")
+							as f64 / unit as f64,
+					)
+				})
+				.collect::<Vec<_>>();
+			let max_amount = points.iter().copied().fold(f64::NAN, |x, (_, y)| f64::max(x, y));
 
 			use plotters::prelude::*;
-			let area =
-				BitMapBackend::new("./lbp_spot_price.png", (1024, 768)).into_drawing_area();
+			let area = BitMapBackend::new("./lbp_spot_price.png", (1024, 768)).into_drawing_area();
 			area.fill(&WHITE).unwrap();
 
 			let mut chart = ChartBuilder::on(&area)
@@ -59,18 +60,12 @@ fn test() {
 				.margin(100u32)
 				.x_label_area_size(30u32)
 				.y_label_area_size(30u32)
-				.build_cartesian_2d(
-					pool.sale.start..pool.sale.end,
-					0f64..0.5f64,
-				)
+				.build_cartesian_2d(pool.sale.start..pool.sale.end, 0f64..max_amount)
 				.unwrap();
 
 			chart.configure_mesh().draw().unwrap();
 			chart
-				.draw_series(LineSeries::new(
-					points,
-					&RED,
-				))
+				.draw_series(LineSeries::new(points, &RED))
 				.unwrap()
 				.label("base")
 				.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
@@ -87,14 +82,16 @@ fn test() {
 			use plotters::prelude::*;
 
 			let plot_swap = |pair, swap_amount, name, caption| {
-        let points = (pool.sale.start..pool.sale.end).map(|block| {
-					(
-						block,
-						LBP::do_get_exchange(pool_id, pair, block, swap_amount)
-							.expect("impossible; qed;") / unit,
-					)
-				}).collect::<Vec<_>>();
-        let max_amount = points.iter().copied().map(|(_, x)| x).max().unwrap();
+				let points = (pool.sale.start..pool.sale.end)
+					.map(|block| {
+						(
+							block,
+							LBP::do_get_exchange(pool_id, pair, block, swap_amount)
+								.expect("impossible; qed;") / unit,
+						)
+					})
+					.collect::<Vec<_>>();
+				let max_amount = points.iter().copied().map(|(_, x)| x).max().unwrap();
 
 				let area = BitMapBackend::new(name, (1024, 768)).into_drawing_area();
 				area.fill(&WHITE).unwrap();
@@ -104,18 +101,12 @@ fn test() {
 					.margin(100u32)
 					.x_label_area_size(30u32)
 					.y_label_area_size(30u32)
-					.build_cartesian_2d(
-						pool.sale.start..pool.sale.end,
-						0..max_amount,
-					)
+					.build_cartesian_2d(pool.sale.start..pool.sale.end, 0..max_amount)
 					.unwrap();
 
 				chart.configure_mesh().draw().unwrap();
 				chart
-					.draw_series(LineSeries::new(
-						points,
-						&BLUE,
-					))
+					.draw_series(LineSeries::new(points, &BLUE))
 					.unwrap()
 					.label("Amount received")
 					.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &BLUE));
@@ -127,17 +118,26 @@ fn test() {
 					.unwrap();
 			};
 
-      let buy_amount = 10;
-      plot_swap(pair, buy_amount * unit, "./lbp_buy_project.png", format!("Buy project tokens with {} USDT", buy_amount));
-      let sell_amount = 100_000;
-      plot_swap(pair.swap(), 100_000 * unit, "./lbp_sell_project.png", format!("Sell {} project tokens", sell_amount));
+			let buy_amount = 10;
+			plot_swap(
+				pair,
+				buy_amount * unit,
+				"./lbp_buy_project.png",
+				format!("Buy project tokens with {} USDT", buy_amount),
+			);
+			let sell_amount = 100_000;
+			plot_swap(
+				pair.swap(),
+				100_000 * unit,
+				"./lbp_sell_project.png",
+				format!("Sell {} project tokens", sell_amount),
+			);
 		}
 
 		#[cfg(feature = "visualization")]
 		{
 			use plotters::prelude::*;
-			let area =
-				BitMapBackend::new("./lbp_weights.png", (1024, 768)).into_drawing_area();
+			let area = BitMapBackend::new("./lbp_weights.png", (1024, 768)).into_drawing_area();
 			area.fill(&WHITE).unwrap();
 
 			let mut chart = ChartBuilder::on(&area)
@@ -145,10 +145,7 @@ fn test() {
 				.margin(100u32)
 				.x_label_area_size(30u32)
 				.y_label_area_size(30u32)
-				.build_cartesian_2d(
-					pool.sale.start..pool.sale.end,
-					0..Permill::one().deconstruct(),
-				)
+				.build_cartesian_2d(pool.sale.start..pool.sale.end, 0..Permill::one().deconstruct())
 				.unwrap();
 
 			let points = (pool.sale.start..pool.sale.end)
@@ -167,9 +164,7 @@ fn test() {
 				.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
 			chart
 				.draw_series(LineSeries::new(
-					points.map(|(block, (_, quote_weight))| {
-						(block, quote_weight.deconstruct())
-					}),
+					points.map(|(block, (_, quote_weight))| (block, quote_weight.deconstruct())),
 					&BLUE,
 				))
 				.unwrap()
