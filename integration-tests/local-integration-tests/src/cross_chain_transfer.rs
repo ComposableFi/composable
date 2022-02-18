@@ -7,7 +7,7 @@ use common::{xcmp::BaseXcmWeight, AccountId, Balance};
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 use dali_runtime as picasso_runtime;
 use orml_traits::currency::MultiCurrency;
-use picasso_runtime::{MaxInstructions, UnitWeightCost};
+use picasso_runtime::{MaxInstructions, UnitWeightCost, Assets, System};
 use primitives::currency::*;
 use sp_runtime::assert_eq_error_rate;
 use support::assert_ok;
@@ -1008,10 +1008,10 @@ fn sibling_trap_assets_works() {
 			),
 			sibling_non_native_amount
 		);
-		
+
 		assert_eq!(
 			picasso_runtime::Balances::free_balance(&picasso_runtime::TreasuryAccount::get()),
-			some_native_amount + this_native_treasury_amount, 
+			some_native_amount + this_native_treasury_amount,
 		);
 	});
 }
