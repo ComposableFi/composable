@@ -13,24 +13,24 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-pub mod config;
-
 #[frame_support::pallet]
 pub mod pallet {
-// ----------------------------------------------------------------------------------------------------
-//                                       Imports and Dependencies                                      
-// ----------------------------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------------
+	//                                       Imports and Dependencies                                      
+	// ----------------------------------------------------------------------------------------------------
 	use crate::traits::CurrencyFactory;
-	
+	use core::ops::AddAssign;
+
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		vault::{
 			Deposit as Duration, Vault, VaultConfig,
 		},
 		pool::{
-			Bound, Deposit, ConstantMeanMarket, PoolConfig, WeightsVec,
+			Assets, Bound, ConstantMeanMarket, Deposit, FixedBalance, PoolConfig, PoolInfo, WeightsVec,
 		},
 	};
+
 	use frame_support::{
 		ensure,
 		pallet_prelude::*,
@@ -46,25 +46,23 @@ pub mod pallet {
 
 	use num_integer::Roots;
 	use num_traits::SaturatingSub;
+	use hydra_dx_math::transcendental::pow;
 	use scale_info::TypeInfo;
 
 	use sp_runtime::{
-		helpers_128bit::multiply_by_rational,
+		// helpers_128bit::multiply_by_rational,
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, 
 			Convert, One, Zero,
 		},
-		ArithmeticError, FixedPointNumber, FixedPointOperand/*, FixedU128*/, Perquintill
+		ArithmeticError, FixedPointOperand/*, FixedU128*/, Perquintill
 	};
-	use fixed::{
-		FixedU128,
-		transcendental::pow
-	};
+
 	use sp_std::fmt::Debug;
 	use std::collections::BTreeSet;
 
 	// ----------------------------------------------------------------------------------------------------
-    //                                    Declaration Of The Pallet Type                                           
+	//                                    Declaration Of The Pallet Type                                           
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::pallet]
@@ -72,7 +70,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	// ----------------------------------------------------------------------------------------------------
-    //                                             Config Trait                                            
+	//                                             Config Trait                                            
 	// ----------------------------------------------------------------------------------------------------
 
 	// Configure the pallet by specifying the parameters and types on which it depends.
@@ -122,7 +120,11 @@ pub mod pallet {
 			+ TypeInfo
 			+ Ord;
 
-		// <Self::Vault as Vault>::AssetId
+		// // Native asset used to pay creation fees
+		// type NativeCurrency: TransferNative<Self::AccountId, Balance = Self::Balance>
+		// 	+ MutateNative<Self::AccountId, Balance = Self::Balance>
+		// 	+ MutateHoldNative<Self::AccountId, Balance = Self::Balance>;
+
 		// Generic Currency bounds. These functions are provided by the `[orml-tokens`](https://github.com/open-web3-stack/open-runtime-module-library/tree/HEAD/currencies) pallet.
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
@@ -131,7 +133,21 @@ pub mod pallet {
 		// Converts the `Balance` type to `u128`, which internally is used in calculations.
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 
-		// The asset ID used to pay for rent.
+		// The ID used to uniquely represent Pools
+		type PoolId: AddAssign
+			+ FullCodec
+			+ One
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ Into<u128>
+			+ From<u64>
+			+ TypeInfo;
+
+		// The asset ID used to pay transaction fees.
 		#[pallet::constant]
 		type NativeAssetId: Get<Self::AssetId>;
 
@@ -169,8 +185,6 @@ pub mod pallet {
     //                                             Pallet Types                                           
 	// ----------------------------------------------------------------------------------------------------
 
-	pub type PoolIndex = u64;
-
 	pub type AssetIdOf<T> =
 		<<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
 	
@@ -183,9 +197,8 @@ pub mod pallet {
 	#[allow(missing_docs)]
 	pub type BalanceOf<T> = <T as Config>::Balance;
 
-	// Type alias exists mainly since `crate::config::PoolInfo` has many generic parameters.
-	pub type PoolInfo<T> =
-		crate::config::PoolInfo<AccountIdOf<T>, AssetIdOf<T>>;
+	// Type alias exists mainly since `PoolInfo` has two generic parameters.
+	pub type PoolInfoOf<T> = PoolInfo<AccountIdOf<T>, AssetIdOf<T>>;
 
 	pub type DepositInfo<T> = 
 		Deposit<<T as Config>::AssetId, <T as Config>::Balance>;
@@ -197,66 +210,81 @@ pub mod pallet {
 	// The number of active pools - also used to generate the next pool identifier.
 	#[pallet::storage]
 	#[pallet::getter(fn pool_count)]
-	pub type PoolCount<T: Config> = StorageValue<
-		_, 
-		PoolIndex, 
-		ValueQuery
-	>;
+	pub type PoolCount<T: Config> = StorageValue<_, T::PoolId, ValueQuery>;
 
-	// Mapping of a Pool's index to its PoolInfo struct.
+	// Mapping of a Pool's Id to its PoolInfo struct.
 	#[pallet::storage]
-	#[pallet::getter(fn pool_info_for)]
-	pub type Pools<T: Config> = StorageMap<
-		_, 
-		Twox64Concat, 
-		PoolIndex, 
-		PoolInfo<T>, 
-		ValueQuery
-	>;
+	#[pallet::getter(fn pools)]
+	pub type Pools<T: Config> = 
+		StorageMap<_, Twox64Concat, T::PoolId, PoolInfoOf<T>, ValueQuery>;
 
+	// Assets tracked by the pool
 	#[pallet::storage]
-	#[pallet::getter(fn pool_id_and_asset_id_to_weight)]
-	pub type PoolIdAndAssetIdToWeight<T: Config> = StorageDoubleMap<
+	#[pallet::getter(fn pool_assets)]
+	pub type PoolAssets<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::PoolId, Assets<T::AssetId>>;
+
+	// Weights for each asset in the pool
+	#[pallet::storage]
+	#[pallet::getter(fn pool_asset_weight)]
+	pub type PoolAssetWeight<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		PoolIndex,
+		T::PoolId,
 		Blake2_128Concat,
 		T::AssetId,
 		Perquintill,
 		ValueQuery
 	>;
 
+	// Mapping of the Pool's Id and an Assets Id to the corresponding vault
 	#[pallet::storage]
-	#[pallet::getter(fn pool_id_and_asset_id_to_vault_id)]
-	pub type PoolIdAndAssetIdToVaultId<T: Config> = StorageDoubleMap<
+	#[pallet::getter(fn pool_asset_vault)]
+	pub type PoolAssetVault<T: Config> = StorageDoubleMap<
 		_, 
 		Blake2_128Concat, 
-		PoolIndex, 
+		T::PoolId, 
 		Blake2_128Concat,
 		T::AssetId,
 		<T::Vault as Vault>::VaultId,
 		ValueQuery
 	>;
 
+	// Balance of asset for given pool excluding admin_fee
 	#[pallet::storage]
-	#[pallet::getter(fn pool_id_to_vault_ids)]
-	pub type PoolIdToVaultIds<T: Config> = StorageMap<
-		_, 
-		Twox64Concat, 
-		PoolIndex, 
-		Vec<<T::Vault as Vault>::VaultId>,
-		ValueQuery
+	#[pallet::getter(fn pool_asset_balance)]
+	// Absence of pool asset balance is equivalent to 0, so ValueQuery is allowed.
+	#[allow(clippy::disallowed_type)]
+	pub type PoolAssetBalance<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::PoolId,
+		Blake2_128Concat,
+		T::AssetId,
+		T::Balance,
+		ValueQuery,
 	>;
 
+	// Balance of asset for given pool including admin_fee
 	#[pallet::storage]
-	#[pallet::getter(fn lp_token_to_pool_id)]
-	pub type LpTokenToPoolId<T: Config> = StorageMap<
-		_, 
-		Twox64Concat, 
-		T::AssetId, 
-		PoolIndex, 
-		ValueQuery
+	#[pallet::getter(fn pool_asset_total_balance)]
+	// Absence of pool asset balance is equivalent to 0, so ValueQuery is allowed.
+	#[allow(clippy::disallowed_type)]
+	pub type PoolAssetTotalBalance<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::PoolId,
+		Blake2_128Concat,
+		T::AssetId,
+		T::Balance,
+		ValueQuery,
 	>;
+
+
+	// #[pallet::storage]
+	// #[pallet::getter(fn lp_token_to_pool_id)]
+	// pub type LpTokenToPoolId<T: Config> = 
+	// 	StorageMap<_, Twox64Concat, T::AssetId, T::PoolId, ValueQuery>;
 
 	// ----------------------------------------------------------------------------------------------------
     //                                            Runtime Events                                          
@@ -269,9 +297,9 @@ pub mod pallet {
 		// Emitted after a pool has been created. [pool_id]
 		PoolCreated {
 			// The (incremented) ID of the created pool.
-			pool_id: PoolIndex,
+			pool_id: T::PoolId,
 			// The configuration info related to the pool just created.
-			pool_info: PoolInfo<T>,
+			pool_info: PoolInfoOf<T>,
 		},
 
 		// Emitted after a user deposits assets into a pool.
@@ -279,7 +307,7 @@ pub mod pallet {
 			// The account issuing the deposit.
 			account: AccountIdOf<T>,
 			// The pool deposited into.
-			pool_id: PoolIndex,
+			pool_id: T::PoolId,
 			// The asset ids and corresponding amount deposited.
 			deposited: Vec<DepositInfo<T>>,
 			// The number of LP tokens minted for the deposit.
@@ -291,7 +319,7 @@ pub mod pallet {
 			// The account issuing the deposit.
 			account: AccountIdOf<T>,
 			// The pool deposited into.
-			pool_id: PoolIndex,
+			pool_id: T::PoolId,
 			// The asset ids and corresponding amount withdrawn.
 			withdrawn: Vec<DepositInfo<T>>,
 			// The number of LP tokens burned from the withdraw.
@@ -332,9 +360,30 @@ pub mod pallet {
 		// Creating a pool of size n with a creation_fee less than the required amount results in:
 		CreationFeeIsInsufficient,
 
+		// Users issuing a request with a pool id that doesn't correspond to an active (created) 
+		//     Pool results in:
+		PoolDoesNotExist,
+
+		// Trying to deposit a number of assets not equivalent to the Pool's underlying assets
+		//     results in:
+		ThereMustBeOneDepositForEachAssetInThePool,
+
+		// Trying to make a deposits where one or more the the asset amounts is ≤ zero results in:
+		DepositsMustBeStrictlyPositive,
+
 		// Trying to create a pool (that represents N assets) when the issuer has less than 
 		//     N * (CreationFee + ExistentialDeposit) native tokens results in:
 		IssuerDoesNotHaveBalanceTryingToDeposit,
+
+		// Trying to deposit an asset amount that is either:
+		//	   i.  deposit_amount < pool_deposit_minimum
+		//	   ii. pool_deposit_maximum < deposit_amount
+		// results in:
+		DepositIsOutsideOfPoolsDepositBounds,
+
+		// Trying to deposit a group of assets with a value distribution that does not match the Pool's 
+		//     value distribution results in:
+		DepositDoesNotMatchUnderlyingValueDistribution,
 
 		// Issues that arise when transfering funds from the user to pools account results in:
 		DepositingIntoPoolFailed,
@@ -345,16 +394,8 @@ pub mod pallet {
 
 
 
-		// Trying to deposit a number of assets not equivalent to the Pool's underlying assets
-		//     results in:
-		ThereMustBeOneDepositForEachAssetInThePool,
-
 		// Failure to create an LP tokens during pool creation results in:
 		ErrorCreatingLpTokenForPool,
-
-		// Users issuing a request with a pool id that doesn't correspond to an active (created) 
-		//     Pool results in:
-		PoolDoesNotExist,
 
 		// Users depositing assets into a pool with a ratio that doesn't match the ratio from the pools
 		//     weighting metric results in:
@@ -420,7 +461,7 @@ pub mod pallet {
 		// #[pallet::weight(10_000)]
 		// pub fn deposit(
 		// 	origin: OriginFor<T>,
-		// 	pool_id: PoolIndex,
+		// 	pool_id: T::PoolId,
 		// 	deposits: Vec<Deposit<T::AssetId, T::Balance>>,
 		// ) -> DispatchResultWithPostInfo {
 		// 	// Requirement 0) this extrinsic must be signed 
@@ -435,7 +476,7 @@ pub mod pallet {
 		// #[pallet::weight(10_000)]
 		// pub fn single_asset_deposit(
 		// 	origin: OriginFor<T>,
-		// 	pool_id: PoolIndex,
+		// 	pool_id: T::PoolId,
 		// 	deposits: Deposit<T::AssetId, T::Balance>,
 		// ) ->  DispatchResultWithPostInfo {
 		// 	// Requirement 0) this extrinsic must be signed 
@@ -456,7 +497,7 @@ pub mod pallet {
 		// #[pallet::weight(10_000)]
 		// pub fn withdraw(
 		// 	origin: OriginFor<T>,
-		// 	pool_id: PoolIndex,
+		// 	pool_id: T::PoolId,
 		// 	lp_amount: T::Balance,
 		// ) -> DispatchResultWithPostInfo {
 		// 	// Requirement 0) this extrinsic must be signed 
@@ -475,20 +516,21 @@ pub mod pallet {
 		type AccountId = AccountIdOf<T>;
 		type Balance = BalanceOf<T>;
 		type AssetId = AssetIdOf<T>;
+		type Weight = Perquintill;
 
-		type PoolId = PoolIndex;
-		type PoolInfo = PoolInfo<T>;
+		type PoolId = T::PoolId;
+		type PoolInfo = PoolInfoOf<T>;
 
 		fn account_id(pool_id: &Self::PoolId) -> Self::AccountId {
 			T::PalletId::get().into_sub_account(pool_id)
 		}
-
-		fn pool_info(pool_id: &PoolIndex) -> Result<PoolInfo<T>, DispatchError> {
+		
+		fn pool_info(pool_id: &Self::PoolId) -> Result<Self::PoolInfo, DispatchError> {
 			Ok(Pools::<T>::try_get(pool_id).map_err(|_err| Error::<T>::PoolDoesNotExist)?)
 		}
 
 		fn lp_token_id(pool_id: &Self::PoolId) -> Result<Self::AssetId, DispatchError> {
-			Ok(Self::pool_info(pool_id)?.lp_token_id)
+			Ok(Self::pool_info(pool_id)?.lp_token)
 		}
 
 		fn lp_circulating_supply(pool_id: &Self::PoolId) -> Result<Self::Balance, DispatchError> {
@@ -497,8 +539,23 @@ pub mod pallet {
 			Ok(T::Currency::total_issuance(lp_token_id))
 		}
 
+		fn reserves_of(pool_id: &Self::PoolId) -> Result<Vec<Deposit<Self::AssetId, Self::Balance>>, DispatchError> {
+			let assets = PoolAssets::<T>::try_get(pool_id).map_err(|_err| Error::<T>::PoolDoesNotExist)?;
+
+			let mut reserves = Vec::<Deposit<Self::AssetId, Self::Balance>>::new();
+
+			for asset in assets {
+				reserves.push(Deposit {
+					asset_id: asset,
+					amount:   Self::balance_of(pool_id, &asset)?,
+				});
+			}
+
+			Ok(reserves)
+		}
+
 		fn balance_of(pool_id: &Self::PoolId, asset_id: &Self::AssetId) -> Result<Self::Balance, DispatchError> {
-			let vault_id = &PoolIdAndAssetIdToVaultId::<T>::get(pool_id, asset_id);
+			let vault_id = &PoolAssetVault::<T>::get(pool_id, asset_id);
 			let vault_lp_token_id = T::Vault::lp_asset_id(&vault_id)?;
 		
 			let pool_account = &Self::account_id(pool_id);
@@ -506,19 +563,8 @@ pub mod pallet {
 			Ok(T::Currency::balance(vault_lp_token_id, pool_account))
 		}
 
-		fn reserves_of(pool_id: &Self::PoolId) -> Result<Vec<Deposit<Self::AssetId, Self::Balance>>, DispatchError> {
-			let assets = &Self::pool_info(pool_id)?.assets;
-
-			let mut reserves = Vec::<Deposit<Self::AssetId, Self::Balance>>::new();
-
-			for asset in assets {
-				reserves.push(Deposit {
-					asset_id: *asset,
-					amount:   Self::balance_of(pool_id, asset)?,
-				});
-			}
-
-			Ok(reserves)
+		fn weight_of(pool_id: &Self::PoolId, asset_id: &Self::AssetId) -> Result<Self::Weight, DispatchError> {
+			Ok(Self::pool_asset_weight(pool_id, asset_id))
 		}
 
 		// Validates the Pool's configuration parameters, and creates a new Pool if the config is valid. 
@@ -603,12 +649,8 @@ pub mod pallet {
 
 			// ---------- User Requirements ----------
 			// Requirement 8) The user who issued must have the balance they are trying to deposit
-			// TODO:
-			//  - move this check into its own function "user_has_specified_balance_for_asset"
-			//  - create another function "user_has_specified_balance_for_deposit" which calls the
-			//        above function for each asset in the deposit
 			ensure!(
-				creation_fee.amount <= T::Currency::balance(T::NativeAssetId::get(), &from), 
+				Self::user_has_specified_balance_for_asset(&from, T::NativeAssetId::get(), creation_fee.amount),
 				Error::<T>::IssuerDoesNotHaveBalanceTryingToDeposit
 			);
 			
@@ -636,6 +678,11 @@ pub mod pallet {
 		//
 		// # Requirements
 		// 		i.    pool id p_i ⇒ exists
+		//		ii.	  ∀ asset a_i in pool : ∃ asset a_i in deposit
+		//		iii.  ∀ asset a_i in deposit : dep_i > 0
+		//		iv.   ∀ asset a_i in deposit : user_balance_i >= dep_i
+		//		v.	  ∀ asset a_i in deposit : dep_min <= dep_i <= dep_max
+		//		vi.	  ∀ asset a_i in deposit : (dep_i / Σ dep_j) = (pool_balance_i / Σ pool_balance_j)
 		//
 		// # Errors
 		//  - When pool_id doesn't correspond to an existing pool.
@@ -652,80 +699,43 @@ pub mod pallet {
 		) -> Result<T::Balance, DispatchError> {
 			// Requirement 1) the desired pool index must exist
 			ensure!(Pools::<T>::contains_key(pool_id), Error::<T>::PoolDoesNotExist);
+		
+			// Requirement 2) For each of the Pool's underlying assets there is a deposit of that asset
+			ensure!(
+				Self::there_is_one_deposit_for_each_underlying_asset(pool_id, &deposits)?,
+				Error::<T>::ThereMustBeOneDepositForEachAssetInThePool
+			);
 
-			// // Requirement 2) the user who issued the extrinsic must have the total balance trying to deposit
-			// for deposit in &deposits {
-			// 	ensure!(
-			// 		T::Currency::balance(deposit.asset_id, &from) >= deposit.amount, 
-			// 		Error::<T>::IssuerDoesNotHaveBalanceTryingToDeposit
-			// 	);
-			// }
-			
-			// let pool_info = Self::pool_info(pool_id)?;
+			let reserve_total: BalanceOf<T> = Self::reserves_of(pool_id)?.iter()
+				.fold(T::Balance::zero(), |total, reserve| total + reserve.amount);
+			let deposit_total: BalanceOf<T> = deposits.iter()
+				.fold(T::Balance::zero(), |total, reserve| total + reserve.amount);
 
-			// // Requirement 3) There must be one deposit for each asset in the pool
-			// // TODO (Nevin):
-			// //  - doesn't properly check for one to one. if one asset isn't in the deposit
-			// //        and one is listed twice then it still passes. need to check for 
-			// //        unique occurences of each asset = assets underlying the pool
-			// ensure!(
-			// 	pool_info.asset_ids.len() == deposits.len(),
-			// 	Error::<T>::ThereMustBeOneDepositForEachAssetInThePool
-			// );
+			for deposit in &deposits {
+				// Requirement 3) deposit amount is stictly positive
+				ensure!(
+					deposit.amount > T::Balance::zero(),
+					Error::<T>::DepositsMustBeStrictlyPositive
+				);
 
-			// for deposit in &deposits {
-			// 	ensure!(
-			// 		PoolIdAndAssetIdToVaultId::<T>::contains_key(pool_id, &deposit.asset_id),
-			// 		Error::<T>::ThereMustBeOneDepositForEachAssetInThePool
-			// 	);
-			// }
+				// Requirement 4) the user who issued the extrinsic must have the total balance trying to deposit
+				ensure!(
+					Self::user_has_specified_balance_for_asset(&from, deposit.asset_id, deposit.amount),
+					Error::<T>::IssuerDoesNotHaveBalanceTryingToDeposit
+				);
 
-			// // Requirement 4) The amount of each asset being deposited must be larger than
-			// //     the pools minimum deposit value and smaller than the pools maximum
-			// //     deposit value
-			
-			// // TODO (Nevin):
-			// //  - empty pools should have a minimum deposit not based on the percentage of pools assets
+				// Requirement 5) if there are assets, deposit is within the pools min/max deposit bounds
+				ensure!(
+					Self::deposit_is_within_pools_deposit_bounds(pool_id, deposit)?,
+					Error::<T>::DepositIsOutsideOfPoolsDepositBounds
+				);
 
-			// let lp_circulating_supply = Self::lp_circulating_supply(pool_id)?;
-			// if lp_circulating_supply != T::Balance::zero() {
-			// 	for deposit in &deposits {
-			// 		let pool_balance_of_token = Self::balance_of(pool_id, &deposit.asset_id)?;
-	
-			// 		// Asset amount to deposit must be greater than the pools deposit minimum
-			// 		let min_deposit = Self::percent_of(pool_info.deposit_min, pool_balance_of_token);
-			// 		ensure!(
-			// 			deposit.amount > min_deposit,
-			// 			Error::<T>::AmountMustBeGreaterThanMinimumDeposit
-			// 		);
-	
-			// 		// Asset amount to deposit must be less than the pools deposit maximum
-			// 		let max_deposit = Self::percent_of(pool_info.deposit_max, pool_balance_of_token);
-			// 		ensure!(
-			// 			deposit.amount < max_deposit,
-			// 			Error::<T>::AmountMustBeLessThanMaximumDeposit
-			// 		);
-			// 	}
-			// }
-
-			// // Requirement 5) Ensure that deposit amount follow the pools weighting metric with some margin of error (T::Epsilon)
-			// let mut total: u128 = 0;
-			// deposits.iter().for_each(|deposit| 
-			// 	total += <T::Convert as Convert<T::Balance, u128>>::convert(deposit.amount)
-			// );
-			
-			// // allow for a margin of error
-			// let epsilon = T::Epsilon::get();
-
-			// for deposit in &deposits{				
-			// 	let weight = PoolIdAndAssetIdToWeight::<T>::get(&pool_id, deposit.asset_id);
-			
-			// 	let amount = <T::Convert as Convert<T::Balance, u128>>::convert(deposit.amount);
-			// 	ensure!(
-			// 		(weight * total) - (epsilon * total) <= amount && amount <= (weight * total) + (epsilon * total),
-			// 		Error::<T>::DepositDoesNotMatchWeightingMetric
-			// 	);
-			// }
+				// Requirement 6) deposit amounts match the pools current reserve ratio
+				ensure!(
+					Self::deposit_matches_underlying_value_distribution(pool_id, deposit, deposit_total, reserve_total)?,
+					Error::<T>::DepositDoesNotMatchUnderlyingValueDistribution
+				);
+			}
 
 			let lp_tokens_minted = Self::do_deposit(&from, &pool_id, deposits.clone())?;
 			
@@ -738,16 +748,6 @@ pub mod pallet {
 
 			Ok(lp_tokens_minted)
 		}
-
-		// fn single_asset_deposit(
-		// 	from: &Self::AccountId,
-		// 	pool_id: &Self::PoolId,
-		// 	deposit: Deposit<Self::AssetId, Self::Balance>,
-		// ) -> Result<Self::Balance, DispatchError> {
-		// 	let lp_tokens_minted = Self::do_single_asset_deposit(&from, &pool_id, deposit.clone())?;
-
-		// 	Ok(lp_tokens_minted)
-		// }
 
 		// // Withdraw assets from the pool by supplying the pools native LP token. Withdrawn assets are
 		// //     removed from the respective underlying vault accounts and transfered into the issuers 
@@ -858,17 +858,20 @@ pub mod pallet {
 
 		// 	// Requirement 3) Persist PoolId and AssetId to Weight mapping in storage
 		// 	for share in &weights {
-		// 		PoolIdAndAssetIdToWeight::<T>::insert(&pool_id, share.asset_id, share.weight);
+		// 		PoolAssetWeight::<T>::insert(&pool_id, share.asset_id, share.weight);
 		// 	}
 
 		// 	Ok(())
 		// }
 	}
 
-	// Helper functions - core functionality
+	// ----------------------------------------------------------------------------------------------------
+	//                                 Helper Functions - Core Functionality                               
+	// ----------------------------------------------------------------------------------------------------
+
 	impl<T: Config> Pallet<T> {
-		// Helper function for the the create extrinsic. Obtains a new LP Token Id for the pool, creates a 
-		//     vault for each asset desired in the pool, and saves all important info into storage
+		// Helper function for the the create trait function. Obtains a new LP Token Id for the pool, creates a 
+		//     vault for each asset desired in the pool, and saves all important info into runtime storage
 		//
 		// # Errors
 		//  - When their is an issue creating an lp token for the pool.
@@ -879,15 +882,15 @@ pub mod pallet {
 			from: T::AccountId,
 			config: PoolConfig<AccountIdOf<T>, AssetIdOf<T>>,
 			creation_fee: Deposit<AssetIdOf<T>, BalanceOf<T>>,
-		) -> Result<(PoolIndex, PoolInfo<T>), DispatchError>  {
+		) -> Result<(T::PoolId, PoolInfoOf<T>), DispatchError>  {
 			PoolCount::<T>::try_mutate(|id| {
 				let id = {
-					*id += 1;
+					*id += One::one();
 					*id
 				};
 
 				// Requirement 1) Obtain a new asset id for this pools lp token 
-				let lp_token_id =
+				let lp_token =
 					{ T::CurrencyFactory::create().map_err(|_| Error::<T>::ErrorCreatingLpTokenForPool)? };
 
 				let account_id = Self::account_id(&id);
@@ -914,55 +917,49 @@ pub mod pallet {
 						},
 					)?;
 					
-					PoolIdAndAssetIdToVaultId::<T>::insert(id, asset_id, vault_id.clone());
+					PoolAssetVault::<T>::insert(id, asset_id, vault_id.clone());
 				}
 
 				// Requirement 3) Transfer native tokens from users account to pools account
 				let pool_account = &Self::account_id(&id);
-				T::Currency::transfer(creation_fee.asset_id, &from, pool_account, creation_fee.amount, true)
+				T::Currency::transfer(T::NativeAssetId::get(), &from, pool_account, creation_fee.amount, true)
 					.map_err(|_| Error::<T>::DepositingIntoPoolFailed)?;
-
-				// Requirement 4) Transfer a portion of the cretion fee into each vault
-				let vault_creation_fee = T::ExistentialDeposit::get() + T::CreationFee::get();
-
-				for asset_id in &config.assets {
-					T::Currency::transfer(
-						creation_fee.asset_id,
-						&pool_account,
-						&<T::Vault as Vault>::account_id(&PoolIdAndAssetIdToVaultId::<T>::get(id, asset_id)),
-						vault_creation_fee,
-						true,
-					).map_err(|_| Error::<T>::DepositingIntoVaultFailed)?;
-				}
 				
-				// Requirement 5) Save each assets weights in global storage
+				// Requirement 4) Save the pools assets in global storage
+				PoolAssets::<T>::insert(&id, config.assets);
+
+				// Requirement 5) Save each assets weight in global storage
 				for share in &config.weights {
-					PoolIdAndAssetIdToWeight::<T>::insert(&id, share.asset_id, share.weight);
+					PoolAssetWeight::<T>::insert(&id, share.asset_id, share.weight);
 				}
 
 				// Requirement 6) Keep track of the pool's configuration
-				let pool_info = PoolInfo::<T> {
-					manager:		 config.manager,
-					assets:			 config.assets,
+				let pool_info = PoolInfoOf::<T> {
+					owner:		 	 config.owner,
+					lp_token:		 lp_token,
+					fee: 			 config.fee,
 					asset_bounds:	 config.asset_bounds,
-					weights:		 config.weights,
 					weight_bounds:	 config.weight_bounds,
 					deposit_bounds:	 config.deposit_bounds,
 					withdraw_bounds: config.withdraw_bounds,
-					transaction_fee: config.transaction_fee,
-					lp_token_id,
 				};
-
 				Pools::<T>::insert(id, pool_info.clone());
-				LpTokenToPoolId::<T>::insert(lp_token_id, id);
 
 				Ok((id, pool_info))
 			})
 		}
 
+		// Helper function for the the deposit trait funciton. Transfers deposit into pool, mints
+		//	   LP tokens for the user, and saves all important info into runtime storage
+		//
+		// # Errors
+		//  - When their is an issue creating an lp token for the pool.
+		//  - When there is an issue creating an underlying vault.
+		//  - When any `deposit` < `CreationFee` + `ExistentialDeposit`.
+		//  - When the issuer has insufficient funds to lock each deposit.
 		fn do_deposit(
 			from: &T::AccountId,
-			pool_id: &PoolIndex,
+			pool_id: &T::PoolId,
 			deposits: Vec<Deposit<T::AssetId, T::Balance>>,
 		) -> Result<T::Balance, DispatchError> {
 			
@@ -972,15 +969,20 @@ pub mod pallet {
 			// TODO (Nevin):
 			//  - transfer all assets into the pool's account before beginning
 			//     '-> should be its own function to abstract away details
+			//  - check all deposits can happen before doing the deposits
+			//     `-> T::Currency::can_deposit(asset, from, to)
 
-			// Requirement 1) Deposit each asset into the pool's underlying vaults
+			// Requirement 1) Calculate the number of LP tokens that need to be minted
+			let lp_tokens_to_mint = Self::calculate_lp_tokens_to_mint(&pool_id, &deposits)?;
+
+			// Requirement 2) Deposit each asset into the pool's underlying vaults
 			for deposit in &deposits {
 				// TODO (Nevin):
 				//  - check for errors in vault depositing, and if so revert all deposits so far
 				//     '-> surround T::Vault::deposit call in match statement checking for Ok(lp_token_amount)
 				//             and DispatchError
 
-				let vault_id = &PoolIdAndAssetIdToVaultId::<T>::get(pool_id, deposit.asset_id);
+				let vault_id = &PoolAssetVault::<T>::get(pool_id, deposit.asset_id);
 
 				T::Currency::transfer(deposit.asset_id, &from, to, deposit.amount, true)
 					.map_err(|_| Error::<T>::DepositingIntoPoolFailed)?;
@@ -989,43 +991,23 @@ pub mod pallet {
 					vault_id,
 					to,
 					deposit.amount,
-				)?;
+				).map_err(|_| Error::<T>::DepositingIntoPoolFailed)?;
+				
+				// Requirement 3) Update the pool's reserve runtime storage objects
+				Self::increase_pool_asset_balance_storage(pool_id,&deposit.asset_id,&deposit.amount)?;
+				Self::increase_pool_asset_total_balance_storage(pool_id,&deposit.asset_id,&deposit.amount)?;
 			}
 
-			// Requirement 2) Calculate the number of lp tokens to mint as a result of this deposit
-			//  |-> when depositig funds to an empty pool, initialize lp token ratio to
-			//  |       the weighted gemoetric mean of the amount deposited. (generalizes Uniswap V2's 
-			//  |       methodology for minting lp tokens when pool is empty)
-			//  '-> when depositing funds to a non-empty pool, the amount of lp tokens minted
-			//          should be equivalent to the product of the current curculating supply
-			//          of lp tokens for this pool and the ratio of assets deposited to the
-			//          pools balance of the tokens
-
-			let lp_circulating_supply = Self::lp_circulating_supply(pool_id)?;
-			let lp_tokens_to_mint = if lp_circulating_supply == T::Balance::zero() {
-				// TODO (Jesper):
-				//  - accounting for MIN LIQ too like uniswap (to avoid sybil, and other issues)
-
-				Self::weighted_geometric_mean(&pool_id)
-			} else {
-				Self::calculate_lp_tokens_to_mint(&pool_id, &deposits)
-			}.map_err(|_| ArithmeticError::Overflow)?;
-
-			// Requirement 3) Mint Pool's lp tokens into the issuers account and update 
-			//     circulating supply of lp tokens
-
-			T::Currency::mint_into(pool_info.lp_token_id, from, lp_tokens_to_mint)
+			// Requirement 4) Mint the calling user LP tokens for the deposit
+			T::Currency::mint_into(pool_info.lp_token, from, lp_tokens_to_mint)
 				.map_err(|_| Error::<T>::FailedToMintLpTokens)?;
-
-			// pool_info.lp_circulating_supply = pool_info.lp_circulating_supply + lp_tokens_to_mint;
-			// Pools::<T>::insert(&pool_id, pool_info);
 
 			Ok(lp_tokens_to_mint)
 		}
 
 		// fn do_single_asset_deposit(
 		// 	from: &T::AccountId,
-		// 	pool_id: &PoolIndex,
+		// 	pool_id: &T::PoolId,
 		// 	deposits: Deposit<T::AssetId, T::Balance>,
 		// ) -> Result<T::Balance, DispatchError> {
 		// 	let lp_circulating_supply = <Self as Pool>::lp_circulating_supply(pool_id);
@@ -1037,7 +1019,7 @@ pub mod pallet {
 
 		// fn do_withdraw(
 		// 	to: &T::AccountId,
-		// 	pool_id: &PoolIndex,
+		// 	pool_id: &T::PoolId,
 		// 	lp_amount: T::Balance,
 		// ) -> Result<Vec<Deposit<T::AssetId, T::Balance>>, DispatchError> {
 		// 	let pool_account = &Self::account_id(pool_id);
@@ -1050,7 +1032,7 @@ pub mod pallet {
 
 		// 	// Requirement 1) Calculate and withdraw the lp tokens share of the each asset in the pool
 		// 	for asset_id in &pool_info.asset_ids {
-		// 		let vault_id = &PoolIdAndAssetIdToVaultId::<T>::get(pool_id, asset_id);
+		// 		let vault_id = &PoolAssetVault::<T>::get(pool_id, asset_id);
 		// 		let pool_balance_of_token = Self::balance_of(pool_id, asset_id)?;
 
 		// 		// Calculate the percentage of the pool's assets that correspond to the deposited lp tokens
@@ -1090,9 +1072,11 @@ pub mod pallet {
 		// }
 	}
 
+	// ----------------------------------------------------------------------------------------------------
+    //                                  Helper functions - Validity Checks                                 
+	// ----------------------------------------------------------------------------------------------------
 
-	// Helper functions - validity checks
-	//     these functions are claled by the Constant Mean Market trait functions to validate the 
+	// These functions are caled by the Constant Mean Market trait functions to validate the 
 	//     input parameters and state space
 	impl<T: Config> Pallet<T> {
 
@@ -1173,18 +1157,259 @@ pub mod pallet {
 
 			true
 		}
+
+		// Checks that, for an all-asset deposit, there is actually one deposit for each asset
+		pub fn there_is_one_deposit_for_each_underlying_asset(
+			pool_id: &T::PoolId, 
+			deposits: &Vec<Deposit<AssetIdOf<T>, BalanceOf<T>>>,
+		) -> Result<bool, DispatchError> {
+			let underlying_assets: Assets<AssetIdOf<T>> = PoolAssets::<T>::get(&pool_id)
+				.ok_or(Error::<T>::PoolDoesNotExist)?;
+
+			let underlying_assets: BTreeSet::<AssetIdOf<T>> = 
+				BTreeSet::<AssetIdOf<T>>::from_iter(underlying_assets.iter().copied());
+
+			let deposit_assets: BTreeSet::<AssetIdOf<T>> = 
+				BTreeSet::<AssetIdOf<T>>::from_iter(deposits.iter().map(|deposit| deposit.asset_id));
+
+			Ok(underlying_assets == deposit_assets)
+		}
+
+		// Checks that the specified user has at least *amount* of *asset* for each asset in the deposit
+		//  '-> Conditions:
+		//        i. ∀ assets a_i : amount ≤ user_balance
+		pub fn user_has_specified_balance_for_deposits(
+			user: &T::AccountId,
+            deposits: &Vec<Deposit<AssetIdOf<T>, BalanceOf<T>>>                                                                                                                                            
+		) -> bool {
+			for deposit in deposits {
+				if !Self::user_has_specified_balance_for_asset(user, deposit.asset_id, deposit.amount) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		// Checks that the specified user has at least *amount* of *asset*
+		//  '-> Conditions:
+		//        i. amount ≤ user_balance
+		pub fn user_has_specified_balance_for_asset(
+			user: &T::AccountId,
+			asset: T::AssetId,
+			amount: T::Balance
+		) -> bool {
+			amount <= T::Currency::balance(asset, user)
+		}
+
+		// Redirects to the correct validity check method depending on if the pool is empty or not as
+		//     initial deposits have different requirements for deposit bounds.
+		pub fn deposit_is_within_pools_deposit_bounds(
+			pool_id: &T::PoolId, 
+			deposit: &Deposit<AssetIdOf<T>, BalanceOf<T>>
+		) -> Result<bool, DispatchError> {
+			let lp_circulating_supply = Self::lp_circulating_supply(pool_id)?;
 			
+			if lp_circulating_supply == (BalanceOf::<T>::zero()) {
+				Self::deposit_is_within_empty_pools_deposit_bounds(pool_id, deposit)
+			} else {
+				Self::deposit_is_within_nonempty_pools_deposit_bounds(pool_id, deposit)
+			}
+		}
+
+		// Checks that the specified deposit is within initial static deposit minimum and maximum bounds
+		pub fn deposit_is_within_empty_pools_deposit_bounds(
+			_pool_id: &T::PoolId, 
+			_deposit: &Deposit<AssetIdOf<T>, BalanceOf<T>>
+		) -> Result<bool, DispatchError> {
+			// TODO (Nevin):
+			//  - allow pool configurations to have initial deposit limits or have a default initial deposit limit
+
+			Ok(true)
+		}
+
+		// Checks that the specified deposit is greater than or equal to the pools reserves of that asset times 
+		//     the pools deposit-minimum percentage and less than or equal to the pools reserves of that asset
+		//     times the pools deposit-maximum percentage
+		pub fn deposit_is_within_nonempty_pools_deposit_bounds(
+			pool_id: &T::PoolId, 
+			deposit: &Deposit<AssetIdOf<T>, BalanceOf<T>>
+		) -> Result<bool, DispatchError> {
+			let asset: AssetIdOf<T> = deposit.asset_id;
+
+			// Version 1: ~219 seconds for 10_000 runs of 
+			// depositing_into_a_non_empty_pool_with_duplicate_deposits_correctly_mints_lp_tokens
+			{
+			// let deposit = <T::Convert as Convert<T::Balance, u128>>::convert(deposit.amount);
+
+			// let reserve = Self::balance_of(pool_id, &asset)?;
+			// let reserve = <T::Convert as Convert<T::Balance, u128>>::convert(reserve);
+
+			// let deposit_bounds: Bound<Perquintill> = Self::pool_info(pool_id)?.deposit_bounds;
+			// let lower_bound = deposit_bounds.minimum * reserve;
+			// let upper_bound = deposit_bounds.maximum * reserve;
+
+			// Ok(lower_bound <= deposit && deposit <= upper_bound)
+			}
+			
+			// Version 2: ~217 seconds for 10_000 runs of 
+			// depositing_into_a_non_empty_pool_with_duplicate_deposits_correctly_mints_lp_tokens
+			
+			// TODO: (Kevin)
+			//  - there is a lot of boiler plate code here - maybe make a new type or set of functions
+			//    that can remove some of this repetitiveness
+			
+			let deposit: u128 = 
+				<T::Convert as Convert<BalanceOf<T>, u128>>::convert(deposit.amount);
+			let deposit: FixedBalance = FixedBalance::saturating_from_num(deposit);
+
+			let reserve: BalanceOf<T> = Self::balance_of(pool_id, &asset)?;
+			let reserve: u128 = 
+				<T::Convert as Convert<BalanceOf<T>, u128>>::convert(reserve);
+			let reserve: FixedBalance = FixedBalance::saturating_from_num(reserve);
+
+			let deposit_bounds: Bound<Perquintill> = Self::pool_info(pool_id)?.deposit_bounds;
+			let lower_bound: FixedBalance = FixedBalance::from_num(
+				deposit_bounds.minimum.deconstruct() as f64 / Perquintill::one().deconstruct() as f64
+			);
+			let lower_bound: FixedBalance = lower_bound.checked_mul(reserve).ok_or(ArithmeticError::Overflow)?;
+
+			let upper_bound: FixedBalance = FixedBalance::from_num(
+				deposit_bounds.maximum.deconstruct() as f64 / Perquintill::one().deconstruct() as f64
+			);
+			let upper_bound: FixedBalance = upper_bound.checked_mul(reserve).ok_or(ArithmeticError::Overflow)?;
+
+			Ok(lower_bound <= deposit && deposit <= upper_bound)
+		}
+
+		// Checks that the value distribution of the deposited asset (deposit.amount / deposit_total) matches
+		//     that of the underlying pool's reserves.
+		pub fn deposit_matches_underlying_value_distribution(
+			pool_id: &T::PoolId, 
+			deposit: &Deposit<AssetIdOf<T>, BalanceOf<T>>,
+			deposit_total: BalanceOf<T>,
+			reserve_total: BalanceOf<T>
+		) -> Result<bool, DispatchError> {
+			let lp_circulating_supply = Self::lp_circulating_supply(pool_id)?;
+			
+			if lp_circulating_supply == (BalanceOf::<T>::zero()) { 
+				return Ok(true);
+			}
+
+			// Version 1: ~220 seconds for 10_000 runs of 
+			// depositing_into_a_non_empty_pool_with_duplicate_deposits_correctly_mints_lp_tokens
+			{
+			// let asset: AssetIdOf<T> = deposit.asset_id;
+			
+			// let epsilon = T::Epsilon::get();
+
+			// let deposit = <T::Convert as Convert<T::Balance, u128>>::convert(deposit.amount);
+			// let deposit_total = <T::Convert as Convert<T::Balance, u128>>::convert(deposit_total);
+			// let deposit_value_distribution = multiply_by_rational(1, deposit, deposit_total)
+			// 	.map_err(|_| ArithmeticError::Overflow)?;
+
+			// let reserve: BalanceOf<T> = Self::balance_of(pool_id, &asset)?;
+			// let reserve: u128 = <T::Convert as Convert<BalanceOf<T>, u128>>::convert(reserve);
+			// let reserve_total = <T::Convert as Convert<T::Balance, u128>>::convert(reserve_total);
+			// let reserve_value_distribution = multiply_by_rational(1, reserve, reserve_total)
+			// 	.map_err(|_| ArithmeticError::Overflow)?;
+
+			// let margin_of_error = epsilon * reserve_value_distribution;
+			// let lower_bound = reserve_value_distribution - margin_of_error;
+			// let upper_bound = reserve_value_distribution + margin_of_error;
+
+			// Ok(lower_bound <= deposit_value_distribution && deposit_value_distribution <= upper_bound)
+			}
+
+			// Version 2: ~217 seconds for 10_000 runs of
+			//depositing_into_a_non_empty_pool_with_duplicate_deposits_correctly_mints_lp_tokens
+			let asset: AssetIdOf<T> = deposit.asset_id;
+			
+			let deposit: u128 =
+				<T::Convert as Convert<T::Balance, u128>>::convert(deposit.amount);
+			let deposit: FixedBalance = FixedBalance::saturating_from_num(deposit);
+
+			let deposit_total: u128 =
+				<T::Convert as Convert<T::Balance, u128>>::convert(deposit_total);
+			let deposit_total: FixedBalance = FixedBalance::saturating_from_num(deposit_total);
+
+			let deposit_value_distribution: FixedBalance = deposit.checked_div(deposit_total)
+				.ok_or(ArithmeticError::Overflow)?;
+
+			let reserve: T::Balance = Self::balance_of(pool_id, &asset)?;
+			let reserve: u128 =
+				<T::Convert as Convert<T::Balance, u128>>::convert(reserve);
+			let reserve: FixedBalance = FixedBalance::saturating_from_num(reserve);
+
+			let reserve_total: u128 =
+				<T::Convert as Convert<T::Balance, u128>>::convert(reserve_total);
+			let reserve_total: FixedBalance = FixedBalance::saturating_from_num(reserve_total);
+
+			let reserve_value_distribution: FixedBalance = reserve.checked_div(reserve_total)
+				.ok_or(ArithmeticError::Overflow)?;
+
+			let margin_of_error: Perquintill = T::Epsilon::get();
+			let margin_of_error: FixedBalance = FixedBalance::from_num(
+				margin_of_error.deconstruct() as f64 / Perquintill::one().deconstruct() as f64
+			);
+
+			let lower_bound = reserve_value_distribution - margin_of_error;
+			let upper_bound = reserve_value_distribution + margin_of_error;
+
+			Ok(lower_bound <= deposit_value_distribution && deposit_value_distribution <= upper_bound)
+		}
 	}
 
-	// Helper functions - low-level functionality
+	// ----------------------------------------------------------------------------------------------------
+    //                              Helper functions - Low-Level Functionality                             
+	// ----------------------------------------------------------------------------------------------------
+
 	impl<T: Config> Pallet<T> {
+		// Adds the asset amount to the PoolAssetTotalBalance runtime storage object for the sepcified asset
+		pub fn increase_pool_asset_total_balance_storage(
+			pool_id: &T::PoolId,
+			asset_id: &T::AssetId,
+			amount: &T::Balance
+		) -> Result<(), DispatchError> {
+			PoolAssetTotalBalance::<T>::mutate(
+				pool_id,
+				asset_id,
+				|balance| -> DispatchResult {
+					*balance = balance.checked_add(amount)
+						.ok_or(ArithmeticError::Overflow)?;
+					Ok(())
+				},
+			)?;
+
+			Ok(())
+		}
+		
+		// Adds the asset amount to the PoolAssetBalance runtime storage object for the sepcified asset
+		pub fn increase_pool_asset_balance_storage(
+			pool_id: &T::PoolId,
+			asset_id: &T::AssetId,
+			amount: &T::Balance
+		) -> Result<(), DispatchError> {
+			PoolAssetBalance::<T>::mutate(
+				pool_id,
+				asset_id,
+				|balance| -> DispatchResult {
+					*balance = balance.checked_add(amount)
+						.ok_or(ArithmeticError::Overflow)?;
+					Ok(())
+				},
+			)?;
+
+			Ok(())
+		}
+		
 		// Calculates the minimum required creation deposit to open a pool with number_of_assets
 		//  |  underlying assets
 		//  '-> required_deposit = (number_of_assets + 1) * (existensial_deposit + creation_fee)
 		//
 		// # Errors
 		//  - When calculating the above formula results of the asset amounts results in an overflow error.
-		pub fn required_creation_deposit_for(number_of_assets: usize) -> Result<T::Balance, DispatchError> {
+		pub fn required_creation_deposit_for(number_of_assets: usize) -> Result<BalanceOf<T>, DispatchError> {
 			let number_of_assets = number_of_assets as u128 + 1;
 			let existential_deposit = T::ExistentialDeposit::get();
 			let creation_fee = T::CreationFee::get();
@@ -1199,116 +1424,107 @@ pub mod pallet {
 			Ok(result)
 		}
 
+		// Calculate the number of lp tokens to mint as a result of this deposit
+		//  |-> when depositig funds to an empty pool, initialize lp token ratio to
+		//  |       the weighted gemoetric mean of the amount deposited.
+		//  '-> when depositing funds to a non-empty pool, the amount of lp tokens minted
+		//          should be calculated relative to the increase in the invariant value
+		fn calculate_lp_tokens_to_mint(
+			pool_id: &T::PoolId,
+			deposits: &Vec<Deposit<T::AssetId, T::Balance>>
+		) -> Result<T::Balance, DispatchError> {
+			let lp_circulating_supply = Self::lp_circulating_supply(pool_id)?;
+
+			if lp_circulating_supply == T::Balance::zero() {
+				// TODO (Jesper):
+				//  - accounting for MIN LIQ too like uniswap (to avoid sybil, and other issues)
+				Self::weighted_geometric_mean(&pool_id, &deposits)
+			} else {
+				Self::increase_in_weighted_geometric_mean(&pool_id, &deposits)
+			}
+		}
+
 		// Calculates the geometric mean of the deposit amounts provided
 		//  '-> weighted geometric mean = Π a_i ^ (w_i), where 1 ≤ i ≤ n, and a_i, w_i are the balance and weight
 		//          of asset i 
 		//
 		// # Errors
-		//  - When calculating the product of the asset amounts results in an overflow error.
-		fn weighted_geometric_mean(pool_id: &PoolIndex) -> Result<T::Balance, DispatchError> {
-			let pool_reserves = Self::reserves_of(pool_id)?;
-		
-			// let mut result = FixedU128::one();
-			// let mut result = FixedU128::
-			// for reserve in pool_reserves {
-			// 	let weight = PoolIdAndAssetIdToWeight::<T>::get(pool_id, reserve.asset_id);
+		//  - When erros propogate up from obtaining the reserves of the specified pool.
+		//  - When calculating an assets balance raised to its weight results in an overflow error.
+		//  - When calculating the product of weighted balances results in an overflow error.
+		fn weighted_geometric_mean(
+			pool_id: &T::PoolId,
+			deposits: &Vec<Deposit<T::AssetId, T::Balance>>
+		) -> Result<BalanceOf<T>, DispatchError> {
+			let mut result: FixedBalance = FixedBalance::from_num(1u8);
 
-			// 	let weighted_balance = FixedU128::saturating_from_integer(reserve.amount) 
-			// 		.pow(weight.into());
-			// 		// FixedU128::saturating_from_rational(weight.deconstruct(), Perquintill::one().deconstruct()).to_float();
-
-			// 	// let weight = weight.deconstruct() / Perquintill::one().deconstruct();
-			// 	// let weighted_balance = reserve.amount as u128 ^ (weight.deconstruct() / Perquintill::one().deconstruct());
-			// 	// let weighted_balance = pow(
-			// 	// 	FixedU128::saturating_from_num(reserve.amount.into()), 
-			// 	// 	FixedU128::saturating_from_num(weight.deconstruct(), Perquintill::one().deconstruct())
-			// 	// );
-			// 	// FixedU128::saturating_from_integer(reserve.amount).pow(
-			// 	// 	// weight;
-			// 	// 	FixedU128::saturating_from_rational(weight.deconstruct(), Perquintill::one().deconstruct()));
-				
-			// 	result.checked_mul(weighted_balance).ok_or(ArithmeticError::Overflow)?;
-			// }
-			
-			let number_of_assets = pool_reserves.len() as u32;
-			
-			Ok(T::Balance::one())
-		}
-
-		// Calculates the geometric mean of the deposit amounts provided
-		//  '-> geometric mean = nth-√(Π ai), where 1 ≤ i ≤ n, and ai is the ith asset balance
-		//
-		// # Errors
-		//  - When calculating the product of the asset amounts results in an overflow error.
-		fn geometric_mean(deposits: &Vec<Deposit<T::AssetId, T::Balance>>) -> Result<T::Balance, DispatchError> {
-			let number_of_assets = deposits.len() as u32;
-			let mut result = T::Balance::one();
-		
 			for deposit in deposits {
-				result = result.checked_mul(&deposit.amount).ok_or(ArithmeticError::Overflow)?;
+				let balance: u128 = 
+					<T::Convert as Convert<T::Balance, u128>>::convert(deposit.amount);
+				let balance: FixedBalance = FixedBalance::saturating_from_num(balance);
+
+				let weight: Perquintill  = PoolAssetWeight::<T>::get(pool_id, deposit.asset_id);
+				let weight: FixedBalance = FixedBalance::from_num(
+					weight.deconstruct() as f64 / Perquintill::one().deconstruct() as f64
+				);
+
+				result = result.checked_mul(
+					pow(balance, weight).map_err(|_| ArithmeticError::Overflow)?
+				).ok_or(ArithmeticError::Overflow)?;
+
 			}
-					
-			Ok(result.nth_root(number_of_assets))
+
+			let result: u128 = FixedBalance::saturating_to_num::<u128>(result);
+			let result: BalanceOf<T> = 
+				<T::Convert as Convert<u128, T::Balance>>::convert(result);
+
+			Ok(result)
 		}
 
 		// Calculates the number of lp tokens to mint from the deposit amounts provided
-		//  '-> lp tokens to mint = lp_circulating_supply * (ai/balance_i), where 1 ≤ i ≤ n
+		//  '-> lp_minted = lp_circulating_supply * 
+		//            sum of (token i's weight * (deposit of token i / balance of token i in pool))
 		//
 		// # Errors
-		//  - When calculating the product of the asset ratio and the supply of lp tokens amounts results in an overflow error.
-		fn calculate_lp_tokens_to_mint(
-			pool_id: &PoolIndex,
+		//  - When errors propagate up from retrieving the pool's reserves
+		//  - When errors propagate up from retrieving the pool's assets
+		//  - When errors propagate up from retrieving the amount of LP tokens circulating for a pool
+		fn increase_in_weighted_geometric_mean(
+			pool_id: &T::PoolId,
 			deposits: &Vec<Deposit<T::AssetId, T::Balance>>
 		) -> Result<T::Balance, DispatchError> {
-			// let lp_circulating_supply = Pools::<T>::get(pool_id).lp_circulating_supply;
+			let mut deposit_ratio = FixedBalance::from_num(0 as u8);
+			
+			for deposit in deposits {
+				let deposit_amount: u128 = 
+					<T::Convert as Convert<BalanceOf<T>, u128>>::convert(deposit.amount);
+				let deposit_amount: FixedBalance = FixedBalance::saturating_from_num(deposit_amount);
 
-			// let mut lp_tokens_to_mint = T::Balance::zero();
+				let reserve: BalanceOf<T> = Self::balance_of(pool_id, &deposit.asset_id)?;
+				let reserve: u128 = 
+					<T::Convert as Convert<BalanceOf<T>, u128>>::convert(reserve);
+				let reserve: FixedBalance = FixedBalance::saturating_from_num(reserve);
 
-			// for deposit in deposits {
-			// 	let weight = PoolIdAndAssetIdToWeight::<T>::get(pool_id, deposit.asset_id);
-				
-			// 	let vault_id = &PoolIdAndAssetIdToVaultId::<T>::get(pool_id, deposit.asset_id);
-			// 	let vault_account = &<T::Vault as Vault>::account_id(vault_id);
+				let weight: Perquintill  = Self::weight_of(pool_id, &deposit.asset_id)?;
+				let weight: FixedBalance = FixedBalance::from_num(
+					weight.deconstruct() as f64 / Perquintill::one().deconstruct() as f64
+				);
 
-			// 	let pool_balance_of_token = T::Currency::balance(deposit.asset_id, vault_account);
+				let asset_ratio = weight * (deposit_amount / reserve);
+				deposit_ratio += asset_ratio;
+			}
 
-			// 	let lp_tokens_to_mint_for_asset = multiply_by_rational(
-			// 		<T::Convert as Convert<T::Balance, u128>>::convert(lp_circulating_supply),
-			// 		<T::Convert as Convert<T::Balance, u128>>::convert(deposit.amount),
-			// 		<T::Convert as Convert<T::Balance, u128>>::convert(pool_balance_of_token),
-			// 	).map_err(|_| ArithmeticError::Overflow)?;
+			let lp_circulating_supply: BalanceOf<T> = Self::lp_circulating_supply(pool_id)?;
+			let lp_circulating_supply: u128 = 
+				<T::Convert as Convert<BalanceOf<T>, u128>>::convert(lp_circulating_supply);
+			let lp_circulating_supply: FixedBalance = FixedBalance::saturating_from_num(lp_circulating_supply);
 
-			// 	let lp_tokens_to_mint_for_asset = weight * lp_tokens_to_mint_for_asset;
+			let lp_tokens_to_mint: FixedBalance = lp_circulating_supply * deposit_ratio;
+			let lp_tokens_to_mint: u128 = FixedBalance::saturating_to_num::<u128>(lp_tokens_to_mint);
+			let lp_tokens_to_mint: BalanceOf<T> = 
+				<T::Convert as Convert<u128, T::Balance>>::convert(lp_tokens_to_mint);
 
-			// 	let lp_tokens_to_mint_for_asset =
-			// 		<T::Convert as Convert<u128, T::Balance>>::convert(lp_tokens_to_mint_for_asset);
-
-			// 	lp_tokens_to_mint = lp_tokens_to_mint.checked_add(&lp_tokens_to_mint_for_asset)
-			// 		.ok_or(ArithmeticError::Overflow)?;
-
-			// }
-
-			// Ok(lp_tokens_to_mint)
-
-			// TODO (Nevin):
-			//  - generalize this formula to sum all deposit rations multiplied by their weights
-			//  - check that this formula is still accurate when weights are off balance before rebalancing
-			//    '-> lp_minted = lp_circulating_supply * 
-			//            sum of (token i's weight * (deposit of token i / balance of token i in pool))
-			let lp_circulating_supply = Self::lp_circulating_supply(pool_id)?;
-
-			let deposit = &deposits[0];
-			let vault_id = &PoolIdAndAssetIdToVaultId::<T>::get(pool_id, deposit.asset_id);
-			let vault_id = &<T::Vault as Vault>::account_id(vault_id);
-
-			let pool_balance_of_token = T::Currency::balance(deposit.asset_id, vault_id);
-			let deposit_ratio = multiply_by_rational(
-				<T::Convert as Convert<T::Balance, u128>>::convert(lp_circulating_supply),
-				<T::Convert as Convert<T::Balance, u128>>::convert(deposit.amount),
-				<T::Convert as Convert<T::Balance, u128>>::convert(pool_balance_of_token),
-			).map_err(|_| ArithmeticError::Overflow)?;
-
-			Ok(<T::Convert as Convert<u128, T::Balance>>::convert(deposit_ratio))
+			Ok(lp_tokens_to_mint)
 		}
 
 	// 	// Calculates the exact balance of assets that the provided lp tokens (shares) correspond to

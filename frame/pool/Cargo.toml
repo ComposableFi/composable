@@ -25,7 +25,9 @@ sp-arithmetic = { default-features = false, git = "https://github.com/paritytech
 sp-io = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 sp-core = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 sp-std = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
-fixed = {default-features = false, git = "https://github.com/encointer/substrate-fixed", package = "substrate-fixed"}
+fixed = "1.9.0"
+hydra-dx-math = { default-features = false, git = "https://github.com/galacticcouncil/HydraDX-math" }
+approx = "0.3.0"
 
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 vault = { version = "0.0.1", package = "pallet-vault", path = "../vault", default-features = false, optional = true }
