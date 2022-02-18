@@ -41,9 +41,8 @@ jobs:
           MSG_MINIMAL: true
 
   picasso-client-release:
-    needs: [dali-client-release]
     concurrency:
-      group: release-${{ github.ref }}
+      group: picasso-${{ github.ref }}
       cancel-in-progress: true
     strategy: 
       fail-fast: true
@@ -52,6 +51,7 @@ jobs:
         - linux
         - X64
         - ansible-runner
+    needs: [dali-client-release]
     steps:
       - name: Clean up
         continue-on-error: true
