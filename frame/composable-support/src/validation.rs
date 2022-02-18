@@ -130,15 +130,16 @@ pub trait Validate<T, U> {
 }
 
 pub trait TryIntoValidated<T, U> {
-    fn try_into_validated(self) -> Result<Validated<T, U>, &'static str>;
+	fn try_into_validated(self) -> Result<Validated<T, U>, &'static str>;
 }
 
-impl<T, U> TryIntoValidated<T, U> for T 
-where U: Validate<T, U>,
+impl<T, U> TryIntoValidated<T, U> for T
+where
+	U: Validate<T, U>,
 {
-    fn try_into_validated(self) -> Result<Validated<T, U>, &'static str> {
-        Validated::new(self)
-    }
+	fn try_into_validated(self) -> Result<Validated<T, U>, &'static str> {
+		Validated::new(self)
+	}
 }
 
 #[derive(Debug, Eq, PartialEq, Default)]
@@ -459,17 +460,17 @@ mod test {
 		assert!(invalid.is_err());
 	}
 
-    #[test]
-    fn try_into_valid() {
-        let value: Validated<_, Valid> = 42_u32.try_into_validated().unwrap();
-        
-        assert_eq!(value, Validated { value: 42, _marker: PhantomData });
-    }
+	#[test]
+	fn try_into_valid() {
+		let value: Validated<_, Valid> = 42_u32.try_into_validated().unwrap();
 
-    #[test]
-    fn try_into_invalid() {
-        let value: Result<Validated<_, Invalid>, _> = 42_u32.try_into_validated();
-        
-        assert!(value.is_err());
-    }
+		assert_eq!(value, Validated { value: 42, _marker: PhantomData });
+	}
+
+	#[test]
+	fn try_into_invalid() {
+		let value: Result<Validated<_, Invalid>, _> = 42_u32.try_into_validated();
+
+		assert!(value.is_err());
+	}
 }
