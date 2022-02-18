@@ -7,7 +7,7 @@ use common::{xcmp::BaseXcmWeight, AccountId, Balance};
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 use dali_runtime as picasso_runtime;
 use orml_traits::currency::MultiCurrency;
-use picasso_runtime::{MaxInstructions, UnitWeightCost, Assets, System};
+use picasso_runtime::{Assets, MaxInstructions, Runtime, System, UnitWeightCost};
 use primitives::currency::*;
 use sp_runtime::assert_eq_error_rate;
 use support::assert_ok;
