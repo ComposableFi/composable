@@ -41,7 +41,7 @@ jobs:
           MSG_MINIMAL: true
 
   picasso-client-release:
-      needs: [dali-client-release]
+    needs: [dali-client-release]
     concurrency:
       group: release-${{ github.ref }}
       cancel-in-progress: true
