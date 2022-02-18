@@ -103,6 +103,9 @@ pub mod pallet {
 		) -> Result<(Permill, Permill), DispatchError> {
 			/* NOTE(hussein-aitlahcen): currently only linear
 
+         Linearly decrease the base asset initial_weight to final_weight.
+         Quote asset weight is simple 1-base_asset_weight
+
 			   Assuming final_weight < initial_weight
 			   current_weight = initial_weight - (current - start) / (end - start) * (initial_weight - final_weight)
 							  = initial_weight - normalized_current / sale_duration * weight_range
