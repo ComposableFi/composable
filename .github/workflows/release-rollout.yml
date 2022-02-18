@@ -34,14 +34,14 @@ jobs:
       - name: Notify sre-tasks slack channel
         uses: rtCamp/action-slack-notify@v2
         env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_CHANNEL: releases
-        SLACK_USERNAME: Github Actions
-        SLACK_ICON: https://avatars.githubusercontent.com/u/44036562?s=200&v=4
-        SLACK_TITLE: A new composable client for Dali-rococo ${{ env.RELEASE_VERSION }} has been rolled out 
-        SLACK_MESSAGE: "https://telemetry.polkadot.io/#list/0x5719ed0c1a5f4a11ef4d206f3a35d350365adc35943f2834b8d5bc7ff6e1a1d2"
-        SLACK_FOOTER: ""
-        MSG_MINIMAL: true
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: releases
+          SLACK_USERNAME: Github Actions
+          SLACK_ICON: https://avatars.githubusercontent.com/u/44036562?s=200&v=4
+          SLACK_TITLE: A new composable client for Dali-rococo ${{ env.RELEASE_VERSION }} has been rolled out 
+          SLACK_MESSAGE: "https://telemetry.polkadot.io/#list/0x5719ed0c1a5f4a11ef4d206f3a35d350365adc35943f2834b8d5bc7ff6e1a1d2"
+          SLACK_FOOTER: ""
+          MSG_MINIMAL: true
 
 #   picasso-client-release:
 #     concurrency:
