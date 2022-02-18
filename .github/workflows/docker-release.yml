@@ -52,6 +52,11 @@ jobs:
 
     - name: Build Docker image
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make containerize
+    
+    - name: Image Tag Version
+      run: |
+        RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
+        export RELEASE_VERSION
 
     - name: Build for Multiple Arch
       uses: docker/build-push-action@v2
