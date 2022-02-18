@@ -10,7 +10,7 @@ set -e # fail on any error
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
   "picasso,picasso"
-  "dali-chachacha,dali"
+  "dali-rococo,dali"
   # "composable,composable" # TODO: add simnode suppport for composable
 )
 
