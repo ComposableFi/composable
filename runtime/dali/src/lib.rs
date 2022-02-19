@@ -533,8 +533,8 @@ impl collator_selection::Config for Runtime {
 }
 
 parameter_type_with_key! {
-	// TODO:
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+	// TODO:  
+	pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
 		Zero::zero()
 	};
 }
