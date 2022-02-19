@@ -539,11 +539,9 @@ mod add_stake {
         #[test]
         fn cannot_add_stake_without_signer_account(
             controller_account in account_id(),
-            // signer_account in account_id(),
             stake in 0..Balance::MAX,
         ) {
             new_test_ext().execute_with(|| {
-
                 prop_assert_noop!(Oracle::add_stake(Origin::signed(controller_account), stake), Error::<Test>::UnsetSigner);
                 Ok(())
             })?;
@@ -568,31 +566,61 @@ mod add_stake {
 
                 let new_controller_balance = controller_balance - MinStake::get();
 
+                // Check if the pre-add-stake balances are correct
                 prop_assert_eq!(Balances::free_balance(&controller_account), new_controller_balance);
                 prop_assert_eq!(Balances::free_balance(&signer_account), signer_balance);
 
+                // Add the stake
                 let stake_to_add = stake.min(new_controller_balance - 1); // -1 so that the controller lives after adding stake
-
                 prop_assert_ok!(Oracle::add_stake(Origin::signed(controller_account), stake_to_add));
 
+                // Check if the post-add-stake balances are correct
                 prop_assert_eq!(Balances::free_balance(controller_account), new_controller_balance - stake_to_add);
+                prop_assert_eq!(Balances::total_balance(&controller_account), new_controller_balance - stake_to_add);
 
+                // Check if the signer's stake is updated correctly
                 let amount_staked = Oracle::oracle_stake(signer_account).unwrap_or_else(|| 0_u32.into());
                 prop_assert_eq!(amount_staked, stake_to_add + MinStake::get());
-                // dbg!(Oracle::oracle_stake(signer_account));
-                // prop_assert_eq!(Oracle::oracle_stake(signer_account), signer_balance + stake_to_add + MinStake::get());
 
-
-                // prop_assert_ok!(Oracle::set_signer(Origin::signed(controller_account), signer_account));
-                //
-                //
-                // prop_assert_eq!(Balances::free_balance(controller_account), controller_balance + stake);
-                // prop_assert_eq!(Balances::free_balance(signer_account), 0);
+                // Check if the signer's total balance includes the amount staked
+                prop_assert_eq!(Balances::total_balance(&signer_account), signer_balance + amount_staked);
 
                 Ok(())
             })?;
         }
 
+        #[test]
+        fn account_must_live_after_adding_stake(
+            controller_account in account_id(),
+            signer_account in account_id(),
+            controller_balance in (MinStake::get() + 1)..(Balance::MAX/2), // +1 so that the controller lives after setting signer
+            signer_balance in 0..(Balance::MAX/2),
+        ) {
+            prop_assume!(controller_account != signer_account);
+
+            new_test_ext().execute_with(|| {
+                Balances::make_free_balance_be(&controller_account, controller_balance);
+                Balances::make_free_balance_be(&signer_account, signer_balance);
+
+                prop_assert_ok!(Oracle::set_signer(Origin::signed(controller_account), signer_account));
+
+                let new_controller_balance = controller_balance - MinStake::get();
+
+                // Check if the pre-add-stake balances are correct
+                prop_assert_eq!(Balances::free_balance(&controller_account), new_controller_balance);
+                prop_assert_eq!(Balances::free_balance(&signer_account), signer_balance);
+
+                // Try to stake the entire controller balance
+                prop_assert_noop!(
+                    Oracle::add_stake(Origin::signed(controller_account), new_controller_balance),
+                    BalancesError::<Test>::KeepAlive
+                );
+
+                Ok(())
+            })?;
+        }
+
+        // TODO: test ExceedStake
     }
 }
 
