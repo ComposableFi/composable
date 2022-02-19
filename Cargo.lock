@@ -7376,11 +7376,8 @@ dependencies = [
 name = "pallet-oracle"
 version = "1.0.0"
 dependencies = [
-<<<<<<< HEAD
  "composable-support",
-=======
  "composable-tests-helpers",
->>>>>>> e251bcb7 (test(oracle): proptest add_asset_and_info)
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -7390,7 +7387,7 @@ dependencies = [
  "pallet-balances",
  "parity-scale-codec",
  "parking_lot 0.11.2",
- "proptest 1.0.0",
+ "proptest",
  "scale-info",
  "serde",
  "serde_json",
