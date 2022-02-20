@@ -133,12 +133,13 @@ where
 
 
 pub type AssetId = u128;
+pub type PriceValue = u128;
 impl pallet_oracle::Config for Test {
 	type Event = Event;
 	type AuthorityId = crypto::BathurstStId;
 	type Currency = Balances;
 	type AssetId = AssetId;
-	type PriceValue = u128;
+	type PriceValue = PriceValue;
 	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
 	type MinStake = MinStake;

@@ -63,6 +63,13 @@ prop_compose! {
 }
 
 prop_compose! {
+    fn price_value()
+        (x in 0..PriceValue::MAX) -> PriceValue {
+        x
+    }
+}
+
+prop_compose! {
 	fn account_id()
 		(x in 0..u64::MAX) -> AccountId {
             let h256 = H256::from_low_u64_be(x);
@@ -768,41 +775,28 @@ mod reclaim_stake {
     }
 }
 
-#[test]
-fn remove_and_reclaim_stake() {
-	new_test_ext().execute_with(|| {
-		let account_1 = get_account_1();
-		let account_2 = get_root_account();
-		let account_3 = get_account_3();
 
-		assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_2));
+mod submit_price {
+    use super::*;
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(10_000))]
 
-		assert_ok!(Oracle::add_stake(Origin::signed(account_1), 50));
+        #[test]
+        fn cannot_submit_prices_when_not_requested(
+            account_id in account_id(),
+            asset_id in asset_id(),
+            price_value in price_value(),
+        ) {
+            new_test_ext().execute_with(|| {
+                prop_assert_noop!(
+                    Oracle::submit_price(Origin::signed(account_id), asset_id, price_value),
+                    Error::<Test>::PriceNotRequested
+                );
+                Ok(())
+            })?;
+        }
 
-		assert_noop!(Oracle::reclaim_stake(Origin::signed(account_1)), Error::<Test>::Unknown);
-
-		assert_ok!(Oracle::remove_stake(Origin::signed(account_1)));
-		let withdrawal = Withdraw { stake: 51, unlock_block: 1 };
-		assert_eq!(Oracle::declared_withdraws(account_2), Some(withdrawal));
-		assert_eq!(Oracle::oracle_stake(account_2), None);
-		assert_noop!(Oracle::remove_stake(Origin::signed(account_1)), Error::<Test>::NoStake);
-
-		assert_noop!(Oracle::reclaim_stake(Origin::signed(account_1)), Error::<Test>::StakeLocked);
-
-		System::set_block_number(2);
-		assert_ok!(Oracle::reclaim_stake(Origin::signed(account_1)));
-		// everyone gets their funds back
-		assert_eq!(Balances::free_balance(account_1), 100);
-		assert_eq!(Balances::total_balance(&account_1), 100);
-		assert_eq!(Balances::free_balance(account_2), 100);
-		assert_eq!(Balances::total_balance(&account_2), 100);
-
-		// signer controller pruned
-		assert_eq!(Oracle::controller_to_signer(account_1), None);
-		assert_eq!(Oracle::signer_to_controller(account_2), None);
-
-		assert_noop!(Oracle::reclaim_stake(Origin::signed(account_3)), Error::<Test>::UnsetSigner);
-	});
+    }
 }
 
 #[test]
