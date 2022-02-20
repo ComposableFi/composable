@@ -669,7 +669,102 @@ mod reclaim_stake {
             })?;
         }
 
+        #[test]
+        fn cannot_remove_stake_when_there_is_none(
+            controller_account in account_id(),
+            controller_balance in (MinStake::get()+1)..Balance::MAX, // +1 to keep alive
+            signer_account in account_id(),
+            start_block in 0..(BlockNumber::MAX / 2),
+        ) {
+            prop_assume!(controller_account != signer_account);
 
+            new_test_ext().execute_with(|| {
+                Balances::make_free_balance_be(&controller_account, controller_balance);
+                prop_assert_ok!(Oracle::set_signer(Origin::signed(controller_account), signer_account));
+
+                System::set_block_number(start_block);
+                // Remove the stake from setting the signer
+                prop_assert_ok!(Oracle::remove_stake(Origin::signed(controller_account)));
+                let withdrawal = Withdraw { stake: MinStake::get(), unlock_block: start_block + StakeLock::get() };
+
+                // Can't remove anymore because we did not stake anything else
+                prop_assert_noop!(
+                    Oracle::remove_stake(Origin::signed(controller_account)),
+                    Error::<Test>::NoStake
+                );
+
+                Ok(())
+            })?;
+        }
+
+        #[test]
+        fn can_reclaim_stake_after_removing_stake(
+            controller_account in account_id(),
+            controller_balance in (MinStake::get()+1)..(Balance::MAX/4), // +1 to keep alive
+            signer_account in account_id(),
+            signer_balance in 0..(Balance::MAX/4),
+            stake_to_add in 0..(Balance::MAX/4),
+            start_block in 0..(BlockNumber::MAX / 4),
+            wait_after_unlock in 0..(BlockNumber::MAX / 4),
+        ) {
+            prop_assume!(controller_account != signer_account);
+
+            new_test_ext().execute_with(|| {
+                Balances::make_free_balance_be(&controller_account, controller_balance);
+                Balances::make_free_balance_be(&signer_account, signer_balance);
+                prop_assert_ok!(Oracle::set_signer(Origin::signed(controller_account), signer_account));
+
+                let actual_stake_to_add = stake_to_add.min(controller_balance - MinStake::get() - 1);
+
+                prop_assert_ok!(Oracle::add_stake(Origin::signed(controller_account), actual_stake_to_add));
+
+                // Assert that the stake is added
+                prop_assert_eq!(
+                    Oracle::oracle_stake(signer_account),
+                    Some(actual_stake_to_add + MinStake::get())
+                );
+
+                // Remove the stake
+                System::set_block_number(start_block);
+                prop_assert_ok!(Oracle::remove_stake(Origin::signed(controller_account)));
+
+                // Check if the withdrawal is correctly declared
+                let withdrawal = Withdraw { stake: actual_stake_to_add + MinStake::get(), unlock_block: start_block + StakeLock::get() };
+                prop_assert_eq!(Oracle::declared_withdraws(signer_account), Some(withdrawal.clone()));
+
+                // ... and that the stake is removed
+                prop_assert_eq!(Oracle::oracle_stake(signer_account), None);
+
+                prop_assert_noop!(
+                    Oracle::remove_stake(Origin::signed(controller_account)),
+                    Error::<Test>::NoStake
+                );
+
+                // Check that stake cannot be claimed too early
+                prop_assert_noop!(
+                    Oracle::reclaim_stake(Origin::signed(controller_account)),
+                    Error::<Test>::StakeLocked
+                );
+
+                System::set_block_number(withdrawal.unlock_block + wait_after_unlock);
+
+                prop_assert_ok!(Oracle::reclaim_stake(Origin::signed(controller_account)));
+
+                // Check if the controller's balance is correct
+                prop_assert_eq!(Balances::free_balance(&controller_account), controller_balance);
+                prop_assert_eq!(Balances::free_balance(&signer_account), signer_balance);
+
+                // After reclaiming the stake, the controller <-> signer relationship is removed
+                prop_assert_eq!(Oracle::controller_to_signer(controller_account), None);
+                prop_assert_eq!(Oracle::signer_to_controller(signer_account), None);
+
+                assert_noop!(Oracle::reclaim_stake(Origin::signed(controller_account)), Error::<Test>::UnsetSigner);
+                assert_noop!(Oracle::reclaim_stake(Origin::signed(signer_account)), Error::<Test>::UnsetSigner);
+
+
+                Ok(())
+            })?;
+        }
     }
 }
 
