@@ -276,8 +276,6 @@ impl timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	/// Minimum amount an account has to hold to stay in state.
-  pub ExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
 	/// Max locks that can be placed on an account. Capped for storage
 	/// concerns.
 	pub const MaxLocks: u32 = 50;
@@ -530,13 +528,6 @@ impl collator_selection::Config for Runtime {
 	type ValidatorIdOf = collator_selection::IdentityCollator;
 	type ValidatorRegistration = Session;
 	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
-}
-
-parameter_type_with_key! {
-	// TODO:  
-	pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
-		Zero::zero()
-	};
 }
 
 pub struct DustRemovalWhitelist;

@@ -8,7 +8,7 @@ use common::{xcmp::BaseXcmWeight, AccountId, Balance};
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 use dali_runtime as picasso_runtime;
 use orml_traits::currency::MultiCurrency;
-use picasso_runtime::{Assets, MaxInstructions, Runtime, System, UnitWeightCost, Tokens, XTokens, Origin};
+use picasso_runtime::{Assets, MaxInstructions, Runtime, System, UnitWeightCost, Tokens, XTokens, Origin, };
 use primitives::currency::*;
 use sp_runtime::{assert_eq_error_rate, MultiAddress};
 use support::assert_ok;
@@ -528,18 +528,18 @@ fn relay_chain_subscribe_version_notify_of_para_chain() {
 
 // #[test]
 // fn test_asset_registry_module() {
-// 	TestNet::reset();
+// 	simtest();
 
-// 	fn karura_reserve_account() -> AccountId {
+// 	fn picasso_reserve_account() -> AccountId {
 // 		use sp_runtime::traits::AccountIdConversion;
-// 		polkadot_parachain::primitives::Sibling::from(2000).into_account()
+// 		polkadot_parachain::primitives::Sibling::from(PICASSO_PARA_ID).into_account()
 // 	}
 
-// 	Karura::execute_with(|| {
+// 	Picasso::execute_with(|| {
 // 		// register foreign asset
 // 		assert_ok!(AssetRegistry::register_foreign_asset(
 // 			Origin::root(),
-// 			Box::new(MultiLocation::new(1, X2(Parachain(2001), GeneralKey(KAR.encode()))).into()),
+// 			Box::new(MultiLocation::new(1, X2(Parachain(SIBLING_PARA_ID), GeneralKey(CurrencyId::PICA.encode()))).into()),
 // 			Box::new(AssetMetadata {
 // 				name: b"Sibling Token".to_vec(),
 // 				symbol: b"ST".to_vec(),
@@ -556,7 +556,7 @@ fn relay_chain_subscribe_version_notify_of_para_chain() {
 
 // 	Sibling::execute_with(|| {
 // 		let _ = Balances::deposit_creating(&AccountId::from(BOB), 100_000_000_000_000);
-// 		assert_eq!(Balances::free_balance(&karura_reserve_account()), 0);
+// 		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 0);
 // 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 100_000_000_000_000);
 
 // 		assert_ok!(XTokens::transfer(
@@ -579,11 +579,11 @@ fn relay_chain_subscribe_version_notify_of_para_chain() {
 // 			1_000_000_000,
 // 		));
 
-// 		assert_eq!(Balances::free_balance(&karura_reserve_account()), 5_000_000_000_000);
+// 		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 5_000_000_000_000);
 // 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 95_000_000_000_000);
 // 	});
 
-// 	Karura::execute_with(|| {
+// 	Picasso::execute_with(|| {
 // 		assert_eq!(
 // 			Tokens::free_balance(CurrencyId::ForeignAsset(0), &AccountId::from(ALICE)),
 // 			4_999_360_000_000
@@ -621,17 +621,17 @@ fn relay_chain_subscribe_version_notify_of_para_chain() {
 // 	});
 
 // 	Sibling::execute_with(|| {
-// 		assert_eq!(Balances::free_balance(&karura_reserve_account()), 4_000_000_000_000);
+// 		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 4_000_000_000_000);
 // 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 95_993_600_000_000);
 // 	});
 
 // 	// remove it
-// 	Karura::execute_with(|| {
+// 	Picasso::execute_with(|| {
 // 		// register foreign asset
 // 		assert_ok!(AssetRegistry::update_foreign_asset(
 // 			Origin::root(),
 // 			0,
-// 			Box::new(MultiLocation::new(1, X2(Parachain(2001), GeneralKey(KAR.encode()))).into()),
+// 			Box::new(MultiLocation::new(1, X2(Parachain(2001), GeneralKey(CurrencyId::PICA.encode()))).into()),
 // 			Box::new(AssetMetadata {
 // 				name: b"Sibling Token".to_vec(),
 // 				symbol: b"ST".to_vec(),
@@ -642,7 +642,7 @@ fn relay_chain_subscribe_version_notify_of_para_chain() {
 // 	});
 
 // 	Sibling::execute_with(|| {
-// 		assert_eq!(Balances::free_balance(&karura_reserve_account()), 4_000_000_000_000);
+// 		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 4_000_000_000_000);
 // 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 95_993_600_000_000);
 
 // 		assert_ok!(XTokens::transfer(
@@ -665,11 +665,11 @@ fn relay_chain_subscribe_version_notify_of_para_chain() {
 // 			1_000_000_000,
 // 		));
 
-// 		assert_eq!(Balances::free_balance(&karura_reserve_account()), 9_000_000_000_000);
+// 		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 9_000_000_000_000);
 // 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 90_993_600_000_000);
 // 	});
 
-// 	Karura::execute_with(|| {
+// 	Picasso::execute_with(|| {
 // 		assert_eq!(
 // 			Tokens::free_balance(CurrencyId::ForeignAsset(0), &AccountId::from(ALICE)),
 // 			8_999_360_000_000
@@ -683,52 +683,50 @@ fn relay_chain_subscribe_version_notify_of_para_chain() {
 // 	});
 // }
 
-// #[test]
-// fn unspent_xcm_fee_is_returned_correctly() {
-// 	let mut parachain_account: AccountId = AccountId::default();
-// 	let homa_lite_sub_account: AccountId =
-// 		hex_literal::hex!["d7b8926b326dd349355a9a7cca6606c1e0eb6fd2b506066b518c7155ff0d8297"].into();
-// 	Picasso::execute_with(|| {
-// 		parachain_account = ParachainAccount::get();
-// 	});
-// 	KusamaRelay::execute_with(|| {
-// 		assert_ok!(kusama_runtime::Balances::transfer(
-// 			kusama_runtime::Origin::signed(ALICE.into()),
-// 			MultiAddress::Id(homa_lite_sub_account.clone()),
-// 			1_000 * dollar(RELAY_CHAIN_CURRENCY)
-// 		));
-// 		assert_ok!(kusama_runtime::Balances::transfer(
-// 			kusama_runtime::Origin::signed(ALICE.into()),
-// 			MultiAddress::Id(parachain_account.clone()),
-// 			1_000 * dollar(RELAY_CHAIN_CURRENCY)
-// 		));
-// 		assert_eq!(
-// 			kusama_runtime::Balances::free_balance(&AccountId::from(ALICE)),
-// 			2 * dollar(RELAY_CHAIN_CURRENCY)
-// 		);
-// 		assert_eq!(
-// 			kusama_runtime::Balances::free_balance(&homa_lite_sub_account),
-// 			1_000 * dollar(RELAY_CHAIN_CURRENCY)
-// 		);
-// 		assert_eq!(kusama_runtime::Balances::free_balance(&AccountId::from(BOB)), 0);
-// 		assert_eq!(
-// 			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
-// 			1_002 * dollar(RELAY_CHAIN_CURRENCY)
-// 		);
-// 	});
+#[test]
+fn unspent_xcm_fee_is_returned_correctly() {
+	let mut parachain_account: AccountId = sibling_account();
+	let homa_lite_sub_account: AccountId = AccountId::from(CHARLIE);
 
-// 	Karura::execute_with(|| {
+	KusamaRelay::execute_with(|| {
+		assert_ok!(kusama_runtime::Balances::transfer(
+			kusama_runtime::Origin::signed(ALICE.into()),
+			MultiAddress::Id(homa_lite_sub_account.clone()),
+			1_000 * CurrencyId::KSM.unit::<Balance>()
+		));
+		assert_ok!(kusama_runtime::Balances::transfer(
+			kusama_runtime::Origin::signed(ALICE.into()),
+			MultiAddress::Id(parachain_account.clone()),
+			1_000 * CurrencyId::KSM.unit::<Balance>()
+		));
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&AccountId::from(ALICE)),
+			2 * CurrencyId::KSM.unit::<Balance>()
+		);
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&homa_lite_sub_account),
+			1_000 * CurrencyId::KSM.unit::<Balance>()
+		);
+		assert_eq!(kusama_runtime::Balances::free_balance(&AccountId::from(BOB)), 0);
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
+			1_002 * CurrencyId::KSM.unit::<Balance>()
+		);
+	});
+
+	Picasso::execute_with(|| {
+		// TODO: add API to trasnfer unspent back
 // 		// Construct a transfer XCM call with returning the deposit
 // 		let transfer_call = RelayChainCallBuilder::<Runtime,
 // ParachainInfo>::balances_transfer_keep_alive( 			AccountId::from(BOB),
-// 			dollar(NATIVE_CURRENCY),
+// 			CurrencyId::PICA.unit(),
 // 		);
 // 		let batch_call = RelayChainCallBuilder::<Runtime,
 // ParachainInfo>::utility_as_derivative_call(transfer_call, 0); 		let weight = 10_000_000_000;
 // 		// Fee to transfer into the hold register
 // 		let asset = MultiAsset {
 // 			id: Concrete(MultiLocation::here()),
-// 			fun: Fungibility::Fungible(dollar(NATIVE_CURRENCY)),
+// 			fun: Fungibility::Fungible(CurrencyId::PICA.unit()),
 // 		};
 // 		let xcm_msg = Xcm(vec![
 // 			WithdrawAsset(asset.clone().into()),
@@ -743,112 +741,113 @@ fn relay_chain_subscribe_version_notify_of_para_chain() {
 // 			},
 // 		]);
 
-// 		let res = PolkadotXcm::send_xcm(Here, Parent, xcm_msg);
+// 		let res = picass_runtime::RelayerXcm::send_xcm(Here, Parent, xcm_msg);
 // 		assert!(res.is_ok());
-// 	});
+	});
 
-// 	KusamaNet::execute_with(|| {
-// 		// 1 dollar is transferred to BOB
-// 		assert_eq!(
-// 			kusama_runtime::Balances::free_balance(&homa_lite_sub_account),
-// 			999 * dollar(RELAY_CHAIN_CURRENCY)
-// 		);
-// 		assert_eq!(
-// 			kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
-// 			dollar(RELAY_CHAIN_CURRENCY)
-// 		);
-// 		// 1 dollar is given to Hold Register for XCM call and never returned.
-// 		assert_eq!(
-// 			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
-// 			1_001 * dollar(RELAY_CHAIN_CURRENCY)
-// 		);
-// 	});
+	KusamaRelay::execute_with(|| {
+		// 1 dollar is transferred to BOB
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&homa_lite_sub_account),
+			999 * CurrencyId::KSM.unit::<Balance>()
+		);
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
+			CurrencyId::KSM.unit::<Balance>()
+		);
+		// 1 dollar is given to Hold Register for XCM call and never returned.
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
+			1_001 * CurrencyId::KSM.unit::<Balance>()
+		);
+	});
 
-// 	Karura::execute_with(|| {
+	// TODO: add API to trasnfer unspent back
+	Picasso::execute_with(|| {
 // 		// Construct a transfer using the RelaychainCallBuilder
 // 		let transfer_call = RelayChainCallBuilder::<Runtime,
 // ParachainInfo>::balances_transfer_keep_alive( 			AccountId::from(BOB),
-// 			dollar(NATIVE_CURRENCY),
+// 			CurrencyId::PICA.unit(),
 // 		);
 // 		let batch_call = RelayChainCallBuilder::<Runtime,
 // ParachainInfo>::utility_as_derivative_call(transfer_call, 0); 		let finalized_call =
 // RelayChainCallBuilder::<Runtime, ParachainInfo>::finalize_call_into_xcm_message( 			batch_call,
-// 			dollar(NATIVE_CURRENCY),
+// 			CurrencyId::PICA.unit(),
 // 			10_000_000_000,
 // 		);
 
-// 		let res = PolkadotXcm::send_xcm(Here, Parent, finalized_call);
+// 		let res = picass_runtime::RelayerXcm::send_xcm(Here, Parent, finalized_call);
 // 		assert!(res.is_ok());
-// 	});
+	});
 
-// 	KusamaNet::execute_with(|| {
-// 		// 1 dollar is transferred to BOB
-// 		assert_eq!(
-// 			kusama_runtime::Balances::free_balance(&homa_lite_sub_account),
-// 			998 * dollar(RELAY_CHAIN_CURRENCY)
-// 		);
-// 		assert_eq!(
-// 			kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
-// 			2 * dollar(RELAY_CHAIN_CURRENCY)
-// 		);
-// 		// Unspent fund from the 1 dollar XCM fee is returned to the sovereign account.
-// 		assert_eq!(
-// 			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
-// 			1_000 * dollar(RELAY_CHAIN_CURRENCY) + 999_626_666_690
-// 		);
-// 	});
-// }
+	KusamaRelay::execute_with(|| {
+		// 1 dollar is transferred to BOB
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&homa_lite_sub_account),
+			998 * CurrencyId::KSM.unit::<Balance>()
+		);
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
+			2 * CurrencyId::KSM.unit::<Balance>()
+		);
+		// Unspent fund from the 1 dollar XCM fee is returned to the sovereign account.
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
+			1_000 * CurrencyId::KSM.unit::<Balance>() + 999_626_666_690
+		);
+	});
+}
 
 #[test]
 fn trap_assets_larger_than_ed_works() {
-	TestNet::reset();
+	simtest();
 
-	let mut kar_treasury_amount = 0;
-	let (ksm_asset_amount, kar_asset_amount) = (dollar(KSM), dollar(KAR));
+	let mut native_treasury_amount = 0;
+	let (ksm_asset_amount, native_asset_amount) = (CurrencyId::KSM.unit::<Balance>(), CurrencyId::PICA.unit::<Balance>());
 	let trader_weight_to_treasury: u128 = 96_000_000;
 
-	Karura::execute_with(|| {
-		assert_ok!(Tokens::deposit(KSM, &AccountId::from(DEFAULT), 100 * dollar(KSM)));
-		let _ = pallet_balances::Pallet::<Runtime>::deposit_creating(&AccountId::from(DEFAULT), 100 *
-dollar(KAR));
+	Picasso::execute_with(|| {
+		assert_ok!(Tokens::deposit(CurrencyId::KSM, &AccountId::from(DEFAULT), 100 *CurrencyId::KSM.unit::<Balance>()));
+		let _ = <balances::Pallet::<Runtime> as support::traits::Currency<AccountId>>::deposit_creating(&AccountId::from(DEFAULT), 100 *
+		CurrencyId::PICA.unit::<Balance>());
 
-		kar_treasury_amount = Currencies::free_balance(KAR, &KaruraTreasuryAccount::get());
+		native_treasury_amount = Assets::free_balance(CurrencyId::PICA,  &picasso_runtime::TreasuryAccount::get());
 	});
 
 	let assets: MultiAsset = (Parent, ksm_asset_amount).into();
-	KusamaNet::execute_with(|| {
+	KusamaRelay::execute_with(|| {
 		let xcm = vec![
 			WithdrawAsset(assets.clone().into()),
 			BuyExecution {
 				fees: assets,
-				weight_limit: Limited(dollar(KSM) as u64),
+				weight_limit: Limited(CurrencyId::KSM.unit::<Balance>() as u64),
 			},
 			WithdrawAsset(
 				(
-					(Parent, X2(Parachain(2000), GeneralKey(KAR.encode()))),
-					kar_asset_amount,
+					(Parent, X2(Parachain(PICASSO_PARA_ID), GeneralKey(CurrencyId::PICA.encode()))),
+					native_asset_amount,
 				)
 					.into(),
 			),
 		];
 		assert_ok!(pallet_xcm::Pallet::<kusama_runtime::Runtime>::send_xcm(
 			Here,
-			Parachain(2000).into(),
+			Parachain(PICASSO_PARA_ID).into(),
 			Xcm(xcm),
 		));
 	});
-	Karura::execute_with(|| {
+	Picasso::execute_with(|| {
 		assert!(System::events()
 			.iter()
-			.any(|r| matches!(r.event, Event::PolkadotXcm(pallet_xcm::Event::AssetsTrapped(_, _, _)))));
+			.any(|r| matches!(r.event, picasso_runtime::Event::RelayerXcm(pallet_xcm::Event::AssetsTrapped(_, _, _)))));
 
 		assert_eq!(
-			trader_weight_to_treasury + dollar(KSM),
-			Currencies::free_balance(KSM, &KaruraTreasuryAccount::get())
+			trader_weight_to_treasury +CurrencyId::KSM.unit::<Balance>(),
+			Assets::free_balance(CurrencyId::KSM, &picasso_runtime::TreasuryAccount::get())
 		);
 		assert_eq!(
-			kar_treasury_amount,
-			Currencies::free_balance(KAR, &KaruraTreasuryAccount::get())
+			native_treasury_amount,
+			Assets::free_balance(CurrencyId::PICA,  &picasso_runtime::TreasuryAccount::get())
 		);
 	});
 }
@@ -934,6 +933,11 @@ fn trap_assets_lower_than_existential_deposit_works() {
 	});
 }
 
+fn sibling_account() -> AccountId {
+	use sp_runtime::traits::AccountIdConversion;
+	polkadot_parachain::primitives::Sibling::from(SIBLING_PARA_ID).into_account()
+}
+
 // From Acala
 #[test]
 fn sibling_trap_assets_works() {
@@ -946,11 +950,6 @@ fn sibling_trap_assets_works() {
 		* MaxInstructions::get() as Balance;
 	let any_asset = CurrencyId::LAYR;
 	let this_native_asset = CurrencyId::PICA;
-
-	fn sibling_account() -> AccountId {
-		use sp_runtime::traits::AccountIdConversion;
-		polkadot_parachain::primitives::Sibling::from(SIBLING_PARA_ID).into_account()
-	}
 
 	let this_native_treasury_amount = Picasso::execute_with(|| {
 		assert_ok!(Assets::deposit(any_asset, &sibling_account(), sibling_non_native_amount));

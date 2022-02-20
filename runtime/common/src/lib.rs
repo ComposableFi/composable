@@ -15,7 +15,11 @@
 pub mod impls;
 pub mod xcmp;
 pub use constants::*;
+use frame_support::parameter_types;
+use orml_traits::parameter_type_with_key;
+use primitives::currency::CurrencyId;
 pub use types::*;
+use num_traits::Zero;
 
 /// Common types of statemint and statemine and dali and picasso and composable.
 mod types {
@@ -110,4 +114,24 @@ mod constants {
 		EnsureRoot<AccountId>,
 		collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilInstance>,
 	>;
+}
+
+parameter_types! {
+	  /// Minimum amount an account has to hold to stay in state.
+	  pub NativeExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
+	}
+
+
+pub fn multi_existential_deposit(currency_id: CurrencyId) -> Balance {
+		match currency_id {
+			CurrencyId::PICA => NativeExistentialDeposit::get(),
+			_ => Balance::zero(),
+		}
+}
+	
+parameter_type_with_key! {  	
+	/// Minimum amount an account has to hold to stay in state
+	pub MultiExistentialDeposit: |currency_id: CurrencyId| -> Balance {
+		multi_existential_deposit(currency_id)
+	};
 }
