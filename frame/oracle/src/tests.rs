@@ -582,6 +582,10 @@ mod add_stake {
                 let amount_staked = Oracle::oracle_stake(signer_account).unwrap_or_else(|| 0_u32.into());
                 prop_assert_eq!(amount_staked, stake_to_add + MinStake::get());
 
+                // Check if the stake is not accidentally added to the controller
+                let controller_stake = Oracle::oracle_stake(controller_account).unwrap_or_else(|| 0_u32.into());
+                prop_assert_eq!(controller_stake, 0);
+
                 // Check if the signer's total balance includes the amount staked
                 prop_assert_eq!(Balances::total_balance(&signer_account), signer_balance + amount_staked);
 
@@ -621,46 +625,9 @@ mod add_stake {
         }
 
         // TODO: test ExceedStake
+        // TODO: check if stakes are isolated
     }
 }
-
-// #[test]
-// fn add_stake() {
-// 	new_test_ext().execute_with(|| {
-// 		let account_1 = get_account_1();
-// 		let account_2 = get_root_account();
-// 		// fails no controller set
-// 		assert_noop!(Oracle::add_stake(Origin::signed(account_1), 50), Error::<Test>::UnsetSigner);
-//
-// 		assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_2));
-//
-// 		assert_eq!(Balances::free_balance(account_2), 100);
-// 		assert_eq!(Balances::free_balance(account_1), 99);
-// 		assert_ok!(Oracle::add_stake(Origin::signed(account_1), 50));
-// 		assert_eq!(Balances::free_balance(account_1), 49);
-// 		assert_eq!(Balances::total_balance(&account_1), 49);
-// 		// funds were transferred to signer and locked
-// 		assert_eq!(Balances::free_balance(account_2), 100);
-// 		assert_eq!(Balances::total_balance(&account_2), 151);
-//
-// 		assert_eq!(Oracle::oracle_stake(account_2), Some(51));
-// 		assert_eq!(Oracle::oracle_stake(account_1), None);
-//
-// 		assert_ok!(Oracle::add_stake(Origin::signed(account_1), 39));
-// 		assert_eq!(Balances::free_balance(account_1), 10);
-// 		assert_eq!(Balances::total_balance(&account_1), 10);
-// 		assert_eq!(Balances::free_balance(account_2), 100);
-// 		assert_eq!(Balances::total_balance(&account_2), 190);
-//
-// 		assert_eq!(Oracle::oracle_stake(account_2), Some(90));
-// 		assert_eq!(Oracle::oracle_stake(account_1), None);
-//
-// 		assert_noop!(
-// 			Oracle::add_stake(Origin::signed(account_1), 10),
-// 			BalancesError::<Test>::KeepAlive
-// 		);
-// 	});
-// }
 
 #[test]
 fn remove_and_reclaim_stake() {
