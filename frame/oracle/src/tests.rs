@@ -629,6 +629,50 @@ mod add_stake {
     }
 }
 
+mod reclaim_stake {
+    use super::*;
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(10_000))]
+
+        #[test]
+        fn cannot_reclaim_stake_when_no_signer_set(
+            controller_account in account_id(),
+        ) {
+            new_test_ext().execute_with(|| {
+                prop_assert_noop!(
+                    Oracle::reclaim_stake(Origin::signed(controller_account)),
+                    Error::<Test>::UnsetSigner
+                );
+
+                Ok(())
+            })?;
+        }
+
+        #[test]
+        fn cannot_reclaim_stake_when_no_declared_withdraws(
+            controller_account in account_id(),
+            controller_balance in MinStake::get()..Balance::MAX,
+            signer_account in account_id(),
+        ) {
+            prop_assume!(controller_account != signer_account);
+
+            new_test_ext().execute_with(|| {
+                Balances::make_free_balance_be(&controller_account, controller_balance);
+                prop_assert_ok!(Oracle::set_signer(Origin::signed(controller_account), signer_account));
+
+                prop_assert_noop!(
+                    Oracle::reclaim_stake(Origin::signed(controller_account)),
+                    Error::<Test>::Unknown
+                );
+
+                Ok(())
+            })?;
+        }
+
+
+    }
+}
+
 #[test]
 fn remove_and_reclaim_stake() {
 	new_test_ext().execute_with(|| {
