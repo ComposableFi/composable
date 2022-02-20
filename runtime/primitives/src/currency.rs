@@ -13,10 +13,10 @@ use sp_runtime::sp_std::ops::Deref;
 /// Trait used to write generalized code over well know currencies
 /// We use const to allow for match on these
 pub trait WellKnownCurrency<AssetId: Copy> {
-	const NATIVE : AssetId;
+	const NATIVE: AssetId;
 	/// usually we expect running with relay,
 	/// but if  not, than degenrative case would be this equal to `NATIVE`
-	const RELAY_NATIVE : AssetId;
+	const RELAY_NATIVE: AssetId;
 }
 
 #[derive(
@@ -38,9 +38,9 @@ pub trait WellKnownCurrency<AssetId: Copy> {
 pub struct CurrencyId(pub u128);
 
 impl WellKnownCurrency<CurrencyId> for CurrencyId {
-    const NATIVE : CurrencyId = CurrencyId::PICA;
+	const NATIVE: CurrencyId = CurrencyId::PICA;
 
-    const RELAY_NATIVE : CurrencyId = CurrencyId::KSM;
+	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
 }
 
 impl CurrencyId {
