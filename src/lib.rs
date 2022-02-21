@@ -16,6 +16,8 @@
 
 pub mod error;
 pub mod primitives;
+#[cfg(test)]
+mod tests;
 pub mod traits;
 
 use crate::error::BeefyClientError;
@@ -109,7 +111,7 @@ pub trait BeefyLightClient {
             .map(|x| keccak_256(&x.1).into())
             .collect::<Vec<_>>();
 
-        // Verify authority inclusion in mmr_update.authority_proof
+        // Verify mmr_update.authority_proof against store root hash
         if current_authority_set.id == validator_set_id {
             let root_hash = current_authority_set.root;
             if !authorities_merkle_proof.verify(
