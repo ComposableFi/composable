@@ -15,6 +15,10 @@
 pub mod impls;
 pub mod xcmp;
 pub use constants::*;
+use frame_support::parameter_types;
+use num_traits::Zero;
+use orml_traits::parameter_type_with_key;
+use primitives::currency::CurrencyId;
 pub use types::*;
 
 /// Common types of statemint and statemine and dali and picasso and composable.
@@ -110,4 +114,23 @@ mod constants {
 		EnsureRoot<AccountId>,
 		collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilInstance>,
 	>;
+}
+
+parameter_types! {
+  /// Existential deposit (ED for short) is minimum amount an account has to hold to stay in state.
+  pub NativeExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
+}
+
+pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
+	match currency_id {
+		&CurrencyId::PICA => NativeExistentialDeposit::get(),
+		_ => Balance::zero(),
+	}
+}
+
+parameter_type_with_key! {
+	// Minimum amount an account has to hold to stay in state
+	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+		multi_existential_deposits(currency_id)
+	};
 }
