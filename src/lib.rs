@@ -59,7 +59,21 @@ pub trait BeefyLightClient {
             return Err(BeefyClientError::InvalidMmrUpdate);
         }
 
-        // Beefy validators sign the kekak256 hash of the scale encoded commitment
+        let mmr_root_vec = mmr_update
+            .signed_commitment
+            .commitment
+            .payload
+            .get_raw(&MMR_ROOT_ID)
+            .ok_or_else(|| BeefyClientError::InvalidMmrUpdate)?
+            .clone();
+        // Return if mmr_root_hash is invalid
+        if mmr_root_vec.len() != HASH_LENGTH {
+            return Err(BeefyClientError::InvalidRootHash);
+        }
+        let mut mmr_root_hash = [0u8; 32];
+        mmr_root_hash.copy_from_slice(&mmr_root_vec);
+
+        // Beefy validators sign the keccak_256 hash of the scale encoded commitment
         let encoded_commitment = mmr_update.signed_commitment.commitment.encode();
         let commitment_hash = keccak_256(&*encoded_commitment);
 
@@ -150,18 +164,6 @@ pub trait BeefyLightClient {
             items: mmr_update.mmr_proof.clone(),
         };
 
-        let mmr_root_vec = mmr_update
-            .signed_commitment
-            .commitment
-            .payload
-            .get_raw(&MMR_ROOT_ID)
-            .ok_or_else(|| BeefyClientError::InvalidMmrUpdate)?
-            .clone();
-        if mmr_root_vec.len() != HASH_LENGTH {
-            return Err(BeefyClientError::InvalidRootHash);
-        }
-        let mut mmr_root_hash = [0u8; 32];
-        mmr_root_hash.copy_from_slice(&mmr_root_vec);
         let encodable_opaque_leaf = pallet_mmr_primitives::EncodableOpaqueLeaf(
             mmr_update.latest_mmr_leaf_with_index.leaf.encode(),
         );
