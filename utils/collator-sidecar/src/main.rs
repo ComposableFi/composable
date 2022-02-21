@@ -1,7 +1,7 @@
 use jsonrpsee::{
 	core::client::ClientT,
+	http_client::{HttpClient, HttpClientBuilder},
 	rpc_params,
-	ws_client::{WsClient, WsClientBuilder},
 };
 use serde::Deserialize;
 use std::sync::Arc;
@@ -11,13 +11,13 @@ use tide::{log, Request};
 #[derive(Debug, Deserialize, StructOpt, Clone)]
 struct Main {
 	#[structopt(long)]
-	ws_port: String,
+	rpc_port: String,
 	#[structopt(long)]
 	port: String,
 }
 
 struct State {
-	client: WsClient,
+	client: HttpClient,
 }
 
 #[tokio::main]
@@ -25,8 +25,8 @@ async fn main() -> tide::Result<()> {
 	env_logger::init();
 	let args = Main::from_args();
 
-	let url = format!("ws://127.0.0.1:{}", args.ws_port);
-	let client = WsClientBuilder::default()
+	let url = format!("http://127.0.0.1:{}", args.ws_port);
+	let client = HttpClientBuilder::default()
 		.max_request_body_size(u32::MAX)
 		.build(url)
 		.await
@@ -54,7 +54,7 @@ async fn log_handler(mut req: Request<Arc<State>>) -> tide::Result {
 	log::info!("result: {:?}", result);
 
 	if let Err(e) = result {
-		return Ok(format!("Error: {:?}", e).into())
+		return Ok(format!("Error: {:?}", e).into());
 	}
 
 	Ok("".into())
