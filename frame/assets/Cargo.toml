@@ -32,8 +32,8 @@ codec = { default-features = false, features = ["derive"], package = "parity-sca
 num-traits = { version = "0.2.14", default-features = false }
 
 [dev-dependencies]
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, features = ["std"] }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false, features = ["std"] }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry", default-features = false }
 proptest = "1.0"
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
