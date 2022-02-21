@@ -21,9 +21,7 @@ mod tests;
 pub mod traits;
 
 use crate::error::BeefyClientError;
-use crate::primitives::{
-    BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof, HASH_LENGTH, MMR_ROOT_ID, SIGNATURE_LEN,
-};
+use crate::primitives::{BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof};
 use crate::traits::{StorageRead, StorageWrite};
 use codec::Encode;
 use rs_merkle::MerkleProof;
@@ -32,16 +30,11 @@ use sp_core_hashing::keccak_256;
 use sp_io::crypto;
 use sp_runtime::traits::Convert;
 
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 
-pub struct BeefyLightClient<Store: StorageRead + StorageWrite> {
-    _store: Store,
-}
+pub struct BeefyLightClient<Store: StorageRead + StorageWrite>(PhantomData<Store>);
 
 impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
-    pub fn new(_store: Store) -> Self {
-        Self { _store }
-    }
     /// This should verify the signed commitment signatures, and reconstruct the
     /// authority merkle root, confirming known authorities signed the [`crate::primitives::Commitment`]
     /// then using the mmr proofs, verify the latest mmr leaf,
@@ -64,19 +57,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
             return Err(BeefyClientError::InvalidMmrUpdate);
         }
 
-        let mmr_root_vec = mmr_update
-            .signed_commitment
-            .commitment
-            .payload
-            .get_raw(&MMR_ROOT_ID)
-            .ok_or_else(|| BeefyClientError::InvalidMmrUpdate)?
-            .clone();
-        // Return if mmr_root_hash is invalid
-        if mmr_root_vec.len() != HASH_LENGTH {
-            return Err(BeefyClientError::InvalidRootHash);
-        }
-        let mut mmr_root_hash = [0u8; 32];
-        mmr_root_hash.copy_from_slice(&mmr_root_vec);
+        let mmr_root_hash = mmr_update.signed_commitment.commitment.mmr_root_hash;
 
         // Beefy validators sign the keccak_256 hash of the scale encoded commitment
         let encoded_commitment = mmr_update.signed_commitment.commitment.encode();
@@ -89,12 +70,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
             .enumerate()
             .filter_map(|item| {
                 if let Some(sig) = item.1 {
-                    let mut temp_sig = [0u8; SIGNATURE_LEN];
-                    if sig.len() != SIGNATURE_LEN {
-                        return None;
-                    }
-                    temp_sig.copy_from_slice(&sig);
-                    Some((item.0, temp_sig))
+                    Some((item.0, sig))
                 } else {
                     None
                 }
@@ -113,13 +89,8 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
 
         let mut authorities_changed = false;
 
-        let authorities_merkle_proof = MerkleProof::<KeccakHasher>::new(
-            mmr_update
-                .authority_proof
-                .into_iter()
-                .map(|x| x.into())
-                .collect(),
-        );
+        let authorities_merkle_proof =
+            MerkleProof::<KeccakHasher>::new(mmr_update.authority_proof.clone());
         let authority_leaf_indices = authority_addresses_and_indices
             .iter()
             .cloned()
@@ -127,7 +98,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
             .collect::<Vec<_>>();
         let authority_leaves = authority_addresses_and_indices
             .into_iter()
-            .map(|x| keccak_256(&x.1).into())
+            .map(|x| keccak_256(&x.1))
             .collect::<Vec<_>>();
 
         // Verify mmr_update.authority_proof against store root hash
@@ -169,20 +140,15 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
             items: mmr_update.mmr_proof.clone(),
         };
 
-        let encodable_opaque_leaf = pallet_mmr_primitives::EncodableOpaqueLeaf(
+        let node = pallet_mmr_primitives::DataOrHash::Data(
             mmr_update.latest_mmr_leaf_with_index.leaf.encode(),
         );
-
-        let node =
-            pallet_mmr_primitives::DataOrHash::Data(encodable_opaque_leaf.into_opaque_leaf());
-        match pallet_mmr::verify_leaf_proof::<sp_runtime::traits::Keccak256, _>(
+        pallet_mmr::verify_leaf_proof::<sp_runtime::traits::Keccak256, _>(
             mmr_root_hash.into(),
             node,
             proof,
-        ) {
-            Err(_) => return Err(BeefyClientError::InvalidMmrProof),
-            _ => {}
-        }
+        )
+        .map_err(|_| BeefyClientError::InvalidMmrProof)?;
 
         <Store as StorageWrite>::set_latest_height(
             mmr_update.signed_commitment.commitment.block_number,
