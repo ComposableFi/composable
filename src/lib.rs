@@ -34,16 +34,21 @@ use sp_runtime::traits::Convert;
 
 use sp_std::prelude::*;
 
-pub trait BeefyLightClient {
-    type Store: StorageRead + StorageWrite;
+pub struct BeefyLightClient<Store: StorageRead + StorageWrite> {
+    _store: Store,
+}
 
+impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
+    pub fn new(_store: Store) -> Self {
+        Self { _store }
+    }
     /// This should verify the signed commitment signatures, and reconstruct the
     /// authority merkle root, confirming known authorities signed the [`crate::primitives::Commitment`]
     /// then using the mmr proofs, verify the latest mmr leaf,
     /// using the latest mmr leaf to rotate its view of the next authorities.
-    fn ingest_mmr_root_with_proof(mmr_update: MmrUpdateProof) -> Result<(), BeefyClientError> {
-        let current_authority_set = Self::Store::current_authority_set()?;
-        let next_authority_set = Self::Store::next_authority_set()?;
+    pub fn ingest_mmr_root_with_proof(mmr_update: MmrUpdateProof) -> Result<(), BeefyClientError> {
+        let current_authority_set = <Store as StorageRead>::current_authority_set()?;
+        let next_authority_set = <Store as StorageRead>::next_authority_set()?;
         let signatures_len = mmr_update.signed_commitment.signatures.len();
         let validator_set_id = mmr_update.signed_commitment.commitment.validator_set_id;
 
@@ -149,7 +154,7 @@ pub trait BeefyLightClient {
             authorities_changed = true;
         }
 
-        let latest_beefy_height = Self::Store::latest_height()?;
+        let latest_beefy_height = <Store as StorageRead>::latest_height()?;
 
         if mmr_update.signed_commitment.commitment.block_number <= latest_beefy_height {
             return Err(BeefyClientError::InvalidMmrUpdate);
@@ -179,12 +184,14 @@ pub trait BeefyLightClient {
             _ => {}
         }
 
-        Self::Store::set_latest_height(mmr_update.signed_commitment.commitment.block_number)?;
-        Self::Store::set_latest_mmr_root_hash(mmr_root_hash.into())?;
+        <Store as StorageWrite>::set_latest_height(
+            mmr_update.signed_commitment.commitment.block_number,
+        )?;
+        <Store as StorageWrite>::set_latest_mmr_root_hash(mmr_root_hash.into())?;
 
         if authorities_changed {
-            Self::Store::set_current_authority_set(next_authority_set)?;
-            Self::Store::set_next_authority_set(
+            <Store as StorageWrite>::set_current_authority_set(next_authority_set)?;
+            <Store as StorageWrite>::set_next_authority_set(
                 mmr_update
                     .latest_mmr_leaf_with_index
                     .leaf
