@@ -79,6 +79,12 @@ Need to do to run 4 relay chain nodes, 2 Composable's collators and 2 Basilisk's
 	yarn composable_and_basilisk
 	```
 
+or you can use Docker image
+
+	```bash
+	docker run --rm -ti -u$(id -u):$(id -g) -p9944:9944 -p9988:9988 -p9998:9998 composablefi/composable-sandbox:latest
+	```
+
 URLs:
 * `https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9945#/explorer` is the 1st Relay Chain node
 * `https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer` is the 1st Composable's collator

@@ -76,7 +76,14 @@ push-release:
 	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 
 containerize-composable-sandbox:
-	docker build -t composable-sandbox:${COMMIT_SHA} -t composable-sandbox:latest -f docker/composable-sandbox.docker .
+	@docker build -f docker/composable-sandbox.docker \
+		-t ${REPO}/composable-sandbox:${COMMIT_SHA} \
+		-t ${REPO}/composable-sandbox:latest  \
+		.
+
+push-composable-sandbox:
+	@docker push ${REPO}/composable-sandbox:${COMMIT_SHA}
+	@docker push ${REPO}/composable-sandbox:latest
 
 stop:
 	@docker-compose down
@@ -90,7 +97,7 @@ else
 endif
 
 
-.PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release containerize-composable-sandbox
+.PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release containerize-composable-sandbox push-composable-sandbox
 
 
 #----------------------------------------------------------------------
