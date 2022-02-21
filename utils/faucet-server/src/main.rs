@@ -1,3 +1,5 @@
+#![allow(unknown_lints, panics)]
+
 use hmac::{Hmac, Mac, NewMac};
 use sha2::Sha256;
 use sp_core::{crypto::Ss58Codec, sr25519, Pair};

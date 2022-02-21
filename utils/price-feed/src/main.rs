@@ -1,3 +1,5 @@
+#![allow(unknown_lints, panics)]
+
 mod asset;
 mod backend;
 mod cache;

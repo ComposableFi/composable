@@ -1,3 +1,4 @@
+#![allow(unknown_lints, panics)]
 use jsonrpsee::{
 	core::client::ClientT,
 	http_client::{HttpClient, HttpClientBuilder},

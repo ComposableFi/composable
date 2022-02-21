@@ -1,3 +1,5 @@
+#![allow(unknown_lints, panics)]
+
 use composable_support::rpc_helpers::{SafeRpcWrapper, SafeRpcWrapperType};
 use crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi;
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};

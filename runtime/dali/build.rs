@@ -1,3 +1,5 @@
+#![allow(unknown_lints, panics)]
+
 fn main() {
 	// NOTE: could make reproducible clean builds like next:
 	// - remove this file

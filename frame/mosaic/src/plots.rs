@@ -1,3 +1,4 @@
+#![allow(unknown_lints, panics)]
 mod decay;
 
 fn main() {

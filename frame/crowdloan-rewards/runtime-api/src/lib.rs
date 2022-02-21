@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(clippy::too_many_arguments)]
-#![allow(clippy::unnecessary_mut_passed)]
+#![allow(unknown_lints, panics, clippy::too_many_arguments, clippy::unnecessary_mut_passed)]
 
 use codec::Codec;
 use composable_support::rpc_helpers::{SafeRpcWrapper, SafeRpcWrapperType};

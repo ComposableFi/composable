@@ -5,7 +5,17 @@
 // 4. Benchmarks and Weights!
 
 #![cfg_attr(not(feature = "std"), no_std)]
-
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_method,
+		clippy::disallowed_type,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)]
 mod decay;
 mod relayer;
 mod validation;
@@ -175,12 +185,16 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, NetworkIdOf<T>, NetworkInfo<BalanceOf<T>>, OptionQuery>;
 
 	#[pallet::storage]
+	// The default constructor is explicitly defined so `ValueQuery` is allowed.
+	#[allow(clippy::disallowed_type)]
 	#[pallet::getter(fn time_lock_period)]
 	#[allow(clippy::disallowed_type)]
 	pub type TimeLockPeriod<T: Config> =
 		StorageValue<_, BlockNumberOf<T>, ValueQuery, TimeLockPeriodOnEmpty<T>>;
 
 	#[pallet::storage]
+	// The Nonce starts at 0, so the default of u128 is correct and `ValueQuery` is allowed.
+	#[allow(clippy::disallowed_type)]
 	#[pallet::getter(fn nonce)]
 	#[allow(clippy::disallowed_type)]
 	pub type Nonce<T: Config> = StorageValue<_, u128, ValueQuery>;

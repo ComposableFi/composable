@@ -1,3 +1,5 @@
+#![allow(unknown_lints, panics)]
+
 use assets_runtime_api::AssetsRuntimeApi;
 use codec::Codec;
 use composable_support::rpc_helpers::{SafeRpcWrapper, SafeRpcWrapperType};

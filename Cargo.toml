@@ -209,3 +209,8 @@ substrate-frame-rpc-system = { git = "https://github.com/composableFi/substrate"
 substrate-prometheus-endpoint = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.16" }
 substrate-wasm-builder = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.16" }
 try-runtime-cli = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.16" }
+
+[workspace.metadata.dylint]
+libraries = [
+  { git = "https://github.com/kaiserkarel/substrace", rev = "26cd2a3d7b7d335455ef3da9b405713fbc238372" },
+]

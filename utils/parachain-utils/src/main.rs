@@ -1,3 +1,5 @@
+#![allow(unknown_lints, panics)]
+
 use codec::Encode;
 use jsonrpc_core_client::RpcError;
 use parachain_system::Call as ParachainSystemCall;
@@ -12,8 +14,8 @@ mod events;
 
 use events::AllRuntimeEvents;
 
-const DALI: &'static str = "dali";
-const PICASSO: &'static str = "picasso";
+const DALI: &str = "dali";
+const PICASSO: &str = "picasso";
 
 /// The command options
 #[derive(Debug, StructOpt, Clone)]

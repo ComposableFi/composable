@@ -1,3 +1,4 @@
+#![allow(unknown_lints, panics)]
 use color_eyre::eyre;
 
 fn main() -> eyre::Result<()> {

@@ -1,3 +1,5 @@
+#![allow(unknown_lints, panics)]
+
 use substrate_wasm_builder::WasmBuilder;
 
 fn main() {

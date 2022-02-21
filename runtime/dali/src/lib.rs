@@ -6,8 +6,7 @@
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
-		// // impl_runtime_apis will generate code that contains a `panic!`. Implementations should still avoid using panics.
-		// clippy::panic
+		clippy::panic
 	)
 )]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -97,25 +96,6 @@ pub mod opaque {
 		}
 	}
 }
-
-// To learn more about runtime versioning and what each of the following value means:
-//   https://substrate.dev/docs/en/knowledgebase/runtime/upgrades#runtime-versioning
-#[sp_version::runtime_version]
-pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("dali"),
-	impl_name: create_runtime_str!("dali"),
-	authoring_version: 1,
-	// The version of the runtime specification. A full node will not attempt to use its native
-	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
-	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
-	//   the compatible custom types.
-	spec_version: 1000,
-	impl_version: 8,
-	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 3,
-	state_version: 0,
-};
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -1152,203 +1132,231 @@ mod benches {
 	);
 }
 
-impl_runtime_apis! {
-	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
-		fn balance_of(asset_id: SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
-			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id.0, &account_id))
-		}
-	}
+pub use runtime_api::*;
 
-	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
-		fn amount_available_to_claim_for(account_id: AccountId) -> SafeRpcWrapper<Balance> {
-			SafeRpcWrapper (
-				crowdloan_rewards::amount_available_to_claim_for::<Runtime>(account_id)
-					.unwrap_or_else(|_| Balance::zero())
-			)
-		}
-	}
+// `impl_runtime_apis` will generate code with `panic` enabled, which is caught incorrectly by
+// clippy. Shuffling with modules allows us to ensure that other code is checked for panics however.
+#[allow(clippy::panic)]
+mod runtime_api {
+	use super::*;
 
-	impl sp_api::Core<Block> for Runtime {
-		fn version() -> RuntimeVersion {
-			VERSION
-		}
+	// To learn more about runtime versioning and what each of the following value means:
+	//   https://substrate.dev/docs/en/knowledgebase/runtime/upgrades#runtime-versioning
+	#[sp_version::runtime_version]
+	pub const VERSION: RuntimeVersion = RuntimeVersion {
+		spec_name: create_runtime_str!("dali"),
+		impl_name: create_runtime_str!("dali"),
+		authoring_version: 1,
+		// The version of the runtime specification. A full node will not attempt to use its native
+		//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
+		//   `spec_version`, and `authoring_version` are the same between Wasm and native.
+		// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
+		//   the compatible custom types.
+		spec_version: 1000,
+		impl_version: 8,
+		apis: RUNTIME_API_VERSIONS,
+		transaction_version: 3,
+		state_version: 0,
+	};
 
-		fn execute_block(block: Block) {
-			Executive::execute_block(block);
-		}
-
-		fn initialize_block(header: &<Block as BlockT>::Header) {
-			Executive::initialize_block(header)
-		}
-	}
-
-	impl sp_api::Metadata<Block> for Runtime {
-		fn metadata() -> OpaqueMetadata {
-			OpaqueMetadata::new(Runtime::metadata().into())
-		}
-	}
-
-	impl sp_block_builder::BlockBuilder<Block> for Runtime {
-		fn apply_extrinsic(extrinsic: <Block as BlockT>::Extrinsic) -> ApplyExtrinsicResult {
-			Executive::apply_extrinsic(extrinsic)
+	impl_runtime_apis! {
+		impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
+			fn balance_of(asset_id: SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
+				SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id.0, &account_id))
+			}
 		}
 
-		fn finalize_block() -> <Block as BlockT>::Header {
-			Executive::finalize_block()
+		impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
+			fn amount_available_to_claim_for(account_id: AccountId) -> SafeRpcWrapper<Balance> {
+				SafeRpcWrapper (
+					crowdloan_rewards::amount_available_to_claim_for::<Runtime>(account_id)
+						.unwrap_or_else(|_| Balance::zero())
+				)
+			}
 		}
 
-		fn inherent_extrinsics(data: sp_inherents::InherentData) -> Vec<<Block as BlockT>::Extrinsic> {
-			data.create_extrinsics()
+		impl sp_api::Core<Block> for Runtime {
+			fn version() -> RuntimeVersion {
+				VERSION
+			}
+
+			fn execute_block(block: Block) {
+				Executive::execute_block(block);
+			}
+
+			fn initialize_block(header: &<Block as BlockT>::Header) {
+				Executive::initialize_block(header)
+			}
 		}
 
-		fn check_inherents(
-			block: Block,
-			data: sp_inherents::InherentData,
-		) -> sp_inherents::CheckInherentsResult {
-			data.check_extrinsics(&block)
-		}
-	}
-
-	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
-		fn validate_transaction(
-			source: TransactionSource,
-			tx: <Block as BlockT>::Extrinsic,
-			block_hash: <Block as BlockT>::Hash,
-		) -> TransactionValidity {
-			Executive::validate_transaction(source, tx, block_hash)
-		}
-	}
-
-	impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
-		fn offchain_worker(header: &<Block as BlockT>::Header) {
-			Executive::offchain_worker(header)
-		}
-	}
-
-	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
-		fn slot_duration() -> sp_consensus_aura::SlotDuration {
-			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+		impl sp_api::Metadata<Block> for Runtime {
+			fn metadata() -> OpaqueMetadata {
+				OpaqueMetadata::new(Runtime::metadata().into())
+			}
 		}
 
-		fn authorities() -> Vec<AuraId> {
-			Aura::authorities().into_inner()
-		}
-	}
+		impl sp_block_builder::BlockBuilder<Block> for Runtime {
+			fn apply_extrinsic(extrinsic: <Block as BlockT>::Extrinsic) -> ApplyExtrinsicResult {
+				Executive::apply_extrinsic(extrinsic)
+			}
 
-	impl sp_session::SessionKeys<Block> for Runtime {
-		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-			opaque::SessionKeys::generate(seed)
-		}
+			fn finalize_block() -> <Block as BlockT>::Header {
+				Executive::finalize_block()
+			}
 
-		fn decode_session_keys(
-			encoded: Vec<u8>,
-		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
-			opaque::SessionKeys::decode_into_raw_public_keys(&encoded)
-		}
-	}
+			fn inherent_extrinsics(data: sp_inherents::InherentData) -> Vec<<Block as BlockT>::Extrinsic> {
+				data.create_extrinsics()
+			}
 
-	impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
-		fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
-			ParachainSystem::collect_collation_info(header)
-		}
-	}
-
-	impl system_rpc_runtime_api::AccountNonceApi<Block, AccountId, AccountIndex> for Runtime {
-		fn account_nonce(account: AccountId) -> AccountIndex {
-			System::account_nonce(account)
-		}
-	}
-
-	impl transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
-		fn query_info(
-			uxt: <Block as BlockT>::Extrinsic,
-			len: u32,
-		) -> transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
-			TransactionPayment::query_info(uxt, len)
-		}
-		fn query_fee_details(
-			uxt: <Block as BlockT>::Extrinsic,
-			len: u32,
-		) -> transaction_payment::FeeDetails<Balance> {
-			TransactionPayment::query_fee_details(uxt, len)
-		}
-	}
-	#[cfg(feature = "sim-node")]
-	impl simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime {
-		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
-			use sp_runtime::{
-				generic::Era, MultiSignature,
-				traits::StaticLookup,
-			};
-			use sp_core::sr25519;
-
-			let nonce = frame_system::Pallet::<Runtime>::account_nonce(signer.clone());
-			let extra = (
-				system::CheckNonZeroSender::<Runtime>::new(),
-				system::CheckSpecVersion::<Runtime>::new(),
-				system::CheckTxVersion::<Runtime>::new(),
-				system::CheckGenesis::<Runtime>::new(),
-				system::CheckEra::<Runtime>::from(Era::Immortal),
-				system::CheckNonce::<Runtime>::from(nonce),
-				system::CheckWeight::<Runtime>::new(),
-				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
-			);
-
-			let signature = MultiSignature::from(sr25519::Signature([0u8;64]));
-			let address = AccountIdLookup::unlookup(signer);
-			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
-
-			ext.encode()
-		}
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	impl frame_benchmarking::Benchmark<Block> for Runtime {
-		fn benchmark_metadata(extra: bool) -> (
-			Vec<frame_benchmarking::BenchmarkList>,
-			Vec<frame_support::traits::StorageInfo>,
-		) {
-			use frame_benchmarking::{Benchmarking, BenchmarkList};
-			use frame_support::traits::StorageInfoTrait;
-			use system_benchmarking::Pallet as SystemBench;
-			use session_benchmarking::Pallet as SessionBench;
-
-			let mut list = Vec::<BenchmarkList>::new();
-			list_benchmarks!(list, extra);
-			let storage_info = AllPalletsWithSystem::storage_info();
-			return (list, storage_info)
+			fn check_inherents(
+				block: Block,
+				data: sp_inherents::InherentData,
+			) -> sp_inherents::CheckInherentsResult {
+				data.check_extrinsics(&block)
+			}
 		}
 
-		fn dispatch_benchmark(
-			config: frame_benchmarking::BenchmarkConfig
-		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, TrackedStorageKey};
+		impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
+			fn validate_transaction(
+				source: TransactionSource,
+				tx: <Block as BlockT>::Extrinsic,
+				block_hash: <Block as BlockT>::Hash,
+			) -> TransactionValidity {
+				Executive::validate_transaction(source, tx, block_hash)
+			}
+		}
 
-			use system_benchmarking::Pallet as SystemBench;
-			impl system_benchmarking::Config for Runtime {}
+		impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
+			fn offchain_worker(header: &<Block as BlockT>::Header) {
+				Executive::offchain_worker(header)
+			}
+		}
 
-			use session_benchmarking::Pallet as SessionBench;
-			impl session_benchmarking::Config for Runtime {}
+		impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
+			fn slot_duration() -> sp_consensus_aura::SlotDuration {
+				sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+			}
 
-			let whitelist: Vec<TrackedStorageKey> = vec![
-				// Block Number
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
-				// Total Issuance
-				hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
-				// Execution Phase
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
-				// Event Count
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
-				// System Events
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
-			];
+			fn authorities() -> Vec<AuraId> {
+				Aura::authorities().into_inner()
+			}
+		}
 
-			let mut batches = Vec::<BenchmarkBatch>::new();
-			let params = (&config, &whitelist);
-			add_benchmarks!(params, batches);
+		impl sp_session::SessionKeys<Block> for Runtime {
+			fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
+				opaque::SessionKeys::generate(seed)
+			}
 
-			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
-			Ok(batches)
+			fn decode_session_keys(
+				encoded: Vec<u8>,
+			) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
+				opaque::SessionKeys::decode_into_raw_public_keys(&encoded)
+			}
+		}
+
+		impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
+			fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
+				ParachainSystem::collect_collation_info(header)
+			}
+		}
+
+		impl system_rpc_runtime_api::AccountNonceApi<Block, AccountId, AccountIndex> for Runtime {
+			fn account_nonce(account: AccountId) -> AccountIndex {
+				System::account_nonce(account)
+			}
+		}
+
+		impl transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
+			fn query_info(
+				uxt: <Block as BlockT>::Extrinsic,
+				len: u32,
+			) -> transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
+				TransactionPayment::query_info(uxt, len)
+			}
+			fn query_fee_details(
+				uxt: <Block as BlockT>::Extrinsic,
+				len: u32,
+			) -> transaction_payment::FeeDetails<Balance> {
+				TransactionPayment::query_fee_details(uxt, len)
+			}
+		}
+		#[cfg(feature = "sim-node")]
+		impl simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime {
+			fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
+				use sp_runtime::{
+					generic::Era, MultiSignature,
+					traits::StaticLookup,
+				};
+				use sp_core::sr25519;
+
+				let nonce = frame_system::Pallet::<Runtime>::account_nonce(signer.clone());
+				let extra = (
+					system::CheckNonZeroSender::<Runtime>::new(),
+					system::CheckSpecVersion::<Runtime>::new(),
+					system::CheckTxVersion::<Runtime>::new(),
+					system::CheckGenesis::<Runtime>::new(),
+					system::CheckEra::<Runtime>::from(Era::Immortal),
+					system::CheckNonce::<Runtime>::from(nonce),
+					system::CheckWeight::<Runtime>::new(),
+					transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
+				);
+
+				let signature = MultiSignature::from(sr25519::Signature([0u8;64]));
+				let address = AccountIdLookup::unlookup(signer);
+				let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
+
+				ext.encode()
+			}
+		}
+
+		#[cfg(feature = "runtime-benchmarks")]
+		impl frame_benchmarking::Benchmark<Block> for Runtime {
+			fn benchmark_metadata(extra: bool) -> (
+				Vec<frame_benchmarking::BenchmarkList>,
+				Vec<frame_support::traits::StorageInfo>,
+			) {
+				use frame_benchmarking::{Benchmarking, BenchmarkList};
+				use frame_support::traits::StorageInfoTrait;
+				use system_benchmarking::Pallet as SystemBench;
+				use session_benchmarking::Pallet as SessionBench;
+
+				let mut list = Vec::<BenchmarkList>::new();
+				list_benchmarks!(list, extra);
+				let storage_info = AllPalletsWithSystem::storage_info();
+				return (list, storage_info)
+			}
+
+			fn dispatch_benchmark(
+				config: frame_benchmarking::BenchmarkConfig
+			) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
+				use frame_benchmarking::{Benchmarking, BenchmarkBatch, TrackedStorageKey};
+
+				use system_benchmarking::Pallet as SystemBench;
+				impl system_benchmarking::Config for Runtime {}
+
+				use session_benchmarking::Pallet as SessionBench;
+				impl session_benchmarking::Config for Runtime {}
+
+				let whitelist: Vec<TrackedStorageKey> = vec![
+					// Block Number
+					hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
+					// Total Issuance
+					hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
+					// Execution Phase
+					hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
+					// Event Count
+					hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
+					// System Events
+					hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
+				];
+
+				let mut batches = Vec::<BenchmarkBatch>::new();
+				let params = (&config, &whitelist);
+				add_benchmarks!(params, batches);
+
+				if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
+				Ok(batches)
+			}
 		}
 	}
 }
