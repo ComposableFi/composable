@@ -478,13 +478,13 @@ pub mod pallet {
 			);
 
 			let asset_info = AssetInfo {
-                threshold: *threshold,
-                min_answers: *min_answers,
-                max_answers: *max_answers,
-                block_interval: *block_interval,
-                reward,
-                slash
-            };
+				threshold: *threshold,
+				min_answers: *min_answers,
+				max_answers: *max_answers,
+				block_interval: *block_interval,
+				reward,
+				slash,
+			};
 
 			let current_asset_info = Self::asset_info(asset_id);
 			if current_asset_info.is_none() {
