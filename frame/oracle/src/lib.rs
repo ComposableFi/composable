@@ -470,20 +470,21 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::AddOracle::ensure_origin(origin)?;
 
-			let threshold = threshold.value();
-			let min_answers = min_answers.value();
-			let max_answers = max_answers.value();
-			let block_interval = block_interval.value();
-
-			ensure!(max_answers >= min_answers, Error::<T>::MaxAnswersLessThanMinAnswers);
+			ensure!(*max_answers >= *min_answers, Error::<T>::MaxAnswersLessThanMinAnswers);
 
 			ensure!(
 				AssetsCount::<T>::get() < T::MaxAssetsCount::get(),
 				Error::<T>::ExceedAssetsCount
 			);
 
-			let asset_info =
-				AssetInfo { threshold, min_answers, max_answers, block_interval, reward, slash };
+			let asset_info = AssetInfo {
+                threshold: *threshold,
+                min_answers: *min_answers,
+                max_answers: *max_answers,
+                block_interval: *block_interval,
+                reward,
+                slash
+            };
 
 			let current_asset_info = Self::asset_info(asset_id);
 			if current_asset_info.is_none() {
@@ -493,10 +494,10 @@ pub mod pallet {
 			AssetsInfo::<T>::insert(asset_id, asset_info);
 			Self::deposit_event(Event::AssetInfoChange(
 				asset_id,
-				threshold,
-				min_answers,
-				max_answers,
-				block_interval,
+				*threshold,
+				*min_answers,
+				*max_answers,
+				*block_interval,
 				reward,
 				slash,
 			));
