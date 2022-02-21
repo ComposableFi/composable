@@ -796,6 +796,44 @@ mod submit_price {
             })?;
         }
 
+        #[test]
+        fn cannot_submit_price_when_stake_too_low(
+            submitter_account in account_id(),
+            asset_id in asset_id(),
+            asset_info in asset_info(),
+            price_value in price_value(),
+            start_block in 0..(BlockNumber::MAX/8),
+        ) {
+            new_test_ext().execute_with(|| {
+                let root_account = get_root_account();
+
+                System::set_block_number(start_block);
+
+                prop_assert_ok!(Oracle::add_asset_and_info(
+                    Origin::signed(root_account),
+                    asset_id,
+                    asset_info.threshold,
+                    asset_info.min_answers,
+                    asset_info.max_answers,
+                    asset_info.block_interval,
+                    asset_info.reward,
+                    asset_info.slash,
+                ));
+
+                let last_update = Oracle::prices(asset_id).block;
+
+                System::set_block_number(last_update + asset_info.block_interval + 1);
+
+                prop_assert_noop!(
+                    Oracle::submit_price(Origin::signed(submitter_account), price_value, asset_id),
+                    Error::<Test>::NotEnoughStake
+                );
+
+                Ok(())
+            })?;
+        }
+
+
     }
 }
 
