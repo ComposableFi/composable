@@ -461,19 +461,19 @@ pub mod pallet {
 		pub fn add_asset_and_info(
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
-			valid_threshold: Validated<Percent, ValidThreshhold>,
-			valid_min_answers: Validated<u32, ValidMinAnswers>,
-			valid_max_answers: Validated<u32, ValidMaxAnswer<T::MaxAnswerBound>>,
-			valid_block_interval: Validated<T::BlockNumber, ValidBlockInterval<T::StalePrice>>,
+			threshold: Validated<Percent, ValidThreshhold>,
+			min_answers: Validated<u32, ValidMinAnswers>,
+			max_answers: Validated<u32, ValidMaxAnswer<T::MaxAnswerBound>>,
+			block_interval: Validated<T::BlockNumber, ValidBlockInterval<T::StalePrice>>,
 			reward: BalanceOf<T>,
 			slash: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			T::AddOracle::ensure_origin(origin)?;
 
-			let threshold = valid_threshold.value();
-			let min_answers = valid_min_answers.value();
-			let max_answers = valid_max_answers.value();
-			let block_interval = valid_block_interval.value();
+			let threshold = threshold.value();
+			let min_answers = min_answers.value();
+			let max_answers = max_answers.value();
+			let block_interval = block_interval.value();
 
 			ensure!(max_answers >= min_answers, Error::<T>::MaxAnswersLessThanMinAnswers);
 
