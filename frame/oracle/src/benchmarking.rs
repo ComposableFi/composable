@@ -1,7 +1,9 @@
 use super::*;
 
+use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
 #[allow(unused)]
 use crate::Pallet as Oracle;
+use composable_support::validation::Validated;
 use composable_traits::oracle::Price;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
@@ -11,8 +13,6 @@ use frame_support::{
 };
 use frame_system::{EventRecord, RawOrigin};
 use sp_runtime::{DispatchResult, Percent};
-use composable_support::validation::Validated;
-use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
 
 use sp_std::{prelude::*, vec};
 
