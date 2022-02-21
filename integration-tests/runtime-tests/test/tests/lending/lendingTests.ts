@@ -79,6 +79,35 @@ describe('Lending Tests', function() {
       console.debug(result.toString());
     });
     describe('Before Lending Tests: Create Oracles', function() {
+      it('Before Lending Tests: Create Oracle for PICA', async function () {
+        if (!testConfiguration.enabledTests.runBeforeCreateOracle)
+          return;
+        // Timeout set to 4 minutes.
+        this.timeout(4 * 60 * 1000);
+        // Create oracle
+        const assetId = api.createType('u128', ASSET_ID_PICA);
+        const threshold = api.createType('Percent', 50);
+        const minAnswers = api.createType('u32', 1);
+        const maxAnswers = api.createType('u32', 5);
+        const blockInterval = api.createType('u32', 6);
+        const reward = api.createType('u128', 150000000000);
+        const slash = api.createType('u128', 100000000000);
+        const {data: [result],} = await txOracleAddAssetAndInfoSuccessTest(
+          oracleControllerWallet,
+          assetId,
+          threshold,
+          minAnswers,
+          maxAnswers,
+          blockInterval,
+          reward,
+          slash
+        );
+        if (result.isErr)
+          console.debug(result.asErr.toString());
+        expect(result.isOk).to.be.true;
+        oracleId = (await api.query.oracle.assetsCount()).toNumber();
+      });
+
       it('Before Lending Tests: Create Oracle for base asset', async function () {
         if (!testConfiguration.enabledTests.runBeforeCreateOracle)
           return;
@@ -87,7 +116,7 @@ describe('Lending Tests', function() {
         // Create oracle
         const assetId = api.createType('u128', ASSET_ID_USDT);
         const threshold = api.createType('Percent', 50);
-        const minAnswers = api.createType('u32', 2);
+        const minAnswers = api.createType('u32', 1);
         const maxAnswers = api.createType('u32', 5);
         const blockInterval = api.createType('u32', 6);
         const reward = api.createType('u128', 150000000000);
@@ -116,7 +145,7 @@ describe('Lending Tests', function() {
         // Create oracle
         const assetId = api.createType('u128', ASSET_ID_BTC);
         const threshold = api.createType('Percent', 50);
-        const minAnswers = api.createType('u32', 2);
+        const minAnswers = api.createType('u32', 1);
         const maxAnswers = api.createType('u32', 5);
         const blockInterval = api.createType('u32', 6);
         const reward = api.createType('u128', 150000000000);
@@ -174,25 +203,25 @@ describe('Lending Tests', function() {
           .equal(api.createType('AccountId32', oracleSignerWallet.publicKey).toString());
       });
     });
+  });
 
-    describe('Liquidation Strategy Success Tests', function () {
-      it('Can create liquidation strategy (DutchAuction, LinearDecrease)', async function () {
-        if (!testConfiguration.enabledTests.canCreateLiquidationStrategy.createLiquidationStrategyDutchAuctionLinearDecrease)
-          this.skip();
-        // Setting timeout to 2 minutes.
-        this.timeout(2 * 60 * 1000);
-        const configuration = api.createType('PalletLiquidationsLiquidationStrategyConfiguration', {
-          DutchAuction: api.createType('ComposableTraitsTimeTimeReleaseFunction', {
-            LinearDecrease: api.createType('ComposableTraitsTimeLinearDecrease', {
-              total: api.createType('u64', 1)
-            })
-          }),
-          UniswapV2: "Null",
-          XcmDex: "Null"
-        });
-        const {data: [result],} = await createLiquidationStrategyHandler(sudoKey, configuration);
-        console.debug(result);
+  describe('Liquidation Strategy Success Tests', function () {
+    it('Can create liquidation strategy (DutchAuction, LinearDecrease)', async function () {
+      if (!testConfiguration.enabledTests.canCreateLiquidationStrategy.createLiquidationStrategyDutchAuctionLinearDecrease)
+        this.skip();
+      // Setting timeout to 2 minutes.
+      this.timeout(2 * 60 * 1000);
+      const configuration = api.createType('PalletLiquidationsLiquidationStrategyConfiguration', {
+        DutchAuction: api.createType('ComposableTraitsTimeTimeReleaseFunction', {
+          LinearDecrease: api.createType('ComposableTraitsTimeLinearDecrease', {
+            total: api.createType('u64', 1)
+          })
+        }),
+        UniswapV2: "Null",
+        XcmDex: "Null"
       });
+      const {data: [result],} = await createLiquidationStrategyHandler(sudoKey, configuration);
+      // ToDo (D. Roth): Add Check!
     });
   });
 
@@ -202,6 +231,7 @@ describe('Lending Tests', function() {
         this.skip();
       // Setting timeout to 2 minutes.
       this.timeout(5 * 60 * 1000);
+      await waitForBlocks(10);
       const price = api.createType('u128', 10000);
       const assetId = api.createType('u128', ASSET_ID_USDT);
       const {data: [result],} = await txOracleSubmitPriceSuccessTest(oracleSignerWallet, price, assetId);
@@ -234,36 +264,24 @@ describe('Lending Tests', function() {
       this.retries(1);
       // Setting timeout to 2 minutes.
       this.timeout(8 * 60 * 1000);
-      await waitForBlocks(5);
       console.log();
-      await Promise.all([
-        /*txOracleSubmitPriceSuccessTest(
-          oracleSignerWallet,
-          api.createType('u128', 1000000000),
-          ASSET_ID_BTC
-        ),*/
-        txOracleSubmitPriceSuccessTest(
-          oracleSignerWallet,
-          api.createType('u128', 100),
-          ASSET_ID_USDT
-        ),
-        createLendingMarketHandler(
-          oracleSignerWallet, // Wallet
-          BigInt(2000000000000000000), // collerateralFactor
-          api.createType('Percent', 10), // underCollaterializedWarnPercent
-          api.createType('Vec<u32>', []), // liquidators
-          api.createType('ComposableTraitsLendingMathInterestRateModel', { // Interest Rate Model
-            curve: api.createType('ComposableTraitsLendingMathCurveModel', { // Curve Model
-              baseRate: api.createType('u128', 1)
-            })
-          }),
-          api.createType('ComposableTraitsDefiCurrencyPair', { // Currency Pair
-            base: api.createType('u128', ASSET_ID_BTC), // Borrow Asset
-            quote: api.createType('u128', ASSET_ID_USDT) // Collateral Asset
-          }),
-          api.createType('Perquintill', 1) // reservedFactor
-        )
-      ]);
+      const result = await createLendingMarketHandler(
+        oracleSignerWallet, // Wallet
+        BigInt(2000000000000000000), // collerateralFactor
+        api.createType('Percent', 10), // underCollaterializedWarnPercent
+        api.createType('Vec<u32>', []), // liquidators
+        api.createType('ComposableTraitsLendingMathInterestRateModel', { // Interest Rate Model
+          curve: api.createType('ComposableTraitsLendingMathCurveModel', { // Curve Model
+            baseRate: api.createType('u128', 1)
+          })
+        }),
+        api.createType('ComposableTraitsDefiCurrencyPair', { // Currency Pair
+          base: api.createType('u128', ASSET_ID_USDT), // Borrow Asset
+          quote: api.createType('u128', ASSET_ID_BTC) // Collateral Asset
+        }),
+        api.createType('Perquintill', 1) // reservedFactor
+      )
+      console.debug(result);
     });
 
     it('Can create lending market (DynamicPIDController Interest Rate Model', ()=>{return});
