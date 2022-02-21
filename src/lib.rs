@@ -19,9 +19,12 @@ pub mod primitives;
 pub mod traits;
 
 use crate::error::BeefyClientError;
-use crate::primitives::{BeefyAuthoritySet, Hasher, MmrUpdateProof, HASH_LENGTH, MMR_ROOT_ID};
+use crate::primitives::{
+    BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof, HASH_LENGTH, MMR_ROOT_ID, SIGNATURE_LEN,
+};
 use crate::traits::{StorageRead, StorageWrite};
 use codec::Encode;
+use rs_merkle::MerkleProof;
 use sp_core::{ByteArray, H256};
 use sp_core_hashing::keccak_256;
 use sp_io::crypto;
@@ -58,40 +61,75 @@ pub trait BeefyLightClient {
         let encoded_commitment = mmr_update.signed_commitment.commitment.encode();
         let commitment_hash = keccak_256(&*encoded_commitment);
 
-        let authority_leaves = mmr_update
+        let authority_addresses_and_indices = mmr_update
             .signed_commitment
             .signatures
             .into_iter()
             .enumerate()
             .filter_map(|item| {
                 if let Some(sig) = item.1 {
-                    Some((item.0, sig))
+                    let mut temp_sig = [0u8; SIGNATURE_LEN];
+                    if sig.len() != SIGNATURE_LEN {
+                        return None;
+                    }
+                    temp_sig.copy_from_slice(&sig);
+                    Some((item.0, temp_sig))
                 } else {
                     None
                 }
             })
             .map(|(idx, sig)| {
-                crypto::secp256k1_ecdsa_recover(&sig, &commitment_hash)
+                crypto::secp256k1_ecdsa_recover_compressed(&sig, &commitment_hash)
                     .map(|public_key_bytes| {
                         beefy_primitives::crypto::AuthorityId::from_slice(&public_key_bytes).ok()
                     })
                     .ok()
                     .flatten()
-                    .map(|pub_key| {
-                        (
-                            idx,
-                            beefy_mmr::BeefyEcdsaToEthereum::convert(pub_key.clone()),
-                        )
-                    })
+                    .map(|pub_key| (idx, beefy_mmr::BeefyEcdsaToEthereum::convert(pub_key)))
                     .ok_or_else(|| BeefyClientError::InvalidSignature)
             })
             .collect::<Result<Vec<_>, BeefyClientError>>()?;
 
         let mut authorities_changed = false;
 
+        let authorities_merkle_proof = MerkleProof::<KeccakHasher>::new(
+            mmr_update
+                .authority_proof
+                .into_iter()
+                .map(|x| x.into())
+                .collect(),
+        );
+        let authority_leaf_indices = authority_addresses_and_indices
+            .iter()
+            .cloned()
+            .map(|x| x.0 as usize)
+            .collect::<Vec<_>>();
+        let authority_leaves = authority_addresses_and_indices
+            .into_iter()
+            .map(|x| keccak_256(&x.1).into())
+            .collect::<Vec<_>>();
+
         // Verify authority inclusion in mmr_update.authority_proof
         if current_authority_set.id == validator_set_id {
+            let root_hash = current_authority_set.root;
+            if !authorities_merkle_proof.verify(
+                root_hash.into(),
+                &authority_leaf_indices,
+                &authority_leaves,
+                current_authority_set.len as usize,
+            ) {
+                return Err(BeefyClientError::InvalidAuthorityProof);
+            }
         } else if next_authority_set.id == validator_set_id {
+            let root_hash = next_authority_set.root;
+            if !authorities_merkle_proof.verify(
+                root_hash.into(),
+                &authority_leaf_indices,
+                &authority_leaves,
+                next_authority_set.len as usize,
+            ) {
+                return Err(BeefyClientError::InvalidAuthorityProof);
+            }
             authorities_changed = true;
         }
 
@@ -114,10 +152,8 @@ pub trait BeefyLightClient {
             .signed_commitment
             .commitment
             .payload
-            .into_iter()
-            .find(|item| item.0 == MMR_ROOT_ID)
+            .get_raw(&MMR_ROOT_ID)
             .ok_or_else(|| BeefyClientError::InvalidMmrUpdate)?
-            .1
             .clone();
         if mmr_root_vec.len() != HASH_LENGTH {
             return Err(BeefyClientError::InvalidRootHash);
@@ -139,28 +175,28 @@ pub trait BeefyLightClient {
             _ => {}
         }
 
-        Self::Store::set_latest_height(mmr_update.signed_commitment.commitment.block_number);
-        Self::Store::set_latest_mmr_root_hash(mmr_root_hash.into());
+        Self::Store::set_latest_height(mmr_update.signed_commitment.commitment.block_number)?;
+        Self::Store::set_latest_mmr_root_hash(mmr_root_hash.into())?;
 
         if authorities_changed {
-            Self::Store::set_current_authority_set(next_authority_set);
+            Self::Store::set_current_authority_set(next_authority_set)?;
             Self::Store::set_next_authority_set(
                 mmr_update
                     .latest_mmr_leaf_with_index
                     .leaf
                     .beefy_next_authority_set
                     .clone(),
-            )
+            )?;
         }
         Ok(())
     }
 }
 
-fn authority_threshold(set: &BeefyAuthoritySet) -> u64 {
+fn authority_threshold(set: &BeefyNextAuthoritySet<H256>) -> u32 {
     ((2 * set.len) / 3) + 1
 }
 
-fn validate_sigs_against_threshold(set: &BeefyAuthoritySet, sigs_len: usize) -> bool {
+fn validate_sigs_against_threshold(set: &BeefyNextAuthoritySet<H256>, sigs_len: usize) -> bool {
     let threshold = authority_threshold(set);
     sigs_len >= threshold as usize
 }

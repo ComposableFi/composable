@@ -13,4 +13,6 @@ pub enum BeefyClientError {
     InvalidRootHash,
     /// Some invalid mmr proof
     InvalidMmrProof,
+    /// Invalid authority proof
+    InvalidAuthorityProof,
 }

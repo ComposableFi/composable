@@ -17,9 +17,10 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 beefy-mmr = { package = "pallet-beefy-mmr", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 pallet-mmr = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 pallet-mmr-primitives = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-beefy-merkle-tree = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", features = ["keccak"] }
 beefy-primitives = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16"}
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+
+rs-merkle = { package = "rs_merkle", git = "https://github.com/ComposableFi/rs-merkle.git", default-features = false }
 
 [features]
 default = ["std"]
@@ -31,8 +32,8 @@ std = [
     "sp-core/std",
     "sp-io/std",
     "beefy-mmr/std",
-    "beefy-merkle-tree/std",
     "beefy-primitives/std",
     "pallet-mmr/std",
-    "pallet-mmr-primitives/std"
+    "pallet-mmr-primitives/std",
+    "rs-merkle/std"
 ]
