@@ -163,11 +163,11 @@ pub type XcmOriginToTransactDispatchOrigin = (
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	crate::Assets,
 	UnknownTokens,
-	IsNativeConcrete<CurrencyId, CurrencyIdConvert>,
+	IsNativeConcrete<CurrencyId, CurrencyIdConvert<AssetsRegistry>>,
 	AccountId,
 	LocationToAccountId,
 	CurrencyId,
-	CurrencyIdConvert,
+	CurrencyIdConvert<AssetsRegistry>,
 	// TODO(hussein-aitlahcen): DepositFailureHandler
 	(),
 >;
@@ -296,11 +296,14 @@ impl FilterAssetLocation for RelayReserverFromParachain {
 	}
 }
 
-pub struct ToTreasury;
-impl TakeRevenue for ToTreasury {
+pub struct ToTreasury<AssetsConverter>(PhantomData<AssetsConverter>);
+impl<AssetsConverter: Convert<MultiLocation, Option<CurrencyId>>> TakeRevenue
+	for ToTreasury<AssetsConverter>
+{
 	fn take_revenue(revenue: MultiAsset) {
 		if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = revenue {
-			if let Some(currency_id) = CurrencyIdConvert::convert(location) {
+			log::info!(target: "xcmp::take_revenue", "{:?} {:?}", &location, amount);
+			if let Some(currency_id) = AssetsConverter::convert(location) {
 				let account = &TreasuryAccount::get();
 				match <crate::Assets>::deposit(currency_id, account, amount) {
 					Ok(_) => {},
@@ -328,8 +331,14 @@ impl FilterAssetLocation for DebugMultiNativeAsset {
 type IsReserveAssetLocationFilter =
 	(DebugMultiNativeAsset, MultiNativeAsset, RelayReserverFromParachain);
 
-pub type Trader =
-	TransactionFeePoolTrader<CurrencyIdConvert, PriceConverter, ToTreasury, WeightToFee>;
+type AssetsIdConverter = CurrencyIdConvert<AssetsRegistry>;
+
+pub type Trader = TransactionFeePoolTrader<
+	AssetsIdConverter,
+	PriceConverter,
+	ToTreasury<AssetsIdConverter>,
+	WeightToFee,
+>;
 
 pub struct CaptureDropAssets<
 	Treasury: TakeRevenue,
@@ -352,6 +361,7 @@ impl<
 		let multi_assets: Vec<MultiAsset> = assets.into();
 		let mut can_return_on_request = vec![];
 		log::info!(target : "xcmp", "drop_assets");
+		let mut weight = Weight::zero();
 		for asset in multi_assets {
 			if let MultiAsset { id: Concrete(location), fun: Fungible(_amount) } = asset.clone() {
 				if let Some(_) = AssetConverter::convert(location) {
@@ -364,13 +374,17 @@ impl<
 			}
 		}
 		if can_return_on_request.len() > 0 {
-			RelayerXcm::drop_assets(origin, can_return_on_request.into());
+			weight += RelayerXcm::drop_assets(origin, can_return_on_request.into());
 		}
-		0
+		weight
 	}
 }
 
-pub type CaptureAssetTrap = CaptureDropAssets<ToTreasury, PriceConverter, CurrencyIdConvert>;
+pub type CaptureAssetTrap = CaptureDropAssets<
+	ToTreasury<CurrencyIdConvert<AssetsRegistry>>,
+	PriceConverter,
+	CurrencyIdConvert<AssetsRegistry>,
+>;
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -402,7 +416,7 @@ impl orml_xtokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type CurrencyId = CurrencyId;
-	type CurrencyIdConvert = CurrencyIdConvert;
+	type CurrencyIdConvert = CurrencyIdConvert<AssetsRegistry>;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = SelfLocation;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
@@ -427,31 +441,24 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 }
 
 /// Converts currency to and from local and remote
-pub struct CurrencyIdConvert;
+pub struct CurrencyIdConvert<AssetRegistry>(PhantomData<AssetRegistry>);
 
 /// converts local currency into remote,
 /// native currency is built in
-impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
+impl<
+		AssetRegistry: RemoteAssetRegistry<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
+	> sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>>
+	for CurrencyIdConvert<AssetRegistry>
+{
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
 		match id {
-			CurrencyId::INVALID => {
-				log::info!(
-					target: "xcmp:convert",
-					"mapping for {:?} on {:?} parachain not found",
-					id,
-					ParachainInfo::parachain_id()
-				);
-				None
-			},
 			CurrencyId::PICA => Some(MultiLocation::new(
 				1,
 				X2(Parachain(ParachainInfo::parachain_id().into()), GeneralKey(id.encode())),
 			)),
 			CurrencyId::KSM => Some(MultiLocation::parent()),
-			_ => {
-				if let Some(location) =
-					<AssetsRegistry as RemoteAssetRegistry>::asset_to_location(id).map(Into::into)
-				{
+			_ =>
+				if let Some(location) = AssetRegistry::asset_to_location(id).map(Into::into) {
 					Some(location)
 				} else {
 					log::trace!(
@@ -461,8 +468,7 @@ impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for Currency
 						ParachainInfo::parachain_id()
 					);
 					None
-				}
-			},
+				},
 		}
 	}
 }
@@ -470,7 +476,7 @@ impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for Currency
 /// converts from Relay parent chain to child chain currency
 /// expected that currency in location is in format well known for local chain
 /// here we can and partner currencies if we trust them (e.g. some LBT event transfer)
-impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
+impl<T> Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert<T> {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!(target: "xcmp::convert", "converting {:?} on {:?}", &location, ParachainInfo::parachain_id());
 		match location {
@@ -511,7 +517,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 }
 
 /// covert remote to local, usually when receiving transfer
-impl Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert {
+impl<T> Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert<T> {
 	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
 		log::trace!(target: "xcmp", "converting {:?}", &asset);
 		if let MultiAsset { id: Concrete(location), .. } = asset {
