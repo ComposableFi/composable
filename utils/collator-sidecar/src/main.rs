@@ -25,7 +25,7 @@ async fn main() -> tide::Result<()> {
 	env_logger::init();
 	let args = Main::from_args();
 
-	let url = format!("http://127.0.0.1:{}", args.ws_port);
+	let url = format!("http://127.0.0.1:{}", args.rpc_port);
 	let client = HttpClientBuilder::default().max_request_body_size(u32::MAX).build(url).unwrap();
 
 	let mut app = tide::with_state(Arc::new(State { client }));
@@ -50,7 +50,7 @@ async fn log_handler(mut req: Request<Arc<State>>) -> tide::Result {
 	log::info!("result: {:?}", result);
 
 	if let Err(e) = result {
-		return Ok(format!("Error: {:?}", e).into());
+		return Ok(format!("Error: {:?}", e).into())
 	}
 
 	Ok("".into())
