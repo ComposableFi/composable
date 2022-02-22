@@ -728,12 +728,11 @@ fn unspent_xcm_fee_is_returned_correctly() {
 	Picasso::execute_with(|| {
 		// TODO: add API to trasnfer unspent back
 				// Construct a transfer XCM call with returning the deposit
-		let transfer_call = RelayChainCallBuilder::<Runtime,
-		ParachainInfo>::balances_transfer_keep_alive( 			AccountId::from(BOB),
+		let transfer_call = crate::relaychain::balances_transfer_keep_alive::<Runtime>( 			AccountId::from(BOB),
 					CurrencyId::PICA.unit(),
 				);
-				let batch_call = RelayChainCallBuilder::<Runtime,
-		ParachainInfo>::utility_as_derivative_call(transfer_call, 0); 		
+		let batch_call = 
+		crate::relaychain::utility_as_derivative_call::<Runtime>(transfer_call, 0); 		
 		let weight =
 		10_000_000_000; 		// Fee to transfer into the hold register
 				let asset = MultiAsset {
