@@ -5,8 +5,8 @@
 //! - `SortedVec` -- sorted from least to greatest, may contain duplicates
 //! - `SortedSet` -- sorted from least to greatest, unique elements
 use codec::{Decode, Encode, EncodeLike, WrapperTypeEncode};
-use frame_support::RuntimeDebug;
 use core::hash::Hash;
+use frame_support::RuntimeDebug;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use sp_std::prelude::*;

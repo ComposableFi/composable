@@ -350,14 +350,13 @@ fn transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit() 
 			0,
 			"assets did not get to recepient as it is not enough to pay ED"
 		);
-		// TODO: make ED non zero in runtime
-		// assert_eq!(
-		// 	picasso_runtime::Tokens::free_balance(
-		// 		CurrencyId::KSM,
-		// 		&picasso_runtime::TreasuryAccount::get()
-		// 	),
-		// 	amount
-		// );
+		assert_eq!(
+			picasso_runtime::Tokens::free_balance(
+				CurrencyId::KSM,
+				&picasso_runtime::TreasuryAccount::get()
+			),
+			amount
+		);
 	});
 }
 
@@ -726,34 +725,29 @@ fn unspent_xcm_fee_is_returned_correctly() {
 	});
 
 	Picasso::execute_with(|| {
-		// TODO: add API to trasnfer unspent back
-				// Construct a transfer XCM call with returning the deposit
-		let transfer_call = crate::relaychain::balances_transfer_keep_alive::<Runtime>( 			AccountId::from(BOB),
-					CurrencyId::PICA.unit(),
-				);
-		let batch_call = 
-		crate::relaychain::utility_as_derivative_call::<Runtime>(transfer_call, 0); 		
-		let weight =
-		10_000_000_000; 		// Fee to transfer into the hold register
-				let asset = MultiAsset {
-					id: Concrete(MultiLocation::here()),
-					fun: Fungibility::Fungible(CurrencyId::PICA.unit()),
-				};
-				let xcm_msg = Xcm(vec![
-					WithdrawAsset(asset.clone().into()),
-					BuyExecution {
-						fees: asset,
-						weight_limit: Unlimited,
-					},
-					Transact {
-						origin_type: OriginKind::SovereignAccount,
-						require_weight_at_most: weight,
-						call: batch_call.encode().into(),
-					},
-				]);
+		// Construct a transfer XCM call with returning the deposit
+		let transfer_call = crate::relaychain::balances_transfer_keep_alive::<Runtime>(
+			AccountId::from(BOB),
+			CurrencyId::PICA.unit(),
+		);
+		let batch_call = crate::relaychain::utility_as_derivative_call::<Runtime>(transfer_call, 0);
+		let weight = 10_000_000_000; // Fee to transfer into the hold register
+		let asset = MultiAsset {
+			id: Concrete(MultiLocation::here()),
+			fun: Fungibility::Fungible(CurrencyId::PICA.unit()),
+		};
+		let xcm_msg = Xcm(vec![
+			WithdrawAsset(asset.clone().into()),
+			BuyExecution { fees: asset, weight_limit: Unlimited },
+			Transact {
+				origin_type: OriginKind::SovereignAccount,
+				require_weight_at_most: weight,
+				call: batch_call.encode().into(),
+			},
+		]);
 
-				let res = picass_runtime::RelayerXcm::send_xcm(Here, Parent, xcm_msg);
-				assert!(res.is_ok());
+		let res = picasso_runtime::RelayerXcm::send_xcm(Here, Parent, xcm_msg);
+		assert!(res.is_ok());
 	});
 
 	KusamaRelay::execute_with(|| {
@@ -773,22 +767,21 @@ fn unspent_xcm_fee_is_returned_correctly() {
 		);
 	});
 
-	// TODO: add API to trasnfer unspent back
 	Picasso::execute_with(|| {
-		// 		// Construct a transfer using the RelaychainCallBuilder
-		// 		let transfer_call = RelayChainCallBuilder::<Runtime,
-		// ParachainInfo>::balances_transfer_keep_alive( 			AccountId::from(BOB),
-		// 			CurrencyId::PICA.unit(),
-		// 		);
-		// 		let batch_call = RelayChainCallBuilder::<Runtime,
-		// ParachainInfo>::utility_as_derivative_call(transfer_call, 0); 		let finalized_call =
-		// RelayChainCallBuilder::<Runtime, ParachainInfo>::finalize_call_into_xcm_message(
-		// batch_call, 			CurrencyId::PICA.unit(),
-		// 			10_000_000_000,
-		// 		);
+		// Construct a transfer using the RelaychainCallBuilder
+		let transfer_call = crate::relaychain::balances_transfer_keep_alive::<Runtime>(
+			AccountId::from(BOB),
+			CurrencyId::PICA.unit(),
+		);
+		let batch_call = crate::relaychain::utility_as_derivative_call::<Runtime>(transfer_call, 0);
+		let finalized_call = crate::relaychain::finalize_call_into_xcm_message::<Runtime>(
+			batch_call,
+			CurrencyId::PICA.unit(),
+			10_000_000_000,
+		);
 
-		// 		let res = picass_runtime::RelayerXcm::send_xcm(Here, Parent, finalized_call);
-		// 		assert!(res.is_ok());
+		let res = picasso_runtime::RelayerXcm::send_xcm(Here, Parent, finalized_call);
+		assert!(res.is_ok());
 	});
 
 	KusamaRelay::execute_with(|| {
@@ -946,14 +939,13 @@ fn trap_assets_lower_than_existential_deposit_works() {
 			) - this_treasury_amount
 		);
 
-		// TODO: fiz zero existential deposit to fix this
-		// assert_eq!(
-		// 	other_non_native_amount,
-		// 	<Assets as MultiCurrency<AccountId>>::free_balance(
-		// 		any_asset,
-		// 		&picasso_runtime::TreasuryAccount::get()
-		// 	) - other_treasury_amount
-		// );
+		assert_eq!(
+			other_non_native_amount,
+			<Assets as MultiCurrency<AccountId>>::free_balance(
+				any_asset,
+				&picasso_runtime::TreasuryAccount::get()
+			) - other_treasury_amount
+		);
 	});
 }
 

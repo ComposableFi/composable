@@ -14,11 +14,13 @@
 
 pub mod impls;
 pub mod xcmp;
+use composable_traits::oracle::MinimalOracle;
 pub use constants::*;
 use frame_support::parameter_types;
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
+use sp_runtime::DispatchError;
 pub use types::*;
 
 /// Common types of statemint and statemine and dali and picasso and composable.
@@ -135,10 +137,32 @@ parameter_types! {
   pub NativeExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
 }
 
+pub struct PriceConverter;
+
+impl MinimalOracle for PriceConverter {
+	type AssetId = CurrencyId;
+
+	type Balance = Balance;
+
+	fn get_price_inverse(
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
+	) -> Result<Self::Balance, sp_runtime::DispatchError> {
+		match asset_id {
+			CurrencyId::PICA => Ok(amount),
+			CurrencyId::KSM => Ok(amount / 10),
+			_ => Err(DispatchError::Other("cannot pay with given weight")),
+		}
+	}
+}
+
 pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
 	match currency_id {
 		&CurrencyId::PICA => NativeExistentialDeposit::get(),
-		_ => Balance::zero(),
+		&CurrencyId::KSM =>
+			PriceConverter::get_price_inverse(CurrencyId::KSM, NativeExistentialDeposit::get())
+				.unwrap(),
+		_ => NativeExistentialDeposit::get(),
 	}
 }
 
