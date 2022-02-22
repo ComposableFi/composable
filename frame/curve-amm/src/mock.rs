@@ -1,5 +1,4 @@
 use crate as curve_amm;
-use composable_traits::dex::{ConversionError, SafeConvert};
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -8,8 +7,7 @@ use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, Convert, ConvertInto, IdentityLookup},
-	FixedPointNumber, FixedU128, Permill,
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 };
 use system::EnsureRoot;
 

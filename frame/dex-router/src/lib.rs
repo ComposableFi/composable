@@ -283,7 +283,7 @@ pub mod pallet {
 						let currency_pair = T::StableSwapDex::currency_pair(*pool_id)?;
 						dx_t = T::StableSwapDex::get_exchange_value(
 							*pool_id,
-							currency_pair.quote,
+							currency_pair.base,
 							dy_t,
 						)
 						.map_err(|_| Error::<T>::ExchangeError)?;
@@ -294,7 +294,7 @@ pub mod pallet {
 						let currency_pair = T::ConstantProductDex::currency_pair(*pool_id)?;
 						dx_t = T::ConstantProductDex::get_exchange_value(
 							*pool_id,
-							currency_pair.quote,
+							currency_pair.base,
 							dy_t,
 						)
 						.map_err(|_| Error::<T>::ExchangeError)?;

@@ -188,11 +188,3 @@ pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
 		amount: Balance,
 	) -> Result<Balance, DispatchError>;
 }
-
-pub struct ConversionError;
-
-/// Similar to `sp_runtime::traits::Convert` but in case if type `A` can't be converted to
-/// `B` it returns Error.
-pub trait SafeConvert<A, B> {
-	fn convert(a: A) -> Result<B, ConversionError>;
-}

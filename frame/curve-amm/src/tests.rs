@@ -93,12 +93,45 @@ fn test() {
 
 		let swap_usdc = 100_u128 * unit;
 		assert_ok!(Tokens::mint_into(USDC, &BOB, swap_usdc));
+		// mint 1 USDT, after selling 100 USDC we get 99 USDT so to buy 100 USDC we need 100 USDT
+		assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
 
+		let pool_account = StableSwap::account_id(&pool_id);
+		let bob_usdc = Tokens::balance(USDC, &BOB);
+		let bob_usdt = Tokens::balance(USDT, &BOB);
+		let pool_usdc = Tokens::balance(USDC, &pool_account);
+		let pool_usdt = Tokens::balance(USDT, &pool_account);
+		sp_std::if_std! {
+			println!("pool's usdc {:?}", pool_usdc);
+			println!("pool's usdt {:?}", pool_usdt);
+			println!("bob's usdc {:?}", bob_usdc);
+			println!("bob's usdt {:?}", bob_usdt);
+		}
 		<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDC, swap_usdc, false)
 			.expect("impossible; qed;");
 
+		let bob_usdc = Tokens::balance(USDC, &BOB);
+		let bob_usdt = Tokens::balance(USDT, &BOB);
+		let pool_usdc = Tokens::balance(USDC, &pool_account);
+		let pool_usdt = Tokens::balance(USDT, &pool_account);
+		sp_std::if_std! {
+			println!("pool's usdc {:?}", pool_usdc);
+			println!("pool's usdt {:?}", pool_usdt);
+			println!("bob's usdc {:?}", bob_usdc);
+			println!("bob's usdt {:?}", bob_usdt);
+		}
 		<StableSwap as CurveAmm>::buy(&BOB, pool_id, USDC, swap_usdc, false)
 			.expect("impossible; qed;");
+		let bob_usdc = Tokens::balance(USDC, &BOB);
+		let bob_usdt = Tokens::balance(USDT, &BOB);
+		let pool_usdc = Tokens::balance(USDC, &pool_account);
+		let pool_usdt = Tokens::balance(USDT, &pool_account);
+		sp_std::if_std! {
+			println!("pool's usdc {:?}", pool_usdc);
+			println!("pool's usdt {:?}", pool_usdt);
+			println!("bob's usdc {:?}", bob_usdc);
+			println!("bob's usdt {:?}", bob_usdt);
+		}
 
 		let bob_usdc = Tokens::balance(USDC, &BOB);
 
@@ -154,7 +187,7 @@ fn add_remove_lp() {
 	});
 }
 
-// 
+//
 // - test error if trying to remove > lp than we have
 #[test]
 fn remove_lp_failure() {
@@ -190,7 +223,7 @@ fn remove_lp_failure() {
 	});
 }
 
-// 
+//
 // - test lp fees
 #[test]
 fn lp_fee() {
@@ -217,7 +250,7 @@ fn lp_fee() {
 	});
 }
 
-// 
+//
 // - test protocol fees
 #[test]
 fn protocol_fee() {
@@ -251,7 +284,7 @@ fn protocol_fee() {
 	});
 }
 
-// 
+//
 // - test high slippage scenario
 // trying to exchange a large value, will result in high_slippage scenario
 // there should be substential difference between expected exchange value and received amount.
@@ -270,7 +303,6 @@ fn high_slippage() {
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
 		let bob_usdt = 1_000_000_000_00_u128 * unit;
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));

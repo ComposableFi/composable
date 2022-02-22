@@ -1,4 +1,5 @@
 use crate::{mock::*, Error};
+use composable_tests_helpers::test::helper::acceptable_computation_error;
 use composable_traits::{
 	defi::CurrencyPair,
 	dex::{CurveAmm as CurveAmmTrait, DexRouteNode, DexRouter as DexRouterTrait},
@@ -59,20 +60,28 @@ fn create_constant_product_amm_pool(
 	pool_id
 }
 
-fn create_usdc_usdt_pool() -> PoolId {
-	let amp_coeff = 1000;
+fn create_usdt_usdc_pool() -> PoolId {
+	let unit = 1_000_000_000_000_u128;
+	// usdc usdt have same price which is 1 USD
+	let initial_usdc = 1_000_000_000 * unit;
+	let initial_usdt = 1_000_000_000 * unit;
+	let amp_coeff = 100;
 	let fee = Permill::zero();
 	let admin_fee = Permill::zero();
-	let assets = CurrencyPair::new(USDC, USDT);
-	let amounts = vec![100000, 100000];
+	let assets = CurrencyPair::new(USDT, USDC);
+	let amounts = vec![initial_usdt, initial_usdc];
 	create_curve_amm_pool(assets, amounts, amp_coeff, fee, admin_fee)
 }
 
-fn create_eth_usdc_pool() -> PoolId {
+fn create_usdc_eth_pool() -> PoolId {
+	let unit = 1_000_000_000_000_u128;
+	let eth_price = 3000_u128;
+	let eth_balance = 1000 * unit;
+	let usdc_balance = eth_price * eth_balance;
 	let fee = Permill::zero();
 	let admin_fee = Permill::zero();
-	let assets = CurrencyPair::new(ETH, USDC);
-	let amounts = vec![1000, 3000000];
+	let assets = CurrencyPair::new(USDC, ETH);
+	let amounts = vec![usdc_balance, eth_balance];
 	create_constant_product_amm_pool(assets, amounts, fee, admin_fee)
 }
 
@@ -83,8 +92,8 @@ fn get_route_tests() {
 		assert_eq!(DexRouter::get_route(currency_pair), None);
 
 		let dex_route = vec![
-			DexRouteNode::Uniswap(create_eth_usdc_pool()),
-			DexRouteNode::Curve(create_usdc_usdt_pool()),
+			DexRouteNode::Uniswap(create_usdc_eth_pool()),
+			DexRouteNode::Curve(create_usdt_usdc_pool()),
 		];
 		assert_ok!(DexRouter::update_route(
 			&ALICE,
@@ -103,8 +112,8 @@ fn update_route_tests() {
 
 		// insert
 		let dex_route = vec![
-			DexRouteNode::Uniswap(create_eth_usdc_pool()),
-			DexRouteNode::Curve(create_usdc_usdt_pool()),
+			DexRouteNode::Uniswap(create_usdc_eth_pool()),
+			DexRouteNode::Curve(create_usdt_usdc_pool()),
 		];
 		assert_ok!(DexRouter::update_route(
 			&ALICE,
@@ -115,8 +124,8 @@ fn update_route_tests() {
 
 		// update
 		let dex_route = vec![
-			DexRouteNode::Curve(create_usdc_usdt_pool()),
-			DexRouteNode::Uniswap(create_eth_usdc_pool()),
+			DexRouteNode::Curve(create_usdt_usdc_pool()),
+			DexRouteNode::Uniswap(create_usdc_eth_pool()),
 		];
 		assert_ok!(DexRouter::update_route(
 			&ALICE,
@@ -131,9 +140,9 @@ fn update_route_tests() {
 
 		// invalid route, case #1
 		let dex_route = vec![
-			DexRouteNode::Curve(create_usdc_usdt_pool()),
+			DexRouteNode::Curve(create_usdt_usdc_pool()),
 			DexRouteNode::Curve(42), // fake route
-			DexRouteNode::Uniswap(create_eth_usdc_pool()),
+			DexRouteNode::Uniswap(create_usdc_eth_pool()),
 		];
 		assert_noop!(
 			DexRouter::update_route(&ALICE, currency_pair, Some(dex_route.try_into().unwrap())),
@@ -142,8 +151,8 @@ fn update_route_tests() {
 
 		// invalid route, case #2
 		let dex_route = vec![
-			DexRouteNode::Curve(create_usdc_usdt_pool()),
-			DexRouteNode::Uniswap(create_eth_usdc_pool()),
+			DexRouteNode::Curve(create_usdt_usdc_pool()),
+			DexRouteNode::Uniswap(create_usdc_eth_pool()),
 			DexRouteNode::Uniswap(42), // fake route
 		];
 		assert_noop!(
@@ -156,40 +165,45 @@ fn update_route_tests() {
 #[test]
 fn exchange_tests() {
 	new_test_ext().execute_with(|| {
-		let currency_pair = CurrencyPair { base: ETH, quote: USDT };
+		let unit = 1_000_000_000_000_u128;
+		let currency_pair = CurrencyPair { base: USDT, quote: ETH };
 		let dex_route = vec![
-			DexRouteNode::Uniswap(create_eth_usdc_pool()),
-			DexRouteNode::Curve(create_usdc_usdt_pool()),
+			DexRouteNode::Uniswap(create_usdc_eth_pool()),
+			DexRouteNode::Curve(create_usdt_usdc_pool()),
 		];
 		assert_ok!(DexRouter::update_route(
 			&ALICE,
 			currency_pair,
 			Some(dex_route.try_into().unwrap())
 		));
-		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 10_u128));
-		let dy = DexRouter::exchange(&CHARLIE, currency_pair, 1_u128);
+		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 10_u128 * unit));
+		let dy = DexRouter::exchange(&CHARLIE, currency_pair, 1_u128 * unit);
 		assert_ok!(dy);
 		let dy = dy.unwrap();
-		assert!(3000 >= dy);
-		assert!(2995 < dy);
+		sp_std::if_std! {
+			println!("exchange value {:?}", dy);
+		}
+		let expected_value = 3000 * unit;
+		assert_ok!(acceptable_computation_error(dy, expected_value, 100));
 	});
 }
 
 #[test]
 fn buy_test() {
 	new_test_ext().execute_with(|| {
-		let currency_pair = CurrencyPair { base: ETH, quote: USDT };
+		let unit = 1_000_000_000_000_u128;
+		let currency_pair = CurrencyPair { base: USDT, quote: ETH };
 		let dex_route = vec![
-			DexRouteNode::Uniswap(create_eth_usdc_pool()),
-			DexRouteNode::Curve(create_usdc_usdt_pool()),
+			DexRouteNode::Uniswap(create_usdc_eth_pool()),
+			DexRouteNode::Curve(create_usdt_usdc_pool()),
 		];
 		assert_ok!(DexRouter::update_route(
 			&ALICE,
 			currency_pair,
 			Some(dex_route.try_into().unwrap())
 		));
-		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 10_u128));
-		let dy = DexRouter::buy(&CHARLIE, currency_pair, 3100_u128);
+		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 1_u128 * unit));
+		let dy = DexRouter::buy(&CHARLIE, currency_pair, 3000_u128 * unit);
 		assert_ok!(dy);
 		let dy = dy.unwrap();
 		assert!(3000 >= dy);

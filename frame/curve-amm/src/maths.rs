@@ -3,10 +3,10 @@ use sp_runtime::{biguint::BigUint, helpers_128bit::to_big_uint, ArithmeticError,
 fn safe_div(a: &mut BigUint, b: &mut BigUint) -> Result<BigUint, DispatchError> {
 	a.lstrip();
 	b.lstrip();
-	sp_std::if_std! {
-		println!("a {:?}", a);
-		println!("b {:?}", b);
-	}
+	// sp_std::if_std! {
+	// 	println!("a {:?}", a);
+	// 	println!("b {:?}", b);
+	// }
 	let a = a.clone();
 	if b.len() == 1 {
 		return Ok(a.div_unit(b.get(0)))
@@ -34,10 +34,10 @@ pub fn compute_d(
 	}
 	let ann = amplification_coefficient.mul(&n).mul(&n);
 	let ann_one = ann.clone().sub(&one).map_err(|_| ArithmeticError::Underflow)?;
-	sp_std::if_std! {
-		println!("base_asset_amount {:?}", base_asset_amount);
-		println!("quote_asset_amount {:?}", quote_asset_amount);
-	}
+	// sp_std::if_std! {
+	// 	println!("base_asset_amount {:?}", base_asset_amount);
+	// 	println!("quote_asset_amount {:?}", quote_asset_amount);
+	// }
 	let mut d = sum.clone();
 
 	let mut base_n = base_asset_amount.mul(&n);
@@ -47,16 +47,16 @@ pub fn compute_d(
 		// d_p = d_p * d / (x * n)
 
 		let mut d_p_d = d_p.mul(&d);
-		sp_std::if_std! {
-			println!("d_p_d {:?}", d_p_d);
-			println!("base_n {:?}", base_n);
-		}
+		// sp_std::if_std! {
+		// 	println!("d_p_d {:?}", d_p_d);
+		// 	println!("base_n {:?}", base_n);
+		// }
 		d_p = safe_div(&mut d_p_d, &mut base_n)?;
 		let mut d_p_d = d_p.mul(&d);
-		sp_std::if_std! {
-			println!("d_p_d {:?}", d_p_d);
-			println!("quote_n {:?}", quote_n);
-		}
+		// sp_std::if_std! {
+		// 	println!("d_p_d {:?}", d_p_d);
+		// 	println!("quote_n {:?}", quote_n);
+		// }
 		d_p = safe_div(&mut d_p_d, &mut quote_n)?;
 
 		let d_prev = d.clone();
@@ -79,18 +79,17 @@ pub fn compute_d(
 	Err(DispatchError::Other("could not compute d"))
 }
 
-pub fn compute_quote(new_base: u128, amp_coeff: u128, d: u128) -> Result<u128, DispatchError> {
+pub fn compute_base(new_quote: u128, amp_coeff: u128, d: u128) -> Result<u128, DispatchError> {
 	let mut n = to_big_uint(2_u128);
-	let mut two = to_big_uint(2_u128);
-	let zero = to_big_uint(0_u128);
+	let two = to_big_uint(2_u128);
 	let one = to_big_uint(1_u128);
 	let mut d = to_big_uint(d);
 	let amplification_coefficient = to_big_uint(amp_coeff);
 	let mut ann = amplification_coefficient.mul(&n).mul(&n);
 
 	// s and p are same as input base amount as pool supports only 2 assets.
-	let s = to_big_uint(new_base);
-	let mut p = to_big_uint(new_base);
+	let s = to_big_uint(new_quote);
+	let mut p = to_big_uint(new_quote);
 	// b = s + (d / ann) -d
 	// c = d^(n + 1) / (ann * n^n * p)
 

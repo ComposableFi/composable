@@ -6905,6 +6905,7 @@ dependencies = [
 name = "pallet-dex-router"
 version = "0.0.1"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
  "frame-support",
  "frame-system",

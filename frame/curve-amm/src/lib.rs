@@ -49,14 +49,14 @@ mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::{
-		maths::{compute_d, compute_quote},
+		maths::{compute_base, compute_d},
 		weights::WeightInfo,
 	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::{CurrencyFactory, RangeId},
 		defi::CurrencyPair,
-		dex::{CurveAmm, SafeConvert, StableSwapPoolInfo},
+		dex::{CurveAmm, StableSwapPoolInfo},
 		math::{safe_multiply_by_rational, SafeArithmetic},
 	};
 	use frame_support::{
@@ -264,7 +264,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
 			pair: CurrencyPair<T::AssetId>,
-			base_amount: T::Balance,
+			quote_amount: T::Balance,
 			min_receive: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
@@ -273,7 +273,7 @@ pub mod pallet {
 				&who,
 				pool_id,
 				pair,
-				base_amount,
+				quote_amount,
 				min_receive,
 				keep_alive,
 			)?;
@@ -308,12 +308,11 @@ pub mod pallet {
 			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
 			let pool_base_aum = T::Assets::balance(pair.base, &pool_account);
 			let pool_quote_aum = T::Assets::balance(pair.quote, &pool_account);
-			let n = 2_u16;
 			let amp = T::Convert::convert(pool.amplification_coefficient.into());
 			let d = Self::get_d(pool_base_aum, pool_quote_aum, amp)?;
-			let new_base_amount = pool_base_aum.safe_add(&amount)?;
-			let new_quote_amount = Self::get_quote(new_base_amount, amp, d)?;
-			let exchange_value = pool_quote_aum.safe_sub(&new_quote_amount)?;
+			let new_quote_amount = pool_quote_aum.safe_add(&amount)?;
+			let new_base_amount = Self::get_base(new_quote_amount, amp, d)?;
+			let exchange_value = pool_base_aum.safe_sub(&new_base_amount)?;
 			Ok(exchange_value)
 		}
 
@@ -326,7 +325,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
+			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
 			// Since when buying asset user can't executed exchange as he don't know how much
 			// amount of token he has to trade-in to get expected buy tokens.
 			// So we compute price assuming user wants to sell instead of buy.
@@ -345,7 +344,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
+			let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
 			let dy = Self::exchange(who, pool_id, pair, amount, Self::Balance::zero(), keep_alive)?;
 			Ok(dy)
 		}
@@ -363,7 +362,6 @@ pub mod pallet {
 			ensure!(base_amount > zero, Error::<T>::AssetAmountMustBePositiveNumber);
 			ensure!(quote_amount > zero, Error::<T>::AssetAmountMustBePositiveNumber);
 			// pool supports only 2 assets
-			let n = 2_u16;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			let pool_base_aum = T::Assets::balance(pool.pair.base, &pool_account);
@@ -509,7 +507,7 @@ pub mod pallet {
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			pair: CurrencyPair<Self::AssetId>,
-			base_amount: Self::Balance,
+			quote_amount: Self::Balance,
 			min_receive: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
@@ -517,36 +515,30 @@ pub mod pallet {
 			// /!\ NOTE(hussein-aitlahcen): after this check, do not use pool.pair as the provided
 			// pair might have been swapped
 			ensure!(pair == pool.pair, Error::<T>::PairMismatch);
-			let (base_amount, quote_amount_excluding_fees, lp_fees, protocol_fees) =
-				Self::do_compute_swap(pool_id, pair, base_amount, true)?;
+			let (base_amount_excluding_fees, quote_amount, lp_fees, protocol_fees) =
+				Self::do_compute_swap(pool_id, pair, quote_amount, true)?;
 
 			ensure!(
-				quote_amount_excluding_fees >= min_receive,
+				base_amount_excluding_fees >= min_receive,
 				Error::<T>::CannotRespectMinimumRequested
 			);
 			let pool_account = Self::account_id(&pool_id);
-			T::Assets::transfer(pair.base, who, &pool_account, base_amount, keep_alive)?;
+			T::Assets::transfer(pair.quote, who, &pool_account, quote_amount, keep_alive)?;
 
 			// NOTE(hussein-aitlance): no need to keep alive the pool account
-			T::Assets::transfer(pair.quote, &pool_account, &pool.owner, protocol_fees, false)?;
-			T::Assets::transfer(
-				pair.quote,
-				&pool_account,
-				who,
-				quote_amount_excluding_fees,
-				false,
-			)?;
+			T::Assets::transfer(pair.base, &pool_account, &pool.owner, protocol_fees, false)?;
+			T::Assets::transfer(pair.base, &pool_account, who, base_amount_excluding_fees, false)?;
 			Self::deposit_event(Event::<T>::Swapped {
 				pool_id,
 				who: who.clone(),
 				base_asset: pair.base,
 				quote_asset: pair.quote,
-				base_amount,
-				quote_amount: quote_amount_excluding_fees,
+				base_amount: base_amount_excluding_fees,
+				quote_amount,
 				fee: lp_fees.safe_add(&protocol_fees)?,
 			});
 
-			Ok(quote_amount_excluding_fees)
+			Ok(base_amount_excluding_fees)
 		}
 	}
 
@@ -640,17 +632,17 @@ pub mod pallet {
 		///
 		/// x_1 = (x_1^2 + c) / (2 * x_1 + b)
 		/// ```
-		pub fn get_quote(
-			new_base: T::Balance,
+		pub fn get_base(
+			new_quote: T::Balance,
 			amp_coeff: T::Balance,
 			d: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			let quote = compute_quote(
-				T::Convert::convert(new_base),
+			let base = compute_base(
+				T::Convert::convert(new_quote),
 				T::Convert::convert(amp_coeff),
 				T::Convert::convert(d),
 			)?;
-			Ok(T::Convert::convert(quote))
+			Ok(T::Convert::convert(base))
 		}
 
 		fn abs_difference(
@@ -668,15 +660,15 @@ pub mod pallet {
 		pub(crate) fn do_compute_swap(
 			pool_id: T::PoolId,
 			pair: CurrencyPair<T::AssetId>,
-			base_amount: T::Balance,
+			quote_amount: T::Balance,
 			apply_fees: bool,
 		) -> Result<(T::Balance, T::Balance, T::Balance, T::Balance), DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			let quote_amount = Self::get_exchange_value(pool_id, pair.base, base_amount)?;
-			let quote_amount_u: u128 = T::Convert::convert(quote_amount);
+			let base_amount = Self::get_exchange_value(pool_id, pair.base, quote_amount)?;
+			let base_amount_u: u128 = T::Convert::convert(base_amount);
 
 			let (lp_fee, protocol_fee) = if apply_fees {
-				let lp_fee = pool.fee.mul_floor(quote_amount_u);
+				let lp_fee = pool.fee.mul_floor(base_amount_u);
 				let protocol_fee = pool.protocol_fee.mul_floor(lp_fee);
 				let lp_fee = T::Convert::convert(lp_fee);
 				let protocol_fee = T::Convert::convert(protocol_fee);
@@ -685,8 +677,8 @@ pub mod pallet {
 				(T::Balance::zero(), T::Balance::zero())
 			};
 
-			let quote_amount_excluding_fees = quote_amount.safe_sub(&lp_fee)?;
-			Ok((base_amount, quote_amount_excluding_fees, lp_fee, protocol_fee))
+			let base_amount_excluding_fees = base_amount.safe_sub(&lp_fee)?;
+			Ok((base_amount_excluding_fees, quote_amount, lp_fee, protocol_fee))
 		}
 	}
 }
