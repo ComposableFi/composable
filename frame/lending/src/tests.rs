@@ -22,7 +22,6 @@ use frame_support::{
 	assert_err, assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
-use frame_system::{EventRecord, Phase};
 use pallet_vault::models::VaultInfo;
 use proptest::{prelude::*, test_runner::TestRunner};
 use sp_arithmetic::assert_eq_error_rate;
@@ -636,7 +635,7 @@ fn test_warn_soon_under_collaterized() {
 			USDT::ID,
 			BTC::ID,
 			*ALICE,
-			DEFAULT_MARKET_VAULT_RESERVE,
+			Perquintill::from_percent(10),
 			MoreThanOneFixedU128::saturating_from_rational(2, 1),
 		);
 
@@ -768,7 +767,7 @@ proptest! {
 	fn market_collateral_deposit_withdraw_higher_amount_fails(amount in valid_amount_without_overflow()) {
 		new_test_ext().execute_with(|| {
 			let (market, _vault) = create_simple_market();
-			prop_assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, amount));
+			prop_assert_ok!(Tokens::mint_into( BTC::ID, &ALICE, amount ));
 			prop_assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, amount ));
 
 			prop_assert_eq!(
