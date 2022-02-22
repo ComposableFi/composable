@@ -60,8 +60,8 @@ fn create_market(
 	reserved: Perquintill,
 	collateral_factor: MoreThanOneFixedU128,
 ) -> (MarketIndex, BorrowAssetVault) {
-	set_price(BTC::ID, 50_000 * NORAMLIZED::one());
-	set_price(USDT::ID, NORAMLIZED::one());
+	set_price(BTC::ID, 50_000 * NORMALIZED::one());
+	set_price(USDT::ID, NORMALIZED::one());
 	let config = CreateInput {
 		updatable: UpdateInput {
 			collateral_factor,
@@ -81,7 +81,7 @@ fn create_market(
 fn create_simple_vaulted_market() -> ((MarketIndex, BorrowAssetVault), CollateralAsset) {
 	let (_collateral_vault, VaultInfo { lp_token_id: collateral_asset, .. }) =
 		create_simple_vault(BTC::ID);
-	set_price(collateral_asset, NORAMLIZED::one());
+	set_price(collateral_asset, NORMALIZED::one());
 	(
 		create_market(
 			BTC::ID,
@@ -595,7 +595,7 @@ fn liquidation() {
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, collateral));
 
 		let usdt_amt = 2 * DEFAULT_COLLATERAL_FACTOR * USDT::one() * get_price(BTC::ID, collateral) /
-			get_price(NORAMLIZED::ID, NORAMLIZED::one());
+			get_price(NORMALIZED::ID, NORMALIZED::one());
 		assert_ok!(Tokens::mint_into(USDT::ID, &CHARLIE, usdt_amt));
 		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, usdt_amt));
 
@@ -647,7 +647,7 @@ fn test_warn_soon_under_collaterized() {
 		(2..10000).for_each(process_block);
 
 		assert_eq!(Lending::soon_under_collaterized(&market, &ALICE), Ok(false));
-		set_price(BTC::ID, NORAMLIZED::units(85));
+		set_price(BTC::ID, NORMALIZED::units(85));
 		assert_eq!(Lending::soon_under_collaterized(&market, &ALICE), Ok(true));
 		assert_eq!(Lending::should_liquidate(&market, &ALICE), Ok(false));
 	});
@@ -842,8 +842,8 @@ fn test_market_created_event() {
 		#[allow(non_camel_case_types)]
 		type ASSET_2 = Currency<987_654_321, 12>;
 
-		set_price(ASSET_1::ID, 50_000 * NORAMLIZED::one());
-		set_price(ASSET_2::ID, NORAMLIZED::one());
+		set_price(ASSET_1::ID, 50_000 * NORMALIZED::one());
+		set_price(ASSET_2::ID, NORMALIZED::one());
 
 		Tokens::mint_into(ASSET_1::ID, &*ALICE, ASSET_1::units(1000)).unwrap();
 		Tokens::mint_into(ASSET_2::ID, &*ALICE, ASSET_2::units(100)).unwrap();
