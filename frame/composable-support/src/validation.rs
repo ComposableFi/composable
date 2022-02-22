@@ -129,6 +129,16 @@ pub trait Validate<T, U> {
 	fn validate(input: T) -> Result<T, &'static str>;
 }
 
+pub trait TryIntoValidated<T> {
+	fn try_into_validated<U: Validate<T, U>>(self) -> Result<Validated<T, U>, &'static str>;
+}
+
+impl<T> TryIntoValidated<T> for T {
+	fn try_into_validated<U: Validate<T, U>>(self) -> Result<Validated<T, U>, &'static str> {
+		Validated::new(self)
+	}
+}
+
 #[derive(Debug, Eq, PartialEq, Default)]
 pub struct Valid;
 
@@ -445,5 +455,19 @@ mod test {
 
 		let invalid = Validated::<X, (Valid, Invalid, Valid)>::decode(&mut &bytes[..]);
 		assert!(invalid.is_err());
+	}
+
+	#[test]
+	fn try_into_valid() {
+		let value = 42_u32.try_into_validated::<Valid>().unwrap();
+
+		assert_eq!(value, Validated { value: 42, _marker: PhantomData });
+	}
+
+	#[test]
+	fn try_into_invalid() {
+		let value = 42_u32.try_into_validated::<Invalid>();
+
+		assert!(value.is_err());
 	}
 }
