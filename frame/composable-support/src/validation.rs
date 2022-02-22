@@ -351,7 +351,6 @@ mod test {
 		assert_ok!(value);
 		let value = Validated::<_, Invalid>::new(42);
 		assert!(value.is_err());
-		let _: i32 = Validated::<_, Valid>::new(42).unwrap().into();
 	}
 
 	#[test]

@@ -11,6 +11,7 @@ use crate::{
 	self as pallet_lending, accrue_interest_internal, currency::*, mocks::*, models::BorrowerData,
 	Error, MarketIndex,
 };
+use codec::{Decode, Encode};
 use composable_support::validation::Validated;
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::{
@@ -29,7 +30,6 @@ use proptest::{prelude::*, test_runner::TestRunner};
 use sp_arithmetic::assert_eq_error_rate;
 use sp_core::{H256, U256};
 use sp_runtime::{ArithmeticError, FixedPointNumber, Percent, Perquintill};
-
 type BorrowAssetVault = VaultId;
 
 type CollateralAsset = CurrencyId;
@@ -338,15 +338,15 @@ fn can_create_valid_market() {
 
 				match x.event {
 					Event::Lending(pallet_lending::Event::<Runtime>::MarketCreated {
-						manager: _,
+						manager: who,
 						vault_id,
-						input: _,
+						currency_pair: _,
 						market_id,
-					}) => Some((market_id, vault_id)),
+					}) if manager == who => Some((market_id, vault_id)),
 					_ => None,
 				}
 			})
-			.next()
+			.last()
 			.unwrap();
 
 		let new_balance = Tokens::balance(borrow_asset, &manager);
