@@ -695,7 +695,6 @@ fn relay_chain_subscribe_version_notify_of_para_chain() {
 // }
 
 #[test]
-#[ignore = "until pallet tx api to be done to return back amounts"]
 fn unspent_xcm_fee_is_returned_correctly() {
 	let mut parachain_account: AccountId = sibling_account();
 	let homa_lite_sub_account: AccountId = AccountId::from(CHARLIE);
@@ -728,33 +727,34 @@ fn unspent_xcm_fee_is_returned_correctly() {
 
 	Picasso::execute_with(|| {
 		// TODO: add API to trasnfer unspent back
-		// 		// Construct a transfer XCM call with returning the deposit
-		// 		let transfer_call = RelayChainCallBuilder::<Runtime,
-		// ParachainInfo>::balances_transfer_keep_alive( 			AccountId::from(BOB),
-		// 			CurrencyId::PICA.unit(),
-		// 		);
-		// 		let batch_call = RelayChainCallBuilder::<Runtime,
-		// ParachainInfo>::utility_as_derivative_call(transfer_call, 0); 		let weight =
-		// 10_000_000_000; 		// Fee to transfer into the hold register
-		// 		let asset = MultiAsset {
-		// 			id: Concrete(MultiLocation::here()),
-		// 			fun: Fungibility::Fungible(CurrencyId::PICA.unit()),
-		// 		};
-		// 		let xcm_msg = Xcm(vec![
-		// 			WithdrawAsset(asset.clone().into()),
-		// 			BuyExecution {
-		// 				fees: asset,
-		// 				weight_limit: Unlimited,
-		// 			},
-		// 			Transact {
-		// 				origin_type: OriginKind::SovereignAccount,
-		// 				require_weight_at_most: weight,
-		// 				call: batch_call.encode().into(),
-		// 			},
-		// 		]);
+				// Construct a transfer XCM call with returning the deposit
+		let transfer_call = RelayChainCallBuilder::<Runtime,
+		ParachainInfo>::balances_transfer_keep_alive( 			AccountId::from(BOB),
+					CurrencyId::PICA.unit(),
+				);
+				let batch_call = RelayChainCallBuilder::<Runtime,
+		ParachainInfo>::utility_as_derivative_call(transfer_call, 0); 		
+		let weight =
+		10_000_000_000; 		// Fee to transfer into the hold register
+				let asset = MultiAsset {
+					id: Concrete(MultiLocation::here()),
+					fun: Fungibility::Fungible(CurrencyId::PICA.unit()),
+				};
+				let xcm_msg = Xcm(vec![
+					WithdrawAsset(asset.clone().into()),
+					BuyExecution {
+						fees: asset,
+						weight_limit: Unlimited,
+					},
+					Transact {
+						origin_type: OriginKind::SovereignAccount,
+						require_weight_at_most: weight,
+						call: batch_call.encode().into(),
+					},
+				]);
 
-		// 		let res = picass_runtime::RelayerXcm::send_xcm(Here, Parent, xcm_msg);
-		// 		assert!(res.is_ok());
+				let res = picass_runtime::RelayerXcm::send_xcm(Here, Parent, xcm_msg);
+				assert!(res.is_ok());
 	});
 
 	KusamaRelay::execute_with(|| {
