@@ -12,9 +12,9 @@
 /// let one_value_of_b = B::ones();
 /// ```
 #[derive(Debug, Clone, Copy)]
-pub struct Currency<const ID: CurrencyId, const EXPONENT: u8> {}
+pub struct Currency<const ID: u128, const EXPONENT: u8> {}
 
-impl<const ID: CurrencyId, const EXPONENT: u8> Currency<ID, EXPONENT> {
+impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// The exponent of the currency. Specifies the precision level; can be thought of as the number
 	/// of decimal points in base 10.
 	///
@@ -31,7 +31,7 @@ impl<const ID: CurrencyId, const EXPONENT: u8> Currency<ID, EXPONENT> {
 
 	/// The id of the currency. This is fairly arbitrary, and is only used to differentiate between
 	/// different currencies.
-	pub const ID: CurrencyId = ID;
+	pub const ID: u128 = ID;
 
 	/// Returns the provided amount of the currency, cannonicalized to [`Self::ones()`], saturating
 	/// at the numeric bounds ([`u128::MAX`]).
@@ -59,21 +59,6 @@ impl<const ID: CurrencyId, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// ```
 	pub const fn one() -> u128 {
 		10_u128.pow(Self::EXPONENT as u32)
-	}
-}
-
-pub type CurrencyId = u128;
-
-impl<const ID: CurrencyId, const EXPONENT: u8> From<Currency<ID, EXPONENT>> for CurrencyId {
-	fn from(_: Currency<ID, EXPONENT>) -> Self {
-		ID
-	}
-}
-
-impl<const ID: CurrencyId, const EXPONENT: u8> AsRef<CurrencyId> for Currency<ID, EXPONENT> {
-	#[inline(always)]
-	fn as_ref(&self) -> &CurrencyId {
-		&ID
 	}
 }
 
