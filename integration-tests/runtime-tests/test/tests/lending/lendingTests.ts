@@ -27,11 +27,14 @@ import {
   runBeforeTxOracleAddStake,
   txOracleAddStakeSuccessTest
 } from "@composabletests/tests/oracle/testHandlers/addStakeTests";
+import {depositCollateralHandler} from "@composabletests/tests/lending/testHandlers/depositCollateralHandler";
+import {borrowHandler} from "@composabletests/tests/lending/testHandlers/borrowHandler";
 
 describe('Lending Tests', function() {
   if (!testConfiguration.enabled)
     return;
-  let oracleId:number;
+  let oracleId:number,
+    lendingMarketIdCurveInterestRate:number;
 
   let sudoKey:KeyringPair,
     lenderWallet:KeyringPair,
@@ -43,11 +46,12 @@ describe('Lending Tests', function() {
   before('Before Lending Tests: Base Setup', async function() {
     if (!testConfiguration.enabledTests.runBeforeBaseSetup)
       return;
+    lendingMarketIdCurveInterestRate = 1;
     sudoKey = walletAlice;
     oracleControllerWallet = walletAlice;
     vaultManagerWallet = walletAlice;
-    lenderWallet = walletAlice.derive('/lenderWallet');
-    borrowerWallet = walletAlice.derive('/borrowerWallet');
+    lenderWallet = walletCharlie.derive('/lenderWallet');
+    borrowerWallet = walletFerdie.derive('/borrowerWallet');
     oracleSignerWallet = walletAlice.derive('/oracleSigner');
   })
 
@@ -56,10 +60,11 @@ describe('Lending Tests', function() {
       return;
     // Timeout set to 2 minutes.
     this.timeout(15 * 60 * 1000)
-    const mintingAmount = 1000000000000
-    await handleAssetMintSetup(sudoKey, [ASSET_ID_USDT, ASSET_ID_PICA], lenderWallet, mintingAmount);
+    const mintingAmount = 10000000000000
+    await handleAssetMintSetup(sudoKey, [ASSET_ID_BTC, ASSET_ID_PICA, ASSET_ID_USDT], lenderWallet, mintingAmount);
+    await handleAssetMintSetup(sudoKey, [ASSET_ID_USDT, ASSET_ID_PICA], borrowerWallet, mintingAmount);
     await handleAssetMintSetup(sudoKey, [ASSET_ID_BTC, ASSET_ID_USDT, ASSET_ID_PICA], oracleSignerWallet, mintingAmount);
-    await handleAssetMintSetup(sudoKey, [ASSET_ID_BTC, ASSET_ID_USDT, ASSET_ID_PICA], walletAlice, mintingAmount);
+    //await handleAssetMintSetup(sudoKey, [ASSET_ID_BTC, ASSET_ID_USDT, ASSET_ID_PICA], walletAlice, mintingAmount);
   });
 
   describe('Lending Tests - Oracle Setup', function() {
@@ -182,7 +187,7 @@ describe('Lending Tests', function() {
           });
         if (resultAccount0.message == "oracle.SignerUsed: This signer is already in use" ||
           resultAccount0.message == "oracle.ControllerUsed: This controller is already in use") {
-          console.warn("The signer for the lending tests has already been set!\nTrying to ignore this and continuing with lending tests...");
+          console.warn("        The signer for the lending tests has already been set!\n        Trying to ignore this and continuing with lending tests...");
           return;
         }
         expect(resultAccount0).to.not.be.an('Error');
@@ -256,7 +261,10 @@ describe('Lending Tests', function() {
   });
 
   describe('Lending Market Creation Success Tests', function () {
-    it('Can create lending market (Jump Interest Rate Model', ()=>{return});
+    it('Can create lending market (Jump Interest Rate Model', ()=>{
+      console.warn('WARN: Lending tests currently only submit the market creation and don\'t wait for the result!');
+      return;
+    });
 
     it('Can create lending market (Curve Interest Rate Model)', async function () {
       if (!testConfiguration.enabledTests.canCreateLendingMarket.createMarketCurveInterestRateModel)
@@ -281,7 +289,8 @@ describe('Lending Tests', function() {
         }),
         api.createType('Perquintill', 1) // reservedFactor
       )
-      console.debug(result);
+      console.debug(result.toString());
+      await waitForBlocks(3);
     });
 
     it('Can create lending market (DynamicPIDController Interest Rate Model', ()=>{return});
@@ -289,8 +298,26 @@ describe('Lending Tests', function() {
     it('Can create lending market (Double Exponent Interest Rate Model', ()=>{return});
   });
 
+  describe('Lending Deposit Collateral Tests', async function() {
+    it('Can deposit collateral to curve market', async function() {
+      // Setting timeout to 2 minutes
+      this.timeout(2 * 60 * 1000);
+      const marketId = api.createType('u32', lendingMarketIdCurveInterestRate);
+      const amount = api.createType('u128', 250000000000);
+      const result = await depositCollateralHandler(lenderWallet, marketId, amount);
+      console.debug(result);
+    });
+  });
+
   describe('Borrow success tests', function() {
-    it('Lending Tests: Borrow very high amounts => High Interest Rate => High Borrow Rate', ()=>{return true}); // ToDo (D. Roth): Implement.
+    it('Lending Tests: Borrow very high amounts => High Interest Rate => High Borrow Rate', async function () {
+      // Setting timeout to 2 minutes
+      this.timeout(2 * 60 * 1000);
+      const marketId = api.createType('u32', lendingMarketIdCurveInterestRate);
+      const amount = api.createType('u128', 100000);
+      const result = await borrowHandler(lenderWallet, marketId, amount);
+      console.debug(result);
+    }); // ToDo (D. Roth): Implement.
 
     it('Lending Tests: Very low borrow amount => Low accrue', ()=>{return true}); // ToDo (D. Roth): Implement.
   });
