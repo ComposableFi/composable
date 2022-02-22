@@ -11981,6 +11981,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
+ "jsonrpc-core",
  "num-traits",
  "pallet-crowdloan-rewards",
  "pallet-sudo",
@@ -11994,6 +11995,7 @@ dependencies = [
  "sc-consensus",
  "sc-consensus-manual-seal",
  "sc-executor",
+ "sc-rpc",
  "sc-service",
  "sc-tracing",
  "simnode-runtime-apis",
@@ -12003,6 +12005,7 @@ dependencies = [
  "sp-io",
  "sp-keyring",
  "sp-runtime",
+ "sp-transaction-pool",
  "structopt",
  "substrate-simnode",
 ]
@@ -12010,7 +12013,7 @@ dependencies = [
 [[package]]
 name = "simnode-runtime-apis"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#d019bb5d6cfb8bb1547e5c5947e251c93126575e"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#0b786084761489174f3e667c90d7478ebd1f6dbe"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -13096,7 +13099,7 @@ dependencies = [
 [[package]]
 name = "substrate-simnode"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#d019bb5d6cfb8bb1547e5c5947e251c93126575e"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#0b786084761489174f3e667c90d7478ebd1f6dbe"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",
