@@ -19,6 +19,7 @@ pallet-mmr = { default-features = false, git = "https://github.com/paritytech/su
 pallet-mmr-primitives = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 beefy-primitives = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16"}
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+#scale-info = { version = "1.0", features = ["derive"] }
 
 rs-merkle = { package = "rs_merkle", git = "https://github.com/ComposableFi/rs-merkle.git", default-features = false }
 

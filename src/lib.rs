@@ -22,7 +22,7 @@ pub mod traits;
 
 use crate::error::BeefyClientError;
 use crate::primitives::{BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof};
-use crate::traits::{StorageRead, StorageWrite};
+use crate::traits::{AuthoritySet, MmrState, StorageRead, StorageWrite};
 use codec::Encode;
 use rs_merkle::MerkleProof;
 use sp_core::{ByteArray, H256};
@@ -40,14 +40,15 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
     /// then using the mmr proofs, verify the latest mmr leaf,
     /// using the latest mmr leaf to rotate its view of the next authorities.
     pub fn ingest_mmr_root_with_proof(mmr_update: MmrUpdateProof) -> Result<(), BeefyClientError> {
-        let current_authority_set = <Store as StorageRead>::current_authority_set()?;
-        let next_authority_set = <Store as StorageRead>::next_authority_set()?;
+        let authority_set = <Store as StorageRead>::authority_set()?;
+        let current_authority_set = &authority_set.current_authorities;
+        let next_authority_set = &authority_set.next_authorities;
         let signatures_len = mmr_update.signed_commitment.signatures.len();
         let validator_set_id = mmr_update.signed_commitment.commitment.validator_set_id;
 
         // If signature threshold is not satisfied, return
-        if !validate_sigs_against_threshold(&current_authority_set, signatures_len)
-            && !validate_sigs_against_threshold(&next_authority_set, signatures_len)
+        if !validate_sigs_against_threshold(current_authority_set, signatures_len)
+            && !validate_sigs_against_threshold(next_authority_set, signatures_len)
         {
             return Err(BeefyClientError::InvalidMmrUpdate);
         }
@@ -125,7 +126,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
             authorities_changed = true;
         }
 
-        let latest_beefy_height = <Store as StorageRead>::latest_height()?;
+        let latest_beefy_height = <Store as StorageRead>::mmr_state()?.latest_height;
 
         if mmr_update.signed_commitment.commitment.block_number <= latest_beefy_height {
             return Err(BeefyClientError::InvalidMmrUpdate);
@@ -150,20 +151,20 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
         )
         .map_err(|_| BeefyClientError::InvalidMmrProof)?;
 
-        <Store as StorageWrite>::set_latest_height(
-            mmr_update.signed_commitment.commitment.block_number,
-        )?;
-        <Store as StorageWrite>::set_latest_mmr_root_hash(mmr_root_hash.into())?;
+        <Store as StorageWrite>::set_mmr_state(MmrState {
+            latest_height: mmr_update.signed_commitment.commitment.block_number,
+            mmr_root_hash: mmr_root_hash.into(),
+        })?;
 
         if authorities_changed {
-            <Store as StorageWrite>::set_current_authority_set(next_authority_set)?;
-            <Store as StorageWrite>::set_next_authority_set(
-                mmr_update
+            <Store as StorageWrite>::set_authority_set(AuthoritySet {
+                current_authorities: next_authority_set.clone(),
+                next_authorities: mmr_update
                     .latest_mmr_leaf_with_index
                     .leaf
                     .beefy_next_authority_set
                     .clone(),
-            )?;
+            })?;
         }
         Ok(())
     }
