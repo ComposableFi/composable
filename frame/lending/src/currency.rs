@@ -77,3 +77,5 @@ pub mod defs {
 }
 
 pub use defs::*;
+
+pub type CurrencyId = u128;
