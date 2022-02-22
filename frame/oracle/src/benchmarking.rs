@@ -1,7 +1,9 @@
 use super::*;
 
+use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
 #[allow(unused)]
 use crate::Pallet as Oracle;
+use composable_support::validation::Validated;
 use composable_traits::oracle::Price;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
@@ -11,6 +13,7 @@ use frame_support::{
 };
 use frame_system::{EventRecord, RawOrigin};
 use sp_runtime::{DispatchResult, Percent};
+
 use sp_std::{prelude::*, vec};
 
 pub type BalanceOf<T> =
@@ -38,10 +41,10 @@ benchmarks! {
 	add_asset_and_info {
 		let caller = T::AddOracle::successful_origin();
 		let asset_id = 1;
-		let threshold = Percent::from_percent(80);
-		let min_answers = 3;
-		let max_answers = 5;
-		let block_interval: T::BlockNumber = 5u32.into();
+		let threshold = Validated::new(Percent::from_percent(80)).unwrap();
+		let min_answers = Validated::new(3).unwrap();
+		let max_answers = Validated::new(5).unwrap();
+		let block_interval = Validated::<T::BlockNumber, ValidBlockInterval<T::StalePrice>>::new(T::BlockNumber::from(5u32)).unwrap();
 		let reward: BalanceOf<T> = T::Currency::minimum_balance();
 		let slash: BalanceOf<T> = T::Currency::minimum_balance();
 
@@ -51,7 +54,7 @@ benchmarks! {
 		);
 	}
 	verify {
-		assert_last_event::<T>(Event::AssetInfoChange(asset_id.into(), threshold, min_answers, max_answers, block_interval, reward, slash).into());
+		assert_last_event::<T>(Event::AssetInfoChange(asset_id.into(), *threshold, *min_answers, *max_answers, *block_interval, reward, slash).into());
 	}
 
 	set_signer {
