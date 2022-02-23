@@ -17,7 +17,6 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 	use frame_support::pallet_prelude::*;
-	use frame_system::Config as SystemConfig;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
