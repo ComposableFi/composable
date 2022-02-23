@@ -324,14 +324,18 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
-			let pool_base_aum = T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
-			let pool_quote_aum = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
-			let exchange_amount = safe_multiply_by_rational(
-				pool_quote_aum,
-				T::Convert::convert(amount),
-				pool_base_aum,
-			)?;
+			let pool_base_aum =
+				T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
+			let pool_quote_aum =
+				T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
+			let amount = T::Convert::convert(amount);
+			let exchange_amount = if asset_id == pool.pair.quote {
+				// AmountOut
+				safe_multiply_by_rational(amount, pool_base_aum, pool_quote_aum.safe_add(&amount)?)?
+			} else {
+				// AmountIn
+				safe_multiply_by_rational(amount, pool_quote_aum, pool_base_aum.safe_sub(&amount)?)?
+			};
 			Ok(T::Convert::convert(exchange_amount))
 		}
 
