@@ -96,42 +96,11 @@ fn test() {
 		// mint 1 USDT, after selling 100 USDC we get 99 USDT so to buy 100 USDC we need 100 USDT
 		assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
 
-		let pool_account = StableSwap::account_id(&pool_id);
-		let bob_usdc = Tokens::balance(USDC, &BOB);
-		let bob_usdt = Tokens::balance(USDT, &BOB);
-		let pool_usdc = Tokens::balance(USDC, &pool_account);
-		let pool_usdt = Tokens::balance(USDT, &pool_account);
-		sp_std::if_std! {
-			println!("pool's usdc {:?}", pool_usdc);
-			println!("pool's usdt {:?}", pool_usdt);
-			println!("bob's usdc {:?}", bob_usdc);
-			println!("bob's usdt {:?}", bob_usdt);
-		}
 		<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDC, swap_usdc, false)
 			.expect("impossible; qed;");
 
-		let bob_usdc = Tokens::balance(USDC, &BOB);
-		let bob_usdt = Tokens::balance(USDT, &BOB);
-		let pool_usdc = Tokens::balance(USDC, &pool_account);
-		let pool_usdt = Tokens::balance(USDT, &pool_account);
-		sp_std::if_std! {
-			println!("pool's usdc {:?}", pool_usdc);
-			println!("pool's usdt {:?}", pool_usdt);
-			println!("bob's usdc {:?}", bob_usdc);
-			println!("bob's usdt {:?}", bob_usdt);
-		}
 		<StableSwap as CurveAmm>::buy(&BOB, pool_id, USDC, swap_usdc, false)
 			.expect("impossible; qed;");
-		let bob_usdc = Tokens::balance(USDC, &BOB);
-		let bob_usdt = Tokens::balance(USDT, &BOB);
-		let pool_usdc = Tokens::balance(USDC, &pool_account);
-		let pool_usdt = Tokens::balance(USDT, &pool_account);
-		sp_std::if_std! {
-			println!("pool's usdc {:?}", pool_usdc);
-			println!("pool's usdt {:?}", pool_usdt);
-			println!("bob's usdc {:?}", bob_usdc);
-			println!("bob's usdt {:?}", bob_usdt);
-		}
 
 		let bob_usdc = Tokens::balance(USDC, &BOB);
 
@@ -310,5 +279,117 @@ fn high_slippage() {
 		assert_ok!(<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, bob_usdt, false));
 		let usdc_balance = Tokens::balance(USDC, &BOB);
 		assert!((bob_usdt - usdc_balance) > 5_u128);
+	});
+}
+
+#[cfg(feature = "visualization")]
+#[test]
+fn get_base_graph() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = 100000_u128 * unit;
+		let initial_usdc = 100000_u128 * unit;
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			100_u16,
+			Permill::zero(),
+			Permill::zero(),
+		);
+
+		let start_quote = 0;
+		let end_quote = 120000;
+		let points = (start_quote..end_quote)
+			.map(|quote| {
+				(
+					quote,
+					<StableSwap as CurveAmm>::get_exchange_value(pool_id, USDC, quote * unit)
+						.expect("impossible; qed;") as f64 /
+						unit as f64,
+				)
+			})
+			.collect::<Vec<_>>();
+		let max_amount = points.iter().copied().fold(f64::NAN, |x, (_, y)| f64::max(x, y));
+
+		use plotters::prelude::*;
+		let area = BitMapBackend::new("./curve_base.png", (1024, 768)).into_drawing_area();
+		area.fill(&WHITE).unwrap();
+
+		let mut chart = ChartBuilder::on(&area)
+			.caption("Curve price, pool has 100000 USDC 100000 USDT", ("Arial", 25).into_font())
+			.margin(100u32)
+			.x_label_area_size(30u32)
+			.y_label_area_size(30u32)
+			.build_cartesian_2d(start_quote..end_quote, 0f64..max_amount)
+			.unwrap();
+
+		chart
+			.configure_mesh()
+			.y_desc("base amount")
+			.x_desc("quote amount")
+			.draw()
+			.unwrap();
+		chart.draw_series(LineSeries::new(points, &RED)).unwrap();
+		chart
+			.configure_series_labels()
+			.background_style(&WHITE.mix(0.8))
+			.border_style(&BLACK)
+			.draw()
+			.unwrap();
+	});
+}
+
+#[cfg(feature = "visualization")]
+#[test]
+fn slippage_graph() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = 1000000_u128 * unit;
+		let initial_usdc = 1000000_u128 * unit;
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			100_u16,
+			Permill::zero(),
+			Permill::zero(),
+		);
+
+		let start_quote = 0;
+		let end_quote = 120000;
+		let points = (start_quote..end_quote)
+			.map(|quote| {
+				let quote = quote * unit;
+				let base = <StableSwap as CurveAmm>::get_exchange_value(pool_id, USDC, quote)
+					.expect("impossible; qed;");
+				let slippage = if base <= quote { quote - base } else { base };
+				(quote / unit, slippage as f64 / unit as f64)
+			})
+			.collect::<Vec<_>>();
+		let max_amount = points.iter().copied().fold(f64::NAN, |x, (_, y)| f64::max(x, y));
+
+		use plotters::prelude::*;
+		let area = BitMapBackend::new("./curve_slippage.png", (1024, 768)).into_drawing_area();
+		area.fill(&WHITE).unwrap();
+
+		let mut chart = ChartBuilder::on(&area)
+			.caption("Curve price, pool has 100000 USDC 100000 USDT", ("Arial", 25).into_font())
+			.margin(100u32)
+			.x_label_area_size(30u32)
+			.y_label_area_size(30u32)
+			.build_cartesian_2d(start_quote..end_quote, 0f64..max_amount)
+			.unwrap();
+
+		chart.configure_mesh().y_desc("slippage").x_desc("quote amount").draw().unwrap();
+		chart.draw_series(LineSeries::new(points, &RED)).unwrap();
+		chart
+			.configure_series_labels()
+			.background_style(&WHITE.mix(0.8))
+			.border_style(&BLACK)
+			.draw()
+			.unwrap();
 	});
 }
