@@ -1,10 +1,9 @@
-use crate::{cli::ComposableCli, tests};
-use common::DAYS;
+use crate::cli::ComposableCli;
 use parachain_inherent::ParachainInherentData;
 use sc_consensus_manual_seal::consensus::timestamp::SlotTimestampProvider;
 use sc_service::TFullBackend;
-use std::{error::Error, sync::Arc};
-use substrate_simnode::{FullClientFor, SignatureVerificationOverride};
+use std::sync::Arc;
+use substrate_simnode::{FullClientFor, RpcHandlerArgs, SignatureVerificationOverride};
 
 /// A unit struct which implements `NativeExecutionDispatch` feeding in the
 /// hard-coded runtime.
@@ -39,20 +38,22 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 		ParachainInherentData,
 	);
 	type Cli = ComposableCli;
-}
 
-/// run all integration tests
-pub fn run() -> Result<(), Box<dyn Error>> {
-	substrate_simnode::parachain_node::<ChainInfo, _, _>(|node| async move {
-		// test code-substitute for dali, by authoring blocks past the launch period
-		node.seal_blocks(10).await;
-		// test runtime upgrades
-		let code = dali_runtime::WASM_BINARY.ok_or("Dali wasm not available")?.to_vec();
-		tests::runtime_upgrade::parachain_runtime_upgrades(&node, code).await?;
-
-		// try to create blocks for a month, if it doesn't panic, all good.
-		node.seal_blocks((30 * DAYS) as usize).await;
-
-		Ok(())
-	})
+	fn create_rpc_io_handler<SC>(
+		deps: RpcHandlerArgs<Self, SC>,
+	) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>
+	where
+		<<Self as substrate_simnode::ChainInfo>::RuntimeApi as sp_api::ConstructRuntimeApi<
+			Self::Block,
+			FullClientFor<Self>,
+		>>::RuntimeApi: sp_api::Core<Self::Block>
+			+ sp_transaction_pool::runtime_api::TaggedTransactionQueue<Self::Block>,
+	{
+		let full_deps = node::rpc::FullDeps {
+			client: deps.client,
+			pool: deps.pool,
+			deny_unsafe: deps.deny_unsafe,
+		};
+		node::rpc::create::<_, _, Self::Block>(full_deps)
+	}
 }
