@@ -3,10 +3,6 @@ use sp_runtime::{biguint::BigUint, helpers_128bit::to_big_uint, ArithmeticError,
 fn safe_div(a: &mut BigUint, b: &mut BigUint) -> Result<BigUint, DispatchError> {
 	a.lstrip();
 	b.lstrip();
-	// sp_std::if_std! {
-	// 	println!("a {:?}", a);
-	// 	println!("b {:?}", b);
-	// }
 	let a = a.clone();
 	if b.len() == 1 {
 		return Ok(a.div_unit(b.get(0)))
@@ -15,6 +11,20 @@ fn safe_div(a: &mut BigUint, b: &mut BigUint) -> Result<BigUint, DispatchError> 
 	Ok(div.0)
 }
 
+/// # Notes
+///
+/// D invariant calculation in non-overflowing integer operations iteratively
+///
+/// ```pseudocode
+///  A * sum(x_i) * n^n + D = A * D * n^n + D^(n+1) / (n^n * prod(x_i))
+/// ```
+///
+/// Converging solution:
+///
+/// ```pseudocode
+/// D[j + 1] = (A * n^n * sum(x_i) - D[j]^(n+1) / (n^n * prod(x_i))) / (A * n^n - 1)
+/// ```
+/// For two assets, n = 2 used while computation
 pub fn compute_d(
 	base_asset_aum: u128,
 	quote_asset_aum: u128,
@@ -34,10 +44,6 @@ pub fn compute_d(
 	}
 	let ann = amplification_coefficient.mul(&n).mul(&n);
 	let ann_one = ann.clone().sub(&one).map_err(|_| ArithmeticError::Underflow)?;
-	// sp_std::if_std! {
-	// 	println!("base_asset_amount {:?}", base_asset_amount);
-	// 	println!("quote_asset_amount {:?}", quote_asset_amount);
-	// }
 	let mut d = sum.clone();
 
 	let mut base_n = base_asset_amount.mul(&n);
@@ -47,16 +53,8 @@ pub fn compute_d(
 		// d_p = d_p * d / (x * n)
 
 		let mut d_p_d = d_p.mul(&d);
-		// sp_std::if_std! {
-		// 	println!("d_p_d {:?}", d_p_d);
-		// 	println!("base_n {:?}", base_n);
-		// }
 		d_p = safe_div(&mut d_p_d, &mut base_n)?;
 		let mut d_p_d = d_p.mul(&d);
-		// sp_std::if_std! {
-		// 	println!("d_p_d {:?}", d_p_d);
-		// 	println!("quote_n {:?}", quote_n);
-		// }
 		d_p = safe_div(&mut d_p_d, &mut quote_n)?;
 
 		let d_prev = d.clone();
@@ -79,6 +77,20 @@ pub fn compute_d(
 	Err(DispatchError::Other("could not compute d"))
 }
 
+/// See https://github.com/equilibrium-eosdt/equilibrium-curve-amm/blob/master/docs/deducing-get_y-formulas.pdf
+/// for detailed explanation about formulas this function uses.
+///
+/// # Notes
+///
+/// Done by solving quadratic equation iteratively.
+///
+/// ```pseudocode
+/// x_1^2 + x_1 * (sum' - (A * n^n - 1) * D / (A * n^n)) = D^(n+1) / (n^2n * prod' * A)
+/// x_1^2 + b * x_1 = c
+///
+/// x_1 = (x_1^2 + c) / (2 * x_1 + b)
+/// ```
+/// For two assets, n = 2 used while computation
 pub fn compute_base(new_quote: u128, amp_coeff: u128, d: u128) -> Result<u128, DispatchError> {
 	let mut n = to_big_uint(2_u128);
 	let two = to_big_uint(2_u128);

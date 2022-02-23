@@ -64,10 +64,10 @@ fn test() {
 			false
 		));
 
-		// 1 unit of btc = 45k unit of usdt
+		// 1 unit of btc = 45k + some unit of usdt
 		let ratio =
 			<Uni as CurveAmm>::get_exchange_value(pool_id, BTC, unit).expect("impossible; qed;");
-		assert_eq!(ratio, (initial_usdt / initial_btc) * unit);
+		assert!(ratio > (initial_usdt / initial_btc) * unit);
 
 		let initial_pool_invariant = current_pool_product();
 

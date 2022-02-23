@@ -101,8 +101,6 @@ pub mod pallet {
 		PoolDoesNotExist,
 		/// For given asset pair no route found.
 		NoRouteFound,
-		/// Some error occured while performing exchange.
-		ExchangeError,
 	}
 
 	#[pallet::event]
@@ -237,8 +235,7 @@ pub mod pallet {
 							dx_t,
 							T::Balance::zero(),
 							true,
-						)
-						.map_err(|_| Error::<T>::ExchangeError)?;
+						)?;
 						dx_t = dy_t;
 					},
 					DexRouteNode::Uniswap(pool_id) => {
@@ -250,8 +247,7 @@ pub mod pallet {
 							dx_t,
 							T::Balance::zero(),
 							true,
-						)
-						.map_err(|_| Error::<T>::ExchangeError)?;
+						)?;
 						dx_t = dy_t;
 					},
 				}
@@ -285,8 +281,7 @@ pub mod pallet {
 							*pool_id,
 							currency_pair.base,
 							dy_t,
-						)
-						.map_err(|_| Error::<T>::ExchangeError)?;
+						)?;
 						stack.push_front(dx_t);
 						dy_t = dx_t;
 					},
@@ -296,58 +291,42 @@ pub mod pallet {
 							*pool_id,
 							currency_pair.base,
 							dy_t,
-						)
-						.map_err(|_| Error::<T>::ExchangeError)?;
+						)?;
 						stack.push_front(dx_t);
 						dy_t = dx_t;
 					},
 				}
 			}
-			sp_std::if_std! {
-				println!("stack {:?}", stack);
-			}
+			let mut dx_t = stack.pop_front().expect("impossible; qed;");
 			for route_node in route {
 				match route_node {
 					DexRouteNode::Curve(pool_id) => {
 						let currency_pair = T::StableSwapDex::currency_pair(pool_id)?;
-						let dx_t = stack
-							.pop_front()
-							.expect("impossible as stack has same length as route");
-						let _res = T::StableSwapDex::exchange(
+						let dy_t = T::StableSwapDex::exchange(
 							who,
 							pool_id,
 							currency_pair,
 							dx_t,
 							T::Balance::zero(),
 							true,
-						)
-						.map_err(|_| Error::<T>::ExchangeError)?;
-						sp_std::if_std! {
-							println!("dx_t {:?}, res {:?}", dx_t, _res);
-						}
+						)?;
+						dx_t = dy_t;
 					},
 					DexRouteNode::Uniswap(pool_id) => {
 						let currency_pair = T::ConstantProductDex::currency_pair(pool_id)?;
-						let dx_t = stack
-							.pop_front()
-							.expect("impossible as stack has same length as route");
-						let _res = T::ConstantProductDex::exchange(
+						let dy_t = T::ConstantProductDex::exchange(
 							who,
 							pool_id,
 							currency_pair,
 							dx_t,
 							T::Balance::zero(),
 							true,
-						)
-						.map_err(|_| Error::<T>::ExchangeError)?;
-						sp_std::if_std! {
-							println!("dx_t {:?}, res {:?}", dx_t, _res);
-						}
+						)?;
+						dx_t = dy_t;
 					},
 				}
 			}
-			// TODO
-			Ok(T::Balance::zero())
+			Ok(dx_t)
 		}
 	}
 }

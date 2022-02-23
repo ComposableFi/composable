@@ -76,7 +76,7 @@ fn create_usdt_usdc_pool() -> PoolId {
 fn create_usdc_eth_pool() -> PoolId {
 	let unit = 1_000_000_000_000_u128;
 	let eth_price = 3000_u128;
-	let eth_balance = 1000 * unit;
+	let eth_balance = 1_000_000_000 * unit;
 	let usdc_balance = eth_price * eth_balance;
 	let fee = Permill::zero();
 	let admin_fee = Permill::zero();
@@ -197,16 +197,19 @@ fn buy_test() {
 			DexRouteNode::Uniswap(create_usdc_eth_pool()),
 			DexRouteNode::Curve(create_usdt_usdc_pool()),
 		];
+		// USDC/ETH
+		// USDT/USDC
+		// USDT/ETH
 		assert_ok!(DexRouter::update_route(
 			&ALICE,
 			currency_pair,
 			Some(dex_route.try_into().unwrap())
 		));
-		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 1_u128 * unit));
+		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 2_u128 * unit));
 		let dy = DexRouter::buy(&CHARLIE, currency_pair, 3000_u128 * unit);
 		assert_ok!(dy);
 		let dy = dy.unwrap();
-		assert!(3000 >= dy);
-		assert!(2995 < dy);
+		let expected_value = 3000 * unit;
+		assert_ok!(acceptable_computation_error(dy, expected_value, 100));
 	});
 }

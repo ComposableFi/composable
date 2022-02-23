@@ -155,9 +155,6 @@ pub mod pallet {
 		PoolNotFound,
 		PairMismatch,
 		CannotRespectMinimumRequested,
-		CouldNotComputeQuote,
-		CouldNotComputeInvariant,
-		ConversionError,
 	}
 
 	#[pallet::event]
@@ -592,19 +589,6 @@ pub mod pallet {
 			T::PalletId::get().into_sub_account(pool_id)
 		}
 
-		/// # Notes
-		///
-		/// D invariant calculation in non-overflowing integer operations iteratively
-		///
-		/// ```pseudocode
-		///  A * sum(x_i) * n^n + D = A * D * n^n + D^(n+1) / (n^n * prod(x_i))
-		/// ```
-		///
-		/// Converging solution:
-		///
-		/// ```pseudocode
-		/// D[j + 1] = (A * n^n * sum(x_i) - D[j]^(n+1) / (n^n * prod(x_i))) / (A * n^n - 1)
-		/// ```
 		pub fn get_d(
 			base_asset_aum: T::Balance,
 			quote_asset_aum: T::Balance,
@@ -619,19 +603,6 @@ pub mod pallet {
 			Ok(T::Convert::convert(d))
 		}
 
-		/// See https://github.com/equilibrium-eosdt/equilibrium-curve-amm/blob/master/docs/deducing-get_y-formulas.pdf
-		/// for detailed explanation about formulas this function uses.
-		///
-		/// # Notes
-		///
-		/// Done by solving quadratic equation iteratively.
-		///
-		/// ```pseudocode
-		/// x_1^2 + x_1 * (sum' - (A * n^n - 1) * D / (A * n^n)) = D^(n+1) / (n^2n * prod' * A)
-		/// x_1^2 + b * x_1 = c
-		///
-		/// x_1 = (x_1^2 + c) / (2 * x_1 + b)
-		/// ```
 		pub fn get_base(
 			new_quote: T::Balance,
 			amp_coeff: T::Balance,

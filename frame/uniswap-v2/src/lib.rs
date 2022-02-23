@@ -377,10 +377,14 @@ pub mod pallet {
 				let base_amount = T::Convert::convert(base_amount);
 				ensure!(quote_amount > T::Balance::zero(), Error::<T>::InvalidAmount);
 				let quote_amount = T::Convert::convert(quote_amount);
-				let lp_to_mint = base_amount
-					.safe_mul(&quote_amount)?
-					.integer_sqrt_checked()
-					.ok_or(ArithmeticError::Overflow)?;
+				// let lp_to_mint = base_amount
+				// 	.safe_mul(&quote_amount)?
+				// 	.integer_sqrt_checked()
+				// 	.ok_or(ArithmeticError::Overflow)?;
+				let lp_to_mint =
+					base_amount.integer_sqrt_checked().ok_or(ArithmeticError::Overflow)?.safe_mul(
+						&quote_amount.integer_sqrt_checked().ok_or(ArithmeticError::Overflow)?,
+					)?;
 				(T::Convert::convert(quote_amount), T::Convert::convert(lp_to_mint))
 			} else {
 				let base_amount = T::Convert::convert(base_amount);

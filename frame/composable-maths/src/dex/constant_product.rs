@@ -26,8 +26,11 @@ where
 	let wi: u32 = wi.deconstruct().into();
 	let wo: u32 = wo.deconstruct().into();
 	let weight_sum = wi.safe_add(&wo)?;
-  let expected_weight_sum: u32 = T::one().deconstruct().into();
-	ensure!(weight_sum == expected_weight_sum, DispatchError::Arithmetic(ArithmeticError::Overflow));
+	let expected_weight_sum: u32 = T::one().deconstruct().into();
+	ensure!(
+		weight_sum == expected_weight_sum,
+		DispatchError::Arithmetic(ArithmeticError::Overflow)
+	);
 
 	let base_unit = Decimal::from_u128(base_unit).ok_or(ArithmeticError::Overflow)?;
 	let bi = Decimal::from_u128(bi).ok_or(ArithmeticError::Overflow)?;
@@ -64,15 +67,17 @@ where
 	let wi: u32 = wi.deconstruct().into();
 	let wo: u32 = wo.deconstruct().into();
 	let weight_sum = wi.safe_add(&wo)?;
-  let expected_weight_sum: u32 = T::one().deconstruct().into();
-	ensure!(weight_sum == expected_weight_sum, DispatchError::Arithmetic(ArithmeticError::Overflow));
+	let expected_weight_sum: u32 = T::one().deconstruct().into();
+	ensure!(
+		weight_sum == expected_weight_sum,
+		DispatchError::Arithmetic(ArithmeticError::Overflow)
+	);
 
 	let ai = Decimal::from_u128(ai).ok_or(ArithmeticError::Overflow)?;
 	let bi = Decimal::from_u128(bi).ok_or(ArithmeticError::Overflow)?;
 	let bo = Decimal::from_u128(bo).ok_or(ArithmeticError::Overflow)?;
 	let weight_numer = Decimal::from_u32(wi).ok_or(ArithmeticError::Overflow)?;
-	let weight_denom =
-		Decimal::from_u32(wo).ok_or(ArithmeticError::Overflow)?;
+	let weight_denom = Decimal::from_u32(wo).ok_or(ArithmeticError::Overflow)?;
 	let weight_power = weight_numer.safe_div(&weight_denom)?;
 	let bi_div_bi_plus_ai = bi.safe_div(&bi.safe_add(&ai)?)?;
 	let term_to_weight_power =
@@ -102,16 +107,17 @@ where
 	let wi: u32 = wi.deconstruct().into();
 	let wo: u32 = wo.deconstruct().into();
 	let weight_sum = wi.safe_add(&wo)?;
-  let expected_weight_sum: u32 = T::one().deconstruct().into();
-	ensure!(weight_sum == expected_weight_sum, DispatchError::Arithmetic(ArithmeticError::Overflow));
+	let expected_weight_sum: u32 = T::one().deconstruct().into();
+	ensure!(
+		weight_sum == expected_weight_sum,
+		DispatchError::Arithmetic(ArithmeticError::Overflow)
+	);
 
 	let ao = Decimal::from_u128(ao).ok_or(ArithmeticError::Overflow)?;
 	let bi = Decimal::from_u128(bi).ok_or(ArithmeticError::Overflow)?;
 	let bo = Decimal::from_u128(bo).ok_or(ArithmeticError::Overflow)?;
-	let weight_numer =
-		Decimal::from_u32(wo).ok_or(ArithmeticError::Overflow)?;
-	let weight_denom =
-		Decimal::from_u32(wi).ok_or(ArithmeticError::Overflow)?;
+	let weight_numer = Decimal::from_u32(wo).ok_or(ArithmeticError::Overflow)?;
+	let weight_denom = Decimal::from_u32(wi).ok_or(ArithmeticError::Overflow)?;
 	let weight_power = weight_numer.safe_div(&weight_denom)?;
 	let bo_div_bo_minus_ao = bo.safe_div(&bo.safe_sub(&ao)?)?;
 	let term_to_weight_power =
