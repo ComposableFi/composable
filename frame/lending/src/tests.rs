@@ -8,8 +8,10 @@
 use std::ops::Mul;
 
 use crate::{
-	accrue_interest_internal, currency::*, mocks::*, models::BorrowerData, Error, MarketIndex,
+	self as pallet_lending, accrue_interest_internal, currency::*, mocks::*, models::BorrowerData,
+	Error, MarketIndex,
 };
+use codec::{Decode, Encode};
 use composable_support::validation::Validated;
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::{
@@ -22,12 +24,12 @@ use frame_support::{
 	assert_err, assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
+use frame_system::EventRecord;
 use pallet_vault::models::VaultInfo;
 use proptest::{prelude::*, test_runner::TestRunner};
 use sp_arithmetic::assert_eq_error_rate;
-use sp_core::U256;
+use sp_core::{H256, U256};
 use sp_runtime::{ArithmeticError, FixedPointNumber, Percent, Perquintill};
-
 type BorrowAssetVault = VaultId;
 
 type CollateralAsset = CurrencyId;
@@ -291,6 +293,8 @@ fn accrue_interest_plotter() {
 #[test]
 fn can_create_valid_market() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1); // ensure non zero blocks as 0 is too way special
+
 		let borrow_asset = BTC::ID;
 		let collateral_asset = USDT::ID;
 		let expected = 50_000 * USDT::one();
@@ -314,16 +318,40 @@ fn can_create_valid_market() {
 			reserved_factor: DEFAULT_MARKET_VAULT_RESERVE,
 			currency_pair: CurrencyPair::new(collateral_asset, borrow_asset),
 		};
-		let created =
+		let failed =
 			<Lending as composable_traits::lending::Lending>::create(manager, config.clone());
-		assert!(!created.is_ok());
+		assert!(!failed.is_ok());
 
 		Tokens::mint_into(borrow_asset, &manager, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
-		let created = <Lending as composable_traits::lending::Lending>::create(manager, config);
+		let created = Lending::create_market(
+			Origin::signed(manager),
+			Validated::new(config.clone()).unwrap(),
+		);
 		assert_ok!(created);
+
+		let (market_id, borrow_vault_id) = System::events()
+			.iter()
+			.filter_map(|x| {
+				// ensure we do not bloat with events  and all are decodable
+				assert_eq!(x.topics.len(), 0);
+				EventRecord::<Event, H256>::decode(&mut &x.encode()[..]).unwrap();
+
+				match x.event {
+					Event::Lending(pallet_lending::Event::<Runtime>::MarketCreated {
+						manager: who,
+						vault_id,
+						currency_pair: _,
+						market_id,
+					}) if manager == who => Some((market_id, vault_id)),
+					_ => None,
+				}
+			})
+			.last()
+			.unwrap();
+
 		let new_balance = Tokens::balance(borrow_asset, &manager);
 		assert!(new_balance < INITIAL_BORROW_ASSET_AMOUNT);
-		let (market_id, borrow_vault_id) = created.unwrap();
+
 		let initial_total_cash = Lending::total_cash(&market_id).unwrap();
 		assert!(initial_total_cash > 0);
 

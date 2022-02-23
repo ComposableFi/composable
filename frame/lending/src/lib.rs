@@ -360,7 +360,7 @@ pub mod pallet {
 			market_id: MarketIndex,
 			vault_id: T::VaultId,
 			manager: T::AccountId,
-			input: CreateInput<T::LiquidationStrategyId, T::MayBeAssetId>,
+			currency_pair: CurrencyPair<T::MayBeAssetId>,
 		},
 		MarketUpdated {
 			market_id: MarketIndex,
@@ -552,12 +552,13 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let input = input.value();
-			let (market_id, vault_id) = Self::create(who.clone(), input.clone())?;
+			let pair = input.currency_pair.clone();
+			let (market_id, vault_id) = Self::create(who.clone(), input)?;
 			Self::deposit_event(Event::<T>::MarketCreated {
 				market_id,
 				vault_id,
 				manager: who,
-				input,
+				currency_pair: pair,
 			});
 			Ok(().into())
 		}
