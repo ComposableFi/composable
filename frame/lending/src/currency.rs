@@ -5,7 +5,7 @@
 /// Intended usage:
 ///
 /// ```
-/// #use pallet_lending::currency::Currency;
+/// # use pallet_lending::currency::Currency;
 ///
 /// type ACOIN = Currency<12345, 10>;
 /// type BCOIN = Currency<54321, 12>;
@@ -41,7 +41,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// # Examples
 	///
 	/// ```
-	/// #use pallet_lending::currency::Currency;
+	/// # use pallet_lending::currency::Currency;
 	///
 	/// type ACOIN = Currency<12345, 10>;
 	/// assert_eq!(ACOIN::units(7), 70_000_000_000);
@@ -58,7 +58,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// # Examples
 	///
 	/// ```
-	/// #use pallet_lending::currency::Currency;
+	/// # use pallet_lending::currency::Currency;
 	///
 	/// type ACOIN = Currency<12345, 10>;
 	/// assert_eq!(ACOIN::ones(), 10_000_000_000);
