@@ -1405,6 +1405,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "composable-maths"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "rust_decimal",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "composable-node"
 version = "1.0.9"
 dependencies = [
@@ -7675,6 +7690,7 @@ dependencies = [
 name = "pallet-uniswap-v2"
 version = "0.0.1"
 dependencies = [
+ "composable-maths",
  "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
@@ -10406,6 +10422,16 @@ checksum = "ffc936cf8a7ea60c58f030fd36a612a48f440610214dc54bc36431f9ea0c3efb"
 dependencies = [
  "libc",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "rust_decimal"
+version = "1.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d37baa70cf8662d2ba1c1868c5983dda16ef32b105cce41fb5c47e72936a90b3"
+dependencies = [
+ "arrayvec 0.7.2",
+ "num-traits",
 ]
 
 [[package]]

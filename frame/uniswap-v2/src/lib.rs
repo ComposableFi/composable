@@ -48,6 +48,7 @@ mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, FullCodec};
+	use composable_maths::dex::constant_product::{compute_in_given_out, compute_out_given_in};
 	use composable_traits::{
 		currency::{CurrencyFactory, RangeId},
 		defi::CurrencyPair,
@@ -324,18 +325,29 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
+			let amount = T::Convert::convert(amount);
+			let half_weight = Permill::from_percent(50);
 			let pool_base_aum =
 				T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
 			let pool_quote_aum =
 				T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
-			let amount = T::Convert::convert(amount);
 			let exchange_amount = if asset_id == pool.pair.quote {
-				// AmountOut
-				safe_multiply_by_rational(amount, pool_base_aum, pool_quote_aum.safe_add(&amount)?)?
+				compute_out_given_in(
+					half_weight,
+					half_weight,
+					pool_quote_aum,
+					pool_base_aum,
+					amount,
+				)
 			} else {
-				// AmountIn
-				safe_multiply_by_rational(amount, pool_quote_aum, pool_base_aum.safe_sub(&amount)?)?
-			};
+				compute_in_given_out(
+					half_weight,
+					half_weight,
+					pool_quote_aum,
+					pool_base_aum,
+					amount,
+				)
+			}?;
 			Ok(T::Convert::convert(exchange_amount))
 		}
 
@@ -600,24 +612,17 @@ pub mod pallet {
 				(0, 0)
 			};
 
-			/* a = out_base, b = in_quote, x = pool base, y = pool quote
-			   k = xy
-
-			   given any b,
-			   a = x - (k / b + y)
-				 = (b * x) / (b + y)
-			*/
 			let quote_amount_excluding_fees =
 				quote_amount.safe_sub(&lp_fee)?.safe_sub(&owner_fee)?;
 
-			let x = pool_base_aum;
-			let y = pool_quote_aum;
-			let b = quote_amount_excluding_fees;
-
-			let b_plus_y = b.safe_add(&y)?;
-			let a = safe_multiply_by_rational(b, x, b_plus_y)?;
-
-			let base_amount = a;
+			let half_weight = Permill::from_percent(50);
+			let base_amount = compute_out_given_in(
+				half_weight,
+				half_weight,
+				pool_quote_aum,
+				pool_base_aum,
+				quote_amount_excluding_fees,
+			)?;
 
 			ensure!(base_amount > 0 && quote_amount_excluding_fees > 0, Error::<T>::InvalidAmount);
 

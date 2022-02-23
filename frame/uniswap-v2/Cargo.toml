@@ -31,6 +31,7 @@ plotters = { version = "0.3.1", optional = true }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 serde = { version = "1.0.130", optional = true }
 composable-traits = { path = "../composable-traits", default-features = false}
+composable-maths = { path = "../composable-maths", default-features = false}
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
