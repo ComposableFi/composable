@@ -1,15 +1,9 @@
-#![deny(unused_extern_crates, missing_docs)]
-#![recursion_limit = "256"]
-
-//! Basic example of end to end runtime tests.
-mod chain;
-mod cli;
-mod events;
-mod tests;
-
-pub use chain::*;
+pub use chains::*;
 use sc_cli::{CliConfiguration, SubstrateCli};
 use std::error::Error;
+
+mod chains;
+mod tests;
 
 fn main() -> Result<(), Box<dyn Error>> {
 	let cli = node::cli::Cli::from_args();
@@ -17,7 +11,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 	match &*chain_id {
 		chain if chain.contains("picasso") => picasso::run()?,
-		"dali-chachacha" => dali::run()?,
+		chain if chain.contains("dali") => dali::run()?,
 		_ => panic!("Unsupported chain_id: {}", chain_id),
 	};
 
