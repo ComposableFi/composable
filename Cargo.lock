@@ -11966,46 +11966,38 @@ dependencies = [
 ]
 
 [[package]]
-name = "simnode"
+name = "simnode-common"
 version = "0.1.0"
 dependencies = [
  "common",
  "composable-node",
- "cumulus-client-cli",
- "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",
- "cumulus-test-relay-sproof-builder",
  "dali-runtime",
  "derive_more",
  "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex",
  "jsonrpc-core",
- "num-traits",
- "pallet-crowdloan-rewards",
- "pallet-sudo",
- "pallet-transaction-payment",
- "parachain-info",
- "parity-scale-codec",
  "picasso-runtime",
- "polkadot-primitives",
  "sc-cli",
- "sc-client-api",
  "sc-consensus",
  "sc-consensus-manual-seal",
  "sc-executor",
  "sc-rpc",
  "sc-service",
- "sc-tracing",
  "simnode-runtime-apis",
  "sp-api",
- "sp-blockchain",
  "sp-consensus-aura",
- "sp-io",
- "sp-keyring",
  "sp-runtime",
  "sp-transaction-pool",
+ "substrate-simnode",
+]
+
+[[package]]
+name = "simnode-node"
+version = "0.1.0"
+dependencies = [
+ "composable-node",
+ "sc-cli",
+ "simnode-common",
  "structopt",
  "substrate-simnode",
 ]
@@ -12018,6 +12010,39 @@ dependencies = [
  "parity-scale-codec",
  "sp-api",
  "sp-std",
+]
+
+[[package]]
+name = "simnode-tests"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "composable-node",
+ "cumulus-pallet-parachain-system",
+ "dali-runtime",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "num-traits",
+ "pallet-sudo",
+ "parachain-info",
+ "parity-scale-codec",
+ "picasso-runtime",
+ "polkadot-primitives",
+ "sc-cli",
+ "sc-client-api",
+ "sc-executor",
+ "sc-rpc",
+ "sc-service",
+ "simnode-common",
+ "simnode-runtime-apis",
+ "sp-api",
+ "sp-blockchain",
+ "sp-keyring",
+ "sp-runtime",
+ "structopt",
+ "substrate-simnode",
 ]
 
 [[package]]
