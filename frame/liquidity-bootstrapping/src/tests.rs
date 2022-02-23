@@ -1,36 +1,66 @@
 use crate::{mock::*, *};
 use composable_support::validation::Validated;
 use composable_traits::{defi::CurrencyPair, dex::CurveAmm};
-use frame_support::{assert_ok, traits::fungibles::Mutate};
+use frame_support::assert_noop;
+use frame_support::{
+	assert_ok,
+	traits::fungibles::{Inspect, Mutate},
+};
+use sp_runtime::DispatchError;
 use sp_runtime::Permill;
+use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 
-#[test]
-fn test() {
+fn valid_pool() -> Validated<Pool<AccountId, BlockNumber, AssetId>, PoolIsValid<Test>> {
+	let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
+	let owner = ALICE;
+	let duration = MaxSaleDuration::get();
+	let start = 0;
+	let end = start + duration;
+	let initial_weight = MaxInitialWeight::get();
+	let final_weight = MinFinalWeight::get();
+	let fee = Permill::from_perthousand(1);
+	Validated::new(Pool {
+		owner,
+		pair,
+		sale: Sale { start, end, initial_weight, final_weight },
+		fee,
+	})
+	.expect("impossible; qed;")
+}
+
+fn within_sale_with_liquidity(
+	owner: AccountId,
+	initial_project_tokens: Balance,
+	initial_usdt: Balance,
+	sale_duration: BlockNumber,
+	initial_weight: Permill,
+	final_weight: Permill,
+	fee: Permill,
+	f: impl FnOnce(PoolId, &Pool<AccountId, BlockNumber, AssetId>, &dyn Fn(BlockNumber), &dyn FnOnce()),
+) {
+	let random_start = 0xDEADC0DE;
+	let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
+	let end = random_start + sale_duration;
+	let pool = Validated::<_, PoolIsValid<Test>>::new(Pool {
+		owner,
+		pair,
+		sale: Sale { start: random_start, end, initial_weight, final_weight },
+		fee,
+	})
+	.expect("impossible; qed;");
 	new_test_ext().execute_with(|| {
-		let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
-		let owner = ALICE;
-		let pool = Pool {
-			owner,
-			pair,
-			sale: Sale {
-				start: 100,
-				end: 19200 + 100,
-				initial_weight: Permill::from_percent(92),
-				final_weight: Permill::from_percent(50),
-			},
-		};
-		let pool_id = LBP::do_create_pool(Validated::new(pool).expect("impossible; qed;"))
-			.expect("impossible; qed;");
+		// Actually create the pool.
+		assert_ok!(LBP::create(Origin::root(), pool));
 
-		let unit = 1_000_000_000_000;
-		let initial_project_tokens = 200_000_000 * unit;
-		let initial_usdt = 5_000_000 * unit;
+		// Will always start to 0.
+		let pool_id = 0;
 
-		assert_ok!(Tokens::mint_into(PROJECT_TOKEN, &ALICE, initial_project_tokens));
-		assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+		assert_ok!(Tokens::mint_into(PROJECT_TOKEN, &owner, initial_project_tokens));
+		assert_ok!(Tokens::mint_into(USDT, &owner, initial_usdt));
 
+		// Add initial liquidity.
 		assert_ok!(LBP::add_liquidity(
-			&ALICE,
+			&owner,
 			pool_id,
 			initial_project_tokens,
 			initial_usdt,
@@ -38,77 +68,391 @@ fn test() {
 			false
 		));
 
-		#[cfg(feature = "visualization")]
-		{
-			let points = (pool.sale.start..pool.sale.end)
-				.map(|block| {
-					(
-						block,
-						LBP::do_spot_price(pool_id, pool.pair, block).expect("impossible; qed;")
-							as f64 / unit as f64,
-					)
-				})
-				.collect::<Vec<_>>();
-			let max_amount = points.iter().copied().fold(f64::NAN, |x, (_, y)| f64::max(x, y));
+		// Relative to sale start.
+		let set_block = |x: BlockNumber| {
+			System::set_block_number(random_start + x);
+		};
 
-			use plotters::prelude::*;
-			let area = BitMapBackend::new("./lbp_spot_price.png", (1024, 768)).into_drawing_area();
-			area.fill(&WHITE).unwrap();
+		// Forward to sale end.
+		let end_sale = || {
+			set_block(sale_duration + 1);
+		};
 
-			let mut chart = ChartBuilder::on(&area)
-				.caption("Spot price", ("Arial", 50).into_font())
-				.margin(100u32)
-				.x_label_area_size(30u32)
-				.y_label_area_size(30u32)
-				.build_cartesian_2d(pool.sale.start..pool.sale.end, 0f64..max_amount)
-				.unwrap();
+		// Actually start the sale.
+		set_block(0);
 
-			chart.configure_mesh().draw().unwrap();
-			chart
-				.draw_series(LineSeries::new(points, &RED))
-				.unwrap()
-				.label("base")
-				.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
-			chart
-				.configure_series_labels()
-				.background_style(&WHITE.mix(0.8))
-				.border_style(&BLACK)
-				.draw()
-				.unwrap();
-		}
+		f(pool_id, &pool, &set_block, &end_sale);
+	});
+}
 
-		#[cfg(feature = "visualization")]
-		{
-			use plotters::prelude::*;
+mod create {
+	use super::*;
 
-			let plot_swap = |pair, swap_amount, name, caption| {
+	#[test]
+	fn arbitrary_user_cant_create() {
+		new_test_ext().execute_with(|| {
+			assert_noop!(
+				LBP::create(Origin::signed(ALICE), valid_pool()),
+				DispatchError::BadOrigin
+			);
+		});
+	}
+
+	#[test]
+	fn admin_can_create() {
+		new_test_ext().execute_with(|| {
+			assert_ok!(LBP::create(Origin::root(), valid_pool()));
+		});
+	}
+}
+
+mod buy {
+  use super::*;
+
+	#[test]
+	fn can_buy_one_to_one() {
+    /* 50% weight = constant product, no fees.
+    */
+		let unit = 1_000_000_000_000;
+		let initial_project_tokens = 1_000_000 * unit;
+		let initial_usdt = 1_000_000 * unit;
+		let sale_duration = MaxSaleDuration::get();
+		let initial_weight = Permill::one() / 2;
+		let final_weight = Permill::one() / 2;
+		let fee = Permill::zero();
+		within_sale_with_liquidity(
+			ALICE,
+			initial_project_tokens,
+			initial_usdt,
+			sale_duration,
+			initial_weight,
+			final_weight,
+			fee,
+			|pool_id, pool, _, _| {
+				// Buy project token
+				assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
+				assert_ok!(LBP::buy(Origin::signed(BOB), pool_id, pool.pair.base, unit, false));
+        assert_ok!(default_acceptable_computation_error(Tokens::balance(PROJECT_TOKEN, &BOB), unit));
+			},
+		)
+	}
+}
+
+mod invalid_pool {
+	use super::*;
+
+	#[test]
+	fn final_weight_below_minimum() {
+		new_test_ext().execute_with(|| {
+			let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
+			let owner = ALICE;
+			let duration = MaxSaleDuration::get() - 1;
+			let start = 0;
+			let end = start + duration;
+			let initial_weight = MaxInitialWeight::get();
+			let final_weight = MinFinalWeight::get() - Permill::from_parts(1);
+			let fee = Permill::from_perthousand(1);
+			assert!(Validated::<_, PoolIsValid<Test>>::new(Pool {
+				owner,
+				pair,
+				sale: Sale { start, end, initial_weight, final_weight },
+				fee,
+			})
+			.is_err());
+		});
+	}
+
+	#[test]
+	fn initial_weight_above_maximum() {
+		new_test_ext().execute_with(|| {
+			let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
+			let owner = ALICE;
+			let duration = MaxSaleDuration::get() - 1;
+			let start = 0;
+			let end = start + duration;
+			let initial_weight = MaxInitialWeight::get() + Permill::from_parts(1);
+			let final_weight = MinFinalWeight::get();
+			let fee = Permill::from_perthousand(1);
+			assert!(Validated::<_, PoolIsValid<Test>>::new(Pool {
+				owner,
+				pair,
+				sale: Sale { start, end, initial_weight, final_weight },
+				fee,
+			})
+			.is_err());
+		});
+	}
+
+	#[test]
+	fn final_weight_above_initial_weight() {
+		new_test_ext().execute_with(|| {
+			let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
+			let owner = ALICE;
+			let duration = MaxSaleDuration::get() - 1;
+			let start = 0;
+			let end = start + duration;
+			let initial_weight = MinFinalWeight::get();
+			let final_weight = MaxInitialWeight::get();
+			let fee = Permill::from_perthousand(1);
+			assert!(Validated::<_, PoolIsValid<Test>>::new(Pool {
+				owner,
+				pair,
+				sale: Sale { start, end, initial_weight, final_weight },
+				fee,
+			})
+			.is_err());
+		});
+	}
+
+	#[test]
+	fn end_before_start() {
+		new_test_ext().execute_with(|| {
+			let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
+			let owner = ALICE;
+			let start = 1;
+			let end = 0;
+			let initial_weight = MaxInitialWeight::get();
+			let final_weight = MinFinalWeight::get();
+			let fee = Permill::from_perthousand(1);
+			assert!(Validated::<_, PoolIsValid<Test>>::new(Pool {
+				owner,
+				pair,
+				sale: Sale { start, end, initial_weight, final_weight },
+				fee,
+			})
+			.is_err());
+		});
+	}
+
+	#[test]
+	fn above_maximum_sale_duration() {
+		new_test_ext().execute_with(|| {
+			let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
+			let owner = ALICE;
+			let duration = MaxSaleDuration::get() + 1;
+			let start = 0;
+			let end = start + duration;
+			let initial_weight = MaxInitialWeight::get();
+			let final_weight = MinFinalWeight::get();
+			let fee = Permill::from_perthousand(1);
+			assert!(Validated::<_, PoolIsValid<Test>>::new(Pool {
+				owner,
+				pair,
+				sale: Sale { start, end, initial_weight, final_weight },
+				fee,
+			})
+			.is_err());
+		});
+	}
+
+	#[test]
+	fn below_minimum_sale_duration() {
+		new_test_ext().execute_with(|| {
+			let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
+			let owner = ALICE;
+			let duration = MinSaleDuration::get() - 1;
+			let start = 0;
+			let end = start + duration;
+			let initial_weight = MaxInitialWeight::get();
+			let final_weight = MinFinalWeight::get();
+			let fee = Permill::from_perthousand(1);
+			assert!(Validated::<_, PoolIsValid<Test>>::new(Pool {
+				owner,
+				pair,
+				sale: Sale { start, end, initial_weight, final_weight },
+				fee,
+			})
+			.is_err());
+		});
+	}
+}
+
+#[cfg(feature = "visualization")]
+mod visualization {
+	use super::*;
+
+	#[test]
+	fn plot() {
+		new_test_ext().execute_with(|| {
+			let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
+			let owner = ALICE;
+			let two_days = 48 * 3600 / 12;
+			let window = 100;
+			let pool = Pool {
+				owner,
+				pair,
+				sale: Sale {
+					start: window,
+					end: two_days + window,
+					initial_weight: Permill::from_percent(92),
+					final_weight: Permill::from_percent(50),
+				},
+				fee: Permill::from_perthousand(1),
+			};
+			let pool_id = LBP::do_create_pool(Validated::new(pool).expect("impossible; qed;"))
+				.expect("impossible; qed;");
+
+			let unit = 1_000_000_000_000;
+			let initial_project_tokens = 100_000_000 * unit;
+			let initial_usdt = 1_000_000 * unit;
+
+			assert_ok!(Tokens::mint_into(PROJECT_TOKEN, &ALICE, initial_project_tokens));
+			assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+
+			assert_ok!(LBP::add_liquidity(
+				&ALICE,
+				pool_id,
+				initial_project_tokens,
+				initial_usdt,
+				0,
+				false
+			));
+
+			{
 				let points = (pool.sale.start..pool.sale.end)
 					.map(|block| {
 						(
 							block,
-							LBP::do_get_exchange(pool_id, pair, block, swap_amount)
-								.expect("impossible; qed;") / unit,
+							LBP::do_spot_price(pool_id, pool.pair, block).expect("impossible; qed;")
+								as f64 / unit as f64,
 						)
 					})
 					.collect::<Vec<_>>();
-				let max_amount = points.iter().copied().map(|(_, x)| x).max().unwrap();
+				let max_amount = points.iter().copied().fold(f64::NAN, |x, (_, y)| f64::max(x, y));
 
-				let area = BitMapBackend::new(name, (1024, 768)).into_drawing_area();
+				use plotters::prelude::*;
+				let area = BitMapBackend::new("./plots/lbp_spot_price.png", (1024, 768))
+					.into_drawing_area();
 				area.fill(&WHITE).unwrap();
 
 				let mut chart = ChartBuilder::on(&area)
-					.caption(caption, ("Arial", 50).into_font())
+					.caption("Spot price", ("Arial", 50).into_font())
 					.margin(100u32)
 					.x_label_area_size(30u32)
 					.y_label_area_size(30u32)
-					.build_cartesian_2d(pool.sale.start..pool.sale.end, 0..max_amount)
+					.build_cartesian_2d(pool.sale.start..pool.sale.end, 0f64..max_amount)
 					.unwrap();
 
 				chart.configure_mesh().draw().unwrap();
 				chart
-					.draw_series(LineSeries::new(points, &BLUE))
+					.draw_series(LineSeries::new(points, &RED))
 					.unwrap()
-					.label("Amount received")
+					.label("base")
+					.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+				chart
+					.configure_series_labels()
+					.background_style(&WHITE.mix(0.8))
+					.border_style(&BLACK)
+					.draw()
+					.unwrap();
+			}
+
+			{
+				use plotters::prelude::*;
+
+				let plot_swap = |pair, swap_amount, name, caption| {
+					let points = (pool.sale.start..pool.sale.end)
+						.map(|block| {
+							let (fees, base_amount) =
+								LBP::do_get_exchange(pool_id, pair, block, swap_amount, true)
+									.expect("impossible; qed;");
+							(block, fees / unit, base_amount / unit)
+						})
+						.collect::<Vec<_>>();
+					let amounts =
+						points.clone().iter().copied().map(|(x, _, y)| (x, y)).collect::<Vec<_>>();
+					let amounts_with_fees =
+						points.into_iter().map(|(x, y, z)| (x, y + z)).collect::<Vec<_>>();
+
+					let max_amount =
+						amounts_with_fees.iter().copied().map(|(_, x)| x).max().unwrap();
+
+					let area = BitMapBackend::new(name, (1024, 768)).into_drawing_area();
+					area.fill(&WHITE).unwrap();
+
+					let mut chart = ChartBuilder::on(&area)
+						.caption(caption, ("Arial", 50).into_font())
+						.margin(100u32)
+						.x_label_area_size(30u32)
+						.y_label_area_size(30u32)
+						.build_cartesian_2d(pool.sale.start..pool.sale.end, 0..max_amount)
+						.unwrap();
+
+					chart.configure_mesh().draw().unwrap();
+					chart
+						.draw_series(LineSeries::new(amounts, &BLUE))
+						.unwrap()
+						.label("Received tokens fees applied")
+						.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &BLUE));
+					chart
+						.draw_series(LineSeries::new(amounts_with_fees, &RED))
+						.unwrap()
+						.label("Received tokens fees not applied")
+						.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+					chart
+						.configure_series_labels()
+						.background_style(&WHITE.mix(0.8))
+						.border_style(&BLACK)
+						.draw()
+						.unwrap();
+				};
+
+				let buy_amount = 500;
+				plot_swap(
+					pair,
+					buy_amount * unit,
+					"./plots/lbp_buy_project.png",
+					format!("Buy project tokens with {} USDT", buy_amount),
+				);
+				let sell_amount = 100_000;
+				plot_swap(
+					pair.swap(),
+					100_000 * unit,
+					"./plots/lbp_sell_project.png",
+					format!("Sell {} project tokens", sell_amount),
+				);
+			}
+
+			{
+				use plotters::prelude::*;
+				let area =
+					BitMapBackend::new("./plots/lbp_weights.png", (1024, 768)).into_drawing_area();
+				area.fill(&WHITE).unwrap();
+
+				let mut chart = ChartBuilder::on(&area)
+					.caption("y = weight", ("Arial", 50).into_font())
+					.margin(100u32)
+					.x_label_area_size(30u32)
+					.y_label_area_size(30u32)
+					.build_cartesian_2d(
+						pool.sale.start..pool.sale.end,
+						0..Permill::one().deconstruct(),
+					)
+					.unwrap();
+
+				let points = (pool.sale.start..pool.sale.end).map(|block| {
+					(block, pool.sale.current_weights(block).expect("impossible; qed;"))
+				});
+
+				chart.configure_mesh().draw().unwrap();
+				chart
+					.draw_series(LineSeries::new(
+						points
+							.clone()
+							.map(|(block, (base_weight, _))| (block, base_weight.deconstruct())),
+						&RED,
+					))
+					.unwrap()
+					.label("base")
+					.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+				chart
+					.draw_series(LineSeries::new(
+						points
+							.map(|(block, (_, quote_weight))| (block, quote_weight.deconstruct())),
+						&BLUE,
+					))
+					.unwrap()
+					.label("quote")
 					.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &BLUE));
 				chart
 					.configure_series_labels()
@@ -116,66 +460,7 @@ fn test() {
 					.border_style(&BLACK)
 					.draw()
 					.unwrap();
-			};
-
-			let buy_amount = 10;
-			plot_swap(
-				pair,
-				buy_amount * unit,
-				"./lbp_buy_project.png",
-				format!("Buy project tokens with {} USDT", buy_amount),
-			);
-			let sell_amount = 100_000;
-			plot_swap(
-				pair.swap(),
-				100_000 * unit,
-				"./lbp_sell_project.png",
-				format!("Sell {} project tokens", sell_amount),
-			);
-		}
-
-		#[cfg(feature = "visualization")]
-		{
-			use plotters::prelude::*;
-			let area = BitMapBackend::new("./lbp_weights.png", (1024, 768)).into_drawing_area();
-			area.fill(&WHITE).unwrap();
-
-			let mut chart = ChartBuilder::on(&area)
-				.caption("y = weight", ("Arial", 50).into_font())
-				.margin(100u32)
-				.x_label_area_size(30u32)
-				.y_label_area_size(30u32)
-				.build_cartesian_2d(pool.sale.start..pool.sale.end, 0..Permill::one().deconstruct())
-				.unwrap();
-
-			let points = (pool.sale.start..pool.sale.end)
-				.map(|block| (block, pool.sale.current_weights(block).expect("impossible; qed;")));
-
-			chart.configure_mesh().draw().unwrap();
-			chart
-				.draw_series(LineSeries::new(
-					points
-						.clone()
-						.map(|(block, (base_weight, _))| (block, base_weight.deconstruct())),
-					&RED,
-				))
-				.unwrap()
-				.label("base")
-				.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
-			chart
-				.draw_series(LineSeries::new(
-					points.map(|(block, (_, quote_weight))| (block, quote_weight.deconstruct())),
-					&BLUE,
-				))
-				.unwrap()
-				.label("quote")
-				.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &BLUE));
-			chart
-				.configure_series_labels()
-				.background_style(&WHITE.mix(0.8))
-				.border_style(&BLACK)
-				.draw()
-				.unwrap();
-		}
-	});
+			}
+		});
+	}
 }

@@ -13,7 +13,7 @@ use sp_runtime::{traits::One, ArithmeticError, DispatchError, PerThing};
 /// - `bo` the pool base balance
 /// - `ai` the quote amount to trade
 #[inline(always)]
-pub fn compute_out_given_in<T: PerThing>(
+pub(crate) fn compute_out_given_in<T: PerThing>(
 	wi: T,
 	wo: T,
 	bi: u128,
@@ -47,7 +47,7 @@ where
 /// - `bo` the pool base balance
 /// - `base_unit` the unit normalized to the base asset decimal
 #[inline(always)]
-pub fn compute_spot_price<T: PerThing>(wi: T, wo: T, bi: u128, bo: u128, base_unit: u128) -> Result<u128, DispatchError>
+pub(crate) fn compute_spot_price<T: PerThing>(wi: T, wo: T, bi: u128, bo: u128, base_unit: u128) -> Result<u128, DispatchError>
 where
 	T::Inner: Into<u32>,
 {

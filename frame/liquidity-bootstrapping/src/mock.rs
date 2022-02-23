@@ -106,7 +106,8 @@ impl pallet_currency_factory::Config for Test {
 
 parameter_types! {
 	pub LBPId: PalletId = PalletId(*b"pall_lbp");
-  pub MaxSaleDuration: BlockNumber = 100000;
+  pub MinSaleDuration: BlockNumber = 3600 / 12;
+  pub MaxSaleDuration: BlockNumber = 30 * 24 * 3600 / 12;
   pub MaxInitialWeight: Permill = Permill::from_percent(95);
   pub MinFinalWeight: Permill = Permill::from_percent(5);
 }
@@ -120,6 +121,7 @@ impl pallet_liquidity_bootstrapping::Config for Test {
 	type PoolId = PoolId;
   type LocalAssets = CurrencyFactory;
 	type PalletId = LBPId;
+  type MinSaleDuration = MinSaleDuration;
   type MaxSaleDuration = MaxSaleDuration;
   type MaxInitialWeight = MaxInitialWeight;
   type MinFinalWeight = MinFinalWeight;

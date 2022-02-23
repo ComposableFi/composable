@@ -32,10 +32,6 @@
 	unused_extern_crates
 )]
 
-pub use pallet::*;
-
-pub mod weights;
-
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
@@ -47,10 +43,14 @@ mod tests;
 
 mod maths;
 
+pub mod weights;
+
+pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::{
-		maths::{compute_spot_price, compute_out_given_in},
+		maths::{compute_out_given_in, compute_spot_price},
 		weights::WeightInfo,
 	};
 	use codec::{Codec, FullCodec};
@@ -61,14 +61,13 @@ pub mod pallet {
 	use core::fmt::Debug;
 	use frame_support::{
 		pallet_prelude::*,
-		traits::fungibles::{Inspect, Transfer},
+		traits::fungibles::{Inspect, Mutate, Transfer},
 		transactional, PalletId, RuntimeDebug,
 	};
 	use frame_system::{
 		ensure_signed,
 		pallet_prelude::{BlockNumberFor, OriginFor},
 	};
-	use rust_decimal::prelude::*;
 	use sp_arithmetic::traits::Saturating;
 	use sp_runtime::{
 		traits::{
@@ -103,14 +102,14 @@ pub mod pallet {
 		) -> Result<(Permill, Permill), DispatchError> {
 			/* NOTE(hussein-aitlahcen): currently only linear
 
-         Linearly decrease the base asset initial_weight to final_weight.
-         Quote asset weight is simple 1-base_asset_weight
+			Linearly decrease the base asset initial_weight to final_weight.
+			Quote asset weight is simple 1-base_asset_weight
 
-			   Assuming final_weight < initial_weight
-			   current_weight = initial_weight - (current - start) / (end - start) * (initial_weight - final_weight)
-							  = initial_weight - normalized_current / sale_duration * weight_range
-							  = initial_weight - point_in_sale * weight_range
-			*/
+				  Assuming final_weight < initial_weight
+				  current_weight = initial_weight - (current - start) / (end - start) * (initial_weight - final_weight)
+								 = initial_weight - normalized_current / sale_duration * weight_range
+								 = initial_weight - point_in_sale * weight_range
+			   */
 			let normalized_current_block = current_block.safe_sub(&self.start)?;
 			let point_in_sale = Permill::from_rational(
 				normalized_current_block.try_into().map_err(|_| ArithmeticError::Overflow)?,
@@ -162,6 +161,8 @@ pub mod pallet {
 		pub pair: CurrencyPair<AssetId>,
 		/// Sale period of the LBP.
 		pub sale: Sale<BlockNumber>,
+		/// Trading fees.
+		pub fee: Permill,
 	}
 
 	#[derive(Copy, Clone, Encode, Decode, MaxEncodedLen, PartialEq, Eq, TypeInfo)]
@@ -175,6 +176,10 @@ pub mod pallet {
 
 			if input.sale.end <= input.sale.start {
 				return Err("Sale end must be after start.");
+			}
+
+			if input.sale.duration() < T::MinSaleDuration::get() {
+				return Err("Sale duration must be greater than minimum duration.");
 			}
 
 			if input.sale.duration() > T::MaxSaleDuration::get() {
@@ -293,6 +298,7 @@ pub mod pallet {
 
 		/// Dependency allowing this pallet to transfer funds from one account to another.
 		type Assets: Transfer<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
+			+ Mutate<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
 			+ Inspect<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>;
 
 		/// Type representing the unique ID of a pool.
@@ -314,6 +320,10 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
+		/// Minimum duration for a sale.
+		#[pallet::constant]
+		type MinSaleDuration: Get<BlockNumberFor<Self>>;
+
 		/// Maximum duration for a sale.
 		#[pallet::constant]
 		type MaxSaleDuration: Get<BlockNumberFor<Self>>;
@@ -326,6 +336,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type MinFinalWeight: Get<Permill>;
 
+		/// The origin allowed to create new pools.
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
 
 		type WeightInfo: WeightInfo;
@@ -497,7 +508,8 @@ pub mod pallet {
 			pair: CurrencyPair<AssetIdOf<T>>,
 			current_block: BlockNumberFor<T>,
 			quote_amount: BalanceOf<T>,
-		) -> Result<BalanceOf<T>, DispatchError> {
+			apply_fees: bool,
+		) -> Result<(BalanceOf<T>, BalanceOf<T>), DispatchError> {
 			let pool =
 				Self::get_pool_ensuring_sale_state(pool_id, current_block, SaleState::Ongoing)?;
 
@@ -511,12 +523,19 @@ pub mod pallet {
 
 			let pool_account = Self::account_id(&pool_id);
 			let ai = T::Convert::convert(quote_amount);
+			let (ai_minus_fees, fees) = if apply_fees {
+				let fees = pool.fee.mul_floor(ai);
+				// Safe as fees is a fraction of ai
+				(ai - fees, fees)
+			} else {
+				(ai, 0)
+			};
 			let bi = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
 			let bo = T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
 
-			let base_amount = compute_out_given_in(wi, wo, bi, bo, ai)?;
+			let base_amount = compute_out_given_in(wi, wo, bi, bo, ai_minus_fees)?;
 
-			Ok(T::Convert::convert(base_amount))
+			Ok((T::Convert::convert(fees), T::Convert::convert(base_amount)))
 		}
 	}
 
@@ -542,9 +561,11 @@ pub mod pallet {
 			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
+			let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
 			let current_block = frame_system::Pallet::<T>::current_block_number();
-			Self::do_get_exchange(pool_id, pair, current_block, amount)
+			let (_, base_amount) =
+				Self::do_get_exchange(pool_id, pair, current_block, amount, false)?;
+			Ok(base_amount)
 		}
 
 		#[transactional]
@@ -556,7 +577,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
+			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
 			let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
 			<Self as CurveAmm>::exchange(
 				who,
@@ -577,7 +598,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
-			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
+			let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
 			<Self as CurveAmm>::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
 		}
 
@@ -652,7 +673,8 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let current_block = frame_system::Pallet::<T>::current_block_number();
-			let base_amount = Self::do_get_exchange(pool_id, pair, current_block, quote_amount)?;
+			let (_, base_amount) =
+				Self::do_get_exchange(pool_id, pair, current_block, quote_amount, true)?;
 
 			ensure!(base_amount >= min_receive, Error::<T>::CannotRespectMinimumRequested);
 
