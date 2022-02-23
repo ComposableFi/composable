@@ -20,7 +20,9 @@ use frame_support::{
 	},
 	PalletId, RuntimeDebug,
 };
-use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
+use orml_xcm_support::{
+	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, OnDepositFail,
+};
 
 use sp_runtime::{
 	traits::{AccountIdLookup, BlakeTwo256, Convert, ConvertInto, Zero},
@@ -168,8 +170,7 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	LocationToAccountId,
 	CurrencyId,
 	CurrencyIdConvert<AssetsRegistry>,
-	// TODO(hussein-aitlahcen): DepositFailureHandler
-	(),
+	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
 >;
 
 pub struct PriceConverter;
@@ -205,16 +206,15 @@ pub struct TransactionFeePoolTrader<
 
 impl<
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
-		PriceConvereter: MinimalOracle<AssetId = CurrencyId, Balance = Balance>,
+		PriceConverter: MinimalOracle<AssetId = CurrencyId, Balance = Balance>,
 		Treasury: TakeRevenue,
 		WeightToFee: WeightToFeePolynomial<Balance = Balance>,
-	> WeightTrader
-	for TransactionFeePoolTrader<AssetConverter, PriceConvereter, Treasury, WeightToFee>
+	> WeightTrader for TransactionFeePoolTrader<AssetConverter, PriceConverter, Treasury, WeightToFee>
 {
 	fn new() -> Self {
 		Self {
 			_marker:
-				PhantomData::<(AssetConverter, PriceConvereter, Treasury, WeightToFee)>::default(),
+				PhantomData::<(AssetConverter, PriceConverter, Treasury, WeightToFee)>::default(),
 			fee: 0,
 			price: 0,
 			asset_location: None,
@@ -238,7 +238,7 @@ impl<
 		if let AssetId::Concrete(ref multi_location) = xcmp_asset_id.clone() {
 			if let Some(asset_id) = AssetConverter::convert(multi_location.clone()) {
 				let fee = WeightToFee::calc(&weight);
-				let price = PriceConvereter::get_price_inverse(asset_id, fee.into())
+				let price = PriceConverter::get_price_inverse(asset_id, fee.into())
 					.map_err(|_| XcmError::TooExpensive)?;
 
 				let required =
@@ -250,7 +250,6 @@ impl<
 				self.fee = self.fee.saturating_add(fee.into());
 				self.price = self.price.saturating_add(price);
 				self.asset_location = Some(multi_location.clone());
-
 				return Ok(unused)
 			}
 		}
@@ -280,7 +279,7 @@ impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Tre
 		log::info!(target : "xcmp::take_revenue", "{:?} {:?}", &self.asset_location, self.fee);
 		if let Some(asset) = self.asset_location.take() {
 			if self.fee > Balance::zero() {
-				Treasury::take_revenue((asset, self.fee).into());
+				Treasury::take_revenue((asset, self.price).into());
 			}
 		}
 	}

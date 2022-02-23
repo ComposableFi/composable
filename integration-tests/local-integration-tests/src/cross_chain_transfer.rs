@@ -735,7 +735,7 @@ fn unspent_xcm_fee_is_returned_correctly() {
 		assert_eq!(kusama_runtime::Balances::free_balance(&AccountId::from(BOB)), 0);
 		assert_eq!(
 			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
-			1_002 * CurrencyId::KSM.unit::<Balance>()
+			1_000 * CurrencyId::KSM.unit::<Balance>()
 		);
 	});
 
