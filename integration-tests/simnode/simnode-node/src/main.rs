@@ -9,13 +9,15 @@ fn main() -> Result<(), Box<dyn Error>> {
 		chain if chain.contains("picasso") =>
 			substrate_simnode::parachain_node::<common::chains::picasso::ChainInfo, _, _>(
 				|node| async move {
+					node.seal_blocks(10).await;
 					node.until_shutdown().await;
 					Ok(())
 				},
 			)?,
-		"dali-chachacha" =>
+		chain if chain.contains("dali") =>
 			substrate_simnode::parachain_node::<common::chains::dali::ChainInfo, _, _>(
 				|node| async move {
+					node.seal_blocks(10).await;
 					node.until_shutdown().await;
 					Ok(())
 				},
