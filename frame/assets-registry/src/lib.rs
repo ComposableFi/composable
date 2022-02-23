@@ -208,6 +208,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			local_asset_id: T::LocalAssetId,
 			foreign_asset_id: T::ForeignAssetId,
+			decimals: u8,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin.clone())?;
 			Self::ensure_admins_only(origin)?;
@@ -219,7 +220,7 @@ pub mod pallet {
 				!<ForeignToLocal<T>>::contains_key(foreign_asset_id.clone()),
 				Error::<T>::ForeignAssetIdAlreadyUsed
 			);
-			Self::approve_candidate(who, local_asset_id, foreign_asset_id.clone())?;
+			Self::approve_candidate(who, local_asset_id, foreign_asset_id.clone(), decimals)?;
 			Self::deposit_event(Event::AssetsMappingCandidateUpdated {
 				local_asset_id,
 				foreign_asset_id,
@@ -285,6 +286,7 @@ pub mod pallet {
 			who: T::AccountId,
 			local_asset_id: T::LocalAssetId,
 			foreign_asset_id: T::ForeignAssetId,
+			decimals: u8,
 		) -> DispatchResultWithPostInfo {
 			let current_candidate_status =
 				<AssetsMappingCandidates<T>>::get((local_asset_id, foreign_asset_id.clone()));
@@ -305,16 +307,25 @@ pub mod pallet {
 					},
 				Some(CandidateStatus::LocalAdminApproved) =>
 					if Some(who) == foreign_admin {
-						Self::set_location(local_asset_id, foreign_asset_id.clone())?;
-						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
+						Self::promote_candidate(local_asset_id, foreign_asset_id, decimals)?;
 					},
 				Some(CandidateStatus::ForeignAdminApproved) =>
 					if Some(who) == local_admin {
-						Self::set_location(local_asset_id, foreign_asset_id.clone())?;
-						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
+						Self::promote_candidate(local_asset_id, foreign_asset_id, decimals)?;
 					},
 			};
 			Ok(().into())
+		}
+
+		fn promote_candidate(
+			local_asset_id: T::LocalAssetId,
+			foreign_asset_id: T::ForeignAssetId,
+			decimals: u8,
+		) -> DispatchResult {
+			Self::set_location(local_asset_id, foreign_asset_id.clone())?;
+			<ForeignAssetMetadata<T>>::insert(local_asset_id, ForeignMetadata { decimals });
+			<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
+			Ok(())
 		}
 	}
 
