@@ -5,11 +5,13 @@
 /// Intended usage:
 ///
 /// ```
-/// type A = Currency<12345, 10>;
-/// type B = Currency<54321, 12>;
+/// #use pallet_lending::currency::Currency;
 ///
-/// let 100_a_tokens = A::units(100);
-/// let one_value_of_b = B::ones();
+/// type ACOIN = Currency<12345, 10>;
+/// type BCOIN = Currency<54321, 12>;
+///
+/// let one_hundred_a_tokens = ACOIN::units(100);
+/// let one_value_of_b = BCOIN::ones();
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Currency<const ID: u128, const EXPONENT: u8> {}
@@ -25,8 +27,8 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// Although this is a [`u8`], there are some (not yet inforced) constraints/ caveats:
 	/// - an exponent of `0` technically works, but is probably not what you want as there will be
 	///   no decimal precision.
-	/// - any value higher than `38` does not make sense (`10^39 > 2^128`) and
-	/// will automatically saturate at `u128::MAX`.
+	/// - any value higher than `38` does not make sense (`10^39 > 2^128`) and will automatically
+	///   saturate at [`u128::MAX`].
 	pub const EXPONENT: u8 = EXPONENT;
 
 	/// The id of the currency. This is fairly arbitrary, and is only used to differentiate between
@@ -39,11 +41,13 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// # Examples
 	///
 	/// ```
-	/// type A = Currency<12345, 10>;
-	/// assert_eq!(A::units(7), 70_000_000_000);
+	/// #use pallet_lending::currency::Currency;
+	///
+	/// type ACOIN = Currency<12345, 10>;
+	/// assert_eq!(ACOIN::units(7), 70_000_000_000);
 	///
 	/// // saturates at u128::MAX
-	/// assert_eq!(A::units(u128::MAX), u128::MAX);
+	/// assert_eq!(ACOIN::units(u128::MAX), u128::MAX);
 	/// ```
 	pub fn units(ones: u128) -> u128 {
 		ones.saturating_mul(Self::one())
@@ -54,8 +58,10 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// # Examples
 	///
 	/// ```
-	/// type A = Currency<12345, 10>;
-	/// assert_eq!(A::ones(), 10_000_000_000);
+	/// #use pallet_lending::currency::Currency;
+	///
+	/// type ACOIN = Currency<12345, 10>;
+	/// assert_eq!(ACOIN::ones(), 10_000_000_000);
 	/// ```
 	pub const fn one() -> u128 {
 		10_u128.pow(Self::EXPONENT as u32)
