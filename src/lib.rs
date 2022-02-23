@@ -126,7 +126,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
             authorities_changed = true;
         }
 
-        let latest_beefy_height = <Store as StorageRead>::mmr_state()?.latest_height;
+        let latest_beefy_height = <Store as StorageRead>::mmr_state()?.latest_beefy_height;
 
         if mmr_update.signed_commitment.commitment.block_number <= latest_beefy_height {
             return Err(BeefyClientError::InvalidMmrUpdate);
@@ -152,7 +152,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
         .map_err(|_| BeefyClientError::InvalidMmrProof)?;
 
         <Store as StorageWrite>::set_mmr_state(MmrState {
-            latest_height: mmr_update.signed_commitment.commitment.block_number,
+            latest_beefy_height: mmr_update.signed_commitment.commitment.block_number,
             mmr_root_hash: mmr_root_hash.into(),
         })?;
 

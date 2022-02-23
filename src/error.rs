@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub enum BeefyClientError {
     /// Failed to read a value from storage
     StorageReadError,

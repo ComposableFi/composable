@@ -3,13 +3,13 @@ use crate::primitives::BeefyNextAuthoritySet;
 use codec::{Decode, Encode};
 use sp_core::H256;
 
-#[derive(Debug, Encode, Decode)]
+#[derive(Debug, Encode, Decode, Clone)]
 pub struct MmrState {
-    pub latest_height: u32,
+    pub latest_beefy_height: u32,
     pub mmr_root_hash: H256,
 }
 
-#[derive(Debug, Encode, Decode)]
+#[derive(Debug, Encode, Decode, Clone)]
 pub struct AuthoritySet {
     pub current_authorities: BeefyNextAuthoritySet<H256>,
     pub next_authorities: BeefyNextAuthoritySet<H256>,
