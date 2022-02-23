@@ -16,15 +16,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
-	use frame_support::{
-		ensure,
-		pallet_prelude::*,
-		traits::{
-			fungibles::{Inspect, Mutate, Transfer},
-			tokens::fungibles::MutateHold,
-		},
-		PalletId,
-	};
+	use frame_support::pallet_prelude::*;
 	use frame_system::Config as SystemConfig;
 
 	// ----------------------------------------------------------------------------------------------------
