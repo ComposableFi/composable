@@ -305,7 +305,7 @@ describe('Lending Tests', function() {
       const marketId = api.createType('u32', lendingMarketIdCurveInterestRate);
       const amount = api.createType('u128', 250000000000);
       const result = await depositCollateralHandler(lenderWallet, marketId, amount);
-      console.debug(result);
+      console.debug(result.toString());
     });
   });
 
