@@ -17,6 +17,8 @@ pub const ALICE: AccountId = 1_u32;
 pub const BOB: AccountId = 2_u32;
 pub const CHARLIE: AccountId = 3_u32;
 
+pub const DECIMALS: u8 = 12;
+
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
 	pub enum Test where

@@ -35,7 +35,8 @@ fn approve_assets_mapping_candidate_tests() {
 		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
 			Origin::signed(ALICE),
 			local_asset_id,
-			foreign_asset_id
+			foreign_asset_id,
+			DECIMALS,
 		));
 		assert_eq!(
 			<AssetsMappingCandidates<Test>>::get((local_asset_id, foreign_asset_id)),
@@ -44,17 +45,23 @@ fn approve_assets_mapping_candidate_tests() {
 		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
 			Origin::signed(BOB),
 			local_asset_id,
-			foreign_asset_id
+			foreign_asset_id,
+			DECIMALS,
 		));
 		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(foreign_asset_id));
 		assert_eq!(AssetsRegistry::from_foreign_asset(foreign_asset_id), Some(local_asset_id));
+		assert_eq!(
+			AssetsRegistry::foreign_asset_metadata(local_asset_id).unwrap(),
+			ForeignMetadata { decimals: DECIMALS }
+		);
 
 		let (other_local_asset_id, other_foreign_asset_id) = (1, 101);
 		assert_noop!(
 			AssetsRegistry::approve_assets_mapping_candidate(
 				Origin::signed(ALICE),
 				other_local_asset_id,
-				foreign_asset_id
+				foreign_asset_id,
+				DECIMALS,
 			),
 			Error::<Test>::ForeignAssetIdAlreadyUsed,
 		);
@@ -62,7 +69,8 @@ fn approve_assets_mapping_candidate_tests() {
 			AssetsRegistry::approve_assets_mapping_candidate(
 				Origin::signed(ALICE),
 				local_asset_id,
-				other_foreign_asset_id
+				other_foreign_asset_id,
+				DECIMALS,
 			),
 			Error::<Test>::LocalAssetIdAlreadyUsed,
 		);
@@ -71,7 +79,8 @@ fn approve_assets_mapping_candidate_tests() {
 			AssetsRegistry::approve_assets_mapping_candidate(
 				Origin::signed(CHARLIE),
 				other_local_asset_id,
-				other_foreign_asset_id
+				other_foreign_asset_id,
+				DECIMALS,
 			),
 			Error::<Test>::OnlyAllowedForAdmins,
 		);
@@ -81,7 +90,8 @@ fn approve_assets_mapping_candidate_tests() {
 		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
 			Origin::signed(BOB),
 			other_local_asset_id,
-			other_foreign_asset_id
+			other_foreign_asset_id,
+			DECIMALS,
 		));
 		assert_eq!(
 			<AssetsMappingCandidates<Test>>::get((other_local_asset_id, other_foreign_asset_id)),
@@ -90,7 +100,8 @@ fn approve_assets_mapping_candidate_tests() {
 		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
 			Origin::signed(ALICE),
 			other_local_asset_id,
-			other_foreign_asset_id
+			other_foreign_asset_id,
+			DECIMALS,
 		));
 		assert_eq!(
 			AssetsRegistry::from_local_asset(other_local_asset_id),
@@ -100,6 +111,10 @@ fn approve_assets_mapping_candidate_tests() {
 			AssetsRegistry::from_foreign_asset(other_foreign_asset_id),
 			Some(other_local_asset_id)
 		);
+		assert_eq!(
+			AssetsRegistry::foreign_asset_metadata(local_asset_id).unwrap(),
+			ForeignMetadata { decimals: DECIMALS }
+		)
 	})
 }
 
@@ -122,17 +137,23 @@ fn set_metadata_tests() {
 		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
 			Origin::signed(ALICE),
 			local_asset_id,
-			foreign_asset_id
+			foreign_asset_id,
+			DECIMALS,
 		));
 		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
 			Origin::signed(BOB),
 			local_asset_id,
-			foreign_asset_id
+			foreign_asset_id,
+			DECIMALS,
 		));
 		assert_ok!(AssetsRegistry::set_metadata(
 			Origin::signed(ALICE),
 			local_asset_id,
-			ForeignMetadata { decimals: 12 }
+			ForeignMetadata { decimals: DECIMALS }
 		));
+		assert_eq!(
+			AssetsRegistry::foreign_asset_metadata(local_asset_id).unwrap(),
+			ForeignMetadata { decimals: DECIMALS }
+		)
 	})
 }
