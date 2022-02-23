@@ -11,7 +11,7 @@
 /// type BCOIN = Currency<54321, 12>;
 ///
 /// let one_hundred_a_tokens = ACOIN::units(100);
-/// let one_value_of_b = BCOIN::ones();
+/// let one_value_of_b = BCOIN::one();
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Currency<const ID: u128, const EXPONENT: u8> {}
@@ -35,7 +35,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// different currencies.
 	pub const ID: u128 = ID;
 
-	/// Returns the provided amount of the currency, cannonicalized to [`Self::ones()`], saturating
+	/// Returns the provided amount of the currency, cannonicalized to [`Self::one()`], saturating
 	/// at the numeric bounds ([`u128::MAX`]).
 	///
 	/// # Examples
@@ -61,7 +61,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// # use pallet_lending::currency::Currency;
 	///
 	/// type ACOIN = Currency<12345, 10>;
-	/// assert_eq!(ACOIN::ones(), 10_000_000_000);
+	/// assert_eq!(ACOIN::one(), 10_000_000_000);
 	/// ```
 	pub const fn one() -> u128 {
 		10_u128.pow(Self::EXPONENT as u32)

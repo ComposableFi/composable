@@ -50,7 +50,7 @@ mod benchmarking;
 mod setup;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
-mod currency;
+pub mod currency;
 
 pub mod weights;
 
