@@ -2720,6 +2720,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "dotenv"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
+
+[[package]]
 name = "downcast-rs"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3009,6 +3015,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3fcf0cee53519c866c09b5de1f6c56ff9d647101f81c1964fa632e148896cdf"
 dependencies = [
  "instant",
+]
+
+[[package]]
+name = "faucet-server"
+version = "0.1.0"
+dependencies = [
+ "async-std",
+ "common",
+ "cumulus-pallet-parachain-system",
+ "dali-runtime",
+ "dotenv",
+ "env_logger 0.8.4",
+ "envy",
+ "frame-system",
+ "hex",
+ "hmac 0.11.0",
+ "log 0.4.14",
+ "pallet-balances",
+ "picasso-runtime",
+ "serde",
+ "serde_urlencoded",
+ "sha2 0.9.9",
+ "sp-core",
+ "structopt",
+ "substrate-xt",
+ "tide",
+ "tokio",
+ "utils-common",
 ]
 
 [[package]]
@@ -6979,7 +7013,7 @@ dependencies = [
 [[package]]
 name = "pallet-elections-phragmen"
 version = "5.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.16#4aeb95f7f38fcd519e2628f32f79044a8fef99d5"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.16#4aeb95f7f38fcd519e2628f32f79044a8fef99d5"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7846,6 +7880,7 @@ dependencies = [
  "substrate-xt",
  "tokio",
  "url 1.7.2",
+ "utils-common",
 ]
 
 [[package]]
@@ -14069,6 +14104,20 @@ name = "utf-8"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
+
+[[package]]
+name = "utils-common"
+version = "0.1.0"
+dependencies = [
+ "dali-runtime",
+ "derive_more",
+ "frame-system",
+ "pallet-transaction-payment",
+ "picasso-runtime",
+ "sp-core",
+ "sp-runtime",
+ "substrate-xt",
+]
 
 [[package]]
 name = "valuable"

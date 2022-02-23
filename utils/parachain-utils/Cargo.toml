@@ -31,6 +31,8 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 common = { package = "common", path = "../../runtime/common" }
 substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch = "master" }
 
+utils-common = { path = "../common" }
+
 # runtimes
 picasso-runtime = { path = "../../runtime/picasso" }
 dali-runtime = { path = "../../runtime/dali" }

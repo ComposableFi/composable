@@ -1,0 +1,16 @@
+[package]
+name = "utils-common"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+picasso-runtime = { path = "../../runtime/picasso" }
+dali-runtime = { path = "../../runtime/dali" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch = "master" }
+derive_more = "0.99.17"
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }

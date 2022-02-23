@@ -33,7 +33,8 @@ members = [
     "runtime/picasso",
     "runtime/dali",
     "runtime/composable",
-
+    "utils/faucet-server",
+    "utils/common",
     "utils/parachain-utils",
     "utils/price-feed",
     "utils/collator-sidecar",

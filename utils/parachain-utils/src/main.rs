@@ -3,14 +3,11 @@ use jsonrpc_core_client::RpcError;
 use parachain_system::Call as ParachainSystemCall;
 use serde::Deserialize;
 use sp_core::{crypto::AccountId32, sr25519, Pair, H256};
-use sp_runtime::{generic::Era, MultiSignature, MultiSigner};
+use sp_runtime::{MultiSignature, MultiSigner};
 use structopt::StructOpt;
 use substrate_xt::{AdrressFor, Client, ConstructExt, ExtrinsicError, SubstrateXtError};
 
-#[macro_use]
-mod events;
-
-use events::AllRuntimeEvents;
+use utils_common::*;
 
 const DALI: &'static str = "dali";
 const PICASSO: &'static str = "picasso";
@@ -50,54 +47,6 @@ struct State<T: ConstructExt> {
 	api: Client<T>,
 	/// Pair signer
 	signer: sr25519::Pair,
-}
-
-struct DaliXtConstructor;
-
-impl ConstructExt for DaliXtConstructor {
-	type Runtime = dali_runtime::Runtime;
-	type Pair = sp_core::sr25519::Pair;
-	type SignedExtra = dali_runtime::SignedExtra;
-
-	fn signed_extras(
-		account_id: <Self::Runtime as frame_system::Config>::AccountId,
-	) -> Self::SignedExtra {
-		let nonce = frame_system::Pallet::<Self::Runtime>::account_nonce(account_id);
-		(
-			frame_system::CheckNonZeroSender::<Self::Runtime>::new(),
-			frame_system::CheckSpecVersion::<Self::Runtime>::new(),
-			frame_system::CheckTxVersion::<Self::Runtime>::new(),
-			frame_system::CheckGenesis::<Self::Runtime>::new(),
-			frame_system::CheckEra::<Self::Runtime>::from(Era::Immortal),
-			frame_system::CheckNonce::<Self::Runtime>::from(nonce),
-			frame_system::CheckWeight::<Self::Runtime>::new(),
-			transaction_payment::ChargeTransactionPayment::<Self::Runtime>::from(0),
-		)
-	}
-}
-
-struct PicassoXtConstructor;
-
-impl ConstructExt for PicassoXtConstructor {
-	type Runtime = picasso_runtime::Runtime;
-	type Pair = sp_core::sr25519::Pair;
-	type SignedExtra = picasso_runtime::SignedExtra;
-
-	fn signed_extras(
-		account_id: <Self::Runtime as frame_system::Config>::AccountId,
-	) -> Self::SignedExtra {
-		let nonce = frame_system::Pallet::<Self::Runtime>::account_nonce(account_id);
-		(
-			frame_system::CheckNonZeroSender::<Self::Runtime>::new(),
-			frame_system::CheckSpecVersion::<Self::Runtime>::new(),
-			frame_system::CheckTxVersion::<Self::Runtime>::new(),
-			frame_system::CheckGenesis::<Self::Runtime>::new(),
-			frame_system::CheckEra::<Self::Runtime>::from(Era::Immortal),
-			frame_system::CheckNonce::<Self::Runtime>::from(nonce),
-			frame_system::CheckWeight::<Self::Runtime>::new(),
-			transaction_payment::ChargeTransactionPayment::<Self::Runtime>::from(0),
-		)
-	}
 }
 
 impl<T: ConstructExt + Send + Sync> State<T> {
@@ -230,7 +179,7 @@ where
 	});
 
 	if !has_event {
-		return Err(ExtrinsicError::Custom("Failed to authorize upgrade".into()).into())
+		return Err(ExtrinsicError::Custom("Failed to authorize upgrade".into()).into());
 	}
 
 	let call = ParachainSystemCall::enact_authorized_upgrade { code };
@@ -251,7 +200,7 @@ where
 		)
 	});
 	if !has_event {
-		return Err(ExtrinsicError::Custom("Failed to enact upgrade".into()).into())
+		return Err(ExtrinsicError::Custom("Failed to enact upgrade".into()).into());
 	}
 
 	log::info!("Runtime upgrade proposed");
