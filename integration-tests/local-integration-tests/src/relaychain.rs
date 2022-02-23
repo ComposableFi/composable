@@ -6,8 +6,8 @@ use common::Balance;
 use dali_runtime::Weight;
 use support::RuntimeDebug;
 use xcm::latest::{
-	prelude::*, Instruction::*, Junction::Parachain, Junctions::X1, MultiAsset, MultiLocation,
-	OriginKind, WeightLimit::Unlimited, Xcm,
+	prelude::*, Junction::Parachain, Junctions::X1, MultiAsset, MultiLocation, OriginKind,
+	WeightLimit::Unlimited, Xcm,
 };
 
 use frame_system::Config;

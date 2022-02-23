@@ -1,13 +1,14 @@
 use crate::{
 	env_logger_init,
 	kusama_test_net::{Dali as Sibling, *},
+	prelude::LocalAssetId,
 };
 use codec::Encode;
-use common::{xcmp::BaseXcmWeight, AccountId, Balance};
+use common::{xcmp::BaseXcmWeight, AccountId, Balance, MultiExistentialDeposits};
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 use dali_runtime as picasso_runtime;
-use num_traits::Zero;
-use orml_traits::currency::MultiCurrency;
+use num_traits::{One, Zero};
+use orml_traits::{currency::MultiCurrency, GetByKey};
 use picasso_runtime::{
 	Assets, MaxInstructions, Origin, Runtime, System, Tokens, UnitWeightCost, XTokens,
 };
@@ -328,12 +329,26 @@ fn transfer_to_sibling() {
 	});
 }
 
+/// under ED, but above Weight
+pub fn under_existential_deposit(asset_id: LocalAssetId, _instruction_count: usize) -> Balance {
+	MultiExistentialDeposits::get(&asset_id).saturating_sub(Balance::one())
+}
+
+/// if Bob sends amount of his tokens and these are above weigth but less than ED,
+/// than our treasury takes that amount, sorry Bob
 /// Acala's tests
 #[test]
 fn transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit() {
 	simtest();
 
-	let amount = 128_000_000 / 10;
+	let amount = under_existential_deposit(LocalAssetId::KSM, 3);
+	let picasso_treasury = Picasso::execute_with(|| {
+		picasso_runtime::Tokens::free_balance(
+			CurrencyId::KSM,
+			&picasso_runtime::TreasuryAccount::get(),
+		)
+	});
+
 	KusamaRelay::execute_with(|| {
 		assert_ok!(kusama_runtime::XcmPallet::reserve_transfer_assets(
 			kusama_runtime::Origin::signed(ALICE.into()),
@@ -355,7 +370,7 @@ fn transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit() 
 				CurrencyId::KSM,
 				&picasso_runtime::TreasuryAccount::get()
 			),
-			amount
+			amount - picasso_treasury
 		);
 	});
 }
@@ -954,17 +969,23 @@ fn sibling_account() -> AccountId {
 	polkadot_parachain::primitives::Sibling::from(SIBLING_PARA_ID).into_account()
 }
 
+/// assert amount is supported deposit amount and is above it
+pub fn assert_above_deposit(asset_id: CurrencyId, amount: Balance) -> Balance {
+	assert!(MultiExistentialDeposits::get(&asset_id) <= amount);
+	amount
+}
+
 // From Acala
 #[test]
 fn sibling_trap_assets_works() {
 	simtest();
 
-	let sibling_non_native_amount = 1_000_000_000;
+	let any_asset = CurrencyId::LAYR;
+	let sibling_non_native_amount = assert_above_deposit(any_asset, 100_000_000_000);
 	let some_native_amount = 1_000_000_000;
 	let this_liveness_native_amount = BaseXcmWeight::get() as u128 *
 		100 * UnitWeightCost::get() as Balance *
 		MaxInstructions::get() as Balance;
-	let any_asset = CurrencyId::LAYR;
 	let this_native_asset = CurrencyId::PICA;
 
 	let this_native_treasury_amount = Picasso::execute_with(|| {
