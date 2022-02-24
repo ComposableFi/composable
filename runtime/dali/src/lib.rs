@@ -26,8 +26,9 @@ pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	CouncilInstance, EnsureRootOrHalfCouncil, Hash, MosaicRemoteAssetId, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO,
+	SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use cumulus_primitives_core::ParaId;
@@ -910,7 +911,7 @@ impl mosaic::Config for Runtime {
 	type MinimumTimeLockPeriod = MinimumTimeLockPeriod;
 	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
 	type NetworkId = u32;
-	type RemoteAssetId = [u8; 20];
+	type RemoteAssetId = MosaicRemoteAssetId;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
 }
