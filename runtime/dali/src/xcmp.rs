@@ -53,8 +53,8 @@ parameter_types! {
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
 
-// here we should add any partner network for zero cost transactions
-// 1000 is statmeing - see kusama runtime setup
+// Here we should add any partner network for zero cost transactions
+// 1000 is statmeing - see the Kusama runtime setup
 // (1, Here) - jump 1 up, and say here - Relay
 // (1, 1000) - jump 1 up and go to child 1000
 match_type! {
@@ -135,7 +135,7 @@ pub type LocationToAccountId = (
 );
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
-/// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
+/// ready for dispatching a transaction with XCM's `Transact`. There is an `OriginKind` which can
 /// biases the kind of local `Origin` it will become.
 pub type XcmOriginToTransactDispatchOrigin = (
 	// Sovereign account converter; this attempts to derive an `AccountId` from the origin location
@@ -298,7 +298,7 @@ impl orml_unknown_tokens::Config for Runtime {
 	type Event = Event;
 }
 
-/// is collaed to convert some account id to account id on other network
+/// Is configured to convert some account id to account id on other network
 /// as of now it is same as in Acala/Hydra
 pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
@@ -433,7 +433,7 @@ impl pallet_xcm::Config for Runtime {
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
-/// cumulus is defalt implementation  of queue integrated with polkadot and kusama runtimes
+/// Cumulus is the default implementation of queue integrated with Polkadot and Kusama runtimes
 impl cumulus_pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;

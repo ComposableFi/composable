@@ -209,3 +209,6 @@ pallet-beefy-mmr = { git = "https://github.com/composableFi/substrate", branch =
 beefy-merkle-tree = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.16" }
 pallet-nicks = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.16" }
 pallet-staking-reward-fn = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.16" }
+
+[package.metadata.spellcheck]
+config = ".config/spellcheck.toml"

@@ -133,6 +133,11 @@ jobs:
         run: |
           cargo +nightly fmt --all -- --check
       
+      - name: Cargo Spellcheck
+        run: |
+          cargo install cargo-spellcheck
+          cargo spellcheck
+
       - name: Hadolint
         env:
           HADOLINT_VERSION: v2.8.0
