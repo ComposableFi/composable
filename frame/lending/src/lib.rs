@@ -50,7 +50,7 @@ mod benchmarking;
 mod setup;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
-mod currency;
+pub mod currency;
 
 pub mod weights;
 
@@ -1178,14 +1178,17 @@ pub mod pallet {
 				)?;
 
 				let initial_price_amount = T::OracleMarketCreationStake::get();
+
 				let initial_pool_size = T::Oracle::get_price_inverse(
 					config_input.borrow_asset(),
 					initial_price_amount,
 				)?;
+
 				ensure!(
 					initial_pool_size > T::Balance::zero(),
 					Error::<T>::PriceOfInitialBorrowVaultShouldBeGreaterThanZero
 				);
+
 				T::MultiCurrency::transfer(
 					config_input.borrow_asset(),
 					&manager,
@@ -1207,6 +1210,7 @@ pub mod pallet {
 				};
 
 				let debt_asset_id = T::CurrencyFactory::reserve_lp_token_id()?;
+
 				DebtMarkets::<T>::insert(market_id, debt_asset_id);
 				Markets::<T>::insert(market_id, config);
 				BorrowIndex::<T>::insert(market_id, ZeroToOneFixedU128::one());
