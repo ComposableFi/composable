@@ -278,7 +278,7 @@ impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Tre
 	fn drop(&mut self) {
 		log::info!(target : "xcmp::take_revenue", "{:?} {:?}", &self.asset_location, self.fee);
 		if let Some(asset) = self.asset_location.take() {
-			if self.fee > Balance::zero() {
+			if self.price > Balance::zero() {
 				Treasury::take_revenue((asset, self.price).into());
 			}
 		}
@@ -362,8 +362,8 @@ impl<
 		log::info!(target : "xcmp", "drop_assets");
 		let mut weight = Weight::zero();
 		for asset in multi_assets {
-			if let MultiAsset { id: Concrete(location), fun: Fungible(_amount) } = asset.clone() {
-				if let Some(_) = AssetConverter::convert(location) {
+			if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = asset.clone() {
+				if let Some(_converted) = AssetConverter::convert(location) {
 					Treasury::take_revenue(asset);
 				} else {
 					can_return_on_request.push(asset);
@@ -500,8 +500,17 @@ impl<T> Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert<T> {
 				// TODO: support DOT
 				Some(CurrencyId::KSM)
 			},
+			MultiLocation { interior: X1(GeneralKey(key)), parents: 0 } => {
+				// adapt for reanchor canonical location: https://github.com/paritytech/polkadot/pull/4470
+				let currency_id = CurrencyId::decode(&mut &key[..]).ok()?;
+				match currency_id {
+					CurrencyId::PICA => Some(CurrencyId::PICA),
+					_ => None,
+				}
+			},
 			// delegate to asset-registry
 			_ => {
+				log::trace!(target: "xcmp", "using assets registry for {:?}", location.clone());
 				let result = <AssetsRegistry as RemoteAssetRegistry>::location_to_asset(
 					XcmAssetLocation(location),
 				)

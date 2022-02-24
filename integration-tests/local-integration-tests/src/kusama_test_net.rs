@@ -10,7 +10,6 @@ use support::traits::GenesisBuild;
 use xcm_emulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
 
 type Balances = u128;
-pub const DEFAULT: [u8; 32] = [0_u8; 32];
 
 pub const ALICE: [u8; 32] = [4_u8; 32];
 pub const BOB: [u8; 32] = [5_u8; 32];
