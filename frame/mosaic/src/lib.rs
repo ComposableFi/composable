@@ -140,7 +140,7 @@ pub mod pallet {
 	#[pallet::getter(fn asset_infos)]
 	pub type AssetsInfo<T: Config> = StorageMap<
 		_,
-		Twox64Concat,
+		Blake2_128Concat,
 		AssetIdOf<T>,
 		AssetInfo<BlockNumberFor<T>, BalanceOf<T>, T::BudgetPenaltyDecayer>,
 		OptionQuery,
@@ -149,7 +149,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn network_infos)]
 	pub type NetworkInfos<T: Config> =
-		StorageMap<_, Twox64Concat, NetworkIdOf<T>, NetworkInfo<BalanceOf<T>>, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, NetworkIdOf<T>, NetworkInfo<BalanceOf<T>>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn time_lock_period)]
@@ -170,9 +170,9 @@ pub mod pallet {
 	#[pallet::getter(fn outgoing_transactions)]
 	pub type OutgoingTransactions<T: Config> = StorageDoubleMap<
 		_,
-		Twox64Concat,
+		Blake2_128Concat,
 		AccountIdOf<T>,
-		Twox64Concat,
+		Blake2_128Concat,
 		AssetIdOf<T>,
 		(BalanceOf<T>, BlockNumberFor<T>),
 		OptionQuery,
@@ -183,9 +183,9 @@ pub mod pallet {
 	#[pallet::getter(fn incoming_transactions)]
 	pub type IncomingTransactions<T: Config> = StorageDoubleMap<
 		_,
-		Twox64Concat,
+		Blake2_128Concat,
 		AccountIdOf<T>,
-		Twox64Concat,
+		Blake2_128Concat,
 		AssetIdOf<T>,
 		(BalanceOf<T>, BlockNumberFor<T>),
 		OptionQuery,
