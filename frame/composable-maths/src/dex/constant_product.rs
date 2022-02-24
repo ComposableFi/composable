@@ -44,7 +44,7 @@ where
 	let bi_div_wi = bi.safe_div(&wi)?;
 	let bo_div_wo = bo.safe_div(&wo)?;
 	let spot_price = bi_div_wi.safe_div(&bo_div_wo)?;
-	Ok(spot_price.safe_mul(&base_unit)?.to_u128().ok_or(ArithmeticError::Overflow)?)
+	spot_price.safe_mul(&base_unit)?.to_u128().ok_or(ArithmeticError::Overflow)
 }
 
 /// From https://balancer.fi/whitepaper.pdf, equation (15)

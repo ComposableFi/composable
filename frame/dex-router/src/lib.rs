@@ -26,7 +26,6 @@ pub mod pallet {
 	use core::fmt::Debug;
 	use frame_support::pallet_prelude::*;
 	use sp_runtime::traits::{CheckedAdd, One, Zero};
-	use std::collections::VecDeque;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -269,10 +268,8 @@ pub mod pallet {
 			amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
 			let route = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
-			let mut stack: VecDeque<T::Balance> = VecDeque::new();
-			stack.reserve(route.len());
 			let mut dy_t = amount;
-			let mut dx_t;
+			let mut dx_t = T::Balance::zero();
 			for route_node in route.iter().rev() {
 				match route_node {
 					DexRouteNode::Curve(pool_id) => {
@@ -282,7 +279,6 @@ pub mod pallet {
 							currency_pair.base,
 							dy_t,
 						)?;
-						stack.push_front(dx_t);
 						dy_t = dx_t;
 					},
 					DexRouteNode::Uniswap(pool_id) => {
@@ -292,12 +288,10 @@ pub mod pallet {
 							currency_pair.base,
 							dy_t,
 						)?;
-						stack.push_front(dx_t);
 						dy_t = dx_t;
 					},
 				}
 			}
-			let mut dx_t = stack.pop_front().expect("impossible; qed;");
 			for route_node in route {
 				match route_node {
 					DexRouteNode::Curve(pool_id) => {
