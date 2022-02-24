@@ -261,11 +261,6 @@ describe('Lending Tests', function() {
   });
 
   describe('Lending Market Creation Success Tests', function () {
-    it('Can create lending market (Jump Interest Rate Model', ()=>{
-      console.warn('WARN: Lending tests currently only submit the market creation and don\'t wait for the result!');
-      return;
-    });
-
     it('Can create lending market (Curve Interest Rate Model)', async function () {
       if (!testConfiguration.enabledTests.canCreateLendingMarket.createMarketCurveInterestRateModel)
         this.skip();
@@ -292,10 +287,6 @@ describe('Lending Tests', function() {
       console.debug(result.toString());
       await waitForBlocks(3);
     });
-
-    it('Can create lending market (DynamicPIDController Interest Rate Model', ()=>{return});
-
-    it('Can create lending market (Double Exponent Interest Rate Model', ()=>{return});
   });
 
   describe('Lending Deposit Collateral Tests', async function() {
@@ -317,8 +308,6 @@ describe('Lending Tests', function() {
       const amount = api.createType('u128', 100000);
       const result = await borrowHandler(lenderWallet, marketId, amount);
       console.debug(result);
-    }); // ToDo (D. Roth): Implement.
-
-    it('Lending Tests: Very low borrow amount => Low accrue', ()=>{return true}); // ToDo (D. Roth): Implement.
+    });
   });
 });

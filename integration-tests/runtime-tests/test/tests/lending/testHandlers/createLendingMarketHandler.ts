@@ -21,5 +21,12 @@ export async function createLendingMarketHandler(
     reservedFactor: reservedFactor
   });
 
-  return api.tx.lending.createMarket(input).signAndSend(wallet);
+  return await sendAndWaitForSuccess(
+    api,
+    wallet,
+    api.events.treasury.Deposit.is,
+    api.tx.lending.createMarket(input),
+    false,
+    true
+  );
 }
