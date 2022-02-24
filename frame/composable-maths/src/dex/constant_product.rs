@@ -1,10 +1,13 @@
-use composable_traits::math::SafeArithmetic;
+use composable_traits::math::{safe_multiply_by_rational, SafeArithmetic};
 use frame_support::ensure;
 use rust_decimal::{
 	prelude::{FromPrimitive, ToPrimitive},
 	Decimal, MathematicalOps,
 };
-use sp_runtime::{traits::One, ArithmeticError, DispatchError, PerThing};
+use sp_runtime::{
+	traits::{IntegerSquareRoot, One, Zero},
+	ArithmeticError, PerThing,
+};
 
 /// From https://balancer.fi/whitepaper.pdf, equation (2)
 /// Compute the spot price of an asset pair.
@@ -19,7 +22,7 @@ pub fn compute_spot_price<T: PerThing>(
 	bi: u128,
 	bo: u128,
 	base_unit: u128,
-) -> Result<u128, DispatchError>
+) -> Result<u128, ArithmeticError>
 where
 	T::Inner: Into<u32>,
 {
@@ -27,10 +30,7 @@ where
 	let wo: u32 = wo.deconstruct().into();
 	let weight_sum = wi.safe_add(&wo)?;
 	let expected_weight_sum: u32 = T::one().deconstruct().into();
-	ensure!(
-		weight_sum == expected_weight_sum,
-		DispatchError::Arithmetic(ArithmeticError::Overflow)
-	);
+	ensure!(weight_sum == expected_weight_sum, ArithmeticError::Overflow);
 
 	let base_unit = Decimal::from_u128(base_unit).ok_or(ArithmeticError::Overflow)?;
 	let bi = Decimal::from_u128(bi).ok_or(ArithmeticError::Overflow)?;
@@ -60,7 +60,7 @@ pub fn compute_out_given_in<T: PerThing>(
 	bi: u128,
 	bo: u128,
 	ai: u128,
-) -> Result<u128, DispatchError>
+) -> Result<u128, ArithmeticError>
 where
 	T::Inner: Into<u32>,
 {
@@ -68,10 +68,7 @@ where
 	let wo: u32 = wo.deconstruct().into();
 	let weight_sum = wi.safe_add(&wo)?;
 	let expected_weight_sum: u32 = T::one().deconstruct().into();
-	ensure!(
-		weight_sum == expected_weight_sum,
-		DispatchError::Arithmetic(ArithmeticError::Overflow)
-	);
+	ensure!(weight_sum == expected_weight_sum, ArithmeticError::Overflow);
 
 	let ai = Decimal::from_u128(ai).ok_or(ArithmeticError::Overflow)?;
 	let bi = Decimal::from_u128(bi).ok_or(ArithmeticError::Overflow)?;
@@ -100,7 +97,7 @@ pub fn compute_in_given_out<T: PerThing>(
 	bi: u128,
 	bo: u128,
 	ao: u128,
-) -> Result<u128, DispatchError>
+) -> Result<u128, ArithmeticError>
 where
 	T::Inner: Into<u32>,
 {
@@ -108,10 +105,7 @@ where
 	let wo: u32 = wo.deconstruct().into();
 	let weight_sum = wi.safe_add(&wo)?;
 	let expected_weight_sum: u32 = T::one().deconstruct().into();
-	ensure!(
-		weight_sum == expected_weight_sum,
-		DispatchError::Arithmetic(ArithmeticError::Overflow)
-	);
+	ensure!(weight_sum == expected_weight_sum, ArithmeticError::Overflow);
 
 	let ao = Decimal::from_u128(ao).ok_or(ArithmeticError::Overflow)?;
 	let bi = Decimal::from_u128(bi).ok_or(ArithmeticError::Overflow)?;
@@ -125,4 +119,44 @@ where
 	let term_minus_one = term_to_weight_power.safe_sub(&Decimal::one())?;
 	let ai = bi.safe_mul(&term_minus_one)?.to_u128().ok_or(ArithmeticError::Overflow)?;
 	Ok(ai)
+}
+
+/// https://uniswap.org/whitepaper.pdf, equation (13)
+/// Compute the initial share of an LP provider.
+/// - `base_amount` the base asset amount deposited.
+/// - `quote_amount` the quote asset amount deposited.
+#[inline(always)]
+pub fn compute_first_deposit_lp(
+	base_amount: u128,
+	quote_amount: u128,
+) -> Result<u128, ArithmeticError> {
+	base_amount
+		.integer_sqrt_checked()
+		.ok_or(ArithmeticError::Overflow)?
+		.safe_mul(&quote_amount.integer_sqrt_checked().ok_or(ArithmeticError::Overflow)?)
+}
+
+/// https://uniswap.org/whitepaper.pdf, equation (12)
+/// Compute the share of an LP provider for an existing, non-empty pool.
+/// - `lp_total_issuance` the total LP already issued to other LP providers.
+/// - `base_amount` the base amount provided by the current LP provider.
+/// - `pool_base_aum` the pool base asset under management.
+/// - `pool_quote_aum` the pool quote asset under management.
+#[inline(always)]
+pub fn compute_deposit_lp(
+	lp_total_issuance: u128,
+	base_amount: u128,
+	quote_amount: u128,
+	pool_base_aum: u128,
+	pool_quote_aum: u128,
+) -> Result<(u128, u128), ArithmeticError> {
+	let first_deposit = lp_total_issuance.is_zero();
+	if first_deposit {
+		let lp_to_mint = compute_first_deposit_lp(base_amount, quote_amount)?;
+		Ok((quote_amount, lp_to_mint))
+	} else {
+		let quote_amount = safe_multiply_by_rational(pool_quote_aum, base_amount, pool_base_aum)?;
+		let lp_to_mint = safe_multiply_by_rational(lp_total_issuance, base_amount, pool_base_aum)?;
+		Ok((quote_amount, lp_to_mint))
+	}
 }

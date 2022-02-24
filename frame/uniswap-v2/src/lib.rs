@@ -48,7 +48,9 @@ mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, FullCodec};
-	use composable_maths::dex::constant_product::{compute_in_given_out, compute_out_given_in};
+	use composable_maths::dex::constant_product::{
+		compute_deposit_lp, compute_in_given_out, compute_out_given_in,
+	};
 	use composable_traits::{
 		currency::{CurrencyFactory, RangeId},
 		defi::CurrencyPair,
@@ -63,7 +65,7 @@ pub mod pallet {
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
 	use sp_runtime::{
-		traits::{AccountIdConversion, CheckedAdd, Convert, IntegerSquareRoot, One, Zero},
+		traits::{AccountIdConversion, CheckedAdd, Convert, One, Zero},
 		ArithmeticError, Permill,
 	};
 	use sp_std::fmt::Debug;
@@ -369,30 +371,16 @@ pub mod pallet {
 			let pool_quote_aum =
 				T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
 
-			let lp_issued = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
-
-			// https://uniswap.org/whitepaper.pdf
-			let first_deposit = lp_issued.is_zero();
-			let (quote_amount, lp_to_mint) = if first_deposit {
-				let base_amount = T::Convert::convert(base_amount);
-				ensure!(quote_amount > T::Balance::zero(), Error::<T>::InvalidAmount);
-				let quote_amount = T::Convert::convert(quote_amount);
-				// let lp_to_mint = base_amount
-				// 	.safe_mul(&quote_amount)?
-				// 	.integer_sqrt_checked()
-				// 	.ok_or(ArithmeticError::Overflow)?;
-				let lp_to_mint =
-					base_amount.integer_sqrt_checked().ok_or(ArithmeticError::Overflow)?.safe_mul(
-						&quote_amount.integer_sqrt_checked().ok_or(ArithmeticError::Overflow)?,
-					)?;
-				(T::Convert::convert(quote_amount), T::Convert::convert(lp_to_mint))
-			} else {
-				let base_amount = T::Convert::convert(base_amount);
-				let quote_amount =
-					safe_multiply_by_rational(pool_quote_aum, base_amount, pool_base_aum)?;
-				let lp_to_mint = safe_multiply_by_rational(lp_issued, base_amount, pool_base_aum)?;
-				(T::Convert::convert(quote_amount), T::Convert::convert(lp_to_mint))
-			};
+			let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
+			let (quote_amount, lp_to_mint) = compute_deposit_lp(
+				lp_total_issuance,
+				T::Convert::convert(base_amount),
+				T::Convert::convert(quote_amount),
+				pool_base_aum,
+				pool_quote_aum,
+			)?;
+			let quote_amount = T::Convert::convert(quote_amount);
+			let lp_to_mint = T::Convert::convert(lp_to_mint);
 
 			ensure!(quote_amount > T::Balance::zero(), Error::<T>::InvalidAmount);
 			ensure!(lp_to_mint >= min_mint_amount, Error::<T>::CannotRespectMinimumRequested);
