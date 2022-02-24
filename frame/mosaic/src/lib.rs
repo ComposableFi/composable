@@ -90,11 +90,13 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Transaction type.
 	pub enum TransactionType {
 		Incoming,
 		Outgoing,
 	}
 
+	/// The information required for an assets to be transferred between chains.
 	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
 	pub struct AssetInfo<BlockNumber, Balance, Decayer> {
 		pub last_mint_block: BlockNumber,
@@ -103,6 +105,7 @@ pub mod pallet {
 		pub penalty_decayer: Decayer,
 	}
 
+	/// The network informations, used for rate limitting.
 	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
 	pub struct NetworkInfo<Balance> {
 		pub enabled: bool,
