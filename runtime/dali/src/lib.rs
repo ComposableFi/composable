@@ -910,6 +910,7 @@ impl mosaic::Config for Runtime {
 	type MinimumTimeLockPeriod = MinimumTimeLockPeriod;
 	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
 	type NetworkId = u32;
+	type RemoteAssetId = [u8; 20];
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
 }

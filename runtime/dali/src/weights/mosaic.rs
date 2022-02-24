@@ -109,4 +109,8 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+
+  fn update_asset_mapping() -> Weight {
+    10_000
+  }
 }
