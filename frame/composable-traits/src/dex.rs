@@ -137,7 +137,7 @@ pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	pub owner: AccountId,
 	/// Swappable assets
 	pub pair: CurrencyPair<AssetId>,
-	/// AssetId of LP token,
+	/// AssetId of LP token
 	pub lp_token: AssetId,
 	/// Amount of the fee pool charges for the exchange
 	pub fee: Permill,

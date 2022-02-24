@@ -73,7 +73,7 @@ fn test() {
 
 		assert_eq!(initial_user_invariant, initial_pool_invariant);
 
-		// swap half a btc
+		// swap a btc
 		let swap_btc = unit;
 		assert_ok!(Tokens::mint_into(BTC, &BOB, swap_btc));
 
