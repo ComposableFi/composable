@@ -10,7 +10,7 @@ pub struct BorrowerData {
 	pub collateral_balance_value: LiftedFixedBalance,
 	pub borrow_balance_value: LiftedFixedBalance,
 	pub collateral_factor: MoreThanOneFixedU128,
-	pub under_collaterized_warn_percent: Percent,
+	pub under_collateralized_warn_percent: Percent,
 }
 
 impl BorrowerData {
@@ -19,7 +19,7 @@ impl BorrowerData {
 		collateral_balance_value: T,
 		borrow_balance_value: T,
 		collateral_factor: MoreThanOneFixedU128,
-		under_collaterized_warn_percent: Percent,
+		under_collateralized_warn_percent: Percent,
 	) -> Self {
 		Self {
 			collateral_balance_value: LiftedFixedBalance::saturating_from_integer(
@@ -29,7 +29,7 @@ impl BorrowerData {
 				borrow_balance_value.into(),
 			),
 			collateral_factor,
-			under_collaterized_warn_percent,
+			under_collateralized_warn_percent,
 		}
 	}
 
@@ -59,15 +59,17 @@ impl BorrowerData {
 	#[inline(always)]
 	pub fn safe_collateral_factor(&self) -> Result<MoreThanOneFixedU128, ArithmeticError> {
 		self.collateral_factor.safe_add(
-			&self.collateral_factor.safe_mul(&self.under_collaterized_warn_percent.into())?,
+			&self
+				.collateral_factor
+				.safe_mul(&self.under_collateralized_warn_percent.into())?,
 		)
 	}
 
-	/// Check if loan is about to be under collaterized
+	/// Check if loan is about to be under collateralized
 	/// safe_collateral_factor = collateral_factor + (collateral_factor *
-	/// under_collaterized_warn_percent) For example collateral_factor = 2 and
-	/// under_collaterized_warn_percent = 10% then if loan's collateral to debt ratio goes below 2.2
-	/// then borrower should be warn so.
+	/// under_collateralized_warn_percent) For example collateral_factor = 2 and
+	/// under_collateralized_warn_percent = 10% then if loan's collateral to debt ratio goes below
+	/// 2.2 then borrower should be warn so.
 	#[inline(always)]
 	pub fn should_warn(&self) -> Result<bool, ArithmeticError> {
 		Ok(self.current_collateral_ratio()? < self.safe_collateral_factor()?)

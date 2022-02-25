@@ -400,8 +400,8 @@ pub mod pallet {
 			market_id: MarketIndex,
 			borrowers: Vec<T::AccountId>,
 		},
-		/// Event emitted to warn that loan may go under collaterized soon.
-		SoonMayUnderCollaterized {
+		/// Event emitted to warn that loan may go under collateralized soon.
+		SoonMayUnderCollateralized {
 			market_id: MarketIndex,
 			account: T::AccountId,
 		},
@@ -582,7 +582,8 @@ pub mod pallet {
 
 					market.collateral_factor = input.collateral_factor;
 					market.interest_rate_model = input.interest_rate_model;
-					market.under_collaterized_warn_percent = input.under_collaterized_warn_percent;
+					market.under_collateralized_warn_percent =
+						input.under_collateralized_warn_percent;
 					market.liquidators = input.liquidators.clone();
 					Ok(())
 				} else {
@@ -693,6 +694,12 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		pub fn initial_pool_size(
+			borrow_asset: <T::Oracle as composable_traits::oracle::Oracle>::AssetId,
+		) -> Result<<T as composable_traits::defi::DeFiComposableConfig>::Balance, DispatchError> {
+			T::Oracle::get_price_inverse(borrow_asset, T::OracleMarketCreationStake::get())
+		}
+
 		pub fn total_interest_accurate(
 			market_id: &<Self as Lending>::MarketId,
 		) -> Result<T::Balance, DispatchError> {
@@ -800,7 +807,7 @@ pub mod pallet {
 				collateral_balance_value,
 				borrow_balance_value,
 				market.collateral_factor,
-				market.under_collaterized_warn_percent,
+				market.under_collateralized_warn_percent,
 			);
 			Ok(borrower)
 		}
@@ -814,7 +821,7 @@ pub mod pallet {
 			Ok(should_liquidate)
 		}
 
-		pub fn soon_under_collaterized(
+		pub fn soon_under_collateralized(
 			market_id: &<Self as Lending>::MarketId,
 			account: &<Self as DeFiEngine>::AccountId,
 		) -> Result<bool, DispatchError> {
@@ -1175,18 +1182,12 @@ pub mod pallet {
 							// Borrowable = 100% - reserved
 							Perquintill::one().saturating_sub(config_input.reserved_factor()),
 						)]
-						.iter()
-						.cloned()
+						.into_iter()
 						.collect(),
 					},
 				)?;
 
-				let initial_price_amount = T::OracleMarketCreationStake::get();
-
-				let initial_pool_size = T::Oracle::get_price_inverse(
-					config_input.borrow_asset(),
-					initial_price_amount,
-				)?;
+				let initial_pool_size = Self::initial_pool_size(config_input.borrow_asset())?;
 
 				ensure!(
 					initial_pool_size > T::Balance::zero(),
@@ -1207,9 +1208,9 @@ pub mod pallet {
 					collateral: config_input.collateral_asset(),
 					collateral_factor: config_input.updatable.collateral_factor,
 					interest_rate_model: config_input.updatable.interest_rate_model,
-					under_collaterized_warn_percent: config_input
+					under_collateralized_warn_percent: config_input
 						.updatable
-						.under_collaterized_warn_percent,
+						.under_collateralized_warn_percent,
 					liquidators: config_input.updatable.liquidators,
 				};
 
@@ -1578,7 +1579,7 @@ pub mod pallet {
 				collateral_balance_after_withdrawal_value,
 				borrow_balance_value,
 				market.collateral_factor,
-				market.under_collaterized_warn_percent,
+				market.under_collateralized_warn_percent,
 			);
 
 			ensure!(

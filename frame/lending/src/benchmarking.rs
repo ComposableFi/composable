@@ -62,7 +62,7 @@ fn create_market_config<T: DeFiComposableConfig + pallet_lending::Config>(
 	CreateInput {
 		updatable: UpdateInput {
 			collateral_factor: MoreThanOneFixedU128::saturating_from_rational(200_u128, 100_u128),
-			under_collaterized_warn_percent: Percent::from_percent(10),
+			under_collateralized_warn_percent: Percent::from_percent(10),
 			liquidators: vec![],
 			interest_rate_model: InterestRateModel::default(),
 		},

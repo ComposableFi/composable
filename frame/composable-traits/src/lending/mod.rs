@@ -23,8 +23,8 @@ pub struct UpdateInput<LiquidationStrategyId> {
 	/// Collateral factor of market
 	pub collateral_factor: MoreThanOneFixedU128,
 	///  warn borrower when loan's collateral/debt ratio
-	///  given percentage short to be under collaterized
-	pub under_collaterized_warn_percent: Percent,
+	///  given percentage short to be under collateralized
+	pub under_collateralized_warn_percent: Percent,
 	/// liquidation engine id
 	pub liquidators: Vec<LiquidationStrategyId>,
 	pub interest_rate_model: InterestRateModel,
@@ -104,7 +104,7 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId> {
 	pub collateral: AssetId,
 	pub collateral_factor: MoreThanOneFixedU128,
 	pub interest_rate_model: InterestRateModel,
-	pub under_collaterized_warn_percent: Percent,
+	pub under_collateralized_warn_percent: Percent,
 	pub liquidators: Vec<LiquidationStrategyId>,
 }
 
