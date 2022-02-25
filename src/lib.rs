@@ -24,7 +24,7 @@ pub mod traits;
 
 use crate::error::BeefyClientError;
 use crate::primitives::{
-    AuthoritySignature, BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof, HASH_LENGTH,
+    BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof, SignatureWithAuthorityIndex, HASH_LENGTH,
 };
 use crate::traits::{AuthoritySet, MmrState, StorageRead, StorageWrite};
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
@@ -106,7 +106,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
             .signed_commitment
             .signatures
             .into_iter()
-            .map(|AuthoritySignature { index, signature }| {
+            .map(|SignatureWithAuthorityIndex { index, signature }| {
                 crypto::secp256k1_ecdsa_recover_compressed(&signature, &commitment_hash)
                     .map(|public_key_bytes| {
                         beefy_primitives::crypto::AuthorityId::from_slice(&public_key_bytes).ok()

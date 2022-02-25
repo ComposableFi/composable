@@ -1,5 +1,5 @@
 use crate::primitives::{MmrLeafWithIndex, SignedCommitment};
-use crate::{runtime, AuthoritySignature, BeefyLightClient, KeccakHasher, MmrUpdateProof};
+use crate::{runtime, BeefyLightClient, KeccakHasher, MmrUpdateProof, SignatureWithAuthorityIndex};
 use crate::{AuthoritySet, BeefyClientError, MmrState, StorageRead, StorageWrite, H256};
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use beefy_primitives::mmr::{BeefyNextAuthoritySet, MmrLeaf};
@@ -146,7 +146,7 @@ async fn test_ingest_mmr_with_proof() {
                         let mut temp = [0u8; 65];
                         if sig.len() == 65 {
                             temp.copy_from_slice(&*sig.encode());
-                            Some(AuthoritySignature {
+                            Some(SignatureWithAuthorityIndex {
                                 index: index as u32,
                                 signature: temp,
                             })
@@ -219,7 +219,7 @@ fn should_fail_with_incomplete_signature_threshold() {
                 validator_set_id: 3,
             },
             signatures: vec![
-                AuthoritySignature {
+                SignatureWithAuthorityIndex {
                     index: 0,
                     signature: [0u8; 65]
                 };
@@ -266,7 +266,7 @@ fn should_fail_with_invalid_validator_set_id() {
                 validator_set_id: 3,
             },
             signatures: vec![
-                AuthoritySignature {
+                SignatureWithAuthorityIndex {
                     index: 0,
                     signature: [0u8; 65]
                 };
