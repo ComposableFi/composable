@@ -1,4 +1,5 @@
-#[derive(Debug)]
+use sp_std::prelude::*;
+#[derive(sp_std::fmt::Debug, PartialEq, Eq)]
 pub enum BeefyClientError {
     /// Failed to read a value from storage
     StorageReadError,

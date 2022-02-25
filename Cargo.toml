@@ -9,26 +9,25 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-runtime = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-core-hashing = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
-beefy-mmr = { package = "pallet-beefy-mmr", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+beefy-mmr = { package = "pallet-beefy-mmr", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 pallet-mmr = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 pallet-mmr-primitives = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-beefy-primitives = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16"}
+beefy-primitives = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
-#scale-info = { version = "1.0", features = ["derive"] }
-
-rs-merkle = { package = "rs_merkle", git = "https://github.com/ComposableFi/rs-merkle.git", default-features = false }
+rs_merkle = { git = "https://github.com/ComposableFi/rs-merkle", default-features = false, branch = "master" }
 
 [dev-dependencies]
-subxt = { git = "https://github.com/paritytech/subxt.git", branch = "master"}
+subxt = "0.17.0"
 tokio = { version = "1.17.0", features = ["full"] }
 hex-literal = "0.3.4"
 serde_json = "1.0.74"
 jsonrpc-core = "18.0.0"
+pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 [features]
 default = ["std"]
@@ -43,5 +42,5 @@ std = [
     "beefy-primitives/std",
     "pallet-mmr/std",
     "pallet-mmr-primitives/std",
-    "rs-merkle/std"
+    "rs_merkle/std"
 ]

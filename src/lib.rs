@@ -17,30 +17,40 @@
 pub mod error;
 pub mod primitives;
 #[cfg(test)]
+mod runtime;
+#[cfg(test)]
 mod tests;
 pub mod traits;
 
 use crate::error::BeefyClientError;
-use crate::primitives::{BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof};
+use crate::primitives::{BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof, HASH_LENGTH};
 use crate::traits::{AuthoritySet, MmrState, StorageRead, StorageWrite};
+use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use codec::Encode;
-use rs_merkle::MerkleProof;
 use sp_core::{ByteArray, H256};
 use sp_core_hashing::keccak_256;
 use sp_io::crypto;
 use sp_runtime::traits::Convert;
 
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::prelude::*;
 
-pub struct BeefyLightClient<Store: StorageRead + StorageWrite>(PhantomData<Store>);
+pub struct BeefyLightClient<Store: StorageRead + StorageWrite> {
+    store: Store,
+}
 
 impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
+    pub fn new(store: Store) -> Self {
+        Self { store }
+    }
     /// This should verify the signed commitment signatures, and reconstruct the
     /// authority merkle root, confirming known authorities signed the [`crate::primitives::Commitment`]
     /// then using the mmr proofs, verify the latest mmr leaf,
     /// using the latest mmr leaf to rotate its view of the next authorities.
-    pub fn ingest_mmr_root_with_proof(mmr_update: MmrUpdateProof) -> Result<(), BeefyClientError> {
-        let authority_set = <Store as StorageRead>::authority_set()?;
+    pub fn ingest_mmr_root_with_proof(
+        &mut self,
+        mmr_update: MmrUpdateProof,
+    ) -> Result<(), BeefyClientError> {
+        let authority_set = self.store.authority_set()?;
         let current_authority_set = &authority_set.current_authorities;
         let next_authority_set = &authority_set.next_authorities;
         let signatures_len = mmr_update.signed_commitment.signatures.len();
@@ -58,7 +68,27 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
             return Err(BeefyClientError::InvalidMmrUpdate);
         }
 
-        let mmr_root_hash = mmr_update.signed_commitment.commitment.mmr_root_hash;
+        // Extract root hash from signed commitment and validate it
+        let mmr_root_vec = {
+            if let Some(root) = mmr_update
+                .signed_commitment
+                .commitment
+                .payload
+                .get_raw(&MMR_ROOT_ID)
+            {
+                if root.len() == HASH_LENGTH {
+                    root
+                } else {
+                    return Err(BeefyClientError::InvalidRootHash);
+                }
+            } else {
+                return Err(BeefyClientError::InvalidMmrUpdate);
+            }
+        };
+
+        let mut mmr_root_hash = [0u8; 32];
+        mmr_root_hash.copy_from_slice(mmr_root_vec);
+        let mmr_root_hash: H256 = mmr_root_hash.into();
 
         // Beefy validators sign the keccak_256 hash of the scale encoded commitment
         let encoded_commitment = mmr_update.signed_commitment.commitment.encode();
@@ -90,17 +120,18 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
 
         let mut authorities_changed = false;
 
-        let authorities_merkle_proof =
-            MerkleProof::<KeccakHasher>::new(mmr_update.authority_proof.clone());
         let authority_leaf_indices = authority_addresses_and_indices
             .iter()
             .cloned()
-            .map(|x| x.0 as usize)
+            .map(|x| x.0)
             .collect::<Vec<_>>();
         let authority_leaves = authority_addresses_and_indices
             .into_iter()
             .map(|x| keccak_256(&x.1))
             .collect::<Vec<_>>();
+
+        let authorities_merkle_proof =
+            rs_merkle::MerkleProof::<KeccakHasher>::new(mmr_update.authority_proof);
 
         // Verify mmr_update.authority_proof against store root hash
         if current_authority_set.id == validator_set_id {
@@ -126,7 +157,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
             authorities_changed = true;
         }
 
-        let latest_beefy_height = <Store as StorageRead>::mmr_state()?.latest_beefy_height;
+        let latest_beefy_height = self.store.mmr_state()?.latest_beefy_height;
 
         if mmr_update.signed_commitment.commitment.block_number <= latest_beefy_height {
             return Err(BeefyClientError::InvalidMmrUpdate);
@@ -134,36 +165,29 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
 
         // Move on to verify mmr_proof
 
-        let proof = pallet_mmr_primitives::Proof {
-            leaf_index: mmr_update.latest_mmr_leaf_with_index.index,
-            // we treat this leaf as the latest leaf in the mmr
-            leaf_count: mmr_update.latest_mmr_leaf_with_index.index + 1,
-            items: mmr_update.mmr_proof.clone(),
-        };
-
         let node = pallet_mmr_primitives::DataOrHash::Data(
-            mmr_update.latest_mmr_leaf_with_index.leaf.encode(),
+            mmr_update.latest_mmr_leaf_with_index.leaf.clone(),
         );
+
         pallet_mmr::verify_leaf_proof::<sp_runtime::traits::Keccak256, _>(
             mmr_root_hash.into(),
             node,
-            proof,
+            mmr_update.mmr_proof,
         )
         .map_err(|_| BeefyClientError::InvalidMmrProof)?;
 
-        <Store as StorageWrite>::set_mmr_state(MmrState {
+        self.store.set_mmr_state(MmrState {
             latest_beefy_height: mmr_update.signed_commitment.commitment.block_number,
             mmr_root_hash: mmr_root_hash.into(),
         })?;
 
         if authorities_changed {
-            <Store as StorageWrite>::set_authority_set(AuthoritySet {
+            self.store.set_authority_set(AuthoritySet {
                 current_authorities: next_authority_set.clone(),
                 next_authorities: mmr_update
                     .latest_mmr_leaf_with_index
                     .leaf
-                    .beefy_next_authority_set
-                    .clone(),
+                    .beefy_next_authority_set,
             })?;
         }
         Ok(())
