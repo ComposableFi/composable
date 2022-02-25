@@ -922,6 +922,7 @@ pub type OrderId = u128;
 parameter_types! {
 	pub const LiquidationsPalletId: PalletId = PalletId(*b"liqdatns");
 }
+
 impl liquidations::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
@@ -950,7 +951,7 @@ impl lending::Config for Runtime {
 	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
 	type AuthorityId = oracle::crypto::BathurstStId;
-	type WeightInfo = ();
+	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 	type LiquidationStrategyId = u32;
 	type OracleMarketCreationStake = OracleMarketCreationStake;
 	type PalletId = LendingPalletId;
