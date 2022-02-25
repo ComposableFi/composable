@@ -39,6 +39,7 @@ pub struct BeefyLightClient<Store: StorageRead + StorageWrite> {
 }
 
 impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
+    /// Create a new instance of the light client
     pub fn new(store: Store) -> Self {
         Self { store }
     }
