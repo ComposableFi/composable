@@ -136,7 +136,7 @@ jobs:
       - name: Cargo Spellcheck
         run: |
           cargo install cargo-spellcheck
-          cargo spellcheck -m 0
+          cargo spellcheck -m 1
 
       - name: Hadolint
         env:
