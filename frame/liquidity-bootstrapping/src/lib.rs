@@ -47,11 +47,9 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use composable_maths::dex::constant_product::{compute_out_given_in, compute_spot_price};
-	use crate::{
-		weights::WeightInfo,
-	};
+	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
+	use composable_maths::dex::constant_product::{compute_out_given_in, compute_spot_price};
 	use composable_support::validation::{Validate, Validated};
 	use composable_traits::{
 		currency::LocalAssets, defi::CurrencyPair, dex::CurveAmm, math::SafeArithmetic,
@@ -477,7 +475,7 @@ pub mod pallet {
 			T::PalletId::get().into_sub_account(pool_id)
 		}
 
-    #[allow(dead_code)]
+		#[allow(dead_code)]
 		pub(crate) fn do_spot_price(
 			pool_id: T::PoolId,
 			pair: CurrencyPair<AssetIdOf<T>>,

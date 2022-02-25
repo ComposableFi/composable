@@ -104,6 +104,41 @@ mod create {
 	}
 }
 
+mod sell {
+	use super::*;
+
+	#[test]
+	fn can_sell_one_to_one() {
+		/* 50% weight = constant product, no fees.
+		 */
+		let unit = 1_000_000_000_000;
+		let initial_project_tokens = 1_000_000 * unit;
+		let initial_usdt = 1_000_000 * unit;
+		let sale_duration = MaxSaleDuration::get();
+		let initial_weight = Permill::one() / 2;
+		let final_weight = Permill::one() / 2;
+		let fee = Permill::zero();
+		within_sale_with_liquidity(
+			ALICE,
+			initial_project_tokens,
+			initial_usdt,
+			sale_duration,
+			initial_weight,
+			final_weight,
+			fee,
+			|pool_id, pool, _, _| {
+				// Buy project token
+				assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
+				assert_ok!(LBP::sell(Origin::signed(BOB), pool_id, pool.pair.quote, unit, false));
+				assert_ok!(default_acceptable_computation_error(
+					Tokens::balance(PROJECT_TOKEN, &BOB),
+					unit
+				));
+			},
+		)
+	}
+}
+
 mod buy {
 	use super::*;
 
