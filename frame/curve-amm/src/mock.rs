@@ -47,7 +47,7 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
-pub type AccountId = u64;
+pub type AccountId = u128;
 
 #[allow(dead_code)]
 pub static ALICE: AccountId = 1;
