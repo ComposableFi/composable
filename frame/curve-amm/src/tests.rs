@@ -305,7 +305,10 @@ fn low_balance_pool() {
 		sp_std::if_std! {
 			println!("pool's usdc {:?}", pool_usdc_balance / unit);
 		}
-		// assert_err!(<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, bob_usdt, false), );
+		assert_err!(
+			<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, bob_usdt, false),
+			orml_tokens::Error::<Test>::BalanceTooLow
+		);
 	});
 }
 
