@@ -197,6 +197,11 @@ async fn test_ingest_mmr_with_proof() {
             assert_eq!(mmr_state.mmr_root_hash.as_bytes(), &mmr_root_hash[..]);
 
             assert_eq!(
+                mmr_state.latest_beefy_height,
+                signed_commitment.commitment.block_number
+            );
+
+            assert_eq!(
                 authority_set.next_authorities,
                 latest_leaf.beefy_next_authority_set
             );
