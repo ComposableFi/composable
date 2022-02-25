@@ -1,4 +1,4 @@
-use crate::mock::*;
+use crate::mock::{StableSwap, *};
 use composable_tests_helpers::test::helper::{
 	acceptable_computation_error, default_acceptable_computation_error,
 };
@@ -7,9 +7,6 @@ use frame_support::{
 	assert_err, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
-
-use crate::mock::StableSwap;
-
 use sp_runtime::{Permill, TokenError};
 
 fn create_pool(

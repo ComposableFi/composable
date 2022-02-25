@@ -14,8 +14,8 @@ benchmarks! {
 		let usdt: T::AssetId = 1.into();
 		let owner = whitelisted_caller();
 	  let pair = CurrencyPair::new(btc, usdt);
-		let fee = Permill::from_float(0.002);
-		let owner_fee = Permill::from_float(0.001);
+		let fee = Permill::from_percent(1);
+		let owner_fee = Permill::from_percent(1);
   }: _(RawOrigin::Signed(owner), pair, fee, owner_fee)
 
   buy {
@@ -25,8 +25,8 @@ benchmarks! {
 		let pool_id = Uni::<T>::do_create_pool(
 			&owner,
 			CurrencyPair::new(btc, usdt),
-			Permill::from_float(0.002),
-			Permill::from_float(0.001),
+			Permill::from_percent(1),
+			Permill::from_percent(1),
 		) .expect("impossible; qed;");
 		let unit = 1_000_000_000_000;
 	  let btc_price = 45_000;
@@ -49,7 +49,7 @@ benchmarks! {
 	  let user = account("user", 0, 0);
 		assert_ok!(T::Assets::mint_into(usdt, &user, (btc_price * unit).into()));
 	// buy 1 btc
-  }: _(RawOrigin::Signed(user), pool_id, unit.into(), false)
+  }: _(RawOrigin::Signed(user), pool_id, btc, unit.into(), false)
 
 	sell {
 		let btc: T::AssetId = 0.into();
@@ -58,8 +58,8 @@ benchmarks! {
 		let pool_id = Uni::<T>::do_create_pool(
 			&owner,
 			CurrencyPair::new(btc, usdt),
-			Permill::from_float(0.002),
-			Permill::from_float(0.001),
+			Permill::from_percent(1),
+			Permill::from_percent(1),
 		) .expect("impossible; qed;");
 		let unit = 1_000_000_000_000;
 		let btc_price = 45_000;
@@ -81,18 +81,18 @@ benchmarks! {
 		));
 		let user = account("user", 0, 0);
 		assert_ok!(T::Assets::mint_into(btc, &user, unit.into()));
-	}: _(RawOrigin::Signed(user), pool_id, unit.into(), false)
+	}: _(RawOrigin::Signed(user), pool_id, btc, unit.into(), false)
 
   swap {
 		let btc: T::AssetId = 0.into();
 		let usdt: T::AssetId = 1.into();
 		let owner = whitelisted_caller();
-	let pair = CurrencyPair::new(btc, usdt);
+	  let pair = CurrencyPair::new(btc, usdt);
 		let pool_id = Uni::<T>::do_create_pool(
 			&owner,
 	  pair,
-			Permill::from_float(0.002),
-			Permill::from_float(0.001),
+			Permill::from_percent(1),
+			Permill::from_percent(1),
 		) .expect("impossible; qed;");
 		let unit = 1_000_000_000_000;
 		let btc_price = 45_000;

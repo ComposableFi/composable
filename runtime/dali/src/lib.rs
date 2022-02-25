@@ -38,7 +38,9 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
+	traits::{
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
+	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -959,6 +961,40 @@ impl lending::Config for Runtime {
 	type WeightToFee = WeightToFee;
 }
 
+pub type PoolId = u128;
+
+parameter_types! {
+  pub const ConstantProductPalletId: PalletId = PalletId(*b"pal_cnst");
+}
+
+impl uniswap_v2::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type CurrencyFactory = CurrencyFactory;
+	type Assets = Tokens;
+	type Convert = ConvertInto;
+	type PoolId = PoolId;
+	type PalletId = ConstantProductPalletId;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+  pub const StableSwapPalletId: PalletId = PalletId(*b"pal_stab");
+}
+
+impl curve_amm::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type CurrencyFactory = CurrencyFactory;
+	type Assets = Tokens;
+	type Convert = ConvertInto;
+	type PoolId = PoolId;
+	type PalletId = StableSwapPalletId;
+	type WeightInfo = ();
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1017,6 +1053,8 @@ construct_runtime!(
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
 		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
+	  ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
+	  StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1087,6 +1125,9 @@ mod benches {
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
 		//FIXME: broken with dali [lending, Lending]
+    //	[lending, Lending]
+	  [uniswap_v2, ConstantProductDex]
+	  [curve_amm, StableSwapDex]
 	);
 }
 

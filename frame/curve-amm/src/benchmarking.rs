@@ -7,28 +7,28 @@ use frame_system::RawOrigin;
 use sp_arithmetic::Permill;
 
 benchmarks! {
-  where_clause { where T::Balance: From<u128>, T::AssetsId: From<u128> }
+  where_clause { where T::Balance: From<u128>, T::AssetId: From<u128> }
 
   create {
-		let usdc: T::AssetsId = 0.into();
-		let usdt: T::AssetsId = 1.into();
+		let usdc: T::AssetId = 0.into();
+		let usdt: T::AssetId = 1.into();
 		let owner = whitelisted_caller();
 		let pair = CurrencyPair::new(usdc, usdt);
 		let amplification_factor = 1000_u16;
-		let fee = Permill::from_float(0.002);
-		let protocl_fee = Permill::from_float(0.01);
-  } : _(RawOrigin::Signed(owner), pair, amplification_factor, fee, protocl_fee)
+		let fee = Permill::from_percent(1);
+		let protocol_fee = Permill::from_percent(1);
+  } : _(RawOrigin::Signed(owner), pair, amplification_factor, fee, protocol_fee)
 
   buy {
 	  let usdc: T::AssetId = 0.into();
 	  let usdt: T::AssetId = 1.into();
 	  let owner = whitelisted_caller();
-		let pool_id = Uni::<T>::do_create_pool(
+		let pool_id = StableSwap::<T>::do_create_pool(
 			&owner,
-			CurrencyPair::new(btc, usdt),
+			CurrencyPair::new(usdc, usdt),
 			1000_u16,
-			Permill::from_float(0.002),
-			Permill::from_float(0.01),
+			Permill::from_percent(1),
+			Permill::from_percent(1),
 		) .expect("impossible; qed;");
 		// 100_000_000 USDC , 100_000_000 USDT
 		let initial_usdc: T::Balance = (100_000_000_u128).into();
@@ -40,7 +40,7 @@ benchmarks! {
 		assert_ok!(<StableSwap<T> as CurveAmm>::add_liquidity(
 			&owner,
 			pool_id,
-			initial_btc,
+			initial_usdc,
 			initial_usdt,
 			0.into(),
 			false
@@ -54,12 +54,12 @@ benchmarks! {
 	  let usdc: T::AssetId = 0.into();
 	  let usdt: T::AssetId = 1.into();
 	  let owner = whitelisted_caller();
-		let pool_id = Uni::<T>::do_create_pool(
+		let pool_id = StableSwap::<T>::do_create_pool(
 			&owner,
-			CurrencyPair::new(btc, usdt),
+			CurrencyPair::new(usdc, usdt),
 			1000_u16,
-			Permill::from_float(0.002),
-			Permill::from_float(0.01),
+			Permill::from_percent(1),
+			Permill::from_percent(1),
 		) .expect("impossible; qed;");
 		// 100_000_000 USDC , 100_000_000 USDT
 		let initial_usdc: T::Balance = (100_000_000_u128).into();
@@ -71,7 +71,7 @@ benchmarks! {
 		assert_ok!(<StableSwap<T> as CurveAmm>::add_liquidity(
 			&owner,
 			pool_id,
-			initial_btc,
+			initial_usdc,
 			initial_usdt,
 			0.into(),
 			false
@@ -85,12 +85,13 @@ benchmarks! {
 	  let usdc: T::AssetId = 0.into();
 	  let usdt: T::AssetId = 1.into();
 	  let owner = whitelisted_caller();
-		let pool_id = Uni::<T>::do_create_pool(
+		let pair = CurrencyPair::new(usdc, usdt);
+		let pool_id = StableSwap::<T>::do_create_pool(
 			&owner,
-			CurrencyPair::new(btc, usdt),
+	  pair,
 			1000_u16,
-			Permill::from_float(0.002),
-			Permill::from_float(0.01),
+			Permill::from_percent(1),
+			Permill::from_percent(1),
 		) .expect("impossible; qed;");
 		// 100_000_000 USDC , 100_000_000 USDT
 		let initial_usdc: T::Balance = (100_000_000_u128).into();
@@ -102,7 +103,7 @@ benchmarks! {
 		assert_ok!(<StableSwap<T> as CurveAmm>::add_liquidity(
 			&owner,
 			pool_id,
-			initial_btc,
+			initial_usdc,
 			initial_usdt,
 			0.into(),
 			false
@@ -110,7 +111,7 @@ benchmarks! {
 	  let user = account("user", 0, 0);
 		assert_ok!(T::Assets::mint_into(usdc, &user, (1000_u128).into()));
 	// swap 1000 USDC
-  }: _(RawOrigin::Signed(user), pool_id, pair, usdc, 1000_u128.into(), 0.into(), false)
+  }: _(RawOrigin::Signed(user), pool_id, pair, 1000_u128.into(), 0.into(), false)
 }
 
 impl_benchmark_test_suite!(StableSwap, crate::mock::new_test_ext(), crate::mock::Test);
