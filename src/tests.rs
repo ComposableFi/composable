@@ -1,9 +1,12 @@
 use crate::primitives::{MmrLeafWithIndex, SignedCommitment};
-use crate::{runtime, BeefyLightClient, KeccakHasher, MmrUpdateProof};
+use crate::{runtime, AuthoritySignature, BeefyLightClient, KeccakHasher, MmrUpdateProof};
 use crate::{AuthoritySet, BeefyClientError, MmrState, StorageRead, StorageWrite, H256};
+use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use beefy_primitives::mmr::{BeefyNextAuthoritySet, MmrLeaf};
+use beefy_primitives::Payload;
 use codec::Encode;
 use hex_literal::hex;
+use pallet_mmr_primitives::Proof;
 use sp_runtime::traits::Convert;
 use subxt::rpc::ClientT;
 use subxt::rpc::{rpc_params, JsonValue, Subscription, SubscriptionClientT};
@@ -137,12 +140,16 @@ async fn test_ingest_mmr_with_proof() {
             let signatures = signed_commitment
                 .signatures
                 .into_iter()
-                .map(|x| {
+                .enumerate()
+                .map(|(index, x)| {
                     if let Some(sig) = x {
                         let mut temp = [0u8; 65];
                         if sig.len() == 65 {
                             temp.copy_from_slice(&*sig.encode());
-                            Some(temp)
+                            Some(AuthoritySignature {
+                                index: index as u32,
+                                signature: temp,
+                            })
                         } else {
                             None
                         }
@@ -150,12 +157,12 @@ async fn test_ingest_mmr_with_proof() {
                         None
                     }
                 })
+                .filter_map(|x| x)
                 .collect::<Vec<_>>();
 
             let signature_indices = signatures
                 .iter()
-                .enumerate()
-                .filter_map(|x| if x.1.is_some() { Some(x.0) } else { None })
+                .map(|x| x.index as usize)
                 .collect::<Vec<_>>();
 
             let tree =
@@ -165,11 +172,11 @@ async fn test_ingest_mmr_with_proof() {
 
             let mmr_update = MmrUpdateProof {
                 signed_commitment: SignedCommitment {
-                    commitment: signed_commitment.commitment,
+                    commitment: signed_commitment.commitment.clone(),
                     signatures,
                 },
                 latest_mmr_leaf_with_index: MmrLeafWithIndex {
-                    leaf: latest_leaf,
+                    leaf: latest_leaf.clone(),
                     index: leaf_index,
                 },
                 mmr_proof,
@@ -180,6 +187,115 @@ async fn test_ingest_mmr_with_proof() {
                 beef_light_client.ingest_mmr_root_with_proof(mmr_update),
                 Ok(())
             );
+
+            let mmr_state = beef_light_client.store_ref().mmr_state().unwrap();
+            let authority_set = beef_light_client.store_ref().authority_set().unwrap();
+
+            let mmr_root_hash = signed_commitment
+                .commitment
+                .payload
+                .get_raw(&MMR_ROOT_ID)
+                .unwrap();
+
+            assert_eq!(mmr_state.mmr_root_hash.as_bytes(), &mmr_root_hash[..]);
+
+            assert_eq!(
+                authority_set.next_authorities,
+                latest_leaf.beefy_next_authority_set
+            );
         }
     }
+}
+
+#[test]
+fn should_fail_with_incomplete_signature_threshold() {
+    let store = StorageMock::new();
+    let mut beef_light_client = BeefyLightClient::new(store);
+    let mmr_update = MmrUpdateProof {
+        signed_commitment: SignedCommitment {
+            commitment: beefy_primitives::Commitment {
+                payload: Payload::new(MMR_ROOT_ID, vec![0u8; 32]),
+                block_number: Default::default(),
+                validator_set_id: 3,
+            },
+            signatures: vec![
+                AuthoritySignature {
+                    index: 0,
+                    signature: [0u8; 65]
+                };
+                2
+            ],
+        },
+        latest_mmr_leaf_with_index: MmrLeafWithIndex {
+            leaf: MmrLeaf {
+                version: Default::default(),
+                parent_number_and_hash: (Default::default(), Default::default()),
+                beefy_next_authority_set: BeefyNextAuthoritySet {
+                    id: 0,
+                    len: 0,
+                    root: Default::default(),
+                },
+                parachain_heads: Default::default(),
+            },
+            index: 0,
+        },
+        mmr_proof: Proof {
+            leaf_index: 0,
+            leaf_count: 0,
+            items: vec![],
+        },
+        authority_proof: vec![],
+    };
+
+    assert_eq!(
+        beef_light_client.ingest_mmr_root_with_proof(mmr_update),
+        Err(BeefyClientError::IncompleteSignatureThreshold)
+    );
+}
+
+#[test]
+fn should_fail_with_invalid_validator_set_id() {
+    let store = StorageMock::new();
+    let mut beef_light_client = BeefyLightClient::new(store);
+
+    let mmr_update = MmrUpdateProof {
+        signed_commitment: SignedCommitment {
+            commitment: beefy_primitives::Commitment {
+                payload: Payload::new(MMR_ROOT_ID, vec![0u8; 32]),
+                block_number: Default::default(),
+                validator_set_id: 3,
+            },
+            signatures: vec![
+                AuthoritySignature {
+                    index: 0,
+                    signature: [0u8; 65]
+                };
+                5
+            ],
+        },
+        latest_mmr_leaf_with_index: MmrLeafWithIndex {
+            leaf: MmrLeaf {
+                version: Default::default(),
+                parent_number_and_hash: (Default::default(), Default::default()),
+                beefy_next_authority_set: BeefyNextAuthoritySet {
+                    id: 0,
+                    len: 0,
+                    root: Default::default(),
+                },
+                parachain_heads: Default::default(),
+            },
+            index: 0,
+        },
+        mmr_proof: Proof {
+            leaf_index: 0,
+            leaf_count: 0,
+            items: vec![],
+        },
+        authority_proof: vec![],
+    };
+
+    assert_eq!(
+        beef_light_client.ingest_mmr_root_with_proof(mmr_update),
+        Err(BeefyClientError::InvalidMmrUpdate)
+    );
 }

@@ -15,9 +15,15 @@ pub type TSignature = [u8; 65];
 pub type Hash = [u8; 32];
 
 #[derive(Clone, sp_std::fmt::Debug, PartialEq, Eq, Encode, Decode)]
+pub struct AuthoritySignature {
+    pub signature: TSignature,
+    pub index: u32,
+}
+
+#[derive(Clone, sp_std::fmt::Debug, PartialEq, Eq, Encode, Decode)]
 pub struct SignedCommitment {
     pub commitment: beefy_primitives::Commitment<u32>,
-    pub signatures: Vec<Option<TSignature>>,
+    pub signatures: Vec<AuthoritySignature>,
 }
 
 #[derive(sp_std::fmt::Debug, Clone, Encode, Decode)]

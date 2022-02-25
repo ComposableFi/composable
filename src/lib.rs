@@ -23,7 +23,9 @@ mod tests;
 pub mod traits;
 
 use crate::error::BeefyClientError;
-use crate::primitives::{BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof, HASH_LENGTH};
+use crate::primitives::{
+    AuthoritySignature, BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof, HASH_LENGTH,
+};
 use crate::traits::{AuthoritySet, MmrState, StorageRead, StorageWrite};
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use codec::Encode;
@@ -43,6 +45,12 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
     pub fn new(store: Store) -> Self {
         Self { store }
     }
+
+    /// Return a reference to the underlying store
+    pub fn store_ref(&self) -> &Store {
+        &self.store
+    }
+
     /// This should verify the signed commitment signatures, and reconstruct the
     /// authority merkle root, confirming known authorities signed the [`crate::primitives::Commitment`]
     /// then using the mmr proofs, verify the latest mmr leaf,
@@ -61,7 +69,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
         if !validate_sigs_against_threshold(current_authority_set, signatures_len)
             && !validate_sigs_against_threshold(next_authority_set, signatures_len)
         {
-            return Err(BeefyClientError::InvalidMmrUpdate);
+            return Err(BeefyClientError::IncompleteSignatureThreshold);
         }
 
         if current_authority_set.id != validator_set_id && next_authority_set.id != validator_set_id
@@ -87,75 +95,63 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
             }
         };
 
-        let mut mmr_root_hash = [0u8; 32];
-        mmr_root_hash.copy_from_slice(mmr_root_vec);
-        let mmr_root_hash: H256 = mmr_root_hash.into();
+        let mmr_root_hash = H256::from_slice(&*mmr_root_vec);
 
         // Beefy validators sign the keccak_256 hash of the scale encoded commitment
         let encoded_commitment = mmr_update.signed_commitment.commitment.encode();
         let commitment_hash = keccak_256(&*encoded_commitment);
 
-        let authority_addresses_and_indices = mmr_update
+        let mut authority_indices = Vec::new();
+        let authority_leaves = mmr_update
             .signed_commitment
             .signatures
             .into_iter()
-            .enumerate()
-            .filter_map(|item| {
-                if let Some(sig) = item.1 {
-                    Some((item.0, sig))
-                } else {
-                    None
-                }
-            })
-            .map(|(idx, sig)| {
-                crypto::secp256k1_ecdsa_recover_compressed(&sig, &commitment_hash)
+            .map(|AuthoritySignature { index, signature }| {
+                crypto::secp256k1_ecdsa_recover_compressed(&signature, &commitment_hash)
                     .map(|public_key_bytes| {
                         beefy_primitives::crypto::AuthorityId::from_slice(&public_key_bytes).ok()
                     })
                     .ok()
                     .flatten()
-                    .map(|pub_key| (idx, beefy_mmr::BeefyEcdsaToEthereum::convert(pub_key)))
+                    .map(|pub_key| {
+                        authority_indices.push(index as usize);
+                        keccak_256(&beefy_mmr::BeefyEcdsaToEthereum::convert(pub_key))
+                    })
                     .ok_or_else(|| BeefyClientError::InvalidSignature)
             })
             .collect::<Result<Vec<_>, BeefyClientError>>()?;
 
         let mut authorities_changed = false;
 
-        let authority_leaf_indices = authority_addresses_and_indices
-            .iter()
-            .cloned()
-            .map(|x| x.0)
-            .collect::<Vec<_>>();
-        let authority_leaves = authority_addresses_and_indices
-            .into_iter()
-            .map(|x| keccak_256(&x.1))
-            .collect::<Vec<_>>();
-
         let authorities_merkle_proof =
             rs_merkle::MerkleProof::<KeccakHasher>::new(mmr_update.authority_proof);
 
         // Verify mmr_update.authority_proof against store root hash
-        if current_authority_set.id == validator_set_id {
-            let root_hash = current_authority_set.root;
-            if !authorities_merkle_proof.verify(
-                root_hash.into(),
-                &authority_leaf_indices,
-                &authority_leaves,
-                current_authority_set.len as usize,
-            ) {
-                return Err(BeefyClientError::InvalidAuthorityProof);
+        match validator_set_id {
+            id if id == current_authority_set.id => {
+                let root_hash = current_authority_set.root;
+                if !authorities_merkle_proof.verify(
+                    root_hash.into(),
+                    &authority_indices,
+                    &authority_leaves,
+                    current_authority_set.len as usize,
+                ) {
+                    return Err(BeefyClientError::InvalidAuthorityProof);
+                }
             }
-        } else if next_authority_set.id == validator_set_id {
-            let root_hash = next_authority_set.root;
-            if !authorities_merkle_proof.verify(
-                root_hash.into(),
-                &authority_leaf_indices,
-                &authority_leaves,
-                next_authority_set.len as usize,
-            ) {
-                return Err(BeefyClientError::InvalidAuthorityProof);
+            id if id == next_authority_set.id => {
+                let root_hash = next_authority_set.root;
+                if !authorities_merkle_proof.verify(
+                    root_hash.into(),
+                    &authority_indices,
+                    &authority_leaves,
+                    next_authority_set.len as usize,
+                ) {
+                    return Err(BeefyClientError::InvalidAuthorityProof);
+                }
+                authorities_changed = true;
             }
-            authorities_changed = true;
+            _ => return Err(BeefyClientError::InvalidMmrUpdate),
         }
 
         let latest_beefy_height = self.store.mmr_state()?.latest_beefy_height;
@@ -165,7 +161,6 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
         }
 
         // Move on to verify mmr_proof
-
         let node = pallet_mmr_primitives::DataOrHash::Data(
             mmr_update.latest_mmr_leaf_with_index.leaf.clone(),
         );

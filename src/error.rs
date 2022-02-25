@@ -9,6 +9,8 @@ pub enum BeefyClientError {
     DecodingError,
     /// Invalid Mmr Update
     InvalidMmrUpdate,
+    /// Incomplete Signature threshold
+    IncompleteSignatureThreshold,
     /// Error recovering public key from signature
     InvalidSignature,
     /// Some invalid merkle root hash
