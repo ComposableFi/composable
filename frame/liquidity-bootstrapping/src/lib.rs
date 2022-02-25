@@ -41,16 +41,14 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-mod maths;
-
 pub mod weights;
 
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use composable_maths::dex::constant_product::{compute_out_given_in, compute_spot_price};
 	use crate::{
-		maths::{compute_out_given_in, compute_spot_price},
 		weights::WeightInfo,
 	};
 	use codec::{Codec, FullCodec};
@@ -171,31 +169,31 @@ pub mod pallet {
 	impl<T: Config> Validate<PoolOf<T>, PoolIsValid<T>> for PoolIsValid<T> {
 		fn validate(input: PoolOf<T>) -> Result<PoolOf<T>, &'static str> {
 			if input.pair.base == input.pair.quote {
-				return Err("Pair elements must be distinct.");
+				return Err("Pair elements must be distinct.")
 			}
 
 			if input.sale.end <= input.sale.start {
-				return Err("Sale end must be after start.");
+				return Err("Sale end must be after start.")
 			}
 
 			if input.sale.duration() < T::MinSaleDuration::get() {
-				return Err("Sale duration must be greater than minimum duration.");
+				return Err("Sale duration must be greater than minimum duration.")
 			}
 
 			if input.sale.duration() > T::MaxSaleDuration::get() {
-				return Err("Sale duration must not exceed maximum duration.");
+				return Err("Sale duration must not exceed maximum duration.")
 			}
 
 			if input.sale.initial_weight < input.sale.final_weight {
-				return Err("Initial weight must be greater than final weight.");
+				return Err("Initial weight must be greater than final weight.")
 			}
 
 			if input.sale.initial_weight > T::MaxInitialWeight::get() {
-				return Err("Initial weight must not exceed the defined maximum.");
+				return Err("Initial weight must not exceed the defined maximum.")
 			}
 
 			if input.sale.final_weight < T::MinFinalWeight::get() {
-				return Err("Final weight must not be lower than the defined minimum.");
+				return Err("Final weight must not be lower than the defined minimum.")
 			}
 
 			Ok(input)
@@ -479,6 +477,7 @@ pub mod pallet {
 			T::PalletId::get().into_sub_account(pool_id)
 		}
 
+    #[allow(dead_code)]
 		pub(crate) fn do_spot_price(
 			pool_id: T::PoolId,
 			pair: CurrencyPair<AssetIdOf<T>>,
@@ -618,7 +617,8 @@ pub mod pallet {
 			ensure!(pool.owner == *who, Error::<T>::MustBeOwner);
 			ensure!(!base_amount.is_zero() && !quote_amount.is_zero(), Error::<T>::InvalidAmount);
 
-			// NOTE(hussein-aitlahcen): as we only allow the owner to provide liquidity, we don't mint any LP.
+			// NOTE(hussein-aitlahcen): as we only allow the owner to provide liquidity, we don't
+			// mint any LP.
 			let pool_account = Self::account_id(&pool_id);
 			T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
 			T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;

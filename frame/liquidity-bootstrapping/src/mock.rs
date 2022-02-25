@@ -6,7 +6,8 @@ use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, ConvertInto, IdentityLookup}, Permill,
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
+	Permill,
 };
 use system::EnsureRoot;
 
@@ -41,7 +42,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
-    CurrencyFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
+	CurrencyFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		LBP: pallet_liquidity_bootstrapping::{Pallet, Storage, Event<T>},
 	}
 );
@@ -119,14 +120,14 @@ impl pallet_liquidity_bootstrapping::Config for Test {
 	type Convert = ConvertInto;
 	type Assets = Tokens;
 	type PoolId = PoolId;
-  type LocalAssets = CurrencyFactory;
+	type LocalAssets = CurrencyFactory;
 	type PalletId = LBPId;
-  type MinSaleDuration = MinSaleDuration;
-  type MaxSaleDuration = MaxSaleDuration;
-  type MaxInitialWeight = MaxInitialWeight;
-  type MinFinalWeight = MinFinalWeight;
-  type WeightInfo = ();
-  type AdminOrigin = EnsureRoot<AccountId>;
+	type MinSaleDuration = MinSaleDuration;
+	type MaxSaleDuration = MaxSaleDuration;
+	type MaxInitialWeight = MaxInitialWeight;
+	type MinFinalWeight = MinFinalWeight;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureRoot<AccountId>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

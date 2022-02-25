@@ -1,14 +1,12 @@
 use crate::{mock::*, *};
 use composable_support::validation::Validated;
+use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 use composable_traits::{defi::CurrencyPair, dex::CurveAmm};
-use frame_support::assert_noop;
 use frame_support::{
-	assert_ok,
+	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
-use sp_runtime::DispatchError;
-use sp_runtime::Permill;
-use composable_tests_helpers::test::helper::default_acceptable_computation_error;
+use sp_runtime::{DispatchError, Permill};
 
 fn valid_pool() -> Validated<Pool<AccountId, BlockNumber, AssetId>, PoolIsValid<Test>> {
 	let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
@@ -107,12 +105,12 @@ mod create {
 }
 
 mod buy {
-  use super::*;
+	use super::*;
 
 	#[test]
 	fn can_buy_one_to_one() {
-    /* 50% weight = constant product, no fees.
-    */
+		/* 50% weight = constant product, no fees.
+		 */
 		let unit = 1_000_000_000_000;
 		let initial_project_tokens = 1_000_000 * unit;
 		let initial_usdt = 1_000_000 * unit;
@@ -132,7 +130,10 @@ mod buy {
 				// Buy project token
 				assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
 				assert_ok!(LBP::buy(Origin::signed(BOB), pool_id, pool.pair.base, unit, false));
-        assert_ok!(default_acceptable_computation_error(Tokens::balance(PROJECT_TOKEN, &BOB), unit));
+				assert_ok!(default_acceptable_computation_error(
+					Tokens::balance(PROJECT_TOKEN, &BOB),
+					unit
+				));
 			},
 		)
 	}

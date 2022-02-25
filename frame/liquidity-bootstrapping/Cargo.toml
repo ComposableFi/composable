@@ -30,6 +30,7 @@ rust_decimal = { version = "1", default-features = false, features = [ "maths" ]
 
 composable-traits = { path = "../composable-traits", default-features = false }
 composable-support = { path = "../composable-support", default-features = false }
+composable-maths = { path = "../composable-maths", default-features = false }
 
 plotters = { version = "0.3", optional = true }
 
