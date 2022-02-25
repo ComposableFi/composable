@@ -1,4 +1,4 @@
-use crate::primitives::{MmrLeafWithIndex, SignedCommitment};
+use crate::primitives::SignedCommitment;
 use crate::{runtime, BeefyLightClient, KeccakHasher, MmrUpdateProof, SignatureWithAuthorityIndex};
 use crate::{AuthoritySet, BeefyClientError, MmrState, StorageRead, StorageWrite, H256};
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
@@ -175,10 +175,7 @@ async fn test_ingest_mmr_with_proof() {
                     commitment: signed_commitment.commitment.clone(),
                     signatures,
                 },
-                latest_mmr_leaf_with_index: MmrLeafWithIndex {
-                    leaf: latest_leaf.clone(),
-                    index: leaf_index,
-                },
+                latest_mmr_leaf: latest_leaf.clone(),
                 mmr_proof,
                 authority_proof: authority_proof.proof_hashes().to_vec(),
             };
@@ -226,18 +223,15 @@ fn should_fail_with_incomplete_signature_threshold() {
                 2
             ],
         },
-        latest_mmr_leaf_with_index: MmrLeafWithIndex {
-            leaf: MmrLeaf {
-                version: Default::default(),
-                parent_number_and_hash: (Default::default(), Default::default()),
-                beefy_next_authority_set: BeefyNextAuthoritySet {
-                    id: 0,
-                    len: 0,
-                    root: Default::default(),
-                },
-                parachain_heads: Default::default(),
+        latest_mmr_leaf: MmrLeaf {
+            version: Default::default(),
+            parent_number_and_hash: (Default::default(), Default::default()),
+            beefy_next_authority_set: BeefyNextAuthoritySet {
+                id: 0,
+                len: 0,
+                root: Default::default(),
             },
-            index: 0,
+            parachain_heads: Default::default(),
         },
         mmr_proof: Proof {
             leaf_index: 0,
@@ -273,18 +267,15 @@ fn should_fail_with_invalid_validator_set_id() {
                 5
             ],
         },
-        latest_mmr_leaf_with_index: MmrLeafWithIndex {
-            leaf: MmrLeaf {
-                version: Default::default(),
-                parent_number_and_hash: (Default::default(), Default::default()),
-                beefy_next_authority_set: BeefyNextAuthoritySet {
-                    id: 0,
-                    len: 0,
-                    root: Default::default(),
-                },
-                parachain_heads: Default::default(),
+        latest_mmr_leaf: MmrLeaf {
+            version: Default::default(),
+            parent_number_and_hash: (Default::default(), Default::default()),
+            beefy_next_authority_set: BeefyNextAuthoritySet {
+                id: 0,
+                len: 0,
+                root: Default::default(),
             },
-            index: 0,
+            parachain_heads: Default::default(),
         },
         mmr_proof: Proof {
             leaf_index: 0,

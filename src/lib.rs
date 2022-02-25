@@ -161,9 +161,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
         }
 
         // Move on to verify mmr_proof
-        let node = pallet_mmr_primitives::DataOrHash::Data(
-            mmr_update.latest_mmr_leaf_with_index.leaf.clone(),
-        );
+        let node = pallet_mmr_primitives::DataOrHash::Data(mmr_update.latest_mmr_leaf.clone());
 
         pallet_mmr::verify_leaf_proof::<sp_runtime::traits::Keccak256, _>(
             mmr_root_hash.into(),
@@ -180,10 +178,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
         if authorities_changed {
             self.store.set_authority_set(AuthoritySet {
                 current_authorities: next_authority_set.clone(),
-                next_authorities: mmr_update
-                    .latest_mmr_leaf_with_index
-                    .leaf
-                    .beefy_next_authority_set,
+                next_authorities: mmr_update.latest_mmr_leaf.beefy_next_authority_set,
             })?;
         }
         Ok(())

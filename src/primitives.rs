@@ -4,12 +4,6 @@ use sp_core::H256;
 use sp_core_hashing::keccak_256;
 use sp_std::prelude::*;
 
-#[derive(sp_std::fmt::Debug, Clone, Encode, Decode)]
-pub struct MmrLeafWithIndex {
-    pub leaf: MmrLeaf<u32, H256, H256>, // see beefy_primitives
-    pub index: u64,
-}
-
 pub const HASH_LENGTH: usize = 32;
 pub type TSignature = [u8; 65];
 pub type Hash = [u8; 32];
@@ -29,7 +23,7 @@ pub struct SignedCommitment {
 #[derive(sp_std::fmt::Debug, Clone, Encode, Decode)]
 pub struct MmrUpdateProof {
     pub signed_commitment: SignedCommitment,
-    pub latest_mmr_leaf_with_index: MmrLeafWithIndex,
+    pub latest_mmr_leaf: MmrLeaf<u32, H256, H256>,
     pub mmr_proof: pallet_mmr_primitives::Proof<H256>,
     pub authority_proof: Vec<Hash>,
 }
