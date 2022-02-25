@@ -427,20 +427,21 @@ fn curve_graph() {
 	new_test_ext().execute_with(|| {
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 5_u128 * unit;
-		let initial_usdc = 5_u128 * unit;
+		let initial_usdc = initial_usdt;
 		let pool_id = create_pool(
 			USDC,
 			USDT,
 			initial_usdc,
 			initial_usdt,
-			100_u16,
+			5_u16,
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let max_base = (initial_usdt + initial_usdc);
-		let max_quote = (initial_usdt + initial_usdc);
+		let window = 15u128;
+		let max_base = (initial_usdt + window * unit) as f64 / unit as f64;
+		let max_quote = max_base;
 		let pool_account = StableSwap::account_id(&pool_id);
-		let range: Vec<u128> = (0..15_u128).collect();
+		let range: Vec<u128> = (0..window).collect();
 
 		let quote_balance = Tokens::balance(USDT, &pool_account);
 		let base_balance = Tokens::balance(USDC, &pool_account);
@@ -451,8 +452,10 @@ fn curve_graph() {
 				Tokens::mint_into(USDC, &BOB, amount);
 				let _base = <StableSwap as CurveAmm>::sell(&BOB, pool_id, USDC, amount, true)
 					.expect("impossible; qed;");
-				let pool_sell_asset_balance = Tokens::balance(USDC, &pool_account);
-				let pool_buy_asset_balance = Tokens::balance(USDT, &pool_account);
+				let pool_sell_asset_balance =
+					Tokens::balance(USDC, &pool_account) as f64 / unit as f64;
+				let pool_buy_asset_balance =
+					Tokens::balance(USDT, &pool_account) as f64 / unit as f64;
 				(pool_buy_asset_balance, pool_sell_asset_balance)
 			})
 			.collect::<Vec<_>>();
@@ -461,7 +464,7 @@ fn curve_graph() {
 			USDT,
 			initial_usdc,
 			initial_usdt,
-			100_u16,
+			5_u16,
 			Permill::zero(),
 			Permill::zero(),
 		);
@@ -473,12 +476,14 @@ fn curve_graph() {
 				Tokens::mint_into(USDT, &BOB, amount);
 				let _base = <StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, amount, true)
 					.expect("impossible; qed;");
-				let pool_sell_asset_balance = Tokens::balance(USDT, &pool_account);
-				let pool_buy_asset_balance = Tokens::balance(USDC, &pool_account);
+				let pool_sell_asset_balance =
+					Tokens::balance(USDC, &pool_account) as f64 / unit as f64;
+				let pool_buy_asset_balance =
+					Tokens::balance(USDT, &pool_account) as f64 / unit as f64;
 				(pool_buy_asset_balance, pool_sell_asset_balance)
 			})
 			.collect::<Vec<_>>();
-		let points: Vec<(u128, u128)> = points1.into_iter().chain(points2.into_iter()).collect();
+		let points: Vec<_> = points1.into_iter().rev().chain(points2.into_iter()).collect();
 		use plotters::prelude::*;
 		let area = BitMapBackend::new("./curve_graph.png", (1024, 768)).into_drawing_area();
 		area.fill(&WHITE).unwrap();
@@ -488,7 +493,7 @@ fn curve_graph() {
 			.margin(100u32)
 			.x_label_area_size(30u32)
 			.y_label_area_size(30u32)
-			.build_cartesian_2d(0_u128..max_base, 0_u128..max_quote)
+			.build_cartesian_2d(0f64..max_base as f64, 0f64..max_quote as f64)
 			.unwrap();
 
 		chart

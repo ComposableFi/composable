@@ -104,7 +104,7 @@ impl pallet_balances::Config for Test {
 pub type Balance = u128;
 pub type AssetId = u128;
 pub type Amount = i128;
-pub type PoolId = u32;
+pub type PoolId = u128;
 
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: AssetId| -> Balance {
