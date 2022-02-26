@@ -70,7 +70,7 @@ pub mod pallet {
 		traits::{AccountIdConversion, CheckedAdd, Convert, One, Zero},
 		ArithmeticError, Permill,
 	};
-	use sp_std::fmt::Debug;
+	use sp_std::{fmt::Debug, ops::Mul};
 
 	type PoolOf<T> =
 		StableSwapPoolInfo<<T as frame_system::Config>::AccountId, <T as Config>::AssetId>;
@@ -377,16 +377,9 @@ pub mod pallet {
 				// fees as a swap. Otherwise, one could exchange w/o paying fees.
 				// And this formula leads to exactly that equality
 				// fee = pool.fee * n_coins / (4 * (n_coins - 1))
-				let one = T::Convert::convert(1_u128);
-				let four = T::Convert::convert(4_u128);
 				// pool supports only two coins.
-				let n = T::Convert::convert(2_u128);
-				let share: u128 =
-					T::Convert::convert(n.safe_div(&four.safe_mul(&n.safe_sub(&one)?)?)?);
-				let fee = pool.fee.mul_floor(share);
-				let protocol_fee = pool.protocol_fee.mul_floor(fee);
-				let fee = T::Convert::convert(fee);
-				let protocol_fee = T::Convert::convert(protocol_fee);
+				let share: Permill = Permill::from_rational(2_u32, 4_u32);
+				let fee = pool.fee.mul(share);
 
 				let ideal_base_balance = T::Convert::convert(safe_multiply_by_rational(
 					T::Convert::convert(d1),
@@ -402,10 +395,13 @@ pub mod pallet {
 				let base_difference = Self::abs_difference(ideal_base_balance, new_base_amount)?;
 				let quote_difference = Self::abs_difference(ideal_quote_balance, new_quote_amount)?;
 
-				let base_fee = fee.safe_mul(&base_difference)?;
-				let quote_fee = fee.safe_mul(&quote_difference)?;
-				let base_protocol_fee = protocol_fee.safe_mul(&base_fee)?;
-				let quote_protocol_fee = protocol_fee.safe_mul(&quote_fee)?;
+				let base_fee = fee.mul_floor(T::Convert::convert(base_difference));
+				let quote_fee = fee.mul_floor(T::Convert::convert(quote_difference));
+				let base_protocol_fee = T::Convert::convert(pool.protocol_fee.mul_floor(base_fee));
+				let quote_protocol_fee =
+					T::Convert::convert(pool.protocol_fee.mul_floor(quote_fee));
+				let base_fee = T::Convert::convert(base_fee);
+				let quote_fee = T::Convert::convert(quote_fee);
 				let new_base_balance = new_base_amount.safe_sub(&base_fee)?;
 				let new_quote_balance = new_quote_amount.safe_sub(&quote_fee)?;
 
