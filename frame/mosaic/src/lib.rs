@@ -13,6 +13,8 @@ mod relayer;
 mod benchmarking;
 pub mod weights;
 
+pub use crate::weights::WeightInfo;
+
 pub use decay::{BudgetPenaltyDecayer, Decayer};
 pub use pallet::*;
 
