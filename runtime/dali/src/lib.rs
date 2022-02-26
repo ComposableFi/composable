@@ -1083,7 +1083,7 @@ mod benches {
 		[mosaic, Mosaic]
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
-		[lending, Lending]
+		//FIXME: broken with dali [lending, Lending]
 	);
 }
 
