@@ -80,6 +80,42 @@ jobs:
           files: lcov.info
           fail_ci_if_error: false
   
+  substrate-runtime-benchmark:
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: benchmarking-runtime-compat-${{ matrix.runtime }}-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: paritytech/ci-linux:production      
+    strategy:
+      matrix:
+        runtime: ["dali-dev", "picasso-dev", "composable-dev"]
+    name: Benchmarking / ${{ matrix.runtime }}
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+      - name: Run single pass benchmarking
+        run: |
+          cargo build --release -p composable --features=runtime-benchmarks
+          ./target/release/composable benchmark \
+            --chain="${{ matrix.runtime }}" \
+            --execution=wasm \
+            --wasm-execution=compiled \
+            --pallet="*" \
+            --extrinsic='*' \
+            --steps=1 \
+            --repeat=1 \
+            --raw \
+            --log error
+
   substrate-tests:
     name: Unit Tests 
     runs-on:
