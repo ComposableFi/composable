@@ -1125,7 +1125,7 @@ mod benches {
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
 		//FIXME: broken with dali [lending, Lending]
-    //	[lending, Lending]
+	//	[lending, Lending]
 	  [uniswap_v2, ConstantProductDex]
 	  [curve_amm, StableSwapDex]
 	);
