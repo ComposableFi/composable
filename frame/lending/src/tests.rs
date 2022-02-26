@@ -912,8 +912,8 @@ fn test_market_created_event() {
 		#[allow(non_camel_case_types)]
 		type ASSET_2 = Currency<987_654_321, 12>;
 
-		set_price(ASSET_1::ID, 50_000 * NORAMLIZED::one());
-		set_price(ASSET_2::ID, NORAMLIZED::one());
+		set_price(ASSET_1::ID, 50_000 * NORMALIZED::one());
+		set_price(ASSET_2::ID, NORMALIZED::one());
 
 		Tokens::mint_into(ASSET_1::ID, &*ALICE, ASSET_1::units(1000)).unwrap();
 		Tokens::mint_into(ASSET_2::ID, &*ALICE, ASSET_2::units(100)).unwrap();
