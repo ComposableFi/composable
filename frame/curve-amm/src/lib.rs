@@ -44,7 +44,9 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 mod maths;
-mod weights;
+
+pub mod weights;
+pub use crate::weights::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {

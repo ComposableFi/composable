@@ -976,7 +976,7 @@ impl uniswap_v2::Config for Runtime {
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type PalletId = ConstantProductPalletId;
-	type WeightInfo = ();
+	type WeightInfo = weights::uniswap_v2::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -992,7 +992,7 @@ impl curve_amm::Config for Runtime {
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type PalletId = StableSwapPalletId;
-	type WeightInfo = ();
+	type WeightInfo = weights::curve_amm::WeightInfo<Runtime>;
 }
 
 construct_runtime!(
