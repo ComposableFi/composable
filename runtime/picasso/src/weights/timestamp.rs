@@ -33,11 +33,11 @@ impl<T: frame_system::Config> timestamp::WeightInfo for WeightInfo<T> {
 	// Storage: Timestamp Now (r:1 w:1)
 	// Storage: Aura CurrentSlot (r:1 w:0)
 	fn set() -> Weight {
-		(13_840_000 as Weight)
+		(12_195_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	fn on_finalize() -> Weight {
-		(6_899_000 as Weight)
+		(5_746_000 as Weight)
 	}
 }

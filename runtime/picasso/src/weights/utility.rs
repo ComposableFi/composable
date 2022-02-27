@@ -31,19 +31,19 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	fn batch(c: u32, ) -> Weight {
-		(8_260_000 as Weight)
-			// Standard Error: 7_000
-			.saturating_add((6_284_000 as Weight).saturating_mul(c as Weight))
+		(17_834_000 as Weight)
+			// Standard Error: 4_000
+			.saturating_add((6_330_000 as Weight).saturating_mul(c as Weight))
 	}
 	fn as_derivative() -> Weight {
-		(4_509_000 as Weight)
+		(4_446_000 as Weight)
 	}
 	fn batch_all(c: u32, ) -> Weight {
-		(38_607_000 as Weight)
-			// Standard Error: 9_000
-			.saturating_add((6_763_000 as Weight).saturating_mul(c as Weight))
+		(27_064_000 as Weight)
+			// Standard Error: 2_000
+			.saturating_add((6_804_000 as Weight).saturating_mul(c as Weight))
 	}
 	fn dispatch_as() -> Weight {
-		(19_332_000 as Weight)
+		(19_319_000 as Weight)
 	}
 }
