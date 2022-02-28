@@ -40,6 +40,24 @@ impl<T: frame_system::Config> curve_amm::WeightInfo for WeightInfo<T> {
 	}
 	// Storage: StableSwapDex Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
+	// Storage: Tokens TotalIssuance (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	fn add_liquidity() -> Weight {
+		(176_969_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(8 as Weight))
+			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+	}
+	// Storage: StableSwapDex Pools (r:1 w:0)
+	// Storage: Tokens Accounts (r:5 w:5)
+	// Storage: Tokens TotalIssuance (r:1 w:1)
+	// Storage: System Account (r:1 w:0)
+	fn remove_liquidity() -> Weight {
+		(121_423_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(8 as Weight))
+			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+	}
+	// Storage: StableSwapDex Pools (r:1 w:0)
+	// Storage: Tokens Accounts (r:5 w:5)
 	// Storage: System Account (r:2 w:1)
 	fn buy() -> Weight {
 		(297_559_000 as Weight)
@@ -62,12 +80,4 @@ impl<T: frame_system::Config> curve_amm::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
-
-    fn add_liquidity() -> Weight {
-        10_000
-    }
-
-    fn remove_liquidity() -> Weight {
-        10_000
-    }
 }

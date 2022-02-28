@@ -51,7 +51,7 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	fn execute(b: u32, m: u32, ) -> Weight {
 		(27_127_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((3_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add((4_000 as Weight).saturating_mul(b as Weight))
 			// Standard Error: 0
 			.saturating_add((128_000 as Weight).saturating_mul(m as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
