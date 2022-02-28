@@ -52,7 +52,7 @@ in {
         serviceConfig = {
           Type = "simple";
           User = "root";
-          ExecStart = "${devnet}/bin/run-${composable.spec}";
+          ExecStart = "${devnet.script}/bin/run-${composable.spec}";
           Restart = "always";
           RuntimeMaxSec = "86400"; # 1 day lease period for rococo, restart it
         };
@@ -80,7 +80,7 @@ in {
         };
       };
       services.nginx =
-        let virtualConfig =
+        let mk-virtual-config = virtualhost-domain:
               let
                 routify-nodes = prefix:
                   map (node: (node // {
@@ -92,9 +92,18 @@ in {
                   routify-nodes "relaychain/" polkadot.nodes;
                 routified-nodes =
                   routified-composable-nodes ++ routified-polkadot-nodes;
+                index = pkgs.writeText "index.html" ''
+                '';
               in
                 {
-                  locations = builtins.foldl' (x: y: x // y) {} (map (node: {
+                  locations = builtins.foldl' (x: y: x // y) {
+                    "= /doc/" = {
+                      return = "301 https://${virtualhost-domain}/doc/composable/index.html";
+                    };
+                    "/doc/" = {
+                      root = devnet.documentation;
+                    };
+                  } (map (node: {
                     "/${node.name}" = {
                       proxyPass = "http://127.0.0.1:${builtins.toString node.wsPort}";
                       proxyWebsockets = true;
@@ -105,11 +114,16 @@ in {
                     };
                   }) routified-nodes);
                 };
+            full-domain = "${domain}.loca.lt";
+            full-domain-latest = "${domain-latest}.loca.lt";
         in {
           enable = true;
+          enableReload = true;
+          recommendedOptimisation = true;
+          recommendedGzipSettings = true;
           serverNamesHashBucketSize = 128;
-          virtualHosts."${domain}.loca.lt" = virtualConfig;
-          virtualHosts."${domain-latest}.loca.lt" = virtualConfig;
+          virtualHosts."${full-domain}" = mk-virtual-config full-domain;
+          virtualHosts."${full-domain-latest}" = mk-virtual-config full-domain-latest;
         };
     };
 }

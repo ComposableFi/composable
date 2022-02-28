@@ -14,7 +14,7 @@
         (if builtins.pathExists ./devnet.json
          then builtins.fromJSON (builtins.readFile ./devnet.json)
          else throw "Devnet `devnet.json` definition missing, please follow the README.md instructions.");
-      mk-composable = spec: { name, version, hash}: {
+      mk-composable = spec: { name, version, hash }: {
         inherit name;
         inherit version;
         inherit spec;
@@ -95,14 +95,14 @@
       (system:
         let pkgs = import nixpkgs { inherit system; };
         in rec {
-          packages.devnet-dali = pkgs.callPackage ./devnet.nix {
+          packages.devnet-dali = (pkgs.callPackage ./devnet.nix {
             inherit (latest-dali) composable;
             inherit (latest-dali) polkadot;
-          };
-          packages.devnet-picasso = pkgs.callPackage ./devnet.nix {
+          }).script;
+          packages.devnet-picasso = (pkgs.callPackage ./devnet.nix {
             inherit (latest-picasso) composable;
             inherit (latest-picasso) polkadot;
-          };
+          }).script;
           packages.localtunnel = pkgs.mkYarnPackage rec {
             name = "localtunnel";
             src = localtunnel-src;
