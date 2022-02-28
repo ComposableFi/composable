@@ -10,7 +10,7 @@ use sp_runtime::{
 };
 use system::EnsureRoot;
 
-type AssetId = u128;
+pub type AssetId = u128;
 
 pub const BTC: AssetId = 0;
 pub const USDT: AssetId = 1;

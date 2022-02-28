@@ -62,4 +62,12 @@ impl<T: frame_system::Config> curve_amm::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
+
+    fn add_liquidity() -> Weight {
+        10_000
+    }
+
+    fn remove_liquidity() -> Weight {
+        10_000
+    }
 }

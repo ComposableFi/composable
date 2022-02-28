@@ -217,6 +217,64 @@ fn add_lp_imbalanced() {
 	});
 }
 
+#[test]
+fn add_lp_with_min_expected_amount() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = 1_000_000_000_000_u128 * unit;
+		let initial_usdc = 1_000_000_000_000_u128 * unit;
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			100_u16,
+			Permill::zero(),
+			Permill::zero(),
+		);
+		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let bob_usdc = 1000 * unit;
+		let bob_usdt = 1000 * unit;
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
+		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
+
+		let lp = Tokens::balance(pool.lp_token, &BOB);
+		assert_eq!(lp, 0_u128);
+		let expected_min_value = bob_usdt + bob_usdc;
+		// Add the liquidity in balanced way
+		assert_ok!(<StableSwap as CurveAmm>::add_liquidity(
+			&BOB,
+			pool_id,
+			bob_usdc,
+			bob_usdt,
+			expected_min_value,
+			false
+		));
+		let lp = Tokens::balance(pool.lp_token, &BOB);
+		// must have received some lp tokens
+		assert!(lp > 0_u128);
+
+		let bob_usdc = 1000 * unit;
+		let bob_usdt = 900 * unit;
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
+		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
+		// Add the liquidity in imbalanced way, but have expected_min_value higher
+		assert_err!(
+			<StableSwap as CurveAmm>::add_liquidity(
+				&BOB,
+				pool_id,
+				bob_usdc,
+				bob_usdt,
+				expected_min_value,
+				false
+			),
+			crate::Error::<Test>::CannotRespectMinimumRequested
+		);
+	});
+}
+
 //
 // - test error if trying to remove > lp than we have
 #[test]
@@ -249,6 +307,67 @@ fn remove_lp_failure() {
 		assert_err!(
 			<StableSwap as CurveAmm>::remove_liquidity(&BOB, pool_id, lp + 1, 0, 0),
 			TokenError::NoFunds
+		);
+		let min_expected_usdt = 1001 * unit;
+		let min_expected_usdc = 1001 * unit;
+		assert_err!(
+			<StableSwap as CurveAmm>::remove_liquidity(
+				&BOB,
+				pool_id,
+				lp,
+				min_expected_usdc,
+				min_expected_usdt
+			),
+			crate::Error::<Test>::CannotRespectMinimumRequested
+		);
+	});
+}
+
+//
+// - test exchange failure
+#[test]
+fn exchange_failure() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = 1_000_000_u128 * unit;
+		let initial_usdc = 1_000_000_u128 * unit;
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			100_u16,
+			Permill::zero(),
+			Permill::zero(),
+		);
+		let bob_usdc = 1000 * unit;
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
+
+		let exchange_usdc = 1001 * unit;
+		assert_err!(
+			<StableSwap as CurveAmm>::exchange(
+				&BOB,
+				pool_id,
+				CurrencyPair::new(USDT, USDC),
+				exchange_usdc,
+				0,
+				false
+			),
+			orml_tokens::Error::<Test>::BalanceTooLow
+		);
+		let exchange_value = 1000 * unit;
+		let expected_value = 1001 * unit;
+		assert_err!(
+			<StableSwap as CurveAmm>::exchange(
+				&BOB,
+				pool_id,
+				CurrencyPair::new(USDT, USDC),
+				exchange_value,
+				expected_value,
+				false
+			),
+			crate::Error::<Test>::CannotRespectMinimumRequested
 		);
 	});
 }
@@ -345,34 +464,6 @@ fn high_slippage() {
 		assert_ok!(<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, bob_usdt, false));
 		let usdc_balance = Tokens::balance(USDC, &BOB);
 		assert!((bob_usdt - usdc_balance) > 5_u128);
-	});
-}
-
-// do exchange when pool does not have enough balance
-#[test]
-fn low_balance_pool() {
-	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
-		let initial_usdt = 1_000_u128 * unit;
-		let initial_usdc = 1_000_u128 * unit;
-		let pool_id = create_pool(
-			USDC,
-			USDT,
-			initial_usdc,
-			initial_usdt,
-			100_u16,
-			Permill::zero(),
-			Permill::zero(),
-		);
-		let bob_usdt = 1_000_u128 * unit;
-		// Mint the tokens
-		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-		// pool's USDC will be very low after this sell
-		assert_ok!(<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, bob_usdt, false));
-		assert_err!(
-			<StableSwap as CurveAmm>::sell(&BOB, pool_id, USDT, bob_usdt, false),
-			orml_tokens::Error::<Test>::BalanceTooLow
-		);
 	});
 }
 

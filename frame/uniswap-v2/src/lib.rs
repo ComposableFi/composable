@@ -301,6 +301,46 @@ pub mod pallet {
 			)?;
 			Ok(())
 		}
+
+		#[pallet::weight(T::WeightInfo::add_liquidity())]
+		pub fn add_liquidity(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			base_amount: T::Balance,
+			quote_amount: T::Balance,
+			min_mint_amount: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as CurveAmm>::add_liquidity(
+				&who,
+				pool_id,
+				base_amount,
+				quote_amount,
+				min_mint_amount,
+				keep_alive,
+			)?;
+			Ok(())
+		}
+
+		#[pallet::weight(T::WeightInfo::remove_liquidity())]
+		pub fn remove_liquidity(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			lp_amount: T::Balance,
+			min_base_amount: T::Balance,
+			min_quote_amount: T::Balance,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as CurveAmm>::remove_liquidity(
+				&who,
+				pool_id,
+				lp_amount,
+				min_base_amount,
+				min_quote_amount,
+			)?;
+			Ok(())
+		}
 	}
 
 	impl<T: Config> CurveAmm for Pallet<T> {

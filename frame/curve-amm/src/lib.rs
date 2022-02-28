@@ -150,7 +150,6 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		AssetAmountMustBePositiveNumber,
-		RequiredAmountNotReached,
 		InvalidFees,
 		InvalidPair,
 		PoolNotFound,
@@ -274,6 +273,46 @@ pub mod pallet {
 				quote_amount,
 				min_receive,
 				keep_alive,
+			)?;
+			Ok(())
+		}
+
+		#[pallet::weight(T::WeightInfo::add_liquidity())]
+		pub fn add_liquidity(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			base_amount: T::Balance,
+			quote_amount: T::Balance,
+			min_mint_amount: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as CurveAmm>::add_liquidity(
+				&who,
+				pool_id,
+				base_amount,
+				quote_amount,
+				min_mint_amount,
+				keep_alive,
+			)?;
+			Ok(())
+		}
+
+		#[pallet::weight(T::WeightInfo::remove_liquidity())]
+		pub fn remove_liquidity(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			lp_amount: T::Balance,
+			min_base_amount: T::Balance,
+			min_quote_amount: T::Balance,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as CurveAmm>::remove_liquidity(
+				&who,
+				pool_id,
+				lp_amount,
+				min_base_amount,
+				min_quote_amount,
 			)?;
 			Ok(())
 		}
@@ -417,7 +456,7 @@ pub mod pallet {
 				(d1, T::Balance::zero(), T::Balance::zero())
 			};
 
-			ensure!(mint_amount >= min_mint_amount, Error::<T>::RequiredAmountNotReached);
+			ensure!(mint_amount >= min_mint_amount, Error::<T>::CannotRespectMinimumRequested);
 
 			T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
 			T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
