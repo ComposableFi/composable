@@ -57,7 +57,7 @@ pub mod pallet {
 	use composable_traits::{
 		currency::{CurrencyFactory, RangeId},
 		defi::CurrencyPair,
-		dex::{CurveAmm, StableSwapPoolInfo},
+		dex::{Amm, StableSwapPoolInfo},
 		math::{safe_multiply_by_rational, SafeArithmetic},
 	};
 	use frame_support::{
@@ -239,7 +239,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
 			Ok(())
 		}
 
@@ -252,7 +252,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
 			Ok(())
 		}
 
@@ -266,7 +266,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::exchange(
+			let _ = <Self as Amm>::exchange(
 				&who,
 				pool_id,
 				pair,
@@ -287,7 +287,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::add_liquidity(
+			let _ = <Self as Amm>::add_liquidity(
 				&who,
 				pool_id,
 				base_amount,
@@ -307,7 +307,7 @@ pub mod pallet {
 			min_quote_amount: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::remove_liquidity(
+			let _ = <Self as Amm>::remove_liquidity(
 				&who,
 				pool_id,
 				lp_amount,
@@ -318,7 +318,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> CurveAmm for Pallet<T> {
+	impl<T: Config> Amm for Pallet<T> {
 		type AssetId = T::AssetId;
 		type Balance = T::Balance;
 		type AccountId = T::AccountId;

@@ -2,7 +2,7 @@ use crate::mock::*;
 use composable_tests_helpers::test::helper::{
 	acceptable_computation_error, default_acceptable_computation_error,
 };
-use composable_traits::{defi::CurrencyPair, dex::CurveAmm};
+use composable_traits::{defi::CurrencyPair, dex::Amm};
 use frame_support::{
 	assert_err, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
@@ -38,14 +38,7 @@ fn create_pool(
 	assert_ok!(Tokens::mint_into(quote_asset, &ALICE, quote_amount));
 
 	// Add the liquidity
-	assert_ok!(<Uni as CurveAmm>::add_liquidity(
-		&ALICE,
-		pool_id,
-		base_amount,
-		quote_amount,
-		0,
-		false
-	));
+	assert_ok!(<Uni as Amm>::add_liquidity(&ALICE, pool_id, base_amount, quote_amount, 0, false));
 	pool_id
 }
 
@@ -86,7 +79,7 @@ fn test() {
 		let initial_user_invariant = current_product(ALICE);
 
 		// Add the liquidity
-		assert_ok!(<Uni as CurveAmm>::add_liquidity(
+		assert_ok!(<Uni as Amm>::add_liquidity(
 			&ALICE,
 			pool_id,
 			initial_btc,
@@ -96,8 +89,7 @@ fn test() {
 		));
 
 		// 1 unit of btc = 45k + some unit of usdt
-		let ratio =
-			<Uni as CurveAmm>::get_exchange_value(pool_id, BTC, unit).expect("impossible; qed;");
+		let ratio = <Uni as Amm>::get_exchange_value(pool_id, BTC, unit).expect("impossible; qed;");
 		assert!(ratio > (initial_usdt / initial_btc) * unit);
 
 		let initial_pool_invariant = current_pool_product();
@@ -108,7 +100,7 @@ fn test() {
 		let swap_btc = unit;
 		assert_ok!(Tokens::mint_into(BTC, &BOB, swap_btc));
 
-		<Uni as CurveAmm>::sell(&BOB, pool_id, BTC, swap_btc, false).expect("impossible; qed;");
+		<Uni as Amm>::sell(&BOB, pool_id, BTC, swap_btc, false).expect("impossible; qed;");
 
 		let new_pool_invariant = current_pool_product();
 		assert_ok!(default_acceptable_computation_error(
@@ -116,7 +108,7 @@ fn test() {
 			new_pool_invariant
 		));
 
-		<Uni as CurveAmm>::buy(&BOB, pool_id, BTC, swap_btc, false).expect("impossible; qed;");
+		<Uni as Amm>::buy(&BOB, pool_id, BTC, swap_btc, false).expect("impossible; qed;");
 
 		let precision = 100;
 		let epsilon = 5;
@@ -130,7 +122,7 @@ fn test() {
 		));
 
 		let lp = Tokens::balance(pool.lp_token, &ALICE);
-		assert_ok!(<Uni as CurveAmm>::remove_liquidity(&ALICE, pool_id, lp, 0, 0));
+		assert_ok!(<Uni as Amm>::remove_liquidity(&ALICE, pool_id, lp, 0, 0));
 
 		// Alice should get back a different amount of tokens.
 		let alice_btc = Tokens::balance(BTC, &ALICE);
@@ -160,11 +152,11 @@ fn add_remove_lp() {
 		let lp = Tokens::balance(pool.lp_token, &BOB);
 		assert_eq!(lp, 0_u128);
 		// Add the liquidity
-		assert_ok!(<Uni as CurveAmm>::add_liquidity(&BOB, pool_id, bob_btc, bob_usdt, 0, false));
+		assert_ok!(<Uni as Amm>::add_liquidity(&BOB, pool_id, bob_btc, bob_usdt, 0, false));
 		let lp = Tokens::balance(pool.lp_token, &BOB);
 		// must have received some lp tokens
 		assert!(lp > 0_u128);
-		assert_ok!(<Uni as CurveAmm>::remove_liquidity(&BOB, pool_id, lp, 0, 0));
+		assert_ok!(<Uni as Amm>::remove_liquidity(&BOB, pool_id, lp, 0, 0));
 		let lp = Tokens::balance(pool.lp_token, &BOB);
 		// all lp tokens must have been burnt
 		assert_eq!(lp, 0_u128);
@@ -190,22 +182,16 @@ fn remove_lp_failure() {
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 
 		// Add the liquidity
-		assert_ok!(<Uni as CurveAmm>::add_liquidity(&BOB, pool_id, bob_btc, bob_usdt, 0, false));
+		assert_ok!(<Uni as Amm>::add_liquidity(&BOB, pool_id, bob_btc, bob_usdt, 0, false));
 		let lp = Tokens::balance(pool.lp_token, &BOB);
 		assert_err!(
-			<Uni as CurveAmm>::remove_liquidity(&BOB, pool_id, lp + 1, 0, 0),
+			<Uni as Amm>::remove_liquidity(&BOB, pool_id, lp + 1, 0, 0),
 			TokenError::NoFunds
 		);
 		let min_expected_btc = (bob_btc + 1) * unit;
 		let min_expected_usdt = (bob_usdt + 1) * unit;
 		assert_err!(
-			<Uni as CurveAmm>::remove_liquidity(
-				&BOB,
-				pool_id,
-				lp,
-				min_expected_btc,
-				min_expected_usdt
-			),
+			<Uni as Amm>::remove_liquidity(&BOB, pool_id, lp, min_expected_btc, min_expected_usdt),
 			crate::Error::<Test>::CannotRespectMinimumRequested
 		);
 	});
@@ -228,7 +214,7 @@ fn exchange_failure() {
 
 		let exchange_btc = 100_u128 * unit;
 		assert_err!(
-			<Uni as CurveAmm>::exchange(
+			<Uni as Amm>::exchange(
 				&BOB,
 				pool_id,
 				CurrencyPair::new(USDT, BTC),
@@ -241,7 +227,7 @@ fn exchange_failure() {
 		let exchange_value = 10 * unit;
 		let expected_value = exchange_value * btc_price + 1;
 		assert_err!(
-			<Uni as CurveAmm>::exchange(
+			<Uni as Amm>::exchange(
 				&BOB,
 				pool_id,
 				CurrencyPair::new(USDT, BTC),
@@ -271,7 +257,7 @@ fn high_slippage() {
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(BTC, &BOB, bob_btc));
 
-		assert_ok!(<Uni as CurveAmm>::sell(&BOB, pool_id, BTC, bob_btc, false));
+		assert_ok!(<Uni as Amm>::sell(&BOB, pool_id, BTC, bob_btc, false));
 		let usdt_balance = Tokens::balance(USDT, &BOB);
 		let idea_usdt_balance = bob_btc * btc_price;
 		assert!((idea_usdt_balance - usdt_balance) > 5_u128);

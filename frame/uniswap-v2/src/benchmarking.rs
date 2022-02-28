@@ -1,6 +1,6 @@
 use super::*;
 use crate::Pallet as Uni;
-use composable_traits::{defi::CurrencyPair, dex::CurveAmm};
+use composable_traits::{defi::CurrencyPair, dex::Amm};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	assert_ok,
@@ -62,7 +62,7 @@ benchmarks! {
 	  assert_ok!(T::Assets::mint_into(btc, &owner, initial_btc));
 	  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
 	  // Add the liquidity
-	  assert_ok!(<Uni<T> as CurveAmm>::add_liquidity(
+	  assert_ok!(<Uni<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_btc,
@@ -94,7 +94,7 @@ benchmarks! {
 	  assert_ok!(T::Assets::mint_into(btc, &owner, initial_btc));
 	  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
 	  // Add the liquidity
-	  assert_ok!(<Uni<T> as CurveAmm>::add_liquidity(
+	  assert_ok!(<Uni<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_btc,
@@ -103,7 +103,7 @@ benchmarks! {
 			  false
 	  ));
 	  let user = account("user", 0, 0);
-	  let price = <Uni<T> as CurveAmm>::get_exchange_value(pool_id, btc, unit.into())?;
+	  let price = <Uni<T> as Amm>::get_exchange_value(pool_id, btc, unit.into())?;
 	  assert_ok!(T::Assets::mint_into(usdt, &user, price));
 	  // buy 1 btc
   }: _(RawOrigin::Signed(user), pool_id, btc, unit.into(), false)
@@ -128,7 +128,7 @@ benchmarks! {
 	  assert_ok!(T::Assets::mint_into(btc, &owner, initial_btc));
 	  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
 	  // Add the liquidity
-	  assert_ok!(<Uni<T> as CurveAmm>::add_liquidity(
+	  assert_ok!(<Uni<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_btc,
@@ -161,7 +161,7 @@ benchmarks! {
 	  assert_ok!(T::Assets::mint_into(btc, &owner, initial_btc));
 	  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
 	  // Add the liquidity
-	  assert_ok!(<Uni<T> as CurveAmm>::add_liquidity(
+	  assert_ok!(<Uni<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_btc,

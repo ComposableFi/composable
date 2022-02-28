@@ -2,12 +2,12 @@ use crate::{mock::*, Error};
 use composable_tests_helpers::test::helper::acceptable_computation_error;
 use composable_traits::{
 	defi::CurrencyPair,
-	dex::{CurveAmm as CurveAmmTrait, DexRouteNode, DexRouter as DexRouterTrait},
+	dex::{Amm as AmmTrait, DexRouteNode, DexRouter as DexRouterTrait},
 };
 use frame_support::{assert_noop, assert_ok, traits::fungibles::Mutate};
 use sp_runtime::Permill;
 
-// Create CurveAmm pool with given amounts added as liquidity to the pool.
+// Create Amm pool with given amounts added as liquidity to the pool.
 fn create_curve_amm_pool(
 	assets: CurrencyPair<AssetId>,
 	amounts: Vec<Balance>,
@@ -22,14 +22,14 @@ fn create_curve_amm_pool(
 	assert_ok!(Tokens::mint_into(base, &BOB, amounts[0]));
 	assert_ok!(Tokens::mint_into(quote, &BOB, amounts[1]));
 
-	let p = CurveAmm::do_create_pool(&ALICE, assets, amp_coeff, fee, admin_fee);
+	let p = StableSwapAmm::do_create_pool(&ALICE, assets, amp_coeff, fee, admin_fee);
 	assert_ok!(&p);
 	let pool_id = p.unwrap();
 	// 1 USDC = 1 USDT
-	assert_ok!(<CurveAmm as CurveAmmTrait>::add_liquidity(
+	assert_ok!(<StableSwapAmm as AmmTrait>::add_liquidity(
 		&ALICE, pool_id, amounts[0], amounts[1], 0_u128, true
 	));
-	assert_ok!(<CurveAmm as CurveAmmTrait>::add_liquidity(
+	assert_ok!(<StableSwapAmm as AmmTrait>::add_liquidity(
 		&BOB, pool_id, amounts[0], amounts[1], 0_u128, true
 	));
 	pool_id
@@ -54,11 +54,11 @@ fn create_constant_product_amm_pool(
 	assert_ok!(&p);
 	let pool_id = p.unwrap();
 	// Add liquidity from ALICE's account to pool
-	assert_ok!(<ConstantProductAmm as CurveAmmTrait>::add_liquidity(
+	assert_ok!(<ConstantProductAmm as AmmTrait>::add_liquidity(
 		&ALICE, pool_id, amounts[0], amounts[1], 0_u128, true
 	));
 	// Add liquidity from BOB's account to pool
-	assert_ok!(<ConstantProductAmm as CurveAmmTrait>::add_liquidity(
+	assert_ok!(<ConstantProductAmm as AmmTrait>::add_liquidity(
 		&BOB, pool_id, amounts[0], amounts[1], 0_u128, true
 	));
 	pool_id

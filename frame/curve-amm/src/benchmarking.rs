@@ -1,6 +1,6 @@
 use super::*;
 use crate::Pallet as StableSwap;
-use composable_traits::{defi::CurrencyPair, dex::CurveAmm};
+use composable_traits::{defi::CurrencyPair, dex::Amm};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	assert_ok,
@@ -61,7 +61,7 @@ benchmarks! {
 	  assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
 	  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
 	  // Add the liquidity
-	  assert_ok!(<StableSwap<T> as CurveAmm>::add_liquidity(
+	  assert_ok!(<StableSwap<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_usdc,
@@ -92,7 +92,7 @@ benchmarks! {
 	  assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
 	  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
 	  // Add the liquidity
-	  assert_ok!(<StableSwap<T> as CurveAmm>::add_liquidity(
+	  assert_ok!(<StableSwap<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_usdc,
@@ -124,7 +124,7 @@ benchmarks! {
 	  assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
 	  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
 	  // Add the liquidity
-	  assert_ok!(<StableSwap<T> as CurveAmm>::add_liquidity(
+	  assert_ok!(<StableSwap<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_usdc,
@@ -157,7 +157,7 @@ benchmarks! {
 	  assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
 	  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
 	  // Add the liquidity
-	  assert_ok!(<StableSwap<T> as CurveAmm>::add_liquidity(
+	  assert_ok!(<StableSwap<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_usdc,

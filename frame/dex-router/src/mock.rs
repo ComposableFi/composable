@@ -34,7 +34,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		CurveAmm: pallet_curve_amm::{Pallet, Call, Storage, Event<T>},
+		StableSwapAmm: pallet_curve_amm::{Pallet, Call, Storage, Event<T>},
 		ConstantProductAmm: pallet_uniswap_v2::{Pallet, Call, Storage, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
@@ -133,7 +133,6 @@ impl orml_tokens::Config for Test {
 }
 
 parameter_types! {
-	pub CurveAmmPrecision: u128 = 100;
 	pub CurveAmmTestPalletID : PalletId = PalletId(*b"curve_am");
 }
 
@@ -176,7 +175,7 @@ impl dex_router::Config for Test {
 	type Balance = Balance;
 	type MaxHopsInRoute = MaxHopsCount;
 	type PoolId = u32;
-	type StableSwapDex = CurveAmm;
+	type StableSwapDex = StableSwapAmm;
 	type ConstantProductDex = ConstantProductAmm;
 }
 
