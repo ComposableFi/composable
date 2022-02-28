@@ -1,7 +1,7 @@
 use crate::{mock::*, *};
 use composable_support::validation::Validated;
 use composable_tests_helpers::test::helper::default_acceptable_computation_error;
-use composable_traits::{defi::CurrencyPair, dex::CurveAmm};
+use composable_traits::defi::CurrencyPair;
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
@@ -26,16 +26,19 @@ fn valid_pool() -> Validated<Pool<AccountId, BlockNumber, AssetId>, PoolIsValid<
 	.expect("impossible; qed;")
 }
 
-fn within_sale_with_liquidity(
+fn with_pool<T>(
 	owner: AccountId,
-	initial_project_tokens: Balance,
-	initial_usdt: Balance,
 	sale_duration: BlockNumber,
 	initial_weight: Permill,
 	final_weight: Permill,
 	fee: Permill,
-	f: impl FnOnce(PoolId, &Pool<AccountId, BlockNumber, AssetId>, &dyn Fn(BlockNumber), &dyn FnOnce()),
-) {
+	f: impl FnOnce(
+		PoolId,
+		&Pool<AccountId, BlockNumber, AssetId>,
+		&dyn Fn(BlockNumber),
+		&dyn FnOnce(),
+	) -> T,
+) -> T {
 	let random_start = 0xDEADC0DE;
 	let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
 	let end = random_start + sale_duration;
@@ -46,25 +49,12 @@ fn within_sale_with_liquidity(
 		fee,
 	})
 	.expect("impossible; qed;");
-	new_test_ext().execute_with(|| {
+	new_test_ext().execute_with(|| -> T {
 		// Actually create the pool.
 		assert_ok!(LBP::create(Origin::root(), pool));
 
 		// Will always start to 0.
 		let pool_id = 0;
-
-		assert_ok!(Tokens::mint_into(PROJECT_TOKEN, &owner, initial_project_tokens));
-		assert_ok!(Tokens::mint_into(USDT, &owner, initial_usdt));
-
-		// Add initial liquidity.
-		assert_ok!(LBP::add_liquidity(
-			&owner,
-			pool_id,
-			initial_project_tokens,
-			initial_usdt,
-			0,
-			false
-		));
 
 		// Relative to sale start.
 		let set_block = |x: BlockNumber| {
@@ -76,11 +66,50 @@ fn within_sale_with_liquidity(
 			set_block(sale_duration + 1);
 		};
 
-		// Actually start the sale.
-		set_block(0);
+		f(pool_id, &pool, &set_block, &end_sale)
+	})
+}
 
-		f(pool_id, &pool, &set_block, &end_sale);
-	});
+fn within_sale_with_liquidity<T>(
+	owner: AccountId,
+	sale_duration: BlockNumber,
+	initial_weight: Permill,
+	final_weight: Permill,
+	fee: Permill,
+	initial_project_tokens: Balance,
+	initial_usdt: Balance,
+	f: impl FnOnce(
+		PoolId,
+		&Pool<AccountId, BlockNumber, AssetId>,
+		&dyn Fn(BlockNumber),
+		&dyn FnOnce(),
+	) -> T,
+) -> T {
+	with_pool(
+		owner,
+		sale_duration,
+		initial_weight,
+		final_weight,
+		fee,
+		|pool_id, pool, set_block, end_sale| -> T {
+			assert_ok!(Tokens::mint_into(PROJECT_TOKEN, &owner, initial_project_tokens));
+			assert_ok!(Tokens::mint_into(USDT, &owner, initial_usdt));
+
+			// Add initial liquidity.
+			assert_ok!(LBP::add_liquidity(
+				Origin::signed(owner),
+				pool_id,
+				initial_project_tokens,
+				initial_usdt,
+				false
+			));
+
+			// Actually start the sale.
+			set_block(0);
+
+			f(pool_id, pool, set_block, end_sale)
+		},
+	)
 }
 
 mod create {
@@ -120,12 +149,12 @@ mod sell {
 		let fee = Permill::zero();
 		within_sale_with_liquidity(
 			ALICE,
-			initial_project_tokens,
-			initial_usdt,
 			sale_duration,
 			initial_weight,
 			final_weight,
 			fee,
+			initial_project_tokens,
+			initial_usdt,
 			|pool_id, pool, _, _| {
 				// Buy project token
 				assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
@@ -155,12 +184,12 @@ mod buy {
 		let fee = Permill::zero();
 		within_sale_with_liquidity(
 			ALICE,
-			initial_project_tokens,
-			initial_usdt,
 			sale_duration,
 			initial_weight,
 			final_weight,
 			fee,
+			initial_project_tokens,
+			initial_usdt,
 			|pool_id, pool, _, _| {
 				// Buy project token
 				assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
@@ -171,6 +200,67 @@ mod buy {
 				));
 			},
 		)
+	}
+}
+
+mod add_liquidity {
+	use super::*;
+
+	#[test]
+	fn can_add_liquidity_before_sale() {
+		let owner = ALICE;
+		let sale_duration = MaxSaleDuration::get();
+		let initial_weight = Permill::one() / 2;
+		let final_weight = Permill::one() / 2;
+		let fee = Permill::zero();
+		let unit = 1_000_000_000_000;
+		let initial_project_tokens = 1_000_000 * unit;
+		let initial_usdt = 1_000_000 * unit;
+		with_pool(owner, sale_duration, initial_weight, final_weight, fee, |pool_id, _, _, _| {
+			assert_ok!(Tokens::mint_into(PROJECT_TOKEN, &owner, initial_project_tokens));
+			assert_ok!(Tokens::mint_into(USDT, &owner, initial_usdt));
+			assert_ok!(LBP::add_liquidity(
+				Origin::signed(owner),
+				pool_id,
+				initial_project_tokens,
+				initial_usdt,
+				false
+			));
+		});
+	}
+
+	#[test]
+	fn cannot_add_liquidity_after_sale_started() {
+		let owner = ALICE;
+		let sale_duration = MaxSaleDuration::get();
+		let initial_weight = Permill::one() / 2;
+		let final_weight = Permill::one() / 2;
+		let fee = Permill::zero();
+		let unit = 1_000_000_000_000;
+		let initial_project_tokens = 1_000_000 * unit;
+		let initial_usdt = 1_000_000 * unit;
+		with_pool(
+			owner,
+			sale_duration,
+			initial_weight,
+			final_weight,
+			fee,
+			|pool_id, _, set_sale_block, _| {
+				assert_ok!(Tokens::mint_into(PROJECT_TOKEN, &owner, initial_project_tokens));
+				assert_ok!(Tokens::mint_into(USDT, &owner, initial_usdt));
+				set_sale_block(0);
+				assert_noop!(
+					LBP::add_liquidity(
+						Origin::signed(owner),
+						pool_id,
+						initial_project_tokens,
+						initial_usdt,
+						false
+					),
+					Error::<Test>::InvalidSaleState
+				);
+			},
+		);
 	}
 }
 

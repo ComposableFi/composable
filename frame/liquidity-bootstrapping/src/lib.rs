@@ -43,6 +43,8 @@ mod tests;
 
 pub mod weights;
 
+pub use crate::weights::WeightInfo;
+
 pub use pallet::*;
 
 #[frame_support::pallet]
@@ -218,8 +220,6 @@ pub mod pallet {
 		PoolDeleted {
 			/// Pool that was removed.
 			pool_id: T::PoolId,
-			/// Owner of the pool that we repatriated the funds to.
-			owner: T::AccountId,
 			/// Amount of base asset repatriated.
 			base_amount: T::Balance,
 			/// Amount of quote asset repatriated.
@@ -379,9 +379,9 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::buy())]
 		pub fn buy(
 			origin: OriginFor<T>,
-			pool_id: T::PoolId,
-			asset_id: T::AssetId,
-			amount: T::Balance,
+			pool_id: PoolIdOf<T>,
+			asset_id: AssetIdOf<T>,
+			amount: BalanceOf<T>,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
@@ -397,9 +397,9 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::sell())]
 		pub fn sell(
 			origin: OriginFor<T>,
-			pool_id: T::PoolId,
-			asset_id: T::AssetId,
-			amount: T::Balance,
+			pool_id: PoolIdOf<T>,
+			asset_id: AssetIdOf<T>,
+			amount: BalanceOf<T>,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
@@ -418,10 +418,10 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::swap())]
 		pub fn swap(
 			origin: OriginFor<T>,
-			pool_id: T::PoolId,
+			pool_id: PoolIdOf<T>,
 			pair: CurrencyPair<T::AssetId>,
-			quote_amount: T::Balance,
-			min_receive: T::Balance,
+			quote_amount: BalanceOf<T>,
+			min_receive: BalanceOf<T>,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
@@ -432,6 +432,47 @@ pub mod pallet {
 				quote_amount,
 				min_receive,
 				keep_alive,
+			)?;
+			Ok(())
+		}
+
+		/// Add liquidity to an LBP pool.
+		///
+		/// Only possible before the sale started.
+		///
+		/// Emits `LiquidityAdded` event when successful.
+		#[pallet::weight(T::WeightInfo::add_liquidity())]
+		pub fn add_liquidity(
+			origin: OriginFor<T>,
+			pool_id: PoolIdOf<T>,
+			base_amount: BalanceOf<T>,
+			quote_amount: BalanceOf<T>,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as CurveAmm>::add_liquidity(
+				&who,
+				pool_id,
+				base_amount,
+				quote_amount,
+				BalanceOf::<T>::zero(),
+				keep_alive,
+			)?;
+			Ok(())
+		}
+
+		///  liquidity to an LBP pool.
+		///
+		/// Emits `LiquidityAdded` event when successful.
+		#[pallet::weight(T::WeightInfo::remove_liquidity())]
+		pub fn withdraw_and_destroy(origin: OriginFor<T>, pool_id: PoolIdOf<T>) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as CurveAmm>::remove_liquidity(
+				&who,
+				pool_id,
+				BalanceOf::<T>::zero(),
+				BalanceOf::<T>::zero(),
+				BalanceOf::<T>::zero(),
 			)?;
 			Ok(())
 		}
@@ -620,6 +661,9 @@ pub mod pallet {
 			let pool_account = Self::account_id(&pool_id);
 			T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
 			T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
+
+			Self::deposit_event(Event::LiquidityAdded { pool_id, base_amount, quote_amount });
+
 			Ok(())
 		}
 
@@ -651,12 +695,7 @@ pub mod pallet {
 
 			Pools::<T>::remove(pool_id);
 
-			Self::deposit_event(Event::PoolDeleted {
-				pool_id,
-				owner: pool.owner,
-				base_amount,
-				quote_amount,
-			});
+			Self::deposit_event(Event::PoolDeleted { pool_id, base_amount, quote_amount });
 
 			Ok(())
 		}
