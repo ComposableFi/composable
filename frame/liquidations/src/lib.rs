@@ -40,6 +40,8 @@ mod mock;
 mod tests;
 mod weights;
 
+pub use crate::weights::WeightInfo;
+
 pub use pallet::*;
 
 #[frame_support::pallet]
@@ -119,11 +121,11 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(T::WeightInfo::add_liquidation_strategy())]
-		pub fn add_liqudation_strategy(
+		pub fn add_liquidation_strategy(
 			_origin: OriginFor<T>,
 			_configuraiton: LiquidationStrategyConfiguration<T::ParachainId>,
 		) -> DispatchResultWithPostInfo {
-			Err(DispatchError::Other("add_liqudation_strategy: no implemented").into())
+			Err(DispatchError::Other("add_liquidation_strategy: no implemented").into())
 		}
 	}
 

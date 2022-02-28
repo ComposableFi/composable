@@ -32,7 +32,7 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> liquidations::WeightInfo for WeightInfo<T> {
 	// Storage: Liquidations DefaultStrategyIndex (r:1 w:0)
 	// Storage: Liquidations Strategies (r:1 w:0)
-	fn liquidate() -> Weight {
+	fn add_liquidation_strategy() -> Weight {
 		(7_383_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 	}

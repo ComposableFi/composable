@@ -933,7 +933,7 @@ impl liquidations::Config for Runtime {
 	type DutchAuction = DutchAuction;
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type OrderId = OrderId;
-	type WeightInfo = ();
+	type WeightInfo = weights::liquidations::WeightInfo<Runtime>;
 	type ParachainId = ParaId;
 	type PalletId = LiquidationsPalletId;
 }
