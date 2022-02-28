@@ -3,7 +3,7 @@
   actor Bob as bob
   actor Charlie as charlie
   participant Lending as lending
-  participant Liquidation as liqudation
+  participant Liquidation as liquidation
   control Governance as governance
 
   participant Vault as vault
@@ -37,20 +37,20 @@
 
   ...
 
-  group Liqudaiton (IN PROGRESS)
+  group Liquidation (IN PROGRESS)
     charlie -> lending : Borrow
     ...
     oracle_bot -> oracle : Make collateral factor bad
     lending_bot -> lending : Liquidate Charlie collateral
-    lending -> liqudation: Liquidate
-    liqudation -> sell: Sell via choses strategy
+    lending -> liquidation: Liquidate
+    liquidation -> sell: Sell via choses strategy
     note left
       - default is auction (multiblock)
       - can be DEX or external (XCMP) DEX 
       - XCMP is multi block process
     end note
     ...
-    lending_bot -> lending : Finalize liqudaiton
+    lending_bot -> lending : Finalize liquidation
   end
 
 @enduml
