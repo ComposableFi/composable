@@ -7,7 +7,7 @@
         "name": "alice",
         "wsPort": 9944,
         "port": 30444,
-        "flags": ["--rpc-cors=all", "--beefy"]
+        "flags": ["--rpc-cors=all", "--beefy", "--enable-offchain-indexing=true", " --rpc-methods=unsafe"]
       },
       {
         "name": "bob",
