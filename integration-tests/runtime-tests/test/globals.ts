@@ -16,5 +16,8 @@ declare global {
   var walletEve: KeyringPair;
   var walletFerdie: KeyringPair;
   var web3: Web3;
+  var ASSET_ID_PICA: number;
+  var ASSET_ID_USDT: number;
+  var ASSET_ID_BTC: number;
 }
 

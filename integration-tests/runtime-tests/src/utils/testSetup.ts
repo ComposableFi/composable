@@ -16,27 +16,27 @@ global.testSudoCommands = true;
 exports.mochaHooks = {
   async beforeAll() {
     this.timeout(5*60*1000);
-  const chai = require('chai');
-  const BN = require('bn.js');
+    const chai = require('chai');
+    const BN = require('bn.js');
 
-  // Enable and inject BN dependency
-  chai.use(require('chai-bn')(BN));
-  const rpc = Object.keys(definitions).reduce((accumulator, key) => ({ ...accumulator, [key]: definitions[key].rpc }), {});
-  const types = Object.values(definitions).reduce((accumulator, { types }) => ({ ...accumulator, ...types }), {});
+    // Enable and inject BN dependency
+    chai.use(require('chai-bn')(BN));
+    const rpc = Object.keys(definitions).reduce((accumulator, key) => ({ ...accumulator, [key]: definitions[key].rpc }), {});
+    const types = Object.values(definitions).reduce((accumulator, { types }) => ({ ...accumulator, ...types }), {});
 
-  global.endpoint = `ws://${args.h}:${args.p}`;
-  const provider = new WsProvider(global.endpoint);
-  console.debug(`Establishing connection to ${global.endpoint}...`);
-  const apiOptions: ApiOptions = {
-    provider, types, rpc
-  };
-  global.api = await ApiPromise.create(apiOptions);
+    global.endpoint = `ws://${args.h}:${args.p}`;
+    const provider = new WsProvider(global.endpoint);
+    console.debug(`Establishing connection to ${global.endpoint}...`);
+    const apiOptions: ApiOptions = {
+      provider, types, rpc
+    };
+    global.api = await ApiPromise.create(apiOptions);
 
-  global.web3 = new Web3();
+    global.web3 = new Web3();
 
-  // do something before every test,
-  // then run the next hook in this array
-  global.keyring = new Keyring({ type: 'sr25519' });
+    // do something before every test,
+    // then run the next hook in this array
+    global.keyring = new Keyring({ type: 'sr25519' });
 
     if (global.useTestnetWallets === true) {
       global.walletAlice = global.keyring.addFromUri('//Alice');
@@ -46,6 +46,9 @@ exports.mochaHooks = {
       global.walletEve = global.keyring.addFromUri('//Eve');
       global.walletFerdie = global.keyring.addFromUri('//Ferdie');
     }
+    global.ASSET_ID_PICA = 1;
+    global.ASSET_ID_USDT = 1000;
+    global.ASSET_ID_BTC = 2000;
   },
   async afterAll() {
     return await global.api.disconnect();

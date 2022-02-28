@@ -67,6 +67,13 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    constantProductDex: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     crowdloanRewards: {
       /**
        * The upfront liquidity unlocked at first claim.
@@ -198,8 +205,49 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    lending: {
+      /**
+       * Minimal price of borrow asset in Oracle price required to create.
+       * Examples, 100 USDC.
+       * Creators puts that amount and it is staked under Vault account.
+       * So he does not owns it anymore.
+       * So borrow is both stake and tool to create market.
+       * 
+       * # Why not pure borrow amount minimum?
+       * 
+       * Borrow may have very small price. Will imbalance some markets on creation.
+       * 
+       * # Why not native parachain token?
+       * 
+       * Possible option. But I doubt closing market as easy as transferring back rent.  So it is
+       * not exactly platform rent only.
+       * 
+       * # Why borrow amount priced by Oracle?
+       * 
+       * We depend on Oracle to price in Lending. So we know price anyway.
+       * We normalized price over all markets and protect from spam all possible pairs equally.
+       * Locking borrow amount ensures manager can create market wit borrow assets, and we force
+       * him to really create it.
+       * 
+       * This solution forces to have amount before creating market.
+       * Vault can take that amount if reconfigured so, but that may be changed during runtime
+       * upgrades.
+       **/
+      oracleMarketCreationStake: u128 & AugmentedConst<ApiType>;
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     mosaic: {
+      /**
+       * The minimum period for which we lock outgoing/incoming funds.
+       **/
       minimumTimeLockPeriod: u32 & AugmentedConst<ApiType>;
+      /**
+       * The minimum time to live before a relayer account rotation.
+       **/
       minimumTTL: u32 & AugmentedConst<ApiType>;
       timelockPeriod: u32 & AugmentedConst<ApiType>;
       /**
@@ -251,6 +299,13 @@ declare module '@polkadot/api-base/types/consts' {
        * Not strictly enforced, but used for weight estimation.
        **/
       maxScheduledPerBlock: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    stableSwapDex: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

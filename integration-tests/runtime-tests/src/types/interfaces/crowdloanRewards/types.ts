@@ -8,6 +8,9 @@ import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/
 import type { ParachainInherentData, PersistedValidationData } from '@polkadot/types/interfaces/parachains';
 import type { AccountId32, Balance } from '@polkadot/types/interfaces/runtime';
 
+/** @name CommonMosaicRemoteAssetId */
+export interface CommonMosaicRemoteAssetId extends Null {}
+
 /** @name ComposableTraitsAssetsXcmAssetLocation */
 export interface ComposableTraitsAssetsXcmAssetLocation extends Null {}
 
@@ -20,14 +23,35 @@ export interface ComposableTraitsBondedFinanceBondOffer extends Null {}
 /** @name ComposableTraitsCallFilterCallFilterEntry */
 export interface ComposableTraitsCallFilterCallFilterEntry extends Null {}
 
+/** @name ComposableTraitsDefiCurrencyPair */
+export interface ComposableTraitsDefiCurrencyPair extends Null {}
+
 /** @name ComposableTraitsDefiSell */
 export interface ComposableTraitsDefiSell extends Null {}
 
 /** @name ComposableTraitsDefiTake */
 export interface ComposableTraitsDefiTake extends Null {}
 
+/** @name ComposableTraitsDexConstantProductPoolInfo */
+export interface ComposableTraitsDexConstantProductPoolInfo extends Null {}
+
+/** @name ComposableTraitsDexStableSwapPoolInfo */
+export interface ComposableTraitsDexStableSwapPoolInfo extends Null {}
+
 /** @name ComposableTraitsGovernanceSignedRawOrigin */
 export interface ComposableTraitsGovernanceSignedRawOrigin extends Null {}
+
+/** @name ComposableTraitsLendingCreateInput */
+export interface ComposableTraitsLendingCreateInput extends Null {}
+
+/** @name ComposableTraitsLendingMarketConfig */
+export interface ComposableTraitsLendingMarketConfig extends Null {}
+
+/** @name ComposableTraitsLendingUpdateInput */
+export interface ComposableTraitsLendingUpdateInput extends Null {}
+
+/** @name ComposableTraitsOraclePrice */
+export interface ComposableTraitsOraclePrice extends Null {}
 
 /** @name ComposableTraitsTimeTimeReleaseFunction */
 export interface ComposableTraitsTimeTimeReleaseFunction extends Null {}

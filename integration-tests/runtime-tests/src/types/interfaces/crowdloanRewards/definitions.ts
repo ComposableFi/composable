@@ -103,6 +103,17 @@ export default {
     FrameSupportScheduleLookupError: "Null",
     PalletCurrencyFactoryRanges: "Null",
     PalletCurrencyFactoryRangesRange: "Null",
-    PalletLiquidationsLiquidationStrategyConfiguration: "Null"
+    PalletLiquidationsLiquidationStrategyConfiguration: "Null",
+    ComposableTraitsDefiCurrencyPair: {
+      base: "u128",
+      quote: "u128"
+    },
+    ComposableTraitsLendingUpdateInput: "Null",
+    ComposableTraitsLendingMarketConfig: "Null",
+    ComposableTraitsLendingCreateInput: "Null",
+    ComposableTraitsDexStableSwapPoolInfo: "Null",
+    ComposableTraitsOraclePrice: "Null",
+    CommonMosaicRemoteAssetId: "Null",
+    ComposableTraitsDexConstantProductPoolInfo: "Null"
   },
 };
