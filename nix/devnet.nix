@@ -91,9 +91,9 @@ let
 
   tmp-directory = "/tmp/polkadot-launch";
 
-  devnet-config =
+  devnet-polkalaunch-config =
     pkgs.writeTextFile {
-      name = "devnet.json";
+      name = "devnet-polkalaunch.json";
       text = builtins.toJSON (
         make-polkalaunch-config
           { inherit tmp-directory;
@@ -105,8 +105,8 @@ let
       );
     };
 in
-pkgs.writeScriptBin "launch-devnet" ''
+pkgs.writeScriptBin "run-${composable.spec}" ''
   #!${pkgs.bash}/bin/bash -e
   rm -rf ${tmp-directory}
-  ${polkalaunch}/bin/polkadot-launch ${devnet-config}
+  ${polkalaunch}/bin/polkadot-launch ${devnet-polkalaunch-config}
 ''

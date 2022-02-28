@@ -6,8 +6,9 @@
 let
   gcefy-version = version:
     builtins.replaceStrings [ "." ] [ "-" ] version;
-  domain = "${composable.name}-${composable.spec}-${gcefy-version composable.version}";
-  domain-latest = "${composable.name}-${composable.spec}-latest";
+  domain = "composable-${composable.spec}-${gcefy-version composable.version}";
+  domain-latest = "composable-${composable.spec}-latest";
+  machine-name = "composable-devnet-${composable.spec}";
 in {
   resources.gceNetworks.composable-devnet = credentials // {
     name = "composable-devnet-network";
@@ -22,7 +23,7 @@ in {
       };
     };
   };
-  devnet-machine = { pkgs, resources, ... }:
+  "${machine-name}" = { pkgs, resources, ... }:
     let
       devnet = pkgs.callPackage ./devnet.nix {
         inherit composable;
@@ -32,7 +33,7 @@ in {
       deployment = {
         targetEnv = "gce";
         gce = credentials // {
-          machineName = "composable-devnet";
+          machineName = machine-name;
           network = resources.gceNetworks.composable-devnet;
           region = "europe-central2-c";
           instanceType = "n2-standard-4";
@@ -51,7 +52,7 @@ in {
         serviceConfig = {
           Type = "simple";
           User = "root";
-          ExecStart = "${devnet}/bin/launch-devnet";
+          ExecStart = "${devnet}/bin/run-${composable.spec}";
           Restart = "always";
           RuntimeMaxSec = "86400"; # 1 day lease period for rococo, restart it
         };
@@ -97,6 +98,10 @@ in {
                     "/${node.name}" = {
                       proxyPass = "http://127.0.0.1:${builtins.toString node.wsPort}";
                       proxyWebsockets = true;
+                      extraConfig = ''
+                        proxy_set_header Origin "";
+                        proxy_set_header Host 127.0.0.1:${builtins.toString node.wsPort};
+                      '';
                     };
                   }) routified-nodes);
                 };
