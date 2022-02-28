@@ -29,6 +29,7 @@ import {
 } from "@composabletests/tests/oracle/testHandlers/addStakeTests";
 import {depositCollateralHandler} from "@composabletests/tests/lending/testHandlers/depositCollateralHandler";
 import {borrowHandler} from "@composabletests/tests/lending/testHandlers/borrowHandler";
+import {withdrawCollateralHandler} from "@composabletests/tests/lending/testHandlers/withdrawCollateralHandler";
 
 describe('Lending Tests', function() {
   if (!testConfiguration.enabled)
@@ -60,7 +61,7 @@ describe('Lending Tests', function() {
       return;
     // Timeout set to 2 minutes.
     this.timeout(15 * 60 * 1000)
-    const mintingAmount = 10000000000000
+    const mintingAmount = 100000000000000
     await handleAssetMintSetup(sudoKey, [ASSET_ID_BTC, ASSET_ID_PICA, ASSET_ID_USDT], lenderWallet, mintingAmount);
     await handleAssetMintSetup(sudoKey, [ASSET_ID_USDT, ASSET_ID_PICA], borrowerWallet, mintingAmount);
     await handleAssetMintSetup(sudoKey, [ASSET_ID_BTC, ASSET_ID_USDT, ASSET_ID_PICA], oracleSignerWallet, mintingAmount);
@@ -294,9 +295,11 @@ describe('Lending Tests', function() {
       // Setting timeout to 2 minutes
       this.timeout(2 * 60 * 1000);
       const marketId = api.createType('u32', lendingMarketIdCurveInterestRate);
-      const amount = api.createType('u128', 250000000000);
-      const result = await depositCollateralHandler(lenderWallet, marketId, amount);
-      console.debug(result.toString());
+      const amount = api.createType('u128', 25000000000000);
+      const {data:[resultWallet, resultMarketId, resultAmount]} = await depositCollateralHandler(lenderWallet, marketId, amount);
+      expect(resultWallet.toString()).to.be.equal(api.createType('AccountId32', lenderWallet.publicKey).toString());
+      expect(resultMarketId.toNumber()).to.be.equal(marketId.toNumber());
+      expect(resultAmount.toNumber()).to.be.equal(amount.toNumber());
     });
   });
 
@@ -305,9 +308,24 @@ describe('Lending Tests', function() {
       // Setting timeout to 2 minutes
       this.timeout(2 * 60 * 1000);
       const marketId = api.createType('u32', lendingMarketIdCurveInterestRate);
-      const amount = api.createType('u128', 100000);
+      const amount = api.createType('u128', 12515000000000); // <1251 && >125
       const result = await borrowHandler(lenderWallet, marketId, amount);
       console.debug(result);
     });
   });
+
+  describe('Lending Withdraw Collateral Tests', async function() {
+    it('Can withdraw collateral from curve market', async function() {
+      // Setting timeout to 2 minutes
+      this.timeout(2 * 60 * 1000);
+      const marketId = api.createType('u32', lendingMarketIdCurveInterestRate);
+      const amount = api.createType('u128', 25000000000000);
+      const {data:[resultWallet, resultMarketId, resultAmount]} = await withdrawCollateralHandler(lenderWallet, marketId, amount);
+      expect(resultWallet.toString()).to.be.equal(api.createType('AccountId32', lenderWallet.publicKey).toString());
+      expect(resultMarketId.toNumber()).to.be.equal(marketId.toNumber());
+      expect(resultAmount.toNumber()).to.be.equal(amount.toNumber());
+    });
+  });
+
+  describe('Lending Repay Borrow Tests', function (){return;});
 });
