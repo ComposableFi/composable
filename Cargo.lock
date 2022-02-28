@@ -2529,6 +2529,7 @@ dependencies = [
  "pallet-indices",
  "pallet-lending",
  "pallet-liquidations",
+ "pallet-liquidity-bootstrapping",
  "pallet-membership",
  "pallet-mosaic",
  "pallet-multisig",
