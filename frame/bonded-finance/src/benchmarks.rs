@@ -65,6 +65,7 @@ where
 	T: Config,
 {
 	let keep_alive = false;
+	let validated_bond_offer = Validated::new(bond_offer).unwrap();
 	Call::<T>::offer { offer: bond_offer, keep_alive }
 		.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())
 		.unwrap();
