@@ -436,18 +436,6 @@ where
 	type Extrinsic = UncheckedExtrinsic;
 }
 
-//TODO set
-parameter_types! {
-	pub const StakeLock: BlockNumber = 50;
-	pub const StalePrice: BlockNumber = 5;
-
-	/// TODO: discuss with omar/cosmin
-	pub MinStake: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
-	pub const MaxAnswerBound: u32 = 25;
-	pub const MaxAssetsCount: u32 = 100_000;
-	pub const MaxHistory: u32 = 20;
-}
-
 // Parachain stuff.
 // See https://github.com/paritytech/cumulus/blob/polkadot-v0.9.8/polkadot-parachains/rococo/src/lib.rs for details.
 parameter_types! {
@@ -528,7 +516,6 @@ impl collator_selection::Config for Runtime {
 }
 
 parameter_type_with_key! {
-	// TODO:
 	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
 		Zero::zero()
 	};
@@ -561,11 +548,10 @@ impl orml_tokens::Config for Runtime {
 
 parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
-	/// percentage of proposal that most be bonded by the proposer
+	/// Percentage of proposal that most be bonded by the proposer.
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	// TODO: rationale?
-	pub ProposalBondMinimum: Balance = 5 * CurrencyId::PICA.unit::<Balance>();
-	pub ProposalBondMaximum: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
+	pub ProposalBondMinimum: Balance = 5000 * CurrencyId::PICA.unit::<Balance>();
+	pub ProposalBondMaximum: Balance = 10000 * CurrencyId::PICA.unit::<Balance>();
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
 
@@ -587,7 +573,6 @@ impl treasury::Config for Runtime {
 	type MaxApprovals = MaxApprovals;
 	type BurnDestination = ();
 	type WeightInfo = weights::treasury::WeightInfo<Runtime>;
-	// TODO: add bounties?
 	type SpendFunds = ();
 }
 
@@ -672,8 +657,11 @@ parameter_types! {
 	pub MinimumDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
-	// TODO: prod value
-	pub PreimageByteDeposit: Balance = CurrencyId::PICA.milli();
+
+	// Note that Kusama uses 10 millis, however KSM is significantly more expensive
+	// https://github.com/paritytech/polkadot/blob/dc784f9b47e4681897cfd477b4f0760330875a87/runtime/kusama/src/lib.rs#L237
+	// so we increase it by a factor 10. This might still be on the low side.
+	pub PreimageByteDeposit: Balance = CurrencyId::PICA.milli::<u128>() * 100_u128;
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -689,7 +677,6 @@ impl democracy::Config for Runtime {
 	type VoteLockingPeriod = EnactmentPeriod;
 	type MinimumDeposit = MinimumDeposit;
 
-	// TODO: prod values
 	type ExternalOrigin = EnsureRootOrHalfCouncil;
 	type ExternalMajorityOrigin = EnsureRootOrHalfCouncil;
 	type ExternalDefaultOrigin = EnsureRootOrHalfCouncil;
@@ -726,9 +713,9 @@ impl currency_factory::Config for Runtime {
 
 parameter_types! {
 	pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
-	  pub const InitialPayment: Perbill = Perbill::from_percent(25);
+	pub const InitialPayment: Perbill = Perbill::from_percent(25);
 	pub const VestingStep: BlockNumber = 7 * DAYS;
-	  pub const Prefix: &'static [u8] = b"picasso-";
+	pub const Prefix: &'static [u8] = b"picasso-";
 }
 
 impl crowdloan_rewards::Config for Runtime {
