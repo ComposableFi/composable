@@ -63,6 +63,35 @@ fn test_populate_rewards_not_funded() {
 }
 
 #[test]
+fn test_incremental_populate() {
+	let gen = |c, r| -> Vec<(RemoteAccountOf<Test>, RewardAmountOf<Test>, VestingPeriodOf<Test>)> {
+		generate_accounts(c)
+			.into_iter()
+			.map(|(_, account)| (account.as_remote_public(), r, DEFAULT_VESTING_PERIOD))
+			.collect()
+	};
+	ExtBuilder::default().build().execute_with(|| {
+		let accounts = gen(10_000, DEFAULT_REWARD);
+		for i in 0..10 {
+			let start = i * 1000;
+			let slice = accounts[start..start + 1000].to_vec();
+			let expected_total_rewards = (i + 1) as u128 * 1000 * DEFAULT_REWARD;
+			Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
+			assert_ok!(CrowdloanRewards::populate(Origin::root(), slice));
+			assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
+		}
+		// Repopulating using the same accounts must overwrite existing entries.
+		let expected_total_rewards = 10_000 * DEFAULT_REWARD;
+		for i in 0..10 {
+			let start = i * 1000;
+			let slice = accounts[start..start + 1000].to_vec();
+			assert_ok!(CrowdloanRewards::populate(Origin::root(), slice));
+			assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
+		}
+	});
+}
+
+#[test]
 fn test_populate_ok() {
 	let gen = |c, r| -> Vec<(RemoteAccountOf<Test>, RewardAmountOf<Test>, VestingPeriodOf<Test>)> {
 		generate_accounts(c)
