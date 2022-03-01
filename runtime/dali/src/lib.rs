@@ -15,16 +15,22 @@
 #![recursion_limit = "256"]
 
 // Make the WASM binary available.
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "wasm-builder"))]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
 mod xcmp;
+
+// TODO: consider moving this to shared runtime
+pub use xcmp::{MaxInstructions, UnitWeightCost};
+
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	CouncilInstance, EnsureRootOrHalfCouncil, Hash, MosaicRemoteAssetId, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO,
+	SLOT_DURATION,
 };
+use composable_support::rpc_helpers::SafeRpcWrapper;
 use cumulus_primitives_core::ParaId;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
@@ -32,7 +38,9 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
+	traits::{
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
+	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -55,7 +63,7 @@ pub use frame_support::{
 };
 
 use codec::Encode;
-use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
+use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use scale_info::TypeInfo;
 #[cfg(any(feature = "std", test))]
@@ -104,7 +112,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
 	spec_version: 1000,
-	impl_version: 5,
+	impl_version: 8,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
 	state_version: 0,
@@ -802,7 +810,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type Currency = Assets;
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
-	type RelayChainAccountId = [u8; 32];
+	type RelayChainAccountId = sp_runtime::AccountId32;
 	type InitialPayment = InitialPayment;
 	type VestingStep = VestingStep;
 	type Prefix = Prefix;
@@ -905,6 +913,7 @@ impl mosaic::Config for Runtime {
 	type MinimumTimeLockPeriod = MinimumTimeLockPeriod;
 	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
 	type NetworkId = u32;
+	type RemoteAssetId = MosaicRemoteAssetId;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
 }
@@ -915,6 +924,7 @@ pub type OrderId = u128;
 parameter_types! {
 	pub const LiquidationsPalletId: PalletId = PalletId(*b"liqdatns");
 }
+
 impl liquidations::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
@@ -924,6 +934,65 @@ impl liquidations::Config for Runtime {
 	type WeightInfo = ();
 	type ParachainId = ParaId;
 	type PalletId = LiquidationsPalletId;
+}
+
+parameter_types! {
+	pub const MaxLendingCount: u32 = 10;
+	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
+	pub OracleMarketCreationStake : Balance = 300;
+}
+
+impl lending::Config for Runtime {
+	type Event = Event;
+	type Oracle = Oracle;
+	type VaultId = u64;
+	type Vault = Vault;
+	type CurrencyFactory = CurrencyFactory;
+	type MultiCurrency = Assets;
+	type Liquidation = Liquidations;
+	type UnixTime = Timestamp;
+	type MaxLendingCount = MaxLendingCount;
+	type AuthorityId = oracle::crypto::BathurstStId;
+	type WeightInfo = weights::lending::WeightInfo<Runtime>;
+	type LiquidationStrategyId = u32;
+	type OracleMarketCreationStake = OracleMarketCreationStake;
+	type PalletId = LendingPalletId;
+	type NativeCurrency = Balances;
+	type WeightToFee = WeightToFee;
+}
+
+pub type PoolId = u128;
+
+parameter_types! {
+  pub const ConstantProductPalletId: PalletId = PalletId(*b"pal_cnst");
+}
+
+impl uniswap_v2::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type CurrencyFactory = CurrencyFactory;
+	type Assets = Tokens;
+	type Convert = ConvertInto;
+	type PoolId = PoolId;
+	type PalletId = ConstantProductPalletId;
+	type WeightInfo = weights::uniswap_v2::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+  pub const StableSwapPalletId: PalletId = PalletId(*b"pal_stab");
+}
+
+impl curve_amm::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type CurrencyFactory = CurrencyFactory;
+	type Assets = Tokens;
+	type Convert = ConvertInto;
+	type PoolId = PoolId;
+	type PalletId = StableSwapPalletId;
+	type WeightInfo = weights::curve_amm::WeightInfo<Runtime>;
 }
 
 construct_runtime!(
@@ -960,7 +1029,7 @@ construct_runtime!(
 		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 		Utility: utility::{Pallet, Call, Event} = 35,
-		  Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
+		Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
@@ -983,6 +1052,9 @@ construct_runtime!(
 		DutchAuction: dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
 		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
+		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
+	  ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
+	  StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1052,10 +1124,29 @@ mod benches {
 		[mosaic, Mosaic]
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
+		//FIXME: broken with dali [lending, Lending]
+	//	[lending, Lending]
+	  [uniswap_v2, ConstantProductDex]
+	  [curve_amm, StableSwapDex]
 	);
 }
 
 impl_runtime_apis! {
+	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
+		fn balance_of(asset_id: SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
+			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id.0, &account_id))
+		}
+	}
+
+	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
+		fn amount_available_to_claim_for(account_id: AccountId) -> SafeRpcWrapper<Balance> {
+			SafeRpcWrapper (
+				crowdloan_rewards::amount_available_to_claim_for::<Runtime>(account_id)
+					.unwrap_or_else(|_| Balance::zero())
+			)
+		}
+	}
+
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
 			VERSION
@@ -1161,6 +1252,34 @@ impl_runtime_apis! {
 			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}
+	#[cfg(feature = "sim-node")]
+	impl simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime {
+		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
+			use sp_runtime::{
+				generic::Era, MultiSignature,
+				traits::StaticLookup,
+			};
+			use sp_core::sr25519;
+
+			let nonce = frame_system::Pallet::<Runtime>::account_nonce(signer.clone());
+			let extra = (
+				system::CheckNonZeroSender::<Runtime>::new(),
+				system::CheckSpecVersion::<Runtime>::new(),
+				system::CheckTxVersion::<Runtime>::new(),
+				system::CheckGenesis::<Runtime>::new(),
+				system::CheckEra::<Runtime>::from(Era::Immortal),
+				system::CheckNonce::<Runtime>::from(nonce),
+				system::CheckWeight::<Runtime>::new(),
+				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
+			);
+
+			let signature = MultiSignature::from(sr25519::Signature([0u8;64]));
+			let address = AccountIdLookup::unlookup(signer);
+			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
+
+			ext.encode()
+		}
+	}
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
@@ -1173,13 +1292,9 @@ impl_runtime_apis! {
 			use system_benchmarking::Pallet as SystemBench;
 			use session_benchmarking::Pallet as SessionBench;
 
-
 			let mut list = Vec::<BenchmarkList>::new();
-
 			list_benchmarks!(list, extra);
-
 			let storage_info = AllPalletsWithSystem::storage_info();
-
 			return (list, storage_info)
 		}
 

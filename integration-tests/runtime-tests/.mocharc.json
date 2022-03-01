@@ -1,6 +1,6 @@
 {
   "diff": true,
-  "extension": ["js", "cjs", "mjs"],
+  "inline-diffs": true,
   "package": "./package.json",
   "reporter": "mochawesome",
   "reporterOptions": {
@@ -10,13 +10,15 @@
     "html": true,
     "json": true
   },
-  "slow": 75,
+  "slow": 600000,
   "timeout": 2000,
-  "retries": 0,
+  "retries": 3,
   "ui": "bdd",
-  "watch-files": ["src/**/*.js", "src/**/*.ts"],
+  "trace-warnings": true,
+  "watch-files": ["src/**/*.ts"],
   "watch-ignore": ["lib/vendor"],
-  "require": "src/utils/testSetup.js",
+  "require": ["mochawesome/register", "src/utils/testSetup.ts"],
   "full-trace": true,
-  "parallel": false
+  "parallel": true,
+  "recursive": true
 }

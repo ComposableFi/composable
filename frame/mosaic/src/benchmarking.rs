@@ -14,7 +14,7 @@ const TRANSFER_AMOUNT: u128 = 100_000_000_000_000;
 
 benchmarks! {
 	where_clause {
-		where T::BlockNumber: From<u32>, T::NetworkId: From<u32>, BalanceOf<T>: From<u128>, AssetIdOf<T>: From<u128>,
+		where T::RemoteAssetId: From<[u8; 20]>, T::BlockNumber: From<u32>, T::NetworkId: From<u32>, BalanceOf<T>: From<u128>, AssetIdOf<T>: From<u128>,
 		  T::BudgetPenaltyDecayer: From<BudgetPenaltyDecayer<BalanceOf<T>, T::BlockNumber>>
 	}
 
@@ -60,6 +60,9 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_network(RawOrigin::Signed(relayer).into(), network_id.clone(), network_info));
 
 		let asset_id: AssetIdOf<T> = 1.into();
+	let remote_asset_id: RemoteAssetIdOf<T> = [0xFFu8; 20].into();
+	assert_ok!(Mosaic::<T>::update_asset_mapping(RawOrigin::Root.into(), asset_id, network_id.clone(), Some(remote_asset_id.clone())));
+
 		let budget_amount: BalanceOf<T> =  BUDGET_AMOUNT.into();
 		let decayer: BudgetPenaltyDecayer<BalanceOf<T>, T::BlockNumber> =
 		  BudgetPenaltyDecayer::linear(5.into());
@@ -84,6 +87,9 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_network(RawOrigin::Signed(relayer.clone()).into(), network_id.clone(), network_info));
 
 		let asset_id: AssetIdOf<T> = 1.into();
+	let remote_asset_id: RemoteAssetIdOf<T> = [0xFFu8; 20].into();
+	assert_ok!(Mosaic::<T>::update_asset_mapping(RawOrigin::Root.into(), asset_id, network_id.clone(), Some(remote_asset_id.clone())));
+
 		let budget_amount: BalanceOf<T> =  BUDGET_AMOUNT.into();
 		let decayer: BudgetPenaltyDecayer<BalanceOf<T>, T::BlockNumber> =
 		  BudgetPenaltyDecayer::linear(5.into());
@@ -94,8 +100,8 @@ benchmarks! {
 		let transfer_amount: BalanceOf<T> = TRANSFER_AMOUNT.into();
 
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
-	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id, asset_id, address, transfer_amount, false));
-  }: _(RawOrigin::Signed(relayer), alice, asset_id, transfer_amount)
+	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id.clone(), asset_id, address, transfer_amount, false));
+  }: _(RawOrigin::Signed(relayer), alice, network_id.clone(), remote_asset_id.clone(), transfer_amount)
 
   claim_stale_to {
 		let relayer: T::AccountId = whitelisted_caller();
@@ -109,6 +115,9 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_network(RawOrigin::Signed(relayer.clone()).into(), network_id.clone(), network_info));
 
 		let asset_id: AssetIdOf<T> = 1.into();
+	let remote_asset_id: RemoteAssetIdOf<T> = [0xFFu8; 20].into();
+	assert_ok!(Mosaic::<T>::update_asset_mapping(RawOrigin::Root.into(), asset_id, network_id.clone(), Some(remote_asset_id.clone())));
+
 		let budget_amount: BalanceOf<T> =  BUDGET_AMOUNT.into();
 		let decayer: BudgetPenaltyDecayer<BalanceOf<T>, T::BlockNumber> =
 		  BudgetPenaltyDecayer::linear(5.into());
@@ -135,6 +144,9 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_network(RawOrigin::Signed(relayer.clone()).into(), network_id.clone(), network_info));
 
 		let asset_id: AssetIdOf<T> = 1.into();
+	let remote_asset_id: RemoteAssetIdOf<T> = [0xFFu8; 20].into();
+	assert_ok!(Mosaic::<T>::update_asset_mapping(RawOrigin::Root.into(), asset_id, network_id.clone(), Some(remote_asset_id.clone())));
+
 		let budget_amount: BalanceOf<T> = BUDGET_AMOUNT.into();
 		let decayer: BudgetPenaltyDecayer<BalanceOf<T>, T::BlockNumber> =
 		  BudgetPenaltyDecayer::linear(5.into());
@@ -147,10 +159,10 @@ benchmarks! {
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
 
 	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id.clone(), asset_id, address, transfer_amount, false));
-	  assert_ok!(Mosaic::<T>::accept_transfer(RawOrigin::Signed(relayer.clone()).into(), alice.clone(), asset_id, transfer_amount));
+	  assert_ok!(Mosaic::<T>::accept_transfer(RawOrigin::Signed(relayer.clone()).into(), alice.clone(), network_id.clone(), remote_asset_id.clone(), transfer_amount));
 	  let current_block = frame_system::Pallet::<T>::block_number();
 	  let tx_id = generate_id::<T>(&alice, &network_id, &asset_id, &address, &transfer_amount, &current_block);
-  }: _(RawOrigin::Signed(relayer), asset_id, alice.clone(), transfer_amount, T::MinimumTimeLockPeriod::get(), tx_id)
+  }: _(RawOrigin::Signed(relayer), network_id.clone(), remote_asset_id.clone(), alice.clone(), transfer_amount, T::MinimumTimeLockPeriod::get(), tx_id)
 
   set_timelock_duration {
   }: _(RawOrigin::Root, 100.into())
@@ -167,6 +179,9 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_network(RawOrigin::Signed(relayer.clone()).into(), network_id.clone(), network_info));
 
 		let asset_id: AssetIdOf<T> = 1.into();
+	let remote_asset_id: RemoteAssetIdOf<T> = [0xFFu8; 20].into();
+	assert_ok!(Mosaic::<T>::update_asset_mapping(RawOrigin::Root.into(), asset_id, network_id.clone(), Some(remote_asset_id.clone())));
+
 		let budget_amount: BalanceOf<T> =  BUDGET_AMOUNT.into();
 		let decayer: BudgetPenaltyDecayer<BalanceOf<T>, T::BlockNumber> =
 		  BudgetPenaltyDecayer::linear(5.into());
@@ -179,12 +194,12 @@ benchmarks! {
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
 
 	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id.clone(), asset_id, address, transfer_amount, false));
-	  assert_ok!(Mosaic::<T>::accept_transfer(RawOrigin::Signed(relayer.clone()).into(), alice.clone(), asset_id, transfer_amount));
+	  assert_ok!(Mosaic::<T>::accept_transfer(RawOrigin::Signed(relayer.clone()).into(), alice.clone(), network_id.clone(), remote_asset_id.clone(), transfer_amount));
 	  let current_block = frame_system::Pallet::<T>::block_number();
 	  let tx_id = generate_id::<T>(&alice, &network_id, &asset_id, &address, &transfer_amount, &current_block);
 
-	  assert_ok!(Mosaic::<T>::timelocked_mint(RawOrigin::Signed(relayer.clone()).into(), asset_id, alice.clone(), transfer_amount, T::MinimumTimeLockPeriod::get(), tx_id));
-  }: _(RawOrigin::Signed(relayer), asset_id, alice.clone(), transfer_amount)
+	  assert_ok!(Mosaic::<T>::timelocked_mint(RawOrigin::Signed(relayer.clone()).into(), network_id.clone(), remote_asset_id.clone(), alice.clone(), transfer_amount, T::MinimumTimeLockPeriod::get(), tx_id));
+  }: _(RawOrigin::Signed(relayer), network_id.clone(), remote_asset_id.clone(), alice.clone(), transfer_amount)
 
 
 	claim_to {
@@ -199,6 +214,9 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_network(RawOrigin::Signed(relayer.clone()).into(), network_id.clone(), network_info));
 
 		let asset_id: AssetIdOf<T> = 1.into();
+	let remote_asset_id: RemoteAssetIdOf<T> = [0xFFu8; 20].into();
+	assert_ok!(Mosaic::<T>::update_asset_mapping(RawOrigin::Root.into(), asset_id, network_id.clone(), Some(remote_asset_id.clone())));
+
 		let budget_amount: BalanceOf<T> = BUDGET_AMOUNT.into();
 		let decayer: BudgetPenaltyDecayer<BalanceOf<T>, T::BlockNumber> =
 		  BudgetPenaltyDecayer::linear(5.into());
@@ -211,13 +229,28 @@ benchmarks! {
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
 
 	  assert_ok!(Mosaic::<T>::transfer_to(RawOrigin::Signed(alice.clone()).into(), network_id.clone(), asset_id, address, transfer_amount, false));
-	  assert_ok!(Mosaic::<T>::accept_transfer(RawOrigin::Signed(relayer.clone()).into(), alice.clone(), asset_id, transfer_amount));
+	  assert_ok!(Mosaic::<T>::accept_transfer(RawOrigin::Signed(relayer.clone()).into(), alice.clone(), network_id.clone(), remote_asset_id.clone(), transfer_amount));
 	  let current_block = frame_system::Pallet::<T>::block_number();
 	  let tx_id = generate_id::<T>(&alice, &network_id, &asset_id, &address, &transfer_amount, &current_block);
 
-	  assert_ok!(Mosaic::<T>::timelocked_mint(RawOrigin::Signed(relayer.clone()).into(), asset_id, alice.clone(), transfer_amount, T::MinimumTimeLockPeriod::get(), tx_id));
+	  assert_ok!(Mosaic::<T>::timelocked_mint(RawOrigin::Signed(relayer.clone()).into(), network_id.clone(), remote_asset_id.clone(), alice.clone(), transfer_amount, T::MinimumTimeLockPeriod::get(), tx_id));
 		frame_system::Pallet::<T>::set_block_number(T::MinimumTimeLockPeriod::get() + 1.into());
 	}: _(RawOrigin::Signed(alice.clone()), asset_id, alice.clone())
+
+	update_asset_mapping {
+		  let relayer: T::AccountId = whitelisted_caller();
+		assert_ok!(Mosaic::<T>::set_relayer(RawOrigin::Root.into(), relayer.clone()));
+
+		  let network_id: T::NetworkId = 1.into();
+		  let network_info = NetworkInfo {
+			  enabled: true,
+			  max_transfer_size: MAX_TRANSFER_SIZE.into(),
+		  };
+
+		assert_ok!(Mosaic::<T>::set_network(RawOrigin::Signed(relayer.clone()).into(), network_id.clone(), network_info));
+		  let asset_id: AssetIdOf<T> = 1.into();
+	  let remote_asset_id: T::RemoteAssetId = [0xFFu8; 20].into();
+	}: _(RawOrigin::Root, asset_id, network_id.clone(), Some(remote_asset_id.clone()))
 }
 
 impl_benchmark_test_suite!(Mosaic, crate::mock::new_test_ext(), crate::mock::Test,);

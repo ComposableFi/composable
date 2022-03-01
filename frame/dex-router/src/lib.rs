@@ -19,17 +19,13 @@ mod tests;
 pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		defi::{CurrencyPair, LiftedFixedBalance},
+		defi::CurrencyPair,
 		dex::{CurveAmm, DexRoute, DexRouteNode, DexRouter},
+		math::SafeArithmetic,
 	};
 	use core::fmt::Debug;
 	use frame_support::pallet_prelude::*;
-	use sp_runtime::{
-		traits::{
-			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, IntegerSquareRoot, One, Zero,
-		},
-		FixedPointOperand,
-	};
+	use sp_runtime::traits::{CheckedAdd, One, Zero};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -49,19 +45,9 @@ pub mod pallet {
 			+ Codec
 			+ MaxEncodedLen
 			+ Copy
-			+ Ord
-			+ CheckedAdd
-			+ CheckedSub
-			+ CheckedMul
-			+ AtLeast32BitUnsigned
-			+ From<u64> // at least 64 bit
 			+ Zero
-			+ One
-			+ IntegerSquareRoot
-			+ FixedPointOperand
-			+ Into<LiftedFixedBalance>
-			+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
-			  // bit
+			+ Ord
+			+ SafeArithmetic;
 		/// The maximum hops in the route.
 		#[pallet::constant]
 		type MaxHopsInRoute: Get<u32> + MaxEncodedLen + TypeInfo;
@@ -77,19 +63,16 @@ pub mod pallet {
 			+ CheckedAdd
 			+ Zero
 			+ One;
-		type PoolTokenIndex: Copy + Debug + Eq + Into<u32> + From<u8>;
 		type StableSwapDex: CurveAmm<
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
-			PoolTokenIndex = Self::PoolTokenIndex,
 			PoolId = Self::PoolId,
 		>;
 		type ConstantProductDex: CurveAmm<
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
-			PoolTokenIndex = Self::PoolTokenIndex,
 			PoolId = Self::PoolId,
 		>;
 	}
@@ -117,8 +100,6 @@ pub mod pallet {
 		PoolDoesNotExist,
 		/// For given asset pair no route found.
 		NoRouteFound,
-		/// Some error occured while performing exchange.
-		ExchangeError,
 	}
 
 	#[pallet::event]
@@ -245,32 +226,101 @@ pub mod pallet {
 			for route_node in &route {
 				match route_node {
 					DexRouteNode::Curve(pool_id) => {
+						let currency_pair = T::StableSwapDex::currency_pair(*pool_id)?;
 						dy_t = T::StableSwapDex::exchange(
 							who,
 							*pool_id,
-							0_u8.into(),
-							1_u8.into(),
+							currency_pair,
 							dx_t,
 							T::Balance::zero(),
-						)
-						.map_err(|_| Error::<T>::ExchangeError)?;
+							true,
+						)?;
 						dx_t = dy_t;
 					},
 					DexRouteNode::Uniswap(pool_id) => {
+						let currency_pair = T::ConstantProductDex::currency_pair(*pool_id)?;
 						dy_t = T::ConstantProductDex::exchange(
 							who,
 							*pool_id,
-							0_u8.into(),
-							1_u8.into(),
+							currency_pair,
 							dx_t,
 							T::Balance::zero(),
-						)
-						.map_err(|_| Error::<T>::ExchangeError)?;
+							true,
+						)?;
 						dx_t = dy_t;
 					},
 				}
 			}
 			Ok(dy_t)
+		}
+
+		fn sell(
+			who: &T::AccountId,
+			asset_pair: CurrencyPair<T::AssetId>,
+			amount: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			Self::exchange(who, asset_pair, amount)
+		}
+
+		fn buy(
+			who: &T::AccountId,
+			asset_pair: CurrencyPair<T::AssetId>,
+			amount: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			let route = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
+			let mut dy_t = amount;
+			let mut dx_t = T::Balance::zero();
+			for route_node in route.iter().rev() {
+				match route_node {
+					DexRouteNode::Curve(pool_id) => {
+						let currency_pair = T::StableSwapDex::currency_pair(*pool_id)?;
+						dx_t = T::StableSwapDex::get_exchange_value(
+							*pool_id,
+							currency_pair.base,
+							dy_t,
+						)?;
+						dy_t = dx_t;
+					},
+					DexRouteNode::Uniswap(pool_id) => {
+						let currency_pair = T::ConstantProductDex::currency_pair(*pool_id)?;
+						dx_t = T::ConstantProductDex::get_exchange_value(
+							*pool_id,
+							currency_pair.base,
+							dy_t,
+						)?;
+						dy_t = dx_t;
+					},
+				}
+			}
+			for route_node in route {
+				match route_node {
+					DexRouteNode::Curve(pool_id) => {
+						let currency_pair = T::StableSwapDex::currency_pair(pool_id)?;
+						let dy_t = T::StableSwapDex::exchange(
+							who,
+							pool_id,
+							currency_pair,
+							dx_t,
+							T::Balance::zero(),
+							true,
+						)?;
+						dx_t = dy_t;
+					},
+					DexRouteNode::Uniswap(pool_id) => {
+						let currency_pair = T::ConstantProductDex::currency_pair(pool_id)?;
+						let dy_t = T::ConstantProductDex::exchange(
+							who,
+							pool_id,
+							currency_pair,
+							dx_t,
+							T::Balance::zero(),
+							true,
+						)?;
+						dx_t = dy_t;
+					},
+				}
+			}
+			Ok(dx_t)
 		}
 	}
 }

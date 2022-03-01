@@ -96,6 +96,36 @@ fn test_initialize_ok() {
 }
 
 #[test]
+fn test_initialize_at_ok() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_ok!(CrowdloanRewards::initialize_at(Origin::root(), 10));
+		assert_eq!(CrowdloanRewards::total_rewards(), 0);
+		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
+	});
+}
+
+#[test]
+fn test_invalid_early_at_claim() {
+	with_rewards_default(|set_block, accounts| {
+		let current = System::block_number();
+		assert_ok!(CrowdloanRewards::initialize_at(Origin::root(), current + 10));
+
+		for (picasso_account, remote_account) in accounts.clone().into_iter() {
+			assert_noop!(
+				remote_account.associate(picasso_account.clone()),
+				Error::<Test>::NotClaimableYet
+			);
+			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NotAssociated);
+		}
+
+		set_block(11);
+		for (picasso_account, remote_account) in accounts.clone().into_iter() {
+			assert_ok!(remote_account.associate(picasso_account.clone()),);
+		}
+	});
+}
+
+#[test]
 fn test_initialize_once() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));

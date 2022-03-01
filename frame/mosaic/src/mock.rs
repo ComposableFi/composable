@@ -21,6 +21,7 @@ pub type NetworkId = u32;
 pub type Balance = u128;
 pub type Amount = i128;
 pub type AssetId = u128;
+pub type RemoteAssetId = [u8; 20];
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -106,6 +107,7 @@ impl pallet_mosaic::Config for Test {
 	type MinimumTimeLockPeriod = MinimumTimeLockPeriod;
 	type BudgetPenaltyDecayer = pallet_mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
 	type NetworkId = NetworkId;
+	type RemoteAssetId = RemoteAssetId;
 	type ControlOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = ();
 }

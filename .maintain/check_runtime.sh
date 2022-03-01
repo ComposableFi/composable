@@ -13,7 +13,7 @@ set -e # fail on any error
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
-  "runtime/dali/src/lib.rs,dali-chachacha,dali"
+  "runtime/dali/src/lib.rs,dali-rococo,dali"
   "runtime/composable/src/lib.rs,composable,composable"
 )
 
@@ -22,9 +22,9 @@ git fetch --depth="${GIT_DEPTH:-100}" origin "${BASE_BRANCH}"
 
 simnode_check() {
   VERSIONS_FILE="$1"
-  if has_runtime_changes "${BASE_BRANCH}" "${GITHUB_BRANCH_NAME}" "$2" && check_runtime "$VERSIONS_FILE" "$2"; then
+  if has_runtime_changes "origin/${BASE_BRANCH}" "origin/${GITHUB_BRANCH_NAME}" "$2" && check_runtime "$VERSIONS_FILE" "$2"; then
     echo "Wasm sources have changed for $3"
-    echo "RUNTIME_CHECK=1" >>$GITHUB_ENV
+    echo "RUNTIME_CHECK=1" >> $GITHUB_ENV
   fi
 }
 

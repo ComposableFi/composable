@@ -7,7 +7,8 @@
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
-		clippy::panic
+		clippy::panic,
+		clippy::identity_op,
 	)
 )] // allow in tests
 #![warn(clippy::unseparated_literal_suffix)]
@@ -43,8 +44,14 @@ mod mocks;
 #[cfg(test)]
 mod tests;
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod setup;
+
+#[cfg(any(feature = "runtime-benchmarks", test))]
+pub mod currency;
+
 pub mod weights;
 
 mod models;
@@ -212,7 +219,8 @@ pub mod pallet {
 		/// Id of proxy to liquidate
 		type LiquidationStrategyId: Parameter + Default + PartialEq + Clone + Debug + TypeInfo;
 
-		/// Minimal price of borrow asset in Oracle price required to create
+		/// Minimal price of borrow asset in Oracle price required to create.
+		/// Examples, 100 USDC.
 		/// Creators puts that amount and it is staked under Vault account.
 		/// So he does not owns it anymore.
 		/// So borrow is both stake and tool to create market.
@@ -237,7 +245,7 @@ pub mod pallet {
 		/// Vault can take that amount if reconfigured so, but that may be changed during runtime
 		/// upgrades.
 		#[pallet::constant]
-		type MarketCreationStake: Get<Self::Balance>;
+		type OracleMarketCreationStake: Get<Self::Balance>;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
@@ -282,6 +290,7 @@ pub mod pallet {
 				return
 			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
+				// TODO: check that it should liqudate before liqudaitons
 				let results = signer.send_signed_transaction(|_account| Call::liquidate {
 					market_id,
 					borrowers: vec![account.clone()],
@@ -339,7 +348,8 @@ pub mod pallet {
 		BorrowerDataCalculationFailed,
 		Unauthorized,
 		NotEnoughRent,
-		PriceOfInitialBorrowVaultShoyldBeGreaterThanZero,
+		/// borrow assets should have enough value as per oracle
+		PriceOfInitialBorrowVaultShouldBeGreaterThanZero,
 	}
 
 	#[pallet::event]
@@ -350,7 +360,7 @@ pub mod pallet {
 			market_id: MarketIndex,
 			vault_id: T::VaultId,
 			manager: T::AccountId,
-			input: CreateInput<T::LiquidationStrategyId, T::MayBeAssetId>,
+			currency_pair: CurrencyPair<T::MayBeAssetId>,
 		},
 		MarketUpdated {
 			market_id: MarketIndex,
@@ -530,7 +540,10 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Create a new lending market.
 		/// - `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause
-		///   borrow & deposits of assets.
+		///   borrow operations.
+		/// - `input`   : Borrow & deposits of assets, persentages.
+		///
+		/// `origin` irreversibly pays `T::OracleMarketCreationStake`.
 		#[pallet::weight(<T as Config>::WeightInfo::create_new_market())]
 		#[transactional]
 		pub fn create_market(
@@ -539,12 +552,13 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let input = input.value();
-			let (market_id, vault_id) = Self::create(who.clone(), input.clone())?;
+			let pair = input.currency_pair.clone();
+			let (market_id, vault_id) = Self::create(who.clone(), input)?;
 			Self::deposit_event(Event::<T>::MarketCreated {
 				market_id,
 				vault_id,
 				manager: who,
-				input,
+				currency_pair: pair,
 			});
 			Ok(().into())
 		}
@@ -1163,15 +1177,18 @@ pub mod pallet {
 					},
 				)?;
 
-				let initial_price_amount = T::MarketCreationStake::get();
+				let initial_price_amount = T::OracleMarketCreationStake::get();
+
 				let initial_pool_size = T::Oracle::get_price_inverse(
 					config_input.borrow_asset(),
 					initial_price_amount,
 				)?;
+
 				ensure!(
 					initial_pool_size > T::Balance::zero(),
-					Error::<T>::PriceOfInitialBorrowVaultShoyldBeGreaterThanZero
+					Error::<T>::PriceOfInitialBorrowVaultShouldBeGreaterThanZero
 				);
+
 				T::MultiCurrency::transfer(
 					config_input.borrow_asset(),
 					&manager,
@@ -1179,13 +1196,6 @@ pub mod pallet {
 					initial_pool_size,
 					false,
 				)?;
-
-				// TODO: discuss on why we do not reposit all amount to vault
-				// <T::Vault as Vault>::deposit(
-				// 	&borrow_asset_vault,
-				// 	&Self::account_id(&market_id),
-				// 	initial_pool_size,
-				// )?;
 
 				let config = MarketConfig {
 					manager,
@@ -1200,6 +1210,7 @@ pub mod pallet {
 				};
 
 				let debt_asset_id = T::CurrencyFactory::reserve_lp_token_id()?;
+
 				DebtMarkets::<T>::insert(market_id, debt_asset_id);
 				Markets::<T>::insert(market_id, config);
 				BorrowIndex::<T>::insert(market_id, ZeroToOneFixedU128::one());
@@ -1311,7 +1322,8 @@ pub mod pallet {
 					total_repay_amount
 				} else {
 					let repay_borrow_amount = total_repay_amount - burn_amount;
-					remaining_borrow_amount -= repay_borrow_amount;
+					remaining_borrow_amount =
+						remaining_borrow_amount.safe_sub(&repay_borrow_amount)?;
 					<T as Config>::MultiCurrency::burn_from(
 						debt_asset_id,
 						&market_account,

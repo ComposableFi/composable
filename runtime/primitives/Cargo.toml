@@ -13,6 +13,7 @@ codec = { package = "parity-scale-codec", version = "2.0.0", default-features = 
 serde = { version = '1.0.130', features = ['derive'], optional = true }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
 composable-traits = {  path = "../../frame/composable-traits", default-features = false }
+composable-support = {  path = "../../frame/composable-support", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16", default-features = false, optional = true}
 
@@ -24,8 +25,7 @@ std = [
 	"codec/std",
 	"sp-runtime/std",
 	"composable-traits/std",
-    "scale-info/std",
+	"composable-support/std",
+	"scale-info/std",
 ]
-develop = [
-	"xcm"
-]
+develop = ["xcm"]

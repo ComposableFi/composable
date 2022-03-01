@@ -1,6 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
+import type { AssetsBalance, CurrencyId } from '@composable/types/interfaces/assets';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u32, u64 } from '@polkadot/types-codec';
@@ -11,7 +12,7 @@ import type { BeefySignedCommitment } from '@polkadot/types/interfaces/beefy';
 import type { BlockHash } from '@polkadot/types/interfaces/chain';
 import type { PrefixedStorageKey } from '@polkadot/types/interfaces/childstate';
 import type { AuthorityId } from '@polkadot/types/interfaces/consensus';
-import type { ContractCallRequest, ContractExecResult, ContractInstantiateResult, InstantiateRequest } from '@polkadot/types/interfaces/contracts';
+import type { CodeUploadRequest, CodeUploadResult, ContractCallRequest, ContractExecResult, ContractInstantiateResult, InstantiateRequest } from '@polkadot/types/interfaces/contracts';
 import type { CreatedBlock } from '@polkadot/types/interfaces/engine';
 import type { EthAccount, EthCallRequest, EthFilter, EthFilterChanges, EthLog, EthReceipt, EthRichBlock, EthSubKind, EthSubParams, EthSyncStatus, EthTransaction, EthTransactionRequest, EthWork } from '@polkadot/types/interfaces/eth';
 import type { Extrinsic } from '@polkadot/types/interfaces/extrinsics';
@@ -20,13 +21,19 @@ import type { MmrLeafProof } from '@polkadot/types/interfaces/mmr';
 import type { StorageKind } from '@polkadot/types/interfaces/offchain';
 import type { FeeDetails, RuntimeDispatchInfo } from '@polkadot/types/interfaces/payment';
 import type { RpcMethods } from '@polkadot/types/interfaces/rpc';
-import type { AccountId, BlockNumber, H160, H256, H64, Hash, Header, Index, Justification, KeyValue, SignedBlock, StorageData } from '@polkadot/types/interfaces/runtime';
+import type { AccountId, AccountId32, Balance, BlockNumber, H160, H256, H64, Hash, Header, Index, Justification, KeyValue, SignedBlock, StorageData } from '@polkadot/types/interfaces/runtime';
 import type { ReadProof, RuntimeVersion, TraceBlockResponse } from '@polkadot/types/interfaces/state';
 import type { ApplyExtrinsicResult, ChainProperties, ChainType, Health, NetworkState, NodeRole, PeerInfo, SyncState } from '@polkadot/types/interfaces/system';
 import type { IExtrinsic, Observable } from '@polkadot/types/types';
 
 declare module '@polkadot/rpc-core/types/jsonrpc' {
   export interface RpcInterface {
+    assets: {
+      /**
+       * Balance available for the specified account for the specified asset.
+       **/
+      balanceOf: AugmentedRpc<(asset: CurrencyId | AnyNumber | Uint8Array, account: AccountId32 | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<AssetsBalance>>;
+    };
     author: {
       /**
        * Returns true if the keystore has private keys for the given public key and key type.
@@ -68,6 +75,10 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       epochAuthorship: AugmentedRpc<() => Observable<HashMap<AuthorityId, EpochAuthorship>>>;
     };
     beefy: {
+      /**
+       * Returns hash of the latest BEEFY finalized block as seen by this client.
+       **/
+      getFinalizedHead: AugmentedRpc<() => Observable<H256>>;
       /**
        * Returns the block most recently finalized by BEEFY, alongside side its justification.
        **/
@@ -146,6 +157,16 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Returns the projected time a given contract will be able to sustain paying its rent
        **/
       rentProjection: AugmentedRpc<(address: AccountId | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<Option<BlockNumber>>>;
+      /**
+       * Upload new code without instantiating a contract from it
+       **/
+      uploadCode: AugmentedRpc<(uploadRequest: CodeUploadRequest | { origin?: any; code?: any; storageDepositLimit?: any } | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<CodeUploadResult>>;
+    };
+    crowdloanRewards: {
+      /**
+       * The unclaimed amount
+       **/
+      amountAvailableToClaimFor: AugmentedRpc<(accountId: AccountId | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Balance>>;
     };
     engine: {
       /**

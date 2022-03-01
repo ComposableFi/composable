@@ -1,156 +1,109 @@
-use frame_support::assert_ok;
-
 use crate::mock::*;
-use composable_traits::dex::CurveAmm as ConstantProductAmmTrait;
-use frame_support::traits::fungibles::{Inspect, Mutate};
+use composable_tests_helpers::test::helper::{
+	acceptable_computation_error, default_acceptable_computation_error,
+};
+use composable_traits::{defi::CurrencyPair, dex::CurveAmm};
+use frame_support::{
+	assert_ok,
+	traits::fungibles::{Inspect, Mutate},
+};
 use sp_runtime::Permill;
 
+// TODO
+/*
+- test lp mint/burn
+- test error if trying to remove > lp than we have
+- test high slippage scenario
+- test lp fees
+- test admin fees
+*/
+
 #[test]
-fn add_remove_liquidity() {
+fn test() {
 	new_test_ext().execute_with(|| {
-		// ConstantProductAmm configurations
-		let assets = vec![USDC, USDT];
-		let fee = Permill::zero();
-		let admin_fee = Permill::zero();
+		let pool_id = Uni::do_create_pool(
+			&ALICE,
+			CurrencyPair::new(BTC, USDT),
+			Permill::zero(),
+			Permill::zero(),
+		)
+		.expect("impossible; qed;");
 
-		// Mint USDT for ALICE
-		assert_eq!(Tokens::balance(USDT, &ALICE), 0);
-		assert_ok!(Tokens::mint_into(USDT, &ALICE, 200000));
-		assert_eq!(Tokens::balance(USDT, &ALICE), 200000);
-		// Mint USDC for ALICE
-		assert_eq!(Tokens::balance(USDC, &ALICE), 0);
-		assert_ok!(Tokens::mint_into(USDC, &ALICE, 200000));
-		assert_eq!(Tokens::balance(USDC, &ALICE), 200000);
-		// Mint USDT for BOB
-		assert_eq!(Tokens::balance(USDT, &BOB), 0);
-		assert_ok!(Tokens::mint_into(USDT, &BOB, 200000));
-		assert_eq!(Tokens::balance(USDT, &BOB), 200000);
-		// Mint USDC for BOB
-		assert_eq!(Tokens::balance(USDC, &BOB), 0);
-		assert_ok!(Tokens::mint_into(USDC, &BOB, 200000));
-		assert_eq!(Tokens::balance(USDC, &BOB), 200000);
+		let pool = Uni::pools(pool_id).expect("impossible; qed;");
 
-		// Create ConstantProductAmm pool
-		let p = ConstantProductAmm::create_pool(&ALICE, assets, fee, admin_fee);
-		assert_ok!(&p);
-		let pool_id = p.unwrap();
-		let pool = ConstantProductAmm::get_pool_info(pool_id);
-		assert!(pool.is_some());
-		let pool = pool.unwrap();
-		let pool_lp_asset = pool.lp_token;
-		// 1 USDC = 1 USDT
+		let current_product = |a| {
+			let balance_btc = Tokens::balance(BTC, &a);
+			let balance_usdt = Tokens::balance(USDT, &a);
+			balance_btc * balance_usdt
+		};
+		let current_pool_product = || current_product(Uni::account_id(&pool_id));
 
-		// Add liquidity from ALICE's account to pool
-		let amounts = vec![130000u128, 130000u128];
-		assert_ok!(ConstantProductAmm::add_liquidity(&ALICE, pool_id, amounts.clone(), 0u128));
-		let alice_balance = Tokens::balance(pool_lp_asset, &ALICE);
-		assert_ne!(alice_balance, 0);
-		assert_eq!(Tokens::balance(USDT, &ALICE), 200000 - 130000);
-		assert_eq!(Tokens::balance(USDC, &ALICE), 200000 - 130000);
-		let pool = ConstantProductAmm::get_pool_info(pool_id);
-		assert!(pool.is_some());
+		let unit = 1_000_000_000_000;
 
-		// Add liquidity from BOB's account to pool
-		assert_ok!(ConstantProductAmm::add_liquidity(&BOB, pool_id, amounts.clone(), 0u128));
-		let bob_balance = Tokens::balance(pool_lp_asset, &BOB);
-		assert_ne!(bob_balance, 0);
-		assert_eq!(Tokens::balance(USDT, &BOB), 200000 - 130000);
-		assert_eq!(Tokens::balance(USDC, &BOB), 200000 - 130000);
-		let min_amt = vec![0u128, 0u128];
+		let btc_price = 45_000;
 
-		// Check that pool has USDT and USDC transferred from ALICE and BOB
-		assert_eq!(Tokens::balance(USDC, &ConstantProductAmm::account_id(&pool_id)), 260000);
-		assert_eq!(Tokens::balance(USDT, &ConstantProductAmm::account_id(&pool_id)), 260000);
+		let nb_of_btc = 100;
 
-		// Withdraw ALICE"s fund from pool.
-		assert_ok!(ConstantProductAmm::remove_liquidity(
+		// 100 BTC/4.5M USDT
+		let initial_btc = nb_of_btc * unit;
+		let initial_usdt = nb_of_btc * btc_price * unit;
+
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
+		assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+
+		let initial_user_invariant = current_product(ALICE);
+
+		// Add the liquidity
+		assert_ok!(<Uni as CurveAmm>::add_liquidity(
 			&ALICE,
 			pool_id,
-			alice_balance,
-			min_amt.clone()
+			initial_btc,
+			initial_usdt,
+			0,
+			false
 		));
-		// Check balances which should be impacted.
-		assert_eq!(Tokens::balance(pool_lp_asset, &ALICE), 0);
-		assert_eq!(Tokens::balance(USDT, &ALICE), 200000);
-		assert_eq!(Tokens::balance(USDC, &ALICE), 200000);
-		assert_eq!(Tokens::balance(USDC, &ConstantProductAmm::account_id(&pool_id)), 130000);
-		assert_eq!(Tokens::balance(USDT, &ConstantProductAmm::account_id(&pool_id)), 130000);
 
-		// Withdraw BOB"s fund from pool.
-		assert_ok!(ConstantProductAmm::remove_liquidity(
-			&BOB,
-			pool_id,
-			bob_balance,
-			min_amt.clone()
+		// 1 unit of btc = 45k + some unit of usdt
+		let ratio =
+			<Uni as CurveAmm>::get_exchange_value(pool_id, BTC, unit).expect("impossible; qed;");
+		assert!(ratio > (initial_usdt / initial_btc) * unit);
+
+		let initial_pool_invariant = current_pool_product();
+
+		assert_eq!(initial_user_invariant, initial_pool_invariant);
+
+		// swap a btc
+		let swap_btc = unit;
+		assert_ok!(Tokens::mint_into(BTC, &BOB, swap_btc));
+
+		<Uni as CurveAmm>::sell(&BOB, pool_id, BTC, swap_btc, false).expect("impossible; qed;");
+
+		let new_pool_invariant = current_pool_product();
+		assert_ok!(default_acceptable_computation_error(
+			initial_pool_invariant,
+			new_pool_invariant
 		));
-		// Check balances which should be impacted.
-		assert_eq!(Tokens::balance(pool_lp_asset, &BOB), 0);
-		assert_eq!(Tokens::balance(USDT, &BOB), 200000);
-		assert_eq!(Tokens::balance(USDC, &BOB), 200000);
-		assert_eq!(Tokens::balance(USDC, &ConstantProductAmm::account_id(&pool_id)), 0);
-		assert_eq!(Tokens::balance(USDT, &ConstantProductAmm::account_id(&pool_id)), 0);
-	});
-}
 
-#[test]
-fn exchange_test() {
-	new_test_ext().execute_with(|| {
-		// ConstantProductAmm configurations
-		let assets = vec![USDC, USDT];
-		let fee = Permill::zero();
-		let admin_fee = Permill::zero();
+		<Uni as CurveAmm>::buy(&BOB, pool_id, BTC, swap_btc, false).expect("impossible; qed;");
 
-		// Mint USDT for ALICE
-		assert_eq!(Tokens::balance(USDT, &ALICE), 0);
-		assert_ok!(Tokens::mint_into(USDT, &ALICE, 200000));
-		assert_eq!(Tokens::balance(USDT, &ALICE), 200000);
-		// Mint USDC for ALICE
-		assert_eq!(Tokens::balance(USDC, &ALICE), 0);
-		assert_ok!(Tokens::mint_into(USDC, &ALICE, 200000));
-		assert_eq!(Tokens::balance(USDC, &ALICE), 200000);
-		// Mint USDT for BOB
-		assert_eq!(Tokens::balance(USDT, &BOB), 0);
-		assert_ok!(Tokens::mint_into(USDT, &BOB, 200000));
-		assert_eq!(Tokens::balance(USDT, &BOB), 200000);
-		// Mint USDC for BOB
-		assert_eq!(Tokens::balance(USDC, &BOB), 0);
-		assert_ok!(Tokens::mint_into(USDC, &BOB, 200000));
-		assert_eq!(Tokens::balance(USDC, &BOB), 200000);
-		// Mint USDT for CHARLIE
-		assert_eq!(Tokens::balance(USDT, &CHARLIE), 0);
-		assert_ok!(Tokens::mint_into(USDT, &CHARLIE, 200000));
-		assert_eq!(Tokens::balance(USDT, &CHARLIE), 200000);
+		let precision = 100;
+		let bob_btc = Tokens::balance(BTC, &BOB);
+		assert_ok!(acceptable_computation_error(bob_btc, swap_btc, precision));
 
-		// Create ConstantProductAmm pool
-		let p = ConstantProductAmm::create_pool(&ALICE, assets, fee, admin_fee);
-		assert_ok!(&p);
-		let pool_id = p.unwrap();
-		let pool = ConstantProductAmm::get_pool_info(pool_id);
-		assert!(pool.is_some());
-		let pool = pool.unwrap();
-		let pool_lp_asset = pool.lp_token;
-		// 1 USDC = 1 USDT
-		// Add liquidity from ALICE's account to pool
-		let amounts = vec![130000u128, 130000u128];
-		assert_ok!(ConstantProductAmm::add_liquidity(&ALICE, pool_id, amounts.clone(), 0u128));
-		let alice_balance = Tokens::balance(pool_lp_asset, &ALICE);
-		assert_ne!(alice_balance, 0);
-		assert_eq!(Tokens::balance(USDT, &ALICE), 200000 - 130000);
-		assert_eq!(Tokens::balance(USDC, &ALICE), 200000 - 130000);
-		let pool = ConstantProductAmm::get_pool_info(pool_id);
-		assert!(pool.is_some());
-		// Add liquidity from BOB's account to pool
-		assert_ok!(ConstantProductAmm::add_liquidity(&BOB, pool_id, amounts.clone(), 0u128));
-		let bob_balance = Tokens::balance(pool_lp_asset, &BOB);
-		assert_ne!(bob_balance, 0);
-		assert_eq!(Tokens::balance(USDT, &BOB), 200000 - 130000);
-		assert_eq!(Tokens::balance(USDC, &BOB), 200000 - 130000);
-		assert_eq!(Tokens::balance(USDC, &CHARLIE), 0);
-		// CHARLIE exchanges USDT for USDC
-		assert_ok!(ConstantProductAmm::exchange(&CHARLIE, pool_id, 1, 0, 65000, 0));
-		sp_std::if_std! {
-			println!("CHARLIE's USDC balance {:?}" , Tokens::balance(   USDC, &CHARLIE));
-		}
-		assert!(65000 >= Tokens::balance(USDC, &CHARLIE));
+		let new_pool_invariant = current_pool_product();
+		assert_ok!(default_acceptable_computation_error(
+			initial_pool_invariant,
+			new_pool_invariant
+		));
+
+		let lp = Tokens::balance(pool.lp_token, &ALICE);
+		assert_ok!(<Uni as CurveAmm>::remove_liquidity(&ALICE, pool_id, lp, 0, 0));
+
+		// Alice should get back a different amount of tokens.
+		let alice_btc = Tokens::balance(BTC, &ALICE);
+		let alice_usdt = Tokens::balance(USDT, &ALICE);
+		assert_ok!(default_acceptable_computation_error(alice_btc, initial_btc));
+		assert_ok!(default_acceptable_computation_error(alice_usdt, initial_usdt));
 	});
 }

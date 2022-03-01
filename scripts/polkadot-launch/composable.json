@@ -7,45 +7,38 @@
         "name": "alice",
         "wsPort": 9944,
         "basePath": "/tmp/polkadot-launch/relaychains/alice",
-        "port": 30444
+        "port": 30444,
+        "flags": ["--beefy"]
       },
       {
         "name": "bob",
         "wsPort": 9955,
         "basePath": "/tmp/polkadot-launch/relaychains/bob",
-        "port": 30555
+        "port": 30555,
+        "flags": ["--beefy"]
       },
       {
         "name": "charlie",
         "wsPort": 9966,
         "basePath": "/tmp/polkadot-launch/relaychains/charlie",
-        "port": 30666
+        "port": 30666,
+        "flags": ["--beefy"]
       },
       {
         "name": "dave",
         "wsPort": 9977,
         "basePath": "/tmp/polkadot-launch/relaychains/dave",
-        "port": 30777
+        "port": 30777,
+        "flags": ["--beefy"]
       },
       {
         "name": "ferdie",
         "wsPort": 9978,
         "basePath": "/tmp/polkadot-launch/relaychains/ferdie",
-        "port": 30778
+        "port": 30778,
+        "flags": ["--beefy"]
       }
-    ],
-    "genesis": {
-      "runtime": {
-        "runtime_genesis_config": {
-          "configuration": {
-            "config": {
-              "validation_upgrade_frequency": 1,
-              "validation_upgrade_delay": 1
-            }
-          }
-        }
-      }
-    }
+    ]
   },
   "parachains": [
     {

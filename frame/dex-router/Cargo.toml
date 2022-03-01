@@ -36,6 +36,7 @@ version = "2.0.0"
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6" }
 pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
+composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 
 [features]
 default = ["std"]

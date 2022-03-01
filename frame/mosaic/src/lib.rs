@@ -13,6 +13,8 @@ mod relayer;
 mod benchmarking;
 pub mod weights;
 
+pub use crate::weights::WeightInfo;
+
 pub use decay::{BudgetPenaltyDecayer, Decayer};
 pub use pallet::*;
 
@@ -53,19 +55,25 @@ pub mod pallet {
 	pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 	pub(crate) type AssetIdOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::AssetId;
 	pub(crate) type NetworkIdOf<T> = <T as Config>::NetworkId;
+	pub(crate) type RemoteAssetIdOf<T> = <T as Config>::RemoteAssetId;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type PalletId: Get<PalletId>;
+
 		type Assets: Mutate<AccountIdOf<Self>> + Transfer<AccountIdOf<Self>>;
 
+		/// The minimum time to live before a relayer account rotation.
 		#[pallet::constant]
 		type MinimumTTL: Get<BlockNumberOf<Self>>;
+
+		/// The minimum period for which we lock outgoing/incoming funds.
 		#[pallet::constant]
 		type MinimumTimeLockPeriod: Get<BlockNumberOf<Self>>;
 
+		/// The budget penalty decayer.
 		type BudgetPenaltyDecayer: Decayer<BalanceOf<Self>, BlockNumberOf<Self>>
 			+ Clone
 			+ Encode
@@ -75,12 +83,17 @@ pub mod pallet {
 			+ TypeInfo
 			+ PartialEq;
 
+		/// A type representing a network ID.
 		type NetworkId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq;
+
+		/// A type representing a remote asset ID.
+		type RemoteAssetId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq;
 
 		/// Origin capable of setting the relayer. Inteded to be RootOrHalfCouncil, as it is also
 		/// used as the origin capable of stopping attackers.
 		type ControlOrigin: EnsureOrigin<Self::Origin>;
 
+		/// Weight implementation used for extrinsics.
 		type WeightInfo: WeightInfo;
 	}
 
@@ -88,11 +101,19 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Convenience identifiers emitted by the pallet for relayer bookkeeping.
+	pub type Id = H256;
+
+	/// Raw ethereum addresses.
+	pub type EthereumAddress = [u8; 20];
+
+	/// Transaction type.
 	pub enum TransactionType {
 		Incoming,
 		Outgoing,
 	}
 
+	/// The information required for an assets to be transferred between chains.
 	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
 	pub struct AssetInfo<BlockNumber, Balance, Decayer> {
 		pub last_mint_block: BlockNumber,
@@ -101,6 +122,7 @@ pub mod pallet {
 		pub penalty_decayer: Decayer,
 	}
 
+	/// The network informations, used for rate limitting.
 	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
 	pub struct NetworkInfo<Balance> {
 		pub enabled: bool,
@@ -138,7 +160,7 @@ pub mod pallet {
 	#[pallet::getter(fn asset_infos)]
 	pub type AssetsInfo<T: Config> = StorageMap<
 		_,
-		Twox64Concat,
+		Blake2_128Concat,
 		AssetIdOf<T>,
 		AssetInfo<BlockNumberFor<T>, BalanceOf<T>, T::BudgetPenaltyDecayer>,
 		OptionQuery,
@@ -147,7 +169,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn network_infos)]
 	pub type NetworkInfos<T: Config> =
-		StorageMap<_, Twox64Concat, NetworkIdOf<T>, NetworkInfo<BalanceOf<T>>, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, NetworkIdOf<T>, NetworkInfo<BalanceOf<T>>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn time_lock_period)]
@@ -168,9 +190,9 @@ pub mod pallet {
 	#[pallet::getter(fn outgoing_transactions)]
 	pub type OutgoingTransactions<T: Config> = StorageDoubleMap<
 		_,
-		Twox64Concat,
+		Blake2_128Concat,
 		AccountIdOf<T>,
-		Twox64Concat,
+		Blake2_128Concat,
 		AssetIdOf<T>,
 		(BalanceOf<T>, BlockNumberFor<T>),
 		OptionQuery,
@@ -181,11 +203,35 @@ pub mod pallet {
 	#[pallet::getter(fn incoming_transactions)]
 	pub type IncomingTransactions<T: Config> = StorageDoubleMap<
 		_,
-		Twox64Concat,
+		Blake2_128Concat,
 		AccountIdOf<T>,
-		Twox64Concat,
+		Blake2_128Concat,
 		AssetIdOf<T>,
 		(BalanceOf<T>, BlockNumberFor<T>),
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn local_to_remote_asset)]
+	pub type LocalToRemoteAsset<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		AssetIdOf<T>,
+		Blake2_128Concat,
+		NetworkIdOf<T>,
+		RemoteAssetIdOf<T>,
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn remote_to_local_asset)]
+	pub type RemoteToLocalAsset<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		RemoteAssetIdOf<T>,
+		Blake2_128Concat,
+		NetworkIdOf<T>,
+		AssetIdOf<T>,
 		OptionQuery,
 	>;
 
@@ -207,13 +253,27 @@ pub mod pallet {
 		TransferOut {
 			id: Id,
 			to: EthereumAddress,
-			amount: BalanceOf<T>,
+			asset_id: AssetIdOf<T>,
 			network_id: NetworkIdOf<T>,
+			remote_asset_id: RemoteAssetIdOf<T>,
+			amount: BalanceOf<T>,
 		},
 		/// User claimed outgoing tx that was not (yet) picked up by the relayer
-		StaleTxClaimed { to: AccountIdOf<T>, by: AccountIdOf<T>, amount: BalanceOf<T> },
+		StaleTxClaimed {
+			to: AccountIdOf<T>,
+			by: AccountIdOf<T>,
+			asset_id: AssetIdOf<T>,
+			amount: BalanceOf<T>,
+		},
 		/// An incoming tx is created and waiting for the user to claim.
-		TransferInto { to: AccountIdOf<T>, amount: BalanceOf<T>, asset_id: AssetIdOf<T>, id: Id },
+		TransferInto {
+			id: Id,
+			to: AccountIdOf<T>,
+			network_id: NetworkIdOf<T>,
+			remote_asset_id: RemoteAssetIdOf<T>,
+			asset_id: AssetIdOf<T>,
+			amount: BalanceOf<T>,
+		},
 		/// When we have finality issues occur on the Ethereum chain,
 		/// we burn the locked `IncomingTransaction` for which we know that it is invalid.
 		TransferIntoRescined {
@@ -225,16 +285,42 @@ pub mod pallet {
 		PartialTransferAccepted {
 			from: AccountIdOf<T>,
 			asset_id: AssetIdOf<T>,
+			network_id: NetworkIdOf<T>,
+			remote_asset_id: RemoteAssetIdOf<T>,
 			amount: BalanceOf<T>,
 		},
 		/// The relayer accepted the user's `OutgoingTransaction`.
-		TransferAccepted { from: AccountIdOf<T>, asset_id: AssetIdOf<T>, amount: BalanceOf<T> },
+		TransferAccepted {
+			from: AccountIdOf<T>,
+			asset_id: AssetIdOf<T>,
+			network_id: NetworkIdOf<T>,
+			remote_asset_id: RemoteAssetIdOf<T>,
+			amount: BalanceOf<T>,
+		},
 		/// The user claims his `IncomingTransaction` and unlocks the locked amount.
 		TransferClaimed {
 			by: AccountIdOf<T>,
 			to: AccountIdOf<T>,
 			asset_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
+		},
+		/// An asset mapping has been created.
+		AssetMappingCreated {
+			asset_id: AssetIdOf<T>,
+			network_id: NetworkIdOf<T>,
+			remote_asset_id: RemoteAssetIdOf<T>,
+		},
+		/// An existing asset mapping has been updated.
+		AssetMappingUpdated {
+			asset_id: AssetIdOf<T>,
+			network_id: NetworkIdOf<T>,
+			remote_asset_id: RemoteAssetIdOf<T>,
+		},
+		/// An existing asset mapping has been deleted.
+		AssetMappingDeleted {
+			asset_id: AssetIdOf<T>,
+			network_id: NetworkIdOf<T>,
+			remote_asset_id: RemoteAssetIdOf<T>,
 		},
 	}
 
@@ -254,6 +340,7 @@ pub mod pallet {
 		TxStillLocked,
 		NoOutgoingTx,
 		AmountMismatch,
+		AssetNotMapped,
 	}
 
 	#[pallet::call]
@@ -365,6 +452,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 			ensure!(AssetsInfo::<T>::contains_key(asset_id), Error::<T>::UnsupportedAsset);
+			let remote_asset_id = Self::get_remote_mapping(asset_id, network_id.clone())?;
 			let network_info =
 				NetworkInfos::<T>::get(network_id.clone()).ok_or(Error::<T>::UnsupportedNetwork)?;
 			ensure!(network_info.enabled, Error::<T>::NetworkDisabled);
@@ -398,7 +486,14 @@ pub mod pallet {
 			)?;
 
 			let id = generate_id::<T>(&caller, &network_id, &asset_id, &address, &amount, &now);
-			Self::deposit_event(Event::<T>::TransferOut { to: address, amount, network_id, id });
+			Self::deposit_event(Event::<T>::TransferOut {
+				id,
+				to: address,
+				amount,
+				asset_id,
+				network_id,
+				remote_asset_id,
+			});
 
 			Ok(().into())
 		}
@@ -419,10 +514,12 @@ pub mod pallet {
 		pub fn accept_transfer(
 			origin: OriginFor<T>,
 			from: AccountIdOf<T>,
-			asset_id: AssetIdOf<T>,
+			network_id: NetworkIdOf<T>,
+			remote_asset_id: RemoteAssetIdOf<T>,
 			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			Self::ensure_relayer(origin)?;
+			let asset_id = Self::get_local_mapping(remote_asset_id.clone(), network_id.clone())?;
 			OutgoingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
 				from.clone(),
 				asset_id,
@@ -441,6 +538,8 @@ pub mod pallet {
 							*maybe_tx = None;
 							Self::deposit_event(Event::<T>::TransferAccepted {
 								from,
+								network_id,
+								remote_asset_id,
 								asset_id,
 								amount,
 							});
@@ -450,6 +549,8 @@ pub mod pallet {
 							*maybe_tx = Some((new_balance, lock_period));
 							Self::deposit_event(Event::<T>::PartialTransferAccepted {
 								from,
+								network_id,
+								remote_asset_id,
 								asset_id,
 								amount,
 							});
@@ -500,7 +601,12 @@ pub mod pallet {
 					}?;
 
 					*prev = None;
-					Self::deposit_event(Event::<T>::StaleTxClaimed { to, by: caller, amount });
+					Self::deposit_event(Event::<T>::StaleTxClaimed {
+						to,
+						asset_id,
+						by: caller,
+						amount,
+					});
 					Ok(())
 				},
 			)?;
@@ -512,13 +618,15 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::timelocked_mint())]
 		pub fn timelocked_mint(
 			origin: OriginFor<T>,
-			asset_id: AssetIdOf<T>,
+			network_id: NetworkIdOf<T>,
+			remote_asset_id: RemoteAssetIdOf<T>,
 			to: AccountIdOf<T>,
 			amount: BalanceOf<T>,
 			lock_time: BlockNumberOf<T>,
 			id: Id,
 		) -> DispatchResultWithPostInfo {
 			let (_caller, current_block) = Self::ensure_relayer(origin)?;
+			let asset_id = Self::get_local_mapping(remote_asset_id.clone(), network_id.clone())?;
 
 			AssetsInfo::<T>::try_mutate_exists::<_, _, DispatchError, _>(asset_id, |info| {
 				let AssetInfo { last_mint_block, penalty, budget, penalty_decayer } =
@@ -554,7 +662,14 @@ pub mod pallet {
 					penalty_decayer,
 				});
 
-				Self::deposit_event(Event::<T>::TransferInto { to, asset_id, amount, id });
+				Self::deposit_event(Event::<T>::TransferInto {
+					id,
+					to,
+					network_id,
+					remote_asset_id,
+					asset_id,
+					amount,
+				});
 				Ok(())
 			})?;
 
@@ -578,11 +693,13 @@ pub mod pallet {
 		#[transactional]
 		pub fn rescind_timelocked_mint(
 			origin: OriginFor<T>,
-			asset_id: AssetIdOf<T>,
+			network_id: NetworkIdOf<T>,
+			remote_asset_id: RemoteAssetIdOf<T>,
 			account: AccountIdOf<T>,
 			untrusted_amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			Self::ensure_relayer(origin)?;
+			let asset_id = Self::get_local_mapping(remote_asset_id.clone(), network_id.clone())?;
 
 			IncomingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
 				account.clone(),
@@ -648,6 +765,79 @@ pub mod pallet {
 			)?;
 			Ok(().into())
 		}
+
+		/// Update a network asset mapping.
+		///
+		/// The caller must be `ControlOrigin`.
+		///
+		/// Possibly emits one of:
+		/// - `AssetMappingCreated`
+		/// - `AssetMappingDeleted`
+		/// - `AssetMappingUpdated`
+		#[pallet::weight(T::WeightInfo::update_asset_mapping())]
+		pub fn update_asset_mapping(
+			origin: OriginFor<T>,
+			asset_id: AssetIdOf<T>,
+			network_id: NetworkIdOf<T>,
+			remote_asset_id: Option<RemoteAssetIdOf<T>>,
+		) -> DispatchResultWithPostInfo {
+			T::ControlOrigin::ensure_origin(origin)?;
+			let _ =
+				NetworkInfos::<T>::get(network_id.clone()).ok_or(Error::<T>::UnsupportedNetwork)?;
+			let entry = LocalToRemoteAsset::<T>::try_get(asset_id, network_id.clone()).ok();
+			match (entry, remote_asset_id) {
+				// remove an non-existent entry.
+				(None, None) => {},
+				// insert a new entry.
+				(None, Some(remote_asset_id)) => {
+					LocalToRemoteAsset::<T>::insert(
+						asset_id,
+						network_id.clone(),
+						remote_asset_id.clone(),
+					);
+					RemoteToLocalAsset::<T>::insert(
+						remote_asset_id.clone(),
+						network_id.clone(),
+						asset_id,
+					);
+					Self::deposit_event(Event::<T>::AssetMappingCreated {
+						asset_id,
+						network_id,
+						remote_asset_id,
+					});
+				},
+				// remove an existing entry.
+				(Some(remote_asset_id), None) => {
+					LocalToRemoteAsset::<T>::remove(asset_id, network_id.clone());
+					RemoteToLocalAsset::<T>::remove(remote_asset_id.clone(), network_id.clone());
+					Self::deposit_event(Event::<T>::AssetMappingDeleted {
+						asset_id,
+						network_id,
+						remote_asset_id,
+					});
+				},
+				// update an existing entry
+				(Some(old_remote_asset_id), Some(new_remote_asset_id)) => {
+					LocalToRemoteAsset::<T>::insert(
+						asset_id,
+						network_id.clone(),
+						new_remote_asset_id.clone(),
+					);
+					RemoteToLocalAsset::<T>::remove(old_remote_asset_id, network_id.clone());
+					RemoteToLocalAsset::<T>::insert(
+						new_remote_asset_id.clone(),
+						network_id.clone(),
+						asset_id,
+					);
+					Self::deposit_event(Event::<T>::AssetMappingUpdated {
+						asset_id,
+						network_id,
+						remote_asset_id: new_remote_asset_id,
+					});
+				},
+			}
+			Ok(().into())
+		}
 	}
 
 	#[pallet::extra_constants]
@@ -659,12 +849,12 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		/// AccountId of the pallet, used to store all funds before actually moving them.
-		pub fn sub_account_id(sub_account: SubAccount<T>) -> AccountIdOf<T> {
+		pub(crate) fn sub_account_id(sub_account: SubAccount<T>) -> AccountIdOf<T> {
 			T::PalletId::get().into_sub_account(sub_account.to_id())
 		}
 
 		/// Queries storage, returning the account_id of the current relayer.
-		pub fn relayer_account_id() -> Result<AccountIdOf<T>, DispatchError> {
+		pub(crate) fn relayer_account_id() -> Result<AccountIdOf<T>, DispatchError> {
 			let current_block = <frame_system::Pallet<T>>::block_number();
 			Ok(Relayer::<T>::get()
 				.ok_or(Error::<T>::RelayerNotSet)?
@@ -686,13 +876,23 @@ pub mod pallet {
 			ensure!(relayer.is_relayer(&acc), DispatchError::BadOrigin);
 			Ok((relayer, current_block))
 		}
+
+		pub(crate) fn get_local_mapping(
+			remote_asset_id: RemoteAssetIdOf<T>,
+			network_id: NetworkIdOf<T>,
+		) -> Result<AssetIdOf<T>, Error<T>> {
+			RemoteToLocalAsset::<T>::try_get(remote_asset_id, network_id)
+				.map_err(|_| Error::<T>::AssetNotMapped)
+		}
+
+		pub(crate) fn get_remote_mapping(
+			asset_id: AssetIdOf<T>,
+			network_id: NetworkIdOf<T>,
+		) -> Result<RemoteAssetIdOf<T>, Error<T>> {
+			LocalToRemoteAsset::<T>::try_get(asset_id, network_id)
+				.map_err(|_| Error::<T>::AssetNotMapped)
+		}
 	}
-
-	/// Convenience identifiers emitted by the pallet for relayer bookkeeping.
-	pub type Id = H256;
-
-	/// Raw ethereum addresses.
-	pub type EthereumAddress = [u8; 20];
 
 	/// Uses Keccak256 to generate an identifier for
 	pub(crate) fn generate_id<T: Config>(
