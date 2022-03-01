@@ -143,37 +143,3 @@ where
 		Ok(input)
 	}
 }
-
-impl<AccountId, AssetId, Balance: Zero + PartialOrd + SafeArithmetic, BlockNumber: Zero>
-	BondOffer<AccountId, AssetId, Balance, BlockNumber>
-{
-	/// An offer is completed once all it's nb_of_bonds has been sold.
-	pub fn completed(&self) -> bool {
-		self.nb_of_bonds.is_zero()
-	}
-	/// The total price of the offer, which is the number of nb_of_bonds * the bond_price.
-	pub fn total_price(&self) -> Result<Balance, ArithmeticError> {
-		self.nb_of_bonds.safe_mul(&self.bond_price)
-	}
-	/// Check whether an offer is valid and can be submitted.
-	pub fn valid(&self, min_transfer: Balance, min_reward: Balance) -> bool {
-		let nonzero_maturity = match &self.maturity {
-			BondDuration::Finite { return_in } => !return_in.is_zero(),
-			BondDuration::Infinite => true,
-		};
-		let valid_price = self.bond_price >= min_transfer;
-		let nonzero_nb_of_bonds = !self.nb_of_bonds.is_zero();
-		let valid_reward = self.reward.amount >= min_reward &&
-			self.reward
-				.amount
-				.safe_div(&self.nb_of_bonds)
-				.unwrap_or_else(|_| Balance::zero()) >=
-				min_transfer;
-		let nonzero_reward_maturity = !self.reward.maturity.is_zero();
-		let valid_total = self.total_price().is_ok();
-		nonzero_maturity &&
-			nonzero_nb_of_bonds &&
-			valid_price && nonzero_reward_maturity &&
-			valid_reward && valid_total
-	}
-}
