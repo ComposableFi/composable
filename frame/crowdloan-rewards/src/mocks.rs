@@ -4,7 +4,8 @@ use crate::{
 };
 use codec::Encode;
 use frame_support::{
-	construct_runtime, dispatch::DispatchResultWithPostInfo, parameter_types, traits::Everything, PalletId,
+	construct_runtime, dispatch::DispatchResultWithPostInfo, parameter_types, traits::Everything,
+	PalletId,
 };
 use frame_system as system;
 use sp_core::{ed25519, keccak_256, Pair, H256};
@@ -100,7 +101,7 @@ impl pallet_crowdloan_rewards::Config for Test {
 	type Prefix = Prefix;
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
-  type PalletId = CrowdloanRewardsPalletId;
+	type PalletId = CrowdloanRewardsPalletId;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;

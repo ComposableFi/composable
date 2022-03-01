@@ -816,7 +816,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type VestingStep = VestingStep;
 	type Prefix = Prefix;
 	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
-  type PalletId = CrowdloanRewardsId;
+	type PalletId = CrowdloanRewardsId;
 }
 
 /// The calls we permit to be executed by extrinsics

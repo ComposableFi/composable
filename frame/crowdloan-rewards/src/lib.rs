@@ -64,9 +64,11 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use super::models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount, Reward};
+	use crate::weights::WeightInfo;
 	use codec::Codec;
 	use composable_traits::math::SafeArithmetic;
-  use frame_support::{
+	use frame_support::{
 		pallet_prelude::*,
 		traits::fungible::{Inspect, Transfer},
 		transactional, PalletId,
@@ -81,8 +83,6 @@ pub mod pallet {
 		AccountId32, MultiSignature, Perbill,
 	};
 	use sp_std::vec::Vec;
-	use crate::weights::WeightInfo;
-	use super::models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount, Reward};
 
 	pub type RemoteAccountOf<T> = RemoteAccount<<T as Config>::RelayChainAccountId>;
 	pub type RewardOf<T> = Reward<<T as Config>::Balance, <T as frame_system::Config>::BlockNumber>;
@@ -109,7 +109,7 @@ pub mod pallet {
 		NotInitialized,
 		AlreadyInitialized,
 		InvalidInitializationBlock,
-    RewardsNotFunded,
+		RewardsNotFunded,
 		InvalidProof,
 		InvalidClaim,
 		NothingToClaim,
@@ -306,8 +306,8 @@ pub mod pallet {
 			let enabled = VestingBlockStart::<T>::get().ok_or(Error::<T>::NotInitialized)? <= now;
 			ensure!(enabled, Error::<T>::NotClaimableYet);
 			let remote_account = get_remote_account::<T>(proof, &reward_account, T::Prefix::get())?;
-			// NOTE(hussein-aitlahcen): this is also checked by the ValidateUnsigned implementation of the pallet. theoretically
-			// useless, but 1:1 to make it clear
+			// NOTE(hussein-aitlahcen): this is also checked by the ValidateUnsigned implementation
+			// of the pallet. theoretically useless, but 1:1 to make it clear
 			ensure!(
 				!Associations::<T>::contains_key(reward_account.clone()),
 				Error::<T>::AlreadyAssociated
@@ -342,7 +342,9 @@ pub mod pallet {
 				});
 			let (total_rewards, total_contributors) = Rewards::<T>::iter_values().try_fold(
 				(T::Balance::zero(), 0),
-				|(total_rewards, total_contributors), contributor_reward| -> Result<(T::Balance, u32), DispatchError> {
+				|(total_rewards, total_contributors),
+				 contributor_reward|
+				 -> Result<(T::Balance, u32), DispatchError> {
 					Ok((
 						total_rewards.safe_add(&contributor_reward.total)?,
 						total_contributors.safe_add(&1)?,
@@ -352,7 +354,7 @@ pub mod pallet {
 			TotalRewards::<T>::set(total_rewards);
 			TotalContributors::<T>::set(total_contributors);
 			let available_funds = T::RewardAsset::balance(&Self::account_id());
-      ensure!(available_funds == total_rewards, Error::<T>::RewardsNotFunded);
+			ensure!(available_funds == total_rewards, Error::<T>::RewardsNotFunded);
 			Ok(())
 		}
 
@@ -373,9 +375,14 @@ pub mod pallet {
 							available_to_claim > T::Balance::zero(),
 							Error::<T>::NothingToClaim
 						);
-            let funds_account = Self::account_id();
-            // No need to keep the pallet account alive.
-            T::RewardAsset::transfer(&funds_account, reward_account, available_to_claim, false)?;
+						let funds_account = Self::account_id();
+						// No need to keep the pallet account alive.
+						T::RewardAsset::transfer(
+							&funds_account,
+							reward_account,
+							available_to_claim,
+							false,
+						)?;
 						(*reward).claimed = available_to_claim.saturating_add(reward.claimed);
 						ClaimedRewards::<T>::mutate(|x| *x = x.saturating_add(available_to_claim));
 						Ok(available_to_claim)
@@ -407,8 +414,8 @@ pub mod pallet {
 			// amount until this window point.
 			let vested_reward = reward.total.saturating_sub(upfront_payment);
 			Ok(upfront_payment.saturating_add(
-				vested_reward.saturating_mul(T::Convert::convert(vesting_window))
-					/ T::Convert::convert(reward.vesting_period),
+				vested_reward.saturating_mul(T::Convert::convert(vesting_window)) /
+					T::Convert::convert(reward.vesting_period),
 			))
 		}
 	}
@@ -512,15 +519,14 @@ pub mod pallet {
 			if let Call::associate { reward_account, proof } = call {
 				let now = frame_system::Pallet::<T>::block_number();
 				let enabled = VestingBlockStart::<T>::get()
-					.ok_or(InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8))?
-					<= now;
+					.ok_or(InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8))? <=
+					now;
 				if !enabled {
-					return InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8).into();
+					return InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8).into()
 				}
 
 				if Associations::<T>::get(reward_account).is_some() {
-					return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8)
-						.into();
+					return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8).into()
 				}
 				let remote_account =
 					get_remote_account::<T>(proof.clone(), reward_account, T::Prefix::get())
@@ -531,14 +537,12 @@ pub mod pallet {
 						})?;
 				match Rewards::<T>::get(remote_account.clone()) {
 					None => InvalidTransaction::Custom(ValidityError::NoReward as u8).into(),
-					Some(reward) if reward.total.is_zero() => {
-						InvalidTransaction::Custom(ValidityError::NoReward as u8).into()
-					},
-					Some(_) => {
+					Some(reward) if reward.total.is_zero() =>
+						InvalidTransaction::Custom(ValidityError::NoReward as u8).into(),
+					Some(_) =>
 						ValidTransaction::with_tag_prefix("CrowdloanRewardsAssociationCheck")
 							.and_provides(remote_account)
-							.build()
-					},
+							.build(),
 				}
 			} else {
 				Err(InvalidTransaction::Call.into())

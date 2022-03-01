@@ -55,8 +55,11 @@ fn test_populate_rewards_not_funded() {
 	};
 	ExtBuilder::default().build().execute_with(|| {
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), 0);
-		assert_noop!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)), Error::<Test>::RewardsNotFunded);
-  });
+		assert_noop!(
+			CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)),
+			Error::<Test>::RewardsNotFunded
+		);
+	});
 }
 
 #[test]
@@ -68,13 +71,13 @@ fn test_populate_ok() {
 			.collect()
 	};
 	ExtBuilder::default().build().execute_with(|| {
-    let expected_total_rewards = 0;
+		let expected_total_rewards = 0;
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
 		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(0, DEFAULT_REWARD)));
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 
-    let expected_total_rewards = 100 * DEFAULT_REWARD;
+		let expected_total_rewards = 100 * DEFAULT_REWARD;
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
 		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)));
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
@@ -84,7 +87,7 @@ fn test_populate_ok() {
 		// In this case, the total shouldn't change as its duplicate
 		// No error will be yield but the process should be = identity
 		let s = frame_support::storage_root();
-    let expected_total_rewards = 100 * DEFAULT_REWARD;
+		let expected_total_rewards = 100 * DEFAULT_REWARD;
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
 		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)));
 		assert_eq!(s, frame_support::storage_root());
@@ -92,7 +95,7 @@ fn test_populate_ok() {
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 
 		// Overwrite rewards + 100 new contributors
-    let expected_total_rewards = 200 * (DEFAULT_REWARD + 1);
+		let expected_total_rewards = 200 * (DEFAULT_REWARD + 1);
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
 		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(200, DEFAULT_REWARD + 1)));
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
@@ -132,8 +135,11 @@ fn test_initialize_at_ok() {
 #[test]
 fn test_initialize_at_ko() {
 	ExtBuilder::default().build().execute_with(|| {
-    System::set_block_number(100);
-		assert_noop!(CrowdloanRewards::initialize_at(Origin::root(), 99), Error::<Test>::InvalidInitializationBlock);
+		System::set_block_number(100);
+		assert_noop!(
+			CrowdloanRewards::initialize_at(Origin::root(), 99),
+			Error::<Test>::InvalidInitializationBlock
+		);
 	});
 }
 
@@ -329,7 +335,7 @@ fn test_valid_eth_hardcoded() {
 
 	assert_eq!(Some(eth_address), recovered_address);
 
-  let reward_amount = DEFAULT_REWARD;
+	let reward_amount = DEFAULT_REWARD;
 	let rewards =
 		vec![(RemoteAccount::Ethereum(eth_address), reward_amount, DEFAULT_VESTING_PERIOD)];
 
