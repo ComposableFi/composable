@@ -113,7 +113,7 @@ where
 		}
 
 		if input.bond_price < MinTransfer::get() {
-			return Err("invalid bond_price")
+			return Err("BOND_PRICE_BELOW_MIN_TRANSFER")
 		}
 
 		if input.nb_of_bonds.is_zero() {
