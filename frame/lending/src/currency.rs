@@ -11,7 +11,7 @@
 /// type BCOIN = Currency<54321, 12>;
 ///
 /// let one_hundred_a_tokens = ACOIN::units(100);
-/// let one_value_of_b = BCOIN::one();
+/// let one_value_of_b = BCOIN::ONE;
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Currency<const ID: u128, const EXPONENT: u8> {}
@@ -35,7 +35,19 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// different currencies.
 	pub const ID: u128 = ID;
 
-	/// Returns the provided amount of the currency, cannonicalized to [`Self::one()`], saturating
+	/// The `one` value of the currency, calculated with [`Self::EXPONENT`].
+	///
+	/// # Examples
+	///
+	/// ```
+	/// # use pallet_lending::currency::Currency;
+	///
+	/// type ACOIN = Currency<12345, 10>;
+	/// assert_eq!(ACOIN::ONE, 10_000_000_000);
+	/// ```
+	pub const ONE: u128 = 10_u128.pow(Self::EXPONENT as u32);
+
+	/// Returns the provided amount of the currency, cannonicalized to [`Self::ONE`], saturating
 	/// at the numeric bounds ([`u128::MAX`]).
 	///
 	/// # Examples
@@ -49,23 +61,50 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// // saturates at u128::MAX
 	/// assert_eq!(ACOIN::units(u128::MAX), u128::MAX);
 	/// ```
-	pub fn units(ones: u128) -> u128 {
-		ones.saturating_mul(Self::one())
+	pub const fn units(ones: u128) -> u128 {
+		ones.saturating_mul(Self::ONE)
 	}
 
-	/// The `one` value of the currency, calculated with [`Self::EXPONENT`].
+	// Runtime methods
+
+	/// Creates an instance of this `Currency`.
 	///
-	/// # Examples
-	///
-	/// ```
-	/// # use pallet_lending::currency::Currency;
-	///
-	/// type ACOIN = Currency<12345, 10>;
-	/// assert_eq!(ACOIN::one(), 10_000_000_000);
-	/// ```
-	pub const fn one() -> u128 {
-		10_u128.pow(Self::EXPONENT as u32)
+	/// Sometimes a value is needed, not just a type. This could be called `new`, but since there
+	/// aren't any runtime values associated with this type, `instance` is less confusing.
+	const fn instance() -> Self {
+		Self {}
 	}
+
+	/// Runtime version of [`Self::ID`].
+	const fn id(&self) -> u128 {
+		Self::ID
+	}
+}
+
+// pub trait RuntimeCurrency {
+// 	const fn instance() -> Self;
+
+// 	const fn id(&self) -> u128;
+// }
+
+// impl<const ID: u128, const EXPONENT: u8> RuntimeCurrency for Currency<ID, EXPONENT> {
+// 	/// Creates an instance of this `Currency`.
+// 	///
+// 	/// Sometimes a value is needed, not just a type. This could be called `new`, but since there
+// 	/// aren't any runtime values associated with this type, `instance` is less confusing.
+// 	const fn instance() -> Self {
+// 		Self {}
+// 	}
+
+// 	/// Runtime version of [`Self::ID`].
+//     const fn id(&self) -> u128 {
+//         Self::ID
+//     }
+// }
+
+fn t234() {
+	let t = BTC::instance();
+	let t22 = t.id();
 }
 
 // separate module so that the `allow` attribute isn't appllied to the entirety of the currency

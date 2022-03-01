@@ -368,7 +368,7 @@ where
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
-	pub OracleMarketCreationStake: Balance = NORMALIZED::one();
+	pub OracleMarketCreationStake: Balance = NORMALIZED::ONE;
 }
 
 parameter_types! {
