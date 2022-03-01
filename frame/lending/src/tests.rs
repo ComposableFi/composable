@@ -1,7 +1,7 @@
 //! Test for Lending. Runtime is almost real.
 //! TODO: cover testing events - so make sure that each even is handled at least once
 //! (events can be obtained from System pallet as in banchmarking.rs before this commit)
-//! TODO: OCW of liqudaitons (like in Oracle)
+//! TODO: OCW of liquidations (like in Oracle)
 //! TODO: test on small numbers via proptests - detect edge case what is minimal amounts it starts
 //! to accure(and miminal block delta), and maximal amounts when it overflows
 
