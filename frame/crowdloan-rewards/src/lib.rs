@@ -66,7 +66,7 @@ pub mod weights;
 pub mod pallet {
 	use codec::Codec;
 	use composable_traits::math::SafeArithmetic;
-use frame_support::{
+  use frame_support::{
 		pallet_prelude::*,
 		traits::fungible::{Inspect, Transfer},
 		transactional, PalletId,
@@ -75,15 +75,13 @@ use frame_support::{
 	use sp_io::hashing::keccak_256;
 	use sp_runtime::{
 		traits::{
-			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert, Saturating, Verify,
-			Zero,
+			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
+			Saturating, Verify, Zero,
 		},
 		AccountId32, MultiSignature, Perbill,
 	};
 	use sp_std::vec::Vec;
-
 	use crate::weights::WeightInfo;
-
 	use super::models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount, Reward};
 
 	pub type RemoteAccountOf<T> = RemoteAccount<<T as Config>::RelayChainAccountId>;
@@ -110,6 +108,8 @@ use frame_support::{
 	pub enum Error<T> {
 		NotInitialized,
 		AlreadyInitialized,
+		InvalidInitializationBlock,
+    RewardsNotFunded,
 		InvalidProof,
 		InvalidClaim,
 		NothingToClaim,
@@ -137,8 +137,9 @@ use frame_support::{
 			+ MaxEncodedLen
 			+ Zero;
 
-		/// The currency used to mint the rewards
-		type Currency: Mutate<Self::AccountId, Balance = Self::Balance>;
+		/// The RewardAsset used to transfer the rewards
+		type RewardAsset: Inspect<Self::AccountId, Balance = Self::Balance>
+			+ Transfer<Self::AccountId, Balance = Self::Balance>;
 
 		/// The origin that is allowed to `initialize` the pallet.
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
@@ -167,6 +168,10 @@ use frame_support::{
 
 		/// The implementation of extrinsics weight.
 		type WeightInfo: WeightInfo;
+
+		/// The unique identifier of this pallet.
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 	}
 
 	#[pallet::storage]
@@ -217,7 +222,6 @@ use frame_support::{
 		pub fn initialize(origin: OriginFor<T>) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
 			let current_block = frame_system::Pallet::<T>::block_number();
-			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
 			Self::do_initialize(current_block)
 		}
 
@@ -226,7 +230,6 @@ use frame_support::{
 		#[transactional]
 		pub fn initialize_at(origin: OriginFor<T>, at: T::BlockNumber) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
-			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
 			Self::do_initialize(at)
 		}
 
@@ -278,8 +281,19 @@ use frame_support::{
 		}
 	}
 
+	#[pallet::extra_constants]
+	impl<T: Config> Pallet<T> {
+		/// The AccountId of this pallet.
+		pub fn account_id() -> T::AccountId {
+			T::PalletId::get().into_account()
+		}
+	}
+
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn do_initialize(at: T::BlockNumber) -> DispatchResult {
+			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
+			let current_block = frame_system::Pallet::<T>::block_number();
+			ensure!(at >= current_block, Error::<T>::InvalidInitializationBlock);
 			VestingBlockStart::<T>::set(Some(at));
 			Ok(())
 		}
@@ -337,6 +351,8 @@ use frame_support::{
 			)?;
 			TotalRewards::<T>::set(total_rewards);
 			TotalContributors::<T>::set(total_contributors);
+			let available_funds = T::RewardAsset::balance(&Self::account_id());
+      ensure!(available_funds == total_rewards, Error::<T>::RewardsNotFunded);
 			Ok(())
 		}
 
@@ -357,7 +373,9 @@ use frame_support::{
 							available_to_claim > T::Balance::zero(),
 							Error::<T>::NothingToClaim
 						);
-						T::Currency::mint_into(reward_account, available_to_claim)?;
+            let funds_account = Self::account_id();
+            // No need to keep the pallet account alive.
+            T::RewardAsset::transfer(&funds_account, reward_account, available_to_claim, false)?;
 						(*reward).claimed = available_to_claim.saturating_add(reward.claimed);
 						ClaimedRewards::<T>::mutate(|x| *x = x.saturating_add(available_to_claim));
 						Ok(available_to_claim)
@@ -389,8 +407,8 @@ use frame_support::{
 			// amount until this window point.
 			let vested_reward = reward.total.saturating_sub(upfront_payment);
 			Ok(upfront_payment.saturating_add(
-				vested_reward.saturating_mul(T::Convert::convert(vesting_window)) /
-					T::Convert::convert(reward.vesting_period),
+				vested_reward.saturating_mul(T::Convert::convert(vesting_window))
+					/ T::Convert::convert(reward.vesting_period),
 			))
 		}
 	}
@@ -494,14 +512,15 @@ use frame_support::{
 			if let Call::associate { reward_account, proof } = call {
 				let now = frame_system::Pallet::<T>::block_number();
 				let enabled = VestingBlockStart::<T>::get()
-					.ok_or(InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8))? <=
-					now;
+					.ok_or(InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8))?
+					<= now;
 				if !enabled {
-					return InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8).into()
+					return InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8).into();
 				}
 
 				if Associations::<T>::get(reward_account).is_some() {
-					return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8).into()
+					return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8)
+						.into();
 				}
 				let remote_account =
 					get_remote_account::<T>(proof.clone(), reward_account, T::Prefix::get())
@@ -512,12 +531,14 @@ use frame_support::{
 						})?;
 				match Rewards::<T>::get(remote_account.clone()) {
 					None => InvalidTransaction::Custom(ValidityError::NoReward as u8).into(),
-					Some(reward) if reward.total.is_zero() =>
-						InvalidTransaction::Custom(ValidityError::NoReward as u8).into(),
-					Some(_) =>
+					Some(reward) if reward.total.is_zero() => {
+						InvalidTransaction::Custom(ValidityError::NoReward as u8).into()
+					},
+					Some(_) => {
 						ValidTransaction::with_tag_prefix("CrowdloanRewardsAssociationCheck")
 							.and_provides(remote_account)
-							.build(),
+							.build()
+					},
 				}
 			} else {
 				Err(InvalidTransaction::Call.into())
