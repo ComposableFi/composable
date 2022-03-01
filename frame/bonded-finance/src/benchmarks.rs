@@ -4,6 +4,7 @@
 use crate::Pallet as BondedFinance;
 use crate::{AssetIdOf, BalanceOf, BlockNumberOf, BondOfferOf, Call, Config, Pallet};
 use codec::Decode;
+use composable_support::validation::Validated;
 use composable_traits::{
 	bonded_finance::{BondDuration, BondOffer, BondOfferReward},
 	math::WrappingNext,
@@ -14,7 +15,6 @@ use frame_support::{
 	traits::{fungible::Mutate as _, fungibles::Mutate as _},
 };
 use frame_system::RawOrigin;
-use composable_support::validation::Validated;
 
 const MIN_VESTED_TRANSFER: u128 = 1000 * 1_000_000_000_000;
 const BALANCE: u128 = 1_000_000 * 1_000_000_000_000;

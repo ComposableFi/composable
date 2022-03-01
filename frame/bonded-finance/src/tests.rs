@@ -429,7 +429,7 @@ mod test_bond_offer {
 		let valid_bond_offer = BondOfferOf::<Runtime> {
 			beneficiary: ALICE,
 			asset: mock::MockCurrencyId::BTC,
-			bond_price:  1_000_000 + MIN_VESTED_TRANSFER as u128,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
 			nb_of_bonds: 100_000_u128,
 			maturity: BondDuration::Infinite,
 			reward: BondOfferReward {
@@ -447,7 +447,7 @@ mod test_bond_offer {
 		let valid_bond_offer2 = BondOfferOf::<Runtime> {
 			beneficiary: ALICE,
 			asset: mock::MockCurrencyId::BTC,
-			bond_price:  1_000_000 + MIN_VESTED_TRANSFER as u128,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
 			nb_of_bonds: 1_u128,
 			maturity: BondDuration::Finite { return_in: 1 },
 			reward: BondOfferReward {
@@ -465,7 +465,7 @@ mod test_bond_offer {
 		let valid_bond_offer3 = BondOfferOf::<Runtime> {
 			beneficiary: ALICE,
 			asset: mock::MockCurrencyId::BTC,
-			bond_price:  1_000_000 + MIN_VESTED_TRANSFER as u128,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
 			nb_of_bonds: 100_000_u128,
 			maturity: BondDuration::Finite { return_in: 1_000_000 },
 			reward: BondOfferReward {
@@ -539,7 +539,7 @@ mod test_bond_offer {
 				maturity: 96_u64,
 			},
 		};
-		
+
 		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
@@ -561,7 +561,7 @@ mod test_bond_offer {
 				maturity: 96_u64,
 			},
 		};
-		
+
 		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
@@ -583,7 +583,7 @@ mod test_bond_offer {
 				maturity: 96_u64,
 			},
 		};
-		
+
 		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
@@ -605,7 +605,7 @@ mod test_bond_offer {
 				maturity: 0_u64,
 			},
 		};
-		
+
 		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
