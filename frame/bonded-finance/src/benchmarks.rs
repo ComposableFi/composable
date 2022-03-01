@@ -14,6 +14,7 @@ use frame_support::{
 	traits::{fungible::Mutate as _, fungibles::Mutate as _},
 };
 use frame_system::RawOrigin;
+use composable_support::validation::Validated;
 
 const MIN_VESTED_TRANSFER: u128 = 1000 * 1_000_000_000_000;
 const BALANCE: u128 = 1_000_000 * 1_000_000_000_000;
@@ -88,7 +89,8 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 		initial_mint::<T>(bond_asset, &caller, reward_asset);
 		let bond_offer = bond_offer::<T>(bond_asset, reward_asset);
-	}: _(RawOrigin::Signed(caller), bond_offer, false)
+		let validated_bond_offer = Validated::new(bond_offer).unwrap();
+	}: _(RawOrigin::Signed(caller), validated_bond_offer, false)
 
 	bond {
 		let [bond_asset, reward_asset] = assets::<T>();
