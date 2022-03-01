@@ -64,7 +64,12 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::Codec;
-	use frame_support::{pallet_prelude::*, traits::fungible::Mutate, transactional};
+	use composable_traits::math::SafeArithmetic;
+use frame_support::{
+		pallet_prelude::*,
+		traits::fungible::{Inspect, Transfer},
+		transactional, PalletId,
+	};
 	use frame_system::pallet_prelude::*;
 	use sp_io::hashing::keccak_256;
 	use sp_runtime::{
@@ -320,16 +325,15 @@ pub mod pallet {
 						},
 					);
 				});
-			// NOTE(hussein-aitlahcen): recompute instead of adding to avoid issues with duplicates
-			let (total_rewards, total_contributors) = Rewards::<T>::iter_values().fold(
+			let (total_rewards, total_contributors) = Rewards::<T>::iter_values().try_fold(
 				(T::Balance::zero(), 0),
-				|(total_rewards, total_contributors), contributor_reward| {
-					(
-						total_rewards.saturating_add(contributor_reward.total),
-						total_contributors.saturating_add(1),
-					)
+				|(total_rewards, total_contributors), contributor_reward| -> Result<(T::Balance, u32), DispatchError> {
+					Ok((
+						total_rewards.safe_add(&contributor_reward.total)?,
+						total_contributors.safe_add(&1)?,
+					))
 				},
-			);
+			)?;
 			TotalRewards::<T>::set(total_rewards);
 			TotalContributors::<T>::set(total_contributors);
 			Ok(())
