@@ -117,7 +117,7 @@ where
 		}
 
 		if input.nb_of_bonds.is_zero() {
-			return Err("invalid nb_of_bonds")
+			return Err("NUMBER_OF_BOND_CANNOT_BE_ZERO")
 		}
 
 		let valid_reward = input.reward.amount >= MinReward::get() &&
