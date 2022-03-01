@@ -55,6 +55,8 @@ let
       tar -xvf $src
       mkdir -p $out/bin
       mv release/composable $out/bin
+
+      mv doc $out
     '';
   };
 
@@ -104,9 +106,11 @@ let
           }
       );
     };
-in
-pkgs.writeScriptBin "run-${composable.spec}" ''
-  #!${pkgs.bash}/bin/bash -e
-  rm -rf ${tmp-directory}
-  ${polkalaunch}/bin/polkadot-launch ${devnet-polkalaunch-config}
-''
+in {
+  script =
+    pkgs.writeShellScriptBin "run-${composable.spec}" ''
+      rm -rf ${tmp-directory}
+      ${polkalaunch}/bin/polkadot-launch ${devnet-polkalaunch-config}
+    '';
+  documentation = "${composable-bin}/share";
+}
