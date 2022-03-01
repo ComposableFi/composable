@@ -16,136 +16,6 @@ use mock::{Event, *};
 use proptest::prelude::*;
 
 #[test]
-fn valid_offer() {
-	assert!(BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: MIN_VESTED_TRANSFER as _,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Infinite,
-		reward: BondOfferReward {
-			asset: MockCurrencyId::PICA,
-			amount: 1_000_000_u128 * 100_000_u128,
-			maturity: 96_u128,
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-	assert!(BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: MIN_VESTED_TRANSFER as _,
-		nb_of_bonds: 1_u128,
-		maturity: BondDuration::Finite { return_in: 1 },
-		reward: BondOfferReward {
-			asset: MockCurrencyId::BTC,
-			amount: 1_000_000_u128,
-			maturity: 96_u128,
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-	assert!(BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Finite { return_in: 1_000_000 },
-		reward: BondOfferReward {
-			asset: MockCurrencyId::BTC,
-			amount: 1_000_000_u128 * 100_000_u128,
-			maturity: 96_u128,
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-}
-
-#[test]
-fn invalid_offer() {
-	// invalid bond_price
-	assert!(!BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: MIN_VESTED_TRANSFER as u128 - 1,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Infinite,
-		reward: BondOfferReward {
-			asset: MockCurrencyId::PICA,
-			amount: 1_000_000_u128,
-			maturity: 96_u128
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-
-	// invalid nb_of_bonds
-	assert!(!BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: MIN_VESTED_TRANSFER as _,
-		nb_of_bonds: 0,
-		maturity: BondDuration::Finite { return_in: 1 },
-		reward: BondOfferReward {
-			asset: MockCurrencyId::BTC,
-			amount: 1_000_000_u128,
-			maturity: 96_u128,
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-
-	// invalid maturity
-	assert!(!BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Finite { return_in: 0 },
-		reward: BondOfferReward {
-			asset: MockCurrencyId::BTC,
-			amount: 1_000_000_u128,
-			maturity: 96_u128,
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-
-	// invalid reward
-	assert!(!BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Finite { return_in: 1_000_000 },
-		reward: BondOfferReward { asset: MockCurrencyId::BTC, amount: 0, maturity: 96_u128 }
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-
-	// invalid reward: < MinVested
-	assert!(!BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Finite { return_in: 1_000_000 },
-		reward: BondOfferReward {
-			asset: MockCurrencyId::BTC,
-			amount: MIN_VESTED_TRANSFER * 1_000_u128 - 1,
-			maturity: 96_u128
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-
-	// invalid reward maturity
-	assert!(!BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Finite { return_in: 1_000_000 },
-		reward: BondOfferReward {
-			asset: MockCurrencyId::BTC,
-			amount: 1_000_000_u128,
-			maturity: 0_u128
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-}
 
 prop_compose! {
 	  // NOTE(hussein-aitlahcen): we use u32 before casting to avoid overflows
@@ -546,7 +416,7 @@ proptest! {
 }
 
 #[cfg(test)]
-mod test {
+mod test_bond_offer {
 	use super::*;
 	use crate::BondOfferOf;
 	use composable_support::validation::Validate;
@@ -555,17 +425,74 @@ mod test {
 	use mock::Runtime;
 
 	#[test]
-	fn test_validate_bond_offer() {
-		let invalid = BondOfferOf::<Runtime> {
-			beneficiary: 23_u128,
-			asset: mock::MockCurrencyId::PICA,
-			bond_price: 1u128,
-			nb_of_bonds: 30_u128,
-			maturity: BondDuration::Finite { return_in: 1 },
+	fn test_valid_offer() {
+		let valid_bond_offer = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price:  1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Infinite,
 			reward: BondOfferReward {
 				asset: mock::MockCurrencyId::PICA,
-				amount: 10_000_000_u128,
-				maturity: 45_u64,
+				amount: 1_000_000_u128 * 100_000_u128,
+				maturity: 96_u64,
+			},
+		};
+
+		assert_ok!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(valid_bond_offer));
+
+		let valid_bond_offer2 = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price:  1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 1_u128,
+			maturity: BondDuration::Finite { return_in: 1 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::BTC,
+				amount: 1_000_000_u128,
+				maturity: 96_u64,
+			},
+		};
+
+		assert_ok!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(valid_bond_offer2));
+
+		let valid_bond_offer3 = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price:  1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Finite { return_in: 1_000_000 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::BTC,
+				amount: 1_000_000_u128 * 100_000_u128,
+				maturity: 96_u64,
+			},
+		};
+
+		assert_ok!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(valid_bond_offer3));
+	}
+
+	#[test]
+	fn invalid_bond_price() {
+		let invalid = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::PICA,
+			bond_price: MIN_VESTED_TRANSFER as u128 - 1,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Infinite,
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::PICA,
+				amount: 1_000_000_u128,
+				maturity: 96_u64,
 			},
 		};
 
@@ -574,23 +501,115 @@ mod test {
 			ValidBondOffer<MinReward, MinVestedTransfer>,
 		>>::validate(invalid)
 		.is_err());
+	}
 
-		let valid = BondOfferOf::<Runtime> {
-			beneficiary: 23_u128,
-			asset: mock::MockCurrencyId::PICA,
-			bond_price: 1000_000u128,
-			nb_of_bonds: 2_u128,
+	#[test]
+	fn test_invalid_nb_of_bonds() {
+		let invalid = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price: MIN_VESTED_TRANSFER as _,
+			nb_of_bonds: 0,
 			maturity: BondDuration::Finite { return_in: 1 },
 			reward: BondOfferReward {
-				asset: mock::MockCurrencyId::PICA,
-				amount: 1_000_000_000_u128,
-				maturity: 45_u64,
+				asset: mock::MockCurrencyId::BTC,
+				amount: 1_000_000_u128,
+				maturity: 96_u64,
 			},
 		};
 
-		assert_ok!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
-		>>::validate(valid));
+		>>::validate(invalid)
+		.is_err());
+	}
+
+	#[test]
+	fn test_invalid_maturity() {
+		let invalid = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Finite { return_in: 0 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::BTC,
+				amount: 1_000_000_u128,
+				maturity: 96_u64,
+			},
+		};
+		
+		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(invalid)
+		.is_err());
+	}
+
+	#[test]
+	fn test_invalid_reward() {
+		let invalid = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Finite { return_in: 1_000_000 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::BTC,
+				amount: 0,
+				maturity: 96_u64,
+			},
+		};
+		
+		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(invalid)
+		.is_err());
+	}
+
+	#[test]
+	fn test_invalid_reward_less_than_minvested() {
+		let invalid = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Finite { return_in: 1_000_000 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::BTC,
+				amount: MIN_VESTED_TRANSFER * 1_000_u128 - 1,
+				maturity: 96_u64,
+			},
+		};
+		
+		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(invalid)
+		.is_err());
+	}
+
+	#[test]
+	fn test_invalid_reward_maturity() {
+		let invalid = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Finite { return_in: 1_000_000 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::BTC,
+				amount: MIN_VESTED_TRANSFER * 1_000_u128 - 1,
+				maturity: 0_u64,
+			},
+		};
+		
+		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(invalid)
+		.is_err());
 	}
 }
