@@ -4,7 +4,7 @@ use composable_tests_helpers::test::helper::{
 };
 use composable_traits::{defi::CurrencyPair, dex::Amm};
 use frame_support::{
-	assert_err, assert_ok,
+	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
 use sp_runtime::{Permill, TokenError};
@@ -31,8 +31,8 @@ fn create_pool(
 	assert_ok!(Tokens::mint_into(quote_asset, &ALICE, quote_amount));
 
 	// Add the liquidity
-	assert_ok!(<StableSwap as Amm>::add_liquidity(
-		&ALICE,
+	assert_ok!(StableSwap::add_liquidity(
+		Origin::signed(ALICE),
 		pool_id,
 		base_amount,
 		quote_amount,
@@ -73,8 +73,8 @@ fn test() {
 		assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
 
 		// Add the liquidity
-		assert_ok!(<StableSwap as Amm>::add_liquidity(
-			&ALICE,
+		assert_ok!(StableSwap::add_liquidity(
+			Origin::signed(ALICE),
 			pool_id,
 			initial_usdc,
 			initial_usdt,
@@ -85,8 +85,8 @@ fn test() {
 		let precision = 100;
 		let epsilon = 1;
 		// 1 unit of usdc == 1 unit of usdt
-		let ratio = <StableSwap as CurveAmm>::get_exchange_value(pool_id, USDC, unit)
-			.expect("impossible; qed;");
+		let ratio =
+			<StableSwap as Amm>::get_exchange_value(pool_id, USDC, unit).expect("impossible; qed;");
 		assert_ok!(acceptable_computation_error(ratio, unit, precision, epsilon));
 
 		let swap_usdc = 100_u128 * unit;
@@ -94,9 +94,11 @@ fn test() {
 		// mint 1 USDT, after selling 100 USDC we get 99 USDT so to buy 100 USDC we need 100 USDT
 		assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
 
-		<StableSwap as Amm>::sell(&BOB, pool_id, USDC, swap_usdc, false).expect("impossible; qed;");
+		StableSwap::sell(Origin::signed(BOB), pool_id, USDC, swap_usdc, false)
+			.expect("impossible; qed;");
 
-		<StableSwap as Amm>::buy(&BOB, pool_id, USDC, swap_usdc, false).expect("impossible; qed;");
+		StableSwap::buy(Origin::signed(BOB), pool_id, USDC, swap_usdc, false)
+			.expect("impossible; qed;");
 
 		let bob_usdc = Tokens::balance(USDC, &BOB);
 
@@ -108,7 +110,7 @@ fn test() {
 		));
 
 		let lp = Tokens::balance(pool.lp_token, &ALICE);
-		assert_ok!(<StableSwap as Amm>::remove_liquidity(&ALICE, pool_id, lp, 0, 0));
+		assert_ok!(StableSwap::remove_liquidity(Origin::signed(ALICE), pool_id, lp, 0, 0));
 
 		// Alice should get back a different amount of tokens.
 		let alice_usdc = Tokens::balance(USDC, &ALICE);
@@ -144,11 +146,18 @@ fn add_remove_lp() {
 		let lp = Tokens::balance(pool.lp_token, &BOB);
 		assert_eq!(lp, 0_u128);
 		// Add the liquidity
-		assert_ok!(<StableSwap as Amm>::add_liquidity(&BOB, pool_id, bob_usdc, bob_usdt, 0, false));
+		assert_ok!(StableSwap::add_liquidity(
+			Origin::signed(BOB),
+			pool_id,
+			bob_usdc,
+			bob_usdt,
+			0,
+			false
+		));
 		let lp = Tokens::balance(pool.lp_token, &BOB);
 		// must have received some lp tokens
 		assert!(lp == bob_usdt + bob_usdc);
-		assert_ok!(<StableSwap as Amm>::remove_liquidity(&BOB, pool_id, lp, 0, 0));
+		assert_ok!(StableSwap::remove_liquidity(Origin::signed(BOB), pool_id, lp, 0, 0));
 		let lp = Tokens::balance(pool.lp_token, &BOB);
 		// all lp tokens must have been burnt
 		assert_eq!(lp, 0_u128);
@@ -182,7 +191,14 @@ fn add_lp_imbalanced() {
 		let lp = Tokens::balance(pool.lp_token, &BOB);
 		assert_eq!(lp, 0_u128);
 		// Add the liquidity in balanced way
-		assert_ok!(<StableSwap as Amm>::add_liquidity(&BOB, pool_id, bob_usdc, bob_usdt, 0, false));
+		assert_ok!(StableSwap::add_liquidity(
+			Origin::signed(BOB),
+			pool_id,
+			bob_usdc,
+			bob_usdt,
+			0,
+			false
+		));
 		let lp = Tokens::balance(pool.lp_token, &BOB);
 		// must have received some lp tokens
 		assert!(lp == bob_usdt + bob_usdc);
@@ -199,7 +215,14 @@ fn add_lp_imbalanced() {
 		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 		// Add the liquidity in imbalanced way
-		assert_ok!(<StableSwap as Amm>::add_liquidity(&BOB, pool_id, bob_usdc, bob_usdt, 0, false));
+		assert_ok!(StableSwap::add_liquidity(
+			Origin::signed(BOB),
+			pool_id,
+			bob_usdc,
+			bob_usdt,
+			0,
+			false
+		));
 		// there must fee charged. simple way is to check owner (ALICE) has got
 		// tokens as owner fee.
 		let alice_usdc = Tokens::balance(USDC, &ALICE);
@@ -235,8 +258,8 @@ fn add_lp_with_min_expected_amount() {
 		assert_eq!(lp, 0_u128);
 		let expected_min_value = bob_usdt + bob_usdc;
 		// Add the liquidity in balanced way
-		assert_ok!(<StableSwap as Amm>::add_liquidity(
-			&BOB,
+		assert_ok!(StableSwap::add_liquidity(
+			Origin::signed(BOB),
 			pool_id,
 			bob_usdc,
 			bob_usdt,
@@ -253,9 +276,9 @@ fn add_lp_with_min_expected_amount() {
 		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 		// Add the liquidity in imbalanced way, but have expected_min_value higher
-		assert_err!(
-			<StableSwap as Amm>::add_liquidity(
-				&BOB,
+		assert_noop!(
+			StableSwap::add_liquidity(
+				Origin::signed(BOB),
 				pool_id,
 				bob_usdc,
 				bob_usdt,
@@ -292,17 +315,24 @@ fn remove_lp_failure() {
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 
 		// Add the liquidity
-		assert_ok!(<StableSwap as Amm>::add_liquidity(&BOB, pool_id, bob_usdc, bob_usdt, 0, false));
+		assert_ok!(StableSwap::add_liquidity(
+			Origin::signed(BOB),
+			pool_id,
+			bob_usdc,
+			bob_usdt,
+			0,
+			false
+		));
 		let lp = Tokens::balance(pool.lp_token, &BOB);
-		assert_err!(
-			<StableSwap as Amm>::remove_liquidity(&BOB, pool_id, lp + 1, 0, 0),
+		assert_noop!(
+			StableSwap::remove_liquidity(Origin::signed(BOB), pool_id, lp + 1, 0, 0),
 			TokenError::NoFunds
 		);
 		let min_expected_usdt = 1001 * unit;
 		let min_expected_usdc = 1001 * unit;
-		assert_err!(
-			<StableSwap as Amm>::remove_liquidity(
-				&BOB,
+		assert_noop!(
+			StableSwap::remove_liquidity(
+				Origin::signed(BOB),
 				pool_id,
 				lp,
 				min_expected_usdc,
@@ -335,9 +365,9 @@ fn exchange_failure() {
 		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
 
 		let exchange_usdc = 1001 * unit;
-		assert_err!(
-			<StableSwap as Amm>::exchange(
-				&BOB,
+		assert_noop!(
+			StableSwap::swap(
+				Origin::signed(BOB),
 				pool_id,
 				CurrencyPair::new(USDT, USDC),
 				exchange_usdc,
@@ -348,9 +378,9 @@ fn exchange_failure() {
 		);
 		let exchange_value = 1000 * unit;
 		let expected_value = 1001 * unit;
-		assert_err!(
-			<StableSwap as Amm>::exchange(
-				&BOB,
+		assert_noop!(
+			StableSwap::swap(
+				Origin::signed(BOB),
 				pool_id,
 				CurrencyPair::new(USDT, USDC),
 				exchange_value,
@@ -379,7 +409,7 @@ fn lp_fee() {
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 
-		assert_ok!(<StableSwap as Amm>::sell(&BOB, pool_id, USDT, bob_usdt, false));
+		assert_ok!(StableSwap::sell(Origin::signed(BOB), pool_id, USDT, bob_usdt, false));
 		let usdc_balance = Tokens::balance(USDC, &BOB);
 		// received usdc should bob_usdt - lp_fee
 		assert_ok!(acceptable_computation_error(
@@ -408,7 +438,7 @@ fn protocol_fee() {
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-		assert_ok!(<StableSwap as Amm>::sell(&BOB, pool_id, USDT, bob_usdt, false));
+		assert_ok!(StableSwap::sell(Origin::signed(BOB), pool_id, USDT, bob_usdt, false));
 		let usdc_balance = Tokens::balance(USDC, &BOB);
 		// received usdc should bob_usdt - lp_fee
 		assert_ok!(acceptable_computation_error(
@@ -451,7 +481,7 @@ fn high_slippage() {
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 
-		assert_ok!(<StableSwap as Amm>::sell(&BOB, pool_id, USDT, bob_usdt, false));
+		assert_ok!(StableSwap::sell(Origin::signed(BOB), pool_id, USDT, bob_usdt, false));
 		let usdc_balance = Tokens::balance(USDC, &BOB);
 		assert!((bob_usdt - usdc_balance) > 5_u128);
 	});
