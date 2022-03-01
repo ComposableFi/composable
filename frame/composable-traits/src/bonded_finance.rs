@@ -129,15 +129,15 @@ where
 				MinTransfer::get();
 
 		if !valid_reward {
-			return Err("invalid reward")
+			return Err("INVALID_REWARD")
 		}
 
 		if input.reward.maturity.is_zero() {
-			return Err("invalid reward_maturity")
+			return Err("ZERO_REWARD_MATURITY")
 		}
 
 		if !input.total_price().is_ok() {
-			return Err("invalid total_price")
+			return Err("INVALID_TOTAL_PRICE")
 		}
 
 		Ok(input)
