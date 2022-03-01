@@ -42,7 +42,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
-	CurrencyFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
+	  CurrencyFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		LBP: pallet_liquidity_bootstrapping::{Pallet, Storage, Event<T>},
 	}
 );

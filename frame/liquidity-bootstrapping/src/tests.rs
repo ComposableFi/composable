@@ -36,7 +36,7 @@ fn with_pool<T>(
 		PoolId,
 		&Pool<AccountId, BlockNumber, AssetId>,
 		&dyn Fn(BlockNumber),
-		&dyn FnOnce(),
+		&dyn Fn(),
 	) -> T,
 ) -> T {
 	let random_start = 0xDEADC0DE;
@@ -82,7 +82,7 @@ fn within_sale_with_liquidity<T>(
 		PoolId,
 		&Pool<AccountId, BlockNumber, AssetId>,
 		&dyn Fn(BlockNumber),
-		&dyn FnOnce(),
+		&dyn Fn(),
 	) -> T,
 ) -> T {
 	with_pool(
@@ -200,6 +200,57 @@ mod buy {
 				));
 			},
 		)
+	}
+}
+
+mod remove_liquidity {
+	use super::*;
+
+	#[test]
+	fn cannot_remove_before_sale_end() {
+		let owner = ALICE;
+		let sale_duration = MaxSaleDuration::get();
+		let initial_weight = Permill::one() / 2;
+		let final_weight = Permill::one() / 2;
+		let fee = Permill::zero();
+		let unit = 1_000_000_000_000;
+		let initial_project_tokens = 1_000_000 * unit;
+		let initial_usdt = 1_000_000 * unit;
+		with_pool(owner, sale_duration, initial_weight, final_weight, fee, |pool_id, _, _, _| {
+			assert_ok!(Tokens::mint_into(PROJECT_TOKEN, &owner, initial_project_tokens));
+			assert_ok!(Tokens::mint_into(USDT, &owner, initial_usdt));
+			assert_noop!(
+				LBP::remove_liquidity(Origin::signed(owner), pool_id,),
+				Error::<Test>::InvalidSaleState
+			);
+		});
+	}
+
+	#[test]
+	fn can_remove_after_sale_end() {
+		let owner = ALICE;
+		let sale_duration = MaxSaleDuration::get();
+		let initial_weight = Permill::one() / 2;
+		let final_weight = Permill::one() / 2;
+		let fee = Permill::zero();
+		let unit = 1_000_000_000_000;
+		let initial_project_tokens = 1_000_000 * unit;
+		let initial_usdt = 1_000_000 * unit;
+		with_pool(
+			owner,
+			sale_duration,
+			initial_weight,
+			final_weight,
+			fee,
+			|pool_id, _, _, end_sale| {
+				assert_ok!(Tokens::mint_into(PROJECT_TOKEN, &owner, initial_project_tokens));
+				assert_ok!(Tokens::mint_into(USDT, &owner, initial_usdt));
+				end_sale();
+				assert_ok!(LBP::remove_liquidity(Origin::signed(owner), pool_id,),);
+        assert_eq!(Tokens::balance(PROJECT_TOKEN, &owner), initial_project_tokens);
+        assert_eq!(Tokens::balance(USDT, &owner), initial_usdt);
+			},
+		);
 	}
 }
 
@@ -533,7 +584,7 @@ mod visualization {
 				let sell_amount = 100_000;
 				plot_swap(
 					pair.swap(),
-					100_000 * unit,
+          sell_amount * unit,
 					"./plots/lbp_sell_project.png",
 					format!("Sell {} project tokens", sell_amount),
 				);

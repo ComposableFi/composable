@@ -72,7 +72,7 @@ impl<T: frame_system::Config> liquidity_bootstrapping::WeightInfo for WeightInfo
 	// Storage: LiquidityBootstrapping Pools (r:1 w:1)
 	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:1 w:0)
-	fn withdraw_and_destroy() -> Weight {
+	fn remove_liquidity() -> Weight {
 		(96_386_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))

@@ -210,9 +210,9 @@ std = [
 	"transaction-payment-rpc-runtime-api/std",
 	"liquidations/std",
 	"simnode-apis/std",
-  	"uniswap-v2/std",
-  	"curve-amm/std",
-  "liquidity-bootstrapping/std",
+  "uniswap-v2/std",
+  "curve-amm/std",
+	"liquidity-bootstrapping/std",
 ]
 runtime-benchmarks = [
 	"assets/runtime-benchmarks",
@@ -253,6 +253,6 @@ runtime-benchmarks = [
 	"lending/runtime-benchmarks",
   "uniswap-v2/runtime-benchmarks",
   "curve-amm/runtime-benchmarks",
-  "liquidity-bootstrapping/runtime-benchmarks",
+	"liquidity-bootstrapping/runtime-benchmarks",
 ]
 sim-node = []

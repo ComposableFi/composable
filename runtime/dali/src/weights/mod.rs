@@ -25,3 +25,4 @@ pub mod treasury;
 pub mod uniswap_v2;
 pub mod utility;
 pub mod vault;
+pub mod liquidity_bootstrapping;

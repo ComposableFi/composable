@@ -360,7 +360,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Create a new pool.
 		///
-		/// Emits `PoolCreated` even when successful.
+		/// Emits `PoolCreated` event when successful.
 		#[pallet::weight(T::WeightInfo::create())]
 		pub fn create(
 			origin: OriginFor<T>,
@@ -372,8 +372,6 @@ pub mod pallet {
 		}
 
 		/// Execute a buy order on a pool.
-		///
-		/// The `base_amount` always represent the base asset amount (A/B => A).
 		///
 		/// Emits `Swapped` event when successful.
 		#[pallet::weight(T::WeightInfo::buy())]
@@ -390,8 +388,6 @@ pub mod pallet {
 		}
 
 		/// Execute a sell order on a pool.
-		///
-		/// The `base_amount` always represent the base asset amount (A/B => A).
 		///
 		/// Emits `Swapped` event when successful.
 		#[pallet::weight(T::WeightInfo::sell())]
@@ -461,11 +457,11 @@ pub mod pallet {
 			Ok(())
 		}
 
-		///  liquidity to an LBP pool.
+		/// Withdraw the remaining liquidity and destroy the pool.
 		///
-		/// Emits `LiquidityAdded` event when successful.
+		/// Emits `PoolDeleted` event when successful.
 		#[pallet::weight(T::WeightInfo::remove_liquidity())]
-		pub fn withdraw_and_destroy(origin: OriginFor<T>, pool_id: PoolIdOf<T>) -> DispatchResult {
+		pub fn remove_liquidity(origin: OriginFor<T>, pool_id: PoolIdOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let _ = <Self as CurveAmm>::remove_liquidity(
 				&who,

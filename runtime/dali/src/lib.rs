@@ -1018,7 +1018,7 @@ impl liquidity_bootstrapping::Config for Runtime {
 	type MaxSaleDuration = MaxSaleDuration;
 	type MaxInitialWeight = MaxInitialWeight;
 	type MinFinalWeight = MinFinalWeight;
-	type WeightInfo = ();
+	type WeightInfo = weights::liquidity_bootstrapping::WeightInfo<Runtime>;
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 }
 
