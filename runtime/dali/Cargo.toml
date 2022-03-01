@@ -209,8 +209,8 @@ std = [
 	"transaction-payment-rpc-runtime-api/std",
 	"liquidations/std",
 	"simnode-apis/std",
-  "uniswap-v2/std",
-  "curve-amm/std",
+  	"uniswap-v2/std",
+  	"curve-amm/std",
 ]
 runtime-benchmarks = [
 	"assets/runtime-benchmarks",
