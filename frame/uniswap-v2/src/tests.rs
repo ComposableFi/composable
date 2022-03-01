@@ -9,15 +9,6 @@ use frame_support::{
 };
 use sp_runtime::{Permill, TokenError};
 
-// TODO
-/*
-- test lp mint/burn
-- test error if trying to remove > lp than we have
-- test high slippage scenario
-- test lp fees
-- test admin fees
-*/
-
 fn create_pool(
 	base_asset: AssetId,
 	quote_asset: AssetId,
@@ -261,5 +252,29 @@ fn high_slippage() {
 		let usdt_balance = Tokens::balance(USDT, &BOB);
 		let idea_usdt_balance = bob_btc * btc_price;
 		assert!((idea_usdt_balance - usdt_balance) > 5_u128);
+	});
+}
+
+#[test]
+fn fees() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_btc = 1_00_u128 * unit;
+		let btc_price = 45_000_u128;
+		let initial_usdt = initial_btc * btc_price;
+		let fee = Permill::from_float(0.05);
+		let protocol_fee = Permill::from_float(0.01);
+		let total_fee = fee + protocol_fee;
+		let pool_id = create_pool(BTC, USDT, initial_btc, initial_usdt, fee, protocol_fee);
+		let bob_usdt = 45_000_u128 * unit;
+		let quote_usdt = bob_usdt - total_fee.mul_floor(bob_usdt);
+		let expected_btc_value =
+			<Uni as Amm>::get_exchange_value(pool_id, USDT, quote_usdt).expect("impossible, qed.");
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
+
+		assert_ok!(<Uni as Amm>::sell(&BOB, pool_id, USDT, bob_usdt, false));
+		let btc_balance = Tokens::balance(BTC, &BOB);
+		assert_ok!(default_acceptable_computation_error(expected_btc_value, btc_balance));
 	});
 }

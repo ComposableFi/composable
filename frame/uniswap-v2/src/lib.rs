@@ -302,6 +302,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Add liquidity to a stable-swap pool.
+		///
+		/// Emits `LiquidityAdded` event when successful.
 		#[pallet::weight(T::WeightInfo::add_liquidity())]
 		pub fn add_liquidity(
 			origin: OriginFor<T>,
@@ -323,6 +326,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Remove liquidity from stable-swap pool.
+		///
+		/// Emits `LiquidityRemoved` event when successful.
 		#[pallet::weight(T::WeightInfo::remove_liquidity())]
 		pub fn remove_liquidity(
 			origin: OriginFor<T>,

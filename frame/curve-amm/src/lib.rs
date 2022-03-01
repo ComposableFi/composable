@@ -217,6 +217,9 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Create a new pool.
+		///
+		/// Emits `PoolCreated` event when successful.
 		#[pallet::weight(T::WeightInfo::create())]
 		pub fn create(
 			origin: OriginFor<T>,
@@ -230,6 +233,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Execute a buy order on pool.
+		///
+		/// Emits `Swapped` event when successful.
 		#[pallet::weight(T::WeightInfo::buy())]
 		pub fn buy(
 			origin: OriginFor<T>,
@@ -243,6 +249,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Execute a sell order on pool.
+		///
+		/// Emits `Swapped` event when successful.
 		#[pallet::weight(T::WeightInfo::sell())]
 		pub fn sell(
 			origin: OriginFor<T>,
@@ -256,6 +265,11 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Execute a specific swap operation.
+		///
+		/// The `quote_amount` is always the quote asset amount (A/B => B), (B/A => A).
+		///
+		/// Emits `Swapped` event when successful.
 		#[pallet::weight(T::WeightInfo::swap())]
 		pub fn swap(
 			origin: OriginFor<T>,
@@ -277,6 +291,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Add liquidity to a stable-swap pool.
+		///
+		/// Emits `LiquidityAdded` event when successful.
 		#[pallet::weight(T::WeightInfo::add_liquidity())]
 		pub fn add_liquidity(
 			origin: OriginFor<T>,
@@ -298,6 +315,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Remove liquidity from stable-swap pool.
+		///
+		/// Emits `LiquidityRemoved` event when successful.
 		#[pallet::weight(T::WeightInfo::remove_liquidity())]
 		pub fn remove_liquidity(
 			origin: OriginFor<T>,
