@@ -854,6 +854,7 @@ pub mod pallet {
 		}
 
 		/// Queries storage, returning the account_id of the current relayer.
+		#[allow(dead_code)]
 		pub(crate) fn relayer_account_id() -> Result<AccountIdOf<T>, DispatchError> {
 			let current_block = <frame_system::Pallet<T>>::block_number();
 			Ok(Relayer::<T>::get()

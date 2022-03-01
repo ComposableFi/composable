@@ -203,7 +203,7 @@ jobs:
 
       - name: Cargo clippy
         run: |
-          SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly clippy --all-targets
+          SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly clippy --all-targets --tests -- -D warnings
 
       - name: Cargo Single Depedency
         # description: Speed up builds and reduced security check surface
