@@ -4,10 +4,6 @@
   localtunnel,
 }:
 let
-  gcefy-version = version:
-    builtins.replaceStrings [ "." ] [ "-" ] version;
-  domain = "composable-${composable.spec}-${gcefy-version composable.version}";
-  domain-latest = "composable-${composable.spec}-latest";
   machine-name = "composable-devnet-${composable.spec}";
 in {
   resources.gceNetworks.composable-devnet = credentials // {
@@ -57,30 +53,15 @@ in {
           RuntimeMaxSec = "86400"; # 1 day lease period for rococo, restart it
         };
       };
-      systemd.services.localtunnel-commit = {
-        wantedBy = [ "multi-user.target" ];
-        after = [ "network.target" ];
-        description = "Local Tunnel Server";
-        serviceConfig = {
-          Type = "simple";
-          User = "root";
-          Restart = "always";
-          ExecStart = "${localtunnel}/bin/lt --port 80 --subdomain ${domain}";
-        };
-      };
-      systemd.services.localtunnel-latest = {
-        wantedBy = [ "multi-user.target" ];
-        after = [ "network.target" ];
-        description = "Local Tunnel Server";
-        serviceConfig = {
-          Type = "simple";
-          User = "root";
-          Restart = "always";
-          ExecStart = "${localtunnel}/bin/lt --port 80 --subdomain ${domain-latest}";
-        };
+      security.acme = {
+        acceptTerms = true;
+        email = "hussein@composable.finance";
       };
       services.nginx =
-        let mk-virtual-config = virtualhost-domain:
+        let
+          runtimeName = pkgs.lib.removeSuffix "-dev" composable.spec;
+          domain = "${runtimeName}.devnets.composablefinance.ninja";
+          virtualConfig =
               let
                 routify-nodes = prefix:
                   map (node: (node // {
@@ -92,13 +73,16 @@ in {
                   routify-nodes "relaychain/" polkadot.nodes;
                 routified-nodes =
                   routified-composable-nodes ++ routified-polkadot-nodes;
-                index = pkgs.writeText "index.html" ''
-                '';
               in
                 {
+                  enableACME = true;
+                  forceSSL = true;
                   locations = builtins.foldl' (x: y: x // y) {
                     "= /doc/" = {
-                      return = "301 https://${virtualhost-domain}/doc/composable/index.html";
+                      return = "301 https://${domain}/doc/composable/index.html";
+                    };
+                    "= /doc" = {
+                      return = "301 https://${domain}/doc/composable/index.html";
                     };
                     "/doc/" = {
                       root = devnet.documentation;
@@ -114,16 +98,13 @@ in {
                     };
                   }) routified-nodes);
                 };
-            full-domain = "${domain}.loca.lt";
-            full-domain-latest = "${domain-latest}.loca.lt";
         in {
           enable = true;
           enableReload = true;
           recommendedOptimisation = true;
           recommendedGzipSettings = true;
           serverNamesHashBucketSize = 128;
-          virtualHosts."${full-domain}" = mk-virtual-config full-domain;
-          virtualHosts."${full-domain-latest}" = mk-virtual-config full-domain-latest;
+          virtualHosts."${domain}" = virtualConfig;
         };
     };
 }
