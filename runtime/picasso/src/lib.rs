@@ -725,6 +725,7 @@ impl currency_factory::Config for Runtime {
 }
 
 parameter_types! {
+	pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	  pub const InitialPayment: Perbill = Perbill::from_percent(25);
 	pub const VestingStep: BlockNumber = 7 * DAYS;
 	  pub const Prefix: &'static [u8] = b"picasso-";
@@ -733,7 +734,7 @@ parameter_types! {
 impl crowdloan_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type Currency = Assets;
+	type RewardAsset = Assets;
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = sp_runtime::AccountId32;
@@ -741,6 +742,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type VestingStep = VestingStep;
 	type Prefix = Prefix;
 	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
+	type PalletId = CrowdloanRewardsId;
 }
 
 parameter_types! {

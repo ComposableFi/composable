@@ -5,6 +5,7 @@ use crate::{
 use codec::Encode;
 use frame_support::{
 	construct_runtime, dispatch::DispatchResultWithPostInfo, parameter_types, traits::Everything,
+	PalletId,
 };
 use frame_system as system;
 use sp_core::{ed25519, keccak_256, Pair, H256};
@@ -83,6 +84,7 @@ impl balances::Config for Test {
 }
 
 parameter_types! {
+  pub const CrowdloanRewardsPalletId: PalletId = PalletId(*b"pal_crow");
 	pub const InitialPayment: Perbill = INITIAL_PAYMENT;
 	pub const VestingStep: BlockNumber = VESTING_STEP;
 	pub const Prefix: &'static [u8] = PROOF_PREFIX;
@@ -90,7 +92,7 @@ parameter_types! {
 
 impl pallet_crowdloan_rewards::Config for Test {
 	type Event = Event;
-	type Currency = Balances;
+	type RewardAsset = Balances;
 	type Balance = Balance;
 	type Convert = ConvertInto;
 	type RelayChainAccountId = RelayChainAccountId;
@@ -99,6 +101,7 @@ impl pallet_crowdloan_rewards::Config for Test {
 	type Prefix = Prefix;
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
+	type PalletId = CrowdloanRewardsPalletId;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
