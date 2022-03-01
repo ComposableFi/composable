@@ -380,10 +380,10 @@ proptest! {
 	  #[test]
 	  fn multiple_bonds(offer in simple_offer(2)) {
 			  ExtBuilder::build().execute_with(|| {
-						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
-						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
+					  prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
+					  prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
 
-						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(),false);
+					  let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(),false);
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
