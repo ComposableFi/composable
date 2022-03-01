@@ -340,7 +340,7 @@ use frame_support::{
 		}
 
 		/// Do claim the reward for a given remote account, rewarding the `reward_account`.
-		/// Returns `InvalidProof` if the user is not a contributor or `NothingToClaim` if not
+		/// Returns `InvalidProof` if the user is not a contributor or `NothingToClaim` if no
 		/// reward can be claimed yet.
 		pub(crate) fn do_claim(
 			remote_account: RemoteAccountOf<T>,
