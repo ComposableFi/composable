@@ -143,3 +143,16 @@ where
 		Ok(input)
 	}
 }
+
+impl<AccountId, AssetId, Balance: Zero + PartialOrd + SafeArithmetic, BlockNumber: Zero>
+	BondOffer<AccountId, AssetId, Balance, BlockNumber>
+{
+	/// An offer is completed once all it's nb_of_bonds has been sold.
+	pub fn completed(&self) -> bool {
+		self.nb_of_bonds.is_zero()
+	}
+	/// The total price of the offer, which is the number of nb_of_bonds * the bond_price.
+	pub fn total_price(&self) -> Result<Balance, ArithmeticError> {
+		self.nb_of_bonds.safe_mul(&self.bond_price)
+	}
+}
