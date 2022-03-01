@@ -109,7 +109,7 @@ where
 		};
 
 		if nonzero_maturity == false {
-			return Err("invalid maturity")
+			return Err("MATURITY_CANNOT_BE_ZERO")
 		}
 
 		if input.bond_price < MinTransfer::get() {
