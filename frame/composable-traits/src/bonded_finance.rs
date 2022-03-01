@@ -72,8 +72,7 @@ pub struct BondOfferReward<AssetId, Balance, BlockNumber> {
 
 #[derive(Debug, Decode)]
 pub struct ValidBondOffer<U, V> {
-	_m1: PhantomData<U>,
-	_m2: PhantomData<V>,
+	_marker: PhantomData<(U, V)>,
 }
 
 impl<U, V> Copy for ValidBondOffer<U, V> {}
