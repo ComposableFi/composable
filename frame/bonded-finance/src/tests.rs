@@ -125,7 +125,7 @@ fn invalid_offer() {
 		maturity: BondDuration::Finite { return_in: 1_000_000 },
 		reward: BondOfferReward {
 			asset: MockCurrencyId::BTC,
-			amount: 1_000_u128 * 1_000_u128 - 1,
+			amount: MIN_VESTED_TRANSFER * 1_000_u128 - 1,
 			maturity: 96_u128
 		}
 	}
