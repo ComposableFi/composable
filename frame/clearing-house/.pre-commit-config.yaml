@@ -1,6 +1,8 @@
 repos:
-- repo: https://github.com/doublify/pre-commit-rust
-  rev: v1.0
+- repo: local
   hooks:
   - id: fmt
-  - id: cargo-check
+    name: rustfmt
+    entry: rustfmt --config skip_children=true --check
+    language: system
+    types: [rust]
