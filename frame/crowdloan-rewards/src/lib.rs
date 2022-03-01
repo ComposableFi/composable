@@ -444,12 +444,13 @@ use frame_support::{
 		relay_account: RelayChainAccountId,
 		proof: &MultiSignature,
 	) -> bool {
-		let wrapped_prefix: &[u8] = b"<Bytes>";
-		let wrapped_postfix: &[u8] = b"</Bytes>";
-		let mut msg = wrapped_prefix.to_vec();
+		/// Polkadotjs wraps the message in this tag before signing.
+		const WRAPPED_PREFIX: &[u8] = b"<Bytes>";
+		const WRAPPED_POSTFIX: &[u8] = b"</Bytes>";
+		let mut msg = WRAPPED_PREFIX.to_vec();
 		msg.append(&mut prefix.to_vec());
 		msg.append(&mut reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()));
-		msg.append(&mut wrapped_postfix.to_vec());
+		msg.append(&mut WRAPPED_POSTFIX.to_vec());
 		proof.verify(&msg[..], &relay_account.into())
 	}
 
