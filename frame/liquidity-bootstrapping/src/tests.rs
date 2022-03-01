@@ -32,12 +32,7 @@ fn with_pool<T>(
 	initial_weight: Permill,
 	final_weight: Permill,
 	fee: Permill,
-	f: impl FnOnce(
-		PoolId,
-		&Pool<AccountId, BlockNumber, AssetId>,
-		&dyn Fn(BlockNumber),
-		&dyn Fn(),
-	) -> T,
+	f: impl FnOnce(PoolId, &Pool<AccountId, BlockNumber, AssetId>, &dyn Fn(BlockNumber), &dyn Fn()) -> T,
 ) -> T {
 	let random_start = 0xDEADC0DE;
 	let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
@@ -78,12 +73,7 @@ fn within_sale_with_liquidity<T>(
 	fee: Permill,
 	initial_project_tokens: Balance,
 	initial_usdt: Balance,
-	f: impl FnOnce(
-		PoolId,
-		&Pool<AccountId, BlockNumber, AssetId>,
-		&dyn Fn(BlockNumber),
-		&dyn Fn(),
-	) -> T,
+	f: impl FnOnce(PoolId, &Pool<AccountId, BlockNumber, AssetId>, &dyn Fn(BlockNumber), &dyn Fn()) -> T,
 ) -> T {
 	with_pool(
 		owner,
@@ -247,8 +237,8 @@ mod remove_liquidity {
 				assert_ok!(Tokens::mint_into(USDT, &owner, initial_usdt));
 				end_sale();
 				assert_ok!(LBP::remove_liquidity(Origin::signed(owner), pool_id,),);
-        assert_eq!(Tokens::balance(PROJECT_TOKEN, &owner), initial_project_tokens);
-        assert_eq!(Tokens::balance(USDT, &owner), initial_usdt);
+				assert_eq!(Tokens::balance(PROJECT_TOKEN, &owner), initial_project_tokens);
+				assert_eq!(Tokens::balance(USDT, &owner), initial_usdt);
 			},
 		);
 	}
@@ -584,7 +574,7 @@ mod visualization {
 				let sell_amount = 100_000;
 				plot_swap(
 					pair.swap(),
-          sell_amount * unit,
+					sell_amount * unit,
 					"./plots/lbp_sell_project.png",
 					format!("Sell {} project tokens", sell_amount),
 				);
