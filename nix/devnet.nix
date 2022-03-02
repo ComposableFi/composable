@@ -47,15 +47,12 @@ let
       url = "https://storage.googleapis.com/composable-binaries/community-releases/${composable.name}/${name}.tar.gz";
       sha256 = composable.hash;
     };
-    nativeBuildInputs = [
-      pkgs.autoPatchelfHook
-    ];
     buildInputs = [ pkgs.stdenv.cc.cc pkgs.zlib ];
     installPhase = ''
       tar -xvf $src
       mkdir -p $out/bin
       mv release/composable $out/bin
-
+      patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" $out/bin/composable
       mv doc $out
     '';
   };
