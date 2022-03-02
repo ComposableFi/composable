@@ -27,7 +27,7 @@ pub use xcmp::{MaxInstructions, UnitWeightCost};
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, MosaicRemoteAssetId, Signature,
-	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES, NORMAL_DISPATCH_RATIO,
 	SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
@@ -801,7 +801,7 @@ impl assets::Config for Runtime {
 parameter_types! {
 	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	  pub const InitialPayment: Perbill = Perbill::from_percent(50);
-	  pub const VestingStep: BlockNumber = 7 * DAYS;
+	  pub const VestingStep: BlockNumber = 1 * MINUTES;
 	  pub const Prefix: &'static [u8] = b"picasso-";
 }
 
