@@ -37,6 +37,8 @@ use frame_support::{
 };
 use proptest::prelude::*;
 use sp_runtime::{DispatchError, TokenError};
+use crate::validation::{ValidTimeLockPeriod, ValidTTL};
+use composable_support::validation::{Validate, Validated};
 
 pub trait OriginExt {
 	fn relayer() -> Origin {
@@ -137,13 +139,13 @@ mod set_relayer {
 		})
 	}
 
+
 	#[test]
 	fn none_cannot_set_relayer() {
 		new_test_ext().execute_with(|| {
 			assert_noop!(Mosaic::set_relayer(Origin::none(), ALICE), DispatchError::BadOrigin);
 		})
 	}
-
 	#[test]
 	fn alice_cannot_set_relayer() {
 		new_test_ext().execute_with(|| {
@@ -165,25 +167,27 @@ mod rotate_relayer {
 			let current_block = System::block_number();
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 
-			// first rotation
-			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl));
+			//first rotation
+			let validated_ttl = Validated::new(ttl).unwrap();
+			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, validated_ttl));
 			System::set_block_number(current_block + ttl);
 			assert_eq!(Mosaic::relayer_account_id(), Ok(BOB));
 
 			// second rotation
-			assert_ok!(Mosaic::rotate_relayer(Origin::signed(BOB), CHARLIE, ttl));
+			assert_ok!(Mosaic::rotate_relayer(Origin::signed(BOB), CHARLIE, validated_ttl));
 			System::set_block_number(current_block + 2 * ttl);
 			assert_eq!(Mosaic::relayer_account_id(), Ok(CHARLIE));
 		})
 	}
-
+	
 	#[test]
 	fn relayer_must_not_rotate_early() {
 		new_test_ext().execute_with(|| {
 			let ttl = 500;
 			let current_block = System::block_number();
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
-			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl));
+			let validated_ttl = Validated::new(ttl).unwrap();
+			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, validated_ttl));
 			System::set_block_number(current_block + ttl - 1); // just before the ttl
 			assert_eq!(Mosaic::relayer_account_id(), Ok(RELAYER)); // not BOB
 		})
@@ -192,7 +196,7 @@ mod rotate_relayer {
 	#[test]
 	fn arbitrary_account_cannot_rotate_relayer() {
 		new_test_ext().execute_with(|| {
-			let ttl = 500;
+			let ttl = Validated::new(500).unwrap();
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 			assert_noop!(
 				Mosaic::rotate_relayer(Origin::signed(ALICE), BOB, ttl),
@@ -204,7 +208,7 @@ mod rotate_relayer {
 	#[test]
 	fn none_cannot_rotate_relayer() {
 		new_test_ext().execute_with(|| {
-			let ttl = 500;
+			let ttl = Validated::new(500).unwrap();
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 			assert_noop!(
 				Mosaic::rotate_relayer(Origin::none(), BOB, ttl),
@@ -878,7 +882,7 @@ mod set_timelock_duration {
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_timelock_duration(
 				Origin::root(),
-				MinimumTimeLockPeriod::get() + 1
+				Validated::new(MinimumTimeLockPeriod::get() + 1).unwrap()
 			));
 		})
 	}
@@ -889,7 +893,7 @@ mod set_timelock_duration {
 			assert_noop!(
 				Mosaic::set_timelock_duration(
 					Origin::signed(ALICE),
-					MinimumTimeLockPeriod::get() + 1
+					Validated::new(MinimumTimeLockPeriod::get() + 1).unwrap()
 				),
 				DispatchError::BadOrigin
 			);
@@ -900,28 +904,8 @@ mod set_timelock_duration {
 	fn set_timelock_duration_with_origin_none() {
 		new_test_ext().execute_with(|| {
 			assert_noop!(
-				Mosaic::set_timelock_duration(Origin::none(), MinimumTimeLockPeriod::get() + 1),
+				Mosaic::set_timelock_duration(Origin::none(), Validated::new(MinimumTimeLockPeriod::get() + 1).unwrap()),
 				DispatchError::BadOrigin
-			);
-		})
-	}
-
-	#[test]
-	fn set_timelock_duration_with_invalid_period() {
-		new_test_ext().execute_with(|| {
-			assert_noop!(
-				Mosaic::set_timelock_duration(Origin::root(), 0),
-				Error::<Test>::BadTimelockPeriod
-			);
-		})
-	}
-
-	#[test]
-	fn set_timelock_duration_with_invalid_period_2() {
-		new_test_ext().execute_with(|| {
-			assert_noop!(
-				Mosaic::set_timelock_duration(Origin::root(), MinimumTimeLockPeriod::get() - 1),
-				Error::<Test>::BadTimelockPeriod
 			);
 		})
 	}
@@ -1275,4 +1259,67 @@ mod claim_to {
 			assert_ok!(Mosaic::claim_to(Origin::alice(), 1, ALICE));
 		})
 	}
+}
+
+#[cfg(test)]
+mod test_validation {
+	use super::*;
+	use composable_support::validation::Validate;
+	use frame_support::assert_ok;
+	use mock::Test;
+	use validation::{ValidTimeLockPeriod, ValidTTL};
+
+	#[test]
+	fn set_ttl_with_invalid_period() {
+		assert!(<ValidTTL<MinimumTTL> as Validate<
+			BlockNumber,
+			ValidTTL<MinimumTTL>,
+		>>::validate(0_u64)
+		.is_err());
+	}
+
+	#[test]
+	fn set_ttl_with_invalid_period_3() {
+		assert!(<ValidTTL<MinimumTTL> as Validate<
+			BlockNumber,
+			ValidTTL<MinimumTTL>,
+		>>::validate(MinimumTTL::get() - 1)
+		.is_err());
+	}
+
+	#[test]
+	fn set_ttl_period_3() {
+		assert_ok!(<ValidTTL<MinimumTTL> as Validate<
+			BlockNumber,
+			ValidTTL<MinimumTTL>,
+		>>::validate(MinimumTTL::get() + 1));
+	}
+
+	#[test]
+	fn set_timelock_duration_with_invalid_period() {
+		assert!(<ValidTimeLockPeriod<MinimumTimeLockPeriod> as Validate<
+			BlockNumber,
+			ValidTimeLockPeriod<MinimumTimeLockPeriod>,
+		>>::validate(0_u64)
+		.is_err());
+	}
+
+	#[test]
+	fn set_timelock_duration_with_invalid_period_2() {
+		assert!(<ValidTimeLockPeriod<MinimumTimeLockPeriod> as Validate<
+			BlockNumber,
+			ValidTimeLockPeriod<MinimumTimeLockPeriod>,
+		>>::validate(MinimumTimeLockPeriod::get() - 1)
+		.is_err());
+	}
+
+	#[test]
+	fn set_timelock_duration_with_invalid_period_3() {
+		assert_ok!(<ValidTimeLockPeriod<MinimumTimeLockPeriod> as Validate<
+			BlockNumber,
+			ValidTimeLockPeriod<MinimumTimeLockPeriod>,
+		>>::validate(MinimumTimeLockPeriod::get() + 1));
+	}
+
+
 }
