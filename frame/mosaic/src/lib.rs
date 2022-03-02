@@ -31,7 +31,7 @@ pub mod pallet {
 	use crate::{
 		decay::Decayer,
 		relayer::{RelayerConfig, StaleRelayer},
-		validation::{ValidTimeLockPeriod, ValidTTL},
+		validation::{ValidTTL, ValidTimeLockPeriod},
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
@@ -371,7 +371,7 @@ pub mod pallet {
 		pub fn rotate_relayer(
 			origin: OriginFor<T>,
 			new: T::AccountId,
-			validated_ttl:Validated::<T::BlockNumber, ValidTTL<T::MinimumTTL>>,
+			validated_ttl: Validated<T::BlockNumber, ValidTTL<T::MinimumTTL>>,
 		) -> DispatchResultWithPostInfo {
 			let ttl = validated_ttl.value();
 			let (relayer, current_block) = Self::ensure_relayer(origin)?;
@@ -682,7 +682,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::set_timelock_duration())]
 		pub fn set_timelock_duration(
 			origin: OriginFor<T>,
-			period: Validated::<BlockNumberOf<T>, ValidTimeLockPeriod<T::MinimumTimeLockPeriod>>,
+			period: Validated<BlockNumberOf<T>, ValidTimeLockPeriod<T::MinimumTimeLockPeriod>>,
 		) -> DispatchResultWithPostInfo {
 			let validated_period = period.value();
 			T::ControlOrigin::ensure_origin(origin)?;

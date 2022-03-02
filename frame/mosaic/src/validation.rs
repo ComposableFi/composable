@@ -29,27 +29,27 @@ impl<U> Clone for ValidTimeLockPeriod<U> {
 	}
 }
 
-impl<TTL: PartialOrd, MinimumTTL> Validate<TTL, ValidTTL<MinimumTTL>>
-	for ValidTTL<MinimumTTL>
+impl<TTL: PartialOrd, MinimumTTL> Validate<TTL, ValidTTL<MinimumTTL>> for ValidTTL<MinimumTTL>
 where
 	MinimumTTL: Get<TTL>,
 {
 	fn validate(input: TTL) -> Result<TTL, &'static str> {
 		if input <= MinimumTTL::get() {
-			return Err("BAD_TTL")
+			return Err("TTL_BELOW_MINIMUM")
 		}
 		Ok(input)
 	}
 }
 
-impl<TimeLockPeriod: PartialOrd, MinimumTimeLockPeriod> Validate<TimeLockPeriod, ValidTimeLockPeriod<MinimumTimeLockPeriod>>
-  for ValidTimeLockPeriod<MinimumTimeLockPeriod>
+impl<TimeLockPeriod: PartialOrd, MinimumTimeLockPeriod>
+	Validate<TimeLockPeriod, ValidTimeLockPeriod<MinimumTimeLockPeriod>>
+	for ValidTimeLockPeriod<MinimumTimeLockPeriod>
 where
 	MinimumTimeLockPeriod: Get<TimeLockPeriod>,
 {
 	fn validate(input: TimeLockPeriod) -> Result<TimeLockPeriod, &'static str> {
 		if input <= MinimumTimeLockPeriod::get() {
-			return Err("BAD_TIME_LOCK_PERIOD")
+			return Err("TIME_LOCK_PERIOD_BELOW_MINIMUM")
 		}
 		Ok(input)
 	}

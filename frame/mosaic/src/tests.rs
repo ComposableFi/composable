@@ -1,3 +1,4 @@
+use crate::validation::{ValidTTL, ValidTimeLockPeriod};
 /// TODO
 ///
 /// 1. Test each extrinsic
@@ -30,6 +31,7 @@
 ///  For every test, make sure that you check wether the funds moved to the correct (sub)
 /// accounts.
 use crate::{decay::*, mock::*, *};
+use composable_support::validation::{Validate, Validated};
 use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
 use frame_support::{
 	assert_err, assert_noop, assert_ok,
@@ -37,8 +39,6 @@ use frame_support::{
 };
 use proptest::prelude::*;
 use sp_runtime::{DispatchError, TokenError};
-use crate::validation::{ValidTimeLockPeriod, ValidTTL};
-use composable_support::validation::{Validate, Validated};
 
 pub trait OriginExt {
 	fn relayer() -> Origin {
@@ -139,7 +139,6 @@ mod set_relayer {
 		})
 	}
 
-
 	#[test]
 	fn none_cannot_set_relayer() {
 		new_test_ext().execute_with(|| {
@@ -179,7 +178,7 @@ mod rotate_relayer {
 			assert_eq!(Mosaic::relayer_account_id(), Ok(CHARLIE));
 		})
 	}
-	
+
 	#[test]
 	fn relayer_must_not_rotate_early() {
 		new_test_ext().execute_with(|| {
@@ -904,7 +903,10 @@ mod set_timelock_duration {
 	fn set_timelock_duration_with_origin_none() {
 		new_test_ext().execute_with(|| {
 			assert_noop!(
-				Mosaic::set_timelock_duration(Origin::none(), Validated::new(MinimumTimeLockPeriod::get() + 1).unwrap()),
+				Mosaic::set_timelock_duration(
+					Origin::none(),
+					Validated::new(MinimumTimeLockPeriod::get() + 1).unwrap()
+				),
 				DispatchError::BadOrigin
 			);
 		})
@@ -1267,32 +1269,31 @@ mod test_validation {
 	use composable_support::validation::Validate;
 	use frame_support::assert_ok;
 	use mock::Test;
-	use validation::{ValidTimeLockPeriod, ValidTTL};
+	use validation::{ValidTTL, ValidTimeLockPeriod};
 
 	#[test]
 	fn set_ttl_with_invalid_period() {
-		assert!(<ValidTTL<MinimumTTL> as Validate<
-			BlockNumber,
-			ValidTTL<MinimumTTL>,
-		>>::validate(0_u64)
+		assert!(<ValidTTL<MinimumTTL> as Validate<BlockNumber, ValidTTL<MinimumTTL>>>::validate(
+			0_u64
+		)
 		.is_err());
 	}
 
 	#[test]
 	fn set_ttl_with_invalid_period_3() {
-		assert!(<ValidTTL<MinimumTTL> as Validate<
-			BlockNumber,
-			ValidTTL<MinimumTTL>,
-		>>::validate(MinimumTTL::get() - 1)
+		assert!(<ValidTTL<MinimumTTL> as Validate<BlockNumber, ValidTTL<MinimumTTL>>>::validate(
+			MinimumTTL::get() - 1
+		)
 		.is_err());
 	}
 
 	#[test]
 	fn set_ttl_period_3() {
-		assert_ok!(<ValidTTL<MinimumTTL> as Validate<
-			BlockNumber,
-			ValidTTL<MinimumTTL>,
-		>>::validate(MinimumTTL::get() + 1));
+		assert_ok!(
+			<ValidTTL<MinimumTTL> as Validate<BlockNumber, ValidTTL<MinimumTTL>>>::validate(
+				MinimumTTL::get() + 1
+			)
+		);
 	}
 
 	#[test]
@@ -1320,6 +1321,4 @@ mod test_validation {
 			ValidTimeLockPeriod<MinimumTimeLockPeriod>,
 		>>::validate(MinimumTimeLockPeriod::get() + 1));
 	}
-
-
 }
