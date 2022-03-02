@@ -1,7 +1,5 @@
 use composable_support::validation::Validate;
 use frame_support::{pallet_prelude::*, traits::Get};
-// use scale_info::TypeInfo;
-// use sp_runtime::{traits::Zero, Percent};
 
 #[derive(Debug, Decode)]
 pub struct ValidTTL<U> {
