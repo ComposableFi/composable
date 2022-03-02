@@ -552,7 +552,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let input = input.value();
-			let pair = input.currency_pair.clone();
+			let pair = input.currency_pair;
 			let (market_id, vault_id) = Self::create(who.clone(), input)?;
 			Self::deposit_event(Event::<T>::MarketCreated {
 				market_id,
