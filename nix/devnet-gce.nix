@@ -1,7 +1,6 @@
 { composable,
   polkadot,
   credentials,
-  localtunnel,
 }:
 let
   machine-name = "composable-devnet-${composable.spec}";

@@ -3,12 +3,8 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/ec7d9d4c182c54acd649674cf1023d40a0539eb7";
     flake-utils.url = "github:numtide/flake-utils/3cecb5b042f7f209c56ffd8371b2711a290ec797";
-    localtunnel-src = {
-      url = "github:localtunnel/localtunnel/c8e85f49624d606730779fc4295a38fd0e650af5";
-      flake = false;
-    };
   };
-  outputs = { nixpkgs, flake-utils, localtunnel-src, ... }:
+  outputs = { nixpkgs, flake-utils, ... }:
     let
       bins =
         (if builtins.pathExists ./devnet.json
@@ -75,13 +71,8 @@
             serviceAccount = conf.client_email;
             accessKey = conf.private_key;
           };
-          localtunnel = pkgs-nixos.mkYarnPackage rec {
-            name = "localtunnel";
-            src = localtunnel-src;
-          };
         in
           builtins.foldl' (machines: { composable, polkadot }: machines // import ./devnet-gce.nix {
-            inherit localtunnel;
             inherit credentials;
             inherit composable;
             inherit polkadot;
@@ -103,10 +94,6 @@
             inherit (latest-picasso) composable;
             inherit (latest-picasso) polkadot;
           }).script;
-          packages.localtunnel = pkgs.mkYarnPackage rec {
-            name = "localtunnel";
-            src = localtunnel-src;
-          };
           packages.deploy = pkgs.mkShell {
             buildInputs = [
               packages.devnet-dali
