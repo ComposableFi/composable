@@ -243,7 +243,9 @@ proptest! {
 					  prop_assert_ok!(BondedFinance::cancel(Origin::signed(ALICE), offer_id));
 
 					  // The remaining half is refunded to alice
-						prop_assert_acceptable_computation_error!(Tokens::balance(offer.reward.asset, &ALICE), half_reward);
+            let precision = 100;
+            let epsilon = 5;
+						prop_assert_acceptable_computation_error!(Tokens::balance(offer.reward.asset, &ALICE), half_reward, precision, epsilon);
 
 					  Ok(())
 			  })?;
@@ -400,8 +402,10 @@ proptest! {
 					  prop_assert_ok!(charlie_reward);
 					  let charlie_reward = charlie_reward.expect("impossible; qed;");
 
-					  prop_assert_acceptable_computation_error!(bob_reward, half_reward, 3);
-					  prop_assert_acceptable_computation_error!(charlie_reward, half_reward, 3);
+            let precision = 100;
+            let epsilon = 5;
+					  prop_assert_acceptable_computation_error!(bob_reward, half_reward, precision, epsilon);
+					  prop_assert_acceptable_computation_error!(charlie_reward, half_reward, precision, epsilon);
 
 					  prop_assert!(Tokens::can_withdraw(offer.reward.asset, &BOB, bob_reward) == WithdrawConsequence::Frozen);
 					  prop_assert!(Tokens::can_withdraw(offer.reward.asset, &CHARLIE, charlie_reward) == WithdrawConsequence::Frozen);

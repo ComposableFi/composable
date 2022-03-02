@@ -184,7 +184,9 @@ fn exchange_tests() {
 			println!("exchange value {:?}", dy);
 		}
 		let expected_value = 3000 * unit;
-		assert_ok!(acceptable_computation_error(dy, expected_value, 100));
+		let precision = 100;
+		let epsilon = 1;
+		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
 	});
 }
 
@@ -210,6 +212,8 @@ fn buy_test() {
 		assert_ok!(dy);
 		let dy = dy.unwrap();
 		let expected_value = 3000 * unit;
-		assert_ok!(acceptable_computation_error(dy, expected_value, 100));
+		let precision = 100;
+		let epsilon = 1;
+		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
 	});
 }
