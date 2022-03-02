@@ -801,7 +801,7 @@ impl assets::Config for Runtime {
 parameter_types! {
 	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	  pub const InitialPayment: Perbill = Perbill::from_percent(50);
-	  pub const VestingStep: BlockNumber = 1 * MINUTES;
+	  pub const VestingStep: BlockNumber = MINUTES;
 	  pub const Prefix: &'static [u8] = b"picasso-";
 }
 

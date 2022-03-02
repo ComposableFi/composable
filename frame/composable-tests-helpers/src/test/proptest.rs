@@ -50,9 +50,9 @@ macro_rules! prop_assert_noop {
 /// Accept a `dust` deviation.
 #[macro_export]
 macro_rules! prop_assert_acceptable_computation_error {
-	($x:expr, $y:expr, $precision:expr) => {{
+	($x:expr, $y:expr, $precision:expr, $epsilon:expr) => {{
 		match composable_tests_helpers::test::helper::acceptable_computation_error(
-			$x, $y, $precision,
+			$x, $y, $precision, $epsilon,
 		) {
 			Ok(()) => {},
 			Err(q) => {
@@ -64,7 +64,8 @@ macro_rules! prop_assert_acceptable_computation_error {
 		prop_assert_acceptable_computation_error!(
 			$x,
 			$y,
-			composable_tests_helpers::test::helper::DEFAULT_ACCEPTABLE_DEVIATION
+			composable_tests_helpers::test::helper::DEFAULT_PRECISION,
+			composable_tests_helpers::test::helper::DEFAULT_EPSILON
 		);
 	}};
 }

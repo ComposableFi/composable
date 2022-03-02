@@ -83,10 +83,11 @@ fn test() {
 		));
 
 		let precision = 100;
+		let epsilon = 1;
 		// 1 unit of usdc == 1 unit of usdt
 		let ratio = <StableSwap as CurveAmm>::get_exchange_value(pool_id, USDC, unit)
 			.expect("impossible; qed;");
-		assert_ok!(acceptable_computation_error(ratio, unit, precision));
+		assert_ok!(acceptable_computation_error(ratio, unit, precision, epsilon));
 
 		let swap_usdc = 100_u128 * unit;
 		assert_ok!(Tokens::mint_into(USDC, &BOB, swap_usdc));
@@ -101,7 +102,12 @@ fn test() {
 
 		let bob_usdc = Tokens::balance(USDC, &BOB);
 
-		assert_ok!(acceptable_computation_error(bob_usdc.into(), swap_usdc.into(), precision));
+		assert_ok!(acceptable_computation_error(
+			bob_usdc.into(),
+			swap_usdc.into(),
+			precision,
+			epsilon
+		));
 
 		let lp = Tokens::balance(pool.lp_token, &ALICE);
 		assert_ok!(<StableSwap as CurveAmm>::remove_liquidity(&ALICE, pool_id, lp, 0, 0));
@@ -253,6 +259,7 @@ fn remove_lp_failure() {
 fn lp_fee() {
 	new_test_ext().execute_with(|| {
 		let precision = 100;
+		let epsilon = 1;
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
 		let initial_usdc = 1_000_000_000_000_u128 * unit;
@@ -269,7 +276,8 @@ fn lp_fee() {
 		assert_ok!(acceptable_computation_error(
 			usdc_balance,
 			bob_usdt - lp_fee.mul_ceil(bob_usdt),
-			precision
+			precision,
+			epsilon
 		));
 	});
 }
@@ -280,6 +288,7 @@ fn lp_fee() {
 fn protocol_fee() {
 	new_test_ext().execute_with(|| {
 		let precision = 100;
+		let epsilon = 1;
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
 		let initial_usdc = 1_000_000_000_000_u128 * unit;
@@ -296,14 +305,16 @@ fn protocol_fee() {
 		assert_ok!(acceptable_computation_error(
 			usdc_balance,
 			bob_usdt - lp_fee.mul_floor(bob_usdt),
-			precision
+			precision,
+			epsilon
 		));
 		// from lp_fee 1 % (as per protocol_fee) goes to pool owner (ALICE)
 		let alice_usdc_bal = Tokens::balance(USDC, &ALICE);
 		assert_ok!(acceptable_computation_error(
 			alice_usdc_bal,
 			protocol_fee.mul_floor(lp_fee.mul_floor(bob_usdt)),
-			precision
+			precision,
+			epsilon
 		));
 	});
 }

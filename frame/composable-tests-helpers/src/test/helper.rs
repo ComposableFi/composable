@@ -1,13 +1,21 @@
 use sp_runtime::{FixedPointNumber, FixedU128};
 
-/// Default is 0.1%
-pub const DEFAULT_ACCEPTABLE_DEVIATION: u128 = 1000;
+/// Default is percent
+pub const DEFAULT_PRECISION: u128 = 1000;
 
-/// Check that x/y ~ 1 up to a certain precision
-pub fn acceptable_computation_error(x: u128, y: u128, precision: u128) -> Result<(), FixedU128> {
+/// Per mill
+pub const DEFAULT_EPSILON: u128 = 1;
+
+/// This function should be used in context of approximation.
+/// It is extensively used in conjunction with proptest because of random input generation.
+pub fn acceptable_computation_error(
+	x: u128,
+	y: u128,
+	precision: u128,
+	epsilon: u128,
+) -> Result<(), FixedU128> {
 	let delta = i128::abs(x as i128 - y as i128);
 	if delta > 1 {
-		let epsilon: u128 = 1;
 		let lower =
 			FixedU128::saturating_from_rational(precision, precision.saturating_add(epsilon));
 		let upper =
@@ -24,5 +32,5 @@ pub fn acceptable_computation_error(x: u128, y: u128, precision: u128) -> Result
 }
 
 pub fn default_acceptable_computation_error(x: u128, y: u128) -> Result<(), FixedU128> {
-	acceptable_computation_error(x, y, DEFAULT_ACCEPTABLE_DEVIATION)
+	acceptable_computation_error(x, y, DEFAULT_PRECISION, DEFAULT_EPSILON)
 }
