@@ -7260,6 +7260,7 @@ dependencies = [
 name = "pallet-mosaic"
 version = "0.1.0"
 dependencies = [
+ "composable-support",
  "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
