@@ -10,8 +10,8 @@ benchmarks! {
   where_clause { where T::Balance: From<u128>, T::AssetId: From<u128> }
 
   create {
-	  let btc: T::AssetId = 0.into();
-	  let usdt: T::AssetId = 1.into();
+	  let btc: T::AssetId = 100.into();
+	  let usdt: T::AssetId = 101.into();
 	  let owner = whitelisted_caller();
 	  let pair = CurrencyPair::new(btc, usdt);
 	  let fee = Permill::from_percent(1);
@@ -19,8 +19,8 @@ benchmarks! {
   }: _(RawOrigin::Signed(owner), pair, fee, owner_fee)
 
   buy {
-	  let btc: T::AssetId = 0.into();
-	  let usdt: T::AssetId = 1.into();
+	  let btc: T::AssetId = 100.into();
+	  let usdt: T::AssetId = 101.into();
 	  let owner = whitelisted_caller();
 	  let pool_id = Uni::<T>::do_create_pool(
 		  &owner,
@@ -53,8 +53,8 @@ benchmarks! {
   }: _(RawOrigin::Signed(user), pool_id, btc, unit.into(), false)
 
   sell {
-	  let btc: T::AssetId = 0.into();
-	  let usdt: T::AssetId = 1.into();
+	  let btc: T::AssetId = 100.into();
+	  let usdt: T::AssetId = 101.into();
 	  let owner = whitelisted_caller();
 	  let pool_id = Uni::<T>::do_create_pool(
 		  &owner,
@@ -85,8 +85,8 @@ benchmarks! {
   }: _(RawOrigin::Signed(user), pool_id, btc, unit.into(), false)
 
   swap {
-	  let btc: T::AssetId = 0.into();
-	  let usdt: T::AssetId = 1.into();
+	  let btc: T::AssetId = 100.into();
+	  let usdt: T::AssetId = 101.into();
 	  let owner = whitelisted_caller();
 	  let pair = CurrencyPair::new(btc, usdt);
 	  let pool_id = Uni::<T>::do_create_pool(
