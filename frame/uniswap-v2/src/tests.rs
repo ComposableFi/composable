@@ -88,7 +88,7 @@ fn test() {
 		<Uni as CurveAmm>::buy(&BOB, pool_id, BTC, swap_btc, false).expect("impossible; qed;");
 
 		let precision = 100;
-    let epsilon = 5;
+		let epsilon = 5;
 		let bob_btc = Tokens::balance(BTC, &BOB);
 		assert_ok!(acceptable_computation_error(bob_btc, swap_btc, precision, epsilon));
 

@@ -399,7 +399,7 @@ mod multicurrency {
 
 				prop_assert_ok!(<Pallet::<Test> as MultiReservableCurrency<AccountId>>::reserve(asset_id, &account, third));
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  0);
-				
+
 				let remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account, first);
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  first - remaining);
 
@@ -410,7 +410,7 @@ mod multicurrency {
 				let free_balance = <Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account);
 				let remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account, third);
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  free_balance + ( third - remaining));
-				
+
 				prop_assert_ok!(<Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first));
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id, &account),  first + second + third);
 

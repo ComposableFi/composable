@@ -84,7 +84,6 @@ parameter_types! {
 	pub const MaxLocks: u32 = 256;
 }
 
-
 impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;

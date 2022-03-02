@@ -52,7 +52,7 @@ macro_rules! prop_assert_noop {
 macro_rules! prop_assert_acceptable_computation_error {
 	($x:expr, $y:expr, $precision:expr, $epsilon:expr) => {{
 		match composable_tests_helpers::test::helper::acceptable_computation_error(
-			$x, $y, $precision, $epsilon
+			$x, $y, $precision, $epsilon,
 		) {
 			Ok(()) => {},
 			Err(q) => {

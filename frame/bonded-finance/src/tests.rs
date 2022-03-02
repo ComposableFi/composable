@@ -242,10 +242,10 @@ proptest! {
 					  // Alice cancel the offer
 					  prop_assert_ok!(BondedFinance::cancel(Origin::signed(ALICE), offer_id));
 
-					  // The remaining half is refunded to alice
-            let precision = 100;
-            let epsilon = 5;
-						prop_assert_acceptable_computation_error!(Tokens::balance(offer.reward.asset, &ALICE), half_reward, precision, epsilon);
+					// The remaining half is refunded to alice
+		  let precision = 100;
+				let epsilon = 5;
+				  prop_assert_acceptable_computation_error!(Tokens::balance(offer.reward.asset, &ALICE), half_reward, precision, epsilon);
 
 					  Ok(())
 			  })?;
@@ -402,8 +402,8 @@ proptest! {
 					  prop_assert_ok!(charlie_reward);
 					  let charlie_reward = charlie_reward.expect("impossible; qed;");
 
-            let precision = 100;
-            let epsilon = 5;
+			let precision = 100;
+			let epsilon = 5;
 					  prop_assert_acceptable_computation_error!(bob_reward, half_reward, precision, epsilon);
 					  prop_assert_acceptable_computation_error!(charlie_reward, half_reward, precision, epsilon);
 

@@ -102,7 +102,12 @@ fn test() {
 
 		let bob_usdc = Tokens::balance(USDC, &BOB);
 
-		assert_ok!(acceptable_computation_error(bob_usdc.into(), swap_usdc.into(), precision, epsilon));
+		assert_ok!(acceptable_computation_error(
+			bob_usdc.into(),
+			swap_usdc.into(),
+			precision,
+			epsilon
+		));
 
 		let lp = Tokens::balance(pool.lp_token, &ALICE);
 		assert_ok!(<StableSwap as CurveAmm>::remove_liquidity(&ALICE, pool_id, lp, 0, 0));
@@ -254,7 +259,7 @@ fn remove_lp_failure() {
 fn lp_fee() {
 	new_test_ext().execute_with(|| {
 		let precision = 100;
-    let epsilon = 1;
+		let epsilon = 1;
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
 		let initial_usdc = 1_000_000_000_000_u128 * unit;
@@ -272,7 +277,7 @@ fn lp_fee() {
 			usdc_balance,
 			bob_usdt - lp_fee.mul_ceil(bob_usdt),
 			precision,
-      epsilon
+			epsilon
 		));
 	});
 }
@@ -283,7 +288,7 @@ fn lp_fee() {
 fn protocol_fee() {
 	new_test_ext().execute_with(|| {
 		let precision = 100;
-    let epsilon = 1;
+		let epsilon = 1;
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
 		let initial_usdc = 1_000_000_000_000_u128 * unit;
@@ -301,7 +306,7 @@ fn protocol_fee() {
 			usdc_balance,
 			bob_usdt - lp_fee.mul_floor(bob_usdt),
 			precision,
-      epsilon
+			epsilon
 		));
 		// from lp_fee 1 % (as per protocol_fee) goes to pool owner (ALICE)
 		let alice_usdc_bal = Tokens::balance(USDC, &ALICE);
@@ -309,7 +314,7 @@ fn protocol_fee() {
 			alice_usdc_bal,
 			protocol_fee.mul_floor(lp_fee.mul_floor(bob_usdt)),
 			precision,
-      epsilon
+			epsilon
 		));
 	});
 }
