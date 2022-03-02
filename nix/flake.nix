@@ -1,7 +1,7 @@
 {
   description = "Composable Devnet Scripts";
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/ec7d9d4c182c54acd649674cf1023d40a0539eb7";
+    nixpkgs.url = "github:nixos/nixpkgs/78dd3171e664c83cf9d969e96e5eed92ea0ad65c";
     flake-utils.url = "github:numtide/flake-utils/3cecb5b042f7f209c56ffd8371b2711a290ec797";
   };
   outputs = { nixpkgs, flake-utils, ... }:

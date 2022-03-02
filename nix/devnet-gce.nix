@@ -61,7 +61,7 @@ in {
           runtimeName = pkgs.lib.removeSuffix "-dev" composable.spec;
           domain = "${runtimeName}.devnets.composablefinance.ninja";
           virtualConfig =
-              let
+            let
                 routify-nodes = prefix:
                   map (node: (node // {
                     name = prefix + node.name;

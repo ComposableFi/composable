@@ -3,7 +3,7 @@ name: "Devnet Community Release"
 on:
   push:
     branches:
-      - main
+      - devnet-image
 
 jobs:
   deploy-devnet:
@@ -16,61 +16,43 @@ jobs:
       group: deploy-devnet
       cancel-in-progress: false
     container:
-      image: paritytech/ci-linux:production
-    env:
-      USER:
-        nonroot
+      image: niteo/nixpkgs-nixos-21.11:ed02c2ba0384b2800db41333045a6fb781f12aac
     steps:
     - uses: actions/checkout@v2
 
-    - uses: google-github-actions/setup-gcloud@master
-      with:
-        service_account_key: ${{ secrets.GCP_CREDENTIALS }}
-        export_default_credentials: true
-
-    - name: Install Nix
+    - name: Install Dependencies
       run: |
-        groupadd -g 30000 --system nixbld
-
-        for i in $(seq 1 32); do
-          useradd \
-            --home-dir /var/empty \
-            --gid 30000 \
-            --groups nixbld \
-            --no-user-group \
-            --system \
-            --shell /usr/sbin/nologin \
-            --uid $((30000 + i)) \
-            --password "!" \
-            nixbld$i
-        done
-
-        mkdir -m 0755 /nix && chown nonroot /nix
-
-        curl -L https://nixos.org/nix/install --output nix.sh
-        sh nix.sh --no-daemon
-
-        echo "$HOME/.nix-profile/bin" >> $GITHUB_PATH
-        mkdir -p ~/.config/nix
-        echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
+        nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs
+        nix-channel --update
+        nix-env -iA nixpkgs.python3 nixpkgs.rustup nixpkgs.sccache nixpkgs.jq nixpkgs.google-cloud-sdk nixpkgs.nix nixpkgs.neofetch
+        nix --version
+        rustup install stable
+        rustup default stable
+        rustup install nightly-2022-02-01
+        rustup target add wasm32-unknown-unknown --toolchain nightly-2022-02-01
+        neofetch
 
     - uses: cachix/cachix-action@v10
       with:
         name: composable-community
-        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
         extraPullNames: composable-community
 
     - name: Set env
       run: |
-        echo "RELEASE_VERSION=$GITHUB_SHA" >> $GITHUB_ENV
+        # echo "RELEASE_VERSION=$GITHUB_SHA" >> $GITHUB_ENV
+        echo "RELEASE_VERSION=4e9bbc92e45bcd60d7a92927769c5592efcb5525" >> $GITHUB_ENV
 
-    - name: Push artifact
-      run: |
-        cargo build --release
-        cargo doc --release
-        tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable target/doc
-        gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
-        rm -rf target
+    # - name: Push artifact
+    #   env:
+    #     RUSTC_WRAPPER: sccache
+    #     GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+    #   run: |
+    #     nix-shell shell.nix --run "cargo build --release"
+    #     nix-shell shell.nix --run "cargo doc --release"
+    #     tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable target/doc
+    #     gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
+    #     rm -rf target
 
     - name: Load state
       run: |
@@ -96,7 +78,14 @@ jobs:
     - name: Deploy
       run: |
         cd nix
-        nix develop .#deploy --impure --command nixops deploy --debug --check --confirm -d devnet-gce
+        echo $HOME
+        echo $USER
+        echo "Host *" > $HOME/.ssh/config
+        echo " StrictHostKeyChecking no" >> $HOME/.ssh/config
+        mkdir -p /root/.ssh
+        echo "Host *" > /root/.ssh/config
+        echo " StrictHostKeyChecking no" >> /root/.ssh/config
+        nix develop .#deploy --impure --command nixops deploy --option sandbox false --check --confirm -d devnet-gce
       env:
         NIXOPS_STATE: "deployment.nixops"
 
