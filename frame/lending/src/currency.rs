@@ -47,8 +47,9 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// ```
 	pub const ONE: u128 = 10_u128.pow(Self::EXPONENT as u32);
 
-	/// Returns the provided amount of the currency, cannonicalized to [`Self::ONE`], saturating
-	/// at the numeric bounds ([`u128::MAX`]).
+	/// Returns the provided amount of the currency, cannonicalized to
+	/// [`Self::ONE`](pallet_lending::currency::Currency::ONE), saturating at the numeric bounds
+	/// ([`u128::MAX`](core::u128::MAX)).
 	///
 	/// # Examples
 	///
@@ -67,45 +68,140 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 
 	// Runtime methods
 
-	/// Creates an instance of this `Currency`.
+	/// Creates an 'instance' of this `Currency`.
 	///
-	/// Sometimes a value is needed, not just a type. This could be called `new`, but since there
-	/// aren't any runtime values associated with this type, `instance` is less confusing.
-	const fn instance() -> Self {
-		Self {}
-	}
-
-	/// Runtime version of [`Self::ID`].
-	const fn id(&self) -> u128 {
-		Self::ID
+	/// Sometimes a value is needed, not just a type. See [`RuntimeCurrency`] for more information.
+	pub const fn instance() -> RuntimeCurrency {
+		RuntimeCurrency { id: ID, exponent: EXPONENT }
 	}
 }
 
-// pub trait RuntimeCurrency {
-// 	const fn instance() -> Self;
+/// A 'runtime' equivalent of [`Currency`].
+///
+/// # Examples
+///
+/// Can be created from a [`Currency`]:
+///
+/// ```rust
+/// # use pallet_lending::currency::{Currency, RuntimeCurrency};
+/// type ACOIN = Currency<12345, 10>;
+/// let runtime_currency = ACOIN::instance()
+/// assert_eq!(runtime_currency.one(), ACOIN::ONE);
+/// ```
+///
+/// Useful in non-const contexts:
+///
+/// ```rust
+/// # use pallet_lending::currency::{Currency, RuntimeCurrency};
+/// let lp_token_id = create_btc_usdt_vault();
+/// let rc = RuntimeCurrency::new(lp_token_id, 12)
+/// let ten_lp_tokens = rc.units(10);
+///
+/// fn create_btc_usdt_vault() -> u128 {
+/// 	// do something here and return the id of an lp_token...
+/// 	42
+/// }
+/// ```
+///
+/// Create many currencies:
+///
+/// ```rust
+/// # use pallet_lending::currency::{Currency, RuntimeCurrency};
+/// let currencies = (0..100).zip(iter::repeat(12).map(RuntimeCurrency::new);
+/// ```
+#[derive(Debug, Clone, Copy)]
+pub struct RuntimeCurrency {
+	id: u128,
+	exponent: u8,
+}
 
-// 	const fn id(&self) -> u128;
+impl RuntimeCurrency {
+	pub fn new(id: u128, exponent: u8) -> Self {
+		Self { id, exponent }
+	}
+
+	/// Get the runtime currency's id.
+	///
+	/// See [`Currency::ID`] for more information.
+	pub fn id(&self) -> u128 {
+		self.id
+	}
+
+	/// Get the runtime currency's exponent.
+	///
+	/// See [`Currency::EXPONENT`] for more information.
+	pub fn exponent(&self) -> u8 {
+		self.exponent
+	}
+
+	/// The `one` value of the currency, calculated with [`Self::exponent`].
+	///
+	/// # Examples
+	///
+	/// ```
+	/// # use pallet_lending::currency::{Currency, RuntimeCurrency};
+	///
+	/// type ACOIN = Currency<12345, 10>;
+	/// assert_eq!(ACOIN::instance().one(), 10_000_000_000);
+	/// ```
+	pub const fn one(&self) -> u128 {
+		10_u128.pow(self.exponent as u32)
+	}
+
+	/// Returns the provided amount of the currency, cannonicalized to [`Self::one()`], saturating
+	/// at the numeric bounds ([`u128::MAX`]).
+	///
+	/// # Examples
+	///
+	/// ```
+	/// # use pallet_lending::currency::{Currency, RuntimeCurrency};
+	///
+	/// type ACOIN = Currency<12345, 10>;
+	/// assert_eq!(ACOIN::instance().units(7), 70_000_000_000);
+	///
+	/// // saturates at u128::MAX
+	/// assert_eq!(ACOIN::instance().units(u128::MAX), u128::MAX);
+	/// ```
+	pub const fn units(&self, ones: u128) -> u128 {
+		ones.saturating_mul(self.one())
+	}
+}
+
+// pub struct RuntimeCurrencyWithExponent<const EXPONENT: u8> {
+// 	id: u128,
 // }
 
-// impl<const ID: u128, const EXPONENT: u8> RuntimeCurrency for Currency<ID, EXPONENT> {
-// 	/// Creates an instance of this `Currency`.
+// impl<const EXPONENT: u8> RuntimeCurrencyWithExponent<EXPONENT> {
+// 	/// The `one` value of the currency, calculated with [`Self::EXPONENT`].
 // 	///
-// 	/// Sometimes a value is needed, not just a type. This could be called `new`, but since there
-// 	/// aren't any runtime values associated with this type, `instance` is less confusing.
-// 	const fn instance() -> Self {
-// 		Self {}
+// 	/// # Examples
+// 	///
+// 	/// ```
+// 	/// # use pallet_lending::currency::Currency;
+// 	///
+// 	/// type ACOIN = Currency<12345, 10>;
+// 	/// assert_eq!(ACOIN::ONE, 10_000_000_000);
+// 	/// ```
+// 	pub const ONE: u128 = 10_u128.pow(Self::EXPONENT as u32);
+
+// 	/// Returns the provided amount of the currency, cannonicalized to [`Self::ONE`], saturating
+// 	/// at the numeric bounds ([`u128::MAX`]).
+// 	///
+// 	/// # Examples
+// 	///
+// 	/// ```
+// 	/// # use pallet_lending::currency::Currency;
+// 	///
+// 	/// type ACOIN = Currency<12345, 10>;
+// 	/// assert_eq!(ACOIN::units(7), 70_000_000_000);
+// 	///
+// 	/// // saturates at u128::MAX
+// 	/// assert_eq!(ACOIN::units(u128::MAX), u128::MAX);
+// 	/// ```
+// 	pub const fn units(ones: u128) -> u128 {
+// 		ones.saturating_mul(Self::ONE)
 // 	}
-
-// 	/// Runtime version of [`Self::ID`].
-//     const fn id(&self) -> u128 {
-//         Self::ID
-//     }
 // }
-
-fn t234() {
-	let t = BTC::instance();
-	let t22 = t.id();
-}
 
 // separate module so that the `allow` attribute isn't appllied to the entirety of the currency
 // module.

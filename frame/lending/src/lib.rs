@@ -272,17 +272,17 @@ pub mod pallet {
 			let one_read = T::DbWeight::get().reads(1);
 			weight += u64::from(call_counters.now) * <T as Config>::WeightInfo::now();
 			weight += u64::from(call_counters.read_markets) * one_read;
-			weight += u64::from(call_counters.accrue_interest) *
-				<T as Config>::WeightInfo::accrue_interest();
+			weight += u64::from(call_counters.accrue_interest)
+				* <T as Config>::WeightInfo::accrue_interest();
 			weight += u64::from(call_counters.account_id) * <T as Config>::WeightInfo::account_id();
-			weight += u64::from(call_counters.available_funds) *
-				<T as Config>::WeightInfo::available_funds();
-			weight += u64::from(call_counters.handle_withdrawable) *
-				<T as Config>::WeightInfo::handle_withdrawable();
-			weight += u64::from(call_counters.handle_depositable) *
-				<T as Config>::WeightInfo::handle_depositable();
-			weight += u64::from(call_counters.handle_must_liquidate) *
-				<T as Config>::WeightInfo::handle_must_liquidate();
+			weight += u64::from(call_counters.available_funds)
+				* <T as Config>::WeightInfo::available_funds();
+			weight += u64::from(call_counters.handle_withdrawable)
+				* <T as Config>::WeightInfo::handle_withdrawable();
+			weight += u64::from(call_counters.handle_depositable)
+				* <T as Config>::WeightInfo::handle_depositable();
+			weight += u64::from(call_counters.handle_must_liquidate)
+				* <T as Config>::WeightInfo::handle_must_liquidate();
 			weight
 		}
 
@@ -291,7 +291,7 @@ pub mod pallet {
 			let signer = Signer::<T, <T as Config>::AuthorityId>::all_accounts();
 			if !signer.can_sign() {
 				log::warn!("No signer");
-				return
+				return;
 			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
 				// TODO: check that it should liquidate before liquidations
@@ -1028,8 +1028,8 @@ pub mod pallet {
 			let existing_borrow_share =
 				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
 			let new_borrow_share = Percent::from_rational(amount_to_borrow, total_borrow_amount);
-			Ok((market_index * new_borrow_share.into()) +
-				(account_interest_index * existing_borrow_share.into()))
+			Ok((market_index * new_borrow_share.into())
+				+ (account_interest_index * existing_borrow_share.into()))
 		}
 
 		fn can_borrow(
@@ -1042,7 +1042,7 @@ pub mod pallet {
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
 			if let Some(time) = latest_borrow_timestamp {
 				if time >= Self::last_block_timestamp() {
-					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into())
+					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into());
 				}
 			}
 
@@ -1499,14 +1499,14 @@ pub mod pallet {
 			let collateral_balance = AccountCollateral::<T>::get(market_id, account)
 				.unwrap_or_else(CollateralLpAmountOf::<Self>::zero);
 
-			if collateral_balance > T::Balance::zero() {
+			if dbg!(collateral_balance) > T::Balance::zero() {
 				let borrower = Self::create_borrower_data(market_id, account)?;
-				Ok(borrower
+				let balance = dbg!(borrower
 					.borrow_for_collateral()
-					.map_err(|_| Error::<T>::BorrowerDataCalculationFailed)?
-					.checked_mul_int(1_u64)
-					.ok_or(ArithmeticError::Overflow)?
-					.into())
+					.map_err(|_| Error::<T>::BorrowerDataCalculationFailed)?)
+				.checked_mul_int(1_u64)
+				.ok_or(ArithmeticError::Overflow)?;
+				Ok(balance.into())
 			} else {
 				Ok(Self::Balance::zero())
 			}
@@ -1589,8 +1589,8 @@ pub mod pallet {
 
 			let market_account = Self::account_id(market_id);
 			ensure!(
-				<T as Config>::MultiCurrency::can_deposit(market.collateral, account, amount) ==
-					DepositConsequence::Success,
+				<T as Config>::MultiCurrency::can_deposit(market.collateral, account, amount)
+					== DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 			ensure!(
@@ -1633,7 +1633,7 @@ pub mod pallet {
 		account_interest_index: ZeroToOneFixedU128,
 	) -> Result<Option<u64>, DispatchError> {
 		if principal.is_zero() {
-			return Ok(None)
+			return Ok(None);
 		}
 		let principal = LiftedFixedBalance::saturating_from_integer(principal.into());
 		let balance = principal

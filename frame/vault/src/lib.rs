@@ -832,14 +832,13 @@ pub mod pallet {
 			let vault = Self::vault_info(vault_id)?;
 
 			ensure!(vault.capabilities.deposits_allowed(), Error::<T>::DepositsHalted);
-
 			ensure!(
+				// ANCHOR
 				T::Currency::can_withdraw(vault.asset_id, from, amount).into_result().is_ok(),
 				Error::<T>::TransferFromFailed
 			);
 
 			let to = Self::account_id(vault_id);
-
 			let vault_aum = Self::assets_under_management(vault_id)?;
 			if vault_aum.is_zero() {
 				ensure!(

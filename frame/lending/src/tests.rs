@@ -36,150 +36,9 @@ use sp_arithmetic::assert_eq_error_rate;
 use sp_core::{H256, U256};
 use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber, Percent, Perquintill};
 
-type BorrowAssetVault = VaultId;
-
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
-
-/// Create a very simple vault for the given currency. 100% is reserved.
-fn create_simple_vault<const AssetId: u128, const AssetExponent: u8>(
-	manager: AccountId,
-) -> (VaultId, VaultInfo<AccountId, Balance, CurrencyId, BlockNumber>) {
-	let config = VaultConfig {
-		asset_id: Currency::<AssetId, AssetExponent>::ID,
-		manager,
-		reserved: Perquintill::from_percent(100),
-		strategies: Default::default(),
-	};
-	let v = Vault::do_create_vault(Deposit::Existential, config.try_into_validated().unwrap());
-	assert_ok!(&v);
-	v.expect("unreachable; qed;")
-}
-
-/// Creates a market with the given values.
-///
-/// Sets the price of the `borrow_asset` to [`NORMALIZED::ONE`], and the `collateral_asset`
-/// `50_000 * `[`NORMALIZED::ONE`].
-///
-/// Mints `1000` units of `borrow_asset` and `100` units of `collateral_asset` into the `manager`.
-///
-/// The default [`InterestRateModel`] is used.
-///
-/// # Panics
-///
-/// Panics on any errors. Only for use in testing.
-fn create_market<
-	const BorrowAssetId: u128,
-	const BorrowAssetExponent: u8,
-	const CollateralAssetId: u128,
-	const CollateralAssetExponent: u8,
->(
-	// these parameters are here to allow for type inference if the type is known.
-	_borrow_asset: Currency<{ BorrowAssetId }, { BorrowAssetExponent }>,
-	_collateral_asset: Currency<{ CollateralAssetId }, { CollateralAssetExponent }>,
-	manager: AccountId,
-	reserved_factor: Perquintill,
-	collateral_factor: MoreThanOneFixedU128,
-) -> (MarketIndex, BorrowAssetVault) {
-	// error[E0401]: can't use generic parameters from outer function
-	// type BorrowAsset = Currency<{ BorrowAssetId }, { BorrowAssetExponent }>;
-	// type CollateralAsset = Currency<{ CollateralAssetId }, { CollateralAssetExponent }>;
-
-	set_price(BorrowAssetId, NORMALIZED::ONE);
-	set_price(CollateralAssetId, 50_000 * NORMALIZED::ONE);
-
-	mint_currency_into::<{ BorrowAssetId }, { BorrowAssetExponent }>(manager, 1000).unwrap();
-	mint_currency_into::<{ CollateralAssetId }, { CollateralAssetExponent }>(manager, 100).unwrap();
-
-	let config = CreateInput {
-		updatable: UpdateInput {
-			collateral_factor,
-			under_collateralized_warn_percent: default_under_collateralized_warn_percent(),
-			liquidators: vec![],
-			interest_rate_model: InterestRateModel::default(),
-		},
-		reserved_factor,
-		currency_pair: CurrencyPair::new(BorrowAssetId, CollateralAssetId),
-	};
-
-	Lending::create_market(Origin::signed(manager), config.try_into_validated().unwrap()).unwrap();
-
-	let system_events = System::events();
-	if let Some(EventRecord {
-		event:
-			Event::Lending(crate::Event::<Runtime>::MarketCreated {
-				market_id,
-				vault_id,
-				manager,
-				currency_pair,
-			}),
-		..
-	}) = system_events.last()
-	{
-		(*market_id, *vault_id)
-	} else {
-		panic!(
-			"System::events() did not contain the market creation event. Found {system_events:#?}"
-		)
-	}
-}
-
-/// Mints the specified amount of the currency into the specified manager.
-fn mint_currency_into<const AssetId: u128, const AssetExponent: u8>(
-	manager: sp_core::sr25519::Public,
-	amount: u128,
-) -> Result<(), DispatchError> {
-	Tokens::mint_into(AssetId, &manager, Currency::<{ AssetId }, { AssetExponent }>::units(amount))
-}
-
-/// Create a market with a USDT vault LP token as collateral
-fn create_simple_vaulted_market<const AssetId: u128, const AssetExponent: u8>(
-	manager: AccountId,
-) -> ((MarketIndex, BorrowAssetVault), CurrencyId) {
-	let (_, VaultInfo { lp_token_id: collateral_asset, .. }) =
-		create_simple_vault::<{ USDT::ID }, { USDT::EXPONENT }>(manager);
-	(
-		create_market::<{ AssetId }, { AssetExponent }, { USDT::ID }, { USDT::EXPONENT }>(
-			Currency::instance(),
-			collateral_asset,
-			manager,
-			DEFAULT_MARKET_VAULT_RESERVE,
-			MoreThanOneFixedU128::saturating_from_rational(2, 1),
-		),
-		collateral_asset,
-	)
-}
-
-#[test]
-fn test_lskdjflksdfj() {
-	assert_eq!(
-		MoreThanOneFixedU128::saturating_from_rational(2, 1),
-		MoreThanOneFixedU128::saturating_from_rational(200, 100)
-	)
-}
-
-/// Create a market with straight USDT as collateral
-fn create_simple_market() -> (MarketIndex, BorrowAssetVault) {
-	create_market(
-		USDT::instance(),
-		BTC::instance(),
-		*ALICE,
-		DEFAULT_MARKET_VAULT_RESERVE,
-		MoreThanOneFixedU128::saturating_from_integer(DEFAULT_COLLATERAL_FACTOR),
-	)
-}
-
-/// some model with sane parameter
-fn new_jump_model() -> (Percent, InterestRateModel) {
-	let base_rate = Rate::saturating_from_rational(2, 100);
-	let jump_rate = Rate::saturating_from_rational(10, 100);
-	let full_rate = Rate::saturating_from_rational(32, 100);
-	let optimal = Percent::from_percent(80);
-	let interest_rate_model =
-		InterestRateModel::Jump(JumpModel::new(base_rate, jump_rate, full_rate, optimal).unwrap());
-	(optimal, interest_rate_model)
-}
 
 #[test]
 fn accrue_interest_base_cases() {
@@ -215,8 +74,8 @@ fn accrue_interest_base_cases() {
 	let error = 25;
 	assert_eq!(
 		accrued_increase,
-		10_000_000_000_000_000_000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR_NAIVE as u128 +
-			error
+		10_000_000_000_000_000_000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR_NAIVE as u128
+			+ error
 	);
 }
 
@@ -358,108 +217,108 @@ fn accrue_interest_plotter() {
 /// Tests market creation and the associated event(s).
 fn can_create_valid_market() {
 	new_test_ext().execute_with(|| {
-				System::set_block_number(1); // ensure block is non-zero
+		System::set_block_number(1); // ensure block is non-zero
 
-				/// The amount of the borrow asset to mint into ALICE.
-				const INITIAL_BORROW_ASSET_AMOUNT: u128 = 10_u128.pow(30);
+		/// The amount of the borrow asset to mint into ALICE.
+		const INITIAL_BORROW_ASSET_AMOUNT: u128 = 10_u128.pow(30);
 
-				const BORROW_ASSET_ID: u128 = BTC::ID;
-				const COLLATERAL_ASSET_ID: u128 = USDT::ID;
-				const EXPECTED_AMOUNT_OF_BORROW_ASSET: u128 = 50_000 * USDT::ONE;
+		const BORROW_ASSET_ID: u128 = BTC::ID;
+		const COLLATERAL_ASSET_ID: u128 = USDT::ID;
+		const EXPECTED_AMOUNT_OF_BORROW_ASSET: u128 = 50_000 * USDT::ONE;
 
-				let config = default_create_input(CurrencyPair::new(COLLATERAL_ASSET_ID, BORROW_ASSET_ID));
+		let config = default_create_input(CurrencyPair::new(COLLATERAL_ASSET_ID, BORROW_ASSET_ID));
 
-				set_price(BORROW_ASSET_ID, EXPECTED_AMOUNT_OF_BORROW_ASSET);
-				set_price(COLLATERAL_ASSET_ID, USDT::ONE);
+		set_price(BORROW_ASSET_ID, EXPECTED_AMOUNT_OF_BORROW_ASSET);
+		set_price(COLLATERAL_ASSET_ID, USDT::ONE);
 
-				let price = <Oracle as oracle::Oracle>::get_price(BORROW_ASSET_ID, BTC::ONE)
-					.expect("impossible")
-					.price;
+		let price = <Oracle as oracle::Oracle>::get_price(BORROW_ASSET_ID, BTC::ONE)
+			.expect("impossible")
+			.price;
 
-				assert_eq!(price, EXPECTED_AMOUNT_OF_BORROW_ASSET);
+		assert_eq!(price, EXPECTED_AMOUNT_OF_BORROW_ASSET);
 
-				let should_have_failed = Lending::create_market(
-					Origin::signed(*ALICE),
-					config.clone().try_into_validated().unwrap(),
+		let should_have_failed = Lending::create_market(
+			Origin::signed(*ALICE),
+			config.clone().try_into_validated().unwrap(),
+		);
+
+		// REVIEW: Does it matter what error.index and error.error are
+		// when using a mock runtime?
+		assert!(
+			matches!(
+				should_have_failed,
+				Err(DispatchErrorWithPostInfo {
+					post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },
+					error: DispatchError::Module {
+						index: 5,
+						error: 0,
+						message: Some("BalanceTooLow")
+					},
+				})
+			),
+			"Creating a market with insufficient funds should fail, with the error message being \"BalanceTooLow\".
+			The other fields are also checked to make sure any changes are tested and accounted, perhaps one of those fields changed?
+			Market creation result was {should_have_failed:#?}",
+		);
+
+		Tokens::mint_into(BORROW_ASSET_ID, &*ALICE, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
+
+		let should_be_created =
+			Lending::create_market(Origin::signed(*ALICE), config.clone().try_into_validated().unwrap());
+
+		assert!(
+			matches!(should_be_created, Ok(PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },)),
+			"Market creation should have succeeded, since ALICE now has BTC.
+			Market creation result was {should_be_created:#?}",
+		);
+
+		let initial_pool_size = Lending::initial_pool_size(BORROW_ASSET_ID).unwrap();
+		let alice_balance_after_market_creation = Tokens::balance(BORROW_ASSET_ID, &*ALICE);
+
+		assert_eq!(
+			alice_balance_after_market_creation,
+			INITIAL_BORROW_ASSET_AMOUNT - initial_pool_size,
+			"ALICE should have 'paid' the inital_pool_size into the market vault.
+			alice_balance_after_market_creation: {alice_balance_after_market_creation}
+			initial_pool_size: {initial_pool_size}",
+		);
+
+		let system_events = System::events();
+
+		match &*system_events {
+			[_, _, _, EventRecord {
+				topics: event_topics,
+				phase: Phase::Initialization,
+				event:
+					Event::Lending(crate::Event::MarketCreated {
+						currency_pair:
+							CurrencyPair { base: COLLATERAL_ASSET_ID, quote: BORROW_ASSET_ID },
+						market_id: created_market_id @ MarketIndex(1),
+						vault_id: created_vault_id @ 1,
+						manager: event_manager,
+					}),
+			}] if event_manager == &*ALICE && event_topics.is_empty() => {
+				assert_eq!(
+					Lending::total_cash(&created_market_id).unwrap(),
+					initial_pool_size,
+					"The market should have {initial_pool_size} in it."
 				);
-
-				// REVIEW: Does it matter what error.index and error.error are
-				// when using a mock runtime?
-				assert!(
-					matches!(
-						should_have_failed,
-						Err(DispatchErrorWithPostInfo {
-							post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },
-							error: DispatchError::Module {
-								index: 5,
-								error: 0,
-								message: Some("BalanceTooLow")
-							},
-						})
-					),
-					"Creating a market with insufficient funds should fail, with the error message being \"BalanceTooLow\".
-					The other fields are also checked to make sure any changes are tested and accounted, perhaps one of those fields changed?
-					Market creation result was {should_have_failed:#?}",
-				);
-
-				Tokens::mint_into(BORROW_ASSET_ID, &*ALICE, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
-
-				let should_be_created =
-					Lending::create_market(Origin::signed(*ALICE), config.clone().try_into_validated().unwrap());
-
-				assert!(
-					matches!(should_be_created, Ok(PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },)),
-					"Market creation should have succeeded, since ALICE now has BTC.
-					Market creation result was {should_be_created:#?}",
-				);
-
-				let initial_pool_size = Lending::initial_pool_size(BORROW_ASSET_ID).unwrap();
-				let alice_balance_after_market_creation = Tokens::balance(BORROW_ASSET_ID, &*ALICE);
 
 				assert_eq!(
-					alice_balance_after_market_creation,
-					INITIAL_BORROW_ASSET_AMOUNT - initial_pool_size,
-					"ALICE should have 'paid' the inital_pool_size into the market vault.
-					alice_balance_after_market_creation: {alice_balance_after_market_creation}
-					initial_pool_size: {initial_pool_size}",
+					<Vault as vault::Vault>::asset_id(&created_vault_id).unwrap(),
+					BORROW_ASSET_ID,
+					"The created market vault should be backed by the borrow asset"
 				);
 
-				let system_events = System::events();
-
-				match &*system_events {
-					[_, _, _, EventRecord {
-						topics: event_topics,
-						phase: Phase::Initialization,
-						event:
-							Event::Lending(crate::Event::MarketCreated {
-								currency_pair:
-									CurrencyPair { base: COLLATERAL_ASSET_ID, quote: BORROW_ASSET_ID },
-								market_id: created_market_id @ MarketIndex(1),
-								vault_id: created_vault_id @ 1,
-								manager: event_manager,
-							}),
-					}] if event_manager == &*ALICE && event_topics.is_empty() => {
-						assert_eq!(
-							Lending::total_cash(&created_market_id).unwrap(),
-							initial_pool_size,
-							"The market should have {initial_pool_size} in it."
-						);
-
-						assert_eq!(
-							<Vault as vault::Vault>::asset_id(&created_vault_id).unwrap(),
-							BORROW_ASSET_ID,
-							"The created market vault should be backed by the borrow asset"
-						);
-
-						assert_eq!(
-							Lending::borrow_balance_current(&created_market_id, &ALICE),
-							Ok(Some(0)),
-							"The borrowed balance of ALICE should be 0."
-						);
-					},
-					_ => panic!("Unexpected value for System::events(); found {system_events:#?}"),
-				}
-			});
+				assert_eq!(
+					Lending::borrow_balance_current(&created_market_id, &ALICE),
+					Ok(Some(0)),
+					"The borrowed balance of ALICE should be 0."
+				);
+			},
+			_ => panic!("Unexpected value for System::events(); found {system_events:#?}"),
+		}
+	});
 }
 
 #[test]
@@ -502,12 +361,6 @@ fn test_borrow_repay_in_same_block() {
 	});
 }
 
-fn get_price(currency_id: CurrencyId, amount: Balance) -> Balance {
-	<Oracle as oracle::Oracle>::get_price(currency_id, amount)
-		.expect("impossible")
-		.price
-}
-
 #[test]
 fn test_calc_utilization_ratio() {
 	// 50% borrow
@@ -535,16 +388,16 @@ fn test_borrow_math() {
 fn borrow_flow() {
 	new_test_ext().execute_with(|| {
 		let (market, vault) = create_simple_market();
-		let initial_total_cash = Lending::total_cash(&market).unwrap();
+		let initial_total_cash = dbg!(Lending::total_cash(&market).unwrap());
 
 		let borrow_amount = USDT::units(1_000_000);
-		let collateral_amount =
-			get_price(USDT::ID, borrow_amount) * BTC::ONE / get_price(BTC::ID, BTC::ONE);
+		let collateral_amount = dbg!(get_price(USDT::ID, borrow_amount))
+			* dbg!(BTC::ONE / get_price(BTC::ID, BTC::ONE));
 
-		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral_amount));
+		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, dbg!(collateral_amount)));
 		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, collateral_amount));
 
-		let limit_normalized = Lending::get_borrow_limit(&market, &ALICE).unwrap();
+		let limit_normalized = dbg!(Lending::get_borrow_limit(&market, &ALICE)).unwrap();
 
 		assert_eq!(
 			limit_normalized,
@@ -712,9 +565,9 @@ fn borrow_repay_repay() {
 #[test]
 fn liquidation() {
 	new_test_ext().execute_with(|| {
-		let (market, vault) = create_market(
-			USDT::ID,
-			BTC::ID,
+		let (market_id, vault) = create_market(
+			USDT::instance(),
+			BTC::instance(),
 			*ALICE,
 			DEFAULT_MARKET_VAULT_RESERVE,
 			MoreThanOneFixedU128::saturating_from_rational(2, 1),
@@ -722,10 +575,12 @@ fn liquidation() {
 
 		let collateral = BTC::units(100);
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral));
-		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, collateral));
+		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market_id, collateral));
 
-		let usdt_amt = 2 * DEFAULT_COLLATERAL_FACTOR * USDT::ONE * get_price(BTC::ID, collateral) /
-			get_price(NORMALIZED::ID, NORMALIZED::ONE);
+		// TODO: check deposit_collateral event
+
+		let usdt_amt = 2 * DEFAULT_COLLATERAL_FACTOR * USDT::ONE * get_price(BTC::ID, collateral)
+			/ get_price(NORMALIZED::ID, NORMALIZED::ONE);
 		assert_ok!(Tokens::mint_into(USDT::ID, &CHARLIE, usdt_amt));
 		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, usdt_amt));
 
@@ -735,16 +590,16 @@ fn liquidation() {
 			process_block(i);
 		}
 
-		let borrow_limit = Lending::get_borrow_limit(&market, &ALICE).expect("impossible");
+		let borrow_limit = Lending::get_borrow_limit(&market_id, &ALICE).expect("impossible");
 		assert!(borrow_limit > 0);
 
-		assert_ok!(Lending::borrow_internal(&market, &ALICE, borrow_limit));
+		assert_ok!(Lending::borrow_internal(&market_id, &ALICE, borrow_limit));
 
 		for i in 2..10000 {
 			process_block(i);
 		}
 
-		assert_ok!(Lending::liquidate_internal(&ALICE, &market, vec![*ALICE]));
+		assert_ok!(Lending::liquidate_internal(&ALICE, &market_id, vec![*ALICE]));
 	});
 }
 
@@ -752,8 +607,8 @@ fn liquidation() {
 fn test_warn_soon_under_collateralized() {
 	new_test_ext().execute_with(|| {
 		let (market, vault) = create_market(
-			USDT::instance(),
 			BTC::instance(),
+			USDT::instance(),
 			*ALICE,
 			DEFAULT_MARKET_VAULT_RESERVE,
 			MoreThanOneFixedU128::saturating_from_rational(2, 1),
@@ -902,7 +757,7 @@ proptest! {
 	#[test]
 	fn market_collateral_vaulted_deposit_withdraw_identity(amount in valid_amount_without_overflow()) {
 		new_test_ext().execute_with(|| {
-			let ((market, _), collateral_asset) = create_simple_vaulted_market();
+			let ((market, _), collateral_asset) = create_simple_vaulted_market(BTC::instance(), *ALICE);
 			let before = Tokens::balance(collateral_asset, &ALICE);
 			prop_assert_ok!(Tokens::mint_into(collateral_asset, &ALICE, amount));
 			prop_assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, amount));
@@ -1029,4 +884,133 @@ fn default_under_collateralized_warn_percent() -> Percent {
 /// Creates a "default" [`MoreThanOneFixedU128`], equal to [`DEFAULT_COLLATERAL_FACTOR`].
 fn default_collateral_factor() -> sp_runtime::FixedU128 {
 	MoreThanOneFixedU128::saturating_from_integer(DEFAULT_COLLATERAL_FACTOR)
+}
+
+/// Helper to get the price of an asset from the Oracle.
+fn get_price(asset_id: CurrencyId, amount: Balance) -> Balance {
+	<Oracle as oracle::Oracle>::get_price(asset_id, amount)
+		.expect("impossible")
+		.price
+}
+/// Create a very simple vault for the given currency. 100% is reserved.
+fn create_simple_vault(
+	asset: RuntimeCurrency,
+	manager: AccountId,
+) -> (VaultId, VaultInfo<AccountId, Balance, CurrencyId, BlockNumber>) {
+	let config = VaultConfig {
+		asset_id: asset.id(),
+		manager,
+		reserved: Perquintill::from_percent(100),
+		strategies: Default::default(),
+	};
+	let v = Vault::do_create_vault(Deposit::Existential, config.try_into_validated().unwrap());
+	assert_ok!(&v);
+	v.expect("unreachable; qed;")
+}
+
+/// Creates a market with the given values.
+///
+/// Sets the price of the `borrow_asset` to [`NORMALIZED::ONE`], and the `collateral_asset`
+/// `50_000 * `[`NORMALIZED::ONE`].
+///
+/// Mints `1000` units of `borrow_asset` and `100` units of `collateral_asset` into the `manager`.
+///
+/// The default [`InterestRateModel`] is used.
+///
+/// # Panics
+///
+/// Panics on any errors. Only for use in testing.
+fn create_market(
+	borrow_asset: RuntimeCurrency,
+	collateral_asset: RuntimeCurrency,
+	manager: AccountId,
+	reserved_factor: Perquintill,
+	collateral_factor: MoreThanOneFixedU128,
+) -> (MarketIndex, VaultId) {
+	set_price(borrow_asset.id(), NORMALIZED::ONE);
+	set_price(collateral_asset.id(), NORMALIZED::units(50_000));
+
+	mint_currency_into(borrow_asset, manager, 1000).unwrap();
+	mint_currency_into(collateral_asset, manager, 100).unwrap();
+
+	let config = CreateInput {
+		updatable: UpdateInput {
+			collateral_factor,
+			under_collateralized_warn_percent: default_under_collateralized_warn_percent(),
+			liquidators: vec![],
+			interest_rate_model: InterestRateModel::default(),
+		},
+		reserved_factor,
+		currency_pair: CurrencyPair::new(borrow_asset.id(), collateral_asset.id()),
+	};
+
+	Lending::create_market(Origin::signed(manager), config.try_into_validated().unwrap()).unwrap();
+
+	let system_events = System::events();
+	if let Some(EventRecord {
+		event:
+			Event::Lending(crate::Event::<Runtime>::MarketCreated {
+				market_id,
+				vault_id,
+				manager: _,
+				currency_pair: _,
+			}),
+		..
+	}) = system_events.last()
+	{
+		(*market_id, *vault_id)
+	} else {
+		panic!(
+			"System::events() did not contain the market creation event. Found {system_events:#?}"
+		)
+	}
+}
+
+/// some model with sane parameter
+fn new_jump_model() -> (Percent, InterestRateModel) {
+	let base_rate = Rate::saturating_from_rational(2, 100);
+	let jump_rate = Rate::saturating_from_rational(10, 100);
+	let full_rate = Rate::saturating_from_rational(32, 100);
+	let optimal = Percent::from_percent(80);
+	let interest_rate_model =
+		InterestRateModel::Jump(JumpModel::new(base_rate, jump_rate, full_rate, optimal).unwrap());
+	(optimal, interest_rate_model)
+}
+
+/// Mints the specified amount of the currency into the specified manager.
+fn mint_currency_into(
+	asset: RuntimeCurrency,
+	manager: sp_core::sr25519::Public,
+	amount: u128,
+) -> Result<(), DispatchError> {
+	Tokens::mint_into(asset.id(), &manager, asset.units(amount))
+}
+
+/// Create a market with a USDT vault LP token as collateral.
+fn create_simple_vaulted_market(
+	borrow_asset: RuntimeCurrency,
+	manager: AccountId,
+) -> ((MarketIndex, VaultId), CurrencyId) {
+	let (_, VaultInfo { lp_token_id, .. }) = create_simple_vault(borrow_asset, manager);
+
+	let market = create_market(
+		borrow_asset,
+		RuntimeCurrency::new(lp_token_id, 12),
+		manager,
+		DEFAULT_MARKET_VAULT_RESERVE,
+		MoreThanOneFixedU128::saturating_from_integer(2),
+	);
+
+	(market, lp_token_id)
+}
+
+/// Create a market with BTC as borrow and USDT as collateral
+fn create_simple_market() -> (MarketIndex, VaultId) {
+	create_market(
+		BTC::instance(),
+		USDT::instance(),
+		*ALICE,
+		DEFAULT_MARKET_VAULT_RESERVE,
+		MoreThanOneFixedU128::saturating_from_integer(DEFAULT_COLLATERAL_FACTOR),
+	)
 }

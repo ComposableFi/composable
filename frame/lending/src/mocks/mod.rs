@@ -435,7 +435,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	let mut ext = sp_io::TestExternalities::new(storage);
 	ext.execute_with(|| {
-		System::set_block_number(0);
+		System::set_block_number(1);
 		Timestamp::set_timestamp(MILLISECS_PER_BLOCK);
 	});
 	ext
