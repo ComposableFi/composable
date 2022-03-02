@@ -111,7 +111,7 @@
             buildInputs = [
               packages.devnet-dali
               packages.devnet-picasso
-              packages.localtunnel
+              pkgs.openssh
               (pkgs.nixopsUnstable.override {
                 overrides = (self: super: {
                   # FIXME: probably useless once 2.0 is stable

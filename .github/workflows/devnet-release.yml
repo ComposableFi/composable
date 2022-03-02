@@ -7,10 +7,19 @@ on:
 
 jobs:
   deploy-devnet:
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: deploy-devnet
       cancel-in-progress: false
+    container:
+      image: paritytech/ci-linux:production
+    env:
+      USER:
+        nonroot
     steps:
     - uses: actions/checkout@v2
 
@@ -19,9 +28,31 @@ jobs:
         service_account_key: ${{ secrets.GCP_CREDENTIALS }}
         export_default_credentials: true
 
-    - uses: actions/setup-python@v2
+    - name: Install Nix
+      run: |
+        groupadd -g 30000 --system nixbld
 
-    - uses: cachix/install-nix-action@v16
+        for i in $(seq 1 32); do
+          useradd \
+            --home-dir /var/empty \
+            --gid 30000 \
+            --groups nixbld \
+            --no-user-group \
+            --system \
+            --shell /usr/sbin/nologin \
+            --uid $((30000 + i)) \
+            --password "!" \
+            nixbld$i
+        done
+
+        mkdir -m 0755 /nix && chown nonroot /nix
+
+        curl -L https://nixos.org/nix/install --output nix.sh
+        sh nix.sh --no-daemon
+
+        echo "$HOME/.nix-profile/bin" >> $GITHUB_PATH
+        mkdir -p ~/.config/nix
+        echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
 
     - uses: cachix/cachix-action@v10
       with:
@@ -32,19 +63,6 @@ jobs:
     - name: Set env
       run: |
         echo "RELEASE_VERSION=$GITHUB_SHA" >> $GITHUB_ENV
-
-    - name: Install stable
-      uses: actions-rs/toolchain@v1
-      with:
-          toolchain: stable
-
-    - name: Install latest Nightly
-      uses: actions-rs/toolchain@v1
-      with:
-          toolchain: nightly-2022-02-01
-          target: wasm32-unknown-unknown
-
-    - uses: Swatinem/rust-cache@v1
 
     - name: Push artifact
       run: |
@@ -78,7 +96,7 @@ jobs:
     - name: Deploy
       run: |
         cd nix
-        nix develop .#deploy --impure --command nixops deploy --check --confirm -d devnet-gce
+        nix develop .#deploy --impure --command nixops deploy --debug --check --confirm -d devnet-gce
       env:
         NIXOPS_STATE: "deployment.nixops"
 
