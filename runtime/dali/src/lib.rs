@@ -827,10 +827,7 @@ impl Contains<Call> for BaseCallFilter {
 		if call_filter::Pallet::<Runtime>::contains(call) {
 			return false
 		}
-		!matches!(
-			call,
-			Call::Balances(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_)
-		)
+		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
 	}
 }
 
@@ -974,7 +971,7 @@ impl uniswap_v2::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type CurrencyFactory = CurrencyFactory;
-	type Assets = Tokens;
+	type Assets = Assets;
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type PalletId = ConstantProductPalletId;
@@ -990,7 +987,7 @@ impl curve_amm::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type CurrencyFactory = CurrencyFactory;
-	type Assets = Tokens;
+	type Assets = Assets;
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type PalletId = StableSwapPalletId;
