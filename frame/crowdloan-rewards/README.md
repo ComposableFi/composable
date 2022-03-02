@@ -42,7 +42,7 @@ To enable unsigned transactions while still preventing spam, we implement
 
 3. The reward account exist and has not been associated.
 
-4. The proof is valid for the reward account and a remote account is accessible 
+4. The proof is valid for the reward account and a remote account are accessible 
    from the proof.
 
 5. There is some reward to claim for the reward account.
