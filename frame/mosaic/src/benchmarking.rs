@@ -165,8 +165,7 @@ benchmarks! {
   }: _(RawOrigin::Signed(relayer), network_id.clone(), remote_asset_id.clone(), alice.clone(), transfer_amount, T::MinimumTimeLockPeriod::get(), tx_id)
 
   set_timelock_duration {
-	let period: BalanceOf<T> = 100.into();
-  }: _(RawOrigin::Root, Validated::new(period).unwrap())
+  }: _(RawOrigin::Root, Validated::new(100_u64).unwrap())
 
   rescind_timelocked_mint {
 		let relayer: T::AccountId = whitelisted_caller();
