@@ -10,8 +10,8 @@ benchmarks! {
   where_clause { where T::Balance: From<u128>, T::AssetId: From<u128> }
 
   create {
-	  let usdc: T::AssetId = 0.into();
-	  let usdt: T::AssetId = 1.into();
+	  let usdc: T::AssetId = 100.into();
+	  let usdt: T::AssetId = 101.into();
 	  let owner = whitelisted_caller();
 	  let pair = CurrencyPair::new(usdc, usdt);
 	  let amplification_factor = 100_u16;
@@ -20,8 +20,8 @@ benchmarks! {
   } : _(RawOrigin::Signed(owner), pair, amplification_factor, fee, protocol_fee)
 
   buy {
-	  let usdc: T::AssetId = 0.into();
-	  let usdt: T::AssetId = 1.into();
+	  let usdc: T::AssetId = 100.into();
+	  let usdt: T::AssetId = 101.into();
 	  let owner = whitelisted_caller();
 	  let pool_id = StableSwap::<T>::do_create_pool(
 		  &owner,
@@ -52,8 +52,8 @@ benchmarks! {
   }: _(RawOrigin::Signed(user), pool_id, usdc, (1000_u128 * unit).into(), false)
 
   sell {
-	  let usdc: T::AssetId = 0.into();
-	  let usdt: T::AssetId = 1.into();
+	  let usdc: T::AssetId = 100.into();
+	  let usdt: T::AssetId = 101.into();
 	  let owner = whitelisted_caller();
 	  let pool_id = StableSwap::<T>::do_create_pool(
 		  &owner,
@@ -84,8 +84,8 @@ benchmarks! {
   }: _(RawOrigin::Signed(user), pool_id, usdc, (1000_u128 * unit).into(), false)
 
   swap {
-	  let usdc: T::AssetId = 0.into();
-	  let usdt: T::AssetId = 1.into();
+	  let usdc: T::AssetId = 100.into();
+	  let usdt: T::AssetId = 101.into();
 	  let owner = whitelisted_caller();
 	  let pair = CurrencyPair::new(usdc, usdt);
 	  let pool_id = StableSwap::<T>::do_create_pool(

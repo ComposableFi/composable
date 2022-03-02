@@ -771,10 +771,7 @@ pub struct BaseCallFilter;
 
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
-		!matches!(
-			call,
-			Call::Balances(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_)
-		)
+		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
 	}
 }
 
