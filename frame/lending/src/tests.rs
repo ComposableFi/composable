@@ -930,6 +930,9 @@ fn create_market(
 	set_price(borrow_asset.id(), NORMALIZED::ONE);
 	set_price(collateral_asset.id(), NORMALIZED::units(50_000));
 
+	dbg!(get_price(borrow_asset.id(), NORMALIZED::ONE));
+	dbg!(get_price(collateral_asset.id(), NORMALIZED::ONE));
+
 	mint_currency_into(borrow_asset, manager, 1000).unwrap();
 	mint_currency_into(collateral_asset, manager, 100).unwrap();
 
