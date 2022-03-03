@@ -2,7 +2,7 @@
 	not(test),
 	warn(
 		clippy::disallowed_method,
-		clippy::disallowed_types,
+		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
