@@ -57,7 +57,7 @@ jobs:
     - name: Clean up
       continue-on-error: true
       run: |
-        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE && sudo chmod -R 777 /home/runner/_work/_tool/node/16.14.0
         docker system prune --force --all --volumes
 
     - uses: actions/checkout@v2
