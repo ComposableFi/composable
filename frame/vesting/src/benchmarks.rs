@@ -2,18 +2,18 @@
 
 #[cfg(test)]
 use crate::Pallet as Vesting;
-use crate::{AssetIdOf, BalanceOf, BlockNumberOf, Call, Config, Pallet, VestingScheduleOf, VestedTransfer};
-use sp_runtime::{
-	traits::StaticLookup,
+use crate::{
+	AssetIdOf, BalanceOf, BlockNumberOf, Call, Config, Pallet, VestedTransfer, VestingScheduleOf,
 };
-use composable_traits::vesting::VestingSchedule;
 use codec::Decode;
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller, account, vec};
+use composable_traits::vesting::VestingSchedule;
+use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller};
 use frame_support::{
 	dispatch::UnfilteredDispatchable,
-	traits::{fungibles::Mutate as Mutate, Get},
+	traits::{fungibles::Mutate, Get},
 };
 use frame_system::RawOrigin;
+use sp_runtime::traits::StaticLookup;
 
 const MAX_VESTING_SCHEDULES: u32 = 128;
 const FUNDING: u128 = 1_000_000_000_000;
@@ -22,43 +22,42 @@ const PERIOD: u32 = 1;
 const START_BLOCK_NUMBER: u32 = 1;
 
 fn asset<T>() -> AssetIdOf<T>
-	where
-		T: Config,
+where
+	T: Config,
 {
 	let a = 0u128.to_be_bytes();
 	AssetIdOf::<T>::decode(&mut &a[..]).unwrap()
 }
 
 fn fund_account<T>(caller: &T::AccountId, asset_id: AssetIdOf<T>, amount: BalanceOf<T>)
-	where
-		T: Config,
-		BalanceOf<T>: From<u128>,
-		<T as Config>::Currency: Mutate<T::AccountId, Balance = BalanceOf<T>, AssetId = AssetIdOf<T>>,
+where
+	T: Config,
+	BalanceOf<T>: From<u128>,
+	<T as Config>::Currency: Mutate<T::AccountId, Balance = BalanceOf<T>, AssetId = AssetIdOf<T>>,
 {
 	T::Currency::mint_into(asset_id, &caller, amount).unwrap()
 }
 
 fn create_account<T>(name: &'static str, index: u32) -> T::AccountId
-	where
-		T: Config,
-		BalanceOf<T>: From<u128>,
+where
+	T: Config,
+	BalanceOf<T>: From<u128>,
 {
 	let caller: T::AccountId = account(name, index, 0);
 	caller
 }
 
-fn vesting_schedule<T>(start: BlockNumberOf<T>, period: BlockNumberOf<T>, period_count: u32,
-					   per_period: BalanceOf<T>) -> VestingScheduleOf<T>
-	where
-		T: Config,
-		BalanceOf<T>: From<u128>,
+fn vesting_schedule<T>(
+	start: BlockNumberOf<T>,
+	period: BlockNumberOf<T>,
+	period_count: u32,
+	per_period: BalanceOf<T>,
+) -> VestingScheduleOf<T>
+where
+	T: Config,
+	BalanceOf<T>: From<u128>,
 {
-	VestingSchedule {
-		start,
-		period,
-		period_count,
-		per_period,
-	}
+	VestingSchedule { start, period, period_count, per_period }
 }
 
 benchmarks! {
