@@ -133,8 +133,8 @@ mod constants {
 }
 
 parameter_types! {
-  /// Existential deposit (ED for short) is minimum amount an account has to hold to stay in state.
-  pub NativeExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
+	/// Existential deposit (ED for short) is minimum amount an account has to hold to stay in state.
+	pub NativeExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
 }
 
 pub struct PriceConverter;

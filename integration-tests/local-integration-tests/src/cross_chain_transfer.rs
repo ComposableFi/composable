@@ -250,7 +250,7 @@ fn transfer_insufficient_amount_should_fail() {
 #[test]
 fn transfer_to_sibling() {
 	simtest();
-	let other_currency = CurrencyId::KSM;
+	let _other_currency = CurrencyId::KSM;
 	fn this_native_reserve_account() -> AccountId {
 		use sp_runtime::traits::AccountIdConversion;
 		polkadot_parachain::primitives::Sibling::from(PICASSO_PARA_ID).into_account()
