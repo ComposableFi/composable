@@ -1202,6 +1202,8 @@ pub mod pallet {
 					false,
 				)?;
 
+				dbg!(&config_input);
+
 				let config = MarketConfig {
 					manager,
 					borrow: borrow_asset_vault.clone(),
@@ -1512,6 +1514,7 @@ pub mod pallet {
 			}
 		}
 
+		// ANCHOR deposit_collateral implementation
 		fn deposit_collateral(
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
@@ -1520,6 +1523,7 @@ pub mod pallet {
 			let market = Self::get_market(market_id)?;
 			let market_account = Self::account_id(market_id);
 
+			// dbg!(&market);
 			dbg!(market.collateral, account, amount);
 
 			ensure!(

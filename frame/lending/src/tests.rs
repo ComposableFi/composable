@@ -911,7 +911,7 @@ fn create_simple_vault(
 
 /// Creates a market with the given values.
 ///
-/// Sets the price of the `borrow_asset` to [`NORMALIZED::ONE`], and the `collateral_asset`
+/// Sets the price of the `collateral_asset` to [`NORMALIZED::ONE`], and the `borrow_asset`
 /// `50_000 * `[`NORMALIZED::ONE`].
 ///
 /// Mints `1000` units of `borrow_asset` and `100` units of `collateral_asset` into the `manager`.
@@ -958,8 +958,8 @@ fn create_market(
 	// 	<Lending as composable_traits::lending::Lending>::create(manager, config).unwrap()
 	// }
 
-	set_price(borrow_asset.id(), NORMALIZED::ONE);
-	set_price(collateral_asset.id(), NORMALIZED::units(50_000));
+	set_price(borrow_asset.id(), NORMALIZED::units(50_000));
+	set_price(collateral_asset.id(), NORMALIZED::ONE);
 
 	dbg!(get_price(borrow_asset.id(), NORMALIZED::ONE));
 	dbg!(get_price(collateral_asset.id(), NORMALIZED::ONE));
