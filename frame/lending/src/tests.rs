@@ -7,7 +7,7 @@
 //! TODO: test on small numbers via proptests - detect edge case what is minimal amounts it starts
 //! to accure(and miminal block delta), and maximal amounts when it overflows
 
-use std::ops::Mul;
+use std::ops::{Mul, Div};
 
 use crate::{
 	self as pallet_lending, accrue_interest_internal, currency::*, mocks::*, models::BorrowerData,
@@ -391,11 +391,12 @@ fn borrow_flow() {
 		let initial_total_cash = dbg!(Lending::total_cash(&market).unwrap());
 
 		let borrow_amount = USDT::units(1_000_000);
-		let collateral_amount = dbg!(get_price(USDT::ID, borrow_amount))
-			* dbg!(BTC::ONE / get_price(BTC::ID, BTC::ONE));
+		let collateral_amount = (get_price(USDT::ID, borrow_amount))
+			.mul(BTC::ONE)
+			.div(get_price(BTC::ID, BTC::ONE));
 
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, dbg!(collateral_amount)));
-		assert_ok!(Lending::deposit_collateral_internal(&market, &ALICE, collateral_amount));
+		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount));
 
 		let limit_normalized = dbg!(Lending::get_borrow_limit(&market, &ALICE)).unwrap();
 
@@ -927,6 +928,36 @@ fn create_market(
 	reserved_factor: Perquintill,
 	collateral_factor: MoreThanOneFixedU128,
 ) -> (MarketIndex, VaultId) {
+	// fn create_market(
+	// 	borrow_asset: CurrencyId,
+	// 	collateral_asset: CurrencyId,
+	// 	manager: AccountId,
+	// 	reserved: Perquintill,
+	// 	collateral_factor: MoreThanOneFixedU128,
+	// ) -> (MarketIndex, BorrowAssetVault) {
+	// 	set_price(USDT::ID, NORMALIZED::one());
+	// 	set_price(BTC::ID, 50_000 * NORMALIZED::one());
+
+	// 	dbg!(get_price(USDT::ID, NORMALIZED::one()));
+	// 	dbg!(get_price(BTC::ID, NORMALIZED::one()));
+
+	// 	let config = CreateInput {
+	// 		updatable: UpdateInput {
+	// 			collateral_factor,
+	// 			under_collaterized_warn_percent: Percent::from_float(0.10),
+	// 			liquidators: vec![],
+	// 			interest_rate_model: InterestRateModel::default(),
+	// 		},
+	// 		reserved_factor: reserved,
+	// 		currency_pair: CurrencyPair::new(collateral_asset, borrow_asset),
+	// 	};
+	// 	Tokens::mint_into(borrow_asset, &manager, USDT::units(1000)).unwrap();
+	// 	Tokens::mint_into(collateral_asset, &manager, BTC::units(100)).unwrap();
+
+	// 	// dbg!(tokens)
+	// 	<Lending as composable_traits::lending::Lending>::create(manager, config).unwrap()
+	// }
+
 	set_price(borrow_asset.id(), NORMALIZED::ONE);
 	set_price(collateral_asset.id(), NORMALIZED::units(50_000));
 
@@ -944,7 +975,7 @@ fn create_market(
 			interest_rate_model: InterestRateModel::default(),
 		},
 		reserved_factor,
-		currency_pair: CurrencyPair::new(borrow_asset.id(), collateral_asset.id()),
+		currency_pair: CurrencyPair::new(collateral_asset.id(), borrow_asset.id()),
 	};
 
 	Lending::create_market(Origin::signed(manager), config.try_into_validated().unwrap()).unwrap();

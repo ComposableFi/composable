@@ -1519,6 +1519,9 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let market = Self::get_market(market_id)?;
 			let market_account = Self::account_id(market_id);
+
+			dbg!(market.collateral, account, amount);
+
 			ensure!(
 				<T as Config>::MultiCurrency::can_withdraw(market.collateral, account, amount)
 					.into_result()
