@@ -6755,6 +6755,7 @@ dependencies = [
 name = "pallet-call-filter"
 version = "0.1.0"
 dependencies = [
+ "composable-support",
  "composable-traits",
  "frame-support",
  "frame-system",

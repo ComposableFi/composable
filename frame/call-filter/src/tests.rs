@@ -4,6 +4,7 @@ use super::*;
 use mock::{Event, *};
 use sp_runtime::traits::BadOrigin;
 use support::{assert_noop, assert_ok};
+use composable_support::validation::Validated;
 
 const BALANCE_TRANSFER: &<Runtime as system::Config>::Call =
 	&mock::Call::Balances(pallet_balances::Call::transfer { dest: ALICE, value: 10 });
@@ -16,10 +17,10 @@ fn pause_transaction_work() {
 			pallet_name: b"Balances".to_vec().try_into().unwrap(),
 			function_name: b"transfer".to_vec().try_into().unwrap(),
 		};
-		assert_noop!(Filter::disable(Origin::signed(5), balances_transfer.clone()), BadOrigin);
+		assert_noop!(Filter::disable(Origin::signed(5), Validated::new(balances_transfer.clone()).unwrap()), BadOrigin);
 
 		assert_eq!(Filter::disabled_calls(&balances_transfer), None);
-		assert_ok!(Filter::disable(Origin::signed(1), balances_transfer.clone()));
+		assert_ok!(Filter::disable(Origin::signed(1), Validated::new(balances_transfer.clone()).unwrap()));
 		System::assert_last_event(Event::Filter(crate::Event::Disabled {
 			entry: balances_transfer.clone(),
 		}));
@@ -35,11 +36,11 @@ fn pause_transaction_work() {
 		};
 
 		assert_noop!(
-			Filter::disable(Origin::signed(1), filter_pause),
+			Filter::disable(Origin::signed(1), Validated::new(filter_pause).unwrap()),
 			Error::<Runtime>::CannotDisable
 		);
 		assert_noop!(
-			Filter::disable(Origin::signed(1), filter_pause_2),
+			Filter::disable(Origin::signed(1), Validated::new(filter_pause_2).unwrap()),
 			Error::<Runtime>::CannotDisable
 		);
 
@@ -47,7 +48,7 @@ fn pause_transaction_work() {
 			pallet_name: b"OtherPallet".to_vec().try_into().unwrap(),
 			function_name: b"disable".to_vec().try_into().unwrap(),
 		};
-		assert_ok!(Filter::disable(Origin::signed(1), other));
+		assert_ok!(Filter::disable(Origin::signed(1),Validated::new(other).unwrap()));
 	});
 }
 
@@ -61,12 +62,12 @@ fn enable_work() {
 			function_name: b"transfer".to_vec().try_into().unwrap(),
 		};
 
-		assert_ok!(Filter::disable(Origin::signed(1), balances_transfer.clone()));
+		assert_ok!(Filter::disable(Origin::signed(1), Validated::new(balances_transfer.clone()).unwrap()));
 		assert_eq!(Filter::disabled_calls(&balances_transfer), Some(()));
 
-		assert_noop!(Filter::enable(Origin::signed(5), balances_transfer.clone()), BadOrigin);
+		assert_noop!(Filter::enable(Origin::signed(5), Validated::new(balances_transfer.clone()).unwrap()), BadOrigin);
 
-		assert_ok!(Filter::enable(Origin::signed(1), balances_transfer.clone()));
+		assert_ok!(Filter::enable(Origin::signed(1), Validated::new(balances_transfer.clone()).unwrap()));
 		System::assert_last_event(Event::Filter(crate::Event::Enabled {
 			entry: balances_transfer.clone(),
 		}));
@@ -83,10 +84,10 @@ fn paused_transaction_filter_work() {
 		};
 
 		assert!(!Filter::contains(BALANCE_TRANSFER));
-		assert_ok!(Filter::disable(Origin::signed(1), balances_transfer.clone()));
+		assert_ok!(Filter::disable(Origin::signed(1),Validated::new(balances_transfer.clone()).unwrap()));
 
 		assert!(Filter::contains(BALANCE_TRANSFER));
-		assert_ok!(Filter::enable(Origin::signed(1), balances_transfer));
+		assert_ok!(Filter::enable(Origin::signed(1), Validated::new(balances_transfer).unwrap()));
 
 		assert!(!Filter::contains(BALANCE_TRANSFER));
 	});

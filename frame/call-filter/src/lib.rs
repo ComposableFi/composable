@@ -25,10 +25,12 @@ use support::{
 };
 use system::pallet_prelude::*;
 use weights::WeightInfo;
-
+use crate::validation::ValidEntry;
+use composable_support::validation::Validated;
 mod mock;
 mod tests;
 mod weights;
+mod validation;
 
 #[support::pallet]
 pub mod pallet {
@@ -36,7 +38,7 @@ pub mod pallet {
 
 	use super::*;
 
-	type CallFilterEntryOf<T> = CallFilterEntry<<T as Config>::MaxStringSize>;
+	pub type CallFilterEntryOf<T> = CallFilterEntry<<T as Config>::MaxStringSize>;
 
 	#[pallet::config]
 	pub trait Config: system::Config {
@@ -98,7 +100,7 @@ pub mod pallet {
 		/// Possibly emits a `Disabled` event.
 		#[pallet::weight(T::WeightInfo::disable())]
 		#[transactional]
-		pub fn disable(origin: OriginFor<T>, entry: CallFilterEntryOf<T>) -> DispatchResult {
+		pub fn disable(origin: OriginFor<T>, entry: Validated<CallFilterEntryOf<T>, ValidEntry<T>>) -> DispatchResult {
 			T::UpdateOrigin::ensure_origin(origin)?;
 			ensure!(entry.valid(), Error::<T>::InvalidString);
 			// We are not allowed to disable this pallet.
@@ -118,10 +120,9 @@ pub mod pallet {
 		/// Possibly emits an `Enabled` event.
 		#[pallet::weight(T::WeightInfo::enable())]
 		#[transactional]
-		pub fn enable(origin: OriginFor<T>, entry: CallFilterEntryOf<T>) -> DispatchResult {
+		pub fn enable(origin: OriginFor<T>,	entry: Validated<CallFilterEntryOf<T>, ValidEntry<T>>) -> DispatchResult {
 			T::UpdateOrigin::ensure_origin(origin)?;
-			ensure!(entry.valid(), Error::<T>::InvalidString);
-			Self::do_enable(&entry)?;
+			Self::do_enable(&entry.value())?;
 			Ok(())
 		}
 	}
