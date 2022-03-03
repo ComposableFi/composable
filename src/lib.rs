@@ -185,11 +185,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
     }
 }
 
-fn authority_threshold(set: &BeefyNextAuthoritySet<H256>) -> u32 {
-    ((2 * set.len) / 3) + 1
-}
-
 fn validate_sigs_against_threshold(set: &BeefyNextAuthoritySet<H256>, sigs_len: usize) -> bool {
-    let threshold = authority_threshold(set);
+    let threshold = ((2 * set.len) / 3) + 1;
     sigs_len >= threshold as usize
 }

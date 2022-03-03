@@ -7,6 +7,7 @@ use beefy_primitives::Payload;
 use codec::Encode;
 use hex_literal::hex;
 use pallet_mmr_primitives::Proof;
+use sp_core::bytes::to_hex;
 use sp_runtime::traits::Convert;
 use subxt::rpc::ClientT;
 use subxt::rpc::{rpc_params, JsonValue, Subscription, SubscriptionClientT};
@@ -72,7 +73,7 @@ async fn test_ingest_mmr_with_proof() {
     let store = StorageMock::new();
     let mut beef_light_client = BeefyLightClient::new(store);
     let client = subxt::ClientBuilder::new()
-        .set_url("ws://127.0.0.1:9978")
+        .set_url("ws://127.0.0.1:9944")
         .build::<subxt::DefaultConfig>()
         .await
         .unwrap();
@@ -92,120 +93,120 @@ async fn test_ingest_mmr_with_proof() {
         .await
         .unwrap();
 
-    for res in subscription.next().await {
-        if let Ok(recv) = res {
-            println!("Received signed commitmment");
-            let recv_commitment: sp_core::Bytes =
-                serde_json::from_value(JsonValue::String(recv)).unwrap();
-            let signed_commitment: beefy_primitives::SignedCommitment<
-                u32,
-                beefy_primitives::crypto::Signature,
-            > = codec::Decode::decode(&mut &*recv_commitment).unwrap();
+    while let Some(Ok(commitment)) =  subscription.next().await {
+        let recv_commitment: sp_core::Bytes =
+            serde_json::from_value(JsonValue::String(commitment)).unwrap();
+        let signed_commitment: beefy_primitives::SignedCommitment<
+            u32,
+            beefy_primitives::crypto::Signature,
+        > = codec::Decode::decode(&mut &*recv_commitment).unwrap();
 
-            let subxt_block_number: subxt::BlockNumber =
-                signed_commitment.commitment.block_number.into();
-            let block_hash = client
-                .rpc()
-                .block_hash(Some(subxt_block_number))
-                .await
-                .unwrap();
+        println!("Received signed commitmment for: {:?}", signed_commitment.commitment.block_number);
 
-            let current_authorities = api.storage().beefy().authorities(block_hash).await.unwrap();
+        let subxt_block_number: subxt::BlockNumber =
+            signed_commitment.commitment.block_number.into();
+        let block_hash = client
+            .rpc()
+            .block_hash(Some(subxt_block_number))
+            .await
+            .unwrap();
 
-            // Current LeafIndex
-            let block_number = signed_commitment.commitment.block_number;
-            let leaf_index = (block_number - 1) as u64;
-            let leaf_proof: pallet_mmr_rpc::LeafProof<H256> = client
-                .rpc()
-                .client
-                .request("mmr_generateProof", rpc_params!(leaf_index, block_hash))
-                .await
-                .unwrap();
+        let current_authorities = api.storage().beefy().authorities(block_hash).await.unwrap();
 
-            let opaque_leaf: Vec<u8> = codec::Decode::decode(&mut &*leaf_proof.leaf.0).unwrap();
-            let latest_leaf: MmrLeaf<u32, H256, H256> =
-                codec::Decode::decode(&mut &*opaque_leaf).unwrap();
-            let mmr_proof: pallet_mmr_primitives::Proof<H256> =
-                codec::Decode::decode(&mut &*leaf_proof.proof.0).unwrap();
+        // Current LeafIndex
+        let block_number = signed_commitment.commitment.block_number;
+        let leaf_index = (block_number - 1) as u64;
+        let leaf_proof: pallet_mmr_rpc::LeafProof<H256> = client
+            .rpc()
+            .client
+            .request("mmr_generateProof", rpc_params!(leaf_index, block_hash))
+            .await
+            .unwrap();
 
-            let authority_address_hashes = current_authorities
-                .into_iter()
-                .map(|x| {
-                    let id: beefy_primitives::crypto::AuthorityId =
-                        codec::Decode::decode(&mut &*x.encode()).unwrap();
-                    keccak_256(&beefy_mmr::BeefyEcdsaToEthereum::convert(id))
-                })
-                .collect::<Vec<_>>();
+        let opaque_leaf: Vec<u8> = codec::Decode::decode(&mut &*leaf_proof.leaf.0).unwrap();
+        let latest_leaf: MmrLeaf<u32, H256, H256> =
+            codec::Decode::decode(&mut &*opaque_leaf).unwrap();
+        let mmr_proof: pallet_mmr_primitives::Proof<H256> =
+            codec::Decode::decode(&mut &*leaf_proof.proof.0).unwrap();
 
-            let signatures = signed_commitment
-                .signatures
-                .into_iter()
-                .enumerate()
-                .map(|(index, x)| {
-                    if let Some(sig) = x {
-                        let mut temp = [0u8; 65];
-                        if sig.len() == 65 {
-                            temp.copy_from_slice(&*sig.encode());
-                            Some(SignatureWithAuthorityIndex {
-                                index: index as u32,
-                                signature: temp,
-                            })
-                        } else {
-                            None
-                        }
+        let authority_address_hashes = current_authorities
+            .into_iter()
+            .map(|x| {
+                let id: beefy_primitives::crypto::AuthorityId =
+                    codec::Decode::decode(&mut &*x.encode()).unwrap();
+                keccak_256(&beefy_mmr::BeefyEcdsaToEthereum::convert(id))
+            })
+            .collect::<Vec<_>>();
+
+        let signatures = signed_commitment
+            .signatures
+            .into_iter()
+            .enumerate()
+            .map(|(index, x)| {
+                if let Some(sig) = x {
+                    let mut temp = [0u8; 65];
+                    if sig.len() == 65 {
+                        temp.copy_from_slice(&*sig.encode());
+                        Some(SignatureWithAuthorityIndex {
+                            index: index as u32,
+                            signature: temp,
+                        })
                     } else {
                         None
                     }
-                })
-                .filter_map(|x| x)
-                .collect::<Vec<_>>();
+                } else {
+                    None
+                }
+            })
+            .filter_map(|x| x)
+            .collect::<Vec<_>>();
 
-            let signature_indices = signatures
-                .iter()
-                .map(|x| x.index as usize)
-                .collect::<Vec<_>>();
+        let signature_indices = signatures
+            .iter()
+            .map(|x| x.index as usize)
+            .collect::<Vec<_>>();
 
-            let tree =
-                rs_merkle::MerkleTree::<KeccakHasher>::from_leaves(&authority_address_hashes);
+        let tree = rs_merkle::MerkleTree::<KeccakHasher>::from_leaves(&authority_address_hashes);
 
-            let authority_proof = tree.proof(&signature_indices);
+        let authority_proof = tree.proof(&signature_indices);
 
-            let mmr_update = MmrUpdateProof {
-                signed_commitment: SignedCommitment {
-                    commitment: signed_commitment.commitment.clone(),
-                    signatures,
-                },
-                latest_mmr_leaf: latest_leaf.clone(),
-                mmr_proof,
-                authority_proof: authority_proof.proof_hashes().to_vec(),
-            };
+        let mmr_update = MmrUpdateProof {
+            signed_commitment: SignedCommitment {
+                commitment: signed_commitment.commitment.clone(),
+                signatures,
+            },
+            latest_mmr_leaf: latest_leaf.clone(),
+            mmr_proof,
+            authority_proof: authority_proof.proof_hashes().to_vec(),
+        };
 
-            assert_eq!(
-                beef_light_client.ingest_mmr_root_with_proof(mmr_update),
-                Ok(())
-            );
+        assert_eq!(
+            beef_light_client.ingest_mmr_root_with_proof(mmr_update),
+            Ok(())
+        );
 
-            let mmr_state = beef_light_client.store_ref().mmr_state().unwrap();
-            let authority_set = beef_light_client.store_ref().authority_set().unwrap();
+        let mmr_state = beef_light_client.store_ref().mmr_state().unwrap();
+        let authority_set = beef_light_client.store_ref().authority_set().unwrap();
 
-            let mmr_root_hash = signed_commitment
-                .commitment
-                .payload
-                .get_raw(&MMR_ROOT_ID)
-                .unwrap();
+        let mmr_root_hash = signed_commitment
+            .commitment
+            .payload
+            .get_raw(&MMR_ROOT_ID)
+            .unwrap();
 
-            assert_eq!(mmr_state.mmr_root_hash.as_bytes(), &mmr_root_hash[..]);
+        assert_eq!(mmr_state.mmr_root_hash.as_bytes(), &mmr_root_hash[..]);
 
-            assert_eq!(
-                mmr_state.latest_beefy_height,
-                signed_commitment.commitment.block_number
-            );
+        assert_eq!(
+            mmr_state.latest_beefy_height,
+            signed_commitment.commitment.block_number
+        );
 
-            assert_eq!(
-                authority_set.next_authorities,
-                latest_leaf.beefy_next_authority_set
-            );
-        }
+        assert_eq!(
+            authority_set.next_authorities,
+            latest_leaf.beefy_next_authority_set
+        );
+
+        println!("\nblock number: {}\nmmr_root_hash: {}\n", mmr_state.latest_beefy_height, to_hex(&mmr_state.mmr_root_hash[..], false))
     }
 }
 
