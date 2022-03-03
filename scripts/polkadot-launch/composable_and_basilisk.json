@@ -26,7 +26,15 @@
         "wsPort": 9977,
         "port": 30777,
         "flags": ["--rpc-cors=all", "--beefy"]
+      },
+      {
+        "name": "ferdie",
+        "wsPort": 9978,
+        "basePath": "/tmp/polkadot-launch/relaychains/ferdie",
+        "port": 30778,
+        "flags": ["--rpc-cors=all", "--beefy"]
       }
+
     ],
     "runtime_genesis_config": {
       "parachainsConfiguration": {
