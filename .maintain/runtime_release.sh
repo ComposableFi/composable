@@ -13,7 +13,7 @@ set -e # fail on any error
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
   "runtime/picasso/src/lib.rs,picasso,picasso"
-  "runtime/dali/src/lib.rs,dali-chachacha,dali"
+  "runtime/dali/src/lib.rs,dali-rococo,dali"
   "runtime/composable/src/lib.rs,composable,composable"
 )
 

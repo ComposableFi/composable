@@ -2,7 +2,11 @@
   "name": "Composable Finance",
   "id": "composable",
   "chainType": "Live",
-  "bootNodes": [],
+  "bootNodes": [
+    "/dns/comp-bn1.composablefinance.ninja/tcp/30334/p2p/12D3KooWGJq8XcoXHYgi7sxw763Sx43wZ8siQyX8tnxoWL5ekRYh",
+    "/dns/comp-bn2.composablefinance.ninja/tcp/30334/p2p/12D3KooWEGSrqq5B7eU18mYAKbe7dXZ4JQgEqNmnzWBpCXFxDh77",
+    "/dns/comp-bn3.composablefinance.ninja/tcp/30334/p2p/12D3KooWMh2UHuLRZjKXPshEYStR34gocq7Qk7aZWhmmrCst7Cyp"
+  ],
   "telemetryEndpoints": [
     [
       "/dns/telemetry.polkadot.io/tcp/443/x-parity-wss/%2Fsubmit%2F",
