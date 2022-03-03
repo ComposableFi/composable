@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - releases
-      - composable-bootnode-peerid
+      - update-node-permission
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
