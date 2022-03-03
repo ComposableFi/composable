@@ -7,7 +7,7 @@
 //! TODO: test on small numbers via proptests - detect edge case what is minimal amounts it starts
 //! to accure(and miminal block delta), and maximal amounts when it overflows
 
-use std::ops::{Mul, Div};
+use std::ops::{Div, Mul};
 
 use crate::{
 	self as pallet_lending, accrue_interest_internal, currency::*, mocks::*, models::BorrowerData,
@@ -391,9 +391,9 @@ fn borrow_flow() {
 		let initial_total_cash = dbg!(Lending::total_cash(&market).unwrap());
 
 		let borrow_amount = USDT::units(1_000_000);
-		let collateral_amount = (get_price(USDT::ID, borrow_amount))
-			.mul(BTC::ONE)
-			.div(get_price(BTC::ID, BTC::ONE));
+		let collateral_amount =
+			dbg!(dbg!(dbg!(get_price(USDT::ID, dbg!(borrow_amount))).mul(dbg!(BTC::ONE)))
+				.div(dbg!(get_price(BTC::ID, BTC::ONE))));
 
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, dbg!(collateral_amount)));
 		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount));
