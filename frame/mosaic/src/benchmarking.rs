@@ -27,8 +27,7 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_relayer(RawOrigin::Root.into(), relayer.clone()));
 
 		let new_relayer = account("new_relayer", 0, 0);
-		let ttl = BlockNumberOf<T> = 42.into();
-	}: _(RawOrigin::Signed(relayer), new_relayer, Validated::new(ttl).unwrap())
+	}: _(RawOrigin::Signed(relayer), new_relayer, Validated::new(42.into()).unwrap())
 
 	set_network {
 		let relayer: T::AccountId = whitelisted_caller();
