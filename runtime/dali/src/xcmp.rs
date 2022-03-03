@@ -362,7 +362,7 @@ impl<
 		log::info!(target : "xcmp", "drop_assets");
 		let mut weight = Weight::zero();
 		for asset in multi_assets {
-			if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = asset.clone() {
+			if let MultiAsset { id: Concrete(location), fun: Fungible(_amount) } = asset.clone() {
 				if let Some(_converted) = AssetConverter::convert(location) {
 					Treasury::take_revenue(asset);
 				} else {

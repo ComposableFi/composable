@@ -827,6 +827,7 @@ fn unspent_xcm_fee_is_returned_correctly() {
 }
 
 /// dumps events for debugging
+#[allow(dead_code)]
 pub fn dump_events() {
 	System::events().iter().for_each(|x| {
 		log::info!("{:?}", x);
