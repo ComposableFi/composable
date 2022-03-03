@@ -1038,11 +1038,11 @@ fn create_simple_vaulted_market(
 	(market, lp_token_id)
 }
 
-/// Create a market with BTC as borrow and USDT as collateral
+/// Create a market with USDT as borrow and BTC as collateral
 fn create_simple_market() -> (MarketIndex, VaultId) {
 	create_market(
-		BTC::instance(),
 		USDT::instance(),
+		BTC::instance(),
 		*ALICE,
 		DEFAULT_MARKET_VAULT_RESERVE,
 		MoreThanOneFixedU128::saturating_from_integer(DEFAULT_COLLATERAL_FACTOR),

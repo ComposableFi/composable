@@ -714,6 +714,7 @@ pub mod pallet {
 		) -> <Self as DeFiEngine>::AccountId {
 			<Self as Lending>::account_id(market_id)
 		}
+
 		pub fn calc_utilization_ratio(
 			cash: <Self as DeFiEngine>::Balance,
 			borrows: <Self as DeFiEngine>::Balance,
@@ -1393,10 +1394,11 @@ pub mod pallet {
 			Ok(total_interest)
 		}
 
+		// ANCHOR total_cash implementation
 		fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
-			let market = Self::get_market(market_id)?;
-			let borrow_id = T::Vault::asset_id(&market.borrow)?;
-			Ok(<T as Config>::MultiCurrency::balance(borrow_id, &Self::account_id(market_id)))
+			let market = dbg!(Self::get_market(market_id)?);
+			let borrow_id = dbg!(T::Vault::asset_id(&market.borrow)?);
+			Ok(dbg!(<T as Config>::MultiCurrency::balance(borrow_id, &Self::account_id(market_id))))
 		}
 
 		fn calc_utilization_ratio(

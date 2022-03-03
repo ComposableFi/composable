@@ -54,7 +54,7 @@ impl<LiquidationStrategyId, Asset: Eq>
 		create_input: CreateInput<LiquidationStrategyId, Asset>,
 	) -> Result<CreateInput<LiquidationStrategyId, Asset>, &'static str> {
 		if create_input.updatable.collateral_factor < MoreThanOneFixedU128::one() {
-			return Err("collateral factor must be >= 1")
+			return Err("collateral factor must be >= 1");
 		}
 
 		let interest_rate_model = <InteresteRateModelIsValid as Validate<
@@ -97,7 +97,7 @@ impl<LiquidationStrategyId, AssetId: Copy> CreateInput<LiquidationStrategyId, As
 	}
 }
 
-#[derive(Encode, Decode, Default, TypeInfo)]
+#[derive(Encode, Decode, Default, TypeInfo, Debug)]
 pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId> {
 	pub manager: AccountId,
 	pub borrow: VaultId,
