@@ -108,9 +108,9 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 		let dest = create_account::<T>("dest", 1);
 		let dest_look_up = T::Lookup::unlookup(dest.clone());
-		fund_account::<T>(&dest, asset_id.clone(), FUNDING.into());
 		let per_period = T::MinVestedTransfer::get();
 		for i in 0..s {
+			fund_account::<T>(&dest, asset_id.clone(), FUNDING.into());
 			schedules.push(vesting_schedule::<T>(
 				START_BLOCK_NUMBER.into(),
 				PERIOD.into(),
