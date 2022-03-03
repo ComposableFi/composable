@@ -103,6 +103,8 @@ jobs:
           docker system prune --force --all --volumes
       - uses: actions/checkout@v2
       - name: Run single pass benchmarking
+        env:
+          RUST_BACKTRACE: full
         run: |
           cargo build --release -p composable --features=runtime-benchmarks
           ./target/release/composable benchmark \
