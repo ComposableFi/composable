@@ -1,7 +1,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{traits::Get, BoundedVec, RuntimeDebug};
 use scale_info::TypeInfo;
-use sp_runtime::{DispatchError, FixedU128, Permill};
+use sp_runtime::{DispatchError, Permill};
 use sp_std::vec::Vec;
 
 use crate::defi::CurrencyPair;
@@ -15,18 +15,44 @@ pub trait CurveAmm {
 	type Balance;
 	/// The user account identifier type for the runtime
 	type AccountId;
-	/// Type that represents index type of token in the pool passed from the outside as an extrinsic
-	/// argument.
-	type PoolTokenIndex;
-
 	/// Type that represents pool id
 	type PoolId;
 
-	/// Check pool with given id exists.
 	fn pool_exists(pool_id: Self::PoolId) -> bool;
 
-	/// Current number of pools (also ID for the next created pool)
-	fn pool_count() -> Self::PoolId;
+	fn currency_pair(pool_id: Self::PoolId) -> Result<CurrencyPair<Self::AssetId>, DispatchError>;
+
+	/// Get pure exchange value for given units of given asset. (Note this does not include fees.)
+	/// `pool_id` the pool containing the `asset_id`.
+	/// `asset_id` the asset the user is interested in.
+	/// `amount` the amount of `asset_id` the user want to obtain.
+	/// Return the amount of quote asset if `asset_id` is base asset, otherwise the amount of base
+	/// asset.
+	fn get_exchange_value(
+		pool_id: Self::PoolId,
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
+
+	/// Buy given `amount` of given asset from the pool.
+	/// In buy user does not know how much assets he/she has to exchange to get desired amount.
+	fn buy(
+		who: &Self::AccountId,
+		pool_id: Self::PoolId,
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
+		keep_alive: bool,
+	) -> Result<Self::Balance, DispatchError>;
+
+	/// Sell given `amount` of given asset to the pool.
+	/// In sell user specifies `amount` of asset he/she wants to exchange to get other asset.
+	fn sell(
+		who: &Self::AccountId,
+		pool_id: Self::PoolId,
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
+		keep_alive: bool,
+	) -> Result<Self::Balance, DispatchError>;
 
 	/// Deposit coins into the pool
 	/// `amounts` - list of amounts of coins to deposit,
@@ -34,8 +60,10 @@ pub trait CurveAmm {
 	fn add_liquidity(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		amounts: Vec<Self::Balance>,
+		base_amount: Self::Balance,
+		quote_amount: Self::Balance,
 		min_mint_amount: Self::Balance,
+		keep_alive: bool,
 	) -> Result<(), DispatchError>;
 
 	/// Withdraw coins from the pool.
@@ -45,30 +73,23 @@ pub trait CurveAmm {
 	fn remove_liquidity(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		amount: Self::Balance,
-		min_amounts: Vec<Self::Balance>,
+		lp_amount: Self::Balance,
+		min_base_amount: Self::Balance,
+		min_quote_amount: Self::Balance,
 	) -> Result<(), DispatchError>;
 
-	/// Perform an exchange between two coins.
-	/// `i` - index value of the coin to send,
-	/// `j` - index value of the coin to receive,
-	/// `dx` - amount of `i` being exchanged,
-	/// `min_dy` - minimum amount of `j` to receive.
+	/// Perform an exchange.
+	/// This operation is a buy order on the provided `pair`, effectively trading the quote asset
+	/// against the base one. The pair can be swapped to execute a sell order.
+	/// Implementor must check the pair.
 	fn exchange(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		i: Self::PoolTokenIndex,
-		j: Self::PoolTokenIndex,
-		dx: Self::Balance,
-		min_dy: Self::Balance,
+		pair: CurrencyPair<Self::AssetId>,
+		quote_amount: Self::Balance,
+		min_receive: Self::Balance,
+		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
-
-	/// Withdraw admin fees
-	fn withdraw_admin_fees(
-		who: &Self::AccountId,
-		pool_id: Self::PoolId,
-		admin_fee_account: &Self::AccountId,
-	) -> Result<(), DispatchError>;
 }
 
 /// Pool type
@@ -76,14 +97,16 @@ pub trait CurveAmm {
 pub struct StableSwapPoolInfo<AccountId, AssetId> {
 	/// Owner of pool
 	pub owner: AccountId,
+	/// Swappable assets
+	pub pair: CurrencyPair<AssetId>,
 	/// AssetId of LP token,
 	pub lp_token: AssetId,
 	/// Initial amplification coefficient
-	pub amplification_coefficient: FixedU128,
-	/// Amount of the fee pool charges for the exchange
+	pub amplification_coefficient: u16,
+	/// Amount of the fee pool charges for the exchange, this goes to liquidity provider.
 	pub fee: Permill,
-	/// Amount of the admin fee pool charges for the exchange
-	pub admin_fee: Permill,
+	/// Amount of the fee pool charges for the exchange
+	pub protocol_fee: Permill,
 }
 
 /// Describes a simple exchanges which does not allow advanced configurations such as slippage.
@@ -108,14 +131,18 @@ pub trait SimpleExchange {
 	) -> Result<Self::Balance, DispatchError>;
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, RuntimeDebug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, RuntimeDebug)]
 pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	/// Owner of pool
 	pub owner: AccountId,
-	/// AssetId of LP token,
+	/// Swappable assets
+	pub pair: CurrencyPair<AssetId>,
+	/// AssetId of LP token
 	pub lp_token: AssetId,
 	/// Amount of the fee pool charges for the exchange
 	pub fee: Permill,
+	/// Amount of the fee pool charges for the exchange
+	pub owner_fee: Permill,
 }
 
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
@@ -142,10 +169,22 @@ pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
 	) -> Result<(), DispatchError>;
 	/// If route exist return `Some(Vec<PoolId>)`, else `None`.
 	fn get_route(asset_pair: CurrencyPair<AssetId>) -> Option<Vec<DexRouteNode<PoolId>>>;
-	/// Exchange `dx` of given `asset_pair` to get `dy`.
+	/// Exchange `dx` of `base` asset of `asset_pair` with associated route.
 	fn exchange(
 		who: &AccountId,
 		asset_pair: CurrencyPair<AssetId>,
 		dx: Balance,
+	) -> Result<Balance, DispatchError>;
+	/// Sell `amount` of `base` asset of asset_pair with associated route.
+	fn sell(
+		who: &AccountId,
+		asset_pair: CurrencyPair<AssetId>,
+		amount: Balance,
+	) -> Result<Balance, DispatchError>;
+	/// Buy `amount` of `quote` asset of asset_pair with associated route.
+	fn buy(
+		who: &AccountId,
+		asset_pair: CurrencyPair<AssetId>,
+		amount: Balance,
 	) -> Result<Balance, DispatchError>;
 }

@@ -14,7 +14,4 @@ url = "1.7.0"
 tokio = { version = "1.12.0", features  = ["macros", "rt-multi-thread"] }
 structopt = "0.3.25"
 
-jsonrpc-core-client = { version = "18", features = ["ws"] }
-sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-picasso = { package = "picasso-runtime", path = "../../runtime/picasso" }
-common = { path = "../../runtime/common" }
+jsonrpsee ={ version = "0.9", features = ["http-client", "macros"] }

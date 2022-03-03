@@ -9,12 +9,12 @@ set -e # fail on any error
 
 VERSIONS_FILES=(
   "runtime/picasso/src/weights,picasso-dev,picasso"
-#  "runtime/dali/src/weights,dali-dev,dali"
-#  "runtime/composable/src/weights,composable-dev,composable"
+  "runtime/dali/src/weights,dali-dev,dali"
+  "runtime/composable/src/weights,composable-dev,composable"
 )
 
-steps=50
-repeat=20
+steps=$1
+repeat=$2
 
 /home/runner/.cargo/bin/rustup install nightly
 /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly

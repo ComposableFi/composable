@@ -1,14 +1,12 @@
-
-
 # [Overview](https://app.clickup.com/20465559/v/dc/kghwq-20761/kghwq-3621)
 
 See overview of more bussiness and architectural state of lending and all know features.
 
 ## Technical Reference
 
-Lending = Self + [Liquidations](liqudaitons) + [Oracle](../oracle) + [Vault](../vault) + OCW
+Lending = Self + [Liquidations](liquidations) + [Oracle](../oracle) + [Vault](../vault) + OCW
 
-Market = Isolated Currency Pair  + Configuration. 
+Market = Isolated Currency Pair + Configuration.
 
 Oracle = only Pairs with Prices are allowed.
 
@@ -24,4 +22,4 @@ Lending is executed after Vault. On block initialization. If can withdraw from V
 
 Borrowing is not allowed if we must liquidate (the vault is expecting the strategy to be liquidated) or if we market have enough funds or if have not enough collateral.
 
-When repaying, we do not transfer the amount back to the vault. This is done within the pallet hooks on each block update.. It actually allows to use some deposit asset by other transactions in same block to borrow. 
+When repaying, we do not transfer the amount back to the vault. This is done within the pallet hooks on each block update.. It actually allows to use some deposit asset by other transactions in same block to borrow.

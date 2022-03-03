@@ -29,6 +29,10 @@ frame_support::construct_runtime!(
 	}
 );
 
+pub type BlockNumber = u64;
+
+// pub type StalePrice = Get<u64>;
+
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;

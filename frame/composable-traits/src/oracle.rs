@@ -20,6 +20,9 @@ pub trait Oracle {
 	type Balance: From<u64>;
 	type Timestamp;
 	type LocalAssets: LocalAssets<Self::AssetId>;
+	type MaxAnswerBound: Get<u32>;
+	// type BlockNumber: From<u64>;
+	// type StalePrice: Get<Self::BlockNumber>;
 	/// Quote the `amount` of `asset_id` in normalized currency unit cent. Default is USDT Cent.
 	/// Which is 0.01 of USDT. `Result::Err` is returned if `asset_id` not supported or price
 	/// information not available.

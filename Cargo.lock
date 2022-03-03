@@ -1340,11 +1340,8 @@ name = "collator-sidecar"
 version = "0.1.0"
 dependencies = [
  "async-std",
- "common",
  "env_logger 0.8.4",
- "jsonrpc-core-client",
- "picasso-runtime",
- "sc-rpc",
+ "jsonrpsee 0.9.0",
  "serde",
  "structopt",
  "tide",
@@ -1405,6 +1402,21 @@ version = "1.0.9"
 dependencies = [
  "color-eyre",
  "composable-node",
+]
+
+[[package]]
+name = "composable-maths"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "rust_decimal",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -2508,6 +2520,7 @@ dependencies = [
  "pallet-collective",
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
+ "pallet-curve-amm",
  "pallet-democracy 4.0.0-dev",
  "pallet-dutch-auction",
  "pallet-governance-registry",
@@ -2528,6 +2541,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-uniswap-v2",
  "pallet-utility",
  "pallet-vault",
  "pallet-vesting 0.0.1",
@@ -4022,6 +4036,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyper-rustls"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d87c48c02e0dc5e3b849a2041db3029fd066650f8f717c07bf8ed78ccb895cac"
+dependencies = [
+ "http",
+ "hyper 0.14.16",
+ "log 0.4.14",
+ "rustls 0.20.2",
+ "rustls-native-certs 0.6.1",
+ "tokio",
+ "tokio-rustls 0.23.2",
+ "webpki-roots 0.22.2",
+]
+
+[[package]]
 name = "hyper-tls"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4441,10 +4471,22 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05fd8cd6c6b1bbd06881d2cf88f1fc83cc36c98f2219090f839115fb4a956cb9"
 dependencies = [
- "jsonrpsee-core",
+ "jsonrpsee-core 0.8.0",
  "jsonrpsee-proc-macros 0.8.0",
  "jsonrpsee-types 0.8.0",
  "jsonrpsee-ws-client 0.8.0",
+]
+
+[[package]]
+name = "jsonrpsee"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0d0b8cc1959f8c05256ace093b2317482da9127f1d9227564f47e7e6bf9bda8"
+dependencies = [
+ "jsonrpsee-core 0.9.0",
+ "jsonrpsee-http-client",
+ "jsonrpsee-proc-macros 0.9.0",
+ "jsonrpsee-types 0.9.0",
 ]
 
 [[package]]
@@ -4455,7 +4497,7 @@ checksum = "3303cdf246e6ab76e2866fb3d9acb6c76a068b1b28bd923a1b7a8122257ad7b5"
 dependencies = [
  "futures 0.3.21",
  "http",
- "jsonrpsee-core",
+ "jsonrpsee-core 0.8.0",
  "jsonrpsee-types 0.8.0",
  "pin-project 1.0.10",
  "rustls-native-certs 0.6.1",
@@ -4492,6 +4534,45 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsonrpsee-core"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22abc3274b265dcefe2e26c4beecf9fda4fffa48cf94930443a6c73678f020d5"
+dependencies = [
+ "anyhow",
+ "arrayvec 0.7.2",
+ "async-trait",
+ "beef",
+ "futures-channel",
+ "futures-util",
+ "hyper 0.14.16",
+ "jsonrpsee-types 0.9.0",
+ "serde",
+ "serde_json",
+ "soketto",
+ "thiserror",
+]
+
+[[package]]
+name = "jsonrpsee-http-client"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d31b837273d09dd80051eefa57d337769dff6c3266108c43a3544ac7ffed9d68"
+dependencies = [
+ "async-trait",
+ "hyper 0.14.16",
+ "hyper-rustls 0.23.0",
+ "jsonrpsee-core 0.9.0",
+ "jsonrpsee-types 0.9.0",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "jsonrpsee-proc-macros"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4509,6 +4590,18 @@ name = "jsonrpsee-proc-macros"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4299ebf790ea9de1cb72e73ff2ae44c723ef264299e5e2d5ef46a371eb3ac3d8"
+dependencies = [
+ "proc-macro-crate 1.1.0",
+ "proc-macro2 1.0.36",
+ "quote 1.0.15",
+ "syn 1.0.86",
+]
+
+[[package]]
+name = "jsonrpsee-proc-macros"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63e171d8071079c8ccdce1b4ab34411c5afa6158d57db7963311ad3c6d073cb1"
 dependencies = [
  "proc-macro-crate 1.1.0",
  "proc-macro2 1.0.36",
@@ -4540,6 +4633,20 @@ name = "jsonrpsee-types"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1b3f601bbbe45cd63f5407b6f7d7950e08a7d4f82aa699ff41a4a5e9e54df58"
+dependencies = [
+ "anyhow",
+ "beef",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "jsonrpsee-types"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f4c45d2e2aa1db4c7d7d7dbaabc10a5b5258d99cd9d42fbfd5260b76f80c324"
 dependencies = [
  "anyhow",
  "beef",
@@ -4591,7 +4698,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aff425cee7c779e33920913bc695447416078ee6d119f443f3060feffa4e86b5"
 dependencies = [
  "jsonrpsee-client-transport",
- "jsonrpsee-core",
+ "jsonrpsee-core 0.8.0",
  "jsonrpsee-types 0.8.0",
 ]
 
@@ -6703,6 +6810,7 @@ dependencies = [
 name = "pallet-crowdloan-rewards"
 version = "0.0.1"
 dependencies = [
+ "composable-traits",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6747,6 +6855,7 @@ dependencies = [
 name = "pallet-curve-amm"
 version = "0.0.1"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -6814,6 +6923,7 @@ dependencies = [
 name = "pallet-dex-router"
 version = "0.0.1"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
  "frame-support",
  "frame-system",
@@ -7244,6 +7354,7 @@ dependencies = [
 name = "pallet-oracle"
 version = "1.0.0"
 dependencies = [
+ "composable-support",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -7582,6 +7693,8 @@ dependencies = [
 name = "pallet-uniswap-v2"
 version = "0.0.1"
 dependencies = [
+ "composable-maths",
+ "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -7592,10 +7705,9 @@ dependencies = [
  "orml-traits",
  "pallet-balances",
  "pallet-currency-factory",
- "pallet-oracle",
- "pallet-vault",
  "parity-scale-codec",
  "plotters",
+ "proptest",
  "scale-info",
  "serde",
  "sp-arithmetic",
@@ -7626,6 +7738,7 @@ name = "pallet-vault"
 version = "0.0.1"
 dependencies = [
  "bitflags",
+ "composable-support",
  "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
@@ -10315,6 +10428,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust_decimal"
+version = "1.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d37baa70cf8662d2ba1c1868c5983dda16ef32b105cce41fb5c47e72936a90b3"
+dependencies = [
+ "arrayvec 0.7.2",
+ "num-traits",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11152,7 +11275,7 @@ dependencies = [
  "futures-timer",
  "hex",
  "hyper 0.14.16",
- "hyper-rustls",
+ "hyper-rustls 0.22.1",
  "num_cpus",
  "once_cell",
  "parity-scale-codec",
@@ -11874,43 +11997,38 @@ dependencies = [
 ]
 
 [[package]]
-name = "simnode"
+name = "simnode-common"
 version = "0.1.0"
 dependencies = [
  "common",
  "composable-node",
- "cumulus-client-cli",
- "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",
- "cumulus-test-relay-sproof-builder",
  "dali-runtime",
  "derive_more",
  "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex",
- "num-traits",
- "pallet-crowdloan-rewards",
- "pallet-sudo",
- "pallet-transaction-payment",
- "parachain-info",
- "parity-scale-codec",
+ "jsonrpc-core",
  "picasso-runtime",
- "polkadot-primitives",
  "sc-cli",
- "sc-client-api",
  "sc-consensus",
  "sc-consensus-manual-seal",
  "sc-executor",
+ "sc-rpc",
  "sc-service",
- "sc-tracing",
  "simnode-runtime-apis",
  "sp-api",
- "sp-blockchain",
  "sp-consensus-aura",
- "sp-io",
- "sp-keyring",
  "sp-runtime",
+ "sp-transaction-pool",
+ "substrate-simnode",
+]
+
+[[package]]
+name = "simnode-node"
+version = "0.1.0"
+dependencies = [
+ "composable-node",
+ "sc-cli",
+ "simnode-common",
  "structopt",
  "substrate-simnode",
 ]
@@ -11918,11 +12036,43 @@ dependencies = [
 [[package]]
 name = "simnode-runtime-apis"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#d019bb5d6cfb8bb1547e5c5947e251c93126575e"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#7e2453df89dac7ae6800186a121d2d0c335728f6"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
  "sp-std",
+]
+
+[[package]]
+name = "simnode-tests"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "composable-node",
+ "cumulus-pallet-parachain-system",
+ "dali-runtime",
+ "frame-benchmarking",
+ "frame-system",
+ "hex",
+ "num-traits",
+ "pallet-sudo",
+ "parachain-info",
+ "parity-scale-codec",
+ "picasso-runtime",
+ "polkadot-primitives",
+ "sc-cli",
+ "sc-client-api",
+ "sc-executor",
+ "sc-rpc",
+ "sc-service",
+ "simnode-common",
+ "simnode-runtime-apis",
+ "sp-api",
+ "sp-blockchain",
+ "sp-keyring",
+ "sp-runtime",
+ "structopt",
+ "substrate-simnode",
 ]
 
 [[package]]
@@ -13004,7 +13154,7 @@ dependencies = [
 [[package]]
 name = "substrate-simnode"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#d019bb5d6cfb8bb1547e5c5947e251c93126575e"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#7e2453df89dac7ae6800186a121d2d0c335728f6"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",

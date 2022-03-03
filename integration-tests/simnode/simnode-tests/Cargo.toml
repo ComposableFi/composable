@@ -1,0 +1,41 @@
+[package]
+name = "simnode-tests"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "master"}
+simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "master" }
+
+system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+parachain-info = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16", default-features = false }
+
+
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+
+
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16" }
+polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16" }
+
+picasso-runtime = { path = "../../../runtime/picasso", features = ["sim-node"] }
+dali-runtime = { path = "../../../runtime/dali", features = ["sim-node"] }
+node = { package = "composable-node", path = "../../../node", features = ["dali"] }
+common = { path = "../../../runtime/common" }
+simnode-common = { path = "../common" }
+
+sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+num-traits = "0.2.14"
+structopt = "0.3.25"
+hex = "0.4.3"
+codec = { package = "parity-scale-codec", version = "2.0.0" }

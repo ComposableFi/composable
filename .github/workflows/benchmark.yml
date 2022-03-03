@@ -50,7 +50,7 @@ jobs:
           GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
         if: env.RUNTIME_CHECK == 1
         id: run_benchmarks
-        run: .maintain/run_benchmarks.sh
+        run: .maintain/run_benchmarks.sh 50 20
 
       - uses: EndBug/add-and-commit@v8 
         with: 

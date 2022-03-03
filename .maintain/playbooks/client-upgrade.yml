@@ -9,23 +9,14 @@
 
     - name: Download composable binary {{ release_version }}
       become: yes
-      get_url:
-        url: https://storage.googleapis.com/composable-binaries/community-releases/{{ release_version }}/composable-{{ release_version }}.tar.gz
+      get_url: 
+        url: https://github.com/ComposableFi/composable/releases/download/{{ release_version }}/composable
         dest: ~/
         mode: "+x"
   
-
-    - name: Unpack Composable Bonary file 
-      become: yes
-      unarchive: 
-        src: ~/composable-{{ release_version }}.tar.gz
-        dest: ~/
-        remote_src: yes
-      
-
     - name: Move composable binary to /usr/local/bin/composable
       become: yes
-      command: mv ~/target/release/composable /usr/bin/composable
+      command: mv ~/composable /usr/bin/composable
 
     - name: Change Composable file permission
       become: yes

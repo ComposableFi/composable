@@ -55,6 +55,8 @@ let
       tar -xvf $src
       mkdir -p $out/bin
       mv release/composable $out/bin
+
+      mv doc $out
     '';
   };
 
@@ -91,9 +93,9 @@ let
 
   tmp-directory = "/tmp/polkadot-launch";
 
-  devnet-config =
+  devnet-polkalaunch-config =
     pkgs.writeTextFile {
-      name = "devnet.json";
+      name = "devnet-polkalaunch.json";
       text = builtins.toJSON (
         make-polkalaunch-config
           { inherit tmp-directory;
@@ -104,9 +106,11 @@ let
           }
       );
     };
-in
-pkgs.writeScriptBin "launch-devnet" ''
-  #!${pkgs.bash}/bin/bash -e
-  rm -rf ${tmp-directory}
-  ${polkalaunch}/bin/polkadot-launch ${devnet-config}
-''
+in {
+  script =
+    pkgs.writeShellScriptBin "run-${composable.spec}" ''
+      rm -rf ${tmp-directory}
+      ${polkalaunch}/bin/polkadot-launch ${devnet-polkalaunch-config}
+    '';
+  documentation = "${composable-bin}/share";
+}

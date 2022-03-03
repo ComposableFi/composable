@@ -3,6 +3,9 @@ name: CI Check
 # please update docker, toolchain toml and github action with toolchain at same time
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
@@ -71,12 +74,48 @@ jobs:
           /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly-2021-11-08
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-08 llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.info
           fail_ci_if_error: false
   
+  substrate-runtime-benchmark:
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: benchmarking-runtime-compat-${{ matrix.runtime }}-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: paritytech/ci-linux:production      
+    strategy:
+      matrix:
+        runtime: ["dali-dev", "picasso-dev", "composable-dev"]
+    name: Benchmarking / ${{ matrix.runtime }}
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+      - name: Run single pass benchmarking
+        run: |
+          cargo build --release -p composable --features=runtime-benchmarks
+          ./target/release/composable benchmark \
+            --chain="${{ matrix.runtime }}" \
+            --execution=wasm \
+            --wasm-execution=compiled \
+            --pallet="*" \
+            --extrinsic='*' \
+            --steps=1 \
+            --repeat=1 \
+            --raw \
+            --log error
+
   substrate-tests:
     name: Unit Tests 
     runs-on:
@@ -164,7 +203,7 @@ jobs:
 
       - name: Cargo clippy
         run: |
-          SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly clippy --all-targets
+          SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly clippy --all-targets --tests -- -D warnings
 
       - name: Cargo Single Depedency
         # description: Speed up builds and reduced security check surface

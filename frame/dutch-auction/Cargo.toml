@@ -28,7 +28,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 num-traits = { version = "0.2.14", default-features = false }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16"  }
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.16' }
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.16' }
 composable-traits = {  path = "../composable-traits", default-features = false }
 
 [dev-dependencies]

@@ -24,6 +24,7 @@ jobs:
       cancel-in-progress: true
     strategy: 
       fail-fast: true
+      
     steps:
     - name: Clean up
       continue-on-error: true
