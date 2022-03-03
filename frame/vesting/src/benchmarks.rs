@@ -8,15 +8,11 @@ use crate::{
 use codec::Decode;
 use composable_traits::vesting::VestingSchedule;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller};
-use frame_support::{
-	dispatch::UnfilteredDispatchable,
-	traits::{fungibles::Mutate, Get},
-};
+use frame_support::traits::{fungibles::Mutate, Get, EnsureOrigin};
 use frame_system::RawOrigin;
 use sp_runtime::traits::StaticLookup;
 
-const MAX_VESTING_SCHEDULES: u32 = 128;
-const FUNDING: u128 = 1_000_000_000_000;
+const FUNDING: u64 = 1_000_000_000_000;
 const PERIOD_COUNT: u32 = 10;
 const PERIOD: u32 = 1;
 const START_BLOCK_NUMBER: u32 = 1;
@@ -32,7 +28,7 @@ where
 fn fund_account<T>(caller: &T::AccountId, asset_id: AssetIdOf<T>, amount: BalanceOf<T>)
 where
 	T: Config,
-	BalanceOf<T>: From<u128>,
+	BalanceOf<T>: From<u64>,
 	<T as Config>::Currency: Mutate<T::AccountId, Balance = BalanceOf<T>, AssetId = AssetIdOf<T>>,
 {
 	T::Currency::mint_into(asset_id, &caller, amount).unwrap()
@@ -40,8 +36,7 @@ where
 
 fn create_account<T>(name: &'static str, index: u32) -> T::AccountId
 where
-	T: Config,
-	BalanceOf<T>: From<u128>,
+	T: Config
 {
 	let caller: T::AccountId = account(name, index, 0);
 	caller
@@ -55,7 +50,7 @@ fn vesting_schedule<T>(
 ) -> VestingScheduleOf<T>
 where
 	T: Config,
-	BalanceOf<T>: From<u128>,
+	BalanceOf<T>: From<u64>,
 {
 	VestingSchedule { start, period, period_count, per_period }
 }
@@ -64,12 +59,12 @@ benchmarks! {
   where_clause {
 	  where
 		T::Lookup: StaticLookup,
-		BalanceOf<T>: From<u128>,
+		BalanceOf<T>: From<u64>,
 		BlockNumberOf<T>: From<u32>,
 		<T as Config>::Currency: Mutate<T::AccountId, Balance = BalanceOf<T>, AssetId = AssetIdOf<T>>,
   }
 	claim {
-		let s in 0 .. MAX_VESTING_SCHEDULES;
+		let s in 0 .. T::MaxVestingSchedules::get();
 		let asset_id = asset::<T>();
 		let caller: T::AccountId = whitelisted_caller();
 		let per_period = T::MinVestedTransfer::get();
@@ -82,13 +77,14 @@ benchmarks! {
 		for i in 0 .. s {
 			let source = create_account::<T>("source", i);
 			fund_account::<T>(&source, asset_id.clone(), FUNDING.into());
-			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &source, &caller, schedule.clone());
+			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &source, &caller, schedule.clone()).unwrap();
 		}
 	}: _(RawOrigin::Signed(caller), asset_id)
 
 	vested_transfer {
 		let asset_id = asset::<T>();
 		let caller: T::AccountId = whitelisted_caller();
+		//let origin = successful_origin::<T>();
 		fund_account::<T>(&caller, asset_id.clone(), FUNDING.into());
 		let dest = T::Lookup::unlookup(create_account::<T>("dest", 1));
 		let per_period = T::MinVestedTransfer::get();
@@ -101,7 +97,7 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller), dest, asset_id, schedule)
 
 	update_vesting_schedules {
-		let s in 0 .. MAX_VESTING_SCHEDULES;
+		let s in 0 .. T::MaxVestingSchedules::get();
 		let mut schedules = vec![];
 		let asset_id = asset::<T>();
 		let caller: T::AccountId = whitelisted_caller();
@@ -120,7 +116,7 @@ benchmarks! {
 	}: _(RawOrigin::Root, dest_look_up, asset_id, schedules)
 
 	claim_for {
-		let s in 0 .. MAX_VESTING_SCHEDULES;
+		let s in 0 .. T::MaxVestingSchedules::get();
 		let asset_id = asset::<T>();
 		let caller: T::AccountId = whitelisted_caller();
 		fund_account::<T>(&caller, asset_id.clone(), FUNDING.into());
@@ -134,7 +130,7 @@ benchmarks! {
 		let dest = create_account::<T>("dest", 1);
 		let dest_look_up = T::Lookup::unlookup(dest.clone());
 		for i in 0 .. s {
-			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &caller, &dest, schedule.clone());
+			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &caller, &dest, schedule.clone()).unwrap();
 		}
 	}: _(RawOrigin::Signed(caller), dest_look_up, asset_id)
 }

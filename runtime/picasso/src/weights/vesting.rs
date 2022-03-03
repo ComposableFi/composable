@@ -32,29 +32,29 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn claim(s: u32, ) -> Weight {
-		(29_374_000 as Weight)
+		(30_286_000 as Weight)
 			// Standard Error: 8_000
-			.saturating_add((174_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((153_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
 	// Storage: Vesting VestingSchedules (r:1 w:1)
 	// Storage: Tokens Accounts (r:2 w:2)
-	// Storage: System Account (r:1 w:1)
+	// Storage: System Account (r:2 w:1)
 	// Storage: Tokens Locks (r:1 w:1)
 	fn vested_transfer() -> Weight {
-		(58_048_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
+		(59_292_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
-	// Storage: Vesting VestingSchedules (r:0 w:1)
 	// Storage: System Account (r:1 w:1)
+	// Storage: Vesting VestingSchedules (r:0 w:1)
 	fn update_vesting_schedules(s: u32, ) -> Weight {
-		(28_647_000 as Weight)
-			// Standard Error: 12_000
-			.saturating_add((80_000 as Weight).saturating_mul(s as Weight))
+		(32_115_000 as Weight)
+			// Standard Error: 9_000
+			.saturating_add((8_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -63,9 +63,9 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn claim_for(s: u32, ) -> Weight {
-		(30_673_000 as Weight)
-			// Standard Error: 14_000
-			.saturating_add((15_000 as Weight).saturating_mul(s as Weight))
+		(29_262_000 as Weight)
+			// Standard Error: 10_000
+			.saturating_add((38_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
