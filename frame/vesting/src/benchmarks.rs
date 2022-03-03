@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 use crate::Pallet as Vesting;
-use crate::{AssetIdOf, BalanceOf, BlockNumberOf, Call, Config, Pallet, VestingScheduleOf};
+use crate::{AssetIdOf, BalanceOf, BlockNumberOf, Call, Config, Pallet, VestingScheduleOf, VestedTransfer};
 use sp_runtime::{
 	traits::StaticLookup,
 };
@@ -14,6 +14,12 @@ use frame_support::{
 	traits::{fungibles::Mutate as Mutate, Get},
 };
 use frame_system::RawOrigin;
+
+const MAX_VESTING_SCHEDULES: u32 = 128;
+const FUNDING: u128 = 1_000_000_000_000;
+const PERIOD_COUNT: u32 = 10;
+const PERIOD: u32 = 1;
+const START_BLOCK_NUMBER: u32 = 1;
 
 fn asset<T>() -> AssetIdOf<T>
 	where
@@ -64,47 +70,74 @@ benchmarks! {
 		<T as Config>::Currency: Mutate<T::AccountId, Balance = BalanceOf<T>, AssetId = AssetIdOf<T>>,
   }
 	claim {
-		// let s = T::MaxVestingSchedules::get();
-		// for i in 0 .. (p - 1) {
-		// 	VestingSchedules<T>.insert();
-		// }
+		let s in 0 .. MAX_VESTING_SCHEDULES;
+		let asset_id = asset::<T>();
 		let caller: T::AccountId = whitelisted_caller();
-	}: _(RawOrigin::Signed(caller), asset::<T>())
+		let per_period = T::MinVestedTransfer::get();
+		let schedule = vesting_schedule::<T>(
+			START_BLOCK_NUMBER.into(),
+			PERIOD.into(),
+			PERIOD_COUNT,
+			per_period.into()
+		);
+		for i in 0 .. s {
+			let source = create_account::<T>("source", i);
+			fund_account::<T>(&source, asset_id.clone(), FUNDING.into());
+			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &source, &caller, schedule.clone());
+		}
+	}: _(RawOrigin::Signed(caller), asset_id)
 
 	vested_transfer {
 		let asset_id = asset::<T>();
 		let caller: T::AccountId = whitelisted_caller();
-		fund_account::<T>(&caller, asset_id.clone(), 1_000_000_000_000.into());
+		fund_account::<T>(&caller, asset_id.clone(), FUNDING.into());
 		let dest = T::Lookup::unlookup(create_account::<T>("dest", 1));
-		let start_block_number = 1;
-		let period = 1;
 		let per_period = T::MinVestedTransfer::get();
 		let schedule = vesting_schedule::<T>(
-			start_block_number.into(),
-			period.into(),
-			10,
+			START_BLOCK_NUMBER.into(),
+			PERIOD.into(),
+			PERIOD_COUNT,
 			per_period.into()
 		);
 	}: _(RawOrigin::Signed(caller), dest, asset_id, schedule)
 
 	update_vesting_schedules {
+		let s in 0 .. MAX_VESTING_SCHEDULES;
+		let mut schedules = vec![];
+		let asset_id = asset::<T>();
 		let caller: T::AccountId = whitelisted_caller();
-		let dest = T::Lookup::unlookup(create_account::<T>("dest", 1));
-		let start_block_number = 1;
-		let period = 1;
+		let dest = create_account::<T>("dest", 1);
+		let dest_look_up = T::Lookup::unlookup(dest.clone());
+		fund_account::<T>(&dest, asset_id.clone(), FUNDING.into());
 		let per_period = T::MinVestedTransfer::get();
-		let schedule = vesting_schedule::<T>(
-			start_block_number.into(),
-			period.into(),
-			1,
-			per_period.into()
-		);
-	}: _(RawOrigin::Signed(caller), dest, asset::<T>(), vec![schedule])
+		for i in 0..s {
+			schedules.push(vesting_schedule::<T>(
+				START_BLOCK_NUMBER.into(),
+				PERIOD.into(),
+				PERIOD_COUNT,
+				per_period.into()
+			));
+		}
+	}: _(RawOrigin::Root, dest_look_up, asset_id, schedules)
 
 	claim_for {
+		let s in 0 .. MAX_VESTING_SCHEDULES;
+		let asset_id = asset::<T>();
 		let caller: T::AccountId = whitelisted_caller();
-		let dest = T::Lookup::unlookup(create_account::<T>("dest", 1));
-	}: _(RawOrigin::Signed(caller), dest, asset::<T>())
+		fund_account::<T>(&caller, asset_id.clone(), FUNDING.into());
+		let per_period = T::MinVestedTransfer::get();
+		let schedule = vesting_schedule::<T>(
+			START_BLOCK_NUMBER.into(),
+			PERIOD.into(),
+			PERIOD_COUNT,
+			per_period.into()
+		);
+		let dest = create_account::<T>("dest", 1);
+		let dest_look_up = T::Lookup::unlookup(dest.clone());
+		for i in 0 .. s {
+			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &caller, &dest, schedule.clone());
+		}
+	}: _(RawOrigin::Signed(caller), dest_look_up, asset_id)
 }
 
 impl_benchmark_test_suite!(Vesting, crate::mock::ExtBuilder::build(), crate::mock::Runtime);
