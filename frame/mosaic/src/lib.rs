@@ -173,11 +173,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn time_lock_period)]
+	#[allow(clippy::disallowed_type)]
 	pub type TimeLockPeriod<T: Config> =
 		StorageValue<_, BlockNumberOf<T>, ValueQuery, TimeLockPeriodOnEmpty<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn nonce)]
+	#[allow(clippy::disallowed_type)]
 	pub type Nonce<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::type_value]
