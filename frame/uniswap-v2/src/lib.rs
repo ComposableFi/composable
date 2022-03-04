@@ -302,7 +302,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Add liquidity to a stable-swap pool.
+		/// Add liquidity to a constant_product pool.
 		///
 		/// Emits `LiquidityAdded` event when successful.
 		#[pallet::weight(T::WeightInfo::add_liquidity())]
@@ -326,7 +326,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Remove liquidity from stable-swap pool.
+		/// Remove liquidity from constant_product pool.
 		///
 		/// Emits `LiquidityRemoved` event when successful.
 		#[pallet::weight(T::WeightInfo::remove_liquidity())]

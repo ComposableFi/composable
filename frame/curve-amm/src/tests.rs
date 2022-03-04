@@ -232,8 +232,9 @@ fn add_lp_imbalanced() {
 	});
 }
 
+// test add liquidity with min_mint_amount
 #[test]
-fn add_lp_with_min_expected_amount() {
+fn add_lp_with_min_mint_amount_success() {
 	new_test_ext().execute_with(|| {
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
@@ -275,6 +276,44 @@ fn add_lp_with_min_expected_amount() {
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
+		// Add the liquidity in imbalanced way, but have expected_min_value higher
+		assert_noop!(
+			StableSwap::add_liquidity(
+				Origin::signed(BOB),
+				pool_id,
+				bob_usdc,
+				bob_usdt,
+				expected_min_value,
+				false
+			),
+			crate::Error::<Test>::CannotRespectMinimumRequested
+		);
+	});
+}
+
+// test add liquidity with min_mint_amount
+#[test]
+fn add_lp_with_min_mint_amount_fail() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = 1_000_000_000_000_u128 * unit;
+		let initial_usdc = 1_000_000_000_000_u128 * unit;
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			100_u16,
+			Permill::zero(),
+			Permill::zero(),
+		);
+
+		let bob_usdc = 1000 * unit;
+		let bob_usdt = 900 * unit;
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
+		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
+		let expected_min_value = bob_usdt + bob_usdc + 1_u128;
 		// Add the liquidity in imbalanced way, but have expected_min_value higher
 		assert_noop!(
 			StableSwap::add_liquidity(
