@@ -156,11 +156,11 @@ impl MinimalOracle for PriceConverter {
 }
 
 pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
-	match currency_id {
-		&CurrencyId::PICA => NativeExistentialDeposit::get(),
-		&CurrencyId::KSM =>
+	match *currency_id {
+		CurrencyId::PICA => NativeExistentialDeposit::get(),
+		CurrencyId::KSM =>
 			PriceConverter::get_price_inverse(CurrencyId::KSM, NativeExistentialDeposit::get())
-				.unwrap(),
+				.expect("Could not convert because unknown currency."),
 		_ => NativeExistentialDeposit::get(),
 	}
 }

@@ -241,16 +241,10 @@ pub mod pallet {
 				Error::<T>::LocalAssetIdAlreadyUsed
 			);
 			ensure!(
-				!<ForeignToLocal<T>>::contains_key(foreign_asset_id.clone()),
+				!<ForeignToLocal<T>>::contains_key(foreign_asset_id),
 				Error::<T>::ForeignAssetIdAlreadyUsed
 			);
-			Self::approve_candidate(
-				who,
-				local_asset_id,
-				foreign_asset_id.clone(),
-				location,
-				decimals,
-			)?;
+			Self::approve_candidate(who, local_asset_id, foreign_asset_id, location, decimals)?;
 			Self::deposit_event(Event::AssetsMappingCandidateUpdated {
 				local_asset_id,
 				foreign_asset_id,
@@ -320,7 +314,7 @@ pub mod pallet {
 			decimals: u8,
 		) -> DispatchResultWithPostInfo {
 			let current_candidate_status =
-				<AssetsMappingCandidates<T>>::get((local_asset_id, foreign_asset_id.clone()));
+				<AssetsMappingCandidates<T>>::get((local_asset_id, foreign_asset_id));
 			let local_admin = <LocalAdmin<T>>::get();
 			let foreign_admin = <ForeignAdmin<T>>::get();
 			match current_candidate_status {
@@ -365,7 +359,7 @@ pub mod pallet {
 			decimals: u8,
 		) -> DispatchResult {
 			Self::set_location(local_asset_id, location)?;
-			<LocalToForeign<T>>::insert(local_asset_id, foreign_asset_id.clone());
+			<LocalToForeign<T>>::insert(local_asset_id, foreign_asset_id);
 			<ForeignToLocal<T>>::insert(foreign_asset_id, local_asset_id);
 			<ForeignAssetMetadata<T>>::insert(local_asset_id, ForeignMetadata { decimals });
 			<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));

@@ -238,7 +238,7 @@ impl<
 		if let AssetId::Concrete(ref multi_location) = xcmp_asset_id.clone() {
 			if let Some(asset_id) = AssetConverter::convert(multi_location.clone()) {
 				let fee = WeightToFee::calc(&weight);
-				let price = PriceConverter::get_price_inverse(asset_id, fee.into())
+				let price = PriceConverter::get_price_inverse(asset_id, fee)
 					.map_err(|_| XcmError::TooExpensive)?;
 
 				let required =
@@ -247,7 +247,7 @@ impl<
 				log::trace!(target : "xcmp::buy_weight", "{:?} {:?} ", required, payment );
 				let unused = payment.checked_sub(required).map_err(|_| XcmError::TooExpensive)?;
 
-				self.fee = self.fee.saturating_add(fee.into());
+				self.fee = self.fee.saturating_add(fee);
 				self.price = self.price.saturating_add(price);
 				self.asset_location = Some(multi_location.clone());
 				return Ok(unused)
@@ -255,7 +255,7 @@ impl<
 		}
 
 		log::info!(target : "xcmp::buy_weight", "required {:?}; provided {:?};", weight, payment );
-		return Err(XcmError::TooExpensive)
+		Err(XcmError::TooExpensive)
 	}
 
 	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
@@ -264,7 +264,7 @@ impl<
 			let fee = self.fee.min(fee);
 			let price = fee.saturating_mul(self.price) / self.fee;
 			self.price = self.price.saturating_sub(price);
-			self.fee = self.fee.saturating_sub(fee.into());
+			self.fee = self.fee.saturating_sub(fee);
 			if price > 0 {
 				return Some((asset_location.clone(), price).into())
 			}
@@ -372,7 +372,7 @@ impl<
 				can_return_on_request.push(asset);
 			}
 		}
-		if can_return_on_request.len() > 0 {
+		if !can_return_on_request.is_empty() {
 			weight += RelayerXcm::drop_assets(origin, can_return_on_request.into());
 		}
 		weight
@@ -510,7 +510,7 @@ impl<T> Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert<T> {
 			},
 			// delegate to asset-registry
 			_ => {
-				log::trace!(target: "xcmp", "using assets registry for {:?}", location.clone());
+				log::trace!(target: "xcmp", "using assets registry for {:?}", location);
 				let result = <AssetsRegistry as RemoteAssetRegistry>::location_to_asset(
 					XcmAssetLocation(location),
 				)
