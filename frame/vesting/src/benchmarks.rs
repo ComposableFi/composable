@@ -8,10 +8,9 @@ use crate::{
 use codec::Decode;
 use composable_traits::vesting::VestingSchedule;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller};
-use frame_support::metadata::StorageEntryModifier::Default;
 use frame_support::traits::{fungibles::Mutate, EnsureOrigin, Get};
 use frame_system::RawOrigin;
-use sp_runtime::traits::StaticLookup;
+use sp_runtime::traits::{StaticLookup, TrailingZeroInput};
 
 const FUNDING: u64 = 1_000_000_000_000;
 const PERIOD_COUNT: u32 = 10;
@@ -60,7 +59,7 @@ fn zero_account<T>() -> T::AccountId
 where
 	T: Config
 {
-	Default::default()
+	T::AccountId::decode(&mut TrailingZeroInput::zeroes()).unwrap()
 }
 
 benchmarks! {

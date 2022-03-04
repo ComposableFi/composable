@@ -1134,6 +1134,7 @@ mod benches {
 		[identity, Identity]
 		[multisig, Multisig]
 		[vault, Vault]
+		[vesting, Vesting]
 		[oracle, Oracle]
 		[dutch_auction, DutchAuction]
 		[currency_factory, CurrencyFactory]
