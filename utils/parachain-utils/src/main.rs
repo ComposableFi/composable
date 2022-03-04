@@ -129,7 +129,7 @@ async fn main() -> Result<(), Error> {
 				// Main::RotateKeys => rotate_keys(&state).await?,
 				Main::UpgradeRuntime { path } => {
 					let wasm = std::fs::read(path).unwrap();
-					upgrade_runtime(wasm, &state).await?;
+					upgrade_runtime_with_sudo(wasm, &state).await?;
 				},
 			};
 		},
@@ -140,7 +140,7 @@ async fn main() -> Result<(), Error> {
 				// Main::RotateKeys => rotate_keys(&state).await?,
 				Main::UpgradeRuntime { path } => {
 					let wasm = std::fs::read(path).unwrap();
-					upgrade_runtime(wasm, &state).await?;
+					upgrade_runtime_with_sudo(wasm, &state).await?;
 				},
 			};
 		},
@@ -151,7 +151,7 @@ async fn main() -> Result<(), Error> {
 }
 
 /// Generic function to upgrade runtime.
-async fn upgrade_runtime<T: ConstructExt<Pair = sr25519::Pair> + Send + Sync>(
+async fn upgrade_runtime_with_sudo<T: ConstructExt<Pair = sr25519::Pair> + Send + Sync>(
 	code: Vec<u8>,
 	state: &State<T>,
 ) -> Result<(), SubstrateXtError>
@@ -197,7 +197,7 @@ where
 		)
 	});
 	if !has_event {
-		return Err(ExtrinsicError::Custom("Failed to propose upgrade".into()).into())
+		return Err(ExtrinsicError::Custom("Failed to propose upgrade".into()).into());
 	}
 
 	log::info!("Runtime upgrade proposed");
