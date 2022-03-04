@@ -8,6 +8,7 @@ title = "Composable Finance"
 [output.html]
 default-theme = "light"
 no-section-label = true
+additional-css = ["fonts/fonts.css", "custom.css"]
 
 [output.html.fold]
 enable = true
