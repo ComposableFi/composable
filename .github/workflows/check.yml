@@ -42,6 +42,7 @@ jobs:
         run: |
           SKIP_WASM_BUILD=1 cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
 
+
   substrate-test-coverage:
     name: Unit Tests (With Coverage)
     runs-on:
@@ -77,6 +78,55 @@ jobs:
           files: lcov.info
           fail_ci_if_error: false
   
+  substrate-runtime-benchmark:
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: benchmarking-runtime-compat-${{ matrix.runtime }}-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: paritytech/ci-linux:production      
+    strategy:
+      matrix:
+        runtime: ["dali-dev", "picasso-dev", "composable-dev"]
+    name: Benchmarking / ${{ matrix.runtime }}
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+
+      - name: Check for runtime changes
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
+        id: check_runtime
+        run: .maintain/check_runtime.sh
+
+      - name: Run single pass benchmarking
+        # only run this step if there are runtime changes
+        if: env.RUNTIME_CHECK == 1
+        env:
+          RUST_BACKTRACE: full
+        run: |
+          cargo build --release -p composable --features=runtime-benchmarks
+          ./target/release/composable benchmark \
+            --chain="${{ matrix.runtime }}" \
+            --execution=wasm \
+            --wasm-execution=compiled \
+            --pallet="*" \
+            --extrinsic='*' \
+            --steps=1 \
+            --repeat=1 \
+            --raw \
+            --log error
+
+
   substrate-tests:
     name: Unit Tests 
     runs-on:
@@ -103,6 +153,7 @@ jobs:
       - name: Run Test
         run: |
           SKIP_WASM_BUILD=1 cargo test --workspace --locked --release --verbose --features=runtime-benchmarks
+
 
   linters:
     name: Linters
