@@ -995,8 +995,8 @@ impl curve_amm::Config for Runtime {
 }
 
 parameter_types! {
-	pub LBPId: PalletId = PalletId(*b"pall_lbp");
-  pub MinSaleDuration: BlockNumber = 1 * DAYS;
+  pub LBPId: PalletId = PalletId(*b"pall_lbp");
+  pub MinSaleDuration: BlockNumber = DAYS;
   pub MaxSaleDuration: BlockNumber = 30 * DAYS;
   pub MaxInitialWeight: Permill = Permill::from_percent(95);
   pub MinFinalWeight: Permill = Permill::from_percent(5);
