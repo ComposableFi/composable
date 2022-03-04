@@ -1,0 +1,6 @@
+[book]
+authors = ["Composable Finance"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Composable Finance"
