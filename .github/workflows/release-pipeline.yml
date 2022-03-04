@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - releases
-      - update-node-permission
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
