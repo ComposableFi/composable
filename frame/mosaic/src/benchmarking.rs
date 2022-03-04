@@ -1,13 +1,13 @@
 use super::*;
 
 use crate::{decay::*, Pallet as Mosaic};
+use composable_support::validation::Validated;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	assert_ok,
 	traits::{fungibles::Mutate, Get},
 };
 use frame_system::RawOrigin;
-
 const MAX_TRANSFER_SIZE: u128 = 100_000_000_000_000_000;
 const BUDGET_AMOUNT: u128 = 100_000_000_000_000_000_000;
 const TRANSFER_AMOUNT: u128 = 100_000_000_000_000;
@@ -27,7 +27,7 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_relayer(RawOrigin::Root.into(), relayer.clone()));
 
 		let new_relayer = account("new_relayer", 0, 0);
-	}: _(RawOrigin::Signed(relayer), new_relayer, 42.into())
+	}: _(RawOrigin::Signed(relayer), new_relayer, Validated::new(42.into()).unwrap())
 
 	set_network {
 		let relayer: T::AccountId = whitelisted_caller();
@@ -165,7 +165,7 @@ benchmarks! {
   }: _(RawOrigin::Signed(relayer), network_id.clone(), remote_asset_id.clone(), alice.clone(), transfer_amount, T::MinimumTimeLockPeriod::get(), tx_id)
 
   set_timelock_duration {
-  }: _(RawOrigin::Root, 100.into())
+  }: _(RawOrigin::Root, Validated::new(100.into()).unwrap())
 
   rescind_timelocked_mint {
 		let relayer: T::AccountId = whitelisted_caller();
