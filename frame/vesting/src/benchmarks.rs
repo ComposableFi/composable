@@ -8,6 +8,7 @@ use crate::{
 use codec::Decode;
 use composable_traits::vesting::VestingSchedule;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller};
+use frame_support::metadata::StorageEntryModifier::Default;
 use frame_support::traits::{fungibles::Mutate, EnsureOrigin, Get};
 use frame_system::RawOrigin;
 use sp_runtime::traits::StaticLookup;
@@ -55,6 +56,13 @@ where
 	VestingSchedule { start, period, period_count, per_period }
 }
 
+fn zero_account<T>() -> T::AccountId
+where
+	T: Config
+{
+	Default::default()
+}
+
 benchmarks! {
   where_clause {
 	  where
@@ -83,8 +91,7 @@ benchmarks! {
 
 	vested_transfer {
 		let asset_id = asset::<T>();
-		let caller: T::AccountId = whitelisted_caller();
-		//let origin = successful_origin::<T>();
+		let caller: T::AccountId = zero_account::<T>();
 		fund_account::<T>(&caller, asset_id.clone(), FUNDING.into());
 		let dest = T::Lookup::unlookup(create_account::<T>("dest", 1));
 		let per_period = T::MinVestedTransfer::get();
