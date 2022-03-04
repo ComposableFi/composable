@@ -24,7 +24,10 @@ export interface ComposableTraitsBondedFinanceBondOffer extends Null {}
 export interface ComposableTraitsCallFilterCallFilterEntry extends Null {}
 
 /** @name ComposableTraitsDefiCurrencyPair */
-export interface ComposableTraitsDefiCurrencyPair extends Null {}
+export interface ComposableTraitsDefiCurrencyPair extends Struct {
+  readonly base: u128;
+  readonly quote: u128;
+}
 
 /** @name ComposableTraitsDefiSell */
 export interface ComposableTraitsDefiSell extends Null {}

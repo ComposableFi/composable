@@ -1,5 +1,25 @@
 {
   "enabledTests": {
-    "enabled": false
+    "enabled": true,
+    "create__success": {
+      "enabled": true,
+      "create1": true,
+      "create2": true
+    },
+    "buy__success": {
+      "enabled": true,
+      "buy1": true,
+      "buy2": true
+    },
+    "sell__success": {
+      "enabled": true,
+      "sell1": true,
+      "sell2": true
+    },
+    "swap__success": {
+      "enabled": true,
+      "swap1": true,
+      "swap2": true
+    }
   }
 }

@@ -1430,7 +1430,7 @@ declare module '@polkadot/api-base/types/submittable' {
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
     liquidations: {
-      addLiqudationStrategy: AugmentedSubmittable<(configuraiton: PalletLiquidationsLiquidationStrategyConfiguration | { DutchAuction: any } | { UniswapV2: any } | { XcmDex: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletLiquidationsLiquidationStrategyConfiguration]>;
+      addLiquidationStrategy: AugmentedSubmittable<(configuraiton: PalletLiquidationsLiquidationStrategyConfiguration | { DutchAuction: any } | { UniswapV2: any } | { XcmDex: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletLiquidationsLiquidationStrategyConfiguration]>;
       /**
        * Generic tx
        **/

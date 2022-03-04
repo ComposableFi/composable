@@ -6,7 +6,6 @@ import type { ApiTypes } from '@polkadot/api-base/types';
 declare module '@polkadot/api-base/types/errors' {
   export interface AugmentedErrors<ApiType extends ApiTypes> {
     assets: {
-      BadOrigin: AugmentedError<ApiType>;
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
       /**
        * Generic error
@@ -250,11 +249,13 @@ declare module '@polkadot/api-base/types/errors' {
       AlreadyAssociated: AugmentedError<ApiType>;
       AlreadyInitialized: AugmentedError<ApiType>;
       InvalidClaim: AugmentedError<ApiType>;
+      InvalidInitializationBlock: AugmentedError<ApiType>;
       InvalidProof: AugmentedError<ApiType>;
       NotAssociated: AugmentedError<ApiType>;
       NotClaimableYet: AugmentedError<ApiType>;
       NothingToClaim: AugmentedError<ApiType>;
       NotInitialized: AugmentedError<ApiType>;
+      RewardsNotFunded: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
