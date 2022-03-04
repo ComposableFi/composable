@@ -930,7 +930,7 @@ impl liquidations::Config for Runtime {
 	type DutchAuction = DutchAuction;
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type OrderId = OrderId;
-	type WeightInfo = ();
+	type WeightInfo = weights::liquidations::WeightInfo<Runtime>;
 	type ParachainId = ParaId;
 	type PalletId = LiquidationsPalletId;
 }
@@ -994,6 +994,31 @@ impl curve_amm::Config for Runtime {
 	type WeightInfo = weights::curve_amm::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	pub LBPId: PalletId = PalletId(*b"pall_lbp");
+  pub MinSaleDuration: BlockNumber = 1 * DAYS;
+  pub MaxSaleDuration: BlockNumber = 30 * DAYS;
+  pub MaxInitialWeight: Permill = Permill::from_percent(95);
+  pub MinFinalWeight: Permill = Permill::from_percent(5);
+}
+
+impl liquidity_bootstrapping::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type Convert = ConvertInto;
+	type Assets = Tokens;
+	type PoolId = PoolId;
+	type LocalAssets = CurrencyFactory;
+	type PalletId = LBPId;
+	type MinSaleDuration = MinSaleDuration;
+	type MaxSaleDuration = MaxSaleDuration;
+	type MaxInitialWeight = MaxInitialWeight;
+	type MinFinalWeight = MinFinalWeight;
+	type WeightInfo = weights::liquidity_bootstrapping::WeightInfo<Runtime>;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1054,6 +1079,7 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 	  ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
 	  StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
+	LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1124,9 +1150,9 @@ mod benches {
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
 		//FIXME: broken with dali [lending, Lending]
-	//	[lending, Lending]
 	  [uniswap_v2, ConstantProductDex]
 	  [curve_amm, StableSwapDex]
+	  [liquidity_bootstrapping, LiquidityBootstrapping]
 	);
 }
 
