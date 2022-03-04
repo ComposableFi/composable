@@ -8,11 +8,11 @@ use crate::{
 use codec::Decode;
 use composable_traits::vesting::VestingSchedule;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller};
-use frame_support::traits::{fungibles::Mutate, EnsureOrigin, Get};
+use frame_support::traits::{fungibles::Mutate, Get};
 use frame_system::RawOrigin;
 use sp_runtime::traits::{StaticLookup, TrailingZeroInput};
 
-const FUNDING: u64 = 1_000_000_000_000;
+const FUNDING: u64 = 1_000_000_000_000_000;
 const PERIOD_COUNT: u32 = 10;
 const PERIOD: u32 = 1;
 const START_BLOCK_NUMBER: u32 = 1;
@@ -57,7 +57,7 @@ where
 
 fn zero_account<T>() -> T::AccountId
 where
-	T: Config
+	T: Config,
 {
 	T::AccountId::decode(&mut TrailingZeroInput::zeroes()).unwrap()
 }
@@ -125,7 +125,6 @@ benchmarks! {
 		let s in 0 .. T::MaxVestingSchedules::get();
 		let asset_id = asset::<T>();
 		let caller: T::AccountId = whitelisted_caller();
-		fund_account::<T>(&caller, asset_id.clone(), FUNDING.into());
 		let per_period = T::MinVestedTransfer::get();
 		let schedule = vesting_schedule::<T>(
 			START_BLOCK_NUMBER.into(),
@@ -136,6 +135,7 @@ benchmarks! {
 		let dest = create_account::<T>("dest", 1);
 		let dest_look_up = T::Lookup::unlookup(dest.clone());
 		for i in 0 .. s {
+			fund_account::<T>(&caller, asset_id.clone(), FUNDING.into());
 			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &caller, &dest, schedule.clone()).unwrap();
 		}
 	}: _(RawOrigin::Signed(caller), dest_look_up, asset_id)
