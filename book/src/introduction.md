@@ -32,4 +32,5 @@ On our quest to supplant new interoperability and development standards across W
 We’ve been working on perfecting our ecosystem, our vision and ensuring that we are leading the way in terms of innovation and accessibility for DeFi. Through our collective vision, our suite of bespoke offerings and products, we aim to embed collaboration where competition has been. Retreating back to the values of decentralism we are passionate to invite, collaborate and work with other projects and investors who reconcile in our vision. 
 The future we are building needs everyone to play a part, reach out to our team for informal or formal enquiries — and see how we can help you and more importantly how you can help us as we build tomorrow, today.
 Join the Composable community:
-Twitter | Telegram | Discord | Website | Medium | GitHub | LinkedIn
+
+[Twitter](https://twitter.com/ComposableFin) | Telegram | Discord | Website | Medium | GitHub | LinkedIn TODO: fix links
