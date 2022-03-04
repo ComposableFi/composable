@@ -28,7 +28,7 @@ pub const MAXIMUM_DEPOSIT: Balance = 10_000;
 
 pub const ALICE: AccountId = 0;
 pub const BOB: AccountId = 1;
-// pub const CHARLIE: AccountId = 2;
+pub const CHARLIE: AccountId = 2;
 // pub const JEREMY: AccountId = 3;
 // pub const ACCOUNT_FREE_START: AccountId = JEREMY + 1;
 
@@ -115,8 +115,9 @@ impl pallet_vault::Config for Test {
 parameter_types! {
 	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::A;
 	pub const TestPoolPalletID: PalletId = PalletId(*b"testpool");
-	pub const MinimumAmount: Balance = 10;
-	pub Epsilon: Perquintill = Perquintill::from_float(0.0000000000000001);
+	
+	// pub Epsilon: Perquintill = Perquintill::from_float(0.0000000000000001);
+	pub Epsilon: Perquintill = Perquintill::from_float(0.01);
 }
 
 impl pallet_pool::Config for Test {
@@ -132,8 +133,6 @@ impl pallet_pool::Config for Test {
 	type CreationFee = CreationDeposit;
 	type ExistentialDeposit = ExistentialDeposit;
 	type Epsilon = Epsilon;
-	type MinimumDeposit = MinimumAmount;
-	type MinimumWithdraw = MinimumAmount;
 	type PalletId = TestPoolPalletID;
 }
 
