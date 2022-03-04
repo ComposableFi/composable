@@ -140,7 +140,7 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Vesting: vesting::{Pallet, Storage, Call, Event<T>, Config<T>},
-	  	Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		  Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
 );
 

@@ -8,7 +8,7 @@ use crate::{
 use codec::Decode;
 use composable_traits::vesting::VestingSchedule;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller};
-use frame_support::traits::{fungibles::Mutate, Get, EnsureOrigin};
+use frame_support::traits::{fungibles::Mutate, EnsureOrigin, Get};
 use frame_system::RawOrigin;
 use sp_runtime::traits::StaticLookup;
 
@@ -36,7 +36,7 @@ where
 
 fn create_account<T>(name: &'static str, index: u32) -> T::AccountId
 where
-	T: Config
+	T: Config,
 {
 	let caller: T::AccountId = account(name, index, 0);
 	caller
