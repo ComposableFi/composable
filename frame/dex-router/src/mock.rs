@@ -7,7 +7,7 @@ use sp_arithmetic::{traits::Zero, FixedU128};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 	FixedPointNumber,
 };
 use system::EnsureRoot;
@@ -133,7 +133,7 @@ impl orml_tokens::Config for Test {
 }
 
 parameter_types! {
-	pub CurveAmmPrecision: FixedU128 = FixedU128::saturating_from_rational(1, 1_000_000_000);
+	pub CurveAmmPrecision: u128 = 100;
 	pub CurveAmmTestPalletID : PalletId = PalletId(*b"curve_am");
 }
 
@@ -142,11 +142,11 @@ impl pallet_curve_amm::Config for Test {
 	type AssetId = AssetId;
 	type Balance = Balance;
 	type CurrencyFactory = LpTokenFactory;
-	type Precision = CurveAmmPrecision;
-	type LpToken = Tokens;
+	type Convert = ConvertInto;
+	type Assets = Tokens;
 	type PoolId = PoolId;
-	type PoolTokenIndex = u32;
 	type PalletId = CurveAmmTestPalletID;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -159,11 +159,11 @@ impl pallet_uniswap_v2::Config for Test {
 	type AssetId = AssetId;
 	type Balance = Balance;
 	type CurrencyFactory = LpTokenFactory;
-	type Precision = ConstantProductAmmPrecision;
-	type LpToken = Tokens;
+	type Convert = ConvertInto;
+	type Assets = Tokens;
 	type PoolId = PoolId;
-	type PoolTokenIndex = u32;
 	type PalletId = ConstantProductAmmTestPalletID;
+	type WeightInfo = ();
 }
 parameter_types! {
   #[derive(codec::Encode, codec::Decode, codec::MaxEncodedLen, TypeInfo)]
@@ -176,7 +176,6 @@ impl dex_router::Config for Test {
 	type Balance = Balance;
 	type MaxHopsInRoute = MaxHopsCount;
 	type PoolId = u32;
-	type PoolTokenIndex = u32;
 	type StableSwapDex = CurveAmm;
 	type ConstantProductDex = ConstantProductAmm;
 }

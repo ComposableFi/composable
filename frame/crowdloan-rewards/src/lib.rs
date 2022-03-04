@@ -56,6 +56,7 @@ mod mocks;
 #[cfg(test)]
 mod tests;
 
+// FIXME: runtime signature generation must use host features.
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
 
@@ -63,22 +64,25 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use super::models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount, Reward};
+	use crate::weights::WeightInfo;
 	use codec::Codec;
-	use frame_support::{pallet_prelude::*, traits::fungible::Mutate, transactional};
+	use composable_traits::math::SafeArithmetic;
+	use frame_support::{
+		pallet_prelude::*,
+		traits::fungible::{Inspect, Transfer},
+		transactional, PalletId,
+	};
 	use frame_system::pallet_prelude::*;
 	use sp_io::hashing::keccak_256;
 	use sp_runtime::{
 		traits::{
-			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert, Saturating, Verify,
-			Zero,
+			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
+			Saturating, Verify, Zero,
 		},
 		AccountId32, MultiSignature, Perbill,
 	};
 	use sp_std::vec::Vec;
-
-	use crate::weights::WeightInfo;
-
-	use super::models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount, Reward};
 
 	pub type RemoteAccountOf<T> = RemoteAccount<<T as Config>::RelayChainAccountId>;
 	pub type RewardOf<T> = Reward<<T as Config>::Balance, <T as frame_system::Config>::BlockNumber>;
@@ -104,6 +108,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		NotInitialized,
 		AlreadyInitialized,
+		InvalidInitializationBlock,
+		RewardsNotFunded,
 		InvalidProof,
 		InvalidClaim,
 		NothingToClaim,
@@ -131,8 +137,9 @@ pub mod pallet {
 			+ MaxEncodedLen
 			+ Zero;
 
-		/// The currency used to mint the rewards
-		type Currency: Mutate<Self::AccountId, Balance = Self::Balance>;
+		/// The RewardAsset used to transfer the rewards
+		type RewardAsset: Inspect<Self::AccountId, Balance = Self::Balance>
+			+ Transfer<Self::AccountId, Balance = Self::Balance>;
 
 		/// The origin that is allowed to `initialize` the pallet.
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
@@ -159,8 +166,12 @@ pub mod pallet {
 		#[pallet::constant]
 		type Prefix: Get<&'static [u8]>;
 
-		// Extrinsic weights
+		/// The implementation of extrinsics weight.
 		type WeightInfo: WeightInfo;
+
+		/// The unique identifier of this pallet.
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 	}
 
 	#[pallet::storage]
@@ -211,7 +222,6 @@ pub mod pallet {
 		pub fn initialize(origin: OriginFor<T>) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
 			let current_block = frame_system::Pallet::<T>::block_number();
-			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
 			Self::do_initialize(current_block)
 		}
 
@@ -220,7 +230,6 @@ pub mod pallet {
 		#[transactional]
 		pub fn initialize_at(origin: OriginFor<T>, at: T::BlockNumber) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
-			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
 			Self::do_initialize(at)
 		}
 
@@ -272,8 +281,19 @@ pub mod pallet {
 		}
 	}
 
+	#[pallet::extra_constants]
+	impl<T: Config> Pallet<T> {
+		/// The AccountId of this pallet.
+		pub fn account_id() -> T::AccountId {
+			T::PalletId::get().into_account()
+		}
+	}
+
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn do_initialize(at: T::BlockNumber) -> DispatchResult {
+			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
+			let current_block = frame_system::Pallet::<T>::block_number();
+			ensure!(at >= current_block, Error::<T>::InvalidInitializationBlock);
 			VestingBlockStart::<T>::set(Some(at));
 			Ok(())
 		}
@@ -286,8 +306,8 @@ pub mod pallet {
 			let enabled = VestingBlockStart::<T>::get().ok_or(Error::<T>::NotInitialized)? <= now;
 			ensure!(enabled, Error::<T>::NotClaimableYet);
 			let remote_account = get_remote_account::<T>(proof, &reward_account, T::Prefix::get())?;
-			// NOTE(hussein-aitlahcen): this is also checked by the signed extension. theoretically
-			// useless, but 1:1 to make it clear
+			// NOTE(hussein-aitlahcen): this is also checked by the ValidateUnsigned implementation
+			// of the pallet. theoretically useless, but 1:1 to make it clear
 			ensure!(
 				!Associations::<T>::contains_key(reward_account.clone()),
 				Error::<T>::AlreadyAssociated
@@ -306,11 +326,10 @@ pub mod pallet {
 			rewards: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
 		) -> DispatchResult {
 			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
-			let _ = Rewards::<T>::remove_all(None);
 			rewards
 				.into_iter()
 				.for_each(|(remote_account, account_reward, vesting_period)| {
-					// Populate and possibly overwrite.
+					// This will eliminate duplicated entries.
 					Rewards::<T>::insert(
 						remote_account,
 						Reward {
@@ -320,23 +339,26 @@ pub mod pallet {
 						},
 					);
 				});
-			// NOTE(hussein-aitlahcen): recompute instead of adding to avoid issues with duplicates
-			let (total_rewards, total_contributors) = Rewards::<T>::iter_values().fold(
+			let (total_rewards, total_contributors) = Rewards::<T>::iter_values().try_fold(
 				(T::Balance::zero(), 0),
-				|(total_rewards, total_contributors), contributor_reward| {
-					(
-						total_rewards.saturating_add(contributor_reward.total),
-						total_contributors.saturating_add(1),
-					)
+				|(total_rewards, total_contributors),
+				 contributor_reward|
+				 -> Result<(T::Balance, u32), DispatchError> {
+					Ok((
+						total_rewards.safe_add(&contributor_reward.total)?,
+						total_contributors.safe_add(&1)?,
+					))
 				},
-			);
+			)?;
 			TotalRewards::<T>::set(total_rewards);
 			TotalContributors::<T>::set(total_contributors);
+			let available_funds = T::RewardAsset::balance(&Self::account_id());
+			ensure!(available_funds == total_rewards, Error::<T>::RewardsNotFunded);
 			Ok(())
 		}
 
 		/// Do claim the reward for a given remote account, rewarding the `reward_account`.
-		/// Returns `InvalidProof` if the user is not a contributor or `NothingToClaim` if not
+		/// Returns `InvalidProof` if the user is not a contributor or `NothingToClaim` if no
 		/// reward can be claimed yet.
 		pub(crate) fn do_claim(
 			remote_account: RemoteAccountOf<T>,
@@ -352,7 +374,14 @@ pub mod pallet {
 							available_to_claim > T::Balance::zero(),
 							Error::<T>::NothingToClaim
 						);
-						T::Currency::mint_into(reward_account, available_to_claim)?;
+						let funds_account = Self::account_id();
+						// No need to keep the pallet account alive.
+						T::RewardAsset::transfer(
+							&funds_account,
+							reward_account,
+							available_to_claim,
+							false,
+						)?;
 						(*reward).claimed = available_to_claim.saturating_add(reward.claimed);
 						ClaimedRewards::<T>::mutate(|x| *x = x.saturating_add(available_to_claim));
 						Ok(available_to_claim)
@@ -362,6 +391,7 @@ pub mod pallet {
 		}
 	}
 
+	/// The reward amount a user should have claimed until now.
 	pub fn should_have_claimed<T: Config>(
 		reward: &Reward<<T as Config>::Balance, <T as frame_system::Config>::BlockNumber>,
 	) -> Result<T::Balance, DispatchError> {
@@ -440,16 +470,17 @@ pub mod pallet {
 		relay_account: RelayChainAccountId,
 		proof: &MultiSignature,
 	) -> bool {
-		let wrapped_prefix: &[u8] = b"<Bytes>";
-		let wrapped_postfix: &[u8] = b"</Bytes>";
-		let mut msg = wrapped_prefix.to_vec();
+		/// Polkadotjs wraps the message in this tag before signing.
+		const WRAPPED_PREFIX: &[u8] = b"<Bytes>";
+		const WRAPPED_POSTFIX: &[u8] = b"</Bytes>";
+		let mut msg = WRAPPED_PREFIX.to_vec();
 		msg.append(&mut prefix.to_vec());
 		msg.append(&mut reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()));
-		msg.append(&mut wrapped_postfix.to_vec());
+		msg.append(&mut WRAPPED_POSTFIX.to_vec());
 		proof.verify(&msg[..], &relay_account.into())
 	}
 
-	/// Signable message that would be generated by eth_sign
+	/// Sign a message and produce an `eth_sign` compatible signature.
 	pub fn ethereum_signable_message(prefix: &[u8], msg: &[u8]) -> Vec<u8> {
 		let mut l = prefix.len() + msg.len();
 		let mut msg_len = Vec::new();
@@ -464,7 +495,8 @@ pub mod pallet {
 		v
 	}
 
-	/// Recover the public key
+	/// Recover the public key of an `eth_sign` signature.
+	/// The original message is required for this extraction to be possible.
 	pub fn ethereum_recover(
 		prefix: &[u8],
 		msg: &[u8],

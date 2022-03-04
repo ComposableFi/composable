@@ -3,7 +3,7 @@
 box Composable #LightYellow
   participant "Assets" as pallet_assets
   participant "Lending" as pallet_lending
-  control "OCW Liqudation" as ocw_liquidation
+  control "OCW Liquidation" as ocw_liquidation
 end box
 
 box HydraDx #SkyBlue
@@ -11,9 +11,9 @@ box HydraDx #SkyBlue
   participant "HydraDx Auction" as pauh
 end box
 
-ocw_liquidation -> pallet_lending: Detect liqudate condition
+ocw_liquidation -> pallet_lending: Detect liquidate condition
 
-ocw_liquidation -> pallet_lending: Liqudate
+ocw_liquidation -> pallet_lending: Liquidate
 
 alt OB
   pallet_lending --> pah: XCM sell via 'Transfer' + 'Exchange'

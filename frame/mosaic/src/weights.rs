@@ -18,51 +18,56 @@ pub trait WeightInfo {
 	fn set_timelock_duration() -> Weight;
 	fn rescind_timelocked_mint() -> Weight;
 	fn claim_to() -> Weight;
+  fn update_asset_mapping() -> Weight;
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-    fn set_relayer() -> Weight {
-      10_000 as Weight
-    }
+  fn set_relayer() -> Weight {
+    10_000 as Weight
+  }
 
-    fn rotate_relayer() -> Weight {
-      10_000 as Weight
-    }
+  fn rotate_relayer() -> Weight {
+    10_000 as Weight
+  }
 
-    fn set_network() -> Weight {
-      10_000 as Weight
-    }
+  fn set_network() -> Weight {
+    10_000 as Weight
+  }
 
-    fn set_budget() -> Weight {
-      10_000 as Weight
-    }
+  fn set_budget() -> Weight {
+    10_000 as Weight
+  }
 
-    fn transfer_to() -> Weight {
-      10_000 as Weight
-    }
+  fn transfer_to() -> Weight {
+    10_000 as Weight
+  }
 
-    fn accept_transfer() -> Weight {
-      10_000 as Weight
-    }
+  fn accept_transfer() -> Weight {
+    10_000 as Weight
+  }
 
-    fn claim_stale_to() -> Weight {
-      10_000 as Weight
-    }
+  fn claim_stale_to() -> Weight {
+    10_000 as Weight
+  }
 
-    fn timelocked_mint() -> Weight {
-      10_000 as Weight
-    }
+  fn timelocked_mint() -> Weight {
+    10_000 as Weight
+  }
 
-    fn set_timelock_duration() -> Weight {
-      10_000 as Weight
-    }
+  fn set_timelock_duration() -> Weight {
+    10_000 as Weight
+  }
 
-    fn rescind_timelocked_mint() -> Weight {
-      10_000 as Weight
-    }
+  fn rescind_timelocked_mint() -> Weight {
+    10_000 as Weight
+  }
 
-    fn claim_to() -> Weight {
-      10_000 as Weight
-    }
+  fn claim_to() -> Weight {
+    10_000 as Weight
+  }
+
+  fn update_asset_mapping() -> Weight {
+    10_000 as Weight
+  }
 }

@@ -122,7 +122,6 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		BadOrigin,
 		CannotSetNewCurrencyToRegistry,
 	}
 
@@ -351,11 +350,11 @@ pub mod pallet {
 				match T::GovernanceRegistry::get(asset_id) {
 					Ok(SignedRawOrigin::Root) => Ok(()),
 					Ok(SignedRawOrigin::Signed(acc)) if acc == account => Ok(()),
-					_ => Err(Error::<T>::BadOrigin.into()),
+					_ => Err(DispatchError::BadOrigin),
 				}
 			},
 			Ok(frame_system::RawOrigin::Root) => Ok(()),
-			_ => Err(Error::<T>::BadOrigin.into()),
+			_ => Err(DispatchError::BadOrigin),
 		}
 	}
 

@@ -29,7 +29,7 @@ pub struct FullDeps<C, P> {
 }
 
 /// Instantiate all full RPC extensions.
-pub fn create<C, P, B>(deps: FullDeps<C, P>) -> jsonrpc_core::IoHandler<sc_rpc::Metadata>
+pub fn create<C, P, B>(deps: FullDeps<C, P>) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>
 where
 	B: Block,
 	C: ProvideRuntimeApi<B>,
@@ -45,7 +45,7 @@ where
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
 
-	let mut io = jsonrpc_core::IoHandler::default();
+	let mut io = jsonrpc_core::MetaIoHandler::default();
 	let FullDeps { client, pool, deny_unsafe } = deps;
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(client.clone(), pool, deny_unsafe)));

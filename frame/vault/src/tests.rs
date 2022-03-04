@@ -730,7 +730,9 @@ proptest! {
 					prop_assert_acceptable_computation_error!(new_native_tokens, half_initial_native_tokens + diff);
 				} else {
 					// Our balance should be equivalent
-				  prop_assert_acceptable_computation_error!(new_native_tokens, half_initial_native_tokens);
+		  let precision = 1000;
+		  let epsilon = 5;
+				  prop_assert_acceptable_computation_error!(new_native_tokens, half_initial_native_tokens, precision, epsilon);
 				}
 			}
 

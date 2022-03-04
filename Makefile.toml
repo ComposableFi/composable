@@ -30,6 +30,13 @@ cd ../polkadot && cargo run --release -- --version && pwd && cd ../composable
 cd scripts/polkadot-launch && yarn && yarn composable
 '''
 
+[tasks.devnet-docker]
+workspace = false
+dependencies = []
+script = '''
+docker run --rm -ti -u$(id -u):$(id -g) -p9944:9944 -p9988:9988 -p9998:9998 composablefi/composable-sandbox:latest
+'''
+
 [tasks.run-local-integration-tests]
 workspace=false
 script='''

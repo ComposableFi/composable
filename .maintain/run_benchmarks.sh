@@ -13,8 +13,8 @@ VERSIONS_FILES=(
   "runtime/composable/src/weights,composable-dev,composable"
 )
 
-steps=50
-repeat=20
+steps=$1
+repeat=$2
 
 /home/runner/.cargo/bin/rustup install nightly
 /home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly

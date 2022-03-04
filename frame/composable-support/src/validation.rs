@@ -68,8 +68,10 @@
 use core::{fmt, marker::PhantomData};
 use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
+use sp_std::ops::Deref;
 
 /// Black box that embbed the validated value.
+/// Validated during construction or serde.
 #[derive(Default, Copy, Clone)]
 pub struct Validated<T, U> {
 	value: T,
@@ -223,18 +225,13 @@ impl<T: codec::Decode, U: Validate<T, U>> codec::Decode for Validated<T, U> {
 	}
 }
 
-pub(crate) mod private {
-	use sp_std::ops::Deref;
+/// Originally there to have `WrapperTypeEncode` work, but now also used in order to prevent
+/// .value() calls everywhere
+impl<T, U> Deref for Validated<T, U> {
+	type Target = T;
 
-	use super::Validated;
-
-	/// just to have `WrapperTypeEncode` work
-	impl<T, U> Deref for Validated<T, U> {
-		type Target = T;
-		#[doc(hidden)]
-		fn deref(&self) -> &Self::Target {
-			&self.value
-		}
+	fn deref(&self) -> &Self::Target {
+		&self.value
 	}
 }
 

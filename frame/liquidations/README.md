@@ -1,12 +1,13 @@
 # Overview
 
-Liquidation uses DEX and auctions for swaps. 
+Liquidation uses DEX and auctions for swaps.
 
-Uses different engines depending on available liquidity and configuration. 
+Uses different engines depending on available liquidity and configuration.
 
-Each liqudaiton strategy parameters can be changed by strategy's owner.
+Each liquidation strategy parameters can be changed by strategy's owner.
 
 Default engine is [Dutch Auction](../dutch-auction)
+
 ## References
 
 https://docs.makerdao.com/smart-contract-modules/dog-and-clipper-detailed-documentation

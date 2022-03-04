@@ -1405,6 +1405,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "composable-maths"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "rust_decimal",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "composable-node"
 version = "1.0.9"
 dependencies = [
@@ -2505,6 +2520,7 @@ dependencies = [
  "pallet-collective",
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
+ "pallet-curve-amm",
  "pallet-democracy 4.0.0-dev",
  "pallet-dutch-auction",
  "pallet-governance-registry",
@@ -2525,6 +2541,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-uniswap-v2",
  "pallet-utility",
  "pallet-vault",
  "pallet-vesting 0.0.1",
@@ -6793,6 +6810,7 @@ dependencies = [
 name = "pallet-crowdloan-rewards"
 version = "0.0.1"
 dependencies = [
+ "composable-traits",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6837,6 +6855,7 @@ dependencies = [
 name = "pallet-curve-amm"
 version = "0.0.1"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -6904,6 +6923,7 @@ dependencies = [
 name = "pallet-dex-router"
 version = "0.0.1"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
  "frame-support",
  "frame-system",
@@ -7334,6 +7354,7 @@ dependencies = [
 name = "pallet-oracle"
 version = "1.0.0"
 dependencies = [
+ "composable-support",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -7672,6 +7693,8 @@ dependencies = [
 name = "pallet-uniswap-v2"
 version = "0.0.1"
 dependencies = [
+ "composable-maths",
+ "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -7682,10 +7705,9 @@ dependencies = [
  "orml-traits",
  "pallet-balances",
  "pallet-currency-factory",
- "pallet-oracle",
- "pallet-vault",
  "parity-scale-codec",
  "plotters",
+ "proptest",
  "scale-info",
  "serde",
  "sp-arithmetic",
@@ -10407,6 +10429,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust_decimal"
+version = "1.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d37baa70cf8662d2ba1c1868c5983dda16ef32b105cce41fb5c47e72936a90b3"
+dependencies = [
+ "arrayvec 0.7.2",
+ "num-traits",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11966,43 +11998,38 @@ dependencies = [
 ]
 
 [[package]]
-name = "simnode"
+name = "simnode-common"
 version = "0.1.0"
 dependencies = [
  "common",
  "composable-node",
- "cumulus-client-cli",
- "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",
- "cumulus-test-relay-sproof-builder",
  "dali-runtime",
  "derive_more",
  "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex",
- "num-traits",
- "pallet-crowdloan-rewards",
- "pallet-sudo",
- "pallet-transaction-payment",
- "parachain-info",
- "parity-scale-codec",
+ "jsonrpc-core",
  "picasso-runtime",
- "polkadot-primitives",
  "sc-cli",
- "sc-client-api",
  "sc-consensus",
  "sc-consensus-manual-seal",
  "sc-executor",
+ "sc-rpc",
  "sc-service",
- "sc-tracing",
  "simnode-runtime-apis",
  "sp-api",
- "sp-blockchain",
  "sp-consensus-aura",
- "sp-io",
- "sp-keyring",
  "sp-runtime",
+ "sp-transaction-pool",
+ "substrate-simnode",
+]
+
+[[package]]
+name = "simnode-node"
+version = "0.1.0"
+dependencies = [
+ "composable-node",
+ "sc-cli",
+ "simnode-common",
  "structopt",
  "substrate-simnode",
 ]
@@ -12010,11 +12037,43 @@ dependencies = [
 [[package]]
 name = "simnode-runtime-apis"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#d019bb5d6cfb8bb1547e5c5947e251c93126575e"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#7e2453df89dac7ae6800186a121d2d0c335728f6"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
  "sp-std",
+]
+
+[[package]]
+name = "simnode-tests"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "composable-node",
+ "cumulus-pallet-parachain-system",
+ "dali-runtime",
+ "frame-benchmarking",
+ "frame-system",
+ "hex",
+ "num-traits",
+ "pallet-sudo",
+ "parachain-info",
+ "parity-scale-codec",
+ "picasso-runtime",
+ "polkadot-primitives",
+ "sc-cli",
+ "sc-client-api",
+ "sc-executor",
+ "sc-rpc",
+ "sc-service",
+ "simnode-common",
+ "simnode-runtime-apis",
+ "sp-api",
+ "sp-blockchain",
+ "sp-keyring",
+ "sp-runtime",
+ "structopt",
+ "substrate-simnode",
 ]
 
 [[package]]
@@ -13096,7 +13155,7 @@ dependencies = [
 [[package]]
 name = "substrate-simnode"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#d019bb5d6cfb8bb1547e5c5947e251c93126575e"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#7e2453df89dac7ae6800186a121d2d0c335728f6"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",

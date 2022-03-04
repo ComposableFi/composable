@@ -8,6 +8,7 @@ use crate::{
 	models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount},
 	Error, RemoteAccountOf, RewardAmountOf, VestingPeriodOf,
 };
+
 use codec::Encode;
 use frame_support::{assert_noop, assert_ok, traits::Currency};
 use hex_literal::hex;
@@ -28,6 +29,7 @@ fn with_rewards<R>(
 		let random_block_start = 0xCAF * WEEKS;
 		let set_block = |x: BlockNumber| System::set_block_number(random_block_start + x);
 		set_block(0);
+		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), reward * count);
 		assert_ok!(CrowdloanRewards::populate(Origin::root(), rewards));
 		execute(&set_block, accounts)
 	})
@@ -44,6 +46,52 @@ fn with_rewards_default<R>(
 }
 
 #[test]
+fn test_populate_rewards_not_funded() {
+	let gen = |c, r| -> Vec<(RemoteAccountOf<Test>, RewardAmountOf<Test>, VestingPeriodOf<Test>)> {
+		generate_accounts(c)
+			.into_iter()
+			.map(|(_, account)| (account.as_remote_public(), r, DEFAULT_VESTING_PERIOD))
+			.collect()
+	};
+	ExtBuilder::default().build().execute_with(|| {
+		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), 0);
+		assert_noop!(
+			CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)),
+			Error::<Test>::RewardsNotFunded
+		);
+	});
+}
+
+#[test]
+fn test_incremental_populate() {
+	let gen = |c, r| -> Vec<(RemoteAccountOf<Test>, RewardAmountOf<Test>, VestingPeriodOf<Test>)> {
+		generate_accounts(c)
+			.into_iter()
+			.map(|(_, account)| (account.as_remote_public(), r, DEFAULT_VESTING_PERIOD))
+			.collect()
+	};
+	ExtBuilder::default().build().execute_with(|| {
+		let accounts = gen(10_000, DEFAULT_REWARD);
+		for i in 0..10 {
+			let start = i * 1000;
+			let slice = accounts[start..start + 1000].to_vec();
+			let expected_total_rewards = (i + 1) as u128 * 1000 * DEFAULT_REWARD;
+			Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
+			assert_ok!(CrowdloanRewards::populate(Origin::root(), slice));
+			assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
+		}
+		// Repopulating using the same accounts must overwrite existing entries.
+		let expected_total_rewards = 10_000 * DEFAULT_REWARD;
+		for i in 0..10 {
+			let start = i * 1000;
+			let slice = accounts[start..start + 1000].to_vec();
+			assert_ok!(CrowdloanRewards::populate(Origin::root(), slice));
+			assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
+		}
+	});
+}
+
+#[test]
 fn test_populate_ok() {
 	let gen = |c, r| -> Vec<(RemoteAccountOf<Test>, RewardAmountOf<Test>, VestingPeriodOf<Test>)> {
 		generate_accounts(c)
@@ -52,25 +100,34 @@ fn test_populate_ok() {
 			.collect()
 	};
 	ExtBuilder::default().build().execute_with(|| {
+		let expected_total_rewards = 0;
+		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
 		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(0, DEFAULT_REWARD)));
-		assert_eq!(CrowdloanRewards::total_rewards(), 0);
+		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
+
+		let expected_total_rewards = 100 * DEFAULT_REWARD;
+		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
 		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)));
-		assert_eq!(CrowdloanRewards::total_rewards(), 100 * DEFAULT_REWARD);
+		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 
 		// Try to repopulate using the same generated accounts
 		// In this case, the total shouldn't change as its duplicate
 		// No error will be yield but the process should be = identity
 		let s = frame_support::storage_root();
+		let expected_total_rewards = 100 * DEFAULT_REWARD;
+		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
 		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)));
 		assert_eq!(s, frame_support::storage_root());
-		assert_eq!(CrowdloanRewards::total_rewards(), 100 * DEFAULT_REWARD);
+		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 
 		// Overwrite rewards + 100 new contributors
+		let expected_total_rewards = 200 * (DEFAULT_REWARD + 1);
+		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
 		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(200, DEFAULT_REWARD + 1)));
-		assert_eq!(CrowdloanRewards::total_rewards(), 200 * (DEFAULT_REWARD + 1));
+		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 	});
 }
@@ -101,6 +158,17 @@ fn test_initialize_at_ok() {
 		assert_ok!(CrowdloanRewards::initialize_at(Origin::root(), 10));
 		assert_eq!(CrowdloanRewards::total_rewards(), 0);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
+	});
+}
+
+#[test]
+fn test_initialize_at_ko() {
+	ExtBuilder::default().build().execute_with(|| {
+		System::set_block_number(100);
+		assert_noop!(
+			CrowdloanRewards::initialize_at(Origin::root(), 99),
+			Error::<Test>::InvalidInitializationBlock
+		);
 	});
 }
 
@@ -296,11 +364,13 @@ fn test_valid_eth_hardcoded() {
 
 	assert_eq!(Some(eth_address), recovered_address);
 
+	let reward_amount = DEFAULT_REWARD;
 	let rewards =
-		vec![(RemoteAccount::Ethereum(eth_address), DEFAULT_REWARD, DEFAULT_VESTING_PERIOD)];
+		vec![(RemoteAccount::Ethereum(eth_address), reward_amount, DEFAULT_VESTING_PERIOD)];
 
 	let proof = Proof::Ethereum(eth_proof);
 	ExtBuilder::default().build().execute_with(|| {
+		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), reward_amount);
 		assert_ok!(CrowdloanRewards::populate(Origin::root(), rewards));
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		assert_ok!(CrowdloanRewards::associate(Origin::none(), ALICE, proof));

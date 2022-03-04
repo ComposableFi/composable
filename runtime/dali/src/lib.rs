@@ -26,8 +26,9 @@ pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	CouncilInstance, EnsureRootOrHalfCouncil, Hash, MosaicRemoteAssetId, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES, NORMAL_DISPATCH_RATIO,
+	SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use cumulus_primitives_core::ParaId;
@@ -37,7 +38,9 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
+	traits::{
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
+	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -796,15 +799,16 @@ impl assets::Config for Runtime {
 }
 
 parameter_types! {
+	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	  pub const InitialPayment: Perbill = Perbill::from_percent(50);
-	  pub const VestingStep: BlockNumber = 7 * DAYS;
+	  pub const VestingStep: BlockNumber = MINUTES;
 	  pub const Prefix: &'static [u8] = b"picasso-";
 }
 
 impl crowdloan_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type Currency = Assets;
+	type RewardAsset = Assets;
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = sp_runtime::AccountId32;
@@ -812,6 +816,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type VestingStep = VestingStep;
 	type Prefix = Prefix;
 	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
+	type PalletId = CrowdloanRewardsId;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -822,10 +827,7 @@ impl Contains<Call> for BaseCallFilter {
 		if call_filter::Pallet::<Runtime>::contains(call) {
 			return false
 		}
-		!matches!(
-			call,
-			Call::Balances(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_)
-		)
+		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
 	}
 }
 
@@ -910,6 +912,7 @@ impl mosaic::Config for Runtime {
 	type MinimumTimeLockPeriod = MinimumTimeLockPeriod;
 	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
 	type NetworkId = u32;
+	type RemoteAssetId = MosaicRemoteAssetId;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
 }
@@ -920,6 +923,7 @@ pub type OrderId = u128;
 parameter_types! {
 	pub const LiquidationsPalletId: PalletId = PalletId(*b"liqdatns");
 }
+
 impl liquidations::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
@@ -948,12 +952,46 @@ impl lending::Config for Runtime {
 	type UnixTime = Timestamp;
 	type MaxLendingCount = MaxLendingCount;
 	type AuthorityId = oracle::crypto::BathurstStId;
-	type WeightInfo = ();
+	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 	type LiquidationStrategyId = u32;
 	type OracleMarketCreationStake = OracleMarketCreationStake;
 	type PalletId = LendingPalletId;
 	type NativeCurrency = Balances;
 	type WeightToFee = WeightToFee;
+}
+
+pub type PoolId = u128;
+
+parameter_types! {
+  pub const ConstantProductPalletId: PalletId = PalletId(*b"pal_cnst");
+}
+
+impl uniswap_v2::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type CurrencyFactory = CurrencyFactory;
+	type Assets = Assets;
+	type Convert = ConvertInto;
+	type PoolId = PoolId;
+	type PalletId = ConstantProductPalletId;
+	type WeightInfo = weights::uniswap_v2::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+  pub const StableSwapPalletId: PalletId = PalletId(*b"pal_stab");
+}
+
+impl curve_amm::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type CurrencyFactory = CurrencyFactory;
+	type Assets = Assets;
+	type Convert = ConvertInto;
+	type PoolId = PoolId;
+	type PalletId = StableSwapPalletId;
+	type WeightInfo = weights::curve_amm::WeightInfo<Runtime>;
 }
 
 construct_runtime!(
@@ -1014,6 +1052,8 @@ construct_runtime!(
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
 		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
+	  ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
+	  StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1083,7 +1123,10 @@ mod benches {
 		[mosaic, Mosaic]
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
-		[lending, Lending]
+		//FIXME: broken with dali [lending, Lending]
+	//	[lending, Lending]
+	  [uniswap_v2, ConstantProductDex]
+	  [curve_amm, StableSwapDex]
 	);
 }
 

@@ -10,7 +10,11 @@
   };
   outputs = { nixpkgs, flake-utils, localtunnel-src, ... }:
     let
-      mk-composable = { name, version, spec, hash}: {
+      bins =
+        (if builtins.pathExists ./devnet.json
+         then builtins.fromJSON (builtins.readFile ./devnet.json)
+         else throw "Devnet `devnet.json` definition missing, please follow the README.md instructions.");
+      mk-composable = spec: { name, version, hash }: {
         inherit name;
         inherit version;
         inherit spec;
@@ -33,7 +37,7 @@
           port = 30777;
         }];
       };
-      mk-polkadot = { version, spec, hash }: {
+      mk-polkadot = spec: { version, hash }: {
         inherit version;
         inherit spec;
         inherit hash;
@@ -51,10 +55,13 @@
           port = 31300;
         }];
       };
-      latest = ({ composable, polkadot}: {
-        composable = mk-composable composable;
-        polkadot = mk-polkadot polkadot;
-      }) (builtins.fromJSON (builtins.readFile ./devnet.json));
+      mk-latest = spec:
+        ({ composable, polkadot }: {
+          composable = mk-composable spec composable;
+          polkadot = mk-polkadot "rococo-local" polkadot;
+        }) bins;
+      latest-dali = mk-latest "dali-dev";
+      latest-picasso = mk-latest "picasso-dev";
     in
     {
       nixopsConfigurations.default =
@@ -62,47 +69,48 @@
           pkgs-nixos = import nixpkgs {};
           conf = if builtins.pathExists ./ops.json
                  then builtins.fromJSON (builtins.readFile ./ops.json)
-                 else throw "GCE credentials `ops.json` not found, please download it.";
+                 else throw "Operations credentials `ops.json` definition missng, please follow the README.md instructions.";
           credentials = {
             project = conf.project_id;
             serviceAccount = conf.client_email;
             accessKey = conf.private_key;
           };
-          localtunnel = pkgs-nixos.mkYarnPackage rec{
+          localtunnel = pkgs-nixos.mkYarnPackage rec {
             name = "localtunnel";
             src = localtunnel-src;
           };
         in
-          /* NOTE(hussein-aitlahcen)
-             I initially used this script to be able to generate N machines.
-             I'll leave the fold and logic as is and just use the latest to overwrite the previous devnet machine.
-          */
-          builtins.foldl' (machines: next-machine: machines // import ./devnet-gce.nix {
+          builtins.foldl' (machines: { composable, polkadot }: machines // import ./devnet-gce.nix {
             inherit localtunnel;
             inherit credentials;
-            inherit (next-machine) composable;
-            inherit (next-machine) polkadot;
+            inherit composable;
+            inherit polkadot;
           }) {
             inherit nixpkgs;
             network.description = "Composable Devnet";
             network.storage.legacy = {};
-          } [ latest ];
+          } [ latest-dali latest-picasso ];
     } //
     flake-utils.lib.eachDefaultSystem
       (system:
         let pkgs = import nixpkgs { inherit system; };
         in rec {
-          packages.devnet = pkgs.callPackage ./devnet.nix {
-            inherit (latest) composable;
-            inherit (latest) polkadot;
-          };
+          packages.devnet-dali = (pkgs.callPackage ./devnet.nix {
+            inherit (latest-dali) composable;
+            inherit (latest-dali) polkadot;
+          }).script;
+          packages.devnet-picasso = (pkgs.callPackage ./devnet.nix {
+            inherit (latest-picasso) composable;
+            inherit (latest-picasso) polkadot;
+          }).script;
           packages.localtunnel = pkgs.mkYarnPackage rec {
             name = "localtunnel";
             src = localtunnel-src;
           };
           packages.deploy = pkgs.mkShell {
             buildInputs = [
-              packages.devnet
+              packages.devnet-dali
+              packages.devnet-picasso
               packages.localtunnel
               (pkgs.nixopsUnstable.override {
                 overrides = (self: super: {
@@ -118,13 +126,14 @@
                   );
                 });
             })];
-            # FIXME: nixops depends on nixpkgs for the virtual machine initial conf...
+            # NOTE: nixops depends on nixpkgs for the virtual machine initial conf...
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };
-          defaultPackage = packages.devnet;
+          defaultPackage = packages.devnet-dali;
           devShell = pkgs.mkShell {
             buildInputs = [
-              defaultPackage
+              packages.devnet-dali
+              packages.devnet-picasso
             ];
           };
         }
