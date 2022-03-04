@@ -14,7 +14,7 @@ use crate::{
 use codec::Encode;
 use common::{xcmp::BaseXcmWeight, AccountId, Balance, MultiExistentialDeposits};
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
-use dali_runtime as picasso_runtime;
+use dali_runtime::{self as picasso_runtime, AssetsRegistry, Balances};
 use num_traits::{One, Zero};
 use orml_traits::{currency::MultiCurrency, GetByKey};
 use picasso_runtime::{
@@ -560,162 +560,189 @@ fn relay_chain_subscribe_version_notify_of_para_chain() {
 	});
 }
 
-// #[test]
-// fn test_asset_registry_module() {
-// 	simtest();
+#[test]
+fn test_assets_registry_module() {
+	simtest();
 
-// 	fn picasso_reserve_account() -> AccountId {
-// 		use sp_runtime::traits::AccountIdConversion;
-// 		polkadot_parachain::primitives::Sibling::from(PICASSO_PARA_ID).into_account()
-// 	}
+	let local_asset = CurrencyId::PICA;
+	let foreign_asset = CurrencyId::PICA;
 
-// 	Picasso::execute_with(|| {
-// 		// register foreign asset
-// 		assert_ok!(AssetRegistry::register_foreign_asset(
-// 			Origin::root(),
-// 			Box::new(MultiLocation::new(1, X2(Parachain(SIBLING_PARA_ID),
-// GeneralKey(CurrencyId::PICA.encode()))).into()), 			Box::new(AssetMetadata {
-// 				name: b"Sibling Token".to_vec(),
-// 				symbol: b"ST".to_vec(),
-// 				decimals: 12,
-// 				minimal_balance: Balances::minimum_balance() / 10, // 10%
-// 			})
-// 		));
+	fn picasso_reserve_account() -> AccountId {
+		use sp_runtime::traits::AccountIdConversion;
+		polkadot_parachain::primitives::Sibling::from(PICASSO_PARA_ID).into_account()
+	}
 
-// 		assert_eq!(
-// 			Tokens::free_balance(CurrencyId::ForeignAsset(0), &TreasuryAccount::get()),
-// 			0
-// 		);
-// 	});
+	Picasso::execute_with(|| {
+		let local_admin = AccountId::from(ALICE);
+		let foreign_admin = AccountId::from(BOB);
+		let decimals = 12;
+		let location = XcmAssetLocation(
+			MultiLocation::new(
+				1,
+				X2(Parachain(SIBLING_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
+			)
+			.into(),
+		);
 
-// 	Sibling::execute_with(|| {
-// 		let _ = Balances::deposit_creating(&AccountId::from(BOB), 100_000_000_000_000);
-// 		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 0);
-// 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 100_000_000_000_000);
+		assert_ok!(AssetsRegistry::set_local_admin(Origin::root(), local_admin.clone()));
+		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::root(), foreign_admin.clone()));
 
-// 		assert_ok!(XTokens::transfer(
-// 			Origin::signed(BOB.into()),
-// 			KAR,
-// 			5_000_000_000_000,
-// 			Box::new(
-// 				MultiLocation::new(
-// 					1,
-// 					X2(
-// 						Parachain(2000),
-// 						Junction::AccountId32 {
-// 							network: NetworkId::Any,
-// 							id: ALICE.into(),
-// 						}
-// 					)
-// 				)
-// 				.into()
-// 			),
-// 			1_000_000_000,
-// 		));
+		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
+			Origin::signed(local_admin),
+			local_asset,
+			foreign_asset,
+			location.clone(),
+			decimals,
+		));
+		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
+			Origin::signed(foreign_admin),
+			local_asset,
+			foreign_asset,
+			location,
+			decimals,
+		));
+	});
 
-// 		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 5_000_000_000_000);
-// 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 95_000_000_000_000);
-// 	});
+	Sibling::execute_with(|| {
+		let local_admin = AccountId::from(ALICE);
+		let foreign_admin = AccountId::from(BOB);
+		let decimals = 12;
+		let location = XcmAssetLocation(
+			MultiLocation::new(
+				1,
+				X2(Parachain(PICASSO_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
+			)
+			.into(),
+		);
 
-// 	Picasso::execute_with(|| {
-// 		assert_eq!(
-// 			Tokens::free_balance(CurrencyId::ForeignAsset(0), &AccountId::from(ALICE)),
-// 			4_999_360_000_000
-// 		);
-// 		// ToTreasury
-// 		assert_eq!(
-// 			Tokens::free_balance(CurrencyId::ForeignAsset(0), &TreasuryAccount::get()),
-// 			640_000_000
-// 		);
+		assert_ok!(AssetsRegistry::set_local_admin(Origin::root(), local_admin.clone()));
+		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::root(), foreign_admin.clone()));
 
-// 		assert_ok!(XTokens::transfer(
-// 			Origin::signed(ALICE.into()),
-// 			CurrencyId::ForeignAsset(0),
-// 			1_000_000_000_000,
-// 			Box::new(
-// 				MultiLocation::new(
-// 					1,
-// 					X2(
-// 						Parachain(2001),
-// 						Junction::AccountId32 {
-// 							network: NetworkId::Any,
-// 							id: BOB.into(),
-// 						}
-// 					)
-// 				)
-// 				.into()
-// 			),
-// 			1_000_000_000,
-// 		));
+		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
+			Origin::signed(local_admin),
+			foreign_asset,
+			local_asset,
+			location.clone(),
+			decimals,
+		));
+		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
+			Origin::signed(foreign_admin),
+			foreign_asset,
+			local_asset,
+			location,
+			decimals,
+		));
+	});
 
-// 		assert_eq!(
-// 			Tokens::free_balance(CurrencyId::ForeignAsset(0), &AccountId::from(ALICE)),
-// 			3_999_360_000_000
-// 		);
-// 	});
+	Sibling::execute_with(|| {
+		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 0);
 
-// 	Sibling::execute_with(|| {
-// 		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 4_000_000_000_000);
-// 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 95_993_600_000_000);
-// 	});
+		assert_ok!(XTokens::transfer(
+			picasso_runtime::Origin::signed(ALICE.into()),
+			CurrencyId::PICA,
+			5 * PICA,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(PICASSO_PARA_ID),
+						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+					)
+				)
+				.into()
+			),
+			1_000_000_000,
+		));
 
-// 	// remove it
-// 	Picasso::execute_with(|| {
-// 		// register foreign asset
-// 		assert_ok!(AssetRegistry::update_foreign_asset(
-// 			Origin::root(),
-// 			0,
-// 			Box::new(MultiLocation::new(1, X2(Parachain(2001),
-// GeneralKey(CurrencyId::PICA.encode()))).into()), 			Box::new(AssetMetadata {
-// 				name: b"Sibling Token".to_vec(),
-// 				symbol: b"ST".to_vec(),
-// 				decimals: 12,
-// 				minimal_balance: 0, // buy_weight 0
-// 			})
-// 		));
-// 	});
+		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 5 * PICA);
+		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 200 * PICA - 5 * PICA);
+	});
 
-// 	Sibling::execute_with(|| {
-// 		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 4_000_000_000_000);
-// 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 95_993_600_000_000);
+	Picasso::execute_with(|| {
+		let balance =
+			picasso_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+		assert_eq_error_rate!(balance, 5 * PICA, (UnitWeightCost::get() * 10) as u128);
 
-// 		assert_ok!(XTokens::transfer(
-// 			Origin::signed(BOB.into()),
-// 			KAR,
-// 			5_000_000_000_000,
-// 			Box::new(
-// 				MultiLocation::new(
-// 					1,
-// 					X2(
-// 						Parachain(2000),
-// 						Junction::AccountId32 {
-// 							network: NetworkId::Any,
-// 							id: ALICE.into(),
-// 						}
-// 					)
-// 				)
-// 				.into()
-// 			),
-// 			1_000_000_000,
-// 		));
+		assert_ok!(XTokens::transfer(
+			Origin::signed(BOB.into()),
+			foreign_asset,
+			PICA,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(SIBLING_PARA_ID),
+						Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }
+					)
+				)
+				.into()
+			),
+			1_000_000_000,
+		));
 
-// 		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 9_000_000_000_000);
-// 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 90_993_600_000_000);
-// 	});
+		let balance =
+			picasso_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+		assert_eq_error_rate!(balance, 5 * PICA - PICA, (UnitWeightCost::get() * 10) as u128);
+	});
 
-// 	Picasso::execute_with(|| {
-// 		assert_eq!(
-// 			Tokens::free_balance(CurrencyId::ForeignAsset(0), &AccountId::from(ALICE)),
-// 			8_999_360_000_000
-// 		);
+	Sibling::execute_with(|| {
+		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 5 * PICA);
+		let balance =
+			picasso_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
+		assert_eq_error_rate!(
+			balance,
+			200 * PICA - 5 * PICA + PICA,
+			(UnitWeightCost::get() * 10) as u128
+		);
+	});
 
-// 		// ToTreasury
-// 		assert_eq!(
-// 			Tokens::free_balance(CurrencyId::ForeignAsset(0), &TreasuryAccount::get()),
-// 			640_000_000
-// 		);
-// 	});
-// }
+	Sibling::execute_with(|| {
+		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 5 * PICA);
+		let balance =
+			picasso_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
+		assert_eq_error_rate!(
+			balance,
+			200 * PICA - 5 * PICA + PICA,
+			(UnitWeightCost::get() * 10) as u128
+		);
+
+		assert_ok!(XTokens::transfer(
+			Origin::signed(ALICE.into()),
+			CurrencyId::PICA,
+			5 * PICA,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(PICASSO_PARA_ID),
+						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+					)
+				)
+				.into()
+			),
+			1_000_000_000,
+		));
+
+		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 10 * PICA);
+		let balance =
+			picasso_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
+		assert_eq_error_rate!(
+			balance,
+			200 * PICA - 5 * PICA + PICA - 5 * PICA,
+			(UnitWeightCost::get() * 10) as u128
+		);
+	});
+
+	Picasso::execute_with(|| {
+		let balance =
+			picasso_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+		assert_eq_error_rate!(
+			balance,
+			5 * PICA - PICA + 5 * PICA,
+			(UnitWeightCost::get() * 10) as u128
+		);
+	});
+}
 
 #[test]
 fn unspent_xcm_fee_is_returned_correctly() {

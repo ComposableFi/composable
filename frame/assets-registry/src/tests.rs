@@ -28,6 +28,7 @@ fn set_foreign_admin_tests() {
 fn approve_assets_mapping_candidate_tests() {
 	new_test_ext().execute_with(|| {
 		let (local_asset_id, foreign_asset_id) = (0, 100);
+		let location = XcmAssetLocation::LOCAL_NATIVE;
 		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), None);
 		assert_eq!(AssetsRegistry::from_local_asset(foreign_asset_id), None);
 		assert_ok!(AssetsRegistry::set_local_admin(Origin::signed(ROOT), ALICE));
@@ -36,6 +37,7 @@ fn approve_assets_mapping_candidate_tests() {
 			Origin::signed(ALICE),
 			local_asset_id,
 			foreign_asset_id,
+			location.clone(),
 			DECIMALS,
 		));
 		assert_eq!(
@@ -46,6 +48,7 @@ fn approve_assets_mapping_candidate_tests() {
 			Origin::signed(BOB),
 			local_asset_id,
 			foreign_asset_id,
+			location.clone(),
 			DECIMALS,
 		));
 		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(foreign_asset_id));
@@ -61,6 +64,7 @@ fn approve_assets_mapping_candidate_tests() {
 				Origin::signed(ALICE),
 				other_local_asset_id,
 				foreign_asset_id,
+				location.clone(),
 				DECIMALS,
 			),
 			Error::<Test>::ForeignAssetIdAlreadyUsed,
@@ -70,6 +74,7 @@ fn approve_assets_mapping_candidate_tests() {
 				Origin::signed(ALICE),
 				local_asset_id,
 				other_foreign_asset_id,
+				location.clone(),
 				DECIMALS,
 			),
 			Error::<Test>::LocalAssetIdAlreadyUsed,
@@ -80,6 +85,7 @@ fn approve_assets_mapping_candidate_tests() {
 				Origin::signed(CHARLIE),
 				other_local_asset_id,
 				other_foreign_asset_id,
+				location.clone(),
 				DECIMALS,
 			),
 			Error::<Test>::OnlyAllowedForAdmins,
@@ -91,6 +97,7 @@ fn approve_assets_mapping_candidate_tests() {
 			Origin::signed(BOB),
 			other_local_asset_id,
 			other_foreign_asset_id,
+			location.clone(),
 			DECIMALS,
 		));
 		assert_eq!(
@@ -101,6 +108,7 @@ fn approve_assets_mapping_candidate_tests() {
 			Origin::signed(ALICE),
 			other_local_asset_id,
 			other_foreign_asset_id,
+			location,
 			DECIMALS,
 		));
 		assert_eq!(
@@ -122,6 +130,7 @@ fn approve_assets_mapping_candidate_tests() {
 fn set_metadata_tests() {
 	new_test_ext().execute_with(|| {
 		let (local_asset_id, foreign_asset_id) = (0, 100);
+		let location = XcmAssetLocation::LOCAL_NATIVE;
 		assert_ok!(AssetsRegistry::set_local_admin(Origin::signed(ROOT), ALICE));
 		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::signed(ROOT), BOB));
 
@@ -138,12 +147,14 @@ fn set_metadata_tests() {
 			Origin::signed(ALICE),
 			local_asset_id,
 			foreign_asset_id,
+			location.clone(),
 			DECIMALS,
 		));
 		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
 			Origin::signed(BOB),
 			local_asset_id,
 			foreign_asset_id,
+			location,
 			DECIMALS,
 		));
 		assert_ok!(AssetsRegistry::set_metadata(
