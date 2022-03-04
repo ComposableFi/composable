@@ -4,3 +4,10 @@ language = "en"
 multilingual = false
 src = "src"
 title = "Composable Finance"
+
+[output.html]
+default-theme = "light"
+no-section-label = true
+
+[output.html.fold]
+enable = true
