@@ -7,7 +7,7 @@ fn safe_div(a: &mut BigUint, b: &mut BigUint) -> Result<BigUint, DispatchError> 
 	if b.len() == 1 {
 		return Ok(a.div_unit(b.get(0)))
 	}
-	let div = a.div(&b, false).ok_or(ArithmeticError::Overflow)?;
+	let div = a.div(b, false).ok_or(ArithmeticError::Overflow)?;
 	Ok(div.0)
 }
 

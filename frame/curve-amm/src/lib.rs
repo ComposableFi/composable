@@ -31,7 +31,6 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
-#![allow(clippy::all)]
 
 pub use pallet::*;
 
@@ -579,7 +578,7 @@ pub mod pallet {
 
 		/// Return pool information for given pool_id.
 		pub(crate) fn get_pool(pool_id: T::PoolId) -> Result<PoolOf<T>, DispatchError> {
-			Pools::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound.into())
+			Pools::<T>::get(pool_id).ok_or_else(|| Error::<T>::PoolNotFound.into())
 		}
 
 		/// Account of a pool
