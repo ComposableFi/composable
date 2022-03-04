@@ -1,7 +1,7 @@
 use super::*;
 use crate::Pallet as LBP;
 use composable_support::validation::Validated;
-use composable_traits::{defi::CurrencyPair, dex::CurveAmm};
+use composable_traits::{defi::CurrencyPair, dex::Amm};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{assert_ok, traits::fungibles::Mutate};
 use frame_system::RawOrigin;
@@ -58,7 +58,7 @@ benchmarks! {
 		  // Mint the tokens
 		  assert_ok!(T::Assets::mint_into(project_token, &owner, initial_project_tokens));
 		  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
-		  assert_ok!(<LBP<T> as CurveAmm>::add_liquidity(
+		  assert_ok!(<LBP<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_project_tokens,
@@ -99,7 +99,7 @@ benchmarks! {
 		  // Mint the tokens
 		  assert_ok!(T::Assets::mint_into(project_token, &owner, initial_project_tokens));
 		  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
-		  assert_ok!(<LBP<T> as CurveAmm>::add_liquidity(
+		  assert_ok!(<LBP<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_project_tokens,
@@ -140,7 +140,7 @@ benchmarks! {
 		  // Mint the tokens
 		  assert_ok!(T::Assets::mint_into(project_token, &owner, initial_project_tokens));
 		  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
-		  assert_ok!(<LBP<T> as CurveAmm>::add_liquidity(
+		  assert_ok!(<LBP<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_project_tokens,
@@ -213,7 +213,7 @@ benchmarks! {
 		  // Mint the tokens
 		  assert_ok!(T::Assets::mint_into(project_token, &owner, initial_project_tokens));
 		  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
-		  assert_ok!(<LBP<T> as CurveAmm>::add_liquidity(
+		  assert_ok!(<LBP<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_project_tokens,

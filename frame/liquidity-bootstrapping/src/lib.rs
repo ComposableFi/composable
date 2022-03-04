@@ -54,7 +54,7 @@ pub mod pallet {
 	use composable_maths::dex::constant_product::{compute_out_given_in, compute_spot_price};
 	use composable_support::validation::{Validate, Validated};
 	use composable_traits::{
-		currency::LocalAssets, defi::CurrencyPair, dex::CurveAmm, math::SafeArithmetic,
+		currency::LocalAssets, defi::CurrencyPair, dex::Amm, math::SafeArithmetic,
 	};
 	use core::fmt::Debug;
 	use frame_support::{
@@ -383,7 +383,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
 			Ok(())
 		}
 
@@ -399,7 +399,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
 			Ok(())
 		}
 
@@ -421,7 +421,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::exchange(
+			let _ = <Self as Amm>::exchange(
 				&who,
 				pool_id,
 				pair,
@@ -446,7 +446,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::add_liquidity(
+			let _ = <Self as Amm>::add_liquidity(
 				&who,
 				pool_id,
 				base_amount,
@@ -463,7 +463,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::remove_liquidity())]
 		pub fn remove_liquidity(origin: OriginFor<T>, pool_id: PoolIdOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::remove_liquidity(
+			let _ = <Self as Amm>::remove_liquidity(
 				&who,
 				pool_id,
 				BalanceOf::<T>::zero(),
@@ -573,7 +573,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> CurveAmm for Pallet<T> {
+	impl<T: Config> Amm for Pallet<T> {
 		type AssetId = AssetIdOf<T>;
 		type Balance = BalanceOf<T>;
 		type AccountId = AccountIdOf<T>;
@@ -613,7 +613,7 @@ pub mod pallet {
 			let pool = Self::get_pool(pool_id)?;
 			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
 			let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
-			<Self as CurveAmm>::exchange(
+			<Self as Amm>::exchange(
 				who,
 				pool_id,
 				pair,
@@ -633,7 +633,7 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
-			<Self as CurveAmm>::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
+			<Self as Amm>::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
 		}
 
 		#[transactional]

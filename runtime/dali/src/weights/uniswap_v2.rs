@@ -40,6 +40,24 @@ impl<T: frame_system::Config> uniswap_v2::WeightInfo for WeightInfo<T> {
 	}
 	// Storage: ConstantProductDex Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
+	// Storage: Tokens TotalIssuance (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	fn add_liquidity() -> Weight {
+		(153_650_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(8 as Weight))
+			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+	}
+	// Storage: ConstantProductDex Pools (r:1 w:0)
+	// Storage: Tokens Accounts (r:5 w:5)
+	// Storage: Tokens TotalIssuance (r:1 w:1)
+	// Storage: System Account (r:1 w:0)
+	fn remove_liquidity() -> Weight {
+		(119_939_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(8 as Weight))
+			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+	}
+	// Storage: ConstantProductDex Pools (r:1 w:0)
+	// Storage: Tokens Accounts (r:5 w:5)
 	// Storage: System Account (r:2 w:1)
 	fn buy() -> Weight {
 		(145_348_000 as Weight)

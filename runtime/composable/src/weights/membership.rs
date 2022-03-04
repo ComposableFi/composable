@@ -95,7 +95,7 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	fn set_prime(m: u32, ) -> Weight {
 		(9_562_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((118_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add((123_000 as Weight).saturating_mul(m as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
