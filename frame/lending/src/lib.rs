@@ -606,7 +606,7 @@ pub mod pallet {
 			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			Self::deposit_collateral_internal(&market_id, &sender, amount)?;
+			<Self as Lending>::deposit_collateral(&market_id, &sender, amount)?;
 			Self::deposit_event(Event::<T>::CollateralDeposited { sender, market_id, amount });
 			Ok(().into())
 		}
@@ -623,7 +623,7 @@ pub mod pallet {
 			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			Self::withdraw_collateral_internal(&market_id, &sender, amount)?;
+			<Self as Lending>::withdraw_collateral(&market_id, &sender, amount)?;
 			Self::deposit_event(Event::<T>::CollateralWithdrawn { sender, market_id, amount });
 			Ok(().into())
 		}
@@ -640,7 +640,7 @@ pub mod pallet {
 			amount_to_borrow: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			Self::borrow_internal(&market_id, &sender, amount_to_borrow)?;
+			<Self as Lending>::borrow(&market_id, &sender, amount_to_borrow)?;
 			Self::deposit_event(Event::<T>::Borrowed {
 				sender,
 				market_id,
@@ -665,7 +665,7 @@ pub mod pallet {
 			repay_amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			Self::repay_borrow_internal(&market_id, &sender, &beneficiary, Some(repay_amount))?;
+			<Self as Lending>::repay_borrow(&market_id, &sender, &beneficiary, Some(repay_amount))?;
 			Self::deposit_event(Event::<T>::RepaidBorrow {
 				sender,
 				market_id,
@@ -707,89 +707,6 @@ pub mod pallet {
 			let total_interest =
 				<T as Config>::MultiCurrency::balance(debt_asset_id, &Self::account_id(market_id));
 			Ok(total_interest)
-		}
-
-		pub fn account_id(
-			market_id: &<Self as Lending>::MarketId,
-		) -> <Self as DeFiEngine>::AccountId {
-			<Self as Lending>::account_id(market_id)
-		}
-
-		pub fn calc_utilization_ratio(
-			cash: <Self as DeFiEngine>::Balance,
-			borrows: <Self as DeFiEngine>::Balance,
-		) -> Result<Percent, DispatchError> {
-			<Self as Lending>::calc_utilization_ratio(cash, borrows)
-		}
-
-		pub fn deposit_collateral_internal(
-			market_id: &<Self as Lending>::MarketId,
-			account_id: &<Self as DeFiEngine>::AccountId,
-			amount: CollateralLpAmountOf<Self>,
-		) -> Result<(), DispatchError> {
-			<Self as Lending>::deposit_collateral(market_id, account_id, amount)
-		}
-		pub fn collateral_of_account(
-			market_id: &<Self as Lending>::MarketId,
-			account: &<Self as DeFiEngine>::AccountId,
-		) -> Result<<Self as DeFiEngine>::Balance, DispatchError> {
-			<Self as Lending>::collateral_of_account(market_id, account)
-		}
-		pub fn withdraw_collateral_internal(
-			market_id: &<Self as Lending>::MarketId,
-			account: &<Self as DeFiEngine>::AccountId,
-			amount: CollateralLpAmountOf<Self>,
-		) -> Result<(), DispatchError> {
-			<Self as Lending>::withdraw_collateral(market_id, account, amount)
-		}
-
-		pub fn get_borrow_limit(
-			market_id: &<Self as Lending>::MarketId,
-			account: &<Self as DeFiEngine>::AccountId,
-		) -> Result<<Self as DeFiEngine>::Balance, DispatchError> {
-			<Self as Lending>::get_borrow_limit(market_id, account)
-		}
-
-		pub fn borrow_internal(
-			market_id: &<Self as Lending>::MarketId,
-			debt_owner: &<Self as DeFiEngine>::AccountId,
-			amount_to_borrow: <Self as DeFiEngine>::Balance,
-		) -> Result<(), DispatchError> {
-			<Self as Lending>::borrow(market_id, debt_owner, amount_to_borrow)
-		}
-
-		pub fn borrow_balance_current(
-			market_id: &<Self as Lending>::MarketId,
-			account: &<Self as DeFiEngine>::AccountId,
-		) -> Result<Option<BorrowAmountOf<Self>>, DispatchError> {
-			<Self as Lending>::borrow_balance_current(market_id, account)
-		}
-
-		pub fn total_borrows(
-			market_id: &<Self as Lending>::MarketId,
-		) -> Result<<Self as DeFiEngine>::Balance, DispatchError> {
-			<Self as Lending>::total_borrows(market_id)
-		}
-
-		pub fn total_cash(
-			market_id: &<Self as Lending>::MarketId,
-		) -> Result<<Self as DeFiEngine>::Balance, DispatchError> {
-			<Self as Lending>::total_cash(market_id)
-		}
-
-		pub fn total_interest(
-			market_id: &<Self as Lending>::MarketId,
-		) -> Result<<Self as DeFiEngine>::Balance, DispatchError> {
-			<Self as Lending>::total_interest(market_id)
-		}
-
-		pub fn repay_borrow_internal(
-			market_id: &<Self as Lending>::MarketId,
-			from: &<Self as DeFiEngine>::AccountId,
-			beneficiary: &<Self as DeFiEngine>::AccountId,
-			repay_amount: Option<BorrowAmountOf<Self>>,
-		) -> Result<(), DispatchError> {
-			<Self as Lending>::repay_borrow(market_id, from, beneficiary, repay_amount)
 		}
 
 		pub fn create_borrower_data(
@@ -1203,8 +1120,6 @@ pub mod pallet {
 					false,
 				)?;
 
-				dbg!(&config_input);
-
 				let config = MarketConfig {
 					manager,
 					borrow: borrow_asset_vault.clone(),
@@ -1315,6 +1230,7 @@ pub mod pallet {
 					&market_account,
 				)?;
 
+				dbg!();
 				let debt_asset_id = DebtMarkets::<T>::get(market_id);
 
 				let burn_amount = <T as Config>::MultiCurrency::balance(debt_asset_id, beneficiary);
@@ -1330,8 +1246,10 @@ pub mod pallet {
 					total_repay_amount
 				} else {
 					let repay_borrow_amount = total_repay_amount - burn_amount;
+					dbg!();
 					remaining_borrow_amount =
 						remaining_borrow_amount.safe_sub(&repay_borrow_amount)?;
+					dbg!();
 					<T as Config>::MultiCurrency::burn_from(
 						debt_asset_id,
 						&market_account,
@@ -1340,6 +1258,7 @@ pub mod pallet {
 					burn_amount
 				};
 
+				dbg!();
 				// release_and_burn
 				<T as Config>::MultiCurrency::release(
 					debt_asset_id,
@@ -1347,12 +1266,15 @@ pub mod pallet {
 					debt_to_release,
 					true,
 				)?;
+
+				dbg!();
 				<T as Config>::MultiCurrency::burn_from(
 					debt_asset_id,
 					beneficiary,
 					debt_to_release,
 				)?;
 
+				dbg!();
 				<T as Config>::MultiCurrency::transfer(
 					borrow_asset_id,
 					from,
@@ -1396,9 +1318,9 @@ pub mod pallet {
 
 		// ANCHOR total_cash implementation
 		fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
-			let market = dbg!(Self::get_market(market_id)?);
-			let borrow_id = dbg!(T::Vault::asset_id(&market.borrow)?);
-			Ok(dbg!(<T as Config>::MultiCurrency::balance(borrow_id, &Self::account_id(market_id))))
+			let market = Self::get_market(market_id)?;
+			let borrow_id = T::Vault::asset_id(&market.borrow)?;
+			Ok(<T as Config>::MultiCurrency::balance(borrow_id, &Self::account_id(market_id)))
 		}
 
 		fn calc_utilization_ratio(
@@ -1503,13 +1425,13 @@ pub mod pallet {
 			let collateral_balance = AccountCollateral::<T>::get(market_id, account)
 				.unwrap_or_else(CollateralLpAmountOf::<Self>::zero);
 
-			if dbg!(collateral_balance) > T::Balance::zero() {
+			if collateral_balance > T::Balance::zero() {
 				let borrower = Self::create_borrower_data(market_id, account)?;
-				let balance = dbg!(borrower
+				let balance = borrower
 					.borrow_for_collateral()
-					.map_err(|_| Error::<T>::BorrowerDataCalculationFailed)?)
-				.checked_mul_int(1_u64)
-				.ok_or(ArithmeticError::Overflow)?;
+					.map_err(|_| Error::<T>::BorrowerDataCalculationFailed)?
+					.checked_mul_int(1_u64)
+					.ok_or(ArithmeticError::Overflow)?;
 				Ok(balance.into())
 			} else {
 				Ok(Self::Balance::zero())
@@ -1524,9 +1446,6 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let market = Self::get_market(market_id)?;
 			let market_account = Self::account_id(market_id);
-
-			// dbg!(&market);
-			dbg!(market.collateral, account, amount);
 
 			ensure!(
 				<T as Config>::MultiCurrency::can_withdraw(market.collateral, account, amount)

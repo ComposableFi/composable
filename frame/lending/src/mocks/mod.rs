@@ -441,8 +441,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext
 }
 
+// BLOCK HELPERS
+
 /// Progress to the given block, and then finalize the block.
-#[allow(dead_code)]
 pub fn run_to_block(n: BlockNumber) {
 	Lending::on_finalize(System::block_number());
 	for b in (System::block_number() + 1)..=n {
@@ -453,11 +454,15 @@ pub fn run_to_block(n: BlockNumber) {
 	}
 }
 
+/// calls [`next_block(n)`] and then calls [`Lending::finalize`](OnFinalize::on_finalize).
 pub fn process_block(n: BlockNumber) {
 	next_block(n);
 	Lending::on_finalize(n);
 }
 
+/// Sets the block to `n`, initializes the block with
+/// [`Lending::on_initialize`](OnInitialize::on_initialize), and then sets the timestamp to where it
+/// should be for the specified block.
 pub fn next_block(n: u64) {
 	System::set_block_number(n);
 	Lending::on_initialize(n);
