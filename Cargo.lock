@@ -5538,6 +5538,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
+ "orml-xtokens",
  "pallet-assets",
  "pallet-assets-registry",
  "pallet-aura",

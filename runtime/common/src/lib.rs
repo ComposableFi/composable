@@ -17,10 +17,10 @@ pub mod xcmp;
 use composable_traits::oracle::MinimalOracle;
 pub use constants::*;
 use frame_support::parameter_types;
+use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_runtime::DispatchError;
-use num_traits::Zero;
 pub use types::*;
 
 /// Common types of statemint and statemine and dali and picasso and composable.
