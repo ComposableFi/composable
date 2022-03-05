@@ -46,8 +46,8 @@ pub enum BondDuration<BlockNumber> {
 pub struct BondOffer<AccountId, AssetId, Balance, BlockNumber> {
 	/// The account that will receive the locked assets.
 	pub beneficiary: AccountId,
-	/// Asset to be locked. Unlockable after `duration`.
-	/// Asset which `beneficiary` wants to get for his offer.
+	/// Asset to be locked. Unlockable after `maturity`.
+	/// Asset which `beneficiary` wants to get for their offer.
 	pub asset: AssetId,
 	/// Price of a bond unit in `asset`.
 	pub bond_price: Balance,
