@@ -29,6 +29,7 @@ Above properies apply to local currencies, so to make econimics operate, need to
 - `Remote Symbols`. 
 
 All currencies are derived, so some currencies can be derived in local consensus. So:
+- `One to One` when we create new currency, and it is always one to one to some other currency.
 - `Dillution`. If currency was direcly derived from protocol in local consensus than can tell exact ration of one amount needed to swap for other amount. With time currency amounts can change (locked, unlocked, minted), which will changed dillution factor. So we cannot tell nothing about external currencies dillution factors, only Oracles can tell. In this case we can observer whole chain of of tokens as they wrap each other and dillute. Process is not nessecary bidirectional.
 - `Local Simple Dillution` - when for each amount there is mint of other amount, may be allowing different reserver/hold propreties. May eventually be not one to one as other can be burnt. But because of can witness total supply, can say ratio. So what to do if curreny transfered from and to system?
 
@@ -51,7 +52,57 @@ So rest code if exstrinsic can operate safely without any checks.
 What assets registry should proved in general, with link to our assets/assters-registy and registy-govenrancne pallets.
 
 ## XCM and other cross consensus protocols
- 
+
+When there are assets in one consensus, how they can be transfered to other consensus?
+
+### Reserver Transfer
+
+Hi there, Parity suggested(at stack exchange) to build your own security protocol on top
+Simple one:
+Parachain1 (P1) mints A
+P1 mints B for A (1-1 map)
+P1 sends messages to P2 with B
+B consults it registry and mints B' on it.
+So P2 can send message to transfer  B' to P1.
+P1 will burn burn B and mint A(can do lock)
+KSM over relay seems should do that (need to find exact code) or for different tokens on Statemine. No sure about acala - how they settle that.
+Can operate on full trust too, like if P2 or P3 sends A token it promised to burn and did it, and we do not need to map it on P1.
+I guess schemas like Mosaic relayed  possible too.
+7 replies
+
+Karel  4 days ago
+So downside of this is compatibility with other bridging solutions. What happens when we do
+Acala -- (XCM) --> Picasso -- (IBC) --> Osmosis -- (IBC) --> Astar -- (XCM) --> Acala?
+
+Karel  4 days ago
+I think fundamentally that model is not scalable
+
+Karel  4 days ago
+Each of these hops would require a consult with Acala.
+:heavy_check_mark:
+1
+
+
+Karel  4 days ago
+It is also not how clearing actually works
+
+Dzmitry Lahoda  2 days ago
+Hi, I am online from today.
+XCM is overall agnostics from how we do the trust of para to para. But not sure if default ORML traits (xtokens) handle that agnostics.
+Yes, by current design any transfer/swap should go over Reserve (trusted chain) who accounts for balances. It is most secured way I guess.
+So we can design different shared security scheme.
+Or build on top of existing security scheme. Like UI may LIE (need bunch of RPC endopints) that KSM on Kusama is same as KSM on Acala is same as KSM on Picasso.
+And do proper transfer beneath.
+That process can be automated via dexes. So transfer will be weight fee + dex fee. But for users it will look like as single chain operation.
+
+Dzmitry Lahoda  2 days ago
+ It is also not how clearing actually works
+clearing?
+
+Dzmitry Lahoda  2 days ago
+I can do research and documenting on various bridge protocols in terms of what security/(de)centralizatoion they provide so can choose proper for uses case.
+
+
 ## API considerations
 
  Asset id as if it was deserialized, not necessary exists.
