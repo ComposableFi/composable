@@ -58,14 +58,13 @@ pub fn compute_d(
 		d_p = safe_div(&mut d_p_d, &mut quote_n)?;
 
 		let d_prev = d.clone();
-
-		// d = (ann * sum + d_p * n) * d / ((ann - 1) * d + (n + 1) * d_p)
-		let mut term1 = ann.clone().mul(&sum).add(&d_p.clone().mul(&n)).mul(&d);
-		let mut term2 = ann_d
+		// d = (ann * sum + d_p * n) * d / (ann * d + (n + 1) * d_p - d)
+		let mut numerator = ann.clone().mul(&sum).add(&d_p.clone().mul(&n)).mul(&d);
+		let mut denominator = ann_d
 			.add(&n.clone().add(&one).mul(&d_p))
 			.sub(&d)
 			.map_err(|_| ArithmeticError::Underflow)?;
-		d = safe_div(&mut term1, &mut term2)?;
+		d = safe_div(&mut numerator, &mut denominator)?;
 
 		if d.clone() > d_prev {
 			if d.clone() - d_prev <= one {
