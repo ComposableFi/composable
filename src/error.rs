@@ -19,4 +19,6 @@ pub enum BeefyClientError {
     InvalidMmrProof,
     /// Invalid authority proof
     InvalidAuthorityProof,
+    /// Invalid merkle proof
+    InvalidMerkleProof,
 }
