@@ -584,6 +584,54 @@ proptest! {
 	}
 
 	#[test]
+	fn add_remove_liquidity_amp_0_proptest(
+		usdc_balance in 1..u32::MAX,
+		usdt_balance in 1..u32::MAX,
+	) {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let usdt_balance = usdt_balance as u128 * unit;
+		let usdc_balance = usdc_balance as u128 * unit;
+		let initial_usdt = u64::MAX as u128 * unit;
+		let initial_usdc = u64::MAX as u128 * unit;
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			0_u16,
+			Permill::zero(),
+			Permill::zero(),
+		);
+		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_balance));
+		prop_assert_ok!(Tokens::mint_into(USDC, &BOB, usdc_balance));
+		prop_assert_ok!(StableSwap::add_liquidity(
+			Origin::signed(BOB),
+			pool_id,
+			usdc_balance,
+			usdt_balance,
+			0,
+			false
+		));
+		let lp = Tokens::balance(pool.lp_token, &BOB);
+		let expected_lp = usdt_balance + usdc_balance;
+		prop_assert_ok!(default_acceptable_computation_error(lp, expected_lp));
+		prop_assert_ok!(StableSwap::remove_liquidity(
+			Origin::signed(BOB),
+			pool_id,
+			lp,
+			0,
+			0,
+				));
+		let bob_usdc = Tokens::balance(USDC, &BOB);
+		let bob_usdt = Tokens::balance(USDT, &BOB);
+		prop_assert_ok!(default_acceptable_computation_error(usdc_balance + usdt_balance, bob_usdc + bob_usdt));
+		Ok(())
+	})?;
+	}
+
+	#[test]
 	fn buy_sell_proptest(
 		value in 1..u32::MAX,
 	) {
@@ -605,6 +653,35 @@ proptest! {
 		prop_assert_ok!(StableSwap::sell(Origin::signed(BOB), pool_id, USDT, value, false));
 		// mint 1 extra USDC so that original amount of USDT can be buy back even with small slippage
 		prop_assert_ok!(Tokens::mint_into(USDC, &BOB, unit));
+		prop_assert_ok!(StableSwap::buy(Origin::signed(BOB), pool_id, USDT, value, false));
+		let bob_usdt = Tokens::balance(USDT, &BOB);
+		prop_assert_ok!(default_acceptable_computation_error(bob_usdt, value));
+		Ok(())
+	})?;
+	}
+
+	#[test]
+	fn buy_sell_amp_0_proptest(
+		value in 1..u32::MAX,
+	) {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = u64::MAX as u128 * unit;
+		let initial_usdc = u64::MAX as u128 * unit;
+		let value = value as u128 * unit;
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			0_u16,
+			Permill::zero(),
+			Permill::zero(),
+		);
+		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, value));
+		prop_assert_ok!(StableSwap::sell(Origin::signed(BOB), pool_id, USDT, value, false));
+		// mint 2 extra USDC so that original amount of USDT can be buy back even with small slippage
+		prop_assert_ok!(Tokens::mint_into(USDC, &BOB, 2_u128 * unit));
 		prop_assert_ok!(StableSwap::buy(Origin::signed(BOB), pool_id, USDT, value, false));
 		let bob_usdt = Tokens::balance(USDT, &BOB);
 		prop_assert_ok!(default_acceptable_computation_error(bob_usdt, value));
@@ -639,6 +716,34 @@ proptest! {
 		Ok(())
 	})?;
 	}
+
+	#[test]
+	fn swap_amp_0_proptest(
+		value in 1..u32::MAX,
+	) {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = u64::MAX as u128 * unit;
+		let initial_usdc = u64::MAX as u128 * unit;
+		let value = value as u128 * unit;
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			0_u16,
+			Permill::from_float(0.025),
+			Permill::zero(),
+		);
+		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, value));
+		prop_assert_ok!(StableSwap::swap(Origin::signed(BOB), pool_id, CurrencyPair::new(USDC, USDT), value, 0, false));
+		let bob_usdc = Tokens::balance(USDC, &BOB);
+		let expected_usdc =  value - pool.fee.mul_floor(value);
+		prop_assert_ok!(default_acceptable_computation_error(bob_usdc, expected_usdc));
+		Ok(())
+	})?;
+	}
 }
 
 #[cfg(feature = "visualization")]
@@ -650,7 +755,7 @@ fn get_base_graph() {
 		let initial_usdc = 100000_u128 * unit;
 		let pool_id = create_pool(
 			USDC,
-			USDT,
+			SDT,
 			initial_usdc,
 			initial_usdt,
 			100_u16,
