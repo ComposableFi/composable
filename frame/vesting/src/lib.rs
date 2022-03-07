@@ -56,11 +56,14 @@ use sp_runtime::{
 };
 use sp_std::{convert::TryInto, vec::Vec};
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarks;
-mod mock;
-mod tests;
 mod weights;
+
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod benchmarks;
 
 pub use module::*;
 pub use weights::WeightInfo;

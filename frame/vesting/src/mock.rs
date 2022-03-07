@@ -78,7 +78,7 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-fn benchmark_vested_transfer_acc() -> AccountId {
+fn benchmark_vested_transfer_account() -> AccountId {
 	AccountId::decode(&mut TrailingZeroInput::zeroes())
 		.expect("infinite length input; no invalid inputs for type; qed")
 }
@@ -88,7 +88,7 @@ impl EnsureOrigin<Origin> for EnsureAliceOrBob {
 	type Success = AccountId;
 
 	fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
-		let benchmark_acc = benchmark_vested_transfer_acc();
+		let benchmark_acc = benchmark_vested_transfer_account();
 		Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
 			RawOrigin::Signed(ALICE) => Ok(ALICE),
 			RawOrigin::Signed(BOB) => Ok(BOB),
@@ -104,7 +104,7 @@ impl EnsureOrigin<Origin> for EnsureAliceOrBob {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn successful_origin() -> Origin {
-		Origin::from(RawOrigin::Signed(benchmark_vested_transfer_acc()))
+		Origin::from(RawOrigin::Signed(benchmark_vested_transfer_account()))
 	}
 }
 
