@@ -4,7 +4,7 @@ We have a few guidelines and requirements to ensure correct workflows are follow
 
 ## First Things First
 Before contributing, go through the documentation found in `~/docs/`.  Specifically:  
-* [rust-setup.md](./rust-setup.md) ― A walkthrough for installing and configuring Rust and other tools in your develop    ment environment  
+* [rust-setup.md](./rust-setup.md) ― A walkthrough for installing and configuring Rust and other tools in your development environment  
 * [proptest.md](./proptest.md) ― A guide to our approach and philosophy for automated testing  
 * [benchmarking.md](./benchmarking.md) ― A guide for benchmarking pallet changes  
 
