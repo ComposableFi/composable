@@ -155,6 +155,7 @@ pub mod pallet {
 		PoolNotFound,
 		PairMismatch,
 		CannotRespectMinimumRequested,
+		AmpFactorMustBeGreaterThanZero,
 	}
 
 	#[pallet::event]
@@ -604,6 +605,7 @@ pub mod pallet {
 			fee: Permill,
 			protocol_fee: Permill,
 		) -> Result<T::PoolId, DispatchError> {
+			ensure!(amplification_coefficient > 0, Error::<T>::AmpFactorMustBeGreaterThanZero);
 			ensure!(pair.base != pair.quote, Error::<T>::InvalidPair);
 
 			let total_fees = fee.checked_add(&protocol_fee).ok_or(ArithmeticError::Overflow)?;
