@@ -154,7 +154,7 @@ prop_compose! {
 	fn generate_equal_weighted_pool_config()
 		(
 			initial_assets in generate_initial_assets_without_duplicates()
-		) -> PoolConfig<AccountId, MockCurrencyId> {
+		) -> PoolConfig<AccountId, MockCurrencyId, Perquintill> {
 			PoolConfig {
 				owner: ALICE,
 				fee: Perquintill::zero(),
@@ -197,7 +197,7 @@ prop_compose! {
 		(
 			pool_config in generate_equal_weighted_pool_config(),
 			mut initial_deposits in generate_n_initial_deposits(n),
-		) -> (PoolConfig<AccountId, MockCurrencyId>, Vec<Vec<Deposit<MockCurrencyId, Balance>>>){
+		) -> (PoolConfig<AccountId, MockCurrencyId, Perquintill>, Vec<Vec<Deposit<MockCurrencyId, Balance>>>){
 			let mut all_deposits = Vec::new();
 			
 			for _ in 0..n {
@@ -225,7 +225,7 @@ prop_compose! {
 			pool_config in generate_equal_weighted_pool_config(),
 			initial_deposits in generate_n_initial_deposits(1),
 			modifiers in prop::collection::vec(0.1f64..5.0f64, n)
-		) -> (PoolConfig<AccountId, MockCurrencyId>, Vec<Vec<Deposit<MockCurrencyId, Balance>>>){
+		) -> (PoolConfig<AccountId, MockCurrencyId, Perquintill>, Vec<Vec<Deposit<MockCurrencyId, Balance>>>){
 			let mut all_deposits = Vec::new();
 			
 			for modifier in modifiers {
@@ -257,7 +257,7 @@ prop_compose! {
 			initial_deposits in generate_n_initial_deposits(1),
 			initial_balances in generate_n_initial_deposits(1),
 			modifiers in prop::collection::vec(0.1f64..5.0f64, n)
-		) -> (PoolConfig<AccountId, MockCurrencyId>, Vec<Vec<Deposit<MockCurrencyId, Balance>>>, Vec<Vec<Deposit<MockCurrencyId, Balance>>>){
+		) -> (PoolConfig<AccountId, MockCurrencyId, Perquintill>, Vec<Vec<Deposit<MockCurrencyId, Balance>>>, Vec<Vec<Deposit<MockCurrencyId, Balance>>>){
 			let mut all_deposits = Vec::new();
 			
 			for modifier in &modifiers {
@@ -309,7 +309,7 @@ prop_compose! {
 			deposit_amounts in generate_n_initial_deposits(1),
 			deposit_modifiers in prop::collection::vec(1..=5u128, n),
 			deposit_users in prop::collection::vec(1..=10u128, n),
-		) -> (PoolConfig<AccountId, MockCurrencyId>, Vec<(AccountId, Vec<Deposit<MockCurrencyId, Balance>>)>){
+		) -> (PoolConfig<AccountId, MockCurrencyId, Perquintill>, Vec<(AccountId, Vec<Deposit<MockCurrencyId, Balance>>)>){
 			let mut all_deposits = Vec::new();
 			
 			for (user, modifier) in deposit_users.iter().zip(deposit_modifiers.iter()) {
@@ -347,7 +347,7 @@ prop_compose! {
 			deposit_users in prop::collection::vec(1..=10u128, n),
 			withdraw_ratios in prop::collection::vec(1..=100u64, m),
 			withdraw_users in prop::collection::vec(1..=10u128, m),
-		) -> (PoolConfig<AccountId, MockCurrencyId>, 
+		) -> (PoolConfig<AccountId, MockCurrencyId, Perquintill>, 
 			Vec<(AccountId, Vec<Deposit<MockCurrencyId, Balance>>)>, 
 			Vec<(AccountId, Perquintill)>){
 			let mut all_deposits = Vec::new();
@@ -385,7 +385,7 @@ prop_compose! {
 //                                           Helper Functions                                          
 // ----------------------------------------------------------------------------------------------------
 
-fn equal_weight_vector_for(assets: &Vec<MockCurrencyId>) -> Vec<Weight<MockCurrencyId>>{
+fn equal_weight_vector_for(assets: &Vec<MockCurrencyId>) -> Vec<Weight<MockCurrencyId, Perquintill>>{
 	let mut weights = Vec::new();
 
 	for asset in assets {
@@ -413,8 +413,8 @@ fn normalize_weights(non_normalized_weights: &mut Vec<Perquintill>) -> Vec<Perqu
 	weights
 }
 
-fn construct_weight_vector_from(assets: &Vec<MockCurrencyId>, perquintills: &Vec<Perquintill>) -> Vec<Weight<MockCurrencyId>> {
-	let mut weights: Vec<Weight<MockCurrencyId>> = Vec::new();
+fn construct_weight_vector_from(assets: &Vec<MockCurrencyId>, perquintills: &Vec<Perquintill>) -> Vec<Weight<MockCurrencyId, Perquintill>> {
+	let mut weights: Vec<Weight<MockCurrencyId, Perquintill>> = Vec::new();
 
 	for (asset, weight) in assets.iter().zip(perquintills.iter()) {
 		weights.push(Weight{
@@ -426,7 +426,7 @@ fn construct_weight_vector_from(assets: &Vec<MockCurrencyId>, perquintills: &Vec
 	weights
 }
 
-fn create_pool_with(config: &PoolConfig<AccountId, MockCurrencyId>) -> u64 {
+fn create_pool_with(config: &PoolConfig<AccountId, MockCurrencyId, Perquintill>) -> u64 {
 	let creation_fee = Deposit {
 		asset_id: MockCurrencyId::A,
 		amount: Pools::required_creation_deposit_for(config.assets.len()).unwrap(), 
@@ -610,7 +610,7 @@ proptest! {
 		//     assets will have multiple weights in the weight vector
 		weights.resize(initial_assets.len(), Perquintill::zero());
 		let weights: Vec<Perquintill> = normalize_weights(&mut weights);
-		let weights: Vec<Weight<MockCurrencyId>> = construct_weight_vector_from(&initial_assets, &weights);
+		let weights: Vec<Weight<MockCurrencyId, Perquintill>> = construct_weight_vector_from(&initial_assets, &weights);
 
 		// remove duplicate assets
 		let initial_assets: Vec<MockCurrencyId> = BTreeSet::<MockCurrencyId>::from_iter(initial_assets.iter().copied())
@@ -2579,7 +2579,7 @@ fn fixed_u128() {
 
 fn invariant(
 	reserves: Vec<Deposit<MockCurrencyId, Balance>>, 
-	weights: Vec<Weight<MockCurrencyId>>
+	weights: Vec<Weight<MockCurrencyId, Perquintill>>
 ) -> Result<FixedBalance, ()> {
 	let mut invariant_constant: FixedBalance = FixedBalance::from_num(1u8);
 

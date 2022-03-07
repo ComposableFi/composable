@@ -22,6 +22,7 @@ pub type BlockNumber = u64;
 pub type AccountId = u128;
 pub type Balance = u128;
 pub type Amount = i128;
+pub type Weight = Perquintill;
 
 pub const MINIMUM_DEPOSIT: Balance = 1_000;
 pub const MAXIMUM_DEPOSIT: Balance = 10_000;
@@ -117,7 +118,7 @@ parameter_types! {
 	pub const TestPoolPalletID: PalletId = PalletId(*b"testpool");
 	
 	// pub Epsilon: Perquintill = Perquintill::from_float(0.0000000000000001);
-	pub Epsilon: Perquintill = Perquintill::from_float(0.01);
+	pub Epsilon: Perquintill = Weight::from_float(0.01);
 }
 
 impl pallet_pool::Config for Test {
@@ -129,6 +130,7 @@ impl pallet_pool::Config for Test {
 	type NativeAssetId = NativeAssetId;
 	type AssetId = MockCurrencyId;
 	type Balance = Balance;
+	type Weight = Weight;
 	type Convert = ConvertInto;
 	type CreationFee = CreationDeposit;
 	type ExistentialDeposit = ExistentialDeposit;

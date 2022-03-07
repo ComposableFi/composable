@@ -8480,7 +8480,6 @@ name = "pallet-pool"
 version = "0.0.1"
 dependencies = [
  "approx 0.3.2",
- "bitflags",
  "composable-tests-helpers",
  "composable-traits",
  "fixed",
@@ -8488,10 +8487,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hydra-dx-math",
- "log 0.4.14",
  "num-integer",
  "num-traits",
- "once_cell",
  "orml-tokens",
  "orml-traits",
  "pallet-balances",
