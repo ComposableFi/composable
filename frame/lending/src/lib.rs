@@ -290,7 +290,7 @@ pub mod pallet {
 				return
 			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
-				// TODO: check that it should liqudate before liqudaitons
+				// TODO: check that it should liquidate before liquidations
 				let results = signer.send_signed_transaction(|_account| Call::liquidate {
 					market_id,
 					borrowers: vec![account.clone()],
@@ -552,7 +552,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let input = input.value();
-			let pair = input.currency_pair.clone();
+			let pair = input.currency_pair;
 			let (market_id, vault_id) = Self::create(who.clone(), input)?;
 			Self::deposit_event(Event::<T>::MarketCreated {
 				market_id,

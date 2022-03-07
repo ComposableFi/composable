@@ -66,6 +66,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 smallvec = "1.6.1"
 
 # local modules
+composable-support = { path = '../../frame/composable-support', default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
@@ -83,7 +84,9 @@ currency-factory = { package = "pallet-currency-factory", path = "../../frame/cu
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 mosaic = { package = "pallet-mosaic", path = "../../frame/mosaic", default-features = false }
-composable-support = { path = '../../frame/composable-support', default-features = false }
+uniswap-v2 = { package = "pallet-uniswap-v2", path = "../../frame/uniswap-v2", default-features = false }
+curve-amm = { package = "pallet-curve-amm", path = "../../frame/curve-amm", default-features = false }
+liquidity-bootstrapping = { package = "pallet-liquidity-bootstrapping", path = "../../frame/liquidity-bootstrapping", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
@@ -206,7 +209,10 @@ std = [
 	"system-rpc-runtime-api/std",
 	"transaction-payment-rpc-runtime-api/std",
 	"liquidations/std",
-	"simnode-apis/std"
+	"simnode-apis/std",
+  "uniswap-v2/std",
+  "curve-amm/std",
+	"liquidity-bootstrapping/std",
 ]
 runtime-benchmarks = [
 	"assets/runtime-benchmarks",
@@ -245,5 +251,8 @@ runtime-benchmarks = [
 	"currency-factory/runtime-benchmarks",
 	"liquidations/runtime-benchmarks",
 	"lending/runtime-benchmarks",
+  "uniswap-v2/runtime-benchmarks",
+  "curve-amm/runtime-benchmarks",
+	"liquidity-bootstrapping/runtime-benchmarks",
 ]
 sim-node = []

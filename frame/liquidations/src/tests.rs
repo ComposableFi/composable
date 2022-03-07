@@ -31,7 +31,7 @@ fn successfull_liquidate() {
 }
 
 #[test]
-fn do_not_have_amount_to_liqudate() {
+fn do_not_have_amount_to_liquidate() {
 	new_test_externalities().execute_with(|| {
 		let who = AccountId::from_raw(CHARLIE.0);
 		let amount = 100;

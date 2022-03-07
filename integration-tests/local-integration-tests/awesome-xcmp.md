@@ -17,9 +17,10 @@ https://www.youtube.com/watch?v=XU6dAAQD9UE - turst and XCMP
 - https://research.web3.foundation/en/latest/polkadot/XCMP/index.html
 - https://medium.com/polkadot-network/xcm-the-cross-consensus-message-format-3b77b1373392
 
-
 ### XCMP desing
 
+- https://www.youtube.com/watch?v=5cgq5jOZx9g
+- https://substrate.stackexchange.com/questions/37/how-can-i-transfer-assets-using-xcm
 - https://www.youtube.com/watch?v=wrA9vlPjVPE
 - https://research.web3.foundation/en/latest/polkadot/XCMP/Opening_closing%20XCMP%20Channel.html
 
@@ -30,6 +31,11 @@ https://www.youtube.com/watch?v=XU6dAAQD9UE - turst and XCMP
 - https://polkadot.network/Polkadot-lightpaper.pdf
 - https://wiki.polkadot.network/docs/learn-crosschain
 - https://medium.com/web3foundation/polkadots-messaging-scheme-b1ec560908b7
+
+### Assets
+
+https://polkadot.network/blog/statemint-becomes-first-common-good-parachain-on-polkadot/
+
 
 ### Issues
 

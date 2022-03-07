@@ -19,7 +19,7 @@ package = "parity-scale-codec"
 version = "2.0.0"
 
 [dependencies]
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.16' }
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.16' }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16"  }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
@@ -41,10 +41,11 @@ composable-traits = { default-features = false, version = "0.0.1", path = "../co
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6"}
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6"}
 pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
 proptest = "1.0"
+composable-tests-helpers = { path = "../composable-tests-helpers"}
 
 [features]
 default = ["std"]

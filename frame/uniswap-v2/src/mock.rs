@@ -1,20 +1,19 @@
-use crate as constant_product_amm;
+use crate as pallet_uniswap_v2;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
-use sp_arithmetic::{traits::Zero, FixedU128};
+use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-	FixedPointNumber,
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 };
 use system::EnsureRoot;
 
-pub type CurrencyId = u128;
+pub type AssetId = u128;
 
-pub const USDT: CurrencyId = 2;
-pub const USDC: CurrencyId = 4;
+pub const BTC: AssetId = 0;
+pub const USDT: AssetId = 1;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -28,7 +27,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		ConstantProductAmm: constant_product_amm::{Pallet, Call, Storage, Event<T>},
+		Uni: pallet_uniswap_v2::{Pallet, Storage, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
@@ -36,7 +35,7 @@ frame_support::construct_runtime!(
 
 impl pallet_currency_factory::Config for Test {
 	type Event = Event;
-	type AssetId = CurrencyId;
+	type AssetId = AssetId;
 	type AddOrigin = EnsureRoot<AccountId>;
 	type ReserveOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
@@ -47,7 +46,7 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
-pub type AccountId = u64;
+pub type AccountId = u128;
 
 #[allow(dead_code)]
 pub static ALICE: AccountId = 1;
@@ -103,12 +102,12 @@ impl pallet_balances::Config for Test {
 
 pub type Balance = u128;
 
-pub type AssetId = CurrencyId;
-
 pub type Amount = i128;
 
+pub type PoolId = u32;
+
 parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+	pub ExistentialDeposits: |_currency_id: AssetId| -> Balance {
 		Zero::zero()
 	};
 }
@@ -117,7 +116,7 @@ impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
-	type CurrencyId = CurrencyId;
+	type CurrencyId = AssetId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
@@ -126,20 +125,19 @@ impl orml_tokens::Config for Test {
 }
 
 parameter_types! {
-	pub Precision: FixedU128 = FixedU128::saturating_from_rational(1, 1_000_000_000);
 	pub TestPalletID : PalletId = PalletId(*b"const_am");
 }
 
-impl constant_product_amm::Config for Test {
+impl pallet_uniswap_v2::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
 	type Balance = Balance;
 	type CurrencyFactory = LpTokenFactory;
-	type Precision = Precision;
-	type LpToken = Tokens;
-	type PoolId = u32;
-	type PoolTokenIndex = u32;
+	type Assets = Tokens;
+	type Convert = ConvertInto;
+	type PoolId = PoolId;
 	type PalletId = TestPalletID;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

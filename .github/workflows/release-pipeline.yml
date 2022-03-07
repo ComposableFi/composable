@@ -49,7 +49,7 @@ jobs:
       - name: Set Permission
         continue-on-error: true
         run: |
-          sudo su runner
+          sudo su runner && sudo chmod -R 777  /home/runner/_work/_tool/node/
 
       - uses: actions/setup-node@v2
         with:
@@ -62,7 +62,9 @@ jobs:
       - name: Add runtime metadata to release body
         run: |
           cd scripts/github && npm install
+          # interpolate release-drafter output with subwasm output.
           printf "\n%s" "${{ steps.release_drafter.outputs.body }}" >> $GITHUB_WORKSPACE/release.md
+          # Uploads release body to github.
           npm run update-release-body -- --id=${{ steps.release_drafter.outputs.id  }} --repo=composableFi/composable --body="$GITHUB_WORKSPACE/release.md"
           cd $GITHUB_WORKSPACE
 
@@ -74,8 +76,8 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.release_drafter.outputs.upload_url }}
-          asset_path: ./runtime/dali/target/srtool/release/wbuild/dali-runtime/dali_runtime.compact.wasm
-          asset_name: dali_runtime.compact.wasm
+          asset_path: ./runtime/dali/target/srtool/release/wbuild/dali-runtime/dali_runtime.compact.compressed.wasm
+          asset_name: dali_runtime.wasm
           asset_content_type: application/octet-stream
 
       - name: Upload Picasso wasm
@@ -84,8 +86,8 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.release_drafter.outputs.upload_url }}
-          asset_path: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.wasm
-          asset_name: picasso_runtime.compact.wasm
+          asset_path: ./runtime/picasso/target/srtool/release/wbuild/picasso-runtime/picasso_runtime.compact.compressed.wasm
+          asset_name: picasso_runtime.wasm
           asset_content_type: application/octet-stream
 
       - name: Upload Composable wasm
@@ -94,8 +96,8 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.release_drafter.outputs.upload_url }}
-          asset_path: ./runtime/composable/target/srtool/release/wbuild/composable-runtime/composable_runtime.compact.wasm
-          asset_name: composable_runtime.compact.wasm
+          asset_path: ./runtime/composable/target/srtool/release/wbuild/composable-runtime/composable_runtime.compact.compressed.wasm
+          asset_name: composable_runtime.wasm
           asset_content_type: application/octet-stream
 
       # This will build a new client binary if there's a diff in the client source code (node/, src/)
@@ -117,7 +119,6 @@ jobs:
         # and hence this action won't run.
         if: env.client_release == 1
         uses: actions/upload-release-asset@v1
-
         with:
           upload_url: ${{ steps.release_drafter.outputs.upload_url }}
           asset_path: ./target/release/composable

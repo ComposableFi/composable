@@ -13,11 +13,21 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod impls;
+pub mod xcmp;
+use composable_traits::oracle::MinimalOracle;
 pub use constants::*;
+use frame_support::parameter_types;
+use num_traits::Zero;
+use orml_traits::parameter_type_with_key;
+use primitives::currency::CurrencyId;
+use sp_runtime::DispatchError;
 pub use types::*;
 
 /// Common types of statemint and statemine and dali and picasso and composable.
 mod types {
+	use codec::{Decode, Encode, MaxEncodedLen};
+	use core::fmt::Debug;
+	use scale_info::TypeInfo;
 	use sp_runtime::traits::{IdentifyAccount, Verify};
 
 	// todo move it into more shared directory so it can be shared with
@@ -66,6 +76,17 @@ mod types {
 
 	/// Opaque block
 	pub type OpaqueBlock = sp_runtime::generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
+
+	#[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, MaxEncodedLen, TypeInfo)]
+	pub enum MosaicRemoteAssetId {
+		EthereumTokenAddress([u8; 20]),
+	}
+
+	impl From<[u8; 20]> for MosaicRemoteAssetId {
+		fn from(x: [u8; 20]) -> Self {
+			MosaicRemoteAssetId::EthereumTokenAddress(x)
+		}
+	}
 }
 
 /// Common constants of statemint and statemine
@@ -109,4 +130,46 @@ mod constants {
 		EnsureRoot<AccountId>,
 		collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilInstance>,
 	>;
+}
+
+parameter_types! {
+	/// Existential deposit (ED for short) is minimum amount an account has to hold to stay in state.
+	pub NativeExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
+}
+
+pub struct PriceConverter;
+
+impl MinimalOracle for PriceConverter {
+	type AssetId = CurrencyId;
+
+	type Balance = Balance;
+
+	fn get_price_inverse(
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
+	) -> Result<Self::Balance, sp_runtime::DispatchError> {
+		match asset_id {
+			CurrencyId::PICA => Ok(amount),
+			CurrencyId::KSM => Ok(amount / 10),
+			_ => Err(DispatchError::Other("cannot pay with given weight")),
+		}
+	}
+}
+
+pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
+	match *currency_id {
+		CurrencyId::PICA => NativeExistentialDeposit::get(),
+		CurrencyId::KSM =>
+			PriceConverter::get_price_inverse(CurrencyId::KSM, NativeExistentialDeposit::get())
+				.expect("Could not convert because unknown currency."),
+		_ => Balance::zero() // NOTE: zero for now to merge, than need to fix it as separate task
+		//_ => NativeExistentialDeposit::get(),
+	}
+}
+
+parameter_type_with_key! {
+	// Minimum amount an account has to hold to stay in state
+	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+		multi_existential_deposits(currency_id)
+	};
 }

@@ -13,7 +13,7 @@ pub mod dali;
 
 pub mod picasso;
 
-// Parachin ID
+// Parachin ID.
 const PARA_ID: ParaId = ParaId::new(2000);
 
 /// The extensions for the [`ChainSpec`].
@@ -162,7 +162,7 @@ pub fn dali_dev() -> dali::ChainSpec {
 				],
 				dev_accounts(),
 				PARA_ID,
-				dali_runtime::ExistentialDeposit::get(),
+				common::NativeExistentialDeposit::get(),
 			)
 		},
 		vec![],

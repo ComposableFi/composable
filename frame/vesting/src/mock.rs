@@ -11,7 +11,10 @@ use frame_system::RawOrigin;
 use orml_traits::parameter_type_with_key;
 use scale_info::TypeInfo;
 use sp_core::H256;
-use sp_runtime::{testing::Header, traits::IdentityLookup};
+use sp_runtime::{
+	testing::Header,
+	traits::{IdentityLookup, TrailingZeroInput},
+};
 
 use crate as vesting;
 
@@ -75,21 +78,33 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+fn benchmark_vested_transfer_account() -> AccountId {
+	AccountId::decode(&mut TrailingZeroInput::zeroes())
+		.expect("infinite length input; no invalid inputs for type; qed")
+}
+
 pub struct EnsureAliceOrBob;
 impl EnsureOrigin<Origin> for EnsureAliceOrBob {
 	type Success = AccountId;
 
 	fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
+		let benchmark_acc = benchmark_vested_transfer_account();
 		Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
 			RawOrigin::Signed(ALICE) => Ok(ALICE),
 			RawOrigin::Signed(BOB) => Ok(BOB),
+			RawOrigin::Signed(acc) =>
+				if acc == benchmark_acc {
+					Ok(benchmark_acc)
+				} else {
+					Err(Origin::from(RawOrigin::Signed(acc)))
+				},
 			r => Err(Origin::from(r)),
 		})
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn successful_origin() -> Origin {
-		Origin::from(RawOrigin::Signed(Default::default()))
+		Origin::from(RawOrigin::Signed(benchmark_vested_transfer_account()))
 	}
 }
 
@@ -140,7 +155,7 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Vesting: vesting::{Pallet, Storage, Call, Event<T>, Config<T>},
-	  Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
 );
 
