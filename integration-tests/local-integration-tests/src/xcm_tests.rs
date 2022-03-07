@@ -4,16 +4,14 @@
 
 use crate::{
 	env_logger_init,
+	helpers::*,
 	kusama_test_net::{KusamaNetwork, *},
 };
 use codec::Encode;
-use common::AccountId;
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
-use cumulus_primitives_core::ParaId;
 use dali_runtime as picasso_runtime;
 use picasso_runtime::{UnitWeightCost, XcmConfig};
 use primitives::currency::CurrencyId;
-use sp_runtime::traits::AccountIdConversion;
 use support::assert_ok;
 use xcm::latest::prelude::*;
 use xcm_emulator::TestExt;
@@ -22,10 +20,6 @@ use xcm_executor::XcmExecutor;
 // Helper function for forming buy execution message
 fn buy_execution<C>(fees: impl Into<MultiAsset>) -> Instruction<C> {
 	BuyExecution { fees: fees.into(), weight_limit: Unlimited }
-}
-
-pub fn para_account_id(id: u32) -> AccountId {
-	ParaId::from(id).into_account()
 }
 
 /// as per documentation is way to throw exception with specific error code as Trap, and that should
