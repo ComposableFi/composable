@@ -16,7 +16,10 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
-	use frame_support::pallet_prelude::*;
+	use codec::FullCodec;
+	use composable_traits::oracle::Oracle;
+	use frame_support::{pallet_prelude::*, Blake2_128Concat, Twox64Concat};
+	use sp_runtime::FixedPointNumber;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
@@ -35,15 +38,81 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		/// The balance type for this pallet. Used for keeping track of nonnegative amounts of
+		/// assets.
+		type Balance: FullCodec + MaxEncodedLen + TypeInfo;
+		/// The Oracle implementation to be used by this pallet
+		type Oracle: Oracle;
+		/// The asset ID type for this and the oracle pallet
+		type AssetId: FullCodec + MaxEncodedLen + TypeInfo;
+		/// The market ID type for this pallet.
+		type MarketId: FullCodec + MaxEncodedLen + TypeInfo;
+		/// Signed decimal fixed point number.
+		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
+		/// Timestamp to be used for funding rate updates
+		type Timestamp: FullCodec + MaxEncodedLen + TypeInfo;
+		/// Duration type for funding rate periodicity
+		type Duration: FullCodec + MaxEncodedLen + TypeInfo;
+		/// The virtual AMM ID type for this pallet. `pallet-virtual-amm` should implement a trait
+		/// VAMM with an associated type 'VAMMId' compatible with this one.
+		type VAMMId: FullCodec + MaxEncodedLen + TypeInfo;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                             Pallet Types
 	// ----------------------------------------------------------------------------------------------------
 
+	/// Stores the user's position in a particular market
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
+	pub struct Position<MarketId, Decimal> {
+		market_id: MarketId,
+		base_asset_amount: Decimal,
+		quote_asset_notional_amount: Decimal,
+		last_cum_funding: Decimal,
+	}
+
+	/// Data relating to a perpetual contracts market
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
+	pub struct Market<AssetId, Decimal, Duration, Timestamp, VAMMId> {
+		vamm_id: VAMMId,
+		asset_id: AssetId,
+		cum_funding_rate: Decimal,
+		funding_rate_ts: Timestamp,
+		periodicity: Duration,
+	}
+
+	pub type AssetIdOf<T> = <T as Config>::AssetId;
+	pub type MarketIdOf<T> = <T as Config>::MarketId;
+	pub type DecimalOf<T> = <T as Config>::Decimal;
+	pub type TimestampOf<T> = <T as Config>::Timestamp;
+	pub type DurationOf<T> = <T as Config>::Duration;
+	pub type VAMMIdOf<T> = <T as Config>::VAMMId;
+	pub type PositionOf<T> = Position<MarketIdOf<T>, DecimalOf<T>>;
+	pub type MarketOf<T> =
+		Market<AssetIdOf<T>, DecimalOf<T>, DurationOf<T>, TimestampOf<T>, VAMMIdOf<T>>;
+
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Storage
 	// ----------------------------------------------------------------------------------------------------
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_margin)]
+	pub type AccountsMargin<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, T::Balance>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_position)]
+	pub type Positions<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		Twox64Concat,
+		T::MarketId,
+		PositionOf<T>,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_market)]
+	pub type Markets<T: Config> = StorageMap<_, Twox64Concat, T::MarketId, MarketOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                            Runtime Events
