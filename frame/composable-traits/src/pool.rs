@@ -2,7 +2,6 @@ use codec::Codec;
 use frame_support::{
 	pallet_prelude::*,
 	sp_std::fmt::Debug,
-	sp_runtime::Perquintill,
 };
 use scale_info::TypeInfo;
 
@@ -16,14 +15,14 @@ pub type Assets<AssetId> = Vec<AssetId>;
 /// Holds the id of an asset and how much weight is given to it
 /// 	proportional to all underlying Pool assets.
 #[derive(Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
-pub struct Weight<CurrencyId> {
+pub struct Weight<CurrencyId, Percent> {
 	pub asset_id: CurrencyId,
-	pub weight: Perquintill,
+	pub weight: Percent,
 }
 
 /// Type alias used for working with a list of 
 /// 	[`Weight`](Weight) objects
-pub type WeightsVec<CurrencyId> = Vec::<Weight<CurrencyId>>;
+pub type WeightsVec<CurrencyId, Percent> = Vec::<Weight<CurrencyId, Percent>>;
 
 /// Struct to maintain the min/max value bounds for some of the Pool's configurable
 /// 	parameters.
@@ -36,53 +35,61 @@ pub struct Bound<T> {
 // Does not derive Copy as assets and weights are Vectors (with their 
 //     data resides on the heap) and thus doesn't derive Copy
 #[derive(Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
-pub struct PoolConfig<AccountId, AssetId>
+pub struct PoolConfig<AccountId, AssetId, Percent>
 where
 	AccountId: core::cmp::Ord,
 {
 	/// Owner of pool
 	pub owner: AccountId,
 	/// Amount of the fee pool charges for the exchange
-	pub fee: Perquintill,
+	pub fee: Percent,
 	/// Vector of the Pool's underlying assets
 	pub assets: Assets<AssetId>,
 	/// Min/max bounds on number of assets allowed in the pool
 	pub asset_bounds: Bound<u8>,
 	/// Vector of the Pool's underlying asset weights
-	pub weights: WeightsVec<AssetId>,
+	pub weights: WeightsVec<AssetId, Percent>,
 	/// Min/max bounds on weights of assets for the pool
-	pub weight_bounds: Bound<Perquintill>,
+	pub weight_bounds: Bound<Percent>,
 	/// Min/max bounds on amount of assets that can be deposited at once	
-	pub deposit_bounds: Bound<Perquintill>,
+	pub deposit_bounds: Bound<Percent>,
 	/// Min/max bounds on amount of assets that can be withdrawn at once	
-	pub withdraw_bounds: Bound<Perquintill>,
+	pub withdraw_bounds: Bound<Percent>,
 }
 
 #[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
-pub struct PoolInfo<AccountId, AssetId> {
+pub struct PoolInfo<AccountId, AssetId, Percent> {
 	/// Owner of pool
 	pub owner: AccountId,
 	/// AssetId of LP token,
 	pub lp_token: AssetId,
 	/// Amount of the fee pool charges for the exchange
-	pub fee: Perquintill,
+	pub fee: Percent,
 	/// Min/max bounds on number of assets allowed in the pool
 	pub asset_bounds: Bound<u8>,
 	/// Min/max bounds on weights of assets for the pool
-	pub weight_bounds: Bound<Perquintill>,
+	pub weight_bounds: Bound<Percent>,
 	/// Min/max bounds on amount of assets that can be deposited at once	
-	pub deposit_bounds:  Bound<Perquintill>,
+	pub deposit_bounds:  Bound<Percent>,
 	/// Min/max bounds on amount of assets that can be withdrawn at once	
-	pub withdraw_bounds: Bound<Perquintill>,
+	pub withdraw_bounds: Bound<Percent>,
 }
 
-// Holds the id of an asset and how much of it is being deposited
-//     Pool functions accept a Vec<Deposit> as an argument.
+/// Holds the id of an asset and how a balance associated with the asset. Can be used to 
+/// represent:
+/// - deposits
+/// - withdraws
+/// - Pool reserves
 #[derive(Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
-pub struct Deposit<CurrencyId, Balance> {
+pub struct Reserve<CurrencyId, Balance> {
 	pub asset_id: CurrencyId,
 	pub amount: Balance,
 }
+
+/// type synonym to better represent the [`Reserve`](Reserve) type in deposits
+pub type Deposit<CurrencyId, Balance> = Reserve<CurrencyId, Balance>;
+/// type synonym to better represent the [`Reserve`](Reserve) type in withdrawals
+pub type Withdraw<CurrencyId, Balance> = Reserve<CurrencyId, Balance>;
 
 pub trait ConstantMeanMarket {
 	/// Corresponds to the Ids used by the pallet to uniquely identify accounts.
@@ -128,7 +135,7 @@ pub trait ConstantMeanMarket {
 	/// 	for the creation fee.
 	fn create(
 		from: Self::AccountId,
-		config: PoolConfig<Self::AccountId, Self::AssetId>,
+		config: PoolConfig<Self::AccountId, Self::AssetId, Self::Weight>,
 		creation_fee: Deposit<Self::AssetId, Self::Balance>,
 	) -> Result<Self::PoolId, DispatchError>;
 
@@ -165,6 +172,6 @@ pub trait ConstantMeanMarket {
 		to: &Self::AccountId,
 		pool_id: &Self::PoolId,
 		lp_amount: Self::Balance,
-	) -> Result<Vec<Deposit<Self::AssetId, Self::Balance>>, DispatchError>;
+	) -> Result<Vec<Withdraw<Self::AssetId, Self::Balance>>, DispatchError>;
 
 }

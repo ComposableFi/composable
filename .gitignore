@@ -58,4 +58,7 @@ node_modules/
 # nix build output
 result
 
+# devnet nodes logs
+*.log
+
 **/.asciidoctor
