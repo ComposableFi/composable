@@ -27,7 +27,7 @@ fn create_pool(
 		lp_fee,
 		protocol_fee,
 	)
-	.expect("impossible; qed;");
+	.expect("pool creation failed");
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(base_asset, &ALICE, base_amount));
 	assert_ok!(Tokens::mint_into(quote_asset, &ALICE, quote_amount));
@@ -52,9 +52,9 @@ fn test_dex_demo(amplification_factor: u16) {
 		Permill::zero(),
 		Permill::zero(),
 	)
-	.expect("impossible; qed;");
+	.expect("pool creation failed");
 
-	let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+	let pool = StableSwap::pools(pool_id).expect("pool not found");
 
 	let unit = 1_000_000_000_000_u128;
 	let usdc_price = 1 * unit;
@@ -85,8 +85,8 @@ fn test_dex_demo(amplification_factor: u16) {
 	let precision = 100;
 	let epsilon = 1;
 	// 1 unit of usdc == 1 unit of usdt
-	let ratio =
-		<StableSwap as Amm>::get_exchange_value(pool_id, USDC, unit).expect("impossible; qed;");
+	let ratio = <StableSwap as Amm>::get_exchange_value(pool_id, USDC, unit)
+		.expect("get_exchange_value failed");
 	assert_ok!(acceptable_computation_error(ratio, unit, precision, epsilon));
 
 	let swap_usdc = 100_u128 * unit;
@@ -94,11 +94,9 @@ fn test_dex_demo(amplification_factor: u16) {
 	// mint 1 USDT, after selling 100 USDC we get 99 USDT so to buy 100 USDC we need 100 USDT
 	assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
 
-	StableSwap::sell(Origin::signed(BOB), pool_id, USDC, swap_usdc, false)
-		.expect("impossible; qed;");
+	StableSwap::sell(Origin::signed(BOB), pool_id, USDC, swap_usdc, false).expect("sell failed");
 
-	StableSwap::buy(Origin::signed(BOB), pool_id, USDC, swap_usdc, false)
-		.expect("impossible; qed;");
+	StableSwap::buy(Origin::signed(BOB), pool_id, USDC, swap_usdc, false).expect("buy failed");
 
 	let bob_usdc = Tokens::balance(USDC, &BOB);
 
@@ -143,7 +141,7 @@ fn add_remove_lp() {
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
 		let bob_usdc = 1000 * unit;
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
@@ -188,7 +186,7 @@ fn add_lp_imbalanced() {
 			Permill::from_float(0.05), // 5% lp fee.
 			Permill::from_float(0.10), // 10% of lp fee goes to owner
 		);
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
 		let bob_usdc = 1000 * unit;
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
@@ -255,7 +253,7 @@ fn add_lp_with_min_mint_amount_success() {
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
 		let bob_usdc = 1000 * unit;
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
@@ -353,7 +351,7 @@ fn remove_lp_failure() {
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
 		let bob_usdc = 1000 * unit;
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
@@ -555,7 +553,7 @@ proptest! {
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
 		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_balance));
 		prop_assert_ok!(Tokens::mint_into(USDC, &BOB, usdc_balance));
 		prop_assert_ok!(StableSwap::add_liquidity(
@@ -603,7 +601,7 @@ proptest! {
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
 		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_balance));
 		prop_assert_ok!(Tokens::mint_into(USDC, &BOB, usdc_balance));
 		prop_assert_ok!(StableSwap::add_liquidity(
@@ -707,7 +705,7 @@ proptest! {
 			Permill::from_float(0.025),
 			Permill::zero(),
 		);
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
 		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, value));
 		prop_assert_ok!(StableSwap::swap(Origin::signed(BOB), pool_id, CurrencyPair::new(USDC, USDT), value, 0, false));
 		let bob_usdc = Tokens::balance(USDC, &BOB);
@@ -735,7 +733,7 @@ proptest! {
 			Permill::from_float(0.025),
 			Permill::zero(),
 		);
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
 		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, value));
 		prop_assert_ok!(StableSwap::swap(Origin::signed(BOB), pool_id, CurrencyPair::new(USDC, USDT), value, 0, false));
 		let bob_usdc = Tokens::balance(USDC, &BOB);
@@ -770,7 +768,7 @@ fn get_base_graph() {
 				(
 					quote,
 					<StableSwap as Amm>::get_exchange_value(pool_id, USDC, quote * unit)
-						.expect("impossible; qed;") as f64 /
+						.expect("get_exchange_value not found") as f64 /
 						unit as f64,
 				)
 			})
@@ -828,7 +826,7 @@ fn slippage_graph() {
 			.map(|quote| {
 				let quote = quote * unit;
 				let base = <StableSwap as Amm>::get_exchange_value(pool_id, USDC, quote)
-					.expect("impossible; qed;");
+					.expect("get_exchange_value failed");
 				let slippage = if base <= quote { quote - base } else { base };
 				(quote / unit, slippage as f64 / unit as f64)
 			})
@@ -888,7 +886,7 @@ fn curve_graph() {
 				let amount = unit;
 				Tokens::mint_into(USDC, &BOB, amount);
 				let _base = <StableSwap as Amm>::sell(&BOB, pool_id, USDC, amount, true)
-					.expect("impossible; qed;");
+					.expect("sell failed");
 				let pool_sell_asset_balance =
 					Tokens::balance(USDC, &pool_account) as f64 / unit as f64;
 				let pool_buy_asset_balance =
@@ -912,7 +910,7 @@ fn curve_graph() {
 				let amount = unit;
 				Tokens::mint_into(USDT, &BOB, amount);
 				let _base = <StableSwap as Amm>::sell(&BOB, pool_id, USDT, amount, true)
-					.expect("impossible; qed;");
+					.expect("sell failed");
 				let pool_sell_asset_balance =
 					Tokens::balance(USDC, &pool_account) as f64 / unit as f64;
 				let pool_buy_asset_balance =
