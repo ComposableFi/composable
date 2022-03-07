@@ -6656,6 +6656,7 @@ dependencies = [
 name = "pallet-bonded-finance"
 version = "0.0.1"
 dependencies = [
+ "composable-support",
  "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",

@@ -4,6 +4,7 @@
 use crate::Pallet as BondedFinance;
 use crate::{AssetIdOf, BalanceOf, BlockNumberOf, BondOfferOf, Call, Config, Pallet};
 use codec::Decode;
+use composable_support::validation::Validated;
 use composable_traits::{
 	bonded_finance::{BondDuration, BondOffer, BondOfferReward},
 	math::WrappingNext,
@@ -64,7 +65,8 @@ where
 	T: Config,
 {
 	let keep_alive = false;
-	Call::<T>::offer { offer: bond_offer, keep_alive }
+	let validated_bond_offer = Validated::new(bond_offer).unwrap();
+	Call::<T>::offer { offer: validated_bond_offer, keep_alive }
 		.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())
 		.unwrap();
 }
@@ -88,7 +90,8 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 		initial_mint::<T>(bond_asset, &caller, reward_asset);
 		let bond_offer = bond_offer::<T>(bond_asset, reward_asset);
-	}: _(RawOrigin::Signed(caller), bond_offer, false)
+		let validated_bond_offer = Validated::new(bond_offer).unwrap();
+	}: _(RawOrigin::Signed(caller), validated_bond_offer, false)
 
 	bond {
 		let [bond_asset, reward_asset] = assets::<T>();
