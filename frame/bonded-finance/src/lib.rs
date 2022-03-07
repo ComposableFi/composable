@@ -60,7 +60,6 @@ mod benchmarks;
 
 mod mock;
 mod tests;
-
 pub mod weights;
 
 pub use crate::weights::WeightInfo;
@@ -70,8 +69,9 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
+	use composable_support::validation::Validated;
 	use composable_traits::{
-		bonded_finance::{BondDuration, BondOffer, BondedFinance},
+		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
 		math::WrappingNext,
 		vesting::{VestedTransfer, VestingSchedule},
 	};
@@ -227,14 +227,17 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::offer())]
 		pub fn offer(
 			origin: OriginFor<T>,
-			offer: BondOfferOf<T>,
+			offer: Validated<
+				BondOfferOf<T>,
+				ValidBondOffer<T::MinReward, <T::Vesting as VestedTransfer>::MinVestedTransfer>,
+			>,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let from = ensure_signed(origin)?;
-			Self::do_offer(&from, offer, keep_alive)?;
+			let value = offer.value();
+			Self::do_offer(&from, value, keep_alive)?;
 			Ok(())
 		}
-
 		/// Bond to an offer.
 		/// And user should provide the number of contracts she is willing to buy.
 		/// On offer completion (a.k.a. no more contract on the offer), the `stake` put by the
@@ -308,13 +311,6 @@ pub mod pallet {
 			offer: BondOfferOf<T>,
 			keep_alive: bool,
 		) -> Result<T::BondOfferId, DispatchError> {
-			ensure!(
-				offer.valid(
-					<T::Vesting as VestedTransfer>::MinVestedTransfer::get(),
-					T::MinReward::get()
-				),
-				Error::<T>::InvalidBondOffer
-			);
 			let offer_id = BondOfferCount::<T>::mutate(|offer_id| {
 				*offer_id = offer_id.next();
 				*offer_id
@@ -445,13 +441,18 @@ pub mod pallet {
 		type Balance = BalanceOf<T>;
 		type BlockNumber = BlockNumberOf<T>;
 		type BondOfferId = T::BondOfferId;
+		type MinReward = T::MinReward;
+		type MinVestedTransfer = <T::Vesting as VestedTransfer>::MinVestedTransfer;
 
 		fn offer(
 			from: &Self::AccountId,
-			offer: BondOfferOf<T>,
+			offer: Validated<
+				BondOfferOf<T>,
+				ValidBondOffer<Self::MinReward, Self::MinVestedTransfer>,
+			>,
 			keep_alive: bool,
 		) -> Result<Self::BondOfferId, DispatchError> {
-			Self::do_offer(from, offer, keep_alive)
+			Self::do_offer(from, offer.value(), keep_alive)
 		}
 
 		fn bond(

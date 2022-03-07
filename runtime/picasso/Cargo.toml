@@ -74,6 +74,7 @@ call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter"
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false }
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
+assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
@@ -124,7 +125,9 @@ simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/pol
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 [features]
-default = ["std"]
+wasm-builder = []
+default = ["std", "wasm-builder"]
+local-integration-tests = []
 std = [
 	"codec/std",
 	"sp-api/std",
@@ -183,6 +186,7 @@ std = [
 	"governance-registry/std",
 	"currency-factory/std",
 	"assets/std",
+	"assets-registry/std",
 	"vesting/std",
 	"bonded-finance/std",
 	"crowdloan-rewards/std",

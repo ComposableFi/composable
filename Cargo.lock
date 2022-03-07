@@ -1394,6 +1394,9 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -5567,6 +5570,7 @@ dependencies = [
  "parachain-info",
  "parity-scale-codec",
  "paste 1.0.6",
+ "picasso-runtime",
  "polkadot-core-primitives",
  "polkadot-parachain",
  "polkadot-primitives",
@@ -6656,6 +6660,7 @@ dependencies = [
 name = "pallet-bonded-finance"
 version = "0.0.1"
 dependencies = [
+ "composable-support",
  "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
@@ -7796,6 +7801,7 @@ name = "pallet-vesting"
 version = "0.0.1"
 dependencies = [
  "composable-traits",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "orml-tokens",
@@ -8295,6 +8301,7 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pallet-assets",
+ "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",

@@ -251,8 +251,8 @@ runtime-benchmarks = [
 	"currency-factory/runtime-benchmarks",
 	"liquidations/runtime-benchmarks",
 	"lending/runtime-benchmarks",
-  "uniswap-v2/runtime-benchmarks",
-  "curve-amm/runtime-benchmarks",
+    "uniswap-v2/runtime-benchmarks",
+    "curve-amm/runtime-benchmarks",
 	"liquidity-bootstrapping/runtime-benchmarks",
 ]
 sim-node = []

@@ -190,10 +190,9 @@ If we are running the latest version of the frame-benchmarking dependency we can
 
 
 ## Compile and run
-Now when we have everything we need, we want to build it and enable
-the runtime-benchmarks features, which are optional.
+Now when we have everything we need, we want to build it:
 ```shell
-$ cargo build --release --features runtime-benchmarks
+cargo make build-benchmarks
 ```
 
 ## Run the benchmarks

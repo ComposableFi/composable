@@ -24,6 +24,11 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16", default-features = false }
 
+# xcm
+xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16", default-features = false }
+xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16", default-features = false }
+xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16", default-features = false }
+
 collator-selection = { package = "pallet-collator-selection", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16", default-features = false }
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
 collective = { package = "pallet-collective", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
@@ -59,5 +64,8 @@ std = [
 	"collective/std",
 	"treasury/std",
 	"polkadot-primitives/std",
-   "scale-info/std",
+   	"scale-info/std",
+   	"xcm/std",
+	"xcm-builder/std",
+	"xcm-executor/std",
 ]

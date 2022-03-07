@@ -16,15 +16,17 @@
 #![recursion_limit = "256"]
 
 // Make the WASM binary available.
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "wasm-builder"))]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
 mod xcmp;
+pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig, };
+
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION, MultiExistentialDeposits,
 };
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
@@ -201,6 +203,16 @@ impl randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
+}
+
+impl assets_registry::Config for Runtime {
+	type Event = Event;
+	type LocalAssetId = CurrencyId;
+	type ForeignAssetId = CurrencyId;
+	type Location = composable_traits::assets::XcmAssetLocation;
+	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
+	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
+	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
 }
 
 impl assets::Config for Runtime {
@@ -515,12 +527,6 @@ impl collator_selection::Config for Runtime {
 	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
 }
 
-parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		Zero::zero()
-	};
-}
-
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
@@ -540,7 +546,7 @@ impl orml_tokens::Config for Runtime {
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
 	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
-	type ExistentialDeposits = ExistentialDeposits;
+	type ExistentialDeposits = MultiExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
@@ -817,6 +823,8 @@ construct_runtime!(
 		RelayerXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
+		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 44,
+		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 45,
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
 		CurrencyFactory: currency_factory::{Pallet, Storage, Event<T>} = 53,
@@ -825,6 +833,7 @@ construct_runtime!(
 		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 57,
 		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 58,
+		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 59,
 	}
 );
 
@@ -890,6 +899,7 @@ mod benches {
 		[multisig, Multisig]
 		[currency_factory, CurrencyFactory]
 		[bonded_finance, BondedFinance]
+		[vesting, Vesting]
 	);
 }
 
