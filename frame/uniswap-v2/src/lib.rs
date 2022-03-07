@@ -45,35 +45,52 @@ mod benchmarking;
 pub mod weights;
 pub use crate::weights::WeightInfo;
 
+pub mod types;
+
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::{
+		types::{PriceCumulatives, TWAP},
+		weights::WeightInfo,
+	};
 	use codec::{Codec, FullCodec};
-	use composable_maths::dex::constant_product::{
-		compute_deposit_lp, compute_in_given_out, compute_out_given_in,
+	use composable_maths::dex::{
+		constant_product::{compute_deposit_lp, compute_in_given_out, compute_out_given_in},
+		price::{
+			compute_initial_price_cumulative, compute_next_price_cumulative, compute_price_average,
+		},
 	};
 	use composable_traits::{
 		currency::{CurrencyFactory, RangeId},
-		defi::CurrencyPair,
+		defi::{CurrencyPair, Rate},
 		dex::{Amm, ConstantProductPoolInfo},
-		math::{safe_multiply_by_rational, SafeAdd, SafeSub},
+		math::{safe_multiply_by_rational, SafeArithmetic, SafeSub, SafeAdd},
 	};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::fungibles::{Inspect, Mutate, Transfer},
+		traits::{
+			fungibles::{Inspect, Mutate, Transfer},
+			Time,
+		},
 		transactional, PalletId,
 	};
-	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
+	use frame_system::{
+		ensure_signed,
+		pallet_prelude::{BlockNumberFor, OriginFor},
+	};
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{AccountIdConversion, CheckedAdd, Convert, One, Zero},
-		ArithmeticError, Permill,
+		ArithmeticError, FixedPointNumber, Permill,
 	};
 	use sp_std::fmt::Debug;
 
-	use crate::weights::WeightInfo;
-
 	type PoolOf<T> =
 		ConstantProductPoolInfo<<T as frame_system::Config>::AccountId, <T as Config>::AssetId>;
+
+	type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
+
+	type PriceCumulativesOf<T> = PriceCumulatives<MomentOf<T>, <T as Config>::Balance>;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -97,8 +114,7 @@ pub mod pallet {
 			+ Copy
 			+ Zero
 			+ Ord
-			+ SafeAdd
-			+ SafeSub;
+      + SafeArithmetic;
 
 		type Convert: Convert<u128, Self::Balance> + Convert<Self::Balance, u128>;
 
@@ -108,6 +124,14 @@ pub mod pallet {
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
 			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
 
+		/// Time provider.
+		type Time: Time;
+
+		/// The interval between TWAP computations.
+		#[pallet::constant]
+		type TWAPInterval: Get<MomentOf<Self>>;
+
+		/// Type allowing us to refer a pool.
 		type PoolId: FullCodec
 			+ MaxEncodedLen
 			+ Default
@@ -117,19 +141,22 @@ pub mod pallet {
 			+ Ord
 			+ Copy
 			+ Debug
-			+ SafeAdd
-			+ SafeSub
+      + SafeArithmetic
 			+ Zero
 			+ One;
 
+		/// Pallet unique ID.
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
+		/// Extrinsics weights implementation.
 		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	// TODO(hussein-aitlahcen): MaxEncodedLen not yet implemented for trait AT `Time::Moment`.
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	/// Current number of pools (also ID for the next created pool)
@@ -152,6 +179,15 @@ pub mod pallet {
 		T::PoolId,
 		ConstantProductPoolInfo<T::AccountId, T::AssetId>,
 	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn price_cumulatives)]
+	pub type PriceCumulativesState<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::PoolId, PriceCumulativesOf<T>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn twap)]
+	pub type TWAPState<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, TWAP, OptionQuery>;
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -348,6 +384,108 @@ pub mod pallet {
 				min_quote_amount,
 			)?;
 			Ok(())
+		}
+	}
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_n: T::BlockNumber) -> Weight {
+			let current_timestamp = T::Time::now();
+			// TODO(hussein-aitlahcen): probably worth making twap enabled/disabled per-pool using
+			// democracy as this can grow a lot.
+			Pools::<T>::iter_keys().fold(Weight::zero(), |weight, pool_id| {
+				let rate_base = Self::do_get_exchange_rate(pool_id, false);
+				let rate_quote = Self::do_get_exchange_rate(pool_id, true);
+				match (rate_base, rate_quote) {
+					(Ok(rate_base), Ok(rate_quote)) => PriceCumulativesState::<T>::try_mutate(
+						pool_id,
+						|price_cumulatives| -> Result<Weight, DispatchError> {
+							match *price_cumulatives {
+								// Initialization
+								None => {
+									let (price_cumulative_base, price_cumulative_quote) = (
+										compute_initial_price_cumulative::<T::Convert, _>(
+											rate_base,
+										)?,
+										compute_initial_price_cumulative::<T::Convert, _>(
+											rate_quote,
+										)?,
+									);
+									*price_cumulatives = Some(PriceCumulatives {
+										timestamp: current_timestamp,
+										price_cumulative_base,
+										price_cumulative_quote,
+									});
+									TWAPState::<T>::insert(
+										pool_id,
+										TWAP {
+											average_price_base: rate_base,
+											average_price_quote: rate_quote,
+										},
+									);
+									Ok(weight + 1)
+								},
+								// Update
+								Some(PriceCumulatives {
+									timestamp: previous_timestamp,
+									price_cumulative_base: previous_price_cumulative_base,
+									price_cumulative_quote: previous_price_cumulative_quote,
+								}) => {
+									let f = |previous_cumulative_price, exchange_rate| {
+										compute_next_price_cumulative::<T::Convert, _, _>(
+											previous_timestamp,
+											previous_cumulative_price,
+											current_timestamp,
+											exchange_rate,
+										)
+									};
+									let (
+										(elapsed, price_cumulative_base),
+										(_, price_cumulative_quote),
+									) = (
+										f(previous_price_cumulative_base, rate_base)?,
+										f(previous_price_cumulative_quote, rate_quote)?,
+									);
+									if elapsed >= T::TWAPInterval::get() {
+										*price_cumulatives = Some(PriceCumulatives {
+											timestamp: current_timestamp,
+											price_cumulative_base,
+											price_cumulative_quote,
+										});
+										let avg = |current: T::Balance,
+										           previous: T::Balance|
+										 -> Result<Rate, DispatchError> {
+											compute_price_average::<T::Convert, _, _>(
+												current, previous, elapsed,
+											)
+										};
+										let average_price_base = avg(
+											price_cumulative_base,
+											previous_price_cumulative_base,
+										)?;
+										let average_price_quote = avg(
+											price_cumulative_quote,
+											previous_price_cumulative_quote,
+										)?;
+										TWAPState::<T>::insert(
+											pool_id,
+											TWAP { average_price_base, average_price_quote },
+										);
+										Ok(weight + 1)
+									} else {
+										Ok(weight)
+									}
+								},
+							}
+						},
+					)
+					.unwrap_or(weight),
+					_ => {
+						log::warn!("Failed to get exchange rate for pool: {:?}", pool_id,);
+						weight
+					},
+				}
+			})
 		}
 	}
 
@@ -672,6 +810,19 @@ pub mod pallet {
 				T::Convert::convert(lp_fee),
 				T::Convert::convert(owner_fee),
 			))
+		}
+
+		pub(crate) fn do_get_exchange_rate(
+			pool_id: T::PoolId,
+			swap: bool,
+		) -> Result<Rate, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			let pair = if swap { pool.pair.swap() } else { pool.pair };
+			let pool_base_aum = T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
+			let pool_quote_aum = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
+			Ok(Rate::checked_from_rational(pool_base_aum, pool_quote_aum)
+				.ok_or(ArithmeticError::Overflow)?)
 		}
 	}
 }

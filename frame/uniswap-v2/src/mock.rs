@@ -12,6 +12,10 @@ use system::EnsureRoot;
 
 pub type AssetId = u128;
 
+pub const MILLISECS_PER_BLOCK: u64 = 12000;
+
+pub type Moment = composable_traits::time::Timestamp;
+
 pub const BTC: AssetId = 0;
 pub const USDT: AssetId = 1;
 
@@ -30,6 +34,7 @@ frame_support::construct_runtime!(
 		Uni: pallet_uniswap_v2::{Pallet, Storage, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+	  Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 	}
 );
 
@@ -85,6 +90,17 @@ impl system::Config for Test {
 }
 
 parameter_types! {
+	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
+}
+
+impl pallet_timestamp::Config for Test {
+	type Moment = Moment;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
+parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
 
@@ -126,6 +142,7 @@ impl orml_tokens::Config for Test {
 
 parameter_types! {
 	pub TestPalletID : PalletId = PalletId(*b"const_am");
+  pub const TWAPInterval: Moment = MILLISECS_PER_BLOCK * 10; // 1 mint
 }
 
 impl pallet_uniswap_v2::Config for Test {
@@ -136,6 +153,8 @@ impl pallet_uniswap_v2::Config for Test {
 	type Assets = Tokens;
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
+	type Time = Timestamp;
+	type TWAPInterval = TWAPInterval;
 	type PalletId = TestPalletID;
 	type WeightInfo = ();
 }

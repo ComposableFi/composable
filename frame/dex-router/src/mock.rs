@@ -14,6 +14,10 @@ use system::EnsureRoot;
 
 pub type CurrencyId = u128;
 
+pub type Moment = composable_traits::time::Timestamp;
+
+pub const MILLISECS_PER_BLOCK: u64 = 12000;
+
 pub const USDT: CurrencyId = 2;
 pub const ETH: CurrencyId = 3;
 pub const USDC: CurrencyId = 4;
@@ -39,8 +43,20 @@ frame_support::construct_runtime!(
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>},
+	  Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 	}
 );
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
+}
+
+impl pallet_timestamp::Config for Test {
+	type Moment = Moment;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
 
 impl pallet_currency_factory::Config for Test {
 	type Event = Event;
@@ -151,6 +167,7 @@ impl pallet_curve_amm::Config for Test {
 parameter_types! {
 	pub ConstantProductAmmPrecision: FixedU128 = FixedU128::saturating_from_rational(1, 1_000_000_000);
 	pub ConstantProductAmmTestPalletID : PalletId = PalletId(*b"const_am");
+  pub const TWAPInterval: Moment = MILLISECS_PER_BLOCK * 10; // 1 mint
 }
 
 impl pallet_uniswap_v2::Config for Test {
@@ -162,6 +179,8 @@ impl pallet_uniswap_v2::Config for Test {
 	type Assets = Tokens;
 	type PoolId = PoolId;
 	type PalletId = ConstantProductAmmTestPalletID;
+	type Time = Timestamp;
+	type TWAPInterval = TWAPInterval;
 	type WeightInfo = ();
 }
 parameter_types! {

@@ -957,6 +957,7 @@ pub type PoolId = u128;
 
 parameter_types! {
   pub const ConstantProductPalletId: PalletId = PalletId(*b"pal_cnst");
+  pub const TWAPInterval: Moment = 30_000; // 30 seconds
 }
 
 impl uniswap_v2::Config for Runtime {
@@ -969,6 +970,8 @@ impl uniswap_v2::Config for Runtime {
 	type PoolId = PoolId;
 	type PalletId = ConstantProductPalletId;
 	type WeightInfo = weights::uniswap_v2::WeightInfo<Runtime>;
+	type Time = Timestamp;
+	type TWAPInterval = TWAPInterval;
 }
 
 parameter_types! {
