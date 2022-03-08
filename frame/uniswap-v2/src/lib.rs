@@ -55,7 +55,7 @@ pub mod pallet {
 		currency::{CurrencyFactory, RangeId},
 		defi::CurrencyPair,
 		dex::{Amm, ConstantProductPoolInfo},
-		math::{safe_multiply_by_rational, SafeArithmetic},
+		math::{safe_multiply_by_rational, SafeAdd, SafeSub},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -97,7 +97,8 @@ pub mod pallet {
 			+ Copy
 			+ Zero
 			+ Ord
-			+ SafeArithmetic;
+			+ SafeAdd
+			+ SafeSub;
 
 		type Convert: Convert<u128, Self::Balance> + Convert<Self::Balance, u128>;
 
@@ -116,7 +117,8 @@ pub mod pallet {
 			+ Ord
 			+ Copy
 			+ Debug
-			+ SafeArithmetic
+			+ SafeAdd
+			+ SafeSub
 			+ Zero
 			+ One;
 

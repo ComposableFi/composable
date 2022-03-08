@@ -36,7 +36,7 @@ pub mod pallet {
 	};
 	use codec::FullCodec;
 	use composable_support::validation::Validated;
-	use composable_traits::math::SafeArithmetic;
+	use composable_traits::math::SafeAdd;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,

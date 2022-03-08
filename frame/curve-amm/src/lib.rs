@@ -58,7 +58,7 @@ pub mod pallet {
 		currency::{CurrencyFactory, RangeId},
 		defi::CurrencyPair,
 		dex::{Amm, StableSwapPoolInfo},
-		math::{safe_multiply_by_rational, SafeArithmetic},
+		math::{safe_multiply_by_rational, SafeAdd, SafeSub},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -97,7 +97,8 @@ pub mod pallet {
 			+ Ord
 			+ Zero
 			+ One
-			+ SafeArithmetic;
+			+ SafeAdd
+			+ SafeSub;
 		type Convert: Convert<u128, Self::Balance> + Convert<Self::Balance, u128>;
 		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
 		type Assets: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
@@ -114,7 +115,8 @@ pub mod pallet {
 			+ Debug
 			+ One
 			+ Zero
-			+ SafeArithmetic;
+			+ SafeAdd
+			+ SafeSub;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;

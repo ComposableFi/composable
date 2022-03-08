@@ -1,4 +1,4 @@
-use composable_traits::math::{safe_multiply_by_rational, SafeArithmetic};
+use composable_traits::math::{safe_multiply_by_rational, SafeAdd, SafeDiv, SafeMul, SafeSub};
 use frame_support::ensure;
 use rust_decimal::{
 	prelude::{FromPrimitive, ToPrimitive},
