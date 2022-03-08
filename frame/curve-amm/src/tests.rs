@@ -1,12 +1,14 @@
 use crate::mock::{StableSwap, *};
-use composable_tests_helpers::test::helper::{
-	acceptable_computation_error, default_acceptable_computation_error,
+use composable_tests_helpers::{
+	prop_assert_ok,
+	test::helper::{acceptable_computation_error, default_acceptable_computation_error},
 };
 use composable_traits::{defi::CurrencyPair, dex::Amm};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
+use proptest::prelude::*;
 use sp_runtime::{Permill, TokenError};
 
 fn create_pool(
@@ -25,7 +27,7 @@ fn create_pool(
 		lp_fee,
 		protocol_fee,
 	)
-	.expect("impossible; qed;");
+	.expect("pool creation failed");
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(base_asset, &ALICE, base_amount));
 	assert_ok!(Tokens::mint_into(quote_asset, &ALICE, quote_amount));
@@ -43,7 +45,23 @@ fn create_pool(
 }
 
 #[test]
-fn test() {
+fn test_amp_zero_failure() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(
+			StableSwap::do_create_pool(
+				&ALICE,
+				CurrencyPair::new(USDC, USDT),
+				0_u16,
+				Permill::zero(),
+				Permill::zero(),
+			),
+			crate::Error::<Test>::AmpFactorMustBeGreaterThanZero
+		);
+	});
+}
+
+#[test]
+fn test_dex_demo() {
 	new_test_ext().execute_with(|| {
 		let pool_id = StableSwap::do_create_pool(
 			&ALICE,
@@ -52,9 +70,9 @@ fn test() {
 			Permill::zero(),
 			Permill::zero(),
 		)
-		.expect("impossible; qed;");
+		.expect("pool creation failed");
 
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
 
 		let unit = 1_000_000_000_000_u128;
 		let usdc_price = 1 * unit;
@@ -85,8 +103,8 @@ fn test() {
 		let precision = 100;
 		let epsilon = 1;
 		// 1 unit of usdc == 1 unit of usdt
-		let ratio =
-			<StableSwap as Amm>::get_exchange_value(pool_id, USDC, unit).expect("impossible; qed;");
+		let ratio = <StableSwap as Amm>::get_exchange_value(pool_id, USDC, unit)
+			.expect("get_exchange_value failed");
 		assert_ok!(acceptable_computation_error(ratio, unit, precision, epsilon));
 
 		let swap_usdc = 100_u128 * unit;
@@ -95,10 +113,9 @@ fn test() {
 		assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
 
 		StableSwap::sell(Origin::signed(BOB), pool_id, USDC, swap_usdc, false)
-			.expect("impossible; qed;");
+			.expect("sell failed");
 
-		StableSwap::buy(Origin::signed(BOB), pool_id, USDC, swap_usdc, false)
-			.expect("impossible; qed;");
+		StableSwap::buy(Origin::signed(BOB), pool_id, USDC, swap_usdc, false).expect("buy failed");
 
 		let bob_usdc = Tokens::balance(USDC, &BOB);
 
@@ -108,7 +125,6 @@ fn test() {
 			precision,
 			epsilon
 		));
-
 		let lp = Tokens::balance(pool.lp_token, &ALICE);
 		assert_ok!(StableSwap::remove_liquidity(Origin::signed(ALICE), pool_id, lp, 0, 0));
 
@@ -136,7 +152,7 @@ fn add_remove_lp() {
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
 		let bob_usdc = 1000 * unit;
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
@@ -181,7 +197,7 @@ fn add_lp_imbalanced() {
 			Permill::from_float(0.05), // 5% lp fee.
 			Permill::from_float(0.10), // 10% of lp fee goes to owner
 		);
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
 		let bob_usdc = 1000 * unit;
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
@@ -248,7 +264,7 @@ fn add_lp_with_min_mint_amount_success() {
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
 		let bob_usdc = 1000 * unit;
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
@@ -346,7 +362,7 @@ fn remove_lp_failure() {
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let pool = StableSwap::pools(pool_id).expect("impossible; qed;");
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
 		let bob_usdc = 1000 * unit;
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
@@ -526,6 +542,114 @@ fn high_slippage() {
 	});
 }
 
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(10000))]
+	#[test]
+	fn add_remove_liquidity_proptest(
+		usdc_balance in 1..u32::MAX,
+		usdt_balance in 1..u32::MAX,
+	) {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let usdt_balance = usdt_balance as u128 * unit;
+		let usdc_balance = usdc_balance as u128 * unit;
+		let initial_usdt = u64::MAX as u128 * unit;
+		let initial_usdc = u64::MAX as u128 * unit;
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			100_u16,
+			Permill::zero(),
+			Permill::zero(),
+		);
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
+		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_balance));
+		prop_assert_ok!(Tokens::mint_into(USDC, &BOB, usdc_balance));
+		prop_assert_ok!(StableSwap::add_liquidity(
+			Origin::signed(BOB),
+			pool_id,
+			usdc_balance,
+			usdt_balance,
+			0,
+			false
+		));
+		let lp = Tokens::balance(pool.lp_token, &BOB);
+		let expected_lp = usdt_balance + usdc_balance;
+		prop_assert_ok!(default_acceptable_computation_error(lp, expected_lp));
+		prop_assert_ok!(StableSwap::remove_liquidity(
+			Origin::signed(BOB),
+			pool_id,
+			lp,
+			0,
+			0,
+				));
+		let bob_usdc = Tokens::balance(USDC, &BOB);
+		let bob_usdt = Tokens::balance(USDT, &BOB);
+		prop_assert_ok!(default_acceptable_computation_error(usdc_balance + usdt_balance, bob_usdc + bob_usdt));
+		Ok(())
+	})?;
+	}
+
+	#[test]
+	fn buy_sell_proptest(
+		value in 1..u32::MAX,
+	) {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = u64::MAX as u128 * unit;
+		let initial_usdc = u64::MAX as u128 * unit;
+		let value = value as u128 * unit;
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			100_u16,
+			Permill::zero(),
+			Permill::zero(),
+		);
+		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, value));
+		prop_assert_ok!(StableSwap::sell(Origin::signed(BOB), pool_id, USDT, value, false));
+		// mint 1 extra USDC so that original amount of USDT can be buy back even with small slippage
+		prop_assert_ok!(Tokens::mint_into(USDC, &BOB, unit));
+		prop_assert_ok!(StableSwap::buy(Origin::signed(BOB), pool_id, USDT, value, false));
+		let bob_usdt = Tokens::balance(USDT, &BOB);
+		prop_assert_ok!(default_acceptable_computation_error(bob_usdt, value));
+		Ok(())
+	})?;
+	}
+
+	#[test]
+	fn swap_proptest(
+		value in 1..u32::MAX,
+	) {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdt = u64::MAX as u128 * unit;
+		let initial_usdc = u64::MAX as u128 * unit;
+		let value = value as u128 * unit;
+		let pool_id = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			100_u16,
+			Permill::from_float(0.025),
+			Permill::zero(),
+		);
+		let pool = StableSwap::pools(pool_id).expect("pool not found");
+		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, value));
+		prop_assert_ok!(StableSwap::swap(Origin::signed(BOB), pool_id, CurrencyPair::new(USDC, USDT), value, 0, false));
+		let bob_usdc = Tokens::balance(USDC, &BOB);
+		let expected_usdc =  value - pool.fee.mul_floor(value);
+		prop_assert_ok!(default_acceptable_computation_error(bob_usdc, expected_usdc));
+		Ok(())
+	})?;
+	}
+}
+
 #[cfg(feature = "visualization")]
 #[test]
 fn get_base_graph() {
@@ -535,7 +659,7 @@ fn get_base_graph() {
 		let initial_usdc = 100000_u128 * unit;
 		let pool_id = create_pool(
 			USDC,
-			USDT,
+			SDT,
 			initial_usdc,
 			initial_usdt,
 			100_u16,
@@ -550,7 +674,7 @@ fn get_base_graph() {
 				(
 					quote,
 					<StableSwap as Amm>::get_exchange_value(pool_id, USDC, quote * unit)
-						.expect("impossible; qed;") as f64 /
+						.expect("get_exchange_value not found") as f64 /
 						unit as f64,
 				)
 			})
@@ -608,7 +732,7 @@ fn slippage_graph() {
 			.map(|quote| {
 				let quote = quote * unit;
 				let base = <StableSwap as Amm>::get_exchange_value(pool_id, USDC, quote)
-					.expect("impossible; qed;");
+					.expect("get_exchange_value failed");
 				let slippage = if base <= quote { quote - base } else { base };
 				(quote / unit, slippage as f64 / unit as f64)
 			})
@@ -668,7 +792,7 @@ fn curve_graph() {
 				let amount = unit;
 				Tokens::mint_into(USDC, &BOB, amount);
 				let _base = <StableSwap as Amm>::sell(&BOB, pool_id, USDC, amount, true)
-					.expect("impossible; qed;");
+					.expect("sell failed");
 				let pool_sell_asset_balance =
 					Tokens::balance(USDC, &pool_account) as f64 / unit as f64;
 				let pool_buy_asset_balance =
@@ -692,7 +816,7 @@ fn curve_graph() {
 				let amount = unit;
 				Tokens::mint_into(USDT, &BOB, amount);
 				let _base = <StableSwap as Amm>::sell(&BOB, pool_id, USDT, amount, true)
-					.expect("impossible; qed;");
+					.expect("sell failed");
 				let pool_sell_asset_balance =
 					Tokens::balance(USDC, &pool_account) as f64 / unit as f64;
 				let pool_buy_asset_balance =
