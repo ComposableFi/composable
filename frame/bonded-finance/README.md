@@ -2,6 +2,35 @@
 
 A pallet providing means of submitting and maintaining bond offers.
 
+## Overview
+
+The bonded finance pallet enables users to create bond offers, buy bonds from 
+other users, and cancel existing bond offers via admin intervention. Theses 
+bonds can be listed with varoius assets and can offer a different asset as the 
+reward.
+
+One bound offer may contain multiple identically priced bounds. Each bound will 
+offer an equal part of the reward to buyers. Buyers can opt to buy multiple 
+bounds to increase their share of the reward. Depending on the offer, buyers 
+may or may not get there initial investment on the bond back. If there is a 
+reward for the bond, buyers will always get their share of the reward.
+
+## Sample Use Case
+
+Alice creates a new bound offer with some number of bounds each priced at the 
+same asset value. At the same time she provides reward assets which will be 
+vested into the accounts which take the bond offers. She then locks some native 
+currency to register the offer.
+
+Bob buys part of the bounds from Alice's offer by transfering some asset amount 
+desired by Alice. Bob will be vested the reward amount after the reward maturity 
+period. If the offer maturity period is infinite, Bob will not be vested his 
+initial invested amount.
+
+Alice may cancel the offer and prevent new bonds on the offer. Once canceled she 
+gets her native tokens back. All existing maturity periods continue to be
+executed.
+
 ## Bond Offer Workflow
 
 ### Creating Offers
@@ -50,19 +79,7 @@ successfully called by the `AdminOrigin`.
 Once canceled, the stake and liquidity will be returned to the offer creator. 
 However, this will not cancel currently vested rewards.
 
-## Sample Use Case
+## Technical Notes
 
-Alice offers some bond priced in specific assets per bond as some amount of 
-shares. At the same time she provides reward assets which will be vested into 
-the accounts which take the bond offers. She then locks some native currency to 
-register the offer.
-
-Bob bonds part of the shares from Alice's offer by transfering some asset amount 
-desired by Alice. Bob will be vested the reward amount after the reward maturity 
-period. If the offer maturity period is infinit, Bob will not be vested the 
-bonded amount.
-
-Alice may cancel the offer and prevent new bonds on the offer. Once canceled she 
-gets her native tokens back. All existing maturity periods continue to be
-executed.
+* This pallet implements the `composable_traits::bonded_finance::BondedFinance`.
 
