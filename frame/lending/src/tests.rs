@@ -7,7 +7,7 @@
 //! TODO: test on small numbers via proptests - detect edge case what is minimal amounts it starts
 //! to accure(and miminal block delta), and maximal amounts when it overflows
 
-use composable_traits::lending::Lending as LendingTrait;
+use composable_traits::lending::{Lending as LendingTrait, RepayStrategy};
 use frame_benchmarking::Zero;
 use std::ops::{Div, Mul};
 
@@ -347,22 +347,24 @@ fn test_borrow_repay_in_same_block() {
 
 		let limit_normalized = Lending::get_borrow_limit(&market_id, &ALICE).unwrap();
 		assert_eq!(Lending::total_cash(&market_id), Ok(total_cash));
-		process_block(1);
+		process_block(1); // <- ???
 		assert_ok!(<Lending as LendingTrait>::borrow(&market_id, &ALICE, limit_normalized / 4));
 		total_cash -= limit_normalized / 4;
 		let total_borrows = limit_normalized / 4;
 		assert_eq!(Lending::total_cash(&market_id), Ok(total_cash));
 		assert_eq!(Lending::total_borrows(&market_id), Ok(total_borrows));
-		let alice_repay_amount = Lending::borrow_balance_current(&market_id, &ALICE).unwrap();
+		let alice_repay_amount =
+			Lending::borrow_balance_current(&market_id, &ALICE).unwrap().unwrap();
 		// MINT required BTC so that ALICE and BOB can repay the borrow.
-		assert_ok!(Tokens::mint_into(
-			BTC::ID,
-			&ALICE,
-			alice_repay_amount.unwrap() - (limit_normalized / 4)
-		));
+		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, alice_repay_amount - (limit_normalized / 4)));
 		assert_noop!(
-			<Lending as LendingTrait>::repay_borrow(&market_id, &ALICE, &ALICE, alice_repay_amount),
-			Error::<Runtime>::BorrowAndRepayInSameBlockIsNotSupported
+			<Lending as LendingTrait>::repay_borrow(
+				&market_id,
+				&ALICE,
+				&ALICE,
+				RepayStrategy::PartialAmount(alice_repay_amount)
+			),
+			Error::<Runtime>::BorrowAndRepayInSameBlockIsNotSupported,
 		);
 	});
 }
@@ -602,12 +604,12 @@ fn borrow_repay_repay() {
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, alice_repay_amount));
 		assert_ok!(Tokens::mint_into(USDT::ID, &BOB, bob_repay_amount));
 
-		assert_ok!(Lending::repay_borrow(Origin::signed(*BOB), market_index, *BOB, bob_repay_amount));
+		assert_ok!(Lending::repay_borrow(Origin::signed(*BOB), market_index, *BOB, RepayStrategy::PartialAmount(bob_repay_amount)));
 		assert!(Tokens::balance(BTC::ID, &BOB) == 0);
 
 		// TODO: fix bug with partial repay:
-		// assert_ok!(Lending::repay_borrow(Origin::signed(*ALICE), market_index, *ALICE, alice_repay_amount));
-		// assert!(alice_balance > Tokens::balance(BTC::ID, &ALICE));
+		assert_ok!(Lending::repay_borrow(Origin::signed(*ALICE), market_index, *ALICE, RepayStrategy::PartialAmount(alice_repay_amount)));
+		assert!(alice_balance > Tokens::balance(BTC::ID, &ALICE));
 	});
 }
 
