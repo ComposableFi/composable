@@ -93,6 +93,16 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::storage]
+	#[pallet::getter(fn get_initial_margin_ratio)]
+	/// Minimum margin ratio for opening a new position
+	pub type InitialMarginRatio<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_maintenance_margin_ratio)]
+	/// Minimum margin ratio, below which liquidations can occur
+	pub type MaintenanceMarginRatio<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn get_margin)]
 	pub type AccountsMargin<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, T::Balance>;
 
