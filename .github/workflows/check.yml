@@ -104,6 +104,10 @@ jobs:
           docker system prune --force --all --volumes
       - uses: actions/checkout@v2
 
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
+
       - name: Check for runtime changes
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
