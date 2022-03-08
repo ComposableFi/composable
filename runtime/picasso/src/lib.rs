@@ -890,6 +890,7 @@ mod benches {
 		[multisig, Multisig]
 		[currency_factory, CurrencyFactory]
 		[bonded_finance, BondedFinance]
+		[vesting, Vesting]
 	);
 }
 

@@ -31,7 +31,6 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
-#![allow(clippy::all)]
 
 pub use pallet::*;
 
@@ -55,7 +54,7 @@ pub mod pallet {
 	use composable_traits::{
 		currency::{CurrencyFactory, RangeId},
 		defi::CurrencyPair,
-		dex::{ConstantProductPoolInfo, CurveAmm},
+		dex::{Amm, ConstantProductPoolInfo},
 		math::{safe_multiply_by_rational, SafeArithmetic},
 	};
 	use frame_support::{
@@ -252,7 +251,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
 			Ok(())
 		}
 
@@ -270,7 +269,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
 			Ok(())
 		}
 
@@ -292,7 +291,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::exchange(
+			let _ = <Self as Amm>::exchange(
 				&who,
 				pool_id,
 				pair,
@@ -302,9 +301,55 @@ pub mod pallet {
 			)?;
 			Ok(())
 		}
+
+		/// Add liquidity to a constant_product pool.
+		///
+		/// Emits `LiquidityAdded` event when successful.
+		#[pallet::weight(T::WeightInfo::add_liquidity())]
+		pub fn add_liquidity(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			base_amount: T::Balance,
+			quote_amount: T::Balance,
+			min_mint_amount: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as Amm>::add_liquidity(
+				&who,
+				pool_id,
+				base_amount,
+				quote_amount,
+				min_mint_amount,
+				keep_alive,
+			)?;
+			Ok(())
+		}
+
+		/// Remove liquidity from constant_product pool.
+		///
+		/// Emits `LiquidityRemoved` event when successful.
+		#[pallet::weight(T::WeightInfo::remove_liquidity())]
+		pub fn remove_liquidity(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			lp_amount: T::Balance,
+			min_base_amount: T::Balance,
+			min_quote_amount: T::Balance,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as Amm>::remove_liquidity(
+				&who,
+				pool_id,
+				lp_amount,
+				min_base_amount,
+				min_quote_amount,
+			)?;
+			Ok(())
+		}
 	}
 
-	impl<T: Config> CurveAmm for Pallet<T> {
+	impl<T: Config> Amm for Pallet<T> {
 		type AssetId = T::AssetId;
 		type Balance = T::Balance;
 		type AccountId = T::AccountId;
@@ -461,7 +506,7 @@ pub mod pallet {
 			let pool = Self::get_pool(pool_id)?;
 			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
 			let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
-			<Self as CurveAmm>::exchange(
+			<Self as Amm>::exchange(
 				who,
 				pool_id,
 				pair,
@@ -481,7 +526,7 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
-			<Self as CurveAmm>::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
+			<Self as Amm>::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
 		}
 
 		#[transactional]
@@ -572,7 +617,7 @@ pub mod pallet {
 
 		/// Return pool information for given pool_id.
 		pub(crate) fn get_pool(pool_id: T::PoolId) -> Result<PoolOf<T>, DispatchError> {
-			Pools::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound.into())
+			Pools::<T>::get(pool_id).ok_or_else(|| Error::<T>::PoolNotFound.into())
 		}
 
 		/// Account of a pool

@@ -33,6 +33,7 @@ pub trait WeightInfo {
 	fn vested_transfer() -> Weight;
 	fn claim(i: u32, ) -> Weight;
 	fn update_vesting_schedules(i: u32, ) -> Weight;
+	fn claim_for(i: u32, ) -> Weight;
 }
 
 /// Default weights.
@@ -55,5 +56,11 @@ impl WeightInfo for () {
 			.saturating_add((117_000 as Weight).saturating_mul(i as Weight))
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+	}
+
+	fn claim_for(i: u32, ) -> Weight {
+		(31_747_000 as Weight)
+			// Standard Error: 4_000
+			.saturating_add((63_000 as Weight).saturating_mul(i as Weight))
 	}
 }

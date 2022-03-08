@@ -86,6 +86,7 @@ call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter"
 mosaic = { package = "pallet-mosaic", path = "../../frame/mosaic", default-features = false }
 uniswap-v2 = { package = "pallet-uniswap-v2", path = "../../frame/uniswap-v2", default-features = false }
 curve-amm = { package = "pallet-curve-amm", path = "../../frame/curve-amm", default-features = false }
+liquidity-bootstrapping = { package = "pallet-liquidity-bootstrapping", path = "../../frame/liquidity-bootstrapping", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
@@ -209,8 +210,9 @@ std = [
 	"transaction-payment-rpc-runtime-api/std",
 	"liquidations/std",
 	"simnode-apis/std",
-  	"uniswap-v2/std",
-  	"curve-amm/std",
+  "uniswap-v2/std",
+  "curve-amm/std",
+	"liquidity-bootstrapping/std",
 ]
 runtime-benchmarks = [
 	"assets/runtime-benchmarks",
@@ -251,5 +253,6 @@ runtime-benchmarks = [
 	"lending/runtime-benchmarks",
   "uniswap-v2/runtime-benchmarks",
   "curve-amm/runtime-benchmarks",
+	"liquidity-bootstrapping/runtime-benchmarks",
 ]
 sim-node = []

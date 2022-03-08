@@ -1,4 +1,5 @@
 use crate as pallet_assets_registry;
+pub use composable_traits::assets::XcmAssetLocation;
 use frame_support::{ord_parameter_types, parameter_types, traits::Everything};
 use frame_system as system;
 use frame_system::EnsureSignedBy;
@@ -16,6 +17,8 @@ pub const ROOT: AccountId = 0_u32;
 pub const ALICE: AccountId = 1_u32;
 pub const BOB: AccountId = 2_u32;
 pub const CHARLIE: AccountId = 3_u32;
+
+pub const DECIMALS: u8 = 12;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -69,6 +72,7 @@ impl pallet_assets_registry::Config for Test {
 	type Event = Event;
 	type LocalAssetId = u128;
 	type ForeignAssetId = u128;
+	type Location = XcmAssetLocation;
 	type UpdateAdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type LocalAdminOrigin = pallet_assets_registry::EnsureLocalAdmin<Test>;
 	type ForeignAdminOrigin = pallet_assets_registry::EnsureForeignAdmin<Test>;

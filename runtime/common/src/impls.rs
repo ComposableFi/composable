@@ -181,6 +181,7 @@ mod tests {
 	}
 
 	parameter_type_with_key! {
+		// TODO: make this non zero
 		pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
 			Zero::zero()
 		};

@@ -6,9 +6,8 @@ use sp_std::vec::Vec;
 
 use crate::defi::CurrencyPair;
 
-/// Implement AMM curve from "StableSwap - efficient mechanism for Stablecoin liquidity by Micheal
-/// Egorov" Also blog at https://miguelmota.com/blog/understanding-stableswap-curve/ has very good explanation.
-pub trait CurveAmm {
+/// Trait for automated market maker.
+pub trait Amm {
 	/// The asset ID type
 	type AssetId;
 	/// The balance type of an account

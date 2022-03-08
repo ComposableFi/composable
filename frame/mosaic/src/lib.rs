@@ -8,6 +8,7 @@
 
 mod decay;
 mod relayer;
+mod validation;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -30,9 +31,11 @@ pub mod pallet {
 	use crate::{
 		decay::Decayer,
 		relayer::{RelayerConfig, StaleRelayer},
+		validation::{ValidTTL, ValidTimeLockPeriod},
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
+	use composable_support::validation::Validated;
 	use composable_traits::math::SafeArithmetic;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
@@ -173,11 +176,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn time_lock_period)]
+	#[allow(clippy::disallowed_type)]
 	pub type TimeLockPeriod<T: Config> =
 		StorageValue<_, BlockNumberOf<T>, ValueQuery, TimeLockPeriodOnEmpty<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn nonce)]
+	#[allow(clippy::disallowed_type)]
 	pub type Nonce<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::type_value]
@@ -368,9 +373,9 @@ pub mod pallet {
 		pub fn rotate_relayer(
 			origin: OriginFor<T>,
 			new: T::AccountId,
-			ttl: T::BlockNumber,
+			validated_ttl: Validated<T::BlockNumber, ValidTTL<T::MinimumTTL>>,
 		) -> DispatchResultWithPostInfo {
-			ensure!(ttl > T::MinimumTTL::get(), Error::<T>::BadTTL);
+			let ttl = validated_ttl.value();
 			let (relayer, current_block) = Self::ensure_relayer(origin)?;
 			let ttl = current_block.saturating_add(ttl);
 			let relayer = relayer.rotate(new.clone(), ttl);
@@ -679,11 +684,11 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::set_timelock_duration())]
 		pub fn set_timelock_duration(
 			origin: OriginFor<T>,
-			period: BlockNumberOf<T>,
+			period: Validated<BlockNumberOf<T>, ValidTimeLockPeriod<T::MinimumTimeLockPeriod>>,
 		) -> DispatchResultWithPostInfo {
+			let validated_period = period.value();
 			T::ControlOrigin::ensure_origin(origin)?;
-			ensure!(period > T::MinimumTimeLockPeriod::get(), Error::<T>::BadTimelockPeriod);
-			TimeLockPeriod::<T>::set(period);
+			TimeLockPeriod::<T>::set(validated_period);
 			Ok(().into())
 		}
 

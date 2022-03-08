@@ -1,66 +1,107 @@
-use crate::{env_logger_init, kusama_test_net::*};
-use codec::Encode;
-use common::AccountId;
-use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
-use dali_runtime as picasso_runtime;
-use orml_traits::currency::MultiCurrency;
-use picasso_runtime::{MaxInstructions, UnitWeightCost};
-use primitives::currency::*;
-use sp_runtime::assert_eq_error_rate;
-use support::assert_ok;
-use xcm::latest::prelude::*;
-use xcm_emulator::TestExt;
-use xcm_executor::XcmExecutor;
+// TODO:
+// Withdraw assets and trap it via polka xcm trap- if will fail always
+// let does_not_exists= u128::MAX-1;
+// (0, GeneralKey(does_not_exists.encode())),
+// Because Convert  will not find assets and execution will never reach to AssetsTrapped
+// cannot handle it because of ORML design
+//pallet_xcm::Event::AssetsTrapped
 
-/// assumes that our parachain has native relay token on relay account
-/// and kusama can send xcm message to our network and transfer native token onto local network
+use crate::{
+	env_logger_init,
+	helpers::*,
+	kusama_test_net::{Dali as Sibling, *},
+	prelude::LocalAssetId,
+};
+use codec::Encode;
+use common::{AccountId, Balance};
+use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
+use dali_runtime::{self as picasso_runtime, AssetsRegistry, Balances};
+use num_traits::Zero;
+use orml_traits::currency::MultiCurrency;
+use picasso_runtime::{
+	Assets, MaxInstructions, Origin, Runtime, System, Tokens, UnitWeightCost, XTokens,
+};
+use primitives::currency::*;
+use sp_runtime::{assert_eq_error_rate, traits::AccountIdConversion, MultiAddress};
+use support::{assert_ok, log};
+use xcm::latest::prelude::*;
+use xcm_builder::ParentIsDefault;
+use xcm_emulator::TestExt;
+use xcm_executor::{traits::Convert, XcmExecutor};
+
 #[test]
-fn transfer_from_relay_chain() {
-	crate::kusama_test_net::KusamaNetwork::reset();
-	env_logger_init();
-	let bob_before = Picasso::execute_with(|| {
+fn reserve_transfer_from_relay_alice_bob() {
+	simtest();
+	let from = ALICE;
+	let to = BOB;
+	reserve_transfer(from, to);
+}
+
+#[test]
+fn reserve_transfer_from_relay_alice_alice() {
+	simtest();
+	let from = ALICE;
+	let to = ALICE;
+	reserve_transfer(from, to);
+}
+
+#[test]
+fn reserve_transfer_from_relay_map() {
+	simtest();
+	let from = ALICE;
+	let to = BOB;
+	Picasso::execute_with(|| {
 		assert_ok!(picasso_runtime::AssetsRegistry::set_location(
 			CurrencyId::KSM, // KSM id as it is locally
 			// if we get tokens from parent chain, these can be only native token
 			XcmAssetLocation::RELAY_NATIVE,
 		));
-		picasso_runtime::Assets::free_balance(CurrencyId::KSM, &AccountId::from(BOB))
 	});
 
-	let transfer_amount = 3 * KSM;
+	reserve_transfer(from, to);
+}
+
+/// how it works:
+/// top level ReserveTransfer instruction is interprtered first on sending chain
+/// it transfers amount from sender account to target chain account on sending chain
+///  send it custs wrapper part of XCM message, and sends remaining with deposit
+/// target chain sees deposit amount and mints approciate amount
+/// validats origin of reserve (must be relay)
+fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
+	let from_account = &AccountId::from(from);
+	let to_account = &AccountId::from(to);
+	let balance = enough_weigth();
+	let before = Picasso::execute_with(|| {
+		picasso_runtime::Assets::free_balance(CurrencyId::KSM, to_account)
+	});
 	KusamaRelay::execute_with(|| {
-		let alice_before = kusama_runtime::Balances::free_balance(&AccountId::from(ALICE));
-		let transfered = kusama_runtime::XcmPallet::reserve_transfer_assets(
-			kusama_runtime::Origin::signed(ALICE.into()),
+		<kusama_runtime::Balances as support::traits::Currency<_>>::deposit_creating(
+			from_account,
+			balance,
+		);
+		let result = kusama_runtime::XcmPallet::reserve_transfer_assets(
+			kusama_runtime::Origin::signed(from.into()),
 			Box::new(Parachain(PICASSO_PARA_ID).into().into()),
-			Box::new(
-				Junction::AccountId32 { id: crate::kusama_test_net::BOB, network: NetworkId::Any }
-					.into()
-					.into(),
-			),
-			Box::new((Here, transfer_amount).into()),
+			Box::new(Junction::AccountId32 { id: to, network: NetworkId::Any }.into().into()),
+			Box::new((Here, balance).into()),
 			0,
 		);
-		assert_ok!(transfered);
-		let alice_after = kusama_runtime::Balances::free_balance(&AccountId::from(ALICE));
-		assert_eq!(alice_before, alice_after + transfer_amount);
+		assert_ok!(result);
+		relay_dump_events();
 	});
-
 	Picasso::execute_with(|| {
-		let bob_after =
-			picasso_runtime::Assets::free_balance(CurrencyId::KSM, &AccountId::from(BOB));
-		assert_eq_error_rate!(
-			bob_after - bob_before,
-			transfer_amount,
-			(UnitWeightCost::get() * 10) as u128
-		);
+		let new_balance = picasso_runtime::Assets::free_balance(CurrencyId::KSM, to_account);
+		dump_events();
+		assert_eq_error_rate!(new_balance, before + balance, (UnitWeightCost::get() * 10) as u128);
+		assert!(!picasso_runtime::System::events()
+			.iter()
+			.any(|r| { matches!(r.event, picasso_runtime::Event::XTokens(_)) }));
 	});
 }
 
 #[test]
 fn transfer_to_relay_chain() {
-	crate::kusama_test_net::KusamaNetwork::reset();
-	env_logger_init();
+	simtest();
 	Picasso::execute_with(|| {
 		assert_ok!(<picasso_runtime::AssetsRegistry as RemoteAssetRegistry>::set_location(
 			CurrencyId::KSM,
@@ -98,8 +139,7 @@ fn transfer_to_relay_chain() {
 
 #[test]
 fn transfer_from_dali() {
-	crate::kusama_test_net::KusamaNetwork::reset();
-	env_logger_init();
+	simtest();
 
 	Picasso::execute_with(|| {
 		assert_ok!(<picasso_runtime::AssetsRegistry as RemoteAssetRegistry>::set_location(
@@ -144,8 +184,7 @@ fn transfer_from_dali() {
 
 #[test]
 fn transfer_from_picasso_to_dali() {
-	crate::kusama_test_net::KusamaNetwork::reset();
-	env_logger_init();
+	simtest();
 
 	Dali::execute_with(|| {
 		assert_ok!(<dali_runtime::AssetsRegistry as RemoteAssetRegistry>::set_location(
@@ -201,8 +240,7 @@ fn transfer_from_picasso_to_dali() {
 // from: Hydra
 #[test]
 fn transfer_insufficient_amount_should_fail() {
-	crate::kusama_test_net::KusamaNetwork::reset();
-	env_logger_init();
+	simtest();
 	Dali::execute_with(|| {
 		assert_ok!(dali_runtime::XTokens::transfer(
 			dali_runtime::Origin::signed(ALICE.into()),
@@ -232,19 +270,118 @@ fn transfer_insufficient_amount_should_fail() {
 	});
 }
 
+#[test]
+#[ignore = "until fixed sibling trust map"]
+fn transfer_to_sibling() {
+	simtest();
+	let _other_currency = CurrencyId::KSM;
+	fn this_native_reserve_account() -> AccountId {
+		use sp_runtime::traits::AccountIdConversion;
+		polkadot_parachain::primitives::Sibling::from(PICASSO_PARA_ID).into_account()
+	}
+
+	let alice_original = Picasso::execute_with(|| {
+		assert_ok!(Tokens::deposit(CurrencyId::KSM, &AccountId::from(ALICE), 100_000_000_000_000));
+		Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE))
+	});
+	let alice_from_amount = alice_original / 10;
+	let alice_remaining = alice_original - alice_from_amount;
+	let weight_to_pay = (alice_from_amount / 2) as u64;
+
+	let picasso_on_sibling = Sibling::execute_with(|| {
+		assert_ok!(Tokens::deposit(
+			CurrencyId::KSM,
+			&this_native_reserve_account(),
+			100 * CurrencyId::KSM.unit::<Balance>(),
+		));
+		Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account())
+	});
+
+	assert_ne!(picasso_on_sibling, Balance::zero());
+
+	Picasso::execute_with(|| {
+		assert_ok!(XTokens::transfer(
+			Origin::signed(ALICE.into()),
+			CurrencyId::KSM,
+			alice_from_amount,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(SIBLING_PARA_ID),
+						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+					)
+				)
+				.into()
+			),
+			weight_to_pay,
+		));
+
+		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE)), alice_remaining);
+	});
+
+	// TODO: also XCM not failes, it really fails with not enough balance, not clear so what balance
+	// is needed to transfer
+	Sibling::execute_with(|| {
+		assert_eq!(
+			Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account()),
+			picasso_on_sibling
+		);
+		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(BOB)), 9_989_760_000_000);
+
+		assert_ok!(XTokens::transfer(
+			Origin::signed(BOB.into()),
+			CurrencyId::KSM,
+			5_000_000_000_000,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(PICASSO_PARA_ID),
+						Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }
+					)
+				)
+				.into()
+			),
+			1_000_000_000,
+		));
+
+		assert_eq!(
+			Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account()),
+			95_000_000_000_000
+		);
+		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(BOB)), 4_989_760_000_000);
+	});
+
+	Picasso::execute_with(|| {
+		assert_eq!(
+			Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE)),
+			94_989_760_000_000
+		);
+	});
+}
+
+/// if Bob sends amount of his tokens and these are above weigth but less than ED,
+/// than our treasury takes that amount, sorry Bob
 /// Acala's tests
 #[test]
-#[ignore]
 fn transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit() {
-	crate::kusama_test_net::KusamaNetwork::reset();
-	env_logger_init();
+	simtest();
+
+	let amount = under_existential_deposit(LocalAssetId::KSM, 3);
+	let picasso_treasury = Picasso::execute_with(|| {
+		picasso_runtime::Tokens::free_balance(
+			CurrencyId::KSM,
+			&picasso_runtime::TreasuryAccount::get(),
+		)
+	});
 
 	KusamaRelay::execute_with(|| {
 		assert_ok!(kusama_runtime::XcmPallet::reserve_transfer_assets(
 			kusama_runtime::Origin::signed(ALICE.into()),
 			Box::new(Parachain(PICASSO_PARA_ID).into().into()),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
-			Box::new((Here, 128_000_111 / 50).into()),
+			Box::new((Here, amount).into()),
 			0
 		));
 	});
@@ -252,16 +389,16 @@ fn transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit() 
 	Picasso::execute_with(|| {
 		assert_eq!(
 			picasso_runtime::Tokens::free_balance(CurrencyId::KSM, &AccountId::from(BOB)),
-			0
+			0,
+			"assets did not get to recepient as it is not enough to pay ED"
 		);
-		// TODO: add treasury like in Acala to get available payment even if it lower than needed to
-		// treasury (add treasury call) assert_eq!(
-		// 	picasso_runtime::Tokens::free_balance(
-		// 		CurrencyId::KSM,
-		// 		&picasso_runtime::TreasuryAccount::get()
-		// 	),
-		// 	1_000_128_000_111
-		// );
+		assert_eq!(
+			picasso_runtime::Tokens::free_balance(
+				CurrencyId::KSM,
+				&picasso_runtime::TreasuryAccount::get()
+			),
+			amount - picasso_treasury
+		);
 	});
 }
 
@@ -270,8 +407,7 @@ fn transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit() 
 /// permissioned execution of some very specific action from other chains
 #[test]
 fn xcm_transfer_execution_barrier_trader_works() {
-	crate::kusama_test_net::KusamaNetwork::reset();
-	env_logger_init();
+	simtest();
 
 	let unit_instruction_weight = UnitWeightCost::get() / 50;
 	assert!(unit_instruction_weight > 0, "barrier makes sence iff there is pay for messages");
@@ -372,7 +508,7 @@ fn xcm_transfer_execution_barrier_trader_works() {
 /// source: Acala
 #[test]
 fn para_chain_subscribe_version_notify_of_sibling_chain() {
-	crate::kusama_test_net::KusamaNetwork::reset();
+	KusamaNetwork::reset();
 	env_logger_init();
 	Picasso::execute_with(|| {
 		let r = pallet_xcm::Pallet::<picasso_runtime::Runtime>::force_subscribe_version_notify(
@@ -438,5 +574,538 @@ fn relay_chain_subscribe_version_notify_of_para_chain() {
 				2,
 			),
 		));
+	});
+}
+
+#[test]
+fn test_assets_registry_module() {
+	simtest();
+
+	let local_asset = CurrencyId::PICA;
+	let foreign_asset = CurrencyId::PICA;
+
+	fn picasso_reserve_account() -> AccountId {
+		use sp_runtime::traits::AccountIdConversion;
+		polkadot_parachain::primitives::Sibling::from(PICASSO_PARA_ID).into_account()
+	}
+
+	Picasso::execute_with(|| {
+		let local_admin = AccountId::from(ALICE);
+		let foreign_admin = AccountId::from(BOB);
+		let decimals = 12;
+		let location = XcmAssetLocation(
+			MultiLocation::new(
+				1,
+				X2(Parachain(SIBLING_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
+			)
+			.into(),
+		);
+
+		assert_ok!(AssetsRegistry::set_local_admin(Origin::root(), local_admin.clone()));
+		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::root(), foreign_admin.clone()));
+
+		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
+			Origin::signed(local_admin),
+			local_asset,
+			foreign_asset,
+			location.clone(),
+			decimals,
+		));
+		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
+			Origin::signed(foreign_admin),
+			local_asset,
+			foreign_asset,
+			location,
+			decimals,
+		));
+	});
+
+	Sibling::execute_with(|| {
+		let local_admin = AccountId::from(ALICE);
+		let foreign_admin = AccountId::from(BOB);
+		let decimals = 12;
+		let location = XcmAssetLocation(
+			MultiLocation::new(
+				1,
+				X2(Parachain(PICASSO_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
+			)
+			.into(),
+		);
+
+		assert_ok!(AssetsRegistry::set_local_admin(Origin::root(), local_admin.clone()));
+		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::root(), foreign_admin.clone()));
+
+		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
+			Origin::signed(local_admin),
+			foreign_asset,
+			local_asset,
+			location.clone(),
+			decimals,
+		));
+		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
+			Origin::signed(foreign_admin),
+			foreign_asset,
+			local_asset,
+			location,
+			decimals,
+		));
+	});
+
+	Sibling::execute_with(|| {
+		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 0);
+
+		assert_ok!(XTokens::transfer(
+			picasso_runtime::Origin::signed(ALICE.into()),
+			CurrencyId::PICA,
+			5 * PICA,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(PICASSO_PARA_ID),
+						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+					)
+				)
+				.into()
+			),
+			1_000_000_000,
+		));
+
+		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 5 * PICA);
+		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 200 * PICA - 5 * PICA);
+	});
+
+	Picasso::execute_with(|| {
+		let balance =
+			picasso_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+		assert_eq_error_rate!(balance, 5 * PICA, (UnitWeightCost::get() * 10) as u128);
+
+		assert_ok!(XTokens::transfer(
+			Origin::signed(BOB.into()),
+			foreign_asset,
+			PICA,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(SIBLING_PARA_ID),
+						Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }
+					)
+				)
+				.into()
+			),
+			1_000_000_000,
+		));
+
+		let balance =
+			picasso_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+		assert_eq_error_rate!(balance, 5 * PICA - PICA, (UnitWeightCost::get() * 10) as u128);
+	});
+
+	Sibling::execute_with(|| {
+		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 5 * PICA);
+		let balance =
+			picasso_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
+		assert_eq_error_rate!(
+			balance,
+			200 * PICA - 5 * PICA + PICA,
+			(UnitWeightCost::get() * 10) as u128
+		);
+	});
+
+	Sibling::execute_with(|| {
+		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 5 * PICA);
+		let balance =
+			picasso_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
+		assert_eq_error_rate!(
+			balance,
+			200 * PICA - 5 * PICA + PICA,
+			(UnitWeightCost::get() * 10) as u128
+		);
+
+		assert_ok!(XTokens::transfer(
+			Origin::signed(ALICE.into()),
+			CurrencyId::PICA,
+			5 * PICA,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(PICASSO_PARA_ID),
+						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+					)
+				)
+				.into()
+			),
+			1_000_000_000,
+		));
+
+		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 10 * PICA);
+		let balance =
+			picasso_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
+		assert_eq_error_rate!(
+			balance,
+			200 * PICA - 5 * PICA + PICA - 5 * PICA,
+			(UnitWeightCost::get() * 10) as u128
+		);
+	});
+
+	Picasso::execute_with(|| {
+		let balance =
+			picasso_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+		assert_eq_error_rate!(
+			balance,
+			5 * PICA - PICA + 5 * PICA,
+			(UnitWeightCost::get() * 10) as u128
+		);
+	});
+}
+
+#[test]
+fn unspent_xcm_fee_is_returned_correctly() {
+	let parachain_account: AccountId =
+		Picasso::execute_with(|| picasso_runtime::ParachainInfo::parachain_id().into_account());
+	let some_account: AccountId = AccountId::from(CHARLIE);
+
+	KusamaRelay::execute_with(|| {
+		assert_ok!(kusama_runtime::Balances::transfer(
+			kusama_runtime::Origin::signed(ALICE.into()),
+			MultiAddress::Id(some_account.clone()),
+			1_000 * CurrencyId::KSM.unit::<Balance>()
+		));
+		assert_ok!(kusama_runtime::Balances::transfer(
+			kusama_runtime::Origin::signed(ALICE.into()),
+			MultiAddress::Id(parachain_account.clone()),
+			1_000 * CurrencyId::KSM.unit::<Balance>()
+		));
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&AccountId::from(ALICE)),
+			2 * CurrencyId::KSM.unit::<Balance>()
+		);
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&some_account),
+			1_000 * CurrencyId::KSM.unit::<Balance>()
+		);
+		assert_eq!(kusama_runtime::Balances::free_balance(&AccountId::from(BOB)), 0);
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
+			1_010 * CurrencyId::KSM.unit::<Balance>()
+		);
+	});
+
+	Picasso::execute_with(|| {
+		// Construct a transfer XCM call with returning the deposit
+		let transfer_call = crate::relaychain::balances_transfer_keep_alive::<Runtime>(
+			AccountId::from(BOB),
+			CurrencyId::PICA.unit(),
+		);
+		let batch_call = crate::relaychain::utility_as_derivative_call::<Runtime>(transfer_call, 0);
+		let weight = 10_000_000_000; // Fee to transfer into the hold register
+		let asset = MultiAsset {
+			id: Concrete(MultiLocation::here()),
+			fun: Fungibility::Fungible(CurrencyId::PICA.unit()),
+		};
+		let xcm_msg = Xcm(vec![
+			WithdrawAsset(asset.clone().into()),
+			BuyExecution { fees: asset, weight_limit: Unlimited },
+			Transact {
+				origin_type: OriginKind::SovereignAccount,
+				require_weight_at_most: weight,
+				call: batch_call.encode().into(),
+			},
+		]);
+
+		let res = picasso_runtime::RelayerXcm::send_xcm(Here, Parent, xcm_msg);
+		assert!(res.is_ok());
+	});
+
+	KusamaRelay::execute_with(|| {
+		// 1 dollar is transferred to BOB
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&some_account),
+			1000 * CurrencyId::KSM.unit::<Balance>()
+		);
+		// ISSUE: ported from Acala, not clear how BOB at all got s amount as we never transfer that
+		// there is no transfer of KSM at all
+		// assert_eq!(
+		// 	kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
+		// 	CurrencyId::KSM.unit::<Balance>()
+		// );
+		// 1 dollar is given to Hold Register for XCM call and never returned.
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
+			1_009 * CurrencyId::KSM.unit::<Balance>()
+		);
+	});
+
+	Picasso::execute_with(|| {
+		// Construct a transfer using the RelaychainCallBuilder
+		let transfer_call = crate::relaychain::balances_transfer_keep_alive::<Runtime>(
+			AccountId::from(BOB),
+			CurrencyId::PICA.unit(),
+		);
+		let batch_call = crate::relaychain::utility_as_derivative_call::<Runtime>(transfer_call, 0);
+		let finalized_call = crate::relaychain::finalize_call_into_xcm_message::<Runtime>(
+			batch_call,
+			CurrencyId::PICA.unit(),
+			10_000_000_000,
+		);
+
+		let res = picasso_runtime::RelayerXcm::send_xcm(Here, Parent, finalized_call);
+		assert!(res.is_ok());
+	});
+
+	KusamaRelay::execute_with(|| {
+		// 1 dollar is transferred to BOB
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&some_account),
+			1_000 * CurrencyId::KSM.unit::<Balance>()
+		);
+		// ISSUE: ported from Acala, not clear how BOB at all got s amount as we never transfer that
+		// there is no transfer of KSM at all
+		// assert_eq!(
+		// 	kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
+		// 	2 * CurrencyId::KSM.unit::<Balance>()
+		// );
+		// Unspent fund from the 1 dollar XCM fee is returned to the sovereign account.
+		assert_eq!(
+			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
+			1_000 * CurrencyId::KSM.unit::<Balance>() + 8_999_626_666_690
+		);
+	});
+}
+
+// from Acala
+#[test]
+fn trap_assets_larger_than_ed_works() {
+	simtest();
+
+	let mut native_treasury_amount = 0;
+	let (ksm_asset_amount, native_asset_amount) =
+		(3 * CurrencyId::KSM.unit::<Balance>(), 2 * CurrencyId::PICA.unit::<Balance>());
+	let parent_account: AccountId = ParentIsDefault::<AccountId>::convert(Parent.into()).unwrap();
+	Picasso::execute_with(|| {
+		assert_ok!(Tokens::deposit(
+			CurrencyId::KSM,
+			&parent_account,
+			42 * CurrencyId::KSM.unit::<Balance>()
+		));
+		let _ =
+			<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::deposit_creating(
+				&parent_account,
+				123 * CurrencyId::PICA.unit::<Balance>(),
+			);
+		// TODO: if we do not top up account initially, than any depositn_creating do not create
+		// anything may be somethign with zero block or like - fix it better way
+		let _ =
+			<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::deposit_creating(
+				&picasso_runtime::TreasuryAccount::get(),
+				7 * CurrencyId::PICA.unit::<Balance>(),
+			);
+
+		native_treasury_amount =
+			Assets::free_balance(CurrencyId::PICA, &picasso_runtime::TreasuryAccount::get());
+	});
+
+	let assets: MultiAsset = (Parent, ksm_asset_amount).into();
+	KusamaRelay::execute_with(|| {
+		let xcm = vec![
+			WithdrawAsset(assets.clone().into()),
+			BuyExecution {
+				fees: assets,
+				weight_limit: Limited(CurrencyId::KSM.unit::<Balance>() as u64),
+			},
+			WithdrawAsset(((0, GeneralKey(CurrencyId::PICA.encode())), native_asset_amount).into()),
+		];
+		assert_ok!(pallet_xcm::Pallet::<kusama_runtime::Runtime>::send_xcm(
+			Here,
+			Parachain(PICASSO_PARA_ID).into(),
+			Xcm(xcm),
+		));
+	});
+
+	Picasso::execute_with(|| {
+		assert_eq!(
+			3 * CurrencyId::KSM.unit::<Balance>(),
+			Assets::free_balance(CurrencyId::KSM, &picasso_runtime::TreasuryAccount::get())
+		);
+		log::error!("{:?}", &picasso_runtime::TreasuryAccount::get());
+		assert_eq!(
+			native_asset_amount,
+			picasso_runtime::Balances::free_balance(&picasso_runtime::TreasuryAccount::get()) -
+				7 * CurrencyId::PICA.unit::<Balance>(),
+		);
+	});
+}
+
+// from Acala
+#[test]
+fn trap_assets_lower_than_existential_deposit_works() {
+	simtest();
+
+	let other_non_native_amount = 1_000_000_000_000;
+	let some_native_amount = 1_000_000_000_000_000;
+	let any_asset = CurrencyId::KSM;
+	let this_native_asset = CurrencyId::PICA;
+
+	let parent_account: AccountId = ParentIsDefault::<AccountId>::convert(Parent.into()).unwrap();
+
+	let (this_treasury_amount, other_treasury_amount) = Picasso::execute_with(|| {
+		assert_ok!(Assets::deposit(any_asset, &parent_account, other_non_native_amount));
+		let _ =
+			<picasso_runtime::Balances as support::traits::Currency<AccountId>>::deposit_creating(
+				&parent_account,
+				some_native_amount,
+			);
+		(
+			<Assets as MultiCurrency<AccountId>>::free_balance(
+				this_native_asset,
+				&picasso_runtime::TreasuryAccount::get(),
+			),
+			<Assets as MultiCurrency<AccountId>>::free_balance(
+				any_asset,
+				&picasso_runtime::TreasuryAccount::get(),
+			),
+		)
+	});
+
+	let assets: MultiAsset = (Parent, other_non_native_amount).into();
+	KusamaRelay::execute_with(|| {
+		let xcm = vec![
+			WithdrawAsset(assets.clone().into()),
+			BuyExecution { fees: assets, weight_limit: Limited(other_non_native_amount as u64) },
+			WithdrawAsset(
+				(
+					(
+						Parent,
+						X2(Parachain(PICASSO_PARA_ID), GeneralKey(this_native_asset.encode())),
+					),
+					some_native_amount,
+				)
+					.into(),
+			),
+			//two asset left in holding register, they both lower than ED, so goes to treasury.
+		];
+		assert_ok!(pallet_xcm::Pallet::<kusama_runtime::Runtime>::send_xcm(
+			Here,
+			Parachain(PICASSO_PARA_ID).into(),
+			Xcm(xcm),
+		));
+	});
+
+	Picasso::execute_with(|| {
+		assert_eq!(
+			System::events().iter().find(|r| matches!(
+				r.event,
+				picasso_runtime::Event::RelayerXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
+			)),
+			None
+		);
+
+		assert_eq!(
+			some_native_amount,
+			<Assets as MultiCurrency<AccountId>>::free_balance(
+				this_native_asset,
+				&picasso_runtime::TreasuryAccount::get()
+			) - this_treasury_amount
+		);
+
+		assert_eq!(
+			other_non_native_amount,
+			<Assets as MultiCurrency<AccountId>>::free_balance(
+				any_asset,
+				&picasso_runtime::TreasuryAccount::get()
+			) - other_treasury_amount
+		);
+	});
+}
+
+// From Acala
+#[test]
+fn sibling_trap_assets_works() {
+	simtest();
+
+	let any_asset = CurrencyId::LAYR;
+	let sibling_non_native_amount = assert_above_deposit(any_asset, 100_000_000_000);
+	let some_native_amount = 1_000_000_000;
+	let this_liveness_native_amount = enough_weigth();
+	let this_native_asset = CurrencyId::PICA;
+
+	let this_native_treasury_amount = Picasso::execute_with(|| {
+		assert_ok!(Assets::deposit(any_asset, &sibling_account(), sibling_non_native_amount));
+		let _ =
+			<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::deposit_creating(
+				&sibling_account(),
+				this_liveness_native_amount,
+			);
+		let _ =
+			<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::deposit_creating(
+				&picasso_runtime::TreasuryAccount::get(),
+				this_liveness_native_amount,
+			);
+		<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::free_balance(
+			&picasso_runtime::TreasuryAccount::get(),
+		)
+	});
+
+	let remote = composable_traits::assets::XcmAssetLocation(MultiLocation::new(
+		1,
+		X2(Parachain(SIBLING_PARA_ID), GeneralKey(CurrencyId::LAYR.encode())),
+	));
+
+	Picasso::execute_with(|| {
+		assert_ok!(picasso_runtime::AssetsRegistry::set_location(any_asset, remote,));
+	});
+
+	// buy execution via native token, and try withdraw on this some amount
+	Sibling::execute_with(|| {
+		let assets: MultiAsset = (
+			(Parent, X2(Parachain(PICASSO_PARA_ID), GeneralKey(this_native_asset.encode()))),
+			some_native_amount,
+		)
+			.into();
+		let xcm = vec![
+			WithdrawAsset(assets.clone().into()), /* withdrow native on target chain from origin
+			                                       * account */
+			BuyExecution {
+				// pay for origin account
+				fees: assets,
+				weight_limit: Unlimited,
+			},
+			WithdrawAsset(
+				(
+					(Parent, X2(Parachain(SIBLING_PARA_ID), GeneralKey(any_asset.encode()))),
+					sibling_non_native_amount,
+				) // withdraw into VM holder asset, and do nothing...
+					.into(),
+			),
+		];
+		assert_ok!(pallet_xcm::Pallet::<Runtime>::send_xcm(
+			Here,
+			(Parent, Parachain(PICASSO_PARA_ID)),
+			Xcm(xcm),
+		));
+	});
+
+	Picasso::execute_with(|| {
+		assert_eq!(
+			System::events().iter().find(|r| matches!(
+				r.event,
+				picasso_runtime::Event::RelayerXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
+			)),
+			None // non of assets trapped by hash, because all are known
+		);
+		assert_eq!(
+			picasso_runtime::Assets::free_balance(
+				any_asset,
+				&picasso_runtime::TreasuryAccount::get()
+			),
+			sibling_non_native_amount
+		);
+
+		assert_eq!(
+			picasso_runtime::Balances::free_balance(&picasso_runtime::TreasuryAccount::get()),
+			some_native_amount + this_native_treasury_amount,
+		);
 	});
 }

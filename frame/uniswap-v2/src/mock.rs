@@ -10,7 +10,7 @@ use sp_runtime::{
 };
 use system::EnsureRoot;
 
-type AssetId = u128;
+pub type AssetId = u128;
 
 pub const BTC: AssetId = 0;
 pub const USDT: AssetId = 1;
@@ -32,8 +32,6 @@ frame_support::construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
 );
-
-parameter_types! {}
 
 impl pallet_currency_factory::Config for Test {
 	type Event = Event;
