@@ -55,24 +55,17 @@ where
 	MultiSigner::from(from_seed::<TPublic>(seed)).into_account()
 }
 
-#[cfg(feature = "dali")]
-/// Dali (westend parachain)
-pub fn dali_westend() -> dali::ChainSpec {
-	dali::ChainSpec::from_json_bytes(include_bytes!("res/dali-westend.json").to_vec())
-		.expect("Dali chain spec not found!")
+#[cfg(feature = "composable")]
+/// Composable (Westend parachain)
+pub fn composable_westend() -> composable::ChainSpec {
+	composable::ChainSpec::from_json_bytes(include_bytes!("res/composable-westend.json").to_vec())
+		.expect("composable-westend chain spec not found!")
 }
 
 #[cfg(feature = "dali")]
-/// Dali (rococo parachain)
+/// Dali (Rococo parachain)
 pub fn dali_rococo() -> dali::ChainSpec {
 	dali::ChainSpec::from_json_bytes(include_bytes!("./res/dali-rococo.json").to_vec())
-		.expect("Dali chain spec not found!")
-}
-
-#[cfg(feature = "dali")]
-/// Dali (chachacha parachain)
-pub fn dali_chachacha() -> dali::ChainSpec {
-	dali::ChainSpec::from_json_bytes(include_bytes!("./res/dali-chachacha.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 
