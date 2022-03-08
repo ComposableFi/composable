@@ -23,8 +23,8 @@ mod weights;
 mod xcmp;
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO,
+	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
@@ -282,7 +282,7 @@ parameter_types! {
 
 impl timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the Unix epoch.
-	type Moment = u64;
+	type Moment = Moment;
 	/// What to do when SLOT_DURATION has passed?
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
@@ -730,6 +730,8 @@ impl crowdloan_rewards::Config for Runtime {
 	type Prefix = Prefix;
 	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
 	type PalletId = CrowdloanRewardsId;
+	type Moment = Moment;
+	type Time = Timestamp;
 }
 
 parameter_types! {
