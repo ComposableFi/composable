@@ -14,6 +14,8 @@
 // limitations under the License.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate core;
+
 pub mod error;
 pub mod primitives;
 #[cfg(test)]
@@ -24,7 +26,7 @@ pub mod traits;
 
 use crate::error::BeefyClientError;
 use crate::primitives::{
-    ParachainsUpdateProof, BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof,
+    BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof, ParachainsUpdateProof,
     SignatureWithAuthorityIndex, HASH_LENGTH,
 };
 use crate::traits::{AuthoritySet, MmrState, StorageRead, StorageWrite};
@@ -188,11 +190,11 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
 
     pub fn verify_parachain_headers(
         &self,
-        beefy_header: ParachainsUpdateProof,
+        parachain_update: ParachainsUpdateProof,
     ) -> Result<(), BeefyClientError> {
         let mut mmr_leaves = Vec::new();
 
-        for parachain_header in beefy_header.parachain_headers {
+        for parachain_header in parachain_update.parachain_headers {
             let pair = (parachain_header.para_id, parachain_header.parachain_header);
             let leaf_bytes = pair.encode();
 
@@ -225,10 +227,11 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
             .store
             .mmr_state()
             .map_err(|_| BeefyClientError::StorageReadError)?;
+
         pallet_mmr::verify_leaves_proof::<sp_runtime::traits::Keccak256, _>(
             mmr_state.mmr_root_hash.into(),
             mmr_leaves,
-            beefy_header.mmr_proofs,
+            parachain_update.mmr_proof,
         )
         .map_err(|_| BeefyClientError::InvalidMmrProof)?;
         Ok(())

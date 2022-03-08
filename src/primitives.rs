@@ -55,7 +55,7 @@ pub struct ParachainHeader {
 #[derive(sp_std::fmt::Debug, Clone, Encode, Decode)]
 pub struct ParachainsUpdateProof {
     pub parachain_headers: Vec<ParachainHeader>,
-    pub mmr_proofs: pallet_mmr_primitives::BatchProof<H256>,
+    pub mmr_proof: pallet_mmr_primitives::BatchProof<H256>,
 }
 
 #[derive(Clone)]
