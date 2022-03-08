@@ -108,6 +108,17 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId> {
 	pub liquidators: Vec<LiquidationStrategyId>,
 }
 
+/// Different ways that a market can be repaid.
+// REVIEW: Name is not final
+#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
+pub enum RepayStrategy<T> {
+	/// Attempt to repay the entirety of the remaining debt, repaying interest first and
+	/// thenprincipal with whatever is left.
+	TotalDebt,
+	/// Repay the specified amount.
+	PartialAmount(T),
+}
+
 /// Basic lending with no its own wrapper (liquidity) token.
 ///  User will deposit borrow and collateral assets via `Vault`.
 /// `Liquidation` is other trait.
@@ -212,17 +223,20 @@ pub trait Lending: DeFiEngine {
 		amount_to_borrow: BorrowAmountOf<Self>,
 	) -> Result<(), DispatchError>;
 
-	/// `from` repays some of `beneficiary` debts.
-	/// - `market_id`   : the market_id on which to be repaid.
-	/// - `repay_amount`: the amount to be repaid in underlying.
-	/// Interest will be repaid first and then remaining amount from `repay_amount` will be used to
-	/// repay principal value.
+	/// Attempt to repay part or all of `beneficiary`'s debts, paid from `from`.
+	/// - `market_id` : id of the market being repaid.
+	/// - `repay_amount`: the amount of borrow asset to be repaid. See [`RepayStrategy`] for more
+	///   information.
+	///
+	/// If successful, returns the amount that was repaid. If there was no balance to repay, returns
+	/// `None`.
+	// REVIEW: Rename `from` parameter? `payer`, perhaps
 	fn repay_borrow(
 		market_id: &Self::MarketId,
 		from: &Self::AccountId,
 		beneficiary: &Self::AccountId,
-		repay_amount: Option<BorrowAmountOf<Self>>,
-	) -> Result<(), DispatchError>;
+		repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
+	) -> Result<Option<BorrowAmountOf<Self>>, DispatchError>;
 
 	/// total debts principals (not includes interest)
 	fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
@@ -248,8 +262,15 @@ pub trait Lending: DeFiEngine {
 		borrows: Self::Balance,
 	) -> Result<Percent, DispatchError>;
 
-	/// Borrow asset amount account should repay to be debt free for specific market pair.
+	/// The amount of *borrow asset* debt remaining for the account in the specified market.
+	///
+	/// Could also be thought of as the amount of *borrow asset* the account must repay to be debt
+	/// free in the specified market.
+	///
 	/// Calculate account's borrow balance using the borrow index at the start of block time.
+	///
+	/// Returns `None` if there is no balance remaining (i.e. debt free in the provided market).
+	///
 	/// ```python
 	/// new_borrow_balance = principal * (market_borrow_index / borrower_borrow_index)
 	/// ```
