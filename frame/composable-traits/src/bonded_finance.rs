@@ -108,7 +108,7 @@ where
 			BondDuration::Infinite => true,
 		};
 
-		if nonzero_maturity == false {
+		if !nonzero_maturity {
 			return Err("MATURITY_CANNOT_BE_ZERO")
 		}
 
@@ -136,7 +136,7 @@ where
 			return Err("ZERO_REWARD_MATURITY")
 		}
 
-		if !input.total_price().is_ok() {
+		if input.total_price().is_err() {
 			return Err("INVALID_TOTAL_PRICE")
 		}
 
