@@ -1393,7 +1393,6 @@ pub mod pallet {
 					&market,
 				)?;
 
-				dbg!();
 				let debt_asset_id =
 					DebtMarkets::<T>::get(market_id).ok_or(Error::<T>::MarketDoesNotExist)?;
 
@@ -1411,10 +1410,8 @@ pub mod pallet {
 					total_repay_amount
 				} else {
 					let repay_borrow_amount = total_repay_amount - burn_amount;
-					dbg!();
 					remaining_borrow_amount =
 						remaining_borrow_amount.safe_sub(&repay_borrow_amount)?;
-					dbg!();
 					<T as Config>::MultiCurrency::burn_from(
 						debt_asset_id,
 						&market_account,
@@ -1423,7 +1420,6 @@ pub mod pallet {
 					burn_amount
 				};
 
-				dbg!();
 				// release_and_burn
 				<T as Config>::MultiCurrency::release(
 					debt_asset_id,
@@ -1432,14 +1428,12 @@ pub mod pallet {
 					true,
 				)?;
 
-				dbg!();
 				<T as Config>::MultiCurrency::burn_from(
 					debt_asset_id,
 					beneficiary,
 					debt_to_release,
 				)?;
 
-				dbg!();
 				<T as Config>::MultiCurrency::transfer(
 					borrow_asset_id,
 					from,
