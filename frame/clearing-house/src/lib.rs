@@ -17,7 +17,6 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 	use codec::FullCodec;
-	use composable_traits::oracle::Oracle;
 	use frame_support::{pallet_prelude::*, Blake2_128Concat, Twox64Concat};
 	use sp_runtime::FixedPointNumber;
 
@@ -41,8 +40,6 @@ pub mod pallet {
 		/// The balance type for this pallet. Used for keeping track of nonnegative amounts of
 		/// assets.
 		type Balance: FullCodec + MaxEncodedLen + TypeInfo;
-		/// The Oracle implementation to be used by this pallet
-		type Oracle: Oracle;
 		/// The asset ID type for this and the oracle pallet
 		type AssetId: FullCodec + MaxEncodedLen + TypeInfo;
 		/// The market ID type for this pallet.
@@ -120,7 +117,7 @@ pub mod pallet {
 
 	// Pallets use events to inform users when important changes are made.
 	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	// #[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {}
 
 	// ----------------------------------------------------------------------------------------------------
