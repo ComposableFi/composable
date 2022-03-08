@@ -3,9 +3,9 @@
   "id": "composable-westend",
   "chainType": "Live",
   "bootNodes": [
-    "/dns/westend-bn1.composable.finance/tcp/30334/p2p/12D3KooWP4JhbuhfNaFxoGfFArXYiwxn3DfVCLBV4YpYdZ6NvZPi",
-    "/dns/westend-bn2.composable.finance/tcp/30334/p2p/12D3KooWSNZYYVpCEntay5JiNs6pEi7P4UYkXUNRpdZo3qkk1kma",
-    "/dns/westend-bn3.composable.finance/tcp/30334/p2p/12D3KooWBm45MpkdHXc58XXKyj5nkPCvanXNUM2Z5j2aeTD3KAe5"
+    "/dns/westend-bn1.composable.finance/tcp/30334/p2p/12D3KooWEzAHmgyvB1uGQZWE2wb3JPpRXcwVEjW5jF56p1aLXUnE",
+    "/dns/westend-bn2.composable.finance/tcp/30334/p2p/12D3KooWSuaUnR13z4jxN8FpTWs3rWfoiptuZB2ctUWTDbzcr9ji",
+    "/dns/westend-bn3.composable.finance/tcp/30334/p2p/12D3KooWB7WhX8XLQDRRZimnbPVw5syktvWhxBFne1iCZCu28ff1"
   ],
   "telemetryEndpoints": [
     [
