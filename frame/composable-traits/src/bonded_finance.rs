@@ -1,4 +1,4 @@
-use crate::math::SafeArithmetic;
+use crate::math::{SafeDiv, SafeMul};
 use composable_support::validation::{Validate, Validated};
 use frame_support::{pallet_prelude::*, traits::Get};
 use scale_info::TypeInfo;
@@ -88,7 +88,7 @@ impl<
 		MinReward,
 		AccountId,
 		AssetId,
-		Balance: Zero + PartialOrd + SafeArithmetic,
+		Balance: Zero + PartialOrd + SafeDiv + SafeMul,
 		BlockNumber: Zero,
 	>
 	Validate<
@@ -144,7 +144,7 @@ where
 	}
 }
 
-impl<AccountId, AssetId, Balance: Zero + PartialOrd + SafeArithmetic, BlockNumber: Zero>
+impl<AccountId, AssetId, Balance: Zero + PartialOrd + SafeMul, BlockNumber: Zero>
 	BondOffer<AccountId, AssetId, Balance, BlockNumber>
 {
 	/// An offer is completed once all it's nb_of_bonds has been sold.

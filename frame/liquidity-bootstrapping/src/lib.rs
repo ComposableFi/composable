@@ -54,7 +54,10 @@ pub mod pallet {
 	use composable_maths::dex::constant_product::{compute_out_given_in, compute_spot_price};
 	use composable_support::validation::{Validate, Validated};
 	use composable_traits::{
-		currency::LocalAssets, defi::CurrencyPair, dex::Amm, math::SafeArithmetic,
+		currency::LocalAssets,
+		defi::CurrencyPair,
+		dex::Amm,
+		math::{SafeAdd, SafeSub},
 	};
 	use core::fmt::Debug;
 	use frame_support::{
@@ -93,7 +96,7 @@ pub mod pallet {
 		pub final_weight: Permill,
 	}
 
-	impl<BlockNumber: TryInto<u64> + Ord + Copy + Saturating + SafeArithmetic> Sale<BlockNumber> {
+	impl<BlockNumber: TryInto<u64> + Ord + Copy + Saturating + SafeAdd + SafeSub> Sale<BlockNumber> {
 		pub(crate) fn current_weights(
 			&self,
 			current_block: BlockNumber,
@@ -287,7 +290,8 @@ pub mod pallet {
 			+ Copy
 			+ Ord
 			+ Zero
-			+ SafeArithmetic;
+			+ SafeAdd
+			+ SafeSub;
 
 		/// An isomorphism: Balance<->u128
 		type Convert: Convert<u128, BalanceOf<Self>> + Convert<BalanceOf<Self>, u128>;
@@ -309,7 +313,8 @@ pub mod pallet {
 			+ Copy
 			+ Zero
 			+ One
-			+ SafeArithmetic;
+			+ SafeAdd
+			+ SafeSub;
 
 		type LocalAssets: LocalAssets<AssetIdOf<Self>>;
 
