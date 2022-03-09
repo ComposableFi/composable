@@ -14,8 +14,6 @@
 // limitations under the License.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-extern crate core;
-
 pub mod error;
 pub mod primitives;
 #[cfg(test)]
@@ -39,6 +37,7 @@ use sp_io::crypto;
 use sp_runtime::traits::Convert;
 
 use sp_std::prelude::*;
+use sp_std::vec;
 
 pub struct BeefyLightClient<Store: StorageRead + StorageWrite> {
     store: Store,
