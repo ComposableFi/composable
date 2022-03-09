@@ -949,7 +949,8 @@ pub mod pallet {
 
 			// Requirement 2) The minimum asset bound must be less than or equal to the maximum asset bound
 			ensure!(
-				config.asset_bounds.minimum <= config.asset_bounds.maximum,
+				// config.asset_bounds.minimum <= config.asset_bounds.maximum,
+				Self::bounds_are_valid(&config.asset_bounds),
 				Error::<T>::InvalidAssetBounds
 			);
 
@@ -957,7 +958,7 @@ pub mod pallet {
 			//     the required bounds set in the config's asset_bounds field
 			let pool_size = number_of_assets as u8;
 			ensure!(
-				config.asset_bounds.minimum <= pool_size && pool_size <= config.asset_bounds.maximum,
+				Self::pool_size_is_within_asset_bounds(pool_size, &config.asset_bounds),
 				Error::<T>::PoolSizeIsOutsideOfAssetBounds
 			);
 
@@ -976,7 +977,7 @@ pub mod pallet {
 
 			// Requirement 6) The minimum weight bound must be less than or equal to the maximum weight bound
 			ensure!(
-				config.weight_bounds.minimum <= config.weight_bounds.maximum,
+				Self::bounds_are_valid(&config.weight_bounds),
 				Error::<T>::InvalidWeightBounds
 			);
 
@@ -1535,6 +1536,30 @@ pub mod pallet {
 			unique_assets.len() == assets.len()
 		}
 
+		fn bounds_are_valid<U>(bounds: &Bound<U>) -> bool 
+		where U: Copy + PartialOrd {
+			let (lower_bounds, upper_bound) = (bounds.minimum, bounds.maximum);
+
+			match (lower_bounds, upper_bound) {
+				(Some(minimum), Some(maximum)) => minimum <= maximum,
+				_ => true
+			}
+		}
+
+		fn pool_size_is_within_asset_bounds(
+			pool_size: u8,
+			bounds: &Bound<u8>
+		) -> bool {
+			let (lower_bound, upper_bound) = (bounds.minimum, bounds.maximum);
+
+			match (lower_bound, upper_bound) {
+				(None, None) => true,
+				(Some(minimum), None) => minimum <= pool_size,
+				(None, Some(maximum)) => pool_size <= maximum,
+				(Some(minimum), Some(maximum)) => minimum <= pool_size && pool_size <= maximum,
+			}
+		}
+
 		// Checks that there is a one-to-one correspondence of weights to assets
 		//  '-> Conditions:
 		//        i.  ∀ assets a_i ⇒ ∃ weight w_i
@@ -1595,14 +1620,27 @@ pub mod pallet {
 			weights: &WeightsVec<AssetIdOf<T>, WeightOf<T>>, 
 			weight_bounds: &Bound<WeightOf<T>>
 		) -> bool {
-			// Condition i
-			for weight_struct in weights {
-				if weight_struct.weight < weight_bounds.minimum || weight_bounds.maximum < weight_struct.weight {
-					return false;
-				}
-			}
+			let (lower_bound, upper_bound) = (weight_bounds.minimum, weight_bounds.maximum);
 
-			true
+			weights.iter()
+				.all(|weight| match (lower_bound, upper_bound) {
+					(None, None) => true,
+					(Some(minimum), None) => minimum <= weight.weight,
+					(None, Some(maximum)) => weight.weight <= maximum,
+					(Some(minimum), Some(maximum)) => minimum <= weight.weight && weight.weight <= maximum,
+				})
+
+			// TODO: (Nevin)
+			//  - delete
+
+			// // Condition i
+			// for weight_struct in weights {
+			// 	if weight_struct.weight < weight_bounds.minimum || weight_bounds.maximum < weight_struct.weight {
+			// 		return false;
+			// 	}
+			// }
+
+			// true
 		}
 
 		// Checks that, for an all-asset deposit, there is actually one deposit for each asset
@@ -1727,19 +1765,36 @@ pub mod pallet {
 				.checked_div(reserve)
 				.ok_or(ArithmeticError::Overflow)?;
 
-			let deposit_bounds: Bound<WeightOf<T>> = Self::pool_info(pool_id)?.deposit_bounds;
-			let lower_bound: FixedBalance = FixedBalance::from_num(
-				deposit_bounds.minimum.deconstruct().into() as f64 / WeightOf::<T>::one().deconstruct().into() as f64
-			);
+			let deposit_bounds = Self::pool_info(pool_id)?.deposit_bounds;
+			let lower_bound: FixedBalance = match deposit_bounds.minimum {
+				None => FixedBalance::from_num(0_u8),
+				// Some(percent) => FixedBalance::from_num(
+				// 	percent.deconstruct().into() as f64 / WeightOf::<T>::one().deconstruct().into() as f64
+				// )
+				Some(percent) => FixedBalance::from_num(percent.deconstruct().into())
+					.checked_div(FixedBalance::from_num(WeightOf::<T>::one().deconstruct().into()))
+					.ok_or(ArithmeticError::Overflow)?
+			};
+
+			let upper_bound: FixedBalance = match deposit_bounds.maximum {
+				None => FixedBalance::MAX,
+				// Some(percent) => FixedBalance::from_num(
+				// 	percent.deconstruct().into() as f64 / WeightOf::<T>::one().deconstruct().into() as f64
+				// )
+				Some(percent) => FixedBalance::from_num(percent.deconstruct().into())
+					.checked_div(FixedBalance::from_num(WeightOf::<T>::one().deconstruct().into()))
+					.ok_or(ArithmeticError::Overflow)?
+			};
 
 			// an upper bound of Perquintill::one() is equal to no upper bound
-			let upper_bound = if deposit_bounds.maximum == T::Weight::one() {
-				FixedBalance::MAX
-			} else {
-				FixedBalance::from_num(
-					deposit_bounds.maximum.deconstruct().into() as f64 / WeightOf::<T>::one().deconstruct().into() as f64
-				)
-			};
+			// let upper_bound = deposit_bounds.maximum;
+			// let upper_bound = if deposit_bounds.maximum == T::Weight::one() {
+			// 	FixedBalance::MAX
+			// } else {
+			// 	FixedBalance::from_num(
+			// 		deposit_bounds.maximum.deconstruct().into() as f64 / WeightOf::<T>::one().deconstruct().into() as f64
+			// 	)
+			// };
 
 			Ok(lower_bound <= reserve_increase && reserve_increase <= upper_bound)
 		}
@@ -1863,10 +1918,21 @@ pub mod pallet {
 			);
 
 			let withdraw_bounds: Bound<WeightOf<T>> = Self::pool_info(pool_id)?.withdraw_bounds;
-			let lower_bound: WeightOf<T> = withdraw_bounds.minimum;
-			let upper_bound: WeightOf<T> = withdraw_bounds.maximum;
+			let (lower_bound, upper_bound) = (withdraw_bounds.minimum, withdraw_bounds.maximum);
+			match (lower_bound, upper_bound) {
+				(None, None) => Ok(true),
+				(Some(minimum), None) => Ok(minimum <= lp_share),
+				(None, Some(maximum)) => Ok(lp_share <= maximum),
+				(Some(minimum), Some(maximum)) => Ok(minimum <= lp_share && lp_share <= maximum),
+			}
 
-			Ok(lower_bound <= lp_share && lp_share <= upper_bound)
+			// TODO: (Nevin)
+			//  - delete
+			
+			// let lower_bound: WeightOf<T> = withdraw_bounds.minimum;
+			// let upper_bound: WeightOf<T> = withdraw_bounds.maximum;
+
+			// Ok(lower_bound <= lp_share && lp_share <= upper_bound)
 		}
 	}
 

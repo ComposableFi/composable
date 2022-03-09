@@ -161,23 +161,23 @@ prop_compose! {
 
 				assets: initial_assets.clone(),
 				asset_bounds: Bound {
-					minimum: 0, 
-					maximum: MAX_POOL_SIZE,
+					minimum: Some(0), 
+					maximum: Some(MAX_POOL_SIZE),
 				},
 
 				weights: equal_weight_vector_for(&initial_assets),
 				weight_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 
 				deposit_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 				withdraw_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 			}
 		}
@@ -481,25 +481,25 @@ proptest! {
 				assets: initial_assets.clone(),
 				// Condition ii && Condition iii
 				asset_bounds: Bound {
-					minimum: 0, 
-					maximum: MAX_POOL_SIZE,
+					minimum: Some(0), 
+					maximum: Some(MAX_POOL_SIZE),
 				},
 
 				// Condition iv && Condition v
 				weights: equal_weight_vector_for(&initial_assets),
 				// Condition vi && Condition vii
 				weight_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 
 				deposit_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 				withdraw_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 			};
 
@@ -537,23 +537,23 @@ proptest! {
 
 				assets: initial_assets.clone(),
 				asset_bounds: Bound {
-					minimum: minimum_asset_bound, 
-					maximum: maximum_asset_bound,
+					minimum: Some(minimum_asset_bound), 
+					maximum: Some(maximum_asset_bound)
 				},
 
 				weights: equal_weight_vector_for(&initial_assets),
 				weight_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 
 				deposit_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 				withdraw_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 			};
 
@@ -578,7 +578,7 @@ proptest! {
 					Error::<Test>::InvalidAssetBounds
 				);
 			// Condition iii
-			} else if pool_size < config.asset_bounds.minimum as usize || (config.asset_bounds.maximum as usize) < pool_size {
+			} else if pool_size < config.asset_bounds.minimum.unwrap() as usize || (config.asset_bounds.maximum.unwrap() as usize) < pool_size {
 				assert_noop!(
 					<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee), 
 					Error::<Test>::PoolSizeIsOutsideOfAssetBounds
@@ -625,23 +625,23 @@ proptest! {
 
 				assets: initial_assets.clone(),
 				asset_bounds: Bound {
-					minimum: 0, 
-					maximum: MAX_POOL_SIZE,
+					minimum: Some(0), 
+					maximum: Some(MAX_POOL_SIZE),
 				},
 
 				weights,
 				weight_bounds: Bound {
-					minimum: weight_minimum, 
-					maximum: weight_maximum
+					minimum: Some(weight_minimum), 
+					maximum: Some(weight_maximum)
 				},
 
 				deposit_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 				withdraw_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 			};
 
@@ -702,23 +702,23 @@ proptest! {
 
 				assets: initial_assets.clone(),
 				asset_bounds: Bound {
-					minimum: 0, 
-					maximum: 26
+					minimum: Some(0), 
+					maximum: Some(26)
 				},
 
 				weights: equal_weight_vector_for(&initial_assets),
 				weight_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 
 				deposit_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 				withdraw_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 			};
 
@@ -770,23 +770,23 @@ proptest! {
 
 				assets: initial_assets.clone(),
 				asset_bounds: Bound {
-					minimum: 0, 
-					maximum: 26
+					minimum: Some(0), 
+					maximum: Some(26)
 				},
 
 				weights: equal_weight_vector_for(&initial_assets),
 				weight_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 
 				deposit_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 				withdraw_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 			};
 
@@ -858,23 +858,23 @@ proptest! {
 
 				assets: initial_assets.clone(),
 				asset_bounds: Bound {
-					minimum: 0, 
-					maximum: 26
+					minimum: Some(0), 
+					maximum: Some(26)
 				},
 
 				weights: equal_weight_vector_for(&initial_assets),
 				weight_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 
 				deposit_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 				withdraw_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 			};
 
@@ -921,23 +921,23 @@ proptest! {
 
 				assets: initial_assets.clone(),
 				asset_bounds: Bound {
-					minimum: 0, 
-					maximum: 26
+					minimum: Some(0), 
+					maximum: Some(26)
 				},
 
 				weights: equal_weight_vector_for(&initial_assets),
 				weight_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 
 				deposit_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 				withdraw_bounds: Bound {
-					minimum: Perquintill::zero(), 
-					maximum: Perquintill::one()
+					minimum: Some(Perquintill::zero()), 
+					maximum: Some(Perquintill::one())
 				},
 			};
 
@@ -982,11 +982,13 @@ fn deposit_is_within_nonempty_pools_deposit_bounds(pool_id: &u64, deposit: &Depo
 	let reserve_increase: f64 = amount / reserve;
 
 	let deposit_bounds: Bound<Perquintill> = Pools::pool_info(pool_id).unwrap().deposit_bounds;
-	let lower_bound: f64 = deposit_bounds.minimum.deconstruct() as f64 / Perquintill::one().deconstruct() as f64;
-	let upper_bound: f64 = if deposit_bounds.maximum == Perquintill::one() {
-		f64::MAX
-	} else {
-		deposit_bounds.maximum.deconstruct() as f64 / Perquintill::one().deconstruct() as f64
+	let lower_bound: f64 = match deposit_bounds.minimum {
+		None => 0.0,
+		Some(minimum) => minimum.deconstruct() as f64 / Perquintill::one().deconstruct() as f64,
+	};
+	let upper_bound: f64 = match deposit_bounds.minimum {
+		None => f64::MAX,
+		Some(maximum) => maximum.deconstruct() as f64 / Perquintill::one().deconstruct() as f64,
 	};
 		
 	lower_bound <= reserve_increase && reserve_increase <= upper_bound
@@ -1336,8 +1338,8 @@ proptest! {
 		let upper_bound = 30;
 
 		config.deposit_bounds = Bound {
-			minimum: Perquintill::from_percent(lower_bound), 
-			maximum: Perquintill::from_percent(upper_bound)
+			minimum: Some(Perquintill::from_percent(lower_bound)), 
+			maximum: Some(Perquintill::from_percent(upper_bound))
 		};
 
 		let deposit_1 = (&all_deposits[0]).to_vec();
@@ -2229,8 +2231,8 @@ proptest! {
 		let upper_bound = Perquintill::from_percent(30);
 
 		config.withdraw_bounds = Bound {
-			minimum: lower_bound,
-			maximum: upper_bound,
+			minimum: Some(lower_bound),
+			maximum: Some(upper_bound),
 		};
 
 		// Only tests the state after one deposit
