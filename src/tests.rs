@@ -488,10 +488,7 @@ async fn verify_parachain_headers() {
         };
 
         let mmr_update = get_mmr_update(&client, signed_commitment).await;
-        assert_eq!(
-            beef_light_client.ingest_mmr_root_with_proof(mmr_update),
-            Ok(())
-        );
+        assert_ok!(beef_light_client.ingest_mmr_root_with_proof(mmr_update));
         assert_ok!(beef_light_client.verify_parachain_headers(parachain_update_proof));
 
         let mmr_state = beef_light_client.store_ref().mmr_state().unwrap();
