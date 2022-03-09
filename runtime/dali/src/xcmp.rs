@@ -3,15 +3,18 @@
 #![allow(unused_imports)] // allow until v2 xcm released (instead creating 2 runtimes)
 use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
+use common::xcmp::*;
 use composable_traits::{
 	assets::{RemoteAssetRegistry, XcmAssetLocation},
 	defi::Ratio,
 	oracle::MinimalOracle,
 };
-use cumulus_primitives_core::{ParaId, IsSystem};
+use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
 	construct_runtime, ensure, log, match_type, parameter_types,
-	traits::{Contains, OriginTrait, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
+	traits::{
+		Contains, Everything, KeyOwnerProofSystem, Nothing, OriginTrait, Randomness, StorageInfo,
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -19,19 +22,19 @@ use frame_support::{
 	},
 	PalletId, RuntimeDebug,
 };
+use orml_traits::{location::Reserve, parameter_type_with_key, MultiCurrency};
 use orml_xcm_support::{
 	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, OnDepositFail,
 };
+use pallet_xcm::XcmPassthrough;
+use polkadot_parachain::primitives::Sibling;
+use sp_api::impl_runtime_apis;
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	traits::{AccountIdLookup, BlakeTwo256, Convert, ConvertInto, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, DispatchError,
 };
-use orml_traits::{location::Reserve, parameter_type_with_key, MultiCurrency};
-use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use pallet_xcm::XcmPassthrough;
-use polkadot_parachain::primitives::Sibling;
 use sp_std::{marker::PhantomData, prelude::*};
 use xcm::latest::{prelude::*, Error};
 use xcm_builder::{
@@ -42,10 +45,11 @@ use xcm_builder::{
 	SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
 };
 use xcm_executor::{
-	traits::{DropAssets, ConvertOrigin, FilterAssetLocation, ShouldExecute, TransactAsset, WeightTrader},
+	traits::{
+		ConvertOrigin, DropAssets, FilterAssetLocation, ShouldExecute, TransactAsset, WeightTrader,
+	},
 	Assets, Config, XcmExecutor,
 };
-use common::xcmp::*;
 
 parameter_types! {
 	pub KsmLocation: MultiLocation = MultiLocation::parent();

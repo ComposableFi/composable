@@ -1,6 +1,6 @@
 use crate::chain_spec;
-use std::path::PathBuf;
 use clap::Parser;
+use std::path::PathBuf;
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, Parser)]
@@ -35,7 +35,7 @@ pub enum Subcommand {
 	Revert(sc_cli::RevertCmd),
 
 	/// Key management cli utilities
-  #[clap(subcommand)]
+	#[clap(subcommand)]
 	Key(sc_cli::KeySubcommand),
 
 	/// The custom benchmark subcommmand benchmarking runtime pallets.
