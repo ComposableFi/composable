@@ -30,12 +30,16 @@ scale-info = { version = "1.0", default-features = false, features = [
 ] }
 serde = { version = '1', optional = true }
 
+[dev-dependencies]
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = true }
+
 [features]
 default = ["std"]
 std = [
     "frame-support/std",
     "frame-system/std",
     "frame-benchmarking/std",
+    "orml-traits/std",
     "sp-runtime/std",
     "sp-arithmetic/std",
     "sp-io/std",
