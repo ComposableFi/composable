@@ -114,6 +114,9 @@ export default {
     ComposableTraitsDexStableSwapPoolInfo: "Null",
     ComposableTraitsOraclePrice: "Null",
     CommonMosaicRemoteAssetId: "Null",
-    ComposableTraitsDexConstantProductPoolInfo: "Null"
+    ComposableTraitsDexConstantProductPoolInfo: "Null",
+    PalletLiquidityBootstrappingPool: "Null",
+    Balance: "u128",
+    PoolId: "u128"
   },
 };

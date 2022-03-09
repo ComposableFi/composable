@@ -481,6 +481,28 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    liquidityBootstrapping: {
+      /**
+       * Liquidity added into the pool `T::PoolId`.
+       **/
+      LiquidityAdded: AugmentedEvent<ApiType, [u128, u128, u128]>;
+      /**
+       * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
+       **/
+      PoolCreated: AugmentedEvent<ApiType, [u128, AccountId32]>;
+      /**
+       * The sale ended, the funds repatriated and the pool deleted.
+       **/
+      PoolDeleted: AugmentedEvent<ApiType, [u128, u128, u128]>;
+      /**
+       * Token exchange happened.
+       **/
+      Swapped: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128, u128, u128]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     mosaic: {
       /**
        * An asset mapping has been created.

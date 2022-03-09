@@ -6,7 +6,10 @@ import type { ITuple } from '@polkadot/types-codec/types';
 import type { EthereumAccountId } from '@polkadot/types/interfaces/eth';
 import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/extrinsics';
 import type { ParachainInherentData, PersistedValidationData } from '@polkadot/types/interfaces/parachains';
-import type { AccountId32, Balance } from '@polkadot/types/interfaces/runtime';
+import type { AccountId32 } from '@polkadot/types/interfaces/runtime';
+
+/** @name Balance */
+export interface Balance extends u128 {}
 
 /** @name CommonMosaicRemoteAssetId */
 export interface CommonMosaicRemoteAssetId extends Null {}
@@ -194,6 +197,9 @@ export interface PalletIdentityRegistration extends Null {}
 /** @name PalletLiquidationsLiquidationStrategyConfiguration */
 export interface PalletLiquidationsLiquidationStrategyConfiguration extends Null {}
 
+/** @name PalletLiquidityBootstrappingPool */
+export interface PalletLiquidityBootstrappingPool extends Null {}
+
 /** @name PalletMosaicAssetInfo */
 export interface PalletMosaicAssetInfo extends Null {}
 
@@ -253,6 +259,9 @@ export interface PolkadotPrimitivesV1AbridgedHostConfiguration extends Null {}
 
 /** @name PolkadotPrimitivesV1PersistedValidationData */
 export interface PolkadotPrimitivesV1PersistedValidationData extends PersistedValidationData {}
+
+/** @name PoolId */
+export interface PoolId extends u128 {}
 
 /** @name SpConsensusAuraSr25519AppSr25519Public */
 export interface SpConsensusAuraSr25519AppSr25519Public extends Null {}

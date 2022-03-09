@@ -578,6 +578,18 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    liquidityBootstrapping: {
+      CannotRespectMinimumRequested: AugmentedError<ApiType>;
+      InvalidAmount: AugmentedError<ApiType>;
+      InvalidSaleState: AugmentedError<ApiType>;
+      MustBeOwner: AugmentedError<ApiType>;
+      PairMismatch: AugmentedError<ApiType>;
+      PoolNotFound: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     mosaic: {
       AmountMismatch: AugmentedError<ApiType>;
       AssetNotMapped: AugmentedError<ApiType>;
@@ -960,7 +972,6 @@ declare module '@polkadot/api-base/types/errors' {
       InvalidPair: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
-      RequiredAmountNotReached: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

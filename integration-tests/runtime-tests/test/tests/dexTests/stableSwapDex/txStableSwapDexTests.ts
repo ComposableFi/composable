@@ -3,7 +3,12 @@ import {KeyringPair} from "@polkadot/keyring/types";
 import {expect} from "chai";
 import testConfiguration from './test_configuration.json';
 
-
+/**
+ * All tests for the stableSwapDex Pallet.
+ *
+ * The second tests are supposed to test amplificationCoefficient == 0.
+ * Those are currently disabled, cause #725 disabled ampCo==0 after some nasty bugs.
+ */
 describe("tx.stableSwapDex Tests", function () {
   if (!testConfiguration.enabledTests.enabled)
     return;
@@ -15,13 +20,19 @@ describe("tx.stableSwapDex Tests", function () {
     baseAssetId:number,
     quoteAssetId:number;
 
+  /***
+   * Just setting some variables
+   */
   before(function() {
     wallet = walletEve.derive("/test/stableSwapDex");
     sudoKey = walletAlice;
-    baseAssetId = ASSET_ID_PICA;
+    baseAssetId = ASSET_ID_BTC;
     quoteAssetId = ASSET_ID_USDT;
   });
 
+  /***
+   * Minting assets to the regarding wallets.
+   */
   before('Minting assets', async function() {
     // Setting timeout to 10 minutes
     this.timeout(10 * 60 * 1000);
@@ -43,8 +54,26 @@ describe("tx.stableSwapDex Tests", function () {
       )
     );
     expect(result2.isOk).to.be.true;
+    const {data: [result3],} = await sendAndWaitForSuccess(
+      api,
+      sudoKey,
+      api.events.sudo.Sudid.is,
+      api.tx.sudo.sudo(
+        api.tx.assets.mintInto(ASSET_ID_PICA, wallet.address, 555555555555555)
+      )
+    );
+    expect(result3.isOk).to.be.true;
   });
 
+  /***
+   * Here we create the pools to make our transactions in.
+   *
+   * A second test here is required to make sure the amplificationCoefficient works with 0.
+   *
+   * The results are:
+   * 1. The public key of the wallet creating the pool.
+   * 2. The pool id of the newly created pool.
+   */
   describe('tx.stableSwapDex.create Success Tests', function () {
     if (!testConfiguration.enabledTests.create__success.enabled)
       return;
@@ -94,7 +123,61 @@ describe("tx.stableSwapDex Tests", function () {
     });
   });
 
-  describe('Providing Liquidity Success Tests | To be implemented!', ()=>{return;});
+  /**
+   * Here we provide liquidity to the newly created pools.
+   *
+   * Results are:
+   * 1. Public key of the wallet providing liquidity.
+   * 2. The pool id, liquidity was provided to.
+   * 3. The asset id of the quote asset.
+   * 4. The asset id of the base asset.
+   * 5. Unknown!
+   */
+  describe('tx.addLiquidity Success Tests', function () {
+    if (!testConfiguration.enabledTests.add_liquidity__success.enabled)
+      return;
+    it ('Can provide liquidity to stableSwapDex pool [Pool #1] (amount: 100000000)', async function() {
+      if (!testConfiguration.enabledTests.add_liquidity__success.add_liquidity1)
+        this.skip();
+      // Setting timeout to 2 minutes
+      this.timeout(2 * 60 * 1000);
+      const parameterPoolId = api.createType('PoolId', poolIdNum1);
+      const baseAmount = api.createType('Balance', 100000002);
+      const quoteAmount = api.createType('Balance', 100000001);
+      const minMintAmount = api.createType('Balance', 100000000);
+      const keepAlive = true;
+      const {data: [resultAccountId, resultPoolId, resultAssetId, resultQuoteAmount, resultNumber4]} = await sendAndWaitForSuccess(
+        api,
+        wallet,
+        api.events.stableSwapDex.LiquidityAdded.is,
+        api.tx.stableSwapDex.addLiquidity(parameterPoolId, baseAmount, quoteAmount, minMintAmount, keepAlive)
+      );
+      expect(resultAccountId.toString()).to.be.equal(api.createType('AccountId32', wallet.address).toString());
+      expect(resultPoolId.toNumber()).to.be.equal(poolIdNum1);
+      expect(resultQuoteAmount.toNumber()).to.be.equal(quoteAmount.toNumber());
+    });
+
+    it ('Can provide liquidity to stableSwapDex pool [Pool #2] (amount: 100000000)', async function() {
+      if (!testConfiguration.enabledTests.add_liquidity__success.add_liquidity2)
+        this.skip();
+      // Setting timeout to 2 minutes
+      this.timeout(2 * 60 * 1000);
+      const parameterPoolId = api.createType('PoolId', poolIdNum2);
+      const baseAmount = api.createType('Balance', 5555555555555);
+      const quoteAmount = api.createType('Balance', 5555555555555);
+      const minMintAmount = api.createType('Balance', 1);
+      const keepAlive = true;
+      const {data: [resultAccountId, resultPoolId, resultAssetId, resultBaseId, resultNumber4]} = await sendAndWaitForSuccess(
+        api,
+        wallet,
+        api.events.stableSwapDex.LiquidityAdded.is,
+        api.tx.stableSwapDex.addLiquidity(parameterPoolId, baseAmount, quoteAmount, minMintAmount, keepAlive)
+      );
+      expect(resultAccountId.toString()).to.be.equal(api.createType('AccountId32', wallet.address).toString());
+      expect(resultPoolId.toNumber()).to.be.equal(poolIdNum1);
+      expect(resultBaseId.toNumber()).to.be.equal(baseAssetId);
+    });
+  });
 
   describe('tx.stableSwapDex.buy Success Tests Success Tests', function () {
     if (!testConfiguration.enabledTests.buy__success.enabled)
@@ -121,7 +204,7 @@ describe("tx.stableSwapDex Tests", function () {
     });
 
     it ('Can buy from stableSwapDex pool [Pool #2] (amount: 100000000)', async function() {
-      if (!testConfiguration.enabledTests.create__success.create1)
+      if (!testConfiguration.enabledTests.buy__success.buy2)
         this.skip();
       // Setting timeout to 2 minutes
       this.timeout(2 * 60 * 1000);
@@ -192,7 +275,8 @@ describe("tx.stableSwapDex Tests", function () {
    * Results are:
    * 1. The wallet who sent the transaction.
    * 2. The id of the pool in which the swap happened.
-   * 3. The
+   * 3. The asset ID of the base asset.
+   * 4. - 7. Unknown! Couldn't identify them.
    */
   describe('tx.stableSwapDex.swap Success Tests', function () {
     if (!testConfiguration.enabledTests.swap__success.enabled)
@@ -243,6 +327,51 @@ describe("tx.stableSwapDex Tests", function () {
       expect(resultAccountId.toString()).to.be.equal(api.createType('AccountId32', wallet.address).toString());
       expect(poolIdNum2).to.be.equal(resultPoolId.toNumber());
       expect(resultBaseAssetId.toNumber()).to.be.equal(baseAssetId);
+    });
+  });
+
+  describe('Remove Liquidity Success Tests', function() {
+    if (!testConfiguration.enabledTests.add_liquidity__success.enabled)
+      return;
+    it ('Can remove liquidity from stableSwapDex pool [Pool #1] (amount: 100000000)', async function() {
+      if (!testConfiguration.enabledTests.remove_liquidity__success.remove_liquidity1)
+        this.skip();
+      // Setting timeout to 2 minutes
+      this.timeout(2 * 60 * 1000);
+      const parameterPoolId = api.createType('PoolId', poolIdNum1);
+      const baseAmount = api.createType('Balance', 100000000);
+      const quoteAmount = api.createType('Balance', 100000000);
+      const minMintAmount = api.createType('Balance', 100000000);
+      const {data: [resultAccountId, resultPoolId, resultAssetId, resultBaseId, resultNumber4]} = await sendAndWaitForSuccess(
+        api,
+        wallet,
+        api.events.stableSwapDex.LiquidityRemoved.is,
+        api.tx.stableSwapDex.removeLiquidity(parameterPoolId, baseAmount, quoteAmount, minMintAmount)
+      );
+      expect(resultAccountId.toString()).to.be.equal(api.createType('AccountId32', wallet.address).toString());
+      expect(resultPoolId.toNumber()).to.be.equal(poolIdNum1);
+      expect(resultBaseId.toNumber()).to.be.equal(baseAssetId);
+    });
+
+    it ('Can remove liquidity from stableSwapDex pool [Pool #2] (amount: 100000000)', async function() {
+      if (!testConfiguration.enabledTests.remove_liquidity__success.remove_liquidity2)
+        this.skip();
+      // Setting timeout to 2 minutes
+      this.timeout(2 * 60 * 1000);
+      const parameterPoolId = api.createType('PoolId', poolIdNum2);
+      const baseAmount = api.createType('Balance', 100000000);
+      const quoteAmount = api.createType('Balance', 100000000);
+      const minMintAmount = api.createType('Balance', 100000000);
+      const {data: [resultAccountId, resultPoolId, resultQuoteAssetId, resultBaseId, resultNumber4]} = await sendAndWaitForSuccess(
+        api,
+        wallet,
+        api.events.stableSwapDex.LiquidityRemoved.is,
+        api.tx.stableSwapDex.removeLiquidity(parameterPoolId, baseAmount, quoteAmount, minMintAmount)
+      );
+      expect(resultAccountId.toString()).to.be.equal(api.createType('AccountId32', wallet.address).toString());
+      expect(resultPoolId.toNumber()).to.be.equal(poolIdNum1);
+      expect(resultQuoteAssetId.toNumber()).to.be.equal(quoteAssetId);
+      expect(resultBaseId.toNumber()).to.be.equal(baseAssetId);
     });
   });
 });

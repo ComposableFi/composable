@@ -248,6 +248,29 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    liquidityBootstrapping: {
+      /**
+       * Maximum initial weight.
+       **/
+      maxInitialWeight: Permill & AugmentedConst<ApiType>;
+      /**
+       * Maximum duration for a sale.
+       **/
+      maxSaleDuration: u32 & AugmentedConst<ApiType>;
+      /**
+       * Minimum final weight.
+       **/
+      minFinalWeight: Permill & AugmentedConst<ApiType>;
+      /**
+       * Minimum duration for a sale.
+       **/
+      minSaleDuration: u32 & AugmentedConst<ApiType>;
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     mosaic: {
       /**
        * The minimum period for which we lock outgoing/incoming funds.
