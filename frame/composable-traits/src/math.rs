@@ -12,7 +12,7 @@ pub fn safe_multiply_by_rational(a: u128, b: u128, c: u128) -> Result<u128, Arit
 /// little bit slower than maximizing performance by knowing constraints.
 /// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if
 /// you have positive number only, you cannot have underflow. Same for other constrains, like non
-/// zero divisor. 
+/// zero divisor.
 
 pub trait SafeAdd: Sized {
 	fn safe_add(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
@@ -31,7 +31,6 @@ pub trait SafeSub: Sized {
 }
 
 pub trait SafeArithmetic: Sized + SafeAdd + SafeDiv + SafeMul + SafeSub {}
-
 
 impl<T: CheckedAdd> SafeAdd for T {
 	#[inline(always)]
