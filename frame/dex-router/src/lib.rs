@@ -220,13 +220,37 @@ pub mod pallet {
 			asset_pair: CurrencyPair<T::AssetId>,
 			dx: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			let route = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
+			let mut route;
+			let mut reverse;
+			let res = Self::get_route(asset_pair);
+			if res.is_some() {
+				reverse = false;
+				route = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
+			} else {
+				route = Self::get_route(asset_pair.swap()).ok_or(Error::<T>::NoRouteFound)?;
+				reverse = true;
+			}
+			// let route =
+			// Self::get_route(asset_pair).ok_or(Self::get_route(asset_pair.swap()).ok_or(Error::
+			// <T>::NoRouteFound))?;
 			let mut dx_t = dx;
 			let mut dy_t = T::Balance::zero();
-			for route_node in &route {
+			let mut forward_iter;
+			let mut backward_iter;
+			let route_iter: &mut dyn Iterator<Item = &DexRouteNode<_>> = if !reverse {
+				forward_iter = route.iter();
+				&mut forward_iter
+			} else {
+				backward_iter = route.iter().rev();
+				&mut backward_iter
+			};
+			for route_node in route_iter {
 				match route_node {
 					DexRouteNode::Curve(pool_id) => {
-						let currency_pair = T::StableSwapDex::currency_pair(*pool_id)?;
+						let mut currency_pair = T::StableSwapDex::currency_pair(*pool_id)?;
+						if reverse {
+							currency_pair = currency_pair.swap();
+						}
 						dy_t = T::StableSwapDex::exchange(
 							who,
 							*pool_id,
@@ -238,7 +262,10 @@ pub mod pallet {
 						dx_t = dy_t;
 					},
 					DexRouteNode::Uniswap(pool_id) => {
-						let currency_pair = T::ConstantProductDex::currency_pair(*pool_id)?;
+						let mut currency_pair = T::ConstantProductDex::currency_pair(*pool_id)?;
+						if reverse {
+							currency_pair = currency_pair.swap();
+						}
 						dy_t = T::ConstantProductDex::exchange(
 							who,
 							*pool_id,

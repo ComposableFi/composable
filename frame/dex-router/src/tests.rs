@@ -181,6 +181,7 @@ fn exchange_tests() {
 			Some(dex_route.try_into().unwrap())
 		));
 		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 10_u128 * unit));
+		// exhcange ETH for USDT
 		let dy = DexRouter::exchange(&CHARLIE, currency_pair, 1_u128 * unit);
 		assert_ok!(dy);
 		let dy = dy.unwrap();
@@ -188,6 +189,15 @@ fn exchange_tests() {
 			println!("exchange value {:?}", dy);
 		}
 		let expected_value = 3000 * unit;
+		let precision = 100;
+		let epsilon = 1;
+		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
+		assert_ok!(Tokens::mint_into(USDT, &CHARLIE, 3000_u128 * unit));
+		// exhcange USDT for ETH
+		let dy = DexRouter::exchange(&CHARLIE, currency_pair.swap(), 3000_u128 * unit);
+		assert_ok!(dy);
+		let dy = dy.unwrap();
+		let expected_value = unit;
 		let precision = 100;
 		let epsilon = 1;
 		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
