@@ -208,7 +208,6 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
                     parachain_header.heads_total_count as usize,
                 )
                 .map_err(|_| BeefyClientError::InvalidMerkleProof)?;
-
             // reconstruct leaf
             let mmr_leaf = MmrLeaf {
                 version: parachain_header.partial_mmr_leaf.version,

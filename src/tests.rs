@@ -157,8 +157,7 @@ async fn get_mmr_update(
         authority_proof: authority_proof.proof_hashes().to_vec(),
     }
 }
-// Run test against rococo-local chain of polkadot release-v0.9.16
-// If a different node is used, rebuild the runtime types using subxt cli codegen
+
 #[tokio::test]
 async fn test_ingest_mmr_with_proof() {
     let store = StorageMock::new();
@@ -221,7 +220,7 @@ async fn test_ingest_mmr_with_proof() {
         );
 
         println!(
-            "\nblock number: {}\nmmr_root_hash: {}\n",
+            "\nSuccessfully ingested mmr for block number: {}\nmmr_root_hash: {}\n",
             mmr_state.latest_beefy_height,
             to_hex(&mmr_state.mmr_root_hash[..], false)
         )
@@ -364,6 +363,7 @@ async fn verify_parachain_headers() {
         let para_ids = api.storage().paras().parachains(block_hash).await.unwrap();
         let storage_prefix = frame_support::storage::storage_prefix(b"Paras", b"Heads");
         let mut para_header_keys = Vec::new();
+
         for para_id in para_ids {
             let encoded_para_id = para_id.encode();
 
@@ -390,7 +390,6 @@ async fn verify_parachain_headers() {
             .unwrap();
         let mut finalized_blocks = BTreeMap::new();
         let mut leaf_indices = vec![];
-
         for changes in change_set {
             let header = client
                 .rpc()
@@ -405,7 +404,8 @@ async fn verify_parachain_headers() {
                 if let Some(storage_data) = value {
                     let key = key.0.to_vec();
                     let para_id = u32::decode(&mut &key[40..]).unwrap();
-                    heads.insert(para_id, storage_data);
+                    let head_data: runtime::api::runtime_types::polkadot_parachain::primitives::HeadData = Decode::decode(&mut &*storage_data.0).unwrap();
+                    heads.insert(para_id, head_data.0);
                 }
             }
 
@@ -421,25 +421,31 @@ async fn verify_parachain_headers() {
             .client
             .request(
                 "mmr_generateBatchProof",
-                rpc_params!(leaf_indices, block_hash),
+                rpc_params!(leaf_indices.clone(), block_hash),
             )
             .await
             .unwrap();
+
+        let mut mmr_leaves_test = vec![];
         let leaves: Vec<(Vec<u8>, pallet_mmr_primitives::LeafIndex)> =
             Decode::decode(&mut &*batch_proof.leaves.to_vec()).unwrap();
-        println!("Mmr leaves {:?}", leaves.len());
 
         let mut parachain_headers = vec![];
         for (leaf_bytes, leaf_index) in leaves {
             let leaf: MmrLeaf<u32, H256, H256> = Decode::decode(&mut &*leaf_bytes).unwrap();
+            mmr_leaves_test.push(pallet_mmr_primitives::DataOrHash::Data::<
+                sp_runtime::traits::Keccak256,
+                _,
+            >(leaf.clone()));
             let leaf_block_number = leaf_index + 1;
             let para_headers = finalized_blocks.get(&leaf_block_number).unwrap();
 
             let mut index = None;
             let mut parachain_leaves = vec![];
-            // Values are sorted by key which is the para_id
+            // Values are already sorted by key which is the para_id
             for (idx, (key, header)) in para_headers.iter().enumerate() {
-                let leaf_hash = keccak_256(&(key.clone(), header.0.clone()).encode());
+                let pair = (*key, header.clone());
+                let leaf_hash = keccak_256(pair.encode().as_slice());
                 parachain_leaves.push(leaf_hash);
                 if key == &PARA_ID {
                     index = Some(idx);
@@ -447,6 +453,7 @@ async fn verify_parachain_headers() {
             }
 
             let tree = rs_merkle::MerkleTree::<KeccakHasher>::from_leaves(&parachain_leaves);
+
             let proof = if let Some(index) = index {
                 tree.proof(&[index])
                     .proof_hashes()
@@ -458,7 +465,7 @@ async fn verify_parachain_headers() {
             };
 
             let header = ParachainHeader {
-                parachain_header: para_headers.get(&PARA_ID).unwrap().0.clone(),
+                parachain_header: para_headers.get(&PARA_ID).unwrap().clone(),
                 partial_mmr_leaf: PartialMmrLeaf {
                     version: leaf.version,
                     parent_number_and_hash: leaf.parent_number_and_hash,
@@ -474,19 +481,13 @@ async fn verify_parachain_headers() {
         }
 
         let batch_proof: pallet_mmr_primitives::BatchProof<H256> =
-            Decode::decode(&mut batch_proof.proof.to_vec().as_slice()).unwrap();
+            Decode::decode(&mut batch_proof.proof.0.as_slice()).unwrap();
         let parachain_update_proof = ParachainsUpdateProof {
             parachain_headers,
             mmr_proof: batch_proof,
         };
 
-        // println!(
-        //     "\nSubmitting parachain update proof {:?}\n",
-        //     parachain_update_proof
-        // );
-
         let mmr_update = get_mmr_update(&client, signed_commitment).await;
-
         assert_eq!(
             beef_light_client.ingest_mmr_root_with_proof(mmr_update),
             Ok(())
@@ -494,8 +495,9 @@ async fn verify_parachain_headers() {
         assert_ok!(beef_light_client.verify_parachain_headers(parachain_update_proof));
 
         let mmr_state = beef_light_client.store_ref().mmr_state().unwrap();
+
         println!(
-            "\nSuccessfully verified parachain headers\nblock number: {}\nmmr_root_hash: {}\n",
+            "\nSuccessfully verified parachain headers for block number: {}\nmmr_root_hash: {}\n",
             mmr_state.latest_beefy_height,
             to_hex(&mmr_state.mmr_root_hash[..], false)
         );
