@@ -1,6 +1,10 @@
 use crate as clearing_house;
 use composable_traits::defi::DeFiComposableConfig;
-use frame_support::traits::{ConstU16, ConstU64};
+use frame_support::{
+	parameter_types,
+	traits::{ConstU16, ConstU64},
+	PalletId,
+};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -26,6 +30,10 @@ frame_support::construct_runtime!(
 
 type Balance = u128;
 type AssetId = u128;
+
+parameter_types! {
+	pub const ClearingHouseId: PalletId = PalletId(*b"test_pid");
+}
 
 impl system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -66,4 +74,5 @@ impl clearing_house::Config for Test {
 	type Timestamp = u64;
 	type Duration = u64;
 	type VAMMId = u64;
+	type PalletId = ClearingHouseId;
 }
