@@ -12,10 +12,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 env_logger = "0.8.4"
 log = "0.4.14"
 url = "1.7.0"
-sp-runtime = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-frame-system = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16" }
+sp-runtime = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+frame-system = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.17" }
 derive_more = "0.99.16"
 tokio = {version = "1", features = ["full"]}
 codec = { package = "parity-scale-codec", version = "2.2.0", default-features = false }
@@ -24,9 +24,9 @@ serde = { version = "1", features = ["derive"] }
 
 jsonrpc-core-client = { version = "18", features = ["ws"] }
 structopt = "0.3.23"
-sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 common = { package = "common", path = "../../runtime/common" }
 substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch = "master" }

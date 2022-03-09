@@ -16,7 +16,7 @@ args = ["build", "--release"]
 workspace = false
 script = '''
 if [ ! -d "../polkadot" ] ; then
-    git clone -b v0.9.16 https://github.com/paritytech/polkadot ../polkadot
+    git clone -b v0.9.17 https://github.com/paritytech/polkadot ../polkadot
 fi
 cd ../polkadot && cargo build --release 
 '''

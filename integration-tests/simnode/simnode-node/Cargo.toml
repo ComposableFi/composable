@@ -10,5 +10,5 @@ substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode"
 common = { package = "simnode-common", path = "../common" }
 node = { package = "composable-node", path = "../../../node", features = ["dali"] }
 
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 structopt = "0.3.25"
