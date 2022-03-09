@@ -16,6 +16,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
+
 	use codec::FullCodec;
 	use composable_traits::defi::DeFiComposableConfig;
 	use frame_support::{pallet_prelude::*, Blake2_128Concat, Twox64Concat};
