@@ -611,7 +611,13 @@ proptest! {
 					Error::<Test>::ThereMustBeOneWeightForEachAssetInThePool
 				);
 			// Condition v
-			} else if !Pools::weights_are_normalized_and_nonnegative(&config.weights) {
+			}else if !Pools::weights_are_nonnegative(&config.weights) {
+				assert_noop!(
+					<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee), 
+					Error::<Test>::PoolWeightsMustBeNonnegative
+				);
+			// Condition vi 
+			} else if !Pools::weights_are_normalized(&config.weights) {
 				assert_noop!(
 					<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee), 
 					Error::<Test>::PoolWeightsMustBeNormalized
