@@ -3,13 +3,13 @@
 #![allow(unused_imports)] // allow until v2 xcm released (instead creating 2 runtimes)
 
 use super::*; // recursive dependency onto runtime
-
+use core::marker::PhantomData;
 use codec::{Decode, Encode};
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
-use cumulus_primitives_core::ParaId;
+use cumulus_primitives_core::{ParaId, IsSystem};
 use frame_support::{
 	construct_runtime, log, match_type, parameter_types,
-	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
+	traits::{Contains, OriginTrait, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -17,19 +17,15 @@ use frame_support::{
 	},
 	PalletId,
 };
-
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
-
 use sp_runtime::{
 	traits::{AccountIdLookup, BlakeTwo256, Convert, ConvertInto, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
-
 use orml_traits::parameter_type_with_key;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use sp_std::prelude::*;
@@ -37,11 +33,11 @@ use xcm::latest::{prelude::*, Error};
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds, LocationInverter,
-	ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	RelayChainAsNative, ParentIsPreset, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 };
 use xcm_executor::{
-	traits::{TransactAsset, WeightTrader},
+	traits::{ConvertOrigin, TransactAsset, WeightTrader},
 	Assets, Config, XcmExecutor,
 };
 
@@ -90,8 +86,8 @@ pub type XcmRouter = (
 /// when determining ownership of accounts for asset transacting and when attempting to use XCM
 /// `Transact` in order to determine the dispatch Origin.
 pub type LocationToAccountId = (
-	// The parent (Relay-chain) origin converts to the default `AccountId`.
-	ParentIsDefault<AccountId>,
+	// The parent (Relay-chain) origin converts to the parent `AccountId`.
+	ParentIsPreset<AccountId>,
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
@@ -338,16 +334,40 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 }
 
+pub struct SystemParachainAsSuperuser<Origin>(PhantomData<Origin>);
+impl<Origin: OriginTrait> ConvertOrigin<Origin> for SystemParachainAsSuperuser<Origin> {
+	fn convert_origin(
+		origin: impl Into<MultiLocation>,
+		kind: OriginKind,
+	) -> Result<Origin, MultiLocation> {
+		let origin = origin.into();
+		if kind == OriginKind::Superuser &&
+			matches!(
+				origin,
+				MultiLocation {
+					parents: 1,
+					interior: X1(Parachain(id)),
+				} if ParaId::from(id).is_system(),
+			) {
+			  Ok(Origin::root())
+		  } else {
+			  Err(origin)
+		  }
+	}
+}
+
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type VersionWrapper = ();
 	type ChannelInfo = ParachainSystem;
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
+	type ExecuteOverweightOrigin = EnsureRootOrHalfCouncil;
+	type ControllerOrigin = EnsureRootOrHalfCouncil;
+	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = system::EnsureRoot<AccountId>;
+	type ExecuteOverweightOrigin = EnsureRootOrHalfCouncil;
 }

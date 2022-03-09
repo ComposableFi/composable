@@ -260,7 +260,9 @@ mod tests {
 			let fee = Balances::issue(10);
 			let tip = Balances::issue(20);
 
-			assert_eq!(Balances::free_balance(AccountId::default()), 0);
+      let account_id = 0;
+
+			assert_eq!(Balances::free_balance(account_id), 0);
 
 			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
 
@@ -277,7 +279,9 @@ mod tests {
 			let fee = Balances::issue(0);
 			let tip = Balances::issue(0);
 
-			assert_eq!(Balances::free_balance(AccountId::default()), 0);
+      let account_id = 0;
+
+			assert_eq!(Balances::free_balance(account_id), 0);
 
 			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
 
@@ -293,7 +297,9 @@ mod tests {
 			let fee = Balances::issue(1);
 			let tip = Balances::issue(1);
 
-			assert_eq!(Balances::free_balance(AccountId::default()), 0);
+      let account_id = 0;
+
+			assert_eq!(Balances::free_balance(account_id), 0);
 
 			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
 
