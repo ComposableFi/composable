@@ -385,7 +385,7 @@ prop_compose! {
 //                                           Helper Functions                                          
 // ----------------------------------------------------------------------------------------------------
 
-fn equal_weight_vector_for(assets: &Vec<MockCurrencyId>) -> Vec<Weight<MockCurrencyId, Perquintill>>{
+fn equal_weight_vector_for(assets: &[MockCurrencyId]) -> Vec<Weight<MockCurrencyId, Perquintill>>{
 	let mut weights = Vec::new();
 
 	for asset in assets {
@@ -413,7 +413,7 @@ fn normalize_weights(non_normalized_weights: &mut Vec<Perquintill>) -> Vec<Perqu
 	weights
 }
 
-fn construct_weight_vector_from(assets: &Vec<MockCurrencyId>, perquintills: &Vec<Perquintill>) -> Vec<Weight<MockCurrencyId, Perquintill>> {
+fn construct_weight_vector_from(assets: &[MockCurrencyId], perquintills: &[Perquintill]) -> Vec<Weight<MockCurrencyId, Perquintill>> {
 	let mut weights: Vec<Weight<MockCurrencyId, Perquintill>> = Vec::new();
 
 	for (asset, weight) in assets.iter().zip(perquintills.iter()) {
@@ -629,7 +629,7 @@ proptest! {
 					maximum: MAX_POOL_SIZE,
 				},
 
-				weights: weights,
+				weights,
 				weight_bounds: Bound {
 					minimum: weight_minimum, 
 					maximum: weight_maximum
@@ -889,7 +889,7 @@ proptest! {
 
 			// Condition i
 			for asset_id in initial_assets {
-				assert_eq!(PoolAssetVault::<Test>::contains_key(pool_id, asset_id), true);
+				assert!(PoolAssetVault::<Test>::contains_key(pool_id, asset_id));
 			}
 		});
 	}
@@ -949,7 +949,7 @@ proptest! {
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, user_balance));
 			
 			// Pre-Condition i
-			assert_eq!(Tokens::balance(MockCurrencyId::A, &ALICE) >= creation_fee_amount, true);
+			assert!(Tokens::balance(MockCurrencyId::A, &ALICE) >= creation_fee_amount);
 
 			let pool_id = <Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee).unwrap();
 
@@ -1285,7 +1285,7 @@ proptest! {
 					deposit_is_valid = false;
 					break;
 				// Condition iv
-				} else if !deposit_is_within_nonempty_pools_deposit_bounds(&pool_id, &deposit) {
+				} else if !deposit_is_within_nonempty_pools_deposit_bounds(&pool_id, deposit) {
 					assert_noop!(
 						<Pools as ConstantMeanMarket>::all_asset_deposit(&BOB, &pool_id, deposit_2.clone()),
 						Error::<Test>::DepositIsOutsideOfPoolsDepositBounds
@@ -1295,7 +1295,7 @@ proptest! {
 					break;
 				// Condition v
 				} else if !deposit_matches_underlying_value_distribution(
-					&pool_id, &deposit, deposit_total, reserve_total
+					&pool_id, deposit, deposit_total, reserve_total
 				) {					
 					assert_noop!(
 						<Pools as ConstantMeanMarket>::all_asset_deposit(&BOB, &pool_id, deposit_2.clone()),
@@ -1363,7 +1363,7 @@ proptest! {
 			}
 			// Condition ii
 			assert_noop!(
-				<Pools as ConstantMeanMarket>::all_asset_deposit(&BOB, &pool_id, deposit_2.clone()),
+				<Pools as ConstantMeanMarket>::all_asset_deposit(&BOB, &pool_id, deposit_2),
 				Error::<Test>::DepositIsOutsideOfPoolsDepositBounds
 			);
 
@@ -1381,7 +1381,7 @@ proptest! {
 
 			// Condition iii
 			assert_noop!(
-				<Pools as ConstantMeanMarket>::all_asset_deposit(&CHARLIE, &pool_id, deposit_3.clone()),
+				<Pools as ConstantMeanMarket>::all_asset_deposit(&CHARLIE, &pool_id, deposit_3),
 				Error::<Test>::DepositIsOutsideOfPoolsDepositBounds
 			);
 		});
@@ -1777,13 +1777,13 @@ proptest! {
 			let lp_token = Pools::lp_token_id(&pool_id).unwrap();
 
 			for (user, deposit) in &all_deposits {
-				assert_ok!(deposit_into(&pool_id, &user, deposit.to_vec()));
+				assert_ok!(deposit_into(&pool_id, user, deposit.to_vec()));
 			}
 
 			for (user, deposit) in &all_deposits {
 				let users_lp_tokens = Tokens::balance(lp_token, user);
 
-				let withdraw = Pools::all_asset_withdraw(&user, &pool_id, users_lp_tokens).unwrap();
+				let withdraw = Pools::all_asset_withdraw(user, &pool_id, users_lp_tokens).unwrap();
 
 				assert_eq!(*deposit, withdraw);
 			}
@@ -1862,7 +1862,7 @@ proptest! {
 			// Withdraw assets
 			let lp_tokens_to_withdraw = withdraw_ratio_1 * minted_lp_tokens;
 
-			let assets_withdrawn = <Pools as ConstantMeanMarket>::all_asset_withdraw(&user_1, &pool_id, lp_tokens_to_withdraw);
+			let _assets_withdrawn = <Pools as ConstantMeanMarket>::all_asset_withdraw(&user_1, &pool_id, lp_tokens_to_withdraw);
 
 			// assert_eq!(deposit_1, assets_withdrawn);
 			// TODO: (Nevin)
@@ -2550,10 +2550,10 @@ fn fixed_u128() {
 	let ten = S::from_num(4u8);
 	let one_hundred = S::from_num(4u8);
 
-	assert_eq!(pow::<S, D>(two, zero), Ok(one.into()));
-	assert_eq!(pow::<S, D>(zero, two), Ok(zero.into()));
-	assert_eq!(pow::<S, D>(ten, two), Ok(one_hundred.into()));
-	assert_eq!(pow::<S, D>(one_hundred, one_half), Ok(ten.into()));
+	assert_eq!(pow::<S, D>(two, zero), Ok(one));
+	assert_eq!(pow::<S, D>(zero, two), Ok(zero));
+	assert_eq!(pow::<S, D>(ten, two), Ok(one_hundred));
+	assert_eq!(pow::<S, D>(one_hundred, one_half), Ok(ten));
 
 	let result: f64 = pow::<S, D>(two, three).unwrap().lossy_into();
 	assert_relative_eq!(result, 8.0f64, epsilon = 1.0e-6);
@@ -2561,7 +2561,7 @@ fn fixed_u128() {
 	let result: f64 = pow::<S, D>(one / four, two).unwrap().lossy_into();
 	assert_relative_eq!(result, 0.0625f64, epsilon = 1.0e-6);
 
-	assert_eq!(pow::<S, D>(two, one), Ok(two.into()));
+	assert_eq!(pow::<S, D>(two, one), Ok(two));
 
 	let result: f64 = pow::<S, D>(one / four, one / two).unwrap().lossy_into();
 	assert_relative_eq!(result, 0.5f64, epsilon = 1.0e-6);
