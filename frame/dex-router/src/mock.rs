@@ -177,6 +177,7 @@ impl dex_router::Config for Test {
 	type PoolId = u32;
 	type StableSwapDex = StableSwapAmm;
 	type ConstantProductDex = ConstantProductAmm;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

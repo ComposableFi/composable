@@ -4,7 +4,10 @@ use composable_traits::{
 	defi::CurrencyPair,
 	dex::{Amm as AmmTrait, DexRouteNode, DexRouter as DexRouterTrait},
 };
-use frame_support::{assert_noop, assert_ok, traits::fungibles::Mutate};
+use frame_support::{
+	assert_noop, assert_ok,
+	traits::fungibles::{Inspect, Mutate},
+};
 use sp_runtime::Permill;
 
 // Create Amm pool with given amounts added as liquidity to the pool.
@@ -100,7 +103,7 @@ fn get_route_tests() {
 			DexRouteNode::Curve(create_usdt_usdc_pool()),
 		];
 		assert_ok!(DexRouter::update_route(
-			&ALICE,
+			Origin::signed(ALICE),
 			currency_pair,
 			Some(dex_route.clone().try_into().unwrap())
 		));
@@ -120,7 +123,7 @@ fn update_route_tests() {
 			DexRouteNode::Curve(create_usdt_usdc_pool()),
 		];
 		assert_ok!(DexRouter::update_route(
-			&ALICE,
+			Origin::signed(ALICE),
 			currency_pair,
 			Some(dex_route.clone().try_into().unwrap())
 		));
@@ -132,14 +135,14 @@ fn update_route_tests() {
 			DexRouteNode::Uniswap(create_usdc_eth_pool()),
 		];
 		assert_ok!(DexRouter::update_route(
-			&ALICE,
+			Origin::signed(ALICE),
 			currency_pair,
 			Some(dex_route.clone().try_into().unwrap())
 		));
 		assert_eq!(DexRouter::get_route(currency_pair), Some(dex_route));
 
 		// delete
-		assert_ok!(DexRouter::update_route(&ALICE, currency_pair, None));
+		assert_ok!(DexRouter::update_route(Origin::signed(ALICE), currency_pair, None));
 		assert_eq!(DexRouter::get_route(currency_pair), None);
 
 		// invalid route, case #1
@@ -149,7 +152,11 @@ fn update_route_tests() {
 			DexRouteNode::Uniswap(create_usdc_eth_pool()),
 		];
 		assert_noop!(
-			DexRouter::update_route(&ALICE, currency_pair, Some(dex_route.try_into().unwrap())),
+			DexRouter::update_route(
+				Origin::signed(ALICE),
+				currency_pair,
+				Some(dex_route.try_into().unwrap())
+			),
 			Error::<Test>::PoolDoesNotExist,
 		);
 
@@ -160,7 +167,11 @@ fn update_route_tests() {
 			DexRouteNode::Uniswap(42), // fake route
 		];
 		assert_noop!(
-			DexRouter::update_route(&ALICE, currency_pair, Some(dex_route.try_into().unwrap())),
+			DexRouter::update_route(
+				Origin::signed(ALICE),
+				currency_pair,
+				Some(dex_route.try_into().unwrap())
+			),
 			Error::<Test>::PoolDoesNotExist,
 		);
 	});
@@ -176,31 +187,46 @@ fn exchange_tests() {
 			DexRouteNode::Curve(create_usdt_usdc_pool()),
 		];
 		assert_ok!(DexRouter::update_route(
-			&ALICE,
+			Origin::signed(ALICE),
 			currency_pair,
 			Some(dex_route.try_into().unwrap())
 		));
 		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 10_u128 * unit));
 		// exhcange ETH for USDT
-		let dy = DexRouter::exchange(&CHARLIE, currency_pair, 1_u128 * unit);
-		assert_ok!(dy);
-		let dy = dy.unwrap();
-		sp_std::if_std! {
-			println!("exchange value {:?}", dy);
-		}
+		assert_ok!(DexRouter::exchange(
+			Origin::signed(CHARLIE),
+			currency_pair,
+			1_u128 * unit,
+			2998_000_000_000_00_u128
+		));
 		let expected_value = 3000 * unit;
 		let precision = 100;
 		let epsilon = 1;
-		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
-		assert_ok!(Tokens::mint_into(USDT, &CHARLIE, 3000_u128 * unit));
+		let usdt_balance = Tokens::balance(USDT, &CHARLIE);
+		assert_ok!(acceptable_computation_error(usdt_balance, expected_value, precision, epsilon));
+		assert_ok!(Tokens::mint_into(USDT, &CHARLIE, 6000_u128 * unit));
 		// exhcange USDT for ETH
-		let dy = DexRouter::exchange(&CHARLIE, currency_pair.swap(), 3000_u128 * unit);
-		assert_ok!(dy);
-		let dy = dy.unwrap();
-		let expected_value = unit;
+		assert_ok!(DexRouter::exchange(
+			Origin::signed(CHARLIE),
+			currency_pair.swap(),
+			3000_u128 * unit,
+			980000000000_u128
+		));
+		let expected_value = 10 * unit;
 		let precision = 100;
 		let epsilon = 1;
-		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
+		let eth_balance = Tokens::balance(ETH, &CHARLIE);
+		assert_ok!(acceptable_computation_error(eth_balance, expected_value, precision, epsilon));
+		// exchange USDT for ETH but expect high value
+		assert_noop!(
+			DexRouter::exchange(
+				Origin::signed(CHARLIE),
+				currency_pair.swap(),
+				3000_u128 * unit,
+				1100000007962_u128
+			),
+			Error::<Test>::CannotRespectMinimumRequested
+		);
 	});
 }
 
@@ -217,17 +243,45 @@ fn buy_test() {
 		// USDT/USDC
 		// USDT/ETH
 		assert_ok!(DexRouter::update_route(
-			&ALICE,
+			Origin::signed(ALICE),
 			currency_pair,
 			Some(dex_route.try_into().unwrap())
 		));
 		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 2_u128 * unit));
-		let dy = DexRouter::buy(&CHARLIE, currency_pair, 3000_u128 * unit);
-		assert_ok!(dy);
-		let dy = dy.unwrap();
+		// buy 3000 USDT.
+		assert_ok!(DexRouter::buy(
+			Origin::signed(CHARLIE),
+			currency_pair,
+			3000_u128 * unit,
+			0_u128
+		));
 		let expected_value = 3000 * unit;
 		let precision = 100;
 		let epsilon = 1;
-		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
+		let usdt_balance = Tokens::balance(USDT, &CHARLIE);
+		assert_ok!(acceptable_computation_error(usdt_balance, expected_value, precision, epsilon));
+		assert_ok!(Tokens::mint_into(USDT, &CHARLIE, 6100_u128 * unit));
+		// buy 1 ETH.
+		assert_ok!(DexRouter::buy(
+			Origin::signed(CHARLIE),
+			currency_pair.swap(),
+			1_u128 * unit,
+			980000000000_u128
+		));
+		let expected_value = 2 * unit;
+		let precision = 100;
+		let epsilon = 1;
+		let eth_balance = Tokens::balance(ETH, &CHARLIE);
+		assert_ok!(acceptable_computation_error(eth_balance, expected_value, precision, epsilon));
+		// buy 1 ETH but expect 1.0005
+		assert_noop!(
+			DexRouter::buy(
+				Origin::signed(CHARLIE),
+				currency_pair.swap(),
+				unit,
+				1_000_500_000_000_u128
+			),
+			Error::<Test>::CannotRespectMinimumRequested
+		);
 	});
 }

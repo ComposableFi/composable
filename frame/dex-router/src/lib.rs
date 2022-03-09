@@ -12,11 +12,15 @@ pub use pallet::*;
 #[cfg(test)]
 mod mock;
 
+pub mod weights;
+pub use crate::weights::WeightInfo;
+
 #[cfg(test)]
 mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		defi::CurrencyPair,
@@ -24,8 +28,12 @@ pub mod pallet {
 		math::SafeArithmetic,
 	};
 	use core::fmt::Debug;
-	use frame_support::pallet_prelude::*;
-	use sp_runtime::traits::{CheckedAdd, One, Zero};
+	use frame_support::{pallet_prelude::*, transactional};
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
+	use sp_runtime::{
+		traits::{CheckedAdd, One, Zero},
+		DispatchResult,
+	};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -75,6 +83,8 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 			PoolId = Self::PoolId,
 		>;
+
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -100,6 +110,8 @@ pub mod pallet {
 		PoolDoesNotExist,
 		/// For given asset pair no route found.
 		NoRouteFound,
+		/// Exchanged amount is less than expected minimum.
+		CannotRespectMinimumRequested,
 	}
 
 	#[pallet::event]
@@ -127,7 +139,86 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		/// Create, update or remove route.
+		/// On successful emits one of `RouteAdded`, `RouteUpdated` or `RouteDeleted`.
+		#[pallet::weight(T::WeightInfo::update_route())]
+		pub fn update_route(
+			origin: OriginFor<T>,
+			asset_pair: CurrencyPair<T::AssetId>,
+			route: Option<BoundedVec<DexRouteNode<T::PoolId>, T::MaxHopsInRoute>>,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as DexRouter<
+				T::AccountId,
+				T::AssetId,
+				T::PoolId,
+				T::Balance,
+				T::MaxHopsInRoute,
+			>>::update_route(&who, asset_pair, route)?;
+			Ok(())
+		}
+
+		/// Exchange `amount` of quote asset for `asset_pair` via route found in router.
+		/// On successful underlying DEX pallets will emit appropriate event.
+		#[pallet::weight(T::WeightInfo::exchange())]
+		pub fn exchange(
+			origin: OriginFor<T>,
+			asset_pair: CurrencyPair<T::AssetId>,
+			amount: T::Balance,
+			min_receive: T::Balance,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as DexRouter<
+				T::AccountId,
+				T::AssetId,
+				T::PoolId,
+				T::Balance,
+				T::MaxHopsInRoute,
+			>>::exchange(&who, asset_pair, amount, min_receive)?;
+			Ok(())
+		}
+
+		/// Sell `amount` of quote asset for `asset_pair` via route found in router.
+		/// On successful underlying DEX pallets will emit appropriate event.
+		#[pallet::weight(T::WeightInfo::sell())]
+		pub fn sell(
+			origin: OriginFor<T>,
+			asset_pair: CurrencyPair<T::AssetId>,
+			amount: T::Balance,
+			min_receive: T::Balance,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as DexRouter<
+				T::AccountId,
+				T::AssetId,
+				T::PoolId,
+				T::Balance,
+				T::MaxHopsInRoute,
+			>>::sell(&who, asset_pair, amount, min_receive)?;
+			Ok(())
+		}
+
+		/// Buy `amount` of quote asset for `asset_pair` via route found in router.
+		/// On successful underlying DEX pallets will emit appropriate event.
+		#[pallet::weight(T::WeightInfo::buy())]
+		pub fn buy(
+			origin: OriginFor<T>,
+			asset_pair: CurrencyPair<T::AssetId>,
+			amount: T::Balance,
+			min_receive: T::Balance,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as DexRouter<
+				T::AccountId,
+				T::AssetId,
+				T::PoolId,
+				T::Balance,
+				T::MaxHopsInRoute,
+			>>::buy(&who, asset_pair, amount, min_receive)?;
+			Ok(())
+		}
+	}
 
 	impl<T: Config> Pallet<T> {
 		fn do_update_route(
@@ -197,6 +288,7 @@ pub mod pallet {
 	impl<T: Config> DexRouter<T::AccountId, T::AssetId, T::PoolId, T::Balance, T::MaxHopsInRoute>
 		for Pallet<T>
 	{
+		#[transactional]
 		fn update_route(
 			who: &T::AccountId,
 			asset_pair: CurrencyPair<T::AssetId>,
@@ -214,14 +306,15 @@ pub mod pallet {
 				.map(|DexRoute::Direct(route)| route.into_inner())
 		}
 
-		// TODO: expected minimum value can be provided from input parameter.
+		#[transactional]
 		fn exchange(
 			who: &T::AccountId,
 			asset_pair: CurrencyPair<T::AssetId>,
-			dx: T::Balance,
+			amount: T::Balance,
+			min_receive: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			let mut route;
-			let mut reverse;
+			let route;
+			let reverse;
 			let res = Self::get_route(asset_pair);
 			if res.is_some() {
 				reverse = false;
@@ -233,7 +326,7 @@ pub mod pallet {
 			// let route =
 			// Self::get_route(asset_pair).ok_or(Self::get_route(asset_pair.swap()).ok_or(Error::
 			// <T>::NoRouteFound))?;
-			let mut dx_t = dx;
+			let mut dx_t = amount;
 			let mut dy_t = T::Balance::zero();
 			let mut forward_iter;
 			let mut backward_iter;
@@ -278,29 +371,63 @@ pub mod pallet {
 					},
 				}
 			}
+			ensure!(dy_t >= min_receive, Error::<T>::CannotRespectMinimumRequested);
 			Ok(dy_t)
 		}
 
+		#[transactional]
 		fn sell(
 			who: &T::AccountId,
 			asset_pair: CurrencyPair<T::AssetId>,
 			amount: T::Balance,
+			min_receive: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			Self::exchange(who, asset_pair, amount)
+			<Self as DexRouter<
+				T::AccountId,
+				T::AssetId,
+				T::PoolId,
+				T::Balance,
+				T::MaxHopsInRoute,
+			>>::exchange(who, asset_pair, amount, min_receive)
 		}
 
+		#[transactional]
 		fn buy(
 			who: &T::AccountId,
 			asset_pair: CurrencyPair<T::AssetId>,
 			amount: T::Balance,
+			min_receive: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			let route = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
+			// let route = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
+			let route;
+			let reverse;
+			let res = Self::get_route(asset_pair);
+			if res.is_some() {
+				reverse = false;
+				route = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
+			} else {
+				route = Self::get_route(asset_pair.swap()).ok_or(Error::<T>::NoRouteFound)?;
+				reverse = true;
+			}
+			let mut forward_iter;
+			let mut backward_iter;
+			let route_iter: &mut dyn Iterator<Item = &DexRouteNode<_>> = if !reverse {
+				backward_iter = route.iter().rev();
+				&mut backward_iter
+			} else {
+				forward_iter = route.iter();
+				&mut forward_iter
+			};
 			let mut dy_t = amount;
 			let mut dx_t = T::Balance::zero();
-			for route_node in route.iter().rev() {
+			for route_node in route_iter {
 				match route_node {
 					DexRouteNode::Curve(pool_id) => {
-						let currency_pair = T::StableSwapDex::currency_pair(*pool_id)?;
+						// let currency_pair = T::StableSwapDex::currency_pair(*pool_id)?;
+						let mut currency_pair = T::StableSwapDex::currency_pair(*pool_id)?;
+						if reverse {
+							currency_pair = currency_pair.swap();
+						}
 						dx_t = T::StableSwapDex::get_exchange_value(
 							*pool_id,
 							currency_pair.base,
@@ -309,7 +436,11 @@ pub mod pallet {
 						dy_t = dx_t;
 					},
 					DexRouteNode::Uniswap(pool_id) => {
-						let currency_pair = T::ConstantProductDex::currency_pair(*pool_id)?;
+						let mut currency_pair = T::ConstantProductDex::currency_pair(*pool_id)?;
+						if reverse {
+							currency_pair = currency_pair.swap();
+						}
+						// let currency_pair = T::ConstantProductDex::currency_pair(*pool_id)?;
 						dx_t = T::ConstantProductDex::get_exchange_value(
 							*pool_id,
 							currency_pair.base,
@@ -319,13 +450,24 @@ pub mod pallet {
 					},
 				}
 			}
-			for route_node in route {
+			let route_iter: &mut dyn Iterator<Item = &DexRouteNode<_>> = if !reverse {
+				forward_iter = route.iter();
+				&mut forward_iter
+			} else {
+				backward_iter = route.iter().rev();
+				&mut backward_iter
+			};
+			for route_node in route_iter {
 				match route_node {
 					DexRouteNode::Curve(pool_id) => {
-						let currency_pair = T::StableSwapDex::currency_pair(pool_id)?;
+						// let currency_pair = T::StableSwapDex::currency_pair(pool_id)?;
+						let mut currency_pair = T::StableSwapDex::currency_pair(*pool_id)?;
+						if reverse {
+							currency_pair = currency_pair.swap();
+						}
 						let dy_t = T::StableSwapDex::exchange(
 							who,
-							pool_id,
+							*pool_id,
 							currency_pair,
 							dx_t,
 							T::Balance::zero(),
@@ -334,10 +476,14 @@ pub mod pallet {
 						dx_t = dy_t;
 					},
 					DexRouteNode::Uniswap(pool_id) => {
-						let currency_pair = T::ConstantProductDex::currency_pair(pool_id)?;
+						// let currency_pair = T::ConstantProductDex::currency_pair(pool_id)?;
+						let mut currency_pair = T::ConstantProductDex::currency_pair(*pool_id)?;
+						if reverse {
+							currency_pair = currency_pair.swap();
+						}
 						let dy_t = T::ConstantProductDex::exchange(
 							who,
-							pool_id,
+							*pool_id,
 							currency_pair,
 							dx_t,
 							T::Balance::zero(),
@@ -347,6 +493,7 @@ pub mod pallet {
 					},
 				}
 			}
+			ensure!(dx_t >= min_receive, Error::<T>::CannotRespectMinimumRequested);
 			Ok(dx_t)
 		}
 	}
