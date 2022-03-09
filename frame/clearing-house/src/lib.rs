@@ -20,7 +20,7 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_traits::defi::DeFiComposableConfig;
 	use frame_support::{pallet_prelude::*, Blake2_128Concat, Twox64Concat};
-	use frame_system::pallet_prelude::OriginFor;
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::FixedPointNumber;
 
 	// ----------------------------------------------------------------------------------------------------
@@ -102,6 +102,10 @@ pub mod pallet {
 	type MaintenanceMarginRatio<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
 
 	#[pallet::storage]
+	/// Supported collateral asset ids
+	type CollateralTypes<T: Config> = StorageMap<_, Twox64Concat, AssetIdOf<T>, ()>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn get_margin)]
 	pub type AccountsMargin<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, T::Balance>;
 
@@ -135,7 +139,10 @@ pub mod pallet {
 
 	// Errors inform users that something went wrong.
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		/// User attempted to deposit unsupported asset type as collateral in his margin account
+		UnsupportedCollateralType,
+	}
 
 	// ----------------------------------------------------------------------------------------------------
 	//                              Extrinsics
@@ -150,12 +157,13 @@ pub mod pallet {
 		/// If an account does not exist in `AccountsMargin`, it is created and initialized with 0
 		/// margin. Checks that the collateral type is supported.
 		#[pallet::weight(0)]
-		#[allow(unused_variables)]
 		pub fn add_margin(
 			origin: OriginFor<T>,
 			asset: AssetIdOf<T>,
 			amount: T::Balance,
 		) -> DispatchResult {
+			let acc = ensure_signed(origin)?;
+			Self::do_add_margin(&acc, asset, amount)?;
 			Ok(())
 		}
 	}
@@ -169,7 +177,19 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	// Helper functions - core functionality
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		#[allow(unused_variables)]
+		pub fn do_add_margin(
+			acc: &T::AccountId,
+			asset: AssetIdOf<T>,
+			amount: T::Balance,
+		) -> Result<(), Error<T>> {
+			if !CollateralTypes::<T>::contains_key(asset) {
+				return Err(Error::<T>::UnsupportedCollateralType)
+			}
+			Ok(())
+		}
+	}
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {}
