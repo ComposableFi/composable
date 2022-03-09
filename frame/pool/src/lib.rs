@@ -524,6 +524,13 @@ pub mod pallet {
 		/// - [`create`](composable_traits::pool::ConstantMeanMarket::create)
 		ThereMustBeOneWeightForEachAssetInThePool,
 		
+		/// A Pool config that contains a set of asset weights where at least one weight is less
+		///     than zero was provided.
+		///
+		/// # Related Functions:
+		/// - [`create`](composable_traits::pool::ConstantMeanMarket::create)
+		PoolWeightsMustBeNonnegative,
+
 		/// A Pool config that contains a set of asset weights that do not sum to one was provided.
 		///
 		/// # Related Functions:
@@ -881,16 +888,17 @@ pub mod pallet {
 		/// 	for the creation fee.
 		/// 
 		/// ## Requirements
-		/// 1. ∀ assets (i, j) ∈ `config.assets`: a_i != a_j -- no duplicate assets
-		/// 2. min_underlying_tokens ≤ max_underlying_tokens
-		/// 3. min_underlying_tokens ≤ n ≤ max_underlying_tokens, where n is the number
-		///		of tokens in the pool
-		///	4. ∀ assets a_i ⇒ ∃ weight w_i
-		/// 5. Σ w_i = 1 & w_i ≥ 0
-		///	6. min_weight ≤ max_weight
-		/// 7. min_weight ≤ w_i ≤ max_weight	
-		///	8. user_balance ≥ creation_fee
-		///	9. creation_fee ≥ (asset_ids.len() + 1) * (creation_deposit + existential_deposit)
+		/// 1.  ∀ assets (i, j) ∈ `config.assets`: a_i != a_j -- no duplicate assets
+		/// 2.  min_underlying_tokens ≤ max_underlying_tokens
+		/// 3.  min_underlying_tokens ≤ n ≤ max_underlying_tokens, where n is the number
+		///		    of tokens in the pool
+		///	4.  ∀ assets a_i ⇒ ∃ weight w_i
+		/// 5.  ∀ weights w_i ∈ `config.weights` : w_i ≥ 0
+		/// 6.  Σ w_i = 1 & w_i ≥ 0
+		///	7.  min_weight ≤ max_weight
+		/// 8.  min_weight ≤ w_i ≤ max_weight	
+		///	9.  user_balance ≥ creation_fee
+		///	10. creation_fee ≥ (asset_ids.len() + 1) * (creation_deposit + existential_deposit)
 		/// 
 		/// ## Emits 
 		/// - [`Event::PoolCreated`](Event::PoolCreated)
@@ -916,6 +924,7 @@ pub mod pallet {
 		/// 	`config.asset_bounds.maximum` < `config.assets.len()`.
 		/// - `ThereMustBeOneWeightForEachAssetInThePool`: Each of the Pool's assets must have an accompanying
 		/// 	weight.
+        /// - `PoolWeightsMustBeNonnegative`: One of the weights in `config.weights` is less than zero.
 		/// - `PoolWeightsMustBeNormalized`: The sum of `config.weights` does not equal one.
 		/// - `InvalidWeightBounds`: `config.weight_bounds.maximum` < `config.weight_bounds.minimum`.
 		/// - `PoolWeightsAreOutsideOfWeightBounds`: One of the weights is less than the minimum allowed 
@@ -934,8 +943,8 @@ pub mod pallet {
 		/// 
 		/// # Weight: O()
 		fn create(
-			from: Self::AccountId,
-			config: PoolConfig<Self::AccountId, AssetIdOf<T>, Self::Weight>,
+			from: AccountIdOf<T>,
+			config: PoolConfig<AccountIdOf<T>, AssetIdOf<T>, Self::Weight>,
 			creation_fee: Deposit<T>,
 		) -> Result<Self::PoolId, DispatchError> {			
 			let number_of_assets = config.assets.len();
@@ -949,7 +958,6 @@ pub mod pallet {
 
 			// Requirement 2) The minimum asset bound must be less than or equal to the maximum asset bound
 			ensure!(
-				// config.asset_bounds.minimum <= config.asset_bounds.maximum,
 				Self::bounds_are_valid(&config.asset_bounds),
 				Error::<T>::InvalidAssetBounds
 			);
@@ -969,38 +977,44 @@ pub mod pallet {
 				Error::<T>::ThereMustBeOneWeightForEachAssetInThePool
 			);
 
-			// Requirement 5) The weights must be normalized (sum to one) and nonnegative
+			// Requirement 5) The weights must be greater than zero
 			ensure!(
-				Self::weights_are_normalized_and_nonnegative(&config.weights),
+				Self::weights_are_nonnegative(&config.weights),
+				Error::<T>::PoolWeightsMustBeNonnegative
+			);
+
+			// Requirement 6) The weights must be normalized (sum to one)
+			ensure!(
+				Self::weights_are_normalized(&config.weights),
 				Error::<T>::PoolWeightsMustBeNormalized
 			);
 
-			// Requirement 6) The minimum weight bound must be less than or equal to the maximum weight bound
+			// Requirement 7) The minimum weight bound must be less than or equal to the maximum weight bound
 			ensure!(
 				Self::bounds_are_valid(&config.weight_bounds),
 				Error::<T>::InvalidWeightBounds
 			);
 
-			// Requirement 7) The provided weights are in the required weight bounds
+			// Requirement 8) The provided weights are in the required weight bounds
 			ensure!(
 				Self::weights_are_in_weight_bounds(&config.weights, &config.weight_bounds),
 				Error::<T>::PoolWeightsAreOutsideOfWeightBounds
 			);
 
 			// ---------- User Requirements ----------
-			// Requirement 8) The user who issued must have the balance they are trying to deposit
+			// Requirement 9) The user who issued must have the balance they are trying to deposit
 			ensure!(
 				Self::user_has_specified_balance_for_asset(&from, T::NativeAssetId::get(), creation_fee.amount),
 				Error::<T>::IssuerDoesNotHaveBalanceTryingToDeposit
 			);
 			
-			// Requirement 9) The specified creation fee is sufficient enough to open a Pool
+			// Requirement 10) The specified creation fee is sufficient enough to open a Pool
 			ensure!(
 				Self::required_creation_deposit_for(number_of_assets)? <= creation_fee.amount, 
 				Error::<T>::CreationFeeIsInsufficient
 			);
 
-			let (pool_id, pool_info) = Self::do_create_pool(from, config, creation_fee)?;
+			let (pool_id, pool_info) = Self::do_create(from, config, creation_fee)?;
 			Self::deposit_event(Event::PoolCreated { 
 				pool_id,
 				pool_info
@@ -1263,16 +1277,15 @@ pub mod pallet {
 			Ok(result)
 		}
 		
-		// Helper function for the the create trait function. Obtains a new LP Token Id for the pool, creates a 
-		//     vault for each asset desired in the pool, and saves all important info into runtime storage
-		//
-		// # Errors
-		//  - When there is an issue creating an lp token for the pool.
-		//  - When there is an issue creating an underlying vault.
-		//  - When any `deposit` < `CreationFee` + `ExistentialDeposit`.
-		//  - When the issuer has insufficient funds to lock each deposit.
-		fn do_create_pool(
-			from: T::AccountId,
+		/// Helper function for the the create trait function. Obtains a new LP Token Id for the pool, creates a 
+		///     vault for each asset desired in the pool, and saves all important info into runtime storage
+		///
+		/// # Errors
+		/// - 'ErrorCreatingLpTokenForPool': there was an issue creating an lp token for the pool.
+		/// - 'DepositingIntoPoolFailed': transfering creation deposit into the Pool failed.
+		/// - Other: an issue arised when creating one of the underlying vaults.
+		fn do_create(
+			from: AccountIdOf<T>,
 			config: PoolConfig<AccountIdOf<T>, AssetIdOf<T>, WeightOf<T>>,
 			creation_fee: Deposit<T>,
 		) -> Result<(T::PoolId, PoolInfoOf<T>), DispatchError>  {
@@ -1282,11 +1295,11 @@ pub mod pallet {
 					*id
 				};
 
+				let pool_account = Self::account_id(&id);
+
 				// Requirement 1) Obtain a new asset id for this pools lp token 
 				let lp_token =
 					{ T::CurrencyFactory::create().map_err(|_| Error::<T>::ErrorCreatingLpTokenForPool)? };
-
-				let account_id = Self::account_id(&id);
 
 				// TODO (Nevin):
 				//  - allow strategies to be supplied during the creation of the vaults
@@ -1303,10 +1316,10 @@ pub mod pallet {
 
 					let vault_id: <T::Vault as Vault>::VaultId = T::Vault::create(
 						Duration::Existential,
-						VaultConfig::<T::AccountId, T::AssetId> {
+						VaultConfig::<AccountIdOf<T>, AssetIdOf<T>> {
 							asset_id: *asset_id,
 							reserved: Perquintill::from_percent(100),
-							manager: account_id.clone(),
+							manager: pool_account.clone(),
 							strategies: [].iter().cloned().collect(),
 						},
 					)?;
@@ -1315,8 +1328,7 @@ pub mod pallet {
 				}
 
 				// Requirement 3) Transfer native tokens from users account to pools account
-				let pool_account = &Self::account_id(&id);
-				T::Currency::transfer(T::NativeAssetId::get(), &from, pool_account, creation_fee.amount, true)
+				T::Currency::transfer(T::NativeAssetId::get(), &from, &pool_account, creation_fee.amount, true)
 					.map_err(|_| Error::<T>::DepositingIntoPoolFailed)?;
 				
 				// Requirement 4) Save the pools assets in global storage
@@ -1329,12 +1341,12 @@ pub mod pallet {
 
 				// Requirement 6) Keep track of the pool's configuration
 				let pool_info = PoolInfoOf::<T> {
-					owner:		 	 config.owner,
+					owner: config.owner,
 					lp_token,
-					fee: 			 config.fee,
-					asset_bounds:	 config.asset_bounds,
-					weight_bounds:	 config.weight_bounds,
-					deposit_bounds:	 config.deposit_bounds,
+					fee: config.fee,
+					asset_bounds: config.asset_bounds,
+					weight_bounds: config.weight_bounds,
+					deposit_bounds: config.deposit_bounds,
 					withdraw_bounds: config.withdraw_bounds,
 				};
 				Pools::<T>::insert(id, pool_info.clone());
@@ -1530,12 +1542,14 @@ pub mod pallet {
 		//  '-> Conditions:
 		//        i.  Σ(i, j) a_i != a_j
 		fn no_duplicate_assets_provided(assets: &[AssetIdOf<T>]) -> bool {
-			let unique_assets = BTreeSet::<T::AssetId>::from_iter(assets.iter().copied());
+			let unique_assets = BTreeSet::<AssetIdOf<T>>::from_iter(assets.iter().copied());
 
 			// Condition i
 			unique_assets.len() == assets.len()
 		}
 
+		// Checks that the 'bounds' input parameter is valid in the sense that if there is a provided
+		//     lower and upper boudn then the lwoer bound must be less than or equal to the upper bound 
 		fn bounds_are_valid<U>(bounds: &Bound<U>) -> bool 
 		where U: Copy + PartialOrd {
 			let (lower_bounds, upper_bound) = (bounds.minimum, bounds.maximum);
@@ -1546,12 +1560,16 @@ pub mod pallet {
 			}
 		}
 
+		// Checks the pool size is strictly in between (inclusive) the required asset bounds
+		//  '-> Conditions:
+		//        i. min_size ≤ pool_size ≤ max_size
 		fn pool_size_is_within_asset_bounds(
 			pool_size: u8,
 			bounds: &Bound<u8>
 		) -> bool {
 			let (lower_bound, upper_bound) = (bounds.minimum, bounds.maximum);
 
+			// Condition i
 			match (lower_bound, upper_bound) {
 				(None, None) => true,
 				(Some(minimum), None) => minimum <= pool_size,
@@ -1571,11 +1589,13 @@ pub mod pallet {
 				return false;
 			}
 
+			// Get unique asset_ids from 'assets'
 			let assets = BTreeSet::<AssetIdOf<T>>::from_iter(
 				assets.iter()
 				.copied()
 			);
 
+			// Get unique asset_ids from 'weights'
 			let weights = BTreeSet::<AssetIdOf<T>>::from_iter(
 				weights.iter()
 				.map(|weight| weight.asset_id)
@@ -1585,31 +1605,33 @@ pub mod pallet {
 			assets.is_subset(&weights) && assets.is_superset(&weights)
 		}
 
-		// Checks the provided weights are all strictly nonnegative (greater than or equal to one) and
-		//  |  they sum to one plus or minus a margin of error
+		// Checks the provided weights are all strictly nonnegative (greater than or equal to one)
 		//  '-> Conditions:
 		//        i.  w_i ≥ 0
-		//        ii. Σ w_i ≈ 1
-		pub fn weights_are_normalized_and_nonnegative(
+		pub fn weights_are_nonnegative(
 			weights: &WeightsVec<AssetIdOf<T>, WeightOf<T>>
 		) -> bool {
-			let zero = T::Weight::zero();
+			let zero = WeightOf::<T>::zero();
 
-			// Condition i
-			for weight in weights {
-				if weight.weight < zero {
-					return false;
-				}
-			}
-			
-			// Condition ii
+			weights.iter()
+				.all(|weight| zero < weight.weight)
+		}
+
+		// Checks the provided weights are weights_are_normalized (they sum to one plus or minus a 
+		//  |  margin of error)
+		//  '-> Conditions:
+		//        i. Σ w_i ≈ 1
+		pub fn weights_are_normalized(
+			weights: &WeightsVec<AssetIdOf<T>, WeightOf<T>>
+		) -> bool {
 			let epsilon: u128 = T::Epsilon::get().deconstruct().into();
-			let one: u128 = T::Weight::one().deconstruct().into();
+			let one: u128 = WeightOf::<T>::one().deconstruct().into();
 			
 			let sum: u128 = weights.iter()
 				.map(|weight| weight.weight.deconstruct().into())
 				.sum();
 
+			// Condition i
 			(one - epsilon) <= sum && sum <= (one + epsilon)
 		}
 
@@ -1629,18 +1651,6 @@ pub mod pallet {
 					(None, Some(maximum)) => weight.weight <= maximum,
 					(Some(minimum), Some(maximum)) => minimum <= weight.weight && weight.weight <= maximum,
 				})
-
-			// TODO: (Nevin)
-			//  - delete
-
-			// // Condition i
-			// for weight_struct in weights {
-			// 	if weight_struct.weight < weight_bounds.minimum || weight_bounds.maximum < weight_struct.weight {
-			// 		return false;
-			// 	}
-			// }
-
-			// true
 		}
 
 		// Checks that, for an all-asset deposit, there is actually one deposit for each asset
@@ -1664,32 +1674,21 @@ pub mod pallet {
 		//  '-> Conditions:
 		//        i. ∀ assets a_i : amount ≤ user_balance
 		pub fn user_has_specified_balance_for_deposits(
-			user: &T::AccountId,
-            deposits: &[Deposit<T>]                                                                                                                                            
+			user: &AccountIdOf<T>, 
+			deposits: &[Deposit<T>]
 		) -> bool {
 			deposits.iter()
 				.all(|deposit| Self::user_has_specified_balance_for_asset(user, deposit.asset_id, deposit.amount))
-			
-			// TODO: (Nevin)
-			//  - delete
-			// for deposit in deposits {
-			// 	if !Self::user_has_specified_balance_for_asset(user, deposit.asset_id, deposit.amount) {
-			// 		return false;
-			// 	}
-			// }
-
-			// true
 		}
 
 		// Checks that the specified user has at least *amount* of *asset*
 		//  '-> Conditions:
 		//        i. amount ≤ user_balance
 		pub fn user_has_specified_balance_for_asset(
-			user: &T::AccountId,
-			asset: T::AssetId,
-			amount: T::Balance
+			user: &AccountIdOf<T>,
+			asset: AssetIdOf<T>,
+			amount: BalanceOf<T>
 		) -> bool {
-			//amount <= T::Currency::balance(asset, user)
 			T::Currency::can_withdraw(asset, user, amount) == WithdrawConsequence::Success
 		}
 
@@ -1894,7 +1893,7 @@ pub mod pallet {
 		// Checks that the specified asset is one of the Pool's underlying assets
 		fn asset_is_tracked_by_pool(
 			pool_id: &T::PoolId,
-			asset_id: &T::AssetId
+			asset_id: &AssetIdOf<T>
 		) -> bool {
 			PoolAssetBalance::<T>::contains_key(pool_id, asset_id)
 		}
@@ -1991,11 +1990,13 @@ pub mod pallet {
 			let creation_fee = T::CreationFee::get();
 
 			let number_of_assets = 
-				<T::Convert as Convert<u128, T::Balance>>::convert(number_of_assets);
+				<T::Convert as Convert<u128, BalanceOf<T>>>::convert(number_of_assets);
 				
 			let result = creation_fee
-				.checked_add(&existential_deposit).ok_or(ArithmeticError::Overflow)?
-				.checked_mul(&number_of_assets).ok_or(ArithmeticError::Overflow)?;
+				.checked_add(&existential_deposit)
+				.ok_or(ArithmeticError::Overflow)?
+				.checked_mul(&number_of_assets)
+				.ok_or(ArithmeticError::Overflow)?;
 					
 			Ok(result)
 		}
