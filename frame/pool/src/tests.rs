@@ -160,25 +160,13 @@ prop_compose! {
 				fee: Perquintill::zero(),
 
 				assets: initial_assets.clone(),
-				asset_bounds: Bound {
-					minimum: Some(0), 
-					maximum: Some(MAX_POOL_SIZE),
-				},
+				asset_bounds: Bound::new(Some(0), Some(MAX_POOL_SIZE)),
 
 				weights: equal_weight_vector_for(&initial_assets),
-				weight_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
+				weight_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
 
-				deposit_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
-				withdraw_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
+				deposit_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
+				withdraw_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
 			}
 		}
 }
@@ -480,27 +468,15 @@ proptest! {
 
 				assets: initial_assets.clone(),
 				// Condition ii && Condition iii
-				asset_bounds: Bound {
-					minimum: Some(0), 
-					maximum: Some(MAX_POOL_SIZE),
-				},
+				asset_bounds: Bound::new(Some(0), Some(MAX_POOL_SIZE)),
 
 				// Condition iv && Condition v
 				weights: equal_weight_vector_for(&initial_assets),
 				// Condition vi && Condition vii
-				weight_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
+				weight_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
 
-				deposit_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
-				withdraw_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
+				deposit_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
+				withdraw_bounds:Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
 			};
 
 			// Condition viii
@@ -536,25 +512,13 @@ proptest! {
 				fee: Perquintill::zero(),
 
 				assets: initial_assets.clone(),
-				asset_bounds: Bound {
-					minimum: Some(minimum_asset_bound), 
-					maximum: Some(maximum_asset_bound)
-				},
+				asset_bounds: Bound::new(Some(minimum_asset_bound), Some(maximum_asset_bound)),
 
 				weights: equal_weight_vector_for(&initial_assets),
-				weight_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
+				weight_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
 
-				deposit_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
-				withdraw_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
+				deposit_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
+				withdraw_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
 			};
 
 			let creation_fee = Deposit {
@@ -624,25 +588,13 @@ proptest! {
 				fee: Perquintill::zero(),
 
 				assets: initial_assets.clone(),
-				asset_bounds: Bound {
-					minimum: Some(0), 
-					maximum: Some(MAX_POOL_SIZE),
-				},
+				asset_bounds: Bound::new(Some(0), Some(MAX_POOL_SIZE)),
 
 				weights,
-				weight_bounds: Bound {
-					minimum: Some(weight_minimum), 
-					maximum: Some(weight_maximum)
-				},
+				weight_bounds: Bound::new(Some(weight_minimum), Some(weight_maximum)),
 
-				deposit_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
-				withdraw_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
+				deposit_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
+				withdraw_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
 			};
 
 			let creation_fee = Deposit {
@@ -701,25 +653,13 @@ proptest! {
 				fee: Perquintill::zero(),
 
 				assets: initial_assets.clone(),
-				asset_bounds: Bound {
-					minimum: Some(0), 
-					maximum: Some(26)
-				},
+				asset_bounds: Bound::new(Some(0), Some(MAX_POOL_SIZE)),
 
 				weights: equal_weight_vector_for(&initial_assets),
-				weight_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
+				weight_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
 
-				deposit_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
-				withdraw_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
+				deposit_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
+				withdraw_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
 			};
 
 			let creation_fee = Deposit {
@@ -857,25 +797,13 @@ proptest! {
 				fee: Perquintill::zero(),
 
 				assets: initial_assets.clone(),
-				asset_bounds: Bound {
-					minimum: Some(0), 
-					maximum: Some(26)
-				},
+				asset_bounds: Bound::new(Some(0), Some(MAX_POOL_SIZE)),
 
 				weights: equal_weight_vector_for(&initial_assets),
-				weight_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
+				weight_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
 
-				deposit_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
-				withdraw_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
+				deposit_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
+				withdraw_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
 			};
 
 			let creation_fee = Deposit {
@@ -920,25 +848,13 @@ proptest! {
 				fee: Perquintill::zero(),
 
 				assets: initial_assets.clone(),
-				asset_bounds: Bound {
-					minimum: Some(0), 
-					maximum: Some(26)
-				},
+				asset_bounds: Bound::new(Some(0), Some(MAX_POOL_SIZE)),
 
 				weights: equal_weight_vector_for(&initial_assets),
-				weight_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
+				weight_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
 
-				deposit_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
-				withdraw_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
+				deposit_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
+				withdraw_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
 			};
 
 			let creation_fee = Deposit {
