@@ -37,6 +37,8 @@ use sp_io::crypto;
 use sp_runtime::traits::Convert;
 
 use sp_std::prelude::*;
+
+#[cfg(not(feature = "std"))]
 use sp_std::vec;
 
 pub struct BeefyLightClient<Store: StorageRead + StorageWrite> {
