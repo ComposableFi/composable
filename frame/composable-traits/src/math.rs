@@ -32,6 +32,7 @@ pub trait SafeSub: Sized {
 
 pub trait SafeArithmetic: Sized + SafeAdd + SafeDiv + SafeMul + SafeSub {}
 
+
 impl<T: CheckedAdd> SafeAdd for T {
 	#[inline(always)]
 	fn safe_add(&self, rhs: &Self) -> Result<Self, ArithmeticError> {
@@ -62,6 +63,8 @@ impl<T: CheckedSub + Zero> SafeSub for T {
 		self.checked_sub(rhs).ok_or(ArithmeticError::Underflow)
 	}
 }
+
+impl<T: SafeAdd + SafeDiv + SafeMul + SafeSub> SafeArithmetic for T {}
 
 /// An object from which we can derive a second object of the same type.
 /// This function cannot fail and might return the same object if a boundary is about to be crossed.
