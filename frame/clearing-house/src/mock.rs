@@ -1,4 +1,5 @@
 use crate as clearing_house;
+use composable_traits::defi::DeFiComposableConfig;
 use frame_support::traits::{ConstU16, ConstU64};
 use frame_system as system;
 use sp_core::H256;
@@ -22,6 +23,9 @@ frame_support::construct_runtime!(
 		ClearingHouse: clearing_house::{Pallet, Call, Storage, Event<T>},
 	}
 );
+
+type Balance = u128;
+type AssetId = u128;
 
 impl system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -50,10 +54,13 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+impl DeFiComposableConfig for Test {
+	type Balance = Balance;
+	type MayBeAssetId = AssetId;
+}
+
 impl clearing_house::Config for Test {
 	type Event = Event;
-	type Balance = u128;
-	type AssetId = u64;
 	type MarketId = u64;
 	type Decimal = FixedI128;
 	type Timestamp = u64;

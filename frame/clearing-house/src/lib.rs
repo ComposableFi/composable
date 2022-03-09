@@ -17,7 +17,9 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 	use codec::FullCodec;
+	use composable_traits::defi::DeFiComposableConfig;
 	use frame_support::{pallet_prelude::*, Blake2_128Concat, Twox64Concat};
+	use frame_system::pallet_prelude::OriginFor;
 	use sp_runtime::FixedPointNumber;
 
 	// ----------------------------------------------------------------------------------------------------
@@ -33,14 +35,9 @@ pub mod pallet {
 
 	// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: DeFiComposableConfig + frame_system::Config {
 		// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		/// The balance type for this pallet. Used for keeping track of nonnegative amounts of
-		/// assets.
-		type Balance: FullCodec + MaxEncodedLen + TypeInfo;
-		/// The asset ID type for this and the oracle pallet
-		type AssetId: FullCodec + MaxEncodedLen + TypeInfo;
 		/// The market ID type for this pallet.
 		type MarketId: FullCodec + MaxEncodedLen + TypeInfo;
 		/// Signed decimal fixed point number.
@@ -77,7 +74,7 @@ pub mod pallet {
 		periodicity: Duration,
 	}
 
-	pub type AssetIdOf<T> = <T as Config>::AssetId;
+	pub type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
 	pub type MarketIdOf<T> = <T as Config>::MarketId;
 	pub type DecimalOf<T> = <T as Config>::Decimal;
 	pub type TimestampOf<T> = <T as Config>::Timestamp;
@@ -144,7 +141,23 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		/// Adds margin to a user's account. A user has to have enough margin to open new positions
+		/// and can be liquidated if its margin ratio falls bellow maintenance. Deposited collateral
+		/// backs all the positions of an account accross multiple markets (cross-margining).
+		///
+		/// If an account does not exist in `AccountsMargin`, it is created and initialized with 0
+		/// margin. Checks that the collateral type is supported.
+		#[pallet::weight(0)]
+		#[allow(unused_variables)]
+		pub fn add_margin(
+			origin: OriginFor<T>,
+			asset: AssetIdOf<T>,
+			amount: T::Balance,
+		) -> DispatchResult {
+			Ok(())
+		}
+	}
 
 	// ----------------------------------------------------------------------------------------------------
 	//                              Trait Implementations
