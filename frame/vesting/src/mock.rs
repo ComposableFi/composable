@@ -5,7 +5,7 @@
 use super::*;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{EnsureOrigin, Everything},
+	traits::{EnsureOrigin, Everything, Time},
 };
 use frame_system::RawOrigin;
 use orml_traits::parameter_type_with_key;
@@ -21,7 +21,10 @@ use crate as vesting;
 pub type Balance = u64;
 pub type Amount = i64;
 pub type AccountId = u128;
+pub type Moment = u64;
+pub type BlockNumber = u64;
 
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
 pub const CHARLIE: AccountId = 3;
@@ -55,7 +58,7 @@ impl frame_system::Config for Runtime {
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;
-	type BlockNumber = u64;
+	type BlockNumber = BlockNumber;
 	type Hash = H256;
 	type Hashing = ::sp_runtime::traits::BlakeTwo256;
 	type AccountId = AccountId;
@@ -76,6 +79,17 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = ();
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+}
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
+}
+
+impl pallet_timestamp::Config for Runtime {
+	type Moment = Moment;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
 }
 
 fn benchmark_vested_transfer_account() -> AccountId {
@@ -135,13 +149,44 @@ parameter_types! {
 	pub const MinVestedTransfer: u64 = 5;
 }
 
-impl Config for Runtime {
+impl Config<Instance2> for Runtime {
 	type Event = Event;
 	type Currency = Tokens;
 	type MinVestedTransfer = MinVestedTransfer;
 	type VestedTransferOrigin = EnsureAliceOrBob;
 	type WeightInfo = ();
 	type MaxVestingSchedules = MaxVestingSchedule;
+	type Moment = Moment;
+	type VestingTime = VestingTimeWithTime;
+}
+
+pub struct VestingTimeWithTime;
+impl<T: pallet_timestamp::Config> VestingTime<T> for VestingTimeWithTime {
+	type Moment = <T as pallet_timestamp::Config>::Moment;
+
+	fn now() -> Self::Moment {
+		<pallet_timestamp::Pallet<T> as Time>::now()
+	}
+}
+
+impl Config<Instance1> for Runtime {
+	type Event = Event;
+	type Currency = Tokens;
+	type MinVestedTransfer = MinVestedTransfer;
+	type VestedTransferOrigin = EnsureAliceOrBob;
+	type WeightInfo = ();
+	type MaxVestingSchedules = MaxVestingSchedule;
+	type Moment = BlockNumber;
+	type VestingTime = VestingTimeWithBlockNumber;
+}
+
+pub struct VestingTimeWithBlockNumber;
+impl<T: frame_system::Config> VestingTime<T> for VestingTimeWithBlockNumber {
+	type Moment = <T as frame_system::Config>::BlockNumber;
+
+	fn now() -> Self::Moment {
+		frame_system::Pallet::<T>::current_block_number()
+	}
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
@@ -154,7 +199,8 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Vesting: vesting::{Pallet, Storage, Call, Event<T>, Config<T>},
+		TimeBasedVesting: vesting::<Instance1>::{Pallet, Storage, Call, Event<T>, Config<T>},
+		BlockNumberBasedVesting: vesting::<Instance2>::{Pallet, Storage, Call, Event<T>, Config<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
 );
@@ -172,15 +218,15 @@ impl ExtBuilder {
 		.assimilate_storage(&mut t)
 		.unwrap();
 
-		vesting::GenesisConfig::<Runtime> {
-			vesting: vec![
-				// asset, who, start, period, period_count, per_period
-				(MockCurrencyId::BTC, CHARLIE, 2, 3, 1, 5),
-				(MockCurrencyId::BTC, CHARLIE, 2 + 3, 3, 3, 5),
-			],
-		}
-		.assimilate_storage(&mut t)
-		.unwrap();
+		// vesting::GenesisConfig::<Runtime> {
+		// 	vesting: vec![
+		// 		// asset, who, start, period, period_count, per_period
+		// 		(MockCurrencyId::BTC, CHARLIE, 2, 3, 1, 5),
+		// 		(MockCurrencyId::BTC, CHARLIE, 2 + 3, 3, 3, 5),
+		// 	],
+		// }
+		// .assimilate_storage(&mut t)
+		// .unwrap();
 
 		t.into()
 	}

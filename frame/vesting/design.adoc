@@ -1,0 +1,33 @@
+= Vesting Scheduling in Absolute Time
+
+Right now the vesting pallet only supports vesting schedules/calculations based on block numbers as the time axis. This means that unlock periods in terms of absolute time can be unpredictable to users as the
+
+. Block time is a system parameter that can be modified in the runtime configuration.
+. The system crashes or downtime can cause the absolute time of vesting longer than what the block time predicts.
+
+Solution is to make a modification to the Vesting pallet to support vesting scheduling in absolute time.
+
+== Requirements
+
+* Vesting pallet must support measuring vesting schedule in terms of absolute time measured in unix time (ms) in addition to the existing support for block number based scheduling.
+
+== Method
+
+There are at least two ways of implementing the absolute time based scheduling.
+
+. Instantiable Pallet/Two Instance Approach: Parameterizing vesting pallet in terms of a generic time parameter type used for schedules. Then configuring two instances of the vesting module in the runtime.
++
+*Advantages*: Code in the pallet remains cleaner with not having to handle special cases based on the scheduling time measurement used. Testing is easier as the existing code would need only minor modifications to support both use cases. Though not likely, the pallet remains extensible to any other type of vesting scheduling measurement, say a monthly schedule.
++
+*Disadvantages*: Much more involved in terms of runtime modifications needed to support the change.
+. Single Instance Approach: Modifying the vesting pallet so that a single instance of pallet in the runtime can support both block number based and absolute time based scheduling.
++
+*Advantages*: Easier to transition into, with less runtime modifications required.
++
+*Disadvantages*: The vesting module interface would require changes with specific functions to support two different types of scheduling while internal implementation details being duplicated.
+
+Based on the above comparison the "1. Instantiable Pallet/Two Instance Approach" is chosen.
+
+=== Proposed Changes
+
+<Refer this Draft PR>

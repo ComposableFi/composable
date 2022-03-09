@@ -20,16 +20,22 @@ pub trait VestedTransfer {
 	) -> DispatchResult;
 }
 
+pub trait VestingTime<T> {
+	type Moment;
+
+	fn now() -> Self::Moment;
+}
+
 /// The vesting schedule.
 ///
 /// Benefits would be granted gradually, `per_period` amount every `period`
-/// of blocks after `start`.
+/// measured in "Moments" after `start`.
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct VestingSchedule<BlockNumber, Balance: HasCompact> {
-	/// Vesting starting block
-	pub start: BlockNumber,
-	/// Number of blocks between vest
-	pub period: BlockNumber,
+pub struct VestingSchedule<Moment, Balance: HasCompact> {
+	/// Vesting starting moment
+	pub start: Moment,
+	/// Number of moments between vest
+	pub period: Moment,
 	/// Number of vest
 	pub period_count: u32,
 	/// Amount of tokens to release per vest
@@ -37,11 +43,11 @@ pub struct VestingSchedule<BlockNumber, Balance: HasCompact> {
 	pub per_period: Balance,
 }
 
-impl<BlockNumber: AtLeast32Bit + Copy, Balance: AtLeast32Bit + Copy>
-	VestingSchedule<BlockNumber, Balance>
+impl<Moment: AtLeast32Bit + Copy, Balance: AtLeast32Bit + Copy>
+	VestingSchedule<Moment, Balance>
 {
 	/// Returns the end of all periods, `None` if calculation overflows.
-	pub fn end(&self) -> Option<BlockNumber> {
+	pub fn end(&self) -> Option<Moment> {
 		// period * period_count + start
 		self.period.checked_mul(&self.period_count.into())?.checked_add(&self.start)
 	}
@@ -55,7 +61,7 @@ impl<BlockNumber: AtLeast32Bit + Copy, Balance: AtLeast32Bit + Copy>
 	///
 	/// Note this func assumes schedule is a valid one(non-zero period and
 	/// non-overflow total amount), and it should be guaranteed by callers.
-	pub fn locked_amount(&self, time: BlockNumber) -> Balance {
+	pub fn locked_amount(&self, time: Moment) -> Balance {
 		// full = (time - start) / period
 		// unrealized = period_count - full
 		// per_period * unrealized
