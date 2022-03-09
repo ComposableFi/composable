@@ -61,7 +61,7 @@
 //! - Ability to query the spot price of an asset in terms of a numeraire.
 //! 
 //! ### Actors
-//! 	
+//!
 //! There are many external entities who will interact with the Pool pallet's public API. Below are the common
 //! actors for the pallet:
 //! - **Trader**: A user that exchanges one asset in a Pool for another.
@@ -70,7 +70,7 @@
 //!     obtain a profit when the intrinsic prices bewteen the markets differentiate.
 //! 
 //! - **Liquidity Provider**: A user who funds a Pool by depositing assets, thus allowing trades to occur within
-//! 	the pool.
+//!     the pool.
 //! 
 //! - **Other Pallets**: The Pool pallet is designed to be utilized as an underlying layer of other pallets, 
 //!     not as a standalone pallet.
@@ -127,23 +127,23 @@
 //! ### Runtime Storage Objects:
 //! 
 //! - [`PoolCount`](PoolCount): A Counter for the number of Pools that have been created. Might not
-//! 	correspond to the number of active Pools if a Pool has been deleted.
+//!     correspond to the number of active Pools if a Pool has been deleted.
 //! 
 //! - [`Pools`](Pools): Mapping of a Pool's `pool_id` to its [`PoolInfo`](composable_traits::pool::PoolInfo) struct.
 //! 
 //! - [`PoolAssets`](PoolAssets): Mapping of a Pool's `pool_id` to a vector of assets underlying the Pool.
 //! 
 //! - [`PoolAssetWeight`](PoolAssetWeight): Mapping of a Pool's `pool_id` and an assets `asset_id` to the weight
-//! 	that asset maintains in the Pool.
+//!     that asset maintains in the Pool.
 //! 
 //! - [`PoolAssetVault`](PoolAssetVault): Mapping of a Pool's `pool_id` and an assets `asset_id` to the
-//! 	underlying Cubic Vault's `vault_id` that holds the asset for the Pool.
+//!     underlying Cubic Vault's `vault_id` that holds the asset for the Pool.
 //! 
 //! - [`PoolAssetBalance`](PoolAssetBalance): Mapping of a Pool's `pool_id` and an assets `asset_id` to the Pool's
-//! 	reserves of the asset. (Doesn't include the assets reserves that were taken as transaction fees).
+//!     reserves of the asset. (Doesn't include the assets reserves that were taken as transaction fees).
 //! 
 //! - [`PoolAssetTotalBalance`](PoolAssetTotalBalance): Mapping of a Pool's `pool_id` and an assets `asset_id` to the Pool's
-//! 	total reserves of the asset. (Includes the assets reserves that were taken as transaction fees).
+//!     total reserves of the asset. (Includes the assets reserves that were taken as transaction fees).
 //! 
 //! ## Usage
 //! 
@@ -415,7 +415,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pool_asset_balance)]
 	// Absence of pool asset balance is equivalent to 0, so ValueQuery is allowed.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type PoolAssetBalance<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -430,7 +430,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pool_asset_total_balance)]
 	// Absence of pool asset balance is equivalent to 0, so ValueQuery is allowed.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type PoolAssetTotalBalance<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -1086,7 +1086,7 @@ pub mod pallet {
 
 				// Requirement 4) the user who issued the extrinsic must have the total balance trying to deposit
 				ensure!(
-					Self::user_has_specified_balance_for_asset(&from, deposit.asset_id, deposit.amount),
+					Self::user_has_specified_balance_for_asset(from, deposit.asset_id, deposit.amount),
 					Error::<T>::IssuerDoesNotHaveBalanceTryingToDeposit
 				);
 
@@ -1103,13 +1103,13 @@ pub mod pallet {
 				);
 			}
 
-			let lp_tokens_minted = Self::do_all_asset_deposit(&from, &pool_id, deposits.clone())?;
+			let lp_tokens_minted = Self::do_all_asset_deposit(from, pool_id, deposits.clone())?;
 			
 			Self::deposit_event(Event::AllAssetDeposit { 
 				account:          from.clone(), 
-				pool_id:          pool_id.clone(), 
+				pool_id:          *pool_id,
 				deposited:        deposits, 
-				lp_tokens_minted: lp_tokens_minted,
+				lp_tokens_minted,
 			});
 
 			Ok(lp_tokens_minted)
@@ -1173,7 +1173,7 @@ pub mod pallet {
 			let lp_token_id = Self::lp_token_id(pool_id)?;
 			// Requirement 2) the user who issued the extrinsic must have the total balance trying to deposit
 			ensure!(
-				Self::user_has_specified_balance_for_asset(&to, lp_token_id, lp_amount),
+				Self::user_has_specified_balance_for_asset(to, lp_token_id, lp_amount),
 				Error::<T>::IssuerDoesNotHaveBalanceTryingToDeposit
 			);
 
@@ -1202,11 +1202,11 @@ pub mod pallet {
 				);
 			}
 
-			let assets_withdrawn = Self::do_all_asset_withdraw(&to, &pool_id, lp_amount, lps_share)?;
+			let assets_withdrawn = Self::do_all_asset_withdraw(to, pool_id, lp_amount, lps_share)?;
 			
 			Self::deposit_event(Event::AllAssetWithdraw { 
 				account:          to.clone(), 
-				pool_id:          pool_id.clone(), 
+				pool_id:          *pool_id, 
 				withdrawn:        assets_withdrawn.clone(), 
 				lp_tokens_burned: lp_amount,
 			});
@@ -1329,7 +1329,7 @@ pub mod pallet {
 				// Requirement 6) Keep track of the pool's configuration
 				let pool_info = PoolInfoOf::<T> {
 					owner:		 	 config.owner,
-					lp_token:		 lp_token,
+					lp_token,
 					fee: 			 config.fee,
 					asset_bounds:	 config.asset_bounds,
 					weight_bounds:	 config.weight_bounds,
@@ -1359,7 +1359,7 @@ pub mod pallet {
 			let to = &Self::account_id(pool_id);
 
 			// Requirement 1) Calculate the number of LP tokens that need to be minted
-			let lp_tokens_to_mint = Self::calculate_lp_tokens_to_mint(&pool_id, &deposits)?;
+			let lp_tokens_to_mint = Self::calculate_lp_tokens_to_mint(pool_id, &deposits)?;
 
 			// TODO (Nevin):
 			//  - transfer all assets into the pool's account before beginning
@@ -1374,7 +1374,7 @@ pub mod pallet {
 
 				let vault_id = &PoolAssetVault::<T>::get(pool_id, deposit.asset_id);
 
-				T::Currency::transfer(deposit.asset_id, &from, to, deposit.amount, true)
+				T::Currency::transfer(deposit.asset_id, from, to, deposit.amount, true)
 					.map_err(|_| Error::<T>::DepositingIntoPoolFailed)?;
 
 				let _vault_lp_token_amount = T::Vault::deposit(
@@ -1422,7 +1422,7 @@ pub mod pallet {
 				// Withdraw the vaults assets into the pools account
 				let vault_balance_withdrawn = T::Vault::withdraw(
 					vault_id,
-					&pool_account,
+					pool_account,
 					asset_share.amount
 				)?;
 
@@ -1505,7 +1505,7 @@ pub mod pallet {
 
 		pub fn balance_of(pool_id: &T::PoolId, asset_id: &T::AssetId) -> Result<T::Balance, DispatchError> {
 			let vault_id = &PoolAssetVault::<T>::get(pool_id, asset_id);
-			let vault_lp_token_id = T::Vault::lp_asset_id(&vault_id)?;
+			let vault_lp_token_id = T::Vault::lp_asset_id(vault_id)?;
 		
 			let pool_account = &Self::account_id(pool_id);
 
@@ -1528,7 +1528,7 @@ pub mod pallet {
 		// Checks if the input vector has duplicate enteries and returns true if it doesn't, false otherwise
 		//  '-> Conditions:
 		//        i.  Σ(i, j) a_i != a_j
-		fn no_duplicate_assets_provided(assets: &Vec<AssetIdOf<T>>) -> bool {
+		fn no_duplicate_assets_provided(assets: &[AssetIdOf<T>]) -> bool {
 			let unique_assets = BTreeSet::<T::AssetId>::from_iter(assets.iter().copied());
 
 			// Condition i
@@ -1539,7 +1539,7 @@ pub mod pallet {
 		//  '-> Conditions:
 		//        i.  ∀ assets a_i ⇒ ∃ weight w_i
 		pub fn each_asset_has_exactly_one_corresponding_weight(
-			assets: &Vec<AssetIdOf<T>>, 
+			assets: &[AssetIdOf<T>], 
 			weights: &WeightsVec<AssetIdOf<T>, WeightOf<T>>
 		) -> bool {
 			if weights.len() != assets.len() {
@@ -1608,7 +1608,7 @@ pub mod pallet {
 		// Checks that, for an all-asset deposit, there is actually one deposit for each asset
 		pub fn there_is_one_deposit_for_each_underlying_asset(
 			pool_id: &T::PoolId, 
-			deposits: &Vec<Deposit<T>>,
+			deposits: &[Deposit<T>],
 		) -> Result<bool, DispatchError> {
 			let underlying_assets: Assets<AssetIdOf<T>> = PoolAssets::<T>::get(&pool_id)
 				.ok_or(Error::<T>::PoolDoesNotExist)?;
@@ -1627,15 +1627,20 @@ pub mod pallet {
 		//        i. ∀ assets a_i : amount ≤ user_balance
 		pub fn user_has_specified_balance_for_deposits(
 			user: &T::AccountId,
-            deposits: &Vec<Deposit<T>>                                                                                                                                            
+            deposits: &[Deposit<T>]                                                                                                                                            
 		) -> bool {
-			for deposit in deposits {
-				if !Self::user_has_specified_balance_for_asset(user, deposit.asset_id, deposit.amount) {
-					return false;
-				}
-			}
+			deposits.iter()
+				.all(|deposit| Self::user_has_specified_balance_for_asset(user, deposit.asset_id, deposit.amount))
+			
+			// TODO: (Nevin)
+			//  - delete
+			// for deposit in deposits {
+			// 	if !Self::user_has_specified_balance_for_asset(user, deposit.asset_id, deposit.amount) {
+			// 		return false;
+			// 	}
+			// }
 
-			return true;
+			// true
 		}
 
 		// Checks that the specified user has at least *amount* of *asset*
@@ -1936,16 +1941,16 @@ pub mod pallet {
 		//          should be calculated relative to the increase in the invariant value
 		fn calculate_lp_tokens_to_mint(
 			pool_id: &T::PoolId,
-			deposits: &Vec<Deposit<T>>
+			deposits: &[Deposit<T>]
 		) -> Result<T::Balance, DispatchError> {
 			let lp_circulating_supply = Self::lp_circulating_supply(pool_id)?;
 
 			if lp_circulating_supply == T::Balance::zero() {
 				// TODO (Jesper):
 				//  - accounting for MIN LIQ too like uniswap (to avoid sybil, and other issues)
-				Self::weighted_geometric_mean(&pool_id, &deposits)
+				Self::weighted_geometric_mean(pool_id, deposits)
 			} else {
-				Self::increase_in_weighted_geometric_mean(&pool_id, &deposits)
+				Self::increase_in_weighted_geometric_mean(pool_id, deposits)
 			}
 		}
 
@@ -1959,7 +1964,7 @@ pub mod pallet {
 		//  - When calculating the product of weighted balances results in an overflow error.
 		fn weighted_geometric_mean(
 			pool_id: &T::PoolId,
-			deposits: &Vec<Deposit<T>>
+			deposits: &[Deposit<T>]
 		) -> Result<BalanceOf<T>, DispatchError> {
 			let mut result: FixedBalance = FixedBalance::from_num(1u8);
 
@@ -1996,9 +2001,9 @@ pub mod pallet {
 		//  - When errors propagate up from retrieving the amount of LP tokens circulating for a pool
 		fn increase_in_weighted_geometric_mean(
 			pool_id: &T::PoolId,
-			deposits: &Vec<Deposit<T>>
+			deposits: &[Deposit<T>]
 		) -> Result<T::Balance, DispatchError> {
-			let mut deposit_ratio = FixedBalance::from_num(0 as u8);
+			let mut deposit_ratio = FixedBalance::from_num(0_u8);
 			
 			for deposit in deposits {
 				let deposit_amount: u128 = 
