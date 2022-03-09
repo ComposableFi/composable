@@ -21,7 +21,8 @@ pub mod pallet {
 	use composable_traits::defi::DeFiComposableConfig;
 	use frame_support::{pallet_prelude::*, Blake2_128Concat, PalletId, Twox64Concat};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
-	use sp_runtime::FixedPointNumber;
+	use orml_traits::MultiCurrency;
+	use sp_runtime::{traits::AccountIdConversion, FixedPointNumber};
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
@@ -50,6 +51,12 @@ pub mod pallet {
 		/// The virtual AMM ID type for this pallet. `pallet-virtual-amm` should implement a trait
 		/// VAMM with an associated type 'VAMMId' compatible with this one.
 		type VAMMId: FullCodec + MaxEncodedLen + TypeInfo;
+		/// Pallet implementation of multicurrency transfers.
+		type MultiCurrency: MultiCurrency<
+			Self::AccountId,
+			CurrencyId = Self::MayBeAssetId,
+			Balance = Self::Balance,
+		>;
 		/// The id used as the `AccountId` of the clearing house. This should be unique across all
 		/// pallets to avoid name collisions with other pallets and clearing houses.
 		#[pallet::constant]
@@ -144,7 +151,7 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// User attempted to deposit unsupported asset type as collateral in his margin account
+		/// User attempted to deposit unsupported asset type as collateral in its margin account
 		UnsupportedCollateralType,
 	}
 
@@ -187,10 +194,12 @@ pub mod pallet {
 			acc: &T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: T::Balance,
-		) -> Result<(), Error<T>> {
+		) -> Result<(), DispatchError> {
 			if !CollateralTypes::<T>::contains_key(asset) {
-				return Err(Error::<T>::UnsupportedCollateralType)
+				return Err(Error::<T>::UnsupportedCollateralType.into())
 			}
+			// Assuming stablecoin and all markets quoted in dollars
+			T::MultiCurrency::transfer(asset, acc, &T::PalletId::get().into_account(), amount)?;
 			Ok(())
 		}
 	}
