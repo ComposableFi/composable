@@ -19,7 +19,7 @@ pub mod pallet {
 
 	use codec::FullCodec;
 	use composable_traits::defi::DeFiComposableConfig;
-	use frame_support::{pallet_prelude::*, Blake2_128Concat, Twox64Concat};
+	use frame_support::{pallet_prelude::*, Blake2_128Concat, PalletId, Twox64Concat};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::FixedPointNumber;
 
@@ -50,6 +50,10 @@ pub mod pallet {
 		/// The virtual AMM ID type for this pallet. `pallet-virtual-amm` should implement a trait
 		/// VAMM with an associated type 'VAMMId' compatible with this one.
 		type VAMMId: FullCodec + MaxEncodedLen + TypeInfo;
+		/// The id used as the `AccountId` of the clearing house. This should be unique across all
+		/// pallets to avoid name collisions with other pallets and clearing houses.
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
