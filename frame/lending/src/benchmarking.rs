@@ -6,9 +6,7 @@ use crate::{self as pallet_lending, Pallet as Lending};
 use composable_support::validation::Validated;
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig, MoreThanOneFixedU128},
-	lending::{
-		math::InterestRateModel, CreateInput, Lending as LendingTrait, RepayStrategy, UpdateInput,
-	},
+	lending::{math::InterestRateModel, CreateInput, Lending as LendingTrait, UpdateInput},
 	oracle::Price,
 	vault::StrategicVault,
 };
@@ -174,7 +172,7 @@ benchmarks! {
 			produce_block::<T>(43_u32.into(),4300_u64.into());
 
 		}:  {
-				Lending::<T>::repay_borrow(origin.clone().into(), market_id, caller, RepayStrategy::PartialAmount(part)).unwrap();
+				Lending::<T>::repay_borrow_partial(origin.clone().into(), market_id, caller, part).unwrap();
 			}
 		now {
 		}: {

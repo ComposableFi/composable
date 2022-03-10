@@ -312,10 +312,11 @@ fn can_create_valid_market() {
 					"The created market vault should be backed by the borrow asset"
 				);
 
+				let alice_borrow_balance_current = Lending::borrow_balance_current(&created_market_id, &ALICE);
 				assert_eq!(
-					Lending::borrow_balance_current(&created_market_id, &ALICE),
-					Ok(Some(0)),
-					"The borrowed balance of ALICE should be 0."
+					alice_borrow_balance_current,
+					Ok(0),
+					"The borrowed balance of ALICE should be 0. Found {alice_borrow_balance_current:#?}",
 				);
 			},
 			_ => panic!("Unexpected value for System::events(); found {system_events:#?}"),
@@ -353,8 +354,7 @@ fn test_borrow_repay_in_same_block() {
 		let total_borrows = limit_normalized / 4;
 		assert_eq!(Lending::total_cash(&market_id), Ok(total_cash));
 		assert_eq!(Lending::total_borrows(&market_id), Ok(total_borrows));
-		let alice_repay_amount =
-			Lending::borrow_balance_current(&market_id, &ALICE).unwrap().unwrap();
+		let alice_repay_amount = Lending::borrow_balance_current(&market_id, &ALICE).unwrap();
 		// MINT required BTC so that ALICE and BOB can repay the borrow.
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, alice_repay_amount - (limit_normalized / 4)));
 		assert_noop!(
@@ -433,7 +433,7 @@ fn borrow_flow() {
 
 		assert_eq!(original_limit, borrow_amount / DEFAULT_COLLATERAL_FACTOR - alice_borrow);
 
-		let borrow = Lending::borrow_balance_current(&market, &ALICE).unwrap().unwrap();
+		let borrow = Lending::borrow_balance_current(&market, &ALICE).unwrap();
 		assert_eq!(borrow, alice_borrow);
 		let interest_before = Lending::total_interest_accurate(&market).unwrap();
 		(2..50).for_each(process_block);
@@ -445,7 +445,7 @@ fn borrow_flow() {
 
 		assert!(new_limit < original_limit);
 
-		let borrow = Lending::borrow_balance_current(&market, &ALICE).unwrap().unwrap();
+		let borrow = Lending::borrow_balance_current(&market, &ALICE).unwrap();
 
 		assert!(borrow > alice_borrow);
 		assert_noop!(
@@ -598,17 +598,17 @@ fn borrow_repay_repay() {
 
 		(1000..1000 + 100).for_each(process_block);
 
-		let alice_repay_amount = Lending::borrow_balance_current(&market_index, &ALICE).unwrap().unwrap();
-		let bob_repay_amount = Lending::borrow_balance_current(&market_index, &BOB).unwrap().unwrap();
+		let alice_repay_amount = Lending::borrow_balance_current(&market_index, &ALICE).unwrap();
+		let bob_repay_amount = Lending::borrow_balance_current(&market_index, &BOB).unwrap();
 
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, alice_repay_amount));
 		assert_ok!(Tokens::mint_into(USDT::ID, &BOB, bob_repay_amount));
 
-		assert_ok!(Lending::repay_borrow(Origin::signed(*BOB), market_index, *BOB, RepayStrategy::PartialAmount(bob_repay_amount)));
+		assert_ok!(Lending::repay_borrow_partial(Origin::signed(*BOB), market_index, *BOB, bob_repay_amount));
 		assert!(Tokens::balance(BTC::ID, &BOB) == 0);
 
 		// TODO: fix bug with partial repay:
-		assert_ok!(Lending::repay_borrow(Origin::signed(*ALICE), market_index, *ALICE, RepayStrategy::PartialAmount(alice_repay_amount)));
+		assert_ok!(Lending::repay_borrow_partial(Origin::signed(*ALICE), market_index, *ALICE, alice_repay_amount));
 		assert!(alice_balance > Tokens::balance(BTC::ID, &ALICE));
 	});
 }

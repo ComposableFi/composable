@@ -31,6 +31,8 @@ pub struct UpdateInput<LiquidationStrategyId> {
 }
 
 /// input to create market extrinsic
+///
+/// Input to [`Lending::create()`].
 #[derive(Encode, Decode, Default, TypeInfo, Debug, Clone, PartialEq)]
 pub struct CreateInput<LiquidationStrategyId, AssetId> {
 	/// the part of market which can be changed
@@ -84,6 +86,7 @@ impl<LiquidationStrategyId, Asset: Eq>
 	}
 }
 
+// REVIEW: Are these necessary? The fields are public.
 impl<LiquidationStrategyId, AssetId: Copy> CreateInput<LiquidationStrategyId, AssetId> {
 	pub fn borrow_asset(&self) -> AssetId {
 		self.currency_pair.quote
@@ -113,10 +116,23 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId> {
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
 pub enum RepayStrategy<T> {
 	/// Attempt to repay the entirety of the remaining debt, repaying interest first and
-	/// thenprincipal with whatever is left.
+	/// then principal with whatever is left.
 	TotalDebt,
 	/// Repay the specified amount.
+	///
+	/// NOTE: Must be less than the total owing amount + the interest
 	PartialAmount(T),
+}
+
+/// Different ways that a market can be repaid.
+// REVIEW: Name is not final
+#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
+pub enum RepayResult<T> {
+	/// Attempt to repay the entirety of the remaining debt, repaying interest first and
+	/// thenprincipal with whatever is left.
+	Repaid(T),
+	/// Repay the specified amount.
+	NothingToRepay,
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.
@@ -189,10 +205,13 @@ pub trait Lending: DeFiEngine {
 
 	/// Withdraw a part/total of previously deposited collateral.
 	/// In practice if used has borrow user will not withdraw v because it would probably result in
-	/// quick liquidation, if he has any borrows. ```python
+	/// quick liquidation, if he has any borrows.
+	///
+	/// ```python
 	/// withdrawable = total_collateral - total_borrows
 	/// withdrawable = collateral_balance * collateral_price - borrower_balance_with_interest *
-	/// borrow_price * collateral_factor ```
+	/// borrow_price * collateral_factor
+	/// ```
 	fn withdraw_collateral(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
@@ -203,6 +222,8 @@ pub trait Lending: DeFiEngine {
 	fn get_markets_for_borrow(vault: Self::VaultId) -> Vec<Self::MarketId>;
 
 	#[allow(clippy::type_complexity)]
+	// REVIEW: Why not use a map? Could also return an iterator, that way the caller can do whatever
+	// they like with it.
 	fn get_all_markets() -> Vec<(
 		Self::MarketId,
 		MarketConfig<
@@ -228,20 +249,20 @@ pub trait Lending: DeFiEngine {
 	/// - `repay_amount`: the amount of borrow asset to be repaid. See [`RepayStrategy`] for more
 	///   information.
 	///
-	/// If successful, returns the amount that was repaid. If there was no balance to repay, returns
-	/// `None`.
+	/// Returns the amount that was repaid.
 	// REVIEW: Rename `from` parameter? `payer`, perhaps
 	fn repay_borrow(
 		market_id: &Self::MarketId,
 		from: &Self::AccountId,
 		beneficiary: &Self::AccountId,
 		repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
-	) -> Result<Option<BorrowAmountOf<Self>>, DispatchError>;
+	) -> Result<BorrowAmountOf<Self>, DispatchError>;
 
 	/// total debts principals (not includes interest)
 	fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
 	/// Floored down to zero.
+	// ^ why?
 	fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
 	/// ````python
@@ -262,14 +283,13 @@ pub trait Lending: DeFiEngine {
 		borrows: Self::Balance,
 	) -> Result<Percent, DispatchError>;
 
-	/// The amount of *borrow asset* debt remaining for the account in the specified market.
+	/// The amount of *borrow asset* debt remaining for the account in the specified market,
+	/// including accrued interest.
 	///
 	/// Could also be thought of as the amount of *borrow asset* the account must repay to be debt
 	/// free in the specified market.
 	///
 	/// Calculate account's borrow balance using the borrow index at the start of block time.
-	///
-	/// Returns `None` if there is no balance remaining (i.e. debt free in the provided market).
 	///
 	/// ```python
 	/// new_borrow_balance = principal * (market_borrow_index / borrower_borrow_index)
@@ -277,7 +297,7 @@ pub trait Lending: DeFiEngine {
 	fn borrow_balance_current(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
-	) -> Result<Option<BorrowAmountOf<Self>>, DispatchError>;
+	) -> Result<BorrowAmountOf<Self>, DispatchError>;
 
 	fn collateral_of_account(
 		market_id: &Self::MarketId,

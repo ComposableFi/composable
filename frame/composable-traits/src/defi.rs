@@ -242,6 +242,8 @@ pub trait DeFiComposableConfig: frame_system::Config {
 			  // bit
 }
 
+// TODO: Use Validate for these types.
+
 /// The fixed point number from 0..to max
 pub type Rate = FixedU128;
 
