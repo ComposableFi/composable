@@ -137,7 +137,7 @@ mod tests {
 			per_period: 1u64,
 		};
 		assert!(!vesting_schedule_time_based.is_zero_period());
-		vesting_schedule_time_based.window = MomentBased {start: 1, period: 0};
+		vesting_schedule_time_based.window = MomentBased { start: 1, period: 0 };
 		assert!(vesting_schedule_time_based.is_zero_period());
 
 		let mut vesting_schedule_block_number_based = VestingSchedule::<u64, u32, u64> {
@@ -146,7 +146,7 @@ mod tests {
 			per_period: 1u64,
 		};
 		assert!(!vesting_schedule_block_number_based.is_zero_period());
-		vesting_schedule_block_number_based.window = BlockNumberBased {start: 1, period: 0};
+		vesting_schedule_block_number_based.window = BlockNumberBased { start: 1, period: 0 };
 		assert!(vesting_schedule_block_number_based.is_zero_period());
 	}
 

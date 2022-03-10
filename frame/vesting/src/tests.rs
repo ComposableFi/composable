@@ -3,7 +3,10 @@
 #![cfg(test)]
 
 use super::*;
-use composable_traits::vesting::{VestingSchedule, VestingWindow::BlockNumberBased};
+use composable_traits::vesting::{
+	VestingSchedule,
+	VestingWindow::{BlockNumberBased, MomentBased},
+};
 use frame_support::{assert_noop, assert_ok, error::BadOrigin};
 use mock::{Event, *};
 use orml_tokens::BalanceLock;
@@ -14,55 +17,91 @@ fn vesting_from_chain_spec_works() {
 		// From the vesting below, only 20 out of 50 are locked at block 0.
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 30));
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 31).is_err());
+		let schedules = vec![
+			/*
+				+------+------+-----+
+				|block |vested|total|
+				|      |      |     |
+				+------+------+-----+
+				|5     |5     |5    |
+				+------+------+-----+
+			*/
+			VestingSchedule {
+				window: BlockNumberBased { start: 2_u64, period: 3_u64 },
+				period_count: 1_u32,
+				per_period: 5_u64,
+			},
+			/*
+			  +------+------+-----+
+			  |block |vested|total|
+			  |      |      |     |
+			  +------+------+-----+
+			  |8     |5     |5    |
+			  +------+------+-----+
+			  |11    |5     |10   |
+			  +------+------+-----+
+			  |14    |5     |15   |
+			  +------+------+-----+
+			*/
+			VestingSchedule {
+				window: BlockNumberBased { start: 2_u64 + 3_u64, period: 3_u64 },
+				period_count: 3_u32,
+				per_period: 5_u64,
+			},
+			/*
+			  +---------+-----------+-----------+
+			  |block    |timestamp  |vested | total |
+			  |         |      	    |      	|       |
+			  +---------+-----------+-------+-------|
+			  |8     	|48000     	|0      |0		|
+			  +---------+-----------+-------+-------|
+			  |14    	|84000      |0      |0		|
+			  +---------+-----------+-------+-------|
+			  |18    	|108000     |5      |5
+			  +---------+-----------+-------+-------|
+			  |25    	|150000     |5      |10		|
+			  +---------+-----------+-------+-------|
+			  |34    	|204000     |5      |15		|
+			  +---------+-----------+-------+-------|
+			*/
+			VestingSchedule {
+				window: MomentBased { start: 40000_u64, period: 50000_u64 },
+				period_count: 3_u32,
+				per_period: 5_u64,
+			},
+		];
 
-		assert_eq!(
-			Vesting::vesting_schedules(&CHARLIE, MockCurrencyId::BTC),
-			vec![
-				/*
-					+------+------+-----+
-					|block |vested|total|
-					|      |      |     |
-					+------+------+-----+
-					|5     |5     |5    |
-					+------+------+-----+
-				*/
-				VestingSchedule {
-					window: BlockNumberBased { start: 2_u64, period: 3_u64 },
-					period_count: 1_u32,
-					per_period: 5_u64
-				},
-				/*
-				  +------+------+-----+
-				  |block |vested|total|
-				  |      |      |     |
-				  +------+------+-----+
-				  |8     |5     |5    |
-				  +------+------+-----+
-				  |11    |5     |10   |
-				  +------+------+-----+
-				  |14    |5     |15   |
-				  +------+------+-----+
-				*/
-				VestingSchedule {
-					window: BlockNumberBased { start: 2_u64 + 3_u64, period: 3_u64 },
-					period_count: 3_u32,
-					per_period: 5_u64,
-				}
-			]
-		);
-
-		System::set_block_number(13);
-
+		assert_eq!(Vesting::vesting_schedules(&CHARLIE, MockCurrencyId::BTC), schedules);
+		System::set_block_number(1);
+		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC));
-		// At block 13, we only have 5 out of the 50 that are locked.
+		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 30));
+		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 31).is_err());
+
+		System::set_block_number(11);
+		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
+		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC));
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 45));
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 46).is_err());
 
 		System::set_block_number(14);
-
+		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC));
-		// Everything is unlocked from blcok 14 onwards.
+		// Block number based schedules are unlocked from block 14 onwards.
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 50));
+		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 51).is_err());
+
+		System::set_block_number(25);
+		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
+		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC));
+		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 60));
+		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 61).is_err());
+
+		System::set_block_number(34);
+		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
+		// everything unlocked
+		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC));
+		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 65));
 	});
 }
 
@@ -73,6 +112,33 @@ fn vested_transfer_works() {
 
 		let schedule = VestingSchedule {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
+			period_count: 1_u32,
+			per_period: 100_u64,
+		};
+		assert_ok!(Vesting::vested_transfer(
+			Origin::signed(ALICE),
+			BOB,
+			MockCurrencyId::BTC,
+			schedule.clone(),
+		));
+		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), vec![schedule.clone()]);
+		System::assert_last_event(Event::Vesting(crate::Event::VestingScheduleAdded {
+			from: ALICE,
+			to: BOB,
+			asset: MockCurrencyId::BTC,
+			schedule,
+		}));
+	});
+}
+
+#[test]
+fn vested_transfer_for_moment_based_schedule_works() {
+	ExtBuilder::build().execute_with(|| {
+		System::set_block_number(1);
+		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
+
+		let schedule = VestingSchedule {
+			window: MomentBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
 		};
@@ -108,6 +174,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 		));
 
 		System::set_block_number(12);
+		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 
 		let another_schedule = VestingSchedule {
 			window: BlockNumberBased { start: 10_u64, period: 13_u64 },
@@ -121,9 +188,21 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 			another_schedule,
 		));
 
+		let moment_based_schedule = VestingSchedule {
+			window: MomentBased { start: 72000_u64, period: 5000_u64 },
+			period_count: 2_u32,
+			per_period: 7_u64,
+		};
+		assert_ok!(Vesting::vested_transfer(
+			Origin::signed(ALICE),
+			BOB,
+			MockCurrencyId::BTC,
+			moment_based_schedule,
+		));
+
 		assert_eq!(
 			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
-			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 17_u64 })
+			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 31_u64 })
 		);
 	});
 }
@@ -433,6 +512,11 @@ fn exceeding_maximum_schedules_should_fail() {
 			period_count: 2_u32,
 			per_period: 10_u64,
 		};
+		let moment_schedule = VestingSchedule {
+			window: MomentBased { start: 0_u64, period: 10_u64 },
+			period_count: 2_u32,
+			per_period: 10_u64,
+		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::signed(ALICE),
 			BOB,
@@ -444,6 +528,12 @@ fn exceeding_maximum_schedules_should_fail() {
 			BOB,
 			MockCurrencyId::BTC,
 			schedule.clone(),
+		));
+		assert_ok!(Vesting::vested_transfer(
+			Origin::signed(ALICE),
+			BOB,
+			MockCurrencyId::BTC,
+			moment_schedule,
 		));
 		assert_noop!(
 			Vesting::vested_transfer(
@@ -455,7 +545,7 @@ fn exceeding_maximum_schedules_should_fail() {
 			Error::<Runtime>::MaxVestingSchedulesExceeded
 		);
 
-		let schedules = vec![schedule.clone(), schedule.clone(), schedule];
+		let schedules = vec![schedule.clone(), schedule.clone(), schedule.clone(), schedule];
 
 		assert_noop!(
 			Vesting::update_vesting_schedules(Origin::root(), BOB, MockCurrencyId::BTC, schedules,),

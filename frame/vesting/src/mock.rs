@@ -3,7 +3,7 @@
 #![cfg(test)]
 
 use super::*;
-use composable_traits::vesting::VestingWindow::BlockNumberBased;
+use composable_traits::vesting::VestingWindow::{BlockNumberBased, MomentBased};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{EnsureOrigin, Everything},
@@ -145,7 +145,7 @@ impl orml_tokens::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MaxVestingSchedule: u32 = 2;
+	pub const MaxVestingSchedule: u32 = 3;
 	pub const MinVestedTransfer: u64 = 5;
 }
 
@@ -184,7 +184,7 @@ impl ExtBuilder {
 		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 		orml_tokens::GenesisConfig::<Runtime> {
-			balances: vec![(ALICE, MockCurrencyId::BTC, 100), (CHARLIE, MockCurrencyId::BTC, 50)],
+			balances: vec![(ALICE, MockCurrencyId::BTC, 100), (CHARLIE, MockCurrencyId::BTC, 65)],
 		}
 		.assimilate_storage(&mut t)
 		.unwrap();
@@ -194,6 +194,7 @@ impl ExtBuilder {
 				// asset, who, VestingWindow {start, period}, period_count, per_period
 				(MockCurrencyId::BTC, CHARLIE, BlockNumberBased { start: 2, period: 3 }, 1, 5),
 				(MockCurrencyId::BTC, CHARLIE, BlockNumberBased { start: 2 + 3, period: 3 }, 3, 5),
+				(MockCurrencyId::BTC, CHARLIE, MomentBased { start: 40000, period: 50000 }, 3, 5),
 			],
 		}
 		.assimilate_storage(&mut t)
