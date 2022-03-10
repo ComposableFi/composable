@@ -19,9 +19,11 @@ pub mod pallet {
 
 	use codec::FullCodec;
 	use composable_traits::{clearing_house::MarginAccounts, defi::DeFiComposableConfig};
-	use frame_support::{pallet_prelude::*, Blake2_128Concat, PalletId, Twox64Concat};
+	use frame_support::{
+		pallet_prelude::*, traits::tokens::fungibles::Transfer, Blake2_128Concat, PalletId,
+		Twox64Concat,
+	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
-	use orml_traits::MultiCurrency;
 	use sp_runtime::{
 		traits::{AccountIdConversion, CheckedAdd, Zero},
 		ArithmeticError, FixedPointNumber,
@@ -54,11 +56,11 @@ pub mod pallet {
 		/// The virtual AMM ID type for this pallet. `pallet-virtual-amm` should implement a trait
 		/// VAMM with an associated type 'VAMMId' compatible with this one.
 		type VAMMId: FullCodec + MaxEncodedLen + TypeInfo;
-		/// Pallet implementation of multicurrency transfers.
-		type MultiCurrency: MultiCurrency<
+		/// Pallet implementation of asset transfers.
+		type Assets: Transfer<
 			Self::AccountId,
-			CurrencyId = Self::MayBeAssetId,
 			Balance = Self::Balance,
+			AssetId = Self::MayBeAssetId,
 		>;
 		/// The id used as the `AccountId` of the clearing house. This should be unique across all
 		/// pallets to avoid name collisions with other pallets and clearing houses.
@@ -212,7 +214,7 @@ pub mod pallet {
 			);
 
 			// Assuming stablecoin collateral and all markets quoted in dollars
-			T::MultiCurrency::transfer(asset, account, &T::PalletId::get().into_account(), amount)?;
+			T::Assets::transfer(asset, account, &T::PalletId::get().into_account(), amount, true)?;
 
 			let old_margin = Self::get_margin(&account).unwrap_or(T::Balance::zero());
 			let new_margin = old_margin.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
