@@ -9,6 +9,13 @@ import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSup
 
 declare module '@polkadot/api-base/types/consts' {
   export interface AugmentedConsts<ApiType extends ApiTypes> {
+    assets: {
+      nativeAssetId: u128 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     authorship: {
       /**
        * The number of blocks back we should accept uncles.
@@ -92,9 +99,9 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       prefix: Bytes & AugmentedConst<ApiType>;
       /**
-       * The number of blocks a fragment of the reward is vested.
+       * The time you have to wait to unlock another part of your reward.
        **/
-      vestingStep: u32 & AugmentedConst<ApiType>;
+      vestingStep: u64 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

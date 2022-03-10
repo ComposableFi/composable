@@ -4,7 +4,8 @@
     "create__success": {
       "enabled": true,
       "create1": true,
-      "create2": false
+      "create2": false,
+      "create3": true
     },
     "add_liquidity__success": {
       "enabled": true,
@@ -16,20 +17,36 @@
       "buy1": true,
       "buy2": false
     },
+    "buy__failure": {
+      "enabled": true,
+      "buy1": true
+    },
     "sell__success": {
       "enabled": true,
       "sell1": true,
       "sell2": false
+    },
+    "sell__failure": {
+      "enabled": true,
+      "sell1": true
     },
     "swap__success": {
       "enabled": true,
       "swap1": true,
       "swap2": false
     },
+    "swap__failure": {
+      "enabled": true,
+      "swap1": true
+    },
     "remove_liquidity__success": {
       "enabled": true,
       "remove_liquidity1": true,
       "remove_liquidity2": false
+    },
+    "remove_liquidity__failure": {
+      "enabled": true,
+      "remove_liquidity1": true
     }
   }
 }

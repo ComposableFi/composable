@@ -14,6 +14,7 @@ declare module '@polkadot/api-base/types/errors' {
     };
     assetsRegistry: {
       ForeignAssetIdAlreadyUsed: AugmentedError<ApiType>;
+      ForeignAssetIdNotFound: AugmentedError<ApiType>;
       LocalAssetIdAlreadyUsed: AugmentedError<ApiType>;
       LocalAssetIdNotFound: AugmentedError<ApiType>;
       OnlyAllowedForAdmins: AugmentedError<ApiType>;
@@ -966,6 +967,7 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     stableSwapDex: {
+      AmpFactorMustBeGreaterThanZero: AugmentedError<ApiType>;
       AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
       CannotRespectMinimumRequested: AugmentedError<ApiType>;
       InvalidFees: AugmentedError<ApiType>;

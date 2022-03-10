@@ -22,11 +22,15 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * Mapping (local asset, foreign asset) to candidate status.
        **/
-      assetsMappingCandidates: AugmentedQuery<ApiType, (arg: ITuple<[u128, ComposableTraitsAssetsXcmAssetLocation]> | [u128 | AnyNumber | Uint8Array, ComposableTraitsAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array]) => Observable<Option<PalletAssetsRegistryCandidateStatus>>, [ITuple<[u128, ComposableTraitsAssetsXcmAssetLocation]>]> & QueryableStorageEntry<ApiType, [ITuple<[u128, ComposableTraitsAssetsXcmAssetLocation]>]>;
+      assetsMappingCandidates: AugmentedQuery<ApiType, (arg: ITuple<[u128, u128]> | [u128 | AnyNumber | Uint8Array, u128 | AnyNumber | Uint8Array]) => Observable<Option<PalletAssetsRegistryCandidateStatus>>, [ITuple<[u128, u128]>]> & QueryableStorageEntry<ApiType, [ITuple<[u128, u128]>]>;
       /**
        * Foreign admin account
        **/
       foreignAdmin: AugmentedQuery<ApiType, () => Observable<Option<AccountId32>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Mapping foreign asset to foreign location.
+       **/
+      foreignAssetLocation: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<XcmV1MultiLocation>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       /**
        * Mapping local asset to foreign asset metadata.
        **/
@@ -34,7 +38,11 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * Mapping foreign asset to local asset.
        **/
-      foreignToLocal: AugmentedQuery<ApiType, (arg: ComposableTraitsAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array) => Observable<Option<u128>>, [ComposableTraitsAssetsXcmAssetLocation]> & QueryableStorageEntry<ApiType, [ComposableTraitsAssetsXcmAssetLocation]>;
+      foreignToLocal: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<u128>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      /**
+       * Mapping foreign location to foreign asset.
+       **/
+      fromForeignAssetLocation: AugmentedQuery<ApiType, (arg: ComposableTraitsAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array) => Observable<Option<u128>>, [ComposableTraitsAssetsXcmAssetLocation]> & QueryableStorageEntry<ApiType, [ComposableTraitsAssetsXcmAssetLocation]>;
       /**
        * Local admin account
        **/
@@ -42,7 +50,7 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * Mapping local asset to foreign asset.
        **/
-      localToForeign: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<XcmV1MultiLocation>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      localToForeign: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<u128>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       /**
        * Generic query
        **/
@@ -246,7 +254,7 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * The block at which the users are able to claim their rewards.
        **/
-      vestingBlockStart: AugmentedQuery<ApiType, () => Observable<Option<u32>>, []> & QueryableStorageEntry<ApiType, []>;
+      vestingTimeStart: AugmentedQuery<ApiType, () => Observable<Option<u64>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Generic query
        **/

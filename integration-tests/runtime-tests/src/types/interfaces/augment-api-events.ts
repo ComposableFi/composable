@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { CommonMosaicRemoteAssetId, ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiCurrencyPair, ComposableTraitsLendingUpdateInput, ComposableTraitsVestingVestingSchedule, FrameSupportScheduleLookupError, PalletCrowdloanRewardsModelsRemoteAccount, PalletCurrencyFactoryRangesRange, PalletDemocracyVoteAccountVote, PalletDemocracyVoteThreshold, PalletDutchAuctionSellOrder, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo } from '@composable/types/interfaces/crowdloanRewards';
+import type { CommonMosaicRemoteAssetId, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiCurrencyPair, ComposableTraitsLendingUpdateInput, ComposableTraitsVestingVestingSchedule, FrameSupportScheduleLookupError, PalletCrowdloanRewardsModelsRemoteAccount, PalletCurrencyFactoryRangesRange, PalletDemocracyVoteAccountVote, PalletDemocracyVoteThreshold, PalletDutchAuctionSellOrder, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo } from '@composable/types/interfaces/crowdloanRewards';
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Bytes, Null, Option, Result, U8aFixed, Vec, bool, u128, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
@@ -12,7 +12,7 @@ declare module '@polkadot/api-base/types/events' {
   export interface AugmentedEvents<ApiType extends ApiTypes> {
     assetsRegistry: {
       AssetMetadataUpdated: AugmentedEvent<ApiType, [u128]>;
-      AssetsMappingCandidateUpdated: AugmentedEvent<ApiType, [u128, ComposableTraitsAssetsXcmAssetLocation]>;
+      AssetsMappingCandidateUpdated: AugmentedEvent<ApiType, [u128, u128]>;
       ForeignAdminUpdated: AugmentedEvent<ApiType, [AccountId32]>;
       LocalAdminUpdated: AugmentedEvent<ApiType, [AccountId32]>;
       /**
@@ -206,6 +206,7 @@ declare module '@polkadot/api-base/types/events' {
     crowdloanRewards: {
       Associated: AugmentedEvent<ApiType, [PalletCrowdloanRewardsModelsRemoteAccount, AccountId32]>;
       Claimed: AugmentedEvent<ApiType, [PalletCrowdloanRewardsModelsRemoteAccount, AccountId32, u128]>;
+      Initialized: AugmentedEvent<ApiType, []>;
       /**
        * Generic event
        **/
