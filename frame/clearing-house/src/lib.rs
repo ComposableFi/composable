@@ -18,7 +18,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::FullCodec;
-	use composable_traits::defi::DeFiComposableConfig;
+	use composable_traits::{clearing_house::MarginAccounts, defi::DeFiComposableConfig};
 	use frame_support::{pallet_prelude::*, Blake2_128Concat, PalletId, Twox64Concat};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use orml_traits::MultiCurrency;
@@ -174,7 +174,7 @@ pub mod pallet {
 			amount: T::Balance,
 		) -> DispatchResult {
 			let acc = ensure_signed(origin)?;
-			Self::do_add_margin(&acc, asset, amount)?;
+			<Self as MarginAccounts>::add_margin(&acc, asset, amount)?;
 			Ok(())
 		}
 	}
@@ -183,17 +183,16 @@ pub mod pallet {
 	//                              Trait Implementations
 	// ----------------------------------------------------------------------------------------------------
 
-	// ----------------------------------------------------------------------------------------------------
-	//                              Helper Functions
-	// ----------------------------------------------------------------------------------------------------
+	impl<T: Config> MarginAccounts for Pallet<T> {
+		type AccountId = T::AccountId;
+		type AssetId = AssetIdOf<T>;
+		type Balance = T::Balance;
 
-	// Helper functions - core functionality
-	impl<T: Config> Pallet<T> {
 		#[allow(unused_variables)]
-		pub fn do_add_margin(
-			acc: &T::AccountId,
-			asset: AssetIdOf<T>,
-			amount: T::Balance,
+		fn add_margin(
+			acc: &Self::AccountId,
+			asset: Self::AssetId,
+			amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			ensure!(
 				CollateralTypes::<T>::contains_key(asset),
@@ -205,6 +204,12 @@ pub mod pallet {
 			Ok(())
 		}
 	}
+	// ----------------------------------------------------------------------------------------------------
+	//                              Helper Functions
+	// ----------------------------------------------------------------------------------------------------
+
+	// Helper functions - core functionality
+	impl<T: Config> Pallet<T> {}
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {}
