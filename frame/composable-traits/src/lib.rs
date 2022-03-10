@@ -16,6 +16,7 @@ pub mod assets;
 pub mod auction;
 pub mod bonded_finance;
 pub mod call_filter;
+pub mod clearing_house;
 pub mod currency;
 pub mod defi;
 pub mod dex;
