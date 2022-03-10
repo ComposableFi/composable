@@ -25,7 +25,7 @@ use primitives::currency::*;
 use sp_runtime::{assert_eq_error_rate, traits::AccountIdConversion, MultiAddress};
 use support::{assert_ok, log};
 use xcm::latest::prelude::*;
-use xcm_builder::ParentIsDefault;
+use xcm_builder::ParentIsPreset;
 use xcm_emulator::TestExt;
 use xcm_executor::{traits::Convert, XcmExecutor};
 
@@ -883,7 +883,7 @@ fn trap_assets_larger_than_ed_works() {
 	let mut native_treasury_amount = 0;
 	let (ksm_asset_amount, native_asset_amount) =
 		(3 * CurrencyId::KSM.unit::<Balance>(), 2 * CurrencyId::PICA.unit::<Balance>());
-	let parent_account: AccountId = ParentIsDefault::<AccountId>::convert(Parent.into()).unwrap();
+	let parent_account: AccountId = ParentIsPreset::<AccountId>::convert(Parent.into()).unwrap();
 	Picasso::execute_with(|| {
 		assert_ok!(Tokens::deposit(
 			CurrencyId::KSM,
@@ -948,7 +948,7 @@ fn trap_assets_lower_than_existential_deposit_works() {
 	let any_asset = CurrencyId::KSM;
 	let this_native_asset = CurrencyId::PICA;
 
-	let parent_account: AccountId = ParentIsDefault::<AccountId>::convert(Parent.into()).unwrap();
+	let parent_account: AccountId = ParentIsPreset::<AccountId>::convert(Parent.into()).unwrap();
 
 	let (this_treasury_amount, other_treasury_amount) = Picasso::execute_with(|| {
 		assert_ok!(Assets::deposit(any_asset, &parent_account, other_non_native_amount));
