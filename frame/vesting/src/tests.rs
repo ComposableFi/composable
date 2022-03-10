@@ -3,7 +3,7 @@
 #![cfg(test)]
 
 use super::*;
-use composable_traits::vesting::VestingSchedule;
+use composable_traits::vesting::{VestingSchedule, VestingWindow::BlockNumberBased};
 use frame_support::{assert_noop, assert_ok, error::BadOrigin};
 use mock::{Event, *};
 use orml_tokens::BalanceLock;
@@ -27,8 +27,7 @@ fn vesting_from_chain_spec_works() {
 					+------+------+-----+
 				*/
 				VestingSchedule {
-					start: 2_u64,
-					period: 3_u64,
+					window: BlockNumberBased { start: 2_u64, period: 3_u64 },
 					period_count: 1_u32,
 					per_period: 5_u64
 				},
@@ -45,8 +44,7 @@ fn vesting_from_chain_spec_works() {
 				  +------+------+-----+
 				*/
 				VestingSchedule {
-					start: 2_u64 + 3_u64,
-					period: 3_u64,
+					window: BlockNumberBased { start: 2_u64 + 3_u64, period: 3_u64 },
 					period_count: 3_u32,
 					per_period: 5_u64,
 				}
@@ -74,8 +72,7 @@ fn vested_transfer_works() {
 		System::set_block_number(1);
 
 		let schedule = VestingSchedule {
-			start: 0_u64,
-			period: 10_u64,
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
 		};
@@ -99,8 +96,7 @@ fn vested_transfer_works() {
 fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 	ExtBuilder::build().execute_with(|| {
 		let schedule = VestingSchedule {
-			start: 0_u64,
-			period: 10_u64,
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
 		};
@@ -114,8 +110,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 		System::set_block_number(12);
 
 		let another_schedule = VestingSchedule {
-			start: 10_u64,
-			period: 13_u64,
+			window: BlockNumberBased { start: 10_u64, period: 13_u64 },
 			period_count: 1_u32,
 			per_period: 7_u64,
 		};
@@ -137,8 +132,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 fn cannot_use_fund_if_not_claimed() {
 	ExtBuilder::build().execute_with(|| {
 		let schedule = VestingSchedule {
-			start: 10_u64,
-			period: 10_u64,
+			window: BlockNumberBased { start: 10_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 50_u64,
 		};
@@ -156,8 +150,7 @@ fn cannot_use_fund_if_not_claimed() {
 fn vested_transfer_fails_if_zero_period_or_count() {
 	ExtBuilder::build().execute_with(|| {
 		let schedule = VestingSchedule {
-			start: 1_u64,
-			period: 0_u64,
+			window: BlockNumberBased { start: 1_u64, period: 0_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
 		};
@@ -167,8 +160,7 @@ fn vested_transfer_fails_if_zero_period_or_count() {
 		);
 
 		let schedule = VestingSchedule {
-			start: 1_u64,
-			period: 1_u64,
+			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 0_u32,
 			per_period: 100_u64,
 		};
@@ -183,8 +175,7 @@ fn vested_transfer_fails_if_zero_period_or_count() {
 fn vested_transfer_fails_if_transfer_err() {
 	ExtBuilder::build().execute_with(|| {
 		let schedule = VestingSchedule {
-			start: 1_u64,
-			period: 1_u64,
+			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
 		};
@@ -199,8 +190,7 @@ fn vested_transfer_fails_if_transfer_err() {
 fn vested_transfer_fails_if_overflow() {
 	ExtBuilder::build().execute_with(|| {
 		let schedule = VestingSchedule {
-			start: 1_u64,
-			period: 1_u64,
+			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 2_u32,
 			per_period: u64::MAX,
 		};
@@ -210,8 +200,7 @@ fn vested_transfer_fails_if_overflow() {
 		);
 
 		let another_schedule = VestingSchedule {
-			start: u64::MAX,
-			period: 1_u64,
+			window: BlockNumberBased { start: u64::MAX, period: 1_u64 },
 			period_count: 2_u32,
 			per_period: 1_u64,
 		};
@@ -231,8 +220,7 @@ fn vested_transfer_fails_if_overflow() {
 fn vested_transfer_fails_if_bad_origin() {
 	ExtBuilder::build().execute_with(|| {
 		let schedule = VestingSchedule {
-			start: 0_u64,
-			period: 10_u64,
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
 		};
@@ -247,8 +235,7 @@ fn vested_transfer_fails_if_bad_origin() {
 fn claim_works() {
 	ExtBuilder::build().execute_with(|| {
 		let schedule = VestingSchedule {
-			start: 0_u64,
-			period: 10_u64,
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
 		};
@@ -286,8 +273,7 @@ fn claim_works() {
 fn claim_for_works() {
 	ExtBuilder::build().execute_with(|| {
 		let schedule = VestingSchedule {
-			start: 0_u64,
-			period: 10_u64,
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
 		};
@@ -320,8 +306,7 @@ fn claim_for_works() {
 fn update_vesting_schedules_works() {
 	ExtBuilder::build().execute_with(|| {
 		let schedule = VestingSchedule {
-			start: 0_u64,
-			period: 10_u64,
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
 		};
@@ -333,8 +318,7 @@ fn update_vesting_schedules_works() {
 		));
 
 		let updated_schedule = VestingSchedule {
-			start: 0_u64,
-			period: 20_u64,
+			window: BlockNumberBased { start: 0_u64, period: 20_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
 		};
@@ -381,8 +365,11 @@ fn update_vesting_schedules_fails_if_unexpected_existing_locks() {
 #[test]
 fn vested_transfer_check_for_min() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule =
-			VestingSchedule { start: 1_u64, period: 1_u64, period_count: 1_u32, per_period: 3_u64 };
+		let schedule = VestingSchedule {
+			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
+			period_count: 1_u32,
+			per_period: 3_u64,
+		};
 		assert_noop!(
 			Vesting::vested_transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, schedule,),
 			Error::<Runtime>::AmountLow
@@ -394,8 +381,7 @@ fn vested_transfer_check_for_min() {
 fn multiple_vesting_schedule_claim_works() {
 	ExtBuilder::build().execute_with(|| {
 		let schedule = VestingSchedule {
-			start: 0_u64,
-			period: 10_u64,
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
 		};
@@ -407,8 +393,7 @@ fn multiple_vesting_schedule_claim_works() {
 		));
 
 		let schedule2 = VestingSchedule {
-			start: 0_u64,
-			period: 10_u64,
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 3_u32,
 			per_period: 10_u64,
 		};
@@ -444,8 +429,7 @@ fn multiple_vesting_schedule_claim_works() {
 fn exceeding_maximum_schedules_should_fail() {
 	ExtBuilder::build().execute_with(|| {
 		let schedule = VestingSchedule {
-			start: 0_u64,
-			period: 10_u64,
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
 		};

@@ -7803,6 +7803,7 @@ dependencies = [
  "frame-system",
  "orml-tokens",
  "orml-traits",
+ "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "serde",
