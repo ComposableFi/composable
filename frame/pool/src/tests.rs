@@ -456,7 +456,7 @@ fn normalize_weights(non_normalized_weights: &mut Vec<Perquintill>) -> Vec<Perqu
 		.map(|weight| weight.deconstruct())
 		.sum();
 	
-	non_normalized_weights.iter_mut()
+	non_normalized_weights.iter()
 		.map(|weight| 
 			Perquintill::from_rational(weight.deconstruct(), sum)
 		)
