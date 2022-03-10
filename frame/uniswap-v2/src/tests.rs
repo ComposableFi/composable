@@ -6,8 +6,12 @@ use composable_tests_helpers::{
 use composable_traits::{defi::CurrencyPair, dex::Amm, math::safe_multiply_by_rational};
 use frame_support::{
 	assert_err, assert_ok,
-	traits::fungibles::{Inspect, Mutate},
+	traits::{
+		fungibles::{Inspect, Mutate},
+		Hooks,
+	},
 };
+use num_traits::One;
 use proptest::prelude::*;
 use sp_runtime::{traits::IntegerSquareRoot, Permill, TokenError};
 
@@ -386,4 +390,74 @@ proptest! {
 		Ok(())
 	})?;
 }
+}
+
+mod twap {
+	use super::*;
+	use crate::types::{PriceCumulatives, TWAP};
+	use composable_traits::defi::Rate;
+
+	fn run_to_block(n: BlockNumber) {
+		Uni::on_finalize(System::block_number());
+		for b in (System::block_number() + 1)..=n {
+			next_block(b);
+			if b != n {
+				Uni::on_finalize(System::block_number());
+			}
+		}
+	}
+
+	fn next_block(n: u64) {
+		Timestamp::set_timestamp(MILLISECS_PER_BLOCK * n);
+		System::set_block_number(n);
+		Uni::on_initialize(n);
+	}
+
+	#[test]
+	fn twap_is_correctly_enabled() {
+		new_test_ext().execute_with(|| {
+			let initial_btc = 100;
+			let initial_usdt = 100;
+			let pool_id =
+				create_pool(BTC, USDT, initial_btc, initial_usdt, Permill::zero(), Permill::zero());
+
+			assert_eq!(Uni::price_cumulatives(pool_id), None);
+			assert_eq!(Uni::twap(pool_id), None);
+
+			run_to_block(1);
+
+			// Initialization of the TWAP state
+			assert_eq!(
+				Uni::price_cumulatives(pool_id),
+				Some(PriceCumulatives {
+					timestamp: MILLISECS_PER_BLOCK,
+					price_cumulative_base: 1,
+					price_cumulative_quote: 1,
+				})
+			);
+			assert_eq!(
+				Uni::twap(pool_id),
+				Some(TWAP { average_price_base: Rate::one(), average_price_quote: Rate::one() })
+			);
+
+			run_to_block(TWAP_INTERVAL + 1);
+
+			// TWAP/Cumulatives get updated
+			let absolute_time = (TWAP_INTERVAL + 1) * MILLISECS_PER_BLOCK;
+			let elapsed = TWAPInterval::get();
+			assert_eq!(
+				Uni::price_cumulatives(pool_id),
+				Some(PriceCumulatives {
+					timestamp: absolute_time,
+					// Must be previous cumulative + current rate * elapsed
+					price_cumulative_base: (1 + (1 * elapsed)).into(),
+					price_cumulative_quote: (1 + (1 * elapsed)).into(),
+				})
+			);
+			assert_eq!(
+				Uni::twap(pool_id),
+				Some(TWAP { average_price_base: Rate::one(), average_price_quote: Rate::one() })
+			);
+		});
+	}
 }
