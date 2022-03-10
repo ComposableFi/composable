@@ -144,8 +144,18 @@ pub mod pallet {
 
 	// Pallets use events to inform users when important changes are made.
 	#[pallet::event]
-	// #[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		/// Margin successfully added to account
+		MarginAdded {
+			/// Account id that received the deposit
+			account: T::AccountId,
+			/// Asset type deposited
+			asset: AssetIdOf<T>,
+			/// Amount of asset deposited
+			amount: T::Balance,
+		},
+	}
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Errors
@@ -192,7 +202,7 @@ pub mod pallet {
 		type Balance = T::Balance;
 
 		fn add_margin(
-			acc: &Self::AccountId,
+			account: &Self::AccountId,
 			asset: Self::AssetId,
 			amount: Self::Balance,
 		) -> Result<(), DispatchError> {
@@ -202,11 +212,13 @@ pub mod pallet {
 			);
 
 			// Assuming stablecoin collateral and all markets quoted in dollars
-			T::MultiCurrency::transfer(asset, acc, &T::PalletId::get().into_account(), amount)?;
+			T::MultiCurrency::transfer(asset, account, &T::PalletId::get().into_account(), amount)?;
 
-			let old_margin = Self::get_margin(&acc).unwrap_or(T::Balance::zero());
+			let old_margin = Self::get_margin(&account).unwrap_or(T::Balance::zero());
 			let new_margin = old_margin.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
-			AccountsMargin::<T>::insert(&acc, new_margin);
+			AccountsMargin::<T>::insert(&account, new_margin);
+
+			Self::deposit_event(Event::MarginAdded { account: account.clone(), asset, amount });
 			Ok(())
 		}
 	}
