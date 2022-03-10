@@ -1564,8 +1564,8 @@ proptest! {
 	fn spot_price_test_after_one_deposit(
 		(config, all_deposits) in generate_equal_weighted_pool_config_and_n_all_asset_deposits(1),
 	) {
-		// Tests that when trying to deposit assets into a pool using a pool id 
-		//  |  that doesn't correspond to an active pool, then an error is raised 
+		// Tests that when there is liquidity in the Pool it correctly calculates the
+		//  |  spot price between two of its underlying assets
 		//  |-> Pre-Condition:
 		//  |     i.   Pool P is non-empty
 		//  '-> Post-Condition:
@@ -1584,7 +1584,7 @@ proptest! {
 			for deposit in &deposits {
 				assert_ok!(Tokens::mint_into(deposit.asset_id, &ALICE, deposit.amount));
 			}
-			assert_ok!(<Pools as ConstantMeanMarket>::all_asset_deposit(&ALICE, &pool_id, deposits.clone()));
+			assert_ok!(Pools::all_asset_deposit(&ALICE, &pool_id, deposits.clone()));
 
 			for asset in &config.weights {
 				for numeraire in &config.weights {
@@ -1598,27 +1598,86 @@ proptest! {
 				
 					let expected_spot_price: f64 = (asset_balance / asset_weight) / (numeraire_balance / numeraire_weight);
 
-					let margin_of_error: f64 = Epsilon::get().deconstruct() as f64 / Perquintill::one().deconstruct() as f64;
-				
 					let actual_spot_price: f64 = 
-						<Pools as ConstantMeanMarket>::spot_price(&pool_id, &asset.asset_id, &numeraire.asset_id)
-						.unwrap()
-						.to_num::<f64>();
-					
+						Pools::spot_price(&pool_id, &asset.asset_id, &numeraire.asset_id)
+							.unwrap()
+							.to_num::<f64>();
+							
 					// Condition ii
-					assert_relative_eq!(expected_spot_price, actual_spot_price, epsilon = margin_of_error);
+					assert_relative_eq!(expected_spot_price, actual_spot_price, epsilon = 1.0);
 				}
 
 				let actual_spot_price: f64 = 
-					<Pools as ConstantMeanMarket>::spot_price(&pool_id, &asset.asset_id, &asset.asset_id)
-					.unwrap()
-					.to_num::<f64>();
+					Pools::spot_price(&pool_id, &asset.asset_id, &asset.asset_id)
+						.unwrap()
+						.to_num::<f64>();
 
 				// Condition iii
 				assert_eq!(1.0, actual_spot_price);
 			}
 		});
 	}
+}
+
+#[test]
+fn spot_price_static_test() {
+	// Tests that when there is liquidity in the Pool it correctly calculates the
+	//  |  spot price between two of its underlying assets
+	//  |-> Pre-Condition:
+	//  |     i.   Pool P is non-empty
+	//  '-> Post-Condition:
+	//        ii.  ∀ assets pairs (a_i, a_j) in P : spot_price of a_i in terms of a_j
+	//				  is equals to (b_i / w_i) / (a_j / w_j)
+	//		  iii. ∀ assets a_i in P : spot_price of a_i in terms of a_i = 1
+
+	ExtBuilder::default().build().execute_with(|| {
+		let initial_assets = vec![
+		    MockCurrencyId::A,
+		    MockCurrencyId::B
+	    ];
+	
+		let config = PoolConfigBuilder::default()
+			.assets(&initial_assets)
+			.weights(&equal_weight_vector_for(&initial_assets))
+			.build();
+		
+		let pool_id = create_pool_with(&config);
+
+		let deposits = vec![
+			Deposit { asset_id: MockCurrencyId::A, amount: 2_000},
+			Deposit { asset_id: MockCurrencyId::B, amount: 1_000}
+		];
+
+		// Condition i
+		for deposit in &deposits {
+			assert_ok!(Tokens::mint_into(deposit.asset_id, &ALICE, deposit.amount));
+		}
+		assert_ok!(Pools::all_asset_deposit(&ALICE, &pool_id, deposits.clone()));
+
+		let spot_price = Pools::spot_price(&pool_id, &MockCurrencyId::A, &MockCurrencyId::B)
+			.unwrap()
+			.to_num::<f64>();
+		// Condition ii
+		assert_relative_eq!(2.0, spot_price, epsilon=0.0);
+
+		let spot_price = Pools::spot_price(&pool_id, &MockCurrencyId::A, &MockCurrencyId::A)
+			.unwrap()
+			.to_num::<f64>();
+		// Condition iii
+		assert_relative_eq!(1.0, spot_price, epsilon=0.0);
+
+		let spot_price = Pools::spot_price(&pool_id, &MockCurrencyId::B, &MockCurrencyId::A)
+			.unwrap()
+			.to_num::<f64>();
+		// Condition ii
+		assert_relative_eq!(0.5, spot_price, epsilon=0.0);
+
+		let spot_price = Pools::spot_price(&pool_id, &MockCurrencyId::B, &MockCurrencyId::B)
+			.unwrap()
+			.to_num::<f64>();
+		// Condition iii
+		assert_relative_eq!(1.0, spot_price, epsilon=0.0);
+	});
 }
 
 // ----------------------------------------------------------------------------------------------------
