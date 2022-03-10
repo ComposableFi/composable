@@ -22,7 +22,10 @@ pub mod pallet {
 	use frame_support::{pallet_prelude::*, Blake2_128Concat, PalletId, Twox64Concat};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use orml_traits::MultiCurrency;
-	use sp_runtime::{traits::AccountIdConversion, FixedPointNumber};
+	use sp_runtime::{
+		traits::{AccountIdConversion, CheckedAdd, Zero},
+		ArithmeticError, FixedPointNumber,
+	};
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
@@ -201,6 +204,10 @@ pub mod pallet {
 
 			// Assuming stablecoin collateral and all markets quoted in dollars
 			T::MultiCurrency::transfer(asset, acc, &T::PalletId::get().into_account(), amount)?;
+
+			let old_margin = Self::get_margin(&acc).unwrap_or(T::Balance::zero());
+			let new_margin = old_margin.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
+			AccountsMargin::<T>::insert(&acc, new_margin);
 			Ok(())
 		}
 	}
