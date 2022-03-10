@@ -1091,7 +1091,7 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 	  ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
 	  StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
-    LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
+	LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 68,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,

@@ -1,4 +1,7 @@
-use composable_traits::{defi::Rate, math::{SafeArithmetic, SafeMul}};
+use composable_traits::{
+	defi::Rate,
+	math::{SafeArithmetic, SafeMul},
+};
 use frame_support::ensure;
 use sp_runtime::{
 	traits::{AtLeast32Bit, Convert, Saturating, Zero},

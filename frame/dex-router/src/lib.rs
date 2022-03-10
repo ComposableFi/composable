@@ -26,7 +26,7 @@ pub mod pallet {
 	use core::fmt::Debug;
 	use frame_support::{pallet_prelude::*, traits::Contains};
 	use sp_runtime::traits::{CheckedAdd, One, Zero};
-  use sp_std::{vec, vec::Vec};
+	use sp_std::{vec, vec::Vec};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
