@@ -394,101 +394,101 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_n: T::BlockNumber) -> Weight {
 			let current_timestamp = T::Time::now();
-			// TODO(hussein-aitlahcen): probably worth making twap enabled/disabled per-pool using
-			// democracy as this can grow a lot.
-			Pools::<T>::iter_keys().fold(Weight::zero(), |weight, pool_id| {
-				let rate_base = Self::do_get_exchange_rate(pool_id, false);
-				let rate_quote = Self::do_get_exchange_rate(pool_id, true);
-				match (rate_base, rate_quote) {
-					(Ok(rate_base), Ok(rate_quote)) => PriceCumulativesState::<T>::try_mutate(
-						pool_id,
-						|price_cumulatives| -> Result<Weight, DispatchError> {
-							match *price_cumulatives {
-								// Initialization
-								None => {
-									let (price_cumulative_base, price_cumulative_quote) = (
-										compute_initial_price_cumulative::<T::Convert, _>(
-											rate_base,
-										)?,
-										compute_initial_price_cumulative::<T::Convert, _>(
-											rate_quote,
-										)?,
-									);
-									*price_cumulatives = Some(PriceCumulatives {
-										timestamp: current_timestamp,
-										price_cumulative_base,
-										price_cumulative_quote,
-									});
-									TWAPState::<T>::insert(
-										pool_id,
-										TWAP {
-											average_price_base: rate_base,
-											average_price_quote: rate_quote,
-										},
-									);
-									Ok(weight + 1)
-								},
-								// Update
-								Some(PriceCumulatives {
-									timestamp: previous_timestamp,
-									price_cumulative_base: previous_price_cumulative_base,
-									price_cumulative_quote: previous_price_cumulative_quote,
-								}) => {
-									let f = |previous_cumulative_price, exchange_rate| {
-										compute_next_price_cumulative::<T::Convert, _, _>(
-											previous_timestamp,
-											previous_cumulative_price,
-											current_timestamp,
-											exchange_rate,
-										)
-									};
-									let (
-										(elapsed, price_cumulative_base),
-										(_, price_cumulative_quote),
-									) = (
-										f(previous_price_cumulative_base, rate_base)?,
-										f(previous_price_cumulative_quote, rate_quote)?,
-									);
-									if elapsed >= T::TWAPInterval::get() {
+			Pools::<T>::iter()
+				.filter(|(pool_id, pool)| T::EnabledPoolTWAP::contains(&(pool.pair, *pool_id)))
+				.fold(Weight::zero(), |weight, (pool_id, _)| {
+					let rate_base = Self::do_get_exchange_rate(pool_id, false);
+					let rate_quote = Self::do_get_exchange_rate(pool_id, true);
+					match (rate_base, rate_quote) {
+						(Ok(rate_base), Ok(rate_quote)) => PriceCumulativesState::<T>::try_mutate(
+							pool_id,
+							|price_cumulatives| -> Result<Weight, DispatchError> {
+								match *price_cumulatives {
+									// Initialization
+									None => {
+										let (price_cumulative_base, price_cumulative_quote) = (
+											compute_initial_price_cumulative::<T::Convert, _>(
+												rate_base,
+											)?,
+											compute_initial_price_cumulative::<T::Convert, _>(
+												rate_quote,
+											)?,
+										);
 										*price_cumulatives = Some(PriceCumulatives {
 											timestamp: current_timestamp,
 											price_cumulative_base,
 											price_cumulative_quote,
 										});
-										let avg = |current: T::Balance,
-										           previous: T::Balance|
-										 -> Result<Rate, DispatchError> {
-											compute_price_average::<T::Convert, _, _>(
-												current, previous, elapsed,
-											)
-										};
-										let average_price_base = avg(
-											price_cumulative_base,
-											previous_price_cumulative_base,
-										)?;
-										let average_price_quote = avg(
-											price_cumulative_quote,
-											previous_price_cumulative_quote,
-										)?;
 										TWAPState::<T>::insert(
 											pool_id,
-											TWAP { average_price_base, average_price_quote },
+											TWAP {
+												average_price_base: rate_base,
+												average_price_quote: rate_quote,
+											},
 										);
 										Ok(weight + 1)
-									} else {
-										Ok(weight)
-									}
-								},
-							}
+									},
+									// Update
+									Some(PriceCumulatives {
+										timestamp: previous_timestamp,
+										price_cumulative_base: previous_price_cumulative_base,
+										price_cumulative_quote: previous_price_cumulative_quote,
+									}) => {
+										let f = |previous_cumulative_price, exchange_rate| {
+											compute_next_price_cumulative::<T::Convert, _, _>(
+												previous_timestamp,
+												previous_cumulative_price,
+												current_timestamp,
+												exchange_rate,
+											)
+										};
+										let (
+											(elapsed, price_cumulative_base),
+											(_, price_cumulative_quote),
+										) = (
+											f(previous_price_cumulative_base, rate_base)?,
+											f(previous_price_cumulative_quote, rate_quote)?,
+										);
+										if elapsed >= T::TWAPInterval::get() {
+											*price_cumulatives = Some(PriceCumulatives {
+												timestamp: current_timestamp,
+												price_cumulative_base,
+												price_cumulative_quote,
+											});
+											let avg = |current: T::Balance,
+											           previous: T::Balance|
+											 -> Result<Rate, DispatchError> {
+												compute_price_average::<T::Convert, _, _>(
+													current, previous, elapsed,
+												)
+											};
+											let average_price_base = avg(
+												price_cumulative_base,
+												previous_price_cumulative_base,
+											)?;
+											let average_price_quote = avg(
+												price_cumulative_quote,
+												previous_price_cumulative_quote,
+											)?;
+											TWAPState::<T>::insert(
+												pool_id,
+												TWAP { average_price_base, average_price_quote },
+											);
+											Ok(weight + 1)
+										} else {
+											Ok(weight)
+										}
+									},
+								}
+							},
+						)
+						.unwrap_or(weight),
+						_ => {
+							log::warn!("Failed to get exchange rate for pool: {:?}", pool_id,);
+							weight
 						},
-					)
-					.unwrap_or(weight),
-					_ => {
-						log::warn!("Failed to get exchange rate for pool: {:?}", pool_id,);
-						weight
-					},
-				}
-			})
+					}
+				})
 		}
 	}
 
