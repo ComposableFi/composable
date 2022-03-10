@@ -195,10 +195,12 @@ pub mod pallet {
 			asset: AssetIdOf<T>,
 			amount: T::Balance,
 		) -> Result<(), DispatchError> {
-			if !CollateralTypes::<T>::contains_key(asset) {
-				return Err(Error::<T>::UnsupportedCollateralType.into())
-			}
-			// Assuming stablecoin and all markets quoted in dollars
+			ensure!(
+				CollateralTypes::<T>::contains_key(asset),
+				Error::<T>::UnsupportedCollateralType
+			);
+
+			// Assuming stablecoin collateral and all markets quoted in dollars
 			T::MultiCurrency::transfer(asset, acc, &T::PalletId::get().into_account(), amount)?;
 			Ok(())
 		}
