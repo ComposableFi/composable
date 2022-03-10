@@ -66,33 +66,39 @@ pub mod weights;
 pub mod pallet {
 	use super::models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount, Reward};
 	use crate::weights::WeightInfo;
-	use codec::Codec;
+	use codec::{Codec, FullCodec};
 	use composable_traits::math::SafeAdd;
 	use frame_support::{
+		dispatch::PostDispatchInfo,
 		pallet_prelude::*,
-		traits::fungible::{Inspect, Transfer},
+		traits::{
+			fungible::{Inspect, Transfer},
+			Time,
+		},
 		transactional, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_io::hashing::keccak_256;
 	use sp_runtime::{
 		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
-			Saturating, Verify, Zero,
+			AccountIdConversion, AtLeast32Bit, AtLeast32BitUnsigned, CheckedAdd, CheckedMul,
+			CheckedSub, Convert, Saturating, Verify, Zero,
 		},
-		AccountId32, MultiSignature, Perbill,
+		AccountId32, DispatchErrorWithPostInfo, MultiSignature, Perbill,
 	};
 	use sp_std::vec::Vec;
 
+	pub type MomentOf<T> = <T as Config>::Moment;
 	pub type RemoteAccountOf<T> = RemoteAccount<<T as Config>::RelayChainAccountId>;
-	pub type RewardOf<T> = Reward<<T as Config>::Balance, <T as frame_system::Config>::BlockNumber>;
-	pub type VestingPeriodOf<T> = <T as frame_system::Config>::BlockNumber;
+	pub type RewardOf<T> = Reward<<T as Config>::Balance, MomentOf<T>>;
+	pub type VestingPeriodOf<T> = MomentOf<T>;
 	pub type RewardAmountOf<T> = <T as Config>::Balance;
 	pub type ProofOf<T> = Proof<<T as Config>::RelayChainAccountId>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		Initialized,
 		Claimed {
 			remote_account: RemoteAccountOf<T>,
 			reward_account: T::AccountId,
@@ -141,11 +147,16 @@ pub mod pallet {
 		type RewardAsset: Inspect<Self::AccountId, Balance = Self::Balance>
 			+ Transfer<Self::AccountId, Balance = Self::Balance>;
 
+		type Moment: AtLeast32Bit + Parameter + Default + Copy + MaxEncodedLen + FullCodec;
+
+		/// The time provider.
+		type Time: Time<Moment = Self::Moment>;
+
 		/// The origin that is allowed to `initialize` the pallet.
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
 
-		/// A conversion function frop `Self::BlockNumber` to `Self::Balance`
-		type Convert: Convert<Self::BlockNumber, Self::Balance>;
+		/// A conversion function frop `Self::Moment` to `Self::Balance`
+		type Convert: Convert<Self::Moment, Self::Balance>;
 
 		/// The relay chain account id.
 		type RelayChainAccountId: Parameter
@@ -158,9 +169,9 @@ pub mod pallet {
 		#[pallet::constant]
 		type InitialPayment: Get<Perbill>;
 
-		/// The number of blocks a fragment of the reward is vested.
+		/// The time you have to wait to unlock another part of your reward.
 		#[pallet::constant]
-		type VestingStep: Get<Self::BlockNumber>;
+		type VestingStep: Get<MomentOf<Self>>;
 
 		/// The arbitrary prefix used for the proof
 		#[pallet::constant]
@@ -202,7 +213,7 @@ pub mod pallet {
 	/// The block at which the users are able to claim their rewards.
 	#[pallet::storage]
 	#[pallet::getter(fn vesting_block_start)]
-	pub type VestingBlockStart<T: Config> = StorageValue<_, T::BlockNumber, OptionQuery>;
+	pub type VestingTimeStart<T: Config> = StorageValue<_, MomentOf<T>, OptionQuery>;
 
 	/// Associate a local account with a remote one.
 	#[pallet::storage]
@@ -221,14 +232,14 @@ pub mod pallet {
 		#[transactional]
 		pub fn initialize(origin: OriginFor<T>) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
-			let current_block = frame_system::Pallet::<T>::block_number();
-			Self::do_initialize(current_block)
+			let now = T::Time::now();
+			Self::do_initialize(now)
 		}
 
 		/// Initialize the pallet at the given transaction block.
 		#[pallet::weight(<T as Config>::WeightInfo::initialize(TotalContributors::<T>::get()))]
 		#[transactional]
-		pub fn initialize_at(origin: OriginFor<T>, at: T::BlockNumber) -> DispatchResult {
+		pub fn initialize_at(origin: OriginFor<T>, at: MomentOf<T>) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
 			Self::do_initialize(at)
 		}
@@ -290,11 +301,12 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn do_initialize(at: T::BlockNumber) -> DispatchResult {
-			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
-			let current_block = frame_system::Pallet::<T>::block_number();
-			ensure!(at >= current_block, Error::<T>::InvalidInitializationBlock);
-			VestingBlockStart::<T>::set(Some(at));
+		pub(crate) fn do_initialize(at: MomentOf<T>) -> DispatchResult {
+			ensure!(!VestingTimeStart::<T>::exists(), Error::<T>::AlreadyInitialized);
+			let now = T::Time::now();
+			ensure!(at >= now, Error::<T>::InvalidInitializationBlock);
+			VestingTimeStart::<T>::set(Some(at));
+			Self::deposit_event(Event::Initialized);
 			Ok(())
 		}
 
@@ -302,8 +314,8 @@ pub mod pallet {
 			reward_account: T::AccountId,
 			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
-			let now = frame_system::Pallet::<T>::block_number();
-			let enabled = VestingBlockStart::<T>::get().ok_or(Error::<T>::NotInitialized)? <= now;
+			let now = T::Time::now();
+			let enabled = VestingTimeStart::<T>::get().ok_or(Error::<T>::NotInitialized)? <= now;
 			ensure!(enabled, Error::<T>::NotClaimableYet);
 			let remote_account = get_remote_account::<T>(proof, &reward_account, T::Prefix::get())?;
 			// NOTE(hussein-aitlahcen): this is also checked by the ValidateUnsigned implementation
@@ -325,7 +337,7 @@ pub mod pallet {
 		pub(crate) fn do_populate(
 			rewards: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,
 		) -> DispatchResult {
-			ensure!(!VestingBlockStart::<T>::exists(), Error::<T>::AlreadyInitialized);
+			ensure!(!VestingTimeStart::<T>::exists(), Error::<T>::AlreadyInitialized);
 			rewards
 				.into_iter()
 				.for_each(|(remote_account, account_reward, vesting_period)| {
@@ -393,14 +405,14 @@ pub mod pallet {
 
 	/// The reward amount a user should have claimed until now.
 	pub fn should_have_claimed<T: Config>(
-		reward: &Reward<<T as Config>::Balance, <T as frame_system::Config>::BlockNumber>,
+		reward: &RewardOf<T>,
 	) -> Result<T::Balance, DispatchError> {
-		let start = VestingBlockStart::<T>::get().ok_or(Error::<T>::NotInitialized)?;
+		let start = VestingTimeStart::<T>::get().ok_or(Error::<T>::NotInitialized)?;
 		let upfront_payment = T::InitialPayment::get().mul_floor(reward.total);
 
-		let current_block = frame_system::Pallet::<T>::block_number();
+		let now = T::Time::now();
 		// Current point in time
-		let vesting_point = current_block.saturating_sub(start);
+		let vesting_point = now.saturating_sub(start);
 		if vesting_point >= reward.vesting_period {
 			// If the user is claiming when the period is over, he should
 			// probably have already claimed everything.
@@ -424,20 +436,17 @@ pub mod pallet {
 		account_id: <T as frame_system::Config>::AccountId,
 	) -> Result<T::Balance, DispatchError> {
 		let association = Associations::<T>::get(account_id).ok_or(Error::<T>::NotAssociated)?;
-		let reward = Rewards::<T>::get(association).ok_or(Error::<T>::NothingToClaim)?;
+		let reward = Rewards::<T>::get(association).ok_or(Error::<T>::InvalidProof)?;
 		let should_have_claimed = should_have_claimed::<T>(&reward)?;
-		let available_to_claim = should_have_claimed - reward.claimed;
+		let available_to_claim = should_have_claimed.saturating_sub(reward.claimed);
 		Ok(available_to_claim)
 	}
 
 	pub fn get_remote_account<T: Config>(
-		proof: Proof<<T as Config>::RelayChainAccountId>,
+		proof: ProofOf<T>,
 		reward_account: &<T as frame_system::Config>::AccountId,
 		prefix: &[u8],
-	) -> Result<
-		RemoteAccount<<T as Config>::RelayChainAccountId>,
-		sp_runtime::DispatchErrorWithPostInfo<frame_support::dispatch::PostDispatchInfo>,
-	> {
+	) -> Result<RemoteAccountOf<T>, DispatchErrorWithPostInfo<PostDispatchInfo>> {
 		let remote_account = match proof {
 			Proof::Ethereum(eth_proof) => {
 				let reward_account_encoded =
@@ -516,8 +525,8 @@ pub mod pallet {
 
 		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			if let Call::associate { reward_account, proof } = call {
-				let now = frame_system::Pallet::<T>::block_number();
-				let enabled = VestingBlockStart::<T>::get()
+				let now = T::Time::now();
+				let enabled = VestingTimeStart::<T>::get()
 					.ok_or(InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8))? <=
 					now;
 				if !enabled {

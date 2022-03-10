@@ -3,10 +3,10 @@ use scale_info::TypeInfo;
 use sp_runtime::{MultiSignature, RuntimeDebug};
 
 #[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo, MaxEncodedLen)]
-pub struct Reward<Balance, BlockNumber> {
+pub struct Reward<Balance, Period> {
 	pub(crate) total: Balance,
 	pub(crate) claimed: Balance,
-	pub(crate) vesting_period: BlockNumber,
+	pub(crate) vesting_period: Period,
 }
 
 #[derive(Clone, RuntimeDebug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]

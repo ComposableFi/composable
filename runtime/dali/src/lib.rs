@@ -26,9 +26,9 @@ pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, MosaicRemoteAssetId, MultiExistentialDeposits,
-	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES,
-	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MosaicRemoteAssetId,
+	MultiExistentialDeposits, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
+	MAXIMUM_BLOCK_WEIGHT, MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use cumulus_primitives_core::ParaId;
@@ -270,7 +270,7 @@ parameter_types! {
 
 impl timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the Unix epoch.
-	type Moment = u64;
+	type Moment = Moment;
 	/// What to do when SLOT_DURATION has passed?
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
@@ -808,6 +808,8 @@ impl crowdloan_rewards::Config for Runtime {
 	type Prefix = Prefix;
 	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
 	type PalletId = CrowdloanRewardsId;
+	type Moment = Moment;
+	type Time = Timestamp;
 }
 
 /// The calls we permit to be executed by extrinsics

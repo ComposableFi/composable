@@ -33,6 +33,9 @@ mod types {
 	// todo move it into more shared directory so it can be shared with
 	// tests, integration, benchmark, (simnode?)
 
+	/// Timestamp implementation.
+	pub type Moment = u64;
+
 	/// An index to a block.
 	pub type BlockNumber = u32;
 

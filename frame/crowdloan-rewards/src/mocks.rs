@@ -19,18 +19,13 @@ use system::EnsureRoot;
 pub type RelayKey = ed25519::Pair;
 pub type EthKey = libsecp256k1::SecretKey;
 
+pub type Moment = u64;
 pub type BlockNumber = u32;
 pub type AccountId = AccountId32;
 pub type RelayChainAccountId = [u8; 32];
 pub type Balance = u128;
 
-pub const MILLISECS_PER_BLOCK: u32 = 6000;
-pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-pub const HOURS: BlockNumber = MINUTES * 60;
-pub const DAYS: BlockNumber = HOURS * 24;
-pub const WEEKS: BlockNumber = DAYS * 7;
-
-pub const VESTING_STEP: BlockNumber = WEEKS;
+pub const VESTING_STEP: Moment = 3600 * 24 * 7;
 pub const INITIAL_PAYMENT: Perbill = Perbill::from_percent(50);
 
 pub const ALICE: AccountId = AccountId32::new([0_u8; 32]);
@@ -60,7 +55,7 @@ impl system::Config for Test {
 	type BlockLength = ();
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = balances::AccountData<Balance>;
+	type AccountData = pallet_balances::AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type DbWeight = ();
@@ -71,7 +66,7 @@ impl system::Config for Test {
 	type MaxConsumers = (MaxConsumers, MaxOverFlow);
 }
 
-impl balances::Config for Test {
+impl pallet_balances::Config for Test {
 	type Balance = Balance;
 	type Event = Event;
 	type DustRemoval = ();
@@ -86,7 +81,7 @@ impl balances::Config for Test {
 parameter_types! {
   pub const CrowdloanRewardsPalletId: PalletId = PalletId(*b"pal_crow");
 	pub const InitialPayment: Perbill = INITIAL_PAYMENT;
-	pub const VestingStep: BlockNumber = VESTING_STEP;
+	pub const VestingStep: Moment = VESTING_STEP;
 	pub const Prefix: &'static [u8] = PROOF_PREFIX;
 }
 
@@ -102,6 +97,21 @@ impl pallet_crowdloan_rewards::Config for Test {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
 	type PalletId = CrowdloanRewardsPalletId;
+	type Moment = Moment;
+	type Time = Timestamp;
+}
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = 6000;
+}
+
+impl pallet_timestamp::Config for Test {
+	/// A timestamp: milliseconds since the Unix epoch.
+	type Moment = Moment;
+	/// What to do when SLOT_DURATION has passed?
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -114,7 +124,8 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Balances: balances::{Pallet, Storage, Event<T>, Config<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		Balances: pallet_balances::{Pallet, Storage, Event<T>, Config<T>},
 	  CrowdloanRewards: pallet_crowdloan_rewards::{Pallet, Storage, Call, Event<T>},
 	}
 );
@@ -127,7 +138,7 @@ pub struct ExtBuilder {
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-		balances::GenesisConfig::<Test> { balances: self.balances }
+		pallet_balances::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut t)
 			.unwrap();
 		t.into()
