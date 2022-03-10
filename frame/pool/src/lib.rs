@@ -943,8 +943,8 @@ pub mod pallet {
 		/// 
 		/// # Weight: O()
 		fn create(
-			from: AccountIdOf<T>,
-			config: PoolConfig<AccountIdOf<T>, AssetIdOf<T>, Self::Weight>,
+			from: Self::AccountId,
+			config: PoolConfig<Self::AccountId, Self::AssetId, Self::Weight>,
 			creation_fee: Deposit<T>,
 		) -> Result<Self::PoolId, DispatchError> {			
 			let number_of_assets = config.assets.len();
@@ -1077,7 +1077,7 @@ pub mod pallet {
 			from: &Self::AccountId,
 			pool_id: &Self::PoolId,
 			deposits: Vec<Deposit<T>>,
-		) -> Result<T::Balance, DispatchError> {
+		) -> Result<Self::Balance, DispatchError> {
 			// Requirement 1) the desired pool index must exist
 			ensure!(Pools::<T>::contains_key(pool_id), Error::<T>::PoolDoesNotExist);
 		
@@ -1242,28 +1242,30 @@ pub mod pallet {
 		//  - When there is an overflow with any of the divisions in the formula above
 		fn do_spot_price(
 			pool_id: &T::PoolId,
-			asset: &T::AssetId,
-			numeraire: &T::AssetId
+			asset: &AssetIdOf<T>,
+			numeraire: &AssetIdOf<T>
 		) -> Result<FixedBalance, DispatchError> {
-			let asset_balance: T::Balance = PoolAssetBalance::<T>::get(pool_id, asset);
+			let asset_balance: BalanceOf<T> = PoolAssetBalance::<T>::get(pool_id, asset);
 			let asset_balance: u128 = 
-				<T::Convert as Convert<T::Balance, u128>>::convert(asset_balance);
+				<T::Convert as Convert<BalanceOf<T>, u128>>::convert(asset_balance);
 			let asset_balance: FixedBalance = FixedBalance::saturating_from_num(asset_balance);
 
-			let asset_weight: WeightOf<T>  = PoolAssetWeight::<T>::get(pool_id, asset);
-			let asset_weight: FixedBalance = FixedBalance::from_num(
-				asset_weight.deconstruct().into() as f64 / WeightOf::<T>::one().deconstruct().into() as f64
-			);
+			let asset_weight: WeightOf<T> = PoolAssetWeight::<T>::get(pool_id, asset);
+			let asset_weight: FixedBalance = 
+				FixedBalance::from_num(asset_weight.deconstruct().into())
+					.checked_div(FixedBalance::from_num(WeightOf::<T>::one().deconstruct().into()))
+					.ok_or(ArithmeticError::Overflow)?;
 
-			let numeraire_balance: T::Balance = PoolAssetBalance::<T>::get(pool_id, numeraire);
+			let numeraire_balance: BalanceOf<T> = PoolAssetBalance::<T>::get(pool_id, numeraire);
 			let numeraire_balance: u128 = 
-				<T::Convert as Convert<T::Balance, u128>>::convert(numeraire_balance);
+				<T::Convert as Convert<BalanceOf<T>, u128>>::convert(numeraire_balance);
 			let numeraire_balance: FixedBalance = FixedBalance::saturating_from_num(numeraire_balance);
 
-			let numeraire_weight: WeightOf<T>  = PoolAssetWeight::<T>::get(pool_id, numeraire);
-			let numeraire_weight: FixedBalance = FixedBalance::from_num(
-				numeraire_weight.deconstruct().into() as f64 / WeightOf::<T>::one().deconstruct().into() as f64
-			);
+			let numeraire_weight: WeightOf<T> = 
+				PoolAssetWeight::<T>::get(pool_id, numeraire);
+			let numeraire_weight: FixedBalance = FixedBalance::from_num(numeraire_weight.deconstruct().into())
+				.checked_div(FixedBalance::from_num(WeightOf::<T>::one().deconstruct().into()))
+				.ok_or(ArithmeticError::Overflow)?;
 
 			let numerator: FixedBalance = asset_balance.checked_div(asset_weight)
 				.ok_or(ArithmeticError::Overflow)?;
@@ -1271,8 +1273,11 @@ pub mod pallet {
 			let denominator: FixedBalance = numeraire_balance.checked_div(numeraire_weight)
 				.ok_or(ArithmeticError::Overflow)?;
 
-			let result = numerator.checked_div(denominator)
+			let result: FixedBalance = numerator.checked_div(denominator)
 				.ok_or(ArithmeticError::Overflow)?;
+			// let result: u128 = result.saturating_to_num();
+			// let result: BalanceOf<T> =
+			//     <T::Convert as Convert<u128, BalanceOf<T>>>::convert(result);
 
 			Ok(result)
 		}
