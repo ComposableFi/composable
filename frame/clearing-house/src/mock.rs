@@ -14,12 +14,12 @@ use sp_runtime::{
 	FixedI128,
 };
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
+type Block = frame_system::mocking::MockBlock<Runtime>;
 
 // Configure a mock runtime to test the pallet
 frame_support::construct_runtime!(
-	pub enum Test where
+	pub enum Runtime where
 		Block = Block,
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
@@ -38,7 +38,7 @@ parameter_types! {
 	pub const ClearingHouseId: PalletId = PalletId(*b"test_pid");
 }
 
-impl system::Config for Test {
+impl system::Config for Runtime {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -71,7 +71,7 @@ parameter_type_with_key! {
 	};
 }
 
-impl orml_tokens::Config for Test {
+impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
@@ -83,12 +83,12 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = Everything;
 }
 
-impl DeFiComposableConfig for Test {
+impl DeFiComposableConfig for Runtime {
 	type Balance = Balance;
 	type MayBeAssetId = AssetId;
 }
 
-impl clearing_house::Config for Test {
+impl clearing_house::Config for Runtime {
 	type Event = Event;
 	type MarketId = u64;
 	type Decimal = FixedI128;
