@@ -971,6 +971,7 @@ impl uniswap_v2::Config for Runtime {
 	type PalletId = ConstantProductPalletId;
 	type WeightInfo = weights::uniswap_v2::WeightInfo<Runtime>;
 	type Time = Timestamp;
+	type EnabledPoolTWAP = DexRouter;
 	type TWAPInterval = TWAPInterval;
 }
 
@@ -988,6 +989,21 @@ impl curve_amm::Config for Runtime {
 	type PoolId = PoolId;
 	type PalletId = StableSwapPalletId;
 	type WeightInfo = weights::curve_amm::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+  #[derive(codec::Encode, codec::Decode, codec::MaxEncodedLen, TypeInfo)]
+	pub const MaxHopsCount: u32 = 4;
+}
+
+impl dex_router::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type MaxHopsInRoute = MaxHopsCount;
+	type PoolId = PoolId;
+	type StableSwapDex = StableSwapDex;
+	type ConstantProductDex = ConstantProductDex;
 }
 
 parameter_types! {
@@ -1075,7 +1091,8 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 	  ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
 	  StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
-	LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
+    LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
+		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 68,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
