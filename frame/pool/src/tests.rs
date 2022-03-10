@@ -50,74 +50,58 @@ const MAX_POOL_SIZE: u8 = 26;
 // ----------------------------------------------------------------------------------------------------
 
 prop_compose! {
-	fn generate_creation_fee(number_of_assets: usize) 
-		(x in 0..Pools::required_creation_deposit_for(number_of_assets).unwrap()) -> Balance{
-			x
+	fn generate_initial_assets()(
+		initial_assets in prop::collection::vec(strategy_pick_random_mock_currency(), 2usize..26usize),
+	) -> Vec<MockCurrencyId>{
+		initial_assets
 	}
 }
 
 prop_compose! {
-	fn generate_native_balance(number_of_assets: usize) 
-		(x in 0..Pools::required_creation_deposit_for(number_of_assets).unwrap()*2) -> Balance{
-			x
-	}
-}
-
-prop_compose! {
-	fn generate_initial_assets() 
-		(
-			initial_assets in prop::collection::vec(strategy_pick_random_mock_currency(), 2usize..26usize),
-		) -> Vec<MockCurrencyId>{
-			initial_assets
-	}
-}
-
-prop_compose! {
-	fn generate_initial_assets_without_duplicates() 
-		(
-			initial_assets in prop::collection::vec(strategy_pick_random_mock_currency(), 2usize..26usize),
-		) -> Vec<MockCurrencyId>{
-			BTreeSet::<MockCurrencyId>::from_iter(initial_assets.iter().copied())
-				.iter()
-				.copied()
-				.collect()
-	}
-}
-
-// TEMP: (Nevin)
-//  - this prop_compose gets around the issue of creating native-asset vaults without using the 
-//		  vault create extrinsic. in the extrinsic the creation deposit is moved to two different
-//		  accounts (deletion reward and rent accounts). without calling the extrinsic the creation
-//		  deposit remains in the vaults account. if the vault is made to hold the native asset
-//		  the held creation deposit is assumed to be apart of the vaults usable reserves - this
-//		  funciton removes the possibility of the native asset being included in the pools 
-//		  underlying assets
-prop_compose! {
-	fn generate_initial_assets_without_duplicates_or_native_asset() 
-		(
-			initial_assets in prop::collection::vec(strategy_pick_random_mock_currency(), 2usize..26usize),
-		) -> Vec<MockCurrencyId>{
-			BTreeSet::<MockCurrencyId>::from_iter(
-				initial_assets
-				.iter()
-				.copied()
-				.map(|asset| match asset {
-					MockCurrencyId::A => MockCurrencyId::B,
-					_ => asset
-				})
-			).iter()
+	fn generate_initial_assets_without_duplicates()(
+		initial_assets in prop::collection::vec(strategy_pick_random_mock_currency(), 2usize..26usize),
+	) -> Vec<MockCurrencyId>{
+		BTreeSet::<MockCurrencyId>::from_iter(initial_assets.iter().copied())
+			.iter()
 			.copied()
 			.collect()
 	}
 }
 
 prop_compose! {
-	fn generate_pool_bounds() 
-		(
-			x in 0..5, 
-		 	y in 4..20,
-		) -> (u8, u8){
-			(x as u8, y as u8)
+	fn generate_size_bounds()(
+		x in 0u8..5u8, 
+		y in 4u8..20u8,
+	) -> Bound<u8> {
+		Bound::new(Some(x), Some(y))
+	}
+}
+
+prop_compose! {
+	fn generate_weight_bounds() (
+		minimim in 0u64..30u64, 
+		maximum in 25u64..100u64,
+	) -> Bound<Perquintill> {
+		Bound::new(
+			Some(Perquintill::from_percent(minimim)), 
+			Some(Perquintill::from_percent(maximum))
+		)
+	}
+}
+
+prop_compose! {
+	fn generate_creation_fee(number_of_assets: usize)(
+		x in 0..Pools::required_creation_deposit_for(number_of_assets).unwrap()
+	) -> Balance{
+		x
+	}
+}
+
+prop_compose! {
+	fn generate_native_balance(number_of_assets: usize)(x 
+		in 0..Pools::required_creation_deposit_for(number_of_assets).unwrap()*2
+	) -> Balance{
+		x
 	}
 }
 
@@ -138,16 +122,6 @@ prop_compose! {
 
 			weights_as_perquintill
 	}
-}
-
-prop_compose! {
-	fn generate_weight_bounds() 
-		(
-			minimim in 0u64..30u64, 
-			maximum in 25u64..100u64,
-		) -> (Perquintill, Perquintill){
-			(Perquintill::from_percent(minimim), Perquintill::from_percent(maximum))
-		}
 }
 
 prop_compose! {
@@ -373,6 +347,99 @@ prop_compose! {
 //                                           Helper Functions                                          
 // ----------------------------------------------------------------------------------------------------
 
+pub struct PoolConfigBuilder {
+	/// Owner of pool
+	pub owner: AccountId,
+	/// Amount of the fee pool charges for the exchange
+	pub fee: Perquintill,
+	/// Vector of the Pool's underlying assets
+	pub assets: Vec<MockCurrencyId>,
+	/// Min/max bounds on number of assets allowed in the pool
+	pub asset_bounds: Bound<u8>,
+	/// Vector of the Pool's underlying asset weights
+	pub weights: Vec<Weight<MockCurrencyId, Perquintill>>,
+	/// Min/max bounds on weights of assets for the pool
+	pub weight_bounds: Bound<Perquintill>,
+	/// Min/max bounds on amount of assets that can be deposited at once
+	pub deposit_bounds: Bound<Perquintill>,
+	/// Min/max bounds on amount of assets that can be withdrawn at once
+	pub withdraw_bounds: Bound<Perquintill>,
+}
+
+impl Default for PoolConfigBuilder {
+	fn default() -> Self {
+		PoolConfigBuilder {
+			owner: ALICE,
+			fee: Perquintill::zero(),
+			assets: Vec::new(),
+			asset_bounds: Bound::new(Some(0), Some(MAX_POOL_SIZE)),
+			weights: Vec::new(),
+			weight_bounds: Bound::new(None, None),
+			deposit_bounds: Bound::new(None, None),
+			withdraw_bounds: Bound::new(None, None),
+		}
+	}
+}
+
+impl PoolConfigBuilder {
+	#[allow(dead_code)]
+	fn owner(mut self, owner: AccountId) -> Self {
+		self.owner = owner;
+		self
+	}
+
+	#[allow(dead_code)]
+	fn fee(mut self, fee: Perquintill) -> Self {
+		self.fee = fee;
+		self
+	}
+
+	fn assets(mut self, assets: &Vec<MockCurrencyId>) -> Self {
+		self.assets = assets.to_vec();
+		self
+	}
+
+	fn asset_bounds(mut self, asset_bounds: Bound<u8>) -> Self {
+		self.asset_bounds = asset_bounds;
+		self
+	}
+
+	fn weights(mut self, weights: &Vec<Weight<MockCurrencyId, Perquintill>>) -> Self {
+		self.weights = weights.to_vec();
+		self
+	}
+
+	fn weight_bounds(mut self, weight_bounds: Bound<Perquintill>) -> Self {
+		self.weight_bounds = weight_bounds;
+		self
+	}
+
+	#[allow(dead_code)]
+	fn deposit_bounds(mut self, deposit_bounds: Bound<Perquintill>) -> Self {
+		self.deposit_bounds = deposit_bounds;
+		self
+	}
+
+	#[allow(dead_code)]
+	fn withdraw_bounds(mut self, withdraw_bounds: Bound<Perquintill>) -> Self {
+		self.withdraw_bounds = withdraw_bounds;
+		self
+	}
+	
+	fn build(&self) -> PoolConfig<AccountId, MockCurrencyId, Perquintill> {
+		PoolConfig {
+			owner: self.owner,
+			fee: self.fee,
+			assets: self.assets.clone(),
+			asset_bounds: self.asset_bounds,
+			weights: self.weights.clone(),
+			weight_bounds: self.weight_bounds,
+			deposit_bounds: self.deposit_bounds,
+			withdraw_bounds: self.withdraw_bounds,
+		}
+	}
+}
+
 fn equal_weight_vector_for(assets: &[MockCurrencyId]) -> Vec<Weight<MockCurrencyId, Perquintill>>{
 	let mut weights = Vec::new();
 
@@ -455,29 +522,18 @@ proptest! {
 		//        iii.	min_underlying_tokens ≤ n ≤ max_underlying_tokens, where n is the number
 		//					of tokens in the pool
 		//        iv.	∀ assets a_i ⇒ ∃ weight w_i
-		//        v.	Σ w_i = 1 & w_i ≥ 0
-		//		  vi.	min_weight ≤ max_weight
-		//        vii.	min_weight ≤ w_i ≤ max_weight
-		//        viii.	creation_fee ≥ (asset_ids.len() + 1) * (creation_deposit + existential_deposit)
-		//        ix.	user_balance ≥ creation_fee
+		//        v.	w_i ≥ 0
+		//        vi.	Σ w_i = 1
+		//		  vii.	min_weight ≤ max_weight
+		//        viii.	min_weight ≤ w_i ≤ max_weight
+		//        ix.	creation_fee ≥ (asset_ids.len() + 1) * (creation_deposit + existential_deposit)
+		//        x.	user_balance ≥ creation_fee
 
 		ExtBuilder::default().build().execute_with(|| {
-			let config = PoolConfig {
-				owner: ALICE,
-				fee: Perquintill::zero(),
-
-				assets: initial_assets.clone(),
-				// Condition ii && Condition iii
-				asset_bounds: Bound::new(Some(0), Some(MAX_POOL_SIZE)),
-
-				// Condition iv && Condition v
-				weights: equal_weight_vector_for(&initial_assets),
-				// Condition vi && Condition vii
-				weight_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-
-				deposit_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-				withdraw_bounds:Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-			};
+			let config = PoolConfigBuilder::default()
+				.assets(&initial_assets)
+				.weights(&equal_weight_vector_for(&initial_assets))
+				.build();
 
 			// Condition viii
 			let creation_fee = Deposit {
@@ -488,14 +544,14 @@ proptest! {
 			// Condition ix
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, creation_fee.amount));
 		
-			assert_ok!(<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee));
+			assert_ok!(Pools::create(ALICE, config, creation_fee));
 		});
 	}
 
 	#[test]
 	fn creating_a_pool_that_does_not_meet_the_asset_requirements_raises_an_error(
 		initial_assets in generate_initial_assets(),
-		(minimum_asset_bound, maximum_asset_bound) in generate_pool_bounds(),
+		size_bounds in generate_size_bounds(),
 	) {
 		// Tests that if not all asset conditions are met to create a pool it will not
 		//  |  be created
@@ -507,19 +563,11 @@ proptest! {
 		//        ...
 
 		ExtBuilder::default().build().execute_with(|| {
-			let config = PoolConfig {
-				owner: ALICE,
-				fee: Perquintill::zero(),
-
-				assets: initial_assets.clone(),
-				asset_bounds: Bound::new(Some(minimum_asset_bound), Some(maximum_asset_bound)),
-
-				weights: equal_weight_vector_for(&initial_assets),
-				weight_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-
-				deposit_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-				withdraw_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-			};
+			let config = PoolConfigBuilder::default()
+				.assets(&initial_assets)
+				.asset_bounds(size_bounds)
+				.weights(&equal_weight_vector_for(&initial_assets))
+				.build();
 
 			let creation_fee = Deposit {
 				asset_id: MockCurrencyId::A,
@@ -528,27 +576,27 @@ proptest! {
 
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, creation_fee.amount));
 
+			let unique_initial_assets = BTreeSet::<MockCurrencyId>::from_iter(initial_assets.iter().copied()).len();
 			let pool_size = config.assets.len();
-			// Condition i
-			if BTreeSet::<MockCurrencyId>::from_iter(initial_assets.iter().copied()).len() != pool_size {
-				assert_noop!(
-					<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee), 
-					Error::<Test>::DuplicateAssets
-				);
-			// Condition ii
+
+			let error = if unique_initial_assets != pool_size {
+				// Condition i
+				Some(Error::<Test>::DuplicateAssets)
 			} else if config.asset_bounds.maximum < config.asset_bounds.minimum {
-				assert_noop!(
-					<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee), 
-					Error::<Test>::InvalidAssetBounds
-				);
-			// Condition iii
+				// Condition ii
+				Some(Error::<Test>::InvalidAssetBounds)
 			} else if pool_size < config.asset_bounds.minimum.unwrap() as usize || (config.asset_bounds.maximum.unwrap() as usize) < pool_size {
-				assert_noop!(
-					<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee), 
-					Error::<Test>::PoolSizeIsOutsideOfAssetBounds
-				);
+				// Condition iii
+				Some(Error::<Test>::PoolSizeIsOutsideOfAssetBounds)
 			} else {
-				assert_ok!(<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee));
+				None
+			};
+
+			match error {
+				None => { assert_ok!(Pools::create(ALICE, config, creation_fee)); },
+				Some(error) => {
+					assert_noop!(Pools::create(ALICE, config, creation_fee), error);
+				}
 			}
 		});
 	}
@@ -557,16 +605,17 @@ proptest! {
 	fn creating_a_pool_that_does_not_meet_the_weight_requirements_raises_an_error(
 		initial_assets in generate_initial_assets(),
 		mut weights in generate_random_weights(),
-		(weight_minimum, weight_maximum) in generate_weight_bounds(),
+		weight_bounds in generate_weight_bounds(),
 	) {
 		// Tests that if not all weight conditions are met to create a pool it will not
 		//  |  be created
 		//  '-> Conditions:
 		//        ...
 		//        iv.  ∀ assets a_i ⇒ ∃ weight w_i
-		//		  v.   Σ w_i = 1 & w_i ≥ 0
-		//		  vi.  min_weight ≤ max_weight
-		// 		  vii. min_weight ≤ w_i ≤ max_weight	
+		//        v.	w_i ≥ 0
+		//        vi.	Σ w_i = 1
+		//		  vii.	min_weight ≤ max_weight
+		//        viii.	min_weight ≤ w_i ≤ max_weight
 		//        ...
 
 		// create a random weight vector for the generated initial assets,
@@ -583,19 +632,11 @@ proptest! {
 			.collect();
 
 		ExtBuilder::default().build().execute_with(|| {
-			let config = PoolConfig {
-				owner: ALICE,
-				fee: Perquintill::zero(),
-
-				assets: initial_assets.clone(),
-				asset_bounds: Bound::new(Some(0), Some(MAX_POOL_SIZE)),
-
-				weights,
-				weight_bounds: Bound::new(Some(weight_minimum), Some(weight_maximum)),
-
-				deposit_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-				withdraw_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-			};
+			let config = PoolConfigBuilder::default()
+				.assets(&initial_assets)
+				.weights(&weights)
+				.weight_bounds(weight_bounds)
+				.build();
 
 			let creation_fee = Deposit {
 				asset_id: MockCurrencyId::A,
@@ -604,38 +645,30 @@ proptest! {
 
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, creation_fee.amount));
 			
-			// Condition iv
-			if !Pools::each_asset_has_exactly_one_corresponding_weight(&config.assets, &config.weights) {
-				assert_noop!(
-					<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee), 
-					Error::<Test>::ThereMustBeOneWeightForEachAssetInThePool
-				);
-			// Condition v
-			}else if !Pools::weights_are_nonnegative(&config.weights) {
-				assert_noop!(
-					<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee), 
-					Error::<Test>::PoolWeightsMustBeNonnegative
-				);
-			// Condition vi 
-			} else if !Pools::weights_are_normalized(&config.weights) {
-				assert_noop!(
-					<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee), 
-					Error::<Test>::PoolWeightsMustBeNormalized
-				);
-			// Condition vi
-			} else if weight_maximum < weight_minimum {
-				assert_noop!(
-					<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee), 
-					Error::<Test>::InvalidWeightBounds
-				);
-			// Condition vii
-			} else if !Pools::weights_are_in_weight_bounds(&config.weights, &config.weight_bounds) {
-				assert_noop!(
-					<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee), 
-					Error::<Test>::PoolWeightsAreOutsideOfWeightBounds
-				);
-			} else {
-				assert_ok!(<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee));
+			let error = if !Pools::each_asset_has_exactly_one_corresponding_weight(&config.assets, &config.weights) {
+				// Condition iv
+				Some(Error::<Test>::ThereMustBeOneWeightForEachAssetInThePool)
+			} else if !Pools::weights_are_nonnegative(&config.weights) {
+				// Condition v
+				Some(Error::<Test>::PoolWeightsMustBeNonnegative)
+		    } else if !Pools::weights_are_normalized(&config.weights) {
+				// Condition vi
+				Some(Error::<Test>::PoolWeightsMustBeNormalized)
+		    } else if config.weight_bounds.maximum < config.weight_bounds.minimum {
+				// Condition vii
+				Some(Error::<Test>::InvalidWeightBounds)
+		    } else if !Pools::weights_are_in_weight_bounds(&config.weights, &config.weight_bounds) {
+				// Condition v
+				Some(Error::<Test>::PoolWeightsAreOutsideOfWeightBounds)
+		    } else {
+				None
+			};
+
+			match error {
+				None => { assert_ok!(Pools::create(ALICE, config, creation_fee)); },
+				Some(error) => {
+					assert_noop!(Pools::create(ALICE, config, creation_fee), error);
+				}
 			}
 		});
 	}
@@ -643,30 +676,22 @@ proptest! {
 	#[test]
 	fn creating_a_pool_that_does_not_meet_the_user_requirements_raises_an_error(
 		initial_assets in generate_initial_assets_without_duplicates(),
-		user_balance in generate_native_balance(26usize),
-		creation_fee in generate_creation_fee(26usize),
+		user_balance in generate_native_balance(MAX_POOL_SIZE as usize),
+		creation_fee in generate_creation_fee(MAX_POOL_SIZE as usize),
 	) {
 		// Tests that if all the conditions are met to create a pool it will be created 
 		//  |  successfully
 		//  '-> Conditions:
 		//		  ...
-		//        viii.	user_balance ≥ creation_fee
-		//        ix.	creation_fee ≥ (asset_ids.len() + 1) * (creation_deposit + existential_deposit)
+		//        ix.	creation_fee ≥ (asset_ids.len() + 1) * 
+		//                  (creation_deposit + existential_deposit)
+		//        x.	user_balance ≥ creation_fee
 
 		ExtBuilder::default().build().execute_with(|| {
-			let config = PoolConfig {
-				owner: ALICE,
-				fee: Perquintill::zero(),
-
-				assets: initial_assets.clone(),
-				asset_bounds: Bound::new(Some(0), Some(MAX_POOL_SIZE)),
-
-				weights: equal_weight_vector_for(&initial_assets),
-				weight_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-
-				deposit_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-				withdraw_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-			};
+			let config = PoolConfigBuilder::default()
+				.assets(&initial_assets)
+				.weights(&equal_weight_vector_for(&initial_assets))
+				.build();
 
 			let creation_fee = Deposit {
 				asset_id: MockCurrencyId::A,
@@ -675,20 +700,24 @@ proptest! {
 
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, user_balance));
 			
-			// Condition viii
-			if user_balance < creation_fee.amount {
-				assert_noop!(
-					<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee), 
-					Error::<Test>::IssuerDoesNotHaveBalanceTryingToDeposit
-				);
-			// Condition ix
-			} else if creation_fee.amount < Pools::required_creation_deposit_for(config.assets.len()).unwrap() {
-				assert_noop!(
-					<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee), 
-					Error::<Test>::CreationFeeIsInsufficient
-				);
-			} else {
-				assert_ok!(<Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee));
+			let required_creatikon_deposit = 
+				Pools::required_creation_deposit_for(config.assets.len()).unwrap();
+
+			let error = if user_balance < creation_fee.amount {
+				// Condition ix
+				Some(Error::<Test>::IssuerDoesNotHaveBalanceTryingToDeposit)
+			} else if creation_fee.amount < required_creatikon_deposit {
+				// Condition x
+				Some(Error::<Test>::CreationFeeIsInsufficient)
+		    } else {
+				None
+			};
+
+			match error {
+				None => { assert_ok!(Pools::create(ALICE, config, creation_fee)); },
+				Some(error) => {
+					assert_noop!(Pools::create(ALICE, config, creation_fee), error);
+				}
 			}
 		});
 	}
@@ -710,31 +739,10 @@ proptest! {
 		//       vii. PoolAssetTotalBalance is empty (includes fee)
 
 		ExtBuilder::default().build().execute_with(|| {
-			let config = PoolConfig {
-				owner: ALICE,
-				fee: Perquintill::zero(),
-
-				assets: initial_assets.clone(),
-				asset_bounds: Bound {
-					minimum: Some(0), 
-					maximum: Some(26)
-				},
-
-				weights: equal_weight_vector_for(&initial_assets),
-				weight_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
-
-				deposit_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
-				withdraw_bounds: Bound {
-					minimum: Some(Perquintill::zero()), 
-					maximum: Some(Perquintill::one())
-				},
-			};
+			let config = PoolConfigBuilder::default()
+				.assets(&initial_assets)
+				.weights(&equal_weight_vector_for(&initial_assets))
+				.build();
 
 			let creation_fee = Deposit {
 				asset_id: MockCurrencyId::A,
@@ -743,7 +751,7 @@ proptest! {
 
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, creation_fee.amount));
 		
-			let pool_id = <Pools as ConstantMeanMarket>::create(ALICE, config.clone(), creation_fee).unwrap();
+			let pool_id = Pools::create(ALICE, config.clone(), creation_fee).unwrap();
 
 			// Condition i
 			assert_eq!(pool_id, PoolCount::<Test>::get());
@@ -798,19 +806,10 @@ proptest! {
 		//              (unique) underlying vaults
 
 		ExtBuilder::default().build().execute_with(|| {
-			let config = PoolConfig {
-				owner: ALICE,
-				fee: Perquintill::zero(),
-
-				assets: initial_assets.clone(),
-				asset_bounds: Bound::new(Some(0), Some(MAX_POOL_SIZE)),
-
-				weights: equal_weight_vector_for(&initial_assets),
-				weight_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-
-				deposit_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-				withdraw_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-			};
+			let config = PoolConfigBuilder::default()
+				.assets(&initial_assets)
+				.weights(&equal_weight_vector_for(&initial_assets))
+				.build();
 
 			let creation_fee = Deposit {
 				asset_id: MockCurrencyId::A,
@@ -819,7 +818,7 @@ proptest! {
 
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, creation_fee.amount));
 		
-			let pool_id = <Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee).unwrap();
+			let pool_id = Pools::create(ALICE, config, creation_fee).unwrap();
 
 			// Condition i
 			for asset_id in initial_assets {
@@ -831,8 +830,8 @@ proptest! {
 	#[test]
 	fn creating_a_pool_transfers_creation_fee_into_pools_account(
 		initial_assets in generate_initial_assets_without_duplicates(),
-		creation_fee in generate_creation_fee(26usize),
-		user_balance in generate_native_balance(26usize),
+		creation_fee in generate_creation_fee(MAX_POOL_SIZE as usize),
+		user_balance in generate_native_balance(MAX_POOL_SIZE as usize),
 	) {
 		// Tests that when a user successfully creates a Pool their Creation fee is transfered 
 		//  |  into the Pools account
@@ -843,25 +842,17 @@ proptest! {
 		//        iii. pool (P) has △ native tokens in its account
 
 		// guarantee the user has enough native assets to create the pool
-		let required_creation_fee = Pools::required_creation_deposit_for(initial_assets.len()).unwrap();
+		let required_creation_fee = 
+			Pools::required_creation_deposit_for(initial_assets.len()).unwrap();
 
 		let creation_fee_amount = creation_fee + required_creation_fee;
 		let user_balance = user_balance + creation_fee_amount;
 
 		ExtBuilder::default().build().execute_with(|| {
-			let config = PoolConfig {
-				owner: ALICE,
-				fee: Perquintill::zero(),
-
-				assets: initial_assets.clone(),
-				asset_bounds: Bound::new(Some(0), Some(MAX_POOL_SIZE)),
-
-				weights: equal_weight_vector_for(&initial_assets),
-				weight_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-
-				deposit_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-				withdraw_bounds: Bound::new(Some(Perquintill::zero()), Some(Perquintill::one())),
-			};
+			let config = PoolConfigBuilder::default()
+				.assets(&initial_assets)
+				.weights(&equal_weight_vector_for(&initial_assets))
+				.build();
 
 			let creation_fee = Deposit {
 				asset_id: MockCurrencyId::A,
@@ -873,10 +864,13 @@ proptest! {
 			// Pre-Condition i
 			assert!(Tokens::balance(MockCurrencyId::A, &ALICE) >= creation_fee_amount);
 
-			let pool_id = <Pools as ConstantMeanMarket>::create(ALICE, config, creation_fee).unwrap();
+			let pool_id = Pools::create(ALICE, config, creation_fee).unwrap();
 
 			// Post-Condition ii
-			assert_eq!(Tokens::balance(MockCurrencyId::A, &ALICE), user_balance - creation_fee_amount);
+			assert_eq!(
+				Tokens::balance(MockCurrencyId::A, &ALICE), 
+				user_balance - creation_fee_amount
+			);
 
 			// Post-Condition iii
 			assert_eq!(
