@@ -5,14 +5,14 @@ A pallet providing means of submitting and maintaining bond offers.
 ## Overview
 
 The bonded finance pallet enables users to create bond offers, buy bonds from 
-other users, and cancel existing bond offers via admin intervention. Theses 
-bonds can be listed with varoius assets and can offer a different asset as the 
+other users, and cancel existing bond offers via admin intervention. These 
+bonds can be listed with various assets and can offer a different asset as the 
 reward.
 
 One bound offer may contain multiple identically priced bounds. Each bound will 
 offer an equal part of the reward to buyers. Buyers can opt to buy multiple 
 bounds to increase their share of the reward. Depending on the offer, buyers 
-may or may not get there initial investment on the bond back. If there is a 
+may or may not get their initial investment on the bond back. If there is a 
 reward for the bond, buyers will always get their share of the reward.
 
 ## Sample Use Case
