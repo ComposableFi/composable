@@ -441,44 +441,38 @@ impl PoolConfigBuilder {
 }
 
 fn equal_weight_vector_for(assets: &[MockCurrencyId]) -> Vec<Weight<MockCurrencyId, Perquintill>>{
-	let mut weights = Vec::new();
-
-	for asset in assets {
-		weights.push(Weight {
-			asset_id: *asset,
-			weight: Perquintill::from_rational(1, assets.len() as u64),
-		});
-	}
-
-	weights
+	assets.iter()
+		.map(|asset_id|
+			Weight {
+				asset_id: *asset_id,
+				weight: Perquintill::from_rational(1, assets.len() as u64),
+			}
+		)
+		.collect()
 }
 
 fn normalize_weights(non_normalized_weights: &mut Vec<Perquintill>) -> Vec<Perquintill> {
-	let sum = non_normalized_weights.iter().map(|weight| weight.deconstruct()).sum();
+	let sum = non_normalized_weights.iter()
+		.map(|weight| weight.deconstruct())
+		.sum();
 	
-	// println!("sum: {:?}", sum);
-	let mut weights: Vec<Perquintill> = Vec::new();
-	for weight in non_normalized_weights.iter_mut() {
-		weights.push(Perquintill::from_rational(weight.deconstruct(), sum));
-	}
-	// println!("normalized {:?}", weights);
-	// println!("one {:?}", Perquintill::one());
-	// let sum: u64 = weights.iter().map(|weight| weight.deconstruct()).sum();
-	// println!("sum {:?}", sum);
-	weights
+	non_normalized_weights.iter_mut()
+		.map(|weight| 
+			Perquintill::from_rational(weight.deconstruct(), sum)
+		)
+		.collect()
 }
 
-fn construct_weight_vector_from(assets: &[MockCurrencyId], perquintills: &[Perquintill]) -> Vec<Weight<MockCurrencyId, Perquintill>> {
-	let mut weights: Vec<Weight<MockCurrencyId, Perquintill>> = Vec::new();
-
-	for (asset, weight) in assets.iter().zip(perquintills.iter()) {
-		weights.push(Weight{
-			asset_id: *asset,
-			weight: *weight,
-		});
-	}
-
-	weights
+fn construct_weight_vector_from(assets: &[MockCurrencyId], weights: &[Perquintill]) -> Vec<Weight<MockCurrencyId, Perquintill>> {
+	assets.iter()
+		.zip(weights.iter())
+		.map(|(asset_id, weight)|
+			Weight {
+				asset_id: *asset_id,
+				weight: *weight
+			}
+		)
+		.collect()
 }
 
 fn create_pool_with(config: &PoolConfig<AccountId, MockCurrencyId, Perquintill>) -> u64 {
