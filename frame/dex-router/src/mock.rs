@@ -180,9 +180,11 @@ impl pallet_uniswap_v2::Config for Test {
 	type PoolId = PoolId;
 	type PalletId = ConstantProductAmmTestPalletID;
 	type Time = Timestamp;
+	type EnabledPoolTWAP = DexRouter;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = ();
 }
+
 parameter_types! {
   #[derive(codec::Encode, codec::Decode, codec::MaxEncodedLen, TypeInfo)]
 	pub const MaxHopsCount: u32 = 4;

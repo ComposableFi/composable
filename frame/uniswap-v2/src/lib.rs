@@ -70,7 +70,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
-			Time,
+			Contains, Time,
 		},
 		transactional, PalletId,
 	};
@@ -130,6 +130,9 @@ pub mod pallet {
 		/// The interval between TWAP computations.
 		#[pallet::constant]
 		type TWAPInterval: Get<MomentOf<Self>>;
+
+		/// Provider that tell us whether a specific pool TWAP is enabled or not.
+		type EnabledPoolTWAP: Contains<(CurrencyPair<Self::AssetId>, Self::PoolId)>;
 
 		/// Type allowing us to refer a pool.
 		type PoolId: FullCodec

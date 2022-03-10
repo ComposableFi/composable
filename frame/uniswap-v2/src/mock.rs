@@ -1,5 +1,10 @@
 use crate as pallet_uniswap_v2;
-use frame_support::{parameter_types, traits::Everything, PalletId};
+use composable_traits::defi::CurrencyPair;
+use frame_support::{
+	parameter_types,
+	traits::{Everything, IsInVec},
+	PalletId,
+};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
 use sp_arithmetic::traits::Zero;
@@ -11,13 +16,14 @@ use sp_runtime::{
 use system::EnsureRoot;
 
 pub type AssetId = u128;
-
-pub const MILLISECS_PER_BLOCK: u64 = 12000;
-
+pub type BlockNumber = u64;
 pub type Moment = composable_traits::time::Timestamp;
 
 pub const BTC: AssetId = 0;
 pub const USDT: AssetId = 1;
+
+pub const TWAP_INTERVAL: Moment = 10;
+pub const MILLISECS_PER_BLOCK: u64 = 12000;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -70,7 +76,7 @@ impl system::Config for Test {
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;
-	type BlockNumber = u64;
+	type BlockNumber = BlockNumber;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
@@ -142,7 +148,11 @@ impl orml_tokens::Config for Test {
 
 parameter_types! {
 	pub TestPalletID : PalletId = PalletId(*b"const_am");
-  pub const TWAPInterval: Moment = MILLISECS_PER_BLOCK * 10; // 1 mint
+  pub const TWAPInterval: Moment = MILLISECS_PER_BLOCK * TWAP_INTERVAL;
+  pub EnabledPoolTWAP: Vec<(CurrencyPair<AssetId>, PoolId)> =
+	vec![
+	  (CurrencyPair::new(BTC, USDT), 0),
+	];
 }
 
 impl pallet_uniswap_v2::Config for Test {
@@ -154,6 +164,7 @@ impl pallet_uniswap_v2::Config for Test {
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type Time = Timestamp;
+	type EnabledPoolTWAP = IsInVec<EnabledPoolTWAP>;
 	type TWAPInterval = TWAPInterval;
 	type PalletId = TestPalletID;
 	type WeightInfo = ();

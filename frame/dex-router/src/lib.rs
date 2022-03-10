@@ -24,7 +24,7 @@ pub mod pallet {
 		math::SafeArithmetic,
 	};
 	use core::fmt::Debug;
-	use frame_support::pallet_prelude::*;
+	use frame_support::{pallet_prelude::*, traits::Contains};
 	use sp_runtime::traits::{CheckedAdd, One, Zero};
 
 	#[pallet::config]
@@ -321,6 +321,17 @@ pub mod pallet {
 				}
 			}
 			Ok(dx_t)
+		}
+	}
+
+	impl<T: Config> Contains<(CurrencyPair<T::AssetId>, T::PoolId)> for Pallet<T> {
+		fn contains(&(asset_pair, pool_id): &(CurrencyPair<T::AssetId>, T::PoolId)) -> bool {
+			let go = || -> Result<bool, Error<T>> {
+				let route = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
+				let is_expected_pool = vec![DexRouteNode::Uniswap(pool_id)] == route;
+				Ok(is_expected_pool)
+			};
+			go().unwrap_or(false)
 		}
 	}
 }
