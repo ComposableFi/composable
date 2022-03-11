@@ -10,15 +10,16 @@ import {expect} from "chai";
  * @param wallet The wallet receiving the assets.
  * @param sudoKey The sudo key making the transaction.
  * @param assetIDs All assets to be minted to wallet.
+ * @param amount Mint amount.
  */
-export async function mintAssetsToWallet(wallet, sudoKey, assetIDs:number[]) {
+export async function mintAssetsToWallet(wallet, sudoKey, assetIDs:number[], amount=999999999999999) {
   for (const asset of assetIDs) {
     const {data: [result]} = await sendAndWaitForSuccess(
       api,
       sudoKey,
       api.events.sudo.Sudid.is,
       api.tx.sudo.sudo(
-        api.tx.assets.mintInto(asset, wallet.publicKey, 999999999999999)
+        api.tx.assets.mintInto(asset, wallet.publicKey, amount)
       )
     )
     expect(result.isOk).to.be.true;

@@ -52,13 +52,31 @@ describe("tx.stableSwapDex Tests", function () {
     // Setting timeout to 10 minutes
     this.timeout(15 * 60 * 1000);
     await mintAssetsToWallet(sudoKey, sudoKey, [ASSET_ID_PICA]);
-    await mintAssetsToWallet(walletPool1, sudoKey, [ASSET_ID_PICA, baseAssetIdPool1, quoteAssetIdPool1]);
-    await mintAssetsToWallet(walletPool2, sudoKey, [ASSET_ID_PICA]);
-    await mintAssetsToWallet(walletPool3, sudoKey, [ASSET_ID_PICA, baseAssetIdPool3, quoteAssetIdPool3]);
-    await mintAssetsToWallet(walletLP1, sudoKey, [ASSET_ID_PICA, baseAssetIdPool1, quoteAssetIdPool1]);
-    await mintAssetsToWallet(walletLP2, sudoKey, [ASSET_ID_PICA, baseAssetIdPool3, quoteAssetIdPool3]);
-    await mintAssetsToWallet(walletTrader1, sudoKey, [ASSET_ID_PICA, baseAssetIdPool1]);
-    await mintAssetsToWallet(walletTrader2, sudoKey, [ASSET_ID_PICA, baseAssetIdPool3, quoteAssetIdPool3]);
+    // Pool creator wallets.
+    if (testConfiguration.enabledTests.create__success.create1)
+      await mintAssetsToWallet(walletPool1, sudoKey, [ASSET_ID_PICA, baseAssetIdPool1, quoteAssetIdPool1]);
+    if (testConfiguration.enabledTests.create__success.create2)
+      await mintAssetsToWallet(walletPool2, sudoKey, [ASSET_ID_PICA, baseAssetIdPool1, quoteAssetIdPool1]);
+    if (testConfiguration.enabledTests.create__success.create3)
+      await mintAssetsToWallet(walletPool3, sudoKey, [ASSET_ID_PICA, baseAssetIdPool3, quoteAssetIdPool3]);
+    // LP Wallet for #1 Pool.
+    if (testConfiguration.enabledTests.add_liquidity__success.add_liquidity1 || testConfiguration.enabledTests.remove_liquidity__success.remove_liquidity1)
+      await mintAssetsToWallet(walletLP1, sudoKey, [ASSET_ID_PICA, baseAssetIdPool1, quoteAssetIdPool1]);
+    // LP Wallet for #2 Pool.
+    if (testConfiguration.enabledTests.add_liquidity__success.add_liquidity2
+      || testConfiguration.enabledTests.remove_liquidity__success.remove_liquidity2
+      || testConfiguration.enabledTests.remove_liquidity__failure.remove_liquidity1)
+      await mintAssetsToWallet(walletLP2, sudoKey, [ASSET_ID_PICA, baseAssetIdPool1, quoteAssetIdPool1]);
+    // Wallet for success trading tests
+    if (testConfiguration.enabledTests.buy__success.buy1
+      || testConfiguration.enabledTests.sell__success.sell1
+      || testConfiguration.enabledTests.swap__success.swap1)
+      await mintAssetsToWallet(walletTrader1, sudoKey, [ASSET_ID_PICA, baseAssetIdPool1]);
+    // Wallet for failure trading tests for pool without liquidity
+    if (testConfiguration.enabledTests.buy__failure.buy1
+      || testConfiguration.enabledTests.sell__failure.sell1
+      || testConfiguration.enabledTests.swap__failure.swap1)
+      await mintAssetsToWallet(walletTrader2, sudoKey, [ASSET_ID_PICA, baseAssetIdPool3, quoteAssetIdPool3]);
     console.debug("=>  Minting done!") // ToDo (D. Roth): Remove!
   });
 
@@ -103,8 +121,8 @@ describe("tx.stableSwapDex Tests", function () {
       // Setting timeout to 2 minutes
       this.timeout(2 * 60 * 1000);
       const pair = api.createType('ComposableTraitsDefiCurrencyPair', {
-        base: api.createType('u128', baseAssetIdPool3),
-        quote: api.createType('u128', quoteAssetIdPool3)
+        base: api.createType('u128', baseAssetIdPool1),
+        quote: api.createType('u128', quoteAssetIdPool1)
       });
       const amplificationCoefficient = api.createType('u16', 0);
       const fee = api.createType('Permill', 0);
@@ -168,8 +186,8 @@ describe("tx.stableSwapDex Tests", function () {
       // Setting timeout to 2 minutes
       this.timeout(2 * 60 * 1000);
       const parameterPoolId = api.createType('PoolId', poolIdNum1);
-      const baseAmount = api.createType('Balance', 100000002);
-      const quoteAmount = api.createType('Balance', 100000001);
+      const baseAmount = api.createType('Balance', 100000000);
+      const quoteAmount = api.createType('Balance', 100000000);
       const minMintAmount = api.createType('Balance', 100000000);
       const keepAlive = true;
       const {data: [resultAccountId, resultPoolId, resultAssetId, resultQuoteAmount, resultNumber4]} = await sendAndWaitForSuccess(
@@ -251,7 +269,7 @@ describe("tx.stableSwapDex Tests", function () {
     });
   });
 
-  describe('tx.stableSwapDex.buy Success Tests Failure Tests', function () {
+  describe('tx.stableSwapDex.buy Failure Tests', function () {
     if (!testConfiguration.enabledTests.buy__failure.enabled)
       return;
     it ('Should not be able to buy from pool without liquidity [Pool #3] (amount: 10000000)', async function() {
@@ -445,19 +463,29 @@ describe("tx.stableSwapDex Tests", function () {
     });
   });
 
+  /***
+   * stableSwapDex.removeLiquidity Success Tests
+   *
+   * The results are:
+   * 1. The transacting wallet.
+   * 2. The pool id from which liquidity was removed.
+   * 3. TBD
+   * 4. The amount of quote asset that were removed from the pool.
+   * 5. TBD
+   */
   describe('Remove Liquidity Success Tests', function() {
     if (!testConfiguration.enabledTests.remove_liquidity__success.enabled)
       return;
-    it ('Can remove liquidity from stableSwapDex pool [Pool #1] (amount: 10000000)', async function() {
+    it ('Can remove liquidity from stableSwapDex pool [Pool #1] (baseAmount: 100, quoteAmount: 10, minMintAmount: 10)', async function() {
       if (!testConfiguration.enabledTests.remove_liquidity__success.remove_liquidity1)
         this.skip();
       // Setting timeout to 2 minutes
       this.timeout(2 * 60 * 1000);
       const parameterPoolId = api.createType('PoolId', poolIdNum1);
-      const baseAmount = api.createType('Balance', 10000000);
-      const quoteAmount = api.createType('Balance', 10000000);
-      const minMintAmount = api.createType('Balance', 1);
-      const {data: [resultAccountId, resultPoolId, resultAssetId, resultBaseId, resultNumber4]} = await sendAndWaitForSuccess(
+      const baseAmount = api.createType('Balance', 100);
+      const quoteAmount = api.createType('Balance', 10);
+      const minMintAmount = api.createType('Balance', 10);
+      const {data: [resultAccountId, resultPoolId, resultAssetId, resultQuoteAmount, resultNumber4]} = await sendAndWaitForSuccess(
         api,
         walletLP1,
         api.events.stableSwapDex.LiquidityRemoved.is,
@@ -465,18 +493,18 @@ describe("tx.stableSwapDex Tests", function () {
       );
       expect(resultAccountId.toString()).to.be.equal(api.createType('AccountId32', walletLP1.address).toString());
       expect(resultPoolId.toNumber()).to.be.equal(poolIdNum1);
-      expect(resultBaseId.toNumber()).to.be.equal(baseAssetIdPool1);
+      expect(resultQuoteAmount.toNumber()).to.be.at.least(quoteAmount.toNumber());
     });
 
-    it ('Can remove liquidity from stableSwapDex pool [Pool #2] (amount: 10000000)', async function() {
+    it ('Can remove liquidity from stableSwapDex pool [Pool #2] (baseAmount: 100, quoteAmount: 10, minMintAmount: 10)', async function() {
       if (!testConfiguration.enabledTests.remove_liquidity__success.remove_liquidity2)
         this.skip();
       // Setting timeout to 2 minutes
       this.timeout(2 * 60 * 1000);
       const parameterPoolId = api.createType('PoolId', poolIdNum2);
-      const baseAmount = api.createType('Balance', 10000000);
-      const quoteAmount = api.createType('Balance', 10000000);
-      const minMintAmount = api.createType('Balance', 1);
+      const baseAmount = api.createType('Balance', 100);
+      const quoteAmount = api.createType('Balance', 10);
+      const minMintAmount = api.createType('Balance', 10);
       const {data: [resultAccountId, resultPoolId, resultQuoteAssetId, resultBaseId, resultNumber4]} = await sendAndWaitForSuccess(
         api,
         walletLP2,
@@ -493,25 +521,22 @@ describe("tx.stableSwapDex Tests", function () {
   describe('Remove Liquidity Failure Tests', function() {
     if (!testConfiguration.enabledTests.remove_liquidity__failure.enabled)
       return;
-    it('Should not be able to remove liquidity from pool without any [Pool #3] (amount: 10000000)', async function () {
+    it('Should not be able to remove liquidity from pool without any [Pool #3] (baseAmount: 100, quoteAmount: 10, minMintAmount: 10)', async function () {
       if (!testConfiguration.enabledTests.remove_liquidity__failure.remove_liquidity1)
         this.skip();
       // Setting timeout to 2 minutes
       this.timeout(2 * 60 * 1000);
       const parameterPoolId = api.createType('PoolId', poolIdNum3);
-      const baseAmount = api.createType('Balance', 10000000);
-      const quoteAmount = api.createType('Balance', 10000000);
-      const minMintAmount = api.createType('Balance', 1);
-      const {data: [resultAccountId, resultPoolId, resultAssetId, resultBaseId, resultNumber4]} = await sendAndWaitForSuccess(
+      const baseAmount = api.createType('Balance', 100);
+      const quoteAmount = api.createType('Balance', 10);
+      const minMintAmount = api.createType('Balance', 10);
+      const {data} = await sendAndWaitForSuccess(
         api,
         walletLP2,
         api.events.stableSwapDex.LiquidityRemoved.is,
         api.tx.stableSwapDex.removeLiquidity(parameterPoolId, baseAmount, quoteAmount, minMintAmount)
       );
-      // ToDo (D. Roth): This should check for an error!
-      expect(resultAccountId.toString()).to.be.equal(api.createType('AccountId32', walletLP2.address).toString());
-      expect(resultPoolId.toNumber()).to.be.equal(poolIdNum3);
-      expect(resultBaseId.toNumber()).to.be.equal(baseAssetIdPool1);
+      console.debug(typeof(data));
     });
   });
 });
