@@ -1,6 +1,5 @@
 pub mod primitive {
-	#[cfg(not(feature = "std"))]
-	use crate::string::{String, ToString};
+	use scale_info::prelude::string::{String, ToString};
 	use ibc::{
 		core::{
 			ics02_client::{client_type::ClientType as IbcClientType, height::Height as IbcHeight},

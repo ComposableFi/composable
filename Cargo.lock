@@ -7615,7 +7615,7 @@ dependencies = [
  "sp-runtime",
  "sp-std 4.0.0",
  "static_assertions",
- "strum 0.23.0",
+ "strum",
 ]
 
 [[package]]
@@ -14266,7 +14266,7 @@ dependencies = [
  "build-helper",
  "cargo_metadata",
  "sp-maybe-compressed-blob",
- "strum 0.23.0",
+ "strum",
  "tempfile",
  "toml",
  "walkdir",

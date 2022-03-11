@@ -46,19 +46,10 @@
 //! ## Usage
 //! Please refer to section "How to Interact with the Pallet" in the repository's README.md
 
-#[cfg(not(feature = "std"))]
-extern crate alloc;
-
-#[cfg(not(feature = "std"))]
-pub use alloc::{format, string};
-
-#[cfg(not(feature = "std"))]
-use string::String;
-
 use codec::{Decode, Encode};
 use frame_system::ensure_signed;
 pub use pallet::*;
-use scale_info::{prelude::vec, TypeInfo};
+use scale_info::{prelude::{vec, format, string::String}, TypeInfo};
 use sp_runtime::RuntimeDebug;
 use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 
