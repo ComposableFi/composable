@@ -27,13 +27,10 @@ pub type Weight = Perquintill;
 pub const MINIMUM_DEPOSIT: Balance = 1_000;
 pub const MAXIMUM_DEPOSIT: Balance = 10_000;
 
-pub const ALICE: AccountId = 0;
-pub const BOB: AccountId = 1;
-pub const CHARLIE: AccountId = 2;
-// pub const JEREMY: AccountId = 3;
-// pub const ACCOUNT_FREE_START: AccountId = JEREMY + 1;
-
-// pub const ACCOUNT_INITIAL_AMOUNT: u128 = 1_000_000;
+pub const ADMIN: AccountId = 0;
+pub const ALICE: AccountId = 1;
+pub const BOB: AccountId = 2;
+pub const CHARLIE: AccountId = 3;
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
