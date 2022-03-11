@@ -37,3 +37,6 @@ node_modules/
 rust-toolchain.toml
 
 .benchmarkRun
+
+# nix build output
+result

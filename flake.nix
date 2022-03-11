@@ -1,4 +1,6 @@
 {
+  description = "Composable Finance";
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     utils.url = "github:numtide/flake-utils";
@@ -15,14 +17,21 @@
           pkgs = nixpkgsFor.${system};
         in
         {
-          book = pkgs.runCommand "book" {} ''
-            cd book
-            mdbook build
-            mkdir -p $out
-            cp -r ./book/* $out
-          '';
+          book = pkgs.stdenv.mkDerivation {
+            name = "composable-book";
+            src = ./book;
+            buildInputs = [ pkgs.mdbook pkgs.tree ];
+            dontUnpack = true;
+            installPhase = ''
+              mkdir -p $out/book
+              cd $src
+              mdbook build --dest-dir $out/book
+              '';
+          };
         }
       );
+
+      defaultPackage = forAllSystems (system: self.packages.${system}.book);
 
       devShell = forAllSystems(system: with nixpkgsFor.${system}; mkShell {
         buildInputs = [ mdbook ];
