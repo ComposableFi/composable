@@ -1425,8 +1425,8 @@ pub mod pallet {
 			// TODO: add keep_alive
 		) -> Result<BorrowAmountOf<Self>, DispatchError> {
 			use crate::{
-				release_and_burn_from, transfer_and_burn_from, ReleaseAndBurnFromConfig,
-				TransferAndBurnFromConfig,
+				transfer_release_and_burn_from, TransferAndBurnFrom,
+				TransferReleaseAndBurnFrom,
 			};
 
 			let timestamp = BorrowTimestamp::<T>::get(market_id, beneficiary)
@@ -1466,52 +1466,33 @@ pub mod pallet {
 						Error::<T>::RepayAmountMustBeGreaterThanZero
 					);
 
-					// transfer interest, from -> beneficiary
-					// burn interest from market
-					transfer_and_burn_from::<T>(TransferAndBurnFromConfig {
+					// transfer borrow tokne interest, from -> market
+					// burn debt token interest from market
+					TransferAndBurnFrom::<T> {
 						transfer_asset_id: borrow_asset_id,
-						from_account: &from,
-						to_account: &beneficiary,
-
 						burn_asset_id: debt_asset_id,
-						burn_account: &market_account,
+
+						from_account: &from,
+						to_account: &market_account,
 
 						amount: beneficiary_interest_on_market,
 						keep_alive: true,
-					})?;
-
-					// transfer borrowed debt, from -> market
-					<T as Config>::MultiCurrency::transfer(
-						borrow_asset_id,
-						&from,
-						&market_account,
-						beneficiary_borrow_asset_debt,
-						true,
-					)?;
+					}
+					.run()?;
 
 					// release and burn borrowed debt from beneficiary
-					release_and_burn_from::<T>(ReleaseAndBurnFromConfig {
+					transfer_release_and_burn_from::<T>(TransferReleaseAndBurnFrom {
 						asset_id: borrow_asset_id,
-						who: &beneficiary,
+
+						from_account: &from,
+						to_account: &market_account,
+						burn_account: &beneficiary,
+
 						amount: beneficiary_borrow_asset_debt,
+
+						keep_alive: true,
 						best_effort: false,
 					})?;
-
-					// // pay off interest
-					// <T as Config>::MultiCurrency::transfer(
-					// 	borrow_asset_id,
-					// 	&from,
-					// 	&market_account,
-					// 	beneficiary_interest_on_market,
-					// 	true,
-					// )?;
-
-					// // burn interest from market
-					// <T as Config>::MultiCurrency::burn_from(
-					// 	debt_asset_id,
-					// 	&market_account,
-					// 	beneficiary_interest_on_market,
-					// )?;
 
 					// borrow no longer exists as it has been repaid in entirety, remove the
 					// timestamp
@@ -1546,81 +1527,50 @@ pub mod pallet {
 					if partial_repay_amount > beneficiary_interest_on_market {
 						// pay off all of the interest
 
-						// transfer interest, from -> beneficiary
+						// transfer interest, from -> market
 						// burn interest from market
-						transfer_and_burn_from::<T>(TransferAndBurnFromConfig {
+						TransferAndBurnFrom::<T> {
 							transfer_asset_id: borrow_asset_id,
-							from_account: &from,
-							to_account: &beneficiary,
-
 							burn_asset_id: debt_asset_id,
-							burn_account: &market_account,
+
+							from_account: &from,
+							to_account: &market_account,
 
 							amount: beneficiary_interest_on_market,
 							keep_alive: true,
-						})?;
-						// // transfer borrow asset from `from` to the market
-						// <T as Config>::MultiCurrency::transfer(
-						// 	borrow_asset_id,
-						// 	&from,
-						// 	&market_account,
-						// 	beneficiary_interest_on_market,
-						// 	true,
-						// )?;
-						// // burn interest from market
-						// <T as Config>::MultiCurrency::burn_from(
-						// 	debt_asset_id,
-						// 	&market_account,
-						// 	beneficiary_interest_on_market,
-						// )?;
+						}.run()?;
 
 						// amount remaining to repay the debt with
 						let amount_of_debt_balance_to_repay_with =
 							partial_repay_amount - beneficiary_interest_on_market;
 
-						// transfer remaining amount from `from` to the market
-						<T as Config>::MultiCurrency::transfer(
-							borrow_asset_id,
-							&from,
-							&market_account,
-							amount_of_debt_balance_to_repay_with,
-							true,
-						)?;
-
 						// release and burn from beneficiary
-						release_and_burn_from::<T>(ReleaseAndBurnFromConfig {
+						transfer_release_and_burn_from::<T>(TransferReleaseAndBurnFrom {
 							asset_id: borrow_asset_id,
-							who: &beneficiary,
+
+							from_account: &from,
+							to_account: &market_account,
+							burn_account: &beneficiary,
+
 							amount: amount_of_debt_balance_to_repay_with,
+
 							best_effort: false,
+							keep_alive: true,
 						})?;
 					} else {
-						// transfer interest, from -> beneficiary
+						// transfer interest, from -> market
 						// burn interest from market
-						transfer_and_burn_from::<T>(TransferAndBurnFromConfig {
+						TransferAndBurnFrom::<T> {
 							transfer_asset_id: borrow_asset_id,
-							from_account: &from,
-							to_account: &beneficiary,
-
 							burn_asset_id: debt_asset_id,
-							burn_account: &market_account,
+
+							from_account: &from,
+							to_account: &market_account,
 
 							amount: partial_repay_amount,
 							keep_alive: true,
-						})?;
-						// // pay off part of the interest
-						// <T as Config>::MultiCurrency::transfer(
-						// 	borrow_asset_id,
-						// 	&from,
-						// 	&market_account,
-						// 	partial_repay_amount,
-						// 	true,
-						// )?;
-						// <T as Config>::MultiCurrency::burn_from(
-						// 	debt_asset_id,
-						// 	&market_account,
-						// 	partial_repay_amount,
-						// )?;
+						}
+						.run()?;
 					};
 
 					Ok(partial_repay_amount)
@@ -1833,60 +1783,99 @@ pub mod pallet {
 
 // helpers
 
-pub(crate) struct ReleaseAndBurnFromConfig<'a, T: Config> {
+/// NOTE: `from_account` can be the same account as `to_account` (and in practice, always is). Be
+/// sure to release before transfering.
+pub(crate) struct TransferReleaseAndBurnFrom<'a, T: Config> {
+	/// The asset to transfer and burn.
 	asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
-	who: &'a T::AccountId,
-	amount: <T as DeFiComposableConfig>::Balance,
-	/// See the `best_effort` parameter for [`MutateHold::release`][frame_support::traits::fungibles::MutateHold::release].
-	best_effort: bool,
-}
 
-/// Release and burn the given [`amount`][ReleaseAndBurnFromConfig::amount] of
-/// [`asset_id`][ReleaseAndBurnFromConfig::asset_id] from [`who`][ReleaseAndBurnFromConfig::who].
-fn release_and_burn_from<T: Config>(cfg: ReleaseAndBurnFromConfig<T>) -> Result<(), DispatchError> {
-	use frame_support::traits::fungibles::{Mutate, MutateHold};
-	<T as Config>::MultiCurrency::release(cfg.asset_id, cfg.who, cfg.amount, cfg.best_effort)?;
-	<T as Config>::MultiCurrency::burn_from(cfg.asset_id, cfg.who, cfg.amount)?;
-
-	Ok(())
-}
-
-pub(crate) struct TransferAndBurnFromConfig<'a, T: Config> {
-	transfer_asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
+	/// The account to transfer the asset out of.
 	from_account: &'a T::AccountId,
+	/// The account to transfer the account into.
 	to_account: &'a T::AccountId,
-
-	burn_asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
+	/// The account to burn the asset from.
 	burn_account: &'a T::AccountId,
 
+	/// The amount to be transfered and burned.
 	amount: <T as DeFiComposableConfig>::Balance,
+
+	/// See the `best_effort` parameter for
+	/// [`MutateHold::release`][frame_support::traits::fungibles::MutateHold::release].
+	best_effort: bool,
 	// Whether or not to keep `from_account` alive.
 	keep_alive: bool,
 }
 
-/// Transfers [`amount`] of [`transfer_asset_id`] from [`from_account`] to [`to_account`], and then
-/// burns the same [`amount`] of [`debt_asset_id`] from [`burn_account`].
-///
-///
-/// [`borrow_asset_id`]: TransferAndBurnFromConfig::borrow_asset_id
-/// [`debt_asset_id`]: TransferAndBurnFromConfig::debt_asset_id
-/// [`from_account`]: TransferAndBurnFromConfig::from_account
-/// [`to_account`]: TransferAndBurnFromConfig::to_account
-/// [`burn_account`]: TransferAndBurnFromConfig::burn_account
-/// [`amount`]: TransferAndBurnFromConfig::amount
-fn transfer_and_burn_from<T: Config>(
-	cfg: TransferAndBurnFromConfig<T>,
+/// Release and burn the given [`amount`][ReleaseAndBurnFromConfig::amount] of
+/// [`asset_id`][ReleaseAndBurnFromConfig::asset_id] from [`who`][ReleaseAndBurnFromConfig::who].
+// pays debt
+fn transfer_release_and_burn_from<T: Config>(
+	cfg: TransferReleaseAndBurnFrom<T>,
 ) -> Result<(), DispatchError> {
-	use frame_support::traits::fungibles::{Mutate, Transfer};
-
+	use frame_support::traits::fungibles::{Mutate, MutateHold, Transfer};
+	// burn account: beneficiary
+	// from_account: from
+	// to account: market
+	<T as Config>::MultiCurrency::release(
+		cfg.asset_id,
+		cfg.burn_account,
+		cfg.amount,
+		cfg.best_effort,
+	)?;
 	<T as Config>::MultiCurrency::transfer(
-		cfg.transfer_asset_id,
+		cfg.asset_id,
 		cfg.from_account,
 		cfg.to_account,
 		cfg.amount,
 		cfg.keep_alive,
 	)?;
-	<T as Config>::MultiCurrency::burn_from(cfg.burn_asset_id, cfg.burn_account, cfg.amount)?;
-
+	<T as Config>::MultiCurrency::burn_from(cfg.asset_id, cfg.burn_account, cfg.amount)?;
 	Ok(())
 }
+
+pub(crate) struct TransferAndBurnFrom<'a, T: Config> {
+	/// The asset to be transfered.
+	transfer_asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
+	/// The asset to be burned.
+	burn_asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
+
+	/// The account to transfer the `transfer_asset_id` from.
+	from_account: &'a T::AccountId,
+	/// The account to transfer the `transfer_asset_id` to.
+	to_account: &'a T::AccountId,
+
+	/// How much asset to transfer and burn. The same amount is burned as is transfered.
+	amount: <T as DeFiComposableConfig>::Balance,
+
+	// Whether or not to keep `from_account` alive.
+	keep_alive: bool,
+}
+
+impl<'a, T: Config> TransferAndBurnFrom<'a, T> {
+	/// Transfers [`amount`] of [`transfer_asset_id`] from [`from_account`] to [`to_account`], and then
+	/// burns the same [`amount`] of [`debt_asset_id`] from [`to_account`].
+	///
+	///
+	/// [`borrow_asset_id`]: TransferAndBurnFromConfig::borrow_asset_id
+	/// [`debt_asset_id`]: TransferAndBurnFromConfig::debt_asset_id
+	/// [`from_account`]: TransferAndBurnFromConfig::from_account
+	/// [`to_account`]: TransferAndBurnFromConfig::to_account
+	/// [`amount`]: TransferAndBurnFromConfig::amount
+	// pays interest
+	pub(crate) fn run(self) -> Result<(), DispatchError> {
+		use frame_support::traits::fungibles::{Mutate, Transfer};
+
+		<T as Config>::MultiCurrency::transfer(
+			self.transfer_asset_id,
+			self.from_account,
+			self.to_account,
+			self.amount,
+			self.keep_alive,
+		)?;
+		<T as Config>::MultiCurrency::burn_from(self.burn_asset_id, self.to_account, self.amount)?;
+
+		Ok(())
+	}
+}
+
+// fn transfer_and_burn_from<T: Config>(cfg: TransferAndBurnFrom<T>) -> Result<(), DispatchError> {}
