@@ -14,7 +14,7 @@
 // limitations under the License.
 #![warn(missing_docs)]
 
-mod primitives;
+use ibc_primitives::*;
 
 use std::sync::Arc;
 
@@ -23,21 +23,13 @@ use ibc::{
 	core::ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
 	Height,
 };
-use jsonrpc_core::Result;
-use jsonrpc_derive::rpc;
-
-use crate::primitives::{
-	ClientStateProof, Coin, ConnectionProof, ConsensusProof, QueryChannelResponse,
-	QueryChannelsResponse, QueryClientStateResponse, QueryConnectionResponse,
-	QueryConnectionsResponse, QueryConsensusStateResponse, QueryDenomTraceResponse,
-	QueryDenomTracesResponse, QueryNextSequenceReceiveResponse, QueryPacketAcknowledgementResponse,
-	QueryPacketAcknowledgementsResponse, QueryPacketCommitmentResponse,
-	QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
-};
 use ibc_runtime_api::IbcRuntimeApi;
+use jsonrpc_core::{Error as JsonRpcError, ErrorCode, Result};
+use jsonrpc_derive::rpc;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::{generic::BlockId, traits::Block as BlockT};
+use tendermint_proto::Protobuf;
 
 /// IBC RPC methods.
 #[rpc]
@@ -52,7 +44,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	fn query_latest_height(&self) -> Result<u64>;
 
 	#[rpc(name = "ibc_queryHeaderAtHeight")]
-	fn query_header_at_height(&self, height: u64) -> Result<Header>;
+	fn query_header_at_height(&self, height: u32) -> Result<Header>;
 
 	#[rpc(name = "ibc_queryBalance")]
 	fn query_balance(&self, key_name: String) -> Result<Coin>;
@@ -64,10 +56,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	fn query_unbonding_period(&self) -> Result<u64>;
 
 	#[rpc(name = "ibc_queryClientState")]
-	fn query_client_state(&self, height: u64, client_id: String) -> Result<AnyClientState>;
-
-	#[rpc(name = "ibc_queryClientStateResponse")]
-	fn query_client_state_response(
+	fn query_client_state(
 		&self,
 		height: u64,
 		src_client_Id: String,
@@ -246,6 +235,17 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	) -> Result<QueryDenomTracesResponse>;
 }
 
+const RUNTIME_ERROR: i64 = 9000;
+
+/// Converts a runtime trap into an RPC error.
+fn runtime_error_into_rpc_error(err: impl std::fmt::Display) -> JsonRpcError {
+	JsonRpcError {
+		code: ErrorCode::ServerError(RUNTIME_ERROR),
+		message: "Runtime trapped".into(),
+		data: Some(err.to_string().into()),
+	}
+}
+
 /// An implementation of IBC specific RPC methods.
 pub struct IbcRpcHandler<C, B> {
 	client: Arc<C>,
@@ -275,11 +275,29 @@ where
 	}
 
 	fn query_latest_height(&self) -> Result<u64> {
-		todo!()
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(self.client.info().best_hash);
+
+		api.latest_height(&at)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error fetching height"))
 	}
 
-	fn query_header_at_height(&self, height: u64) -> Result<<Block as BlockT>::Header> {
-		todo!()
+	// TODO: Revisit after a header for the beefy light client is defined in ibc-rs
+	fn query_header_at_height(&self, height: u32) -> Result<<Block as BlockT>::Header> {
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?;
+		let at = BlockId::Hash(block_hash);
+		self.client
+			.header(at)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("header not found in chain"))
 	}
 
 	fn query_balance(&self, key_name: String) -> Result<Coin> {
@@ -294,16 +312,17 @@ where
 		todo!()
 	}
 
-	fn query_client_state(&self, height: u64, client_id: String) -> Result<AnyClientState> {
-		todo!()
-	}
-
-	fn query_client_state_response(
+	fn query_client_state(
 		&self,
 		height: u64,
-		src_client_Id: String,
+		client_id: String,
 	) -> Result<QueryClientStateResponse> {
-		todo!()
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(self.client.info().best_hash);
+		api.client_state(&at, height, client_id)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error querying client state"))
 	}
 
 	fn query_client_consensus_state(

@@ -18,10 +18,13 @@ jsonrpc-core-client = "18.0.0"
 jsonrpc-derive = "18.0.0"
 serde = { version = "1.0.136", features = ["derive"] }
 ibc = { version = "0.12.0" }
+ibc-primitives = { path = "../ibc-primitives" }
 
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+tendermint-proto = "0.23.5"
 
 ibc-runtime-api = { path = "../ibc-runtime-api" }

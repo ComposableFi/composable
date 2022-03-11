@@ -8,6 +8,7 @@ sp-api = { default-features = false, git = "https://github.com/paritytech/substr
 codec = { default-features = false, features = ["derive"], package = "parity-scale-codec", version = "2.0.0" }
 scale-info = { version = '1.0.0', default-features = false }
 ibc = { version = "0.12.0", default-features = false }
+ibc-primitives = { path = "../ibc-primitives", default-features = false }
 
 [features]
 default = ['std']
@@ -15,5 +16,6 @@ std = [
     'sp-api/std',
     'codec/std',
     'scale-info/std',
-    'ibc/std'
+    'ibc/std',
+    'ibc-primitives/std'
 ]
