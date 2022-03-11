@@ -11,6 +11,7 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, wh
 use frame_support::traits::{fungibles::Mutate, Get};
 use frame_system::RawOrigin;
 use sp_runtime::traits::{StaticLookup, TrailingZeroInput};
+use composable_traits::vesting::VestingWindow::BlockNumberBased;
 
 const FUNDING: u64 = 1_000_000_000_000_000;
 const PERIOD_COUNT: u32 = 10;
@@ -52,7 +53,7 @@ where
 	T: Config,
 	BalanceOf<T>: From<u64>,
 {
-	VestingSchedule { start, period, period_count, per_period }
+	VestingSchedule { window: BlockNumberBased {start, period}, period_count, per_period }
 }
 
 fn zero_account<T>() -> T::AccountId
