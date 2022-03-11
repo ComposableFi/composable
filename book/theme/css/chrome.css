@@ -405,10 +405,11 @@ ul#searchresults span.teaser em {
 } */
 
 .chapter li a.active {
-    color: var(--sidebar-active);
+    color: var(--sidebar-active) !important;
 }
 
 .chapter li > a.toggle {
+    font-size: 10px;
     cursor: pointer;
     display: block;
     margin-left: auto;
@@ -424,6 +425,14 @@ ul#searchresults span.teaser em {
 /* collapse the section */
 .chapter li:not(.expanded) + li > ol {
     display: none;
+}
+
+.chapter li.expanded + li > ol > li {
+    border-left: 1px solid #D3DCE4;
+}
+
+.chapter li.expanded + li > ol > li > a {
+    color: rgba(136,153,168,1.00);
 }
 
 .chapter li.chapter-item {

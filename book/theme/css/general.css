@@ -171,9 +171,11 @@ blockquote {
 }
 
 .chapter li.part-title {
-    color: var(--sidebar-fg);
+    color: rgba(136,153,168,1.00);;
     padding: 0 16px;
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 14px;
+    margin-top: 32px;
 }
 
 .result-no-output {

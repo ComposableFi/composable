@@ -18,9 +18,7 @@
 - [The Composable Parachain](./products/the-composable-parachain.md)
     - [The Composable Crowdloan](./products/the-composable-parachain/the-composable-crowdloan.md)
         - [Crowdloan How-To Guide for DOT](./products/the-composable-parachain/the-composable-crowdloan/crowdloan-how-to-guide-for-dot)
-
-
-
+        
 # 🪙  GOVERNANCE AND TOKENOMICS
 - [The Picasso (PICA) Network Token](./governance-and-tokenomics/the-picasso-pica-network-token.md)
 
