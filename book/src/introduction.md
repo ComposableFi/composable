@@ -1,11 +1,19 @@
-# 👋 Introduction
+# **👋** Introduction
+*Composable Finance: The Face of DeFi's Future*
 
-Composable Finance: The Face of DeFi's Future
+---
+
+![Composable Face](./composable-face.png)
+*Composable Finance: The Face of DeFi's Future*
+
+---
 
 ## The Vision
 **The future we are crafting is fully interoperable by its design and seamless in utility.**
 
 A natural evolution in a **cross-chain world** entails developers and users interacting seamlessly regardless of where their assets lie. That’s why our team at Composable Finance is on a mission to build a **fully interoperable future** capable of offering developers and end-users alike **seamless user experience and utility.**
+
+---
 
 ## The Problem
 DeFi is still flourishing. Many top DeFi protocols are still seeing an influx of users and high total value locked (TVL), while stablecoins in circulation are at an all-time high. However, the industry is siloed and fragmented, and scaling the industry is further perpetuating the fragmentations as projects explore L2s and other L1 networks to launch. Current interoperability solutions for cross-layer and cross-chain communication and value transfer are lacking in number and efficiency. Yet, all DeFi participants need infrastructure to build and use the most cost-effective and performant applications.

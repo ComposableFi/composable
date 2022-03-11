@@ -1,4 +1,4 @@
-/* add Robot */
+/* add Roboto */
 
 
 /* roboto-100 - latin */
@@ -172,7 +172,53 @@
 /* end add roboto */
 
 
+/* custom */
+hr {
+    border: 0;
+    height: 1px;
+    background-color: rgba(211,220,228,1.00);
+    margin: 32px 0;
+}
 
+
+/* we only have one theme so we do not let users customize the theme setting */
+#theme-toggle {
+    display: none;
+}
+
+
+/* headers */
+h1 {
+    font-size: 48px;
+    margin: 0;
+}
+
+/* subtitles */
+h1 + p em {
+    font-style: normal;
+    color: #8899A8;
+}
+
+/* make emoji relatively small */
+h1 strong {
+    font-size: 0.5em;
+    display: inline-block;
+    transform: translateY(-0.25em);
+}
+
+h2 {
+    font-size: 32px;
+}
+
+
+/* img caption */
+img + em {
+    font-style: normal;
+    color: #8899A8;
+    font-size: 12px;
+    display: block;
+    text-align: center;
+}
 
 
 
