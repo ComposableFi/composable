@@ -184,9 +184,20 @@ jobs:
         with:
           node-version: 14.x
 
-      - name: Cargo fmt
+      - name: Cargo format (Rust)
         run: |
           cargo +nightly fmt --all -- --check
+
+      - name: Taplo format (Toml)
+        run: |
+          cargo install taplo-cli
+          taplo lint --warn-as-error
+          taplo fmt --warn-as-error
+          if ! git diff-index --quiet HEAD; then
+            exit 1
+          else
+            echo "Everything is fine!"
+          fi
       
       - name: Hadolint
         env:
