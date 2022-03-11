@@ -746,6 +746,8 @@ impl vesting::Config for Runtime {
 	type MinVestedTransfer = MinVestedTransfer;
 	type VestedTransferOrigin = system::EnsureSigned<AccountId>;
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
+	type Moment = Moment;
+	type Time = Timestamp;
 }
 
 parameter_types! {
