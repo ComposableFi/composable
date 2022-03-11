@@ -172,7 +172,7 @@ blockquote {
 
 .chapter li.part-title {
     color: var(--sidebar-fg);
-    margin: 5px 0px;
+    padding: 0 16px;
     font-weight: bold;
 }
 
