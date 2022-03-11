@@ -19,7 +19,7 @@ version = "2.0.0"
 # FRAME
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16"  }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.16' }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 # substrate primitives
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
@@ -35,7 +35,7 @@ composable-traits = {  path = "../composable-traits", default-features = false }
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 proptest = "1.0.0"
-composable-tests-helpers = { version = "0.0.1", path = "../composable-tests-helpers", default-features = false }
+composable-tests-helpers = { version = "0.0.1", path = "../composable-tests-helpers" }
 
 [features]
 default = ["std"]

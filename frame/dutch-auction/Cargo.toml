@@ -28,7 +28,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 num-traits = { version = "0.2.14", default-features = false }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16"  }
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.16' }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 composable-traits = {  path = "../composable-traits", default-features = false }
 
 [dev-dependencies]
@@ -36,9 +36,9 @@ proptest = "1.0"
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 pallet-currency-factory = { path = "../currency-factory" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-pallet-assets = { path = '../assets', default-features = false}
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
-hex-literal = {version = "0.3.3", default-features = false }
+pallet-assets = { path = '../assets' }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6" }
+hex-literal = { version = "0.3.3" }
 composable-tests-helpers = {  path = "../composable-tests-helpers" }
 
 [package.metadata.cargo-udeps.ignore]

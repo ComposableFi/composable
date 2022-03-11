@@ -35,7 +35,7 @@ composable-maths = { path = "../composable-maths", default-features = false }
 plotters = { version = "0.3", optional = true }
 
 [dev-dependencies]
-composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
+composable-tests-helpers = { path = "../composable-tests-helpers" }
 pallet-currency-factory = { path = "../currency-factory" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6" }
