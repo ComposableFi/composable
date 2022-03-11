@@ -87,6 +87,9 @@ primitives = { path = "../primitives", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 
+# ibc support
+pallet-ibc = { path = "../../bridges/substrate-ibc", default-features = false }
+
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.19" }
 transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.19" }
@@ -133,7 +136,6 @@ orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-l
 
 # simnode support
 simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, rev = "a1e52d5ae48282834c89dd61e88e6db47d05108f" }
-
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
@@ -259,6 +261,7 @@ std = [
   "liquidations/std",
   "simnode-apis/std",
   "pablo/std",
-  "dex-router/std",
+  "dex-router/std"
+  "pallet-ibc/std"
 ]
 wasm-builder = []

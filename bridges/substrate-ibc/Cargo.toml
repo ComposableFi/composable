@@ -1,0 +1,54 @@
+[package]
+name = "pallet-ibc"
+version = "0.0.1"
+authors = ["Composable Developers"]
+homepage = "https://composable.finance"
+edition = "2021"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+log = { version = "0.4.0", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, optional = true }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
+
+ibc = { version = "0.12.0", default-features = false }
+prost-types = { version = "0.9", default-features = false }
+tendermint-proto = "0.23.5"
+
+[dev-dependencies]
+hex = '0.4.0'
+sha2 = '0.9.3'
+serde = { version = "1.0" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+chrono = "0.4.19"
+
+[features]
+default = ['std']
+std = [
+	'codec/std',
+	'log/std',
+	"scale-info/std",
+	"frame-benchmarking/std",
+	'frame-support/std',
+	'frame-system/std',
+	'sp-runtime/std',
+	'sp-core/std',
+	'sp-std/std',
+	'sp-io/std',
+	'ibc/std',
+	'prost-types/std'
+]
+
+runtime-benchmarks = ["frame-benchmarking"]
+try-runtime = ["frame-support/try-runtime"]

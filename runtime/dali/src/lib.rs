@@ -1030,6 +1030,18 @@ impl dex_router::Config for Runtime {
 	type WeightInfo = weights::dex_router::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	pub const ExpectedBlockTime: u64 = SLOT_DURATION;
+}
+
+impl pallet_ibc::Config for Runtime {
+	type TimeProvider = Timestamp;
+	type Event = Event;
+	const INDEXING_PREFIX: &'static [u8] = b"ibc";
+	const CONNECTION_PREFIX: &'static [u8] = b"ibc";
+	type ExpectedBlockTime = ExpectedBlockTime;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1091,6 +1103,9 @@ construct_runtime!(
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
+
+		// IBC
+		Ibc:: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 101
 	}
 );
 
