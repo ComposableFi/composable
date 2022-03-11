@@ -1,5 +1,4 @@
 pub mod primitive {
-	use scale_info::prelude::string::{String, ToString};
 	use ibc::{
 		core::{
 			ics02_client::{client_type::ClientType as IbcClientType, height::Height as IbcHeight},
@@ -11,6 +10,7 @@ pub mod primitive {
 		},
 		timestamp::Timestamp as IbcTimestamp,
 	};
+	use scale_info::prelude::string::{String, ToString};
 	use sp_std::{str::FromStr, vec::Vec};
 
 	use codec::{Decode, Encode};

@@ -60,7 +60,6 @@ impl system::Config for Test {
 	type MaxConsumers = ();
 }
 
-
 pub struct MockUnixTime;
 
 // maybe future to fix

@@ -4,11 +4,13 @@
 #![allow(non_camel_case_types)]
 #![allow(dead_code)]
 
-
 use codec::{Decode, Encode};
 use frame_system::ensure_signed;
 pub use pallet::*;
-use scale_info::{prelude::{vec, format, string::String}, TypeInfo};
+use scale_info::{
+	prelude::{format, string::String, vec},
+	TypeInfo,
+};
 use sp_runtime::RuntimeDebug;
 use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 
