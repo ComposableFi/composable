@@ -88,7 +88,7 @@ vault = { package = "pallet-vault", path = "../../frame/vault", default-features
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 
 # ibc support
-pallet-ibc = { path = "../../bridges/substrate-ibc", default-features = false }
+pallet-ibc = { path = "../../bridges/pallet-ibc", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.19" }
