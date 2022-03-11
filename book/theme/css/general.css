@@ -208,6 +208,7 @@ h1 strong {
 
 h2 {
     font-size: 32px;
+    margin: 0;
 }
 
 
@@ -218,6 +219,10 @@ img + em {
     font-size: 12px;
     display: block;
     text-align: center;
+}
+
+img {
+    border-radius: 4px;
 }
 
 
@@ -236,6 +241,7 @@ html {
     color: var(--fg);
     background-color: var(--bg);
     text-size-adjust: none;
+    -webkit-font-smoothing: antialiased;
 }
 
 body {
@@ -260,8 +266,8 @@ h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
 .hide-boring .boring { display: none; }
 .hidden { display: none !important; }
 
-h2, h3 { margin-top: 2.5em; }
-h4, h5 { margin-top: 2em; }
+/* h2, h3 { margin-top: 2.5em; }
+h4, h5 { margin-top: 2em; } */
 
 .header + .header h3,
 .header + .header h4,
@@ -311,9 +317,9 @@ h6:target::before {
     margin-right: auto;
     max-width: var(--content-max-width);
 }
-.content p { line-height: 1.45em; }
-.content ol { line-height: 1.45em; }
-.content ul { line-height: 1.45em; }
+.content p { line-height: 1.5em; }
+.content ol { line-height: 1.5em; }
+.content ul { line-height: 1.5em; }
 .content a { text-decoration: none; }
 .content a:hover { text-decoration: underline; }
 .content img, .content video { max-width: 100%; }
@@ -397,7 +403,7 @@ blockquote {
 .chapter li.part-title {
     color: rgb(136, 153, 168);
     padding: 0 16px;
-    font-weight: 400;
+    font-weight: 500;
     font-size: 12px;
     margin-top: 32px;
     text-transform: uppercase;

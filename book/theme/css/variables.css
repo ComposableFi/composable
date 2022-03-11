@@ -3,7 +3,7 @@
 
 :root {
     --sidebar-width: 300px;
-    --page-padding: 15px;
+    --page-padding: 32px;
     --content-max-width: 750px;
     --menu-bar-height: 50px;
 }
@@ -101,7 +101,8 @@
     --sidebar-active: rgb(192, 42, 142);
     --sidebar-spacer: #f4f4f4;
 
-    --scrollbar: #8F8F8F;
+    --scrollbar: var(--sidebar-bg);
+
 
     --icons: #747474;
     --icons-hover: #000000;
