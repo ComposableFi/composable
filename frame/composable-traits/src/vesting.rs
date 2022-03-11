@@ -22,6 +22,7 @@ pub trait VestedTransfer {
 }
 
 /// Vesting window type for the vesting schedules.
+#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub enum VestingWindow<BlockNumber, Moment> {
 	MomentBased {
