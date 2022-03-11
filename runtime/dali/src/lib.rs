@@ -1014,6 +1014,24 @@ impl liquidity_bootstrapping::Config for Runtime {
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 }
 
+parameter_types! {
+  #[derive(codec::Encode, codec::Decode, codec::MaxEncodedLen, TypeInfo)]
+	pub const MaxHopsCount: u32 = 4;
+	pub DexRouterId : PalletId = PalletId(*b"dex_rout");
+}
+
+impl dex_router::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type MaxHopsInRoute = MaxHopsCount;
+	type PoolId = PoolId;
+	type StableSwapDex = StableSwapDex;
+	type ConstantProductDex = ConstantProductDex;
+	type PalletId = DexRouterId;
+	type WeightInfo = weights::dex_router::WeightInfo<Runtime>;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1072,9 +1090,10 @@ construct_runtime!(
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
 		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
-	  ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
-	  StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
-	LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
+		ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
+		StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
+		LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
+		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 68,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1146,9 +1165,10 @@ mod benches {
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
 		//FIXME: broken with dali [lending, Lending]
-	  [uniswap_v2, ConstantProductDex]
-	  [curve_amm, StableSwapDex]
-	  [liquidity_bootstrapping, LiquidityBootstrapping]
+		[uniswap_v2, ConstantProductDex]
+		[curve_amm, StableSwapDex]
+		[liquidity_bootstrapping, LiquidityBootstrapping]
+		[dex_router, DexRouter]
 	);
 }
 

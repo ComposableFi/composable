@@ -6,6 +6,7 @@ pub mod collective;
 pub mod crowdloan_rewards;
 pub mod currency_factory;
 pub mod democracy;
+pub mod dex_router;
 pub mod dutch_auction;
 pub mod frame_system;
 pub mod identity;

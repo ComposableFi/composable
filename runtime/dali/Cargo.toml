@@ -76,6 +76,7 @@ composable-traits = { path = "../../frame/composable-traits", default-features =
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
 curve-amm = { package = "pallet-curve-amm", path = "../../frame/curve-amm", default-features = false }
+dex-router = { package = "pallet-dex-router", path = "../../frame/dex-router", default-features = false }
 dutch-auction = { package = "pallet-dutch-auction", path = "../../frame/dutch-auction", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false }
 lending = { package = "pallet-lending", path = "../../frame/lending", default-features = false }
@@ -180,6 +181,7 @@ runtime-benchmarks = [
   "uniswap-v2/runtime-benchmarks",
   "curve-amm/runtime-benchmarks",
   "liquidity-bootstrapping/runtime-benchmarks",
+  "dex-router/runtime-benchmarks",
 ]
 sim-node = []
 std = [
@@ -258,5 +260,6 @@ std = [
   "uniswap-v2/std",
   "curve-amm/std",
   "liquidity-bootstrapping/std",
+  "dex-router/std",
 ]
 wasm-builder = []

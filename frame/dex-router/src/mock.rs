@@ -55,7 +55,7 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
-pub type AccountId = u64;
+pub type AccountId = u128;
 
 #[allow(dead_code)]
 pub static ALICE: AccountId = 1;
@@ -112,7 +112,7 @@ impl pallet_balances::Config for Test {
 pub type Balance = u128;
 pub type AssetId = u128;
 pub type Amount = i128;
-pub type PoolId = u32;
+pub type PoolId = u128;
 
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: AssetId| -> Balance {
@@ -167,6 +167,7 @@ impl pallet_uniswap_v2::Config for Test {
 parameter_types! {
   #[derive(codec::Encode, codec::Decode, codec::MaxEncodedLen, TypeInfo)]
 	pub const MaxHopsCount: u32 = 4;
+	pub TestPalletID: PalletId = PalletId(*b"dex_rout");
 }
 
 impl dex_router::Config for Test {
@@ -174,9 +175,10 @@ impl dex_router::Config for Test {
 	type AssetId = AssetId;
 	type Balance = Balance;
 	type MaxHopsInRoute = MaxHopsCount;
-	type PoolId = u32;
+	type PoolId = PoolId;
 	type StableSwapDex = StableSwapAmm;
 	type ConstantProductDex = ConstantProductAmm;
+	type PalletId = TestPalletID;
 	type WeightInfo = ();
 }
 
