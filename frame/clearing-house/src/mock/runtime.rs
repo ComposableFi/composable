@@ -39,10 +39,6 @@ pub type Balance = u128;
 pub type AssetId = u128;
 pub type Amount = i64;
 
-parameter_types! {
-	pub const ClearingHouseId: PalletId = PalletId(*b"test_pid");
-}
-
 impl system::Config for Runtime {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
@@ -135,6 +131,10 @@ impl pallet_assets::Config for Runtime {
 impl DeFiComposableConfig for Runtime {
 	type Balance = Balance;
 	type MayBeAssetId = AssetId;
+}
+
+parameter_types! {
+	pub const ClearingHouseId: PalletId = PalletId(*b"test_pid");
 }
 
 impl clearing_house::Config for Runtime {
