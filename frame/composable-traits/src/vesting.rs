@@ -21,8 +21,7 @@ pub trait VestedTransfer {
 	) -> DispatchResult;
 }
 
-/// Vesting type for the vesting schedules.
-#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
+/// Vesting window type for the vesting schedules.
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub enum VestingWindow<BlockNumber, Moment> {
 	MomentBased {
@@ -58,7 +57,6 @@ pub enum VestingWindowResult<BlockNumber, Moment> {
 	BlockNumberResult(BlockNumber),
 }
 
-/// Impl for VestingSchedule Util with BlockNumber as the TimeMeasure
 impl<
 		BlockNumber: AtLeast32Bit + Copy,
 		Moment: AtLeast32Bit + Copy,
@@ -125,9 +123,8 @@ impl<
 
 #[cfg(test)]
 mod tests {
-	use crate::vesting::VestingWindow::{BlockNumberBased, MomentBased};
-	// Note this useful idiom: importing names from outer (for mod tests) scope.
 	use super::*;
+	use crate::vesting::VestingWindow::{BlockNumberBased, MomentBased};
 
 	#[test]
 	fn test_is_zero_period() {
