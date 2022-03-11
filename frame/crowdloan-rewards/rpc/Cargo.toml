@@ -1,10 +1,10 @@
 [package]
-name = "crowdloan-rewards-rpc"
-version = "0.0.1"
 authors = ["Composable Developers"]
-homepage = "https://composable.finance"
 edition = "2021"
+homepage = "https://composable.finance"
+name = "crowdloan-rewards-rpc"
 rust-version = "1.56"
+version = "0.0.1"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -20,12 +20,14 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 # local
-composable-traits = { path = "../../composable-traits" }
 composable-support = { path = "../../composable-support" }
+composable-traits = { path = "../../composable-traits" }
 crowdloan-rewards-runtime-api = { path = "../runtime-api" }
 
 # SCALE
-codec = { features = ["derive"], package = "parity-scale-codec", version = "2.0.0" }
+codec = { features = [
+  "derive",
+], package = "parity-scale-codec", version = "2.0.0" }
 scale-info = { version = "1.0", features = ["derive"] }
 
 # rpc
