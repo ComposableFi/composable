@@ -745,7 +745,7 @@ impl vesting::Config for Runtime {
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
 	type VestedTransferOrigin = system::EnsureSigned<AccountId>;
-	type WeightInfo = ();
+	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 }
 
 parameter_types! {
