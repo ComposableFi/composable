@@ -98,7 +98,7 @@
     --sidebar-bg: rgb(245, 247, 249);
     --sidebar-fg: rgb(92, 105, 117);
     --sidebar-non-existant: #aaaaaa;
-    --sidebar-active: rgb(192, 42, 142);;
+    --sidebar-active: rgb(192, 42, 142);
     --sidebar-spacer: #f4f4f4;
 
     --scrollbar: #8F8F8F;
@@ -106,7 +106,7 @@
     --icons: #747474;
     --icons-hover: #000000;
 
-    --links: #20609f;
+    --links: rgb(192, 42, 142);
 
     --inline-code-color: #301900;
 

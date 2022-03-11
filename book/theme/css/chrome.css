@@ -322,6 +322,9 @@ ul#searchresults span.teaser em {
     overscroll-behavior-y: contain;
     background-color: var(--sidebar-bg);
     color: var(--sidebar-fg);
+    border-right-width: 1px;
+    border-right-color: rgb(211, 220, 228);
+    border-right-style: solid;
 }
 .sidebar-resizing {
     -moz-user-select: none;
@@ -342,7 +345,7 @@ ul#searchresults span.teaser em {
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 10px 0 10px 24px;
+    padding: 0 0 0 24px;
 }
 .sidebar .sidebar-resize-handle {
     position: absolute;
@@ -396,10 +399,10 @@ ul#searchresults span.teaser em {
     text-decoration: none;
     color: var(--sidebar-fg);
 }
-
+/* 
 .chapter li a:hover {
     color: var(--sidebar-active);
-}
+} */
 
 .chapter li a.active {
     color: var(--sidebar-active);
