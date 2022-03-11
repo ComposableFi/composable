@@ -12,6 +12,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
 log = { version = "0.4.0", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+pallet-mmr = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, optional = true }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
@@ -25,13 +26,13 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 ibc = { version = "0.12.0", default-features = false }
 prost-types = { version = "0.9", default-features = false }
 tendermint-proto = "0.23.5"
-#
-#[dev-dependencies]
-#hex = '0.4.0'
-#sha2 = '0.9.3'
-#serde = { version = "1.0" }
-#sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-#chrono = "0.4.19"
+
+[dev-dependencies]
+hex = '0.4.0'
+sha2 = '0.9.3'
+serde = { version = "1.0" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+chrono = "0.4.19"
 
 [features]
 default = ['std']

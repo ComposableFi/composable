@@ -10,9 +10,10 @@ use ibc::core::{
 	ics24_host::identifier::PortId,
 };
 
+// TODO: Revisit when port binding is implemented
 impl<T: Config> CapabilityReader for Context<T> {
 	fn get_capability(&self, _name: &CapabilityName) -> Result<Capability, ICS05Error> {
-		todo!()
+		Err(ICS05Error::implementation_specific())
 	}
 
 	fn authenticate_capability(
@@ -20,7 +21,7 @@ impl<T: Config> CapabilityReader for Context<T> {
 		_name: &CapabilityName,
 		_capability: &Capability,
 	) -> Result<(), ICS05Error> {
-		todo!()
+		Err(ICS05Error::implementation_specific())
 	}
 }
 

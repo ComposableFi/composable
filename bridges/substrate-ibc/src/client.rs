@@ -158,7 +158,7 @@ impl<T: Config> ClientReader for Context<T> {
 		Height::new(0, current_height.unwrap())
 	}
 
-	// TODO: Define consenssus state for substrate chains in ibc-rs and modify this after
+	// TODO: Revisit after consensus state for substrate chains is defined in ibc-rs
 	fn host_consensus_state(&self, _height: Height) -> Result<AnyConsensusState, ICS02Error> {
 		Err(ICS02Error::implementation_specific())
 	}

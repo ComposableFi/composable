@@ -396,12 +396,12 @@ impl<T: Config> ChannelReader for Context<T> {
 		ts.unwrap()
 	}
 
-	// TODO: Define consenssus state for substrate chains in ibc-rs and modify this after
+	// TODO: Revisit after consensus state for substrate chains is defined in ibc-rs
 	fn host_consensus_state(&self, _height: Height) -> Result<AnyConsensusState, ICS04Error> {
 		Err(ICS04Error::implementation_specific())
 	}
 
-	// TODO: Define consenssus state for substrate chains in ibc-rs and modify this after
+	// TODO: Revisit after consensus state for substrate chains is defined in ibc-rs
 	fn pending_host_consensus_state(&self) -> Result<AnyConsensusState, ICS04Error> {
 		Err(ICS04Error::implementation_specific())
 	}

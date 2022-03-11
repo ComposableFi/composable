@@ -5286,7 +5286,7 @@ dependencies = [
  "pallet-im-online",
  "pallet-indices",
  "pallet-membership",
- "pallet-mmr-primitives",
+ "pallet-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17)",
  "pallet-multisig",
  "pallet-nicks",
  "pallet-offences",
@@ -7278,8 +7278,8 @@ dependencies = [
  "k256",
  "log 0.4.16",
  "pallet-beefy",
- "pallet-mmr",
- "pallet-mmr-primitives",
+ "pallet-mmr 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17)",
+ "pallet-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17)",
  "pallet-session",
  "parity-scale-codec",
  "scale-info",
@@ -7615,7 +7615,7 @@ dependencies = [
  "sp-runtime",
  "sp-std 4.0.0",
  "static_assertions",
- "strum",
+ "strum 0.23.0",
 ]
 
 [[package]]
@@ -7933,7 +7933,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
- "pallet-mmr-primitives",
+ "pallet-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17)",
  "parity-scale-codec",
  "serde",
  "sp-api",
@@ -9311,7 +9311,7 @@ dependencies = [
  "beefy-primitives",
  "frame-benchmarking",
  "frame-system-rpc-runtime-api",
- "pallet-mmr-primitives",
+ "pallet-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17)",
  "pallet-transaction-payment-rpc-runtime-api",
  "polkadot-primitives",
  "polkadot-runtime",
@@ -10024,7 +10024,7 @@ dependencies = [
  "pallet-im-online",
  "pallet-indices",
  "pallet-membership",
- "pallet-mmr-primitives",
+ "pallet-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17)",
  "pallet-multisig",
  "pallet-nicks",
  "pallet-offences",
@@ -10206,7 +10206,7 @@ dependencies = [
  "lru 0.7.5",
  "pallet-babe",
  "pallet-im-online",
- "pallet-mmr-primitives",
+ "pallet-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17)",
  "pallet-staking",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-db",
@@ -11146,8 +11146,8 @@ dependencies = [
  "pallet-im-online",
  "pallet-indices",
  "pallet-membership",
- "pallet-mmr",
- "pallet-mmr-primitives",
+ "pallet-mmr 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17)",
+ "pallet-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17)",
  "pallet-multisig",
  "pallet-offences",
  "pallet-proxy",
@@ -14104,6 +14104,15 @@ dependencies = [
 
 [[package]]
 name = "strum"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7ac893c7d471c8a21f31cfe213ec4f6d9afeed25537c772e08ef3f005f8729e"
+dependencies = [
+ "strum_macros 0.22.0",
+]
+
+[[package]]
+name = "strum"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cae14b91c7d11c9a851d3fbc80a963198998c2a64eec840477fa92d8ce9b70bb"
@@ -14266,7 +14275,7 @@ dependencies = [
  "build-helper",
  "cargo_metadata",
  "sp-maybe-compressed-blob",
- "strum",
+ "strum 0.23.0",
  "tempfile",
  "toml",
  "walkdir",
@@ -15899,7 +15908,7 @@ dependencies = [
  "pallet-im-online",
  "pallet-indices",
  "pallet-membership",
- "pallet-mmr-primitives",
+ "pallet-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17)",
  "pallet-multisig",
  "pallet-nicks",
  "pallet-offences",
