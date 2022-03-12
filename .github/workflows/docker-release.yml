@@ -63,6 +63,10 @@ jobs:
     - name: Build Docker image
       run: 
         RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make containerize
+        RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make publish
+
+    - name: Push Docker Image
+      run: 
         RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make push
 
     # - name: Image Tag Version
