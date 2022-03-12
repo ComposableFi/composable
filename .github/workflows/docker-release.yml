@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: 
-      - multi-arch-test
+      - docker-build-test
     tags: 
       - '*'
       
