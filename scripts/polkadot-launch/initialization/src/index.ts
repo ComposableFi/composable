@@ -16,6 +16,7 @@ interface IAsset {
     name: string;
     composable_id: number;
     basilisk_id: number;
+    decimals: number;
 }
 
 async function main() {
@@ -105,7 +106,7 @@ async function doComposableAssetsMapping(
         await sleep(1000);
     }
 
-    for (const { name, composable_id } of assets) {
+    for (const { name, composable_id, basilisk_id, decimals } of assets) {
         const basiliskAssetIdOpt = await basiliskApi.query.assetRegistry
             .assetIds(name);
         const basiliskAssetId: AssetId | null = basiliskAssetIdOpt.unwrapOr(null);
@@ -124,17 +125,19 @@ async function doComposableAssetsMapping(
             { parents: 0, interior: junctionsV2 },
         );
         await composableApi.tx.assetsRegistry
-            .approveAssetsMappingCandidate(composable_id, location)
+            .approveAssetsMappingCandidate(composable_id, basilisk_id, location, decimals)
             .signAndSend(localAdmin, { nonce: -1 }, ({ status }: ISubmittableResult) => {
                 if (status.isInBlock) {
-                    console.log(`Current status of approveAssetsMappingCandidate(${composable_id}, ${location}) is ${status}`);
+                    let function_call = `approveAssetsMappingCandidate(${composable_id}, ${basilisk_id}, ${location}, ${decimals})`;
+                    console.log(`Current status of ${function_call} is ${status}`);
                 }
             });
         await composableApi.tx.assetsRegistry
-            .approveAssetsMappingCandidate(composable_id, location)
+            .approveAssetsMappingCandidate(composable_id, basilisk_id, location, decimals)
             .signAndSend(foreignAdmin, { nonce: -1 }, ({ status }: ISubmittableResult) => {
                 if (status.isInBlock) {
-                    console.log(`Current status of approveAssetsMappingCandidate(${composable_id}, ${location}) is ${status}`);
+                    let function_call = `approveAssetsMappingCandidate(${composable_id}, ${basilisk_id}, ${location}, ${decimals})`;
+                    console.log(`Current status of ${function_call} is ${status}`);
                 }
             });
     }
