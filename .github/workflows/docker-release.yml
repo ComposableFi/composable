@@ -56,7 +56,7 @@ jobs:
 
     - name: Build Composable Binary
       run: |
-        RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
+        RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) >> $GITHUB_ENV
         /home/runner/.cargo/bin/cargo build --release -p composable
         gsutil cp  target/release/composable gs://composable-binaries/community-releases/${{ env.RELEASE_VERSION }}/
 
