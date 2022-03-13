@@ -216,7 +216,7 @@ pub mod pallet {
 			// Assuming stablecoin collateral and all markets quoted in dollars
 			T::Assets::transfer(asset, account, &T::PalletId::get().into_account(), amount, true)?;
 
-			let old_margin = Self::get_margin(&account).unwrap_or(T::Balance::zero());
+			let old_margin = Self::get_margin(&account).unwrap_or_else(T::Balance::zero);
 			let new_margin = old_margin.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
 			AccountsMargin::<T>::insert(&account, new_margin);
 
