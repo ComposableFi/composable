@@ -105,7 +105,7 @@ else
 endif
 
 
-.PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release containerize-composable-sandbox push-composable-sandbox
+.PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release containerize-composable-sandbox push-composable-sandbox cargo-version
 
 
 #----------------------------------------------------------------------
