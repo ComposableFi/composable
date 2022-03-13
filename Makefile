@@ -6,7 +6,6 @@ INSTALL_DIR=docker/
 IMAGE_URL:=${REPO}/${SERVICE_NAME}
 AUTO_UPDATE:=1
 
-RELEASE_VERSION=v.2.0.10
 IMAGE?=${IMAGE_URL}:${COMMIT_SHA}
 IMAGE_WITH_COMMIT=${IMAGE}
 IMAGE_WITH_RELEASE_VERSION:=${IMAGE_URL}:${RELEASE_VERSION}
@@ -52,6 +51,13 @@ version:
 	@if [ ${RELEASE_VERSION} ]; then \
 	sed -i "s|^version =.*|version = '"${RELEASE_VERSION}"'|" node/Cargo.toml; \
 	fi;
+
+.PHONY: cargo-version
+cargo-version:
+	@if [ ${CARGO_VERSION} ]; then \
+	sed -i "s|^version =.*|version = '"${CARGO_VERSION}"'|" node/Cargo.toml; \
+	fi;
+
 
 
 .PHONY: containerize-release
