@@ -6,9 +6,12 @@
 // cannot handle it because of ORML design
 //pallet_xcm::Event::AssetsTrapped
 
-use crate::kusama_test_net::{This, THIS_PARA_ID, SIBLING_PARA_ID, KusamaRelay, Sibling, BOB, ALICE, CHARLIE, PICA, ALICE_PARACHAIN_KSM};
 use crate::{
 	helpers::*,
+	kusama_test_net::{
+		KusamaRelay, Sibling, This, ALICE, ALICE_PARACHAIN_KSM, BOB, CHARLIE, PICA,
+		SIBLING_PARA_ID, THIS_PARA_ID,
+	},
 	prelude::*,
 };
 use codec::Encode;
@@ -16,7 +19,8 @@ use common::{AccountId, Balance};
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 
 use this_runtime::{
-	Assets, MaxInstructions, Origin, Runtime, System, Tokens, UnitWeightCost, XTokens, AssetsRegistry, Balances,
+	Assets, AssetsRegistry, Balances, MaxInstructions, Origin, Runtime, System, Tokens,
+	UnitWeightCost, XTokens,
 };
 
 use num_traits::Zero;
@@ -72,9 +76,8 @@ fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 	let from_account = &AccountId::from(from);
 	let to_account = &AccountId::from(to);
 	let balance = enough_weigth();
-	let before = This::execute_with(|| {
-		this_runtime::Assets::free_balance(CurrencyId::KSM, to_account)
-	});
+	let before =
+		This::execute_with(|| this_runtime::Assets::free_balance(CurrencyId::KSM, to_account));
 	KusamaRelay::execute_with(|| {
 		<kusama_runtime::Balances as support::traits::Currency<_>>::deposit_creating(
 			from_account,
@@ -177,8 +180,7 @@ fn transfer_from_dali() {
 	});
 
 	This::execute_with(|| {
-		let balance =
-			this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+		let balance = this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
 		assert_eq_error_rate!(balance, local_withdraw_amount, (UnitWeightCost::get() * 10) as u128);
 	});
 }
@@ -233,7 +235,8 @@ fn transfer_from_picasso_to_dali() {
 	});
 
 	Sibling::execute_with(|| {
-		let balance = sibling_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+		let balance =
+			sibling_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
 		assert_eq_error_rate!(balance, 3 * PICA, (UnitWeightCost::get() * 10) as u128);
 	});
 }
@@ -259,15 +262,15 @@ fn transfer_insufficient_amount_should_fail() {
 			),
 			399_600_000_000
 		));
-		assert_eq!(sibling_runtime::Balances::free_balance(&AccountId::from(ALICE)), 199999999000001);
+		assert_eq!(
+			sibling_runtime::Balances::free_balance(&AccountId::from(ALICE)),
+			199999999000001
+		);
 	});
 
 	This::execute_with(|| {
 		// Xcm should fail therefore nothing should be deposit into beneficiary account
-		assert_eq!(
-			this_runtime::Tokens::free_balance(CurrencyId::PICA, &AccountId::from(BOB)),
-			0
-		);
+		assert_eq!(this_runtime::Tokens::free_balance(CurrencyId::PICA, &AccountId::from(BOB)), 0);
 	});
 }
 
@@ -370,15 +373,12 @@ fn transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit() 
 	simtest();
 	let amount = under_existential_deposit(LocalAssetId::KSM, 3);
 	let receiver = CHARLIE;
-    let picasso_treasury = This::execute_with(|| {
-        assert_eq!(
+	let picasso_treasury = This::execute_with(|| {
+		assert_eq!(
 			this_runtime::Tokens::free_balance(CurrencyId::KSM, &AccountId::from(receiver)),
 			0,
 		);
-		this_runtime::Tokens::free_balance(
-			CurrencyId::KSM,
-			&this_runtime::TreasuryAccount::get(),
-		)
+		this_runtime::Tokens::free_balance(CurrencyId::KSM, &this_runtime::TreasuryAccount::get())
 	});
 
 	KusamaRelay::execute_with(|| {
@@ -436,12 +436,10 @@ fn xcm_transfer_execution_barrier_trader_works() {
 		assert!(this_runtime::System::events().iter().any(|r| {
 			matches!(
 				r.event,
-				this_runtime::Event::DmpQueue(
-					cumulus_pallet_dmp_queue::Event::ExecutedDownward(
-						_,
-						Outcome::Error(XcmError::Barrier)
-					)
-				)
+				this_runtime::Event::DmpQueue(cumulus_pallet_dmp_queue::Event::ExecutedDownward(
+					_,
+					Outcome::Error(XcmError::Barrier)
+				))
 			)
 		}));
 	});
@@ -514,7 +512,7 @@ fn xcm_transfer_execution_barrier_trader_works() {
 #[test]
 fn para_chain_subscribe_version_notify_of_sibling_chain() {
 	simtest();
-    This::execute_with(|| {
+	This::execute_with(|| {
 		let r = pallet_xcm::Pallet::<this_runtime::Runtime>::force_subscribe_version_notify(
 			this_runtime::Origin::root(),
 			Box::new((Parent, Parachain(SIBLING_PARA_ID)).into()),
@@ -534,9 +532,7 @@ fn para_chain_subscribe_version_notify_of_sibling_chain() {
 			r.event,
 			this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent(
 				Some(_)
-			)) | this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::Success(
-				Some(_)
-			))
+			)) | this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::Success(Some(_)))
 		)));
 	});
 }
@@ -680,8 +676,7 @@ fn test_assets_registry_module() {
 	});
 
 	This::execute_with(|| {
-		let balance =
-			this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+		let balance = this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
 		assert_eq_error_rate!(balance, 5 * PICA, (UnitWeightCost::get() * 10) as u128);
 
 		assert_ok!(XTokens::transfer(
@@ -701,15 +696,13 @@ fn test_assets_registry_module() {
 			1_000_000_000,
 		));
 
-		let balance =
-			this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+		let balance = this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
 		assert_eq_error_rate!(balance, 5 * PICA - PICA, (UnitWeightCost::get() * 10) as u128);
 	});
 
 	Sibling::execute_with(|| {
 		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 5 * PICA);
-		let balance =
-			this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
+		let balance = this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
 		assert_eq_error_rate!(
 			balance,
 			200 * PICA - 5 * PICA + PICA,
@@ -719,8 +712,7 @@ fn test_assets_registry_module() {
 
 	Sibling::execute_with(|| {
 		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 5 * PICA);
-		let balance =
-			this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
+		let balance = this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
 		assert_eq_error_rate!(
 			balance,
 			200 * PICA - 5 * PICA + PICA,
@@ -745,8 +737,7 @@ fn test_assets_registry_module() {
 		));
 
 		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 10 * PICA);
-		let balance =
-			this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
+		let balance = this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
 		assert_eq_error_rate!(
 			balance,
 			200 * PICA - 5 * PICA + PICA - 5 * PICA,
@@ -755,8 +746,7 @@ fn test_assets_registry_module() {
 	});
 
 	This::execute_with(|| {
-		let balance =
-			this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
+		let balance = this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
 		assert_eq_error_rate!(
 			balance,
 			5 * PICA - PICA + 5 * PICA,
@@ -956,11 +946,10 @@ fn trap_assets_lower_than_existential_deposit_works() {
 
 	let (this_treasury_amount, other_treasury_amount) = This::execute_with(|| {
 		assert_ok!(Assets::deposit(any_asset, &parent_account, other_non_native_amount));
-		let _ =
-			<this_runtime::Balances as support::traits::Currency<AccountId>>::deposit_creating(
-				&parent_account,
-				some_native_amount,
-			);
+		let _ = <this_runtime::Balances as support::traits::Currency<AccountId>>::deposit_creating(
+			&parent_account,
+			some_native_amount,
+		);
 		(
 			<Assets as MultiCurrency<AccountId>>::free_balance(
 				this_native_asset,
@@ -980,10 +969,7 @@ fn trap_assets_lower_than_existential_deposit_works() {
 			BuyExecution { fees: assets, weight_limit: Limited(other_non_native_amount as u64) },
 			WithdrawAsset(
 				(
-					(
-						Parent,
-						X2(Parachain(THIS_PARA_ID), GeneralKey(this_native_asset.encode())),
-					),
+					(Parent, X2(Parachain(THIS_PARA_ID), GeneralKey(this_native_asset.encode()))),
 					some_native_amount,
 				)
 					.into(),
@@ -1030,9 +1016,9 @@ fn sibling_trap_assets_works() {
 	simtest();
 
 	let any_asset = CurrencyId::kUSD;
-   // TODO: create  foregn asset via factory
-   // TODO: set key for it to allow transfer
-   // TODO: parametriz test. ISSUE: how to solve DEX swap paying for transfer?
+	// TODO: create  foregn asset via factory
+	// TODO: set key for it to allow transfer
+	// TODO: parametriz test. ISSUE: how to solve DEX swap paying for transfer?
 	let sibling_non_native_amount = assert_above_deposit(any_asset, 100_000_000_000);
 	let some_native_amount = 1_000_000_000;
 	let this_liveness_native_amount = enough_weigth();
@@ -1103,10 +1089,7 @@ fn sibling_trap_assets_works() {
 			None // non of assets trapped by hash, because all are known
 		);
 		assert_eq!(
-			this_runtime::Assets::free_balance(
-				any_asset,
-				&this_runtime::TreasuryAccount::get()
-			),
+			this_runtime::Assets::free_balance(any_asset, &this_runtime::TreasuryAccount::get()),
 			sibling_non_native_amount
 		);
 

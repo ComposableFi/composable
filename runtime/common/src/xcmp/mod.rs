@@ -1,9 +1,15 @@
 //! proposed shared XCM setup parameters and impl
-use crate::{Balance, AccountId};
+use crate::{AccountId, Balance};
 use codec::{Decode, Encode};
-use composable_traits::{oracle::MinimalOracle, assets::{XcmAssetLocation, RemoteAssetRegistry}};
+use composable_traits::{
+	assets::{RemoteAssetRegistry, XcmAssetLocation},
+	oracle::MinimalOracle,
+};
 use frame_support::{
-	dispatch::Weight, ensure, log, parameter_types, weights::WeightToFeePolynomial, traits::{Contains, Get},
+	dispatch::Weight,
+	ensure, log, parameter_types,
+	traits::{Contains, Get},
+	weights::WeightToFeePolynomial,
 };
 use num_traits::Zero;
 use orml_traits::location::Reserve;
@@ -11,9 +17,12 @@ use polkadot_primitives::v1::Id;
 use primitives::currency::{CurrencyId, WellKnownCurrency};
 use sp_runtime::traits::Convert;
 use sp_std::marker::PhantomData;
-use xcm::{latest::{MultiAsset }, prelude::*};
-use xcm_builder::{*,};
-use xcm_executor::{*, traits::{WeightTrader, ShouldExecute, FilterAssetLocation,},};
+use xcm::{latest::MultiAsset, prelude::*};
+use xcm_builder::*;
+use xcm_executor::{
+	traits::{FilterAssetLocation, ShouldExecute, WeightTrader},
+	*,
+};
 
 parameter_types! {
 	pub const BaseXcmWeight: Weight = 100_000_000;
@@ -137,13 +146,14 @@ impl<
 	}
 }
 
-pub struct ToTreasury<AssetsConverter, Assets, TreasuryAccount>(PhantomData<(AssetsConverter, Assets, TreasuryAccount)>);
+pub struct ToTreasury<AssetsConverter, Assets, TreasuryAccount>(
+	PhantomData<(AssetsConverter, Assets, TreasuryAccount)>,
+);
 impl<
-	AssetsConverter: Convert<MultiLocation, Option<CurrencyId>>,
-	Assets: orml_traits::currency::MultiCurrency<AccountId, CurrencyId = CurrencyId, Balance = Balance>,
-	Treasury : Get<AccountId>,
-	> TakeRevenue
-	for ToTreasury<AssetsConverter, Assets, Treasury>
+		AssetsConverter: Convert<MultiLocation, Option<CurrencyId>>,
+		Assets: orml_traits::currency::MultiCurrency<AccountId, CurrencyId = CurrencyId, Balance = Balance>,
+		Treasury: Get<AccountId>,
+	> TakeRevenue for ToTreasury<AssetsConverter, Assets, Treasury>
 {
 	fn take_revenue(revenue: MultiAsset) {
 		if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = revenue {
@@ -175,18 +185,15 @@ pub trait XcmpAssets {
 }
 
 /// Converts currency to and from local and remote
-pub struct CurrencyIdConvert<
-	AssetRegistry, 
-	WellKnownCurrency,
-	ThisParaId,
-	WellKnownXcmpAssets>
-	(PhantomData<(AssetRegistry, WellKnownCurrency, ThisParaId,  WellKnownXcmpAssets)>);
+pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets>(
+	PhantomData<(AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets)>,
+);
 
 /// converts local currency into remote,
 /// native currency is built in
 impl<
 		AssetRegistry: RemoteAssetRegistry<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
-		WellKnown : WellKnownCurrency,
+		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
 		WellKnownXcmpAssets,
 	> sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>>
@@ -222,15 +229,22 @@ pub const RELAY_LOCATION: MultiLocation = MultiLocation { parents: 1, interior: 
 /// 1. if remote is origin without key(some identifiers), than it is native token
 /// 2. if origin is parent of this consensus, than this is relay
 /// 2. if origin is this consensus, than it is this native token
-/// 3. if origin is some well know chain and key(asset id) is exactly same as binary value on remote chain, that we map to local currency
-/// 4. if origin is mapped by sender to include our mapped id into our chain, than we also map that
-/// 
+/// 3. if origin is some well know chain and key(asset id) is exactly same as binary value on remote
+/// chain, that we map to local currency 4. if origin is mapped by sender to include our mapped id
+/// into our chain, than we also map that
+///
 /// so:
 /// 1. in some cases origin leads to asset id
-/// 2. in some well know cases remote asset id is statically typed into here (so it is okey to send their id to us)
-/// 3. and in other cases they must map on us, and than send our id to here 
-impl<AssetsRegistry: RemoteAssetRegistry<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>, WellKnown : WellKnownCurrency, ThisParaId : Get<Id>,WellKnownXcmpAssets : XcmpAssets> 
-Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert<AssetsRegistry, WellKnown, ThisParaId, WellKnownXcmpAssets> {
+/// 2. in some well know cases remote asset id is statically typed into here (so it is okey to send
+/// their id to us) 3. and in other cases they must map on us, and than send our id to here
+impl<
+		AssetsRegistry: RemoteAssetRegistry<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
+		WellKnown: WellKnownCurrency,
+		ThisParaId: Get<Id>,
+		WellKnownXcmpAssets: XcmpAssets,
+	> Convert<MultiLocation, Option<CurrencyId>>
+	for CurrencyIdConvert<AssetsRegistry, WellKnown, ThisParaId, WellKnownXcmpAssets>
+{
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!(target: "xcmp::convert", "converting {:?} on {:?}", &location, ThisParaId::get());
 		match location {
@@ -239,11 +253,11 @@ Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert<AssetsRegistry,
 			{
 				if let Ok(currency_id) = CurrencyId::decode(&mut &key[..]) {
 					if let CurrencyId::NATIVE = currency_id {
-        Some(CurrencyId::NATIVE)
-    } else {
-							    log::error!(target: "xcmp", "currency {:?} is not yet handled", currency_id);
-							    None
-						    }
+						Some(CurrencyId::NATIVE)
+					} else {
+						log::error!(target: "xcmp", "currency {:?} is not yet handled", currency_id);
+						None
+					}
 				} else {
 					log::error!(target: "xcmp", "currency {:?} is not yet handled", &key);
 					None
@@ -253,7 +267,7 @@ Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert<AssetsRegistry,
 				// TODO: support DOT via abstracting CurrencyId
 				Some(CurrencyId::RELAY_NATIVE)
 			},
-			MultiLocation { parents: 0, interior: X1(GeneralKey(key)),  } => {
+			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } => {
 				// adapt for reanchor canonical location: https://github.com/paritytech/polkadot/pull/4470
 				let currency_id = CurrencyId::decode(&mut &key[..]).ok()?;
 				match currency_id {
@@ -262,30 +276,31 @@ Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert<AssetsRegistry,
 				}
 			},
 			// delegate to asset-registry
-			_ => {
+			_ =>
 				if let Some(currency_id) = WellKnownXcmpAssets::remote_to_local(location.clone()) {
 					Some(currency_id)
-				}
-				else {
-				log::trace!(target: "xcmp", "using assets registry for {:?}", location);
-				let result = AssetsRegistry::location_to_asset(
-					XcmAssetLocation(location),
-				)
-				.map(Into::into);
-				if result.is_none() {
-					log::error!(target: "xcmp", "failed converting currency");
-				}
-				result
-			}
-			},
+				} else {
+					log::trace!(target: "xcmp", "using assets registry for {:?}", location);
+					let result = AssetsRegistry::location_to_asset(XcmAssetLocation(location))
+						.map(Into::into);
+					if result.is_none() {
+						log::error!(target: "xcmp", "failed converting currency");
+					}
+					result
+				},
 		}
 	}
 }
 
 /// covert remote to local, usually when receiving transfer
-impl<T : RemoteAssetRegistry<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>, WellKnown : WellKnownCurrency, ThisParaId : Get<Id>, WellKnownXcmpAssets:XcmpAssets > 
-Convert<MultiAsset, Option<CurrencyId>> for
- CurrencyIdConvert<T, WellKnown, ThisParaId, WellKnownXcmpAssets> {
+impl<
+		T: RemoteAssetRegistry<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
+		WellKnown: WellKnownCurrency,
+		ThisParaId: Get<Id>,
+		WellKnownXcmpAssets: XcmpAssets,
+	> Convert<MultiAsset, Option<CurrencyId>>
+	for CurrencyIdConvert<T, WellKnown, ThisParaId, WellKnownXcmpAssets>
+{
 	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
 		log::trace!(target: "xcmp", "converting {:?}", &asset);
 		if let MultiAsset { id: Concrete(location), .. } = asset {
@@ -321,7 +336,6 @@ impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Tre
 		}
 	}
 }
-
 
 // // here we should add any partner network for zero cost transactions
 // // 1000 is statmeing - see kusama runtime setup

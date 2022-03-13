@@ -15,7 +15,8 @@ use sp_runtime::sp_std::ops::Deref;
 /// Allows to have reuse of code amids runtime and cross relay transfers in future.
 // TODO: split CurrenyId for runtimes - one for DOT and one for KSM
 pub trait WellKnownCurrency {
-	// works well with pattnrs unlike impl trait `associated consts cannot be referenced in patterns`
+	// works well with pattnrs unlike impl trait `associated consts cannot be referenced in
+	// patterns`
 	const NATIVE: Self;
 	/// usually we expect running with relay,
 	/// but if  not, than degenrative case would be this equal to `NATIVE`
@@ -55,6 +56,7 @@ impl CurrencyId {
 	pub const KSM: CurrencyId = CurrencyId(4);
 
 	/// Karura stable coin(Karura Dollar), not native.
+	#[allow(non_upper_case_globals)]
 	pub const kUSD: CurrencyId = CurrencyId(129);
 
 	#[inline(always)]

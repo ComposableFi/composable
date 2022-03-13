@@ -7,7 +7,6 @@ pub use support::RuntimeDebug;
 /// just making it easier to refactor generalized code
 pub type LocalAssetId = CurrencyId;
 
-
 #[cfg(feature = "dali")]
 pub use dali_runtime as this_runtime;
 
@@ -15,8 +14,7 @@ pub use dali_runtime as this_runtime;
 pub use dali_runtime as sibling_runtime;
 
 #[cfg(feature = "dali")]
-pub use dali_runtime::{UnitWeightCost, XcmConfig, MaxInstructions, Weight};
-
+pub use dali_runtime::{MaxInstructions, UnitWeightCost, Weight, XcmConfig};
 
 #[cfg(feature = "picasso")]
 pub use picasso_runtime as this_runtime;
@@ -25,4 +23,4 @@ pub use picasso_runtime as this_runtime;
 pub use picasso_runtime as sibling_runtime;
 
 #[cfg(feature = "picasso")]
-pub use picasso_runtime::{UnitWeightCost, XcmConfig, MaxInstructions, Weight};
+pub use picasso_runtime::{MaxInstructions, UnitWeightCost, Weight, XcmConfig};

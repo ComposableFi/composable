@@ -17,7 +17,6 @@ pub mod xcmp;
 use composable_traits::oracle::MinimalOracle;
 pub use constants::*;
 use frame_support::parameter_types;
-use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_runtime::DispatchError;
@@ -135,11 +134,6 @@ mod constants {
 	>;
 }
 
-parameter_types! {
-	/// Existential deposit (ED for short) is minimum amount an account has to hold to stay in state.
-	pub NativeExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
-}
-
 pub struct PriceConverter;
 
 impl MinimalOracle for PriceConverter {
@@ -160,13 +154,37 @@ impl MinimalOracle for PriceConverter {
 	}
 }
 
-// 2022-03-07 21:55:12 Running Benchmark: collective.disapprove_proposal 2/1 1/1
-// Error:
-//    0: Invalid input: Account cannot exist with the funds that would be given
+#[cfg(not(feature = "runtime-benchmarks"))]
+fn native_existential_desposit() -> Balance {
+	100 * CurrencyId::PICA.milli::<Balance>()
+}
 
-// Backtrace omitted.
-// Run with RUST_BACKTRACE=1 environment variable to display it.
+#[cfg(feature = "runtime-benchmarks")]
+fn native_existential_desposit() -> Balance {
+	use num_traits::Zero;
+	Balance::zero()
+}
 
+parameter_types! {
+	/// Existential deposit (ED for short) is minimum amount an account has to hold to stay in state.
+	pub NativeExistentialDeposit: Balance = native_existential_desposit();
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+pub fn multi_existential_deposits(_currency_id: &CurrencyId) -> Balance {
+	// ISSUE:
+	// 1. runing only collective pallet does not lead to issue (we cannot control other pallets
+	// always) 2. pallet benchmark does not contain direct manipulation of deposits
+	// 3. increatng caller balance does not help to fix issue
+	// 4. so it contains weight return to take from caller
+	// 2022-03-14 20:50:19 Running Benchmark: collective.set_members 2/1 1/1
+	// Error:
+	//   0: Invalid input: Account cannot exist with the funds that would be given
+	use num_traits::Zero;
+	Balance::zero()
+}
+
+#[cfg(not(feature = "runtime-benchmarks"))]
 pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
 	match *currency_id {
 		CurrencyId::PICA => NativeExistentialDeposit::get(),

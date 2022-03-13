@@ -2,11 +2,7 @@
 //! Cumulus/ORML abstractions) Partially ported from articles and examples of https://github.com/paritytech/polkadot/blob/master/xcm/xcm-simulator/example/src/lib.rs
 //! Cannot port QueryHold because it is not implemented
 
-use crate::{
-	prelude::*,
-	helpers::*,
-	kusama_test_net::{*},
-};
+use crate::{helpers::*, kusama_test_net::*, prelude::*};
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 
 use primitives::currency::CurrencyId;

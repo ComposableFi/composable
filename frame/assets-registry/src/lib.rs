@@ -149,8 +149,10 @@ pub mod pallet {
 		local_admin: Option<T::AccountId>,
 		foreign_admin: Option<T::AccountId>,
 		// TODO: split this into 2 pairs
-		// 1. (xcm location -> local asset id as used in our tuntime), so that when others send our id to our chain we can trust them
-		// 2. (local qasset id - > remote location -> remote asset id) so then when we send our local asset to remote chain we know what id we should envode. 
+		// 1. (xcm location -> local asset id as used in our tuntime), so that when others send our
+		// id to our chain we can trust them 2. (local qasset id - > remote location -> remote
+		// asset id) so then when we send our local asset to remote chain we know what id we should
+		// envode.
 		asset_pairs: Vec<(T::LocalAssetId, XcmAssetLocation)>,
 	}
 

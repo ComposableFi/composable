@@ -58,7 +58,6 @@ parameter_types! {
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
 
-
 pub type Barrier = (
 	XcmpDebug,
 	//DebugAllowUnpaidExecutionFrom<WellKnownsChains>,
@@ -117,8 +116,6 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	XcmPassthrough<Origin>,
 );
 
-
-
 pub struct StaticAssetsMap;
 
 pub mod parachains {
@@ -129,17 +126,17 @@ pub mod parachains {
 }
 
 impl XcmpAssets for StaticAssetsMap {
-    fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
-        match location {
-			MultiLocation{ parents: 1, interior : X2(Parachain(para_id), GeneralKey(key))} => {
+	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
+		match location {
+			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
 				match (para_id, &key[..]) {
-					(parachains::karura::ID, parachains::karura::KUSD_KEY) => Some(CurrencyId::kUSD),
+					(parachains::karura::ID, parachains::karura::KUSD_KEY) =>
+						Some(CurrencyId::kUSD),
 					_ => None,
-				}	
-			},
-			_=> None,
+				},
+			_ => None,
 		}
-    }
+	}
 }
 
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
@@ -185,7 +182,8 @@ impl FilterAssetLocation for RelayReserveFromParachain {
 type IsReserveAssetLocationFilter =
 	(DebugMultiNativeAsset, MultiNativeAsset, RelayReserveFromParachain);
 
-type AssetsIdConverter = CurrencyIdConvert<AssetsRegistry, CurrencyId, ParachainInfo, StaticAssetsMap>;
+type AssetsIdConverter =
+	CurrencyIdConvert<AssetsRegistry, CurrencyId, ParachainInfo, StaticAssetsMap>;
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
@@ -283,7 +281,6 @@ impl orml_xtokens::Config for Runtime {
 impl orml_unknown_tokens::Config for Runtime {
 	type Event = Event;
 }
-
 
 // make setup as in Acala, max instructions seems resoanble, for weigth may consider to  settle with
 // our PICA

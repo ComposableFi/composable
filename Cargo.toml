@@ -17,7 +17,9 @@ color-eyre = { version = "0.5.11", default-features = false }
 composable-node = { path = "node", features = ["composable", "dali"] }
 
 [features]
+dali = []
 local-integration-tests = []
+picasso = []
 runtime-benchmarks = ["composable-node/runtime-benchmarks"]
 std = ["composable-node/std"]
 

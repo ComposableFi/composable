@@ -21,19 +21,15 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
 mod xcmp;
-pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig, };
+pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
 
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-<<<<<<< HEAD
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO,
-	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
-=======
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION, MultiExistentialDeposits,
->>>>>>> 27c8ff4b5678b7b6a59763651ab7d8fe1d9458d8
+	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MultiExistentialDeposits,
+	NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
+	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
-use orml_traits::parameter_type_with_key;
+
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -307,9 +303,6 @@ impl timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	/// Minimum amount an account has to hold to stay in state.
-	// minimum account balance is given as 0.1 PICA ~ 100 CurrencyId::PICA.milli()
-	pub ExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
 	/// Max locks that can be placed on an account. Capped for storage
 	/// concerns.
 	pub const MaxLocks: u32 = 50;
@@ -324,7 +317,7 @@ impl balances::Config for Runtime {
 	/// The ubiquitous event type.
 	type Event = Event;
 	type DustRemoval = Treasury;
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = NativeExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
