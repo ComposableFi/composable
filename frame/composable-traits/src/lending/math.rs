@@ -14,7 +14,7 @@ use sp_arithmetic::per_things::Percent;
 
 use crate::{
 	defi::{LiftedFixedBalance, Rate, ZeroToOneFixedU128},
-	math::SafeArithmetic,
+	math::{SafeAdd, SafeDiv, SafeMul},
 	time::{DurationSeconds, SECONDS_PER_YEAR_NAIVE},
 };
 
