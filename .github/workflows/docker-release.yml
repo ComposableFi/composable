@@ -54,6 +54,12 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
 
+    - name: Set Version
+      run: 
+        RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make version
+        echo ${{ env.RELEASE_VERSION }}
+
+
     - name: Build Composable Binary
       run: |
         RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) >> $GITHUB_ENV
