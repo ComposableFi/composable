@@ -52,7 +52,6 @@ version:
 	sed -i "s|^version =.*|version = '"${RELEASE_VERSION}"'|" node/Cargo.toml; \
 	fi;
 
-.PHONY: cargo-version
 cargo-version:
 	@if [ ${CARGO_VERSION} ]; then \
 	sed -i "s|^version =.*|version = '"${CARGO_VERSION}"'|" node/Cargo.toml; \
