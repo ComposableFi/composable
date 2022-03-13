@@ -3,13 +3,11 @@
 # `cargo build --release --features runtime-benchmarks`
 
 chains=(
-  "./runtime/composable/src/weights,composable-dev"
-  "./runtime/picasso/src/weights,picasso-dev"
   "./runtime/dali/src/weights,dali-dev"
 )
 
-steps=50
-repeat=20
+steps=1
+repeat=1
 
 
 # shellcheck disable=SC2068

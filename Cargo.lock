@@ -1394,6 +1394,9 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -5567,6 +5570,7 @@ dependencies = [
  "parachain-info",
  "parity-scale-codec",
  "paste 1.0.6",
+ "picasso-runtime",
  "polkadot-core-primitives",
  "polkadot-parachain",
  "polkadot-primitives",
@@ -8300,6 +8304,7 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pallet-assets",
+ "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",

@@ -24,6 +24,15 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
 
+<<<<<<< HEAD
+=======
+# xcm
+xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16", default-features = false }
+xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16", default-features = false }
+xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16", default-features = false }
+
+collator-selection = { package = "pallet-collator-selection", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16", default-features = false }
+>>>>>>> 27c8ff4b5678b7b6a59763651ab7d8fe1d9458d8
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
 collator-selection = { package = "pallet-collator-selection", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16", default-features = false }
 collective = { package = "pallet-collective", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
@@ -46,6 +55,7 @@ sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate
 [features]
 default = ["std"]
 std = [
+<<<<<<< HEAD
   "codec/std",
   "orml-traits/std",
   "sp-consensus-aura/std",
@@ -62,4 +72,25 @@ std = [
   "treasury/std",
   "polkadot-primitives/std",
   "scale-info/std",
+=======
+	"codec/std",
+	"orml-traits/std",
+	"sp-consensus-aura/std",
+	"sp-runtime/std",
+	"primitives/std",
+	"composable-traits/std",
+	"sp-std/std",
+	"sp-io/std",
+	"frame-support/std",
+	"frame-system/std",
+	"collator-selection/std",
+	"balances/std",
+	"collective/std",
+	"treasury/std",
+	"polkadot-primitives/std",
+   	"scale-info/std",
+   	"xcm/std",
+	"xcm-builder/std",
+	"xcm-executor/std",
+>>>>>>> 27c8ff4b5678b7b6a59763651ab7d8fe1d9458d8
 ]

@@ -12,7 +12,12 @@ workspace = false
 args = ["build", "--release"]
 workspace = false
 
+<<<<<<< HEAD
 [tasks.polkadot]
+=======
+[tasks.git-polkadot]
+workspace = false
+>>>>>>> 27c8ff4b5678b7b6a59763651ab7d8fe1d9458d8
 script = '''
 if [ ! -d "../polkadot" ] ; then
     git clone -b v0.9.16 https://github.com/paritytech/polkadot ../polkadot
@@ -21,8 +26,14 @@ cd ../polkadot && cargo build --release
 '''
 workspace = false
 
+<<<<<<< HEAD
 [tasks.devnet]
 dependencies = ["build", "polkadot"]
+=======
+[tasks.start-devnet]
+workspace = false
+dependencies = ["build", "git-polkadot"]
+>>>>>>> 27c8ff4b5678b7b6a59763651ab7d8fe1d9458d8
 script = '''
 cargo run --release -- --version
 cd ../polkadot && cargo run --release -- --version && pwd && cd ../composable
@@ -30,7 +41,12 @@ cd scripts/polkadot-launch && yarn && yarn composable
 '''
 workspace = false
 
+<<<<<<< HEAD
 [tasks.devnet-docker]
+=======
+[tasks.start-devnet-docker]
+workspace = false
+>>>>>>> 27c8ff4b5678b7b6a59763651ab7d8fe1d9458d8
 dependencies = []
 script = '''
 docker run --rm -ti -u$(id -u):$(id -g) -p9944:9944 -p9988:9988 -p9998:9998 composablefi/composable-sandbox:latest
@@ -45,8 +61,14 @@ cargo +stable test --package local-integration-tests --features local-integratio
 workspace = false
 
 [tasks.run-local-integration-tests-debug]
+<<<<<<< HEAD
 script = '''
 RUST_BACKTRACE=1 RUST_LOG=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace cargo +stable test --package local-integration-tests --features local-integration-tests --no-default-features -- --nocapture --test-threads=1
+=======
+workspace=false
+script='''
+RUST_BACKTRACE=full RUST_LOG=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace cargo +stable test  transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit --package local-integration-tests --features local-integration-tests  --no-default-features -- --nocapture --test-threads=1
+>>>>>>> 27c8ff4b5678b7b6a59763651ab7d8fe1d9458d8
 '''
 workspace = false
 
@@ -54,4 +76,13 @@ workspace = false
 script = '''
 SKIP_WASM_BUILD=1 cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
 '''
+<<<<<<< HEAD
 workspace = false
+=======
+
+[tasks.build-benchmarks]
+workspace=false
+script='''
+cargo build --release --features runtime-benchmarks
+'''
+>>>>>>> 27c8ff4b5678b7b6a59763651ab7d8fe1d9458d8

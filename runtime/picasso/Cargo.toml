@@ -76,7 +76,13 @@ composable-traits = { path = "../../frame/composable-traits", default-features =
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false }
+<<<<<<< HEAD
 primitives = { path = "../primitives", default-features = false }
+=======
+assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
+assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }
+crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
+>>>>>>> 27c8ff4b5678b7b6a59763651ab7d8fe1d9458d8
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 
 # Used for the node template's RPCs
@@ -128,8 +134,11 @@ simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/pol
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 [features]
-default = ["std"]
+wasm-builder = []
+default = ["std", "wasm-builder"]
+local-integration-tests = []
 std = [
+<<<<<<< HEAD
   "codec/std",
   "sp-api/std",
   "sp-std/std",
@@ -195,6 +204,74 @@ std = [
   "system-rpc-runtime-api/std",
   "transaction-payment-rpc-runtime-api/std",
   "simnode-apis/std",
+=======
+	"codec/std",
+	"sp-api/std",
+	"sp-std/std",
+	"sp-core/std",
+	"sp-runtime/std",
+	"sp-version/std",
+	"sp-offchain/std",
+	"sp-session/std",
+	"sp-block-builder/std",
+	"sp-transaction-pool/std",
+	"sp-inherents/std",
+	"frame-support/std",
+	"executive/std",
+	"frame-system/std",
+	"utility/std",
+	"authorship/std",
+	"balances/std",
+	"randomness-collective-flip/std",
+	"timestamp/std",
+	"session/std",
+	"sudo/std",
+	"indices/std",
+	"identity/std",
+	"multisig/std",
+	"call-filter/std",
+	"orml-tokens/std",
+	"orml-traits/std",
+	"treasury/std",
+	"democracy/std",
+	"scheduler/std",
+	"common/std",
+	"primitives/std",
+	"collective/std",
+	"transaction-payment/std",
+	"parachain-info/std",
+	"cumulus-pallet-aura-ext/std",
+	"cumulus-pallet-parachain-system/std",
+	"cumulus-pallet-xcmp-queue/std",
+	"cumulus-pallet-xcm/std",
+	"cumulus-primitives-core/std",
+	"cumulus-primitives-timestamp/std",
+	"cumulus-primitives-utility/std",
+	"collator-selection/std",
+	"xcm/std",
+	"xcm-builder/std",
+	"xcm-executor/std",
+	"aura/std",
+	"sp-consensus-aura/std",
+	"scale-info/std",
+	"orml-xtokens/std",
+	"orml-xcm-support/std",
+	"orml-unknown-tokens/std",
+	"composable-traits/std",
+	"composable-support/std",
+	"governance-registry/std",
+	"currency-factory/std",
+	"assets/std",
+	"assets-registry/std",
+	"vesting/std",
+	"bonded-finance/std",
+	"crowdloan-rewards/std",
+	"preimage/std",
+	"membership/std",
+	"system-rpc-runtime-api/std",
+	"transaction-payment-rpc-runtime-api/std",
+	"simnode-apis/std"
+>>>>>>> 27c8ff4b5678b7b6a59763651ab7d8fe1d9458d8
 ]
 
 runtime-benchmarks = [

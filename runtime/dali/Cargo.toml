@@ -141,6 +141,7 @@ substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", bran
 default = ["std", "wasm-builder"]
 local-integration-tests = []
 runtime-benchmarks = [
+<<<<<<< HEAD
   "assets/runtime-benchmarks",
   "balances/runtime-benchmarks",
   "frame-benchmarking",
@@ -180,6 +181,47 @@ runtime-benchmarks = [
   "uniswap-v2/runtime-benchmarks",
   "curve-amm/runtime-benchmarks",
   "liquidity-bootstrapping/runtime-benchmarks",
+=======
+	"assets/runtime-benchmarks",
+	"balances/runtime-benchmarks",
+	"frame-benchmarking",
+	"frame-support/runtime-benchmarks",
+	"system-benchmarking",
+	"frame-system/runtime-benchmarks",
+	"hex-literal",
+	"balances/runtime-benchmarks",
+	"timestamp/runtime-benchmarks",
+	"assets-registry/runtime-benchmarks",
+	"oracle/runtime-benchmarks",
+	"collective/runtime-benchmarks",
+	"collator-selection/runtime-benchmarks",
+	"session-benchmarking/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
+	"indices/runtime-benchmarks",
+	"crowdloan-rewards/runtime-benchmarks",
+	"identity/runtime-benchmarks",
+	"multisig/runtime-benchmarks",
+	"membership/runtime-benchmarks",
+	"treasury/runtime-benchmarks",
+	"scheduler/runtime-benchmarks",
+	"collective/runtime-benchmarks",
+	"democracy/runtime-benchmarks",
+	"utility/runtime-benchmarks",
+	"vault/runtime-benchmarks",
+	"vesting/runtime-benchmarks",
+	"assets/runtime-benchmarks",
+	"bonded-finance/runtime-benchmarks",
+	"dutch-auction/runtime-benchmarks",
+	"mosaic/runtime-benchmarks",
+	"currency-factory/runtime-benchmarks",
+	"liquidations/runtime-benchmarks",
+	"lending/runtime-benchmarks",
+    "uniswap-v2/runtime-benchmarks",
+    "curve-amm/runtime-benchmarks",
+	"liquidity-bootstrapping/runtime-benchmarks",
+>>>>>>> 27c8ff4b5678b7b6a59763651ab7d8fe1d9458d8
 ]
 sim-node = []
 std = [

@@ -154,19 +154,24 @@ impl MinimalOracle for PriceConverter {
 		match asset_id {
 			CurrencyId::PICA => Ok(amount),
 			CurrencyId::KSM => Ok(amount / 10),
+			CurrencyId::kUSD => Ok(amount / 10),
 			_ => Err(DispatchError::Other("cannot pay with given weight")),
 		}
 	}
 }
 
+// 2022-03-07 21:55:12 Running Benchmark: collective.disapprove_proposal 2/1 1/1
+// Error:
+//    0: Invalid input: Account cannot exist with the funds that would be given
+
+// Backtrace omitted.
+// Run with RUST_BACKTRACE=1 environment variable to display it.
+
 pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
 	match *currency_id {
 		CurrencyId::PICA => NativeExistentialDeposit::get(),
-		CurrencyId::KSM =>
-			PriceConverter::get_price_inverse(CurrencyId::KSM, NativeExistentialDeposit::get())
-				.expect("Could not convert because unknown currency."),
-		_ => Balance::zero() // NOTE: zero for now to merge, than need to fix it as separate task
-		//_ => NativeExistentialDeposit::get(),
+		id => PriceConverter::get_price_inverse(id, NativeExistentialDeposit::get())
+			.unwrap_or(Balance::MAX), // TODO: here DEX call to pemissioned markets should come
 	}
 }
 
