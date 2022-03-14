@@ -59,21 +59,23 @@ jobs:
     #     /home/runner/.cargo/bin/cargo build --release -p composable
     #     gsutil cp  target/release/composable gs://composable-binaries/community-releases/${{ env.RELEASE_VERSION }}/
 
-    - name: Image Tag Version
+    - name: Build and Push
       id: imagetag
       run: |
         RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) >> $GITHUB_ENV
         echo ::set-output name=release_version::${RELEASE_VERSION}
+        RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make containerize
+        make push
 
-    - name: Build for Multiple Arch
-      uses: docker/build-push-action@v2
-      with:
-        builder: ${{ steps.buildx.outputs.name }}
-        context: .
-        file: docker/Dockerfile
-        platforms: linux/386,linux/amd64,linux/arm64,linux/ppc64le,linux/arm/v6,linux/arm/v7, linux/arm/v8
-        push: true
-        tags: composablefi/composable:${{ steps.imagetag.outputs.release_version }}, composablefi/composable:latest
+    # - name: Build for Multiple Arch
+    #   uses: docker/build-push-action@v2
+    #   with:
+    #     builder: ${{ steps.buildx.outputs.name }}
+    #     context: .
+    #     file: docker/Dockerfile
+    #     platforms: linux/386,linux/amd64,linux/arm64,linux/ppc64le,linux/arm/v6,linux/arm/v7, linux/arm/v8
+    #     push: true
+    #     tags: composablefi/composable:${{ steps.imagetag.outputs.release_version }}, composablefi/composable:latest
 
     - uses: 8398a7/action-slack@v3
       with:
