@@ -291,13 +291,13 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?;
+			.ok_or(runtime_error_into_rpc_error("Error retrieving block hash"))?;
 		let at = BlockId::Hash(block_hash);
 		self.client
 			.header(at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("header not found in chain"))
+			.ok_or(runtime_error_into_rpc_error("Error retrieving header"))
 	}
 
 	fn query_balance(&self, key_name: String) -> Result<Coin> {
@@ -323,7 +323,7 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?;
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
 		api.client_state(&at, client_id)
@@ -338,7 +338,7 @@ where
 				.hash(height.into())
 				.ok()
 				.flatten()
-				.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?
+				.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?
 		} else {
 			self.client.info().best_hash
 		};
@@ -416,7 +416,7 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?;
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
 
@@ -447,7 +447,7 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?;
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
 		api.connections_using_client(&at, client_id)
@@ -488,7 +488,7 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?;
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
 		api.channel(&at, channel_id, port_id)
@@ -509,7 +509,7 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?;
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
 
@@ -526,11 +526,30 @@ where
 		height: u32,
 		connection_id: String,
 	) -> Result<QueryChannelsResponse> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+
+		let at = BlockId::Hash(block_hash);
+
+		api.connection_channels(&at, connection_id)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Failed to fetch channels state for connection"))
 	}
 
 	fn query_channels(&self) -> Result<QueryChannelsResponse> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(self.client.info().best_hash);
+
+		api.channels(&at)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Failed to fetch channels"))
 	}
 
 	fn query_packet_commitments(
@@ -539,7 +558,20 @@ where
 		channel_id: String,
 		port_id: String,
 	) -> Result<QueryPacketCommitmentsResponse> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+
+		let at = BlockId::Hash(block_hash);
+
+		api.packet_commitments(&at, channel_id, port_id)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Failed to fetch commitments"))
 	}
 
 	fn query_packet_acknowledgements(
@@ -548,7 +580,20 @@ where
 		channel_id: String,
 		port_id: String,
 	) -> Result<QueryPacketAcknowledgementsResponse> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+
+		let at = BlockId::Hash(block_hash);
+
+		api.packet_acknowledgements(&at, channel_id, port_id)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Failed to fetch acknowledgements"))
 	}
 
 	fn query_unreceived_packets(
@@ -577,7 +622,19 @@ where
 		channel_id: String,
 		port_id: String,
 	) -> Result<QueryNextSequenceReceiveResponse> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+
+		let at = BlockId::Hash(block_hash);
+		api.next_seq_recv(&at, channel_id, port_id)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))
 	}
 
 	fn query_packet_commitment(
@@ -587,7 +644,19 @@ where
 		port_id: String,
 		seq: u64,
 	) -> Result<QueryPacketCommitmentResponse> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+
+		let at = BlockId::Hash(block_hash);
+		api.packet_commitment(&at, channel_id, port_id, seq)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))
 	}
 
 	fn query_packet_acknowledgement(
@@ -597,7 +666,19 @@ where
 		port_id: String,
 		seq: u64,
 	) -> Result<QueryPacketAcknowledgementResponse> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+
+		let at = BlockId::Hash(block_hash);
+		api.packet_acknowledgement(&at, channel_id, port_id, seq)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))
 	}
 
 	fn query_packet_receipt(
@@ -607,7 +688,19 @@ where
 		port_id: String,
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+
+		let at = BlockId::Hash(block_hash);
+		api.packet_receipt(&at, channel_id, port_id, seq)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))
 	}
 
 	fn query_denom_trace(&self, denom: String) -> Result<QueryDenomTraceResponse> {
