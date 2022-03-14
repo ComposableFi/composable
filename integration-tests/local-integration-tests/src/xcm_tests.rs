@@ -2,15 +2,9 @@
 //! Cumulus/ORML abstractions) Partially ported from articles and examples of https://github.com/paritytech/polkadot/blob/master/xcm/xcm-simulator/example/src/lib.rs
 //! Cannot port QueryHold because it is not implemented
 
-use crate::{
-	env_logger_init,
-	helpers::*,
-	kusama_test_net::{KusamaNetwork, *},
-};
-use codec::Encode;
+use crate::{helpers::*, kusama_test_net::*, prelude::*};
 use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
-use dali_runtime as picasso_runtime;
-use picasso_runtime::{UnitWeightCost, XcmConfig};
+
 use primitives::currency::CurrencyId;
 use support::assert_ok;
 use xcm::latest::prelude::*;
@@ -26,7 +20,7 @@ fn buy_execution<C>(fees: impl Into<MultiAsset>) -> Instruction<C> {
 /// be handled
 #[test]
 fn throw_exception() {
-	Picasso::execute_with(|| {
+	This::execute_with(|| {
 		let here = MultiLocation::new(0, Here);
 		let xcm = Xcm(vec![Trap(42)]);
 
@@ -43,10 +37,9 @@ fn throw_exception() {
 /// this is low levl
 #[test]
 fn initiate_reserver_withdraw_on_relay() {
-	crate::kusama_test_net::KusamaNetwork::reset();
-	env_logger_init();
-	Picasso::execute_with(|| {
-		assert_ok!(<picasso_runtime::AssetsRegistry as RemoteAssetRegistry>::set_location(
+	simtest();
+	This::execute_with(|| {
+		assert_ok!(<this_runtime::AssetsRegistry as RemoteAssetRegistry>::set_location(
 			CurrencyId::KSM,
 			XcmAssetLocation::RELAY_NATIVE,
 		));
@@ -72,7 +65,7 @@ fn initiate_reserver_withdraw_on_relay() {
 		]);
 		let units = xcm.len() as u64;
 
-		let executed = <picasso_runtime::Runtime as cumulus_pallet_xcmp_queue::Config>::XcmExecutor::execute_xcm_in_credit(origin, xcm, 10000000000, 10000000000);
+		let executed = <this_runtime::Runtime as cumulus_pallet_xcmp_queue::Config>::XcmExecutor::execute_xcm_in_credit(origin, xcm, 10000000000, 10000000000);
 
 		match executed {
 			Outcome::Complete(weight) if weight == UnitWeightCost::get() * units => {},
@@ -83,16 +76,15 @@ fn initiate_reserver_withdraw_on_relay() {
 
 #[test]
 fn send_remark() {
-	KusamaNetwork::reset();
-	env_logger_init();
-	let remark = picasso_runtime::Call::System(
-		frame_system::Call::<picasso_runtime::Runtime>::remark_with_event { remark: vec![1, 2, 3] },
+	simtest();
+	let remark = this_runtime::Call::System(
+		frame_system::Call::<this_runtime::Runtime>::remark_with_event { remark: vec![1, 2, 3] },
 	);
 	let execution = (UnitWeightCost::get() * 5) as u128;
-	Picasso::execute_with(|| {
-		assert_ok!(picasso_runtime::RelayerXcm::send_xcm(
+	This::execute_with(|| {
+		assert_ok!(this_runtime::RelayerXcm::send_xcm(
 			Here,
-			(Parent, Parachain(DALI_PARA_ID)),
+			(Parent, Parachain(SIBLING_PARA_ID)),
 			Xcm(vec![
 				ReserveAssetDeposited((Parent, execution).into()),
 				BuyExecution { fees: (Parent, execution).into(), weight_limit: Unlimited },
@@ -105,8 +97,8 @@ fn send_remark() {
 		));
 	});
 
-	Dali::execute_with(|| {
-		use dali_runtime::{Event, System};
+	Sibling::execute_with(|| {
+		use sibling_runtime::{Event, System};
 		assert!(System::events().iter().any(|r| matches!(
 			r.event,
 			Event::System(frame_system::Event::Remarked { sender: _, hash: _ })
@@ -116,26 +108,25 @@ fn send_remark() {
 
 #[test]
 fn withdraw_and_deposit_back() {
-	KusamaNetwork::reset();
-	env_logger_init();
+	simtest();
 	let send_amount = 10;
 
-	Picasso::execute_with(|| {
+	This::execute_with(|| {
 		let message = Xcm(vec![
 			WithdrawAsset((Here, send_amount).into()),
 			buy_execution((Here, send_amount)),
 			DepositAsset {
 				assets: All.into(),
 				max_assets: 1,
-				beneficiary: Parachain(PICASSO_PARA_ID).into(),
+				beneficiary: Parachain(THIS_PARA_ID).into(),
 			},
 		]);
-		assert_ok!(picasso_runtime::RelayerXcm::send_xcm(Here, Parent, message,));
+		assert_ok!(this_runtime::RelayerXcm::send_xcm(Here, Parent, message,));
 	});
 
 	KusamaRelay::execute_with(|| {
 		assert_eq!(
-			kusama_runtime::Balances::free_balance(para_account_id(PICASSO_PARA_ID)),
+			kusama_runtime::Balances::free_balance(para_account_id(THIS_PARA_ID)),
 			PICASSO_RELAY_BALANCE - send_amount
 		);
 	});

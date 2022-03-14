@@ -1072,10 +1072,9 @@ construct_runtime!(
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
 		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
-	  ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
-	  StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
-	LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
-
+		ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
+		StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
+		LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );

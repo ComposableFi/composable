@@ -1,4 +1,5 @@
 FROM debian:11-slim as builder
+LABEL description="Docker image with Composable" 
 
 ARG NIGHTLY_VERSION=nightly
 
@@ -50,4 +51,3 @@ RUN chown -R service /apps/composable/scripts/polkadot-launch && \
 USER service
 EXPOSE 9945 9988 9998
 ENTRYPOINT ["yarn", "composable_and_basilisk"]
-
