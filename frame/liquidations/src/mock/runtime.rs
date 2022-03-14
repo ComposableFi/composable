@@ -23,6 +23,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 	Perbill,
 };
+use xcm::latest::SendXcm;
 
 use super::governance_registry::GovernanceRegistry;
 
@@ -189,6 +190,26 @@ impl WeightToFeePolynomial for WeightToFee {
 	}
 }
 
+pub struct XcmFake;
+impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
+	fn into(self) -> Result<cumulus_pallet_xcm::Origin, XcmFake> {
+		todo!("please test via local-integration-tests")
+	}
+}
+impl From<Origin> for XcmFake {
+	fn from(_: Origin) -> Self {
+		todo!("please test via local-integration-tests")
+	}
+}
+impl SendXcm for XcmFake {
+	fn send_xcm(
+		destination: impl Into<xcm::latest::MultiLocation>,
+		message: xcm::latest::Xcm<()>,
+	) -> xcm::latest::SendResult {
+		todo!("please test via local-integration-tests")
+	}
+}
+
 impl pallet_dutch_auction::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
@@ -198,6 +219,9 @@ impl pallet_dutch_auction::Config for Runtime {
 	type PalletId = DutchAuctionPalletId;
 	type NativeCurrency = Balances;
 	type PositionExistentialDeposit = NativeExistentialDeposit;
+	type AdminOrigin = EnsureRoot<Self::AccountId>;
+	type XcmSender = XcmFake;
+	type XcmOrigin = XcmFake;
 }
 
 parameter_types! {
@@ -205,7 +229,6 @@ parameter_types! {
 }
 
 type LiquidationStrategyId = u32;
-type ParaId = u32;
 impl pallet_liquidations::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
@@ -214,7 +237,8 @@ impl pallet_liquidations::Config for Runtime {
 	type DutchAuction = DutchAuction;
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type PalletId = LiquidationPalletId;
-	type ParachainId = ParaId;
+	type CanModifyStrategies = EnsureRoot<Self::AccountId>;
+	type XcmSender = XcmFake;
 }
 
 #[allow(dead_code)] // not really dead

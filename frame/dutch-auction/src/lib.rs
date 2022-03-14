@@ -26,6 +26,10 @@
 //!
 //! # DEX
 //! Currently this dutch auction does not tries to sell on external DEX.
+//!
+//! # XCMP
+//!
+//! Auction provides cross chain API. Alternative
 
 #![cfg_attr(
 	not(test),
@@ -60,6 +64,7 @@
 	unused_extern_crates
 )]
 pub use pallet::*;
+
 pub mod math;
 #[cfg(test)]
 mod tests;
@@ -68,35 +73,56 @@ mod tests;
 mod benchmarking;
 mod mock;
 
+mod prelude;
+mod support;
+mod types;
 pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
 	pub use crate::weights::WeightInfo;
-	use codec::{Decode, Encode};
+	use crate::{prelude::*, types::*};
+	use xcm::{
+		latest::{prelude::*, Instruction, MultiAsset, WeightLimit::Unlimited},
+		v0::Junction::PalletInstance,
+	};
+
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
 		math::WrappingNext,
 		time::{TimeReleaseFunction, Timestamp},
+		xcm::{ConfiguraitonId, CumulusMethodId, XcmSellInitialResponseTransact},
 	};
-	#[cfg(feature = "runtime-benchmarks")]
-	use frame_support::traits::Currency;
+	use frame_support::dispatch::DispatchResultWithPostInfo;
+
+	use crate::{math::*, support::DefiMultiReservableCurrency};
+	use composable_traits::xcm::{XcmSellFinalResponseTransact, XcmSellRequest};
+	use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{tokens::fungible::Transfer as NativeTransfer, IsType, UnixTime},
-		PalletId,
+		traits::{
+			tokens::fungible::Transfer as NativeTransfer, Currency, EnsureOrigin, IsType, UnixTime,
+		},
+		transactional, PalletId, Twox128, Twox64Concat,
 	};
 	use frame_system::{
 		ensure_signed,
 		pallet_prelude::{BlockNumberFor, OriginFor},
 	};
-	use num_traits::Zero;
-	use scale_info::TypeInfo;
-
-	use crate::math::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
 	use sp_runtime::{traits::AccountIdConversion, DispatchError};
-	use sp_std::vec::Vec;
+	use sp_std::convert::TryInto;
+	pub type OrderIdOf<T> = <T as Config>::OrderId;
+	pub type SellOf<T> = SellOrder<
+		<T as DeFiComposableConfig>::MayBeAssetId,
+		<T as DeFiComposableConfig>::Balance,
+		<T as frame_system::Config>::AccountId,
+		EDContext<<T as DeFiComposableConfig>::Balance>,
+		TimeReleaseFunction,
+	>;
+
+	pub type TakeOf<T> =
+		TakeOrder<<T as DeFiComposableConfig>::Balance, <T as frame_system::Config>::AccountId>;
 
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
@@ -121,46 +147,30 @@ pub mod pallet {
 		/// ED taken to create position. Part of if returned when position is liqudated.
 		#[pallet::constant]
 		type PositionExistentialDeposit: Get<Self::Balance>;
+
+		type XcmOrigin: From<<Self as frame_system::Config>::Origin>
+			+ Into<Result<CumulusOrigin, <Self as Config>::XcmOrigin>>;
+		/// origin of admin of this pallet
+		type AdminOrigin: EnsureOrigin<<Self as frame_system::Config>::Origin>;
+
+		type XcmSender: SendXcm;
 	}
-
-	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo, Clone, Debug, PartialEq)]
-	pub struct SellOrder<AssetId, Balance, AccountId, Context> {
-		pub from_to: AccountId,
-		pub order: Sell<AssetId, Balance>,
-		pub configuration: TimeReleaseFunction,
-		/// context captured when sell started
-		pub context: Context,
-	}
-
-	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo, Clone, Debug, PartialEq)]
-	pub struct Context<Balance> {
-		pub added_at: Timestamp,
-		pub deposit: Balance,
-	}
-
-	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo)]
-	pub struct TakeOrder<Balance, AccountId> {
-		pub from_to: AccountId,
-		pub take: Take<Balance>,
-	}
-
-	// type aliases
-	pub type OrderIdOf<T> = <T as Config>::OrderId;
-	pub type SellOf<T> = SellOrder<
-		<T as DeFiComposableConfig>::MayBeAssetId,
-		<T as DeFiComposableConfig>::Balance,
-		<T as frame_system::Config>::AccountId,
-		Context<<T as DeFiComposableConfig>::Balance>,
-	>;
-
-	pub type TakeOf<T> =
-		TakeOrder<<T as DeFiComposableConfig>::Balance, <T as frame_system::Config>::AccountId>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-		OrderAdded { order_id: OrderIdOf<T>, order: SellOf<T> },
-		OrderRemoved { order_id: OrderIdOf<T> },
+		OrderAdded {
+			order_id: OrderIdOf<T>,
+			order: SellOf<T>,
+		},
+		/// raised
+		OrderTaken {
+			order_id: OrderIdOf<T>,
+			taken: T::Balance,
+		},
+		OrderRemoved {
+			order_id: OrderIdOf<T>,
+		},
 	}
 
 	#[pallet::error]
@@ -171,6 +181,10 @@ pub mod pallet {
 		TakeLimitDoesNotSatisfiesOrder,
 		OrderNotFound,
 		NotEnoughNativeCurrentyToPayForAuction,
+		/// errors trying to decode and parse XCM input
+		XcmCannotDecodeRemotParametersToLocalRepresentations,
+		XcmCannotFindLocalIdentifiersAsDecodedFromRemote,
+		XcmNotFoundConfigurationById,
 	}
 
 	#[pallet::pallet]
@@ -188,6 +202,47 @@ pub mod pallet {
 	pub type SellOrders<T: Config> =
 		StorageMap<_, Twox64Concat, OrderIdOf<T>, SellOf<T>, OptionQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn xcm_sell_orders)]
+	pub type XcmSellOrders<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		polkadot_parachain::primitives::Id,
+		Twox64Concat,
+		composable_traits::xcm::OrderId,
+		T::OrderId,
+		OptionQuery,
+	>;
+
+	/// orders are handled locally, but if these came from remote,
+	/// these should be notified approtiately
+	#[pallet::storage]
+	#[pallet::getter(fn get_local_order_id_to_remote)]
+	pub type LocalOrderIdToRemote<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		OrderIdOf<T>,
+		(polkadot_parachain::primitives::Id, composable_traits::xcm::OrderId),
+		OptionQuery,
+	>;
+
+	/// registered callback location for specific parachain
+	#[pallet::storage]
+	#[pallet::getter(fn get_callback_locations)]
+	pub type ParachainXcmCallbackLocation<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		polkadot_parachain::primitives::Id,
+		CumulusMethodId,
+		OptionQuery,
+	>;
+
+	/// set of reusable auction configurations
+	#[pallet::storage]
+	#[pallet::getter(fn configuraitons)]
+	pub type Configurations<T: Config> =
+		StorageMap<_, Twox64Concat, ConfiguraitonId, TimeReleaseFunction, OptionQuery>;
+
 	/// one block storage, users payed N * WEIGHT for this Vec, so will not put bound here (neither
 	/// HydraDX does)
 	#[pallet::storage]
@@ -197,9 +252,7 @@ pub mod pallet {
 
 	impl<T: Config + DeFiComposableConfig> DeFiEngine for Pallet<T> {
 		type MayBeAssetId = T::MayBeAssetId;
-
 		type Balance = T::Balance;
-
 		type AccountId = T::AccountId;
 	}
 
@@ -210,6 +263,20 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::weight(T::WeightInfo::add_configuration())]
+
+		/// adds configuration of updates in place
+		/// already running acutions are not updated
+		pub fn add_configuration(
+			origin: OriginFor<T>,
+			configuration_id: ConfiguraitonId,
+			configuraiton: TimeReleaseFunction,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::AdminOrigin::ensure_origin(origin)?;
+			Configurations::<T>::insert(configuration_id, configuraiton);
+			Ok(().into())
+		}
+
 		/// sell `order` in auction with `configuration`
 		/// some deposit is taken for storing sell order
 		#[pallet::weight(T::WeightInfo::ask())]
@@ -266,6 +333,45 @@ pub mod pallet {
 
 			Ok(Pays::No.into())
 		}
+
+		// TODO: make API for call this as liquidation engine
+		// TODO: so make pallet trait for having this call
+		#[pallet::weight(<T as Config>::WeightInfo::xcm_sell())]
+		#[transactional]
+		pub fn xcm_sell(
+			origin: OriginFor<T>,
+			request: XcmSellRequest,
+		) -> DispatchResultWithPostInfo {
+			// TODO: make events/logs from all failed liqudations
+
+			// incoming message is generic in representations, so need to map it back to local,
+			let parachain_id =
+				cumulus_pallet_xcm::ensure_sibling_para(<T as Config>::XcmOrigin::from(origin))?;
+			let base = T::MayBeAssetId::decode(&mut &request.order.pair.base.encode()[..])
+				.map_err(|_| Error::<T>::XcmCannotDecodeRemotParametersToLocalRepresentations)?;
+			let quote = T::MayBeAssetId::decode(&mut &request.order.pair.quote.encode()[..])
+				.map_err(|_| Error::<T>::XcmCannotDecodeRemotParametersToLocalRepresentations)?;
+			let amount: T::Balance =
+				request.order.take.amount.try_into().map_err(|_| {
+					Error::<T>::XcmCannotDecodeRemotParametersToLocalRepresentations
+				})?;
+			let order = Sell::new(base, quote, amount, request.order.take.limit);
+			let configuration = Configurations::<T>::get(request.configuration)
+				.ok_or(Error::<T>::XcmNotFoundConfigurationById)?;
+			let who = T::AccountId::decode(&mut &request.from_to[..])
+				.map_err(|_| Error::<T>::XcmCannotDecodeRemotParametersToLocalRepresentations)?;
+
+			let order_id =
+				<Self as SellEngine<TimeReleaseFunction>>::ask(&who, order, configuration)?;
+			LocalOrderIdToRemote::<T>::insert(order_id, (parachain_id, request.order_id));
+
+			Self::deposit_event(Event::OrderAdded {
+				order_id,
+				order: SellOrders::<T>::get(order_id).expect("just added order exists"),
+			});
+
+			Ok(().into())
+		}
 	}
 
 	impl<T: Config + DeFiComposableConfig> SellEngine<TimeReleaseFunction> for Pallet<T> {
@@ -292,7 +398,7 @@ pub mod pallet {
 				from_to: from_to.clone(),
 				configuration,
 				order,
-				context: Context::<Self::Balance> { added_at: now, deposit },
+				context: EDContext::<Self::Balance> { added_at: now, deposit },
 			};
 
 			T::MultiCurrency::reserve(order.order.pair.base, from_to, order.order.take.amount)?;
@@ -333,13 +439,14 @@ pub mod pallet {
 		// so we stay fast and prevent attack
 		fn on_finalize(_n: T::BlockNumber) {
 			for (order_id, mut takes) in <Takes<T>>::iter() {
-				if let Some(SellOrder {
+				if let Some(crate::types::SellOrder {
 					mut order,
 					context: _,
 					from_to: ref seller,
 					configuration: _,
 				}) = <SellOrders<T>>::get(order_id)
 				{
+					let mut amount_received = T::Balance::zero();
 					// users payed N * WEIGHT before, we here pay N * (log N - 1) * Weight. We can
 					// retain pure N by first served principle so, not highest price.
 					takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));
@@ -347,9 +454,10 @@ pub mod pallet {
 					for take in takes {
 						let quote_amount =
 							take.take.quote_limit_amount().expect("was checked in take call");
-						// what to do with orders which nobody ever takes? some kind of dust orders
-						// with
+						// TODO: what to do with orders which nobody ever takes? some kind of dust
+						// orders
 						if order.take.amount == T::Balance::zero() {
+							// bidder was unlucky because order was sol out
 							T::MultiCurrency::unreserve(
 								order.pair.quote,
 								&take.from_to,
@@ -361,7 +469,7 @@ pub mod pallet {
 							let real_quote_amount =
 								take.take.quote_amount(take_amount).expect("was taken via min");
 
-							exchange_reserved::<T>(
+							T::MultiCurrency::exchange_reserved(
 								order.pair.base,
 								seller,
 								take_amount,
@@ -370,19 +478,101 @@ pub mod pallet {
 								real_quote_amount,
 							)
 							.expect("we forced locks beforehand");
-
 							if real_quote_amount < quote_amount {
 								T::MultiCurrency::unreserve(
 									order.pair.quote,
 									&take.from_to,
 									quote_amount - real_quote_amount,
 								);
+
+								amount_received += real_quote_amount;
 							}
 						}
 					}
 
 					if order.take.amount == T::Balance::zero() {
 						<SellOrders<T>>::remove(order_id);
+						if let Some((parachain_id, xcm_order_id)) =
+							LocalOrderIdToRemote::<T>::take(&order_id)
+						{
+							let received_amount =
+								T::MultiCurrency::free_balance(order.pair.quote, seller);
+							let mut account = vec![0u8; 32];
+							seller.encode_to(&mut account);
+							let account: [u8; 32] = account
+								.try_into()
+								.expect("cumulus runtime has no account with 33 bytes");
+							// as of now we do only final sell
+
+							// setting up XCM message
+							let asset_id = MultiLocation {
+								parents: 1,
+								interior: X2(
+									AccountId32 { network: Any, id: account },
+									GeneralKey(order.pair.encode()),
+								),
+							};
+							let asset_id = AssetId::Concrete(asset_id);
+							let assets =
+								MultiAsset { fun: Fungible(received_amount.into()), id: asset_id };
+							let callback = composable_traits::xcm::SellResponse::Final(
+								XcmSellInitialResponseTransact {
+									total_amount_taken: received_amount.into(),
+									minimal_price: composable_traits::xcm::Balance::one(), /* auction goes to mimimal price, can thin about better later */
+								},
+							);
+							if let Some(method) =
+								ParachainXcmCallbackLocation::<T>::get(parachain_id)
+							{
+								let callback = composable_traits::xcm::XcmCumulusDispatch::new(
+									method.pallet_instance,
+									method.method_id,
+									callback,
+								);
+								let callback = vec![
+									WithdrawAsset(assets.clone().into()),
+									BuyExecution { fees: assets.clone(), weight_limit: Unlimited },
+									TransferReserveAsset {
+										assets: assets.into(),
+										dest: (
+											Parent,
+											X3(
+												Parachain(parachain_id.into()),
+												AccountId32 { network: Any, id: account.clone() },
+												GeneralKey(order.pair.encode()),
+											),
+										)
+											.into(),
+										xcm: Xcm(vec![Transact {
+											origin_type: OriginKind::Native,
+											require_weight_at_most: 0, /* TODO: make sure that
+											                            * callbacks are free (if
+											                            * correct) or specify
+											                            * price */
+											call: callback.encode().into(),
+										}]),
+									},
+								];
+								let msg = Xcm(callback);
+								let result = T::XcmSender::send_xcm(
+									(Parent, Junction::Parachain(parachain_id.into())),
+									msg,
+								);
+								match result {
+									Ok(_) => {
+										// TODO: decide if need to send event about sent XCM
+									},
+									Err(_) => {
+										// TODO: insert here event to allow to act on failure
+										LocalOrderIdToRemote::<T>::insert(
+											order_id,
+											(parachain_id, xcm_order_id),
+										);
+									},
+								}
+							}
+						}
+
 						Self::deposit_event(Event::OrderRemoved { order_id });
 					}
 				}
@@ -393,21 +583,5 @@ pub mod pallet {
 		fn on_initialize(_n: T::BlockNumber) -> Weight {
 			T::WeightInfo::known_overhead_for_on_finalize()
 		}
-	}
-
-	/// feesless exchange of reserved currencies
-	fn exchange_reserved<T: Config>(
-		base: <T as DeFiComposableConfig>::MayBeAssetId,
-		seller: &<T as frame_system::Config>::AccountId,
-		take_amount: <T as DeFiComposableConfig>::Balance,
-		quote: <T as DeFiComposableConfig>::MayBeAssetId,
-		taker: &<T as frame_system::Config>::AccountId,
-		quote_amount: <T as DeFiComposableConfig>::Balance,
-	) -> Result<(), DispatchError> {
-		T::MultiCurrency::unreserve(base, seller, take_amount);
-		T::MultiCurrency::unreserve(quote, taker, quote_amount);
-		T::MultiCurrency::transfer(base, seller, taker, take_amount)?;
-		T::MultiCurrency::transfer(quote, taker, seller, quote_amount)?;
-		Ok(())
 	}
 }

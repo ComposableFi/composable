@@ -28,10 +28,13 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 composable-traits = { path = "../composable-traits", default-features = false }
 
+cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.17", default-features = false }
+cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.17", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = [
   "derive",
 ] }
+xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.17" }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
@@ -60,6 +63,8 @@ std = [
   "sp-arithmetic/std",
   "composable-traits/std",
   "scale-info/std",
+  "cumulus-primitives-core/std",
+  "xcm/std",
 ]
 
 runtime-benchmarks = [

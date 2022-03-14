@@ -48,7 +48,9 @@ impl WellKnownCurrency for CurrencyId {
 
 impl CurrencyId {
 	pub const INVALID: CurrencyId = CurrencyId(0);
+	/// Runtime native token Kustama
 	pub const PICA: CurrencyId = CurrencyId(1);
+	/// Runtime native token Polkadot
 	pub const LAYR: CurrencyId = CurrencyId(2);
 	pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
 

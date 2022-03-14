@@ -13,7 +13,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod assets;
-pub mod auction;
 pub mod bonded_finance;
 pub mod call_filter;
 pub mod currency;
@@ -29,3 +28,4 @@ pub mod privilege;
 pub mod time;
 pub mod vault;
 pub mod vesting;
+pub mod xcm;
