@@ -6,7 +6,13 @@ import type { ITuple } from '@polkadot/types-codec/types';
 import type { EthereumAccountId } from '@polkadot/types/interfaces/eth';
 import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/extrinsics';
 import type { ParachainInherentData, PersistedValidationData } from '@polkadot/types/interfaces/parachains';
-import type { AccountId32, Balance } from '@polkadot/types/interfaces/runtime';
+import type { AccountId32, Permill } from '@polkadot/types/interfaces/runtime';
+
+/** @name Balance */
+export interface Balance extends u128 {}
+
+/** @name CommonMosaicRemoteAssetId */
+export interface CommonMosaicRemoteAssetId extends Null {}
 
 /** @name CommonMosaicRemoteAssetId */
 export interface CommonMosaicRemoteAssetId extends Null {}
@@ -46,7 +52,10 @@ export interface ComposableTraitsBondedFinanceBondOfferReward extends Struct {
 export interface ComposableTraitsCallFilterCallFilterEntry extends Null {}
 
 /** @name ComposableTraitsDefiCurrencyPair */
-export interface ComposableTraitsDefiCurrencyPair extends Null {}
+export interface ComposableTraitsDefiCurrencyPair extends Struct {
+  readonly base: u128;
+  readonly quote: u128;
+}
 
 /** @name ComposableTraitsDefiSell */
 export interface ComposableTraitsDefiSell extends Null {}
@@ -58,7 +67,16 @@ export interface ComposableTraitsDefiTake extends Null {}
 export interface ComposableTraitsDexConsantProductPoolInfo extends Null {}
 
 /** @name ComposableTraitsDexConstantProductPoolInfo */
-export interface ComposableTraitsDexConstantProductPoolInfo extends Null {}
+export interface ComposableTraitsDexConstantProductPoolInfo extends Struct {
+  readonly owner: AccountId32;
+  readonly pair: {
+    readonly base: u128;
+    readonly quote: u128;
+  } & Struct;
+  readonly lpToken: u128;
+  readonly fee: Permill;
+  readonly ownerFee: Permill;
+}
 
 /** @name ComposableTraitsDexStableSwapPoolInfo */
 export interface ComposableTraitsDexStableSwapPoolInfo extends Null {}
@@ -127,7 +145,11 @@ export interface FrameSupportScheduleLookupError extends Null {}
 export interface FrameSupportScheduleMaybeHashed extends Null {}
 
 /** @name OrmlTokensAccountData */
-export interface OrmlTokensAccountData extends Null {}
+export interface OrmlTokensAccountData extends Struct {
+  readonly free: u128;
+  readonly reserved: u128;
+  readonly frozen: u128;
+}
 
 /** @name OrmlTokensBalanceLock */
 export interface OrmlTokensBalanceLock extends Null {}
@@ -278,6 +300,9 @@ export interface PolkadotPrimitivesV1AbridgedHostConfiguration extends Null {}
 
 /** @name PolkadotPrimitivesV1PersistedValidationData */
 export interface PolkadotPrimitivesV1PersistedValidationData extends PersistedValidationData {}
+
+/** @name PoolId */
+export interface PoolId extends u128 {}
 
 /** @name SpConsensusAuraSr25519AppSr25519Public */
 export interface SpConsensusAuraSr25519AppSr25519Public extends Null {}

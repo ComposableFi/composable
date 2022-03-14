@@ -77,7 +77,11 @@ export default {
     PalletSchedulerReleases: "Null",
     PalletSchedulerScheduledV3: "Null",
     DaliRuntimeOpaqueSessionKeys: "Null",
-    OrmlTokensAccountData: "Null",
+    OrmlTokensAccountData: {
+      free: 'u128',
+      reserved: 'u128',
+      frozen: 'u128'
+    },
     OrmlTokensBalanceLock: "Null",
     PalletTreasuryProposal: "Null",
     PalletVaultModelsStrategyOverview: "Null",
@@ -120,15 +124,27 @@ export default {
     PalletCurrencyFactoryRanges: "Null",
     PalletCurrencyFactoryRangesRange: "Null",
     PalletLiquidationsLiquidationStrategyConfiguration: "Null",
-    ComposableTraitsDefiCurrencyPair: "Null",
+    ComposableTraitsDefiCurrencyPair: {
+      base: "u128",
+      quote: "u128"
+    },
     CommonMosaicRemoteAssetId: "Null",
     ComposableTraitsDexConsantProductPoolInfo: "Null",
     ComposableTraitsLendingMarketConfig: "Null",
     ComposableTraitsLendingCreateInput: "Null",
     ComposableTraitsLendingUpdateInput: "Null",
-    PalletLiquidityBootstrappingPool: "Null",
-    ComposableTraitsOraclePrice: "Null",
     ComposableTraitsDexStableSwapPoolInfo: "Null",
-    ComposableTraitsDexConstantProductPoolInfo: "Null"
+    ComposableTraitsOraclePrice: "Null",
+    PalletLiquidityBootstrappingPool: "Null",
+    ComposableTraitsDexConstantProductPoolInfo: {
+      owner: "AccountId32",
+      pair: {
+        base: "u128",
+        quote: "u128"
+      },
+      lpToken: "u128",
+      fee: "Permill",
+      ownerFee: "Permill"
+    },
   },
 };
