@@ -60,18 +60,10 @@ jobs:
     #     /home/runner/.cargo/bin/cargo build --release -p composable
     #     gsutil cp  target/release/composable gs://composable-binaries/community-releases/${{ env.RELEASE_VERSION }}/
 
-    - name: Build Docker image
-      run: 
-        RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make containerize
-
-    - name: Push Docker Image
-      run: 
-        RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make push
-
     - name: Image Tag Version
       id: imagetag
       run: |
-        RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
+        RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) >> $GITHUB_ENV
         echo ::set-output name=release_version::${RELEASE_VERSION}
 
     - name: Build for Multiple Arch
