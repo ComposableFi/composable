@@ -52,18 +52,18 @@ version:
 	sed -i "s|^version =.*|version = '"${RELEASE_VERSION}"'|" node/Cargo.toml; \
 	fi;
 
+.PHONY: cargo-version
 cargo-version:
 	@if [ ${CARGO_VERSION} ]; then \
 	sed -i "s|^version =.*|version = '"${CARGO_VERSION}"'|" node/Cargo.toml; \
 	fi;
 
 
-
 .PHONY: containerize-release
 containerize-release: version containerize
 
 containerize:
-	@docker buildx build --platform=linux/arm64,linux/amd64,linux/arm64/v8 --output "type=image,push=true"  \
+	@docker build  \
 	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg VERSION=${RELEASE_VERSION} \
 		-f ${INSTALL_DIR}/Dockerfile \
 		-t ${IMAGE_WITH_COMMIT} \
@@ -104,7 +104,7 @@ else
 endif
 
 
-.PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release containerize-composable-sandbox push-composable-sandbox cargo-version
+.PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release containerize-composable-sandbox push-composable-sandbox
 
 
 #----------------------------------------------------------------------
