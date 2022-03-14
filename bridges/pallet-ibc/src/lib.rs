@@ -55,7 +55,10 @@ pub mod pallet {
 		},
 		events::IbcEvent,
 	};
-	use ibc_primitives::{QueryChannelResponse, QueryClientStateResponse, QueryConnectionResponse};
+	use ibc_primitives::{
+		QueryChannelResponse, QueryClientStateResponse, QueryClientStatesResponse,
+		QueryConnectionResponse, QueryConsensusStateResponse,
+	};
 	use sp_runtime::{generic::DigestItem, traits::BlakeTwo256};
 	use sp_trie::{TrieDBMut, TrieMut};
 	use tendermint_proto::Protobuf;
@@ -224,6 +227,8 @@ pub mod pallet {
 		TrieInsertError,
 		/// Error generating trie proof
 		ProofGenerationError,
+		/// Client consensus state not found for height
+		ConsensusStateNotFound,
 	}
 
 	#[pallet::hooks]
@@ -649,13 +654,63 @@ pub mod pallet {
 		}
 
 		/// Get all client states
-		pub fn clients() -> Result<Vec<u8>, Error<T>> {
-			todo!()
+		pub fn clients() -> Result<QueryClientStatesResponse, Error<T>> {
+			let mut client_ids = Vec::new();
+			let client_states = Clients::<T>::iter()
+				.map(|(id, state)| {
+					client_ids.push(id);
+					state
+				})
+				.collect::<Vec<_>>();
+
+			let prefix = T::CONNECTION_PREFIX.to_vec();
+			let keys = client_ids
+				.into_iter()
+				.map(|id_bytes| {
+					let client_id = client_id_from_bytes(id_bytes.clone())?;
+					let path = format!("{}", ClientStatePath(client_id));
+					let mut key = prefix.clone();
+					key.extend_from_slice(path.as_bytes());
+					Ok(key)
+				})
+				.collect::<Result<Vec<_>, Error<T>>>()?;
+
+			Ok(QueryClientStatesResponse {
+				client_states,
+				proof: Self::generate_proof(keys.iter().collect::<Vec<_>>())?,
+				height: vec![],
+			})
 		}
 
 		/// Get a consensus state for client
-		pub fn consensus_state(client_id: String) -> Result<Vec<u8>, Error<T>> {
-			todo!()
+		pub fn consensus_state(
+			height: Vec<u8>,
+			client_id: String,
+		) -> Result<QueryConsensusStateResponse, Error<T>> {
+			let client_id_bytes = client_id.as_bytes().to_vec();
+			let consensus_states = ConsensusStates::<T>::get(client_id_bytes.clone());
+			let mut key = T::CONNECTION_PREFIX.to_vec();
+			let client_id = client_id_from_bytes(client_id_bytes)?;
+
+			let (.., consensus_state) = consensus_states
+				.into_iter()
+				.find(|(maybe_height, state)| maybe_height == &height)
+				.ok_or(Error::<T>::ConsensusStateNotFound)?;
+			let height = ibc::Height::decode(&*height).map_err(|_| Error::<T>::DecodingError)?;
+			let consensus_path = ClientConsensusStatePath {
+				client_id: client_id.clone(),
+				epoch: height.revision_number,
+				height: height.revision_height,
+			};
+
+			let path = format!("{}", consensus_path);
+			key.extend_from_slice(path.as_bytes());
+
+			Ok(QueryConsensusStateResponse {
+				consensus_state,
+				proof: Self::generate_proof(vec![&key])?,
+				height: LatestHeight::<T>::get(),
+			})
 		}
 
 		/// Get all connection states for a client
