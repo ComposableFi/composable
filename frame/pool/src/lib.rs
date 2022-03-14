@@ -856,7 +856,7 @@ pub mod pallet {
 			numeraire: &Self::AssetId
 		) -> Result<FixedBalance, DispatchError> {
 			// Requirement 1) the desired pool index must exist
-			ensure!(Pools::<T>::contains_key(pool_id), Error::<T>::PoolDoesNotExist);
+			ensure!(Self::pool_exists(pool_id), Error::<T>::PoolDoesNotExist);
 
 			// Requirement 2) asset must be tracked by the pool
 			ensure!(
@@ -1074,12 +1074,12 @@ pub mod pallet {
 		/// 
 		/// # Weight: O()
 		fn all_asset_deposit(
-			from: &Self::AccountId,
-			pool_id: &Self::PoolId,
+			from: &AccountIdOf<T>,
+			pool_id: &T::PoolId,
 			deposits: Vec<Deposit<T>>,
 		) -> Result<Self::Balance, DispatchError> {
 			// Requirement 1) the desired pool index must exist
-			ensure!(Pools::<T>::contains_key(pool_id), Error::<T>::PoolDoesNotExist);
+			ensure!(Self::pool_exists(pool_id), Error::<T>::PoolDoesNotExist);
 		
 			// Requirement 2) For each of the Pool's underlying assets there is a deposit of that asset
 			ensure!(
@@ -1088,14 +1088,14 @@ pub mod pallet {
 			);
 
 			let reserve_total: BalanceOf<T> = Self::reserves_of(pool_id)?.iter()
-				.fold(T::Balance::zero(), |total, reserve| total + reserve.amount);
+				.fold(BalanceOf::<T>::zero(), |total, reserve| total + reserve.amount);
 			let deposit_total: BalanceOf<T> = deposits.iter()
-				.fold(T::Balance::zero(), |total, reserve| total + reserve.amount);
+				.fold(BalanceOf::<T>::zero(), |total, reserve| total + reserve.amount);
 
 			for deposit in &deposits {
 				// Requirement 3) deposit amount is stictly positive
 				ensure!(
-					deposit.amount > T::Balance::zero(),
+					deposit.amount > BalanceOf::<T>::zero(),
 					Error::<T>::DepositsMustBeStrictlyPositive
 				);
 
@@ -1183,7 +1183,7 @@ pub mod pallet {
 			lp_amount: Self::Balance,
 		) -> Result<Vec<Deposit<T>>, DispatchError> {
 			// Requirement 1) the desired pool index must exist
-			ensure!(Pools::<T>::contains_key(pool_id), Error::<T>::PoolDoesNotExist);
+			ensure!(Self::pool_exists(pool_id), Error::<T>::PoolDoesNotExist);
 
 			let lp_token_id = Self::lp_token_id(pool_id)?;
 			// Requirement 2) the user who issued the extrinsic must have the total balance trying to deposit
@@ -1369,31 +1369,31 @@ pub mod pallet {
 		//  - When any `deposit` < `CreationFee` + `ExistentialDeposit`.
 		//  - When the issuer has insufficient funds to lock each deposit.
 		fn do_all_asset_deposit(
-			from: &T::AccountId,
+			from: &AccountIdOf<T>,
 			pool_id: &T::PoolId,
 			deposits: Vec<Deposit<T>>,
-		) -> Result<T::Balance, DispatchError> {
+		) -> Result<BalanceOf<T>, DispatchError> {
 			let pool_info = Pools::<T>::get(&pool_id);
 			let to = &Self::account_id(pool_id);
 
 			// Requirement 1) Calculate the number of LP tokens that need to be minted
 			let lp_tokens_to_mint = Self::calculate_lp_tokens_to_mint(pool_id, &deposits)?;
 
-			// TODO (Nevin):
-			//  - transfer all assets into the pool's account before beginning
-			//     '-> should be its own function to abstract away details
-
 			// Requirement 2) Deposit each asset into the pool's underlying vaults
 			for deposit in &deposits {
 				// TODO (Nevin):
-				//  - check for errors in vault depositing, and if so revert all deposits so far
-				//     '-> surround T::Vault::deposit call in match statement checking for Ok(lp_token_amount)
-				//             and DispatchError
+			    //  - transfer all assets into the pool's account before beginning
+			    //     '-> should be its own function to abstract away details
 
 				let vault_id = &PoolAssetVault::<T>::get(pool_id, deposit.asset_id);
 
 				T::Currency::transfer(deposit.asset_id, from, to, deposit.amount, true)
 					.map_err(|_| Error::<T>::DepositingIntoPoolFailed)?;
+
+				// TODO (Nevin):
+				//  - check for errors in vault depositing, and if so revert all deposits so far
+				//     '-> surround T::Vault::deposit call in match statement checking for Ok(lp_token_amount)
+				//             and DispatchError
 
 				let _vault_lp_token_amount = T::Vault::deposit(
 					vault_id,
@@ -1402,8 +1402,8 @@ pub mod pallet {
 				).map_err(|_| Error::<T>::DepositingIntoVaultFailed)?;
 				
 				// Requirement 3) Update the pool's reserve runtime storage objects
-				Self::increase_pool_asset_balance_storage(pool_id,&deposit.asset_id,&deposit.amount)?;
-				Self::increase_pool_asset_total_balance_storage(pool_id,&deposit.asset_id,&deposit.amount)?;
+				Self::increase_pool_asset_balance_storage(pool_id, &deposit.asset_id, &deposit.amount)?;
+				Self::increase_pool_asset_total_balance_storage(pool_id, &deposit.asset_id, &deposit.amount)?;
 			}
 
 			// Requirement 4) Mint the calling user LP tokens for the deposit
@@ -1426,9 +1426,9 @@ pub mod pallet {
 		// }
 
 		fn do_all_asset_withdraw(
-			to: &T::AccountId,
+			to: &AccountIdOf<T>,
 			pool_id: &T::PoolId,
-			lp_amount: T::Balance,
+			lp_amount: BalanceOf<T>,
 			lps_share: Vec<Withdraw<T>>
 		) -> Result<Vec<Withdraw<T>>, DispatchError> {
 			let pool_account = &Self::account_id(pool_id);
@@ -1449,7 +1449,7 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::TransferFromFailed)?;
 			}
 
-			let lp_token: T::AssetId = Self::lp_token_id(pool_id)?;
+			let lp_token: AssetIdOf<T> = Self::lp_token_id(pool_id)?;
 
 			// Requirement 2) burn the lp tokens that were deposited during this withdraw
 			T::Currency::burn_from(lp_token, to, lp_amount)
@@ -1542,6 +1542,11 @@ pub mod pallet {
 	// These functions are caled by the Constant Mean Market trait functions to validate the 
 	//     input parameters and state space
 	impl<T: Config> Pallet<T> {
+
+		// Checks that the provided PoolId corresponds to an active Pool
+		fn pool_exists(pool_id: &T::PoolId) -> bool {
+			Pools::<T>::contains_key(pool_id)
+		}
 
 		// Checks if the input vector has duplicate enteries and returns true if it doesn't, false otherwise
 		//  '-> Conditions:
@@ -1672,7 +1677,7 @@ pub mod pallet {
 			let deposit_assets: BTreeSet::<AssetIdOf<T>> = 
 				BTreeSet::<AssetIdOf<T>>::from_iter(deposits.iter().map(|deposit| deposit.asset_id));
 
-			Ok(underlying_assets == deposit_assets)
+			Ok(underlying_assets.is_subset(&deposit_assets) && underlying_assets.is_superset(&deposit_assets))
 		}
 
 		// Checks that the specified user has at least *amount* of *asset* for each asset in the deposit
@@ -1737,16 +1742,36 @@ pub mod pallet {
 			// Version 1: ~219 seconds for 10_000 runs of 
 			// depositing_into_a_non_empty_pool_with_duplicate_deposits_correctly_mints_lp_tokens
 			{
-			// let deposit = <T::Convert as Convert<T::Balance, u128>>::convert(deposit.amount);
+			// let deposit: u128 = 
+			// 	<T::Convert as Convert<BalanceOf<T>, u128>>::convert(deposit.amount);
 
-			// let reserve = Self::balance_of(pool_id, &asset)?;
-			// let reserve = <T::Convert as Convert<T::Balance, u128>>::convert(reserve);
+			// let reserve: BalanceOf<T> = Self::balance_of(pool_id, &asset)?;
+			// let reserve: u128 = 
+			// 	<T::Convert as Convert<BalanceOf<T>, u128>>::convert(reserve);
 
-			// let deposit_bounds: Bound<Perquintill> = Self::pool_info(pool_id)?.deposit_bounds;
-			// let lower_bound = deposit_bounds.minimum * reserve;
-			// let upper_bound = deposit_bounds.maximum * reserve;
+			// let reserve_increase: u128 = multiply_by_rational(1u128,
+			// 	deposit,
+			// 	reserve
+			// ).map_err(|_| ArithmeticError::Overflow)?;
 
-			// Ok(lower_bound <= deposit && deposit <= upper_bound)
+			// let deposit_bounds = Self::pool_info(pool_id)?.deposit_bounds;
+			// let lower_bound: u128 = match deposit_bounds.minimum {
+			// 	None => 0_128,
+			// 	Some(percent) => multiply_by_rational(1u128,
+			// 		percent.deconstruct().into(),
+			// 		WeightOf::<T>::one().deconstruct().into()
+			// 	).map_err(|_| ArithmeticError::Overflow)?,
+			// };
+
+			// let upper_bound: u128 = match deposit_bounds.maximum {
+			// 	None => u128::MAX,
+			// 	Some(percent) => multiply_by_rational(1u128,
+			// 		percent.deconstruct().into(),
+			// 		WeightOf::<T>::one().deconstruct().into()
+			// 	).map_err(|_| ArithmeticError::Overflow)?
+			// };
+
+			// Ok(lower_bound <= reserve_increase && reserve_increase <= upper_bound)
 			}
 			
 			// Version 2: ~217 seconds for 10_000 runs of 
@@ -1772,9 +1797,6 @@ pub mod pallet {
 			let deposit_bounds = Self::pool_info(pool_id)?.deposit_bounds;
 			let lower_bound: FixedBalance = match deposit_bounds.minimum {
 				None => FixedBalance::from_num(0_u8),
-				// Some(percent) => FixedBalance::from_num(
-				// 	percent.deconstruct().into() as f64 / WeightOf::<T>::one().deconstruct().into() as f64
-				// )
 				Some(percent) => FixedBalance::from_num(percent.deconstruct().into())
 					.checked_div(FixedBalance::from_num(WeightOf::<T>::one().deconstruct().into()))
 					.ok_or(ArithmeticError::Overflow)?
@@ -1782,23 +1804,10 @@ pub mod pallet {
 
 			let upper_bound: FixedBalance = match deposit_bounds.maximum {
 				None => FixedBalance::MAX,
-				// Some(percent) => FixedBalance::from_num(
-				// 	percent.deconstruct().into() as f64 / WeightOf::<T>::one().deconstruct().into() as f64
-				// )
 				Some(percent) => FixedBalance::from_num(percent.deconstruct().into())
 					.checked_div(FixedBalance::from_num(WeightOf::<T>::one().deconstruct().into()))
 					.ok_or(ArithmeticError::Overflow)?
 			};
-
-			// an upper bound of Perquintill::one() is equal to no upper bound
-			// let upper_bound = deposit_bounds.maximum;
-			// let upper_bound = if deposit_bounds.maximum == T::Weight::one() {
-			// 	FixedBalance::MAX
-			// } else {
-			// 	FixedBalance::from_num(
-			// 		deposit_bounds.maximum.deconstruct().into() as f64 / WeightOf::<T>::one().deconstruct().into() as f64
-			// 	)
-			// };
 
 			Ok(lower_bound <= reserve_increase && reserve_increase <= upper_bound)
 		}
@@ -1822,14 +1831,14 @@ pub mod pallet {
 			
 			let asset: AssetIdOf<T> = deposit.asset_id;
 			
-			let deposit = <T::Convert as Convert<T::Balance, u128>>::convert(deposit.amount);
-			let deposit_total = <T::Convert as Convert<T::Balance, u128>>::convert(deposit_total);
+			let deposit = <T::Convert as Convert<BalanceOf<T>, u128>>::convert(deposit.amount);
+			let deposit_total = <T::Convert as Convert<BalanceOf<T>, u128>>::convert(deposit_total);
 			let deposit_value_distribution = multiply_by_rational(1, deposit, deposit_total)
 				.map_err(|_| ArithmeticError::Overflow)?;
 
 			let reserve: BalanceOf<T> = Self::balance_of(pool_id, &asset)?;
 			let reserve: u128 = <T::Convert as Convert<BalanceOf<T>, u128>>::convert(reserve);
-			let reserve_total = <T::Convert as Convert<T::Balance, u128>>::convert(reserve_total);
+			let reserve_total = <T::Convert as Convert<BalanceOf<T>, u128>>::convert(reserve_total);
 			let reserve_value_distribution = multiply_by_rational(1, reserve, reserve_total)
 				.map_err(|_| ArithmeticError::Overflow)?;
 
@@ -1842,13 +1851,6 @@ pub mod pallet {
 			let lower_bound = reserve_value_distribution - margin_of_error;
 			let upper_bound = reserve_value_distribution + margin_of_error;
 
-			if deposit_value_distribution < lower_bound || upper_bound < deposit_value_distribution {
-				println!("asset: {asset:?}");
-				println!("lower_bound: {lower_bound:?}");
-				println!("deposit_value_distribution: {deposit_value_distribution:?}");
-				println!("upper_bound: {upper_bound:?}\n");
-			}
-
 			Ok(lower_bound <= deposit_value_distribution && deposit_value_distribution <= upper_bound)
 
 			// Version 2: ~217 seconds for 10_000 runs of
@@ -1856,23 +1858,23 @@ pub mod pallet {
 			// let asset: AssetIdOf<T> = deposit.asset_id;
 			
 			// let deposit: u128 =
-			// 	<T::Convert as Convert<T::Balance, u128>>::convert(deposit.amount);
+			// 	<T::Convert as Convert<BalanceOf<T>, u128>>::convert(deposit.amount);
 			// let deposit: FixedBalance = FixedBalance::saturating_from_num(deposit);
 
 			// let deposit_total: u128 =
-			// 	<T::Convert as Convert<T::Balance, u128>>::convert(deposit_total);
+			// 	<T::Convert as Convert<BalanceOf<T>, u128>>::convert(deposit_total);
 			// let deposit_total: FixedBalance = FixedBalance::saturating_from_num(deposit_total);
 
 			// let deposit_value_distribution: FixedBalance = deposit.checked_div(deposit_total)
 			// 	.ok_or(ArithmeticError::Overflow)?;
 
-			// let reserve: T::Balance = Self::balance_of(pool_id, &asset)?;
+			// let reserve: BalanceOf<T> = Self::balance_of(pool_id, &asset)?;
 			// let reserve: u128 =
-			// 	<T::Convert as Convert<T::Balance, u128>>::convert(reserve);
+			// 	<T::Convert as Convert<BalanceOf<T>, u128>>::convert(reserve);
 			// let reserve: FixedBalance = FixedBalance::saturating_from_num(reserve);
 
 			// let reserve_total: u128 =
-			// 	<T::Convert as Convert<T::Balance, u128>>::convert(reserve_total);
+			// 	<T::Convert as Convert<BalanceOf<T>, u128>>::convert(reserve_total);
 			// let reserve_total: FixedBalance = FixedBalance::saturating_from_num(reserve_total);
 
 			// let reserve_value_distribution: FixedBalance = reserve.checked_div(reserve_total)
@@ -1885,12 +1887,6 @@ pub mod pallet {
 
 			// let lower_bound = reserve_value_distribution - margin_of_error;
 			// let upper_bound = reserve_value_distribution + margin_of_error;
-
-			// if deposit_value_distribution < lower_bound || upper_bound < deposit_value_distribution {
-			// 	println!("lower_bound: {lower_bound:?}");
-			// 	println!("deposit_value_distribution: {deposit_value_distribution:?}");
-			// 	println!("upper_bound: {upper_bound:?}\n");
-			// }
 
 			// Ok(lower_bound <= deposit_value_distribution && deposit_value_distribution <= upper_bound)
 		}
@@ -1948,8 +1944,8 @@ pub mod pallet {
 		// Adds the asset amount to the PoolAssetTotalBalance runtime storage object for the sepcified asset
 		fn increase_pool_asset_total_balance_storage(
 			pool_id: &T::PoolId,
-			asset_id: &T::AssetId,
-			amount: &T::Balance
+			asset_id: &AssetIdOf<T>,
+			amount: &BalanceOf<T>
 		) -> Result<(), DispatchError> {
 			PoolAssetTotalBalance::<T>::mutate(
 				pool_id,
@@ -1967,8 +1963,8 @@ pub mod pallet {
 		// Adds the asset amount to the PoolAssetBalance runtime storage object for the sepcified asset
 		fn increase_pool_asset_balance_storage(
 			pool_id: &T::PoolId,
-			asset_id: &T::AssetId,
-			amount: &T::Balance
+			asset_id: &AssetIdOf<T>,
+			amount: &BalanceOf<T>
 		) -> Result<(), DispatchError> {
 			PoolAssetBalance::<T>::mutate(
 				pool_id,
@@ -2014,10 +2010,10 @@ pub mod pallet {
 		fn calculate_lp_tokens_to_mint(
 			pool_id: &T::PoolId,
 			deposits: &[Deposit<T>]
-		) -> Result<T::Balance, DispatchError> {
+		) -> Result<BalanceOf<T>, DispatchError> {
 			let lp_circulating_supply = Self::lp_circulating_supply(pool_id)?;
 
-			if lp_circulating_supply == T::Balance::zero() {
+			if lp_circulating_supply == BalanceOf::<T>::zero() {
 				// TODO (Jesper):
 				//  - accounting for MIN LIQ too like uniswap (to avoid sybil, and other issues)
 				Self::weighted_geometric_mean(pool_id, deposits)
@@ -2042,10 +2038,18 @@ pub mod pallet {
 
 			for deposit in deposits {
 				let balance: u128 = 
-					<T::Convert as Convert<T::Balance, u128>>::convert(deposit.amount);
+					<T::Convert as Convert<BalanceOf<T>, u128>>::convert(deposit.amount);
 				let balance: FixedBalance = FixedBalance::saturating_from_num(balance);
 
-				let weight: WeightOf<T>  = PoolAssetWeight::<T>::get(pool_id, deposit.asset_id);
+				let weight: WeightOf<T> = PoolAssetWeight::<T>::get(pool_id, deposit.asset_id);
+				
+				// TODO: (Kevin)
+				//  - check if this math works
+				
+				// let weight: FixedBalance = FixedBalance::from_num(weight.deconstruct().into())
+				// 	.checked_div(FixedBalance::from_num(WeightOf::<T>::one().deconstruct().into()))
+				// 	.ok_or(ArithmeticError::Overflow)?;
+
 				let weight: FixedBalance = FixedBalance::from_num(
 					weight.deconstruct().into() as f64 / WeightOf::<T>::one().deconstruct().into() as f64
 				);
@@ -2058,7 +2062,7 @@ pub mod pallet {
 
 			let result: u128 = FixedBalance::saturating_to_num::<u128>(result);
 			let result: BalanceOf<T> = 
-				<T::Convert as Convert<u128, T::Balance>>::convert(result);
+				<T::Convert as Convert<u128, BalanceOf<T>>>::convert(result);
 
 			Ok(result)
 		}
