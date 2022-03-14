@@ -1,0 +1,30 @@
+name: CI Check
+
+on:
+  push:
+    workflow_dispatch:
+    branches:
+      - '*'
+
+jobs:
+  checker:
+    strategy:
+      matrix:
+        go-version: [1.17]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: ToolChain Selector
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+
+    - name: Install srtool
+      run: |
+        cargo install --git https://github.com/chevdor/srtool-cli
+        cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
+    - name: Checker
+      run: |
+        cargo check --no-default-features --target=wasm32-unknown-unknown
