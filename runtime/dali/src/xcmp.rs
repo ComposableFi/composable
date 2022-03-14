@@ -226,7 +226,7 @@ impl<
 		// this is for trusted chains origin, see `f` if any
 		// TODO: dicuss if we need payments from Relay chain or common goods chains?
 		if weight.is_zero() {
-			return Ok(payment);
+			return Ok(payment)
 		}
 
 		// only support first fungible assets now.
@@ -251,7 +251,7 @@ impl<
 				self.fee = self.fee.saturating_add(fee);
 				self.price = self.price.saturating_add(price);
 				self.asset_location = Some(multi_location.clone());
-				return Ok(unused);
+				return Ok(unused)
 			}
 		}
 
@@ -267,7 +267,7 @@ impl<
 			self.price = self.price.saturating_sub(price);
 			self.fee = self.fee.saturating_sub(fee);
 			if price > 0 {
-				return Some((asset_location.clone(), price).into());
+				return Some((asset_location.clone(), price).into())
 			}
 		}
 
@@ -291,8 +291,8 @@ impl FilterAssetLocation for RelayReserverFromParachain {
 	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
 		// NOTE: In Acala there is not such thing
 		// if asset is KSM and send from some parachain then allow for  that
-		asset.reserve() == Some(MultiLocation::parent())
-			&& matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
+		asset.reserve() == Some(MultiLocation::parent()) &&
+			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
 	}
 }
 
@@ -468,7 +468,7 @@ impl<
 				X2(Parachain(ParachainInfo::parachain_id().into()), GeneralKey(id.encode())),
 			)),
 			CurrencyId::KSM => Some(MultiLocation::parent()),
-			_ => {
+			_ =>
 				if let Some(location) = AssetRegistry::asset_to_location(id).map(Into::into) {
 					Some(location)
 				} else {
@@ -479,8 +479,7 @@ impl<
 						ParachainInfo::parachain_id()
 					);
 					None
-				}
-			},
+				},
 		}
 	}
 }
