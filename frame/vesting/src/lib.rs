@@ -9,11 +9,11 @@
 //! ### Vesting Schedule
 //!
 //! The schedule of a vesting is described by data structure `VestingSchedule`:
-//! from the block number of `start`, for every `period` amount of blocks,
+//! from the time of `window.start`, for every `window.period` amount of time,
 //! `per_period` amount of balance would unlocked, until number of periods
-//! `period_count` reached. Note in vesting schedules, *time* is measured by
-//! block number. All `VestingSchedule`s under an account could be queried in
-//! chain state.
+//! `period_count` reached. The pallet supports measuring time windows in terms of absolute
+//! timestamps as well as block numbers for vesting schedules. All `VestingSchedule`s under
+//! an account could be queried in chain state.
 //!
 //! ## Interface
 //! - `VestedTransfer` - allowing a third party pallet to have this implementation as dependency to

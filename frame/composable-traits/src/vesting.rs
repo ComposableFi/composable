@@ -41,8 +41,8 @@ pub enum VestingWindow<BlockNumber, Moment> {
 
 /// The vesting schedule.
 ///
-/// Benefits would be granted gradually, `per_period` amount every `period`
-/// of blocks after `start`.
+/// Benefits would be granted gradually, `per_period` amount every `window.period`
+/// of blocks after `window.start`.
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct VestingSchedule<BlockNumber, Moment, Balance: HasCompact> {
 	pub window: VestingWindow<BlockNumber, Moment>,
@@ -92,9 +92,9 @@ impl<
 		self.per_period.checked_mul(&self.period_count.into())
 	}
 
-	/// Returns locked amount for a given schedule of VestingWindow = BlockNumberBased.
+	/// Returns locked amount for a given schedule of VestingWindow.
 	///
-	/// Note this func assumes schedule is a valid one(BlockNumberBased, non-zero period and
+	/// Note this func assumes schedule is a valid one(non-zero period and
 	/// non-overflow total amount), and it should be guaranteed by callers.
 	pub fn locked_amount(&self, block_number: BlockNumber, moment: Moment) -> Balance {
 		// full = (time - start) / period
