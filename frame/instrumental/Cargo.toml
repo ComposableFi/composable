@@ -1,0 +1,44 @@
+[package]
+name = "instrumental"
+version = "0.1.0"
+authors = ["Kevin@composable.finance", "Composable Finance Developers"]
+homepage = "https://instrumental.finance"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.27' }
+
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
+
+codec = { default-features = false, package = "parity-scale-codec", version = "3.0.0", features = ["derive",] }
+scale-info = { version = "2.1.2", default-features = false, features = ["derive",] }
+log = { version = "0.4.14", default-features = false }
+serde = { version = '1', optional = true }
+
+[features]
+default = ["std"]
+std = [
+    "frame-support/std",
+    "frame-system/std",
+    "frame-benchmarking/std",
+    "sp-runtime/std",
+    "sp-arithmetic/std",
+    "sp-io/std",
+    "sp-core/std",
+    "sp-std/std",
+    "codec/std",
+    "scale-info/std",
+    "log/std",
+    "serde/std",
+]
+runtime-benchmarks = ["frame-benchmarking"]
