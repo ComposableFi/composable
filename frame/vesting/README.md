@@ -13,4 +13,5 @@ The schedule of a vesting is described by data structure `VestingSchedule`: from
 The original Vesting pallet is not currency agnostic. This tweaked version is 
 1. Generalized to any currency and usable with the `MultiLockableCurrency` trait. 
 2. Modified to support measuring time in terms of absolute timestamps as well as the original block number based scheme for vesting schedules.
+
 Other than that, most of the code is the original version from the [open runtime module repo](https://github.com/open-web3-stack/open-runtime-module-library/blob/1f520348f31b5e94b8a5dd7f8e6b8ec359df4177/vesting/README.md)
