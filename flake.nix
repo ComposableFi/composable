@@ -18,12 +18,13 @@
         let
           pkgs = nixpkgsFor.${system};
           devnet = pkgs.callPackage ./devnet { inherit nixpkgs; };
-          book = pkgs.callPackage ./book {};
+          latest-book = pkgs.callPackage ./book {};
         in {
-          inherit (devnet) dali;
-          inherit (devnet) picasso;
+          dali-script = devnet.dali.script;
+          picasso-script = devnet.picasso.script;
+          inherit (devnet.dali) book;
           inherit (devnet) nixops;
-          inherit book;
+          inherit latest-book;
         });
 
       # Default package is currently the book, but that will change

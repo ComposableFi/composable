@@ -60,6 +60,22 @@ let
     '';
   };
 
+  book = pkgs.stdenv.mkDerivation {
+    name = "composable-book";
+    src = fetchFromGitHub {
+      owner = "ComposableFi";
+      repo = "composable";
+      rev = composable.version;
+      sha256 = composable.revhash;
+    };
+    buildInputs = [ pkgs.mdbook ];
+    installPhase = ''
+      mkdir -p $out/book
+      cd $src/book
+      mdbook build --dest-dir $out/book
+    '';
+  };
+
   make-node = tmp-directory: node-type: { name, wsPort, port }: {
     inherit name;
     inherit wsPort;
@@ -113,4 +129,5 @@ in {
       ${polkalaunch}/bin/polkadot-launch ${devnet-polkalaunch-config}
     '';
   documentation = "${composable-bin}/share";
+  inherit book;
 }

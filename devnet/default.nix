@@ -68,12 +68,12 @@ in {
   dali = (pkgs.callPackage ./devnet.nix {
     inherit (latest-dali) composable;
     inherit (latest-dali) polkadot;
-  }).script;
+  });
 
   picasso = (pkgs.callPackage ./devnet.nix {
     inherit (latest-picasso) composable;
     inherit (latest-picasso) polkadot;
-  }).script;
+  });
 
   nixops = (pkgs.nixopsUnstable.override {
     overrides = (self: super: {

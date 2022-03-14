@@ -56,7 +56,9 @@ jobs:
 
     - name: Load state
       run: |
-        echo $(cat devnet.json | jq --arg version "${{ env.RELEASE_VERSION }}" '.composable.version = $version' | jq --arg hash "$(nix-prefetch-url https://storage.googleapis.com/composable-binaries/community-releases/picasso/composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz)" '.composable.hash = $hash') > devnet.json
+        cd devnet
+        ./latest.sh
+        cd ..
 
         jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
 
