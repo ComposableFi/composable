@@ -33,6 +33,7 @@ let
     };
   mk-polkadot = spec:
     def: def // {
+      inherit spec;
       nodes = [
         {
           name = "alice";

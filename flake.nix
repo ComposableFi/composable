@@ -37,7 +37,7 @@
           devnet = pkgs.mkShell {
             buildInputs =
               let p = self.packages.${system};
-              in [ p.nixops p.dali p.picasso ];
+              in [ p.nixops p.dali-script p.picasso-script ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };
         });

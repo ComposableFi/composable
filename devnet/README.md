@@ -5,13 +5,9 @@
 
 # Run locally
 
-1. `./latest.sh SPEC` where `SPEC` is one of the runtime:
-   - `dali-dev`
-   - `picasso-dev`
-   - `composable-dev`
+1. `./update.sh REVISION` where `REVISION` is the latest deployed commit hash.
+2. Go back to the root directory and run `nix develop .#devnet` then run the devnet using `run-dali-dev`.
 3. Reach alice at `https://polkadot.js.org/apps/?rpc=ws://localhost:9944#/explorer`
-
-NOTE: The script will automatically run the latest devnet deployed from the latest origin/main commit.
 
 # GCE
 
