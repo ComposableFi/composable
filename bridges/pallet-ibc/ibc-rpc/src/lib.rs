@@ -40,6 +40,9 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryTransactions")]
 	fn query_transactions(&self, page: u32, limit: u32) -> Result<Vec<Transaction>>;
 
+	#[rpc(name = "ibc_generateProof")]
+	fn genrate_proof(&self, height: u32, key: Vec<u8>) -> Result;
+
 	#[rpc(name = "ibc_queryLatestHeight")]
 	fn query_latest_height(&self) -> Result<u32>;
 

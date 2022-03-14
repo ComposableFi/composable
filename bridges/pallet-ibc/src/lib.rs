@@ -55,6 +55,7 @@ pub mod pallet {
 		},
 		events::IbcEvent,
 	};
+	use ibc_primitives::{QueryChannelResponse, QueryClientStateResponse, QueryConnectionResponse};
 	use sp_runtime::{generic::DigestItem, traits::BlakeTwo256};
 	use sp_trie::{TrieDBMut, TrieMut};
 	use tendermint_proto::Protobuf;
@@ -221,6 +222,8 @@ pub mod pallet {
 		DecodingError,
 		/// Error inserting a value in trie
 		TrieInsertError,
+		/// Error generating trie proof
+		ProofGenerationError,
 	}
 
 	#[pallet::hooks]
@@ -576,20 +579,73 @@ pub mod pallet {
 			Ok(trie.root().as_bytes().to_vec())
 		}
 
+		pub fn generate_proof(keys: Vec<&Vec<u8>>) -> Result<Vec<Vec<u8>>, Error<T>> {
+			let mut db = sp_trie::MemoryDB::<BlakeTwo256>::default();
+			let root = {
+				let mut root = Default::default();
+				let mut trie = Self::build_ibc_state_trie(&mut db, &mut root)?;
+				trie.root().clone()
+			};
+			sp_trie::generate_trie_proof::<sp_trie::LayoutV0<BlakeTwo256>, _, _, _>(&db, root, keys)
+				.map_err(|_| Error::<T>::ProofGenerationError)
+		}
+
 		// IBC Runtime Api helper methods
 		/// Get a channel state
-		pub fn channel(channel_id: String, port_id: String) -> Result<Vec<u8>, Error<T>> {
-			todo!()
+		pub fn channel(
+			channel_id: String,
+			port_id: String,
+		) -> Result<QueryChannelResponse, Error<T>> {
+			let channel_id_bytes = channel_id.as_bytes().to_vec();
+			let port_id_bytes = port_id.as_bytes().to_vec();
+			let channel = Channels::<T>::get(port_id_bytes.clone(), channel_id_bytes.clone());
+			let port_id = port_id_from_bytes(port_id_bytes)?;
+			let channel_id = channel_id_from_bytes(channel_id_bytes)?;
+
+			let mut key = T::CONNECTION_PREFIX.to_vec();
+			let channel_path = format!("{}", ChannelEndsPath(port_id.clone(), channel_id.clone()));
+			key.extend_from_slice(channel_path.as_bytes());
+
+			Ok(QueryChannelResponse {
+				channel,
+				proof: Self::generate_proof(vec![&key])?,
+				height: LatestHeight::<T>::get(),
+			})
 		}
 
 		/// Get a connection state
-		pub fn connection(connection_id: String) -> Result<Vec<u8>, Error<T>> {
-			todo!()
+		pub fn connection(connection_id: String) -> Result<QueryConnectionResponse, Error<T>> {
+			let connection_id_bytes = connection_id.as_bytes().to_vec();
+			let connection = Connections::<T>::get(connection_id_bytes.clone());
+			let mut key = T::CONNECTION_PREFIX.to_vec();
+			let connection_id = connection_id_from_bytes(connection_id_bytes)?;
+
+			let connection_path = format!("{}", ConnectionsPath(connection_id));
+			key.extend_from_slice(connection_path.as_bytes());
+
+			Ok(QueryConnectionResponse {
+				connection,
+				proof: Self::generate_proof(vec![&key])?,
+				height: LatestHeight::<T>::get(),
+			})
 		}
 
 		/// Get a client state
-		pub fn client(client_id: String) -> Result<Vec<u8>, Error<T>> {
-			todo!()
+		pub fn client(client_id: String) -> Result<QueryClientStateResponse, Error<T>> {
+			let client_id_bytes = client_id.as_bytes().to_vec();
+			let client_state = Clients::<T>::get(client_id_bytes.clone());
+			let mut key = T::CONNECTION_PREFIX.to_vec();
+			let client_id = client_id_from_bytes(client_id_bytes)?;
+
+			let client_state_path = format!("{}", ClientStatePath(client_id));
+
+			key.extend_from_slice(client_state_path.as_bytes());
+
+			Ok(QueryClientStateResponse {
+				client_state,
+				proof: Self::generate_proof(vec![&key])?,
+				height: LatestHeight::<T>::get(),
+			})
 		}
 
 		/// Get all client states
@@ -694,5 +750,15 @@ fn port_id_from_bytes<T: Config>(port: Vec<u8>) -> Result<PortId, Error<T>> {
 
 fn channel_id_from_bytes<T: Config>(channel: Vec<u8>) -> Result<ChannelId, Error<T>> {
 	ChannelId::from_str(&String::from_utf8(channel).map_err(|_| Error::<T>::DecodingError)?)
+		.map_err(|_| Error::<T>::DecodingError)
+}
+
+fn connection_id_from_bytes<T: Config>(connection: Vec<u8>) -> Result<ConnectionId, Error<T>> {
+	ConnectionId::from_str(&String::from_utf8(connection).map_err(|_| Error::<T>::DecodingError)?)
+		.map_err(|_| Error::<T>::DecodingError)
+}
+
+fn client_id_from_bytes<T: Config>(client_id: Vec<u8>) -> Result<ClientId, Error<T>> {
+	ClientId::from_str(&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?)
 		.map_err(|_| Error::<T>::DecodingError)
 }

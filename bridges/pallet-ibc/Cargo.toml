@@ -26,6 +26,9 @@ ibc = { version = "0.12.0", default-features = false }
 prost-types = { version = "0.9", default-features = false }
 tendermint-proto = "0.23.5"
 
+# local deps
+ibc-primitives = { path = "./ibc-primitives", default-features = false}
+
 [dev-dependencies]
 hex = '0.4.0'
 sha2 = '0.9.3'
@@ -47,7 +50,8 @@ std = [
 	'sp-std/std',
 	'sp-io/std',
 	'ibc/std',
-	'prost-types/std'
+	'prost-types/std',
+	'ibc-primitives/std'
 ]
 
 runtime-benchmarks = ["frame-benchmarking"]
