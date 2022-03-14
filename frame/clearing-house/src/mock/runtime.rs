@@ -2,7 +2,7 @@ use crate::{self as clearing_house, mock::governance_registry::GovernanceRegistr
 use composable_traits::defi::DeFiComposableConfig;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{ConstU16, ConstU64, Everything},
+	traits::{ConstU16, ConstU64, Everything, GenesisBuild},
 	PalletId,
 };
 use frame_system as system;
@@ -38,6 +38,12 @@ pub type AccountId = u64;
 pub type Balance = u128;
 pub type AssetId = u128;
 pub type Amount = i64;
+
+pub const ADMIN: AccountId = 0;
+pub const ALICE: AccountId = 1;
+
+pub const PICA: AssetId = 0;
+pub const USDC: AssetId = 1;
 
 impl system::Config for Runtime {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -109,11 +115,11 @@ impl pallet_currency_factory::Config for Runtime {
 }
 
 parameter_types! {
-	pub const NativeAssetId: AssetId = 0;
+	pub const NativeAssetId: AssetId = PICA;
 }
 
 ord_parameter_types! {
-	pub const RootAccount: AccountId = 0;
+	pub const RootAccount: AccountId = ADMIN;
 }
 
 impl pallet_assets::Config for Runtime {
@@ -146,4 +152,36 @@ impl clearing_house::Config for Runtime {
 	type VAMMId = u64;
 	type Assets = Assets;
 	type PalletId = ClearingHouseId;
+}
+
+pub struct ExtBuilder {
+	native_balances: Vec<(AccountId, Balance)>,
+	balances: Vec<(AccountId, AssetId, Balance)>,
+}
+
+impl Default for ExtBuilder {
+	fn default() -> Self {
+		Self {
+			native_balances: vec![(ADMIN, 1_000_000_000), (ALICE, 0)],
+			balances: vec![(ADMIN, USDC, 1_000_000_000), (ALICE, USDC, 0)],
+		}
+	}
+}
+
+impl ExtBuilder {
+	#[allow(clippy::disallowed_methods)]
+	pub fn build(self) -> sp_io::TestExternalities {
+		let mut storage =
+			frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+
+		pallet_balances::GenesisConfig::<Runtime> { balances: self.native_balances }
+			.assimilate_storage(&mut storage)
+			.unwrap();
+
+		orml_tokens::GenesisConfig::<Runtime> { balances: self.balances }
+			.assimilate_storage(&mut storage)
+			.unwrap();
+
+		storage.into()
+	}
 }
