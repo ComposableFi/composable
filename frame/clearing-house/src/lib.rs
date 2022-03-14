@@ -119,7 +119,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	/// Supported collateral asset ids
-	type CollateralTypes<T: Config> = StorageMap<_, Twox64Concat, AssetIdOf<T>, ()>;
+	pub type CollateralTypes<T: Config> = StorageMap<_, Twox64Concat, AssetIdOf<T>, ()>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_margin)]
