@@ -254,7 +254,7 @@ pub type OneOrMoreFixedU128 = FixedU128;
 /// Must be (1.0..MAX] because applied only to price normalized values
 pub type MoreThanOneFixedU128 = FixedU128;
 
-/// Must be [0..1]
+/// Must be \[0..1\]
 pub type ZeroToOneFixedU128 = FixedU128;
 
 /// Number like of higher bits, so that amount and balance calculations are done it it with higher
