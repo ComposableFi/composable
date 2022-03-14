@@ -25,7 +25,7 @@ std = ["composable-node/std"]
 exclude = ["frame/transaction-fee"]
 members = [
   "frame/*",
-#  "integration-tests/local-integration-tests",
+  #  "integration-tests/local-integration-tests",
   "node",
 
   "runtime/common",
