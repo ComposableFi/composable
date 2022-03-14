@@ -226,7 +226,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_n: BlockNumberFor<T>) {
-			let root = Pallet::<T>::build_ibc_state_root();
+			let root = Pallet::<T>::extract_ibc_state_root();
 			if let Ok(root) = root {
 				let log = DigestItem::Consensus(IBC_DIGEST_ID, root);
 				<frame_system::Pallet<T>>::deposit_log(log);
@@ -419,12 +419,11 @@ pub mod pallet {
 
 		pub fn store_timeout_packet_offchain() {}
 
-		fn build_ibc_state_root() -> Result<Vec<u8>, Error<T>> {
-			let mut db = sp_trie::MemoryDB::<BlakeTwo256>::default();
-
-			let mut root = Default::default();
-
-			let mut trie = <TrieDBMut<sp_trie::LayoutV0<BlakeTwo256>>>::new(&mut db, &mut root);
+		pub fn build_ibc_state_trie<'a>(
+			db: &'a mut sp_trie::MemoryDB<BlakeTwo256>,
+			root: &'a mut sp_core::H256,
+		) -> Result<TrieDBMut<'a, sp_trie::LayoutV0<BlakeTwo256>>, Error<T>> {
+			let mut trie = <TrieDBMut<sp_trie::LayoutV0<BlakeTwo256>>>::new(db, root);
 			let prefix = T::CONNECTION_PREFIX.to_vec();
 
 			// Insert client and consensus states in trie
@@ -566,7 +565,124 @@ pub mod pallet {
 
 				trie.insert(&receipt_key, &receipt).map_err(|_| Error::<T>::TrieInsertError)?;
 			}
+
+			Ok(trie)
+		}
+
+		fn extract_ibc_state_root() -> Result<Vec<u8>, Error<T>> {
+			let mut db = sp_trie::MemoryDB::<BlakeTwo256>::default();
+			let mut root = Default::default();
+			let mut trie = Self::build_ibc_state_trie(&mut db, &mut root)?;
 			Ok(trie.root().as_bytes().to_vec())
+		}
+
+		// IBC Runtime Api helper methods
+		/// Get a channel state
+		pub fn channel(channel_id: String, port_id: String) -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		/// Get a connection state
+		pub fn connection(connection_id: String) -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		/// Get a client state
+		pub fn client(client_id: String) -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		/// Get all client states
+		pub fn clients() -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		/// Get a consensus state for client
+		pub fn consensus_state(client_id: String) -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		/// Get all connection states for a client
+		pub fn connections_client(client_id: String) -> Result<Vec<Vec<u8>>, Error<T>> {
+			todo!()
+		}
+
+		/// Get all client state for channel
+		pub fn channel_client(channel_id: String, port_id: String) -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		/// Get the host consensus state
+		pub fn host_consensus_state() -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		/// Get all channel states
+		pub fn channels() -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		/// Get all connection states
+		pub fn connections() -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		pub fn packet_commitments(
+			channel_id: String,
+			port_id: String,
+		) -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		fn packet_acknowledgements(
+			channel_id: String,
+			port_id: String,
+		) -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		fn unreceived_packets(
+			channel_id: String,
+			port_id: String,
+			seqs: Vec<u64>,
+		) -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		fn unreceived_acknowledgements(
+			channel_id: String,
+			port_id: String,
+			seqs: Vec<u64>,
+		) -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		fn next_seq_recv(channel_id: String, port_id: String) -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		fn packet_commitment(
+			channel_id: String,
+			port_id: String,
+			seq: u64,
+		) -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		fn packet_acknowledgement(
+			channel_id: String,
+			port_id: String,
+			seq: u64,
+		) -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		fn packet_receipt(
+			channel_id: String,
+			port_id: String,
+			seq: u64,
+		) -> Result<Vec<u8>, Error<T>> {
+			todo!()
 		}
 	}
 }

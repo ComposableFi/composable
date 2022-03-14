@@ -11,9 +11,11 @@ sp_api::decl_runtime_apis! {
 	where
 		Header: Codec
 	{
-		fn latest_height() -> Option<u64>;
+		/// Return latest height
+		fn latest_height() -> Option<u32>;
 
-		fn header_at_height(height: u64) -> Option<Header>;
+		/// Return host chain header
+		fn header_at_height() -> Option<Header>;
 
 		fn query_balance(key_name: String) -> Option<Vec<u8>>;
 
@@ -21,49 +23,61 @@ sp_api::decl_runtime_apis! {
 
 		fn unbonding_period() -> Option<u64>;
 
-		fn client_state(height: u64, client_id: String) -> Option<QueryClientStateResponse>;
+		/// Return client state at height
+		fn client_state(client_id: String) -> Option<QueryClientStateResponse>;
 
+		/// Return the consensus state for the host machine
+		fn host_consensus_state() -> Option<QueryConsensusStateResponse>;
+
+		/// Return the consensus state for the given client at a height
 		fn client_consensus_state(client_id: String, client_height: Vec<u8>) -> Option<QueryConsensusStateResponse>;
 
-		fn clients() -> Option<QueryClientStatesResponse>;
+		/// Returns client states for all clients on chain
+		fn clients() -> Option<Vec<Vec<u8>>>;
 
 		fn find_matching_client(client_state: Vec<u8>) -> Option<String>;
 
-		fn connection(height: u64, connection_id: String) -> Option<QueryConnectionResponse>;
+		/// Query the given connection state with proof
+		fn connection(connection_id: String) -> Option<QueryConnectionResponse>;
 
+		/// Returns all connections registered on chain
 		fn connections() -> Option<QueryConnectionsResponse>;
 
-		fn connections_using_client(height: u64, client_id: String) -> Option<QueryConnectionsResponse>;
+		/// Returns all connections associated with the given client
+		fn connections_using_client(client_id: String) -> Option<QueryConnectionsResponse>;
 
 		/// Returns Connection handshake proof
-		fn conn_handshake_proof(height: u64, client_id: String, conn_id: String) -> Option<ConnectionHandshakeProof>;
+		fn conn_handshake_proof(client_id: String, conn_id: String) -> Option<ConnectionHandshakeProof>;
 
-		fn channel(height: u64, channel_id: String, port_id: String) -> Option<QueryChannelResponse>;
+		fn channel(channel_id: String, port_id: String) -> Option<QueryChannelResponse>;
 
-		fn channel_client(height: u64, channel_id: String, port_id: String) -> Option<Vec<u8>>;
+		/// Should return the client state for the client supporting this channel
+		fn channel_client(channel_id: String, port_id: String) -> Option<Vec<u8>>;
 
-		fn connection_channels(height: u64, connection_id: String) -> Option<QueryChannelsResponse>;
+		/// Returns all channels associated with this connection
+		fn connection_channels(connection_id: String) -> Option<QueryChannelsResponse>;
 
+		/// Returns all channels registered on chain
 		fn channels() -> Option<QueryChannelsResponse>;
 
-		fn packet_commitments(height: u64, channel_id: String, port_id: String) -> Option<QueryPacketCommitmentsResponse>;
+		fn packet_commitments(channel_id: String, port_id: String) -> Option<QueryPacketCommitmentsResponse>;
 
-		fn packet_acknowledgements(height: u64, channel_id: String, port_id: String) -> Option<QueryPacketAcknowledgementsResponse>;
+		fn packet_acknowledgements(channel_id: String, port_id: String) -> Option<QueryPacketAcknowledgementsResponse>;
 
-		fn unreceived_packets(height: u64, channel_id: String, port_id: String, seqs: Vec<u64>) -> Option<Vec<u64>>;
+		fn unreceived_packets(channel_id: String, port_id: String, seqs: Vec<u64>) -> Option<Vec<u64>>;
 
-		fn unreceived_acknowledgements(height: u64, channel_id: String, port_id: String, seqs: Vec<u64>) -> Option<Vec<u64>>;
+		fn unreceived_acknowledgements(channel_id: String, port_id: String, seqs: Vec<u64>) -> Option<Vec<u64>>;
 
-		fn next_seq_recv(height: u64, channel_id: String, port_id: String) -> Option<QueryNextSequenceReceiveResponse>;
+		fn next_seq_recv(channel_id: String, port_id: String) -> Option<QueryNextSequenceReceiveResponse>;
 
-		fn packet_commitment(height: u64, channel_id: String, port_id: String, seq: u64) -> Option<QueryPacketCommitmentResponse>;
+		fn packet_commitment(channel_id: String, port_id: String, seq: u64) -> Option<QueryPacketCommitmentResponse>;
 
-		fn packet_acknowledgement(height: u64, channel_id: String, port_id: String, seq: u64) -> Option<QueryPacketAcknowledgementResponse>;
+		fn packet_acknowledgement(channel_id: String, port_id: String, seq: u64) -> Option<QueryPacketAcknowledgementResponse>;
 
-		fn packet_receipt(height: u64, channel_id: String, port_id: String, seq: u64) -> Option<QueryPacketReceiptResponse>;
+		fn packet_receipt(channel_id: String, port_id: String, seq: u64) -> Option<QueryPacketReceiptResponse>;
 
 		fn denom_trace(denom: String) -> Option<QueryDenomTraceResponse>;
 
-		fn denom_traces(offset: String, limit: u64, height: u64) -> Option<QueryDenomTracesResponse>;
+		fn denom_traces(offset: String, limit: u64, height: u32) -> Option<QueryDenomTracesResponse>;
 	}
 }

@@ -133,6 +133,7 @@ pub struct QueryDenomTracesResponse {
 }
 
 #[derive(codec::Encode, codec::Decode)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ConnectionHandshakeProof {
 	pub client_state: Vec<u8>,
 	pub client_state_proof: Vec<u8>,
@@ -140,7 +141,3 @@ pub struct ConnectionHandshakeProof {
 	pub consensus_proof: Vec<u8>,
 	pub height: Vec<u8>,
 }
-
-pub type ClientStateProof = Vec<u8>;
-pub type ConsensusProof = Vec<u8>;
-pub type ConnectionProof = Vec<u8>;

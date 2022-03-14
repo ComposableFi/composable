@@ -24,7 +24,7 @@ use ibc::{
 	Height,
 };
 use ibc_runtime_api::IbcRuntimeApi;
-use jsonrpc_core::{Error as JsonRpcError, ErrorCode, Result};
+use jsonrpc_core::{futures::future::ok, Error as JsonRpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
@@ -41,7 +41,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	fn query_transactions(&self, page: u32, limit: u32) -> Result<Vec<Transaction>>;
 
 	#[rpc(name = "ibc_queryLatestHeight")]
-	fn query_latest_height(&self) -> Result<u64>;
+	fn query_latest_height(&self) -> Result<u32>;
 
 	#[rpc(name = "ibc_queryHeaderAtHeight")]
 	fn query_header_at_height(&self, height: u32) -> Result<Header>;
@@ -58,9 +58,12 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryClientState")]
 	fn query_client_state(
 		&self,
-		height: u64,
+		height: u32,
 		src_client_Id: String,
 	) -> Result<QueryClientStateResponse>;
+
+	#[rpc(name = "ibc_queryConsensusState")]
+	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse>;
 
 	#[rpc(name = "ibc_queryClientConsensusState")]
 	fn query_client_consensus_state(
@@ -70,13 +73,10 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	) -> Result<QueryConsensusStateResponse>;
 
 	#[rpc(name = "ibc_queryUpgradedClient")]
-	fn query_upgraded_client(&self, height: u64) -> Result<QueryClientStateResponse>;
+	fn query_upgraded_client(&self, height: u32) -> Result<QueryClientStateResponse>;
 
 	#[rpc(name = "ibc_queryUpgradedConnectionState")]
-	fn query_upgraded_cons_state(&self, height: u64) -> Result<QueryConsensusStateResponse>;
-
-	#[rpc(name = "ibc_queryConsensusState")]
-	fn query_consensus_state(&self, height: u64, client_id: String) -> Result<Vec<u8>>;
+	fn query_upgraded_cons_state(&self, height: u32) -> Result<QueryConsensusStateResponse>;
 
 	#[rpc(name = "ibc_queryClients")]
 	fn query_clients(&self) -> Result<Vec<AnyClientState>>;
@@ -96,7 +96,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryConnection")]
 	fn query_connection(
 		&self,
-		height: u64,
+		height: u32,
 		connection_id: String,
 	) -> Result<QueryConnectionResponse>;
 
@@ -106,17 +106,17 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryConnectionUsingClient")]
 	fn query_connections_using_client(
 		&self,
-		height: u64,
+		height: u32,
 		client_id: String,
 	) -> Result<QueryConnectionsResponse>;
 
 	#[rpc(name = "ibc_generateConnectionHandshakeProof")]
 	fn generate_conn_handshake_proof(
 		&self,
-		height: u64,
+		height: u32,
 		client_id: String,
 		conn_id: String,
-	) -> Result<(AnyClientState, ClientStateProof, ConsensusProof, ConnectionProof, Height)>;
+	) -> Result<ConnectionHandshakeProof>;
 
 	#[rpc(name = "ibc_newClientState")]
 	fn new_client_state(
@@ -131,7 +131,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryChannel")]
 	fn query_channel(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 	) -> Result<QueryChannelResponse>;
@@ -139,7 +139,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryChannelClient")]
 	fn query_channel_client(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 	) -> Result<AnyClientState>;
@@ -147,7 +147,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryConnectionChannels")]
 	fn query_connection_channels(
 		&self,
-		height: u64,
+		height: u32,
 		connection_id: String,
 	) -> Result<QueryChannelsResponse>;
 
@@ -157,7 +157,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryPacketCommitments")]
 	fn query_packet_commitments(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 	) -> Result<QueryPacketCommitmentsResponse>;
@@ -165,7 +165,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryPacketAcknowledgements")]
 	fn query_packet_acknowledgements(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 	) -> Result<QueryPacketAcknowledgementsResponse>;
@@ -173,7 +173,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryUnreceivedPackets")]
 	fn query_unreceived_packets(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 		seqs: Vec<u64>,
@@ -182,7 +182,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryUnreceivedAcknowledgement")]
 	fn query_unreceived_acknowledgements(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 		seqs: Vec<u64>,
@@ -191,7 +191,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryNextSeqRecv")]
 	fn query_next_seq_recv(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 	) -> Result<QueryNextSequenceReceiveResponse>;
@@ -199,7 +199,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryPacketCommitment")]
 	fn query_packet_commitment(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 		seq: u64,
@@ -208,7 +208,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryPacketAcknowledgement")]
 	fn query_packet_acknowledgement(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 		seq: u64,
@@ -217,7 +217,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryPacketReceipt")]
 	fn query_packet_receipt(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 		seq: u64,
@@ -231,7 +231,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 		&self,
 		offset: String,
 		limit: u64,
-		height: u64,
+		height: u32,
 	) -> Result<QueryDenomTracesResponse>;
 }
 
@@ -267,14 +267,14 @@ where
 	C::Api: IbcRuntimeApi<Block, <Block as BlockT>::Header>,
 {
 	fn query_transaction(&self, tx_hash: <Block as BlockT>::Hash) -> Result<Transaction> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_transactions(&self, page: u32, limit: u32) -> Result<Vec<Transaction>> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
-	fn query_latest_height(&self) -> Result<u64> {
+	fn query_latest_height(&self) -> Result<u32> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
 
@@ -301,28 +301,53 @@ where
 	}
 
 	fn query_balance(&self, key_name: String) -> Result<Coin> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_balance_with_address(&self, addr: String) -> Result<Coin> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_unbonding_period(&self) -> Result<u64> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_client_state(
 		&self,
-		height: u64,
+		height: u32,
 		client_id: String,
 	) -> Result<QueryClientStateResponse> {
 		let api = self.client.runtime_api();
-		let at = BlockId::Hash(self.client.info().best_hash);
-		api.client_state(&at, height, client_id)
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?;
+
+		let at = BlockId::Hash(block_hash);
+		api.client_state(&at, client_id)
 			.ok()
 			.flatten()
 			.ok_or(runtime_error_into_rpc_error("Error querying client state"))
+	}
+
+	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse> {
+		let block_hash = if height != 0 {
+			self.client
+				.hash(height.into())
+				.ok()
+				.flatten()
+				.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?
+		} else {
+			self.client.info().best_hash
+		};
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(block_hash);
+		api.host_consensus_state(&at)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error querying client consensus state"))
 	}
 
 	fn query_client_consensus_state(
@@ -330,23 +355,40 @@ where
 		client_id: String,
 		client_height: Height,
 	) -> Result<QueryConsensusStateResponse> {
-		todo!()
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(self.client.info().best_hash);
+		let height = client_height.encode_vec().map_err(|e| runtime_error_into_rpc_error(e))?;
+		api.client_consensus_state(&at, client_id, height)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error querying client consensus state"))
 	}
 
-	fn query_upgraded_client(&self, height: u64) -> Result<QueryClientStateResponse> {
-		todo!()
+	fn query_upgraded_client(&self, height: u32) -> Result<QueryClientStateResponse> {
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
-	fn query_upgraded_cons_state(&self, height: u64) -> Result<QueryConsensusStateResponse> {
-		todo!()
-	}
-
-	fn query_consensus_state(&self, height: u64, client_id: String) -> Result<Vec<u8>> {
-		todo!()
+	fn query_upgraded_cons_state(&self, height: u32) -> Result<QueryConsensusStateResponse> {
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_clients(&self) -> Result<Vec<AnyClientState>> {
-		todo!()
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(self.client.info().best_hash);
+
+		let client_states = api.clients(&at).ok().flatten().map(|states| {
+			states
+				.into_iter()
+				.map(|state| {
+					AnyClientState::decode_vec(&state)
+						.map_err(|_| runtime_error_into_rpc_error("Error decoding client state"))
+				})
+				.collect::<Result<Vec<_>>>()
+		});
+		match client_states {
+			Some(res) => res,
+			_ => Err(runtime_error_into_rpc_error("Failed to fetch client states")),
+		}
 	}
 
 	fn auto_update_client(
@@ -356,40 +398,71 @@ where
 		src_clientId: String,
 		dst_clientId: String,
 	) -> Result<u64> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn find_matching_client(&self, client_state: AnyClientState) -> Result<Option<String>> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_connection(
 		&self,
-		height: u64,
+		height: u32,
 		connection_id: String,
 	) -> Result<QueryConnectionResponse> {
-		todo!()
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?;
+
+		let at = BlockId::Hash(block_hash);
+
+		api.connection(&at, connection_id)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Failed to fetch connection state"))
 	}
 
 	fn query_connections(&self) -> Result<QueryConnectionsResponse> {
-		todo!()
+		let api = self.client.runtime_api();
+
+		let at = BlockId::Hash(self.client.info().best_hash);
+		api.connections(&at)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Failed to fetch connections"))
 	}
 
 	fn query_connections_using_client(
 		&self,
-		height: u64,
+		height: u32,
 		client_id: String,
 	) -> Result<QueryConnectionsResponse> {
-		todo!()
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?;
+
+		let at = BlockId::Hash(block_hash);
+		api.connections_using_client(&at, client_id)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Failed to fetch connections"))
 	}
 
 	fn generate_conn_handshake_proof(
 		&self,
-		height: u64,
+		height: u32,
 		client_id: String,
 		conn_id: String,
-	) -> Result<(AnyClientState, ClientStateProof, ConsensusProof, ConnectionProof, Height)> {
-		todo!()
+	) -> Result<ConnectionHandshakeProof> {
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn new_client_state(
@@ -400,126 +473,153 @@ where
 		allow_update_after_expiry: bool,
 		allow_update_after_misbehaviour: bool,
 	) -> Result<AnyClientState> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_channel(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 	) -> Result<QueryChannelResponse> {
-		todo!()
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?;
+
+		let at = BlockId::Hash(block_hash);
+		api.channel(&at, channel_id, port_id)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Failed to fetch channel state"))
 	}
 
 	fn query_channel_client(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 	) -> Result<AnyClientState> {
-		todo!()
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving header"))?;
+
+		let at = BlockId::Hash(block_hash);
+
+		api.channel_client(&at, channel_id, port_id)
+			.ok()
+			.flatten()
+			.map(|state| AnyClientState::decode_vec(&state).ok())
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Failed to Client state for channel"))
 	}
 
 	fn query_connection_channels(
 		&self,
-		height: u64,
+		height: u32,
 		connection_id: String,
 	) -> Result<QueryChannelsResponse> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_channels(&self) -> Result<QueryChannelsResponse> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_packet_commitments(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 	) -> Result<QueryPacketCommitmentsResponse> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_packet_acknowledgements(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 	) -> Result<QueryPacketAcknowledgementsResponse> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_unreceived_packets(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_unreceived_acknowledgements(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_next_seq_recv(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 	) -> Result<QueryNextSequenceReceiveResponse> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_packet_commitment(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 		seq: u64,
 	) -> Result<QueryPacketCommitmentResponse> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_packet_acknowledgement(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 		seq: u64,
 	) -> Result<QueryPacketAcknowledgementResponse> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_packet_receipt(
 		&self,
-		height: u64,
+		height: u32,
 		channel_id: String,
 		port_id: String,
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_denom_trace(&self, denom: String) -> Result<QueryDenomTraceResponse> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_denom_traces(
 		&self,
 		offset: String,
 		limit: u64,
-		height: u64,
+		height: u32,
 	) -> Result<QueryDenomTracesResponse> {
-		todo!()
+		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 }
