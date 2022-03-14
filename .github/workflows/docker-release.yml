@@ -82,7 +82,7 @@ jobs:
         file: docker/Dockerfile
         platforms: linux/386,linux/amd64,linux/arm64,linux/ppc64le,linux/arm/v6,linux/arm/v7, linux/arm/v8
         push: true
-        tags: latest, composablefi/composable:${{ steps.imagetag.outputs.release_version }}
+        tags: composablefi/composable:${{ steps.imagetag.outputs.release_version }}, composablefi/composable:latest
 
     - uses: 8398a7/action-slack@v3
       with:
