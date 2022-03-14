@@ -6,11 +6,8 @@ let
     throw
     "Devnet `devnet.json` definition missing, please follow the README.md instructions.");
   mk-composable = spec:
-    { name, version, hash }: {
-      inherit name;
-      inherit version;
+    def: def // {
       inherit spec;
-      inherit hash;
       nodes = [
         {
           name = "alice";
@@ -35,10 +32,7 @@ let
       ];
     };
   mk-polkadot = spec:
-    { version, hash }: {
-      inherit version;
-      inherit spec;
-      inherit hash;
+    def: def // {
       nodes = [
         {
           name = "alice";

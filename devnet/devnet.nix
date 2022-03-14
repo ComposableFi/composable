@@ -55,7 +55,6 @@ let
       tar -xvf $src
       mkdir -p $out/bin
       mv release/composable $out/bin
-
       mv doc $out
     '';
   };
@@ -69,6 +68,7 @@ let
       sha256 = composable.revhash;
     };
     buildInputs = [ pkgs.mdbook ];
+    phases = [ "installPhase" ];
     installPhase = ''
       mkdir -p $out/book
       cd $src/book

@@ -90,6 +90,9 @@ in {
                     "/doc/" = {
                       root = devnet.documentation;
                     };
+                    "/" = {
+                      root = "${devnet.book}/book";
+                    };
                   } (map (node: {
                     "/${node.name}" = {
                       proxyPass = "http://127.0.0.1:${builtins.toString node.wsPort}";
