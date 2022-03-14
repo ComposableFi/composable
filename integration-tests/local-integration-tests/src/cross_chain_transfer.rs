@@ -142,7 +142,7 @@ fn transfer_to_relay_chain() {
 }
 
 #[test]
-fn transfer_from_dali() {
+fn transfer_from_this_to_sibling() {
 	simtest();
 
 	This::execute_with(|| {
@@ -186,7 +186,7 @@ fn transfer_from_dali() {
 }
 
 #[test]
-fn transfer_from_picasso_to_dali() {
+fn transfer_from_sibling_to_this() {
 	simtest();
 
 	Sibling::execute_with(|| {
@@ -820,7 +820,7 @@ fn unspent_xcm_fee_is_returned_correctly() {
 			1000 * CurrencyId::unit::<Balance>()
 		);
 		// ISSUE: ported from Acala, not clear how BOB at all got s amount as we never transfer that
-		// there is no transfer of KSM at all
+		//there is no transfer of KSM at all
 		// assert_eq!(
 		// 	kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
 		// 	CurrencyId::unit::<Balance>()
@@ -1073,7 +1073,7 @@ fn sibling_trap_assets_works() {
 					.into(),
 			),
 		];
-		assert_ok!(pallet_xcm::Pallet::<Runtime>::send_xcm(
+		assert_ok!(pallet_xcm::Pallet::<sibling_runtime::Runtime>::send_xcm(
 			Here,
 			(Parent, Parachain(THIS_PARA_ID)),
 			Xcm(xcm),

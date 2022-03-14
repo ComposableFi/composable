@@ -171,6 +171,12 @@ pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	.assimilate_storage(&mut storage)
 	.unwrap();
 
+	<liquidations::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
+		&liquidations::GenesisConfig {},
+		&mut storage,
+	)
+	.unwrap();
+
 	let mut externalities = sp_io::TestExternalities::new(storage);
 	externalities.execute_with(|| System::set_block_number(1));
 	externalities
