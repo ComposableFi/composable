@@ -128,7 +128,6 @@ jobs:
             --extrinsic='*' \
             --steps=1 \
             --repeat=1 \
-            --raw \
             --log error
 
 
