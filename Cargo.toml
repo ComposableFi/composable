@@ -1,9 +1,9 @@
 [package]
-name = "composable"
-version = '1.0.9'
 authors = ["Composable Developers"]
-homepage = "https://composable.finance"
 edition = "2018"
+homepage = "https://composable.finance"
+name = "composable"
+version = "1.0.0"
 
 [[bin]]
 name = "composable"
@@ -13,36 +13,39 @@ path = "src/main.rs"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-composable-node = { path = "node", features = ["composable", "dali"] }
 color-eyre = { version = "0.5.11", default-features = false }
+composable-node = { path = "node", features = ["composable", "dali"] }
 
 [features]
-runtime-benchmarks = [ "composable-node/runtime-benchmarks" ]
-std = [ "composable-node/std" ]
 local-integration-tests = []
+runtime-benchmarks = ["composable-node/runtime-benchmarks"]
+std = ["composable-node/std"]
 
 [workspace]
 exclude = ["frame/transaction-fee"]
 members = [
-    "frame/*",
-    "integration-tests/local-integration-tests",
-    "node",
+  "frame/*",
+#  "integration-tests/local-integration-tests",
+  "node",
 
-    "runtime/common",
-    "runtime/primitives",
-    "runtime/picasso",
-    "runtime/dali",
-    "runtime/composable",
+  "runtime/common",
+  "runtime/primitives",
+  "runtime/picasso",
+  "runtime/dali",
+  "runtime/composable",
 
-    "utils/parachain-utils",
-    "utils/price-feed",
-    "utils/collator-sidecar",
-    "integration-tests/simnode/simnode-node",
-    "integration-tests/simnode/simnode-tests",
-    "integration-tests/simnode/common",
+  "utils/parachain-utils",
+  "utils/price-feed",
+  "utils/collator-sidecar",
+  "integration-tests/simnode/simnode-node",
+  "integration-tests/simnode/simnode-tests",
+  "integration-tests/simnode/common",
 ]
 
 [profile.release]
 # Polkadot runtime requires unwinding.
 panic = "unwind"
+
+[profile.production]
+inherits = "release"
 lto = true

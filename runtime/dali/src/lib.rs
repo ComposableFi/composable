@@ -28,7 +28,7 @@ use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MosaicRemoteAssetId,
 	MultiExistentialDeposits, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
-	MAXIMUM_BLOCK_WEIGHT, MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use cumulus_primitives_core::ParaId;
@@ -791,8 +791,8 @@ impl assets::Config for Runtime {
 
 parameter_types! {
 	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
-	  pub const InitialPayment: Perbill = Perbill::from_percent(50);
-	  pub const VestingStep: BlockNumber = MINUTES;
+	  pub const InitialPayment: Perbill = Perbill::from_percent(25);
+	  pub const VestingStep: Moment = 1;
 	  pub const Prefix: &'static [u8] = b"picasso-";
 }
 
@@ -848,7 +848,9 @@ impl vesting::Config for Runtime {
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
 	type VestedTransferOrigin = system::EnsureSigned<AccountId>;
-	type WeightInfo = ();
+	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
+	type Moment = Moment;
+	type Time = Timestamp;
 }
 
 parameter_types! {
