@@ -56,8 +56,6 @@ jobs:
 
     - name: Load state
       run: |
-        cd nix
-
         echo $(cat devnet.json | jq --arg version "${{ env.RELEASE_VERSION }}" '.composable.version = $version' | jq --arg hash "$(nix-prefetch-url https://storage.googleapis.com/composable-binaries/community-releases/picasso/composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz)" '.composable.hash = $hash') > devnet.json
 
         jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
@@ -66,7 +64,7 @@ jobs:
         then
           gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
         else
-          nix develop .#deploy --impure --command nixops create -d devnet-gce
+          nix develop .#devnet --impure --command nixops create -d devnet-gce
         fi
       env:
         NIXOPS_STATE_URL: "gs://composable-state"
@@ -77,8 +75,7 @@ jobs:
 
     - name: Deploy
       run: |
-        cd nix
-        nix develop .#deploy --impure --command nixops deploy --check --confirm -d devnet-gce
+        nix develop .#devnet --impure --command nixops deploy --check --confirm -d devnet-gce
       env:
         NIXOPS_STATE: "deployment.nixops"
 

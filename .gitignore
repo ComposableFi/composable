@@ -40,3 +40,6 @@ rust-toolchain.toml
 
 # nix build output
 result
+
+# devnet nodes logs
+*.log

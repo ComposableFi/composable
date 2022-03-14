@@ -7,4 +7,3 @@ echo "Url: ${URL}"
 HASH=$(nix-prefetch-url ${URL})
 echo "Hash: ${HASH}"
 echo $(cat devnet.json | jq --arg version ${REVISION} '.composable.version = $version' | jq --arg hash ${HASH} '.composable.hash = $hash') > devnet.json
-nix develop --command run-$1
