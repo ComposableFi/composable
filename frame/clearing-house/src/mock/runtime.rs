@@ -162,7 +162,7 @@ pub struct ExtBuilder {
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
-			native_balances: vec![(ADMIN, 1_000_000_000), (ALICE, 0)],
+			native_balances: vec![(ADMIN, 1_000_000_000), (ALICE, 1_000_000)],
 			balances: vec![(ADMIN, USDC, 1_000_000_000), (ALICE, USDC, 0)],
 		}
 	}
