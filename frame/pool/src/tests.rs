@@ -1027,12 +1027,32 @@ impl ValidityCheck {
 	}
 }
 
+fn weighted_geometric_mean(
+	reserves: Vec<Deposit<MockCurrencyId, Balance>>, 
+	weights: Vec<Weight<MockCurrencyId, Perquintill>>
+) -> Result<u128, ()> {
+	let mut invariant_constant: f64 = 1.0;
+
+	for (reserve, weight) in reserves.iter().zip(weights.iter()) {
+
+		let reserve: f64 = reserve.amount as f64;
+		let weight: f64 = 
+			weight.weight.deconstruct() as f64 / Perquintill::one().deconstruct() as f64;
+
+		let result = reserve.powf(weight);
+		
+		invariant_constant = invariant_constant * result;
+	}
+
+	Ok(invariant_constant as u128)
+}
+
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(10_000))]
 
 	#[test]
 	fn depositing_into_a_pool_transfers_funds_from_issuers_account_and_into_the_underlying_vault_accounts(
-		(initial_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1)
+		(pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1)
 	) {
 		// Tests that when a user deposits assets into the Pool, these assets are removed from the users
 		//  |  account and transferred into the underlying vault accounts
@@ -1049,8 +1069,8 @@ proptest! {
 
 		ExtBuilder::default().build().execute_with(|| {
 			let config = PoolConfigBuilder::default()
-				.assets(&initial_assets)
-				.weights(&equal_weight_vector_for(&initial_assets))
+				.assets(&pool_assets)
+				.weights(&equal_weight_vector_for(&pool_assets))
 				.build();
 
 			// Create the pool
@@ -1097,7 +1117,7 @@ proptest! {
 
 	#[test]
 	fn depositing_into_an_empty_pool_correctly_mints_lp_tokens(
-		(config, all_deposits) in generate_equal_weighted_pool_config_and_n_all_asset_deposits(1),
+		(pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1)
 	) {
 		// Tests that if a user is the first to deposit into a newly created pool they are 
 		//  |  rewarded a number of LP tokens equal to the weighted geometric mean of the
@@ -1110,32 +1130,39 @@ proptest! {
 		//                 weight of asset i
 
 		// Only tests the state after one deposit
-		let deposits = (&all_deposits[0]).to_vec();
+		let deposits = (&all_asset_deposits[0]).to_vec();
 
 		ExtBuilder::default().build().execute_with(|| {
+			let config = PoolConfigBuilder::default()
+				.assets(&pool_assets)
+				.weights(&equal_weight_vector_for(&pool_assets))
+				.build();
+
 			// Condition i - Pool is newly created
-			let pool_id = create_pool_with(&config);
+			let pool_id = PoolStateBuilder::default()
+				.config(config.clone())
+				.build();
 			
 			// Make the first deposit
 			for deposit in &deposits {
 				assert_ok!(Tokens::mint_into(deposit.asset_id, &ALICE, deposit.amount));
 			}
-			assert_ok!(<Pools as ConstantMeanMarket>::all_asset_deposit(&ALICE, &pool_id, deposits.clone()));
+			assert_ok!(Pools::all_asset_deposit(&ALICE, &pool_id, deposits.clone()));
 
 			// Condition ii
-			let weighted_geometric_mean: FixedBalance = invariant(deposits, config.weights).unwrap();
-			let weighted_geometric_mean: f64 = weighted_geometric_mean.to_num::<f64>();
+			let weighted_geometric_mean: f64 = 
+				invariant(deposits, config.weights).unwrap().to_num::<f64>();
 
 			let lp_token = Pools::lp_token_id(&pool_id).unwrap();
 			let lp_tokens_minted: f64 = Tokens::balance(lp_token, &ALICE) as f64;
 
-			assert_relative_eq!(lp_tokens_minted, weighted_geometric_mean, epsilon = 1.0);
+			assert_relative_eq!(lp_tokens_minted, weighted_geometric_mean, epsilon=2.0);
 		});
 	}
 
 	#[test]
 	fn depositing_into_a_non_empty_pool_with_duplicate_deposits_correctly_mints_lp_tokens(
-		(config, all_deposits) in generate_equal_weighted_pool_config_and_n_rational_all_asset_deposits(1),
+		(pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1)
 	) {
 		// Tests that when a user deposits assets into a non-empty Pool (i.e. their deposit is not 
 		//  |  the Pool's first deposit) the user is rewarded with a number of LP tokens equal to
@@ -1148,14 +1175,22 @@ proptest! {
 		//                 deposited amount and pool's reserve  of asset i, respectively, and w_i 
 		//				   refers the Pool's weight of asset i
 
-		prop_assume!(config.assets.len() >= 2);
+		prop_assume!(pool_assets.len() >= 2);
 
 		// use the same deposit for both deposits - sendary deposits should mint equal LP amounts
-		let deposit_1 = (&all_deposits[0]).to_vec();
-		let deposit_2 = (&all_deposits[0]).to_vec();
+		let deposit_1 = (&all_asset_deposits[0]).to_vec();
+		let deposit_2 = (&all_asset_deposits[0]).to_vec();
 
 		ExtBuilder::default().build().execute_with(|| {
-			let pool_id = create_pool_with(&config);
+			let config = PoolConfigBuilder::default()
+				.assets(&pool_assets)
+				.weights(&equal_weight_vector_for(&pool_assets))
+				.build();
+
+			let pool_id = PoolStateBuilder::default()
+				.config(config.clone())
+				.build();
+				
 			let lp_token = Pools::lp_token_id(&pool_id).unwrap();
 			
 			// Make the first deposit
@@ -1184,7 +1219,7 @@ proptest! {
 
 	#[test]
 	fn depositing_into_a_non_empty_pool_correctly_mints_lp_tokens(
-		(config, all_deposits) in generate_equal_weighted_pool_config_and_n_rational_all_asset_deposits(2),
+		(pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(2),
 	) {
 		// Tests that when a user deposits assets into a non-empty Pool (i.e. their deposit is not 
 		//  |  the Pool's first deposit) the user is rewarded with a number of LP tokens equal to
@@ -1197,11 +1232,19 @@ proptest! {
 		//                 deposited amount and pool's reserve  of asset i, respectively, and w_i 
 		//				   refers the Pool's weight of asset i
 
-		let deposit_1 = (&all_deposits[0]).to_vec();
-		let deposit_2 = (&all_deposits[1]).to_vec();
+		let deposit_1 = (&all_asset_deposits[0]).to_vec();
+		let deposit_2 = (&all_asset_deposits[1]).to_vec();
 
 		ExtBuilder::default().build().execute_with(|| {
-			let pool_id = create_pool_with(&config);
+			let config = PoolConfigBuilder::default()
+				.assets(&pool_assets)
+				.weights(&equal_weight_vector_for(&pool_assets))
+				.build();
+
+			let pool_id = PoolStateBuilder::default()
+				.config(config.clone())
+				.build();
+
 			let lp_token = Pools::lp_token_id(&pool_id).unwrap();
 			
 			// Make the first deposit
@@ -1328,7 +1371,7 @@ proptest! {
 
 	#[test]
 	fn depositing_an_amount_of_tokens_outside_of_asset_bounds_raises_an_error(
-		(mut config, all_deposits) in generate_equal_weighted_pool_config_and_n_all_asset_deposits(1),
+		(pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1),
 	) {
 		// Tests that deposits after the initial deposit follow the Pool's deposit bounds set 
 		//  |  during Pool creation
@@ -1342,25 +1385,31 @@ proptest! {
 		//					'-> i.e. the Pool's invariant constant doesn't increase greater than the
 		//							Pool's maximum deposit bound
 
-		prop_assume!(config.assets.len() >= 2);
+		prop_assume!(pool_assets.len() >= 2);
 
+		let deposit_1 = (&all_asset_deposits[0]).to_vec();
 		let lower_bound = 10;
 		let upper_bound = 30;
 
-		config.deposit_bounds = Bound {
-			minimum: Some(Perquintill::from_percent(lower_bound)), 
-			maximum: Some(Perquintill::from_percent(upper_bound))
-		};
-
-		let deposit_1 = (&all_deposits[0]).to_vec();
 		ExtBuilder::default().build().execute_with(|| {
-			let pool_id = create_pool_with(&config);
-			
+			let config = PoolConfigBuilder::default()
+				.assets(&pool_assets)
+				.weights(&equal_weight_vector_for(&pool_assets))
+				.deposit_bounds(Bound {
+					minimum: Some(Perquintill::from_percent(lower_bound)), 
+					maximum: Some(Perquintill::from_percent(upper_bound))
+				})
+				.build();
+
+			let pool_id = PoolStateBuilder::default()
+				.config(config.clone())
+				.build();
+						
 			// Condition i - Make the first deposit
 			for balance in &deposit_1 {
 				assert_ok!(Tokens::mint_into(balance.asset_id, &ALICE, balance.amount));
 			}
-			assert_ok!(<Pools as ConstantMeanMarket>::all_asset_deposit(&ALICE, &pool_id, deposit_1.clone()));
+			assert_ok!(Pools::all_asset_deposit(&ALICE, &pool_id, deposit_1.clone()));
 
 			// Attempt to a deposit below the minimum deposit bound
 			let deposit_2 = deposit_1.iter()
@@ -1375,7 +1424,7 @@ proptest! {
 			}
 			// Condition ii
 			assert_noop!(
-				<Pools as ConstantMeanMarket>::all_asset_deposit(&BOB, &pool_id, deposit_2),
+				Pools::all_asset_deposit(&BOB, &pool_id, deposit_2),
 				Error::<Test>::DepositIsOutsideOfPoolsDepositBounds
 			);
 
@@ -1393,7 +1442,7 @@ proptest! {
 
 			// Condition iii
 			assert_noop!(
-				<Pools as ConstantMeanMarket>::all_asset_deposit(&CHARLIE, &pool_id, deposit_3),
+				Pools::all_asset_deposit(&CHARLIE, &pool_id, deposit_3),
 				Error::<Test>::DepositIsOutsideOfPoolsDepositBounds
 			);
 		});
@@ -1549,26 +1598,26 @@ proptest! {
 
 	#[test]
 	fn depositing_into_a_nonexistent_pool_raises_an_error(
-		(_config, all_deposits) in generate_equal_weighted_pool_config_and_n_all_asset_deposits(1),
+		(_pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1),	
 	) {
 		// Tests that when trying to deposit assets into a pool using a pool id 
 		//  |  that doesn't correspond to an active pool, then an error is raised 
 		//  '-> Condition
 		//        i. ∀ deposits d ⇒ pool_id must exist
 
-		let deposits = (&all_deposits[0]).to_vec();
+		let deposit_1 = (&all_asset_deposits[0]).to_vec();
 
 		ExtBuilder::default().build().execute_with(|| {
 			// Condition i - Pool isn't created
-			// let pool_id = create_pool_with(&config);
+
 			let pool_id = 1;
 
 			// Make the first deposit
-			for deposit in &deposits {
+			for deposit in &deposit_1 {
 				assert_ok!(Tokens::mint_into(deposit.asset_id, &ALICE, deposit.amount));
 			}
 			assert_noop!(
-				<Pools as ConstantMeanMarket>::all_asset_deposit(&ALICE, &pool_id, deposits.clone()),
+				Pools::all_asset_deposit(&ALICE, &pool_id, deposit_1.clone()),
 				Error::<Test>::PoolDoesNotExist
 			);
 		});
@@ -1576,25 +1625,33 @@ proptest! {
 
 	#[test]
 	fn depositing_a_non_all_asset_deposit_as_an_all_asset_deposit_raises_an_error(
-		(config, all_deposits) in generate_equal_weighted_pool_config_and_n_all_asset_deposits(1),
+		(pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1),	
 	) {
 		// Tests that when trying to do an all asset deposit all of the Pool's underlying
 		//    assets must be present in the deposit
 		//  '-> Condition
 		//        i. ∀ assets a_i in pool P ⇒ all-asset deposit D must have an amount of asset a_i
 
-		let mut deposits = (&all_deposits[0]).to_vec();
-		deposits.pop(); // take out one of the assets
+		let mut deposit_1 = (&all_asset_deposits[0]).to_vec();
+		deposit_1.pop(); // take out one of the assets
 
 		ExtBuilder::default().build().execute_with(|| {
-			let pool_id = create_pool_with(&config);
+			let config = PoolConfigBuilder::default()
+				.assets(&pool_assets)
+				.weights(&equal_weight_vector_for(&pool_assets))
+				.build();
 
-			for deposit in &deposits {
+			let pool_id = PoolStateBuilder::default()
+				.config(config)
+				.build();
+			
+			for deposit in &deposit_1 {
 				assert_ok!(Tokens::mint_into(deposit.asset_id, &ALICE, deposit.amount));
 			}
+
 			// Condition i
 			assert_noop!(
-				<Pools as ConstantMeanMarket>::all_asset_deposit(&ALICE, &pool_id, deposits.clone()),
+				Pools::all_asset_deposit(&ALICE, &pool_id, deposit_1.clone()),
 				Error::<Test>::ThereMustBeOneDepositForEachAssetInThePool
 			);
 		});
@@ -1602,23 +1659,29 @@ proptest! {
 
 	#[test]
 	fn depositing_an_amount_of_assets_that_user_does_not_have_raises_an_error(
-		(config, all_deposits) in generate_equal_weighted_pool_config_and_n_all_asset_deposits(1),
+		(pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1),
 	) {
 		// Tests that an error is raised when a user tries to deposit an amount of assets
 		//  |  greater than what they own
 		//  '-> Conditions:
 		//        i. ∀ deposits d of assets a1 ... an ⇒ user U has ≥ asset ai
 
-		let deposits = (&all_deposits[0]).to_vec();
+		let deposit_1 = (&all_asset_deposits[0]).to_vec();
 
 		ExtBuilder::default().build().execute_with(|| {
-			let pool_id = create_pool_with(&config);
+			let config = PoolConfigBuilder::default()
+				.assets(&pool_assets)
+				.weights(&equal_weight_vector_for(&pool_assets))
+				.build();
+
+			let pool_id = PoolStateBuilder::default()
+				.config(config)
+				.build();
 
 			// Condition i - tokens are not minted
-			// for deposit in &deposits { assert_ok!(Tokens::mint_into(deposit.asset_id, &ALICE, deposit.amount)); }
 			
 			assert_noop!(
-				<Pools as ConstantMeanMarket>::all_asset_deposit(&ALICE, &pool_id, deposits.clone()),
+				<Pools as ConstantMeanMarket>::all_asset_deposit(&ALICE, &pool_id, deposit_1.clone()),
 				Error::<Test>::IssuerDoesNotHaveBalanceTryingToDeposit
 			);
 		});
