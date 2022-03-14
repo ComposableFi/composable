@@ -182,6 +182,8 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage)
 			.unwrap();
 
+		clearing_house::CollateralTypes::<Runtime>::insert(&USDC, ());
+
 		storage.into()
 	}
 }
