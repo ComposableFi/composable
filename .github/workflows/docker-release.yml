@@ -65,7 +65,7 @@ jobs:
         RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) >> $GITHUB_ENV
         echo ::set-output name=release_version::${RELEASE_VERSION}
         RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make containerize
-        make push
+        RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make push
 
     # - name: Build for Multiple Arch
     #   uses: docker/build-push-action@v2
