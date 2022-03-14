@@ -7,7 +7,7 @@ use crate::{
 	defi::{CurrencyPair, DeFiEngine, MoreThanOneFixedU128},
 	time::Timestamp,
 };
-use composable_support::validation::Validate;
+use composable_support::validation::{TryIntoValidated, Validate};
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::One, Percent};
@@ -22,8 +22,8 @@ pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 pub struct UpdateInput<LiquidationStrategyId> {
 	/// Collateral factor of market
 	pub collateral_factor: MoreThanOneFixedU128,
-	///  warn borrower when loan's collateral/debt ratio
-	///  given percentage short to be under collateralized
+	/// warn borrower when loan's collateral/debt ratio
+	/// given percentage short to be under collateralized
 	pub under_collateralized_warn_percent: Percent,
 	/// liquidation engine id
 	pub liquidators: Vec<LiquidationStrategyId>,
@@ -59,10 +59,11 @@ impl<LiquidationStrategyId, Asset: Eq>
 			return Err("collateral factor must be >= 1")
 		}
 
-		let interest_rate_model = <InteresteRateModelIsValid as Validate<
-			InterestRateModel,
-			InteresteRateModelIsValid,
-		>>::validate(create_input.updatable.interest_rate_model)?;
+		let interest_rate_model = create_input
+			.updatable
+			.interest_rate_model
+			.try_into_validated::<InteresteRateModelIsValid>()?
+			.value();
 
 		Ok(CreateInput {
 			updatable: UpdateInput { interest_rate_model, ..create_input.updatable },
@@ -102,9 +103,12 @@ impl<LiquidationStrategyId, AssetId: Copy> CreateInput<LiquidationStrategyId, As
 
 #[derive(Encode, Decode, Default, TypeInfo, Debug)]
 pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId> {
+	/// The owner of this market.
 	pub manager: AccountId,
-	pub borrow: VaultId,
-	pub collateral: AssetId,
+	/// The vault containing the borrow asset.
+	pub borrow_asset_vault: VaultId,
+	/// The asset being used as collateral.
+	pub collateral_asset: AssetId,
 	pub collateral_factor: MoreThanOneFixedU128,
 	pub interest_rate_model: InterestRateModel,
 	pub under_collateralized_warn_percent: Percent,
@@ -149,6 +153,7 @@ pub trait Lending: DeFiEngine {
 	type LiquidationStrategyId;
 	/// returned from extrinsic is guaranteed to be existing asset id at time of block execution
 	//type AssetId;
+
 	/// Generates the underlying owned vault that will hold borrowable asset (may be shared with
 	/// specific set of defined collaterals). Creates market for new pair in specified vault. if
 	/// market exists under specified manager, updates its parameters `deposit` - asset users want
@@ -286,15 +291,15 @@ pub trait Lending: DeFiEngine {
 	/// The amount of *borrow asset* debt remaining for the account in the specified market,
 	/// including accrued interest.
 	///
-	/// Could also be thought of as the amount of *borrow asset* the account must repay to be debt
-	/// free in the specified market.
+	/// Could also be thought of as the amount of *borrow asset* the account must repay to be
+	/// totally debt free in the specified market.
 	///
 	/// Calculate account's borrow balance using the borrow index at the start of block time.
 	///
 	/// ```python
 	/// new_borrow_balance = principal * (market_borrow_index / borrower_borrow_index)
 	/// ```
-	fn borrow_balance_current(
+	fn total_debt_with_interest(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
 	) -> Result<BorrowAmountOf<Self>, DispatchError>;
@@ -315,6 +320,8 @@ pub trait Lending: DeFiEngine {
 	/// Depends on overall collateral put by user into vault.
 	/// This borrow limit of specific user, depends only on prices and users collateral, not on
 	/// state of vault.
+	///
+	/// REVIEW: Order of operations below?
 	/// ```python
 	/// collateral_balance * collateral_price / collateral_factor - borrower_balance_with_interest * borrow_price
 	/// ```

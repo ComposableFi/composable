@@ -274,7 +274,7 @@ fn can_create_valid_market() {
 			Market creation result was {should_be_created:#?}",
 		);
 
-		let initial_pool_size = Lending::initial_pool_size(BORROW_ASSET_ID).unwrap();
+		let initial_pool_size = Lending::calculate_initial_pool_size(BORROW_ASSET_ID).unwrap();
 		let alice_balance_after_market_creation = Tokens::balance(BORROW_ASSET_ID, &*ALICE);
 
 		assert_eq!(
@@ -312,7 +312,7 @@ fn can_create_valid_market() {
 					"The created market vault should be backed by the borrow asset"
 				);
 
-				let alice_borrow_balance_current = Lending::borrow_balance_current(&created_market_id, &ALICE);
+				let alice_borrow_balance_current = Lending::total_debt_with_interest(&created_market_id, &ALICE);
 				assert_eq!(
 					alice_borrow_balance_current,
 					Ok(0),
@@ -354,7 +354,7 @@ fn test_borrow_repay_in_same_block() {
 		let total_borrows = limit_normalized / 4;
 		assert_eq!(Lending::total_cash(&market_id), Ok(total_cash));
 		assert_eq!(Lending::total_borrows(&market_id), Ok(total_borrows));
-		let alice_repay_amount = Lending::borrow_balance_current(&market_id, &ALICE).unwrap();
+		let alice_repay_amount = Lending::total_debt_with_interest(&market_id, &ALICE).unwrap();
 		// MINT required BTC so that ALICE and BOB can repay the borrow.
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, alice_repay_amount - (limit_normalized / 4)));
 		assert_noop!(
@@ -433,7 +433,7 @@ fn borrow_flow() {
 
 		assert_eq!(original_limit, borrow_amount / DEFAULT_COLLATERAL_FACTOR - alice_borrow);
 
-		let borrow = Lending::borrow_balance_current(&market, &ALICE).unwrap();
+		let borrow = Lending::total_debt_with_interest(&market, &ALICE).unwrap();
 		assert_eq!(borrow, alice_borrow);
 		let interest_before = Lending::total_interest_accurate(&market).unwrap();
 		(2..50).for_each(process_block);
@@ -445,7 +445,7 @@ fn borrow_flow() {
 
 		assert!(new_limit < original_limit);
 
-		let borrow = Lending::borrow_balance_current(&market, &ALICE).unwrap();
+		let borrow = Lending::total_debt_with_interest(&market, &ALICE).unwrap();
 
 		assert!(borrow > alice_borrow);
 		assert_noop!(
@@ -598,8 +598,8 @@ fn borrow_repay_repay() {
 
 		(1000..1000 + 100).for_each(process_block);
 
-		let alice_repay_amount = Lending::borrow_balance_current(&market_index, &ALICE).unwrap();
-		let bob_repay_amount = Lending::borrow_balance_current(&market_index, &BOB).unwrap();
+		let alice_repay_amount = Lending::total_debt_with_interest(&market_index, &ALICE).unwrap();
+		let bob_repay_amount = Lending::total_debt_with_interest(&market_index, &BOB).unwrap();
 
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, alice_repay_amount));
 		assert_ok!(Tokens::mint_into(USDT::ID, &BOB, bob_repay_amount));

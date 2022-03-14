@@ -258,7 +258,7 @@ benchmarks! {
 				let account = &Lending::<T>::account_id(&market_id);
 				<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.base, account, bank).unwrap();
 				<T as pallet_lending::Config>::MultiCurrency::mint_into(pair.quote, account, bank).unwrap();
-				<T as pallet_lending::Config>::Vault::deposit(&market_config.borrow, account, bank).unwrap();
+				<T as pallet_lending::Config>::Vault::deposit(&market_config.borrow_asset_vault, account, bank).unwrap();
 			}:  {
 					Lending::<T>::handle_withdrawable(&market_config, &caller, part ).unwrap()
 				}

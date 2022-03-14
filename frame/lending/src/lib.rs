@@ -36,9 +36,7 @@
 	unused_extern_crates
 )]
 
-use composable_traits::defi::DeFiComposableConfig;
 pub use pallet::*;
-use sp_runtime::DispatchError;
 
 #[cfg(test)]
 mod mocks;
@@ -96,10 +94,9 @@ pub mod pallet {
 		offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},
 		pallet_prelude::*,
 	};
-	use num_traits::CheckedDiv;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
-		traits::{AccountIdConversion, CheckedAdd, CheckedMul, CheckedSub, One, Saturating, Zero},
+		traits::{AccountIdConversion, CheckedAdd, CheckedSub, One, Saturating, Zero},
 		ArithmeticError, DispatchError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
 		Percent, Perquintill,
 	};
@@ -274,17 +271,17 @@ pub mod pallet {
 			let one_read = T::DbWeight::get().reads(1);
 			weight += u64::from(call_counters.now) * <T as Config>::WeightInfo::now();
 			weight += u64::from(call_counters.read_markets) * one_read;
-			weight += u64::from(call_counters.accrue_interest)
-				* <T as Config>::WeightInfo::accrue_interest();
+			weight += u64::from(call_counters.accrue_interest) *
+				<T as Config>::WeightInfo::accrue_interest();
 			weight += u64::from(call_counters.account_id) * <T as Config>::WeightInfo::account_id();
-			weight += u64::from(call_counters.available_funds)
-				* <T as Config>::WeightInfo::available_funds();
-			weight += u64::from(call_counters.handle_withdrawable)
-				* <T as Config>::WeightInfo::handle_withdrawable();
-			weight += u64::from(call_counters.handle_depositable)
-				* <T as Config>::WeightInfo::handle_depositable();
-			weight += u64::from(call_counters.handle_must_liquidate)
-				* <T as Config>::WeightInfo::handle_must_liquidate();
+			weight += u64::from(call_counters.available_funds) *
+				<T as Config>::WeightInfo::available_funds();
+			weight += u64::from(call_counters.handle_withdrawable) *
+				<T as Config>::WeightInfo::handle_withdrawable();
+			weight += u64::from(call_counters.handle_depositable) *
+				<T as Config>::WeightInfo::handle_depositable();
+			weight += u64::from(call_counters.handle_must_liquidate) *
+				<T as Config>::WeightInfo::handle_must_liquidate();
 			weight
 		}
 
@@ -293,7 +290,7 @@ pub mod pallet {
 			let signer = Signer::<T, <T as Config>::AuthorityId>::all_accounts();
 			if !signer.can_sign() {
 				log::warn!("No signer");
-				return;
+				return
 			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
 				// TODO: check that it should liquidate before liquidations
@@ -437,6 +434,8 @@ pub mod pallet {
 
 	/// Original debt values are on balances.
 	/// Debt token allows to simplify some debt management and implementation of features
+	///
+	/// market_id -> debt asset
 	#[pallet::storage]
 	#[pallet::getter(fn debt_currencies)]
 	pub type DebtMarkets<T: Config> = StorageMap<
@@ -474,7 +473,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn borrow_rent)]
+	// #[pallet::getter(fn borrow_rent)]
 	pub type BorrowRent<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
@@ -749,7 +748,9 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn initial_pool_size(
+		/// Returns the initial pool size for a a market with `borrow_asset`. Calculated with
+		/// [`Config::OracleMarketCreationStake`].
+		pub fn calculate_initial_pool_size(
 			borrow_asset: <T::Oracle as composable_traits::oracle::Oracle>::AssetId,
 		) -> Result<<T as composable_traits::defi::DeFiComposableConfig>::Balance, DispatchError> {
 			T::Oracle::get_price_inverse(borrow_asset, T::OracleMarketCreationStake::get())
@@ -771,9 +772,11 @@ pub mod pallet {
 		) -> Result<BorrowerData, DispatchError> {
 			let market = Self::get_market(market_id)?;
 			let collateral_balance = Self::collateral_of_account(market_id, account)?;
-			let collateral_balance_value = Self::get_price(market.collateral, collateral_balance)?;
-			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-			let borrower_balance_with_interest = Self::borrow_balance_current(market_id, account)?;
+			let collateral_balance_value =
+				Self::get_price(market.collateral_asset, collateral_balance)?;
+			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
+			let borrower_balance_with_interest =
+				Self::total_debt_with_interest(market_id, account)?;
 			let borrow_balance_value =
 				Self::get_price(borrow_asset, borrower_balance_with_interest)?;
 			let borrower = BorrowerData::new(
@@ -815,13 +818,15 @@ pub mod pallet {
 			for account in borrowers.iter() {
 				if Self::should_liquidate(market_id, account)? {
 					let market = Self::get_market(market_id)?;
-					let borrow_asset = T::Vault::asset_id(&market.borrow)?;
+					let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
 					let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
 					let source_target_account = Self::account_id(market_id);
-					let unit_price =
-						T::Oracle::get_ratio(CurrencyPair::new(market.collateral, borrow_asset))?;
+					let unit_price = T::Oracle::get_ratio(CurrencyPair::new(
+						market.collateral_asset,
+						borrow_asset,
+					))?;
 					let sell = Sell::new(
-						market.collateral,
+						market.collateral_asset,
 						borrow_asset,
 						collateral_to_liquidate,
 						unit_price,
@@ -921,7 +926,10 @@ pub mod pallet {
 			config: &MarketConfigOf<T>,
 			market_account: &T::AccountId,
 		) -> Result<FundsAvailability<T::Balance>, DispatchError> {
-			<T::Vault as StrategicVault>::available_funds(&config.borrow, market_account)
+			<T::Vault as StrategicVault>::available_funds(
+				&config.borrow_asset_vault,
+				market_account,
+			)
 		}
 
 		pub(crate) fn handle_withdrawable(
@@ -929,7 +937,11 @@ pub mod pallet {
 			market_account: &T::AccountId,
 			balance: T::Balance,
 		) -> Result<(), DispatchError> {
-			<T::Vault as StrategicVault>::withdraw(&config.borrow, market_account, balance)
+			<T::Vault as StrategicVault>::withdraw(
+				&config.borrow_asset_vault,
+				market_account,
+				balance,
+			)
 		}
 
 		pub(crate) fn handle_depositable(
@@ -937,21 +949,29 @@ pub mod pallet {
 			market_account: &T::AccountId,
 			balance: T::Balance,
 		) -> Result<(), DispatchError> {
-			let asset_id = <T::Vault as Vault>::asset_id(&config.borrow)?;
+			let asset_id = <T::Vault as Vault>::asset_id(&config.borrow_asset_vault)?;
 			let balance =
 				<T as Config>::MultiCurrency::reducible_balance(asset_id, market_account, false)
 					.min(balance);
-			<T::Vault as StrategicVault>::deposit(&config.borrow, market_account, balance)
+			<T::Vault as StrategicVault>::deposit(
+				&config.borrow_asset_vault,
+				market_account,
+				balance,
+			)
 		}
 
 		pub(crate) fn handle_must_liquidate(
 			config: &MarketConfigOf<T>,
 			market_account: &T::AccountId,
 		) -> Result<(), DispatchError> {
-			let asset_id = <T::Vault as Vault>::asset_id(&config.borrow)?;
+			let asset_id = <T::Vault as Vault>::asset_id(&config.borrow_asset_vault)?;
 			let balance =
 				<T as Config>::MultiCurrency::reducible_balance(asset_id, market_account, false);
-			<T::Vault as StrategicVault>::deposit(&config.borrow, market_account, balance)
+			<T::Vault as StrategicVault>::deposit(
+				&config.borrow_asset_vault,
+				market_account,
+				balance,
+			)
 		}
 
 		fn get_market(market_id: &MarketIndex) -> Result<MarketConfigOf<T>, DispatchError> {
@@ -1003,8 +1023,8 @@ pub mod pallet {
 			let existing_borrow_share =
 				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
 			let new_borrow_share = Percent::from_rational(amount_to_borrow, total_borrow_amount);
-			Ok((market_index * new_borrow_share.into())
-				+ (account_interest_index * existing_borrow_share.into()))
+			Ok((market_index * new_borrow_share.into()) +
+				(account_interest_index * existing_borrow_share.into()))
 		}
 
 		fn can_borrow(
@@ -1014,14 +1034,15 @@ pub mod pallet {
 			market: MarketConfigOf<T>,
 			market_account: &T::AccountId,
 		) -> Result<(), DispatchError> {
+			// REVIEW: Unnecessary check?
 			let latest_borrow_timestamp = BorrowTimestamp::<T>::get(market_id, debt_owner);
 			if let Some(time) = latest_borrow_timestamp {
 				if time >= Self::last_block_timestamp() {
-					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into());
+					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into())
 				}
 			}
 
-			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
+			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
 
 			let borrow_limit = Self::get_borrow_limit(market_id, debt_owner)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, amount_to_borrow)?;
@@ -1052,7 +1073,7 @@ pub mod pallet {
 
 			ensure!(
 				!matches!(
-					T::Vault::available_funds(&market.borrow, market_account)?,
+					T::Vault::available_funds(&market.borrow_asset_vault, market_account)?,
 					FundsAvailability::MustLiquidate
 				),
 				Error::<T>::MarketIsClosing
@@ -1061,77 +1082,77 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Checks if the provided market can be repaid, by checking if `from` is able to repay
-		/// `repay_amount` `borrow_asset_id`s into `beneficiary`'s account.
-		///
-		/// # Parameters
-		/// `market_id`, `from`, and `beneficiary` are the same as [`Lending::repay_borrow()`].
-		///
-		/// - `repay_amount`: The amount that `from` is attempting to repay.
-		/// - `owed`: The amount owing in the market (`market_id`).
-		/// - `borrow_asset_id`: The id of the borrow asset.
-		///
-		/// # Errors
-		///
-		/// Checks made in this function:
-		///
-		/// - [`Error::BorrowAndRepayInSameBlockIsNotSupported`]
-		/// - [`Error::BorrowDoesNotExist`]
-		/// - [`Error::RepayAmountMustBeGreaterThanZero`]
-		/// - [`Error::CannotRepayMoreThanBorrowAmount`]
-		/// - [`Error::CannotWithdrawFromProvidedBorrowAccount`]
-		/// - [`Error::TransferFailed`]
-		fn can_repay_borrow(
-			market_id: &MarketIndex,
-			from: &T::AccountId,
-			beneficiary: &T::AccountId,
-			amount_provided_to_repay_with: BorrowAmountOf<Self>,
-			amount_of_debt_balance_to_repay_with: BorrowAmountOf<Self>,
-			market: &MarketConfigOf<T>,
-		) -> Result<(), DispatchError> {
-			let market_account = Self::account_id(market_id);
-			let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
+		// /// Checks if the provided market can be repaid, by checking if `from` is able to repay
+		// /// `repay_amount` `borrow_asset_id`s into `beneficiary`'s account.
+		// ///
+		// /// # Parameters
+		// /// `market_id`, `from`, and `beneficiary` are the same as [`Lending::repay_borrow()`].
+		// ///
+		// /// - `repay_amount`: The amount that `from` is attempting to repay.
+		// /// - `owed`: The amount owing in the market (`market_id`).
+		// /// - `borrow_asset_id`: The id of the borrow asset.
+		// ///
+		// /// # Errors
+		// ///
+		// /// Checks made in this function:
+		// ///
+		// /// - [`Error::BorrowAndRepayInSameBlockIsNotSupported`]
+		// /// - [`Error::BorrowDoesNotExist`]
+		// /// - [`Error::RepayAmountMustBeGreaterThanZero`]
+		// /// - [`Error::CannotRepayMoreThanBorrowAmount`]
+		// /// - [`Error::CannotWithdrawFromProvidedBorrowAccount`]
+		// /// - [`Error::TransferFailed`]
+		// fn can_repay_borrow(
+		// 	market_id: &MarketIndex,
+		// 	from: &T::AccountId,
+		// 	beneficiary: &T::AccountId,
+		// 	amount_provided_to_repay_with: BorrowAmountOf<Self>,
+		// 	amount_of_debt_balance_to_repay_with: BorrowAmountOf<Self>,
+		// 	market: &MarketConfigOf<T>,
+		// ) -> Result<(), DispatchError> {
+		// 	let market_account = Self::account_id(market_id);
+		// 	let borrow_asset_id = T::Vault::asset_id(&market.borrow_asset_vault)?;
 
-			if let Some(timestamp) = BorrowTimestamp::<T>::get(market_id, beneficiary) {
-				ensure!(
-					timestamp != Self::last_block_timestamp(),
-					Error::<T>::BorrowAndRepayInSameBlockIsNotSupported
-				);
-			} else {
-				return Err(Error::<T>::BorrowDoesNotExist.into());
-			}
+		// 	if let Some(timestamp) = BorrowTimestamp::<T>::get(market_id, beneficiary) {
+		// 		ensure!(
+		// 			timestamp != Self::last_block_timestamp(),
+		// 			Error::<T>::BorrowAndRepayInSameBlockIsNotSupported
+		// 		);
+		// 	} else {
+		// 		return Err(Error::<T>::BorrowDoesNotExist.into());
+		// 	}
 
-			// ensure!(
-			// 	amount_provided_to_repay_with > <Self as DeFiEngine>::Balance::zero(),
-			// 	Error::<T>::RepayAmountMustBeGreaterThanZero
-			// );
-			// ensure!(
-			// 	amount_provided_to_repay_with <= amount_of_debt_balance_to_repay_with,
-			// 	Error::<T>::CannotRepayMoreThanBorrowAmount
-			// );
-			ensure!(
-				<T as Config>::MultiCurrency::can_withdraw(
-					borrow_asset_id,
-					from,
-					amount_provided_to_repay_with
-				)
-				.into_result()
-				.is_ok(),
-				Error::<T>::CannotWithdrawFromProvidedBorrowAccount
-			);
-			ensure!(
-				<T as Config>::MultiCurrency::can_deposit(
-					borrow_asset_id,
-					&market_account,
-					amount_provided_to_repay_with
-				)
-				.into_result()
-				.is_ok(),
-				Error::<T>::TransferFailed
-			);
+		// 	// ensure!(
+		// 	// 	amount_provided_to_repay_with > <Self as DeFiEngine>::Balance::zero(),
+		// 	// 	Error::<T>::RepayAmountMustBeGreaterThanZero
+		// 	// );
+		// 	// ensure!(
+		// 	// 	amount_provided_to_repay_with <= amount_of_debt_balance_to_repay_with,
+		// 	// 	Error::<T>::CannotRepayMoreThanBorrowAmount
+		// 	// );
+		// 	ensure!(
+		// 		<T as Config>::MultiCurrency::can_withdraw(
+		// 			borrow_asset_id,
+		// 			from,
+		// 			amount_provided_to_repay_with
+		// 		)
+		// 		.into_result()
+		// 		.is_ok(),
+		// 		Error::<T>::CannotWithdrawFromProvidedBorrowAccount
+		// 	);
+		// 	ensure!(
+		// 		<T as Config>::MultiCurrency::can_deposit(
+		// 			borrow_asset_id,
+		// 			&market_account,
+		// 			amount_provided_to_repay_with
+		// 		)
+		// 		.into_result()
+		// 		.is_ok(),
+		// 		Error::<T>::TransferFailed
+		// 	);
 
-			Ok(())
-		}
+		// 	Ok(())
+		// }
 	}
 
 	// === DEFI ENGINE ===
@@ -1159,6 +1180,7 @@ pub mod pallet {
 				Error::<T>::CollateralFactorIsLessOrEqualOne
 			);
 
+			// TODO: Specify which asset is not supported in returned error
 			let collateral_asset_supported =
 				<T::Oracle as Oracle>::is_supported(config_input.collateral_asset())?;
 			let borrow_asset_supported =
@@ -1194,25 +1216,27 @@ pub mod pallet {
 					},
 				)?;
 
-				let initial_pool_size = Self::initial_pool_size(config_input.borrow_asset())?;
+				let initial_pool_size =
+					Self::calculate_initial_pool_size(config_input.borrow_asset())?;
 
 				ensure!(
 					initial_pool_size > T::Balance::zero(),
 					Error::<T>::PriceOfInitialBorrowVaultShouldBeGreaterThanZero
 				);
 
+				// transfer `initial_pool_size` worth of borrow asset from the manager to the market
 				T::MultiCurrency::transfer(
 					config_input.borrow_asset(),
 					&manager,
 					&Self::account_id(&market_id),
 					initial_pool_size,
-					false,
+					false, // <- REVIEW: Do we want to possibly reap the manager?
 				)?;
 
 				let config = MarketConfig {
 					manager,
-					borrow: borrow_asset_vault.clone(),
-					collateral: config_input.collateral_asset(),
+					borrow_asset_vault: borrow_asset_vault.clone(),
+					collateral_asset: config_input.collateral_asset(),
 					collateral_factor: config_input.updatable.collateral_factor,
 					interest_rate_model: config_input.updatable.interest_rate_model,
 					under_collateralized_warn_percent: config_input
@@ -1245,15 +1269,19 @@ pub mod pallet {
 			let market_account = Self::account_id(market_id);
 
 			ensure!(
-				<T as Config>::MultiCurrency::can_withdraw(market.collateral, account, amount)
-					.into_result()
-					.is_ok(),
+				<T as Config>::MultiCurrency::can_withdraw(
+					market.collateral_asset,
+					account,
+					amount
+				)
+				.into_result()
+				.is_ok(),
 				Error::<T>::TransferFailed
 			);
 
 			ensure!(
 				<T as Config>::MultiCurrency::can_deposit(
-					market.collateral,
+					market.collateral_asset,
 					&market_account,
 					amount
 				) == DepositConsequence::Success,
@@ -1269,7 +1297,7 @@ pub mod pallet {
 				Result::<(), Error<T>>::Ok(())
 			})?;
 			<T as Config>::MultiCurrency::transfer(
-				market.collateral,
+				market.collateral_asset,
 				account,
 				&market_account,
 				amount,
@@ -1291,13 +1319,14 @@ pub mod pallet {
 
 			ensure!(amount <= collateral_balance, Error::<T>::NotEnoughCollateral);
 
-			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
-			let borrower_balance_with_interest = Self::borrow_balance_current(market_id, account)?;
+			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
+			let borrower_balance_with_interest =
+				Self::total_debt_with_interest(market_id, account)?;
 			let borrow_balance_value =
 				Self::get_price(borrow_asset, borrower_balance_with_interest)?;
 
 			let collateral_balance_after_withdrawal_value =
-				Self::get_price(market.collateral, collateral_balance.safe_sub(&amount)?)?;
+				Self::get_price(market.collateral_asset, collateral_balance.safe_sub(&amount)?)?;
 
 			let borrower_after_withdrawal = BorrowerData::new(
 				collateral_balance_after_withdrawal_value,
@@ -1313,13 +1342,13 @@ pub mod pallet {
 
 			let market_account = Self::account_id(market_id);
 			ensure!(
-				<T as Config>::MultiCurrency::can_deposit(market.collateral, account, amount)
-					== DepositConsequence::Success,
+				<T as Config>::MultiCurrency::can_deposit(market.collateral_asset, account, amount) ==
+					DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 			ensure!(
 				<T as Config>::MultiCurrency::can_withdraw(
-					market.collateral,
+					market.collateral_asset,
 					&market_account,
 					amount
 				)
@@ -1337,7 +1366,7 @@ pub mod pallet {
 				Result::<(), Error<T>>::Ok(())
 			})?;
 			<T as Config>::MultiCurrency::transfer(
-				market.collateral,
+				market.collateral_asset,
 				&market_account,
 				account,
 				amount,
@@ -1359,7 +1388,7 @@ pub mod pallet {
 			// markets
 
 			Markets::<T>::iter()
-				.filter_map(|(index, market)| market.borrow.eq(&borrow).then(|| index))
+				.filter_map(|(index, market)| market.borrow_asset_vault.eq(&borrow).then(|| index))
 				.collect()
 		}
 
@@ -1373,7 +1402,7 @@ pub mod pallet {
 			amount_to_borrow: BorrowAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			let market = Self::get_market(market_id)?;
-			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
+			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
 			let market_account = Self::account_id(market_id);
 
 			Self::can_borrow(market_id, debt_owner, amount_to_borrow, market, &market_account)?;
@@ -1424,10 +1453,7 @@ pub mod pallet {
 			total_repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
 			// TODO: add keep_alive
 		) -> Result<BorrowAmountOf<Self>, DispatchError> {
-			use crate::{
-				transfer_release_and_burn_from, TransferAndBurnFrom,
-				TransferReleaseAndBurnFrom,
-			};
+			use crate::repay_borrow::{PayInterest, RepayDebt};
 
 			let timestamp = BorrowTimestamp::<T>::get(market_id, beneficiary)
 				.ok_or(Error::<T>::BorrowDoesNotExist)?;
@@ -1440,24 +1466,25 @@ pub mod pallet {
 
 			// debt + interest
 			let beneficiary_total_debt_with_interest =
-				Self::borrow_balance_current(market_id, beneficiary)?;
+				Self::total_debt_with_interest(market_id, beneficiary)?;
 
-			let borrow_asset_id = T::Vault::asset_id(&market.borrow)?;
 			let market_account = Self::account_id(market_id);
 
-			let debt_asset_id =
+			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
+			let debt_asset =
 				DebtMarkets::<T>::get(market_id).ok_or(Error::<T>::MarketDoesNotExist)?;
 
 			// initial borrow amount
 			let beneficiary_borrow_asset_debt =
-				<T as Config>::MultiCurrency::balance(debt_asset_id, beneficiary);
+				<T as Config>::MultiCurrency::balance(debt_asset, beneficiary);
 
+			// interest accrued
 			let beneficiary_interest_on_market =
 				beneficiary_total_debt_with_interest.safe_sub(&beneficiary_borrow_asset_debt)?;
 
-			// let mut remaining_borrow_amount =
-			let market_total_debt_interest =
-				<T as Config>::MultiCurrency::balance(debt_asset_id, &market_account);
+			// // let mut remaining_borrow_amount =
+			// let market_total_debt_interest =
+			// 	<T as Config>::MultiCurrency::balance(debt_asset_id, &market_account);
 
 			match total_repay_amount {
 				RepayStrategy::TotalDebt => {
@@ -1466,33 +1493,33 @@ pub mod pallet {
 						Error::<T>::RepayAmountMustBeGreaterThanZero
 					);
 
-					// transfer borrow tokne interest, from -> market
+					// transfer borrow token interest, from -> market
 					// burn debt token interest from market
-					TransferAndBurnFrom::<T> {
-						transfer_asset_id: borrow_asset_id,
-						burn_asset_id: debt_asset_id,
+					PayInterest::<T> {
+						borrow_asset,
+						debt_asset,
 
-						from_account: &from,
-						to_account: &market_account,
+						payer_account: &from,
+						market_account: &market_account,
 
-						amount: beneficiary_interest_on_market,
+						amount_of_interest_to_repay: beneficiary_interest_on_market,
 						keep_alive: true,
 					}
 					.run()?;
 
 					// release and burn borrowed debt from beneficiary
-					transfer_release_and_burn_from::<T>(TransferReleaseAndBurnFrom {
-						asset_id: borrow_asset_id,
+					RepayDebt::<T> {
+						borrow_asset,
 
-						from_account: &from,
-						to_account: &market_account,
-						burn_account: &beneficiary,
+						payer_account: &from,
+						market_account: &market_account,
+						beneficiary_account: &beneficiary,
 
-						amount: beneficiary_borrow_asset_debt,
+						amount_of_debt_to_repay: beneficiary_borrow_asset_debt,
 
 						keep_alive: true,
-						best_effort: false,
-					})?;
+					}
+					.run()?;
 
 					// borrow no longer exists as it has been repaid in entirety, remove the
 					// timestamp
@@ -1529,45 +1556,47 @@ pub mod pallet {
 
 						// transfer interest, from -> market
 						// burn interest from market
-						TransferAndBurnFrom::<T> {
-							transfer_asset_id: borrow_asset_id,
-							burn_asset_id: debt_asset_id,
+						PayInterest::<T> {
+							borrow_asset,
+							debt_asset,
 
-							from_account: &from,
-							to_account: &market_account,
+							payer_account: &from,
+							market_account: &market_account,
 
-							amount: beneficiary_interest_on_market,
+							amount_of_interest_to_repay: beneficiary_interest_on_market,
 							keep_alive: true,
-						}.run()?;
+						}
+						.run()?;
 
 						// amount remaining to repay the debt with
 						let amount_of_debt_balance_to_repay_with =
 							partial_repay_amount - beneficiary_interest_on_market;
 
 						// release and burn from beneficiary
-						transfer_release_and_burn_from::<T>(TransferReleaseAndBurnFrom {
-							asset_id: borrow_asset_id,
+						RepayDebt::<T> {
+							borrow_asset,
 
-							from_account: &from,
-							to_account: &market_account,
-							burn_account: &beneficiary,
+							payer_account: &from,
+							market_account: &market_account,
+							beneficiary_account: &beneficiary,
 
-							amount: amount_of_debt_balance_to_repay_with,
+							amount_of_debt_to_repay: amount_of_debt_balance_to_repay_with,
 
-							best_effort: false,
 							keep_alive: true,
-						})?;
+						}
+						.run()?;
 					} else {
 						// transfer interest, from -> market
 						// burn interest from market
-						TransferAndBurnFrom::<T> {
-							transfer_asset_id: borrow_asset_id,
-							burn_asset_id: debt_asset_id,
+						PayInterest::<T> {
+							borrow_asset,
+							debt_asset,
 
-							from_account: &from,
-							to_account: &market_account,
+							payer_account: &from,
+							market_account: &market_account,
 
-							amount: partial_repay_amount,
+							amount_of_interest_to_repay: partial_repay_amount,
+
 							keep_alive: true,
 						}
 						.run()?;
@@ -1636,7 +1665,7 @@ pub mod pallet {
 		// ANCHOR total_cash implementation
 		fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
 			let market = Self::get_market(market_id)?;
-			let borrow_id = T::Vault::asset_id(&market.borrow)?;
+			let borrow_id = T::Vault::asset_id(&market.borrow_asset_vault)?;
 			Ok(<T as Config>::MultiCurrency::balance(borrow_id, &Self::account_id(market_id)))
 		}
 
@@ -1650,14 +1679,12 @@ pub mod pallet {
 			)?)
 		}
 
-		fn borrow_balance_current(
+		fn total_debt_with_interest(
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
 		) -> Result<BorrowAmountOf<Self>, DispatchError> {
 			let debt_asset_id =
 				DebtMarkets::<T>::get(market_id).ok_or(Error::<T>::MarketDoesNotExist)?;
-
-			();
 
 			// ANCHOR DebtNotFound
 			let account_interest_index =
@@ -1672,7 +1699,7 @@ pub mod pallet {
 			} else {
 				// REVIEW
 				let principal = LiftedFixedBalance::saturating_from_integer(principal.into());
-				// principal * market index / debt index
+				// principal * (market index / debt index)
 				let balance = principal
 					.safe_mul(&market_interest_index)?
 					.safe_div(&account_interest_index)?
@@ -1696,7 +1723,7 @@ pub mod pallet {
 			borrow_amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			let market = Self::get_market(market_id)?;
-			let borrow_asset = T::Vault::asset_id(&market.borrow)?;
+			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, borrow_amount)?;
 			Ok(LiftedFixedBalance::saturating_from_integer(borrow_amount_value.into())
 				.safe_mul(&market.collateral_factor)?
@@ -1724,27 +1751,6 @@ pub mod pallet {
 				Ok(Self::Balance::zero())
 			}
 		}
-	}
-
-	/// If borrowBalance = 0 then borrow index is likely also 0.
-	/// Rather than failing the calculation with a division by 0, we immediately return 0 in
-	/// this case.
-	// REVIEW: There's probably a better way to do this
-	fn borrow_from_principal<T: Config>(
-		principal: <T as DeFiComposableConfig>::Balance,
-		market_interest_index: ZeroToOneFixedU128,
-		account_interest_index: ZeroToOneFixedU128,
-	) -> Result<Option<u64>, DispatchError> {
-		if principal.is_zero() {
-			return Ok(None);
-		}
-		let principal = LiftedFixedBalance::saturating_from_integer(principal.into());
-		let balance = principal
-			.checked_mul(&market_interest_index)
-			.and_then(|from_start_total| from_start_total.checked_div(&account_interest_index))
-			.and_then(|x| x.checked_mul_int(1_u64))
-			.ok_or(ArithmeticError::Overflow)?;
-		Ok(Some(balance))
 	}
 
 	/// given collateral information, how much of borrow asset can get?
@@ -1783,99 +1789,123 @@ pub mod pallet {
 
 // helpers
 
-/// NOTE: `from_account` can be the same account as `to_account` (and in practice, always is). Be
-/// sure to release before transfering.
-pub(crate) struct TransferReleaseAndBurnFrom<'a, T: Config> {
-	/// The asset to transfer and burn.
-	asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
-
-	/// The account to transfer the asset out of.
-	from_account: &'a T::AccountId,
-	/// The account to transfer the account into.
-	to_account: &'a T::AccountId,
-	/// The account to burn the asset from.
-	burn_account: &'a T::AccountId,
-
-	/// The amount to be transfered and burned.
-	amount: <T as DeFiComposableConfig>::Balance,
-
-	/// See the `best_effort` parameter for
-	/// [`MutateHold::release`][frame_support::traits::fungibles::MutateHold::release].
-	best_effort: bool,
-	// Whether or not to keep `from_account` alive.
-	keep_alive: bool,
-}
-
-/// Release and burn the given [`amount`][ReleaseAndBurnFromConfig::amount] of
-/// [`asset_id`][ReleaseAndBurnFromConfig::asset_id] from [`who`][ReleaseAndBurnFromConfig::who].
-// pays debt
-fn transfer_release_and_burn_from<T: Config>(
-	cfg: TransferReleaseAndBurnFrom<T>,
-) -> Result<(), DispatchError> {
+/// Various helpers used in the implementation of [`Lending::repay_borrow`].
+///
+/// [`Lending::repay_borrow`]: composable_traits::lending::Lending::repay_borrow
+mod repay_borrow {
+	use composable_traits::defi::DeFiComposableConfig;
 	use frame_support::traits::fungibles::{Mutate, MutateHold, Transfer};
-	// burn account: beneficiary
-	// from_account: from
-	// to account: market
-	<T as Config>::MultiCurrency::release(
-		cfg.asset_id,
-		cfg.burn_account,
-		cfg.amount,
-		cfg.best_effort,
-	)?;
-	<T as Config>::MultiCurrency::transfer(
-		cfg.asset_id,
-		cfg.from_account,
-		cfg.to_account,
-		cfg.amount,
-		cfg.keep_alive,
-	)?;
-	<T as Config>::MultiCurrency::burn_from(cfg.asset_id, cfg.burn_account, cfg.amount)?;
-	Ok(())
-}
+	use sp_runtime::DispatchError;
 
-pub(crate) struct TransferAndBurnFrom<'a, T: Config> {
-	/// The asset to be transfered.
-	transfer_asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
-	/// The asset to be burned.
-	burn_asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
+	use crate::Config;
 
-	/// The account to transfer the `transfer_asset_id` from.
-	from_account: &'a T::AccountId,
-	/// The account to transfer the `transfer_asset_id` to.
-	to_account: &'a T::AccountId,
-
-	/// How much asset to transfer and burn. The same amount is burned as is transfered.
-	amount: <T as DeFiComposableConfig>::Balance,
-
-	// Whether or not to keep `from_account` alive.
-	keep_alive: bool,
-}
-
-impl<'a, T: Config> TransferAndBurnFrom<'a, T> {
-	/// Transfers [`amount`] of [`transfer_asset_id`] from [`from_account`] to [`to_account`], and then
-	/// burns the same [`amount`] of [`debt_asset_id`] from [`to_account`].
+	/// Repay `amount` of `beneficiary_account`'s `borrow_asset` debt.
 	///
+	/// Release given `amount` of `borrow_asset` from `beneficiary_account`, transfer `amount` from
+	/// `payer_account` to `market_account`, and then burn `amount` from `beneficiary_account`.
+	// 										 REVIEW: Why is it burned?
+	pub(crate) struct RepayDebt<'a, T: Config> {
+		/// The borrowed asset being repaid.
+		pub(crate) borrow_asset: <T as DeFiComposableConfig>::MayBeAssetId,
+
+		/// The account repaying `beneficiary_account`'s debt.
+		pub(crate) payer_account: &'a T::AccountId,
+
+		/// The market account that will be repaid.
+		pub(crate) market_account: &'a T::AccountId,
+
+		/// The account that took out the borrow and who's debt is being repaid, i.e. the
+		/// beneficiary.
+		pub(crate) beneficiary_account: &'a T::AccountId,
+
+		/// The amount of `beneficiary_account`'s debt to be repaid by `payer_account`.
+		pub(crate) amount_of_debt_to_repay: <T as DeFiComposableConfig>::Balance,
+
+		// Whether or not to keep `from_account` alive.
+		pub(crate) keep_alive: bool,
+	}
+
+	impl<'a, T: Config> RepayDebt<'a, T> {
+		pub(crate) fn run(self) -> Result<(), DispatchError> {
+			// NOTE: `payer_account` can be (and currently always is) the same account as
+			// `beneficiary_account`. Be sure to release before transfering.
+
+			// release from beneficiary
+			<T as Config>::MultiCurrency::release(
+				self.borrow_asset,
+				self.beneficiary_account,
+				self.amount_of_debt_to_repay,
+				false, // <- we don't want best_effort, all of it must be released
+			)?;
+
+			// transfer from payer -> market
+			// payer repays the debt
+			<T as Config>::MultiCurrency::transfer(
+				self.borrow_asset,
+				self.payer_account,
+				self.market_account,
+				self.amount_of_debt_to_repay,
+				self.keep_alive,
+			)?;
+
+			// burn from burn_account
+			<T as Config>::MultiCurrency::burn_from(
+				self.borrow_asset,
+				self.beneficiary_account,
+				self.amount_of_debt_to_repay,
+			)?;
+
+			Ok(())
+		}
+	}
+
+	/// Pays off the interest accrued in a market.
 	///
-	/// [`borrow_asset_id`]: TransferAndBurnFromConfig::borrow_asset_id
-	/// [`debt_asset_id`]: TransferAndBurnFromConfig::debt_asset_id
-	/// [`from_account`]: TransferAndBurnFromConfig::from_account
-	/// [`to_account`]: TransferAndBurnFromConfig::to_account
-	/// [`amount`]: TransferAndBurnFromConfig::amount
-	// pays interest
-	pub(crate) fn run(self) -> Result<(), DispatchError> {
-		use frame_support::traits::fungibles::{Mutate, Transfer};
+	/// Transfers `amount` of `borrow_asset` from `payer_account` to `market_account`,
+	/// and then burns the same `amount` of `debt_asset` from `market_account`.
+	pub(crate) struct PayInterest<'a, T: Config> {
+		/// The borrowed asset.
+		///
+		/// This is the asset that was originally borrowed, and is the same asset used to pay the
+		/// interest on the borrow (loan).
+		pub(crate) borrow_asset: <T as DeFiComposableConfig>::MayBeAssetId,
 
-		<T as Config>::MultiCurrency::transfer(
-			self.transfer_asset_id,
-			self.from_account,
-			self.to_account,
-			self.amount,
-			self.keep_alive,
-		)?;
-		<T as Config>::MultiCurrency::burn_from(self.burn_asset_id, self.to_account, self.amount)?;
+		/// The debt asset.
+		///
+		/// This is the asset the market accrues interest into.
+		pub(crate) debt_asset: <T as DeFiComposableConfig>::MayBeAssetId,
 
-		Ok(())
+		/// The account that is paying off the interest.
+		pub(crate) payer_account: &'a T::AccountId,
+
+		/// The market account that owns the interest being paid off.
+		pub(crate) market_account: &'a T::AccountId,
+
+		/// How much interest is being paid off.
+		///
+		/// NOTE: This is assumed to be `<=` the total interest amount.
+		pub(crate) amount_of_interest_to_repay: <T as DeFiComposableConfig>::Balance,
+
+		/// Whether or not to keep `from_account` alive.
+		pub(crate) keep_alive: bool,
+	}
+
+	impl<'a, T: Config> PayInterest<'a, T> {
+		pub(crate) fn run(self) -> Result<(), DispatchError> {
+			<T as Config>::MultiCurrency::transfer(
+				self.borrow_asset,
+				self.payer_account,
+				self.market_account,
+				self.amount_of_interest_to_repay,
+				self.keep_alive,
+			)?;
+			<T as Config>::MultiCurrency::burn_from(
+				self.debt_asset,
+				self.market_account,
+				self.amount_of_interest_to_repay,
+			)?;
+
+			Ok(())
+		}
 	}
 }
-
-// fn transfer_and_burn_from<T: Config>(cfg: TransferAndBurnFrom<T>) -> Result<(), DispatchError> {}
