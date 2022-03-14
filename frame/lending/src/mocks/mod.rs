@@ -443,16 +443,16 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 // BLOCK HELPERS
 
-/// Progress to the given block, and then finalize the block.
-pub fn run_to_block(n: BlockNumber) {
-	Lending::on_finalize(System::block_number());
-	for b in (System::block_number() + 1)..=n {
-		next_block(b);
-		if b != n {
-			Lending::on_finalize(System::block_number());
-		}
-	}
-}
+// /// Progress to the given block, and then finalize the block.
+// pub fn run_to_block(n: BlockNumber) {
+// 	Lending::on_finalize(System::block_number());
+// 	for b in (System::block_number() + 1)..=n {
+// 		next_block(b);
+// 		if b != n {
+// 			Lending::on_finalize(System::block_number());
+// 		}
+// 	}
+// }
 
 /// calls [`next_block(n)`] and then calls [`Lending::finalize`](OnFinalize::on_finalize).
 pub fn process_block(n: BlockNumber) {
