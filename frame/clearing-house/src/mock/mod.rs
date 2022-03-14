@@ -1,4 +1,4 @@
 #[cfg(test)]
-mod governance_registry;
+pub mod governance_registry;
 #[cfg(test)]
-mod runtime;
+pub mod runtime;
