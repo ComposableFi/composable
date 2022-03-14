@@ -364,6 +364,7 @@ pub mod pallet {
 
 	// type synonym to better represent the `Reserve` type in withdrawals
 	pub type Withdraw<T> = Reserve<AssetIdOf<T>, BalanceOf<T>>;
+	
 	// ----------------------------------------------------------------------------------------------------
     //                                           Runtime  Storage                                          
 	// ----------------------------------------------------------------------------------------------------
