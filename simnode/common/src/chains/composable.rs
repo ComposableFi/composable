@@ -14,11 +14,11 @@ impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
 		(frame_benchmarking::benchmarking::HostFunctions, SignatureVerificationOverride);
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		picasso_runtime::api::dispatch(method, data)
+		composable_runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		picasso_runtime::native_version()
+		composable_runtime::native_version()
 	}
 }
 
@@ -28,8 +28,8 @@ pub struct ChainInfo;
 impl substrate_simnode::ChainInfo for ChainInfo {
 	type Block = common::OpaqueBlock;
 	type ExecutorDispatch = ExecutorDispatch;
-	type Runtime = picasso_runtime::Runtime;
-	type RuntimeApi = picasso_runtime::RuntimeApi;
+	type Runtime = composable_runtime::Runtime;
+	type RuntimeApi = composable_runtime::RuntimeApi;
 	type SelectChain = sc_consensus::LongestChain<TFullBackend<Self::Block>, Self::Block>;
 	type BlockImport = Arc<FullClientFor<Self>>;
 	type InherentDataProviders = (
@@ -38,16 +38,10 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 		ParachainInherentData,
 	);
 	type Cli = ComposableCli;
+
 	fn create_rpc_io_handler<SC>(
 		deps: RpcHandlerArgs<Self, SC>,
-	) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>
-	where
-		<<Self as substrate_simnode::ChainInfo>::RuntimeApi as sp_api::ConstructRuntimeApi<
-			Self::Block,
-			FullClientFor<Self>,
-		>>::RuntimeApi: sp_api::Core<Self::Block>
-			+ sp_transaction_pool::runtime_api::TaggedTransactionQueue<Self::Block>,
-	{
+	) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata> {
 		let full_deps = node::rpc::FullDeps {
 			client: deps.client,
 			pool: deps.pool,

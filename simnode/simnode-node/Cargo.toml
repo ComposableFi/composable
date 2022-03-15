@@ -7,7 +7,7 @@ version = "0.1.0"
 
 [dependencies]
 common = { package = "simnode-common", path = "../common" }
-node = { package = "composable-node", path = "../../../node", features = [
+node = { package = "composable-node", path = "../../node", features = [
   "dali",
 ] }
 substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "master" }

@@ -37,9 +37,9 @@ members = [
   "utils/parachain-utils",
   "utils/price-feed",
   "utils/collator-sidecar",
-  "integration-tests/simnode/simnode-node",
-  "integration-tests/simnode/simnode-tests",
-  "integration-tests/simnode/common",
+  "simnode/simnode-node",
+  "simnode/simnode-tests",
+  "simnode/common",
 ]
 
 [profile.release]

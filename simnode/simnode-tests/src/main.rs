@@ -12,6 +12,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 	match &*chain_id {
 		chain if chain.contains("picasso") => picasso::run()?,
 		chain if chain.contains("dali") => dali::run()?,
+		chain if chain.contains("composable") => composable::run()?,
 		_ => panic!("Unsupported chain_id: {}", chain_id),
 	};
 

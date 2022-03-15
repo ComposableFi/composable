@@ -41,14 +41,7 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 
 	fn create_rpc_io_handler<SC>(
 		deps: RpcHandlerArgs<Self, SC>,
-	) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>
-	where
-		<<Self as substrate_simnode::ChainInfo>::RuntimeApi as sp_api::ConstructRuntimeApi<
-			Self::Block,
-			FullClientFor<Self>,
-		>>::RuntimeApi: sp_api::Core<Self::Block>
-			+ sp_transaction_pool::runtime_api::TaggedTransactionQueue<Self::Block>,
-	{
+	) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata> {
 		let full_deps = node::rpc::FullDeps {
 			client: deps.client,
 			pool: deps.pool,

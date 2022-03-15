@@ -1557,6 +1557,7 @@ dependencies = [
  "polkadot-parachain",
  "primitives",
  "scale-info",
+ "simnode-runtime-apis",
  "smallvec 1.8.0",
  "sp-api",
  "sp-block-builder",
@@ -11915,6 +11916,7 @@ version = "0.1.0"
 dependencies = [
  "common",
  "composable-node",
+ "composable-runtime",
  "cumulus-primitives-parachain-inherent",
  "dali-runtime",
  "derive_more",
@@ -11962,6 +11964,7 @@ version = "0.1.0"
 dependencies = [
  "common",
  "composable-node",
+ "composable-runtime",
  "cumulus-pallet-parachain-system",
  "dali-runtime",
  "frame-benchmarking",

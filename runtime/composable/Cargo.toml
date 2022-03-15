@@ -120,6 +120,9 @@ orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-m
 orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb", default-features = false }
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb", default-features = false }
 
+# simnode support
+simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "master" }
+
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
@@ -217,3 +220,4 @@ std = [
   "system-rpc-runtime-api/std",
   "transaction-payment-rpc-runtime-api/std",
 ]
+sim-node = []
