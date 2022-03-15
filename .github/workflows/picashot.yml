@@ -39,3 +39,22 @@ jobs:
     - name: Run ansible playbook
       run: |
         ansible-playbook -l _collator_node_yes  /opt/ansible/inventory/dalishot.yml -i  /opt/ansible/inventory/gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
+
+
+  composable-snapshot:
+    runs-on: 
+      - self-hosted
+      - linux
+      - X64
+      - ansible-runner
+
+    steps:
+    - name: Clean up
+      continue-on-error: true
+      run: |
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+        docker system prune --force --all --volumes
+
+    - name: Run ansible playbook
+      run: |
+        ansible-playbook -l _node_class_collator  /opt/ansible/inventory/composable-shot.yml -i  /opt/ansible/inventory/composable-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
