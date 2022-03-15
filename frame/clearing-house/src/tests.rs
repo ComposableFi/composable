@@ -32,9 +32,13 @@ fn test_deposit_unsupported_collateral_returns_error() {
 #[test]
 fn test_deposit_supported_collateral_succeeds() {
 	ExtBuilder::default().build().execute_with(|| {
+		let before = AccountsMargin::<Runtime>::get(&BOB).unwrap_or_default();
+
 		let origin = Origin::signed(BOB);
 		let amount: Balance = 1_000u32.into();
 		assert_ok!(ClearingHouse::add_margin(origin, USDC, amount));
-		assert_eq!(AccountsMargin::<Runtime>::get(&BOB).unwrap_or_default(), amount);
+
+		let after = AccountsMargin::<Runtime>::get(&BOB).unwrap_or_default();
+		assert_eq!(after - before, amount);
 	})
 }
