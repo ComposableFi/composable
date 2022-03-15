@@ -89,6 +89,7 @@ impl pallet_balances::Config for Test {
 
 impl pallet_instrumental::Config for Test {
 	type Event = Event;
+	type WeightInfo = ();
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
