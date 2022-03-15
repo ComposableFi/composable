@@ -62,8 +62,11 @@ pub mod pallet {
 		events::IbcEvent,
 	};
 	use ibc_primitives::{
-		QueryChannelResponse, QueryClientStateResponse, QueryClientStatesResponse,
-		QueryConnectionResponse, QueryConsensusStateResponse,
+		QueryChannelResponse, QueryChannelsResponse, QueryClientStateResponse,
+		QueryClientStatesResponse, QueryConnectionResponse, QueryConnectionsResponse,
+		QueryConsensusStateResponse, QueryNextSequenceReceiveResponse,
+		QueryPacketAcknowledgementResponse, QueryPacketAcknowledgementsResponse,
+		QueryPacketCommitmentResponse, QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
 	};
 	use sp_runtime::{generic::DigestItem, traits::BlakeTwo256};
 	use sp_trie::{TrieDBMut, TrieMut};
@@ -235,6 +238,8 @@ pub mod pallet {
 		ProofGenerationError,
 		/// Client consensus state not found for height
 		ConsensusStateNotFound,
+		/// Client state not found
+		ClientStateNotFound,
 	}
 
 	#[pallet::hooks]
@@ -746,41 +751,93 @@ pub mod pallet {
 		}
 
 		/// Get all connection states for a client
-		pub fn connections_client(client_id: String) -> Result<Vec<Vec<u8>>, Error<T>> {
-			todo!()
+		pub fn connection_using_client(
+			client_id: String,
+		) -> Result<QueryConnectionResponse, Error<T>> {
+			let connection_id = ConnectionClient::<T>::get(client_id.as_bytes().to_vec());
+			let connection = Connections::<T>::get(connection_id.clone());
+
+			let mut key = T::CONNECTION_PREFIX.to_vec();
+			let connection_id = connection_id_from_bytes(connection_id)?;
+
+			let connection_path = format!("{}", ConnectionsPath(connection_id));
+			key.extend_from_slice(connection_path.as_bytes());
+			Ok(QueryConnectionResponse {
+				connection,
+				proof: Self::generate_proof(vec![&key])?,
+				height: LatestHeight::<T>::get(),
+			})
 		}
 
-		/// Get all client state for channel
+		/// Get client state for client which this channel is bound to
 		pub fn channel_client(channel_id: String, port_id: String) -> Result<Vec<u8>, Error<T>> {
-			todo!()
+			for (connection_id, channels) in ChannelsConnection::<T>::iter() {
+				if channels.contains(&(port_id.as_bytes().to_vec(), channel_id.as_bytes().to_vec()))
+				{
+					if let Some((client_id, ..)) = ConnectionClient::<T>::iter()
+						.find(|(client_id, connection)| &connection_id == connection)
+					{
+						let client_state = ClientStates::<T>::get(client_id);
+						let client_state = AnyClientState::decode_vec(&client_state)
+							.map_err(|_| Error::<T>::DecodingError)?;
+
+						// TODO: Revisit when more client states are defined in ibc_rs
+						let client_state = match client_state {
+							AnyClientState::Tendermint(state) =>
+								state.encode_vec().map_err(|_| Error::<T>::DecodingError)?,
+							_ => return Err(Error::<T>::DecodingError),
+						};
+
+						return Ok(client_state)
+					}
+				}
+			}
+			Err(Error::<T>::ClientStateNotFound)
 		}
 
 		/// Get the host consensus state
-		pub fn host_consensus_state() -> Result<Vec<u8>, Error<T>> {
+		pub fn host_consensus_state() -> Result<QueryConsensusStateResponse, Error<T>> {
 			todo!()
 		}
 
 		/// Get all channel states
-		pub fn channels() -> Result<Vec<u8>, Error<T>> {
-			todo!()
+		pub fn channels() -> Result<QueryChannelsResponse, Error<T>> {
+			let prefix = T::CONNECTION_PREFIX;
+			let channels = Channels::<T>::iter_values().collect::<Vec<_>>();
+			let keys = Channels::<T>::iter_keys()
+				.map(|(port_id, channel_id)| {
+					let mut channel_key = prefix.to_vec();
+					let channel_id = channel_id_from_bytes::<T>(channel_id)?;
+					let port_id = port_id_from_bytes::<T>(port_id)?;
+					let channel_path =
+						format!("{}", ChannelEndsPath(port_id.clone(), channel_id.clone()));
+					channel_key.extend_from_slice(channel_path.as_bytes());
+					channel_key
+				})
+				.collect::<Vec<_>>();
+			Ok(QueryChannelsResponse {
+				channels,
+				proof: Self::generate_proof(keys.iter().collect::<Vec<_>>())?,
+				height: LatestHeight::<T>::get(),
+			})
 		}
 
 		/// Get all connection states
-		pub fn connections() -> Result<Vec<u8>, Error<T>> {
+		pub fn connections() -> Result<QueryConnectionsResponse, Error<T>> {
 			todo!()
 		}
 
 		pub fn packet_commitments(
 			channel_id: String,
 			port_id: String,
-		) -> Result<Vec<u8>, Error<T>> {
+		) -> Result<QueryPacketCommitmentsResponse, Error<T>> {
 			todo!()
 		}
 
 		fn packet_acknowledgements(
 			channel_id: String,
 			port_id: String,
-		) -> Result<Vec<u8>, Error<T>> {
+		) -> Result<QueryPacketAcknowledgementsResponse, Error<T>> {
 			todo!()
 		}
 
@@ -800,7 +857,10 @@ pub mod pallet {
 			todo!()
 		}
 
-		fn next_seq_recv(channel_id: String, port_id: String) -> Result<Vec<u8>, Error<T>> {
+		fn next_seq_recv(
+			channel_id: String,
+			port_id: String,
+		) -> Result<QueryNextSequenceReceiveResponse, Error<T>> {
 			todo!()
 		}
 
@@ -808,7 +868,7 @@ pub mod pallet {
 			channel_id: String,
 			port_id: String,
 			seq: u64,
-		) -> Result<Vec<u8>, Error<T>> {
+		) -> Result<QueryPacketCommitmentResponse, Error<T>> {
 			todo!()
 		}
 
@@ -816,7 +876,7 @@ pub mod pallet {
 			channel_id: String,
 			port_id: String,
 			seq: u64,
-		) -> Result<Vec<u8>, Error<T>> {
+		) -> Result<QueryPacketAcknowledgementResponse, Error<T>> {
 			todo!()
 		}
 
@@ -824,7 +884,7 @@ pub mod pallet {
 			channel_id: String,
 			port_id: String,
 			seq: u64,
-		) -> Result<Vec<u8>, Error<T>> {
+		) -> Result<QueryPacketReceiptResponse, Error<T>> {
 			todo!()
 		}
 	}

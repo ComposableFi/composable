@@ -107,7 +107,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	fn query_connections(&self) -> Result<QueryConnectionsResponse>;
 
 	#[rpc(name = "ibc_queryConnectionUsingClient")]
-	fn query_connections_using_client(
+	fn query_connection_using_client(
 		&self,
 		height: u32,
 		client_id: String,
@@ -435,11 +435,11 @@ where
 			.ok_or(runtime_error_into_rpc_error("Failed to fetch connections"))
 	}
 
-	fn query_connections_using_client(
+	fn query_connection_using_client(
 		&self,
 		height: u32,
 		client_id: String,
-	) -> Result<QueryConnectionsResponse> {
+	) -> Result<QueryConnectionResponse> {
 		let api = self.client.runtime_api();
 		let block_hash = self
 			.client
@@ -449,7 +449,7 @@ where
 			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
-		api.connections_using_client(&at, client_id)
+		api.connection_using_client(&at, client_id)
 			.ok()
 			.flatten()
 			.ok_or(runtime_error_into_rpc_error("Failed to fetch connections"))

@@ -44,7 +44,7 @@ sp_api::decl_runtime_apis! {
 		fn connections() -> Option<QueryConnectionsResponse>;
 
 		/// Returns all connections associated with the given client
-		fn connections_using_client(client_id: String) -> Option<QueryConnectionsResponse>;
+		fn connection_using_client(client_id: String) -> Option<QueryConnectionResponse>;
 
 		/// Returns Connection handshake proof
 		fn conn_handshake_proof(client_id: String, conn_id: String) -> Option<ConnectionHandshakeProof>;
