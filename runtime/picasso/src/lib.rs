@@ -1020,7 +1020,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	#[cfg(feature = "sim-node")]
+
 	impl simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime {
 		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
 			use sp_runtime::{

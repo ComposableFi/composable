@@ -29,12 +29,10 @@ sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 common = { path = "../../runtime/common" }
-composable-runtime = { path = "../../runtime/composable", features = [
-  "sim-node",
-] }
-dali-runtime = { path = "../../runtime/dali", features = ["sim-node"] }
+composable-runtime = { path = "../../runtime/composable" }
+dali-runtime = { path = "../../runtime/dali" }
 node = { package = "composable-node", path = "../../node", features = ["dali"] }
-picasso-runtime = { path = "../../runtime/picasso", features = ["sim-node"] }
+picasso-runtime = { path = "../../runtime/picasso" }
 simnode-common = { path = "../common" }
 
 codec = { package = "parity-scale-codec", version = "2.0.0" }

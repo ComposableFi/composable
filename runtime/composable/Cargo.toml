@@ -156,7 +156,6 @@ runtime-benchmarks = [
   "utility/runtime-benchmarks",
   "vault/runtime-benchmarks",
 ]
-sim-node = []
 std = [
   "codec/std",
   "composable-support/std",

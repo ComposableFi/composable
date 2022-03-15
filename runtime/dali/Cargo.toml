@@ -181,7 +181,6 @@ runtime-benchmarks = [
   "curve-amm/runtime-benchmarks",
   "liquidity-bootstrapping/runtime-benchmarks",
 ]
-sim-node = []
 std = [
   "codec/std",
   "sp-api/std",

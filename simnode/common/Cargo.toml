@@ -24,13 +24,11 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 common = { path = "../../runtime/common" }
-composable-runtime = { path = "../../runtime/composable", features = [
-    "sim-node",
-] }
-dali-runtime = { path = "../../runtime/dali", features = ["sim-node"] }
+composable-runtime = { path = "../../runtime/composable" }
+dali-runtime = { path = "../../runtime/dali" }
 node = { package = "composable-node", path = "../../node", features = ["dali"] }
 parachain-inherent = { package = "cumulus-primitives-parachain-inherent", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.17" }
-picasso-runtime = { path = "../../runtime/picasso", features = ["sim-node"] }
+picasso-runtime = { path = "../../runtime/picasso" }
 
 jsonrpc-core = "18.0"
 derive_more = "0.99.17"
