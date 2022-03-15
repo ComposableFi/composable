@@ -32,14 +32,14 @@ impl<T: frame_system::Config> session::WeightInfo for WeightInfo<T> {
 	// Storage: Session NextKeys (r:1 w:1)
 	// Storage: Session KeyOwner (r:1 w:1)
 	fn set_keys() -> Weight {
-		(28_702_000 as Weight)
+		(31_320_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Session NextKeys (r:1 w:1)
 	// Storage: Session KeyOwner (r:0 w:1)
 	fn purge_keys() -> Weight {
-		(21_982_000 as Weight)
+		(22_060_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}

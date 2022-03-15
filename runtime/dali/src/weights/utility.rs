@@ -31,24 +31,24 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn batch(c: u32, ) -> Weight {
-		(30_229_000 as Weight)
-			// Standard Error: 4_000
-			.saturating_add((9_084_000 as Weight).saturating_mul(c as Weight))
+		(36_534_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((9_411_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn as_derivative() -> Weight {
-		(10_279_000 as Weight)
+		(10_436_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn batch_all(c: u32, ) -> Weight {
-		(25_904_000 as Weight)
+		(31_088_000 as Weight)
 			// Standard Error: 4_000
-			.saturating_add((9_744_000 as Weight).saturating_mul(c as Weight))
+			.saturating_add((9_983_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	fn dispatch_as() -> Weight {
-		(20_116_000 as Weight)
+		(21_317_000 as Weight)
 	}
 }

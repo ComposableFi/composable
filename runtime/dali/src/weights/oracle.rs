@@ -32,7 +32,7 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle AssetsCount (r:1 w:1)
 	// Storage: Oracle AssetsInfo (r:1 w:1)
 	fn add_asset_and_info() -> Weight {
-		(29_330_000 as Weight)
+		(37_232_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -40,7 +40,7 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle SignerToController (r:1 w:1)
 	// Storage: Oracle OracleStake (r:1 w:1)
 	fn set_signer() -> Weight {
-		(107_663_000 as Weight)
+		(139_863_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -48,7 +48,7 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle OracleStake (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn add_stake() -> Weight {
-		(93_481_000 as Weight)
+		(100_526_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -56,7 +56,7 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle OracleStake (r:1 w:1)
 	// Storage: Oracle DeclaredWithdraws (r:0 w:1)
 	fn remove_stake() -> Weight {
-		(37_328_000 as Weight)
+		(45_847_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -65,7 +65,7 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:0)
 	// Storage: Oracle SignerToController (r:0 w:1)
 	fn reclaim_stake() -> Weight {
-		(44_344_000 as Weight)
+		(52_625_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -74,19 +74,17 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle AssetsInfo (r:1 w:0)
 	// Storage: Oracle AnswerInTransit (r:1 w:1)
 	// Storage: Oracle PrePrices (r:1 w:1)
-	fn submit_price(p: u32, ) -> Weight {
-		(54_551_000 as Weight)
-			// Standard Error: 8_000
-			.saturating_add((300_000 as Weight).saturating_mul(p as Weight))
+	fn submit_price(_p: u32, ) -> Weight {
+		(68_939_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Oracle PrePrices (r:1 w:1)
 	// Storage: Oracle AnswerInTransit (r:1 w:1)
 	fn update_pre_prices(p: u32, ) -> Weight {
-		(15_376_000 as Weight)
+		(15_330_000 as Weight)
 			// Standard Error: 3_000
-			.saturating_add((218_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add((233_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -96,9 +94,9 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle Prices (r:0 w:1)
 	// Storage: Oracle PrePrices (r:0 w:1)
 	fn update_price(p: u32, ) -> Weight {
-		(41_744_000 as Weight)
+		(40_806_000 as Weight)
 			// Standard Error: 23_000
-			.saturating_add((13_352_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add((13_904_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
