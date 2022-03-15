@@ -157,6 +157,7 @@ impl clearing_house::Config for Runtime {
 pub struct ExtBuilder {
 	native_balances: Vec<(AccountId, Balance)>,
 	balances: Vec<(AccountId, AssetId, Balance)>,
+	collateral_types: Vec<AssetId>,
 }
 
 impl Default for ExtBuilder {
@@ -164,6 +165,7 @@ impl Default for ExtBuilder {
 		Self {
 			native_balances: vec![(ADMIN, 1_000_000_000), (ALICE, 1_000_000)],
 			balances: vec![(ADMIN, USDC, 1_000_000_000), (ALICE, USDC, 0)],
+			collateral_types: vec![USDC],
 		}
 	}
 }
@@ -179,6 +181,10 @@ impl ExtBuilder {
 			.unwrap();
 
 		orml_tokens::GenesisConfig::<Runtime> { balances: self.balances }
+			.assimilate_storage(&mut storage)
+			.unwrap();
+
+		clearing_house::GenesisConfig::<Runtime> { collateral_types: self.collateral_types }
 			.assimilate_storage(&mut storage)
 			.unwrap();
 

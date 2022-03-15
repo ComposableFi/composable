@@ -8,8 +8,6 @@ use orml_tokens::Error as TokenError;
 #[test]
 fn test_add_margin_returns_transfer_error() {
 	ExtBuilder::default().build().execute_with(|| {
-		CollateralTypes::<Runtime>::insert(&USDC, ());
-
 		let origin = Origin::signed(ALICE);
 		assert_err!(
 			ClearingHouse::add_margin(origin, USDC, 1_000u32.into()),
@@ -21,8 +19,6 @@ fn test_add_margin_returns_transfer_error() {
 #[test]
 fn test_deposit_unsupported_collateral_returns_error() {
 	ExtBuilder::default().build().execute_with(|| {
-		CollateralTypes::<Runtime>::insert(&USDC, ());
-
 		let origin = Origin::signed(ALICE);
 		assert_err!(
 			ClearingHouse::add_margin(origin, PICA, 1_000u32.into()),
