@@ -70,7 +70,7 @@ jobs:
       - name: Run Test (with coverage)
         run: |
           /home/runner/.cargo/bin/cargo install -f cargo-llvm-cov
-          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly
+          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly-2021-11-08
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
