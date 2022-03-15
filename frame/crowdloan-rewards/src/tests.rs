@@ -230,6 +230,7 @@ fn test_initial_payment() {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.associate(picasso_account.clone()));
+			assert_ok!(remote_account.claim(picasso_account.clone()));
 			assert_eq!(Balances::total_balance(&picasso_account), INITIAL_PAYMENT * DEFAULT_REWARD);
 		}
 		assert_eq!(
@@ -245,6 +246,7 @@ fn test_invalid_early_claim() {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.associate(picasso_account.clone()));
+			assert_ok!(remote_account.claim(picasso_account.clone()));
 			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NothingToClaim);
 		}
 	});
@@ -289,7 +291,8 @@ fn test_invalid_less_than_a_week() {
 	with_rewards_default(|set_moment, accounts| {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
-			assert_ok!(remote_account.associate(picasso_account));
+			assert_ok!(remote_account.associate(picasso_account.clone()));
+			assert_ok!(remote_account.claim(picasso_account));
 		}
 		set_moment(VESTING_STEP - 1);
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
@@ -311,7 +314,8 @@ fn test_valid_claim_full() {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		// Initial payment
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
-			assert_ok!(remote_account.associate(picasso_account));
+			assert_ok!(remote_account.associate(picasso_account.clone()));
+			assert_ok!(remote_account.claim(picasso_account));
 		}
 		assert_eq!(CrowdloanRewards::claimed_rewards(), total_initial_reward);
 		for i in 1..(nb_of_vesting_step + 1) {
@@ -337,7 +341,8 @@ fn test_valid_claim_no_vesting() {
 		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
 		// Initial payment = full reward
 		for (picasso_account, remote_account) in accounts.into_iter() {
-			assert_ok!(remote_account.associate(picasso_account));
+			assert_ok!(remote_account.associate(picasso_account.clone()));
+			assert_ok!(remote_account.claim(picasso_account));
 		}
 		assert_eq!(CrowdloanRewards::claimed_rewards(), CrowdloanRewards::total_rewards());
 	});

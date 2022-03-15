@@ -98,7 +98,9 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Initialized,
+		Initialized {
+			at: MomentOf<T>,
+		},
 		Claimed {
 			remote_account: RemoteAccountOf<T>,
 			reward_account: T::AccountId,
@@ -306,7 +308,7 @@ pub mod pallet {
 			let now = T::Time::now();
 			ensure!(at >= now, Error::<T>::InvalidInitializationBlock);
 			VestingTimeStart::<T>::set(Some(at));
-			Self::deposit_event(Event::Initialized);
+			Self::deposit_event(Event::Initialized { at });
 			Ok(())
 		}
 
@@ -324,13 +326,10 @@ pub mod pallet {
 				!Associations::<T>::contains_key(reward_account.clone()),
 				Error::<T>::AlreadyAssociated
 			);
-			let claimed = Self::do_claim(remote_account.clone(), &reward_account)?;
+			// Already checked by ValidateUnsigned
+			ensure!(Rewards::<T>::contains_key(remote_account.clone()), Error::<T>::InvalidProof);
 			Associations::<T>::insert(reward_account.clone(), remote_account.clone());
-			Self::deposit_event(Event::Associated {
-				remote_account: remote_account.clone(),
-				reward_account: reward_account.clone(),
-			});
-			Self::deposit_event(Event::Claimed { remote_account, reward_account, amount: claimed });
+			Self::deposit_event(Event::Associated { remote_account, reward_account });
 			Ok(Pays::No.into())
 		}
 
