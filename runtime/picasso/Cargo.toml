@@ -231,4 +231,5 @@ runtime-benchmarks = [
   "assets-registry/runtime-benchmarks",
   "vesting/runtime-benchmarks",
   "bonded-finance/runtime-benchmarks",
+  "common/runtime-benchmarks",
 ]

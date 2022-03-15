@@ -155,6 +155,7 @@ runtime-benchmarks = [
   "democracy/runtime-benchmarks",
   "utility/runtime-benchmarks",
   "vault/runtime-benchmarks",
+  "common/runtime-benchmarks",
 ]
 std = [
   "codec/std",

@@ -4,12 +4,12 @@
 
 chains=(
   "./runtime/dali/src/weights,dali-dev"
-  "./runtime/picasso/src/weights,picasso-dev"
-  "./runtime/composable/src/weights,composable-dev"
+  #"./runtime/picasso/src/weights,picasso-dev"
+  #"./runtime/composable/src/weights,composable-dev"
 )
 
-steps=50
-repeat=20
+steps=1
+repeat=1
 
 
 # shellcheck disable=SC2068
