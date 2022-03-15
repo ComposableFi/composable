@@ -32,7 +32,7 @@ impl<T: frame_system::Config> liquidity_bootstrapping::WeightInfo for WeightInfo
 	// Storage: LiquidityBootstrapping PoolCount (r:1 w:1)
 	// Storage: LiquidityBootstrapping Pools (r:0 w:1)
 	fn create() -> Weight {
-		(25_551_000 as Weight)
+		(26_548_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -40,7 +40,7 @@ impl<T: frame_system::Config> liquidity_bootstrapping::WeightInfo for WeightInfo
 	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:2 w:1)
 	fn buy() -> Weight {
-		(137_530_000 as Weight)
+		(141_276_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
@@ -48,7 +48,7 @@ impl<T: frame_system::Config> liquidity_bootstrapping::WeightInfo for WeightInfo
 	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:2 w:1)
 	fn sell() -> Weight {
-		(120_298_000 as Weight)
+		(125_048_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
@@ -56,7 +56,7 @@ impl<T: frame_system::Config> liquidity_bootstrapping::WeightInfo for WeightInfo
 	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:2 w:1)
 	fn swap() -> Weight {
-		(132_515_000 as Weight)
+		(137_164_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
@@ -64,7 +64,7 @@ impl<T: frame_system::Config> liquidity_bootstrapping::WeightInfo for WeightInfo
 	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:1 w:1)
 	fn add_liquidity() -> Weight {
-		(122_233_000 as Weight)
+		(124_353_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
@@ -72,7 +72,7 @@ impl<T: frame_system::Config> liquidity_bootstrapping::WeightInfo for WeightInfo
 	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:1 w:1)
 	fn remove_liquidity() -> Weight {
-		(118_661_000 as Weight)
+		(121_854_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}

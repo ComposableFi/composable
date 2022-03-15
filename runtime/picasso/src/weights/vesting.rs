@@ -34,9 +34,9 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)
 	fn claim(s: u32, ) -> Weight {
-		(60_950_000 as Weight)
+		(59_519_000 as Weight)
 			// Standard Error: 5_000
-			.saturating_add((2_458_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((2_419_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -45,7 +45,7 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:2 w:1)
 	// Storage: Tokens Locks (r:1 w:1)
 	fn vested_transfer() -> Weight {
-		(111_644_000 as Weight)
+		(106_166_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
@@ -54,9 +54,9 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Vesting VestingSchedules (r:0 w:1)
 	fn update_vesting_schedules(s: u32, ) -> Weight {
-		(93_418_000 as Weight)
-			// Standard Error: 32_000
-			.saturating_add((335_000 as Weight).saturating_mul(s as Weight))
+		(58_886_000 as Weight)
+			// Standard Error: 2_000
+			.saturating_add((138_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -66,9 +66,9 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)
 	fn claim_for(s: u32, ) -> Weight {
-		(58_690_000 as Weight)
+		(58_437_000 as Weight)
 			// Standard Error: 3_000
-			.saturating_add((2_230_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((2_178_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}

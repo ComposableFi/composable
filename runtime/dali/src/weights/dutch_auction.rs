@@ -35,7 +35,7 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: DutchAuction SellOrders (r:0 w:1)
 	fn ask() -> Weight {
-		(90_042_000 as Weight)
+		(93_997_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -44,7 +44,7 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: DutchAuction Takes (r:1 w:1)
 	fn take() -> Weight {
-		(52_956_000 as Weight)
+		(54_697_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -52,7 +52,7 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn liquidate() -> Weight {
-		(80_745_000 as Weight)
+		(81_026_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -60,7 +60,7 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: DutchAuction SellOrders (r:1 w:1)
 	// Storage: Tokens Accounts (r:2 w:2)
 	fn known_overhead_for_on_finalize() -> Weight {
-		(87_891_000 as Weight)
+		(88_983_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
