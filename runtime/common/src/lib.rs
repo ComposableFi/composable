@@ -156,15 +156,9 @@ impl MinimalOracle for PriceConverter {
 	}
 }
 
-#[cfg(not(feature = "runtime-benchmarks"))]
+//  cannot be zero as in benches it fails Invalid input: InsufficientBalance
 fn native_existential_desposit() -> Balance {
 	100 * CurrencyId::milli::<Balance>()
-}
-
-#[cfg(feature = "runtime-benchmarks")]
-fn native_existential_desposit() -> Balance {
-	use num_traits::Zero;
-	Balance::zero()
 }
 
 parameter_types! {
