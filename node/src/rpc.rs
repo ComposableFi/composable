@@ -9,7 +9,7 @@ use primitives::currency::CurrencyId;
 use std::sync::Arc;
 
 use assets_rpc::{Assets, AssetsApi};
-use common::{AccountId, MarketId, AccountIndex, Balance};
+use common::{AccountId, AccountIndex, Balance, MarketId};
 use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApi};
 use lending_rpc::{Lending, LendingApi};
 pub use sc_rpc_api::DenyUnsafe;

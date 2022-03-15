@@ -22,9 +22,10 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod weights;
 mod xcmp;
 use common::{
-	impls::DealWithFees, AccountId, MarketId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash,Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,MILLISECS_PER_BLOCK
+	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
+	CouncilInstance, EnsureRootOrHalfCouncil, Hash, MarketId, Moment, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
@@ -849,10 +850,10 @@ impl_runtime_apis! {
 			)
 		}
 	}
-	
+
 	impl lending_runtime_api::LendingRuntimeApi<Block, AccountId, Balance, MarketId> for Runtime {
 		fn get_borrow_limit(market_id: MarketId, account: AccountId) -> SafeRpcWrapper<Balance> {
-			
+
 			unimplemented!()
 
 		}

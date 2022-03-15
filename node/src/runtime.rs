@@ -1,4 +1,4 @@
-use common::{AccountId, MarketId, Balance, Index, OpaqueBlock as Block};
+use common::{AccountId, Balance, Index, MarketId, OpaqueBlock as Block};
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::BlakeTwo256;
 
