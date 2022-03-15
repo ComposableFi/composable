@@ -16,6 +16,7 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 
+/// test
 const MIN_VESTED_TRANSFER: u128 = 1000 * 1_000_000_000_000;
 const BALANCE: u128 = 1_000_000 * 1_000_000_000_000;
 

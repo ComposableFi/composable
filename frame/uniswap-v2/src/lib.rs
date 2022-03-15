@@ -9,7 +9,7 @@
 		clippy::unwrap_used,
 		clippy::panic
 	)
-)] // allow in tests
+)] // allow in tests test
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
