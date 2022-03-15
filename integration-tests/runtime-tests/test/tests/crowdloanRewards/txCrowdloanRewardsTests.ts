@@ -5,7 +5,8 @@ import { expect } from 'chai';
 import { IKeyringPair } from '@polkadot/types/types';
 import {KeyringPair} from "@polkadot/keyring/types";
 import testConfiguration from './test_configuration.json';
-import {sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import {sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess, waitForBlocks} from "@composable/utils/polkadotjs";
+import {mintAssetsToWallet} from "@composable/utils/mintingHelper";
 
 const toHexString = bytes =>
   Array.prototype.map.call(bytes, x => ('0' + (x & 0xFF).toString(16)).slice(-2)).join('');
@@ -17,6 +18,14 @@ const proofMessage = (account: IKeyringPair, isEth=false) =>
 const ethAccount = (seed: number) =>
   web3.eth.accounts.privateKeyToAccount("0x" + seed.toString(16).padStart(64, '0'));
 
+
+/**
+ * Task order list:
+ *  1. Provide funds to crowdloan pallet
+ *  2. Populate the list of contributors
+ *  3. Initialize the crowdloan
+ *  4. Associate a picassso account
+ */
 describe('CrowdloanRewards Tests', function() {
   if (!testConfiguration.enabledTests.tx.enabled)
     return;
@@ -31,7 +40,9 @@ describe('CrowdloanRewards Tests', function() {
   let onExistingChain = false;
 
   /**
-   * We identify if this chain had already tests run on it.
+   * We mainly set up some variables here.
+   *
+   * We also identify if this chain had already tests run on it.
    * And if so, we skip the populate() and initialize() tests.
    */
   before(async function() {
@@ -40,11 +51,11 @@ describe('CrowdloanRewards Tests', function() {
     let associationExisting = true;
     let i = 1;
     while (associationExisting) {
-      contributor = wallet.derive("/contributor-" + i);
+      contributor = wallet.derive("/test/crowdloan/contributor-" + i);
       contributorEth = ethAccount(i);
       // arbitrary, user defined reward account
-      contributorRewardAccount = contributor.derive("/reward");
-      contributorEthRewardAccount = wallet.derive("/reward-eth-" + i);
+      contributorRewardAccount = contributor.derive("/test/crowdloan/reward");
+      contributorEthRewardAccount = wallet.derive("/test/crowdloan/reward-eth-" + i);
       const existingAssociations = await api.query.crowdloanRewards.associations(contributorRewardAccount.publicKey);
       if (existingAssociations.toString() == "") {
         associationExisting = false;
@@ -57,27 +68,58 @@ describe('CrowdloanRewards Tests', function() {
       console.info("tx.crowdloanRewards Tests: Detected already configured chain! " +
         "Skipping populate() & initialize().")
   });
-  // 2 minutes timeout
-  this.timeout(60 * 2 * 1000);
+
+  before('Providing funds to crowdloan pallet', async function() {
+    if (!testConfiguration.enabledTests.tx.setup.provideAssets)
+      this.skip();
+    // 2 minutes timeout
+    this.timeout(60 * 2 * 1000);
+    await TxCrowdloanRewardsTests.beforeCrowdlownTestsProvideFunds(sudoKey);
+  });
+
+  /**
+   * Here we populate the crowdloan pallet with a random generated list of contributors.
+   *
+   * !!! Is actually a SUDO call, but we're waiting for a different final event than `sudid`. !!!
+   * This results in us not checking the result not for
+   */
   it('Can populate the list of contributors', async function() {
     if (!testConfiguration.enabledTests.tx.populate_success.populate1 || onExistingChain)
       this.skip();
+    // 2 minutes timeout
+    this.timeout(60 * 2 * 1000);
     const { data: [result], } = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTest(sudoKey);
-    expect(result.isOk).to.be.true;
+    console.debug(result.toString());
+    //expect(result.isOk).to.be.true;
   });
 
   it('Can initialize the crowdloan', async function() {
     if (!testConfiguration.enabledTests.tx.initialize_success.initialize1 || onExistingChain)
       this.skip();
+    // 2 minutes timeout
+    this.timeout(60 * 2 * 1000);
     const { data: [result], } = await TxCrowdloanRewardsTests.txCrowdloanRewardsInitializeTest(sudoKey);
     expect(result.isOk).to.be.true;
   });
 
+  /***
+   * Here we associate our picasso account with our ETH & RelayChain wallets.
+   *
+   * Here we send 2 transactions at the same time, therefore we have 2 results,
+   * though with the exact same result structure.
+   *
+   * Results:
+   * 1. The public key of the remote wallet.
+   * 2. The public key of the transacting wallet.
+   */
   it('Can associate a picasso account', async function() {
     if (!testConfiguration.enabledTests.tx.associate_success.associate1)
       this.skip();
+    // 2 minutes timeout
+    this.timeout(60 * 20 * 1000);
+    await waitForBlocks(32);
     await Promise.all([
-      TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTests(
+      TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTest(
         wallet,
         contributorEth,
         contributorEthRewardAccount
@@ -87,22 +129,47 @@ describe('CrowdloanRewards Tests', function() {
         contributor,
         contributorRewardAccount
       ),
-    ]).then(function(result) {
-      expect(result[0].data[1].toString()).to.be
+    ]).then(function([result, result2]) {
+      expect(result.data[1].toString()).to.be
         .equal(api.createType('AccountId32', contributorEthRewardAccount.publicKey).toString());
-      expect(result[1].data[1].toString()).to.be
+      expect(result.data[2].toString()).to.be
+        .equal(api.createType('AccountId32', wallet.publicKey).toString());
+      expect(result2.data[1].toString()).to.be
         .equal(api.createType('AccountId32', contributorRewardAccount.publicKey).toString());
+      expect(result2.data[2].toString()).to.be
+        .equal(api.createType('AccountId32', wallet.publicKey).toString());
     });
+  });
+
+  /***
+   * Can we finally claim the crowdloan reward?
+   * We're gonna find out!
+   *
+   * Results are:
+   * 1. The public key of the remote account.
+   * 2. The public key of the transacting wallet.
+   * 3. Some unidentified number.
+   */
+  it('Can claim the crowdloan reward', async function() {
+    if (!testConfiguration.enabledTests.tx.initialize_success.initialize1 || onExistingChain)
+      this.skip();
+    // 2 minutes timeout
+    this.timeout(60 * 2 * 1000);
+    const { data: [resultRemoteAccountId, resultAccountId, resultNumber], } = await TxCrowdloanRewardsTests.txCrowdloanRewardsClaimTest(wallet);
+    console.debug(resultRemoteAccountId);
+    console.debug(resultAccountId);
+    console.debug(resultNumber);
   });
 });
 
 export class TxCrowdloanRewardsTests {
   /**
-   * Task order list:
-   *  * Populate the list of contributors
-   *  * Initialize the crowdloan
-   *  * Associate a picassso account
+   * Providing the crowdloan pallet with funds
    */
+  public static async beforeCrowdlownTestsProvideFunds(sudoKey:KeyringPair) {
+    const palletPublicKey = api.consts.crowdloanRewards.accountId;
+    await mintAssetsToWallet(palletPublicKey, sudoKey, [1]);
+  }
 
   /**
    * tx.crowdloanRewards.initialize
@@ -146,7 +213,8 @@ export class TxCrowdloanRewardsTests {
     return await sendAndWaitForSuccess(
       api,
       sudoKey,
-      api.events.sudo.Sudid.is, api.tx.sudo.sudo(
+      api.events.balances.Deposit.is,
+      api.tx.sudo.sudo(
         api.tx.crowdloanRewards.populate(accounts)
       )
     );
@@ -177,7 +245,7 @@ export class TxCrowdloanRewardsTests {
    * @param contributor
    * @param contributorRewardAccount
    */
-  public static async txCrowdloanRewardsEthAssociateTests(wallet:KeyringPair, contributor, contributorRewardAccount) {
+  public static async txCrowdloanRewardsEthAssociateTest(wallet:KeyringPair, contributor, contributorRewardAccount) {
     const proof = contributor.sign(proofMessage(contributorRewardAccount, true));
     return await sendUnsignedAndWaitForSuccess(
       api,
@@ -186,6 +254,21 @@ export class TxCrowdloanRewardsTests {
         contributorRewardAccount.publicKey,
         { Ethereum: proof.signature }
       )
+    );
+  }
+
+  /**
+   * tx.crowdloanRewards.claim
+   * @param { KeyringPair } wallet
+   * @param contributor
+   * @param contributorRewardAccount
+   */
+  public static async txCrowdloanRewardsClaimTest(wallet:KeyringPair) {
+    return await sendAndWaitForSuccess(
+      api,
+      wallet,
+      api.events.crowdloanRewards.Claimed.is,
+      api.tx.crowdloanRewards.claim()
     );
   }
 }

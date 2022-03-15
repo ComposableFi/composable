@@ -29,6 +29,9 @@
     },
     "tx": {
       "enabled": true,
+      "setup": {
+        "provideAssets": true
+      },
       "populate_success": {
         "enabled": true,
         "populate1": true
