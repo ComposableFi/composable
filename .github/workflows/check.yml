@@ -66,7 +66,6 @@ jobs:
       - name: Rustup show
         run: |
          /home/runner/.cargo/bin/rustup show
-      - uses: actions/checkout@v2
       - name: Run Test (with coverage)
         run: |
           /home/runner/.cargo/bin/cargo install -f cargo-llvm-cov
