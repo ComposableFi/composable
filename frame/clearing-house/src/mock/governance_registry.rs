@@ -1,7 +1,7 @@
 use composable_traits::governance::SignedRawOrigin;
 use orml_traits::GetByKey;
 
-use super::runtime::{AccountId, AssetId};
+use super::{accounts::AccountId, assets::AssetId};
 
 pub struct GovernanceRegistry;
 impl composable_traits::governance::GovernanceRegistry<AssetId, AccountId> for GovernanceRegistry {
