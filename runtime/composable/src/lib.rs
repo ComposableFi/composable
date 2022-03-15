@@ -852,7 +852,7 @@ impl_runtime_apis! {
 	}
 
 	impl lending_runtime_api::LendingRuntimeApi<Block, AccountId, Balance, MarketId> for Runtime {
-		fn get_borrow_limit(market_id: MarketId, account: AccountId) -> SafeRpcWrapper<Balance> {
+		fn get_borrow_limit(_: MarketId, _: AccountId) -> SafeRpcWrapper<Balance> {
 
 			unimplemented!()
 
