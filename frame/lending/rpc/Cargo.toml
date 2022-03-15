@@ -1,7 +1,7 @@
 [package]
+edition = "2021"
 name = "lending-rpc"
 version = "0.1.0"
-edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,12 +16,14 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 # local
-composable-traits = { path = "../../composable-traits" }
 composable-support = { path = "../../composable-support" }
+composable-traits = { path = "../../composable-traits" }
 lending-runtime-api = { path = "../runtime-api" }
 
 # SCALE
-codec = { features = ["derive"], package = "parity-scale-codec", version = "2.0.0" }
+codec = { features = [
+  "derive",
+], package = "parity-scale-codec", version = "2.0.0" }
 scale-info = { version = "1.0", features = ["derive"] }
 
 # rpc

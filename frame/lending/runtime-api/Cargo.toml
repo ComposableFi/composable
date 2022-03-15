@@ -1,10 +1,10 @@
 [package]
-name = "lending-runtime-api"
-version = "0.1.0"
 authors = ["Composable Developers"]
-homepage = "https://composable.finance"
 edition = "2021"
+homepage = "https://composable.finance"
+name = "lending-runtime-api"
 rust-version = "1.56"
+version = "0.1.0"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -16,8 +16,8 @@ package = "parity-scale-codec"
 version = "2.0.0"
 
 [dependencies]
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 composable-support = { path = "../../composable-support", default-features = false }
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 [features]
 default = ["std"]
