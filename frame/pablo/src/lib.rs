@@ -35,23 +35,45 @@
 
 pub use pallet::*;
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		currency::LocalAssets,
+		currency::{CurrencyFactory, RangeId},
 		defi::CurrencyPair,
-		dex::StableSwapPoolInfo,
-		math::{SafeAdd, SafeSub},
+		dex::{Amm, StableSwapPoolInfo},
+		math::{safe_multiply_by_rational, SafeAdd, SafeSub},
 	};
 	use core::fmt::Debug;
 	use frame_support::{
 		pallet_prelude::*,
 		traits::fungibles::{Inspect, Mutate, Transfer},
-		PalletId, RuntimeDebug,
+		transactional, PalletId, RuntimeDebug,
 	};
-	use frame_system::pallet_prelude::OriginFor;
-	use sp_runtime::traits::{AccountIdConversion, Convert, One, Zero};
+
+	use composable_maths::dex::stable_swap::{compute_base, compute_d};
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
+	use sp_runtime::{
+		traits::{AccountIdConversion, CheckedAdd, Convert, One, Zero},
+		ArithmeticError, Permill,
+	};
+	use sp_std::ops::Mul;
+
+	#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
+	pub enum PoolInitConfiguration<AssetId> {
+		StableSwap {
+			pair: CurrencyPair<AssetId>,
+			amplification_coefficient: u16,
+			fee: Permill,
+			protocol_fee: Permill,
+		},
+	}
 
 	#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 	pub enum PoolConfiguration<AccountId, AssetId> {
@@ -64,6 +86,7 @@ pub mod pallet {
 	type PoolIdOf<T> = <T as Config>::PoolId;
 	type PoolOf<T> =
 		PoolConfiguration<<T as frame_system::Config>::AccountId, <T as Config>::AssetId>;
+	type PoolInitOf<T> = PoolInitConfiguration<<T as Config>::AssetId>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -139,6 +162,9 @@ pub mod pallet {
 		InvalidAmount,
 		CannotRespectMinimumRequested,
 		AssetAmountMustBePositiveNumber,
+		InvalidPair,
+		InvalidFees,
+		AmpFactorMustBeGreaterThanZero,
 	}
 
 	#[pallet::config]
@@ -173,6 +199,9 @@ pub mod pallet {
 		/// An isomorphism: Balance<->u128
 		type Convert: Convert<u128, BalanceOf<Self>> + Convert<BalanceOf<Self>, u128>;
 
+		/// Factory to create new lp-token.
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
+
 		/// Dependency allowing this pallet to transfer funds from one account to another.
 		type Assets: Transfer<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
 			+ Mutate<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
@@ -193,13 +222,8 @@ pub mod pallet {
 			+ SafeAdd
 			+ SafeSub;
 
-		type LocalAssets: LocalAssets<AssetIdOf<Self>>;
-
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
-
-		/// The origin allowed to create new pools.
-		type AdminOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::pallet]
@@ -227,10 +251,9 @@ pub mod pallet {
 		/// Emits `PoolCreated` event when successful.
 		// TODO: enable weight
 		#[pallet::weight(10_000)]
-		pub fn create(
-			_origin: OriginFor<T>,
-			_pool: PoolConfiguration<T::AccountId, T::AssetId>,
-		) -> DispatchResult {
+		pub fn create(origin: OriginFor<T>, pool: PoolInitOf<T>) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = Self::do_create_pool(&who, pool)?;
 			Ok(())
 		}
 
@@ -239,12 +262,14 @@ pub mod pallet {
 		/// Emits `Swapped` event when successful.
 		#[pallet::weight(10_000)]
 		pub fn buy(
-			_origin: OriginFor<T>,
-			_pool_id: T::PoolId,
-			_asset_id: T::AssetId,
-			_amount: T::Balance,
-			_keep_alive: bool,
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			asset_id: T::AssetId,
+			amount: T::Balance,
+			keep_alive: bool,
 		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
 			Ok(())
 		}
 
@@ -253,12 +278,14 @@ pub mod pallet {
 		/// Emits `Swapped` event when successful.
 		#[pallet::weight(10_000)]
 		pub fn sell(
-			_origin: OriginFor<T>,
-			_pool_id: T::PoolId,
-			_asset_id: T::AssetId,
-			_amount: T::Balance,
-			_keep_alive: bool,
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			asset_id: T::AssetId,
+			amount: T::Balance,
+			keep_alive: bool,
 		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
 			Ok(())
 		}
 
@@ -269,13 +296,22 @@ pub mod pallet {
 		/// Emits `Swapped` event when successful.
 		#[pallet::weight(10_000)]
 		pub fn swap(
-			_origin: OriginFor<T>,
-			_pool_id: T::PoolId,
-			_pair: CurrencyPair<T::AssetId>,
-			_quote_amount: T::Balance,
-			_min_receive: T::Balance,
-			_keep_alive: bool,
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			pair: CurrencyPair<T::AssetId>,
+			quote_amount: T::Balance,
+			min_receive: T::Balance,
+			keep_alive: bool,
 		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as Amm>::exchange(
+				&who,
+				pool_id,
+				pair,
+				quote_amount,
+				min_receive,
+				keep_alive,
+			)?;
 			Ok(())
 		}
 
@@ -284,13 +320,22 @@ pub mod pallet {
 		/// Emits `LiquidityAdded` event when successful.
 		#[pallet::weight(10_000)]
 		pub fn add_liquidity(
-			_origin: OriginFor<T>,
-			_pool_id: T::PoolId,
-			_base_amount: T::Balance,
-			_quote_amount: T::Balance,
-			_min_mint_amount: T::Balance,
-			_keep_alive: bool,
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			base_amount: T::Balance,
+			quote_amount: T::Balance,
+			min_mint_amount: T::Balance,
+			keep_alive: bool,
 		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as Amm>::add_liquidity(
+				&who,
+				pool_id,
+				base_amount,
+				quote_amount,
+				min_mint_amount,
+				keep_alive,
+			)?;
 			Ok(())
 		}
 
@@ -299,29 +344,70 @@ pub mod pallet {
 		/// Emits `LiquidityRemoved` event when successful.
 		#[pallet::weight(10_000)]
 		pub fn remove_liquidity(
-			_origin: OriginFor<T>,
-			_pool_id: T::PoolId,
-			_lp_amount: T::Balance,
-			_min_base_amount: T::Balance,
-			_min_quote_amount: T::Balance,
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			lp_amount: T::Balance,
+			min_base_amount: T::Balance,
+			min_quote_amount: T::Balance,
 		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as Amm>::remove_liquidity(
+				&who,
+				pool_id,
+				lp_amount,
+				min_base_amount,
+				min_quote_amount,
+			)?;
 			Ok(())
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn do_create_pool(pool: PoolOf<T>) -> Result<T::PoolId, DispatchError> {
-			let pool_id =
-				PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {
-					let pool_id = *pool_count;
-					Pools::<T>::insert(pool_id, pool.clone());
-					*pool_count = pool_id.safe_add(&T::PoolId::one())?;
-					Ok(pool_id)
-				})?;
-			match pool {
-				PoolConfiguration::StableSwap(stable_swap_pool_info) => {
-					let pool = stable_swap_pool_info;
-					Self::deposit_event(Event::PoolCreated { pool_id, owner: pool.owner.clone() });
+		pub(crate) fn do_create_pool(
+			who: &T::AccountId,
+			init_config: PoolInitOf<T>,
+		) -> Result<T::PoolId, DispatchError> {
+			match init_config {
+				PoolInitConfiguration::StableSwap {
+					pair,
+					amplification_coefficient,
+					fee,
+					protocol_fee,
+				} => {
+					ensure!(
+						amplification_coefficient > 0,
+						Error::<T>::AmpFactorMustBeGreaterThanZero
+					);
+					ensure!(pair.base != pair.quote, Error::<T>::InvalidPair);
+
+					let total_fees =
+						fee.checked_add(&protocol_fee).ok_or(ArithmeticError::Overflow)?;
+					ensure!(total_fees < Permill::one(), Error::<T>::InvalidFees);
+
+					let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS)?;
+					// Add new pool
+					let pool_id = PoolCount::<T>::try_mutate(
+						|pool_count| -> Result<T::PoolId, DispatchError> {
+							let pool_id = *pool_count;
+
+							Pools::<T>::insert(
+								pool_id,
+								PoolConfiguration::StableSwap(StableSwapPoolInfo {
+									owner: who.clone(),
+									pair,
+									lp_token,
+									amplification_coefficient,
+									fee,
+									protocol_fee,
+								}),
+							);
+							*pool_count = pool_id.safe_add(&T::PoolId::one())?;
+							Ok(pool_id)
+						},
+					)?;
+
+					Self::deposit_event(Event::PoolCreated { owner: who.clone(), pool_id });
+
 					Ok(pool_id)
 				},
 			}
@@ -333,6 +419,430 @@ pub mod pallet {
 
 		pub(crate) fn account_id(pool_id: &T::PoolId) -> T::AccountId {
 			T::PalletId::get().into_sub_account(pool_id)
+		}
+
+		fn get_exchange_value_for_stable_swap(
+			pool: StableSwapPoolInfo<T::AccountId, T::AssetId>,
+			pool_account: T::AccountId,
+			asset_id: T::AssetId,
+			amount: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
+			let pool_base_aum = T::Assets::balance(pair.base, &pool_account);
+			let pool_quote_aum = T::Assets::balance(pair.quote, &pool_account);
+			let amp = T::Convert::convert(pool.amplification_coefficient.into());
+			let d = Self::get_stable_swap_invariant(pool_base_aum, pool_quote_aum, amp)?;
+			let new_quote_amount = pool_quote_aum.safe_add(&amount)?;
+			let new_base_amount = T::Convert::convert(compute_base(
+				T::Convert::convert(new_quote_amount),
+				T::Convert::convert(amp),
+				T::Convert::convert(d),
+			)?);
+			let exchange_value = pool_base_aum.safe_sub(&new_base_amount)?;
+			Ok(exchange_value)
+		}
+
+		fn abs_difference(
+			new_balance: T::Balance,
+			old_balance: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			let difference = if old_balance > new_balance {
+				old_balance.safe_sub(&new_balance)
+			} else {
+				new_balance.safe_sub(&old_balance)
+			}?;
+			Ok(difference)
+		}
+
+		fn get_stable_swap_invariant(
+			base_asset_aum: T::Balance,
+			quote_asset_aum: T::Balance,
+			amp_coeff: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			let d = compute_d(
+				T::Convert::convert(base_asset_aum),
+				T::Convert::convert(quote_asset_aum),
+				T::Convert::convert(amp_coeff),
+			)?;
+
+			Ok(T::Convert::convert(d))
+		}
+
+		fn add_liquidity_for_stable_swap(
+			who: &T::AccountId,
+			pool: StableSwapPoolInfo<T::AccountId, T::AssetId>,
+			pool_account: T::AccountId,
+			base_amount: T::Balance,
+			quote_amount: T::Balance,
+			min_mint_amount: T::Balance,
+			keep_alive: bool,
+		) -> Result<T::Balance, DispatchError> {
+			let zero = T::Balance::zero();
+			ensure!(base_amount > zero, Error::<T>::AssetAmountMustBePositiveNumber);
+			ensure!(quote_amount > zero, Error::<T>::AssetAmountMustBePositiveNumber);
+			// pool supports only 2 assets
+			let pool_base_aum = T::Assets::balance(pool.pair.base, &pool_account);
+			let pool_quote_aum = T::Assets::balance(pool.pair.quote, &pool_account);
+
+			let lp_issued = T::Assets::total_issuance(pool.lp_token);
+			let amp = T::Convert::convert(pool.amplification_coefficient.into());
+			let d0 = Self::get_stable_swap_invariant(pool_base_aum, pool_quote_aum, amp)?;
+			let new_base_amount = pool_base_aum.safe_add(&base_amount)?;
+			let new_quote_amount = pool_quote_aum.safe_add(&quote_amount)?;
+			let d1 = Self::get_stable_swap_invariant(new_base_amount, new_quote_amount, amp)?;
+			ensure!(d1 > d0, Error::<T>::AssetAmountMustBePositiveNumber);
+
+			let (mint_amount, base_protocol_fee, quote_protocol_fee) = if lp_issued > zero {
+				// Deposit x + withdraw y sould charge about same
+				// fees as a swap. Otherwise, one could exchange w/o paying fees.
+				// And this formula leads to exactly that equality
+				// fee = pool.fee * n_coins / (4 * (n_coins - 1))
+				// pool supports only two coins.
+				let share: Permill = Permill::from_rational(2_u32, 4_u32);
+				let fee = pool.fee.mul(share);
+
+				let ideal_base_balance = T::Convert::convert(safe_multiply_by_rational(
+					T::Convert::convert(d1),
+					T::Convert::convert(pool_base_aum),
+					T::Convert::convert(d0),
+				)?);
+				let ideal_quote_balance = T::Convert::convert(safe_multiply_by_rational(
+					T::Convert::convert(d1),
+					T::Convert::convert(pool_quote_aum),
+					T::Convert::convert(d0),
+				)?);
+
+				let base_difference = Self::abs_difference(ideal_base_balance, new_base_amount)?;
+				let quote_difference = Self::abs_difference(ideal_quote_balance, new_quote_amount)?;
+
+				let base_fee = fee.mul_floor(T::Convert::convert(base_difference));
+				let quote_fee = fee.mul_floor(T::Convert::convert(quote_difference));
+				let base_protocol_fee = T::Convert::convert(pool.protocol_fee.mul_floor(base_fee));
+				let quote_protocol_fee =
+					T::Convert::convert(pool.protocol_fee.mul_floor(quote_fee));
+				let base_fee = T::Convert::convert(base_fee);
+				let quote_fee = T::Convert::convert(quote_fee);
+				let new_base_balance = new_base_amount.safe_sub(&base_fee)?;
+				let new_quote_balance = new_quote_amount.safe_sub(&quote_fee)?;
+
+				let d2 = Self::get_stable_swap_invariant(new_base_balance, new_quote_balance, amp)?;
+				let mint_amount = T::Convert::convert(safe_multiply_by_rational(
+					T::Convert::convert(lp_issued),
+					T::Convert::convert(d2.safe_sub(&d0)?),
+					T::Convert::convert(d0),
+				)?);
+				(mint_amount, base_protocol_fee, quote_protocol_fee)
+			} else {
+				(d1, T::Balance::zero(), T::Balance::zero())
+			};
+
+			ensure!(mint_amount >= min_mint_amount, Error::<T>::CannotRespectMinimumRequested);
+
+			T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
+			T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
+			// owner's fee is transferred upfront.
+			T::Assets::transfer(
+				pool.pair.base,
+				&pool_account,
+				&pool.owner,
+				base_protocol_fee,
+				keep_alive,
+			)?;
+			T::Assets::transfer(
+				pool.pair.quote,
+				&pool_account,
+				&pool.owner,
+				quote_protocol_fee,
+				keep_alive,
+			)?;
+			T::Assets::mint_into(pool.lp_token, who, mint_amount)?;
+			Ok(mint_amount)
+		}
+
+		fn remove_liquidity_stable_swap(
+			who: &T::AccountId,
+			pool: StableSwapPoolInfo<T::AccountId, T::AssetId>,
+			pool_account: T::AccountId,
+			lp_amount: T::Balance,
+			min_base_amount: T::Balance,
+			min_quote_amount: T::Balance,
+		) -> Result<
+			(
+				T::Balance, /* base_amount */
+				T::Balance, /* quote_amount */
+				T::Balance, /* updated_lp */
+			),
+			DispatchError,
+		> {
+			let pool_base_aum = T::Assets::balance(pool.pair.base, &pool_account);
+			let pool_quote_aum = T::Assets::balance(pool.pair.quote, &pool_account);
+			let lp_issued = T::Assets::total_issuance(pool.lp_token);
+			let base_amount = T::Convert::convert(safe_multiply_by_rational(
+				T::Convert::convert(lp_amount),
+				T::Convert::convert(pool_base_aum),
+				T::Convert::convert(lp_issued),
+			)?);
+			let quote_amount = T::Convert::convert(safe_multiply_by_rational(
+				T::Convert::convert(lp_amount),
+				T::Convert::convert(pool_quote_aum),
+				T::Convert::convert(lp_issued),
+			)?);
+
+			ensure!(
+				base_amount >= min_base_amount && quote_amount >= min_quote_amount,
+				Error::<T>::CannotRespectMinimumRequested
+			);
+
+			let total_issuance = lp_issued.safe_sub(&lp_amount)?;
+
+			// NOTE(hussein-aitlance): no need to keep alive the pool account
+			T::Assets::transfer(pool.pair.base, &pool_account, who, base_amount, false)?;
+			T::Assets::transfer(pool.pair.quote, &pool_account, who, quote_amount, false)?;
+			T::Assets::burn_from(pool.lp_token, who, lp_amount)?;
+			Ok((base_amount, quote_amount, total_issuance))
+		}
+
+		fn do_compute_swap(
+			pool_id: T::PoolId,
+			pair: CurrencyPair<T::AssetId>,
+			quote_amount: T::Balance,
+			apply_fees: bool,
+			fee: Permill,
+			protocol_fee: Permill,
+		) -> Result<(T::Balance, T::Balance, T::Balance, T::Balance), DispatchError> {
+			let base_amount = Self::get_exchange_value(pool_id, pair.base, quote_amount)?;
+			let base_amount_u: u128 = T::Convert::convert(base_amount);
+
+			let (lp_fee, protocol_fee) = if apply_fees {
+				let lp_fee = fee.mul_floor(base_amount_u);
+				// protocol_fee is computed based on lp_fee
+				let protocol_fee = protocol_fee.mul_floor(lp_fee);
+				let lp_fee = T::Convert::convert(lp_fee);
+				let protocol_fee = T::Convert::convert(protocol_fee);
+				(lp_fee, protocol_fee)
+			} else {
+				(T::Balance::zero(), T::Balance::zero())
+			};
+
+			let base_amount_excluding_fees = base_amount.safe_sub(&lp_fee)?;
+			Ok((base_amount_excluding_fees, quote_amount, lp_fee, protocol_fee))
+		}
+	}
+	impl<T: Config> Amm for Pallet<T> {
+		type AssetId = T::AssetId;
+		type Balance = T::Balance;
+		type AccountId = T::AccountId;
+		type PoolId = T::PoolId;
+
+		fn pool_exists(pool_id: Self::PoolId) -> bool {
+			Pools::<T>::contains_key(pool_id)
+		}
+
+		fn currency_pair(
+			pool_id: Self::PoolId,
+		) -> Result<CurrencyPair<Self::AssetId>, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			match pool {
+				PoolConfiguration::StableSwap(stable_swap_pool_info) =>
+					Ok(stable_swap_pool_info.pair),
+			}
+		}
+
+		fn get_exchange_value(
+			pool_id: Self::PoolId,
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			match pool {
+				PoolConfiguration::StableSwap(stable_swap_pool_info) =>
+					Self::get_exchange_value_for_stable_swap(
+						stable_swap_pool_info,
+						pool_account,
+						asset_id,
+						amount,
+					),
+			}
+		}
+
+		#[transactional]
+		fn add_liquidity(
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			base_amount: Self::Balance,
+			quote_amount: Self::Balance,
+			min_mint_amount: Self::Balance,
+			keep_alive: bool,
+		) -> Result<(), DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			match pool {
+				PoolConfiguration::StableSwap(stable_swap_pool_info) => {
+					let mint_amount = Self::add_liquidity_for_stable_swap(
+						who,
+						stable_swap_pool_info,
+						pool_account,
+						base_amount,
+						quote_amount,
+						min_mint_amount,
+						keep_alive,
+					)?;
+					Self::deposit_event(Event::<T>::LiquidityAdded {
+						who: who.clone(),
+						pool_id,
+						base_amount,
+						quote_amount,
+						mint_amount,
+					});
+				},
+			}
+			Ok(())
+		}
+
+		#[transactional]
+		fn remove_liquidity(
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			lp_amount: Self::Balance,
+			min_base_amount: Self::Balance,
+			min_quote_amount: Self::Balance,
+		) -> Result<(), DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			match pool {
+				PoolConfiguration::StableSwap(stable_swap_pool_info) => {
+					let (base_amount, quote_amount, updated_lp) =
+						Self::remove_liquidity_stable_swap(
+							who,
+							stable_swap_pool_info,
+							pool_account,
+							lp_amount,
+							min_base_amount,
+							min_quote_amount,
+						)?;
+					Self::deposit_event(Event::<T>::LiquidityRemoved {
+						pool_id,
+						who: who.clone(),
+						base_amount,
+						quote_amount,
+						total_issuance: updated_lp,
+					});
+				},
+			}
+			Ok(())
+		}
+
+		#[transactional]
+		fn exchange(
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			pair: CurrencyPair<Self::AssetId>,
+			quote_amount: Self::Balance,
+			min_receive: Self::Balance,
+			keep_alive: bool,
+		) -> Result<Self::Balance, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			match pool {
+				PoolConfiguration::StableSwap(pool) => {
+					// /!\ NOTE(hussein-aitlahcen): after this check, do not use pool.pair as the
+					// provided pair might have been swapped
+					ensure!(pair == pool.pair, Error::<T>::PairMismatch);
+					let (base_amount_excluding_fees, quote_amount, lp_fees, protocol_fees) =
+						Self::do_compute_swap(
+							pool_id,
+							pair,
+							quote_amount,
+							true,
+							pool.fee,
+							pool.protocol_fee,
+						)?;
+
+					ensure!(
+						base_amount_excluding_fees >= min_receive,
+						Error::<T>::CannotRespectMinimumRequested
+					);
+					T::Assets::transfer(pair.quote, who, &pool_account, quote_amount, keep_alive)?;
+
+					// NOTE(hussein-aitlance): no need to keep alive the pool account
+					T::Assets::transfer(
+						pair.base,
+						&pool_account,
+						&pool.owner,
+						protocol_fees,
+						false,
+					)?;
+					T::Assets::transfer(
+						pair.base,
+						&pool_account,
+						who,
+						base_amount_excluding_fees,
+						false,
+					)?;
+					Self::deposit_event(Event::<T>::Swapped {
+						pool_id,
+						who: who.clone(),
+						base_asset: pair.base,
+						quote_asset: pair.quote,
+						base_amount: base_amount_excluding_fees,
+						quote_amount,
+						fee: lp_fees.safe_add(&protocol_fees)?,
+					});
+
+					Ok(base_amount_excluding_fees)
+				},
+			}
+		}
+
+		#[transactional]
+		fn buy(
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
+			keep_alive: bool,
+		) -> Result<Self::Balance, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			match pool {
+				PoolConfiguration::StableSwap(pool) => {
+					let pair =
+						if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
+					// Since when buying asset user can't executed exchange as he don't know how
+					// much amount of token he has to trade-in to get expected buy tokens.
+					// So we compute price assuming user wants to sell instead of buy.
+					// And then do exchange computed amount with token indices flipped.
+					let dx = Self::get_exchange_value(pool_id, asset_id, amount)?;
+					Self::exchange(who, pool_id, pair, dx, T::Balance::zero(), keep_alive)?;
+					Ok(amount)
+				},
+			}
+		}
+
+		#[transactional]
+		fn sell(
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
+			keep_alive: bool,
+		) -> Result<Self::Balance, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			match pool {
+				PoolConfiguration::StableSwap(pool) => {
+					let pair =
+						if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
+					let dy = Self::exchange(
+						who,
+						pool_id,
+						pair,
+						amount,
+						Self::Balance::zero(),
+						keep_alive,
+					)?;
+					Ok(dy)
+				},
+			}
 		}
 	}
 }

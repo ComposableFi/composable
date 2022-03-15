@@ -1,4 +1,4 @@
-use crate as curve_amm;
+use crate as pablo;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -27,7 +27,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		StableSwap: curve_amm::{Pallet, Call, Storage, Event<T>},
+		Pablo: pablo::{Pallet, Call, Storage, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
@@ -109,10 +109,10 @@ impl orml_tokens::Config for Test {
 
 parameter_types! {
 	pub Precision: u128 = 100_u128;
-	pub TestPalletID : PalletId = PalletId(*b"curve_am");
+	pub TestPalletID : PalletId = PalletId(*b"pablo_pa");
 }
 
-impl curve_amm::Config for Test {
+impl pablo::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
 	type Balance = Balance;
@@ -121,7 +121,6 @@ impl curve_amm::Config for Test {
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type PalletId = TestPalletID;
-	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
