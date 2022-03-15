@@ -22,6 +22,7 @@ The runtimes can be found under the `runtime` directory.
 The chain specs are located in `node/src/chain_spec`.
 
 test
+test
 
 # Pallets
 
