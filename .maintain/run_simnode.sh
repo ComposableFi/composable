@@ -11,7 +11,7 @@ set -e # fail on any error
 VERSIONS_FILES=(
   "picasso,picasso"
   "dali-rococo,dali"
-  # "composable,composable" # TODO: add simnode suppport for composable
+  "composable,composable"
 )
 
 /home/runner/.cargo/bin/rustup update nightly
