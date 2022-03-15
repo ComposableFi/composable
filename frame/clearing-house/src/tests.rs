@@ -4,7 +4,7 @@ pub use crate::{
 	},
 	pallet::*,
 };
-use frame_support::assert_err;
+use frame_support::{assert_err, assert_ok};
 use orml_tokens::Error as TokenError;
 
 #[test]
@@ -34,7 +34,7 @@ fn test_deposit_supported_collateral_succeeds() {
 	ExtBuilder::default().build().execute_with(|| {
 		let origin = Origin::signed(BOB);
 		let amount: Balance = 1_000u32.into();
-		assert!(ClearingHouse::add_margin(origin, USDC, amount).is_ok());
+		assert_ok!(ClearingHouse::add_margin(origin, USDC, amount));
 		assert_eq!(AccountsMargin::<Runtime>::get(&BOB).unwrap_or_default(), amount);
 	})
 }
