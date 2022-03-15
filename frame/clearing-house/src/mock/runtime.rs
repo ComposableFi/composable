@@ -41,6 +41,7 @@ pub type Amount = i64;
 
 pub const ADMIN: AccountId = 0;
 pub const ALICE: AccountId = 1;
+pub const BOB: AccountId = 2;
 
 pub const PICA: AssetId = 0;
 pub const USDC: AssetId = 1;
@@ -163,8 +164,12 @@ pub struct ExtBuilder {
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
-			native_balances: vec![(ADMIN, 1_000_000_000), (ALICE, 1_000_000)],
-			balances: vec![(ADMIN, USDC, 1_000_000_000), (ALICE, USDC, 0)],
+			native_balances: vec![(ADMIN, 1_000_000_000), (ALICE, 1_000_000), (BOB, 0)],
+			balances: vec![
+				(ADMIN, USDC, 1_000_000_000),
+				(ALICE, USDC, 0),
+				(BOB, USDC, 1_000_000_000),
+			],
 			collateral_types: vec![USDC],
 		}
 	}
