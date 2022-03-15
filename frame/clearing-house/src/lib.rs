@@ -20,8 +20,9 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_traits::{clearing_house::MarginAccounts, defi::DeFiComposableConfig};
 	use frame_support::{
-		pallet_prelude::*, traits::tokens::fungibles::Transfer, Blake2_128Concat, PalletId,
-		Twox64Concat,
+		pallet_prelude::*,
+		traits::{tokens::fungibles::Transfer, GenesisBuild},
+		Blake2_128Concat, PalletId, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::{
@@ -139,6 +140,31 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_market)]
 	pub type Markets<T: Config> = StorageMap<_, Twox64Concat, T::MarketId, MarketOf<T>>;
+
+	// ----------------------------------------------------------------------------------------------------
+	//                                            Genesis Configuration
+	// ----------------------------------------------------------------------------------------------------
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub collateral_types: Vec<AssetIdOf<T>>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { collateral_types: vec![] }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			self.collateral_types.iter().for_each(|asset| {
+				CollateralTypes::<T>::insert(asset, ());
+			})
+		}
+	}
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                            Runtime Events
