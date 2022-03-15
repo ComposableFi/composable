@@ -204,7 +204,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Adds margin to a user's account. A user has to have enough margin to open new positions
 		/// and can be liquidated if its margin ratio falls bellow maintenance. Deposited collateral
-		/// backs all the positions of an account accross multiple markets (cross-margining).
+		/// backs all the positions of an account across multiple markets (cross-margining).
 		///
 		/// If an account does not exist in `AccountsMargin`, it is created and initialized with 0
 		/// margin. Checks that the collateral type is supported.
