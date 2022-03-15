@@ -8133,6 +8133,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-instrumental"
+version = "0.1.0"
+dependencies = [
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log 0.4.14",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-lending"
 version = "0.0.1"
 dependencies = [
