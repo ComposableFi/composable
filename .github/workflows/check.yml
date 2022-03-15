@@ -190,7 +190,7 @@ jobs:
           cargo install taplo-cli
           taplo lint --warn-as-error
           taplo fmt --warn-as-error
-          if ! git diff-index --quiet HEAD; then
+          if ! git diff-index HEAD; then
             exit 1
           else
             echo "Everything is fine!"
