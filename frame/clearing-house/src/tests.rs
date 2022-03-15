@@ -1,5 +1,7 @@
 pub use crate::{
-	mock::runtime::{ClearingHouse, ExtBuilder, Origin, Runtime, Tokens, ALICE, PICA, USDC},
+	mock::runtime::{
+		Balance, ClearingHouse, ExtBuilder, Origin, Runtime, Tokens, ALICE, BOB, PICA, USDC,
+	},
 	pallet::*,
 };
 use frame_support::assert_err;
@@ -25,4 +27,14 @@ fn test_deposit_unsupported_collateral_returns_error() {
 			Error::<Runtime>::UnsupportedCollateralType
 		)
 	});
+}
+
+#[test]
+fn test_deposit_supported_collateral_succeeds() {
+	ExtBuilder::default().build().execute_with(|| {
+		let origin = Origin::signed(BOB);
+		let amount: Balance = 1_000u32.into();
+		assert!(ClearingHouse::add_margin(origin, USDC, amount).is_ok());
+		assert_eq!(AccountsMargin::<Runtime>::get(&BOB).unwrap_or_default(), amount);
+	})
 }
