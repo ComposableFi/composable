@@ -38,7 +38,7 @@ has_runtime_changes() {
   echo "diffing $from & $to"
   if git diff --name-only "${from}...${to}" |
     grep -q -e '^frame/' -e "^runtime/$3/"; then
-    return 0
+    return 1
   else
     return 1
   fi
