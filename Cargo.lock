@@ -7408,6 +7408,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-pablo"
+version = "0.0.1"
+dependencies = [
+ "composable-maths",
+ "composable-support",
+ "composable-tests-helpers",
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-currency-factory",
+ "parity-scale-codec",
+ "plotters",
+ "proptest",
+ "rust_decimal",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-ping"
 version = "0.1.0"
 dependencies = [
