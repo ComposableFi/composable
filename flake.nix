@@ -40,6 +40,29 @@
               in [ p.nixops p.dali-script p.picasso-script ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };
+          main = pkgs.mkShell { # not working yet, needs rust nightly
+            buildInputs = [ 
+              pkgs.cargo 
+              pkgs.rustc
+              pkgs.rustfmt
+            ];
+            nativeBuildInputs = [
+                pkgs.llvmPackages.libclang
+                pkgs.llvmPackages.libcxxClang
+                pkgs.clang
+            ];
+
+            # 
+            LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
+            BINDGEN_EXTRA_CLANG_ARGS = "-isystem ${pkgs.llvmPackages.libclang.lib}/lib/clang/${pkgs.lib.getVersion pkgs.clang}/include";
+            PROTOC = "${pkgs.protobuf}/bin/protoc";
+            ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
+
+            # Certain Rust tools won't work without this
+            # This can also be fixed by using oxalica/rust-overlay and specifying the rust-src extension
+            # See https://discourse.nixos.org/t/rust-src-not-found-and-other-misadventures-of-developing-rust-on-nixos/11570/3?u=samuela. for more details.
+            RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+          };
         });
     };
 }
