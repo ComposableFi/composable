@@ -1,5 +1,5 @@
 [package]
-name = "instrumental"
+name = "pallet-instrumental"
 version = "0.1.0"
 authors = ["Kevin@composable.finance", "Composable Finance Developers"]
 homepage = "https://instrumental.finance"
@@ -27,6 +27,7 @@ log = { version = "0.4.14", default-features = false }
 serde = { version = '1', optional = true }
 
 [dev-dependencies]
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 [features]
 default = ["std"]
@@ -44,4 +45,9 @@ std = [
     "log/std",
     "serde/std",
 ]
-runtime-benchmarks = ["frame-benchmarking"]
+
+runtime-benchmarks = [
+  "frame-benchmarking",
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+]
