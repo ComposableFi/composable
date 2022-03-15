@@ -1,3 +1,13 @@
+#[cfg(test)]
+mod tests;
+
+#[cfg(test)]
+mod mock;
+
+mod weights;
+
+pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
@@ -7,7 +17,8 @@ pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::{
 		ensure_signed,
-		pallet_prelude::*,
+		pallet_prelude::OriginFor,
+		// pallet_prelude::*,
 	};
 
 	// ----------------------------------------------------------------------------------------------------
@@ -43,10 +54,6 @@ pub mod pallet {
 		Test {
 			issuer: T::AccountId
 		},
-
-		LiquidityAdded {
-
-		}
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -86,18 +93,6 @@ pub mod pallet {
 
 			Ok(().into())
 		}
-
-		// #[pallet::weight(0)]
-		// pub fn add_liquidity(
-		// 	origin: OriginFor<T>,
-		// ) -> DispatchResultWithPostInfo {
-		// 	// Requirement 0) This extrinsic must be signed 
-		// 	let from = ensure_signed(origin)?;
-
-		// 	Self::deposit_event(Event::LiquidityAdded { });
-
-		// 	Ok(().into())
-		// }
 	}
 }
 
@@ -106,5 +101,6 @@ pub mod pallet {
 // ----------------------------------------------------------------------------------------------------
 
 #[cfg(test)]
-mod tests {
+mod unit_tests {
+
 }
