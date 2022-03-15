@@ -156,6 +156,7 @@ runtime-benchmarks = [
   "utility/runtime-benchmarks",
   "vault/runtime-benchmarks",
 ]
+sim-node = []
 std = [
   "codec/std",
   "composable-support/std",
@@ -220,4 +221,3 @@ std = [
   "system-rpc-runtime-api/std",
   "transaction-payment-rpc-runtime-api/std",
 ]
-sim-node = []
