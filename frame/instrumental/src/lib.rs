@@ -14,11 +14,15 @@ pub mod pallet {
 	//                                       Imports and Dependencies                                      
 	// ----------------------------------------------------------------------------------------------------
 
-	use frame_support::pallet_prelude::*;
+	use crate::weights::WeightInfo;
+
+	use frame_support::{
+		pallet_prelude::*,
+		transactional,
+	};
 	use frame_system::{
-		ensure_signed,
 		pallet_prelude::OriginFor,
-		// pallet_prelude::*,
+		ensure_signed,
 	};
 
 	// ----------------------------------------------------------------------------------------------------
@@ -38,6 +42,8 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		type WeightInfo: WeightInfo;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -52,7 +58,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		Test {
-			issuer: T::AccountId
+			account: T::AccountId
 		},
 	}
 
@@ -82,14 +88,15 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 
-		#[pallet::weight(0)]
+		#[transactional]
+		#[pallet::weight(<T as Config>::WeightInfo::test())]
 		pub fn test(
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
 			// Requirement 0) This extrinsic must be signed 
 			let from = ensure_signed(origin)?;
 
-			Self::deposit_event(Event::Test { issuer: from });
+			Self::deposit_event(Event::Test { account: from });
 
 			Ok(().into())
 		}
