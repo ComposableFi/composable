@@ -48,10 +48,16 @@ pub mod pallet {
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*, traits::UnixTime};
 	use frame_system::pallet_prelude::*;
 	use ibc::{
-		core::ics24_host::path::{
-			AcksPath, ChannelEndsPath, ClientConnectionsPath, ClientConsensusStatePath,
-			ClientStatePath, ClientTypePath, CommitmentsPath, ConnectionsPath, ReceiptsPath,
-			SeqAcksPath, SeqRecvsPath, SeqSendsPath,
+		core::{
+			ics02_client::{
+				client_consensus::AnyConsensusState,
+				client_state::{AnyClientState, TENDERMINT_CLIENT_STATE_TYPE_URL},
+			},
+			ics24_host::path::{
+				AcksPath, ChannelEndsPath, ClientConnectionsPath, ClientConsensusStatePath,
+				ClientStatePath, ClientTypePath, CommitmentsPath, ConnectionsPath, ReceiptsPath,
+				SeqAcksPath, SeqRecvsPath, SeqSendsPath,
+			},
 		},
 		events::IbcEvent,
 	};
@@ -638,7 +644,17 @@ pub mod pallet {
 		/// Get a client state
 		pub fn client(client_id: String) -> Result<QueryClientStateResponse, Error<T>> {
 			let client_id_bytes = client_id.as_bytes().to_vec();
-			let client_state = Clients::<T>::get(client_id_bytes.clone());
+			let client_state = ClientStates::<T>::get(client_id_bytes.clone());
+			let client_state =
+				AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
+
+			// TODO: Revisit when more client states are defined in ibc_rs
+			let client_state = match client_state {
+				AnyClientState::Tendermint(state) =>
+					state.encode_vec().map_err(|_| Error::<T>::DecodingError)?,
+				_ => return Err(Error::<T>::DecodingError),
+			};
+
 			let mut key = T::CONNECTION_PREFIX.to_vec();
 			let client_id = client_id_from_bytes(client_id_bytes)?;
 
@@ -656,12 +672,19 @@ pub mod pallet {
 		/// Get all client states
 		pub fn clients() -> Result<QueryClientStatesResponse, Error<T>> {
 			let mut client_ids = Vec::new();
-			let client_states = Clients::<T>::iter()
+			let client_states = ClientStates::<T>::iter()
 				.map(|(id, state)| {
 					client_ids.push(id);
-					state
+					// TODO: Revisit when more client states are defined in ibc_rs
+					let client_state = AnyClientState::decode_vec(&state)
+						.map_err(|_| Error::<T>::DecodingError)?;
+					match client_state {
+						AnyClientState::Tendermint(state) =>
+							state.encode_vec().map_err(|_| Error::<T>::DecodingError),
+						_ => Err(Error::<T>::DecodingError),
+					}
 				})
-				.collect::<Vec<_>>();
+				.collect::<Result<Vec<_>, Error<T>>>()?;
 
 			let prefix = T::CONNECTION_PREFIX.to_vec();
 			let keys = client_ids
@@ -696,6 +719,15 @@ pub mod pallet {
 				.into_iter()
 				.find(|(maybe_height, state)| maybe_height == &height)
 				.ok_or(Error::<T>::ConsensusStateNotFound)?;
+			let consensus_state = AnyConsensusState::decode_vec(&consensus_state)
+				.map_err(|_| Error::<T>::DecodingError)?;
+			// TODO: Revisit when more consensus states are defined in ibc_rs
+			let consensus_state = match consensus_state {
+				AnyConsensusState::Tendermint(state) =>
+					state.encode_vec().map_err(|_| Error::<T>::DecodingError)?,
+				_ => return Err(Error::<T>::DecodingError),
+			};
+
 			let height = ibc::Height::decode(&*height).map_err(|_| Error::<T>::DecodingError)?;
 			let consensus_path = ClientConsensusStatePath {
 				client_id: client_id.clone(),

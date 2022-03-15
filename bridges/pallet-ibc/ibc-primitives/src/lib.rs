@@ -20,7 +20,8 @@ pub struct Proof {
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryClientStateResponse {
-	/// Protobuf encoded `ibc::core::ics02_client::client_state::AnyClientState`
+	/// Protobuf encoded client state
+	/// Should decode into the respective client state definition for this client
 	pub client_state: Vec<u8>,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
@@ -31,7 +32,8 @@ pub struct QueryClientStateResponse {
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryClientStatesResponse {
-	/// Vector of Protobuf encoded `ibc::core::ics02_client::client_state::AnyClientState`
+	/// Vector of Protobuf encoded client states
+	/// Should decode into the respective client state definition for this client
 	pub client_states: Vec<Vec<u8>>,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
@@ -42,7 +44,8 @@ pub struct QueryClientStatesResponse {
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryConsensusStateResponse {
-	/// Protobuf encoded `ibc::core::ics02_client::client_consensus::AnyConsensusState`
+	/// Protobuf encoded consensus state
+	/// Should decode into the respective consensus state definition for this client
 	pub consensus_state: Vec<u8>,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
@@ -178,7 +181,7 @@ pub struct QueryDenomTracesResponse {
 #[derive(codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ConnectionHandshakeProof {
-	/// Protobuf encoded `ibc::core::ics02_client::client_state::AnyClientState`
+	/// Protobuf encoded client state
 	pub client_state: Vec<u8>,
 	/// Trie proof for connection state, client state and consensus state
 	pub proof: Vec<Vec<u8>>,
