@@ -21,6 +21,8 @@ When building the chain, we use different names to target different [relay chain
 The runtimes can be found under the `runtime` directory.
 The chain specs are located in `node/src/chain_spec`.
 
+test
+
 # Pallets
 
 The building blocks of a substrate blockchain are **pallets**, they define the capability and allow us to implements DeFi protocols.
