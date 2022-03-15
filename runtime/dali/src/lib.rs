@@ -25,7 +25,7 @@ mod xcmp;
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
-	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
+	impls::DealWithFees, AccountId, MarketId,AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, MosaicRemoteAssetId, MultiExistentialDeposits,
 	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
@@ -74,6 +74,7 @@ use system::{
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 pub use xcmp::XcmConfig;
+
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -1160,6 +1161,15 @@ impl_runtime_apis! {
 			SafeRpcWrapper (
 				crowdloan_rewards::amount_available_to_claim_for::<Runtime>(account_id)
 					.unwrap_or_else(|_| Balance::zero())
+			)
+		}
+	}
+
+	impl lending_runtime_api::LendingRuntimeApi<Block, AccountId, Balance, MarketId> for Runtime {
+		fn get_borrow_limit(market_id: MarketId, account_id: AccountId) -> SafeRpcWrapper<Balance> {
+			SafeRpcWrapper (
+				 <Lending as composable_traits::lending::Lending>::get_borrow_limit(&market_id, &account_id)
+				 .unwrap_or_else(|_| Balance::zero())
 			)
 		}
 	}

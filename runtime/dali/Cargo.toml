@@ -95,6 +95,7 @@ transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rp
 # local RPCs
 assets-runtime-api = { path = '../../frame/assets/runtime-api', default-features = false }
 crowdloan-rewards-runtime-api = { path = '../../frame/crowdloan-rewards/runtime-api', default-features = false }
+lending-runtime-api = { path = '../../frame/lending/runtime-api', default-features = false }
 
 # Used for runtime benchmarking
 frame-benchmarking = { package = "frame-benchmarking", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, optional = true }

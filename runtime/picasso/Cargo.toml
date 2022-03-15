@@ -78,7 +78,6 @@ crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
 composable-support = { path = "../../frame/composable-support", default-features = false }
-
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
 transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
@@ -86,7 +85,7 @@ transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rp
 # local RPCs
 assets-runtime-api = { path = '../../frame/assets/runtime-api', default-features = false }
 crowdloan-rewards-runtime-api = { path = '../../frame/crowdloan-rewards/runtime-api', default-features = false }
-
+lending-runtime-api = { path = '../../frame/lending/runtime-api', default-features = false }
 # Used for runtime benchmarking
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, optional = true }
 system-benchmarking = { package = "frame-system-benchmarking", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, optional = true }

@@ -22,7 +22,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod weights;
 mod xcmp;
 use common::{
-	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
+	impls::DealWithFees, AccountId, MarketId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
 	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -845,6 +845,14 @@ impl_runtime_apis! {
 				crowdloan_rewards::amount_available_to_claim_for::<Runtime>(account_id)
 					.unwrap_or_else(|_| Balance::zero())
 			)
+		}
+	}
+	
+	impl lending_runtime_api::LendingRuntimeApi<Block, AccountId, Balance, MarketId> for Runtime {
+		fn get_borrow_limit(market_id: MarketId, account: AccountId) -> SafeRpcWrapper<Balance> {
+			
+			unimplemented!()
+
 		}
 	}
 

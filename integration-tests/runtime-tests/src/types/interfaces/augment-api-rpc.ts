@@ -2,6 +2,7 @@
 /* eslint-disable */
 
 import type { AssetsBalance, CurrencyId } from '@composable/types/interfaces/assets';
+import type { MarketId } from '@composable/types/interfaces/lending';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u32, u64 } from '@polkadot/types-codec';
@@ -168,6 +169,9 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       amountAvailableToClaimFor: AugmentedRpc<(accountId: AccountId | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Balance>>;
     };
+    lending: {
+      getBorrowLimit: AugmentedRpc<(marketId: MarketId |string | Uint8Array ,accountId: AccountId | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Balance>>;
+    },
     engine: {
       /**
        * Instructs the manual-seal authorship task to create a new block

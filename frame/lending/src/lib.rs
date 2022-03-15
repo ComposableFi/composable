@@ -102,6 +102,7 @@ pub mod pallet {
 		Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec, vec::Vec};
+	use serde::{Deserialize, Serialize};
 
 	type MarketConfiguration<T> = MarketConfig<
 		<T as Config>::VaultId,
@@ -110,7 +111,7 @@ pub mod pallet {
 		<T as Config>::LiquidationStrategyId,
 	>;
 
-	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, MaxEncodedLen, TypeInfo)]
+	#[derive(Default, Debug, Copy, Clone, Encode, Decode,Serialize, Deserialize, Ord, Eq, PartialOrd, PartialEq, MaxEncodedLen, TypeInfo)]
 	#[repr(transparent)]
 	pub struct MarketIndex(u32);
 

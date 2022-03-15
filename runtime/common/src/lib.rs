@@ -23,12 +23,15 @@ use primitives::currency::CurrencyId;
 use sp_runtime::DispatchError;
 pub use types::*;
 
+
+
 /// Common types of statemint and statemine and dali and picasso and composable.
 mod types {
 	use codec::{Decode, Encode, MaxEncodedLen};
 	use core::fmt::Debug;
 	use scale_info::TypeInfo;
 	use sp_runtime::traits::{IdentifyAccount, Verify};
+	use lending::MarketIndex;
 
 	// todo move it into more shared directory so it can be shared with
 	// tests, integration, benchmark, (simnode?)
@@ -67,6 +70,8 @@ mod types {
 
 	// Aura consensus authority.
 	pub type AuraId = sp_consensus_aura::sr25519::AuthorityId;
+
+	pub type MarketId = MarketIndex;
 
 	/// Council Instance
 	pub type CouncilInstance = collective::Instance1;

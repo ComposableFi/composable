@@ -1,0 +1,1 @@
+export declare function txOracleSubmitPriceSuccessTest(signer: any, price: any, assetId: any): Promise<import("@polkadot/types/types").IEvent<[import("@polkadot/types/interfaces").AccountId32, import("@polkadot/types-codec").u128, import("@polkadot/types-codec").u128]>>;

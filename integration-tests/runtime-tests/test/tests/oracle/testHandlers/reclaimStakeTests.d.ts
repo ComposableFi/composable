@@ -1,0 +1,1 @@
+export declare function txOracleReclaimStakeSuccessTest(controller: any): Promise<import("@polkadot/types/types").IEvent<[import("@polkadot/types/interfaces").AccountId32, import("@polkadot/types-codec").u128]>>;

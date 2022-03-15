@@ -40,6 +40,7 @@ log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
 plotters = { version = "0.3.1", optional = true }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+serde = { version = "1.0.130", features = [ "derive" ], default-features = false}
 
 [dev-dependencies]
 hex-literal = "0.3.3"
@@ -54,7 +55,6 @@ pallet-currency-factory = { path = "../currency-factory" }
 pallet-liquidations = { path = "../liquidations" }
 pallet-dutch-auction = { path = "../dutch-auction", default-features = false }
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
-serde = { version = '1.0.130' }
 pallet-assets = { path = '../assets', default-features = false}
 frame-benchmarking = { default-features = false,  git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.16' }
 
