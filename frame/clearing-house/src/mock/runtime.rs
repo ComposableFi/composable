@@ -1,4 +1,9 @@
-use crate::{self as clearing_house, mock::governance_registry::GovernanceRegistry};
+use crate::{
+	self as clearing_house,
+	mock::accounts::{AccountId, ADMIN},
+	mock::assets::{AssetId, PICA},
+	mock::governance_registry::GovernanceRegistry,
+};
 use composable_traits::defi::DeFiComposableConfig;
 use frame_support::{
 	ord_parameter_types, parameter_types,
@@ -34,17 +39,8 @@ frame_support::construct_runtime!(
 	}
 );
 
-pub type AccountId = u64;
 pub type Balance = u128;
-pub type AssetId = u128;
 pub type Amount = i64;
-
-pub const ADMIN: AccountId = 0;
-pub const ALICE: AccountId = 1;
-pub const BOB: AccountId = 2;
-
-pub const PICA: AssetId = 0;
-pub const USDC: AssetId = 1;
 
 impl system::Config for Runtime {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -156,23 +152,9 @@ impl clearing_house::Config for Runtime {
 }
 
 pub struct ExtBuilder {
-	native_balances: Vec<(AccountId, Balance)>,
-	balances: Vec<(AccountId, AssetId, Balance)>,
-	collateral_types: Vec<AssetId>,
-}
-
-impl Default for ExtBuilder {
-	fn default() -> Self {
-		Self {
-			native_balances: vec![(ADMIN, 1_000_000_000), (ALICE, 1_000_000), (BOB, 0)],
-			balances: vec![
-				(ADMIN, USDC, 1_000_000_000),
-				(ALICE, USDC, 0),
-				(BOB, USDC, 1_000_000_000),
-			],
-			collateral_types: vec![USDC],
-		}
-	}
+	pub native_balances: Vec<(AccountId, Balance)>,
+	pub balances: Vec<(AccountId, AssetId, Balance)>,
+	pub collateral_types: Vec<AssetId>,
 }
 
 impl ExtBuilder {
