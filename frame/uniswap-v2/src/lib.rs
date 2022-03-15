@@ -280,7 +280,7 @@ pub mod pallet {
 		/// Buy operation if the pair is the original pool pair (A/B).
 		/// Sell operation if the pair is the original pool pair swapped (B/A).
 		///
-		/// The `quote_amount` is always the quote asset amount (A/B => B), (B/A => A).
+		/// The `quote_amount` is always the quote asset amount (A/B => B), (B/A => A). 2
 		///
 		/// Emits `Swapped` event when successful.
 		#[pallet::weight(T::WeightInfo::swap())]
