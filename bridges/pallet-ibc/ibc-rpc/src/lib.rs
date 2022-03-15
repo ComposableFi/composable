@@ -41,7 +41,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	fn query_transactions(&self, page: u32, limit: u32) -> Result<Vec<Transaction>>;
 
 	#[rpc(name = "ibc_generateProof")]
-	fn genrate_proof(&self, height: u32, key: Vec<u8>) -> Result;
+	fn generate_proof(&self, height: u32, key: Vec<u8>) -> Result<Proof>;
 
 	#[rpc(name = "ibc_queryLatestHeight")]
 	fn query_latest_height(&self) -> Result<u32>;
@@ -82,7 +82,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	fn query_upgraded_cons_state(&self, height: u32) -> Result<QueryConsensusStateResponse>;
 
 	#[rpc(name = "ibc_queryClients")]
-	fn query_clients(&self) -> Result<Vec<AnyClientState>>;
+	fn query_clients(&self) -> Result<Vec<Vec<u8>>>;
 
 	#[rpc(name = "ibc_autoUpdateClient")]
 	fn auto_update_client(
@@ -277,6 +277,10 @@ where
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
+	fn generate_proof(&self, height: u32, key: Vec<u8>) -> Result<Proof> {
+		Err(runtime_error_into_rpc_error("Unimplemented"))
+	}
+
 	fn query_latest_height(&self) -> Result<u32> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
@@ -375,21 +379,13 @@ where
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
-	fn query_clients(&self) -> Result<Vec<AnyClientState>> {
+	fn query_clients(&self) -> Result<Vec<Vec<u8>>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
 
-		let client_states = api.clients(&at).ok().flatten().map(|states| {
-			states
-				.into_iter()
-				.map(|state| {
-					AnyClientState::decode_vec(&state)
-						.map_err(|_| runtime_error_into_rpc_error("Error decoding client state"))
-				})
-				.collect::<Result<Vec<_>>>()
-		});
+		let client_states = api.clients(&at).ok().flatten();
 		match client_states {
-			Some(res) => res,
+			Some(res) => Ok(res),
 			_ => Err(runtime_error_into_rpc_error("Failed to fetch client states")),
 		}
 	}
