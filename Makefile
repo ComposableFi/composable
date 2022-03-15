@@ -34,7 +34,8 @@ style-check:
 
 style:
 	@rustup component add rustfmt 2> /dev/null
-	cargo +nightly fmt --all
+	cargo install taplo-cli 2> /dev/null
+	cargo +nightly fmt --all && taplo fmt
 
 lint:
 	@rustup component add clippy 2> /dev/null
@@ -56,10 +57,10 @@ version:
 .PHONY: containerize-release
 containerize-release: version containerize
 
-containerize: 
+containerize:
 	@docker build \
 	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg VERSION=${RELEASE_VERSION} \
-       	-f ${INSTALL_DIR}/Dockerfile \
+		-f ${INSTALL_DIR}/Dockerfile \
 		-t ${IMAGE_WITH_COMMIT} \
 		-t ${IMAGE_WITH_RELEASE_VERSION} \
 		-t ${IMAGE_WITH_BRANCH} \

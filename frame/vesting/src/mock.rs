@@ -3,6 +3,7 @@
 #![cfg(test)]
 
 use super::*;
+use composable_traits::vesting::VestingWindow::{BlockNumberBased, MomentBased};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{EnsureOrigin, Everything},
@@ -18,6 +19,7 @@ use sp_runtime::{
 
 use crate as vesting;
 
+pub type Moment = u64;
 pub type Balance = u64;
 pub type Amount = i64;
 pub type AccountId = u128;
@@ -25,6 +27,7 @@ pub type AccountId = u128;
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
 pub const CHARLIE: AccountId = 3;
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
 
 #[derive(
 	PartialOrd,
@@ -76,6 +79,17 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = ();
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+}
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
+}
+
+impl pallet_timestamp::Config for Runtime {
+	type Moment = Moment;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
 }
 
 fn benchmark_vested_transfer_account() -> AccountId {
@@ -131,7 +145,7 @@ impl orml_tokens::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MaxVestingSchedule: u32 = 2;
+	pub const MaxVestingSchedule: u32 = 3;
 	pub const MinVestedTransfer: u64 = 5;
 }
 
@@ -142,6 +156,8 @@ impl Config for Runtime {
 	type VestedTransferOrigin = EnsureAliceOrBob;
 	type WeightInfo = ();
 	type MaxVestingSchedules = MaxVestingSchedule;
+	type Moment = Moment;
+	type Time = Timestamp;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
@@ -156,6 +172,7 @@ construct_runtime!(
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Vesting: vesting::{Pallet, Storage, Call, Event<T>, Config<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 	}
 );
 
@@ -167,16 +184,17 @@ impl ExtBuilder {
 		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 		orml_tokens::GenesisConfig::<Runtime> {
-			balances: vec![(ALICE, MockCurrencyId::BTC, 100), (CHARLIE, MockCurrencyId::BTC, 50)],
+			balances: vec![(ALICE, MockCurrencyId::BTC, 100), (CHARLIE, MockCurrencyId::BTC, 65)],
 		}
 		.assimilate_storage(&mut t)
 		.unwrap();
 
 		vesting::GenesisConfig::<Runtime> {
 			vesting: vec![
-				// asset, who, start, period, period_count, per_period
-				(MockCurrencyId::BTC, CHARLIE, 2, 3, 1, 5),
-				(MockCurrencyId::BTC, CHARLIE, 2 + 3, 3, 3, 5),
+				// asset, who, VestingWindow {start, period}, period_count, per_period
+				(MockCurrencyId::BTC, CHARLIE, BlockNumberBased { start: 2, period: 3 }, 1, 5),
+				(MockCurrencyId::BTC, CHARLIE, BlockNumberBased { start: 2 + 3, period: 3 }, 3, 5),
+				(MockCurrencyId::BTC, CHARLIE, MomentBased { start: 40000, period: 50000 }, 3, 5),
 			],
 		}
 		.assimilate_storage(&mut t)

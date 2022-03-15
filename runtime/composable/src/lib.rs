@@ -23,8 +23,8 @@ mod weights;
 mod xcmp;
 use common::{
 	impls::DealWithFees, AccountId, MarketId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	CouncilInstance, EnsureRootOrHalfCouncil, Hash,Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
+	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,MILLISECS_PER_BLOCK
 };
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
@@ -220,7 +220,7 @@ parameter_types! {
 
 impl timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the Unix epoch.
-	type Moment = u64;
+	type Moment = Moment;
 	/// What to do when SLOT_DURATION has passed?
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
@@ -683,8 +683,8 @@ impl democracy::Config for Runtime {
 
 parameter_types! {
 	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
-	  pub const InitialPayment: Perbill = Perbill::from_percent(50);
-	  pub const VestingStep: BlockNumber = 7 * DAYS;
+	  pub const InitialPayment: Perbill = Perbill::from_percent(25);
+	  pub const VestingStep: Moment = (7 * DAYS as Moment) * MILLISECS_PER_BLOCK;
 	  pub const Prefix: &'static [u8] = b"composable-";
 }
 
@@ -700,6 +700,8 @@ impl crowdloan_rewards::Config for Runtime {
 	type Prefix = Prefix;
 	type WeightInfo = ();
 	type PalletId = CrowdloanRewardsId;
+	type Moment = Moment;
+	type Time = Timestamp;
 }
 
 parameter_types! {

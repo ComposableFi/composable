@@ -1,9 +1,9 @@
 [package]
+authors = ["Composable Developers"]
+edition = "2021"
+homepage = "https://composable.finance"
 name = "pallet-crowdloan-rewards"
 version = "0.0.1"
-authors = ["Composable Developers"]
-homepage = "https://composable.finance"
-edition = "2021"
 
 
 [package.metadata.docs.rs]
@@ -16,20 +16,21 @@ package = "parity-scale-codec"
 version = "2.0.0"
 
 [dev-dependencies]
+hex-literal = "0.3.3"
+libsecp256k1 = { version = "0.7.0" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 serde = "1.0.130"
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-libsecp256k1 = { version = "0.7.0", default-features = false, features = [
-    "hmac",
-    "static-context",
-] }
-hex-literal = "0.3.3"
-balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false, features = [ "std" ]}
 
 [dependencies]
 # Benchmarking
-hex-literal = { version = "0.3.3", optional = true }
-libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, features = ["hmac","static-context"] }
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+hex-literal = { version = "0.3.3", optional = true }
+libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, features = [
+  "hmac",
+  "static-context",
+] }
 sp-application-crypto = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 # FRAME
@@ -37,43 +38,45 @@ frame-support = { default-features = false, git = "https://github.com/paritytech
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 # substrate primitives
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 # SCALE
-scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+scale-info = { version = "1.0", default-features = false, features = [
+  "derive",
+] }
 
 # misc
-serde = { version = "1.0.130", optional = true }
-rustc-hex = { version = "2.1.0", default-features = false }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
+rustc-hex = { version = "2.1.0", default-features = false }
+serde = { version = "1.0.130", optional = true }
 
-composable-traits = {  path = "../composable-traits", default-features = false }
+composable-traits = { path = "../composable-traits", default-features = false }
 
 [features]
 default = ["std"]
 
 std = [
-    "codec/std",
-    "frame-support/std",
-    "frame-system/std",
-    "sp-runtime/std",
-    "sp-io/std",
-    "sp-core/std",
-    "sp-std/std",
-    "sp-arithmetic/std",
-    "scale-info/std",
-    "serde/std",
+  "codec/std",
+  "frame-support/std",
+  "frame-system/std",
+  "sp-runtime/std",
+  "sp-io/std",
+  "sp-core/std",
+  "sp-std/std",
+  "sp-arithmetic/std",
+  "scale-info/std",
+  "serde/std",
 ]
 
 runtime-benchmarks = [
-    "hex-literal",
-    "libsecp256k1",
-    "frame-benchmarking",
-    "sp-application-crypto",
-    "frame-support/runtime-benchmarks",
-    "frame-system/runtime-benchmarks",
+  "hex-literal",
+  "libsecp256k1",
+  "frame-benchmarking",
+  "sp-application-crypto",
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
 ]

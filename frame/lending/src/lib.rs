@@ -72,7 +72,7 @@ pub mod pallet {
 			MarketConfig, MarketModelValid, UpdateInput,
 		},
 		liquidation::Liquidation,
-		math::SafeArithmetic,
+		math::{SafeAdd, SafeDiv, SafeMul, SafeSub},
 		oracle::Oracle,
 		time::{DurationSeconds, Timestamp, SECONDS_PER_YEAR_NAIVE},
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},

@@ -35,7 +35,7 @@ pub mod pallet {
 	use composable_support::validation::Validated;
 	use composable_traits::{
 		currency::LocalAssets,
-		math::SafeArithmetic,
+		math::SafeDiv,
 		oracle::{Oracle, Price},
 	};
 	use core::ops::{Div, Mul};

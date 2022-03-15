@@ -48,17 +48,13 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"picasso-dev" => Box::new(chain_spec::picasso_dev()),
 		#[cfg(feature = "composable")]
 		"composable-dev" => Box::new(chain_spec::composable_dev()),
-		// Dali (Westend Relay)
-		#[cfg(feature = "dali")]
-		"dali-westend" => Box::new(chain_spec::dali_westend()),
 		// Dali (Rococo Relay)
 		#[cfg(feature = "dali")]
 		"dali-rococo" => Box::new(chain_spec::dali_rococo()),
-		// Dali (Chachacha Relay)
-		#[cfg(feature = "dali")]
-		"dali" | "dali-chachacha" => Box::new(chain_spec::dali_chachacha()),
 		// Picasso (Kusama Relay)
 		"picasso" => Box::new(chain_spec::picasso()),
+		// Composable (Westend Relay)
+		"composable-westend" => Box::new(chain_spec::composable_westend()),
 		// Composable (Polkadot Relay)
 		#[cfg(feature = "composable")]
 		"" | "composable" => Box::new(chain_spec::composable()),
