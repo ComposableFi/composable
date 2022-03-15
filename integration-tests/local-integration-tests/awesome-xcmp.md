@@ -1,6 +1,6 @@
 ## Overview
 
-Resources which allows to grapsh XCM. General undrestanding how bridges work will help too.
+Resources which allows to grasp  XCM. General undrestanding how bridges work will help too.
 
 ### Conceptual
 
