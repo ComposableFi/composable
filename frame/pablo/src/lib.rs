@@ -42,14 +42,16 @@ mod mock;
 mod stable_swap_tests;
 
 mod stable_swap;
+mod uniswap;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::{uniswap::Uniswap, PoolConfiguration::ConstantProduct};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		currency::CurrencyFactory,
+		currency::{CurrencyFactory, LocalAssets},
 		defi::CurrencyPair,
-		dex::{Amm, StableSwapPoolInfo},
+		dex::{Amm, ConstantProductPoolInfo, StableSwapPoolInfo},
 		math::{SafeAdd, SafeSub},
 	};
 	use core::fmt::Debug;
@@ -80,13 +82,14 @@ pub mod pallet {
 	#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 	pub enum PoolConfiguration<AccountId, AssetId> {
 		StableSwap(StableSwapPoolInfo<AccountId, AssetId>),
+		ConstantProduct(ConstantProductPoolInfo<AccountId, AssetId>),
 	}
 
 	type AssetIdOf<T> = <T as Config>::AssetId;
 	type BalanceOf<T> = <T as Config>::Balance;
 	type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	type PoolIdOf<T> = <T as Config>::PoolId;
-	type PoolConfigurationOf<T> =
+	pub type PoolConfigurationOf<T> =
 		PoolConfiguration<<T as frame_system::Config>::AccountId, <T as Config>::AssetId>;
 	type PoolInitConfigurationOf<T> = PoolInitConfiguration<<T as Config>::AssetId>;
 
@@ -110,7 +113,7 @@ pub mod pallet {
 			quote_amount: T::Balance,
 		},
 		/// Liquidity added into the pool `T::PoolId`.
-		LiquidityAdded {
+		LiquidityAddedToStableSwapPool {
 			/// Account id who added liquidity.
 			who: T::AccountId,
 			/// Pool id to which liquidity added.
@@ -121,6 +124,28 @@ pub mod pallet {
 			quote_amount: T::Balance,
 			/// Amount of minted lp tokens.
 			mint_amount: T::Balance,
+		},
+		/// Liquidity added into the pool `T::PoolId`.
+		LiquidityAddedToLiquidityBootstrappingPool {
+			/// Pool id to which liquidity added.
+			pool_id: T::PoolId,
+			/// Amount of base asset deposited.
+			base_amount: T::Balance,
+			/// Amount of quote asset deposited.
+			quote_amount: T::Balance,
+		},
+		/// Liquidity added into the pool `T::PoolId`.
+		LiquidityAddedToConstantProductPool {
+			/// Account id who added liquidity.
+			who: T::AccountId,
+			/// Pool id to which liquidity added.
+			pool_id: T::PoolId,
+			/// Amount of base asset deposited.
+			base_amount: T::Balance,
+			/// Amount of quote asset deposited.
+			quote_amount: T::Balance,
+			/// Amount of minted lp.
+			minted_lp: T::Balance,
 		},
 		/// Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
 		LiquidityRemoved {
@@ -167,6 +192,9 @@ pub mod pallet {
 		InvalidPair,
 		InvalidFees,
 		AmpFactorMustBeGreaterThanZero,
+
+		// ConstantProduct Specific: Possibly rename
+		MissingAmount,
 	}
 
 	#[pallet::config]
@@ -388,6 +416,13 @@ pub mod pallet {
 
 					Ok(pool_id)
 				},
+				PoolInitConfiguration::ConstantProduct(constant_product_pool_info) =>
+					Uniswap::<T>::do_create_pool(
+						&constant_product_pool_info.owner,
+						constant_product_pool_info.pair,
+						constant_product_pool_info.fee,
+						constant_product_pool_info.owner_fee,
+					),
 			}
 		}
 
