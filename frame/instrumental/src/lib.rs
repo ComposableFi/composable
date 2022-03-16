@@ -177,27 +177,29 @@ pub mod pallet {
 			// Requirement 0) This extrinsic must be signed 
 			let from = ensure_signed(origin)?;
 
-			Self::do_create(from, asset)?;
+			Self::do_create(&from, &asset)?;
 
 			Self::deposit_event(Event::Created { asset });
 
 			Ok(().into())
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::create())]
+		#[pallet::weight(<T as Config>::WeightInfo::add_liquidity())]
 		pub fn add_liquidity(
 			origin: OriginFor<T>,
 			asset: T::AssetId,
 			amount: T::Balance
 		) -> DispatchResultWithPostInfo {
 			// Requirement 0) This extrinsic must be signed 
-			let _from = ensure_signed(origin)?;
+			let from = ensure_signed(origin)?;
 
 			// Requirement 1) The asset must have an associated vault
 			ensure!(
 				AssetVault::<T>::contains_key(asset),
 				Error::<T>::AssetDoesNotHaveAnAssociatedVault
 			);
+
+			Self::do_add_liquidity(&from, &asset, amount)?;
 
 			Self::deposit_event(Event::AddedLiquidity {asset, amount});
 
@@ -210,14 +212,14 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> Pallet<T> {
-		fn account_id(asset: T::AssetId) -> T::AccountId {
+		fn account_id(asset: &T::AssetId) -> T::AccountId {
 			T::PalletId::get().into_sub_account_truncating(asset)
 		}
 		
 		#[transactional]
 		fn do_create(
-			_issuer: T::AccountId,
-			asset: T::AssetId,
+			_issuer: &T::AccountId,
+			asset: &T::AssetId,
 		) -> Result<(), DispatchError> {
 			// Requirement 0) An asset can only have one vault associated with it
 			ensure!(!AssetVault::<T>::contains_key(asset), Error::<T>::VaultAlreadyExists);
@@ -230,7 +232,7 @@ pub mod pallet {
 			let vault_id: T::VaultId = T::Vault::create(
 				Duration::Existential,
 				VaultConfig:: <T::AccountId ,T::AssetId > {
-					asset_id: asset,
+					asset_id: *asset,
 					reserved: Perquintill::from_percent(100),
 					manager: account_id,
 					strategies: [].iter().cloned().collect(),
@@ -239,6 +241,23 @@ pub mod pallet {
 
 			AssetVault::<T>::insert(asset, vault_id);
 			
+			Ok(())
+		}
+
+		#[transactional]
+		fn do_add_liquidity(
+			issuer: &T::AccountId,
+			asset: &T::AssetId,
+			amount: T::Balance
+		) -> Result<(), DispatchError> {
+			// Requirement 0) An asset can only have one vault associated with it
+			ensure!(!AssetVault::<T>::contains_key(asset), Error::<T>::VaultAlreadyExists);
+
+			let vault_id: T::VaultId = Self::asset_vault(asset)
+				.ok_or(Error::<T>::AssetDoesNotHaveAnAssociatedVault)?;
+
+			<T::Vault as StrategicVault>::deposit(&vault_id, issuer, amount)?;
+
 			Ok(())
 		}
 	}
