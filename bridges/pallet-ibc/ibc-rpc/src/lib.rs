@@ -28,28 +28,36 @@ use jsonrpc_core::{futures::future::ok, Error as JsonRpcError, ErrorCode, Result
 use jsonrpc_derive::rpc;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::{generic::BlockId, traits::Block as BlockT};
+use sp_runtime::{
+	generic::BlockId,
+	traits::{Block as BlockT, Header as HeaderT},
+};
 use tendermint_proto::Protobuf;
 
 /// IBC RPC methods.
 #[rpc]
-pub trait IbcApi<Header, Hash> {
+pub trait IbcApi<BlockNumber> {
+	/// Generate proof for given key
 	#[rpc(name = "ibc_generateProof")]
 	fn generate_proof(&self, height: u32, key: Vec<u8>) -> Result<Proof>;
 
+	/// Query latest height
 	#[rpc(name = "ibc_queryLatestHeight")]
-	fn query_latest_height(&self) -> Result<u32>;
+	fn query_latest_height(&self) -> Result<BlockNumber>;
 
+	/// Query balance of an address on chain
 	#[rpc(name = "ibc_queryBalanceWithAddress")]
 	fn query_balance_with_address(&self, addr: String) -> Result<Coin>;
 
+	/// Query a client state
 	#[rpc(name = "ibc_queryClientState")]
 	fn query_client_state(
 		&self,
 		height: u32,
-		src_client_Id: String,
+		src_client_id: String,
 	) -> Result<QueryClientStateResponse>;
 
+	/// Query client consensus state
 	#[rpc(name = "ibc_queryClientConsensusState")]
 	fn query_client_consensus_state(
 		&self,
@@ -57,15 +65,19 @@ pub trait IbcApi<Header, Hash> {
 		client_height: ibc::Height,
 	) -> Result<QueryConsensusStateResponse>;
 
+	/// Query upgraded client state
 	#[rpc(name = "ibc_queryUpgradedClient")]
 	fn query_upgraded_client(&self, height: u32) -> Result<QueryClientStateResponse>;
 
+	/// Query upgraded consensus state for client
 	#[rpc(name = "ibc_queryUpgradedConnectionState")]
 	fn query_upgraded_cons_state(&self, height: u32) -> Result<QueryConsensusStateResponse>;
 
+	/// Query all client states
 	#[rpc(name = "ibc_queryClients")]
 	fn query_clients(&self) -> Result<Vec<Vec<u8>>>;
 
+	/// Query a connection state
 	#[rpc(name = "ibc_queryConnection")]
 	fn query_connection(
 		&self,
@@ -73,9 +85,11 @@ pub trait IbcApi<Header, Hash> {
 		connection_id: String,
 	) -> Result<QueryConnectionResponse>;
 
+	/// Query all connection states
 	#[rpc(name = "ibc_queryConnections")]
 	fn query_connections(&self) -> Result<QueryConnectionsResponse>;
 
+	/// Query all connection states for associated client
 	#[rpc(name = "ibc_queryConnectionUsingClient")]
 	fn query_connection_using_client(
 		&self,
@@ -83,6 +97,7 @@ pub trait IbcApi<Header, Hash> {
 		client_id: String,
 	) -> Result<QueryConnectionResponse>;
 
+	/// Generate proof for connection handshake
 	#[rpc(name = "ibc_generateConnectionHandshakeProof")]
 	fn generate_conn_handshake_proof(
 		&self,
@@ -91,9 +106,11 @@ pub trait IbcApi<Header, Hash> {
 		conn_id: String,
 	) -> Result<ConnectionHandshakeProof>;
 
+	/// Construct a new client state
 	#[rpc(name = "ibc_newClientState")]
-	fn new_client_state(&self) -> Result<AnyClientState>;
+	fn new_client_state(&self) -> Result<Vec<u8>>;
 
+	/// Query a channel state
 	#[rpc(name = "ibc_queryChannel")]
 	fn query_channel(
 		&self,
@@ -102,6 +119,7 @@ pub trait IbcApi<Header, Hash> {
 		port_id: String,
 	) -> Result<QueryChannelResponse>;
 
+	/// Query client state for channel and port id
 	#[rpc(name = "ibc_queryChannelClient")]
 	fn query_channel_client(
 		&self,
@@ -110,6 +128,7 @@ pub trait IbcApi<Header, Hash> {
 		port_id: String,
 	) -> Result<AnyClientState>;
 
+	/// Query all channel states for associated connection
 	#[rpc(name = "ibc_queryConnectionChannels")]
 	fn query_connection_channels(
 		&self,
@@ -117,9 +136,11 @@ pub trait IbcApi<Header, Hash> {
 		connection_id: String,
 	) -> Result<QueryChannelsResponse>;
 
+	/// Query all channel states
 	#[rpc(name = "ibc_queryChannels")]
 	fn query_channels(&self) -> Result<QueryChannelsResponse>;
 
+	/// Query packet commitments
 	#[rpc(name = "ibc_queryPacketCommitments")]
 	fn query_packet_commitments(
 		&self,
@@ -128,6 +149,7 @@ pub trait IbcApi<Header, Hash> {
 		port_id: String,
 	) -> Result<QueryPacketCommitmentsResponse>;
 
+	/// Query packet acknowledgements
 	#[rpc(name = "ibc_queryPacketAcknowledgements")]
 	fn query_packet_acknowledgements(
 		&self,
@@ -136,6 +158,7 @@ pub trait IbcApi<Header, Hash> {
 		port_id: String,
 	) -> Result<QueryPacketAcknowledgementsResponse>;
 
+	/// Query unreceived packet commitments
 	#[rpc(name = "ibc_queryUnreceivedPackets")]
 	fn query_unreceived_packets(
 		&self,
@@ -145,6 +168,7 @@ pub trait IbcApi<Header, Hash> {
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>>;
 
+	/// Query the unreceived acknowledgements
 	#[rpc(name = "ibc_queryUnreceivedAcknowledgement")]
 	fn query_unreceived_acknowledgements(
 		&self,
@@ -154,6 +178,7 @@ pub trait IbcApi<Header, Hash> {
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>>;
 
+	/// Query next sequence to be received on channel
 	#[rpc(name = "ibc_queryNextSeqRecv")]
 	fn query_next_seq_recv(
 		&self,
@@ -162,6 +187,7 @@ pub trait IbcApi<Header, Hash> {
 		port_id: String,
 	) -> Result<QueryNextSequenceReceiveResponse>;
 
+	/// Query packet commitment
 	#[rpc(name = "ibc_queryPacketCommitment")]
 	fn query_packet_commitment(
 		&self,
@@ -171,6 +197,7 @@ pub trait IbcApi<Header, Hash> {
 		seq: u64,
 	) -> Result<QueryPacketCommitmentResponse>;
 
+	/// Query packet acknowledgement
 	#[rpc(name = "ibc_queryPacketAcknowledgement")]
 	fn query_packet_acknowledgement(
 		&self,
@@ -180,6 +207,7 @@ pub trait IbcApi<Header, Hash> {
 		seq: u64,
 	) -> Result<QueryPacketAcknowledgementResponse>;
 
+	/// Query packet receipt
 	#[rpc(name = "ibc_queryPacketReceipt")]
 	fn query_packet_receipt(
 		&self,
@@ -189,9 +217,11 @@ pub trait IbcApi<Header, Hash> {
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse>;
 
+	/// Query the denom trace for an ibc denom
 	#[rpc(name = "ibc_queryDenomTrace")]
 	fn query_denom_trace(&self, denom: String) -> Result<QueryDenomTraceResponse>;
 
+	/// Query the denom traces for an ibc denoms matching offset
 	#[rpc(name = "ibc_queryDenomTraces")]
 	fn query_denom_traces(
 		&self,
@@ -225,8 +255,7 @@ impl<C, B> IbcRpcHandler<C, B> {
 	}
 }
 
-impl<C, Block, Transaction> IbcApi<<Block as BlockT>::Header, <Block as BlockT>::Hash>
-	for IbcRpcHandler<C, Block>
+impl<C, Block> IbcApi<<<Block as BlockT>::Header as HeaderT>::Number> for IbcRpcHandler<C, Block>
 where
 	Block: BlockT,
 	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
@@ -236,14 +265,12 @@ where
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
-	fn query_latest_height(&self) -> Result<u32> {
-		let api = self.client.runtime_api();
-		let at = BlockId::Hash(self.client.info().best_hash);
-
-		api.latest_height(&at)
-			.ok()
-			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error fetching height"))
+	fn query_latest_height(&self) -> Result<<<Block as BlockT>::Header as HeaderT>::Number> {
+		if let Ok(Some(height)) = self.client.number(self.client.info().best_hash) {
+			Ok(height)
+		} else {
+			Err(runtime_error_into_rpc_error("Could not get latest height"))
+		}
 	}
 
 	// Query balance of relayer on chain
@@ -364,7 +391,7 @@ where
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
-	fn new_client_state(&self) -> Result<AnyClientState> {
+	fn new_client_state(&self) -> Result<Vec<u8>> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
