@@ -117,7 +117,6 @@ describe('CrowdloanRewards Tests', function() {
       this.skip();
     // 2 minutes timeout
     this.timeout(60 * 20 * 1000);
-    await waitForBlocks(32);
     await Promise.all([
       TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTest(
         wallet,
