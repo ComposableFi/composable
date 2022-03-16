@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use super::*;
 
 use crate::Pallet as Vault;
@@ -103,15 +105,16 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 		let amount = T::CreationDeposit::get() * 10u32.into();
 		let (vault, _) = create_vault::<T>(A, caller.clone());
+		let ed = common::NativeExistentialDeposit::get().into();
 		T::Currency::mint_into(T::AssetId::from(A), &caller, amount * 2u32.into())?;
 		T::NativeCurrency::mint_into(&caller, amount * 2u32.into())?;
 		<Vault<T> as VaultTrait>::deposit(&vault, &caller, amount)?;
-	}: _(RawOrigin::Signed(caller.clone()), vault, amount)
+	}: _(RawOrigin::Signed(caller.clone()), vault, amount - ed)
 	verify {
 		assert_last_event::<T>(Event::Withdrawn {
 			account: caller,
-			asset_amount: amount,
-			lp_amount: amount
+			asset_amount: amount - ed,
+			lp_amount: amount - ed
 		}.into())
 	}
 

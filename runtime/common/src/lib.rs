@@ -165,8 +165,7 @@ pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
 		CurrencyId::KSM =>
 			PriceConverter::get_price_inverse(CurrencyId::KSM, NativeExistentialDeposit::get())
 				.expect("Could not convert because unknown currency."),
-		_ => Balance::zero() // NOTE: zero for now to merge, than need to fix it as separate task
-		//_ => NativeExistentialDeposit::get(),
+		_ => NativeExistentialDeposit::get(),
 	}
 }
 

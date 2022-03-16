@@ -30,13 +30,14 @@ benchmarks! {
 		  &owner,
 		  CurrencyPair::new(usdc, usdt),
 		  1000_u16,
-		  Permill::from_percent(1),
-		  Permill::from_percent(1),
+		  Permill::zero(),
+		  Permill::zero(),
 	  ) .expect("impossible; qed;");
 	  let unit = 1_000_000_000_000;
 	  // 100_000_000 USDC , 100_000_000 USDT
 	  let initial_usdc: T::Balance = (100_000_000_u128 * unit).into();
 	  let initial_usdt: T::Balance = (100_000_000_u128 * unit).into();
+
 	  // Mint the tokens
 	  assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
 	  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
@@ -62,8 +63,8 @@ benchmarks! {
 		  &owner,
 		  CurrencyPair::new(usdc, usdt),
 		  100_u16,
-		  Permill::from_percent(1),
-		  Permill::from_percent(1),
+		  Permill::zero(),
+		  Permill::zero(),
 	  ) .expect("impossible; qed;");
 	  let unit = 1_000_000_000_000;
 	  // 100_000_000 USDC , 100_000_000 USDT
@@ -95,8 +96,8 @@ benchmarks! {
 		  &owner,
 		  pair,
 		  100_u16,
-		  Permill::from_percent(1),
-		  Permill::from_percent(1),
+		  Permill::zero(),
+		  Permill::zero(),
 	  ) .expect("impossible; qed;");
 	  let unit = 1_000_000_000_000;
 	  // 100_000_000 USDC , 100_000_000 USDT
