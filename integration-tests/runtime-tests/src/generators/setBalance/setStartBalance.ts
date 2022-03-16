@@ -1,7 +1,6 @@
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import {expect} from "chai";
 import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
-import {args} from "@composable/utils/args";
 
 
 /**
@@ -11,7 +10,7 @@ export class startBalanceGenerator {
   /**
    * Sends test transaction from Alice to Bob.
    * @param {ApiPromise} api Connected API Promise.
-   * @param {Keyring} walletSender Wallet sending asset.
+   * @param {Keyring} sudoKey Sudo key minting asset.
    * @param {Keyring} walletReceiverAddress Wallet receiving asset.
    **/
   public static async setBalance(api: ApiPromise, sudoKey, walletReceiverAddress) {
@@ -28,7 +27,7 @@ export class startBalanceGenerator {
 }
 
 async function main() {
-  const endpoint = `ws://${args.h}:${args.p}`;
+  const endpoint = `ws://${process.env.ENDPOINT}`;
   // Instantiate the API
   const provider = new WsProvider(endpoint);
   const api = await ApiPromise.create({ provider: provider });
