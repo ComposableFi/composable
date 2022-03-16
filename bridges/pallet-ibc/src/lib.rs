@@ -49,10 +49,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use ibc::{
 		core::{
-			ics02_client::{
-				client_consensus::AnyConsensusState,
-				client_state::{AnyClientState, TENDERMINT_CLIENT_STATE_TYPE_URL},
-			},
+			ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
 			ics24_host::path::{
 				AcksPath, ChannelEndsPath, ClientConnectionsPath, ClientConsensusStatePath,
 				ClientStatePath, ClientTypePath, CommitmentsPath, ConnectionsPath, ReceiptsPath,
@@ -80,6 +77,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// Prefix for events stored in the Off-chain DB via Indexing API.
 		const INDEXING_PREFIX: &'static [u8];
+		/// Prefix for ibc connection
 		const CONNECTION_PREFIX: &'static [u8];
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<u64>;
@@ -91,17 +89,17 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	// client_id => ClientState
+	/// client_id => ClientState
 	pub type ClientStates<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
-	// client_id => (Height, ConsensusState)
+	/// client_id => (Height, ConsensusState)
 	pub type ConsensusStates<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<(Vec<u8>, Vec<u8>)>, ValueQuery>;
 
 	#[pallet::storage]
-	// client_id , Height => Height
+	/// client_id , Height => Height
 	pub type ClientUpdateHeight<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -113,7 +111,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	// client_id , Height => Timestamp
+	/// client_id , Height => Timestamp
 	pub type ClientUpdateTime<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -125,7 +123,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	// connection_id => ConnectionEnd
+	/// connection_id => ConnectionEnd
 	pub type Connections<T: Config> =
 		CountedStorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
@@ -133,7 +131,7 @@ pub mod pallet {
 	pub type ChannelCounter<T: Config> = StorageValue<_, u64, ValueQuery>;
 
 	#[pallet::storage]
-	// (port_identifier, channel_identifier) => ChannelEnd
+	/// (port_identifier, channel_identifier) => ChannelEnd
 	pub type Channels<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -146,12 +144,12 @@ pub mod pallet {
 
 	// store_connection_channels
 	#[pallet::storage]
-	// connection_identifier => Vec<(port_id, channel_id)>
+	/// connection_identifier => Vec<(port_id, channel_id)>
 	pub type ChannelsConnection<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<(Vec<u8>, Vec<u8>)>, ValueQuery>;
 
 	#[pallet::storage]
-	// (port_identifier, channel_identifier) => Sequence
+	/// (port_identifier, channel_identifier) => Sequence
 	pub type NextSequenceSend<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -163,7 +161,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	// (port_identifier, channel_identifier) => Sequence
+	/// (port_identifier, channel_identifier) => Sequence
 	pub type NextSequenceRecv<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -175,7 +173,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	// (port_identifier, channel_identifier) = Sequence
+	/// (port_identifier, channel_identifier) = Sequence
 	pub type NextSequenceAck<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -187,36 +185,36 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	// (port_identifier, channel_identifier, sequence) => Hash
+	/// (port_identifier, channel_identifier, sequence) => Hash
 	pub type Acknowledgements<T: Config> =
 		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
-	// clientId => ClientType
+	/// clientId => ClientType
 	pub type Clients<T: Config> =
 		CountedStorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
-	// client_id => Connection id
+	/// client_id => Connection id
 	pub type ConnectionClient<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
-	// (port_id, channel_id, sequence) => receipt
+	/// (port_id, channel_id, sequence) => receipt
 	pub type PacketReceipt<T: Config> =
 		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
-	// (port_id, channel_id, sequence) => hash
+	/// (port_id, channel_id, sequence) => hash
 	pub type PacketCommitment<T: Config> =
 		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
-	// store latest height
+	/// store latest height
 	pub type LatestHeight<T: Config> = StorageValue<_, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
-	// store latest height
+	/// store latest height
 	pub type OldHeight<T: Config> = StorageValue<_, u64, ValueQuery>;
 
 	#[pallet::event]
@@ -225,7 +223,7 @@ pub mod pallet {
 		/// Processed incoming ibc messages
 		ProcessedIBCMessages,
 	}
-	// Errors inform users that something went wrong.
+	/// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Error processing ibc messages
@@ -597,7 +595,8 @@ pub mod pallet {
 			Ok(trie.root().as_bytes().to_vec())
 		}
 
-		pub fn generate_proof(keys: Vec<&Vec<u8>>) -> Result<Vec<Vec<u8>>, Error<T>> {
+		pub fn generate_proof(keys: Vec<Vec<u8>>) -> Result<Vec<Vec<u8>>, Error<T>> {
+			let keys = keys.iter().collect::<Vec<_>>();
 			let mut db = sp_trie::MemoryDB::<BlakeTwo256>::default();
 			let root = {
 				let mut root = Default::default();
@@ -626,8 +625,8 @@ pub mod pallet {
 
 			Ok(QueryChannelResponse {
 				channel,
-				proof: Self::generate_proof(vec![&key])?,
-				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?
+				proof: Self::generate_proof(vec![key])?,
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
 
@@ -643,7 +642,7 @@ pub mod pallet {
 
 			Ok(QueryConnectionResponse {
 				connection,
-				proof: Self::generate_proof(vec![&key])?,
+				proof: Self::generate_proof(vec![key])?,
 				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
@@ -671,7 +670,7 @@ pub mod pallet {
 
 			Ok(QueryClientStateResponse {
 				client_state,
-				proof: Self::generate_proof(vec![&key])?,
+				proof: Self::generate_proof(vec![key])?,
 				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
@@ -707,7 +706,7 @@ pub mod pallet {
 
 			Ok(QueryClientStatesResponse {
 				client_states,
-				proof: Self::generate_proof(keys.iter().collect::<Vec<_>>())?,
+				proof: Self::generate_proof(keys)?,
 				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
@@ -724,7 +723,7 @@ pub mod pallet {
 
 			let (.., consensus_state) = consensus_states
 				.into_iter()
-				.find(|(maybe_height, state)| maybe_height == &height)
+				.find(|(maybe_height, ..)| maybe_height == &height)
 				.ok_or(Error::<T>::ConsensusStateNotFound)?;
 			let consensus_state = AnyConsensusState::decode_vec(&consensus_state)
 				.map_err(|_| Error::<T>::DecodingError)?;
@@ -747,7 +746,7 @@ pub mod pallet {
 
 			Ok(QueryConsensusStateResponse {
 				consensus_state,
-				proof: Self::generate_proof(vec![&key])?,
+				proof: Self::generate_proof(vec![key])?,
 				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
@@ -766,7 +765,7 @@ pub mod pallet {
 			key.extend_from_slice(connection_path.as_bytes());
 			Ok(QueryConnectionResponse {
 				connection,
-				proof: Self::generate_proof(vec![&key])?,
+				proof: Self::generate_proof(vec![key])?,
 				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
@@ -777,7 +776,7 @@ pub mod pallet {
 				if channels.contains(&(port_id.as_bytes().to_vec(), channel_id.as_bytes().to_vec()))
 				{
 					if let Some((client_id, ..)) = ConnectionClient::<T>::iter()
-						.find(|(client_id, connection)| &connection_id == connection)
+						.find(|(.., connection)| &connection_id == connection)
 					{
 						let client_state = ClientStates::<T>::get(client_id);
 						let client_state = AnyClientState::decode_vec(&client_state)
@@ -797,12 +796,6 @@ pub mod pallet {
 			Err(Error::<T>::ClientStateNotFound)
 		}
 
-		/// Get the host consensus state
-		/// This will need some beefy state from the relay chain
-		pub fn host_consensus_state() -> Result<QueryConsensusStateResponse, Error<T>> {
-			todo!()
-		}
-
 		/// Get all channel states
 		pub fn channels() -> Result<QueryChannelsResponse, Error<T>> {
 			let prefix = T::CONNECTION_PREFIX;
@@ -820,8 +813,8 @@ pub mod pallet {
 				.collect::<Result<Vec<_>, Error<T>>>()?;
 			Ok(QueryChannelsResponse {
 				channels,
-				proof: Self::generate_proof(keys.iter().collect::<Vec<_>>())?,
-				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?
+				proof: Self::generate_proof(keys)?,
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
 
@@ -840,7 +833,7 @@ pub mod pallet {
 				.collect::<Result<Vec<_>, Error<T>>>()?;
 			Ok(QueryConnectionsResponse {
 				connections,
-				proof: Self::generate_proof(keys.iter().collect::<Vec<_>>())?,
+				proof: Self::generate_proof(keys)?,
 				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
@@ -852,56 +845,91 @@ pub mod pallet {
 			let channel_id_bytes = channel_id.as_bytes().to_vec();
 			let port_id_bytes = port_id.as_bytes().to_vec();
 			let mut sequences = vec![];
-			let commitments = PacketCommitment::<T>::iter().filter_map(|((p, c, s), commitment)| {
-				if p == port_id_bytes && c == channel_id_bytes {
-					sequences.push(s);
-					Some(commitment)
-				}
-				else {
-					None
-				}
-			}).collect::<Vec<_>>();
-			let keys = sequences.into_iter().map(|seq| {
-				let channel_id = channel_id_from_bytes::<T>(channel_id_bytes.clone())?;
-				let port_id = port_id_from_bytes::<T>(port_id_bytes.clone())?;
-				let sequence = ibc::core::ics04_channel::packet::Sequence::from(
-					u64::decode(&mut &*seq).map_err(|_| Error::<T>::DecodingError)?,
-				);
-				let mut key = T::CONNECTION_PREFIX.to_vec();
-				let commitment_path = CommitmentsPath { port_id, channel_id, sequence };
-				let commitment_path =
-					format!("{}", commitment_path);
-				key.extend_from_slice(commitment_path.as_bytes());
-				Ok(key)
-			}).collect::<Result<Vec<_>, Error<T>>>()?;
+			let commitments = PacketCommitment::<T>::iter()
+				.filter_map(|((p, c, s), commitment)| {
+					if p == port_id_bytes && c == channel_id_bytes {
+						sequences.push(s);
+						Some(commitment)
+					} else {
+						None
+					}
+				})
+				.collect::<Vec<_>>();
+			let keys = sequences
+				.into_iter()
+				.map(|seq| {
+					let channel_id = channel_id_from_bytes::<T>(channel_id_bytes.clone())?;
+					let port_id = port_id_from_bytes::<T>(port_id_bytes.clone())?;
+					let sequence = ibc::core::ics04_channel::packet::Sequence::from(
+						u64::decode(&mut &*seq).map_err(|_| Error::<T>::DecodingError)?,
+					);
+					let mut key = T::CONNECTION_PREFIX.to_vec();
+					let commitment_path = CommitmentsPath { port_id, channel_id, sequence };
+					let commitment_path = format!("{}", commitment_path);
+					key.extend_from_slice(commitment_path.as_bytes());
+					Ok(key)
+				})
+				.collect::<Result<Vec<_>, Error<T>>>()?;
 
 			Ok(QueryPacketCommitmentsResponse {
 				commitments,
-				proof: Self::generate_proof(keys.iter().collect::<Vec<_>>())?,
-				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?
+				proof: Self::generate_proof(keys)?,
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
-
 		}
 
 		fn packet_acknowledgements(
 			channel_id: String,
 			port_id: String,
 		) -> Result<QueryPacketAcknowledgementsResponse, Error<T>> {
-			todo!()
+			let channel_id_bytes = channel_id.as_bytes().to_vec();
+			let port_id_bytes = port_id.as_bytes().to_vec();
+			let mut sequences = vec![];
+			let acks = Acknowledgements::<T>::iter()
+				.filter_map(|((p, c, s), ack)| {
+					if p == port_id_bytes && c == channel_id_bytes {
+						sequences.push(s);
+						Some(ack)
+					} else {
+						None
+					}
+				})
+				.collect::<Vec<_>>();
+			let keys = sequences
+				.into_iter()
+				.map(|seq| {
+					let channel_id = channel_id_from_bytes::<T>(channel_id_bytes.clone())?;
+					let port_id = port_id_from_bytes::<T>(port_id_bytes.clone())?;
+					let sequence = ibc::core::ics04_channel::packet::Sequence::from(
+						u64::decode(&mut &*seq).map_err(|_| Error::<T>::DecodingError)?,
+					);
+					let mut key = T::CONNECTION_PREFIX.to_vec();
+					let acks_path = AcksPath { port_id, channel_id, sequence };
+					let acks_path = format!("{}", acks_path);
+					key.extend_from_slice(acks_path.as_bytes());
+					Ok(key)
+				})
+				.collect::<Result<Vec<_>, Error<T>>>()?;
+
+			Ok(QueryPacketAcknowledgementsResponse {
+				acks,
+				proof: Self::generate_proof(keys)?,
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			})
 		}
 
 		fn unreceived_packets(
-			channel_id: String,
-			port_id: String,
-			seqs: Vec<u64>,
+			_channel_id: String,
+			_port_id: String,
+			_seqs: Vec<u64>,
 		) -> Result<Vec<u8>, Error<T>> {
 			todo!()
 		}
 
 		fn unreceived_acknowledgements(
-			channel_id: String,
-			port_id: String,
-			seqs: Vec<u64>,
+			_channel_id: String,
+			_port_id: String,
+			_seqs: Vec<u64>,
 		) -> Result<Vec<u8>, Error<T>> {
 			todo!()
 		}
@@ -910,7 +938,22 @@ pub mod pallet {
 			channel_id: String,
 			port_id: String,
 		) -> Result<QueryNextSequenceReceiveResponse, Error<T>> {
-			todo!()
+			let channel_id_bytes = channel_id.as_bytes().to_vec();
+			let port_id_bytes = port_id.as_bytes().to_vec();
+
+			let sequence =
+				NextSequenceRecv::<T>::get(port_id_bytes.clone(), channel_id_bytes.clone());
+			let port_id = port_id_from_bytes(port_id_bytes)?;
+			let channel_id = channel_id_from_bytes(channel_id_bytes)?;
+			let next_seq_recv_path = format!("{}", SeqRecvsPath(port_id, channel_id));
+			let mut key = T::CONNECTION_PREFIX.to_vec();
+			key.extend_from_slice(next_seq_recv_path.as_bytes());
+
+			Ok(QueryNextSequenceReceiveResponse {
+				sequence,
+				proof: Self::generate_proof(vec![key])?,
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			})
 		}
 
 		fn packet_commitment(
@@ -918,7 +961,26 @@ pub mod pallet {
 			port_id: String,
 			seq: u64,
 		) -> Result<QueryPacketCommitmentResponse, Error<T>> {
-			todo!()
+			let channel_id_bytes = channel_id.as_bytes().to_vec();
+			let port_id_bytes = port_id.as_bytes().to_vec();
+			let seq_bytes = seq.encode();
+			let commitment = PacketCommitment::<T>::get((
+				port_id_bytes.clone(),
+				channel_id_bytes.clone(),
+				seq_bytes,
+			));
+			let port_id = port_id_from_bytes(port_id_bytes)?;
+			let channel_id = channel_id_from_bytes(channel_id_bytes)?;
+			let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
+			let commitment_path = format!("{}", CommitmentsPath { port_id, channel_id, sequence });
+			let mut key = T::CONNECTION_PREFIX.to_vec();
+			key.extend_from_slice(commitment_path.as_bytes());
+
+			Ok(QueryPacketCommitmentResponse {
+				commitment,
+				proof: Self::generate_proof(vec![key])?,
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			})
 		}
 
 		fn packet_acknowledgement(
@@ -926,7 +988,26 @@ pub mod pallet {
 			port_id: String,
 			seq: u64,
 		) -> Result<QueryPacketAcknowledgementResponse, Error<T>> {
-			todo!()
+			let channel_id_bytes = channel_id.as_bytes().to_vec();
+			let port_id_bytes = port_id.as_bytes().to_vec();
+			let seq_bytes = seq.encode();
+			let ack = Acknowledgements::<T>::get((
+				port_id_bytes.clone(),
+				channel_id_bytes.clone(),
+				seq_bytes,
+			));
+			let port_id = port_id_from_bytes(port_id_bytes)?;
+			let channel_id = channel_id_from_bytes(channel_id_bytes)?;
+			let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
+			let acks_path = format!("{}", AcksPath { port_id, channel_id, sequence });
+			let mut key = T::CONNECTION_PREFIX.to_vec();
+			key.extend_from_slice(acks_path.as_bytes());
+
+			Ok(QueryPacketAcknowledgementResponse {
+				ack,
+				proof: Self::generate_proof(vec![key])?,
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			})
 		}
 
 		fn packet_receipt(
@@ -934,7 +1015,26 @@ pub mod pallet {
 			port_id: String,
 			seq: u64,
 		) -> Result<QueryPacketReceiptResponse, Error<T>> {
-			todo!()
+			let channel_id_bytes = channel_id.as_bytes().to_vec();
+			let port_id_bytes = port_id.as_bytes().to_vec();
+			let seq_bytes = seq.encode();
+			let receipt = PacketReceipt::<T>::get((
+				port_id_bytes.clone(),
+				channel_id_bytes.clone(),
+				seq_bytes,
+			));
+			let port_id = port_id_from_bytes(port_id_bytes)?;
+			let channel_id = channel_id_from_bytes(channel_id_bytes)?;
+			let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
+			let receipt_path = format!("{}", ReceiptsPath { port_id, channel_id, sequence });
+			let mut key = T::CONNECTION_PREFIX.to_vec();
+			key.extend_from_slice(receipt_path.as_bytes());
+
+			Ok(QueryPacketReceiptResponse {
+				receipt,
+				proof: Self::generate_proof(vec![key])?,
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			})
 		}
 	}
 }
@@ -961,8 +1061,6 @@ fn client_id_from_bytes<T: Config>(client_id: Vec<u8>) -> Result<ClientId, Error
 
 fn host_height<T: Config>() -> Result<ibc::Height, Error<T>> {
 	let block_number = format!("{:?}", <frame_system::Pallet<T>>::block_number());
-	let current_height = block_number
-		.parse()
-		.map_err(|e| Error::<T>::DecodingError)?;
+	let current_height = block_number.parse().map_err(|_| Error::<T>::DecodingError)?;
 	Ok(ibc::Height::new(0, current_height))
 }

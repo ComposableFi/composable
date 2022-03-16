@@ -33,15 +33,12 @@ use tendermint_proto::Protobuf;
 
 /// IBC RPC methods.
 #[rpc]
-pub trait IbcApi<Header, Hash, Transaction> {
+pub trait IbcApi<Header, Hash> {
 	#[rpc(name = "ibc_generateProof")]
 	fn generate_proof(&self, height: u32, key: Vec<u8>) -> Result<Proof>;
 
 	#[rpc(name = "ibc_queryLatestHeight")]
 	fn query_latest_height(&self) -> Result<u32>;
-
-	#[rpc(name = "ibc_queryHeaderAtHeight")]
-	fn query_header_at_height(&self, height: u32) -> Result<Header>;
 
 	#[rpc(name = "ibc_queryBalanceWithAddress")]
 	fn query_balance_with_address(&self, addr: String) -> Result<Coin>;
@@ -52,9 +49,6 @@ pub trait IbcApi<Header, Hash, Transaction> {
 		height: u32,
 		src_client_Id: String,
 	) -> Result<QueryClientStateResponse>;
-
-	#[rpc(name = "ibc_queryConsensusState")]
-	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse>;
 
 	#[rpc(name = "ibc_queryClientConsensusState")]
 	fn query_client_consensus_state(
@@ -71,9 +65,6 @@ pub trait IbcApi<Header, Hash, Transaction> {
 
 	#[rpc(name = "ibc_queryClients")]
 	fn query_clients(&self) -> Result<Vec<Vec<u8>>>;
-
-	#[rpc(name = "ibc_findMatchingClient")]
-	fn find_matching_client(&self, client_state: AnyClientState) -> Result<Option<String>>;
 
 	#[rpc(name = "ibc_queryConnection")]
 	fn query_connection(
@@ -234,7 +225,7 @@ impl<C, B> IbcRpcHandler<C, B> {
 	}
 }
 
-impl<C, Block, Transaction> IbcApi<<Block as BlockT>::Header, <Block as BlockT>::Hash, Transaction>
+impl<C, Block, Transaction> IbcApi<<Block as BlockT>::Header, <Block as BlockT>::Hash>
 	for IbcRpcHandler<C, Block>
 where
 	Block: BlockT,
@@ -253,22 +244,6 @@ where
 			.ok()
 			.flatten()
 			.ok_or(runtime_error_into_rpc_error("Error fetching height"))
-	}
-
-	// TODO: Revisit after a header for the beefy light client is defined in ibc-rs
-	fn query_header_at_height(&self, height: u32) -> Result<<Block as BlockT>::Header> {
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retrieving block hash"))?;
-		let at = BlockId::Hash(block_hash);
-		self.client
-			.header(at)
-			.ok()
-			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retrieving header"))
 	}
 
 	// Query balance of relayer on chain
@@ -294,24 +269,6 @@ where
 			.ok()
 			.flatten()
 			.ok_or(runtime_error_into_rpc_error("Error querying client state"))
-	}
-
-	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse> {
-		let block_hash = if height != 0 {
-			self.client
-				.hash(height.into())
-				.ok()
-				.flatten()
-				.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?
-		} else {
-			self.client.info().best_hash
-		};
-		let api = self.client.runtime_api();
-		let at = BlockId::Hash(block_hash);
-		api.host_consensus_state(&at)
-			.ok()
-			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error querying client consensus state"))
 	}
 
 	fn query_client_consensus_state(
@@ -345,10 +302,6 @@ where
 			Some(res) => Ok(res),
 			_ => Err(runtime_error_into_rpc_error("Failed to fetch client states")),
 		}
-	}
-
-	fn find_matching_client(&self, client_state: AnyClientState) -> Result<Option<String>> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_connection(

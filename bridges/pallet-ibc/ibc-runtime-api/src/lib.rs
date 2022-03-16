@@ -14,24 +14,16 @@ sp_api::decl_runtime_apis! {
 		/// Return latest height
 		fn latest_height() -> Option<u32>;
 
-		/// Return host chain header
-		fn header_at_height() -> Option<Header>;
-
 		fn query_balance_with_address(addr: String) -> Option<Vec<u8>>;
 
 		/// Return client state at height
 		fn client_state(client_id: String) -> Option<QueryClientStateResponse>;
-
-		/// Return the consensus state for the host machine
-		fn host_consensus_state() -> Option<QueryConsensusStateResponse>;
 
 		/// Return the consensus state for the given client at a height
 		fn client_consensus_state(client_id: String, client_height: Vec<u8>) -> Option<QueryConsensusStateResponse>;
 
 		/// Returns client states for all clients on chain
 		fn clients() -> Option<Vec<Vec<u8>>>;
-
-		fn find_matching_client(client_state: Vec<u8>) -> Option<String>;
 
 		/// Query the given connection state with proof
 		fn connection(connection_id: String) -> Option<QueryConnectionResponse>;
