@@ -5,6 +5,7 @@ mod tests;
 mod mock;
 
 mod weights;
+mod currency;
 
 pub use pallet::*;
 
