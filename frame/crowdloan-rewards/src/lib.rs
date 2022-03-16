@@ -114,7 +114,7 @@ pub mod pallet {
 	pub enum Error<T> {
 		NotInitialized,
 		AlreadyInitialized,
-		InvalidInitializationBlock,
+		BackToTheFuture,
 		RewardsNotFunded,
 		InvalidProof,
 		InvalidClaim,
@@ -304,7 +304,7 @@ pub mod pallet {
 		pub(crate) fn do_initialize(at: MomentOf<T>) -> DispatchResult {
 			ensure!(!VestingTimeStart::<T>::exists(), Error::<T>::AlreadyInitialized);
 			let now = T::Time::now();
-			ensure!(at >= now, Error::<T>::InvalidInitializationBlock);
+			ensure!(at >= now, Error::<T>::BackToTheFuture);
 			VestingTimeStart::<T>::set(Some(at));
 			Self::deposit_event(Event::Initialized);
 			Ok(())

@@ -5,16 +5,14 @@ use crate::Pallet as BondedFinance;
 use crate::{AssetIdOf, BalanceOf, BlockNumberOf, BondOfferOf, Call, Config, Pallet};
 use codec::Decode;
 use composable_support::validation::Validated;
-use composable_traits::{
-	bonded_finance::{BondDuration, BondOffer, BondOfferReward},
-	math::WrappingNext,
-};
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller, Zero};
+use composable_traits::bonded_finance::{BondDuration, BondOffer, BondOfferReward};
+use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	dispatch::UnfilteredDispatchable,
 	traits::{fungible::Mutate as _, fungibles::Mutate as _},
 };
 use frame_system::RawOrigin;
+use sp_runtime::traits::One;
 
 const MIN_VESTED_TRANSFER: u128 = 1000 * 1_000_000_000_000;
 const BALANCE: u128 = 1_000_000 * 1_000_000_000_000;
@@ -100,7 +98,7 @@ benchmarks! {
 		let bond_offer = bond_offer::<T>(bond_asset, reward_asset);
 		let nb_of_bonds = bond_offer.nb_of_bonds;
 		call_offer::<T>(bond_offer, &caller);
-		let offer_id = T::BondOfferId::zero().next();
+		let offer_id = T::BondOfferId::one();
 	}: _(RawOrigin::Signed(caller), offer_id, nb_of_bonds, false)
 
 	cancel {
@@ -110,7 +108,7 @@ benchmarks! {
 		let bond_offer = bond_offer::<T>(bond_asset, reward_asset);
 		let nb_of_bonds = bond_offer.nb_of_bonds;
 		call_offer::<T>(bond_offer, &caller);
-		let offer_id = T::BondOfferId::zero().next();
+		let offer_id = T::BondOfferId::one();
 		call_bond::<T>(&caller, nb_of_bonds, offer_id);
 	}: _(RawOrigin::Signed(caller), offer_id)
 }

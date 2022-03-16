@@ -168,7 +168,7 @@ fn test_initialize_at_ko() {
 		Timestamp::set_timestamp(100);
 		assert_noop!(
 			CrowdloanRewards::initialize_at(Origin::root(), 99),
-			Error::<Test>::InvalidInitializationBlock
+			Error::<Test>::BackToTheFuture
 		);
 	});
 }
