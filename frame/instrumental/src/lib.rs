@@ -29,10 +29,11 @@ pub mod pallet {
 	};
 
 	use composable_traits::{
-		vault::StrategicVault,
+		vault::{Deposit as Duration, StrategicVault, Vault, VaultConfig},
 	};
 
 	use sp_runtime::{
+		Perquintill,
 		traits::{
 			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
 			Zero,
@@ -153,12 +154,15 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[transactional]
+		
 		#[pallet::weight(<T as Config>::WeightInfo::create())]
 		pub fn create(
 			origin: OriginFor<T>,
 			asset: T::AssetId,
 		) -> DispatchResultWithPostInfo {
+			// TODO: (Nevin)
+			//  - (potentially) enforce that the issuer must have priviledged rights
+
 			// Requirement 0) This extrinsic must be signed 
 			let from = ensure_signed(origin)?;
 
@@ -175,17 +179,29 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> Pallet<T> {
+		#[transactional]
 		fn do_create(
-			_issuer: T::AccountId,
+			issuer: T::AccountId,
 			asset: T::AssetId,
 		) -> Result<(), DispatchError> {
+			// Requirement 0) An asset can only have one vault associated with it
 			ensure!(!AssetVault::<T>::contains_key(asset), Error::<T>::VaultAlreadyExists);
 
 			// TODO: (Nevin)
-			//  - create underlying vault
-			//  - save vault_id
+			//  - convert pallet_instrumentals PalletId into an AccountId
+			let account_id = issuer;
 
-			AssetVault::<T>::insert(asset, T::VaultId::default());
+			let vault_id: T::VaultId = T::Vault::create(
+				Duration::Existential,
+				VaultConfig:: <T::AccountId ,T::AssetId > {
+					asset_id: asset,
+					reserved: Perquintill::from_percent(100),
+					manager: account_id,
+					strategies: [].iter().cloned().collect(),
+				},
+			)?;
+
+			AssetVault::<T>::insert(asset, vault_id);
 			
 			Ok(())
 		}
