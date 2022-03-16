@@ -11979,7 +11979,7 @@ dependencies = [
 [[package]]
 name = "simnode-runtime-apis"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#0474833ac1c3ddf59db254e690abb8e2b1b70a23"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#a5bc46c664884bac71ab13aa1669693e62fd99fd"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -13078,7 +13078,7 @@ dependencies = [
 [[package]]
 name = "substrate-simnode"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#0474833ac1c3ddf59db254e690abb8e2b1b70a23"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=master#a5bc46c664884bac71ab13aa1669693e62fd99fd"
 dependencies = [
  "clap 3.1.6",
  "cumulus-pallet-parachain-system",

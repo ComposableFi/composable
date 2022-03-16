@@ -1039,7 +1039,7 @@ impl_runtime_apis! {
 				system::CheckWeight::<Runtime>::new(),
 				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 			);
-			let signature = MultiSignature::from(sr25519::Signature([0u8;64]));
+			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
 			let address = AccountIdLookup::unlookup(signer);
 			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
 			ext.encode()

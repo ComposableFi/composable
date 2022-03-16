@@ -818,7 +818,7 @@ pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false
+			return false;
 		}
 		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
 	}
@@ -1294,7 +1294,7 @@ impl_runtime_apis! {
 				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 			);
 
-			let signature = MultiSignature::from(sr25519::Signature([0u8;64]));
+			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
 			let address = AccountIdLookup::unlookup(signer);
 			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
 
