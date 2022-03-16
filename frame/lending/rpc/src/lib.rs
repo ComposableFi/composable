@@ -47,7 +47,7 @@ where
 	fn get_borrow_limit(
 		&self,
 		market_id: MarketId,
-		remote_account: AccountId,
+		account: AccountId,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<SafeRpcWrapper<Balance>> {
 		let api = self.client.runtime_api();
@@ -56,7 +56,7 @@ where
 			self.client.info().best_hash
 		}));
 
-		let runtime_api_result = api.get_borrow_limit(&at, market_id, remote_account);
+		let runtime_api_result = api.get_borrow_limit(&at, market_id, account);
 		// TODO(benluelo): Review what error message & code to use
 		runtime_api_result.map_err(|e| {
 			RpcError {
