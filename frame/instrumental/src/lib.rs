@@ -20,6 +20,7 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 
 	use frame_support::{
+		PalletId,
 		pallet_prelude::*,
 		transactional,
 	};
@@ -35,7 +36,7 @@ pub mod pallet {
 	use sp_runtime::{
 		Perquintill,
 		traits::{
-			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
+			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
 			Zero,
 		},
 	};
@@ -101,6 +102,9 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 			VaultId = Self::VaultId,
 		>;
+
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -179,17 +183,22 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> Pallet<T> {
+		fn account_id(asset: T::AssetId) -> T::AccountId {
+			T::PalletId::get().into_sub_account(asset)
+		}
+		
 		#[transactional]
 		fn do_create(
-			issuer: T::AccountId,
+			_issuer: T::AccountId,
 			asset: T::AssetId,
 		) -> Result<(), DispatchError> {
 			// Requirement 0) An asset can only have one vault associated with it
 			ensure!(!AssetVault::<T>::contains_key(asset), Error::<T>::VaultAlreadyExists);
 
 			// TODO: (Nevin)
-			//  - convert pallet_instrumentals PalletId into an AccountId
-			let account_id = issuer;
+			//  - decide if each assey should have an associated account, or if
+			//        the pallet itself should have one global account
+			let account_id = Self::account_id(asset);
 
 			let vault_id: T::VaultId = T::Vault::create(
 				Duration::Existential,
