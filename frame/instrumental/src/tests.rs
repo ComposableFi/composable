@@ -1,10 +1,13 @@
 use crate::mock::{
-    ALICE, Event, ExtBuilder, Instrumental, MockRuntime, Origin, System
+    ALICE, Event, ExtBuilder, Instrumental, MockRuntime, Origin, System, Tokens,
 };
 use crate::{pallet, pallet::AssetVault, pallet::Error};
 use crate::currency::PICA;
 
-use frame_support::{assert_ok, assert_noop};
+use frame_support::{
+    assert_ok, assert_noop,
+    traits::fungibles::Mutate,
+};
 
 // ----------------------------------------------------------------------------------------------------
 //                                                Create                                               
@@ -55,6 +58,7 @@ fn add_liquidity_extrinsic_emits_event() {
 
         assert_ok!(Instrumental::create(Origin::signed(ALICE), PICA::ID));
         
+        assert_ok!(Tokens::mint_into(PICA::ID, &ALICE, PICA::units(100)));
         assert_ok!(Instrumental::add_liquidity(Origin::signed(ALICE), PICA::ID, PICA::units(100)));
 
         System::assert_last_event(Event::Instrumental(
