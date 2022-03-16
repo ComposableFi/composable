@@ -31,7 +31,7 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
 
-impl frame_system::Config for Test {
+impl frame_system::Config for MockRuntime {
 	type Origin = Origin;
 	type Index = u64;
 	type BlockNumber = BlockNumber;
@@ -66,7 +66,7 @@ parameter_types! {
 	pub const BalanceExistentialDeposit: u64 = 1;
 }
 
-impl pallet_balances::Config for Test {
+impl pallet_balances::Config for MockRuntime {
 	type Balance = Balance;
 	type Event = Event;
 	type DustRemoval = ();
@@ -88,7 +88,7 @@ parameter_type_with_key! {
 	};
 }
 
-impl orml_tokens::Config for Test {
+impl orml_tokens::Config for MockRuntime {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
@@ -105,7 +105,7 @@ impl orml_tokens::Config for Test {
 // ----------------------------------------------------------------------------------------------------
 
 
-impl pallet_currency_factory::Config for Test {
+impl pallet_currency_factory::Config for MockRuntime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
@@ -129,7 +129,7 @@ parameter_types! {
   	pub const TombstoneDuration: u64 = 42;
 }
 
-impl pallet_vault::Config for Test {
+impl pallet_vault::Config for MockRuntime {
 	type Event = Event;
 	type Currency = Tokens;
 	type AssetId = CurrencyId;
@@ -153,7 +153,7 @@ impl pallet_vault::Config for Test {
 //                                             Instrumental                                            
 // ----------------------------------------------------------------------------------------------------
 
-impl pallet_instrumental::Config for Test {
+impl pallet_instrumental::Config for MockRuntime {
 	type Event = Event;
 	type WeightInfo = ();
 	type Balance = Balance;
@@ -166,11 +166,11 @@ impl pallet_instrumental::Config for Test {
 //                                           Construct Runtime                                         
 // ----------------------------------------------------------------------------------------------------
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
+type Block = frame_system::mocking::MockBlock<MockRuntime>;
 
 frame_support::construct_runtime!(
-	pub enum Test where
+	pub enum MockRuntime where
 		Block = Block,
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
@@ -192,7 +192,7 @@ pub struct ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let t = frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
 
 		// pallet_balances::GenesisConfig::<Test> { balances: vec![(ALICE, 1_000_000)] }
 		// 	.assimilate_storage(&mut t)
