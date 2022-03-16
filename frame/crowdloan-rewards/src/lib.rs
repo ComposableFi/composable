@@ -326,6 +326,9 @@ pub mod pallet {
 				!Associations::<T>::contains_key(reward_account.clone()),
 				Error::<T>::AlreadyAssociated
 			);
+			// NOTE(hussein-aitlahcen): very important to have a claim here because we do the
+			// upfront payment, which will allow the user to execute transactions because he had 0
+			// funds prior to this call.
 			let claimed = Self::do_claim(remote_account.clone(), &reward_account)?;
 			Associations::<T>::insert(reward_account.clone(), remote_account.clone());
 			Self::deposit_event(Event::Associated {
