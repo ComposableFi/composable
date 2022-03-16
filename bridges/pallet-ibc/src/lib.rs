@@ -812,9 +812,9 @@ pub mod pallet {
 					let channel_path =
 						format!("{}", ChannelEndsPath(port_id.clone(), channel_id.clone()));
 					channel_key.extend_from_slice(channel_path.as_bytes());
-					channel_key
+					Ok(channel_key)
 				})
-				.collect::<Vec<_>>();
+				.collect::<Result<Vec<_>, Error<T>>>()?;
 			Ok(QueryChannelsResponse {
 				channels,
 				proof: Self::generate_proof(keys.iter().collect::<Vec<_>>())?,
@@ -824,7 +824,22 @@ pub mod pallet {
 
 		/// Get all connection states
 		pub fn connections() -> Result<QueryConnectionsResponse, Error<T>> {
-			todo!()
+			let prefix = T::CONNECTION_PREFIX;
+			let connections = Connections::<T>::iter_values().collect::<Vec<_>>();
+			let keys = Connections::<T>::iter()
+				.map(|(connection_id, ..)| {
+					let mut connection_key = prefix.to_vec();
+					let connection_id = connection_id_from_bytes::<T>(connection_id)?;
+					let connection_path = format!("{}", ConnectionsPath(connection_id));
+					connection_key.extend_from_slice(connection_path.as_bytes());
+					Ok(connection_key)
+				})
+				.collect::<Result<Vec<_>, Error<T>>>()?;
+			Ok(QueryConnectionsResponse {
+				connections,
+				proof: Self::generate_proof(keys.iter().collect::<Vec<_>>())?,
+				height: LatestHeight::<T>::get(),
+			})
 		}
 
 		pub fn packet_commitments(

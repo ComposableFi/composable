@@ -17,11 +17,7 @@ sp_api::decl_runtime_apis! {
 		/// Return host chain header
 		fn header_at_height() -> Option<Header>;
 
-		fn query_balance(key_name: String) -> Option<Vec<u8>>;
-
 		fn query_balance_with_address(addr: String) -> Option<Vec<u8>>;
-
-		fn unbonding_period() -> Option<u64>;
 
 		/// Return client state at height
 		fn client_state(client_id: String) -> Option<QueryClientStateResponse>;

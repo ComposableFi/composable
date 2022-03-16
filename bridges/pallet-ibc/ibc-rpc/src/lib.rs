@@ -34,12 +34,6 @@ use tendermint_proto::Protobuf;
 /// IBC RPC methods.
 #[rpc]
 pub trait IbcApi<Header, Hash, Transaction> {
-	#[rpc(name = "ibc_queryTransaction")]
-	fn query_transaction(&self, tx_hash: Hash) -> Result<Transaction>;
-
-	#[rpc(name = "ibc_queryTransactions")]
-	fn query_transactions(&self, page: u32, limit: u32) -> Result<Vec<Transaction>>;
-
 	#[rpc(name = "ibc_generateProof")]
 	fn generate_proof(&self, height: u32, key: Vec<u8>) -> Result<Proof>;
 
@@ -49,14 +43,8 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryHeaderAtHeight")]
 	fn query_header_at_height(&self, height: u32) -> Result<Header>;
 
-	#[rpc(name = "ibc_queryBalance")]
-	fn query_balance(&self, key_name: String) -> Result<Coin>;
-
 	#[rpc(name = "ibc_queryBalanceWithAddress")]
 	fn query_balance_with_address(&self, addr: String) -> Result<Coin>;
-
-	#[rpc(name = "ibc_queryUnbondingPeriod")]
-	fn query_unbonding_period(&self) -> Result<u64>;
 
 	#[rpc(name = "ibc_queryClientState")]
 	fn query_client_state(
@@ -84,15 +72,6 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	#[rpc(name = "ibc_queryClients")]
 	fn query_clients(&self) -> Result<Vec<Vec<u8>>>;
 
-	#[rpc(name = "ibc_autoUpdateClient")]
-	fn auto_update_client(
-		&self,
-		dst: String,
-		thresholdTime: u64,
-		src_clientId: String,
-		dst_clientId: String,
-	) -> Result<u64>;
-
 	#[rpc(name = "ibc_findMatchingClient")]
 	fn find_matching_client(&self, client_state: AnyClientState) -> Result<Option<String>>;
 
@@ -111,7 +90,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 		&self,
 		height: u32,
 		client_id: String,
-	) -> Result<QueryConnectionsResponse>;
+	) -> Result<QueryConnectionResponse>;
 
 	#[rpc(name = "ibc_generateConnectionHandshakeProof")]
 	fn generate_conn_handshake_proof(
@@ -122,14 +101,7 @@ pub trait IbcApi<Header, Hash, Transaction> {
 	) -> Result<ConnectionHandshakeProof>;
 
 	#[rpc(name = "ibc_newClientState")]
-	fn new_client_state(
-		&self,
-		dst_update_header: Header,
-		dst_trusting_period: u64,
-		dst_unbonding_period: u64,
-		allow_update_after_expiry: bool,
-		allow_update_after_misbehaviour: bool,
-	) -> Result<AnyClientState>;
+	fn new_client_state(&self) -> Result<AnyClientState>;
 
 	#[rpc(name = "ibc_queryChannel")]
 	fn query_channel(
@@ -269,14 +241,6 @@ where
 	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	C::Api: IbcRuntimeApi<Block, <Block as BlockT>::Header>,
 {
-	fn query_transaction(&self, tx_hash: <Block as BlockT>::Hash) -> Result<Transaction> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
-	}
-
-	fn query_transactions(&self, page: u32, limit: u32) -> Result<Vec<Transaction>> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
-	}
-
 	fn generate_proof(&self, height: u32, key: Vec<u8>) -> Result<Proof> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
@@ -307,15 +271,8 @@ where
 			.ok_or(runtime_error_into_rpc_error("Error retrieving header"))
 	}
 
-	fn query_balance(&self, key_name: String) -> Result<Coin> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
-	}
-
+	// Query balance of relayer on chain
 	fn query_balance_with_address(&self, addr: String) -> Result<Coin> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
-	}
-
-	fn query_unbonding_period(&self) -> Result<u64> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
@@ -370,7 +327,7 @@ where
 			.flatten()
 			.ok_or(runtime_error_into_rpc_error("Error querying client consensus state"))
 	}
-
+	// Look for client upgrade in ibc-rs
 	fn query_upgraded_client(&self, height: u32) -> Result<QueryClientStateResponse> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
@@ -388,16 +345,6 @@ where
 			Some(res) => Ok(res),
 			_ => Err(runtime_error_into_rpc_error("Failed to fetch client states")),
 		}
-	}
-
-	fn auto_update_client(
-		&self,
-		dst: String,
-		thresholdTime: u64,
-		src_clientId: String,
-		dst_clientId: String,
-	) -> Result<u64> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn find_matching_client(&self, client_state: AnyClientState) -> Result<Option<String>> {
@@ -464,14 +411,7 @@ where
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
-	fn new_client_state(
-		&self,
-		dst_update_header: <Block as BlockT>::Header,
-		dst_trusting_period: u64,
-		dst_unbonding_period: u64,
-		allow_update_after_expiry: bool,
-		allow_update_after_misbehaviour: bool,
-	) -> Result<AnyClientState> {
+	fn new_client_state(&self) -> Result<AnyClientState> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
