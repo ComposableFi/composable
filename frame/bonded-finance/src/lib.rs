@@ -72,7 +72,7 @@ pub mod pallet {
 	use composable_support::validation::Validated;
 	use composable_traits::{
 		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
-		math::WrappingNext,
+		math::{SafeAdd},
 		vesting::{VestedTransfer, VestingSchedule, VestingWindow::BlockNumberBased},
 	};
 	use frame_support::{
@@ -87,7 +87,7 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
-		traits::{AccountIdConversion, BlockNumberProvider, Convert, Zero},
+		traits::{AccountIdConversion, BlockNumberProvider, Convert, Zero, One},
 		ArithmeticError,
 	};
 	use sp_std::fmt::Debug;
@@ -156,7 +156,8 @@ pub mod pallet {
 			+ Eq
 			+ Debug
 			+ Zero
-			+ WrappingNext
+      + SafeAdd
+      + One
 			+ FullCodec
 			+ MaxEncodedLen
 			+ TypeInfo;
@@ -311,10 +312,10 @@ pub mod pallet {
 			offer: BondOfferOf<T>,
 			keep_alive: bool,
 		) -> Result<T::BondOfferId, DispatchError> {
-			let offer_id = BondOfferCount::<T>::mutate(|offer_id| {
-				*offer_id = offer_id.next();
-				*offer_id
-			});
+			let offer_id = BondOfferCount::<T>::try_mutate(|offer_id| -> Result<T::BondOfferId, DispatchError> {
+				*offer_id = offer_id.safe_add(&T::BondOfferId::one())?;
+				Ok(*offer_id)
+			})?;
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(from, &offer_account, T::Stake::get(), keep_alive)?;
 			T::Currency::transfer(
