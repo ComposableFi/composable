@@ -98,7 +98,9 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Initialized,
+		Initialized {
+			at: MomentOf<T>,
+		},
 		Claimed {
 			remote_account: RemoteAccountOf<T>,
 			reward_account: T::AccountId,
@@ -306,7 +308,7 @@ pub mod pallet {
 			let now = T::Time::now();
 			ensure!(at >= now, Error::<T>::BackToTheFuture);
 			VestingTimeStart::<T>::set(Some(at));
-			Self::deposit_event(Event::Initialized);
+			Self::deposit_event(Event::Initialized { at });
 			Ok(())
 		}
 
