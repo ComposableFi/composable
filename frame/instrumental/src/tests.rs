@@ -14,7 +14,7 @@ fn create_extrinsic_emits_event() {
         assert_ok!(Instrumental::create(Origin::signed(ALICE), PICA::ID));
 
         System::assert_last_event(Event::Instrumental(
-            pallet::Event::Create { asset: PICA::ID }
+            pallet::Event::Created { asset: PICA::ID }
         ));
     });
 }
