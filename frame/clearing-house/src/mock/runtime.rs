@@ -142,6 +142,7 @@ parameter_types! {
 
 impl clearing_house::Config for Runtime {
 	type Event = Event;
+	type WeightInfo = ();
 	type MarketId = u64;
 	type Decimal = FixedI128;
 	type Timestamp = u64;

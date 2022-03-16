@@ -8,6 +8,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod weights;
+
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
@@ -17,6 +19,7 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
+	use crate::weights::WeightInfo;
 	use codec::FullCodec;
 	use composable_traits::{clearing_house::MarginAccounts, defi::DeFiComposableConfig};
 	use frame_support::{
@@ -46,6 +49,8 @@ pub mod pallet {
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
 		// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		/// Weight information for this pallet's extrinsics
+		type WeightInfo: WeightInfo;
 		/// The market ID type for this pallet.
 		type MarketId: FullCodec + MaxEncodedLen + TypeInfo;
 		/// Signed decimal fixed point number.
@@ -208,7 +213,7 @@ pub mod pallet {
 		///
 		/// If an account does not exist in `AccountsMargin`, it is created and initialized with 0
 		/// margin. Checks that the collateral type is supported.
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::add_margin())]
 		pub fn add_margin(
 			origin: OriginFor<T>,
 			asset: AssetIdOf<T>,
