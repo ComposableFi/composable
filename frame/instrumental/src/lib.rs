@@ -4,8 +4,10 @@ mod tests;
 #[cfg(test)]
 mod mock;
 
-mod weights;
+#[cfg(test)]
 mod currency;
+
+mod weights;
 
 pub use pallet::*;
 
@@ -26,6 +28,19 @@ pub mod pallet {
 		ensure_signed,
 	};
 
+	use composable_traits::{
+		vault::StrategicVault,
+	};
+
+	use sp_runtime::{
+		traits::{
+			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
+			Zero,
+		},
+	};
+	use sp_std::fmt::Debug;
+	use codec::{Codec, FullCodec};
+	
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type                                           
 	// ----------------------------------------------------------------------------------------------------
@@ -45,11 +60,60 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type WeightInfo: WeightInfo;
+
+		/// The Balance type used by the pallet for bookkeeping. `Config::Convert` is used for
+		/// conversions to `u128`, which are used in the computations.
+		type Balance: Default
+			+ Parameter
+			+ Codec
+			+ MaxEncodedLen
+			+ Copy
+			+ Ord
+			+ CheckedAdd
+			+ CheckedSub
+			+ CheckedMul
+			+ AtLeast32BitUnsigned
+			+ Zero;
+
+		/// The `AssetId` used by the pallet. Corresponds the the Ids used by the Currency pallet.
+		type AssetId: FullCodec
+			+ MaxEncodedLen
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ TypeInfo;
+
+		type VaultId: Clone 
+		    + Codec 
+			+ MaxEncodedLen 
+			+ Debug 
+			+ PartialEq 
+			+ Default 
+			+ Parameter;
+
+		type Vault: StrategicVault<
+			AssetId = Self::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+			VaultId = Self::VaultId,
+		>;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
     //                                             Pallet Types                                           
 	// ----------------------------------------------------------------------------------------------------
+
+	// ----------------------------------------------------------------------------------------------------
+    //                                            Runtime Storage                                          
+	// ----------------------------------------------------------------------------------------------------
+
+	#[pallet::storage]
+	#[pallet::getter(fn asset_vault)]
+	pub(super) type AssetVault<T: Config> = 
+		StorageMap<_, Blake2_128Concat, T::AssetId, T::VaultId>;
 
 	// ----------------------------------------------------------------------------------------------------
     //                                            Runtime Events                                          
@@ -61,6 +125,10 @@ pub mod pallet {
 		Test {
 			account: T::AccountId
 		},
+
+		Create {
+			asset: T::AssetId
+		},
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -69,11 +137,8 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-	}
 
-	// ----------------------------------------------------------------------------------------------------
-    //                                           Runtime  Storage                                          
-	// ----------------------------------------------------------------------------------------------------
+	}
 
 	// ----------------------------------------------------------------------------------------------------
     //                                                Hooks                                                
@@ -88,20 +153,41 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
 		#[transactional]
-		#[pallet::weight(<T as Config>::WeightInfo::test())]
-		pub fn test(
+		#[pallet::weight(<T as Config>::WeightInfo::create())]
+		pub fn create(
 			origin: OriginFor<T>,
+			asset: T::AssetId,
 		) -> DispatchResultWithPostInfo {
 			// Requirement 0) This extrinsic must be signed 
 			let from = ensure_signed(origin)?;
 
-			Self::deposit_event(Event::Test { account: from });
+			Self::do_create(from, asset)?;
+
+			Self::deposit_event(Event::Create { asset });
 
 			Ok(().into())
 		}
 	}
+
+	// ----------------------------------------------------------------------------------------------------
+    //                                        Low Level Functionality                                      
+	// ----------------------------------------------------------------------------------------------------
+
+	impl<T: Config> Pallet<T> {
+		fn do_create(
+			_issuer: T::AccountId,
+			asset: T::AssetId,
+		) -> Result<(), DispatchError> {
+			// TODO: (Kevin)
+			//  - check that the assets vault doesn't already exist
+
+			AssetVault::<T>::insert(asset, T::VaultId::default());
+			
+			Ok(())
+		}
+	}
+
 }
 
 // ----------------------------------------------------------------------------------------------------

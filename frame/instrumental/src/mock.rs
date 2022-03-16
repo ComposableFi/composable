@@ -161,10 +161,10 @@ impl pallet_vault::Config for Test {
 impl pallet_instrumental::Config for Test {
 	type Event = Event;
 	type WeightInfo = ();
-	// type Balance = Balance;
-	// type AssetId = CurrencyId;
-	// type VaultId = VaultId;
-	// type Vault = Vault;
+	type Balance = Balance;
+	type AssetId = CurrencyId;
+	type VaultId = VaultId;
+	type Vault = Vault;
 }
 
 // ----------------------------------------------------------------------------------------------------
