@@ -6,6 +6,10 @@ use crate::currency::PICA;
 
 use frame_support::{assert_ok, assert_noop};
 
+// ----------------------------------------------------------------------------------------------------
+//                                                Create                                               
+// ----------------------------------------------------------------------------------------------------
+
 #[test]
 fn create_extrinsic_emits_event() {
     ExtBuilder::default().build().execute_with(|| {
@@ -37,5 +41,24 @@ fn cannot_create_more_than_one_vault_for_an_asset() {
             Instrumental::create(Origin::signed(ALICE), PICA::ID),
             Error::<MockRuntime>::VaultAlreadyExists
         );
+    });
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                             Add Liquidity                                           
+// ----------------------------------------------------------------------------------------------------
+
+#[test]
+fn add_liquidity_extrinsic_emits_event() {
+    ExtBuilder::default().build().execute_with(|| {
+        System::set_block_number(1);
+
+        assert_ok!(Instrumental::create(Origin::signed(ALICE), PICA::ID));
+        
+        assert_ok!(Instrumental::add_liquidity(Origin::signed(ALICE), PICA::ID, PICA::units(100)));
+
+        System::assert_last_event(Event::Instrumental(
+            pallet::Event::AddedLiquidity { asset: PICA::ID , amount: PICA::units(100)}
+        ));
     });
 }
