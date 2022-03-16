@@ -112,7 +112,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn asset_vault)]
-	pub(super) type AssetVault<T: Config> = 
+	pub type AssetVault<T: Config> = 
 		StorageMap<_, Blake2_128Concat, T::AssetId, T::VaultId>;
 
 	// ----------------------------------------------------------------------------------------------------
@@ -137,7 +137,7 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-
+		VaultAlreadyExists,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -179,8 +179,11 @@ pub mod pallet {
 			_issuer: T::AccountId,
 			asset: T::AssetId,
 		) -> Result<(), DispatchError> {
-			// TODO: (Kevin)
-			//  - check that the assets vault doesn't already exist
+			ensure!(!AssetVault::<T>::contains_key(asset), Error::<T>::VaultAlreadyExists);
+
+			// TODO: (Nevin)
+			//  - create underlying vault
+			//  - save vault_id
 
 			AssetVault::<T>::insert(asset, T::VaultId::default());
 			
