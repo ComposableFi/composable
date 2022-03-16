@@ -232,6 +232,8 @@ pub mod pallet {
 		ProcessingError,
 		/// Error decoding some type
 		DecodingError,
+		/// Error encoding some type
+		EncodingError,
 		/// Error inserting a value in trie
 		TrieInsertError,
 		/// Error generating trie proof
@@ -625,7 +627,7 @@ pub mod pallet {
 			Ok(QueryChannelResponse {
 				channel,
 				proof: Self::generate_proof(vec![&key])?,
-				height: LatestHeight::<T>::get(),
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?
 			})
 		}
 
@@ -642,7 +644,7 @@ pub mod pallet {
 			Ok(QueryConnectionResponse {
 				connection,
 				proof: Self::generate_proof(vec![&key])?,
-				height: LatestHeight::<T>::get(),
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
 
@@ -670,7 +672,7 @@ pub mod pallet {
 			Ok(QueryClientStateResponse {
 				client_state,
 				proof: Self::generate_proof(vec![&key])?,
-				height: LatestHeight::<T>::get(),
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
 
@@ -706,7 +708,7 @@ pub mod pallet {
 			Ok(QueryClientStatesResponse {
 				client_states,
 				proof: Self::generate_proof(keys.iter().collect::<Vec<_>>())?,
-				height: vec![],
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
 
@@ -746,7 +748,7 @@ pub mod pallet {
 			Ok(QueryConsensusStateResponse {
 				consensus_state,
 				proof: Self::generate_proof(vec![&key])?,
-				height: LatestHeight::<T>::get(),
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
 
@@ -765,7 +767,7 @@ pub mod pallet {
 			Ok(QueryConnectionResponse {
 				connection,
 				proof: Self::generate_proof(vec![&key])?,
-				height: LatestHeight::<T>::get(),
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
 
@@ -796,6 +798,7 @@ pub mod pallet {
 		}
 
 		/// Get the host consensus state
+		/// This will need some beefy state from the relay chain
 		pub fn host_consensus_state() -> Result<QueryConsensusStateResponse, Error<T>> {
 			todo!()
 		}
@@ -818,7 +821,7 @@ pub mod pallet {
 			Ok(QueryChannelsResponse {
 				channels,
 				proof: Self::generate_proof(keys.iter().collect::<Vec<_>>())?,
-				height: LatestHeight::<T>::get(),
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?
 			})
 		}
 
@@ -838,7 +841,7 @@ pub mod pallet {
 			Ok(QueryConnectionsResponse {
 				connections,
 				proof: Self::generate_proof(keys.iter().collect::<Vec<_>>())?,
-				height: LatestHeight::<T>::get(),
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 			})
 		}
 
@@ -846,7 +849,38 @@ pub mod pallet {
 			channel_id: String,
 			port_id: String,
 		) -> Result<QueryPacketCommitmentsResponse, Error<T>> {
-			todo!()
+			let channel_id_bytes = channel_id.as_bytes().to_vec();
+			let port_id_bytes = port_id.as_bytes().to_vec();
+			let mut sequences = vec![];
+			let commitments = PacketCommitment::<T>::iter().filter_map(|((p, c, s), commitment)| {
+				if p == port_id_bytes && c == channel_id_bytes {
+					sequences.push(s);
+					Some(commitment)
+				}
+				else {
+					None
+				}
+			}).collect::<Vec<_>>();
+			let keys = sequences.into_iter().map(|seq| {
+				let channel_id = channel_id_from_bytes::<T>(channel_id_bytes.clone())?;
+				let port_id = port_id_from_bytes::<T>(port_id_bytes.clone())?;
+				let sequence = ibc::core::ics04_channel::packet::Sequence::from(
+					u64::decode(&mut &*seq).map_err(|_| Error::<T>::DecodingError)?,
+				);
+				let mut key = T::CONNECTION_PREFIX.to_vec();
+				let commitment_path = CommitmentsPath { port_id, channel_id, sequence };
+				let commitment_path =
+					format!("{}", commitment_path);
+				key.extend_from_slice(commitment_path.as_bytes());
+				Ok(key)
+			}).collect::<Result<Vec<_>, Error<T>>>()?;
+
+			Ok(QueryPacketCommitmentsResponse {
+				commitments,
+				proof: Self::generate_proof(keys.iter().collect::<Vec<_>>())?,
+				height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?
+			})
+
 		}
 
 		fn packet_acknowledgements(
@@ -923,4 +957,12 @@ fn connection_id_from_bytes<T: Config>(connection: Vec<u8>) -> Result<Connection
 fn client_id_from_bytes<T: Config>(client_id: Vec<u8>) -> Result<ClientId, Error<T>> {
 	ClientId::from_str(&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?)
 		.map_err(|_| Error::<T>::DecodingError)
+}
+
+fn host_height<T: Config>() -> Result<ibc::Height, Error<T>> {
+	let block_number = format!("{:?}", <frame_system::Pallet<T>>::block_number());
+	let current_height = block_number
+		.parse()
+		.map_err(|e| Error::<T>::DecodingError)?;
+	Ok(ibc::Height::new(0, current_height))
 }
