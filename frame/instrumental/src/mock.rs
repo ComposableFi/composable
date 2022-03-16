@@ -1,30 +1,25 @@
-// use super::currency_factory::MockCurrencyId;
-// use frame_support::{
-// 	traits::GenesisBuild,
-// 	PalletId,
-// };
-// use num_traits::Zero;
-// use orml_traits::parameter_type_with_key;
-// use sp_runtime::{
-// 	traits::IdentityLookup,
-// };
-
 use crate as pallet_instrumental;
+use crate::currency::{CurrencyId, PICA};
 
+use frame_system::EnsureRoot;
 use frame_support::{
 	parameter_types,
-	traits::Everything,
+	traits::Everything, PalletId,
 };
 
 use sp_runtime::{
 	testing::Header,
-	traits::IdentityLookup
+	traits::{ConvertInto, IdentityLookup}
 };
 use sp_core::H256;
+
+use orml_traits::parameter_type_with_key;
 
 pub type BlockNumber = u64;
 pub type AccountId = u128;
 pub type Balance = u128;
+pub type VaultId = u64;
+pub type Amount = i128;
 
 pub const ALICE: AccountId = 0;
 
@@ -84,13 +79,92 @@ impl pallet_balances::Config for Test {
 }
 
 // ----------------------------------------------------------------------------------------------------
+//                                                Tokens                                               
+// ----------------------------------------------------------------------------------------------------
+
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+		0u128 as Balance
+	};
+}
+
+impl orml_tokens::Config for Test {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = CurrencyId;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
+	type MaxLocks = ();
+	type DustRemovalWhitelist = Everything;
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                           Currency Factory                                          
+// ----------------------------------------------------------------------------------------------------
+
+
+impl pallet_currency_factory::Config for Test {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type AddOrigin = EnsureRoot<AccountId>;
+	type ReserveOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                                Vault                                                
+// ----------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const MaxStrategies: usize = 255;
+	pub const NativeAssetId: CurrencyId = PICA::ID;
+	pub const CreationDeposit: Balance = 10;
+	pub const ExistentialDeposit: Balance = 1000;
+	pub const RentPerBlock: Balance = 1;
+	pub const MinimumDeposit: Balance = 0;
+	pub const MinimumWithdrawal: Balance = 0;
+	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
+  	pub const TombstoneDuration: u64 = 42;
+}
+
+impl pallet_vault::Config for Test {
+	type Event = Event;
+	type Currency = Tokens;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type MaxStrategies = MaxStrategies;
+	type CurrencyFactory = LpTokenFactory;
+	type Convert = ConvertInto;
+	type MinimumDeposit = MinimumDeposit;
+	type MinimumWithdrawal = MinimumWithdrawal;
+	type PalletId = VaultPalletId;
+	type CreationDeposit = CreationDeposit;
+	type ExistentialDeposit = ExistentialDeposit;
+	type RentPerBlock = RentPerBlock;
+	type NativeCurrency = Balances;
+	type VaultId = VaultId;
+	type TombstoneDuration = TombstoneDuration;
+	type WeightInfo = ();
+}
+
+// ----------------------------------------------------------------------------------------------------
 //                                             Instrumental                                            
 // ----------------------------------------------------------------------------------------------------
 
 impl pallet_instrumental::Config for Test {
 	type Event = Event;
 	type WeightInfo = ();
+	type Balance = Balance;
+	type AssetId = CurrencyId;
+	type VaultId = VaultId;
+	type Vault = Vault;
 }
+
+// ----------------------------------------------------------------------------------------------------
+//                                           Construct Runtime                                         
+// ----------------------------------------------------------------------------------------------------
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -103,6 +177,10 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
+		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
+
+		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Instrumental: pallet_instrumental::{Pallet, Call, Storage, Event<T>},
 	}
 );
