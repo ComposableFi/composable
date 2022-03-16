@@ -250,9 +250,6 @@ pub mod pallet {
 			asset: &T::AssetId,
 			amount: T::Balance
 		) -> Result<(), DispatchError> {
-			// Requirement 0) An asset can only have one vault associated with it
-			ensure!(!AssetVault::<T>::contains_key(asset), Error::<T>::VaultAlreadyExists);
-
 			let vault_id: T::VaultId = Self::asset_vault(asset)
 				.ok_or(Error::<T>::AssetDoesNotHaveAnAssociatedVault)?;
 
