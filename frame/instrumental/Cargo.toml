@@ -1,7 +1,7 @@
 [package]
 name = "pallet-instrumental"
 version = "0.1.0"
-authors = ["Kevin@composable.finance", "Composable Finance Developers"]
+authors = ["Kevin@composable.finance", "Composable Developers"]
 homepage = "https://instrumental.finance"
 edition = "2021"
 
@@ -28,6 +28,10 @@ serde = { version = '1', optional = true }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-currency-factory = { path = "../currency-factory" }
+pallet-vault = { default-features = false, path = "../vault"}
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
 
 [features]
 default = ["std"]
