@@ -21,9 +21,10 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
 mod xcmp;
+
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, MarketId, Moment, Signature,
+	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, MarketId, Moment, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -236,12 +237,12 @@ impl aura::Config for Runtime {
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
-	pub BasicDeposit: Balance = 8 * CurrencyId::PICA.unit::<Balance>();
-	pub FieldDeposit: Balance = 256 * CurrencyId::PICA.milli::<Balance>();
+	pub BasicDeposit: Balance = 8 * CurrencyId::unit::<Balance>();
+	pub FieldDeposit: Balance = 256 * CurrencyId::milli::<Balance>();
 	pub const MaxAdditionalFields: u32 = 32;
 	pub const MaxRegistrars: u32 = 8;
 	pub const MaxSubAccounts: u32 = 32;
-	pub SubAccountDeposit: Balance = 2 * CurrencyId::PICA.unit::<Balance>();
+	pub SubAccountDeposit: Balance = 2 * CurrencyId::unit::<Balance>();
 }
 
 impl identity::Config for Runtime {
@@ -260,8 +261,8 @@ impl identity::Config for Runtime {
 }
 
 parameter_types! {
-	pub DepositBase: u64 = CurrencyId::PICA.unit();
-	pub DepositFactor: u64 = 32 * CurrencyId::PICA.milli::<u64>();
+	pub DepositBase: u64 = CurrencyId::unit();
+	pub DepositFactor: u64 = 32 * CurrencyId::milli::<u64>();
 	pub const MaxSignatories: u16 = 5;
 }
 
@@ -292,8 +293,8 @@ impl timestamp::Config for Runtime {
 
 parameter_types! {
 	/// Minimum amount an account has to hold to stay in state.
-	// minimum account balance is given as 0.1 PICA ~ 100 CurrencyId::PICA.milli()
-	pub ExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
+	// minimum account balance is given as 0.1 PICA ~ 100 CurrencyId::milli()
+	pub ExistentialDeposit: Balance = 100 * CurrencyId::milli::<Balance>();
 	/// Max locks that can be placed on an account. Capped for storage
 	/// concerns.
 	pub const MaxLocks: u32 = 50;
@@ -315,7 +316,7 @@ impl balances::Config for Runtime {
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
-	pub TransactionByteFee: Balance = CurrencyId::PICA.milli();
+	pub TransactionByteFee: Balance = CurrencyId::milli();
 
 	// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
@@ -336,7 +337,7 @@ pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		let p = CurrencyId::PICA.milli::<Balance>();
+		let p = CurrencyId::milli::<Balance>();
 		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 		smallvec::smallvec![WeightToFeeCoefficient {
 			degree: 1,
@@ -364,7 +365,7 @@ impl sudo::Config for Runtime {
 
 parameter_types! {
 	/// Deposit required to get an index.
-	pub IndexDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
+	pub IndexDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 }
 
 impl indices::Config for Runtime {
@@ -551,8 +552,8 @@ parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
 	/// Percentage of proposal that most be bonded by the proposer.
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub ProposalBondMinimum: Balance = 5000 * CurrencyId::PICA.unit::<Balance>();
-	pub ProposalBondMaximum: Balance = 10000 * CurrencyId::PICA.unit::<Balance>();
+	pub ProposalBondMinimum: Balance = 5000 * CurrencyId::unit::<Balance>();
+	pub ProposalBondMaximum: Balance = 10000 * CurrencyId::unit::<Balance>();
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
 
@@ -630,7 +631,7 @@ impl scheduler::Config for Runtime {
 
 parameter_types! {
 	pub const PreimageMaxSize: u32 = 4096 * 1024;
-	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
 }
 
 impl preimage::Config for Runtime {
@@ -655,14 +656,14 @@ parameter_types! {
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
 
-	pub MinimumDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
+	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 
 	// Note that Kusama uses 10 millis, however KSM is significantly more expensive
 	// https://github.com/paritytech/polkadot/blob/dc784f9b47e4681897cfd477b4f0760330875a87/runtime/kusama/src/lib.rs#L237
 	// so we increase it by a factor 10. This might still be on the low side.
-	pub PreimageByteDeposit: Balance = CurrencyId::PICA.milli::<u128>() * 100_u128;
+	pub PreimageByteDeposit: Balance = CurrencyId::milli::<u128>() * 100_u128;
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -737,7 +738,7 @@ impl crowdloan_rewards::Config for Runtime {
 
 parameter_types! {
 	  pub const MaxVestingSchedule: u32 = 128;
-	  pub MinVestedTransfer: u64 = CurrencyId::PICA.milli::<u64>();
+	  pub MinVestedTransfer: u64 = CurrencyId::milli::<u64>();
 }
 
 impl vesting::Config for Runtime {
@@ -745,7 +746,7 @@ impl vesting::Config for Runtime {
 	type Event = Event;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = system::EnsureSigned<AccountId>;
+	type VestedTransferOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
@@ -753,13 +754,13 @@ impl vesting::Config for Runtime {
 
 parameter_types! {
 	  pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
-	  pub MinReward: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
-	  pub Stake: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+	  pub MinReward: Balance = 10 * CurrencyId::unit::<Balance>();
+	  pub Stake: Balance = 10 * CurrencyId::unit::<Balance>();
 }
 
 impl bonded_finance::Config for Runtime {
-	type AdminOrigin = EnsureRoot<AccountId>;
-	type BondOfferId = u64;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type BondOfferId = BondOfferId;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type Currency = Assets;
 	type Event = Event;

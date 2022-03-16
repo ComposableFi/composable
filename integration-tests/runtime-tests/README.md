@@ -4,12 +4,17 @@ Picasso Integration Tester is a collection of different implementation tests for
 
 ## Installation
 
-
 ```bash
 $ npm ci
 ```
 
+
 ## Usage
+
+### To run the fully automated test suite on Docker:
+```bash
+$ docker-compose up
+```
 
 ### To run the devnet dummy data initializer
 ```bash
@@ -31,11 +36,6 @@ $ npm run gen
 $ npm run check_dep_updates
 ```
 
-
-## ToDo:
-* Add all general test cases.
-* Add non-conventional test cases.
-* Enhance code documentation.
 
 
 ## Contributing

@@ -230,8 +230,8 @@ impl timestamp::Config for Runtime {
 
 parameter_types! {
 	/// Minimum amount an account has to hold to stay in state.
-	// minimum account balance is given as 0.1 PICA ~ 100 CurrencyId::PICA.milli()
-	pub ExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
+	// minimum account balance is given as 0.1 PICA ~ 100 CurrencyId::milli()
+	pub ExistentialDeposit: Balance = 100 * CurrencyId::milli::<Balance>();
 	/// Max locks that can be placed on an account. Capped for storage
 	/// concerns.
 	pub const MaxLocks: u32 = 50;
@@ -253,7 +253,7 @@ impl balances::Config for Runtime {
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
-	pub TransactionByteFee: Balance = CurrencyId::PICA.milli();
+	pub TransactionByteFee: Balance = CurrencyId::milli();
 
 	// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
@@ -274,7 +274,7 @@ pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		let p = CurrencyId::PICA.milli::<Balance>();
+		let p = CurrencyId::milli::<Balance>();
 		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 		smallvec::smallvec![WeightToFeeCoefficient {
 			degree: 1,
@@ -302,7 +302,7 @@ impl sudo::Config for Runtime {
 
 parameter_types! {
 	/// Deposit required to get an index.
-	pub IndexDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
+	pub IndexDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 }
 
 impl indices::Config for Runtime {
@@ -381,7 +381,7 @@ parameter_types! {
 	pub const StalePrice: BlockNumber = 5;
 
 	/// TODO: discuss with omar/cosmin
-	pub MinStake: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
+	pub MinStake: Balance = 1000 * CurrencyId::unit::<Balance>();
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
@@ -515,8 +515,8 @@ parameter_types! {
 	/// percentage of proposal that most be bonded by the proposer
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	// TODO: rationale?
-	pub ProposalBondMinimum: Balance = 5 * CurrencyId::PICA.unit::<Balance>();
-	pub ProposalBondMaximum: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
+	pub ProposalBondMinimum: Balance = 5 * CurrencyId::unit::<Balance>();
+	pub ProposalBondMaximum: Balance = 1000 * CurrencyId::unit::<Balance>();
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
 
@@ -595,7 +595,7 @@ impl scheduler::Config for Runtime {
 
 parameter_types! {
 	pub const PreimageMaxSize: u32 = 4096 * 1024;
-	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
 }
 
 impl preimage::Config for Runtime {
@@ -620,11 +620,11 @@ parameter_types! {
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
 
-	pub MinimumDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
+	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	// TODO: prod value
-	pub PreimageByteDeposit: Balance = CurrencyId::PICA.milli();
+	pub PreimageByteDeposit: Balance = CurrencyId::milli();
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -708,9 +708,9 @@ impl crowdloan_rewards::Config for Runtime {
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
-	pub CreationDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
-	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
-	pub RentPerBlock: Balance = CurrencyId::PICA.milli::<Balance>();
+	pub CreationDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
+	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::unit::<Balance>();
+	pub RentPerBlock: Balance = CurrencyId::milli::<Balance>();
 	pub const VaultMinimumDeposit: Balance = 10_000;
 	pub const VaultMinimumWithdrawal: Balance = 10_000;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");

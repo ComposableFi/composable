@@ -51,14 +51,14 @@ impl CurrencyId {
 	pub const KSM: CurrencyId = CurrencyId(4);
 
 	#[inline(always)]
-	pub fn decimals(&self) -> Exponent {
+	pub const fn decimals() -> Exponent {
 		12
 	}
-	pub fn unit<T: From<u64>>(&self) -> T {
-		T::from(10_u64.pow(self.decimals()))
+	pub fn unit<T: From<u64>>() -> T {
+		T::from(10_u64.pow(Self::decimals()))
 	}
-	pub fn milli<T: From<u64> + Div<Output = T>>(&self) -> T {
-		self.unit::<T>() / T::from(1000_u64)
+	pub fn milli<T: From<u64> + Div<Output = T>>() -> T {
+		Self::unit::<T>() / T::from(1000_u64)
 	}
 }
 

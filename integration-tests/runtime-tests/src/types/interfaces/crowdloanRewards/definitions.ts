@@ -30,7 +30,23 @@ export default {
     ComposableTraitsCallFilterCallFilterEntry: "Null",
     PalletAssetsRegistryCandidateStatus: "Null",
     SpConsensusAuraSr25519AppSr25519Public: "Null",
-    ComposableTraitsBondedFinanceBondOffer: "Null",
+    ComposableTraitsBondedFinanceBondOffer: {
+      beneficiary: "AccountId32",
+      asset: "u128",
+      bondPrice: "u128",
+      nbOfBonds: "u128",
+      maturity: "ComposableTraitsBondedFinanceBondDuration",
+      reward: "ComposableTraitsBondedFinanceBondOfferReward",
+      keepAlive: "bool"
+    },
+    ComposableTraitsBondedFinanceBondDuration: {
+      Finite: {returnIn: "u32"}
+    },
+    ComposableTraitsBondedFinanceBondOfferReward: {
+      asset: "u128",
+      amount: "u128",
+      maturity: "u32"
+    },
     PalletCollatorSelectionCandidateInfo: "Null",
     PalletCrowdloanRewardsReward: "Null",
     PalletDemocracyVoteThreshold: "Null",
@@ -103,6 +119,16 @@ export default {
     FrameSupportScheduleLookupError: "Null",
     PalletCurrencyFactoryRanges: "Null",
     PalletCurrencyFactoryRangesRange: "Null",
-    PalletLiquidationsLiquidationStrategyConfiguration: "Null"
+    PalletLiquidationsLiquidationStrategyConfiguration: "Null",
+    ComposableTraitsDefiCurrencyPair: "Null",
+    CommonMosaicRemoteAssetId: "Null",
+    ComposableTraitsDexConsantProductPoolInfo: "Null",
+    ComposableTraitsLendingMarketConfig: "Null",
+    ComposableTraitsLendingCreateInput: "Null",
+    ComposableTraitsLendingUpdateInput: "Null",
+    PalletLiquidityBootstrappingPool: "Null",
+    ComposableTraitsOraclePrice: "Null",
+    ComposableTraitsDexStableSwapPoolInfo: "Null",
+    ComposableTraitsDexConstantProductPoolInfo: "Null"
   },
 };
