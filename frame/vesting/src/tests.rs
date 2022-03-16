@@ -116,7 +116,7 @@ fn vested_transfer_works() {
 			per_period: 100_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
+			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
@@ -144,7 +144,7 @@ fn vested_transfer_for_moment_based_schedule_works() {
 			per_period: 100_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
+			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
@@ -169,7 +169,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 			per_period: 10_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
+			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
@@ -185,7 +185,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 			per_period: 7_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
+			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
@@ -198,7 +198,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 			per_period: 7_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
+			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
@@ -221,7 +221,7 @@ fn cannot_use_fund_if_not_claimed() {
 			per_period: 50_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
+			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
@@ -233,7 +233,7 @@ fn cannot_use_fund_if_not_claimed() {
 			per_period: 10_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
+			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
@@ -256,10 +256,7 @@ fn vested_transfer_fails_if_zero_period_count() {
 			per_period: 100_u64,
 		};
 		assert_noop!(
-			Vesting::vested_transfer(
-        Origin::root(),
-			  ALICE
-, BOB, MockCurrencyId::BTC, schedule,),
+			Vesting::vested_transfer(Origin::root(), ALICE, BOB, MockCurrencyId::BTC, schedule,),
 			Error::<Runtime>::ZeroVestingPeriodCount
 		);
 	});
@@ -274,10 +271,7 @@ fn vested_transfer_fails_if_zero_period() {
 			per_period: 100_u64,
 		};
 		assert_noop!(
-			Vesting::vested_transfer(
-        Origin::root(),
-			  ALICE
-, BOB, MockCurrencyId::BTC, schedule,),
+			Vesting::vested_transfer(Origin::root(), ALICE, BOB, MockCurrencyId::BTC, schedule,),
 			Error::<Runtime>::ZeroVestingPeriod
 		);
 
@@ -328,8 +322,8 @@ fn vested_transfer_fails_if_overflow() {
 		};
 		assert_noop!(
 			Vesting::vested_transfer(
-        Origin::root(),
-        ALICE,
+				Origin::root(),
+				ALICE,
 				BOB,
 				MockCurrencyId::BTC,
 				another_schedule,
@@ -344,8 +338,8 @@ fn vested_transfer_fails_if_overflow() {
 		};
 		assert_noop!(
 			Vesting::vested_transfer(
-        Origin::root(),
-        ALICE,
+				Origin::root(),
+				ALICE,
 				BOB,
 				MockCurrencyId::BTC,
 				moment_based_schedule,
@@ -364,7 +358,13 @@ fn vested_transfer_fails_if_bad_origin() {
 			per_period: 100_u64,
 		};
 		assert_noop!(
-			Vesting::vested_transfer(Origin::signed(CHARLIE), CHARLIE, BOB, MockCurrencyId::BTC, schedule,),
+			Vesting::vested_transfer(
+				Origin::signed(CHARLIE),
+				CHARLIE,
+				BOB,
+				MockCurrencyId::BTC,
+				schedule,
+			),
 			BadOrigin
 		);
 	});
@@ -379,8 +379,8 @@ fn claim_works() {
 			per_period: 10_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
-      ALICE,
+			Origin::root(),
+			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
 			schedule,
@@ -418,8 +418,8 @@ fn claim_for_works() {
 			per_period: 10_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
-      ALICE,
+			Origin::root(),
+			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
 			schedule,
@@ -454,8 +454,8 @@ fn claim_for_works_moment_based() {
 			per_period: 10_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
-      ALICE,
+			Origin::root(),
+			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
 			schedule,
@@ -489,8 +489,8 @@ fn update_vesting_schedules_works() {
 			per_period: 10_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
-      ALICE,
+			Origin::root(),
+			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
 			schedule,
@@ -502,8 +502,8 @@ fn update_vesting_schedules_works() {
 			per_period: 10_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
-      ALICE,
+			Origin::root(),
+			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
 			moment_based_schedule,
@@ -585,8 +585,8 @@ fn multiple_vesting_schedule_claim_works() {
 			per_period: 10_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
-      ALICE,
+			Origin::root(),
+			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
 			schedule.clone(),
@@ -598,8 +598,8 @@ fn multiple_vesting_schedule_claim_works() {
 			per_period: 10_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
-        ALICE,
+			Origin::root(),
+			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
 			schedule2.clone(),
@@ -636,30 +636,30 @@ fn exceeding_maximum_schedules_should_fail() {
 			per_period: 10_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
-      ALICE,
+			Origin::root(),
+			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
 			schedule.clone(),
 		));
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
-      ALICE,
+			Origin::root(),
+			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
 			schedule.clone(),
 		));
 		assert_ok!(Vesting::vested_transfer(
-      Origin::root(),
-      ALICE,
+			Origin::root(),
+			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
 			moment_schedule,
 		));
 		assert_noop!(
 			Vesting::vested_transfer(
-        Origin::root(),
-        ALICE,
+				Origin::root(),
+				ALICE,
 				BOB,
 				MockCurrencyId::BTC,
 				schedule.clone(),

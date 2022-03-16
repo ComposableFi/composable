@@ -33,7 +33,7 @@ mod types {
 	// todo move it into more shared directory so it can be shared with
 	// tests, integration, benchmark, (simnode?)
 
-  pub type BondOfferId = u128;
+	pub type BondOfferId = u128;
 
 	/// Timestamp implementation.
 	pub type Moment = u64;

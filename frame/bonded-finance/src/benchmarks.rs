@@ -5,16 +5,14 @@ use crate::Pallet as BondedFinance;
 use crate::{AssetIdOf, BalanceOf, BlockNumberOf, BondOfferOf, Call, Config, Pallet};
 use codec::Decode;
 use composable_support::validation::Validated;
-use composable_traits::{
-	bonded_finance::{BondDuration, BondOffer, BondOfferReward},
-};
+use composable_traits::bonded_finance::{BondDuration, BondOffer, BondOfferReward};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	dispatch::UnfilteredDispatchable,
 	traits::{fungible::Mutate as _, fungibles::Mutate as _},
 };
-use sp_runtime::traits::One;
 use frame_system::RawOrigin;
+use sp_runtime::traits::One;
 
 const MIN_VESTED_TRANSFER: u128 = 1000 * 1_000_000_000_000;
 const BALANCE: u128 = 1_000_000 * 1_000_000_000_000;

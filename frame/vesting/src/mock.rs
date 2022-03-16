@@ -8,7 +8,7 @@ use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{EnsureOrigin, Everything},
 };
-use frame_system::{RawOrigin, EnsureRoot};
+use frame_system::{EnsureRoot, RawOrigin};
 use orml_traits::parameter_type_with_key;
 use scale_info::TypeInfo;
 use sp_core::H256;

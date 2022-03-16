@@ -246,13 +246,13 @@ pub mod module {
 		#[pallet::weight(<T as Config>::WeightInfo::vested_transfer())]
 		pub fn vested_transfer(
 			origin: OriginFor<T>,
-      from: <T::Lookup as StaticLookup>::Source,
+			from: <T::Lookup as StaticLookup>::Source,
 			beneficiary: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
 			schedule: VestingScheduleOf<T>,
 		) -> DispatchResult {
-      T::VestedTransferOrigin::ensure_origin(origin)?;
-      let from = T::Lookup::lookup(from)?;
+			T::VestedTransferOrigin::ensure_origin(origin)?;
+			let from = T::Lookup::lookup(from)?;
 			let to = T::Lookup::lookup(beneficiary)?;
 			<Self as VestedTransfer>::vested_transfer(asset, &from, &to, schedule.clone())?;
 

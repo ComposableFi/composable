@@ -24,8 +24,9 @@ mod xcmp;
 
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO,
-	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION, BondOfferId,
+	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
