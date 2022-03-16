@@ -24,7 +24,7 @@ use ibc::{
 	Height,
 };
 use ibc_runtime_api::IbcRuntimeApi;
-use jsonrpc_core::{futures::future::ok, Error as JsonRpcError, ErrorCode, Result};
+use jsonrpc_core::{Error as JsonRpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
@@ -39,7 +39,7 @@ use tendermint_proto::Protobuf;
 pub trait IbcApi<BlockNumber> {
 	/// Generate proof for given key
 	#[rpc(name = "ibc_generateProof")]
-	fn generate_proof(&self, height: u32, key: Vec<u8>) -> Result<Proof>;
+	fn generate_proof(&self, height: u32, key: Vec<Vec<u8>>) -> Result<Proof>;
 
 	/// Query latest height
 	#[rpc(name = "ibc_queryLatestHeight")]
@@ -47,7 +47,7 @@ pub trait IbcApi<BlockNumber> {
 
 	/// Query balance of an address on chain
 	#[rpc(name = "ibc_queryBalanceWithAddress")]
-	fn query_balance_with_address(&self, addr: String) -> Result<Coin>;
+	fn query_balance_with_address(&self, addr: Vec<u8>) -> Result<Coin>;
 
 	/// Query a client state
 	#[rpc(name = "ibc_queryClientState")]
@@ -261,8 +261,19 @@ where
 	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	C::Api: IbcRuntimeApi<Block, <Block as BlockT>::Header>,
 {
-	fn generate_proof(&self, height: u32, key: Vec<u8>) -> Result<Proof> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+	fn generate_proof(&self, height: u32, keys: Vec<Vec<u8>>) -> Result<Proof> {
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+		let at = BlockId::Hash(block_hash);
+		api.generate_proof(&at, keys)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error generating proof"))
 	}
 
 	fn query_latest_height(&self) -> Result<<<Block as BlockT>::Header as HeaderT>::Number> {
@@ -273,8 +284,7 @@ where
 		}
 	}
 
-	// Query balance of relayer on chain
-	fn query_balance_with_address(&self, addr: String) -> Result<Coin> {
+	fn query_balance_with_address(&self, addr: Vec<u8>) -> Result<Coin> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
@@ -388,7 +398,19 @@ where
 		client_id: String,
 		conn_id: String,
 	) -> Result<ConnectionHandshakeProof> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+
+		let at = BlockId::Hash(block_hash);
+		api.connection_handshake_proof(&at, client_id, conn_id)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error generating handshake proof"))
 	}
 
 	fn new_client_state(&self) -> Result<Vec<u8>> {

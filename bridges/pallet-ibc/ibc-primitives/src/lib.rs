@@ -1,9 +1,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-use ibc::core::{
-	ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
-	ics03_connection::connection::ConnectionEnd,
-	ics04_channel::{channel::ChannelEnd, packet::Sequence},
-};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};

@@ -14,7 +14,11 @@ sp_api::decl_runtime_apis! {
 		/// Return latest height
 		fn latest_height() -> Option<u32>;
 
+		/// Returns the balance of this address
 		fn query_balance_with_address(addr: String) -> Option<Vec<u8>>;
+
+		/// Generate trie proof for these keys
+		fn generate_proof(keys: Vec<Vec<u8>>) -> Option<Proof>;
 
 		/// Return client state at height
 		fn client_state(client_id: String) -> Option<QueryClientStateResponse>;
@@ -35,7 +39,7 @@ sp_api::decl_runtime_apis! {
 		fn connection_using_client(client_id: String) -> Option<QueryConnectionResponse>;
 
 		/// Returns Connection handshake proof
-		fn conn_handshake_proof(client_id: String, conn_id: String) -> Option<ConnectionHandshakeProof>;
+		fn connection_handshake_proof(client_id: String, conn_id: String) -> Option<ConnectionHandshakeProof>;
 
 		fn channel(channel_id: String, port_id: String) -> Option<QueryChannelResponse>;
 
