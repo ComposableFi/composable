@@ -38,5 +38,5 @@ rust-toolchain.toml
 
 .benchmarkRun
 
-integration-tests/**/*.js
-integration-tests/**/*d.ts
+integration-tests/runtime-tests/**/*.js
+integration-tests/runtime-tests/**/*d.ts
