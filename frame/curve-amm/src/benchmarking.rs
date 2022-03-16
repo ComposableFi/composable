@@ -4,7 +4,7 @@ use composable_traits::{defi::CurrencyPair, dex::Amm};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	assert_ok,
-	traits::fungibles::{Inspect, Mutate},
+	traits::fungibles::{Mutate},
 };
 use frame_system::RawOrigin;
 use sp_arithmetic::Permill;
