@@ -88,7 +88,7 @@ pub mod pallet {
 	type PoolIdOf<T> = <T as Config>::PoolId;
 	type PoolConfigurationOf<T> =
 		PoolConfiguration<<T as frame_system::Config>::AccountId, <T as Config>::AssetId>;
-	type PoolInitOf<T> = PoolInitConfiguration<<T as Config>::AssetId>;
+	type PoolInitConfigurationOf<T> = PoolInitConfiguration<<T as Config>::AssetId>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -253,7 +253,7 @@ pub mod pallet {
 		/// Emits `PoolCreated` event when successful.
 		// TODO: enable weight
 		#[pallet::weight(10_000)]
-		pub fn create(origin: OriginFor<T>, pool: PoolInitOf<T>) -> DispatchResult {
+		pub fn create(origin: OriginFor<T>, pool: PoolInitConfigurationOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let _ = Self::do_create_pool(&who, pool)?;
 			Ok(())
@@ -368,7 +368,7 @@ pub mod pallet {
 		#[transactional]
 		pub(crate) fn do_create_pool(
 			who: &T::AccountId,
-			init_config: PoolInitOf<T>,
+			init_config: PoolInitConfigurationOf<T>,
 		) -> Result<T::PoolId, DispatchError> {
 			match init_config {
 				PoolInitConfiguration::StableSwap {
@@ -427,6 +427,7 @@ pub mod pallet {
 			Ok((base_amount_excluding_fees, quote_amount, lp_fee, protocol_fee))
 		}
 	}
+
 	impl<T: Config> Amm for Pallet<T> {
 		type AssetId = T::AssetId;
 		type Balance = T::Balance;

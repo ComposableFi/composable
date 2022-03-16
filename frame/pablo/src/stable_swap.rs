@@ -58,6 +58,7 @@ impl<T: Config> StableSwap<T> {
 
 		Ok(pool_id)
 	}
+
 	fn get_invariant(
 		base_asset_aum: T::Balance,
 		quote_asset_aum: T::Balance,
