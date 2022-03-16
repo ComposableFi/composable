@@ -143,7 +143,13 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		/// This error is thrown when a vault is trying to be created for an asset that already
+		///     has an associated vault.
 		VaultAlreadyExists,
+
+		/// This error is thrown when a user tries to call add_liquidity or remove_liquidity on an asset 
+		///     that does not have an associated vault (yet).
+		AssetDoesNotHaveAnAssociatedVault,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -186,6 +192,12 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			// Requirement 0) This extrinsic must be signed 
 			let _from = ensure_signed(origin)?;
+
+			// Requirement 1) The asset must have an associated vault
+			ensure!(
+				AssetVault::<T>::contains_key(asset),
+				Error::<T>::AssetDoesNotHaveAnAssociatedVault
+			);
 
 			Self::deposit_event(Event::AddedLiquidity {asset, amount});
 
