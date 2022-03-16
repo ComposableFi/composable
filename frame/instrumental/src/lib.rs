@@ -127,9 +127,14 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Create {
+		Created {
 			asset: T::AssetId
 		},
+
+		AddedLiquidity {
+			asset: T::AssetId,
+			amount: T::Balance
+		}
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -168,7 +173,21 @@ pub mod pallet {
 
 			Self::do_create(from, asset)?;
 
-			Self::deposit_event(Event::Create { asset });
+			Self::deposit_event(Event::Created { asset });
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::create())]
+		pub fn add_liquidity(
+			origin: OriginFor<T>,
+			asset: T::AssetId,
+			amount: T::Balance
+		) -> DispatchResultWithPostInfo {
+			// Requirement 0) This extrinsic must be signed 
+			let _from = ensure_signed(origin)?;
+
+			Self::deposit_event(Event::AddedLiquidity {asset, amount});
 
 			Ok(().into())
 		}
