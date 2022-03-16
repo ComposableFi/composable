@@ -403,9 +403,9 @@ pub mod pallet {
 								// that the protocol is now owning the funds.
 							},
 						}
-						// NOTE(hussein-aitlahcen): can't overflow as checked to be <
+						// NOTE(hussein-aitlahcen): can't overflow as checked to be <=
 						// offer.nb_of_bonds prior to this
-						// Same goes for reward_share as nb_of_bonds * bond_price <= total_price
+						// Same goes for reward_share as nb_of_bonds * bond_price <= total_price is checked by the `Validate` instance of `BondOffer`
 						(*offer).nb_of_bonds -= nb_of_bonds;
 						(*offer).reward.amount -= reward_share;
 						let new_bond_event = || {
