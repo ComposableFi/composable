@@ -62,3 +62,15 @@ fn add_liquidity_extrinsic_emits_event() {
         ));
     });
 }
+
+#[test]
+fn add_liquidity_asset_must_have_an_associated_vault() {
+    ExtBuilder::default().build().execute_with(|| {
+        System::set_block_number(1);
+        
+        assert_noop!(
+            Instrumental::add_liquidity(Origin::signed(ALICE), PICA::ID, PICA::units(100)),
+            Error::<MockRuntime>::AssetDoesNotHaveAnAssociatedVault
+        );
+    });
+}
