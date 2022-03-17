@@ -196,7 +196,7 @@ pub mod pallet {
 			amount: T::Balance
 		) -> DispatchResultWithPostInfo {
 			// Requirement 0) This extrinsic must be signed 
-			let from = ensure_signed(origin)?;
+			let issuer = ensure_signed(origin)?;
 
 			// Requirement 1) The asset must have an associated vault
 			ensure!(
@@ -204,8 +204,7 @@ pub mod pallet {
 				Error::<T>::AssetDoesNotHaveAnAssociatedVault
 			);
 
-			Self::do_add_liquidity(&from, &asset, amount)?;
-
+			Self::do_add_liquidity(&issuer, &asset, amount)?;
 			Self::deposit_event(Event::AddedLiquidity {asset, amount});
 
 			Ok(().into())
@@ -218,8 +217,9 @@ pub mod pallet {
 			amount: T::Balance
 		) -> DispatchResultWithPostInfo {
 			// Requirement 0) This extrinsic must be signed 
-			let _from = ensure_signed(origin)?;
+			let issuer = ensure_signed(origin)?;
 
+			Self::do_remove_liquidity(&issuer, &asset, amount)?;
 			Self::deposit_event(Event::RemovedLiquidity {asset, amount});
 
 			Ok(().into())
@@ -273,6 +273,20 @@ pub mod pallet {
 				.ok_or(Error::<T>::AssetDoesNotHaveAnAssociatedVault)?;
 
 			<T::Vault as StrategicVault>::deposit(&vault_id, issuer, amount)?;
+
+			Ok(())
+		}
+
+		#[transactional]
+		fn do_remove_liquidity(
+			issuer: &T::AccountId,
+			asset: &T::AssetId,
+			amount: T::Balance
+		) -> Result<(), DispatchError> {
+			let vault_id: T::VaultId = Self::asset_vault(asset)
+				.ok_or(Error::<T>::AssetDoesNotHaveAnAssociatedVault)?;
+
+			<T::Vault as StrategicVault>::withdraw(&vault_id, issuer, amount)?;
 
 			Ok(())
 		}
