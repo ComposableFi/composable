@@ -129,7 +129,7 @@ pub mod pallet {
 	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
 	pub struct NetworkInfo<Balance> {
 		pub enabled: bool,
-    pub min_transfer_size: Balance,
+		pub min_transfer_size: Balance,
 		pub max_transfer_size: Balance,
 	}
 
@@ -342,7 +342,7 @@ pub mod pallet {
 		NoStaleTransactions,
 		InsufficientBudget,
 		ExceedsMaxTransferSize,
-    BelowMinTransferSize,
+		BelowMinTransferSize,
 		NoClaimableTx,
 		TxStillLocked,
 		NoOutgoingTx,

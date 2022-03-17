@@ -222,7 +222,8 @@ mod set_network {
 	#[test]
 	fn relayer_can_set_network() {
 		let network_id = 3;
-		let network_info = NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
+		let network_info =
+			NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 
@@ -234,7 +235,8 @@ mod set_network {
 	#[test]
 	fn root_cannot_set_network() {
 		let network_id = 3;
-		let network_info = NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
+		let network_info =
+			NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 
@@ -248,7 +250,8 @@ mod set_network {
 	#[test]
 	fn none_cannot_set_network() {
 		let network_id = 3;
-		let network_info = NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
+		let network_info =
+			NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 
@@ -616,7 +619,7 @@ mod timelocked_mint {
 		fn can_mint_up_to_the_penalised_budget(
 			account_a in account_id(),
 			decay in 1..100u128, // todo,
-      min_transfer_size in 1..10_000_000u128,
+	  min_transfer_size in 1..10_000_000u128,
 			max_transfer_size in 10_000_000u128..100_000_000u128,
 			asset_id in 1..100u128,
 			network_id in 1..100u32,
@@ -654,7 +657,7 @@ mod timelocked_mint {
 		fn cannot_mint_more_than_the_penalised_budget(
 			account_a in account_id(),
 			decay in 1..100u128, // todo,
-      min_transfer_size in 1..10_000_000u128,
+	  min_transfer_size in 1..10_000_000u128,
 			max_transfer_size in 10_000_000u128..100_000_000u128,
 			asset_id in 1..100u128,
 			network_id in 1..100u32,
@@ -693,7 +696,7 @@ mod timelocked_mint {
 		fn should_be_able_to_mint_again_after_waiting_for_penalty_to_decay(
 			account_a in account_id(),
 			decay_factor in 1..100u128, // todo,
-      min_transfer_size in 1..10_000_000u128,
+	  min_transfer_size in 1..10_000_000u128,
 			max_transfer_size in 10_000_000u128..100_000_000u128,
 			asset_id in 1..100u128,
 			network_id in 1..100u32,
@@ -1036,7 +1039,7 @@ mod transfer_to {
 	#[test]
 	fn transfer_to_below_min_transfer_size() {
 		ExtBuilder { balances: Default::default() }.build().execute_with(|| {
-      let min_transfer_size = 1000;
+			let min_transfer_size = 1000;
 			let max_transfer_size = 100000;
 
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
@@ -1083,7 +1086,7 @@ mod transfer_to {
 	#[test]
 	fn transfer_to_exceeds_max_transfer_size() {
 		ExtBuilder { balances: Default::default() }.build().execute_with(|| {
-      let min_transfer_size = 1;
+			let min_transfer_size = 1;
 			let max_transfer_size = 100000;
 
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));

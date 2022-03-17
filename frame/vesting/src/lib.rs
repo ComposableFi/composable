@@ -143,8 +143,8 @@ pub mod module {
 		AmountLow,
 		/// Failed because the maximum vesting schedules was exceeded
 		MaxVestingSchedulesExceeded,
-    /// Trying to vest to ourselves
-    TryingToSelfVest
+		/// Trying to vest to ourselves
+		TryingToSelfVest,
 	}
 
 	#[pallet::event]
@@ -309,7 +309,7 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 		to: &Self::AccountId,
 		schedule: VestingSchedule<Self::BlockNumber, Self::Moment, Self::Balance>,
 	) -> frame_support::dispatch::DispatchResult {
-    ensure!(from != to, Error::<T>::TryingToSelfVest);
+		ensure!(from != to, Error::<T>::TryingToSelfVest);
 
 		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 
