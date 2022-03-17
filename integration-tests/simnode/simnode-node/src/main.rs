@@ -1,3 +1,5 @@
+#![allow(unknown_lints, panics)]
+
 use sc_cli::{CliConfiguration, SubstrateCli};
 use std::error::Error;
 
