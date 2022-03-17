@@ -172,15 +172,6 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	pub fn offchain_key(packet_type: &str) -> Vec<u8> {
-		let parent_blockhash = frame_system::Pallet::<T>::parent_hash();
-		(T::INDEXING_PREFIX, packet_type, parent_blockhash).encode()
-	}
-
-	pub fn store_send_packet_offchain() {}
-
-	pub fn store_timeout_packet_offchain() {}
-
 	pub(crate) fn build_ibc_state_trie<'a>(
 		db: &'a mut sp_trie::MemoryDB<BlakeTwo256>,
 		root: &'a mut sp_core::H256,
@@ -772,9 +763,9 @@ impl<T: Config> Pallet<T> {
 		client_id: String,
 		connection_id: String,
 	) -> Result<ConnectionHandshakeProof, Error<T>> {
-		let height = ibc::Height::decode(&*LatestHeight::<T>::get())
-			.map_err(|_| Error::<T>::DecodingError)?;
 		let client_state = ClientStates::<T>::get(client_id.as_bytes().to_vec());
+        let client_state_decoded = AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
+        let height = client_state_decoded.latest_height();
 		let client_id = client_id_from_bytes(client_id.as_bytes().to_vec())?;
 		let connection_id = connection_id_from_bytes(connection_id.as_bytes().to_vec())?;
 		let prefix = T::CONNECTION_PREFIX.to_vec();

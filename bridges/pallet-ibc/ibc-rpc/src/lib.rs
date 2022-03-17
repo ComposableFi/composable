@@ -321,7 +321,7 @@ where
 			.flatten()
 			.ok_or(runtime_error_into_rpc_error("Error querying client consensus state"))
 	}
-	// Look for client upgrade in ibc-rs
+	// TODO: Not required in first version
 	fn query_upgraded_client(&self, height: u32) -> Result<QueryClientStateResponse> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
