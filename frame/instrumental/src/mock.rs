@@ -4,7 +4,8 @@ use crate::currency::{CurrencyId, PICA};
 use frame_system::EnsureRoot;
 use frame_support::{
 	parameter_types,
-	traits::Everything, PalletId,
+	PalletId,
+	traits::{Everything, GenesisBuild},
 };
 
 use sp_runtime::{
@@ -21,7 +22,9 @@ pub type Balance = u128;
 pub type VaultId = u64;
 pub type Amount = i128;
 
-pub const ALICE: AccountId = 0;
+pub const NATIVE_ASSET: CurrencyId = PICA::ID;
+pub const ADMIN: AccountId = 0;
+pub const ALICE: AccountId = 1;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                Config                                               
@@ -124,7 +127,7 @@ impl pallet_currency_factory::Config for MockRuntime {
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: CurrencyId = PICA::ID;
+	pub const NativeAssetId: CurrencyId = NATIVE_ASSET;
 	pub const CreationDeposit: Balance = 10;
 	pub const ExistentialDeposit: Balance = 1000;
 	pub const RentPerBlock: Balance = 1;
@@ -197,17 +200,34 @@ frame_support::construct_runtime!(
 
 #[derive(Default)]
 pub struct ExtBuilder {
-	// balances: Vec<(AccountId, MockCurrencyId, Balance)>,
+	native_balances: Vec<(AccountId, Balance)>,
+	balances: Vec<(AccountId, CurrencyId, Balance)>,
 }
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
+		let mut storage = frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
+		
+		pallet_balances::GenesisConfig::<MockRuntime> { balances: self.native_balances }
+			.assimilate_storage(&mut storage)
+			.unwrap();
 
-		// pallet_balances::GenesisConfig::<Test> { balances: vec![(ALICE, 1_000_000)] }
-		// 	.assimilate_storage(&mut t)
-		// 	.unwrap();
+		orml_tokens::GenesisConfig::<MockRuntime> { balances: self.balances }
+			.assimilate_storage(&mut storage)
+			.unwrap();
 
-		t.into()
+		storage.into()
+	}
+
+	pub fn initialize_balance(mut self, user: AccountId, asset: CurrencyId, balance: Balance) -> ExtBuilder {
+		// TODO: (Nevin)
+		//  - it might be unnecessary to add balance to the balances pallet as well
+		if asset == NATIVE_ASSET {
+			self.native_balances.push((user, balance));
+		}
+
+		self.balances.push((user, asset, balance));
+
+		self
 	}
 }
