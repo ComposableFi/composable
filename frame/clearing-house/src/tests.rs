@@ -1,7 +1,9 @@
 pub use crate::{
-	mock::accounts::{AccountId, ALICE},
-	mock::assets::{AssetId, PICA, USDC},
-	mock::runtime::{Balance, ClearingHouse, ExtBuilder, Origin, Runtime, Tokens},
+	mock::{
+		accounts::{AccountId, ALICE},
+		assets::{AssetId, PICA, USDC},
+		runtime::{Balance, ClearingHouse, ExtBuilder, Origin, Runtime, Tokens},
+	},
 	pallet::*,
 };
 use frame_support::{assert_noop, assert_ok};

@@ -1,8 +1,10 @@
 use crate::{
 	self as clearing_house,
-	mock::accounts::{AccountId, ADMIN},
-	mock::assets::{AssetId, PICA},
-	mock::governance_registry::GovernanceRegistry,
+	mock::{
+		accounts::{AccountId, ADMIN},
+		assets::{AssetId, PICA},
+		governance_registry::GovernanceRegistry,
+	},
 };
 use composable_traits::defi::DeFiComposableConfig;
 use frame_support::{
