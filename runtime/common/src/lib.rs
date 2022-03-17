@@ -169,10 +169,8 @@ parameter_types! {
 #[cfg(feature = "runtime-benchmarks")]
 pub fn multi_existential_deposits(_currency_id: &CurrencyId) -> Balance {
 	// ISSUE:
-	// 1. runing only collective pallet does not lead to issue (we cannot control other pallets
-	// always) 2. pallet benchmark does not contain direct manipulation of deposits
-	// 3. increatng caller balance does not help to fix issue
-	// 4. so it contains weight return to take from caller
+	// Running benchmarks with non zero multideopist leads to fail in 3rd party pallet.
+	// It is not cleary why it happens.pub const BaseXcmWeight: Weight = 100_000_000;
 	// 2022-03-14 20:50:19 Running Benchmark: collective.set_members 2/1 1/1
 	// Error:
 	//   0: Invalid input: Account cannot exist with the funds that would be given

@@ -25,6 +25,7 @@ use xcm_executor::{
 };
 
 parameter_types! {
+	// similar to what Acala/Hydra has
 	pub const BaseXcmWeight: Weight = 100_000_000;
 }
 
