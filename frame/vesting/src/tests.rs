@@ -106,6 +106,29 @@ fn vesting_from_chain_spec_works() {
 }
 
 #[test]
+fn vested_transfer_self_vest_ko() {
+	ExtBuilder::build().execute_with(|| {
+		System::set_block_number(1);
+
+		let schedule = VestingSchedule {
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
+			period_count: 1_u32,
+			per_period: 100_u64,
+		};
+		assert_noop!(
+			Vesting::vested_transfer(
+				Origin::root(),
+				ALICE,
+				ALICE,
+				MockCurrencyId::BTC,
+				schedule.clone(),
+			),
+			Error::<Runtime>::TryingToSelfVest
+		);
+	});
+}
+
+#[test]
 fn vested_transfer_works() {
 	ExtBuilder::build().execute_with(|| {
 		System::set_block_number(1);

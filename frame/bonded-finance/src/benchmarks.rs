@@ -6,7 +6,7 @@ use crate::{AssetIdOf, BalanceOf, BlockNumberOf, BondOfferOf, Call, Config, Pall
 use codec::Decode;
 use composable_support::validation::Validated;
 use composable_traits::bonded_finance::{BondDuration, BondOffer, BondOfferReward};
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	dispatch::UnfilteredDispatchable,
 	traits::{fungible::Mutate as _, fungibles::Mutate as _},
@@ -83,9 +83,10 @@ benchmarks! {
   where_clause {
 	  where BalanceOf<T>: From<u128>
   }
+
 	offer {
 		let [bond_asset, reward_asset] = assets::<T>();
-		let caller: T::AccountId = whitelisted_caller();
+		let caller: T::AccountId = account("caller", 0, 0xCAFEBABE);
 		initial_mint::<T>(bond_asset, &caller, reward_asset);
 		let bond_offer = bond_offer::<T>(bond_asset, reward_asset);
 		let validated_bond_offer = Validated::new(bond_offer).unwrap();
@@ -93,7 +94,7 @@ benchmarks! {
 
 	bond {
 		let [bond_asset, reward_asset] = assets::<T>();
-		let caller: T::AccountId = whitelisted_caller();
+		let caller: T::AccountId = account("caller", 0, 0xCAFEBABE);
 		initial_mint::<T>(bond_asset, &caller, reward_asset);
 		let bond_offer = bond_offer::<T>(bond_asset, reward_asset);
 		let nb_of_bonds = bond_offer.nb_of_bonds;
@@ -103,7 +104,7 @@ benchmarks! {
 
 	cancel {
 		let [bond_asset, reward_asset] = assets::<T>();
-		let caller: T::AccountId = whitelisted_caller();
+		let caller: T::AccountId = account("caller", 0, 0xCAFEBABE);
 		initial_mint::<T>(bond_asset, &caller, reward_asset);
 		let bond_offer = bond_offer::<T>(bond_asset, reward_asset);
 		let nb_of_bonds = bond_offer.nb_of_bonds;
