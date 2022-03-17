@@ -234,9 +234,9 @@ jobs:
 
       - name: Substrace
         run: |
-          cargo install dylint dylint-link
-          RUSTFLAGS="" SKIP_WASM_BUILD=1 cargo dylint substrace --workspace
-          
+          cargo install cargo-dylint dylint-link
+          RUSTC_WRAPPER="" SKIP_WASM_BUILD=1 cargo dylint substrace --workspace    
+      
       - name: Cargo clippy
         run: |
           SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly clippy --workspace --all-targets --tests -- -D warnings
