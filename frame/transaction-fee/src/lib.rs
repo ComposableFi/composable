@@ -6,8 +6,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -133,7 +133,7 @@ pub mod pallet {
 	#[pallet::getter(fn next_fee_multiplier)]
 	// `NextFeeMultiplierOnEmpty` explicitly defines what happens on empty, so `ValueQuery` is
 	// allowed.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type NextFeeMultiplier<T: Config> =
 		StorageValue<_, Multiplier, ValueQuery, NextFeeMultiplierOnEmpty>;
 
@@ -146,7 +146,7 @@ pub mod pallet {
 		}
 
 		// `integrity_test` is allowed to panic.
-		#[allow(clippy::disallowed_method, clippy::expect_used)]
+		#[allow(clippy::disallowed_methods, clippy::expect_used)]
 		fn integrity_test() {
 			// given weight == u64, we build multipliers from `diff` of two weight values, which can
 			// at most be maximum block weight. Make sure that this can fit in a multiplier without

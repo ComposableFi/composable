@@ -325,7 +325,7 @@ fn can_create_valid_market() {
 		Tokens::mint_into(borrow_asset, &manager, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
 		let created = Lending::create_market(
 			Origin::signed(manager),
-			Validated::new(config.clone()).unwrap(),
+			Validated::new(config).unwrap(),
 		);
 		assert_ok!(created);
 

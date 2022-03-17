@@ -188,7 +188,7 @@ fn test_invalid_early_at_claim() {
 		}
 
 		set_moment(11);
-		for (picasso_account, remote_account) in accounts.clone().into_iter() {
+		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.associate(picasso_account.clone()),);
 		}
 	});

@@ -71,6 +71,7 @@ impl<T: SafeAdd + SafeDiv + SafeMul + SafeSub> SafeArithmetic for T {}
 pub trait WrappingNext {
 	/// pallet must be coded that way that wrapping around does not do harm except of error
 	/// so additional check should be check on pallet level
+	#[must_use]
 	fn next(&self) -> Self;
 }
 

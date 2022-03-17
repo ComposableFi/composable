@@ -161,7 +161,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 pub fn new_test_ext_multi_currency() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	let balances: Vec<(AccountId, AssetId, Balance)> =
 		vec![(ALICE, ASSET_1, 1000), (BOB, ASSET_2, 1000)];

@@ -1,4 +1,4 @@
-#![allow(clippy::disallowed_method, clippy::panic)]
+#![allow(clippy::disallowed_methods, clippy::panic)]
 
 use super::*;
 

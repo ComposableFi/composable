@@ -1,4 +1,4 @@
-#![allow(unknown_lints, panics)]
+#![allow(unknown_lints, panics, clippy::disallowed_methods)]
 use jsonrpsee::{
 	core::client::ClientT,
 	http_client::{HttpClient, HttpClientBuilder},

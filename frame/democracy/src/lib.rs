@@ -155,8 +155,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -458,7 +458,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn public_props)]
 	// Usage of ValueQuery was audited by parity and allowed for now.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type PublicProps<T: Config> = StorageValue<
 		_,
 		Vec<(PropIndex, ProposalId<T::Hash, T::AssetId>, T::AccountId)>,
@@ -489,7 +489,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn referendum_count)]
 	// Usage of ValueQuery was audited by parity and allowed for now.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type ReferendumCount<T> = StorageValue<_, ReferendumIndex, ValueQuery>;
 
 	/// The lowest referendum index representing an unbaked referendum. Equal to
@@ -497,7 +497,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn lowest_unbaked)]
 	// Usage of ValueQuery was audited by parity and allowed for now.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type LowestUnbaked<T> = StorageValue<_, ReferendumIndex, ValueQuery>;
 
 	/// Information concerning any given referendum.
@@ -519,7 +519,7 @@ pub mod pallet {
 	/// user-controlled data.
 	#[pallet::storage]
 	// Usage of ValueQuery was audited by parity and allowed for now.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type VotingOf<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
@@ -542,7 +542,7 @@ pub mod pallet {
 	// (council). https://github.com/paritytech/substrate/issues/5322
 	#[pallet::storage]
 	// Usage of ValueQuery was audited by parity and allowed for now.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type LastTabledWasExternal<T> = StorageValue<_, bool, ValueQuery>;
 
 	/// The referendum to be tabled whenever it would be valid to table an external proposal.
@@ -566,7 +566,7 @@ pub mod pallet {
 	/// Record of all proposals that have been subject to emergency cancellation.
 	#[pallet::storage]
 	// Usage of ValueQuery was audited by parity and allowed for now.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type Cancellations<T: Config> =
 		StorageMap<_, Identity, ProposalId<T::Hash, T::AssetId>, bool, ValueQuery>;
 

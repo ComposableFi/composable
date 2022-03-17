@@ -309,7 +309,7 @@ fn transfer_to_sibling() {
 					1,
 					X2(
 						Parachain(SIBLING_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+						Junction::AccountId32 { network: NetworkId::Any, id: BOB }
 					)
 				)
 				.into()
@@ -338,7 +338,7 @@ fn transfer_to_sibling() {
 					1,
 					X2(
 						Parachain(PICASSO_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }
+						Junction::AccountId32 { network: NetworkId::Any, id: ALICE }
 					)
 				)
 				.into()
@@ -597,8 +597,7 @@ fn test_assets_registry_module() {
 			MultiLocation::new(
 				1,
 				X2(Parachain(SIBLING_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
-			)
-			.into(),
+			),
 		);
 
 		assert_ok!(AssetsRegistry::set_local_admin(Origin::root(), local_admin.clone()));
@@ -628,8 +627,7 @@ fn test_assets_registry_module() {
 			MultiLocation::new(
 				1,
 				X2(Parachain(PICASSO_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
-			)
-			.into(),
+			),
 		);
 
 		assert_ok!(AssetsRegistry::set_local_admin(Origin::root(), local_admin.clone()));
@@ -663,7 +661,7 @@ fn test_assets_registry_module() {
 					1,
 					X2(
 						Parachain(PICASSO_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+						Junction::AccountId32 { network: NetworkId::Any, id: BOB }
 					)
 				)
 				.into()
@@ -689,7 +687,7 @@ fn test_assets_registry_module() {
 					1,
 					X2(
 						Parachain(SIBLING_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }
+						Junction::AccountId32 { network: NetworkId::Any, id: ALICE }
 					)
 				)
 				.into()
@@ -732,7 +730,7 @@ fn test_assets_registry_module() {
 					1,
 					X2(
 						Parachain(PICASSO_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+						Junction::AccountId32 { network: NetworkId::Any, id: BOB }
 					)
 				)
 				.into()

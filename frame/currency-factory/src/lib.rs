@@ -3,15 +3,15 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -104,7 +104,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn asset_id_rages)]
 	// Storage is intialized using RangesOnEmpty, so ValueQuery is allowed.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type AssetIdRanges<T: Config> =
 		StorageValue<_, Ranges<T::AssetId>, ValueQuery, RangesOnEmpty<T>>;
 

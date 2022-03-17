@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(any(test, feature = "runtime-benchmarks")),
 	deny(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,

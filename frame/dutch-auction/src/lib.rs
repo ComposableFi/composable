@@ -30,15 +30,15 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -201,7 +201,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn orders_index)]
-	#[allow(clippy::disallowed_type)] // OrderIdOnEmpty provides a default value
+	#[allow(clippy::disallowed_types)] // OrderIdOnEmpty provides a default value
 	pub type OrdersIndex<T: Config> = StorageValue<_, T::OrderId, ValueQuery, OrderIdOnEmpty<T>>;
 
 	#[pallet::storage]
