@@ -134,7 +134,12 @@ pub mod pallet {
 		AddedLiquidity {
 			asset: T::AssetId,
 			amount: T::Balance
-		}
+		},
+
+		RemovedLiquidity {
+			asset: T::AssetId,
+			amount: T::Balance
+		},
 	}
 
 	// ----------------------------------------------------------------------------------------------------
