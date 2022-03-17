@@ -255,6 +255,7 @@ fn exchange_failure() {
 	});
 }
 
+//
 // - test high slippage scenario
 // trying to exchange a large value, will result in high_slippage scenario
 // there should be substantial difference between expected exchange value and received amount.
