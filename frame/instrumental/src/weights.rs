@@ -6,6 +6,7 @@ const I_HAVENT_CALCULATED_YET: i32 = 1_000;
 pub trait WeightInfo {
 	fn create() -> Weight;
 	fn add_liquidity() -> Weight;
+	fn remove_liquidity() -> Weight;
 }
 
 /// Weights for pallet_instrumental using the Substrate node and recommended hardware.
@@ -18,6 +19,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn add_liquidity() -> Weight {
 		I_HAVENT_CALCULATED_YET as Weight
 	}
+
+	fn remove_liquidity() -> Weight {
+		I_HAVENT_CALCULATED_YET as Weight
+	}
 }
 
 // For backwards compatibility and tests
@@ -27,6 +32,10 @@ impl WeightInfo for () {
 	}
 
 	fn add_liquidity() -> Weight {
+		I_HAVENT_CALCULATED_YET as Weight
+	}
+
+	fn remove_liquidity() -> Weight {
 		I_HAVENT_CALCULATED_YET as Weight
 	}
 }
