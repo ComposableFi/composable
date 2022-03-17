@@ -210,6 +210,20 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::add_liquidity())]
+		pub fn remove_liquidity(
+			origin: OriginFor<T>,
+			asset: T::AssetId,
+			amount: T::Balance
+		) -> DispatchResultWithPostInfo {
+			// Requirement 0) This extrinsic must be signed 
+			let _from = ensure_signed(origin)?;
+
+			Self::deposit_event(Event::RemovedLiquidity {asset, amount});
+
+			Ok(().into())
+		}
 	}
 
 	// ----------------------------------------------------------------------------------------------------
