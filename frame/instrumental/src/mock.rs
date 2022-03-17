@@ -23,7 +23,6 @@ pub type VaultId = u64;
 pub type Amount = i128;
 
 pub const NATIVE_ASSET: CurrencyId = PICA::ID;
-pub const ADMIN: AccountId = 0;
 pub const ALICE: AccountId = 1;
 
 // ----------------------------------------------------------------------------------------------------
