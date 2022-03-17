@@ -1,4 +1,3 @@
-
 /// TODO
 ///
 /// 1. Test each extrinsic
@@ -31,7 +30,7 @@
 ///  For every test, make sure that you check wether the funds moved to the correct (sub)
 /// accounts.
 use crate::{decay::*, mock::*, *};
-use composable_support::validation::{Validated};
+use composable_support::validation::Validated;
 use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
 use frame_support::{
 	assert_err, assert_noop, assert_ok,
@@ -1268,7 +1267,7 @@ mod test_validation {
 	use super::*;
 	use composable_support::validation::Validate;
 	use frame_support::assert_ok;
-	
+
 	use validation::{ValidTTL, ValidTimeLockPeriod};
 
 	#[test]

@@ -181,7 +181,7 @@ fn exchange_tests() {
 			Some(dex_route.try_into().unwrap())
 		));
 		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 10_u128 * unit));
-		let dy = DexRouter::exchange(&CHARLIE, currency_pair, 1_u128 * unit);
+		let dy = DexRouter::exchange(&CHARLIE, currency_pair, unit);
 		assert_ok!(dy);
 		let dy = dy.unwrap();
 		sp_std::if_std! {

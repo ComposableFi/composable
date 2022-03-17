@@ -53,7 +53,6 @@ pub fn assert_above_deposit(asset_id: CurrencyId, amount: Balance) -> Balance {
 
 /// weigh enough to handle any XCMP message
 pub fn enough_weigth() -> u128 {
-	
 	BaseXcmWeight::get() as u128 +
 		100 * UnitWeightCost::get() as Balance * MaxInstructions::get() as Balance
 }

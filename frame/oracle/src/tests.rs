@@ -20,8 +20,8 @@ use sp_runtime::{
 };
 use std::sync::Arc;
 
-use crate::validation::{ValidBlockInterval};
-use composable_support::validation::{Validated};
+use crate::validation::ValidBlockInterval;
+use composable_support::validation::Validated;
 
 #[test]
 fn add_asset_and_info() {
@@ -994,7 +994,7 @@ mod test {
 	use super::*;
 	use composable_support::validation::Validate;
 	use frame_support::assert_ok;
-	
+
 	use validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
 
 	#[test]

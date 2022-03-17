@@ -390,7 +390,7 @@ pub mod pallet {
 					protocol_fee,
 				} => {
 					let pool_id = StableSwap::<T>::do_create_pool(
-						&who,
+						who,
 						pair,
 						amplification_coefficient,
 						fee,
@@ -401,7 +401,7 @@ pub mod pallet {
 					Ok(pool_id)
 				},
 				PoolInitConfiguration::ConstantProduct { pair, fee, owner_fee } => {
-					let pool_id = Uniswap::<T>::do_create_pool(&who, pair, fee, owner_fee)?;
+					let pool_id = Uniswap::<T>::do_create_pool(who, pair, fee, owner_fee)?;
 					Self::deposit_event(Event::PoolCreated { owner: who.clone(), pool_id });
 					Ok(pool_id)
 				},

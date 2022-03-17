@@ -65,6 +65,7 @@ fn with_pool<T>(
 	})
 }
 
+#[allow(clippy::too_many_arguments)]
 fn within_sale_with_liquidity<T>(
 	owner: AccountId,
 	sale_duration: BlockNumber,

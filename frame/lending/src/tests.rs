@@ -320,13 +320,11 @@ fn can_create_valid_market() {
 		};
 		let failed =
 			<Lending as composable_traits::lending::Lending>::create(manager, config.clone());
-		assert!(!failed.is_ok());
+		assert!(failed.is_err());
 
 		Tokens::mint_into(borrow_asset, &manager, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
-		let created = Lending::create_market(
-			Origin::signed(manager),
-			Validated::new(config).unwrap(),
-		);
+		let created =
+			Lending::create_market(Origin::signed(manager), Validated::new(config).unwrap());
 		assert_ok!(created);
 
 		let (market_id, borrow_vault_id) = System::events()

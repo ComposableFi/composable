@@ -75,10 +75,10 @@ fn test_dex_demo() {
 		let pool = StableSwap::pools(pool_id).expect("pool not found");
 
 		let unit = 1_000_000_000_000_u128;
-		let usdc_price = 1 * unit;
+		let usdc_price = unit;
 
 		let nb_of_usdc = 1_000_000_000;
-		let usdt_price = 1 * unit;
+		let usdt_price = unit;
 
 		let nb_of_usdt = 1_000_000_000;
 
@@ -119,12 +119,7 @@ fn test_dex_demo() {
 
 		let bob_usdc = Tokens::balance(USDC, &BOB);
 
-		assert_ok!(acceptable_computation_error(
-			bob_usdc,
-			swap_usdc,
-			precision,
-			epsilon
-		));
+		assert_ok!(acceptable_computation_error(bob_usdc, swap_usdc, precision, epsilon));
 		let lp = Tokens::balance(pool.lp_token, &ALICE);
 		assert_ok!(StableSwap::remove_liquidity(Origin::signed(ALICE), pool_id, lp, 0, 0));
 

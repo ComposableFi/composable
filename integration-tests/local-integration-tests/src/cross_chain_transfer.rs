@@ -75,7 +75,7 @@ fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 		picasso_runtime::Assets::free_balance(CurrencyId::KSM, to_account)
 	});
 	KusamaRelay::execute_with(|| {
-		<kusama_runtime::Balances as support::traits::Currency<_>>::deposit_creating(
+		let _ = <kusama_runtime::Balances as support::traits::Currency<_>>::deposit_creating(
 			from_account,
 			balance,
 		);
@@ -593,12 +593,10 @@ fn test_assets_registry_module() {
 		let local_admin = AccountId::from(ALICE);
 		let foreign_admin = AccountId::from(BOB);
 		let decimals = 12;
-		let location = XcmAssetLocation(
-			MultiLocation::new(
-				1,
-				X2(Parachain(SIBLING_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
-			),
-		);
+		let location = XcmAssetLocation(MultiLocation::new(
+			1,
+			X2(Parachain(SIBLING_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
+		));
 
 		assert_ok!(AssetsRegistry::set_local_admin(Origin::root(), local_admin.clone()));
 		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::root(), foreign_admin.clone()));
@@ -623,12 +621,10 @@ fn test_assets_registry_module() {
 		let local_admin = AccountId::from(ALICE);
 		let foreign_admin = AccountId::from(BOB);
 		let decimals = 12;
-		let location = XcmAssetLocation(
-			MultiLocation::new(
-				1,
-				X2(Parachain(PICASSO_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
-			),
-		);
+		let location = XcmAssetLocation(MultiLocation::new(
+			1,
+			X2(Parachain(PICASSO_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
+		));
 
 		assert_ok!(AssetsRegistry::set_local_admin(Origin::root(), local_admin.clone()));
 		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::root(), foreign_admin.clone()));

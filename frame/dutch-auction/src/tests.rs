@@ -83,7 +83,7 @@ fn with_immediate_exact_buy() {
 		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
 		let order_id = crate::OrdersIndex::<Runtime>::get();
 		let result = DutchAuction::take(Origin::signed(buyer), order_id, Take::new(1, fixed(999)));
-		assert!(!result.is_ok());
+		assert!(result.is_err());
 		let not_reserved = <Assets as MultiReservableCurrency<_>>::reserved_balance(USDT, &BOB);
 		let result = DutchAuction::take(Origin::signed(buyer), order_id, Take::new(1, fixed(1000)));
 		assert_ok!(result);

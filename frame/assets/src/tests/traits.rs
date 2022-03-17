@@ -131,7 +131,7 @@ mod currency {
 
 				assert_issuance!(balance + added);
 
-				prop_assert!(!<Pallet::<Test> as Currency<AccountId>>::ensure_can_withdraw(&account, balance + added, WithdrawReasons::TRANSFER, 0).is_err());
+				prop_assert!(<Pallet::<Test> as Currency<AccountId>>::ensure_can_withdraw(&account, balance + added, WithdrawReasons::TRANSFER, 0).is_ok());
 				prop_assert!( <Pallet::<Test> as Currency<AccountId>>::withdraw(&account, balance + added, WithdrawReasons::TRANSFER, ExistenceRequirement::KeepAlive).is_err());
 				prop_assert!(<Pallet::<Test> as Currency<AccountId>>::withdraw(&account, balance + added,WithdrawReasons::TRANSFER, ExistenceRequirement::AllowDeath).is_ok() 				);
 				<Pallet::<Test> as Currency<AccountId>>::make_free_balance_be(&account, first);
