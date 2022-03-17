@@ -13,6 +13,7 @@ use system::EnsureRoot;
 
 pub type CurrencyId = u128;
 
+pub const BTC: AssetId = 0;
 pub const USDT: CurrencyId = 2;
 pub const USDC: CurrencyId = 4;
 

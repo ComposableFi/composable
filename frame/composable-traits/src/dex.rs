@@ -130,7 +130,7 @@ pub trait SimpleExchange {
 	) -> Result<Self::Balance, DispatchError>;
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, RuntimeDebug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, RuntimeDebug)]
 pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	/// Owner of pool
 	pub owner: AccountId,

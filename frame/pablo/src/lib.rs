@@ -37,19 +37,22 @@ pub use pallet::*;
 
 #[cfg(test)]
 mod mock;
-
 #[cfg(test)]
 mod stable_swap_tests;
+#[cfg(test)]
+mod uniswap_tests;
 
 mod stable_swap;
+mod uniswap;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::{stable_swap::StableSwap, uniswap::Uniswap, PoolConfiguration::ConstantProduct};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
 		defi::CurrencyPair,
-		dex::{Amm, StableSwapPoolInfo},
+		dex::{Amm, ConstantProductPoolInfo, StableSwapPoolInfo},
 		math::{SafeAdd, SafeSub},
 	};
 	use core::fmt::Debug;
@@ -65,8 +68,6 @@ pub mod pallet {
 		Permill,
 	};
 
-	use crate::stable_swap::StableSwap;
-
 	#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 	pub enum PoolInitConfiguration<AssetId> {
 		StableSwap {
@@ -75,11 +76,17 @@ pub mod pallet {
 			fee: Permill,
 			protocol_fee: Permill,
 		},
+		ConstantProduct {
+			pair: CurrencyPair<AssetId>,
+			fee: Permill,
+			owner_fee: Permill,
+		},
 	}
 
 	#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 	pub enum PoolConfiguration<AccountId, AssetId> {
 		StableSwap(StableSwapPoolInfo<AccountId, AssetId>),
+		ConstantProduct(ConstantProductPoolInfo<AccountId, AssetId>),
 	}
 
 	type AssetIdOf<T> = <T as Config>::AssetId;
@@ -90,6 +97,7 @@ pub mod pallet {
 		PoolConfiguration<<T as frame_system::Config>::AccountId, <T as Config>::AssetId>;
 	type PoolInitConfigurationOf<T> = PoolInitConfiguration<<T as Config>::AssetId>;
 
+	// TODO refactor event publishing with cu-23v2y3n
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -109,6 +117,7 @@ pub mod pallet {
 			/// Amount of quote asset repatriated.
 			quote_amount: T::Balance,
 		},
+
 		/// Liquidity added into the pool `T::PoolId`.
 		LiquidityAdded {
 			/// Account id who added liquidity.
@@ -119,8 +128,8 @@ pub mod pallet {
 			base_amount: T::Balance,
 			/// Amount of quote asset deposited.
 			quote_amount: T::Balance,
-			/// Amount of minted lp tokens.
-			mint_amount: T::Balance,
+			/// Amount of minted lp.
+			minted_lp: T::Balance,
 		},
 		/// Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
 		LiquidityRemoved {
@@ -167,6 +176,9 @@ pub mod pallet {
 		InvalidPair,
 		InvalidFees,
 		AmpFactorMustBeGreaterThanZero,
+
+		// ConstantProduct Specific: Possibly rename
+		MissingAmount,
 	}
 
 	#[pallet::config]
@@ -388,6 +400,11 @@ pub mod pallet {
 
 					Ok(pool_id)
 				},
+				PoolInitConfiguration::ConstantProduct { pair, fee, owner_fee } => {
+					let pool_id = Uniswap::<T>::do_create_pool(&who, pair, fee, owner_fee)?;
+					Self::deposit_event(Event::PoolCreated { owner: who.clone(), pool_id });
+					Ok(pool_id)
+				},
 			}
 		}
 
@@ -445,6 +462,7 @@ pub mod pallet {
 			match pool {
 				PoolConfiguration::StableSwap(stable_swap_pool_info) =>
 					Ok(stable_swap_pool_info.pair),
+				ConstantProduct(constant_product_pool_info) => Ok(constant_product_pool_info.pair),
 			}
 		}
 
@@ -463,6 +481,12 @@ pub mod pallet {
 						asset_id,
 						amount,
 					),
+				ConstantProduct(constant_product_pool_info) => Uniswap::<T>::get_exchange_value(
+					constant_product_pool_info,
+					pool_account,
+					asset_id,
+					amount,
+				),
 			}
 		}
 
@@ -493,10 +517,29 @@ pub mod pallet {
 						pool_id,
 						base_amount,
 						quote_amount,
-						mint_amount,
+						minted_lp: mint_amount,
+					});
+				},
+				ConstantProduct(constant_product_pool_info) => {
+					let mint_amount = Uniswap::<T>::add_liquidity(
+						who,
+						constant_product_pool_info,
+						pool_account,
+						base_amount,
+						quote_amount,
+						min_mint_amount,
+						keep_alive,
+					)?;
+					Self::deposit_event(Event::<T>::LiquidityAdded {
+						who: who.clone(),
+						pool_id,
+						base_amount,
+						quote_amount,
+						minted_lp: mint_amount,
 					});
 				},
 			}
+			// TODO refactor event publishing with cu-23v2y3n
 			Ok(())
 		}
 
@@ -529,7 +572,25 @@ pub mod pallet {
 						total_issuance: updated_lp,
 					});
 				},
+				ConstantProduct(constant_product_pool_info) => {
+					let (base_amount, quote_amount, updated_lp) = Uniswap::<T>::remove_liquidity(
+						who,
+						constant_product_pool_info,
+						pool_account,
+						lp_amount,
+						min_base_amount,
+						min_quote_amount,
+					)?;
+					Self::deposit_event(Event::<T>::LiquidityRemoved {
+						pool_id,
+						who: who.clone(),
+						base_amount,
+						quote_amount,
+						total_issuance: updated_lp,
+					});
+				},
 			}
+			// TODO refactor event publishing with cu-23v2y3n
 			Ok(())
 		}
 
@@ -592,7 +653,54 @@ pub mod pallet {
 
 					Ok(base_amount_excluding_fees)
 				},
+				ConstantProduct(constant_product_pool_info) => {
+					let (base_amount, quote_amount_excluding_fees, lp_fees, owner_fees) =
+						Uniswap::<T>::do_compute_swap(
+							&constant_product_pool_info,
+							pool_account,
+							pair,
+							quote_amount,
+							true,
+						)?;
+					let total_fees = lp_fees.safe_add(&owner_fees)?;
+					let quote_amount_including_fees =
+						quote_amount_excluding_fees.safe_add(&total_fees)?;
+
+					ensure!(base_amount >= min_receive, Error::<T>::CannotRespectMinimumRequested);
+
+					let pool_account = Self::account_id(&pool_id);
+					T::Assets::transfer(
+						pair.quote,
+						who,
+						&pool_account,
+						quote_amount_including_fees,
+						keep_alive,
+					)?;
+					// NOTE(hussein-aitlance): no need to keep alive the pool account
+					T::Assets::transfer(
+						pair.quote,
+						&pool_account,
+						&constant_product_pool_info.owner,
+						owner_fees,
+						false,
+					)?;
+					T::Assets::transfer(pair.base, &pool_account, who, base_amount, false)?;
+
+					Self::deposit_event(Event::<T>::Swapped {
+						pool_id,
+						who: who.clone(),
+						base_asset: pair.base,
+						quote_asset: pair.quote,
+						base_amount,
+						quote_amount: quote_amount_excluding_fees,
+						fee: total_fees,
+					});
+
+					Ok(base_amount)
+				},
 			}
+
+			// TODO refactor event publishing with cu-23v2y3n
 		}
 
 		#[transactional]
@@ -616,6 +724,15 @@ pub mod pallet {
 					Self::exchange(who, pool_id, pair, dx, T::Balance::zero(), keep_alive)?;
 					Ok(amount)
 				},
+				ConstantProduct(constant_product_pool) => {
+					let pair = if asset_id == constant_product_pool.pair.base {
+						constant_product_pool.pair
+					} else {
+						constant_product_pool.pair.swap()
+					};
+					let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
+					Self::exchange(who, pool_id, pair, quote_amount, T::Balance::zero(), keep_alive)
+				},
 			}
 		}
 
@@ -632,15 +749,15 @@ pub mod pallet {
 				PoolConfiguration::StableSwap(pool) => {
 					let pair =
 						if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
-					let dy = Self::exchange(
-						who,
-						pool_id,
-						pair,
-						amount,
-						Self::Balance::zero(),
-						keep_alive,
-					)?;
-					Ok(dy)
+					Self::exchange(who, pool_id, pair, amount, Self::Balance::zero(), keep_alive)
+				},
+				ConstantProduct(constant_product_pool) => {
+					let pair = if asset_id == constant_product_pool.pair.base {
+						constant_product_pool.pair.swap()
+					} else {
+						constant_product_pool.pair
+					};
+					Self::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
 				},
 			}
 		}
