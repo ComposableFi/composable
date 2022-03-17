@@ -117,30 +117,9 @@ pub mod pallet {
 			/// Amount of quote asset repatriated.
 			quote_amount: T::Balance,
 		},
+
 		/// Liquidity added into the pool `T::PoolId`.
-		LiquidityAddedToStableSwapPool {
-			/// Account id who added liquidity.
-			who: T::AccountId,
-			/// Pool id to which liquidity added.
-			pool_id: T::PoolId,
-			/// Amount of base asset deposited.
-			base_amount: T::Balance,
-			/// Amount of quote asset deposited.
-			quote_amount: T::Balance,
-			/// Amount of minted lp tokens.
-			mint_amount: T::Balance,
-		},
-		/// Liquidity added into the pool `T::PoolId`.
-		LiquidityAddedToLiquidityBootstrappingPool {
-			/// Pool id to which liquidity added.
-			pool_id: T::PoolId,
-			/// Amount of base asset deposited.
-			base_amount: T::Balance,
-			/// Amount of quote asset deposited.
-			quote_amount: T::Balance,
-		},
-		/// Liquidity added into the pool `T::PoolId`.
-		LiquidityAddedToConstantProductPool {
+		LiquidityAdded {
 			/// Account id who added liquidity.
 			who: T::AccountId,
 			/// Pool id to which liquidity added.
@@ -533,12 +512,12 @@ pub mod pallet {
 						min_mint_amount,
 						keep_alive,
 					)?;
-					Self::deposit_event(Event::<T>::LiquidityAddedToStableSwapPool {
+					Self::deposit_event(Event::<T>::LiquidityAdded {
 						who: who.clone(),
 						pool_id,
 						base_amount,
 						quote_amount,
-						mint_amount,
+						minted_lp: mint_amount,
 					});
 				},
 				ConstantProduct(constant_product_pool_info) => {
@@ -551,7 +530,7 @@ pub mod pallet {
 						min_mint_amount,
 						keep_alive,
 					)?;
-					Self::deposit_event(Event::<T>::LiquidityAddedToConstantProductPool {
+					Self::deposit_event(Event::<T>::LiquidityAdded {
 						who: who.clone(),
 						pool_id,
 						base_amount,
