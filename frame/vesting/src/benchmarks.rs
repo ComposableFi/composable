@@ -90,7 +90,7 @@ benchmarks! {
 
 	vested_transfer {
 		let asset_id = asset::<T>();
-		let from: T::AccountId = zero_account::<T>();
+		let from: T::AccountId = create_account::<T>("from", 0xCAFEBABE);
 		fund_account::<T>(&from, asset_id.clone(), FUNDING.into());
 		let dest = T::Lookup::unlookup(create_account::<T>("dest", 1));
 		let per_period = T::MinVestedTransfer::get();

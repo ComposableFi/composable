@@ -8,6 +8,7 @@ use frame_support::{
 	traits::{fungibles::Mutate, Get},
 };
 use frame_system::RawOrigin;
+const MIN_TRANSFER_SIZE: u128 = 1_000_000_000_000;
 const MAX_TRANSFER_SIZE: u128 = 100_000_000_000_000_000;
 const BUDGET_AMOUNT: u128 = 100_000_000_000_000_000_000;
 const TRANSFER_AMOUNT: u128 = 100_000_000_000_000;
@@ -36,6 +37,7 @@ benchmarks! {
 		let network_id: T::NetworkId = 1.into();
 		let network_info = NetworkInfo {
 			enabled: true,
+	  min_transfer_size: MIN_TRANSFER_SIZE.into(),
 			max_transfer_size: MAX_TRANSFER_SIZE.into(),
 		};
 
@@ -55,6 +57,7 @@ benchmarks! {
 		let network_id: T::NetworkId = 1.into();
 		let network_info = NetworkInfo {
 			enabled: true,
+	  min_transfer_size: MIN_TRANSFER_SIZE.into(),
 			max_transfer_size: MAX_TRANSFER_SIZE.into(),
 		};
 	  assert_ok!(Mosaic::<T>::set_network(RawOrigin::Signed(relayer).into(), network_id.clone(), network_info));
@@ -82,6 +85,7 @@ benchmarks! {
 		let network_id: T::NetworkId = 1.into();
 		let network_info = NetworkInfo {
 			enabled: true,
+	  min_transfer_size: MIN_TRANSFER_SIZE.into(),
 			max_transfer_size: MAX_TRANSFER_SIZE.into(),
 		};
 	  assert_ok!(Mosaic::<T>::set_network(RawOrigin::Signed(relayer.clone()).into(), network_id.clone(), network_info));
@@ -110,6 +114,7 @@ benchmarks! {
 		let network_id: T::NetworkId = 1.into();
 		let network_info = NetworkInfo {
 			enabled: true,
+	  min_transfer_size: MIN_TRANSFER_SIZE.into(),
 			max_transfer_size: MAX_TRANSFER_SIZE.into(),
 		};
 	  assert_ok!(Mosaic::<T>::set_network(RawOrigin::Signed(relayer.clone()).into(), network_id.clone(), network_info));
@@ -139,6 +144,7 @@ benchmarks! {
 		let network_id: T::NetworkId = 1.into();
 		let network_info = NetworkInfo {
 			enabled: true,
+	  min_transfer_size: MIN_TRANSFER_SIZE.into(),
 			max_transfer_size: MAX_TRANSFER_SIZE.into(),
 		};
 	  assert_ok!(Mosaic::<T>::set_network(RawOrigin::Signed(relayer.clone()).into(), network_id.clone(), network_info));
@@ -174,6 +180,7 @@ benchmarks! {
 		let network_id: T::NetworkId = 1.into();
 		let network_info = NetworkInfo {
 			enabled: true,
+	  min_transfer_size: MIN_TRANSFER_SIZE.into(),
 			max_transfer_size: MAX_TRANSFER_SIZE.into(),
 		};
 	  assert_ok!(Mosaic::<T>::set_network(RawOrigin::Signed(relayer.clone()).into(), network_id.clone(), network_info));
@@ -209,6 +216,7 @@ benchmarks! {
 		let network_id: T::NetworkId = 1.into();
 		let network_info = NetworkInfo {
 			enabled: true,
+	  min_transfer_size: MIN_TRANSFER_SIZE.into(),
 			max_transfer_size: MAX_TRANSFER_SIZE.into(),
 		};
 	  assert_ok!(Mosaic::<T>::set_network(RawOrigin::Signed(relayer.clone()).into(), network_id.clone(), network_info));
@@ -244,6 +252,7 @@ benchmarks! {
 		  let network_id: T::NetworkId = 1.into();
 		  let network_info = NetworkInfo {
 			  enabled: true,
+		min_transfer_size: MIN_TRANSFER_SIZE.into(),
 			  max_transfer_size: MAX_TRANSFER_SIZE.into(),
 		  };
 
