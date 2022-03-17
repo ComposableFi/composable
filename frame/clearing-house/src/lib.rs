@@ -10,7 +10,7 @@
 //!
 //! * **Trader**: Primary user of the public extrinsics of the pallet
 //! * **Derivative**: A financial instrument which derives its value from another asset, a.k.a. the
-//!   __underlying__.
+//!   _underlying_.
 //! * **Perpetual contract**: A derivative product that allows a trader to have exposure to the underlying's price without owning it. See [The Cartoon Guide to Perps](https://www.paradigm.xyz/2021/03/the-cartoon-guide-to-perps) for intuitions.
 //! * **Market**: Perpetual contracts market, where users trade virtual tokens mirroring the
 //!   base-quote asset pair of spot markets. A.k.a. a virtual market.
