@@ -1,15 +1,12 @@
 use crate::mock::{
-    ALICE, Event, ExtBuilder, Instrumental, MockRuntime, Origin, System, Tokens,
+    ALICE, Event, ExtBuilder, Instrumental, MockRuntime, Origin, System,
 };
 use crate::{pallet, pallet::AssetVault, pallet::Error};
 use crate::currency::PICA;
 
 use frame_support::{
-    assert_ok, assert_noop,
-    traits::fungibles::Mutate,
+    assert_ok, assert_noop, assert_storage_noop,
 };
-
-use proptest::prelude::*;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                Create                                               
@@ -82,7 +79,14 @@ fn add_liquidity_asset_must_have_an_associated_vault() {
     });
 }
 
-// proptest! {
-// 	#![proptest_config(ProptestConfig::with_cases(10000))]
+#[test]
+#[allow(unused_must_use)]
+fn add_liquidity_does_not_update_storage_if_user_does_not_have_balance() {
+    ExtBuilder::default().build().execute_with(|| {
+        assert_ok!(Instrumental::create(Origin::signed(ALICE), PICA::ID));
 
-// }
+        assert_storage_noop!(
+            Instrumental::add_liquidity(Origin::signed(ALICE), PICA::ID, PICA::units(100))
+        );
+    });
+}
