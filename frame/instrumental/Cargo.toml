@@ -32,6 +32,7 @@ pallet-currency-factory = { path = "../currency-factory" }
 pallet-vault = { default-features = false, path = "../vault"}
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6" }
+proptest = "1.0"
 
 [features]
 default = ["std"]
