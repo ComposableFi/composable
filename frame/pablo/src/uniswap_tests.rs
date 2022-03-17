@@ -17,10 +17,7 @@ use frame_support::{
 	traits::fungibles::{Inspect, Mutate},
 };
 use proptest::prelude::*;
-use sp_runtime::{
-	traits::{IntegerSquareRoot, Zero},
-	Permill, TokenError,
-};
+use sp_runtime::{traits::IntegerSquareRoot, Permill, TokenError};
 
 fn create_pool(
 	base_asset: AssetId,
@@ -56,14 +53,13 @@ fn get_pool(pool_id: PoolId) -> ConstantProductPoolInfo<AccountId, AssetId> {
 #[test]
 fn test() {
 	new_test_ext().execute_with(|| {
-		let pool_id = create_pool(
-			BTC,
-			USDT,
-			Balance::zero(),
-			Balance::zero(),
-			Permill::zero(),
-			Permill::zero(),
-		);
+		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			pair: CurrencyPair::new(BTC, USDT),
+			fee: Permill::zero(),
+			owner_fee: Permill::zero(),
+		};
+		let pool_id =
+			Pablo::do_create_pool(&ALICE, pool_init_config).expect("pool creation failed");
 
 		let pool = get_pool(pool_id);
 

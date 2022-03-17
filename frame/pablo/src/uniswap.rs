@@ -5,16 +5,16 @@ use composable_maths::dex::constant_product::{
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
 	defi::CurrencyPair,
-	dex::{Amm, ConstantProductPoolInfo},
+	dex::ConstantProductPoolInfo,
 	math::{safe_multiply_by_rational, SafeAdd, SafeSub},
 };
 use frame_support::{
 	pallet_prelude::*,
 	traits::fungibles::{Inspect, Mutate, Transfer},
-	transactional, PalletId,
+	transactional,
 };
 use sp_runtime::{
-	traits::{AccountIdConversion, CheckedAdd, Convert, One, Zero},
+	traits::{CheckedAdd, Convert, One, Zero},
 	ArithmeticError, Permill,
 };
 
@@ -150,5 +150,49 @@ impl<T: Config> Uniswap<T> {
 		T::Assets::burn_from(pool.lp_token, who, lp_amount)?;
 
 		Ok((base_amount, quote_amount, lp_issued.safe_sub(&lp_amount)?))
+	}
+
+	pub(crate) fn do_compute_swap(
+		pool: &ConstantProductPoolInfo<T::AccountId, T::AssetId>,
+		pool_account: T::AccountId,
+		pair: CurrencyPair<T::AssetId>,
+		quote_amount: T::Balance,
+		apply_fees: bool,
+	) -> Result<(T::Balance, T::Balance, T::Balance, T::Balance), DispatchError> {
+		let pool_base_aum = T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
+		let pool_quote_aum = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
+		let quote_amount = T::Convert::convert(quote_amount);
+
+		// https://uniswap.org/whitepaper.pdf
+		// 3.2.1
+		// we do not inflate the lp for the owner fees
+		// cut is done before enforcing the invariant
+		let (lp_fee, owner_fee) = if apply_fees {
+			let lp_fee = pool.fee.mul_floor(quote_amount);
+			let owner_fee = pool.owner_fee.mul_floor(quote_amount);
+			(lp_fee, owner_fee)
+		} else {
+			(0, 0)
+		};
+
+		let quote_amount_excluding_fees = quote_amount.safe_sub(&lp_fee)?.safe_sub(&owner_fee)?;
+
+		let half_weight = Permill::from_percent(50);
+		let base_amount = compute_out_given_in(
+			half_weight,
+			half_weight,
+			pool_quote_aum,
+			pool_base_aum,
+			quote_amount_excluding_fees,
+		)?;
+
+		ensure!(base_amount > 0 && quote_amount_excluding_fees > 0, Error::<T>::InvalidAmount);
+
+		Ok((
+			T::Convert::convert(base_amount),
+			T::Convert::convert(quote_amount_excluding_fees),
+			T::Convert::convert(lp_fee),
+			T::Convert::convert(owner_fee),
+		))
 	}
 }

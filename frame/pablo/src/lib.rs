@@ -50,7 +50,7 @@ pub mod pallet {
 	use crate::{stable_swap::StableSwap, uniswap::Uniswap, PoolConfiguration::ConstantProduct};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		currency::{CurrencyFactory, LocalAssets},
+		currency::CurrencyFactory,
 		defi::CurrencyPair,
 		dex::{Amm, ConstantProductPoolInfo, StableSwapPoolInfo},
 		math::{SafeAdd, SafeSub},
@@ -93,7 +93,7 @@ pub mod pallet {
 	type BalanceOf<T> = <T as Config>::Balance;
 	type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	type PoolIdOf<T> = <T as Config>::PoolId;
-	pub type PoolConfigurationOf<T> =
+	type PoolConfigurationOf<T> =
 		PoolConfiguration<<T as frame_system::Config>::AccountId, <T as Config>::AssetId>;
 	type PoolInitConfigurationOf<T> = PoolInitConfiguration<<T as Config>::AssetId>;
 
@@ -450,10 +450,6 @@ pub mod pallet {
 			let base_amount = Self::get_exchange_value(pool_id, pair.base, quote_amount)?;
 			let base_amount_u: u128 = T::Convert::convert(base_amount);
 
-			// https://uniswap.org/whitepaper.pdf
-			// 3.2.1
-			// we do not inflate the lp for the owner fees
-			// cut is done before enforcing the invariant
 			let (lp_fee, protocol_fee) = if apply_fees {
 				let lp_fee = fee.mul_floor(base_amount_u);
 				// protocol_fee is computed based on lp_fee
@@ -679,16 +675,17 @@ pub mod pallet {
 					Ok(base_amount_excluding_fees)
 				},
 				ConstantProduct(constant_product_pool_info) => {
-					let (base_amount, quote_amount, lp_fees, owner_fees) = Self::do_compute_swap(
-						pool_id,
-						pair,
-						quote_amount,
-						true,
-						constant_product_pool_info.fee,
-						constant_product_pool_info.owner_fee,
-					)?;
+					let (base_amount, quote_amount_excluding_fees, lp_fees, owner_fees) =
+						Uniswap::<T>::do_compute_swap(
+							&constant_product_pool_info,
+							pool_account,
+							pair,
+							quote_amount,
+							true,
+						)?;
 					let total_fees = lp_fees.safe_add(&owner_fees)?;
-					let quote_amount_including_fees = quote_amount.safe_add(&total_fees)?;
+					let quote_amount_including_fees =
+						quote_amount_excluding_fees.safe_add(&total_fees)?;
 
 					ensure!(base_amount >= min_receive, Error::<T>::CannotRespectMinimumRequested);
 
@@ -716,7 +713,7 @@ pub mod pallet {
 						base_asset: pair.base,
 						quote_asset: pair.quote,
 						base_amount,
-						quote_amount,
+						quote_amount: quote_amount_excluding_fees,
 						fee: total_fees,
 					});
 
