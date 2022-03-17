@@ -1,3 +1,4 @@
+#![allow(unknown_lints, panics)]
 #![deny(unused_extern_crates, missing_docs)]
 #![recursion_limit = "256"]
 
