@@ -57,8 +57,6 @@ fn add_liquidity_extrinsic_emits_event() {
         System::set_block_number(1);
 
         assert_ok!(Instrumental::create(Origin::signed(ALICE), PICA::ID));
-        
-        // assert_ok!(Tokens::mint_into(PICA::ID, &ALICE, PICA::units(100)));
         assert_ok!(Instrumental::add_liquidity(Origin::signed(ALICE), PICA::ID, PICA::units(100)));
 
         System::assert_last_event(Event::Instrumental(
@@ -88,5 +86,27 @@ fn add_liquidity_does_not_update_storage_if_user_does_not_have_balance() {
         assert_storage_noop!(
             Instrumental::add_liquidity(Origin::signed(ALICE), PICA::ID, PICA::units(100))
         );
+    });
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                           Remove Liquidity                                          
+// ----------------------------------------------------------------------------------------------------
+
+#[test]
+fn remove_liquidity_extrinsic_emits_event() {
+    ExtBuilder::default()
+        .initialize_balance(ALICE, PICA::ID, PICA::units(100))
+        .build()
+        .execute_with(|| {
+            System::set_block_number(1);
+
+            assert_ok!(Instrumental::create(Origin::signed(ALICE), PICA::ID));
+            assert_ok!(Instrumental::add_liquidity(Origin::signed(ALICE), PICA::ID, PICA::units(100)));
+            assert_ok!(Instrumental::remove_liquidity(Origin::signed(ALICE), PICA::ID, PICA::units(100)));
+
+            System::assert_last_event(Event::Instrumental(
+                pallet::Event::RemovedLiquidity { asset: PICA::ID , amount: PICA::units(100)}
+            ));
     });
 }
