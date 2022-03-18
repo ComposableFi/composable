@@ -1,9 +1,8 @@
 use crate::{
 	self as clearing_house,
 	mock::{
-		accounts::{AccountId, ADMIN},
+		accounts::{AccountId, ALICE},
 		assets::{AssetId, PICA},
-		governance_registry::GovernanceRegistry,
 	},
 };
 use composable_traits::defi::DeFiComposableConfig;
@@ -34,6 +33,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Assets: pallet_assets::{Pallet, Call, Storage},
@@ -87,6 +87,12 @@ impl pallet_balances::Config for Runtime {
 	type ReserveIdentifier = [u8; 8];
 }
 
+impl governance_registry::Config for Runtime {
+	type AssetId = AssetId;
+	type WeightInfo = ();
+	type Event = Event;
+}
+
 parameter_type_with_key! {
 	pub TokensExistentialDeposit: |_currency_id: AssetId| -> Balance {
 		0
@@ -118,7 +124,7 @@ parameter_types! {
 }
 
 ord_parameter_types! {
-	pub const RootAccount: AccountId = ADMIN;
+	pub const RootAccount: AccountId = ALICE;
 }
 
 impl pallet_assets::Config for Runtime {
