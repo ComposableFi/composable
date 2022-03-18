@@ -1,3 +1,28 @@
+//! # Instrumental Pallet
+//! 
+//! ## Overview
+//! 
+//! ### Terminology
+//! 
+//! ### Goals
+//! 
+//! ### Actors
+//! 
+//! ### Implementations
+//! 
+//! ## Interface
+//! 
+//! ### Extrinsics
+//! 
+//! ### Runtime Storage Objects
+//! 
+//! ## Usage
+//! 
+//! ### Example
+//! 
+//! ## Related Modules
+//!  
+
 #[cfg(test)]
 mod tests;
 
