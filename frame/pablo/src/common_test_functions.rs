@@ -1,6 +1,6 @@
 use crate::{
 	mock::{Pablo, *},
-	PoolConfiguration::{ConstantProduct, StableSwap},
+	PoolConfiguration::{ConstantProduct, LiquidityBootstrapping, StableSwap},
 	PoolInitConfiguration,
 };
 use frame_support::{
@@ -11,7 +11,7 @@ use frame_support::{
 /// `expected_lp_check` takes base_amount, quote_amount and lp_tokens in order and returns
 /// true if lp_tokens are expected for given base_amount, quote_amount.
 pub fn common_add_remove_lp(
-	init_config: PoolInitConfiguration<AssetId>,
+	init_config: PoolInitConfiguration<AccountId, AssetId, BlockNumber>,
 	init_base_amount: Balance,
 	init_quote_amount: Balance,
 	base_amount: Balance,
@@ -22,6 +22,7 @@ pub fn common_add_remove_lp(
 	let pair = match init_config {
 		PoolInitConfiguration::StableSwap { pair, .. } => pair,
 		PoolInitConfiguration::ConstantProduct { pair, .. } => pair,
+		PoolInitConfiguration::LiquidityBootstrapping(pool) => pool.pair,
 	};
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(pair.base, &ALICE, init_base_amount));
@@ -41,6 +42,7 @@ pub fn common_add_remove_lp(
 	let lp_token = match pool {
 		StableSwap(pool) => pool.lp_token,
 		ConstantProduct(pool) => pool.lp_token,
+		LiquidityBootstrapping(_) => panic!("Not implemented"),
 	};
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(pair.base, &BOB, base_amount));
