@@ -20,6 +20,7 @@
 // --log
 // error
 
+
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
@@ -34,15 +35,33 @@ impl<T: frame_system::Config> curve_amm::WeightInfo for WeightInfo<T> {
 	// Storage: StableSwapDex PoolCount (r:1 w:1)
 	// Storage: StableSwapDex Pools (r:0 w:1)
 	fn create() -> Weight {
-		(94_719_000 as Weight)
+		(96_921_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
 	// Storage: StableSwapDex Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
+	// Storage: Tokens TotalIssuance (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	fn add_liquidity() -> Weight {
+		(296_427_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(8 as Weight))
+			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+	}
+	// Storage: StableSwapDex Pools (r:1 w:0)
+	// Storage: Tokens Accounts (r:5 w:5)
+	// Storage: Tokens TotalIssuance (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	fn remove_liquidity() -> Weight {
+		(283_419_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(8 as Weight))
+			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+	}
+	// Storage: StableSwapDex Pools (r:1 w:0)
+	// Storage: Tokens Accounts (r:5 w:5)
 	// Storage: System Account (r:3 w:2)
 	fn buy() -> Weight {
-		(667_456_000 as Weight)
+		(533_555_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
@@ -50,7 +69,7 @@ impl<T: frame_system::Config> curve_amm::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:2 w:1)
 	fn sell() -> Weight {
-		(423_740_000 as Weight)
+		(423_084_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
@@ -58,7 +77,7 @@ impl<T: frame_system::Config> curve_amm::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:2 w:1)
 	fn swap() -> Weight {
-		(389_347_000 as Weight)
+		(435_797_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
