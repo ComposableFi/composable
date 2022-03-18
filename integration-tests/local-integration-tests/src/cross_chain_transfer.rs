@@ -894,7 +894,7 @@ fn trap_assets_larger_than_ed_works() {
 		let _ =
 			<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::deposit_creating(
 				&this_runtime::TreasuryAccount::get(),
-				7 * CurrencyId::PICA.unit::<Balance>(),
+				7 * CurrencyId::unit::<Balance>(),
 			);
 
 		native_treasury_amount =
@@ -920,14 +920,14 @@ fn trap_assets_larger_than_ed_works() {
 
 	This::execute_with(|| {
 		assert_eq!(
-			3 * CurrencyId::KSM.unit::<Balance>(),
+			3 * CurrencyId:.unit::<Balance>(),
 			Assets::free_balance(CurrencyId::KSM, &this_runtime::TreasuryAccount::get())
 		);
 		log::error!("{:?}", &this_runtime::TreasuryAccount::get());
 		assert_eq!(
 			native_asset_amount,
 			this_runtime::Balances::free_balance(&this_runtime::TreasuryAccount::get()) -
-				7 * CurrencyId::PICA.unit::<Balance>(),
+				7 * CurrencyId::unit::<Balance>(),
 		);
 	});
 }
