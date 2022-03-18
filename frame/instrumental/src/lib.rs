@@ -232,6 +232,30 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		
+		/// Create an underlying vault and save a reference to its 'VaultId'.
+		/// 
+		/// # Overview
+		/// 
+		/// ## Parameters
+		/// - `origin`: 
+		/// - `asset`: the `AssetId` of an asset to create a vault for.
+		/// 
+		/// ## Assumptions
+		/// 1. the call must have been signed by the issuer.
+		/// 
+		/// ## Emits 
+		/// - [`Event::Created`](Event::Created)
+		/// 
+		/// ## State Changes
+		/// - [`AssetVault`](AssetVault): a mapping between the parameter `asset` and the created vault's
+		///     `VaultId` is stored.
+		/// 
+		/// ## Errors
+		/// - `VaultAlreadyExists`: their already exists an underlying vault for `asset`.
+		/// 
+		/// # Examples
+		/// 
+		/// # Weight: O(TBD)
 		#[pallet::weight(<T as Config>::WeightInfo::create())]
 		pub fn create(
 			origin: OriginFor<T>,
