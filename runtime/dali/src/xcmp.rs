@@ -9,10 +9,12 @@ use composable_traits::{
 	defi::Ratio,
 	oracle::MinimalOracle,
 };
-use cumulus_primitives_core::ParaId;
+use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
 	construct_runtime, ensure, log, match_type, parameter_types,
-	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
+	traits::{
+		Contains, Everything, KeyOwnerProofSystem, Nothing, OriginTrait, Randomness, StorageInfo,
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -20,33 +22,32 @@ use frame_support::{
 	},
 	PalletId, RuntimeDebug,
 };
+use orml_traits::{location::Reserve, parameter_type_with_key, MultiCurrency};
 use orml_xcm_support::{
 	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, OnDepositFail,
 };
-
+use pallet_xcm::XcmPassthrough;
+use polkadot_parachain::primitives::Sibling;
+use sp_api::impl_runtime_apis;
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	traits::{AccountIdLookup, BlakeTwo256, Convert, ConvertInto, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, DispatchError,
 };
-
-use orml_traits::{location::Reserve, parameter_type_with_key, MultiCurrency};
-use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-
-use pallet_xcm::XcmPassthrough;
-use polkadot_parachain::primitives::Sibling;
 use sp_std::{marker::PhantomData, prelude::*};
 use xcm::latest::{prelude::*, Error};
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds,
-	LocationInverter, ParentIsDefault, RelayChainAsNative, SiblingParachainAsNative,
+	LocationInverter, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative,
 	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
 	SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
 };
 use xcm_executor::{
-	traits::{DropAssets, FilterAssetLocation, ShouldExecute, TransactAsset, WeightTrader},
+	traits::{
+		ConvertOrigin, DropAssets, FilterAssetLocation, ShouldExecute, TransactAsset, WeightTrader,
+	},
 	Assets, Config, XcmExecutor,
 };
 
@@ -130,8 +131,8 @@ pub type XcmRouter = (
 /// when determining ownership of accounts for asset transacting and when attempting to use XCM
 /// `Transact` in order to determine the dispatch Origin.
 pub type LocationToAccountId = (
-	// The parent (Relay-chain) origin converts to the default `AccountId`.
-	ParentIsDefault<AccountId>,
+	// The parent (Relay-chain) origin converts to the parent `AccountId`.
+	ParentIsPreset<AccountId>,
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
@@ -411,6 +412,16 @@ parameter_types! {
 	pub const MaxAssetsForTransfer: usize = 1;
 }
 
+parameter_type_with_key! {
+	pub ParachainMinFee: |location: MultiLocation| -> u128 {
+		#[allow(clippy::match_ref_pats)] // false positive
+		match (location.parents, location.first_interior()) {
+			// (1, Some(Parachain(2))) => 40,
+			_ => 0,
+		}
+	};
+}
+
 impl orml_xtokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -421,6 +432,7 @@ impl orml_xtokens::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
+	type MinXcmFee = ParachainMinFee;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
 }
@@ -575,12 +587,13 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type VersionWrapper = ();
 	type ChannelInfo = ParachainSystem;
-	// NOTE: we could consider allowance for some chains (see Acala tests ports  PRs)
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
+	type ExecuteOverweightOrigin = EnsureRootOrHalfCouncil;
+	type ControllerOrigin = EnsureRootOrHalfCouncil;
+	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = system::EnsureRoot<AccountId>;
+	type ExecuteOverweightOrigin = EnsureRootOrHalfCouncil;
 }

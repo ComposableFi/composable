@@ -2,6 +2,7 @@ use crate::cli::ComposableCli;
 use parachain_inherent::ParachainInherentData;
 use sc_consensus_manual_seal::consensus::timestamp::SlotTimestampProvider;
 use sc_service::TFullBackend;
+use sp_runtime::generic::Era;
 use std::sync::Arc;
 use substrate_simnode::{FullClientFor, RpcHandlerArgs, SignatureVerificationOverride};
 
@@ -37,22 +38,30 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 		sp_consensus_aura::inherents::InherentDataProvider,
 		ParachainInherentData,
 	);
+	type SignedExtras = picasso_runtime::SignedExtra;
 	type Cli = ComposableCli;
 	fn create_rpc_io_handler<SC>(
 		deps: RpcHandlerArgs<Self, SC>,
-	) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>
-	where
-		<<Self as substrate_simnode::ChainInfo>::RuntimeApi as sp_api::ConstructRuntimeApi<
-			Self::Block,
-			FullClientFor<Self>,
-		>>::RuntimeApi: sp_api::Core<Self::Block>
-			+ sp_transaction_pool::runtime_api::TaggedTransactionQueue<Self::Block>,
-	{
+	) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata> {
 		let full_deps = node::rpc::FullDeps {
 			client: deps.client,
 			pool: deps.pool,
 			deny_unsafe: deps.deny_unsafe,
 		};
 		node::rpc::create::<_, _, Self::Block>(full_deps)
+	}
+
+	fn signed_extras(from: <Self::Runtime as system::Config>::AccountId) -> Self::SignedExtras {
+		let nonce = system::Pallet::<Self::Runtime>::account_nonce(from);
+		(
+			system::CheckNonZeroSender::<Self::Runtime>::new(),
+			system::CheckSpecVersion::<Self::Runtime>::new(),
+			system::CheckTxVersion::<Self::Runtime>::new(),
+			system::CheckGenesis::<Self::Runtime>::new(),
+			system::CheckEra::<Self::Runtime>::from(Era::Immortal),
+			system::CheckNonce::<Self::Runtime>::from(nonce),
+			system::CheckWeight::<Self::Runtime>::new(),
+			transaction_payment::ChargeTransactionPayment::<Self::Runtime>::from(0),
+		)
 	}
 }

@@ -108,7 +108,7 @@ pub mod module {
 		type MinVestedTransfer: Get<BalanceOf<Self>>;
 
 		/// Required origin for vested transfer.
-		type VestedTransferOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
+		type VestedTransferOrigin: EnsureOrigin<Self::Origin>;
 
 		/// Weight information for extrinsics in this module.
 		type WeightInfo: WeightInfo;
@@ -143,6 +143,8 @@ pub mod module {
 		AmountLow,
 		/// Failed because the maximum vesting schedules was exceeded
 		MaxVestingSchedulesExceeded,
+		/// Trying to vest to ourselves
+		TryingToSelfVest,
 	}
 
 	#[pallet::event]
@@ -246,12 +248,14 @@ pub mod module {
 		#[pallet::weight(<T as Config>::WeightInfo::vested_transfer())]
 		pub fn vested_transfer(
 			origin: OriginFor<T>,
-			dest: <T::Lookup as StaticLookup>::Source,
+			from: <T::Lookup as StaticLookup>::Source,
+			beneficiary: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
 			schedule: VestingScheduleOf<T>,
 		) -> DispatchResult {
-			let from = T::VestedTransferOrigin::ensure_origin(origin)?;
-			let to = T::Lookup::lookup(dest)?;
+			T::VestedTransferOrigin::ensure_origin(origin)?;
+			let from = T::Lookup::lookup(from)?;
+			let to = T::Lookup::lookup(beneficiary)?;
 			<Self as VestedTransfer>::vested_transfer(asset, &from, &to, schedule.clone())?;
 
 			Self::deposit_event(Event::VestingScheduleAdded { from, to, asset, schedule });
@@ -305,6 +309,8 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 		to: &Self::AccountId,
 		schedule: VestingSchedule<Self::BlockNumber, Self::Moment, Self::Balance>,
 	) -> frame_support::dispatch::DispatchResult {
+		ensure!(from != to, Error::<T>::TryingToSelfVest);
+
 		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 
 		let total_amount = Self::locked_balance(to, asset)

@@ -102,6 +102,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	/// Convenience identifiers emitted by the pallet for relayer bookkeeping.
@@ -129,6 +130,7 @@ pub mod pallet {
 	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
 	pub struct NetworkInfo<Balance> {
 		pub enabled: bool,
+		pub min_transfer_size: Balance,
 		pub max_transfer_size: Balance,
 	}
 
@@ -341,6 +343,7 @@ pub mod pallet {
 		NoStaleTransactions,
 		InsufficientBudget,
 		ExceedsMaxTransferSize,
+		BelowMinTransferSize,
 		NoClaimableTx,
 		TxStillLocked,
 		NoOutgoingTx,
@@ -462,6 +465,7 @@ pub mod pallet {
 				NetworkInfos::<T>::get(network_id.clone()).ok_or(Error::<T>::UnsupportedNetwork)?;
 			ensure!(network_info.enabled, Error::<T>::NetworkDisabled);
 			ensure!(network_info.max_transfer_size >= amount, Error::<T>::ExceedsMaxTransferSize);
+			ensure!(network_info.min_transfer_size <= amount, Error::<T>::BelowMinTransferSize);
 
 			T::Assets::transfer(
 				asset_id,
