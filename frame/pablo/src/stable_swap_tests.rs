@@ -1,6 +1,7 @@
 #![allow(unreachable_patterns)] // TODO: remove this when there are more pool configurations added.
 
 use crate::{
+	common_test_functions::*,
 	mock::{Pablo, *},
 	PoolConfiguration::StableSwap,
 	PoolInitConfiguration,
@@ -147,47 +148,29 @@ fn test_dex_demo() {
 #[test]
 fn add_remove_lp() {
 	new_test_ext().execute_with(|| {
+		let pool_init_config = PoolInitConfiguration::StableSwap {
+			pair: CurrencyPair::new(USDC, USDT),
+			amplification_coefficient: 10_u16,
+			fee: Permill::zero(),
+			protocol_fee: Permill::zero(),
+		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
 		let initial_usdc = 1_000_000_000_000_u128 * unit;
-		let pool_id = create_stable_swap_pool(
-			USDC,
-			USDT,
+		let usdc_amount = 1000 * unit;
+		let usdt_amount = 1000 * unit;
+		let expected_lp_check = |base_amount: Balance,
+		                         quote_amount: Balance,
+		                         lp: Balance|
+		 -> bool { base_amount + quote_amount == lp };
+		common_add_remove_lp(
+			pool_init_config,
 			initial_usdc,
 			initial_usdt,
-			100_u16,
-			Permill::zero(),
-			Permill::zero(),
+			usdc_amount,
+			usdt_amount,
+			expected_lp_check,
 		);
-		let pool = Pablo::pools(pool_id).expect("pool not found");
-		let pool = match pool {
-			StableSwap(pool) => pool,
-			_ => panic!("expected stable_swap pool"),
-		};
-		let bob_usdc = 1000 * unit;
-		let bob_usdt = 1000 * unit;
-		// Mint the tokens
-		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
-		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-
-		let lp = Tokens::balance(pool.lp_token, &BOB);
-		assert_eq!(lp, 0_u128);
-		// Add the liquidity
-		assert_ok!(Pablo::add_liquidity(
-			Origin::signed(BOB),
-			pool_id,
-			bob_usdc,
-			bob_usdt,
-			0,
-			false
-		));
-		let lp = Tokens::balance(pool.lp_token, &BOB);
-		// must have received some lp tokens
-		assert!(lp == bob_usdt + bob_usdc);
-		assert_ok!(Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp, 0, 0));
-		let lp = Tokens::balance(pool.lp_token, &BOB);
-		// all lp tokens must have been burnt
-		assert_eq!(lp, 0_u128);
 	});
 }
 

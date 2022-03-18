@@ -36,6 +36,8 @@
 pub use pallet::*;
 
 #[cfg(test)]
+mod common_test_functions;
+#[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod stable_swap_tests;
@@ -417,32 +419,6 @@ pub mod pallet {
 		pub(crate) fn account_id(pool_id: &T::PoolId) -> T::AccountId {
 			T::PalletId::get().into_sub_account(pool_id)
 		}
-
-		fn do_compute_swap(
-			pool_id: T::PoolId,
-			pair: CurrencyPair<T::AssetId>,
-			quote_amount: T::Balance,
-			apply_fees: bool,
-			fee: Permill,
-			protocol_fee: Permill,
-		) -> Result<(T::Balance, T::Balance, T::Balance, T::Balance), DispatchError> {
-			let base_amount = Self::get_exchange_value(pool_id, pair.base, quote_amount)?;
-			let base_amount_u: u128 = T::Convert::convert(base_amount);
-
-			let (lp_fee, protocol_fee) = if apply_fees {
-				let lp_fee = fee.mul_floor(base_amount_u);
-				// protocol_fee is computed based on lp_fee
-				let protocol_fee = protocol_fee.mul_floor(lp_fee);
-				let lp_fee = T::Convert::convert(lp_fee);
-				let protocol_fee = T::Convert::convert(protocol_fee);
-				(lp_fee, protocol_fee)
-			} else {
-				(T::Balance::zero(), T::Balance::zero())
-			};
-
-			let base_amount_excluding_fees = base_amount.safe_sub(&lp_fee)?;
-			Ok((base_amount_excluding_fees, quote_amount, lp_fee, protocol_fee))
-		}
 	}
 
 	impl<T: Config> Amm for Pallet<T> {
@@ -476,14 +452,14 @@ pub mod pallet {
 			match pool {
 				PoolConfiguration::StableSwap(stable_swap_pool_info) =>
 					StableSwap::<T>::get_exchange_value(
-						stable_swap_pool_info,
-						pool_account,
+						&stable_swap_pool_info,
+						&pool_account,
 						asset_id,
 						amount,
 					),
 				ConstantProduct(constant_product_pool_info) => Uniswap::<T>::get_exchange_value(
-					constant_product_pool_info,
-					pool_account,
+					&constant_product_pool_info,
+					&pool_account,
 					asset_id,
 					amount,
 				),
@@ -611,14 +587,7 @@ pub mod pallet {
 					// provided pair might have been swapped
 					ensure!(pair == pool.pair, Error::<T>::PairMismatch);
 					let (base_amount_excluding_fees, quote_amount, lp_fees, protocol_fees) =
-						Self::do_compute_swap(
-							pool_id,
-							pair,
-							quote_amount,
-							true,
-							pool.fee,
-							pool.protocol_fee,
-						)?;
+						StableSwap::<T>::do_compute_swap(&pool, &pool_account, quote_amount, true)?;
 
 					ensure!(
 						base_amount_excluding_fees >= min_receive,
@@ -657,7 +626,7 @@ pub mod pallet {
 					let (base_amount, quote_amount_excluding_fees, lp_fees, owner_fees) =
 						Uniswap::<T>::do_compute_swap(
 							&constant_product_pool_info,
-							pool_account,
+							&pool_account,
 							pair,
 							quote_amount,
 							true,
@@ -668,7 +637,6 @@ pub mod pallet {
 
 					ensure!(base_amount >= min_receive, Error::<T>::CannotRespectMinimumRequested);
 
-					let pool_account = Self::account_id(&pool_id);
 					T::Assets::transfer(
 						pair.quote,
 						who,
