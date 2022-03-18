@@ -1,0 +1,144 @@
+@startuml clearing-house
+
+<style>
+.struct {
+    BackgroundColor LightGreen
+}
+.Call {
+    BackgroundColor LightBlue
+}
+.trait {
+    BackgroundColor Cyan
+}
+</style>
+
+package "pallet-clearing-house" {
+    interface ClearingHouse <<Call>> {
+        + open_position()
+        + close_position()
+        + add_margin()
+        + remove_margin()
+        + liquidate()
+        + update_funding()
+        # create_market()
+        # delete_market()
+    }
+    
+    interface "MarginTrading" as MTTrait <<trait>> {
+        ~ add_margin()
+        ~ remove_margin()
+        ~ open_position()
+        ~ close_position()
+        ~ liquidate()
+    }
+    
+    interface "RiskEngine" as RETrait <<trait>> {
+        ~ above_risk_threshold(AccountId)
+        ~ risk_free_collateral(AccountId)
+        '~ get_margin_ratio()
+        '~ get_free_collateral()
+    }
+    
+    interface "Instruments" as ITrait <<trait>> {
+        ~ funding_owed(Position)
+        ~ funding_rate(MarketId)
+        ~ update_funding(MarketId)
+    }
+
+    database "Clearing House Storage" {
+        map "AccountsMargin" as MarginAccounts <<StorageMap>> {
+            AccountId => Balance collateral
+        }
+
+        map Positions <<StorageDoubleMap>> {
+            AccountId, MarketId =>
+        }
+
+        map Markets <<StorageMap>> {
+            MarketId =>
+        }
+
+        class Position <<struct>> {
+            MarketId market_id
+            Decimal base_asset_amount
+            Decimal quote_asset_notional_amount
+            Decimal last_cum_funding
+        }
+
+        class Market <<struct>> {
+            VAMMId vamm_id
+            AssetId asset_id
+            Decimal cum_funding_rate
+            Timestamp funding_rate_ts
+            Duration periodicity
+        }
+    }
+}
+
+package "pallet-virtual-amm" {
+    interface vAmm <<trait>> {
+        ~ create()
+        ~ get_price()
+        ~ get_twap()
+        ~ swap()
+    }
+    database "vAMM Storage" {
+        map vAmms <<StorageMap>> {
+            VirturalAMMId =>
+        }
+        class vAmmState <<struct>> {
+            u128 base_asset_reserves
+            u128 quote_asset_reserves
+        }
+    }
+}
+
+package "pallet-oracle" {
+    interface Oracle <<trait>> {
+        ~get_price(asset_id: AssetId, amount: Balance)
+        ~get_twap(of: AssetId, weighting: Vec<Balance>)
+    }
+}
+
+hide empty members
+hide circle
+
+'Storage relationships'
+Markets::MarketId ..> Market : maps
+Market::VirtualAMMId ..> vAmms : references
+Market::asset_id ..> Oracle : used in
+
+Positions ..> Position: maps
+Position::MarketId ..> Markets : references
+
+'           Control flow relationships             '
+ClearingHouse --> MTTrait : calls
+ClearingHouse --> ITrait : calls
+
+'add_margin'
+'remove_margin'
+MTTrait --> MarginAccounts : write
+
+'remove_margin'
+MTTrait --> RETrait : calls
+
+'open_position'
+'close_position'
+'liquidate'
+MTTrait --> Positions : write
+
+'open_position'
+'close_position'
+MTTrait --> vAmm : calls
+
+
+ITrait::update_funding --> Market : write
+ITrait::update_funding --> Oracle : calls
+ITrait::update_funding --> vAmm : calls
+
+
+'vAMM'
+vAmm --> vAmms : read/write
+vAmms --> vAmmState : maps
+
+@enduml
