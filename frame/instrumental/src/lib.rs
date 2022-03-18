@@ -284,10 +284,11 @@ pub mod pallet {
 		/// - `amount`: the amount of `asset` to deposit.
 		/// 
 		/// ## Requirements
-		/// 1. the call must have been signed by the issuer.
+		/// 1. The call must have been signed by the issuer.
+		/// 2. There must be a vault associated with `asset`.
 		/// 
 		/// ## Emits 
-		/// - [`Event::Created`](Event::Created)
+		/// - [`Event::AddedLiquidity`](Event::AddedLiquidity)
 		/// 
 		/// ## Errors
 		/// - `AssetDoesNotHaveAnAssociatedVault`: no vault has been created for `asset`.
@@ -316,6 +317,28 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Remove assets from its underlying vault.
+		/// 
+		/// # Overview
+		/// 
+		/// ## Parameters
+		/// - `origin`: 
+		/// - `asset`: the `AssetId` of the asset to withdraw.
+		/// - `amount`: the amount of `asset` to withdraw.
+		/// 
+		/// ## Requirements
+		/// 1. The call must have been signed by the issuer.
+		/// 2. There must be a vault associated with `asset`.
+		/// 
+		/// ## Emits 
+		/// - [`Event::RemovedLiquidity`](Event::RemovedLiquidity)
+		/// 
+		/// ## Errors
+		/// - `AssetDoesNotHaveAnAssociatedVault`: no vault has been created for `asset`.
+		/// 
+		/// # Examples
+		/// 
+		/// # Weight: O(TBD)
 		#[pallet::weight(<T as Config>::WeightInfo::add_liquidity())]
 		pub fn remove_liquidity(
 			origin: OriginFor<T>,
