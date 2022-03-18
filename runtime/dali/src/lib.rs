@@ -27,8 +27,8 @@ pub use xcmp::{MaxInstructions, UnitWeightCost};
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MosaicRemoteAssetId,
-	MultiExistentialDeposits, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
-	MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	MultiExistentialDeposits, NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO,
+	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use cumulus_primitives_core::ParaId;
@@ -887,10 +887,10 @@ impl dutch_auction::Config for Runtime {
 	type Event = Event;
 	type MultiCurrency = Assets;
 	type PalletId = DutchAuctionId;
-	type WeightToFee = WeightToFee;
 	type OrderId = u128;
 	type UnixTime = Timestamp;
 	type WeightInfo = weights::dutch_auction::WeightInfo<Runtime>;
+	type PositionExistentialDeposit = NativeExistentialDeposit;
 }
 
 parameter_types! {
@@ -1072,10 +1072,9 @@ construct_runtime!(
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
 		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
-	  ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
-	  StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
-	LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
-
+		ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
+		StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
+		LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );

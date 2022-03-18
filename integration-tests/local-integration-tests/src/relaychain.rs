@@ -3,10 +3,10 @@
 use self::kusama::RelayChainCall;
 use crate::prelude::*;
 use common::Balance;
-use dali_runtime::Weight;
+
 use support::RuntimeDebug;
 use xcm::latest::{
-	prelude::*, Junction::Parachain, Junctions::X1, MultiAsset, MultiLocation, OriginKind,
+	Junction::Parachain, Junctions::X1, MultiAsset, MultiLocation, OriginKind,
 	WeightLimit::Unlimited, Xcm,
 };
 
@@ -93,7 +93,7 @@ pub fn finalize_call_into_xcm_message<T: Config>(
 			max_assets: u32::max_value(),
 			beneficiary: MultiLocation {
 				parents: 0,
-				interior: X1(Parachain(dali_runtime::ParachainInfo::parachain_id().into())),
+				interior: X1(Parachain(sibling_runtime::ParachainInfo::parachain_id().into())),
 			},
 		},
 	])

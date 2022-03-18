@@ -1,7 +1,17 @@
 //! Setup of Picasso running as if it is on Kusama relay
 use common::AccountId;
 use cumulus_primitives_core::ParaId;
-use dali_runtime as picasso_runtime;
+
+#[cfg(feature = "dali")]
+use dali_runtime as sibling_runtime;
+#[cfg(feature = "dali")]
+use dali_runtime as other_runtime;
+
+#[cfg(feature = "picasso")]
+use picasso_runtime as sibling_runtime;
+#[cfg(feature = "picasso")]
+use picasso_runtime as other_runtime;
+
 use polkadot_primitives::v1::{BlockNumber, MAX_CODE_SIZE, MAX_POV_SIZE};
 use polkadot_runtime_parachains::configuration::HostConfiguration;
 use primitives::currency::CurrencyId;
@@ -19,24 +29,24 @@ pub const PICA: Balances = 1_000_000_000_000;
 pub const KSM: Balances = PICA / 50;
 
 decl_test_parachain! {
-	pub struct Picasso {
-		Runtime = picasso_runtime::Runtime,
-		Origin = picasso_runtime::Origin,
-		XcmpMessageHandler = picasso_runtime::XcmpQueue,
-		DmpMessageHandler = picasso_runtime::DmpQueue,
-		new_ext = picasso_ext(PICASSO_PARA_ID),
+	pub struct This {
+		Runtime = sibling_runtime::Runtime,
+		Origin = sibling_runtime::Origin,
+		XcmpMessageHandler = sibling_runtime::XcmpQueue,
+		DmpMessageHandler = sibling_runtime::DmpQueue,
+		new_ext = picasso_ext(THIS_PARA_ID),
 	}
 }
 
 // we use picasso as test, need to test out transfer
 // and then decide how to imitate hydra
 decl_test_parachain! {
-	pub struct Dali {
-		Runtime = dali_runtime::Runtime,
-		Origin = dali_runtime::Origin,
-		XcmpMessageHandler = dali_runtime::XcmpQueue,
-		DmpMessageHandler = dali_runtime::DmpQueue,
-		new_ext = picasso_ext(DALI_PARA_ID),
+	pub struct Sibling {
+		Runtime = other_runtime::Runtime,
+		Origin = other_runtime::Origin,
+		XcmpMessageHandler = other_runtime::XcmpQueue,
+		DmpMessageHandler = other_runtime::DmpQueue,
+		new_ext = picasso_ext(SIBLING_PARA_ID),
 	}
 }
 
@@ -49,18 +59,15 @@ decl_test_relay_chain! {
 }
 
 // keep in sync with parachains, as macro does not allows for names
-pub const PICASSO_PARA_ID: u32 = 2000;
-pub const DALI_PARA_ID: u32 = 3000;
-
-/// for now unknow sibling is Dali, unti functional will diverge
-pub const SIBLING_PARA_ID: u32 = DALI_PARA_ID;
+pub const THIS_PARA_ID: u32 = 2000;
+pub const SIBLING_PARA_ID: u32 = 3000;
 
 decl_test_network! {
 	pub struct KusamaNetwork {
 		relay_chain = KusamaRelay,
 		parachains = vec![
-			(2000, Picasso),
-			(3000, Dali),
+			(2000, This),
+			(3000, Sibling),
 		],
 	}
 }
@@ -113,7 +120,7 @@ pub fn kusama_ext() -> sp_io::TestExternalities {
 	balances::GenesisConfig::<Runtime> {
 		balances: vec![
 			(AccountId::from(ALICE), ALICE_RELAY_BALANCE),
-			(ParaId::from(PICASSO_PARA_ID).into_account(), PICASSO_RELAY_BALANCE),
+			(ParaId::from(THIS_PARA_ID).into_account(), PICASSO_RELAY_BALANCE),
 		],
 	}
 	.assimilate_storage(&mut storage)
@@ -141,7 +148,7 @@ pub const ALICE_PARACHAIN_KSM: u128 = 13 * 1_000_000_000_000;
 
 pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	let parachain_id = parachain_id.into();
-	use dali_runtime::{Runtime, System};
+	use sibling_runtime::{Runtime, System};
 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 	balances::GenesisConfig::<Runtime> {
 		balances: vec![(AccountId::from(ALICE), ALICE_PARACHAIN_BALANCE)],
@@ -162,6 +169,12 @@ pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 		],
 	}
 	.assimilate_storage(&mut storage)
+	.unwrap();
+
+	<liquidations::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
+		&liquidations::GenesisConfig {},
+		&mut storage,
+	)
 	.unwrap();
 
 	let mut externalities = sp_io::TestExternalities::new(storage);

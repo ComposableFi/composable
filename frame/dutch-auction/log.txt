@@ -1,0 +1,26 @@
+warning: Patch `polkadot v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `polkadot-node-subsystem-test-helpers v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `polkadot-primitives-test-helpers v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `polkadot-test-client v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `polkadot-test-malus v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `polkadot-test-runtime v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `polkadot-test-service v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `polkadot-voter-bags v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `remote-ext-tests-bags-list v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `staking-miner v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `test-parachain-adder v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `test-parachain-adder-collator v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `test-parachain-halt v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `test-parachains v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `test-runtime-constants v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `xcm-executor-integration-tests v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `xcm-simulator v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `xcm-simulator-example v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `xcm-simulator-fuzzer v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Patch `zombienet-backchannel v0.9.17 (https://github.com/composableFi/polkadot?branch=release-v0.9.17#1db48fed)` was not used in the crate graph.
+Check that the patched package version and available features are compatible
+with the dependency requirements. If the patch has a different version from
+what is locked in the Cargo.lock file, run `cargo update` to use the new
+version. This may also occur with an optional dependency that is not enabled.
+    Checking pallet-dutch-auction v0.0.1 (/home/dz/git/blockchain/polkadot/composable/frame/dutch-auction)
+    Finished dev [unoptimized + debuginfo] target(s) in 1.58s

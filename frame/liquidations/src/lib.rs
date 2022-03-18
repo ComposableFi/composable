@@ -32,7 +32,7 @@
 	unused_extern_crates
 )]
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
 mod mock;
 
@@ -60,6 +60,7 @@ pub mod pallet {
 		traits::{Get, IsType, UnixTime},
 		PalletId, Parameter, Twox64Concat,
 	};
+	use frame_system::ensure_signed;
 
 	#[cfg(feature = "std")]
 	use frame_support::traits::GenesisBuild;
@@ -126,6 +127,16 @@ pub mod pallet {
 			_configuraiton: LiquidationStrategyConfiguration<T::ParachainId>,
 		) -> DispatchResultWithPostInfo {
 			Err(DispatchError::Other("add_liquidation_strategy: no implemented").into())
+		}
+		#[pallet::weight(10_000)]
+		pub fn sell(
+			origin: OriginFor<T>,
+			order: Sell<T::MayBeAssetId, T::Balance>,
+			configuration: Vec<T::LiquidationStrategyId>,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			Self::liquidate(&who, order, configuration)?;
+			Ok(().into())
 		}
 	}
 
@@ -229,7 +240,6 @@ pub mod pallet {
 			if configuration.is_empty() {
 				configuration.push(DefaultStrategyIndex::<T>::get())
 			};
-
 			for id in configuration {
 				let configuration = Strategies::<T>::get(id);
 				if let Some(configuration) = configuration {
@@ -242,9 +252,9 @@ pub mod pallet {
 							)),
 					};
 
-					if result.is_ok() {
+					if let Ok(order_id) = result {
 						Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
-						return result
+						return Ok(order_id)
 					}
 				}
 			}

@@ -21,8 +21,8 @@ cd ../polkadot && cargo build --release
 '''
 workspace = false
 
-[tasks.devnet]
-dependencies = ["build", "polkadot"]
+[tasks.start-devnet]
+dependencies = ["build", "git-polkadot"]
 script = '''
 cargo run --release -- --version
 cd ../polkadot && cargo run --release -- --version && pwd && cd ../composable
@@ -30,7 +30,7 @@ cd scripts/polkadot-launch && yarn && yarn composable
 '''
 workspace = false
 
-[tasks.devnet-docker]
+[tasks.start-devnet-docker]
 dependencies = []
 script = '''
 docker run --rm -ti -u$(id -u):$(id -g) -p9944:9944 -p9988:9988 -p9998:9998 composablefi/composable-sandbox:latest
@@ -46,12 +46,18 @@ workspace = false
 
 [tasks.run-local-integration-tests-debug]
 script = '''
-RUST_BACKTRACE=1 RUST_LOG=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace cargo +stable test --package local-integration-tests --features local-integration-tests --no-default-features -- --nocapture --test-threads=1
+RUST_BACKTRACE=full RUST_LOG=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace cargo +stable test  --package local-integration-tests --features local-integration-tests --features picasso  --no-default-features -- --nocapture --test-threads=1
 '''
 workspace = false
 
 [tasks.check-ci]
 script = '''
 SKIP_WASM_BUILD=1 cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
+'''
+workspace = false
+
+[tasks.build-benchmarks]
+script = '''
+cargo build --release --features runtime-benchmarks
 '''
 workspace = false

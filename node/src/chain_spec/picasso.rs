@@ -19,6 +19,7 @@ pub fn genesis_config(
 	accounts: Vec<AccountId>,
 	id: ParaId,
 	existential_deposit: Balance,
+	treasury: AccountId,
 ) -> picasso_runtime::GenesisConfig {
 	picasso_runtime::GenesisConfig {
 		system: picasso_runtime::SystemConfig {
@@ -27,8 +28,12 @@ pub fn genesis_config(
 				.to_vec(),
 		},
 		balances: picasso_runtime::BalancesConfig {
-			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+			// Configure endowed accounts with initial balance.
+			balances: vec![
+				vec![(treasury, existential_deposit)],
+				accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+			]
+			.concat(),
 		},
 		aura: Default::default(),
 		sudo: picasso_runtime::SudoConfig {

@@ -1,8 +1,12 @@
 use frame_support::dispatch::Weight;
 
 pub trait WeightInfo {
+	fn liquidate() -> Weight {
+		10_000
+	}
+
 	fn add_liquidation_strategy() -> Weight {
-		10000
+		10_000
 	}
 }
 

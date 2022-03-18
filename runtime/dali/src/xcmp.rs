@@ -28,6 +28,7 @@ use orml_xcm_support::{
 };
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
+use primitives::currency::WellKnownCurrency;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -58,56 +59,9 @@ parameter_types! {
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
 
-// here we should add any partner network for zero cost transactions
-// 1000 is statmeing - see kusama runtime setup
-// (1, Here) - jump 1 up, and say here - Relay
-// (1, 1000) - jump 1 up and go to child 1000
-match_type! {
-	pub type WellKnownsChains: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: Here } |
-			MultiLocation { parents: 1, interior: X1(Parachain(1000)) }
-	};
-}
-
-/// this is debug struct implementing as many XCMP interfaces as possible
-/// it just dumps content, no modification.
-/// returns default expected
-pub struct XcmpDebug;
-
-impl xcm_executor::traits::ShouldExecute for XcmpDebug {
-	fn should_execute<Call>(
-		origin: &MultiLocation,
-		message: &mut Xcm<Call>,
-		max_weight: Weight,
-		weight_credit: &mut Weight,
-	) -> Result<(), ()> {
-		log::trace!(target: "xcmp::should_execute", "{:?} {:?} {:?} {:?}", origin, message, max_weight, weight_credit);
-		Err(())
-	}
-}
-
-/// NOTE: there could be payments taken on other side, so cannot rely on this to work end to end
-pub struct DebugAllowUnpaidExecutionFrom<T>(PhantomData<T>);
-impl<T: Contains<MultiLocation>> ShouldExecute for DebugAllowUnpaidExecutionFrom<T> {
-	fn should_execute<Call>(
-		origin: &MultiLocation,
-		_message: &mut Xcm<Call>,
-		_max_weight: Weight,
-		_weight_credit: &mut Weight,
-	) -> Result<(), ()> {
-		log::trace!(
-			target: "xcm::barriers",
-			"AllowUnpaidExecutionFrom origin: {:?}, message: {:?}, max_weight: {:?}, weight_credit: {:?}, contains: {:?}",
-			origin, _message, _max_weight, _weight_credit, T::contains(origin),
-		);
-		ensure!(T::contains(origin), ());
-		Ok(())
-	}
-}
-
 pub type Barrier = (
 	XcmpDebug,
-	//DebugAllowUnpaidExecutionFrom<WellKnownsChains>,
+	AllowUnpaidExecutionFrom<ThisChain<ParachainInfo>>,
 	// Expected responses are OK.
 	AllowKnownQueryResponses<RelayerXcm>,
 	// Subscriptions for version tracking are OK.
@@ -163,14 +117,37 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	XcmPassthrough<Origin>,
 );
 
+pub struct StaticAssetsMap;
+
+pub mod parachains {
+	pub mod karura {
+		pub const ID: u32 = 3000;
+		pub const KUSD_KEY: &[u8] = &[0, 129];
+	}
+}
+
+impl XcmpAssets for StaticAssetsMap {
+	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
+		match location {
+			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
+				match (para_id, &key[..]) {
+					(parachains::karura::ID, parachains::karura::KUSD_KEY) =>
+						Some(CurrencyId::kUSD),
+					_ => None,
+				},
+			_ => None,
+		}
+	}
+}
+
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	crate::Assets,
 	UnknownTokens,
-	IsNativeConcrete<CurrencyId, CurrencyIdConvert<AssetsRegistry>>,
+	IsNativeConcrete<CurrencyId, AssetsIdConverter>,
 	AccountId,
 	LocationToAccountId,
 	CurrencyId,
-	CurrencyIdConvert<AssetsRegistry>,
+	AssetsIdConverter,
 	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
 >;
 
@@ -188,106 +165,13 @@ impl MinimalOracle for PriceConverter {
 		match asset_id {
 			CurrencyId::PICA => Ok(amount),
 			CurrencyId::KSM => Ok(amount / 10),
+			CurrencyId::kUSD => Ok(amount / 10),
 			_ => Err(DispatchError::Other("cannot pay with given weight")),
 		}
 	}
 }
-
-pub struct TransactionFeePoolTrader<
-	AssetConverter,
-	PriceConverter,
-	Treasury: TakeRevenue,
-	WeightToFee,
-> {
-	_marker: PhantomData<(AssetConverter, PriceConverter, Treasury, WeightToFee)>,
-	fee: Balance,
-	price: Balance,
-	asset_location: Option<MultiLocation>,
-}
-
-impl<
-		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
-		PriceConverter: MinimalOracle<AssetId = CurrencyId, Balance = Balance>,
-		Treasury: TakeRevenue,
-		WeightToFee: WeightToFeePolynomial<Balance = Balance>,
-	> WeightTrader for TransactionFeePoolTrader<AssetConverter, PriceConverter, Treasury, WeightToFee>
-{
-	fn new() -> Self {
-		Self {
-			_marker:
-				PhantomData::<(AssetConverter, PriceConverter, Treasury, WeightToFee)>::default(),
-			fee: 0,
-			price: 0,
-			asset_location: None,
-		}
-	}
-
-	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, Error> {
-		// this is for trusted chains origin, see `f` if any
-		// TODO: dicuss if we need payments from Relay chain or common goods chains?
-		if weight.is_zero() {
-			return Ok(payment)
-		}
-
-		// only support first fungible assets now.
-		let xcmp_asset_id = payment
-			.fungible
-			.iter()
-			.next()
-			.map_or(Err(XcmError::TooExpensive), |v| Ok(v.0))?;
-
-		if let AssetId::Concrete(ref multi_location) = xcmp_asset_id.clone() {
-			if let Some(asset_id) = AssetConverter::convert(multi_location.clone()) {
-				let fee = WeightToFee::calc(&weight);
-				let price = PriceConverter::get_price_inverse(asset_id, fee)
-					.map_err(|_| XcmError::TooExpensive)?;
-
-				let required =
-					MultiAsset { id: xcmp_asset_id.clone(), fun: Fungibility::Fungible(price) };
-
-				log::trace!(target : "xcmp::buy_weight", "{:?} {:?} ", required, payment );
-				let unused = payment.checked_sub(required).map_err(|_| XcmError::TooExpensive)?;
-
-				self.fee = self.fee.saturating_add(fee);
-				self.price = self.price.saturating_add(price);
-				self.asset_location = Some(multi_location.clone());
-				return Ok(unused)
-			}
-		}
-
-		log::info!(target : "xcmp::buy_weight", "required {:?}; provided {:?};", weight, payment );
-		Err(XcmError::TooExpensive)
-	}
-
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
-		if let Some(ref asset_location) = self.asset_location {
-			let fee = WeightToFee::calc(&weight);
-			let fee = self.fee.min(fee);
-			let price = fee.saturating_mul(self.price) / self.fee;
-			self.price = self.price.saturating_sub(price);
-			self.fee = self.fee.saturating_sub(fee);
-			if price > 0 {
-				return Some((asset_location.clone(), price).into())
-			}
-		}
-
-		None
-	}
-}
-
-impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Treasury, Z> {
-	fn drop(&mut self) {
-		log::info!(target : "xcmp::take_revenue", "{:?} {:?}", &self.asset_location, self.fee);
-		if let Some(asset) = self.asset_location.take() {
-			if self.price > Balance::zero() {
-				Treasury::take_revenue((asset, self.price).into());
-			}
-		}
-	}
-}
-
-pub struct RelayReserverFromParachain;
-impl FilterAssetLocation for RelayReserverFromParachain {
+pub struct RelayReserveFromParachain;
+impl FilterAssetLocation for RelayReserveFromParachain {
 	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
 		// NOTE: In Acala there is not such thing
 		// if asset is KSM and send from some parachain then allow for  that
@@ -296,47 +180,16 @@ impl FilterAssetLocation for RelayReserverFromParachain {
 	}
 }
 
-pub struct ToTreasury<AssetsConverter>(PhantomData<AssetsConverter>);
-impl<AssetsConverter: Convert<MultiLocation, Option<CurrencyId>>> TakeRevenue
-	for ToTreasury<AssetsConverter>
-{
-	fn take_revenue(revenue: MultiAsset) {
-		if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = revenue {
-			log::info!(target: "xcmp::take_revenue", "{:?} {:?}", &location, amount);
-			if let Some(currency_id) = AssetsConverter::convert(location) {
-				let account = &TreasuryAccount::get();
-				match <crate::Assets>::deposit(currency_id, account, amount) {
-					Ok(_) => {},
-					Err(err) => log::error!(target: "xcmp", "{:?}", err),
-				};
-			}
-		}
-	}
-}
-
-pub struct DebugMultiNativeAsset;
-impl FilterAssetLocation for DebugMultiNativeAsset {
-	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
-		log::trace!(
-			target: "xcmp::filter_asset_location",
-			"asset: {:?}; origin: {:?}; reserve: {:?};",
-			&asset,
-			&origin,
-			&asset.clone().reserve(),
-		);
-		false
-	}
-}
-
 type IsReserveAssetLocationFilter =
-	(DebugMultiNativeAsset, MultiNativeAsset, RelayReserverFromParachain);
+	(DebugMultiNativeAsset, MultiNativeAsset, RelayReserveFromParachain);
 
-type AssetsIdConverter = CurrencyIdConvert<AssetsRegistry>;
+type AssetsIdConverter =
+	CurrencyIdConvert<AssetsRegistry, CurrencyId, ParachainInfo, StaticAssetsMap>;
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
 	PriceConverter,
-	ToTreasury<AssetsIdConverter>,
+	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
 	WeightToFee,
 >;
 
@@ -381,9 +234,9 @@ impl<
 }
 
 pub type CaptureAssetTrap = CaptureDropAssets<
-	ToTreasury<CurrencyIdConvert<AssetsRegistry>>,
+	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
 	PriceConverter,
-	CurrencyIdConvert<AssetsRegistry>,
+	AssetsIdConverter,
 >;
 
 pub struct XcmConfig;
@@ -426,7 +279,7 @@ impl orml_xtokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type CurrencyId = CurrencyId;
-	type CurrencyIdConvert = CurrencyIdConvert<AssetsRegistry>;
+	type CurrencyIdConvert = AssetsIdConverter;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = SelfLocation;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
@@ -439,114 +292,6 @@ impl orml_xtokens::Config for Runtime {
 
 impl orml_unknown_tokens::Config for Runtime {
 	type Event = Event;
-}
-
-/// is collaed to convert some account id to account id on other network
-/// as of now it is same as in Acala/Hydra
-pub struct AccountIdToMultiLocation;
-impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
-	fn convert(account: AccountId) -> MultiLocation {
-		//  considers any other network using globally unique ids
-		X1(AccountId32 { network: NetworkId::Any, id: account.into() }).into()
-	}
-}
-
-/// Converts currency to and from local and remote
-pub struct CurrencyIdConvert<AssetRegistry>(PhantomData<AssetRegistry>);
-
-/// converts local currency into remote,
-/// native currency is built in
-impl<
-		AssetRegistry: RemoteAssetRegistry<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
-	> sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>>
-	for CurrencyIdConvert<AssetRegistry>
-{
-	fn convert(id: CurrencyId) -> Option<MultiLocation> {
-		match id {
-			CurrencyId::PICA => Some(MultiLocation::new(
-				1,
-				X2(Parachain(ParachainInfo::parachain_id().into()), GeneralKey(id.encode())),
-			)),
-			CurrencyId::KSM => Some(MultiLocation::parent()),
-			_ =>
-				if let Some(location) = AssetRegistry::asset_to_location(id).map(Into::into) {
-					Some(location)
-				} else {
-					log::trace!(
-						target: "xcmp:convert",
-						"mapping for {:?} on {:?} parachain not found",
-						id,
-						ParachainInfo::parachain_id()
-					);
-					None
-				},
-		}
-	}
-}
-
-/// converts from Relay parent chain to child chain currency
-/// expected that currency in location is in format well known for local chain
-/// here we can and partner currencies if we trust them (e.g. some LBT event transfer)
-impl<T> Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert<T> {
-	fn convert(location: MultiLocation) -> Option<CurrencyId> {
-		log::trace!(target: "xcmp::convert", "converting {:?} on {:?}", &location, ParachainInfo::parachain_id());
-		match location {
-			MultiLocation { parents, interior: X2(Parachain(id), GeneralKey(key)) }
-				if parents == 1 && ParaId::from(id) == ParachainInfo::parachain_id() =>
-			{
-				if let Ok(currency_id) = CurrencyId::decode(&mut &key[..]) {
-					match currency_id {
-						CurrencyId::PICA => Some(CurrencyId::PICA),
-						_ => {
-							log::error!(target: "xcmp", "currency {:?} is not yet handled", currency_id);
-							None
-						},
-					}
-				} else {
-					log::error!(target: "xcmp", "currency {:?} is not yet handled", &key);
-					None
-				}
-			},
-			// TODO: make this const expression to filter parent
-			MultiLocation { parents: 1, interior: Here } => {
-				// TODO: support DOT
-				Some(CurrencyId::KSM)
-			},
-			MultiLocation { interior: X1(GeneralKey(key)), parents: 0 } => {
-				// adapt for reanchor canonical location: https://github.com/paritytech/polkadot/pull/4470
-				let currency_id = CurrencyId::decode(&mut &key[..]).ok()?;
-				match currency_id {
-					CurrencyId::PICA => Some(CurrencyId::PICA),
-					_ => None,
-				}
-			},
-			// delegate to asset-registry
-			_ => {
-				log::trace!(target: "xcmp", "using assets registry for {:?}", location);
-				let result = <AssetsRegistry as RemoteAssetRegistry>::location_to_asset(
-					XcmAssetLocation(location),
-				)
-				.map(Into::into);
-				if result.is_none() {
-					log::error!(target: "xcmp", "failed converting currency");
-				}
-				result
-			},
-		}
-	}
-}
-
-/// covert remote to local, usually when receiving transfer
-impl<T> Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert<T> {
-	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
-		log::trace!(target: "xcmp", "converting {:?}", &asset);
-		if let MultiAsset { id: Concrete(location), .. } = asset {
-			Self::convert(location)
-		} else {
-			log::error!(target: "xcmp", "failed to find remote asset");
-			None
-		}
-	}
 }
 
 // make setup as in Acala, max instructions seems resoanble, for weigth may consider to  settle with
