@@ -190,6 +190,16 @@ pub mod pallet {
 	pub type PacketCommitment<T: Config> =
 		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
 
+	#[pallet::storage]
+	/// (port_id, channel_id)  => Vec<Vec<u8>>
+	pub type SendPackets<T: Config> =
+		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
+
+	#[pallet::storage]
+	/// (port_id, channel_id, sequence) => Vec<u8>
+	pub type TimeoutPackets<T: Config> =
+		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T> {

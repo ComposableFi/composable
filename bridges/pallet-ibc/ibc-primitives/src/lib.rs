@@ -95,8 +95,7 @@ pub struct QueryConnectionsResponse {
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryNextSequenceReceiveResponse {
-	/// Protobuf encoded `ibc::Sequence`
-	pub sequence: Vec<u8>,
+	pub sequence: u64,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
 	/// Protobuf encoded `ibc::Height`
@@ -115,10 +114,17 @@ pub struct QueryPacketCommitmentResponse {
 
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct PacketState {
+	pub port_id: String,
+	pub channel_id: String,
+	pub sequence: u64,
+	pub data: Vec<u8>,
+}
+
+#[derive(Clone, codec::Encode, codec::Decode)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryPacketCommitmentsResponse {
-	pub commitments: Vec<Vec<u8>>,
-	/// Trie proof
-	pub proof: Vec<Vec<u8>>,
+	pub commitments: Vec<PacketState>,
 	/// Protobuf encoded `ibc::Height`
 	pub height: Vec<u8>,
 }
@@ -136,9 +142,7 @@ pub struct QueryPacketAcknowledgementResponse {
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryPacketAcknowledgementsResponse {
-	pub acks: Vec<Vec<u8>>,
-	/// Trie proof
-	pub proof: Vec<Vec<u8>>,
+	pub acks: Vec<PacketState>,
 	/// Protobuf encoded `ibc::Height`
 	pub height: Vec<u8>,
 }

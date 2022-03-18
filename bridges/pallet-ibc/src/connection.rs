@@ -68,7 +68,7 @@ impl<T: Config> ConnectionReader for Context<T> {
 		log::info!("in connection : [host_oldest_height]");
 
 		let mut temp = frame_system::BlockHash::<T>::iter().collect::<Vec<_>>();
-		temp.sort_by(|(a,..), (b, ..)| a.cmp(b));
+		temp.sort_by(|(a, ..), (b, ..)| a.cmp(b));
 		let (block_number, ..) = temp.get(0).cloned().unwrap_or_default();
 		let block_number = format!("{:?}", block_number);
 		let height = block_number.parse().unwrap_or_default();
