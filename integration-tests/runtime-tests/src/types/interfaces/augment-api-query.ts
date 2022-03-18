@@ -125,11 +125,11 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * The counter used to uniquely identify bond offers within this pallet.
        **/
-      bondOfferCount: AugmentedQuery<ApiType, () => Observable<u64>, []> & QueryableStorageEntry<ApiType, []>;
+      bondOfferCount: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * A mapping from offer ID to the pair: (issuer, offer)
        **/
-      bondOffers: AugmentedQuery<ApiType, (arg: u64 | AnyNumber | Uint8Array) => Observable<Option<ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>>>, [u64]> & QueryableStorageEntry<ApiType, [u64]>;
+      bondOffers: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       /**
        * Generic query
        **/

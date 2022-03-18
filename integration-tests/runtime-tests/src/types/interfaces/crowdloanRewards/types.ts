@@ -163,12 +163,15 @@ export interface PalletAssetsRegistryForeignMetadata extends Null {}
 /** @name PalletCollatorSelectionCandidateInfo */
 export interface PalletCollatorSelectionCandidateInfo extends Null {}
 
+/** @name PalletCrowdloanRewardsModelsEcdsaSignature */
+export interface PalletCrowdloanRewardsModelsEcdsaSignature extends EcdsaSignature {}
+
 /** @name PalletCrowdloanRewardsModelsProof */
 export interface PalletCrowdloanRewardsModelsProof extends Enum {
   readonly isRelayChain: boolean;
   readonly asRelayChain: ITuple<[AccountId32, MultiSignature]>;
   readonly isEthereum: boolean;
-  readonly asEthereum: EcdsaSignature;
+  readonly asEthereum: PalletCrowdloanRewardsModelsEcdsaSignature;
   readonly type: 'RelayChain' | 'Ethereum';
 }
 

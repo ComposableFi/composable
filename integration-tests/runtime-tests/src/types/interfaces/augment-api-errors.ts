@@ -249,8 +249,8 @@ declare module '@polkadot/api-base/types/errors' {
     crowdloanRewards: {
       AlreadyAssociated: AugmentedError<ApiType>;
       AlreadyInitialized: AugmentedError<ApiType>;
+      BackToTheFuture: AugmentedError<ApiType>;
       InvalidClaim: AugmentedError<ApiType>;
-      InvalidInitializationBlock: AugmentedError<ApiType>;
       InvalidProof: AugmentedError<ApiType>;
       NotAssociated: AugmentedError<ApiType>;
       NotClaimableYet: AugmentedError<ApiType>;

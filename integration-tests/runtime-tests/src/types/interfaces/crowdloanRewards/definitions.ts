@@ -95,9 +95,10 @@ export default {
     PalletCrowdloanRewardsModelsProof: {
       _enum: {
         RelayChain: '(AccountId32, MultiSignature)',
-        Ethereum: 'EcdsaSignature'
+        Ethereum: 'PalletCrowdloanRewardsModelsEcdsaSignature'
       }
     },
+    PalletCrowdloanRewardsModelsEcdsaSignature: "EcdsaSignature",
     PalletDemocracyConviction: "Null",
     PalletDemocracyVoteAccountVote: "Null",
     ComposableTraitsDefiSell: "Null",
