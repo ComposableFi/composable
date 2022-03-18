@@ -1096,29 +1096,9 @@ declare module '@polkadot/api-base/types/events' {
     };
     xTokens: {
       /**
-       * Transferred.
-       **/
-      Transferred: AugmentedEvent<ApiType, [AccountId32, u128, u128, XcmV1MultiLocation]>;
-      /**
-       * Transferred `MultiAsset`.
-       **/
-      TransferredMultiAsset: AugmentedEvent<ApiType, [AccountId32, XcmV1MultiAsset, XcmV1MultiLocation]>;
-      /**
        * Transferred `MultiAsset` with fee.
        **/
-      TransferredMultiAssets: AugmentedEvent<ApiType, [AccountId32, XcmV1MultiassetMultiAssets, XcmV1MultiLocation]>;
-      /**
-       * Transferred `MultiAsset` with fee.
-       **/
-      TransferredMultiAssetWithFee: AugmentedEvent<ApiType, [AccountId32, XcmV1MultiAsset, XcmV1MultiAsset, XcmV1MultiLocation]>;
-      /**
-       * Transferred `MultiAsset` with fee.
-       **/
-      TransferredMultiCurrencies: AugmentedEvent<ApiType, [AccountId32, Vec<ITuple<[u128, u128]>>, XcmV1MultiLocation]>;
-      /**
-       * Transferred with fee.
-       **/
-      TransferredWithFee: AugmentedEvent<ApiType, [AccountId32, u128, u128, u128, XcmV1MultiLocation]>;
+      TransferredMultiAssets: AugmentedEvent<ApiType, [AccountId32, XcmV1MultiassetMultiAssets, XcmV1MultiAsset, XcmV1MultiLocation]>;
       /**
        * Generic event
        **/

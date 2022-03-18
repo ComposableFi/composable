@@ -148,7 +148,7 @@ describe('CrowdloanRewards Tests', function() {
    * 3. The claimed amount.
    */
   it('Can claim the crowdloan reward', async function() {
-    if (!testConfiguration.enabledTests.tx.initialize_success.initialize1 || onExistingChain)
+    if (!testConfiguration.enabledTests.tx.claim_success.claim1 || onExistingChain)
       this.skip();
     // 2 minutes timeout
     this.timeout(60 * 2 * 1000);
