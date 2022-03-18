@@ -6,6 +6,7 @@ repos:
     entry: cargo +nightly fmt --check -p clearing-house
     language: system
     pass_filenames: false
+    stages: [commit, push]
   - id: clippy
     name: cargo-clippy
     entry: cargo +nightly clippy --all-targets --no-deps -p clearing-house
