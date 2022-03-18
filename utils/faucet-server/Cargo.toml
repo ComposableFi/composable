@@ -17,7 +17,7 @@ log = "0.4.14"
 serde = { version = "1", features = ["derive"] }
 serde_urlencoded = "0.7.0"
 sha2 = "0.9.8"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 structopt = "0.3.25"
 subxt = { git = "https://github.com/composableFi/subxt", branch = "seun-0.9.13" }
 subxt-clients = { path = "../subxt-clients" }

@@ -22,6 +22,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 					Ok(())
 				},
 			)?,
+		chain if chain.contains("composable") =>
+			substrate_simnode::parachain_node::<common::chains::composable::ChainInfo, _, _>(
+				|node| async move {
+					node.seal_blocks(10).await;
+					node.until_shutdown().await;
+					Ok(())
+				},
+			)?,
 		_ => panic!("Unsupported chain_id: {}", chain_id),
 	};
 

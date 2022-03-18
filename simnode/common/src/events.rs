@@ -6,6 +6,8 @@ pub enum AllRuntimeEvents {
 	Picasso(picasso_runtime::Event),
 	/// Dali runtime events
 	Dali(dali_runtime::Event),
+	/// Composable runtime events
+	Composable(composable_runtime::Event),
 }
 
 /// Convenience method to match on [`AllRuntimeEvents`]

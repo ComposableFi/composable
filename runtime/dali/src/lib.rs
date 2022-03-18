@@ -1273,7 +1273,7 @@ impl_runtime_apis! {
 			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}
-	#[cfg(feature = "sim-node")]
+
 	impl simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime {
 		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
 			use sp_runtime::{
@@ -1294,7 +1294,7 @@ impl_runtime_apis! {
 				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 			);
 
-			let signature = MultiSignature::from(sr25519::Signature([0u8;64]));
+			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
 			let address = AccountIdLookup::unlookup(signer);
 			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
 
