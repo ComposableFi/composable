@@ -31,8 +31,9 @@ scale-info = { version = "1.0", default-features = false, features = [
 serde = { version = '1', optional = true }
 
 [dev-dependencies]
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = true }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6", default-features = false }
+governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
 pallet-assets = { path = '../assets', default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 pallet-currency-factory = { path = "../currency-factory" }
@@ -53,4 +54,8 @@ std = [
     "scale-info/std",
     "serde/std",
 ]
-runtime-benchmarks = ["frame-benchmarking"]
+runtime-benchmarks = [
+    "frame-benchmarking",
+    "frame-support/runtime-benchmarks",
+    "frame-system/runtime-benchmarks",
+]
