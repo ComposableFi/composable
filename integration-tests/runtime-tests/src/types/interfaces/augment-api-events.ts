@@ -72,19 +72,19 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * A new bond has been registered.
        **/
-      NewBond: AugmentedEvent<ApiType, [u64, AccountId32, u128]>;
+      NewBond: AugmentedEvent<ApiType, [u128, AccountId32, u128]>;
       /**
        * A new offer has been created.
        **/
-      NewOffer: AugmentedEvent<ApiType, [u64]>;
+      NewOffer: AugmentedEvent<ApiType, [u128]>;
       /**
        * An offer has been cancelled by the `AdminOrigin`.
        **/
-      OfferCancelled: AugmentedEvent<ApiType, [u64]>;
+      OfferCancelled: AugmentedEvent<ApiType, [u128]>;
       /**
        * An offer has been completed.
        **/
-      OfferCompleted: AugmentedEvent<ApiType, [u64]>;
+      OfferCompleted: AugmentedEvent<ApiType, [u128]>;
       /**
        * Generic event
        **/
@@ -206,7 +206,7 @@ declare module '@polkadot/api-base/types/events' {
     crowdloanRewards: {
       Associated: AugmentedEvent<ApiType, [PalletCrowdloanRewardsModelsRemoteAccount, AccountId32]>;
       Claimed: AugmentedEvent<ApiType, [PalletCrowdloanRewardsModelsRemoteAccount, AccountId32, u128]>;
-      Initialized: AugmentedEvent<ApiType, []>;
+      Initialized: AugmentedEvent<ApiType, [u64]>;
       /**
        * Generic event
        **/
@@ -1096,29 +1096,9 @@ declare module '@polkadot/api-base/types/events' {
     };
     xTokens: {
       /**
-       * Transferred.
-       **/
-      Transferred: AugmentedEvent<ApiType, [AccountId32, u128, u128, XcmV1MultiLocation]>;
-      /**
-       * Transferred `MultiAsset`.
-       **/
-      TransferredMultiAsset: AugmentedEvent<ApiType, [AccountId32, XcmV1MultiAsset, XcmV1MultiLocation]>;
-      /**
        * Transferred `MultiAsset` with fee.
        **/
-      TransferredMultiAssets: AugmentedEvent<ApiType, [AccountId32, XcmV1MultiassetMultiAssets, XcmV1MultiLocation]>;
-      /**
-       * Transferred `MultiAsset` with fee.
-       **/
-      TransferredMultiAssetWithFee: AugmentedEvent<ApiType, [AccountId32, XcmV1MultiAsset, XcmV1MultiAsset, XcmV1MultiLocation]>;
-      /**
-       * Transferred `MultiAsset` with fee.
-       **/
-      TransferredMultiCurrencies: AugmentedEvent<ApiType, [AccountId32, Vec<ITuple<[u128, u128]>>, XcmV1MultiLocation]>;
-      /**
-       * Transferred with fee.
-       **/
-      TransferredWithFee: AugmentedEvent<ApiType, [AccountId32, u128, u128, u128, XcmV1MultiLocation]>;
+      TransferredMultiAssets: AugmentedEvent<ApiType, [AccountId32, XcmV1MultiassetMultiAssets, XcmV1MultiAsset, XcmV1MultiLocation]>;
       /**
        * Generic event
        **/

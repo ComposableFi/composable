@@ -249,8 +249,8 @@ declare module '@polkadot/api-base/types/errors' {
     crowdloanRewards: {
       AlreadyAssociated: AugmentedError<ApiType>;
       AlreadyInitialized: AugmentedError<ApiType>;
+      BackToTheFuture: AugmentedError<ApiType>;
       InvalidClaim: AugmentedError<ApiType>;
-      InvalidInitializationBlock: AugmentedError<ApiType>;
       InvalidProof: AugmentedError<ApiType>;
       NotAssociated: AugmentedError<ApiType>;
       NotClaimableYet: AugmentedError<ApiType>;
@@ -596,6 +596,7 @@ declare module '@polkadot/api-base/types/errors' {
       AssetNotMapped: AugmentedError<ApiType>;
       BadTimelockPeriod: AugmentedError<ApiType>;
       BadTTL: AugmentedError<ApiType>;
+      BelowMinTransferSize: AugmentedError<ApiType>;
       ExceedsMaxTransferSize: AugmentedError<ApiType>;
       InsufficientBudget: AugmentedError<ApiType>;
       NetworkDisabled: AugmentedError<ApiType>;
@@ -1224,6 +1225,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       TooManyVestingSchedules: AugmentedError<ApiType>;
       /**
+       * Trying to vest to ourselves
+       **/
+      TryingToSelfVest: AugmentedError<ApiType>;
+      /**
        * Vesting period is zero
        **/
       ZeroVestingPeriod: AugmentedError<ApiType>;
@@ -1268,7 +1273,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       AssetHasNoReserve: AugmentedError<ApiType>;
       /**
-       * The specified index does not exist in a MultiAssets struct
+       * The specified index does not exist in a MultiAssets struct.
        **/
       AssetIndexNonExistent: AugmentedError<ApiType>;
       /**
@@ -1287,18 +1292,21 @@ declare module '@polkadot/api-base/types/errors' {
       DestinationNotInvertible: AugmentedError<ApiType>;
       /**
        * We tried sending distinct asset and fee but they have different
-       * reserve chains
+       * reserve chains.
        **/
       DistinctReserveForAssetAndFee: AugmentedError<ApiType>;
       /**
-       * The fee amount was zero when the fee specification extrinsic is
-       * being used.
+       * Fee is not enough.
        **/
-      FeeCannotBeZero: AugmentedError<ApiType>;
+      FeeNotEnough: AugmentedError<ApiType>;
       /**
        * Could not get ancestry of asset reserve location.
        **/
       InvalidAncestry: AugmentedError<ApiType>;
+      /**
+       * The MultiAsset is invalid.
+       **/
+      InvalidAsset: AugmentedError<ApiType>;
       /**
        * Invalid transfer destination.
        **/
@@ -1312,11 +1320,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotCrossChainTransferableCurrency: AugmentedError<ApiType>;
       /**
-       * Not fungible asset.
-       **/
-      NotFungible: AugmentedError<ApiType>;
-      /**
-       * The number of assets to be sent is over the maximum
+       * The number of assets to be sent is over the maximum.
        **/
       TooManyAssetsBeingSent: AugmentedError<ApiType>;
       /**
@@ -1327,6 +1331,14 @@ declare module '@polkadot/api-base/types/errors' {
        * XCM execution failed.
        **/
       XcmExecutionFailed: AugmentedError<ApiType>;
+      /**
+       * The transfering asset amount is zero.
+       **/
+      ZeroAmount: AugmentedError<ApiType>;
+      /**
+       * The fee is zero.
+       **/
+      ZeroFee: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
