@@ -147,7 +147,7 @@ mod tests {
 		where
 			I: 'a,
 		{
-			Some(Default::default())
+			Some(AccountId::from([0u8; 32]))
 		}
 	}
 
@@ -259,8 +259,6 @@ mod tests {
 			let fee = Balances::issue(10);
 			let tip = Balances::issue(20);
 
-			assert_eq!(Balances::free_balance(AccountId::default()), 0);
-
 			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
 
 			// Author gets 50% of tip and 50% of fee = 15
@@ -276,8 +274,6 @@ mod tests {
 			let fee = Balances::issue(0);
 			let tip = Balances::issue(0);
 
-			assert_eq!(Balances::free_balance(AccountId::default()), 0);
-
 			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
 
 			// Author gets 50% of tip and 50% of fee = 15
@@ -291,8 +287,6 @@ mod tests {
 		new_test_ext().execute_with(|| {
 			let fee = Balances::issue(1);
 			let tip = Balances::issue(1);
-
-			assert_eq!(Balances::free_balance(AccountId::default()), 0);
 
 			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
 

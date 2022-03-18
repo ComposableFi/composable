@@ -15,13 +15,9 @@ Need to do to run 4 relay chain nodes and 1 Composable's collator:
 2. build a Polkadot Relay Chain
 
 	```bash
-	old_pwd=$(pwd)
-	cd ../../..
-	git clone -b v0.9.16 https://github.com/paritytech/polkadot
-	cd polkadot
-	cargo build --release
-	target/release/polkadot --version
-	cd "$old_pwd"
+	mkdir -p ../../../polkadot/target/release
+	curl https://github.com/paritytech/polkadot/releases/download/v0.9.17/polkadot -Lo ../../../polkadot/target/release/polkadot
+	../../../polkadot/target/release/polkadot -- version
     ```
 
 3. build this project
@@ -57,13 +53,9 @@ Need to do to run 4 relay chain nodes, 2 Composable's collators and 2 Basilisk's
 2. build a Polkadot Relay Chain
 
 	```bash
-	old_pwd=$(pwd)
-	cd ../../..
-	git clone -b v0.9.16 https://github.com/paritytech/polkadot
-	cd polkadot
-	cargo build --release
-	target/release/polkadot --version
-	cd "$old_pwd"
+	mkdir -p ../../../polkadot/target/release
+	curl https://github.com/paritytech/polkadot/releases/download/v0.9.17/polkadot -Lo ../../../polkadot/target/release/polkadot
+	../../../polkadot/target/release/polkadot -- version
     ```
 
 3. build a Basilisk's collator

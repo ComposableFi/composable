@@ -11,7 +11,7 @@ set -e # fail on any error
 VERSIONS_FILES=(
   "picasso,picasso"
   "dali-rococo,dali"
-  # "composable,composable" # TODO: add simnode suppport for composable
+  "composable,composable"
 )
 
 /home/runner/.cargo/bin/rustup update nightly
@@ -28,7 +28,7 @@ run_simnode() {
   GS_BUCKET="$CHAIN-data-store"
   sudo gsutil cp gs://$GS_BUCKET/"$FILENAME" .
   sudo unzip -o "$FILENAME" -d /tmp/db
-  ./target/release/simnode-tests --chain="$CHAIN" --base-path=/tmp/db/var/lib/composable-data/ --pruning=archive --execution=wasm
+  sudo ./target/release/simnode-tests --chain="$CHAIN" --base-path=/tmp/db/var/lib/composable-data/ --pruning=archive --execution=wasm
 }
 
 # shellcheck disable=SC2039
