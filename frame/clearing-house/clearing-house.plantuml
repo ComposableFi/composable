@@ -103,42 +103,50 @@ package "pallet-oracle" {
 hide empty members
 hide circle
 
-'Storage relationships'
-Markets::MarketId ..> Market : maps
-Market::VirtualAMMId ..> vAmms : references
+'================== Storage relationships
+Markets ..> Market : maps
+Market::vamm_id ..> vAmms : references
 Market::asset_id ..> Oracle : used in
 
 Positions ..> Position: maps
-Position::MarketId ..> Markets : references
+Position ..> Markets : references
 
-'           Control flow relationships             '
+'================== Control flow relationships             
 ClearingHouse --> MTTrait : calls
 ClearingHouse --> ITrait : calls
 
-'add_margin'
-'remove_margin'
+'add_margin
+'remove_margin
 MTTrait --> MarginAccounts : write
 
-'remove_margin'
+'remove_margin
 MTTrait --> RETrait : calls
 
-'open_position'
-'close_position'
-'liquidate'
+'open_position
+'close_position
+'liquidate
 MTTrait --> Positions : write
 
-'open_position'
-'close_position'
+'open_position
+'close_position
 MTTrait --> vAmm : calls
 
+'update_funding
+MTTrait --> ITrait : calls
 
-ITrait::update_funding --> Market : write
-ITrait::update_funding --> Oracle : calls
-ITrait::update_funding --> vAmm : calls
+'update_funding
+ITrait --> Markets : write
+ITrait --> Oracle : calls
+ITrait --> vAmm : calls
 
+'above_risk_threshold
+'risk_free_collateral
+RETrait --> MarginAccounts : read
+RETrait --> Positions : read
+RETrait --> ITrait : calls
 
-'vAMM'
-vAmm --> vAmms : read/write
-vAmms --> vAmmState : maps
+'vAMM
+vAmm --> vAmms : write
+vAmms ..> vAmmState : maps
 
 @enduml
