@@ -2,10 +2,16 @@ repos:
 - repo: local
   hooks:
   - id: fmt
-    name: rustfmt
-    entry: rustfmt --config skip_children=true --check
+    name: cargo-fmt
+    entry: cargo +nightly fmt --check -p clearing-house
     language: system
-    types: [rust]
+    pass_filenames: false
+  - id: clippy
+    name: cargo-clippy
+    entry: cargo +nightly clippy --all-targets --no-deps -p clearing-house
+    language: system
+    pass_filenames: false
+    stages: [push]
 - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
   rev: v8.0.0
   hooks:
