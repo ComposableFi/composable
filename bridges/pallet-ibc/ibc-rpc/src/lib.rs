@@ -542,7 +542,19 @@ where
 		port_id: String,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+		let at = BlockId::Hash(block_hash);
+
+		api.unreceived_packets(&at, channel_id, port_id, seqs)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Failed to unreceived packet sequences"))
 	}
 
 	fn query_unreceived_acknowledgements(
@@ -552,7 +564,19 @@ where
 		port_id: String,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+		let at = BlockId::Hash(block_hash);
+
+		api.unreceived_acknowledgements(&at, channel_id, port_id, seqs)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Failed to unreceived packet sequences"))
 	}
 
 	fn query_next_seq_recv(
