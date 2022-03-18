@@ -804,7 +804,6 @@ declare module '@polkadot/types/types/registry' {
     PolkadotParachainPrimitivesXcmpMessageFormat: PolkadotParachainPrimitivesXcmpMessageFormat;
     PolkadotPrimitivesV1AbridgedHostConfiguration: PolkadotPrimitivesV1AbridgedHostConfiguration;
     PolkadotPrimitivesV1PersistedValidationData: PolkadotPrimitivesV1PersistedValidationData;
-    PoolId: u128;
     PortableType: PortableType;
     PortableTypeV14: PortableTypeV14;
     Precommits: Precommits;

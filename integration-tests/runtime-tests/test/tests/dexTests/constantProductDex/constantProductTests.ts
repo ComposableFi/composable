@@ -1,7 +1,7 @@
 import testConfiguration from './test_configuration.json';
 import {expect} from "chai";
 import {KeyringPair} from "@polkadot/keyring/types";
-import { addFundstoThePool, buyFromPool, createPool, getOwnerFee, getUserTokens, mintAssets, removeLiquidityFromPool, sellToPool, swapTokenPairs } from './testHandlers/constantProductDex';
+import { addFundstoThePool, buyFromPool, createPool, getOwnerFee, getUserTokens, removeLiquidityFromPool, sellToPool, swapTokenPairs } from './testHandlers/constantProductDexHelper';
 import { mintAssetsToWallet } from '@composable/utils/mintingHelper';
 
 /**
@@ -44,11 +44,14 @@ describe('tx.constantProductDex Tests', function () {
   });
   
   describe('tx.constantProductDex Success Tests', function() {
-    if(!testConfiguration.enabledTests.enabled){
+    if(!testConfiguration.enabledTests.successTests.enabled){
       return;
     }
 
     it('Users can create a constantProduct pool', async function() {
+      if(!testConfiguration.enabledTests.successTests.createPool.enabled){
+        return;
+      }
       this.timeout(2*60*1000);
       poolId = await createPool(walletId1, 
         baseAssetId,
@@ -63,6 +66,9 @@ describe('tx.constantProductDex Tests', function () {
     })     
         
     it('Given that users has sufficient balance, User1 can send funds to pool', async function(){
+      if(!testConfiguration.enabledTests.successTests.addLiquidityTests.enabled){
+        return;
+      }
       this.timeout(2*60*1000);
       const result = await addFundstoThePool(walletId1,
         baseAmount,
@@ -76,6 +82,9 @@ describe('tx.constantProductDex Tests', function () {
     });  
 
     it('User2 can send funds to pool and router adjusts deposited amounts based on constantProductFormula to prevent arbitrage', async function(){
+      if(!testConfiguration.enabledTests.successTests.addLiquidityTests.enabled){
+        return;
+      }
       this.timeout(2*60*1000);
       const assetAmount = 30;
       const quoteAmount = 100;
@@ -86,6 +95,9 @@ describe('tx.constantProductDex Tests', function () {
     });
 
     it("Given the pool has the sufficient funds, User1 can't completely drain the funds", async function(){
+      if(!testConfiguration.enabledTests.successTests.poolDrainTest.enabled){
+        return;
+      }
       this.timeout(2*60*1000);
       await buyFromPool(walletId1, baseAssetId, 2800).catch(error=>{
         expect(error.message).to.contain('arithmetic');
@@ -93,6 +105,9 @@ describe('tx.constantProductDex Tests', function () {
     });
 
     it('User1 can buy from the pool and router respects the constantProductFormula', async function() {
+      if(!testConfiguration.enabledTests.successTests.buyTest.enabled){
+        return;
+      }
       this.timeout(2 * 60 * 1000);
       const result = await buyFromPool(walletId1, baseAssetId, 30); 
       expect(result.accountId.toString()).to.be.equal(walletId1Account);
@@ -101,12 +116,18 @@ describe('tx.constantProductDex Tests', function () {
     });
     
     it('User1 can sell on the pool', async function(){
+      if(!testConfiguration.enabledTests.successTests.sellTest.enabled){
+        return;
+      }
       this.timeout(2*60*1000);
       const accountIdSeller = await sellToPool(walletId1, baseAssetId, 20);
       expect(accountIdSeller).to.be.equal(walletId1Account);
     });
 
     it('User2 can swap from the pool', async function(){
+      if(!testConfiguration.enabledTests.successTests.swapTest.enabled){
+        return;
+      }
       this.timeout(2*60*1000);
       const quotedAmount = 12;
       const result = await swapTokenPairs(walletId2,
@@ -118,6 +139,9 @@ describe('tx.constantProductDex Tests', function () {
     });
 
     it('Owner of the pool receives owner fee on the transactions happened in the pool', async function(){
+      if(!testConfiguration.enabledTests.successTests.ownerFeeTest.enabled){
+        return;
+      }
       this.timeout(2*60*1000);
       let ownerInitialTokens = await getUserTokens(walletId1, quoteAssetId);
       const result = await buyFromPool(walletId2, baseAssetId, 500);      
@@ -127,6 +151,9 @@ describe('tx.constantProductDex Tests', function () {
     });
 
     it('User1 can remove liquidity from the pool by using LP Tokens', async function(){
+      if(!testConfiguration.enabledTests.successTests.removeLiquidityTest.enabled){
+        return;
+      }
       this.timeout(2*60*1000);
       //Randomly checks an integer value that is always < mintedLPTokens. 
       const result = await removeLiquidityFromPool(walletId1, Math.floor(Math.random()*wallet1LpTokens));
