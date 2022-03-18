@@ -1,4 +1,5 @@
 use crate::{
+	common_test_functions::*,
 	mock::{Pablo, *},
 	PoolConfiguration::ConstantProduct,
 	PoolInitConfiguration,
@@ -145,30 +146,27 @@ fn test() {
 #[test]
 fn add_remove_lp() {
 	new_test_ext().execute_with(|| {
+		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			pair: CurrencyPair::new(BTC, USDT),
+			fee: Permill::zero(),
+			owner_fee: Permill::zero(),
+		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
 		let btc_price = 45_000_u128;
 		let initial_usdt = initial_btc * btc_price;
-		let pool_id =
-			create_pool(BTC, USDT, initial_btc, initial_usdt, Permill::zero(), Permill::zero());
-		let pool = get_pool(pool_id);
-		let bob_btc = 10 * unit;
-		let bob_usdt = bob_btc * btc_price;
-		// Mint the tokens
-		assert_ok!(Tokens::mint_into(BTC, &BOB, bob_btc));
-		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-
-		let lp = Tokens::balance(pool.lp_token, &BOB);
-		assert_eq!(lp, 0_u128);
-		// Add the liquidity
-		assert_ok!(<Pablo as Amm>::add_liquidity(&BOB, pool_id, bob_btc, bob_usdt, 0, false));
-		let lp = Tokens::balance(pool.lp_token, &BOB);
-		// must have received some lp tokens
-		assert!(lp > 0_u128);
-		assert_ok!(<Pablo as Amm>::remove_liquidity(&BOB, pool_id, lp, 0, 0));
-		let lp = Tokens::balance(pool.lp_token, &BOB);
-		// all lp tokens must have been burnt
-		assert_eq!(lp, 0_u128);
+		let btc_amount = 10 * unit;
+		let usdt_amount = btc_amount * btc_price;
+		let expected_lp_check =
+			|_base_amount: Balance, _quote_amount: Balance, lp: Balance| -> bool { lp > 0_u128 };
+		common_add_remove_lp(
+			pool_init_config,
+			initial_btc,
+			initial_usdt,
+			btc_amount,
+			usdt_amount,
+			expected_lp_check,
+		);
 	});
 }
 

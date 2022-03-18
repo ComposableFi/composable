@@ -61,16 +61,15 @@ impl<T: Config> Uniswap<T> {
 	}
 
 	pub(crate) fn get_exchange_value(
-		pool: ConstantProductPoolInfo<T::AccountId, T::AssetId>,
-		pool_account: T::AccountId,
+		pool: &ConstantProductPoolInfo<T::AccountId, T::AssetId>,
+		pool_account: &T::AccountId,
 		asset_id: T::AssetId,
 		amount: T::Balance,
 	) -> Result<T::Balance, DispatchError> {
 		let amount = T::Convert::convert(amount);
 		let half_weight = Permill::from_percent(50);
-		let pool_base_aum = T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
-		let pool_quote_aum =
-			T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
+		let pool_base_aum = T::Convert::convert(T::Assets::balance(pool.pair.base, pool_account));
+		let pool_quote_aum = T::Convert::convert(T::Assets::balance(pool.pair.quote, pool_account));
 		let exchange_amount = if asset_id == pool.pair.quote {
 			compute_out_given_in(half_weight, half_weight, pool_quote_aum, pool_base_aum, amount)
 		} else {
@@ -154,13 +153,13 @@ impl<T: Config> Uniswap<T> {
 
 	pub(crate) fn do_compute_swap(
 		pool: &ConstantProductPoolInfo<T::AccountId, T::AssetId>,
-		pool_account: T::AccountId,
+		pool_account: &T::AccountId,
 		pair: CurrencyPair<T::AssetId>,
 		quote_amount: T::Balance,
 		apply_fees: bool,
 	) -> Result<(T::Balance, T::Balance, T::Balance, T::Balance), DispatchError> {
-		let pool_base_aum = T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
-		let pool_quote_aum = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
+		let pool_base_aum = T::Convert::convert(T::Assets::balance(pair.base, pool_account));
+		let pool_quote_aum = T::Convert::convert(T::Assets::balance(pair.quote, pool_account));
 		let quote_amount = T::Convert::convert(quote_amount);
 
 		// https://uniswap.org/whitepaper.pdf

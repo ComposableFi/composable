@@ -1,8 +1,10 @@
-## Readings
+## Overview
+
+Resources which allows to grasp  XCM. General undrestanding how bridges work will help too.
 
 ### Conceptual
 
-https://www.youtube.com/watch?v=XU6dAAQD9UE - turst and XCMP
+https://www.youtube.com/watch?v=XU6dAAQD9UE - trust and XCMP
 
 ### How to setup XCMP
 
@@ -17,12 +19,14 @@ https://www.youtube.com/watch?v=XU6dAAQD9UE - turst and XCMP
 - https://research.web3.foundation/en/latest/polkadot/XCMP/index.html
 - https://medium.com/polkadot-network/xcm-the-cross-consensus-message-format-3b77b1373392
 
-### XCMP desing
+### XCM(P) desing
 
+- https://www.youtube.com/watch?v=cS8GvPGMLS0
 - https://www.youtube.com/watch?v=5cgq5jOZx9g
 - https://substrate.stackexchange.com/questions/37/how-can-i-transfer-assets-using-xcm
 - https://www.youtube.com/watch?v=wrA9vlPjVPE
 - https://research.web3.foundation/en/latest/polkadot/XCMP/Opening_closing%20XCMP%20Channel.html
+- https://www.youtube.com/watch?v=P_yLrFfmLrU 
 
 ### Generic context
 
@@ -36,6 +40,10 @@ https://www.youtube.com/watch?v=XU6dAAQD9UE - turst and XCMP
 
 https://polkadot.network/blog/statemint-becomes-first-common-good-parachain-on-polkadot/
 
+
+### Other parachains usage
+
+https://www.youtube.com/watch?v=5mspUoK1aIE
 
 ### Issues
 

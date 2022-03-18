@@ -12,11 +12,15 @@ use sp_runtime::sp_std::ops::Deref;
 
 /// Trait used to write generalized code over well know currencies
 /// We use const to allow for match on these
-pub trait WellKnownCurrency<AssetId: Copy> {
-	const NATIVE: AssetId;
+/// Allows to have reuse of code amids runtime and cross relay transfers in future.
+// TODO: split CurrenyId for runtimes - one for DOT and one for KSM
+pub trait WellKnownCurrency {
+	// works well with pattnrs unlike impl trait `associated consts cannot be referenced in
+	// patterns`
+	const NATIVE: Self;
 	/// usually we expect running with relay,
 	/// but if  not, than degenrative case would be this equal to `NATIVE`
-	const RELAY_NATIVE: AssetId;
+	const RELAY_NATIVE: Self;
 }
 
 #[derive(
@@ -37,9 +41,8 @@ pub trait WellKnownCurrency<AssetId: Copy> {
 #[repr(transparent)]
 pub struct CurrencyId(pub u128);
 
-impl WellKnownCurrency<CurrencyId> for CurrencyId {
+impl WellKnownCurrency for CurrencyId {
 	const NATIVE: CurrencyId = CurrencyId::PICA;
-
 	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
 }
 
@@ -48,7 +51,13 @@ impl CurrencyId {
 	pub const PICA: CurrencyId = CurrencyId(1);
 	pub const LAYR: CurrencyId = CurrencyId(2);
 	pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
+
+	/// Kusama native token
 	pub const KSM: CurrencyId = CurrencyId(4);
+
+	/// Karura stable coin(Karura Dollar), not native.
+	#[allow(non_upper_case_globals)]
+	pub const kUSD: CurrencyId = CurrencyId(129);
 
 	#[inline(always)]
 	pub const fn decimals() -> Exponent {

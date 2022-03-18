@@ -74,14 +74,14 @@ impl<T: Config> StableSwap<T> {
 	}
 
 	pub fn get_exchange_value(
-		pool: StableSwapPoolInfo<T::AccountId, T::AssetId>,
-		pool_account: T::AccountId,
+		pool: &StableSwapPoolInfo<T::AccountId, T::AssetId>,
+		pool_account: &T::AccountId,
 		asset_id: T::AssetId,
 		amount: T::Balance,
 	) -> Result<T::Balance, DispatchError> {
 		let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
-		let pool_base_aum = T::Assets::balance(pair.base, &pool_account);
-		let pool_quote_aum = T::Assets::balance(pair.quote, &pool_account);
+		let pool_base_aum = T::Assets::balance(pair.base, pool_account);
+		let pool_quote_aum = T::Assets::balance(pair.quote, pool_account);
 		let amp = T::Convert::convert(pool.amplification_coefficient.into());
 		let d = Self::get_invariant(pool_base_aum, pool_quote_aum, amp)?;
 		let new_quote_amount = pool_quote_aum.safe_add(&amount)?;
@@ -104,6 +104,31 @@ impl<T: Config> StableSwap<T> {
 			new_balance.safe_sub(&old_balance)
 		}?;
 		Ok(difference)
+	}
+
+	pub fn do_compute_swap(
+		pool: &StableSwapPoolInfo<T::AccountId, T::AssetId>,
+		pool_account: &T::AccountId,
+		quote_amount: T::Balance,
+		apply_fees: bool,
+	) -> Result<(T::Balance, T::Balance, T::Balance, T::Balance), DispatchError> {
+		let base_amount =
+			Self::get_exchange_value(pool, pool_account, pool.pair.base, quote_amount)?;
+		let base_amount_u: u128 = T::Convert::convert(base_amount);
+
+		let (lp_fee, protocol_fee) = if apply_fees {
+			let lp_fee = pool.fee.mul_floor(base_amount_u);
+			// protocol_fee is computed based on lp_fee
+			let protocol_fee = pool.protocol_fee.mul_floor(lp_fee);
+			let lp_fee = T::Convert::convert(lp_fee);
+			let protocol_fee = T::Convert::convert(protocol_fee);
+			(lp_fee, protocol_fee)
+		} else {
+			(T::Balance::zero(), T::Balance::zero())
+		};
+
+		let base_amount_excluding_fees = base_amount.safe_sub(&lp_fee)?;
+		Ok((base_amount_excluding_fees, quote_amount, lp_fee, protocol_fee))
 	}
 
 	pub fn add_liquidity(
