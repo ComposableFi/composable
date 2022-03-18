@@ -19,6 +19,6 @@
   "watch-ignore": ["lib/vendor"],
   "require": ["mochawesome/register", "src/utils/testSetup.ts"],
   "full-trace": true,
-  "parallel": true,
+  "parallel": false,
   "recursive": true
 }

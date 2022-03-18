@@ -220,8 +220,8 @@ mod tests {
 		/// percentage of proposal that most be bonded by the proposer
 		pub const ProposalBond: Permill = Permill::from_percent(5);
 		// TODO: rationale?
-		pub ProposalBondMinimum: Balance = 5 * CurrencyId::PICA.unit::<Balance>();
-		pub ProposalBondMaximum: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
+		pub ProposalBondMinimum: Balance = 5 * CurrencyId::unit::<Balance>();
+		pub ProposalBondMaximum: Balance = 1000 * CurrencyId::unit::<Balance>();
 		pub const SpendPeriod: BlockNumber = 7 * DAYS;
 		pub const Burn: Permill = Permill::from_percent(0);
 

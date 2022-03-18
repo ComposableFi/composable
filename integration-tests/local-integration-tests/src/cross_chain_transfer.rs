@@ -292,7 +292,7 @@ fn transfer_to_sibling() {
 		assert_ok!(Tokens::deposit(
 			CurrencyId::KSM,
 			&this_native_reserve_account(),
-			100 * CurrencyId::KSM.unit::<Balance>(),
+			100 * CurrencyId::unit::<Balance>(),
 		));
 		Tokens::free_balance(CurrencyId::KSM, &this_native_reserve_account())
 	});
@@ -771,25 +771,25 @@ fn unspent_xcm_fee_is_returned_correctly() {
 		assert_ok!(kusama_runtime::Balances::transfer(
 			kusama_runtime::Origin::signed(ALICE.into()),
 			MultiAddress::Id(some_account.clone()),
-			1_000 * CurrencyId::KSM.unit::<Balance>()
+			1_000 * CurrencyId::unit::<Balance>()
 		));
 		assert_ok!(kusama_runtime::Balances::transfer(
 			kusama_runtime::Origin::signed(ALICE.into()),
 			MultiAddress::Id(parachain_account.clone()),
-			1_000 * CurrencyId::KSM.unit::<Balance>()
+			1_000 * CurrencyId::unit::<Balance>()
 		));
 		assert_eq!(
 			kusama_runtime::Balances::free_balance(&AccountId::from(ALICE)),
-			2 * CurrencyId::KSM.unit::<Balance>()
+			2 * CurrencyId::unit::<Balance>()
 		);
 		assert_eq!(
 			kusama_runtime::Balances::free_balance(&some_account),
-			1_000 * CurrencyId::KSM.unit::<Balance>()
+			1_000 * CurrencyId::unit::<Balance>()
 		);
 		assert_eq!(kusama_runtime::Balances::free_balance(&AccountId::from(BOB)), 0);
 		assert_eq!(
 			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
-			1_010 * CurrencyId::KSM.unit::<Balance>()
+			1_010 * CurrencyId::unit::<Balance>()
 		);
 	});
 
@@ -797,13 +797,13 @@ fn unspent_xcm_fee_is_returned_correctly() {
 		// Construct a transfer XCM call with returning the deposit
 		let transfer_call = crate::relaychain::balances_transfer_keep_alive::<Runtime>(
 			AccountId::from(BOB),
-			CurrencyId::PICA.unit(),
+			CurrencyId::unit(),
 		);
 		let batch_call = crate::relaychain::utility_as_derivative_call::<Runtime>(transfer_call, 0);
 		let weight = 10_000_000_000; // Fee to transfer into the hold register
 		let asset = MultiAsset {
 			id: Concrete(MultiLocation::here()),
-			fun: Fungibility::Fungible(CurrencyId::PICA.unit()),
+			fun: Fungibility::Fungible(CurrencyId::unit()),
 		};
 		let xcm_msg = Xcm(vec![
 			WithdrawAsset(asset.clone().into()),
@@ -823,18 +823,18 @@ fn unspent_xcm_fee_is_returned_correctly() {
 		// 1 dollar is transferred to BOB
 		assert_eq!(
 			kusama_runtime::Balances::free_balance(&some_account),
-			1000 * CurrencyId::KSM.unit::<Balance>()
+			1000 * CurrencyId::unit::<Balance>()
 		);
 		// ISSUE: ported from Acala, not clear how BOB at all got s amount as we never transfer that
 		// there is no transfer of KSM at all
 		// assert_eq!(
 		// 	kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
-		// 	CurrencyId::KSM.unit::<Balance>()
+		// 	CurrencyId::unit::<Balance>()
 		// );
 		// 1 dollar is given to Hold Register for XCM call and never returned.
 		assert_eq!(
 			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
-			1_009 * CurrencyId::KSM.unit::<Balance>()
+			1_009 * CurrencyId::unit::<Balance>()
 		);
 	});
 
@@ -842,12 +842,12 @@ fn unspent_xcm_fee_is_returned_correctly() {
 		// Construct a transfer using the RelaychainCallBuilder
 		let transfer_call = crate::relaychain::balances_transfer_keep_alive::<Runtime>(
 			AccountId::from(BOB),
-			CurrencyId::PICA.unit(),
+			CurrencyId::unit(),
 		);
 		let batch_call = crate::relaychain::utility_as_derivative_call::<Runtime>(transfer_call, 0);
 		let finalized_call = crate::relaychain::finalize_call_into_xcm_message::<Runtime>(
 			batch_call,
-			CurrencyId::PICA.unit(),
+			CurrencyId::unit(),
 			10_000_000_000,
 		);
 
@@ -859,18 +859,18 @@ fn unspent_xcm_fee_is_returned_correctly() {
 		// 1 dollar is transferred to BOB
 		assert_eq!(
 			kusama_runtime::Balances::free_balance(&some_account),
-			1_000 * CurrencyId::KSM.unit::<Balance>()
+			1_000 * CurrencyId::unit::<Balance>()
 		);
 		// ISSUE: ported from Acala, not clear how BOB at all got s amount as we never transfer that
 		// there is no transfer of KSM at all
 		// assert_eq!(
 		// 	kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
-		// 	2 * CurrencyId::KSM.unit::<Balance>()
+		// 	2 * CurrencyId::unit::<Balance>()
 		// );
 		// Unspent fund from the 1 dollar XCM fee is returned to the sovereign account.
 		assert_eq!(
 			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
-			1_000 * CurrencyId::KSM.unit::<Balance>() + 8_999_626_666_690
+			1_000 * CurrencyId::unit::<Balance>() + 8_999_626_666_690
 		);
 	});
 }
@@ -882,25 +882,25 @@ fn trap_assets_larger_than_ed_works() {
 
 	let mut native_treasury_amount = 0;
 	let (ksm_asset_amount, native_asset_amount) =
-		(3 * CurrencyId::KSM.unit::<Balance>(), 2 * CurrencyId::PICA.unit::<Balance>());
-	let parent_account: AccountId = ParentIsPreset::<AccountId>::convert(Parent.into()).unwrap();
+		(3 * CurrencyId::unit::<Balance>(), 2 * CurrencyId::unit::<Balance>());
+	let parent_account: AccountId = ParentIsDefault::<AccountId>::convert(Parent.into()).unwrap();
 	Picasso::execute_with(|| {
 		assert_ok!(Tokens::deposit(
 			CurrencyId::KSM,
 			&parent_account,
-			42 * CurrencyId::KSM.unit::<Balance>()
+			42 * CurrencyId::unit::<Balance>()
 		));
 		let _ =
 			<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::deposit_creating(
 				&parent_account,
-				123 * CurrencyId::PICA.unit::<Balance>(),
+				123 * CurrencyId::unit::<Balance>(),
 			);
 		// TODO: if we do not top up account initially, than any depositn_creating do not create
 		// anything may be somethign with zero block or like - fix it better way
 		let _ =
 			<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::deposit_creating(
 				&picasso_runtime::TreasuryAccount::get(),
-				7 * CurrencyId::PICA.unit::<Balance>(),
+				7 * CurrencyId::unit::<Balance>(),
 			);
 
 		native_treasury_amount =
@@ -913,7 +913,7 @@ fn trap_assets_larger_than_ed_works() {
 			WithdrawAsset(assets.clone().into()),
 			BuyExecution {
 				fees: assets,
-				weight_limit: Limited(CurrencyId::KSM.unit::<Balance>() as u64),
+				weight_limit: Limited(CurrencyId::unit::<Balance>() as u64),
 			},
 			WithdrawAsset(((0, GeneralKey(CurrencyId::PICA.encode())), native_asset_amount).into()),
 		];
@@ -926,14 +926,14 @@ fn trap_assets_larger_than_ed_works() {
 
 	Picasso::execute_with(|| {
 		assert_eq!(
-			3 * CurrencyId::KSM.unit::<Balance>(),
+			3 * CurrencyId::unit::<Balance>(),
 			Assets::free_balance(CurrencyId::KSM, &picasso_runtime::TreasuryAccount::get())
 		);
 		log::error!("{:?}", &picasso_runtime::TreasuryAccount::get());
 		assert_eq!(
 			native_asset_amount,
 			picasso_runtime::Balances::free_balance(&picasso_runtime::TreasuryAccount::get()) -
-				7 * CurrencyId::PICA.unit::<Balance>(),
+				7 * CurrencyId::unit::<Balance>(),
 		);
 	});
 }

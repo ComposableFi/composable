@@ -98,7 +98,9 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Initialized,
+		Initialized {
+			at: MomentOf<T>,
+		},
 		Claimed {
 			remote_account: RemoteAccountOf<T>,
 			reward_account: T::AccountId,
@@ -114,7 +116,7 @@ pub mod pallet {
 	pub enum Error<T> {
 		NotInitialized,
 		AlreadyInitialized,
-		InvalidInitializationBlock,
+		BackToTheFuture,
 		RewardsNotFunded,
 		InvalidProof,
 		InvalidClaim,
@@ -304,9 +306,9 @@ pub mod pallet {
 		pub(crate) fn do_initialize(at: MomentOf<T>) -> DispatchResult {
 			ensure!(!VestingTimeStart::<T>::exists(), Error::<T>::AlreadyInitialized);
 			let now = T::Time::now();
-			ensure!(at >= now, Error::<T>::InvalidInitializationBlock);
+			ensure!(at >= now, Error::<T>::BackToTheFuture);
 			VestingTimeStart::<T>::set(Some(at));
-			Self::deposit_event(Event::Initialized);
+			Self::deposit_event(Event::Initialized { at });
 			Ok(())
 		}
 
@@ -324,6 +326,9 @@ pub mod pallet {
 				!Associations::<T>::contains_key(reward_account.clone()),
 				Error::<T>::AlreadyAssociated
 			);
+			// NOTE(hussein-aitlahcen): very important to have a claim here because we do the
+			// upfront payment, which will allow the user to execute transactions because he had 0
+			// funds prior to this call.
 			let claimed = Self::do_claim(remote_account.clone(), &reward_account)?;
 			Associations::<T>::insert(reward_account.clone(), remote_account.clone());
 			Self::deposit_event(Event::Associated {

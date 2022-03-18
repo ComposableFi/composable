@@ -33,6 +33,8 @@ mod types {
 	// todo move it into more shared directory so it can be shared with
 	// tests, integration, benchmark, (simnode?)
 
+	pub type BondOfferId = u128;
+
 	/// Timestamp implementation.
 	pub type Moment = u64;
 
@@ -137,7 +139,7 @@ mod constants {
 
 parameter_types! {
 	/// Existential deposit (ED for short) is minimum amount an account has to hold to stay in state.
-	pub NativeExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
+	pub NativeExistentialDeposit: Balance = 100 * CurrencyId::milli::<Balance>();
 }
 
 pub struct PriceConverter;
