@@ -219,6 +219,7 @@ img + em {
     font-size: 12px;
     display: block;
     text-align: center;
+    line-height: 1.4em;
 }
 
 img {
@@ -319,7 +320,8 @@ h6:target::before {
 }
 .content p { line-height: 1.5em; }
 .content ol { line-height: 1.5em; }
-.content ul { line-height: 2em; }
+.content ul { line-height: 1.5em; }
+.content li { margin-bottom: 1em; }
 .content a { text-decoration: none; }
 .content a:hover { text-decoration: underline; }
 .content img, .content video { max-width: 100%; }

@@ -1,7 +1,7 @@
 # Summary
 
 - [👋 Introduction](introduction.md)
-- [💻 Developer Guides](.developer-guides.md)
+- [💻 Developer Guides](./developer-guides.md)
     - [Composable SDK](./developer-guides/composable-sdk.md)
 
 # 💿  PRODUCTS
