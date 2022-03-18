@@ -111,7 +111,7 @@ paste = "1.0.6"
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.17", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.17", default-features = false }
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.17", default-features = false }
-xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "a250ffc998bac4831c5692c591dee7bc13f3aead", default-features = false }
+xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "24ccbce563d1f99019b4cdfa2f3af4e99bac0dfc", default-features = false }
 
 dali-runtime = { package = "dali-runtime", path = "../../runtime/dali", default-features = false }
 picasso-runtime = { package = "picasso-runtime", path = "../../runtime/picasso", default-features = false, optional = true }

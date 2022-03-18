@@ -877,7 +877,7 @@ fn trap_assets_larger_than_ed_works() {
 	let mut native_treasury_amount = 0;
 	let (ksm_asset_amount, native_asset_amount) =
 		(3 * CurrencyId::unit::<Balance>(), 2 * CurrencyId::unit::<Balance>());
-	let parent_account: AccountId = ParentIsDefault::<AccountId>::convert(Parent.into()).unwrap();
+	let parent_account: AccountId = ParentIsPreset::<AccountId>::convert(Parent.into()).unwrap();
 	This::execute_with(|| {
 		assert_ok!(Tokens::deposit(
 			CurrencyId::KSM,
@@ -920,7 +920,7 @@ fn trap_assets_larger_than_ed_works() {
 
 	This::execute_with(|| {
 		assert_eq!(
-			3 * CurrencyId:.unit::<Balance>(),
+			3 * CurrencyId::unit::<Balance>(),
 			Assets::free_balance(CurrencyId::KSM, &this_runtime::TreasuryAccount::get())
 		);
 		log::error!("{:?}", &this_runtime::TreasuryAccount::get());
