@@ -73,7 +73,7 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		Ok(pool_id)
 	}
 
-	pub fn ensure_sale_state(
+	fn ensure_sale_state(
 		pool: &LiquidityBootstrappingPoolInfoOf<T>,
 		current_block: BlockNumberFor<T>,
 		expected_sale_state: SaleState,
@@ -174,8 +174,6 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		// mint any LP.
 		T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
 		T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
-
-		// T::deposit_event(Event::LiquidityAdded { pool_id, base_amount, quote_amount });
 
 		Ok(())
 	}

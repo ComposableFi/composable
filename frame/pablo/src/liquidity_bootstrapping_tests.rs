@@ -461,6 +461,7 @@ mod invalid_pool {
 #[cfg(feature = "visualization")]
 mod visualization {
 	use super::*;
+	use crate::liquidity_bootstrapping::LiquidityBootstrapping;
 
 	#[test]
 	fn plot() {
@@ -480,8 +481,9 @@ mod visualization {
 				},
 				fee: Permill::from_perthousand(1),
 			};
-			let pool_id = Pablo::do_create_pool(Validated::new(pool).expect("impossible; qed;"))
-				.expect("impossible; qed;");
+			let pool_id =
+				Pablo::do_create_pool(&owner, PoolInitConfiguration::LiquidityBootstrapping(pool))
+					.expect("impossible; qed;");
 
 			let unit = 1_000_000_000_000;
 			let initial_project_tokens = 100_000_000 * unit;
@@ -489,23 +491,28 @@ mod visualization {
 
 			assert_ok!(Tokens::mint_into(PROJECT_TOKEN, &ALICE, initial_project_tokens));
 			assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
-
 			assert_ok!(Pablo::add_liquidity(
-				&ALICE,
+				Origin::signed(ALICE),
 				pool_id,
 				initial_project_tokens,
 				initial_usdt,
 				0,
 				false
 			));
+			let pool_account = Pablo::account_id(&pool_id);
 
 			{
 				let points = (pool.sale.start..pool.sale.end)
 					.map(|block| {
 						(
 							block,
-							Pablo::do_spot_price(pool_id, pool.pair, block)
-								.expect("impossible; qed;") as f64 /
+							LiquidityBootstrapping::<Test>::do_spot_price(
+								pool,
+								pool_account,
+								pool.pair,
+								block,
+							)
+							.expect("impossible; qed;") as f64 /
 								unit as f64,
 						)
 					})
@@ -513,7 +520,7 @@ mod visualization {
 				let max_amount = points.iter().copied().fold(f64::NAN, |x, (_, y)| f64::max(x, y));
 
 				use plotters::prelude::*;
-				let area = BitMapBackend::new("./plots/lbp_spot_price.png", (1024, 768))
+				let area = BitMapBackend::new("./plots/lbp/lbp_spot_price.png", (1024, 768))
 					.into_drawing_area();
 				area.fill(&WHITE).unwrap();
 
@@ -546,8 +553,15 @@ mod visualization {
 					let points = (pool.sale.start..pool.sale.end)
 						.map(|block| {
 							let (fees, base_amount) =
-								Pablo::do_get_exchange(pool_id, pair, block, swap_amount, true)
-									.expect("impossible; qed;");
+								LiquidityBootstrapping::<Test>::do_get_exchange(
+									pool,
+									&pool_account,
+									pair,
+									block,
+									swap_amount,
+									true,
+								)
+								.expect("impossible; qed;");
 							(block, fees / unit, base_amount / unit)
 						})
 						.collect::<Vec<_>>();
@@ -593,22 +607,22 @@ mod visualization {
 				plot_swap(
 					pair,
 					buy_amount * unit,
-					"./plots/lbp_buy_project.png",
+					"./plots/lbp/lbp_buy_project.png",
 					format!("Buy project tokens with {} USDT", buy_amount),
 				);
 				let sell_amount = 100_000;
 				plot_swap(
 					pair.swap(),
 					sell_amount * unit,
-					"./plots/lbp_sell_project.png",
+					"./plots/lbp/lbp_sell_project.png",
 					format!("Sell {} project tokens", sell_amount),
 				);
 			}
 
 			{
 				use plotters::prelude::*;
-				let area =
-					BitMapBackend::new("./plots/lbp_weights.png", (1024, 768)).into_drawing_area();
+				let area = BitMapBackend::new("./plots/lbp/lbp_weights.png", (1024, 768))
+					.into_drawing_area();
 				area.fill(&WHITE).unwrap();
 
 				let mut chart = ChartBuilder::on(&area)

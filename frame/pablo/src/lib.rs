@@ -265,7 +265,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
-		// Why this is
+		// Used for spot price calculation for LBP
 		type LocalAssets: LocalAssets<AssetIdOf<Self>>;
 
 		/// Minimum duration for a sale.
