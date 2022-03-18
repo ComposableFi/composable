@@ -190,14 +190,6 @@ pub mod pallet {
 	pub type PacketCommitment<T: Config> =
 		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
 
-	#[pallet::storage]
-	/// store latest height
-	pub type LatestHeight<T: Config> = StorageValue<_, Vec<u8>, ValueQuery>;
-
-	#[pallet::storage]
-	/// store oldest height
-	pub type OldHeight<T: Config> = StorageValue<_, u64, ValueQuery>;
-
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T> {
@@ -257,8 +249,6 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::ProcessingError)?;
 
 			log::info!("result: {:?}", result);
-
-			Self::store_latest_height(result);
 			Ok(())
 		}
 	}
