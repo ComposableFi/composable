@@ -180,6 +180,7 @@ runtime-benchmarks = [
   "uniswap-v2/runtime-benchmarks",
   "curve-amm/runtime-benchmarks",
   "liquidity-bootstrapping/runtime-benchmarks",
+  "common/runtime-benchmarks",
 ]
 std = [
   "codec/std",
