@@ -89,6 +89,8 @@ vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-fe
 
 # ibc support
 pallet-ibc = { path = "../../bridges/pallet-ibc", default-features = false }
+ibc-runtime-api = { path = "../../bridges/pallet-ibc/ibc-runtime-api", default-features = false }
+ibc-primitives = { path = "../../bridges/pallet-ibc/ibc-primitives", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.19" }
@@ -261,7 +263,9 @@ std = [
   "liquidations/std",
   "simnode-apis/std",
   "pablo/std",
-  "dex-router/std"
-  "pallet-ibc/std"
+  "dex-router/std",
+  "pallet-ibc/std",
+  "ibc-runtime-api/std",
+	"ibc-primitives/std"
 ]
 wasm-builder = []

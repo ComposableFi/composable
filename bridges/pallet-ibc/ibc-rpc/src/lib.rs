@@ -18,13 +18,9 @@ use ibc_primitives::*;
 
 use std::sync::Arc;
 
-use codec::{Codec, Encode};
-use ibc::{
-	core::ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
-	Height,
-};
+use ibc::Height;
 use ibc_runtime_api::IbcRuntimeApi;
-use jsonrpc_core::{Error as JsonRpcError, ErrorCode, Result};
+use jsonrpc_core::{Error as JsonRpcError, ErrorCode, Result, Value};
 use jsonrpc_derive::rpc;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
@@ -95,7 +91,7 @@ pub trait IbcApi<BlockNumber> {
 		&self,
 		height: u32,
 		client_id: String,
-	) -> Result<QueryConnectionResponse>;
+	) -> Result<IdentifiedConnection>;
 
 	/// Generate proof for connection handshake
 	#[rpc(name = "ibc_generateConnectionHandshakeProof")]
@@ -105,10 +101,6 @@ pub trait IbcApi<BlockNumber> {
 		client_id: String,
 		conn_id: String,
 	) -> Result<ConnectionHandshakeProof>;
-
-	/// Construct a new client state
-	#[rpc(name = "ibc_newClientState")]
-	fn new_client_state(&self) -> Result<Vec<u8>>;
 
 	/// Query a channel state
 	#[rpc(name = "ibc_queryChannel")]
@@ -245,13 +237,15 @@ fn runtime_error_into_rpc_error(err: impl std::fmt::Display) -> JsonRpcError {
 /// An implementation of IBC specific RPC methods.
 pub struct IbcRpcHandler<C, B> {
 	client: Arc<C>,
+	/// A copy of the chain spec.
+	pub chain_spec: Box<dyn sc_chain_spec::ChainSpec>,
 	_marker: std::marker::PhantomData<B>,
 }
 
 impl<C, B> IbcRpcHandler<C, B> {
 	/// Create new `IbcRpcHandler` with the given reference to the client.
-	pub fn new(client: Arc<C>) -> Self {
-		Self { client, _marker: Default::default() }
+	pub fn new(client: Arc<C>, chain_spec: Box<dyn sc_chain_spec::ChainSpec>) -> Self {
+		Self { client, chain_spec, _marker: Default::default() }
 	}
 }
 
@@ -259,7 +253,7 @@ impl<C, Block> IbcApi<<<Block as BlockT>::Header as HeaderT>::Number> for IbcRpc
 where
 	Block: BlockT,
 	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	C::Api: IbcRuntimeApi<Block, <Block as BlockT>::Header>,
+	C::Api: IbcRuntimeApi<Block>,
 {
 	fn generate_proof(&self, height: u32, keys: Vec<Vec<u8>>) -> Result<Proof> {
 		let api = self.client.runtime_api();
@@ -285,7 +279,18 @@ where
 	}
 
 	fn query_balance_with_address(&self, addr: Vec<u8>) -> Result<Coin> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(self.client.info().best_hash);
+		let denom =
+			match self.chain_spec.properties().get("tokenSymbol").cloned().unwrap_or_default() {
+				Value::String(symbol) => symbol,
+				_ => "".to_string(),
+			};
+
+		match api.query_balance_with_address(&at, addr).ok().flatten() {
+			Some(amt) => Ok(Coin { amt, denom }),
+			None => Err(runtime_error_into_rpc_error("Error querying balance")),
+		}
 	}
 
 	fn query_client_state(
@@ -322,11 +327,11 @@ where
 			.ok_or(runtime_error_into_rpc_error("Error querying client consensus state"))
 	}
 	// TODO: Not required in first version
-	fn query_upgraded_client(&self, height: u32) -> Result<QueryClientStateResponse> {
+	fn query_upgraded_client(&self, _height: u32) -> Result<QueryClientStateResponse> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
-	fn query_upgraded_cons_state(&self, height: u32) -> Result<QueryConsensusStateResponse> {
+	fn query_upgraded_cons_state(&self, _height: u32) -> Result<QueryConsensusStateResponse> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
@@ -376,7 +381,7 @@ where
 		&self,
 		height: u32,
 		client_id: String,
-	) -> Result<QueryConnectionResponse> {
+	) -> Result<IdentifiedConnection> {
 		let api = self.client.runtime_api();
 		let block_hash = self
 			.client
@@ -411,10 +416,6 @@ where
 			.ok()
 			.flatten()
 			.ok_or(runtime_error_into_rpc_error("Error generating handshake proof"))
-	}
-
-	fn new_client_state(&self) -> Result<Vec<u8>> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_channel(
@@ -666,15 +667,15 @@ where
 			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))
 	}
 
-	fn query_denom_trace(&self, denom: String) -> Result<QueryDenomTraceResponse> {
+	fn query_denom_trace(&self, _denom: String) -> Result<QueryDenomTraceResponse> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
 	fn query_denom_traces(
 		&self,
-		offset: String,
-		limit: u64,
-		height: u32,
+		_offset: String,
+		_limit: u64,
+		_height: u32,
 	) -> Result<QueryDenomTracesResponse> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}

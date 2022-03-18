@@ -25,6 +25,7 @@ sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "pol
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 tendermint-proto = "0.23.5"
 
 ibc-runtime-api = { path = "../ibc-runtime-api" }

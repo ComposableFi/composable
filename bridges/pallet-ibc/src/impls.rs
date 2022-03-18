@@ -1,5 +1,6 @@
 use super::*;
 use codec::Encode;
+use frame_support::traits::Currency;
 use ibc::core::{
 	ics02_client::{
 		client_consensus::AnyConsensusState, client_state::AnyClientState, client_type::ClientType,
@@ -16,8 +17,8 @@ use ibc::core::{
 use ibc_primitives::{
 	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
 	IdentifiedConsensusState, PacketState, QueryChannelResponse, QueryChannelsResponse,
-	QueryClientStateResponse, QueryClientStatesResponse, QueryConnectionResponse,
-	QueryConnectionsResponse, QueryConsensusStateResponse, QueryNextSequenceReceiveResponse,
+	QueryClientStateResponse, QueryConnectionResponse, QueryConnectionsResponse,
+	QueryConsensusStateResponse, QueryNextSequenceReceiveResponse,
 	QueryPacketAcknowledgementResponse, QueryPacketAcknowledgementsResponse,
 	QueryPacketCommitmentResponse, QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
 };
@@ -263,7 +264,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get all client states
-	pub fn clients() -> Result<QueryClientStatesResponse, Error<T>> {
+	pub fn clients() -> Result<Vec<IdentifiedClientState>, Error<T>> {
 		let client_states = ClientStates::<T>::iter()
 			.map(|(id, state)| {
 				let client_id = client_id_from_bytes(id.clone())?;
@@ -290,10 +291,7 @@ impl<T: Config> Pallet<T> {
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
 
-		Ok(QueryClientStatesResponse {
-			client_states,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
-		})
+		Ok(client_states)
 	}
 
 	/// Get a consensus state for client
@@ -342,19 +340,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get all connection states for a client
-	pub fn connection_using_client(client_id: String) -> Result<QueryConnectionResponse, Error<T>> {
+	pub fn connection_using_client(client_id: String) -> Result<IdentifiedConnection, Error<T>> {
 		let connection_id = ConnectionClient::<T>::get(client_id.as_bytes().to_vec());
 		let connection = Connections::<T>::get(connection_id.clone());
 
-		let mut key = T::CONNECTION_PREFIX.to_vec();
 		let connection_id = connection_id_from_bytes(connection_id)?;
 
-		let connection_path = format!("{}", ConnectionsPath(connection_id));
-		key.extend_from_slice(connection_path.as_bytes());
-		Ok(QueryConnectionResponse {
-			connection,
-			proof: Self::generate_proof(vec![key])?,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+		Ok(IdentifiedConnection {
+			connection_id: connection_id.to_string(),
+			connection_end: connection,
 		})
 	}
 
@@ -423,6 +417,27 @@ impl<T: Config> Pallet<T> {
 
 		Ok(QueryConnectionsResponse {
 			connections,
+			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+		})
+	}
+
+	/// Get all channels bound to this connection
+	pub fn connection_channels(connection_id: String) -> Result<QueryChannelsResponse, Error<T>> {
+		let identifiers = ChannelsConnection::<T>::get(connection_id.as_bytes().to_vec());
+
+		let channels = identifiers
+			.into_iter()
+			.map(|(port_id, channel_id)| {
+				let channel_end = Channels::<T>::get(port_id.clone(), channel_id.clone());
+				Ok(IdentifiedChannel {
+					channel_id: channel_id_from_bytes(channel_id)?.to_string(),
+					port_id: port_id_from_bytes(port_id)?.to_string(),
+					channel_end,
+				})
+			})
+			.collect::<Result<Vec<_>, Error<T>>>()?;
+		Ok(QueryChannelsResponse {
+			channels,
 			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 		})
 	}
@@ -656,6 +671,13 @@ impl<T: Config> Pallet<T> {
 			proof: Self::generate_proof(vec![client_state_key, connection_key, consensus_key])?,
 			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 		})
+	}
+
+	pub fn query_balance_with_address(addr: Vec<u8>) -> Result<u128, Error<T>> {
+		let account_id =
+			T::AccountId::decode(&mut &*addr).map_err(|_| Error::<T>::DecodingError)?;
+		let balance = format!("{:?}", T::Currency::free_balance(&account_id));
+		Ok(balance.parse().unwrap_or_default())
 	}
 }
 

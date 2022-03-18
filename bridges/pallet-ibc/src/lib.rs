@@ -45,17 +45,23 @@ mod impls;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{dispatch::DispatchResult, pallet_prelude::*, traits::UnixTime};
+	use frame_support::{
+		dispatch::DispatchResult,
+		pallet_prelude::*,
+		traits::{Currency, UnixTime},
+	};
 	use frame_system::pallet_prelude::*;
 
 	use sp_runtime::generic::DigestItem;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + balances::Config {
 		type TimeProvider: UnixTime;
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		/// Currency type of the runtime
+		type Currency: Currency<Self::AccountId>;
 		/// Prefix for events stored in the Off-chain DB via Indexing API.
 		const INDEXING_PREFIX: &'static [u8];
 		/// Prefix for ibc connection
@@ -191,9 +197,9 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
-	/// (port_id, channel_id)  => Vec<Vec<u8>>
+	/// (port_id, channel_id, seq)  => Vec<u8>
 	pub type SendPackets<T: Config> =
-		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	/// (port_id, channel_id, sequence) => Vec<u8>

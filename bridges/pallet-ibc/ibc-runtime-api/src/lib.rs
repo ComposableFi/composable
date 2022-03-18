@@ -1,21 +1,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
 
-use codec::Codec;
 use ibc_primitives::*;
 use scale_info::prelude::string::String;
 
 sp_api::decl_runtime_apis! {
 	/// IBC Runtime Apis
-	pub trait IbcRuntimeApi<Header>
-	where
-		Header: Codec
-	{
-		/// Return latest height
-		fn latest_height() -> Option<u32>;
-
+	pub trait IbcRuntimeApi {
 		/// Returns the balance of this address
-		fn query_balance_with_address(addr: String) -> Option<Vec<u8>>;
+		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128>;
 
 		/// Generate trie proof for these keys
 		fn generate_proof(keys: Vec<Vec<u8>>) -> Option<Proof>;
@@ -36,7 +29,7 @@ sp_api::decl_runtime_apis! {
 		fn connections() -> Option<QueryConnectionsResponse>;
 
 		/// Returns all connections associated with the given client
-		fn connection_using_client(client_id: String) -> Option<QueryConnectionResponse>;
+		fn connection_using_client(client_id: String) -> Option<IdentifiedConnection>;
 
 		/// Returns Connection handshake proof
 		fn connection_handshake_proof(client_id: String, conn_id: String) -> Option<ConnectionHandshakeProof>;
