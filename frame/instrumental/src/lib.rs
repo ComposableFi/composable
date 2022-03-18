@@ -1,6 +1,17 @@
 //! # Instrumental Pallet
 //! 
+//! This pallet will house the logic required by [`Intrumental Finance`](https://www.instrumental.finance/);
+//! Instrumental will speak to this pallet through the Mosaic Pallet. This pallet will be responsible
+//! for sending assets into their associated vaults and specifying which strategies should be set for each
+//! vault.
+//! 
 //! ## Overview
+//! 
+//! The following API functions will be exposed thorugh this pallet:
+//! 
+//! - [`create`](Pallet::create)
+//! - [`add_liquidity`](Pallet::add_liquidity)
+//! - [`remove_liquidity`](Pallet::remove_liquidity)
 //! 
 //! ### Terminology
 //! 
@@ -8,19 +19,43 @@
 //! 
 //! ### Actors
 //! 
+//! - users: Instrumentals users lie in the Ethereum ecosystem and interact (indirectly) with this
+//!     pallet through the [`Intrumental Finance`](https://www.instrumental.finance/) frontend.
+//! 
+//! - Instrumental: The Ethereum-native smart sontracts provide the core funcitoanlity for Instrumental.
+//! 
+//! - Mosaic Pallet: Instrumental speaks to the Mosaic pallet which then redirects calls to the 
+//!     Instrumental pallet.
+//! 
+//! - [`Vault Pallet`](../pallet_vault/index.html): Each asset supported by this pallet will have an underlying vault.
+//!     Each vault will an associated stratgey that will dictate where those assets will go in 
+//!     order to earn yeild.
+//! 
 //! ### Implementations
 //! 
 //! ## Interface
 //! 
 //! ### Extrinsics
 //! 
+//! - [`create`](Pallet::create): Creates a Cubic vault that is responsible for housing the specified asset
+//!     and enforcing its strategy.
+//! 
+//! - [`add_liquidity`](Pallet::add_liquidity): Adds assets to its associated vault.
+//! 
+//! - [`remove_liquidity`](Pallet::remove_liquidity): Removes assets from its associated vault.
+//! 
 //! ### Runtime Storage Objects
+//! 
+//! - [`AssetVault`](AssetVault): Mapping of an `AssetId` to the underlying Cubic Vault's `VaultId` 
+//!     that is responsible for enforcing the asset's strategy.
 //! 
 //! ## Usage
 //! 
 //! ### Example
 //! 
 //! ## Related Modules
+//! 
+//! - [`Vault Pallet`](../pallet_vault/index.html)
 //!  
 
 #[cfg(test)]
@@ -102,7 +137,7 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ Zero;
 
-		/// The `AssetId` used by the pallet. Corresponds the the Ids used by the Currency pallet.
+		/// The `AssetId` used by the pallet. Corresponds to the Ids used by the Currency pallet.
 		type AssetId: FullCodec
 			+ MaxEncodedLen
 			+ Eq
@@ -113,6 +148,7 @@ pub mod pallet {
 			+ Default
 			+ TypeInfo;
 
+		/// The `VaultId` used by the pallet. Corresponds to the Ids used by the Vault pallet.
 		type VaultId: Clone 
 		    + Codec 
 			+ MaxEncodedLen 
