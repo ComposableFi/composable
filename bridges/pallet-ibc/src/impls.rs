@@ -1,7 +1,9 @@
 use super::*;
 use codec::Encode;
 use ibc::core::{
-	ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
+	ics02_client::{
+		client_consensus::AnyConsensusState, client_state::AnyClientState, client_type::ClientType,
+	},
 	ics24_host::{
 		identifier::*,
 		path::{
@@ -12,7 +14,8 @@ use ibc::core::{
 	},
 };
 use ibc_primitives::{
-	ConnectionHandshakeProof, PacketState, QueryChannelResponse, QueryChannelsResponse,
+	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
+	IdentifiedConsensusState, PacketState, QueryChannelResponse, QueryChannelsResponse,
 	QueryClientStateResponse, QueryClientStatesResponse, QueryConnectionResponse,
 	QueryConnectionsResponse, QueryConsensusStateResponse, QueryNextSequenceReceiveResponse,
 	QueryPacketAcknowledgementResponse, QueryPacketAcknowledgementsResponse,
@@ -233,11 +236,15 @@ impl<T: Config> Pallet<T> {
 		let client_state = ClientStates::<T>::get(client_id_bytes.clone());
 		let client_state =
 			AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
-
+		let client_type = Clients::<T>::get(client_id_bytes.clone());
+		let client_type = client_type_from_bytes(client_type)?;
 		// TODO: Revisit when more client states are defined in ibc_rs
 		let client_state = match client_state {
-			AnyClientState::Tendermint(state) =>
-				state.encode_vec().map_err(|_| Error::<T>::DecodingError)?,
+			AnyClientState::Tendermint(state) => IdentifiedClientState {
+				client_id,
+				client_type: client_type.to_string(),
+				client_state: state.encode_vec().map_err(|_| Error::<T>::DecodingError)?,
+			},
 			_ => return Err(Error::<T>::DecodingError),
 		};
 
@@ -257,36 +264,34 @@ impl<T: Config> Pallet<T> {
 
 	/// Get all client states
 	pub fn clients() -> Result<QueryClientStatesResponse, Error<T>> {
-		let mut client_ids = Vec::new();
 		let client_states = ClientStates::<T>::iter()
 			.map(|(id, state)| {
-				client_ids.push(id);
+				let client_id = client_id_from_bytes(id.clone())?;
+				let client_type = Clients::<T>::get(id);
+				let client_type = client_type_from_bytes(client_type)?;
 				// TODO: Revisit when more client states are defined in ibc_rs
 				let client_state =
 					AnyClientState::decode_vec(&state).map_err(|_| Error::<T>::DecodingError)?;
 				match client_state {
-					AnyClientState::Tendermint(state) =>
-						state.encode_vec().map_err(|_| Error::<T>::DecodingError),
+					AnyClientState::Tendermint(state) => {
+						if let Ok(state) = state.encode_vec().map_err(|_| Error::<T>::DecodingError)
+						{
+							Ok(IdentifiedClientState {
+								client_id: client_id.to_string(),
+								client_type: client_type.to_string(),
+								client_state: state,
+							})
+						} else {
+							Err(Error::<T>::DecodingError)
+						}
+					},
 					_ => Err(Error::<T>::DecodingError),
 				}
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
 
-		let prefix = T::CONNECTION_PREFIX.to_vec();
-		let keys = client_ids
-			.into_iter()
-			.map(|id_bytes| {
-				let client_id = client_id_from_bytes(id_bytes.clone())?;
-				let path = format!("{}", ClientStatePath(client_id));
-				let mut key = prefix.clone();
-				key.extend_from_slice(path.as_bytes());
-				Ok(key)
-			})
-			.collect::<Result<Vec<_>, Error<T>>>()?;
-
 		Ok(QueryClientStatesResponse {
 			client_states,
-			proof: Self::generate_proof(keys)?,
 			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 		})
 	}
@@ -297,6 +302,8 @@ impl<T: Config> Pallet<T> {
 		client_id: String,
 	) -> Result<QueryConsensusStateResponse, Error<T>> {
 		let client_id_bytes = client_id.as_bytes().to_vec();
+		let client_type = Clients::<T>::get(client_id_bytes.clone());
+		let client_type = client_type_from_bytes(client_type)?;
 		let consensus_states = ConsensusStates::<T>::get(client_id_bytes.clone());
 		let mut key = T::CONNECTION_PREFIX.to_vec();
 		let client_id = client_id_from_bytes(client_id_bytes)?;
@@ -309,14 +316,17 @@ impl<T: Config> Pallet<T> {
 			.map_err(|_| Error::<T>::DecodingError)?;
 		// TODO: Revisit when more consensus states are defined in ibc_rs
 		let consensus_state = match consensus_state {
-			AnyConsensusState::Tendermint(state) =>
-				state.encode_vec().map_err(|_| Error::<T>::DecodingError)?,
+			AnyConsensusState::Tendermint(state) => IdentifiedConsensusState {
+				client_id: client_id.to_string(),
+				client_type: client_type.to_string(),
+				consensus_state: state.encode_vec().map_err(|_| Error::<T>::DecodingError)?,
+			},
 			_ => return Err(Error::<T>::DecodingError),
 		};
 
 		let height = ibc::Height::decode(&*height).map_err(|_| Error::<T>::DecodingError)?;
 		let consensus_path = ClientConsensusStatePath {
-			client_id: client_id.clone(),
+			client_id,
 			epoch: height.revision_number,
 			height: height.revision_height,
 		};
@@ -349,16 +359,21 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get client state for client which this channel is bound to
-	pub fn channel_client(channel_id: String, port_id: String) -> Result<Vec<u8>, Error<T>> {
+	pub fn channel_client(
+		channel_id: String,
+		port_id: String,
+	) -> Result<IdentifiedClientState, Error<T>> {
 		for (connection_id, channels) in ChannelsConnection::<T>::iter() {
 			if channels.contains(&(port_id.as_bytes().to_vec(), channel_id.as_bytes().to_vec())) {
 				if let Some((client_id, ..)) = ConnectionClient::<T>::iter()
 					.find(|(.., connection)| &connection_id == connection)
 				{
-					let client_state = ClientStates::<T>::get(client_id);
+					let client_type = Clients::<T>::get(client_id.clone());
+					let client_type = client_type_from_bytes(client_type)?;
+					let client_state = ClientStates::<T>::get(client_id.clone());
 					let client_state = AnyClientState::decode_vec(&client_state)
 						.map_err(|_| Error::<T>::DecodingError)?;
-
+					let client_id = client_id_from_bytes(client_id)?;
 					// TODO: Revisit when more client states are defined in ibc_rs
 					let client_state = match client_state {
 						AnyClientState::Tendermint(state) =>
@@ -366,7 +381,11 @@ impl<T: Config> Pallet<T> {
 						_ => return Err(Error::<T>::DecodingError),
 					};
 
-					return Ok(client_state)
+					return Ok(IdentifiedClientState {
+						client_id: client_id.to_string(),
+						client_type: client_type.to_string(),
+						client_state,
+					})
 				}
 			}
 		}
@@ -375,42 +394,35 @@ impl<T: Config> Pallet<T> {
 
 	/// Get all channel states
 	pub fn channels() -> Result<QueryChannelsResponse, Error<T>> {
-		let prefix = T::CONNECTION_PREFIX;
-		let channels = Channels::<T>::iter_values().collect::<Vec<_>>();
-		let keys = Channels::<T>::iter_keys()
-			.map(|(port_id, channel_id)| {
-				let mut channel_key = prefix.to_vec();
-				let channel_id = channel_id_from_bytes::<T>(channel_id)?;
-				let port_id = port_id_from_bytes::<T>(port_id)?;
-				let channel_path =
-					format!("{}", ChannelEndsPath(port_id.clone(), channel_id.clone()));
-				channel_key.extend_from_slice(channel_path.as_bytes());
-				Ok(channel_key)
+		let channels = Channels::<T>::iter()
+			.map(|(port_id, channel_id, channel_end)| {
+				Ok(IdentifiedChannel {
+					channel_id: channel_id_from_bytes(channel_id)?.to_string(),
+					port_id: port_id_from_bytes(port_id)?.to_string(),
+					channel_end,
+				})
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
+
 		Ok(QueryChannelsResponse {
 			channels,
-			proof: Self::generate_proof(keys)?,
 			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 		})
 	}
 
 	/// Get all connection states
 	pub fn connections() -> Result<QueryConnectionsResponse, Error<T>> {
-		let prefix = T::CONNECTION_PREFIX;
-		let connections = Connections::<T>::iter_values().collect::<Vec<_>>();
-		let keys = Connections::<T>::iter()
-			.map(|(connection_id, ..)| {
-				let mut connection_key = prefix.to_vec();
-				let connection_id = connection_id_from_bytes::<T>(connection_id)?;
-				let connection_path = format!("{}", ConnectionsPath(connection_id));
-				connection_key.extend_from_slice(connection_path.as_bytes());
-				Ok(connection_key)
+		let connections = Connections::<T>::iter()
+			.map(|(connection_id, connection_end)| {
+				Ok(IdentifiedConnection {
+					connection_id: connection_id_from_bytes(connection_id)?.to_string(),
+					connection_end,
+				})
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
+
 		Ok(QueryConnectionsResponse {
 			connections,
-			proof: Self::generate_proof(keys)?,
 			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 		})
 	}
@@ -614,6 +626,8 @@ impl<T: Config> Pallet<T> {
 		let client_state = ClientStates::<T>::get(client_id.as_bytes().to_vec());
 		let client_state_decoded =
 			AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
+		let client_type = Clients::<T>::get(client_id.as_bytes().to_vec());
+		let client_type = client_type_from_bytes(client_type)?;
 		let height = client_state_decoded.latest_height();
 		let client_id = client_id_from_bytes(client_id.as_bytes().to_vec())?;
 		let connection_id = connection_id_from_bytes(connection_id.as_bytes().to_vec())?;
@@ -624,7 +638,7 @@ impl<T: Config> Pallet<T> {
 			epoch: height.revision_number,
 			height: height.revision_height,
 		};
-		let client_state_path = format!("{}", ClientStatePath(client_id));
+		let client_state_path = format!("{}", ClientStatePath(client_id.clone()));
 		let consensus_path = format!("{}", consensus_path);
 		let mut client_state_key = prefix.clone();
 		client_state_key.extend_from_slice(client_state_path.as_bytes());
@@ -634,7 +648,11 @@ impl<T: Config> Pallet<T> {
 		consensus_key.extend_from_slice(consensus_path.as_bytes());
 
 		Ok(ConnectionHandshakeProof {
-			client_state,
+			client_state: IdentifiedClientState {
+				client_id: client_id.to_string(),
+				client_type: client_type.to_string(),
+				client_state,
+			},
 			proof: Self::generate_proof(vec![client_state_key, connection_key, consensus_key])?,
 			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
 		})
@@ -658,6 +676,11 @@ fn connection_id_from_bytes<T: Config>(connection: Vec<u8>) -> Result<Connection
 
 fn client_id_from_bytes<T: Config>(client_id: Vec<u8>) -> Result<ClientId, Error<T>> {
 	ClientId::from_str(&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?)
+		.map_err(|_| Error::<T>::DecodingError)
+}
+
+fn client_type_from_bytes<T: Config>(client_type: Vec<u8>) -> Result<ClientType, Error<T>> {
+	ClientType::from_str(&String::from_utf8(client_type).map_err(|_| Error::<T>::DecodingError)?)
 		.map_err(|_| Error::<T>::DecodingError)
 }
 

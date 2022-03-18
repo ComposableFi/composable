@@ -27,7 +27,7 @@ sp_api::decl_runtime_apis! {
 		fn client_consensus_state(client_id: String, client_height: Vec<u8>) -> Option<QueryConsensusStateResponse>;
 
 		/// Returns client states for all clients on chain
-		fn clients() -> Option<Vec<Vec<u8>>>;
+		fn clients() -> Option<Vec<IdentifiedClientState>>;
 
 		/// Query the given connection state with proof
 		fn connection(connection_id: String) -> Option<QueryConnectionResponse>;
@@ -44,7 +44,7 @@ sp_api::decl_runtime_apis! {
 		fn channel(channel_id: String, port_id: String) -> Option<QueryChannelResponse>;
 
 		/// Should return the client state for the client supporting this channel
-		fn channel_client(channel_id: String, port_id: String) -> Option<Vec<u8>>;
+		fn channel_client(channel_id: String, port_id: String) -> Option<IdentifiedClientState>;
 
 		/// Returns all channels associated with this connection
 		fn connection_channels(connection_id: String) -> Option<QueryChannelsResponse>;

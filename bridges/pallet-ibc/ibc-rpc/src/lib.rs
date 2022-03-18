@@ -75,7 +75,7 @@ pub trait IbcApi<BlockNumber> {
 
 	/// Query all client states
 	#[rpc(name = "ibc_queryClients")]
-	fn query_clients(&self) -> Result<Vec<Vec<u8>>>;
+	fn query_clients(&self) -> Result<Vec<IdentifiedClientState>>;
 
 	/// Query a connection state
 	#[rpc(name = "ibc_queryConnection")]
@@ -126,7 +126,7 @@ pub trait IbcApi<BlockNumber> {
 		height: u32,
 		channel_id: String,
 		port_id: String,
-	) -> Result<AnyClientState>;
+	) -> Result<IdentifiedClientState>;
 
 	/// Query all channel states for associated connection
 	#[rpc(name = "ibc_queryConnectionChannels")]
@@ -330,7 +330,7 @@ where
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
-	fn query_clients(&self) -> Result<Vec<Vec<u8>>> {
+	fn query_clients(&self) -> Result<Vec<IdentifiedClientState>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
 
@@ -443,7 +443,7 @@ where
 		height: u32,
 		channel_id: String,
 		port_id: String,
-	) -> Result<AnyClientState> {
+	) -> Result<IdentifiedClientState> {
 		let api = self.client.runtime_api();
 		let block_hash = self
 			.client
@@ -456,8 +456,6 @@ where
 
 		api.channel_client(&at, channel_id, port_id)
 			.ok()
-			.flatten()
-			.map(|state| AnyClientState::decode_vec(&state).ok())
 			.flatten()
 			.ok_or(runtime_error_into_rpc_error("Failed to Client state for channel"))
 	}

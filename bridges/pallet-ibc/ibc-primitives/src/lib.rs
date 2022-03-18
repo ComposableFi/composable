@@ -7,17 +7,50 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Proof {
 	/// Trie proof
-	proof: Vec<Vec<u8>>,
+	pub proof: Vec<Vec<u8>>,
 	/// Protobuf encoded `ibc::Height`
-	height: Vec<u8>,
+	pub height: Vec<u8>,
+}
+
+#[derive(Clone, codec::Encode, codec::Decode)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct IdentifiedChannel {
+	pub channel_id: String,
+	pub port_id: String,
+	/// Protobuf encoded `ibc::core::ics04_channel::connection::ChannelEnd`
+	pub channel_end: Vec<u8>,
+}
+
+#[derive(Clone, codec::Encode, codec::Decode)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct IdentifiedConnection {
+	pub connection_id: String,
+	/// Protobuf encoded `ibc::core::ics03_connection::connection::ConnectionEnd`
+	pub connection_end: Vec<u8>,
+}
+
+#[derive(Clone, codec::Encode, codec::Decode)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct IdentifiedClientState {
+	pub client_id: String,
+	pub client_type: String,
+	/// Protobuf encoded client state for this client type as defined in `ibc-rs`
+	pub client_state: Vec<u8>,
+}
+
+#[derive(Clone, codec::Encode, codec::Decode)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct IdentifiedConsensusState {
+	pub client_id: String,
+	pub client_type: String,
+	/// Protobuf encoded consensus state for this client type as defined in `ibc-rs`
+	pub consensus_state: Vec<u8>,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryClientStateResponse {
-	/// Protobuf encoded client state
-	/// Should decode into the respective client state definition for this client
-	pub client_state: Vec<u8>,
+	pub client_state: IdentifiedClientState,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
 	/// Protobuf encoded `ibc::Height`
@@ -27,11 +60,7 @@ pub struct QueryClientStateResponse {
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryClientStatesResponse {
-	/// Vector of Protobuf encoded client states
-	/// Should decode into the respective client state definition for this client
-	pub client_states: Vec<Vec<u8>>,
-	/// Trie proof
-	pub proof: Vec<Vec<u8>>,
+	pub client_states: Vec<IdentifiedClientState>,
 	/// Protobuf encoded `ibc::Height`
 	pub height: Vec<u8>,
 }
@@ -39,9 +68,7 @@ pub struct QueryClientStatesResponse {
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryConsensusStateResponse {
-	/// Protobuf encoded consensus state
-	/// Should decode into the respective consensus state definition for this client
-	pub consensus_state: Vec<u8>,
+	pub consensus_state: IdentifiedConsensusState,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
 	/// Protobuf encoded `ibc::Height`
@@ -73,10 +100,7 @@ pub struct QueryChannelResponse {
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryChannelsResponse {
-	/// Vector of Protobuf encoded `ibc::core::ics04_channel::connection::ChannelEnd`
-	pub channels: Vec<Vec<u8>>,
-	/// Trie proof
-	pub proof: Vec<Vec<u8>>,
+	pub channels: Vec<IdentifiedChannel>,
 	/// Protobuf encoded `ibc::Height`
 	pub height: Vec<u8>,
 }
@@ -84,10 +108,7 @@ pub struct QueryChannelsResponse {
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryConnectionsResponse {
-	/// Vector of Protobuf encoded `ibc::core::ics03_connection::connection::ConnectionEnd`
-	pub connections: Vec<Vec<u8>>,
-	/// Trie proof
-	pub proof: Vec<Vec<u8>>,
+	pub connections: Vec<IdentifiedConnection>,
 	/// Protobuf encoded `ibc::Height`
 	pub height: Vec<u8>,
 }
@@ -181,7 +202,7 @@ pub struct QueryDenomTracesResponse {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ConnectionHandshakeProof {
 	/// Protobuf encoded client state
-	pub client_state: Vec<u8>,
+	pub client_state: IdentifiedClientState,
 	/// Trie proof for connection state, client state and consensus state
 	pub proof: Vec<Vec<u8>>,
 	pub height: Vec<u8>,
