@@ -24,7 +24,8 @@ const ethAccount = (seed: number) =>
  *  1. Provide funds to crowdloan pallet
  *  2. Populate the list of contributors
  *  3. Initialize the crowdloan
- *  4. Associate a picassso account
+ *  4. Associate a picassso account (which also claims)
+ *  5. Claiming more rewards.
  */
 describe('CrowdloanRewards Tests', function() {
   if (!testConfiguration.enabledTests.tx.enabled)
@@ -84,7 +85,7 @@ describe('CrowdloanRewards Tests', function() {
   /**
    * Here we populate the crowdloan pallet with a random generated list of contributors.
    *
-   * Sudo call! Checked with `.isOk`.
+   * This is a SUDO call and is checked with `.isOk`.
    */
   it('Can populate the list of contributors', async function() {
     if (!testConfiguration.enabledTests.tx.populate_success.populate1 || onExistingChain)
@@ -95,6 +96,11 @@ describe('CrowdloanRewards Tests', function() {
     expect(result.isOk).to.be.true;
   });
 
+  /**
+   * Here we initialize the crowdloan with our populated list of contributors.
+   *
+   * This is a SUDO call and is checked with `.isOk`.
+   */
   it('Can initialize the crowdloan', async function() {
     if (!testConfiguration.enabledTests.tx.initialize_success.initialize1 || onExistingChain)
       this.skip();
@@ -121,12 +127,10 @@ describe('CrowdloanRewards Tests', function() {
     this.timeout(60 * 20 * 1000);
     await Promise.all([
       TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTest(
-        wallet,
         contributorEth,
         contributorEthRewardAccount
       ),
       TxCrowdloanRewardsTests.txCrowdloanRewardsRelayAssociateTests(
-        wallet,
         contributor,
         contributorRewardAccount
       ),
@@ -166,6 +170,8 @@ export class TxCrowdloanRewardsTests {
    *
    * Unfortunately we can't directly mint into the pallet therefore,
    * we mint into the Alice wallet and transfer funds from there.
+   *
+   * @param {KeyringPair} sudoKey Wallet with sudo rights.
    */
   public static async beforeCrowdlownTestsProvideFunds(sudoKey:KeyringPair) {
     const palletPublicKey = api.consts.crowdloanRewards.accountId;
@@ -180,6 +186,8 @@ export class TxCrowdloanRewardsTests {
 
   /**
    * tx.crowdloanRewards.initialize
+   *
+   * @param {KeyringPair} sudoKey Wallet with sudo rights.
    */
   public static txCrowdloanRewardsInitializeTest(sudoKey:KeyringPair) {
     return sendAndWaitForSuccess(
@@ -194,6 +202,9 @@ export class TxCrowdloanRewardsTests {
 
   /**
    * tx.crowdloanRewards.populate
+   *
+   * @param {KeyringPair} sudoKey Wallet with sudo rights.
+   * @param {KeyringPair} contributor The picasso wallet of which the contributor wallets are derived from.
    */
   public static async txCrowdloanRewardsPopulateTest(sudoKey:KeyringPair, contributor:KeyringPair) {
     const vesting48weeks = api.createType('u32', 100800);
@@ -229,11 +240,11 @@ export class TxCrowdloanRewardsTests {
 
   /**
    * tx.crowdloanRewards.associate RelayChain
-   * @param { KeyringPair } wallet
-   * @param contributor
-   * @param contributorRewardAccount
+   *
+   * @param {KeyringPair} contributor The contributor relay chain wallet public key.
+   * @param {KeyringPair} contributorRewardAccount The wallet the contributor wants to receive their PICA to.
    */
-  public static async txCrowdloanRewardsRelayAssociateTests(wallet:KeyringPair, contributor, contributorRewardAccount) {
+  public static async txCrowdloanRewardsRelayAssociateTests(contributor:KeyringPair, contributorRewardAccount) {
     // arbitrary, user defined reward account
     const proof = contributor.sign(proofMessage(contributorRewardAccount));
     return await sendUnsignedAndWaitForSuccess(
@@ -249,11 +260,11 @@ export class TxCrowdloanRewardsTests {
 
   /**
    * tx.crowdloanRewards.associate ETH Chain
-   * @param { KeyringPair } wallet
-   * @param contributor
-   * @param contributorRewardAccount
+   *
+   * @param {KeyringPair} contributor The contributor ETH chain wallet public key.
+   * @param {KeyringPair} contributorRewardAccount The wallet the contributor wants to receive their PICA to.
    */
-  public static async txCrowdloanRewardsEthAssociateTest(wallet:KeyringPair, contributor, contributorRewardAccount) {
+  public static async txCrowdloanRewardsEthAssociateTest(contributor, contributorRewardAccount) {
     const proof = contributor.sign(proofMessage(contributorRewardAccount, true));
     return await sendUnsignedAndWaitForSuccess(
       api,
@@ -267,7 +278,8 @@ export class TxCrowdloanRewardsTests {
 
   /**
    * tx.crowdloanRewards.claim
-   * @param { KeyringPair } wallet
+   *
+   * @param { KeyringPair } wallet The reward account which tries to claim.
    */
   public static async txCrowdloanRewardsClaimTest(wallet:KeyringPair) {
     return await sendAndWaitForSuccess(
