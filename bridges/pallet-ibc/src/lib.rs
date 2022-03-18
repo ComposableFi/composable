@@ -41,6 +41,7 @@ mod mock;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 mod impls;
+mod traits;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -196,14 +197,10 @@ pub mod pallet {
 	pub type PacketCommitment<T: Config> =
 		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
 
+	// TODO: Prune SendPackets on timeout or on acknowledgement
 	#[pallet::storage]
 	/// (port_id, channel_id, seq)  => Vec<u8>
 	pub type SendPackets<T: Config> =
-		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
-
-	#[pallet::storage]
-	/// (port_id, channel_id, sequence) => Vec<u8>
-	pub type TimeoutPackets<T: Config> =
 		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
 
 	#[pallet::event]
@@ -248,11 +245,11 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(0)]
-		pub fn deliver(origin: OriginFor<T>, messages: Vec<Any>, tmp: u8) -> DispatchResult {
+		pub fn deliver(origin: OriginFor<T>, messages: Vec<Any>) -> DispatchResult {
 			log::info!("in deliver");
 
 			let _sender = ensure_signed(origin)?;
-			let mut ctx = routing::Context { _pd: PhantomData::<T>, tmp };
+			let mut ctx = routing::Context::<T>::new();
 			let messages = messages
 				.iter()
 				.map(|message| {

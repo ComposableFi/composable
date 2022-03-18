@@ -6,13 +6,12 @@ use ibc::{
 
 #[derive(Clone)]
 pub struct Context<T: Config> {
-	pub _pd: PhantomData<T>,
-	pub tmp: u8,
+	pub _pd: PhantomData<T>
 }
 
 impl<T: Config> Context<T> {
 	pub fn new() -> Self {
-		Self { _pd: PhantomData::default(), tmp: 0 }
+		Self { _pd: PhantomData::default() }
 	}
 }
 
