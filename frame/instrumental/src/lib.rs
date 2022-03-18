@@ -240,7 +240,7 @@ pub mod pallet {
 		/// - `origin`: 
 		/// - `asset`: the `AssetId` of an asset to create a vault for.
 		/// 
-		/// ## Assumptions
+		/// ## Requirements
 		/// 1. the call must have been signed by the issuer.
 		/// 
 		/// ## Emits 
@@ -264,7 +264,7 @@ pub mod pallet {
 			// TODO: (Nevin)
 			//  - (potentially) enforce that the issuer must have priviledged rights
 
-			// Requirement 0) This extrinsic must be signed 
+			// Requirement 1) This extrinsic must be signed 
 			let from = ensure_signed(origin)?;
 
 			Self::do_create(&from, &asset)?;
@@ -274,16 +274,37 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Add assets into its underlying vault.
+		/// 
+		/// # Overview
+		/// 
+		/// ## Parameters
+		/// - `origin`: 
+		/// - `asset`: the `AssetId` of the asset to deposit.
+		/// - `amount`: the amount of `asset` to deposit.
+		/// 
+		/// ## Requirements
+		/// 1. the call must have been signed by the issuer.
+		/// 
+		/// ## Emits 
+		/// - [`Event::Created`](Event::Created)
+		/// 
+		/// ## Errors
+		/// - `AssetDoesNotHaveAnAssociatedVault`: no vault has been created for `asset`.
+		/// 
+		/// # Examples
+		/// 
+		/// # Weight: O(TBD)
 		#[pallet::weight(<T as Config>::WeightInfo::add_liquidity())]
 		pub fn add_liquidity(
 			origin: OriginFor<T>,
 			asset: T::AssetId,
 			amount: T::Balance
 		) -> DispatchResultWithPostInfo {
-			// Requirement 0) This extrinsic must be signed 
+			// Requirement 1) This extrinsic must be signed 
 			let issuer = ensure_signed(origin)?;
 
-			// Requirement 1) The asset must have an associated vault
+			// Requirement 2) The asset must have an associated vault
 			ensure!(
 				AssetVault::<T>::contains_key(asset),
 				Error::<T>::AssetDoesNotHaveAnAssociatedVault
@@ -301,8 +322,14 @@ pub mod pallet {
 			asset: T::AssetId,
 			amount: T::Balance
 		) -> DispatchResultWithPostInfo {
-			// Requirement 0) This extrinsic must be signed 
+			// Requirement 1) This extrinsic must be signed 
 			let issuer = ensure_signed(origin)?;
+
+			// Requirement 2) The asset must have an associated vault
+			ensure!(
+				AssetVault::<T>::contains_key(asset),
+				Error::<T>::AssetDoesNotHaveAnAssociatedVault
+			);
 
 			Self::do_remove_liquidity(&issuer, &asset, amount)?;
 			Self::deposit_event(Event::RemovedLiquidity {asset, amount});
@@ -325,11 +352,11 @@ pub mod pallet {
 			_issuer: &T::AccountId,
 			asset: &T::AssetId,
 		) -> Result<(), DispatchError> {
-			// Requirement 0) An asset can only have one vault associated with it
+			// Requirement 1) An asset can only have one vault associated with it
 			ensure!(!AssetVault::<T>::contains_key(asset), Error::<T>::VaultAlreadyExists);
 
 			// TODO: (Nevin)
-			//  - decide if each assey should have an associated account, or if
+			//  - decide if each asset should have an associated account, or if
 			//        the pallet itself should have one global account
 			let account_id = Self::account_id(asset);
 
