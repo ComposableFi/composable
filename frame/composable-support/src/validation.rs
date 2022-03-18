@@ -1,7 +1,7 @@
 //! Module for validating extrinsic inputs
 //!
 //! This module is made of two main parts that are needed to validate an
-//! extrinsic input, the `Validated` struct and the `Valitate` trait.
+//! extrinsic input, the `Validated` struct and the `Validate` trait.
 //!
 //! # Example
 //! ## Single Validation

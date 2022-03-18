@@ -1,4 +1,4 @@
-use crate::{Config, Error, Event, Pallet, PoolConfiguration, PoolCount, Pools};
+use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::constant_product::{
 	compute_deposit_lp, compute_in_given_out, compute_out_given_in,
 };
@@ -54,8 +54,6 @@ impl<T: Config> Uniswap<T> {
 				*pool_count = pool_id.safe_add(&T::PoolId::one())?;
 				Ok(pool_id)
 			})?;
-
-		<Pallet<T>>::deposit_event(Event::PoolCreated { pool_id, owner: who.clone() });
 
 		Ok(pool_id)
 	}
