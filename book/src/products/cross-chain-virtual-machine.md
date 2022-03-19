@@ -16,3 +16,16 @@ In order to facilitate this communication, we need two specific components that 
     - Polkadot-IBC cross-chain communication and asset transfers
     - L2-L2 communication and transfer through our parachain
 - **Finality Layer**: This will be our parachain offering — called [Picasso](./the-picasso-parachain.html) on Kusama, and [Composable](./the-composable-parachain.html) on Polkadot.
+
+
+![Our XCVM includes the IAL and our parachains, allowing communication across various chains and layers.](./xcvm-ial-parachains.png)
+*Our XCVM includes the IAL and our parachains, allowing communication across various chains and layers.*
+
+The idea of our solution, however, is not to create a new standard for cross-chain communication, which is already the object of a number of projects. Instead, the intention is to serve as a data availability layer for existing cross-chain communication protocols like IBC and Polkadot’s cross-chain message passing (XCMP).
+
+Throughout this experience, Composable allows users to tailor their experience to maximize for a desired parameter while minimizing ecosystem-specific decision making.
+
+![XCVM example use case](./xcvm-example-use-case.png)
+*An example use for the Composable XCVM, allowing a user to borrow with USDC on Angular Finance and invest into a liquidity pool on SushiSwap, a process that can occur cross-chain and cross-layer thanks to Composable's technology.*
+
+We will also provide **developer interfacing** for the XCVM: tooling with which users can interface with the Composable XCVM, such as testing suites, deployment scripts, etc.
