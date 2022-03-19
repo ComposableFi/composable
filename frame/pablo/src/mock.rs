@@ -8,14 +8,17 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
+	Permill,
 };
 use system::EnsureRoot;
 
 pub type CurrencyId = u128;
+pub type BlockNumber = u64;
 
 pub const BTC: AssetId = 0;
 pub const USDT: CurrencyId = 2;
 pub const USDC: CurrencyId = 4;
+pub const PROJECT_TOKEN: AssetId = 1;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -66,7 +69,7 @@ impl system::Config for Test {
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;
-	type BlockNumber = u64;
+	type BlockNumber = BlockNumber;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
@@ -111,6 +114,10 @@ impl orml_tokens::Config for Test {
 parameter_types! {
 	pub Precision: u128 = 100_u128;
 	pub TestPalletID : PalletId = PalletId(*b"pablo_pa");
+	pub MinSaleDuration: BlockNumber = 3600 / 12;
+	pub MaxSaleDuration: BlockNumber = 30 * 24 * 3600 / 12;
+	pub MaxInitialWeight: Permill = Permill::from_percent(95);
+	pub MinFinalWeight: Permill = Permill::from_percent(5);
 }
 
 impl pablo::Config for Test {
@@ -122,6 +129,11 @@ impl pablo::Config for Test {
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type PalletId = TestPalletID;
+	type LocalAssets = LpTokenFactory;
+	type LbpMinSaleDuration = MinSaleDuration;
+	type LbpMaxSaleDuration = MaxSaleDuration;
+	type LbpMaxInitialWeight = MaxInitialWeight;
+	type LbpMinFinalWeight = MinFinalWeight;
 }
 
 // Build genesis storage according to the mock runtime.
