@@ -10,7 +10,7 @@
     - [Innovation Availability Layer](./products/cross-chain-virtual-machine/innovation-availability-layer.md)
 - [Routing Layer](./products/routing-layer.md)
 - [Mosaic](./products/mosaic.md)
-    - [Mosaic](./products/mosaic/fragmentation-in-layer-2.md)
+    - [Fragmentation in DeFi's Layer 2](./products/mosaic/fragmentation-in-layer-2.md)
 - [Parachain Vault Strategy](./products/parachain-vault-strategy.md)
     - [Vault Strategy for the Composable Polkadot Prachain](./products/parachain-vault-strategy/vault-strategy-expansion.md)
 - [The Picasso Parachain](./products/the-picasso-parachain.md)
