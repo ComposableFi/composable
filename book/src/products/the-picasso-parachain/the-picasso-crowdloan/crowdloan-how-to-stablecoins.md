@@ -35,7 +35,7 @@ we will raise the cap to $50 million.*
 participate in the vault, click on the option to contribute and you will be 
 directed to the following page:*
 
-[sc-1](./sc-1.png)
+![sc-1](./sc-1.png)
 
 *Here you can link the crypto wallet you would like to deposit from, type in how 
 many/which stablecoins you would like to deposit, and input any referral codes 
@@ -52,12 +52,12 @@ crowdloan compared to its cap.*
 able to generate a referral code to pass along to others. You can click the “?” 
 icon for more information about this referral code:*
 
-[sc-2](./sc-2.png)
+![sc-2](./sc-2.png)
 
 *You are also able to see your position in the crowdloan (for each token type 
 you have deposited) under “My Position”:*
 
-[sc-3](./sc-3.png)
+![sc-3](./sc-3.png)
 
 *This will display your current contributions including how many/which tokens 
 you have deposited (out of the options of KSM, USDC, USDT, and DAI), the 
@@ -69,11 +69,11 @@ to deposit more tokens.*
 *Further, in this screen, you can click “Current Referral Bonus” to view the 
 progress you have made towards obtaining the 20% referral bonus:*
 
-[sc-4](./sc-4.png)
+![sc-4](./sc-4.png)
 
 *The “General Stats” page further demonstrates the statistics on your position:*
 
-[sc-5](./sc-5.png)
+![sc-5](./sc-5.png)
 
 *Here, you can see your total value locked (TVL) of stablecoins, the projected 
 APY on PICA rewards, and the KSM value equivalent of stablecoins you have 
@@ -83,7 +83,7 @@ PICA.*
 *From the main crowdloan page, you will also be able to view the overall auction 
 status and statistics, and its comparison to our targeted KSM raise:*
 
-[sc-6](./sc-6.png)
+![sc-6](./sc-6.png)
 
 ## Fund Conversion, Repayment, and Rewards
 
