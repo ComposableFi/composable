@@ -180,12 +180,8 @@ pub fn multi_existential_deposits(_currency_id: &CurrencyId) -> Balance {
 
 #[cfg(not(feature = "runtime-benchmarks"))]
 pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
-	match *currency_id {
-		id @ CurrencyId::PICA | id @ CurrencyId::KSM | id @ CurrencyId::kUSD =>
-			PriceConverter::get_price_inverse(id, NativeExistentialDeposit::get())
-				.unwrap_or(Balance::MAX), // TODO: here DEX call to pemissioned markets should come
-		_ => NativeExistentialDeposit::get(),
-	}
+	PriceConverter::get_price_inverse(*currency_id, NativeExistentialDeposit::get())
+		.unwrap_or(Balance::MAX) // TODO: here DEX call to pemissioned markets should come
 }
 
 parameter_type_with_key! {

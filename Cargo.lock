@@ -7751,7 +7751,6 @@ name = "pallet-vault"
 version = "0.0.1"
 dependencies = [
  "bitflags",
- "common",
  "composable-support",
  "composable-tests-helpers",
  "composable-traits",
