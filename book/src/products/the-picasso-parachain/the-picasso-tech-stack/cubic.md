@@ -25,7 +25,7 @@ finance. This means that funds can be sent to and from a number of ecosystems,
 including Polkadot, its canary network Kusama, Ethereum, and Cosmos. This 
 relationship is depicted below:
 
-[image]
+![cubic use case diagram](./cubic-ucd.png)
 
 ## Use Cases
 

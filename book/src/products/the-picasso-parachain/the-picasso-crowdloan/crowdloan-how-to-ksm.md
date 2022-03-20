@@ -16,7 +16,7 @@ crowdloan:*
 the option to contribute to the crowdloan and you will be directed to the 
 following page:*
 
-[image]
+[ksm-1](./ksm-1.png)
 
 *In this interface, you will be able to select the wallet you would like to 
 deposit from, input how many KSM you would like to stake (with the amount of KSM 
@@ -34,12 +34,12 @@ and how much of the crowdloan share of PICA rewards this would be.*
 pass along to others. You can click the “?” icon for more information about this 
 referral code:*
 
-[image]
+[ksm-2](./ksm-2.png)
 
 *Once you have contributed, you will be able to see your position in the 
 crowdloan under “My Position”:*
 
-[image]
+[ksm-3](./ksm-3.png)
 
 *Here, you will see a summary of your KSM contributions so far, the 
 corresponding estimated PICA rewards, and whether or not you have obtained the 
@@ -49,12 +49,12 @@ crowdloan, which sends you back to the previous interface.*
 *If you click on the “Current Referral Bonus” you will be able to view the 
 progress you have made towards obtaining the 20% referral bonus:*
 
-[image]
+[ksm-4](./ksm-4.png)
 
 *From the main crowdloan page, you will also be able to view the overall auction 
 status, and its comparison to our targeted KSM raise:*
 
-[image]
+[ksm-5](./ksm-5.png)
 
 *We appreciate your contributions thus far and look forward to seeing what 
 Picasso is able to achieve.*

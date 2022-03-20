@@ -38,7 +38,7 @@ users to obtain the Picasso Network token.***
 
 ## *Picasso Crowdloan Bonuses*
 
-[image]
+![rewards](./picasso-cl-rewards.png)
 
 ### *Referral Bonus*
 
