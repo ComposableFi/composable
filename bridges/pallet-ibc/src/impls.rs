@@ -680,22 +680,6 @@ impl<T: Config> Pallet<T> {
 		let balance = format!("{:?}", T::Currency::free_balance(&account_id));
 		Ok(balance.parse().unwrap_or_default())
 	}
-
-	// WIP
-	pub fn check_and_process_timeouts() -> Result<(), Error<T>>{
-		let mut ctx = routing::Context::<T>::new();
-		for client_id in ClientStates::<T>::iter_keys() {
-			let client_id = client_id_from_bytes(client_id)?;
-			let client_state = ctx.client_state(&client_id).map_err(|_| Error::<T>::ClientStateNotFound)?;
-			let latest_height = client_state.latest_height();
-			let consensus_state = ctx.consensus_state(&client_id, latest_height).map_err(|_| Error::<T>::ConsensusStateNotFound)?;
-			let latest_timestamp = consensus_state.timestamp();
-
-
-		}
-
-		Ok(())
-	}
 }
 
 fn port_id_from_bytes<T: Config>(port: Vec<u8>) -> Result<PortId, Error<T>> {
