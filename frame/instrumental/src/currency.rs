@@ -85,9 +85,9 @@ pub mod defs {
 
 	pub type PICA = Currency<1, 12>;
 	pub type BTC = Currency<2000, 12>;
-	pub type USDT = Currency<1000, 12>;
+	pub type USDC = Currency<1000, 12>;
 
-	pub type NORMALIZED = USDT;
+	pub type NORMALIZED = USDC;
 }
 
 pub use defs::*;
