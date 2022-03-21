@@ -2,6 +2,8 @@
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+use scale_info::prelude::string::String;
+use scale_info::prelude::vec::Vec;
 
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
