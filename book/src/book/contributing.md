@@ -5,7 +5,7 @@
 
 This book is part of our [monorepo hosted on GitHub](https://github.com/ComposableFi/composable). It is built using [mdBook](https://rust-lang.github.io/mdBook/), and it's contents are located in the `book/` directory.
 
-The structure is simple: there is a `SUMMARY.md` that lilsts all of the available pages, and defines the structure of the sidebar. When you add a link to this file, a matching `.md` file will automatically be generated.
+The structure is simple: there is a `SUMMARY.md` which lists all of the available pages, and defines the structure of the sidebar. When you add a link to this file, a matching `.md` file will automatically be generated.
 
 ---
 
