@@ -1,7 +1,9 @@
 use crate as pallet_instrumental;
 use crate::currency::{CurrencyId, PICA};
 
-use frame_system::EnsureRoot;
+use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
+use frame_support::ord_parameter_types;
+use frame_system::{EnsureRoot, EnsureSignedBy};
 use frame_support::{
 	parameter_types,
 	PalletId,
@@ -10,20 +12,27 @@ use frame_support::{
 
 use sp_runtime::{
 	testing::Header,
-	traits::{ConvertInto, IdentityLookup}
+	traits::{ConvertInto, IdentifyAccount, IdentityLookup, Verify}
 };
-use sp_core::H256;
+use sp_core::{
+	H256,
+	sr25519::{Public, Signature}
+};
 
-use orml_traits::parameter_type_with_key;
+use orml_traits::{GetByKey, parameter_type_with_key};
+use primitives::currency::ValidateCurrencyId;
+use hex_literal::hex;
 
 pub type BlockNumber = u64;
-pub type AccountId = u128;
 pub type Balance = u128;
 pub type VaultId = u64;
 pub type Amount = i128;
 
 pub const NATIVE_ASSET: CurrencyId = PICA::ID;
-pub const ALICE: AccountId = 1;
+
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+pub static ALICE: Public =
+	Public(hex!("0000000000000000000000000000000000000000000000000000000000000000"));
 
 // ----------------------------------------------------------------------------------------------------
 //                                                Config                                               
@@ -111,7 +120,6 @@ impl orml_tokens::Config for MockRuntime {
 //                                           Currency Factory                                          
 // ----------------------------------------------------------------------------------------------------
 
-
 impl pallet_currency_factory::Config for MockRuntime {
 	type Event = Event;
 	type AssetId = CurrencyId;
@@ -121,12 +129,55 @@ impl pallet_currency_factory::Config for MockRuntime {
 }
 
 // ----------------------------------------------------------------------------------------------------
+//                                                Assets                                               
+// ----------------------------------------------------------------------------------------------------
+
+ord_parameter_types! {
+	pub const RootAccount: AccountId = ALICE;
+}
+
+parameter_types! {
+	pub const NativeAssetId: CurrencyId = NATIVE_ASSET;
+}
+
+pub struct NoopRegistry;
+
+impl<CurrencyId, AccountId> GovernanceRegistry<CurrencyId, AccountId> for NoopRegistry {
+	fn set(_k: CurrencyId, _value: SignedRawOrigin<AccountId>) {}
+}
+
+impl<CurrencyId>
+	GetByKey<
+		CurrencyId,
+		Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError>,
+	> for NoopRegistry
+{
+	fn get(
+		_k: &CurrencyId,
+	) -> Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError> {
+		Ok(SignedRawOrigin::Root)
+	}
+}
+
+impl pallet_assets::Config for MockRuntime {
+	type NativeAssetId = NativeAssetId;
+	type GenerateCurrencyId = LpTokenFactory;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type NativeCurrency = Balances;
+	type MultiCurrency = Tokens;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
+	type GovernanceRegistry = NoopRegistry;
+	type CurrencyValidator = ValidateCurrencyId;
+}
+
+// ----------------------------------------------------------------------------------------------------
 //                                                Vault                                                
 // ----------------------------------------------------------------------------------------------------
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: CurrencyId = NATIVE_ASSET;
 	pub const CreationDeposit: Balance = 10;
 	pub const ExistentialDeposit: Balance = 1000;
 	pub const RentPerBlock: Balance = 1;
@@ -138,7 +189,7 @@ parameter_types! {
 
 impl pallet_vault::Config for MockRuntime {
 	type Event = Event;
-	type Currency = Tokens;
+	type Currency = Assets;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type MaxStrategies = MaxStrategies;
@@ -146,14 +197,14 @@ impl pallet_vault::Config for MockRuntime {
 	type Convert = ConvertInto;
 	type MinimumDeposit = MinimumDeposit;
 	type MinimumWithdrawal = MinimumWithdrawal;
-	type PalletId = VaultPalletId;
 	type CreationDeposit = CreationDeposit;
 	type ExistentialDeposit = ExistentialDeposit;
 	type RentPerBlock = RentPerBlock;
-	type NativeCurrency = Balances;
+	type NativeCurrency = Assets;
 	type VaultId = VaultId;
 	type TombstoneDuration = TombstoneDuration;
 	type WeightInfo = ();
+	type PalletId = VaultPalletId;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -190,6 +241,8 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+		Assets: pallet_assets::{Pallet, Call, Storage},
+
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
@@ -219,13 +272,11 @@ impl ExtBuilder {
 	}
 
 	pub fn initialize_balance(mut self, user: AccountId, asset: CurrencyId, balance: Balance) -> ExtBuilder {
-		// TODO: (Nevin)
-		//  - it might be unnecessary to add balance to the balances pallet as well
 		if asset == NATIVE_ASSET {
 			self.native_balances.push((user, balance));
+		} else {
+			self.balances.push((user, asset, balance));
 		}
-
-		self.balances.push((user, asset, balance));
 
 		self
 	}

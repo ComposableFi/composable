@@ -30,9 +30,12 @@ serde = { version = '1', optional = true }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 pallet-currency-factory = { path = "../currency-factory" }
 pallet-vault = { default-features = false, path = "../vault"}
+pallet-assets = { default-features = false, path = "../assets"}
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
+primitives = { path = "../../runtime/primitives", default-features = false }
 proptest = "1.0"
+hex-literal = "0.3.3"
 
 [features]
 default = ["std"]
@@ -47,6 +50,7 @@ std = [
     "sp-std/std",
     "codec/std",
     "scale-info/std",
+    "primitives/std",
     "log/std",
     "serde/std",
 ]
