@@ -37,6 +37,13 @@ docker run --rm -ti -u$(id -u):$(id -g) -p9944:9944 -p9988:9988 -p9998:9998 comp
 '''
 workspace = false
 
+[tasks.remove-composable-sandbox-image]
+dependencies = []
+script = '''
+docker rmi composablefi/composable-sandbox:latest
+'''
+workspace = false
+
 [tasks.run-local-integration-tests]
 script = '''
 # we cannot use toolchain setting as different parts of codebase require different compiler
