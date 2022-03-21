@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import type { AssetsBalance, CurrencyId } from '@composable/types/interfaces/assets';
-import type { ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsAuctionAuctionStepFunction, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiSell, ComposableTraitsDefiTake, ComposableTraitsGovernanceSignedRawOrigin, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVaultVaultConfig, ComposableTraitsVestingVestingSchedule, CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueInboundStatus, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueOutboundStatus, CumulusPalletXcmpQueueQueueConfigData, CumulusPrimitivesParachainInherentParachainInherentData, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, FrameSupportScheduleLookupError, FrameSupportScheduleMaybeHashed, OrmlTokensAccountData, OrmlTokensBalanceLock, PalletAssetsRegistryCandidateStatus, PalletAssetsRegistryForeignMetadata, PalletCollatorSelectionCandidateInfo, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletCrowdloanRewardsModelsReward, PalletCrowdloanRewardsReward, PalletCurrencyFactoryRanges, PalletCurrencyFactoryRangesRange, PalletDemocracyConviction, PalletDemocracyPreimageStatus, PalletDemocracyReferendumInfo, PalletDemocracyReleases, PalletDemocracyVoteAccountVote, PalletDemocracyVoteThreshold, PalletDemocracyVoteVoting, PalletDutchAuctionSellOrder, PalletDutchAuctionTakeOrder, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletLiquidationsLiquidationStrategyConfiguration, PalletMosaicAssetInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMosaicRelayerStaleRelayer, PalletOracleAssetInfo, PalletOraclePrePrice, PalletOraclePrice, PalletOracleWithdraw, PalletPreimageRequestStatus, PalletSchedulerReleases, PalletSchedulerScheduledV2, PalletSchedulerScheduledV3, PalletTreasuryProposal, PalletVaultModelsStrategyOverview, PalletVaultModelsVaultInfo, PolkadotParachainPrimitivesXcmpMessageFormat, PolkadotPrimitivesV1AbridgedHostConfiguration, PolkadotPrimitivesV1PersistedValidationData, SpConsensusAuraSr25519AppSr25519Public, XcmVersionedMultiAsset } from '@composable/types/interfaces/crowdloanRewards';
+import type { CommonMosaicRemoteAssetId, ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsAuctionAuctionStepFunction, ComposableTraitsBondedFinanceBondDuration, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsBondedFinanceBondOfferReward, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiCurrencyPair, ComposableTraitsDefiSell, ComposableTraitsDefiTake, ComposableTraitsDexConsantProductPoolInfo, ComposableTraitsDexConstantProductPoolInfo, ComposableTraitsDexStableSwapPoolInfo, ComposableTraitsGovernanceSignedRawOrigin, ComposableTraitsLendingCreateInput, ComposableTraitsLendingMarketConfig, ComposableTraitsLendingUpdateInput, ComposableTraitsOraclePrice, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVaultVaultConfig, ComposableTraitsVestingVestingSchedule, CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueInboundStatus, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueOutboundStatus, CumulusPalletXcmpQueueQueueConfigData, CumulusPrimitivesParachainInherentParachainInherentData, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, FrameSupportScheduleLookupError, FrameSupportScheduleMaybeHashed, OrmlTokensAccountData, OrmlTokensBalanceLock, PalletAssetsRegistryCandidateStatus, PalletAssetsRegistryForeignMetadata, PalletCollatorSelectionCandidateInfo, PalletCrowdloanRewardsModelsEcdsaSignature, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletCrowdloanRewardsModelsReward, PalletCrowdloanRewardsReward, PalletCurrencyFactoryRanges, PalletCurrencyFactoryRangesRange, PalletDemocracyConviction, PalletDemocracyPreimageStatus, PalletDemocracyReferendumInfo, PalletDemocracyReleases, PalletDemocracyVoteAccountVote, PalletDemocracyVoteThreshold, PalletDemocracyVoteVoting, PalletDutchAuctionSellOrder, PalletDutchAuctionTakeOrder, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletLiquidationsLiquidationStrategyConfiguration, PalletLiquidityBootstrappingPool, PalletMosaicAssetInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMosaicRelayerStaleRelayer, PalletOracleAssetInfo, PalletOraclePrePrice, PalletOraclePrice, PalletOracleWithdraw, PalletPreimageRequestStatus, PalletSchedulerReleases, PalletSchedulerScheduledV2, PalletSchedulerScheduledV3, PalletTreasuryProposal, PalletVaultModelsStrategyOverview, PalletVaultModelsVaultInfo, PolkadotParachainPrimitivesXcmpMessageFormat, PolkadotPrimitivesV1AbridgedHostConfiguration, PolkadotPrimitivesV1PersistedValidationData, SpConsensusAuraSr25519AppSr25519Public, XcmVersionedMultiAsset } from '@composable/types/interfaces/crowdloanRewards';
 import type { Data, StorageKey } from '@polkadot/types';
 import type { BitVec, Bool, Bytes, I128, I16, I256, I32, I64, I8, Json, Null, Raw, Text, Type, U128, U16, U256, U32, U64, U8, USize, bool, i128, i16, i256, i32, i64, i8, u128, u16, u256, u32, u64, u8, usize } from '@polkadot/types-codec';
 import type { BlockAttestations, IncludedBlocks, MoreAttestations } from '@polkadot/types/interfaces/attestations';
@@ -201,6 +201,7 @@ declare module '@polkadot/types/types/registry' {
     CollatorSignature: CollatorSignature;
     CollectiveOrigin: CollectiveOrigin;
     CommittedCandidateReceipt: CommittedCandidateReceipt;
+    CommonMosaicRemoteAssetId: CommonMosaicRemoteAssetId;
     CompactAssignments: CompactAssignments;
     CompactAssignmentsTo257: CompactAssignmentsTo257;
     CompactAssignmentsTo265: CompactAssignmentsTo265;
@@ -210,11 +211,21 @@ declare module '@polkadot/types/types/registry' {
     CompactScoreCompact: CompactScoreCompact;
     ComposableTraitsAssetsXcmAssetLocation: ComposableTraitsAssetsXcmAssetLocation;
     ComposableTraitsAuctionAuctionStepFunction: ComposableTraitsAuctionAuctionStepFunction;
+    ComposableTraitsBondedFinanceBondDuration: ComposableTraitsBondedFinanceBondDuration;
     ComposableTraitsBondedFinanceBondOffer: ComposableTraitsBondedFinanceBondOffer;
+    ComposableTraitsBondedFinanceBondOfferReward: ComposableTraitsBondedFinanceBondOfferReward;
     ComposableTraitsCallFilterCallFilterEntry: ComposableTraitsCallFilterCallFilterEntry;
+    ComposableTraitsDefiCurrencyPair: ComposableTraitsDefiCurrencyPair;
     ComposableTraitsDefiSell: ComposableTraitsDefiSell;
     ComposableTraitsDefiTake: ComposableTraitsDefiTake;
+    ComposableTraitsDexConsantProductPoolInfo: ComposableTraitsDexConsantProductPoolInfo;
+    ComposableTraitsDexConstantProductPoolInfo: ComposableTraitsDexConstantProductPoolInfo;
+    ComposableTraitsDexStableSwapPoolInfo: ComposableTraitsDexStableSwapPoolInfo;
     ComposableTraitsGovernanceSignedRawOrigin: ComposableTraitsGovernanceSignedRawOrigin;
+    ComposableTraitsLendingCreateInput: ComposableTraitsLendingCreateInput;
+    ComposableTraitsLendingMarketConfig: ComposableTraitsLendingMarketConfig;
+    ComposableTraitsLendingUpdateInput: ComposableTraitsLendingUpdateInput;
+    ComposableTraitsOraclePrice: ComposableTraitsOraclePrice;
     ComposableTraitsTimeTimeReleaseFunction: ComposableTraitsTimeTimeReleaseFunction;
     ComposableTraitsVaultVaultConfig: ComposableTraitsVaultVaultConfig;
     ComposableTraitsVestingVestingSchedule: ComposableTraitsVestingVestingSchedule;
@@ -700,6 +711,7 @@ declare module '@polkadot/types/types/registry' {
     PalletCollatorSelectionCandidateInfo: PalletCollatorSelectionCandidateInfo;
     PalletConstantMetadataLatest: PalletConstantMetadataLatest;
     PalletConstantMetadataV14: PalletConstantMetadataV14;
+    PalletCrowdloanRewardsModelsEcdsaSignature: PalletCrowdloanRewardsModelsEcdsaSignature;
     PalletCrowdloanRewardsModelsProof: PalletCrowdloanRewardsModelsProof;
     PalletCrowdloanRewardsModelsRemoteAccount: PalletCrowdloanRewardsModelsRemoteAccount;
     PalletCrowdloanRewardsModelsReward: PalletCrowdloanRewardsModelsReward;
@@ -726,6 +738,7 @@ declare module '@polkadot/types/types/registry' {
     PalletIdentityRegistrarInfo: PalletIdentityRegistrarInfo;
     PalletIdentityRegistration: PalletIdentityRegistration;
     PalletLiquidationsLiquidationStrategyConfiguration: PalletLiquidationsLiquidationStrategyConfiguration;
+    PalletLiquidityBootstrappingPool: PalletLiquidityBootstrappingPool;
     PalletMetadataLatest: PalletMetadataLatest;
     PalletMetadataV14: PalletMetadataV14;
     PalletMosaicAssetInfo: PalletMosaicAssetInfo;

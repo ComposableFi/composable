@@ -13,7 +13,7 @@ pub mod dali;
 
 pub mod picasso;
 
-// Parachin ID
+// Parachin ID.
 const PARA_ID: ParaId = ParaId::new(2000);
 
 /// The extensions for the [`ChainSpec`].
@@ -55,24 +55,17 @@ where
 	MultiSigner::from(from_seed::<TPublic>(seed)).into_account()
 }
 
-#[cfg(feature = "dali")]
-/// Dali (westend parachain)
-pub fn dali_westend() -> dali::ChainSpec {
-	dali::ChainSpec::from_json_bytes(include_bytes!("res/dali-westend.json").to_vec())
-		.expect("Dali chain spec not found!")
+#[cfg(feature = "composable")]
+/// Composable (Westend parachain)
+pub fn composable_westend() -> composable::ChainSpec {
+	composable::ChainSpec::from_json_bytes(include_bytes!("res/composable-westend.json").to_vec())
+		.expect("composable-westend chain spec not found!")
 }
 
 #[cfg(feature = "dali")]
-/// Dali (rococo parachain)
+/// Dali (Rococo parachain)
 pub fn dali_rococo() -> dali::ChainSpec {
 	dali::ChainSpec::from_json_bytes(include_bytes!("./res/dali-rococo.json").to_vec())
-		.expect("Dali chain spec not found!")
-}
-
-#[cfg(feature = "dali")]
-/// Dali (chachacha parachain)
-pub fn dali_chachacha() -> dali::ChainSpec {
-	dali::ChainSpec::from_json_bytes(include_bytes!("./res/dali-chachacha.json").to_vec())
 		.expect("Dali chain spec not found!")
 }
 
@@ -119,7 +112,8 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 				],
 				dev_accounts(),
 				PARA_ID,
-				picasso_runtime::ExistentialDeposit::get(),
+				common::NativeExistentialDeposit::get(),
+				picasso_runtime::TreasuryAccount::get(),
 			)
 		},
 		vec![],
@@ -162,7 +156,8 @@ pub fn dali_dev() -> dali::ChainSpec {
 				],
 				dev_accounts(),
 				PARA_ID,
-				dali_runtime::ExistentialDeposit::get(),
+				common::NativeExistentialDeposit::get(),
+				dali_runtime::TreasuryAccount::get(),
 			)
 		},
 		vec![],
@@ -205,7 +200,8 @@ pub fn composable_dev() -> composable::ChainSpec {
 				],
 				dev_accounts(),
 				PARA_ID,
-				picasso_runtime::ExistentialDeposit::get(),
+				composable_runtime::ExistentialDeposit::get(),
+				composable_runtime::TreasuryAccount::get(),
 			)
 		},
 		vec![],

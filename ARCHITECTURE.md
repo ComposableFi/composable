@@ -9,9 +9,16 @@ The Composable project consists of a blockchain, various utility applications, d
 # Runtimes
 
 When building the chain, we use different names to target different [relay chain](https://wiki.polkadot.network/docs/learn-architecture):
-- the **Dali** chain is deployed for **Westend/Rococo/Chachacha**
-- the **Picasso** chain is deployed for **Kusama**
-- the **Composable** chain is deployed for **Polkadot**
+
+| Chain and Runtime | Deployed to       | Relayer Native Currency | Link                                                                                                      | Docs                                          |
+| ----------------- | ----------------- | ----------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Dali              | Devnet(own Relay) | KSM                     | https://polkadot.js.org/apps/?rpc=wss://dali.devnets.composablefinance.ninja/parachain/alice#/explorer    | https://dali.devnets.composablefinance.ninja/ |
+| Picasso           | Devnet(own Relay) | KSM                     | https://polkadot.js.org/apps/?rpc=wss://picasso.devnets.composablefinance.ninja/parachain/alice#/explorer |
+| Dali              | Westend           | WND(DOT)                     |
+| Dali              | Rococo            |                         | https://polkadot.js.org/apps/?rpc=wss://rpc.composablefinance.ninja                                       |
+| Dali              | Chachacha         |                         |
+| Picasso           | Kusama            | KSM                     | https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/explorer                    |
+| Composable        | Polkadot          | DOT                     |
 
 The runtimes can be found under the `runtime` directory.
 The chain specs are located in `node/src/chain_spec`.

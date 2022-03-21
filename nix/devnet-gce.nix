@@ -4,10 +4,7 @@
   localtunnel,
 }:
 let
-  gcefy-version = version:
-    builtins.replaceStrings [ "." ] [ "-" ] version;
-  domain = "${composable.name}-${composable.spec}-${gcefy-version composable.version}";
-  domain-latest = "${composable.name}-${composable.spec}-latest";
+  machine-name = "composable-devnet-${composable.spec}";
 in {
   resources.gceNetworks.composable-devnet = credentials // {
     name = "composable-devnet-network";
@@ -22,7 +19,7 @@ in {
       };
     };
   };
-  devnet-machine = { pkgs, resources, ... }:
+  "${machine-name}" = { pkgs, resources, ... }:
     let
       devnet = pkgs.callPackage ./devnet.nix {
         inherit composable;
@@ -32,7 +29,7 @@ in {
       deployment = {
         targetEnv = "gce";
         gce = credentials // {
-          machineName = "composable-devnet";
+          machineName = machine-name;
           network = resources.gceNetworks.composable-devnet;
           region = "europe-central2-c";
           instanceType = "n2-standard-4";
@@ -43,6 +40,10 @@ in {
           ];
         };
       };
+      nix = {
+        gc.automatic = true;
+        autoOptimiseStore = true;
+      };
       networking.firewall.allowedTCPPorts = [ 80 443 ];
       systemd.services.composable-devnet = {
         wantedBy = [ "multi-user.target" ];
@@ -51,35 +52,20 @@ in {
         serviceConfig = {
           Type = "simple";
           User = "root";
-          ExecStart = "${devnet}/bin/launch-devnet";
+          ExecStart = "${devnet.script}/bin/run-${composable.spec}";
           Restart = "always";
           RuntimeMaxSec = "86400"; # 1 day lease period for rococo, restart it
         };
       };
-      systemd.services.localtunnel-commit = {
-        wantedBy = [ "multi-user.target" ];
-        after = [ "network.target" ];
-        description = "Local Tunnel Server";
-        serviceConfig = {
-          Type = "simple";
-          User = "root";
-          Restart = "always";
-          ExecStart = "${localtunnel}/bin/lt --port 80 --subdomain ${domain}";
-        };
-      };
-      systemd.services.localtunnel-latest = {
-        wantedBy = [ "multi-user.target" ];
-        after = [ "network.target" ];
-        description = "Local Tunnel Server";
-        serviceConfig = {
-          Type = "simple";
-          User = "root";
-          Restart = "always";
-          ExecStart = "${localtunnel}/bin/lt --port 80 --subdomain ${domain-latest}";
-        };
+      security.acme = {
+        acceptTerms = true;
+        email = "hussein@composable.finance";
       };
       services.nginx =
-        let virtualConfig =
+        let
+          runtimeName = pkgs.lib.removeSuffix "-dev" composable.spec;
+          domain = "${runtimeName}.devnets.composablefinance.ninja";
+          virtualConfig =
               let
                 routify-nodes = prefix:
                   map (node: (node // {
@@ -93,18 +79,36 @@ in {
                   routified-composable-nodes ++ routified-polkadot-nodes;
               in
                 {
-                  locations = builtins.foldl' (x: y: x // y) {} (map (node: {
+                  enableACME = true;
+                  forceSSL = true;
+                  locations = builtins.foldl' (x: y: x // y) {
+                    "= /doc/" = {
+                      return = "301 https://${domain}/doc/composable/index.html";
+                    };
+                    "= /doc" = {
+                      return = "301 https://${domain}/doc/composable/index.html";
+                    };
+                    "/doc/" = {
+                      root = devnet.documentation;
+                    };
+                  } (map (node: {
                     "/${node.name}" = {
                       proxyPass = "http://127.0.0.1:${builtins.toString node.wsPort}";
                       proxyWebsockets = true;
+                      extraConfig = ''
+                        proxy_set_header Origin "";
+                        proxy_set_header Host 127.0.0.1:${builtins.toString node.wsPort};
+                      '';
                     };
                   }) routified-nodes);
                 };
         in {
           enable = true;
+          enableReload = true;
+          recommendedOptimisation = true;
+          recommendedGzipSettings = true;
           serverNamesHashBucketSize = 128;
-          virtualHosts."${domain}.loca.lt" = virtualConfig;
-          virtualHosts."${domain-latest}.loca.lt" = virtualConfig;
+          virtualHosts."${domain}" = virtualConfig;
         };
     };
 }

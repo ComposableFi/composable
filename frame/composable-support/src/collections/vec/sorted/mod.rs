@@ -6,13 +6,14 @@
 //! - `SortedSet` -- sorted from least to greatest, unique elements
 use codec::{Decode, Encode, EncodeLike, WrapperTypeEncode};
 use core::hash::Hash;
+use frame_support::RuntimeDebug;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use sp_std::prelude::*;
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(all(feature = "serde", not(feature = "serde-nontransparent")), serde(transparent))]
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, RuntimeDebug, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct SortedVec<T: Ord> {
 	#[cfg_attr(feature = "serde", serde(deserialize_with = "parse_vec"))]
 	#[cfg_attr(feature = "serde", serde(bound(deserialize = "T : serde::Deserialize <'de>")))]

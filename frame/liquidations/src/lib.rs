@@ -40,6 +40,8 @@ mod mock;
 mod tests;
 mod weights;
 
+pub use crate::weights::WeightInfo;
+
 pub use pallet::*;
 
 #[frame_support::pallet]
@@ -119,11 +121,11 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(T::WeightInfo::add_liquidation_strategy())]
-		pub fn add_liqudation_strategy(
+		pub fn add_liquidation_strategy(
 			_origin: OriginFor<T>,
 			_configuraiton: LiquidationStrategyConfiguration<T::ParachainId>,
 		) -> DispatchResultWithPostInfo {
-			Err(DispatchError::Other("add_liqudation_strategy: no implemented").into())
+			Err(DispatchError::Other("add_liquidation_strategy: no implemented").into())
 		}
 	}
 
@@ -187,7 +189,7 @@ pub mod pallet {
 		 * liquidation --> dutch_auction_strategy: Invoke Dispatchable
 		 * dutch_auction_strategy -> dutch_auction_strategy: Get liquidation configuration by id previosly baked into call
 		 * dutch_auction_strategy --> liquidation: Pop next order
-		 * dutch_auction_strategy -> dutch_auction_strategy: Start liqudaiton
+		 * dutch_auction_strategy -> dutch_auction_strategy: Start liquidation
 		 * ```
 		 *Dynamic { liquidate: Dispatch, minimum_price: Balance }, */
 	}
