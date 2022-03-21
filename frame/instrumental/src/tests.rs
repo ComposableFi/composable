@@ -1,13 +1,16 @@
 #[cfg(test)]
 
 use crate::mock::{
-    ALICE, Event, ExtBuilder, Instrumental, MockRuntime, Origin, System,
+    ALICE, Assets, Event, ExtBuilder, Instrumental, MockRuntime, Origin, System, Vault,
 };
 use crate::{pallet, pallet::AssetVault, pallet::Error};
 use crate::currency::USDC;
 
+use pallet_vault::Vaults as VaultInfoStorage;
+
 use frame_support::{
     assert_ok, assert_noop, assert_storage_noop,
+    traits::fungibles::Inspect,
 };
 
 // use proptest::prelude::*;
@@ -125,5 +128,28 @@ fn remove_liquidity_asset_must_have_an_associated_vault() {
             Instrumental::remove_liquidity(Origin::signed(ALICE), USDC::ID, USDC::units(100)),
             Error::<MockRuntime>::AssetDoesNotHaveAnAssociatedVault
         );
+    });
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                              ExtBuilder                                             
+// ----------------------------------------------------------------------------------------------------
+
+#[test]
+fn initialize_vault() {
+    let vault_id = 1u64;
+    let (asset_id, balance) = (USDC::ID, USDC::units(100));
+
+    ExtBuilder::default().initialize_vault(asset_id, balance).build().execute_with(|| {
+        assert_ok!(Instrumental::create(Origin::signed(ALICE), asset_id));
+        
+        // Requirement 1) The Instrumental Pallet saves a reference to each created Vault
+        assert!(AssetVault::<MockRuntime>::contains_key(asset_id));
+
+        assert!(VaultInfoStorage::<MockRuntime>::contains_key(vault_id));
+
+        let vault_account = 
+            <Vault as composable_traits::vault::Vault>::account_id(&vault_id);
+        assert_eq!(Assets::balance(USDC::ID, &vault_account), balance);
     });
 }
