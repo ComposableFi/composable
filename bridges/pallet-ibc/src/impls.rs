@@ -17,10 +17,9 @@ use ibc::core::{
 	},
 };
 use ibc_primitives::{
-	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
-	IdentifiedConsensusState, PacketState, Proof, QueryChannelResponse, QueryChannelsResponse,
-	QueryClientStateResponse, QueryConnectionResponse, QueryConnectionsResponse,
-	QueryConsensusStateResponse, QueryNextSequenceReceiveResponse,
+	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedConnection, PacketState, Proof,
+	QueryChannelResponse, QueryChannelsResponse, QueryClientStateResponse, QueryConnectionResponse,
+	QueryConnectionsResponse, QueryConsensusStateResponse, QueryNextSequenceReceiveResponse,
 	QueryPacketAcknowledgementResponse, QueryPacketAcknowledgementsResponse,
 	QueryPacketCommitmentResponse, QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
 };
@@ -205,12 +204,13 @@ impl<T: Config> Pallet<T> {
 
 	// IBC Runtime Api helper methods
 	/// Get a channel state
-	pub fn channel(channel_id: String, port_id: String) -> Result<QueryChannelResponse, Error<T>> {
-		let channel_id_bytes = channel_id.as_bytes().to_vec();
-		let port_id_bytes = port_id.as_bytes().to_vec();
-		let channel = Channels::<T>::get(port_id_bytes.clone(), channel_id_bytes.clone());
-		let port_id = port_id_from_bytes(port_id_bytes)?;
-		let channel_id = channel_id_from_bytes(channel_id_bytes)?;
+	pub fn channel(
+		channel_id: Vec<u8>,
+		port_id: Vec<u8>,
+	) -> Result<QueryChannelResponse, Error<T>> {
+		let channel = Channels::<T>::get(port_id.clone(), channel_id.clone());
+		let port_id = port_id_from_bytes(port_id.clone())?;
+		let channel_id = channel_id_from_bytes(channel_id.clone())?;
 
 		let mut key = T::CONNECTION_PREFIX.to_vec();
 		let channel_path = format!("{}", ChannelEndsPath(port_id.clone(), channel_id.clone()));
@@ -224,11 +224,10 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get a connection state
-	pub fn connection(connection_id: String) -> Result<QueryConnectionResponse, Error<T>> {
-		let connection_id_bytes = connection_id.as_bytes().to_vec();
-		let connection = Connections::<T>::get(connection_id_bytes.clone());
+	pub fn connection(connection_id: Vec<u8>) -> Result<QueryConnectionResponse, Error<T>> {
+		let connection = Connections::<T>::get(connection_id.clone());
 		let mut key = T::CONNECTION_PREFIX.to_vec();
-		let connection_id = connection_id_from_bytes(connection_id_bytes)?;
+		let connection_id = connection_id_from_bytes(connection_id)?;
 
 		let connection_path = format!("{}", ConnectionsPath(connection_id));
 		key.extend_from_slice(connection_path.as_bytes());
@@ -241,25 +240,10 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get a client state
-	pub fn client(client_id: String) -> Result<QueryClientStateResponse, Error<T>> {
-		let client_id_bytes = client_id.as_bytes().to_vec();
-		let client_state = ClientStates::<T>::get(client_id_bytes.clone());
-		let client_state =
-			AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
-		let client_type = Clients::<T>::get(client_id_bytes.clone());
-		let client_type = client_type_from_bytes(client_type)?;
-		// TODO: Revisit when more client states are defined in ibc_rs
-		let client_state = match client_state {
-			AnyClientState::Tendermint(state) => IdentifiedClientState {
-				client_id,
-				client_type: client_type.to_string(),
-				client_state: state.encode_vec().map_err(|_| Error::<T>::DecodingError)?,
-			},
-			_ => return Err(Error::<T>::DecodingError),
-		};
-
+	pub fn client(client_id: Vec<u8>) -> Result<QueryClientStateResponse, Error<T>> {
+		let client_state = ClientStates::<T>::get(client_id.clone());
 		let mut key = T::CONNECTION_PREFIX.to_vec();
-		let client_id = client_id_from_bytes(client_id_bytes)?;
+		let client_id = client_id_from_bytes(client_id)?;
 
 		let client_state_path = format!("{}", ClientStatePath(client_id));
 
@@ -273,32 +257,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get all client states
-	pub fn clients() -> Result<Vec<IdentifiedClientState>, Error<T>> {
-		let client_states = ClientStates::<T>::iter()
-			.map(|(id, state)| {
-				let client_id = client_id_from_bytes(id.clone())?;
-				let client_type = Clients::<T>::get(id);
-				let client_type = client_type_from_bytes(client_type)?;
-				// TODO: Revisit when more client states are defined in ibc_rs
-				let client_state =
-					AnyClientState::decode_vec(&state).map_err(|_| Error::<T>::DecodingError)?;
-				match client_state {
-					AnyClientState::Tendermint(state) => {
-						if let Ok(state) = state.encode_vec().map_err(|_| Error::<T>::DecodingError)
-						{
-							Ok(IdentifiedClientState {
-								client_id: client_id.to_string(),
-								client_type: client_type.to_string(),
-								client_state: state,
-							})
-						} else {
-							Err(Error::<T>::DecodingError)
-						}
-					},
-					_ => Err(Error::<T>::DecodingError),
-				}
-			})
-			.collect::<Result<Vec<_>, Error<T>>>()?;
+	pub fn clients() -> Result<Vec<(Vec<u8>, Vec<u8>)>, Error<T>> {
+		let client_states = ClientStates::<T>::iter().collect::<Vec<_>>();
 
 		Ok(client_states)
 	}
@@ -306,30 +266,28 @@ impl<T: Config> Pallet<T> {
 	/// Get a consensus state for client
 	pub fn consensus_state(
 		height: Vec<u8>,
-		client_id: String,
+		client_id: Vec<u8>,
+		latest_cs: bool,
 	) -> Result<QueryConsensusStateResponse, Error<T>> {
-		let client_id_bytes = client_id.as_bytes().to_vec();
-		let client_type = Clients::<T>::get(client_id_bytes.clone());
-		let client_type = client_type_from_bytes(client_type)?;
-		let consensus_states = ConsensusStates::<T>::get(client_id_bytes.clone());
+		let height = if latest_cs {
+			let client_state = ClientStates::<T>::get(client_id.clone());
+			let client_state =
+				AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
+			client_state
+				.latest_height()
+				.encode_vec()
+				.map_err(|_| Error::<T>::DecodingError)?
+		} else {
+			height
+		};
+		let consensus_states = ConsensusStates::<T>::get(client_id.clone());
 		let mut key = T::CONNECTION_PREFIX.to_vec();
-		let client_id = client_id_from_bytes(client_id_bytes)?;
+		let client_id = client_id_from_bytes(client_id.clone())?;
 
 		let (.., consensus_state) = consensus_states
 			.into_iter()
 			.find(|(maybe_height, ..)| maybe_height == &height)
 			.ok_or(Error::<T>::ConsensusStateNotFound)?;
-		let consensus_state = AnyConsensusState::decode_vec(&consensus_state)
-			.map_err(|_| Error::<T>::DecodingError)?;
-		// TODO: Revisit when more consensus states are defined in ibc_rs
-		let consensus_state = match consensus_state {
-			AnyConsensusState::Tendermint(state) => IdentifiedConsensusState {
-				client_id: client_id.to_string(),
-				client_type: client_type.to_string(),
-				consensus_state: state.encode_vec().map_err(|_| Error::<T>::DecodingError)?,
-			},
-			_ => return Err(Error::<T>::DecodingError),
-		};
 
 		let height = ibc::Height::decode(&*height).map_err(|_| Error::<T>::DecodingError)?;
 		let consensus_path = ClientConsensusStatePath {
@@ -349,46 +307,22 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get all connection states for a client
-	pub fn connection_using_client(client_id: String) -> Result<IdentifiedConnection, Error<T>> {
-		let connection_id = ConnectionClient::<T>::get(client_id.as_bytes().to_vec());
+	pub fn connection_using_client(client_id: Vec<u8>) -> Result<IdentifiedConnection, Error<T>> {
+		let connection_id = ConnectionClient::<T>::get(client_id);
 		let connection = Connections::<T>::get(connection_id.clone());
 
-		let connection_id = connection_id_from_bytes(connection_id)?;
-
-		Ok(IdentifiedConnection {
-			connection_id: connection_id.to_string(),
-			connection_end: connection,
-		})
+		Ok(IdentifiedConnection { connection_id, connection_end: connection })
 	}
 
 	/// Get client state for client which this channel is bound to
-	pub fn channel_client(
-		channel_id: String,
-		port_id: String,
-	) -> Result<IdentifiedClientState, Error<T>> {
+	pub fn channel_client(channel_id: Vec<u8>, port_id: Vec<u8>) -> Result<Vec<u8>, Error<T>> {
 		for (connection_id, channels) in ChannelsConnection::<T>::iter() {
-			if channels.contains(&(port_id.as_bytes().to_vec(), channel_id.as_bytes().to_vec())) {
+			if channels.contains(&(port_id.clone(), channel_id.clone())) {
 				if let Some((client_id, ..)) = ConnectionClient::<T>::iter()
 					.find(|(.., connection)| &connection_id == connection)
 				{
-					let client_type = Clients::<T>::get(client_id.clone());
-					let client_type = client_type_from_bytes(client_type)?;
 					let client_state = ClientStates::<T>::get(client_id.clone());
-					let client_state = AnyClientState::decode_vec(&client_state)
-						.map_err(|_| Error::<T>::DecodingError)?;
-					let client_id = client_id_from_bytes(client_id)?;
-					// TODO: Revisit when more client states are defined in ibc_rs
-					let client_state = match client_state {
-						AnyClientState::Tendermint(state) =>
-							state.encode_vec().map_err(|_| Error::<T>::DecodingError)?,
-						_ => return Err(Error::<T>::DecodingError),
-					};
-
-					return Ok(IdentifiedClientState {
-						client_id: client_id.to_string(),
-						client_type: client_type.to_string(),
-						client_state,
-					})
+					return Ok(client_state)
 				}
 			}
 		}
@@ -399,11 +333,7 @@ impl<T: Config> Pallet<T> {
 	pub fn channels() -> Result<QueryChannelsResponse, Error<T>> {
 		let channels = Channels::<T>::iter()
 			.map(|(port_id, channel_id, channel_end)| {
-				Ok(IdentifiedChannel {
-					channel_id: channel_id_from_bytes(channel_id)?.to_string(),
-					port_id: port_id_from_bytes(port_id)?.to_string(),
-					channel_end,
-				})
+				Ok(IdentifiedChannel { channel_id, port_id, channel_end })
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
 
@@ -414,10 +344,7 @@ impl<T: Config> Pallet<T> {
 	pub fn connections() -> Result<QueryConnectionsResponse, Error<T>> {
 		let connections = Connections::<T>::iter()
 			.map(|(connection_id, connection_end)| {
-				Ok(IdentifiedConnection {
-					connection_id: connection_id_from_bytes(connection_id)?.to_string(),
-					connection_end,
-				})
+				Ok(IdentifiedConnection { connection_id, connection_end })
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
 
@@ -425,32 +352,26 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get all channels bound to this connection
-	pub fn connection_channels(connection_id: String) -> Result<QueryChannelsResponse, Error<T>> {
-		let identifiers = ChannelsConnection::<T>::get(connection_id.as_bytes().to_vec());
+	pub fn connection_channels(connection_id: Vec<u8>) -> Result<QueryChannelsResponse, Error<T>> {
+		let identifiers = ChannelsConnection::<T>::get(connection_id.clone());
 
 		let channels = identifiers
 			.into_iter()
 			.map(|(port_id, channel_id)| {
 				let channel_end = Channels::<T>::get(port_id.clone(), channel_id.clone());
-				Ok(IdentifiedChannel {
-					channel_id: channel_id_from_bytes(channel_id)?.to_string(),
-					port_id: port_id_from_bytes(port_id)?.to_string(),
-					channel_end,
-				})
+				Ok(IdentifiedChannel { channel_id, port_id, channel_end })
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
 		Ok(QueryChannelsResponse { channels, height: host_height()? })
 	}
 
 	pub fn packet_commitments(
-		channel_id: String,
-		port_id: String,
+		channel_id: Vec<u8>,
+		port_id: Vec<u8>,
 	) -> Result<QueryPacketCommitmentsResponse, Error<T>> {
-		let channel_id_bytes = channel_id.as_bytes().to_vec();
-		let port_id_bytes = port_id.as_bytes().to_vec();
 		let commitments = PacketCommitment::<T>::iter()
 			.filter_map(|((p, c, s), commitment)| {
-				if p == port_id_bytes && c == channel_id_bytes {
+				if p == port_id && c == channel_id {
 					let packet_state = PacketState {
 						port_id: port_id.clone(),
 						channel_id: channel_id.clone(),
@@ -468,14 +389,12 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn packet_acknowledgements(
-		channel_id: String,
-		port_id: String,
+		channel_id: Vec<u8>,
+		port_id: Vec<u8>,
 	) -> Result<QueryPacketAcknowledgementsResponse, Error<T>> {
-		let channel_id_bytes = channel_id.as_bytes().to_vec();
-		let port_id_bytes = port_id.as_bytes().to_vec();
 		let acks = Acknowledgements::<T>::iter()
 			.filter_map(|((p, c, s), ack)| {
-				if p == port_id_bytes && c == channel_id_bytes {
+				if p == port_id && c == channel_id {
 					let packet_state = PacketState {
 						port_id: port_id.clone(),
 						channel_id: channel_id.clone(),
@@ -492,13 +411,10 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn unreceived_packets(
-		channel_id: String,
-		port_id: String,
+		channel_id: Vec<u8>,
+		port_id: Vec<u8>,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Error<T>> {
-		let channel_id = channel_id.as_bytes().to_vec();
-		let port_id = port_id.as_bytes().to_vec();
-
 		Ok(seqs
 			.into_iter()
 			.filter(|s| {
@@ -509,13 +425,10 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn unreceived_acknowledgements(
-		channel_id: String,
-		port_id: String,
+		channel_id: Vec<u8>,
+		port_id: Vec<u8>,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Error<T>> {
-		let channel_id = channel_id.as_bytes().to_vec();
-		let port_id = port_id.as_bytes().to_vec();
-
 		Ok(seqs
 			.into_iter()
 			.filter(|s| {
@@ -526,19 +439,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn next_seq_recv(
-		channel_id: String,
-		port_id: String,
+		channel_id: Vec<u8>,
+		port_id: Vec<u8>,
 	) -> Result<QueryNextSequenceReceiveResponse, Error<T>> {
-		let channel_id_bytes = channel_id.as_bytes().to_vec();
-		let port_id_bytes = port_id.as_bytes().to_vec();
-
 		let sequence = u64::decode(
-			&mut NextSequenceRecv::<T>::get(port_id_bytes.clone(), channel_id_bytes.clone())
-				.as_slice(),
+			&mut NextSequenceRecv::<T>::get(port_id.clone(), channel_id.clone()).as_slice(),
 		)
 		.map_err(|_| Error::<T>::DecodingError)?;
-		let port_id = port_id_from_bytes(port_id_bytes)?;
-		let channel_id = channel_id_from_bytes(channel_id_bytes)?;
+		let port_id = port_id_from_bytes(port_id)?;
+		let channel_id = channel_id_from_bytes(channel_id)?;
 		let next_seq_recv_path = format!("{}", SeqRecvsPath(port_id, channel_id));
 		let mut key = T::CONNECTION_PREFIX.to_vec();
 		key.extend_from_slice(next_seq_recv_path.as_bytes());
@@ -551,20 +460,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn packet_commitment(
-		channel_id: String,
-		port_id: String,
+		channel_id: Vec<u8>,
+		port_id: Vec<u8>,
 		seq: u64,
 	) -> Result<QueryPacketCommitmentResponse, Error<T>> {
-		let channel_id_bytes = channel_id.as_bytes().to_vec();
-		let port_id_bytes = port_id.as_bytes().to_vec();
 		let seq_bytes = seq.encode();
-		let commitment = PacketCommitment::<T>::get((
-			port_id_bytes.clone(),
-			channel_id_bytes.clone(),
-			seq_bytes,
-		));
-		let port_id = port_id_from_bytes(port_id_bytes)?;
-		let channel_id = channel_id_from_bytes(channel_id_bytes)?;
+		let commitment =
+			PacketCommitment::<T>::get((port_id.clone(), channel_id.clone(), seq_bytes));
+		let port_id = port_id_from_bytes(port_id)?;
+		let channel_id = channel_id_from_bytes(channel_id)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
 		let commitment_path = format!("{}", CommitmentsPath { port_id, channel_id, sequence });
 		let mut key = T::CONNECTION_PREFIX.to_vec();
@@ -578,20 +482,14 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn packet_acknowledgement(
-		channel_id: String,
-		port_id: String,
+		channel_id: Vec<u8>,
+		port_id: Vec<u8>,
 		seq: u64,
 	) -> Result<QueryPacketAcknowledgementResponse, Error<T>> {
-		let channel_id_bytes = channel_id.as_bytes().to_vec();
-		let port_id_bytes = port_id.as_bytes().to_vec();
 		let seq_bytes = seq.encode();
-		let ack = Acknowledgements::<T>::get((
-			port_id_bytes.clone(),
-			channel_id_bytes.clone(),
-			seq_bytes,
-		));
-		let port_id = port_id_from_bytes(port_id_bytes)?;
-		let channel_id = channel_id_from_bytes(channel_id_bytes)?;
+		let ack = Acknowledgements::<T>::get((port_id.clone(), channel_id.clone(), seq_bytes));
+		let port_id = port_id_from_bytes(port_id)?;
+		let channel_id = channel_id_from_bytes(channel_id)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
 		let acks_path = format!("{}", AcksPath { port_id, channel_id, sequence });
 		let mut key = T::CONNECTION_PREFIX.to_vec();
@@ -605,17 +503,14 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn packet_receipt(
-		channel_id: String,
-		port_id: String,
+		channel_id: Vec<u8>,
+		port_id: Vec<u8>,
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse, Error<T>> {
-		let channel_id_bytes = channel_id.as_bytes().to_vec();
-		let port_id_bytes = port_id.as_bytes().to_vec();
 		let seq_bytes = seq.encode();
-		let receipt =
-			PacketReceipt::<T>::get((port_id_bytes.clone(), channel_id_bytes.clone(), seq_bytes));
-		let port_id = port_id_from_bytes(port_id_bytes)?;
-		let channel_id = channel_id_from_bytes(channel_id_bytes)?;
+		let receipt = PacketReceipt::<T>::get((port_id.clone(), channel_id.clone(), seq_bytes));
+		let port_id = port_id_from_bytes(port_id)?;
+		let channel_id = channel_id_from_bytes(channel_id)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
 		let receipt_path = format!("{}", ReceiptsPath { port_id, channel_id, sequence });
 		let mut key = T::CONNECTION_PREFIX.to_vec();
@@ -629,17 +524,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn generate_connection_handshake_proof(
-		client_id: String,
-		connection_id: String,
+		client_id: Vec<u8>,
+		connection_id: Vec<u8>,
 	) -> Result<ConnectionHandshakeProof, Error<T>> {
-		let client_state = ClientStates::<T>::get(client_id.as_bytes().to_vec());
+		let client_state = ClientStates::<T>::get(client_id.clone());
 		let client_state_decoded =
 			AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
-		let client_type = Clients::<T>::get(client_id.as_bytes().to_vec());
-		let client_type = client_type_from_bytes(client_type)?;
 		let height = client_state_decoded.latest_height();
-		let client_id = client_id_from_bytes(client_id.as_bytes().to_vec())?;
-		let connection_id = connection_id_from_bytes(connection_id.as_bytes().to_vec())?;
+		let client_id = client_id_from_bytes(client_id.clone())?;
+		let connection_id = connection_id_from_bytes(connection_id.clone())?;
 		let prefix = T::CONNECTION_PREFIX.to_vec();
 		let connection_path = format!("{}", ConnectionsPath(connection_id));
 		let consensus_path = ClientConsensusStatePath {
@@ -657,11 +550,7 @@ impl<T: Config> Pallet<T> {
 		consensus_key.extend_from_slice(consensus_path.as_bytes());
 
 		Ok(ConnectionHandshakeProof {
-			client_state: IdentifiedClientState {
-				client_id: client_id.to_string(),
-				client_type: client_type.to_string(),
-				client_state,
-			},
+			client_state,
 			proof: Self::generate_raw_proof(vec![client_state_key, connection_key, consensus_key])?,
 			height: host_height()?,
 		})

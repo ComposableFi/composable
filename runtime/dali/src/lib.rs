@@ -1395,11 +1395,11 @@ impl_runtime_apis! {
 			Ibc::client(client_id).ok()
 		}
 
-		fn client_consensus_state(client_id: String, client_height: Vec<u8>) -> Option<ibc_primitives::QueryConsensusStateResponse> {
-			Ibc::consensus_state(client_height, client_id).ok()
+		fn client_consensus_state(client_id: String, client_height: Vec<u8>, latest_cs: bool) -> Option<ibc_primitives::QueryConsensusStateResponse> {
+			Ibc::consensus_state(client_height, client_id, latest_cs).ok()
 		}
 
-		fn clients() -> Option<Vec<ibc_primitives::IdentifiedClientState>> {
+		fn clients() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
 			Ibc::clients().ok()
 		}
 
@@ -1423,7 +1423,7 @@ impl_runtime_apis! {
 			Ibc::channel(channel_id, port_id).ok()
 		}
 
-		fn channel_client(channel_id: String, port_id: String) -> Option<ibc_primitives::IdentifiedClientState> {
+		fn channel_client(channel_id: String, port_id: String) -> Option<Vec<u8>> {
 			Ibc::channel_client(channel_id, port_id).ok()
 		}
 
