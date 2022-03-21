@@ -9,7 +9,6 @@ import {KeyringPair} from "@polkadot/keyring/types";
 import {txOracleAddAssetAndInfoSuccessTest} from "@composabletests/tests/oracle/testHandlers/addAssetAndInfoTests";
 import {expect} from "chai";
 import {
-  handleAssetMintSetup,
   handleLendingVaultSetup
 } from "@composabletests/tests/lending/testHandlers/setupHandler";
 import {sendAndWaitForSuccess, waitForBlocks} from "@composable/utils/polkadotjs";
@@ -30,6 +29,7 @@ import {
 import {depositCollateralHandler} from "@composabletests/tests/lending/testHandlers/depositCollateralHandler";
 import {borrowHandler} from "@composabletests/tests/lending/testHandlers/borrowHandler";
 import {withdrawCollateralHandler} from "@composabletests/tests/lending/testHandlers/withdrawCollateralHandler";
+import {mintAssetsToWallet} from "@composable/utils/mintingHelper";
 
 describe('Lending Tests', function() {
   if (!testConfiguration.enabled)
@@ -51,9 +51,9 @@ describe('Lending Tests', function() {
     sudoKey = walletAlice;
     oracleControllerWallet = walletAlice;
     vaultManagerWallet = walletAlice;
-    lenderWallet = walletCharlie.derive('/lenderWallet');
-    borrowerWallet = walletFerdie.derive('/borrowerWallet');
-    oracleSignerWallet = walletAlice.derive('/oracleSigner');
+    lenderWallet = walletCharlie.derive('/test/lending/lenderWallet');
+    borrowerWallet = walletFerdie.derive('/test/lending/borrowerWallet');
+    oracleSignerWallet = walletAlice.derive('/test/lending/oracleSigner');
   })
 
   before('Before Lending Tests: Mint lending asset', async function() {
@@ -61,10 +61,9 @@ describe('Lending Tests', function() {
       return;
     // Timeout set to 2 minutes.
     this.timeout(15 * 60 * 1000)
-    const mintingAmount = 100000000000000
-    await handleAssetMintSetup(sudoKey, [ASSET_ID_BTC, ASSET_ID_PICA, ASSET_ID_USDT], lenderWallet, mintingAmount);
-    await handleAssetMintSetup(sudoKey, [ASSET_ID_USDT, ASSET_ID_PICA], borrowerWallet, mintingAmount);
-    await handleAssetMintSetup(sudoKey, [ASSET_ID_BTC, ASSET_ID_USDT, ASSET_ID_PICA], oracleSignerWallet, mintingAmount);
+    await mintAssetsToWallet(lenderWallet, sudoKey, [ASSET_ID_PICA, 2, 3]);
+    await mintAssetsToWallet(borrowerWallet, sudoKey, [ASSET_ID_PICA, 3]);
+    await mintAssetsToWallet(oracleSignerWallet, sudoKey, [ASSET_ID_PICA, 3]);
     //await handleAssetMintSetup(sudoKey, [ASSET_ID_BTC, ASSET_ID_USDT, ASSET_ID_PICA], walletAlice, mintingAmount);
   });
 
