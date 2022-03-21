@@ -1,10 +1,12 @@
 use super::*;
+use crate::traits::{OffchainPacketType, SendPacketData};
 use codec::Encode;
 use frame_support::traits::Currency;
 use ibc::core::{
 	ics02_client::{
 		client_consensus::AnyConsensusState, client_state::AnyClientState, client_type::ClientType,
 	},
+	ics04_channel::packet::{Packet, Sequence},
 	ics24_host::{
 		identifier::*,
 		path::{
@@ -14,7 +16,6 @@ use ibc::core::{
 		},
 	},
 };
-use ibc::core::ics02_client::context::ClientReader;
 use ibc_primitives::{
 	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
 	IdentifiedConsensusState, PacketState, QueryChannelResponse, QueryChannelsResponse,
@@ -23,7 +24,9 @@ use ibc_primitives::{
 	QueryPacketAcknowledgementResponse, QueryPacketAcknowledgementsResponse,
 	QueryPacketCommitmentResponse, QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
 };
+use scale_info::prelude::collections::BTreeMap;
 use sp_runtime::traits::BlakeTwo256;
+use sp_std::time::Duration;
 use sp_trie::{TrieDBMut, TrieMut};
 use tendermint_proto::Protobuf;
 
@@ -679,6 +682,81 @@ impl<T: Config> Pallet<T> {
 			T::AccountId::decode(&mut &*addr).map_err(|_| Error::<T>::DecodingError)?;
 		let balance = format!("{:?}", T::Currency::free_balance(&account_id));
 		Ok(balance.parse().unwrap_or_default())
+	}
+
+	pub fn offchain_key(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u8> {
+		let pair = (T::INDEXING_PREFIX.to_vec(), channel_id, port_id);
+		pair.encode()
+	}
+}
+
+impl<T: Config> crate::traits::SendPacketTrait<T> for Pallet<T> {
+	fn send_packet(data: SendPacketData) -> Result<(), Error<T>> {
+		let channel_id = data.channel_id;
+		let port_id = data.port_id;
+
+		let connection_id = ChannelsConnection::<T>::iter()
+			.find_map(|(connection, identifiers)| {
+				if identifiers.contains(&(port_id.clone(), channel_id.clone())) {
+					Some(connection)
+				} else {
+					None
+				}
+			})
+			.ok_or(Error::<T>::Other)?;
+
+		let client_id = ConnectionClient::<T>::iter()
+			.find_map(
+				|(client_id, conn)| if conn == connection_id { Some(client_id) } else { None },
+			)
+			.ok_or(Error::<T>::Other)?;
+		let client_state = ClientStates::<T>::get(client_id.clone());
+		let client_state =
+			AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
+		let latest_height = client_state.latest_height();
+		let encoded_height = latest_height.encode_vec().map_err(|_| Error::<T>::EncodingError)?;
+		let consensus_state = ConsensusStates::<T>::get(client_id)
+			.into_iter()
+			.find_map(|(height, cs)| if height == encoded_height { Some(cs) } else { None })
+			.ok_or(Error::<T>::ConsensusStateNotFound)?;
+		let consensus_state = AnyConsensusState::decode_vec(&consensus_state)
+			.map_err(|_| Error::<T>::DecodingError)?;
+		let latest_timestamp = consensus_state.timestamp();
+		let ctx = crate::routing::Context::<T>::new();
+		let next_seq_send = NextSequenceSend::<T>::get(port_id.clone(), channel_id.clone());
+		let next_seq_send =
+			u64::decode(&mut &*next_seq_send).map_err(|_| Error::<T>::DecodingError)?;
+		let sequence = Sequence::from(next_seq_send);
+		let source_port = port_id_from_bytes(port_id.clone())?;
+		let source_channel = channel_id_from_bytes(channel_id.clone())?;
+		let destination_port = port_id_from_bytes(data.dest_port_id)?;
+		let destination_channel = channel_id_from_bytes(data.dest_channel_id)?;
+		let timestamp = (latest_timestamp + Duration::from_nanos(data.timeout_timestamp_offset))
+			.map_err(|_| Error::<T>::Other)?;
+		let packet = Packet {
+			sequence,
+			source_port,
+			source_channel,
+			destination_port,
+			destination_channel,
+			data: data.data,
+			timeout_height: latest_height.add(data.timeout_height_offset),
+			timeout_timestamp: timestamp,
+		};
+
+		let _ = ibc::core::ics04_channel::handler::send_packet::send_packet(&ctx, packet.clone())
+			.map_err(|_| Error::<T>::Other)?;
+
+		// store packet offchain
+		let key = Pallet::<T>::offchain_key(channel_id, port_id);
+		let mut offchain_packets: BTreeMap<u64, OffchainPacketType> =
+			sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
+				.and_then(|v| codec::Decode::decode(&mut &*v).ok())
+				.unwrap_or_default();
+		let offchain_packet: OffchainPacketType = packet.into();
+		offchain_packets.insert(next_seq_send, offchain_packet);
+		sp_io::offchain_index::set(&key, offchain_packets.encode().as_slice());
+		Ok(())
 	}
 }
 

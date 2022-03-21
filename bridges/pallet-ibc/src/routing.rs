@@ -6,7 +6,7 @@ use ibc::{
 
 #[derive(Clone)]
 pub struct Context<T: Config> {
-	pub _pd: PhantomData<T>
+	pub _pd: PhantomData<T>,
 }
 
 impl<T: Config> Context<T> {

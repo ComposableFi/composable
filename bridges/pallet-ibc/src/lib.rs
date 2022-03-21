@@ -82,7 +82,7 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
-	/// client_id => (Height, ConsensusState)
+	/// client_id => Vec<(Height, ConsensusState)>
 	pub type ConsensusStates<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<(Vec<u8>, Vec<u8>)>, ValueQuery>;
 
@@ -197,12 +197,6 @@ pub mod pallet {
 	pub type PacketCommitment<T: Config> =
 		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
 
-	// TODO: Prune SendPackets on timeout or on acknowledgement
-	#[pallet::storage]
-	/// (port_id, channel_id, seq)  => Vec<u8>
-	pub type SendPackets<T: Config> =
-		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
-
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T> {
@@ -226,6 +220,10 @@ pub mod pallet {
 		ConsensusStateNotFound,
 		/// Client state not found
 		ClientStateNotFound,
+		/// Error constructing packet
+		SendPacketError,
+		/// Other forms of errors
+		Other,
 	}
 
 	#[pallet::hooks]
@@ -245,6 +243,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(0)]
+		#[frame_support::transactional]
 		pub fn deliver(origin: OriginFor<T>, messages: Vec<Any>) -> DispatchResult {
 			log::info!("in deliver");
 
