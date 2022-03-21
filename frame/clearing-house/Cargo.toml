@@ -35,7 +35,7 @@ governance-registry = { package = "pallet-governance-registry", path = "../gover
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
 pallet-assets = { path = '../assets', default-features = false }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 pallet-currency-factory = { path = "../currency-factory" }
 
 [features]
