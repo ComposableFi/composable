@@ -11,8 +11,8 @@
 
     - name: Download WASM runtime {{ release_version }}
       become: yes
-      get_url:
-        url: https://storage.googleapis.com/composable-binaries/community-releases/{{ chain }}/picasso_runtime.compact.wasm-{{ release_version }}.tar.gz
+      get_url: 
+        url: https://github.com/ComposableFi/composable/releases/download/{{ release_version }}/{{ chain }}_runtime.compact.wasm
         dest: ~/
         mode: "+x"
     
@@ -23,13 +23,6 @@
         dest: ~/
         mode: "+x"
     
-    - name: Unpack WASM runtime file 
-      become: yes
-      unarchive: 
-        src: ~/picasso_runtime.compact.wasm-{{ release_version }}.tar.gz
-        dest: ~/
-        remote_src: yes
-
     - name: Unpack WASM runtime file 
       become: yes
       unarchive: 
@@ -57,7 +50,7 @@
 
     - name: Runtime Upgrade
       become: yes
-      command: parachain-utils upgrade-runtime --path ~/target/release/picasso_runtime.compact.wasm    
+      command: parachain-utils upgrade-runtime --path ~/target/release/{{ chain }}_runtime.compact.wasm    
 
     - name: Start Composable service
       become: true
