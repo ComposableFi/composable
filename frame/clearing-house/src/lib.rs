@@ -93,11 +93,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_initial_margin_ratio)]
+	#[allow(clippy::disallowed_types)]
 	/// Minimum margin ratio for opening a new position
 	type InitialMarginRatio<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_maintenance_margin_ratio)]
+	#[allow(clippy::disallowed_types)]
 	/// Minimum margin ratio, below which liquidations can occur
 	type MaintenanceMarginRatio<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
 
