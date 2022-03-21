@@ -8,8 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct Proof {
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
@@ -53,16 +52,14 @@ pub struct QueryClientStateResponse {
 	pub client_state: IdentifiedClientState,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryClientStatesResponse {
 	pub client_states: Vec<IdentifiedClientState>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
@@ -71,8 +68,7 @@ pub struct QueryConsensusStateResponse {
 	pub consensus_state: IdentifiedConsensusState,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
@@ -82,8 +78,7 @@ pub struct QueryConnectionResponse {
 	pub connection: Vec<u8>,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
@@ -93,24 +88,21 @@ pub struct QueryChannelResponse {
 	pub channel: Vec<u8>,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryChannelsResponse {
 	pub channels: Vec<IdentifiedChannel>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryConnectionsResponse {
 	pub connections: Vec<IdentifiedConnection>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
@@ -119,8 +111,7 @@ pub struct QueryNextSequenceReceiveResponse {
 	pub sequence: u64,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
@@ -129,8 +120,7 @@ pub struct QueryPacketCommitmentResponse {
 	pub commitment: Vec<u8>,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
@@ -146,8 +136,7 @@ pub struct PacketState {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryPacketCommitmentsResponse {
 	pub commitments: Vec<PacketState>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
@@ -156,16 +145,14 @@ pub struct QueryPacketAcknowledgementResponse {
 	pub ack: Vec<u8>,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct QueryPacketAcknowledgementsResponse {
 	pub acks: Vec<PacketState>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode)]
@@ -174,8 +161,7 @@ pub struct QueryPacketReceiptResponse {
 	pub receipt: Vec<u8>,
 	/// Trie proof
 	pub proof: Vec<Vec<u8>>,
-	/// Protobuf encoded `ibc::Height`
-	pub height: Vec<u8>,
+	pub height: u64,
 }
 
 // Temporary structs
@@ -205,5 +191,5 @@ pub struct ConnectionHandshakeProof {
 	pub client_state: IdentifiedClientState,
 	/// Trie proof for connection state, client state and consensus state
 	pub proof: Vec<Vec<u8>>,
-	pub height: Vec<u8>,
+	pub height: u64,
 }

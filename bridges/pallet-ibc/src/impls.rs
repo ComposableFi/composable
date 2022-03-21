@@ -18,7 +18,7 @@ use ibc::core::{
 };
 use ibc_primitives::{
 	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
-	IdentifiedConsensusState, PacketState, QueryChannelResponse, QueryChannelsResponse,
+	IdentifiedConsensusState, PacketState, Proof, QueryChannelResponse, QueryChannelsResponse,
 	QueryClientStateResponse, QueryConnectionResponse, QueryConnectionsResponse,
 	QueryConsensusStateResponse, QueryNextSequenceReceiveResponse,
 	QueryPacketAcknowledgementResponse, QueryPacketAcknowledgementsResponse,
@@ -186,7 +186,7 @@ impl<T: Config> Pallet<T> {
 		Ok(trie.root().as_bytes().to_vec())
 	}
 
-	pub fn generate_proof(keys: Vec<Vec<u8>>) -> Result<Vec<Vec<u8>>, Error<T>> {
+	pub fn generate_raw_proof(keys: Vec<Vec<u8>>) -> Result<Vec<Vec<u8>>, Error<T>> {
 		let keys = keys.iter().collect::<Vec<_>>();
 		let mut db = sp_trie::MemoryDB::<BlakeTwo256>::default();
 		let root = {
@@ -196,6 +196,11 @@ impl<T: Config> Pallet<T> {
 		};
 		sp_trie::generate_trie_proof::<sp_trie::LayoutV0<BlakeTwo256>, _, _, _>(&db, root, keys)
 			.map_err(|_| Error::<T>::ProofGenerationError)
+	}
+
+	pub fn generate_proof(keys: Vec<Vec<u8>>) -> Result<Proof, Error<T>> {
+		let proof = Self::generate_raw_proof(keys)?;
+		Ok(Proof { proof, height: host_height()? })
 	}
 
 	// IBC Runtime Api helper methods
@@ -213,8 +218,8 @@ impl<T: Config> Pallet<T> {
 
 		Ok(QueryChannelResponse {
 			channel,
-			proof: Self::generate_proof(vec![key])?,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			proof: Self::generate_raw_proof(vec![key])?,
+			height: host_height()?,
 		})
 	}
 
@@ -230,8 +235,8 @@ impl<T: Config> Pallet<T> {
 
 		Ok(QueryConnectionResponse {
 			connection,
-			proof: Self::generate_proof(vec![key])?,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			proof: Self::generate_raw_proof(vec![key])?,
+			height: host_height()?,
 		})
 	}
 
@@ -262,8 +267,8 @@ impl<T: Config> Pallet<T> {
 
 		Ok(QueryClientStateResponse {
 			client_state,
-			proof: Self::generate_proof(vec![key])?,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			proof: Self::generate_raw_proof(vec![key])?,
+			height: host_height()?,
 		})
 	}
 
@@ -338,8 +343,8 @@ impl<T: Config> Pallet<T> {
 
 		Ok(QueryConsensusStateResponse {
 			consensus_state,
-			proof: Self::generate_proof(vec![key])?,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			proof: Self::generate_raw_proof(vec![key])?,
+			height: host_height()?,
 		})
 	}
 
@@ -402,10 +407,7 @@ impl<T: Config> Pallet<T> {
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
 
-		Ok(QueryChannelsResponse {
-			channels,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
-		})
+		Ok(QueryChannelsResponse { channels, height: host_height()? })
 	}
 
 	/// Get all connection states
@@ -419,10 +421,7 @@ impl<T: Config> Pallet<T> {
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
 
-		Ok(QueryConnectionsResponse {
-			connections,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
-		})
+		Ok(QueryConnectionsResponse { connections, height: host_height()? })
 	}
 
 	/// Get all channels bound to this connection
@@ -440,10 +439,7 @@ impl<T: Config> Pallet<T> {
 				})
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
-		Ok(QueryChannelsResponse {
-			channels,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
-		})
+		Ok(QueryChannelsResponse { channels, height: host_height()? })
 	}
 
 	pub fn packet_commitments(
@@ -468,10 +464,7 @@ impl<T: Config> Pallet<T> {
 			})
 			.collect::<Vec<_>>();
 
-		Ok(QueryPacketCommitmentsResponse {
-			commitments,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
-		})
+		Ok(QueryPacketCommitmentsResponse { commitments, height: host_height()? })
 	}
 
 	pub fn packet_acknowledgements(
@@ -495,10 +488,7 @@ impl<T: Config> Pallet<T> {
 				}
 			})
 			.collect::<Vec<_>>();
-		Ok(QueryPacketAcknowledgementsResponse {
-			acks,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
-		})
+		Ok(QueryPacketAcknowledgementsResponse { acks, height: host_height()? })
 	}
 
 	pub fn unreceived_packets(
@@ -555,8 +545,8 @@ impl<T: Config> Pallet<T> {
 
 		Ok(QueryNextSequenceReceiveResponse {
 			sequence,
-			proof: Self::generate_proof(vec![key])?,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			proof: Self::generate_raw_proof(vec![key])?,
+			height: host_height()?,
 		})
 	}
 
@@ -582,8 +572,8 @@ impl<T: Config> Pallet<T> {
 
 		Ok(QueryPacketCommitmentResponse {
 			commitment,
-			proof: Self::generate_proof(vec![key])?,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			proof: Self::generate_raw_proof(vec![key])?,
+			height: host_height()?,
 		})
 	}
 
@@ -609,8 +599,8 @@ impl<T: Config> Pallet<T> {
 
 		Ok(QueryPacketAcknowledgementResponse {
 			ack,
-			proof: Self::generate_proof(vec![key])?,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			proof: Self::generate_raw_proof(vec![key])?,
+			height: host_height()?,
 		})
 	}
 
@@ -633,8 +623,8 @@ impl<T: Config> Pallet<T> {
 
 		Ok(QueryPacketReceiptResponse {
 			receipt,
-			proof: Self::generate_proof(vec![key])?,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			proof: Self::generate_raw_proof(vec![key])?,
+			height: host_height()?,
 		})
 	}
 
@@ -672,8 +662,8 @@ impl<T: Config> Pallet<T> {
 				client_type: client_type.to_string(),
 				client_state,
 			},
-			proof: Self::generate_proof(vec![client_state_key, connection_key, consensus_key])?,
-			height: host_height::<T>()?.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+			proof: Self::generate_raw_proof(vec![client_state_key, connection_key, consensus_key])?,
+			height: host_height()?,
 		})
 	}
 
@@ -807,8 +797,8 @@ fn client_type_from_bytes<T: Config>(client_type: Vec<u8>) -> Result<ClientType,
 		.map_err(|_| Error::<T>::DecodingError)
 }
 
-fn host_height<T: Config>() -> Result<ibc::Height, Error<T>> {
+fn host_height<T: Config>() -> Result<u64, Error<T>> {
 	let block_number = format!("{:?}", <frame_system::Pallet<T>>::block_number());
 	let current_height = block_number.parse().map_err(|_| Error::<T>::DecodingError)?;
-	Ok(ibc::Height::new(0, current_height))
+	Ok(current_height)
 }
