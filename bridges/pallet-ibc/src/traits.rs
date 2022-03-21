@@ -7,6 +7,7 @@ use ibc::{
 	},
 	timestamp::Timestamp,
 };
+use scale_info::prelude::string::ToString;
 
 pub struct SendPacketData {
 	pub data: Vec<u8>,
@@ -22,10 +23,10 @@ pub struct SendPacketData {
 #[derive(codec::Encode, codec::Decode, Clone)]
 pub struct OffchainPacketType {
 	sequence: u64,
-	source_port: String,
-	source_channel: String,
-	destination_port: String,
-	destination_channel: String,
+	source_port: Vec<u8>,
+	source_channel: Vec<u8>,
+	destination_port: Vec<u8>,
+	destination_channel: Vec<u8>,
 	data: Vec<u8>,
 	timeout_height: (u64, u64),
 	timeout_timestamp: u64,
@@ -35,11 +36,22 @@ impl From<OffchainPacketType> for Packet {
 	fn from(packet: OffchainPacketType) -> Self {
 		Self {
 			sequence: Sequence::from(packet.sequence),
-			source_port: PortId::from_str(&packet.source_port).unwrap_or_default(),
-			source_channel: ChannelId::from_str(&packet.source_channel).unwrap_or_default(),
-			destination_port: PortId::from_str(&packet.destination_port).unwrap_or_default(),
-			destination_channel: ChannelId::from_str(&packet.destination_channel)
-				.unwrap_or_default(),
+			source_port: PortId::from_str(
+				&String::from_utf8(packet.source_port).unwrap_or_default(),
+			)
+			.unwrap_or_default(),
+			source_channel: ChannelId::from_str(
+				&String::from_utf8(packet.source_channel).unwrap_or_default(),
+			)
+			.unwrap_or_default(),
+			destination_port: PortId::from_str(
+				&String::from_utf8(packet.destination_port).unwrap_or_default(),
+			)
+			.unwrap_or_default(),
+			destination_channel: ChannelId::from_str(
+				&String::from_utf8(packet.destination_channel).unwrap_or_default(),
+			)
+			.unwrap_or_default(),
 			data: packet.data,
 			timeout_height: ibc::Height::new(packet.timeout_height.0, packet.timeout_height.1),
 			timeout_timestamp: Timestamp::from_nanoseconds(packet.timeout_timestamp)
@@ -52,10 +64,10 @@ impl From<Packet> for OffchainPacketType {
 	fn from(packet: Packet) -> Self {
 		Self {
 			sequence: packet.sequence.into(),
-			source_port: packet.source_port.to_string(),
-			source_channel: packet.source_channel.to_string(),
-			destination_port: packet.destination_port.to_string(),
-			destination_channel: packet.destination_channel.to_string(),
+			source_port: packet.source_port.to_string().as_bytes().to_vec(),
+			source_channel: packet.source_channel.to_string().as_bytes().to_vec(),
+			destination_port: packet.destination_port.to_string().as_bytes().to_vec(),
+			destination_channel: packet.destination_channel.to_string().as_bytes().to_vec(),
 			data: packet.data,
 			timeout_height: (
 				packet.timeout_height.revision_number,
