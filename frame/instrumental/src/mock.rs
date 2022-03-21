@@ -1,5 +1,6 @@
 use crate as pallet_instrumental;
-use crate::currency::{CurrencyId, PICA};
+
+use pallet_instrumental::currency::{CurrencyId, PICA};
 
 use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
 use frame_support::ord_parameter_types;
@@ -10,6 +11,7 @@ use frame_support::{
 	traits::{Everything, GenesisBuild},
 };
 
+use sp_runtime::traits::AccountIdConversion;
 use sp_runtime::{
 	testing::Header,
 	traits::{ConvertInto, IdentifyAccount, IdentityLookup, Verify}
@@ -27,6 +29,7 @@ pub type Balance = u128;
 pub type VaultId = u64;
 pub type Amount = i128;
 
+pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
 pub const NATIVE_ASSET: CurrencyId = PICA::ID;
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
@@ -176,7 +179,7 @@ parameter_types! {
 	pub const RentPerBlock: Balance = 1;
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
-	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
+	pub const VaultPalletId: PalletId = VAULT_PALLET_ID;
   	pub const TombstoneDuration: u64 = 42;
 }
 
@@ -247,6 +250,12 @@ frame_support::construct_runtime!(
 pub struct ExtBuilder {
 	native_balances: Vec<(AccountId, Balance)>,
 	balances: Vec<(AccountId, CurrencyId, Balance)>,
+	// TODO: (Nevin)
+	//  - add genesis config for Vault pallet 
+	vault_count: u64,
+	// TODO: (Nevin)
+	//  - add genesis config for Instrumental pallet 
+	// asset_vaults: Vec<(CurrencyId, VaultId)>,
 }
 
 impl ExtBuilder {
@@ -271,6 +280,22 @@ impl ExtBuilder {
 			self.balances.push((user, asset, balance));
 		}
 
+		self
+	}
+
+	pub fn initialize_vault(mut self, asset: CurrencyId, balance: Balance) -> ExtBuilder {
+		self.vault_count += 1;
+		let vault_id = self.vault_count;
+
+		// self.asset_vaults.push((asset, vault_id));
+
+		let vault_account = VAULT_PALLET_ID.into_sub_account(&vault_id);
+		if asset == NATIVE_ASSET {
+			self.native_balances.push((vault_account, balance));
+		} else {
+			self.balances.push((vault_account, asset, balance));
+		}
+		
 		self
 	}
 }
