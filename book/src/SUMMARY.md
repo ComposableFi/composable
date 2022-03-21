@@ -33,3 +33,7 @@
 
 # 🗺️  ROADMAP
 - [Timeline](./roadmap/timeline.md)
+
+# 📖 BOOK
+- [Contributing](./book/contributing.md)
+
