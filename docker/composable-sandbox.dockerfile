@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends apt-utils ca-ce
 
 # ===== SECOND STAGE ======
 
-FROM andor/mmr-polkadot:v0.9.17 as mmr-polkadot
+FROM composablefi/mmr-polkadot:latest as mmr-polkadot
 
 FROM debian:11-slim
 

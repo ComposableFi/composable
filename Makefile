@@ -86,6 +86,14 @@ push-composable-sandbox:
 	@docker push ${REPO}/composable-sandbox:${COMMIT_SHA}
 	@docker push ${REPO}/composable-sandbox:latest
 
+containerize-mmr-polkadot:
+	@docker build -f docker/mmr-polkadot.dockerfile \
+		-t ${REPO}/mmr-polkadot:latest  \
+		.
+
+push-mmr-polkadot:
+	@docker push ${REPO}/mmr-polkadot:latest
+
 containerize-ci-linux:
 	@docker build -f docker/ci-linux.dockerfile \
 		-t ${REPO}/ci-linux:production  \
@@ -107,7 +115,8 @@ endif
 
 
 .PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release
-.PHONY: containerize-composable-sandbox push-composable-sandbox containerize-ci-linux push-ci-linux
+.PHONY: containerize-composable-sandbox push-composable-sandbox containerize-mmr-polkadot push-mmr-polkadot
+.PHONY: containerize-ci-linux push-ci-linux
 
 #----------------------------------------------------------------------
 # UTILITY FUNCTIONS TO remove
