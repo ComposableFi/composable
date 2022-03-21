@@ -235,6 +235,10 @@ pub mod pallet {
 				<frame_system::Pallet<T>>::deposit_log(log);
 			}
 		}
+
+		fn offchain_worker(_n: BlockNumberFor<T>) {
+			Pallet::<T>::packet_cleanup();
+		}
 	}
 
 	// Dispatch able functions allows users to interact with the pallet and invoke state changes.

@@ -1,6 +1,6 @@
 use super::*;
 use crate::traits::{OffchainPacketType, SendPacketData};
-use codec::Encode;
+use codec::{Decode, Encode};
 use frame_support::traits::Currency;
 use ibc::core::{
 	ics02_client::{
@@ -687,6 +687,28 @@ impl<T: Config> Pallet<T> {
 	pub fn offchain_key(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u8> {
 		let pair = (T::INDEXING_PREFIX.to_vec(), channel_id, port_id);
 		pair.encode()
+	}
+
+	pub(crate) fn packet_cleanup() {
+		for (port_id, channel_id) in Channels::<T>::iter_keys() {
+			let key = Pallet::<T>::offchain_key(channel_id.clone(), port_id.clone());
+			if let Some(mut offchain_packets) =
+				sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
+					.and_then(|v| BTreeMap::<u64, OffchainPacketType>::decode(&mut &*v).ok())
+			{
+				let keys: Vec<u64> = offchain_packets.clone().into_keys().collect();
+				for key in keys {
+					if !PacketCommitment::<T>::contains_key((
+						port_id.clone(),
+						channel_id.clone(),
+						key.encode(),
+					)) {
+						let _ = offchain_packets.remove(&key);
+					}
+				}
+				sp_io::offchain_index::set(&key, offchain_packets.encode().as_slice());
+			}
+		}
 	}
 }
 
