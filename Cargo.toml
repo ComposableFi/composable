@@ -52,6 +52,7 @@ panic = "unwind"
 [profile.production]
 inherits = "release"
 lto = true
+
 [patch."https://github.com/paritytech/polkadot"]
 bp-header-chain = { git = "https://github.com/composableFi/polkadot", branch = "release-v0.9.17" }
 bp-message-dispatch = { git = "https://github.com/composableFi/polkadot", branch = "release-v0.9.17" }
