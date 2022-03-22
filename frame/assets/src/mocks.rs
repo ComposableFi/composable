@@ -80,6 +80,10 @@ impl Config for Test {
 	type AdminOrigin = EnsureRoot<AccountId>;
 }
 
+parameter_types! {
+	pub const MaxLocks: u32 = 256;
+}
+
 impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
@@ -88,7 +92,7 @@ impl orml_tokens::Config for Test {
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
-	type MaxLocks = ();
+	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = Everything;
 }
 

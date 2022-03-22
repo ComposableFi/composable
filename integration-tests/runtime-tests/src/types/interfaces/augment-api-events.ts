@@ -1,17 +1,18 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsVestingVestingSchedule, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyVoteThreshold, PalletDutchAuctionSellOrder } from '@composable/types/interfaces/default';
+import type { CommonMosaicRemoteAssetId, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiCurrencyPair, ComposableTraitsLendingUpdateInput, ComposableTraitsVestingVestingSchedule, FrameSupportScheduleLookupError, PalletCrowdloanRewardsModelsRemoteAccount, PalletCurrencyFactoryRangesRange, PalletDemocracyVoteAccountVote, PalletDemocracyVoteThreshold, PalletDutchAuctionSellOrder, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo } from '@composable/types/interfaces/crowdloanRewards';
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Bytes, Null, Option, Result, U8aFixed, Vec, bool, u128, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H256, Percent } from '@polkadot/types/interfaces/runtime';
-import type { FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, PalletMultisigTimepoint, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, PalletMultisigTimepoint, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/events' {
   export interface AugmentedEvents<ApiType extends ApiTypes> {
     assetsRegistry: {
-      AssetsMappingCandidateUpdated: AugmentedEvent<ApiType, [u128, ComposableTraitsAssetsXcmAssetLocation]>;
+      AssetMetadataUpdated: AugmentedEvent<ApiType, [u128]>;
+      AssetsMappingCandidateUpdated: AugmentedEvent<ApiType, [u128, u128]>;
       ForeignAdminUpdated: AugmentedEvent<ApiType, [AccountId32]>;
       LocalAdminUpdated: AugmentedEvent<ApiType, [AccountId32]>;
       /**
@@ -71,19 +72,19 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * A new bond has been registered.
        **/
-      NewBond: AugmentedEvent<ApiType, [u64, AccountId32, u128]>;
+      NewBond: AugmentedEvent<ApiType, [u128, AccountId32, u128]>;
       /**
        * A new offer has been created.
        **/
-      NewOffer: AugmentedEvent<ApiType, [u64]>;
+      NewOffer: AugmentedEvent<ApiType, [u128]>;
       /**
        * An offer has been cancelled by the `AdminOrigin`.
        **/
-      OfferCancelled: AugmentedEvent<ApiType, [u64]>;
+      OfferCancelled: AugmentedEvent<ApiType, [u128]>;
       /**
        * An offer has been completed.
        **/
-      OfferCompleted: AugmentedEvent<ApiType, [u64]>;
+      OfferCompleted: AugmentedEvent<ApiType, [u128]>;
       /**
        * Generic event
        **/
@@ -109,6 +110,28 @@ declare module '@polkadot/api-base/types/events' {
       NewCandidacyBond: AugmentedEvent<ApiType, [u128]>;
       NewDesiredCandidates: AugmentedEvent<ApiType, [u32]>;
       NewInvulnerables: AugmentedEvent<ApiType, [Vec<AccountId32>]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    constantProductDex: {
+      /**
+       * Liquidity added into the pool `T::PoolId` by `T::AccountId`.
+       **/
+      LiquidityAdded: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128, u128]>;
+      /**
+       * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
+       **/
+      LiquidityRemoved: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128, u128]>;
+      /**
+       * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
+       **/
+      PoolCreated: AugmentedEvent<ApiType, [u128, AccountId32]>;
+      /**
+       * Token exchange happened.
+       **/
+      Swapped: AugmentedEvent<ApiType, [AccountId32, u128, u128, u128, u128, u128, u128]>;
       /**
        * Generic event
        **/
@@ -183,6 +206,7 @@ declare module '@polkadot/api-base/types/events' {
     crowdloanRewards: {
       Associated: AugmentedEvent<ApiType, [PalletCrowdloanRewardsModelsRemoteAccount, AccountId32]>;
       Claimed: AugmentedEvent<ApiType, [PalletCrowdloanRewardsModelsRemoteAccount, AccountId32, u128]>;
+      Initialized: AugmentedEvent<ApiType, [u64]>;
       /**
        * Generic event
        **/
@@ -204,6 +228,13 @@ declare module '@polkadot/api-base/types/events' {
        * \[ id \]
        **/
       UnsupportedVersion: AugmentedEvent<ApiType, [U8aFixed]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    currencyFactory: {
+      RangeCreated: AugmentedEvent<ApiType, [PalletCurrencyFactoryRangesRange]>;
       /**
        * Generic event
        **/
@@ -263,6 +294,10 @@ declare module '@polkadot/api-base/types/events' {
        **/
       Proposed: AugmentedEvent<ApiType, [u32, u128]>;
       /**
+       * An account has secconded a proposal
+       **/
+      Seconded: AugmentedEvent<ApiType, [AccountId32, u32]>;
+      /**
        * A referendum has begun.
        **/
       Started: AugmentedEvent<ApiType, [u32, PalletDemocracyVoteThreshold]>;
@@ -278,6 +313,10 @@ declare module '@polkadot/api-base/types/events' {
        * An external proposal has been vetoed.
        **/
       Vetoed: AugmentedEvent<ApiType, [AccountId32, H256, u32]>;
+      /**
+       * An account has voted in a referendum
+       **/
+      Voted: AugmentedEvent<ApiType, [AccountId32, u32, PalletDemocracyVoteAccountVote]>;
       /**
        * Generic event
        **/
@@ -322,12 +361,6 @@ declare module '@polkadot/api-base/types/events' {
     dutchAuction: {
       OrderAdded: AugmentedEvent<ApiType, [u128, PalletDutchAuctionSellOrder]>;
       OrderRemoved: AugmentedEvent<ApiType, [u128]>;
-      /**
-       * Generic event
-       **/
-      [key: string]: AugmentedEvent<ApiType>;
-    };
-    factory: {
       /**
        * Generic event
        **/
@@ -402,6 +435,130 @@ declare module '@polkadot/api-base/types/events' {
        * A account index has been frozen to its current account ID.
        **/
       IndexFrozen: AugmentedEvent<ApiType, [u32, AccountId32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    lending: {
+      /**
+       * Event emitted when user borrows from given market.
+       **/
+      Borrowed: AugmentedEvent<ApiType, [AccountId32, u32, u128]>;
+      /**
+       * Event emitted when collateral is deposited.
+       **/
+      CollateralDeposited: AugmentedEvent<ApiType, [AccountId32, u32, u128]>;
+      /**
+       * Event emitted when collateral is withdrawed.
+       **/
+      CollateralWithdrawn: AugmentedEvent<ApiType, [AccountId32, u32, u128]>;
+      /**
+       * Event emitted when a liquidation is initiated for a loan.
+       **/
+      LiquidationInitiated: AugmentedEvent<ApiType, [u32, Vec<AccountId32>]>;
+      /**
+       * Event emitted when new lending market is created.
+       **/
+      MarketCreated: AugmentedEvent<ApiType, [u32, u64, AccountId32, ComposableTraitsDefiCurrencyPair]>;
+      MarketUpdated: AugmentedEvent<ApiType, [u32, ComposableTraitsLendingUpdateInput]>;
+      /**
+       * Event emitted when user repays borrow of beneficiary in given market.
+       **/
+      RepaidBorrow: AugmentedEvent<ApiType, [AccountId32, u32, AccountId32, u128]>;
+      /**
+       * Event emitted to warn that loan may go under collaterized soon.
+       **/
+      SoonMayUnderCollaterized: AugmentedEvent<ApiType, [u32, AccountId32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    liquidations: {
+      PositionWasSentToLiquidation: AugmentedEvent<ApiType, []>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    liquidityBootstrapping: {
+      /**
+       * Liquidity added into the pool `T::PoolId`.
+       **/
+      LiquidityAdded: AugmentedEvent<ApiType, [u128, u128, u128]>;
+      /**
+       * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
+       **/
+      PoolCreated: AugmentedEvent<ApiType, [u128, AccountId32]>;
+      /**
+       * The sale ended, the funds repatriated and the pool deleted.
+       **/
+      PoolDeleted: AugmentedEvent<ApiType, [u128, u128, u128]>;
+      /**
+       * Token exchange happened.
+       **/
+      Swapped: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128, u128, u128]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    mosaic: {
+      /**
+       * An asset mapping has been created.
+       **/
+      AssetMappingCreated: AugmentedEvent<ApiType, [u128, u32, CommonMosaicRemoteAssetId]>;
+      /**
+       * An existing asset mapping has been deleted.
+       **/
+      AssetMappingDeleted: AugmentedEvent<ApiType, [u128, u32, CommonMosaicRemoteAssetId]>;
+      /**
+       * An existing asset mapping has been updated.
+       **/
+      AssetMappingUpdated: AugmentedEvent<ApiType, [u128, u32, CommonMosaicRemoteAssetId]>;
+      BudgetUpdated: AugmentedEvent<ApiType, [u128, u128, PalletMosaicDecayBudgetPenaltyDecayer]>;
+      /**
+       * The `NetworkInfos` `network_info` was updated for `network_id`.
+       **/
+      NetworksUpdated: AugmentedEvent<ApiType, [u32, PalletMosaicNetworkInfo]>;
+      /**
+       * The relayer partially accepted the user's `OutgoingTransaction`.
+       **/
+      PartialTransferAccepted: AugmentedEvent<ApiType, [AccountId32, u128, u32, CommonMosaicRemoteAssetId, u128]>;
+      /**
+       * The relayer has been rotated to `account_id`.
+       **/
+      RelayerRotated: AugmentedEvent<ApiType, [u32, AccountId32]>;
+      /**
+       * The account of the relayer has been set.
+       **/
+      RelayerSet: AugmentedEvent<ApiType, [AccountId32]>;
+      /**
+       * User claimed outgoing tx that was not (yet) picked up by the relayer
+       **/
+      StaleTxClaimed: AugmentedEvent<ApiType, [AccountId32, AccountId32, u128, u128]>;
+      /**
+       * The relayer accepted the user's `OutgoingTransaction`.
+       **/
+      TransferAccepted: AugmentedEvent<ApiType, [AccountId32, u128, u32, CommonMosaicRemoteAssetId, u128]>;
+      /**
+       * The user claims his `IncomingTransaction` and unlocks the locked amount.
+       **/
+      TransferClaimed: AugmentedEvent<ApiType, [AccountId32, AccountId32, u128, u128]>;
+      /**
+       * An incoming tx is created and waiting for the user to claim.
+       **/
+      TransferInto: AugmentedEvent<ApiType, [H256, AccountId32, u32, CommonMosaicRemoteAssetId, u128, u128]>;
+      /**
+       * When we have finality issues occur on the Ethereum chain,
+       * we burn the locked `IncomingTransaction` for which we know that it is invalid.
+       **/
+      TransferIntoRescined: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      /**
+       * An outgoing tx is created, and locked in the outgoing tx pool.
+       **/
+      TransferOut: AugmentedEvent<ApiType, [H256, U8aFixed, u128, u32, CommonMosaicRemoteAssetId, u128]>;
       /**
        * Generic event
        **/
@@ -499,6 +656,24 @@ declare module '@polkadot/api-base/types/events' {
        * The validation function has been scheduled to apply.
        **/
       ValidationFunctionStored: AugmentedEvent<ApiType, []>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    preimage: {
+      /**
+       * A preimage has ben cleared.
+       **/
+      Cleared: AugmentedEvent<ApiType, [H256]>;
+      /**
+       * A preimage has been noted.
+       **/
+      Noted: AugmentedEvent<ApiType, [H256]>;
+      /**
+       * A preimage has been requested.
+       **/
+      Requested: AugmentedEvent<ApiType, [H256]>;
       /**
        * Generic event
        **/
@@ -628,15 +803,19 @@ declare module '@polkadot/api-base/types/events' {
     };
     scheduler: {
       /**
-       * Canceled some task. \[when, index\]
+       * The call for the provided hash was not found so the task has been aborted.
+       **/
+      CallLookupFailed: AugmentedEvent<ApiType, [ITuple<[u32, u32]>, Option<Bytes>, FrameSupportScheduleLookupError]>;
+      /**
+       * Canceled some task.
        **/
       Canceled: AugmentedEvent<ApiType, [u32, u32]>;
       /**
-       * Dispatched some task. \[task, id, result\]
+       * Dispatched some task.
        **/
       Dispatched: AugmentedEvent<ApiType, [ITuple<[u32, u32]>, Option<Bytes>, Result<Null, SpRuntimeDispatchError>]>;
       /**
-       * Scheduled some task. \[when, index\]
+       * Scheduled some task.
        **/
       Scheduled: AugmentedEvent<ApiType, [u32, u32]>;
       /**
@@ -655,11 +834,33 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    stableSwapDex: {
+      /**
+       * Liquidity added into the pool `T::PoolId` by `T::AccountId`.
+       **/
+      LiquidityAdded: AugmentedEvent<ApiType, [AccountId32, u128, u128, u128, u128]>;
+      /**
+       * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
+       **/
+      LiquidityRemoved: AugmentedEvent<ApiType, [AccountId32, u128, u128, u128, u128]>;
+      /**
+       * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
+       **/
+      PoolCreated: AugmentedEvent<ApiType, [AccountId32, u128]>;
+      /**
+       * Token exchange happened.
+       **/
+      Swapped: AugmentedEvent<ApiType, [AccountId32, u128, u128, u128, u128, u128, u128]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     sudo: {
       /**
-       * The \[sudoer\] just switched identity; the old key is supplied.
+       * The \[sudoer\] just switched identity; the old key is supplied if one existed.
        **/
-      KeyChanged: AugmentedEvent<ApiType, [AccountId32]>;
+      KeyChanged: AugmentedEvent<ApiType, [Option<AccountId32>]>;
       /**
        * A sudo just took place. \[result\]
        **/
@@ -679,23 +880,23 @@ declare module '@polkadot/api-base/types/events' {
        **/
       CodeUpdated: AugmentedEvent<ApiType, []>;
       /**
-       * An extrinsic failed. \[error, info\]
+       * An extrinsic failed.
        **/
       ExtrinsicFailed: AugmentedEvent<ApiType, [SpRuntimeDispatchError, FrameSupportWeightsDispatchInfo]>;
       /**
-       * An extrinsic completed successfully. \[info\]
+       * An extrinsic completed successfully.
        **/
       ExtrinsicSuccess: AugmentedEvent<ApiType, [FrameSupportWeightsDispatchInfo]>;
       /**
-       * An \[account\] was reaped.
+       * An account was reaped.
        **/
       KilledAccount: AugmentedEvent<ApiType, [AccountId32]>;
       /**
-       * A new \[account\] was created.
+       * A new account was created.
        **/
       NewAccount: AugmentedEvent<ApiType, [AccountId32]>;
       /**
-       * On on-chain remark happened. \[origin, remark_hash\]
+       * On on-chain remark happened.
        **/
       Remarked: AugmentedEvent<ApiType, [AccountId32, H256]>;
       /**
@@ -705,38 +906,33 @@ declare module '@polkadot/api-base/types/events' {
     };
     tokens: {
       /**
-       * A balance was set by root. \[who, free, reserved\]
+       * A balance was set by root.
        **/
       BalanceSet: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128]>;
       /**
        * An account was removed whose balance was non-zero but below
-       * ExistentialDeposit, resulting in an outright loss. \[currency_id,
-       * account, balance\]
+       * ExistentialDeposit, resulting in an outright loss.
        **/
       DustLost: AugmentedEvent<ApiType, [u128, AccountId32, u128]>;
       /**
-       * An account was created with some free balance. \[currency_id,
-       * account, free_balance\]
+       * An account was created with some free balance.
        **/
       Endowed: AugmentedEvent<ApiType, [u128, AccountId32, u128]>;
       /**
        * Some reserved balance was repatriated (moved from reserved to
        * another account).
-       * \[currency_id, from, to, amount_actually_moved, status\]
        **/
       RepatriatedReserve: AugmentedEvent<ApiType, [u128, AccountId32, AccountId32, u128, FrameSupportTokensMiscBalanceStatus]>;
       /**
        * Some balance was reserved (moved from free to reserved).
-       * \[currency_id, who, value\]
        **/
       Reserved: AugmentedEvent<ApiType, [u128, AccountId32, u128]>;
       /**
-       * Transfer succeeded. \[currency_id, from, to, value\]
+       * Transfer succeeded.
        **/
       Transfer: AugmentedEvent<ApiType, [u128, AccountId32, AccountId32, u128]>;
       /**
        * Some balance was unreserved (moved from reserved to free).
-       * \[currency_id, who, value\]
        **/
       Unreserved: AugmentedEvent<ApiType, [u128, AccountId32, u128]>;
       /**
@@ -746,32 +942,31 @@ declare module '@polkadot/api-base/types/events' {
     };
     treasury: {
       /**
-       * Some funds have been allocated. \[proposal_index, award, beneficiary\]
+       * Some funds have been allocated.
        **/
       Awarded: AugmentedEvent<ApiType, [u32, u128, AccountId32]>;
       /**
-       * Some of our funds have been burnt. \[burn\]
+       * Some of our funds have been burnt.
        **/
       Burnt: AugmentedEvent<ApiType, [u128]>;
       /**
-       * Some funds have been deposited. \[deposit\]
+       * Some funds have been deposited.
        **/
       Deposit: AugmentedEvent<ApiType, [u128]>;
       /**
-       * New proposal. \[proposal_index\]
+       * New proposal.
        **/
       Proposed: AugmentedEvent<ApiType, [u32]>;
       /**
-       * A proposal was rejected; funds were slashed. \[proposal_index, slashed\]
+       * A proposal was rejected; funds were slashed.
        **/
       Rejected: AugmentedEvent<ApiType, [u32, u128]>;
       /**
        * Spending has finished; this is the amount that rolls over until next spend.
-       * \[budget_remaining\]
        **/
       Rollover: AugmentedEvent<ApiType, [u128]>;
       /**
-       * We have ended a spend period and will now allocate funds. \[budget_remaining\]
+       * We have ended a spend period and will now allocate funds.
        **/
       Spending: AugmentedEvent<ApiType, [u128]>;
       /**
@@ -781,11 +976,11 @@ declare module '@polkadot/api-base/types/events' {
     };
     unknownTokens: {
       /**
-       * Deposit success. [asset, to]
+       * Deposit success.
        **/
       Deposited: AugmentedEvent<ApiType, [XcmV1MultiAsset, XcmV1MultiLocation]>;
       /**
-       * Withdraw success. [asset, from]
+       * Withdraw success.
        **/
       Withdrawn: AugmentedEvent<ApiType, [XcmV1MultiAsset, XcmV1MultiLocation]>;
       /**
@@ -804,7 +999,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       BatchInterrupted: AugmentedEvent<ApiType, [u32, SpRuntimeDispatchError]>;
       /**
-       * A call was dispatched. \[result\]
+       * A call was dispatched.
        **/
       DispatchedAs: AugmentedEvent<ApiType, [Result<Null, SpRuntimeDispatchError>]>;
       /**
@@ -875,6 +1070,14 @@ declare module '@polkadot/api-base/types/events' {
        **/
       Fail: AugmentedEvent<ApiType, [Option<H256>, XcmV2TraitsError]>;
       /**
+       * An XCM exceeded the individual message weight budget.
+       **/
+      OverweightEnqueued: AugmentedEvent<ApiType, [u32, u32, u64, u64]>;
+      /**
+       * An XCM from the overweight queue was executed with the given actual weight used.
+       **/
+      OverweightServiced: AugmentedEvent<ApiType, [u64, u64]>;
+      /**
        * Some XCM was executed ok.
        **/
       Success: AugmentedEvent<ApiType, [Option<H256>]>;
@@ -893,21 +1096,9 @@ declare module '@polkadot/api-base/types/events' {
     };
     xTokens: {
       /**
-       * Transferred. \[sender, currency_id, amount, dest\]
+       * Transferred `MultiAsset` with fee.
        **/
-      Transferred: AugmentedEvent<ApiType, [AccountId32, u128, u128, XcmV1MultiLocation]>;
-      /**
-       * Transferred `MultiAsset`. \[sender, asset, dest\]
-       **/
-      TransferredMultiAsset: AugmentedEvent<ApiType, [AccountId32, XcmV1MultiAsset, XcmV1MultiLocation]>;
-      /**
-       * Transferred `MultiAsset` with fee. \[sender, asset, fee, dest\]
-       **/
-      TransferredMultiAssetWithFee: AugmentedEvent<ApiType, [AccountId32, XcmV1MultiAsset, XcmV1MultiAsset, XcmV1MultiLocation]>;
-      /**
-       * Transferred with fee. \[sender, currency_id, amount, fee, dest\]
-       **/
-      TransferredWithFee: AugmentedEvent<ApiType, [AccountId32, u128, u128, u128, XcmV1MultiLocation]>;
+      TransferredMultiAssets: AugmentedEvent<ApiType, [AccountId32, XcmV1MultiassetMultiAssets, XcmV1MultiAsset, XcmV1MultiLocation]>;
       /**
        * Generic event
        **/

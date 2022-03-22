@@ -7,32 +7,40 @@
         "name": "alice",
         "wsPort": 9944,
         "port": 30444,
-        "flags": ["--rpc-cors=all"]
+        "flags": ["--rpc-cors=all", "--beefy", "--enable-offchain-indexing=true"]
       },
       {
         "name": "bob",
         "wsPort": 9955,
         "port": 30555,
-        "flags": ["--rpc-cors=all"]
+        "flags": ["--rpc-cors=all", "--beefy"]
       },
       {
         "name": "charlie",
         "wsPort": 9966,
         "port": 30666,
-        "flags": ["--rpc-cors=all"]
+        "flags": ["--rpc-cors=all", "--beefy"]
       },
       {
         "name": "dave",
         "wsPort": 9977,
         "port": 30777,
-        "flags": ["--rpc-cors=all"]
+        "flags": ["--rpc-cors=all", "--beefy"]
+      },
+      {
+        "name": "ferdie",
+        "wsPort": 9978,
+        "basePath": "/tmp/polkadot-launch/relaychains/ferdie",
+        "port": 30778,
+        "flags": ["--rpc-cors=all", "--beefy"]
       }
+
     ],
     "runtime_genesis_config": {
       "parachainsConfiguration": {
         "config": {
           "validation_upgrade_frequency": 1,
-          "validation_upgrade_delay": 1
+          "validation_upgrade_delay": 10
         }
       }
     }
@@ -58,7 +66,6 @@
     },
     {
       "bin": "../../../Basilisk-node/target/release/basilisk",
-      "id": "200",
       "chain":"local",
       "balance": "1000000000000000000000",
       "nodes": [
@@ -77,14 +84,14 @@
   ],
   "hrmpChannels": [
     {
-      "sender": 200,
-      "recipient": 2000,
+      "sender": 2000,
+      "recipient": 2090,
       "maxCapacity": 8,
       "maxMessageSize": 512
     },
     {
-      "sender": 2000,
-      "recipient": 200,
+      "sender": 2090,
+      "recipient": 2000,
       "maxCapacity": 8,
       "maxMessageSize": 512
     }

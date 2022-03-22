@@ -8,7 +8,7 @@
         "wsPort": 9944,
         "basePath": "/tmp/polkadot-launch/relaychains/alice",
         "port": 30444,
-        "flags": ["--beefy"]
+        "flags": ["--rpc-cors=all", "--beefy", "--enable-offchain-indexing=true"]
       },
       {
         "name": "bob",
@@ -38,19 +38,7 @@
         "port": 30778,
         "flags": ["--beefy"]
       }
-    ],
-    "genesis": {
-      "runtime": {
-        "runtime_genesis_config": {
-          "configuration": {
-            "config": {
-              "validation_upgrade_frequency": 1,
-              "validation_upgrade_delay": 1
-            }
-          }
-        }
-      }
-    }
+    ]
   },
   "parachains": [
     {

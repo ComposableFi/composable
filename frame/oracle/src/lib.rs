@@ -15,6 +15,8 @@
 #![allow(clippy::too_many_arguments)]
 pub use pallet::*;
 
+mod validation;
+
 #[cfg(test)]
 mod mock;
 
@@ -27,12 +29,14 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
+	use composable_support::validation::Validated;
 	use composable_traits::{
 		currency::LocalAssets,
-		math::SafeArithmetic,
-		oracle::{Oracle, Price as LastPrice},
+		math::SafeDiv,
+		oracle::{Oracle, Price},
 	};
 	use core::ops::{Div, Mul};
 	use frame_support::{
@@ -53,7 +57,6 @@ pub mod pallet {
 		pallet_prelude::*,
 		Config as SystemConfig,
 	};
-
 	use lite_json::json::JsonValue;
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
@@ -167,14 +170,6 @@ pub mod pallet {
 		pub price: PriceValue,
 		pub block: BlockNumber,
 		pub who: AccountId,
-	}
-
-	// block timestamped value
-	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
-	pub struct Price<PriceValue, BlockNumber> {
-		/// value
-		pub price: PriceValue,
-		pub block: BlockNumber,
 	}
 
 	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Clone, TypeInfo)]
@@ -384,11 +379,12 @@ pub mod pallet {
 		type AssetId = T::AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 		type LocalAssets = T::LocalAssets;
+		type MaxAnswerBound = T::MaxAnswerBound;
 
 		fn get_price(
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
-		) -> Result<LastPrice<Self::Balance, Self::Timestamp>, DispatchError> {
+		) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
 				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
 			let unit = 10_u128
@@ -399,7 +395,7 @@ pub mod pallet {
 			let price = price
 				.try_into()
 				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			Ok(LastPrice { price, block })
+			Ok(Price { price, block })
 		}
 
 		fn get_twap(
@@ -420,6 +416,7 @@ pub mod pallet {
 				Self::get_price(pair.quote, (10 ^ T::LocalAssets::decimals(pair.base)?).into())?
 					.price
 					.into();
+
 			let base = FixedU128::saturating_from_integer(base);
 			let quote = FixedU128::saturating_from_integer(quote);
 			Ok(base.safe_div(&quote)?)
@@ -436,6 +433,7 @@ pub mod pallet {
 			// so we need 2_500 asset amount to pay for 10 normalized
 			let unit = 10 ^ (T::LocalAssets::decimals(asset_id))?;
 			let price_asset_for_unit: u128 = Self::get_price(asset_id, unit.into())?.price.into();
+
 			let amount: u128 = amount.into();
 			let result = multiply_by_rational(amount, unit as u128, price_asset_for_unit)?;
 			let result: u64 = result
@@ -463,25 +461,30 @@ pub mod pallet {
 		pub fn add_asset_and_info(
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
-			threshold: Percent,
-			min_answers: u32,
-			max_answers: u32,
-			block_interval: T::BlockNumber,
+			threshold: Validated<Percent, ValidThreshhold>,
+			min_answers: Validated<u32, ValidMinAnswers>,
+			max_answers: Validated<u32, ValidMaxAnswer<T::MaxAnswerBound>>,
+			block_interval: Validated<T::BlockNumber, ValidBlockInterval<T::StalePrice>>,
 			reward: BalanceOf<T>,
 			slash: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			T::AddOracle::ensure_origin(origin)?;
-			ensure!(min_answers > 0, Error::<T>::InvalidMinAnswers);
-			ensure!(max_answers >= min_answers, Error::<T>::MaxAnswersLessThanMinAnswers);
-			ensure!(threshold < Percent::from_percent(100), Error::<T>::ExceedThreshold);
-			ensure!(max_answers <= T::MaxAnswerBound::get(), Error::<T>::ExceedMaxAnswers);
-			ensure!(block_interval > T::StalePrice::get(), Error::<T>::BlockIntervalLength);
+
+			ensure!(*max_answers >= *min_answers, Error::<T>::MaxAnswersLessThanMinAnswers);
+
 			ensure!(
 				AssetsCount::<T>::get() < T::MaxAssetsCount::get(),
 				Error::<T>::ExceedAssetsCount
 			);
-			let asset_info =
-				AssetInfo { threshold, min_answers, max_answers, block_interval, reward, slash };
+
+			let asset_info = AssetInfo {
+				threshold: *threshold,
+				min_answers: *min_answers,
+				max_answers: *max_answers,
+				block_interval: *block_interval,
+				reward,
+				slash,
+			};
 
 			let current_asset_info = Self::asset_info(asset_id);
 			if current_asset_info.is_none() {
@@ -491,10 +494,10 @@ pub mod pallet {
 			AssetsInfo::<T>::insert(asset_id, asset_info);
 			Self::deposit_event(Event::AssetInfoChange(
 				asset_id,
-				threshold,
-				min_answers,
-				max_answers,
-				block_interval,
+				*threshold,
+				*min_answers,
+				*max_answers,
+				*block_interval,
 				reward,
 				slash,
 			));

@@ -1,7 +1,7 @@
 //! Module for validating extrinsic inputs
 //!
 //! This module is made of two main parts that are needed to validate an
-//! extrinsic input, the `Validated` struct and the `Valitate` trait.
+//! extrinsic input, the `Validated` struct and the `Validate` trait.
 //!
 //! # Example
 //! ## Single Validation
@@ -65,15 +65,48 @@
 //! }
 //! ```
 
-use core::marker::PhantomData;
+use core::{fmt, marker::PhantomData};
 use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
+use sp_std::ops::Deref;
 
 /// Black box that embbed the validated value.
-#[derive(Default, Copy, Clone, PartialEq, Eq, Debug, TypeInfo)]
+/// Validated during construction or serde.
+#[derive(Default, Copy, Clone)]
 pub struct Validated<T, U> {
 	value: T,
 	_marker: PhantomData<U>,
+}
+
+impl<T, U> TypeInfo for Validated<T, U>
+where
+	T: TypeInfo,
+{
+	type Identity = <T as TypeInfo>::Identity;
+
+	fn type_info() -> scale_info::Type {
+		T::type_info()
+	}
+}
+
+impl<T, U> PartialEq for Validated<T, U>
+where
+	T: PartialEq,
+{
+	fn eq(&self, other: &Self) -> bool {
+		self.value == other.value
+	}
+}
+
+impl<T, U> Eq for Validated<T, U> where T: PartialEq + Eq {}
+
+impl<T, U> fmt::Debug for Validated<T, U>
+where
+	T: core::fmt::Debug,
+{
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		self.value.fmt(f)
+	}
 }
 
 impl<T, U> Validated<T, U>
@@ -81,7 +114,7 @@ where
 	Validated<T, U>: Validate<T, U>,
 	U: Validate<T, U>,
 {
-	pub fn new(value: T, _validator_tag: U) -> Result<Self, &'static str> {
+	pub fn new(value: T) -> Result<Self, &'static str> {
 		match <U as Validate<T, U>>::validate(value) {
 			Ok(value) => Ok(Self { value, _marker: PhantomData }),
 			Err(e) => Err(e),
@@ -96,6 +129,16 @@ pub trait ValidateDispatch<U>: Sized {
 pub trait Validate<T, U> {
 	// use string here because in serde layer there is not dispatch
 	fn validate(input: T) -> Result<T, &'static str>;
+}
+
+pub trait TryIntoValidated<T> {
+	fn try_into_validated<U: Validate<T, U>>(self) -> Result<Validated<T, U>, &'static str>;
+}
+
+impl<T> TryIntoValidated<T> for T {
+	fn try_into_validated<U: Validate<T, U>>(self) -> Result<Validated<T, U>, &'static str> {
+		Validated::new(self)
+	}
 }
 
 #[derive(Debug, Eq, PartialEq, Default)]
@@ -182,18 +225,13 @@ impl<T: codec::Decode, U: Validate<T, U>> codec::Decode for Validated<T, U> {
 	}
 }
 
-pub(crate) mod private {
-	use sp_std::ops::Deref;
+/// Originally there to have `WrapperTypeEncode` work, but now also used in order to prevent
+/// .value() calls everywhere
+impl<T, U> Deref for Validated<T, U> {
+	type Target = T;
 
-	use super::Validated;
-
-	/// just to have `WrapperTypeEncode` work
-	impl<T, U> Deref for Validated<T, U> {
-		type Target = T;
-		#[doc(hidden)]
-		fn deref(&self) -> &Self::Target {
-			&self.value
-		}
+	fn deref(&self) -> &Self::Target {
+		&self.value
 	}
 }
 
@@ -309,9 +347,9 @@ mod test {
 
 	#[test]
 	fn value() {
-		let value = Validated::new(42, Valid);
+		let value = Validated::<_, Valid>::new(42);
 		assert_ok!(value);
-		let value = Validated::new(42, Invalid);
+		let value = Validated::<_, Invalid>::new(42);
 		assert!(value.is_err());
 	}
 
@@ -414,5 +452,19 @@ mod test {
 
 		let invalid = Validated::<X, (Valid, Invalid, Valid)>::decode(&mut &bytes[..]);
 		assert!(invalid.is_err());
+	}
+
+	#[test]
+	fn try_into_valid() {
+		let value = 42_u32.try_into_validated::<Valid>().unwrap();
+
+		assert_eq!(value, Validated { value: 42, _marker: PhantomData });
+	}
+
+	#[test]
+	fn try_into_invalid() {
+		let value = 42_u32.try_into_validated::<Invalid>();
+
+		assert!(value.is_err());
 	}
 }

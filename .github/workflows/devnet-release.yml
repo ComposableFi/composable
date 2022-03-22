@@ -22,8 +22,6 @@ jobs:
     - uses: actions/setup-python@v2
 
     - uses: cachix/install-nix-action@v16
-      with:
-        nix_path: nixpkgs=channel:nixos-unstable
 
     - uses: cachix/cachix-action@v10
       with:
@@ -43,14 +41,18 @@ jobs:
     - name: Install latest Nightly
       uses: actions-rs/toolchain@v1
       with:
-          toolchain: nightly
+          toolchain: nightly-2022-02-01
           target: wasm32-unknown-unknown
+
+    - uses: Swatinem/rust-cache@v1
 
     - name: Push artifact
       run: |
         cargo build --release
-        tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
+        cargo doc --release
+        tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable target/doc
         gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
+        rm -rf target
 
     - name: Load state
       run: |

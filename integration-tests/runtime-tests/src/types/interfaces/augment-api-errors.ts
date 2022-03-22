@@ -6,7 +6,6 @@ import type { ApiTypes } from '@polkadot/api-base/types';
 declare module '@polkadot/api-base/types/errors' {
   export interface AugmentedErrors<ApiType extends ApiTypes> {
     assets: {
-      BadOrigin: AugmentedError<ApiType>;
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
       /**
        * Generic error
@@ -15,7 +14,9 @@ declare module '@polkadot/api-base/types/errors' {
     };
     assetsRegistry: {
       ForeignAssetIdAlreadyUsed: AugmentedError<ApiType>;
+      ForeignAssetIdNotFound: AugmentedError<ApiType>;
       LocalAssetIdAlreadyUsed: AugmentedError<ApiType>;
+      LocalAssetIdNotFound: AugmentedError<ApiType>;
       OnlyAllowedForAdmins: AugmentedError<ApiType>;
       /**
        * Generic error
@@ -172,6 +173,19 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    constantProductDex: {
+      CannotRespectMinimumRequested: AugmentedError<ApiType>;
+      InvalidAmount: AugmentedError<ApiType>;
+      InvalidFees: AugmentedError<ApiType>;
+      InvalidPair: AugmentedError<ApiType>;
+      MissingAmount: AugmentedError<ApiType>;
+      PairMismatch: AugmentedError<ApiType>;
+      PoolNotFound: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     council: {
       /**
        * Members are already initialized!
@@ -235,17 +249,26 @@ declare module '@polkadot/api-base/types/errors' {
     crowdloanRewards: {
       AlreadyAssociated: AugmentedError<ApiType>;
       AlreadyInitialized: AugmentedError<ApiType>;
+      BackToTheFuture: AugmentedError<ApiType>;
       InvalidClaim: AugmentedError<ApiType>;
       InvalidProof: AugmentedError<ApiType>;
       NotAssociated: AugmentedError<ApiType>;
+      NotClaimableYet: AugmentedError<ApiType>;
       NothingToClaim: AugmentedError<ApiType>;
       NotInitialized: AugmentedError<ApiType>;
+      RewardsNotFunded: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
     };
     cumulusXcm: {
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    currencyFactory: {
       /**
        * Generic error
        **/
@@ -385,17 +408,12 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     dutchAuction: {
+      NotEnoughNativeCurrentyToPayForAuction: AugmentedError<ApiType>;
       OrderNotFound: AugmentedError<ApiType>;
       OrderParametersIsInvalid: AugmentedError<ApiType>;
       RequestedOrderDoesNotExists: AugmentedError<ApiType>;
       TakeLimitDoesNotSatisfiesOrder: AugmentedError<ApiType>;
       TakeParametersIsInvalid: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
-    factory: {
       /**
        * Generic error
        **/
@@ -502,6 +520,94 @@ declare module '@polkadot/api-base/types/errors' {
        * The index is permanent and may not be freed/changed.
        **/
       Permanent: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    lending: {
+      /**
+       * Only assets for which we can track price are supported
+       **/
+      AssetNotSupportedByOracle: AugmentedError<ApiType>;
+      AssetPriceNotFound: AugmentedError<ApiType>;
+      BorrowAndRepayInSameBlockIsNotSupported: AugmentedError<ApiType>;
+      BorrowDoesNotExist: AugmentedError<ApiType>;
+      BorrowerDataCalculationFailed: AugmentedError<ApiType>;
+      BorrowIndexDoesNotExist: AugmentedError<ApiType>;
+      BorrowRateDoesNotExist: AugmentedError<ApiType>;
+      CannotRepayMoreThanBorrowAmount: AugmentedError<ApiType>;
+      CannotWithdrawFromProvidedBorrowAccount: AugmentedError<ApiType>;
+      CollateralDepositFailed: AugmentedError<ApiType>;
+      CollateralFactorIsLessOrEqualOne: AugmentedError<ApiType>;
+      ExceedLendingCount: AugmentedError<ApiType>;
+      InvalidTimestampOnBorrowRequest: AugmentedError<ApiType>;
+      LiquidationFailed: AugmentedError<ApiType>;
+      MarketAndAccountPairNotFound: AugmentedError<ApiType>;
+      MarketCollateralWasNotDepositedByAccount: AugmentedError<ApiType>;
+      /**
+       * The market could not be found
+       **/
+      MarketDoesNotExist: AugmentedError<ApiType>;
+      MarketIsClosing: AugmentedError<ApiType>;
+      NotEnoughBorrowAsset: AugmentedError<ApiType>;
+      NotEnoughCollateral: AugmentedError<ApiType>;
+      NotEnoughCollateralToBorrowAmount: AugmentedError<ApiType>;
+      NotEnoughRent: AugmentedError<ApiType>;
+      Overflow: AugmentedError<ApiType>;
+      /**
+       * borrow assets should have enough value as per oracle
+       **/
+      PriceOfInitialBorrowVaultShouldBeGreaterThanZero: AugmentedError<ApiType>;
+      RepayAmountMustBeGraterThanZero: AugmentedError<ApiType>;
+      TransferFailed: AugmentedError<ApiType>;
+      Unauthorized: AugmentedError<ApiType>;
+      Underflow: AugmentedError<ApiType>;
+      /**
+       * vault provided does not exist
+       **/
+      VaultNotFound: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    liquidations: {
+      NoLiquidationEngineFound: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    liquidityBootstrapping: {
+      CannotRespectMinimumRequested: AugmentedError<ApiType>;
+      InvalidAmount: AugmentedError<ApiType>;
+      InvalidSaleState: AugmentedError<ApiType>;
+      MustBeOwner: AugmentedError<ApiType>;
+      PairMismatch: AugmentedError<ApiType>;
+      PoolNotFound: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    mosaic: {
+      AmountMismatch: AugmentedError<ApiType>;
+      AssetNotMapped: AugmentedError<ApiType>;
+      BadTimelockPeriod: AugmentedError<ApiType>;
+      BadTTL: AugmentedError<ApiType>;
+      BelowMinTransferSize: AugmentedError<ApiType>;
+      ExceedsMaxTransferSize: AugmentedError<ApiType>;
+      InsufficientBudget: AugmentedError<ApiType>;
+      NetworkDisabled: AugmentedError<ApiType>;
+      NoClaimableTx: AugmentedError<ApiType>;
+      NoOutgoingTx: AugmentedError<ApiType>;
+      NoStaleTransactions: AugmentedError<ApiType>;
+      Overflow: AugmentedError<ApiType>;
+      RelayerNotSet: AugmentedError<ApiType>;
+      TxStillLocked: AugmentedError<ApiType>;
+      UnsupportedAsset: AugmentedError<ApiType>;
+      UnsupportedNetwork: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -620,6 +726,8 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       InvalidMinAnswers: AugmentedError<ApiType>;
       MaxAnswersLessThanMinAnswers: AugmentedError<ApiType>;
+      MaxHistory: AugmentedError<ApiType>;
+      MaxPrePrices: AugmentedError<ApiType>;
       /**
        * Max prices already reached
        **/
@@ -715,6 +823,36 @@ declare module '@polkadot/api-base/types/errors' {
        * The inherent which supplies the validation data did not run this block
        **/
       ValidationDataNotAvailable: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    preimage: {
+      /**
+       * Preimage has already been noted on-chain.
+       **/
+      AlreadyNoted: AugmentedError<ApiType>;
+      /**
+       * The user is not authorized to perform this action.
+       **/
+      NotAuthorized: AugmentedError<ApiType>;
+      /**
+       * The preimage cannot be removed since it has not yet been noted.
+       **/
+      NotNoted: AugmentedError<ApiType>;
+      /**
+       * The preimage request cannot be removed since no outstanding requests exist.
+       **/
+      NotRequested: AugmentedError<ApiType>;
+      /**
+       * A preimage may not be removed when there are outstanding requests.
+       **/
+      Requested: AugmentedError<ApiType>;
+      /**
+       * Preimage is too large to store on-chain.
+       **/
+      TooLarge: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -824,6 +962,19 @@ declare module '@polkadot/api-base/types/errors' {
        * No keys are associated with this account.
        **/
       NoKeys: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    stableSwapDex: {
+      AmpFactorMustBeGreaterThanZero: AugmentedError<ApiType>;
+      AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
+      CannotRespectMinimumRequested: AugmentedError<ApiType>;
+      InvalidFees: AugmentedError<ApiType>;
+      InvalidPair: AugmentedError<ApiType>;
+      PairMismatch: AugmentedError<ApiType>;
+      PoolNotFound: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -1074,6 +1225,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       TooManyVestingSchedules: AugmentedError<ApiType>;
       /**
+       * Trying to vest to ourselves
+       **/
+      TryingToSelfVest: AugmentedError<ApiType>;
+      /**
        * Vesting period is zero
        **/
       ZeroVestingPeriod: AugmentedError<ApiType>;
@@ -1088,6 +1243,10 @@ declare module '@polkadot/api-base/types/errors' {
     };
     xcmpQueue: {
       /**
+       * Bad overweight index.
+       **/
+      BadOverweightIndex: AugmentedError<ApiType>;
+      /**
        * Bad XCM data.
        **/
       BadXcm: AugmentedError<ApiType>;
@@ -1100,6 +1259,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       FailedToSend: AugmentedError<ApiType>;
       /**
+       * Provided weight is possibly not enough to execute the message.
+       **/
+      WeightOverLimit: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
@@ -1109,6 +1272,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Asset has no reserve location.
        **/
       AssetHasNoReserve: AugmentedError<ApiType>;
+      /**
+       * The specified index does not exist in a MultiAssets struct.
+       **/
+      AssetIndexNonExistent: AugmentedError<ApiType>;
       /**
        * The version of the `Versioned` value used is not able to be
        * interpreted.
@@ -1124,18 +1291,22 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       DestinationNotInvertible: AugmentedError<ApiType>;
       /**
-       * The fee MultiAsset is of different type than the asset to transfer.
+       * We tried sending distinct asset and fee but they have different
+       * reserve chains.
        **/
-      DistincAssetAndFeeId: AugmentedError<ApiType>;
+      DistinctReserveForAssetAndFee: AugmentedError<ApiType>;
       /**
-       * The fee amount was zero when the fee specification extrinsic is
-       * being used.
+       * Fee is not enough.
        **/
-      FeeCannotBeZero: AugmentedError<ApiType>;
+      FeeNotEnough: AugmentedError<ApiType>;
       /**
        * Could not get ancestry of asset reserve location.
        **/
       InvalidAncestry: AugmentedError<ApiType>;
+      /**
+       * The MultiAsset is invalid.
+       **/
+      InvalidAsset: AugmentedError<ApiType>;
       /**
        * Invalid transfer destination.
        **/
@@ -1149,9 +1320,9 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotCrossChainTransferableCurrency: AugmentedError<ApiType>;
       /**
-       * Not fungible asset.
+       * The number of assets to be sent is over the maximum.
        **/
-      NotFungible: AugmentedError<ApiType>;
+      TooManyAssetsBeingSent: AugmentedError<ApiType>;
       /**
        * The message's weight could not be determined.
        **/
@@ -1160,6 +1331,14 @@ declare module '@polkadot/api-base/types/errors' {
        * XCM execution failed.
        **/
       XcmExecutionFailed: AugmentedError<ApiType>;
+      /**
+       * The transfering asset amount is zero.
+       **/
+      ZeroAmount: AugmentedError<ApiType>;
+      /**
+       * The fee is zero.
+       **/
+      ZeroFee: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

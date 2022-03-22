@@ -1,10 +1,11 @@
 use composable_traits::{
 	currency::MathBalance,
 	defi::{LiftedFixedBalance, MoreThanOneFixedU128, Rate},
-	math::SafeArithmetic,
+	math::{SafeAdd, SafeDiv, SafeMul},
 };
 use sp_runtime::{traits::Saturating, ArithmeticError, FixedPointNumber, Percent};
 
+#[derive(Debug)]
 pub struct BorrowerData {
 	pub collateral_balance_value: LiftedFixedBalance,
 	pub borrow_balance_value: LiftedFixedBalance,

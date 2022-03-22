@@ -1,9 +1,4 @@
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import { KeyringPair } from '@polkadot/keyring/types';
-import * as R from 'ramda';
-import minimist from 'minimist';
-import { args } from '../../utils/args';
-
 
 /**
  * Generates a test transaction.
@@ -13,6 +8,8 @@ export class testTransactionGenerator {
   /**
    * Sends test transaction from Alice to Bob.
    * @param {ApiPromise} api Connected API Promise.
+   * @param {Keyring} walletSender Wallet sending asset.
+   * @param {Keyring} walletReceiverAddress Wallet receiving asset.
   **/
   public static async testTransaction(api: ApiPromise, walletSender, walletReceiverAddress) {
     const transfer = api.tx.assets.transferNative(walletReceiverAddress, 12345678910, true);
@@ -22,7 +19,7 @@ export class testTransactionGenerator {
 }
 
 async function main() {
-  const endpoint = `ws://${args.h}:${args.p}`;
+  const endpoint = `ws://${process.env.ENDPOINT}`;
   // Instantiate the API
   const provider = new WsProvider(endpoint);
   const api = await ApiPromise.create({ provider: provider });
@@ -31,10 +28,10 @@ async function main() {
   const walletAlice = keyring.addFromUri('//Alice');
   const walletBob = keyring.addFromUri('//Bob');
   await testTransactionGenerator.testTransaction(api, walletAlice, walletBob.address);
-  process.exit(0);
+  console.info("setStartBalance finished!");
+  await api.disconnect();
 }
 
 if (require.main === module) {
-  main();
+  main().catch(console.error).finally(() => process.exit());
 }
-

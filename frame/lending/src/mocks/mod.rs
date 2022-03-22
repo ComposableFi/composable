@@ -2,8 +2,10 @@ use self::currency::CurrencyId;
 pub use self::currency::*;
 use crate::{self as pallet_lending, *};
 use composable_traits::{
+	currency::{Exponent, LocalAssets},
 	defi::DeFiComposableConfig,
 	governance::{GovernanceRegistry, SignedRawOrigin},
+	oracle::Price,
 };
 use frame_support::{
 	ord_parameter_types, parameter_types,
@@ -23,14 +25,11 @@ use sp_runtime::{
 	traits::{
 		BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify,
 	},
-	Perbill,
+	DispatchError, Perbill,
 };
 
-pub mod currency;
-pub mod oracle;
-
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
+type Block = frame_system::mocking::MockBlock<Runtime>;
 pub type Balance = u128;
 pub type Amount = i128;
 pub type BlockNumber = u64;
@@ -45,7 +44,7 @@ parameter_types! {
 
 pub type ParachainId = u32;
 
-pub const MINIMUM_BALANCE: Balance = 1000;
+pub const MINIMUM_BALANCE: Balance = 1_000_000;
 
 pub static ALICE: Lazy<AccountId> = Lazy::new(|| {
 	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000000"))
@@ -63,7 +62,7 @@ pub static UNRESERVED: Lazy<AccountId> = Lazy::new(|| {
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test where
+	pub enum Runtime where
 		Block = Block,
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
@@ -77,8 +76,8 @@ frame_support::construct_runtime!(
 		Assets: pallet_assets::{Pallet, Call, Storage},
 		Liquidations: pallet_liquidations::{Pallet, Call, Event<T>},
 		Lending: pallet_lending::{Pallet, Call, Config, Storage, Event<T>},
-		Oracle: pallet_lending::mocks::oracle::{Pallet},
 		DutchAuction: pallet_dutch_auction::{Pallet, Call, Storage, Event<T>},
+		Oracle: pallet_oracle::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -87,7 +86,7 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
-impl frame_system::Config for Test {
+impl frame_system::Config for Runtime {
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -118,7 +117,7 @@ parameter_types! {
 	pub const ExistentialDeposit: u64 = 1000;
 }
 
-impl pallet_balances::Config for Test {
+impl pallet_balances::Config for Runtime {
 	type Balance = Balance;
 	type Event = Event;
 	type DustRemoval = ();
@@ -136,14 +135,14 @@ parameter_types! {
 	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
 }
 
-impl pallet_timestamp::Config for Test {
+impl pallet_timestamp::Config for Runtime {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
 
-impl pallet_currency_factory::Config for Test {
+impl pallet_currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
@@ -153,7 +152,7 @@ impl pallet_currency_factory::Config for Test {
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub const NativeAssetId: CurrencyId = PICA;
+	pub const NativeAssetId: CurrencyId = PICA::ID;
 	pub const CreationDeposit: Balance = 10;
 	pub const RentPerBlock: Balance = 1;
 	pub const MinimumDeposit: Balance = 0;
@@ -162,7 +161,7 @@ parameter_types! {
   pub const TombstoneDuration: u64 = 42;
 }
 
-impl pallet_vault::Config for Test {
+impl pallet_vault::Config for Runtime {
 	type Event = Event;
 	type Currency = Tokens;
 	type AssetId = CurrencyId;
@@ -192,7 +191,7 @@ parameter_types! {
 	pub MaxLocks: u32 = 2;
 }
 
-impl orml_tokens::Config for Test {
+impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
@@ -227,7 +226,7 @@ impl<CurrencyId>
 	}
 }
 
-impl pallet_assets::Config for Test {
+impl pallet_assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
 	type GenerateCurrencyId = LpTokenFactory;
 	type AssetId = CurrencyId;
@@ -239,12 +238,38 @@ impl pallet_assets::Config for Test {
 	type GovernanceRegistry = NoopRegistry;
 }
 
-impl crate::mocks::oracle::Config for Test {
-	type VaultId = VaultId;
-	type Vault = Vault;
+parameter_types! {
+	pub const MinBalance : Balance = 0;
+	pub const MinU32 : u32 = 0;
+	pub const MinU64 : u64 = 0;
 }
 
-impl DeFiComposableConfig for Test {
+pub struct Decimals;
+impl LocalAssets<CurrencyId> for Decimals {
+	fn decimals(_currency_id: CurrencyId) -> Result<Exponent, DispatchError> {
+		Ok(12)
+	}
+}
+
+impl pallet_oracle::Config for Runtime {
+	type Event = Event;
+	type Currency = Assets;
+	type AssetId = CurrencyId;
+	type PriceValue = Balance;
+	type AuthorityId = pallet_oracle::crypto::BathurstStId;
+	type MinStake = MinBalance;
+	type StakeLock = MinU64;
+	type StalePrice = MinU64;
+	type AddOracle = EnsureSignedBy<RootAccount, AccountId>;
+	type MaxAnswerBound = MinU32;
+	type MaxAssetsCount = MinU32;
+	type MaxHistory = MinU32;
+	type MaxPrePrices = MinU32;
+	type WeightInfo = ();
+	type LocalAssets = Decimals;
+}
+
+impl DeFiComposableConfig for Runtime {
 	type MayBeAssetId = CurrencyId;
 	type Balance = Balance;
 }
@@ -288,7 +313,7 @@ impl WeightToFeePolynomial for DutchAuctionsMocks {
 	}
 }
 
-impl pallet_dutch_auction::Config for Test {
+impl pallet_dutch_auction::Config for Runtime {
 	type Event = Event;
 	type OrderId = OrderId;
 	type UnixTime = Timestamp;
@@ -299,7 +324,7 @@ impl pallet_dutch_auction::Config for Test {
 	type WeightToFee = DutchAuctionsMocks;
 }
 
-impl pallet_liquidations::Config for Test {
+impl pallet_liquidations::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
 	type DutchAuction = DutchAuction;
@@ -313,12 +338,12 @@ impl pallet_liquidations::Config for Test {
 pub type Extrinsic = TestXt<Call, ()>;
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
-impl frame_system::offchain::SigningTypes for Test {
+impl frame_system::offchain::SigningTypes for Runtime {
 	type Public = <Signature as Verify>::Signer;
 	type Signature = Signature;
 }
 
-impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
+impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Runtime
 where
 	Call: From<LocalCall>,
 {
@@ -326,7 +351,7 @@ where
 	type Extrinsic = Extrinsic;
 }
 
-impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Test
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
 	Call: From<LocalCall>,
 {
@@ -343,7 +368,7 @@ where
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
-	pub MarketCreationStake : Balance = 10^15;
+	pub OracleMarketCreationStake : Balance = NORMALIZED::one();
 }
 
 parameter_types! {
@@ -363,7 +388,7 @@ impl WeightToFeePolynomial for WeightToFee {
 	}
 }
 
-impl pallet_lending::Config for Test {
+impl pallet_lending::Config for Runtime {
 	type Oracle = Oracle;
 	type VaultId = VaultId;
 	type Vault = Vault;
@@ -378,31 +403,37 @@ impl pallet_lending::Config for Test {
 	type WeightInfo = ();
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type PalletId = LendingPalletId;
-	type MarketCreationStake = MarketCreationStake;
+	type OracleMarketCreationStake = OracleMarketCreationStake;
 
 	type WeightToFee = WeightToFee;
 }
 
+pub fn set_price(asset_id: CurrencyId, balance: Balance) {
+	let price = Price { price: balance, block: System::block_number() };
+	pallet_oracle::Prices::<Runtime>::insert(asset_id, price);
+}
+
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 	let balances = vec![(*ALICE, 1_000_000_000), (*BOB, 1_000_000_000), (*CHARLIE, 1_000_000_000)];
 
-	pallet_balances::GenesisConfig::<Test> { balances }
+	pallet_balances::GenesisConfig::<Runtime> { balances }
 		.assimilate_storage(&mut storage)
 		.unwrap();
 	pallet_lending::GenesisConfig {}
-		.assimilate_storage::<Test>(&mut storage)
+		.assimilate_storage::<Runtime>(&mut storage)
 		.unwrap();
-	GenesisBuild::<Test>::assimilate_storage(&pallet_liquidations::GenesisConfig {}, &mut storage)
-		.unwrap();
+	GenesisBuild::<Runtime>::assimilate_storage(
+		&pallet_liquidations::GenesisConfig {},
+		&mut storage,
+	)
+	.unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(storage);
 	ext.execute_with(|| {
 		System::set_block_number(0);
 		Timestamp::set_timestamp(MILLISECS_PER_BLOCK);
-		// Initialize BTC price to 50000
-		pallet_lending::mocks::oracle::BTCValue::<Test>::set(50000_u128);
 	});
 	ext
 }
@@ -424,7 +455,7 @@ pub fn process_block(n: BlockNumber) {
 	Lending::on_finalize(n);
 }
 
-fn next_block(n: u64) {
+pub fn next_block(n: u64) {
 	System::set_block_number(n);
 	Lending::on_initialize(n);
 	Timestamp::set_timestamp(MILLISECS_PER_BLOCK * n);

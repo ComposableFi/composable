@@ -1,5 +1,6 @@
 #![allow(clippy::unnecessary_cast)]
 pub mod balances;
+pub mod bonded_finance;
 pub mod collator_selection;
 pub mod collective;
 pub mod crowdloan_rewards;
@@ -16,3 +17,4 @@ pub mod timestamp;
 pub mod tokens;
 pub mod treasury;
 pub mod utility;
+pub mod vesting;

@@ -15,24 +15,31 @@
 #![recursion_limit = "256"]
 
 // Make the WASM binary available.
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "wasm-builder"))]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
 mod xcmp;
+
+// TODO: consider moving this to shared runtime
+pub use xcmp::{MaxInstructions, UnitWeightCost};
+
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MosaicRemoteAssetId,
+	MultiExistentialDeposits, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
+	MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
+use composable_support::rpc_helpers::SafeRpcWrapper;
 use cumulus_primitives_core::ParaId;
-use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
+	traits::{
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
+	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -55,7 +62,7 @@ pub use frame_support::{
 };
 
 use codec::Encode;
-use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
+use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use scale_info::TypeInfo;
 #[cfg(any(feature = "std", test))]
@@ -104,7 +111,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
 	spec_version: 1000,
-	impl_version: 4,
+	impl_version: 8,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
 	state_version: 0,
@@ -216,12 +223,12 @@ impl aura::Config for Runtime {
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
-	pub BasicDeposit: Balance = 8 * CurrencyId::PICA.unit::<Balance>();
-	pub FieldDeposit: Balance = 256 * CurrencyId::PICA.milli::<Balance>();
+	pub BasicDeposit: Balance = 8 * CurrencyId::unit::<Balance>();
+	pub FieldDeposit: Balance = 256 * CurrencyId::milli::<Balance>();
 	pub const MaxAdditionalFields: u32 = 32;
 	pub const MaxRegistrars: u32 = 8;
 	pub const MaxSubAccounts: u32 = 32;
-	pub SubAccountDeposit: Balance = 2 * CurrencyId::PICA.unit::<Balance>();
+	pub SubAccountDeposit: Balance = 2 * CurrencyId::unit::<Balance>();
 }
 
 impl identity::Config for Runtime {
@@ -240,8 +247,8 @@ impl identity::Config for Runtime {
 }
 
 parameter_types! {
-	pub DepositBase: u64 = CurrencyId::PICA.unit();
-	pub DepositFactor: u64 = 32 * CurrencyId::PICA.milli::<u64>();
+	pub DepositBase: u64 = CurrencyId::unit();
+	pub DepositFactor: u64 = 32 * CurrencyId::milli::<u64>();
 	pub const MaxSignatories: u16 = 5;
 }
 
@@ -263,7 +270,7 @@ parameter_types! {
 
 impl timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the Unix epoch.
-	type Moment = u64;
+	type Moment = Moment;
 	/// What to do when SLOT_DURATION has passed?
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
@@ -271,8 +278,6 @@ impl timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	/// Minimum amount an account has to hold to stay in state.
-  pub ExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
 	/// Max locks that can be placed on an account. Capped for storage
 	/// concerns.
 	pub const MaxLocks: u32 = 50;
@@ -287,14 +292,14 @@ impl balances::Config for Runtime {
 	/// The ubiquitous event type.
 	type Event = Event;
 	type DustRemoval = Treasury;
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = common::NativeExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
-	pub TransactionByteFee: Balance = CurrencyId::PICA.milli::<Balance>();
+	pub TransactionByteFee: Balance = CurrencyId::milli::<Balance>();
 
 	// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
@@ -315,7 +320,7 @@ pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		let p = CurrencyId::PICA.milli::<Balance>();
+		let p = CurrencyId::milli::<Balance>();
 		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 		smallvec::smallvec![WeightToFeeCoefficient {
 			degree: 1,
@@ -343,7 +348,7 @@ impl sudo::Config for Runtime {
 
 parameter_types! {
 	/// Deposit required to get an index.
-	pub IndexDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
+	pub IndexDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 }
 
 impl indices::Config for Runtime {
@@ -422,7 +427,7 @@ parameter_types! {
 	pub const StalePrice: BlockNumber = 5;
 
 	/// TODO: discuss with omar/cosmin
-	pub MinStake: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
+	pub MinStake: Balance = 1000 * CurrencyId::unit::<Balance>();
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
@@ -434,7 +439,7 @@ impl oracle::Config for Runtime {
 	type Event = Event;
 	type AuthorityId = oracle::crypto::BathurstStId;
 	type AssetId = CurrencyId;
-	type PriceValue = u128;
+	type PriceValue = Balance;
 	type StakeLock = StakeLock;
 	type MinStake = MinStake;
 	type StalePrice = StalePrice;
@@ -527,13 +532,6 @@ impl collator_selection::Config for Runtime {
 	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
 }
 
-parameter_type_with_key! {
-	// TODO:
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		Zero::zero()
-	};
-}
-
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
@@ -553,7 +551,7 @@ impl orml_tokens::Config for Runtime {
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
 	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
-	type ExistentialDeposits = ExistentialDeposits;
+	type ExistentialDeposits = MultiExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
@@ -571,8 +569,8 @@ parameter_types! {
 	/// percentage of proposal that most be bonded by the proposer
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	// TODO: rationale?
-	pub ProposalBondMinimum: Balance = 5 * CurrencyId::PICA.unit::<Balance>();
-	pub ProposalBondMaximum: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
+	pub ProposalBondMinimum: Balance = 5 * CurrencyId::unit::<Balance>();
+	pub ProposalBondMaximum: Balance = 1000 * CurrencyId::unit::<Balance>();
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
 
@@ -661,11 +659,11 @@ parameter_types! {
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
 
-	pub MinimumDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
+	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	// TODO: prod value
-	pub PreimageByteDeposit: Balance = CurrencyId::PICA.milli::<Balance>();
+	pub PreimageByteDeposit: Balance = CurrencyId::milli::<Balance>();
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -710,7 +708,7 @@ impl democracy::Config for Runtime {
 
 parameter_types! {
 	pub const PreimageMaxSize: u32 = 4096 * 1024;
-	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
 }
 
 impl preimage::Config for Runtime {
@@ -726,9 +724,9 @@ impl preimage::Config for Runtime {
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
-	pub CreationDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
-	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
-	pub RentPerBlock: Balance = CurrencyId::PICA.milli();
+	pub CreationDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
+	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::unit::<Balance>();
+	pub RentPerBlock: Balance = CurrencyId::milli();
 	pub const VaultMinimumDeposit: Balance = 10_000;
 	pub const VaultMinimumWithdrawal: Balance = 10_000;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
@@ -766,7 +764,8 @@ impl currency_factory::Config for Runtime {
 impl assets_registry::Config for Runtime {
 	type Event = Event;
 	type LocalAssetId = CurrencyId;
-	type ForeignAssetId = composable_traits::assets::XcmAssetLocation;
+	type ForeignAssetId = CurrencyId;
+	type Location = composable_traits::assets::XcmAssetLocation;
 	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
 	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
 	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
@@ -791,22 +790,26 @@ impl assets::Config for Runtime {
 }
 
 parameter_types! {
-	  pub const InitialPayment: Perbill = Perbill::from_percent(50);
-	  pub const VestingStep: BlockNumber = 7 * DAYS;
+	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
+	  pub const InitialPayment: Perbill = Perbill::from_percent(25);
+	  pub const VestingStep: Moment = 1;
 	  pub const Prefix: &'static [u8] = b"picasso-";
 }
 
 impl crowdloan_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type Currency = Assets;
+	type RewardAsset = Assets;
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
-	type RelayChainAccountId = [u8; 32];
+	type RelayChainAccountId = sp_runtime::AccountId32;
 	type InitialPayment = InitialPayment;
 	type VestingStep = VestingStep;
 	type Prefix = Prefix;
 	type WeightInfo = weights::crowdloan_rewards::WeightInfo<Runtime>;
+	type PalletId = CrowdloanRewardsId;
+	type Moment = Moment;
+	type Time = Timestamp;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -817,10 +820,7 @@ impl Contains<Call> for BaseCallFilter {
 		if call_filter::Pallet::<Runtime>::contains(call) {
 			return false
 		}
-		!matches!(
-			call,
-			Call::Balances(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_)
-		)
+		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
 	}
 }
 
@@ -839,7 +839,7 @@ impl call_filter::Config for Runtime {
 
 parameter_types! {
 	pub const MaxVestingSchedule: u32 = 2;
-	pub MinVestedTransfer: u64 = 10 * CurrencyId::PICA.unit::<u64>();
+	pub MinVestedTransfer: u64 = 10 * CurrencyId::unit::<u64>();
 }
 
 impl vesting::Config for Runtime {
@@ -847,19 +847,21 @@ impl vesting::Config for Runtime {
 	type Event = Event;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = system::EnsureSigned<AccountId>;
-	type WeightInfo = ();
+	type VestedTransferOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
+	type Moment = Moment;
+	type Time = Timestamp;
 }
 
 parameter_types! {
 	pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
-	pub MinReward: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
-	pub Stake: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+	pub MinReward: Balance = 100 * CurrencyId::unit::<Balance>();
+	pub Stake: Balance = 10 * CurrencyId::unit::<Balance>();
 }
 
 impl bonded_finance::Config for Runtime {
-	type AdminOrigin = EnsureRoot<AccountId>;
-	type BondOfferId = u64;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type BondOfferId = BondOfferId;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type Currency = Assets;
 	type Event = Event;
@@ -868,6 +870,7 @@ impl bonded_finance::Config for Runtime {
 	type PalletId = BondedFinanceId;
 	type Stake = Stake;
 	type Vesting = Vesting;
+	type WeightInfo = weights::bonded_finance::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -904,6 +907,7 @@ impl mosaic::Config for Runtime {
 	type MinimumTimeLockPeriod = MinimumTimeLockPeriod;
 	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
 	type NetworkId = u32;
+	type RemoteAssetId = MosaicRemoteAssetId;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
 }
@@ -914,15 +918,100 @@ pub type OrderId = u128;
 parameter_types! {
 	pub const LiquidationsPalletId: PalletId = PalletId(*b"liqdatns");
 }
+
 impl liquidations::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
 	type DutchAuction = DutchAuction;
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type OrderId = OrderId;
-	type WeightInfo = ();
+	type WeightInfo = weights::liquidations::WeightInfo<Runtime>;
 	type ParachainId = ParaId;
 	type PalletId = LiquidationsPalletId;
+}
+
+parameter_types! {
+	pub const MaxLendingCount: u32 = 10;
+	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
+	pub OracleMarketCreationStake : Balance = 300;
+}
+
+impl lending::Config for Runtime {
+	type Event = Event;
+	type Oracle = Oracle;
+	type VaultId = u64;
+	type Vault = Vault;
+	type CurrencyFactory = CurrencyFactory;
+	type MultiCurrency = Assets;
+	type Liquidation = Liquidations;
+	type UnixTime = Timestamp;
+	type MaxLendingCount = MaxLendingCount;
+	type AuthorityId = oracle::crypto::BathurstStId;
+	type WeightInfo = weights::lending::WeightInfo<Runtime>;
+	type LiquidationStrategyId = u32;
+	type OracleMarketCreationStake = OracleMarketCreationStake;
+	type PalletId = LendingPalletId;
+	type NativeCurrency = Balances;
+	type WeightToFee = WeightToFee;
+}
+
+pub type PoolId = u128;
+
+parameter_types! {
+  pub const ConstantProductPalletId: PalletId = PalletId(*b"pal_cnst");
+}
+
+impl uniswap_v2::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type CurrencyFactory = CurrencyFactory;
+	type Assets = Assets;
+	type Convert = ConvertInto;
+	type PoolId = PoolId;
+	type PalletId = ConstantProductPalletId;
+	type WeightInfo = weights::uniswap_v2::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+  pub const StableSwapPalletId: PalletId = PalletId(*b"pal_stab");
+}
+
+impl curve_amm::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type CurrencyFactory = CurrencyFactory;
+	type Assets = Assets;
+	type Convert = ConvertInto;
+	type PoolId = PoolId;
+	type PalletId = StableSwapPalletId;
+	type WeightInfo = weights::curve_amm::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+  pub LBPId: PalletId = PalletId(*b"pall_lbp");
+  pub MinSaleDuration: BlockNumber = DAYS;
+  pub MaxSaleDuration: BlockNumber = 30 * DAYS;
+  pub MaxInitialWeight: Permill = Permill::from_percent(95);
+  pub MinFinalWeight: Permill = Permill::from_percent(5);
+}
+
+impl liquidity_bootstrapping::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type Convert = ConvertInto;
+	type Assets = Tokens;
+	type PoolId = PoolId;
+	type LocalAssets = CurrencyFactory;
+	type PalletId = LBPId;
+	type MinSaleDuration = MinSaleDuration;
+	type MaxSaleDuration = MaxSaleDuration;
+	type MaxInitialWeight = MaxInitialWeight;
+	type MinFinalWeight = MinFinalWeight;
+	type WeightInfo = weights::liquidity_bootstrapping::WeightInfo<Runtime>;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
 }
 
 construct_runtime!(
@@ -959,7 +1048,7 @@ construct_runtime!(
 		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 		Utility: utility::{Pallet, Call, Event} = 35,
-		  Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
+		Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
@@ -982,7 +1071,10 @@ construct_runtime!(
 		DutchAuction: dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
 		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
-
+		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
+		ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
+		StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
+		LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
@@ -1045,14 +1137,36 @@ mod benches {
 		[identity, Identity]
 		[multisig, Multisig]
 		[vault, Vault]
+		[vesting, Vesting]
 		[oracle, Oracle]
 		[dutch_auction, DutchAuction]
+		[currency_factory, CurrencyFactory]
 		[mosaic, Mosaic]
 		[liquidations, Liquidations]
+		[bonded_finance, BondedFinance]
+		//FIXME: broken with dali [lending, Lending]
+	  [uniswap_v2, ConstantProductDex]
+	  [curve_amm, StableSwapDex]
+	  [liquidity_bootstrapping, LiquidityBootstrapping]
 	);
 }
 
 impl_runtime_apis! {
+	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
+		fn balance_of(asset_id: SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
+			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id.0, &account_id))
+		}
+	}
+
+	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
+		fn amount_available_to_claim_for(account_id: AccountId) -> SafeRpcWrapper<Balance> {
+			SafeRpcWrapper (
+				crowdloan_rewards::amount_available_to_claim_for::<Runtime>(account_id)
+					.unwrap_or_else(|_| Balance::zero())
+			)
+		}
+	}
+
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
 			VERSION
@@ -1158,7 +1272,7 @@ impl_runtime_apis! {
 			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}
-	#[cfg(feature = "sim-node")]
+
 	impl simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime {
 		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
 			use sp_runtime::{
@@ -1179,7 +1293,7 @@ impl_runtime_apis! {
 				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 			);
 
-			let signature = MultiSignature::from(sr25519::Signature([0u8;64]));
+			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
 			let address = AccountIdLookup::unlookup(signer);
 			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
 
@@ -1198,37 +1312,16 @@ impl_runtime_apis! {
 			use system_benchmarking::Pallet as SystemBench;
 			use session_benchmarking::Pallet as SessionBench;
 
-
 			let mut list = Vec::<BenchmarkList>::new();
-
-			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, balances, Balances);
-			list_benchmark!(list, extra, timestamp, Timestamp);
-			list_benchmark!(list, extra, collator_selection, CollatorSelection);
-			list_benchmark!(list, extra, indices, Indices);
-			list_benchmark!(list, extra, membership, CouncilMembership);
-			list_benchmark!(list, extra, treasury, Treasury);
-			list_benchmark!(list, extra, scheduler, Scheduler);
-			list_benchmark!(list, extra, democracy, Democracy);
-			list_benchmark!(list, extra, collective, Council);
-			list_benchmark!(list, extra, utility, Utility);
-			list_benchmark!(list, extra, identity, Identity);
-			list_benchmark!(list, extra, multisig, Multisig);
-			list_benchmark!(list, extra, vault, Vault);
-			list_benchmark!(list, extra, oracle, Oracle);
-			list_benchmark!(list, extra, dutch_auction, DutchAuction);
-			list_benchmark!(list, extra, currency_factory, CurrencyFactory);
-			list_benchmark!(list, extra, liquidations, Liquidations);
-
+			list_benchmarks!(list, extra);
 			let storage_info = AllPalletsWithSystem::storage_info();
-
 			return (list, storage_info)
 		}
 
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+			use frame_benchmarking::{Benchmarking, BenchmarkBatch, TrackedStorageKey};
 
 			use system_benchmarking::Pallet as SystemBench;
 			impl system_benchmarking::Config for Runtime {}
@@ -1251,26 +1344,7 @@ impl_runtime_apis! {
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
-
-			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, balances, Balances);
-			add_benchmark!(params, batches, timestamp, Timestamp);
-			add_benchmark!(params, batches, session, SessionBench::<Runtime>);
-			add_benchmark!(params, batches, collator_selection, CollatorSelection);
-			add_benchmark!(params, batches, indices, Indices);
-			add_benchmark!(params, batches, membership, CouncilMembership);
-			add_benchmark!(params, batches, treasury, Treasury);
-			add_benchmark!(params, batches, scheduler, Scheduler);
-			add_benchmark!(params, batches, democracy, Democracy);
-			add_benchmark!(params, batches, collective, Council);
-			add_benchmark!(params, batches, utility, Utility);
-			add_benchmark!(params, batches, identity, Identity);
-			add_benchmark!(params, batches, multisig, Multisig);
-			add_benchmark!(params, batches, vault, Vault);
-			add_benchmark!(params, batches, oracle, Oracle);
-			add_benchmark!(params, batches, dutch_auction, DutchAuction);
-			add_benchmark!(params, batches, currency_factory, CurrencyFactory);
-			add_benchmark!(params, batches, liquidations, Liquidations);
+			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

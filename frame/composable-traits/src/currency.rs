@@ -4,7 +4,7 @@ use scale_info::TypeInfo;
 use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 use sp_std::fmt::Debug;
 
-use crate::math::SafeArithmetic;
+use crate::math::{SafeAdd, SafeDiv, SafeMul, SafeSub};
 
 /// really u8, but easy to do math operations
 pub type Exponent = u32;
@@ -90,11 +90,30 @@ impl<
 /// so inner type is either u64 or u128 with helpers for producing `ArithmeticError`s instead of
 /// `Option`s.
 pub trait MathBalance:
-	PartialOrd + Zero + SafeArithmetic + Into<u128> + TryFrom<u128> + From<u64> + Copy
+	PartialOrd
+	+ Zero
+	+ SafeAdd
+	+ SafeDiv
+	+ SafeMul
+	+ SafeSub
+	+ Into<u128>
+	+ TryFrom<u128>
+	+ From<u64>
+	+ Copy
 {
 }
-impl<T: PartialOrd + Zero + SafeArithmetic + Into<u128> + TryFrom<u128> + From<u64> + Copy>
-	MathBalance for T
+impl<
+		T: PartialOrd
+			+ Zero
+			+ SafeAdd
+			+ SafeDiv
+			+ SafeMul
+			+ SafeSub
+			+ Into<u128>
+			+ TryFrom<u128>
+			+ From<u64>
+			+ Copy,
+	> MathBalance for T
 {
 }
 

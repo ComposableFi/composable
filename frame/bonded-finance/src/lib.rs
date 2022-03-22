@@ -46,7 +46,7 @@
 //! Bob bonds parts of shares from offer by transfer some asset amount desired by Alice.
 //! Bob will be vested part of reward amount during maturity period from that moment.
 //! It the end of some period Bob may or may be not be return with amount he provided to Alice -
-//! depends on how offer was setup.   
+//! depends on how offer was setup.
 //!
 //! Alice may cancel offer and prevent new bonds on offer, she gets her native tokens back.
 //! All existing vesting periods continue to be executed.
@@ -55,20 +55,25 @@
 //!
 //! This pallet implements the `composable_traits::bonded_finance::BondedFinance`.
 
+#[cfg(feature = "runtime-benchmarks")]
 mod benchmarks;
+
 mod mock;
 mod tests;
-mod utils;
+pub mod weights;
+
+pub use crate::weights::WeightInfo;
 
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
+	use composable_support::validation::Validated;
 	use composable_traits::{
-		bonded_finance::{BondDuration, BondOffer, BondedFinance},
-		math::WrappingNext,
-		vesting::{VestedTransfer, VestingSchedule},
+		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
+		math::SafeAdd,
+		vesting::{VestedTransfer, VestingSchedule, VestingWindow::BlockNumberBased},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -82,10 +87,12 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
-		traits::{AccountIdConversion, BlockNumberProvider, Convert, Zero},
+		traits::{AccountIdConversion, BlockNumberProvider, Convert, One, Zero},
 		ArithmeticError,
 	};
 	use sp_std::fmt::Debug;
+
+	use crate::weights::WeightInfo;
 
 	pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -149,7 +156,8 @@ pub mod pallet {
 			+ Eq
 			+ Debug
 			+ Zero
-			+ WrappingNext
+			+ SafeAdd
+			+ One
 			+ FullCodec
 			+ MaxEncodedLen
 			+ TypeInfo;
@@ -173,10 +181,14 @@ pub mod pallet {
 
 		/// The origin that is allowed to cancel bond offers.
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
+
+		/// Weights
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::type_value]
@@ -210,15 +222,24 @@ pub mod pallet {
 		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must have the
 		/// appropriate funds.
+		/// Allow the issuer to ask for his account to be kept alive using the `keep_alive`
+		/// parameter.
 		///
 		/// Emits a `NewOffer`.
-		#[pallet::weight(10_000)]
-		pub fn offer(origin: OriginFor<T>, offer: BondOfferOf<T>) -> DispatchResult {
+		#[pallet::weight(T::WeightInfo::offer())]
+		pub fn offer(
+			origin: OriginFor<T>,
+			offer: Validated<
+				BondOfferOf<T>,
+				ValidBondOffer<T::MinReward, <T::Vesting as VestedTransfer>::MinVestedTransfer>,
+			>,
+			keep_alive: bool,
+		) -> DispatchResult {
 			let from = ensure_signed(origin)?;
-			Self::do_offer(&from, offer)?;
+			let value = offer.value();
+			Self::do_offer(&from, value, keep_alive)?;
 			Ok(())
 		}
-
 		/// Bond to an offer.
 		/// And user should provide the number of contracts she is willing to buy.
 		/// On offer completion (a.k.a. no more contract on the offer), the `stake` put by the
@@ -227,16 +248,20 @@ pub mod pallet {
 		/// The dispatch origin for this call must be _Signed_ and the sender must have the
 		/// appropriate funds.
 		///
+		/// Allow the bonder to ask for his account to be kept alive using the `keep_alive`
+		/// parameter.
+		///
 		/// Emits a `NewBond`.
 		/// Possibily Emits a `OfferCompleted`.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::bond())]
 		pub fn bond(
 			origin: OriginFor<T>,
 			offer_id: T::BondOfferId,
 			nb_of_bonds: BalanceOf<T>,
+			keep_alive: bool,
 		) -> DispatchResult {
 			let from = ensure_signed(origin)?;
-			Self::do_bond(offer_id, &from, nb_of_bonds)?;
+			Self::do_bond(offer_id, &from, nb_of_bonds, keep_alive)?;
 			Ok(())
 		}
 
@@ -245,7 +270,7 @@ pub mod pallet {
 		/// The dispatch origin for this call must be _Signed_ and the sender must be `AdminOrigin`
 		///
 		/// Emits a `OfferCancelled`.
-		#[pallet::weight(10_000)] // TODO: add weights
+		#[pallet::weight(T::WeightInfo::cancel())]
 		#[transactional]
 		pub fn cancel(origin: OriginFor<T>, offer_id: T::BondOfferId) -> DispatchResult {
 			let (issuer, offer) = Self::get_offer(offer_id)?;
@@ -260,7 +285,8 @@ pub mod pallet {
 				_ => return Err(DispatchError::BadOrigin),
 			};
 			let offer_account = Self::account_id(offer_id);
-			T::NativeCurrency::transfer(&offer_account, &issuer, T::Stake::get(), true)?;
+			// NOTE(hussein-aitlahcen): no need to keep the offer account alive
+			T::NativeCurrency::transfer(&offer_account, &issuer, T::Stake::get(), false)?;
 			T::Currency::transfer(
 				offer.reward.asset,
 				&offer_account,
@@ -285,26 +311,22 @@ pub mod pallet {
 		pub fn do_offer(
 			from: &AccountIdOf<T>,
 			offer: BondOfferOf<T>,
+			keep_alive: bool,
 		) -> Result<T::BondOfferId, DispatchError> {
-			ensure!(
-				offer.valid(
-					<T::Vesting as VestedTransfer>::MinVestedTransfer::get(),
-					T::MinReward::get()
-				),
-				Error::<T>::InvalidBondOffer
-			);
-			let offer_id = BondOfferCount::<T>::mutate(|offer_id| {
-				*offer_id = offer_id.next();
-				*offer_id
-			});
+			let offer_id = BondOfferCount::<T>::try_mutate(
+				|offer_id| -> Result<T::BondOfferId, DispatchError> {
+					*offer_id = offer_id.safe_add(&T::BondOfferId::one())?;
+					Ok(*offer_id)
+				},
+			)?;
 			let offer_account = Self::account_id(offer_id);
-			T::NativeCurrency::transfer(from, &offer_account, T::Stake::get(), true)?;
+			T::NativeCurrency::transfer(from, &offer_account, T::Stake::get(), keep_alive)?;
 			T::Currency::transfer(
 				offer.reward.asset,
 				from,
 				&offer_account,
 				offer.reward.amount,
-				true,
+				keep_alive,
 			)?;
 			BondOffers::<T>::insert(offer_id, (from.clone(), offer));
 			Self::deposit_event(Event::<T>::NewOffer { offer_id });
@@ -316,6 +338,7 @@ pub mod pallet {
 			offer_id: T::BondOfferId,
 			from: &AccountIdOf<T>,
 			nb_of_bonds: BalanceOf<T>,
+			keep_alive: bool,
 		) -> Result<BalanceOf<T>, DispatchError> {
 			BondOffers::<T>::try_mutate(offer_id, |offer| {
 				match offer.as_mut() {
@@ -342,15 +365,23 @@ pub mod pallet {
 							.map_err(|_| ArithmeticError::Overflow)?,
 						);
 						let offer_account = Self::account_id(offer_id);
-						T::Currency::transfer(offer.asset, from, &offer.beneficiary, value, true)?;
+						T::Currency::transfer(
+							offer.asset,
+							from,
+							&offer.beneficiary,
+							value,
+							keep_alive,
+						)?;
 						let current_block = frame_system::Pallet::<T>::current_block_number();
 						T::Vesting::vested_transfer(
 							offer.reward.asset,
 							&offer_account,
 							from,
 							VestingSchedule {
-								start: current_block,
-								period: offer.reward.maturity,
+								window: BlockNumberBased {
+									start: current_block,
+									period: offer.reward.maturity,
+								},
 								period_count: 1,
 								per_period: reward_share,
 							},
@@ -362,8 +393,10 @@ pub mod pallet {
 									&offer.beneficiary,
 									from,
 									VestingSchedule {
-										start: current_block,
-										period: return_in,
+										window: BlockNumberBased {
+											start: current_block,
+											period: return_in,
+										},
 										period_count: 1,
 										per_period: value,
 									},
@@ -374,9 +407,10 @@ pub mod pallet {
 								// that the protocol is now owning the funds.
 							},
 						}
-						// NOTE(hussein-aitlahcen): can't overflow as checked to be <
+						// NOTE(hussein-aitlahcen): can't overflow as checked to be <=
 						// offer.nb_of_bonds prior to this
-						// Same goes for reward_share as nb_of_bonds * bond_price <= total_price
+						// Same goes for reward_share as nb_of_bonds * bond_price <= total_price is
+						// checked by the `Validate` instance of `BondOffer`
 						(*offer).nb_of_bonds -= nb_of_bonds;
 						(*offer).reward.amount -= reward_share;
 						let new_bond_event = || {
@@ -391,7 +425,8 @@ pub mod pallet {
 								&offer_account,
 								issuer,
 								T::Stake::get(),
-								true,
+								// NOTE(hussein-aitlahcen): no need to keep the offer account alive
+								false,
 							)?;
 							new_bond_event();
 							Self::deposit_event(Event::<T>::OfferCompleted { offer_id });
@@ -415,20 +450,27 @@ pub mod pallet {
 		type Balance = BalanceOf<T>;
 		type BlockNumber = BlockNumberOf<T>;
 		type BondOfferId = T::BondOfferId;
+		type MinReward = T::MinReward;
+		type MinVestedTransfer = <T::Vesting as VestedTransfer>::MinVestedTransfer;
 
 		fn offer(
 			from: &Self::AccountId,
-			offer: BondOfferOf<T>,
+			offer: Validated<
+				BondOfferOf<T>,
+				ValidBondOffer<Self::MinReward, Self::MinVestedTransfer>,
+			>,
+			keep_alive: bool,
 		) -> Result<Self::BondOfferId, DispatchError> {
-			Self::do_offer(from, offer)
+			Self::do_offer(from, offer.value(), keep_alive)
 		}
 
 		fn bond(
 			offer: Self::BondOfferId,
 			from: &Self::AccountId,
 			nb_of_bonds: Self::Balance,
+			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
-			Self::do_bond(offer, from, nb_of_bonds)
+			Self::do_bond(offer, from, nb_of_bonds, keep_alive)
 		}
 	}
 }

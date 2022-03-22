@@ -3,7 +3,6 @@
 #![cfg(test)]
 
 use super::*;
-use crate::utils::MIN_VESTED_TRANSFER;
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::bonded_finance::{BondDuration, BondOffer, BondOfferReward};
 use frame_support::{
@@ -15,138 +14,6 @@ use frame_support::{
 };
 use mock::{Event, *};
 use proptest::prelude::*;
-
-#[test]
-fn valid_offer() {
-	assert!(BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: MIN_VESTED_TRANSFER as _,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Infinite,
-		reward: BondOfferReward {
-			asset: MockCurrencyId::PICA,
-			amount: 1_000_000_u128 * 100_000_u128,
-			maturity: 96_u128,
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-	assert!(BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: MIN_VESTED_TRANSFER as _,
-		nb_of_bonds: 1_u128,
-		maturity: BondDuration::Finite { return_in: 1 },
-		reward: BondOfferReward {
-			asset: MockCurrencyId::BTC,
-			amount: 1_000_000_u128,
-			maturity: 96_u128,
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-	assert!(BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Finite { return_in: 1_000_000 },
-		reward: BondOfferReward {
-			asset: MockCurrencyId::BTC,
-			amount: 1_000_000_u128 * 100_000_u128,
-			maturity: 96_u128,
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-}
-
-#[test]
-fn invalid_offer() {
-	// invalid bond_price
-	assert!(!BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: MIN_VESTED_TRANSFER as u128 - 1,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Infinite,
-		reward: BondOfferReward {
-			asset: MockCurrencyId::PICA,
-			amount: 1_000_000_u128,
-			maturity: 96_u128
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-
-	// invalid nb_of_bonds
-	assert!(!BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: MIN_VESTED_TRANSFER as _,
-		nb_of_bonds: 0,
-		maturity: BondDuration::Finite { return_in: 1 },
-		reward: BondOfferReward {
-			asset: MockCurrencyId::BTC,
-			amount: 1_000_000_u128,
-			maturity: 96_u128,
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-
-	// invalid maturity
-	assert!(!BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Finite { return_in: 0 },
-		reward: BondOfferReward {
-			asset: MockCurrencyId::BTC,
-			amount: 1_000_000_u128,
-			maturity: 96_u128,
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-
-	// invalid reward
-	assert!(!BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Finite { return_in: 1_000_000 },
-		reward: BondOfferReward { asset: MockCurrencyId::BTC, amount: 0, maturity: 96_u128 }
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-
-	// invalid reward: < MinVested
-	assert!(!BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Finite { return_in: 1_000_000 },
-		reward: BondOfferReward {
-			asset: MockCurrencyId::BTC,
-			amount: 1_000_000_u128 * 100_000_u128 - 1,
-			maturity: 96_u128
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-
-	// invalid reward maturity
-	assert!(!BondOffer {
-		beneficiary: ALICE,
-		asset: MockCurrencyId::BTC,
-		bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
-		nb_of_bonds: 100_000_u128,
-		maturity: BondDuration::Finite { return_in: 1_000_000 },
-		reward: BondOfferReward {
-			asset: MockCurrencyId::BTC,
-			amount: 1_000_000_u128,
-			maturity: 0_u128
-		}
-	}
-	.valid(MinVestedTransfer::get() as _, MinReward::get()));
-}
 
 prop_compose! {
 	  // NOTE(hussein-aitlahcen): we use u32 before casting to avoid overflows
@@ -188,7 +55,7 @@ proptest! {
 					  System::set_block_number(1);
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
-						let offer_id = BondedFinance::do_offer(&ALICE, offer);
+						let offer_id = BondedFinance::do_offer(&ALICE, offer, false);
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
@@ -204,7 +71,7 @@ proptest! {
 						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
 
 						prop_assert_eq!(Tokens::balance(NATIVE_CURRENCY_ID, &ALICE), Stake::get());
-						prop_assert_ok!(BondedFinance::do_offer(&ALICE, offer));
+						prop_assert_ok!(BondedFinance::do_offer(&ALICE, offer, false));
 						prop_assert_eq!(Tokens::balance(NATIVE_CURRENCY_ID, &ALICE), 0);
 					  Ok(())
 			  })?;
@@ -217,7 +84,7 @@ proptest! {
 						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
 
 						prop_assert_eq!(Tokens::balance(offer.reward.asset, &ALICE), offer.reward.amount);
-						prop_assert_ok!(BondedFinance::do_offer(&ALICE, offer.clone()));
+						prop_assert_ok!(BondedFinance::do_offer(&ALICE, offer.clone(), false));
 						prop_assert_eq!(Tokens::balance(offer.reward.asset, &ALICE), 0);
 					  Ok(())
 			  })?;
@@ -230,7 +97,7 @@ proptest! {
 						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
 
 						prop_assert_eq!(Tokens::balance(offer.reward.asset, &ALICE), offer.reward.amount);
-						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(), false);
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
@@ -238,13 +105,15 @@ proptest! {
 					  let half_nb_of_bonds = offer.nb_of_bonds / 2;
 					  let half_reward = offer.reward.amount / 2;
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, half_nb_of_bonds * offer.bond_price));
-					  prop_assert_ok!(BondedFinance::do_bond(offer_id, &BOB, half_nb_of_bonds));
+					  prop_assert_ok!(BondedFinance::do_bond(offer_id, &BOB, half_nb_of_bonds, false));
 
 					  // Alice cancel the offer
 					  prop_assert_ok!(BondedFinance::cancel(Origin::signed(ALICE), offer_id));
 
-					  // The remaining half is refunded to alice
-						prop_assert_acceptable_computation_error!(Tokens::balance(offer.reward.asset, &ALICE), half_reward);
+					// The remaining half is refunded to alice
+		  let precision = 100;
+				let epsilon = 5;
+				  prop_assert_acceptable_computation_error!(Tokens::balance(offer.reward.asset, &ALICE), half_reward, precision, epsilon);
 
 					  Ok(())
 			  })?;
@@ -257,7 +126,7 @@ proptest! {
 						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
 
 						prop_assert_eq!(Tokens::balance(offer.reward.asset, &ALICE), offer.reward.amount);
-						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(), false);
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
@@ -276,14 +145,14 @@ proptest! {
 			  ExtBuilder::build().execute_with(|| {
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
-						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(), false);
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
-					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds));
+					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds, false));
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds),
+							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds, false),
 							  Err(Error::<Runtime>::OfferCompleted.into())
 					  );
 
@@ -320,13 +189,13 @@ proptest! {
 
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer_a.reward.asset, &ALICE, offer_a.reward.amount));
-						let offer_a_id = BondedFinance::do_offer(&ALICE, offer_a.clone());
+						let offer_a_id = BondedFinance::do_offer(&ALICE, offer_a.clone(), false);
 					  prop_assert_ok!(offer_a_id);
 					  let offer_a_id = offer_a_id.expect("impossible; qed");
 
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &BOB, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer_b.reward.asset, &BOB, offer_b.reward.amount));
-						let offer_b_id = BondedFinance::do_offer(&BOB, offer_b.clone());
+						let offer_b_id = BondedFinance::do_offer(&BOB, offer_b.clone(), false);
 					  prop_assert_ok!(offer_b_id);
 					  let offer_b_id = offer_b_id.expect("impossible; qed");
 
@@ -351,12 +220,12 @@ proptest! {
 
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
-						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(), false);
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
-					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds - 1));
+					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds - 1, false));
 
 					  System::assert_last_event(Event::BondedFinance(crate::Event::NewBond {
 							  offer_id,
@@ -364,7 +233,7 @@ proptest! {
 							  nb_of_bonds: offer.nb_of_bonds - 1
 					  }));
 
-					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, 1));
+					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, 1, false));
 
 					  System::assert_has_event(Event::BondedFinance(crate::Event::NewBond {
 							  offer_id,
@@ -381,10 +250,10 @@ proptest! {
 	  #[test]
 	  fn multiple_bonds(offer in simple_offer(2)) {
 			  ExtBuilder::build().execute_with(|| {
-						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
-						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
+					  prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
+					  prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
 
-						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+					  let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(),false);
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
@@ -392,17 +261,19 @@ proptest! {
 					  let half_reward = offer.reward.amount / 2;
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, half_nb_of_bonds * offer.bond_price));
-					  let bob_reward = BondedFinance::do_bond(offer_id, &BOB, half_nb_of_bonds);
+					  let bob_reward = BondedFinance::do_bond(offer_id, &BOB, half_nb_of_bonds,false);
 					  prop_assert_ok!(bob_reward);
 					  let bob_reward = bob_reward.expect("impossible; qed;");
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &CHARLIE, half_nb_of_bonds * offer.bond_price));
-					  let charlie_reward = BondedFinance::do_bond(offer_id, &CHARLIE, half_nb_of_bonds);
+					  let charlie_reward = BondedFinance::do_bond(offer_id, &CHARLIE, half_nb_of_bonds,false);
 					  prop_assert_ok!(charlie_reward);
 					  let charlie_reward = charlie_reward.expect("impossible; qed;");
 
-					  prop_assert_acceptable_computation_error!(bob_reward, half_reward, 3);
-					  prop_assert_acceptable_computation_error!(charlie_reward, half_reward, 3);
+			let precision = 100;
+			let epsilon = 5;
+					  prop_assert_acceptable_computation_error!(bob_reward, half_reward, precision, epsilon);
+					  prop_assert_acceptable_computation_error!(charlie_reward, half_reward, precision, epsilon);
 
 					  prop_assert!(Tokens::can_withdraw(offer.reward.asset, &BOB, bob_reward) == WithdrawConsequence::Frozen);
 					  prop_assert!(Tokens::can_withdraw(offer.reward.asset, &CHARLIE, charlie_reward) == WithdrawConsequence::Frozen);
@@ -424,13 +295,13 @@ proptest! {
 			  ExtBuilder::build().execute_with(|| {
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
-						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(),false);
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id + 1, offer.nb_of_bonds),
+							  BondedFinance::bond(Origin::signed(BOB), offer_id + 1, offer.nb_of_bonds,false),
 							  Err(Error::<Runtime>::BondOfferNotFound.into())
 					  );
 
@@ -443,17 +314,17 @@ proptest! {
 			  ExtBuilder::build().execute_with(|| {
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
-						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(),false);
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds + 1),
+							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds + 1,false),
 							  Err(Error::<Runtime>::InvalidNumberOfBonds.into())
 					  );
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, 0),
+							  BondedFinance::bond(Origin::signed(BOB), offer_id, 0,false),
 							  Err(Error::<Runtime>::InvalidNumberOfBonds.into())
 					  );
 
@@ -466,14 +337,14 @@ proptest! {
 			  ExtBuilder::build().execute_with(|| {
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
-						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(),false);
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
-					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds));
+					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds,false));
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds),
+							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds,false),
 							  Err(Error::<Runtime>::OfferCompleted.into())
 					  );
 
@@ -490,7 +361,7 @@ proptest! {
 
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
-						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(),false);
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
@@ -504,7 +375,7 @@ proptest! {
 						prop_assert_eq!(Tokens::balance(offer.reward.asset, &ALICE), offer.reward.amount);
 
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds),
+							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds,false),
 							  Err(Error::<Runtime>::BondOfferNotFound.into())
 					  );
 
@@ -521,7 +392,7 @@ proptest! {
 
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
 						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
-						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone());
+						let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(),false);
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
@@ -535,7 +406,7 @@ proptest! {
 						prop_assert_eq!(Tokens::balance(offer.reward.asset, &ALICE), offer.reward.amount);
 
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds),
+							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds,false),
 							  Err(Error::<Runtime>::BondOfferNotFound.into())
 					  );
 
@@ -544,4 +415,203 @@ proptest! {
 					  Ok(())
 			  })?;
 	  }
+}
+
+#[cfg(test)]
+mod test_bond_offer {
+	use super::*;
+	use crate::BondOfferOf;
+	use composable_support::validation::Validate;
+	use composable_traits::bonded_finance::{BondDuration, ValidBondOffer};
+	use frame_support::assert_ok;
+	use mock::Runtime;
+
+	#[test]
+	fn test_valid_offer() {
+		let valid_bond_offer = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Infinite,
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::PICA,
+				amount: 1_000_000_u128 * 100_000_u128,
+				maturity: 96_u64,
+			},
+		};
+
+		assert_ok!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(valid_bond_offer));
+
+		let valid_bond_offer2 = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 1_u128,
+			maturity: BondDuration::Finite { return_in: 1 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::BTC,
+				amount: 1_000_000_u128,
+				maturity: 96_u64,
+			},
+		};
+
+		assert_ok!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(valid_bond_offer2));
+
+		let valid_bond_offer3 = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Finite { return_in: 1_000_000 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::BTC,
+				amount: 1_000_000_u128 * 100_000_u128,
+				maturity: 96_u64,
+			},
+		};
+
+		assert_ok!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(valid_bond_offer3));
+	}
+
+	#[test]
+	fn invalid_bond_price() {
+		let invalid = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::PICA,
+			bond_price: MIN_VESTED_TRANSFER as u128 - 1,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Infinite,
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::PICA,
+				amount: 1_000_000_u128,
+				maturity: 96_u64,
+			},
+		};
+
+		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(invalid)
+		.is_err());
+	}
+
+	#[test]
+	fn test_invalid_nb_of_bonds() {
+		let invalid = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price: MIN_VESTED_TRANSFER as _,
+			nb_of_bonds: 0,
+			maturity: BondDuration::Finite { return_in: 1 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::BTC,
+				amount: 1_000_000_u128,
+				maturity: 96_u64,
+			},
+		};
+
+		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(invalid)
+		.is_err());
+	}
+
+	#[test]
+	fn test_invalid_maturity() {
+		let invalid = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Finite { return_in: 0 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::BTC,
+				amount: 1_000_000_u128,
+				maturity: 96_u64,
+			},
+		};
+
+		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(invalid)
+		.is_err());
+	}
+
+	#[test]
+	fn test_invalid_reward() {
+		let invalid = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Finite { return_in: 1_000_000 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::BTC,
+				amount: 0,
+				maturity: 96_u64,
+			},
+		};
+
+		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(invalid)
+		.is_err());
+	}
+
+	#[test]
+	fn test_invalid_reward_less_than_minvested() {
+		let invalid = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Finite { return_in: 1_000_000 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::BTC,
+				amount: MIN_VESTED_TRANSFER * 1_000_u128 - 1,
+				maturity: 96_u64,
+			},
+		};
+
+		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(invalid)
+		.is_err());
+	}
+
+	#[test]
+	fn test_invalid_reward_maturity() {
+		let invalid = BondOfferOf::<Runtime> {
+			beneficiary: ALICE,
+			asset: mock::MockCurrencyId::BTC,
+			bond_price: 1_000_000 + MIN_VESTED_TRANSFER as u128,
+			nb_of_bonds: 100_000_u128,
+			maturity: BondDuration::Finite { return_in: 1_000_000 },
+			reward: BondOfferReward {
+				asset: mock::MockCurrencyId::BTC,
+				amount: MIN_VESTED_TRANSFER * 1_000_u128 - 1,
+				maturity: 0_u64,
+			},
+		};
+
+		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
+			BondOfferOf<Runtime>,
+			ValidBondOffer<MinReward, MinVestedTransfer>,
+		>>::validate(invalid)
+		.is_err());
+	}
 }

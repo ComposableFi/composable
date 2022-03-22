@@ -8,6 +8,8 @@ use sp_runtime::{
 	ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128,
 };
 
+use sp_std::fmt::Debug;
+
 use crate::currency::{AssetIdLike, BalanceLike, MathBalance};
 
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
@@ -71,7 +73,7 @@ impl<AssetId: PartialEq, Balance: MathBalance> Sell<AssetId, Balance> {
 /// Example, can do - give `base`, how much `quote` needed for unit.
 /// Can be local `Copy` `AssetId` or remote XCM asset id pair.
 #[repr(C)]
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone)]
 pub struct CurrencyPair<AssetId> {
 	/// See [Base Currency](https://www.investopedia.com/terms/b/basecurrency.asp).
 	/// Also can be named `native`(to the market) currency.
@@ -81,6 +83,21 @@ pub struct CurrencyPair<AssetId> {
 	/// Also can be named `price` currency.
 	/// Usually more stable, may be `borrowable` asset.
 	pub quote: AssetId,
+}
+
+impl<AssetId: PartialEq> PartialEq for CurrencyPair<AssetId> {
+	fn eq(&self, other: &Self) -> bool {
+		(self.base == other.base && self.quote == other.quote) ||
+			(self.base == other.quote && self.quote == other.base)
+	}
+}
+
+impl<AssetId: PartialEq> Eq for CurrencyPair<AssetId> {}
+
+impl<AssetId: Copy> CurrencyPair<AssetId> {
+	pub fn swap(&self) -> Self {
+		Self { base: self.quote, quote: self.base }
+	}
 }
 
 impl<AssetId> From<(AssetId, AssetId)> for CurrencyPair<AssetId> {
@@ -205,7 +222,7 @@ pub trait SellEngine<Configuration>: DeFiEngine {
 }
 
 pub trait DeFiComposableConfig: frame_system::Config {
-	type MayBeAssetId: AssetIdLike + MaybeSerializeDeserialize + Default;
+	type MayBeAssetId: AssetIdLike + MaybeSerializeDeserialize + Default + MaxEncodedLen + Debug;
 
 	type Balance: BalanceLike
 		+ MathBalance
@@ -249,7 +266,6 @@ pub type Ratio = FixedU128;
 
 #[cfg(test)]
 mod tests {
-
 	use super::{Ratio, Take};
 	use sp_runtime::FixedPointNumber;
 
