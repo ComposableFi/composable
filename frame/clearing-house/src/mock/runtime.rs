@@ -184,6 +184,8 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage)
 			.unwrap();
 
-		storage.into()
+		let mut ext: sp_io::TestExternalities = storage.into();
+		ext.execute_with(|| System::set_block_number(1));
+		ext
 	}
 }
