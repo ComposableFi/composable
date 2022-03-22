@@ -61,7 +61,7 @@ pub mod pallet {
 
 	use crate::weights::WeightInfo;
 	use codec::FullCodec;
-	use composable_traits::{clearing_house::MarginAccounts, defi::DeFiComposableConfig};
+	use composable_traits::{clearing_house::MarginTrading, defi::DeFiComposableConfig};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{tokens::fungibles::Transfer, GenesisBuild},
@@ -295,7 +295,7 @@ pub mod pallet {
 			amount: T::Balance,
 		) -> DispatchResult {
 			let acc = ensure_signed(origin)?;
-			<Self as MarginAccounts>::add_margin(&acc, asset, amount)?;
+			<Self as MarginTrading>::add_margin(&acc, asset, amount)?;
 			Ok(())
 		}
 	}
@@ -304,7 +304,7 @@ pub mod pallet {
 	//                              Trait Implementations
 	// ----------------------------------------------------------------------------------------------------
 
-	impl<T: Config> MarginAccounts for Pallet<T> {
+	impl<T: Config> MarginTrading for Pallet<T> {
 		type AccountId = T::AccountId;
 		type AssetId = AssetIdOf<T>;
 		type Balance = T::Balance;
