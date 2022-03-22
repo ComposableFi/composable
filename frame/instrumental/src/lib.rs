@@ -392,6 +392,22 @@ pub mod pallet {
 			Ok(vault_id)
 		}
 	
+		/// Add assets into its underlying vault.
+		/// 
+		/// # Overview
+		/// 
+		/// ## Parameters
+		/// - `issuer`: the 'AccountId' of the user who issued the request
+		/// - `asset`: the `AssetId` of the asset to deposit.
+		/// - `amount`: the amount of `asset` to deposit.
+		/// 
+		/// ## Requirements
+		/// 1. There must be a vault associated with `asset`.
+		/// 
+		/// ## Errors
+		/// - `AssetDoesNotHaveAnAssociatedVault`: no vault has been created for `asset`.
+		/// 
+		/// # Runtime: O(TBD)
 		fn add_liquidity(
 			issuer: &Self::AccountId,
 			asset: &Self::AssetId,
