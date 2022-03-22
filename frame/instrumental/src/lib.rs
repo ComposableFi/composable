@@ -90,6 +90,7 @@ pub mod pallet {
 	};
 
 	use composable_traits::{
+		instrumental::Instrumental,
 		vault::{Deposit as Duration, StrategicVault, Vault, VaultConfig},
 	};
 
@@ -189,6 +190,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		Created {
+			vault_id: T::VaultId,
 			asset: T::AssetId
 		},
 
@@ -265,11 +267,11 @@ pub mod pallet {
 			//  - (potentially) enforce that the issuer must have priviledged rights
 
 			// Requirement 1) This extrinsic must be signed 
-			let from = ensure_signed(origin)?;
+			let _from = ensure_signed(origin)?;
 
-			Self::do_create(&from, &asset)?;
+			let vault_id = <Self as Instrumental>::create(&asset)?;
 
-			Self::deposit_event(Event::Created { asset });
+			Self::deposit_event(Event::Created { vault_id, asset });
 
 			Ok(().into())
 		}
@@ -362,6 +364,41 @@ pub mod pallet {
 	}
 
 	// ----------------------------------------------------------------------------------------------------
+    //                                          Instrumental Trait                                         
+	// ----------------------------------------------------------------------------------------------------
+
+	impl<T: Config> Instrumental for Pallet<T> {
+		type AccountId = T::AccountId;
+		type AssetId = T::AssetId;
+		type Balance = T::Balance;
+		type VaultId = T::VaultId;
+
+		fn create(
+			asset: &Self::AssetId,
+		) -> Result<Self::VaultId, DispatchError> {
+			let vault_id = Self::do_create(asset)?;
+
+			Ok(vault_id)
+		}
+	
+		fn add_liquidity(
+			issuer: Self::AccountId,
+			asset: Self::AssetId,
+			amount: Self::Balance
+		) -> Result<(), DispatchError> {
+			Ok(())
+		}
+	
+		fn remove_liquidity(
+			issuer: Self::AccountId,
+			asset: Self::AssetId,
+			amount: Self::Balance
+		) -> Result<(), DispatchError> {
+			Ok(())
+		}
+	}
+
+	// ----------------------------------------------------------------------------------------------------
     //                                        Low Level Functionality                                      
 	// ----------------------------------------------------------------------------------------------------
 
@@ -372,9 +409,8 @@ pub mod pallet {
 		
 		#[transactional]
 		fn do_create(
-			_issuer: &T::AccountId,
 			asset: &T::AssetId,
-		) -> Result<(), DispatchError> {
+		) -> Result<T::VaultId, DispatchError> {
 			// Requirement 1) An asset can only have one vault associated with it
 			ensure!(!AssetVault::<T>::contains_key(asset), Error::<T>::VaultAlreadyExists);
 
@@ -393,9 +429,9 @@ pub mod pallet {
 				},
 			)?;
 
-			AssetVault::<T>::insert(asset, vault_id);
+			AssetVault::<T>::insert(asset, &vault_id);
 			
-			Ok(())
+			Ok(vault_id)
 		}
 
 		#[transactional]

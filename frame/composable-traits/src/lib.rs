@@ -21,6 +21,7 @@ pub mod defi;
 pub mod dex;
 pub mod financial_nft;
 pub mod governance;
+pub mod instrumental;
 pub mod lending;
 pub mod liquidation;
 pub mod mosaic;
