@@ -1,3 +1,5 @@
+pub type CurrencyId = u128;
+
 /// # Note: 
 ///
 /// I was having issues add pallet_lending as a dev-dependency, so this
@@ -19,7 +21,7 @@
 /// let one_value_of_b = BCOIN::one();
 /// ```
 #[derive(Debug, Clone, Copy)]
-pub struct Currency<const ID: u128, const EXPONENT: u8> {}
+pub struct Currency<const ID: CurrencyId, const EXPONENT: u8> {}
 
 impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	#![allow(unused)]
@@ -84,12 +86,24 @@ pub mod defs {
 	use super::Currency;
 
 	pub type PICA = Currency<1, 12>;
-	pub type BTC = Currency<2000, 12>;
 	pub type USDC = Currency<1000, 12>;
+	pub type BTC = Currency<2000, 12>;
+	pub type LAYR = Currency<3000, 12>;
+	pub type CROWDLOAN = Currency<4000, 12>;
+	pub type KSM = Currency<5000, 12>;
 
 	pub type NORMALIZED = USDC;
 }
 
 pub use defs::*;
 
-pub type CurrencyId = u128;
+use proptest::{prop_oneof, strategy::{Just, Strategy}};
+
+#[allow(dead_code)]
+pub fn pick_currency() -> impl Strategy<Value = CurrencyId> {
+	prop_oneof![
+		Just(PICA::ID),
+		Just(BTC::ID),
+		Just(USDC::ID),
+	]
+}

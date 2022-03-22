@@ -1,12 +1,12 @@
 #[cfg(test)]
 
 use crate::mock::{
-    AccountId, ADMIN, ALICE, Assets, Event, ExtBuilder, Instrumental, 
+    AccountId, ADMIN, ALICE, Assets, Balance, Event, ExtBuilder, Instrumental, 
     MockRuntime, Origin, System, Vault,
 };
 use crate::{pallet, pallet::AssetVault, pallet::Error};
 use crate::currency::{
-    CurrencyId, USDC
+    CurrencyId, pick_currency, USDC
 };
 
 use pallet_vault::Vaults as VaultInfoStorage;
@@ -19,7 +19,7 @@ use frame_support::{
 };
 use sp_runtime::Perquintill;
 
-// use proptest::prelude::*;
+use proptest::prelude::*;
 
 // ----------------------------------------------------------------------------------------------------
 //                                           Helper Functions                                          
@@ -106,6 +106,36 @@ impl VaultBuilder {
                 ).ok();
             })
     }
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                             Prop_compose                                            
+// ----------------------------------------------------------------------------------------------------
+
+prop_compose! {
+    fn generate_centre()(centre in -1000..1000) -> i32 {
+        centre
+    }
+}
+
+// initial_assets in prop::collection::vec(strategy_pick_random_mock_currency(), 2usize..26usize),
+
+#[allow(dead_code)]
+const TOTAL_NUM_OF_ASSETS: usize = 3;
+#[allow(dead_code)]
+const MINIMUM_RESERVE: Balance = 1_000;
+#[allow(dead_code)]
+const MAXIMUM_RESERVE: Balance = 1_000_000_000;
+
+prop_compose! {
+    fn generate_reserves()
+        (
+            currencies in prop::collection::vec(pick_currency(), 1..=TOTAL_NUM_OF_ASSETS),
+            balances in prop::collection::vec(MINIMUM_RESERVE..MAXIMUM_RESERVE, 1..=TOTAL_NUM_OF_ASSETS),
+        ) -> Vec<(CurrencyId, Balance)>{
+
+        currencies.into_iter().zip(balances.into_iter()).collect()
+   }
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -212,7 +242,7 @@ fn remove_liquidity_extrinsic_emits_event() {
 
             let config = VaultConfigBuilder::default().build();
             assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
-            
+
             assert_ok!(Instrumental::add_liquidity(Origin::signed(ALICE), USDC::ID, USDC::units(100)));
             assert_ok!(Instrumental::remove_liquidity(Origin::signed(ALICE), USDC::ID, USDC::units(100)));
 
