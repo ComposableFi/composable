@@ -88,6 +88,7 @@ impl Default for VaultBuilder {
     }
 }
 
+#[allow(dead_code)]
 impl VaultBuilder {
     fn vault(mut self, asset: CurrencyId) -> Self {
         self.assets.push(asset);
@@ -95,9 +96,11 @@ impl VaultBuilder {
     }
     
     fn build(self) -> () {
+        // TODO: (Nevin)
+        //  - remove duplicate assets
         self.assets.iter()
             .for_each(|&asset| {
-               Instrumental::create(Origin::signed(ADMIN), asset);
+               Instrumental::create(Origin::signed(ADMIN), asset).ok();
             })
     }
 }
