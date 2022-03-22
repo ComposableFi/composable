@@ -20,6 +20,7 @@ pub mod currency;
 pub mod defi;
 pub mod dex;
 pub mod governance;
+pub mod instrumental;
 pub mod lending;
 pub mod liquidation;
 pub mod math;
