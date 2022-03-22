@@ -28,6 +28,7 @@
 //! ## Interface
 //!
 //! ### Extrinsics
+//! - [`add_margin`](Call::add_margin)
 //!
 //! ### Implemented Functions
 //!
@@ -270,24 +271,33 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Adds margin to a trader's account.
 		///
+		/// # Overview
 		/// A user has to have enough margin to open new positions
 		/// and can be liquidated if its margin ratio falls bellow maintenance. Deposited collateral
 		/// backs all the positions of an account across multiple markets (cross-margining).
 		///
-		/// If an account does not exist in [`AccountsMargin`], it is created and initialized with 0
-		/// margin.
+		/// ![](http://www.plantuml.com/plantuml/svg/JOuzoiCm44JxxnHV3c1ldyeGo3tMqbWII2kpF-JwCIb2gc4UhtYREQl7w7-t9gb7HcZ_h-wdtOcKNsjfNcCFWwOf3l4rpK6FESvfl7Sy6wNl8LYgqEK0UoY8Sru6Qsb2X_80fGxM9cMfCmoK6vUBsu-udftbKxH1yhLl)
 		///
-		/// Parameters:
+		/// ## Parameters:
 		/// - `asset`: The identifier of the asset type being deposited
 		/// - `amount`: The balance of `asset` to be transferred from the caller to the Clearing
 		///   House
 		///
-		/// Emits [`MarginAdded`](Event::<T>::MarginAdded) event when successful.
+		/// ## Assumptions or Requirements
+		/// The collateral type must be supported, i.e., contained in [`CollateralTypes`].
 		///
-		/// Checks that the collateral type is supported, raising
-		/// [`UnsupportedCollateralType`](Error::<T>::UnsupportedCollateralType) if unsuccessful.
+		/// ## Emits
+		/// * [`MarginAdded`](Event::<T>::MarginAdded)
 		///
-		/// Weight: `O(1)`
+		/// ## State Changes
+		/// Updates the [`AccountsMargin`] storage map. If an account does not exist in
+		/// [`AccountsMargin`], it is created and initialized with 0 margin.
+		///
+		/// ## Errors
+		/// * [`UnsupportedCollateralType`](Error::<T>::UnsupportedCollateralType)
+		///
+		/// # Weight/Runtime
+		/// `O(1)`
 		#[pallet::weight(<T as Config>::WeightInfo::add_margin())]
 		pub fn add_margin(
 			origin: OriginFor<T>,
