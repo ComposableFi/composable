@@ -10,7 +10,10 @@ use crate::{
 use composable_support::validation::{TryIntoValidated, Validate};
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
-use sp_runtime::{traits::One, Percent};
+use sp_runtime::{
+	traits::{One, Zero},
+	Percent,
+};
 
 use self::math::*;
 
@@ -87,7 +90,6 @@ impl<LiquidationStrategyId, Asset: Eq>
 	}
 }
 
-// REVIEW: Are these necessary? The fields are public.
 impl<LiquidationStrategyId, AssetId: Copy> CreateInput<LiquidationStrategyId, AssetId> {
 	pub fn borrow_asset(&self) -> AssetId {
 		self.currency_pair.quote
@@ -116,27 +118,76 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId> {
 }
 
 /// Different ways that a market can be repaid.
-// REVIEW: Name is not final
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
 pub enum RepayStrategy<T> {
-	/// Attempt to repay the entirety of the remaining debt, repaying interest first and
-	/// then principal with whatever is left.
+	/// Attempt to repay the entirety of the remaining debt.
 	TotalDebt,
-	/// Repay the specified amount.
+	/// Repay the specified amount, repaying interest first and then principal with whatever (if
+	/// anything) is left.
 	///
-	/// NOTE: Must be less than the total owing amount + the interest
+	/// NOTE: Must be *less than* the total owing amount + the accrued interest.
 	PartialAmount(T),
+	// REVIEW: Perhaps add an "interest only" strategy?
 }
 
-/// Different ways that a market can be repaid.
-// REVIEW: Name is not final
+/// The total amount of debt for an account on a market, if any.
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
-pub enum RepayResult<T> {
-	/// Attempt to repay the entirety of the remaining debt, repaying interest first and
-	/// thenprincipal with whatever is left.
-	Repaid(T),
-	/// Repay the specified amount.
-	NothingToRepay,
+pub enum TotalDebtWithInterest<T> {
+	/// The account has some amount of debt on the market.
+	Amount(T),
+	/// The account has not borrowed from the market yet, or has paid off their debts. There is no
+	/// interest or principal left to repay.
+	NoDebt,
+}
+
+impl<T> TotalDebtWithInterest<T>
+where
+	T: Zero,
+{
+	/// Returns the value contained in [`Amount`], or `T::zero()` if `self` is [`NoDebt`].
+	///
+	/// [`Amount`]: TotalDebtWithInterest::Amount
+	/// [`NoDebt`]: TotalDebtWithInterest::NoDebt
+	pub fn unwrap_or_zero(self) -> T {
+		match self {
+			TotalDebtWithInterest::Amount(amount) => amount,
+			TotalDebtWithInterest::NoDebt => T::zero(),
+		}
+	}
+}
+
+impl<T> TotalDebtWithInterest<T> {
+	///    Returns the contained [`Amount`] value, consuming the self value.
+	///
+	/// # Panics
+	///
+	/// Panics if the self value equals [`NoDebt`].
+	///
+	/// [`Amount`]: TotalDebtWithInterest::Amount
+	/// [`NoDebt`]: TotalDebtWithInterest::NoDebt
+	// #[cfg(test)]
+	pub fn unwrap_amount(self) -> T {
+		match self {
+			TotalDebtWithInterest::Amount(amount) => amount,
+			TotalDebtWithInterest::NoDebt => {
+				panic!("called `TotalDebtWithInterest::unwrap_amount()` on a `NoDebt` value")
+			},
+		}
+	}
+
+	/// Returns `true` if the total debt with interest is [`Amount`].
+	///
+	/// [`Amount`]: TotalDebtWithInterest::Amount
+	pub fn is_amount(&self) -> bool {
+		matches!(self, Self::Amount(..))
+	}
+
+	/// Returns `true` if the total debt with interest is [`NoDebt`].
+	///
+	/// [`NoDebt`]: TotalDebtWithInterest::NoDebt
+	pub fn is_no_debt(&self) -> bool {
+		matches!(self, Self::NoDebt)
+	}
 }
 
 /// Basic lending with no its own wrapper (liquidity) token.
@@ -198,7 +249,7 @@ pub trait Lending: DeFiEngine {
 		config: CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId>,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 
-	/// AccountId of the market instance
+	/// [`AccountId`][Self::AccountId] of the market instance
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId;
 
 	/// Deposit collateral in order to borrow.
@@ -226,21 +277,9 @@ pub trait Lending: DeFiEngine {
 	/// get all existing markets for current deposit
 	fn get_markets_for_borrow(vault: Self::VaultId) -> Vec<Self::MarketId>;
 
-	#[allow(clippy::type_complexity)]
-	// REVIEW: Why not use a map? Could also return an iterator, that way the caller can do whatever
-	// they like with it.
-	fn get_all_markets() -> Vec<(
-		Self::MarketId,
-		MarketConfig<
-			Self::VaultId,
-			Self::MayBeAssetId,
-			Self::AccountId,
-			Self::LiquidationStrategyId,
-		>,
-	)>;
-
+	// REVIEW: what
 	/// `amount_to_borrow` is the amount of the borrow asset lendings's vault shares the user wants
-	/// to borrow. Normalizes amounts for calculations.
+	/// to borrow. Amounts are normalized for calculations.
 	/// Borrows as exact amount as possible with some inaccuracies for oracle price based
 	/// normalization. If there is not enough collateral or borrow amounts - fails
 	fn borrow(
@@ -250,11 +289,16 @@ pub trait Lending: DeFiEngine {
 	) -> Result<(), DispatchError>;
 
 	/// Attempt to repay part or all of `beneficiary`'s debts, paid from `from`.
-	/// - `market_id` : id of the market being repaid.
-	/// - `repay_amount`: the amount of borrow asset to be repaid. See [`RepayStrategy`] for more
+	///
+	/// - `market_id`: id of the market being repaid.
+	/// - `from`: the account repaying the debt.
+	/// - `beneficiary`: the account who's debt is being repaid.
+	/// - `repay_amount`: the amount of debt to be repaid. See [`RepayStrategy`] for more
 	///   information.
 	///
-	/// Returns the amount that was repaid.
+	/// Returns the amount that was repaid if the repay was successful.
+	///
+	/// NOTE: `from` and `beneficiary` can be the same account.
 	// REVIEW: Rename `from` parameter? `payer`, perhaps
 	fn repay_borrow(
 		market_id: &Self::MarketId,
@@ -263,11 +307,11 @@ pub trait Lending: DeFiEngine {
 		repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
 	) -> Result<BorrowAmountOf<Self>, DispatchError>;
 
-	/// total debts principals (not includes interest)
+	/// The total amount borrowed from the given market, not including interest.
 	fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
 	/// Floored down to zero.
-	// ^ why?
+	// REVIEW: ^ why?
 	fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
 	/// ````python
@@ -302,7 +346,7 @@ pub trait Lending: DeFiEngine {
 	fn total_debt_with_interest(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
-	) -> Result<BorrowAmountOf<Self>, DispatchError>;
+	) -> Result<TotalDebtWithInterest<BorrowAmountOf<Self>>, DispatchError>;
 
 	fn collateral_of_account(
 		market_id: &Self::MarketId,
@@ -310,21 +354,85 @@ pub trait Lending: DeFiEngine {
 	) -> Result<CollateralLpAmountOf<Self>, DispatchError>;
 
 	/// Borrower shouldn't borrow more than his total collateral value
+	///
+	/// The amount of collateral that would be required in order to borrow `borrow_amount` of borrow
+	/// asset.
+	///
+	/// Can be thought of as the "inverse" of [`Lending::get_borrow_limit`], in that
+	/// `get_borrow_limit` returns the maximum amount borrowable with the *current* collateral,
+	/// while `collateral_required` returns the amount of collateral asset that would be needed to
+	/// borrow the specified amount.
 	fn collateral_required(
 		market_id: &Self::MarketId,
 		borrow_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
-	/// Returns the borrow limit for an account in `Oracle` price.
-	/// Calculation uses indexes from start of block time.
-	/// Depends on overall collateral put by user into vault.
-	/// This borrow limit of specific user, depends only on prices and users collateral, not on
-	/// state of vault.
+	/// Returns the "borrow limit" for an account in `Oracle` price, i.e. the maximum amount an
+	/// account can borrow before going under-collateralized.
 	///
-	/// REVIEW: Order of operations below?
-	/// ```python
-	/// collateral_balance * collateral_price / collateral_factor - borrower_balance_with_interest * borrow_price
+	/// REVIEW: What?
+	/// The calculation uses indexes from start of block time.
+	///
+	/// The borrow limit is only affected by the prices of the assets and the amount of collateral
+	/// deopsited by the account, and is *specific to this account*. The state of the vault is not
+	/// relevant for this calculation.
+	///
+	/// The calculation is as follows, broken up for clarity:
+	///
+	/// ```ignore
+	/// // total value of the account's collateral
+	/// collateral_value = collateral_balance * collateral_price
+	///
+	/// // available value of the account's collateral, i.e. the amount not held as collateral
+	/// collateral_value_available = collateral_value / collateral_factor
+	///
+	/// // total value of the account's borrowed asset, including interest
+	/// value_already_borrowed = borrower_total_balance_with_interest * borrow_price
+	///
+	/// // the maximum amount the account can borrow
+	/// borrow_limit = collateral_value_available - value_already_borrowed
 	/// ```
+	///
+	/// # Example
+	///
+	/// ```ignore
+	/// // Given the following values:
+	/// let collateral_balance = 100;
+	/// let collateral_price = 50_000;
+	/// let collateral_factor = 2;
+	/// let borrower_total_balance_with_interest = 100;
+	/// let borrow_price = 1_000;
+	///
+	/// let collateral_value = collateral_balance * collateral_price;
+	///                   // = 100 * 50_000
+	///                   // = 5_000_000
+	///
+	/// let collateral_value_available = collateral_value / collateral_factor;
+	///                             // = 5_000_000 / 2
+	///                             // = 2_500_000
+	///
+	/// let value_already_borrowed = borrower_total_balance_with_interest * borrow_price;
+	///               // = 100 * 1_000
+	///               // = 100_000
+	///
+	/// let borrow_limit = collateral_value_available - value_already_borrowed;
+	///               // = 2_500_000 - 100_000
+	///               // = 2_400_000
+	/// ```
+	///
+	/// ...meaning the borrower can borrow 2.4m *worth* of the borrow asset.
+	///
+	/// Given that the price of the borrow asset is `1_000`, they would be able to borrow ***`2,400`
+	/// total tokens*** of borrow asset.
+	///
+	/// The borrow limit will fluctuate as the prices of the borrow and collateral assets fluctuate,
+	/// going *up* as either the borrow asset *loses* value or the collateral asset *gains* value,
+	/// and going *down* as either the borrow asset *gains* value or the collateral asset *loses*
+	/// value.
+	///
+	/// NOTE: This will return `zero` if the account has not deposited any collateral yet (a newly
+	/// created market, for instance) ***OR*** if the account has already borrowed the maximum
+	/// amount borrowable with the given amount of collateral deposited.
 	fn get_borrow_limit(
 		market_id: &Self::MarketId,
 		account: &Self::AccountId,
