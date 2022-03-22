@@ -307,13 +307,8 @@ pub mod pallet {
 			// Requirement 1) This extrinsic must be signed 
 			let issuer = ensure_signed(origin)?;
 
-			// Requirement 2) The asset must have an associated vault
-			ensure!(
-				AssetVault::<T>::contains_key(asset),
-				Error::<T>::AssetDoesNotHaveAnAssociatedVault
-			);
+			<Self as Instrumental>::add_liquidity(&issuer, &asset, amount)?;
 
-			Self::do_add_liquidity(&issuer, &asset, amount)?;
 			Self::deposit_event(Event::AddedLiquidity {asset, amount});
 
 			Ok(().into())
@@ -382,10 +377,18 @@ pub mod pallet {
 		}
 	
 		fn add_liquidity(
-			issuer: Self::AccountId,
-			asset: Self::AssetId,
+			issuer: &Self::AccountId,
+			asset: &Self::AssetId,
 			amount: Self::Balance
 		) -> Result<(), DispatchError> {
+			// Requirement 1) The asset must have an associated vault
+			ensure!(
+				AssetVault::<T>::contains_key(asset),
+				Error::<T>::AssetDoesNotHaveAnAssociatedVault
+			);
+
+			Self::do_add_liquidity(issuer, asset, amount)?;
+
 			Ok(())
 		}
 	
