@@ -424,6 +424,22 @@ pub mod pallet {
 			Ok(())
 		}
 	
+		/// Remove assets from its underlying vault.
+		/// 
+		/// # Overview
+		/// 
+		/// ## Parameters
+		/// - `issuer`: the 'AccountId' of the user who issued the request
+		/// - `asset`: the `AssetId` of the asset to withdraw.
+		/// - `amount`: the amount of `asset` to withdraw.
+		/// 
+		/// ## Requirements
+		/// 1. There must be a vault associated with `asset`.
+		/// 
+		/// ## Errors
+		/// - `AssetDoesNotHaveAnAssociatedVault`: no vault has been created for `asset`.
+		/// 
+		/// # Runtime: O(TBD)
 		fn remove_liquidity(
 			issuer: &Self::AccountId,
 			asset: &Self::AssetId,
