@@ -197,6 +197,8 @@ std = [
   "membership/std",
   "system-rpc-runtime-api/std",
   "transaction-payment-rpc-runtime-api/std",
+  "assets-runtime-api/std",
+  "crowdloan-rewards-runtime-api/std",
   "simnode-apis/std",
 ]
 wasm-builder = []
