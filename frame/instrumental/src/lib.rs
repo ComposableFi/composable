@@ -95,7 +95,6 @@ pub mod pallet {
 	};
 
 	use sp_runtime::{
-		Perquintill,
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
 			Zero,
@@ -191,7 +190,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		Created {
 			vault_id: T::VaultId,
-			asset: T::AssetId
+			config: VaultConfig<T::AccountId, T::AssetId>
 		},
 
 		AddedLiquidity {
@@ -249,7 +248,7 @@ pub mod pallet {
 		/// - [`Event::Created`](Event::Created)
 		/// 
 		/// ## State Changes
-		/// - [`AssetVault`](AssetVault): a mapping between the parameter `asset` and the created vault's
+		/// - [`AssetVault`](AssetVault): a mcklapping between the parameter `asset` and the created vault's
 		///     `VaultId` is stored.
 		/// 
 		/// ## Errors
@@ -261,7 +260,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::create())]
 		pub fn create(
 			origin: OriginFor<T>,
-			asset: T::AssetId,
+			config: VaultConfig<T::AccountId, T::AssetId>,
 		) -> DispatchResultWithPostInfo {
 			// TODO: (Nevin)
 			//  - (potentially) enforce that the issuer must have priviledged rights
@@ -269,9 +268,9 @@ pub mod pallet {
 			// Requirement 1) This extrinsic must be signed 
 			let _from = ensure_signed(origin)?;
 
-			let vault_id = <Self as Instrumental>::create(&asset)?;
+			let vault_id = <Self as Instrumental>::create(config.clone())?;
 
-			Self::deposit_event(Event::Created { vault_id, asset });
+			Self::deposit_event(Event::Created { vault_id, config });
 
 			Ok(().into())
 		}
@@ -364,9 +363,12 @@ pub mod pallet {
 		type VaultId = T::VaultId;
 
 		fn create(
-			asset: &Self::AssetId,
+			config: VaultConfig<Self::AccountId, Self::AssetId>,
 		) -> Result<Self::VaultId, DispatchError> {
-			let vault_id = Self::do_create(asset)?;
+			// Requirement 1) An asset can only have one vault associated with it
+			ensure!(!AssetVault::<T>::contains_key(config.asset_id), Error::<T>::VaultAlreadyExists);
+			
+			let vault_id = Self::do_create(config)?;
 
 			Ok(vault_id)
 		}
@@ -409,29 +411,30 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> Pallet<T> {
+		// TODO: (Nevin)
+		//  - decide if each asset should have an associated account, or if
+		//        the pallet itself should have one global account
 		fn account_id(asset: &T::AssetId) -> T::AccountId {
 			T::PalletId::get().into_sub_account_truncating(asset)
 		}
 		
 		#[transactional]
 		fn do_create(
-			asset: &T::AssetId,
+			config: VaultConfig<T::AccountId, T::AssetId>,
 		) -> Result<T::VaultId, DispatchError> {
-			// Requirement 1) An asset can only have one vault associated with it
-			ensure!(!AssetVault::<T>::contains_key(asset), Error::<T>::VaultAlreadyExists);
+			let asset = config.asset_id;
+			let account_id = Self::account_id(&asset);
 
 			// TODO: (Nevin)
-			//  - decide if each asset should have an associated account, or if
-			//        the pallet itself should have one global account
-			let account_id = Self::account_id(asset);
-
+			//  - decide a better way to input VaultConfig fields (maybe as seperate inputs)
+			//  - VaultConfig.manager should be set to account_id
 			let vault_id: T::VaultId = T::Vault::create(
 				Duration::Existential,
-				VaultConfig:: <T::AccountId ,T::AssetId > {
-					asset_id: *asset,
-					reserved: Perquintill::from_percent(100),
+				VaultConfig {
+					asset_id: config.asset_id,
 					manager: account_id,
-					strategies: [].iter().cloned().collect(),
+					reserved: config.reserved,
+					strategies: config.strategies,
 				},
 			)?;
 
