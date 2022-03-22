@@ -105,9 +105,6 @@ pub mod pallet {
 		/// Duration type for funding rate periodicity
 		type Duration: FullCodec + MaxEncodedLen + TypeInfo;
 		type VirtualAMM: VirtualAMM;
-		/// The virtual AMM ID type for this pallet. `pallet-virtual-amm` should implement a trait
-		/// VAMM with an associated type 'VAMMId' compatible with this one.
-		type VAMMId: FullCodec + MaxEncodedLen + TypeInfo;
 		/// Pallet implementation of asset transfers.
 		type Assets: Transfer<
 			Self::AccountId,
@@ -144,9 +141,9 @@ pub mod pallet {
 
 	/// Data relating to a perpetual contracts market
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
-	pub struct Market<AssetId, Decimal, Duration, Timestamp, VAMMId> {
+	pub struct Market<AssetId, Decimal, Duration, Timestamp, VammId> {
 		/// The Id of the vAMM used for price discovery in the virtual market
-		vamm_id: VAMMId,
+		vamm_id: VammId,
 		/// The Id of the underlying asset (base-quote pair). A price feed from one or more oracles
 		/// must be available for this symbol
 		asset_id: AssetId,
@@ -163,11 +160,11 @@ pub mod pallet {
 	type DecimalOf<T> = <T as Config>::Decimal;
 	type TimestampOf<T> = <T as Config>::Timestamp;
 	type DurationOf<T> = <T as Config>::Duration;
-	type VAMMParamsOf<T> = <<T as Config>::VirtualAMM as VirtualAMM>::VammParams;
-	type VAMMIdOf<T> = <T as Config>::VAMMId;
+	type VammParamsOf<T> = <<T as Config>::VirtualAMM as VirtualAMM>::VammParams;
+	type VammIdOf<T> = <<T as Config>::VirtualAMM as VirtualAMM>::VammId;
 	type PositionOf<T> = Position<MarketIdOf<T>, DecimalOf<T>>;
 	type MarketOf<T> =
-		Market<AssetIdOf<T>, DecimalOf<T>, DurationOf<T>, TimestampOf<T>, VAMMIdOf<T>>;
+		Market<AssetIdOf<T>, DecimalOf<T>, DurationOf<T>, TimestampOf<T>, VammIdOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Storage
@@ -323,7 +320,7 @@ pub mod pallet {
 		pub fn create_market(
 			_origin: OriginFor<T>,
 			_asset: AssetIdOf<T>,
-			_vamm_params: VAMMParamsOf<T>,
+			_vamm_params: VammParamsOf<T>,
 		) -> DispatchResult {
 			Err("Unimplemented".into())
 		}

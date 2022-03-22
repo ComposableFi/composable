@@ -157,7 +157,6 @@ impl clearing_house::Config for Runtime {
 	type Timestamp = u64;
 	type Duration = u64;
 	type VirtualAMM = Vamm;
-	type VAMMId = u64;
 	type Assets = Assets;
 	type PalletId = ClearingHouseId;
 }

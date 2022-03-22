@@ -7,5 +7,6 @@ pub struct Vamm;
 pub struct VammParams;
 
 impl VirtualAMM for Vamm {
+	type VammId = u64;
 	type VammParams = VammParams;
 }
