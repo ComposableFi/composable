@@ -121,20 +121,30 @@ prop_compose! {
 // initial_assets in prop::collection::vec(strategy_pick_random_mock_currency(), 2usize..26usize),
 
 #[allow(dead_code)]
-const TOTAL_NUM_OF_ASSETS: usize = 3;
+const TOTAL_NUM_OF_ASSETS: usize = 6;
 #[allow(dead_code)]
 const MINIMUM_RESERVE: Balance = 1_000;
 #[allow(dead_code)]
 const MAXIMUM_RESERVE: Balance = 1_000_000_000;
 
 prop_compose! {
+    fn generate_assets()
+        (
+            assets in prop::collection::vec(pick_currency(), 1..=TOTAL_NUM_OF_ASSETS),
+        ) -> Vec<CurrencyId>{
+
+            assets
+   }
+}
+
+prop_compose! {
     fn generate_reserves()
         (
-            currencies in prop::collection::vec(pick_currency(), 1..=TOTAL_NUM_OF_ASSETS),
+            assets in prop::collection::vec(pick_currency(), 1..=TOTAL_NUM_OF_ASSETS),
             balances in prop::collection::vec(MINIMUM_RESERVE..MAXIMUM_RESERVE, 1..=TOTAL_NUM_OF_ASSETS),
         ) -> Vec<(CurrencyId, Balance)>{
 
-        currencies.into_iter().zip(balances.into_iter()).collect()
+            assets.into_iter().zip(balances.into_iter()).collect()
    }
 }
 
@@ -157,6 +167,20 @@ fn create_extrinsic_emits_event() {
 }
 
 #[test]
+fn cannot_create_more_than_one_vault_for_an_asset() {
+    ExtBuilder::default().build().execute_with(|| {
+        let config = VaultConfigBuilder::default().build();
+        assert_ok!(Instrumental::create(Origin::signed(ADMIN), config.clone()));
+
+        assert_noop!(
+            Instrumental::create(Origin::signed(ADMIN), config),
+            Error::<MockRuntime>::VaultAlreadyExists
+        );
+    });
+}
+
+
+#[test]
 fn create_extrinsic_updates_storage() {
     ExtBuilder::default().build().execute_with(|| {
         assert!(!AssetVault::<MockRuntime>::contains_key(USDC::ID));
@@ -168,17 +192,27 @@ fn create_extrinsic_updates_storage() {
     });
 }
 
-#[test]
-fn cannot_create_more_than_one_vault_for_an_asset() {
-    ExtBuilder::default().build().execute_with(|| {
-        let config = VaultConfigBuilder::default().build();
-        assert_ok!(Instrumental::create(Origin::signed(ADMIN), config.clone()));
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(100))]
 
-        assert_noop!(
-            Instrumental::create(Origin::signed(ADMIN), config),
-            Error::<MockRuntime>::VaultAlreadyExists
-        );
-    });
+    #[test]
+    fn create_extrinsic(assets in generate_assets()) {
+        ExtBuilder::default().build().execute_with(|| {
+            assets.iter().for_each(|&asset| {
+                let config = VaultConfigBuilder::default().asset_id(asset).build();
+
+                if AssetVault::<MockRuntime>::contains_key(asset) {
+                    assert_noop!(
+                        Instrumental::create(Origin::signed(ADMIN), config),
+                        Error::<MockRuntime>::VaultAlreadyExists
+                    );
+                } else {
+                    assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
+                    assert!(AssetVault::<MockRuntime>::contains_key(asset));
+                }
+            });
+        });
+    }
 }
 
 // ----------------------------------------------------------------------------------------------------
