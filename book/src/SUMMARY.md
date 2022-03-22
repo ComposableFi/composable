@@ -26,7 +26,8 @@
       - [KSM Purchase Log](./products/the-picasso-parachain/the-picasso-crowdloan/ksm-purchase-log.md)
 - [The Composable Parachain](./products/the-composable-parachain.md)
     - [The Composable Crowdloan](./products/the-composable-parachain/the-composable-crowdloan.md)
-        - [Crowdloan How-To Guide for DOT](./products/the-composable-parachain/the-composable-crowdloan/crowdloan-how-to-guide-for-dot)
+        - [Crowdloan How-To Guide for DOT](./products/the-composable-parachain/the-composable-crowdloan/crowdloan-how-to-guide-for-dot.md)
+        - [Crowdloan How-To Guide for Stablecoins](./products/the-composable-parachain/the-composable-crowdloan/crowdloan-how-to-guide-for-stablecoin.md)
         
 # 🪙  GOVERNANCE AND TOKENOMICS
 - [The Picasso (PICA) Network Token](./governance-and-tokenomics/the-picasso-pica-network-token.md)
