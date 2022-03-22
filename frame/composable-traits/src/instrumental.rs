@@ -15,8 +15,8 @@ pub trait Instrumental {
     ) -> Result<Self::VaultId, DispatchError>;
 
     fn add_liquidity(
-        issuer: Self::AccountId,
-        asset: Self::AssetId,
+        issuer: &Self::AccountId,
+        asset: &Self::AssetId,
         amount: Self::Balance
     ) -> Result<(), DispatchError>;
 
