@@ -29,6 +29,7 @@
 //!
 //! ### Extrinsics
 //! - [`add_margin`](Call::add_margin)
+//! - [`create_market`](Call::create_market)
 //!
 //! ### Implemented Functions
 //!
@@ -104,6 +105,7 @@ pub mod pallet {
 		type Timestamp: FullCodec + MaxEncodedLen + TypeInfo;
 		/// Duration type for funding rate periodicity
 		type Duration: FullCodec + MaxEncodedLen + TypeInfo;
+		/// Virtual Automated Market Maker pallet implementation
 		type VirtualAMM: VirtualAMM;
 		/// Pallet implementation of asset transfers.
 		type Assets: Transfer<
@@ -253,8 +255,11 @@ pub mod pallet {
 			/// Amount of asset deposited
 			amount: T::Balance,
 		},
+		/// New virtual market successfully created
 		MarketCreated {
+			/// Id for the newly created market
 			market: T::MarketId,
+			/// Id of the underlying asset
 			asset: AssetIdOf<T>,
 		},
 	}
@@ -316,6 +321,26 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// # Overview
+		/// Creates a new perpetuals market with the desired parameters.
+		///
+		/// ## Parameters
+		/// - `asset`: Asset id of the underlying for the derivatives market
+		/// - `vamm_params`: Parameters for creating and initializing the vAMM for price discovery
+		///
+		/// ## Assumptions or Requirements
+		/// The underlying must have a stable price feed via another pallet.
+		///
+		/// ## Emits
+		/// * [`MarketCreated`](Event::<T>::MarketCreated)
+		///
+		/// ## State Changes
+		/// Adds an entry to the [`Markets`] storage map.
+		///
+		/// ## Errors
+		///
+		/// # Weight/Runtime
+		/// `O(1)`
 		#[pallet::weight(<T as Config>::WeightInfo::create_market())]
 		pub fn create_market(
 			_origin: OriginFor<T>,
