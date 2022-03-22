@@ -37,6 +37,7 @@ pub fn calc_utilization_ratio(
 }
 
 pub trait InterestRate {
+	// Mutable because of [`DynamicPIDControllerModel::get_output_utilization_ratio`].
 	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate>;
 }
 
@@ -425,6 +426,7 @@ pub fn increment_index(
 	index: Rate,
 	delta_time: DurationSeconds,
 ) -> Result<Rate, ArithmeticError> {
+	// borrow_rate * index * delta_time / SECONDS_PER_YEAR_NAIVE + index
 	borrow_rate
 		.safe_mul(&index)?
 		.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
