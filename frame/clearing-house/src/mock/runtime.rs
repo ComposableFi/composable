@@ -3,6 +3,7 @@ use crate::{
 	mock::{
 		accounts::{AccountId, ALICE},
 		assets::{AssetId, PICA},
+		vamm::Vamm,
 	},
 };
 use composable_traits::defi::DeFiComposableConfig;
@@ -155,6 +156,7 @@ impl clearing_house::Config for Runtime {
 	type Decimal = FixedI128;
 	type Timestamp = u64;
 	type Duration = u64;
+	type VirtualAMM = Vamm;
 	type VAMMId = u64;
 	type Assets = Assets;
 	type PalletId = ClearingHouseId;

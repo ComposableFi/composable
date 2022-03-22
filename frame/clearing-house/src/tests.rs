@@ -1,8 +1,11 @@
+// use std::assert_matches::assert_matches;
+
 pub use crate::{
 	mock::{
 		accounts::{AccountId, ALICE},
-		assets::{AssetId, PICA, USDC},
+		assets::{AssetId, DOT, PICA, USDC},
 		runtime::{Balance, ClearingHouse, ExtBuilder, Origin, Runtime, System, Tokens},
+		vamm::VammParams,
 	},
 	pallet::*,
 };
@@ -56,4 +59,18 @@ fn test_deposit_supported_collateral_succeeds() {
 			let after = AccountsMargin::<Runtime>::get(&account).unwrap_or_default();
 			assert_eq!(after - before, amount);
 		})
+}
+
+#[test]
+fn test_create_market_succeeds() {
+	ExtBuilder::default().build().execute_with(|| {
+		let origin = Origin::signed(ALICE);
+		let asset = DOT;
+		let vamm_params = VammParams {};
+		assert_ok!(ClearingHouse::create_market(origin, asset, vamm_params));
+		// let event =
+		// 	Event::from(System::events().last().expect("Expected at least one event").event);
+		// assert_matches!(event, Event::MarketCreated { market: _, asset });
+		// System::assert_last_event(Event::MarketCreated.into());
+	})
 }

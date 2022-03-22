@@ -6,3 +6,6 @@ pub mod accounts;
 
 #[cfg(test)]
 pub mod assets;
+
+#[cfg(test)]
+pub mod vamm;

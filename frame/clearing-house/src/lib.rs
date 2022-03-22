@@ -60,9 +60,13 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
+	use std::fmt::Debug;
+
 	use crate::weights::WeightInfo;
 	use codec::FullCodec;
-	use composable_traits::{clearing_house::MarginTrading, defi::DeFiComposableConfig};
+	use composable_traits::{
+		clearing_house::MarginTrading, defi::DeFiComposableConfig, vamm::VirtualAMM,
+	};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{tokens::fungibles::Transfer, GenesisBuild},
@@ -93,13 +97,14 @@ pub mod pallet {
 		/// Weight information for this pallet's extrinsics
 		type WeightInfo: WeightInfo;
 		/// The market ID type for this pallet.
-		type MarketId: FullCodec + MaxEncodedLen + TypeInfo;
+		type MarketId: FullCodec + MaxEncodedLen + TypeInfo + Clone + PartialEq + Debug;
 		/// Signed decimal fixed point number.
 		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
 		/// Timestamp to be used for funding rate updates
 		type Timestamp: FullCodec + MaxEncodedLen + TypeInfo;
 		/// Duration type for funding rate periodicity
 		type Duration: FullCodec + MaxEncodedLen + TypeInfo;
+		type VirtualAMM: VirtualAMM;
 		/// The virtual AMM ID type for this pallet. `pallet-virtual-amm` should implement a trait
 		/// VAMM with an associated type 'VAMMId' compatible with this one.
 		type VAMMId: FullCodec + MaxEncodedLen + TypeInfo;
@@ -158,6 +163,7 @@ pub mod pallet {
 	type DecimalOf<T> = <T as Config>::Decimal;
 	type TimestampOf<T> = <T as Config>::Timestamp;
 	type DurationOf<T> = <T as Config>::Duration;
+	type VAMMParamsOf<T> = <<T as Config>::VirtualAMM as VirtualAMM>::VammParams;
 	type VAMMIdOf<T> = <T as Config>::VAMMId;
 	type PositionOf<T> = Position<MarketIdOf<T>, DecimalOf<T>>;
 	type MarketOf<T> =
@@ -250,6 +256,10 @@ pub mod pallet {
 			/// Amount of asset deposited
 			amount: T::Balance,
 		},
+		MarketCreated {
+			market: T::MarketId,
+			asset: AssetIdOf<T>,
+		},
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -307,6 +317,15 @@ pub mod pallet {
 			let acc = ensure_signed(origin)?;
 			<Self as MarginTrading>::add_margin(&acc, asset, amount)?;
 			Ok(())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::create_market())]
+		pub fn create_market(
+			_origin: OriginFor<T>,
+			_asset: AssetIdOf<T>,
+			_vamm_params: VAMMParamsOf<T>,
+		) -> DispatchResult {
+			Err("Unimplemented".into())
 		}
 	}
 
