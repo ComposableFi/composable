@@ -22,7 +22,7 @@ use sp_runtime::Perquintill;
 // use proptest::prelude::*;
 
 // ----------------------------------------------------------------------------------------------------
-//                                           Helper Funcitons                                          
+//                                           Helper Functions                                          
 // ----------------------------------------------------------------------------------------------------
 
 struct VaultConfigBuilder {
@@ -36,8 +36,8 @@ impl Default for VaultConfigBuilder {
     fn default() -> Self {
         VaultConfigBuilder {
             asset_id: USDC::ID,
-            manager: ALICE,
-            reserved: Perquintill::zero(),
+            manager: ADMIN,
+            reserved: Perquintill::one(),
             strategies: BTreeMap::new(),
         }
     }
@@ -77,30 +77,33 @@ impl VaultConfigBuilder {
 }
 
 struct VaultBuilder {
-    pub assets: Vec<CurrencyId>,
+    pub configs: Vec<VaultConfig<AccountId, CurrencyId>>,
 }
 
 impl Default for VaultBuilder {
     fn default() -> Self {
         VaultBuilder {
-            assets: Vec::new(),
+            configs: Vec::new(),
         }
     }
 }
 
 #[allow(dead_code)]
 impl VaultBuilder {
-    fn vault(mut self, asset: CurrencyId) -> Self {
-        self.assets.push(asset);
+    fn vault(mut self, config: VaultConfig<AccountId, CurrencyId>) -> Self {
+        self.configs.push(config);
         self
     }
     
     fn build(self) -> () {
         // TODO: (Nevin)
         //  - remove duplicate assets
-        self.assets.iter()
-            .for_each(|&asset| {
-               Instrumental::create(Origin::signed(ADMIN), asset).ok();
+        self.configs.iter()
+            .for_each(|config| {
+               Instrumental::create(
+                   Origin::signed(ADMIN), 
+                   config.clone()
+                ).ok();
             })
     }
 }
@@ -114,10 +117,11 @@ fn create_extrinsic_emits_event() {
     ExtBuilder::default().build().execute_with(|| {
         System::set_block_number(1);
 
-        assert_ok!(Instrumental::create(Origin::signed(ALICE), USDC::ID));
+        let config = VaultConfigBuilder::default().build();
+        assert_ok!(Instrumental::create(Origin::signed(ADMIN), config.clone()));
 
         System::assert_last_event(Event::Instrumental(
-            pallet::Event::Created { vault_id: 1u64, asset: USDC::ID }
+            pallet::Event::Created { vault_id: 1u64, config: config}
         ));
     });
 }
@@ -126,7 +130,10 @@ fn create_extrinsic_emits_event() {
 fn create_extrinsic_updates_storage() {
     ExtBuilder::default().build().execute_with(|| {
         assert!(!AssetVault::<MockRuntime>::contains_key(USDC::ID));
-        assert_ok!(Instrumental::create(Origin::signed(ALICE), USDC::ID));
+
+        let config = VaultConfigBuilder::default().build();
+        assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
+
         assert!(AssetVault::<MockRuntime>::contains_key(USDC::ID));
     });
 }
@@ -134,10 +141,11 @@ fn create_extrinsic_updates_storage() {
 #[test]
 fn cannot_create_more_than_one_vault_for_an_asset() {
     ExtBuilder::default().build().execute_with(|| {
-        assert_ok!(Instrumental::create(Origin::signed(ALICE), USDC::ID));
+        let config = VaultConfigBuilder::default().build();
+        assert_ok!(Instrumental::create(Origin::signed(ADMIN), config.clone()));
 
         assert_noop!(
-            Instrumental::create(Origin::signed(ALICE), USDC::ID),
+            Instrumental::create(Origin::signed(ADMIN), config),
             Error::<MockRuntime>::VaultAlreadyExists
         );
     });
@@ -154,7 +162,9 @@ fn add_liquidity_extrinsic_emits_event() {
     ).build().execute_with(|| {
         System::set_block_number(1);
 
-        assert_ok!(Instrumental::create(Origin::signed(ALICE), USDC::ID));
+        let config = VaultConfigBuilder::default().build();
+        assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
+
         assert_ok!(Instrumental::add_liquidity(Origin::signed(ALICE), USDC::ID, USDC::units(100)));
 
         System::assert_last_event(Event::Instrumental(
@@ -179,7 +189,8 @@ fn add_liquidity_asset_must_have_an_associated_vault() {
 #[allow(unused_must_use)]
 fn add_liquidity_does_not_update_storage_if_user_does_not_have_balance() {
     ExtBuilder::default().build().execute_with(|| {
-        assert_ok!(Instrumental::create(Origin::signed(ALICE), USDC::ID));
+        let config = VaultConfigBuilder::default().build();
+        assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
 
         assert_storage_noop!(
             Instrumental::add_liquidity(Origin::signed(ALICE), USDC::ID, USDC::units(100))
@@ -187,9 +198,9 @@ fn add_liquidity_does_not_update_storage_if_user_does_not_have_balance() {
     });
 }
 
-// ----------------------------------------------------------------------------------------------------
-//                                           Remove Liquidity                                          
-// ----------------------------------------------------------------------------------------------------
+// // ----------------------------------------------------------------------------------------------------
+// //                                           Remove Liquidity                                          
+// // ----------------------------------------------------------------------------------------------------
 
 #[test]
 fn remove_liquidity_extrinsic_emits_event() {
@@ -199,7 +210,9 @@ fn remove_liquidity_extrinsic_emits_event() {
         .execute_with(|| {
             System::set_block_number(1);
 
-            assert_ok!(Instrumental::create(Origin::signed(ALICE), USDC::ID));
+            let config = VaultConfigBuilder::default().build();
+            assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
+            
             assert_ok!(Instrumental::add_liquidity(Origin::signed(ALICE), USDC::ID, USDC::units(100)));
             assert_ok!(Instrumental::remove_liquidity(Origin::signed(ALICE), USDC::ID, USDC::units(100)));
 
@@ -231,7 +244,8 @@ fn initialize_vault() {
     let (asset_id, balance) = (USDC::ID, USDC::units(100));
 
     ExtBuilder::default().initialize_vault(asset_id, balance).build().execute_with(|| {
-        assert_ok!(Instrumental::create(Origin::signed(ALICE), asset_id));
+        let config = VaultConfigBuilder::default().asset_id(asset_id).build();
+        assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
         
         // Requirement 1) The Instrumental Pallet saves a reference to each created Vault
         assert!(AssetVault::<MockRuntime>::contains_key(asset_id));

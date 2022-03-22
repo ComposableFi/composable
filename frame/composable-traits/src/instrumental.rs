@@ -1,3 +1,5 @@
+use crate::vault::VaultConfig;
+
 use frame_support::{
     pallet_prelude::*,
     sp_std::fmt::Debug,
@@ -11,7 +13,7 @@ pub trait Instrumental {
 	type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 
     fn create(
-        asset: &Self::AssetId,
+        config: VaultConfig<Self::AccountId, Self::AssetId>,
     ) -> Result<Self::VaultId, DispatchError>;
 
     fn add_liquidity(
