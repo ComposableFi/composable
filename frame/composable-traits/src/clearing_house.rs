@@ -3,7 +3,7 @@
 //! Common traits for clearing house implementations
 use frame_support::pallet_prelude::DispatchError;
 
-pub trait MarginAccounts {
+pub trait MarginTrading {
 	/// The trader's account identifier type
 	type AccountId;
 	/// The asset identifier type
