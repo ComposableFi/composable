@@ -1,19 +1,80 @@
 #[cfg(test)]
 
 use crate::mock::{
-    ALICE, Assets, Event, ExtBuilder, Instrumental, MockRuntime, Origin, System, Vault,
+    AccountId, ALICE, Assets, Event, ExtBuilder, Instrumental, 
+    MockRuntime, Origin, System, Vault,
 };
 use crate::{pallet, pallet::AssetVault, pallet::Error};
-use crate::currency::USDC;
+use crate::currency::{
+    CurrencyId, USDC
+};
 
 use pallet_vault::Vaults as VaultInfoStorage;
+use composable_traits::vault::VaultConfig;
 
 use frame_support::{
     assert_ok, assert_noop, assert_storage_noop,
+    sp_std::collections::btree_map::BTreeMap,
     traits::fungibles::Inspect,
 };
+use sp_runtime::Perquintill;
 
 // use proptest::prelude::*;
+
+// ----------------------------------------------------------------------------------------------------
+//                                           Helper Funcitons                                          
+// ----------------------------------------------------------------------------------------------------
+
+struct VaultConfigBuilder {
+    pub asset_id: CurrencyId,
+    pub manager: AccountId,
+    pub reserved: Perquintill,
+    pub strategies: BTreeMap<AccountId, Perquintill>,
+}
+
+impl Default for VaultConfigBuilder {
+    fn default() -> Self {
+        VaultConfigBuilder {
+            asset_id: USDC::ID,
+            manager: ALICE,
+            reserved: Perquintill::zero(),
+            strategies: BTreeMap::new(),
+        }
+    }
+}
+
+#[allow(dead_code)]
+impl VaultConfigBuilder {
+
+    fn asset_id(mut self, asset: CurrencyId) -> Self {
+        self.asset_id = asset;
+        self
+    }
+
+    fn reserved(mut self, reserved: Perquintill) -> Self {
+        self.reserved = reserved;
+        self
+    }
+
+    fn manager(mut self, manager: AccountId) -> Self {
+        self.manager = manager;
+        self
+    }
+
+    fn strategy(mut self, account: AccountId, strategy: Perquintill) -> Self {
+        self.strategies.insert(account, strategy);
+        self
+    }
+    
+    fn build(self) -> VaultConfig<AccountId, CurrencyId> {
+        VaultConfig {
+            asset_id: self.asset_id,
+            reserved: self.reserved,
+            manager: self.manager,
+            strategies: self.strategies,
+        }
+    }
+}
 
 // ----------------------------------------------------------------------------------------------------
 //                                                Create                                               
@@ -27,7 +88,7 @@ fn create_extrinsic_emits_event() {
         assert_ok!(Instrumental::create(Origin::signed(ALICE), USDC::ID));
 
         System::assert_last_event(Event::Instrumental(
-            pallet::Event::Created { asset: USDC::ID }
+            pallet::Event::Created { vault_id: 1u64, asset: USDC::ID }
         ));
     });
 }
