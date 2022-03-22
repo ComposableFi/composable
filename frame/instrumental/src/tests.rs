@@ -1,7 +1,7 @@
 #[cfg(test)]
 
 use crate::mock::{
-    AccountId, ALICE, Assets, Event, ExtBuilder, Instrumental, 
+    AccountId, ADMIN, ALICE, Assets, Event, ExtBuilder, Instrumental, 
     MockRuntime, Origin, System, Vault,
 };
 use crate::{pallet, pallet::AssetVault, pallet::Error};
@@ -73,6 +73,32 @@ impl VaultConfigBuilder {
             manager: self.manager,
             strategies: self.strategies,
         }
+    }
+}
+
+struct VaultBuilder {
+    pub assets: Vec<CurrencyId>,
+}
+
+impl Default for VaultBuilder {
+    fn default() -> Self {
+        VaultBuilder {
+            assets: Vec::new(),
+        }
+    }
+}
+
+impl VaultBuilder {
+    fn vault(mut self, asset: CurrencyId) -> Self {
+        self.assets.push(asset);
+        self
+    }
+    
+    fn build(self) -> () {
+        self.assets.iter()
+            .for_each(|&asset| {
+               Instrumental::create(Origin::signed(ADMIN), asset);
+            })
     }
 }
 
