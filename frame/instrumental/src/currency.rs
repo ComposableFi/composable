@@ -105,5 +105,8 @@ pub fn pick_currency() -> impl Strategy<Value = CurrencyId> {
 		Just(PICA::ID),
 		Just(BTC::ID),
 		Just(USDC::ID),
+		Just(LAYR::ID),
+		Just(CROWDLOAN::ID),
+		Just(KSM::ID),
 	]
 }
