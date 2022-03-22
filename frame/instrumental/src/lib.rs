@@ -80,8 +80,8 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 
 	use frame_support::{
-		PalletId,
 		pallet_prelude::*,
+		PalletId,
 		transactional,
 	};
 	use frame_system::{
