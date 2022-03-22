@@ -1,0 +1,19 @@
+@startuml Add margin
+actor Trader
+participant "Clearing\nHouse" as CH
+database "AccountsMargin" as CHS
+collections "Pallet assets\naccount" as Acc
+
+Trader -> CH : add margin
+
+CH -> CH : assert collateral is supported
+
+CH -> Acc : transfer collateral to pallet account
+
+CH -> CHS : get/create margin account
+return
+
+CH -> CHS : update margin amount
+
+CH ->o? : emit event
+@enduml
