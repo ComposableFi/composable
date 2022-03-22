@@ -239,16 +239,17 @@ pub mod pallet {
 		/// 
 		/// ## Parameters
 		/// - `origin`: 
-		/// - `asset`: the `AssetId` of an asset to create a vault for.
+		/// - `config`: the `VaultConfig` of the underlying vault to create.
 		/// 
 		/// ## Requirements
 		/// 1. the call must have been signed by the issuer.
+		/// 2. 'config.asset_id' must not correspond to a preexisting Instrumental vault.
 		/// 
 		/// ## Emits 
 		/// - [`Event::Created`](Event::Created)
 		/// 
 		/// ## State Changes
-		/// - [`AssetVault`](AssetVault): a mcklapping between the parameter `asset` and the created vault's
+		/// - [`AssetVault`](AssetVault): a mapping between the parameter `asset` and the created vault's
 		///     `VaultId` is stored.
 		/// 
 		/// ## Errors
@@ -362,6 +363,24 @@ pub mod pallet {
 		type Balance = T::Balance;
 		type VaultId = T::VaultId;
 
+		/// Create an underlying vault and save a reference to its 'VaultId'.
+		/// 
+		/// # Overview
+		/// 
+		/// ## Parameters
+		/// - `config`: the `VaultConfig` of the underlying vault to create.
+		/// 
+		/// ## Requirements
+		/// 1. 'config.asset_id' must not correspond to a preexisting Instrumental vault.
+		/// 
+		/// ## State Changes
+		/// - [`AssetVault`](AssetVault): a mapping between the parameter `asset` and the created vault's
+		///     `VaultId` is stored.
+		/// 
+		/// ## Errors
+		/// - `VaultAlreadyExists`: their already exists an underlying vault for `asset`.
+		/// 
+		/// # Runtime: O(TBD)
 		fn create(
 			config: VaultConfig<Self::AccountId, Self::AssetId>,
 		) -> Result<Self::VaultId, DispatchError> {
