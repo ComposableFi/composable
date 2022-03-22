@@ -21,8 +21,8 @@ pub trait Instrumental {
     ) -> Result<(), DispatchError>;
 
     fn remove_liquidity(
-        issuer: Self::AccountId,
-        asset: Self::AssetId,
+        issuer: &Self::AccountId,
+        asset: &Self::AssetId,
         amount: Self::Balance
     ) -> Result<(), DispatchError>;
 }
