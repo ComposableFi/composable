@@ -345,13 +345,8 @@ pub mod pallet {
 			// Requirement 1) This extrinsic must be signed 
 			let issuer = ensure_signed(origin)?;
 
-			// Requirement 2) The asset must have an associated vault
-			ensure!(
-				AssetVault::<T>::contains_key(asset),
-				Error::<T>::AssetDoesNotHaveAnAssociatedVault
-			);
-
-			Self::do_remove_liquidity(&issuer, &asset, amount)?;
+			<Self as Instrumental>::remove_liquidity(&issuer, &asset, amount)?;
+			
 			Self::deposit_event(Event::RemovedLiquidity {asset, amount});
 
 			Ok(().into())
@@ -393,10 +388,18 @@ pub mod pallet {
 		}
 	
 		fn remove_liquidity(
-			issuer: Self::AccountId,
-			asset: Self::AssetId,
+			issuer: &Self::AccountId,
+			asset: &Self::AssetId,
 			amount: Self::Balance
 		) -> Result<(), DispatchError> {
+			// Requirement 1) The asset must have an associated vault
+			ensure!(
+				AssetVault::<T>::contains_key(asset),
+				Error::<T>::AssetDoesNotHaveAnAssociatedVault
+			);
+
+			Self::do_remove_liquidity(issuer, asset, amount)?;
+
 			Ok(())
 		}
 	}
