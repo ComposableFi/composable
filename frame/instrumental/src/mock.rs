@@ -34,9 +34,11 @@ pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
 pub const NATIVE_ASSET: CurrencyId = PICA::ID;
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-pub static ALICE: Public =
+pub static ADMIN: Public =
 	Public(hex!("0000000000000000000000000000000000000000000000000000000000000000"));
-
+pub static ALICE: Public =
+	Public(hex!("0000000000000000000000000000000000000000000000000000000000000001"));
+	
 // ----------------------------------------------------------------------------------------------------
 //                                                Config                                               
 // ----------------------------------------------------------------------------------------------------
