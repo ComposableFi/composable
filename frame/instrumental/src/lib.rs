@@ -176,6 +176,7 @@ pub mod pallet {
     //                                            Runtime Storage                                          
 	// ----------------------------------------------------------------------------------------------------
 
+	/// Stores the `VaultId` that corresponds to a specific `AssetId`.
 	#[pallet::storage]
 	#[pallet::getter(fn asset_vault)]
 	pub type AssetVault<T: Config> = 
@@ -188,19 +189,19 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Emitted after a successful call to the [`create`](Pallet::create) extrinsic
+		/// Emitted after a successful call to the [`create`](Pallet::create) extrinsic.
 		Created {
 			vault_id: T::VaultId,
 			config: VaultConfig<T::AccountId, T::AssetId>
 		},
 
-		/// Emitted after a successful call to the [`add_liquidity`](Pallet::add_liquidity) extrinsic
+		/// Emitted after a successful call to the [`add_liquidity`](Pallet::add_liquidity) extrinsic.
 		AddedLiquidity {
 			asset: T::AssetId,
 			amount: T::Balance
 		},
 
-		/// Emitted after a successful call to the [`remove_liquidity`](Pallet::remove_liquidity) extrinsic
+		/// Emitted after a successful call to the [`remove_liquidity`](Pallet::remove_liquidity) extrinsic.
 		RemovedLiquidity {
 			asset: T::AssetId,
 			amount: T::Balance
