@@ -11,6 +11,7 @@
 - [Routing Layer](./products/routing-layer.md)
 - [Mosaic](./products/mosaic.md)
     - [Fragmentation in DeFi's Layer 2](./products/mosaic/fragmentation-in-layer-2.md)
+    - [Proof of Concept: A Cross-Layer Transferal System](./products/mosaic/proof-of-concept-polygon-arbitrum-cross-layer-transferral-system.md)
 - [Parachain Vault Strategy](./products/parachain-vault-strategy.md)
     - [Vault Strategy for the Composable Polkadot Prachain](./products/parachain-vault-strategy/vault-strategy-expansion.md)
 - [The Picasso Parachain](./products/the-picasso-parachain.md)
