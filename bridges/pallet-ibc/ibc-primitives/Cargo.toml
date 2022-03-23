@@ -8,8 +8,11 @@ edition = "2021"
 [dependencies]
 serde = { version = "1.0.136", features = ["derive"], default-features = false }
 codec = { package = "parity-scale-codec", version = "2.0.0", features = ["derive"], default-features = false}
-ibc = { version = "0.12.0", default-features = false }
+#ibc = { version = "0.12.0", default-features = false }
+ibc = { git = "https://github.com/Wizdave97/ibc-rs", branch = "david/serializable-structs", default-features = false}
+ibc-proto = { git = "https://github.com/Wizdave97/ibc-rs", branch = "david/serializable-structs", default-features = false}
 scale-info = { version = '1.0.0', default-features = false }
+#ibc-proto = { version = "0.16.0", default-features = false }
 
 [features]
 default = ['std']
@@ -17,5 +20,6 @@ std = [
     "codec/std",
     "serde/std",
     "ibc/std",
-    "scale-info/std"
+    "scale-info/std",
+    "ibc-proto/std"
 ]

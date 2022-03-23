@@ -14,15 +14,17 @@
 // limitations under the License.
 #![warn(missing_docs)]
 
+//! IBC RPC Implementation.
+
 use codec::Encode;
 use ibc::core::{
 	ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
 	ics03_connection::connection::ConnectionEnd,
-	ics24_host::identifier::ConnectionId,
+	ics04_channel::channel::{ChannelEnd, IdentifiedChannelEnd},
+	ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 };
 use std::{str::FromStr, sync::Arc};
 
-use ibc::Height;
 use ibc_primitives::{ConnectionHandshakeProof, Proof};
 use ibc_proto::{
 	cosmos::base::v1beta1::Coin,
@@ -30,7 +32,7 @@ use ibc_proto::{
 		applications::transfer::v1::{QueryDenomTraceResponse, QueryDenomTracesResponse},
 		core::{
 			channel::v1::{
-				IdentifiedChannel, QueryChannelResponse, QueryChannelsResponse,
+				PacketState, QueryChannelResponse, QueryChannelsResponse,
 				QueryNextSequenceReceiveResponse, QueryPacketAcknowledgementResponse,
 				QueryPacketAcknowledgementsResponse, QueryPacketCommitmentResponse,
 				QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
@@ -47,6 +49,7 @@ use ibc_proto::{
 use ibc_runtime_api::IbcRuntimeApi;
 use jsonrpc_core::{Error as JsonRpcError, ErrorCode, Result, Value};
 use jsonrpc_derive::rpc;
+use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{
@@ -55,12 +58,14 @@ use sp_runtime::{
 };
 use tendermint_proto::Protobuf;
 
-#[derive(codec::Encode, codec::Decode, Serialize, Deserialize)]
+/// Connection handshake proof
+#[derive(Serialize, Deserialize)]
 pub struct ConnHandshakeProof {
 	/// Protobuf encoded client state
 	pub client_state: IdentifiedClientState,
 	/// Trie proof for connection state, client state and consensus state
-	pub proof: Vec<Vec<u8>>,
+	pub proof: Vec<u8>,
+	/// Proof height
 	pub height: ibc_proto::ibc::core::client::v1::Height,
 }
 
@@ -136,7 +141,7 @@ pub trait IbcApi<BlockNumber> {
 		height: u32,
 		client_id: String,
 		conn_id: String,
-	) -> Result<ConnectionHandshakeProof>;
+	) -> Result<ConnHandshakeProof>;
 
 	/// Query a channel state
 	#[rpc(name = "ibc_queryChannel")]
@@ -377,7 +382,7 @@ where
 			.flatten()
 			.ok_or(runtime_error_into_rpc_error("Error querying client consensus state"))?;
 		let consensus_state = AnyConsensusState::decode_vec(&result.consensus_state)
-			.map_err(|| runtime_error_into_rpc_error("Error querying client consensus state"))?;
+			.map_err(|_| runtime_error_into_rpc_error("Error querying client consensus state"))?;
 		Ok(QueryConsensusStateResponse {
 			consensus_state: Some(consensus_state.into()),
 			proof: result.proof.encode(),
@@ -402,15 +407,20 @@ where
 
 		let client_states: Option<Vec<(Vec<u8>, Vec<u8>)>> = api.clients(&at).ok().flatten();
 		match client_states {
-			Some((client_id, client_states)) => client_states.into_iter().map(|state| {
-				let client_state = AnyClientState::decode_vec(&state)
-					.map_err(|_| runtime_error_into_rpc_error("Failed to decode client state"))?;
-				Ok(IdentifiedClientState {
-					client_id: String::from_utf8(client_id)
-						.map_err(|_| runtime_error_into_rpc_error("Failed to decode client id"))?,
-					client_state: Some(client_state.into()),
+			Some(client_states) => client_states
+				.into_iter()
+				.map(|(client_id, client_state)| {
+					let client_state = AnyClientState::decode_vec(&client_state).map_err(|_| {
+						runtime_error_into_rpc_error("Failed to decode client state")
+					})?;
+					Ok(IdentifiedClientState {
+						client_id: String::from_utf8(client_id).map_err(|_| {
+							runtime_error_into_rpc_error("Failed to decode client id")
+						})?,
+						client_state: Some(client_state.into()),
+					})
 				})
-			}),
+				.collect(),
 			_ => Err(runtime_error_into_rpc_error("Failed to fetch client states")),
 		}
 	}
@@ -463,13 +473,13 @@ where
 			.into_iter()
 			.map(|identified_connection| {
 				let connection_id = String::from_utf8(identified_connection.connection_id)
-					.map_err(|| runtime_error_into_rpc_error("Failed to decode connection id"))?;
+					.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection id"))?;
 				let connection_id = ConnectionId::from_str(&connection_id)
-					.map_err(|| runtime_error_into_rpc_error("Failed to decode connection id"))?;
+					.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection id"))?;
 				let connection_end = ConnectionEnd::decode_vec(
 					&identified_connection.connection_end,
 				)
-				.map_err(|| runtime_error_into_rpc_error("Failed to decode connection end"))?;
+				.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection end"))?;
 				let identified_connection =
 					ibc::core::ics03_connection::connection::IdentifiedConnectionEnd::new(
 						connection_id,
@@ -509,11 +519,11 @@ where
 			.flatten()
 			.ok_or(runtime_error_into_rpc_error("Failed to fetch connections"))?;
 		let connection_id = String::from_utf8(result.connection_id)
-			.map_err(|| runtime_error_into_rpc_error("Failed to decode connection id"))?;
+			.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection id"))?;
 		let connection_id = ConnectionId::from_str(&connection_id)
-			.map_err(|| runtime_error_into_rpc_error("Failed to decode connection id"))?;
+			.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection id"))?;
 		let connection_end = ConnectionEnd::decode_vec(&result.connection_end)
-			.map_err(|| runtime_error_into_rpc_error("Failed to decode connection end"))?;
+			.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection end"))?;
 		let identified_connection =
 			ibc::core::ics03_connection::connection::IdentifiedConnectionEnd::new(
 				connection_id,
@@ -547,7 +557,7 @@ where
 			.ok()
 			.flatten()
 			.ok_or(runtime_error_into_rpc_error("Error generating handshake proof"))?;
-		let client_state = AnyClientState::decode_vec(&state)
+		let client_state = AnyClientState::decode_vec(&result.client_state)
 			.map_err(|_| runtime_error_into_rpc_error("Failed to decode client state"))?;
 		Ok(ConnHandshakeProof {
 			client_state: IdentifiedClientState {
@@ -577,10 +587,21 @@ where
 			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
-		api.channel(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
+		let result: ibc_primitives::QueryChannelResponse = api
+			.channel(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to fetch channel state"))
+			.ok_or(runtime_error_into_rpc_error("Failed to fetch channel state"))?;
+		let channel = ibc::core::ics04_channel::channel::ChannelEnd::decode_vec(&result.channel)
+			.map_err(|_| runtime_error_into_rpc_error("Failed to decode channel state"))?;
+		Ok(QueryChannelResponse {
+			channel: Some(channel.into()),
+			proof: result.proof,
+			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
+				revision_number: 0,
+				revision_height: result.height,
+			}),
+		})
 	}
 
 	fn query_channel_client(
@@ -599,10 +620,19 @@ where
 
 		let at = BlockId::Hash(block_hash);
 
-		api.channel_client(&at, channel_id, port_id)
+		let result: ibc_primitives::IdentifiedClientState = api
+			.channel_client(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to Client state for channel"))
+			.ok_or(runtime_error_into_rpc_error("Failed to Client state for channel"))?;
+
+		let client_state = AnyClientState::decode_vec(&result.client_state)
+			.map_err(|_| runtime_error_into_rpc_error("Failed to decode cleint state"))?;
+		Ok(IdentifiedClientState {
+			client_id: String::from_utf8(result.client_id)
+				.map_err(|_| runtime_error_into_rpc_error("Failed to decode client id"))?,
+			client_state: Some(client_state.into()),
+		})
 	}
 
 	fn query_connection_channels(
@@ -620,20 +650,86 @@ where
 
 		let at = BlockId::Hash(block_hash);
 
-		api.connection_channels(&at, connection_id)
+		let result: ibc_primitives::QueryChannelsResponse = api
+			.connection_channels(&at, connection_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to fetch channels state for connection"))
+			.ok_or(runtime_error_into_rpc_error("Failed to fetch channels state for connection"))?;
+		let channels = result
+			.channels
+			.into_iter()
+			.map(|temp| {
+				let port_id = PortId::from_str(
+					&String::from_utf8(temp.port_id)
+						.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?,
+				)
+				.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?;
+				let channel_id = ChannelId::from_str(
+					&String::from_utf8(temp.channel_id)
+						.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?,
+				)
+				.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?;
+				let channel_end = ChannelEnd::decode_vec(&temp.channel_end)
+					.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?;
+				let identified_channel =
+					IdentifiedChannelEnd::new(port_id, channel_id, channel_end);
+				let identified_channel: ibc_proto::ibc::core::channel::v1::IdentifiedChannel =
+					identified_channel.into();
+				Ok(identified_channel)
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		Ok(QueryChannelsResponse {
+			channels,
+			pagination: None,
+			height: Some(ibc_proto::ibc::core::client::v1::Height {
+				revision_number: 0,
+				revision_height: result.height,
+			}),
+		})
 	}
 
 	fn query_channels(&self) -> Result<QueryChannelsResponse> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
 
-		api.channels(&at)
+		let result: ibc_primitives::QueryChannelsResponse = api
+			.channels(&at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to fetch channels"))
+			.ok_or(runtime_error_into_rpc_error("Failed to fetch channels"))?;
+		let channels = result
+			.channels
+			.into_iter()
+			.map(|temp| {
+				let port_id = PortId::from_str(
+					&String::from_utf8(temp.port_id)
+						.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?,
+				)
+				.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?;
+				let channel_id = ChannelId::from_str(
+					&String::from_utf8(temp.channel_id)
+						.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?,
+				)
+				.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?;
+				let channel_end = ChannelEnd::decode_vec(&temp.channel_end)
+					.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?;
+				let identified_channel =
+					IdentifiedChannelEnd::new(port_id, channel_id, channel_end);
+				let identified_channel: ibc_proto::ibc::core::channel::v1::IdentifiedChannel =
+					identified_channel.into();
+				Ok(identified_channel)
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		Ok(QueryChannelsResponse {
+			channels,
+			pagination: None,
+			height: Some(ibc_proto::ibc::core::client::v1::Height {
+				revision_number: 0,
+				revision_height: result.height,
+			}),
+		})
 	}
 
 	fn query_packet_commitments(
@@ -652,10 +748,35 @@ where
 
 		let at = BlockId::Hash(block_hash);
 
-		api.packet_commitments(&at, channel_id, port_id)
+		let result: ibc_primitives::QueryPacketCommitmentsResponse = api
+			.packet_commitments(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to fetch commitments"))
+			.ok_or(runtime_error_into_rpc_error("Failed to fetch commitments"))?;
+		let commitments = result
+			.commitments
+			.into_iter()
+			.map(|packet_state| {
+				let port_id = String::from_utf8(packet_state.port_id)
+					.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?;
+				let channel_id = String::from_utf8(packet_state.channel_id)
+					.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?;
+				Ok(PacketState {
+					port_id,
+					channel_id,
+					sequence: packet_state.sequence,
+					data: packet_state.data,
+				})
+			})
+			.collect::<Result<Vec<_>>>()?;
+		Ok(QueryPacketCommitmentsResponse {
+			commitments,
+			pagination: None,
+			height: Some(ibc_proto::ibc::core::client::v1::Height {
+				revision_number: 0,
+				revision_height: result.height,
+			}),
+		})
 	}
 
 	fn query_packet_acknowledgements(
@@ -674,10 +795,39 @@ where
 
 		let at = BlockId::Hash(block_hash);
 
-		api.packet_acknowledgements(&at, channel_id, port_id)
+		let result: ibc_primitives::QueryPacketAcknowledgementsResponse = api
+			.packet_acknowledgements(
+				&at,
+				channel_id.as_bytes().to_vec(),
+				port_id.as_bytes().to_vec(),
+			)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to fetch acknowledgements"))
+			.ok_or(runtime_error_into_rpc_error("Failed to fetch acknowledgements"))?;
+		let acknowledgements = result
+			.acks
+			.into_iter()
+			.map(|packet_state| {
+				let port_id = String::from_utf8(packet_state.port_id)
+					.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?;
+				let channel_id = String::from_utf8(packet_state.channel_id)
+					.map_err(|_| runtime_error_into_rpc_error("Failed to decode port id"))?;
+				Ok(PacketState {
+					port_id,
+					channel_id,
+					sequence: packet_state.sequence,
+					data: packet_state.data,
+				})
+			})
+			.collect::<Result<Vec<_>>>()?;
+		Ok(QueryPacketAcknowledgementsResponse {
+			acknowledgements,
+			pagination: None,
+			height: Some(ibc_proto::ibc::core::client::v1::Height {
+				revision_number: 0,
+				revision_height: result.height,
+			}),
+		})
 	}
 
 	fn query_unreceived_packets(
@@ -696,10 +846,15 @@ where
 			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 		let at = BlockId::Hash(block_hash);
 
-		api.unreceived_packets(&at, channel_id, port_id, seqs)
-			.ok()
-			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to unreceived packet sequences"))
+		api.unreceived_packets(
+			&at,
+			channel_id.as_bytes().to_vec(),
+			port_id.as_bytes().to_vec(),
+			seqs,
+		)
+		.ok()
+		.flatten()
+		.ok_or(runtime_error_into_rpc_error("Failed to unreceived packet sequences"))
 	}
 
 	fn query_unreceived_acknowledgements(
@@ -718,10 +873,15 @@ where
 			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 		let at = BlockId::Hash(block_hash);
 
-		api.unreceived_acknowledgements(&at, channel_id, port_id, seqs)
-			.ok()
-			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to unreceived packet sequences"))
+		api.unreceived_acknowledgements(
+			&at,
+			channel_id.as_bytes().to_vec(),
+			port_id.as_bytes().to_vec(),
+			seqs,
+		)
+		.ok()
+		.flatten()
+		.ok_or(runtime_error_into_rpc_error("Failed to unreceived packet sequences"))
 	}
 
 	fn query_next_seq_recv(
@@ -739,10 +899,19 @@ where
 			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
-		api.next_seq_recv(&at, channel_id, port_id)
+		let result: ibc_primitives::QueryNextSequenceReceiveResponse = api
+			.next_seq_recv(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))
+			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))?;
+		Ok(QueryNextSequenceReceiveResponse {
+			next_sequence_receive: result.sequence,
+			proof: result.proof,
+			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
+				revision_number: 0,
+				revision_height: result.height,
+			}),
+		})
 	}
 
 	fn query_packet_commitment(
@@ -761,10 +930,24 @@ where
 			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
-		api.packet_commitment(&at, channel_id, port_id, seq)
+		let result: ibc_primitives::QueryPacketCommitmentResponse = api
+			.packet_commitment(
+				&at,
+				channel_id.as_bytes().to_vec(),
+				port_id.as_bytes().to_vec(),
+				seq,
+			)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))
+			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))?;
+		Ok(QueryPacketCommitmentResponse {
+			commitment: result.commitment,
+			proof: result.proof,
+			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
+				revision_number: 0,
+				revision_height: result.height,
+			}),
+		})
 	}
 
 	fn query_packet_acknowledgement(
@@ -783,10 +966,24 @@ where
 			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
-		api.packet_acknowledgement(&at, channel_id, port_id, seq)
+		let result: ibc_primitives::QueryPacketAcknowledgementResponse = api
+			.packet_acknowledgement(
+				&at,
+				channel_id.as_bytes().to_vec(),
+				port_id.as_bytes().to_vec(),
+				seq,
+			)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))
+			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))?;
+		Ok(QueryPacketAcknowledgementResponse {
+			acknowledgement: result.ack,
+			proof: result.proof,
+			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
+				revision_number: 0,
+				revision_height: result.height,
+			}),
+		})
 	}
 
 	fn query_packet_receipt(
@@ -805,10 +1002,19 @@ where
 			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
-		api.packet_receipt(&at, channel_id, port_id, seq)
+		let result: ibc_primitives::QueryPacketReceiptResponse = api
+			.packet_receipt(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec(), seq)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))
+			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))?;
+		Ok(QueryPacketReceiptResponse {
+			received: result.receipt,
+			proof: result.proof,
+			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
+				revision_number: 0,
+				revision_height: result.height,
+			}),
+		})
 	}
 
 	fn query_denom_trace(&self, _denom: String) -> Result<QueryDenomTraceResponse> {

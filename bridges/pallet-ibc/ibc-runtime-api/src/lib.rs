@@ -37,7 +37,7 @@ sp_api::decl_runtime_apis! {
 		fn channel(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<QueryChannelResponse>;
 
 		/// Should return the client state for the client supporting this channel
-		fn channel_client(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<Vec<u8>>;
+		fn channel_client(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<IdentifiedClientState>;
 
 		/// Returns all channels associated with this connection
 		fn connection_channels(connection_id: Vec<u8>) -> Option<QueryChannelsResponse>;

@@ -17,11 +17,12 @@ use ibc::core::{
 	},
 };
 use ibc_primitives::{
-	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedConnection, PacketState, Proof,
-	QueryChannelResponse, QueryChannelsResponse, QueryClientStateResponse, QueryConnectionResponse,
-	QueryConnectionsResponse, QueryConsensusStateResponse, QueryNextSequenceReceiveResponse,
-	QueryPacketAcknowledgementResponse, QueryPacketAcknowledgementsResponse,
-	QueryPacketCommitmentResponse, QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
+	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
+	PacketState, Proof, QueryChannelResponse, QueryChannelsResponse, QueryClientStateResponse,
+	QueryConnectionResponse, QueryConnectionsResponse, QueryConsensusStateResponse,
+	QueryNextSequenceReceiveResponse, QueryPacketAcknowledgementResponse,
+	QueryPacketAcknowledgementsResponse, QueryPacketCommitmentResponse,
+	QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
 };
 use scale_info::prelude::collections::BTreeMap;
 use sp_runtime::traits::BlakeTwo256;
@@ -185,7 +186,7 @@ impl<T: Config> Pallet<T> {
 		Ok(trie.root().as_bytes().to_vec())
 	}
 
-	pub fn generate_raw_proof(keys: Vec<Vec<u8>>) -> Result<Vec<Vec<u8>>, Error<T>> {
+	pub fn generate_raw_proof(keys: Vec<Vec<u8>>) -> Result<Vec<u8>, Error<T>> {
 		let keys = keys.iter().collect::<Vec<_>>();
 		let mut db = sp_trie::MemoryDB::<BlakeTwo256>::default();
 		let root = {
@@ -194,6 +195,7 @@ impl<T: Config> Pallet<T> {
 			trie.root().clone()
 		};
 		sp_trie::generate_trie_proof::<sp_trie::LayoutV0<BlakeTwo256>, _, _, _>(&db, root, keys)
+			.map(|proof| proof.encode())
 			.map_err(|_| Error::<T>::ProofGenerationError)
 	}
 
@@ -257,6 +259,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get all client states
+	/// Returns a Vec of (client_id, client_state)
 	pub fn clients() -> Result<Vec<(Vec<u8>, Vec<u8>)>, Error<T>> {
 		let client_states = ClientStates::<T>::iter().collect::<Vec<_>>();
 
@@ -315,14 +318,17 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get client state for client which this channel is bound to
-	pub fn channel_client(channel_id: Vec<u8>, port_id: Vec<u8>) -> Result<Vec<u8>, Error<T>> {
+	pub fn channel_client(
+		channel_id: Vec<u8>,
+		port_id: Vec<u8>,
+	) -> Result<IdentifiedClientState, Error<T>> {
 		for (connection_id, channels) in ChannelsConnection::<T>::iter() {
 			if channels.contains(&(port_id.clone(), channel_id.clone())) {
 				if let Some((client_id, ..)) = ConnectionClient::<T>::iter()
 					.find(|(.., connection)| &connection_id == connection)
 				{
 					let client_state = ClientStates::<T>::get(client_id.clone());
-					return Ok(client_state)
+					return Ok(IdentifiedClientState { client_id, client_state })
 				}
 			}
 		}
@@ -509,13 +515,14 @@ impl<T: Config> Pallet<T> {
 	) -> Result<QueryPacketReceiptResponse, Error<T>> {
 		let seq_bytes = seq.encode();
 		let receipt = PacketReceipt::<T>::get((port_id.clone(), channel_id.clone(), seq_bytes));
+		let receipt = String::from_utf8(receipt).map_err(|_| Error::<T>::DecodingError)?;
 		let port_id = port_id_from_bytes(port_id)?;
 		let channel_id = channel_id_from_bytes(channel_id)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
 		let receipt_path = format!("{}", ReceiptsPath { port_id, channel_id, sequence });
 		let mut key = T::CONNECTION_PREFIX.to_vec();
 		key.extend_from_slice(receipt_path.as_bytes());
-
+		let receipt = if &receipt == "Ok" { true } else { false };
 		Ok(QueryPacketReceiptResponse {
 			receipt,
 			proof: Self::generate_raw_proof(vec![key])?,

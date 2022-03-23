@@ -29,8 +29,8 @@ pub struct Any {
 	pub value: Vec<u8>,
 }
 
-impl From<prost_types::Any> for Any {
-	fn from(any: prost_types::Any) -> Self {
+impl From<ibc_proto::google::protobuf::Any> for Any {
+	fn from(any: ibc_proto::google::protobuf::Any) -> Self {
 		Self { type_url: any.type_url.as_bytes().to_vec(), value: any.value }
 	}
 }
@@ -250,17 +250,17 @@ pub mod pallet {
 		#[frame_support::transactional]
 		pub fn deliver(origin: OriginFor<T>, messages: Vec<Any>) -> DispatchResult {
 			log::info!("in deliver");
-
 			let _sender = ensure_signed(origin)?;
 			let mut ctx = routing::Context::<T>::new();
 			let messages = messages
-				.iter()
+				.into_iter()
 				.map(|message| {
 					let type_url = String::from_utf8(message.type_url.clone())
 						.map_err(|_| Error::DecodingError)?;
-					Ok(prost_types::Any { type_url, value: message.value.clone() })
+					Ok(ibc_proto::google::protobuf::Any { type_url, value: message.value })
 				})
-				.collect::<Result<Vec<prost_types::Any>, Error<T>>>()?;
+				.collect::<Result<Vec<ibc_proto::google::protobuf::Any>, Error<T>>>()?;
+
 			let result = ibc::core::ics26_routing::handler::deliver(&mut ctx, messages)
 				.map_err(|_| Error::<T>::ProcessingError)?;
 
