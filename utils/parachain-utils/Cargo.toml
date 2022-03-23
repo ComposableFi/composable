@@ -26,7 +26,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 structopt = "0.3.23"
 
-sudo = { package= "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 common = { package = "common", path = "../../runtime/common" }
 substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch = "master" }

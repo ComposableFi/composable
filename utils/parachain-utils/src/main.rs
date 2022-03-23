@@ -196,7 +196,7 @@ where
 		)
 	});
 	if !has_event {
-		return Err(ExtrinsicError::Custom("Failed to propose upgrade".into()).into());
+		return Err(ExtrinsicError::Custom("Failed to propose upgrade".into()).into())
 	}
 
 	log::info!("Runtime upgrade proposed");
