@@ -163,7 +163,7 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		quote_amount: T::Balance,
 		_: T::Balance,
 		keep_alive: bool,
-	) -> Result<(), DispatchError> {
+	) -> Result<T::Balance, DispatchError> {
 		let current_block = frame_system::Pallet::<T>::current_block_number();
 		Self::ensure_sale_state(&pool, current_block, SaleState::NotStarted)?;
 
@@ -175,7 +175,7 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
 		T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
 
-		Ok(())
+		Ok(T::Balance::zero())
 	}
 
 	#[transactional]

@@ -545,7 +545,7 @@ pub mod pallet {
 					min_mint_amount,
 					keep_alive,
 				)?,
-				PoolConfiguration::LiquidityBootstrapping(liquidity_bootstrapping_pool_info) => {
+				PoolConfiguration::LiquidityBootstrapping(liquidity_bootstrapping_pool_info) =>
 					LiquidityBootstrapping::<T>::add_liquidity(
 						who,
 						liquidity_bootstrapping_pool_info,
@@ -554,9 +554,7 @@ pub mod pallet {
 						quote_amount,
 						min_mint_amount,
 						keep_alive,
-					)?;
-					T::Balance::zero()
-				},
+					)?,
 			};
 			Self::deposit_event(Event::<T>::LiquidityAdded {
 				who: who.clone(),
