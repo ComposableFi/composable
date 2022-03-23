@@ -210,7 +210,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_market)]
 	/// Maps [MarketId](Config::MarketId) to the corresponding virtual [Market] specs
-	pub type Markets<T: Config> = StorageMap<_, Twox64Concat, T::MarketId, MarketOf<T>>;
+	pub type Markets<T: Config> = StorageMap<_, Blake2_128Concat, T::MarketId, MarketOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                            Genesis Configuration
