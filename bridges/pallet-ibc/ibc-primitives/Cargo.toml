@@ -13,6 +13,7 @@ ibc = { git = "https://github.com/Wizdave97/ibc-rs", branch = "david/serializabl
 ibc-proto = { git = "https://github.com/Wizdave97/ibc-rs", branch = "david/serializable-structs", default-features = false}
 scale-info = { version = '1.0.0', default-features = false }
 #ibc-proto = { version = "0.16.0", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", default-features = false }
 
 [features]
 default = ['std']
@@ -21,5 +22,6 @@ std = [
     "serde/std",
     "ibc/std",
     "scale-info/std",
-    "ibc-proto/std"
+    "ibc-proto/std",
+    "sp-std/std"
 ]

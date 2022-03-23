@@ -32,7 +32,7 @@ use ibc_proto::{
 		applications::transfer::v1::{QueryDenomTraceResponse, QueryDenomTracesResponse},
 		core::{
 			channel::v1::{
-				PacketState, QueryChannelResponse, QueryChannelsResponse,
+				Packet, PacketState, QueryChannelResponse, QueryChannelsResponse,
 				QueryNextSequenceReceiveResponse, QueryPacketAcknowledgementResponse,
 				QueryPacketAcknowledgementsResponse, QueryPacketCommitmentResponse,
 				QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
@@ -72,6 +72,14 @@ pub struct ConnHandshakeProof {
 /// IBC RPC methods.
 #[rpc]
 pub trait IbcApi<BlockNumber> {
+	/// Query packet data
+	#[rpc(name = "ibc_queryPackets")]
+	fn query_packets(
+		&self,
+		channel_id: String,
+		port_id: String,
+		seqs: Vec<u64>,
+	) -> Result<Vec<Packet>>;
 	/// Generate proof for given key
 	#[rpc(name = "ibc_generateProof")]
 	fn generate_proof(&self, height: u32, key: Vec<Vec<u8>>) -> Result<Proof>;
@@ -296,6 +304,48 @@ where
 	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	C::Api: IbcRuntimeApi<Block>,
 {
+	fn query_packets(
+		&self,
+		channel_id: String,
+		port_id: String,
+		seqs: Vec<u64>,
+	) -> Result<Vec<Packet>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(self.client.info().best_hash);
+		let packets: Vec<ibc_primitives::OffchainPacketType> = api
+			.query_packets(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec(), seqs)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error fetching packets"))?;
+
+		packets
+			.into_iter()
+			.map(|packet| {
+				Ok(Packet {
+					sequence: packet.sequence,
+					source_port: String::from_utf8(packet.source_port).map_err(|_| {
+						runtime_error_into_rpc_error("Failed to decode source port")
+					})?,
+					source_channel: String::from_utf8(packet.source_channel).map_err(|_| {
+						runtime_error_into_rpc_error("Failed to decode source channel")
+					})?,
+					destination_port: String::from_utf8(packet.destination_port).map_err(|_| {
+						runtime_error_into_rpc_error("Failed to decode destination port")
+					})?,
+					destination_channel: String::from_utf8(packet.destination_channel).map_err(
+						|_| runtime_error_into_rpc_error("Failed to decode destination channel"),
+					)?,
+					data: packet.data,
+					timeout_height: Some(ibc_proto::ibc::core::client::v1::Height {
+						revision_number: packet.timeout_height.0,
+						revision_height: packet.timeout_height.1,
+					}),
+					timeout_timestamp: packet.timeout_timestamp,
+				})
+			})
+			.collect()
+	}
+
 	fn generate_proof(&self, height: u32, keys: Vec<Vec<u8>>) -> Result<Proof> {
 		let api = self.client.runtime_api();
 		let block_hash = self

@@ -1387,6 +1387,10 @@ impl_runtime_apis! {
 			Ibc::query_balance_with_address(addr).ok()
 		}
 
+		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
+			Ibc::get_offchain_packets(channel_id, port_id, seqs).ok()
+		}
+
 		fn generate_proof(keys: Vec<Vec<u8>>) -> Option<ibc_primitives::Proof> {
 			Ibc::generate_proof(keys).ok()
 		}

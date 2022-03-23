@@ -10,6 +10,9 @@ sp_api::decl_runtime_apis! {
 		/// Returns the balance of this address
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128>;
 
+		/// Quuery offchain packets
+		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<OffchainPacketType>>;
+
 		/// Generate trie proof for these keys
 		fn generate_proof(keys: Vec<Vec<u8>>) -> Option<Proof>;
 

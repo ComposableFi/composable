@@ -1,5 +1,4 @@
 use super::*;
-use crate::traits::{OffchainPacketType, SendPacketData};
 use codec::{Decode, Encode};
 use frame_support::traits::Currency;
 use ibc::core::{
@@ -18,11 +17,12 @@ use ibc::core::{
 };
 use ibc_primitives::{
 	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
-	PacketState, Proof, QueryChannelResponse, QueryChannelsResponse, QueryClientStateResponse,
-	QueryConnectionResponse, QueryConnectionsResponse, QueryConsensusStateResponse,
-	QueryNextSequenceReceiveResponse, QueryPacketAcknowledgementResponse,
-	QueryPacketAcknowledgementsResponse, QueryPacketCommitmentResponse,
-	QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
+	OffchainPacketType, PacketState, Proof, QueryChannelResponse, QueryChannelsResponse,
+	QueryClientStateResponse, QueryConnectionResponse, QueryConnectionsResponse,
+	QueryConsensusStateResponse, QueryNextSequenceReceiveResponse,
+	QueryPacketAcknowledgementResponse, QueryPacketAcknowledgementsResponse,
+	QueryPacketCommitmentResponse, QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
+	SendPacketData,
 };
 use scale_info::prelude::collections::BTreeMap;
 use sp_runtime::traits::BlakeTwo256;
@@ -595,6 +595,27 @@ impl<T: Config> Pallet<T> {
 				sp_io::offchain_index::set(&key, offchain_packets.encode().as_slice());
 			}
 		}
+	}
+
+	pub fn get_offchain_packets(
+		channel_id: Vec<u8>,
+		port_id: Vec<u8>,
+		sequences: Vec<u64>,
+	) -> Result<Vec<OffchainPacketType>, Error<T>> {
+		let key = Pallet::<T>::offchain_key(channel_id, port_id);
+		let offchain_packets: BTreeMap<u64, OffchainPacketType> =
+			sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
+				.and_then(|v| codec::Decode::decode(&mut &*v).ok())
+				.unwrap_or_default();
+		sequences
+			.into_iter()
+			.map(|seq| {
+				offchain_packets
+					.get(&seq)
+					.map(|packet_ref| packet_ref.clone())
+					.ok_or(Error::<T>::Other)
+			})
+			.collect()
 	}
 }
 
