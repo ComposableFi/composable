@@ -19,6 +19,7 @@ pub mod call_filter;
 pub mod currency;
 pub mod defi;
 pub mod dex;
+pub mod financial_nft;
 pub mod governance;
 pub mod lending;
 pub mod liquidation;
