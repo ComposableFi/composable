@@ -248,101 +248,32 @@ fn add_lp_imbalanced() {
 
 // test add liquidity with min_mint_amount
 #[test]
-fn add_lp_with_min_mint_amount_success() {
+fn add_lp_with_min_mint_amount() {
 	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
-		let initial_usdt = 1_000_000_000_000_u128 * unit;
-		let initial_usdc = 1_000_000_000_000_u128 * unit;
-		let pool_id = create_stable_swap_pool(
-			USDC,
-			USDT,
-			initial_usdc,
-			initial_usdt,
-			100_u16,
-			Permill::zero(),
-			Permill::zero(),
-		);
-		let pool = Pablo::pools(pool_id).expect("pool not found");
-		let pool = match pool {
-			StableSwap(pool) => pool,
-			_ => panic!("expected stable_swap pool"),
+		let pool_init_config = PoolInitConfiguration::StableSwap {
+			pair: CurrencyPair::new(USDC, USDT),
+			amplification_coefficient: 10_u16,
+			fee: Permill::zero(),
+			protocol_fee: Permill::zero(),
 		};
-		let bob_usdc = 1000 * unit;
-		let bob_usdt = 1000 * unit;
-		// Mint the tokens
-		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
-		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-
-		let lp = Tokens::balance(pool.lp_token, &BOB);
-		assert_eq!(lp, 0_u128);
-		let expected_min_value = bob_usdt + bob_usdc;
-		// Add the liquidity in balanced way
-		assert_ok!(Pablo::add_liquidity(
-			Origin::signed(BOB),
-			pool_id,
-			bob_usdc,
-			bob_usdt,
-			expected_min_value,
-			false
-		));
-		let lp = Tokens::balance(pool.lp_token, &BOB);
-		// must have received some lp tokens
-		assert!(lp == bob_usdc + bob_usdt);
-
-		let bob_usdc = 1000 * unit;
-		let bob_usdt = 900 * unit;
-		// Mint the tokens
-		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
-		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-		// Add the liquidity in imbalanced way, but have expected_min_value higher
-		assert_noop!(
-			Pablo::add_liquidity(
-				Origin::signed(BOB),
-				pool_id,
-				bob_usdc,
-				bob_usdt,
-				expected_min_value,
-				false
-			),
-			crate::Error::<Test>::CannotRespectMinimumRequested
-		);
-	});
-}
-
-// test add liquidity with min_mint_amount
-#[test]
-fn add_lp_with_min_mint_amount_fail() {
-	new_test_ext().execute_with(|| {
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
 		let initial_usdc = 1_000_000_000_000_u128 * unit;
-		let pool_id = create_stable_swap_pool(
-			USDC,
-			USDT,
+		let expected_lp = |base_amount: Balance,
+		                   quote_amount: Balance,
+		                   _lp_total_issuance: Balance,
+		                   _pool_base_amount: Balance,
+		                   _pool_quote_amount: Balance|
+		 -> Balance { base_amount + quote_amount };
+		let usdc_amount = 1000 * unit;
+		let usdt_amount = 1000 * unit;
+		common_add_lp_with_min_mint_amount(
+			pool_init_config,
 			initial_usdc,
 			initial_usdt,
-			100_u16,
-			Permill::zero(),
-			Permill::zero(),
-		);
-
-		let bob_usdc = 1000 * unit;
-		let bob_usdt = 900 * unit;
-		// Mint the tokens
-		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
-		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-		let expected_min_value = bob_usdt + bob_usdc + 1_u128;
-		// Add the liquidity in imbalanced way, but have expected_min_value higher
-		assert_noop!(
-			Pablo::add_liquidity(
-				Origin::signed(BOB),
-				pool_id,
-				bob_usdc,
-				bob_usdt,
-				expected_min_value,
-				false
-			),
-			crate::Error::<Test>::CannotRespectMinimumRequested
+			usdc_amount,
+			usdt_amount,
+			expected_lp,
 		);
 	});
 }
@@ -355,52 +286,15 @@ fn remove_lp_failure() {
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
 		let initial_usdc = 1_000_000_000_000_u128 * unit;
-		let pool_id = create_stable_swap_pool(
-			USDC,
-			USDT,
-			initial_usdc,
-			initial_usdt,
-			100_u16,
-			Permill::zero(),
-			Permill::zero(),
-		);
-		let pool = Pablo::pools(pool_id).expect("pool not found");
-		let pool = match pool {
-			StableSwap(pool) => pool,
-			_ => panic!("expected stable_swap pool"),
+		let pool_init_config = PoolInitConfiguration::StableSwap {
+			pair: CurrencyPair::new(USDC, USDT),
+			amplification_coefficient: 10_u16,
+			fee: Permill::zero(),
+			protocol_fee: Permill::zero(),
 		};
 		let bob_usdc = 1000 * unit;
 		let bob_usdt = 1000 * unit;
-		// Mint the tokens
-		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
-		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-
-		// Add the liquidity
-		assert_ok!(Pablo::add_liquidity(
-			Origin::signed(BOB),
-			pool_id,
-			bob_usdc,
-			bob_usdt,
-			0,
-			false
-		));
-		let lp = Tokens::balance(pool.lp_token, &BOB);
-		assert_noop!(
-			Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp + 1, 0, 0),
-			TokenError::NoFunds
-		);
-		let min_expected_usdt = 1001 * unit;
-		let min_expected_usdc = 1001 * unit;
-		assert_noop!(
-			Pablo::remove_liquidity(
-				Origin::signed(BOB),
-				pool_id,
-				lp,
-				min_expected_usdc,
-				min_expected_usdt
-			),
-			crate::Error::<Test>::CannotRespectMinimumRequested
-		);
+		common_remove_lp_failure(pool_init_config, initial_usdc, initial_usdt, bob_usdc, bob_usdt);
 	});
 }
 
@@ -412,44 +306,14 @@ fn exchange_failure() {
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 1_000_000_u128 * unit;
 		let initial_usdc = 1_000_000_u128 * unit;
-		let pool_id = create_stable_swap_pool(
-			USDC,
-			USDT,
-			initial_usdc,
-			initial_usdt,
-			100_u16,
-			Permill::zero(),
-			Permill::zero(),
-		);
-		let bob_usdc = 1000 * unit;
-		// Mint the tokens
-		assert_ok!(Tokens::mint_into(USDC, &BOB, bob_usdc));
-
-		let exchange_usdc = 1001 * unit;
-		assert_noop!(
-			Pablo::swap(
-				Origin::signed(BOB),
-				pool_id,
-				CurrencyPair::new(USDT, USDC),
-				exchange_usdc,
-				0,
-				false
-			),
-			orml_tokens::Error::<Test>::BalanceTooLow
-		);
-		let exchange_value = 1000 * unit;
-		let expected_value = 1001 * unit;
-		assert_noop!(
-			Pablo::swap(
-				Origin::signed(BOB),
-				pool_id,
-				CurrencyPair::new(USDT, USDC),
-				exchange_value,
-				expected_value,
-				false
-			),
-			crate::Error::<Test>::CannotRespectMinimumRequested
-		);
+		let exchange_base_amount = 1000 * unit;
+		let pool_init_config = PoolInitConfiguration::StableSwap {
+			pair: CurrencyPair::new(USDC, USDT),
+			amplification_coefficient: 10_u16,
+			fee: Permill::zero(),
+			protocol_fee: Permill::zero(),
+		};
+		common_exchange_failure(pool_init_config, initial_usdc, initial_usdt, exchange_base_amount);
 	});
 }
 
