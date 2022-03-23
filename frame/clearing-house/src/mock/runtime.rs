@@ -22,6 +22,10 @@ use sp_runtime::{
 	FixedI128,
 };
 
+// ----------------------------------------------------------------------------------------------------
+// 											Construct Runtime
+// ----------------------------------------------------------------------------------------------------
+
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 type Block = frame_system::mocking::MockBlock<Runtime>;
 
@@ -44,6 +48,10 @@ frame_support::construct_runtime!(
 
 pub type Balance = u128;
 pub type Amount = i64;
+
+// ----------------------------------------------------------------------------------------------------
+//                                                Config
+// ----------------------------------------------------------------------------------------------------
 
 impl system::Config for Runtime {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -72,6 +80,10 @@ impl system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+// ----------------------------------------------------------------------------------------------------
+//                                                Balances
+// ----------------------------------------------------------------------------------------------------
+
 parameter_types! {
 	pub const NativeExistentialDeposit: Balance = 0;
 }
@@ -88,11 +100,19 @@ impl pallet_balances::Config for Runtime {
 	type ReserveIdentifier = [u8; 8];
 }
 
+// ----------------------------------------------------------------------------------------------------
+//                                            Governance Registry
+// ----------------------------------------------------------------------------------------------------
+
 impl governance_registry::Config for Runtime {
 	type AssetId = AssetId;
 	type WeightInfo = ();
 	type Event = Event;
 }
+
+// ----------------------------------------------------------------------------------------------------
+//                                            		ORML Tokens
+// ----------------------------------------------------------------------------------------------------
 
 parameter_type_with_key! {
 	pub TokensExistentialDeposit: |_currency_id: AssetId| -> Balance {
@@ -112,6 +132,10 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = Everything;
 }
 
+// ----------------------------------------------------------------------------------------------------
+//                                            	Currency Factory
+// ----------------------------------------------------------------------------------------------------
+
 impl pallet_currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = AssetId;
@@ -119,6 +143,10 @@ impl pallet_currency_factory::Config for Runtime {
 	type ReserveOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
 }
+
+// ----------------------------------------------------------------------------------------------------
+//                                            		Assets
+// ----------------------------------------------------------------------------------------------------
 
 parameter_types! {
 	pub const NativeAssetId: AssetId = PICA;
@@ -140,6 +168,10 @@ impl pallet_assets::Config for Runtime {
 	type GovernanceRegistry = GovernanceRegistry;
 }
 
+// ----------------------------------------------------------------------------------------------------
+//                                            	Clearing House
+// ----------------------------------------------------------------------------------------------------
+
 impl DeFiComposableConfig for Runtime {
 	type Balance = Balance;
 	type MayBeAssetId = AssetId;
@@ -160,6 +192,10 @@ impl clearing_house::Config for Runtime {
 	type Assets = Assets;
 	type PalletId = ClearingHouseId;
 }
+
+// ----------------------------------------------------------------------------------------------------
+//                                            	Externalities Builder
+// ----------------------------------------------------------------------------------------------------
 
 pub struct ExtBuilder {
 	pub native_balances: Vec<(AccountId, Balance)>,
