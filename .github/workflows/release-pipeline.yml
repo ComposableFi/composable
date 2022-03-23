@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - releases
+      - runtime-upgrade-workflow
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
