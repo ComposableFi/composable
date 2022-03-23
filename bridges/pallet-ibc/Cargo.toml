@@ -26,7 +26,6 @@ balances = { package = "pallet-balances", git = "https://github.com/paritytech/s
 #ibc = { version = "0.12.0", default-features = false }
 ibc = { git = "https://github.com/Wizdave97/ibc-rs", branch = "david/serializable-structs", default-features = false}
 ibc-proto = { git = "https://github.com/Wizdave97/ibc-rs", branch = "david/serializable-structs", default-features = false}
-#prost-types = { version = "0.9", default-features = false }
 tendermint-proto = "0.23.5"
 
 # local deps

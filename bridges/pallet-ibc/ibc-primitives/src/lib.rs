@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use scale_info::prelude::vec::Vec;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
@@ -12,8 +11,8 @@ use ibc::{
 	},
 	timestamp::Timestamp,
 };
-use scale_info::prelude::string::ToString;
-use sp_std::str::FromStr;
+use scale_info::prelude::string::{ToString, String};
+use sp_std::{str::FromStr, vec::Vec};
 
 pub struct SendPacketData {
 	pub data: Vec<u8>,
