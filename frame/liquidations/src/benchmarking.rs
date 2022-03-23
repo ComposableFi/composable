@@ -36,7 +36,7 @@ pub fn sell_identity<T: Config>(
 }
 
 benchmarks! {
-	liquidate {
+	add_liquidation_strategy {
 		let sell = sell_identity::<T>();
 		let account_id : T::AccountId = whitelisted_caller();
 		let caller = RawOrigin::Signed(account_id.clone());

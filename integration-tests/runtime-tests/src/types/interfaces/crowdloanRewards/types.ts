@@ -6,7 +6,10 @@ import type { ITuple } from '@polkadot/types-codec/types';
 import type { EthereumAccountId } from '@polkadot/types/interfaces/eth';
 import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/extrinsics';
 import type { ParachainInherentData, PersistedValidationData } from '@polkadot/types/interfaces/parachains';
-import type { AccountId32, Balance } from '@polkadot/types/interfaces/runtime';
+import type { AccountId32, Balance, Permill } from '@polkadot/types/interfaces/runtime';
+
+/** @name CommonMosaicRemoteAssetId */
+export interface CommonMosaicRemoteAssetId extends Null {}
 
 /** @name ComposableTraitsAssetsXcmAssetLocation */
 export interface ComposableTraitsAssetsXcmAssetLocation extends Null {}
@@ -14,11 +17,39 @@ export interface ComposableTraitsAssetsXcmAssetLocation extends Null {}
 /** @name ComposableTraitsAuctionAuctionStepFunction */
 export interface ComposableTraitsAuctionAuctionStepFunction extends Null {}
 
+/** @name ComposableTraitsBondedFinanceBondDuration */
+export interface ComposableTraitsBondedFinanceBondDuration extends Struct {
+  readonly Finite: {
+    readonly returnIn: u32;
+  } & Struct;
+}
+
 /** @name ComposableTraitsBondedFinanceBondOffer */
-export interface ComposableTraitsBondedFinanceBondOffer extends Null {}
+export interface ComposableTraitsBondedFinanceBondOffer extends Struct {
+  readonly beneficiary: AccountId32;
+  readonly asset: u128;
+  readonly bondPrice: u128;
+  readonly nbOfBonds: u128;
+  readonly maturity: ComposableTraitsBondedFinanceBondDuration;
+  readonly reward: ComposableTraitsBondedFinanceBondOfferReward;
+  readonly keepAlive: bool;
+}
+
+/** @name ComposableTraitsBondedFinanceBondOfferReward */
+export interface ComposableTraitsBondedFinanceBondOfferReward extends Struct {
+  readonly asset: u128;
+  readonly amount: u128;
+  readonly maturity: u32;
+}
 
 /** @name ComposableTraitsCallFilterCallFilterEntry */
 export interface ComposableTraitsCallFilterCallFilterEntry extends Null {}
+
+/** @name ComposableTraitsDefiCurrencyPair */
+export interface ComposableTraitsDefiCurrencyPair extends Struct {
+  readonly base: u128;
+  readonly quote: u128;
+}
 
 /** @name ComposableTraitsDefiSell */
 export interface ComposableTraitsDefiSell extends Null {}
@@ -26,8 +57,38 @@ export interface ComposableTraitsDefiSell extends Null {}
 /** @name ComposableTraitsDefiTake */
 export interface ComposableTraitsDefiTake extends Null {}
 
+/** @name ComposableTraitsDexConsantProductPoolInfo */
+export interface ComposableTraitsDexConsantProductPoolInfo extends Null {}
+
+/** @name ComposableTraitsDexConstantProductPoolInfo */
+export interface ComposableTraitsDexConstantProductPoolInfo extends Struct {
+  readonly owner: AccountId32;
+  readonly pair: {
+    readonly base: u128;
+    readonly quote: u128;
+  } & Struct;
+  readonly lpToken: u128;
+  readonly fee: Permill;
+  readonly ownerFee: Permill;
+}
+
+/** @name ComposableTraitsDexStableSwapPoolInfo */
+export interface ComposableTraitsDexStableSwapPoolInfo extends Null {}
+
 /** @name ComposableTraitsGovernanceSignedRawOrigin */
 export interface ComposableTraitsGovernanceSignedRawOrigin extends Null {}
+
+/** @name ComposableTraitsLendingCreateInput */
+export interface ComposableTraitsLendingCreateInput extends Null {}
+
+/** @name ComposableTraitsLendingMarketConfig */
+export interface ComposableTraitsLendingMarketConfig extends Null {}
+
+/** @name ComposableTraitsLendingUpdateInput */
+export interface ComposableTraitsLendingUpdateInput extends Null {}
+
+/** @name ComposableTraitsOraclePrice */
+export interface ComposableTraitsOraclePrice extends Null {}
 
 /** @name ComposableTraitsTimeTimeReleaseFunction */
 export interface ComposableTraitsTimeTimeReleaseFunction extends Null {}
@@ -78,7 +139,11 @@ export interface FrameSupportScheduleLookupError extends Null {}
 export interface FrameSupportScheduleMaybeHashed extends Null {}
 
 /** @name OrmlTokensAccountData */
-export interface OrmlTokensAccountData extends Null {}
+export interface OrmlTokensAccountData extends Struct {
+  readonly free: u128;
+  readonly reserved: u128;
+  readonly frozen: u128;
+}
 
 /** @name OrmlTokensBalanceLock */
 export interface OrmlTokensBalanceLock extends Null {}
@@ -92,12 +157,15 @@ export interface PalletAssetsRegistryForeignMetadata extends Null {}
 /** @name PalletCollatorSelectionCandidateInfo */
 export interface PalletCollatorSelectionCandidateInfo extends Null {}
 
+/** @name PalletCrowdloanRewardsModelsEcdsaSignature */
+export interface PalletCrowdloanRewardsModelsEcdsaSignature extends EcdsaSignature {}
+
 /** @name PalletCrowdloanRewardsModelsProof */
 export interface PalletCrowdloanRewardsModelsProof extends Enum {
   readonly isRelayChain: boolean;
   readonly asRelayChain: ITuple<[AccountId32, MultiSignature]>;
   readonly isEthereum: boolean;
-  readonly asEthereum: EcdsaSignature;
+  readonly asEthereum: PalletCrowdloanRewardsModelsEcdsaSignature;
   readonly type: 'RelayChain' | 'Ethereum';
 }
 
@@ -166,6 +234,9 @@ export interface PalletIdentityRegistration extends Null {}
 
 /** @name PalletLiquidationsLiquidationStrategyConfiguration */
 export interface PalletLiquidationsLiquidationStrategyConfiguration extends Null {}
+
+/** @name PalletLiquidityBootstrappingPool */
+export interface PalletLiquidityBootstrappingPool extends Null {}
 
 /** @name PalletMosaicAssetInfo */
 export interface PalletMosaicAssetInfo extends Null {}

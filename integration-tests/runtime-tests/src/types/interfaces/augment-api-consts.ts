@@ -4,11 +4,18 @@
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Bytes, Option, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
-import type { Perbill, Permill } from '@polkadot/types/interfaces/runtime';
+import type { AccountId32, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
 import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSupportWeightsWeightToFeeCoefficient, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/consts' {
   export interface AugmentedConsts<ApiType extends ApiTypes> {
+    assets: {
+      nativeAssetId: u128 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     authorship: {
       /**
        * The number of blocks back we should accept uncles.
@@ -67,19 +74,34 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    constantProductDex: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     crowdloanRewards: {
+      /**
+       * The AccountId of this pallet.
+       **/
+      accountId: AccountId32 & AugmentedConst<ApiType>;
       /**
        * The upfront liquidity unlocked at first claim.
        **/
       initialPayment: Perbill & AugmentedConst<ApiType>;
       /**
+       * The unique identifier of this pallet.
+       **/
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
        * The arbitrary prefix used for the proof
        **/
       prefix: Bytes & AugmentedConst<ApiType>;
       /**
-       * The number of blocks a fragment of the reward is vested.
+       * The time you have to wait to unlock another part of your reward.
        **/
-      vestingStep: u32 & AugmentedConst<ApiType>;
+      vestingStep: u64 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -198,8 +220,72 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    lending: {
+      /**
+       * Minimal price of borrow asset in Oracle price required to create.
+       * Examples, 100 USDC.
+       * Creators puts that amount and it is staked under Vault account.
+       * So he does not owns it anymore.
+       * So borrow is both stake and tool to create market.
+       * 
+       * # Why not pure borrow amount minimum?
+       * 
+       * Borrow may have very small price. Will imbalance some markets on creation.
+       * 
+       * # Why not native parachain token?
+       * 
+       * Possible option. But I doubt closing market as easy as transferring back rent.  So it is
+       * not exactly platform rent only.
+       * 
+       * # Why borrow amount priced by Oracle?
+       * 
+       * We depend on Oracle to price in Lending. So we know price anyway.
+       * We normalized price over all markets and protect from spam all possible pairs equally.
+       * Locking borrow amount ensures manager can create market wit borrow assets, and we force
+       * him to really create it.
+       * 
+       * This solution forces to have amount before creating market.
+       * Vault can take that amount if reconfigured so, but that may be changed during runtime
+       * upgrades.
+       **/
+      oracleMarketCreationStake: u128 & AugmentedConst<ApiType>;
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    liquidityBootstrapping: {
+      /**
+       * Maximum initial weight.
+       **/
+      maxInitialWeight: Permill & AugmentedConst<ApiType>;
+      /**
+       * Maximum duration for a sale.
+       **/
+      maxSaleDuration: u32 & AugmentedConst<ApiType>;
+      /**
+       * Minimum final weight.
+       **/
+      minFinalWeight: Permill & AugmentedConst<ApiType>;
+      /**
+       * Minimum duration for a sale.
+       **/
+      minSaleDuration: u32 & AugmentedConst<ApiType>;
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     mosaic: {
+      /**
+       * The minimum period for which we lock outgoing/incoming funds.
+       **/
       minimumTimeLockPeriod: u32 & AugmentedConst<ApiType>;
+      /**
+       * The minimum time to live before a relayer account rotation.
+       **/
       minimumTTL: u32 & AugmentedConst<ApiType>;
       timelockPeriod: u32 & AugmentedConst<ApiType>;
       /**
@@ -251,6 +337,13 @@ declare module '@polkadot/api-base/types/consts' {
        * Not strictly enforced, but used for weight estimation.
        **/
       maxScheduledPerBlock: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    stableSwapDex: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -355,6 +448,8 @@ declare module '@polkadot/api-base/types/consts' {
       burn: Permill & AugmentedConst<ApiType>;
       /**
        * The maximum number of approvals that can wait in the spending queue.
+       * 
+       * NOTE: This parameter is also used within the Bounties Pallet extension if enabled.
        **/
       maxApprovals: u32 & AugmentedConst<ApiType>;
       /**

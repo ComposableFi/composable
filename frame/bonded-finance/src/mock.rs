@@ -21,6 +21,7 @@ use sp_runtime::{
 };
 
 pub type BlockNumber = u64;
+pub type Moment = u64;
 pub type Balance = u128;
 pub type Amount = i128;
 pub type AccountId = u128;
@@ -28,6 +29,7 @@ pub type AccountId = u128;
 pub const MIN_VESTED_TRANSFER: u128 = 100;
 pub const NATIVE_CURRENCY_ID: MockCurrencyId = MockCurrencyId::PICA;
 pub const MIN_REWARD: u128 = 1_000_000;
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
 
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
@@ -128,6 +130,17 @@ impl orml_tokens::Config for Runtime {
 }
 
 parameter_types! {
+	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
+}
+
+impl pallet_timestamp::Config for Runtime {
+	type Moment = Moment;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
+parameter_types! {
 	pub const MaxVestingSchedule: u32 = 2;
 	pub const MinVestedTransfer: u64 = MIN_VESTED_TRANSFER as _;
 }
@@ -139,6 +152,8 @@ impl pallet_vesting::Config for Runtime {
 	type VestedTransferOrigin = EnsureAliceOrBob;
 	type WeightInfo = ();
 	type MaxVestingSchedules = MaxVestingSchedule;
+	type Moment = Moment;
+	type Time = Timestamp;
 }
 
 parameter_types! {
@@ -175,6 +190,7 @@ construct_runtime!(
 		Vesting: pallet_vesting::{Pallet, Storage, Call, Event<T>, Config<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		BondedFinance: pallet::{Pallet, Call, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 	}
 );
 

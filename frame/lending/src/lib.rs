@@ -50,7 +50,7 @@ mod benchmarking;
 mod setup;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
-mod currency;
+pub mod currency;
 
 pub mod weights;
 
@@ -72,7 +72,7 @@ pub mod pallet {
 			MarketConfig, MarketModelValid, UpdateInput,
 		},
 		liquidation::Liquidation,
-		math::SafeArithmetic,
+		math::{SafeAdd, SafeDiv, SafeMul, SafeSub},
 		oracle::Oracle,
 		time::{DurationSeconds, Timestamp, SECONDS_PER_YEAR_NAIVE},
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
@@ -290,7 +290,7 @@ pub mod pallet {
 				return
 			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
-				// TODO: check that it should liqudate before liqudaitons
+				// TODO: check that it should liquidate before liquidations
 				let results = signer.send_signed_transaction(|_account| Call::liquidate {
 					market_id,
 					borrowers: vec![account.clone()],
@@ -360,7 +360,7 @@ pub mod pallet {
 			market_id: MarketIndex,
 			vault_id: T::VaultId,
 			manager: T::AccountId,
-			input: CreateInput<T::LiquidationStrategyId, T::MayBeAssetId>,
+			currency_pair: CurrencyPair<T::MayBeAssetId>,
 		},
 		MarketUpdated {
 			market_id: MarketIndex,
@@ -552,12 +552,13 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let input = input.value();
-			let (market_id, vault_id) = Self::create(who.clone(), input.clone())?;
+			let pair = input.currency_pair;
+			let (market_id, vault_id) = Self::create(who.clone(), input)?;
 			Self::deposit_event(Event::<T>::MarketCreated {
 				market_id,
 				vault_id,
 				manager: who,
-				input,
+				currency_pair: pair,
 			});
 			Ok(().into())
 		}
@@ -1177,14 +1178,17 @@ pub mod pallet {
 				)?;
 
 				let initial_price_amount = T::OracleMarketCreationStake::get();
+
 				let initial_pool_size = T::Oracle::get_price_inverse(
 					config_input.borrow_asset(),
 					initial_price_amount,
 				)?;
+
 				ensure!(
 					initial_pool_size > T::Balance::zero(),
 					Error::<T>::PriceOfInitialBorrowVaultShouldBeGreaterThanZero
 				);
+
 				T::MultiCurrency::transfer(
 					config_input.borrow_asset(),
 					&manager,
@@ -1206,6 +1210,7 @@ pub mod pallet {
 				};
 
 				let debt_asset_id = T::CurrencyFactory::reserve_lp_token_id()?;
+
 				DebtMarkets::<T>::insert(market_id, debt_asset_id);
 				Markets::<T>::insert(market_id, config);
 				BorrowIndex::<T>::insert(market_id, ZeroToOneFixedU128::one());

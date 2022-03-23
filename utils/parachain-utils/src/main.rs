@@ -1,7 +1,5 @@
 use codec::Encode;
 use jsonrpc_core_client::RpcError;
-use parachain_system::Call as ParachainSystemCall;
-use serde::Deserialize;
 use sp_core::{crypto::AccountId32, sr25519, Pair, H256};
 use sp_runtime::{MultiSignature, MultiSigner};
 use structopt::StructOpt;
@@ -14,7 +12,7 @@ const PICASSO: &'static str = "picasso";
 
 /// The command options
 #[derive(Debug, StructOpt, Clone)]
-pub enum Main {
+pub enum Subcommand {
 	// RotateKeys,
 	UpgradeRuntime {
 		/// path to wasm file
@@ -25,21 +23,22 @@ pub enum Main {
 
 /// The chain option
 #[derive(Debug, StructOpt, Clone)]
-pub struct Chain {
+pub struct Command {
 	/// Chain id [`picasso`, `composable` or `dali`]
 	#[structopt(long)]
 	chain_id: String,
 
-	#[structopt(subcommand)]
-	main: Main,
-}
+	/// ws url of the node to query and send extrinsics to
+	/// eg wss://rpc.composablefinance.ninja (for dali-rocococ)
+	#[structopt(long)]
+	rpc_ws_url: String,
 
-#[derive(Deserialize, Debug)]
-struct Env {
 	/// Root key used to sign transactions
+	#[structopt(long)]
 	root_key: String,
-	/// Url to dali rpc node
-	rpc_node: String,
+
+	#[structopt(subcommand)]
+	main: Subcommand,
 }
 
 struct State<T: ConstructExt> {
@@ -50,12 +49,11 @@ struct State<T: ConstructExt> {
 }
 
 impl<T: ConstructExt + Send + Sync> State<T> {
-	async fn new() -> Self {
-		let env = envy::from_env::<Env>().unwrap();
+	async fn new(args: &Command) -> Self {
 		// create the signer
-		let signer = sr25519::Pair::from_string(&env.root_key, None).unwrap();
+		let signer = sr25519::Pair::from_string(&args.root_key, None).unwrap();
 
-		let api = Client::new(&env.rpc_node).await.unwrap();
+		let api = Client::new(&args.rpc_ws_url).await.unwrap();
 
 		State { api, signer }
 	}
@@ -71,26 +69,26 @@ enum Error {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
 	env_logger::init();
-	let chain = Chain::from_args();
+	let chain = Command::from_args();
 	match &*chain.chain_id {
-		PICASSO => {
-			let state = State::<PicassoXtConstructor>::new().await;
+		id if id.contains(PICASSO) => {
+			let state = State::<PicassoXtConstructor>::new(&chain).await;
 			match chain.main {
 				// Main::RotateKeys => rotate_keys(&state).await?,
-				Main::UpgradeRuntime { path } => {
+				Subcommand::UpgradeRuntime { path } => {
 					let wasm = std::fs::read(path).unwrap();
-					upgrade_runtime(wasm, &state).await?;
+					upgrade_runtime_with_sudo(wasm, &state).await?;
 				},
 			};
 		},
 
-		DALI => {
-			let state = State::<DaliXtConstructor>::new().await;
+		id if id.contains(DALI) => {
+			let state = State::<DaliXtConstructor>::new(&chain).await;
 			match chain.main {
 				// Main::RotateKeys => rotate_keys(&state).await?,
-				Main::UpgradeRuntime { path } => {
+				Subcommand::UpgradeRuntime { path } => {
 					let wasm = std::fs::read(path).unwrap();
-					upgrade_runtime(wasm, &state).await?;
+					upgrade_runtime_with_sudo(wasm, &state).await?;
 				},
 			};
 		},
@@ -100,98 +98,45 @@ async fn main() -> Result<(), Error> {
 	Ok(())
 }
 
-// async fn rotate_keys(state: &State) -> Result<(), Error> {
-// 	let url = url::Url::from_str(&state.env.rpc_node).unwrap();
-// 	let rpc_channel = ws::connect::<RpcChannel>(&url).await?;
-// 	let dali_author: AuthorClient<common::Hash, common::Hash> = rpc_channel.clone().into();
-//
-// 	// first rotate, our keys.
-// 	let bytes = dali_author.rotate_keys().await?.to_vec();
-// 	use chachacha::api::runtime_types::rococo_runtime::SessionKeys;
-// 	// assert that our keys have been rotated.
-// 	assert!(dali_author.has_session_keys(bytes.clone().into()).await?);
-//
-// 	// now to set our session keys on cha cha cha
-// 	let api = ClientBuilder::new()
-// 		.set_url("wss://fullnode-relay.chachacha.centrifuge.io")
-// 		.build()
-// 		.await?
-// 		.to_runtime_api::<chachacha::api::RuntimeApi<chachacha::api::DefaultConfig>>();
-//
-// 	let signer = PairSigner::new(state.signer.clone());
-// 	let account = MultiSigner::from(state.signer.public()).into_account();
-//
-// 	let _ = api
-// 		.tx()
-// 		.session()
-// 		.set_keys(SessionKeys::decode(&mut &bytes[..]).unwrap(), vec![])
-// 		.sign_and_submit_then_watch(&signer)
-// 		.await?;
-//
-// 	// check storage for the new keys
-// 	let key_bytes = api
-// 		.storage()
-// 		.session()
-// 		.next_keys(account, None)
-// 		.await?
-// 		.ok_or_else(|| subxt::Error::Other("Failed to set keys!".into()))?
-// 		.encode();
-//
-// 	// should match
-// 	assert_eq!(bytes, key_bytes);
-//
-// 	Ok(())
-// }
-
 /// Generic function to upgrade runtime.
-async fn upgrade_runtime<T: ConstructExt<Pair = sr25519::Pair> + Send + Sync>(
+async fn upgrade_runtime_with_sudo<T: ConstructExt<Pair = sr25519::Pair> + Send + Sync>(
 	code: Vec<u8>,
 	state: &State<T>,
 ) -> Result<(), SubstrateXtError>
 where
-	<T::Runtime as frame_system::Config>::AccountId: From<AccountId32>,
-	<T::Runtime as frame_system::Config>::Event: Into<AllRuntimeEvents>,
-	<T::Runtime as frame_system::Config>::Call: Encode + Send + Sync,
-	T::Runtime: parachain_system::Config + frame_system::Config,
-	<T::Runtime as frame_system::Config>::Hash: From<H256>,
+	<T::Runtime as system::Config>::AccountId: From<AccountId32>,
+	<T::Runtime as system::Config>::Event: Into<AllRuntimeEvents>,
+	<T::Runtime as system::Config>::Call:
+		Encode + Send + Sync + From<sudo::Call<T::Runtime>> + From<system::Call<T::Runtime>>,
+	T::Runtime: system::Config + sudo::Config,
+	<T::Runtime as system::Config>::Hash: From<H256>,
 	MultiSigner: From<<T::Pair as sp_core::Pair>::Public>,
 	MultiSignature: From<<T::Pair as Pair>::Signature>,
 	AdrressFor<T>: From<AccountId32>,
-	<T::Runtime as frame_system::Config>::Call: From<parachain_system::Call<T::Runtime>>,
+	<T::Runtime as sudo::Config>::Call: From<<T::Runtime as system::Config>::Call>,
 {
-	let code_hash = H256::from(sp_io::hashing::blake2_256(&code));
-
-	let call = ParachainSystemCall::authorize_upgrade { code_hash: code_hash.into() };
-	let xt = state.api.construct_extrinsic(call.into(), state.signer.clone())?;
+	let xt = state.api.construct_extrinsic(
+		sudo::Call::sudo_unchecked_weight {
+			call: Box::new(
+				<T::Runtime as system::Config>::Call::from(system::Call::set_code {
+					code: code.clone(),
+				})
+				.into(),
+			),
+			weight: 0,
+		}
+		.into(),
+		state.signer.clone(),
+	)?;
 	let progress = state.api.submit_and_watch(xt).await?;
+
+	log::info!("Runtime upgrade proposed, waiting for finalization");
 
 	let events = state
 		.api
 		.with_rpc_externalities(Some(progress.wait_for_finalized().await?), || {
-			frame_system::Pallet::<<T as ConstructExt>::Runtime>::events()
+			system::Pallet::<<T as ConstructExt>::Runtime>::events()
 		});
-	let has_event = events.into_iter().any(|event| {
-		match_event!(
-			event.event.into(),
-			ParachainSystem,
-			parachain_system::Event::UpgradeAuthorized(_)
-		)
-	});
-
-	if !has_event {
-		return Err(ExtrinsicError::Custom("Failed to authorize upgrade".into()).into())
-	}
-
-	let call = ParachainSystemCall::enact_authorized_upgrade { code };
-	let xt = state.api.construct_extrinsic(call.into(), state.signer.clone())?;
-	let progress = state.api.submit_and_watch(xt).await?;
-
-	let events = state
-		.api
-		.with_rpc_externalities(Some(progress.wait_for_finalized().await?), || {
-			frame_system::Pallet::<<T as ConstructExt>::Runtime>::events()
-		});
-
 	let has_event = events.into_iter().any(|event| {
 		match_event!(
 			event.event.into(),
@@ -200,7 +145,7 @@ where
 		)
 	});
 	if !has_event {
-		return Err(ExtrinsicError::Custom("Failed to enact upgrade".into()).into())
+		return Err(ExtrinsicError::Custom("Failed to propose upgrade".into()).into());
 	}
 
 	log::info!("Runtime upgrade proposed");

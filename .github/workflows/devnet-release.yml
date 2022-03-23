@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - uses: google-github-actions/setup-gcloud@master
+    - uses: google-github-actions/setup-gcloud@v0
       with:
         service_account_key: ${{ secrets.GCP_CREDENTIALS }}
         export_default_credentials: true
@@ -49,8 +49,10 @@ jobs:
     - name: Push artifact
       run: |
         cargo build --release
-        tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable
+        cargo doc --release
+        tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable target/doc
         gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
+        rm -rf target
 
     - name: Load state
       run: |

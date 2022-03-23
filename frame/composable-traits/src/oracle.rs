@@ -13,6 +13,23 @@ pub struct Price<PriceValue, BlockNumber> {
 	pub block: BlockNumber,
 }
 
+/// oracle that only works with single asset to some normalized asset at latest block in local
+/// consensus usually normalized asset is stable coin or native currency
+/// fallback in `Oracle` or `Market`(DEXes) lacks trusted prices
+/// (or initial values before threre is market)
+pub trait MinimalOracle {
+	type AssetId: Copy;
+	type Balance: From<u64>;
+
+	/// Given `asset_id` and `amount` of price asset.
+	/// Returns what amount of  `asset_id` will be required to be same price as `amount` of
+	/// some normalized currency
+	fn get_price_inverse(
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
+}
+
 /// An object that is able to provide an asset price.
 /// Important: the current price-feed is providing prices in USDT only.
 pub trait Oracle {
@@ -20,6 +37,9 @@ pub trait Oracle {
 	type Balance: From<u64>;
 	type Timestamp;
 	type LocalAssets: LocalAssets<Self::AssetId>;
+	type MaxAnswerBound: Get<u32>;
+	// type BlockNumber: From<u64>;
+	// type StalePrice: Get<Self::BlockNumber>;
 	/// Quote the `amount` of `asset_id` in normalized currency unit cent. Default is USDT Cent.
 	/// Which is 0.01 of USDT. `Result::Err` is returned if `asset_id` not supported or price
 	/// information not available.

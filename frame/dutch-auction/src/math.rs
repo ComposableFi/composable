@@ -4,7 +4,7 @@
 
 use composable_traits::{
 	defi::LiftedFixedBalance,
-	math::SafeArithmetic,
+	math::{SafeDiv, SafeMul},
 	time::{DurationSeconds, LinearDecrease, StairstepExponentialDecrease, TimeReleaseFunction},
 };
 

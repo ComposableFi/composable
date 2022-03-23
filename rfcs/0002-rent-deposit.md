@@ -19,7 +19,7 @@ Rent amount is voted by validators. Rent depends on size of data.
 ### P2P Storage with only small part of nodes stores replicas
 
 Overall, if node is interested in data it stores it.
-Interest to store data can be payed with some desposit.
+Interest to store data can be payed with some deposit.
 Proves of storage are obtained from nodes which where payed to store data. 
 Payed node must pin (copy and share on demand) specific data.
 Payment to store depends on size of data at least.

@@ -399,21 +399,20 @@ mod multicurrency {
 
 				prop_assert_ok!(<Pallet::<Test> as MultiReservableCurrency<AccountId>>::reserve(asset_id, &account, third));
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  0);
-				//
-				let mut remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account, first);
+
+				let remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account, first);
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  first - remaining);
 
-				let mut free_balance = <Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account);
-				remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account, second);
+				let free_balance = <Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account);
+				let remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account, second);
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  free_balance + ( second - remaining));
 
-				let mut free_balance = <Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account);
-				remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account, third);
+				let free_balance = <Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account);
+				let remaining = <Pallet::<Test> as MultiReservableCurrency<AccountId>>::unreserve(asset_id, &account, third);
 				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  free_balance + ( third - remaining));
-				//lock
-				free_balance = <Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account);
-				<Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first);
-				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),  first + second + third);
+
+				prop_assert_ok!(<Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first));
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id, &account),  first + second + third);
 
 				Ok(())
 			})?;
@@ -439,17 +438,17 @@ mod lockable_multicurrency {
 			 prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),0);
 			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account,first + second + third));
 
-			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first);
+			 prop_assert_ok!(<Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first));
 			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, second + third ));
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
 
 			 // ensure set_lock updates lock with same id
-			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account,  second);
+			 prop_assert_ok!(<Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account,  second));
 			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account,  first + third ));
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
 
 			  // ensure set_lock updates lock with same id
-			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account,  third);
+			 prop_assert_ok!(<Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account,  third));
 			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account,  first + second ));
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
 
@@ -468,15 +467,15 @@ mod lockable_multicurrency {
 			 prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),0);
 			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account,first + second + third));
 
-			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first);
+			 prop_assert_ok!(<Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first));
 			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, second + third ));
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
 
-			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::extend_lock(*b"prelocks", asset_id, &account, second);
+			 prop_assert_ok!(<Pallet::<Test> as MultiLockableCurrency<AccountId>>::extend_lock(*b"prelocks", asset_id, &account, second));
 			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, third ));
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
 
-			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::extend_lock(*b"prelocks", asset_id, &account,  third);
+			 prop_assert_ok!(<Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account,  third));
 			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second));
 			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second + third).is_err());
 			Ok(())
@@ -490,19 +489,15 @@ mod lockable_multicurrency {
 			(first, second, _) in valid_amounts_without_overflow_3()) {
 
 			new_test_ext_multi_currency().execute_with(|| {
-
-			 prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),0);
-			 prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account,first + second));
-
-			 <Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first + second);
-			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second).is_err());
-			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first ).is_err());
-			 prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, second ).is_err());
-
-			prop_assert_ok!(<Pallet::<Test> as MultiLockableCurrency<AccountId>>::remove_lock(*b"prelocks", asset_id, &account));
-			prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second));
-
-			Ok(())
+				prop_assert_eq!(<Pallet::<Test> as MultiCurrency<AccountId>>::free_balance(asset_id,&account),0);
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(asset_id, &account, first + second));
+				prop_assert_ok!(<Pallet::<Test> as MultiLockableCurrency<AccountId>>::set_lock(*b"prelocks", asset_id, &account, first + second));
+				prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second).is_err());
+				prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first ).is_err());
+				prop_assert!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, second ).is_err());
+				prop_assert_ok!(<Pallet::<Test> as MultiLockableCurrency<AccountId>>::remove_lock(*b"prelocks", asset_id, &account));
+				prop_assert_ok!(<Pallet::<Test> as MultiCurrency<AccountId>>::ensure_can_withdraw(asset_id, &account, first + second));
+				Ok(())
 		  })?;
 	   }
 
@@ -596,7 +591,7 @@ mod reservable_multicurrency {
 		fn test_repariate_reserve_implementation(
 			(account_1, account_2) in accounts_2(),
 			   asset_id in asset(),
-			(first, second, third) in valid_amounts_without_overflow_3()
+			(first, second, _) in valid_amounts_without_overflow_3()
 		) {
 			new_test_ext_multi_currency().execute_with(|| {
 

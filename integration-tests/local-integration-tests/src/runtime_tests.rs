@@ -3,6 +3,7 @@
 use crate::{
 	env_logger_init,
 	kusama_test_net::{KusamaNetwork, *},
+	prelude::*,
 };
 use cumulus_primitives_core::{ChannelStatus, GetChannelInfo, ParaId};
 use xcm_emulator::TestExt;
@@ -12,8 +13,8 @@ use xcm_emulator::TestExt;
 fn channel_to_relay() {
 	env_logger_init();
 	KusamaNetwork::reset();
-	Picasso::execute_with(|| {
-		let status = <dali_runtime::ParachainSystem as GetChannelInfo>::get_channel_status(
+	This::execute_with(|| {
+		let status = <this_runtime::ParachainSystem as GetChannelInfo>::get_channel_status(
 			ParaId::new(2090),
 		);
 		assert!(matches!(status, ChannelStatus::Closed));
@@ -25,9 +26,9 @@ fn channel_to_relay() {
 fn channel_to_self() {
 	env_logger_init();
 	KusamaNetwork::reset();
-	Picasso::execute_with(|| {
-		let status = <dali_runtime::ParachainSystem as GetChannelInfo>::get_channel_status(
-			ParaId::new(PICASSO_PARA_ID),
+	This::execute_with(|| {
+		let status = <this_runtime::ParachainSystem as GetChannelInfo>::get_channel_status(
+			ParaId::new(THIS_PARA_ID),
 		);
 		assert!(matches!(status, ChannelStatus::Ready(_, _)));
 	});
@@ -38,9 +39,9 @@ fn channel_to_self() {
 fn channel_to_parachain() {
 	env_logger_init();
 	KusamaNetwork::reset();
-	Picasso::execute_with(|| {
-		let status = <dali_runtime::ParachainSystem as GetChannelInfo>::get_channel_status(
-			ParaId::new(DALI_PARA_ID),
+	This::execute_with(|| {
+		let status = <this_runtime::ParachainSystem as GetChannelInfo>::get_channel_status(
+			ParaId::new(SIBLING_PARA_ID),
 		);
 
 		assert!(matches!(status, ChannelStatus::Ready(_, _)));
