@@ -170,43 +170,55 @@ fn add_remove_lp() {
 	});
 }
 
+// test add liquidity with min_mint_amount
+#[test]
+fn add_lp_with_min_mint_amount() {
+	new_test_ext().execute_with(|| {
+		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			pair: CurrencyPair::new(BTC, USDT),
+			fee: Permill::zero(),
+			owner_fee: Permill::zero(),
+		};
+		let unit = 1_000_000_000_000_u128;
+		let initial_btc = 1_00_u128 * unit;
+		let btc_price = 45_000_u128;
+		let initial_usdt = initial_btc * btc_price;
+		let btc_amount = 10 * unit;
+		let usdt_amount = btc_amount * btc_price;
+		let expected_lp = |base_amount: Balance,
+		                   _quote_amount: Balance,
+		                   lp_total_issuance: Balance,
+		                   pool_base_amount: Balance,
+		                   _pool_quote_amount: Balance|
+		 -> Balance { lp_total_issuance * base_amount / pool_base_amount };
+		common_add_lp_with_min_mint_amount(
+			pool_init_config,
+			initial_btc,
+			initial_usdt,
+			btc_amount,
+			usdt_amount,
+			expected_lp,
+		);
+	});
+}
+
 //
 // - test error if trying to remove > lp than we have
 #[test]
 fn remove_lp_failure() {
 	new_test_ext().execute_with(|| {
+		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			pair: CurrencyPair::new(BTC, USDT),
+			fee: Permill::zero(),
+			owner_fee: Permill::zero(),
+		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
 		let btc_price = 45_000_u128;
 		let initial_usdt = initial_btc * btc_price;
-		let pool_id =
-			create_pool(BTC, USDT, initial_btc, initial_usdt, Permill::zero(), Permill::zero());
-		let pool = get_pool(pool_id);
 		let bob_btc = 10 * unit;
 		let bob_usdt = bob_btc * btc_price;
-		// Mint the tokens
-		assert_ok!(Tokens::mint_into(BTC, &BOB, bob_btc));
-		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-
-		// Add the liquidity
-		assert_ok!(<Pablo as Amm>::add_liquidity(&BOB, pool_id, bob_btc, bob_usdt, 0, false));
-		let lp = Tokens::balance(pool.lp_token, &BOB);
-		assert_err!(
-			<Pablo as Amm>::remove_liquidity(&BOB, pool_id, lp + 1, 0, 0),
-			TokenError::NoFunds
-		);
-		let min_expected_btc = (bob_btc + 1) * unit;
-		let min_expected_usdt = (bob_usdt + 1) * unit;
-		assert_err!(
-			<Pablo as Amm>::remove_liquidity(
-				&BOB,
-				pool_id,
-				lp,
-				min_expected_btc,
-				min_expected_usdt
-			),
-			crate::Error::<Test>::CannotRespectMinimumRequested
-		);
+		common_remove_lp_failure(pool_init_config, initial_btc, initial_usdt, bob_btc, bob_usdt);
 	});
 }
 
@@ -219,37 +231,13 @@ fn exchange_failure() {
 		let initial_btc = 1_00_u128 * unit;
 		let btc_price = 45_000_u128;
 		let initial_usdt = initial_btc * btc_price;
-		let pool_id =
-			create_pool(BTC, USDT, initial_btc, initial_usdt, Permill::zero(), Permill::zero());
-		let bob_btc = 10 * unit;
-		// Mint the tokens
-		assert_ok!(Tokens::mint_into(BTC, &BOB, bob_btc));
-
-		let exchange_btc = 100_u128 * unit;
-		assert_err!(
-			<Pablo as Amm>::exchange(
-				&BOB,
-				pool_id,
-				CurrencyPair::new(USDT, BTC),
-				exchange_btc,
-				0,
-				false
-			),
-			orml_tokens::Error::<Test>::BalanceTooLow
-		);
-		let exchange_value = 10 * unit;
-		let expected_value = exchange_value * btc_price + 1;
-		assert_err!(
-			<Pablo as Amm>::exchange(
-				&BOB,
-				pool_id,
-				CurrencyPair::new(USDT, BTC),
-				exchange_value,
-				expected_value,
-				false
-			),
-			crate::Error::<Test>::CannotRespectMinimumRequested
-		);
+		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			pair: CurrencyPair::new(BTC, USDT),
+			fee: Permill::zero(),
+			owner_fee: Permill::zero(),
+		};
+		let exchange_base_amount = 100 * unit;
+		common_exchange_failure(pool_init_config, initial_usdt, initial_btc, exchange_base_amount)
 	});
 }
 
