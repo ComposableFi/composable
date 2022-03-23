@@ -2,6 +2,9 @@ name: "Runtime Upgrade"
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - runtime-upgrade-workflow
 
 jobs:
   dali-runtime-release:
