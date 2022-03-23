@@ -12,7 +12,9 @@ use ibc::{
 	timestamp::Timestamp,
 };
 use scale_info::prelude::string::{String, ToString};
-use sp_std::{str::FromStr, vec::Vec};
+use sp_std::str::FromStr;
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
 
 pub struct SendPacketData {
 	pub data: Vec<u8>,

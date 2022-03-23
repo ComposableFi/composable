@@ -2,7 +2,8 @@
 #![allow(clippy::too_many_arguments)]
 
 use ibc_primitives::*;
-use scale_info::prelude::vec::Vec;
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
 
 sp_api::decl_runtime_apis! {
 	/// IBC Runtime Apis
