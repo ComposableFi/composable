@@ -2,7 +2,7 @@
 
 A set of commonly needed operations to maintain a parachain.
 
-## Runtime Upgrades
+### Runtime Upgrades
 
 ```bash
 ➜ ./target/release/parachain-utils --help
@@ -28,7 +28,7 @@ SUBCOMMANDS:
 
 ```
 
-In order to perform a runtime upgrade on any chain, you need to supply a few parameteres and environment variables
+In order to perform a runtime upgrade on any chain, you need to supply a few parameters
 
 eg
 
