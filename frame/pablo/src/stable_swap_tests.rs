@@ -28,14 +28,14 @@ fn create_stable_swap_pool(
 	protocol_fee: Permill,
 ) -> PoolId {
 	let pool_init_config = PoolInitConfiguration::StableSwap {
+		owner: ALICE,
 		pair: CurrencyPair::new(base_asset, quote_asset),
 		amplification_coefficient: amplification_factor,
 		fee: lp_fee,
 		protocol_fee,
 	};
 	System::set_block_number(1);
-	let actual_pool_id =
-		Pablo::do_create_pool(&ALICE, pool_init_config).expect("pool creation failed");
+	let actual_pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 	assert_has_event::<Test, _>(
 		|e| matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == actual_pool_id),
 	);
@@ -65,13 +65,14 @@ fn create_stable_swap_pool(
 fn test_amp_zero_pool_creation_failure() {
 	new_test_ext().execute_with(|| {
 		let pool_init_config = PoolInitConfiguration::StableSwap {
+			owner: ALICE,
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 0_u16,
 			fee: Permill::zero(),
 			protocol_fee: Permill::zero(),
 		};
 		assert_noop!(
-			Pablo::do_create_pool(&ALICE, pool_init_config),
+			Pablo::do_create_pool(pool_init_config),
 			crate::Error::<Test>::AmpFactorMustBeGreaterThanZero
 		);
 	});
@@ -81,13 +82,13 @@ fn test_amp_zero_pool_creation_failure() {
 fn test_dex_demo() {
 	new_test_ext().execute_with(|| {
 		let pool_init_config = PoolInitConfiguration::StableSwap {
+			owner: ALICE,
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 100_u16,
 			fee: Permill::zero(),
 			protocol_fee: Permill::zero(),
 		};
-		let pool_id =
-			Pablo::do_create_pool(&ALICE, pool_init_config).expect("pool creation failed");
+		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 		let pool = Pablo::pools(pool_id).expect("pool not found");
 		let pool = match pool {
 			StableSwap(pool) => pool,
@@ -160,6 +161,7 @@ fn test_dex_demo() {
 fn add_remove_lp() {
 	new_test_ext().execute_with(|| {
 		let pool_init_config = PoolInitConfiguration::StableSwap {
+			owner: ALICE,
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 10_u16,
 			fee: Permill::zero(),
@@ -262,6 +264,7 @@ fn add_lp_imbalanced() {
 fn add_lp_with_min_mint_amount() {
 	new_test_ext().execute_with(|| {
 		let pool_init_config = PoolInitConfiguration::StableSwap {
+			owner: ALICE,
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 10_u16,
 			fee: Permill::zero(),
@@ -298,6 +301,7 @@ fn remove_lp_failure() {
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
 		let initial_usdc = 1_000_000_000_000_u128 * unit;
 		let pool_init_config = PoolInitConfiguration::StableSwap {
+			owner: ALICE,
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 10_u16,
 			fee: Permill::zero(),
@@ -319,6 +323,7 @@ fn exchange_failure() {
 		let initial_usdc = 1_000_000_u128 * unit;
 		let exchange_base_amount = 1000 * unit;
 		let pool_init_config = PoolInitConfiguration::StableSwap {
+			owner: ALICE,
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 10_u16,
 			fee: Permill::zero(),

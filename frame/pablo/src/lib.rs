@@ -82,14 +82,14 @@ pub mod pallet {
 	#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 	pub enum PoolInitConfiguration<AccountId, AssetId, BlockNumber> {
 		StableSwap {
-			// TODO consider adding the owner here to allow a third party owner
+			owner: AccountId,
 			pair: CurrencyPair<AssetId>,
 			amplification_coefficient: u16,
 			fee: Permill,
 			protocol_fee: Permill,
 		},
 		ConstantProduct {
-			// TODO consider adding the owner here to allow a third party owner
+			owner: AccountId,
 			pair: CurrencyPair<AssetId>,
 			fee: Permill,
 			owner_fee: Permill,
@@ -281,6 +281,9 @@ pub mod pallet {
 		/// Minimum final weight.
 		#[pallet::constant]
 		type LbpMinFinalWeight: Get<Permill>;
+
+		/// Required origin for pool creation.
+		type PoolCreationOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::pallet]
@@ -309,8 +312,8 @@ pub mod pallet {
 		// TODO: enable weight
 		#[pallet::weight(10_000)]
 		pub fn create(origin: OriginFor<T>, pool: PoolInitConfigurationOf<T>) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-			let _ = Self::do_create_pool(&who, pool)?;
+			T::PoolCreationOrigin::ensure_origin(origin)?;
+			let _ = Self::do_create_pool(pool)?;
 			Ok(())
 		}
 
@@ -422,30 +425,36 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[transactional]
 		pub(crate) fn do_create_pool(
-			who: &T::AccountId,
 			init_config: PoolInitConfigurationOf<T>,
 		) -> Result<T::PoolId, DispatchError> {
-			let pool_id = match init_config {
+			let (owner, pool_id) = match init_config {
 				PoolInitConfiguration::StableSwap {
+					owner,
 					pair,
 					amplification_coefficient,
 					fee,
 					protocol_fee,
-				} => StableSwap::<T>::do_create_pool(
-					&who,
-					pair,
-					amplification_coefficient,
-					fee,
-					protocol_fee,
-				)?,
-				PoolInitConfiguration::ConstantProduct { pair, fee, owner_fee } =>
-					Uniswap::<T>::do_create_pool(&who, pair, fee, owner_fee)?,
+				} => (
+					owner.clone(),
+					StableSwap::<T>::do_create_pool(
+						&owner,
+						pair,
+						amplification_coefficient,
+						fee,
+						protocol_fee,
+					)?,
+				),
+				PoolInitConfiguration::ConstantProduct { owner, pair, fee, owner_fee } =>
+					(owner.clone(), Uniswap::<T>::do_create_pool(&owner, pair, fee, owner_fee)?),
 				PoolInitConfiguration::LiquidityBootstrapping(pool_config) => {
-					let validated_pool_config = Validated::new(pool_config)?;
-					LiquidityBootstrapping::<T>::do_create_pool(validated_pool_config)?
+					let validated_pool_config = Validated::new(pool_config.clone())?;
+					(
+						pool_config.owner,
+						LiquidityBootstrapping::<T>::do_create_pool(validated_pool_config)?,
+					)
 				},
 			};
-			Self::deposit_event(Event::<T>::PoolCreated { owner: who.clone(), pool_id });
+			Self::deposit_event(Event::<T>::PoolCreated { owner, pool_id });
 			Ok(pool_id)
 		}
 

@@ -31,13 +31,13 @@ fn create_pool(
 	protocol_fee: Permill,
 ) -> PoolId {
 	let pool_init_config = PoolInitConfiguration::ConstantProduct {
+		owner: ALICE,
 		pair: CurrencyPair::new(base_asset, quote_asset),
 		fee: lp_fee,
 		owner_fee: protocol_fee,
 	};
 	System::set_block_number(1);
-	let actual_pool_id =
-		Pablo::do_create_pool(&ALICE, pool_init_config).expect("pool creation failed");
+	let actual_pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 	assert_has_event::<Test, _>(
 		|e| matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == actual_pool_id),
 	);
@@ -74,12 +74,12 @@ fn get_pool(pool_id: PoolId) -> ConstantProductPoolInfo<AccountId, AssetId> {
 fn test() {
 	new_test_ext().execute_with(|| {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee: Permill::zero(),
 			owner_fee: Permill::zero(),
 		};
-		let pool_id =
-			Pablo::do_create_pool(&ALICE, pool_init_config).expect("pool creation failed");
+		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 
 		let pool = get_pool(pool_id);
 
@@ -166,6 +166,7 @@ fn test() {
 fn add_remove_lp() {
 	new_test_ext().execute_with(|| {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee: Permill::zero(),
 			owner_fee: Permill::zero(),
@@ -194,6 +195,7 @@ fn add_remove_lp() {
 fn add_lp_with_min_mint_amount() {
 	new_test_ext().execute_with(|| {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee: Permill::zero(),
 			owner_fee: Permill::zero(),
@@ -227,6 +229,7 @@ fn add_lp_with_min_mint_amount() {
 fn remove_lp_failure() {
 	new_test_ext().execute_with(|| {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee: Permill::zero(),
 			owner_fee: Permill::zero(),
@@ -251,6 +254,7 @@ fn exchange_failure() {
 		let btc_price = 45_000_u128;
 		let initial_usdt = initial_btc * btc_price;
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee: Permill::zero(),
 			owner_fee: Permill::zero(),

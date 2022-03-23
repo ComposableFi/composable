@@ -1,4 +1,5 @@
 use crate::{
+	liquidity_bootstrapping_tests::valid_pool,
 	mock,
 	mock::{Pablo, *},
 	Config,
@@ -11,7 +12,7 @@ use frame_support::{
 };
 use frame_system::EventRecord;
 use sp_core::H256;
-use sp_runtime::TokenError;
+use sp_runtime::{DispatchError, TokenError};
 
 /// `expected_lp_check` takes base_amount, quote_amount and lp_tokens in order and returns
 /// true if lp_tokens are expected for given base_amount, quote_amount.
@@ -24,8 +25,7 @@ pub fn common_add_remove_lp(
 	expected_lp_check: impl Fn(Balance, Balance, Balance) -> bool,
 ) {
 	System::set_block_number(System::block_number() + 1);
-	let actual_pool_id =
-		Pablo::do_create_pool(&ALICE, init_config.clone()).expect("pool creation failed");
+	let actual_pool_id = Pablo::do_create_pool(init_config.clone()).expect("pool creation failed");
 	assert_has_event::<Test, _>(
 		|e| matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == actual_pool_id),
 	);
@@ -106,7 +106,7 @@ pub fn common_add_lp_with_min_mint_amount(
 	quote_amount: Balance,
 	expected_lp: impl Fn(Balance, Balance, Balance, Balance, Balance) -> Balance,
 ) {
-	let pool_id = Pablo::do_create_pool(&ALICE, init_config.clone()).expect("pool creation failed");
+	let pool_id = Pablo::do_create_pool(init_config.clone()).expect("pool creation failed");
 	let pair = match init_config {
 		PoolInitConfiguration::StableSwap { pair, .. } => pair,
 		PoolInitConfiguration::ConstantProduct { pair, .. } => pair,
@@ -176,7 +176,7 @@ pub fn common_remove_lp_failure(
 	base_amount: Balance,
 	quote_amount: Balance,
 ) {
-	let pool_id = Pablo::do_create_pool(&ALICE, init_config.clone()).expect("pool creation failed");
+	let pool_id = Pablo::do_create_pool(init_config.clone()).expect("pool creation failed");
 	let pair = match init_config {
 		PoolInitConfiguration::StableSwap { pair, .. } => pair,
 		PoolInitConfiguration::ConstantProduct { pair, .. } => pair,
@@ -244,7 +244,7 @@ pub fn common_exchange_failure(
 	init_quote_amount: Balance,
 	exchange_base_amount: Balance,
 ) {
-	let pool_id = Pablo::do_create_pool(&ALICE, init_config.clone()).expect("pool creation failed");
+	let pool_id = Pablo::do_create_pool(init_config.clone()).expect("pool creation failed");
 	let pair = match init_config {
 		PoolInitConfiguration::StableSwap { pair, .. } => pair,
 		PoolInitConfiguration::ConstantProduct { pair, .. } => pair,
@@ -306,4 +306,33 @@ where
 	F: FnOnce(&EventRecord<mock::Event, H256>) -> bool,
 {
 	assert!(matcher(System::events().last().expect("events expected")));
+}
+
+mod create {
+	use super::*;
+	#[test]
+	fn arbitrary_user_cant_create() {
+		new_test_ext().execute_with(|| {
+			assert_noop!(
+				Pablo::create(
+					Origin::signed(ALICE),
+					PoolInitConfiguration::LiquidityBootstrapping(valid_pool().value())
+				),
+				DispatchError::BadOrigin
+			);
+		});
+	}
+
+	#[test]
+	fn admin_can_create() {
+		new_test_ext().execute_with(|| {
+			System::set_block_number(1);
+			assert_ok!(Pablo::create(Origin::root(),
+				PoolInitConfiguration::LiquidityBootstrapping(valid_pool().value())));
+			assert_has_event::<Test, _>(
+				|e|
+					matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == 0)
+			);
+		});
+	}
 }
