@@ -12,10 +12,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { package = "parity-scale-codec", version = "2.2.0", default-features = false }
 derive_more = "0.99.16"
 env_logger = "0.8.4"
-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 log = "0.4.14"
 parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.17" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 tokio = { version = "1", features = ["full"] }
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 url = "1.7.0"
@@ -34,9 +34,9 @@ substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch =
 utils-common = { path = "../common" }
 
 # runtimes
+composable-runtime = { path = "../../runtime/composable" }
 dali-runtime = { path = "../../runtime/dali" }
 picasso-runtime = { path = "../../runtime/picasso" }
-composable-runtime = { path = "../../runtime/composable" }
 
 [dev-dependencies]
 hex = "0.4.3"
