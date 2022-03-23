@@ -1,6 +1,7 @@
 use crate as pallet_instrumental;
 
 use pallet_instrumental::currency::{CurrencyId, PICA};
+use pallet_instrumental::account_id::*;
 
 use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
 use frame_support::ord_parameter_types;
@@ -14,16 +15,14 @@ use frame_support::{
 use sp_runtime::traits::AccountIdConversion;
 use sp_runtime::{
 	testing::Header,
-	traits::{ConvertInto, IdentifyAccount, IdentityLookup, Verify}
+	traits::{ConvertInto, IdentityLookup}
 };
 use sp_core::{
 	H256,
-	sr25519::{Public, Signature}
 };
 
 use orml_traits::{GetByKey, parameter_type_with_key};
 use primitives::currency::ValidateCurrencyId;
-use hex_literal::hex;
 
 pub type BlockNumber = u64;
 pub type Balance = u128;
@@ -32,12 +31,6 @@ pub type Amount = i128;
 
 pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
 pub const NATIVE_ASSET: CurrencyId = PICA::ID;
-
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-pub static ADMIN: Public =
-	Public(hex!("0000000000000000000000000000000000000000000000000000000000000000"));
-pub static ALICE: Public =
-	Public(hex!("0000000000000000000000000000000000000000000000000000000000000001"));
 	
 // ----------------------------------------------------------------------------------------------------
 //                                                Config                                               
@@ -280,6 +273,19 @@ impl ExtBuilder {
 			.unwrap();
 
 		storage.into()
+	}
+
+	pub fn initialize_balances(mut self, balances: Vec<(AccountId, CurrencyId, Balance)>) -> ExtBuilder {
+		balances.into_iter()
+		    .for_each(|(account, asset, balance)| {
+				if asset == NATIVE_ASSET {
+					self.native_balances.push((account, balance));
+				} else {
+					self.balances.push((account, asset, balance));
+				}
+			});
+
+		self
 	}
 
 	pub fn initialize_balance(mut self, user: AccountId, asset: CurrencyId, balance: Balance) -> ExtBuilder {

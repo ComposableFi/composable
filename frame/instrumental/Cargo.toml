@@ -36,6 +36,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 primitives = { path = "../../runtime/primitives", default-features = false }
 proptest = "1.0"
 hex-literal = "0.3.3"
+itertools = "0.10.3"
 
 [features]
 default = ["std"]
