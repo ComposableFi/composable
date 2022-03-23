@@ -60,7 +60,6 @@ mod benchmarks;
 
 mod mock;
 mod tests;
-
 pub mod weights;
 
 pub use crate::weights::WeightInfo;
@@ -70,10 +69,11 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
+	use composable_support::validation::Validated;
 	use composable_traits::{
-		bonded_finance::{BondDuration, BondOffer, BondedFinance},
-		math::WrappingNext,
-		vesting::{VestedTransfer, VestingSchedule},
+		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
+		math::SafeAdd,
+		vesting::{VestedTransfer, VestingSchedule, VestingWindow::BlockNumberBased},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -87,7 +87,7 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
-		traits::{AccountIdConversion, BlockNumberProvider, Convert, Zero},
+		traits::{AccountIdConversion, BlockNumberProvider, Convert, One, Zero},
 		ArithmeticError,
 	};
 	use sp_std::fmt::Debug;
@@ -156,7 +156,8 @@ pub mod pallet {
 			+ Eq
 			+ Debug
 			+ Zero
-			+ WrappingNext
+			+ SafeAdd
+			+ One
 			+ FullCodec
 			+ MaxEncodedLen
 			+ TypeInfo;
@@ -187,6 +188,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::type_value]
@@ -227,14 +229,17 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::offer())]
 		pub fn offer(
 			origin: OriginFor<T>,
-			offer: BondOfferOf<T>,
+			offer: Validated<
+				BondOfferOf<T>,
+				ValidBondOffer<T::MinReward, <T::Vesting as VestedTransfer>::MinVestedTransfer>,
+			>,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let from = ensure_signed(origin)?;
-			Self::do_offer(&from, offer, keep_alive)?;
+			let value = offer.value();
+			Self::do_offer(&from, value, keep_alive)?;
 			Ok(())
 		}
-
 		/// Bond to an offer.
 		/// And user should provide the number of contracts she is willing to buy.
 		/// On offer completion (a.k.a. no more contract on the offer), the `stake` put by the
@@ -308,17 +313,12 @@ pub mod pallet {
 			offer: BondOfferOf<T>,
 			keep_alive: bool,
 		) -> Result<T::BondOfferId, DispatchError> {
-			ensure!(
-				offer.valid(
-					<T::Vesting as VestedTransfer>::MinVestedTransfer::get(),
-					T::MinReward::get()
-				),
-				Error::<T>::InvalidBondOffer
-			);
-			let offer_id = BondOfferCount::<T>::mutate(|offer_id| {
-				*offer_id = offer_id.next();
-				*offer_id
-			});
+			let offer_id = BondOfferCount::<T>::try_mutate(
+				|offer_id| -> Result<T::BondOfferId, DispatchError> {
+					*offer_id = offer_id.safe_add(&T::BondOfferId::one())?;
+					Ok(*offer_id)
+				},
+			)?;
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(from, &offer_account, T::Stake::get(), keep_alive)?;
 			T::Currency::transfer(
@@ -378,8 +378,10 @@ pub mod pallet {
 							&offer_account,
 							from,
 							VestingSchedule {
-								start: current_block,
-								period: offer.reward.maturity,
+								window: BlockNumberBased {
+									start: current_block,
+									period: offer.reward.maturity,
+								},
 								period_count: 1,
 								per_period: reward_share,
 							},
@@ -391,8 +393,10 @@ pub mod pallet {
 									&offer.beneficiary,
 									from,
 									VestingSchedule {
-										start: current_block,
-										period: return_in,
+										window: BlockNumberBased {
+											start: current_block,
+											period: return_in,
+										},
 										period_count: 1,
 										per_period: value,
 									},
@@ -403,9 +407,10 @@ pub mod pallet {
 								// that the protocol is now owning the funds.
 							},
 						}
-						// NOTE(hussein-aitlahcen): can't overflow as checked to be <
+						// NOTE(hussein-aitlahcen): can't overflow as checked to be <=
 						// offer.nb_of_bonds prior to this
-						// Same goes for reward_share as nb_of_bonds * bond_price <= total_price
+						// Same goes for reward_share as nb_of_bonds * bond_price <= total_price is
+						// checked by the `Validate` instance of `BondOffer`
 						(*offer).nb_of_bonds -= nb_of_bonds;
 						(*offer).reward.amount -= reward_share;
 						let new_bond_event = || {
@@ -445,13 +450,18 @@ pub mod pallet {
 		type Balance = BalanceOf<T>;
 		type BlockNumber = BlockNumberOf<T>;
 		type BondOfferId = T::BondOfferId;
+		type MinReward = T::MinReward;
+		type MinVestedTransfer = <T::Vesting as VestedTransfer>::MinVestedTransfer;
 
 		fn offer(
 			from: &Self::AccountId,
-			offer: BondOfferOf<T>,
+			offer: Validated<
+				BondOfferOf<T>,
+				ValidBondOffer<Self::MinReward, Self::MinVestedTransfer>,
+			>,
 			keep_alive: bool,
 		) -> Result<Self::BondOfferId, DispatchError> {
-			Self::do_offer(from, offer, keep_alive)
+			Self::do_offer(from, offer.value(), keep_alive)
 		}
 
 		fn bond(

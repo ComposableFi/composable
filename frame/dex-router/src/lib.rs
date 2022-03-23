@@ -20,7 +20,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		defi::CurrencyPair,
-		dex::{CurveAmm, DexRoute, DexRouteNode, DexRouter},
+		dex::{Amm, DexRoute, DexRouteNode, DexRouter},
 		math::SafeArithmetic,
 	};
 	use core::fmt::Debug;
@@ -63,13 +63,13 @@ pub mod pallet {
 			+ CheckedAdd
 			+ Zero
 			+ One;
-		type StableSwapDex: CurveAmm<
+		type StableSwapDex: Amm<
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 			PoolId = Self::PoolId,
 		>;
-		type ConstantProductDex: CurveAmm<
+		type ConstantProductDex: Amm<
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,

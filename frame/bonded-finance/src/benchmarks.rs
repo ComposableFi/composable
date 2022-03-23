@@ -4,16 +4,15 @@
 use crate::Pallet as BondedFinance;
 use crate::{AssetIdOf, BalanceOf, BlockNumberOf, BondOfferOf, Call, Config, Pallet};
 use codec::Decode;
-use composable_traits::{
-	bonded_finance::{BondDuration, BondOffer, BondOfferReward},
-	math::WrappingNext,
-};
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller, Zero};
+use composable_support::validation::Validated;
+use composable_traits::bonded_finance::{BondDuration, BondOffer, BondOfferReward};
+use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	dispatch::UnfilteredDispatchable,
 	traits::{fungible::Mutate as _, fungibles::Mutate as _},
 };
 use frame_system::RawOrigin;
+use sp_runtime::traits::One;
 
 const MIN_VESTED_TRANSFER: u128 = 1000 * 1_000_000_000_000;
 const BALANCE: u128 = 1_000_000 * 1_000_000_000_000;
@@ -64,7 +63,8 @@ where
 	T: Config,
 {
 	let keep_alive = false;
-	Call::<T>::offer { offer: bond_offer, keep_alive }
+	let validated_bond_offer = Validated::new(bond_offer).unwrap();
+	Call::<T>::offer { offer: validated_bond_offer, keep_alive }
 		.dispatch_bypass_filter(RawOrigin::Signed(caller.clone()).into())
 		.unwrap();
 }
@@ -83,31 +83,33 @@ benchmarks! {
   where_clause {
 	  where BalanceOf<T>: From<u128>
   }
+
 	offer {
 		let [bond_asset, reward_asset] = assets::<T>();
-		let caller: T::AccountId = whitelisted_caller();
+		let caller: T::AccountId = account("caller", 0, 0xCAFEBABE);
 		initial_mint::<T>(bond_asset, &caller, reward_asset);
 		let bond_offer = bond_offer::<T>(bond_asset, reward_asset);
-	}: _(RawOrigin::Signed(caller), bond_offer, false)
+		let validated_bond_offer = Validated::new(bond_offer).unwrap();
+	}: _(RawOrigin::Signed(caller), validated_bond_offer, false)
 
 	bond {
 		let [bond_asset, reward_asset] = assets::<T>();
-		let caller: T::AccountId = whitelisted_caller();
+		let caller: T::AccountId = account("caller", 0, 0xCAFEBABE);
 		initial_mint::<T>(bond_asset, &caller, reward_asset);
 		let bond_offer = bond_offer::<T>(bond_asset, reward_asset);
 		let nb_of_bonds = bond_offer.nb_of_bonds;
 		call_offer::<T>(bond_offer, &caller);
-		let offer_id = T::BondOfferId::zero().next();
+		let offer_id = T::BondOfferId::one();
 	}: _(RawOrigin::Signed(caller), offer_id, nb_of_bonds, false)
 
 	cancel {
 		let [bond_asset, reward_asset] = assets::<T>();
-		let caller: T::AccountId = whitelisted_caller();
+		let caller: T::AccountId = account("caller", 0, 0xCAFEBABE);
 		initial_mint::<T>(bond_asset, &caller, reward_asset);
 		let bond_offer = bond_offer::<T>(bond_asset, reward_asset);
 		let nb_of_bonds = bond_offer.nb_of_bonds;
 		call_offer::<T>(bond_offer, &caller);
-		let offer_id = T::BondOfferId::zero().next();
+		let offer_id = T::BondOfferId::one();
 		call_bond::<T>(&caller, nb_of_bonds, offer_id);
 	}: _(RawOrigin::Signed(caller), offer_id)
 }

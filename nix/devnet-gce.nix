@@ -40,6 +40,10 @@ in {
           ];
         };
       };
+      nix = {
+        gc.automatic = true;
+        autoOptimiseStore = true;
+      };
       networking.firewall.allowedTCPPorts = [ 80 443 ];
       systemd.services.composable-devnet = {
         wantedBy = [ "multi-user.target" ];

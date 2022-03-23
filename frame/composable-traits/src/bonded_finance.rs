@@ -1,8 +1,8 @@
-use frame_support::pallet_prelude::*;
+use crate::math::{SafeDiv, SafeMul};
+use composable_support::validation::{Validate, Validated};
+use frame_support::{pallet_prelude::*, traits::Get};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, ArithmeticError};
-
-use crate::math::SafeArithmetic;
 
 pub trait BondedFinance {
 	type AccountId;
@@ -10,11 +10,16 @@ pub trait BondedFinance {
 	type Balance;
 	type BlockNumber;
 	type BondOfferId;
+	type MinReward;
+	type MinVestedTransfer;
 
 	/// Create a new offer.
 	fn offer(
 		from: &Self::AccountId,
-		offer: BondOffer<Self::AccountId, Self::AssetId, Self::Balance, Self::BlockNumber>,
+		offer: Validated<
+			BondOffer<Self::AccountId, Self::AssetId, Self::Balance, Self::BlockNumber>,
+			ValidBondOffer<Self::MinReward, Self::MinVestedTransfer>,
+		>,
 		keep_alive: bool,
 	) -> Result<Self::BondOfferId, DispatchError>;
 
@@ -65,7 +70,81 @@ pub struct BondOfferReward<AssetId, Balance, BlockNumber> {
 	pub maturity: BlockNumber,
 }
 
-impl<AccountId, AssetId, Balance: Zero + PartialOrd + SafeArithmetic, BlockNumber: Zero>
+#[derive(Debug, Decode)]
+pub struct ValidBondOffer<U, V> {
+	_marker: PhantomData<(U, V)>,
+}
+
+impl<U, V> Copy for ValidBondOffer<U, V> {}
+
+impl<U, V> Clone for ValidBondOffer<U, V> {
+	fn clone(&self) -> Self {
+		*self
+	}
+}
+
+impl<
+		MinTransfer,
+		MinReward,
+		AccountId,
+		AssetId,
+		Balance: Zero + PartialOrd + SafeDiv + SafeMul,
+		BlockNumber: Zero,
+	>
+	Validate<
+		BondOffer<AccountId, AssetId, Balance, BlockNumber>,
+		ValidBondOffer<MinTransfer, MinReward>,
+	> for ValidBondOffer<MinTransfer, MinReward>
+where
+	ValidBondOffer<MinTransfer, MinReward>: Decode,
+	MinTransfer: Get<Balance>,
+	MinReward: Get<Balance>,
+{
+	fn validate(
+		input: BondOffer<AccountId, AssetId, Balance, BlockNumber>,
+	) -> Result<BondOffer<AccountId, AssetId, Balance, BlockNumber>, &'static str> {
+		let nonzero_maturity = match &input.maturity {
+			BondDuration::Finite { return_in } => !return_in.is_zero(),
+			BondDuration::Infinite => true,
+		};
+
+		if !nonzero_maturity {
+			return Err("MATURITY_CANNOT_BE_ZERO")
+		}
+
+		if input.bond_price < MinTransfer::get() {
+			return Err("BOND_PRICE_BELOW_MIN_TRANSFER")
+		}
+
+		if input.nb_of_bonds.is_zero() {
+			return Err("NUMBER_OF_BOND_CANNOT_BE_ZERO")
+		}
+
+		let valid_reward = input.reward.amount >= MinReward::get() &&
+			input
+				.reward
+				.amount
+				.safe_div(&input.nb_of_bonds)
+				.unwrap_or_else(|_| Balance::zero()) >=
+				MinTransfer::get();
+
+		if !valid_reward {
+			return Err("INVALID_REWARD")
+		}
+
+		if input.reward.maturity.is_zero() {
+			return Err("ZERO_REWARD_MATURITY")
+		}
+
+		if input.total_price().is_err() {
+			return Err("INVALID_TOTAL_PRICE")
+		}
+
+		Ok(input)
+	}
+}
+
+impl<AccountId, AssetId, Balance: Zero + PartialOrd + SafeMul, BlockNumber: Zero>
 	BondOffer<AccountId, AssetId, Balance, BlockNumber>
 {
 	/// An offer is completed once all it's nb_of_bonds has been sold.
@@ -75,26 +154,5 @@ impl<AccountId, AssetId, Balance: Zero + PartialOrd + SafeArithmetic, BlockNumbe
 	/// The total price of the offer, which is the number of nb_of_bonds * the bond_price.
 	pub fn total_price(&self) -> Result<Balance, ArithmeticError> {
 		self.nb_of_bonds.safe_mul(&self.bond_price)
-	}
-	/// Check whether an offer is valid and can be submitted.
-	pub fn valid(&self, min_transfer: Balance, min_reward: Balance) -> bool {
-		let nonzero_maturity = match &self.maturity {
-			BondDuration::Finite { return_in } => !return_in.is_zero(),
-			BondDuration::Infinite => true,
-		};
-		let valid_price = self.bond_price >= min_transfer;
-		let nonzero_nb_of_bonds = !self.nb_of_bonds.is_zero();
-		let valid_reward = self.reward.amount >= min_reward &&
-			self.reward
-				.amount
-				.safe_div(&self.nb_of_bonds)
-				.unwrap_or_else(|_| Balance::zero()) >=
-				min_transfer;
-		let nonzero_reward_maturity = !self.reward.maturity.is_zero();
-		let valid_total = self.total_price().is_ok();
-		nonzero_maturity &&
-			nonzero_nb_of_bonds &&
-			valid_price && nonzero_reward_maturity &&
-			valid_reward && valid_total
 	}
 }

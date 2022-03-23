@@ -1,1 +1,1 @@
-{ "composable": { "name": "picasso", "version": "68d0c38b8c3e65021a99888f35cd5d58238cfa07", "hash": "0qj4hrsvxcblmf8xfq46bg345sq733ay9mywd11q3l8cb6w464vd" }, "polkadot": { "version": "0.9.16", "hash": "sha256-zDu0Tj7cSCER/ASxQmt+JCjoxLZc8UI8nYkrqXtveRU=" } }
+{ "composable": { "name": "picasso", "version": "68d0c38b8c3e65021a99888f35cd5d58238cfa07", "hash": "0qj4hrsvxcblmf8xfq46bg345sq733ay9mywd11q3l8cb6w464vd" }, "polkadot": { "version": "0.9.17-rc4", "hash": "10q34jml0yab7inbkdd193gpxjl880kkdjf029qlnjzh7wdihg0f" } }

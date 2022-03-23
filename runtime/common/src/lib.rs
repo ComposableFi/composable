@@ -13,7 +13,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod impls;
+pub mod xcmp;
+use composable_traits::oracle::MinimalOracle;
 pub use constants::*;
+use frame_support::parameter_types;
+use orml_traits::parameter_type_with_key;
+use primitives::currency::CurrencyId;
+use sp_runtime::DispatchError;
 pub use types::*;
 
 /// Common types of statemint and statemine and dali and picasso and composable.
@@ -25,6 +31,11 @@ mod types {
 
 	// todo move it into more shared directory so it can be shared with
 	// tests, integration, benchmark, (simnode?)
+
+	pub type BondOfferId = u128;
+
+	/// Timestamp implementation.
+	pub type Moment = u64;
 
 	/// An index to a block.
 	pub type BlockNumber = u32;
@@ -123,4 +134,59 @@ mod constants {
 		EnsureRoot<AccountId>,
 		collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilInstance>,
 	>;
+}
+
+pub struct PriceConverter;
+
+impl MinimalOracle for PriceConverter {
+	type AssetId = CurrencyId;
+
+	type Balance = Balance;
+
+	fn get_price_inverse(
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
+	) -> Result<Self::Balance, sp_runtime::DispatchError> {
+		match asset_id {
+			CurrencyId::PICA => Ok(amount),
+			CurrencyId::KSM => Ok(amount / 10),
+			CurrencyId::kUSD => Ok(amount / 10),
+			_ => Err(DispatchError::Other("cannot pay with given weight")),
+		}
+	}
+}
+
+//  cannot be zero as in benches it fails Invalid input: InsufficientBalance
+fn native_existential_deposit() -> Balance {
+	100 * CurrencyId::milli::<Balance>()
+}
+
+parameter_types! {
+	/// Existential deposit (ED for short) is minimum amount an account has to hold to stay in state.
+	pub NativeExistentialDeposit: Balance = native_existential_deposit();
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+pub fn multi_existential_deposits(_currency_id: &CurrencyId) -> Balance {
+	// ISSUE:
+	// Running benchmarks with non zero multideopist leads to fail in 3rd party pallet.
+	// It is not cleary why it happens.pub const BaseXcmWeight: Weight = 100_000_000;
+	// 2022-03-14 20:50:19 Running Benchmark: collective.set_members 2/1 1/1
+	// Error:
+	//   0: Invalid input: Account cannot exist with the funds that would be given
+	use num_traits::Zero;
+	Balance::zero()
+}
+
+#[cfg(not(feature = "runtime-benchmarks"))]
+pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
+	PriceConverter::get_price_inverse(*currency_id, NativeExistentialDeposit::get())
+		.unwrap_or(Balance::MAX) // TODO: here DEX call to pemissioned markets should come
+}
+
+parameter_type_with_key! {
+	// Minimum amount an account has to hold to stay in state
+	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+		multi_existential_deposits(currency_id)
+	};
 }

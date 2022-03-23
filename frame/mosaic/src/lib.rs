@@ -8,6 +8,7 @@
 
 mod decay;
 mod relayer;
+mod validation;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -30,10 +31,12 @@ pub mod pallet {
 	use crate::{
 		decay::Decayer,
 		relayer::{RelayerConfig, StaleRelayer},
+		validation::{ValidTTL, ValidTimeLockPeriod},
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_traits::math::SafeArithmetic;
+	use composable_support::validation::Validated;
+	use composable_traits::math::SafeAdd;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
@@ -99,6 +102,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	/// Convenience identifiers emitted by the pallet for relayer bookkeeping.
@@ -126,6 +130,7 @@ pub mod pallet {
 	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
 	pub struct NetworkInfo<Balance> {
 		pub enabled: bool,
+		pub min_transfer_size: Balance,
 		pub max_transfer_size: Balance,
 	}
 
@@ -173,11 +178,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn time_lock_period)]
+	#[allow(clippy::disallowed_type)]
 	pub type TimeLockPeriod<T: Config> =
 		StorageValue<_, BlockNumberOf<T>, ValueQuery, TimeLockPeriodOnEmpty<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn nonce)]
+	#[allow(clippy::disallowed_type)]
 	pub type Nonce<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::type_value]
@@ -336,6 +343,7 @@ pub mod pallet {
 		NoStaleTransactions,
 		InsufficientBudget,
 		ExceedsMaxTransferSize,
+		BelowMinTransferSize,
 		NoClaimableTx,
 		TxStillLocked,
 		NoOutgoingTx,
@@ -368,9 +376,9 @@ pub mod pallet {
 		pub fn rotate_relayer(
 			origin: OriginFor<T>,
 			new: T::AccountId,
-			ttl: T::BlockNumber,
+			validated_ttl: Validated<T::BlockNumber, ValidTTL<T::MinimumTTL>>,
 		) -> DispatchResultWithPostInfo {
-			ensure!(ttl > T::MinimumTTL::get(), Error::<T>::BadTTL);
+			let ttl = validated_ttl.value();
 			let (relayer, current_block) = Self::ensure_relayer(origin)?;
 			let ttl = current_block.saturating_add(ttl);
 			let relayer = relayer.rotate(new.clone(), ttl);
@@ -457,6 +465,7 @@ pub mod pallet {
 				NetworkInfos::<T>::get(network_id.clone()).ok_or(Error::<T>::UnsupportedNetwork)?;
 			ensure!(network_info.enabled, Error::<T>::NetworkDisabled);
 			ensure!(network_info.max_transfer_size >= amount, Error::<T>::ExceedsMaxTransferSize);
+			ensure!(network_info.min_transfer_size <= amount, Error::<T>::BelowMinTransferSize);
 
 			T::Assets::transfer(
 				asset_id,
@@ -679,11 +688,11 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::set_timelock_duration())]
 		pub fn set_timelock_duration(
 			origin: OriginFor<T>,
-			period: BlockNumberOf<T>,
+			period: Validated<BlockNumberOf<T>, ValidTimeLockPeriod<T::MinimumTimeLockPeriod>>,
 		) -> DispatchResultWithPostInfo {
+			let validated_period = period.value();
 			T::ControlOrigin::ensure_origin(origin)?;
-			ensure!(period > T::MinimumTimeLockPeriod::get(), Error::<T>::BadTimelockPeriod);
-			TimeLockPeriod::<T>::set(period);
+			TimeLockPeriod::<T>::set(validated_period);
 			Ok(().into())
 		}
 

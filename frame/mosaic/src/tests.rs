@@ -30,6 +30,7 @@
 ///  For every test, make sure that you check wether the funds moved to the correct (sub)
 /// accounts.
 use crate::{decay::*, mock::*, *};
+use composable_support::validation::{Validate, Validated};
 use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
 use frame_support::{
 	assert_err, assert_noop, assert_ok,
@@ -143,7 +144,6 @@ mod set_relayer {
 			assert_noop!(Mosaic::set_relayer(Origin::none(), ALICE), DispatchError::BadOrigin);
 		})
 	}
-
 	#[test]
 	fn alice_cannot_set_relayer() {
 		new_test_ext().execute_with(|| {
@@ -165,13 +165,14 @@ mod rotate_relayer {
 			let current_block = System::block_number();
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 
-			// first rotation
-			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl));
+			//first rotation
+			let validated_ttl = Validated::new(ttl).unwrap();
+			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, validated_ttl));
 			System::set_block_number(current_block + ttl);
 			assert_eq!(Mosaic::relayer_account_id(), Ok(BOB));
 
 			// second rotation
-			assert_ok!(Mosaic::rotate_relayer(Origin::signed(BOB), CHARLIE, ttl));
+			assert_ok!(Mosaic::rotate_relayer(Origin::signed(BOB), CHARLIE, validated_ttl));
 			System::set_block_number(current_block + 2 * ttl);
 			assert_eq!(Mosaic::relayer_account_id(), Ok(CHARLIE));
 		})
@@ -183,7 +184,8 @@ mod rotate_relayer {
 			let ttl = 500;
 			let current_block = System::block_number();
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
-			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, ttl));
+			let validated_ttl = Validated::new(ttl).unwrap();
+			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, validated_ttl));
 			System::set_block_number(current_block + ttl - 1); // just before the ttl
 			assert_eq!(Mosaic::relayer_account_id(), Ok(RELAYER)); // not BOB
 		})
@@ -192,7 +194,7 @@ mod rotate_relayer {
 	#[test]
 	fn arbitrary_account_cannot_rotate_relayer() {
 		new_test_ext().execute_with(|| {
-			let ttl = 500;
+			let ttl = Validated::new(500).unwrap();
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 			assert_noop!(
 				Mosaic::rotate_relayer(Origin::signed(ALICE), BOB, ttl),
@@ -204,7 +206,7 @@ mod rotate_relayer {
 	#[test]
 	fn none_cannot_rotate_relayer() {
 		new_test_ext().execute_with(|| {
-			let ttl = 500;
+			let ttl = Validated::new(500).unwrap();
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 			assert_noop!(
 				Mosaic::rotate_relayer(Origin::none(), BOB, ttl),
@@ -220,7 +222,8 @@ mod set_network {
 	#[test]
 	fn relayer_can_set_network() {
 		let network_id = 3;
-		let network_info = NetworkInfo { enabled: false, max_transfer_size: 100000 };
+		let network_info =
+			NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 
@@ -232,7 +235,8 @@ mod set_network {
 	#[test]
 	fn root_cannot_set_network() {
 		let network_id = 3;
-		let network_info = NetworkInfo { enabled: false, max_transfer_size: 100000 };
+		let network_info =
+			NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 
@@ -246,7 +250,8 @@ mod set_network {
 	#[test]
 	fn none_cannot_set_network() {
 		let network_id = 3;
-		let network_info = NetworkInfo { enabled: false, max_transfer_size: 100000 };
+		let network_info =
+			NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 
@@ -388,7 +393,7 @@ fn initialize() {
 	assert_ok!(Mosaic::set_network(
 		Origin::relayer(),
 		1,
-		NetworkInfo { enabled: true, max_transfer_size: 100000 },
+		NetworkInfo { enabled: true, min_transfer_size: 1, max_transfer_size: 100000 },
 	));
 	assert_ok!(Mosaic::set_budget(Origin::root(), 1, BUDGET, BudgetPenaltyDecayer::linear(10)));
 	assert_ok!(Mosaic::update_asset_mapping(
@@ -614,10 +619,11 @@ mod timelocked_mint {
 		fn can_mint_up_to_the_penalised_budget(
 			account_a in account_id(),
 			decay in 1..100u128, // todo,
-			max_transfer_size in 1..10_000_000u128,
+	  min_transfer_size in 1..10_000_000u128,
+			max_transfer_size in 10_000_000u128..100_000_000u128,
 			asset_id in 1..100u128,
 			network_id in 1..100u32,
-		remote_asset_id in any::<RemoteAssetId>(),
+		  remote_asset_id in any::<RemoteAssetId>(),
 			start_block in 1..10_000u64,
 			(budget, first_part, second_part) in budget_with_split(),
 		) {
@@ -629,7 +635,7 @@ mod timelocked_mint {
 				prop_assert_ok!(Mosaic::set_network(
 					Origin::relayer(),
 					network_id,
-					NetworkInfo { enabled: true, max_transfer_size },
+					NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
 				), "relayer may set network info");
 				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
 			prop_assert_ok!(Mosaic::update_asset_mapping(Origin::root(), asset_id, network_id, Some(remote_asset_id)));
@@ -651,10 +657,11 @@ mod timelocked_mint {
 		fn cannot_mint_more_than_the_penalised_budget(
 			account_a in account_id(),
 			decay in 1..100u128, // todo,
-			max_transfer_size in 1..10_000_000u128,
+	  min_transfer_size in 1..10_000_000u128,
+			max_transfer_size in 10_000_000u128..100_000_000u128,
 			asset_id in 1..100u128,
 			network_id in 1..100u32,
-		remote_asset_id in any::<RemoteAssetId>(),
+		  remote_asset_id in any::<RemoteAssetId>(),
 			start_block in 1..10_000u64,
 			(budget, first_part, second_part) in budget_with_split(),
 		) {
@@ -666,7 +673,7 @@ mod timelocked_mint {
 				prop_assert_ok!(Mosaic::set_network(
 					Origin::relayer(),
 					network_id,
-					NetworkInfo { enabled: true, max_transfer_size },
+					NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
 				), "relayer may set network info");
 				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
 			prop_assert_ok!(Mosaic::update_asset_mapping(Origin::root(), asset_id, network_id, Some(remote_asset_id)));
@@ -689,10 +696,11 @@ mod timelocked_mint {
 		fn should_be_able_to_mint_again_after_waiting_for_penalty_to_decay(
 			account_a in account_id(),
 			decay_factor in 1..100u128, // todo,
-			max_transfer_size in 1..10_000_000u128,
+	  min_transfer_size in 1..10_000_000u128,
+			max_transfer_size in 10_000_000u128..100_000_000u128,
 			asset_id in 1..100u128,
 			network_id in 1..100u32,
-		remote_asset_id in any::<RemoteAssetId>(),
+		  remote_asset_id in any::<RemoteAssetId>(),
 			start_block in 1..10_000u64,
 			(budget, first_part, second_part) in budget_with_split(),
 			iteration_count in 2..10u64,
@@ -710,7 +718,7 @@ mod timelocked_mint {
 				prop_assert_ok!(Mosaic::set_network(
 					Origin::relayer(),
 					network_id,
-					NetworkInfo { enabled: true, max_transfer_size },
+					NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
 				), "relayer may set network info");
 				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, budget_penalty_decayer.clone()), "root may set budget");
 			prop_assert_ok!(Mosaic::update_asset_mapping(Origin::root(), asset_id, network_id, Some(remote_asset_id)));
@@ -878,7 +886,7 @@ mod set_timelock_duration {
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_timelock_duration(
 				Origin::root(),
-				MinimumTimeLockPeriod::get() + 1
+				Validated::new(MinimumTimeLockPeriod::get() + 1).unwrap()
 			));
 		})
 	}
@@ -889,7 +897,7 @@ mod set_timelock_duration {
 			assert_noop!(
 				Mosaic::set_timelock_duration(
 					Origin::signed(ALICE),
-					MinimumTimeLockPeriod::get() + 1
+					Validated::new(MinimumTimeLockPeriod::get() + 1).unwrap()
 				),
 				DispatchError::BadOrigin
 			);
@@ -900,28 +908,11 @@ mod set_timelock_duration {
 	fn set_timelock_duration_with_origin_none() {
 		new_test_ext().execute_with(|| {
 			assert_noop!(
-				Mosaic::set_timelock_duration(Origin::none(), MinimumTimeLockPeriod::get() + 1),
+				Mosaic::set_timelock_duration(
+					Origin::none(),
+					Validated::new(MinimumTimeLockPeriod::get() + 1).unwrap()
+				),
 				DispatchError::BadOrigin
-			);
-		})
-	}
-
-	#[test]
-	fn set_timelock_duration_with_invalid_period() {
-		new_test_ext().execute_with(|| {
-			assert_noop!(
-				Mosaic::set_timelock_duration(Origin::root(), 0),
-				Error::<Test>::BadTimelockPeriod
-			);
-		})
-	}
-
-	#[test]
-	fn set_timelock_duration_with_invalid_period_2() {
-		new_test_ext().execute_with(|| {
-			assert_noop!(
-				Mosaic::set_timelock_duration(Origin::root(), MinimumTimeLockPeriod::get() - 1),
-				Error::<Test>::BadTimelockPeriod
 			);
 		})
 	}
@@ -1046,8 +1037,9 @@ mod transfer_to {
 	}
 
 	#[test]
-	fn transfer_to_exceeds_max_transfer_size() {
+	fn transfer_to_below_min_transfer_size() {
 		ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+			let min_transfer_size = 1000;
 			let max_transfer_size = 100000;
 
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
@@ -1056,7 +1048,54 @@ mod transfer_to {
 			assert_ok!(Mosaic::set_network(
 				Origin::relayer(),
 				network_id,
-				NetworkInfo { enabled: true, max_transfer_size },
+				NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
+			));
+
+			let asset_id: u128 = 1;
+			assert_ok!(Mosaic::set_budget(
+				Origin::root(),
+				asset_id,
+				10000,
+				BudgetPenaltyDecayer::linear(10)
+			));
+
+			let remote_asset_id = [0xFFu8; 20];
+			assert_ok!(Mosaic::update_asset_mapping(
+				Origin::root(),
+				asset_id,
+				network_id,
+				Some(remote_asset_id)
+			));
+
+			let amount = min_transfer_size - 1;
+			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+			assert_noop!(
+				Mosaic::transfer_to(
+					Origin::signed(ALICE),
+					network_id,
+					asset_id,
+					[0; 20],
+					amount,
+					true
+				),
+				Error::<Test>::BelowMinTransferSize
+			);
+		})
+	}
+
+	#[test]
+	fn transfer_to_exceeds_max_transfer_size() {
+		ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+			let min_transfer_size = 1;
+			let max_transfer_size = 100000;
+
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+			let network_id = 1;
+			assert_ok!(Mosaic::set_network(
+				Origin::relayer(),
+				network_id,
+				NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
 			));
 
 			let asset_id: u128 = 1;
@@ -1128,7 +1167,7 @@ mod transfer_to {
 			assert_ok!(Mosaic::set_network(
 				Origin::relayer(),
 				1,
-				NetworkInfo { enabled: true, max_transfer_size: 100000 },
+				NetworkInfo { enabled: true, min_transfer_size: 1, max_transfer_size: 100000 },
 			));
 
 			// We don't register the asset
@@ -1274,5 +1313,64 @@ mod claim_to {
 			System::set_block_number(current_block + lock_time + 1);
 			assert_ok!(Mosaic::claim_to(Origin::alice(), 1, ALICE));
 		})
+	}
+}
+
+#[cfg(test)]
+mod test_validation {
+	use super::*;
+	use composable_support::validation::Validate;
+	use frame_support::assert_ok;
+	use validation::{ValidTTL, ValidTimeLockPeriod};
+
+	#[test]
+	fn set_ttl_with_invalid_period() {
+		assert!(<ValidTTL<MinimumTTL> as Validate<BlockNumber, ValidTTL<MinimumTTL>>>::validate(
+			0_u64
+		)
+		.is_err());
+	}
+
+	#[test]
+	fn set_ttl_with_invalid_period_3() {
+		assert!(<ValidTTL<MinimumTTL> as Validate<BlockNumber, ValidTTL<MinimumTTL>>>::validate(
+			MinimumTTL::get() - 1
+		)
+		.is_err());
+	}
+
+	#[test]
+	fn set_ttl_period_3() {
+		assert_ok!(
+			<ValidTTL<MinimumTTL> as Validate<BlockNumber, ValidTTL<MinimumTTL>>>::validate(
+				MinimumTTL::get() + 1
+			)
+		);
+	}
+
+	#[test]
+	fn set_timelock_duration_with_invalid_period() {
+		assert!(<ValidTimeLockPeriod<MinimumTimeLockPeriod> as Validate<
+			BlockNumber,
+			ValidTimeLockPeriod<MinimumTimeLockPeriod>,
+		>>::validate(0_u64)
+		.is_err());
+	}
+
+	#[test]
+	fn set_timelock_duration_with_invalid_period_2() {
+		assert!(<ValidTimeLockPeriod<MinimumTimeLockPeriod> as Validate<
+			BlockNumber,
+			ValidTimeLockPeriod<MinimumTimeLockPeriod>,
+		>>::validate(MinimumTimeLockPeriod::get() - 1)
+		.is_err());
+	}
+
+	#[test]
+	fn set_timelock_duration_with_invalid_period_3() {
+		assert_ok!(<ValidTimeLockPeriod<MinimumTimeLockPeriod> as Validate<
+			BlockNumber,
+			ValidTimeLockPeriod<MinimumTimeLockPeriod>,
+		>>::validate(MinimumTimeLockPeriod::get() + 1));
 	}
 }

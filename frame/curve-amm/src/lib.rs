@@ -31,7 +31,6 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
-#![allow(clippy::all)]
 
 pub use pallet::*;
 
@@ -58,8 +57,8 @@ pub mod pallet {
 	use composable_traits::{
 		currency::{CurrencyFactory, RangeId},
 		defi::CurrencyPair,
-		dex::{CurveAmm, StableSwapPoolInfo},
-		math::{safe_multiply_by_rational, SafeArithmetic},
+		dex::{Amm, StableSwapPoolInfo},
+		math::{safe_multiply_by_rational, SafeAdd, SafeSub},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -98,7 +97,8 @@ pub mod pallet {
 			+ Ord
 			+ Zero
 			+ One
-			+ SafeArithmetic;
+			+ SafeAdd
+			+ SafeSub;
 		type Convert: Convert<u128, Self::Balance> + Convert<Self::Balance, u128>;
 		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
 		type Assets: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
@@ -115,7 +115,8 @@ pub mod pallet {
 			+ Debug
 			+ One
 			+ Zero
-			+ SafeArithmetic;
+			+ SafeAdd
+			+ SafeSub;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
@@ -151,12 +152,12 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		AssetAmountMustBePositiveNumber,
-		RequiredAmountNotReached,
 		InvalidFees,
 		InvalidPair,
 		PoolNotFound,
 		PairMismatch,
 		CannotRespectMinimumRequested,
+		AmpFactorMustBeGreaterThanZero,
 	}
 
 	#[pallet::event]
@@ -219,6 +220,9 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Create a new pool.
+		///
+		/// Emits `PoolCreated` event when successful.
 		#[pallet::weight(T::WeightInfo::create())]
 		pub fn create(
 			origin: OriginFor<T>,
@@ -232,6 +236,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Execute a buy order on pool.
+		///
+		/// Emits `Swapped` event when successful.
 		#[pallet::weight(T::WeightInfo::buy())]
 		pub fn buy(
 			origin: OriginFor<T>,
@@ -241,10 +248,13 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
 			Ok(())
 		}
 
+		/// Execute a sell order on pool.
+		///
+		/// Emits `Swapped` event when successful.
 		#[pallet::weight(T::WeightInfo::sell())]
 		pub fn sell(
 			origin: OriginFor<T>,
@@ -254,10 +264,15 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
 			Ok(())
 		}
 
+		/// Execute a specific swap operation.
+		///
+		/// The `quote_amount` is always the quote asset amount (A/B => B), (B/A => A).
+		///
+		/// Emits `Swapped` event when successful.
 		#[pallet::weight(T::WeightInfo::swap())]
 		pub fn swap(
 			origin: OriginFor<T>,
@@ -268,7 +283,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as CurveAmm>::exchange(
+			let _ = <Self as Amm>::exchange(
 				&who,
 				pool_id,
 				pair,
@@ -278,9 +293,55 @@ pub mod pallet {
 			)?;
 			Ok(())
 		}
+
+		/// Add liquidity to a stable-swap pool.
+		///
+		/// Emits `LiquidityAdded` event when successful.
+		#[pallet::weight(T::WeightInfo::add_liquidity())]
+		pub fn add_liquidity(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			base_amount: T::Balance,
+			quote_amount: T::Balance,
+			min_mint_amount: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as Amm>::add_liquidity(
+				&who,
+				pool_id,
+				base_amount,
+				quote_amount,
+				min_mint_amount,
+				keep_alive,
+			)?;
+			Ok(())
+		}
+
+		/// Remove liquidity from stable-swap pool.
+		///
+		/// Emits `LiquidityRemoved` event when successful.
+		#[pallet::weight(T::WeightInfo::remove_liquidity())]
+		pub fn remove_liquidity(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			lp_amount: T::Balance,
+			min_base_amount: T::Balance,
+			min_quote_amount: T::Balance,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as Amm>::remove_liquidity(
+				&who,
+				pool_id,
+				lp_amount,
+				min_base_amount,
+				min_quote_amount,
+			)?;
+			Ok(())
+		}
 	}
 
-	impl<T: Config> CurveAmm for Pallet<T> {
+	impl<T: Config> Amm for Pallet<T> {
 		type AssetId = T::AssetId;
 		type Balance = T::Balance;
 		type AccountId = T::AccountId;
@@ -418,7 +479,7 @@ pub mod pallet {
 				(d1, T::Balance::zero(), T::Balance::zero())
 			};
 
-			ensure!(mint_amount >= min_mint_amount, Error::<T>::RequiredAmountNotReached);
+			ensure!(mint_amount >= min_mint_amount, Error::<T>::CannotRespectMinimumRequested);
 
 			T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
 			T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
@@ -546,6 +607,7 @@ pub mod pallet {
 			fee: Permill,
 			protocol_fee: Permill,
 		) -> Result<T::PoolId, DispatchError> {
+			ensure!(amplification_coefficient > 0, Error::<T>::AmpFactorMustBeGreaterThanZero);
 			ensure!(pair.base != pair.quote, Error::<T>::InvalidPair);
 
 			let total_fees = fee.checked_add(&protocol_fee).ok_or(ArithmeticError::Overflow)?;
@@ -579,7 +641,7 @@ pub mod pallet {
 
 		/// Return pool information for given pool_id.
 		pub(crate) fn get_pool(pool_id: T::PoolId) -> Result<PoolOf<T>, DispatchError> {
-			Pools::<T>::get(pool_id).ok_or(Error::<T>::PoolNotFound.into())
+			Pools::<T>::get(pool_id).ok_or_else(|| Error::<T>::PoolNotFound.into())
 		}
 
 		/// Account of a pool

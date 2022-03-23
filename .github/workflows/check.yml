@@ -45,6 +45,7 @@ jobs:
         run: |
           SKIP_WASM_BUILD=1 cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
 
+
   substrate-test-coverage:
     name: Unit Tests (With Coverage)
     runs-on:
@@ -65,12 +66,9 @@ jobs:
       - name: Rustup show
         run: |
          /home/runner/.cargo/bin/rustup show
-      - uses: actions/checkout@v2
       - name: Run Test (with coverage)
         run: |
-          # integration tests can't be compiled with --feature=runtime-benchmarks
-          # TODO: https://github.com/ComposableFi/composable/issues/535
-          /home/runner/.cargo/bin/cargo install -f cargo-llvm-cov
+          /home/runner/.cargo/bin/cargo +nightly-2021-11-08 install -f cargo-llvm-cov
           /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly-2021-11-08
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-08 llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
@@ -102,7 +100,22 @@ jobs:
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
       - uses: actions/checkout@v2
+
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
+
+      # FIXME: actually broken: https://github.com/ComposableFi/composable/runs/5570301249?check_suite_focus=true
+      # - name: Check for runtime changes
+      #   env:
+      #     BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+      #     GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
+      #   id: check_runtime
+      #   run: .maintain/check_runtime.sh
+
       - name: Run single pass benchmarking
+        # only run this step if there are runtime changes
+        # if: env.RUNTIME_CHECK == 1
         env:
           RUST_BACKTRACE: full
         run: |
@@ -115,8 +128,8 @@ jobs:
             --extrinsic='*' \
             --steps=1 \
             --repeat=1 \
-            --raw \
             --log error
+
 
   substrate-tests:
     name: Unit Tests 
@@ -145,6 +158,7 @@ jobs:
         run: |
           SKIP_WASM_BUILD=1 cargo test --workspace --locked --release --verbose --features=runtime-benchmarks
 
+
   linters:
     name: Linters
     runs-on:
@@ -167,9 +181,20 @@ jobs:
         with:
           node-version: 14.x
 
-      - name: Cargo fmt
+      - name: Cargo format (Rust)
         run: |
           cargo +nightly fmt --all -- --check
+
+      - name: Taplo format (Toml)
+        run: |
+          cargo install taplo-cli
+          taplo lint --warn-as-error
+          taplo fmt --warn-as-error
+          if ! git diff-index HEAD; then
+            exit 1
+          else
+            echo "Everything is fine!"
+          fi
       
       - name: Hadolint
         env:

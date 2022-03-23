@@ -105,6 +105,7 @@ pub mod pallet {
 		/// currency id
 		type AssetId: AssetIdLike;
 		type Balance: BalanceLike;
+		#[pallet::constant]
 		type NativeAssetId: Get<Self::AssetId>;
 		type GenerateCurrencyId: CurrencyFactory<Self::AssetId>;
 		type NativeCurrency;

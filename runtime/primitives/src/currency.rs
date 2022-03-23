@@ -10,6 +10,19 @@ use composable_support::rpc_helpers::FromHexStr;
 use serde::{Deserialize, Serialize};
 use sp_runtime::sp_std::ops::Deref;
 
+/// Trait used to write generalized code over well know currencies
+/// We use const to allow for match on these
+/// Allows to have reuse of code amids runtime and cross relay transfers in future.
+// TODO: split CurrenyId for runtimes - one for DOT and one for KSM
+pub trait WellKnownCurrency {
+	// works well with pattnrs unlike impl trait `associated consts cannot be referenced in
+	// patterns`
+	const NATIVE: Self;
+	/// usually we expect running with relay,
+	/// but if  not, than degenrative case would be this equal to `NATIVE`
+	const RELAY_NATIVE: Self;
+}
+
 #[derive(
 	Encode,
 	Decode,
@@ -28,22 +41,33 @@ use sp_runtime::sp_std::ops::Deref;
 #[repr(transparent)]
 pub struct CurrencyId(pub u128);
 
+impl WellKnownCurrency for CurrencyId {
+	const NATIVE: CurrencyId = CurrencyId::PICA;
+	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
+}
+
 impl CurrencyId {
 	pub const INVALID: CurrencyId = CurrencyId(0);
 	pub const PICA: CurrencyId = CurrencyId(1);
 	pub const LAYR: CurrencyId = CurrencyId(2);
 	pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
+
+	/// Kusama native token
 	pub const KSM: CurrencyId = CurrencyId(4);
 
+	/// Karura stable coin(Karura Dollar), not native.
+	#[allow(non_upper_case_globals)]
+	pub const kUSD: CurrencyId = CurrencyId(129);
+
 	#[inline(always)]
-	pub fn decimals(&self) -> Exponent {
+	pub const fn decimals() -> Exponent {
 		12
 	}
-	pub fn unit<T: From<u64>>(&self) -> T {
-		T::from(10_u64.pow(self.decimals()))
+	pub fn unit<T: From<u64>>() -> T {
+		T::from(10_u64.pow(Self::decimals()))
 	}
-	pub fn milli<T: From<u64> + Div<Output = T>>(&self) -> T {
-		self.unit::<T>() / T::from(1000_u64)
+	pub fn milli<T: From<u64> + Div<Output = T>>() -> T {
+		Self::unit::<T>() / T::from(1000_u64)
 	}
 }
 

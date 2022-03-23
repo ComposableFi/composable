@@ -40,6 +40,8 @@ mod mock;
 mod tests;
 mod weights;
 
+pub use crate::weights::WeightInfo;
+
 pub use pallet::*;
 
 #[frame_support::pallet]

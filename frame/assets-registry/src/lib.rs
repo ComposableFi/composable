@@ -56,6 +56,16 @@ pub mod pallet {
 		type ForeignAssetId: FullCodec
 			+ Eq
 			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ From<u128>
+			+ Into<u128>
+			+ Debug
+			+ Default
+			+ TypeInfo;
+		type Location: FullCodec
+			+ Eq
+			+ PartialEq
 			// we wrap non serde type, so until written custom serde, cannot handle that
 			// + MaybeSerializeDeserialize
 			+ Debug
@@ -117,6 +127,18 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn foreign_asset_location)]
+	/// Mapping foreign asset to foreign location.
+	pub type ForeignAssetLocation<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::LocalAssetId, T::Location, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn from_foreign_asset_location)]
+	/// Mapping foreign location to foreign asset.
+	pub type FromForeignAssetLocation<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::Location, T::LocalAssetId, OptionQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn foreign_asset_metadata)]
 	/// Mapping local asset to foreign asset metadata.
 	pub type ForeignAssetMetadata<T: Config> =
@@ -126,6 +148,11 @@ pub mod pallet {
 	pub struct GenesisConfig<T: Config> {
 		local_admin: Option<T::AccountId>,
 		foreign_admin: Option<T::AccountId>,
+		// TODO: split this into 2 pairs
+		// 1. (xcm location -> local asset id as used in our tuntime), so that when others send our
+		// id to our chain we can trust them 2. (local qasset id - > remote location -> remote
+		// asset id) so then when we send our local asset to remote chain we know what id we should
+		// envode.
 		asset_pairs: Vec<(T::LocalAssetId, XcmAssetLocation)>,
 	}
 
@@ -177,10 +204,12 @@ pub mod pallet {
 		LocalAssetIdAlreadyUsed,
 		ForeignAssetIdAlreadyUsed,
 		LocalAssetIdNotFound,
+		ForeignAssetIdNotFound,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		// TODO: bench this
 		#[pallet::weight(10_000)]
 		pub fn set_local_admin(
 			origin: OriginFor<T>,
@@ -208,6 +237,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			local_asset_id: T::LocalAssetId,
 			foreign_asset_id: T::ForeignAssetId,
+			location: T::Location,
+			decimals: u8,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin.clone())?;
 			Self::ensure_admins_only(origin)?;
@@ -216,10 +247,10 @@ pub mod pallet {
 				Error::<T>::LocalAssetIdAlreadyUsed
 			);
 			ensure!(
-				!<ForeignToLocal<T>>::contains_key(foreign_asset_id.clone()),
+				!<ForeignToLocal<T>>::contains_key(foreign_asset_id),
 				Error::<T>::ForeignAssetIdAlreadyUsed
 			);
-			Self::approve_candidate(who, local_asset_id, foreign_asset_id.clone())?;
+			Self::approve_candidate(who, local_asset_id, foreign_asset_id, location, decimals)?;
 			Self::deposit_event(Event::AssetsMappingCandidateUpdated {
 				local_asset_id,
 				foreign_asset_id,
@@ -249,23 +280,23 @@ pub mod pallet {
 	impl<T: Config> RemoteAssetRegistry for Pallet<T> {
 		type AssetId = T::LocalAssetId;
 
-		type AssetNativeLocation = T::ForeignAssetId;
+		type AssetNativeLocation = T::Location;
 
 		fn set_location(
 			local_asset_id: Self::AssetId,
-			foreign_asset_id: Self::AssetNativeLocation,
+			location: Self::AssetNativeLocation,
 		) -> DispatchResult {
-			<LocalToForeign<T>>::insert(local_asset_id, foreign_asset_id.clone());
-			<ForeignToLocal<T>>::insert(foreign_asset_id, local_asset_id);
+			<ForeignAssetLocation<T>>::insert(local_asset_id, location.clone());
+			<FromForeignAssetLocation<T>>::insert(location, local_asset_id);
 			Ok(())
 		}
 
 		fn asset_to_location(local_asset_id: Self::AssetId) -> Option<Self::AssetNativeLocation> {
-			<LocalToForeign<T>>::get(local_asset_id)
+			<ForeignAssetLocation<T>>::get(local_asset_id)
 		}
 
-		fn location_to_asset(foreign_asset_id: Self::AssetNativeLocation) -> Option<Self::AssetId> {
-			<ForeignToLocal<T>>::get(foreign_asset_id)
+		fn location_to_asset(location: Self::AssetNativeLocation) -> Option<Self::AssetId> {
+			<FromForeignAssetLocation<T>>::get(location)
 		}
 	}
 
@@ -285,9 +316,11 @@ pub mod pallet {
 			who: T::AccountId,
 			local_asset_id: T::LocalAssetId,
 			foreign_asset_id: T::ForeignAssetId,
+			location: T::Location,
+			decimals: u8,
 		) -> DispatchResultWithPostInfo {
 			let current_candidate_status =
-				<AssetsMappingCandidates<T>>::get((local_asset_id, foreign_asset_id.clone()));
+				<AssetsMappingCandidates<T>>::get((local_asset_id, foreign_asset_id));
 			let local_admin = <LocalAdmin<T>>::get();
 			let foreign_admin = <ForeignAdmin<T>>::get();
 			match current_candidate_status {
@@ -305,16 +338,38 @@ pub mod pallet {
 					},
 				Some(CandidateStatus::LocalAdminApproved) =>
 					if Some(who) == foreign_admin {
-						Self::set_location(local_asset_id, foreign_asset_id.clone())?;
-						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
+						Self::promote_candidate(
+							local_asset_id,
+							foreign_asset_id,
+							location,
+							decimals,
+						)?;
 					},
 				Some(CandidateStatus::ForeignAdminApproved) =>
 					if Some(who) == local_admin {
-						Self::set_location(local_asset_id, foreign_asset_id.clone())?;
-						<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
+						Self::promote_candidate(
+							local_asset_id,
+							foreign_asset_id,
+							location,
+							decimals,
+						)?;
 					},
 			};
 			Ok(().into())
+		}
+
+		fn promote_candidate(
+			local_asset_id: T::LocalAssetId,
+			foreign_asset_id: T::ForeignAssetId,
+			location: T::Location,
+			decimals: u8,
+		) -> DispatchResult {
+			Self::set_location(local_asset_id, location)?;
+			<LocalToForeign<T>>::insert(local_asset_id, foreign_asset_id);
+			<ForeignToLocal<T>>::insert(foreign_asset_id, local_asset_id);
+			<ForeignAssetMetadata<T>>::insert(local_asset_id, ForeignMetadata { decimals });
+			<AssetsMappingCandidates<T>>::remove((local_asset_id, foreign_asset_id));
+			Ok(())
 		}
 	}
 
