@@ -66,7 +66,7 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use codec::FullCodec;
 	use composable_traits::{
-		clearing_house::MarginTrading, defi::DeFiComposableConfig, vamm::VirtualAMM,
+		clearing_house::MarginTrading, defi::DeFiComposableConfig, oracle::Oracle, vamm::VirtualAMM,
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -107,6 +107,8 @@ pub mod pallet {
 		type Duration: FullCodec + MaxEncodedLen + TypeInfo;
 		/// Virtual Automated Market Maker pallet implementation
 		type VirtualAMM: VirtualAMM;
+		/// Price feed (in USDT) Oracle pallet implementation
+		type Oracle: Oracle;
 		/// Pallet implementation of asset transfers.
 		type Assets: Transfer<
 			Self::AccountId,

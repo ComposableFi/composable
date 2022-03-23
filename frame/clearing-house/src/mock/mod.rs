@@ -9,3 +9,6 @@ pub mod assets;
 
 #[cfg(test)]
 pub mod vamm;
+
+#[cfg(test)]
+pub mod oracle;

@@ -3,6 +3,7 @@ use crate::{
 	mock::{
 		accounts::{AccountId, ALICE},
 		assets::{AssetId, PICA},
+		oracle as mock_oracle,
 		vamm::Vamm,
 	},
 };
@@ -42,12 +43,14 @@ frame_support::construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Assets: pallet_assets::{Pallet, Call, Storage},
+		Oracle: mock_oracle::{Pallet, Storage},
 		ClearingHouse: clearing_house::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
 pub type Balance = u128;
 pub type Amount = i64;
+pub type Timestamp = u64;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                Config
@@ -169,6 +172,22 @@ impl pallet_assets::Config for Runtime {
 }
 
 // ----------------------------------------------------------------------------------------------------
+//                                            		Oracle
+// ----------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const MaxAnswerBound: u32 = 5;
+}
+
+impl mock_oracle::Config for Runtime {
+	type AssetId = AssetId;
+	type Balance = Balance;
+	type Timestamp = Timestamp;
+	type LocalAssets = ();
+	type MaxAnswerBound = MaxAnswerBound;
+}
+
+// ----------------------------------------------------------------------------------------------------
 //                                            	Clearing House
 // ----------------------------------------------------------------------------------------------------
 
@@ -186,9 +205,10 @@ impl clearing_house::Config for Runtime {
 	type WeightInfo = ();
 	type MarketId = u64;
 	type Decimal = FixedI128;
-	type Timestamp = u64;
+	type Timestamp = Timestamp;
 	type Duration = u64;
 	type VirtualAMM = Vamm;
+	type Oracle = Oracle;
 	type Assets = Assets;
 	type PalletId = ClearingHouseId;
 }
@@ -201,6 +221,7 @@ pub struct ExtBuilder {
 	pub native_balances: Vec<(AccountId, Balance)>,
 	pub balances: Vec<(AccountId, AssetId, Balance)>,
 	pub collateral_types: Vec<AssetId>,
+	pub oracle_supports_assets: bool,
 }
 
 impl ExtBuilder {
@@ -220,6 +241,10 @@ impl ExtBuilder {
 		clearing_house::GenesisConfig::<Runtime> { collateral_types: self.collateral_types }
 			.assimilate_storage(&mut storage)
 			.unwrap();
+
+		let oracle_genesis =
+			mock_oracle::GenesisConfig { supports_assets: self.oracle_supports_assets };
+		GenesisBuild::<Runtime>::assimilate_storage(&oracle_genesis, &mut storage).unwrap();
 
 		let mut ext: sp_io::TestExternalities = storage.into();
 		ext.execute_with(|| System::set_block_number(1));

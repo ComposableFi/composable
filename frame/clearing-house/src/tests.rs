@@ -14,7 +14,12 @@ use orml_tokens::Error as TokenError;
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self { native_balances: vec![], balances: vec![], collateral_types: vec![USDC] }
+		Self {
+			native_balances: vec![],
+			balances: vec![],
+			collateral_types: vec![USDC],
+			oracle_supports_assets: false,
+		}
 	}
 }
 
