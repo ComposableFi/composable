@@ -64,13 +64,26 @@ fn test_deposit_supported_collateral_succeeds() {
 #[test]
 fn test_create_market_succeeds() {
 	ExtBuilder::default().build().execute_with(|| {
-		let origin = Origin::signed(ALICE);
+		let market = 1u32.into();
 		let asset = DOT;
 		let vamm_params = VammParams {};
-		assert_ok!(ClearingHouse::create_market(origin, asset, vamm_params));
+		assert_ok!(ClearingHouse::create_market(Origin::signed(ALICE), market, asset, vamm_params));
 		// let event =
 		// 	Event::from(System::events().last().expect("Expected at least one event").event);
 		// assert_matches!(event, Event::MarketCreated { market: _, asset });
-		// System::assert_last_event(Event::MarketCreated.into());
+		System::assert_last_event(Event::MarketCreated { market, asset }.into());
+	})
+}
+
+#[test]
+fn test_create_existing_market_id_fails() {
+	ExtBuilder::default().build().execute_with(|| {
+		let market = 1u32.into();
+		assert_ok!(ClearingHouse::create_market(Origin::signed(ALICE), market, DOT, VammParams {}));
+
+		assert_noop!(
+			ClearingHouse::create_market(Origin::signed(ALICE), market, PICA, VammParams {}),
+			Error::<Runtime>::MarketAlreadyExists
+		);
 	})
 }

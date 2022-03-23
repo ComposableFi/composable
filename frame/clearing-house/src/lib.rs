@@ -273,6 +273,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// User attempted to deposit unsupported asset type as collateral in its margin account
 		UnsupportedCollateralType,
+		/// Attempted to create a new market with an existing market's id
+		MarketAlreadyExists,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -325,11 +327,13 @@ pub mod pallet {
 		/// Creates a new perpetuals market with the desired parameters.
 		///
 		/// ## Parameters
+		/// - `market`: Id for the new derivatives market
 		/// - `asset`: Asset id of the underlying for the derivatives market
 		/// - `vamm_params`: Parameters for creating and initializing the vAMM for price discovery
 		///
 		/// ## Assumptions or Requirements
-		/// The underlying must have a stable price feed via another pallet.
+		/// * The `market` must be a new id not contained in [`Markets`]
+		/// * The underlying must have a stable price feed via another pallet
 		///
 		/// ## Emits
 		/// * [`MarketCreated`](Event::<T>::MarketCreated)
@@ -338,14 +342,17 @@ pub mod pallet {
 		/// Adds an entry to the [`Markets`] storage map.
 		///
 		/// ## Errors
+		/// - [`MarketAlreadyExists`](Error::<T>::MarketAlreadyExists)
 		///
 		/// # Weight/Runtime
 		/// `O(1)`
 		#[pallet::weight(<T as Config>::WeightInfo::create_market())]
+		#[allow(unused_variables)]
 		pub fn create_market(
-			_origin: OriginFor<T>,
-			_asset: AssetIdOf<T>,
-			_vamm_params: VammParamsOf<T>,
+			origin: OriginFor<T>,
+			market: T::MarketId,
+			asset: AssetIdOf<T>,
+			vamm_params: VammParamsOf<T>,
 		) -> DispatchResult {
 			Err("Unimplemented".into())
 		}
