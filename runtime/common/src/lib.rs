@@ -157,13 +157,13 @@ impl MinimalOracle for PriceConverter {
 }
 
 //  cannot be zero as in benches it fails Invalid input: InsufficientBalance
-fn native_existential_desposit() -> Balance {
+fn native_existential_deposit() -> Balance {
 	100 * CurrencyId::milli::<Balance>()
 }
 
 parameter_types! {
 	/// Existential deposit (ED for short) is minimum amount an account has to hold to stay in state.
-	pub NativeExistentialDeposit: Balance = native_existential_desposit();
+	pub NativeExistentialDeposit: Balance = native_existential_deposit();
 }
 
 #[cfg(feature = "runtime-benchmarks")]
