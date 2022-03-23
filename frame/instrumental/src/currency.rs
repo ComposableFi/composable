@@ -102,7 +102,6 @@ use proptest::{prop_oneof, strategy::{Just, Strategy}};
 #[allow(dead_code)]
 pub fn pick_currency() -> impl Strategy<Value = CurrencyId> {
 	prop_oneof![
-		Just(PICA::ID),
 		Just(BTC::ID),
 		Just(USDC::ID),
 		Just(LAYR::ID),
