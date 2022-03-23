@@ -3,9 +3,9 @@ use sha2::Sha256;
 use sp_core::{crypto::Ss58Codec, sr25519, Pair};
 use std::sync::Arc;
 use structopt::StructOpt;
-use subxt::{ClientBuilder, PairSigner};
-use subxt_clients::picasso::api;
+use substrate_xt::Client;
 use tide::{prelude::*, Error, Request};
+use utils_common::*;
 
 #[derive(Debug, Deserialize, StructOpt, Clone)]
 struct Main {
@@ -32,8 +32,8 @@ struct SlackWebhook {
 }
 
 struct State {
-	api: api::RuntimeApi<api::DefaultConfig>,
-	signer: PairSigner<api::DefaultConfig, sr25519::Pair>,
+	api: Client<DaliXtConstructor>,
+	signer: sr25519::Pair,
 	env: Env,
 }
 
@@ -41,7 +41,6 @@ struct State {
 struct Env {
 	slack_signing_key: String,
 	root_key: String,
-	rpc_node: String,
 }
 
 #[tokio::main]
@@ -61,15 +60,11 @@ async fn main() -> tide::Result<()> {
 async fn init() -> Arc<State> {
 	let env = envy::from_env::<Env>().expect("Missing env vars");
 
+	const RPC_WS_URL: &'static str = "wss://rpc.composablefinance.ninja";
 	// create the signer
-	let signer = PairSigner::new(sr25519::Pair::from_string(&env.root_key, None).unwrap());
+	let signer = sr25519::Pair::from_string(&env.root_key, None).unwrap();
 
-	let api = ClientBuilder::new()
-		.set_url(&env.rpc_node)
-		.build()
-		.await
-		.unwrap()
-		.to_runtime_api();
+	let api = Client::new(RPC_WS_URL).await.unwrap();
 
 	Arc::new(State { api, signer, env })
 }
@@ -109,23 +104,24 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 
 	let state = req.state();
 
-	let result = state
-		.api
-		.tx()
-		.balances()
-		// 1k Dali
-		.transfer(address.into(), 1_000_000_000_000_000)
-		.sign_and_submit_then_watch(&state.signer)
-		.await?
-		.wait_for_in_block()
-		.await?
-		.fetch_events()
-		.await?;
+	let ext = state.api.construct_extrinsic(
+		balances::Call::transfer { dest: address.into(), value: 1_000_000_000_000_000 }.into(),
+		state.signer.clone(),
+	)?;
 
-	if result.find_events::<api::balances::events::Transfer>()?.is_empty() {
-		return Ok("Error: Transfer failed!".into())
+	let progress = state.api.submit_and_watch(ext).await?;
+
+	let block_hash = progress.wait_for_finalized().await?;
+	let events = state.api.with_rpc_externalities(Some(block_hash), || {
+		frame_system::Pallet::<dali_runtime::Runtime>::events()
+	});
+	let has_event = events
+		.into_iter()
+		.any(|event| match_event!(event.event.into(), Balances, balances::Event::Transfer { .. }));
+
+	if !has_event {
+		return Ok(format!("error encountered while sending tx").into())
 	}
-
 	log::info!("Sent {} 1k Dali", user_name);
 
 	Ok(format!("Sent <@{}> 1,000 Dalis", user_id).into())

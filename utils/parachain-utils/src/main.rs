@@ -1,14 +1,11 @@
 use codec::Encode;
 use jsonrpc_core_client::RpcError;
 use sp_core::{crypto::AccountId32, sr25519, Pair, H256};
-use sp_runtime::{generic::Era, MultiSignature, MultiSigner};
+use sp_runtime::{MultiSignature, MultiSigner};
 use structopt::StructOpt;
 use substrate_xt::{AdrressFor, Client, ConstructExt, ExtrinsicError, SubstrateXtError};
 
-#[macro_use]
-mod events;
-
-use events::AllRuntimeEvents;
+use utils_common::*;
 
 const DALI: &'static str = "dali";
 const PICASSO: &'static str = "picasso";
@@ -49,54 +46,6 @@ struct State<T: ConstructExt> {
 	api: Client<T>,
 	/// Pair signer
 	signer: sr25519::Pair,
-}
-
-struct DaliXtConstructor;
-
-impl ConstructExt for DaliXtConstructor {
-	type Runtime = dali_runtime::Runtime;
-	type Pair = sp_core::sr25519::Pair;
-	type SignedExtra = dali_runtime::SignedExtra;
-
-	fn signed_extras(
-		account_id: <Self::Runtime as frame_system::Config>::AccountId,
-	) -> Self::SignedExtra {
-		let nonce = frame_system::Pallet::<Self::Runtime>::account_nonce(account_id);
-		(
-			frame_system::CheckNonZeroSender::<Self::Runtime>::new(),
-			frame_system::CheckSpecVersion::<Self::Runtime>::new(),
-			frame_system::CheckTxVersion::<Self::Runtime>::new(),
-			frame_system::CheckGenesis::<Self::Runtime>::new(),
-			frame_system::CheckEra::<Self::Runtime>::from(Era::Immortal),
-			frame_system::CheckNonce::<Self::Runtime>::from(nonce),
-			frame_system::CheckWeight::<Self::Runtime>::new(),
-			transaction_payment::ChargeTransactionPayment::<Self::Runtime>::from(0),
-		)
-	}
-}
-
-struct PicassoXtConstructor;
-
-impl ConstructExt for PicassoXtConstructor {
-	type Runtime = picasso_runtime::Runtime;
-	type Pair = sp_core::sr25519::Pair;
-	type SignedExtra = picasso_runtime::SignedExtra;
-
-	fn signed_extras(
-		account_id: <Self::Runtime as frame_system::Config>::AccountId,
-	) -> Self::SignedExtra {
-		let nonce = frame_system::Pallet::<Self::Runtime>::account_nonce(account_id);
-		(
-			frame_system::CheckNonZeroSender::<Self::Runtime>::new(),
-			frame_system::CheckSpecVersion::<Self::Runtime>::new(),
-			frame_system::CheckTxVersion::<Self::Runtime>::new(),
-			frame_system::CheckGenesis::<Self::Runtime>::new(),
-			frame_system::CheckEra::<Self::Runtime>::from(Era::Immortal),
-			frame_system::CheckNonce::<Self::Runtime>::from(nonce),
-			frame_system::CheckWeight::<Self::Runtime>::new(),
-			transaction_payment::ChargeTransactionPayment::<Self::Runtime>::from(0),
-		)
-	}
 }
 
 impl<T: ConstructExt + Send + Sync> State<T> {
@@ -155,21 +104,21 @@ async fn upgrade_runtime_with_sudo<T: ConstructExt<Pair = sr25519::Pair> + Send 
 	state: &State<T>,
 ) -> Result<(), SubstrateXtError>
 where
-	<T::Runtime as frame_system::Config>::AccountId: From<AccountId32>,
-	<T::Runtime as frame_system::Config>::Event: Into<AllRuntimeEvents>,
-	<T::Runtime as frame_system::Config>::Call:
-		Encode + Send + Sync + From<sudo::Call<T::Runtime>> + From<frame_system::Call<T::Runtime>>,
-	T::Runtime: frame_system::Config + sudo::Config,
-	<T::Runtime as frame_system::Config>::Hash: From<H256>,
+	<T::Runtime as system::Config>::AccountId: From<AccountId32>,
+	<T::Runtime as system::Config>::Event: Into<AllRuntimeEvents>,
+	<T::Runtime as system::Config>::Call:
+		Encode + Send + Sync + From<sudo::Call<T::Runtime>> + From<system::Call<T::Runtime>>,
+	T::Runtime: system::Config + sudo::Config,
+	<T::Runtime as system::Config>::Hash: From<H256>,
 	MultiSigner: From<<T::Pair as sp_core::Pair>::Public>,
 	MultiSignature: From<<T::Pair as Pair>::Signature>,
 	AdrressFor<T>: From<AccountId32>,
-	<T::Runtime as sudo::Config>::Call: From<<T::Runtime as frame_system::Config>::Call>,
+	<T::Runtime as sudo::Config>::Call: From<<T::Runtime as system::Config>::Call>,
 {
 	let xt = state.api.construct_extrinsic(
 		sudo::Call::sudo_unchecked_weight {
 			call: Box::new(
-				<T::Runtime as frame_system::Config>::Call::from(frame_system::Call::set_code {
+				<T::Runtime as system::Config>::Call::from(system::Call::set_code {
 					code: code.clone(),
 				})
 				.into(),
@@ -186,7 +135,7 @@ where
 	let events = state
 		.api
 		.with_rpc_externalities(Some(progress.wait_for_finalized().await?), || {
-			frame_system::Pallet::<<T as ConstructExt>::Runtime>::events()
+			system::Pallet::<<T as ConstructExt>::Runtime>::events()
 		});
 	let has_event = events.into_iter().any(|event| {
 		match_event!(
