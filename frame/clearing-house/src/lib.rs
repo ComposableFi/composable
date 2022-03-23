@@ -277,6 +277,9 @@ pub mod pallet {
 		UnsupportedCollateralType,
 		/// Attempted to create a new market with an existing market's id
 		MarketAlreadyExists,
+		/// Attempted to create a new market but the underlying asset is not supported by the
+		/// oracle
+		NoPriceFeedForAsset,
 	}
 
 	// ----------------------------------------------------------------------------------------------------

@@ -18,7 +18,7 @@ impl Default for ExtBuilder {
 			native_balances: vec![],
 			balances: vec![],
 			collateral_types: vec![USDC],
-			oracle_supports_assets: false,
+			oracle_supports_assets: true,
 		}
 	}
 }
@@ -91,4 +91,17 @@ fn test_create_existing_market_id_fails() {
 			Error::<Runtime>::MarketAlreadyExists
 		);
 	})
+}
+
+#[test]
+fn test_fails_to_create_market_for_unsupported_asset_by_oracle() {
+	ExtBuilder { oracle_supports_assets: false, ..Default::default() }
+		.build()
+		.execute_with(|| {
+			let market = 1u32.into();
+			assert_noop!(
+				ClearingHouse::create_market(Origin::signed(ALICE), market, DOT, VammParams {}),
+				Error::<Runtime>::NoPriceFeedForAsset
+			);
+		})
 }
