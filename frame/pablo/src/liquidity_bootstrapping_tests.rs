@@ -1,5 +1,8 @@
+#[cfg(test)]
 use crate::{
+	common_test_functions::*,
 	liquidity_bootstrapping::PoolIsValid,
+	mock,
 	mock::{Pablo, *},
 	Error, PoolInitConfiguration,
 };
@@ -130,10 +133,14 @@ mod create {
 	#[test]
 	fn arbitrary_user_can_create() {
 		new_test_ext().execute_with(|| {
+			System::set_block_number(1);
 			assert_ok!(Pablo::create(
 				Origin::signed(ALICE),
 				PoolInitConfiguration::LiquidityBootstrapping(valid_pool().value())
 			),);
+			assert_has_event::<Test, _>(
+				|e| matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == 0)
+			);
 		});
 	}
 

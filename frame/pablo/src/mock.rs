@@ -1,3 +1,5 @@
+#![cfg(test)]
+
 use crate as pablo;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;

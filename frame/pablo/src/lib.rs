@@ -445,7 +445,7 @@ pub mod pallet {
 					LiquidityBootstrapping::<T>::do_create_pool(validated_pool_config)?
 				},
 			};
-			Self::deposit_event(Event::PoolCreated { owner: who.clone(), pool_id });
+			Self::deposit_event(Event::<T>::PoolCreated { owner: who.clone(), pool_id });
 			Ok(pool_id)
 		}
 
