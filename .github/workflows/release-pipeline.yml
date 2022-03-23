@@ -51,7 +51,7 @@ jobs:
         continue-on-error: true
         run: |
           sudo su runner && sudo chmod -R 777  /home/runner/_work/_tool/node/
-          echo ${{ steps.release_drafter.outputs  }}
+          echo ${{ steps.release_drafter.outputs.id  }}
 
 
       - uses: actions/setup-node@v2
