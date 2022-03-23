@@ -1,7 +1,7 @@
-#![allow(unreachable_patterns)] // TODO: remove this when there are more pool configurations added.
-
+#[cfg(test)]
 use crate::{
 	common_test_functions::*,
+	mock,
 	mock::{Pablo, *},
 	PoolConfiguration::StableSwap,
 	PoolInitConfiguration,
@@ -33,7 +33,13 @@ fn create_stable_swap_pool(
 		fee: lp_fee,
 		protocol_fee,
 	};
-	let pool_id = Pablo::do_create_pool(&ALICE, pool_init_config).expect("pool creation failed");
+	System::set_block_number(1);
+	let actual_pool_id =
+		Pablo::do_create_pool(&ALICE, pool_init_config).expect("pool creation failed");
+	assert_has_event::<Test, _>(
+		|e| matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == actual_pool_id),
+	);
+
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(base_asset, &ALICE, base_amount));
 	assert_ok!(Tokens::mint_into(quote_asset, &ALICE, quote_amount));
@@ -41,13 +47,18 @@ fn create_stable_swap_pool(
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
 		Origin::signed(ALICE),
-		pool_id,
+		actual_pool_id,
 		base_amount,
 		quote_amount,
 		0,
 		false
 	));
-	pool_id
+	assert_last_event::<Test, _>(|e| {
+		matches!(e.event,
+            mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, .. })
+            if who == ALICE && pool_id == actual_pool_id)
+	});
+	actual_pool_id
 }
 
 #[test]

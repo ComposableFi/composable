@@ -123,7 +123,7 @@ pub mod pallet {
 		<T as Config>::AssetId,
 		<T as frame_system::Config>::BlockNumber,
 	>;
-	// TODO refactor event publishing with cu-23v2y3n
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -202,8 +202,6 @@ pub mod pallet {
 		InvalidPair,
 		InvalidFees,
 		AmpFactorMustBeGreaterThanZero,
-
-		// ConstantProduct Specific: Possibly rename
 		MissingAmount,
 	}
 
@@ -427,37 +425,28 @@ pub mod pallet {
 			who: &T::AccountId,
 			init_config: PoolInitConfigurationOf<T>,
 		) -> Result<T::PoolId, DispatchError> {
-			match init_config {
+			let pool_id = match init_config {
 				PoolInitConfiguration::StableSwap {
 					pair,
 					amplification_coefficient,
 					fee,
 					protocol_fee,
-				} => {
-					let pool_id = StableSwap::<T>::do_create_pool(
-						&who,
-						pair,
-						amplification_coefficient,
-						fee,
-						protocol_fee,
-					)?;
-					Self::deposit_event(Event::PoolCreated { owner: who.clone(), pool_id });
-
-					Ok(pool_id)
-				},
-				PoolInitConfiguration::ConstantProduct { pair, fee, owner_fee } => {
-					let pool_id = Uniswap::<T>::do_create_pool(&who, pair, fee, owner_fee)?;
-					Self::deposit_event(Event::PoolCreated { owner: who.clone(), pool_id });
-					Ok(pool_id)
-				},
+				} => StableSwap::<T>::do_create_pool(
+					&who,
+					pair,
+					amplification_coefficient,
+					fee,
+					protocol_fee,
+				)?,
+				PoolInitConfiguration::ConstantProduct { pair, fee, owner_fee } =>
+					Uniswap::<T>::do_create_pool(&who, pair, fee, owner_fee)?,
 				PoolInitConfiguration::LiquidityBootstrapping(pool_config) => {
 					let validated_pool_config = Validated::new(pool_config)?;
-					let pool_id =
-						LiquidityBootstrapping::<T>::do_create_pool(validated_pool_config)?;
-					Self::deposit_event(Event::PoolCreated { owner: who.clone(), pool_id });
-					Ok(pool_id)
+					LiquidityBootstrapping::<T>::do_create_pool(validated_pool_config)?
 				},
-			}
+			};
+			Self::deposit_event(Event::<T>::PoolCreated { owner: who.clone(), pool_id });
+			Ok(pool_id)
 		}
 
 		pub(crate) fn get_pool(
@@ -536,9 +525,9 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			match pool {
-				PoolConfiguration::StableSwap(stable_swap_pool_info) => {
-					let mint_amount = StableSwap::<T>::add_liquidity(
+			let minted_lp = match pool {
+				PoolConfiguration::StableSwap(stable_swap_pool_info) =>
+					StableSwap::<T>::add_liquidity(
 						who,
 						stable_swap_pool_info,
 						pool_account,
@@ -546,34 +535,17 @@ pub mod pallet {
 						quote_amount,
 						min_mint_amount,
 						keep_alive,
-					)?;
-					Self::deposit_event(Event::<T>::LiquidityAdded {
-						who: who.clone(),
-						pool_id,
-						base_amount,
-						quote_amount,
-						minted_lp: mint_amount,
-					});
-				},
-				ConstantProduct(constant_product_pool_info) => {
-					let mint_amount = Uniswap::<T>::add_liquidity(
-						who,
-						constant_product_pool_info,
-						pool_account,
-						base_amount,
-						quote_amount,
-						min_mint_amount,
-						keep_alive,
-					)?;
-					Self::deposit_event(Event::<T>::LiquidityAdded {
-						who: who.clone(),
-						pool_id,
-						base_amount,
-						quote_amount,
-						minted_lp: mint_amount,
-					});
-				},
-				PoolConfiguration::LiquidityBootstrapping(liquidity_bootstrapping_pool_info) => {
+					)?,
+				ConstantProduct(constant_product_pool_info) => Uniswap::<T>::add_liquidity(
+					who,
+					constant_product_pool_info,
+					pool_account,
+					base_amount,
+					quote_amount,
+					min_mint_amount,
+					keep_alive,
+				)?,
+				PoolConfiguration::LiquidityBootstrapping(liquidity_bootstrapping_pool_info) =>
 					LiquidityBootstrapping::<T>::add_liquidity(
 						who,
 						liquidity_bootstrapping_pool_info,
@@ -582,17 +554,15 @@ pub mod pallet {
 						quote_amount,
 						min_mint_amount,
 						keep_alive,
-					)?;
-					Self::deposit_event(Event::<T>::LiquidityAdded {
-						who: who.clone(),
-						pool_id,
-						base_amount,
-						quote_amount,
-						minted_lp: T::Balance::zero(),
-					});
-				},
-			}
-			// TODO refactor event publishing with cu-23v2y3n
+					)?,
+			};
+			Self::deposit_event(Event::<T>::LiquidityAdded {
+				who: who.clone(),
+				pool_id,
+				base_amount,
+				quote_amount,
+				minted_lp,
+			});
 			Ok(())
 		}
 
@@ -670,7 +640,7 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			match pool {
+			let (base_amount, fees) = match pool {
 				PoolConfiguration::StableSwap(pool) => {
 					// /!\ NOTE(hussein-aitlahcen): after this check, do not use pool.pair as the
 					// provided pair might have been swapped
@@ -699,17 +669,7 @@ pub mod pallet {
 						base_amount_excluding_fees,
 						false,
 					)?;
-					Self::deposit_event(Event::<T>::Swapped {
-						pool_id,
-						who: who.clone(),
-						base_asset: pair.base,
-						quote_asset: pair.quote,
-						base_amount: base_amount_excluding_fees,
-						quote_amount,
-						fee: lp_fees.safe_add(&protocol_fees)?,
-					});
-
-					Ok(base_amount_excluding_fees)
+					(base_amount_excluding_fees, lp_fees.safe_add(&protocol_fees)?)
 				},
 				ConstantProduct(constant_product_pool_info) => {
 					let (base_amount, quote_amount_excluding_fees, lp_fees, owner_fees) =
@@ -742,18 +702,7 @@ pub mod pallet {
 						false,
 					)?;
 					T::Assets::transfer(pair.base, &pool_account, who, base_amount, false)?;
-
-					Self::deposit_event(Event::<T>::Swapped {
-						pool_id,
-						who: who.clone(),
-						base_asset: pair.base,
-						quote_asset: pair.quote,
-						base_amount,
-						quote_amount: quote_amount_excluding_fees,
-						fee: total_fees,
-					});
-
-					Ok(base_amount)
+					(base_amount, total_fees)
 				},
 				PoolConfiguration::LiquidityBootstrapping(liquidity_bootstrapping_pool_info) => {
 					let current_block = frame_system::Pallet::<T>::current_block_number();
@@ -771,20 +720,19 @@ pub mod pallet {
 					T::Assets::transfer(pair.quote, who, &pool_account, quote_amount, keep_alive)?;
 					// NOTE(hussein-aitlance): no need to keep alive the pool account
 					T::Assets::transfer(pair.base, &pool_account, who, base_amount, false)?;
-					Self::deposit_event(Event::<T>::Swapped {
-						pool_id,
-						who: who.clone(),
-						base_asset: pair.base,
-						quote_asset: pair.quote,
-						base_amount,
-						quote_amount,
-						fee: fees,
-					});
-					Ok(base_amount)
+					(base_amount, fees)
 				},
-			}
-
-			// TODO refactor event publishing with cu-23v2y3n
+			};
+			Self::deposit_event(Event::<T>::Swapped {
+				pool_id,
+				who: who.clone(),
+				base_asset: pair.base,
+				quote_asset: pair.quote,
+				base_amount,
+				quote_amount,
+				fee: fees,
+			});
+			Ok(base_amount)
 		}
 
 		#[transactional]

@@ -1,5 +1,7 @@
 use crate::{
+	mock,
 	mock::{Pablo, *},
+	Config,
 	PoolConfiguration::{ConstantProduct, LiquidityBootstrapping, StableSwap},
 	PoolInitConfiguration,
 };
@@ -7,6 +9,8 @@ use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
+use frame_system::EventRecord;
+use sp_core::H256;
 use sp_runtime::TokenError;
 
 /// `expected_lp_check` takes base_amount, quote_amount and lp_tokens in order and returns
@@ -15,11 +19,16 @@ pub fn common_add_remove_lp(
 	init_config: PoolInitConfiguration<AccountId, AssetId, BlockNumber>,
 	init_base_amount: Balance,
 	init_quote_amount: Balance,
-	base_amount: Balance,
-	quote_amount: Balance,
+	next_base_amount: Balance,
+	next_quote_amount: Balance,
 	expected_lp_check: impl Fn(Balance, Balance, Balance) -> bool,
 ) {
-	let pool_id = Pablo::do_create_pool(&ALICE, init_config.clone()).expect("pool creation failed");
+	System::set_block_number(System::block_number() + 1);
+	let actual_pool_id =
+		Pablo::do_create_pool(&ALICE, init_config.clone()).expect("pool creation failed");
+	assert_has_event::<Test, _>(
+		|e| matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == actual_pool_id),
+	);
 	let pair = match init_config {
 		PoolInitConfiguration::StableSwap { pair, .. } => pair,
 		PoolInitConfiguration::ConstantProduct { pair, .. } => pair,
@@ -29,40 +38,59 @@ pub fn common_add_remove_lp(
 	assert_ok!(Tokens::mint_into(pair.base, &ALICE, init_base_amount));
 	assert_ok!(Tokens::mint_into(pair.quote, &ALICE, init_quote_amount));
 
+	System::set_block_number(System::block_number() + 1);
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
 		Origin::signed(ALICE),
-		pool_id,
+		actual_pool_id,
 		init_base_amount,
 		init_quote_amount,
 		0,
 		false
 	));
+	assert_last_event::<Test, _>(|e| {
+		matches!(e.event,
+            mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, base_amount, quote_amount, .. })
+            if who == ALICE
+            && pool_id == actual_pool_id
+            && base_amount == init_base_amount
+            && quote_amount == init_quote_amount)
+	});
 
-	let pool = Pablo::pools(pool_id).expect("pool not found");
+	let pool = Pablo::pools(actual_pool_id).expect("pool not found");
 	let lp_token = match pool {
 		StableSwap(pool) => pool.lp_token,
 		ConstantProduct(pool) => pool.lp_token,
 		LiquidityBootstrapping(_) => panic!("Not implemented"),
 	};
 	// Mint the tokens
-	assert_ok!(Tokens::mint_into(pair.base, &BOB, base_amount));
-	assert_ok!(Tokens::mint_into(pair.quote, &BOB, quote_amount));
+	assert_ok!(Tokens::mint_into(pair.base, &BOB, next_base_amount));
+	assert_ok!(Tokens::mint_into(pair.quote, &BOB, next_quote_amount));
 
 	let lp = Tokens::balance(lp_token, &BOB);
 	assert_eq!(lp, 0_u128);
+
+	System::set_block_number(System::block_number() + 1);
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
 		Origin::signed(BOB),
-		pool_id,
-		base_amount,
-		quote_amount,
+		actual_pool_id,
+		next_base_amount,
+		next_quote_amount,
 		0,
 		false
 	));
+	assert_last_event::<Test, _>(|e| {
+		matches!(e.event,
+            mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, base_amount, quote_amount, .. })
+			if who == BOB
+				&& pool_id == actual_pool_id
+				&& base_amount == next_base_amount
+				&& quote_amount == next_quote_amount)
+	});
 	let lp = Tokens::balance(lp_token, &BOB);
-	assert!(expected_lp_check(base_amount, quote_amount, lp));
-	assert_ok!(Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp, 0, 0));
+	assert!(expected_lp_check(next_base_amount, next_quote_amount, lp));
+	assert_ok!(Pablo::remove_liquidity(Origin::signed(BOB), actual_pool_id, lp, 0, 0));
 	let lp = Tokens::balance(lp_token, &BOB);
 	// all lp tokens must have been burnt
 	assert_eq!(lp, 0_u128);
@@ -262,4 +290,20 @@ pub fn common_exchange_failure(
 		),
 		crate::Error::<Test>::CannotRespectMinimumRequested
 	);
+}
+
+pub fn assert_has_event<T, F>(matcher: F)
+where
+	T: Config,
+	F: Fn(&EventRecord<mock::Event, H256>) -> bool,
+{
+	assert!(System::events().iter().any(matcher));
+}
+
+pub fn assert_last_event<T, F>(matcher: F)
+where
+	T: Config,
+	F: FnOnce(&EventRecord<mock::Event, H256>) -> bool,
+{
+	assert!(matcher(System::events().last().expect("events expected")));
 }
