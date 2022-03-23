@@ -302,24 +302,14 @@ proptest! {
     fn add_liquidity_extrinsic(
         assets in generate_assets(),
         deposits in generate_deposits()
-    ) {
-        // TODO: (Nevin)
-        //  - create vaults from assets
-        //  - cycle through deposits and try to deposit maybe resulting in no vault error
-         
+    ) {         
         ExtBuilder::default().initialize_balances(deposits.clone()).build().execute_with(|| {        
-            // create a vault for each asset in `assets`
-            // assets.iter().for_each(|&asset| {
-            //     VaultBuilder::new().add(
-            //         VaultConfigBuilder::default().asset_id(asset).build()
-            //     ).build();
-            // });
-
+            // Create a vault for each randomly chosen asset
             VaultBuilder::new().group_add(assets.iter().map(|&asset| {
                 VaultConfigBuilder::default().asset_id(asset).build()
             }).collect()).build();
 
-            // try to deposit for each (asset, balance) pair in `deposits`
+            // Have each account try to deposit an asset balance into an Instrumental vault
             deposits.into_iter().for_each(|(account, asset, balance)| {
                 if AssetVault::<MockRuntime>::contains_key(asset) {
                     assert_ok!(Instrumental::add_liquidity(Origin::signed(account), asset, balance));
