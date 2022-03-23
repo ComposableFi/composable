@@ -11,7 +11,7 @@ use ibc::{
 	},
 	timestamp::Timestamp,
 };
-use scale_info::prelude::string::{ToString, String};
+use scale_info::prelude::string::{String, ToString};
 use sp_std::{str::FromStr, vec::Vec};
 
 pub struct SendPacketData {
