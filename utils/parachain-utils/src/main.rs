@@ -1,6 +1,5 @@
 use codec::Encode;
 use jsonrpc_core_client::RpcError;
-use serde::Deserialize;
 use sp_core::{crypto::AccountId32, sr25519, Pair, H256};
 use sp_runtime::{generic::Era, MultiSignature, MultiSigner};
 use structopt::StructOpt;
@@ -16,7 +15,7 @@ const PICASSO: &'static str = "picasso";
 
 /// The command options
 #[derive(Debug, StructOpt, Clone)]
-pub enum Main {
+pub enum Subcommand {
 	// RotateKeys,
 	UpgradeRuntime {
 		/// path to wasm file
@@ -27,21 +26,22 @@ pub enum Main {
 
 /// The chain option
 #[derive(Debug, StructOpt, Clone)]
-pub struct Chain {
+pub struct Command {
 	/// Chain id [`picasso`, `composable` or `dali`]
 	#[structopt(long)]
 	chain_id: String,
 
-	#[structopt(subcommand)]
-	main: Main,
-}
+	/// ws url of the node to query and send extrinsics to
+	/// eg wss://rpc.composablefinance.ninja (for dali-rocococ)
+	#[structopt(long)]
+	rpc_ws_url: String,
 
-#[derive(Deserialize, Debug)]
-struct Env {
 	/// Root key used to sign transactions
+	#[structopt(long)]
 	root_key: String,
-	/// Url to dali rpc node
-	rpc_node: String,
+
+	#[structopt(subcommand)]
+	main: Subcommand,
 }
 
 struct State<T: ConstructExt> {
@@ -100,12 +100,11 @@ impl ConstructExt for PicassoXtConstructor {
 }
 
 impl<T: ConstructExt + Send + Sync> State<T> {
-	async fn new() -> Self {
-		let env = envy::from_env::<Env>().unwrap();
+	async fn new(args: &Command) -> Self {
 		// create the signer
-		let signer = sr25519::Pair::from_string(&env.root_key, None).unwrap();
+		let signer = sr25519::Pair::from_string(&args.root_key, None).unwrap();
 
-		let api = Client::new(&env.rpc_node).await.unwrap();
+		let api = Client::new(&args.rpc_ws_url).await.unwrap();
 
 		State { api, signer }
 	}
@@ -121,13 +120,13 @@ enum Error {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
 	env_logger::init();
-	let chain = Chain::from_args();
+	let chain = Command::from_args();
 	match &*chain.chain_id {
 		id if id.contains(PICASSO) => {
-			let state = State::<PicassoXtConstructor>::new().await;
+			let state = State::<PicassoXtConstructor>::new(&chain).await;
 			match chain.main {
 				// Main::RotateKeys => rotate_keys(&state).await?,
-				Main::UpgradeRuntime { path } => {
+				Subcommand::UpgradeRuntime { path } => {
 					let wasm = std::fs::read(path).unwrap();
 					upgrade_runtime_with_sudo(wasm, &state).await?;
 				},
@@ -135,10 +134,10 @@ async fn main() -> Result<(), Error> {
 		},
 
 		id if id.contains(DALI) => {
-			let state = State::<DaliXtConstructor>::new().await;
+			let state = State::<DaliXtConstructor>::new(&chain).await;
 			match chain.main {
 				// Main::RotateKeys => rotate_keys(&state).await?,
-				Main::UpgradeRuntime { path } => {
+				Subcommand::UpgradeRuntime { path } => {
 					let wasm = std::fs::read(path).unwrap();
 					upgrade_runtime_with_sudo(wasm, &state).await?;
 				},

@@ -2912,15 +2912,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68b91989ae21441195d7d9b9993a2f9295c7e1a8c96255d8b729accddc124797"
 
 [[package]]
-name = "envy"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f47e0157f2cb54f5ae1bd371b30a2ae4311e1c028f575cd4e81de7353215965"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "errno"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7866,7 +7857,6 @@ dependencies = [
  "dali-runtime",
  "derive_more",
  "env_logger 0.8.4",
- "envy",
  "frame-system",
  "hex",
  "jsonrpc-core-client",
@@ -7876,7 +7866,6 @@ dependencies = [
  "parity-scale-codec",
  "picasso-runtime",
  "sc-rpc",
- "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
