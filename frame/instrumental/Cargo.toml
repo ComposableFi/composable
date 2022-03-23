@@ -35,6 +35,7 @@ orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b1c9fb367ccb8e13601b2da43d1c5d9737b93c6" }
 proptest = "1.0"
 hex-literal = "0.3.3"
+itertools = "0.10.3"
 
 [features]
 default = ["std"]
