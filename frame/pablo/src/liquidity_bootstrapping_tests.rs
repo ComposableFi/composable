@@ -18,7 +18,7 @@ use frame_support::{
 };
 use sp_runtime::Permill;
 
-fn valid_pool(
+pub fn valid_pool(
 ) -> Validated<LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber>, PoolIsValid<Test>> {
 	let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
 	let owner = ALICE;
@@ -125,32 +125,6 @@ fn within_sale_with_liquidity<T>(
 			f(pool_id, pool, set_block, end_sale)
 		},
 	)
-}
-
-mod create {
-	use super::*;
-
-	#[test]
-	fn arbitrary_user_can_create() {
-		new_test_ext().execute_with(|| {
-			System::set_block_number(1);
-			assert_ok!(Pablo::create(
-				Origin::signed(ALICE),
-				PoolInitConfiguration::LiquidityBootstrapping(valid_pool().value())
-			),);
-			assert_has_event::<Test, _>(
-				|e| matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == 0)
-			);
-		});
-	}
-
-	// TODO enable with cu-23v3155
-	// #[test]
-	// fn admin_can_create() {
-	//     new_test_ext().execute_with(|| {
-	//         assert_ok!(Pablo::create(Origin::root(),
-	// PoolInitConfiguration::LiquidityBootstrapping(valid_pool().value())));     });
-	// }
 }
 
 mod sell {
