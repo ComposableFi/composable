@@ -347,14 +347,15 @@ pub mod pallet {
 		/// # Weight/Runtime
 		/// `O(1)`
 		#[pallet::weight(<T as Config>::WeightInfo::create_market())]
-		#[allow(unused_variables)]
 		pub fn create_market(
 			origin: OriginFor<T>,
 			market: T::MarketId,
 			asset: AssetIdOf<T>,
 			vamm_params: VammParamsOf<T>,
 		) -> DispatchResult {
-			Err("Unimplemented".into())
+			let acc = ensure_signed(origin)?;
+			Self::do_create_market(&acc, market, asset, vamm_params)?;
+			Ok(())
 		}
 	}
 
@@ -393,7 +394,18 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	// Helper functions - core functionality
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		#[allow(unused_variables)]
+		fn do_create_market(
+			account: &T::AccountId,
+			market: T::MarketId,
+			asset: AssetIdOf<T>,
+			vamm_params: VammParamsOf<T>,
+		) -> DispatchResult {
+			ensure!(!Markets::<T>::contains_key(market), Error::<T>::MarketAlreadyExists);
+			unimplemented!()
+		}
+	}
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {}
