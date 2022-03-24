@@ -1,6 +1,7 @@
-use assets_runtime_api::AssetsRuntimeApi;
+use assets_runtime_api::{AssetsRuntimeApi};
 use codec::Codec;
 use composable_support::rpc_helpers::{SafeRpcWrapper, SafeRpcWrapperType};
+use composable_traits::assets::Asset;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
 use jsonrpc_derive::rpc;
 use sp_api::ProvideRuntimeApi;
@@ -21,6 +22,8 @@ where
 		account: AccountId,
 		at: Option<BlockHash>,
 	) -> RpcResult<SafeRpcWrapper<Balance>>;
+
+	fn list_assets(&self, at: Option<BlockHash>) -> RpcResult<[Asset; 5]>;
 }
 
 pub struct Assets<C, Block> {
@@ -62,6 +65,24 @@ where
 
 		let runtime_api_result = api.balance_of(&at, asset_id, account_id);
 		// TODO(benluelo): Review what error message & code to use
+		runtime_api_result.map_err(|e| {
+			RpcError {
+				code: ErrorCode::ServerError(9876), // No real reason for this value
+				message: "Something wrong".into(),
+				data: Some(format!("{:?}", e).into()),
+			}
+		})
+	}
+
+	fn list_assets(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<[Asset;5]> {
+		let api = self.client.runtime_api();
+
+		let at = BlockId::hash(at.unwrap_or_else(||{
+            self.client.info().best_hash
+		}));
+
+		let runtime_api_result = api.list_assets(&at);
+
 		runtime_api_result.map_err(|e| {
 			RpcError {
 				code: ErrorCode::ServerError(9876), // No real reason for this value

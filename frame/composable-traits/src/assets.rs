@@ -281,3 +281,10 @@ pub enum BodyPartDef {
 	/// More than than the given proportion of members of the body.
 	MoreThanProportion { nom: u32, denom: u32 },
 }
+
+#[derive(Encode, Decode, Clone)]
+#[cfg(feature = "std")]
+pub struct Asset {
+	pub name: String,
+	pub id: u128
+}
