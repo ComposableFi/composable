@@ -35,6 +35,8 @@
 
 pub use pallet::*;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 mod common_test_functions;
 #[cfg(test)]
@@ -118,7 +120,7 @@ pub mod pallet {
 		<T as Config>::AssetId,
 		<T as frame_system::Config>::BlockNumber,
 	>;
-	type PoolInitConfigurationOf<T> = PoolInitConfiguration<
+	pub(crate) type PoolInitConfigurationOf<T> = PoolInitConfiguration<
 		<T as frame_system::Config>::AccountId,
 		<T as Config>::AssetId,
 		<T as frame_system::Config>::BlockNumber,
