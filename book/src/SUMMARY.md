@@ -13,6 +13,7 @@
     - [Fragmentation in DeFi's Layer 2](./products/mosaic/fragmentation-in-layer-2.md)
     - [Proof of Concept: A Cross-Layer Transferal System](./products/mosaic/proof-of-concept-polygon-arbitrum-cross-layer-transferral-system.md)
         - [TriCrypto, aToken, and SLP PoC Expansions](./products/mosaic/proof-of-concept-polygon-arbitrum-cross-layer-transferral-system/curve-tricrypto-poc-expansion.md)
+        - [PoC Components and User Flow](./products/mosaic/proof-of-concept-polygon-arbitrum-cross-layer-transferral-system/poc-components-and-user-flow.md)
 - [Parachain Vault Strategy](./products/parachain-vault-strategy.md)
     - [Vault Strategy for the Composable Polkadot Prachain](./products/parachain-vault-strategy/vault-strategy-expansion.md)
 - [The Picasso Parachain](./products/the-picasso-parachain.md)
