@@ -48,11 +48,15 @@ mod stable_swap_tests;
 #[cfg(test)]
 mod uniswap_tests;
 
+pub mod weights;
+
 mod liquidity_bootstrapping;
 mod stable_swap;
 mod twap;
 mod types;
 mod uniswap;
+
+pub use crate::weights::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -61,6 +65,7 @@ pub mod pallet {
 		twap::{update_price_cumulative_state, update_twap_state},
 		types::{PriceCumulative, TimeWeightedAveragePrice},
 		uniswap::Uniswap,
+        WeightInfo,
 	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
@@ -308,6 +313,8 @@ pub mod pallet {
 		/// The interval between TWAP computations.
 		#[pallet::constant]
 		type TWAPInterval: Get<MomentOf<Self>>;
+
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -350,8 +357,7 @@ pub mod pallet {
 		/// Create a new pool.
 		///
 		/// Emits `PoolCreated` event when successful.
-		// TODO: enable weight
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::create())]
 		pub fn create(origin: OriginFor<T>, pool: PoolInitConfigurationOf<T>) -> DispatchResult {
 			T::PoolCreationOrigin::ensure_origin(origin)?;
 			let _ = Self::do_create_pool(pool)?;
@@ -361,7 +367,7 @@ pub mod pallet {
 		/// Execute a buy order on pool.
 		///
 		/// Emits `Swapped` event when successful.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::buy())]
 		pub fn buy(
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
@@ -377,7 +383,7 @@ pub mod pallet {
 		/// Execute a sell order on pool.
 		///
 		/// Emits `Swapped` event when successful.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::sell())]
 		pub fn sell(
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
@@ -395,7 +401,7 @@ pub mod pallet {
 		/// The `quote_amount` is always the quote asset amount (A/B => B), (B/A => A).
 		///
 		/// Emits `Swapped` event when successful.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::swap())]
 		pub fn swap(
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
@@ -416,10 +422,10 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Add liquidity to a stable-swap pool.
+		/// Add liquidity to the given pool.
 		///
 		/// Emits `LiquidityAdded` event when successful.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::add_liquidity())]
 		pub fn add_liquidity(
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,
@@ -440,10 +446,10 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Remove liquidity from stable-swap pool.
+		/// Remove liquidity from the given pool.
 		///
 		/// Emits `LiquidityRemoved` event when successful.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::remove_liquidity())]
 		pub fn remove_liquidity(
 			origin: OriginFor<T>,
 			pool_id: T::PoolId,

@@ -155,6 +155,7 @@ impl pablo::Config for Test {
 	type EnableTwapOrigin = EnsureRoot<AccountId>;
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
