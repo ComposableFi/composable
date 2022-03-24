@@ -2,17 +2,21 @@ repos:
 - repo: local
   hooks:
   - id: fmt
-    name: cargo-fmt
+    name: cargo-fmt clearing-house
     entry: cargo +nightly fmt --check -p clearing-house
     language: system
     pass_filenames: false
     stages: [commit, push]
+    files: ^frame/clearing-house/
+    types: [rust]
   - id: clippy
-    name: cargo-clippy
+    name: cargo-clippy clearing-house
     entry: cargo +nightly clippy --all-targets --no-deps -p clearing-house
     language: system
     pass_filenames: false
     stages: [push]
+    files: ^frame/clearing-house/
+    types: [rust]
 - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
   rev: v8.0.0
   hooks:
