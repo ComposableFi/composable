@@ -37,7 +37,7 @@ use proptest::{prelude::*, test_runner::TestRunner};
 use sp_arithmetic::assert_eq_error_rate;
 use sp_core::{H256, U256};
 use sp_runtime::{
-	ArithmeticError, DispatchError, FixedPointNumber, FixedU128, Percent, Perquintill,
+	ArithmeticError, DispatchError, FixedPointNumber, FixedU128, ModuleError, Percent, Perquintill,
 };
 
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
@@ -251,11 +251,11 @@ fn can_create_valid_market() {
 				should_have_failed,
 				Err(DispatchErrorWithPostInfo {
 					post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },
-					error: DispatchError::Module {
+					error: DispatchError::Module(ModuleError {
 						index: _, // not important in mock runtime
 						error: _, // not important in mock runtime
 						message: Some(error)
-					},
+					}),
 				}) if Into::<&'static str>::into(orml_tokens::Error::<Runtime>::BalanceTooLow) == error
 			),
 			"Creating a market with insufficient funds should fail, with the error message being \"BalanceTooLow\".
@@ -640,11 +640,11 @@ fn test_repay_partial_amount() {
 			),
 			DispatchErrorWithPostInfo {
 				post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },
-				error: DispatchError::Module {
+				error: DispatchError::Module(ModuleError {
 					index: 8,
 					error: 31,
 					message: Some(Error::<Runtime>::PartialRepayMustBeLessThanTotalDebt.into(),),
-				},
+				}),
 			},
 		);
 		(1_002..1_003).for_each(process_block);

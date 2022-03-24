@@ -3,7 +3,7 @@ use composable_traits::{
 	currency::MathBalance,
 	defi::{validate::MoreThanOne, LiftedFixedBalance, MoreThanOneFixedU128},
 	lending::CollateralRatio,
-	math::SafeArithmetic,
+	math::{SafeAdd, SafeDiv, SafeMul},
 };
 use sp_runtime::{
 	traits::{Saturating, Zero},

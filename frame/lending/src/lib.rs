@@ -1513,12 +1513,12 @@ pub mod pallet {
 			let MarketAssets { borrow_asset, debt_asset } = Self::get_assets_for_market(market_id)?;
 
 			{
-				let market = Self::get_market(market_id).unwrap();
+				// let market = Self::get_market(market_id).unwrap();
 				// dbg!(market);
-				dbg!(<T as Config>::MultiCurrency::balance(
-					debt_asset,
-					&Self::account_id(market_id)
-				));
+				// dbg!(<T as Config>::MultiCurrency::balance(
+				// 	debt_asset,
+				// 	&Self::account_id(market_id)
+				// ));
 			}
 
 			// initial borrow amount
@@ -1599,7 +1599,7 @@ pub mod pallet {
 
 						// pay interest, from -> market
 						// burn interest (debt token) from market
-						dbg!();
+
 						PayInterest::<T> {
 							borrow_asset,
 							debt_asset,
@@ -1611,7 +1611,7 @@ pub mod pallet {
 							keep_alive: true,
 						}
 						.run()?;
-						dbg!();
+
 						// amount remaining to repay the debt with
 						let amount_to_repay_principal_with =
 							partial_repay_amount - beneficiary_interest_on_market;
@@ -1630,9 +1630,7 @@ pub mod pallet {
 							keep_alive: true,
 						}
 						.run()?;
-						dbg!();
 					} else {
-						dbg!();
 						// pay interest, from -> market
 						// burn interest from market
 						PayInterest::<T> {
@@ -1647,7 +1645,6 @@ pub mod pallet {
 							keep_alive: true,
 						}
 						.run()?;
-						dbg!();
 					};
 
 					// the above will short circuit if amount cannot be paid, so if this is reached
@@ -1769,20 +1766,20 @@ pub mod pallet {
 					dbg!(&market_interest_index);
 					dbg!(&account_interest_index);
 
-					let principal =
+					let account_principal =
 						<T as Config>::MultiCurrency::balance_on_hold(debt_token, account);
 
-					dbg!(&principal);
-					if principal.is_zero() {
+					dbg!(&account_principal);
+					if account_principal.is_zero() {
 						Ok(TotalDebtWithInterest::NoDebt)
 					} else {
 						// REVIEW
-						let principal =
-							LiftedFixedBalance::saturating_from_integer(principal.into());
+						let account_principal =
+							LiftedFixedBalance::saturating_from_integer(account_principal.into());
 						// principal * (market index / debt index)
 						let t = market_interest_index.safe_div(&account_interest_index)?;
 
-						let balance = principal
+						let balance = account_principal
 							.safe_mul(&t)?
 							// TODO: Balance should be u128 eventually
 							.checked_mul_int(1_u64)
@@ -2001,8 +1998,6 @@ mod repay_borrow {
 	impl<'a, T: Config> PayInterest<'a, T> {
 		/// See the type level docs for [`PayInterest`].
 		pub(crate) fn run(self) -> Result<(), DispatchError> {
-			dbg!();
-			dbg!(&self);
 			<T as Config>::MultiCurrency::transfer(
 				self.borrow_asset,
 				self.payer_account,
@@ -2011,8 +2006,9 @@ mod repay_borrow {
 				self.keep_alive,
 			)?;
 
-			dbg!();
-			dbg!(<T as Config>::MultiCurrency::balance(self.debt_asset, self.market_account));
+			let market_debt_asset_balance =
+				<T as Config>::MultiCurrency::balance(self.debt_asset, self.market_account);
+			dbg!(market_debt_asset_balance);
 
 			<T as Config>::MultiCurrency::burn_from(
 				self.debt_asset,
@@ -2020,7 +2016,6 @@ mod repay_borrow {
 				dbg!(self.amount_of_interest_to_repay),
 			)?;
 
-			dbg!();
 			Ok(())
 		}
 	}

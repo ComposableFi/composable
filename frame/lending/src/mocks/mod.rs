@@ -456,6 +456,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 /// calls [`next_block(n)`] and then calls [`Lending::finalize`](OnFinalize::on_finalize).
 pub fn process_block(n: BlockNumber) {
+	println!("PROCESSING BLOCK {}", n);
 	next_block(n);
 	Lending::on_finalize(n);
 }
