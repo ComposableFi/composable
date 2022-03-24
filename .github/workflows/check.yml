@@ -29,7 +29,7 @@ jobs:
       group: check-${{ github.ref }}
       cancel-in-progress: true
     container:
-      image: paritytech/ci-linux:production
+      image: composablefi/ci-linux:production
     steps:
       - name: Clean up
         continue-on-error: true
@@ -88,7 +88,7 @@ jobs:
       group: benchmarking-runtime-compat-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
     container:
-      image: paritytech/ci-linux:production      
+      image: composablefi/ci-linux:production
     strategy:
       matrix:
         runtime: ["dali-dev", "picasso-dev", "composable-dev"]
@@ -142,7 +142,7 @@ jobs:
       group: tests-${{ github.ref }}
       cancel-in-progress: true
     container:
-      image: paritytech/ci-linux:production      
+      image: composablefi/ci-linux:production
     steps:
       - name: Clean up
         continue-on-error: true
@@ -170,7 +170,7 @@ jobs:
       group: lint-${{ github.ref }}
       cancel-in-progress: true
     container:
-      image: paritytech/ci-linux:production
+      image: composablefi/ci-linux:production
     steps:
       - uses: actions/checkout@v2
       - name: Rustup show
