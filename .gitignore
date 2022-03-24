@@ -42,3 +42,4 @@ frame/instrumental/.rustc_info.json
 frame/instrumental/.rustdoc_fingerprint.json
 frame/instrumental/debug/
 frame/instrumental/doc/
+frame/instrumental/proptest-regressions/
