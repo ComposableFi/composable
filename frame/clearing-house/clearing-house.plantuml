@@ -77,10 +77,14 @@ package "pallet-clearing-house" {
 
 package "pallet-virtual-amm" {
     interface vAmm <<trait>> {
-        ~ create()
-        ~ get_price()
-        ~ get_twap()
-        ~ swap()
+        ~ create(base_asset_amount: u128, quote_asset_amount: u128, peg_multiplier: u128)
+        ~ deprecate(vamm: VammId, when: Timestamp)
+        ~ get_price(vamm: VammId, asset: VammAsset)
+        ~ get_twap(vamm: VammId)
+        ~ swap_base_asset(vamm: VammId, amount: u128, direction: SwapDirection)
+        ~ swap_quote_asset(vamm: VammId, amount: u128, direction: SwapDirection)
+        ~ move_price(vamm: VammId, base_asset_amount: u128, quote_asset_amount: u128)
+        ~ move_to_price(vamm: VammId, target_price: u128)
     }
     database "vAMM Storage" {
         map vAmms <<StorageMap>> {
@@ -89,6 +93,10 @@ package "pallet-virtual-amm" {
         class vAmmState <<struct>> {
             u128 base_asset_reserves
             u128 quote_asset_reserves
+            u128 sqrt_k
+            u128 peg_multiplier
+            u128 mark_twap
+            Option<Timestamp> is_deprecated
         }
     }
 }
