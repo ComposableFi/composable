@@ -94,7 +94,7 @@ pub mod pallet {
 
 	use composable_traits::{
 		instrumental::Instrumental,
-		vault::{Deposit as Duration, StrategicVault, Vault, VaultConfig},
+		vault::{Deposit as Duration, FundsAvailability, StrategicVault, Vault, VaultConfig},
 	};
 
 	use sp_runtime::{
@@ -224,6 +224,10 @@ pub mod pallet {
 		/// This error is thrown when a user tries to call add_liquidity or remove_liquidity on an asset 
 		///     that does not have an associated vault (yet).
 		AssetDoesNotHaveAnAssociatedVault,
+
+		/// This error is thrown if a user tries to withdraw an amount of assets that is currently not
+		///     held in the specified vault.
+		NotEnoughLiquidity,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -524,7 +528,20 @@ pub mod pallet {
 			let vault_id: T::VaultId = Self::asset_vault(asset)
 				.ok_or(Error::<T>::AssetDoesNotHaveAnAssociatedVault)?;
 
-			<T::Vault as StrategicVault>::withdraw(&vault_id, issuer, amount)?;
+			// TODO: (Nevin)
+			//  - this can be done in a better way
+			let vault_account = T::Vault::account_id(&vault_id);
+			match <T::Vault as StrategicVault>::available_funds(&vault_id, &vault_account)? {
+				FundsAvailability::Withdrawable(balance) if balance >= amount => {
+					<T::Vault as StrategicVault>::withdraw(&vault_id, issuer, amount)
+				},
+				FundsAvailability::MustLiquidate => {
+					<T::Vault as StrategicVault>::withdraw(&vault_id, issuer, amount)
+				},
+				_ => {
+					Err(Error::<T>::NotEnoughLiquidity.into())
+				}
+			}.map_err(|_| Error::<T>::NotEnoughLiquidity)?;
 
 			Ok(())
 		}

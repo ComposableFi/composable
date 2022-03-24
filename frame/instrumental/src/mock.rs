@@ -93,7 +93,7 @@ impl pallet_balances::Config for MockRuntime {
 
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		0u128 as Balance
+		0u128
 	};
 }
 
@@ -275,6 +275,16 @@ impl ExtBuilder {
 		storage.into()
 	}
 
+	pub fn initialize_balance(mut self, user: AccountId, asset: CurrencyId, balance: Balance) -> ExtBuilder {
+		if asset == NATIVE_ASSET {
+			self.native_balances.push((user, balance));
+		} else {
+			self.balances.push((user, asset, balance));
+		}
+
+		self
+	}
+
 	pub fn initialize_balances(mut self, balances: Vec<(AccountId, CurrencyId, Balance)>) -> ExtBuilder {
 		balances.into_iter()
 		    .for_each(|(account, asset, balance)| {
@@ -284,16 +294,6 @@ impl ExtBuilder {
 					self.balances.push((account, asset, balance));
 				}
 			});
-
-		self
-	}
-
-	pub fn initialize_balance(mut self, user: AccountId, asset: CurrencyId, balance: Balance) -> ExtBuilder {
-		if asset == NATIVE_ASSET {
-			self.native_balances.push((user, balance));
-		} else {
-			self.balances.push((user, asset, balance));
-		}
 
 		self
 	}
@@ -310,6 +310,22 @@ impl ExtBuilder {
 		} else {
 			self.balances.push((vault_account, asset, balance));
 		}
+		
+		self
+	}
+
+	pub fn initialize_vaults(mut self, reserves: Vec<(CurrencyId, Balance)>) -> ExtBuilder {
+		reserves.into_iter().for_each(|(asset, balance)| {
+			self.vault_count += 1;
+			let vault_id = self.vault_count;
+
+			let vault_account = VAULT_PALLET_ID.into_sub_account_truncating(&vault_id);
+			if asset == NATIVE_ASSET {
+				self.native_balances.push((vault_account, balance));
+			} else {
+				self.balances.push((vault_account, asset, balance));
+			}
+		});
 		
 		self
 	}
