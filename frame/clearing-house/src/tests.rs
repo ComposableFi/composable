@@ -24,7 +24,7 @@ impl Default for ExtBuilder {
 }
 
 #[test]
-fn test_add_margin_returns_transfer_error() {
+fn add_margin_returns_transfer_error() {
 	ExtBuilder::default().build().execute_with(|| {
 		let origin = Origin::signed(ALICE);
 		assert_noop!(
@@ -35,7 +35,7 @@ fn test_add_margin_returns_transfer_error() {
 }
 
 #[test]
-fn test_deposit_unsupported_collateral_returns_error() {
+fn deposit_unsupported_collateral_returns_error() {
 	ExtBuilder { balances: vec![(ALICE, PICA, 1_000_000)], ..Default::default() }
 		.build()
 		.execute_with(|| {
@@ -48,7 +48,7 @@ fn test_deposit_unsupported_collateral_returns_error() {
 }
 
 #[test]
-fn test_deposit_supported_collateral_succeeds() {
+fn deposit_supported_collateral_succeeds() {
 	ExtBuilder { balances: vec![(ALICE, USDC, 1_000_000)], ..Default::default() }
 		.build()
 		.execute_with(|| {
@@ -67,7 +67,7 @@ fn test_deposit_supported_collateral_succeeds() {
 }
 
 #[test]
-fn test_create_market_succeeds() {
+fn create_market_succeeds() {
 	ExtBuilder::default().build().execute_with(|| {
 		let market = 1u32.into();
 		let asset = DOT;
@@ -81,7 +81,7 @@ fn test_create_market_succeeds() {
 }
 
 #[test]
-fn test_create_existing_market_id_fails() {
+fn create_existing_market_id_fails() {
 	ExtBuilder::default().build().execute_with(|| {
 		let market = 1u32.into();
 		assert_ok!(ClearingHouse::create_market(Origin::signed(ALICE), market, DOT, VammParams {}));
@@ -94,7 +94,7 @@ fn test_create_existing_market_id_fails() {
 }
 
 #[test]
-fn test_fails_to_create_market_for_unsupported_asset_by_oracle() {
+fn fails_to_create_market_for_unsupported_asset_by_oracle() {
 	ExtBuilder { oracle_supports_assets: false, ..Default::default() }
 		.build()
 		.execute_with(|| {
