@@ -81,4 +81,3 @@ function hex_to_ascii(str1: string)
 	}
 	return str;
  }
-

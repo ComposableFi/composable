@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
+// Copyright (C) 2017-2021 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,7 @@ fn fast_track_referendum_works() {
 			Error::<Test>::ProposalMissing
 		);
 		let id = set_balance_proposal_hash_and_note(2);
-		assert_ok!(Democracy::external_propose_majority(Origin::signed(3), id.hash, id.asset_id));
+		assert_ok!(Democracy::external_propose_majority(Origin::signed(3), id.hash, id.asset_id,));
 		assert_noop!(
 			Democracy::fast_track(Origin::signed(1), id.hash, id.asset_id, 3, 2),
 			BadOrigin
@@ -57,7 +57,8 @@ fn instant_referendum_works() {
 			Democracy::fast_track(Origin::signed(5), id.hash, id.asset_id, 3, 2),
 			Error::<Test>::ProposalMissing
 		);
-		assert_ok!(Democracy::external_propose_majority(Origin::signed(3), id.hash, id.asset_id));
+		// let id2 = set_balance_proposal_hash_and_note(2);
+		assert_ok!(Democracy::external_propose_majority(Origin::signed(3), id.hash, id.asset_id,));
 		assert_noop!(
 			Democracy::fast_track(Origin::signed(1), id.hash, id.asset_id, 3, 2),
 			BadOrigin
@@ -89,10 +90,11 @@ fn instant_referendum_works() {
 fn fast_track_referendum_fails_when_no_simple_majority() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(0);
+		let h = set_balance_proposal_hash_and_note(2);
 		let id = set_balance_proposal_hash_and_note(2);
-		assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id));
+		assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id,));
 		assert_noop!(
-			Democracy::fast_track(Origin::signed(5), id.hash, id.asset_id, 3, 2),
+			Democracy::fast_track(Origin::signed(5), h.hash, id.asset_id, 3, 2),
 			Error::<Test>::NotSimpleMajority
 		);
 	});

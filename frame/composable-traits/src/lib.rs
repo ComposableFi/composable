@@ -30,7 +30,4 @@ pub mod staking_rewards;
 pub mod time;
 pub mod vault;
 pub mod vesting;
-<<<<<<< HEAD
 pub mod xcm;
-=======
->>>>>>> 021e3c66 (cargo fmt)

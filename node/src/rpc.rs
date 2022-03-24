@@ -9,12 +9,7 @@ use primitives::currency::CurrencyId;
 use std::sync::Arc;
 
 use assets_rpc::{Assets, AssetsApi};
-<<<<<<< HEAD
 use common::{AccountId, AccountIndex, Balance, PoolId};
-=======
-use common::{AccountId, AccountIndex, Balance};
-use composable_traits::assets::Asset;
->>>>>>> 021e3c66 (cargo fmt)
 use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApi};
 use pablo_rpc::{Pablo, PabloApi};
 pub use sc_rpc_api::DenyUnsafe;
@@ -43,7 +38,7 @@ where
 	C: Send + Sync + 'static,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<B, AccountId, AccountIndex>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<B, Balance>,
-	C::Api: assets_runtime_api::AssetsRuntimeApi<B, CurrencyId, AccountId, Balance, Asset>,
+	C::Api: assets_runtime_api::AssetsRuntimeApi<B, CurrencyId, AccountId, Balance>,
 	C::Api: crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<B, AccountId, Balance>,
 	C::Api: pablo_runtime_api::PabloRuntimeApi<B, PoolId, CurrencyId, Balance>,
 	C::Api: BlockBuilder<B>,

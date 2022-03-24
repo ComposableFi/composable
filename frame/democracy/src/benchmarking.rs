@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.
+// Copyright (C) 2020-2021 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,22 +23,19 @@ use frame_benchmarking::{account, benchmarks, whitelist_account};
 use frame_support::{
 	assert_noop, assert_ok,
 	codec::Decode,
-	traits::{
-		schedule::DispatchTime, Currency, EnsureOrigin, Get, OnInitialize, UnfilteredDispatchable,
-	},
+	traits::{schedule::DispatchTime, EnsureOrigin, Get, OnInitialize, UnfilteredDispatchable},
 };
 use frame_system::{Pallet as System, RawOrigin};
-use sp_runtime::traits::{BadOrigin, Bounded, One};
+use sp_runtime::traits::{BadOrigin, One};
 
 use crate::Pallet as Democracy;
-use sp_std::vec;
+
+const DOT_ASSET: u64 = 2;
 
 const SEED: u32 = 0;
 const MAX_REFERENDUMS: u32 = 99;
 const MAX_SECONDERS: u32 = 100;
 const MAX_BYTES: u32 = 16_384;
-
-const DOT_ASSET: u64 = 2;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
@@ -46,7 +43,7 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 
 fn funded_account<T: Config>(name: &'static str, index: u32) -> T::AccountId {
 	let caller: T::AccountId = account(name, index, SEED);
-	// T::Currency::make_free_balance_be(&caller, BalanceOf::<T>::max_value());
+	//T::Currency::make_free_balance_be(&caller, BalanceOf::<T>::max_value());
 	caller
 }
 
@@ -85,7 +82,7 @@ fn add_referendum<T: Config>(n: u32) -> Result<ReferendumIndex, &'static str> {
 		None,
 		63,
 		frame_system::RawOrigin::Root.into(),
-		Call::enact_proposal { proposal_id, index: referendum_index }.into(),
+		Call::enact_proposal { proposal_id, index: referendum_index }.into(), /* change to proposal id */
 	)
 	.map_err(|_| "failed to schedule named")?;
 	Ok(referendum_index)
@@ -98,15 +95,18 @@ fn account_vote<T: Config>(b: BalanceOf<T>) -> AccountVote<BalanceOf<T>> {
 }
 
 benchmarks! {
+	// change to proposal id
 	propose {
 		let p = T::MaxProposals::get();
 
 		for i in 0 .. (p - 1) {
 			add_proposal::<T>(i)?;
 		}
+
+		// let asset_id = DOT_ASSET;
 		let asset_id = T::AssetId::from(DOT_ASSET);
 		let caller = funded_account::<T>("caller", 0);
-		let proposal_hash: T::Hash = T::Hashing::hash_of(&0);
+		let proposal_hash = T::Hashing::hash_of(&0);
 		let value = T::MinimumDeposit::get();
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller), proposal_hash, asset_id, value.into())
@@ -230,6 +230,7 @@ benchmarks! {
 		let asset_id = DOT_ASSET.into();
 		// Place our proposal in the external queue, too.
 		let hash = T::Hashing::hash_of(&0);
+
 		assert_ok!(
 			Democracy::<T>::external_propose(T::ExternalOrigin::successful_origin(), hash.clone(), asset_id)
 		);
@@ -254,15 +255,12 @@ benchmarks! {
 		let proposal_hash = T::Hashing::hash_of(&0);
 		let asset_id = T::AssetId::from(DOT_ASSET);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
-		// Add proposal to blacklist with block number 0
+		let blacklist_account: T::AccountId = account("blacklist_account", 0, SEED);
 
-		let addresses = (0..v)
-			.into_iter()
-			.map(|i| account::<T::AccountId>("blacklist", i, SEED))
-			.collect::<Vec<_>>();
+		// Add proposal to blacklist with block number 0
 		Blacklist::<T>::insert(
 			proposal_id,
-			(T::BlockNumber::zero(), addresses),
+			(T::BlockNumber::zero(), vec![blacklist_account; v as usize])
 		);
 	}: _<T::Origin>(origin, proposal_hash, asset_id)
 	verify {
@@ -284,6 +282,7 @@ benchmarks! {
 		let origin = T::ExternalDefaultOrigin::successful_origin();
 		let proposal_hash = T::Hashing::hash_of(&0);
 		let asset_id = T::AssetId::from(DOT_ASSET);
+
 	}: _<T::Origin>(origin, proposal_hash, asset_id)
 	verify {
 		// External proposal created
@@ -319,7 +318,7 @@ benchmarks! {
 
 		let mut vetoers: Vec<T::AccountId> = Vec::new();
 		for i in 0 .. v {
-			vetoers.push(account::<T::AccountId>("vetoer", i, SEED));
+			vetoers.push(account("vetoer", i, SEED));
 		}
 		vetoers.sort();
 		Blacklist::<T>::insert(proposal_id, (T::BlockNumber::zero(), vetoers));
@@ -533,7 +532,7 @@ benchmarks! {
 		};
 		assert_eq!(votes.len(), r as usize, "Votes were not recorded.");
 		whitelist_account!(caller);
-	}: _(RawOrigin::Signed(caller.clone()), new_delegate.clone(), asset_id,  Conviction::Locked1x, delegated_balance)
+	}: _(RawOrigin::Signed(caller.clone()), new_delegate.clone(), asset_id, Conviction::Locked1x, delegated_balance)
 	verify {
 		let (target, balance) = match VotingOf::<T>::get((&caller, asset_id)) {
 			Voting::Delegating { target, balance, .. } => (target, balance),
@@ -632,7 +631,7 @@ benchmarks! {
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
 
 		let block_number = T::BlockNumber::one();
-		Preimages::<T>::insert(&proposal_id, PreimageStatus::Missing(block_number));
+		Preimages::<T>::insert(proposal_id, PreimageStatus::Missing(block_number));
 
 		let caller = funded_account::<T>("caller", 0);
 		let encoded_proposal = vec![1; b as usize];
@@ -669,7 +668,7 @@ benchmarks! {
 
 		let caller = funded_account::<T>("caller", 0);
 		whitelist_account!(caller);
-	}: _(RawOrigin::Signed(caller), proposal_hash.clone(), asset_id, u32::MAX)
+	}: _(RawOrigin::Signed(caller), proposal_hash.clone(),asset_id, u32::MAX)
 	verify {
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		let asset_id = T::AssetId::from(DOT_ASSET);
@@ -732,7 +731,7 @@ benchmarks! {
 		let voting = VotingOf::<T>::get((&locker, asset_id));
 		assert_eq!(voting.locked_balance(), base_balance * 10u32.into());
 
-		Democracy::<T>::remove_vote(RawOrigin::Signed(locker.clone()).into(), asset_id,  referendum_index)?;
+		Democracy::<T>::remove_vote(RawOrigin::Signed(locker.clone()).into(), asset_id, referendum_index)?;
 
 		let caller = funded_account::<T>("caller", 0);
 		whitelist_account!(caller);
@@ -757,6 +756,7 @@ benchmarks! {
 
 		let asset_id = T::AssetId::from(DOT_ASSET);
 
+
 		for i in 0 .. r {
 			let ref_idx = add_referendum::<T>(i)?;
 			Democracy::<T>::vote(RawOrigin::Signed(caller.clone()).into(), ref_idx, account_vote.clone())?;
@@ -770,7 +770,7 @@ benchmarks! {
 
 		let referendum_index = r - 1;
 		whitelist_account!(caller);
-	}: _(RawOrigin::Signed(caller.clone()), asset_id,  referendum_index)
+	}: _(RawOrigin::Signed(caller.clone()), asset_id, referendum_index)
 	verify {
 		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
 			Voting::Direct { votes, .. } => votes,
@@ -800,7 +800,7 @@ benchmarks! {
 
 		let referendum_index = r - 1;
 		whitelist_account!(caller);
-	}: _(RawOrigin::Signed(caller.clone()), caller.clone(), asset_id,  referendum_index)
+	}: _(RawOrigin::Signed(caller.clone()), caller.clone(), asset_id, referendum_index)
 	verify {
 		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
 			Voting::Direct { votes, .. } => votes,
@@ -817,12 +817,13 @@ benchmarks! {
 		let asset_id = T::AssetId::from(DOT_ASSET);
 
 		let proposer = funded_account::<T>("proposer", 0);
-		let raw_call = Call::note_preimage { encoded_proposal: vec![1; b as usize], asset_id: asset_id };
+		let raw_call = Call::note_preimage { encoded_proposal: vec![1; b as usize], asset_id: asset_id};
 		let generic_call: T::Proposal = raw_call.into();
 		let encoded_proposal = generic_call.encode();
 
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
+
 
 		Democracy::<T>::note_preimage(RawOrigin::Signed(proposer).into(), encoded_proposal, asset_id)?;
 
@@ -833,7 +834,7 @@ benchmarks! {
 	}: enact_proposal(RawOrigin::Root, proposal_id, 0)
 	verify {
 		// Fails due to mismatched origin
-		assert_last_event::<T>(Event::<T>::Executed { ref_index: 0, result: Err(BadOrigin.into()) }.into());
+		assert_last_event::<T>(Event::<T>::Executed(0, Err(BadOrigin.into())).into());
 	}
 
 	#[extra]

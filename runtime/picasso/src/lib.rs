@@ -62,11 +62,7 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-<<<<<<< HEAD
 use codec::{Codec, Encode, EncodeLike};
-=======
-use codec::Encode;
->>>>>>> 021e3c66 (cargo fmt)
 use composable_traits::assets::Asset;
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;

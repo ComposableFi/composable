@@ -10,7 +10,7 @@ use sp_std::vec::Vec;
 // runtime amalgamator file (the `runtime/src/lib.rs`)
 sp_api::decl_runtime_apis! {
 	// REVIEW(benluelo): Should the AssetId type parameter be removed and then just use CurencyId directly?
-	pub trait AssetsRuntimeApi<AssetId, AccountId, Balance, Asset>
+	pub trait AssetsRuntimeApi<AssetId, AccountId, Balance>
 	where
 		AccountId: Codec,
 		Balance: Codec,

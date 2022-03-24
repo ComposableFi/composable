@@ -11,7 +11,7 @@ use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::{sync::Arc, vec::Vec};
 
 #[rpc]
-pub trait AssetsApi<BlockHash, AssetId, AccountId, Balance, Asset>
+pub trait AssetsApi<BlockHash, AssetId, AccountId, Balance>
 where
 	AssetId: FromStr + Display,
 	Balance: FromStr + Display,
@@ -39,9 +39,9 @@ impl<C, M> Assets<C, M> {
 	}
 }
 
-impl<C, Block, AssetId, AccountId, Balance, Asset>
-	AssetsApi<<Block as BlockT>::Hash, AssetId, AccountId, Balance, Asset>
-	for Assets<C, (Block, AssetId, AccountId, Balance, Asset)>
+impl<C, Block, AssetId, AccountId, Balance>
+	AssetsApi<<Block as BlockT>::Hash, AssetId, AccountId, Balance>
+	for Assets<C, (Block, AssetId, AccountId, Balance)>
 where
 	Block: BlockT,
 	AssetId: Send + Sync + 'static + Codec + FromStr + Display,
@@ -50,7 +50,7 @@ where
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
-	C::Api: AssetsRuntimeApi<Block, AssetId, AccountId, Balance, Asset>,
+	C::Api: AssetsRuntimeApi<Block, AssetId, AccountId, Balance>,
 {
 	fn balance_of(
 		&self,

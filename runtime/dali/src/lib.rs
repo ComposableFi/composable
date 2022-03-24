@@ -64,11 +64,7 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-<<<<<<< HEAD
 use codec::{Codec, Encode, EncodeLike};
-=======
-use codec::Encode;
->>>>>>> 021e3c66 (cargo fmt)
 use composable_traits::assets::Asset;
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
@@ -85,11 +81,8 @@ use system::{
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 pub use xcmp::XcmConfig;
-<<<<<<< HEAD
 
 use crate::xcmp::XcmRouter;
-=======
->>>>>>> 021e3c66 (cargo fmt)
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats

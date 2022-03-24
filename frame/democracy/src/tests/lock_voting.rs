@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
+// Copyright (C) 2017-2021 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
 //! The tests for functionality concerning locking and lock-voting.
 
 use super::*;
+use std::convert::TryFrom;
 
 fn aye(x: u8, balance: u64) -> AccountVote<u64> {
 	AccountVote::Standard {
@@ -33,13 +34,14 @@ fn nay(x: u8, balance: u64) -> AccountVote<u64> {
 	}
 }
 
-fn the_lock(amount: u64) -> BalanceLock<u64> {
-	BalanceLock { id: DEMOCRACY_ID, amount, reasons: pallet_balances::Reasons::Misc }
-}
+// fn the_lock(amount: u64) -> BalanceLock<u64> {
+// 	BalanceLock { id: DEMOCRACY_ID, amount, reasons: pallet_balances::Reasons::Misc }
+// }
 
 #[test]
 fn lock_voting_should_work() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		System::set_block_number(0);
 		let r = Democracy::inject_referendum(
 			2,
@@ -121,8 +123,93 @@ fn lock_voting_should_work() {
 }
 
 #[test]
+fn lock_voting_should_work_without_native_asset() {
+	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DOT_ASSET).unwrap();
+		System::set_block_number(0);
+		let r = Democracy::inject_referendum(
+			2,
+			set_balance_proposal_hash_and_note_and_asset(2, DOT_ASSET),
+			VoteThreshold::SuperMajorityApprove,
+			0,
+		);
+		assert_ok!(Democracy::vote(Origin::signed(1), r, nay(5, 10)));
+		assert_ok!(Democracy::vote(Origin::signed(2), r, aye(4, 20)));
+		assert_ok!(Democracy::vote(Origin::signed(3), r, aye(3, 30)));
+		assert_ok!(Democracy::vote(Origin::signed(4), r, aye(2, 40)));
+		assert_ok!(Democracy::vote(Origin::signed(5), r, nay(1, 50)));
+		assert_eq!(tally(r), Tally { ayes: 250, nays: 100, turnout: 150 });
+
+		// All balances are currently locked.
+		for i in 1..=5 {
+			assert_eq!(Tokens::locks(&i, DOT_ASSET)[0].amount, i * 10);
+		}
+
+		fast_forward_to(2);
+
+		// Referendum passed; 1 and 5 didn't get their way and can now reap and unlock.
+		assert_ok!(Democracy::remove_vote(Origin::signed(1), DOT_ASSET, r));
+		assert_ok!(Democracy::unlock(Origin::signed(1), 1, DOT_ASSET));
+		// Anyone can reap and unlock anyone else's in this context.
+		assert_ok!(Democracy::remove_other_vote(Origin::signed(2), 5, DOT_ASSET, r));
+		assert_ok!(Democracy::unlock(Origin::signed(2), 5, DOT_ASSET));
+
+		// 2, 3, 4 got their way with the vote, so they cannot be reaped by others.
+		assert_noop!(
+			Democracy::remove_other_vote(Origin::signed(1), 2, DOT_ASSET, r),
+			Error::<Test>::NoPermission
+		);
+		// However, they can be unvoted by the owner, though it will make no difference to the lock.
+		assert_ok!(Democracy::remove_vote(Origin::signed(2), DOT_ASSET, r));
+		assert_ok!(Democracy::unlock(Origin::signed(2), 2, DOT_ASSET));
+
+		assert_eq!(Tokens::locks(&1, DOT_ASSET).len(), 0);
+		assert_eq!(Tokens::locks(&2, DOT_ASSET)[0].amount, 20);
+		assert_eq!(Tokens::locks(&3, DOT_ASSET)[0].amount, 30);
+		assert_eq!(Tokens::locks(&4, DOT_ASSET)[0].amount, 40);
+		assert_eq!(Tokens::locks(&5, DOT_ASSET).len(), 0);
+		assert_eq!(Balances::free_balance(&42), 2);
+
+		fast_forward_to(7);
+		// No change yet...
+		assert_noop!(
+			Democracy::remove_other_vote(Origin::signed(1), 4, DOT_ASSET, r),
+			Error::<Test>::NoPermission
+		);
+		assert_ok!(Democracy::unlock(Origin::signed(1), 4, DOT_ASSET));
+		assert_eq!(Tokens::locks(&4, DOT_ASSET)[0].amount, 40);
+		fast_forward_to(8);
+		// 4 should now be able to reap and unlock
+		assert_ok!(Democracy::remove_other_vote(Origin::signed(1), 4, DOT_ASSET, r));
+		assert_ok!(Democracy::unlock(Origin::signed(1), 4, DOT_ASSET));
+		assert_eq!(Tokens::locks(&4, DOT_ASSET).len(), 0);
+
+		fast_forward_to(13);
+		assert_noop!(
+			Democracy::remove_other_vote(Origin::signed(1), 3, DOT_ASSET, r),
+			Error::<Test>::NoPermission
+		);
+		assert_ok!(Democracy::unlock(Origin::signed(1), 3, DOT_ASSET));
+		assert_eq!(Tokens::locks(&3, DOT_ASSET)[0].amount, 30);
+		fast_forward_to(14);
+		assert_ok!(Democracy::remove_other_vote(Origin::signed(1), 3, DOT_ASSET, r));
+		assert_ok!(Democracy::unlock(Origin::signed(1), 3, DOT_ASSET));
+		assert_eq!(Tokens::locks(&3, DOT_ASSET).len(), 0);
+
+		// 2 doesn't need to reap_vote here because it was already done before.
+		fast_forward_to(25);
+		assert_ok!(Democracy::unlock(Origin::signed(1), 2, DOT_ASSET));
+		assert_eq!(Tokens::locks(&2, DOT_ASSET)[0].amount, 20);
+		fast_forward_to(26);
+		assert_ok!(Democracy::unlock(Origin::signed(1), 2, DOT_ASSET));
+		assert_eq!(Tokens::locks(&2, DOT_ASSET).len(), 0);
+	});
+}
+
+#[test]
 fn no_locks_without_conviction_should_work() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		System::set_block_number(0);
 		let r = Democracy::inject_referendum(
 			2,
@@ -142,8 +229,9 @@ fn no_locks_without_conviction_should_work() {
 }
 
 #[test]
-fn lock_voting_should_work_with_delegation() {
+fn _lock_voting_should_work_with_delegation() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		let r = Democracy::inject_referendum(
 			2,
 			set_balance_proposal_hash_and_note(2),
@@ -167,7 +255,7 @@ fn lock_voting_should_work_with_delegation() {
 		next_block();
 		next_block();
 
-		assert_eq!(Balances::free_balance(42), 2);
+		assert_eq!(Balances::balance(&42), 2);
 	});
 }
 
@@ -205,6 +293,7 @@ fn setup_three_referenda() -> (u32, u32, u32) {
 #[test]
 fn prior_lockvotes_should_be_enforced() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		let r = setup_three_referenda();
 		// r.0 locked 10 until 2 + 8 * 3 = #26
 		// r.1 locked 20 until 2 + 4 * 3 = #14
@@ -249,6 +338,7 @@ fn prior_lockvotes_should_be_enforced() {
 #[test]
 fn single_consolidation_of_lockvotes_should_work_as_before() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		let r = setup_three_referenda();
 		// r.0 locked 10 until 2 + 8 * 3 = #26
 		// r.1 locked 20 until 2 + 4 * 3 = #14
@@ -283,6 +373,7 @@ fn single_consolidation_of_lockvotes_should_work_as_before() {
 #[test]
 fn multi_consolidation_of_lockvotes_should_be_conservative() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		let r = setup_three_referenda();
 		// r.0 locked 10 until 2 + 8 * 3 = #26
 		// r.1 locked 20 until 2 + 4 * 3 = #14
@@ -309,6 +400,7 @@ fn multi_consolidation_of_lockvotes_should_be_conservative() {
 #[test]
 fn locks_should_persist_from_voting_to_delegation() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		System::set_block_number(0);
 		let r = Democracy::inject_referendum(
 			2,
@@ -355,6 +447,7 @@ fn locks_should_persist_from_voting_to_delegation() {
 #[test]
 fn locks_should_persist_from_delegation_to_voting() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		System::set_block_number(0);
 		assert_ok!(Democracy::delegate(
 			Origin::signed(5),

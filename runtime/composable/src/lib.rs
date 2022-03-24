@@ -57,11 +57,7 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-<<<<<<< HEAD
 use codec::{Codec, Encode, EncodeLike};
-=======
-use codec::Encode;
->>>>>>> 021e3c66 (cargo fmt)
 use composable_traits::assets::Asset;
 use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
@@ -844,7 +840,7 @@ mod benches {
 }
 
 impl_runtime_apis! {
-	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, Asset> for Runtime {
+	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
 			SafeRpcWrapper(<Assets as frame_support::traits::fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
