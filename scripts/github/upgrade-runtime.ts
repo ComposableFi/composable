@@ -37,6 +37,7 @@ async function main() {
                 } else if (result.status.isFinalized) {
                     console.log(`Transaction finalized at blockHash ${result.status.asFinalized}`);
                     unsub();
+                    process.exit(0)
                 }
             }
         )
