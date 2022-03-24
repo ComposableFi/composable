@@ -264,12 +264,6 @@ pub fn common_exchange_failure(
 		false
 	));
 
-	let pool = Pablo::pools(pool_id).expect("pool not found");
-	let lp_token = match pool {
-		StableSwap(pool) => pool.lp_token,
-		ConstantProduct(pool) => pool.lp_token,
-		LiquidityBootstrapping(_) => panic!("Not implemented"),
-	};
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(pair.base, &BOB, exchange_base_amount));
 	// error as trying to swap more value than balance
