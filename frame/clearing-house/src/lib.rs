@@ -414,7 +414,6 @@ pub mod pallet {
 
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
-		#[allow(unused_variables)]
 		fn do_create_market(
 			account: &T::AccountId,
 			asset: AssetIdOf<T>,
