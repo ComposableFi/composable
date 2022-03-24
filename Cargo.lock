@@ -7474,6 +7474,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "itertools",
  "log 0.4.14",
  "orml-tokens",
  "orml-traits",
