@@ -54,24 +54,8 @@ jobs:
     - name: Build Docker image
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make containerize
     
-    - name: Image Tag Version
-      id: imagetag
-      run: |
-        RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
-        echo ::set-output name=release_version::${RELEASE_VERSION}
-
-    - name: Build for Multiple Arch
-      uses: docker/build-push-action@v2
-      with:
-        builder: ${{ steps.buildx.outputs.name }}
-        context: .
-        file: docker/Dockerfile
-        platforms: linux/386,linux/amd64,linux/arm64,linux/ppc64le,linux/arm/v6,linux/arm/v7, linux/arm/v8
-        push: true
-        tags: composablefi/composable:${{ steps.imagetag.outputs.release_version }}, composablefi/composable:latest
-
-    #- name:  Docker push
-    #  run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make push
+    - name:  Docker push
+     run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make push
 
     - uses: 8398a7/action-slack@v3
       with:
