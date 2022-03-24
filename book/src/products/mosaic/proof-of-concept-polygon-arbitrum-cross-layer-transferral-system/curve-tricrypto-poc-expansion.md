@@ -78,3 +78,41 @@ Critically, Curve also has instances on Polygon and Arbitrum, making it usable f
 
 ---
 
+## Alpha Strategy Simulation Methods & Data
+
+As an initial step in building this new SDK-backed cross-layer LPing strategy, we collected data in a proof-of-concept (PoC) to support its business case and to make data-driven decisions surrounding the potential and backing up our intuition. Excitingly, we found a strong correlation between what we believed to be possible and what was happening on-chain.
+
+Composable Labs first ran the blockchain data scanner on the Curve pool on POL and found all exchange events (one exchange event means a single token swap in the pool occurred). We repeated this for ARB - all in the time frame August 26th 2021 to September 26th 2021. Then, we leveraged API calls to Uniswap to obtain pricing information about the swaps, which in turn allowed us to compute the USD equivalent volume. We studied the deployed contract codes to get the fees for the pools charged to LPs. Thus, we knew the total revenue generated in USD for each pool at any point in time. We made the assumptions of using same-day pricing for all exchange events within a day (i.e. not intraday resolution) and we assumed the same ratio of reserves in the pools as it was near September 27, 2021. These are assumptions that can be removed later on, but our general results are unchanged.
+
+We then created a global time grid and snapped the revenues onto this grid. We subtracted ARB from POL and this gave us the delta revenue stream versus time - we call it the delta distribution. If this stream is positive, it implies that more revenue can be obtained by staking in the ARB pool. But, this distribution changes over time and there is a (small) fee involved with moving the LP tokens so moving 100% back and forth might not be the best strategy either also when factoring in risks. Besides, the exchange volume can change and experience spikes in time intervals shorter than the time it takes to reallocate the portfolio. From this, we found that the optimal distribution of capital is not one in which 100% is allocated to one of the L2 pools.
+
+Next, we look at how the direct/actual distribution changes over time. These data will be computed in real-time allowing the strategy to apply conditional rules governing the reallocation actions.
+
+---
+
+## Alpha Strategy Simulation Results & Implications
+
+Combined, this leads us to one of the key findings in this work: namely the insight that an optimal alpha strategy should be dynamic in time (in other words, a static upfront allocation is not better) and should intelligently decide when to move the LP tokens and how many to move. 
+
+**Perhaps most importantly, we discovered that this strategy offers increased rewards for LPs: by having the opportunity to partake in the active strategy versus a traditional passive strategy, we show that additional returns from around an 80% APY or much higher are projected.**
+
+As shown, to effectively and safely accomplish this, we leverage Composable’s SDK. Thus, we solidified our proposed alpha strategy:
+
+We turn the data collected into actionable insights guiding the investment manager/bot. We envision that this be a bot continuously reading in the data making decisions based on this in real-time.
+
+The strategy can be thought of as a function with the following required inputs:
+
+- How many funds to allocate overall to this strategy.
+- What is the max allocation in one pool at any time; e.g., 80% (this of course implies the minimum as well to be 20%).
+- What is the distribution of allocation versus the number and types (mean or skewness) of windows favoring a given pool. We will provide an example of this below.
+- A limit on the total turnover ratio computed as number of turnover events over the total number of dates in a rolling window.
+
+---
+
+## Conclusions
+
+Composable Labs has already uncovered cross-layer liquidity provisioning as a new opportunity with potentially significant yield. We have now furthered our investigation into optimizing this strategy for LPs themselves (in terms of the fees they earn) as well as optimizing the liquidity available for cross-layer transactions.
+
+Our research endeavors have shown us that a cross-layer LPing strategy using Curve TriCrypto pools on Polygon and Arbitrum with automated redistribution of liquidity via the Composable SDK results in optimizing these aforementioned metrics.
+
+As a result of the promising results we observed in this simulation, we will be reopening LPing for Mosaic’s PoC for an additional 3 days using this strategy, before returning to a period where cross-layer transactions themselves are active. This will further help us test our alpha strategy using real-world transactions, helping us refine the model that is best for our users.
