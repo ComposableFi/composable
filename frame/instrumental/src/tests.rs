@@ -11,7 +11,7 @@ use crate::currency::{
 use crate::account_id::{AccountId, ADMIN, pick_account};
 
 use pallet_vault::Vaults as VaultInfoStorage;
-use composable_traits::vault::VaultConfig;
+use composable_traits::vault::{Vault as VaultTrait, VaultConfig};
 
 use frame_support::{
     assert_ok, assert_noop, assert_storage_noop,
@@ -102,7 +102,7 @@ impl VaultBuilder {
         self
     }
     
-    fn build(self) -> () {
+    fn build(self) {
         // TODO: (Nevin)
         //  - remove duplicate assets
         self.configs.iter()
@@ -126,60 +126,54 @@ const MAXIMUM_RESERVE: Balance = 1_000_000_000;
 #[allow(dead_code)]
 const TOTAL_NUM_OF_ACCOUNTS: usize = 5;
 
-prop_compose! {
-    fn generate_assets()
-        (
-            assets in prop::collection::vec(pick_currency(), 1..=TOTAL_NUM_OF_ASSETS),
-        ) -> Vec<CurrencyId>{
+#[allow(dead_code)]
+const NUMBER_OF_PROPTEST_CASES: u32 = 3u32 * TOTAL_NUM_OF_ASSETS as u32 * TOTAL_NUM_OF_ACCOUNTS as u32;
 
-            assets
+prop_compose! {
+    fn generate_assets()(
+        assets in prop::collection::vec(pick_currency(), 1..=TOTAL_NUM_OF_ASSETS),
+    ) -> Vec<CurrencyId>{
+        assets
    }
 }
 
 prop_compose! {
-    fn generate_balances()
-        (
-            balances in prop::collection::vec(MINIMUM_RESERVE..MAXIMUM_RESERVE, 1..=TOTAL_NUM_OF_ASSETS),
-        ) -> Vec<Balance>{
-
-            balances
+    fn generate_balances()(
+        balances in prop::collection::vec(MINIMUM_RESERVE..MAXIMUM_RESERVE, 1..=TOTAL_NUM_OF_ASSETS),
+    ) -> Vec<Balance>{
+        balances
    }
 }
 
 prop_compose! {
-    fn generate_accounts()
-        (
-            accounts in prop::collection::vec(pick_account(), 1..=TOTAL_NUM_OF_ACCOUNTS),
-        ) -> Vec<AccountId>{
-
-            accounts
+    fn generate_accounts()(
+        accounts in prop::collection::vec(pick_account(), 1..=TOTAL_NUM_OF_ACCOUNTS),
+    ) -> Vec<AccountId>{
+        accounts
    }
 }
 
 prop_compose! {
-    fn generate_reserves()
-        (
-            assets in generate_assets(),
-            balances in generate_balances(),
-        ) -> Vec<(CurrencyId, Balance)>{
-
-            assets.into_iter().zip(balances.into_iter()).collect()
+    fn generate_reserves()(
+        assets in generate_assets(),
+        balances in generate_balances(),
+    ) -> Vec<(CurrencyId, Balance)>{
+        assets.into_iter().unique().zip(balances.into_iter()).collect()
    }
 }
 
 prop_compose! {
-    fn generate_deposits()
-        (
-            accounts in generate_accounts(),
-            assets in generate_assets(),
-            balances in generate_balances(),
-        ) -> Vec<(AccountId, CurrencyId, Balance)>{
-            accounts.into_iter()
-                .zip(assets.into_iter())
-                .unique()
-                .zip(balances.into_iter())
-                .map(|((account, asset), balance)| (account, asset, balance))
-                .collect()
+    fn generate_deposits()(
+        accounts in generate_accounts(),
+        assets in generate_assets(),
+        balances in generate_balances(),
+    ) -> Vec<(AccountId, CurrencyId, Balance)>{
+        accounts.into_iter()
+            .zip(assets.into_iter())
+            .unique()
+            .zip(balances.into_iter())
+            .map(|((account, asset), balance)| (account, asset, balance))
+            .collect()
    }
 }
 
@@ -196,7 +190,7 @@ fn create_extrinsic_emits_event() {
         assert_ok!(Instrumental::create(Origin::signed(ADMIN), config.clone()));
 
         System::assert_last_event(Event::Instrumental(
-            pallet::Event::Created { vault_id: 1u64, config: config}
+            pallet::Event::Created { vault_id: 1u64, config }
         ));
     });
 }
@@ -296,7 +290,7 @@ fn add_liquidity_does_not_update_storage_if_user_does_not_have_balance() {
 }
 
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(100))]
+    #![proptest_config(ProptestConfig::with_cases(NUMBER_OF_PROPTEST_CASES))]
 
     #[test]
     fn add_liquidity_extrinsic(
@@ -305,9 +299,9 @@ proptest! {
     ) {         
         ExtBuilder::default().initialize_balances(deposits.clone()).build().execute_with(|| {        
             // Create a vault for each randomly chosen asset
-            VaultBuilder::new().group_add(assets.iter().map(|&asset| {
-                VaultConfigBuilder::default().asset_id(asset).build()
-            }).collect()).build();
+            VaultBuilder::new().group_add(
+                assets.iter().map(|&asset| { VaultConfigBuilder::default().asset_id(asset).build() }
+            ).collect()).build();
 
             // Have each account try to deposit an asset balance into an Instrumental vault
             deposits.into_iter().for_each(|(account, asset, balance)| {
@@ -358,6 +352,46 @@ fn remove_liquidity_asset_must_have_an_associated_vault() {
             Error::<MockRuntime>::AssetDoesNotHaveAnAssociatedVault
         );
     });
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(NUMBER_OF_PROPTEST_CASES))]
+
+    #[test]
+    fn remove_liquidity_extrinsic(
+        assets in generate_assets(),
+        reserves in generate_reserves(),
+        withdraws in generate_deposits()
+    ) {         
+        ExtBuilder::default().initialize_vaults(reserves).build().execute_with(|| {        
+            // Create a vault for each randomly chosen asset
+            VaultBuilder::new().group_add(
+                assets.into_iter().map(|asset| { VaultConfigBuilder::default().asset_id(asset).build() }
+            ).collect()).build();
+
+            // Have each account try to withdraw an asset balance from an Instrumental vault
+            withdraws.into_iter().for_each(|(account, asset, balance)| {
+                if !AssetVault::<MockRuntime>::contains_key(asset) {
+                    assert_noop!(
+                        Instrumental::remove_liquidity(Origin::signed(account), asset, balance),
+                        Error::<MockRuntime>::AssetDoesNotHaveAnAssociatedVault
+                    );
+                } else {
+                    let vault_id = Instrumental::asset_vault(asset).unwrap();
+                    let vault_account = Vault::account_id(&vault_id);
+                    
+                    if Assets::balance(asset, &vault_account) >= balance {
+                        assert_ok!(Instrumental::remove_liquidity(Origin::signed(account), asset, balance));
+                    } else {
+                        assert_noop!(
+                            Instrumental::remove_liquidity(Origin::signed(account), asset, balance),
+                            Error::<MockRuntime>::NotEnoughLiquidity
+                        );
+                    }
+                }
+            });
+        });
+    }
 }
 
 // ----------------------------------------------------------------------------------------------------
