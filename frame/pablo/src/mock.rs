@@ -137,6 +137,7 @@ impl pablo::Config for Test {
 	type LbpMaxInitialWeight = MaxInitialWeight;
 	type LbpMinFinalWeight = MinFinalWeight;
 	type PoolCreationOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
