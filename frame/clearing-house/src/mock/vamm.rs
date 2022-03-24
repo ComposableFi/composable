@@ -29,8 +29,8 @@ pub mod pallet {
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
 			+ TypeInfo
-			+ Default
-			+ Clone;
+			+ Clone
+			+ Default;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -39,12 +39,12 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub vamm_id: T::VammId,
+		pub vamm_id: Option<T::VammId>,
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { vamm_id: Default::default() }
+			Self { vamm_id: None }
 		}
 	}
 
@@ -60,7 +60,9 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		FailedToCreateVamm,
+	}
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                             Pallet Types
@@ -75,8 +77,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn vamm_id)]
-	#[allow(clippy::disallowed_types)]
-	pub type NextVammId<T: Config> = StorageValue<_, T::VammId, ValueQuery>;
+	pub type NextVammId<T: Config> = StorageValue<_, T::VammId, OptionQuery>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Trait Implementations

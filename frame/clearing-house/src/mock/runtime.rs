@@ -51,6 +51,7 @@ frame_support::construct_runtime!(
 pub type Balance = u128;
 pub type Amount = i64;
 pub type Timestamp = u64;
+pub type VammId = u64;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -176,7 +177,7 @@ impl pallet_assets::Config for Runtime {
 // ----------------------------------------------------------------------------------------------------
 
 impl mock_vamm::Config for Runtime {
-	type VammId = u64;
+	type VammId = VammId;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -229,6 +230,7 @@ pub struct ExtBuilder {
 	pub native_balances: Vec<(AccountId, Balance)>,
 	pub balances: Vec<(AccountId, AssetId, Balance)>,
 	pub collateral_types: Vec<AssetId>,
+	pub vamm_id: Option<VammId>,
 	pub oracle_supports_assets: bool,
 }
 
@@ -247,6 +249,10 @@ impl ExtBuilder {
 			.unwrap();
 
 		clearing_house::GenesisConfig::<Runtime> { collateral_types: self.collateral_types }
+			.assimilate_storage(&mut storage)
+			.unwrap();
+
+		mock_vamm::GenesisConfig::<Runtime> { vamm_id: self.vamm_id }
 			.assimilate_storage(&mut storage)
 			.unwrap();
 

@@ -3,6 +3,7 @@ pub use crate::{
 		accounts::{AccountId, ALICE},
 		assets::{AssetId, DOT, PICA, USDC},
 		runtime::{Balance, ClearingHouse, ExtBuilder, Origin, Runtime, System, Tokens},
+		vamm as mock_vamm,
 		vamm::VammParams,
 	},
 	pallet::*,
@@ -16,6 +17,7 @@ impl Default for ExtBuilder {
 			native_balances: vec![],
 			balances: vec![],
 			collateral_types: vec![USDC],
+			vamm_id: Some(0u64),
 			oracle_supports_assets: true,
 		}
 	}
@@ -92,4 +94,14 @@ fn fails_to_create_market_for_unsupported_asset_by_oracle() {
 				Error::<Runtime>::NoPriceFeedForAsset
 			);
 		})
+}
+
+#[test]
+fn fails_to_create_market_if_fails_to_create_vamm() {
+	ExtBuilder { vamm_id: None, ..Default::default() }.build().execute_with(|| {
+		assert_noop!(
+			ClearingHouse::create_market(Origin::signed(ALICE), DOT, VammParams {}),
+			mock_vamm::Error::<Runtime>::FailedToCreateVamm
+		);
+	})
 }
