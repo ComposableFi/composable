@@ -110,13 +110,13 @@ pub mod pallet {
 		/// Signed decimal fixed point number.
 		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
 		/// Timestamp to be used for funding rate updates
-		type Timestamp: FullCodec + MaxEncodedLen + TypeInfo;
+		type Timestamp: Default + FullCodec + MaxEncodedLen + TypeInfo;
 		/// Duration type for funding rate periodicity
-		type Duration: FullCodec + MaxEncodedLen + TypeInfo;
+		type Duration: Default + FullCodec + MaxEncodedLen + TypeInfo;
 		/// Virtual Automated Market Maker pallet implementation
 		type VirtualAMM: VirtualAMM;
 		/// Price feed (in USDT) Oracle pallet implementation
-		type Oracle: Oracle;
+		type Oracle: Oracle<AssetId = Self::MayBeAssetId>;
 		/// Pallet implementation of asset transfers.
 		type Assets: Transfer<
 			Self::AccountId,
@@ -372,7 +372,8 @@ pub mod pallet {
 			vamm_params: VammParamsOf<T>,
 		) -> DispatchResult {
 			let acc = ensure_signed(origin)?;
-			Self::do_create_market(&acc, asset, vamm_params)?;
+			let market = Self::do_create_market(&acc, asset, vamm_params)?;
+			Self::deposit_event(Event::MarketCreated { market, asset });
 			Ok(())
 		}
 	}
@@ -418,8 +419,25 @@ pub mod pallet {
 			account: &T::AccountId,
 			asset: AssetIdOf<T>,
 			vamm_params: VammParamsOf<T>,
-		) -> DispatchResult {
-			unimplemented!()
+		) -> Result<T::MarketId, DispatchError> {
+			MarketCount::<T>::try_mutate(|id| {
+				ensure!(T::Oracle::is_supported(asset)?, Error::<T>::NoPriceFeedForAsset);
+
+				let market_id = id.clone();
+				let market = Market {
+					asset_id: asset,
+					cum_funding_rate: T::Decimal::default(),
+					funding_rate_ts: T::Timestamp::default(),
+					periodicity: T::Duration::default(),
+					vamm_id: VammIdOf::<T>::default(),
+				};
+				Markets::<T>::insert(&market_id, market);
+
+				// Change the market count at the end
+				// Should we use checked addition here?
+				*id += One::one();
+				Ok(market_id)
+			})
 		}
 	}
 
