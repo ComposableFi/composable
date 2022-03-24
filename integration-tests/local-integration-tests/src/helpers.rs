@@ -1,13 +1,13 @@
 use common::{xcmp::BaseXcmWeight, AccountId, Balance, MultiExistentialDeposits};
 use cumulus_primitives_core::ParaId;
-use dali_runtime::{MaxInstructions, UnitWeightCost};
+
 use num_traits::One;
 use orml_traits::GetByKey;
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
 use support::log;
 
-use crate::{env_logger_init, kusama_test_net::SIBLING_PARA_ID, prelude::LocalAssetId};
+use crate::{env_logger_init, kusama_test_net::SIBLING_PARA_ID, prelude::*};
 
 // TODO: make marco of it
 pub fn simtest() {
@@ -28,7 +28,7 @@ pub fn under_existential_deposit(asset_id: LocalAssetId, _instruction_count: usi
 /// dumps events for debugging
 #[allow(dead_code)]
 pub fn dump_events() {
-	dali_runtime::System::events().iter().for_each(|x| {
+	sibling_runtime::System::events().iter().for_each(|x| {
 		log::info!("{:?}", x);
 	});
 }

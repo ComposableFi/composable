@@ -41,7 +41,7 @@ jobs:
         ansible-playbook -l _collator_node_yes  /opt/ansible/inventory/dalishot.yml -i  /opt/ansible/inventory/gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
 
 
-  composable:
+  composable-snapshot:
     runs-on: 
       - self-hosted
       - linux

@@ -35,7 +35,6 @@ run_benchmarks() {
     --extrinsic='*' \
     --steps=$steps \
     --repeat=$repeat \
-    --raw \
     --output="$OUTPUT" \
     --log error
   # ToDO: Setup gpg signing and create a bot account for pushing

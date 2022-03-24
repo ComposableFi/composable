@@ -130,7 +130,7 @@
         dest: "/home/{{ user }}/basilisk"
       - url: https://storage.googleapis.com/composable-binaries/testnet-releases/picasso/composable-latest.tar.gz
         dest: "/home/{{ user }}/composable-latest.tar.gz"
-      - url: https://github.com/paritytech/polkadot/releases/download/v0.9.16/polkadot
+      - url: https://github.com/paritytech/polkadot/releases/download/v0.9.17/polkadot
         dest: "/home/{{ user }}/polkadot"
 
     - name: Clone composable repo

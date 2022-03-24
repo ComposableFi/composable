@@ -7,19 +7,25 @@ version = "0.1.0"
 
 [dependencies]
 async-std = { version = "1", features = ["attributes", "tokio1"] }
-common = { package = "common", path = "../../runtime/common" }
+balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+common = { path = "../../runtime/common" }
+composable-runtime = { path = "../../runtime/composable" }
+dali-runtime = { path = "../../runtime/dali" }
 dotenv = "0.15.0"
 env_logger = "0.8.4"
 envy = "0.4"
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 hex = "0.4.3"
 hmac = "0.11.0"
 log = "0.4.14"
+parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.17" }
+picasso-runtime = { path = "../../runtime/picasso" }
 serde = { version = "1", features = ["derive"] }
 serde_urlencoded = "0.7.0"
 sha2 = "0.9.8"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 structopt = "0.3.25"
-subxt = { git = "https://github.com/composableFi/subxt", branch = "seun-0.9.13" }
-subxt-clients = { path = "../subxt-clients" }
+substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch = "master" }
 tide = "0.16"
 tokio = { version = "1.12.0", features = ["macros", "rt-multi-thread"] }
+utils-common = { path = "../common" }

@@ -8,11 +8,10 @@ use crate::{
 	models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount},
 	Error, RemoteAccountOf, RewardAmountOf, VestingPeriodOf,
 };
-
 use codec::Encode;
 use frame_support::{assert_noop, assert_ok, traits::Currency};
 use hex_literal::hex;
-use sp_core::{ed25519, Pair};
+use sp_core::{ed25519, storage::StateVersion, Pair};
 
 fn with_rewards<R>(
 	count: u128,
@@ -116,11 +115,11 @@ fn test_populate_ok() {
 		// Try to repopulate using the same generated accounts
 		// In this case, the total shouldn't change as its duplicate
 		// No error will be yield but the process should be = identity
-		let s = frame_support::storage_root();
+		let s = frame_support::storage_root(StateVersion::V1);
 		let expected_total_rewards = 100 * DEFAULT_REWARD;
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
 		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)));
-		assert_eq!(s, frame_support::storage_root());
+		assert_eq!(s, frame_support::storage_root(StateVersion::V1));
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 
@@ -168,7 +167,7 @@ fn test_initialize_at_ko() {
 		Timestamp::set_timestamp(100);
 		assert_noop!(
 			CrowdloanRewards::initialize_at(Origin::root(), 99),
-			Error::<Test>::InvalidInitializationBlock
+			Error::<Test>::BackToTheFuture
 		);
 	});
 }

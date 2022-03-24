@@ -6,7 +6,6 @@ import type { ApiTypes } from '@polkadot/api-base/types';
 declare module '@polkadot/api-base/types/errors' {
   export interface AugmentedErrors<ApiType extends ApiTypes> {
     assets: {
-      BadOrigin: AugmentedError<ApiType>;
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
       /**
        * Generic error
@@ -15,6 +14,7 @@ declare module '@polkadot/api-base/types/errors' {
     };
     assetsRegistry: {
       ForeignAssetIdAlreadyUsed: AugmentedError<ApiType>;
+      ForeignAssetIdNotFound: AugmentedError<ApiType>;
       LocalAssetIdAlreadyUsed: AugmentedError<ApiType>;
       LocalAssetIdNotFound: AugmentedError<ApiType>;
       OnlyAllowedForAdmins: AugmentedError<ApiType>;
@@ -173,6 +173,19 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    constantProductDex: {
+      CannotRespectMinimumRequested: AugmentedError<ApiType>;
+      InvalidAmount: AugmentedError<ApiType>;
+      InvalidFees: AugmentedError<ApiType>;
+      InvalidPair: AugmentedError<ApiType>;
+      MissingAmount: AugmentedError<ApiType>;
+      PairMismatch: AugmentedError<ApiType>;
+      PoolNotFound: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     council: {
       /**
        * Members are already initialized!
@@ -236,11 +249,14 @@ declare module '@polkadot/api-base/types/errors' {
     crowdloanRewards: {
       AlreadyAssociated: AugmentedError<ApiType>;
       AlreadyInitialized: AugmentedError<ApiType>;
+      BackToTheFuture: AugmentedError<ApiType>;
       InvalidClaim: AugmentedError<ApiType>;
       InvalidProof: AugmentedError<ApiType>;
       NotAssociated: AugmentedError<ApiType>;
+      NotClaimableYet: AugmentedError<ApiType>;
       NothingToClaim: AugmentedError<ApiType>;
       NotInitialized: AugmentedError<ApiType>;
+      RewardsNotFunded: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -509,6 +525,53 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    lending: {
+      /**
+       * Only assets for which we can track price are supported
+       **/
+      AssetNotSupportedByOracle: AugmentedError<ApiType>;
+      AssetPriceNotFound: AugmentedError<ApiType>;
+      BorrowAndRepayInSameBlockIsNotSupported: AugmentedError<ApiType>;
+      BorrowDoesNotExist: AugmentedError<ApiType>;
+      BorrowerDataCalculationFailed: AugmentedError<ApiType>;
+      BorrowIndexDoesNotExist: AugmentedError<ApiType>;
+      BorrowRateDoesNotExist: AugmentedError<ApiType>;
+      CannotRepayMoreThanBorrowAmount: AugmentedError<ApiType>;
+      CannotWithdrawFromProvidedBorrowAccount: AugmentedError<ApiType>;
+      CollateralDepositFailed: AugmentedError<ApiType>;
+      CollateralFactorIsLessOrEqualOne: AugmentedError<ApiType>;
+      ExceedLendingCount: AugmentedError<ApiType>;
+      InvalidTimestampOnBorrowRequest: AugmentedError<ApiType>;
+      LiquidationFailed: AugmentedError<ApiType>;
+      MarketAndAccountPairNotFound: AugmentedError<ApiType>;
+      MarketCollateralWasNotDepositedByAccount: AugmentedError<ApiType>;
+      /**
+       * The market could not be found
+       **/
+      MarketDoesNotExist: AugmentedError<ApiType>;
+      MarketIsClosing: AugmentedError<ApiType>;
+      NotEnoughBorrowAsset: AugmentedError<ApiType>;
+      NotEnoughCollateral: AugmentedError<ApiType>;
+      NotEnoughCollateralToBorrowAmount: AugmentedError<ApiType>;
+      NotEnoughRent: AugmentedError<ApiType>;
+      Overflow: AugmentedError<ApiType>;
+      /**
+       * borrow assets should have enough value as per oracle
+       **/
+      PriceOfInitialBorrowVaultShouldBeGreaterThanZero: AugmentedError<ApiType>;
+      RepayAmountMustBeGraterThanZero: AugmentedError<ApiType>;
+      TransferFailed: AugmentedError<ApiType>;
+      Unauthorized: AugmentedError<ApiType>;
+      Underflow: AugmentedError<ApiType>;
+      /**
+       * vault provided does not exist
+       **/
+      VaultNotFound: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     liquidations: {
       NoLiquidationEngineFound: AugmentedError<ApiType>;
       /**
@@ -516,10 +579,24 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    liquidityBootstrapping: {
+      CannotRespectMinimumRequested: AugmentedError<ApiType>;
+      InvalidAmount: AugmentedError<ApiType>;
+      InvalidSaleState: AugmentedError<ApiType>;
+      MustBeOwner: AugmentedError<ApiType>;
+      PairMismatch: AugmentedError<ApiType>;
+      PoolNotFound: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     mosaic: {
       AmountMismatch: AugmentedError<ApiType>;
+      AssetNotMapped: AugmentedError<ApiType>;
       BadTimelockPeriod: AugmentedError<ApiType>;
       BadTTL: AugmentedError<ApiType>;
+      BelowMinTransferSize: AugmentedError<ApiType>;
       ExceedsMaxTransferSize: AugmentedError<ApiType>;
       InsufficientBudget: AugmentedError<ApiType>;
       NetworkDisabled: AugmentedError<ApiType>;
@@ -890,6 +967,19 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    stableSwapDex: {
+      AmpFactorMustBeGreaterThanZero: AugmentedError<ApiType>;
+      AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
+      CannotRespectMinimumRequested: AugmentedError<ApiType>;
+      InvalidFees: AugmentedError<ApiType>;
+      InvalidPair: AugmentedError<ApiType>;
+      PairMismatch: AugmentedError<ApiType>;
+      PoolNotFound: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     sudo: {
       /**
        * Sender must be the Sudo account
@@ -1135,6 +1225,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       TooManyVestingSchedules: AugmentedError<ApiType>;
       /**
+       * Trying to vest to ourselves
+       **/
+      TryingToSelfVest: AugmentedError<ApiType>;
+      /**
        * Vesting period is zero
        **/
       ZeroVestingPeriod: AugmentedError<ApiType>;
@@ -1179,7 +1273,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       AssetHasNoReserve: AugmentedError<ApiType>;
       /**
-       * The specified index does not exist in a MultiAssets struct
+       * The specified index does not exist in a MultiAssets struct.
        **/
       AssetIndexNonExistent: AugmentedError<ApiType>;
       /**
@@ -1198,18 +1292,21 @@ declare module '@polkadot/api-base/types/errors' {
       DestinationNotInvertible: AugmentedError<ApiType>;
       /**
        * We tried sending distinct asset and fee but they have different
-       * reserve chains
+       * reserve chains.
        **/
       DistinctReserveForAssetAndFee: AugmentedError<ApiType>;
       /**
-       * The fee amount was zero when the fee specification extrinsic is
-       * being used.
+       * Fee is not enough.
        **/
-      FeeCannotBeZero: AugmentedError<ApiType>;
+      FeeNotEnough: AugmentedError<ApiType>;
       /**
        * Could not get ancestry of asset reserve location.
        **/
       InvalidAncestry: AugmentedError<ApiType>;
+      /**
+       * The MultiAsset is invalid.
+       **/
+      InvalidAsset: AugmentedError<ApiType>;
       /**
        * Invalid transfer destination.
        **/
@@ -1223,11 +1320,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotCrossChainTransferableCurrency: AugmentedError<ApiType>;
       /**
-       * Not fungible asset.
-       **/
-      NotFungible: AugmentedError<ApiType>;
-      /**
-       * The number of assets to be sent is over the maximum
+       * The number of assets to be sent is over the maximum.
        **/
       TooManyAssetsBeingSent: AugmentedError<ApiType>;
       /**
@@ -1238,6 +1331,14 @@ declare module '@polkadot/api-base/types/errors' {
        * XCM execution failed.
        **/
       XcmExecutionFailed: AugmentedError<ApiType>;
+      /**
+       * The transfering asset amount is zero.
+       **/
+      ZeroAmount: AugmentedError<ApiType>;
+      /**
+       * The fee is zero.
+       **/
+      ZeroFee: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

@@ -90,8 +90,8 @@ benchmarks! {
 
 	vested_transfer {
 		let asset_id = asset::<T>();
-		let caller: T::AccountId = zero_account::<T>();
-		fund_account::<T>(&caller, asset_id.clone(), FUNDING.into());
+		let from: T::AccountId = create_account::<T>("from", 0xCAFEBABE);
+		fund_account::<T>(&from, asset_id.clone(), FUNDING.into());
 		let dest = T::Lookup::unlookup(create_account::<T>("dest", 1));
 		let per_period = T::MinVestedTransfer::get();
 		let schedule = vesting_schedule::<T>(
@@ -100,7 +100,7 @@ benchmarks! {
 			PERIOD_COUNT,
 			per_period.into()
 		);
-	}: _(RawOrigin::Signed(caller), dest, asset_id, schedule)
+	}: _(RawOrigin::Root, T::Lookup::unlookup(from), dest, asset_id, schedule)
 
 	update_vesting_schedules {
 		let s in 0 .. T::MaxVestingSchedules::get();

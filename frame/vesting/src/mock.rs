@@ -8,7 +8,7 @@ use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{EnsureOrigin, Everything},
 };
-use frame_system::RawOrigin;
+use frame_system::{EnsureRoot, RawOrigin};
 use orml_traits::parameter_type_with_key;
 use scale_info::TypeInfo;
 use sp_core::H256;
@@ -153,7 +153,7 @@ impl Config for Runtime {
 	type Event = Event;
 	type Currency = Tokens;
 	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = EnsureAliceOrBob;
+	type VestedTransferOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type Moment = Moment;

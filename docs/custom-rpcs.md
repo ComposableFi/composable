@@ -32,7 +32,7 @@ rust-version = "1.56"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 codec = { default-features = false, features = ["derive"], package = "parity-scale-codec", version = "2.0.0" }
 
 # ...any other dependencies, as per usual
@@ -80,10 +80,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # substrate primitives
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 # SCALE
 scale-info = { version = "1.0", features = ["derive"] }

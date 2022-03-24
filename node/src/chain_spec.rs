@@ -112,7 +112,8 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 				],
 				dev_accounts(),
 				PARA_ID,
-				picasso_runtime::ExistentialDeposit::get(),
+				common::NativeExistentialDeposit::get(),
+				picasso_runtime::TreasuryAccount::get(),
 			)
 		},
 		vec![],
@@ -156,6 +157,7 @@ pub fn dali_dev() -> dali::ChainSpec {
 				dev_accounts(),
 				PARA_ID,
 				common::NativeExistentialDeposit::get(),
+				dali_runtime::TreasuryAccount::get(),
 			)
 		},
 		vec![],
@@ -198,7 +200,8 @@ pub fn composable_dev() -> composable::ChainSpec {
 				],
 				dev_accounts(),
 				PARA_ID,
-				picasso_runtime::ExistentialDeposit::get(),
+				composable_runtime::ExistentialDeposit::get(),
+				composable_runtime::TreasuryAccount::get(),
 			)
 		},
 		vec![],

@@ -1,10 +1,16 @@
+use crate::{
+	defi::CurrencyPair,
+	math::{SafeAdd, SafeSub},
+};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{traits::Get, BoundedVec, RuntimeDebug};
 use scale_info::TypeInfo;
-use sp_runtime::{DispatchError, Permill};
+use sp_arithmetic::traits::Saturating;
+use sp_runtime::{
+	traits::{CheckedMul, CheckedSub},
+	ArithmeticError, DispatchError, Permill,
+};
 use sp_std::vec::Vec;
-
-use crate::defi::CurrencyPair;
 
 /// Trait for automated market maker.
 pub trait Amm {
@@ -104,8 +110,8 @@ pub struct StableSwapPoolInfo<AccountId, AssetId> {
 	pub amplification_coefficient: u16,
 	/// Amount of the fee pool charges for the exchange, this goes to liquidity provider.
 	pub fee: Permill,
-	/// Amount of the fee pool charges for the exchange
-	pub protocol_fee: Permill,
+	/// Amount of the fee goes to owner of the pool
+	pub owner_fee: Permill,
 }
 
 /// Describes a simple exchanges which does not allow advanced configurations such as slippage.
@@ -130,7 +136,7 @@ pub trait SimpleExchange {
 	) -> Result<Self::Balance, DispatchError>;
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, RuntimeDebug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, RuntimeDebug)]
 pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	/// Owner of pool
 	pub owner: AccountId,
@@ -140,8 +146,98 @@ pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	pub lp_token: AssetId,
 	/// Amount of the fee pool charges for the exchange
 	pub fee: Permill,
-	/// Amount of the fee pool charges for the exchange
+	/// Amount of the fee goes to owner of the pool
 	pub owner_fee: Permill,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum SaleState {
+	NotStarted,
+	Ongoing,
+	Ended,
+}
+
+#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Copy, Clone, PartialEq, Eq, TypeInfo)]
+pub struct Sale<BlockNumber> {
+	/// Block at which the sale start.
+	pub start: BlockNumber,
+	/// Block at which the sale stop.
+	pub end: BlockNumber,
+	/// Initial weight of the base asset of the current pair.
+	pub initial_weight: Permill,
+	/// Final weight of the base asset of the current pair.
+	pub final_weight: Permill,
+}
+
+impl<BlockNumber: TryInto<u64> + Ord + Copy + Saturating + SafeAdd + SafeSub> Sale<BlockNumber> {
+	// TODO unit test
+	pub fn current_weights(
+		&self,
+		current_block: BlockNumber,
+	) -> Result<(Permill, Permill), DispatchError> {
+		/* NOTE(hussein-aitlahcen): currently only linear
+
+		Linearly decrease the base asset initial_weight to final_weight.
+		Quote asset weight is simple 1-base_asset_weight
+
+			  Assuming final_weight < initial_weight
+			  current_weight = initial_weight - (current - start) / (end - start) * (initial_weight - final_weight)
+							 = initial_weight - normalized_current / sale_duration * weight_range
+							 = initial_weight - point_in_sale * weight_range
+		   */
+		let normalized_current_block = current_block.safe_sub(&self.start)?;
+		let point_in_sale = Permill::from_rational(
+			normalized_current_block.try_into().map_err(|_| ArithmeticError::Overflow)?,
+			self.duration().try_into().map_err(|_| ArithmeticError::Overflow)?,
+		);
+		let weight_range = self
+			.initial_weight
+			.checked_sub(&self.final_weight)
+			.ok_or(ArithmeticError::Underflow)?;
+		let current_base_weight = self
+			.initial_weight
+			.checked_sub(
+				&point_in_sale.checked_mul(&weight_range).ok_or(ArithmeticError::Overflow)?,
+			)
+			.ok_or(ArithmeticError::Underflow)?;
+		let current_quote_weight = Permill::one()
+			.checked_sub(&current_base_weight)
+			.ok_or(ArithmeticError::Underflow)?;
+		Ok((current_base_weight, current_quote_weight))
+	}
+}
+
+impl<BlockNumber: Copy + Saturating> Sale<BlockNumber> {
+	pub fn duration(&self) -> BlockNumber {
+		// NOTE(hussein-aitlahcen): end > start as previously checked by PoolIsValid.
+		self.end.saturating_sub(self.start)
+	}
+}
+
+impl<BlockNumber: Ord> Sale<BlockNumber> {
+	pub fn state(&self, current_block: BlockNumber) -> SaleState {
+		if current_block < self.start {
+			SaleState::NotStarted
+		} else if current_block >= self.end {
+			SaleState::Ended
+		} else {
+			SaleState::Ongoing
+		}
+	}
+}
+
+#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Copy, Clone, PartialEq, Eq, TypeInfo)]
+pub struct LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber> {
+	/// Owner of the pool
+	pub owner: AccountId,
+	/// Asset pair of the pool along their weight.
+	/// Base asset is the project token.
+	/// Quote asset is the collateral token.
+	pub pair: CurrencyPair<AssetId>,
+	/// Sale period of the LBP.
+	pub sale: Sale<BlockNumber>,
+	/// Trading fees.
+	pub fee: Permill,
 }
 
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]

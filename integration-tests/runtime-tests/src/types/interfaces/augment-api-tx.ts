@@ -1,12 +1,12 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiSell, ComposableTraitsDefiTake, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVaultVaultConfig, ComposableTraitsVestingVestingSchedule, CumulusPrimitivesParachainInherentParachainInherentData, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, FrameSupportScheduleMaybeHashed, PalletAssetsRegistryForeignMetadata, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyConviction, PalletDemocracyVoteAccountVote, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletLiquidationsLiquidationStrategyConfiguration, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, XcmVersionedMultiAsset } from '@composable/types/interfaces/crowdloanRewards';
+import type { CommonMosaicRemoteAssetId, ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiCurrencyPair, ComposableTraitsDefiSell, ComposableTraitsDefiTake, ComposableTraitsLendingCreateInput, ComposableTraitsLendingUpdateInput, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVaultVaultConfig, ComposableTraitsVestingVestingSchedule, CumulusPrimitivesParachainInherentParachainInherentData, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, FrameSupportScheduleMaybeHashed, PalletAssetsRegistryForeignMetadata, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyConviction, PalletDemocracyVoteAccountVote, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletLiquidationsLiquidationStrategyConfiguration, PalletLiquidityBootstrappingPool, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, XcmVersionedMultiAsset } from '@composable/types/interfaces/crowdloanRewards';
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Data } from '@polkadot/types';
 import type { Bytes, Compact, Option, U8aFixed, Vec, WrapperKeepOpaque, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
-import type { AccountId32, Call, H256, MultiAddress, Perbill, Percent } from '@polkadot/types/interfaces/runtime';
+import type { AccountId32, Call, H256, MultiAddress, Perbill, Percent, Permill } from '@polkadot/types/interfaces/runtime';
 import type { PalletMultisigTimepoint, SpRuntimeHeader, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/submittable' {
@@ -95,7 +95,7 @@ declare module '@polkadot/api-base/types/submittable' {
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
     assetsRegistry: {
-      approveAssetsMappingCandidate: AugmentedSubmittable<(localAssetId: u128 | AnyNumber | Uint8Array, foreignAssetId: ComposableTraitsAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsAssetsXcmAssetLocation]>;
+      approveAssetsMappingCandidate: AugmentedSubmittable<(localAssetId: u128 | AnyNumber | Uint8Array, foreignAssetId: u128 | AnyNumber | Uint8Array, location: ComposableTraitsAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array, decimals: u8 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, ComposableTraitsAssetsXcmAssetLocation, u8]>;
       setForeignAdmin: AugmentedSubmittable<(foreignAdmin: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32]>;
       setLocalAdmin: AugmentedSubmittable<(localAdmin: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32]>;
       setMetadata: AugmentedSubmittable<(localAssetId: u128 | AnyNumber | Uint8Array, metadata: PalletAssetsRegistryForeignMetadata | { decimals?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, PalletAssetsRegistryForeignMetadata]>;
@@ -219,7 +219,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * Emits a `NewBond`.
        * Possibily Emits a `OfferCompleted`.
        **/
-      bond: AugmentedSubmittable<(offerId: u64 | AnyNumber | Uint8Array, nbOfBonds: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, u128, bool]>;
+      bond: AugmentedSubmittable<(offerId: u128 | AnyNumber | Uint8Array, nbOfBonds: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, bool]>;
       /**
        * Cancel a running offer. Blocking further bond but not cancelling the
        * currently vested rewards. The `stake` put by the creator is refunded.
@@ -227,7 +227,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits a `OfferCancelled`.
        **/
-      cancel: AugmentedSubmittable<(offerId: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
+      cancel: AugmentedSubmittable<(offerId: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128]>;
       /**
        * Create a new offer. So later can `bond` it.
        * 
@@ -299,6 +299,57 @@ declare module '@polkadot/api-base/types/submittable' {
        * Set the list of invulnerable (fixed) collators.
        **/
       setInvulnerables: AugmentedSubmittable<(updated: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Vec<AccountId32>]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    constantProductDex: {
+      /**
+       * Add liquidity to a constant_product pool.
+       * 
+       * Emits `LiquidityAdded` event when successful.
+       **/
+      addLiquidity: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, baseAmount: u128 | AnyNumber | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minMintAmount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, u128, bool]>;
+      /**
+       * Execute a buy order on a pool.
+       * 
+       * The `base_amount` always represent the base asset amount (A/B => A).
+       * 
+       * Emits `Swapped` event when successful.
+       **/
+      buy: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, bool]>;
+      /**
+       * Create a new pool.
+       * 
+       * Emits `PoolCreated` even when successful.
+       **/
+      create: AugmentedSubmittable<(pair: ComposableTraitsDefiCurrencyPair | { base?: any; quote?: any } | string | Uint8Array, fee: Permill | AnyNumber | Uint8Array, ownerFee: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiCurrencyPair, Permill, Permill]>;
+      /**
+       * Remove liquidity from constant_product pool.
+       * 
+       * Emits `LiquidityRemoved` event when successful.
+       **/
+      removeLiquidity: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, lpAmount: u128 | AnyNumber | Uint8Array, minBaseAmount: u128 | AnyNumber | Uint8Array, minQuoteAmount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, u128]>;
+      /**
+       * Execute a sell order on a pool.
+       * 
+       * The `base_amount` always represent the base asset amount (A/B => A).
+       * 
+       * Emits `Swapped` event when successful.
+       **/
+      sell: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, bool]>;
+      /**
+       * Execute a specific swap operation.
+       * 
+       * Buy operation if the pair is the original pool pair (A/B).
+       * Sell operation if the pair is the original pool pair swapped (B/A).
+       * 
+       * The `quote_amount` is always the quote asset amount (A/B => B), (B/A => A).
+       * 
+       * Emits `Swapped` event when successful.
+       **/
+      swap: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, pair: ComposableTraitsDefiCurrencyPair | { base?: any; quote?: any } | string | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsDefiCurrencyPair, u128, u128, bool]>;
       /**
        * Generic tx
        **/
@@ -536,11 +587,15 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       initialize: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
       /**
+       * Initialize the pallet at the given transaction block.
+       **/
+      initializeAt: AugmentedSubmittable<(at: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
+      /**
        * Populate pallet by adding more rewards.
        * Can be called multiple times. Idempotent.
        * Can only be called before `initialize`.
        **/
-      populate: AugmentedSubmittable<(rewards: Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]>> | ([PalletCrowdloanRewardsModelsRemoteAccount | { RelayChain: any } | { Ethereum: any } | string | Uint8Array, u128 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array])[]) => SubmittableExtrinsic<ApiType>, [Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]>>]>;
+      populate: AugmentedSubmittable<(rewards: Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u64]>> | ([PalletCrowdloanRewardsModelsRemoteAccount | { RelayChain: any } | { Ethereum: any } | string | Uint8Array, u128 | AnyNumber | Uint8Array, u64 | AnyNumber | Uint8Array])[]) => SubmittableExtrinsic<ApiType>, [Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u64]>>]>;
       /**
        * Generic tx
        **/
@@ -1329,8 +1384,114 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+    lending: {
+      /**
+       * Borrow asset against deposited collateral.
+       * - `origin` : Sender of this extrinsic. (Also the user who wants to borrow from market.)
+       * - `market_id` : Market index from which user wants to borrow.
+       * - `amount_to_borrow` : Amount which user wants to borrow.
+       **/
+      borrow: AugmentedSubmittable<(marketId: u32 | AnyNumber | Uint8Array, amountToBorrow: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u128]>;
+      /**
+       * Create a new lending market.
+       * - `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause
+       * borrow operations.
+       * - `input`   : Borrow & deposits of assets, persentages.
+       * 
+       * `origin` irreversibly pays `T::OracleMarketCreationStake`.
+       **/
+      createMarket: AugmentedSubmittable<(input: ComposableTraitsLendingCreateInput | { updatable?: any; currencyPair?: any; reservedFactor?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsLendingCreateInput]>;
+      /**
+       * Deposit collateral to market.
+       * - `origin` : Sender of this extrinsic.
+       * - `market` : Market index to which collateral will be deposited.
+       * - `amount` : Amount of collateral to be deposited.
+       **/
+      depositCollateral: AugmentedSubmittable<(marketId: u32 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u128]>;
+      /**
+       * Check if borrow for `borrower` account is required to be liquidated, initiate
+       * liquidation.
+       * - `origin` : Sender of this extrinsic.
+       * - `market_id` : Market index from which `borrower` has taken borrow.
+       **/
+      liquidate: AugmentedSubmittable<(marketId: u32 | AnyNumber | Uint8Array, borrowers: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, Vec<AccountId32>]>;
+      /**
+       * Repay borrow for beneficiary account.
+       * - `origin` : Sender of this extrinsic. (Also the user who repays beneficiary's borrow.)
+       * - `market_id` : Market index to which user wants to repay borrow.
+       * - `beneficiary` : AccountId which has borrowed asset. (This can be same or different
+       * than
+       * origin).
+       * - `repay_amount` : Amount which user wants to borrow.
+       **/
+      repayBorrow: AugmentedSubmittable<(marketId: u32 | AnyNumber | Uint8Array, beneficiary: AccountId32 | string | Uint8Array, repayAmount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, AccountId32, u128]>;
+      /**
+       * owner must be very careful calling this
+       **/
+      updateMarket: AugmentedSubmittable<(marketId: u32 | AnyNumber | Uint8Array, input: ComposableTraitsLendingUpdateInput | { collateralFactor?: any; underCollaterizedWarnPercent?: any; liquidators?: any; interestRateModel?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, ComposableTraitsLendingUpdateInput]>;
+      /**
+       * Withdraw collateral from market.
+       * - `origin` : Sender of this extrinsic.
+       * - `market_id` : Market index from which collateral will be withdraw.
+       * - `amount` : Amount of collateral to be withdrawed.
+       **/
+      withdrawCollateral: AugmentedSubmittable<(marketId: u32 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u128]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
     liquidations: {
-      addLiqudationStrategy: AugmentedSubmittable<(configuraiton: PalletLiquidationsLiquidationStrategyConfiguration | { DutchAuction: any } | { UniswapV2: any } | { XcmDex: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletLiquidationsLiquidationStrategyConfiguration]>;
+      addLiquidationStrategy: AugmentedSubmittable<(configuraiton: PalletLiquidationsLiquidationStrategyConfiguration | { DutchAuction: any } | { UniswapV2: any } | { XcmDex: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletLiquidationsLiquidationStrategyConfiguration]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    liquidityBootstrapping: {
+      /**
+       * Add liquidity to an LBP pool.
+       * 
+       * Only possible before the sale started.
+       * 
+       * Emits `LiquidityAdded` event when successful.
+       **/
+      addLiquidity: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, baseAmount: u128 | AnyNumber | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, bool]>;
+      /**
+       * Execute a buy order on a pool.
+       * 
+       * Emits `Swapped` event when successful.
+       **/
+      buy: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, bool]>;
+      /**
+       * Create a new pool.
+       * 
+       * Emits `PoolCreated` event when successful.
+       **/
+      create: AugmentedSubmittable<(pool: PalletLiquidityBootstrappingPool | { owner?: any; pair?: any; sale?: any; fee?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletLiquidityBootstrappingPool]>;
+      /**
+       * Withdraw the remaining liquidity and destroy the pool.
+       * 
+       * Emits `PoolDeleted` event when successful.
+       **/
+      removeLiquidity: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128]>;
+      /**
+       * Execute a sell order on a pool.
+       * 
+       * Emits `Swapped` event when successful.
+       **/
+      sell: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, bool]>;
+      /**
+       * Execute a specific swap operation.
+       * 
+       * Buy operation if the pair is the original pool pair (A/B).
+       * Sell operation if the pair is the original pool pair swapped (B/A).
+       * 
+       * The `quote_amount` is always the quote asset amount (A/B => B), (B/A => A).
+       * 
+       * Emits `Swapped` event when successful.
+       **/
+      swap: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, pair: ComposableTraitsDefiCurrencyPair | { base?: any; quote?: any } | string | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsDefiCurrencyPair, u128, u128, bool]>;
       /**
        * Generic tx
        **/
@@ -1350,7 +1511,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Reclaim period is not reset if not all the funds are moved; menaing that the clock
        * remains ticking for the relayer to pick up the rest of the transaction.
        **/
-      acceptTransfer: AugmentedSubmittable<(from: AccountId32 | string | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32, u128, u128]>;
+      acceptTransfer: AugmentedSubmittable<(from: AccountId32 | string | Uint8Array, networkId: u32 | AnyNumber | Uint8Array, remoteAssetId: CommonMosaicRemoteAssetId | { EthereumTokenAddress: any } | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32, u32, CommonMosaicRemoteAssetId, u128]>;
       /**
        * Claims user funds from the `OutgoingTransactions`, in case that the relayer has not
        * picked them up.
@@ -1364,7 +1525,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * Burns funds waiting in incoming_transactions that are still unclaimed. May be used by
        * the relayer in case of finality issues on the other side of the bridge.
        **/
-      rescindTimelockedMint: AugmentedSubmittable<(assetId: u128 | AnyNumber | Uint8Array, account: AccountId32 | string | Uint8Array, untrustedAmount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, AccountId32, u128]>;
+      rescindTimelockedMint: AugmentedSubmittable<(networkId: u32 | AnyNumber | Uint8Array, remoteAssetId: CommonMosaicRemoteAssetId | { EthereumTokenAddress: any } | string | Uint8Array, account: AccountId32 | string | Uint8Array, untrustedAmount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, CommonMosaicRemoteAssetId, AccountId32, u128]>;
       /**
        * Rotates the Relayer Account
        * 
@@ -1372,7 +1533,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Only callable by the current relayer.
        * - TTL must be sufficiently long.
        **/
-      rotateRelayer: AugmentedSubmittable<(updated: AccountId32 | string | Uint8Array, ttl: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32, u32]>;
+      rotateRelayer: AugmentedSubmittable<(updated: AccountId32 | string | Uint8Array, validatedTtl: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32, u32]>;
       /**
        * Sets the relayer budget for _incoming_ transactions for specific assets. Does not reset
        * the current `penalty`.
@@ -1384,7 +1545,7 @@ declare module '@polkadot/api-base/types/submittable' {
       /**
        * Sets supported networks and maximum transaction sizes accepted by the relayer.
        **/
-      setNetwork: AugmentedSubmittable<(networkId: u32 | AnyNumber | Uint8Array, networkInfo: PalletMosaicNetworkInfo | { enabled?: any; maxTransferSize?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletMosaicNetworkInfo]>;
+      setNetwork: AugmentedSubmittable<(networkId: u32 | AnyNumber | Uint8Array, networkInfo: PalletMosaicNetworkInfo | { enabled?: any; minTransferSize?: any; maxTransferSize?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletMosaicNetworkInfo]>;
       /**
        * Sets the current relayer configuration. This is enacted immediately and invalidates
        * inflight, incoming transactions from the previous relayer. Budgets remain in place
@@ -1396,7 +1557,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * Mints new tokens into the pallet's wallet, ready for the user to be picked up after
        * `lock_time` blocks have expired.
        **/
-      timelockedMint: AugmentedSubmittable<(assetId: u128 | AnyNumber | Uint8Array, to: AccountId32 | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, lockTime: u32 | AnyNumber | Uint8Array, id: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, AccountId32, u128, u32, H256]>;
+      timelockedMint: AugmentedSubmittable<(networkId: u32 | AnyNumber | Uint8Array, remoteAssetId: CommonMosaicRemoteAssetId | { EthereumTokenAddress: any } | string | Uint8Array, to: AccountId32 | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, lockTime: u32 | AnyNumber | Uint8Array, id: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, CommonMosaicRemoteAssetId, AccountId32, u128, u32, H256]>;
       /**
        * Creates an outgoing transaction request, locking the funds locally until picked up by
        * the relayer.
@@ -1410,6 +1571,17 @@ declare module '@polkadot/api-base/types/submittable' {
        * an error.
        **/
       transferTo: AugmentedSubmittable<(networkId: u32 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, address: U8aFixed | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u128, U8aFixed, u128, bool]>;
+      /**
+       * Update a network asset mapping.
+       * 
+       * The caller must be `ControlOrigin`.
+       * 
+       * Possibly emits one of:
+       * - `AssetMappingCreated`
+       * - `AssetMappingDeleted`
+       * - `AssetMappingUpdated`
+       **/
+      updateAssetMapping: AugmentedSubmittable<(assetId: u128 | AnyNumber | Uint8Array, networkId: u32 | AnyNumber | Uint8Array, remoteAssetId: Option<CommonMosaicRemoteAssetId> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u32, Option<CommonMosaicRemoteAssetId>]>;
       /**
        * Generic tx
        **/
@@ -1871,6 +2043,50 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+    stableSwapDex: {
+      /**
+       * Add liquidity to a stable-swap pool.
+       * 
+       * Emits `LiquidityAdded` event when successful.
+       **/
+      addLiquidity: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, baseAmount: u128 | AnyNumber | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minMintAmount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, u128, bool]>;
+      /**
+       * Execute a buy order on pool.
+       * 
+       * Emits `Swapped` event when successful.
+       **/
+      buy: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, bool]>;
+      /**
+       * Create a new pool.
+       * 
+       * Emits `PoolCreated` event when successful.
+       **/
+      create: AugmentedSubmittable<(pair: ComposableTraitsDefiCurrencyPair | { base?: any; quote?: any } | string | Uint8Array, amplificationCoefficient: u16 | AnyNumber | Uint8Array, fee: Permill | AnyNumber | Uint8Array, ownerFee: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiCurrencyPair, u16, Permill, Permill]>;
+      /**
+       * Remove liquidity from stable-swap pool.
+       * 
+       * Emits `LiquidityRemoved` event when successful.
+       **/
+      removeLiquidity: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, lpAmount: u128 | AnyNumber | Uint8Array, minBaseAmount: u128 | AnyNumber | Uint8Array, minQuoteAmount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, u128]>;
+      /**
+       * Execute a sell order on pool.
+       * 
+       * Emits `Swapped` event when successful.
+       **/
+      sell: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, bool]>;
+      /**
+       * Execute a specific swap operation.
+       * 
+       * The `quote_amount` is always the quote asset amount (A/B => B), (B/A => A).
+       * 
+       * Emits `Swapped` event when successful.
+       **/
+      swap: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, pair: ComposableTraitsDefiCurrencyPair | { base?: any; quote?: any } | string | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsDefiCurrencyPair, u128, u128, bool]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
     sudo: {
       /**
        * Authenticates the current sudo key and sets the given AccountId (`new`) as the new sudo
@@ -1956,11 +2172,6 @@ declare module '@polkadot/api-base/types/submittable' {
       remark: AugmentedSubmittable<(remark: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes]>;
       /**
        * Make some on-chain remark and emit event.
-       * 
-       * # <weight>
-       * - `O(b)` where b is the length of the remark.
-       * - 1 event.
-       * # </weight>
        **/
       remarkWithEvent: AugmentedSubmittable<(remark: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes]>;
       /**
@@ -2315,14 +2526,22 @@ declare module '@polkadot/api-base/types/submittable' {
     vesting: {
       claim: AugmentedSubmittable<(asset: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128]>;
       claimFor: AugmentedSubmittable<(dest: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, asset: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [MultiAddress, u128]>;
-      updateVestingSchedules: AugmentedSubmittable<(who: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, asset: u128 | AnyNumber | Uint8Array, vestingSchedules: Vec<ComposableTraitsVestingVestingSchedule> | (ComposableTraitsVestingVestingSchedule | { start?: any; period?: any; periodCount?: any; perPeriod?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [MultiAddress, u128, Vec<ComposableTraitsVestingVestingSchedule>]>;
-      vestedTransfer: AugmentedSubmittable<(dest: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, asset: u128 | AnyNumber | Uint8Array, schedule: ComposableTraitsVestingVestingSchedule | { start?: any; period?: any; periodCount?: any; perPeriod?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [MultiAddress, u128, ComposableTraitsVestingVestingSchedule]>;
+      updateVestingSchedules: AugmentedSubmittable<(who: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, asset: u128 | AnyNumber | Uint8Array, vestingSchedules: Vec<ComposableTraitsVestingVestingSchedule> | (ComposableTraitsVestingVestingSchedule | { window?: any; periodCount?: any; perPeriod?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [MultiAddress, u128, Vec<ComposableTraitsVestingVestingSchedule>]>;
+      vestedTransfer: AugmentedSubmittable<(from: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, beneficiary: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array, asset: u128 | AnyNumber | Uint8Array, schedule: ComposableTraitsVestingVestingSchedule | { window?: any; periodCount?: any; perPeriod?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [MultiAddress, MultiAddress, u128, ComposableTraitsVestingVestingSchedule]>;
       /**
        * Generic tx
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
     xcmpQueue: {
+      /**
+       * Resumes all XCM executions for the XCMP queue.
+       * 
+       * Note that this function doesn't change the status of the in/out bound channels.
+       * 
+       * - `origin`: Must pass `ControllerOrigin`.
+       **/
+      resumeXcmExecution: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
       /**
        * Services a single overweight XCM.
        * 
@@ -2339,6 +2558,59 @@ declare module '@polkadot/api-base/types/submittable' {
        * - `OverweightServiced`: On success.
        **/
       serviceOverweight: AugmentedSubmittable<(index: u64 | AnyNumber | Uint8Array, weightLimit: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, u64]>;
+      /**
+       * Suspends all XCM executions for the XCMP queue, regardless of the sender's origin.
+       * 
+       * - `origin`: Must pass `ControllerOrigin`.
+       **/
+      suspendXcmExecution: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
+      /**
+       * Overwrites the number of pages of messages which must be in the queue after which we drop any further
+       * messages from the channel.
+       * 
+       * - `origin`: Must pass `Root`.
+       * - `new`: Desired value for `QueueConfigData.drop_threshold`
+       **/
+      updateDropThreshold: AugmentedSubmittable<(updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      /**
+       * Overwrites the number of pages of messages which the queue must be reduced to before it signals that
+       * message sending may recommence after it has been suspended.
+       * 
+       * - `origin`: Must pass `Root`.
+       * - `new`: Desired value for `QueueConfigData.resume_threshold`
+       **/
+      updateResumeThreshold: AugmentedSubmittable<(updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      /**
+       * Overwrites the number of pages of messages which must be in the queue for the other side to be told to
+       * suspend their sending.
+       * 
+       * - `origin`: Must pass `Root`.
+       * - `new`: Desired value for `QueueConfigData.suspend_value`
+       **/
+      updateSuspendThreshold: AugmentedSubmittable<(updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      /**
+       * Overwrites the amount of remaining weight under which we stop processing messages.
+       * 
+       * - `origin`: Must pass `Root`.
+       * - `new`: Desired value for `QueueConfigData.threshold_weight`
+       **/
+      updateThresholdWeight: AugmentedSubmittable<(updated: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
+      /**
+       * Overwrites the speed to which the available weight approaches the maximum weight.
+       * A lower number results in a faster progression. A value of 1 makes the entire weight available initially.
+       * 
+       * - `origin`: Must pass `Root`.
+       * - `new`: Desired value for `QueueConfigData.weight_restrict_decay`.
+       **/
+      updateWeightRestrictDecay: AugmentedSubmittable<(updated: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
+      /**
+       * Overwrite the maximum amount of weight any individual message may consume.
+       * Messages above this weight go into the overweight queue and may only be serviced explicitly.
+       * 
+       * - `origin`: Must pass `Root`.
+       * - `new`: Desired value for `QueueConfigData.xcmp_max_individual_weight`.
+       **/
+      updateXcmpMaxIndividualWeight: AugmentedSubmittable<(updated: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
       /**
        * Generic tx
        **/

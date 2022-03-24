@@ -29,6 +29,9 @@
     },
     "tx": {
       "enabled": true,
+      "setup": {
+        "provideAssets": true
+      },
       "populate_success": {
         "enabled": true,
         "populate1": true
@@ -40,6 +43,10 @@
       "associate_success": {
         "enabled": true,
         "associate1": true
+      },
+      "claim_success": {
+        "enabled": true,
+        "claim1": true
       }
     },
     "rpc": {

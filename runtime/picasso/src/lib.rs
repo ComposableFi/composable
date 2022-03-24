@@ -16,17 +16,20 @@
 #![recursion_limit = "256"]
 
 // Make the WASM binary available.
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "wasm-builder"))]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
 mod xcmp;
+pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
+
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO,
-	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MultiExistentialDeposits,
+	NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
+	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
-use orml_traits::parameter_type_with_key;
+
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -101,9 +104,9 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	spec_version: 1000,
-	impl_version: 8,
+	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 3,
+	transaction_version: 1,
 	state_version: 0,
 };
 
@@ -203,6 +206,16 @@ parameter_types! {
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
 }
 
+impl assets_registry::Config for Runtime {
+	type Event = Event;
+	type LocalAssetId = CurrencyId;
+	type ForeignAssetId = CurrencyId;
+	type Location = composable_traits::assets::XcmAssetLocation;
+	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
+	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
+	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
+}
+
 impl assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
 	type GenerateCurrencyId = CurrencyFactory;
@@ -235,12 +248,12 @@ impl aura::Config for Runtime {
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
-	pub BasicDeposit: Balance = 8 * CurrencyId::PICA.unit::<Balance>();
-	pub FieldDeposit: Balance = 256 * CurrencyId::PICA.milli::<Balance>();
+	pub BasicDeposit: Balance = 8 * CurrencyId::unit::<Balance>();
+	pub FieldDeposit: Balance = 256 * CurrencyId::milli::<Balance>();
 	pub const MaxAdditionalFields: u32 = 32;
 	pub const MaxRegistrars: u32 = 8;
 	pub const MaxSubAccounts: u32 = 32;
-	pub SubAccountDeposit: Balance = 2 * CurrencyId::PICA.unit::<Balance>();
+	pub SubAccountDeposit: Balance = 2 * CurrencyId::unit::<Balance>();
 }
 
 impl identity::Config for Runtime {
@@ -259,8 +272,8 @@ impl identity::Config for Runtime {
 }
 
 parameter_types! {
-	pub DepositBase: u64 = CurrencyId::PICA.unit();
-	pub DepositFactor: u64 = 32 * CurrencyId::PICA.milli::<u64>();
+	pub DepositBase: u64 = CurrencyId::unit();
+	pub DepositFactor: u64 = 32 * CurrencyId::milli::<u64>();
 	pub const MaxSignatories: u16 = 5;
 }
 
@@ -290,9 +303,6 @@ impl timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	/// Minimum amount an account has to hold to stay in state.
-	// minimum account balance is given as 0.1 PICA ~ 100 CurrencyId::PICA.milli()
-	pub ExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
 	/// Max locks that can be placed on an account. Capped for storage
 	/// concerns.
 	pub const MaxLocks: u32 = 50;
@@ -307,14 +317,14 @@ impl balances::Config for Runtime {
 	/// The ubiquitous event type.
 	type Event = Event;
 	type DustRemoval = Treasury;
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = NativeExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
-	pub TransactionByteFee: Balance = CurrencyId::PICA.milli();
+	pub TransactionByteFee: Balance = CurrencyId::milli();
 
 	// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
@@ -335,7 +345,7 @@ pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		let p = CurrencyId::PICA.milli::<Balance>();
+		let p = CurrencyId::milli::<Balance>();
 		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 		smallvec::smallvec![WeightToFeeCoefficient {
 			degree: 1,
@@ -363,7 +373,7 @@ impl sudo::Config for Runtime {
 
 parameter_types! {
 	/// Deposit required to get an index.
-	pub IndexDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
+	pub IndexDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 }
 
 impl indices::Config for Runtime {
@@ -515,12 +525,6 @@ impl collator_selection::Config for Runtime {
 	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
 }
 
-parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		Zero::zero()
-	};
-}
-
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
@@ -540,7 +544,7 @@ impl orml_tokens::Config for Runtime {
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
 	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
-	type ExistentialDeposits = ExistentialDeposits;
+	type ExistentialDeposits = MultiExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
@@ -550,8 +554,8 @@ parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
 	/// Percentage of proposal that most be bonded by the proposer.
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub ProposalBondMinimum: Balance = 5000 * CurrencyId::PICA.unit::<Balance>();
-	pub ProposalBondMaximum: Balance = 10000 * CurrencyId::PICA.unit::<Balance>();
+	pub ProposalBondMinimum: Balance = 5000 * CurrencyId::unit::<Balance>();
+	pub ProposalBondMaximum: Balance = 10000 * CurrencyId::unit::<Balance>();
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
 
@@ -629,7 +633,7 @@ impl scheduler::Config for Runtime {
 
 parameter_types! {
 	pub const PreimageMaxSize: u32 = 4096 * 1024;
-	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
 }
 
 impl preimage::Config for Runtime {
@@ -654,14 +658,14 @@ parameter_types! {
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
 
-	pub MinimumDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
+	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 
 	// Note that Kusama uses 10 millis, however KSM is significantly more expensive
 	// https://github.com/paritytech/polkadot/blob/dc784f9b47e4681897cfd477b4f0760330875a87/runtime/kusama/src/lib.rs#L237
 	// so we increase it by a factor 10. This might still be on the low side.
-	pub PreimageByteDeposit: Balance = CurrencyId::PICA.milli::<u128>() * 100_u128;
+	pub PreimageByteDeposit: Balance = CurrencyId::milli::<u128>() * 100_u128;
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -736,7 +740,7 @@ impl crowdloan_rewards::Config for Runtime {
 
 parameter_types! {
 	  pub const MaxVestingSchedule: u32 = 128;
-	  pub MinVestedTransfer: u64 = CurrencyId::PICA.milli::<u64>();
+	  pub MinVestedTransfer: u64 = CurrencyId::milli::<u64>();
 }
 
 impl vesting::Config for Runtime {
@@ -744,7 +748,7 @@ impl vesting::Config for Runtime {
 	type Event = Event;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = system::EnsureSigned<AccountId>;
+	type VestedTransferOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
@@ -752,13 +756,13 @@ impl vesting::Config for Runtime {
 
 parameter_types! {
 	  pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
-	  pub MinReward: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
-	  pub Stake: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+	  pub MinReward: Balance = 10 * CurrencyId::unit::<Balance>();
+	  pub Stake: Balance = 10 * CurrencyId::unit::<Balance>();
 }
 
 impl bonded_finance::Config for Runtime {
-	type AdminOrigin = EnsureRoot<AccountId>;
-	type BondOfferId = u64;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type BondOfferId = BondOfferId;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type Currency = Assets;
 	type Event = Event;
@@ -821,6 +825,8 @@ construct_runtime!(
 		RelayerXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
+		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 44,
+		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 45,
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
 		CurrencyFactory: currency_factory::{Pallet, Storage, Event<T>} = 53,
@@ -829,6 +835,7 @@ construct_runtime!(
 		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 57,
 		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 58,
+		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 59,
 	}
 );
 
@@ -1020,7 +1027,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	#[cfg(feature = "sim-node")]
+
 	impl simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime {
 		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
 			use sp_runtime::{
@@ -1039,7 +1046,7 @@ impl_runtime_apis! {
 				system::CheckWeight::<Runtime>::new(),
 				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 			);
-			let signature = MultiSignature::from(sr25519::Signature([0u8;64]));
+			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
 			let address = AccountIdLookup::unlookup(signer);
 			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
 			ext.encode()

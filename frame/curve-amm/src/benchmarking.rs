@@ -22,6 +22,57 @@ benchmarks! {
 	  let protocol_fee = Permill::from_percent(1);
   } : _(RawOrigin::Signed(owner), pair, amplification_factor, fee, protocol_fee)
 
+  add_liquidity {
+	  let usdc: T::AssetId = 100.into();
+	  let usdt: T::AssetId = 101.into();
+	  let owner = whitelisted_caller();
+	  let pool_id = StableSwap::<T>::do_create_pool(
+		  &owner,
+		  CurrencyPair::new(usdc, usdt),
+		  1000_u16,
+		  Permill::from_percent(1),
+		  Permill::from_percent(1),
+	  ) .expect("impossible; qed;");
+	  let unit = 1_000_000_000_000;
+	  // 100_000_000 USDC , 100_000_000 USDT
+	  let initial_usdc: T::Balance = (100_000_000_u128 * unit).into();
+	  let initial_usdt: T::Balance = (100_000_000_u128 * unit).into();
+	  // Mint the tokens
+	  assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
+	  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
+  }: _(RawOrigin::Signed(owner), pool_id, initial_usdc, initial_usdt, 0.into(), false)
+
+  remove_liquidity {
+	  let usdc: T::AssetId = 100.into();
+	  let usdt: T::AssetId = 101.into();
+	  let owner = whitelisted_caller();
+	  let pool_id = StableSwap::<T>::do_create_pool(
+		  &owner,
+		  CurrencyPair::new(usdc, usdt),
+		  1000_u16,
+		  Permill::from_percent(1),
+		  Permill::from_percent(1),
+	  ) .expect("impossible; qed;");
+	  let unit = 1_000_000_000_000;
+	  // 100_000_000 USDC , 100_000_000 USDT
+	  let initial_usdc: T::Balance = (100_000_000_u128 * unit).into();
+	  let initial_usdt: T::Balance = (100_000_000_u128 * unit).into();
+	  // Mint the tokens
+	  assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
+	  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
+	  // Add the liquidity
+	  assert_ok!(<StableSwap<T> as Amm>::add_liquidity(
+			  &owner,
+			  pool_id,
+			  initial_usdc,
+			  initial_usdt,
+			  0.into(),
+			  false
+	  ));
+	  let pool_info = StableSwap::<T>::get_pool(pool_id).expect("impossible; qed;");
+	  let lp_amount = T::Assets::balance(pool_info.lp_token, &owner);
+  }: _(RawOrigin::Signed(owner), pool_id, lp_amount, (0_u128).into(), (0_u128).into())
+
  buy {
 	  let usdc: T::AssetId = 100.into();
 	  let usdt: T::AssetId = 101.into();

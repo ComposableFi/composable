@@ -10,13 +10,15 @@ The Composable project consists of a blockchain, various utility applications, d
 
 When building the chain, we use different names to target different [relay chain](https://wiki.polkadot.network/docs/learn-architecture):
 
-| Chain and Runtime | Deployed to | Relayer Native Currency |
-|-------------------|-------------|-------------------------|
-| Dali              | Westend     | WND                     |
-| Dali              | Rococo      |                         |
-| Dali              | Chachacha   |                         |
-| Picasso           | Kusama      | KSM                     |
-| Composable        | Polkadot    | DOT                     |
+| Chain and Runtime | Deployed to       | Relayer Native Currency | Link                                                                                                      | Docs                                          |
+| ----------------- | ----------------- | ----------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Dali              | Devnet(own Relay) | KSM                     | https://polkadot.js.org/apps/?rpc=wss://dali.devnets.composablefinance.ninja/parachain/alice#/explorer    | https://dali.devnets.composablefinance.ninja/ |
+| Picasso           | Devnet(own Relay) | KSM                     | https://polkadot.js.org/apps/?rpc=wss://picasso.devnets.composablefinance.ninja/parachain/alice#/explorer |
+| Dali              | Westend           | WND(DOT)                     |
+| Dali              | Rococo            |                         | https://polkadot.js.org/apps/?rpc=wss://rpc.composablefinance.ninja                                       |
+| Dali              | Chachacha         |                         |
+| Picasso           | Kusama            | KSM                     | https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/explorer                    |
+| Composable        | Polkadot          | DOT                     |
 
 The runtimes can be found under the `runtime` directory.
 The chain specs are located in `node/src/chain_spec`.
