@@ -1,5 +1,3 @@
-// use std::assert_matches::assert_matches;
-
 pub use crate::{
 	mock::{
 		accounts::{AccountId, ALICE},
@@ -67,29 +65,20 @@ fn deposit_supported_collateral_succeeds() {
 }
 
 #[test]
-fn create_market_succeeds() {
+fn create_first_market_succeeds() {
 	ExtBuilder::default().build().execute_with(|| {
-		let market = 1u32.into();
+		let old_count = ClearingHouse::market_count();
+
 		let asset = DOT;
 		let vamm_params = VammParams {};
-		assert_ok!(ClearingHouse::create_market(Origin::signed(ALICE), market, asset, vamm_params));
-		// let event =
-		// 	Event::from(System::events().last().expect("Expected at least one event").event);
-		// assert_matches!(event, Event::MarketCreated { market: _, asset });
-		System::assert_last_event(Event::MarketCreated { market, asset }.into());
-	})
-}
+		assert_ok!(ClearingHouse::create_market(Origin::signed(ALICE), asset, vamm_params));
 
-#[test]
-fn create_existing_market_id_fails() {
-	ExtBuilder::default().build().execute_with(|| {
-		let market = 1u32.into();
-		assert_ok!(ClearingHouse::create_market(Origin::signed(ALICE), market, DOT, VammParams {}));
+		// Ensure first market id is 0 (we know its type since it's defined in the mock runtime)
+		System::assert_last_event(Event::MarketCreated { market: 0u64, asset }.into());
+		assert!(Markets::<Runtime>::contains_key(0u64));
 
-		assert_noop!(
-			ClearingHouse::create_market(Origin::signed(ALICE), market, PICA, VammParams {}),
-			Error::<Runtime>::MarketAlreadyExists
-		);
+		// Ensure market count is increased by 1
+		assert_eq!(ClearingHouse::market_count(), old_count + 1);
 	})
 }
 
@@ -98,9 +87,8 @@ fn fails_to_create_market_for_unsupported_asset_by_oracle() {
 	ExtBuilder { oracle_supports_assets: false, ..Default::default() }
 		.build()
 		.execute_with(|| {
-			let market = 1u32.into();
 			assert_noop!(
-				ClearingHouse::create_market(Origin::signed(ALICE), market, DOT, VammParams {}),
+				ClearingHouse::create_market(Origin::signed(ALICE), DOT, VammParams {}),
 				Error::<Runtime>::NoPriceFeedForAsset
 			);
 		})

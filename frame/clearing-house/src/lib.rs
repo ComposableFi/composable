@@ -61,7 +61,7 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
-	use std::fmt::Debug;
+	use std::{fmt::Debug, ops::AddAssign};
 
 	use crate::weights::WeightInfo;
 	use codec::FullCodec;
@@ -75,7 +75,7 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::{
-		traits::{AccountIdConversion, CheckedAdd, Zero},
+		traits::{AccountIdConversion, CheckedAdd, One, Zero},
 		ArithmeticError, FixedPointNumber,
 	};
 
@@ -98,7 +98,15 @@ pub mod pallet {
 		/// Weight information for this pallet's extrinsics
 		type WeightInfo: WeightInfo;
 		/// The market ID type for this pallet.
-		type MarketId: FullCodec + MaxEncodedLen + TypeInfo + Clone + PartialEq + Debug;
+		type MarketId: AddAssign
+			+ One
+			+ Default
+			+ FullCodec
+			+ MaxEncodedLen
+			+ TypeInfo
+			+ Clone
+			+ PartialEq
+			+ Debug;
 		/// Signed decimal fixed point number.
 		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
 		/// Timestamp to be used for funding rate updates
@@ -210,6 +218,16 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn market_count)]
+	#[allow(clippy::disallowed_types)]
+	/// The number of markets, also used to generate the next market identifier.
+	///
+	/// # Note
+	///
+	/// Frozen markets do not decrement the counter.
+	pub type MarketCount<T: Config> = StorageValue<_, T::MarketId, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn get_market)]
 	/// Maps [MarketId](Config::MarketId) to the corresponding virtual [Market] specs
 	pub type Markets<T: Config> = StorageMap<_, Blake2_128Concat, T::MarketId, MarketOf<T>>;
@@ -275,8 +293,6 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// User attempted to deposit unsupported asset type as collateral in its margin account
 		UnsupportedCollateralType,
-		/// Attempted to create a new market with an existing market's id
-		MarketAlreadyExists,
 		/// Attempted to create a new market but the underlying asset is not supported by the
 		/// oracle
 		NoPriceFeedForAsset,
@@ -332,12 +348,10 @@ pub mod pallet {
 		/// Creates a new perpetuals market with the desired parameters.
 		///
 		/// ## Parameters
-		/// - `market`: Id for the new derivatives market
 		/// - `asset`: Asset id of the underlying for the derivatives market
 		/// - `vamm_params`: Parameters for creating and initializing the vAMM for price discovery
 		///
 		/// ## Assumptions or Requirements
-		/// * The `market` must be a new id not contained in [`Markets`]
 		/// * The underlying must have a stable price feed via another pallet
 		///
 		/// ## Emits
@@ -347,19 +361,18 @@ pub mod pallet {
 		/// Adds an entry to the [`Markets`] storage map.
 		///
 		/// ## Errors
-		/// - [`MarketAlreadyExists`](Error::<T>::MarketAlreadyExists)
+		/// - [`NoPriceFeedForAsset`](Error::<T>::NoPriceFeedForAsset)
 		///
 		/// # Weight/Runtime
 		/// `O(1)`
 		#[pallet::weight(<T as Config>::WeightInfo::create_market())]
 		pub fn create_market(
 			origin: OriginFor<T>,
-			market: T::MarketId,
 			asset: AssetIdOf<T>,
 			vamm_params: VammParamsOf<T>,
 		) -> DispatchResult {
 			let acc = ensure_signed(origin)?;
-			Self::do_create_market(&acc, market, asset, vamm_params)?;
+			Self::do_create_market(&acc, asset, vamm_params)?;
 			Ok(())
 		}
 	}
@@ -403,11 +416,9 @@ pub mod pallet {
 		#[allow(unused_variables)]
 		fn do_create_market(
 			account: &T::AccountId,
-			market: T::MarketId,
 			asset: AssetIdOf<T>,
 			vamm_params: VammParamsOf<T>,
 		) -> DispatchResult {
-			ensure!(!Markets::<T>::contains_key(market), Error::<T>::MarketAlreadyExists);
 			unimplemented!()
 		}
 	}
