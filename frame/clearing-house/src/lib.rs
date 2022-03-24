@@ -371,8 +371,8 @@ pub mod pallet {
 			asset: AssetIdOf<T>,
 			vamm_params: VammParamsOf<T>,
 		) -> DispatchResult {
-			let acc = ensure_signed(origin)?;
-			let market = Self::do_create_market(&acc, asset, vamm_params)?;
+			ensure_signed(origin)?;
+			let market = Self::do_create_market(asset, vamm_params)?;
 			Self::deposit_event(Event::MarketCreated { market, asset });
 			Ok(())
 		}
@@ -415,7 +415,6 @@ pub mod pallet {
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
 		fn do_create_market(
-			account: &T::AccountId,
 			asset: AssetIdOf<T>,
 			vamm_params: VammParamsOf<T>,
 		) -> Result<T::MarketId, DispatchError> {
