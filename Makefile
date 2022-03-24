@@ -76,6 +76,16 @@ push:
 push-release:
 	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 
+containerize-faucet-server:
+	@docker build -f docker/faucet-server.dockerfile \
+		-t ${REPO}/faucet-server:${COMMIT_SHA} \
+		-t ${REPO}/faucet-server:latest  \
+		.
+
+push-faucet-server:
+	@docker push ${REPO}/faucet-server:${COMMIT_SHA}
+	@docker push ${REPO}/faucet-server:latest
+
 containerize-composable-sandbox:
 	@docker build -f docker/composable-sandbox.dockerfile \
 		-t ${REPO}/composable-sandbox:${COMMIT_SHA} \
