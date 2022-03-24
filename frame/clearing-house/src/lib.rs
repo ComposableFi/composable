@@ -425,10 +425,10 @@ pub mod pallet {
 				let market_id = id.clone();
 				let market = Market {
 					asset_id: asset,
-					cum_funding_rate: T::Decimal::default(),
-					funding_rate_ts: T::Timestamp::default(),
-					periodicity: T::Duration::default(),
-					vamm_id: VammIdOf::<T>::default(),
+					cum_funding_rate: Default::default(),
+					funding_rate_ts: Default::default(),
+					periodicity: Default::default(),
+					vamm_id: Default::default(),
 				};
 				Markets::<T>::insert(&market_id, market);
 

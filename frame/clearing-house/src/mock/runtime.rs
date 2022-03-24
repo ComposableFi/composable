@@ -3,8 +3,7 @@ use crate::{
 	mock::{
 		accounts::{AccountId, ALICE},
 		assets::{AssetId, PICA},
-		oracle as mock_oracle,
-		vamm::Vamm,
+		oracle as mock_oracle, vamm as mock_vamm,
 	},
 };
 use composable_traits::defi::DeFiComposableConfig;
@@ -43,6 +42,7 @@ frame_support::construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Assets: pallet_assets::{Pallet, Call, Storage},
+		Vamm: mock_vamm::{Pallet, Storage},
 		Oracle: mock_oracle::{Pallet, Storage},
 		ClearingHouse: clearing_house::{Pallet, Call, Storage, Event<T>},
 	}
@@ -169,6 +169,14 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                            		VAMM
+// ----------------------------------------------------------------------------------------------------
+
+impl mock_vamm::Config for Runtime {
+	type VammId = u64;
 }
 
 // ----------------------------------------------------------------------------------------------------
