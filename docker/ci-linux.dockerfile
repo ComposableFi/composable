@@ -1,7 +1,14 @@
 FROM paritytech/ci-linux:production
 
-RUN rustup toolchain uninstall nightly-2021-11-08 && \
+ARG OLD_NIGHTLY_VERSION=nightly-2021-11-08
+ARG NIGHTLY_VERSION=nightly-2021-11-29
+
+RUN rustup toolchain uninstall ${OLD_NIGHTLY_VERSION} && \
     rustup toolchain uninstall nightly && \
-    rustup toolchain install nightly-2021-11-29 && \
-    rustup target install wasm32-unknown-unknown --toolchain nightly-2021-11-29 && \
-    ln -s "${RUSTUP_HOME}/toolchains/nightly-2021-11-29-x86_64-unknown-linux-gnu" "${RUSTUP_HOME}/toolchains/nightly-x86_64-unknown-linux-gnu"
+    rustup toolchain install ${NIGHTLY_VERSION} && \
+    rustup component add clippy && \
+    rustup component add clippy --toolchain ${NIGHTLY_VERSION} && \
+    rustup component add rustfmt && \
+    rustup component add rustfmt --toolchain ${NIGHTLY_VERSION} && \
+    rustup target install wasm32-unknown-unknown --toolchain ${NIGHTLY_VERSION} && \
+    ln -s "${RUSTUP_HOME}/toolchains/${NIGHTLY_VERSION}-x86_64-unknown-linux-gnu" "${RUSTUP_HOME}/toolchains/nightly-x86_64-unknown-linux-gnu"
