@@ -16,11 +16,11 @@ use composable_traits::{
 	math::safe_multiply_by_rational,
 };
 use frame_support::{
-	assert_err, assert_ok,
+	assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
 use proptest::prelude::*;
-use sp_runtime::{traits::IntegerSquareRoot, Permill, TokenError};
+use sp_runtime::{traits::IntegerSquareRoot, Permill};
 
 fn create_pool(
 	base_asset: AssetId,
@@ -289,7 +289,7 @@ fn high_slippage() {
 }
 
 //
-// - test protocol_fee and owner_fee
+// - test lp_fee and owner_fee
 #[test]
 fn fees() {
 	new_test_ext().execute_with(|| {
@@ -297,12 +297,11 @@ fn fees() {
 		let initial_btc = 1_00_u128 * unit;
 		let btc_price = 45_000_u128;
 		let initial_usdt = initial_btc * btc_price;
-		let fee = Permill::from_float(0.05);
-		let protocol_fee = Permill::from_float(0.01);
-		let total_fee = fee + protocol_fee;
-		let pool_id = create_pool(BTC, USDT, initial_btc, initial_usdt, fee, protocol_fee);
+		let lp_fee = Permill::from_float(0.05);
+		let owner_fee = Permill::from_float(0.01);
+		let pool_id = create_pool(BTC, USDT, initial_btc, initial_usdt, lp_fee, owner_fee);
 		let bob_usdt = 45_000_u128 * unit;
-		let quote_usdt = bob_usdt - total_fee.mul_floor(bob_usdt);
+		let quote_usdt = bob_usdt - lp_fee.mul_floor(bob_usdt);
 		let expected_btc_value = <Pablo as Amm>::get_exchange_value(pool_id, USDT, quote_usdt)
 			.expect("get_exchange_value failed");
 		// Mint the tokens
@@ -310,7 +309,19 @@ fn fees() {
 
 		assert_ok!(<Pablo as Amm>::sell(&BOB, pool_id, USDT, bob_usdt, false));
 		let btc_balance = Tokens::balance(BTC, &BOB);
+        sp_std::if_std! {
+            println!("expected_btc_value {:?}, btc_balance {:?}", expected_btc_value, btc_balance);
+        }
 		assert_ok!(default_acceptable_computation_error(expected_btc_value, btc_balance));
+        // lp_fee is taken from quote 
+		// from lp_fee 1 % (as per owner_fee) goes to pool owner (ALICE)
+        let alice_usdt_bal = Tokens::balance(USDT, &ALICE);
+        let expected_alice_usdt_bal = owner_fee.mul_floor(lp_fee.mul_floor(bob_usdt));
+        sp_std::if_std! {
+            println!("alice_usdt_bal {:?}, expected_alice_usdt_bal {:?}", alice_usdt_bal, expected_alice_usdt_bal);
+        }
+		assert_ok!(default_acceptable_computation_error(expected_alice_usdt_bal, alice_usdt_bal));
+
 	});
 }
 

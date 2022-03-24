@@ -110,8 +110,8 @@ pub struct StableSwapPoolInfo<AccountId, AssetId> {
 	pub amplification_coefficient: u16,
 	/// Amount of the fee pool charges for the exchange, this goes to liquidity provider.
 	pub fee: Permill,
-	/// Amount of the fee pool charges for the exchange
-	pub protocol_fee: Permill,
+	/// Amount of the fee goes to owner of the pool
+	pub owner_fee: Permill,
 }
 
 /// Describes a simple exchanges which does not allow advanced configurations such as slippage.
@@ -146,7 +146,7 @@ pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	pub lp_token: AssetId,
 	/// Amount of the fee pool charges for the exchange
 	pub fee: Permill,
-	/// Amount of the fee pool charges for the exchange
+	/// Amount of the fee goes to owner of the pool
 	pub owner_fee: Permill,
 }
 

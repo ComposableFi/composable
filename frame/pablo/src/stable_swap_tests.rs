@@ -16,7 +16,7 @@ use frame_support::{
 	traits::fungibles::{Inspect, Mutate},
 };
 use proptest::prelude::*;
-use sp_runtime::{Permill, TokenError};
+use sp_runtime::Permill;
 
 fn create_stable_swap_pool(
 	base_asset: AssetId,
@@ -25,14 +25,14 @@ fn create_stable_swap_pool(
 	quote_amount: Balance,
 	amplification_factor: u16,
 	lp_fee: Permill,
-	protocol_fee: Permill,
+	owner_fee: Permill,
 ) -> PoolId {
 	let pool_init_config = PoolInitConfiguration::StableSwap {
 		owner: ALICE,
 		pair: CurrencyPair::new(base_asset, quote_asset),
 		amplification_coefficient: amplification_factor,
 		fee: lp_fee,
-		protocol_fee,
+		owner_fee,
 	};
 	System::set_block_number(1);
 	let actual_pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -69,7 +69,7 @@ fn test_amp_zero_pool_creation_failure() {
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 0_u16,
 			fee: Permill::zero(),
-			protocol_fee: Permill::zero(),
+			owner_fee: Permill::zero(),
 		};
 		assert_noop!(
 			Pablo::do_create_pool(pool_init_config),
@@ -86,7 +86,7 @@ fn test_dex_demo() {
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 100_u16,
 			fee: Permill::zero(),
-			protocol_fee: Permill::zero(),
+			owner_fee: Permill::zero(),
 		};
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 		let pool = Pablo::pools(pool_id).expect("pool not found");
@@ -165,7 +165,7 @@ fn add_remove_lp() {
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 10_u16,
 			fee: Permill::zero(),
-			protocol_fee: Permill::zero(),
+			owner_fee: Permill::zero(),
 		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
@@ -268,7 +268,7 @@ fn add_lp_with_min_mint_amount() {
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 10_u16,
 			fee: Permill::zero(),
-			protocol_fee: Permill::zero(),
+			owner_fee: Permill::zero(),
 		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
@@ -305,7 +305,7 @@ fn remove_lp_failure() {
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 10_u16,
 			fee: Permill::zero(),
-			protocol_fee: Permill::zero(),
+			owner_fee: Permill::zero(),
 		};
 		let bob_usdc = 1000 * unit;
 		let bob_usdt = 1000 * unit;
@@ -327,16 +327,16 @@ fn exchange_failure() {
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 10_u16,
 			fee: Permill::zero(),
-			protocol_fee: Permill::zero(),
+			owner_fee: Permill::zero(),
 		};
 		common_exchange_failure(pool_init_config, initial_usdc, initial_usdt, exchange_base_amount);
 	});
 }
 
 //
-// - test lp fees
+// - test lp_fees and owner_fee
 #[test]
-fn lp_fee() {
+fn fees() {
 	new_test_ext().execute_with(|| {
 		let precision = 100;
 		let epsilon = 1;
@@ -344,6 +344,7 @@ fn lp_fee() {
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
 		let initial_usdc = 1_000_000_000_000_u128 * unit;
 		let lp_fee = Permill::from_float(0.05);
+		let owner_fee = Permill::from_float(0.01); // 10% of lp fees goes to pool owner
 		let pool_id = create_stable_swap_pool(
 			USDC,
 			USDT,
@@ -351,44 +352,7 @@ fn lp_fee() {
 			initial_usdt,
 			100_u16,
 			lp_fee,
-			Permill::zero(),
-		);
-		let bob_usdt = 1000 * unit;
-		// Mint the tokens
-		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-
-		assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, bob_usdt, false));
-		let usdc_balance = Tokens::balance(USDC, &BOB);
-		// received usdc should bob_usdt - lp_fee
-		assert_ok!(acceptable_computation_error(
-			usdc_balance,
-			bob_usdt - lp_fee.mul_ceil(bob_usdt),
-			precision,
-			epsilon
-		));
-	});
-}
-
-//
-// - test protocol fees
-#[test]
-fn protocol_fee() {
-	new_test_ext().execute_with(|| {
-		let precision = 100;
-		let epsilon = 1;
-		let unit = 1_000_000_000_000_u128;
-		let initial_usdt = 1_000_000_000_000_u128 * unit;
-		let initial_usdc = 1_000_000_000_000_u128 * unit;
-		let lp_fee = Permill::from_float(0.05);
-		let protocol_fee = Permill::from_float(0.01); // 10% of lp fees goes to pool owner
-		let pool_id = create_stable_swap_pool(
-			USDC,
-			USDT,
-			initial_usdc,
-			initial_usdt,
-			100_u16,
-			lp_fee,
-			protocol_fee,
+			owner_fee,
 		);
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
@@ -402,11 +366,11 @@ fn protocol_fee() {
 			precision,
 			epsilon
 		));
-		// from lp_fee 1 % (as per protocol_fee) goes to pool owner (ALICE)
+		// from lp_fee 1 % (as per owner_fee) goes to pool owner (ALICE)
 		let alice_usdc_bal = Tokens::balance(USDC, &ALICE);
 		assert_ok!(acceptable_computation_error(
 			alice_usdc_bal,
-			protocol_fee.mul_floor(lp_fee.mul_floor(bob_usdt)),
+			owner_fee.mul_floor(lp_fee.mul_floor(bob_usdt)),
 			precision,
 			epsilon
 		));

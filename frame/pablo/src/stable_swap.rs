@@ -27,12 +27,12 @@ impl<T: Config> StableSwap<T> {
 		pair: CurrencyPair<T::AssetId>,
 		amp_coeff: u16,
 		fee: Permill,
-		protocol_fee: Permill,
+		owner_fee: Permill,
 	) -> Result<T::PoolId, DispatchError> {
 		ensure!(amp_coeff > 0, Error::<T>::AmpFactorMustBeGreaterThanZero);
 		ensure!(pair.base != pair.quote, Error::<T>::InvalidPair);
 
-		let total_fees = fee.checked_add(&protocol_fee).ok_or(ArithmeticError::Overflow)?;
+		let total_fees = fee.checked_add(&owner_fee).ok_or(ArithmeticError::Overflow)?;
 		ensure!(total_fees < Permill::one(), Error::<T>::InvalidFees);
 
 		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS)?;
@@ -49,7 +49,7 @@ impl<T: Config> StableSwap<T> {
 						lp_token,
 						amplification_coefficient: amp_coeff,
 						fee,
-						protocol_fee,
+						owner_fee,
 					}),
 				);
 				*pool_count = pool_id.safe_add(&T::PoolId::one())?;
@@ -116,19 +116,19 @@ impl<T: Config> StableSwap<T> {
 			Self::get_exchange_value(pool, pool_account, pool.pair.base, quote_amount)?;
 		let base_amount_u: u128 = T::Convert::convert(base_amount);
 
-		let (lp_fee, protocol_fee) = if apply_fees {
+		let (lp_fee, owner_fee) = if apply_fees {
 			let lp_fee = pool.fee.mul_floor(base_amount_u);
-			// protocol_fee is computed based on lp_fee
-			let protocol_fee = pool.protocol_fee.mul_floor(lp_fee);
+			// owner_fee is computed based on lp_fee
+			let owner_fee = pool.owner_fee.mul_floor(lp_fee);
 			let lp_fee = T::Convert::convert(lp_fee);
-			let protocol_fee = T::Convert::convert(protocol_fee);
-			(lp_fee, protocol_fee)
+			let owner_fee = T::Convert::convert(owner_fee);
+			(lp_fee, owner_fee)
 		} else {
 			(T::Balance::zero(), T::Balance::zero())
 		};
 
 		let base_amount_excluding_fees = base_amount.safe_sub(&lp_fee)?;
-		Ok((base_amount_excluding_fees, quote_amount, lp_fee, protocol_fee))
+		Ok((base_amount_excluding_fees, quote_amount, lp_fee, owner_fee))
 	}
 
 	pub fn add_liquidity(
@@ -155,7 +155,7 @@ impl<T: Config> StableSwap<T> {
 		let d1 = Self::get_invariant(new_base_amount, new_quote_amount, amp)?;
 		ensure!(d1 > d0, Error::<T>::AssetAmountMustBePositiveNumber);
 
-		let (mint_amount, base_protocol_fee, quote_protocol_fee) = if lp_issued > zero {
+		let (mint_amount, base_owner_fee, quote_owner_fee) = if lp_issued > zero {
 			// Deposit x + withdraw y sould charge about same
 			// fees as a swap. Otherwise, one could exchange w/o paying fees.
 			// And this formula leads to exactly that equality
@@ -180,8 +180,8 @@ impl<T: Config> StableSwap<T> {
 
 			let base_fee = fee.mul_floor(T::Convert::convert(base_difference));
 			let quote_fee = fee.mul_floor(T::Convert::convert(quote_difference));
-			let base_protocol_fee = T::Convert::convert(pool.protocol_fee.mul_floor(base_fee));
-			let quote_protocol_fee = T::Convert::convert(pool.protocol_fee.mul_floor(quote_fee));
+			let base_owner_fee = T::Convert::convert(pool.owner_fee.mul_floor(base_fee));
+			let quote_owner_fee = T::Convert::convert(pool.owner_fee.mul_floor(quote_fee));
 			let base_fee = T::Convert::convert(base_fee);
 			let quote_fee = T::Convert::convert(quote_fee);
 			let new_base_balance = new_base_amount.safe_sub(&base_fee)?;
@@ -193,7 +193,7 @@ impl<T: Config> StableSwap<T> {
 				T::Convert::convert(d2.safe_sub(&d0)?),
 				T::Convert::convert(d0),
 			)?);
-			(mint_amount, base_protocol_fee, quote_protocol_fee)
+			(mint_amount, base_owner_fee, quote_owner_fee)
 		} else {
 			(d1, T::Balance::zero(), T::Balance::zero())
 		};
@@ -207,14 +207,14 @@ impl<T: Config> StableSwap<T> {
 			pool.pair.base,
 			&pool_account,
 			&pool.owner,
-			base_protocol_fee,
+			base_owner_fee,
 			keep_alive,
 		)?;
 		T::Assets::transfer(
 			pool.pair.quote,
 			&pool_account,
 			&pool.owner,
-			quote_protocol_fee,
+			quote_owner_fee,
 			keep_alive,
 		)?;
 		T::Assets::mint_into(pool.lp_token, who, mint_amount)?;
