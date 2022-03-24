@@ -17,6 +17,28 @@ use sp_runtime::{
 
 use self::math::*;
 
+/// Representation for the collateral ratio of a borrower. It's possible for the borrow value to be
+/// zero when calculating this, which would result in a divide by zero error; hence the
+/// [`NoBorrowValue`][CollateralRatio::NoBorrowValue] variant.
+pub enum CollateralRatio<T> {
+	/// The current `collateral:debt` ratio for the borrower.
+	Ratio(T),
+	/// The total value of the borrow assets owned by the borrower is `0`, either because the
+	/// account hasn't borrowed yet *or* the borrow asset has no value.
+	NoBorrowValue,
+}
+
+/// Representation for the utilization ratio of a market. It's possible for the borrow value to be
+/// zero when calculating this, which would result in a divide by zero error; hence the
+/// [`NoBorrowValue`][UtilizationRatio::NoBorrowValue] variant.
+pub enum UtilizationRatio<T> {
+	/// The current utilization ratio for the market.
+	Ratio(T),
+	/// The total value of the borrow assets owned by the borrower is `0`, either because the
+	/// account hasn't borrowed yet *or* the borrow asset has no value.
+	NoBorrowValue,
+}
+
 pub type CollateralLpAmountOf<T> = <T as DeFiEngine>::Balance;
 
 pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
@@ -128,12 +150,13 @@ pub enum RepayStrategy<T> {
 	/// NOTE: Must be *less than* the total owing amount + the accrued interest.
 	PartialAmount(T),
 	// REVIEW: Perhaps add an "interest only" strategy?
+	// InterestOnly,
 }
 
 /// The total amount of debt for an account on a market, if any.
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
 pub enum TotalDebtWithInterest<T> {
-	/// The account has some amount of debt on the market.
+	/// The account has some amount of debt on the market. Guarranteed to be non-zero.
 	Amount(T),
 	/// The account has not borrowed from the market yet, or has paid off their debts. There is no
 	/// interest or principal left to repay.
@@ -307,11 +330,14 @@ pub trait Lending: DeFiEngine {
 		repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
 	) -> Result<BorrowAmountOf<Self>, DispatchError>;
 
-	/// The total amount borrowed from the given market, not including interest.
-	fn total_borrows(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
+	/// The total amount borrowed from the given market, excluding interest.
+	///
+	/// Can also be though of as the total amount of borrow asset currently lent out by the market.
+	fn total_borrowed_from_market_excluding_interest(
+		market_id: &Self::MarketId,
+	) -> Result<Self::Balance, DispatchError>;
 
-	/// Floored down to zero.
-	// REVIEW: ^ why?
+	/// Total amount of interest in the market between all borrowers.
 	fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
 
 	/// ````python
@@ -322,12 +348,14 @@ pub trait Lending: DeFiEngine {
 	/// ```
 	fn accrue_interest(market_id: &Self::MarketId, now: Timestamp) -> Result<(), DispatchError>;
 
-	/// current borrowable balance of market
-	fn total_cash(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError>;
+	/// The total amount of borrow asset available to be borrowed in the market.
+	fn total_available_to_be_borrowed(
+		market_id: &Self::MarketId,
+	) -> Result<Self::Balance, DispatchError>;
 
 	/// utilization_ratio = total_borrows / (total_cash + total_borrows).
 	/// utilization ratio is 0 when there are no borrows.
-	fn calc_utilization_ratio(
+	fn calculate_utilization_ratio(
 		cash: Self::Balance,
 		borrows: Self::Balance,
 	) -> Result<Percent, DispatchError>;
@@ -338,7 +366,7 @@ pub trait Lending: DeFiEngine {
 	/// Could also be thought of as the amount of *borrow asset* the account must repay to be
 	/// totally debt free in the specified market.
 	///
-	/// Calculate account's borrow balance using the borrow index at the start of block time.
+	/// Calculates the account's borrow balance using the borrow index at the start of block time.
 	///
 	/// ```python
 	/// new_borrow_balance = principal * (market_borrow_index / borrower_borrow_index)

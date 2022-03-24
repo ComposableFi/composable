@@ -465,6 +465,6 @@ pub fn process_block(n: BlockNumber) {
 /// should be for the specified block.
 pub fn next_block(n: u64) {
 	System::set_block_number(n);
-	Lending::on_initialize(n);
 	Timestamp::set_timestamp(MILLISECS_PER_BLOCK * n);
+	Lending::on_initialize(n);
 }

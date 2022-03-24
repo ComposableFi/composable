@@ -2,10 +2,13 @@ use composable_support::validation::Validated;
 use composable_traits::{
 	currency::MathBalance,
 	defi::{validate::MoreThanOne, LiftedFixedBalance, MoreThanOneFixedU128},
+	lending::CollateralRatio,
 	math::SafeArithmetic,
 };
-use frame_benchmarking::Zero;
-use sp_runtime::{traits::Saturating, ArithmeticError, FixedPointNumber, FixedU128, Percent};
+use sp_runtime::{
+	traits::{Saturating, Zero},
+	ArithmeticError, FixedPointNumber, FixedU128, Percent,
+};
 
 /// Information about a borrower, including the respective total values of their collateral and
 /// borrow assets, and the collateral_factor and under_collateralized_warn_percent for the market.
@@ -74,25 +77,23 @@ impl BorrowerData {
 	#[inline(always)]
 	pub fn should_liquidate(&self) -> Result<bool, ArithmeticError> {
 		match self.current_collateral_ratio()? {
-			CurrentCollateralRatio::Ratio(ratio) => Ok(ratio < *self.collateral_factor),
+			CollateralRatio::Ratio(ratio) => Ok(ratio < *self.collateral_factor),
 			// No liquidation necessary if the borrower's borrow asset balance has no value
-			CurrentCollateralRatio::NoBorrowValue => Ok(false),
+			CollateralRatio::NoBorrowValue => Ok(false),
 		}
 	}
 
 	/// The current collateral to debt ratio for the borrower. See [`CurrentCollateralRatio`] for
 	/// more information.
 	#[inline(always)]
-	pub fn current_collateral_ratio(
-		&self,
-	) -> Result<CurrentCollateralRatio<FixedU128>, ArithmeticError> {
+	pub fn current_collateral_ratio(&self) -> Result<CollateralRatio<FixedU128>, ArithmeticError> {
 		if self.borrow_balance_total_value.is_zero() {
-			Ok(CurrentCollateralRatio::NoBorrowValue)
+			Ok(CollateralRatio::NoBorrowValue)
 		} else {
 			// REVIEW: What errors can occur with safe_div?
 			let ratio =
 				self.collateral_balance_total_value.safe_div(&self.borrow_balance_total_value)?;
-			Ok(CurrentCollateralRatio::Ratio(ratio))
+			Ok(CollateralRatio::Ratio(ratio))
 		}
 	}
 
@@ -135,23 +136,11 @@ impl BorrowerData {
 	#[inline(always)]
 	pub fn should_warn(&self) -> Result<bool, ArithmeticError> {
 		match self.current_collateral_ratio()? {
-			CurrentCollateralRatio::Ratio(ratio) =>
-				Ok(ratio < self.minimum_safe_collateral_factor()?),
+			CollateralRatio::Ratio(ratio) => Ok(ratio < self.minimum_safe_collateral_factor()?),
 			// No liquidation necessary if the borrower's borrow asset balance has no value
-			CurrentCollateralRatio::NoBorrowValue => Ok(false),
+			CollateralRatio::NoBorrowValue => Ok(false),
 		}
 	}
 }
 
 // TODO: Tests?
-
-/// Representation for the collateral ratio of a borrower. It's possible for the borrow value to be
-/// zero when calculating this, which would result in a divide by zero error, hence the
-/// [`NoBorrowValue`][CurrentCollateralRatio::NoBorrowValue] variant.
-pub enum CurrentCollateralRatio<T> {
-	/// The current collateral:debt ratio for the borrower.
-	Ratio(T),
-	/// The total value of the borrow assets owned by the borrower is `0`, either because the
-	/// account hasn't borrowed yet *or* the borrow asset has no value.
-	NoBorrowValue,
-}
