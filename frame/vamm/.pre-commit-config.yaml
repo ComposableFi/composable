@@ -13,6 +13,12 @@ repos:
     language: system
     pass_filenames: false
     stages: [commit, push]
+  - id: test
+    name: cargo-test
+    entry: cargo +nightly test --all-features --tests -p pallet-vamm
+    language: system
+    pass_filenames: false
+    stages: [push]
   - id: clippy
     name: cargo-clippy
     entry: cargo +nightly clippy --all-targets --no-deps -p pallet-vamm
