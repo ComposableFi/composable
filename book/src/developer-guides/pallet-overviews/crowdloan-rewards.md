@@ -1,6 +1,6 @@
 # Crowdloan Rewards
 
-## Overveiw
+## Overview
 
 The Crowdloan Rewards pallet allows contributors to claim their rewards.
 
@@ -77,7 +77,7 @@ Must come from an [`AdminOrigin`](#adminorigin)
 Can be called multible times. Idempotent.
 
 Can only be called before the pallet has been initialized with a call to 
-`initailize` or `initailize_at`
+[`initailize`](#initailize) or [`initailize_at`](#initailize-at)
 
 ### Associate
 
