@@ -133,8 +133,8 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		} else {
 			(ai, 0)
 		};
-		let bi = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
-		let bo = T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
+		let bi = T::Convert::convert(T::Assets::balance(pair.quote, pool_account));
+		let bo = T::Convert::convert(T::Assets::balance(pair.base, pool_account));
 
 		let base_amount = compute_out_given_in(wi, wo, bi, bo, ai_minus_fees)?;
 
