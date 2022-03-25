@@ -73,7 +73,9 @@ pub mod pallet {
 		AccountId32, ArithmeticError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
 		PerThing, Percent, RuntimeDebug,
 	};
-	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec, vec::Vec};
+	#[cfg(not(feature = "std"))]
+	use sp_std::vec::Vec;
+	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec};
 
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";

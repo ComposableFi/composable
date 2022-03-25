@@ -54,6 +54,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 
 	use sp_runtime::generic::DigestItem;
+	use tendermint_proto::Protobuf;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -197,6 +198,11 @@ pub mod pallet {
 	pub type PacketCommitment<T: Config> =
 		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
 
+	#[pallet::storage]
+	/// height => (timestamp, hash)
+	pub type CommitmentRoot<T: Config> =
+		StorageMap<_, Blake2_128Concat, Vec<u8>, (u128, Vec<u8>), ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T> {
@@ -231,6 +237,11 @@ pub mod pallet {
 		fn on_finalize(_n: BlockNumberFor<T>) {
 			let root = Pallet::<T>::extract_ibc_state_root();
 			if let Ok(root) = root {
+				let height = crate::impls::host_height::<T>().unwrap_or_default();
+				let height = ibc::Height::new(0, height);
+				let height = height.encode_vec().unwrap_or_default();
+				let timestamp = T::TimeProvider::now().as_nanos();
+				CommitmentRoot::<T>::insert(height, (timestamp, root.clone()));
 				let log = DigestItem::Consensus(IBC_DIGEST_ID, root);
 				<frame_system::Pallet<T>>::deposit_log(log);
 			}

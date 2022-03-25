@@ -27,7 +27,7 @@ pub struct SendPacketData {
 	pub dest_port_id: Vec<u8>,
 	pub dest_channel_id: Vec<u8>,
 }
-#[derive(codec::Encode, codec::Decode, Clone)]
+#[derive(codec::Encode, codec::Decode, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub struct OffchainPacketType {
 	pub sequence: u64,
 	pub source_port: Vec<u8>,
@@ -85,7 +85,7 @@ impl From<Packet> for OffchainPacketType {
 	}
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Proof {
 	/// Trie proof
@@ -93,7 +93,7 @@ pub struct Proof {
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct IdentifiedChannel {
 	pub channel_id: Vec<u8>,
 	pub port_id: Vec<u8>,
@@ -101,21 +101,21 @@ pub struct IdentifiedChannel {
 	pub channel_end: Vec<u8>,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct IdentifiedClientState {
 	pub client_id: Vec<u8>,
 	/// Protobuf encoded `AnyClientState`
 	pub client_state: Vec<u8>,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct IdentifiedConnection {
 	pub connection_id: Vec<u8>,
 	/// Protobuf encoded `ibc::core::ics03_connection::connection::ConnectionEnd`
 	pub connection_end: Vec<u8>,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryClientStateResponse {
 	/// Protobuf encoded `AnyClientState`
 	pub client_state: Vec<u8>,
@@ -124,13 +124,13 @@ pub struct QueryClientStateResponse {
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryClientStatesResponse {
 	pub client_states: Vec<Vec<u8>>,
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryConsensusStateResponse {
 	pub consensus_state: Vec<u8>,
 	/// Trie proof
@@ -138,7 +138,7 @@ pub struct QueryConsensusStateResponse {
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryConnectionResponse {
 	/// Protobuf encoded `ibc::core::ics03_connection::connection::ConnectionEnd`
 	pub connection: Vec<u8>,
@@ -147,7 +147,7 @@ pub struct QueryConnectionResponse {
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryChannelResponse {
 	/// Protobuf encoded `ibc::core::ics04_channel::connection::ChannelEnd`
 	pub channel: Vec<u8>,
@@ -156,19 +156,19 @@ pub struct QueryChannelResponse {
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryChannelsResponse {
 	pub channels: Vec<IdentifiedChannel>,
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryConnectionsResponse {
 	pub connections: Vec<IdentifiedConnection>,
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryNextSequenceReceiveResponse {
 	pub sequence: u64,
 	/// Trie proof
@@ -176,7 +176,7 @@ pub struct QueryNextSequenceReceiveResponse {
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryPacketCommitmentResponse {
 	pub commitment: Vec<u8>,
 	/// Trie proof
@@ -184,7 +184,7 @@ pub struct QueryPacketCommitmentResponse {
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct PacketState {
 	pub port_id: Vec<u8>,
 	pub channel_id: Vec<u8>,
@@ -192,13 +192,13 @@ pub struct PacketState {
 	pub data: Vec<u8>,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryPacketCommitmentsResponse {
 	pub commitments: Vec<PacketState>,
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryPacketAcknowledgementResponse {
 	pub ack: Vec<u8>,
 	/// Trie proof
@@ -206,13 +206,13 @@ pub struct QueryPacketAcknowledgementResponse {
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryPacketAcknowledgementsResponse {
 	pub acks: Vec<PacketState>,
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryPacketReceiptResponse {
 	pub receipt: bool,
 	/// Trie proof
@@ -220,19 +220,17 @@ pub struct QueryPacketReceiptResponse {
 	pub height: u64,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryDenomTraceResponse {
 	pub trace: Vec<u8>,
 }
 
-#[derive(Clone, codec::Encode, codec::Decode)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryDenomTracesResponse {
 	pub trace: Vec<Vec<u8>>,
 }
 
-#[derive(codec::Encode, codec::Decode)]
+#[derive(codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ConnectionHandshakeProof {
 	/// Protobuf encoded client state

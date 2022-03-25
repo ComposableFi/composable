@@ -81,8 +81,8 @@ pub trait IbcApi<BlockNumber> {
 		seqs: Vec<u64>,
 	) -> Result<Vec<Packet>>;
 	/// Generate proof for given key
-	#[rpc(name = "ibc_generateProof")]
-	fn generate_proof(&self, height: u32, key: Vec<Vec<u8>>) -> Result<Proof>;
+	#[rpc(name = "ibc_queryProof")]
+	fn query_proof(&self, height: u32, key: Vec<Vec<u8>>) -> Result<Proof>;
 
 	/// Query latest height
 	#[rpc(name = "ibc_queryLatestHeight")]
@@ -346,7 +346,7 @@ where
 			.collect()
 	}
 
-	fn generate_proof(&self, height: u32, keys: Vec<Vec<u8>>) -> Result<Proof> {
+	fn query_proof(&self, height: u32, keys: Vec<Vec<u8>>) -> Result<Proof> {
 		let api = self.client.runtime_api();
 		let block_hash = self
 			.client

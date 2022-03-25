@@ -714,7 +714,7 @@ fn client_type_from_bytes<T: Config>(client_type: Vec<u8>) -> Result<ClientType,
 		.map_err(|_| Error::<T>::DecodingError)
 }
 
-fn host_height<T: Config>() -> Result<u64, Error<T>> {
+pub fn host_height<T: Config>() -> Result<u64, Error<T>> {
 	let block_number = format!("{:?}", <frame_system::Pallet<T>>::block_number());
 	let current_height = block_number.parse().map_err(|_| Error::<T>::DecodingError)?;
 	Ok(current_height)
