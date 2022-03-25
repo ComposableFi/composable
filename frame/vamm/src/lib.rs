@@ -1,3 +1,71 @@
+//! # VAMM Pallet
+//!
+//! ## Overview
+//!
+//! ![](http://www.plantuml.com/plantuml/svg/NSqz2W91343XtbFe0TpqLWk2zyXcuyv09XdoWzTNB2oi7b_rraZqh26dIrUIshbSpYrpnWt0yRKSFLjj5Unacgova0susvWMk0a_Ej0Fm46D7PwEWu64qRiUrsOL_roce7xFA-l-wHi0)
+//!
+//! TODO
+//!
+//! ### Terminology
+//!
+//! * **VAAM**: Acronym for Virtual Automated Market Maker. (TODO: expand definition)
+//!
+//! TODO
+//!
+//! ### Goals
+//!
+//! TODO
+//!
+//! ### Actors
+//!
+//! TODO
+//!
+//! (clearing house)
+//!
+//! ### Implementations
+//!
+//! TODO
+//!
+//! ## Interface
+//!
+//! TODO
+//!
+//! ### Extrinsics
+//!
+//! TODO
+//!
+//! not applicable
+//!
+//! ### Implemented Functions
+//!
+//! * **`create()`**
+//!
+//! TODO
+//!
+//! ### Public Functions
+//!
+//! TODO
+//!
+//! ### Public Storage Objects
+//!
+//! TODO
+//!
+//! ## Usage
+//!
+//! TODO
+//!
+//! ### Example
+//!
+//! TODO
+//!
+//! ## Related Modules
+//!
+//! TODO
+//!
+//! (clearing house)
+//!
+//! <!-- Original author: @Cardosaum -->
+
 #[frame_support::pallet]
 pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
