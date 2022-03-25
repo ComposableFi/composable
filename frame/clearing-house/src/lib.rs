@@ -182,32 +182,32 @@ pub mod pallet {
 	//                                           Runtime Storage
 	// ----------------------------------------------------------------------------------------------------
 
+	/// Minimum margin ratio for opening a new position
 	#[pallet::storage]
 	#[pallet::getter(fn get_initial_margin_ratio)]
 	#[allow(clippy::disallowed_types)]
-	/// Minimum margin ratio for opening a new position
 	type InitialMarginRatio<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
 
+	/// Minimum margin ratio, below which liquidations can occur
 	#[pallet::storage]
 	#[pallet::getter(fn get_maintenance_margin_ratio)]
 	#[allow(clippy::disallowed_types)]
-	/// Minimum margin ratio, below which liquidations can occur
 	type MaintenanceMarginRatio<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
 
-	#[pallet::storage]
 	/// Supported collateral asset ids
+	#[pallet::storage]
 	pub type CollateralTypes<T: Config> = StorageMap<_, Twox64Concat, AssetIdOf<T>, ()>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn get_margin)]
 	/// Maps [AccountId](frame_system::Config::AccountId) to its collateral
 	/// [Balance](DeFiComposableConfig::Balance), if set.
+	#[pallet::storage]
+	#[pallet::getter(fn get_margin)]
 	pub type AccountsMargin<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, T::Balance>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn get_position)]
 	/// Maps [AccountId](frame_system::Config::AccountId) and [MarketId](Config::MarketId) to its
 	/// respective [Position](Position), if it exists.
+	#[pallet::storage]
+	#[pallet::getter(fn get_position)]
 	pub type Positions<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -217,19 +217,19 @@ pub mod pallet {
 		PositionOf<T>,
 	>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn market_count)]
-	#[allow(clippy::disallowed_types)]
 	/// The number of markets, also used to generate the next market identifier.
 	///
 	/// # Note
 	///
 	/// Frozen markets do not decrement the counter.
+	#[pallet::storage]
+	#[pallet::getter(fn market_count)]
+	#[allow(clippy::disallowed_types)]
 	pub type MarketCount<T: Config> = StorageValue<_, T::MarketId, ValueQuery>;
 
+	/// Maps [MarketId](Config::MarketId) to the corresponding virtual [Market] specs
 	#[pallet::storage]
 	#[pallet::getter(fn get_market)]
-	/// Maps [MarketId](Config::MarketId) to the corresponding virtual [Market] specs
 	pub type Markets<T: Config> = StorageMap<_, Blake2_128Concat, T::MarketId, MarketOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
