@@ -61,7 +61,7 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
-	use std::{fmt::Debug, ops::AddAssign};
+	use std::fmt::Debug;
 
 	use crate::weights::WeightInfo;
 	use codec::FullCodec;
@@ -98,7 +98,7 @@ pub mod pallet {
 		/// Weight information for this pallet's extrinsics
 		type WeightInfo: WeightInfo;
 		/// The market ID type for this pallet.
-		type MarketId: AddAssign
+		type MarketId: CheckedAdd
 			+ One
 			+ Default
 			+ FullCodec
@@ -432,8 +432,7 @@ pub mod pallet {
 				Markets::<T>::insert(&market_id, market);
 
 				// Change the market count at the end
-				// Should we use checked addition here?
-				*id += One::one();
+				*id = id.checked_add(&One::one()).ok_or(ArithmeticError::Overflow)?;
 				Ok(market_id)
 			})
 		}
