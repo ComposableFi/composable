@@ -427,7 +427,7 @@ pub mod pallet {
 					cum_funding_rate: Default::default(),
 					funding_rate_ts: Default::default(),
 					periodicity: Default::default(),
-					vamm_id: Default::default(),
+					vamm_id: T::VirtualAMM::create(vamm_params)?,
 				};
 				Markets::<T>::insert(&market_id, market);
 

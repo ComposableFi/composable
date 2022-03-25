@@ -25,12 +25,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type VammId: FullCodec
-			+ MaxEncodedLen
-			+ MaybeSerializeDeserialize
-			+ TypeInfo
-			+ Clone
-			+ Default;
+		type VammId: FullCodec + MaxEncodedLen + MaybeSerializeDeserialize + TypeInfo + Clone;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
