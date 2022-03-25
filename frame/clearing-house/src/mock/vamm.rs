@@ -86,5 +86,14 @@ pub mod pallet {
 	impl<T: Config> VirtualAMM for Pallet<T> {
 		type VammId = T::VammId;
 		type VammParams = VammParams;
+
+		#[allow(unused_variables)]
+		fn create(info: Self::VammParams) -> Result<Self::VammId, DispatchError> {
+			if let Some(id) = Self::vamm_id() {
+				Ok(id)
+			} else {
+				Err(Error::<T>::FailedToCreateVamm.into())
+			}
+		}
 	}
 }

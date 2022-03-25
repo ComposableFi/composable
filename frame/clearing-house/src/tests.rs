@@ -2,14 +2,19 @@ pub use crate::{
 	mock::{
 		accounts::{AccountId, ALICE},
 		assets::{AssetId, DOT, PICA, USDC},
-		runtime::{Balance, ClearingHouse, ExtBuilder, Origin, Runtime, System, Tokens},
+		oracle as mock_oracle,
+		runtime::{
+			Balance, ClearingHouse, ExtBuilder, Oracle, Origin, Runtime, System, Tokens, Vamm,
+		},
 		vamm as mock_vamm,
-		vamm::VammParams,
 	},
 	pallet::*,
 };
-use frame_support::{assert_noop, assert_ok};
+use composable_traits::{oracle::Oracle as OracleTrait, vamm::VirtualAMM};
+use frame_support::{assert_err, assert_noop, assert_ok};
 use orml_tokens::Error as TokenError;
+
+type VammParams = mock_vamm::VammParams;
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
@@ -18,7 +23,7 @@ impl Default for ExtBuilder {
 			balances: vec![],
 			collateral_types: vec![USDC],
 			vamm_id: Some(0u64),
-			oracle_supports_assets: true,
+			oracle_asset_support: Some(true),
 		}
 	}
 }
@@ -85,8 +90,35 @@ fn create_first_market_succeeds() {
 }
 
 #[test]
+fn mock_oracle_asset_support_reflects_genesis_config() {
+	let asset_support = Some(false);
+	ExtBuilder { oracle_asset_support: asset_support, ..Default::default() }
+		.build()
+		.execute_with(|| {
+			let is_supported = <Oracle as OracleTrait>::is_supported(DOT);
+			match asset_support {
+				Some(support) => assert_ok!(is_supported, support),
+				None =>
+					assert_err!(is_supported, mock_oracle::Error::<Runtime>::CantCheckAssetSupport),
+			}
+		})
+}
+
+#[test]
+fn mock_vamm_created_id_reflects_genesis_config() {
+	let vamm_id = None;
+	ExtBuilder { vamm_id, ..Default::default() }.build().execute_with(|| {
+		let created = <Vamm as VirtualAMM>::create(VammParams {});
+		match vamm_id {
+			Some(id) => assert_ok!(created, id),
+			None => assert_err!(created, mock_vamm::Error::<Runtime>::FailedToCreateVamm),
+		}
+	})
+}
+
+#[test]
 fn fails_to_create_market_for_unsupported_asset_by_oracle() {
-	ExtBuilder { oracle_supports_assets: false, ..Default::default() }
+	ExtBuilder { oracle_asset_support: Some(false), ..Default::default() }
 		.build()
 		.execute_with(|| {
 			assert_noop!(

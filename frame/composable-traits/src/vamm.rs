@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use codec::{FullCodec, MaxEncodedLen};
+use frame_support::dispatch::DispatchError;
 use scale_info::TypeInfo;
 
 pub trait VirtualAMM {
@@ -10,4 +11,6 @@ pub trait VirtualAMM {
 	/// Parameters for creating and initializing a new vAMM instance. May be used in extrinsic
 	/// signatures
 	type VammParams: FullCodec + MaxEncodedLen + TypeInfo + Debug + Clone + PartialEq;
+
+	fn create(info: Self::VammParams) -> Result<Self::VammId, DispatchError>;
 }

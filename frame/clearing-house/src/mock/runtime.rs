@@ -231,7 +231,7 @@ pub struct ExtBuilder {
 	pub balances: Vec<(AccountId, AssetId, Balance)>,
 	pub collateral_types: Vec<AssetId>,
 	pub vamm_id: Option<VammId>,
-	pub oracle_supports_assets: bool,
+	pub oracle_asset_support: Option<bool>,
 }
 
 impl ExtBuilder {
@@ -257,7 +257,7 @@ impl ExtBuilder {
 			.unwrap();
 
 		let oracle_genesis =
-			mock_oracle::GenesisConfig { supports_assets: self.oracle_supports_assets };
+			mock_oracle::GenesisConfig { supports_assets: self.oracle_asset_support };
 		GenesisBuild::<Runtime>::assimilate_storage(&oracle_genesis, &mut storage).unwrap();
 
 		let mut ext: sp_io::TestExternalities = storage.into();

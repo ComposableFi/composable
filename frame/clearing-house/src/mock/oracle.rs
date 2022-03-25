@@ -41,7 +41,7 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	#[derive(Default)]
 	pub struct GenesisConfig {
-		pub supports_assets: bool,
+		pub supports_assets: Option<bool>,
 	}
 
 	#[pallet::genesis_build]
@@ -56,7 +56,9 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		CantCheckAssetSupport,
+	}
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Storage
@@ -64,8 +66,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn supports_assets)]
-	#[allow(clippy::disallowed_types)]
-	pub type SupportsAssets<T: Config> = StorageValue<_, bool, ValueQuery>;
+	pub type SupportsAssets<T: Config> = StorageValue<_, bool, OptionQuery>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Trait Implementations
@@ -80,7 +81,11 @@ pub mod pallet {
 		type MaxAnswerBound = T::MaxAnswerBound;
 
 		fn is_supported(asset: Self::AssetId) -> Result<bool, DispatchError> {
-			Ok(Self::supports_assets())
+			if let Some(support) = Self::supports_assets() {
+				Ok(support)
+			} else {
+				Err(Error::<T>::CantCheckAssetSupport.into())
+			}
 		}
 
 		fn get_price(
