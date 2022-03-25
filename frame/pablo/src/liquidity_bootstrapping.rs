@@ -12,7 +12,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::BlockNumberFor;
 use sp_runtime::traits::{BlockNumberProvider, Convert, One, Zero};
-use std::marker::PhantomData;
+use sp_std::marker::PhantomData;
 
 #[derive(Copy, Clone, Encode, Decode, MaxEncodedLen, PartialEq, Eq, TypeInfo)]
 pub struct PoolIsValid<T>(PhantomData<T>);

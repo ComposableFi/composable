@@ -12,7 +12,7 @@ use frame_support::{
 };
 use frame_system::EventRecord;
 use sp_core::H256;
-use sp_runtime::{DispatchError, TokenError};
+use sp_runtime::TokenError;
 
 /// `expected_lp_check` takes base_amount, quote_amount and lp_tokens in order and returns
 /// true if lp_tokens are expected for given base_amount, quote_amount.
@@ -305,24 +305,15 @@ where
 mod create {
 	use super::*;
 	#[test]
-	fn arbitrary_user_cant_create() {
+	fn signed_user_can_create() {
 		new_test_ext().execute_with(|| {
-			assert_noop!(
+			System::set_block_number(1);
+			assert_ok!(
 				Pablo::create(
 					Origin::signed(ALICE),
 					PoolInitConfiguration::LiquidityBootstrapping(valid_pool().value())
-				),
-				DispatchError::BadOrigin
+				)
 			);
-		});
-	}
-
-	#[test]
-	fn admin_can_create() {
-		new_test_ext().execute_with(|| {
-			System::set_block_number(1);
-			assert_ok!(Pablo::create(Origin::root(),
-				PoolInitConfiguration::LiquidityBootstrapping(valid_pool().value())));
 			assert_has_event::<Test, _>(
 				|e|
 					matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == 0)

@@ -3,6 +3,7 @@
 use crate as pablo;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
+use frame_system::EnsureSigned;
 use orml_traits::parameter_type_with_key;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
@@ -151,7 +152,7 @@ impl pablo::Config for Test {
 	type LbpMaxSaleDuration = MaxSaleDuration;
 	type LbpMaxInitialWeight = MaxInitialWeight;
 	type LbpMinFinalWeight = MinFinalWeight;
-	type PoolCreationOrigin = EnsureRoot<AccountId>;
+	type PoolCreationOrigin = EnsureSigned<Self::AccountId>;
 	type EnableTwapOrigin = EnsureRoot<AccountId>;
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;

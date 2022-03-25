@@ -53,13 +53,13 @@ benchmarks! {
 	create {
 		  let usdc: T::AssetId = 100.into();
 		  let usdt: T::AssetId = 101.into();
-		  let owner = whitelisted_caller();
+		  let owner: T::AccountId = whitelisted_caller();
 		  let pair = CurrencyPair::new(usdc, usdt);
 		let amplification_factor = 100_u16;
 		let fee = Permill::from_percent(1);
 		let protocol_fee = Permill::from_percent(1);
-		let stable_swap_pool_init = stable_swap_init_config::<T>(owner, pair, amplification_factor, fee, protocol_fee);
-	  } : _(RawOrigin::Root, stable_swap_pool_init)
+		let stable_swap_pool_init = stable_swap_init_config::<T>(owner.clone(), pair, amplification_factor, fee, protocol_fee);
+	  } : _(RawOrigin::Signed(owner), stable_swap_pool_init)
 
 	create_lbp {
 		let unit = 1_000_000_000_000u128;
@@ -79,7 +79,7 @@ benchmarks! {
 			},
 			  fee
 		};
-	  }: create(RawOrigin::Root, PoolInitConfiguration::LiquidityBootstrapping(pool))
+	  }: create(RawOrigin::Signed(owner), PoolInitConfiguration::LiquidityBootstrapping(pool))
 
 	  add_liquidity {
 		let usdc: T::AssetId = 100.into();
