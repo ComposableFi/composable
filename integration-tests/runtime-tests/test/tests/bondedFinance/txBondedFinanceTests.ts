@@ -11,7 +11,6 @@ import {
 } from "@composabletests/tests/bondedFinance/testHandlers/cancelTests";
 
 
-let bondOfferId1:number, bondOfferId2:number;
 /**
  * Contains all TX tests for the pallet:
  * bondedFinance
@@ -19,6 +18,8 @@ let bondOfferId1:number, bondOfferId2:number;
 describe('tx.bondedFinance Tests', function() {
   if (!testConfiguration.enabledTests.enabled)
     return;
+
+  let bondOfferId1:number, bondOfferId2:number;
   /**
    * bondedFinance.offer(...) Success Tests
    */
