@@ -1,7 +1,6 @@
 import { ApiPromise } from '@polkadot/api';
 import { AnyTuple, IEvent } from '@polkadot/types/types';
 import { SubmittableExtrinsic, AddressOrPair } from '@polkadot/api/types';
-import {expect} from "chai";
 
 export async function sendUnsignedAndWaitForSuccess<T extends AnyTuple>(
   api: ApiPromise,
@@ -149,20 +148,8 @@ export function sendAndWaitFor<T extends AnyTuple>(
           }
         }
       })
-      .catch(async function (e) {
-        if (e.message.contains("1014: Priority is too low:")) {
-          // This happens when we send 2 transaction from the same wallet, at the same time.
-          // We solve it by waiting 2 seconds and retrying it.
-          await sleep(2000);
-          const {data: [result],} = await sendAndWaitFor(api, sender, filter, call, intendedToFail).catch(function (exc) {
-            reject(exc);
-            return {data:[exc]};
-          });
-          expect(result).to.not.be.an('Error');
-          resolve(result);
-        }
-        else
-          reject(Error(e.stack));
+      .catch(function (e) {
+        reject(Error(e.stack));
       });
   });
 }
