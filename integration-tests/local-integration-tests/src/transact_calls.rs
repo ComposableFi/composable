@@ -1,17 +1,16 @@
 //! Testing custom XCMP transactions call
 
-use composable_traits::defi::Sell;
-use frame_system::EventRecord;
-use primitives::currency::CurrencyId;
-use support::{assert_ok, log};
-use xcm_emulator::TestExt;
-// /use xcm_executor::{traits::Convert, XcmExecutor};
 use crate::{
 	helpers::{assert_above_deposit, enough_weigth, sibling_account, simtest},
 	kusama_test_net::*,
 	prelude::*,
 };
+use composable_traits::defi::Sell;
+use frame_system::EventRecord;
 use orml_traits::currency::MultiCurrency;
+use primitives::currency::CurrencyId;
+use support::{assert_ok, log};
+use xcm_emulator::TestExt;
 
 #[macro_export]
 macro_rules! match_this_event {

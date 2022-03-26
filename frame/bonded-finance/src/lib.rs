@@ -57,7 +57,7 @@
 //!   returns to user in the end.
 //! - Vesting. User offers amount and ensure that recepients has 'ticket' tokens to bond to get
 //!   reward.
-//! - Sell/Exchange/Trae. User makes bond offer, other users takes offer in exchange for other
+//! - Sell/Exchange/Trade. User makes bond offer, other users takes offer in exchange for other
 //!   amount..
 //!
 //! ## Concerns
