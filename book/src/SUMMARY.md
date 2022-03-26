@@ -20,6 +20,8 @@
         - [PoC Components and User Flow](./products/mosaic/proof-of-concept-polygon-arbitrum-cross-layer-transferral-system/poc-components-and-user-flow.md)
         - [Poc Walkthrough](./products/mosaic/proof-of-concept-polygon-arbitrum-cross-layer-transferral-system/poc-walkthrough.md)
         - [PoC vault and liquidity rebalancing process](./products/mosaic/proof-of-concept-polygon-arbitrum-cross-layer-transferral-system/poc-vault-and-liquidity-rebalancing-process.md)
+    - [Mural: NFT Transfers on Mosaic via the Summoner Vault](./products/mosaic/mural-nft-transfers-on-mosaic-via-the-summoner-vault.md)
+        - [NFT Transfer Flow](./products/mosaic/mural-nft-transfers-on-mosaic-via-the-summoner-vault/nft-transfer-flow.md)
 - [Parachain Vault Strategy](./products/parachain-vault-strategy.md)
     - [Vault Strategy for the Composable Polkadot Prachain](./products/parachain-vault-strategy/vault-strategy-expansion.md)
 - [The Picasso Parachain](./products/the-picasso-parachain.md)
