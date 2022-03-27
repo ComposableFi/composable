@@ -1,8 +1,8 @@
 # Crowdloan Rewards
 
-## Overview
-
 The Crowdloan Rewards pallet allows contributors to claim their rewards.
+
+## Overview
 
 ### Unsigned Transactions
 
@@ -97,7 +97,7 @@ This extrinsic expects unsigned transactions.
 
 Claim a reward from the associated reward account.
 
-A previous call to `associate` should have been made.
+A previous call to [`associate`](#associate) should have been made.
 
 If the transaction is succussful, no fees are applied.
 

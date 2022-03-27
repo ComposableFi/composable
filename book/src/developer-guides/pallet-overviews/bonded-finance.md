@@ -1,8 +1,8 @@
 # Bonded Finance
 
-## Overview
-
 A pallet providing means of submitting and maintaining bond offers.
+
+## Overview
 
 The bonded finance pallet enables users to create bond offers, buy bonds from 
 other users, and cancel existing bond offers via admin intervention. These bonds 
