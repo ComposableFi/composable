@@ -31,6 +31,7 @@
     - [Vault Boosts](./products/parachain-vault-strategy/vault-boosts.md)
     - [Additional Rewards](./products/parachain-vault-strategy/additional-rewards.md)
     - [Contract - Technical Details](./products/parachain-vault-strategy/contracts-technical-details.md)
+    - [Bug Bounty Via Immunefi](./products/parachain-vault-strategy/bug-bounty-via-immunefi.md)
 - [The Picasso Parachain](./products/the-picasso-parachain.md)
     - [Polkadot - A Brief Overview](./products/the-picasso-parachain/polkadot-a-brief-overview.md)
     - [The Picasso Tech Stack](./products/the-picasso-parachain/the-picasso-tech-stack.md)
