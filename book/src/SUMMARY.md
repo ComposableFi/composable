@@ -34,6 +34,7 @@
     - [Bug Bounty Via Immunefi](./products/parachain-vault-strategy/bug-bounty-via-immunefi.md)
     - [Parachain Auction Tokens](./products/parachain-vault-strategy/parachain-auction-tokens.md)
     - [Risks](./products/parachain-vault-strategy/risks.md)
+    - [Walkthroughs](./products/parachain-vault-strategy/walkthroughs.md)
 - [The Picasso Parachain](./products/the-picasso-parachain.md)
     - [Polkadot - A Brief Overview](./products/the-picasso-parachain/polkadot-a-brief-overview.md)
     - [The Picasso Tech Stack](./products/the-picasso-parachain/the-picasso-tech-stack.md)
