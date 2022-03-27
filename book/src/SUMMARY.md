@@ -29,6 +29,7 @@
     - [Vault Strategy for the Composable Polkadot Prachain](./products/parachain-vault-strategy/vault-strategy-expansion.md)
     - [Vault Process in Detail](./products/parachain-vault-strategy/vault-process-in-detail.md)
     - [Vault Boosts](./products/parachain-vault-strategy/vault-boosts.md)
+    - [Additional Rewards](./products/parachain-vault-strategy/additional-rewards.md)
 - [The Picasso Parachain](./products/the-picasso-parachain.md)
     - [Polkadot - A Brief Overview](./products/the-picasso-parachain/polkadot-a-brief-overview.md)
     - [The Picasso Tech Stack](./products/the-picasso-parachain/the-picasso-tech-stack.md)
