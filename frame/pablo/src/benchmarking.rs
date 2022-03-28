@@ -140,11 +140,11 @@ benchmarks! {
 		// Add the liquidity
 		assert_ok!(<Pablo<T> as Amm>::add_liquidity(
 			&owner,
-		  	pool_id,
-		  	initial_usdc,
-		  	initial_usdt,
-		  	0.into(),
-		  	false
+			  pool_id,
+			  initial_usdc,
+			  initial_usdt,
+			  0.into(),
+			  false
 		));
 		let lp_amount = T::Assets::balance(get_lp_token::<T>(pool_id), &owner);
 	  }: _(RawOrigin::Signed(owner), pool_id, lp_amount, (0_u128).into(), (0_u128).into())
