@@ -239,7 +239,8 @@ pub mod pallet {
 			if let Ok(root) = root {
 				let height = crate::impls::host_height::<T>().unwrap_or_default();
 				let height = ibc::Height::new(0, height);
-				let height = height.encode_vec().unwrap_or_default();
+				// let height = height.encode_vec().unwrap_or_default();
+				let height = height.encode_vec();
 				let timestamp = T::TimeProvider::now().as_nanos();
 				CommitmentRoot::<T>::insert(height, (timestamp, root.clone()));
 				let log = DigestItem::Consensus(IBC_DIGEST_ID, root);

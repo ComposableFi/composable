@@ -106,7 +106,8 @@ impl<T: Config> ConnectionReader for Context<T> {
 		);
 
 		// ClientReader::consensus_state(self, client_id, height)
-		let height = height.encode_vec().unwrap();
+		// let height = height.encode_vec().unwrap();
+		let height = height.encode_vec();
 		let value = <ConsensusStates<T>>::get(client_id.as_bytes());
 
 		for item in value.iter() {
@@ -138,7 +139,8 @@ impl<T: Config> ConnectionKeeper for Context<T> {
 			connection_end
 		);
 
-		let data = connection_end.encode_vec().unwrap();
+		// let data = connection_end.encode_vec().unwrap();
+		let data = connection_end.encode_vec();
 		<Connections<T>>::insert(connection_id.as_bytes().to_vec(), data);
 
 		let temp = ConnectionReader::connection_end(self, &connection_id);

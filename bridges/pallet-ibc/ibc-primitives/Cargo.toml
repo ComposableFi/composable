@@ -10,10 +10,8 @@ targets = ["x86_64-unknown-linux-gnu"]
 serde = { version = "1.0.136", features = ["derive"], optional = true }
 codec = { package = "parity-scale-codec", version = "2.0.0", features = ["derive"], default-features = false}
 #ibc = { version = "0.12.0", default-features = false }
-ibc = { git = "https://github.com/Wizdave97/ibc-rs", branch = "david/serializable-structs", default-features = false}
-ibc-proto = { git = "https://github.com/Wizdave97/ibc-rs", branch = "david/serializable-structs", default-features = false}
+ibc = { git = "https://github.com/informalsystems/ibc-rs", branch = "master", default-features = false}
 scale-info = { version = '1.0.0', default-features = false }
-#ibc-proto = { version = "0.16.0", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
 
 [features]
@@ -23,6 +21,5 @@ std = [
     "serde",
     "ibc/std",
     "scale-info/std",
-    "ibc-proto/std",
     "sp-std/std"
 ]

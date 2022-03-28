@@ -24,9 +24,11 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
 
 #ibc = { version = "0.12.0", default-features = false }
-ibc = { git = "https://github.com/Wizdave97/ibc-rs", branch = "david/serializable-structs", default-features = false}
-ibc-proto = { git = "https://github.com/Wizdave97/ibc-rs", branch = "david/serializable-structs", default-features = false}
-tendermint-proto = "0.23.5"
+ibc = { git = "https://github.com/informalsystems/ibc-rs", branch = "master", default-features = false}
+ibc-proto = { git = "https://github.com/informalsystems/ibc-rs", branch = "master", default-features = false}
+tendermint-proto = { git = "https://github.com/informalsystems/tendermint-rs", tag = "v0.23.5", default-features = false}
+
+#tendermint-proto = "0.23.5"
 
 # local deps
 ibc-primitives = { path = "./ibc-primitives", default-features = false}
@@ -54,6 +56,7 @@ std = [
 	'ibc/std',
 	'ibc-proto/std',
 	'ibc-primitives/std',
+	'tendermint-proto/std',
 	'balances/std'
 ]
 

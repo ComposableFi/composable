@@ -17,8 +17,11 @@ sp_api::decl_runtime_apis! {
 		/// Generate trie proof for these keys
 		fn generate_proof(keys: Vec<Vec<u8>>) -> Option<Proof>;
 
-		/// Return client state at height
+		/// Returns client state at height
 		fn client_state(client_id: Vec<u8>) -> Option<QueryClientStateResponse>;
+
+		/// Returns protobuf encoded `AnyConsensusState` consensus state for host chain
+		fn host_consensus_state() -> Option<Vec<u8>>;
 
 		/// Return the consensus state for the given client at a height
 		fn client_consensus_state(client_id: Vec<u8>, client_height: Vec<u8>, latest_cs: bool) -> Option<QueryConsensusStateResponse>;

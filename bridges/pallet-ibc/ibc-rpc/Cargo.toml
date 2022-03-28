@@ -26,8 +26,9 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-tendermint-proto = "0.23.5"
+#tendermint-proto = "0.23.5"
 #ibc-proto = "0.16.0"
 ibc-runtime-api = { path = "../ibc-runtime-api" }
-ibc = { git = "https://github.com/Wizdave97/ibc-rs", branch = "david/serializable-structs"}
-ibc-proto = { git = "https://github.com/Wizdave97/ibc-rs", branch = "david/serializable-structs"}
+ibc = { git = "https://github.com/informalsystems/ibc-rs", branch = "master"}
+ibc-proto = { git = "https://github.com/informalsystems/ibc-rs", branch = "master"}
+tendermint-proto = { git = "https://github.com/informalsystems/tendermint-rs", tag = "v0.23.5"}

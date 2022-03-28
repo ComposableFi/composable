@@ -100,6 +100,10 @@ pub trait IbcApi<BlockNumber> {
 		src_client_id: String,
 	) -> Result<QueryClientStateResponse>;
 
+	/// Query localchain consensus state
+	#[rpc(name = "ibc_queryConsensusState")]
+	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse>;
+
 	/// Query client consensus state
 	#[rpc(name = "ibc_queryClientConsensusState")]
 	fn query_client_consensus_state(
@@ -415,6 +419,31 @@ where
 		})
 	}
 
+	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse> {
+		let api = self.client.runtime_api();
+		let block_hash = self
+			.client
+			.hash(height.into())
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+
+		let at = BlockId::Hash(block_hash);
+		let result: Vec<u8> = api
+			.host_consensus_state(&at)
+			.ok()
+			.flatten()
+			.ok_or(runtime_error_into_rpc_error("Error querying host consensus state"))?;
+		let consensus_state = AnyConsensusState::decode_vec(&result)
+			.map_err(|_| runtime_error_into_rpc_error("Error querying host consensus state"))?;
+
+		Ok(QueryConsensusStateResponse {
+			consensus_state: Some(consensus_state.into()),
+			proof: vec![],
+			proof_height: None,
+		})
+	}
+
 	fn query_client_consensus_state(
 		&self,
 		client_id: String,
@@ -425,7 +454,8 @@ where
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
 		let client_height = ibc::Height::new(revision_number, revision_height);
-		let height = client_height.encode_vec().map_err(|e| runtime_error_into_rpc_error(e))?;
+		// let height = client_height.encode_vec().map_err(|e| runtime_error_into_rpc_error(e))?;
+		let height = client_height.encode_vec();
 		let result: ibc_primitives::QueryConsensusStateResponse = api
 			.client_consensus_state(&at, client_id.as_bytes().to_vec(), height, latest_cs)
 			.ok()
@@ -442,7 +472,7 @@ where
 			}),
 		})
 	}
-	// TODO: Not required in first version
+	// TODO: Unimplemented
 	fn query_upgraded_client(&self, _height: u32) -> Result<QueryClientStateResponse> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}

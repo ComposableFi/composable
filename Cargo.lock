@@ -573,6 +573,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "349a06037c7bf932dd7e7d1f653678b2038b9ad46a74102f1fc7bd7872678cce"
 
 [[package]]
+name = "base16ct"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "349a06037c7bf932dd7e7d1f653678b2038b9ad46a74102f1fc7bd7872678cce"
+
+[[package]]
 name = "base58"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -608,6 +614,12 @@ name = "base64ct"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dea908e7347a8c64e378c17e30ef880ad73e3b4498346b055c2c00ea342f3179"
+
+[[package]]
+name = "base64ct"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71acf5509fc522cce1b100ac0121c635129bfd4d91cdf036bcc9b9935f97ccf5"
 
 [[package]]
 name = "beef"
@@ -1153,6 +1165,9 @@ name = "bytes"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4872d67bab6358e59559027aa3b9157c53d9358c51423c17554809a8858e0f8"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "bzip2-sys"
@@ -2647,6 +2662,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "curve25519-dalek-ng"
+version = "4.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c359b7249347e46fb28804470d071c921156ad62b3eef5d34e2ba867533dec8"
+dependencies = [
+ "byteorder",
+ "digest 0.9.0",
+ "rand_core 0.6.3",
+ "subtle-ng",
+ "zeroize",
+]
+
+[[package]]
 name = "custom_derive"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2992,6 +3020,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d5c4b5e5959dc2c2b89918d8e2cc40fcdd623cef026ed09d2f0ee05199dc8e4"
 dependencies = [
  "signature",
+]
+
+[[package]]
+name = "ed25519-consensus"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "542217a53411d471743362251a5a1770a667cb0cc0384c9be2c0952bd70a7275"
+dependencies = [
+ "curve25519-dalek-ng",
+ "hex",
+ "rand_core 0.6.3",
+ "sha2 0.9.9",
+ "thiserror",
+ "zeroize",
 ]
 
 [[package]]
@@ -4454,7 +4496,6 @@ name = "ibc-primitives"
 version = "0.1.0"
 dependencies = [
  "ibc",
- "ibc-proto",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -4896,7 +4937,7 @@ dependencies = [
  "log 0.4.16",
  "tokio 1.18.0",
  "tokio-stream",
- "tokio-util 0.6.9",
+ "tokio-util",
  "unicase 2.6.0",
 ]
 
@@ -4999,7 +5040,7 @@ dependencies = [
  "thiserror",
  "tokio 1.18.0",
  "tokio-rustls 0.23.3",
- "tokio-util 0.6.9",
+ "tokio-util",
  "tracing",
  "webpki-roots 0.22.3",
 ]
@@ -5223,7 +5264,7 @@ dependencies = [
  "thiserror",
  "tokio 1.18.0",
  "tokio-rustls 0.22.0",
- "tokio-util 0.6.9",
+ "tokio-util",
 ]
 
 [[package]]
@@ -11231,6 +11272,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c31b5c4033f8fdde8700e4657be2c497e7288f01515be52168c631e2e4d4086"
 
 [[package]]
+name = "rfc6979"
+version = "0.2.0-pre.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b5fc62eda367f95399820ccb69ffa1695519e053001ae0b7517d16438d26ef2"
+dependencies = [
+ "crypto-bigint",
+ "hmac 0.12.1",
+ "zeroize",
+]
+
+[[package]]
 name = "ring"
 version = "0.16.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -14458,6 +14510,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "subtle-ng"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "734676eb262c623cec13c3155096e08d1f8f29adce39ba17948b18dad1e54142"
+
+[[package]]
 name = "sval"
 version = "1.0.0-alpha.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -14535,17 +14593,18 @@ dependencies = [
  "async-trait",
  "bytes 1.1.0",
  "ed25519",
- "ed25519-dalek",
+ "ed25519-consensus",
  "flex-error",
  "futures 0.3.21",
+ "k256",
  "num-traits",
  "once_cell",
  "prost",
  "prost-types",
+ "ripemd160",
  "serde",
  "serde_bytes",
  "serde_json",
- "serde_repr",
  "sha2 0.9.9",
  "signature",
  "subtle",
@@ -15603,7 +15662,7 @@ dependencies = [
  "tokio 1.18.0",
  "tokio-stream",
  "tokio-tungstenite",
- "tokio-util 0.6.9",
+ "tokio-util",
  "tower-service",
  "tracing",
 ]
