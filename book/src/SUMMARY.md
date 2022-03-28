@@ -53,6 +53,7 @@
         
 # 🪙  GOVERNANCE AND TOKENOMICS
 - [The Picasso (PICA) Network Token](./governance-and-tokenomics/the-picasso-pica-network-token.md)
+- [LAYR Tokens](./governance-and-tokenomics/layr-tokens.md)
 
 # 🗺️  ROADMAP
 - [Timeline](./roadmap/timeline.md)
