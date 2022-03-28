@@ -382,10 +382,7 @@ pub mod pallet {
 			Ok(instance_id)
 		}
 
-		fn unstake(
-			to: &Self::AccountId,
-			instance_id: &Self::InstanceId,
-		) -> DispatchResult {
+		fn unstake(to: &Self::AccountId, instance_id: &Self::InstanceId) -> DispatchResult {
 			// Make sure we execute a final claim before unstaking.
 			<Self as ChaosProtocol>::claim(to, instance_id)?;
 
@@ -399,7 +396,7 @@ pub mod pallet {
 
 			// Transfer back the (possibly penalized) staked amount.
 			let chaos_account = Self::account_id();
-      // NOTE(hussein-aitlahcen): no need to keep protocol account alive.
+			// NOTE(hussein-aitlahcen): no need to keep protocol account alive.
 			T::ChaosAsset::transfer(&chaos_account, &to, penalized_stake, false)?;
 
 			// Decrement total shares.
@@ -453,10 +450,7 @@ pub mod pallet {
 			})
 		}
 
-		fn claim(
-			to: &Self::AccountId,
-			instance_id: &Self::InstanceId,
-		) -> DispatchResult {
+		fn claim(to: &Self::AccountId, instance_id: &Self::InstanceId) -> DispatchResult {
 			T::try_mutate_protocol_nft(
 				instance_id,
 				|nft: &mut ChaosStakingNFTOf<T>| -> Result<(), DispatchError> {

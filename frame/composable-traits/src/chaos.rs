@@ -11,13 +11,13 @@ use sp_runtime::{traits::AtLeast32BitUnsigned, DispatchError, Permill};
 
 #[derive(Debug, Encode, Decode, TypeInfo)]
 pub struct ChaosStakingNFT<Balance, Indexes> {
-  /// The stake this NFT was minted for.
+	/// The stake this NFT was minted for.
 	pub stake: Balance,
-  /// The indexes at which this NFT was minted, used to compute the rewards.
+	/// The indexes at which this NFT was minted, used to compute the rewards.
 	pub reward_indexes: Indexes,
-  /// The date at which this NFT was minted.
+	/// The date at which this NFT was minted.
 	pub lock_date: Timestamp,
-  /// The duration for which this NFT stake was locked.
+	/// The duration for which this NFT stake was locked.
 	pub lock_duration: Timestamp,
 }
 
@@ -56,14 +56,17 @@ pub trait ChaosProtocol {
 	type Balance;
 	type InstanceId;
 
-  /// Stake an amount of Chaos in the protocol. A new NFT representing the user position will be minted.
-  ///
-  /// Arguments
-  ///
-  /// * `from` the account to transfer the Chaos stake from.
-  /// * `amount` the amount of Chaos to stake.
-  /// * `duration` the staking duration (must be one of the predefined presets). Unstaking before the end trigger the unstake penalty.
-  /// * `keep_alive` whether to keep the `from` account alive or not while transferring the Chaos stake.
+	/// Stake an amount of Chaos in the protocol. A new NFT representing the user position will be
+	/// minted.
+	///
+	/// Arguments
+	///
+	/// * `from` the account to transfer the Chaos stake from.
+	/// * `amount` the amount of Chaos to stake.
+	/// * `duration` the staking duration (must be one of the predefined presets). Unstaking before
+	///   the end trigger the unstake penalty.
+	/// * `keep_alive` whether to keep the `from` account alive or not while transferring the Chaos
+	///   stake.
 	fn stake(
 		from: &Self::AccountId,
 		amount: Self::Balance,
@@ -71,36 +74,33 @@ pub trait ChaosProtocol {
 		keep_alive: bool,
 	) -> Result<Self::InstanceId, DispatchError>;
 
-  /// Unstake an actual staked position, represented by a NFT.
-  ///
-  /// Arguments
-  ///
-  /// * `to` the account to transfer the final claimed rewards to.
-  /// * `instance_id` the ID uniquely identifiying the NFT from which we will compute the available rewards.
-	fn unstake(
-		to: &Self::AccountId,
-		instance_id: &Self::InstanceId,
-	) -> DispatchResult;
+	/// Unstake an actual staked position, represented by a NFT.
+	///
+	/// Arguments
+	///
+	/// * `to` the account to transfer the final claimed rewards to.
+	/// * `instance_id` the ID uniquely identifiying the NFT from which we will compute the
+	///   available rewards.
+	fn unstake(to: &Self::AccountId, instance_id: &Self::InstanceId) -> DispatchResult;
 
-  /// Claim the current rewards.
-  ///
-  /// Arguments
-  ///
-  /// * `to` the account to transfer the rewards to.
-  /// * `instance_id` the ID uniquely identifiying the NFT from which we will compute the available rewards.
-	fn claim(
-		to: &Self::AccountId,
-		instance_id: &Self::InstanceId,
-	) -> DispatchResult;
+	/// Claim the current rewards.
+	///
+	/// Arguments
+	///
+	/// * `to` the account to transfer the rewards to.
+	/// * `instance_id` the ID uniquely identifiying the NFT from which we will compute the
+	///   available rewards.
+	fn claim(to: &Self::AccountId, instance_id: &Self::InstanceId) -> DispatchResult;
 
-  /// Transfer a reward to the Chaos protocol.
-  ///
-  /// Arguments
-  ///
-  /// * `from` the account to transfer the reward from.
-  /// * `asset` the reward asset to transfer.
-  /// * `amount` the amount of reward to transfer.
-  /// * `keep_alive` whether to keep alive or not the `from` account while transferring the reward.
+	/// Transfer a reward to the Chaos protocol.
+	///
+	/// Arguments
+	///
+	/// * `from` the account to transfer the reward from.
+	/// * `asset` the reward asset to transfer.
+	/// * `amount` the amount of reward to transfer.
+	/// * `keep_alive` whether to keep alive or not the `from` account while transferring the
+	///   reward.
 	fn transfer_reward(
 		from: &Self::AccountId,
 		asset: Self::AssetId,
