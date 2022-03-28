@@ -59,7 +59,7 @@ pub mod pallet {
 		transactional, PalletId,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
-	use sp_core::{U256, U512};
+	use sp_core::U256;
 	use sp_runtime::{
 		traits::{AccountIdConversion, Zero},
 		ArithmeticError, Permill, SaturatedConversion,
@@ -108,7 +108,7 @@ pub mod pallet {
 		/// The ID that uniquely identify an asset.
 		type AssetId: AssetId + Ord;
 
-		type Balance: Balance + TryFrom<U512>;
+		type Balance: Balance + TryFrom<U256>;
 
 		/// The underlying currency system.
 		type Assets: FungiblesInspect<
@@ -146,13 +146,13 @@ pub mod pallet {
 	}
 
 	#[pallet::type_value]
-	pub fn TotalSharesOnEmpty<T: Config>() -> U512 {
-		U512::zero()
+	pub fn TotalSharesOnEmpty<T: Config>() -> U256 {
+		U256::zero()
 	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn total_shares)]
-	pub type TotalShares<T: Config> = StorageValue<_, U512, ValueQuery, TotalSharesOnEmpty<T>>;
+	pub type TotalShares<T: Config> = StorageValue<_, U256, ValueQuery, TotalSharesOnEmpty<T>>;
 
 	#[pallet::type_value]
 	pub fn EarlyUnstakePenaltyOnEmpty<T: Config>() -> Permill {
@@ -451,54 +451,51 @@ pub mod pallet {
 		}
 
 		fn claim(to: &Self::AccountId, instance_id: &Self::InstanceId) -> DispatchResult {
-			T::try_mutate_protocol_nft(
-				instance_id,
-				|nft: &mut ChaosStakingNFTOf<T>| -> Result<(), DispatchError> {
-					// NOTE(hussein-aitlahcen): user is still able to claim even if his position
-					// 'expired', do we allow that?
+			T::try_mutate_protocol_nft(instance_id, |nft: &mut ChaosStakingNFTOf<T>| {
+				// NOTE(hussein-aitlahcen): user is still able to claim even if his position
+				// 'expired', do we allow that?
 
-					let share = U512::from(nft.stake.saturated_into::<u128>());
-					let total_shares = TotalShares::<T>::get();
+				let share = U256::from(nft.stake.saturated_into::<u128>());
+				let total_shares = TotalShares::<T>::get();
 
-					// TODO(hussein-aitlahcen): extract pure maths to their own functions
-					let compute_reward = |delta_index| -> Result<BalanceOf<T>, DispatchError> {
-						U512::from(delta_index)
-							.checked_mul(share)
-							.and_then(|x| x.checked_div(total_shares))
-							.ok_or(ArithmeticError::Overflow.into())
-							.and_then(|x| {
-								TryFrom::<U512>::try_from(x)
-									.map_err(|_| ArithmeticError::Overflow.into())
-							})
-					};
+				// TODO(hussein-aitlahcen): extract pure maths to their own functions
+				let compute_reward = |delta_index: U256| -> Result<BalanceOf<T>, DispatchError> {
+					delta_index
+						.checked_mul(share)
+						.and_then(|x| x.checked_div(total_shares))
+						.ok_or(ArithmeticError::Overflow.into())
+						.and_then(|x| {
+							TryFrom::<U256>::try_from(x)
+								.map_err(|_| ArithmeticError::Overflow.into())
+						})
+				};
 
-					let rewards = nft
-				    .reward_indexes
-				    .iter()
-				    .map(|(asset, index)| -> Result<(AssetIdOf<T>, BalanceOf<T>), DispatchError> {
-					    match RewardIndexes::<T>::get(&asset) {
-						    Some(current_index) => {
-							    let delta_index = current_index.saturating_sub(*index);
-							    let reward = compute_reward(delta_index)?;
-							    Ok((*asset, reward))
-						    },
-						    None => Ok((*asset, Zero::zero())),
-					    }
-				    })
-				    .collect::<Result<Vec<_>, _>>()?;
+				let rewards = nft
+					.reward_indexes
+					.iter()
+					.map(|(asset, index)| -> Result<(AssetIdOf<T>, BalanceOf<T>), DispatchError> {
+						match RewardIndexes::<T>::get(&asset) {
+							Some(current_index) => {
+								let delta_index = current_index.saturating_sub(*index);
+								let reward = compute_reward(delta_index)?;
+								Ok((*asset, reward))
+							},
+							None => Ok((*asset, Zero::zero())),
+						}
+					})
+					.collect::<Result<Vec<_>, _>>()?;
 
-					let chaos_account = Self::account_id();
-					for (asset, reward) in rewards {
-						T::Assets::transfer(asset, &chaos_account, to, reward, false)?;
-					}
+				let chaos_account = Self::account_id();
+				for (asset, reward) in rewards {
+					T::Assets::transfer(asset, &chaos_account, to, reward, false)?;
+				}
 
-					// NOTE(hussein-aitahcen): the reward computation is based on the index delta,
-					// hence we need to update the indexes after having claimed the rewards.
-					nft.reward_indexes = Self::current_reward_indexes();
+				// NOTE(hussein-aitahcen): the reward computation is based on the index delta,
+				// hence we need to update the indexes after having claimed the rewards.
+				nft.reward_indexes = Self::current_reward_indexes();
 
-					Ok(())
-				},
-			)
+				Ok(())
+			})
 		}
 	}
 }
