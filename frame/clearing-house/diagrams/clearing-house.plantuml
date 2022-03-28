@@ -66,7 +66,7 @@ package "pallet-clearing-house" {
         }
 
         class Market <<struct>> {
-            VAMMId vamm_id
+            VammId vamm_id
             AssetId asset_id
             Decimal cum_funding_rate
             Timestamp funding_rate_ts
@@ -76,7 +76,7 @@ package "pallet-clearing-house" {
 }
 
 package "pallet-virtual-amm" {
-    interface vAmm <<trait>> {
+    interface "Vamm" as vAmm <<trait>> {
         ~ create(base_asset_amount: u128, quote_asset_amount: u128, peg_multiplier: u128)
         ~ deprecate(vamm: VammId, when: Timestamp)
         ~ get_price(vamm: VammId, asset: VammAsset)
@@ -87,8 +87,8 @@ package "pallet-virtual-amm" {
         ~ move_to_price(vamm: VammId, target_price: u128)
     }
     database "vAMM Storage" {
-        map vAmms <<StorageMap>> {
-            VirturalAMMId =>
+        map "Vamms" as vAmms <<StorageMap>> {
+            VammId =>
         }
         class vAmmState <<struct>> {
             u128 base_asset_reserves
