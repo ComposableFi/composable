@@ -1,0 +1,35 @@
+@startuml open_position
+
+actor Trader
+participant "Clearing\nHouse" as ClearingHouse
+database "Storage (CH)" as Storage
+participant vAMM
+database "Storage (Amm)" as AmmStorage
+
+Trader -> ClearingHouse : open position
+
+ClearingHouse -> Storage : get/create position
+return
+
+note right ClearingHouse: compute quote asset\nnotional amount
+
+ClearingHouse -> vAMM ++ : swap quote for base asset
+vAMM -> AmmStorage : update\nreserves
+return base asset amount
+
+ClearingHouse -> ClearingHouse  ++: compute margin\nratio
+
+    ClearingHouse -> Storage: get latest cum. funding rate
+
+    ClearingHouse -> vAMM : compute position notional\nvalue (mark or TWAP?)
+
+return
+
+note right ClearingHouse : ensure margin ratio\nabove MMR
+
+ClearingHouse -> Storage : update position
+
+note right ClearingHouse: charge and transfer fees
+
+?<-o ClearingHouse : emit event
+@enduml
