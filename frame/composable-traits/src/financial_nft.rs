@@ -1,8 +1,11 @@
 use codec::{Decode, Encode};
 use core::fmt::Debug;
-use frame_support::traits::{
-	tokens::nonfungibles::{Create, Inspect, Mutate},
-	Get,
+use frame_support::{
+	dispatch::DispatchResult,
+	traits::{
+		tokens::nonfungibles::{Create, Inspect, Mutate},
+		Get,
+	},
 };
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchError, TokenError};
@@ -138,6 +141,18 @@ pub trait FinancialNFTProtocol {
 			&nft,
 		)?;
 		Ok(r)
+	}
+
+	/// Destroy the given NFT. Irreversible operation.
+	///
+	/// Arguments
+	///
+	/// * `instance_id` the NFT instance to destroy.
+	fn burn_protocol_nft<NFT>(instance_id: &Self::InstanceId) -> DispatchResult
+	where
+		NFT: Get<Self::ClassId>,
+	{
+		Self::NFTProvider::burn_from(&NFT::get(), instance_id)
 	}
 }
 
