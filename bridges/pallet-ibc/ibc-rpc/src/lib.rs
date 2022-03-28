@@ -454,8 +454,7 @@ where
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
 		let client_height = ibc::Height::new(revision_number, revision_height);
-		// let height = client_height.encode_vec().map_err(|e| runtime_error_into_rpc_error(e))?;
-		let height = client_height.encode_vec();
+		let height = client_height.encode_vec().map_err(|e| runtime_error_into_rpc_error(e))?;
 		let result: ibc_primitives::QueryConsensusStateResponse = api
 			.client_consensus_state(&at, client_id.as_bytes().to_vec(), height, latest_cs)
 			.ok()

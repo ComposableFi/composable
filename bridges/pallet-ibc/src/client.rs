@@ -72,8 +72,7 @@ impl<T: Config> ClientReader for Context<T> {
 		);
 
 		let native_height = height.clone();
-		//let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
-		let height = height.encode_vec();
+		let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
 		let value = <ConsensusStates<T>>::get(client_id.as_bytes());
 
 		for item in value.iter() {
@@ -214,8 +213,7 @@ impl<T: Config> ClientKeeper for Context<T> {
 			client_state
 		);
 
-		//let data = client_state.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
-		let data = client_state.encode_vec();
+		let data = client_state.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
 		// store client states key-value
 		<ClientStates<T>>::insert(client_id.as_bytes().to_vec(), data);
 
@@ -232,12 +230,10 @@ impl<T: Config> ClientKeeper for Context<T> {
 		log::info!("in client : [store_consensus_state] >> client_id: {:?}, height = {:?}, consensus_state = {:?}",
 			client_id, height, consensus_state);
 
-		//let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
-		let height = height.encode_vec();
-		// let data = consensus_state
-		// 	.encode_vec()
-		// 	.map_err(|_| ICS02Error::implementation_specific())?;
-		let data = consensus_state.encode_vec();
+		let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
+		let data = consensus_state
+			.encode_vec()
+			.map_err(|_| ICS02Error::implementation_specific())?;
 		if <ConsensusStates<T>>::contains_key(client_id.as_bytes()) {
 			// if consensus_state is no empty use push insert an exist ConsensusStates
 			<ConsensusStates<T>>::try_mutate(
@@ -261,8 +257,7 @@ impl<T: Config> ClientKeeper for Context<T> {
 		height: Height,
 		timestamp: Timestamp,
 	) -> Result<(), ICS02Error> {
-		// let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
-		let height = height.encode_vec();
+		let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
 		let timestamp = timestamp.nanoseconds().encode();
 		let client_id = client_id.as_bytes().to_vec();
 		ClientUpdateTime::<T>::insert(client_id, height, timestamp);
@@ -275,11 +270,9 @@ impl<T: Config> ClientKeeper for Context<T> {
 		height: Height,
 		host_height: Height,
 	) -> Result<(), ICS02Error> {
-		// let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
-		let height = height.encode_vec();
-		// let host_height =
-		// 	host_height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
-		let host_height = host_height.encode_vec();
+		let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
+		let host_height =
+			host_height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
 		let client_id = client_id.as_bytes().to_vec();
 		ClientUpdateHeight::<T>::insert(client_id, height, host_height);
 		Ok(())

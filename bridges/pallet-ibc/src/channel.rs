@@ -129,8 +129,7 @@ impl<T: Config> ChannelReader for Context<T> {
 			height
 		);
 
-		// let height = height.encode_vec().map_err(|_| ICS04Error::implementation_specific())?;
-		let height = height.encode_vec();
+		let height = height.encode_vec().map_err(|_| ICS04Error::implementation_specific())?;
 		let value = <ConsensusStates<T>>::get(client_id.as_bytes());
 
 		for item in value.iter() {
@@ -412,8 +411,7 @@ impl<T: Config> ChannelReader for Context<T> {
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Timestamp, ICS04Error> {
-		//let height = height.encode_vec().map_err(|_| ICS04Error::implementation_specific())?;
-		let height = height.encode_vec();
+		let height = height.encode_vec().map_err(|_| ICS04Error::implementation_specific())?;
 		let client_id = client_id.as_bytes().to_vec();
 		let timestamp = ClientUpdateTime::<T>::get(&client_id, &height);
 
@@ -428,8 +426,7 @@ impl<T: Config> ChannelReader for Context<T> {
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Height, ICS04Error> {
-		//let height = height.encode_vec().map_err(|_| ICS04Error::implementation_specific())?;
-		let height = height.encode_vec();
+		let height = height.encode_vec().map_err(|_| ICS04Error::implementation_specific())?;
 		let client_id = client_id.as_bytes().to_vec();
 		let host_height = ClientUpdateHeight::<T>::get(&client_id, &height);
 
@@ -647,8 +644,7 @@ impl<T: Config> ChannelKeeper for Context<T> {
 			channel_end
 		);
 
-		//let channel_end = channel_end.encode_vec().unwrap();
-		let channel_end = channel_end.encode_vec();
+		let channel_end = channel_end.encode_vec().unwrap();
 
 		// store channels key-value
 		<Channels<T>>::insert(

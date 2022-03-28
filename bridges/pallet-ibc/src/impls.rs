@@ -276,11 +276,11 @@ impl<T: Config> Pallet<T> {
 			let client_state = ClientStates::<T>::get(client_id.clone());
 			let client_state =
 				AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
-			// client_state
-			// 	.latest_height()
-			// 	.encode_vec()
-			// 	.map_err(|_| Error::<T>::DecodingError)?
-			client_state.latest_height().encode_vec()
+			client_state
+				.latest_height()
+				.encode_vec()
+				.map_err(|_| Error::<T>::DecodingError)?
+		// client_state.latest_height().encode_vec()
 		} else {
 			height
 		};
@@ -644,8 +644,7 @@ impl<T: Config> crate::traits::SendPacketTrait<T> for Pallet<T> {
 		let client_state =
 			AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
 		let latest_height = client_state.latest_height();
-		// let encoded_height = latest_height.encode_vec().map_err(|_| Error::<T>::EncodingError)?;
-		let encoded_height = latest_height.encode_vec();
+		let encoded_height = latest_height.encode_vec().map_err(|_| Error::<T>::EncodingError)?;
 		let consensus_state = ConsensusStates::<T>::get(client_id)
 			.into_iter()
 			.find_map(|(height, cs)| if height == encoded_height { Some(cs) } else { None })
