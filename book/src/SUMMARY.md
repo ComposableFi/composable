@@ -62,6 +62,9 @@
 # 🌎 ECOSYSTEM
 - [Build on Composable: Ecosystem Development](./ecosystem/build-on-composable-ecosystem-development.md)
 - [Business Line Development](./ecosystem/business-line-development.md)
+- [Press Kit](./ecosystem/press-kit.md)
+- [The Composable Team](./ecosystem/the-composable-team.md)
+- [Careers](./ecosystem/careers.md)
 
 
 # 📖 BOOK
