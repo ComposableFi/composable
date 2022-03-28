@@ -1332,6 +1332,7 @@ dependencies = [
  "pallet-currency-factory",
  "pallet-governance-registry",
  "parity-scale-codec",
+ "proptest",
  "scale-info",
  "serde",
  "sp-arithmetic",
