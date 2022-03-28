@@ -291,13 +291,13 @@ fn runtime_error_into_rpc_error(err: impl std::fmt::Display) -> JsonRpcError {
 pub struct IbcRpcHandler<C, B> {
 	client: Arc<C>,
 	/// A copy of the chain spec.
-	pub chain_spec: Box<dyn sc_chain_spec::ChainSpec>,
+	pub chain_spec: Option<Box<dyn sc_chain_spec::ChainSpec>>,
 	_marker: std::marker::PhantomData<B>,
 }
 
 impl<C, B> IbcRpcHandler<C, B> {
 	/// Create new `IbcRpcHandler` with the given reference to the client.
-	pub fn new(client: Arc<C>, chain_spec: Box<dyn sc_chain_spec::ChainSpec>) -> Self {
+	pub fn new(client: Arc<C>, chain_spec: Option<Box<dyn sc_chain_spec::ChainSpec>>) -> Self {
 		Self { client, chain_spec, _marker: Default::default() }
 	}
 }
@@ -376,11 +376,14 @@ where
 	fn query_balance_with_address(&self, addr: Vec<u8>) -> Result<Coin> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
-		let denom =
-			match self.chain_spec.properties().get("tokenSymbol").cloned().unwrap_or_default() {
+		let denom = if let Some(chain_spec) = self.chain_spec.as_ref() {
+			match chain_spec.properties().get("tokenSymbol").cloned().unwrap_or_default() {
 				Value::String(symbol) => symbol,
 				_ => "".to_string(),
-			};
+			}
+		} else {
+			"".to_string()
+		};
 
 		match api.query_balance_with_address(&at, addr).ok().flatten() {
 			Some(amt) => Ok(Coin { denom, amount: format!("{}", amt) }),

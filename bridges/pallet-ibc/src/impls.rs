@@ -15,6 +15,7 @@ use ibc::core::{
 		},
 	},
 };
+use ibc::core::ics04_channel::context::ChannelKeeper;
 use ibc_primitives::{
 	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
 	OffchainPacketType, PacketState, Proof, QueryChannelResponse, QueryChannelsResponse,
@@ -652,7 +653,7 @@ impl<T: Config> crate::traits::SendPacketTrait<T> for Pallet<T> {
 		let consensus_state = AnyConsensusState::decode_vec(&consensus_state)
 			.map_err(|_| Error::<T>::DecodingError)?;
 		let latest_timestamp = consensus_state.timestamp();
-		let ctx = crate::routing::Context::<T>::new();
+		let mut ctx = crate::routing::Context::<T>::new();
 		let next_seq_send = NextSequenceSend::<T>::get(port_id.clone(), channel_id.clone());
 		let next_seq_send =
 			u64::decode(&mut &*next_seq_send).map_err(|_| Error::<T>::DecodingError)?;
@@ -674,8 +675,9 @@ impl<T: Config> crate::traits::SendPacketTrait<T> for Pallet<T> {
 			timeout_timestamp: timestamp,
 		};
 
-		let _ = ibc::core::ics04_channel::handler::send_packet::send_packet(&ctx, packet.clone())
+		let send_packet_result = ibc::core::ics04_channel::handler::send_packet::send_packet(&ctx, packet.clone())
 			.map_err(|_| Error::<T>::Other)?;
+		ctx.store_packet_result(send_packet_result.result).map_err(|_| Error::<T>::Other)?;
 
 		// store packet offchain
 		let key = Pallet::<T>::offchain_key(channel_id, port_id);
