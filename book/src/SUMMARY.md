@@ -58,6 +58,11 @@
 # 🗺️  ROADMAP
 - [Timeline](./roadmap/timeline.md)
 
+
+# 🌎 ECOSYSTEM
+- [Build on Composable: Ecosystem Development](./ecosystem/build-on-composable-ecosystem-development.md)
+
+
 # 📖 BOOK
 - [Contributing](./book/contributing.md)
 
