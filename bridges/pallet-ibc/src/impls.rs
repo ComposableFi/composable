@@ -5,7 +5,10 @@ use ibc::core::{
 	ics02_client::{
 		client_consensus::AnyConsensusState, client_state::AnyClientState, client_type::ClientType,
 	},
-	ics04_channel::packet::{Packet, Sequence},
+	ics04_channel::{
+		context::ChannelKeeper,
+		packet::{Packet, Sequence},
+	},
 	ics24_host::{
 		identifier::*,
 		path::{
@@ -15,7 +18,6 @@ use ibc::core::{
 		},
 	},
 };
-use ibc::core::ics04_channel::context::ChannelKeeper;
 use ibc_primitives::{
 	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
 	OffchainPacketType, PacketState, Proof, QueryChannelResponse, QueryChannelsResponse,
@@ -675,9 +677,11 @@ impl<T: Config> crate::traits::SendPacketTrait<T> for Pallet<T> {
 			timeout_timestamp: timestamp,
 		};
 
-		let send_packet_result = ibc::core::ics04_channel::handler::send_packet::send_packet(&ctx, packet.clone())
+		let send_packet_result =
+			ibc::core::ics04_channel::handler::send_packet::send_packet(&ctx, packet.clone())
+				.map_err(|_| Error::<T>::Other)?;
+		ctx.store_packet_result(send_packet_result.result)
 			.map_err(|_| Error::<T>::Other)?;
-		ctx.store_packet_result(send_packet_result.result).map_err(|_| Error::<T>::Other)?;
 
 		// store packet offchain
 		let key = Pallet::<T>::offchain_key(channel_id, port_id);

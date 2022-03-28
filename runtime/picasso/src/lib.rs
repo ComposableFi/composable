@@ -1100,6 +1100,110 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
+		fn query_balance_with_address(_addr: Vec<u8>) -> Option<u128> {
+			None
+		}
+
+		fn query_packets(_channel_id: Vec<u8>, _port_id: Vec<u8>, _seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
+			None
+		}
+
+		fn generate_proof(_keys: Vec<Vec<u8>>) -> Option<ibc_primitives::Proof> {
+			None
+		}
+
+		fn client_state(_client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {
+			None
+		}
+
+		fn host_consensus_state() -> Option<Vec<u8>> {
+			// Unimplemented
+			None
+		}
+
+		fn client_consensus_state(_client_id: Vec<u8>, _client_height: Vec<u8>, _latest_cs: bool) -> Option<ibc_primitives::QueryConsensusStateResponse> {
+			None
+		}
+
+		fn clients() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+			None
+		}
+
+		fn connection(_connection_id: Vec<u8>) -> Option<ibc_primitives::QueryConnectionResponse>{
+			None
+		}
+
+		fn connections() -> Option<ibc_primitives::QueryConnectionsResponse> {
+			None
+		}
+
+		fn connection_using_client(_client_id: Vec<u8>) -> Option<ibc_primitives::IdentifiedConnection>{
+			None
+		}
+
+		fn connection_handshake_proof(_client_id: Vec<u8>, _connection_id: Vec<u8>) -> Option<ibc_primitives::ConnectionHandshakeProof> {
+			None
+		}
+
+		fn channel(_channel_id: Vec<u8>, _port_id: Vec<u8>) -> Option<ibc_primitives::QueryChannelResponse> {
+			None
+		}
+
+		fn channel_client(_channel_id: Vec<u8>, _port_id: Vec<u8>) -> Option<ibc_primitives::IdentifiedClientState> {
+			None
+		}
+
+		fn connection_channels(_connection_id: Vec<u8>) -> Option<ibc_primitives::QueryChannelsResponse> {
+			None
+		}
+
+		fn channels() -> Option<ibc_primitives::QueryChannelsResponse> {
+			None
+		}
+
+		fn packet_commitments(_channel_id: Vec<u8>, _port_id: Vec<u8>) -> Option<ibc_primitives::QueryPacketCommitmentsResponse> {
+			None
+		}
+
+		fn packet_acknowledgements(_channel_id: Vec<u8>, _port_id: Vec<u8>) -> Option<ibc_primitives::QueryPacketAcknowledgementsResponse>{
+			None
+		}
+
+		fn unreceived_packets(_channel_id: Vec<u8>, _port_id: Vec<u8>, _seqs: Vec<u64>) -> Option<Vec<u64>> {
+			None
+		}
+
+		fn unreceived_acknowledgements(_channel_id: Vec<u8>, _port_id: Vec<u8>, _seqs: Vec<u64>) -> Option<Vec<u64>> {
+			None
+		}
+
+		fn next_seq_recv(_channel_id: Vec<u8>, _port_id: Vec<u8>) -> Option<ibc_primitives::QueryNextSequenceReceiveResponse> {
+			None
+		}
+
+		fn packet_commitment(_channel_id: Vec<u8>, _port_id: Vec<u8>, _seq: u64) -> Option<ibc_primitives::QueryPacketCommitmentResponse> {
+			None
+		}
+
+		fn packet_acknowledgement(_channel_id: Vec<u8>, _port_id: Vec<u8>, _seq: u64) -> Option<ibc_primitives::QueryPacketAcknowledgementResponse> {
+			None
+		}
+
+		fn packet_receipt(_channel_id: Vec<u8>, _port_id: Vec<u8>, _seq: u64) -> Option<ibc_primitives::QueryPacketReceiptResponse> {
+			None
+		}
+
+		fn denom_trace(_denom: Vec<u8>) -> Option<ibc_primitives::QueryDenomTraceResponse> {
+			None
+		}
+
+		fn denom_traces(_offset: Vec<u8>, _limit: u64, _height: u32) -> Option<ibc_primitives::QueryDenomTracesResponse> {
+			None
+		}
+	}
+
+
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (

@@ -30,7 +30,6 @@ exclude = [
   "integration-tests",
 ]
 members = [
-<<<<<<< HEAD
   "frame/*",
   "integration-tests/local-integration-tests",
   "node",
@@ -45,29 +44,6 @@ members = [
   "simnode/simnode-node",
   "simnode/simnode-tests",
   "simnode/common",
-=======
-    "frame/*",
-    "bridges/pallet-ibc",
-    "bridges/pallet-ibc/ibc-rpc",
-    "bridges/pallet-ibc/ibc-runtime-api",
-    "bridges/pallet-ibc/ibc-primitives",
-    "integration-tests/local-integration-tests",
-    "node",
-
-    "runtime/common",
-    "runtime/primitives",
-    "runtime/picasso",
-    "runtime/dali",
-    "runtime/composable",
-    "utils/faucet-server",
-    "utils/common",
-    "utils/parachain-utils",
-    "utils/price-feed",
-    "utils/collator-sidecar",
-    "simnode/simnode-node",
-    "simnode/simnode-tests",
-    "simnode/common",
->>>>>>> 46f68b7e (minor fix)
 ]
 
 [profile.release]

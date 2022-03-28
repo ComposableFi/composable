@@ -25,6 +25,7 @@ pub trait BaseHostRuntimeApis:
 	+ OffchainWorkerApi<OpaqueBlock>
 	+ SessionKeys<OpaqueBlock>
 	+ CollectCollationInfo<OpaqueBlock>
+	+ ibc_runtime_api::IbcRuntimeApi<OpaqueBlock>
 	+ TransactionPaymentRuntimeApi<OpaqueBlock, Balance>
 where
 	<Self as ApiExt<OpaqueBlock>>::StateBackend: StateBackend<BlakeTwo256>,
@@ -42,6 +43,7 @@ where
 		+ OffchainWorkerApi<OpaqueBlock>
 		+ SessionKeys<OpaqueBlock>
 		+ CollectCollationInfo<OpaqueBlock>
+		+ ibc_runtime_api::IbcRuntimeApi<OpaqueBlock>
 		+ TransactionPaymentRuntimeApi<OpaqueBlock, Balance>,
 	<Self as ApiExt<OpaqueBlock>>::StateBackend: StateBackend<BlakeTwo256>,
 {

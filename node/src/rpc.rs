@@ -34,6 +34,8 @@ pub struct FullDeps<Client, Pool> {
 	pub pool: Arc<Pool>,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: DenyUnsafe,
+	/// Chain properties
+	pub chain_props: sc_chain_spec::Properties,
 }
 
 /// Instantiate all full RPC extensions.
@@ -77,6 +79,11 @@ where
 
 	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
 		deps.client.clone(),
+	)));
+
+	io.extend_with(ibc_rpc::IbcApi::to_delegate(ibc_rpc::IbcRpcHandler::new(
+		deps.client.clone(),
+		deps.chain_props,
 	)));
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_assets_api(

@@ -364,11 +364,13 @@ where
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let transaction_pool = transaction_pool.clone();
+		let chain_props = parachain_config.chain_spec.properties();
 		Box::new(move |deny_unsafe, _| {
 			let deps = rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 				deny_unsafe,
+				chain_props: chain_props.clone(),
 			};
 
 			Ok(rpc::create(deps))

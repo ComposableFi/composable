@@ -1,5 +1,5 @@
 use crate as pallet_ibc;
-use frame_support::parameter_types;
+use frame_support::{pallet_prelude::ConstU32, parameter_types};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -8,7 +8,6 @@ use sp_runtime::{
 	MultiSignature,
 };
 use std::time::{Duration, Instant};
-use frame_support::pallet_prelude::ConstU32;
 
 pub type Signature = MultiSignature;
 pub(crate) type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;

@@ -49,6 +49,7 @@ use ibc_proto::{
 use ibc_runtime_api::IbcRuntimeApi;
 use jsonrpc_core::{Error as JsonRpcError, ErrorCode, Result, Value};
 use jsonrpc_derive::rpc;
+use sc_chain_spec::Properties;
 use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
@@ -290,15 +291,15 @@ fn runtime_error_into_rpc_error(err: impl std::fmt::Display) -> JsonRpcError {
 /// An implementation of IBC specific RPC methods.
 pub struct IbcRpcHandler<C, B> {
 	client: Arc<C>,
-	/// A copy of the chain spec.
-	pub chain_spec: Option<Box<dyn sc_chain_spec::ChainSpec>>,
+	/// A copy of the chain properties.
+	pub chain_props: Properties,
 	_marker: std::marker::PhantomData<B>,
 }
 
 impl<C, B> IbcRpcHandler<C, B> {
 	/// Create new `IbcRpcHandler` with the given reference to the client.
-	pub fn new(client: Arc<C>, chain_spec: Option<Box<dyn sc_chain_spec::ChainSpec>>) -> Self {
-		Self { client, chain_spec, _marker: Default::default() }
+	pub fn new(client: Arc<C>, chain_props: Properties) -> Self {
+		Self { client, chain_props, _marker: Default::default() }
 	}
 }
 
@@ -376,13 +377,9 @@ where
 	fn query_balance_with_address(&self, addr: Vec<u8>) -> Result<Coin> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
-		let denom = if let Some(chain_spec) = self.chain_spec.as_ref() {
-			match chain_spec.properties().get("tokenSymbol").cloned().unwrap_or_default() {
-				Value::String(symbol) => symbol,
-				_ => "".to_string(),
-			}
-		} else {
-			"".to_string()
+		let denom = match self.chain_props.get("tokenSymbol").cloned().unwrap_or_default() {
+			Value::String(symbol) => symbol,
+			_ => "".to_string(),
 		};
 
 		match api.query_balance_with_address(&at, addr).ok().flatten() {
