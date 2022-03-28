@@ -1,0 +1,63 @@
+fail_fast: true
+repos:
+- repo: local
+  hooks:
+
+    ########## Clearing House ##########
+  - id: clearing-house::cargo-fmt
+    name: clearing-house::cargo-fmt
+    entry: cargo +nightly fmt --check -p clearing-house
+    language: system
+    pass_filenames: false
+    stages: [commit, push]
+    files: ^frame/clearing-house/
+    types: [rust]
+  - id: clearing-house::cargo-clippy
+    name: clearing-house::cargo-clippy
+    entry: cargo +nightly clippy --all-targets --no-deps -p clearing-house
+    language: system
+    pass_filenames: false
+    stages: [push]
+    files: ^frame/clearing-house/
+    types: [rust]
+
+    ########## VAMM ##########
+  - id: vamm::cargo-fmt
+    name: vamm::cargo-fmt
+    entry: cargo +nightly fmt --check -p pallet-vamm
+    language: system
+    pass_filenames: false
+    files: ^frame/vamm/
+    types: [rust]
+    stages: [commit, push]
+  - id: vamm::cargo-check
+    name: vamm::cargo-check
+    entry: cargo +nightly check --all-targets -p pallet-vamm
+    language: system
+    pass_filenames: false
+    files: ^frame/vamm/
+    types: [rust]
+    stages: [commit, push]
+  - id: vamm::cargo-test
+    name: vamm::cargo-test
+    entry: cargo +nightly test --all-features --tests -p pallet-vamm
+    language: system
+    pass_filenames: false
+    files: ^frame/vamm/
+    types: [rust]
+    stages: [push]
+  - id: vamm::cargo-clippy
+    name: vamm::cargo-clippy
+    entry: cargo +nightly clippy --all-targets --no-deps -p pallet-vamm -- -D warnings -D clippy::all
+    language: system
+    pass_filenames: false
+    files: ^frame/vamm/
+    types: [rust]
+    stages: [push]
+
+- repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+  rev: v8.0.0
+  hooks:
+  - id: commitlint
+    stages: [commit-msg]
+    additional_dependencies: ['@commitlint/config-conventional']
