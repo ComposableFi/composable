@@ -237,5 +237,6 @@ jobs:
       - name: Cargo udeps
         run: |
           cargo udeps --version
-          SKIP_WASM_BUILD=1 cargo +nightly udeps --workspace --all-features
+          # Compilation of local-integration-tests crate with --all-features doesn't work
+          SKIP_WASM_BUILD=1 cargo +nightly udeps --workspace --exclude local-integration-tests --all-features
         continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.  

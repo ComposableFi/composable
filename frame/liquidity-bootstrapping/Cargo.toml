@@ -34,8 +34,6 @@ composable-maths = { path = "../composable-maths", default-features = false }
 composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
 
-plotters = { version = "0.3", optional = true }
-
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
@@ -65,4 +63,3 @@ std = [
   "composable-support/std",
   "rust_decimal/std",
 ]
-visualization = ["plotters"]

@@ -24,9 +24,6 @@ serde = "1.0.130"
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 [dependencies]
-# Benchmarking
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-hex-literal = { version = "0.3.3", optional = true }
 libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, features = [
   "hmac",
   "static-context",
@@ -73,9 +70,7 @@ std = [
 ]
 
 runtime-benchmarks = [
-  "hex-literal",
   "libsecp256k1",
-  "frame-benchmarking",
   "sp-application-crypto",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
