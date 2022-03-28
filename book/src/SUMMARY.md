@@ -66,6 +66,11 @@
 - [The Composable Team](./ecosystem/the-composable-team.md)
 - [Careers](./ecosystem/careers.md)
 
+# 🩺 AUDITS AND FIXES
+- [Audit Results, Recommendations, and Remediations](./audits/audit-results-recommendations-and-remediations.md)
+- [Code Fixes](./audits/code-fixes.md)
+
+
 
 # 📖 BOOK
 - [Contributing](./book/contributing.md)
