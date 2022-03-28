@@ -55,6 +55,9 @@ impl CurrencyId {
 	/// Kusama native token
 	pub const KSM: CurrencyId = CurrencyId(4);
 
+	/// Chaos protocol token
+	pub const CHAOS: CurrencyId = CurrencyId(5);
+
 	/// Karura stable coin(Karura Dollar), not native.
 	#[allow(non_upper_case_globals)]
 	pub const kUSD: CurrencyId = CurrencyId(129);
