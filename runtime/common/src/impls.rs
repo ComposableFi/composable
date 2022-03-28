@@ -147,7 +147,7 @@ mod tests {
 		where
 			I: 'a,
 		{
-			Some(Default::default())
+			Some(AccountId::from([0u8; 32]))
 		}
 	}
 
@@ -220,8 +220,8 @@ mod tests {
 		/// percentage of proposal that most be bonded by the proposer
 		pub const ProposalBond: Permill = Permill::from_percent(5);
 		// TODO: rationale?
-		pub ProposalBondMinimum: Balance = 5 * CurrencyId::PICA.unit::<Balance>();
-		pub ProposalBondMaximum: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
+		pub ProposalBondMinimum: Balance = 5 * CurrencyId::unit::<Balance>();
+		pub ProposalBondMaximum: Balance = 1000 * CurrencyId::unit::<Balance>();
 		pub const SpendPeriod: BlockNumber = 7 * DAYS;
 		pub const Burn: Permill = Permill::from_percent(0);
 
@@ -260,8 +260,6 @@ mod tests {
 			let fee = Balances::issue(10);
 			let tip = Balances::issue(20);
 
-			assert_eq!(Balances::free_balance(AccountId::default()), 0);
-
 			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
 
 			// Author gets 50% of tip and 50% of fee = 15
@@ -277,8 +275,6 @@ mod tests {
 			let fee = Balances::issue(0);
 			let tip = Balances::issue(0);
 
-			assert_eq!(Balances::free_balance(AccountId::default()), 0);
-
 			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
 
 			// Author gets 50% of tip and 50% of fee = 15
@@ -292,8 +288,6 @@ mod tests {
 		new_test_ext().execute_with(|| {
 			let fee = Balances::issue(1);
 			let tip = Balances::issue(1);
-
-			assert_eq!(Balances::free_balance(AccountId::default()), 0);
 
 			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
 

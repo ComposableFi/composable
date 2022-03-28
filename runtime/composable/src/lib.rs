@@ -100,10 +100,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 1000,
-	impl_version: 4,
+	spec_version: 100,
+	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2,
+	transaction_version: 1,
 	state_version: 0,
 };
 
@@ -229,8 +229,8 @@ impl timestamp::Config for Runtime {
 
 parameter_types! {
 	/// Minimum amount an account has to hold to stay in state.
-	// minimum account balance is given as 0.1 PICA ~ 100 CurrencyId::PICA.milli()
-	pub ExistentialDeposit: Balance = 100 * CurrencyId::PICA.milli::<Balance>();
+	// minimum account balance is given as 0.1 PICA ~ 100 CurrencyId::milli()
+	pub ExistentialDeposit: Balance = 100 * CurrencyId::milli::<Balance>();
 	/// Max locks that can be placed on an account. Capped for storage
 	/// concerns.
 	pub const MaxLocks: u32 = 50;
@@ -252,7 +252,7 @@ impl balances::Config for Runtime {
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
-	pub TransactionByteFee: Balance = CurrencyId::PICA.milli();
+	pub TransactionByteFee: Balance = CurrencyId::milli();
 
 	// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
@@ -273,7 +273,7 @@ pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		let p = CurrencyId::PICA.milli::<Balance>();
+		let p = CurrencyId::milli::<Balance>();
 		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
 		smallvec::smallvec![WeightToFeeCoefficient {
 			degree: 1,
@@ -301,7 +301,7 @@ impl sudo::Config for Runtime {
 
 parameter_types! {
 	/// Deposit required to get an index.
-	pub IndexDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
+	pub IndexDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 }
 
 impl indices::Config for Runtime {
@@ -380,7 +380,7 @@ parameter_types! {
 	pub const StalePrice: BlockNumber = 5;
 
 	/// TODO: discuss with omar/cosmin
-	pub MinStake: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
+	pub MinStake: Balance = 1000 * CurrencyId::unit::<Balance>();
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
@@ -514,8 +514,8 @@ parameter_types! {
 	/// percentage of proposal that most be bonded by the proposer
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	// TODO: rationale?
-	pub ProposalBondMinimum: Balance = 5 * CurrencyId::PICA.unit::<Balance>();
-	pub ProposalBondMaximum: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
+	pub ProposalBondMinimum: Balance = 5 * CurrencyId::unit::<Balance>();
+	pub ProposalBondMaximum: Balance = 1000 * CurrencyId::unit::<Balance>();
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
 
@@ -594,7 +594,7 @@ impl scheduler::Config for Runtime {
 
 parameter_types! {
 	pub const PreimageMaxSize: u32 = 4096 * 1024;
-	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
+	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
 }
 
 impl preimage::Config for Runtime {
@@ -619,11 +619,11 @@ parameter_types! {
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
 
-	pub MinimumDeposit: Balance = 100 * CurrencyId::PICA.unit::<Balance>();
+	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	// TODO: prod value
-	pub PreimageByteDeposit: Balance = CurrencyId::PICA.milli();
+	pub PreimageByteDeposit: Balance = CurrencyId::milli();
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -707,9 +707,9 @@ impl crowdloan_rewards::Config for Runtime {
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
-	pub CreationDeposit: Balance = 10 * CurrencyId::PICA.unit::<Balance>();
-	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::PICA.unit::<Balance>();
-	pub RentPerBlock: Balance = CurrencyId::PICA.milli::<Balance>();
+	pub CreationDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
+	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::unit::<Balance>();
+	pub RentPerBlock: Balance = CurrencyId::milli::<Balance>();
 	pub const VaultMinimumDeposit: Balance = 10_000;
 	pub const VaultMinimumWithdrawal: Balance = 10_000;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
@@ -953,6 +953,35 @@ impl_runtime_apis! {
 			len: u32,
 		) -> transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
+		}
+	}
+
+
+	impl simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime {
+		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
+			use sp_runtime::{
+				generic::Era, MultiSignature,
+				traits::StaticLookup,
+			};
+			use sp_core::sr25519;
+
+			let nonce = frame_system::Pallet::<Runtime>::account_nonce(signer.clone());
+			let extra = (
+				system::CheckNonZeroSender::<Runtime>::new(),
+				system::CheckSpecVersion::<Runtime>::new(),
+				system::CheckTxVersion::<Runtime>::new(),
+				system::CheckGenesis::<Runtime>::new(),
+				system::CheckEra::<Runtime>::from(Era::Immortal),
+				system::CheckNonce::<Runtime>::from(nonce),
+				system::CheckWeight::<Runtime>::new(),
+				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
+			);
+
+			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
+			let address = AccountIdLookup::unlookup(signer);
+			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
+
+			ext.encode()
 		}
 	}
 

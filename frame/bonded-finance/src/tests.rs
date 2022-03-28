@@ -15,8 +15,6 @@ use frame_support::{
 use mock::{Event, *};
 use proptest::prelude::*;
 
-#[test]
-
 prop_compose! {
 	  // NOTE(hussein-aitlahcen): we use u32 before casting to avoid overflows
 	  /// Pseudo random valid simple offer

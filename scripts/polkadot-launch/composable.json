@@ -2,13 +2,25 @@
   "relaychain": {
     "bin": "../../../polkadot/target/release/polkadot",
     "chain": "rococo-local",
+    "genesis": {
+      "runtime": {
+        "runtime_genesis_config": {
+          "configuration": {
+            "config": {
+              "validation_upgrade_frequency": 2,
+              "validation_upgrade_delay": 2
+            }
+          }
+        }
+      }
+    },
     "nodes": [
       {
         "name": "alice",
         "wsPort": 9944,
         "basePath": "/tmp/polkadot-launch/relaychains/alice",
         "port": 30444,
-        "flags": ["--beefy"]
+        "flags": ["--rpc-cors=all", "--beefy", "--enable-offchain-indexing=true"]
       },
       {
         "name": "bob",

@@ -1,5 +1,4 @@
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import {args} from "../../utils/args";
 
 /**
  * Generates a test transaction.
@@ -20,7 +19,7 @@ export class testTransactionGenerator {
 }
 
 async function main() {
-  const endpoint = `ws://${args.h}:${args.p}`;
+  const endpoint = `ws://${process.env.ENDPOINT}`;
   // Instantiate the API
   const provider = new WsProvider(endpoint);
   const api = await ApiPromise.create({ provider: provider });

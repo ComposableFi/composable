@@ -1,4 +1,3 @@
-use crate::validation::{ValidTTL, ValidTimeLockPeriod};
 /// TODO
 ///
 /// 1. Test each extrinsic
@@ -223,7 +222,8 @@ mod set_network {
 	#[test]
 	fn relayer_can_set_network() {
 		let network_id = 3;
-		let network_info = NetworkInfo { enabled: false, max_transfer_size: 100000 };
+		let network_info =
+			NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 
@@ -235,7 +235,8 @@ mod set_network {
 	#[test]
 	fn root_cannot_set_network() {
 		let network_id = 3;
-		let network_info = NetworkInfo { enabled: false, max_transfer_size: 100000 };
+		let network_info =
+			NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 
@@ -249,7 +250,8 @@ mod set_network {
 	#[test]
 	fn none_cannot_set_network() {
 		let network_id = 3;
-		let network_info = NetworkInfo { enabled: false, max_transfer_size: 100000 };
+		let network_info =
+			NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
 
@@ -391,7 +393,7 @@ fn initialize() {
 	assert_ok!(Mosaic::set_network(
 		Origin::relayer(),
 		1,
-		NetworkInfo { enabled: true, max_transfer_size: 100000 },
+		NetworkInfo { enabled: true, min_transfer_size: 1, max_transfer_size: 100000 },
 	));
 	assert_ok!(Mosaic::set_budget(Origin::root(), 1, BUDGET, BudgetPenaltyDecayer::linear(10)));
 	assert_ok!(Mosaic::update_asset_mapping(
@@ -617,10 +619,11 @@ mod timelocked_mint {
 		fn can_mint_up_to_the_penalised_budget(
 			account_a in account_id(),
 			decay in 1..100u128, // todo,
-			max_transfer_size in 1..10_000_000u128,
+	  min_transfer_size in 1..10_000_000u128,
+			max_transfer_size in 10_000_000u128..100_000_000u128,
 			asset_id in 1..100u128,
 			network_id in 1..100u32,
-		remote_asset_id in any::<RemoteAssetId>(),
+		  remote_asset_id in any::<RemoteAssetId>(),
 			start_block in 1..10_000u64,
 			(budget, first_part, second_part) in budget_with_split(),
 		) {
@@ -632,7 +635,7 @@ mod timelocked_mint {
 				prop_assert_ok!(Mosaic::set_network(
 					Origin::relayer(),
 					network_id,
-					NetworkInfo { enabled: true, max_transfer_size },
+					NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
 				), "relayer may set network info");
 				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
 			prop_assert_ok!(Mosaic::update_asset_mapping(Origin::root(), asset_id, network_id, Some(remote_asset_id)));
@@ -654,10 +657,11 @@ mod timelocked_mint {
 		fn cannot_mint_more_than_the_penalised_budget(
 			account_a in account_id(),
 			decay in 1..100u128, // todo,
-			max_transfer_size in 1..10_000_000u128,
+	  min_transfer_size in 1..10_000_000u128,
+			max_transfer_size in 10_000_000u128..100_000_000u128,
 			asset_id in 1..100u128,
 			network_id in 1..100u32,
-		remote_asset_id in any::<RemoteAssetId>(),
+		  remote_asset_id in any::<RemoteAssetId>(),
 			start_block in 1..10_000u64,
 			(budget, first_part, second_part) in budget_with_split(),
 		) {
@@ -669,7 +673,7 @@ mod timelocked_mint {
 				prop_assert_ok!(Mosaic::set_network(
 					Origin::relayer(),
 					network_id,
-					NetworkInfo { enabled: true, max_transfer_size },
+					NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
 				), "relayer may set network info");
 				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
 			prop_assert_ok!(Mosaic::update_asset_mapping(Origin::root(), asset_id, network_id, Some(remote_asset_id)));
@@ -692,10 +696,11 @@ mod timelocked_mint {
 		fn should_be_able_to_mint_again_after_waiting_for_penalty_to_decay(
 			account_a in account_id(),
 			decay_factor in 1..100u128, // todo,
-			max_transfer_size in 1..10_000_000u128,
+	  min_transfer_size in 1..10_000_000u128,
+			max_transfer_size in 10_000_000u128..100_000_000u128,
 			asset_id in 1..100u128,
 			network_id in 1..100u32,
-		remote_asset_id in any::<RemoteAssetId>(),
+		  remote_asset_id in any::<RemoteAssetId>(),
 			start_block in 1..10_000u64,
 			(budget, first_part, second_part) in budget_with_split(),
 			iteration_count in 2..10u64,
@@ -713,7 +718,7 @@ mod timelocked_mint {
 				prop_assert_ok!(Mosaic::set_network(
 					Origin::relayer(),
 					network_id,
-					NetworkInfo { enabled: true, max_transfer_size },
+					NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
 				), "relayer may set network info");
 				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, budget_penalty_decayer.clone()), "root may set budget");
 			prop_assert_ok!(Mosaic::update_asset_mapping(Origin::root(), asset_id, network_id, Some(remote_asset_id)));
@@ -1032,8 +1037,9 @@ mod transfer_to {
 	}
 
 	#[test]
-	fn transfer_to_exceeds_max_transfer_size() {
+	fn transfer_to_below_min_transfer_size() {
 		ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+			let min_transfer_size = 1000;
 			let max_transfer_size = 100000;
 
 			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
@@ -1042,7 +1048,54 @@ mod transfer_to {
 			assert_ok!(Mosaic::set_network(
 				Origin::relayer(),
 				network_id,
-				NetworkInfo { enabled: true, max_transfer_size },
+				NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
+			));
+
+			let asset_id: u128 = 1;
+			assert_ok!(Mosaic::set_budget(
+				Origin::root(),
+				asset_id,
+				10000,
+				BudgetPenaltyDecayer::linear(10)
+			));
+
+			let remote_asset_id = [0xFFu8; 20];
+			assert_ok!(Mosaic::update_asset_mapping(
+				Origin::root(),
+				asset_id,
+				network_id,
+				Some(remote_asset_id)
+			));
+
+			let amount = min_transfer_size - 1;
+			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
+			assert_noop!(
+				Mosaic::transfer_to(
+					Origin::signed(ALICE),
+					network_id,
+					asset_id,
+					[0; 20],
+					amount,
+					true
+				),
+				Error::<Test>::BelowMinTransferSize
+			);
+		})
+	}
+
+	#[test]
+	fn transfer_to_exceeds_max_transfer_size() {
+		ExtBuilder { balances: Default::default() }.build().execute_with(|| {
+			let min_transfer_size = 1;
+			let max_transfer_size = 100000;
+
+			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+			let network_id = 1;
+			assert_ok!(Mosaic::set_network(
+				Origin::relayer(),
+				network_id,
+				NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
 			));
 
 			let asset_id: u128 = 1;
@@ -1114,7 +1167,7 @@ mod transfer_to {
 			assert_ok!(Mosaic::set_network(
 				Origin::relayer(),
 				1,
-				NetworkInfo { enabled: true, max_transfer_size: 100000 },
+				NetworkInfo { enabled: true, min_transfer_size: 1, max_transfer_size: 100000 },
 			));
 
 			// We don't register the asset
@@ -1268,7 +1321,6 @@ mod test_validation {
 	use super::*;
 	use composable_support::validation::Validate;
 	use frame_support::assert_ok;
-	use mock::Test;
 	use validation::{ValidTTL, ValidTimeLockPeriod};
 
 	#[test]
