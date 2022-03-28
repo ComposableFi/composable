@@ -51,10 +51,10 @@ fn get_lp_token<T: Config>(pool_id: T::PoolId) -> T::AssetId {
 benchmarks! {
   where_clause { where T::BlockNumber: From<u32>, T::Balance: From<u128>, T::AssetId: From<u128> }
 	create {
-		  let usdc: T::AssetId = 100.into();
-		  let usdt: T::AssetId = 101.into();
-		  let owner: T::AccountId = whitelisted_caller();
-		  let pair = CurrencyPair::new(usdc, usdt);
+		let usdc: T::AssetId = 100.into();
+		let usdt: T::AssetId = 101.into();
+		let owner: T::AccountId = whitelisted_caller();
+		let pair = CurrencyPair::new(usdc, usdt);
 		let amplification_factor = 100_u16;
 		let fee = Permill::from_percent(1);
 		let protocol_fee = Permill::from_percent(1);
@@ -63,11 +63,11 @@ benchmarks! {
 
 	create_lbp {
 		let unit = 1_000_000_000_000u128;
-		  let project_token: T::AssetId = 0.into();
-		  let usdt: T::AssetId = 1.into();
+		let project_token: T::AssetId = 0.into();
+		let usdt: T::AssetId = 1.into();
 		let pair = CurrencyPair::new(project_token, usdt);
 		let owner: T::AccountId = whitelisted_caller();
-		  let fee = Permill::from_perthousand(1);
+		let fee = Permill::from_perthousand(1);
 		let pool = LiquidityBootstrappingPoolInfo {
 			owner: owner.clone(),
 			pair,
@@ -81,27 +81,27 @@ benchmarks! {
 		};
 	  }: create(RawOrigin::Signed(owner), PoolInitConfiguration::LiquidityBootstrapping(pool))
 
-	  add_liquidity {
+	add_liquidity {
 		let usdc: T::AssetId = 100.into();
 		let usdt: T::AssetId = 101.into();
 		let owner: T::AccountId = whitelisted_caller();
-		  let pool_id = create_stable_swap_pool::<T>(owner.clone(), CurrencyPair::new(usdc, usdt));
-		  let unit = 1_000_000_000_000;
-		  // 100_000_000 USDC , 100_000_000 USDT
-		  let initial_usdc: T::Balance = (100_000_000_u128 * unit).into();
-		  let initial_usdt: T::Balance = (100_000_000_u128 * unit).into();
-		  // Mint the tokens
-		  assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
-		  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
+		let pool_id = create_stable_swap_pool::<T>(owner.clone(), CurrencyPair::new(usdc, usdt));
+		let unit = 1_000_000_000_000;
+		// 100_000_000 USDC , 100_000_000 USDT
+		let initial_usdc: T::Balance = (100_000_000_u128 * unit).into();
+		let initial_usdt: T::Balance = (100_000_000_u128 * unit).into();
+		// Mint the tokens
+		assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
+		assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
 	  }: _(RawOrigin::Signed(owner), pool_id, initial_usdc, initial_usdt, 0.into(), false)
 
 	add_liquidity_lbp {
 		let unit = 1_000_000_000_000u128;
-		  let project_token: T::AssetId = 0.into();
-		  let usdt: T::AssetId = 1.into();
+		let project_token: T::AssetId = 0.into();
+		let usdt: T::AssetId = 1.into();
 		let pair = CurrencyPair::new(project_token, usdt);
 		let owner: T::AccountId = whitelisted_caller();
-		  let fee = Permill::from_perthousand(1);
+		let fee = Permill::from_perthousand(1);
 		let pool = LiquidityBootstrappingPoolInfo {
 			owner: owner.clone(),
 			pair,
@@ -139,23 +139,23 @@ benchmarks! {
 		  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
 		  // Add the liquidity
 		  assert_ok!(<Pablo<T> as Amm>::add_liquidity(
-			  &owner,
-			  pool_id,
-			  initial_usdc,
-			  initial_usdt,
-			  0.into(),
-			  false
+		  &owner,
+		  pool_id,
+		  initial_usdc,
+		  initial_usdt,
+		  0.into(),
+		  false
 		  ));
 		  let lp_amount = T::Assets::balance(get_lp_token::<T>(pool_id), &owner);
 	  }: _(RawOrigin::Signed(owner), pool_id, lp_amount, (0_u128).into(), (0_u128).into())
 
 	remove_liquidity_lbp {
 		let unit = 1_000_000_000_000u128;
-		  let project_token: T::AssetId = 0.into();
-		  let usdt: T::AssetId = 1.into();
+		let project_token: T::AssetId = 0.into();
+		let usdt: T::AssetId = 1.into();
 		let pair = CurrencyPair::new(project_token, usdt);
 		let owner: T::AccountId = whitelisted_caller();
-		  let fee = Permill::from_perthousand(1);
+		let fee = Permill::from_perthousand(1);
 		let start = T::BlockNumber::from(100u32);
 		let end = T::BlockNumber::from(21600u32 + 100u32);
 		let pool = LiquidityBootstrappingPoolInfo {
@@ -174,71 +174,71 @@ benchmarks! {
 		).expect("impossible; qed;");
 		let nb_of_project_tokens = 200_000_000;
 		let nb_of_usdt = 5_000_000;
-		  let initial_project_tokens: T::Balance = (nb_of_project_tokens * unit).into();
-		  let initial_usdt: T::Balance = (nb_of_usdt * unit).into();
-		  // Mint the tokens
-		  assert_ok!(T::Assets::mint_into(project_token, &owner, initial_project_tokens));
-		  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
-		  assert_ok!(<Pablo<T> as Amm>::add_liquidity(
-		  &owner,
-		  pool_id,
-		  initial_project_tokens,
-		  initial_usdt,
-		  0.into(),
-		  false
+		let initial_project_tokens: T::Balance = (nb_of_project_tokens * unit).into();
+		let initial_usdt: T::Balance = (nb_of_usdt * unit).into();
+		// Mint the tokens
+		assert_ok!(T::Assets::mint_into(project_token, &owner, initial_project_tokens));
+		assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
+		assert_ok!(<Pablo<T> as Amm>::add_liquidity(
+			&owner,
+			  pool_id,
+			  initial_project_tokens,
+			  initial_usdt,
+			  0.into(),
+			  false
 		  ));
-		  let user = account("user", 0, 0);
-		  assert_ok!(T::Assets::mint_into(usdt, &user, unit.into()));
-		  frame_system::Pallet::<T>::set_block_number(end);
+		let user = account("user", 0, 0);
+		assert_ok!(T::Assets::mint_into(usdt, &user, unit.into()));
+		frame_system::Pallet::<T>::set_block_number(end);
 	}: remove_liquidity(RawOrigin::Signed(owner), pool_id, (0_u128).into(), (0_u128).into(), (0_u128).into())
 
 	buy {
 		let usdc: T::AssetId = 100.into();
 		let usdt: T::AssetId = 101.into();
 		let owner: T::AccountId = whitelisted_caller();
-		  let pool_id = create_stable_swap_pool::<T>(owner.clone(), CurrencyPair::new(usdc, usdt));
-		  let unit = 1_000_000_000_000;
-		  // 100_000_000 USDC , 100_000_000 USDT
-		  let initial_usdc: T::Balance = (100_000_000_u128 * unit).into();
-		  let initial_usdt: T::Balance = (100_000_000_u128 * unit).into();
-		  // Mint the tokens
-		  assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
-		  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
-		  // Add the liquidity
-		  assert_ok!(<Pablo<T> as Amm>::add_liquidity(
+		let pool_id = create_stable_swap_pool::<T>(owner.clone(), CurrencyPair::new(usdc, usdt));
+		let unit = 1_000_000_000_000;
+		// 100_000_000 USDC , 100_000_000 USDT
+		let initial_usdc: T::Balance = (100_000_000_u128 * unit).into();
+		let initial_usdt: T::Balance = (100_000_000_u128 * unit).into();
+		// Mint the tokens
+		assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
+		assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
+		// Add the liquidity
+		assert_ok!(<Pablo<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_usdc,
 			  initial_usdt,
 			  0.into(),
 			  false
-		  ));
-		  let user = account("user", 0, 0);
-		  assert_ok!(T::Assets::mint_into(usdt, &user, (1000_u128 * unit).into()));
-		  // buy 1000 USDC
+		));
+		let user = account("user", 0, 0);
+		assert_ok!(T::Assets::mint_into(usdt, &user, (1000_u128 * unit).into()));
+		// buy 1000 USDC
 	 }: _(RawOrigin::Signed(user), pool_id, usdc, (1000_u128 * unit).into(), false)
 
 	sell {
 		let usdc: T::AssetId = 100.into();
 		let usdt: T::AssetId = 101.into();
 		let owner: T::AccountId = whitelisted_caller();
-		  let pool_id = create_stable_swap_pool::<T>(owner.clone(), CurrencyPair::new(usdc, usdt));
-		  let unit = 1_000_000_000_000;
-		  // 100_000_000 USDC , 100_000_000 USDT
-		  let initial_usdc: T::Balance = (100_000_000_u128 * unit).into();
-		  let initial_usdt: T::Balance = (100_000_000_u128 * unit).into();
-		  // Mint the tokens
-		  assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
-		  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
-		  // Add the liquidity
-		  assert_ok!(<Pablo<T> as Amm>::add_liquidity(
-			  &owner,
-			  pool_id,
-			  initial_usdc,
-			  initial_usdt,
-			  0.into(),
-			  false
-		  ));
+		let pool_id = create_stable_swap_pool::<T>(owner.clone(), CurrencyPair::new(usdc, usdt));
+		let unit = 1_000_000_000_000;
+		// 100_000_000 USDC , 100_000_000 USDT
+		let initial_usdc: T::Balance = (100_000_000_u128 * unit).into();
+		let initial_usdt: T::Balance = (100_000_000_u128 * unit).into();
+		// Mint the tokens
+		assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
+		assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
+		// Add the liquidity
+		assert_ok!(<Pablo<T> as Amm>::add_liquidity(
+			&owner,
+			pool_id,
+			initial_usdc,
+			initial_usdt,
+			0.into(),
+			false
+		));
 		let user = account("user", 0, 0);
 		assert_ok!(T::Assets::mint_into(usdc, &user, (1000_u128 * unit).into()));
 		// sell 1000 USDC
@@ -248,27 +248,27 @@ benchmarks! {
 		let usdc: T::AssetId = 100.into();
 		let usdt: T::AssetId = 101.into();
 		let owner: T::AccountId = whitelisted_caller();
-		  let pool_id = create_stable_swap_pool::<T>(owner.clone(), CurrencyPair::new(usdc, usdt));
+		let pool_id = create_stable_swap_pool::<T>(owner.clone(), CurrencyPair::new(usdc, usdt));
 
-		  let unit = 1_000_000_000_000;
-		  // 100_000_000 USDC , 100_000_000 USDT
-		  let initial_usdc: T::Balance = (100_000_000_u128 * unit).into();
-		  let initial_usdt: T::Balance = (100_000_000_u128 * unit).into();
-		  // Mint the tokens
-		  assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
-		  assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
-		  // Add the liquidity
-		  assert_ok!(<Pablo<T> as Amm>::add_liquidity(
+		let unit = 1_000_000_000_000;
+		// 100_000_000 USDC , 100_000_000 USDT
+		let initial_usdc: T::Balance = (100_000_000_u128 * unit).into();
+		let initial_usdt: T::Balance = (100_000_000_u128 * unit).into();
+		// Mint the tokens
+		assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
+		assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
+		// Add the liquidity
+		assert_ok!(<Pablo<T> as Amm>::add_liquidity(
 			  &owner,
 			  pool_id,
 			  initial_usdc,
 			  initial_usdt,
 			  0.into(),
 			  false
-		  ));
-		  let user = account("user", 0, 0);
-		  assert_ok!(T::Assets::mint_into(usdt, &user, (1000_u128 * unit).into()));
-		  // swap 1000 USDC
+		));
+		let user = account("user", 0, 0);
+		assert_ok!(T::Assets::mint_into(usdt, &user, (1000_u128 * unit).into()));
+		// swap 1000 USDC
 	 }: _(RawOrigin::Signed(user), pool_id, CurrencyPair::new(usdc, usdt), (1000_u128 * unit).into(), 0.into(), false)
 }
 
