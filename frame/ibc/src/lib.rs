@@ -17,7 +17,6 @@ use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 mod channel;
 mod client;
 mod connection;
-pub mod event;
 mod port;
 mod routing;
 
