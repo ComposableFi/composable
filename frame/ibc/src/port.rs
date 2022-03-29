@@ -1,5 +1,6 @@
 use super::*;
 
+use scale_info::prelude::string::ToString;
 use crate::routing::Context;
 use ibc::core::{
 	ics05_port::{
