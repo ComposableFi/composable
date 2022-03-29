@@ -66,7 +66,7 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use codec::FullCodec;
 	use composable_traits::{
-		clearing_house::MarginTrading, defi::DeFiComposableConfig, oracle::Oracle, vamm::VirtualAMM,
+		clearing_house::ClearingHouse, defi::DeFiComposableConfig, oracle::Oracle, vamm::VirtualAMM,
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -340,7 +340,7 @@ pub mod pallet {
 			amount: T::Balance,
 		) -> DispatchResult {
 			let acc = ensure_signed(origin)?;
-			<Self as MarginTrading>::add_margin(&acc, asset, amount)?;
+			<Self as ClearingHouse>::add_margin(&acc, asset, amount)?;
 			Ok(())
 		}
 
@@ -372,7 +372,7 @@ pub mod pallet {
 			vamm_params: VammParamsOf<T>,
 		) -> DispatchResult {
 			ensure_signed(origin)?;
-			let market = Self::do_create_market(asset, vamm_params)?;
+			let market = <Self as ClearingHouse>::create_market(asset, vamm_params)?;
 			Self::deposit_event(Event::MarketCreated { market, asset });
 			Ok(())
 		}
@@ -382,10 +382,12 @@ pub mod pallet {
 	// 											Trait Implementations
 	// ----------------------------------------------------------------------------------------------------
 
-	impl<T: Config> MarginTrading for Pallet<T> {
+	impl<T: Config> ClearingHouse for Pallet<T> {
 		type AccountId = T::AccountId;
 		type AssetId = AssetIdOf<T>;
 		type Balance = T::Balance;
+		type MarketId = T::MarketId;
+		type VammParams = VammParamsOf<T>;
 
 		fn add_margin(
 			account: &Self::AccountId,
@@ -407,17 +409,11 @@ pub mod pallet {
 			Self::deposit_event(Event::MarginAdded { account: account.clone(), asset, amount });
 			Ok(())
 		}
-	}
-	// ----------------------------------------------------------------------------------------------------
-	// 											Helper Functions
-	// ----------------------------------------------------------------------------------------------------
 
-	// Helper functions - core functionality
-	impl<T: Config> Pallet<T> {
-		fn do_create_market(
-			asset: AssetIdOf<T>,
-			vamm_params: VammParamsOf<T>,
-		) -> Result<T::MarketId, DispatchError> {
+		fn create_market(
+			asset: Self::AssetId,
+			vamm_params: Self::VammParams,
+		) -> Result<Self::MarketId, DispatchError> {
 			MarketCount::<T>::try_mutate(|id| {
 				ensure!(T::Oracle::is_supported(asset)?, Error::<T>::NoPriceFeedForAsset);
 
@@ -437,6 +433,12 @@ pub mod pallet {
 			})
 		}
 	}
+	// ----------------------------------------------------------------------------------------------------
+	// 											Helper Functions
+	// ----------------------------------------------------------------------------------------------------
+
+	// Helper functions - core functionality
+	impl<T: Config> Pallet<T> {}
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {}
