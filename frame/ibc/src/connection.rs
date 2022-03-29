@@ -18,46 +18,42 @@ use tendermint_proto::Protobuf;
 
 impl<T: Config> ConnectionReader for Context<T> {
 	fn connection_end(&self, conn_id: &ConnectionId) -> Result<ConnectionEnd, ICS03Error> {
-		log::info!("in connection : [connection_end]");
-		log::info!("in connection : [connection_end] >> connection_id = {:?}", conn_id);
+		log::trace!("in connection : [connection_end] >> connection_id = {:?}", conn_id);
 
 		if <Connections<T>>::contains_key(conn_id.as_bytes()) {
 			let data = <Connections<T>>::get(conn_id.as_bytes());
 			let ret = ConnectionEnd::decode_vec(&*data)
 				.map_err(|_| ICS03Error::implementation_specific())?;
-			log::info!("in connection : [connection_end] >>  connection_end = {:?}", ret);
+			log::trace!("in connection : [connection_end] >>  connection_end = {:?}", ret);
 			Ok(ret)
 		} else {
-			log::info!("in connection : [connection_end] >> read connection end returns None");
+			log::trace!("in connection : [connection_end] >> read connection end returns None");
 			Err(ICS03Error::connection_mismatch(conn_id.clone()))
 		}
 	}
 
 	fn client_state(&self, client_id: &ClientId) -> Result<AnyClientState, ICS03Error> {
-		log::info!("in connection : [client_state]");
-		log::info!("in connection : [client_state] >> client_id = {:?}", client_id);
+		log::trace!("in connection : [client_state] >> client_id = {:?}", client_id);
 
 		// ClientReader::client_state(self, client_id)
 		if <ClientStates<T>>::contains_key(client_id.as_bytes()) {
 			let data = <ClientStates<T>>::get(client_id.as_bytes());
 			let state = AnyClientState::decode_vec(&*data)
 				.map_err(|_| ICS03Error::implementation_specific())?;
-			log::info!("in connection : [client_state] >> client_state: {:?}", state);
+			log::trace!("in connection : [client_state] >> client_state: {:?}", state);
 			Ok(state)
 		} else {
-			log::info!("in connection : [client_state] >> read client_state is None");
+			log::trace!("in connection : [client_state] >> read client_state is None");
 
 			Err(ICS03Error::frozen_client(client_id.clone()))
 		}
 	}
 
 	fn host_current_height(&self) -> Height {
-		log::info!("in connection : [host_current_height]");
-
 		let block_number = format!("{:?}", <frame_system::Pallet<T>>::block_number());
 		let current_height: u64 = block_number.parse().unwrap_or_default();
 
-		log::info!(
+		log::trace!(
 			"in connection : [host_current_height] >> Host current height = {:?}",
 			Height::new(0, current_height)
 		);
@@ -65,14 +61,12 @@ impl<T: Config> ConnectionReader for Context<T> {
 	}
 
 	fn host_oldest_height(&self) -> Height {
-		log::info!("in connection : [host_oldest_height]");
-
 		let mut temp = frame_system::BlockHash::<T>::iter().collect::<Vec<_>>();
 		temp.sort_by(|(a, ..), (b, ..)| a.cmp(b));
 		let (block_number, ..) = temp.get(0).cloned().unwrap_or_default();
 		let block_number = format!("{:?}", block_number);
 		let height = block_number.parse().unwrap_or_default();
-		log::info!(
+		log::trace!(
 			"in connection : [host_oldest_height] >> Host oldest height = {:?}",
 			Height::new(0, height)
 		);
@@ -80,16 +74,14 @@ impl<T: Config> ConnectionReader for Context<T> {
 	}
 
 	fn connection_counter(&self) -> Result<u64, ICS03Error> {
-		log::info!("in connection : [connection_counter]");
 		let count = Connections::<T>::count();
-		log::info!("in connection : [connection_counter] >> Connection_counter = {:?}", count);
+		log::trace!("in connection : [connection_counter] >> Connection_counter = {:?}", count);
 
 		Ok(count as u64)
 	}
 
 	fn commitment_prefix(&self) -> CommitmentPrefix {
-		log::info!("in connection : [commitment_prefix]");
-		log::info!("in connection : [commitment_prefix] >> CommitmentPrefix = {:?}", "ibc");
+		log::trace!("in connection : [commitment_prefix] >> CommitmentPrefix = {:?}", "ibc");
 		T::CONNECTION_PREFIX.to_vec().try_into().unwrap()
 	}
 
@@ -98,8 +90,7 @@ impl<T: Config> ConnectionReader for Context<T> {
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<AnyConsensusState, ICS03Error> {
-		log::info!("in connection : [client_consensus_state]");
-		log::info!(
+		log::trace!(
 			"in connection : [client_consensus_state] client_id = {:?}, height = {:?}",
 			client_id,
 			height
@@ -129,8 +120,7 @@ impl<T: Config> ConnectionKeeper for Context<T> {
 		connection_id: ConnectionId,
 		connection_end: &ConnectionEnd,
 	) -> Result<(), ICS03Error> {
-		log::info!("in connection : [store_connection]");
-		log::info!(
+		log::trace!(
 			"in connection : [store_connection] >> connection_id: {:?}, connection_end: {:?}",
 			connection_id,
 			connection_end
@@ -141,7 +131,7 @@ impl<T: Config> ConnectionKeeper for Context<T> {
 		<Connections<T>>::insert(connection_id.as_bytes().to_vec(), data);
 
 		let temp = ConnectionReader::connection_end(self, &connection_id);
-		log::info!("in connection : [store_connection] >> read store after: {:?}", temp);
+		log::trace!("in connection : [store_connection] >> read store after: {:?}", temp);
 		Ok(())
 	}
 
@@ -150,8 +140,7 @@ impl<T: Config> ConnectionKeeper for Context<T> {
 		connection_id: ConnectionId,
 		client_id: &ClientId,
 	) -> Result<(), ICS03Error> {
-		log::info!("in connection : [store_connection_to_client]");
-		log::info!(
+		log::trace!(
 			"in connection : [store_connection_to_client] >> connection_id = {:?},\
 		 client_id = {:?}",
 			connection_id,
@@ -166,7 +155,7 @@ impl<T: Config> ConnectionKeeper for Context<T> {
 	}
 
 	fn increase_connection_counter(&mut self) {
-		log::info!("in connection : [increase_connection_counter]");
+		log::trace!("in connection : [increase_connection_counter]");
 		// connections uses a counted storage map
 	}
 }

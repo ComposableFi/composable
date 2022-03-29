@@ -43,7 +43,7 @@ impl<T: Config> PortReader for Context<T> {
 		&self,
 		_port_id: &PortId,
 	) -> Result<(Self::ModuleId, Capability), ICS05Error> {
-		log::info!("in port: [look_module_by_port]");
+		log::trace!("in port: [look_module_by_port]");
 
 		Ok(((), Capability::default()))
 	}

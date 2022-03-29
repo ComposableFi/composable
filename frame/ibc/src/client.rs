@@ -20,8 +20,7 @@ use tendermint_proto::Protobuf;
 
 impl<T: Config> ClientReader for Context<T> {
 	fn client_type(&self, client_id: &ClientId) -> Result<ClientType, ICS02Error> {
-		log::info!("in client : [client_type]");
-		log::info!("in client : [client_type] >> client_id = {:?}", client_id);
+		log::trace!("in client : [client_type] >> client_id = {:?}", client_id);
 
 		if <Clients<T>>::contains_key(client_id.as_bytes()) {
 			let data = <Clients<T>>::get(client_id.as_bytes());
@@ -33,28 +32,27 @@ impl<T: Config> ClientReader for Context<T> {
 			match ClientType::from_str(&data) {
 				Err(_err) => Err(ICS02Error::unknown_client_type(format!("{}", data))),
 				Ok(val) => {
-					log::info!("in client : [client_type] >> client_type : {:?}", val);
+					log::trace!("in client : [client_type] >> client_type : {:?}", val);
 					Ok(val)
 				},
 			}
 		} else {
-			log::info!("in client : [client_type] >> read client_type is None");
+			log::trace!("in client : [client_type] >> read client_type is None");
 			Err(ICS02Error::client_not_found(client_id.clone()))
 		}
 	}
 
 	fn client_state(&self, client_id: &ClientId) -> Result<AnyClientState, ICS02Error> {
-		log::info!("in client : [client_state]");
-		log::info!("in client : [client_state] >> client_id = {:?}", client_id);
+		log::trace!("in client : [client_state] >> client_id = {:?}", client_id);
 
 		if <ClientStates<T>>::contains_key(client_id.as_bytes()) {
 			let data = <ClientStates<T>>::get(client_id.as_bytes());
 			let state = AnyClientState::decode_vec(&*data)
 				.map_err(|_| ICS02Error::implementation_specific())?;
-			log::info!("in client : [client_state] >> any client_state: {:?}", state);
+			log::trace!("in client : [client_state] >> any client_state: {:?}", state);
 			Ok(state)
 		} else {
-			log::info!("in client : [client_state] >> read any client state is None");
+			log::trace!("in client : [client_state] >> read any client state is None");
 			Err(ICS02Error::client_not_found(client_id.clone()))
 		}
 	}
@@ -64,8 +62,7 @@ impl<T: Config> ClientReader for Context<T> {
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<AnyConsensusState, ICS02Error> {
-		log::info!("in client : [consensus_state]");
-		log::info!(
+		log::trace!(
 			"in client : [consensus_state] >> client_id = {:?}, height = {:?}",
 			client_id,
 			height
@@ -77,7 +74,7 @@ impl<T: Config> ClientReader for Context<T> {
 
 		let any_consensus_state = AnyConsensusState::decode_vec(&*value)
 			.map_err(|_| ICS02Error::consensus_state_not_found(client_id.clone(), native_height))?;
-		log::info!(
+		log::trace!(
 			"in client : [consensus_state] >> any consensus state = {:?}",
 			any_consensus_state
 		);
@@ -141,7 +138,7 @@ impl<T: Config> ClientReader for Context<T> {
 	}
 
 	fn host_height(&self) -> Height {
-		log::info!("in client: [host_height]");
+		log::trace!("in client: [host_height]");
 
 		let block_number = format!("{:?}", <frame_system::Pallet<T>>::block_number());
 		let current_height = block_number
@@ -161,9 +158,8 @@ impl<T: Config> ClientReader for Context<T> {
 	}
 
 	fn client_counter(&self) -> Result<u64, ICS02Error> {
-		log::info!("in client : [client_counter]");
 		let count = Clients::<T>::count();
-		log::info!("in client : [client_counter] >> client_counter: {:?}", count);
+		log::trace!("in client : [client_counter] >> client_counter: {:?}", count);
 
 		Ok(count as u64)
 	}
@@ -175,8 +171,7 @@ impl<T: Config> ClientKeeper for Context<T> {
 		client_id: ClientId,
 		client_type: ClientType,
 	) -> Result<(), ICS02Error> {
-		log::info!("in client : [store_client_type]");
-		log::info!(
+		log::trace!(
 			"in client : [store_client_type] >> client id = {:?}, client_type = {:?}",
 			client_id,
 			client_type
@@ -189,7 +184,7 @@ impl<T: Config> ClientKeeper for Context<T> {
 	}
 
 	fn increase_client_counter(&mut self) {
-		log::info!("in client : [increase_client_counter]");
+		log::trace!("in client : [increase_client_counter]");
 		// Clients uses a counted storage map
 	}
 
@@ -198,8 +193,7 @@ impl<T: Config> ClientKeeper for Context<T> {
 		client_id: ClientId,
 		client_state: AnyClientState,
 	) -> Result<(), ICS02Error> {
-		log::info!("in client : [store_client_state]");
-		log::info!(
+		log::trace!(
 			"in client : [store_client_state] >> client_id: {:?}, client_state = {:?}",
 			client_id,
 			client_state
@@ -218,8 +212,7 @@ impl<T: Config> ClientKeeper for Context<T> {
 		height: Height,
 		consensus_state: AnyConsensusState,
 	) -> Result<(), ICS02Error> {
-		log::info!("in client : [store_consensus_state]");
-		log::info!("in client : [store_consensus_state] >> client_id: {:?}, height = {:?}, consensus_state = {:?}",
+		log::trace!("in client : [store_consensus_state] >> client_id: {:?}, height = {:?}, consensus_state = {:?}",
 			client_id, height, consensus_state);
 
 		let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;

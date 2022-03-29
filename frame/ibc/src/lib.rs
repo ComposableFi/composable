@@ -272,7 +272,6 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		#[frame_support::transactional]
 		pub fn deliver(origin: OriginFor<T>, messages: Vec<Any>) -> DispatchResult {
-			log::info!("in deliver");
 			let _sender = ensure_signed(origin)?;
 			let mut ctx = routing::Context::<T>::new();
 			let messages = messages
@@ -287,7 +286,7 @@ pub mod pallet {
 			let result = ibc::core::ics26_routing::handler::deliver(&mut ctx, messages)
 				.map_err(|_| Error::<T>::ProcessingError)?;
 
-			log::info!("result: {:?}", result);
+			log::trace!("result: {:?}", result);
 			Ok(())
 		}
 	}
