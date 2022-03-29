@@ -21,7 +21,13 @@ package "pallet-clearing-house" {
         + liquidate()
         + update_funding()
         # create_market()
-        # delete_market()
+        # stop_market()
+    }
+
+    interface "ClearingHouse" as CH <<trait>> {
+        ~ create_market()
+        ~ stop_market()
+        ~ update_funding()
     }
     
     interface "MarginTrading" as MTTrait <<trait>> {
@@ -42,7 +48,6 @@ package "pallet-clearing-house" {
     interface "Instruments" as ITrait <<trait>> {
         ~ funding_owed(Position)
         ~ funding_rate(MarketId)
-        ~ update_funding(MarketId)
     }
 
     database "Clearing House Storage" {
@@ -120,8 +125,10 @@ Positions ..> Position: maps
 Position ..> Markets : references
 
 '================== Control flow relationships             
-ClearingHouse --> MTTrait : calls
-ClearingHouse --> ITrait : calls
+ClearingHouse --> CH : wraps
+
+CH --> MTTrait : requires\n(trait bound)
+CH --> ITrait : calls
 
 'add_margin
 'remove_margin
