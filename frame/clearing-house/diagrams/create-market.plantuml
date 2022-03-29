@@ -1,4 +1,6 @@
 @startuml create_market
+!theme mars
+
 actor "god" as g
 participant "Clearing\nHouse" as ch
 participant "trait\nInstruments" as inst

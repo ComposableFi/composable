@@ -1,0 +1,35 @@
+@startuml open_position
+!theme mars
+skinparam responseMessageBelowArrow true
+
+title Opening a Position
+
+actor Trader
+participant "Clearing\nHouse" as CH
+database "Positions" as Storage
+participant "trait\nRiskEngine" as RE
+participant vAMM
+
+Trader -> CH : open position
+
+CH -> Storage : get/create position
+return
+'note right CH: compute quote asset\nnotional amount
+
+CH -> vAMM ++ : swap quote for base asset
+return base asset amount
+
+CH -> CH : realize PnL?
+
+CH -> Storage : update position
+
+'RiskEngine
+CH -> RE : ensure ""above_initial_margin_ratio""
+'note right CH : ensure margin ratio\nabove MMR
+
+CH -> CH: check oracle-mark\nprice divergence
+
+note right CH: charge and transfer fees
+
+?<-o CH : emit event
+@enduml

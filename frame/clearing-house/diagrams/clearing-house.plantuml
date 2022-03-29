@@ -21,21 +21,25 @@ package "pallet-clearing-house" {
         + liquidate()
         + update_funding()
         # create_market()
-        # delete_market()
+        # stop_market()
     }
-    
-    interface "MarginTrading" as MTTrait <<trait>> {
+
+    interface "ClearingHouse" as CH <<trait>> {
         ~ add_margin()
         ~ remove_margin()
         ~ open_position()
         ~ close_position()
         ~ liquidate()
+        ~ create_market()
+        ~ stop_market()
+        ~ update_funding()
     }
     
     interface "RiskEngine" as RETrait <<trait>> {
-        ~ above_risk_threshold(AccountId)
+        ~ get_margin_ratio(AccountId)
+        ~ above_initial_margin_ratio(AccountId)
+        ~ above_maintenance_margin_ratio(AccountId)
         ~ risk_free_collateral(AccountId)
-        '~ get_margin_ratio()
         '~ get_free_collateral()
     }
     
@@ -43,6 +47,10 @@ package "pallet-clearing-house" {
         ~ funding_owed(Position)
         ~ funding_rate(MarketId)
         ~ update_funding(MarketId)
+    }
+
+    interface "FeeModel" as FTrait <<trait>> {
+        ~ fee_for_trade()
     }
 
     database "Clearing House Storage" {
@@ -112,49 +120,48 @@ hide empty members
 hide circle
 
 '================== Storage relationships
-Markets ..> Market : maps
+Markets ..down> Market : maps
 Market::vamm_id ..> vAmms : references
 Market::asset_id ..> Oracle : used in
 
-Positions ..> Position: maps
-Position ..> Markets : references
+Positions ..down> Position: maps
+Position ..left> Markets : references
 
 '================== Control flow relationships             
-ClearingHouse --> MTTrait : calls
-ClearingHouse --> ITrait : calls
+ClearingHouse -> CH : wraps
+
+CH -[#blue]-> ITrait : calls
 
 'add_margin
 'remove_margin
-MTTrait --> MarginAccounts : write
+CH -[#red]-> MarginAccounts : write
 
 'remove_margin
-MTTrait --> RETrait : calls
+CH -[#blue]-> RETrait : calls
 
 'open_position
 'close_position
 'liquidate
-MTTrait --> Positions : write
+CH -[#red]-> Positions : write
+CH -[#blue]right> FTrait : calls
 
 'open_position
 'close_position
-MTTrait --> vAmm : calls
+CH -[#blue]-> vAmm : calls
 
 'update_funding
-MTTrait --> ITrait : calls
+ITrait -[#red]-> Markets : write
+ITrait -[#blue]-> Oracle : calls
+ITrait -[#blue]-> vAmm : calls
 
-'update_funding
-ITrait --> Markets : write
-ITrait --> Oracle : calls
-ITrait --> vAmm : calls
-
-'above_risk_threshold
-'risk_free_collateral
-RETrait --> MarginAccounts : read
-RETrait --> Positions : read
-RETrait --> ITrait : calls
+'get_margin_ratio
+RETrait -[#green]-> MarginAccounts : read
+RETrait -[#green]-> Positions : read
+RETrait -[#blue]-> ITrait : calls
+RETrait -[#blue]-> vAmm : calls
 
 'vAMM
-vAmm --> vAmms : write
+vAmm -[#red]-> vAmms : write
 vAmms ..> vAmmState : maps
 
 @enduml
