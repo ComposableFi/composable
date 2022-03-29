@@ -19,6 +19,7 @@ version = "2.0.0"
 composable-maths = { path = "../composable-maths", default-features = false }
 composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 log = { version = "0.4.14", default-features = false }
@@ -43,6 +44,7 @@ proptest = { version = "1.0" }
 [features]
 default = ["std"]
 runtime-benchmarks = [
+  "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
 ]
