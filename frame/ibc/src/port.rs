@@ -1,6 +1,5 @@
 use super::*;
 
-use scale_info::prelude::string::ToString;
 use crate::routing::Context;
 use ibc::core::{
 	ics05_port::{
@@ -10,6 +9,7 @@ use ibc::core::{
 	},
 	ics24_host::identifier::PortId,
 };
+use scale_info::prelude::string::ToString;
 
 impl<T: Config> CapabilityReader for Context<T> {
 	fn get_capability(&self, name: &CapabilityName) -> Result<Capability, ICS05Error> {
