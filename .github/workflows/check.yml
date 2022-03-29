@@ -230,9 +230,9 @@ jobs:
       - name: Cargo Single Depedency
         # description: Speed up builds and reduced security check surface
         run: |
-         cargo install -f cargo-deny
+         cargo +nightly install -f cargo-deny
          # start from minimal dependency crate
-         cargo deny --manifest-path ./frame/composable-support/Cargo.toml check Ban
+         cargo +nightly deny --manifest-path ./frame/composable-support/Cargo.toml check Ban
 
       - name: Cargo udeps
         run: |
