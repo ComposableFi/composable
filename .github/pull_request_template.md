@@ -1,5 +1,7 @@
+## ClickUp
+*Please replace this line with a link to the ClickUp issue*
 ## Description
-
+*Please replace this line with info that is not in the ClickUp ticket, eg: "also bumps dependency foo version"*
 
 ## Checklist
 
