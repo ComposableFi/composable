@@ -1,7 +1,7 @@
 use super::*;
 use core::str::FromStr;
 
-use crate::routing::Context;
+use crate::{impls::host_height, routing::Context};
 use ibc::{
 	core::{
 		ics02_client::{
@@ -18,7 +18,10 @@ use ibc::{
 };
 use tendermint_proto::Protobuf;
 
-impl<T: Config> ClientReader for Context<T> {
+impl<T: Config> ClientReader for Context<T>
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
 	fn client_type(&self, client_id: &ClientId) -> Result<ClientType, ICS02Error> {
 		log::trace!("in client : [client_type] >> client_id = {:?}", client_id);
 
@@ -139,12 +142,8 @@ impl<T: Config> ClientReader for Context<T> {
 
 	fn host_height(&self) -> Height {
 		log::trace!("in client: [host_height]");
-
-		let block_number = format!("{:?}", <frame_system::Pallet<T>>::block_number());
-		let current_height = block_number
-			.parse()
-			.map_err(|e| panic!("{:?}, caused by {:?} from frame_system::Pallet", e, block_number));
-		Height::new(0, current_height.unwrap())
+		let current_height = host_height::<T>();
+		Height::new(0, current_height)
 	}
 
 	// TODO: Revisit after consensus state for beefy light client is defined in chains is defined in

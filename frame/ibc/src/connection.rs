@@ -1,6 +1,6 @@
 use super::*;
 
-use crate::routing::Context;
+use crate::{impls::host_height, routing::Context};
 use ibc::{
 	core::{
 		ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
@@ -16,7 +16,10 @@ use ibc::{
 };
 use tendermint_proto::Protobuf;
 
-impl<T: Config> ConnectionReader for Context<T> {
+impl<T: Config> ConnectionReader for Context<T>
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
 	fn connection_end(&self, conn_id: &ConnectionId) -> Result<ConnectionEnd, ICS03Error> {
 		log::trace!("in connection : [connection_end] >> connection_id = {:?}", conn_id);
 
@@ -50,9 +53,7 @@ impl<T: Config> ConnectionReader for Context<T> {
 	}
 
 	fn host_current_height(&self) -> Height {
-		let block_number = format!("{:?}", <frame_system::Pallet<T>>::block_number());
-		let current_height: u64 = block_number.parse().unwrap_or_default();
-
+		let current_height = host_height::<T>();
 		log::trace!(
 			"in connection : [host_current_height] >> Host current height = {:?}",
 			Height::new(0, current_height)
@@ -114,7 +115,10 @@ impl<T: Config> ConnectionReader for Context<T> {
 	}
 }
 
-impl<T: Config> ConnectionKeeper for Context<T> {
+impl<T: Config> ConnectionKeeper for Context<T>
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
 	fn store_connection(
 		&mut self,
 		connection_id: ConnectionId,

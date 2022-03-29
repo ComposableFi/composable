@@ -15,6 +15,8 @@ impl<T: Config> Context<T> {
 	}
 }
 
-impl<T: Config> Ics26Context for Context<T> {}
+impl<T: Config> Ics26Context for Context<T> where u32: From<<T as frame_system::Config>::BlockNumber>
+{}
 
-impl<T: Config> Ics20Context for Context<T> {}
+impl<T: Config> Ics20Context for Context<T> where u32: From<<T as frame_system::Config>::BlockNumber>
+{}

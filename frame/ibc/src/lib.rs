@@ -244,11 +244,14 @@ pub mod pallet {
 	}
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>
+	where
+		u32: From<<T as frame_system::Config>::BlockNumber>,
+	{
 		fn on_finalize(_n: BlockNumberFor<T>) {
 			let root = Pallet::<T>::extract_ibc_state_root();
 			if let Ok(root) = root {
-				let height = crate::impls::host_height::<T>().unwrap_or_default();
+				let height = crate::impls::host_height::<T>();
 				let height = ibc::Height::new(0, height);
 				let height = height.encode_vec().unwrap_or_default();
 				let timestamp = T::TimeProvider::now().as_nanos();
@@ -267,7 +270,10 @@ pub mod pallet {
 	// These functions materialize as "extrinsic", which are often compared to transactions.
 	// Dispatch able functions must be annotated with a weight and must return a DispatchResult.
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T>
+	where
+		u32: From<<T as frame_system::Config>::BlockNumber>,
+	{
 		#[pallet::weight(0)]
 		#[frame_support::transactional]
 		pub fn deliver(origin: OriginFor<T>, messages: Vec<Any>) -> DispatchResult {

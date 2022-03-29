@@ -2,7 +2,7 @@ use super::*;
 use core::{str::FromStr, time::Duration};
 use frame_support::traits::Get;
 
-use crate::routing::Context;
+use crate::{impls::host_height, routing::Context};
 use ibc::{
 	core::{
 		ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
@@ -21,7 +21,10 @@ use ibc::{
 };
 use tendermint_proto::Protobuf;
 
-impl<T: Config> ChannelReader for Context<T> {
+impl<T: Config> ChannelReader for Context<T>
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
 	/// Returns the ChannelEnd for the given `port_id` and `chan_id`.
 	fn channel_end(&self, port_channel_id: &(PortId, ChannelId)) -> Result<ChannelEnd, ICS04Error> {
 		log::trace!(
@@ -303,15 +306,12 @@ impl<T: Config> ChannelReader for Context<T> {
 
 	/// Returns the current height of the local chain.
 	fn host_height(&self) -> Height {
-		let block_number = format!("{:?}", <frame_system::Pallet<T>>::block_number());
-		let current_height = block_number
-			.parse()
-			.map_err(|e| panic!("{:?}, caused by {:?} from frame_system::Pallet", e, block_number));
+		let current_height = host_height::<T>();
 		log::trace!(
 			"in channel: [host_height] >> host_height = {:?}",
-			Height::new(0, current_height.unwrap())
+			Height::new(0, current_height)
 		);
-		Height::new(0, current_height.unwrap())
+		Height::new(0, current_height)
 	}
 
 	/// Returns the current timestamp of the local chain.
@@ -376,7 +376,10 @@ impl<T: Config> ChannelReader for Context<T> {
 	}
 }
 
-impl<T: Config> ChannelKeeper for Context<T> {
+impl<T: Config> ChannelKeeper for Context<T>
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
 	fn store_packet_commitment(
 		&mut self,
 		key: (PortId, ChannelId, Sequence),

@@ -33,7 +33,10 @@ use sp_std::time::Duration;
 use sp_trie::{TrieDBMut, TrieMut};
 use tendermint_proto::Protobuf;
 
-impl<T: Config> Pallet<T> {
+impl<T: Config> Pallet<T>
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
 	pub(crate) fn build_ibc_state_trie<'a>(
 		db: &'a mut sp_trie::MemoryDB<BlakeTwo256>,
 		root: &'a mut sp_core::H256,
@@ -216,7 +219,7 @@ impl<T: Config> Pallet<T> {
 
 	pub fn generate_proof(keys: Vec<Vec<u8>>) -> Result<Proof, Error<T>> {
 		let proof = Self::generate_raw_proof(keys)?;
-		Ok(Proof { proof, height: host_height()? })
+		Ok(Proof { proof, height: host_height::<T>() })
 	}
 
 	// IBC Runtime Api helper methods
@@ -236,7 +239,7 @@ impl<T: Config> Pallet<T> {
 		Ok(QueryChannelResponse {
 			channel,
 			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height()?,
+			height: host_height::<T>(),
 		})
 	}
 
@@ -252,7 +255,7 @@ impl<T: Config> Pallet<T> {
 		Ok(QueryConnectionResponse {
 			connection,
 			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height()?,
+			height: host_height::<T>(),
 		})
 	}
 
@@ -269,7 +272,7 @@ impl<T: Config> Pallet<T> {
 		Ok(QueryClientStateResponse {
 			client_state,
 			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height()?,
+			height: host_height::<T>(),
 		})
 	}
 
@@ -315,7 +318,7 @@ impl<T: Config> Pallet<T> {
 		Ok(QueryConsensusStateResponse {
 			consensus_state,
 			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height()?,
+			height: host_height::<T>(),
 		})
 	}
 
@@ -353,7 +356,7 @@ impl<T: Config> Pallet<T> {
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
 
-		Ok(QueryChannelsResponse { channels, height: host_height()? })
+		Ok(QueryChannelsResponse { channels, height: host_height::<T>() })
 	}
 
 	/// Get all connection states
@@ -364,7 +367,7 @@ impl<T: Config> Pallet<T> {
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
 
-		Ok(QueryConnectionsResponse { connections, height: host_height()? })
+		Ok(QueryConnectionsResponse { connections, height: host_height::<T>() })
 	}
 
 	/// Get all channels bound to this connection
@@ -378,7 +381,7 @@ impl<T: Config> Pallet<T> {
 				Ok(IdentifiedChannel { channel_id, port_id, channel_end })
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
-		Ok(QueryChannelsResponse { channels, height: host_height()? })
+		Ok(QueryChannelsResponse { channels, height: host_height::<T>() })
 	}
 
 	pub fn packet_commitments(
@@ -401,7 +404,7 @@ impl<T: Config> Pallet<T> {
 			})
 			.collect::<Vec<_>>();
 
-		Ok(QueryPacketCommitmentsResponse { commitments, height: host_height()? })
+		Ok(QueryPacketCommitmentsResponse { commitments, height: host_height::<T>() })
 	}
 
 	pub fn packet_acknowledgements(
@@ -423,7 +426,7 @@ impl<T: Config> Pallet<T> {
 				}
 			})
 			.collect::<Vec<_>>();
-		Ok(QueryPacketAcknowledgementsResponse { acks, height: host_height()? })
+		Ok(QueryPacketAcknowledgementsResponse { acks, height: host_height::<T>() })
 	}
 
 	pub fn unreceived_packets(
@@ -471,7 +474,7 @@ impl<T: Config> Pallet<T> {
 		Ok(QueryNextSequenceReceiveResponse {
 			sequence,
 			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height()?,
+			height: host_height::<T>(),
 		})
 	}
 
@@ -493,7 +496,7 @@ impl<T: Config> Pallet<T> {
 		Ok(QueryPacketCommitmentResponse {
 			commitment,
 			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height()?,
+			height: host_height::<T>(),
 		})
 	}
 
@@ -514,7 +517,7 @@ impl<T: Config> Pallet<T> {
 		Ok(QueryPacketAcknowledgementResponse {
 			ack,
 			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height()?,
+			height: host_height::<T>(),
 		})
 	}
 
@@ -536,7 +539,7 @@ impl<T: Config> Pallet<T> {
 		Ok(QueryPacketReceiptResponse {
 			receipt,
 			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height()?,
+			height: host_height::<T>(),
 		})
 	}
 
@@ -569,7 +572,7 @@ impl<T: Config> Pallet<T> {
 		Ok(ConnectionHandshakeProof {
 			client_state,
 			proof: Self::generate_raw_proof(vec![client_state_key, connection_key, consensus_key])?,
-			height: host_height()?,
+			height: host_height::<T>(),
 		})
 	}
 
@@ -629,7 +632,10 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-impl<T: Config> crate::traits::SendPacketTrait<T> for Pallet<T> {
+impl<T: Config> crate::traits::SendPacketTrait<T> for Pallet<T>
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
 	fn send_packet(data: SendPacketData) -> Result<(), Error<T>> {
 		let channel_id = data.channel_id;
 		let port_id = data.port_id;
@@ -724,8 +730,10 @@ fn client_type_from_bytes<T: Config>(client_type: Vec<u8>) -> Result<ClientType,
 		.map_err(|_| Error::<T>::DecodingError)
 }
 
-pub fn host_height<T: Config>() -> Result<u64, Error<T>> {
-	let block_number = <frame_system::Pallet<T>>::block_number().encode();
-	let block_number = u32::decode(&mut &*block_number).unwrap_or_default();
-	Ok(block_number.into())
+pub fn host_height<T: Config>() -> u64
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
+	let block_number: u32 = <frame_system::Pallet<T>>::block_number().into();
+	block_number.into()
 }
