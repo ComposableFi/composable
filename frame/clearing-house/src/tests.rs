@@ -16,6 +16,10 @@ use frame_support::{assert_err, assert_noop, assert_ok};
 use orml_tokens::Error as TokenError;
 use proptest::prelude::*;
 
+// ----------------------------------------------------------------------------------------------------
+//                                             Setup
+// ----------------------------------------------------------------------------------------------------
+
 type VammParams = mock_vamm::VammParams;
 
 impl Default for ExtBuilder {
@@ -29,6 +33,46 @@ impl Default for ExtBuilder {
 		}
 	}
 }
+
+// ----------------------------------------------------------------------------------------------------
+//                                           Mocked Pallets Tests
+// ----------------------------------------------------------------------------------------------------
+
+proptest! {
+	// Can we guarantee that any::<Option<Value>> will generate at least one of `Some` and `None`?
+	#[test]
+	fn mock_oracle_asset_support_reflects_genesis_config(asset_support in any::<Option<bool>>()) {
+		ExtBuilder { oracle_asset_support: asset_support, ..Default::default() }
+		.build()
+		.execute_with(|| {
+			let is_supported = <Oracle as OracleTrait>::is_supported(DOT);
+			match asset_support {
+				Some(support) => assert_ok!(is_supported, support),
+				None => {
+					assert_err!(is_supported, mock_oracle::Error::<Runtime>::CantCheckAssetSupport)
+				},
+			}
+		})
+	}
+}
+
+proptest! {
+	// Can we guarantee that any::<Option<Value>> will generate at least one of `Some` and `None`?
+	#[test]
+	fn mock_vamm_created_id_reflects_genesis_config(vamm_id in any::<Option<VammId>>()) {
+		ExtBuilder { vamm_id , ..Default::default() }.build().execute_with(|| {
+			let created = <Vamm as VirtualAMM>::create(VammParams {});
+			match vamm_id {
+				Some(id) => assert_ok!(created, id),
+				None => assert_err!(created, mock_vamm::Error::<Runtime>::FailedToCreateVamm),
+			}
+		})
+	}
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                             Pallet Tests
+// ----------------------------------------------------------------------------------------------------
 
 #[test]
 fn add_margin_returns_transfer_error() {
@@ -89,38 +133,6 @@ fn create_first_market_succeeds() {
 		// Ensure market count is increased by 1
 		assert_eq!(ClearingHouse::market_count(), old_count + 1);
 	})
-}
-
-proptest! {
-	// Can we guarantee that any::<Option<Value>> will generate at least one of `Some` and `None`?
-	#[test]
-	fn mock_oracle_asset_support_reflects_genesis_config(asset_support in any::<Option<bool>>()) {
-		ExtBuilder { oracle_asset_support: asset_support, ..Default::default() }
-		.build()
-		.execute_with(|| {
-			let is_supported = <Oracle as OracleTrait>::is_supported(DOT);
-			match asset_support {
-				Some(support) => assert_ok!(is_supported, support),
-				None => {
-					assert_err!(is_supported, mock_oracle::Error::<Runtime>::CantCheckAssetSupport)
-				},
-			}
-		})
-	}
-}
-
-proptest! {
-	// Can we guarantee that any::<Option<Value>> will generate at least one of `Some` and `None`?
-	#[test]
-	fn mock_vamm_created_id_reflects_genesis_config(vamm_id in any::<Option<VammId>>()) {
-		ExtBuilder { vamm_id , ..Default::default() }.build().execute_with(|| {
-			let created = <Vamm as VirtualAMM>::create(VammParams {});
-			match vamm_id {
-				Some(id) => assert_ok!(created, id),
-				None => assert_err!(created, mock_vamm::Error::<Runtime>::FailedToCreateVamm),
-			}
-		})
-	}
 }
 
 #[test]
