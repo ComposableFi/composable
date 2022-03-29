@@ -37,6 +37,13 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+	// Storage: Pablo PoolCount (r:1 w:1)
+	// Storage: Pablo Pools (r:0 w:1)
+	fn create_lbp() -> Weight {
+		(28_198_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
@@ -47,6 +54,14 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
 	// Storage: Pablo Pools (r:1 w:0)
+	// Storage: Tokens Accounts (r:2 w:2)
+	// Storage: System Account (r:1 w:1)
+	fn add_liquidity_lbp() -> Weight {
+		(123_129_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+	}
+	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	// Storage: System Account (r:1 w:0)
@@ -54,6 +69,14 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 		(123_271_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+	}
+	// Storage: Pablo Pools (r:1 w:1)
+	// Storage: Tokens Accounts (r:2 w:2)
+	// Storage: System Account (r:1 w:1)
+	fn remove_liquidity_lbp() -> Weight {
+		(119_584_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
