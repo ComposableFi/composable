@@ -105,18 +105,16 @@ impl<T: Config> ConnectionReader for Context<T> {
 			height
 		);
 
-		// ClientReader::consensus_state(self, client_id, height)
-		let height = height.encode_vec().unwrap();
-		let value = <ConsensusStates<T>>::get(client_id.as_bytes());
+		let height = height.encode_vec().map_err(|_| ICS03Error::implementation_specific())?;
+		let value = <ConsensusStates<T>>::get(client_id.as_bytes(), height);
 
-		for item in value.iter() {
-			if item.0 == height {
-				let any_consensus_state = AnyConsensusState::decode_vec(&*item.1)
-					.map_err(|_| ICS03Error::implementation_specific())?;
-				return Ok(any_consensus_state)
-			}
-		}
-		Err(ICS03Error::missing_consensus_height())
+		let any_consensus_state = AnyConsensusState::decode_vec(&*value)
+			.map_err(|_| ICS03Error::missing_consensus_height())?;
+		log::trace!(
+			"in channel: [client_consensus_state] >> any consensus state = {:?}",
+			any_consensus_state
+		);
+		Ok(any_consensus_state)
 	}
 
 	// TODO: Define consenssus state for substrate chains in ibc-rs and modify this after
@@ -138,7 +136,8 @@ impl<T: Config> ConnectionKeeper for Context<T> {
 			connection_end
 		);
 
-		let data = connection_end.encode_vec().unwrap();
+		let data =
+			connection_end.encode_vec().map_err(|_| ICS03Error::implementation_specific())?;
 		<Connections<T>>::insert(connection_id.as_bytes().to_vec(), data);
 
 		let temp = ConnectionReader::connection_end(self, &connection_id);

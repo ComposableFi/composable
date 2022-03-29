@@ -130,23 +130,15 @@ impl<T: Config> ChannelReader for Context<T> {
 		);
 
 		let height = height.encode_vec().map_err(|_| ICS04Error::implementation_specific())?;
-		let value = <ConsensusStates<T>>::get(client_id.as_bytes());
+		let value = <ConsensusStates<T>>::get(client_id.as_bytes(), height);
 
-		for item in value.iter() {
-			if item.0 == height {
-				let any_consensus_state = AnyConsensusState::decode_vec(&*item.1)
-					.map_err(|_| ICS04Error::implementation_specific())?;
-				log::info!(
-					"in channel: [client_consensus_state] >> any consensus state = {:?}",
-					any_consensus_state
-				);
-				return Ok(any_consensus_state)
-			}
-		}
-		log::info!(
-			"in channel : [client_consensus_state] >> read about client_id consensus_state error"
+		let any_consensus_state = AnyConsensusState::decode_vec(&*value)
+			.map_err(|_| ICS04Error::implementation_specific())?;
+		log::trace!(
+			"in channel: [client_consensus_state] >> any consensus state = {:?}",
+			any_consensus_state
 		);
-		Err(ICS04Error::frozen_client(client_id.clone()))
+		Ok(any_consensus_state)
 	}
 
 	fn authenticated_capability(&self, port_id: &PortId) -> Result<Capability, ICS04Error> {
@@ -644,7 +636,8 @@ impl<T: Config> ChannelKeeper for Context<T> {
 			channel_end
 		);
 
-		let channel_end = channel_end.encode_vec().unwrap();
+		let channel_end =
+			channel_end.encode_vec().map_err(|_| ICS04Error::implementation_specific())?;
 
 		// store channels key-value
 		<Channels<T>>::insert(

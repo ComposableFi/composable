@@ -12,9 +12,9 @@ use ibc::core::{
 	ics24_host::{
 		identifier::*,
 		path::{
-			AcksPath, ChannelEndsPath, ClientConnectionsPath, ClientConsensusStatePath,
-			ClientStatePath, ClientTypePath, CommitmentsPath, ConnectionsPath, ReceiptsPath,
-			SeqAcksPath, SeqRecvsPath, SeqSendsPath,
+			AcksPath, ChannelEndsPath, ClientConsensusStatePath, ClientStatePath, ClientTypePath,
+			CommitmentsPath, ConnectionsPath, ReceiptsPath, SeqAcksPath, SeqRecvsPath,
+			SeqSendsPath,
 		},
 	},
 };
@@ -41,11 +41,16 @@ impl<T: Config> Pallet<T> {
 		let mut trie = <TrieDBMut<sp_trie::LayoutV0<BlakeTwo256>>>::new(db, root);
 		let prefix = T::CONNECTION_PREFIX.to_vec();
 
-		// Insert client and consensus states in trie
+		// Insert client state in trie
 		for (client_id, client_state) in ClientStates::<T>::iter() {
-			let consensus_states = ConsensusStates::<T>::get(&client_id);
-			let client_connection = ConnectionClient::<T>::get(&client_id);
 			let client_type = Clients::<T>::get(&client_id);
+			let client_state = AnyClientState::decode_vec(&*client_state)
+				.map_err(|_| Error::<T>::DecodingError)?;
+			let client_state = match client_state {
+				AnyClientState::Tendermint(state) =>
+					state.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+				_ => continue,
+			};
 
 			let id = ClientId::from_str(
 				&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?,
@@ -61,25 +66,32 @@ impl<T: Config> Pallet<T> {
 				.map_err(|_| Error::<T>::TrieInsertError)?;
 			trie.insert(&client_type_key, &client_type)
 				.map_err(|_| Error::<T>::TrieInsertError)?;
+		}
 
-			let client_connections_path = format!("{}", ClientConnectionsPath(id.clone()));
-			let mut client_connections_path_key = prefix.clone();
-			client_connections_path_key.extend_from_slice(client_connections_path.as_bytes());
-			trie.insert(&client_connections_path_key, &client_connection)
-				.map_err(|_| Error::<T>::TrieInsertError)?;
-			for (height, consensus_state) in consensus_states {
-				let height =
-					ibc::Height::decode(&*height).map_err(|_| Error::<T>::DecodingError)?;
-				let consensus_path = ClientConsensusStatePath {
-					client_id: id.clone(),
-					epoch: height.revision_number,
-					height: height.revision_height,
-				};
-				let mut key = prefix.clone();
-				let path = format!("{}", consensus_path);
-				key.extend_from_slice(&path.as_bytes());
-				trie.insert(&key, &consensus_state).map_err(|_| Error::<T>::TrieInsertError)?;
-			}
+		// Insert consensus states in trie
+		let consensus_states = ConsensusStates::<T>::iter();
+		for (client_id, height, consensus_state) in consensus_states {
+			let client_id = ClientId::from_str(
+				&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?,
+			)
+			.map_err(|_| Error::<T>::DecodingError)?;
+			let consensus_state = match AnyConsensusState::decode_vec(&*consensus_state)
+				.map_err(|_| Error::<T>::DecodingError)?
+			{
+				AnyConsensusState::Tendermint(state) =>
+					state.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
+				_ => continue,
+			};
+			let height = ibc::Height::decode(&*height).map_err(|_| Error::<T>::DecodingError)?;
+			let consensus_path = ClientConsensusStatePath {
+				client_id,
+				epoch: height.revision_number,
+				height: height.revision_height,
+			};
+			let mut key = prefix.clone();
+			let path = format!("{}", consensus_path);
+			key.extend_from_slice(&path.as_bytes());
+			trie.insert(&key, &consensus_state).map_err(|_| Error::<T>::TrieInsertError)?;
 		}
 
 		// Insert connection ends in trie
@@ -283,18 +295,12 @@ impl<T: Config> Pallet<T> {
 				.latest_height()
 				.encode_vec()
 				.map_err(|_| Error::<T>::DecodingError)?
-		// client_state.latest_height().encode_vec()
 		} else {
 			height
 		};
-		let consensus_states = ConsensusStates::<T>::get(client_id.clone());
+		let consensus_state = ConsensusStates::<T>::get(client_id.clone(), height.clone());
 		let mut key = T::CONNECTION_PREFIX.to_vec();
 		let client_id = client_id_from_bytes(client_id.clone())?;
-
-		let (.., consensus_state) = consensus_states
-			.into_iter()
-			.find(|(maybe_height, ..)| maybe_height == &height)
-			.ok_or(Error::<T>::ConsensusStateNotFound)?;
 
 		let height = ibc::Height::decode(&*height).map_err(|_| Error::<T>::DecodingError)?;
 		let consensus_path = ClientConsensusStatePath {
@@ -648,10 +654,7 @@ impl<T: Config> crate::traits::SendPacketTrait<T> for Pallet<T> {
 			AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
 		let latest_height = client_state.latest_height();
 		let encoded_height = latest_height.encode_vec().map_err(|_| Error::<T>::EncodingError)?;
-		let consensus_state = ConsensusStates::<T>::get(client_id)
-			.into_iter()
-			.find_map(|(height, cs)| if height == encoded_height { Some(cs) } else { None })
-			.ok_or(Error::<T>::ConsensusStateNotFound)?;
+		let consensus_state = ConsensusStates::<T>::get(client_id, encoded_height);
 		let consensus_state = AnyConsensusState::decode_vec(&consensus_state)
 			.map_err(|_| Error::<T>::DecodingError)?;
 		let latest_timestamp = consensus_state.timestamp();

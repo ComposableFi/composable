@@ -21,7 +21,7 @@ pub mod event;
 mod port;
 mod routing;
 
-pub const IBC_DIGEST_ID: [u8; 4] = *b"IBC_";
+pub const IBC_DIGEST_ID: [u8; 4] = *b"/IBC";
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct Any {
@@ -83,9 +83,16 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
-	/// client_id => Vec<(Height, ConsensusState)>
-	pub type ConsensusStates<T: Config> =
-		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<(Vec<u8>, Vec<u8>)>, ValueQuery>;
+	/// client_id, height => ConsensusState
+	pub type ConsensusStates<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		Vec<u8>,
+		Blake2_128Concat,
+		Vec<u8>,
+		Vec<u8>,
+		ValueQuery,
+	>;
 
 	#[pallet::storage]
 	/// client_id , Height => Height

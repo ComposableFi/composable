@@ -73,21 +73,15 @@ impl<T: Config> ClientReader for Context<T> {
 
 		let native_height = height.clone();
 		let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
-		let value = <ConsensusStates<T>>::get(client_id.as_bytes());
+		let value = <ConsensusStates<T>>::get(client_id.as_bytes(), height);
 
-		for item in value.iter() {
-			if item.0 == height {
-				let any_consensus_state = AnyConsensusState::decode_vec(&*item.1)
-					.map_err(|_| ICS02Error::implementation_specific())?;
-				log::info!(
-					"in client : [consensus_state] >> any consensus state = {:?}",
-					any_consensus_state
-				);
-				return Ok(any_consensus_state)
-			}
-		}
-
-		Err(ICS02Error::consensus_state_not_found(client_id.clone(), native_height))
+		let any_consensus_state = AnyConsensusState::decode_vec(&*value)
+			.map_err(|_| ICS02Error::consensus_state_not_found(client_id.clone(), native_height))?;
+		log::info!(
+			"in client : [consensus_state] >> any consensus state = {:?}",
+			any_consensus_state
+		);
+		Ok(any_consensus_state)
 	}
 
 	fn next_consensus_state(
@@ -96,13 +90,12 @@ impl<T: Config> ClientReader for Context<T> {
 		height: Height,
 	) -> Result<Option<AnyConsensusState>, ICS02Error> {
 		let client_id = client_id.as_bytes().to_vec();
-		let consensus_states = ConsensusStates::<T>::get(client_id);
-		let mut cs_states = consensus_states
-			.into_iter()
-			.map(|(height, state)| {
+		let mut cs_states = ConsensusStates::<T>::iter_key_prefix(client_id.clone())
+			.map(|height| {
+				let cs_state = ConsensusStates::<T>::get(client_id.clone(), height.clone());
 				let height = Height::decode_vec(&height)
 					.map_err(|_| ICS02Error::implementation_specific())?;
-				let cs = AnyConsensusState::decode_vec(&state)
+				let cs = AnyConsensusState::decode_vec(&cs_state)
 					.map_err(|_| ICS02Error::implementation_specific())?;
 				Ok((height, cs))
 			})
@@ -125,13 +118,12 @@ impl<T: Config> ClientReader for Context<T> {
 		height: Height,
 	) -> Result<Option<AnyConsensusState>, ICS02Error> {
 		let client_id = client_id.as_bytes().to_vec();
-		let consensus_states = ConsensusStates::<T>::get(client_id);
-		let mut cs_states = consensus_states
-			.into_iter()
-			.map(|(height, state)| {
+		let mut cs_states = ConsensusStates::<T>::iter_key_prefix(client_id.clone())
+			.map(|height| {
+				let cs_state = ConsensusStates::<T>::get(client_id.clone(), height.clone());
 				let height = Height::decode_vec(&height)
 					.map_err(|_| ICS02Error::implementation_specific())?;
-				let cs = AnyConsensusState::decode_vec(&state)
+				let cs = AnyConsensusState::decode_vec(&cs_state)
 					.map_err(|_| ICS02Error::implementation_specific())?;
 				Ok((height, cs))
 			})
@@ -234,20 +226,7 @@ impl<T: Config> ClientKeeper for Context<T> {
 		let data = consensus_state
 			.encode_vec()
 			.map_err(|_| ICS02Error::implementation_specific())?;
-		if <ConsensusStates<T>>::contains_key(client_id.as_bytes()) {
-			// if consensus_state is no empty use push insert an exist ConsensusStates
-			<ConsensusStates<T>>::try_mutate(
-				client_id.as_bytes(),
-				|val| -> Result<(), &'static str> {
-					val.push((height, data));
-					Ok(())
-				},
-			)
-			.expect("store consensus state error");
-		} else {
-			// if consensus state is empty insert a new item.
-			<ConsensusStates<T>>::insert(client_id.as_bytes(), vec![(height, data)]);
-		}
+		ConsensusStates::<T>::insert(client_id.as_bytes().to_vec(), height, data);
 		Ok(())
 	}
 
