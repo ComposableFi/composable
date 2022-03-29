@@ -1584,14 +1584,12 @@ name = "composable-support"
 version = "0.0.1"
 dependencies = [
  "frame-support",
- "frame-system",
  "is_sorted",
  "parity-scale-codec",
  "proptest",
  "scale-info",
  "serde",
  "serde_json",
- "sorted-vec",
  "sp-arithmetic",
  "sp-runtime",
  "sp-std",
@@ -1601,7 +1599,6 @@ dependencies = [
 name = "composable-tests-helpers"
 version = "0.0.1"
 dependencies = [
- "frame-support",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -1918,7 +1915,6 @@ name = "crowdloan-rewards-rpc"
 version = "0.0.1"
 dependencies = [
  "composable-support",
- "composable-traits",
  "crowdloan-rewards-runtime-api",
  "frame-support",
  "jsonrpc-core",
@@ -6493,7 +6489,6 @@ name = "pallet-assets-registry"
 version = "0.1.0"
 dependencies = [
  "composable-traits",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log 0.4.16",
@@ -6818,7 +6813,6 @@ name = "pallet-crowdloan-rewards"
 version = "0.0.1"
 dependencies = [
  "composable-traits",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex",
@@ -6873,7 +6867,6 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-currency-factory",
- "pallet-oracle",
  "pallet-vault",
  "parity-scale-codec",
  "plotters",
@@ -7154,7 +7147,6 @@ dependencies = [
  "pallet-timestamp",
  "pallet-vault",
  "parity-scale-codec",
- "plotters",
  "proptest",
  "scale-info",
  "serde",
@@ -7210,7 +7202,6 @@ dependencies = [
  "orml-traits",
  "pallet-currency-factory",
  "parity-scale-codec",
- "plotters",
  "proptest",
  "rust_decimal",
  "scale-info",
@@ -7415,14 +7406,12 @@ dependencies = [
  "composable-support",
  "composable-tests-helpers",
  "composable-traits",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "orml-tokens",
  "orml-traits",
  "pallet-currency-factory",
  "parity-scale-codec",
- "plotters",
  "proptest",
  "rust_decimal",
  "scale-info",
@@ -7764,7 +7753,6 @@ dependencies = [
  "orml-traits",
  "pallet-currency-factory",
  "parity-scale-codec",
- "plotters",
  "proptest",
  "scale-info",
  "serde",
@@ -12104,7 +12092,6 @@ dependencies = [
  "composable-node",
  "sc-cli",
  "simnode-common",
- "structopt",
  "substrate-simnode",
 ]
 
@@ -12147,7 +12134,6 @@ dependencies = [
  "sp-blockchain",
  "sp-keyring",
  "sp-runtime",
- "structopt",
  "substrate-simnode",
 ]
 
@@ -12262,12 +12248,6 @@ dependencies = [
  "rand 0.8.5",
  "sha-1 0.9.8",
 ]
-
-[[package]]
-name = "sorted-vec"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4210e1a17d165a0c1d4a233af1e3b36fb21b1359042767a4d2c73554f5f8c2aa"
 
 [[package]]
 name = "sp-api"

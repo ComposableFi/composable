@@ -11,4 +11,3 @@ node = { package = "composable-node", path = "../../node", features = ["dali"] }
 substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "master" }
 
 sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-structopt = "0.3.25"
