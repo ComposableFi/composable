@@ -5,29 +5,31 @@ skinparam responseMessageBelowArrow true
 title Opening a Position
 
 actor Trader
-participant "Clearing\nHouse" as ClearingHouse
+participant "Clearing\nHouse" as CH
 database "Positions" as Storage
 participant "trait\nRiskEngine" as RE
 participant vAMM
 
-Trader -> ClearingHouse : open position
+Trader -> CH : open position
 
-ClearingHouse -> Storage : get/create position
+CH -> Storage : get/create position
 return
-'note right ClearingHouse: compute quote asset\nnotional amount
+'note right CH: compute quote asset\nnotional amount
 
-ClearingHouse -> vAMM ++ : swap quote for base asset
+CH -> vAMM ++ : swap quote for base asset
 return base asset amount
 
-ClearingHouse -> ClearingHouse : realize PnL?
+CH -> CH : realize PnL?
 
-ClearingHouse -> Storage : update position
+CH -> Storage : update position
 
 'RiskEngine
-ClearingHouse -> RE : ensure ""above_initial_margin_ratio""
-'note right ClearingHouse : ensure margin ratio\nabove MMR
+CH -> RE : ensure ""above_initial_margin_ratio""
+'note right CH : ensure margin ratio\nabove MMR
 
-note right ClearingHouse: charge and transfer fees
+CH -> CH: check oracle-mark\nprice divergence
 
-?<-o ClearingHouse : emit event
+note right CH: charge and transfer fees
+
+?<-o CH : emit event
 @enduml
