@@ -1620,6 +1620,7 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "plotters",
+ "polkadot-parachain",
  "proptest",
  "scale-info",
  "serde",
