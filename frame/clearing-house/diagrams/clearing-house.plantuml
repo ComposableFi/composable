@@ -39,9 +39,10 @@ package "pallet-clearing-house" {
     }
     
     interface "RiskEngine" as RETrait <<trait>> {
-        ~ above_risk_threshold(AccountId)
+        ~ get_margin_ratio(AccountId)
+        ~ above_initial_margin_ratio(AccountId)
+        ~ above_maintenance_margin_ratio(AccountId)
         ~ risk_free_collateral(AccountId)
-        '~ get_margin_ratio()
         '~ get_free_collateral()
     }
     
@@ -145,9 +146,6 @@ MTTrait --> Positions : write
 'open_position
 'close_position
 MTTrait --> vAmm : calls
-
-'update_funding
-MTTrait --> ITrait : calls
 
 'update_funding
 ITrait --> Markets : write

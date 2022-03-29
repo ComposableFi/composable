@@ -19,6 +19,8 @@ return
 ClearingHouse -> vAMM ++ : swap quote for base asset
 return base asset amount
 
+ClearingHouse -> ClearingHouse : realize PnL?
+
 ClearingHouse -> Storage : update position
 
 'RiskEngine
