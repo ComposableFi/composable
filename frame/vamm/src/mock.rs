@@ -1,26 +1,11 @@
-// use super::currency_factory::MockCurrencyId;
-// use frame_support::{
-// 	traits::GenesisBuild,
-// 	PalletId,
-// };
-// use num_traits::Zero;
-// use orml_traits::parameter_type_with_key;
-// use sp_runtime::{
-// 	traits::IdentityLookup,
-// };
+use super::currency_factory::MockCurrencyId;
+use frame_support::{parameter_types, traits::Everything, traits::GenesisBuild, PalletId};
+use num_traits::Zero;
+use orml_traits::parameter_type_with_key;
+use sp_core::H256;
+use sp_runtime::{testing::Header, traits::IdentityLookup, traits::IdentityLookup};
 
 use crate as pallet_vamm;
-
-use frame_support::{
-	parameter_types,
-	traits::Everything,
-};
-
-use sp_runtime::{
-	testing::Header,
-	traits::IdentityLookup
-};
-use sp_core::H256;
 
 pub type BlockNumber = u64;
 pub type AccountId = u128;
@@ -64,7 +49,7 @@ impl frame_system::Config for Test {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                                Balances                                               
+//                                                Balances
 // ----------------------------------------------------------------------------------------------------
 
 parameter_types! {
