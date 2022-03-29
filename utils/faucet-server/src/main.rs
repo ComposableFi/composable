@@ -119,7 +119,7 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 		.any(|event| match_event!(event.event.into(), Balances, balances::Event::Transfer { .. }));
 
 	if !has_event {
-		return Ok(format!("error encountered while sending tx").into());
+		return Ok(format!("error encountered while sending tx").into())
 	}
 	log::info!("Sent {} 1k Dali", user_name);
 
