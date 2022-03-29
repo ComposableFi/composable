@@ -1,5 +1,6 @@
-## ClickUp
-*Please replace this line with a link to the ClickUp issue*
+## Issue
+*Please replace this line with either a link to the ClickUp issue, or a reference to the GitHub issue.*
+
 ## Description
 *Please replace this line with info that is not in the ClickUp ticket, eg: "also bumps dependency foo version"*
 
