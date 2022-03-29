@@ -48,7 +48,7 @@ fn do_not_have_amount_to_liquidate() {
 	});
 }
 
-/// this is used if we will ahrd code TX for earch
+/// This is used if we will hard code TX for each network.
 #[derive(Encode)]
 pub enum LiquidationsCall {
 	#[codec(index = 1)]

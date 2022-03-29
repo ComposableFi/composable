@@ -1058,7 +1058,7 @@ fn sibling_trap_assets_works() {
 		)
 			.into();
 		let xcm = vec![
-			WithdrawAsset(assets.clone().into()), /* withdrow native on target chain from origin
+			WithdrawAsset(assets.clone().into()), /* withdraw native on target chain from origin
 			                                       * account */
 			BuyExecution {
 				// pay for origin account

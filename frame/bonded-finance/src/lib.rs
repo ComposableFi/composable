@@ -63,6 +63,8 @@
 //! ## Concerns
 //!
 //! Protocol is not protected from sniper bots, whales and other attackers.
+//! Could lock amounts after into time locked fNFTs, vested, or offer to depend on time and already
+//! taken amount.
 //!
 //! ## Interface
 //!

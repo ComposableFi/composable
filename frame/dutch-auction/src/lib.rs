@@ -118,7 +118,7 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>;
 
-		/// ED taken to create poisiton. Part of if returned when position is liqudated.
+		/// ED taken to create position. Part of if returned when position is liqudated.
 		#[pallet::constant]
 		type PositionExistentialDeposit: Get<Self::Balance>;
 	}

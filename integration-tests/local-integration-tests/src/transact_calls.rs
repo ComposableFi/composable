@@ -37,9 +37,11 @@ fn dex() {
 	let this_native_asset = CurrencyId::PICA;
 
 	let user = AccountId::from(ALICE);
+	let some_enough_liquidation_weight = UnitWeightCost::get() * 2;
 	let order = Sell::new(
 		LocalAssetId::PICA,
 		LocalAssetId::kUSD,
+		// prices are set just for easy debugging
 		100,
 		FixedU128::saturating_from_integer(42u64),
 	);
@@ -104,7 +106,7 @@ fn dex() {
 		)
 			.into();
 		let xcm = vec![
-			WithdrawAsset(assets.clone().into()), /* withdrow native on target chain from origin
+			WithdrawAsset(assets.clone().into()), /* withdraw native on target chain from origin
 			                                       * account */
 			BuyExecution {
 				// pay for origin account
@@ -113,7 +115,7 @@ fn dex() {
 			},
 			Transact {
 				origin_type: OriginKind::SovereignAccount,
-				require_weight_at_most: UnitWeightCost::get() * 2,
+				require_weight_at_most: some_enough_liquidation_weight,
 				call: sell.encode().into(),
 			},
 		];
@@ -142,7 +144,7 @@ fn dex() {
 		)
 			.into();
 		let xcm = vec![
-			WithdrawAsset(assets.clone().into()), /* withdrow native on target chain from origin
+			WithdrawAsset(assets.clone().into()), /* withdraw native on target chain from origin
 			                                       * account */
 			BuyExecution {
 				// pay for origin account
@@ -151,7 +153,7 @@ fn dex() {
 			},
 			Transact {
 				origin_type: OriginKind::SovereignAccount,
-				require_weight_at_most: UnitWeightCost::get() * 2,
+				require_weight_at_most: some_enough_liquidation_weight,
 				call: binary_sell.encode().into(),
 			},
 		];
