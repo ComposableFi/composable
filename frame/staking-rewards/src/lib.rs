@@ -58,14 +58,14 @@ pub mod pallet {
 		transactional, PalletId,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
-	use sp_core::U256;
+	use sp_core::U512;
 	use sp_runtime::{
 		traits::{AccountIdConversion, Zero},
 		ArithmeticError, Perbill, SaturatedConversion,
 	};
 	use sp_std::collections::btree_map::BTreeMap;
 
-	pub(crate) type RewardIndex = U256;
+	pub(crate) type CollectedReward = U512;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
@@ -73,7 +73,7 @@ pub mod pallet {
 	pub(crate) type MaxRewardAssetsOf<T> = <T as Config>::MaxRewardAssets;
 	pub(crate) type MaxStakingPresetsOf<T> = <T as Config>::MaxStakingPresets;
 	pub(crate) type ProtocolRewardStateOf<T> =
-		BoundedBTreeMap<AssetIdOf<T>, RewardIndex, MaxRewardAssetsOf<T>>;
+		BoundedBTreeMap<AssetIdOf<T>, CollectedReward, MaxRewardAssetsOf<T>>;
 	pub(crate) type StakingNFTOf<T> =
 		StakingNFT<AssetIdOf<T>, BalanceOf<T>, ProtocolRewardStateOf<T>>;
 	pub(crate) type StakingConfigOf<T> = StakingConfig<
@@ -159,14 +159,14 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, u128, ValueQuery, TotalSharesOnEmpty<T>>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn reward_indexes)]
-	pub type RewardIndexes<T: Config> = StorageDoubleMap<
+	#[pallet::getter(fn collected_rewards)]
+	pub type CollectedRewards<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		AssetIdOf<T>,
 		Blake2_128Concat,
 		AssetIdOf<T>,
-		RewardIndex,
+		CollectedReward,
 		OptionQuery,
 	>;
 
@@ -279,7 +279,7 @@ pub mod pallet {
 		}
 
 		/// Current reward indexes.
-		pub(crate) fn current_reward_indexes(
+		pub(crate) fn current_collected_rewards(
 			asset: &AssetIdOf<T>,
 			config: &StakingConfigOf<T>,
 		) -> ProtocolRewardStateOf<T> {
@@ -287,7 +287,9 @@ pub mod pallet {
 				.rewards
 				.iter()
 				.copied()
-				.map(|x| (x, RewardIndexes::<T>::get(asset, &x).unwrap_or(RewardIndex::zero())))
+				.map(|x| {
+					(x, CollectedRewards::<T>::get(asset, &x).unwrap_or(CollectedReward::zero()))
+				})
 				.collect::<BTreeMap<_, _>>()
 				.try_into()
 				.expect("map does not alter the length; qed;")
@@ -316,8 +318,8 @@ pub mod pallet {
 			T::Assets::transfer(*reward_asset, from, &protocol_account, amount, keep_alive)?;
 
 			// Increment the reward index, used to compute user rewards.
-			RewardIndexes::<T>::try_mutate(asset, reward_asset, |entry| -> DispatchResult {
-				let lifted_amount = RewardIndex::from(amount.saturated_into::<u128>());
+			CollectedRewards::<T>::try_mutate(asset, reward_asset, |entry| -> DispatchResult {
+				let lifted_amount = CollectedReward::from(amount.saturated_into::<u128>());
 				match entry {
 					Some(index) => {
 						*index =
@@ -365,14 +367,14 @@ pub mod pallet {
 			T::Assets::transfer(*asset, from, &protocol_account, amount, keep_alive)?;
 
 			// Actually create the NFT representing the user position.
-			let reward_indexes = Self::current_reward_indexes(asset, &config);
+			let collected_rewards = Self::current_collected_rewards(asset, &config);
 			let now = T::Time::now();
 			let nft = StakingNFT {
 				asset,
 				stake: amount,
 				lock_date: now.as_secs(),
 				lock_duration: duration,
-				reward_indexes,
+				collected_rewards,
 				reward_multiplier,
 			};
 			let instance_id = T::mint_protocol_nft(from, &nft)?;
@@ -409,10 +411,11 @@ pub mod pallet {
 
 			// Transfer back the (possibly penalized) staked amount.
 			let pallet_account = Self::account_id(&nft.asset);
-			// NOTE(hussein-aitlahcen): no need to keep protocol account alive.
+			// NOTE(hussein-aitlahcen): no need to keep pallet account alive.
 			T::Assets::transfer(nft.asset, &pallet_account, &to, penalized_stake, false)?;
 
 			// Move penalty to configured beneficiary
+			// NOTE(hussein-aitlahcen): no need to keep pallet account alive.
 			T::Assets::transfer(
 				nft.asset,
 				&pallet_account,
@@ -445,19 +448,16 @@ pub mod pallet {
 			T::try_mutate_protocol_nft(instance_id, |nft: &mut StakingNFTOf<T>| {
 				let config = Self::get_config(&nft.asset)?;
 
-				// NOTE(hussein-aitlahcen): user is still able to claim even if his position
-				// 'expired', do we allow that?
-
 				let share = nft.stake.saturated_into::<u128>();
 				let total_shares = TotalShares::<T>::get(nft.asset);
 
 				// TODO(hussein-aitlahcen): extract pure maths to their own functions
 				let compute_reward =
-					|delta_reward_index: U256| -> Result<BalanceOf<T>, DispatchError> {
-						// Index always increment but diff can't be > max supply = u128.
-						let normalized_delta = u128::try_from(delta_reward_index)?;
-						let final_reward = nft.reward_multiplier.mul_floor(normalized_delta);
-						final_reward
+					|delta_collected: CollectedReward| -> Result<BalanceOf<T>, DispatchError> {
+						// Always increment but delta can't be > max supply <= u128.
+						let normalized_delta = u128::try_from(delta_collected)?;
+						nft.reward_multiplier
+							.mul_floor(normalized_delta)
 							.safe_mul(&share)?
 							.safe_div(&total_shares)?
 							.try_into()
@@ -465,13 +465,13 @@ pub mod pallet {
 					};
 
 				let rewards = nft
-					.reward_indexes
+					.collected_rewards
 					.iter()
-					.map(|(reward_asset, index)| -> Result<(AssetIdOf<T>, BalanceOf<T>), DispatchError> {
-						match RewardIndexes::<T>::get(nft.asset, &reward_asset) {
-							Some(current_index) => {
-								let delta_reward_index = current_index.saturating_sub(*index);
-								let reward = compute_reward(delta_reward_index)?;
+					.map(|(reward_asset, collected)| -> Result<(AssetIdOf<T>, BalanceOf<T>), DispatchError> {
+						match CollectedRewards::<T>::get(nft.asset, &reward_asset) {
+							Some(current_collected) => {
+								let delta_collected = current_collected.saturating_sub(*collected);
+								let reward = compute_reward(delta_collected)?;
 								Ok((*reward_asset, reward))
 							},
 							None => Ok((*reward_asset, Zero::zero())),
@@ -486,7 +486,7 @@ pub mod pallet {
 
 				// NOTE(hussein-aitahcen): the reward computation is based on the index delta,
 				// hence we need to update the indexes after having claimed the rewards.
-				nft.reward_indexes = Self::current_reward_indexes(&nft.asset, &config);
+				nft.collected_rewards = Self::current_collected_rewards(&nft.asset, &config);
 
 				Ok(())
 			})

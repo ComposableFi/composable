@@ -18,7 +18,7 @@ pub struct StakingConfig<AccountId, DurationPresets, Rewards> {
 }
 
 #[derive(Debug, Encode, Decode, TypeInfo)]
-pub struct StakingNFT<AssetId, Balance, Indexes> {
+pub struct StakingNFT<AssetId, Balance, CollectedRewards> {
 	/// The staked asset.
 	pub asset: AssetId,
 	/// The stake this NFT was minted for.
@@ -27,13 +27,15 @@ pub struct StakingNFT<AssetId, Balance, Indexes> {
 	pub lock_date: Timestamp,
 	/// The duration for which this NFT stake was locked.
 	pub lock_duration: DurationSeconds,
-	/// The indexes at which this NFT was minted, used to compute the rewards.
-	pub reward_indexes: Indexes,
+	/// The collected rewards counters at which this NFT was minted, used to compute the rewards.
+	pub collected_rewards: CollectedRewards,
 	/// The reward multiplier.
 	pub reward_multiplier: Perbill,
 }
 
-impl<AssetId, Balance: AtLeast32BitUnsigned + Copy, Indexes> StakingNFT<AssetId, Balance, Indexes> {
+impl<AssetId, Balance: AtLeast32BitUnsigned + Copy, CollectedRewards>
+	StakingNFT<AssetId, Balance, CollectedRewards>
+{
 	pub fn penalize_early_unstake_amount(
 		&self,
 		now: Timestamp,
@@ -49,13 +51,17 @@ impl<AssetId, Balance: AtLeast32BitUnsigned + Copy, Indexes> StakingNFT<AssetId,
 	}
 }
 
-impl<AssetId, Balance, Indexes> Get<NFTClass> for StakingNFT<AssetId, Balance, Indexes> {
+impl<AssetId, Balance, CollectedRewards> Get<NFTClass>
+	for StakingNFT<AssetId, Balance, CollectedRewards>
+{
 	fn get() -> NFTClass {
 		NFTClass::STAKING
 	}
 }
 
-impl<AssetId, Balance, Indexes> Get<NFTVersion> for StakingNFT<AssetId, Balance, Indexes> {
+impl<AssetId, Balance, CollectedRewards> Get<NFTVersion>
+	for StakingNFT<AssetId, Balance, CollectedRewards>
+{
 	fn get() -> NFTVersion {
 		NFTVersion::VERSION_1
 	}
