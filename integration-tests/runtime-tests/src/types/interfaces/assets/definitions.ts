@@ -19,9 +19,24 @@ export default {
       ],
       type: "AssetsBalance"
     },
+    listAssets: {
+      description: "Lists assets.",
+      params: [
+        {
+          name: "at",
+          type: "Hash",
+          isOptional: true,
+        },
+      ],
+      type: "Vec<Asset>"
+    },
   },
   types: {
     CurrencyId: "u128",
     AssetsBalance: "u128",
+    Asset: {
+       name: "Vec<u8>",
+       id: "u64"
+    }
   },
 };

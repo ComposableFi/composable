@@ -2,6 +2,7 @@
 /* eslint-disable */
 
 import type { AssetsBalance, CurrencyId } from '@composable/types/interfaces/assets';
+import type { Asset } from '@composable/types/interfaces/assets';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u32, u64 } from '@polkadot/types-codec';
@@ -33,6 +34,8 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Balance available for the specified account for the specified asset.
        **/
       balanceOf: AugmentedRpc<(asset: CurrencyId | AnyNumber | Uint8Array, account: AccountId32 | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<AssetsBalance>>;
+
+      listAssets: AugmentedRpc<(at?: Hash | string | Uint8Array) => Observable<Vec<Asset>>>;
     };
     author: {
       /**

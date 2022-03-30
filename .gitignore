@@ -37,3 +37,6 @@ node_modules/
 rust-toolchain.toml
 
 .benchmarkRun
+
+integration-tests/runtime-tests/**/*.js
+integration-tests/runtime-tests/**/*d.ts

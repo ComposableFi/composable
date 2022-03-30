@@ -20,7 +20,7 @@ scale-info = { version = "1.0", default-features = false, features = [
 serde = { version = '1.0.130', features = ['derive'], optional = true }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
 xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.17", default-features = false, optional = true }
-
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 [features]
 default = ["std"]
@@ -28,6 +28,7 @@ develop = ["xcm"]
 std = [
   "serde",
   "codec/std",
+  "sp-std/std",
   "sp-runtime/std",
   "composable-traits/std",
   "composable-support/std",

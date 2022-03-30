@@ -25,6 +25,7 @@ primitives = { path = "../runtime/primitives" }
 
 pallet-assets = { path = "../frame/assets" }
 pallet-crowdloan-rewards = { path = "../frame/crowdloan-rewards" }
+composable-traits = { path = "../frame/composable-traits" }
 
 assets-rpc = { path = "../frame/assets/rpc" }
 assets-runtime-api = { path = "../frame/assets/runtime-api" }

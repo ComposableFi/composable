@@ -17,6 +17,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::Block;
+use composable_traits::assets::Asset;
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
@@ -37,7 +38,7 @@ where
 	C: Send + Sync + 'static,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<B, AccountId, AccountIndex>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<B, Balance>,
-	C::Api: assets_runtime_api::AssetsRuntimeApi<B, CurrencyId, AccountId, Balance>,
+	C::Api: assets_runtime_api::AssetsRuntimeApi<B, CurrencyId, AccountId, Balance, Asset>,
 	C::Api: crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<B, AccountId, Balance>,
 	C::Api: BlockBuilder<B>,
 	P: TransactionPool + 'static,
