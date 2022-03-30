@@ -15,6 +15,7 @@ use composable_traits::{oracle::Oracle as OracleTrait, vamm::VirtualAMM};
 use frame_support::{assert_err, assert_noop, assert_ok};
 use orml_tokens::Error as TokenError;
 use proptest::prelude::*;
+use sp_runtime::FixedI128;
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup
@@ -124,7 +125,15 @@ fn create_first_market_succeeds() {
 
 		let asset = DOT;
 		let vamm_params = VammParams {};
-		assert_ok!(ClearingHouse::create_market(Origin::signed(ALICE), asset, vamm_params));
+		let margin_ratio_initial = FixedI128::from_float(0.1); // 10x max leverage to open a position
+		let margin_ratio_maintenance = FixedI128::from_float(0.02); // liquidate when above 50x leverage
+		assert_ok!(ClearingHouse::create_market(
+			Origin::signed(ALICE),
+			asset,
+			vamm_params,
+			margin_ratio_initial,
+			margin_ratio_maintenance,
+		));
 
 		// Ensure first market id is 0 (we know its type since it's defined in the mock runtime)
 		System::assert_last_event(Event::MarketCreated { market: 0u64, asset }.into());
@@ -141,7 +150,13 @@ fn fails_to_create_market_for_unsupported_asset_by_oracle() {
 		.build()
 		.execute_with(|| {
 			assert_noop!(
-				ClearingHouse::create_market(Origin::signed(ALICE), DOT, VammParams {}),
+				ClearingHouse::create_market(
+					Origin::signed(ALICE),
+					DOT,
+					VammParams {},
+					FixedI128::from_float(0.1),
+					FixedI128::from_float(0.02)
+				),
 				Error::<Runtime>::NoPriceFeedForAsset
 			);
 		})
@@ -151,7 +166,13 @@ fn fails_to_create_market_for_unsupported_asset_by_oracle() {
 fn fails_to_create_market_if_fails_to_create_vamm() {
 	ExtBuilder { vamm_id: None, ..Default::default() }.build().execute_with(|| {
 		assert_noop!(
-			ClearingHouse::create_market(Origin::signed(ALICE), DOT, VammParams {}),
+			ClearingHouse::create_market(
+				Origin::signed(ALICE),
+				DOT,
+				VammParams {},
+				FixedI128::from_float(0.1),
+				FixedI128::from_float(0.02)
+			),
 			mock_vamm::Error::<Runtime>::FailedToCreateVamm
 		);
 	})

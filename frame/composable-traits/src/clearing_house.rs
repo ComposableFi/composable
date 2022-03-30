@@ -2,6 +2,7 @@
 //!
 //! Common traits for clearing house implementations
 use frame_support::pallet_prelude::DispatchError;
+use sp_runtime::FixedPointNumber;
 
 pub trait ClearingHouse {
 	/// The trader's account identifier type
@@ -10,6 +11,8 @@ pub trait ClearingHouse {
 	type AssetId;
 	/// The balance type for an account
 	type Balance;
+	/// Signed fixed point number implementation
+	type Decimal: FixedPointNumber;
 	/// The identifier type for each market
 	type MarketId;
 	/// Parameters for creating and initializing a new vAMM instance.
@@ -26,15 +29,19 @@ pub trait ClearingHouse {
 	) -> Result<(), DispatchError>;
 
 	/// Create a new perpetuals market
-	/// 
+	///
 	/// ## Parameters
 	/// - `asset`: Asset id of the underlying for the derivatives market
 	/// - `vamm_params`: Parameters for creating and initializing the vAMM for price discovery
-	/// 
+	/// - `margin_ratio_initial`: Minimum margin ratio for opening a new position
+	/// - `margin_ratio_maintenance`: Margin ratio below which liquidations can occur
+	///
 	/// ## Returns
 	/// The new market id, if successful
 	fn create_market(
 		asset: Self::AssetId,
 		vamm_params: Self::VammParams,
+		margin_ratio_initial: Self::Decimal,
+		margin_ratio_maintenance: Self::Decimal,
 	) -> Result<Self::MarketId, DispatchError>;
 }

@@ -165,6 +165,10 @@ pub mod pallet {
 		funding_rate_ts: Timestamp,
 		/// The time span between each funding rate update.
 		periodicity: Duration,
+		/// Minimum margin ratio for opening a new position
+		margin_ratio_initial: Decimal,
+		/// Margin ratio below which liquidations can occur
+		margin_ratio_maintenance: Decimal,
 	}
 
 	type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
@@ -181,18 +185,6 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime Storage
 	// ----------------------------------------------------------------------------------------------------
-
-	/// Minimum margin ratio for opening a new position
-	#[pallet::storage]
-	#[pallet::getter(fn get_initial_margin_ratio)]
-	#[allow(clippy::disallowed_types)]
-	type InitialMarginRatio<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
-
-	/// Minimum margin ratio, below which liquidations can occur
-	#[pallet::storage]
-	#[pallet::getter(fn get_maintenance_margin_ratio)]
-	#[allow(clippy::disallowed_types)]
-	type MaintenanceMarginRatio<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
 
 	/// Supported collateral asset ids
 	#[pallet::storage]
@@ -350,6 +342,8 @@ pub mod pallet {
 		/// ## Parameters
 		/// - `asset`: Asset id of the underlying for the derivatives market
 		/// - `vamm_params`: Parameters for creating and initializing the vAMM for price discovery
+		/// - `margin_ratio_initial`: Minimum margin ratio for opening a new position
+		/// - `margin_ratio_maintenance`: Margin ratio below which liquidations can occur
 		///
 		/// ## Assumptions or Requirements
 		/// * The underlying must have a stable price feed via another pallet
@@ -370,9 +364,16 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset: AssetIdOf<T>,
 			vamm_params: VammParamsOf<T>,
+			margin_ratio_initial: T::Decimal,
+			margin_ratio_maintenance: T::Decimal,
 		) -> DispatchResult {
 			ensure_signed(origin)?;
-			let market = <Self as ClearingHouse>::create_market(asset, vamm_params)?;
+			let market = <Self as ClearingHouse>::create_market(
+				asset,
+				vamm_params,
+				margin_ratio_initial,
+				margin_ratio_maintenance,
+			)?;
 			Self::deposit_event(Event::MarketCreated { market, asset });
 			Ok(())
 		}
@@ -386,6 +387,7 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type AssetId = AssetIdOf<T>;
 		type Balance = T::Balance;
+		type Decimal = T::Decimal;
 		type MarketId = T::MarketId;
 		type VammParams = VammParamsOf<T>;
 
@@ -413,6 +415,8 @@ pub mod pallet {
 		fn create_market(
 			asset: Self::AssetId,
 			vamm_params: Self::VammParams,
+			margin_ratio_initial: Self::Decimal,
+			margin_ratio_maintenance: Self::Decimal,
 		) -> Result<Self::MarketId, DispatchError> {
 			MarketCount::<T>::try_mutate(|id| {
 				ensure!(T::Oracle::is_supported(asset)?, Error::<T>::NoPriceFeedForAsset);
@@ -420,6 +424,8 @@ pub mod pallet {
 				let market_id = id.clone();
 				let market = Market {
 					asset_id: asset,
+					margin_ratio_initial,
+					margin_ratio_maintenance,
 					cum_funding_rate: Default::default(),
 					funding_rate_ts: Default::default(),
 					periodicity: Default::default(),
