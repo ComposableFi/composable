@@ -160,6 +160,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure!(Self::class_owners(class).is_none(), Error::<T>::ClassAlreadyExists);
 			ClassOwners::<T>::insert(class, (who, admin));
+			Class::<T>::insert(class, BTreeMap::<Vec<u8>, Vec<u8>>::new());
 			Ok(())
 		}
 	}
@@ -193,6 +194,7 @@ pub mod pallet {
 
 		fn burn_from(class: &Self::ClassId, instance: &Self::InstanceId) -> DispatchResult {
 			Self::ensure_instance_exists(class, instance)?;
+			InstanceOwner::<T>::remove((class, instance));
 			Instance::<T>::remove((class, instance));
 			Ok(())
 		}
