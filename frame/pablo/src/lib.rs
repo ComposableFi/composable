@@ -65,7 +65,7 @@ pub mod pallet {
 		twap::{update_price_cumulative_state, update_twap_state},
 		types::{PriceCumulative, TimeWeightedAveragePrice},
 		uniswap::Uniswap,
-        WeightInfo,
+		WeightInfo,
 	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
