@@ -30,7 +30,7 @@
 ///  For every test, make sure that you check wether the funds moved to the correct (sub)
 /// accounts.
 use crate::{decay::*, mock::*, *};
-use composable_support::{types::EthereumAddress, validation::{Validated}};
+use composable_support::{types::EthereumAddress, validation::Validated};
 use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
 use frame_support::{
 	assert_err, assert_noop, assert_ok,
@@ -363,7 +363,7 @@ fn incoming_outgoing_accounts_are_isolated() {
 		initialize();
 
 		let amount = 100;
-        let ethereum_address = EthereumAddress([0; 20]);
+		let ethereum_address = EthereumAddress([0; 20]);
 		let network_id = 1;
 		let asset_id: u128 = 1u128;
 
@@ -1069,7 +1069,7 @@ mod transfer_to {
 			));
 
 			let amount = min_transfer_size - 1;
-            let ethereum_address = EthereumAddress([0; 20]);
+			let ethereum_address = EthereumAddress([0; 20]);
 			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 			assert_noop!(
 				Mosaic::transfer_to(
@@ -1118,7 +1118,7 @@ mod transfer_to {
 
 			// We exceed the max transfer size
 			let amount = max_transfer_size + 1;
-		    let ethereum_address = EthereumAddress([0; 20]);
+			let ethereum_address = EthereumAddress([0; 20]);
 			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 			assert_noop!(
 				Mosaic::transfer_to(
@@ -1140,7 +1140,7 @@ mod transfer_to {
 			initialize();
 
 			let amount = 100;
-		    let ethereum_address = EthereumAddress([0; 20]);
+			let ethereum_address = EthereumAddress([0; 20]);
 			let network_id = 1;
 			let asset_id: u128 = 1;
 
@@ -1176,7 +1176,7 @@ mod transfer_to {
 
 			// We don't register the asset
 
-		    let ethereum_address = EthereumAddress([0; 20]);
+			let ethereum_address = EthereumAddress([0; 20]);
 			let amount = 100;
 			let network_id = 1;
 			let asset_id: u128 = 1;
