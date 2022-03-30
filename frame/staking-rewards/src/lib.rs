@@ -132,8 +132,8 @@ pub mod pallet {
 		/// The time provider.
 		type Time: UnixTime;
 
-		/// The admin origin, allowed to update sensitive values such as the unlock penalty.
-		type AdminOrigin: EnsureOrigin<Self::Origin>;
+		/// The governance origin, allowed to update sensitive values such as the unlock penalty.
+		type GovernanceOrigin: EnsureOrigin<Self::Origin>;
 
 		/// The pallet id, used to uniquely identify this pallet.
 		#[pallet::constant]
@@ -186,7 +186,7 @@ pub mod pallet {
 		///
 		/// Arguments
 		///
-		/// * `origin` the origin that signed this extrinsic, must be `T::AdminOrigin`.
+		/// * `origin` the origin that signed this extrinsic, must be `T::GovernanceOrigin`.
 		/// * `staking_configuration` the staking configuration for the given protocol `asset`.
 		#[pallet::weight(10_000)]
 		pub fn configure(
@@ -194,7 +194,7 @@ pub mod pallet {
 			asset: AssetIdOf<T>,
 			configuration: StakingConfigOf<T>,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::AdminOrigin::ensure_origin(origin)?;
+			let _ = T::GovernanceOrigin::ensure_origin(origin)?;
 			StakingConfigurations::<T>::insert(asset, configuration.clone());
 			Self::deposit_event(Event::<T>::Configured { asset, configuration });
 			Ok(().into())
