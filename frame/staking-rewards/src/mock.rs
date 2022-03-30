@@ -19,6 +19,9 @@ pub type Balance = u128;
 pub type Amount = i128;
 pub type Moment = u64;
 pub type InstanceId = u128;
+pub type BlockNumber = u64;
+
+pub const MILLISECS_PER_BLOCK: Moment = 12_000;
 
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -30,7 +33,7 @@ frame_support::construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		NFT: pallet_nft::{Pallet, Storage, Event<T>},
-	StakingRewards: crate::{Pallet, Storage, Call, Event<T>},
+	  StakingRewards: crate::{Pallet, Storage, Call, Event<T>},
 	}
 );
 
@@ -41,7 +44,7 @@ parameter_type_with_key! {
 }
 
 parameter_types! {
-	pub const MinimumPeriod: u64 = 12_000 / 2;
+	pub const MinimumPeriod: Moment = MILLISECS_PER_BLOCK / 2;
 }
 
 impl pallet_timestamp::Config for Test {
@@ -109,7 +112,7 @@ impl system::Config for Test {
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;
-	type BlockNumber = u64;
+	type BlockNumber = BlockNumber;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
