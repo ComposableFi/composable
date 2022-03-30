@@ -25,9 +25,15 @@
 //!
 //! ### Implementations
 //!
+//! The Clearing House pallet provides implementations for the following traits:
+//!
+//! - [`ClearingHouse`](composable_traits::clearing_house::ClearingHouse): Exposes functionality for
+//!   trading of perpetual contracts
+//!
 //! ## Interface
 //!
 //! ### Extrinsics
+//!
 //! - [`add_margin`](Call::add_margin)
 //! - [`create_market`](Call::create_market)
 //!
@@ -38,6 +44,9 @@
 //! ### Example
 //!
 //! ## Related Modules
+//!
+//! - `pallet-virtual-amm`
+//! - `pallet-oracle`
 //!
 //! <!-- Original author: @0xangelo -->
 #![cfg_attr(not(feature = "std"), no_std)]

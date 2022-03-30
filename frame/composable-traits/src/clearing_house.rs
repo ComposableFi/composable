@@ -4,7 +4,7 @@
 use frame_support::pallet_prelude::DispatchError;
 use sp_runtime::FixedPointNumber;
 
-/// Object allowing trading of perpetual contracts
+/// Exposes functionality for trading of perpetual contracts
 ///
 /// Provides functionality for:
 /// * creating and stopping perpetual futures markets
