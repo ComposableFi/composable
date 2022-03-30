@@ -979,6 +979,7 @@ pub mod pallet {
 			// representing the call, we've just created.
 			// Submit signed will return a vector of results for all accounts that were found in the
 			// local keystore with expected `KEY_TYPE`.
+
 			let results = signer.send_signed_transaction(|_account| {
 				// Received price is wrapped into a call to `submit_price` public function of this
 				// pallet. This means that the transaction, when executed, will simply call that

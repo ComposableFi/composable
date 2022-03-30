@@ -46,6 +46,22 @@ impl ShouldExecute for XcmpDebug {
 	}
 }
 
+/// is used to represent this chain in various APIS
+pub struct ThisChain<T>(PhantomData<T>);
+
+impl<T: Get<Id>> ThisChain<T> {
+	pub const SELF_RECURSIVE: MultiLocation = MultiLocation { parents: 0, interior: Here };
+	pub fn self_parent() -> MultiLocation {
+		MultiLocation { parents: 1, interior: X1(Parachain(T::get().into())) }
+	}
+}
+
+impl<T: Get<Id>> Contains<MultiLocation> for ThisChain<T> {
+	fn contains(origin: &MultiLocation) -> bool {
+		origin == &Self::SELF_RECURSIVE || origin == &Self::self_parent()
+	}
+}
+
 /// NOTE: there could be payments taken on other side, so cannot rely on this to work end to end
 pub struct DebugAllowUnpaidExecutionFrom<T>(PhantomData<T>);
 impl<T: Contains<MultiLocation>> ShouldExecute for DebugAllowUnpaidExecutionFrom<T> {
@@ -268,6 +284,7 @@ impl<
 				// TODO: support DOT via abstracting CurrencyId
 				Some(CurrencyId::RELAY_NATIVE)
 			},
+			ThisChain::<ThisParaId>::SELF_RECURSIVE => Some(CurrencyId::NATIVE),
 			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } => {
 				// adapt for reanchor canonical location: https://github.com/paritytech/polkadot/pull/4470
 				let currency_id = CurrencyId::decode(&mut &key[..]).ok()?;
