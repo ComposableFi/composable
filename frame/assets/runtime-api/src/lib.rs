@@ -4,19 +4,21 @@
 
 use codec::{Codec};
 use composable_support::rpc_helpers::{SafeRpcWrapper, SafeRpcWrapperType};
-use composable_traits::assets::Asset;
+use sp_std::vec::Vec;
 // Here we declare the runtime API. It is implemented it the `impl` block in
 // runtime amalgamator file (the `runtime/src/lib.rs`)
 sp_api::decl_runtime_apis! {
 	// REVIEW(benluelo): Should the AssetId type parameter be removed and then just use CurencyId directly?
-	pub trait AssetsRuntimeApi<AssetId, AccountId, Balance>
+	pub trait AssetsRuntimeApi<AssetId, AccountId, Balance, Asset>
 	where
 		AssetId: SafeRpcWrapperType,
 		AccountId: Codec,
 		Balance: SafeRpcWrapperType,
+		Asset: Codec,
 	{
 		fn balance_of(asset_id: SafeRpcWrapper<AssetId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */;
 
-		fn list_assets() -> [Asset; 5];
+		fn list_assets() -> Vec<Asset>;
 	}
 }
+
