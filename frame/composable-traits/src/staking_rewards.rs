@@ -7,7 +7,7 @@ use codec::{Decode, Encode};
 use core::fmt::Debug;
 use frame_support::{dispatch::DispatchResult, traits::Get};
 use scale_info::TypeInfo;
-use sp_runtime::{traits::AtLeast32BitUnsigned, DispatchError, Perbill};
+use sp_runtime::{traits::AtLeast32BitUnsigned, DispatchError, Perbill, SaturatedConversion};
 
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 pub struct StakingConfig<AccountId, DurationPresets, Rewards> {
@@ -48,6 +48,10 @@ impl<AssetId, Balance: AtLeast32BitUnsigned + Copy, CollectedRewards>
 			let penalized_amount = self.stake.safe_sub(&penalty_amount)?;
 			Ok((penalized_amount, penalty_amount))
 		}
+	}
+
+	pub fn shares(&self) -> u128 {
+		self.reward_multiplier.mul_ceil(self.stake.saturated_into::<u128>())
 	}
 }
 

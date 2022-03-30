@@ -46,7 +46,7 @@ mod mock;
 pub mod pallet {
 	use composable_traits::{
 		financial_nft::{FinancialNFTProtocol, NFTClass, NFTVersion},
-		math::{SafeAdd, SafeDiv, SafeMul, SafeSub},
+		math::{safe_multiply_by_rational, SafeAdd, SafeSub},
 		staking_rewards::{Staking, StakingConfig, StakingNFT, StakingReward},
 		time::{DurationSeconds, Timestamp},
 	};
@@ -386,8 +386,8 @@ pub mod pallet {
 			let instance_id = T::mint_protocol_nft(from, &nft)?;
 
 			// Increment total shares.
-			TotalShares::<T>::try_mutate(asset, |x| -> DispatchResult {
-				*x = x.safe_add(&amount.saturated_into::<u128>())?;
+			TotalShares::<T>::try_mutate(asset, |total_shares| -> DispatchResult {
+				*total_shares = total_shares.safe_add(&nft.shares())?;
 				Ok(())
 			})?;
 
@@ -431,8 +431,8 @@ pub mod pallet {
 			)?;
 
 			// Decrement total shares.
-			TotalShares::<T>::try_mutate(nft.asset, |x| -> DispatchResult {
-				*x = x.safe_sub(&nft.stake.saturated_into::<u128>())?;
+			TotalShares::<T>::try_mutate(nft.asset, |total_shares| -> DispatchResult {
+				*total_shares = total_shares.safe_sub(&nft.shares())?;
 				Ok(())
 			})?;
 
@@ -454,7 +454,7 @@ pub mod pallet {
 			T::try_mutate_protocol_nft(instance_id, |nft: &mut StakingNFTOf<T>| {
 				let config = Self::get_config(&nft.asset)?;
 
-				let share = nft.stake.saturated_into::<u128>();
+				let shares = nft.shares();
 				let total_shares = TotalShares::<T>::get(nft.asset);
 
 				// TODO(hussein-aitlahcen): extract pure maths to their own functions
@@ -462,10 +462,7 @@ pub mod pallet {
 					|delta_collected: CollectedReward| -> Result<BalanceOf<T>, DispatchError> {
 						// Always increment but delta can't be > max supply <= u128.
 						let normalized_delta = u128::try_from(delta_collected)?;
-						nft.reward_multiplier
-							.mul_floor(normalized_delta)
-							.safe_mul(&share)?
-							.safe_div(&total_shares)?
+						safe_multiply_by_rational(normalized_delta, shares, total_shares)?
 							.try_into()
 							.map_err(|_| ArithmeticError::Overflow.into())
 					};
