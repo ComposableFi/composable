@@ -488,7 +488,7 @@ pub mod pallet {
 					T::Assets::transfer(reward_asset, &pallet_account, to, reward, false)?;
 				}
 
-				// NOTE(hussein-aitahcen): the reward computation is based on the index delta,
+				// NOTE(hussein-aitahcen): the reward computation is based on the collected delta,
 				// hence we need to update the indexes after having claimed the rewards.
 				nft.collected_rewards = Self::current_collected_rewards(&nft.asset, &config);
 
