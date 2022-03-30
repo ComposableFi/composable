@@ -10,6 +10,7 @@ pub mod pallet {
 	use composable_traits::vamm::VirtualAMM;
 	use frame_support::pallet_prelude::*;
 	use scale_info::TypeInfo;
+	use sp_runtime::FixedPointNumber;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
@@ -26,6 +27,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type VammId: FullCodec + MaxEncodedLen + MaybeSerializeDeserialize + TypeInfo + Clone;
+		type Decimal: FixedPointNumber;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -57,6 +59,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		FailedToCreateVamm,
+		FailedToCalculateTwap,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -81,6 +84,7 @@ pub mod pallet {
 	impl<T: Config> VirtualAMM for Pallet<T> {
 		type VammId = T::VammId;
 		type VammParams = VammParams;
+		type Decimal = T::Decimal;
 
 		#[allow(unused_variables)]
 		fn create(info: Self::VammParams) -> Result<Self::VammId, DispatchError> {
@@ -89,6 +93,11 @@ pub mod pallet {
 			} else {
 				Err(Error::<T>::FailedToCreateVamm.into())
 			}
+		}
+
+		fn get_twap(vamm: Self::VammId) -> Result<Self::Decimal, DispatchError> {
+			Ok(Self::Decimal::checked_from_rational(10000u32, 100u32)
+				.ok_or(Error::<T>::FailedToCalculateTwap)?)
 		}
 	}
 }

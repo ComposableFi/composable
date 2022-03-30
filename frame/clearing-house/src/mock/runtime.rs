@@ -52,6 +52,7 @@ pub type Balance = u128;
 pub type Amount = i64;
 pub type Timestamp = u64;
 pub type VammId = u64;
+pub type Decimal = FixedI128;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -178,6 +179,7 @@ impl pallet_assets::Config for Runtime {
 
 impl mock_vamm::Config for Runtime {
 	type VammId = VammId;
+	type Decimal = Decimal;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -213,7 +215,7 @@ impl clearing_house::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 	type MarketId = u64;
-	type Decimal = FixedI128;
+	type Decimal = Decimal;
 	type Timestamp = Timestamp;
 	type Duration = u64;
 	type VirtualAMM = Vamm;
