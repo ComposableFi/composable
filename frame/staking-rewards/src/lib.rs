@@ -327,9 +327,10 @@ pub mod pallet {
 			CollectedRewards::<T>::try_mutate(asset, reward_asset, |entry| -> DispatchResult {
 				let lifted_amount = CollectedReward::from(amount.saturated_into::<u128>());
 				match entry {
-					Some(index) => {
-						*index =
-							(*index).checked_add(lifted_amount).ok_or(ArithmeticError::Overflow)?;
+					Some(collected_so_far) => {
+						*collected_so_far = (*collected_so_far)
+							.checked_add(lifted_amount)
+							.ok_or(ArithmeticError::Overflow)?;
 					},
 					None => {
 						*entry = Some(lifted_amount);
